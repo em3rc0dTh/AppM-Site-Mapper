@@ -1,180 +1,179 @@
 # Site Mapper MK1 — Canonical Domain Contract
 
 **Gate:** G2 — Canonical Domain Contract  
-**Status:** DRAFT / PROPOSED  
-**Authority:** Binding only after G2 is sealed and merged into `main`.
+**Status:** DRAFT — TOPOLOGY HIERARCHY ACCEPTED  
+**Authority:** Binding after G2 is sealed and merged into `main`.
 
 ## 1. Purpose
 
-This contract defines the canonical business/domain language and invariants for Site Mapper MK1.
+This contract defines the authoritative business/domain structure for Site Mapper MK1 before persistence is designed.
 
-It intentionally does **not** define MongoDB collections, indexes, embedding strategy, Prisma models, route-handler shapes, React components or MQTT transport. Those belong to later gates.
+It intentionally does **not** define MongoDB collections, indexes, embedding strategy, Prisma models, route-handler shapes, React component boundaries or MQTT transport.
 
-G2 exists to ensure that persistence and implementation serve one domain instead of creating it accidentally.
+Persistence and implementation must serve this domain model, not redefine it.
 
-## 2. Evidence boundary
+## 2. Accepted topology hierarchy
 
-The following are confirmed legacy product concepts:
-
-- hierarchical physical topology;
-- physical Site, Structure and Level concepts;
-- room/substructure context;
-- grouped physical rack/container placement;
-- positions/grid coordinates;
-- rack/container equipment;
-- devices with identity and category;
-- rack capacity in U;
-- CAS occupancy states;
-- Blueprint spatial geometry;
-- BDFB internal hierarchy;
-- power-path relationships;
-- realtime telemetry identity;
-- user/role concepts.
-
-Legacy persistence names, collection aliases and component boundaries are not domain authority.
-
-## 3. Canonical topology — proposed
-
-The proposed MK1 hierarchy is:
+The following hierarchy is now an explicit product decision:
 
 ```text
 Network
 └── Site
     └── Structure
         └── Level
-            └── Room
-                └── Zone
+            └── Room / Substructure
+                └── ContainerCluster / Bay
                     └── Position
-                        └── Rack
-                            └── Device
+                        └── Container / Rack
+                            ├── Device
+                            │   └── Shelf
+                            │       └── Frame
+                            │           └── Panel
+                            │               └── Breaker / Holder
+                            └── Equipment
 ```
 
-### Decision state
+The detailed authority for this hierarchy is recorded in:
 
-- `Network`: PROPOSED as topology root/context, not necessarily a persisted entity.
-- `Site`: ACCEPT-CANDIDATE.
-- `Structure`: ACCEPT-CANDIDATE.
-- `Level`: ACCEPT-CANDIDATE.
-- `Room`: PROPOSED canonical replacement for legacy Room/Substructure ambiguity.
-- `Zone`: OPEN. Candidate replacement for legacy Cluster/ContainerCluster/Bay ambiguity.
-- `Position`: ACCEPT-CANDIDATE.
-- `Rack`: PROPOSED canonical replacement for operational legacy Container where the physical object is rack-like.
-- `Device`: ACCEPT-CANDIDATE.
+`docs/domain/topology-hierarchy.md`
 
-No OPEN or PROPOSED noun becomes permanent runtime vocabulary until ADR-001 is accepted.
+This decision supersedes the earlier G2 proposal that introduced a `Zone` concept.
 
-## 4. Core aggregate candidates
+There is **no Zone layer** in the accepted topology.
+
+## 3. Hierarchy semantics
+
+### Network
+
+Root operational context for the Site Mapper topology.
+
+Whether Network requires its own persisted document remains a G3 decision. Its hierarchical position is accepted.
 
 ### Site
 
-Represents one managed physical site.
+Direct child of Network.
 
-Candidate responsibilities:
-
-- identity and human-readable name;
-- physical/geographic metadata where required;
-- structural children;
-- lifecycle state.
-
-Candidate invariant:
-
-> A Structure belongs to exactly one Site.
+A Site represents one managed physical site.
 
 ### Structure
 
-Represents a physical building or managed structure inside a Site.
+Direct child of Site.
 
-Candidate invariant:
-
-> A Structure belongs to exactly one Site.
+A Structure represents a physical building or managed structure within a Site.
 
 ### Level
 
-Represents a physical floor/level inside a Structure.
+Direct child of Structure.
 
-Candidate invariant:
+A Level represents one physical or operational level/floor.
 
-> A Level belongs to exactly one Structure.
+### Room / Substructure
 
-### Room
+Direct child of Level.
 
-Represents an enclosed or operational physical area inside a Level.
+`Room` and `Substructure` occupy the same hierarchy level and refer to the accepted Room/Substructure domain position.
 
-Confirmed behavior evidence includes polygon/spatial context.
+A Room/Substructure may own polygon and spatial-boundary information used by the Blueprint Engine.
 
-Candidate invariants:
+### ContainerCluster / Bay
 
-- Room belongs to exactly one Level.
-- A Room may define a valid physical boundary/polygon.
-- Spatial children must resolve inside the Room's accepted spatial model.
+Direct child of Room/Substructure.
 
-### Zone
+`ContainerCluster` and `Bay` occupy the same hierarchy level.
 
-Working term for a grouped physical region inside a Room.
-
-This is deliberately **OPEN** because legacy evidence uses Cluster, ContainerCluster and Bay inconsistently.
-
-Questions to resolve before acceptance:
-
-- Is Zone required at all?
-- Is Bay a distinct physical construct rather than a grouping?
-- Can a Position belong directly to a Room?
-- Is grouping optional?
+No additional Zone abstraction exists between Room/Substructure and ContainerCluster/Bay.
 
 ### Position
 
-Represents an addressable physical placement location in a spatial context.
+Direct child of ContainerCluster/Bay.
 
-Candidate responsibilities:
+Position is an addressable physical placement location and remains an explicit domain level.
 
-- coordinate/grid address;
-- occupancy eligibility;
-- association with Room or Zone.
+### Container / Rack
 
-Candidate invariants:
+Direct child of Position.
 
-- a Position has one canonical parent spatial context;
-- a Position cannot simultaneously host incompatible physical occupants;
-- coordinates must obey the accepted Blueprint coordinate contract.
+`Container` and `Rack` occupy the same hierarchy level.
 
-### Rack
+This node owns the physical context in which Device and Equipment are placed.
 
-Working canonical term for the rack-like physical container that owns U capacity.
-
-Candidate responsibilities:
-
-- physical dimensions;
-- U capacity;
-- placement;
-- occupancy/CAS state;
-- association to devices.
-
-Candidate invariants:
-
-- rack U capacity is positive;
-- rack placement must be spatially valid;
-- device occupancy cannot overlap;
-- rack capacity cannot be exceeded.
+Rack-specific behavior such as U capacity and CAS may apply where the Container/Rack instance supports that capability.
 
 ### Device
 
-Represents independently identifiable managed equipment.
+Direct child of Container/Rack.
 
-Candidate responsibilities:
+Device is an independently identifiable managed object.
 
-- stable identity;
-- serial/category/specification data;
-- placement association;
-- operational status;
-- telemetry identity mapping where applicable.
+A Device may contain the internal physical/electrical structure:
 
-Strong proposed invariant:
+```text
+Shelf
+└── Frame
+    └── Panel
+        └── Breaker / Holder
+```
 
-> Device identity survives placement changes. Moving a Device does not create a new Device.
+Device identity remains separate from placement identity.
+
+Moving a Device does not create a new Device.
+
+### Equipment
+
+Direct child of Container/Rack.
+
+**Equipment and Device have the same hierarchical rank.**
+
+Equipment is not a child of Device.
+
+This relationship is authoritative:
+
+```text
+Container / Rack
+├── Device
+└── Equipment
+```
+
+Any legacy structure that nests Equipment under Device must be treated as migration evidence rather than the MK1 topology contract.
+
+### Shelf
+
+Internal child of Device.
+
+### Frame
+
+Internal child of Shelf.
+
+### Panel
+
+Internal child of Frame.
+
+### Breaker / Holder
+
+Internal child of Panel.
+
+`Breaker` and `Holder` occupy the same internal hierarchy level.
+
+Their precise electrical semantics remain subject to the Power-domain gate.
+
+## 4. Slash-pair rule
+
+Slash notation identifies accepted paired product vocabulary at a single hierarchy level.
+
+It does not mean parent/child.
+
+Accepted pairs are:
+
+- Room / Substructure;
+- ContainerCluster / Bay;
+- Container / Rack;
+- Breaker / Holder.
+
+G3 may choose a single technical schema identifier for storage and code where necessary, but that implementation decision must not alter the accepted product hierarchy or invent a new level.
 
 ## 5. Rack occupancy / CAS domain
 
-Confirmed legacy states:
+Confirmed states remain:
 
 ```text
 AVAILABLE
@@ -182,14 +181,16 @@ RESERVED
 EQUIPPED
 ```
 
-G2 treats CAS as a domain concept but does not yet decide whether CAS is:
+CAS applies within the Container/Rack context where rack capacity is supported.
+
+G2 does not yet decide whether CAS is:
 
 - persisted authoritative state;
-- a value object owned by Rack;
+- a value object owned by Container/Rack;
 - derived occupancy state;
-- a separate aggregate.
+- a separate domain entity.
 
-Required G7 invariants already known:
+Required invariants remain:
 
 - U ranges must be valid;
 - occupied ranges cannot overlap;
@@ -198,190 +199,163 @@ Required G7 invariants already known:
 - mount/split/free are deterministic;
 - physical size and reserved size are not silently conflated.
 
-Persistence representation remains a G3/G7 decision.
-
 ## 6. Device internal structure / BDFB
 
-Confirmed product hierarchy:
+The accepted structural path is:
 
 ```text
 Device
 └── Shelf
     └── Frame
         └── Panel
-            └── Holder / Breaker
+            └── Breaker / Holder
 ```
 
-G2 candidate interpretation:
+BDFB remains a Device specialization/capability candidate rather than a new topology root.
 
-- `Device` is the externally identifiable aggregate root.
-- Shelf, Frame, Panel and Holder/Breaker are internal physical/electrical structures unless later evidence requires independent identity/lifecycle.
-- BDFB is a specialized Device capability/type, not a separate topology root.
-
-This remains PROPOSED until G9 requirements are reconciled.
+G9 will formalize its electrical and provisioning rules.
 
 ## 7. Power domain
 
-Confirmed product concepts:
+Confirmed concepts include:
 
-- source device;
-- panel;
-- breaker;
-- target equipment/device;
+- source Device or Equipment as applicable;
+- Panel;
+- Breaker/Holder;
+- target Device or Equipment;
 - A/B provisioning;
 - source-to-target Power Path.
 
-G2 establishes the principle:
+Domain principle:
 
-> Electrical topology is a domain relationship and must not be inferred solely from UI state.
+> Electrical topology is an explicit domain relationship and must not be inferred solely from UI state.
 
-Still OPEN for G9:
+Still open for G9:
 
-- exact endpoint entity types;
+- exact endpoint type rules;
 - A/B semantics;
-- redundancy rules;
+- redundancy;
 - path lifecycle;
-- whether PowerPath is aggregate/entity/value object;
+- PowerPath aggregate/value semantics;
 - persistence versus derivation.
 
 ## 8. Telemetry identity
 
-Telemetry is operational state, not the canonical identity of a Device.
+Telemetry state does not define topology identity.
 
-Proposed rule:
-
-```text
-DeviceIdentity
-    ↕ mapping
-TelemetryIdentity
-    ↕
-external topic / serial / source identifier
-```
-
-A telemetry-source identifier may change without changing the domain Device identity unless an explicit business rule says otherwise.
+A Device or Equipment identity may map to an external telemetry identity without making topic/serial naming the primary domain ID.
 
 Transport details remain G10.
 
 ## 9. Identity and roles
 
-Confirmed legacy role vocabulary:
+Legacy role vocabulary remains evidence:
 
 - Superadmin;
 - Admin;
 - Standard.
 
-G2 does not accept their permissions.
+G4 owns their final permissions, sessions, password policy, lifecycle and audit semantics.
 
-G4 owns:
+## 10. Lifecycle principles
 
-- authoritative session;
-- permission model;
-- password policy;
-- lifecycle;
-- audit;
-- rate limiting.
+Current domain principles:
 
-Role names are evidence until ADR-007 is accepted.
-
-## 10. Lifecycle principles — proposed
-
-Unless a later accepted rule overrides them:
-
-1. Identity and placement are separate concepts.
-2. Moving an entity does not recreate its identity.
+1. Identity and placement are separate.
+2. Moving a Device or Equipment does not recreate its identity.
 3. Parent-child deletion must never silently destroy operational descendants.
-4. Archival is preferred over destructive deletion for entities with history or references.
-5. Hard delete is reserved for explicitly safe cases.
-6. All domain mutations must be representable as explicit use cases, not generic collection CRUD.
+4. Archival is preferred where an entity has operational history or references.
+5. Hard deletion requires an explicitly safe use case.
+6. Domain mutations are explicit use cases, not generic collection CRUD.
 
-Exact archive/delete policy remains OPEN until persistence and operational requirements are known.
+Exact archive/delete policy remains open for later G2/G3 decisions.
 
-## 11. Identifier principles — proposed
+## 11. Identifier principles
 
-Canonical domain IDs should:
+Canonical domain identifiers must:
 
+- remain stable across movement and renaming;
 - be opaque to presentation code;
-- remain stable across movement/renaming;
-- not encode hierarchy;
-- not rely on legacy Mongo collection names;
-- allow legacy IDs to be retained as migration metadata when required.
+- not encode the hierarchy;
+- not depend on legacy collection names;
+- permit legacy identifiers as migration metadata where required.
 
-The concrete ID format belongs to ADR-005.
+The concrete identifier strategy belongs to ADR-005.
 
-## 12. Domain boundary principles
+## 12. Module boundaries
 
 ### Topology
 
-Owns hierarchy and placement context.
+Owns the accepted hierarchy and parent/child relationships.
 
 ### Spatial
 
-Owns coordinates, dimensions, geometry, polygons, snapping and collision rules.
+Owns coordinates, geometry, polygons, snapping and collision.
 
-### Inventory / Device
+### Inventory
 
-Owns equipment identity and specifications.
+Owns Device and Equipment identity/specification concerns.
 
 ### Rack
 
-Owns rack capacity and occupancy behavior.
+Owns Container/Rack capacity and occupancy behavior.
 
 ### Power
 
-Owns electrical topology and provisioning relationships.
+Owns Shelf/Frame/Panel/Breaker/Holder electrical relationships and Power Path.
 
 ### Telemetry
 
-Owns normalization and association of external realtime state with domain identities.
+Owns normalization and association of realtime state to Device/Equipment identities.
 
 ### Identity
 
-Owns users, sessions, roles and authorization concepts.
+Owns users, sessions, roles and authorization.
 
-These are module boundaries inside one modular monolith, not microservices.
+These are modular-monolith boundaries, not microservices.
 
-## 13. Explicitly rejected legacy domain leakage
+## 13. Rejected domain drift
 
-The following are prohibited from becoming canonical domain concepts:
+The following are prohibited:
 
-- duplicate PascalCase/lowercase collection names;
-- caller-provided collection names;
-- `any` payloads as business contracts;
-- cookie-derived authority;
-- UI component shape as persistence shape;
-- Prisma schema being treated as truth merely because it exists;
-- `Container` surviving only because a legacy route used that word;
-- `Substructure` surviving only because a collection used that word.
+- introducing Zone into the accepted topology;
+- nesting Equipment below Device;
+- removing Position as a domain level without explicit amendment;
+- treating persistence collection names as domain nouns;
+- caller-provided collection/entity names as business contracts;
+- UI shape becoming persistence shape;
+- a Prisma schema being treated as domain authority merely because it exists;
+- browser/client role state becoming authorization authority.
 
-## 14. Open Decision Register
+## 14. Remaining G2 open decisions
 
-G2 cannot be sealed until these are resolved or explicitly deferred with a safe boundary:
+Topology order is no longer open.
 
-1. Room vs Substructure.
-2. Cluster vs ContainerCluster vs Bay vs a new canonical Zone term.
-3. Container vs Rack.
-4. Whether grouping between Room and Position is mandatory.
-5. Position parent rules.
-6. Device identity uniqueness scope.
-7. Entity archive/delete behavior.
-8. Rack movement semantics.
-9. Device movement semantics.
-10. CAS authority/ownership model.
-11. BDFB aggregate interpretation.
-12. PowerPath entity semantics.
-13. identifier format/strategy.
+Remaining decisions include:
+
+1. exact meaning/behavioral distinction, if any, inside each accepted slash pair;
+2. whether Network is persisted or contextual only;
+3. Device and Equipment uniqueness scopes;
+4. entity archive/delete behavior;
+5. Container/Rack movement semantics;
+6. Device movement semantics;
+7. Equipment movement semantics;
+8. CAS authority/ownership model;
+9. BDFB aggregate interpretation;
+10. PowerPath entity semantics;
+11. identifier format/strategy;
+12. exact parent deletion restrictions and lifecycle rules.
 
 ## 15. G2 exit criteria
 
 G2 passes only when:
 
-- ADR-001 canonical terminology is accepted;
-- every canonical topology noun has one meaning;
-- every legacy ambiguous noun maps to canonical/deprecated/removed;
-- entity parent/child cardinalities are documented;
-- core lifecycle/movement invariants are explicit;
-- aggregate candidates are clear enough for G3 to design persistence;
+- ADR-001 reflects the accepted hierarchy;
+- parent/child cardinalities are documented;
+- Device and Equipment sibling semantics are preserved;
+- lifecycle/movement invariants are explicit enough for persistence design;
+- aggregate candidates are clear enough for G3;
 - no persistence implementation is used to resolve a domain ambiguity;
-- open external inputs are explicitly tracked rather than guessed.
+- remaining external inputs are explicit rather than guessed.
 
-Until then, this document is a controlled draft and **does not authorize persistence implementation**.
+Until then, **G3 persistence implementation is not authorized**.

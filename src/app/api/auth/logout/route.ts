@@ -2,10 +2,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 import { AuthService } from '@/modules/identity/application/auth-service';
-import {
-  AUTH_COOKIE_NAME,
-  clearAuthCookie,
-} from '@/modules/identity/infrastructure/auth-cookie';
+import { AUTH_COOKIE_NAME, clearAuthCookie } from '@/modules/identity/infrastructure/auth-cookie';
 import { getIdentityRuntime } from '@/modules/identity/infrastructure/identity-runtime';
 
 export async function POST() {

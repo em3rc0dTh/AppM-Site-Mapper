@@ -81,11 +81,7 @@ export class AuthService {
   async resolveSession(token: string): Promise<SafeUser | null> {
     const session = await this.repository.getSessionByTokenHash(hashSessionToken(token));
 
-    if (
-      !session ||
-      session.revokedAt ||
-      session.expiresAt.getTime() <= this.clock().getTime()
-    ) {
+    if (!session || session.revokedAt || session.expiresAt.getTime() <= this.clock().getTime()) {
       return null;
     }
 
@@ -98,10 +94,7 @@ export class AuthService {
     return toSafeUser(user);
   }
 
-  async authorize(
-    token: string,
-    permission: Permission,
-  ): Promise<Result<SafeUser, AuthError>> {
+  async authorize(token: string, permission: Permission): Promise<Result<SafeUser, AuthError>> {
     const user = await this.resolveSession(token);
 
     if (!user) {

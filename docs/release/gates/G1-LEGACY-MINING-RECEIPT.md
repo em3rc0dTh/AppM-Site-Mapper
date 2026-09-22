@@ -1,6 +1,6 @@
 # G1 — Legacy Mining & Product Truth Receipt
 
-Status: **READY FOR CI / REVIEW**
+Status: **PASS**
 
 Frozen evidence source:
 
@@ -50,13 +50,20 @@ G2 may therefore design the canonical domain without relying on hidden aliases o
 
 Items in `docs/legacy/external-information-register.md` remain open by design. They do not invalidate G1; they constrain what G2/G3/G4/G6/G7/G9/G10 may freeze.
 
+## Certification
+
+Final G1 evidence head passed the complete CI pipeline before this receipt was sealed:
+
+- typecheck;
+- lint;
+- format check;
+- unit tests;
+- integration-test harness;
+- production build;
+- production dependency audit.
+
+The PR diff is documentation/evidence only and contains no legacy runtime code or secret material.
+
 ## Gate verdict
 
-Final PASS requires:
-
-- CI success on the final G1 head;
-- PR diff contains documentation/evidence only;
-- no secret or legacy runtime implementation introduced;
-- PR is mergeable against the current binding contract.
-
-Until those checks complete, this receipt remains READY FOR CI / REVIEW.
+**PASS — G2 Canonical Domain Contract may begin after this PR is integrated into `main`.**

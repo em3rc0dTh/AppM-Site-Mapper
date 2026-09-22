@@ -315,11 +315,7 @@ export class TopologyService {
 
       current = await this.repository.getById(id);
 
-      if (
-        !current ||
-        topologySlug[current.kind] !== slug ||
-        current.parentId !== previousId
-      ) {
+      if (!current || topologySlug[current.kind] !== slug || current.parentId !== previousId) {
         return failure('INVALID_DEEP_LINK');
       }
 

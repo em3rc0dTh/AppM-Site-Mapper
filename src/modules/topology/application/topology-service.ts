@@ -7,10 +7,7 @@ import type {
   TopologyKind,
   TopologyNode,
 } from '@/modules/topology/domain/entities';
-import {
-  isAllowedParent,
-  topologySlug,
-} from '@/modules/topology/domain/hierarchy';
+import { isAllowedParent, topologySlug } from '@/modules/topology/domain/hierarchy';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
@@ -58,18 +55,14 @@ export class TopologyService {
     return networks.filter((node) => node.lifecycle === 'ACTIVE');
   }
 
-  async create(
-    input: CreateTopologyNodeInput,
-  ): Promise<Result<TopologyNode, TopologyError>> {
+  async create(input: CreateTopologyNodeInput): Promise<Result<TopologyNode, TopologyError>> {
     const name = input.name.trim();
 
     if (!name) {
       return failure('INVALID_NAME');
     }
 
-    const parent = input.parentId
-      ? await this.repository.getById(input.parentId)
-      : null;
+    const parent = input.parentId ? await this.repository.getById(input.parentId) : null;
 
     if (!isAllowedParent(input.kind, parent)) {
       return failure('INVALID_PARENT');
@@ -79,11 +72,7 @@ export class TopologyService {
       return failure('PARENT_ARCHIVED');
     }
 
-    if (
-      input.kind === 'CONTAINER_RACK' &&
-      parent &&
-      (await this.hasActiveRack(parent.id))
-    ) {
+    if (input.kind === 'CONTAINER_RACK' && parent && (await this.hasActiveRack(parent.id))) {
       return failure('POSITION_OCCUPIED');
     }
 
@@ -198,10 +187,7 @@ export class TopologyService {
     return success(node);
   }
 
-  async move(
-    id: string,
-    newParentId: string,
-  ): Promise<Result<TopologyNode, TopologyError>> {
+  async move(id: string, newParentId: string): Promise<Result<TopologyNode, TopologyError>> {
     const node = await this.repository.getById(id);
     const parent = await this.repository.getById(newParentId);
 
@@ -221,10 +207,7 @@ export class TopologyService {
       return failure('PARENT_ARCHIVED');
     }
 
-    if (
-      node.kind === 'CONTAINER_RACK' &&
-      (await this.hasActiveRack(parent.id, node.id))
-    ) {
+    if (node.kind === 'CONTAINER_RACK' && (await this.hasActiveRack(parent.id, node.id))) {
       return failure('POSITION_OCCUPIED');
     }
 
@@ -311,14 +294,10 @@ export class TopologyService {
 
   async buildDeepLink(id: string): Promise<string> {
     const trail = await this.getTrail(id);
-    return `/topology/${trail
-      .flatMap((node) => [topologySlug[node.kind], node.id])
-      .join('/')}`;
+    return `/topology/${trail.flatMap((node) => [topologySlug[node.kind], node.id]).join('/')}`;
   }
 
-  async resolveDeepLink(
-    segments: readonly string[],
-  ): Promise<Result<TopologyNode, TopologyError>> {
+  async resolveDeepLink(segments: readonly string[]): Promise<Result<TopologyNode, TopologyError>> {
     if (segments.length < 2 || segments.length % 2 !== 0) {
       return failure('INVALID_DEEP_LINK');
     }
@@ -339,7 +318,7 @@ export class TopologyService {
       if (
         !current ||
         topologySlug[current.kind] !== slug ||
-        current.parentId !== previous?.id && !(previous === null && current.parentId === null)
+        (current.parentId !== previous?.id && !(previous === null && current.parentId === null))
       ) {
         return failure('INVALID_DEEP_LINK');
       }
@@ -355,9 +334,7 @@ export class TopologyService {
 
     return children.some(
       (node) =>
-        node.kind === 'CONTAINER_RACK' &&
-        node.lifecycle === 'ACTIVE' &&
-        node.id !== excludingId,
+        node.kind === 'CONTAINER_RACK' && node.lifecycle === 'ACTIVE' && node.id !== excludingId,
     );
   }
 }

@@ -31,9 +31,7 @@ export async function createTopologyRepository(): Promise<TopologyRepository> {
     return memoryRepository;
   }
 
-  mongoRepository ??= getMongoDatabase().then(
-    (database) => new MongoTopologyRepository(database),
-  );
+  mongoRepository ??= getMongoDatabase().then((database) => new MongoTopologyRepository(database));
 
   return mongoRepository;
 }

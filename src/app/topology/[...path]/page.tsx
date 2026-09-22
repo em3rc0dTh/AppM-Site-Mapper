@@ -71,9 +71,7 @@ export default async function TopologyNodePage({
       </section>
 
       {canWrite &&
-        childKinds.map((kind) => (
-          <TopologyCreateForm key={kind} kind={kind} parentId={node.id} />
-        ))}
+        childKinds.map((kind) => <TopologyCreateForm key={kind} kind={kind} parentId={node.id} />)}
     </main>
   );
 }

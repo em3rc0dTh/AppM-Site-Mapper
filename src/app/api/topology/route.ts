@@ -94,9 +94,7 @@ export async function POST(request: Request) {
     kind,
     parentId,
     name: body.name,
-    ...(roomVariant(body.roomVariant)
-      ? { roomVariant: roomVariant(body.roomVariant) }
-      : {}),
+    ...(roomVariant(body.roomVariant) ? { roomVariant: roomVariant(body.roomVariant) } : {}),
     ...(clusterVariant(body.clusterVariant)
       ? { clusterVariant: clusterVariant(body.clusterVariant) }
       : {}),

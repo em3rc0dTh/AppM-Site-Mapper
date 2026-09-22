@@ -41,10 +41,7 @@ export function allowedChildKinds(kind: TopologyKind): readonly TopologyKind[] {
   return childKinds[kind] ?? [];
 }
 
-export function isAllowedParent(
-  childKind: TopologyKind,
-  parent: TopologyNode | null,
-): boolean {
+export function isAllowedParent(childKind: TopologyKind, parent: TopologyNode | null): boolean {
   const expected = parentKind[childKind];
   return expected === null ? parent === null : parent?.kind === expected;
 }

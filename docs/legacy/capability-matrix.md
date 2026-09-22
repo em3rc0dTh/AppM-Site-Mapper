@@ -1,89 +1,41 @@
 # Legacy Capability Matrix
 
-Status: initial mining pass. This is evidence, not a canonical domain contract.
+Status: G1 product-evidence matrix. This is not the canonical domain contract.
 
-## Hierarchical topology
+| Capability | Legacy state | MK1 class | Preserve | Reimplement | Acceptance direction |
+| --- | --- | --- | --- | --- | --- |
+| Hierarchical topology | Implemented | CONCEPT + UX | hierarchy/deep navigation behavior | canonical domain and queries | Network -> Site -> Structure -> Level -> Room -> Rack -> Device remains deterministic |
+| Breadcrumbs / deep links | Implemented | CONCEPT + UX | contextual navigation | route nouns after G2 | reload/deep-link reconstructs context |
+| Global navigation tree | Implemented | CONCEPT + UX | tree workflow | topology query model | tree reflects canonical topology without legacy aliases |
+| Blueprint / room map | Implemented | ALGORITHM + UX | 600 mm grid, polygon/spatial behavior | pure spatial engine + renderer | placement/collision can be tested without React |
+| Rack placement | Implemented | DOMAIN + UX | physical footprint concepts | canonical placement rules | invalid overlap/capacity states are rejected |
+| Rack elevation | Implemented | UX + DOMAIN | U-space visualization | renderer over canonical rack state | render agrees with CAS/device placement |
+| CAS | Implemented | ALGORITHM + DOMAIN | AVAILABLE/RESERVED/EQUIPPED and workflows | isolated domain engine/persistence | mount/split/free deterministic and invariant-safe |
+| Device inventory | Implemented | CONCEPT + DOMAIN + UX | device identity/specification intent | aggregate/use cases | identity is independent from accidental legacy collection shape |
+| BDFB hierarchy | Implemented | CONCEPT + DOMAIN | Shelf/Frame/Panel/Holder/Breaker concepts | explicit device/power domain | creation is not a side effect hidden inside CAS persistence |
+| Panel / breaker operations | Implemented | DOMAIN + UX | validated operational behavior | explicit use cases | mutation validates capacity, ownership and permissions |
+| Power Path | Implemented | CONCEPT + DOMAIN + UX | source-to-target electrical relationship | explicit graph/path model | paths can be validated independent of overlay UI |
+| A/B provisioning | Implemented | CONCEPT + DOMAIN | provisioning concept | canonical semantics | G9 defines valid feed/redundancy state |
+| Pinned devices | Implemented | UX | workflow/value | query/application contract | pins survive reload and respect authorization |
+| Global notifications | Partially implemented | CONCEPT + UX | operational surface | notification contract | only validated sources generate notifications |
+| MQTT telemetry | Implemented with security debt | CONCEPT | server-side broker ingestion + browser-safe realtime fan-out | secrets/auth/topic validation/normalization/lifecycle | unauthorized client cannot open telemetry; payloads are schema-validated |
+| Settings | Implemented as monolith | UX + selected capabilities | required admin/product functions | split modules/use cases | profile/security/users/import/drafting/danger are isolated |
+| User roles | Implemented with unsafe trust boundary | CONCEPT | role vocabulary as evidence | server-authoritative auth/RBAC | client state cannot grant authority |
+| Password flows | Implemented with legacy compatibility | REQUIREMENT evidence | intended login/change/reset workflows as applicable | secure identity implementation | bcrypt-only or accepted modern equivalent; no plaintext fallback |
+| JSON/data import | Present | CONCEPT | import need | validated import pipeline | unknown/invalid payload cannot mutate domain |
+| Drafting engine | Present in Settings/docs | CONCEPT/UX evidence | workflow if still required | module after product confirmation | remains P1 until behavior is explicitly accepted |
+| Legacy Mongo aliases | Implemented | LEGACY | nothing in runtime | migration adapter only | no runtime module knows PascalCase/lowercase alternatives |
+| Prisma reference schema | Present, not authoritative | EVIDENCE | field/relationship clues | persistence chosen in G3 | one persistence contract only |
+| Generic dynamic CRUD | Implemented | LEGACY | user-visible capabilities only | explicit use cases/repositories | no caller-controlled collection/entity dispatch |
+| Cookie-derived authority | Implemented | LEGACY | nothing | secure session | browser-editable values never authorize |
+| Hardcoded MQTT secrets | Implemented | LEGACY | nothing | runtime secret config | committed credentials are rotated and never copied |
 
-- **Legacy state:** Implemented
-- **MK1 treatment:** CONCEPT + UX
-- **Initial acceptance intent:** Navigate Network -> Site -> Structure -> Level -> Room -> Rack -> Device with stable deep links.
+## Evidence sources
 
-## Blueprint / room map
+Primary frozen source: `thradexIT/site-mapper@22c7b8c495a026e34732fe0b7e3848b8c37e84c7`.
 
-- **Legacy state:** Implemented
-- **MK1 treatment:** ALGORITHM + UX
-- **Initial acceptance intent:** Preserve 600 mm grid semantics, geometry, placement and collision behavior through a pure spatial engine.
+Supporting evidence is recorded in the G1 files for components, data, domain, spatial, CAS, power, telemetry, identity/security and routes.
 
-## Rack elevation
+## G1 rule
 
-- **Legacy state:** Implemented
-- **MK1 treatment:** UX + DOMAIN
-- **Initial acceptance intent:** Render canonical occupancy from rack/domain state.
-
-## CAS
-
-- **Legacy state:** Implemented
-- **MK1 treatment:** ALGORITHM + DOMAIN
-- **Initial acceptance intent:** Preserve AVAILABLE / RESERVED / EQUIPPED semantics after G2 validation.
-
-## BDFB hierarchy
-
-- **Legacy state:** Implemented
-- **MK1 treatment:** CONCEPT + DOMAIN
-- **Initial acceptance intent:** Model Shelf -> Frame -> Panel -> Holder/Breaker independently from popup UI.
-
-## Power path
-
-- **Legacy state:** Implemented
-- **MK1 treatment:** CONCEPT + DOMAIN
-- **Initial acceptance intent:** Make source/destination/feed relationships explicit and testable.
-
-## Pinned devices
-
-- **Legacy state:** Implemented
-- **MK1 treatment:** UX
-- **Initial acceptance intent:** Reconstruct against application contracts.
-
-## Global navigation tree
-
-- **Legacy state:** Implemented
-- **MK1 treatment:** CONCEPT + UX
-- **Initial acceptance intent:** Preserve topology navigation without coupling to legacy collections.
-
-## Breadcrumbs / deep links
-
-- **Legacy state:** Implemented
-- **MK1 treatment:** CONCEPT + UX
-- **Initial acceptance intent:** Preserve deterministic hierarchy navigation.
-
-## MQTT telemetry
-
-- **Legacy state:** Implemented with security debt
-- **MK1 treatment:** CONCEPT; transport reimplemented
-- **Initial acceptance intent:** Authenticated, validated and normalized realtime delivery.
-
-## User roles
-
-- **Legacy state:** Implemented with unsafe trust boundary
-- **MK1 treatment:** CONCEPT; implementation rejected
-- **Initial acceptance intent:** Server-authoritative identity and RBAC.
-
-## Settings / administration
-
-- **Legacy state:** Implemented as monolith
-- **MK1 treatment:** UX + selected capabilities
-- **Initial acceptance intent:** Split by profile, security, users, import/drafting and dangerous operations.
-
-## Legacy Mongo aliases
-
-- **Legacy state:** Implemented
-- **MK1 treatment:** LEGACY
-- **Initial acceptance intent:** Migration-only compatibility; never runtime architecture.
-
-## Prisma reference schema
-
-- **Legacy state:** Present but not runtime authority
-- **MK1 treatment:** EVIDENCE
-- **Initial acceptance intent:** Reassess during persistence ADR; do not carry both models forward.
-
-This matrix will expand during G1 as code, documentation and runtime behavior are reconciled.
+A row saying “Preserve” preserves validated product intent or behavior. It does not authorize copying the legacy implementation.

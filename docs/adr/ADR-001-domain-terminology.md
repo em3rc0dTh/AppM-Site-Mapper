@@ -1,102 +1,106 @@
-# ADR-001 — Canonical Domain Terminology
+# ADR-001 — Canonical Domain Terminology and Hierarchy
 
-**Status:** Proposed  
-**Gate:** G2 — Canonical Domain Contract
+**Status:** Accepted  
+**Gate:** G2 — Canonical Domain Contract  
+**Decision date:** 2026-09-22
 
 ## Context
 
-The legacy system contains overlapping terminology:
+The legacy product uses paired terminology at several physical levels.
 
-- Room / Substructure;
-- Cluster / ContainerCluster / Bay;
-- Container / Rack.
+An earlier G2 draft proposed normalizing:
 
-Permanent runtime aliases are prohibited by the MK1 contract.
+- Room / Substructure -> Room;
+- ContainerCluster / Bay -> Zone;
+- Container / Rack -> Rack.
 
-## Proposed mapping
+That proposal is superseded by the explicit product decision to preserve the established hierarchy and paired vocabulary.
 
-### Stable terms
+## Decision
 
-- Site -> `Site`
-- Structure -> `Structure`
-- Level -> `Level`
-- Position -> `Position`
-- Device -> `Device`
-
-### Room / Substructure
-
-**Proposed canonical term:** `Room`
-
-Rationale:
-
-- it represents a physical/operational area inside a Level;
-- room-bound polygon/spatial behavior is already confirmed;
-- `Substructure` is less precise and appears partly as legacy persistence vocabulary.
-
-Proposed mapping:
-
-- Room -> `Room`
-- Substructure -> deprecated legacy alias -> `Room`
-
-### Container / Rack
-
-**Proposed canonical term:** `Rack` where the entity owns physical U capacity and rack elevation.
-
-Rationale:
-
-- operational behavior is rack-specific;
-- CAS and U capacity belong naturally to Rack;
-- `Container` is too generic for the confirmed behavior.
-
-Proposed mapping:
-
-- Rack -> `Rack`
-- legacy Container -> `Rack` only when evidence proves rack semantics.
-
-If legacy data contains non-rack containers, those must be classified separately during G13 rather than forced into Rack.
-
-### Cluster / ContainerCluster / Bay
-
-**Status:** OPEN
-
-Recommended working term: `Zone`.
-
-Reason for not accepting yet:
-
-- current evidence proves grouped spatial placement but does not prove that Cluster, ContainerCluster and Bay are semantically identical;
-- `Bay` may have a specific physical meaning that must not be erased;
-- using a neutral working term prevents legacy naming from silently becoming architecture.
-
-No runtime `Zone` implementation is authorized until this decision is accepted.
-
-## Proposed canonical hierarchy
+The accepted hierarchy is:
 
 ```text
 Network
 └── Site
     └── Structure
         └── Level
-            └── Room
-                └── Zone?        # unresolved / potentially optional
+            └── Room / Substructure
+                └── ContainerCluster / Bay
                     └── Position
-                        └── Rack
-                            └── Device
+                        └── Container / Rack
+                            ├── Device
+                            │   └── Shelf
+                            │       └── Frame
+                            │           └── Panel
+                            │               └── Breaker / Holder
+                            └── Equipment
 ```
+
+## Accepted terminology semantics
+
+The slash-pairs occupy one hierarchy level:
+
+- `Room / Substructure`;
+- `ContainerCluster / Bay`;
+- `Container / Rack`;
+- `Breaker / Holder`.
+
+A slash does not represent parent/child nesting.
+
+## Device and Equipment decision
+
+`Device` and `Equipment` are hierarchical peers.
+
+Both are direct children of `Container / Rack`.
+
+Therefore:
+
+```text
+Container / Rack
+├── Device
+└── Equipment
+```
+
+is authoritative.
+
+`Equipment` must not be modeled as a child of `Device`.
+
+A Device may independently own:
+
+```text
+Shelf -> Frame -> Panel -> Breaker / Holder
+```
+
+without changing the equal topology rank of Device and Equipment.
+
+## Zone decision
+
+The proposed `Zone` abstraction is rejected.
+
+No Zone layer exists between:
+
+```text
+Room / Substructure
+and
+ContainerCluster / Bay
+```
+
+## Technical naming consequence
+
+G3 may select one internal technical identifier for an accepted paired concept when required by schema/code constraints.
+
+That technical decision must:
+
+- preserve the accepted hierarchy;
+- preserve the product meaning;
+- avoid creating an extra runtime hierarchy level;
+- remain traceable to the paired domain vocabulary.
 
 ## Consequences
 
-Until this ADR becomes Accepted:
+Persistence, routes, migrations and UI reconstruction must conform to this hierarchy.
 
-- no canonical persistence schema is frozen;
-- routes may not be redesigned around unresolved nouns;
-- legacy terms remain confined to evidence/migration context;
-- implementation may use only already accepted/stable concepts or isolated prototypes.
+Legacy records that differ must be normalized during migration rather than redefining MK1.
 
-## Acceptance requirements
-
-Before changing status to Accepted:
-
-1. resolve the grouped-space concept;
-2. confirm whether Zone/Bay/Cluster is mandatory or optional;
-3. confirm whether any legacy Container is not a Rack;
-4. map every ambiguous legacy term to canonical, deprecated or removed.
+Any future change to this topology requires an explicit domain-contract amendment.

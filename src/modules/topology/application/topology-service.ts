@@ -302,7 +302,7 @@ export class TopologyService {
       return failure('INVALID_DEEP_LINK');
     }
 
-    let previous: TopologyNode | null = null;
+    let previousId: string | null = null;
     let current: TopologyNode | null = null;
 
     for (let index = 0; index < segments.length; index += 2) {
@@ -318,12 +318,12 @@ export class TopologyService {
       if (
         !current ||
         topologySlug[current.kind] !== slug ||
-        (current.parentId !== previous?.id && !(previous === null && current.parentId === null))
+        current.parentId !== previousId
       ) {
         return failure('INVALID_DEEP_LINK');
       }
 
-      previous = current;
+      previousId = current.id;
     }
 
     return current ? success(current) : failure('INVALID_DEEP_LINK');

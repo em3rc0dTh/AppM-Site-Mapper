@@ -10,36 +10,173 @@ Every legacy artifact is classified before implementation is moved.
 - **LEGACY** — do not migrate into runtime code.
 - **EVIDENCE** — useful for decisions, but not executable truth.
 
-| Legacy artifact / behavior | Classification | MK1 action | Destination / gate |
-| --- | --- | --- | --- |
-| Hierarchical navigation | CONCEPT + UX | reconstruct from canonical topology | G5 |
-| Breadcrumb/deep links | CONCEPT + UX | preserve deterministic context | G5 |
-| Blueprint geometry | ALGORITHM | isolate rules and create pure tests before port | G6 |
-| `room-dashboard.tsx` orchestration | UX + LEGACY | reconstruct renderer/editor; reject monolith | G6/G11 |
-| Rack elevation | UX + DOMAIN evidence | rebuild over canonical rack/CAS state | G7/G8 |
-| CAS operations | ALGORITHM + DOMAIN | specify invariants, then port through tests | G7 |
-| `mountDeviceInCAS` orchestration | DOMAIN evidence + LEGACY coupling | split rack allocation/device construction/persistence | G7/G8/G9 |
-| Device popup | UX + DOMAIN evidence | decompose around application contracts | G8/G11 |
-| BDFB hierarchy | CONCEPT + DOMAIN | formalize device/power aggregate | G9 |
-| Panel/breaker behavior | DOMAIN + UX | explicit use cases and validated mutation | G9 |
-| Power path overlay | CONCEPT + UX | formalize graph/path before renderer | G9 |
-| MQTT -> SSE -> EventSource concept | CONCEPT | preserve server fan-out idea | G10 |
-| MQTT credentials in code | LEGACY | reject; rotate legacy credentials | G10/security |
-| Public telemetry stream | LEGACY | reject; enforce session/authorization | G10 |
-| Pinned devices | UX | reconstruct from canonical device queries | G11 |
-| Notifications | CONCEPT + UX | define event/notification contract | G11 |
-| Settings monolith | UX + LEGACY structure | split by responsibility | G12 |
-| Role names | CONCEPT evidence | evaluate in RBAC contract | G4 |
-| Cookie-derived session/RBAC | LEGACY | reject | G4 |
-| Plaintext password compatibility | LEGACY | reject | G4 |
-| Broad user records | LEGACY | minimize outputs and authorize | G4/G12 |
-| Generic `saveEntity(type, any)` CRUD | LEGACY | explicit commands/use cases | G3+ |
-| PascalCase/lowercase collection aliases | LEGACY | migration scripts only | G13 |
-| Prisma schema | EVIDENCE | mine fields/relationships, do not treat as authority | G2/G3 |
-| Legacy data-service parent crawls | EVIDENCE + LEGACY implementation | use query needs as evidence; redesign repository/query model | G3/G5 |
-| Wireframes/mockups | UX + EVIDENCE | reconcile with validated product behavior | G11 |
-| Historical security QA | EVIDENCE | retain findings, reverify against frozen code | G1/G4/G10 |
-| Lint/temporary QA artifacts | LEGACY | do not migrate | none |
+## Hierarchical navigation
+
+- **Classification:** CONCEPT + UX
+- **Action:** Reconstruct from canonical topology.
+- **Gate:** G5
+
+## Breadcrumbs and deep links
+
+- **Classification:** CONCEPT + UX
+- **Action:** Preserve deterministic context.
+- **Gate:** G5
+
+## Blueprint geometry
+
+- **Classification:** ALGORITHM
+- **Action:** Isolate rules and create pure tests before port.
+- **Gate:** G6
+
+## `room-dashboard.tsx` orchestration
+
+- **Classification:** UX + LEGACY
+- **Action:** Reconstruct renderer/editor and reject the monolithic boundary.
+- **Gate:** G6 / G11
+
+## Rack elevation
+
+- **Classification:** UX + DOMAIN evidence
+- **Action:** Rebuild over canonical rack/CAS state.
+- **Gate:** G7 / G8
+
+## CAS operations
+
+- **Classification:** ALGORITHM + DOMAIN
+- **Action:** Specify invariants, then port behavior through tests.
+- **Gate:** G7
+
+## `mountDeviceInCAS` orchestration
+
+- **Classification:** DOMAIN evidence + LEGACY coupling
+- **Action:** Split rack allocation, device construction, persistence and authorization.
+- **Gate:** G7 / G8 / G9
+
+## Device popup
+
+- **Classification:** UX + DOMAIN evidence
+- **Action:** Decompose around application contracts.
+- **Gate:** G8 / G11
+
+## BDFB hierarchy
+
+- **Classification:** CONCEPT + DOMAIN
+- **Action:** Formalize the device/power aggregate.
+- **Gate:** G9
+
+## Panel / breaker behavior
+
+- **Classification:** DOMAIN + UX
+- **Action:** Implement explicit use cases and validated mutations.
+- **Gate:** G9
+
+## Power Path overlay
+
+- **Classification:** CONCEPT + UX
+- **Action:** Formalize graph/path semantics before building the renderer.
+- **Gate:** G9
+
+## MQTT -> SSE -> EventSource concept
+
+- **Classification:** CONCEPT
+- **Action:** Preserve the server-side fan-out idea, not the legacy endpoint.
+- **Gate:** G10
+
+## MQTT credentials committed in code
+
+- **Classification:** LEGACY
+- **Action:** Reject and rotate legacy credentials outside this repository.
+- **Gate:** G10 / Security
+
+## Public telemetry stream
+
+- **Classification:** LEGACY
+- **Action:** Reject; enforce authoritative session and authorization.
+- **Gate:** G10
+
+## Pinned devices
+
+- **Classification:** UX
+- **Action:** Reconstruct from canonical device queries.
+- **Gate:** G11
+
+## Notifications
+
+- **Classification:** CONCEPT + UX
+- **Action:** Define event and notification contracts.
+- **Gate:** G11
+
+## Settings monolith
+
+- **Classification:** UX + LEGACY structure
+- **Action:** Split by responsibility.
+- **Gate:** G12
+
+## Role names
+
+- **Classification:** CONCEPT evidence
+- **Action:** Evaluate Superadmin, Admin and Standard in the RBAC contract.
+- **Gate:** G4
+
+## Cookie-derived session and RBAC
+
+- **Classification:** LEGACY
+- **Action:** Reject.
+- **Gate:** G4
+
+## Plaintext password compatibility
+
+- **Classification:** LEGACY
+- **Action:** Reject.
+- **Gate:** G4
+
+## Broad user records
+
+- **Classification:** LEGACY
+- **Action:** Minimize outputs and authorize every use case.
+- **Gate:** G4 / G12
+
+## Generic `saveEntity(type, any)` CRUD
+
+- **Classification:** LEGACY
+- **Action:** Replace with explicit commands and use cases.
+- **Gate:** G3 onward
+
+## PascalCase / lowercase collection aliases
+
+- **Classification:** LEGACY
+- **Action:** Allow only inside migration tooling.
+- **Gate:** G13
+
+## Prisma schema
+
+- **Classification:** EVIDENCE
+- **Action:** Mine fields and relationships without treating it as authority.
+- **Gate:** G2 / G3
+
+## Legacy data-service parent crawls
+
+- **Classification:** EVIDENCE + LEGACY implementation
+- **Action:** Preserve query requirements; redesign repositories and query model.
+- **Gate:** G3 / G5
+
+## Wireframes and mockups
+
+- **Classification:** UX + EVIDENCE
+- **Action:** Reconcile against validated product behavior.
+- **Gate:** G11
+
+## Historical security QA
+
+- **Classification:** EVIDENCE
+- **Action:** Retain findings and reverify against frozen code.
+- **Gate:** G1 / G4 / G10
+
+## Lint and temporary QA artifacts
+
+- **Classification:** LEGACY
+- **Action:** Do not migrate.
+- **Gate:** None
 
 ## Runtime prohibition
 
@@ -47,7 +184,7 @@ No MK1 runtime module may contain permanent compatibility logic that asks whethe
 
 ## Porting rule
 
-ALGORITHM does not mean copy/paste. The sequence is:
+ALGORITHM does not mean copy/paste. The required sequence is:
 
 ```text
 identify behavior

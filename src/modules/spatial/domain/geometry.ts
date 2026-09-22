@@ -40,19 +40,14 @@ export function isValidPolygon(points: readonly PointMm[]): boolean {
 }
 
 function pointOnSegment(point: PointMm, start: PointMm, end: PointMm): boolean {
-  const cross =
-    (point.y - start.y) * (end.x - start.x) -
-    (point.x - start.x) * (end.y - start.y);
+  const cross = (point.y - start.y) * (end.x - start.x) - (point.x - start.x) * (end.y - start.y);
 
   if (Math.abs(cross) > 1e-7) {
     return false;
   }
 
-  const dot =
-    (point.x - start.x) * (end.x - start.x) +
-    (point.y - start.y) * (end.y - start.y);
-  const squaredLength =
-    (end.x - start.x) ** 2 + (end.y - start.y) ** 2;
+  const dot = (point.x - start.x) * (end.x - start.x) + (point.y - start.y) * (end.y - start.y);
+  const squaredLength = (end.x - start.x) ** 2 + (end.y - start.y) ** 2;
 
   return dot >= 0 && dot <= squaredLength;
 }
@@ -60,9 +55,11 @@ function pointOnSegment(point: PointMm, start: PointMm, end: PointMm): boolean {
 export function pointInPolygon(point: PointMm, polygon: readonly PointMm[]): boolean {
   let inside = false;
 
-  for (let currentIndex = 0, previousIndex = polygon.length - 1;
+  for (
+    let currentIndex = 0, previousIndex = polygon.length - 1;
     currentIndex < polygon.length;
-    previousIndex = currentIndex, currentIndex += 1) {
+    previousIndex = currentIndex, currentIndex += 1
+  ) {
     const current = polygon[currentIndex];
     const previous = polygon[previousIndex];
 
@@ -77,9 +74,7 @@ export function pointInPolygon(point: PointMm, polygon: readonly PointMm[]): boo
     const intersects =
       current.y > point.y !== previous.y > point.y &&
       point.x <
-        ((previous.x - current.x) * (point.y - current.y)) /
-          (previous.y - current.y) +
-          current.x;
+        ((previous.x - current.x) * (point.y - current.y)) / (previous.y - current.y) + current.x;
 
     if (intersects) {
       inside = !inside;

@@ -67,8 +67,7 @@ export class SpatialService {
     )
       .flat()
       .filter(
-        (child): child is PositionNode =>
-          child.kind === 'POSITION' && child.lifecycle === 'ACTIVE',
+        (child): child is PositionNode => child.kind === 'POSITION' && child.lifecycle === 'ACTIVE',
       );
 
     const racksByPosition = await Promise.all(
@@ -97,9 +96,7 @@ export class SpatialService {
     });
 
     const occupied = racks.map((rack) => rack.rect);
-    const assignableSlots = node.polygon
-      ? generateAssignableSlots(node.polygon, occupied)
-      : [];
+    const assignableSlots = node.polygon ? generateAssignableSlots(node.polygon, occupied) : [];
 
     return success({
       room: node,

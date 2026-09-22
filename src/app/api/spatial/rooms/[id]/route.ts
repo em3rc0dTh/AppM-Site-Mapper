@@ -42,9 +42,7 @@ export async function GET(_request: Request, context: Context) {
   }
 
   const { id } = await context.params;
-  const result = await new SpatialService(
-    await createTopologyRepository(),
-  ).getRoomLayout(id);
+  const result = await new SpatialService(await createTopologyRepository()).getRoomLayout(id);
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 404 });
@@ -62,18 +60,17 @@ export async function PUT(request: Request, context: Context) {
 
   const body: unknown = await request.json().catch(() => null);
   const polygon =
-    body && typeof body === 'object' && 'polygon' in body
-      ? parsePolygon(body.polygon)
-      : null;
+    body && typeof body === 'object' && 'polygon' in body ? parsePolygon(body.polygon) : null;
 
   if (!polygon) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
   const { id } = await context.params;
-  const result = await new SpatialService(
-    await createTopologyRepository(),
-  ).updateRoomPolygon(id, polygon);
+  const result = await new SpatialService(await createTopologyRepository()).updateRoomPolygon(
+    id,
+    polygon,
+  );
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 422 });

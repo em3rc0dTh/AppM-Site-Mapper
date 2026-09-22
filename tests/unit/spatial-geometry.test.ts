@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  pointInPolygon,
-  rectsOverlap,
-} from '@/modules/spatial/domain/geometry';
-import {
-  generateAssignableSlots,
-  validatePlacement,
-} from '@/modules/spatial/domain/placement';
+import { pointInPolygon, rectsOverlap } from '@/modules/spatial/domain/geometry';
+import { generateAssignableSlots, validatePlacement } from '@/modules/spatial/domain/placement';
 
 const room = [
   { x: -1, y: -1 },
@@ -34,9 +28,9 @@ describe('Blueprint geometry', () => {
   it('rejects collisions and exposes empty 600 mm slots', () => {
     const occupied = [{ x: 0, y: 0, width: 600, depth: 600 }];
 
-    expect(
-      validatePlacement({ x: 300, y: 0, width: 600, depth: 600 }, room, occupied),
-    ).toContain('COLLISION');
+    expect(validatePlacement({ x: 300, y: 0, width: 600, depth: 600 }, room, occupied)).toContain(
+      'COLLISION',
+    );
 
     expect(generateAssignableSlots(room, occupied)).toHaveLength(5);
   });

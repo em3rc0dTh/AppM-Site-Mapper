@@ -116,7 +116,18 @@ No role, username or email stored in a browser-readable cookie will constitute p
 
 ### D. Validate at every trust boundary
 
-Inputs from forms, route handlers, Server Actions, query parameters, MQTT, migration files, JSON import, and database records must be validated before they become domain data.
+Inputs from:
+
+* forms,
+* route handlers,
+* Server Actions,
+* query parameters,
+* MQTT,
+* migration files,
+* JSON import,
+* database records
+
+must be validated before they become domain data.
 
 ### E. Domain rules do not live inside React
 
@@ -162,70 +173,97 @@ MK1 should begin as a **modular monolith**.
 
 We do not need microservices.
 
+Conceptually:
+
 ```text
-Presentation
-    ↓
-Application
-    ↓
-Domain
-    ↓
-Repository interfaces
-    ↓
-Infrastructure
+┌──────────────────────────────────────────────┐
+│                Presentation                  │
+│ Next.js Routes / RSC / Client Components     │
+└──────────────────────┬───────────────────────┘
+                       │
+┌──────────────────────▼───────────────────────┐
+│              Application Layer               │
+│ Use Cases / Commands / Queries / Services    │
+└──────────────────────┬───────────────────────┘
+                       │
+┌──────────────────────▼───────────────────────┐
+│                 Domain                       │
+│ Entities / Value Objects / Rules / Policies  │
+└──────────────────────┬───────────────────────┘
+                       │
+             repository interfaces
+                       │
+┌──────────────────────▼───────────────────────┐
+│              Infrastructure                  │
+│ MongoDB / MQTT / Sessions / Logs / Adapters  │
+└──────────────────────────────────────────────┘
 ```
 
 React must not know how MongoDB documents are structured.
+
 MongoDB must not dictate domain behavior.
+
 MQTT messages must not flow directly into UI objects.
 
 ---
 
-# 5. Repository structure
+# 5. Proposed repository structure
 
 ```text
-src/
-├── app/
-├── modules/
-│   ├── identity/
-│   ├── topology/
-│   ├── spatial/
-│   ├── inventory/
-│   ├── rack/
-│   ├── power/
-│   ├── telemetry/
-│   ├── notifications/
-│   └── settings/
-├── shared/
-│   ├── domain/
-│   ├── infrastructure/
-│   ├── validation/
+AppM-Site-Mapper/
+│
+├── src/
+│   ├── app/
+│   │
+│   ├── modules/
+│   │   ├── identity/
+│   │   ├── topology/
+│   │   ├── spatial/
+│   │   ├── inventory/
+│   │   ├── rack/
+│   │   ├── power/
+│   │   ├── telemetry/
+│   │   ├── notifications/
+│   │   └── settings/
+│   │
+│   ├── shared/
+│   │   ├── domain/
+│   │   ├── infrastructure/
+│   │   ├── validation/
+│   │   ├── security/
+│   │   └── ui/
+│   │
+│   └── config/
+│
+├── tests/
+│   ├── unit/
+│   ├── integration/
+│   ├── contract/
 │   ├── security/
-│   └── ui/
-└── config/
-
-tests/
-├── unit/
-├── integration/
-├── contract/
-├── security/
-└── e2e/
-
-scripts/
-├── migrations/
-├── validation/
-└── fixtures/
-
-docs/
-├── product/
-├── architecture/
-├── domain/
-├── adr/
-├── security/
-├── telemetry/
-├── migrations/
-├── operations/
-├── testing/
-└── release/
+│   └── e2e/
+│
+├── scripts/
+│   ├── migrations/
+│   ├── validation/
+│   └── fixtures/
+│
+├── docs/
+│   ├── product/
+│   ├── architecture/
+│   ├── domain/
+│   ├── adr/
+│   ├── security/
+│   ├── telemetry/
+│   ├── migrations/
+│   ├── operations/
+│   ├── testing/
+│   └── release/
+│
+├── .github/
+│   └── workflows/
+│
+├── README.md
+└── ...
 ```
 
 ---
@@ -233,6 +271,8 @@ docs/
 # 6. Git strategy
 
 Use `main` as the single durable integration branch.
+
+Avoid recreating a permanent `developer` branch unless a concrete workflow requires it.
 
 Work through short-lived branches:
 
@@ -245,13 +285,1030 @@ feat/mk1-g4-topology
 ...
 ```
 
-Each gate ends in a PR.
+Each gate should end in a PR.
 
-`main` represents **integrated and passing**, not experimental work.
+`main` represents:
+
+> **integrated and passing**, not experimental work.
+
+Each PR must contain applicable:
+
+```text
+code
+tests
+documentation
+migration notes
+security implications
+acceptance evidence
+```
 
 ---
 
-# 7. Execution gates
+# 7. Gate G0 — Repository Foundation
+
+## Objective
+
+Create a clean engineering baseline before any Site Mapper functionality enters the repository.
+
+## Deliverables
+
+* Next.js + TypeScript baseline.
+* Strict TypeScript.
+* Lint.
+* Formatter.
+* Test runner.
+* Environment validation.
+* Security-safe `.gitignore`.
+* `.env.example` containing names only.
+* Initial CI.
+* README.
+* ADR mechanism.
+* Folder boundaries.
+* Basic error/result conventions.
+* Logging abstraction.
+* Health endpoint where appropriate.
+* Dependency lockfile.
+
+## CI baseline
+
+Every PR must run:
+
+```text
+install
+↓
+typecheck
+↓
+lint
+↓
+unit tests
+↓
+integration tests
+↓
+build
+↓
+security/dependency checks
+```
+
+## Gate acceptance
+
+G0 passes only when a clean clone can be installed, tested and built with documented commands.
+
+---
+
+# 8. Gate G1 — Legacy Mining & Product Truth
+
+## Objective
+
+Extract product knowledge from the old repository without importing its architecture.
+
+## Outputs
+
+### Product Capability Matrix
+
+For every current capability:
+
+```text
+Capability
+Status in legacy
+Keep?
+Reimplement?
+Expected MK1 behavior
+Evidence/source
+Dependencies
+Acceptance scenario
+```
+
+### Legacy Artifact Inventory
+
+Review at minimum:
+
+```text
+app/
+components/
+lib/
+prisma/schema.prisma
+docs/
+scripts/
+package.json
+configuration files
+wireframes
+UI references
+security reports
+```
+
+Particularly important legacy components include:
+
+```text
+room-dashboard
+rack-elevation
+container popup
+device popup
+panel popup
+power path
+global navigation tree
+breadcrumbs
+BDFB summary
+pinned devices
+telemetry context/gateway
+CAS actions
+```
+
+## Important rule
+
+Historical documentation is evidence.
+
+It is not automatically authoritative.
+
+The code, documentation and actual product behavior must be reconciled into a new MK1 contract.
+
+---
+
+# 9. Gate G2 — Canonical Domain Contract
+
+No application persistence should be implemented before this contract is sufficiently stable.
+
+## Required entities
+
+At minimum investigate and formalize:
+
+```text
+Site
+Structure
+Level
+Room
+Cluster/Bay
+Position
+Container/Rack
+Device
+Shelf
+Frame
+Panel
+Holder
+Breaker
+Equipment
+CAS
+PowerPath
+User
+Role
+TelemetryIdentity
+```
+
+For every entity define:
+
+```text
+canonical name
+purpose
+ID strategy
+required fields
+optional fields
+parent
+children
+invariants
+uniqueness
+lifecycle
+deletion behavior
+audit behavior
+persistence representation
+```
+
+## Required relationship decisions
+
+Examples:
+
+* Can a Position exist without a Cluster?
+* Can a Rack move between Positions?
+* Is device identity independent from rack placement?
+* Is BDFB a device type or a specialized aggregate?
+* Are Shelf/Frame/Panel embedded or separate aggregates?
+* Is CAS a persisted object or derivable state?
+* What happens to children when a parent is deleted?
+* Can topology nodes be archived instead of deleted?
+
+## Deliverable
+
+`docs/domain/domain-contract.md`
+
+plus machine-readable schemas where useful.
+
+---
+
+# 10. Gate G3 — Persistence Contract
+
+## Objective
+
+Create one canonical storage model.
+
+MongoDB can remain the database unless subsequent evidence provides a reason to replace it.
+
+## Required decisions
+
+For every aggregate:
+
+```text
+collection
+document schema
+indexes
+unique constraints
+references
+embedded data
+ownership
+timestamps
+versioning
+soft-delete policy
+```
+
+## Required protections
+
+* Schema validation.
+* Application-level validation.
+* Explicit repository APIs.
+* No collection-name arguments from UI.
+* No generic `saveEntity(type, any)`.
+* No direct Mongo calls from presentation components.
+
+## Migration isolation
+
+Legacy compatibility lives only here:
+
+```text
+scripts/migrations/legacy/
+```
+
+Never here:
+
+```text
+src/modules/
+```
+
+---
+
+# 11. Gate G4 — Identity, Authentication & RBAC
+
+This must be built before administrative or destructive product functionality.
+
+## Roles to initially evaluate
+
+```text
+Superadmin
+Admin
+Standard
+```
+
+The names may remain, but their exact permissions must be documented.
+
+## Required capabilities
+
+* Secure login.
+* Secure logout.
+* Authoritative server session.
+* Session expiration.
+* Session invalidation.
+* Password hashing only.
+* Current-password validation for password change where applicable.
+* Forced initial password change if required.
+* Server-side RBAC.
+* Rate limiting.
+* User lifecycle.
+* Audit events.
+* Locked/read-only default on ambiguity.
+
+## Explicitly prohibited
+
+```text
+client role as authority
+plaintext password fallback
+role stored as trusted browser cookie
+generic unauthenticated mutations
+hardcoded passwords
+demo credentials in production paths
+```
+
+---
+
+# 12. Gate G5 — Core Topology
+
+Implement the canonical hierarchy.
+
+Initial functional flow:
+
+```text
+Network
+→ Sites
+→ Site
+→ Structure
+→ Level
+→ Room
+→ Rack/Container
+→ Device
+```
+
+Required features:
+
+* deep linking,
+* breadcrumbs,
+* navigation tree,
+* empty states,
+* create/edit/archive flows,
+* validation,
+* permissions,
+* persistence.
+
+## Acceptance test
+
+A topology created from the root must survive:
+
+```text
+create
+→ navigate
+→ reload
+→ logout
+→ login
+→ navigate through deep link
+```
+
+without losing or reconstructing incorrect relationships.
+
+---
+
+# 13. Gate G6 — Blueprint Engine MK1
+
+This is a preservation gate, not a rewrite of the product idea.
+
+Preserve validated concepts such as:
+
+```text
+600 mm × 600 mm physical tile
+grid coordinates
+room polygon
+rack dimensions
+placement
+snapping
+empty assignable positions
+collision prevention
+zoom/pan
+physical representation
+```
+
+The legacy decision to extract geometry and placement intelligence from the monolithic Room component is retained.
+
+## Proposed domain split
+
+```text
+modules/spatial/
+├── domain/
+│   ├── coordinates
+│   ├── geometry
+│   ├── polygons
+│   ├── dimensions
+│   ├── placement
+│   ├── snapping
+│   └── collision
+│
+├── application/
+│   └── blueprint services
+│
+└── ui/
+    ├── canvas
+    ├── rack node
+    ├── slot
+    └── editor controls
+```
+
+Geometry rules must have unit tests without React or browser rendering.
+
+---
+
+# 14. Gate G7 — Rack & CAS Engine
+
+Preserve the validated CAS states:
+
+```text
+AVAILABLE
+RESERVED
+EQUIPPED
+```
+
+Preserve or formally redefine:
+
+```text
+startPosition
+endPosition
+physicalSize
+totalReservedSpace
+top clearance
+bottom clearance
+mount
+split
+free
+```
+
+## Critical invariants
+
+Examples:
+
+* no impossible U ranges,
+* no overlapping mounted equipment,
+* rack capacity never exceeded,
+* physical device size respected,
+* clearance respected,
+* split/free operations remain deterministic.
+
+This should become one of the highest-test-coverage modules.
+
+---
+
+# 15. Gate G8 — Device & Rack Elevation
+
+Implement canonical device placement and elevation rendering.
+
+Separate:
+
+```text
+device identity
+device specifications
+rack placement
+operational state
+telemetry state
+```
+
+A device should not cease to exist merely because it is moved within the physical topology unless the domain explicitly says so.
+
+---
+
+# 16. Gate G9 — BDFB & Power Domain
+
+Preserve the validated conceptual hierarchy:
+
+```text
+BDFB
+└── Shelf
+    └── Frame
+        └── Panel
+            └── Holder / Breaker
+```
+
+Support documented variants where required, including no-frame arrangements if still part of the business domain.
+
+Separate:
+
+```text
+physical hierarchy
+electrical topology
+provisioning
+telemetry
+UI presentation
+```
+
+## Power Path
+
+Power Path must become an explicit graph/domain relationship rather than UI-derived state.
+
+Required investigation:
+
+```text
+source
+destination
+A/B feed
+breaker
+panel
+device/equipment association
+path validity
+redundancy
+provisioning state
+```
+
+---
+
+# 17. Gate G10 — Telemetry Gateway
+
+Preserve the useful architectural direction:
+
+```text
+MQTT
+→ application backend
+→ normalized telemetry
+→ authenticated realtime transport
+→ browser
+```
+
+Do not copy the old endpoint.
+
+## Required layers
+
+```text
+MQTT transport adapter
+topic parser
+payload validator
+device resolver
+telemetry normalizer
+authorization
+subscription manager
+browser realtime transport
+```
+
+## Required protections
+
+* secrets only from runtime environment,
+* credential rotation,
+* authenticated browser stream,
+* connection limits,
+* reconnect policy,
+* malformed-message protection,
+* topic allowlist,
+* logging without sensitive payload leakage.
+
+---
+
+# 18. Gate G11 — Operational Workspace
+
+Reconstruct the validated operational experience.
+
+Capabilities to evaluate:
+
+```text
+workspace
+pinned devices
+BDFB summary
+notifications
+navigation tree
+breadcrumbs
+contextual panels
+read/edit mode
+device popup
+rack popup
+panel/breaker views
+settings
+```
+
+The UI should consume stable application contracts, not database documents.
+
+---
+
+# 19. Gate G12 — Settings & Administration
+
+Split legacy Settings responsibilities into modules.
+
+For example:
+
+```text
+Profile
+Security
+Users
+Roles
+Data Import
+Drafting
+System
+Danger Zone
+```
+
+Dangerous operations require:
+
+* strong authorization,
+* explicit confirmation,
+* audit trail,
+* defensive validation.
+
+Database reset, if retained at all, must be strictly development/test scoped unless there is an explicit operational requirement.
+
+---
+
+# 20. Gate G13 — Legacy Data Migration
+
+Data is migrated only after the canonical model is stable.
+
+## Migration pipeline
+
+```text
+legacy source
+↓
+read
+↓
+normalize
+↓
+validate
+↓
+transform
+↓
+canonical validation
+↓
+write
+↓
+post-migration verification
+```
+
+## Every migration must support
+
+```text
+dry-run
+counts
+warnings
+rejected records
+deterministic transformation
+re-runnability strategy
+verification
+rollback/restore strategy
+```
+
+No production data is manually “fixed” during migration without a recorded transformation rule.
+
+---
+
+# 21. Gate G14 — System Certification
+
+MK1 does not pass because `npm run build` succeeds.
+
+The complete golden path should include at least:
+
+```text
+login
+→ Network
+→ Site
+→ Structure
+→ Level
+→ Room
+→ Blueprint
+→ Rack
+→ CAS
+→ mount Device
+→ Rack Elevation
+→ BDFB
+→ Panel
+→ Breaker
+→ Power Path
+→ Telemetry
+→ persistence
+→ logout
+→ login
+→ verify reconstruction
+```
+
+Additional certification:
+
+```text
+RBAC
+security
+invalid inputs
+deep links
+refresh recovery
+migration
+MQTT reconnect
+telemetry isolation
+error boundaries
+backup/restore
+```
+
+---
+
+# 22. Gate G15 — Release Documentation
+
+Before release we require:
+
+```text
+README
+Architecture Overview
+Domain Contract
+Data Model
+Authentication Model
+RBAC Matrix
+Blueprint Engine Specification
+CAS Specification
+Rack Model
+BDFB Specification
+Power Path Specification
+Telemetry Contract
+Environment Reference
+Migration Guide
+Testing Strategy
+Security Baseline
+Operations Runbook
+Backup/Restore
+Release Checklist
+Known Limitations
+ADRs
+```
+
+Documentation and implementation must describe the same system.
+
+---
+
+# 23. Information Acquisition Register
+
+The following information must be gathered during reconstruction.
+
+## P0 — Blocking information
+
+These decisions can block canonical architecture.
+
+### Product/domain
+
+* Canonical hierarchy.
+* Meaning of Room vs Substructure.
+* Meaning of Cluster vs Bay vs ContainerCluster.
+* Meaning of Container vs Rack.
+* Device identity rules.
+* Entity lifecycle rules.
+* Delete vs archive behavior.
+* Required deep-link behavior.
+* Read mode vs edit mode.
+
+### Physical model
+
+* Standard tile dimensions.
+* Coordinate origin.
+* Coordinate naming.
+* Rack width/depth/height rules.
+* Rack U numbering direction.
+* Valid rack sizes.
+* Position occupancy rules.
+* Collision behavior.
+* Room polygon constraints.
+
+### CAS
+
+* Exact meaning of AVAILABLE.
+* Exact meaning of RESERVED.
+* Exact meaning of EQUIPPED.
+* U-range semantics.
+* Physical size semantics.
+* Clearance semantics.
+* Split semantics.
+* Free semantics.
+* Device mount semantics.
+
+### BDFB / power
+
+* Supported BDFB models.
+* Shelf rules.
+* Frame rules.
+* Panel rules.
+* Breaker/holder rules.
+* No-frame variants.
+* A/B provisioning semantics.
+* Power-path source/destination rules.
+* Redundancy rules.
+
+### Identity/security
+
+* Final role definitions.
+* Permissions matrix.
+* Password policy.
+* Session lifetime.
+* Force-password-change requirements.
+* Account disable/archive behavior.
+* Audit requirements.
+
+### Persistence
+
+* Representative sanitized legacy documents.
+* Existing collection inventory.
+* Approximate data volume.
+* Required preservation of legacy IDs.
+* Referential inconsistencies.
+* Migration downtime tolerance.
+
+### Telemetry
+
+* MQTT topic grammar.
+* Sanitized representative payloads.
+* Serial-number/device mapping.
+* `reported` payload semantics.
+* Update frequency.
+* Device offline semantics.
+* Reconnect expectations.
+* Required telemetry history or realtime-only behavior.
+
+### Deployment
+
+* Deployment target.
+* Mongo hosting target.
+* Runtime secret provider.
+* MQTT environment.
+* environments required:
+
+```text
+development
+test
+staging
+production
+```
+
+---
+
+# 24. P1 — Required before individual modules are certified
+
+* Exact visual behavior of existing Blueprint.
+* Existing rack rendering conventions.
+* Device popup information hierarchy.
+* Panel/breaker interaction behavior.
+* Pinned-device behavior.
+* Notification requirements.
+* Settings requirements.
+* JSON/import requirements.
+* Drafting-engine requirements.
+* User-management workflows.
+* Required search/filtering.
+* Accessibility requirements.
+* Responsive viewport expectations.
+* Browser support.
+
+---
+
+# 25. P2 — Required before production release
+
+* Expected number of Sites.
+* Expected number of Rooms.
+* Expected number of Racks.
+* Expected number of Devices.
+* Simultaneous users.
+* Simultaneous telemetry streams.
+* MQTT event throughput.
+* Performance targets.
+* Availability target.
+* Logging retention.
+* Audit-log retention.
+* Backup interval.
+* Recovery objectives.
+* Localization requirements.
+* Time-zone handling.
+* Data retention.
+* Monitoring/alerting requirements.
+
+---
+
+# 26. Inputs we can mine automatically from the legacy repository
+
+We do not need the user to manually explain everything.
+
+The old repository can provide evidence for:
+
+* current routes,
+* current UI hierarchy,
+* component behavior,
+* Blueprint algorithms,
+* geometry,
+* rack rendering,
+* CAS implementation,
+* BDFB hierarchy,
+* power-path implementation,
+* current roles,
+* telemetry transport,
+* current schemas,
+* old persistence conventions,
+* wireframes,
+* implementation plans,
+* UI mockups,
+* security findings,
+* legacy scripts.
+
+We should extract these systematically during G1.
+
+---
+
+# 27. Inputs that GitHub alone cannot provide reliably
+
+These require external evidence or explicit product decisions.
+
+### Legacy database
+
+We need sanitized examples of real/current MongoDB structures.
+
+Not credentials.
+
+Prefer:
+
+```text
+collection name
+sanitized sample document
+field types
+indexes
+approximate count
+relationships
+```
+
+### MQTT
+
+We need sanitized real messages and topic examples.
+
+Never the current broker password.
+
+### Deployment
+
+We need to know the intended runtime environment before production architecture is frozen.
+
+### Product intent
+
+Where old code and documentation disagree, an explicit MK1 decision is required.
+
+---
+
+# 28. Evidence pack to construct
+
+Before migration begins, create:
+
+```text
+docs/legacy/
+├── capability-matrix.md
+├── route-inventory.md
+├── component-inventory.md
+├── domain-findings.md
+├── data-findings.md
+├── spatial-findings.md
+├── cas-findings.md
+├── power-findings.md
+├── telemetry-findings.md
+├── security-findings.md
+└── migration-map.md
+```
+
+This is not legacy code.
+
+It is extracted knowledge.
+
+---
+
+# 29. ADRs required early
+
+At minimum:
+
+```text
+ADR-001 Domain terminology
+ADR-002 Modular monolith architecture
+ADR-003 Persistence strategy
+ADR-004 Mongo aggregate boundaries
+ADR-005 Identifier strategy
+ADR-006 Authentication/session model
+ADR-007 RBAC model
+ADR-008 Validation strategy
+ADR-009 Blueprint coordinate system
+ADR-010 CAS model
+ADR-011 Power domain model
+ADR-012 Telemetry transport
+ADR-013 Legacy migration strategy
+ADR-014 Audit/logging strategy
+ADR-015 Deployment architecture
+```
+
+---
+
+# 30. Definition of Done
+
+A feature is `DONE` only when applicable conditions are satisfied:
+
+```text
+[ ] Domain behavior defined
+[ ] Input/output contract defined
+[ ] Validation implemented
+[ ] Authorization implemented
+[ ] Persistence implemented
+[ ] UI implemented
+[ ] Unit tests pass
+[ ] Integration tests pass
+[ ] E2E flow passes
+[ ] Security concerns evaluated
+[ ] Documentation updated
+[ ] CI passes
+[ ] No secret introduced
+[ ] Acceptance scenario demonstrated
+```
+
+---
+
+# 31. Migration rule
+
+Code from the legacy repository receives one of four classifications:
+
+```text
+CONCEPT
+Preserve the idea.
+
+ALGORITHM
+Port after isolation and testing.
+
+UX
+Reproduce behavior with new implementation.
+
+LEGACY
+Do not migrate.
+```
+
+Example:
+
+```text
+CAS rules             → ALGORITHM / DOMAIN
+Blueprint geometry    → ALGORITHM
+Rack elevation UX     → UX
+BDFB model            → CONCEPT + DOMAIN
+Navigation hierarchy  → CONCEPT + UX
+Mongo aliases         → LEGACY
+Cookie-trusted RBAC   → LEGACY
+Generic any CRUD      → LEGACY
+Hardcoded secrets     → LEGACY
+Plaintext passwords   → LEGACY
+```
+
+---
+
+# 32. Recommended execution sequence
 
 ```text
 G0   Repository Foundation
@@ -287,433 +1344,17 @@ G14  Certification
 G15  Release Documentation
 ```
 
-G6–G12 may allow controlled parallel work once their domain contracts are frozen.
+G6–G12 may subsequently allow controlled parallel work once their domain contracts are frozen.
 
 ---
 
-# 8. G0 — Repository Foundation
+# 33. First milestone
 
-Deliver:
+## MK1-F0 — Foundation & Truth
 
-* Next.js + TypeScript baseline
-* strict TypeScript
-* lint
-* formatter
-* test runner
-* environment validation
-* security-safe `.gitignore`
-* `.env.example` with names only
-* initial CI
-* README
-* ADR mechanism
-* folder boundaries
-* result/error conventions
-* logging abstraction
-* health endpoint where appropriate
-* dependency lockfile
+The first milestone should not attempt to recreate the complete UI.
 
-CI baseline:
-
-```text
-install
-↓
-typecheck
-↓
-lint
-↓
-unit tests
-↓
-integration tests
-↓
-build
-↓
-security/dependency checks
-```
-
-G0 passes only when a clean clone can be installed, tested and built with documented commands.
-
----
-
-# 9. G1 — Legacy Mining & Product Truth
-
-Extract product knowledge from the legacy repository without importing its architecture.
-
-Required evidence pack:
-
-```text
-docs/legacy/
-├── capability-matrix.md
-├── route-inventory.md
-├── component-inventory.md
-├── domain-findings.md
-├── data-findings.md
-├── spatial-findings.md
-├── cas-findings.md
-├── power-findings.md
-├── telemetry-findings.md
-├── security-findings.md
-└── migration-map.md
-```
-
-Historical documentation is evidence, not automatically authoritative.
-
----
-
-# 10. G2 — Canonical Domain Contract
-
-At minimum formalize:
-
-```text
-Site
-Structure
-Level
-Room
-Cluster/Bay
-Position
-Container/Rack
-Device
-Shelf
-Frame
-Panel
-Holder
-Breaker
-Equipment
-CAS
-PowerPath
-User
-Role
-TelemetryIdentity
-```
-
-For each entity define canonical name, purpose, ID strategy, fields, parent/children, invariants, uniqueness, lifecycle, deletion behavior, audit behavior and persistence representation.
-
----
-
-# 11. G3 — Persistence Contract
-
-Create one canonical storage model.
-
-MongoDB may remain unless evidence provides a reason to replace it.
-
-Legacy compatibility may exist only in migration tooling, never in runtime domain modules.
-
----
-
-# 12. G4 — Identity / Auth / RBAC
-
-Evaluate initial roles:
-
-```text
-Superadmin
-Admin
-Standard
-```
-
-Required capabilities include secure login/logout, authoritative server session, session expiration/invalidation, password hashing only, server-side RBAC, rate limiting, user lifecycle and audit events.
-
-Explicitly prohibited:
-
-```text
-client role as authority
-plaintext password fallback
-trusted role cookie
-unauthenticated mutations
-hardcoded passwords
-demo credentials in production paths
-```
-
----
-
-# 13. G5 — Topology Core
-
-Initial functional flow:
-
-```text
-Network
-→ Sites
-→ Site
-→ Structure
-→ Level
-→ Room
-→ Rack/Container
-→ Device
-```
-
-A topology created from root must survive create → navigate → reload → logout → login → deep-link navigation.
-
----
-
-# 14. G6 — Blueprint Engine
-
-Preserve validated concepts:
-
-```text
-600 mm × 600 mm physical tile
-grid coordinates
-room polygon
-rack dimensions
-placement
-snapping
-empty assignable positions
-collision prevention
-zoom/pan
-physical representation
-```
-
-Geometry rules must be testable without React or browser rendering.
-
----
-
-# 15. G7 — Rack & CAS
-
-Preserve or formally redefine:
-
-```text
-AVAILABLE
-RESERVED
-EQUIPPED
-startPosition
-endPosition
-physicalSize
-totalReservedSpace
-top clearance
-bottom clearance
-mount
-split
-free
-```
-
-No impossible U ranges, overlaps or rack-capacity violations are allowed.
-
----
-
-# 16. G8 — Devices & Rack Elevation
-
-Separate device identity, specifications, rack placement, operational state and telemetry state.
-
----
-
-# 17. G9 — BDFB & Power
-
-Preserve the validated hierarchy:
-
-```text
-BDFB
-└── Shelf
-    └── Frame
-        └── Panel
-            └── Holder / Breaker
-```
-
-Power Path becomes an explicit graph/domain relationship rather than UI-derived state.
-
----
-
-# 18. G10 — Telemetry
-
-Preserve the architectural direction:
-
-```text
-MQTT
-→ backend
-→ normalized telemetry
-→ authenticated realtime transport
-→ browser
-```
-
-Required protections include runtime-only secrets, rotated credentials, authenticated stream, connection limits, reconnect policy, malformed-message protection, topic allowlist and safe logging.
-
----
-
-# 19. G11–G12 — Workspace & Administration
-
-Reconstruct workspace, pinned devices, BDFB summary, notifications, navigation tree, breadcrumbs, contextual panels, read/edit mode, device/rack/panel views, settings and user administration against stable application contracts.
-
-Dangerous operations require strong authorization, explicit confirmation, audit trail and defensive validation.
-
----
-
-# 20. G13 — Legacy Data Migration
-
-Pipeline:
-
-```text
-legacy source
-↓
-read
-↓
-normalize
-↓
-validate
-↓
-transform
-↓
-canonical validation
-↓
-write
-↓
-post-migration verification
-```
-
-Every migration must support dry-run, counts, warnings, rejected records, deterministic transformation, re-runnability strategy, verification and rollback/restore strategy.
-
----
-
-# 21. G14 — System Certification
-
-A build is not certification.
-
-Golden path includes at least:
-
-```text
-login
-→ Network
-→ Site
-→ Structure
-→ Level
-→ Room
-→ Blueprint
-→ Rack
-→ CAS
-→ mount Device
-→ Rack Elevation
-→ BDFB
-→ Panel
-→ Breaker
-→ Power Path
-→ Telemetry
-→ persistence
-→ logout
-→ login
-→ verify reconstruction
-```
-
-Also certify RBAC, security, invalid inputs, deep links, refresh recovery, migration, MQTT reconnect, telemetry isolation, error boundaries and backup/restore.
-
----
-
-# 22. G15 — Release Documentation
-
-Required before release:
-
-```text
-README
-Architecture Overview
-Domain Contract
-Data Model
-Authentication Model
-RBAC Matrix
-Blueprint Engine Specification
-CAS Specification
-Rack Model
-BDFB Specification
-Power Path Specification
-Telemetry Contract
-Environment Reference
-Migration Guide
-Testing Strategy
-Security Baseline
-Operations Runbook
-Backup/Restore
-Release Checklist
-Known Limitations
-ADRs
-```
-
-Documentation and implementation must describe the same system.
-
----
-
-# 23. Information acquisition
-
-P0 blockers include canonical hierarchy and terminology; physical coordinate/rack rules; CAS semantics; BDFB/power rules; role and session requirements; representative sanitized persistence examples; MQTT grammar and sanitized payloads; deployment targets and environment requirements.
-
-P1 includes exact operational UI behavior, rack rendering, popups, notifications, Settings, import/drafting, user flows, search/filtering, accessibility and supported viewports.
-
-P2 includes expected scale, concurrency, MQTT throughput, performance/availability targets, logging/audit retention, backups, recovery objectives, localization, retention and monitoring.
-
-GitHub can be mined automatically for product behavior and implementation evidence. GitHub alone cannot reliably provide real database state, real MQTT payloads, deployment intent or product decisions where code and docs disagree.
-
----
-
-# 24. ADR baseline
-
-At minimum:
-
-```text
-ADR-001 Domain terminology
-ADR-002 Modular monolith architecture
-ADR-003 Persistence strategy
-ADR-004 Mongo aggregate boundaries
-ADR-005 Identifier strategy
-ADR-006 Authentication/session model
-ADR-007 RBAC model
-ADR-008 Validation strategy
-ADR-009 Blueprint coordinate system
-ADR-010 CAS model
-ADR-011 Power domain model
-ADR-012 Telemetry transport
-ADR-013 Legacy migration strategy
-ADR-014 Audit/logging strategy
-ADR-015 Deployment architecture
-```
-
----
-
-# 25. Definition of Done
-
-A feature is DONE only when applicable items pass:
-
-```text
-[ ] Domain behavior defined
-[ ] Input/output contract defined
-[ ] Validation implemented
-[ ] Authorization implemented
-[ ] Persistence implemented
-[ ] UI implemented
-[ ] Unit tests pass
-[ ] Integration tests pass
-[ ] E2E flow passes
-[ ] Security concerns evaluated
-[ ] Documentation updated
-[ ] CI passes
-[ ] No secret introduced
-[ ] Acceptance scenario demonstrated
-```
-
----
-
-# 26. Migration classification
-
-Every legacy artifact receives exactly one migration classification:
-
-```text
-CONCEPT   — preserve the idea
-ALGORITHM — port only after isolation and testing
-UX        — reproduce behavior with new implementation
-LEGACY    — do not migrate
-```
-
-Examples:
-
-```text
-CAS rules             → ALGORITHM / DOMAIN
-Blueprint geometry    → ALGORITHM
-Rack elevation UX     → UX
-BDFB model            → CONCEPT + DOMAIN
-Navigation hierarchy  → CONCEPT + UX
-Mongo aliases         → LEGACY
-Cookie-trusted RBAC   → LEGACY
-Generic any CRUD      → LEGACY
-Hardcoded secrets     → LEGACY
-Plaintext passwords   → LEGACY
-```
-
----
-
-# 27. First milestone — MK1-F0
-
-MK1-F0 delivers:
+It should deliver:
 
 ```text
 repository baseline
@@ -733,22 +1374,16 @@ Only after MK1-F0 is sealed do we begin product reconstruction.
 
 ---
 
-# 28. Final target
+# 34. Final target
 
-The objective is not merely that Site Mapper looks like the old Site Mapper.
+The objective is not:
 
-> **Every valuable capability of Site Mapper must be deliberately reconstructed on a canonical domain model, secure trust boundaries, deterministic persistence, testable business rules and documentation that accurately represents the running product.**
+> “Site Mapper looks like the old Site Mapper.”
+
+The objective is:
+
+> **Every valuable capability of Site Mapper has been deliberately reconstructed on a canonical domain model, secure trust boundaries, deterministic persistence, testable business rules and documentation that accurately represents the running product.**
 
 The legacy system proves what the product can do.
 
 **MK1 must prove that we can trust it.**
-
----
-
-# Contract authority
-
-This document is the governing reconstruction contract for AppM Site Mapper MK1.
-
-Future implementation instructions must be interpreted within this contract. A conflicting instruction is treated as a proposed contract amendment, not as implicit permission to bypass the contract.
-
-The contract changes only through an explicit amendment.

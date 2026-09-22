@@ -1,0 +1,8 @@
+.next
+node_modules
+coverage
+dist
+build
+
+# Binding contract: preserve verbatim; formatting is not allowed to rewrite it.
+docs/product/MK1-RECONSTRUCTION-CONTRACT.md

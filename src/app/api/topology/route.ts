@@ -89,18 +89,18 @@ export async function POST(request: Request) {
       ? { row: coordinateObject.row, column: coordinateObject.column }
       : undefined;
 
+  const parsedRoomVariant = roomVariant(body.roomVariant);
+  const parsedClusterVariant = clusterVariant(body.clusterVariant);
+  const parsedContainerVariant = containerVariant(body.containerVariant);
+
   const repository = await createTopologyRepository();
   const result = await new TopologyService(repository).create({
     kind,
     parentId,
     name: body.name,
-    ...(roomVariant(body.roomVariant) ? { roomVariant: roomVariant(body.roomVariant) } : {}),
-    ...(clusterVariant(body.clusterVariant)
-      ? { clusterVariant: clusterVariant(body.clusterVariant) }
-      : {}),
-    ...(containerVariant(body.containerVariant)
-      ? { containerVariant: containerVariant(body.containerVariant) }
-      : {}),
+    ...(parsedRoomVariant ? { roomVariant: parsedRoomVariant } : {}),
+    ...(parsedClusterVariant ? { clusterVariant: parsedClusterVariant } : {}),
+    ...(parsedContainerVariant ? { containerVariant: parsedContainerVariant } : {}),
     ...(coordinate ? { coordinate } : {}),
     ...(typeof body.totalU === 'number' ? { totalU: body.totalU } : {}),
     ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),

@@ -1,6 +1,6 @@
 # G5 — Topology Core Receipt
 
-**Status:** READY FOR CI / REVIEW
+**Status:** PASS
 
 ## Delivered
 
@@ -19,4 +19,4 @@
 
 ## Gate verdict
 
-PASS requires the final branch to pass the complete CI pipeline.
+PASS — the final implementation passed typecheck, lint, format, unit tests, integration tests, production build and production dependency audit.

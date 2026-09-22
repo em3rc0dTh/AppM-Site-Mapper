@@ -1,17 +1,15 @@
 # G2 — Canonical Domain Contract Receipt
 
-**Status:** IN PROGRESS — TOPOLOGY SEALED
+**Status:** PASS
 
 ## Inputs
 
 - binding MK1 reconstruction contract;
 - sealed G1 Product Truth evidence;
-- explicit product hierarchy decision;
+- explicit accepted topology decision;
 - legacy external-information register.
 
-## Sealed topology decision
-
-The following hierarchy is accepted:
+## Accepted topology
 
 ```text
 Network
@@ -30,49 +28,34 @@ Network
                             └── Equipment
 ```
 
-Key decision:
+## Sealed domain decisions
 
-> Device and Equipment are siblings at the same hierarchy level beneath Container / Rack.
+- Device and Equipment are sibling topology entities.
+- Slash-pairs are same-level variants, not extra hierarchy.
+- Zone is rejected.
+- IDs are stable opaque UUIDv4 values.
+- Lifecycle is ACTIVE / ARCHIVED.
+- Movement preserves entity identity.
+- CAS is owned by Container/Rack and is not a topology node.
+- BDFB is a specialized Device capability/type.
+- PowerPath is an explicit aggregate.
+- Telemetry identity is an external binding to Device/Equipment identity.
+- Generic dynamic CRUD is prohibited.
 
-The prior `Zone` proposal is removed.
+## Evidence
 
-## Current deliverables
+Authoritative documents:
 
-- accepted topology hierarchy;
-- accepted ADR-001 terminology/hierarchy decision;
-- canonical domain contract updated to reflect the decision;
-- module/domain boundaries;
-- lifecycle and identity principles;
-- rejected domain-drift rules;
-- remaining decision register.
+- `docs/domain/topology-hierarchy.md`
+- `docs/domain/domain-contract.md`
+- `docs/domain/invariants.md`
+- `docs/adr/ADR-001-domain-terminology.md`
+- `docs/adr/ADR-005-identifiers.md`
+- `docs/adr/ADR-010-cas-domain-ownership.md`
+- `docs/adr/ADR-011-bdfb-power-domain.md`
 
-## Non-goals
+## Gate verdict
 
-G2 still does not implement:
+**PASS — G3 Persistence Contract is authorized after this branch passes CI and is integrated into `main`.**
 
-- MongoDB collections;
-- Prisma models;
-- repositories;
-- authentication;
-- MQTT;
-- Blueprint renderer;
-- CAS persistence;
-- UI migration.
-
-## Remaining gate work
-
-G2 remains open for:
-
-- lifecycle/delete/archive rules;
-- identifier strategy;
-- movement semantics;
-- CAS ownership;
-- BDFB aggregate details;
-- PowerPath semantics;
-- any required technical naming resolution for slash-pairs.
-
-## Gate rule
-
-The topology itself is now sealed.
-
-G2 as a whole remains IN PROGRESS until its remaining invariants are sufficient for G3 Persistence Contract without guessing.
+No persistence implementation was used to decide the domain.

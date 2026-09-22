@@ -359,3 +359,24 @@ G2 passes only when:
 - remaining external inputs are explicit rather than guessed.
 
 Until then, **G3 persistence implementation is not authorized**.
+
+
+## 16. Accepted G2 closure decisions
+
+The following decisions are accepted and remove the remaining architecture-blocking ambiguity:
+
+- lifecycle is `ACTIVE | ARCHIVED`; hard delete is exceptional;
+- new domain identifiers use stable opaque UUIDv4 values;
+- movement preserves identity;
+- Container/Rack movement requires a valid unconflicted Position;
+- Device and Equipment may move between compatible Container/Rack parents while preserving identity;
+- Device and Equipment remain siblings;
+- CAS is rack-owned authoritative occupancy state, not a topology node;
+- BDFB is a specialized Device capability/type;
+- PowerPath is an explicit aggregate;
+- telemetry identity is a binding to Device/Equipment identity, not the identity itself;
+- slash-pair concepts preserve variant semantics at one hierarchy level.
+
+Detailed invariants are defined in `docs/domain/invariants.md`.
+
+With these decisions, G3 may design persistence without using database structure to resolve domain ambiguity.

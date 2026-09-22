@@ -1,26 +1,54 @@
 # G2 — Canonical Domain Contract Receipt
 
-**Status:** IN PROGRESS
+**Status:** IN PROGRESS — TOPOLOGY SEALED
 
 ## Inputs
 
 - binding MK1 reconstruction contract;
 - sealed G1 Product Truth evidence;
-- ADR-001 terminology proposal;
+- explicit product hierarchy decision;
 - legacy external-information register.
+
+## Sealed topology decision
+
+The following hierarchy is accepted:
+
+```text
+Network
+└── Site
+    └── Structure
+        └── Level
+            └── Room / Substructure
+                └── ContainerCluster / Bay
+                    └── Position
+                        └── Container / Rack
+                            ├── Device
+                            │   └── Shelf
+                            │       └── Frame
+                            │           └── Panel
+                            │               └── Breaker / Holder
+                            └── Equipment
+```
+
+Key decision:
+
+> Device and Equipment are siblings at the same hierarchy level beneath Container / Rack.
+
+The prior `Zone` proposal is removed.
 
 ## Current deliverables
 
-- canonical domain contract draft;
-- explicit topology candidates;
+- accepted topology hierarchy;
+- accepted ADR-001 terminology/hierarchy decision;
+- canonical domain contract updated to reflect the decision;
 - module/domain boundaries;
 - lifecycle and identity principles;
-- rejected legacy leakage rules;
-- open-decision register.
+- rejected domain-drift rules;
+- remaining decision register.
 
 ## Non-goals
 
-G2 does not implement:
+G2 still does not implement:
 
 - MongoDB collections;
 - Prisma models;
@@ -31,8 +59,20 @@ G2 does not implement:
 - CAS persistence;
 - UI migration.
 
+## Remaining gate work
+
+G2 remains open for:
+
+- lifecycle/delete/archive rules;
+- identifier strategy;
+- movement semantics;
+- CAS ownership;
+- BDFB aggregate details;
+- PowerPath semantics;
+- any required technical naming resolution for slash-pairs.
+
 ## Gate rule
 
-G2 remains open until canonical terminology and domain invariants are sufficiently stable for G3 Persistence Contract without guessing.
+The topology itself is now sealed.
 
-No PASS verdict is declared by this receipt yet.
+G2 as a whole remains IN PROGRESS until its remaining invariants are sufficient for G3 Persistence Contract without guessing.

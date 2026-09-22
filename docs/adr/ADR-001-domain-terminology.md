@@ -1,24 +1,106 @@
-# ADR-001 — Canonical Domain Terminology
+# ADR-001 — Canonical Domain Terminology and Hierarchy
 
-**Status:** Proposed
+**Status:** Accepted  
+**Gate:** G2 — Canonical Domain Contract  
+**Decision date:** 2026-09-22
 
 ## Context
 
-The legacy system contains overlapping terminology including Room/Substructure, Cluster/ContainerCluster/Bay and Container/Rack.
+The legacy product uses paired terminology at several physical levels.
 
-Permanent aliases are prohibited by the MK1 contract.
+An earlier G2 draft proposed normalizing:
 
-## Decision required
+- Room / Substructure -> Room;
+- ContainerCluster / Bay -> Zone;
+- Container / Rack -> Rack.
 
-G2 must choose exactly one canonical term and semantic meaning for every topology entity.
+That proposal is superseded by the explicit product decision to preserve the established hierarchy and paired vocabulary.
 
-Until that gate is accepted:
+## Decision
 
-- no canonical persistence schema is frozen;
-- no compatibility alias enters runtime modules;
-- legacy names may appear only in evidence documents;
-- route and data findings must record the legacy term exactly as observed.
+The accepted hierarchy is:
 
-## Acceptance evidence
+```text
+Network
+└── Site
+    └── Structure
+        └── Level
+            └── Room / Substructure
+                └── ContainerCluster / Bay
+                    └── Position
+                        └── Container / Rack
+                            ├── Device
+                            │   └── Shelf
+                            │       └── Frame
+                            │           └── Panel
+                            │               └── Breaker / Holder
+                            └── Equipment
+```
 
-The final ADR must map every legacy term to one canonical term or explicitly mark it as deprecated/removed.
+## Accepted terminology semantics
+
+The slash-pairs occupy one hierarchy level:
+
+- `Room / Substructure`;
+- `ContainerCluster / Bay`;
+- `Container / Rack`;
+- `Breaker / Holder`.
+
+A slash does not represent parent/child nesting.
+
+## Device and Equipment decision
+
+`Device` and `Equipment` are hierarchical peers.
+
+Both are direct children of `Container / Rack`.
+
+Therefore:
+
+```text
+Container / Rack
+├── Device
+└── Equipment
+```
+
+is authoritative.
+
+`Equipment` must not be modeled as a child of `Device`.
+
+A Device may independently own:
+
+```text
+Shelf -> Frame -> Panel -> Breaker / Holder
+```
+
+without changing the equal topology rank of Device and Equipment.
+
+## Zone decision
+
+The proposed `Zone` abstraction is rejected.
+
+No Zone layer exists between:
+
+```text
+Room / Substructure
+and
+ContainerCluster / Bay
+```
+
+## Technical naming consequence
+
+G3 may select one internal technical identifier for an accepted paired concept when required by schema/code constraints.
+
+That technical decision must:
+
+- preserve the accepted hierarchy;
+- preserve the product meaning;
+- avoid creating an extra runtime hierarchy level;
+- remain traceable to the paired domain vocabulary.
+
+## Consequences
+
+Persistence, routes, migrations and UI reconstruction must conform to this hierarchy.
+
+Legacy records that differ must be normalized during migration rather than redefining MK1.
+
+Any future change to this topology requires an explicit domain-contract amendment.

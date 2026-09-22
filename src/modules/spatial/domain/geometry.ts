@@ -39,6 +39,24 @@ export function isValidPolygon(points: readonly PointMm[]): boolean {
   );
 }
 
+function pointOnSegment(point: PointMm, start: PointMm, end: PointMm): boolean {
+  const cross =
+    (point.y - start.y) * (end.x - start.x) -
+    (point.x - start.x) * (end.y - start.y);
+
+  if (Math.abs(cross) > 1e-7) {
+    return false;
+  }
+
+  const dot =
+    (point.x - start.x) * (end.x - start.x) +
+    (point.y - start.y) * (end.y - start.y);
+  const squaredLength =
+    (end.x - start.x) ** 2 + (end.y - start.y) ** 2;
+
+  return dot >= 0 && dot <= squaredLength;
+}
+
 export function pointInPolygon(point: PointMm, polygon: readonly PointMm[]): boolean {
   let inside = false;
 
@@ -50,6 +68,10 @@ export function pointInPolygon(point: PointMm, polygon: readonly PointMm[]): boo
 
     if (!current || !previous) {
       continue;
+    }
+
+    if (pointOnSegment(point, previous, current)) {
+      return true;
     }
 
     const intersects =

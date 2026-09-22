@@ -52,6 +52,14 @@ export default async function TopologyNodePage({
         <span>{node.lifecycle}</span>
       </header>
 
+      {node.kind === 'ROOM_SUBSTRUCTURE' && (
+        <div className="node-actions">
+          <Link className="action-link" href={`/blueprint/${node.id}`}>
+            Open Blueprint
+          </Link>
+        </div>
+      )}
+
       <section className="panel">
         <h2>Children</h2>
         {children.length === 0 ? (

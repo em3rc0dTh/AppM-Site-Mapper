@@ -173,3 +173,125 @@ p {
 .form-error {
   color: #ffb4b4;
 }
+
+textarea {
+  width: 100%;
+  border: 1px solid #354157;
+  border-radius: 12px;
+  padding: 0.8rem;
+  background: #0d121a;
+  color: #f3f5f7;
+  font: 0.84rem/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  resize: vertical;
+}
+
+.node-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.action-link {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  border: 1px solid #496489;
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  background: #15213a;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.blueprint-panel,
+.polygon-form {
+  margin-top: 1rem;
+  border: 1px solid #293344;
+  border-radius: 18px;
+  background: rgba(17, 21, 28, 0.94);
+}
+
+.blueprint-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #293344;
+}
+
+.blueprint-toolbar > div:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.blueprint-toolbar span {
+  color: #8fa0b7;
+  font-size: 0.82rem;
+}
+
+.blueprint-actions {
+  display: flex;
+  gap: 0.45rem;
+}
+
+.blueprint-actions button {
+  min-width: 42px;
+}
+
+.blueprint-canvas {
+  display: block;
+  width: 100%;
+  min-height: min(68vh, 720px);
+  border-radius: 0 0 18px 18px;
+  background: #080b10;
+  touch-action: none;
+  cursor: grab;
+}
+
+.blueprint-canvas:active {
+  cursor: grabbing;
+}
+
+.blueprint-room {
+  fill: #0f1827;
+  stroke: #8aa5ca;
+  stroke-width: 18;
+}
+
+.blueprint-grid {
+  fill: url(#grid600);
+  pointer-events: none;
+}
+
+.blueprint-grid-line {
+  fill: none;
+  stroke: #29384c;
+  stroke-width: 6;
+}
+
+.blueprint-slot {
+  fill: rgba(73, 100, 137, 0.08);
+  stroke: #425776;
+  stroke-width: 8;
+  stroke-dasharray: 45 30;
+}
+
+.blueprint-rack {
+  fill: #d7e5f8;
+  stroke: #ffffff;
+  stroke-width: 10;
+}
+
+.blueprint-rack-label {
+  fill: #080b10;
+  font-size: 115px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.polygon-form {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}

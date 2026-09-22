@@ -360,7 +360,6 @@ G2 passes only when:
 
 Until then, **G3 persistence implementation is not authorized**.
 
-
 ## 16. Accepted G2 closure decisions
 
 The following decisions are accepted and remove the remaining architecture-blocking ambiguity:

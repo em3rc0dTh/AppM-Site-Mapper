@@ -17,31 +17,45 @@ The legacy repository is evidence and reference, not the architectural foundatio
 ## Current status
 
 **Milestone:** MK1-F0 — Foundation & Truth  
-**Gate:** G0 Repository Foundation — IN PROGRESS  
-**Active branch:** feat/mk1-g0-bootstrap
+**Gate:** G0 Repository Foundation — PASSED  
+**Integration:** PR #1  
+**Next gate:** G1 Legacy Mining & Product Truth
 
-No product capability is considered migrated yet.
+No legacy product implementation has been copied into MK1.
 
 ## Stack baseline
 
-- Next.js 16.x Active LTS
-- React 19.x
-- TypeScript strict mode
-- ESLint
-- Prettier
-- Vitest
+- Next.js 16.3.5
+- React 19.3.0
+- TypeScript 5.9.3
+- ESLint 9.39.5
+- Prettier 3.9.8
+- Vitest 5.0.1
 - GitHub Actions
+- Node.js 22
+- npm lockfile v3
 
 Persistence, authentication, RBAC and telemetry libraries are intentionally not selected yet. Their architecture must be decided by the relevant ADR and domain gate before implementation.
 
 ## Local bootstrap
 
 1. Use Node.js 22.
-2. Run npm install.
-3. Run npm run verify.
-4. Run npm run dev.
+2. Run `npm ci`.
+3. Run `npm run verify`.
+4. Run `npm run dev`.
 
-A dependency lockfile is required before G0 can be sealed. Until that file is committed and CI is green, G0 remains IN PROGRESS.
+## Quality gate
+
+Pull requests must pass:
+
+- reproducible dependency installation with `npm ci`;
+- TypeScript typecheck;
+- ESLint;
+- Prettier check;
+- unit tests;
+- integration-test harness;
+- production build;
+- production dependency audit at high severity.
 
 ## Trust boundary
 

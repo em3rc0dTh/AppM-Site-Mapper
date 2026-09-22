@@ -5,6 +5,9 @@ import { getMongoDatabase } from '@/shared/infrastructure/mongodb/client';
 
 export type PersistenceMode = 'memory' | 'mongodb';
 
+const memoryRepository = new MemoryTopologyRepository();
+let mongoRepository: Promise<TopologyRepository> | undefined;
+
 export function getPersistenceMode(): PersistenceMode {
   const configured = process.env.APP_PERSISTENCE?.trim();
 
@@ -25,8 +28,10 @@ export function getPersistenceMode(): PersistenceMode {
 
 export async function createTopologyRepository(): Promise<TopologyRepository> {
   if (getPersistenceMode() === 'memory') {
-    return new MemoryTopologyRepository();
+    return memoryRepository;
   }
 
-  return new MongoTopologyRepository(await getMongoDatabase());
+  mongoRepository ??= getMongoDatabase().then((database) => new MongoTopologyRepository(database));
+
+  return mongoRepository;
 }

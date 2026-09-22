@@ -1,6 +1,6 @@
 # G3 — Persistence Contract Receipt
 
-**Status:** READY FOR CI / REVIEW
+**Status:** PASS
 
 ## Delivered
 
@@ -26,4 +26,4 @@
 
 ## Gate verdict
 
-PASS requires the final branch to pass the complete CI pipeline after the bootstrap workflow is removed.
+PASS — the final branch passed the complete CI pipeline after the one-time dependency bootstrap workflow was removed.

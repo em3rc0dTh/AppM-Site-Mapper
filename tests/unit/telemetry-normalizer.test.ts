@@ -8,9 +8,7 @@ describe('normalizeTelemetry', () => {
   it('normalizes legacy reported payloads', () => {
     const result = normalizeTelemetry(
       'data/dev/SN-001',
-      new TextEncoder().encode(
-        JSON.stringify({ reported: { voltage: 52.1 } }),
-      ),
+      new TextEncoder().encode(JSON.stringify({ reported: { voltage: 52.1 } })),
       options,
       '2026-09-22T00:00:00.000Z',
     );
@@ -27,11 +25,7 @@ describe('normalizeTelemetry', () => {
   });
 
   it('rejects topics outside the allowlisted prefix', () => {
-    const result = normalizeTelemetry(
-      'other/SN-001',
-      new TextEncoder().encode('{}'),
-      options,
-    );
+    const result = normalizeTelemetry('other/SN-001', new TextEncoder().encode('{}'), options);
 
     expect(result).toEqual({
       ok: false,
@@ -40,24 +34,12 @@ describe('normalizeTelemetry', () => {
   });
 
   it('rejects malformed JSON and oversized payloads', () => {
-    expect(
-      normalizeTelemetry(
-        'data/dev/SN-001',
-        new TextEncoder().encode('{'),
-        options,
-      ),
-    ).toEqual({
+    expect(normalizeTelemetry('data/dev/SN-001', new TextEncoder().encode('{'), options)).toEqual({
       ok: false,
       error: 'INVALID_JSON',
     });
 
-    expect(
-      normalizeTelemetry(
-        'data/dev/SN-001',
-        new Uint8Array(1025),
-        options,
-      ),
-    ).toEqual({
+    expect(normalizeTelemetry('data/dev/SN-001', new Uint8Array(1025), options)).toEqual({
       ok: false,
       error: 'PAYLOAD_TOO_LARGE',
     });

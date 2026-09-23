@@ -3,10 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import { BdfbChassis } from '@/components/power/bdfb-chassis';
-import {
-  TopologyContextTree,
-  type ContextTreeEntry,
-} from '@/components/topology/context-tree';
+import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
 import { TopologyCreateForm } from '@/components/topology/topology-create-form';
 import {
   TopologyVisualStage,

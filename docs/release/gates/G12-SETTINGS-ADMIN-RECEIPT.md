@@ -1,6 +1,6 @@
 # G12 — Settings & Administration Receipt
 
-**Status:** READY FOR CI / REVIEW
+**Status:** PASS
 
 ## Delivered
 
@@ -25,6 +25,18 @@ G12 does not weaken G4.
 
 Every administrative mutation is re-authorized on the server and only safe user projections leave the identity module.
 
+## Certification
+
+The final G12 implementation passed:
+
+- typecheck;
+- lint;
+- format check;
+- unit tests;
+- integration tests;
+- production build;
+- production dependency audit.
+
 ## Gate verdict
 
-Final PASS requires the complete CI pipeline to succeed on the final G12 head.
+**PASS — G13 Legacy Data Migration tooling is authorized after this PR is integrated into `main`.**

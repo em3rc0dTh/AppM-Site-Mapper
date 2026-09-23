@@ -594,6 +594,41 @@ async function main() {
     .map(([reason, count]) => ({ reason, count }))
     .sort((left, right) => right.count - left.count);
 
+  const rejectionDetails = plan.rejections.map((rejection) => {
+    const source = input.collections[rejection.sourceCollection] ?? [];
+    const record = rejection.legacyId
+      ? source.find((candidate) => recordId(candidate) === rejection.legacyId)
+      : undefined;
+    return {
+      ...rejection,
+      ...(record
+        ? {
+            name: label(record, rejection.legacyId ?? 'Unnamed'),
+            category: reference(record, ['category', 'type', 'variant']),
+            parentReferences: {
+              parentId: reference(record, ['parentId']),
+              siteId: reference(record, ['siteId', 'site_id']),
+              structureId: reference(record, ['structureId', 'structure_id']),
+              levelId: reference(record, ['levelId', 'level_id']),
+              roomId: reference(record, ['roomId', 'room_id', 'substructureId']),
+              clusterId: reference(record, ['clusterId', 'containerClusterId']),
+              positionId: reference(record, ['positionId', 'position_id']),
+              containerId: reference(record, ['containerId', 'rackId']),
+            },
+            rackFacts: {
+              totalU: numeric(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']),
+              capacityTotal: asRecord(record.capacity)
+                ? numeric(record.capacity as LegacyRecord, ['total'])
+                : undefined,
+              heightRu: asRecord(record.dimensions)
+                ? numeric(record.dimensions as LegacyRecord, ['heightRu'])
+                : undefined,
+            },
+          }
+        : {}),
+    };
+  });
+
   process.stdout.write(
     JSON.stringify(
       {
@@ -605,6 +640,7 @@ async function main() {
         warnings: plan.warnings.length,
         rejections: plan.rejections.length,
         rejectionReasons,
+        rejectionDetails,
         ...(staging ? { staging } : {}),
       },
       null,

@@ -2,16 +2,29 @@ import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { PowerService } from '@/modules/power/application/power-service';
-import type { PowerEndpoint, PowerFeed } from '@/modules/power/domain/entities';
+import type { InternalPowerEndpoint, PowerEndpoint, PowerFeed } from '@/modules/power/domain/entities';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function isInternalEndpoint(value: unknown): value is InternalPowerEndpoint {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const allowed = ['shelfId', 'frameId', 'panelId', 'breakerHolderId'] as const;
+
+  return allowed.every((key) => value[key] === undefined || typeof value[key] === 'string');
+}
+
 function isEndpoint(value: unknown): value is PowerEndpoint {
-  return Boolean(
-    value &&
-      typeof value === 'object' &&
-      'entityId' in value &&
-      typeof (value as { entityId?: unknown }).entityId === 'string',
+  return (
+    isRecord(value) &&
+    typeof value.entityId === 'string' &&
+    (value.internal === undefined || isInternalEndpoint(value.internal))
   );
 }
 
@@ -40,10 +53,7 @@ export async function POST(request: Request) {
   const body: unknown = await request.json().catch(() => null);
 
   if (
-    !body ||
-    typeof body !== 'object' ||
-    !('source' in body) ||
-    !('target' in body) ||
+    !isRecord(body) ||
     !isEndpoint(body.source) ||
     !isEndpoint(body.target)
   ) {
@@ -51,10 +61,15 @@ export async function POST(request: Request) {
   }
 
   const feed =
-    'feed' in body && (body.feed === 'A' || body.feed === 'B')
+    body.feed === 'A' || body.feed === 'B'
       ? (body.feed as PowerFeed)
       : undefined;
-  const label = 'label' in body && typeof body.label === 'string' ? body.label : undefined;
+
+  if (body.feed !== undefined && !feed) {
+    return NextResponse.json({ error: 'INVALID_FEED' }, { status: 400 });
+  }
+
+  const label = typeof body.label === 'string' ? body.label : undefined;
 
   const service = new PowerService(
     await createTopologyRepository(),

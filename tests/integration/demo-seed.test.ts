@@ -32,7 +32,7 @@ describe('development demo seed', () => {
       throw new Error('Expected demo room.');
     }
 
-    expect(room.polygon).toHaveLength(4);
+    expect(room.polygon).toHaveLength(6);
 
     const devices = await topology.listByKind('DEVICE');
     const bdfb = devices.find((node) => node.kind === 'DEVICE' && node.name === 'BDFB-A');

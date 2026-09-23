@@ -52,6 +52,69 @@ describe('legacy migration planner', () => {
     expect(equipment?.kind).toBe('EQUIPMENT');
   });
 
+
+  it('preserves equipped rack mount start so physical RU usage is not rendered as clearance', () => {
+    let cursor = 0;
+    const generated = Array.from(
+      { length: 8 },
+      (_, index) => `10000000-0000-4000-8000-${String(index + 1).padStart(12, '0')}`,
+    );
+    const plan = planLegacyMigration(
+      {
+        network: { id: 'network-id', name: 'Network' },
+        collections: {
+          Site: [{ id: 's1', name: 'Site A' }],
+          Structure: [{ id: 'st1', name: 'Structure A', siteId: 's1' }],
+          Level: [{ id: 'l1', name: 'L1', structureId: 'st1' }],
+          Substructure: [{ id: 'r1', name: 'Room A', levelId: 'l1' }],
+          ContainerCluster: [{ id: 'c1', name: 'Bay A', substructureId: 'r1' }],
+          Position: [{ id: 'p1', name: 'A-1', clusterId: 'c1', coordinate: 'A-1' }],
+          Rack: [
+            {
+              id: 'rack1',
+              name: 'Rack A',
+              positionId: 'p1',
+              totalU: 42,
+              CAS: [
+                {
+                  id: 'cas-1',
+                  startPosition: 39,
+                  endPosition: 42,
+                  casStatus: 'EQUIPPED',
+                  deviceId: 'd1',
+                  mounting: {
+                    startPosition: 40,
+                    endPosition: 41,
+                    physicalSize: 2,
+                    clearance: { top: 1, bottom: 1 },
+                  },
+                },
+              ],
+            },
+          ],
+          Device: [{ id: 'd1', name: 'Device A', rackId: 'rack1' }],
+        },
+      },
+      { createId: () => generated[cursor++]! },
+    );
+
+    expect(plan.rejections).toEqual([]);
+    const rack = plan.nodes.find((node) => node.legacyId === 'rack1');
+    const device = plan.nodes.find((node) => node.legacyId === 'd1');
+    const cas = Array.isArray(rack?.cas) ? rack.cas[0] : undefined;
+
+    expect(cas).toMatchObject({
+      startU: 39,
+      endU: 42,
+      state: 'EQUIPPED',
+      mountStartU: 40,
+      physicalSizeU: 2,
+      clearanceTopU: 1,
+      clearanceBottomU: 1,
+      occupantId: device?.id,
+    });
+  });
+
   it('rejects unresolved parents instead of inventing hierarchy', () => {
     const plan = planLegacyMigration(
       {

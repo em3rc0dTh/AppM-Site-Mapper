@@ -46,6 +46,7 @@ export interface MigrationWarning {
 }
 
 export interface MigrationPlan {
+  readonly sourceFingerprint: string;
   readonly nodes: readonly CanonicalNode[];
   readonly idMap: Readonly<Record<string, string>>;
   readonly warnings: readonly MigrationWarning[];

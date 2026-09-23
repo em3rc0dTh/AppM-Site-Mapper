@@ -126,7 +126,7 @@ export default async function TopologyNodePage({
         : [];
 
   const spatialNavigationItems: SpatialNavigationItem[] =
-    node.kind === 'STRUCTURE' || node.kind === 'LEVEL'
+    node.kind === 'SITE' || node.kind === 'STRUCTURE' || node.kind === 'LEVEL'
       ? childEntries.map(({ node: child, href }) => ({
           id: child.id,
           name: child.name,
@@ -212,7 +212,7 @@ export default async function TopologyNodePage({
                 initialPolygon={node.polygon ?? []}
                 canWrite={canWrite}
                 contextPolygons={boundaryContext}
-                navigationItems={node.kind === 'STRUCTURE' ? spatialNavigationItems : []}
+                navigationItems={spatialNavigationItems}
                 title={node.kind === 'SITE' ? 'Site boundary' : 'Structure boundary'}
                 subtitle="Spatial authoring · millimetres"
               />

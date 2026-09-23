@@ -4,14 +4,12 @@ import { TelemetryService } from '@/modules/telemetry/application/telemetry-serv
 import { NativeMqttSource } from '@/modules/telemetry/infrastructure/native-mqtt-source';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { logger } from '@/shared/infrastructure/logger';
+import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
 
 export interface TelemetryRuntime {
   readonly hub: TelemetryHub;
   readonly service: TelemetryService;
 }
-
-let runtimePromise: Promise<TelemetryRuntime> | undefined;
-let source: NativeMqttSource | undefined;
 
 function positiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
@@ -19,7 +17,7 @@ function positiveInt(value: string | undefined, fallback: number): number {
 }
 
 export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
-  runtimePromise ??= (async () => {
+  return getProcessSingleton<Promise<TelemetryRuntime>>('telemetry-runtime', async () => {
     const maxStreams = positiveInt(process.env.TELEMETRY_MAX_STREAMS, 100);
     const maxPayloadBytes = positiveInt(process.env.TELEMETRY_MAX_PAYLOAD_BYTES, 262_144);
     const topicPrefix = process.env.MQTT_TOPIC_PREFIX?.trim() || 'data/dev/';
@@ -30,11 +28,11 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
       maxPayloadBytes,
     });
 
-    if (process.env.TELEMETRY_ENABLED === 'true' && !source) {
+    if (process.env.TELEMETRY_ENABLED === 'true') {
       const brokerUrl = requireRuntimeSecret('MQTT_BROKER_URL', process.env.MQTT_BROKER_URL);
       const topicFilter = process.env.MQTT_TOPIC_FILTER?.trim() || `${topicPrefix}#`;
 
-      source = new NativeMqttSource(
+      const source = new NativeMqttSource(
         {
           brokerUrl,
           topicFilter,
@@ -59,7 +57,5 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     }
 
     return { hub, service };
-  })();
-
-  return runtimePromise;
+  });
 }

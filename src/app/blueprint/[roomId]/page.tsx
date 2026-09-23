@@ -57,7 +57,12 @@ export default async function BlueprintPage({
         />
       )}
 
-      {canWrite && <RoomPolygonForm roomId={roomId} />}
+      {canWrite && (
+        <details className="edit-disclosure">
+          <summary>Edit room boundary</summary>
+          <RoomPolygonForm roomId={roomId} />
+        </details>
+      )}
     </main>
   );
 }

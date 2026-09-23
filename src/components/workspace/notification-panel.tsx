@@ -1,3 +1,4 @@
+import { StatePanel } from '@/shared/ui/primitives';
 import type { WorkspaceNotification } from '@/modules/workspace/application/workspace-service';
 
 export function NotificationPanel({
@@ -10,7 +11,10 @@ export function NotificationPanel({
         <strong>{notifications.length}</strong>
       </div>
       {notifications.length === 0 ? (
-        <p>No configuration warnings.</p>
+        <StatePanel
+          title="No configuration warnings"
+          description="Inventory configuration checks have no warnings to display."
+        />
       ) : (
         <ul className="workspace-notifications">
           {notifications.map((notification) => (

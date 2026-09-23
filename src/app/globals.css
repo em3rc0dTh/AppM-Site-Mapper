@@ -1717,3 +1717,54 @@ p {
     scroll-behavior: auto !important;
   }
 }
+.power-flow {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  overflow: visible;
+  gap: 22px;
+}
+.power-stage {
+  position: relative;
+  min-width: 0;
+}
+.power-step-arrow {
+  position: absolute;
+  right: -17px;
+  top: 38px;
+  transform: rotate(-90deg);
+  color: var(--accent);
+}
+@media (max-width: 640px) {
+  .power-flow {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .power-step-arrow {
+    left: 50%;
+    right: auto;
+    top: auto;
+    bottom: -24px;
+    transform: none;
+  }
+}
+.blueprint-actions button[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.edit-disclosure {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-top: 16px;
+  background: var(--surface);
+}
+.edit-disclosure > summary {
+  padding: 16px 20px;
+  cursor: pointer;
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+.edit-disclosure > .create-form,
+.edit-disclosure > .polygon-form {
+  border: 0;
+  margin: 0;
+}

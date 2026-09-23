@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 import { Icon } from './primitives';
 
@@ -14,6 +14,7 @@ const links = [
 ];
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   if (pathname === '/login' || pathname === '/change-password') return children;
@@ -29,7 +30,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST' });
       if (!response.ok) throw new Error();
-      window.location.href = '/login';
+      router.replace('/login');
+      router.refresh();
     } catch {
       setError('Could not sign out. Try again.');
       setBusy(false);

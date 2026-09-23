@@ -179,7 +179,12 @@ export default async function TopologyNodePage({
       </section>
 
       {canWrite &&
-        childKinds.map((kind) => <TopologyCreateForm key={kind} kind={kind} parentId={node.id} />)}
+        childKinds.map((kind) => (
+          <details className="edit-disclosure" key={kind}>
+            <summary>Edit · Create {kind.replaceAll('_', ' ').toLowerCase()}</summary>
+            <TopologyCreateForm kind={kind} parentId={node.id} />
+          </details>
+        ))}
     </main>
   );
 }

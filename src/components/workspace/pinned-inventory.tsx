@@ -1,3 +1,4 @@
+import { StatePanel } from '@/shared/ui/primitives';
 import Link from 'next/link';
 
 import type { WorkspacePinnedItem } from '@/modules/workspace/application/workspace-service';
@@ -9,7 +10,10 @@ export function PinnedInventory({ items }: Readonly<{ items: readonly WorkspaceP
         <span>Pinned inventory</span>
       </div>
       {items.length === 0 ? (
-        <p>No pinned Device or Equipment.</p>
+        <StatePanel
+          title="Keep important inventory close"
+          description="Pin a Device or Equipment from its details to find it here."
+        />
       ) : (
         <ul className="workspace-compact-list">
           {items.map((item) => (

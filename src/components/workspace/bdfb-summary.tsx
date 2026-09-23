@@ -1,3 +1,4 @@
+import { StatePanel } from '@/shared/ui/primitives';
 import Link from 'next/link';
 
 import type { WorkspaceBdfbSummary } from '@/modules/workspace/application/workspace-service';
@@ -10,7 +11,10 @@ export function BdfbSummary({ items }: Readonly<{ items: readonly WorkspaceBdfbS
         <Link href="/power">Power paths</Link>
       </div>
       {items.length === 0 ? (
-        <p>No BDFB Device structure is configured.</p>
+        <StatePanel
+          title="No distribution structure"
+          description="BDFB devices will appear after their internal structure is configured."
+        />
       ) : (
         <div className="workspace-card-grid">
           {items.map((item) => (

@@ -1,32 +1,16 @@
-'use client';
+import Link from 'next/link';
+import { StatusBadge } from '@/shared/ui/primitives';
 
-import { useState } from 'react';
-
-export function WorkspaceMode({ canEdit }: Readonly<{ canEdit: boolean }>) {
-  const [mode, setMode] = useState<'READ' | 'EDIT'>('READ');
-
+export function WorkspaceMode({ canEdit }: { canEdit: boolean }) {
   return (
     <div className="workspace-mode" aria-label="Workspace mode">
-      <button
-        aria-pressed={mode === 'READ'}
-        className={mode === 'READ' ? 'is-active' : ''}
-        onClick={() => setMode('READ')}
-        type="button"
-      >
-        Read
-      </button>
-      <button
-        aria-pressed={mode === 'EDIT'}
-        className={mode === 'EDIT' ? 'is-active' : ''}
-        disabled={!canEdit}
-        onClick={() => setMode('EDIT')}
-        type="button"
-      >
-        Edit
-      </button>
+      <StatusBadge>READ VIEW</StatusBadge>
       <span>
-        {mode === 'EDIT' ? 'Editing enabled for permitted actions' : 'Read-only workspace'}
+        {canEdit
+          ? 'Open an entity to use its permitted editing controls.'
+          : 'Your role has read-only access.'}
       </span>
+      {canEdit && <Link href="/network">Manage topology →</Link>}
     </div>
   );
 }

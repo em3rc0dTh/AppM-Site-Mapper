@@ -1,5 +1,6 @@
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
+  ContainerClusterBayNode,
   ContainerRackNode,
   PositionNode,
   RoomSubstructureNode,
@@ -23,8 +24,28 @@ export interface RackPlacementView {
   readonly rect: RectMm;
 }
 
+export interface PositionPlacementView {
+  readonly id: string;
+  readonly name: string;
+  readonly coordinate: string;
+  readonly clusterId: string;
+  readonly clusterName: string;
+  readonly rect: RectMm;
+  readonly occupied: boolean;
+}
+
+export interface ClusterPlacementView {
+  readonly id: string;
+  readonly name: string;
+  readonly variant: ContainerClusterBayNode['variant'];
+  readonly rect: RectMm;
+  readonly positionCount: number;
+}
+
 export interface RoomLayout {
   readonly room: RoomSubstructureNode;
+  readonly clusters: readonly ClusterPlacementView[];
+  readonly positions: readonly PositionPlacementView[];
   readonly racks: readonly RackPlacementView[];
   readonly assignableSlots: readonly RectMm[];
 }
@@ -102,25 +123,49 @@ export class SpatialService {
     }
 
     const clusters = (await this.repository.listChildren(roomId)).filter(
-      (child) => child.kind === 'CONTAINER_CLUSTER_BAY' && child.lifecycle === 'ACTIVE',
+      (child): child is ContainerClusterBayNode =>
+        child.kind === 'CONTAINER_CLUSTER_BAY' && child.lifecycle === 'ACTIVE',
     );
 
-    const positions = (
-      await Promise.all(clusters.map((cluster) => this.repository.listChildren(cluster.id)))
-    )
-      .flat()
-      .filter(
-        (child): child is PositionNode => child.kind === 'POSITION' && child.lifecycle === 'ACTIVE',
-      );
+    const positionsByCluster = await Promise.all(
+      clusters.map(async (cluster) => {
+        const positions = (await this.repository.listChildren(cluster.id)).filter(
+          (child): child is PositionNode =>
+            child.kind === 'POSITION' && child.lifecycle === 'ACTIVE',
+        );
+        return { cluster, positions };
+      }),
+    );
+
+    const positions = positionsByCluster.flatMap(({ cluster, positions: clusterPositions }) =>
+      clusterPositions.map((position) => {
+        const point = gridCoordinateToPoint(position.coordinate);
+        return {
+          id: position.id,
+          name: position.name,
+          coordinate: `${position.coordinate.row}-${position.coordinate.column}`,
+          clusterId: cluster.id,
+          clusterName: cluster.name,
+          rect: {
+            x: point.x,
+            y: point.y,
+            width: TILE_SIZE_MM,
+            depth: TILE_SIZE_MM,
+          },
+        };
+      }),
+    );
 
     const racksByPosition = await Promise.all(
-      positions.map(async (position) => {
-        const racks = (await this.repository.listChildren(position.id)).filter(
-          (child): child is ContainerRackNode =>
-            child.kind === 'CONTAINER_RACK' && child.lifecycle === 'ACTIVE',
-        );
-        return { position, racks };
-      }),
+      positionsByCluster.flatMap(({ positions: clusterPositions }) =>
+        clusterPositions.map(async (position) => {
+          const racks = (await this.repository.listChildren(position.id)).filter(
+            (child): child is ContainerRackNode =>
+              child.kind === 'CONTAINER_RACK' && child.lifecycle === 'ACTIVE',
+          );
+          return { position, racks };
+        }),
+      ),
     );
 
     const racks = racksByPosition.flatMap(({ position, racks: positionRacks }) => {
@@ -138,11 +183,61 @@ export class SpatialService {
       }));
     });
 
+    const occupiedPositionIds = new Set(
+      racksByPosition
+        .filter(({ racks: positionRacks }) => positionRacks.length > 0)
+        .map(({ position }) => position.id),
+    );
+
+    const positionViews: PositionPlacementView[] = positions.map((position) => ({
+      ...position,
+      occupied: occupiedPositionIds.has(position.id),
+    }));
+
+    const clusterViews: ClusterPlacementView[] = positionsByCluster.flatMap(
+      ({ cluster, positions: clusterPositions }) => {
+        if (clusterPositions.length === 0) {
+          return [];
+        }
+
+        const rects = clusterPositions.map((position) => {
+          const point = gridCoordinateToPoint(position.coordinate);
+          return {
+            x: point.x,
+            y: point.y,
+            width: TILE_SIZE_MM,
+            depth: TILE_SIZE_MM,
+          };
+        });
+        const minX = Math.min(...rects.map((rect) => rect.x));
+        const minY = Math.min(...rects.map((rect) => rect.y));
+        const maxX = Math.max(...rects.map((rect) => rect.x + rect.width));
+        const maxY = Math.max(...rects.map((rect) => rect.y + rect.depth));
+
+        return [
+          {
+            id: cluster.id,
+            name: cluster.name,
+            variant: cluster.variant,
+            rect: {
+              x: minX,
+              y: minY,
+              width: maxX - minX,
+              depth: maxY - minY,
+            },
+            positionCount: clusterPositions.length,
+          },
+        ];
+      },
+    );
+
     const occupied = racks.map((rack) => rack.rect);
     const assignableSlots = node.polygon ? generateAssignableSlots(node.polygon, occupied) : [];
 
     return success({
       room: node,
+      clusters: clusterViews,
+      positions: positionViews,
       racks,
       assignableSlots,
     });

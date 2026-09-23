@@ -21,7 +21,9 @@ function parseArgs(argv: readonly string[]): CliOptions {
 
   const input = value('--input');
   if (!input) {
-    throw new Error('Usage: --input <legacy.json> [--output report.json] [--id-map ids.json] [--apply]');
+    throw new Error(
+      'Usage: --input <legacy.json> [--output report.json] [--id-map ids.json] [--apply]',
+    );
   }
 
   const idMap = value('--id-map');

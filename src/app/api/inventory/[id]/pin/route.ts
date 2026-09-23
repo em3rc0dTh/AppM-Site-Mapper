@@ -24,9 +24,10 @@ export async function PATCH(request: Request, context: Context) {
   }
 
   const { id } = await context.params;
-  const result = await new InventoryService(
-    await createTopologyRepository(),
-  ).setPinned(id, body.pinned);
+  const result = await new InventoryService(await createTopologyRepository()).setPinned(
+    id,
+    body.pinned,
+  );
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 404 });

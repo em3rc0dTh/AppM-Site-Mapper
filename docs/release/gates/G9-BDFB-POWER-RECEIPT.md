@@ -1,6 +1,6 @@
 # G9 — BDFB / Power Receipt
 
-**Status:** READY FOR FINAL CI
+**Status:** PASS
 
 ## Delivered
 
@@ -19,4 +19,4 @@
 
 ## Gate verdict
 
-PASS requires complete final CI and integration into main.
+The complete CI pipeline passed on the certified implementation head. G9 is ready for integration into main.

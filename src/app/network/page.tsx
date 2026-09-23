@@ -1,4 +1,12 @@
-import Link from 'next/link';
+import {
+  DataView,
+  EntityRow,
+  SectionHeader,
+  StatePanel,
+  StatusBadge,
+} from '@/shared/ui/primitives';
+import { InspectButton } from '@/shared/ui/entity-inspector';
+import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { redirect } from 'next/navigation';
 
 import { TopologyCreateForm } from '@/components/topology/topology-create-form';
@@ -20,29 +28,39 @@ export default async function NetworkPage() {
 
   return (
     <main className="workspace-shell">
-      <header className="workspace-header">
-        <div>
-          <p className="eyebrow">AppManager · Site Mapper</p>
-          <h1>Network</h1>
-        </div>
-        <span>{auth.value.displayName}</span>
-      </header>
+      <SectionHeader
+        eyebrow="Infrastructure / topology"
+        title="Network"
+        description="Explore your sites and the physical hierarchy beneath them."
+        actions={<StatusBadge>{canWrite ? 'EDIT PERMITTED' : 'READ ONLY'}</StatusBadge>}
+      />
 
       <section className="panel">
         <h2>Topology roots</h2>
         {networks.length === 0 ? (
-          <p>No network has been created yet.</p>
+          <StatePanel
+            title="No networks yet"
+            description="Create the first network to start organizing sites, rooms and racks."
+          />
         ) : (
-          <ul className="node-list">
+          <DataView label="Networks">
             {await Promise.all(
               networks.map(async (network) => (
-                <li key={network.id}>
-                  <Link href={await service.buildDeepLink(network.id)}>{network.name}</Link>
-                  <span>{network.kind}</span>
-                </li>
+                <EntityRow
+                  key={network.id}
+                  name={network.name}
+                  kind={network.kind}
+                  href={await service.buildDeepLink(network.id)}
+                  status={<StatusBadge>{network.lifecycle}</StatusBadge>}
+                  actions={
+                    <InspectButton
+                      entity={topologyInspector(network, await service.buildDeepLink(network.id))}
+                    />
+                  }
+                />
               )),
             )}
-          </ul>
+          </DataView>
         )}
       </section>
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { DataView, StatusBadge } from '@/shared/ui/primitives';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
@@ -36,7 +37,7 @@ export function UserAdminTable({
   }
 
   return (
-    <div className="settings-user-table-wrap">
+    <DataView mode="table" label="User administration">
       <table className="settings-user-table">
         <thead>
           <tr>
@@ -68,7 +69,11 @@ export function UserAdminTable({
                     <option value="SUPERADMIN">Superadmin</option>
                   </select>
                 </td>
-                <td>{user.lifecycle}</td>
+                <td>
+                  <StatusBadge tone={user.lifecycle === 'ACTIVE' ? 'good' : 'neutral'}>
+                    {user.lifecycle}
+                  </StatusBadge>
+                </td>
                 <td>{user.mustChangePassword ? 'Change required' : 'Configured'}</td>
                 <td>
                   <button
@@ -89,6 +94,6 @@ export function UserAdminTable({
         </tbody>
       </table>
       {error ? <p className="form-error">{error}</p> : null}
-    </div>
+    </DataView>
   );
 }

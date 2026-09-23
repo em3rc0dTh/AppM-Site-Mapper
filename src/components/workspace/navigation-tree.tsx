@@ -1,38 +1,90 @@
+'use client';
+
 import Link from 'next/link';
-
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import type { WorkspaceTreeNode } from '@/modules/workspace/application/workspace-service';
+import { Icon, StatePanel } from '@/shared/ui/primitives';
 
-function Branch({ node }: Readonly<{ node: WorkspaceTreeNode }>) {
+function matches(node: WorkspaceTreeNode, query: string): boolean {
+  return (
+    node.name.toLowerCase().includes(query) || node.children.some((child) => matches(child, query))
+  );
+}
+function Branch({
+  node,
+  query,
+  pathname,
+}: {
+  node: WorkspaceTreeNode;
+  query: string;
+  pathname: string;
+}) {
+  const [expanded, setExpanded] = useState(true);
+  const children = node.children.filter((child) => matches(child, query));
   return (
     <li>
-      <Link href={node.href}>
-        <span>{node.name}</span>
-        <small>{node.kind.replaceAll('_', ' ')}</small>
-      </Link>
-      {node.children.length > 0 ? (
+      <div className="tree-node-line">
+        {node.children.length ? (
+          <button
+            className="tree-toggle"
+            aria-label={`${expanded ? 'Collapse' : 'Expand'} ${node.name}`}
+            aria-expanded={!!query || expanded}
+            onClick={() => setExpanded(!expanded)}
+          >
+            {query || expanded ? '⌄' : '›'}
+          </button>
+        ) : (
+          <span className="tree-spacer" />
+        )}
+        <Link
+          href={node.href}
+          aria-current={pathname === node.href ? 'page' : undefined}
+          title={node.kind.replaceAll('_', ' ')}
+        >
+          <Icon
+            name={node.kind === 'NETWORK' ? 'network' : node.kind.includes('ROOM') ? 'room' : 'box'}
+          />
+          <span>{node.name}</span>
+          {node.children.length > 0 && <small>{node.children.length}</small>}
+        </Link>
+      </div>
+      {children.length > 0 && (query || expanded) && (
         <ul>
-          {node.children.map((child) => (
-            <Branch key={child.id} node={child} />
+          {children.map((child) => (
+            <Branch key={child.id} node={child} query={query} pathname={pathname} />
           ))}
         </ul>
-      ) : null}
+      )}
     </li>
   );
 }
-
-export function NavigationTree({ roots }: Readonly<{ roots: readonly WorkspaceTreeNode[] }>) {
+export function NavigationTree({ roots }: { roots: readonly WorkspaceTreeNode[] }) {
+  const [query, setQuery] = useState('');
+  const pathname = usePathname();
+  const filtered = roots.filter((node) => matches(node, query.toLowerCase()));
   return (
     <nav className="workspace-tree" aria-label="Infrastructure topology">
       <div className="workspace-section-title">
-        <span>Topology</span>
+        <span>Topology explorer</span>
         <Link href="/network">Manage</Link>
       </div>
-      {roots.length === 0 ? (
-        <p>No topology has been created.</p>
+      <input
+        type="search"
+        aria-label="Search topology"
+        placeholder="Search infrastructure…"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      {!filtered.length ? (
+        <StatePanel
+          title={query ? 'No matching entities' : 'No topology yet'}
+          description={query ? 'Try another name.' : 'Create a network to map your infrastructure.'}
+        />
       ) : (
-        <ul className="workspace-tree-root">
-          {roots.map((root) => (
-            <Branch key={root.id} node={root} />
+        <ul>
+          {filtered.map((node) => (
+            <Branch key={node.id} node={node} query={query.toLowerCase()} pathname={pathname} />
           ))}
         </ul>
       )}

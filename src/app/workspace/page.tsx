@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { MetricTile, SectionHeader, StatusBadge } from '@/shared/ui/primitives';
+import type { WorkspaceTreeNode } from '@/modules/workspace/application/workspace-service';
 import { redirect } from 'next/navigation';
 
 import { BdfbSummary } from '@/components/workspace/bdfb-summary';
@@ -26,21 +28,55 @@ export default async function WorkspacePage() {
     await createPowerRepository(),
   );
   const snapshot = await service.getSnapshot();
+  const flatten = (nodes: readonly WorkspaceTreeNode[]): WorkspaceTreeNode[] =>
+    nodes.flatMap((node) => [node, ...flatten(node.children)]);
+  const allNodes = flatten(snapshot.navigation);
   const canEdit = hasPermission(auth.value.role, 'topology:write');
 
   return (
     <main className="operations-shell">
-      <header className="operations-header">
-        <div>
-          <p className="eyebrow">AppManager · Site Mapper</p>
-          <h1>Operations Workspace</h1>
-          <p>Physical topology, capacity, power and realtime operations from one trusted model.</p>
-        </div>
-        <div className="operations-user">
-          <strong>{auth.value.displayName}</strong>
-          <span>{auth.value.role}</span>
-        </div>
-      </header>
+      <SectionHeader
+        eyebrow="Operations / overview"
+        title="Operations Workspace"
+        description="Your physical infrastructure, connected in one operational view."
+        actions={
+          <>
+            <StatusBadge>{auth.value.role}</StatusBadge>
+            <span>{auth.value.displayName}</span>
+          </>
+        }
+      />
+      <div className="metric-grid">
+        <MetricTile
+          label="Sites"
+          value={allNodes
+            .filter((n) => n.kind === 'SITE')
+            .length.toString()
+            .padStart(2, '0')}
+          detail="Across active networks"
+        />
+        <MetricTile
+          label="Containers / racks"
+          value={allNodes
+            .filter((n) => n.kind === 'CONTAINER_RACK')
+            .length.toString()
+            .padStart(2, '0')}
+          detail="Physical infrastructure"
+        />
+        <MetricTile
+          label="Inventory"
+          value={allNodes
+            .filter((n) => n.kind === 'DEVICE' || n.kind === 'EQUIPMENT')
+            .length.toString()
+            .padStart(2, '0')}
+          detail="Device + Equipment"
+        />
+        <MetricTile
+          label="Power paths"
+          value={snapshot.activePowerPaths.toString().padStart(2, '0')}
+          detail="Active relationships"
+        />
+      </div>
 
       <WorkspaceMode canEdit={canEdit} />
 

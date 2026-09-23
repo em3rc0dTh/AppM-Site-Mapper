@@ -1,3 +1,13 @@
+import {
+  DataView,
+  EntityRow,
+  SectionHeader,
+  StatePanel,
+  StatusBadge,
+} from '@/shared/ui/primitives';
+import { InspectButton } from '@/shared/ui/entity-inspector';
+import { topologyInspector } from '@/shared/ui/entity-adapters';
+import { PinButton } from '@/components/workspace/pin-button';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
@@ -44,13 +54,93 @@ export default async function TopologyNodePage({
         )}
       </nav>
 
-      <header className="workspace-header">
-        <div>
-          <p className="eyebrow">{node.kind.replaceAll('_', ' ')}</p>
-          <h1>{node.name}</h1>
+      <SectionHeader
+        eyebrow={node.kind.replaceAll('_', ' ')}
+        title={node.name}
+        actions={
+          <>
+            <StatusBadge>{node.lifecycle}</StatusBadge>
+            <InspectButton entity={topologyInspector(node)} />
+            {(node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && canWrite && (
+              <PinButton id={node.id} initialPinned={node.pinned} />
+            )}
+          </>
+        }
+      />
+      {node.kind === 'CONTAINER_RACK' && node.variant === 'RACK' && (
+        <div className="node-actions">
+          <Link className="action-link" href={`/rack/${node.id}`}>
+            Open Rack Elevation →
+          </Link>
         </div>
-        <span>{node.lifecycle}</span>
-      </header>
+      )}
+      {node.kind === 'DEVICE' && node.bdfb && (
+        <section className="panel">
+          <h2>Power distribution structure</h2>
+          <DataView label="BDFB internals">
+            {node.bdfb.shelves.flatMap((shelf) =>
+              shelf.frames.flatMap((frame) =>
+                frame.panels.map((panel) => (
+                  <section key={panel.id}>
+                    <EntityRow
+                      name={panel.label}
+                      kind="PANEL"
+                      metadata={`${shelf.label} / ${frame.label}`}
+                      actions={
+                        <InspectButton
+                          entity={{
+                            name: panel.label,
+                            kind: 'PANEL',
+                            sections: [
+                              {
+                                title: 'Overview',
+                                fields: [
+                                  { label: 'Shelf', value: shelf.label },
+                                  { label: 'Frame', value: frame.label },
+                                  { label: 'Endpoints', value: panel.endpoints.length },
+                                ],
+                              },
+                            ],
+                          }}
+                        />
+                      }
+                    />
+                    {panel.endpoints.map((endpoint) => (
+                      <EntityRow
+                        key={endpoint.id}
+                        name={endpoint.label}
+                        kind={endpoint.variant}
+                        metadata={panel.label}
+                        actions={
+                          <InspectButton
+                            entity={{
+                              name: endpoint.label,
+                              kind: endpoint.variant,
+                              sections: [
+                                {
+                                  title: 'Overview',
+                                  fields: [
+                                    { label: 'Panel', value: panel.label },
+                                    {
+                                      label: 'Capacity',
+                                      value: endpoint.capacity ?? 'Not specified',
+                                    },
+                                    { label: 'Endpoint ID', value: endpoint.id },
+                                  ],
+                                },
+                              ],
+                            }}
+                          />
+                        }
+                      />
+                    ))}
+                  </section>
+                )),
+              ),
+            )}
+          </DataView>
+        </section>
+      )}
 
       {node.kind === 'ROOM_SUBSTRUCTURE' && (
         <div className="node-actions">
@@ -61,20 +151,30 @@ export default async function TopologyNodePage({
       )}
 
       <section className="panel">
-        <h2>Children</h2>
+        <h2>Contained infrastructure</h2>
         {children.length === 0 ? (
-          <p>No active children.</p>
+          <StatePanel
+            title="No contained entities"
+            description="This entity has no active children."
+          />
         ) : (
-          <ul className="node-list">
+          <DataView label="Contained entities">
             {await Promise.all(
               children.map(async (child) => (
-                <li key={child.id}>
-                  <Link href={await service.buildDeepLink(child.id)}>{child.name}</Link>
-                  <span>{child.kind.replaceAll('_', ' ')}</span>
-                </li>
+                <EntityRow
+                  key={child.id}
+                  name={child.name}
+                  kind={child.kind}
+                  href={await service.buildDeepLink(child.id)}
+                  actions={
+                    <InspectButton
+                      entity={topologyInspector(child, await service.buildDeepLink(child.id))}
+                    />
+                  }
+                />
               )),
             )}
-          </ul>
+          </DataView>
         )}
       </section>
 

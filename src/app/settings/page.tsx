@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 import { redirect } from 'next/navigation';
 
 import { PasswordForm } from '@/components/settings/password-form';
@@ -32,18 +32,12 @@ export default async function SettingsPage() {
 
   return (
     <main className="settings-shell">
-      <header className="settings-header">
-        <div>
-          <p className="eyebrow">AppManager · Site Mapper</p>
-          <h1>Settings</h1>
-          <p>
-            Account, security and administrative controls with server-authoritative permissions.
-          </p>
-        </div>
-        <Link className="action-link" href="/workspace">
-          Back to workspace
-        </Link>
-      </header>
+      <SectionHeader
+        eyebrow="Preferences / administration"
+        title="Settings"
+        description="Manage your account, security and operational environment."
+        actions={<StatusBadge>{auth.value.role}</StatusBadge>}
+      />
 
       <div className="settings-grid">
         <section className="panel">
@@ -79,14 +73,13 @@ export default async function SettingsPage() {
               <dd>{getPersistenceMode()}</dd>
             </div>
           </dl>
-          <p>No credential or secret value is exposed through this screen.</p>
+          <p>Runtime configuration for this environment.</p>
         </section>
 
         <section className="panel settings-danger">
           <h2>Danger Zone</h2>
           <p>
-            Destructive database reset is intentionally not exposed as a production runtime action.
-            Migration and test cleanup live in controlled tooling instead.
+            Database reset is unavailable here. Contact your administrator for data maintenance.
           </p>
         </section>
       </div>

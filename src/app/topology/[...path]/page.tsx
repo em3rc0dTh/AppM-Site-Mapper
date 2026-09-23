@@ -6,6 +6,7 @@ import { BdfbChassis } from '@/components/power/bdfb-chassis';
 import {
   SpatialAuthoringCanvas,
   type SpatialContextPolygon,
+  type SpatialNavigationItem,
 } from '@/components/spatial/spatial-authoring-canvas';
 import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
 import { TopologyCreateForm } from '@/components/topology/topology-create-form';
@@ -108,6 +109,30 @@ export default async function TopologyNodePage({
               ]
             : [],
         )
+      : node.kind === 'LEVEL'
+        ? childEntries.flatMap(({ node: child, href }) =>
+            child.kind === 'ROOM_SUBSTRUCTURE' && child.polygon
+              ? [
+                  {
+                    id: child.id,
+                    name: child.name,
+                    kind: child.kind,
+                    polygon: child.polygon,
+                    href,
+                  },
+                ]
+              : [],
+          )
+        : [];
+
+  const spatialNavigationItems: SpatialNavigationItem[] =
+    node.kind === 'STRUCTURE' || node.kind === 'LEVEL'
+      ? childEntries.map(({ node: child, href }) => ({
+          id: child.id,
+          name: child.name,
+          kind: child.kind,
+          href,
+        }))
       : [];
 
   const rackLink =
@@ -166,6 +191,18 @@ export default async function TopologyNodePage({
                   kind="readonly"
                 />
               )
+            ) : node.kind === 'LEVEL' && (boundaryContext.length > 0 || childEntries.length > 0) ? (
+              <SpatialAuthoringCanvas
+                entityId={node.id}
+                entityName={node.name}
+                entityKind={node.kind}
+                initialPolygon={[]}
+                canWrite={false}
+                contextPolygons={boundaryContext}
+                navigationItems={spatialNavigationItems}
+                title="Level floor plan"
+                subtitle="Room boundaries · select a room to enter"
+              />
             ) : (node.kind === 'SITE' || node.kind === 'STRUCTURE') &&
               (node.polygon || canWrite) ? (
               <SpatialAuthoringCanvas
@@ -175,6 +212,7 @@ export default async function TopologyNodePage({
                 initialPolygon={node.polygon ?? []}
                 canWrite={canWrite}
                 contextPolygons={boundaryContext}
+                navigationItems={node.kind === 'STRUCTURE' ? spatialNavigationItems : []}
                 title={node.kind === 'SITE' ? 'Site boundary' : 'Structure boundary'}
                 subtitle="Spatial authoring · millimetres"
               />

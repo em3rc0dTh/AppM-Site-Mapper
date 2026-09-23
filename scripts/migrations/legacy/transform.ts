@@ -427,6 +427,12 @@ function normalizeCas(
         return occupantLegacyId ? { occupantLegacyId } : {};
       })(),
       ...(() => {
+        const mountStartU =
+          getNumber(item, ['mountStartU', 'mountStart', 'mountPosition']) ??
+          getNestedNumber(item, ['mounting', 'startPosition']);
+        return mountStartU !== null ? { mountStartU } : {};
+      })(),
+      ...(() => {
         const physicalSizeU =
           getNumber(item, ['physicalSizeU', 'physicalSize']) ??
           getNestedNumber(item, ['mounting', 'physicalSize']);

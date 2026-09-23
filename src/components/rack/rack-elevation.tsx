@@ -1,13 +1,12 @@
 'use client';
 
 import { useMemo, useState, type CSSProperties } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { EntityInspector, InspectButton, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
+import { openPhysicalPopup } from '@/shared/ui/physical-popup';
 
 interface RackBlock {
   readonly key: string;
@@ -71,7 +70,6 @@ export function RackElevation({
   context?: RackElevationContext;
   inventoryHrefs?: Readonly<Record<string, string>>;
 }>) {
-  const router = useRouter();
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const blocks = useMemo(() => buildBlocks(view), [view]);
   const count = (role: string) => view.rows.filter((row) => row.role === role).length;
@@ -84,11 +82,10 @@ export function RackElevation({
   const primaryInventory = view.inventory[0];
 
   const inspectInventory = (item: RackElevationView['inventory'][number]) =>
-    setSelected(topologyInspector(item, inventoryHrefs[item.id]));
+    setSelected(topologyInspector(item, `/popup/device/${item.id}`));
 
   const openInventory = (id: string) => {
-    const href = inventoryHrefs[id];
-    if (href) router.push(href);
+    openPhysicalPopup(`/popup/device/${id}`, 'device', id);
   };
 
   const occupiedBlocks = blocks.filter((block) => block.role === 'PHYSICAL');
@@ -246,9 +243,15 @@ export function RackElevation({
               </dl>
             ))}
             {selected.actions?.map((action) => (
-              <Link key={action.href} href={action.href}>
+              <button
+                key={action.href}
+                type="button"
+                onClick={() =>
+                  openPhysicalPopup(action.href, 'device', selected.name)
+                }
+              >
                 {action.label} →
-              </Link>
+              </button>
             ))}
             <button onClick={() => setSelected(null)}>Clear selection</button>
           </section>
@@ -311,7 +314,7 @@ export function RackElevation({
                     <small>{item.kind}</small>
                     <strong>{item.name}</strong>
                   </span>
-                  <b>{inventoryHrefs[item.id] ? 'Inspect / open →' : 'Inspect →'}</b>
+                  <b>Inspect · double-click opens popup</b>
                 </button>
               ))}
             </div>
@@ -323,11 +326,9 @@ export function RackElevation({
             <button type="button" onClick={() => inspectInventory(primaryInventory)}>
               Inspect mounted device
             </button>
-            {inventoryHrefs[primaryInventory.id] && (
-              <button type="button" onClick={() => openInventory(primaryInventory.id)}>
-                Open physical device view →
-              </button>
-            )}
+            <button type="button" onClick={() => openInventory(primaryInventory.id)}>
+              Open device popup →
+            </button>
           </div>
         )}
       </aside>

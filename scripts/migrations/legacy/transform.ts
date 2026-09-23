@@ -377,6 +377,17 @@ function extraFields(
   }
 }
 
+function sourceFingerprint(input: LegacyMigrationInput): string {
+  return createHash('sha256')
+    .update(
+      JSON.stringify({
+        network: input.network,
+        collections: input.collections,
+      }),
+    )
+    .digest('hex');
+}
+
 export function planLegacyMigration(
   input: LegacyMigrationInput,
   options: Readonly<{ now?: string; createId?: () => string }> = {},
@@ -535,6 +546,7 @@ export function planLegacyMigration(
   });
 
   return {
+    sourceFingerprint: sourceFingerprint(input),
     nodes: resolvedNodes,
     idMap,
     warnings,

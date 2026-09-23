@@ -1,7 +1,10 @@
+'use client';
+
 import { StatePanel } from '@/shared/ui/primitives';
 import Link from 'next/link';
 
 import type { WorkspaceBdfbSummary } from '@/modules/workspace/application/workspace-service';
+import { openPhysicalPopup } from '@/shared/ui/physical-popup';
 
 export function BdfbSummary({ items }: Readonly<{ items: readonly WorkspaceBdfbSummary[] }>) {
   return (
@@ -18,13 +21,20 @@ export function BdfbSummary({ items }: Readonly<{ items: readonly WorkspaceBdfbS
       ) : (
         <div className="workspace-card-grid">
           {items.map((item) => (
-            <Link className="workspace-summary-card" href={item.href} key={item.deviceId}>
+            <button
+              type="button"
+              className="workspace-summary-card workspace-summary-popup"
+              key={item.deviceId}
+              onClick={() =>
+                openPhysicalPopup(`/popup/device/${item.deviceId}`, 'device', item.deviceId)
+              }
+            >
               <strong>{item.deviceName}</strong>
               <span>{item.shelves} shelves</span>
               <span>{item.frames} frames</span>
               <span>{item.panels} panels</span>
               <span>{item.endpoints} breaker/holder endpoints</span>
-            </Link>
+            </button>
           ))}
         </div>
       )}

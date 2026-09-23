@@ -1423,6 +1423,10 @@ button.legacy-rack-block:hover {
     grid-template-rows: 66px minmax(0, 1fr);
   }
 
+  .legacy-shell.app-shell--immersive {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .legacy-topbar {
     height: 66px;
     padding-inline: 22px;

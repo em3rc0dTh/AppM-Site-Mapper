@@ -1,9 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 
-import {
-  TopologyContextTree,
-  type ContextTreeEntry,
-} from '@/components/topology/context-tree';
+import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
 import { RackElevation } from '@/components/rack/rack-elevation';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';

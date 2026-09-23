@@ -72,6 +72,18 @@ export default async function TopologyNodePage({
     href,
   }));
 
+  const structurePreviewNodes =
+    node.kind === 'STRUCTURE' && children[0]?.kind === 'LEVEL'
+      ? await service.listChildren(children[0].id)
+      : [];
+
+  const structurePreviewEntries: VisualStageChild[] = await Promise.all(
+    structurePreviewNodes.map(async (child) => ({
+      node: child,
+      href: await service.buildDeepLink(child.id),
+    })),
+  );
+
   const roomLayout =
     node.kind === 'ROOM_SUBSTRUCTURE'
       ? await new SpatialService(repository).getRoomLayout(node.id)
@@ -130,7 +142,11 @@ export default async function TopologyNodePage({
                 description="Define the physical boundary to render the Blueprint."
               />
             ) : (
-              <TopologyVisualStage node={node} items={childEntries} />
+              <TopologyVisualStage
+                node={node}
+                items={childEntries}
+                previewItems={structurePreviewEntries}
+              />
             )}
           </div>
 

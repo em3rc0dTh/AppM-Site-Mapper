@@ -1,13 +1,57 @@
+'use client';
+
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
 import { Icon } from '@/shared/ui/primitives';
+import { openPhysicalPopup, popupKindForTopology } from '@/shared/ui/physical-popup';
 
 export interface ContextTreeEntry {
   readonly id: string;
   readonly name: string;
   readonly kind: string;
   readonly href: string;
+}
+
+function popupHref(entry: ContextTreeEntry): string {
+  if (entry.kind === 'CONTAINER_RACK') return `/popup/container/${entry.id}`;
+  if (entry.kind === 'DEVICE' || entry.kind === 'EQUIPMENT') return `/popup/device/${entry.id}`;
+  return entry.href;
+}
+
+function ContextEntry({
+  entry,
+  current,
+}: Readonly<{ entry: ContextTreeEntry; current?: boolean }>) {
+  const popupKind = popupKindForTopology(entry.kind);
+  const content = (
+    <>
+      <Icon name={iconFor(entry.kind)} />
+      <span>
+        <small>{entry.kind.replaceAll('_', ' ')}</small>
+        <strong>{entry.name}</strong>
+      </span>
+    </>
+  );
+
+  if (popupKind) {
+    return (
+      <button
+        type="button"
+        className="context-tree-popup-link"
+        aria-current={current ? 'page' : undefined}
+        onClick={() => openPhysicalPopup(popupHref(entry), popupKind, entry.id)}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={entry.href} aria-current={current ? 'page' : undefined}>
+      {content}
+    </Link>
+  );
 }
 
 function iconFor(kind: string): string {
@@ -47,13 +91,7 @@ export function TopologyContextTree({
           const isActive = entry.id === active?.id;
           return (
             <li key={entry.id} style={{ '--context-depth': index } as CSSProperties}>
-              <Link href={entry.href} aria-current={isActive ? 'page' : undefined}>
-                <Icon name={iconFor(entry.kind)} />
-                <span>
-                  <small>{entry.kind.replaceAll('_', ' ')}</small>
-                  <strong>{entry.name}</strong>
-                </span>
-              </Link>
+              <ContextEntry entry={entry} current={isActive} />
             </li>
           );
         })}
@@ -65,13 +103,7 @@ export function TopologyContextTree({
           <ul>
             {descendants.map((entry) => (
               <li key={entry.id}>
-                <Link href={entry.href}>
-                  <Icon name={iconFor(entry.kind)} />
-                  <span>
-                    <small>{entry.kind.replaceAll('_', ' ')}</small>
-                    <strong>{entry.name}</strong>
-                  </span>
-                </Link>
+                <ContextEntry entry={entry} />
               </li>
             ))}
           </ul>

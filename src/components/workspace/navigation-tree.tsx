@@ -20,9 +20,7 @@ function Branch({ node }: Readonly<{ node: WorkspaceTreeNode }>) {
   );
 }
 
-export function NavigationTree({
-  roots,
-}: Readonly<{ roots: readonly WorkspaceTreeNode[] }>) {
+export function NavigationTree({ roots }: Readonly<{ roots: readonly WorkspaceTreeNode[] }>) {
   return (
     <nav className="workspace-tree" aria-label="Infrastructure topology">
       <div className="workspace-section-title">

@@ -3442,3 +3442,29 @@ button.legacy-rack-block:hover {
     width: min(410px, 86%);
   }
 }
+
+
+/* Keep collapsed edit controls available without covering the drafting surface. */
+.app-shell--immersive .operational-edit-dock {
+  left: 14px;
+  bottom: 12px;
+  max-width: min(420px, calc(100% - 28px));
+}
+
+.app-shell--immersive .operational-stage-body:has(.blueprint-panel) + .operational-edit-dock {
+  bottom: 48px;
+}
+
+.app-shell--immersive .operational-edit-dock .edit-disclosure {
+  border-radius: 3px;
+  box-shadow: 0 10px 30px #0008;
+}
+
+.app-shell--immersive .operational-edit-dock .edit-disclosure > summary {
+  min-height: 34px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  color: var(--legacy-blue);
+  font-size: 0.62rem;
+}

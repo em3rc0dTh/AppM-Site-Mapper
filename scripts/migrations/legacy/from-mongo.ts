@@ -80,9 +80,7 @@ function reference(record: LegacyRecord, keys: readonly string[]): string | null
 
 function label(record: LegacyRecord, fallback: string): string {
   return (
-    reference(record, ['label', 'name', 'title']) ??
-    reference(record, ['id', '_id']) ??
-    fallback
+    reference(record, ['label', 'name', 'title']) ?? reference(record, ['id', '_id']) ?? fallback
   );
 }
 
@@ -200,13 +198,7 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
   ) as Record<keyof typeof sourceAliases, readonly LegacyRecord[]>;
 
   const enrichedDevices = loaded.devices.map((device) => {
-    const bdfb = buildBdfb(
-      device,
-      loaded.shelves,
-      loaded.frames,
-      loaded.panels,
-      loaded.breakers,
-    );
+    const bdfb = buildBdfb(device, loaded.shelves, loaded.frames, loaded.panels, loaded.breakers);
     return bdfb ? { ...device, bdfb } : device;
   });
 

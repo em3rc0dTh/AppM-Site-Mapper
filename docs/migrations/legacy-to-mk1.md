@@ -101,7 +101,6 @@ G13 certifies the migration engine, deterministic mapping, hierarchy enforcement
 
 It does not claim that a production database has been migrated because no production dump or target credential is stored in this public repository.
 
-
 ## Direct migration from the legacy MongoDB
 
 When the legacy data already lives in MongoDB, no production dump needs to be copied into the

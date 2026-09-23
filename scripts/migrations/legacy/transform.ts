@@ -110,7 +110,6 @@ function getNumber(record: LegacyRecord, keys: readonly string[]): number | null
   return null;
 }
 
-
 function getNestedNumber(record: LegacyRecord, path: readonly string[]): number | null {
   let value: unknown = record;
   for (const key of path) {

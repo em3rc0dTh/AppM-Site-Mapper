@@ -36,7 +36,9 @@ export default async function SettingsPage() {
         <div>
           <p className="eyebrow">AppManager · Site Mapper</p>
           <h1>Settings</h1>
-          <p>Account, security and administrative controls with server-authoritative permissions.</p>
+          <p>
+            Account, security and administrative controls with server-authoritative permissions.
+          </p>
         </div>
         <Link className="action-link" href="/workspace">
           Back to workspace

@@ -300,7 +300,6 @@ textarea {
   padding: 1.25rem;
 }
 
-
 .rack-elevation {
   border: 1px solid #293344;
   border-radius: 18px;
@@ -364,13 +363,7 @@ textarea {
 }
 
 .rack-unit-clearance {
-  background: repeating-linear-gradient(
-    135deg,
-    #101823,
-    #101823 10px,
-    #151f2d 10px,
-    #151f2d 20px
-  );
+  background: repeating-linear-gradient(135deg, #101823, #101823 10px, #151f2d 10px, #151f2d 20px);
 }
 
 .rack-unit[data-state='EQUIPPED'] .rack-u-content {

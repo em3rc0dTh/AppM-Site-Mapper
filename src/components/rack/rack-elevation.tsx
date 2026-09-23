@@ -1,8 +1,6 @@
 import type { RackElevationProjection } from '@/modules/rack/domain/elevation';
 
-export function RackElevation({
-  elevation,
-}: Readonly<{ elevation: RackElevationProjection }>) {
+export function RackElevation({ elevation }: Readonly<{ elevation: RackElevationProjection }>) {
   return (
     <section className="rack-elevation" aria-label={`${elevation.rackName} rack elevation`}>
       <header className="rack-elevation-header">

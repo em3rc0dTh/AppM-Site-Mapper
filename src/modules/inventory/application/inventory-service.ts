@@ -9,12 +9,7 @@ import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type InventoryError =
-  | 'NOT_FOUND'
-  | 'NOT_INVENTORY'
-  | 'NOT_A_RACK'
-  | 'INVALID_NAME'
-  | 'INVALID_SERIAL'
-  | 'INVALID_TYPE';
+  'NOT_FOUND' | 'NOT_INVENTORY' | 'NOT_A_RACK' | 'INVALID_NAME' | 'INVALID_SERIAL' | 'INVALID_TYPE';
 
 export interface UpdateInventoryInput {
   readonly name?: string;
@@ -41,7 +36,9 @@ export class InventoryService {
     return success(toInventoryProfile(node));
   }
 
-  async listRackInventory(rackId: string): Promise<Result<readonly InventoryProfile[], InventoryError>> {
+  async listRackInventory(
+    rackId: string,
+  ): Promise<Result<readonly InventoryProfile[], InventoryError>> {
     const rack = await this.repository.getById(rackId);
 
     if (!rack || rack.kind !== 'CONTAINER_RACK' || rack.variant !== 'RACK') {
@@ -148,9 +145,6 @@ function normalizeOptional(
   return value || undefined;
 }
 
-function replaceOptional<K extends string>(
-  key: K,
-  value: Normalized,
-): Partial<Record<K, string>> {
+function replaceOptional<K extends string>(key: K, value: Normalized): Partial<Record<K, string>> {
   return value && value !== 'INVALID' ? ({ [key]: value } as Record<K, string>) : {};
 }

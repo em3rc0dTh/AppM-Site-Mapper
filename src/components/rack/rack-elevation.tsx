@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type CSSProperties } from 'react';
+import { useRouter } from 'next/navigation';
 
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
@@ -63,7 +64,13 @@ export interface RackElevationContext {
 export function RackElevation({
   view,
   context,
-}: Readonly<{ view: RackElevationView; context?: RackElevationContext }>) {
+  inventoryHrefs = {},
+}: Readonly<{
+  view: RackElevationView;
+  context?: RackElevationContext;
+  inventoryHrefs?: Readonly<Record<string, string>>;
+}>) {
+  const router = useRouter();
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const blocks = useMemo(() => buildBlocks(view), [view]);
   const count = (role: string) => view.rows.filter((row) => row.role === role).length;
@@ -74,6 +81,14 @@ export function RackElevation({
   const totalU = view.rack.totalU ?? view.rows.length;
   const usedPercent = Math.round((physical / Math.max(totalU, 1)) * 100);
   const primaryInventory = view.inventory[0];
+
+  const inspectInventory = (item: RackElevationView['inventory'][number]) =>
+    setSelected(topologyInspector(item, inventoryHrefs[item.id]));
+
+  const openInventory = (id: string) => {
+    const href = inventoryHrefs[id];
+    if (href) router.push(href);
+  };
 
   const occupiedBlocks = blocks.filter((block) => block.role === 'PHYSICAL');
   const vacantBlocks = blocks.filter((block) => block.role === 'AVAILABLE');
@@ -102,7 +117,7 @@ export function RackElevation({
                 const item = block.occupant
                   ? view.inventory.find((candidate) => candidate.id === block.occupant?.id)
                   : undefined;
-                if (item) setSelected(topologyInspector(item));
+                if (item) inspectInventory(item);
               }}
             >
               <span className="legacy-rack-tree-dot" />
@@ -190,7 +205,8 @@ export function RackElevation({
                     type="button"
                     className={`legacy-rack-block legacy-rack-block--${block.role.toLowerCase()}`}
                     style={blockStyle}
-                    onClick={() => setSelected(topologyInspector(item))}
+                    onClick={() => inspectInventory(item)}
+                    onDoubleClick={() => openInventory(item.id)}
                   >
                     {content}
                   </button>
@@ -265,13 +281,14 @@ export function RackElevation({
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setSelected(topologyInspector(item))}
+                  onClick={() => inspectInventory(item)}
+                  onDoubleClick={() => openInventory(item.id)}
                 >
                   <span>
                     <small>{item.kind}</small>
                     <strong>{item.name}</strong>
                   </span>
-                  <b>Inspect →</b>
+                  <b>{inventoryHrefs[item.id] ? 'Inspect / open →' : 'Inspect →'}</b>
                 </button>
               ))}
             </div>
@@ -280,9 +297,14 @@ export function RackElevation({
 
         {primaryInventory && (
           <div className="legacy-properties-actions">
-            <button type="button" onClick={() => setSelected(topologyInspector(primaryInventory))}>
+            <button type="button" onClick={() => inspectInventory(primaryInventory)}>
               Inspect mounted device
             </button>
+            {inventoryHrefs[primaryInventory.id] && (
+              <button type="button" onClick={() => openInventory(primaryInventory.id)}>
+                Open physical device view →
+              </button>
+            )}
           </div>
         )}
       </aside>

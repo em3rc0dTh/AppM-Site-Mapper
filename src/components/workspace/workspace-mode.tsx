@@ -24,7 +24,9 @@ export function WorkspaceMode({ canEdit }: Readonly<{ canEdit: boolean }>) {
       >
         Edit
       </button>
-      <span>{mode === 'EDIT' ? 'Editing enabled for permitted actions' : 'Read-only workspace'}</span>
+      <span>
+        {mode === 'EDIT' ? 'Editing enabled for permitted actions' : 'Read-only workspace'}
+      </span>
     </div>
   );
 }

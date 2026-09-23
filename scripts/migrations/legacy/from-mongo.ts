@@ -441,6 +441,84 @@ function levelRoomCentroids(
   });
 }
 
+function parseLevelParentOverrides(): Readonly<Record<string, string>> {
+  const raw = process.env.LEGACY_LEVEL_PARENT_OVERRIDES?.trim();
+  if (!raw) return {};
+  const parsed = JSON.parse(raw) as unknown;
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('LEGACY_LEVEL_PARENT_OVERRIDES must be a JSON object of levelId -> structureId.');
+  }
+  return Object.fromEntries(
+    Object.entries(parsed as Record<string, unknown>).flatMap(([levelId, structureId]) =>
+      typeof structureId === 'string' && structureId.trim()
+        ? [[levelId, structureId.trim()]]
+        : [],
+    ),
+  );
+}
+
+function diagnoseSiteParentedLevels(
+  loaded: Record<keyof typeof sourceAliases, readonly LegacyRecord[]>,
+): readonly Readonly<Record<string, unknown>>[] {
+  const siteIds = new Set(
+    loaded.sites.flatMap((site) => {
+      const id = recordId(site);
+      return id ? [id] : [];
+    }),
+  );
+  const directStructureLevelParents = new Set(
+    loaded.levels.flatMap((level) => {
+      const parentId = reference(level, ['structureId', 'structure_id', 'parentId']);
+      return parentId && !siteIds.has(parentId) ? [parentId] : [];
+    }),
+  );
+
+  return loaded.levels.flatMap((level) => {
+    const levelId = recordId(level);
+    const parentId = reference(level, ['structureId', 'structure_id', 'parentId']);
+    if (!levelId || !parentId || !siteIds.has(parentId)) return [];
+
+    const rooms = loaded.rooms.filter(
+      (room) => reference(room, ['levelId', 'level_id', 'parentId']) === levelId,
+    );
+    const roomCentroids = levelRoomCentroids(levelId, loaded.rooms);
+    const candidates = loaded.structures
+      .filter(
+        (structure) =>
+          reference(structure, ['siteId', 'site_id', 'parentId']) === parentId,
+      )
+      .map((structure) => {
+        const structureId = recordId(structure);
+        const polygon = polygonFromRecord(structure);
+        const containsAllRooms =
+          polygon && roomCentroids.length > 0
+            ? roomCentroids.every((centroid) => pointInPolygon(centroid, polygon))
+            : null;
+        return {
+          structureId,
+          name: label(structure, structureId ?? 'Unnamed structure'),
+          hasDirectLevel: structureId ? directStructureLevelParents.has(structureId) : false,
+          polygonVertices: polygon?.length ?? 0,
+          containsAllRoomCentroids: containsAllRooms,
+        };
+      });
+
+    return [
+      {
+        levelId,
+        levelName: label(level, levelId),
+        legacySiteId: parentId,
+        rooms: rooms.map((room) => ({
+          roomId: recordId(room),
+          name: label(room, recordId(room) ?? 'Unnamed room'),
+          polygonVertices: polygonFromRecord(room)?.length ?? 0,
+        })),
+        candidates,
+      },
+    ];
+  });
+}
+
 function normalizeSiteParentedLevels(
   loaded: Record<keyof typeof sourceAliases, readonly LegacyRecord[]>,
 ): Readonly<{
@@ -480,8 +558,12 @@ function normalizeSiteParentedLevels(
     legacySiteId: string;
     structureId: string;
     structureName: string;
-    strategy: 'ROOM_GEOMETRY' | 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL';
+    strategy:
+      | 'ROOM_GEOMETRY'
+      | 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL'
+      | 'EXPLICIT_OVERRIDE';
   }> = [];
+  const overrides = parseLevelParentOverrides();
 
   const levels = loaded.levels.map((level) => {
     const parentId = reference(level, ['structureId', 'structure_id', 'parentId']);
@@ -490,6 +572,31 @@ function normalizeSiteParentedLevels(
     const siteStructures = structuresBySite.get(parentId) ?? [];
     const levelId = recordId(level);
     if (!levelId) return level;
+
+    const overrideStructureId = overrides[levelId];
+    if (overrideStructureId) {
+      const overrideStructure = siteStructures.find(
+        (structure) => recordId(structure) === overrideStructureId,
+      );
+      if (!overrideStructure) {
+        throw new Error(
+          `Invalid LEGACY_LEVEL_PARENT_OVERRIDES entry for level ${levelId}: structure ${overrideStructureId} is not under legacy site ${parentId}.`,
+        );
+      }
+      normalized.push({
+        levelId,
+        legacySiteId: parentId,
+        structureId: overrideStructureId,
+        structureName: label(overrideStructure, overrideStructureId),
+        strategy: 'EXPLICIT_OVERRIDE',
+      });
+      return {
+        ...level,
+        parentId: overrideStructureId,
+        migrationParentSource: 'explicit-level-parent-override',
+        migrationLegacyParentId: parentId,
+      };
+    }
 
     const roomCentroids = levelRoomCentroids(levelId, loaded.rooms);
     const geometryCandidates =
@@ -648,6 +755,12 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
         collectionResolution: resolutions,
         derivedPositions: loaded.positions.length - loadedRaw.positions.length,
         normalizedSiteLevelParents: levelNormalization.normalized,
+        unresolvedSiteLevelDiagnostics: diagnoseSiteParentedLevels(loaded).filter(
+          (diagnostic) =>
+            !levelNormalization.normalized.some(
+              (item) => item.levelId === diagnostic.levelId,
+            ),
+        ),
       },
       null,
       2,

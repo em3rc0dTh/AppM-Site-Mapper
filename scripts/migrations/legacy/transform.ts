@@ -191,7 +191,9 @@ function parentLegacyId(kind: CanonicalKind, record: LegacyRecord): string | nul
         'parentId',
       ]);
     case 'CONTAINER_RACK':
-      return getString(record, ['positionId', 'position_id', 'position', 'parentId']);
+      // "position" in the legacy Container is frequently a numeric display/order field,
+      // not a foreign key. Only explicit position ids or parentId are relationship refs.
+      return getString(record, ['positionId', 'position_id', 'parentId']);
     case 'DEVICE':
     case 'EQUIPMENT':
       return getString(record, ['containerId', 'rackId', 'container_id', 'rack_id', 'parentId']);
@@ -301,6 +303,26 @@ function deterministicMigrationId(seed: string): string {
   hex[16] = ((variant & 0x3) | 0x8).toString(16);
   const value = hex.join('');
   return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
+}
+
+function totalUFromCas(record: LegacyRecord): number | undefined {
+  const source = Array.isArray(record.cas)
+    ? record.cas
+    : Array.isArray(record.CAS)
+      ? record.CAS
+      : null;
+  if (!source) return undefined;
+
+  const ends = source.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+    const item = entry as LegacyRecord;
+    const endU =
+      getNumber(item, ['endU', 'endPosition']) ??
+      getNestedNumber(item, ['mounting', 'endPosition']);
+    return Number.isInteger(endU) && (endU ?? 0) > 0 ? [endU as number] : [];
+  });
+
+  return ends.length ? Math.max(...ends) : undefined;
 }
 
 function normalizeCas(
@@ -454,7 +476,8 @@ function extraFields(
       const capacityTotal = getNestedNumber(record, ['capacity', 'total']);
       const heightRu = getNestedNumber(record, ['dimensions', 'heightRu']);
       const mountedEnd = getNestedNumber(record, ['mounting', 'endPosition']);
-      const totalCandidate = explicitTotal ?? capacityTotal ?? heightRu ?? mountedEnd;
+      const casEnd = totalUFromCas(record);
+      const totalCandidate = explicitTotal ?? capacityTotal ?? heightRu ?? casEnd ?? mountedEnd;
       const totalU =
         totalCandidate && Number.isInteger(totalCandidate) && totalCandidate > 0
           ? totalCandidate

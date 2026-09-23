@@ -180,113 +180,113 @@ export function BlueprintCanvas({
           <b>600 × 600 mm TILE</b>
         </div>
         <svg
-        ref={svgRef}
-        className="blueprint-canvas"
-        viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
-        onWheel={wheel}
-        onPointerDown={pointerDown}
-        onPointerMove={pointerMove}
-        onPointerUp={pointerUp}
-        onPointerCancel={() => {
-          pointer.current = null;
-        }}
-        role="group"
-        aria-label="Room blueprint"
-      >
-        <defs>
-          <pattern id="grid600" width="600" height="600" patternUnits="userSpaceOnUse">
-            <path d="M 600 0 L 0 0 0 600" className="blueprint-grid-line" />
-          </pattern>
-        </defs>
+          ref={svgRef}
+          className="blueprint-canvas"
+          viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
+          onWheel={wheel}
+          onPointerDown={pointerDown}
+          onPointerMove={pointerMove}
+          onPointerUp={pointerUp}
+          onPointerCancel={() => {
+            pointer.current = null;
+          }}
+          role="group"
+          aria-label="Room blueprint"
+        >
+          <defs>
+            <pattern id="grid600" width="600" height="600" patternUnits="userSpaceOnUse">
+              <path d="M 600 0 L 0 0 0 600" className="blueprint-grid-line" />
+            </pattern>
+          </defs>
 
-        <polygon
-          points={polygon.map((point) => `${point.x},${point.y}`).join(' ')}
-          className="blueprint-room"
-        />
-        <polygon
-          points={polygon.map((point) => `${point.x},${point.y}`).join(' ')}
-          fill="url(#grid600)"
-          className="blueprint-grid"
-        />
-
-        <g className="blueprint-coordinate-labels" aria-hidden="true">
-          {labels.columns.map((column) => (
-            <text
-              key={`column-${column.label}`}
-              x={column.x}
-              y={labels.minY - 115}
-              textAnchor="middle"
-            >
-              {column.label}
-            </text>
-          ))}
-          {labels.rows.map((row) => (
-            <text
-              key={`row-${row.label}`}
-              x={labels.minX - 115}
-              y={row.y}
-              textAnchor="middle"
-              dominantBaseline="middle"
-            >
-              {row.label}
-            </text>
-          ))}
-        </g>
-
-        {slots.map((slot) => (
-          <rect
-            key={rectKey(slot)}
-            x={slot.x}
-            y={slot.y}
-            width={slot.width}
-            height={slot.depth}
-            className="blueprint-slot"
+          <polygon
+            points={polygon.map((point) => `${point.x},${point.y}`).join(' ')}
+            className="blueprint-room"
           />
-        ))}
+          <polygon
+            points={polygon.map((point) => `${point.x},${point.y}`).join(' ')}
+            fill="url(#grid600)"
+            className="blueprint-grid"
+          />
 
-        {racks.map((rack) => (
-          <g
-            key={rack.id}
-            className="blueprint-rack-node"
-            role="button"
-            tabIndex={0}
-            aria-label={`Inspect ${rack.name}`}
-            onClick={() => {
-              if (tool === 'select') inspectRack(rack);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                inspectRack(rack);
-              }
-            }}
-          >
-            <rect
-              x={rack.rect.x}
-              y={rack.rect.y}
-              width={rack.rect.width}
-              height={rack.rect.depth}
-              className="blueprint-rack"
-            />
-            <rect
-              x={rack.rect.x + Math.min(65, rack.rect.width * 0.12)}
-              y={rack.rect.y + Math.min(65, rack.rect.depth * 0.12)}
-              width={Math.max(1, rack.rect.width - Math.min(130, rack.rect.width * 0.24))}
-              height={Math.max(1, rack.rect.depth - Math.min(130, rack.rect.depth * 0.24))}
-              className="blueprint-rack-inner"
-              aria-hidden="true"
-            />
-            <text
-              x={rack.rect.x + rack.rect.width / 2}
-              y={rack.rect.y + rack.rect.depth / 2}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              className="blueprint-rack-label"
-            >
-              {rack.name}
-            </text>
+          <g className="blueprint-coordinate-labels" aria-hidden="true">
+            {labels.columns.map((column) => (
+              <text
+                key={`column-${column.label}`}
+                x={column.x}
+                y={labels.minY - 115}
+                textAnchor="middle"
+              >
+                {column.label}
+              </text>
+            ))}
+            {labels.rows.map((row) => (
+              <text
+                key={`row-${row.label}`}
+                x={labels.minX - 115}
+                y={row.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+              >
+                {row.label}
+              </text>
+            ))}
           </g>
-        ))}
+
+          {slots.map((slot) => (
+            <rect
+              key={rectKey(slot)}
+              x={slot.x}
+              y={slot.y}
+              width={slot.width}
+              height={slot.depth}
+              className="blueprint-slot"
+            />
+          ))}
+
+          {racks.map((rack) => (
+            <g
+              key={rack.id}
+              className="blueprint-rack-node"
+              role="button"
+              tabIndex={0}
+              aria-label={`Inspect ${rack.name}`}
+              onClick={() => {
+                if (tool === 'select') inspectRack(rack);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  inspectRack(rack);
+                }
+              }}
+            >
+              <rect
+                x={rack.rect.x}
+                y={rack.rect.y}
+                width={rack.rect.width}
+                height={rack.rect.depth}
+                className="blueprint-rack"
+              />
+              <rect
+                x={rack.rect.x + Math.min(65, rack.rect.width * 0.12)}
+                y={rack.rect.y + Math.min(65, rack.rect.depth * 0.12)}
+                width={Math.max(1, rack.rect.width - Math.min(130, rack.rect.width * 0.24))}
+                height={Math.max(1, rack.rect.depth - Math.min(130, rack.rect.depth * 0.24))}
+                className="blueprint-rack-inner"
+                aria-hidden="true"
+              />
+              <text
+                x={rack.rect.x + rack.rect.width / 2}
+                y={rack.rect.y + rack.rect.depth / 2}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                className="blueprint-rack-label"
+              >
+                {rack.name}
+              </text>
+            </g>
+          ))}
         </svg>
         <div className="blueprint-canvas-corners" aria-hidden="true">
           <span />

@@ -17,20 +17,20 @@
 - [x] G12 Settings / Administration
 - [x] G13 Legacy Migration engine
 - [x] G14 System Certification
-- [ ] G15 Release Documentation final CI/merge
+- [x] G15 Release Documentation
 
 ## CI
 
 Before sealing G15:
 
-- [ ] typecheck green;
-- [ ] lint green without application warnings;
-- [ ] format check green;
-- [ ] unit tests green;
-- [ ] integration tests green;
-- [ ] system certification green;
-- [ ] production build green;
-- [ ] production dependency audit green.
+- [x] typecheck green;
+- [x] lint green without application warnings;
+- [x] format check green;
+- [x] unit tests green;
+- [x] integration tests green;
+- [x] system certification green;
+- [x] production build green;
+- [x] production dependency audit green.
 
 ## Production environment — external evidence required
 

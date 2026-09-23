@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent, type WheelEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
 import {
   isValidPolygon,
@@ -143,6 +144,7 @@ export function SpatialAuthoringCanvas({
   title?: string;
   subtitle?: string;
 }>) {
+  const router = useRouter();
   const sourcePolygon = useMemo(() => clonePolygon(initialPolygon), [initialPolygon]);
   const base = useMemo(
     () => authoringBounds(sourcePolygon, contextPolygons, rectangles, gridSizeMm),
@@ -648,14 +650,26 @@ export function SpatialAuthoringCanvas({
             );
 
             return context.href && !editing ? (
-              <a
+              <g
                 key={context.id}
-                href={context.href}
                 className="spatial-context-shape is-navigable"
+                role="link"
+                tabIndex={0}
                 aria-label={`Open ${context.name}`}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  router.push(context.href!);
+                }}
+                onKeyDown={(event: ReactKeyboardEvent<SVGGElement>) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    router.push(context.href!);
+                  }
+                }}
               >
                 {contents}
-              </a>
+              </g>
             ) : (
               <g key={context.id} className="spatial-context-shape">
                 {contents}
@@ -808,11 +822,16 @@ export function SpatialAuthoringCanvas({
           <nav className="spatial-navigation-rail" aria-label="Contained navigation">
             <span>Contained next</span>
             {navigationItems.map((item) => (
-              <a key={item.id} href={item.href}>
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => router.push(item.href)}
+                aria-label={`Open ${item.name}`}
+              >
                 <small>{item.kind.replaceAll('_', ' ')}</small>
                 <strong>{item.name}</strong>
                 <b>→</b>
-              </a>
+              </button>
             ))}
           </nav>
         )}

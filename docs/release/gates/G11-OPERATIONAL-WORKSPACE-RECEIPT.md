@@ -1,6 +1,6 @@
 # G11 — Operational Workspace Receipt
 
-**Status:** READY FOR CI / REVIEW
+**Status:** PASS
 
 ## Delivered
 
@@ -21,6 +21,18 @@ The workspace does not duplicate domain state.
 
 Topology, Rack/CAS, Power and Telemetry remain authoritative in their own modules.
 
+## Certification
+
+The final implementation head passed the complete CI pipeline:
+
+- typecheck;
+- lint;
+- format check;
+- unit tests;
+- integration tests;
+- production build;
+- production dependency audit.
+
 ## Gate verdict
 
-Final PASS requires the complete CI pipeline to succeed on the final G11 head.
+**PASS — G12 Settings & Administration is authorized after this PR is integrated into `main`.**

@@ -37,7 +37,9 @@ export default async function WorkspacePage() {
   const allNodes = flatten(snapshot.navigation);
   const canEdit = hasPermission(auth.value.role, 'topology:write');
   const canLoadDevelopmentDemo =
-    process.env.APP_ENV === 'development' && getPersistenceMode() === 'memory' && allNodes.length === 0;
+    process.env.APP_ENV === 'development' &&
+    getPersistenceMode() === 'memory' &&
+    allNodes.length === 0;
 
   return (
     <main className="operations-shell">

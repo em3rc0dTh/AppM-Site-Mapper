@@ -97,6 +97,12 @@ function PanelBoard({
         <strong>{panel.label}</strong>
         <small>{panel.endpoints.length} endpoints</small>
       </button>
+      <div className="bdfb-panel-busbar bdfb-panel-busbar--a" aria-hidden="true">
+        <span>BUS A</span>
+      </div>
+      <div className="bdfb-panel-busbar bdfb-panel-busbar--b" aria-hidden="true">
+        <span>BUS B</span>
+      </div>
       <div className="bdfb-endpoint-grid">
         {panel.endpoints.length ? (
           panel.endpoints.map((endpoint, index) => (
@@ -165,13 +171,11 @@ function ImplicitFrame({
   onInspect: (entity: InspectorEntity) => void;
 }>) {
   return (
-    <section className="bdfb-frame-implicit">
-      <div className="bdfb-implicit-note">
-        <span>Canonical frame retained</span>
-        <strong>{frame.label}</strong>
-        <small>Physical frame hidden by presentation contract</small>
-      </div>
-      <div className="bdfb-panel-grid">
+    <section
+      className="bdfb-frame-hidden"
+      aria-label={`${frame.label} hidden physical frame · panels rendered directly in shelf`}
+    >
+      <div className="bdfb-panel-grid bdfb-panel-grid--frame-hidden">
         {frame.panels.map((panel) => (
           <PanelBoard
             key={panel.id}
@@ -222,6 +226,12 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
               <span>Shelf</span>
               <strong>{shelf.label}</strong>
             </header>
+            <div className="bdfb-shelf-hardware" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+              <span />
+            </div>
             <div className="bdfb-frame-field">
               {shelf.frames.map((frame) =>
                 frame.presentation?.physicalFrameVisible === false ? (

@@ -41,6 +41,10 @@ export function TopologyCreateForm({
     if (kind === 'CONTAINER_RACK') {
       payload.containerVariant = String(form.get('variant') ?? 'RACK');
       payload.totalU = Number(form.get('totalU') ?? 42);
+      payload.dimensionsMm = {
+        width: Number(form.get('widthMm') ?? 600),
+        depth: Number(form.get('depthMm') ?? 600),
+      };
     }
 
     if (kind === 'DEVICE' || kind === 'EQUIPMENT') {
@@ -106,6 +110,24 @@ export function TopologyCreateForm({
             type="number"
             min="1"
             defaultValue="42"
+          />
+          <input
+            aria-label="Physical width in millimetres"
+            name="widthMm"
+            type="number"
+            min="1"
+            step="1"
+            defaultValue="600"
+            required
+          />
+          <input
+            aria-label="Physical depth in millimetres"
+            name="depthMm"
+            type="number"
+            min="1"
+            step="1"
+            defaultValue="600"
+            required
           />
         </>
       )}

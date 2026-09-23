@@ -41,7 +41,7 @@ export function BlueprintCanvas({
       id: cluster.id,
       name: cluster.name,
       ...(navigationHrefs[cluster.id] ? { href: navigationHrefs[cluster.id] } : {}),
-      detail: `${cluster.positionCount} positions · extent derived from positions`,
+      detail: `${cluster.positionCount} positions · extent derived from positions + rack footprints`,
       kind: 'bay' as const,
       rect: cluster.rect,
     })),

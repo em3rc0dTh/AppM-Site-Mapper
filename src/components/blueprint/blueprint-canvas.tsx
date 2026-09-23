@@ -35,6 +35,31 @@ function rectKey(rect: RectMm): string {
   return `${rect.x}:${rect.y}:${rect.width}:${rect.depth}`;
 }
 
+function gridLabels(polygon: readonly PointMm[]) {
+  const xs = polygon.map((point) => point.x);
+  const ys = polygon.map((point) => point.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const tile = 600;
+  const columns = Math.max(1, Math.ceil((maxX - minX) / tile));
+  const rows = Math.max(1, Math.ceil((maxY - minY) / tile));
+
+  return {
+    minX,
+    minY,
+    columns: Array.from({ length: columns }, (_, index) => ({
+      label: String(index + 1),
+      x: minX + index * tile + tile / 2,
+    })),
+    rows: Array.from({ length: rows }, (_, index) => ({
+      label: String.fromCharCode(65 + index),
+      y: minY + index * tile + tile / 2,
+    })),
+  };
+}
+
 export function BlueprintCanvas({
   polygon,
   racks,
@@ -45,6 +70,7 @@ export function BlueprintCanvas({
   slots: readonly RectMm[];
 }>) {
   const base = useMemo(() => boundsFor(polygon), [polygon]);
+  const labels = useMemo(() => gridLabels(polygon), [polygon]);
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const [tool, setTool] = useState<'select' | 'pan'>('select');
   function inspectRack(rack: RackPlacementView) {
@@ -148,7 +174,12 @@ export function BlueprintCanvas({
         </div>
       </header>
 
-      <svg
+      <div className="blueprint-canvas-shell">
+        <div className="blueprint-canvas-hud" aria-hidden="true">
+          <span>2D DRAFTING</span>
+          <b>600 × 600 mm TILE</b>
+        </div>
+        <svg
         ref={svgRef}
         className="blueprint-canvas"
         viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
@@ -177,6 +208,30 @@ export function BlueprintCanvas({
           fill="url(#grid600)"
           className="blueprint-grid"
         />
+
+        <g className="blueprint-coordinate-labels" aria-hidden="true">
+          {labels.columns.map((column) => (
+            <text
+              key={`column-${column.label}`}
+              x={column.x}
+              y={labels.minY - 115}
+              textAnchor="middle"
+            >
+              {column.label}
+            </text>
+          ))}
+          {labels.rows.map((row) => (
+            <text
+              key={`row-${row.label}`}
+              x={labels.minX - 115}
+              y={row.y}
+              textAnchor="middle"
+              dominantBaseline="middle"
+            >
+              {row.label}
+            </text>
+          ))}
+        </g>
 
         {slots.map((slot) => (
           <rect
@@ -213,6 +268,14 @@ export function BlueprintCanvas({
               height={rack.rect.depth}
               className="blueprint-rack"
             />
+            <rect
+              x={rack.rect.x + Math.min(65, rack.rect.width * 0.12)}
+              y={rack.rect.y + Math.min(65, rack.rect.depth * 0.12)}
+              width={Math.max(1, rack.rect.width - Math.min(130, rack.rect.width * 0.24))}
+              height={Math.max(1, rack.rect.depth - Math.min(130, rack.rect.depth * 0.24))}
+              className="blueprint-rack-inner"
+              aria-hidden="true"
+            />
             <text
               x={rack.rect.x + rack.rect.width / 2}
               y={rack.rect.y + rack.rect.depth / 2}
@@ -224,7 +287,14 @@ export function BlueprintCanvas({
             </text>
           </g>
         ))}
-      </svg>
+        </svg>
+        <div className="blueprint-canvas-corners" aria-hidden="true">
+          <span />
+          <span />
+          <span />
+          <span />
+        </div>
+      </div>
       <footer className="blueprint-legend">
         <StatusBadge tone="accent">{racks.length} RACK FOOTPRINTS</StatusBadge>
         <StatusBadge>{slots.length} ASSIGNABLE TILES</StatusBadge>

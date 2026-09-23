@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
-import type { DeviceNode, EquipmentNode } from '@/modules/topology/domain/entities';
+import type {
+  DeviceNode,
+  EquipmentNode,
+} from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 
 const timestamp = '2026-09-22T00:00:00.000Z';
@@ -49,12 +52,16 @@ describe('TelemetryService', () => {
 
     const result = await service.ingest(
       'data/dev/SN-E',
-      new TextEncoder().encode(JSON.stringify({ reported: { current: 5 } })),
+      new TextEncoder().encode(
+        JSON.stringify({ reported: { current: 5 } }),
+      ),
       timestamp,
     );
 
     expect(result.ok).toBe(true);
-    expect(service.latest('equipment-1')?.reported).toEqual({ current: 5 });
+    expect(service.latest('equipment-1')?.reported).toEqual({
+      current: 5,
+    });
   });
 
   it('rejects unknown and ambiguous source identities', async () => {
@@ -62,17 +69,29 @@ describe('TelemetryService', () => {
       device('device-1', 'DUP'),
       equipment('equipment-1', 'DUP'),
     ]);
-    const service = new TelemetryService(repository, new TelemetryHub(4), {
-      topicPrefix: 'data/dev/',
-      maxPayloadBytes: 1024,
-    });
+    const service = new TelemetryService(
+      repository,
+      new TelemetryHub(4),
+      {
+        topicPrefix: 'data/dev/',
+        maxPayloadBytes: 1024,
+      },
+    );
 
     expect(
-      await service.ingest('data/dev/MISSING', new TextEncoder().encode('{}'), timestamp),
+      await service.ingest(
+        'data/dev/MISSING',
+        new TextEncoder().encode('{}'),
+        timestamp,
+      ),
     ).toEqual({ ok: false, error: 'UNKNOWN_SOURCE' });
 
     expect(
-      await service.ingest('data/dev/DUP', new TextEncoder().encode('{}'), timestamp),
+      await service.ingest(
+        'data/dev/DUP',
+        new TextEncoder().encode('{}'),
+        timestamp,
+      ),
     ).toEqual({ ok: false, error: 'UNKNOWN_SOURCE' });
   });
 

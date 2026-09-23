@@ -20,20 +20,22 @@ interface StageResult {
 }
 
 const sourceAliases = {
-  sites: ['Site', 'sites'],
-  structures: ['Structure', 'structures'],
-  levels: ['Level', 'levels'],
-  rooms: ['Substructure', 'Room', 'rooms'],
-  clusters: ['ContainerCluster', 'Bay', 'clusters'],
-  positions: ['Position', 'positions'],
-  containers: ['Container', 'Rack', 'containers'],
-  devices: ['Device', 'devices'],
-  equipment: ['Equipment', 'equipment'],
-  shelves: ['Shelf', 'shelves'],
-  frames: ['Frame', 'frames'],
-  panels: ['Panel', 'panels'],
-  breakers: ['Breaker', 'breakers'],
+  sites: { pascal: ['Site'], lowercase: ['sites'] },
+  structures: { pascal: ['Structure'], lowercase: ['structures'] },
+  levels: { pascal: ['Level'], lowercase: ['levels'] },
+  rooms: { pascal: ['Substructure', 'Room'], lowercase: ['rooms'] },
+  clusters: { pascal: ['ContainerCluster', 'Bay'], lowercase: ['clusters'] },
+  positions: { pascal: ['Position'], lowercase: ['positions'] },
+  containers: { pascal: ['Container', 'Rack'], lowercase: ['containers'] },
+  devices: { pascal: ['Device'], lowercase: ['devices'] },
+  equipment: { pascal: ['Equipment'], lowercase: ['equipment'] },
+  shelves: { pascal: ['Shelf'], lowercase: ['shelves'] },
+  frames: { pascal: ['Frame'], lowercase: ['frames'] },
+  panels: { pascal: ['Panel'], lowercase: ['panels'] },
+  breakers: { pascal: ['Breaker'], lowercase: ['breakers'] },
 } as const;
+
+type CollectionFamily = 'pascal' | 'lowercase';
 
 interface CollectionResolution {
   readonly logicalName: string;
@@ -217,6 +219,184 @@ async function loadCollection(
   };
 }
 
+
+async function collectionCount(
+  db: ReturnType<MongoClient['db']>,
+  available: ReadonlySet<string>,
+  names: readonly string[],
+): Promise<number> {
+  let total = 0;
+  for (const name of names) {
+    if (available.has(name)) total += await db.collection(name).estimatedDocumentCount();
+  }
+  return total;
+}
+
+async function detectCollectionFamily(
+  db: ReturnType<MongoClient['db']>,
+  available: ReadonlySet<string>,
+): Promise<CollectionFamily> {
+  const requested = process.env.LEGACY_COLLECTION_FAMILY?.trim().toLowerCase();
+  if (requested === 'pascal' || requested === 'lowercase') return requested;
+
+  const logicalNames = ['structures', 'levels', 'rooms', 'clusters', 'containers', 'devices'] as const;
+  let pascal = 0;
+  let lowercase = 0;
+  for (const logicalName of logicalNames) {
+    pascal += await collectionCount(db, available, sourceAliases[logicalName].pascal);
+    lowercase += await collectionCount(db, available, sourceAliases[logicalName].lowercase);
+  }
+
+  if (pascal === lowercase && pascal > 0) {
+    throw new Error(
+      'Could not determine legacy collection family automatically. Set LEGACY_COLLECTION_FAMILY=pascal or lowercase.',
+    );
+  }
+  return pascal >= lowercase ? 'pascal' : 'lowercase';
+}
+
+function asRecord(value: unknown): LegacyRecord | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as LegacyRecord)
+    : null;
+}
+
+function embeddedBdfb(device: LegacyRecord): Record<string, unknown> | undefined {
+  if (!Array.isArray(device.shelves) || device.shelves.length === 0) return undefined;
+
+  const shelves = device.shelves.flatMap((rawShelf, shelfIndex) => {
+    const shelf = asRecord(rawShelf);
+    if (!shelf) return [];
+    const shelfId = recordId(shelf) ?? `embedded-shelf-${shelfIndex + 1}`;
+    const frames = Array.isArray(shelf.frames)
+      ? shelf.frames.flatMap((rawFrame, frameIndex) => {
+          const frame = asRecord(rawFrame);
+          if (!frame) return [];
+          const frameId = recordId(frame) ?? `${shelfId}-frame-${frameIndex + 1}`;
+          const panels = Array.isArray(frame.panels)
+            ? frame.panels.flatMap((rawPanel, panelIndex) => {
+                const panel = asRecord(rawPanel);
+                if (!panel) return [];
+                const panelId = recordId(panel) ?? `${frameId}-panel-${panelIndex + 1}`;
+                const rawEndpoints = [
+                  ...(Array.isArray(panel.breakers) ? panel.breakers : []),
+                  ...(Array.isArray(panel.holders) ? panel.holders : []),
+                ];
+                const endpoints = rawEndpoints.flatMap((rawEndpoint, endpointIndex) => {
+                  const endpoint = asRecord(rawEndpoint);
+                  if (!endpoint) return [];
+                  const assignedBreaker = asRecord(endpoint.breaker);
+                  const endpointId =
+                    recordId(endpoint) ??
+                    recordId(assignedBreaker ?? {}) ??
+                    `${panelId}-endpoint-${endpointIndex + 1}`;
+                  const capacity =
+                    numeric(assignedBreaker ?? {}, ['capacity', 'ampacity', 'amps']) ??
+                    numeric(endpoint, ['capacity', 'ampacity', 'amps']);
+                  const explicitStatus = reference(endpoint, ['status', 'variant', 'type'])?.toUpperCase();
+                  const variant =
+                    assignedBreaker || explicitStatus === 'BREAKER' ? 'BREAKER' : 'HOLDER';
+                  return [
+                    {
+                      id: endpointId,
+                      variant,
+                      label: label(assignedBreaker ?? endpoint, `Endpoint ${endpointIndex + 1}`),
+                      ...(capacity === undefined ? {} : { capacity }),
+                    },
+                  ];
+                });
+                return [
+                  {
+                    id: panelId,
+                    label: label(panel, `Panel ${panelIndex + 1}`),
+                    endpoints,
+                  },
+                ];
+              })
+            : [];
+          return [
+            {
+              id: frameId,
+              label: label(frame, `Frame ${frameIndex + 1}`),
+              panels,
+              ...(typeof frame.visible === 'boolean'
+                ? { presentation: { physicalFrameVisible: frame.visible } }
+                : {}),
+            },
+          ];
+        })
+      : [];
+    return [
+      {
+        id: shelfId,
+        label: label(shelf, `Shelf ${shelfIndex + 1}`),
+        frames,
+      },
+    ];
+  });
+
+  return shelves.length ? { shelves } : undefined;
+}
+
+function inferClusterRow(cluster: LegacyRecord | undefined): string {
+  if (!cluster) return 'A';
+  const clusterLabel = reference(cluster, ['label', 'name']) ?? '';
+  const match = clusterLabel.match(/\b(?:row|bay)\s*[-:]?\s*([A-Z]+)\b/i);
+  return match?.[1]?.toUpperCase() ?? 'A';
+}
+
+function deriveDirectContainerPositions(
+  loaded: Record<keyof typeof sourceAliases, readonly LegacyRecord[]>,
+): Record<keyof typeof sourceAliases, readonly LegacyRecord[]> {
+  const clusterById = new Map(
+    loaded.clusters.flatMap((cluster) => {
+      const id = recordId(cluster);
+      return id ? [[id, cluster] as const] : [];
+    }),
+  );
+  const positionIds = new Set(loaded.positions.flatMap((position) => {
+    const id = recordId(position);
+    return id ? [id] : [];
+  }));
+  const derivedPositions: LegacyRecord[] = [];
+  const clusterCounters = new Map<string, number>();
+
+  const containers = loaded.containers.map((container) => {
+    const parent = reference(container, ['positionId', 'position_id', 'parentId']);
+    if (!parent || positionIds.has(parent) || !clusterById.has(parent)) return container;
+
+    const containerId = recordId(container);
+    if (!containerId) return container;
+    const derivedId = `derived-position:${containerId}`;
+    const cluster = clusterById.get(parent);
+    const next = (clusterCounters.get(parent) ?? 0) + 1;
+    clusterCounters.set(parent, next);
+
+    const explicitPosition = numeric(container, ['position']);
+    const column =
+      explicitPosition && Number.isInteger(explicitPosition) && explicitPosition > 0
+        ? explicitPosition
+        : next;
+    const row = inferClusterRow(cluster);
+    derivedPositions.push({
+      id: derivedId,
+      name: `Position ${row}-${column}`,
+      label: `Position ${row}-${column}`,
+      parentId: parent,
+      row,
+      column,
+      migrationDerived: true,
+    });
+    return { ...container, parentId: derivedId };
+  });
+
+  return {
+    ...loaded,
+    positions: [...loaded.positions, ...derivedPositions],
+    containers,
+  };
+}
+
 async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInput> {
   const databaseName = process.env.LEGACY_MONGODB_DB_NAME?.trim();
   const networkId = process.env.LEGACY_NETWORK_ID?.trim();
@@ -231,21 +411,33 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
     (await db.listCollections({}, { nameOnly: true }).toArray()).map((entry) => entry.name),
   );
 
+  const family = await detectCollectionFamily(db, available);
   const loadedEntries = await Promise.all(
     Object.entries(sourceAliases).map(
-      async ([logicalName, aliases]) =>
-        [logicalName, await loadCollection(db, available, logicalName, aliases)] as const,
+      async ([logicalName, families]) =>
+        [
+          logicalName,
+          await loadCollection(
+            db,
+            available,
+            logicalName,
+            families[family as keyof typeof families],
+          ),
+        ] as const,
     ),
   );
-  const loaded = Object.fromEntries(
+  const loadedRaw = Object.fromEntries(
     loadedEntries.map(([logicalName, result]) => [logicalName, result.records]),
   ) as Record<keyof typeof sourceAliases, readonly LegacyRecord[]>;
+  const loaded = deriveDirectContainerPositions(loadedRaw);
   const resolutions = loadedEntries.map(([, result]) => result.resolution);
 
   process.stdout.write(
     JSON.stringify(
       {
+        collectionFamily: family,
         collectionResolution: resolutions,
+        derivedPositions: loaded.positions.length - loadedRaw.positions.length,
       },
       null,
       2,
@@ -253,7 +445,9 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
   );
 
   const enrichedDevices = loaded.devices.map((device) => {
-    const bdfb = buildBdfb(device, loaded.shelves, loaded.frames, loaded.panels, loaded.breakers);
+    const bdfb =
+      embeddedBdfb(device) ??
+      buildBdfb(device, loaded.shelves, loaded.frames, loaded.panels, loaded.breakers);
     return bdfb ? { ...device, bdfb } : device;
   });
 

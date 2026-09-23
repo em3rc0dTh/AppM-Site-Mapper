@@ -14,6 +14,7 @@ import type {
 import type { PowerPath } from '@/modules/power/domain/entities';
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
+import { openPhysicalPopup } from '@/shared/ui/physical-popup';
 
 export interface ElectricalConnection {
   path: PowerPath;
@@ -31,6 +32,7 @@ export function DevicePhysicalView({
   connections,
   focus,
   powerReadable,
+  popupMode = false,
 }: Readonly<{
   device: DeviceNode | EquipmentNode;
   rack: ContainerRackNode | null;
@@ -38,6 +40,7 @@ export function DevicePhysicalView({
   connections: readonly ElectricalConnection[];
   focus: Readonly<{ shelf?: string; panel?: string; endpoint?: string; path?: string }>;
   powerReadable: boolean;
+  popupMode?: boolean;
 }>) {
   const [inspection, setInspection] = useState<InspectorEntity | null>(null);
   const [selection, setSelection] = useState<string | null>(focus.endpoint ?? null);
@@ -60,6 +63,22 @@ export function DevicePhysicalView({
       : 'Placement not specified';
   function link(params: Record<string, string>) {
     return `${href}?${new URLSearchParams(params)}`;
+  }
+  function openPanelPopup(shelf: Shelf, panel: Panel) {
+    openPhysicalPopup(
+      `/popup/panel/${device.id}/${panel.id}?shelf=${encodeURIComponent(shelf.id)}`,
+      'panel',
+      panel.id,
+    );
+  }
+  function openEndpointPopup(shelf: Shelf, panel: Panel, endpoint: BreakerHolder) {
+    openPhysicalPopup(
+      `/popup/endpoint/${device.id}/${endpoint.id}?shelf=${encodeURIComponent(
+        shelf.id,
+      )}&panel=${encodeURIComponent(panel.id)}`,
+      'endpoint',
+      endpoint.id,
+    );
   }
   function endpointLinks(endpoint: BreakerHolder) {
     return connections.filter(
@@ -94,7 +113,9 @@ export function DevicePhysicalView({
       actions: [
         {
           label: 'Open electrical endpoint',
-          href: link({ shelf: shelf.id, panel: panel.id, endpoint: endpoint.id }),
+          href: `/popup/endpoint/${device.id}/${endpoint.id}?shelf=${encodeURIComponent(
+            shelf.id,
+          )}&panel=${encodeURIComponent(panel.id)}`,
         },
       ],
     });
@@ -107,7 +128,9 @@ export function DevicePhysicalView({
             <small>DISTRIBUTION PANEL</small>
             <h2>{panel.label}</h2>
           </div>
-          <Link href={link({ shelf: shelf.id, panel: panel.id })}>Open panel →</Link>
+          <button type="button" onClick={() => openPanelPopup(shelf, panel)}>
+            Open panel popup ↗
+          </button>
         </header>
         <div className="studio-bus">
           <span>Distribution endpoints</span>
@@ -119,13 +142,7 @@ export function DevicePhysicalView({
               <button
                 className={`studio-endpoint ${endpoint.variant.toLowerCase()} ${selection === endpoint.id || activeEndpoint?.id === endpoint.id ? 'is-selected' : ''}`}
                 onClick={() => setSelection(endpoint.id)}
-                onDoubleClick={() => {
-                  window.location.href = link({
-                    shelf: shelf.id,
-                    panel: panel.id,
-                    endpoint: endpoint.id,
-                  });
-                }}
+                onDoubleClick={() => openEndpointPopup(shelf, panel, endpoint)}
                 aria-label={`Select ${endpoint.label}`}
               >
                 <span className="studio-terminal-number">{String(index + 1).padStart(2, '0')}</span>
@@ -144,9 +161,13 @@ export function DevicePhysicalView({
                     : 'CONNECTIONS RESTRICTED'}
                 </span>
               </button>
-              <Link href={link({ shelf: shelf.id, panel: panel.id, endpoint: endpoint.id })}>
-                Open endpoint →
-              </Link>
+              <button
+                type="button"
+                className="studio-open-endpoint"
+                onClick={() => openEndpointPopup(shelf, panel, endpoint)}
+              >
+                Open endpoint popup ↗
+              </button>
               {selection === endpoint.id && (
                 <button
                   className="studio-inspect-endpoint"
@@ -226,7 +247,9 @@ export function DevicePhysicalView({
           </Link>
         )}
         {activePath && <span>Power trace</span>}
-        <Link href={`/rack/${device.parentId}`}>↑ Rack</Link>
+        <Link href={popupMode ? `/popup/container/${device.parentId}` : `/rack/${device.parentId}`}>
+          ↑ Rack
+        </Link>
       </nav>
       <div className="studio-device-scroll">
         {invalidFocus ? (
@@ -317,7 +340,18 @@ export function DevicePhysicalView({
                         {connection.sourceName}
                       </button>
                       <span>{connection.sourceTrail.slice(1).join(' / ')}</span>
-                      <Link href={connection.sourceHref}>Open source →</Link>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openPhysicalPopup(
+                            connection.sourceHref,
+                            'device',
+                            connection.path.source.entityId,
+                          )
+                        }
+                      >
+                        Open source popup ↗
+                      </button>
                     </div>
                     <div className="studio-feed">
                       <span>
@@ -326,20 +360,38 @@ export function DevicePhysicalView({
                       <svg viewBox="0 0 200 30" aria-hidden="true">
                         <path d="M0 15H192M181 5L193 15L181 25" />
                       </svg>
-                      <Link
-                        href={link({
-                          ...(focus.shelf ? { shelf: focus.shelf } : {}),
-                          ...(focus.panel ? { panel: focus.panel } : {}),
-                          ...(focus.endpoint ? { endpoint: focus.endpoint } : {}),
-                          path: connection.path.id,
-                        })}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openPhysicalPopup(
+                            link({
+                              ...(focus.shelf ? { shelf: focus.shelf } : {}),
+                              ...(focus.panel ? { panel: focus.panel } : {}),
+                              ...(focus.endpoint ? { endpoint: focus.endpoint } : {}),
+                              path: connection.path.id,
+                            }),
+                            'power',
+                            connection.path.id,
+                          )
+                        }
                       >
-                        Trace connection
-                      </Link>
+                        Trace connection ↗
+                      </button>
                     </div>
                     <div className="studio-power-target">
                       <small>DESTINATION</small>
-                      <Link href={connection.targetHref}>{connection.targetName} →</Link>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          openPhysicalPopup(
+                            connection.targetHref,
+                            'device',
+                            connection.path.target.entityId,
+                          )
+                        }
+                      >
+                        {connection.targetName} ↗
+                      </button>
                       <span>{connection.path.label ?? 'Configured power path'}</span>
                     </div>
                   </div>

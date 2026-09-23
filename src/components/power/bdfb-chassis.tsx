@@ -203,9 +203,7 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
         <div>
           <span>Power distribution chassis</span>
           <strong>{device.name}</strong>
-          <small>
-            Canonical Shelf → Frame → Panel → Breaker / Holder hierarchy
-          </small>
+          <small>Canonical Shelf → Frame → Panel → Breaker / Holder hierarchy</small>
         </div>
         <div className="bdfb-chassis-status">
           <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>

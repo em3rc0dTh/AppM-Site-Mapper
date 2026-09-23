@@ -1439,3 +1439,407 @@
   margin-left: auto;
   color: #71879a;
 }
+
+
+/* Popup depth contract: Device = overview, Panel = endpoints, Endpoint = one electrical position.
+   Popup workspaces are viewport surfaces; no page/panel scrolling. */
+.physical-popup-body .studio-device-scroll {
+  overflow: hidden;
+}
+
+.studio-device--device .studio-local-nav,
+.studio-device--panel .studio-local-nav,
+.studio-device--endpoint .studio-local-nav {
+  min-height: 46px;
+  flex: 0 0 46px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  padding: 8px 14px;
+}
+
+.studio-device--device .studio-device-scroll {
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+
+.studio-device--device .studio-shelf {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+
+.studio-device--device .studio-shelf > header {
+  flex: 0 0 auto;
+  margin-bottom: 10px;
+}
+
+.studio-device--device .studio-frame,
+.studio-device--device .studio-implicit-frame {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.studio-device--device .studio-panel-field {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: stretch;
+  gap: 10px;
+}
+
+.studio-panel--overview {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  box-shadow: inset 0 0 0 3px #0d151d;
+}
+
+.studio-panel--overview > header {
+  margin-bottom: 8px;
+}
+
+.studio-panel--overview .studio-bus {
+  border-top-width: 4px;
+  padding: 8px 0;
+}
+
+.studio-panel-summary {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-rows: 1fr auto;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.studio-panel-summary > div {
+  min-width: 0;
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  border: 1px solid #425466;
+  background: #101922;
+  text-align: center;
+}
+
+.studio-panel-summary small {
+  color: #7f91a2;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+
+.studio-panel-summary strong {
+  color: #ecf5fa;
+  font-size: clamp(22px, 2.4vw, 34px);
+}
+
+.studio-panel-summary > button {
+  grid-column: 1 / -1;
+  min-height: 36px;
+  border: 1px solid #4a7186;
+  background: #132b38;
+  color: #a9edf5;
+  cursor: pointer;
+}
+
+.studio-panel-context {
+  color: #8da0b1;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.studio-device--device .studio-device-facts {
+  flex: 0 0 38px;
+  min-height: 38px;
+  align-items: center;
+  margin: 8px 0 0;
+  padding: 6px 2px 0;
+  border-top: 1px solid #2e3d49;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+/* Panel popup: all endpoint positions fit in one frame. */
+.studio-device--panel .studio-device-scroll {
+  padding: 10px;
+}
+
+.studio-device--panel .studio-panel--detail {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+}
+
+.studio-device--panel .studio-panel--detail > header {
+  flex: 0 0 42px;
+  margin-bottom: 4px;
+}
+
+.studio-device--panel .studio-panel--detail .studio-bus {
+  flex: 0 0 34px;
+  border-top-width: 4px;
+  padding: 6px 0;
+}
+
+.studio-device--panel .studio-endpoint-matrix {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.studio-device--panel .studio-endpoint-position {
+  min-width: 0;
+  min-height: 0;
+}
+
+.studio-device--panel .studio-endpoint {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  gap: 3px;
+  padding: 5px 4px;
+  border-width: 1px;
+  box-shadow: 1px 2px 0 #05090d;
+}
+
+.studio-device--panel .studio-endpoint strong {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-device--panel .studio-endpoint small {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-device--panel .studio-terminal-number {
+  font-size: 9px;
+}
+
+.studio-device--panel .studio-switch {
+  width: 19px;
+  height: 28px;
+  border-width: 3px;
+  box-shadow:
+    inset 0 8px #11161c,
+    inset 0 11px #a6adb1;
+}
+
+.studio-device--panel .holder .studio-switch {
+  width: 27px;
+  height: 27px;
+}
+
+.studio-device--panel .studio-assignment {
+  font-size: 7px;
+}
+
+/* Endpoint popup: one endpoint, its parent context and electrical relationships. */
+.studio-device--endpoint .studio-device-scroll {
+  padding: 14px;
+}
+
+.studio-endpoint-detail {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 0.9fr) minmax(320px, 1.1fr) minmax(320px, 1.2fr);
+  gap: 12px;
+}
+
+.studio-endpoint-hero,
+.studio-endpoint-metadata,
+.studio-endpoint-power {
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid #3d5263;
+  background: #101820;
+}
+
+.studio-endpoint-hero {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 14px;
+  padding: 22px;
+  text-align: center;
+}
+
+.studio-endpoint-hero > small,
+.studio-endpoint-metadata small,
+.studio-endpoint-power > small {
+  color: #7890a3;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.studio-endpoint-hero > strong {
+  max-width: 100%;
+  overflow: hidden;
+  color: #eef7fb;
+  font-size: clamp(24px, 3vw, 44px);
+  text-overflow: ellipsis;
+}
+
+.studio-endpoint-hero > span {
+  color: #91dce8;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.studio-endpoint-hero-switch {
+  width: 78px;
+  height: 112px;
+  border: 10px solid #747d82;
+  background: #171d22;
+  box-shadow:
+    inset 0 34px #0d1217,
+    inset 0 45px #a7afb2,
+    0 18px 40px #0009;
+}
+
+.studio-endpoint-hero.holder .studio-endpoint-hero-switch {
+  width: 96px;
+  height: 96px;
+  border: 3px solid #65798d;
+  border-radius: 50%;
+  background: #05090d;
+  box-shadow: inset 0 0 26px #000;
+}
+
+.studio-endpoint-metadata {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: center;
+  gap: 8px;
+  padding: 14px;
+}
+
+.studio-endpoint-metadata > div {
+  min-height: 72px;
+  display: grid;
+  align-content: center;
+  gap: 5px;
+  border-bottom: 1px solid #2e414f;
+}
+
+.studio-endpoint-metadata strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #e7f0f6;
+  font-size: 13px;
+  text-overflow: ellipsis;
+}
+
+.studio-endpoint-metadata > button {
+  grid-column: 1 / -1;
+  min-height: 40px;
+  border: 1px solid #467188;
+  background: #13303e;
+  color: #b8f2f7;
+  cursor: pointer;
+}
+
+.studio-endpoint-power {
+  display: grid;
+  align-content: center;
+  gap: 10px;
+  padding: 18px;
+}
+
+.studio-endpoint-power > strong {
+  color: #dfeaf1;
+  font-size: 18px;
+}
+
+.studio-endpoint-power > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  min-height: 54px;
+  border-bottom: 1px solid #2e414f;
+}
+
+.studio-endpoint-power > div span {
+  min-width: 0;
+  overflow: hidden;
+  color: #c2d0da;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-endpoint-power b {
+  color: #77dce9;
+}
+
+/* Rack popup remains a fixed viewport too; properties compress instead of scrolling. */
+.physical-popup-body .legacy-rack-properties {
+  overflow: hidden;
+}
+
+.physical-popup-body .legacy-properties-header,
+.physical-popup-body .legacy-property-section,
+.physical-popup-body .studio-rack-selection {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.physical-popup-body .legacy-rack-inventory-list button {
+  min-height: 42px;
+  padding-block: 6px;
+}
+
+@media (max-width: 1500px) {
+  .studio-device--panel .studio-endpoint-matrix {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+
+  .studio-endpoint-detail {
+    grid-template-columns: minmax(220px, 0.8fr) minmax(280px, 1fr) minmax(280px, 1fr);
+  }
+}
+
+@media (max-width: 1120px) {
+  .studio-device--panel .studio-endpoint-matrix {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+  }
+
+  .studio-endpoint-detail {
+    grid-template-columns: 0.8fr 1fr 1fr;
+    gap: 8px;
+  }
+
+  .studio-endpoint-metadata {
+    grid-template-columns: 1fr;
+  }
+
+  .studio-endpoint-metadata > div {
+    min-height: 44px;
+  }
+}

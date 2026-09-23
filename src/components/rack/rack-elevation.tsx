@@ -244,9 +244,7 @@ export function RackElevation({
               <button
                 key={action.href}
                 type="button"
-                onClick={() =>
-                  openPhysicalPopup(action.href, 'device', selected.name)
-                }
+                onClick={() => openPhysicalPopup(action.href, 'device', selected.name)}
               >
                 {action.label} →
               </button>

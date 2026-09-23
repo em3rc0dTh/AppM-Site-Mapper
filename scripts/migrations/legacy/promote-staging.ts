@@ -55,7 +55,10 @@ function stringValue(value: unknown): string | null {
 }
 
 function backupSuffix(): string {
-  return new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+  return new Date()
+    .toISOString()
+    .replace(/[-:.TZ]/g, '')
+    .slice(0, 14);
 }
 
 function canonicalDocument(node: StagedNode): Document {
@@ -114,9 +117,7 @@ function validateCanonicalSet(nodes: readonly StagedNode[]): readonly string[] {
 
     const expectedKind = expectedParentKind[kind];
     if (parent.kind !== expectedKind) {
-      issues.push(
-        `${id}: expected parent kind ${expectedKind}, found ${String(parent.kind)}.`,
-      );
+      issues.push(`${id}: expected parent kind ${expectedKind}, found ${String(parent.kind)}.`);
     }
   }
 
@@ -158,9 +159,7 @@ async function main() {
     await client.connect();
     const database = client.db(databaseName);
     const staging = database.collection<StagedNode>('topology_nodes_migration_staging');
-    const staged = await staging
-      .find({ migrationFingerprint: options.fingerprint })
-      .toArray();
+    const staged = await staging.find({ migrationFingerprint: options.fingerprint }).toArray();
 
     if (staged.length !== options.expected) {
       throw new Error(

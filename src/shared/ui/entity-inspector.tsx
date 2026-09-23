@@ -146,9 +146,7 @@ export function EntityInspector({
           <section
             id={`${titleId}-panel`}
             role={entity.sections.length > 1 ? 'tabpanel' : undefined}
-            aria-labelledby={
-              entity.sections.length > 1 ? `${titleId}-tab-${activeTab}` : undefined
-            }
+            aria-labelledby={entity.sections.length > 1 ? `${titleId}-tab-${activeTab}` : undefined}
             tabIndex={0}
             className="inspector-section"
           >

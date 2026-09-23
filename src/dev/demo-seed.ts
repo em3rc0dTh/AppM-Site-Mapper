@@ -161,6 +161,7 @@ export async function seedDevelopmentDemo(
   powerRepository: PowerRepository,
 ): Promise<DemoSeedSummary> {
   const topology = new TopologyService(topologyRepository);
+  const spatial = new SpatialService(topologyRepository);
   const inventory = new InventoryService(topologyRepository);
   const existingNetworks = await topologyRepository.listByKind('NETWORK');
   const alreadyPresent = existingNetworks.some(
@@ -185,6 +186,19 @@ export async function seedDevelopmentDemo(
     'SITE',
   );
 
+  const siteBoundary = await spatial.updateBoundary(site.id, [
+    { x: 0, y: 0 },
+    { x: 7200, y: 0 },
+    { x: 7800, y: 1800 },
+    { x: 6600, y: 4800 },
+    { x: 600, y: 4800 },
+    { x: 0, y: 3000 },
+  ]);
+
+  if (!siteBoundary.ok) {
+    throw new Error('Demo seed could not configure Site boundary: ' + siteBoundary.error);
+  }
+
   const structure = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'STRUCTURE',
@@ -193,6 +207,20 @@ export async function seedDevelopmentDemo(
     }),
     'STRUCTURE',
   );
+
+  const structureBoundary = await spatial.updateBoundary(structure.id, [
+    { x: 600, y: 600 },
+    { x: 5400, y: 600 },
+    { x: 6000, y: 1800 },
+    { x: 4800, y: 3600 },
+    { x: 600, y: 3600 },
+  ]);
+
+  if (!structureBoundary.ok) {
+    throw new Error(
+      'Demo seed could not configure Structure boundary: ' + structureBoundary.error,
+    );
+  }
 
   const level = expectKind(
     await ensureNode(topologyRepository, topology, {
@@ -213,10 +241,12 @@ export async function seedDevelopmentDemo(
     'ROOM_SUBSTRUCTURE',
   );
 
-  const polygonResult = await new SpatialService(topologyRepository).updateRoomPolygon(room.id, [
+  const polygonResult = await spatial.updateRoomPolygon(room.id, [
     { x: 0, y: 0 },
     { x: 3600, y: 0 },
-    { x: 3600, y: 2400 },
+    { x: 3600, y: 1200 },
+    { x: 3000, y: 1200 },
+    { x: 3000, y: 2400 },
     { x: 0, y: 2400 },
   ]);
 

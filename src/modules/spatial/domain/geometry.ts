@@ -10,6 +10,17 @@ export interface RectMm {
   readonly depth: number;
 }
 
+export interface PolygonBoundsMm {
+  readonly minX: number;
+  readonly minY: number;
+  readonly maxX: number;
+  readonly maxY: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+const EPSILON = 1e-7;
+
 export function polygonArea(points: readonly PointMm[]): number {
   if (points.length < 3) {
     return 0;
@@ -31,25 +42,152 @@ export function polygonArea(points: readonly PointMm[]): number {
   return Math.abs(area) / 2;
 }
 
-export function isValidPolygon(points: readonly PointMm[]): boolean {
-  return (
-    points.length >= 3 &&
-    points.every((point) => Number.isFinite(point.x) && Number.isFinite(point.y)) &&
-    polygonArea(points) > 0
-  );
+function pointsEqual(left: PointMm, right: PointMm): boolean {
+  return Math.abs(left.x - right.x) <= EPSILON && Math.abs(left.y - right.y) <= EPSILON;
+}
+
+function orientation(a: PointMm, b: PointMm, c: PointMm): number {
+  return (b.y - a.y) * (c.x - b.x) - (b.x - a.x) * (c.y - b.y);
 }
 
 function pointOnSegment(point: PointMm, start: PointMm, end: PointMm): boolean {
   const cross = (point.y - start.y) * (end.x - start.x) - (point.x - start.x) * (end.y - start.y);
 
-  if (Math.abs(cross) > 1e-7) {
+  if (Math.abs(cross) > EPSILON) {
     return false;
   }
 
   const dot = (point.x - start.x) * (end.x - start.x) + (point.y - start.y) * (end.y - start.y);
   const squaredLength = (end.x - start.x) ** 2 + (end.y - start.y) ** 2;
 
-  return dot >= 0 && dot <= squaredLength;
+  return dot >= -EPSILON && dot <= squaredLength + EPSILON;
+}
+
+function segmentsIntersect(a1: PointMm, a2: PointMm, b1: PointMm, b2: PointMm): boolean {
+  const o1 = orientation(a1, a2, b1);
+  const o2 = orientation(a1, a2, b2);
+  const o3 = orientation(b1, b2, a1);
+  const o4 = orientation(b1, b2, a2);
+
+  if (
+    ((o1 > EPSILON && o2 < -EPSILON) || (o1 < -EPSILON && o2 > EPSILON)) &&
+    ((o3 > EPSILON && o4 < -EPSILON) || (o3 < -EPSILON && o4 > EPSILON))
+  ) {
+    return true;
+  }
+
+  return (
+    (Math.abs(o1) <= EPSILON && pointOnSegment(b1, a1, a2)) ||
+    (Math.abs(o2) <= EPSILON && pointOnSegment(b2, a1, a2)) ||
+    (Math.abs(o3) <= EPSILON && pointOnSegment(a1, b1, b2)) ||
+    (Math.abs(o4) <= EPSILON && pointOnSegment(a2, b1, b2))
+  );
+}
+
+export function polygonSelfIntersects(points: readonly PointMm[]): boolean {
+  if (points.length < 4) {
+    return false;
+  }
+
+  for (let firstIndex = 0; firstIndex < points.length; firstIndex += 1) {
+    const a1 = points[firstIndex];
+    const a2 = points[(firstIndex + 1) % points.length];
+
+    if (!a1 || !a2) {
+      continue;
+    }
+
+    for (let secondIndex = firstIndex + 1; secondIndex < points.length; secondIndex += 1) {
+      const b1 = points[secondIndex];
+      const b2 = points[(secondIndex + 1) % points.length];
+
+      if (!b1 || !b2) {
+        continue;
+      }
+
+      const adjacent =
+        firstIndex === secondIndex ||
+        (firstIndex + 1) % points.length === secondIndex ||
+        (secondIndex + 1) % points.length === firstIndex;
+
+      if (adjacent) {
+        continue;
+      }
+
+      if (segmentsIntersect(a1, a2, b1, b2)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+export function polygonBounds(points: readonly PointMm[]): PolygonBoundsMm | null {
+  if (points.length === 0) {
+    return null;
+  }
+
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  return {
+    minX,
+    minY,
+    maxX,
+    maxY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+}
+
+export function polygonCentroid(points: readonly PointMm[]): PointMm | null {
+  if (points.length === 0) {
+    return null;
+  }
+
+  const total = points.reduce(
+    (accumulator, point) => ({
+      x: accumulator.x + point.x,
+      y: accumulator.y + point.y,
+    }),
+    { x: 0, y: 0 },
+  );
+
+  return {
+    x: total.x / points.length,
+    y: total.y / points.length,
+  };
+}
+
+export function isValidPolygon(points: readonly PointMm[]): boolean {
+  if (
+    points.length < 3 ||
+    points.some((point) => !Number.isFinite(point.x) || !Number.isFinite(point.y))
+  ) {
+    return false;
+  }
+
+  const uniqueVertices = new Set(points.map((point) => `${point.x}:${point.y}`));
+
+  if (uniqueVertices.size < 3) {
+    return false;
+  }
+
+  for (let index = 0; index < points.length; index += 1) {
+    const current = points[index];
+    const next = points[(index + 1) % points.length];
+
+    if (current && next && pointsEqual(current, next)) {
+      return false;
+    }
+  }
+
+  return polygonArea(points) > 0 && !polygonSelfIntersects(points);
 }
 
 export function pointInPolygon(point: PointMm, polygon: readonly PointMm[]): boolean {

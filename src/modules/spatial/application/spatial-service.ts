@@ -3,6 +3,9 @@ import type {
   ContainerRackNode,
   PositionNode,
   RoomSubstructureNode,
+  SiteNode,
+  StructureNode,
+  TopologyNode,
 } from '@/modules/topology/domain/entities';
 import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
@@ -10,7 +13,12 @@ import { isValidPolygon, type PointMm, type RectMm } from '@/modules/spatial/dom
 import { generateAssignableSlots } from '@/modules/spatial/domain/placement';
 import { gridCoordinateToPoint, TILE_SIZE_MM } from '@/modules/spatial/domain/grid';
 
-export type SpatialError = 'ROOM_NOT_FOUND' | 'INVALID_POLYGON';
+export type SpatialBoundaryNode = SiteNode | StructureNode | RoomSubstructureNode;
+export type SpatialError =
+  | 'ROOM_NOT_FOUND'
+  | 'BOUNDARY_NODE_NOT_FOUND'
+  | 'UNSUPPORTED_BOUNDARY_KIND'
+  | 'INVALID_POLYGON';
 
 export interface RackPlacementView {
   readonly id: string;
@@ -24,8 +32,56 @@ export interface RoomLayout {
   readonly assignableSlots: readonly RectMm[];
 }
 
+function isBoundaryNode(node: TopologyNode): node is SpatialBoundaryNode {
+  return node.kind === 'SITE' || node.kind === 'STRUCTURE' || node.kind === 'ROOM_SUBSTRUCTURE';
+}
+
 export class SpatialService {
   constructor(private readonly repository: TopologyRepository) {}
+
+  async updateBoundary(
+    nodeId: string,
+    polygon: readonly PointMm[],
+  ): Promise<Result<SpatialBoundaryNode, SpatialError>> {
+    const node = await this.repository.getById(nodeId);
+
+    if (!node) {
+      return failure('BOUNDARY_NODE_NOT_FOUND');
+    }
+
+    if (!isBoundaryNode(node)) {
+      return failure('UNSUPPORTED_BOUNDARY_KIND');
+    }
+
+    if (!isValidPolygon(polygon)) {
+      return failure('INVALID_POLYGON');
+    }
+
+    const updated: SpatialBoundaryNode = {
+      ...node,
+      polygon,
+      updatedAt: nowIso(),
+    };
+
+    await this.repository.replace(updated);
+    return success(updated);
+  }
+
+  async getBoundary(
+    nodeId: string,
+  ): Promise<Result<SpatialBoundaryNode, 'BOUNDARY_NODE_NOT_FOUND' | 'UNSUPPORTED_BOUNDARY_KIND'>> {
+    const node = await this.repository.getById(nodeId);
+
+    if (!node) {
+      return failure('BOUNDARY_NODE_NOT_FOUND');
+    }
+
+    if (!isBoundaryNode(node)) {
+      return failure('UNSUPPORTED_BOUNDARY_KIND');
+    }
+
+    return success(node);
+  }
 
   async updateRoomPolygon(
     roomId: string,
@@ -37,18 +93,8 @@ export class SpatialService {
       return failure('ROOM_NOT_FOUND');
     }
 
-    if (!isValidPolygon(polygon)) {
-      return failure('INVALID_POLYGON');
-    }
-
-    const updated: RoomSubstructureNode = {
-      ...node,
-      polygon,
-      updatedAt: nowIso(),
-    };
-
-    await this.repository.replace(updated);
-    return success(updated);
+    const result = await this.updateBoundary(roomId, polygon);
+    return result.ok ? success(result.value as RoomSubstructureNode) : result;
   }
 
   async getRoomLayout(roomId: string): Promise<Result<RoomLayout, SpatialError>> {

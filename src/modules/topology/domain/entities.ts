@@ -94,11 +94,13 @@ export interface NetworkNode extends TopologyBase {
 export interface SiteNode extends TopologyBase {
   readonly kind: 'SITE';
   readonly parentId: string;
+  readonly polygon?: readonly Readonly<{ x: number; y: number }>[];
 }
 
 export interface StructureNode extends TopologyBase {
   readonly kind: 'STRUCTURE';
   readonly parentId: string;
+  readonly polygon?: readonly Readonly<{ x: number; y: number }>[];
 }
 
 export interface LevelNode extends TopologyBase {

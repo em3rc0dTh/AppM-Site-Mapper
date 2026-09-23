@@ -8,6 +8,7 @@ import type {
   TopologyNode,
 } from '@/modules/topology/domain/entities';
 import { isAllowedParent, topologySlug } from '@/modules/topology/domain/hierarchy';
+import { initializeCas } from '@/modules/rack/domain/cas';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
@@ -22,6 +23,7 @@ export type TopologyError =
   | 'INVALID_RACK_CAPACITY'
   | 'MOVE_NOT_ALLOWED'
   | 'HAS_ACTIVE_CHILDREN'
+  | 'CAS_RELEASE_REQUIRED'
   | 'PARENT_ARCHIVED_ON_RESTORE'
   | 'INVALID_DEEP_LINK';
 
@@ -158,7 +160,10 @@ export class TopologyService {
           parentId: input.parentId as string,
           variant: input.containerVariant,
           ...(input.totalU === undefined ? {} : { totalU: input.totalU }),
-          cas: [],
+          cas:
+            input.containerVariant === 'RACK' && input.totalU
+              ? initializeCas(input.totalU)
+              : [],
         };
         break;
       case 'DEVICE':
@@ -209,6 +214,19 @@ export class TopologyService {
 
     if (node.kind === 'CONTAINER_RACK' && (await this.hasActiveRack(parent.id, node.id))) {
       return failure('POSITION_OCCUPIED');
+    }
+
+    if (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') {
+      const currentParent = node.parentId ? await this.repository.getById(node.parentId) : null;
+
+      if (
+        currentParent?.kind === 'CONTAINER_RACK' &&
+        currentParent.cas.some(
+          (range) => range.state === 'EQUIPPED' && range.occupantId === node.id,
+        )
+      ) {
+        return failure('CAS_RELEASE_REQUIRED');
+      }
     }
 
     const moved = {

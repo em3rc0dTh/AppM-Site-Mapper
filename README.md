@@ -9,8 +9,8 @@ The legacy repository is evidence and reference, not the architectural foundatio
 ## Release status
 
 **Software milestone:** MK1  
-**Certified gates:** G0 through G14  
-**Current gate:** G15 Release Documentation  
+**Certified gates:** G0 through G15  
+**Current state:** MK1 repository/software baseline complete  
 **Repository contract:** `CONTRACT.md` and `docs/product/MK1-RECONSTRUCTION-CONTRACT.md`
 
 The integrated software golden path is certified in CI. This is **not** a claim that a production deployment, production-data migration, physical field integration or production-scale load test has already been executed.
@@ -147,4 +147,4 @@ Never commit production secrets, customer topology, database dumps, MQTT credent
 
 MK1 is repository/software certified through the documented gates.
 
-Before a production deployment is declared certified, the environment-specific items in `docs/release/release-checklist.md` must also be completed.
+G0 through G15 certify the repository/software baseline. Before a specific production deployment is declared certified, the environment-specific items in `docs/release/release-checklist.md` must also be completed.

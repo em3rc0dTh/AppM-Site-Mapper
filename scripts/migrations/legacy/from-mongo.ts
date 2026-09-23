@@ -594,13 +594,31 @@ async function main() {
     .map(([reason, count]) => ({ reason, count }))
     .sort((left, right) => right.count - left.count);
 
+  const sourceCollections = Object.entries(input.collections);
+
   const rejectionDetails = plan.rejections.map((rejection) => {
     const source = input.collections[rejection.sourceCollection] ?? [];
     const record = rejection.legacyId
       ? source.find((candidate) => recordId(candidate) === rejection.legacyId)
       : undefined;
+    const unresolvedParent = rejection.reason.startsWith('UNRESOLVED_PARENT:')
+      ? rejection.reason.split(':').at(-1)
+      : null;
+    const parentMatches = unresolvedParent
+      ? sourceCollections.flatMap(([collectionName, records]) =>
+          records
+            .filter((candidate) => recordId(candidate) === unresolvedParent)
+            .map((candidate) => ({
+              collection: collectionName,
+              legacyId: recordId(candidate),
+              name: label(candidate, unresolvedParent),
+            })),
+        )
+      : [];
+
     return {
       ...rejection,
+      ...(parentMatches.length ? { parentMatches } : {}),
       ...(record
         ? {
             name: label(record, rejection.legacyId ?? 'Unnamed'),
@@ -620,9 +638,30 @@ async function main() {
               capacityTotal: asRecord(record.capacity)
                 ? numeric(record.capacity as LegacyRecord, ['total'])
                 : undefined,
-              heightRu: asRecord(record.dimensions)
-                ? numeric(record.dimensions as LegacyRecord, ['heightRu'])
-                : undefined,
+              heightRu:
+                (asRecord(record.dimensions)
+                  ? numeric(record.dimensions as LegacyRecord, ['heightRu'])
+                  : undefined) ??
+                (asRecord(record.appMObject)
+                  ? numeric(record.appMObject as LegacyRecord, ['heightRu'])
+                  : undefined),
+              casEntries: Array.isArray(record.CAS)
+                ? record.CAS.length
+                : Array.isArray(record.cas)
+                  ? record.cas.length
+                  : 0,
+            },
+            sourceShape: {
+              keys: Object.keys(record).sort(),
+              appMObjectKeys: asRecord(record.appMObject)
+                ? Object.keys(record.appMObject as LegacyRecord).sort()
+                : [],
+              dimensionsKeys: asRecord(record.dimensions)
+                ? Object.keys(record.dimensions as LegacyRecord).sort()
+                : [],
+              capacityKeys: asRecord(record.capacity)
+                ? Object.keys(record.capacity as LegacyRecord).sort()
+                : [],
             },
           }
         : {}),

@@ -4,7 +4,11 @@ import {
   SpatialAuthoringCanvas,
   type SpatialRectOverlay,
 } from '@/components/spatial/spatial-authoring-canvas';
-import type { RackPlacementView } from '@/modules/spatial/application/spatial-service';
+import type {
+  ClusterPlacementView,
+  PositionPlacementView,
+  RackPlacementView,
+} from '@/modules/spatial/application/spatial-service';
 import type { PointMm, RectMm } from '@/modules/spatial/domain/geometry';
 
 function slotId(rect: RectMm): string {
@@ -15,6 +19,8 @@ export function BlueprintCanvas({
   roomId,
   roomName,
   polygon,
+  clusters,
+  positions,
   racks,
   slots,
   canEditBoundary,
@@ -22,16 +28,32 @@ export function BlueprintCanvas({
   roomId: string;
   roomName: string;
   polygon: readonly PointMm[];
+  clusters: readonly ClusterPlacementView[];
+  positions: readonly PositionPlacementView[];
   racks: readonly RackPlacementView[];
   slots: readonly RectMm[];
   canEditBoundary: boolean;
 }>) {
   const rectangles: SpatialRectOverlay[] = [
+    ...clusters.map((cluster) => ({
+      id: cluster.id,
+      name: cluster.name,
+      detail: `${cluster.positionCount} positions`,
+      kind: 'bay' as const,
+      rect: cluster.rect,
+    })),
     ...slots.map((rect) => ({
       id: slotId(rect),
       name: 'Assignable tile',
       kind: 'slot' as const,
       rect,
+    })),
+    ...positions.map((position) => ({
+      id: position.id,
+      name: position.name,
+      detail: position.coordinate,
+      kind: 'position' as const,
+      rect: position.rect,
     })),
     ...racks.map((rack) => ({
       id: rack.id,

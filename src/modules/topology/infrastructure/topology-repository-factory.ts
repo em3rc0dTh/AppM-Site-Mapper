@@ -2,10 +2,10 @@ import type { TopologyRepository } from '@/modules/topology/application/topology
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 import { MongoTopologyRepository } from '@/modules/topology/infrastructure/mongo-topology-repository';
 import { getMongoDatabase } from '@/shared/infrastructure/mongodb/client';
+import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
 
 export type PersistenceMode = 'memory' | 'mongodb';
 
-const memoryRepository = new MemoryTopologyRepository();
 let mongoRepository: Promise<TopologyRepository> | undefined;
 
 export function getPersistenceMode(): PersistenceMode {
@@ -28,7 +28,10 @@ export function getPersistenceMode(): PersistenceMode {
 
 export async function createTopologyRepository(): Promise<TopologyRepository> {
   if (getPersistenceMode() === 'memory') {
-    return memoryRepository;
+    return getProcessSingleton<TopologyRepository>(
+      'topology-memory-repository',
+      () => new MemoryTopologyRepository(),
+    );
   }
 
   mongoRepository ??= getMongoDatabase().then((database) => new MongoTopologyRepository(database));

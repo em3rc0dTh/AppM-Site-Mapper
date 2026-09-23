@@ -528,7 +528,10 @@ function normalizeSiteParentedLevels(
     legacySiteId: string;
     structureId: string;
     structureName: string;
-    strategy: 'ROOM_GEOMETRY' | 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL';
+    strategy:
+      | 'ROOM_GEOMETRY'
+      | 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL'
+      | 'EXPLICIT_OVERRIDE';
   }>[];
 }> {
   const siteIds = new Set(

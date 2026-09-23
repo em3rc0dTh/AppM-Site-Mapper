@@ -4,25 +4,27 @@
 
 ## Delivered
 
-- isolated legacy alias handling under `scripts/migrations/legacy/`;
-- deterministic transformation when a persisted ID map is supplied;
-- dry-run report with counts, warnings and rejected records;
+- legacy aliases isolated under `scripts/migrations/legacy/`;
+- source-snapshot fingerprinting;
+- deterministic transformation with persisted ID map;
+- explicit counts, warnings and rejections;
 - strict parent/hierarchy resolution;
-- Device and Equipment sibling preservation;
+- Device/Equipment sibling preservation;
 - Position coordinate normalization;
-- Container/Rack variant handling;
-- CAS normalization for supported legacy shapes;
-- apply mode guarded by zero rejections and explicit ID map;
-- idempotent canonical upserts by stable ID;
-- migration guide;
+- Container/Rack and CAS normalization;
+- apply blocked by any rejected record;
+- staging-first MongoDB apply;
+- exact staged-count verification;
+- no automatic write to live `topology_nodes`;
+- migration runbook;
 - sanitized migration tests.
 
 ## Truth boundary
 
 This gate certifies migration tooling.
 
-It does **not** claim that real production data has been migrated. No production dump, customer topology or credential is stored in this public repository.
+It does not claim real production data has already been migrated. No production dump, customer topology or credential is stored in this public repository.
 
 ## Gate verdict
 
-Final PASS requires complete CI success on the final G13 head.
+Final PASS requires full CI success on the final G13 head.

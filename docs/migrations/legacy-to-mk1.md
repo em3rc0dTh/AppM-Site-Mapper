@@ -164,7 +164,6 @@ relationships, Position coordinates, Rack/CAS shape and CAS occupant references.
 
 The command is read-only and only inspects `topology_nodes_migration_staging`.
 
-
 ## Promote verified staging to live topology
 
 After staging verification returns `valid: true` with an empty `issues` array, promote the exact

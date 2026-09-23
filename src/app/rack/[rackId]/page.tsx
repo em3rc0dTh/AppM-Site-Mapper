@@ -33,6 +33,12 @@ export default async function RackPage({
       ? topology.getById(result.value.rack.parentId)
       : Promise.resolve(null),
   ]);
+  const inventoryHrefs = Object.fromEntries(
+    await Promise.all(
+      result.value.inventory.map(async (item) => [item.id, await topology.buildDeepLink(item.id)]),
+    ),
+  );
+
   const trailEntries: ContextTreeEntry[] = await Promise.all(
     trail.map(async (node) => ({
       id: node.id,
@@ -59,6 +65,7 @@ export default async function RackPage({
         <section className="operational-stage operational-stage--wide">
           <RackElevation
             view={result.value}
+            inventoryHrefs={inventoryHrefs}
             {...(parent?.kind === 'POSITION'
               ? {
                   context: {

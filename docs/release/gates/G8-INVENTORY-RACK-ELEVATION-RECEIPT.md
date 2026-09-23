@@ -19,4 +19,4 @@
 
 ## Gate verdict
 
-PASS requires final CI and integration into main.
+Implementation formatting is normalized. PASS requires final CI and integration into main.

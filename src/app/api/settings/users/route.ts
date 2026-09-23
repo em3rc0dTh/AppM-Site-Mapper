@@ -50,12 +50,15 @@ export async function POST(request: Request) {
   }
 
   const runtime = await getIdentityRuntime();
-  const result = await new AuthService(runtime.repository, runtime.throttle).createUser(auth.value, {
-    email: body.email,
-    displayName: body.displayName,
-    role: body.role as Role,
-    temporaryPassword: body.temporaryPassword,
-  });
+  const result = await new AuthService(runtime.repository, runtime.throttle).createUser(
+    auth.value,
+    {
+      email: body.email,
+      displayName: body.displayName,
+      role: body.role as Role,
+      temporaryPassword: body.temporaryPassword,
+    },
+  );
 
   if (!result.ok) {
     const status = result.error === 'USER_EXISTS' ? 409 : result.error === 'FORBIDDEN' ? 403 : 400;

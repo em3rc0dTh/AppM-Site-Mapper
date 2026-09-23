@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
-import { BdfbChassis } from '@/components/power/bdfb-chassis';
+import { DevicePhysicalView, type ElectricalConnection } from '@/components/inventory/device-physical-view';
+import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import {
   SpatialAuthoringCanvas,
   type SpatialContextPolygon,
@@ -26,8 +27,8 @@ import { InspectButton } from '@/shared/ui/entity-inspector';
 import { SectionHeader, StatePanel, StatusBadge } from '@/shared/ui/primitives';
 
 export default async function TopologyNodePage({
-  params,
-}: Readonly<{ params: Promise<{ path: string[] }> }>) {
+  params, searchParams,
+}: Readonly<{ params: Promise<{ path: string[] }>; searchParams: Promise<Record<string, string | string[] | undefined>> }>) {
   const auth = await requirePermission('topology:read');
 
   if (!auth.ok) {
@@ -44,6 +45,29 @@ export default async function TopologyNodePage({
   }
 
   const node = resolved.value;
+  const query = await searchParams;
+  const focus = Object.fromEntries(['shelf', 'panel', 'endpoint', 'path'].flatMap(key => typeof query[key] === 'string' ? [[key, query[key]]] : []));
+  const powerReadable = hasPermission(auth.value.role, 'power:read');
+  const physicalHref = await service.buildDeepLink(node.id);
+  const parent = node.parentId ? await repository.getById(node.parentId) : null;
+  const connections: ElectricalConnection[] = (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && powerReadable
+    ? await Promise.all((await (await createPowerRepository()).listActive()).filter(item => item.source.entityId === node.id || item.target.entityId === node.id).map(async path => {
+      const source = await repository.getById(path.source.entityId);
+      const target = await repository.getById(path.target.entityId);
+      const internal = path.source.internal;
+      const shelf = source?.kind === 'DEVICE' ? source.bdfb?.shelves.find(item => item.id === internal?.shelfId) : undefined;
+      const frame = shelf?.frames.find(item => item.id === internal?.frameId);
+      const panel = frame?.panels.find(item => item.id === internal?.panelId);
+      const endpoint = panel?.endpoints.find(item => item.id === internal?.breakerHolderId);
+      const params = new URLSearchParams();
+      if (shelf) params.set('shelf', shelf.id);
+      if (panel) params.set('panel', panel.id);
+      if (endpoint) params.set('endpoint', endpoint.id);
+      return { path, sourceName: source?.name ?? 'Unavailable source', targetName: target?.name ?? 'Unavailable destination',
+        sourceHref: `${await service.buildDeepLink(path.source.entityId)}?${params}`,
+        targetHref: await service.buildDeepLink(path.target.entityId),
+        sourceTrail: [source?.name, shelf?.label, frame?.label, panel?.label, endpoint?.label].filter((name): name is string => Boolean(name)) };
+    })) : [];
   const [trail, children] = await Promise.all([
     service.getTrail(node.id),
     service.listChildren(node.id),
@@ -159,11 +183,11 @@ export default async function TopologyNodePage({
           <SectionHeader
             eyebrow={node.kind.replaceAll('_', ' ')}
             title={node.name}
-            description="Navigate physically, inspect contextually, and keep the canonical hierarchy visible."
+            description="Physical infrastructure workspace"
             actions={
               <>
                 <StatusBadge>{node.lifecycle}</StatusBadge>
-                <InspectButton entity={topologyInspector(node)} />
+                <InspectButton entity={topologyInspector(node, physicalHref)} />
                 {(node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && canWrite && (
                   <PinButton id={node.id} initialPinned={node.pinned} />
                 )}
@@ -172,8 +196,8 @@ export default async function TopologyNodePage({
           />
 
           <div className="operational-stage-body">
-            {node.kind === 'DEVICE' && node.bdfb ? (
-              <BdfbChassis device={node} />
+            {node.kind === 'DEVICE' || node.kind === 'EQUIPMENT' ? (
+              <DevicePhysicalView key={physicalHref + JSON.stringify(focus)} device={node} rack={parent?.kind === 'CONTAINER_RACK' ? parent : null} href={physicalHref} connections={connections} focus={focus} powerReadable={powerReadable} />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' && roomLayout?.ok ? (
               roomLayout.value.room.polygon || canWrite ? (
                 <BlueprintCanvas
@@ -258,7 +282,7 @@ export default async function TopologyNodePage({
               </div>
             </dl>
             <div className="operational-inspector-actions">
-              <InspectButton label="Technical details" entity={topologyInspector(node)} />
+              <InspectButton label="Technical details" entity={topologyInspector(node, physicalHref)} />
               {rackLink && (
                 <Link className="action-link" href={rackLink}>
                   Open rack elevation →
@@ -271,13 +295,7 @@ export default async function TopologyNodePage({
               )}
             </div>
           </div>
-          <div className="operational-hint">
-            <span>Navigation contract</span>
-            <p>
-              The left context grows as you move deeper. The center represents the selected physical
-              level; technical facts stay in the inspector.
-            </p>
-          </div>
+
         </aside>
       </div>
     </main>

@@ -150,7 +150,7 @@ export function RackElevation({
           description="Front elevation · physical occupancy and clearance"
           actions={
             <>
-              <StatusBadge tone="good">ACTIVE</StatusBadge>
+              <StatusBadge>{view.rack.lifecycle}</StatusBadge>
               <InspectButton entity={topologyInspector(view.rack)} />
             </>
           }
@@ -195,7 +195,7 @@ export function RackElevation({
                           : `${block.units}RU ${roleLabel(block.role)}`}
                       </small>
                     </span>
-                    {block.role === 'PHYSICAL' && <span className="legacy-rack-led">● ACTIVE</span>}
+                    {block.role === 'PHYSICAL' && <span className="legacy-rack-led">MOUNTED</span>}
                   </>
                 );
 
@@ -233,7 +233,7 @@ export function RackElevation({
         <div className="legacy-properties-header">
           <span>Rack details</span>
           <strong>{view.rack.name}</strong>
-          <StatusBadge tone="good">OK · HEALTHY</StatusBadge>
+          <StatusBadge>{view.rack.lifecycle}</StatusBadge>
         </div>
 
         <section className="legacy-property-section">

@@ -96,7 +96,7 @@ function NetworkSiteCanvas({ items }: { items: readonly VisualStageChild[] }) {
       <div className="legacy-site-hud">
         <span className="legacy-site-hud-target">◎</span>
         <span>SCHEMATIC SITE VIEW</span>
-        <b>● ONLINE</b>
+        <b>CONFIGURED TOPOLOGY</b>
       </div>
       <div className="legacy-site-boundary">
         <span className="legacy-corner legacy-corner--tl" />

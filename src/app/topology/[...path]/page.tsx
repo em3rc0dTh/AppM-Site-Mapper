@@ -55,10 +55,15 @@ export default async function TopologyNodePage({
     })),
   );
   const childEntries: VisualStageChild[] = await Promise.all(
-    children.map(async (child) => ({
-      node: child,
-      href: await service.buildDeepLink(child.id),
-    })),
+    children.map(async (child) => {
+      const deepLink = await service.buildDeepLink(child.id);
+      const href =
+        child.kind === 'CONTAINER_RACK' && child.variant === 'RACK'
+          ? `/rack/${child.id}`
+          : deepLink;
+
+      return { node: child, href };
+    }),
   );
   const contextChildren: ContextTreeEntry[] = childEntries.map(({ node: child, href }) => ({
     id: child.id,

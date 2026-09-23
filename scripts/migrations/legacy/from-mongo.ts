@@ -446,13 +446,13 @@ function parseLevelParentOverrides(): Readonly<Record<string, string>> {
   if (!raw) return {};
   const parsed = JSON.parse(raw) as unknown;
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new Error('LEGACY_LEVEL_PARENT_OVERRIDES must be a JSON object of levelId -> structureId.');
+    throw new Error(
+      'LEGACY_LEVEL_PARENT_OVERRIDES must be a JSON object of levelId -> structureId.',
+    );
   }
   return Object.fromEntries(
     Object.entries(parsed as Record<string, unknown>).flatMap(([levelId, structureId]) =>
-      typeof structureId === 'string' && structureId.trim()
-        ? [[levelId, structureId.trim()]]
-        : [],
+      typeof structureId === 'string' && structureId.trim() ? [[levelId, structureId.trim()]] : [],
     ),
   );
 }
@@ -483,10 +483,7 @@ function diagnoseSiteParentedLevels(
     );
     const roomCentroids = levelRoomCentroids(levelId, loaded.rooms);
     const candidates = loaded.structures
-      .filter(
-        (structure) =>
-          reference(structure, ['siteId', 'site_id', 'parentId']) === parentId,
-      )
+      .filter((structure) => reference(structure, ['siteId', 'site_id', 'parentId']) === parentId)
       .map((structure) => {
         const structureId = recordId(structure);
         const polygon = polygonFromRecord(structure);
@@ -624,10 +621,7 @@ function normalizeSiteParentedLevels(
     legacySiteId: string;
     structureId: string;
     structureName: string;
-    strategy:
-      | 'ROOM_GEOMETRY'
-      | 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL'
-      | 'EXPLICIT_OVERRIDE';
+    strategy: 'ROOM_GEOMETRY' | 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL' | 'EXPLICIT_OVERRIDE';
   }>[];
 }> {
   const siteIds = new Set(
@@ -657,10 +651,7 @@ function normalizeSiteParentedLevels(
     legacySiteId: string;
     structureId: string;
     structureName: string;
-    strategy:
-      | 'ROOM_GEOMETRY'
-      | 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL'
-      | 'EXPLICIT_OVERRIDE';
+    strategy: 'ROOM_GEOMETRY' | 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL' | 'EXPLICIT_OVERRIDE';
   }> = [];
   const overrides = parseLevelParentOverrides();
 
@@ -868,9 +859,7 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
         normalizedSiteLevelParents: levelNormalization.normalized,
         unresolvedSiteLevelDiagnostics: diagnoseSiteParentedLevels(loaded).filter(
           (diagnostic) =>
-            !levelNormalization.normalized.some(
-              (item) => item.levelId === diagnostic.levelId,
-            ),
+            !levelNormalization.normalized.some((item) => item.levelId === diagnostic.levelId),
         ),
       },
       null,

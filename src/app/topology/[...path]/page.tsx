@@ -92,7 +92,7 @@ export default async function TopologyNodePage({
 
       <div className="operational-layout">
         <aside className="operational-context">
-          <TopologyContextTree trail={trailEntries} children={contextChildren} />
+          <TopologyContextTree trail={trailEntries} descendants={contextChildren} />
         </aside>
 
         <section className="operational-stage">
@@ -128,7 +128,7 @@ export default async function TopologyNodePage({
                 description="Define the physical boundary to render the Blueprint."
               />
             ) : (
-              <TopologyVisualStage node={node} children={childEntries} />
+              <TopologyVisualStage node={node} items={childEntries} />
             )}
           </div>
 

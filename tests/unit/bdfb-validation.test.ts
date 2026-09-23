@@ -32,6 +32,33 @@ describe('BDFB validation', () => {
     ).toEqual({ ok: true });
   });
 
+  it('keeps an implicit physical frame valid in the canonical hierarchy', () => {
+    expect(
+      validateBdfb({
+        shelves: [
+          {
+            id: 'shelf-a',
+            label: 'Shelf A',
+            frames: [
+              {
+                id: 'frame-a',
+                label: 'Frame A',
+                presentation: { physicalFrameVisible: false },
+                panels: [
+                  {
+                    id: 'panel-a',
+                    label: 'Panel A',
+                    endpoints: [{ id: 'breaker-1', variant: 'BREAKER', label: 'CB-01' }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }),
+    ).toEqual({ ok: true });
+  });
+
   it('rejects duplicate identities', () => {
     const result = validateBdfb({
       shelves: [

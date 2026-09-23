@@ -2067,3 +2067,1140 @@ p {
   color: var(--muted);
   font-size: 0.68rem;
 }
+
+/* -------------------------------------------------------------------------- */
+/* MK1 Visual Operations Surface                                               */
+/* The canonical domain remains unchanged; these rules restore spatial context */
+/* and operational density without copying the legacy presentation.            */
+/* -------------------------------------------------------------------------- */
+
+.app-shell {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-content {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.operational-page {
+  height: calc(100dvh - 156px);
+  min-height: 620px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.operational-breadcrumbs {
+  flex: 0 0 auto;
+  margin-bottom: 14px;
+  white-space: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.operational-breadcrumbs a:not(:last-child)::after {
+  content: '/';
+  margin-left: 0.75rem;
+  color: #4d5d70;
+}
+
+.operational-layout {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr) minmax(230px, 280px);
+  gap: 14px;
+}
+
+.operational-layout--rack,
+.operational-layout--blueprint {
+  grid-template-columns: minmax(210px, 250px) minmax(0, 1fr);
+}
+
+.operational-context,
+.operational-inspector,
+.operational-stage {
+  min-height: 0;
+  border: 1px solid var(--border);
+  background: #0e131a;
+}
+
+.operational-context {
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.operational-stage {
+  display: flex;
+  flex-direction: column;
+  border-radius: 8px;
+  padding: 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 70% 10%, rgba(121, 217, 232, 0.035), transparent 30%), #0b1016;
+}
+
+.operational-stage--wide {
+  grid-column: 2;
+}
+
+.operational-stage > .section-header,
+.rack-elevation-view > .section-header {
+  flex: 0 0 auto;
+  margin-bottom: 16px;
+}
+
+.operational-stage-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.operational-inspector {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.operational-inspector-card,
+.operational-hint {
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+.operational-inspector-card {
+  padding: 18px;
+}
+
+.operational-inspector-card h2 {
+  margin: 4px 0 18px;
+  font-size: 1.2rem;
+}
+
+.operational-inspector-card dl {
+  margin: 0;
+}
+
+.operational-inspector-card dl > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+
+.operational-inspector-card dt {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.operational-inspector-card dd {
+  margin: 0;
+  font:
+    0.7rem ui-monospace,
+    monospace;
+  color: #cdd8e5;
+  text-align: right;
+}
+
+.operational-inspector-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.operational-inspector-actions > * {
+  width: 100%;
+  justify-content: center;
+}
+
+.operational-hint {
+  margin-top: auto;
+  padding: 14px;
+}
+
+.operational-hint span {
+  color: var(--accent);
+  font:
+    0.62rem ui-monospace,
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.operational-hint p {
+  margin: 8px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.operational-edit-dock {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 8px;
+  padding-top: 10px;
+  overflow-x: auto;
+}
+
+.operational-edit-dock .edit-disclosure {
+  min-width: 230px;
+  margin: 0;
+}
+
+.operational-edit-dock .edit-disclosure[open] {
+  position: absolute;
+  z-index: 30;
+  right: 300px;
+  bottom: 22px;
+  width: min(620px, 45vw);
+  box-shadow: 0 24px 80px #000b;
+}
+
+/* Context tree: the left rail accumulates navigational depth. */
+.context-tree {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.context-tree-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 54px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border);
+  color: #9fb0c4;
+  font:
+    0.66rem ui-monospace,
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.context-tree-heading small {
+  color: var(--accent);
+}
+
+.context-tree-trail,
+.context-tree-children ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.context-tree-trail {
+  padding: 12px 10px 8px;
+  overflow-y: auto;
+}
+
+.context-tree-trail li {
+  position: relative;
+  padding-left: calc(var(--context-depth) * 9px);
+}
+
+.context-tree-trail li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: calc(21px + var(--context-depth) * 9px);
+  top: 39px;
+  bottom: -7px;
+  width: 1px;
+  background: #273645;
+}
+
+.context-tree a {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--muted);
+}
+
+.context-tree a:hover {
+  color: var(--text);
+  background: #151d27;
+}
+
+.context-tree a[aria-current='page'] {
+  color: #d6f5f9;
+  border-color: #315362;
+  background: #172a33;
+}
+
+.context-tree a .icon {
+  width: 16px;
+  height: 16px;
+  flex-basis: 16px;
+}
+
+.context-tree a > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.context-tree a small {
+  color: #66788e;
+  font:
+    0.52rem ui-monospace,
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+
+.context-tree a strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 520;
+}
+
+.context-tree-children {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding: 12px 10px;
+  max-height: 38%;
+  overflow: auto;
+  background: #0b1016;
+}
+
+.context-tree-subtitle {
+  display: block;
+  padding: 0 8px 7px;
+  color: #6e7f93;
+  font:
+    0.56rem ui-monospace,
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.context-tree-children a {
+  padding-block: 7px;
+}
+
+/* Logical visual surface for hierarchy levels that do not have surveyed geometry. */
+.topology-visual-stage {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #090d12;
+}
+
+.topology-visual-toolbar {
+  flex: 0 0 auto;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #111820;
+}
+
+.topology-visual-toolbar > div {
+  display: grid;
+  gap: 3px;
+}
+
+.topology-visual-toolbar span {
+  color: #cdd8e5;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.topology-visual-toolbar small {
+  color: #6f8197;
+  font-size: 0.62rem;
+}
+
+.topology-visual-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: clamp(18px, 3vw, 38px);
+  isolation: isolate;
+}
+
+.topology-visual-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  background-image:
+    linear-gradient(rgba(86, 110, 133, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(86, 110, 133, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at center, #000 30%, transparent 88%);
+}
+
+.topology-visual-canvas::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  width: 64%;
+  height: 54%;
+  border: 1px solid rgba(121, 217, 232, 0.1);
+  background: rgba(17, 27, 36, 0.32);
+  box-shadow:
+    0 0 0 16px rgba(121, 217, 232, 0.015),
+    0 28px 80px #0007;
+}
+
+.topology-node-field {
+  width: min(820px, 88%);
+  max-height: 86%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  overflow: auto;
+  padding: 4px;
+}
+
+.topology-visual-stage--structure .topology-node-field {
+  grid-template-columns: 1fr;
+  width: min(680px, 84%);
+}
+
+.topology-visual-stage--container_cluster_bay .topology-node-field {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  width: min(760px, 88%);
+}
+
+.topology-visual-stage--position .topology-node-field {
+  width: min(520px, 80%);
+  grid-template-columns: 1fr;
+}
+
+.topology-visual-node {
+  position: relative;
+  min-height: 116px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #334250;
+  background: linear-gradient(140deg, rgba(121, 217, 232, 0.06), transparent 52%), #10161e;
+  color: #dbe5ee;
+  text-decoration: none;
+  box-shadow: 0 12px 40px #0004;
+}
+
+.topology-visual-node::before {
+  content: '';
+  position: absolute;
+  inset: 7px;
+  border: 1px solid rgba(135, 160, 184, 0.08);
+  pointer-events: none;
+}
+
+.topology-visual-node:hover,
+.topology-visual-node:focus-visible {
+  border-color: var(--accent);
+  background: linear-gradient(140deg, rgba(121, 217, 232, 0.13), transparent 58%), #121b24;
+}
+
+.topology-visual-stage--structure .topology-visual-node--level {
+  min-height: 72px;
+  border-left: 4px solid #5d8797;
+}
+
+.topology-visual-node--room_substructure {
+  min-height: 140px;
+}
+
+.topology-visual-node--position {
+  min-height: 94px;
+  border-style: dashed;
+}
+
+.topology-visual-node--container_rack {
+  min-height: 180px;
+  border-width: 2px 8px;
+  border-color: #344756;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(121, 217, 232, 0.035),
+      rgba(121, 217, 232, 0.035) 8px,
+      transparent 8px,
+      transparent 15px
+    ),
+    #0d131a;
+}
+
+.topology-node-icon {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 42px;
+  border: 1px solid #39505e;
+  background: #17242d;
+  color: var(--accent);
+}
+
+.topology-node-copy {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.topology-node-copy small {
+  color: #71859a;
+  font:
+    0.58rem ui-monospace,
+    monospace;
+  letter-spacing: 0.09em;
+}
+
+.topology-node-copy strong {
+  font-size: 0.92rem;
+  font-weight: 560;
+  overflow-wrap: anywhere;
+}
+
+.topology-node-enter {
+  margin-left: auto;
+  align-self: flex-start;
+  color: #5e7186;
+}
+
+.topology-empty-node {
+  grid-column: 1 / -1;
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  border: 1px dashed #32404e;
+  color: #718397;
+  text-align: center;
+}
+
+.topology-empty-node strong {
+  color: #aab8c7;
+  font-size: 0.82rem;
+}
+
+.topology-empty-node span {
+  max-width: 320px;
+  font-size: 0.7rem;
+}
+
+/* BDFB chassis: Frame remains canonical even when presentation flattens it. */
+.bdfb-chassis {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #32404e;
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 0, rgba(121, 217, 232, 0.055), transparent 36%), #080c11;
+}
+
+.bdfb-chassis-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background: #10161e;
+}
+
+.bdfb-chassis-header > div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.bdfb-chassis-header > div:first-child > span {
+  color: var(--accent);
+  font:
+    0.58rem ui-monospace,
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.bdfb-chassis-header > div:first-child > strong {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.bdfb-chassis-header > div:first-child > small {
+  color: #74869a;
+  font-size: 0.64rem;
+}
+
+.bdfb-chassis-status {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.bdfb-chassis-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 18px;
+}
+
+.bdfb-shelf {
+  position: relative;
+  min-height: 100%;
+  border: 1px solid #44515f;
+  border-radius: 12px;
+  padding: 42px 16px 16px;
+  background:
+    linear-gradient(
+      90deg,
+      #171d25 0 8px,
+      transparent 8px calc(100% - 8px),
+      #171d25 calc(100% - 8px)
+    ),
+    #0b1016;
+  box-shadow: inset 0 0 0 6px #080c11;
+}
+
+.bdfb-shelf > header {
+  position: absolute;
+  top: 11px;
+  left: 18px;
+  right: 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.bdfb-shelf > header span,
+.bdfb-frame > header span,
+.bdfb-panel-title > span {
+  color: #6e8094;
+  font:
+    0.56rem ui-monospace,
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.bdfb-shelf > header strong {
+  color: #dce6ef;
+  font-size: 0.78rem;
+}
+
+.bdfb-frame-field {
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.bdfb-frame,
+.bdfb-frame-implicit {
+  min-height: 0;
+}
+
+.bdfb-frame {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #315160;
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(19, 31, 40, 0.6);
+}
+
+.bdfb-frame > header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 4px 10px;
+}
+
+.bdfb-frame > header strong {
+  font-size: 0.75rem;
+}
+
+.bdfb-frame-implicit {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.28fr) minmax(0, 1fr);
+  gap: 12px;
+  border: 1px dashed #4d5b68;
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(15, 20, 27, 0.7);
+}
+
+.bdfb-implicit-note {
+  display: grid;
+  align-content: center;
+  gap: 7px;
+  padding: 12px;
+  border-right: 1px solid var(--border);
+}
+
+.bdfb-implicit-note span {
+  color: var(--warning);
+  font:
+    0.56rem ui-monospace,
+    monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.bdfb-implicit-note strong {
+  font-size: 0.82rem;
+}
+
+.bdfb-implicit-note small {
+  color: #738397;
+  font-size: 0.62rem;
+  line-height: 1.45;
+}
+
+.bdfb-panel-grid {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+}
+
+.bdfb-panel-board {
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #3a4755;
+  border-radius: 7px;
+  overflow: hidden;
+  background: #0d131a;
+}
+
+.bdfb-panel-title {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-bottom: 1px solid #2d3946;
+  border-radius: 0;
+  padding: 8px 10px;
+  background: #111923;
+  text-align: left;
+}
+
+.bdfb-panel-title strong {
+  color: #e5edf4;
+  font-size: 0.78rem;
+}
+
+.bdfb-panel-title small {
+  color: #73869c;
+  font-size: 0.58rem;
+}
+
+.bdfb-endpoint-grid {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: stretch;
+  gap: 6px;
+  padding: 8px;
+}
+
+.bdfb-endpoint {
+  position: relative;
+  min-height: 54px;
+  display: grid;
+  grid-template-columns: 22px 1fr;
+  grid-template-rows: auto auto;
+  gap: 2px 7px;
+  align-content: center;
+  border-color: #31404f;
+  background: #0a0f15;
+  color: #aebdcb;
+  text-align: left;
+  padding: 7px;
+}
+
+.bdfb-endpoint > span {
+  grid-row: 1 / 3;
+  width: 22px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  border: 1px solid #355364;
+  color: var(--accent);
+  font:
+    0.52rem ui-monospace,
+    monospace;
+}
+
+.bdfb-endpoint > strong {
+  font-size: 0.68rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bdfb-endpoint > small {
+  color: #65778c;
+  font:
+    0.5rem ui-monospace,
+    monospace;
+}
+
+.bdfb-endpoint--breaker {
+  border-color: #3d5967;
+  background: linear-gradient(90deg, rgba(121, 217, 232, 0.07), transparent 65%), #0a1016;
+}
+
+.bdfb-endpoint--holder {
+  border-style: dashed;
+  opacity: 0.68;
+}
+
+.bdfb-empty-endpoints {
+  grid-column: 1 / -1;
+  display: grid;
+  place-items: center;
+  color: #697b8f;
+  font-size: 0.68rem;
+}
+
+/* Rack elevation: all U positions remain visible without document scrolling. */
+.rack-elevation-view {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rack-metric-strip {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.rack-metric {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #10161e;
+}
+
+.rack-metric span {
+  color: #7f90a4;
+  font-size: 0.64rem;
+}
+
+.rack-metric strong {
+  font:
+    1rem ui-monospace,
+    monospace;
+  font-weight: 600;
+}
+
+.rack-metric strong small {
+  margin-left: 3px;
+  color: #718397;
+  font-size: 0.56rem;
+}
+
+.rack-metric--equipped {
+  border-top-color: #4d8694;
+}
+
+.rack-metric--reserved {
+  border-top-color: #8b7043;
+}
+
+.rack-layout--visual {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(380px, 1.35fr) minmax(250px, 0.65fr);
+  gap: 12px;
+  align-items: stretch;
+}
+
+.rack-physical-stage {
+  position: relative;
+  min-height: 0;
+  display: grid;
+  place-items: stretch center;
+  padding: 12px 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 48%, rgba(121, 217, 232, 0.04), transparent 45%), #080c11;
+}
+
+.rack-physical-stage::before {
+  content: '';
+  position: absolute;
+  inset: 12px 20%;
+  border: 1px solid #202b36;
+  pointer-events: none;
+}
+
+.rack-rail {
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  width: 12px;
+  border: 1px solid #2f3d4a;
+  background: repeating-linear-gradient(to bottom, #33414f 0 2px, #151d25 2px 12px);
+}
+
+.rack-rail--left {
+  left: 18px;
+}
+
+.rack-rail--right {
+  right: 18px;
+}
+
+.rack-layout--visual .rack-elevation-shell {
+  position: relative;
+  z-index: 1;
+  width: min(620px, 100%);
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  padding: 5px;
+  border: 2px solid #3e4c5a;
+  border-left-width: 8px;
+  border-right-width: 8px;
+  border-radius: 5px;
+  background: #060a0e;
+  box-shadow:
+    0 0 0 5px #0d1319,
+    0 24px 80px #0008;
+}
+
+.rack-layout--visual .rack-unit {
+  min-height: 0;
+  height: auto;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  border-bottom: 1px solid #202c36;
+  overflow: hidden;
+}
+
+.rack-layout--visual .rack-unit-number {
+  min-width: 0;
+  flex: none;
+  display: grid;
+  place-items: center end;
+  padding: 0 6px 0 0;
+  border-right: 1px solid #2b3946;
+  color: #61768c;
+  font:
+    clamp(0.42rem, 0.55vw, 0.56rem) ui-monospace,
+    monospace;
+  line-height: 1;
+}
+
+.rack-layout--visual .rack-unit-state {
+  min-height: 0;
+  height: 100%;
+  border-radius: 0;
+  padding: 0 7px;
+  font-size: clamp(0.48rem, 0.6vw, 0.62rem);
+  line-height: 1;
+}
+
+.rack-layout--visual .rack-unit-state strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rack-layout--visual .rack-unit-state small {
+  font-size: 0.45rem;
+}
+
+.rack-layout--visual .rack-unit--physical .rack-unit-state {
+  background: linear-gradient(90deg, rgba(121, 217, 232, 0.12), transparent 80%), #173541;
+  border-left: 2px solid #68c6d5;
+}
+
+.rack-layout--visual .rack-unit--reserved .rack-unit-state {
+  background: linear-gradient(90deg, rgba(237, 193, 121, 0.12), transparent 80%), #2a2419;
+  border-left: 2px solid #b18c4e;
+}
+
+.rack-layout--visual .rack-unit--clearance .rack-unit-state {
+  background: repeating-linear-gradient(135deg, #151c23, #151c23 4px, #202832 4px, #202832 5px);
+  color: #7c8c9e;
+}
+
+.rack-inventory-panel {
+  min-height: 0;
+  overflow: auto;
+}
+
+.rack-inventory-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.rack-inventory-heading h2 {
+  margin: 3px 0 0;
+}
+
+.rack-inventory-panel .rack-legend {
+  margin: 14px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.operational-stage .blueprint-panel {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.operational-stage .blueprint-canvas {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+  border-radius: 0;
+}
+
+.operational-stage .blueprint-legend {
+  flex: 0 0 auto;
+}
+
+.operational-blueprint-edit {
+  flex: 0 0 auto;
+  margin: 10px 0 0;
+}
+
+@media (max-width: 1350px) {
+  .operational-layout {
+    grid-template-columns: 200px minmax(0, 1fr) 220px;
+  }
+
+  .operational-layout--rack,
+  .operational-layout--blueprint {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+
+  .bdfb-frame-implicit {
+    grid-template-columns: 1fr;
+  }
+
+  .bdfb-implicit-note {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+@media (max-width: 1100px) {
+  .operational-page {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .operational-layout,
+  .operational-layout--rack,
+  .operational-layout--blueprint {
+    grid-template-columns: 1fr;
+  }
+
+  .operational-context,
+  .operational-inspector,
+  .operational-stage--wide {
+    grid-column: 1;
+  }
+
+  .operational-context {
+    max-height: 260px;
+  }
+
+  .operational-stage {
+    min-height: 620px;
+  }
+
+  .rack-layout--visual {
+    grid-template-columns: 1fr;
+  }
+
+  .rack-physical-stage {
+    min-height: 680px;
+  }
+}
+
+@media (max-width: 700px) {
+  .operational-stage {
+    padding: 14px;
+  }
+
+  .rack-metric-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .topology-node-field {
+    width: 96%;
+    grid-template-columns: 1fr;
+  }
+
+  .bdfb-chassis-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .bdfb-frame-field,
+  .bdfb-panel-grid {
+    grid-template-columns: 1fr;
+  }
+}

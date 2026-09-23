@@ -54,10 +54,20 @@ export interface Panel {
   readonly endpoints: readonly BreakerHolder[];
 }
 
+export interface FramePresentation {
+  /**
+   * The canonical Frame always exists in the data model.
+   * false means the customer does not expose a distinct physical frame, so presentation flattens
+   * its panels directly under the Shelf without changing hierarchy or power-path identities.
+   */
+  readonly physicalFrameVisible?: boolean;
+}
+
 export interface Frame {
   readonly id: string;
   readonly label: string;
   readonly panels: readonly Panel[];
+  readonly presentation?: FramePresentation;
 }
 
 export interface Shelf {

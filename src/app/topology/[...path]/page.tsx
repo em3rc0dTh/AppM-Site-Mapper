@@ -1,22 +1,24 @@
-import {
-  DataView,
-  EntityRow,
-  SectionHeader,
-  StatePanel,
-  StatusBadge,
-} from '@/shared/ui/primitives';
-import { InspectButton } from '@/shared/ui/entity-inspector';
-import { topologyInspector } from '@/shared/ui/entity-adapters';
-import { PinButton } from '@/components/workspace/pin-button';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
+import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
+import { BdfbChassis } from '@/components/power/bdfb-chassis';
+import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
 import { TopologyCreateForm } from '@/components/topology/topology-create-form';
+import {
+  TopologyVisualStage,
+  type VisualStageChild,
+} from '@/components/topology/topology-visual-stage';
+import { PinButton } from '@/components/workspace/pin-button';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
+import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { allowedChildKinds } from '@/modules/topology/domain/hierarchy';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import { topologyInspector } from '@/shared/ui/entity-adapters';
+import { InspectButton } from '@/shared/ui/entity-inspector';
+import { SectionHeader, StatePanel, StatusBadge } from '@/shared/ui/primitives';
 
 export default async function TopologyNodePage({
   params,
@@ -28,7 +30,8 @@ export default async function TopologyNodePage({
   }
 
   const { path } = await params;
-  const service = new TopologyService(await createTopologyRepository());
+  const repository = await createTopologyRepository();
+  const service = new TopologyService(repository);
   const resolved = await service.resolveDeepLink(path);
 
   if (!resolved.ok) {
@@ -36,155 +39,149 @@ export default async function TopologyNodePage({
   }
 
   const node = resolved.value;
-  const trail = await service.getTrail(node.id);
-  const children = await service.listChildren(node.id);
+  const [trail, children] = await Promise.all([
+    service.getTrail(node.id),
+    service.listChildren(node.id),
+  ]);
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
+  const trailEntries: ContextTreeEntry[] = await Promise.all(
+    trail.map(async (item) => ({
+      id: item.id,
+      name: item.name,
+      kind: item.kind,
+      href: await service.buildDeepLink(item.id),
+    })),
+  );
+  const childEntries: VisualStageChild[] = await Promise.all(
+    children.map(async (child) => ({
+      node: child,
+      href: await service.buildDeepLink(child.id),
+    })),
+  );
+  const contextChildren: ContextTreeEntry[] = childEntries.map(({ node: child, href }) => ({
+    id: child.id,
+    name: child.name,
+    kind: child.kind,
+    href,
+  }));
+
+  const roomLayout =
+    node.kind === 'ROOM_SUBSTRUCTURE'
+      ? await new SpatialService(repository).getRoomLayout(node.id)
+      : null;
+
+  const rackLink =
+    node.kind === 'CONTAINER_RACK' && node.variant === 'RACK' ? `/rack/${node.id}` : null;
+  const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
+
   return (
-    <main className="workspace-shell">
-      <nav className="breadcrumbs" aria-label="Breadcrumb">
+    <main className="operational-page">
+      <nav className="breadcrumbs operational-breadcrumbs" aria-label="Breadcrumb">
         <Link href="/network">Network index</Link>
-        {await Promise.all(
-          trail.map(async (item) => (
-            <Link key={item.id} href={await service.buildDeepLink(item.id)}>
-              {item.name}
-            </Link>
-          )),
-        )}
+        {trailEntries.map((item) => (
+          <Link key={item.id} href={item.href}>
+            {item.name}
+          </Link>
+        ))}
       </nav>
 
-      <SectionHeader
-        eyebrow={node.kind.replaceAll('_', ' ')}
-        title={node.name}
-        actions={
-          <>
-            <StatusBadge>{node.lifecycle}</StatusBadge>
-            <InspectButton entity={topologyInspector(node)} />
-            {(node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && canWrite && (
-              <PinButton id={node.id} initialPinned={node.pinned} />
-            )}
-          </>
-        }
-      />
-      {node.kind === 'CONTAINER_RACK' && node.variant === 'RACK' && (
-        <div className="node-actions">
-          <Link className="action-link" href={`/rack/${node.id}`}>
-            Open Rack Elevation →
-          </Link>
-        </div>
-      )}
-      {node.kind === 'DEVICE' && node.bdfb && (
-        <section className="panel">
-          <h2>Power distribution structure</h2>
-          <DataView label="BDFB internals">
-            {node.bdfb.shelves.flatMap((shelf) =>
-              shelf.frames.flatMap((frame) =>
-                frame.panels.map((panel) => (
-                  <section key={panel.id}>
-                    <EntityRow
-                      name={panel.label}
-                      kind="PANEL"
-                      metadata={`${shelf.label} / ${frame.label}`}
-                      actions={
-                        <InspectButton
-                          entity={{
-                            name: panel.label,
-                            kind: 'PANEL',
-                            sections: [
-                              {
-                                title: 'Overview',
-                                fields: [
-                                  { label: 'Shelf', value: shelf.label },
-                                  { label: 'Frame', value: frame.label },
-                                  { label: 'Endpoints', value: panel.endpoints.length },
-                                ],
-                              },
-                            ],
-                          }}
-                        />
-                      }
-                    />
-                    {panel.endpoints.map((endpoint) => (
-                      <EntityRow
-                        key={endpoint.id}
-                        name={endpoint.label}
-                        kind={endpoint.variant}
-                        metadata={panel.label}
-                        actions={
-                          <InspectButton
-                            entity={{
-                              name: endpoint.label,
-                              kind: endpoint.variant,
-                              sections: [
-                                {
-                                  title: 'Overview',
-                                  fields: [
-                                    { label: 'Panel', value: panel.label },
-                                    {
-                                      label: 'Capacity',
-                                      value: endpoint.capacity ?? 'Not specified',
-                                    },
-                                    { label: 'Endpoint ID', value: endpoint.id },
-                                  ],
-                                },
-                              ],
-                            }}
-                          />
-                        }
-                      />
-                    ))}
-                  </section>
-                )),
-              ),
-            )}
-          </DataView>
-        </section>
-      )}
+      <div className="operational-layout">
+        <aside className="operational-context">
+          <TopologyContextTree trail={trailEntries} descendants={contextChildren} />
+        </aside>
 
-      {node.kind === 'ROOM_SUBSTRUCTURE' && (
-        <div className="node-actions">
-          <Link className="action-link" href={`/blueprint/${node.id}`}>
-            Open Blueprint
-          </Link>
-        </div>
-      )}
-
-      <section className="panel">
-        <h2>Contained infrastructure</h2>
-        {children.length === 0 ? (
-          <StatePanel
-            title="No contained entities"
-            description="This entity has no active children."
+        <section className="operational-stage">
+          <SectionHeader
+            eyebrow={node.kind.replaceAll('_', ' ')}
+            title={node.name}
+            description="Navigate physically, inspect contextually, and keep the canonical hierarchy visible."
+            actions={
+              <>
+                <StatusBadge>{node.lifecycle}</StatusBadge>
+                <InspectButton entity={topologyInspector(node)} />
+                {(node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && canWrite && (
+                  <PinButton id={node.id} initialPinned={node.pinned} />
+                )}
+              </>
+            }
           />
-        ) : (
-          <DataView label="Contained entities">
-            {await Promise.all(
-              children.map(async (child) => (
-                <EntityRow
-                  key={child.id}
-                  name={child.name}
-                  kind={child.kind}
-                  href={await service.buildDeepLink(child.id)}
-                  actions={
-                    <InspectButton
-                      entity={topologyInspector(child, await service.buildDeepLink(child.id))}
-                    />
-                  }
-                />
-              )),
-            )}
-          </DataView>
-        )}
-      </section>
 
-      {canWrite &&
-        childKinds.map((kind) => (
-          <details className="edit-disclosure" key={kind}>
-            <summary>Edit · Create {kind.replaceAll('_', ' ').toLowerCase()}</summary>
-            <TopologyCreateForm kind={kind} parentId={node.id} />
-          </details>
-        ))}
+          <div className="operational-stage-body">
+            {node.kind === 'DEVICE' && node.bdfb ? (
+              <BdfbChassis device={node} />
+            ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
+              roomLayout?.ok &&
+              roomLayout.value.room.polygon ? (
+              <BlueprintCanvas
+                polygon={roomLayout.value.room.polygon}
+                racks={roomLayout.value.racks}
+                slots={roomLayout.value.assignableSlots}
+              />
+            ) : node.kind === 'ROOM_SUBSTRUCTURE' && roomLayout?.ok ? (
+              <StatePanel
+                title="No room boundary"
+                description="Define the physical boundary to render the Blueprint."
+              />
+            ) : (
+              <TopologyVisualStage node={node} items={childEntries} />
+            )}
+          </div>
+
+          {canWrite && childKinds.length > 0 && (
+            <div className="operational-edit-dock">
+              {childKinds.map((kind) => (
+                <details className="edit-disclosure" key={kind}>
+                  <summary>Edit · Create {kind.replaceAll('_', ' ').toLowerCase()}</summary>
+                  <TopologyCreateForm kind={kind} parentId={node.id} />
+                </details>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <aside className="operational-inspector">
+          <div className="operational-inspector-card">
+            <span className="eyebrow">Current selection</span>
+            <h2>{node.name}</h2>
+            <dl>
+              <div>
+                <dt>Canonical type</dt>
+                <dd>{node.kind.replaceAll('_', ' ')}</dd>
+              </div>
+              <div>
+                <dt>Contained</dt>
+                <dd>{children.length}</dd>
+              </div>
+              <div>
+                <dt>Lifecycle</dt>
+                <dd>{node.lifecycle}</dd>
+              </div>
+            </dl>
+            <div className="operational-inspector-actions">
+              <InspectButton label="Technical details" entity={topologyInspector(node)} />
+              {rackLink && (
+                <Link className="action-link" href={rackLink}>
+                  Open rack elevation →
+                </Link>
+              )}
+              {blueprintLink && (
+                <Link className="action-link" href={blueprintLink}>
+                  Open Blueprint fullscreen →
+                </Link>
+              )}
+            </div>
+          </div>
+          <div className="operational-hint">
+            <span>Navigation contract</span>
+            <p>
+              The left context grows as you move deeper. The center represents the selected physical
+              level; technical facts stay in the inspector.
+            </p>
+          </div>
+        </aside>
+      </div>
     </main>
   );
 }

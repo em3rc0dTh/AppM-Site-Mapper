@@ -1,8 +1,10 @@
 import { notFound, redirect } from 'next/navigation';
 
+import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
 import { RackElevation } from '@/components/rack/rack-elevation';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
+import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 export default async function RackPage({
@@ -15,16 +17,46 @@ export default async function RackPage({
   }
 
   const { rackId } = await params;
-  const service = new RackElevationService(await createTopologyRepository());
-  const result = await service.getView(rackId);
+  const repository = await createTopologyRepository();
+  const elevation = new RackElevationService(repository);
+  const topology = new TopologyService(repository);
+  const result = await elevation.getView(rackId);
 
   if (!result.ok) {
     notFound();
   }
 
+  const [trail, children] = await Promise.all([
+    topology.getTrail(rackId),
+    topology.listChildren(rackId),
+  ]);
+  const trailEntries: ContextTreeEntry[] = await Promise.all(
+    trail.map(async (node) => ({
+      id: node.id,
+      name: node.name,
+      kind: node.kind,
+      href: await topology.buildDeepLink(node.id),
+    })),
+  );
+  const childEntries: ContextTreeEntry[] = await Promise.all(
+    children.map(async (node) => ({
+      id: node.id,
+      name: node.name,
+      kind: node.kind,
+      href: await topology.buildDeepLink(node.id),
+    })),
+  );
+
   return (
-    <main className="rack-page">
-      <RackElevation view={result.value} />
+    <main className="operational-page operational-page--rack">
+      <div className="operational-layout operational-layout--rack">
+        <aside className="operational-context">
+          <TopologyContextTree trail={trailEntries} descendants={childEntries} />
+        </aside>
+        <section className="operational-stage operational-stage--wide">
+          <RackElevation view={result.value} />
+        </section>
+      </div>
     </main>
   );
 }

@@ -369,6 +369,80 @@ function inferClusterRow(cluster: LegacyRecord | undefined): string {
   return match?.[1]?.toUpperCase() ?? 'A';
 }
 
+function normalizeSiteParentedLevels(
+  loaded: Record<keyof typeof sourceAliases, readonly LegacyRecord[]>,
+): Readonly<{
+  loaded: Record<keyof typeof sourceAliases, readonly LegacyRecord[]>;
+  normalized: readonly Readonly<{
+    levelId: string;
+    legacySiteId: string;
+    structureId: string;
+    structureName: string;
+  }>[];
+}> {
+  const siteIds = new Set(
+    loaded.sites.flatMap((site) => {
+      const id = recordId(site);
+      return id ? [id] : [];
+    }),
+  );
+  const structuresBySite = new Map<string, LegacyRecord[]>();
+  for (const structure of loaded.structures) {
+    const siteId = reference(structure, ['siteId', 'site_id', 'parentId']);
+    if (!siteId) continue;
+    const bucket = structuresBySite.get(siteId) ?? [];
+    bucket.push(structure);
+    structuresBySite.set(siteId, bucket);
+  }
+
+  const directStructureLevelParents = new Set(
+    loaded.levels.flatMap((level) => {
+      const parentId = reference(level, ['structureId', 'structure_id', 'parentId']);
+      return parentId && !siteIds.has(parentId) ? [parentId] : [];
+    }),
+  );
+
+  const normalized: Array<{
+    levelId: string;
+    legacySiteId: string;
+    structureId: string;
+    structureName: string;
+  }> = [];
+
+  const levels = loaded.levels.map((level) => {
+    const parentId = reference(level, ['structureId', 'structure_id', 'parentId']);
+    if (!parentId || !siteIds.has(parentId)) return level;
+
+    const candidates = (structuresBySite.get(parentId) ?? []).filter((structure) => {
+      const id = recordId(structure);
+      return id ? !directStructureLevelParents.has(id) : false;
+    });
+
+    if (candidates.length !== 1) return level;
+
+    const structure = candidates[0]!;
+    const structureId = recordId(structure);
+    const levelId = recordId(level);
+    if (!structureId || !levelId) return level;
+
+    normalized.push({
+      levelId,
+      legacySiteId: parentId,
+      structureId,
+      structureName: label(structure, structureId),
+    });
+
+    return {
+      ...level,
+      parentId: structureId,
+      migrationParentSource: 'legacy-site-level-fallback',
+      migrationLegacyParentId: parentId,
+    };
+  });
+
+  return { loaded: { ...loaded, levels }, normalized };
+}
+
 function deriveDirectContainerPositions(
   loaded: Record<keyof typeof sourceAliases, readonly LegacyRecord[]>,
 ): Record<keyof typeof sourceAliases, readonly LegacyRecord[]> {
@@ -462,7 +536,9 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
   const loadedRaw = Object.fromEntries(
     loadedEntries.map(([logicalName, result]) => [logicalName, result.records]),
   ) as Record<keyof typeof sourceAliases, readonly LegacyRecord[]>;
-  const loaded = deriveDirectContainerPositions(loadedRaw);
+  const withPositions = deriveDirectContainerPositions(loadedRaw);
+  const levelNormalization = normalizeSiteParentedLevels(withPositions);
+  const loaded = levelNormalization.loaded;
   const resolutions = loadedEntries.map(([, result]) => result.resolution);
 
   process.stdout.write(
@@ -471,6 +547,7 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
         collectionFamily: family,
         collectionResolution: resolutions,
         derivedPositions: loaded.positions.length - loadedRaw.positions.length,
+        normalizedSiteLevelParents: levelNormalization.normalized,
       },
       null,
       2,

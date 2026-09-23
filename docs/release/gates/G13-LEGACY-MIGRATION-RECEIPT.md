@@ -1,6 +1,6 @@
 # G13 — Legacy Data Migration Receipt
 
-**Status:** READY FOR CI / REVIEW
+**Status:** PASS
 
 ## Delivered
 
@@ -19,12 +19,28 @@
 - migration runbook;
 - sanitized migration tests.
 
+## Certification
+
+The final G13 head passed:
+
+- typecheck;
+- lint;
+- format check;
+- unit tests;
+- integration tests;
+- production build;
+- production dependency audit.
+
+The sanitized migration suite verifies deterministic reruns, strict parent resolution and the accepted Device/Equipment sibling hierarchy.
+
 ## Truth boundary
 
-This gate certifies migration tooling.
+G13 certifies the migration engine and controlled staging workflow.
 
-It does not claim real production data has already been migrated. No production dump, customer topology or credential is stored in this public repository.
+It does **not** claim that a real production database has been migrated. No production dump, customer topology, production ID map or credential is stored in this public repository.
+
+A real production migration remains an external operational execution using this certified engine and the documented promotion/rollback procedure.
 
 ## Gate verdict
 
-Final PASS requires full CI success on the final G13 head.
+**PASS — G14 System Certification is authorized after this PR is integrated into `main`.**

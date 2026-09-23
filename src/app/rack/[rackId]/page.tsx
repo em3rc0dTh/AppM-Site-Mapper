@@ -26,9 +26,10 @@ export default async function RackPage({
     notFound();
   }
 
-  const [trail, children] = await Promise.all([
+  const [trail, children, parent] = await Promise.all([
     topology.getTrail(rackId),
     topology.listChildren(rackId),
+    result.value.rack.parentId ? topology.getById(result.value.rack.parentId) : Promise.resolve(null),
   ]);
   const trailEntries: ContextTreeEntry[] = await Promise.all(
     trail.map(async (node) => ({
@@ -54,7 +55,17 @@ export default async function RackPage({
           <TopologyContextTree trail={trailEntries} descendants={childEntries} />
         </aside>
         <section className="operational-stage operational-stage--wide">
-          <RackElevation view={result.value} />
+          <RackElevation
+            view={result.value}
+            context={
+              parent?.kind === 'POSITION'
+                ? {
+                    positionName: parent.name,
+                    coordinate: `${parent.coordinate.row}-${parent.coordinate.column}`,
+                  }
+                : undefined
+            }
+          />
         </section>
       </div>
     </main>

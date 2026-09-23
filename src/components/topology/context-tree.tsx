@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 
 import type { TopologyKind } from '@/modules/topology/domain/entities';
@@ -36,7 +37,7 @@ export function TopologyContextTree({
         {trail.map((entry, index) => {
           const isActive = entry.id === active?.id;
           return (
-            <li key={entry.id} style={{ '--context-depth': index } as React.CSSProperties}>
+            <li key={entry.id} style={{ '--context-depth': index } as CSSProperties}>
               <Link href={entry.href} aria-current={isActive ? 'page' : undefined}>
                 <Icon name={iconFor(entry.kind)} />
                 <span>

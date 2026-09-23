@@ -164,7 +164,9 @@ export function RackElevation({ view }: Readonly<{ view: RackElevationView }>) {
         <section className="legacy-property-section">
           <div className="legacy-property-title">
             <span>RU Usage</span>
-            <strong>{physical} / {totalU} U</strong>
+            <strong>
+              {physical} / {totalU} U
+            </strong>
           </div>
           <div className="legacy-progress">
             <span style={{ width: `${usedPercent}%` }} />
@@ -175,10 +177,22 @@ export function RackElevation({ view }: Readonly<{ view: RackElevationView }>) {
         <section className="legacy-property-section">
           <h3>Capacity state</h3>
           <dl>
-            <div><dt>Physical</dt><dd>{physical} U</dd></div>
-            <div><dt>Reserved</dt><dd>{reserved} U</dd></div>
-            <div><dt>Clearance</dt><dd>{clearance} U</dd></div>
-            <div><dt>Available</dt><dd>{available} U</dd></div>
+            <div>
+              <dt>Physical</dt>
+              <dd>{physical} U</dd>
+            </div>
+            <div>
+              <dt>Reserved</dt>
+              <dd>{reserved} U</dd>
+            </div>
+            <div>
+              <dt>Clearance</dt>
+              <dd>{clearance} U</dd>
+            </div>
+            <div>
+              <dt>Available</dt>
+              <dd>{available} U</dd>
+            </div>
           </dl>
         </section>
 

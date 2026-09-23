@@ -160,11 +160,11 @@ describe('MK1 system golden path', () => {
 
     requireSuccess(await cas.equip(rack.id, reservation!.id, device.id));
 
-    const elevation = requireSuccess(await new RackElevationService(topologyRepository).getView(rack.id));
+    const elevation = requireSuccess(
+      await new RackElevationService(topologyRepository).getView(rack.id),
+    );
     expect(
-      elevation.rows.some(
-        (row) => row.occupant?.id === device.id && row.role === 'PHYSICAL',
-      ),
+      elevation.rows.some((row) => row.occupant?.id === device.id && row.role === 'PHYSICAL'),
     ).toBe(true);
 
     const inventory = new InventoryService(topologyRepository);
@@ -251,16 +251,10 @@ describe('MK1 system golden path', () => {
       status: 'online',
     });
 
-    const workspace = await new WorkspaceService(
-      topologyRepository,
-      powerRepository,
-    ).getSnapshot();
+    const workspace = await new WorkspaceService(topologyRepository, powerRepository).getSnapshot();
 
     expect(workspace.navigation).toHaveLength(1);
-    expect(workspace.pinned.map((item) => item.kind).sort()).toEqual([
-      'DEVICE',
-      'EQUIPMENT',
-    ]);
+    expect(workspace.pinned.map((item) => item.kind).sort()).toEqual(['DEVICE', 'EQUIPMENT']);
     expect(workspace.bdfb).toEqual([
       expect.objectContaining({
         deviceId: device.id,

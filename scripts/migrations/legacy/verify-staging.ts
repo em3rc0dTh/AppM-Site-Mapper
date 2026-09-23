@@ -59,8 +59,7 @@ function stringValue(value: unknown): string | null {
 
 function isKind(value: unknown): value is CanonicalKind {
   return (
-    value === 'NETWORK' ||
-    Object.prototype.hasOwnProperty.call(expectedParentKind, String(value))
+    value === 'NETWORK' || Object.prototype.hasOwnProperty.call(expectedParentKind, String(value))
   );
 }
 
@@ -110,7 +109,11 @@ function validateNodeShape(node: StagedNode, issues: string[]): void {
       issues.push(`${id}: RACK requires positive integer totalU.`);
     }
 
-    if (node.dimensionsMm && typeof node.dimensionsMm === 'object' && !Array.isArray(node.dimensionsMm)) {
+    if (
+      node.dimensionsMm &&
+      typeof node.dimensionsMm === 'object' &&
+      !Array.isArray(node.dimensionsMm)
+    ) {
       const dimensions = node.dimensionsMm as Record<string, unknown>;
       if (!positiveNumber(dimensions.width) || !positiveNumber(dimensions.depth)) {
         issues.push(`${id}: dimensionsMm width/depth must be positive numbers.`);
@@ -173,9 +176,7 @@ async function main() {
       .db(databaseName)
       .collection<StagedNode>('topology_nodes_migration_staging');
 
-    const nodes = await collection
-      .find({ migrationFingerprint: options.fingerprint })
-      .toArray();
+    const nodes = await collection.find({ migrationFingerprint: options.fingerprint }).toArray();
 
     const issues: string[] = [];
     if (nodes.length === 0) {
@@ -216,9 +217,7 @@ async function main() {
 
       const expectedKind = expectedParentKind[kind];
       if (parent.kind !== expectedKind) {
-        issues.push(
-          `${id}: expected parent kind ${expectedKind}, found ${String(parent.kind)}.`,
-        );
+        issues.push(`${id}: expected parent kind ${expectedKind}, found ${String(parent.kind)}.`);
       }
     }
 

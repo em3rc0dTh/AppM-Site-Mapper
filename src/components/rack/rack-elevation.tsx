@@ -63,7 +63,8 @@ export function RackElevation({ view }: Readonly<{ view: RackElevationView }>) {
   const reserved = count('RESERVED');
   const clearance = count('CLEARANCE');
   const available = count('AVAILABLE');
-  const usedPercent = Math.round((physical / Math.max(view.rack.totalU, 1)) * 100);
+  const totalU = view.rack.totalU ?? view.rows.length;
+  const usedPercent = Math.round((physical / Math.max(totalU, 1)) * 100);
   const primaryInventory = view.inventory[0];
 
   return (
@@ -85,7 +86,7 @@ export function RackElevation({ view }: Readonly<{ view: RackElevationView }>) {
           <div className="legacy-rack-canvas-grid" aria-hidden="true" />
           <div className="legacy-rack-heading">
             <div>
-              <strong>{view.rack.totalU}RU Cabinet</strong>
+              <strong>{totalU}RU Cabinet</strong>
               <span>{view.rack.variant}</span>
             </div>
             <small>{view.rack.name}</small>
@@ -163,7 +164,7 @@ export function RackElevation({ view }: Readonly<{ view: RackElevationView }>) {
         <section className="legacy-property-section">
           <div className="legacy-property-title">
             <span>RU Usage</span>
-            <strong>{physical} / {view.rack.totalU} U</strong>
+            <strong>{physical} / {totalU} U</strong>
           </div>
           <div className="legacy-progress">
             <span style={{ width: `${usedPercent}%` }} />

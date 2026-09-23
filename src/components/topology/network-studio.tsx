@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 
 import type { NetworkNode, SiteNode } from '@/modules/topology/domain/entities';
 import type { VisualStageChild } from '@/components/topology/topology-visual-stage';
@@ -102,7 +102,7 @@ export function NetworkStudio({
                       setSelectedId(site.node.id);
                     }
                   }}
-                  style={{ '--site-index': index } as React.CSSProperties}
+                  style={{ '--site-index': index } as CSSProperties}
                 >
                   <div className="studio-network-site-map" aria-hidden="true">
                     {polygon ? (

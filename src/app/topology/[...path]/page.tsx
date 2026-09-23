@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { StructureStudio } from '@/components/topology/structure-studio';
+import { NetworkStudio } from '@/components/topology/network-studio';
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import {
   DevicePhysicalView,
@@ -322,7 +323,9 @@ export default async function TopologyNodePage({
           />
 
           <div className="operational-stage-body">
-            {node.kind === 'DEVICE' || node.kind === 'EQUIPMENT' ? (
+            {node.kind === 'NETWORK' ? (
+              <NetworkStudio key={node.id} node={node} sites={childEntries} />
+            ) : node.kind === 'DEVICE' || node.kind === 'EQUIPMENT' ? (
               <DevicePhysicalView
                 key={physicalHref + JSON.stringify(focus)}
                 device={node}

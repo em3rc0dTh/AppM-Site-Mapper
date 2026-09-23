@@ -47,7 +47,14 @@ export default async function BlueprintPage({
       href: await topology.buildDeepLink(node.id),
     })),
   );
-  const spatialHrefs = Object.fromEntries(await Promise.all([...result.value.clusters, ...result.value.positions].map(async item => [item.id, await topology.buildDeepLink(item.id)])));
+  const spatialHrefs = Object.fromEntries(
+    await Promise.all(
+      [...result.value.clusters, ...result.value.positions].map(async (item) => [
+        item.id,
+        await topology.buildDeepLink(item.id),
+      ]),
+    ),
+  );
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
   return (
@@ -68,6 +75,7 @@ export default async function BlueprintPage({
           <div className="operational-stage-body">
             {result.value.room.polygon || canWrite ? (
               <BlueprintCanvas
+                key={roomId}
                 navigationHrefs={spatialHrefs}
                 roomId={roomId}
                 roomName={result.value.room.name}

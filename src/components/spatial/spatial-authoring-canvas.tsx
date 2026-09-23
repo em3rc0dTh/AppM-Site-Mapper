@@ -7,7 +7,6 @@ import {
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent,
-  type WheelEvent,
 } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -247,6 +246,17 @@ export function SpatialAuthoringCanvas({
   }, [displayed, gridSizeMm]);
 
   useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const zoomWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      setZoom((current) => Math.min(8, Math.max(0.35, current * (event.deltaY > 0 ? 0.9 : 1.1))));
+    };
+    svg.addEventListener('wheel', zoomWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', zoomWheel);
+  }, []);
+
+  useEffect(() => {
     if (!editing || !dirty) {
       return;
     }
@@ -288,11 +298,22 @@ export function SpatialAuthoringCanvas({
     }
 
     const keyDown = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLElement && (event.target.matches('input, textarea, select') || event.target.isContentEditable)) return;
+      if (
+        event.target instanceof HTMLElement &&
+        (event.target.matches('input, textarea, select') || event.target.isContentEditable)
+      )
+        return;
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
-        event.preventDefault(); if (event.shiftKey) redo(); else undo(); return;
+        event.preventDefault();
+        if (event.shiftKey) redo();
+        else undo();
+        return;
       }
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {event.preventDefault(); redo(); return;}
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
+        event.preventDefault();
+        redo();
+        return;
+      }
 
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -320,30 +341,42 @@ export function SpatialAuthoringCanvas({
   });
 
   function checkpoint() {
-    setPast(current => [...current.slice(-99), clonePolygon(draft)]);
+    setPast((current) => [...current.slice(-99), clonePolygon(draft)]);
     setFuture([]);
   }
   function undo() {
     const previous = past.at(-1);
     if (!previous) return;
-    setFuture(current => [...current, clonePolygon(draft)]);
-    setPast(current => current.slice(0, -1));
-    setDraft(clonePolygon(previous)); setSelectedVertex(null);
+    setFuture((current) => [...current, clonePolygon(draft)]);
+    setPast((current) => current.slice(0, -1));
+    setDraft(clonePolygon(previous));
+    setSelectedVertex(null);
   }
   function redo() {
     const next = future.at(-1);
     if (!next) return;
-    setPast(current => [...current, clonePolygon(draft)]);
-    setFuture(current => current.slice(0, -1));
-    setDraft(clonePolygon(next)); setSelectedVertex(null);
+    setPast((current) => [...current, clonePolygon(draft)]);
+    setFuture((current) => current.slice(0, -1));
+    setDraft(clonePolygon(next));
+    setSelectedVertex(null);
   }
   function selectContext(context: SpatialContextPolygon) {
     if (editing || tool !== 'select') return;
     setPhysicalId(context.id);
-    setPhysical({ name: context.name, kind: context.kind, sections: [{title: 'Physical boundary', fields: [
-      {label: 'Area', value: `${(polygonArea(context.polygon) / 1_000_000).toFixed(2)} m²`},
-      {label: 'Perimeter', value: formatDistance(polygonPerimeter(context.polygon))},
-    ]}], ...(context.href ? {actions: [{label: 'Open physical view →', href: context.href}]} : {}) });
+    setPhysical({
+      name: context.name,
+      kind: context.kind,
+      sections: [
+        {
+          title: 'Physical boundary',
+          fields: [
+            { label: 'Area', value: `${(polygonArea(context.polygon) / 1_000_000).toFixed(2)} m²` },
+            { label: 'Perimeter', value: formatDistance(polygonPerimeter(context.polygon)) },
+          ],
+        },
+      ],
+      ...(context.href ? { actions: [{ label: 'Open physical view →', href: context.href }] } : {}),
+    });
   }
   function normalizePoint(point: PointMm): PointMm {
     if (snap && gridSizeMm) {
@@ -381,7 +414,11 @@ export function SpatialAuthoringCanvas({
   }
 
   function beginEdit() {
-    setPast([]); setFuture([]); setMeasure([]); setPhysical(null); setPhysicalId(null);
+    setPast([]);
+    setFuture([]);
+    setMeasure([]);
+    setPhysical(null);
+    setPhysicalId(null);
     setDraft(clonePolygon(sourcePolygon));
     setEditing(true);
     setError(null);
@@ -418,6 +455,10 @@ export function SpatialAuthoringCanvas({
   }
 
   function insertMidpoint(index: number) {
+    if (draft.length >= 256) {
+      setError('Maximum 256 vertices.');
+      return;
+    }
     const current = draft[index];
     const next = draft[(index + 1) % draft.length];
 
@@ -426,7 +467,12 @@ export function SpatialAuthoringCanvas({
     }
 
     const inserted = normalizePoint(midpoint(current, next));
-    if ([current, next].some(point => point.x === inserted.x && point.y === inserted.y)) { setError("Snapping merges this midpoint with an existing vertex. Turn Snap off to insert it."); return; }
+    if ([current, next].some((point) => point.x === inserted.x && point.y === inserted.y)) {
+      setError(
+        'Snapping merges this midpoint with an existing vertex. Turn Snap off to insert it.',
+      );
+      return;
+    }
     checkpoint();
     setDraft((points) => [...points.slice(0, index + 1), inserted, ...points.slice(index + 1)]);
     setSelectedVertex(index + 1);
@@ -451,13 +497,17 @@ export function SpatialAuthoringCanvas({
           ],
         },
       ],
-      ...(item.href ? { actions: [{ label: item.kind === 'rack' ? 'Open rack elevation' : 'Open physical view', href: item.href }] } : {}),
+      ...(item.href
+        ? {
+            actions: [
+              {
+                label: item.kind === 'rack' ? 'Open rack elevation' : 'Open physical view',
+                href: item.href,
+              },
+            ],
+          }
+        : {}),
     });
-  }
-
-  function wheel(event: WheelEvent<SVGSVGElement>) {
-    event.preventDefault();
-    setZoom((current) => Math.min(8, Math.max(0.35, current * (event.deltaY > 0 ? 0.9 : 1.1))));
   }
 
   function canvasPointerDown(event: PointerEvent<SVGSVGElement>) {
@@ -473,7 +523,7 @@ export function SpatialAuthoringCanvas({
 
     if (tool === 'measure') {
       const point = toCanvasPoint(event.clientX, event.clientY);
-      if (point) setMeasure(current => current.length === 1 ? [...current, point] : [point]);
+      if (point) setMeasure((current) => (current.length === 1 ? [...current, point] : [point]));
       return;
     }
     if (!editing || tool !== 'draw') {
@@ -486,7 +536,10 @@ export function SpatialAuthoringCanvas({
       return;
     }
 
-    if (draft.length >= 256) { setError("Maximum 256 vertices."); return; }
+    if (draft.length >= 256) {
+      setError('Maximum 256 vertices.');
+      return;
+    }
     checkpoint();
     setDraft((current) => [...current, point]);
     setSelectedVertex(draft.length);
@@ -561,13 +614,25 @@ export function SpatialAuthoringCanvas({
 
     try {
       const response = await fetch(`/api/spatial/boundaries/${entityId}`, {
-        method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ polygon: draft }),
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ polygon: draft }),
       });
       const result = (await response.json().catch(() => ({}))) as { error?: string };
-      if (!response.ok) { setError(result.error ?? 'BOUNDARY_UPDATE_FAILED'); return; }
-      setEditing(false); setTool('select'); setPast([]); setFuture([]); router.refresh();
-    } catch { setError('Could not save. Your draft is preserved; retry when connected.'); }
-    finally { setBusy(false); }
+      if (!response.ok) {
+        setError(result.error ?? 'BOUNDARY_UPDATE_FAILED');
+        return;
+      }
+      setEditing(false);
+      setTool('select');
+      setPast([]);
+      setFuture([]);
+      router.refresh();
+    } catch {
+      setError('Could not save. Your draft is preserved; retry when connected.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -588,11 +653,24 @@ export function SpatialAuthoringCanvas({
             Pan
           </button>
 
-          <button type="button" aria-pressed={tool === 'measure'} onClick={() => {setTool('measure'); setMeasure([]);}}>Measure</button>
+          <button
+            type="button"
+            aria-pressed={tool === 'measure'}
+            onClick={() => {
+              setTool('measure');
+              setMeasure([]);
+            }}
+          >
+            Measure
+          </button>
           {editing && (
             <>
-              <button type="button" onClick={undo} disabled={!past.length || busy}>Undo</button>
-              <button type="button" onClick={redo} disabled={!future.length || busy}>Redo</button>
+              <button type="button" onClick={undo} disabled={!past.length || busy}>
+                Undo
+              </button>
+              <button type="button" onClick={redo} disabled={!future.length || busy}>
+                Redo
+              </button>
               <button type="button" aria-pressed={tool === 'draw'} onClick={() => setTool('draw')}>
                 Add points
               </button>
@@ -664,7 +742,6 @@ export function SpatialAuthoringCanvas({
           ref={svgRef}
           className={`spatial-authoring-canvas tool-${tool}`}
           viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
-          onWheel={wheel}
           onPointerDown={canvasPointerDown}
           onPointerMove={pointerMove}
           onPointerUp={pointerUp}
@@ -735,9 +812,19 @@ export function SpatialAuthoringCanvas({
                     {context.href && !editing && (
                       <text
                         className="spatial-context-enter"
-                        role="link" tabIndex={0} aria-label={`Open ${context.name}`}
-                        onClick={event => {event.stopPropagation(); if (tool === "select") router.push(context.href!);}}
-                        onKeyDown={event => {if (event.key === "Enter") {event.stopPropagation(); router.push(context.href!);}}}
+                        role="link"
+                        tabIndex={0}
+                        aria-label={`Open ${context.name}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (tool === 'select') router.push(context.href!);
+                        }}
+                        onKeyDown={(event) => {
+                          if (event.key === 'Enter') {
+                            event.stopPropagation();
+                            router.push(context.href!);
+                          }
+                        }}
                         x={center.x}
                         y={center.y + contextLabelSize * 0.92}
                         textAnchor="middle"
@@ -755,7 +842,7 @@ export function SpatialAuthoringCanvas({
             return context.href && !editing ? (
               <g
                 key={context.id}
-                className={`spatial-context-shape is-navigable ${physicalId === context.id ? "is-selected" : ""}`}
+                className={`spatial-context-shape is-navigable ${physicalId === context.id ? 'is-selected' : ''}`}
                 role="button"
                 tabIndex={0}
                 aria-label={`Select ${context.name}`}
@@ -763,7 +850,9 @@ export function SpatialAuthoringCanvas({
                   event.stopPropagation();
                   selectContext(context);
                 }}
-                onDoubleClick={() => { if (tool === "select") router.push(context.href!); }}
+                onDoubleClick={() => {
+                  if (tool === 'select') router.push(context.href!);
+                }}
                 onKeyDown={(event: ReactKeyboardEvent<SVGGElement>) => {
                   if (event.key === 'Enter' || event.key === ' ') {
                     event.preventDefault();
@@ -819,7 +908,17 @@ export function SpatialAuthoringCanvas({
           {rectangles.map((item) => {
             if (item.kind === 'bay') {
               return (
-                <g key={item.id} className={`spatial-bay ${physicalId === item.id ? "is-selected" : ""}`} aria-label={`Select ${item.name}`} role="button" tabIndex={editing ? -1 : 0} onClick={() => inspectRectangle(item)} onKeyDown={event => {if (event.key === "Enter") inspectRectangle(item);}}>
+                <g
+                  key={item.id}
+                  className={`spatial-bay ${physicalId === item.id ? 'is-selected' : ''}`}
+                  aria-label={`Select ${item.name}`}
+                  role="button"
+                  tabIndex={editing ? -1 : 0}
+                  onClick={() => inspectRectangle(item)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') inspectRectangle(item);
+                  }}
+                >
                   <rect
                     x={item.rect.x}
                     y={item.rect.y}
@@ -856,15 +955,30 @@ export function SpatialAuthoringCanvas({
                   width={item.rect.width}
                   height={item.rect.depth}
                   className="spatial-slot"
-                  onClick={() => inspectRectangle(item)} role="button" tabIndex={editing ? -1 : 0} aria-label={`Select tile X ${item.rect.x} Y ${item.rect.y}`}
-                  onKeyDown={event => {if (event.key === "Enter") inspectRectangle(item);}}
+                  onClick={() => inspectRectangle(item)}
+                  role="button"
+                  tabIndex={editing ? -1 : 0}
+                  aria-label={`Select tile X ${item.rect.x} Y ${item.rect.y}`}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') inspectRectangle(item);
+                  }}
                 />
               );
             }
 
             if (item.kind === 'position') {
               return (
-                <g key={item.id} className={`spatial-position ${physicalId === item.id ? "is-selected" : ""}`} aria-label={`Select ${item.name}`} role="button" tabIndex={editing ? -1 : 0} onClick={() => inspectRectangle(item)} onKeyDown={event => {if (event.key === "Enter") inspectRectangle(item);}}>
+                <g
+                  key={item.id}
+                  className={`spatial-position ${physicalId === item.id ? 'is-selected' : ''}`}
+                  aria-label={`Select ${item.name}`}
+                  role="button"
+                  tabIndex={editing ? -1 : 0}
+                  onClick={() => inspectRectangle(item)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') inspectRectangle(item);
+                  }}
+                >
                   <rect
                     x={item.rect.x}
                     y={item.rect.y}
@@ -886,7 +1000,7 @@ export function SpatialAuthoringCanvas({
             return (
               <g
                 key={item.id}
-                className={`spatial-rack ${physicalId === item.id ? "is-selected" : ""}`}
+                className={`spatial-rack ${physicalId === item.id ? 'is-selected' : ''}`}
                 aria-label={`Select ${item.name}`}
                 role="button"
                 tabIndex={editing ? -1 : 0}
@@ -929,17 +1043,43 @@ export function SpatialAuthoringCanvas({
             );
           })}
 
-          {!editing && rectangles.filter(item => item.kind === 'bay' || item.kind === 'position').map(item => {
-            const label = item.kind === 'bay' ? item.name : (item.detail?.split(' · ')[0] ?? item.name);
-            const labelSize = overlayLabelSize * .7;
-            const x = item.rect.x + 18;
-            const y = item.kind === 'bay' ? item.rect.y - labelSize * 1.5 : item.rect.y + item.rect.depth - labelSize * 1.1;
-            return <g key={`label-${item.id}`} className={`studio-blueprint-tag ${physicalId === item.id ? 'is-selected' : ''}`} role="button" tabIndex={0} aria-label={`Select ${item.name} label`}
-              onClick={() => inspectRectangle(item)} onKeyDown={event => { if (event.key === 'Enter') inspectRectangle(item); }}>
-              <rect x={x} y={y} width={Math.max(labelSize * (label.length * .65 + 1), labelSize * 3)} height={labelSize * 1.6} rx={8} />
-              <text x={x + labelSize * .4} y={y + labelSize * 1.12} fontSize={labelSize}>{label}</text>
-            </g>;
-          })}
+          {!editing &&
+            rectangles
+              .filter((item) => item.kind === 'bay' || item.kind === 'position')
+              .map((item) => {
+                const label =
+                  item.kind === 'bay' ? item.name : (item.detail?.split(' · ')[0] ?? item.name);
+                const labelSize = overlayLabelSize * 0.7;
+                const x = item.rect.x + 18;
+                const y =
+                  item.kind === 'bay'
+                    ? item.rect.y - labelSize * 1.5
+                    : item.rect.y + item.rect.depth - labelSize * 1.1;
+                return (
+                  <g
+                    key={`label-${item.id}`}
+                    className={`studio-blueprint-tag ${physicalId === item.id ? 'is-selected' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Select ${item.name} label`}
+                    onClick={() => inspectRectangle(item)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') inspectRectangle(item);
+                    }}
+                  >
+                    <rect
+                      x={x}
+                      y={y}
+                      width={Math.max(labelSize * (label.length * 0.65 + 1), labelSize * 3)}
+                      height={labelSize * 1.6}
+                      rx={8}
+                    />
+                    <text x={x + labelSize * 0.4} y={y + labelSize * 1.12} fontSize={labelSize}>
+                      {label}
+                    </text>
+                  </g>
+                );
+              })}
 
           {editing &&
             tool === 'select' &&
@@ -1001,12 +1141,48 @@ export function SpatialAuthoringCanvas({
                 </text>
               </g>
             ))}
-          {measure.length > 0 && <g className="studio-measure" pointerEvents="none">
-            {measure.map((point, index) => <circle key={index} cx={point.x} cy={point.y} r={view.width / 180} />)}
-            {measure[0] && measure[1] && <><line x1={measure[0].x} y1={measure[0].y} x2={measure[1].x} y2={measure[1].y} /><text x={(measure[0].x + measure[1].x)/2} y={(measure[0].y + measure[1].y)/2 - view.width/60} fontSize={contextLabelSize * .7} textAnchor="middle">{formatDistance(segmentLength(measure[0], measure[1]))}</text></>}
-          </g>}
+          {measure.length > 0 && (
+            <g className="studio-measure" pointerEvents="none">
+              {measure.map((point, index) => (
+                <circle key={index} cx={point.x} cy={point.y} r={view.width / 180} />
+              ))}
+              {measure[0] && measure[1] && (
+                <>
+                  <line x1={measure[0].x} y1={measure[0].y} x2={measure[1].x} y2={measure[1].y} />
+                  <text
+                    x={(measure[0].x + measure[1].x) / 2}
+                    y={(measure[0].y + measure[1].y) / 2 - view.width / 60}
+                    fontSize={contextLabelSize * 0.7}
+                    textAnchor="middle"
+                  >
+                    {formatDistance(segmentLength(measure[0], measure[1]))}
+                  </text>
+                </>
+              )}
+            </g>
+          )}
         </svg>
-        {!editing && physical && <div className="studio-spatial-selection"><strong>{physical.name}</strong><span>{physical.kind}</span><button onClick={() => setSelected(physical)}>Inspect</button>{physical.actions?.map(action => <button key={action.href} onClick={() => router.push(action.href)}>{action.label} →</button>)}<button aria-label="Clear selection" onClick={() => {setPhysical(null);setPhysicalId(null);}}>×</button></div>}
+        {!editing && physical && (
+          <div className="studio-spatial-selection">
+            <strong>{physical.name}</strong>
+            <span>{physical.kind}</span>
+            <button onClick={() => setSelected(physical)}>Inspect</button>
+            {physical.actions?.map((action) => (
+              <button key={action.href} onClick={() => router.push(action.href)}>
+                {action.label} →
+              </button>
+            ))}
+            <button
+              aria-label="Clear selection"
+              onClick={() => {
+                setPhysical(null);
+                setPhysicalId(null);
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
 
         {!editing && navigationItems.length > 0 && (
           <nav className="spatial-navigation-rail" aria-label="Contained navigation">

@@ -20,7 +20,7 @@ function toneForStatus(status: string | undefined) {
 
   const normalized = status.toUpperCase();
 
-  if (['ACTIVE', 'LIVE', 'CONNECTED', 'AVAILABLE', 'HEALTHY'].includes(normalized)) {
+  if (['LIVE', 'CONNECTED', 'HEALTHY'].includes(normalized)) {
     return 'good' as const;
   }
 

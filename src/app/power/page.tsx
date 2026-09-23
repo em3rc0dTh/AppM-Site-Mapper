@@ -44,11 +44,16 @@ export default async function PowerPage() {
         kind: breaker?.variant ?? 'BREAKER / HOLDER',
         name: breaker?.label ?? internal.breakerHolderId,
       });
-    const params = new URLSearchParams();
-    if (internal.shelfId) params.set('shelf', internal.shelfId);
-    if (internal.panelId) params.set('panel', internal.panelId);
-    if (internal.breakerHolderId) params.set('endpoint', internal.breakerHolderId);
-    return result.map(stage => ({...stage, href: stage.kind === 'DEVICE' || stage.kind === 'EQUIPMENT' ? href : `${href}?${params}`}));
+    return result.map((stage) => {
+      const stageParams = new URLSearchParams();
+      if (stage.kind !== 'DEVICE' && stage.kind !== 'EQUIPMENT' && internal.shelfId)
+        stageParams.set('shelf', internal.shelfId);
+      if (['PANEL', 'BREAKER', 'HOLDER'].includes(stage.kind) && internal.panelId)
+        stageParams.set('panel', internal.panelId);
+      if (['BREAKER', 'HOLDER'].includes(stage.kind) && internal.breakerHolderId)
+        stageParams.set('endpoint', internal.breakerHolderId);
+      return { ...stage, href: stageParams.size ? `${href}?${stageParams}` : href };
+    });
   }
   const views = await Promise.all(
     paths.map(async (path) => {

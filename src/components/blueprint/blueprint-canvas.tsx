@@ -40,7 +40,7 @@ export function BlueprintCanvas({
     ...clusters.map((cluster) => ({
       id: cluster.id,
       name: cluster.name,
-      ...(navigationHrefs[cluster.id] ? {href: navigationHrefs[cluster.id]} : {}),
+      ...(navigationHrefs[cluster.id] ? { href: navigationHrefs[cluster.id] } : {}),
       detail: `${cluster.positionCount} positions · extent derived from positions`,
       kind: 'bay' as const,
       rect: cluster.rect,
@@ -54,8 +54,8 @@ export function BlueprintCanvas({
     ...positions.map((position) => ({
       id: position.id,
       name: position.name,
-      detail: `${position.coordinate} · ${position.occupied ? "Occupied" : "Available"}`,
-      ...(navigationHrefs[position.id] ? {href: navigationHrefs[position.id]} : {}),
+      detail: `${position.coordinate} · ${position.occupied ? 'Occupied' : 'Available'}`,
+      ...(navigationHrefs[position.id] ? { href: navigationHrefs[position.id] } : {}),
       kind: 'position' as const,
       rect: position.rect,
     })),
@@ -70,6 +70,7 @@ export function BlueprintCanvas({
 
   return (
     <SpatialAuthoringCanvas
+      key={roomId}
       entityId={roomId}
       entityName={roomName}
       entityKind="ROOM / SUBSTRUCTURE"

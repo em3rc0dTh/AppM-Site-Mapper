@@ -39,7 +39,9 @@ export function PowerPathView({
                 setSelected({
                   name: stage.name,
                   kind: stage.kind,
-                  ...(stage.href ? {actions: [{label: "Open physical view", href: stage.href}]} : {}),
+                  ...(stage.href
+                    ? { actions: [{ label: 'Open physical view', href: stage.href }] }
+                    : {}),
                   sections: [
                     {
                       title: 'Overview',
@@ -59,7 +61,11 @@ export function PowerPathView({
               </small>
               <strong>{stage.name}</strong>
             </button>
-            {stage.href && <Link className="action-link" href={stage.href}>Open physical view →</Link>}
+            {stage.href && (
+              <Link className="action-link" href={stage.href}>
+                Open physical view →
+              </Link>
+            )}
             {index < stages.length - 1 && (
               <span className="power-step-arrow" aria-hidden="true">
                 ↓

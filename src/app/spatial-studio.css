@@ -1253,3 +1253,145 @@
     monospace;
   white-space: nowrap;
 }
+
+
+/* Physical popup windows */
+.physical-popup-shell {
+  width: 100vw;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #070b10;
+  color: #e5edf4;
+}
+
+.physical-popup-header {
+  min-height: 74px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2b3a47;
+  background: linear-gradient(90deg, #111923, #0c1219);
+}
+
+.physical-popup-header > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.physical-popup-header small {
+  color: #6fd8e7;
+  font: 750 9px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.physical-popup-header strong {
+  overflow: hidden;
+  color: #edf6fa;
+  font-size: 20px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.physical-popup-header span {
+  color: #7c8fa1;
+  font-size: 11px;
+}
+
+.physical-popup-header > button {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #344653;
+  border-radius: 5px;
+  background: #101821;
+  color: #b9c8d5;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.physical-popup-header > button:hover {
+  border-color: #6bcfdd;
+  color: #e8fbfd;
+}
+
+.physical-popup-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.physical-popup-body > .legacy-rack-view,
+.physical-popup-body > .studio-device {
+  height: 100%;
+}
+
+.context-tree-popup-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  padding: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.context-tree-popup-link:hover {
+  color: #dff9fd;
+}
+
+.workspace-popup-launch {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workspace-popup-launch:hover strong {
+  color: #a7edf5;
+}
+
+.studio-node-open[type='button'],
+.studio-panel header > button,
+.studio-open-endpoint,
+.studio-power-source > button:last-child,
+.studio-feed > button,
+.studio-power-target > button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #8fdce8;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.studio-node-open[type='button']:hover,
+.studio-panel header > button:hover,
+.studio-open-endpoint:hover,
+.studio-power-source > button:last-child:hover,
+.studio-feed > button:hover,
+.studio-power-target > button:hover {
+  color: #d7fbff;
+  text-decoration: underline;
+}
+
+@media (max-width: 1100px) {
+  .physical-popup-header {
+    min-height: 64px;
+  }
+}

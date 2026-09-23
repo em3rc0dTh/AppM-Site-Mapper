@@ -20,20 +20,26 @@ interface StageResult {
 }
 
 const sourceAliases = {
-  sites: ['sites', 'Site'],
-  structures: ['structures', 'Structure'],
-  levels: ['levels', 'Level'],
-  rooms: ['rooms', 'Room'],
-  clusters: ['clusters', 'ContainerCluster', 'Bay'],
-  positions: ['positions', 'Position'],
-  containers: ['containers', 'Container', 'Rack'],
-  devices: ['devices', 'Device'],
-  equipment: ['equipment', 'Equipment'],
-  shelves: ['shelves', 'Shelf'],
-  frames: ['frames', 'Frame'],
-  panels: ['panels', 'Panel'],
-  breakers: ['breakers', 'Breaker'],
+  sites: ['Site', 'sites'],
+  structures: ['Structure', 'structures'],
+  levels: ['Level', 'levels'],
+  rooms: ['Substructure', 'Room', 'rooms'],
+  clusters: ['ContainerCluster', 'Bay', 'clusters'],
+  positions: ['Position', 'positions'],
+  containers: ['Container', 'Rack', 'containers'],
+  devices: ['Device', 'devices'],
+  equipment: ['Equipment', 'equipment'],
+  shelves: ['Shelf', 'shelves'],
+  frames: ['Frame', 'frames'],
+  panels: ['Panel', 'panels'],
+  breakers: ['Breaker', 'breakers'],
 } as const;
+
+interface CollectionResolution {
+  readonly logicalName: string;
+  readonly selected?: string;
+  readonly candidates: readonly Readonly<{ name: string; documents: number }>[];
+}
 
 function parseArgs(argv: readonly string[]): CliOptions {
   const value = (name: string) => {
@@ -167,11 +173,48 @@ function buildBdfb(
 async function loadCollection(
   db: ReturnType<MongoClient['db']>,
   available: ReadonlySet<string>,
+  logicalName: string,
   aliases: readonly string[],
-): Promise<readonly LegacyRecord[]> {
-  const selected = aliases.find((name) => available.has(name));
-  if (!selected) return [];
-  return (await db.collection(selected).find({}).toArray()) as readonly LegacyRecord[];
+): Promise<Readonly<{ records: readonly LegacyRecord[]; resolution: CollectionResolution }>> {
+  const present = aliases.filter((name) => available.has(name));
+  const candidates = await Promise.all(
+    present.map(async (name) => ({
+      name,
+      documents: await db.collection(name).estimatedDocumentCount(),
+    })),
+  );
+
+  const populated = candidates
+    .filter((candidate) => candidate.documents > 0)
+    .sort((left, right) => right.documents - left.documents);
+
+  const selected = populated[0]?.name ?? candidates[0]?.name;
+
+  if (
+    populated.length > 1 &&
+    populated[0] &&
+    populated[1] &&
+    populated[0].documents === populated[1].documents
+  ) {
+    throw new Error(
+      `Ambiguous legacy source for ${logicalName}: ${populated
+        .map((candidate) => `${candidate.name}(${candidate.documents})`)
+        .join(', ')}. Resolve the duplicate populated collections before migration.`,
+    );
+  }
+
+  const records = selected
+    ? ((await db.collection(selected).find({}).toArray()) as readonly LegacyRecord[])
+    : [];
+
+  return {
+    records,
+    resolution: {
+      logicalName,
+      ...(selected ? { selected } : {}),
+      candidates,
+    },
+  };
 }
 
 async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInput> {
@@ -188,14 +231,26 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
     (await db.listCollections({}, { nameOnly: true }).toArray()).map((entry) => entry.name),
   );
 
+  const loadedEntries = await Promise.all(
+    Object.entries(sourceAliases).map(async ([logicalName, aliases]) => [
+      logicalName,
+      await loadCollection(db, available, logicalName, aliases),
+    ] as const),
+  );
   const loaded = Object.fromEntries(
-    await Promise.all(
-      Object.entries(sourceAliases).map(async ([logicalName, aliases]) => [
-        logicalName,
-        await loadCollection(db, available, aliases),
-      ]),
-    ),
+    loadedEntries.map(([logicalName, result]) => [logicalName, result.records]),
   ) as Record<keyof typeof sourceAliases, readonly LegacyRecord[]>;
+  const resolutions = loadedEntries.map(([, result]) => result.resolution);
+
+  process.stdout.write(
+    JSON.stringify(
+      {
+        collectionResolution: resolutions,
+      },
+      null,
+      2,
+    ) + '\n',
+  );
 
   const enrichedDevices = loaded.devices.map((device) => {
     const bdfb = buildBdfb(device, loaded.shelves, loaded.frames, loaded.panels, loaded.breakers);

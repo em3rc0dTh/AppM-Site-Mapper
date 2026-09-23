@@ -52,7 +52,6 @@ describe('legacy migration planner', () => {
     expect(equipment?.kind).toBe('EQUIPMENT');
   });
 
-
   it('preserves equipped rack mount start so physical RU usage is not rendered as clearance', () => {
     let cursor = 0;
     const generated = Array.from(

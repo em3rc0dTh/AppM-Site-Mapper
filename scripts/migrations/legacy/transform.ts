@@ -167,11 +167,11 @@ function parentLegacyId(kind: CanonicalKind, record: LegacyRecord): string | nul
     case 'SITE':
       return '__NETWORK__';
     case 'STRUCTURE':
-      return getString(record, ['siteId', 'site_id', 'site']);
+      return getString(record, ['siteId', 'site_id', 'site', 'parentId']);
     case 'LEVEL':
-      return getString(record, ['structureId', 'structure_id', 'structure']);
+      return getString(record, ['structureId', 'structure_id', 'structure', 'parentId']);
     case 'ROOM_SUBSTRUCTURE':
-      return getString(record, ['levelId', 'level_id', 'level']);
+      return getString(record, ['levelId', 'level_id', 'level', 'parentId']);
     case 'CONTAINER_CLUSTER_BAY':
       return getString(record, [
         'roomId',
@@ -248,8 +248,17 @@ function normalizeCoordinate(
     return { row: row.toUpperCase(), column: column as number };
   }
 
-  const arrayCoordinate = Array.isArray(record.grid_coordinate)
-    ? record.grid_coordinate.map((value) => scalar(value)).find(Boolean)
+  const appMObject =
+    record.appMObject && typeof record.appMObject === 'object' && !Array.isArray(record.appMObject)
+      ? (record.appMObject as LegacyRecord)
+      : null;
+  const sourceGridCoordinate = Array.isArray(record.grid_coordinate)
+    ? record.grid_coordinate
+    : appMObject && Array.isArray(appMObject.grid_coordinate)
+      ? appMObject.grid_coordinate
+      : null;
+  const arrayCoordinate = sourceGridCoordinate
+    ? sourceGridCoordinate.map((value) => scalar(value)).find(Boolean)
     : null;
   const coordinate =
     getString(record, ['coordinate', 'gridCoordinate', 'grid_coordinate']) ?? arrayCoordinate;
@@ -266,12 +275,18 @@ function normalizeContainerVariant(spec: SourceSpec, record: LegacyRecord): 'CON
     return 'RACK';
   }
 
-  const explicit = getString(record, ['variant', 'containerVariant', 'type'])?.toUpperCase();
-  if (explicit === 'RACK') {
+  const explicit = getString(record, ['variant', 'containerVariant', 'type', 'category'])?.toUpperCase();
+  if (explicit === 'RACK' || explicit === 'CABINET') {
     return 'RACK';
   }
 
-  return getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']) ? 'RACK' : 'CONTAINER';
+  const capacityTotal = getNestedNumber(record, ['capacity', 'total']);
+  const heightRu = getNestedNumber(record, ['dimensions', 'heightRu']);
+  return getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']) ||
+    capacityTotal ||
+    heightRu
+    ? 'RACK'
+    : 'CONTAINER';
 }
 
 function deterministicMigrationId(seed: string): string {
@@ -321,9 +336,11 @@ function normalizeCas(
     }
 
     const item = entry as LegacyRecord;
-    const startU = getNumber(item, ['startU', 'startPosition']);
-    const endU = getNumber(item, ['endU', 'endPosition']);
-    const stateRaw = getString(item, ['state', 'status'])?.toUpperCase();
+    const startU =
+      getNumber(item, ['startU', 'startPosition']) ?? getNestedNumber(item, ['mounting', 'startPosition']);
+    const endU =
+      getNumber(item, ['endU', 'endPosition']) ?? getNestedNumber(item, ['mounting', 'endPosition']);
+    const stateRaw = getString(item, ['state', 'status', 'casStatus'])?.toUpperCase();
     const state =
       stateRaw === 'AVAILABLE' || stateRaw === 'RESERVED' || stateRaw === 'EQUIPPED'
         ? stateRaw
@@ -351,18 +368,34 @@ function normalizeCas(
       startU,
       endU,
       state,
-      ...(getString(item, ['deviceId', 'occupantId'])
-        ? { occupantLegacyId: getString(item, ['deviceId', 'occupantId']) }
-        : {}),
-      ...(getNumber(item, ['physicalSizeU', 'physicalSize']) !== null
-        ? { physicalSizeU: getNumber(item, ['physicalSizeU', 'physicalSize']) }
-        : {}),
-      ...(getNumber(item, ['clearanceTopU']) !== null
-        ? { clearanceTopU: getNumber(item, ['clearanceTopU']) }
-        : {}),
-      ...(getNumber(item, ['clearanceBottomU']) !== null
-        ? { clearanceBottomU: getNumber(item, ['clearanceBottomU']) }
-        : {}),
+      ...(() => {
+        const embeddedDevice =
+          item.device && typeof item.device === 'object' && !Array.isArray(item.device)
+            ? (item.device as LegacyRecord)
+            : null;
+        const occupantLegacyId =
+          getString(item, ['deviceId', 'occupantId']) ??
+          (embeddedDevice ? getString(embeddedDevice, ['id', '_id', 'originalId']) : null);
+        return occupantLegacyId ? { occupantLegacyId } : {};
+      })(),
+      ...(() => {
+        const physicalSizeU =
+          getNumber(item, ['physicalSizeU', 'physicalSize']) ??
+          getNestedNumber(item, ['mounting', 'physicalSize']);
+        return physicalSizeU !== null ? { physicalSizeU } : {};
+      })(),
+      ...(() => {
+        const clearanceTopU =
+          getNumber(item, ['clearanceTopU']) ??
+          getNestedNumber(item, ['mounting', 'clearance', 'top']);
+        return clearanceTopU !== null ? { clearanceTopU } : {};
+      })(),
+      ...(() => {
+        const clearanceBottomU =
+          getNumber(item, ['clearanceBottomU']) ??
+          getNestedNumber(item, ['mounting', 'clearance', 'bottom']);
+        return clearanceBottomU !== null ? { clearanceBottomU } : {};
+      })(),
     });
   }
 
@@ -397,20 +430,37 @@ function extraFields(
     }
     case 'POSITION': {
       const coordinate = normalizeCoordinate(record);
-      return coordinate ? { coordinate } : null;
+      if (!coordinate) return null;
+      if (record.migrationDerived === true) {
+        warnings.push({
+          sourceCollection: spec.collection,
+          legacyId: id,
+          message:
+            'Canonical Position was derived because the legacy Container was attached directly to a ContainerCluster.',
+        });
+      }
+      return { coordinate };
     }
     case 'CONTAINER_RACK': {
       const variant = normalizeContainerVariant(spec, record);
       const explicitTotal = getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']);
+      const capacityTotal = getNestedNumber(record, ['capacity', 'total']);
+      const heightRu = getNestedNumber(record, ['dimensions', 'heightRu']);
       const mountedEnd = getNestedNumber(record, ['mounting', 'endPosition']);
-      const totalCandidate = explicitTotal ?? mountedEnd;
+      const totalCandidate = explicitTotal ?? capacityTotal ?? heightRu ?? mountedEnd;
       const totalU =
         totalCandidate && Number.isInteger(totalCandidate) && totalCandidate > 0
           ? totalCandidate
           : undefined;
-      const width = getNumber(record, ['widthMm', 'width', 'w']);
-      const depth = getNumber(record, ['depthMm', 'depth', 'h']);
-      const height = getNumber(record, ['heightMm', 'height']);
+      const width =
+        getNestedNumber(record, ['dimensions', 'width']) ??
+        getNumber(record, ['widthMm', 'width', 'w']);
+      const depth =
+        getNestedNumber(record, ['dimensions', 'depth']) ??
+        getNumber(record, ['depthMm', 'depth', 'h']);
+      const height =
+        getNestedNumber(record, ['dimensions', 'height']) ??
+        getNumber(record, ['heightMm', 'height']);
       const dimensionsMm =
         width && width > 0 && depth && depth > 0
           ? {

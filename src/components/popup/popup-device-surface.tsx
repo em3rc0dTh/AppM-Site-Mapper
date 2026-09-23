@@ -5,7 +5,6 @@ import {
   type ElectricalConnection,
 } from '@/components/inventory/device-physical-view';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
-import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 export interface PopupDeviceFocus {
@@ -25,7 +24,6 @@ export async function PopupDeviceSurface({
   powerReadable: boolean;
 }>) {
   const repository = await createTopologyRepository();
-  const topology = new TopologyService(repository);
   const device = await repository.getById(deviceId);
 
   if (!device || (device.kind !== 'DEVICE' && device.kind !== 'EQUIPMENT')) {

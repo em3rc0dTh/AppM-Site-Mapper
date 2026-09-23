@@ -2035,7 +2035,6 @@ button.legacy-rack-block:hover {
   font-size: 0.95rem;
 }
 
-
 /* --------------------------------------------------------------------------
    v0.4 workflow-fidelity pass
    Restores the previous product's interaction grammar rather than only scaling
@@ -2089,8 +2088,7 @@ button.legacy-rack-block:hover {
   justify-content: center;
   border-width: 2px;
   background:
-    linear-gradient(rgba(173, 198, 255, 0.03), rgba(173, 198, 255, 0.015)),
-    rgba(18, 24, 33, 0.72);
+    linear-gradient(rgba(173, 198, 255, 0.03), rgba(173, 198, 255, 0.015)), rgba(18, 24, 33, 0.72);
 }
 
 .legacy-site-footprint {
@@ -2098,8 +2096,7 @@ button.legacy-rack-block:hover {
   min-height: 180px;
   border: 1px solid #7b8696;
   background:
-    linear-gradient(145deg, rgba(173, 198, 255, 0.08), transparent 60%),
-    rgba(30, 36, 46, 0.9);
+    linear-gradient(145deg, rgba(173, 198, 255, 0.08), transparent 60%), rgba(30, 36, 46, 0.9);
 }
 
 .legacy-corner {
@@ -2176,9 +2173,7 @@ button.legacy-rack-block:hover {
   position: absolute;
   inset: 11% 14% 12% 12%;
   border: 1px solid #414b58;
-  background:
-    linear-gradient(135deg, rgba(173, 198, 255, 0.035), transparent 45%),
-    #090d13;
+  background: linear-gradient(135deg, rgba(173, 198, 255, 0.035), transparent 45%), #090d13;
   box-shadow:
     0 0 0 12px rgba(5, 8, 12, 0.45),
     0 28px 90px #000b;
@@ -2216,8 +2211,7 @@ button.legacy-rack-block:hover {
   border: 1px solid #2f3945;
   background:
     linear-gradient(rgba(56, 56, 58, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 56, 58, 0.18) 1px, transparent 1px),
-    rgba(9, 13, 19, 0.82);
+    linear-gradient(90deg, rgba(56, 56, 58, 0.18) 1px, transparent 1px), rgba(9, 13, 19, 0.82);
   background-size: 40px 40px;
 }
 
@@ -2228,9 +2222,7 @@ button.legacy-rack-block:hover {
   gap: 14px;
   padding: 18px;
   border: 1px solid #596575;
-  background:
-    linear-gradient(145deg, rgba(104, 211, 255, 0.055), transparent 58%),
-    #151b23;
+  background: linear-gradient(145deg, rgba(104, 211, 255, 0.055), transparent 58%), #151b23;
 }
 
 .legacy-structure-room:hover {
@@ -2346,8 +2338,7 @@ button.legacy-rack-block:hover {
   min-height: 190px;
   border-color: #657184;
   background:
-    linear-gradient(145deg, rgba(173, 198, 255, 0.055), transparent 62%),
-    rgba(24, 29, 38, 0.94);
+    linear-gradient(145deg, rgba(173, 198, 255, 0.055), transparent 62%), rgba(24, 29, 38, 0.94);
   box-shadow: 0 16px 40px #0007;
 }
 

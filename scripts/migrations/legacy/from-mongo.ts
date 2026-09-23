@@ -369,6 +369,78 @@ function inferClusterRow(cluster: LegacyRecord | undefined): string {
   return match?.[1]?.toUpperCase() ?? 'A';
 }
 
+function polygonFromRecord(
+  record: LegacyRecord,
+): readonly Readonly<{ x: number; y: number }>[] | null {
+  const spatialMetadata =
+    typeof record.spatialMetadata === 'string'
+      ? (() => {
+          try {
+            return asRecord(JSON.parse(record.spatialMetadata));
+          } catch {
+            return null;
+          }
+        })()
+      : asRecord(record.spatialMetadata);
+  const source = Array.isArray(record.polygon)
+    ? record.polygon
+    : Array.isArray(record.points)
+      ? record.points
+      : spatialMetadata && Array.isArray(spatialMetadata.points)
+        ? spatialMetadata.points
+        : null;
+  if (!source) return null;
+
+  const points = source.flatMap((entry) => {
+    const point = asRecord(entry);
+    if (!point) return [];
+    const x = numeric(point, ['x']);
+    const y = numeric(point, ['y']);
+    return x === undefined || y === undefined ? [] : [{ x, y }];
+  });
+  return points.length >= 3 ? points : null;
+}
+
+function polygonCentroid(
+  polygon: readonly Readonly<{ x: number; y: number }>[],
+): Readonly<{ x: number; y: number }> {
+  return {
+    x: polygon.reduce((sum, point) => sum + point.x, 0) / polygon.length,
+    y: polygon.reduce((sum, point) => sum + point.y, 0) / polygon.length,
+  };
+}
+
+function pointInPolygon(
+  point: Readonly<{ x: number; y: number }>,
+  polygon: readonly Readonly<{ x: number; y: number }>[],
+): boolean {
+  let inside = false;
+  for (let index = 0, previous = polygon.length - 1; index < polygon.length; previous = index++) {
+    const currentPoint = polygon[index]!;
+    const previousPoint = polygon[previous]!;
+    const intersects =
+      currentPoint.y > point.y !== previousPoint.y > point.y &&
+      point.x <
+        ((previousPoint.x - currentPoint.x) * (point.y - currentPoint.y)) /
+          (previousPoint.y - currentPoint.y || Number.EPSILON) +
+          currentPoint.x;
+    if (intersects) inside = !inside;
+  }
+  return inside;
+}
+
+function levelRoomCentroids(
+  levelId: string,
+  rooms: readonly LegacyRecord[],
+): readonly Readonly<{ x: number; y: number }>[] {
+  return rooms.flatMap((room) => {
+    const parentId = reference(room, ['levelId', 'level_id', 'parentId']);
+    if (parentId !== levelId) return [];
+    const polygon = polygonFromRecord(room);
+    return polygon ? [polygonCentroid(polygon)] : [];
+  });
+}
+
 function normalizeSiteParentedLevels(
   loaded: Record<keyof typeof sourceAliases, readonly LegacyRecord[]>,
 ): Readonly<{
@@ -378,6 +450,7 @@ function normalizeSiteParentedLevels(
     legacySiteId: string;
     structureId: string;
     structureName: string;
+    strategy: 'ROOM_GEOMETRY' | 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL';
   }>[];
 }> {
   const siteIds = new Set(
@@ -407,29 +480,55 @@ function normalizeSiteParentedLevels(
     legacySiteId: string;
     structureId: string;
     structureName: string;
+    strategy: 'ROOM_GEOMETRY' | 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL';
   }> = [];
 
   const levels = loaded.levels.map((level) => {
     const parentId = reference(level, ['structureId', 'structure_id', 'parentId']);
     if (!parentId || !siteIds.has(parentId)) return level;
 
-    const candidates = (structuresBySite.get(parentId) ?? []).filter((structure) => {
+    const siteStructures = structuresBySite.get(parentId) ?? [];
+    const levelId = recordId(level);
+    if (!levelId) return level;
+
+    const roomCentroids = levelRoomCentroids(levelId, loaded.rooms);
+    const geometryCandidates =
+      roomCentroids.length > 0
+        ? siteStructures.filter((structure) => {
+            const polygon = polygonFromRecord(structure);
+            return polygon
+              ? roomCentroids.every((centroid) => pointInPolygon(centroid, polygon))
+              : false;
+          })
+        : [];
+
+    const withoutDirectLevel = siteStructures.filter((structure) => {
       const id = recordId(structure);
       return id ? !directStructureLevelParents.has(id) : false;
     });
 
-    if (candidates.length !== 1) return level;
+    const structure =
+      geometryCandidates.length === 1
+        ? geometryCandidates[0]
+        : withoutDirectLevel.length === 1
+          ? withoutDirectLevel[0]
+          : undefined;
+    const strategy =
+      geometryCandidates.length === 1
+        ? 'ROOM_GEOMETRY'
+        : withoutDirectLevel.length === 1
+          ? 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL'
+          : undefined;
 
-    const structure = candidates[0]!;
-    const structureId = recordId(structure);
-    const levelId = recordId(level);
-    if (!structureId || !levelId) return level;
+    const structureId = structure ? recordId(structure) : null;
+    if (!structureId || !strategy) return level;
 
     normalized.push({
       levelId,
       legacySiteId: parentId,
       structureId,
       structureName: label(structure, structureId),
+      strategy,
     });
 
     return {

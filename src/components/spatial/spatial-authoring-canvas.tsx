@@ -33,8 +33,9 @@ export interface SpatialContextPolygon {
 export interface SpatialRectOverlay {
   readonly id: string;
   readonly name: string;
-  readonly kind: 'rack' | 'slot';
+  readonly kind: 'rack' | 'slot' | 'bay' | 'position';
   readonly rect: RectMm;
+  readonly detail?: string;
   readonly href?: string;
 }
 
@@ -123,6 +124,27 @@ function midpoint(left: PointMm, right: PointMm): PointMm {
   };
 }
 
+function segmentLength(left: PointMm, right: PointMm): number {
+  return Math.hypot(right.x - left.x, right.y - left.y);
+}
+
+function polygonPerimeter(points: readonly PointMm[]): number {
+  if (points.length < 2) {
+    return 0;
+  }
+
+  return points.reduce((total, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return next ? total + segmentLength(point, next) : total;
+  }, 0);
+}
+
+function formatDistance(millimetres: number): string {
+  return millimetres >= 1000
+    ? `${(millimetres / 1000).toFixed(millimetres >= 10_000 ? 1 : 2)} m`
+    : `${Math.round(millimetres)} mm`;
+}
+
 function samePolygon(left: readonly PointMm[], right: readonly PointMm[]): boolean {
   return JSON.stringify(left) === JSON.stringify(right);
 }
@@ -175,6 +197,7 @@ export function SpatialAuthoringCanvas({
   const validDraft = draft.length >= 3 && isValidPolygon(draft);
   const dirty = editing && !samePolygon(draft, sourcePolygon);
   const areaSqm = displayed.length >= 3 ? polygonArea(displayed) / 1_000_000 : 0;
+  const perimeterMm = displayed.length >= 3 ? polygonPerimeter(displayed) : 0;
 
   const view: ViewState = {
     width: base.width / zoom,
@@ -184,6 +207,9 @@ export function SpatialAuthoringCanvas({
   };
 
   const contextLabelSize = Math.max(72, view.width / 48);
+  const overlayLabelSize = Math.max(62, view.width / 62);
+  const coordinateLabelSize = Math.max(54, view.width / 78);
+  const vertexLabelSize = Math.max(48, view.width / 86);
 
   const grid = useMemo(() => {
     if (!gridSizeMm || displayed.length < 3) {
@@ -716,6 +742,7 @@ export function SpatialAuthoringCanvas({
                   x={column.x}
                   y={grid.startY - Math.max(90, gridSizeMm! * 0.16)}
                   textAnchor="middle"
+                  fontSize={coordinateLabelSize}
                 >
                   {column.label}
                 </text>
@@ -727,6 +754,7 @@ export function SpatialAuthoringCanvas({
                   y={row.y}
                   textAnchor="middle"
                   dominantBaseline="middle"
+                  fontSize={coordinateLabelSize}
                 >
                   {row.label}
                 </text>
@@ -734,23 +762,83 @@ export function SpatialAuthoringCanvas({
             </g>
           )}
 
-          {rectangles.map((item) =>
-            item.kind === 'slot' ? (
-              <rect
-                key={item.id}
-                x={item.rect.x}
-                y={item.rect.y}
-                width={item.rect.width}
-                height={item.rect.depth}
-                className="spatial-slot"
-              />
-            ) : (
+          {rectangles.map((item) => {
+            if (item.kind === 'bay') {
+              return (
+                <g key={item.id} className="spatial-bay" aria-label={item.name}>
+                  <rect
+                    x={item.rect.x}
+                    y={item.rect.y}
+                    width={item.rect.width}
+                    height={item.rect.depth}
+                  />
+                  <text
+                    x={item.rect.x + 34}
+                    y={item.rect.y + overlayLabelSize * 0.9}
+                    fontSize={overlayLabelSize * 0.72}
+                  >
+                    {item.name.toUpperCase()}
+                  </text>
+                  {item.detail && (
+                    <text
+                      className="spatial-bay-detail"
+                      x={item.rect.x + 34}
+                      y={item.rect.y + overlayLabelSize * 1.55}
+                      fontSize={overlayLabelSize * 0.44}
+                    >
+                      {item.detail}
+                    </text>
+                  )}
+                </g>
+              );
+            }
+
+            if (item.kind === 'slot') {
+              return (
+                <rect
+                  key={item.id}
+                  x={item.rect.x}
+                  y={item.rect.y}
+                  width={item.rect.width}
+                  height={item.rect.depth}
+                  className="spatial-slot"
+                />
+              );
+            }
+
+            if (item.kind === 'position') {
+              return (
+                <g key={item.id} className="spatial-position" aria-label={item.name}>
+                  <rect
+                    x={item.rect.x}
+                    y={item.rect.y}
+                    width={item.rect.width}
+                    height={item.rect.depth}
+                  />
+                  <text
+                    x={item.rect.x + item.rect.width - 30}
+                    y={item.rect.y + 42}
+                    textAnchor="end"
+                    fontSize={overlayLabelSize * 0.46}
+                  >
+                    {item.detail ?? item.name}
+                  </text>
+                </g>
+              );
+            }
+
+            return (
               <g
                 key={item.id}
                 className="spatial-rack"
                 role="button"
                 tabIndex={editing ? -1 : 0}
                 onClick={() => inspectRectangle(item)}
+                onDoubleClick={() => {
+                  if (!editing && item.href) {
+                    router.push(item.href);
+                  }
+                }}
                 onKeyDown={(event) => {
                   if (!editing && (event.key === 'Enter' || event.key === ' ')) {
                     event.preventDefault();
@@ -764,17 +852,25 @@ export function SpatialAuthoringCanvas({
                   width={item.rect.width}
                   height={item.rect.depth}
                 />
+                <rect
+                  className="spatial-rack-inner"
+                  x={item.rect.x + 28}
+                  y={item.rect.y + 28}
+                  width={Math.max(0, item.rect.width - 56)}
+                  height={Math.max(0, item.rect.depth - 56)}
+                />
                 <text
                   x={item.rect.x + item.rect.width / 2}
                   y={item.rect.y + item.rect.depth / 2}
                   textAnchor="middle"
                   dominantBaseline="middle"
+                  fontSize={overlayLabelSize}
                 >
                   {item.name}
                 </text>
               </g>
-            ),
-          )}
+            );
+          })}
 
           {editing &&
             tool === 'select' &&
@@ -787,18 +883,29 @@ export function SpatialAuthoringCanvas({
               }
 
               const center = midpoint(point, next);
+              const length = segmentLength(point, next);
               return (
-                <circle
-                  key={`midpoint-${index}`}
-                  cx={center.x}
-                  cy={center.y}
-                  r={Math.max(18, view.width / 240)}
-                  className="spatial-midpoint"
-                  onPointerDown={(event) => {
-                    event.stopPropagation();
-                    insertMidpoint(index);
-                  }}
-                />
+                <g key={`midpoint-${index}`} className="spatial-segment-control">
+                  <circle
+                    cx={center.x}
+                    cy={center.y}
+                    r={Math.max(18, view.width / 240)}
+                    className="spatial-midpoint"
+                    onPointerDown={(event) => {
+                      event.stopPropagation();
+                      insertMidpoint(index);
+                    }}
+                  />
+                  <text
+                    className="spatial-segment-length"
+                    x={center.x}
+                    y={center.y - Math.max(42, view.width / 120)}
+                    textAnchor="middle"
+                    fontSize={vertexLabelSize * 0.82}
+                  >
+                    {formatDistance(length)}
+                  </text>
+                </g>
               );
             })}
 
@@ -819,8 +926,9 @@ export function SpatialAuthoringCanvas({
                   y={point.y - Math.max(55, view.width / 90)}
                   textAnchor="middle"
                   className="spatial-vertex-label"
+                  fontSize={vertexLabelSize}
                 >
-                  {index + 1}
+                  V{index + 1}
                 </text>
               </g>
             ))}
@@ -875,6 +983,12 @@ export function SpatialAuthoringCanvas({
           <StatusBadge tone="accent">{displayed.length} VERTICES</StatusBadge>
         )}
         {displayed.length >= 3 && <StatusBadge>{areaSqm.toFixed(2)} m²</StatusBadge>}
+        {displayed.length >= 3 && <StatusBadge>{formatDistance(perimeterMm)} PERIMETER</StatusBadge>}
+        {selectedVertex !== null && draft[selectedVertex] && editing && (
+          <StatusBadge>
+            V{selectedVertex + 1} · X {draft[selectedVertex].x} · Y {draft[selectedVertex].y}
+          </StatusBadge>
+        )}
         {gridSizeMm && <StatusBadge>{gridSizeMm} mm GRID</StatusBadge>}
         <span>
           {editing

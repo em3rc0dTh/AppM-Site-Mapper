@@ -100,3 +100,51 @@ The migration tooling never deletes the legacy database, and production promotio
 G13 certifies the migration engine, deterministic mapping, hierarchy enforcement and staging behavior.
 
 It does not claim that a production database has been migrated because no production dump or target credential is stored in this public repository.
+
+
+## Direct migration from the legacy MongoDB
+
+When the legacy data already lives in MongoDB, no production dump needs to be copied into the
+repository. The migration runner can read the source database directly and produce the same
+reviewable migration plan.
+
+Configure these variables locally only; never commit their values:
+
+```dotenv
+LEGACY_MONGODB_URI=mongodb://...
+LEGACY_MONGODB_DB_NAME=site_mapper
+LEGACY_NETWORK_ID=<stable canonical network id>
+LEGACY_NETWORK_NAME=<real network name>
+
+# Required only when applying the reviewed plan to MK1 staging:
+MONGODB_URI=mongodb://...
+MONGODB_DB_NAME=appm_site_mapper_mk1
+```
+
+The source and target may be different databases on the same MongoDB deployment, but `--apply`
+refuses to run when the legacy source database and MK1 target database are identical.
+
+Dry run directly from MongoDB:
+
+```bash
+npm run migration:legacy:mongo -- --output /secure/path/real-migration-report.json
+```
+
+The direct reader understands the legacy Site Mapper collections for sites, structures, levels,
+rooms, clusters/bays, positions, containers/racks, devices/equipment and BDFB internals
+(shelves, frames, panels and breakers). It preserves available Site/Structure/Room polygons,
+Position grid coordinates, Container/Rack footprint dimensions and BDFB Frame visibility.
+Level remains non-spatial in MK1.
+
+Persist the generated `idMap` from the reviewed report outside Git. Then stage the exact same
+logical source into the MK1 target:
+
+```bash
+npm run migration:legacy:mongo -- \
+  --id-map /secure/path/id-map.json \
+  --output /secure/path/staging-report.json \
+  --apply
+```
+
+This writes only to `topology_nodes_migration_staging`. Promotion into
+`topology_nodes` remains a separate controlled operation.

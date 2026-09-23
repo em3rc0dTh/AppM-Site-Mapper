@@ -8,6 +8,7 @@ import { hashPassword, verifyPassword } from '@/modules/identity/domain/password
 import { createSessionToken, hashSessionToken } from '@/modules/identity/domain/session-token';
 import type { Permission, Role } from '@/modules/identity/domain/roles';
 import { canManageRole, hasPermission } from '@/modules/identity/domain/roles';
+import type { LifecycleState } from '@/shared/domain/entity';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
@@ -17,11 +18,15 @@ const SESSION_TTL_MS = 8 * 60 * 60 * 1_000;
 
 export type AuthError =
   | 'INVALID_CREDENTIALS'
+  | 'INVALID_INPUT'
   | 'RATE_LIMITED'
   | 'SESSION_INVALID'
   | 'FORBIDDEN'
   | 'PASSWORD_CHANGE_REQUIRED'
   | 'USER_EXISTS'
+  | 'USER_NOT_FOUND'
+  | 'SELF_MANAGEMENT_RESTRICTED'
+  | 'LAST_SUPERADMIN'
   | 'BOOTSTRAP_CLOSED';
 
 export interface AuthenticatedSession {
@@ -137,6 +142,10 @@ export class AuthService {
       return failure('INVALID_CREDENTIALS');
     }
 
+    if (newPassword.length < 12) {
+      return failure('INVALID_INPUT');
+    }
+
     const updated: User = {
       ...user,
       passwordHash: await hashPassword(newPassword),
@@ -150,6 +159,37 @@ export class AuthService {
     return success(toSafeUser(updated));
   }
 
+  async updateOwnProfile(
+    token: string,
+    displayName: string,
+  ): Promise<Result<SafeUser, AuthError>> {
+    const session = await this.repository.getSessionByTokenHash(hashSessionToken(token));
+
+    if (!session || session.revokedAt || session.expiresAt.getTime() <= this.clock().getTime()) {
+      return failure('SESSION_INVALID');
+    }
+
+    const user = await this.repository.getUserById(session.userId);
+    const normalizedDisplayName = displayName.trim();
+
+    if (!user) {
+      return failure('USER_NOT_FOUND');
+    }
+
+    if (!normalizedDisplayName || normalizedDisplayName.length > 120) {
+      return failure('INVALID_INPUT');
+    }
+
+    const updated: User = {
+      ...user,
+      displayName: normalizedDisplayName,
+      updatedAt: nowIso(),
+    };
+
+    await this.repository.replaceUser(updated);
+    return success(toSafeUser(updated));
+  }
+
   async bootstrapSuperadmin(
     email: string,
     password: string,
@@ -157,6 +197,10 @@ export class AuthService {
   ): Promise<Result<SafeUser, AuthError>> {
     if ((await this.repository.countUsers()) !== 0) {
       return failure('BOOTSTRAP_CLOSED');
+    }
+
+    if (password.length < 12 || !displayName.trim()) {
+      return failure('INVALID_INPUT');
     }
 
     const timestamp = nowIso();
@@ -185,19 +229,26 @@ export class AuthService {
       temporaryPassword: string;
     }>,
   ): Promise<Result<SafeUser, AuthError>> {
-    if (!canManageRole(actor.role, input.role)) {
+    if (!hasPermission(actor.role, 'users:manage') || !canManageRole(actor.role, input.role)) {
       return failure('FORBIDDEN');
     }
 
-    if (await this.repository.getUserByEmail(input.email)) {
+    const email = normalizeEmail(input.email);
+    const displayName = input.displayName.trim();
+
+    if (!email || !displayName || input.temporaryPassword.length < 12) {
+      return failure('INVALID_INPUT');
+    }
+
+    if (await this.repository.getUserByEmail(email)) {
       return failure('USER_EXISTS');
     }
 
     const timestamp = nowIso();
     const user: User = {
       id: createDomainId(),
-      email: normalizeEmail(input.email),
-      displayName: input.displayName.trim(),
+      email,
+      displayName,
       role: input.role,
       passwordHash: await hashPassword(input.temporaryPassword),
       mustChangePassword: true,
@@ -208,5 +259,89 @@ export class AuthService {
 
     await this.repository.insertUser(user);
     return success(toSafeUser(user));
+  }
+
+  async listUsers(actor: SafeUser): Promise<Result<readonly SafeUser[], AuthError>> {
+    if (!hasPermission(actor.role, 'users:manage')) {
+      return failure('FORBIDDEN');
+    }
+
+    const users = await this.repository.listUsers();
+    return success(users.map(toSafeUser));
+  }
+
+  async updateManagedUser(
+    actor: SafeUser,
+    targetId: string,
+    input: Readonly<{
+      displayName?: string;
+      role?: Role;
+      lifecycle?: LifecycleState;
+    }>,
+  ): Promise<Result<SafeUser, AuthError>> {
+    if (!hasPermission(actor.role, 'users:manage')) {
+      return failure('FORBIDDEN');
+    }
+
+    const target = await this.repository.getUserById(targetId);
+
+    if (!target) {
+      return failure('USER_NOT_FOUND');
+    }
+
+    if (!canManageRole(actor.role, target.role)) {
+      return failure('FORBIDDEN');
+    }
+
+    if (input.role && !canManageRole(actor.role, input.role)) {
+      return failure('FORBIDDEN');
+    }
+
+    if (
+      actor.id === target.id &&
+      ((input.role && input.role !== target.role) ||
+        (input.lifecycle && input.lifecycle !== target.lifecycle))
+    ) {
+      return failure('SELF_MANAGEMENT_RESTRICTED');
+    }
+
+    const nextRole = input.role ?? target.role;
+    const nextLifecycle = input.lifecycle ?? target.lifecycle;
+    const nextDisplayName = input.displayName?.trim() ?? target.displayName;
+
+    if (!nextDisplayName || nextDisplayName.length > 120) {
+      return failure('INVALID_INPUT');
+    }
+
+    if (
+      target.role === 'SUPERADMIN' &&
+      target.lifecycle === 'ACTIVE' &&
+      (nextRole !== 'SUPERADMIN' || nextLifecycle !== 'ACTIVE')
+    ) {
+      const users = await this.repository.listUsers();
+      const activeSuperadmins = users.filter(
+        (user) => user.role === 'SUPERADMIN' && user.lifecycle === 'ACTIVE',
+      ).length;
+
+      if (activeSuperadmins <= 1) {
+        return failure('LAST_SUPERADMIN');
+      }
+    }
+
+    const updated: User = {
+      ...target,
+      displayName: nextDisplayName,
+      role: nextRole,
+      lifecycle: nextLifecycle,
+      updatedAt: nowIso(),
+    };
+
+    await this.repository.replaceUser(updated);
+
+    if (nextLifecycle === 'ARCHIVED' || nextRole !== target.role) {
+      await this.repository.revokeUserSessions(target.id, this.clock());
+    }
+
+    return success(toSafeUser(updated));
   }
 }

@@ -443,6 +443,17 @@ function extraFields(
       const polygon = normalizePolygon(record);
       return polygon ? { polygon } : {};
     }
+    case 'LEVEL': {
+      if (record.migrationParentSource === 'legacy-site-level-fallback') {
+        warnings.push({
+          sourceCollection: spec.collection,
+          legacyId: id,
+          message:
+            'Rebound Site-parented Level to the unique Structure without a direct Level, preserving the legacy structure fallback behavior.',
+        });
+      }
+      return {};
+    }
     case 'ROOM_SUBSTRUCTURE': {
       const polygon = normalizePolygon(record);
       return { variant: spec.variant, ...(polygon ? { polygon } : {}) };
@@ -480,10 +491,21 @@ function extraFields(
       const mountedEnd = getNestedNumber(record, ['mounting', 'endPosition']);
       const casEnd = totalUFromCas(record);
       const totalCandidate = explicitTotal ?? capacityTotal ?? heightRu ?? casEnd ?? mountedEnd;
-      const totalU =
+      let totalU =
         totalCandidate && Number.isInteger(totalCandidate) && totalCandidate > 0
           ? totalCandidate
           : undefined;
+
+      if (variant === 'RACK' && !totalU) {
+        totalU = 42;
+        warnings.push({
+          sourceCollection: spec.collection,
+          legacyId: id,
+          message:
+            'Rack has no persisted RU capacity; applied the legacy Site Mapper rack-popup fallback of 42U.',
+        });
+      }
+
       const width =
         getNestedNumber(record, ['dimensions', 'width']) ??
         getNumber(record, ['widthMm', 'width', 'w']);
@@ -501,10 +523,6 @@ function extraFields(
               ...(height && height > 0 ? { height } : {}),
             }
           : undefined;
-
-      if (variant === 'RACK' && !totalU) {
-        return null;
-      }
 
       return {
         variant,

@@ -1268,7 +1268,9 @@ button.legacy-rack-block:hover {
 .legacy-property-section dd {
   margin: 0;
   color: #edf0f4;
-  font: 0.7rem ui-monospace, monospace;
+  font:
+    0.7rem ui-monospace,
+    monospace;
 }
 
 .legacy-rack-inventory-list {

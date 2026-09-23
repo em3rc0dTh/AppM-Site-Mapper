@@ -2574,7 +2574,6 @@ button.legacy-rack-block:hover {
   }
 }
 
-
 /* --------------------------------------------------------------------------
    v0.5 source-driven visual reconstruction
    Values below are taken from the original SiteMapper design system and
@@ -2816,8 +2815,7 @@ button.legacy-rack-block:hover {
   min-height: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 42%, rgba(173, 198, 255, 0.025), transparent 36%),
-    #05070a;
+    radial-gradient(circle at 50% 42%, rgba(173, 198, 255, 0.025), transparent 36%), #05070a;
 }
 
 .app-shell--immersive .blueprint-canvas {
@@ -3037,15 +3035,12 @@ button.legacy-rack-block:hover {
 
 .legacy-rack-block--available {
   background:
-    repeating-linear-gradient(to bottom, transparent 0 16px, rgba(56, 56, 58, 0.34) 17px),
-    #161a20;
+    repeating-linear-gradient(to bottom, transparent 0 16px, rgba(56, 56, 58, 0.34) 17px), #161a20;
 }
 
 .legacy-rack-block--physical {
   border-left: 4px solid var(--legacy-blue);
-  background:
-    linear-gradient(90deg, rgba(19, 156, 199, 0.14), transparent 72%),
-    #10222b;
+  background: linear-gradient(90deg, rgba(19, 156, 199, 0.14), transparent 72%), #10222b;
 }
 
 .legacy-rack-block--reserved {
@@ -3075,9 +3070,7 @@ button.legacy-rack-block:hover {
   flex-direction: column;
   border: 0;
   border-radius: 0;
-  background:
-    radial-gradient(circle at 78% 8%, rgba(75, 142, 255, 0.055), transparent 25%),
-    #000;
+  background: radial-gradient(circle at 78% 8%, rgba(75, 142, 255, 0.055), transparent 25%), #000;
 }
 
 .bdfb-chassis-header {
@@ -3127,9 +3120,7 @@ button.legacy-rack-block:hover {
   padding: 68px 24px 24px;
   border: 2px solid #6930a5;
   border-radius: 18px;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(147, 51, 234, 0.08), transparent 30%),
-    #070a10;
+  background: radial-gradient(circle at 50% 0%, rgba(147, 51, 234, 0.08), transparent 30%), #070a10;
   box-shadow:
     inset 0 0 0 8px #030508,
     0 28px 80px #000b;
@@ -3242,9 +3233,7 @@ button.legacy-rack-block:hover {
   overflow: hidden;
   border: 2px solid #ef6719;
   border-radius: 9px;
-  background:
-    linear-gradient(180deg, rgba(239, 103, 25, 0.025), transparent 22%),
-    #070a0f;
+  background: linear-gradient(180deg, rgba(239, 103, 25, 0.025), transparent 22%), #070a0f;
   box-shadow: inset 0 0 38px rgba(239, 103, 25, 0.025);
 }
 
@@ -3442,7 +3431,6 @@ button.legacy-rack-block:hover {
     width: min(410px, 86%);
   }
 }
-
 
 /* Keep collapsed edit controls available without covering the drafting surface. */
 .app-shell--immersive .operational-edit-dock {

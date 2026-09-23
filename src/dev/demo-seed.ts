@@ -362,6 +362,7 @@ export async function seedDevelopmentDemo(
           {
             id: 'demo-frame-a',
             label: 'Frame A',
+            presentation: { physicalFrameVisible: false },
             panels: [
               {
                 id: 'demo-panel-a',
@@ -378,6 +379,43 @@ export async function seedDevelopmentDemo(
                     variant: 'BREAKER',
                     label: 'Breaker A2',
                     capacity: 20,
+                  },
+                  {
+                    id: 'demo-holder-a3',
+                    variant: 'HOLDER',
+                    label: 'Holder A3',
+                  },
+                  {
+                    id: 'demo-holder-a4',
+                    variant: 'HOLDER',
+                    label: 'Holder A4',
+                  },
+                ],
+              },
+              {
+                id: 'demo-panel-b',
+                label: 'Panel B',
+                endpoints: [
+                  {
+                    id: 'demo-breaker-b1',
+                    variant: 'BREAKER',
+                    label: 'Breaker B1',
+                    capacity: 30,
+                  },
+                  {
+                    id: 'demo-holder-b2',
+                    variant: 'HOLDER',
+                    label: 'Holder B2',
+                  },
+                  {
+                    id: 'demo-holder-b3',
+                    variant: 'HOLDER',
+                    label: 'Holder B3',
+                  },
+                  {
+                    id: 'demo-holder-b4',
+                    variant: 'HOLDER',
+                    label: 'Holder B4',
                   },
                 ],
               },

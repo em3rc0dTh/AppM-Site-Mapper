@@ -97,7 +97,6 @@ claims were fabricated. No secret, local credentials or environment file was
 included in commits. main was not merged and no additional remote branch was
 created. Updates continue in PR #29 through non-forced branch updates.
 
-
 ## Spatial truth / popup restoration addendum
 
 - Level floor geometry is derived from contained Room/Substructure polygons. The demo now avoids

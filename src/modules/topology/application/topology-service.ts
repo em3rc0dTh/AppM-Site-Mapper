@@ -2,6 +2,7 @@ import type { TopologyRepository } from '@/modules/topology/application/topology
 import type {
   ContainerClusterBayVariant,
   ContainerRackVariant,
+  DimensionsMm,
   GridCoordinate,
   RoomSubstructureVariant,
   TopologyKind,
@@ -36,6 +37,7 @@ export interface CreateTopologyNodeInput {
   readonly containerVariant?: ContainerRackVariant;
   readonly coordinate?: GridCoordinate;
   readonly totalU?: number;
+  readonly dimensionsMm?: DimensionsMm;
   readonly serialNumber?: string;
   readonly category?: string;
 }
@@ -160,6 +162,7 @@ export class TopologyService {
           parentId: input.parentId as string,
           variant: input.containerVariant,
           ...(input.totalU === undefined ? {} : { totalU: input.totalU }),
+          ...(input.dimensionsMm ? { dimensionsMm: input.dimensionsMm } : {}),
           cas: input.containerVariant === 'RACK' && input.totalU ? initializeCas(input.totalU) : [],
         };
         break;

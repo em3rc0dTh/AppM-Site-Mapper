@@ -7,6 +7,7 @@ import type { CSSProperties, ReactNode } from 'react';
 
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 import { Icon, StatusBadge } from '@/shared/ui/primitives';
+import { openPhysicalPopup, popupKindForTopology } from '@/shared/ui/physical-popup';
 
 export interface VisualStageChild {
   readonly node: TopologyNode;
@@ -69,6 +70,20 @@ function ChildLink({
 }>) {
   const [selected, setSelected] = useState(false);
   const router = useRouter();
+  const popupKind = popupKindForTopology(child.kind);
+  const popupHref =
+    child.kind === 'CONTAINER_RACK'
+      ? `/popup/container/${child.id}`
+      : child.kind === 'DEVICE' || child.kind === 'EQUIPMENT'
+        ? `/popup/device/${child.id}`
+        : null;
+  const open = () => {
+    if (popupKind && popupHref) {
+      openPhysicalPopup(popupHref, popupKind, child.id);
+    } else {
+      router.push(href);
+    }
+  };
   return (
     <div
       className={`legacy-stage-node ${className} ${selected ? 'studio-node-selected' : ''}`}
@@ -77,7 +92,7 @@ function ChildLink({
       tabIndex={0}
       aria-label={`Select ${child.name}`}
       onClick={() => setSelected(true)}
-      onDoubleClick={() => router.push(href)}
+      onDoubleClick={open}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
@@ -105,14 +120,27 @@ function ChildLink({
           <span className="legacy-stage-enter">↗</span>
         </>
       )}
-      <Link
-        className="studio-node-open"
-        href={href}
-        onClick={(event) => event.stopPropagation()}
-        onKeyDown={(event) => event.stopPropagation()}
-      >
-        Open →
-      </Link>
+      {popupKind && popupHref ? (
+        <button
+          type="button"
+          className="studio-node-open"
+          onClick={(event) => {
+            event.stopPropagation();
+            openPhysicalPopup(popupHref, popupKind, child.id);
+          }}
+        >
+          Open popup ↗
+        </button>
+      ) : (
+        <Link
+          className="studio-node-open"
+          href={href}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          Open →
+        </Link>
+      )}
     </div>
   );
 }

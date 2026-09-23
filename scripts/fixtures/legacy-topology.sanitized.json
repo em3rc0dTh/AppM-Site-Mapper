@@ -1,0 +1,60 @@
+{
+  "network": {
+    "id": "00000000-0000-4000-8000-000000000000",
+    "name": "Reference Network"
+  },
+  "collections": {
+    "Site": [{ "_id": "legacy-site-1", "name": "Reference Site" }],
+    "Structure": [{ "_id": "legacy-structure-1", "name": "Building A", "siteId": "legacy-site-1" }],
+    "Level": [{ "_id": "legacy-level-1", "name": "Level 1", "structureId": "legacy-structure-1" }],
+    "Substructure": [
+      {
+        "_id": "legacy-room-1",
+        "name": "Equipment Room",
+        "levelId": "legacy-level-1"
+      }
+    ],
+    "ContainerCluster": [
+      {
+        "_id": "legacy-cluster-1",
+        "name": "Bay A",
+        "substructureId": "legacy-room-1"
+      }
+    ],
+    "Position": [
+      {
+        "_id": "legacy-position-1",
+        "name": "A-1",
+        "containerClusterId": "legacy-cluster-1",
+        "row": "A",
+        "column": 1
+      }
+    ],
+    "Rack": [
+      {
+        "_id": "legacy-rack-1",
+        "name": "Rack 01",
+        "positionId": "legacy-position-1",
+        "totalU": 42
+      }
+    ],
+    "Device": [
+      {
+        "_id": "legacy-device-1",
+        "name": "BDFB-01",
+        "rackId": "legacy-rack-1",
+        "serialNumber": "SANITIZED-DEVICE-001",
+        "category": "BDFB"
+      }
+    ],
+    "Equipment": [
+      {
+        "_id": "legacy-equipment-1",
+        "name": "Equipment-01",
+        "rackId": "legacy-rack-1",
+        "serialNumber": "SANITIZED-EQUIPMENT-001",
+        "category": "REFERENCE"
+      }
+    ]
+  }
+}

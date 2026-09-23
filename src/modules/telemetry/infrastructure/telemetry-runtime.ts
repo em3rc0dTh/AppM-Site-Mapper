@@ -20,16 +20,9 @@ function positiveInt(value: string | undefined, fallback: number): number {
 
 export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
   runtimePromise ??= (async () => {
-    const maxStreams = positiveInt(
-      process.env.TELEMETRY_MAX_STREAMS,
-      100,
-    );
-    const maxPayloadBytes = positiveInt(
-      process.env.TELEMETRY_MAX_PAYLOAD_BYTES,
-      262_144,
-    );
-    const topicPrefix =
-      process.env.MQTT_TOPIC_PREFIX?.trim() || 'data/dev/';
+    const maxStreams = positiveInt(process.env.TELEMETRY_MAX_STREAMS, 100);
+    const maxPayloadBytes = positiveInt(process.env.TELEMETRY_MAX_PAYLOAD_BYTES, 262_144);
+    const topicPrefix = process.env.MQTT_TOPIC_PREFIX?.trim() || 'data/dev/';
     const hub = new TelemetryHub(maxStreams);
     const topologyRepository = await createTopologyRepository();
     const service = new TelemetryService(topologyRepository, hub, {
@@ -38,12 +31,8 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     });
 
     if (process.env.TELEMETRY_ENABLED === 'true' && !source) {
-      const brokerUrl = requireRuntimeSecret(
-        'MQTT_BROKER_URL',
-        process.env.MQTT_BROKER_URL,
-      );
-      const topicFilter =
-        process.env.MQTT_TOPIC_FILTER?.trim() || `${topicPrefix}#`;
+      const brokerUrl = requireRuntimeSecret('MQTT_BROKER_URL', process.env.MQTT_BROKER_URL);
+      const topicFilter = process.env.MQTT_TOPIC_FILTER?.trim() || `${topicPrefix}#`;
 
       source = new NativeMqttSource(
         {
@@ -52,9 +41,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           ...(process.env.MQTT_USERNAME?.trim()
             ? { username: process.env.MQTT_USERNAME.trim() }
             : {}),
-          ...(process.env.MQTT_PASSWORD?.trim()
-            ? { password: process.env.MQTT_PASSWORD }
-            : {}),
+          ...(process.env.MQTT_PASSWORD?.trim() ? { password: process.env.MQTT_PASSWORD } : {}),
         },
         async (topic, payload) => {
           const result = await service.ingest(topic, payload);

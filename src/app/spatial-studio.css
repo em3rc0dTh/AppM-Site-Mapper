@@ -1395,3 +1395,44 @@
     min-height: 64px;
   }
 }
+
+
+.workspace-summary-popup {
+  appearance: none;
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workspace-tree-popup {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 0;
+  padding: 5px 7px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.workspace-tree-popup:hover {
+  color: #d9f7fb;
+  background: rgba(61, 104, 122, .18);
+}
+
+.workspace-tree-popup > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.workspace-tree-popup > small {
+  margin-left: auto;
+  color: #71879a;
+}

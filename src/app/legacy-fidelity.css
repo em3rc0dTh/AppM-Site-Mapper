@@ -274,6 +274,7 @@
 
 .app-shell--immersive .operational-layout--rack,
 .app-shell--immersive .operational-layout--blueprint {
+  height: calc(100dvh - 58px);
   grid-template-columns: 280px minmax(0, 1fr);
 }
 

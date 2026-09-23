@@ -1,9 +1,10 @@
 import { redirect } from 'next/navigation';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
+import type { PowerEndpoint } from '@/modules/power/domain/entities';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 
-function endpointLabel(endpoint: Readonly<{ entityId: string; internal?: Record<string, string> }>) {
+function endpointLabel(endpoint: PowerEndpoint) {
   const internal = endpoint.internal ? Object.values(endpoint.internal).filter(Boolean) : [];
 
   return internal.length > 0

@@ -296,6 +296,9 @@ function embeddedBdfb(device: LegacyRecord): Record<string, unknown> | undefined
                     recordId(endpoint) ??
                     recordId(assignedBreaker ?? {}) ??
                     `${panelId}-endpoint-${endpointIndex + 1}`;
+                  const position =
+                    numeric(endpoint, ['position', 'slot', 'index']) ??
+                    numeric(assignedBreaker ?? {}, ['position', 'slot', 'index']);
                   const capacity =
                     numeric(assignedBreaker ?? {}, ['capacity', 'ampacity', 'amps']) ??
                     numeric(endpoint, ['capacity', 'ampacity', 'amps']);
@@ -311,6 +314,7 @@ function embeddedBdfb(device: LegacyRecord): Record<string, unknown> | undefined
                       id: endpointId,
                       variant,
                       label: label(assignedBreaker ?? endpoint, `Endpoint ${endpointIndex + 1}`),
+                      ...(position === undefined ? {} : { position }),
                       ...(capacity === undefined ? {} : { capacity }),
                     },
                   ];

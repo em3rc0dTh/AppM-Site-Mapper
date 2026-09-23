@@ -3205,7 +3205,6 @@ p {
   }
 }
 
-
 /* Spatial Authoring Engine v0.1 */
 .spatial-authoring {
   flex: 1;
@@ -3243,7 +3242,9 @@ p {
 
 .spatial-authoring-title span {
   color: #72859a;
-  font: 0.58rem ui-monospace, monospace;
+  font:
+    0.58rem ui-monospace,
+    monospace;
 }
 
 .spatial-authoring-actions {
@@ -3292,8 +3293,7 @@ p {
   min-height: 0;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 40%, rgba(89, 171, 188, 0.035), transparent 44%),
-    #05080c;
+    radial-gradient(circle at 50% 40%, rgba(89, 171, 188, 0.035), transparent 44%), #05080c;
 }
 
 .spatial-authoring-canvas-shell.is-editing {
@@ -3312,9 +3312,15 @@ p {
   background-size: 32px 32px;
 }
 
-.spatial-authoring-canvas.tool-pan { cursor: grab; }
-.spatial-authoring-canvas.tool-pan:active { cursor: grabbing; }
-.spatial-authoring-canvas.tool-draw { cursor: crosshair; }
+.spatial-authoring-canvas.tool-pan {
+  cursor: grab;
+}
+.spatial-authoring-canvas.tool-pan:active {
+  cursor: grabbing;
+}
+.spatial-authoring-canvas.tool-draw {
+  cursor: crosshair;
+}
 
 .spatial-authoring-hud {
   position: absolute;
@@ -3336,12 +3342,18 @@ p {
 
 .spatial-authoring-hud span,
 .spatial-authoring-hud b {
-  font: 0.52rem ui-monospace, monospace;
+  font:
+    0.52rem ui-monospace,
+    monospace;
   letter-spacing: 0.12em;
 }
 
-.spatial-authoring-hud span { color: #ffad2e; }
-.spatial-authoring-hud b { color: #6fd8e7; }
+.spatial-authoring-hud span {
+  color: #ffad2e;
+}
+.spatial-authoring-hud b {
+  color: #6fd8e7;
+}
 
 .spatial-authoring-hud strong {
   grid-column: 1 / -1;
@@ -3386,7 +3398,9 @@ p {
   vector-effect: non-scaling-stroke;
 }
 
-.spatial-context-shape { pointer-events: none; }
+.spatial-context-shape {
+  pointer-events: none;
+}
 
 .spatial-context-shape polygon {
   fill: rgba(173, 198, 255, 0.05);
@@ -3398,7 +3412,9 @@ p {
 
 .spatial-context-shape text {
   fill: #8193a8;
-  font: 0.62rem ui-monospace, monospace;
+  font:
+    0.62rem ui-monospace,
+    monospace;
   paint-order: stroke;
   stroke: #070b10;
   stroke-width: 4px;
@@ -3406,7 +3422,9 @@ p {
 
 .spatial-coordinate-labels text {
   fill: #7790a6;
-  font: 0.58rem ui-monospace, monospace;
+  font:
+    0.58rem ui-monospace,
+    monospace;
 }
 
 .spatial-slot {
@@ -3418,7 +3436,9 @@ p {
   pointer-events: none;
 }
 
-.spatial-rack { cursor: pointer; }
+.spatial-rack {
+  cursor: pointer;
+}
 
 .spatial-rack rect {
   fill: #243342;
@@ -3439,7 +3459,9 @@ p {
 
 .spatial-rack text {
   fill: #f1f5fa;
-  font: 0.62rem ui-monospace, monospace;
+  font:
+    0.62rem ui-monospace,
+    monospace;
   font-weight: 700;
   paint-order: stroke;
   stroke: #0a0f15;
@@ -3454,7 +3476,9 @@ p {
   cursor: copy;
 }
 
-.spatial-midpoint:hover { fill: #2a5b67; }
+.spatial-midpoint:hover {
+  fill: #2a5b67;
+}
 
 .spatial-vertex {
   fill: #ff9f0a;
@@ -3465,7 +3489,9 @@ p {
   filter: drop-shadow(0 0 8px rgba(255, 159, 10, 0.45));
 }
 
-.spatial-vertex:active { cursor: grabbing; }
+.spatial-vertex:active {
+  cursor: grabbing;
+}
 
 .spatial-vertex.is-selected {
   fill: #fff1cf;
@@ -3474,7 +3500,9 @@ p {
 
 .spatial-vertex-label {
   fill: #ffd28a;
-  font: 0.56rem ui-monospace, monospace;
+  font:
+    0.56rem ui-monospace,
+    monospace;
   font-weight: 700;
   pointer-events: none;
   paint-order: stroke;
@@ -3543,7 +3571,9 @@ p {
   border-radius: 5px;
   background: rgba(67, 20, 20, 0.94);
   color: #ffd1cf;
-  font: 0.62rem ui-monospace, monospace;
+  font:
+    0.62rem ui-monospace,
+    monospace;
 }
 
 .spatial-authoring-legend {

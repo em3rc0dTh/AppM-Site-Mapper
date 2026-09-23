@@ -32,7 +32,6 @@ The UI receives:
 
 The UI does not perform authoritative collision or geometry calculations.
 
-
 ## Spatial authoring
 
 MK1 preserves the legacy drafting intent without treating the legacy UI as architecture.

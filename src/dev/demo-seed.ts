@@ -217,9 +217,7 @@ export async function seedDevelopmentDemo(
   ]);
 
   if (!structureBoundary.ok) {
-    throw new Error(
-      'Demo seed could not configure Structure boundary: ' + structureBoundary.error,
-    );
+    throw new Error('Demo seed could not configure Structure boundary: ' + structureBoundary.error);
   }
 
   const level = expectKind(

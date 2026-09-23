@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent,
-  type WheelEvent,
-} from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
 
 import {
   isValidPolygon,
@@ -46,8 +39,7 @@ interface ViewState {
 type Tool = 'select' | 'pan' | 'draw';
 
 type PointerSession =
-  | Readonly<{ type: 'pan'; x: number; y: number }>
-  | Readonly<{ type: 'vertex'; index: number }>;
+  Readonly<{ type: 'pan'; x: number; y: number }> | Readonly<{ type: 'vertex'; index: number }>;
 
 function clonePolygon(points: readonly PointMm[]): PointMm[] {
   return points.map((point) => ({ x: point.x, y: point.y }));
@@ -347,11 +339,7 @@ export function SpatialAuthoringCanvas({
     }
 
     const inserted = normalizePoint(midpoint(current, next));
-    setDraft((points) => [
-      ...points.slice(0, index + 1),
-      inserted,
-      ...points.slice(index + 1),
-    ]);
+    setDraft((points) => [...points.slice(0, index + 1), inserted, ...points.slice(index + 1)]);
     setSelectedVertex(index + 1);
   }
 
@@ -515,7 +503,11 @@ export function SpatialAuthoringCanvas({
                 Redraw
               </button>
               {gridSizeMm && (
-                <button type="button" aria-pressed={snap} onClick={() => setSnap((value) => !value)}>
+                <button
+                  type="button"
+                  aria-pressed={snap}
+                  onClick={() => setSnap((value) => !value)}
+                >
                   Snap {snap ? 'ON' : 'OFF'}
                 </button>
               )}
@@ -593,10 +585,7 @@ export function SpatialAuthoringCanvas({
                 height={gridSizeMm}
                 patternUnits="userSpaceOnUse"
               >
-                <path
-                  d={`M ${gridSizeMm} 0 L 0 0 0 ${gridSizeMm}`}
-                  className="spatial-grid-line"
-                />
+                <path d={`M ${gridSizeMm} 0 L 0 0 0 ${gridSizeMm}`} className="spatial-grid-line" />
               </pattern>
             )}
           </defs>
@@ -741,7 +730,9 @@ export function SpatialAuthoringCanvas({
                   cx={point.x}
                   cy={point.y}
                   r={Math.max(30, view.width / 160)}
-                  className={selectedVertex === index ? 'spatial-vertex is-selected' : 'spatial-vertex'}
+                  className={
+                    selectedVertex === index ? 'spatial-vertex is-selected' : 'spatial-vertex'
+                  }
                   onPointerDown={(event) => vertexPointerDown(index, event)}
                 />
                 <text

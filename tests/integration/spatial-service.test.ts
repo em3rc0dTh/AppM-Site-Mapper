@@ -93,9 +93,9 @@ describe('SpatialService boundary authoring', () => {
     expect(
       persistedStructure?.kind === 'STRUCTURE' ? persistedStructure.polygon : undefined,
     ).toEqual(polygon);
-    expect(
-      persistedRoom?.kind === 'ROOM_SUBSTRUCTURE' ? persistedRoom.polygon : undefined,
-    ).toEqual(polygon);
+    expect(persistedRoom?.kind === 'ROOM_SUBSTRUCTURE' ? persistedRoom.polygon : undefined).toEqual(
+      polygon,
+    );
   });
 
   it('does not invent persisted geometry for Level', async () => {

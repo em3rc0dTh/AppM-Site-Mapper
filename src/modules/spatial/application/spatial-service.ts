@@ -15,10 +15,7 @@ import { gridCoordinateToPoint, TILE_SIZE_MM } from '@/modules/spatial/domain/gr
 
 export type SpatialBoundaryNode = SiteNode | StructureNode | RoomSubstructureNode;
 export type SpatialError =
-  | 'ROOM_NOT_FOUND'
-  | 'BOUNDARY_NODE_NOT_FOUND'
-  | 'UNSUPPORTED_BOUNDARY_KIND'
-  | 'INVALID_POLYGON';
+  'ROOM_NOT_FOUND' | 'BOUNDARY_NODE_NOT_FOUND' | 'UNSUPPORTED_BOUNDARY_KIND' | 'INVALID_POLYGON';
 
 export interface RackPlacementView {
   readonly id: string;

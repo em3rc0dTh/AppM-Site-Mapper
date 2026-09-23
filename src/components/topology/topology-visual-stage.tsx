@@ -55,14 +55,16 @@ function ChildLink({
   href,
   className = '',
   children,
+  style,
 }: Readonly<{
   child: TopologyNode;
   href: string;
   className?: string;
   children?: ReactNode;
+  style?: CSSProperties;
 }>) {
   return (
-    <Link className={`legacy-stage-node ${className}`} href={href}>
+    <Link className={`legacy-stage-node ${className}`} href={href} style={style}>
       {children ?? (
         <>
           <span className="legacy-stage-node-icon">

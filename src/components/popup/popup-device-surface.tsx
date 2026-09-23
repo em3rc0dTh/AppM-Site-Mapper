@@ -35,7 +35,9 @@ export async function PopupDeviceSurface({
   const connections: ElectricalConnection[] = powerReadable
     ? await Promise.all(
         (await (await createPowerRepository()).listActive())
-          .filter((item) => item.source.entityId === device.id || item.target.entityId === device.id)
+          .filter(
+            (item) => item.source.entityId === device.id || item.target.entityId === device.id,
+          )
           .map(async (path) => {
             const [source, target] = await Promise.all([
               repository.getById(path.source.entityId),
@@ -48,9 +50,7 @@ export async function PopupDeviceSurface({
                 : undefined;
             const frame = shelf?.frames.find((item) => item.id === internal?.frameId);
             const panel = frame?.panels.find((item) => item.id === internal?.panelId);
-            const endpoint = panel?.endpoints.find(
-              (item) => item.id === internal?.breakerHolderId,
-            );
+            const endpoint = panel?.endpoints.find((item) => item.id === internal?.breakerHolderId);
             const params = new URLSearchParams();
             if (shelf) params.set('shelf', shelf.id);
             if (panel) params.set('panel', panel.id);

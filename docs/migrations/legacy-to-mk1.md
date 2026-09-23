@@ -147,3 +147,20 @@ npm run migration:legacy:mongo -- \
 
 This writes only to `topology_nodes_migration_staging`. Promotion into
 `topology_nodes` remains a separate controlled operation.
+
+
+## Verify MongoDB staging before promotion
+
+After a successful staging apply, validate the exact staged fingerprint before any promotion:
+
+```bash
+npm run migration:verify-staging -- \
+  --fingerprint <sourceFingerprint> \
+  --expected <staged-count>
+```
+
+The verifier checks staged count, unique canonical ids, the single Network root, canonical parent-kind
+relationships, Position coordinates, Rack/CAS shape and CAS occupant references. A non-empty
+`issues` array blocks promotion.
+
+The command is read-only and only inspects `topology_nodes_migration_staging`.

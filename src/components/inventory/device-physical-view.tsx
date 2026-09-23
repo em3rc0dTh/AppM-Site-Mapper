@@ -56,7 +56,11 @@ export function DevicePhysicalView({
   const orderedPanels = (frame: Frame) =>
     [...frame.panels].sort((left, right) => naturalOrder.compare(left.label, right.label));
   const orderedEndpoints = (panel: Panel) =>
-    [...panel.endpoints].sort((left, right) => naturalOrder.compare(left.label, right.label));
+    [...panel.endpoints].sort((left, right) => {
+      const positionDelta = (left.position ?? Number.MAX_SAFE_INTEGER) -
+        (right.position ?? Number.MAX_SAFE_INTEGER);
+      return positionDelta || naturalOrder.compare(left.label, right.label);
+    });
   const boards = shelves.flatMap((shelf) =>
     orderedFrames(shelf).flatMap((frame) =>
       orderedPanels(frame).map((panel) => ({ shelf, frame, panel })),
@@ -181,7 +185,7 @@ export function DevicePhysicalView({
                   }
                 >
                   <span className="studio-terminal-number">
-                    {String(index + 1).padStart(2, '0')}
+                    {String(endpoint.position ?? index + 1).padStart(2, '0')}
                   </span>
                   <span className="studio-switch" aria-hidden="true" />
                   <strong>{endpoint.label}</strong>
@@ -271,7 +275,9 @@ export function DevicePhysicalView({
   function endpointDetail() {
     if (!activeBoard || !activeEndpoint) return null;
     const panelEndpoints = orderedEndpoints(activeBoard.panel);
-    const position = panelEndpoints.findIndex((endpoint) => endpoint.id === activeEndpoint.id) + 1;
+    const position =
+      activeEndpoint.position ??
+      panelEndpoints.findIndex((endpoint) => endpoint.id === activeEndpoint.id) + 1;
     const links = endpointLinks(activeEndpoint);
 
     return (

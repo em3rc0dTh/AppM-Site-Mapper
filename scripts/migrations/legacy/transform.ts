@@ -74,6 +74,16 @@ function scalar(value: unknown): string | null {
     return typeof oid === 'string' && oid.trim() ? oid.trim() : null;
   }
 
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toHexString' in value &&
+    typeof (value as { toHexString?: unknown }).toHexString === 'function'
+  ) {
+    const hex = (value as { toHexString: () => string }).toHexString();
+    return hex.trim() ? hex.trim() : null;
+  }
+
   return null;
 }
 
@@ -98,6 +108,51 @@ function getNumber(record: LegacyRecord, keys: readonly string[]): number | null
     }
   }
   return null;
+}
+
+
+function getNestedNumber(record: LegacyRecord, path: readonly string[]): number | null {
+  let value: unknown = record;
+  for (const key of path) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    value = (value as Record<string, unknown>)[key];
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) {
+    return Number(value);
+  }
+  return null;
+}
+
+function normalizePolygon(
+  record: LegacyRecord,
+): readonly Readonly<{ x: number; y: number }>[] | undefined {
+  const source = Array.isArray(record.polygon)
+    ? record.polygon
+    : Array.isArray(record.points)
+      ? record.points
+      : null;
+  if (!source) return undefined;
+
+  const points = source.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+    const point = entry as Record<string, unknown>;
+    const x =
+      typeof point.x === 'number'
+        ? point.x
+        : typeof point.x === 'string' && Number.isFinite(Number(point.x))
+          ? Number(point.x)
+          : null;
+    const y =
+      typeof point.y === 'number'
+        ? point.y
+        : typeof point.y === 'string' && Number.isFinite(Number(point.y))
+          ? Number(point.y)
+          : null;
+    return x !== null && y !== null ? [{ x, y }] : [];
+  });
+
+  return points.length >= 3 ? points : undefined;
 }
 
 function legacyId(record: LegacyRecord): string | null {
@@ -194,7 +249,11 @@ function normalizeCoordinate(
     return { row: row.toUpperCase(), column: column as number };
   }
 
-  const coordinate = getString(record, ['coordinate', 'gridCoordinate']);
+  const arrayCoordinate = Array.isArray(record.grid_coordinate)
+    ? record.grid_coordinate.map((value) => scalar(value)).find(Boolean)
+    : null;
+  const coordinate =
+    getString(record, ['coordinate', 'gridCoordinate', 'grid_coordinate']) ?? arrayCoordinate;
   const match = coordinate?.match(/^([A-Za-z]+)[- ]?(\d+)$/);
   if (!match) {
     return null;
@@ -318,8 +377,15 @@ function extraFields(
   id: string,
 ): Record<string, unknown> | null {
   switch (spec.kind) {
-    case 'ROOM_SUBSTRUCTURE':
-      return { variant: spec.variant };
+    case 'SITE':
+    case 'STRUCTURE': {
+      const polygon = normalizePolygon(record);
+      return polygon ? { polygon } : {};
+    }
+    case 'ROOM_SUBSTRUCTURE': {
+      const polygon = normalizePolygon(record);
+      return { variant: spec.variant, ...(polygon ? { polygon } : {}) };
+    }
     case 'CONTAINER_CLUSTER_BAY':
       return { variant: spec.variant };
     case 'POSITION': {
@@ -328,8 +394,24 @@ function extraFields(
     }
     case 'CONTAINER_RACK': {
       const variant = normalizeContainerVariant(spec, record);
-      const total = getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']);
-      const totalU = total && Number.isInteger(total) && total > 0 ? total : undefined;
+      const explicitTotal = getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']);
+      const mountedEnd = getNestedNumber(record, ['mounting', 'endPosition']);
+      const totalCandidate = explicitTotal ?? mountedEnd;
+      const totalU =
+        totalCandidate && Number.isInteger(totalCandidate) && totalCandidate > 0
+          ? totalCandidate
+          : undefined;
+      const width = getNumber(record, ['widthMm', 'width', 'w']);
+      const depth = getNumber(record, ['depthMm', 'depth', 'h']);
+      const height = getNumber(record, ['heightMm', 'height']);
+      const dimensionsMm =
+        width && width > 0 && depth && depth > 0
+          ? {
+              width,
+              depth,
+              ...(height && height > 0 ? { height } : {}),
+            }
+          : undefined;
 
       if (variant === 'RACK' && !totalU) {
         return null;
@@ -338,6 +420,7 @@ function extraFields(
       return {
         variant,
         ...(totalU ? { totalU } : {}),
+        ...(dimensionsMm ? { dimensionsMm } : {}),
         cas: normalizeCas(record, totalU, warnings, spec.collection, id),
       };
     }
@@ -350,8 +433,12 @@ function extraFields(
             'Embedded Equipment was not migrated under Device. Promote it explicitly as Container/Rack sibling input.',
         });
       }
+      const bdfb =
+        record.bdfb && typeof record.bdfb === 'object' && !Array.isArray(record.bdfb)
+          ? record.bdfb
+          : undefined;
       return {
-        pinned: Boolean(record.pinned),
+        pinned: Boolean(record.pinned ?? record.isPinned),
         ...(getString(record, ['serialNumber', 'serial', 'sn'])
           ? { serialNumber: getString(record, ['serialNumber', 'serial', 'sn']) }
           : {}),
@@ -359,6 +446,7 @@ function extraFields(
         ...(getString(record, ['deviceType', 'type'])
           ? { deviceType: getString(record, ['deviceType', 'type']) }
           : {}),
+        ...(bdfb ? { bdfb } : {}),
       };
     }
     case 'EQUIPMENT':

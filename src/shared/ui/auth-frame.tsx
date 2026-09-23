@@ -29,9 +29,7 @@ export function AuthFrame({
         <div className="auth-stage-copy">
           <p className="eyebrow">APP MANAGER / CONTROL CENTER</p>
           <h2>Physical infrastructure. One trusted operational view.</h2>
-          <p>
-            Topology, rack capacity, power and telemetry share the same certified MK1 domain.
-          </p>
+          <p>Topology, rack capacity, power and telemetry share the same certified MK1 domain.</p>
         </div>
 
         <div className="auth-proof-grid" aria-label="Platform capabilities">

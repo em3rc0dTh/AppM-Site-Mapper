@@ -1779,7 +1779,6 @@ p {
   margin: 0;
 }
 
-
 /* Reusable identity shell. Login and credential rotation share the same control-center language. */
 .auth-shell {
   min-height: 100dvh;

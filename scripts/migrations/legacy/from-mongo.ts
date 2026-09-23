@@ -564,6 +564,15 @@ async function main() {
     staging = await stagePlan(plan);
   }
 
+  const rejectionReasons = Object.entries(
+    plan.rejections.reduce<Record<string, number>>((summary, rejection) => {
+      summary[rejection.reason] = (summary[rejection.reason] ?? 0) + 1;
+      return summary;
+    }, {}),
+  )
+    .map(([reason, count]) => ({ reason, count }))
+    .sort((left, right) => right.count - left.count);
+
   process.stdout.write(
     JSON.stringify(
       {
@@ -574,6 +583,7 @@ async function main() {
         counts: plan.counts,
         warnings: plan.warnings.length,
         rejections: plan.rejections.length,
+        rejectionReasons,
         ...(staging ? { staging } : {}),
       },
       null,

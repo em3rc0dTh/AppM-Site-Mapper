@@ -1,36 +1,86 @@
 # MK1 Security Baseline
 
-Status: active from first implementation commit.
+**Status:** Implemented software baseline; environment-specific production validation still required.
 
 ## Trust model
 
-- Browser-controlled state is untrusted.
-- Authentication and authorization are server authoritative.
-- Every external input is validated.
-- Secrets come from runtime configuration and never from committed fallbacks.
-- Logging must not emit credentials or secret material.
-- Public-repository status is treated as an additional exposure constraint.
+- browser-controlled state is untrusted;
+- authentication and authorization are server authoritative;
+- secrets are runtime-only;
+- external inputs are validated before domain use;
+- password hashes and secret material are never exposed through safe DTOs;
+- public-repository status is treated as an additional exposure constraint.
+
+## Authentication and session controls
+
+Implemented:
+
+- scrypt password hashing;
+- no plaintext-password compatibility;
+- opaque session token;
+- only token hash persisted;
+- HttpOnly cookie;
+- Secure cookie in production;
+- SameSite=Lax;
+- eight-hour session lifetime;
+- logout revocation;
+- session revocation after password/role/lifecycle changes;
+- forced password change for temporary credentials;
+- active-user lifecycle check during session resolution;
+- login rate limiting;
+- one-time Superadmin bootstrap guarded by runtime secret and timing-safe comparison.
+
+## RBAC
+
+Roles:
+
+- STANDARD;
+- ADMIN;
+- SUPERADMIN.
+
+Permissions are server evaluated. See `docs/security/rbac-matrix.md`.
+
+## Telemetry
+
+Implemented:
+
+- MQTT credentials remain server-side runtime configuration;
+- authenticated `telemetry:read` SSE;
+- topic-prefix allowlist;
+- payload-size and JSON validation;
+- unique Device/Equipment identity resolution;
+- bounded browser subscriber count;
+- reconnect behavior;
+- no committed broker fallback credential.
+
+Previously committed legacy MQTT credentials remain considered compromised and must be rotated before production use.
+
+## Browser headers
+
+Configured globally:
+
+- `X-Content-Type-Options: nosniff`;
+- `X-Frame-Options: DENY`;
+- `Referrer-Policy: strict-origin-when-cross-origin`;
+- restrictive `Permissions-Policy`;
+- Next.js powered-by header disabled.
+
+A full Content-Security-Policy is not yet configured and is recorded as a release limitation requiring environment-specific design/validation.
 
 ## Repository controls
 
-Ignored by default:
+The repository excludes environment files, private key/certificate patterns, dumps/exports and runtime artifacts where configured.
 
-- environment files except .env.example;
-- private keys and certificates;
-- database dumps/exports;
-- test/runtime artifacts.
+Never commit production dumps, migration ID maps, customer topology or runtime secrets.
 
-## Known legacy risks that must not migrate
+## Certification boundary
 
-- public telemetry streaming;
-- hardcoded MQTT credentials;
-- browser-controlled role trust;
-- plaintext password compatibility;
-- generic dynamic CRUD with weak validation;
-- direct data-store access from broad application actions.
+CI certifies application security behavior covered by unit/integration/system tests and runs a production dependency audit.
 
-These are historical findings, not implementation templates.
+It does not replace:
 
-## Open security work
-
-Authentication/session design, RBAC, rate limiting, CSP and telemetry authorization are intentionally deferred to their formal gates/ADRs. Their absence means MK1 is not security-certified yet.
+- infrastructure/network security review;
+- production secret rotation evidence;
+- penetration testing;
+- production CSP validation;
+- production load/DoS validation.

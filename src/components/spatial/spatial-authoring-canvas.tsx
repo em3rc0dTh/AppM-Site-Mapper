@@ -29,6 +29,13 @@ export interface SpatialRectOverlay {
   readonly href?: string;
 }
 
+export interface SpatialNavigationItem {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: string;
+  readonly href: string;
+}
+
 interface ViewState {
   readonly x: number;
   readonly y: number;
@@ -120,6 +127,7 @@ export function SpatialAuthoringCanvas({
   gridSizeMm,
   contextPolygons = [],
   rectangles = [],
+  navigationItems = [],
   title = 'Spatial boundary',
   subtitle = 'Polygon geometry · millimetres',
 }: Readonly<{
@@ -131,6 +139,7 @@ export function SpatialAuthoringCanvas({
   gridSizeMm?: number;
   contextPolygons?: readonly SpatialContextPolygon[];
   rectangles?: readonly SpatialRectOverlay[];
+  navigationItems?: readonly SpatialNavigationItem[];
   title?: string;
   subtitle?: string;
 }>) {
@@ -163,6 +172,8 @@ export function SpatialAuthoringCanvas({
     x: base.x + (base.width - base.width / zoom) / 2 + pan.x,
     y: base.y + (base.height - base.height / zoom) / 2 + pan.y,
   };
+
+  const contextLabelSize = Math.max(72, view.width / 48);
 
   const grid = useMemo(() => {
     if (!gridSizeMm || displayed.length < 3) {
@@ -592,16 +603,62 @@ export function SpatialAuthoringCanvas({
 
           {contextPolygons.map((context) => {
             const center = polygonCentroid(context.polygon);
-            return (
-              <g key={context.id} className="spatial-context-shape">
+            const contents = (
+              <>
                 <polygon
                   points={context.polygon.map((point) => `${point.x},${point.y}`).join(' ')}
                 />
                 {center && (
-                  <text x={center.x} y={center.y} textAnchor="middle" dominantBaseline="middle">
-                    {context.name}
-                  </text>
+                  <>
+                    <text
+                      className="spatial-context-kind"
+                      x={center.x}
+                      y={center.y - contextLabelSize * 0.42}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={contextLabelSize * 0.48}
+                    >
+                      {context.kind.replaceAll('_', ' ')}
+                    </text>
+                    <text
+                      className="spatial-context-name"
+                      x={center.x}
+                      y={center.y + contextLabelSize * 0.18}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize={contextLabelSize}
+                    >
+                      {context.name}
+                    </text>
+                    {context.href && !editing && (
+                      <text
+                        className="spatial-context-enter"
+                        x={center.x}
+                        y={center.y + contextLabelSize * 0.92}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize={contextLabelSize * 0.46}
+                      >
+                        OPEN →
+                      </text>
+                    )}
+                  </>
                 )}
+              </>
+            );
+
+            return context.href && !editing ? (
+              <a
+                key={context.id}
+                href={context.href}
+                className="spatial-context-shape is-navigable"
+                aria-label={`Open ${context.name}`}
+              >
+                {contents}
+              </a>
+            ) : (
+              <g key={context.id} className="spatial-context-shape">
+                {contents}
               </g>
             );
           })}
@@ -747,6 +804,19 @@ export function SpatialAuthoringCanvas({
             ))}
         </svg>
 
+        {!editing && navigationItems.length > 0 && (
+          <nav className="spatial-navigation-rail" aria-label="Contained navigation">
+            <span>Contained next</span>
+            {navigationItems.map((item) => (
+              <a key={item.id} href={item.href}>
+                <small>{item.kind.replaceAll('_', ' ')}</small>
+                <strong>{item.name}</strong>
+                <b>→</b>
+              </a>
+            ))}
+          </nav>
+        )}
+
         {editing && (
           <div className="spatial-edit-state" role="status">
             <div>
@@ -774,8 +844,10 @@ export function SpatialAuthoringCanvas({
       </div>
 
       <footer className="spatial-authoring-legend">
-        <StatusBadge tone="accent">{displayed.length} VERTICES</StatusBadge>
-        <StatusBadge>{areaSqm.toFixed(2)} m²</StatusBadge>
+        {(displayed.length > 0 || editing) && (
+          <StatusBadge tone="accent">{displayed.length} VERTICES</StatusBadge>
+        )}
+        {displayed.length >= 3 && <StatusBadge>{areaSqm.toFixed(2)} m²</StatusBadge>}
         {gridSizeMm && <StatusBadge>{gridSizeMm} mm GRID</StatusBadge>}
         <span>
           {editing

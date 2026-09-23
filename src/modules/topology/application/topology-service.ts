@@ -22,6 +22,7 @@ export type TopologyError =
   | 'INVALID_VARIANT'
   | 'INVALID_COORDINATE'
   | 'INVALID_RACK_CAPACITY'
+  | 'INVALID_DIMENSIONS'
   | 'MOVE_NOT_ALLOWED'
   | 'HAS_ACTIVE_CHILDREN'
   | 'CAS_RELEASE_REQUIRED'
@@ -155,6 +156,15 @@ export class TopologyService {
           (!Number.isInteger(input.totalU) || (input.totalU ?? 0) < 1)
         ) {
           return failure('INVALID_RACK_CAPACITY');
+        }
+        if (
+          input.dimensionsMm &&
+          (!Number.isFinite(input.dimensionsMm.width) ||
+            !Number.isFinite(input.dimensionsMm.depth) ||
+            input.dimensionsMm.width <= 0 ||
+            input.dimensionsMm.depth <= 0)
+        ) {
+          return failure('INVALID_DIMENSIONS');
         }
         node = {
           ...base,

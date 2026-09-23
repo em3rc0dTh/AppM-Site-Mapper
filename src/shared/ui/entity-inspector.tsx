@@ -109,10 +109,10 @@ export function EntityInspector({
           {entity.sections.map((item, index) => (
             <button
               type="button"
-              id={`\${titleId}-tab-\${index}`}
+              id={`${titleId}-tab-${index}`}
               role="tab"
               aria-selected={index === activeTab}
-              aria-controls={`\${titleId}-panel`}
+              aria-controls={`${titleId}-panel`}
               tabIndex={index === activeTab ? 0 : -1}
               key={item.title}
               onClick={() => setTab(index)}
@@ -131,7 +131,7 @@ export function EntityInspector({
                 if (next !== null) {
                   event.preventDefault();
                   setTab(next);
-                  document.getElementById(`\${titleId}-tab-\${next}`)?.focus();
+                  document.getElementById(`${titleId}-tab-${next}`)?.focus();
                 }
               }}
             >
@@ -144,10 +144,10 @@ export function EntityInspector({
       <div className="inspector-body">
         {section ? (
           <section
-            id={`\${titleId}-panel`}
+            id={`${titleId}-panel`}
             role={entity.sections.length > 1 ? 'tabpanel' : undefined}
             aria-labelledby={
-              entity.sections.length > 1 ? `\${titleId}-tab-\${activeTab}` : undefined
+              entity.sections.length > 1 ? `${titleId}-tab-${activeTab}` : undefined
             }
             tabIndex={0}
             className="inspector-section"
@@ -155,7 +155,7 @@ export function EntityInspector({
             <h2>{section.title}</h2>
             <dl className="inspector-facts">
               {section.fields.map((field) => (
-                <div key={`\${section.title}-\${field.label}`}>
+                <div key={`${section.title}-${field.label}`}>
                   <dt>{field.label}</dt>
                   <dd>{field.value}</dd>
                 </div>
@@ -168,7 +168,7 @@ export function EntityInspector({
           {entity.actions?.map((action) => (
             <Link
               className="action-link"
-              key={`\${action.href}-\${action.label}`}
+              key={`${action.href}-${action.label}`}
               href={action.href}
               onClick={onClose}
             >
@@ -195,7 +195,7 @@ export function InspectButton({
       <button
         className="button-quiet"
         type="button"
-        aria-label={`\${label} \${entity.name}`}
+        aria-label={`${label} ${entity.name}`}
         onClick={() => setOpen(true)}
       >
         {label}

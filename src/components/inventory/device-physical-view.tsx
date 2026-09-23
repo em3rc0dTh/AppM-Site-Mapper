@@ -158,9 +158,7 @@ export function DevicePhysicalView({
             <small>DISTRIBUTION PANEL</small>
             <h2>{panel.label}</h2>
           </div>
-          {showEndpoints ? (
-            <span className="studio-panel-context">{frame.label}</span>
-          ) : null}
+          {showEndpoints ? <span className="studio-panel-context">{frame.label}</span> : null}
         </header>
         <div className="studio-bus">
           <span>Distribution endpoints</span>
@@ -168,57 +166,59 @@ export function DevicePhysicalView({
         </div>
         {showEndpoints ? (
           <div className="studio-endpoint-matrix">
-          {endpoints.map((endpoint, index) => (
-            <div className="studio-endpoint-position" key={endpoint.id}>
-              <button
-                className={`studio-endpoint ${endpoint.variant.toLowerCase()} ${selection === endpoint.id || activeEndpoint?.id === endpoint.id ? 'is-selected' : ''}`}
-                onClick={() =>
-                  viewMode === 'panel'
-                    ? openEndpointPopup(shelf, panel, endpoint)
-                    : setSelection(endpoint.id)
-                }
-                onDoubleClick={() => openEndpointPopup(shelf, panel, endpoint)}
-                aria-label={
-                  viewMode === 'panel' ? `Open ${endpoint.label}` : `Select ${endpoint.label}`
-                }
-              >
-                <span className="studio-terminal-number">{String(index + 1).padStart(2, '0')}</span>
-                <span className="studio-switch" aria-hidden="true" />
-                <strong>{endpoint.label}</strong>
-                <small>
-                  {endpoint.capacity !== undefined
-                    ? `Capacity ${endpoint.capacity}`
-                    : endpoint.variant}
-                </small>
-                <span className="studio-assignment">
-                  {powerReadable
-                    ? endpointLinks(endpoint).length
-                      ? 'CONNECTED'
-                      : 'UNASSIGNED'
-                    : 'CONNECTIONS RESTRICTED'}
-                </span>
-              </button>
-              {viewMode !== 'panel' && (
-                <>
-                  <button
-                    type="button"
-                    className="studio-open-endpoint"
-                    onClick={() => openEndpointPopup(shelf, panel, endpoint)}
-                  >
-                    Open endpoint popup ↗
-                  </button>
-                  {selection === endpoint.id && (
+            {endpoints.map((endpoint, index) => (
+              <div className="studio-endpoint-position" key={endpoint.id}>
+                <button
+                  className={`studio-endpoint ${endpoint.variant.toLowerCase()} ${selection === endpoint.id || activeEndpoint?.id === endpoint.id ? 'is-selected' : ''}`}
+                  onClick={() =>
+                    viewMode === 'panel'
+                      ? openEndpointPopup(shelf, panel, endpoint)
+                      : setSelection(endpoint.id)
+                  }
+                  onDoubleClick={() => openEndpointPopup(shelf, panel, endpoint)}
+                  aria-label={
+                    viewMode === 'panel' ? `Open ${endpoint.label}` : `Select ${endpoint.label}`
+                  }
+                >
+                  <span className="studio-terminal-number">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span className="studio-switch" aria-hidden="true" />
+                  <strong>{endpoint.label}</strong>
+                  <small>
+                    {endpoint.capacity !== undefined
+                      ? `Capacity ${endpoint.capacity}`
+                      : endpoint.variant}
+                  </small>
+                  <span className="studio-assignment">
+                    {powerReadable
+                      ? endpointLinks(endpoint).length
+                        ? 'CONNECTED'
+                        : 'UNASSIGNED'
+                      : 'CONNECTIONS RESTRICTED'}
+                  </span>
+                </button>
+                {viewMode !== 'panel' && (
+                  <>
                     <button
-                      className="studio-inspect-endpoint"
-                      onClick={() => inspectEndpoint(shelf, frame, panel, endpoint)}
+                      type="button"
+                      className="studio-open-endpoint"
+                      onClick={() => openEndpointPopup(shelf, panel, endpoint)}
                     >
-                      Inspect details
+                      Open endpoint popup ↗
                     </button>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
+                    {selection === endpoint.id && (
+                      <button
+                        className="studio-inspect-endpoint"
+                        onClick={() => inspectEndpoint(shelf, frame, panel, endpoint)}
+                      >
+                        Inspect details
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            ))}
           </div>
         ) : (
           <div className="studio-panel-summary">
@@ -307,7 +307,10 @@ export function DevicePhysicalView({
             <small>POWER LINKS</small>
             <strong>{powerReadable ? links.length : 'Restricted'}</strong>
           </div>
-          <button type="button" onClick={() => openPanelPopup(activeBoard.shelf, activeBoard.panel)}>
+          <button
+            type="button"
+            onClick={() => openPanelPopup(activeBoard.shelf, activeBoard.panel)}
+          >
             Open parent panel →
           </button>
         </div>
@@ -421,7 +424,8 @@ export function DevicePhysicalView({
                 </span>
               </div>
             )}
-            {viewMode === 'adaptive' && <section className="studio-connections">
+            {viewMode === 'adaptive' && (
+              <section className="studio-connections">
               <header>
                 <div>
                   <small>ELECTRICAL TOPOLOGY</small>
@@ -527,16 +531,19 @@ export function DevicePhysicalView({
                   </div>
                 ))
               )}
-            </section>}
-            {(viewMode === 'adaptive' || viewMode === 'device') && <div className="studio-device-facts">
+              </section>
+            )}
+            {(viewMode === 'adaptive' || viewMode === 'device') && (
+              <div className="studio-device-facts">
               <span>
                 {rack?.name ?? 'Rack unavailable'} · {uRange}
               </span>
               <span>Serial: {device.serialNumber ?? 'Not specified'}</span>
               <button onClick={() => setInspection(topologyInspector(device, href))}>
                 Inspect identity
-              </button>
-            </div>}
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

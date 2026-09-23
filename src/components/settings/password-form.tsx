@@ -1,8 +1,10 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
 export function PasswordForm() {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -34,7 +36,8 @@ export function PasswordForm() {
       return;
     }
 
-    window.location.href = '/login';
+    router.replace('/login');
+    router.refresh();
   }
 
   return (

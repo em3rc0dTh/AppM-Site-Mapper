@@ -2,9 +2,7 @@ import Link from 'next/link';
 
 import type { WorkspaceBdfbSummary } from '@/modules/workspace/application/workspace-service';
 
-export function BdfbSummary({
-  items,
-}: Readonly<{ items: readonly WorkspaceBdfbSummary[] }>) {
+export function BdfbSummary({ items }: Readonly<{ items: readonly WorkspaceBdfbSummary[] }>) {
   return (
     <section className="panel">
       <div className="workspace-section-title">

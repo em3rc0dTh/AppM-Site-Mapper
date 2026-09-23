@@ -23,8 +23,8 @@ A Frame always exists in the canonical data model. Customer equipment may, howev
 
 ```ts
 frame.presentation = {
-  physicalFrameVisible: false
-}
+  physicalFrameVisible: false,
+};
 ```
 
 The UI then renders the Panels directly under the Shelf while preserving the canonical hierarchy:

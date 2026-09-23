@@ -103,7 +103,7 @@ export class NativeMqttSource {
         return;
       }
 
-      this.receiveBuffer = parsed.remainder;
+      this.receiveBuffer = new Uint8Array(parsed.remainder);
 
       for (const packet of parsed.packets) {
         if (packet.type === 2) {

@@ -163,3 +163,28 @@ relationships, Position coordinates, Rack/CAS shape and CAS occupant references.
 `issues` array blocks promotion.
 
 The command is read-only and only inspects `topology_nodes_migration_staging`.
+
+
+## Promote verified staging to live topology
+
+After staging verification returns `valid: true` with an empty `issues` array, promote the exact
+fingerprint with an explicit confirmation:
+
+```bash
+npm run migration:promote-staging -- \
+  --fingerprint <sourceFingerprint> \
+  --expected <staged-count> \
+  --confirm-fingerprint <sourceFingerprint>
+```
+
+The promotion command:
+
+- refuses to run when the MK1 target database name matches the configured legacy source database;
+- revalidates canonical ids and parent-kind relationships;
+- builds a separate candidate collection and creates the production topology indexes there;
+- preserves the staging collection;
+- renames any existing live `topology_nodes` collection to a timestamped backup before swap;
+- restores that backup if the candidate rename fails;
+- verifies the final live document count.
+
+Promotion only changes the MK1 target database. It does not delete or modify the legacy source database.

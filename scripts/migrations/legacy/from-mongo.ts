@@ -842,10 +842,18 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
   const loadedRaw = Object.fromEntries(
     loadedEntries.map(([logicalName, result]) => [logicalName, result.records]),
   ) as Record<keyof typeof sourceAliases, readonly LegacyRecord[]>;
+  const legacyDocumentCount = Object.values(loadedRaw).reduce(
+    (total, records) => total + records.length,
+    0,
+  );
   const withPositions = deriveDirectContainerPositions(loadedRaw);
   const sharedLevelExpansion = expandSharedSiteLevelFallbacks(withPositions);
   const levelNormalization = normalizeSiteParentedLevels(sharedLevelExpansion.loaded);
   const loaded = levelNormalization.loaded;
+  const normalizedRecordCount = Object.values(loaded).reduce(
+    (total, records) => total + records.length,
+    0,
+  );
   const resolutions = loadedEntries.map(([, result]) => result.resolution);
 
   process.stdout.write(
@@ -853,6 +861,8 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
       {
         collectionFamily: family,
         collectionResolution: resolutions,
+        legacyDocuments: legacyDocumentCount,
+        normalizedRecords: normalizedRecordCount,
         derivedPositions: loaded.positions.length - loadedRaw.positions.length,
         expandedSharedSiteLevels: sharedLevelExpansion.expanded,
         normalizedSiteLevelParents: levelNormalization.normalized,

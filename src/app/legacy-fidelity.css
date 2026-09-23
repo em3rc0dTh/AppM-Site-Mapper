@@ -505,8 +505,7 @@
   overflow: hidden;
   background:
     linear-gradient(rgba(56, 56, 58, 0.22) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 56, 58, 0.22) 1px, transparent 1px),
-    #05070b;
+    linear-gradient(90deg, rgba(56, 56, 58, 0.22) 1px, transparent 1px), #05070b;
   background-size: 40px 40px;
 }
 
@@ -636,7 +635,9 @@
   place-items: center;
   border: 1px solid #515a69;
   color: var(--legacy-primary);
-  font: 0.72rem ui-monospace, monospace;
+  font:
+    0.72rem ui-monospace,
+    monospace;
 }
 
 .legacy-level-status {
@@ -691,7 +692,9 @@
   place-items: center;
   border: 1px solid #778398;
   color: var(--legacy-primary);
-  font: 0.7rem ui-monospace, monospace;
+  font:
+    0.7rem ui-monospace,
+    monospace;
 }
 
 .legacy-bay-canvas {
@@ -701,7 +704,9 @@
 .legacy-bay-axis {
   position: absolute;
   color: #aab2c0;
-  font: 0.62rem ui-monospace, monospace;
+  font:
+    0.62rem ui-monospace,
+    monospace;
 }
 
 .legacy-bay-axis--top {
@@ -796,8 +801,7 @@
   display: grid;
   place-items: center;
   padding: 20px;
-  background:
-    repeating-linear-gradient(to bottom, #11161d 0 11px, #252b34 12px, #11161d 13px);
+  background: repeating-linear-gradient(to bottom, #11161d 0 11px, #252b34 12px, #11161d 13px);
 }
 
 .legacy-cabinet-body > span:last-child {
@@ -889,8 +893,7 @@
   width: 100%;
   background:
     linear-gradient(rgba(56, 56, 58, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(56, 56, 58, 0.18) 1px, transparent 1px),
-    #020407;
+    linear-gradient(90deg, rgba(56, 56, 58, 0.18) 1px, transparent 1px), #020407;
   background-size: 40px 40px;
 }
 
@@ -1107,7 +1110,9 @@ button.legacy-rack-block:hover {
   padding: 4px 7px 4px 0;
   border-right: 1px solid #39414d;
   color: #8d98aa;
-  font: 0.56rem ui-monospace, monospace;
+  font:
+    0.56rem ui-monospace,
+    monospace;
 }
 
 .legacy-rack-block-copy {
@@ -1131,8 +1136,7 @@ button.legacy-rack-block:hover {
 
 .legacy-rack-block--available {
   background:
-    repeating-linear-gradient(to bottom, transparent 0 13px, rgba(56, 56, 58, 0.35) 14px),
-    #11161d;
+    repeating-linear-gradient(to bottom, transparent 0 13px, rgba(56, 56, 58, 0.35) 14px), #11161d;
 }
 
 .legacy-rack-block--available .legacy-rack-block-copy {
@@ -1140,8 +1144,7 @@ button.legacy-rack-block:hover {
 }
 
 .legacy-rack-block--clearance {
-  background:
-    repeating-linear-gradient(135deg, #141922, #141922 6px, #202630 6px, #202630 8px);
+  background: repeating-linear-gradient(135deg, #141922, #141922 6px, #202630 6px, #202630 8px);
 }
 
 .legacy-rack-block--reserved {
@@ -1151,9 +1154,7 @@ button.legacy-rack-block:hover {
 
 .legacy-rack-block--physical {
   border-left: 4px solid var(--legacy-blue);
-  background:
-    linear-gradient(90deg, rgba(19, 156, 199, 0.17), transparent 75%),
-    #12202a;
+  background: linear-gradient(90deg, rgba(19, 156, 199, 0.17), transparent 75%), #12202a;
 }
 
 .legacy-rack-block--physical .legacy-rack-block-copy strong {

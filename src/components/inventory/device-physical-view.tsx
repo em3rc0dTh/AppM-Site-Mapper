@@ -158,9 +158,9 @@ export function DevicePhysicalView({
             <small>DISTRIBUTION PANEL</small>
             <h2>{panel.label}</h2>
           </div>
-          <button type="button" onClick={() => openPanelPopup(shelf, panel)}>
-            Open panel popup ↗
-          </button>
+          {showEndpoints ? (
+            <span className="studio-panel-context">{frame.label}</span>
+          ) : null}
         </header>
         <div className="studio-bus">
           <span>Distribution endpoints</span>
@@ -172,9 +172,15 @@ export function DevicePhysicalView({
             <div className="studio-endpoint-position" key={endpoint.id}>
               <button
                 className={`studio-endpoint ${endpoint.variant.toLowerCase()} ${selection === endpoint.id || activeEndpoint?.id === endpoint.id ? 'is-selected' : ''}`}
-                onClick={() => setSelection(endpoint.id)}
+                onClick={() =>
+                  viewMode === 'panel'
+                    ? openEndpointPopup(shelf, panel, endpoint)
+                    : setSelection(endpoint.id)
+                }
                 onDoubleClick={() => openEndpointPopup(shelf, panel, endpoint)}
-                aria-label={`Select ${endpoint.label}`}
+                aria-label={
+                  viewMode === 'panel' ? `Open ${endpoint.label}` : `Select ${endpoint.label}`
+                }
               >
                 <span className="studio-terminal-number">{String(index + 1).padStart(2, '0')}</span>
                 <span className="studio-switch" aria-hidden="true" />
@@ -192,20 +198,24 @@ export function DevicePhysicalView({
                     : 'CONNECTIONS RESTRICTED'}
                 </span>
               </button>
-              <button
-                type="button"
-                className="studio-open-endpoint"
-                onClick={() => openEndpointPopup(shelf, panel, endpoint)}
-              >
-                Open endpoint popup ↗
-              </button>
-              {selection === endpoint.id && (
-                <button
-                  className="studio-inspect-endpoint"
-                  onClick={() => inspectEndpoint(shelf, frame, panel, endpoint)}
-                >
-                  Inspect details
-                </button>
+              {viewMode !== 'panel' && (
+                <>
+                  <button
+                    type="button"
+                    className="studio-open-endpoint"
+                    onClick={() => openEndpointPopup(shelf, panel, endpoint)}
+                  >
+                    Open endpoint popup ↗
+                  </button>
+                  {selection === endpoint.id && (
+                    <button
+                      className="studio-inspect-endpoint"
+                      onClick={() => inspectEndpoint(shelf, frame, panel, endpoint)}
+                    >
+                      Inspect details
+                    </button>
+                  )}
+                </>
               )}
             </div>
           ))}

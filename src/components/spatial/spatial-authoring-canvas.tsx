@@ -190,6 +190,7 @@ export function SpatialAuthoringCanvas({
   const [past, setPast] = useState<PointMm[][]>([]);
   const [future, setFuture] = useState<PointMm[][]>([]);
   const [measure, setMeasure] = useState<PointMm[]>([]);
+  const [cursor, setCursor] = useState<PointMm | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -333,6 +334,33 @@ export function SpatialAuthoringCanvas({
         event.preventDefault();
         setTool('select');
         setSelectedVertex(0);
+        return;
+      }
+
+      if (
+        selectedVertex !== null &&
+        ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)
+      ) {
+        event.preventDefault();
+        const selectedPoint = draft[selectedVertex];
+        if (!selectedPoint) return;
+
+        const increment = snap && gridSizeMm ? gridSizeMm : 100;
+        const delta =
+          event.key === 'ArrowLeft'
+            ? { x: -increment, y: 0 }
+            : event.key === 'ArrowRight'
+              ? { x: increment, y: 0 }
+              : event.key === 'ArrowUp'
+                ? { x: 0, y: -increment }
+                : { x: 0, y: increment };
+
+        checkpoint();
+        setDraft((current) =>
+          current.map((point, index) =>
+            index === selectedVertex ? { x: point.x + delta.x, y: point.y + delta.y } : point,
+          ),
+        );
       }
     };
 
@@ -569,6 +597,9 @@ export function SpatialAuthoringCanvas({
   }
 
   function pointerMove(event: PointerEvent<SVGSVGElement>) {
+    const point = toCanvasPoint(event.clientX, event.clientY);
+    if (point) setCursor(point);
+
     const session = pointer.current;
 
     if (!session) {
@@ -584,8 +615,6 @@ export function SpatialAuthoringCanvas({
       pointer.current = { type: 'pan', x: event.clientX, y: event.clientY };
       return;
     }
-
-    const point = toCanvasPoint(event.clientX, event.clientY);
 
     if (!point) {
       return;
@@ -736,6 +765,11 @@ export function SpatialAuthoringCanvas({
           <span>{editing ? 'EDIT MODE' : 'READ MODE'}</span>
           <b>{entityKind}</b>
           <strong>{entityName}</strong>
+          {cursor && (
+            <em>
+              X {cursor.x} · Y {cursor.y} mm
+            </em>
+          )}
         </div>
 
         <svg
@@ -748,6 +782,7 @@ export function SpatialAuthoringCanvas({
           onPointerCancel={() => {
             pointer.current = null;
           }}
+          onPointerLeave={() => setCursor(null)}
           role="group"
           aria-label={`${entityName} spatial boundary`}
         >
@@ -1240,6 +1275,11 @@ export function SpatialAuthoringCanvas({
           <StatusBadge>
             V{selectedVertex + 1} · X {draft[selectedVertex].x} · Y {draft[selectedVertex].y}
           </StatusBadge>
+        )}
+        {editing && selectedVertex !== null && (
+          <span className="spatial-keyboard-hint">
+            Arrow keys nudge {snap && gridSizeMm ? gridSizeMm + ' mm' : '100 mm'}
+          </span>
         )}
         {gridSizeMm && <StatusBadge>{gridSizeMm} mm GRID</StatusBadge>}
         <span>

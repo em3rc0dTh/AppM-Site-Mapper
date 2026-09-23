@@ -983,7 +983,9 @@ export function SpatialAuthoringCanvas({
           <StatusBadge tone="accent">{displayed.length} VERTICES</StatusBadge>
         )}
         {displayed.length >= 3 && <StatusBadge>{areaSqm.toFixed(2)} m²</StatusBadge>}
-        {displayed.length >= 3 && <StatusBadge>{formatDistance(perimeterMm)} PERIMETER</StatusBadge>}
+        {displayed.length >= 3 && (
+          <StatusBadge>{formatDistance(perimeterMm)} PERIMETER</StatusBadge>
+        )}
         {selectedVertex !== null && draft[selectedVertex] && editing && (
           <StatusBadge>
             V{selectedVertex + 1} · X {draft[selectedVertex].x} · Y {draft[selectedVertex].y}

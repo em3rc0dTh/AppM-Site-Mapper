@@ -141,9 +141,7 @@ export function reserveCas(
 
   const available = ranges.find(
     (range) =>
-      range.state === 'AVAILABLE' &&
-      range.startU <= allocationStart &&
-      range.endU >= allocationEnd,
+      range.state === 'AVAILABLE' && range.startU <= allocationStart && range.endU >= allocationEnd,
   );
 
   if (!available) {

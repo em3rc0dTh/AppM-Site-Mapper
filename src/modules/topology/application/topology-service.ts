@@ -160,10 +160,7 @@ export class TopologyService {
           parentId: input.parentId as string,
           variant: input.containerVariant,
           ...(input.totalU === undefined ? {} : { totalU: input.totalU }),
-          cas:
-            input.containerVariant === 'RACK' && input.totalU
-              ? initializeCas(input.totalU)
-              : [],
+          cas: input.containerVariant === 'RACK' && input.totalU ? initializeCas(input.totalU) : [],
         };
         break;
       case 'DEVICE':

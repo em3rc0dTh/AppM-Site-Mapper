@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { equipCas, freeCas, initializeCas, reserveCas, validateCas } from '@/modules/rack/domain/cas';
+import {
+  equipCas,
+  freeCas,
+  initializeCas,
+  reserveCas,
+  validateCas,
+} from '@/modules/rack/domain/cas';
 
 describe('CAS engine', () => {
   it('reserves, equips and frees a rack interval while preserving full coverage', () => {
@@ -27,12 +33,7 @@ describe('CAS engine', () => {
     });
     expect(validateCas(reserved.ranges, 42)).toBe(true);
 
-    const equipped = equipCas(
-      reserved.ranges,
-      42,
-      reserved.allocation.id,
-      'device-1',
-    );
+    const equipped = equipCas(reserved.ranges, 42, reserved.allocation.id, 'device-1');
 
     expect(equipped.ok).toBe(true);
 

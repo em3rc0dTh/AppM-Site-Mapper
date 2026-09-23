@@ -12,11 +12,7 @@ import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type CasServiceError =
-  | CasError
-  | 'RACK_NOT_FOUND'
-  | 'NOT_A_RACK'
-  | 'OCCUPANT_NOT_FOUND'
-  | 'OCCUPANT_NOT_IN_RACK';
+  CasError | 'RACK_NOT_FOUND' | 'NOT_A_RACK' | 'OCCUPANT_NOT_FOUND' | 'OCCUPANT_NOT_IN_RACK';
 
 export class CasService {
   constructor(private readonly repository: TopologyRepository) {}
@@ -70,12 +66,7 @@ export class CasService {
       return failure('OCCUPANT_NOT_IN_RACK');
     }
 
-    const result = equipCas(
-      rack.value.cas,
-      rack.value.totalU as number,
-      allocationId,
-      occupant.id,
-    );
+    const result = equipCas(rack.value.cas, rack.value.totalU as number, allocationId, occupant.id);
 
     if (!result.ok) {
       return failure(result.error);
@@ -117,9 +108,7 @@ export class CasService {
     return success(updated);
   }
 
-  private async getRack(
-    rackId: string,
-  ): Promise<Result<ContainerRackNode, CasServiceError>> {
+  private async getRack(rackId: string): Promise<Result<ContainerRackNode, CasServiceError>> {
     const node = await this.repository.getById(rackId);
 
     if (!node) {

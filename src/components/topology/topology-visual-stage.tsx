@@ -52,10 +52,10 @@ function stageLabel(node: TopologyNode): string {
 
 export function TopologyVisualStage({
   node,
-  children,
+  items,
 }: Readonly<{
   node: TopologyNode;
-  children: readonly VisualStageChild[];
+  items: readonly VisualStageChild[];
 }>) {
   return (
     <section className={`topology-visual-stage topology-visual-stage--${node.kind.toLowerCase()}`}>
@@ -64,20 +64,20 @@ export function TopologyVisualStage({
           <span>{stageLabel(node)}</span>
           <small>Operational schematic · visual placement is not a survey drawing</small>
         </div>
-        <StatusBadge>{children.length} CONTAINED</StatusBadge>
+        <StatusBadge>{items.length} CONTAINED</StatusBadge>
       </header>
 
       <div className="topology-visual-canvas">
         <div className="topology-visual-grid" aria-hidden="true" />
         <div className="topology-node-field">
-          {children.length === 0 ? (
+          {items.length === 0 ? (
             <div className="topology-empty-node">
               <Icon name="box" />
               <strong>No contained infrastructure</strong>
               <span>The canonical entity exists, but it has no active children.</span>
             </div>
           ) : (
-            children.map(({ node: child, href }, index) => (
+            items.map(({ node: child, href }, index) => (
               <Link
                 key={child.id}
                 href={href}

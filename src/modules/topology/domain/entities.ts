@@ -45,6 +45,7 @@ export interface BreakerHolder {
   readonly id: string;
   readonly variant: BreakerHolderVariant;
   readonly label: string;
+  readonly position?: number;
   readonly capacity?: number;
 }
 

@@ -18,7 +18,19 @@ export function topologyInspector(node: TopologyNode, href?: string): InspectorE
       label: 'Footprint',
       value: `${node.dimensionsMm.width} × ${node.dimensionsMm.depth} mm`,
     });
-  const actions = href ? [{ label: 'Open entity', href }] : [];
+  const actions = href
+    ? [
+        {
+          label:
+            node.kind === 'DEVICE'
+              ? 'Open device view'
+              : node.kind === 'EQUIPMENT'
+                ? 'Open equipment view'
+                : 'Open entity',
+          href,
+        },
+      ]
+    : [];
   if (node.kind === 'ROOM_SUBSTRUCTURE')
     actions.push({ label: 'Open Blueprint', href: `/blueprint/${node.id}` });
   if (node.kind === 'CONTAINER_RACK' && node.variant === 'RACK')

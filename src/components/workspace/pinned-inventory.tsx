@@ -2,9 +2,7 @@ import Link from 'next/link';
 
 import type { WorkspacePinnedItem } from '@/modules/workspace/application/workspace-service';
 
-export function PinnedInventory({
-  items,
-}: Readonly<{ items: readonly WorkspacePinnedItem[] }>) {
+export function PinnedInventory({ items }: Readonly<{ items: readonly WorkspacePinnedItem[] }>) {
   return (
     <section className="workspace-side-section">
       <div className="workspace-section-title">

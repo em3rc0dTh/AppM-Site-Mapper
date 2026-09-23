@@ -2057,3 +2057,14 @@ p {
     width: 100%;
   }
 }
+
+
+.demo-seed-action {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: -2px 0 18px;
+  color: var(--muted);
+  font-size: 0.68rem;
+}

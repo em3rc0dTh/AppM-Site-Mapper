@@ -221,7 +221,13 @@ export function equipCas(
     return { ok: false, error: 'INVALID_RANGE' };
   }
 
-  return { ok: true, ranges: next, allocation: next.find((range) => range.id === allocationId) };
+  const equipped = next.find((range) => range.id === allocationId);
+
+  if (!equipped) {
+    return { ok: false, error: 'RESERVATION_NOT_FOUND' };
+  }
+
+  return { ok: true, ranges: next, allocation: equipped };
 }
 
 function mergeAvailable(ranges: readonly CasRange[]): readonly CasRange[] {

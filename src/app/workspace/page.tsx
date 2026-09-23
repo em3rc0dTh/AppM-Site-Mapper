@@ -3,6 +3,7 @@ import { MetricTile, SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 import type { WorkspaceTreeNode } from '@/modules/workspace/application/workspace-service';
 import { redirect } from 'next/navigation';
 
+import { DemoSeedButton } from '@/components/dev/demo-seed-button';
 import { BdfbSummary } from '@/components/workspace/bdfb-summary';
 import { NavigationTree } from '@/components/workspace/navigation-tree';
 import { NotificationPanel } from '@/components/workspace/notification-panel';
@@ -11,7 +12,10 @@ import { WorkspaceMode } from '@/components/workspace/workspace-mode';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
-import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import {
+  createTopologyRepository,
+  getPersistenceMode,
+} from '@/modules/topology/infrastructure/topology-repository-factory';
 import { WorkspaceService } from '@/modules/workspace/application/workspace-service';
 
 export const dynamic = 'force-dynamic';
@@ -32,6 +36,10 @@ export default async function WorkspacePage() {
     nodes.flatMap((node) => [node, ...flatten(node.children)]);
   const allNodes = flatten(snapshot.navigation);
   const canEdit = hasPermission(auth.value.role, 'topology:write');
+  const canLoadDevelopmentDemo =
+    process.env.APP_ENV === 'development' &&
+    getPersistenceMode() === 'memory' &&
+    allNodes.length === 0;
 
   return (
     <main className="operations-shell">
@@ -79,6 +87,7 @@ export default async function WorkspacePage() {
       </div>
 
       <WorkspaceMode canEdit={canEdit} />
+      {canLoadDevelopmentDemo ? <DemoSeedButton /> : null}
 
       <div className="operations-grid">
         <aside className="operations-rail">

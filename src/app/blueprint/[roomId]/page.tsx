@@ -70,6 +70,8 @@ export default async function BlueprintPage({
                 roomId={roomId}
                 roomName={result.value.room.name}
                 polygon={result.value.room.polygon ?? []}
+                clusters={result.value.clusters}
+                positions={result.value.positions}
                 racks={result.value.racks}
                 slots={result.value.assignableSlots}
                 canEditBoundary={canWrite}

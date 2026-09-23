@@ -232,10 +232,10 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
   );
 
   const loadedEntries = await Promise.all(
-    Object.entries(sourceAliases).map(async ([logicalName, aliases]) => [
-      logicalName,
-      await loadCollection(db, available, logicalName, aliases),
-    ] as const),
+    Object.entries(sourceAliases).map(
+      async ([logicalName, aliases]) =>
+        [logicalName, await loadCollection(db, available, logicalName, aliases)] as const,
+    ),
   );
   const loaded = Object.fromEntries(
     loadedEntries.map(([logicalName, result]) => [logicalName, result.records]),

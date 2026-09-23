@@ -474,7 +474,9 @@ function extraFields(
       const variant = normalizeContainerVariant(spec, record);
       const explicitTotal = getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']);
       const capacityTotal = getNestedNumber(record, ['capacity', 'total']);
-      const heightRu = getNestedNumber(record, ['dimensions', 'heightRu']);
+      const heightRu =
+        getNestedNumber(record, ['dimensions', 'heightRu']) ??
+        getNestedNumber(record, ['appMObject', 'heightRu']);
       const mountedEnd = getNestedNumber(record, ['mounting', 'endPosition']);
       const casEnd = totalUFromCas(record);
       const totalCandidate = explicitTotal ?? capacityTotal ?? heightRu ?? casEnd ?? mountedEnd;

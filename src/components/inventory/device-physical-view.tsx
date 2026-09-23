@@ -426,121 +426,123 @@ export function DevicePhysicalView({
             )}
             {viewMode === 'adaptive' && (
               <section className="studio-connections">
-              <header>
-                <div>
-                  <small>ELECTRICAL TOPOLOGY</small>
-                  <h2>{activePath ? 'Power trace' : 'Power relationships'}</h2>
-                </div>
-                <span>Configured connections · no live telemetry</span>
-              </header>
-              {!powerReadable ? (
-                <p>Your role cannot read power relationships.</p>
-              ) : !focusedConnections.length ? (
-                <p>
-                  {activeEndpoint
-                    ? 'No power path assigned to this endpoint.'
-                    : 'No configured power relationships.'}
-                </p>
-              ) : (
-                focusedConnections.map((connection) => (
-                  <div
-                    className={`studio-power-trace ${connection.path.feed === 'B' ? 'feed-b' : ''}`}
-                    key={connection.path.id}
-                  >
-                    <div className="studio-power-source">
-                      <small>SOURCE</small>
-                      <button
-                        onClick={() =>
-                          setInspection({
-                            name: connection.sourceName,
-                            kind: 'POWER SOURCE',
-                            sections: [
-                              {
-                                title: 'Physical distribution',
-                                fields: connection.sourceTrail.map((name, index) => ({
-                                  label:
-                                    ['BDFB', 'Shelf', 'Frame', 'Panel', 'Endpoint'][index] ??
-                                    'Context',
-                                  value: name,
-                                })),
-                              },
-                            ],
-                            actions: [
-                              { label: 'Open source endpoint', href: connection.sourceHref },
-                            ],
-                          })
-                        }
-                      >
-                        {connection.sourceName}
-                      </button>
-                      <span>{connection.sourceTrail.slice(1).join(' / ')}</span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openPhysicalPopup(
-                            connection.sourceHref,
-                            'device',
-                            connection.path.source.entityId,
-                          )
-                        }
-                      >
-                        Open source popup ↗
-                      </button>
-                    </div>
-                    <div className="studio-feed">
-                      <span>
-                        {connection.path.feed ? `FEED ${connection.path.feed}` : 'FEED UNSPECIFIED'}
-                      </span>
-                      <svg viewBox="0 0 200 30" aria-hidden="true">
-                        <path d="M0 15H192M181 5L193 15L181 25" />
-                      </svg>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openPhysicalPopup(
-                            link({
-                              ...(focus.shelf ? { shelf: focus.shelf } : {}),
-                              ...(focus.panel ? { panel: focus.panel } : {}),
-                              ...(focus.endpoint ? { endpoint: focus.endpoint } : {}),
-                              path: connection.path.id,
-                            }),
-                            'power',
-                            connection.path.id,
-                          )
-                        }
-                      >
-                        Trace connection ↗
-                      </button>
-                    </div>
-                    <div className="studio-power-target">
-                      <small>DESTINATION</small>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          openPhysicalPopup(
-                            connection.targetHref,
-                            'device',
-                            connection.path.target.entityId,
-                          )
-                        }
-                      >
-                        {connection.targetName} ↗
-                      </button>
-                      <span>{connection.path.label ?? 'Configured power path'}</span>
-                    </div>
+                <header>
+                  <div>
+                    <small>ELECTRICAL TOPOLOGY</small>
+                    <h2>{activePath ? 'Power trace' : 'Power relationships'}</h2>
                   </div>
-                ))
-              )}
+                  <span>Configured connections · no live telemetry</span>
+                </header>
+                {!powerReadable ? (
+                  <p>Your role cannot read power relationships.</p>
+                ) : !focusedConnections.length ? (
+                  <p>
+                    {activeEndpoint
+                      ? 'No power path assigned to this endpoint.'
+                      : 'No configured power relationships.'}
+                  </p>
+                ) : (
+                  focusedConnections.map((connection) => (
+                    <div
+                      className={`studio-power-trace ${connection.path.feed === 'B' ? 'feed-b' : ''}`}
+                      key={connection.path.id}
+                    >
+                      <div className="studio-power-source">
+                        <small>SOURCE</small>
+                        <button
+                          onClick={() =>
+                            setInspection({
+                              name: connection.sourceName,
+                              kind: 'POWER SOURCE',
+                              sections: [
+                                {
+                                  title: 'Physical distribution',
+                                  fields: connection.sourceTrail.map((name, index) => ({
+                                    label:
+                                      ['BDFB', 'Shelf', 'Frame', 'Panel', 'Endpoint'][index] ??
+                                      'Context',
+                                    value: name,
+                                  })),
+                                },
+                              ],
+                              actions: [
+                                { label: 'Open source endpoint', href: connection.sourceHref },
+                              ],
+                            })
+                          }
+                        >
+                          {connection.sourceName}
+                        </button>
+                        <span>{connection.sourceTrail.slice(1).join(' / ')}</span>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openPhysicalPopup(
+                              connection.sourceHref,
+                              'device',
+                              connection.path.source.entityId,
+                            )
+                          }
+                        >
+                          Open source popup ↗
+                        </button>
+                      </div>
+                      <div className="studio-feed">
+                        <span>
+                          {connection.path.feed
+                            ? `FEED ${connection.path.feed}`
+                            : 'FEED UNSPECIFIED'}
+                        </span>
+                        <svg viewBox="0 0 200 30" aria-hidden="true">
+                          <path d="M0 15H192M181 5L193 15L181 25" />
+                        </svg>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openPhysicalPopup(
+                              link({
+                                ...(focus.shelf ? { shelf: focus.shelf } : {}),
+                                ...(focus.panel ? { panel: focus.panel } : {}),
+                                ...(focus.endpoint ? { endpoint: focus.endpoint } : {}),
+                                path: connection.path.id,
+                              }),
+                              'power',
+                              connection.path.id,
+                            )
+                          }
+                        >
+                          Trace connection ↗
+                        </button>
+                      </div>
+                      <div className="studio-power-target">
+                        <small>DESTINATION</small>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openPhysicalPopup(
+                              connection.targetHref,
+                              'device',
+                              connection.path.target.entityId,
+                            )
+                          }
+                        >
+                          {connection.targetName} ↗
+                        </button>
+                        <span>{connection.path.label ?? 'Configured power path'}</span>
+                      </div>
+                    </div>
+                  ))
+                )}
               </section>
             )}
             {(viewMode === 'adaptive' || viewMode === 'device') && (
               <div className="studio-device-facts">
-              <span>
-                {rack?.name ?? 'Rack unavailable'} · {uRange}
-              </span>
-              <span>Serial: {device.serialNumber ?? 'Not specified'}</span>
-              <button onClick={() => setInspection(topologyInspector(device, href))}>
-                Inspect identity
+                <span>
+                  {rack?.name ?? 'Rack unavailable'} · {uRange}
+                </span>
+                <span>Serial: {device.serialNumber ?? 'Not specified'}</span>
+                <button onClick={() => setInspection(topologyInspector(device, href))}>
+                  Inspect identity
                 </button>
               </div>
             )}

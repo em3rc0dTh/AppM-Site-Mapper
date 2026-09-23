@@ -48,6 +48,7 @@ export default async function EndpointPopupPage({
         deviceId={deviceId}
         focus={{ shelf: shelfId, panel: panelId, endpoint: endpointId }}
         powerReadable={hasPermission(auth.value.role, 'power:read')}
+        mode="endpoint"
       />
     </PopupChrome>
   );

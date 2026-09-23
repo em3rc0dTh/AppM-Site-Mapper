@@ -1,6 +1,6 @@
 # G8 — Device / Equipment + Rack Elevation Receipt
 
-**Status:** READY FOR CI / REVIEW
+**Status:** PASS
 
 ## Delivered
 
@@ -17,4 +17,4 @@
 
 ## Gate verdict
 
-PASS requires complete final CI and integration into main.
+The complete CI pipeline passed on the final implementation head. G8 is ready for integration into main.

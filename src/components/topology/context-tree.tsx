@@ -1,5 +1,5 @@
-import type { CSSProperties } from 'react';
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 
 import type { TopologyKind } from '@/modules/topology/domain/entities';
 import { Icon } from '@/shared/ui/primitives';
@@ -27,10 +27,20 @@ export function TopologyContextTree({
   const active = trail.at(-1);
 
   return (
-    <nav className="context-tree" aria-label="Current infrastructure context">
-      <div className="context-tree-heading">
-        <span>Location context</span>
-        <small>{trail.length.toString().padStart(2, '0')}</small>
+    <nav className="context-tree legacy-context-tree" aria-label="Current infrastructure context">
+      <header className="legacy-context-heading">
+        <span className="legacy-context-heading-icon">
+          <Icon name="network" />
+        </span>
+        <span>
+          <strong>System Hierarchy</strong>
+          <small>Infrastructure Root</small>
+        </span>
+      </header>
+
+      <div className="legacy-context-scope">
+        <span>Current location</span>
+        <small>{trail.length.toString().padStart(2, '0')} levels</small>
       </div>
 
       <ol className="context-tree-trail">

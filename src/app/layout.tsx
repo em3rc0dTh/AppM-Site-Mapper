@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 
 import './globals.css';
+import './legacy-fidelity.css';
 import { AppShell } from '@/shared/ui/app-shell';
 
 export const metadata: Metadata = {

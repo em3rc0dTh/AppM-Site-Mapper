@@ -1,0 +1,1411 @@
+/* Site Mapper MK1 — legacy visual-fidelity layer
+   Reuses the validated UI grammar from the legacy product while keeping MK1 domain/application code. */
+
+:root {
+  --legacy-bg: #0b0e16;
+  --legacy-surface: #10131b;
+  --legacy-surface-low: #181c23;
+  --legacy-surface-mid: #1c2028;
+  --legacy-surface-high: #272a32;
+  --legacy-stroke: #38383a;
+  --legacy-outline: #566071;
+  --legacy-text: #e0e2ed;
+  --legacy-muted: #aeb5c5;
+  --legacy-primary: #adc6ff;
+  --legacy-blue: #68d3ff;
+  --legacy-green: #32d74b;
+  --legacy-yellow: #ffd60a;
+  --legacy-orange: #ff9f0a;
+}
+
+.legacy-shell {
+  background: var(--legacy-bg);
+}
+
+.legacy-shell.app-shell {
+  grid-template-columns: 280px minmax(0, 1fr);
+  grid-template-rows: 58px minmax(0, 1fr);
+  height: 100dvh;
+}
+
+.legacy-shell.app-shell--immersive {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.legacy-shell .app-content {
+  padding: 0;
+  overflow: hidden;
+  background: var(--legacy-bg);
+}
+
+.legacy-shell.app-shell--immersive .app-content {
+  grid-column: 1;
+}
+
+.legacy-topbar {
+  height: 58px;
+  padding: 0 18px;
+  background: #0e1119;
+  border-bottom: 1px solid var(--legacy-stroke);
+  gap: 24px;
+}
+
+.legacy-brand {
+  min-width: 245px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--legacy-text);
+}
+
+.legacy-brand-mark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 3px;
+  background: #293346;
+  color: var(--legacy-primary);
+}
+
+.legacy-brand > span:last-child {
+  font-family: var(--font-geist-sans), Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: 0.025em;
+}
+
+.legacy-brand small {
+  display: block;
+  margin-top: 2px;
+  color: #7f91a8;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.legacy-topnav {
+  align-self: stretch;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  margin-left: 10px;
+}
+
+.legacy-topnav a,
+.legacy-topnav span {
+  position: relative;
+  min-width: 64px;
+  display: grid;
+  place-items: center;
+  padding: 0 12px;
+  color: #b2b8c5;
+  text-decoration: none;
+  font-size: 0.8rem;
+  cursor: default;
+}
+
+.legacy-topnav a:hover {
+  color: var(--legacy-text);
+}
+
+.legacy-topnav [aria-current='page'] {
+  color: var(--legacy-primary);
+  font-weight: 650;
+}
+
+.legacy-topnav [aria-current='page']::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  background: var(--legacy-primary);
+}
+
+.legacy-top-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legacy-icon-button,
+.legacy-signout {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--legacy-stroke);
+  border-radius: 4px;
+  background: var(--legacy-surface);
+  color: #bbc4d2;
+}
+
+.legacy-icon-button {
+  width: 36px;
+}
+
+.legacy-icon-button .icon {
+  width: 17px;
+  height: 17px;
+}
+
+.legacy-signout {
+  padding: 0 14px;
+  font-size: 0.72rem;
+}
+
+.legacy-primary-rail {
+  top: 58px;
+  height: calc(100dvh - 58px);
+  padding: 0;
+  background: var(--legacy-surface-low);
+  border-right: 1px solid var(--legacy-stroke);
+}
+
+.legacy-rail-heading {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border-bottom: 1px solid var(--legacy-stroke);
+  background: #171b23;
+}
+
+.legacy-rail-heading-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: #303644;
+  color: var(--legacy-primary);
+}
+
+.legacy-rail-heading strong {
+  display: block;
+  color: var(--legacy-primary);
+  font-size: 1rem;
+  font-weight: 620;
+}
+
+.legacy-rail-heading small {
+  display: block;
+  margin-top: 3px;
+  color: #d2d7e0;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.legacy-primary-rail nav {
+  padding: 12px 0;
+  gap: 0;
+}
+
+.legacy-primary-rail nav a {
+  min-height: 42px;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  padding: 0 18px;
+  color: #c6cad4;
+}
+
+.legacy-primary-rail nav a:hover {
+  background: #252a33;
+}
+
+.legacy-primary-rail nav a[aria-current='page'] {
+  border-left-color: var(--legacy-primary);
+  background: #353a44;
+  color: var(--legacy-text);
+}
+
+.legacy-rail-footer {
+  margin-top: auto;
+  border-top: 1px solid var(--legacy-stroke);
+}
+
+.legacy-rail-footer a {
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 18px;
+  color: #c9ced8;
+  text-decoration: none;
+}
+
+/* Immersive work pages: one hierarchy panel, one work canvas, one property panel. */
+.app-shell--immersive .operational-page {
+  height: calc(100dvh - 58px);
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.app-shell--immersive .operational-breadcrumbs {
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--legacy-stroke);
+  background: var(--legacy-surface);
+  color: #9ea7b7;
+}
+
+.app-shell--immersive .operational-breadcrumbs a {
+  font-size: 0.7rem;
+}
+
+.app-shell--immersive .operational-layout {
+  height: calc(100dvh - 110px);
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr) 320px;
+  gap: 0;
+}
+
+.app-shell--immersive .operational-layout--rack,
+.app-shell--immersive .operational-layout--blueprint {
+  height: calc(100dvh - 58px);
+  grid-template-columns: 280px minmax(0, 1fr);
+}
+
+.app-shell--immersive .operational-context,
+.app-shell--immersive .operational-stage,
+.app-shell--immersive .operational-inspector {
+  border: 0;
+  border-radius: 0;
+  min-height: 0;
+}
+
+.app-shell--immersive .operational-context {
+  border-right: 1px solid var(--legacy-stroke);
+  background: var(--legacy-surface-low);
+}
+
+.app-shell--immersive .operational-stage {
+  padding: 0;
+  background: #000;
+  overflow: hidden;
+}
+
+.app-shell--immersive .operational-stage > .section-header {
+  min-height: 104px;
+  margin: 0;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--legacy-stroke);
+  background: var(--legacy-surface);
+  align-items: center;
+}
+
+.app-shell--immersive .operational-stage > .section-header h1 {
+  margin: 2px 0 7px;
+  color: var(--legacy-text);
+  font-size: 1.7rem;
+}
+
+.app-shell--immersive .operational-stage > .section-header .section-description {
+  color: #aeb7c7;
+  max-width: 720px;
+}
+
+.app-shell--immersive .operational-stage-body {
+  min-height: 0;
+  background: #000;
+}
+
+.app-shell--immersive .operational-inspector {
+  border-left: 1px solid var(--legacy-stroke);
+  padding: 0;
+  background: var(--legacy-surface-low);
+}
+
+.app-shell--immersive .operational-inspector-card {
+  border: 0;
+  border-radius: 0;
+  padding: 22px 20px;
+  background: transparent;
+}
+
+.app-shell--immersive .operational-inspector-card h2 {
+  margin: 6px 0 20px;
+  font-size: 1.15rem;
+}
+
+.app-shell--immersive .operational-inspector-card dl > div {
+  padding: 12px 0;
+  border-top: 1px solid var(--legacy-stroke);
+}
+
+.app-shell--immersive .operational-inspector-card dt {
+  color: #afb6c3;
+}
+
+.app-shell--immersive .operational-inspector-card dd {
+  color: #e2e5eb;
+}
+
+.app-shell--immersive .operational-hint {
+  margin: auto 16px 16px;
+  border-color: var(--legacy-stroke);
+  background: #151922;
+}
+
+.app-shell--immersive .operational-edit-dock {
+  position: absolute;
+  z-index: 30;
+  left: 300px;
+  bottom: 18px;
+  padding: 0;
+}
+
+.app-shell--immersive .operational-edit-dock .edit-disclosure {
+  background: #1a1e26;
+  border-color: #4a5260;
+}
+
+/* Hierarchy sidebar */
+.legacy-context-tree {
+  background: var(--legacy-surface-low);
+}
+
+.legacy-context-heading {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--legacy-stroke);
+  background: #171b23;
+}
+
+.legacy-context-heading-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: #303644;
+  color: var(--legacy-primary);
+}
+
+.legacy-context-heading strong {
+  display: block;
+  color: var(--legacy-primary);
+  font-size: 0.98rem;
+  font-weight: 620;
+}
+
+.legacy-context-heading small {
+  display: block;
+  margin-top: 3px;
+  color: #d2d7e0;
+  font-size: 0.56rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.legacy-context-scope {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  color: #b8bfcb;
+  border-bottom: 1px solid var(--legacy-stroke);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.legacy-context-scope small {
+  color: #778396;
+}
+
+.legacy-context-tree .context-tree-trail {
+  padding: 10px 8px;
+}
+
+.legacy-context-tree .context-tree-trail li {
+  padding-left: calc(var(--context-depth) * 9px);
+}
+
+.legacy-context-tree .context-tree-trail a {
+  min-height: 41px;
+  padding: 7px 10px;
+  border-radius: 0;
+  color: #c3c9d4;
+}
+
+.legacy-context-tree .context-tree-trail a[aria-current='page'] {
+  border-color: transparent;
+  border-left: 2px solid var(--legacy-primary);
+  background: #343a46;
+  color: var(--legacy-text);
+}
+
+.legacy-context-tree .context-tree-trail li:not(:last-child)::after {
+  background: #444b58;
+}
+
+.legacy-context-tree .context-tree-children {
+  border-top: 1px solid var(--legacy-stroke);
+  background: #151920;
+}
+
+.legacy-context-tree .context-tree-children a {
+  border-radius: 0;
+}
+
+/* Legacy visual stage */
+.legacy-visual-stage {
+  border: 0;
+  border-radius: 0;
+  background: #000;
+}
+
+.legacy-stage-toolbar {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--legacy-stroke);
+  background: #171b23;
+}
+
+.legacy-stage-toolbar > div {
+  display: grid;
+  gap: 2px;
+}
+
+.legacy-stage-toolbar strong {
+  color: #e2e5eb;
+  font-size: 0.78rem;
+}
+
+.legacy-stage-toolbar span {
+  color: #8f99aa;
+  font-size: 0.58rem;
+}
+
+.legacy-stage-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(56, 56, 58, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 56, 58, 0.22) 1px, transparent 1px), #05070b;
+  background-size: 40px 40px;
+}
+
+.legacy-stage-node {
+  color: var(--legacy-text);
+  text-decoration: none;
+}
+
+.legacy-site-canvas,
+.legacy-structure-canvas,
+.legacy-level-canvas,
+.legacy-bay-canvas,
+.legacy-position-canvas,
+.legacy-generic-canvas {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.legacy-site-map-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.45;
+  background:
+    radial-gradient(circle at 45% 42%, rgba(173, 198, 255, 0.08), transparent 22%),
+    linear-gradient(28deg, transparent 46%, rgba(255, 159, 10, 0.08) 47% 48%, transparent 49%),
+    linear-gradient(115deg, transparent 52%, rgba(255, 159, 10, 0.06) 53% 54%, transparent 55%);
+}
+
+.legacy-site-boundary {
+  position: absolute;
+  inset: 15% 16%;
+  border: 2px solid var(--legacy-primary);
+  background: rgba(173, 198, 255, 0.06);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 18px;
+  padding: 20px;
+}
+
+.legacy-site-footprint {
+  position: relative;
+  min-height: 110px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid #5b6677;
+  background: rgba(28, 32, 40, 0.9);
+}
+
+.legacy-site-footprint:hover {
+  border-color: var(--legacy-primary);
+  background: rgba(49, 57, 70, 0.95);
+}
+
+.legacy-site-footprint-crosshair {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--legacy-orange);
+  border-radius: 50%;
+  color: var(--legacy-orange);
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.legacy-site-footprint > span:nth-child(2),
+.legacy-stage-node > span:nth-child(2) {
+  display: grid;
+  gap: 5px;
+}
+
+.legacy-stage-node small {
+  color: #8f9aae;
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.legacy-stage-node strong {
+  color: #edf0f5;
+  font-size: 0.82rem;
+}
+
+.legacy-stage-enter {
+  margin-left: auto;
+  color: var(--legacy-primary);
+}
+
+.legacy-structure-canvas {
+  display: grid;
+  place-items: center;
+  padding: 44px;
+}
+
+.legacy-building-outline {
+  width: min(720px, 88%);
+  max-height: 86%;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #4d5664;
+  background: #0b0f15;
+  box-shadow: 0 28px 70px #000b;
+}
+
+.legacy-level-slab {
+  min-height: 74px;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 0 16px;
+  border-bottom: 1px solid #414754;
+  background: linear-gradient(90deg, rgba(173, 198, 255, 0.06), transparent 50%);
+}
+
+.legacy-level-slab:hover {
+  background: #222833;
+}
+
+.legacy-level-number {
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #515a69;
+  color: var(--legacy-primary);
+  font:
+    0.72rem ui-monospace,
+    monospace;
+}
+
+.legacy-level-status {
+  color: #8895aa;
+  font-size: 0.6rem;
+  font-weight: 700;
+}
+
+.legacy-level-canvas {
+  padding: 48px 58px;
+}
+
+.legacy-level-grid {
+  position: absolute;
+  inset: 8% 9%;
+  border: 1px solid #3a414c;
+  background:
+    linear-gradient(rgba(56, 56, 58, 0.28) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 56, 58, 0.28) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+.legacy-room-field {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  align-content: center;
+  gap: 18px;
+}
+
+.legacy-room-footprint {
+  min-height: 160px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  border: 2px solid #586579;
+  background: rgba(24, 28, 35, 0.94);
+}
+
+.legacy-room-footprint:hover {
+  border-color: var(--legacy-primary);
+}
+
+.legacy-room-index {
+  width: 32px;
+  height: 32px;
+  display: grid !important;
+  place-items: center;
+  border: 1px solid #778398;
+  color: var(--legacy-primary);
+  font:
+    0.7rem ui-monospace,
+    monospace;
+}
+
+.legacy-bay-canvas {
+  padding: 54px 50px 34px 66px;
+}
+
+.legacy-bay-axis {
+  position: absolute;
+  color: #aab2c0;
+  font:
+    0.62rem ui-monospace,
+    monospace;
+}
+
+.legacy-bay-axis--top {
+  left: 66px;
+  right: 50px;
+  top: 20px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  text-align: center;
+}
+
+.legacy-bay-axis--left {
+  left: 24px;
+  top: 54px;
+  bottom: 34px;
+  display: grid;
+  grid-template-rows: repeat(4, 1fr);
+  align-items: center;
+}
+
+.legacy-position-grid {
+  height: 100%;
+  border: 2px solid var(--legacy-orange);
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  background:
+    linear-gradient(rgba(56, 56, 58, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 56, 58, 0.4) 1px, transparent 1px);
+  background-size: 12.5% 25%;
+}
+
+.legacy-position-tile {
+  margin: 4px;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  border: 1px solid #58606e;
+  background: #262a33;
+  text-align: center;
+}
+
+.legacy-position-tile:hover {
+  border-color: var(--legacy-primary);
+  background: #303642;
+}
+
+.legacy-position-marker {
+  color: var(--legacy-primary);
+}
+
+.legacy-position-marker .icon {
+  width: 22px;
+  height: 22px;
+}
+
+.legacy-position-canvas {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 38px;
+}
+
+.legacy-cabinet-preview {
+  width: min(320px, 34vw);
+  min-height: 72%;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #4a5260;
+  background: #090c11;
+  box-shadow: 0 30px 80px #000c;
+}
+
+.legacy-cabinet-top,
+.legacy-cabinet-bottom {
+  height: 30px;
+  border-bottom: 1px solid #3d4552;
+  background: #1b1f26;
+}
+
+.legacy-cabinet-bottom {
+  border-top: 1px solid #3d4552;
+  border-bottom: 0;
+}
+
+.legacy-cabinet-body {
+  position: relative;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: repeating-linear-gradient(to bottom, #11161d 0 11px, #252b34 12px, #11161d 13px);
+}
+
+.legacy-cabinet-body > span:last-child {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 4px;
+  padding: 14px 18px;
+  border: 1px solid #536071;
+  background: #131923;
+}
+
+.legacy-cabinet-rails {
+  position: absolute;
+  inset: 0 14px;
+  border-left: 7px solid #333c49;
+  border-right: 7px solid #333c49;
+}
+
+.legacy-generic-canvas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  align-content: center;
+  gap: 14px;
+  padding: 36px;
+}
+
+.legacy-generic-canvas .legacy-stage-node {
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #4e5867;
+  background: #181c23;
+}
+
+.legacy-stage-node-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: #303644;
+  color: var(--legacy-primary);
+}
+
+.legacy-stage-empty {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  color: #8b95a5;
+}
+
+/* Blueprint: make the room plan fill the work surface like the legacy drafting view. */
+.app-shell--immersive .blueprint-panel {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: #05070a;
+}
+
+.app-shell--immersive .blueprint-toolbar {
+  min-height: 52px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--legacy-stroke);
+  background: #171b23;
+}
+
+.app-shell--immersive .blueprint-toolbar strong {
+  color: #e5e8ee;
+}
+
+.app-shell--immersive .blueprint-toolbar span {
+  color: #9ca7b7;
+}
+
+.app-shell--immersive .blueprint-actions button[aria-pressed='true'] {
+  border-color: var(--legacy-orange);
+  color: var(--legacy-orange);
+  background: rgba(255, 159, 10, 0.08);
+}
+
+.app-shell--immersive .blueprint-canvas {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  background:
+    linear-gradient(rgba(56, 56, 58, 0.18) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 56, 58, 0.18) 1px, transparent 1px), #020407;
+  background-size: 40px 40px;
+}
+
+.app-shell--immersive .blueprint-room {
+  fill: #131924;
+  stroke: var(--legacy-orange);
+  stroke-width: 18px;
+}
+
+.app-shell--immersive .blueprint-grid-line {
+  stroke: #4a5361;
+  stroke-width: 7px;
+  opacity: 0.8;
+}
+
+.app-shell--immersive .blueprint-slot {
+  fill: transparent;
+  stroke: #5a6371;
+  stroke-width: 5px;
+}
+
+.app-shell--immersive .blueprint-rack {
+  fill: #2b303a;
+  stroke: var(--legacy-primary);
+  stroke-width: 12px;
+}
+
+.app-shell--immersive .blueprint-rack-node:hover .blueprint-rack {
+  fill: #394352;
+  stroke: var(--legacy-blue);
+}
+
+.app-shell--immersive .blueprint-rack-label {
+  fill: #eef1f5;
+  font-weight: 700;
+}
+
+.app-shell--immersive .blueprint-legend {
+  min-height: 44px;
+  border-top: 1px solid var(--legacy-stroke);
+  background: #171b23;
+}
+
+/* Rack: legacy cabinet scale and right properties. */
+.legacy-rack-view {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  overflow: hidden;
+  background: #000;
+}
+
+.legacy-rack-main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.legacy-rack-main > .section-header {
+  min-height: 104px;
+  margin: 0;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--legacy-stroke);
+  background: var(--legacy-surface);
+  align-items: center;
+}
+
+.legacy-rack-main > .section-header h1 {
+  margin: 2px 0 7px;
+  font-size: 1.7rem;
+}
+
+.legacy-rack-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  place-items: start center;
+  padding: 30px 48px 48px;
+  background: #030508;
+}
+
+.legacy-rack-canvas-grid {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(56, 56, 58, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56, 56, 58, 0.22) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.legacy-rack-heading {
+  position: relative;
+  z-index: 2;
+  width: min(430px, 90%);
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.legacy-rack-heading > div {
+  display: grid;
+  gap: 3px;
+}
+
+.legacy-rack-heading strong {
+  color: var(--legacy-text);
+  font-size: 1.25rem;
+}
+
+.legacy-rack-heading span,
+.legacy-rack-heading small {
+  color: #a9b1bf;
+  font-size: 0.65rem;
+}
+
+.legacy-rack-heading small {
+  padding: 7px 10px;
+  border: 1px solid var(--legacy-stroke);
+  background: #2a2f38;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.legacy-rack-frame {
+  position: relative;
+  z-index: 2;
+  width: min(430px, 90%);
+  min-height: 680px;
+  max-height: calc(100dvh - 250px);
+  display: flex;
+  flex-direction: column;
+  border: 2px solid #454d59;
+  background: #080b10;
+  box-shadow: 0 0 80px #000d;
+}
+
+.legacy-rack-metal {
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #1a1d23;
+}
+
+.legacy-rack-metal--top {
+  border-bottom: 2px solid #404753;
+}
+
+.legacy-rack-metal--top span {
+  width: 92px;
+  height: 4px;
+  border-radius: 999px;
+  background: #4a4e55;
+}
+
+.legacy-rack-metal--bottom {
+  justify-content: space-between;
+  padding: 0 34px;
+  border-top: 2px solid #404753;
+}
+
+.legacy-rack-metal--bottom span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #06080b;
+}
+
+.legacy-rack-units {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.legacy-rack-block {
+  position: relative;
+  flex: var(--rack-block-units) 1 0;
+  min-height: 18px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px 0 0;
+  border: 0;
+  border-bottom: 1px solid #343b46;
+  border-radius: 0;
+  background: #12171e;
+  color: #cfd5df;
+  text-align: left;
+}
+
+button.legacy-rack-block {
+  cursor: pointer;
+}
+
+button.legacy-rack-block:hover {
+  outline: 1px solid var(--legacy-primary);
+  z-index: 2;
+}
+
+.legacy-rack-scale {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: end;
+  padding: 4px 7px 4px 0;
+  border-right: 1px solid #39414d;
+  color: #8d98aa;
+  font:
+    0.56rem ui-monospace,
+    monospace;
+}
+
+.legacy-rack-block-copy {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.legacy-rack-block-copy strong {
+  font-size: 0.74rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.legacy-rack-block-copy small {
+  color: #8792a3;
+  font-size: 0.54rem;
+  text-transform: uppercase;
+}
+
+.legacy-rack-block--available {
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 13px, rgba(56, 56, 58, 0.35) 14px), #11161d;
+}
+
+.legacy-rack-block--available .legacy-rack-block-copy {
+  opacity: 0.5;
+}
+
+.legacy-rack-block--clearance {
+  background: repeating-linear-gradient(135deg, #141922, #141922 6px, #202630 6px, #202630 8px);
+}
+
+.legacy-rack-block--reserved {
+  border-left: 3px solid var(--legacy-yellow);
+  background: rgba(255, 214, 10, 0.08);
+}
+
+.legacy-rack-block--physical {
+  border-left: 4px solid var(--legacy-blue);
+  background: linear-gradient(90deg, rgba(19, 156, 199, 0.17), transparent 75%), #12202a;
+}
+
+.legacy-rack-block--physical .legacy-rack-block-copy strong {
+  color: #d9f4ff;
+  font-size: 0.86rem;
+}
+
+.legacy-rack-led {
+  color: var(--legacy-green);
+  font-size: 0.55rem;
+  font-weight: 800;
+}
+
+.legacy-rack-properties {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--legacy-stroke);
+  background: var(--legacy-surface-low);
+  overflow: auto;
+}
+
+.legacy-properties-header {
+  display: grid;
+  gap: 7px;
+  padding: 22px;
+  border-bottom: 1px solid var(--legacy-stroke);
+  background: #171b23;
+}
+
+.legacy-properties-header > span {
+  color: #9ca6b5;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.legacy-properties-header > strong {
+  color: var(--legacy-text);
+  font-size: 1.2rem;
+}
+
+.legacy-properties-header .status-badge {
+  width: fit-content;
+  margin-top: 5px;
+}
+
+.legacy-property-section {
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--legacy-stroke);
+}
+
+.legacy-property-section h3,
+.legacy-property-title span {
+  color: #b2bac8;
+  font-size: 0.62rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.legacy-property-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.legacy-property-title strong {
+  color: #e3e6ec;
+  font-size: 0.76rem;
+}
+
+.legacy-progress {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #3a4049;
+}
+
+.legacy-progress span {
+  display: block;
+  height: 100%;
+  background: var(--legacy-primary);
+}
+
+.legacy-property-section > small {
+  display: block;
+  margin-top: 9px;
+  color: #9aa3b2;
+  font-size: 0.65rem;
+}
+
+.legacy-property-section dl {
+  margin: 12px 0 0;
+}
+
+.legacy-property-section dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #333a45;
+}
+
+.legacy-property-section dt {
+  color: #aab2c0;
+  font-size: 0.7rem;
+}
+
+.legacy-property-section dd {
+  margin: 0;
+  color: #edf0f4;
+  font:
+    0.7rem ui-monospace,
+    monospace;
+}
+
+.legacy-rack-inventory-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.legacy-rack-inventory-list button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  padding: 10px 12px;
+  border: 1px solid #424a57;
+  border-radius: 3px;
+  background: #20252e;
+  text-align: left;
+}
+
+.legacy-rack-inventory-list button span {
+  display: grid;
+  gap: 3px;
+}
+
+.legacy-rack-inventory-list small {
+  color: #8490a3;
+  font-size: 0.54rem;
+}
+
+.legacy-rack-inventory-list strong {
+  color: #e4e7ec;
+  font-size: 0.74rem;
+}
+
+.legacy-rack-inventory-list b {
+  color: var(--legacy-primary);
+  font-size: 0.58rem;
+}
+
+.legacy-properties-actions {
+  margin-top: auto;
+  padding: 18px 22px;
+  border-top: 1px solid var(--legacy-stroke);
+  background: #1c2028;
+}
+
+.legacy-properties-actions button {
+  width: 100%;
+  min-height: 42px;
+  border-color: var(--legacy-primary);
+  background: var(--legacy-primary);
+  color: #14223a;
+  font-weight: 750;
+}
+
+/* Inspector should feel like the old equipment popup rather than a generic modal. */
+.inspector-dialog {
+  width: min(460px, 96vw);
+  max-height: 100dvh;
+  height: 100dvh;
+  margin: 0 0 0 auto;
+  border: 0;
+  border-left: 1px solid var(--legacy-stroke);
+  border-radius: 0;
+  background: #11151d;
+}
+
+.inspector-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.68);
+}
+
+.inspector-header {
+  min-height: 102px;
+  border-bottom: 1px solid var(--legacy-stroke);
+  background: #0e1218;
+}
+
+.inspector-body {
+  background: #11151d;
+}
+
+@media (max-width: 1180px) {
+  .app-shell--immersive .operational-layout {
+    grid-template-columns: 230px minmax(0, 1fr) 280px;
+  }
+
+  .app-shell--immersive .operational-layout--rack,
+  .app-shell--immersive .operational-layout--blueprint {
+    grid-template-columns: 230px minmax(0, 1fr);
+  }
+
+  .legacy-rack-view {
+    grid-template-columns: minmax(0, 1fr) 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  .legacy-shell.app-shell,
+  .legacy-shell.app-shell--immersive {
+    grid-template-columns: 1fr;
+  }
+
+  .legacy-primary-rail,
+  .legacy-topnav {
+    display: none;
+  }
+
+  .legacy-brand {
+    min-width: 0;
+  }
+
+  .app-shell--immersive .operational-page {
+    height: auto;
+    overflow: auto;
+  }
+
+  .app-shell--immersive .operational-layout,
+  .app-shell--immersive .operational-layout--rack,
+  .app-shell--immersive .operational-layout--blueprint {
+    height: auto;
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell--immersive .operational-context,
+  .app-shell--immersive .operational-inspector {
+    min-height: 280px;
+  }
+
+  .legacy-rack-view {
+    grid-template-columns: 1fr;
+  }
+
+  .legacy-rack-properties {
+    min-height: 420px;
+  }
+}

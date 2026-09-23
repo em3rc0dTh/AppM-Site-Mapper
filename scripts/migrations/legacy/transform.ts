@@ -471,6 +471,14 @@ function extraFields(
             'Rebound Site-parented Level to the unique Structure without a direct Level, preserving the legacy structure fallback behavior.',
         });
       }
+      if (record.migrationParentSource === 'legacy-site-level-shared-fallback') {
+        warnings.push({
+          sourceCollection: spec.collection,
+          legacyId: id,
+          message:
+            'Materialized a Structure-scoped Level from a shared Site-parented legacy Level because the original Structure view reused that Level for Structures without direct Levels.',
+        });
+      }
       return {};
     }
     case 'ROOM_SUBSTRUCTURE': {

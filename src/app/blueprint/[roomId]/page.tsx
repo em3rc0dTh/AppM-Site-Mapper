@@ -57,7 +57,7 @@ export default async function BlueprintPage({
     <main className="operational-page operational-page--blueprint">
       <div className="operational-layout operational-layout--blueprint">
         <aside className="operational-context">
-          <TopologyContextTree trail={trailEntries} children={childEntries} />
+          <TopologyContextTree trail={trailEntries} descendants={childEntries} />
         </aside>
 
         <section className="operational-stage operational-stage--wide">

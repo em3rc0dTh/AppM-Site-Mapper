@@ -3,6 +3,10 @@ import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import { BdfbChassis } from '@/components/power/bdfb-chassis';
+import {
+  SpatialAuthoringCanvas,
+  type SpatialContextPolygon,
+} from '@/components/spatial/spatial-authoring-canvas';
 import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
 import { TopologyCreateForm } from '@/components/topology/topology-create-form';
 import {
@@ -89,6 +93,23 @@ export default async function TopologyNodePage({
       ? await new SpatialService(repository).getRoomLayout(node.id)
       : null;
 
+  const boundaryContext: SpatialContextPolygon[] =
+    node.kind === 'SITE'
+      ? childEntries.flatMap(({ node: child, href }) =>
+          child.kind === 'STRUCTURE' && child.polygon
+            ? [
+                {
+                  id: child.id,
+                  name: child.name,
+                  kind: child.kind,
+                  polygon: child.polygon,
+                  href,
+                },
+              ]
+            : [],
+        )
+      : [];
+
   const rackLink =
     node.kind === 'CONTAINER_RACK' && node.variant === 'RACK' ? `/rack/${node.id}` : null;
   const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
@@ -128,18 +149,34 @@ export default async function TopologyNodePage({
           <div className="operational-stage-body">
             {node.kind === 'DEVICE' && node.bdfb ? (
               <BdfbChassis device={node} />
-            ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
-              roomLayout?.ok &&
-              roomLayout.value.room.polygon ? (
-              <BlueprintCanvas
-                polygon={roomLayout.value.room.polygon}
-                racks={roomLayout.value.racks}
-                slots={roomLayout.value.assignableSlots}
-              />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' && roomLayout?.ok ? (
-              <StatePanel
-                title="No room boundary"
-                description="Define the physical boundary to render the Blueprint."
+              roomLayout.value.room.polygon || canWrite ? (
+                <BlueprintCanvas
+                  roomId={node.id}
+                  roomName={node.name}
+                  polygon={roomLayout.value.room.polygon ?? []}
+                  racks={roomLayout.value.racks}
+                  slots={roomLayout.value.assignableSlots}
+                  canEditBoundary={canWrite}
+                />
+              ) : (
+                <StatePanel
+                  title="No room boundary"
+                  description="This room has no spatial boundary and your role is read-only."
+                  kind="readonly"
+                />
+              )
+            ) : (node.kind === 'SITE' || node.kind === 'STRUCTURE') &&
+              (node.polygon || canWrite) ? (
+              <SpatialAuthoringCanvas
+                entityId={node.id}
+                entityName={node.name}
+                entityKind={node.kind}
+                initialPolygon={node.polygon ?? []}
+                canWrite={canWrite}
+                contextPolygons={boundaryContext}
+                title={node.kind === 'SITE' ? 'Site boundary' : 'Structure boundary'}
+                subtitle="Spatial authoring · millimetres"
               />
             ) : (
               <TopologyVisualStage

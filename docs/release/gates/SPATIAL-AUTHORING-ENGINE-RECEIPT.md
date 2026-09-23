@@ -27,10 +27,10 @@ PASS for Room. Existing placement, snapping, assignable slots and collision rule
 PASS at the domain and API boundary. Polygon payloads are bounded to 256 vertices.
 
 ### G7 — Persistence / Save / Cancel
-PASS at the service/API contract. UI certification is tracked in the feature PR.
+PASS in implementation. The authoring canvas keeps draft geometry local until an authenticated Save, supports Cancel/reset, and warns on navigation with unsaved changes.
 
 ### G8 — Visual Certification
-PENDING CI and interactive browser review on the feature branch.
+IMPLEMENTED / PENDING CI. The shared canvas now exposes vertex handles, edge midpoint insertion, drag editing, redraw, Room grid snapping, pan/zoom, rack overlays and Site child-boundary context. Browser review remains required before merge.
 
 ## Security implications
 

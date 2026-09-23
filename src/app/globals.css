@@ -3204,3 +3204,390 @@ p {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Spatial Authoring Engine v0.1 */
+.spatial-authoring {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #2a3744;
+  border-radius: 8px;
+  background: #070b10;
+}
+
+.spatial-authoring-toolbar {
+  flex: 0 0 auto;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  background: #111820;
+}
+
+.spatial-authoring-title {
+  min-width: 180px;
+  display: grid;
+  gap: 2px;
+}
+
+.spatial-authoring-title strong {
+  color: #e5edf4;
+  font-size: 0.78rem;
+}
+
+.spatial-authoring-title span {
+  color: #72859a;
+  font: 0.58rem ui-monospace, monospace;
+}
+
+.spatial-authoring-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.spatial-authoring-actions button,
+.spatial-edit-state-actions button {
+  min-height: 34px;
+  border: 1px solid #334454;
+  border-radius: 5px;
+  padding: 0 11px;
+  background: #18232e;
+  color: #b9c8d7;
+  font-size: 0.66rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.spatial-authoring-actions button:hover,
+.spatial-edit-state-actions button:hover {
+  border-color: #64c7d8;
+  color: #e6fbff;
+  background: #1b303a;
+}
+
+.spatial-authoring-actions button[aria-pressed='true'] {
+  border-color: #6dd8e8;
+  background: #17333d;
+  color: #d7fbff;
+}
+
+.spatial-authoring-actions .spatial-edit-cta {
+  border-color: #b77919;
+  background: #332309;
+  color: #ffc45e;
+}
+
+.spatial-authoring-canvas-shell {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(89, 171, 188, 0.035), transparent 44%),
+    #05080c;
+}
+
+.spatial-authoring-canvas-shell.is-editing {
+  box-shadow: inset 0 0 0 1px rgba(255, 159, 10, 0.7);
+}
+
+.spatial-authoring-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  user-select: none;
+  background-image:
+    linear-gradient(rgba(83, 103, 124, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(83, 103, 124, 0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.spatial-authoring-canvas.tool-pan { cursor: grab; }
+.spatial-authoring-canvas.tool-pan:active { cursor: grabbing; }
+.spatial-authoring-canvas.tool-draw { cursor: crosshair; }
+
+.spatial-authoring-hud {
+  position: absolute;
+  z-index: 4;
+  top: 14px;
+  left: 14px;
+  display: grid;
+  grid-template-columns: auto auto;
+  gap: 2px 10px;
+  align-items: center;
+  max-width: min(360px, calc(100% - 28px));
+  padding: 9px 11px;
+  border: 1px solid #2d3b49;
+  border-radius: 5px;
+  background: rgba(11, 16, 22, 0.9);
+  box-shadow: 0 12px 36px #0008;
+  pointer-events: none;
+}
+
+.spatial-authoring-hud span,
+.spatial-authoring-hud b {
+  font: 0.52rem ui-monospace, monospace;
+  letter-spacing: 0.12em;
+}
+
+.spatial-authoring-hud span { color: #ffad2e; }
+.spatial-authoring-hud b { color: #6fd8e7; }
+
+.spatial-authoring-hud strong {
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: #e4edf5;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spatial-grid-line {
+  fill: none;
+  stroke: #4a6174;
+  stroke-width: 5;
+  opacity: 0.34;
+  vector-effect: non-scaling-stroke;
+}
+
+.spatial-boundary {
+  fill: rgba(34, 71, 86, 0.31);
+  stroke: #8ed6e2;
+  stroke-width: 10;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 12px rgba(104, 211, 255, 0.12));
+}
+
+.is-editing .spatial-boundary {
+  fill: rgba(255, 159, 10, 0.055);
+  stroke: #ff9f0a;
+}
+
+.spatial-boundary-grid {
+  stroke: transparent;
+  pointer-events: none;
+}
+
+.spatial-draft-line {
+  fill: none;
+  stroke: #ff9f0a;
+  stroke-width: 10;
+  stroke-dasharray: 18 12;
+  vector-effect: non-scaling-stroke;
+}
+
+.spatial-context-shape { pointer-events: none; }
+
+.spatial-context-shape polygon {
+  fill: rgba(173, 198, 255, 0.05);
+  stroke: #577291;
+  stroke-width: 7;
+  stroke-dasharray: 18 12;
+  vector-effect: non-scaling-stroke;
+}
+
+.spatial-context-shape text {
+  fill: #8193a8;
+  font: 0.62rem ui-monospace, monospace;
+  paint-order: stroke;
+  stroke: #070b10;
+  stroke-width: 4px;
+}
+
+.spatial-coordinate-labels text {
+  fill: #7790a6;
+  font: 0.58rem ui-monospace, monospace;
+}
+
+.spatial-slot {
+  fill: rgba(112, 136, 161, 0.025);
+  stroke: #3f5264;
+  stroke-width: 5;
+  stroke-dasharray: 14 12;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.spatial-rack { cursor: pointer; }
+
+.spatial-rack rect {
+  fill: #243342;
+  stroke: #a9c8ff;
+  stroke-width: 7;
+  vector-effect: non-scaling-stroke;
+}
+
+.spatial-rack:hover rect {
+  fill: #2b4453;
+  stroke: #7ce0ee;
+}
+
+.is-editing .spatial-rack {
+  opacity: 0.48;
+  pointer-events: none;
+}
+
+.spatial-rack text {
+  fill: #f1f5fa;
+  font: 0.62rem ui-monospace, monospace;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: #0a0f15;
+  stroke-width: 5px;
+}
+
+.spatial-midpoint {
+  fill: #0d161d;
+  stroke: #7fe3ef;
+  stroke-width: 5;
+  vector-effect: non-scaling-stroke;
+  cursor: copy;
+}
+
+.spatial-midpoint:hover { fill: #2a5b67; }
+
+.spatial-vertex {
+  fill: #ff9f0a;
+  stroke: #ffe2ad;
+  stroke-width: 7;
+  vector-effect: non-scaling-stroke;
+  cursor: grab;
+  filter: drop-shadow(0 0 8px rgba(255, 159, 10, 0.45));
+}
+
+.spatial-vertex:active { cursor: grabbing; }
+
+.spatial-vertex.is-selected {
+  fill: #fff1cf;
+  stroke: #ff9f0a;
+}
+
+.spatial-vertex-label {
+  fill: #ffd28a;
+  font: 0.56rem ui-monospace, monospace;
+  font-weight: 700;
+  pointer-events: none;
+  paint-order: stroke;
+  stroke: #070b10;
+  stroke-width: 4px;
+}
+
+.spatial-edit-state {
+  position: absolute;
+  z-index: 5;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 9px 10px;
+  border: 1px solid #66502c;
+  border-radius: 6px;
+  background: rgba(19, 17, 12, 0.94);
+  box-shadow: 0 18px 48px #0009;
+}
+
+.spatial-edit-state > div:first-child {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.spatial-edit-state > div:first-child > span:last-child {
+  overflow: hidden;
+  color: #b4a992;
+  font-size: 0.64rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spatial-edit-state-actions {
+  display: flex;
+  gap: 7px;
+}
+
+.spatial-edit-state-actions button:last-child {
+  border-color: #d58d1d;
+  background: #b86e00;
+  color: #140d03;
+}
+
+.spatial-edit-state-actions button:disabled,
+.spatial-authoring-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.spatial-authoring-error {
+  position: absolute;
+  z-index: 6;
+  right: 14px;
+  top: 14px;
+  max-width: 340px;
+  padding: 9px 11px;
+  border: 1px solid #883c3a;
+  border-radius: 5px;
+  background: rgba(67, 20, 20, 0.94);
+  color: #ffd1cf;
+  font: 0.62rem ui-monospace, monospace;
+}
+
+.spatial-authoring-legend {
+  flex: 0 0 auto;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-top: 1px solid var(--border);
+  background: #10161e;
+}
+
+.spatial-authoring-legend > span:last-child {
+  margin-left: 4px;
+  color: #788b9f;
+  font-size: 0.62rem;
+}
+
+.operational-stage .spatial-authoring {
+  flex: 1;
+  min-height: 0;
+}
+
+@media (max-width: 900px) {
+  .spatial-authoring-toolbar,
+  .spatial-edit-state {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .spatial-authoring-actions {
+    justify-content: flex-start;
+  }
+
+  .spatial-edit-state-actions {
+    width: 100%;
+  }
+
+  .spatial-edit-state-actions button {
+    flex: 1;
+  }
+
+  .spatial-authoring-legend {
+    flex-wrap: wrap;
+  }
+}

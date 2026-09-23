@@ -1,7 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
-import { RoomPolygonForm } from '@/components/blueprint/room-polygon-form';
 import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
@@ -66,26 +65,23 @@ export default async function BlueprintPage({
           />
 
           <div className="operational-stage-body">
-            {result.value.room.polygon ? (
+            {result.value.room.polygon || canWrite ? (
               <BlueprintCanvas
-                polygon={result.value.room.polygon}
+                roomId={roomId}
+                roomName={result.value.room.name}
+                polygon={result.value.room.polygon ?? []}
                 racks={result.value.racks}
                 slots={result.value.assignableSlots}
+                canEditBoundary={canWrite}
               />
             ) : (
               <StatePanel
                 title="No room boundary"
-                description="Define the physical boundary to render this room."
+                description="This room has no spatial boundary and your role is read-only."
+                kind="readonly"
               />
             )}
           </div>
-
-          {canWrite && (
-            <details className="edit-disclosure operational-blueprint-edit">
-              <summary>Edit room boundary</summary>
-              <RoomPolygonForm roomId={roomId} />
-            </details>
-          )}
         </section>
       </div>
     </main>

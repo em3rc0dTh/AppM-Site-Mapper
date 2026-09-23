@@ -3,12 +3,14 @@ import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-pow
 import { MongoPowerRepository } from '@/modules/power/infrastructure/mongo-power-repository';
 import { getPersistenceMode } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { getMongoDatabase } from '@/shared/infrastructure/mongodb/client';
-
-const memoryRepository = new MemoryPowerRepository();
+import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
 
 export async function createPowerRepository(): Promise<PowerRepository> {
   if (getPersistenceMode() === 'memory') {
-    return memoryRepository;
+    return getProcessSingleton<PowerRepository>(
+      'power-memory-repository',
+      () => new MemoryPowerRepository(),
+    );
   }
 
   return new MongoPowerRepository(await getMongoDatabase());

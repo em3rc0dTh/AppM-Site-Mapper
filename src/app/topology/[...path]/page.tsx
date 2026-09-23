@@ -180,6 +180,8 @@ export default async function TopologyNodePage({
                   roomId={node.id}
                   roomName={node.name}
                   polygon={roomLayout.value.room.polygon ?? []}
+                  clusters={roomLayout.value.clusters}
+                  positions={roomLayout.value.positions}
                   racks={roomLayout.value.racks}
                   slots={roomLayout.value.assignableSlots}
                   canEditBoundary={canWrite}

@@ -57,8 +57,8 @@ export function DevicePhysicalView({
     [...frame.panels].sort((left, right) => naturalOrder.compare(left.label, right.label));
   const orderedEndpoints = (panel: Panel) =>
     [...panel.endpoints].sort((left, right) => {
-      const positionDelta = (left.position ?? Number.MAX_SAFE_INTEGER) -
-        (right.position ?? Number.MAX_SAFE_INTEGER);
+      const positionDelta =
+        (left.position ?? Number.MAX_SAFE_INTEGER) - (right.position ?? Number.MAX_SAFE_INTEGER);
       return positionDelta || naturalOrder.compare(left.label, right.label);
     });
   const boards = shelves.flatMap((shelf) =>

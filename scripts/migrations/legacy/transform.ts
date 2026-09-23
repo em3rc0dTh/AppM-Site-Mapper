@@ -126,11 +126,30 @@ function getNestedNumber(record: LegacyRecord, path: readonly string[]): number 
 function normalizePolygon(
   record: LegacyRecord,
 ): readonly Readonly<{ x: number; y: number }>[] | undefined {
+  const spatialMetadata =
+    typeof record.spatialMetadata === 'string'
+      ? (() => {
+          try {
+            const parsed = JSON.parse(record.spatialMetadata);
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+              ? (parsed as LegacyRecord)
+              : null;
+          } catch {
+            return null;
+          }
+        })()
+      : record.spatialMetadata &&
+          typeof record.spatialMetadata === 'object' &&
+          !Array.isArray(record.spatialMetadata)
+        ? (record.spatialMetadata as LegacyRecord)
+        : null;
   const source = Array.isArray(record.polygon)
     ? record.polygon
     : Array.isArray(record.points)
       ? record.points
-      : null;
+      : spatialMetadata && Array.isArray(spatialMetadata.points)
+        ? spatialMetadata.points
+        : null;
   if (!source) return undefined;
 
   const points = source.flatMap((entry) => {

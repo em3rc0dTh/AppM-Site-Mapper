@@ -219,7 +219,6 @@ async function loadCollection(
   };
 }
 
-
 async function collectionCount(
   db: ReturnType<MongoClient['db']>,
   available: ReadonlySet<string>,
@@ -239,7 +238,14 @@ async function detectCollectionFamily(
   const requested = process.env.LEGACY_COLLECTION_FAMILY?.trim().toLowerCase();
   if (requested === 'pascal' || requested === 'lowercase') return requested;
 
-  const logicalNames = ['structures', 'levels', 'rooms', 'clusters', 'containers', 'devices'] as const;
+  const logicalNames = [
+    'structures',
+    'levels',
+    'rooms',
+    'clusters',
+    'containers',
+    'devices',
+  ] as const;
   let pascal = 0;
   let lowercase = 0;
   for (const logicalName of logicalNames) {
@@ -293,7 +299,11 @@ function embeddedBdfb(device: LegacyRecord): Record<string, unknown> | undefined
                   const capacity =
                     numeric(assignedBreaker ?? {}, ['capacity', 'ampacity', 'amps']) ??
                     numeric(endpoint, ['capacity', 'ampacity', 'amps']);
-                  const explicitStatus = reference(endpoint, ['status', 'variant', 'type'])?.toUpperCase();
+                  const explicitStatus = reference(endpoint, [
+                    'status',
+                    'variant',
+                    'type',
+                  ])?.toUpperCase();
                   const variant =
                     assignedBreaker || explicitStatus === 'BREAKER' ? 'BREAKER' : 'HOLDER';
                   return [
@@ -354,10 +364,12 @@ function deriveDirectContainerPositions(
       return id ? [[id, cluster] as const] : [];
     }),
   );
-  const positionIds = new Set(loaded.positions.flatMap((position) => {
-    const id = recordId(position);
-    return id ? [id] : [];
-  }));
+  const positionIds = new Set(
+    loaded.positions.flatMap((position) => {
+      const id = recordId(position);
+      return id ? [id] : [];
+    }),
+  );
   const derivedPositions: LegacyRecord[] = [];
   const clusterCounters = new Map<string, number>();
 

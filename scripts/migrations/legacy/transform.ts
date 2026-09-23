@@ -275,7 +275,12 @@ function normalizeContainerVariant(spec: SourceSpec, record: LegacyRecord): 'CON
     return 'RACK';
   }
 
-  const explicit = getString(record, ['variant', 'containerVariant', 'type', 'category'])?.toUpperCase();
+  const explicit = getString(record, [
+    'variant',
+    'containerVariant',
+    'type',
+    'category',
+  ])?.toUpperCase();
   if (explicit === 'RACK' || explicit === 'CABINET') {
     return 'RACK';
   }
@@ -337,9 +342,11 @@ function normalizeCas(
 
     const item = entry as LegacyRecord;
     const startU =
-      getNumber(item, ['startU', 'startPosition']) ?? getNestedNumber(item, ['mounting', 'startPosition']);
+      getNumber(item, ['startU', 'startPosition']) ??
+      getNestedNumber(item, ['mounting', 'startPosition']);
     const endU =
-      getNumber(item, ['endU', 'endPosition']) ?? getNestedNumber(item, ['mounting', 'endPosition']);
+      getNumber(item, ['endU', 'endPosition']) ??
+      getNestedNumber(item, ['mounting', 'endPosition']);
     const stateRaw = getString(item, ['state', 'status', 'casStatus'])?.toUpperCase();
     const state =
       stateRaw === 'AVAILABLE' || stateRaw === 'RESERVED' || stateRaw === 'EQUIPPED'

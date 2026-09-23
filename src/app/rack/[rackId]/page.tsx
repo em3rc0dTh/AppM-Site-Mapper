@@ -54,7 +54,7 @@ export default async function RackPage({
     <main className="operational-page operational-page--rack">
       <div className="operational-layout operational-layout--rack">
         <aside className="operational-context">
-          <TopologyContextTree trail={trailEntries} children={childEntries} />
+          <TopologyContextTree trail={trailEntries} descendants={childEntries} />
         </aside>
         <section className="operational-stage operational-stage--wide">
           <RackElevation view={result.value} />

@@ -20,6 +20,7 @@
     "migration:legacy": "node --experimental-strip-types scripts/migrations/legacy/migrate.ts",
     "migration:legacy:mongo": "node --experimental-strip-types scripts/migrations/legacy/from-mongo.ts",
     "migration:verify-staging": "node --experimental-strip-types scripts/migrations/legacy/verify-staging.ts",
+    "migration:promote-staging": "node --experimental-strip-types scripts/migrations/legacy/promote-staging.ts",
     "test:certification": "vitest run tests/certification"
   },
   "dependencies": {

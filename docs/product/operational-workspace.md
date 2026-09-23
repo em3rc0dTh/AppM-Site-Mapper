@@ -36,3 +36,24 @@ Future operational alarms must originate from explicit domain/telemetry rules ra
 ## Context surfaces
 
 Topology, Blueprint, Rack Elevation, BDFB/Power and Telemetry remain dedicated module surfaces reachable from the workspace and topology context.
+
+
+## Visual operations contract
+
+MK1 preserves the validated spatial interaction grammar of the legacy product without copying its visual design.
+
+The canonical hierarchy remains navigable at every depth. As the operator enters deeper entities, a persistent context tree accumulates the active path and exposes the next contained level.
+
+The center surface represents the selected physical concept rather than reducing every entity to a CRUD list:
+
+- Site / Structure / Level: logical infrastructure canvases where surveyed geometry is unavailable;
+- Room: physical Blueprint using the canonical 600 × 600 mm grid;
+- Bay / Position: spatial containment views;
+- Rack: full front elevation fitted to the operational viewport;
+- BDFB: Shelf / Frame / Panel / Breaker-or-Holder chassis;
+- Frame with `physicalFrameVisible: false`: canonical Frame remains in data, but Panels flatten visually under Shelf;
+- PowerPath: explicit relationship rendered as a diagram, never inferred from presentation.
+
+The application shell uses a bounded operational viewport. Document-level scrolling is avoided for primary infrastructure surfaces; when large datasets require scrolling, it is confined to the relevant tree, inspector, inventory, or configuration panel.
+
+The technical Inspector remains a quick factual surface. It complements rather than replaces Blueprint, Rack Elevation, BDFB chassis, Panel/Breaker views, and PowerPath diagrams.

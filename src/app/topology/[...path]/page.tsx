@@ -92,8 +92,8 @@ export default async function TopologyNodePage({
                 path,
                 sourceName: source?.name ?? 'Unavailable source',
                 targetName: target?.name ?? 'Unavailable destination',
-                sourceHref: `${await service.buildDeepLink(path.source.entityId)}?${params}`,
-                targetHref: await service.buildDeepLink(path.target.entityId),
+                sourceHref: `/popup/device/${path.source.entityId}${params.size ? `?${params}` : ''}`,
+                targetHref: `/popup/device/${path.target.entityId}`,
                 sourceTrail: [
                   source?.name,
                   shelf?.label,

@@ -208,12 +208,16 @@ export async function seedDevelopmentDemo(
     'STRUCTURE',
   );
 
+  // Demo truth: this single-floor structure uses the same operational footprint
+  // as its only Room. Structure geometry may differ in real data, but the demo
+  // must not invent a second footprint without evidence.
   const structureBoundary = await spatial.updateBoundary(structure.id, [
-    { x: 600, y: 600 },
-    { x: 5400, y: 600 },
-    { x: 6000, y: 1800 },
-    { x: 4800, y: 3600 },
-    { x: 600, y: 3600 },
+    { x: 0, y: 0 },
+    { x: 3600, y: 0 },
+    { x: 3600, y: 1200 },
+    { x: 3000, y: 1200 },
+    { x: 3000, y: 2400 },
+    { x: 0, y: 2400 },
   ]);
 
   if (!structureBoundary.ok) {
@@ -292,6 +296,16 @@ export async function seedDevelopmentDemo(
     'POSITION',
   );
 
+  const positionA03 = expectKind(
+    await ensureNode(topologyRepository, topology, {
+      kind: 'POSITION',
+      parentId: bayA.id,
+      name: 'Position A03',
+      coordinate: { row: 'A', column: 3 },
+    }),
+    'POSITION',
+  );
+
   const positionB01 = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'POSITION',
@@ -302,6 +316,19 @@ export async function seedDevelopmentDemo(
     'POSITION',
   );
 
+  const positionB02 = expectKind(
+    await ensureNode(topologyRepository, topology, {
+      kind: 'POSITION',
+      parentId: bayB.id,
+      name: 'Position B02',
+      coordinate: { row: 'B', column: 2 },
+    }),
+    'POSITION',
+  );
+
+  void positionA03;
+  void positionB02;
+
   const rackA01 = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'CONTAINER_RACK',
@@ -309,6 +336,7 @@ export async function seedDevelopmentDemo(
       name: 'RACK-A01',
       containerVariant: 'RACK',
       totalU: 42,
+      dimensionsMm: { width: 600, depth: 600 },
     }),
     'CONTAINER_RACK',
   );
@@ -320,6 +348,7 @@ export async function seedDevelopmentDemo(
       name: 'RACK-A02',
       containerVariant: 'RACK',
       totalU: 42,
+      dimensionsMm: { width: 900, depth: 600 },
     }),
     'CONTAINER_RACK',
   );
@@ -331,6 +360,7 @@ export async function seedDevelopmentDemo(
       name: 'RACK-B01',
       containerVariant: 'RACK',
       totalU: 24,
+      dimensionsMm: { width: 1200, depth: 600 },
     }),
     'CONTAINER_RACK',
   );

@@ -14,9 +14,7 @@ export async function GET(_request: Request, context: Context) {
   }
 
   const { id } = await context.params;
-  const result = await new RackElevationService(
-    await createTopologyRepository(),
-  ).getView(id);
+  const result = await new RackElevationService(await createTopologyRepository()).getView(id);
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 404 });

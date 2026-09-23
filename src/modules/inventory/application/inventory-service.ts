@@ -1,9 +1,5 @@
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
-import type {
-  DeviceNode,
-  EquipmentNode,
-  TopologyNode,
-} from '@/modules/topology/domain/entities';
+import type { DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type InventoryItem = DeviceNode | EquipmentNode;
@@ -28,8 +24,7 @@ export class InventoryService {
     const children = await this.repository.listChildren(rack.id);
     const items = children.filter(
       (node): node is InventoryItem =>
-        node.lifecycle === 'ACTIVE' &&
-        (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT'),
+        node.lifecycle === 'ACTIVE' && (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT'),
     );
 
     return success(items);

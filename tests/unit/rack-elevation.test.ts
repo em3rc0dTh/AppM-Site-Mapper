@@ -68,10 +68,7 @@ describe('RackElevationService', () => {
       throw new Error('Expected rack elevation.');
     }
 
-    expect(result.value.inventory.map((item) => item.kind).sort()).toEqual([
-      'DEVICE',
-      'EQUIPMENT',
-    ]);
+    expect(result.value.inventory.map((item) => item.kind).sort()).toEqual(['DEVICE', 'EQUIPMENT']);
     expect(result.value.rows).toHaveLength(6);
     expect(result.value.rows.find((row) => row.u === 3)).toMatchObject({
       role: 'PHYSICAL',

@@ -96,3 +96,22 @@ Frame remains canonical. No manufacturer geometry, live telemetry or survey
 claims were fabricated. No secret, local credentials or environment file was
 included in commits. main was not merged and no additional remote branch was
 created. Updates continue in PR #29 through non-forced branch updates.
+
+
+## Spatial truth / popup restoration addendum
+
+- Level floor geometry is derived from contained Room/Substructure polygons. The demo now avoids
+  inventing a second floor footprint: its single operational Room and Structure use the same
+  explicit footprint while Level itself remains non-spatial in persistence.
+- Room grid semantics remain fixed at 600 × 600 mm. Position is the 600 mm operational anchor;
+  Container/Rack footprint is independent physical geometry in millimetres and may be 600×600,
+  900×600, 900×900, 1200×600 or other positive dimensions.
+- Bay / ContainerCluster remains a spatial grouping derived from its Positions plus actual
+  Container/Rack footprints. The derived extent is not represented as surveyed geometry.
+- Physical popup behavior is restored from Container/Rack downward:
+  Room rack double-click and hierarchy rack selection open a dedicated Container popup;
+  mounted Device/Equipment opens a separate Device popup; Panels and Breaker/Holders open
+  dedicated child popup windows; power tracing can open a separate trace window.
+- Workspace pinned inventory, BDFB summary and topology tree launch physical Device/Container
+  popups instead of forcing the main operational page to navigate away.
+- Popup windows bypass the normal application chrome and retain specialized physical surfaces.

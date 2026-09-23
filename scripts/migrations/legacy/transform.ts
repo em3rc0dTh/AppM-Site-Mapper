@@ -184,7 +184,9 @@ function resolveCanonicalId(
   return generated;
 }
 
-function normalizeCoordinate(record: LegacyRecord): Readonly<{ row: string; column: number }> | null {
+function normalizeCoordinate(
+  record: LegacyRecord,
+): Readonly<{ row: string; column: number }> | null {
   const row = getString(record, ['row', 'gridRow']);
   const column = getNumber(record, ['column', 'gridColumn']);
 
@@ -230,7 +232,11 @@ function normalizeCas(
   sourceCollection: string,
   id: string,
 ): readonly Record<string, unknown>[] {
-  const source = Array.isArray(record.cas) ? record.cas : Array.isArray(record.CAS) ? record.CAS : null;
+  const source = Array.isArray(record.cas)
+    ? record.cas
+    : Array.isArray(record.CAS)
+      ? record.CAS
+      : null;
 
   if (!source) {
     return totalU

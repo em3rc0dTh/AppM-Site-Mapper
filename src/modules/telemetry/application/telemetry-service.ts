@@ -25,12 +25,7 @@ export class TelemetryService {
     payload: Uint8Array,
     receivedAt?: string,
   ): Promise<Result<TelemetrySample, TelemetryIngestError>> {
-    const normalized = normalizeTelemetry(
-      topic,
-      payload,
-      this.normalizerOptions,
-      receivedAt,
-    );
+    const normalized = normalizeTelemetry(topic, payload, this.normalizerOptions, receivedAt);
 
     if (!normalized.ok) {
       return normalized;
@@ -62,9 +57,7 @@ export class TelemetryService {
     return this.hub.snapshot();
   }
 
-  private async resolveSource(
-    sourceIdentity: string,
-  ): Promise<TelemetryEntity | null> {
+  private async resolveSource(sourceIdentity: string): Promise<TelemetryEntity | null> {
     const [devices, equipment] = await Promise.all([
       this.topologyRepository.listByKind('DEVICE'),
       this.topologyRepository.listByKind('EQUIPMENT'),
@@ -77,6 +70,6 @@ export class TelemetryService {
         node.serialNumber === sourceIdentity,
     );
 
-    return candidates.length === 1 ? candidates[0] ?? null : null;
+    return candidates.length === 1 ? (candidates[0] ?? null) : null;
   }
 }

@@ -2068,7 +2068,6 @@ p {
   font-size: 0.68rem;
 }
 
-
 /* -------------------------------------------------------------------------- */
 /* MK1 Visual Operations Surface                                               */
 /* The canonical domain remains unchanged; these rules restore spatial context */
@@ -2142,8 +2141,7 @@ p {
   padding: 20px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 70% 10%, rgba(121, 217, 232, 0.035), transparent 30%),
-    #0b1016;
+    radial-gradient(circle at 70% 10%, rgba(121, 217, 232, 0.035), transparent 30%), #0b1016;
 }
 
 .operational-stage--wide {
@@ -2506,9 +2504,7 @@ p {
   gap: 14px;
   padding: 18px;
   border: 1px solid #334250;
-  background:
-    linear-gradient(140deg, rgba(121, 217, 232, 0.06), transparent 52%),
-    #10161e;
+  background: linear-gradient(140deg, rgba(121, 217, 232, 0.06), transparent 52%), #10161e;
   color: #dbe5ee;
   text-decoration: none;
   box-shadow: 0 12px 40px #0004;
@@ -2525,9 +2521,7 @@ p {
 .topology-visual-node:hover,
 .topology-visual-node:focus-visible {
   border-color: var(--accent);
-  background:
-    linear-gradient(140deg, rgba(121, 217, 232, 0.13), transparent 58%),
-    #121b24;
+  background: linear-gradient(140deg, rgba(121, 217, 232, 0.13), transparent 58%), #121b24;
 }
 
 .topology-visual-stage--structure .topology-visual-node--level {
@@ -2628,8 +2622,7 @@ p {
   border: 1px solid #32404e;
   border-radius: 8px;
   background:
-    radial-gradient(circle at 50% 0, rgba(121, 217, 232, 0.055), transparent 36%),
-    #080c11;
+    radial-gradient(circle at 50% 0, rgba(121, 217, 232, 0.055), transparent 36%), #080c11;
 }
 
 .bdfb-chassis-header {
@@ -2688,7 +2681,12 @@ p {
   border-radius: 12px;
   padding: 42px 16px 16px;
   background:
-    linear-gradient(90deg, #171d25 0 8px, transparent 8px calc(100% - 8px), #171d25 calc(100% - 8px)),
+    linear-gradient(
+      90deg,
+      #171d25 0 8px,
+      transparent 8px calc(100% - 8px),
+      #171d25 calc(100% - 8px)
+    ),
     #0b1016;
   box-shadow: inset 0 0 0 6px #080c11;
 }
@@ -2886,9 +2884,7 @@ p {
 
 .bdfb-endpoint--breaker {
   border-color: #3d5967;
-  background:
-    linear-gradient(90deg, rgba(121, 217, 232, 0.07), transparent 65%),
-    #0a1016;
+  background: linear-gradient(90deg, rgba(121, 217, 232, 0.07), transparent 65%), #0a1016;
 }
 
 .bdfb-endpoint--holder {
@@ -2977,8 +2973,7 @@ p {
   border-radius: 8px;
   overflow: hidden;
   background:
-    radial-gradient(circle at 50% 48%, rgba(121, 217, 232, 0.04), transparent 45%),
-    #080c11;
+    radial-gradient(circle at 50% 48%, rgba(121, 217, 232, 0.04), transparent 45%), #080c11;
 }
 
 .rack-physical-stage::before {
@@ -2995,8 +2990,7 @@ p {
   bottom: 16px;
   width: 12px;
   border: 1px solid #2f3d4a;
-  background:
-    repeating-linear-gradient(to bottom, #33414f 0 2px, #151d25 2px 12px);
+  background: repeating-linear-gradient(to bottom, #33414f 0 2px, #151d25 2px 12px);
 }
 
 .rack-rail--left {
@@ -3068,16 +3062,12 @@ p {
 }
 
 .rack-layout--visual .rack-unit--physical .rack-unit-state {
-  background:
-    linear-gradient(90deg, rgba(121, 217, 232, 0.12), transparent 80%),
-    #173541;
+  background: linear-gradient(90deg, rgba(121, 217, 232, 0.12), transparent 80%), #173541;
   border-left: 2px solid #68c6d5;
 }
 
 .rack-layout--visual .rack-unit--reserved .rack-unit-state {
-  background:
-    linear-gradient(90deg, rgba(237, 193, 121, 0.12), transparent 80%),
-    #2a2419;
+  background: linear-gradient(90deg, rgba(237, 193, 121, 0.12), transparent 80%), #2a2419;
   border-left: 2px solid #b18c4e;
 }
 

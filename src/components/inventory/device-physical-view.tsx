@@ -16,6 +16,8 @@ import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspec
 import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { openPhysicalPopup } from '@/shared/ui/physical-popup';
 
+const naturalOrder = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
+
 export interface ElectricalConnection {
   path: PowerPath;
   sourceName: string;
@@ -33,6 +35,7 @@ export function DevicePhysicalView({
   focus,
   powerReadable,
   popupMode = false,
+  viewMode = 'adaptive',
 }: Readonly<{
   device: DeviceNode | EquipmentNode;
   rack: ContainerRackNode | null;
@@ -41,12 +44,23 @@ export function DevicePhysicalView({
   focus: Readonly<{ shelf?: string; panel?: string; endpoint?: string; path?: string }>;
   powerReadable: boolean;
   popupMode?: boolean;
+  viewMode?: 'adaptive' | 'device' | 'panel' | 'endpoint';
 }>) {
   const [inspection, setInspection] = useState<InspectorEntity | null>(null);
   const [selection, setSelection] = useState<string | null>(focus.endpoint ?? null);
-  const shelves = device.kind === 'DEVICE' ? (device.bdfb?.shelves ?? []) : [];
+  const shelves = [...(device.kind === 'DEVICE' ? (device.bdfb?.shelves ?? []) : [])].sort(
+    (left, right) => naturalOrder.compare(left.label, right.label),
+  );
+  const orderedFrames = (shelf: Shelf) =>
+    [...shelf.frames].sort((left, right) => naturalOrder.compare(left.label, right.label));
+  const orderedPanels = (frame: Frame) =>
+    [...frame.panels].sort((left, right) => naturalOrder.compare(left.label, right.label));
+  const orderedEndpoints = (panel: Panel) =>
+    [...panel.endpoints].sort((left, right) => naturalOrder.compare(left.label, right.label));
   const boards = shelves.flatMap((shelf) =>
-    shelf.frames.flatMap((frame) => frame.panels.map((panel) => ({ shelf, frame, panel }))),
+    orderedFrames(shelf).flatMap((frame) =>
+      orderedPanels(frame).map((panel) => ({ shelf, frame, panel })),
+    ),
   );
   const activeBoard = boards.find(
     (item) => item.panel.id === focus.panel && (!focus.shelf || item.shelf.id === focus.shelf),
@@ -120,9 +134,25 @@ export function DevicePhysicalView({
       ],
     });
   }
-  function board(shelf: Shelf, frame: Frame, panel: Panel, expanded: boolean) {
+  function board(
+    shelf: Shelf,
+    frame: Frame,
+    panel: Panel,
+    expanded: boolean,
+    showEndpoints = true,
+  ) {
+    const endpoints = orderedEndpoints(panel);
+    const breakerCount = endpoints.filter((endpoint) => endpoint.variant === 'BREAKER').length;
+    const holderCount = endpoints.length - breakerCount;
+    const connectedCount = powerReadable
+      ? endpoints.filter((endpoint) => endpointLinks(endpoint).length > 0).length
+      : null;
+
     return (
-      <article className={`studio-panel ${expanded ? 'is-expanded' : ''}`} key={panel.id}>
+      <article
+        className={`studio-panel ${expanded ? 'is-expanded' : ''} ${showEndpoints ? 'studio-panel--detail' : 'studio-panel--overview'}`}
+        key={panel.id}
+      >
         <header>
           <div>
             <small>DISTRIBUTION PANEL</small>
@@ -134,10 +164,11 @@ export function DevicePhysicalView({
         </header>
         <div className="studio-bus">
           <span>Distribution endpoints</span>
-          <span>{panel.endpoints.length} configured positions</span>
+          <span>{endpoints.length} configured positions</span>
         </div>
-        <div className="studio-endpoint-matrix">
-          {panel.endpoints.map((endpoint, index) => (
+        {showEndpoints ? (
+          <div className="studio-endpoint-matrix">
+          {endpoints.map((endpoint, index) => (
             <div className="studio-endpoint-position" key={endpoint.id}>
               <button
                 className={`studio-endpoint ${endpoint.variant.toLowerCase()} ${selection === endpoint.id || activeEndpoint?.id === endpoint.id ? 'is-selected' : ''}`}
@@ -178,8 +209,27 @@ export function DevicePhysicalView({
               )}
             </div>
           ))}
-        </div>
-        {!panel.endpoints.length && <p>No endpoints configured on this panel.</p>}
+          </div>
+        ) : (
+          <div className="studio-panel-summary">
+            <div>
+              <small>BREAKERS</small>
+              <strong>{breakerCount}</strong>
+            </div>
+            <div>
+              <small>HOLDERS</small>
+              <strong>{holderCount}</strong>
+            </div>
+            <div>
+              <small>CONNECTED</small>
+              <strong>{connectedCount ?? '—'}</strong>
+            </div>
+            <button type="button" onClick={() => openPanelPopup(shelf, panel)}>
+              Enter panel →
+            </button>
+          </div>
+        )}
+        {!endpoints.length && <p>No endpoints configured on this panel.</p>}
       </article>
     );
   }
@@ -190,7 +240,7 @@ export function DevicePhysicalView({
           <span>SHELF</span>
           <Link href={link({ shelf: shelf.id })}>{shelf.label} →</Link>
         </header>
-        {shelf.frames.map((frame) => (
+        {orderedFrames(shelf).map((frame) => (
           <div
             key={frame.id}
             className={
@@ -201,13 +251,77 @@ export function DevicePhysicalView({
           >
             {frame.presentation?.physicalFrameVisible !== false && <h3>{frame.label}</h3>}
             <div className="studio-panel-field">
-              {frame.panels.map((panel) => board(shelf, frame, panel, false))}
+              {orderedPanels(frame).map((panel) => board(shelf, frame, panel, false, false))}
             </div>
           </div>
         ))}
       </section>
     );
   }
+  function endpointDetail() {
+    if (!activeBoard || !activeEndpoint) return null;
+    const panelEndpoints = orderedEndpoints(activeBoard.panel);
+    const position = panelEndpoints.findIndex((endpoint) => endpoint.id === activeEndpoint.id) + 1;
+    const links = endpointLinks(activeEndpoint);
+
+    return (
+      <section className="studio-endpoint-detail">
+        <div className={`studio-endpoint-hero ${activeEndpoint.variant.toLowerCase()}`}>
+          <small>PHYSICAL ENDPOINT · POSITION {String(position).padStart(2, '0')}</small>
+          <div className="studio-endpoint-hero-switch" aria-hidden="true" />
+          <strong>{activeEndpoint.label}</strong>
+          <span>{activeEndpoint.variant}</span>
+        </div>
+        <div className="studio-endpoint-metadata">
+          <div>
+            <small>DEVICE</small>
+            <strong>{device.name}</strong>
+          </div>
+          <div>
+            <small>SHELF / FRAME</small>
+            <strong>
+              {activeBoard.shelf.label} / {activeBoard.frame.label}
+            </strong>
+          </div>
+          <div>
+            <small>PANEL</small>
+            <strong>{activeBoard.panel.label}</strong>
+          </div>
+          <div>
+            <small>CAPACITY</small>
+            <strong>
+              {activeEndpoint.capacity !== undefined ? activeEndpoint.capacity : 'Not specified'}
+            </strong>
+          </div>
+          <div>
+            <small>POWER LINKS</small>
+            <strong>{powerReadable ? links.length : 'Restricted'}</strong>
+          </div>
+          <button type="button" onClick={() => openPanelPopup(activeBoard.shelf, activeBoard.panel)}>
+            Open parent panel →
+          </button>
+        </div>
+        <div className="studio-endpoint-power">
+          <small>ELECTRICAL RELATIONSHIPS</small>
+          {!powerReadable ? (
+            <strong>Restricted by role</strong>
+          ) : links.length === 0 ? (
+            <strong>No configured power path</strong>
+          ) : (
+            links.slice(0, 3).map((connection) => (
+              <div key={connection.path.id}>
+                <span>{connection.sourceName}</span>
+                <b>→</b>
+                <span>{connection.targetName}</span>
+              </div>
+            ))
+          )}
+          {links.length > 3 && <span>+{links.length - 3} additional paths</span>}
+        </div>
+      </section>
+    );
+  }
+
   const endpointConnections = activeEndpoint ? endpointLinks(activeEndpoint) : connections;
   const focusedConnections = activePath
     ? connections.filter((item) => item.path.target.entityId === activePath.path.target.entityId)
@@ -218,7 +332,7 @@ export function DevicePhysicalView({
     (focus.endpoint && !activeEndpoint) ||
     (focus.path && !activePath);
   return (
-    <section className="studio-device">
+    <section className={`studio-device studio-device--${viewMode}`}>
       <nav className="studio-local-nav" aria-label="Equipment physical context">
         <Link href={href} aria-current={!focus.shelf && !focus.path ? 'page' : undefined}>
           Chassis
@@ -260,8 +374,14 @@ export function DevicePhysicalView({
           <>
             {!activePath &&
               (shelves.length ? (
-                activeBoard ? (
-                  board(activeBoard.shelf, activeBoard.frame, activeBoard.panel, true)
+                viewMode === 'endpoint' && activeEndpoint ? (
+                  endpointDetail()
+                ) : viewMode === 'panel' && activeBoard ? (
+                  board(activeBoard.shelf, activeBoard.frame, activeBoard.panel, true, true)
+                ) : viewMode === 'device' ? (
+                  (activeShelf ? [activeShelf] : shelves).map(shelfView)
+                ) : activeBoard ? (
+                  board(activeBoard.shelf, activeBoard.frame, activeBoard.panel, true, true)
                 ) : (
                   (activeShelf ? [activeShelf] : shelves).map(shelfView)
                 )
@@ -280,7 +400,7 @@ export function DevicePhysicalView({
                   <span className="studio-mount-ear" aria-hidden="true" />
                 </div>
               ))}
-            {activeEndpoint && (
+            {viewMode === 'adaptive' && activeEndpoint && (
               <div className="studio-endpoint-context">
                 <strong>{activeEndpoint.label}</strong>
                 <span>{activeEndpoint.variant}</span>
@@ -291,7 +411,7 @@ export function DevicePhysicalView({
                 </span>
               </div>
             )}
-            <section className="studio-connections">
+            {viewMode === 'adaptive' && <section className="studio-connections">
               <header>
                 <div>
                   <small>ELECTRICAL TOPOLOGY</small>
@@ -397,8 +517,8 @@ export function DevicePhysicalView({
                   </div>
                 ))
               )}
-            </section>
-            <div className="studio-device-facts">
+            </section>}
+            {(viewMode === 'adaptive' || viewMode === 'device') && <div className="studio-device-facts">
               <span>
                 {rack?.name ?? 'Rack unavailable'} · {uRange}
               </span>
@@ -406,7 +526,7 @@ export function DevicePhysicalView({
               <button onClick={() => setInspection(topologyInspector(device, href))}>
                 Inspect identity
               </button>
-            </div>
+            </div>}
           </>
         )}
       </div>

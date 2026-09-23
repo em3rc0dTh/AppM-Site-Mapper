@@ -95,13 +95,10 @@ function NetworkSiteCanvas({ items }: { items: readonly VisualStageChild[] }) {
       <div className="legacy-site-map-grid" aria-hidden="true" />
       <div className="legacy-site-boundary">
         {items.map(({ node, href }, index) => (
-          <ChildLink
-            key={node.id}
-            child={node}
-            href={href}
-            className="legacy-site-footprint"
-          >
-            <span className="legacy-site-footprint-crosshair" aria-hidden="true">+</span>
+          <ChildLink key={node.id} child={node} href={href} className="legacy-site-footprint">
+            <span className="legacy-site-footprint-crosshair" aria-hidden="true">
+              +
+            </span>
             <span>
               <small>{metadata(node)}</small>
               <strong>{node.name}</strong>
@@ -122,12 +119,7 @@ function StructureCanvas({ items }: { items: readonly VisualStageChild[] }) {
           <div className="legacy-stage-empty">No active levels</div>
         ) : (
           [...items].reverse().map(({ node, href }, index) => (
-            <ChildLink
-              key={node.id}
-              child={node}
-              href={href}
-              className="legacy-level-slab"
-            >
+            <ChildLink key={node.id} child={node} href={href} className="legacy-level-slab">
               <span className="legacy-level-number">
                 {(items.length - index).toString().padStart(2, '0')}
               </span>
@@ -150,12 +142,7 @@ function LevelCanvas({ items }: { items: readonly VisualStageChild[] }) {
       <div className="legacy-level-grid" aria-hidden="true" />
       <div className="legacy-room-field">
         {items.map(({ node, href }, index) => (
-          <ChildLink
-            key={node.id}
-            child={node}
-            href={href}
-            className="legacy-room-footprint"
-          >
+          <ChildLink key={node.id} child={node} href={href} className="legacy-room-footprint">
             <span className="legacy-room-index">{String.fromCharCode(65 + (index % 26))}</span>
             <span>
               <small>{metadata(node)}</small>
@@ -173,10 +160,14 @@ function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
   return (
     <div className="legacy-bay-canvas">
       <div className="legacy-bay-axis legacy-bay-axis--top">
-        {Array.from({ length: 8 }, (_, i) => <span key={i}>{i + 1}</span>)}
+        {Array.from({ length: 8 }, (_, i) => (
+          <span key={i}>{i + 1}</span>
+        ))}
       </div>
       <div className="legacy-bay-axis legacy-bay-axis--left">
-        {['A', 'B', 'C', 'D'].map((label) => <span key={label}>{label}</span>)}
+        {['A', 'B', 'C', 'D'].map((label) => (
+          <span key={label}>{label}</span>
+        ))}
       </div>
       <div className="legacy-position-grid">
         {items.map(({ node, href }) => (
@@ -250,11 +241,15 @@ export function TopologyVisualStage({
   }
 
   return (
-    <section className={`topology-visual-stage legacy-visual-stage legacy-visual-stage--${node.kind.toLowerCase()}`}>
+    <section
+      className={`topology-visual-stage legacy-visual-stage legacy-visual-stage--${node.kind.toLowerCase()}`}
+    >
       <header className="legacy-stage-toolbar">
         <div>
           <strong>{titleFor(node)}</strong>
-          <span>Operational view · schematic geometry where surveyed coordinates are unavailable</span>
+          <span>
+            Operational view · schematic geometry where surveyed coordinates are unavailable
+          </span>
         </div>
         <StatusBadge>{items.length} CONTAINED</StatusBadge>
       </header>

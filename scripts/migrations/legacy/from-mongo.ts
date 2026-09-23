@@ -519,6 +519,102 @@ function diagnoseSiteParentedLevels(
   });
 }
 
+function expandSharedSiteLevelFallbacks(
+  loaded: Record<keyof typeof sourceAliases, readonly LegacyRecord[]>,
+): Readonly<{
+  loaded: Record<keyof typeof sourceAliases, readonly LegacyRecord[]>;
+  expanded: readonly Readonly<{
+    legacyLevelId: string;
+    legacySiteId: string;
+    derivedLevelId: string;
+    structureId: string;
+    structureName: string;
+  }>[];
+}> {
+  const siteIds = new Set(
+    loaded.sites.flatMap((site) => {
+      const id = recordId(site);
+      return id ? [id] : [];
+    }),
+  );
+
+  const directStructureLevelParents = new Set(
+    loaded.levels.flatMap((level) => {
+      const parentId = reference(level, ['structureId', 'structure_id', 'parentId']);
+      return parentId && !siteIds.has(parentId) ? [parentId] : [];
+    }),
+  );
+
+  const structuresBySite = new Map<string, LegacyRecord[]>();
+  for (const structure of loaded.structures) {
+    const siteId = reference(structure, ['siteId', 'site_id', 'parentId']);
+    if (!siteId) continue;
+    const bucket = structuresBySite.get(siteId) ?? [];
+    bucket.push(structure);
+    structuresBySite.set(siteId, bucket);
+  }
+
+  const expanded: Array<{
+    legacyLevelId: string;
+    legacySiteId: string;
+    derivedLevelId: string;
+    structureId: string;
+    structureName: string;
+  }> = [];
+
+  const levels = loaded.levels.flatMap((level) => {
+    const levelId = recordId(level);
+    const parentId = reference(level, ['structureId', 'structure_id', 'parentId']);
+    if (!levelId || !parentId || !siteIds.has(parentId)) return [level];
+
+    const rooms = loaded.rooms.filter(
+      (room) => reference(room, ['levelId', 'level_id', 'parentId']) === levelId,
+    );
+
+    // Legacy getFullStructureData() reused Site-parented Levels for every Structure
+    // under that Site that had no direct Levels. When the shared Level has no Room
+    // descendants, MK1 can preserve that behavior losslessly by materializing one
+    // deterministic derived Level per affected Structure.
+    if (rooms.length > 0) return [level];
+
+    const fallbackStructures = (structuresBySite.get(parentId) ?? []).filter((structure) => {
+      const structureId = recordId(structure);
+      return structureId ? !directStructureLevelParents.has(structureId) : false;
+    });
+
+    if (fallbackStructures.length <= 1) return [level];
+
+    return fallbackStructures.flatMap((structure) => {
+      const structureId = recordId(structure);
+      if (!structureId) return [];
+      const derivedLevelId = `derived-level:${levelId}:${structureId}`;
+      expanded.push({
+        legacyLevelId: levelId,
+        legacySiteId: parentId,
+        derivedLevelId,
+        structureId,
+        structureName: label(structure, structureId),
+      });
+      return [
+        {
+          ...level,
+          id: derivedLevelId,
+          originalId: levelId,
+          parentId: structureId,
+          migrationParentSource: 'legacy-site-level-shared-fallback',
+          migrationLegacyParentId: parentId,
+          migrationDerived: true,
+        },
+      ];
+    });
+  });
+
+  return {
+    loaded: { ...loaded, levels },
+    expanded,
+  };
+}
+
 function normalizeSiteParentedLevels(
   loaded: Record<keyof typeof sourceAliases, readonly LegacyRecord[]>,
 ): Readonly<{
@@ -747,7 +843,8 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
     loadedEntries.map(([logicalName, result]) => [logicalName, result.records]),
   ) as Record<keyof typeof sourceAliases, readonly LegacyRecord[]>;
   const withPositions = deriveDirectContainerPositions(loadedRaw);
-  const levelNormalization = normalizeSiteParentedLevels(withPositions);
+  const sharedLevelExpansion = expandSharedSiteLevelFallbacks(withPositions);
+  const levelNormalization = normalizeSiteParentedLevels(sharedLevelExpansion.loaded);
   const loaded = levelNormalization.loaded;
   const resolutions = loadedEntries.map(([, result]) => result.resolution);
 
@@ -757,6 +854,7 @@ async function loadLegacyInput(client: MongoClient): Promise<LegacyMigrationInpu
         collectionFamily: family,
         collectionResolution: resolutions,
         derivedPositions: loaded.positions.length - loadedRaw.positions.length,
+        expandedSharedSiteLevels: sharedLevelExpansion.expanded,
         normalizedSiteLevelParents: levelNormalization.normalized,
         unresolvedSiteLevelDiagnostics: diagnoseSiteParentedLevels(loaded).filter(
           (diagnostic) =>

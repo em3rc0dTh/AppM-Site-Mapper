@@ -1,9 +1,11 @@
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
+import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type InventoryItem = DeviceNode | EquipmentNode;
-export type InventoryError = 'RACK_NOT_FOUND' | 'NOT_A_CONTAINER_RACK';
+export type InventoryError =
+  'RACK_NOT_FOUND' | 'NOT_A_CONTAINER_RACK' | 'ITEM_NOT_FOUND' | 'NOT_INVENTORY_ITEM';
 
 export class InventoryService {
   constructor(private readonly repository: TopologyRepository) {}
@@ -38,5 +40,26 @@ export class InventoryService {
     }
 
     return node;
+  }
+
+  async setPinned(id: string, pinned: boolean): Promise<Result<InventoryItem, InventoryError>> {
+    const node = await this.repository.getById(id);
+
+    if (!node) {
+      return failure('ITEM_NOT_FOUND');
+    }
+
+    if (node.kind !== 'DEVICE' && node.kind !== 'EQUIPMENT') {
+      return failure('NOT_INVENTORY_ITEM');
+    }
+
+    const updated: InventoryItem = {
+      ...node,
+      pinned,
+      updatedAt: nowIso(),
+    };
+
+    await this.repository.replace(updated);
+    return success(updated);
   }
 }

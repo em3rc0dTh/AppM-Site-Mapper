@@ -35,10 +35,8 @@ export default async function EndpointPopupPage({
 
   if (!endpointContext) return null;
 
-  const shelfId =
-    typeof query.shelf === 'string' ? query.shelf : endpointContext.shelf.id;
-  const panelId =
-    typeof query.panel === 'string' ? query.panel : endpointContext.panel.id;
+  const shelfId = typeof query.shelf === 'string' ? query.shelf : endpointContext.shelf.id;
+  const panelId = typeof query.panel === 'string' ? query.panel : endpointContext.panel.id;
 
   return (
     <PopupChrome

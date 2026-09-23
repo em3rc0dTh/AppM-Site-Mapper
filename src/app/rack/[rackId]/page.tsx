@@ -57,14 +57,14 @@ export default async function RackPage({
         <section className="operational-stage operational-stage--wide">
           <RackElevation
             view={result.value}
-            context={
-              parent?.kind === 'POSITION'
-                ? {
+            {...(parent?.kind === 'POSITION'
+              ? {
+                  context: {
                     positionName: parent.name,
                     coordinate: `${parent.coordinate.row}-${parent.coordinate.column}`,
-                  }
-                : undefined
-            }
+                  },
+                }
+              : {})}
           />
         </section>
       </div>

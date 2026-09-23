@@ -1,6 +1,6 @@
 # G6 — Blueprint Engine Receipt
 
-**Status:** READY FOR CI / REVIEW
+**Status:** PASS PENDING FINAL CI
 
 ## Delivered
 
@@ -18,4 +18,4 @@
 
 ## Gate verdict
 
-PASS requires Blueprint UI/API integration and complete CI.
+Blueprint UI/API integration is present. Final PASS requires complete CI on the final branch head.

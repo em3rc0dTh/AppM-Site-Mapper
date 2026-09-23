@@ -482,3 +482,107 @@ textarea {
     flex-direction: column;
   }
 }
+
+.settings-shell {
+  width: min(1240px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 1.5rem 0 4rem;
+}
+
+.settings-header,
+.settings-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.settings-form {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.settings-form label {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.settings-facts {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0 0 1rem;
+}
+
+.settings-facts div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #293344;
+  padding-bottom: 0.5rem;
+}
+
+.settings-facts dt {
+  color: #8fa0b7;
+}
+
+.settings-facts dd {
+  margin: 0;
+  font-weight: 700;
+}
+
+.settings-success {
+  color: #a8efc0;
+}
+
+.settings-danger {
+  border-color: #6e433f;
+}
+
+.settings-users {
+  overflow: hidden;
+}
+
+.settings-user-create {
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  align-items: end;
+  margin-bottom: 1rem;
+}
+
+.settings-user-table-wrap {
+  overflow-x: auto;
+}
+
+.settings-user-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.settings-user-table th,
+.settings-user-table td {
+  padding: 0.75rem;
+  border-top: 1px solid #293344;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.settings-user-table td:first-child {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.settings-user-table small {
+  color: #8fa0b7;
+}
+
+@media (max-width: 720px) {
+  .settings-header,
+  .settings-section-heading {
+    flex-direction: column;
+  }
+}

@@ -35,6 +35,11 @@ export class MongoIdentityRepository implements IdentityRepository {
     return this.users.countDocuments({});
   }
 
+  async listUsers(): Promise<readonly User[]> {
+    const documents = await this.users.find({}).sort({ email: 1 }).toArray();
+    return documents.map((document) => withoutMongoId<User>(document));
+  }
+
   async getUserById(id: string): Promise<User | null> {
     const document = await this.users.findOne({ id });
     return document ? withoutMongoId<User>(document) : null;

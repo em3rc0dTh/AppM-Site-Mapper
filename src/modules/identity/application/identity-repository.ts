@@ -2,6 +2,7 @@ import type { SessionRecord, User } from '@/modules/identity/domain/entities';
 
 export interface IdentityRepository {
   countUsers(): Promise<number>;
+  listUsers(): Promise<readonly User[]>;
   getUserById(id: string): Promise<User | null>;
   getUserByEmail(email: string): Promise<User | null>;
   insertUser(user: User): Promise<void>;

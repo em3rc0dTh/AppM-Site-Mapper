@@ -2,6 +2,13 @@
 
 import { useState, type FormEvent } from 'react';
 
+interface LoginResponse {
+  readonly error?: string;
+  readonly user?: {
+    readonly mustChangePassword?: boolean;
+  };
+}
+
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -20,7 +27,7 @@ export default function LoginPage() {
         password: String(form.get('password') ?? ''),
       }),
     });
-    const result = (await response.json()) as { error?: string };
+    const result = (await response.json()) as LoginResponse;
 
     if (!response.ok) {
       setError(result.error ?? 'LOGIN_FAILED');
@@ -28,7 +35,7 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.href = '/network';
+    window.location.href = result.user?.mustChangePassword ? '/change-password' : '/workspace';
   }
 
   return (
@@ -47,7 +54,7 @@ export default function LoginPage() {
         <button type="submit" disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in'}
         </button>
-        {error && <p className="form-error">{error}</p>}
+        {error ? <p className="form-error">{error}</p> : null}
       </form>
     </main>
   );

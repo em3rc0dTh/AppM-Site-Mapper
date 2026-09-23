@@ -8,8 +8,20 @@ export class MemoryIdentityRepository implements IdentityRepository {
   private readonly users = new Map<string, User>();
   private readonly sessions = new Map<string, SessionRecord>();
 
+  constructor(seed: readonly User[] = []) {
+    for (const user of seed) {
+      this.users.set(user.id, structuredClone(user));
+    }
+  }
+
   async countUsers(): Promise<number> {
     return this.users.size;
+  }
+
+  async listUsers(): Promise<readonly User[]> {
+    return [...this.users.values()]
+      .map((user) => structuredClone(user))
+      .sort((left, right) => left.email.localeCompare(right.email));
   }
 
   async getUserById(id: string): Promise<User | null> {

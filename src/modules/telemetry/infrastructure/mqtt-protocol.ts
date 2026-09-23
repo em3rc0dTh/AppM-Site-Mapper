@@ -55,7 +55,11 @@ export function encodeRemainingLength(length: number): Uint8Array {
 }
 
 function frame(header: number, body: Uint8Array): Uint8Array {
-  return concat([Uint8Array.of(header), encodeRemainingLength(body.length), body]);
+  return concat([
+    Uint8Array.of(header),
+    encodeRemainingLength(body.length),
+    body,
+  ]);
 }
 
 export function encodeConnect(input: MqttConnectInput): Uint8Array {
@@ -86,7 +90,10 @@ export function encodeConnect(input: MqttConnectInput): Uint8Array {
   return frame(0x10, concat([variableHeader, payload]));
 }
 
-export function encodeSubscribe(packetId: number, topicFilter: string): Uint8Array {
+export function encodeSubscribe(
+  packetId: number,
+  topicFilter: string,
+): Uint8Array {
   if (!Number.isInteger(packetId) || packetId < 1 || packetId > 65_535) {
     throw new Error('Invalid MQTT packet identifier.');
   }
@@ -105,7 +112,12 @@ export function encodePingRequest(): Uint8Array {
 }
 
 export function encodePubAck(packetId: number): Uint8Array {
-  return Uint8Array.of(0x40, 0x02, (packetId >> 8) & 0xff, packetId & 0xff);
+  return Uint8Array.of(
+    0x40,
+    0x02,
+    (packetId >> 8) & 0xff,
+    packetId & 0xff,
+  );
 }
 
 export interface ParsedMqttPacket {
@@ -191,7 +203,9 @@ export function parsePublish(packet: ParsedMqttPacket): MqttPublishPacket {
     if (payloadOffset + 2 > packet.body.length) {
       throw new Error('Malformed MQTT PUBLISH packet id.');
     }
-    packetId = ((packet.body[payloadOffset] ?? 0) << 8) | (packet.body[payloadOffset + 1] ?? 0);
+    packetId =
+      ((packet.body[payloadOffset] ?? 0) << 8) |
+      (packet.body[payloadOffset + 1] ?? 0);
     payloadOffset += 2;
   }
 

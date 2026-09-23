@@ -60,6 +60,14 @@ export default async function TopologyNodePage({
         </div>
       )}
 
+      {node.kind === 'CONTAINER_RACK' && node.variant === 'RACK' && (
+        <div className="node-actions">
+          <Link className="action-link" href={`/rack/${node.id}/elevation`}>
+            Open Rack Elevation
+          </Link>
+        </div>
+      )}
+
       <section className="panel">
         <h2>Children</h2>
         {children.length === 0 ? (

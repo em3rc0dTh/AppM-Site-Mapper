@@ -2,10 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import { RoomPolygonForm } from '@/components/blueprint/room-polygon-form';
-import {
-  TopologyContextTree,
-  type ContextTreeEntry,
-} from '@/components/topology/context-tree';
+import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';

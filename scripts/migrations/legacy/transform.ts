@@ -26,7 +26,7 @@ const sourceSpecs: readonly SourceSpec[] = [
   { collection: 'levels', kind: 'LEVEL' },
   { collection: 'Room', kind: 'ROOM_SUBSTRUCTURE', variant: 'ROOM' },
   { collection: 'Substructure', kind: 'ROOM_SUBSTRUCTURE', variant: 'SUBSTRUCTURE' },
-  { collection: 'rooms', kind: 'ROOM_SUBSTRUCTURE', variant: 'SUBSTRUCTURE' },
+  { collection: 'rooms', kind: 'ROOM_SUBSTRUCTURE', variant: 'ROOM' },
   {
     collection: 'ContainerCluster',
     kind: 'CONTAINER_CLUSTER_BAY',
@@ -386,8 +386,16 @@ function extraFields(
       const polygon = normalizePolygon(record);
       return { variant: spec.variant, ...(polygon ? { polygon } : {}) };
     }
-    case 'CONTAINER_CLUSTER_BAY':
-      return { variant: spec.variant };
+    case 'CONTAINER_CLUSTER_BAY': {
+      const explicit = getString(record, ['variant', 'category', 'type'])?.toUpperCase();
+      const variant =
+        explicit === 'BAY'
+          ? 'BAY'
+          : explicit === 'CONTAINER_CLUSTER'
+            ? 'CONTAINER_CLUSTER'
+            : spec.variant;
+      return { variant };
+    }
     case 'POSITION': {
       const coordinate = normalizeCoordinate(record);
       return coordinate ? { coordinate } : null;

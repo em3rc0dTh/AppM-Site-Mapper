@@ -64,11 +64,9 @@ export interface RackElevationContext {
 export function RackElevation({
   view,
   context,
-  inventoryHrefs = {},
 }: Readonly<{
   view: RackElevationView;
   context?: RackElevationContext;
-  inventoryHrefs?: Readonly<Record<string, string>>;
 }>) {
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const blocks = useMemo(() => buildBlocks(view), [view]);

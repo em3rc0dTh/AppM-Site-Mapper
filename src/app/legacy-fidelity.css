@@ -1409,3 +1409,626 @@ button.legacy-rack-block:hover {
     min-height: 420px;
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   v0.3 visual-presence pass
+   The first legacy-fidelity pass matched structure but remained visually
+   under-scaled on 1900x900 class desktop viewports. This pass restores the
+   density, physical presence and equipment emphasis of the original product.
+   -------------------------------------------------------------------------- */
+
+@media (min-width: 1400px) and (min-height: 820px) {
+  .legacy-shell.app-shell {
+    grid-template-columns: 300px minmax(0, 1fr);
+    grid-template-rows: 66px minmax(0, 1fr);
+  }
+
+  .legacy-topbar {
+    height: 66px;
+    padding-inline: 22px;
+  }
+
+  .legacy-brand {
+    min-width: 262px;
+  }
+
+  .legacy-brand-mark {
+    width: 40px;
+    height: 40px;
+  }
+
+  .legacy-brand > span:last-child {
+    font-size: 1.08rem;
+  }
+
+  .legacy-brand small {
+    font-size: 0.58rem;
+  }
+
+  .legacy-topnav a,
+  .legacy-topnav span {
+    min-width: 76px;
+    padding-inline: 16px;
+    font-size: 0.88rem;
+  }
+
+  .legacy-primary-rail {
+    top: 66px;
+    height: calc(100dvh - 66px);
+  }
+
+  .app-shell--immersive .operational-page {
+    height: calc(100dvh - 66px);
+  }
+
+  .app-shell--immersive .operational-breadcrumbs {
+    height: 56px;
+    padding-inline: 22px;
+  }
+
+  .app-shell--immersive .operational-breadcrumbs a {
+    font-size: 0.76rem;
+  }
+
+  .app-shell--immersive .operational-layout {
+    height: calc(100dvh - 122px);
+    grid-template-columns: 300px minmax(0, 1fr) 350px;
+  }
+
+  .app-shell--immersive .operational-layout--rack,
+  .app-shell--immersive .operational-layout--blueprint {
+    height: calc(100dvh - 66px);
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+
+  .legacy-context-heading {
+    min-height: 98px;
+    padding-inline: 18px;
+  }
+
+  .legacy-context-heading-icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .legacy-context-heading strong {
+    font-size: 1.08rem;
+  }
+
+  .legacy-context-heading small {
+    font-size: 0.62rem;
+  }
+
+  .legacy-context-scope {
+    min-height: 48px;
+    padding-inline: 18px;
+    font-size: 0.67rem;
+  }
+
+  .legacy-context-tree .context-tree-trail {
+    padding: 14px 10px;
+  }
+
+  .legacy-context-tree .context-tree-trail a {
+    min-height: 48px;
+    gap: 11px;
+    padding: 9px 11px;
+  }
+
+  .legacy-context-tree .context-tree-trail a .icon {
+    width: 18px;
+    height: 18px;
+    flex-basis: 18px;
+  }
+
+  .legacy-context-tree .context-tree-trail a small {
+    font-size: 0.57rem;
+  }
+
+  .legacy-context-tree .context-tree-trail a strong {
+    font-size: 0.82rem;
+  }
+
+  .app-shell--immersive .operational-stage > .section-header,
+  .legacy-rack-main > .section-header {
+    min-height: 126px;
+    padding: 22px 26px;
+  }
+
+  .app-shell--immersive .operational-stage > .section-header h1,
+  .legacy-rack-main > .section-header h1 {
+    font-size: 2rem;
+  }
+
+  .app-shell--immersive .operational-stage > .section-header .eyebrow,
+  .legacy-rack-main > .section-header .eyebrow {
+    font-size: 0.68rem;
+  }
+
+  .app-shell--immersive .operational-stage > .section-header .section-description,
+  .legacy-rack-main > .section-header .section-description {
+    font-size: 0.84rem;
+  }
+
+  .legacy-stage-toolbar {
+    min-height: 56px;
+    padding-inline: 18px;
+  }
+
+  .legacy-stage-toolbar strong {
+    font-size: 0.9rem;
+  }
+
+  .legacy-stage-toolbar span {
+    font-size: 0.64rem;
+  }
+
+  .legacy-stage-canvas {
+    background-size: 48px 48px;
+  }
+
+  .legacy-site-boundary {
+    inset: 9% 10%;
+    padding: 28px;
+  }
+
+  .legacy-site-footprint {
+    min-height: 160px;
+    padding: 24px;
+  }
+
+  .legacy-site-footprint-crosshair {
+    width: 54px;
+    height: 54px;
+    font-size: 2rem;
+  }
+
+  .legacy-stage-node small {
+    font-size: 0.62rem;
+  }
+
+  .legacy-stage-node strong {
+    font-size: 0.98rem;
+  }
+
+  .legacy-building-outline {
+    width: min(900px, 88%);
+    min-height: 48%;
+    border-width: 3px;
+  }
+
+  .legacy-level-slab {
+    min-height: 106px;
+    grid-template-columns: 58px minmax(0, 1fr) auto;
+    padding-inline: 22px;
+  }
+
+  .legacy-level-number {
+    height: 54px;
+    font-size: 0.82rem;
+  }
+
+  .legacy-level-status {
+    font-size: 0.68rem;
+  }
+
+  .legacy-level-grid {
+    inset: 6% 6%;
+    background-size: 86px 86px;
+  }
+
+  .legacy-room-field {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    padding: 20px;
+  }
+
+  .legacy-room-footprint {
+    min-height: 220px;
+    padding: 24px;
+  }
+
+  .legacy-room-index {
+    width: 42px;
+    height: 42px;
+    font-size: 0.8rem;
+  }
+
+  .legacy-bay-canvas {
+    padding: 64px 58px 42px 74px;
+  }
+
+  .legacy-position-tile {
+    margin: 6px;
+  }
+
+  .legacy-position-marker .icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .legacy-cabinet-preview {
+    width: min(390px, 30vw);
+    min-height: 78%;
+    border-width: 3px;
+  }
+
+  .app-shell--immersive .blueprint-toolbar {
+    min-height: 60px;
+    padding-inline: 20px;
+  }
+
+  .app-shell--immersive .blueprint-toolbar strong {
+    font-size: 0.95rem;
+  }
+
+  .app-shell--immersive .blueprint-toolbar span {
+    font-size: 0.72rem;
+  }
+
+  .app-shell--immersive .blueprint-actions button {
+    min-width: 48px;
+    min-height: 38px;
+  }
+
+  .app-shell--immersive .blueprint-canvas {
+    background-size: 48px 48px;
+  }
+
+  .app-shell--immersive .blueprint-rack-label {
+    font-size: 92px;
+  }
+
+  .app-shell--immersive .operational-inspector-card {
+    padding: 26px 24px;
+  }
+
+  .app-shell--immersive .operational-inspector-card h2 {
+    font-size: 1.35rem;
+  }
+
+  .app-shell--immersive .operational-inspector-card dt,
+  .app-shell--immersive .operational-inspector-card dd {
+    font-size: 0.78rem;
+  }
+
+  .legacy-rack-view {
+    grid-template-columns: minmax(0, 1fr) 350px;
+  }
+
+  .legacy-rack-canvas {
+    padding: 34px 56px 54px;
+  }
+
+  .legacy-rack-heading {
+    width: min(520px, 90%);
+    margin-bottom: 18px;
+  }
+
+  .legacy-rack-heading strong {
+    font-size: 1.5rem;
+  }
+
+  .legacy-rack-heading span,
+  .legacy-rack-heading small {
+    font-size: 0.72rem;
+  }
+
+  .legacy-rack-frame {
+    width: min(520px, 90%);
+    min-height: 700px;
+    max-height: calc(100dvh - 238px);
+    border-width: 3px;
+  }
+
+  .legacy-rack-metal {
+    flex-basis: 34px;
+  }
+
+  .legacy-rack-block {
+    grid-template-columns: 44px minmax(0, 1fr) auto;
+    gap: 14px;
+    padding-right: 15px;
+  }
+
+  .legacy-rack-scale {
+    padding-right: 9px;
+    font-size: 0.62rem;
+  }
+
+  .legacy-rack-block-copy strong {
+    font-size: 0.82rem;
+  }
+
+  .legacy-rack-block-copy small,
+  .legacy-rack-led {
+    font-size: 0.6rem;
+  }
+
+  .legacy-rack-block--physical .legacy-rack-block-copy strong {
+    font-size: 1rem;
+  }
+
+  .legacy-properties-header,
+  .legacy-property-section {
+    padding-inline: 26px;
+  }
+
+  .legacy-properties-header > strong {
+    font-size: 1.38rem;
+  }
+
+  .legacy-property-section h3,
+  .legacy-property-title span {
+    font-size: 0.68rem;
+  }
+
+  .legacy-property-section dt,
+  .legacy-property-section dd {
+    font-size: 0.78rem;
+  }
+
+  .inspector-dialog {
+    width: min(500px, 96vw);
+  }
+
+  .inspector-header {
+    min-height: 118px;
+    padding: 24px 26px;
+  }
+
+  .inspector-header h2 {
+    font-size: 1.7rem;
+  }
+
+  .inspector-body {
+    padding: 22px 26px;
+  }
+}
+
+/* BDFB equipment view: make the chassis read as physical hardware, not nested CRUD cards. */
+.bdfb-chassis {
+  border-radius: 0;
+  border-color: #3f4c5d;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(94, 72, 255, 0.08), transparent 28%),
+    radial-gradient(circle at 50% 42%, rgba(0, 186, 255, 0.045), transparent 34%),
+    #05070b;
+}
+
+.bdfb-chassis-header {
+  min-height: 66px;
+  padding: 16px 20px;
+  background: #11151d;
+}
+
+.bdfb-chassis-header > div:first-child > strong {
+  font-size: 1.22rem;
+}
+
+.bdfb-chassis-body {
+  padding: clamp(22px, 3vw, 42px);
+}
+
+.bdfb-shelf {
+  width: min(1120px, 96%);
+  min-height: 88%;
+  margin: 0 auto;
+  padding: 58px 24px 24px;
+  border: 2px solid #6b36aa;
+  border-radius: 16px;
+  background:
+    linear-gradient(90deg, rgba(255, 159, 10, 0.025), transparent 18% 82%, rgba(255, 159, 10, 0.025)),
+    #080b11;
+  box-shadow:
+    inset 0 0 0 9px #04060a,
+    0 0 0 1px rgba(146, 73, 255, 0.12),
+    0 32px 100px #000b;
+}
+
+.bdfb-shelf::before {
+  content: '';
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  top: 46px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #ff9f0a 12% 88%, transparent);
+  opacity: 0.75;
+}
+
+.bdfb-shelf > header {
+  top: 16px;
+  left: 26px;
+}
+
+.bdfb-shelf > header strong {
+  font-size: 0.92rem;
+}
+
+.bdfb-frame {
+  position: relative;
+  border: 2px solid #0c8eb3;
+  border-radius: 12px;
+  padding: 46px 18px 18px;
+  background:
+    linear-gradient(180deg, rgba(0, 181, 229, 0.035), transparent 24%),
+    #080c12;
+}
+
+.bdfb-frame::before,
+.bdfb-frame::after {
+  content: '';
+  position: absolute;
+  top: 18px;
+  width: 76px;
+  height: 18px;
+  border: 2px solid #a43bdf;
+  border-radius: 8px;
+  box-shadow: 0 0 18px rgba(164, 59, 223, 0.25);
+}
+
+.bdfb-frame::before {
+  left: 16%;
+}
+
+.bdfb-frame::after {
+  right: 16%;
+}
+
+.bdfb-frame > header {
+  position: absolute;
+  top: 10px;
+  left: 18px;
+  right: 18px;
+  padding: 0;
+  pointer-events: none;
+}
+
+.bdfb-frame > header span {
+  color: #21c9f5;
+}
+
+.bdfb-frame > header strong {
+  margin-left: auto;
+  color: #d7edf7;
+  font-size: 0.86rem;
+}
+
+.bdfb-panel-grid {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 18px;
+}
+
+.bdfb-panel-board {
+  position: relative;
+  min-height: 260px;
+  border: 2px solid #f06a16;
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 106, 22, 0.03), transparent 18%),
+    #070a10;
+  box-shadow: inset 0 0 34px rgba(255, 106, 22, 0.025);
+}
+
+.bdfb-panel-board::before,
+.bdfb-panel-board::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 64px;
+  bottom: 18px;
+  width: 8px;
+  border-radius: 999px;
+  opacity: 0.85;
+}
+
+.bdfb-panel-board::before {
+  left: 18px;
+  background: linear-gradient(#1188ff, #1f51a9);
+  box-shadow: 0 0 18px rgba(17, 136, 255, 0.5);
+}
+
+.bdfb-panel-board::after {
+  right: 18px;
+  background: linear-gradient(#e1399d, #7d245e);
+  box-shadow: 0 0 18px rgba(225, 57, 157, 0.42);
+}
+
+.bdfb-panel-title {
+  position: relative;
+  z-index: 2;
+  min-height: 60px;
+  padding: 10px 18px;
+  border-bottom-color: #4a2a19;
+  background: rgba(17, 18, 25, 0.94);
+}
+
+.bdfb-panel-title strong {
+  color: #ff9f0a;
+  font-size: 0.9rem;
+}
+
+.bdfb-endpoint-grid {
+  position: relative;
+  z-index: 2;
+  grid-template-columns: repeat(2, minmax(150px, 1fr));
+  align-content: center;
+  gap: 18px;
+  padding: 34px 48px;
+}
+
+.bdfb-endpoint {
+  min-height: 96px;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 4px 10px;
+  padding: 14px;
+  border: 1px solid #435267;
+  background: #0d1420;
+  box-shadow: 0 12px 24px #0007;
+}
+
+.bdfb-endpoint::before,
+.bdfb-endpoint::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 28px;
+  height: 1px;
+  background: #2f6fc8;
+}
+
+.bdfb-endpoint::before {
+  left: -29px;
+}
+
+.bdfb-endpoint::after {
+  right: -29px;
+  background: #a9337d;
+}
+
+.bdfb-endpoint > span {
+  width: 32px;
+  height: 36px;
+  border-color: #2a88b6;
+  font-size: 0.6rem;
+}
+
+.bdfb-endpoint > strong {
+  color: #eaf3fa;
+  font-size: 0.8rem;
+}
+
+.bdfb-endpoint > small {
+  font-size: 0.56rem;
+}
+
+.bdfb-endpoint--breaker {
+  border-color: #1cb7e9;
+  box-shadow:
+    inset 0 0 0 1px rgba(28, 183, 233, 0.12),
+    0 0 22px rgba(28, 183, 233, 0.08);
+}
+
+.bdfb-endpoint--holder {
+  border-color: #475266;
+  background: #0a0e15;
+}
+
+.bdfb-frame-implicit {
+  position: relative;
+  grid-template-columns: minmax(170px, 0.24fr) minmax(0, 1fr);
+  padding: 18px;
+  border: 2px dashed #536071;
+  background: #070a10;
+}
+
+.bdfb-implicit-note {
+  padding: 18px;
+}
+
+.bdfb-implicit-note strong {
+  font-size: 0.95rem;
+}
+

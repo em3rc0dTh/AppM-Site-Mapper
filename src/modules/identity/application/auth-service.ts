@@ -159,10 +159,7 @@ export class AuthService {
     return success(toSafeUser(updated));
   }
 
-  async updateOwnProfile(
-    token: string,
-    displayName: string,
-  ): Promise<Result<SafeUser, AuthError>> {
+  async updateOwnProfile(token: string, displayName: string): Promise<Result<SafeUser, AuthError>> {
     const session = await this.repository.getSessionByTokenHash(hashSessionToken(token));
 
     if (!session || session.revokedAt || session.expiresAt.getTime() <= this.clock().getTime()) {

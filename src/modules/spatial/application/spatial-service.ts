@@ -202,7 +202,8 @@ export class SpatialService {
           return [];
         }
 
-        const rects = clusterPositions.map((position) => {
+        const positionIds = new Set(clusterPositions.map((position) => position.id));
+        const positionRects = clusterPositions.map((position) => {
           const point = gridCoordinateToPoint(position.coordinate);
           return {
             x: point.x,
@@ -211,6 +212,10 @@ export class SpatialService {
             depth: TILE_SIZE_MM,
           };
         });
+        const physicalRackRects = racks
+          .filter((rack) => rack.positionId && positionIds.has(rack.positionId))
+          .map((rack) => rack.rect);
+        const rects = [...positionRects, ...physicalRackRects];
         const minX = Math.min(...rects.map((rect) => rect.x));
         const minY = Math.min(...rects.map((rect) => rect.y));
         const maxX = Math.max(...rects.map((rect) => rect.x + rect.width));

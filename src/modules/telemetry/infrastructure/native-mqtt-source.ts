@@ -1,6 +1,6 @@
+import { randomUUID } from 'node:crypto';
 import net, { type Socket } from 'node:net';
 import tls from 'node:tls';
-import { randomUUID } from 'node:crypto';
 
 import {
   encodeConnect,
@@ -20,7 +20,10 @@ export interface NativeMqttOptions {
   readonly keepAliveSeconds?: number;
 }
 
-export type MqttMessageHandler = (topic: string, payload: Uint8Array) => void | Promise<void>;
+export type MqttMessageHandler = (
+  topic: string,
+  payload: Uint8Array,
+) => void | Promise<void>;
 
 export class NativeMqttSource {
   private socket: Socket | tls.TLSSocket | null = null;
@@ -80,15 +83,21 @@ export class NativeMqttSource {
       socket.write(
         encodeConnect({
           clientId: `appm-site-mapper-${randomUUID()}`,
-          ...(this.options.username === undefined ? {} : { username: this.options.username }),
-          ...(this.options.password === undefined ? {} : { password: this.options.password }),
+          ...(this.options.username === undefined
+            ? {}
+            : { username: this.options.username }),
+          ...(this.options.password === undefined
+            ? {}
+            : { password: this.options.password }),
           keepAliveSeconds: this.options.keepAliveSeconds ?? 30,
         }),
       );
     });
 
     socket.on('data', (chunk: Buffer) => {
-      const combined = new Uint8Array(this.receiveBuffer.length + chunk.length);
+      const combined = new Uint8Array(
+        this.receiveBuffer.length + chunk.length,
+      );
       combined.set(this.receiveBuffer);
       combined.set(chunk, this.receiveBuffer.length);
 
@@ -114,16 +123,22 @@ export class NativeMqttSource {
             continue;
           }
 
-          socket.write(encodeSubscribe(this.nextPacketId(), this.options.topicFilter));
+          socket.write(
+            encodeSubscribe(this.nextPacketId(), this.options.topicFilter),
+          );
           this.startPings(socket);
-          logger.info('mqtt.connected', { topicFilter: this.options.topicFilter });
+          logger.info('mqtt.connected', {
+            topicFilter: this.options.topicFilter,
+          });
           continue;
         }
 
         if (packet.type === 3) {
           try {
             const publish = parsePublish(packet);
-            void Promise.resolve(this.onMessage(publish.topic, publish.payload)).catch((error) => {
+            void Promise.resolve(
+              this.onMessage(publish.topic, publish.payload),
+            ).catch((error) => {
               logger.warn('mqtt.message.handler_failed', {
                 reason: error instanceof Error ? error.message : 'unknown',
               });
@@ -170,7 +185,10 @@ export class NativeMqttSource {
   private scheduleReconnect(): void {
     if (this.reconnectTimer || this.stopping) return;
 
-    const delay = Math.min(30_000, 1_000 * 2 ** Math.min(this.reconnectAttempt, 5));
+    const delay = Math.min(
+      30_000,
+      1_000 * 2 ** Math.min(this.reconnectAttempt, 5),
+    );
     this.reconnectAttempt += 1;
 
     this.reconnectTimer = setTimeout(() => {

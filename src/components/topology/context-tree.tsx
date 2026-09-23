@@ -1,17 +1,16 @@
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
-import type { TopologyKind } from '@/modules/topology/domain/entities';
 import { Icon } from '@/shared/ui/primitives';
 
 export interface ContextTreeEntry {
   readonly id: string;
   readonly name: string;
-  readonly kind: TopologyKind;
+  readonly kind: string;
   readonly href: string;
 }
 
-function iconFor(kind: TopologyKind): string {
+function iconFor(kind: string): string {
   if (kind === 'NETWORK') return 'network';
   if (kind === 'ROOM_SUBSTRUCTURE') return 'room';
   return 'box';

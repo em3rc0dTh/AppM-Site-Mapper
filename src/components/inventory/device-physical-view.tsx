@@ -56,13 +56,14 @@ export function DevicePhysicalView({ device, rack, href, connections, focus, pow
       <div className="studio-bus"><span>Distribution endpoints</span><span>{panel.endpoints.length} configured positions</span></div>
       <div className="studio-endpoint-matrix">{panel.endpoints.map((endpoint, index) => <div className="studio-endpoint-position" key={endpoint.id}>
         <button className={`studio-endpoint ${endpoint.variant.toLowerCase()} ${selection === endpoint.id || activeEndpoint?.id === endpoint.id ? 'is-selected' : ''}`}
-          onClick={() => inspectEndpoint(shelf, frame, panel, endpoint)}
-          onDoubleClick={() => { window.location.href = link({ shelf: shelf.id, panel: panel.id, endpoint: endpoint.id }); }} aria-label={`Inspect ${endpoint.label}`}>
+          onClick={() => setSelection(endpoint.id)}
+          onDoubleClick={() => { window.location.href = link({ shelf: shelf.id, panel: panel.id, endpoint: endpoint.id }); }} aria-label={`Select ${endpoint.label}`}>
           <span className="studio-terminal-number">{String(index + 1).padStart(2, '0')}</span><span className="studio-switch" aria-hidden="true" />
           <strong>{endpoint.label}</strong><small>{endpoint.capacity !== undefined ? `Capacity ${endpoint.capacity}` : endpoint.variant}</small>
           <span className="studio-assignment">{powerReadable ? (endpointLinks(endpoint).length ? 'CONNECTED' : 'UNASSIGNED') : 'CONNECTIONS RESTRICTED'}</span>
         </button>
         <Link href={link({ shelf: shelf.id, panel: panel.id, endpoint: endpoint.id })}>Open endpoint →</Link>
+        {selection === endpoint.id && <button className="studio-inspect-endpoint" onClick={() => inspectEndpoint(shelf, frame, panel, endpoint)}>Inspect details</button>}
       </div>)}</div>
       {!panel.endpoints.length && <p>No endpoints configured on this panel.</p>}
     </article>;

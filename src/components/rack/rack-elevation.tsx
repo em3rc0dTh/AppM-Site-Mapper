@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, type CSSProperties } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
@@ -230,6 +231,11 @@ export function RackElevation({
       </div>
 
       <aside className="legacy-rack-properties">
+        {selected && <section className="studio-rack-selection"><small>SELECTED INVENTORY</small><h2>{selected.name}</h2>
+          {selected.sections.map(section => <dl key={section.title}>{section.fields.map(field => <div key={field.label}><dt>{field.label}</dt><dd>{field.value}</dd></div>)}</dl>)}
+          {selected.actions?.map(action => <Link key={action.href} href={action.href}>{action.label} →</Link>)}
+          <button onClick={() => setSelected(null)}>Clear selection</button>
+        </section>}
         <div className="legacy-properties-header">
           <span>Rack details</span>
           <strong>{view.rack.name}</strong>
@@ -309,7 +315,7 @@ export function RackElevation({
         )}
       </aside>
 
-      {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}
+
     </section>
   );
 }

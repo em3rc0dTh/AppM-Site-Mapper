@@ -929,6 +929,18 @@ export function SpatialAuthoringCanvas({
             );
           })}
 
+          {!editing && rectangles.filter(item => item.kind === 'bay' || item.kind === 'position').map(item => {
+            const label = item.kind === 'bay' ? item.name : (item.detail?.split(' · ')[0] ?? item.name);
+            const labelSize = overlayLabelSize * .7;
+            const x = item.rect.x + 18;
+            const y = item.kind === 'bay' ? item.rect.y - labelSize * 1.5 : item.rect.y + item.rect.depth - labelSize * 1.1;
+            return <g key={`label-${item.id}`} className={`studio-blueprint-tag ${physicalId === item.id ? 'is-selected' : ''}`} role="button" tabIndex={0} aria-label={`Select ${item.name} label`}
+              onClick={() => inspectRectangle(item)} onKeyDown={event => { if (event.key === 'Enter') inspectRectangle(item); }}>
+              <rect x={x} y={y} width={Math.max(labelSize * (label.length * .65 + 1), labelSize * 3)} height={labelSize * 1.6} rx={8} />
+              <text x={x + labelSize * .4} y={y + labelSize * 1.12} fontSize={labelSize}>{label}</text>
+            </g>;
+          })}
+
           {editing &&
             tool === 'select' &&
             draft.length >= 3 &&

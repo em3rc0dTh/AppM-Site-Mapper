@@ -20,6 +20,7 @@ export type SpatialError =
 
 export interface RackPlacementView {
   readonly id: string;
+  readonly positionId?: string;
   readonly name: string;
   readonly rect: RectMm;
 }
@@ -173,6 +174,7 @@ export class SpatialService {
 
       return positionRacks.map((rack) => ({
         id: rack.id,
+        positionId: position.id,
         name: rack.name,
         rect: {
           x: point.x,

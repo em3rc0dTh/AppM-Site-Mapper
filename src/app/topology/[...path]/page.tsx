@@ -53,8 +53,7 @@ export default async function TopologyNodePage({
   const parent = node.parentId ? await repository.getById(node.parentId) : null;
   const connections: ElectricalConnection[] = (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && powerReadable
     ? await Promise.all((await (await createPowerRepository()).listActive()).filter(item => item.source.entityId === node.id || item.target.entityId === node.id).map(async path => {
-      const source = await repository.getById(path.source.entityId);
-      const target = await repository.getById(path.target.entityId);
+      const [source, target] = await Promise.all([repository.getById(path.source.entityId), repository.getById(path.target.entityId)]);
       const internal = path.source.internal;
       const shelf = source?.kind === 'DEVICE' ? source.bdfb?.shelves.find(item => item.id === internal?.shelfId) : undefined;
       const frame = shelf?.frames.find(item => item.id === internal?.frameId);
@@ -95,12 +94,35 @@ export default async function TopologyNodePage({
       return { node: child, href };
     }),
   );
-  const contextChildren: ContextTreeEntry[] = childEntries.map(({ node: child, href }) => ({
+  let contextChildren: ContextTreeEntry[] = childEntries.map(({ node: child, href }) => ({
     id: child.id,
     name: child.name,
     kind: child.kind,
     href,
   }));
+
+  if (node.kind === 'DEVICE' && node.bdfb) {
+    const internalHref = (params: Record<string, string>) => `${physicalHref}?${new URLSearchParams(params)}`;
+    const shelf = node.bdfb.shelves.find(item => item.id === focus.shelf);
+    const frame = shelf?.frames.find(item => item.panels.some(panel => panel.id === focus.panel));
+    const panel = frame?.panels.find(item => item.id === focus.panel);
+    const endpoint = panel?.endpoints.find(item => item.id === focus.endpoint);
+    contextChildren = node.bdfb.shelves.map(item => ({ id: item.id, kind: 'SHELF', name: item.label, href: internalHref({ shelf: item.id }) }));
+    if (shelf) {
+      trailEntries.push({id: shelf.id, kind: 'SHELF', name: shelf.label, href: internalHref({shelf: shelf.id})});
+      contextChildren = shelf.frames.flatMap(item => item.panels.map(panel => ({id: panel.id, kind: 'PANEL', name: panel.label, href: internalHref({shelf: shelf.id, panel: panel.id})})));
+    }
+    if (frame && panel && shelf) {
+      trailEntries.push({id: frame.id, kind: 'FRAME', name: frame.label, href: internalHref({shelf: shelf.id})}, {id: panel.id, kind: 'PANEL', name: panel.label, href: internalHref({shelf: shelf.id, panel: panel.id})});
+      contextChildren = panel.endpoints.map(item => ({id: item.id, kind: item.variant, name: item.label, href: internalHref({shelf: shelf.id, panel: panel.id, endpoint: item.id})}));
+    }
+    if (endpoint && shelf && panel) {
+      trailEntries.push({id: endpoint.id, kind: endpoint.variant, name: endpoint.label, href: internalHref({shelf: shelf.id, panel: panel.id, endpoint: endpoint.id})});
+      contextChildren = connections.filter(item => item.path.source.internal?.breakerHolderId === endpoint.id).map(item => ({id: item.path.id, kind: 'POWER PATH', name: item.path.label ?? 'Power path', href: internalHref({shelf: shelf.id, panel: panel.id, endpoint: endpoint.id, path: item.path.id})}));
+    }
+    const powerFocus = connections.find(item => item.path.id === focus.path);
+    if (powerFocus) trailEntries.push({id: powerFocus.path.id, kind: 'POWER PATH', name: powerFocus.path.label ?? 'Power path', href: internalHref(focus)});
+  }
 
   const structurePreviewNodes =
     node.kind === 'STRUCTURE' && children[0]?.kind === 'LEVEL'
@@ -115,8 +137,8 @@ export default async function TopologyNodePage({
   );
 
   const roomLayout =
-    node.kind === 'ROOM_SUBSTRUCTURE'
-      ? await new SpatialService(repository).getRoomLayout(node.id)
+    node.kind === 'ROOM_SUBSTRUCTURE' || node.kind === 'CONTAINER_CLUSTER_BAY'
+      ? await new SpatialService(repository).getRoomLayout(node.kind === 'ROOM_SUBSTRUCTURE' ? node.id : node.parentId)
       : null;
 
   const spatialHrefs = roomLayout?.ok ? Object.fromEntries(await Promise.all([...roomLayout.value.clusters, ...roomLayout.value.positions].map(async item => [item.id, await service.buildDeepLink(item.id)]))) : {};
@@ -221,6 +243,11 @@ export default async function TopologyNodePage({
                   kind="readonly"
                 />
               )
+            ) : node.kind === 'CONTAINER_CLUSTER_BAY' && roomLayout?.ok ? (
+              <BlueprintCanvas roomId={roomLayout.value.room.id} roomName={`${node.name} · ${roomLayout.value.room.name}`} polygon={roomLayout.value.room.polygon ?? []}
+                clusters={roomLayout.value.clusters.filter(item => item.id === node.id)} positions={roomLayout.value.positions.filter(item => item.clusterId === node.id)}
+                racks={roomLayout.value.racks.filter(item => roomLayout.value.positions.some(position => position.clusterId === node.id && position.id === item.positionId))}
+                slots={[]} navigationHrefs={spatialHrefs} canEditBoundary={false} />
             ) : node.kind === 'STRUCTURE' ? (
               <StructureStudio node={node} levels={childEntries} canWrite={canWrite} />
             ) : node.kind === 'LEVEL' && (boundaryContext.length > 0 || childEntries.length > 0) ? (

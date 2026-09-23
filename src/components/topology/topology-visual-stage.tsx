@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 
 import type { TopologyNode } from '@/modules/topology/domain/entities';
@@ -81,7 +82,7 @@ export function TopologyVisualStage({
                 key={child.id}
                 href={href}
                 className={`topology-visual-node topology-visual-node--${child.kind.toLowerCase()}`}
-                style={{ '--node-order': index } as React.CSSProperties}
+                style={{ '--node-order': index } as CSSProperties}
               >
                 <span className="topology-node-icon">
                   <Icon

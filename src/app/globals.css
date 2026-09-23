@@ -3374,6 +3374,7 @@ p {
 
 .spatial-boundary {
   fill: rgba(34, 71, 86, 0.31);
+  pointer-events: none;
   stroke: #8ed6e2;
   stroke-width: 10;
   vector-effect: non-scaling-stroke;
@@ -3828,4 +3829,20 @@ p {
 
 .spatial-authoring-legend .status-badge {
   white-space: nowrap;
+}
+
+
+.legacy-properties-actions {
+  display: grid;
+  gap: 8px;
+}
+
+.legacy-properties-actions button {
+  width: 100%;
+}
+
+.legacy-properties-actions button + button {
+  border-color: #355d68;
+  background: #17313a;
+  color: #a9ecf5;
 }

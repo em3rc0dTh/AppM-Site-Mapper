@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { AuthFrame } from '@/shared/ui/auth-frame';
+
 interface LoginResponse {
   readonly error?: string;
   readonly user?: {
@@ -39,23 +41,41 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="shell">
-      <form className="login-card" onSubmit={submit}>
-        <p className="eyebrow">AppManager · Site Mapper</p>
-        <h1>Sign in</h1>
+    <AuthFrame
+      eyebrow="Identity / secure access"
+      title="Sign in"
+      description="Authenticate to enter the Site Mapper operational workspace."
+    >
+      <form className="auth-form" onSubmit={submit}>
         <label>
-          Email
-          <input name="email" type="email" autoComplete="username" required />
+          <span>Email</span>
+          <input
+            name="email"
+            type="email"
+            autoComplete="username"
+            placeholder="operator@company.com"
+            required
+          />
         </label>
         <label>
-          Password
-          <input name="password" type="password" autoComplete="current-password" required />
+          <span>Password</span>
+          <input
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="••••••••••••"
+            required
+          />
         </label>
-        <button type="submit" disabled={busy}>
-          {busy ? 'Signing in…' : 'Sign in'}
+        <button className="auth-submit" type="submit" disabled={busy}>
+          {busy ? 'Establishing secure session…' : 'Enter control center'}
         </button>
-        {error ? <p className="form-error">{error}</p> : null}
+        {error ? (
+          <p className="form-error auth-error" role="alert">
+            {error}
+          </p>
+        ) : null}
       </form>
-    </main>
+    </AuthFrame>
   );
 }

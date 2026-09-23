@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 
 import { PasswordForm } from '@/components/settings/password-form';
 import { getCurrentSessionUser } from '@/modules/identity/application/current-session';
+import { AuthFrame } from '@/shared/ui/auth-frame';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,17 +14,21 @@ export default async function ChangePasswordPage() {
   }
 
   return (
-    <main className="shell">
-      <section className="login-card">
-        <p className="eyebrow">AppManager · Site Mapper</p>
-        <h1>Change password</h1>
-        <p>
-          {user.mustChangePassword
-            ? 'A new password is required before operational access is enabled.'
-            : 'Update your password and revoke every existing session.'}
-        </p>
-        <PasswordForm />
-      </section>
-    </main>
+    <AuthFrame
+      eyebrow="Identity / credential policy"
+      title="Change password"
+      description={
+        user.mustChangePassword
+          ? 'Replace the temporary credential before operational access is enabled.'
+          : 'Update your credential and revoke every existing session.'
+      }
+    >
+      <div className="auth-account">
+        <span>Signed in as</span>
+        <strong>{user.displayName}</strong>
+        <small>{user.email}</small>
+      </div>
+      <PasswordForm />
+    </AuthFrame>
   );
 }

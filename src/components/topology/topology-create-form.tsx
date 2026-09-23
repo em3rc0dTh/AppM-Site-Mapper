@@ -68,38 +68,51 @@ export function TopologyCreateForm({
   return (
     <form className="create-form" onSubmit={submit}>
       <strong>Create {kind.replaceAll('_', ' ').toLowerCase()}</strong>
-      <input name="name" placeholder="Name" required />
+      <input aria-label="Name" name="name" placeholder="Name" required />
       {kind === 'ROOM_SUBSTRUCTURE' && (
-        <select name="variant" defaultValue="ROOM">
+        <select aria-label="Entity variant" name="variant" defaultValue="ROOM">
           <option value="ROOM">Room</option>
           <option value="SUBSTRUCTURE">Substructure</option>
         </select>
       )}
       {kind === 'CONTAINER_CLUSTER_BAY' && (
-        <select name="variant" defaultValue="CONTAINER_CLUSTER">
+        <select aria-label="Entity variant" name="variant" defaultValue="CONTAINER_CLUSTER">
           <option value="CONTAINER_CLUSTER">ContainerCluster</option>
           <option value="BAY">Bay</option>
         </select>
       )}
       {kind === 'POSITION' && (
         <>
-          <input name="row" placeholder="Row (A)" required />
-          <input name="column" type="number" min="1" placeholder="Column" required />
+          <input aria-label="Grid row" name="row" placeholder="Row (A)" required />
+          <input
+            aria-label="Grid column"
+            name="column"
+            type="number"
+            min="1"
+            placeholder="Column"
+            required
+          />
         </>
       )}
       {kind === 'CONTAINER_RACK' && (
         <>
-          <select name="variant" defaultValue="RACK">
+          <select aria-label="Entity variant" name="variant" defaultValue="RACK">
             <option value="RACK">Rack</option>
             <option value="CONTAINER">Container</option>
           </select>
-          <input name="totalU" type="number" min="1" defaultValue="42" />
+          <input
+            aria-label="Rack capacity in U"
+            name="totalU"
+            type="number"
+            min="1"
+            defaultValue="42"
+          />
         </>
       )}
       {(kind === 'DEVICE' || kind === 'EQUIPMENT') && (
         <>
-          <input name="serialNumber" placeholder="Serial number" />
-          <input name="category" placeholder="Category" />
+          <input aria-label="Serial number" name="serialNumber" placeholder="Serial number" />
+          <input aria-label="Category" name="category" placeholder="Category" />
         </>
       )}
       <button type="submit" disabled={busy}>

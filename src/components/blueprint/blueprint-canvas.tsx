@@ -2,6 +2,8 @@
 
 import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
 
+import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
+import { StatusBadge } from '@/shared/ui/primitives';
 import type { RackPlacementView } from '@/modules/spatial/application/spatial-service';
 import type { PointMm, RectMm } from '@/modules/spatial/domain/geometry';
 
@@ -43,6 +45,24 @@ export function BlueprintCanvas({
   slots: readonly RectMm[];
 }>) {
   const base = useMemo(() => boundsFor(polygon), [polygon]);
+  const [selected, setSelected] = useState<InspectorEntity | null>(null);
+  const [tool, setTool] = useState<'select' | 'pan'>('select');
+  function inspectRack(rack: RackPlacementView) {
+    setSelected({
+      name: rack.name,
+      kind: 'CONTAINER / RACK',
+      sections: [
+        {
+          title: 'Physical',
+          fields: [
+            { label: 'Footprint', value: `${rack.rect.width} × ${rack.rect.depth} mm` },
+            { label: 'Coordinates', value: `X ${rack.rect.x} / Y ${rack.rect.y} mm` },
+          ],
+        },
+      ],
+      actions: [{ label: 'Open rack elevation', href: `/rack/${rack.id}` }],
+    });
+  }
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const pointer = useRef<Readonly<{ x: number; y: number }> | null>(null);
@@ -61,6 +81,7 @@ export function BlueprintCanvas({
   }
 
   function pointerDown(event: PointerEvent<SVGSVGElement>) {
+    if (tool !== 'pan') return;
     pointer.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
@@ -83,7 +104,8 @@ export function BlueprintCanvas({
 
   function pointerUp(event: PointerEvent<SVGSVGElement>) {
     pointer.current = null;
-    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (event.currentTarget.hasPointerCapture(event.pointerId))
+      event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
   return (
@@ -94,10 +116,24 @@ export function BlueprintCanvas({
           <span>600 mm grid · {Math.round(zoom * 100)}%</span>
         </div>
         <div className="blueprint-actions">
-          <button type="button" onClick={() => setZoom((value) => Math.min(5, value * 1.2))}>
+          <button type="button" aria-pressed={tool === 'select'} onClick={() => setTool('select')}>
+            Select
+          </button>
+          <button type="button" aria-pressed={tool === 'pan'} onClick={() => setTool('pan')}>
+            Pan
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom in"
+            onClick={() => setZoom((value) => Math.min(5, value * 1.2))}
+          >
             +
           </button>
-          <button type="button" onClick={() => setZoom((value) => Math.max(0.5, value / 1.2))}>
+          <button
+            type="button"
+            aria-label="Zoom out"
+            onClick={() => setZoom((value) => Math.max(0.5, value / 1.2))}
+          >
             −
           </button>
           <button
@@ -107,7 +143,7 @@ export function BlueprintCanvas({
               setPan({ x: 0, y: 0 });
             }}
           >
-            Reset
+            Fit
           </button>
         </div>
       </header>
@@ -123,7 +159,7 @@ export function BlueprintCanvas({
         onPointerCancel={() => {
           pointer.current = null;
         }}
-        role="img"
+        role="group"
         aria-label="Room blueprint"
       >
         <defs>
@@ -154,7 +190,22 @@ export function BlueprintCanvas({
         ))}
 
         {racks.map((rack) => (
-          <g key={rack.id}>
+          <g
+            key={rack.id}
+            className="blueprint-rack-node"
+            role="button"
+            tabIndex={0}
+            aria-label={`Inspect ${rack.name}`}
+            onClick={() => {
+              if (tool === 'select') inspectRack(rack);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                inspectRack(rack);
+              }
+            }}
+          >
             <rect
               x={rack.rect.x}
               y={rack.rect.y}
@@ -174,6 +225,16 @@ export function BlueprintCanvas({
           </g>
         ))}
       </svg>
+      <footer className="blueprint-legend">
+        <StatusBadge tone="accent">{racks.length} RACK FOOTPRINTS</StatusBadge>
+        <StatusBadge>{slots.length} ASSIGNABLE TILES</StatusBadge>
+        <span>
+          {tool === 'pan'
+            ? 'Drag to pan · scroll to zoom'
+            : 'Select a rack to inspect · scroll to zoom'}
+        </span>
+      </footer>
+      {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}
     </section>
   );
 }

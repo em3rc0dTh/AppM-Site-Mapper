@@ -1,3 +1,4 @@
+import { SectionHeader, StatePanel, StatusBadge } from '@/shared/ui/primitives';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
@@ -36,13 +37,12 @@ export default async function BlueprintPage({
         <Link href={roomLink}>← {result.value.room.name}</Link>
       </nav>
 
-      <header className="workspace-header">
-        <div>
-          <p className="eyebrow">Blueprint Engine</p>
-          <h1>{result.value.room.name}</h1>
-        </div>
-        <span>600 × 600 mm</span>
-      </header>
+      <SectionHeader
+        eyebrow="Spatial / Blueprint engine"
+        title={result.value.room.name}
+        description="Physical footprint and rack placement · 600 × 600 mm grid"
+        actions={<StatusBadge>{canWrite ? 'EDIT PERMITTED' : 'READ ONLY'}</StatusBadge>}
+      />
 
       {result.value.room.polygon ? (
         <BlueprintCanvas
@@ -51,13 +51,18 @@ export default async function BlueprintPage({
           slots={result.value.assignableSlots}
         />
       ) : (
-        <section className="panel">
-          <h2>No room polygon yet</h2>
-          <p>Define the physical boundary before the room can be rendered.</p>
-        </section>
+        <StatePanel
+          title="No room boundary"
+          description="Define the physical boundary to render this room."
+        />
       )}
 
-      {canWrite && <RoomPolygonForm roomId={roomId} />}
+      {canWrite && (
+        <details className="edit-disclosure">
+          <summary>Edit room boundary</summary>
+          <RoomPolygonForm roomId={roomId} />
+        </details>
+      )}
     </main>
   );
 }

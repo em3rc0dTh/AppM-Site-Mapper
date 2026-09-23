@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 
 import type {
   CanonicalKind,
@@ -214,6 +214,15 @@ function normalizeContainerVariant(spec: SourceSpec, record: LegacyRecord): 'CON
   return getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']) ? 'RACK' : 'CONTAINER';
 }
 
+function deterministicMigrationId(seed: string): string {
+  const hex = createHash('sha256').update(seed).digest('hex').slice(0, 32).split('');
+  hex[12] = '5';
+  const variant = Number.parseInt(hex[16] ?? '8', 16);
+  hex[16] = ((variant & 0x3) | 0x8).toString(16);
+  const value = hex.join('');
+  return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
+}
+
 function normalizeCas(
   record: LegacyRecord,
   totalU: number | undefined,
@@ -227,7 +236,7 @@ function normalizeCas(
     return totalU
       ? [
           {
-            id: randomUUID(),
+            id: deterministicMigrationId(`CAS:${id}:1:${totalU}`),
             startU: 1,
             endU: totalU,
             state: 'AVAILABLE',
@@ -237,7 +246,7 @@ function normalizeCas(
   }
 
   const ranges: Record<string, unknown>[] = [];
-  for (const entry of source) {
+  for (const [index, entry] of source.entries()) {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
       warnings.push({
         sourceCollection,
@@ -272,7 +281,9 @@ function normalizeCas(
     }
 
     ranges.push({
-      id: getString(item, ['id', '_id']) ?? randomUUID(),
+      id:
+        getString(item, ['id', '_id']) ??
+        deterministicMigrationId(`CAS:${id}:${index}:${startU}:${endU}`),
       startU,
       endU,
       state,
@@ -480,8 +491,45 @@ export function planLegacyMigration(
     });
   }
 
+  const resolvedNodes = nodes.map((node) => {
+    if (node.kind !== 'CONTAINER_RACK' || !Array.isArray(node.cas)) {
+      return node;
+    }
+
+    const cas = node.cas.map((range) => {
+      if (!range || typeof range !== 'object' || !('occupantLegacyId' in range)) {
+        return range;
+      }
+
+      const legacyOccupant = scalar((range as Record<string, unknown>).occupantLegacyId);
+      if (!legacyOccupant) {
+        return range;
+      }
+
+      const occupantId =
+        idMap[migrationKey('DEVICE', legacyOccupant)] ??
+        idMap[migrationKey('EQUIPMENT', legacyOccupant)];
+
+      const copy = { ...(range as Record<string, unknown>) };
+      delete copy.occupantLegacyId;
+
+      if (!occupantId) {
+        warnings.push({
+          sourceCollection: 'CAS',
+          legacyId: legacyOccupant,
+          message: 'CAS occupant reference could not be resolved; occupancy reference omitted.',
+        });
+        return copy;
+      }
+
+      return { ...copy, occupantId };
+    });
+
+    return { ...node, cas };
+  });
+
   return {
-    nodes,
+    nodes: resolvedNodes,
     idMap,
     warnings,
     rejections,

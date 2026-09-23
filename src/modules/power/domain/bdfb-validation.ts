@@ -4,7 +4,8 @@ export type BdfbValidationError =
   | 'EMPTY_BDFB'
   | 'EMPTY_LABEL'
   | 'DUPLICATE_ID'
-  | 'DUPLICATE_ENDPOINT_LABEL';
+  | 'DUPLICATE_ENDPOINT_LABEL'
+  | 'INVALID_CAPACITY';
 
 export function validateBdfb(
   structure: BdfbStructure,
@@ -42,6 +43,13 @@ export function validateBdfb(
         for (const endpoint of panel.endpoints) {
           if (!endpoint.label.trim()) {
             return { ok: false, error: 'EMPTY_LABEL' };
+          }
+
+          if (
+            endpoint.capacity !== undefined &&
+            (!Number.isFinite(endpoint.capacity) || endpoint.capacity <= 0)
+          ) {
+            return { ok: false, error: 'INVALID_CAPACITY' };
           }
 
           if (ids.has(endpoint.id)) {

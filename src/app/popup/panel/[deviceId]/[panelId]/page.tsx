@@ -33,8 +33,7 @@ export default async function PanelPopupPage({
 
   if (!panelContext) return null;
 
-  const shelfId =
-    typeof query.shelf === 'string' ? query.shelf : panelContext.shelf.id;
+  const shelfId = typeof query.shelf === 'string' ? query.shelf : panelContext.shelf.id;
 
   return (
     <PopupChrome

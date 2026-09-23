@@ -1440,7 +1440,6 @@
   color: #71879a;
 }
 
-
 /* Popup depth contract: Device = overview, Panel = endpoints, Endpoint = one electrical position.
    Popup workspaces are viewport surfaces; no page/panel scrolling. */
 .physical-popup-body .studio-device-scroll {

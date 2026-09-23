@@ -37,7 +37,6 @@ Future operational alarms must originate from explicit domain/telemetry rules ra
 
 Topology, Blueprint, Rack Elevation, BDFB/Power and Telemetry remain dedicated module surfaces reachable from the workspace and topology context.
 
-
 ## Visual operations contract
 
 MK1 preserves the validated spatial interaction grammar of the legacy product without copying its visual design.

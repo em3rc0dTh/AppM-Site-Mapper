@@ -1,6 +1,6 @@
 # G9 — BDFB / Power Receipt
 
-**Status:** READY FOR CI / REVIEW
+**Status:** READY FOR FINAL CI
 
 ## Delivered
 

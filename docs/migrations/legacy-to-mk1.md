@@ -148,7 +148,6 @@ npm run migration:legacy:mongo -- \
 This writes only to `topology_nodes_migration_staging`. Promotion into
 `topology_nodes` remains a separate controlled operation.
 
-
 ## Verify MongoDB staging before promotion
 
 After a successful staging apply, validate the exact staged fingerprint before any promotion:

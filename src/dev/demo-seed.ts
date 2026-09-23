@@ -296,16 +296,6 @@ export async function seedDevelopmentDemo(
     'POSITION',
   );
 
-  const positionA03 = expectKind(
-    await ensureNode(topologyRepository, topology, {
-      kind: 'POSITION',
-      parentId: bayA.id,
-      name: 'Position A03',
-      coordinate: { row: 'A', column: 3 },
-    }),
-    'POSITION',
-  );
-
   const positionB01 = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'POSITION',
@@ -315,19 +305,6 @@ export async function seedDevelopmentDemo(
     }),
     'POSITION',
   );
-
-  const positionB02 = expectKind(
-    await ensureNode(topologyRepository, topology, {
-      kind: 'POSITION',
-      parentId: bayB.id,
-      name: 'Position B02',
-      coordinate: { row: 'B', column: 2 },
-    }),
-    'POSITION',
-  );
-
-  void positionA03;
-  void positionB02;
 
   const rackA01 = expectKind(
     await ensureNode(topologyRepository, topology, {

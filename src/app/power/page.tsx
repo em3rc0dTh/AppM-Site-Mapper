@@ -7,9 +7,7 @@ import { createPowerRepository } from '@/modules/power/infrastructure/power-repo
 function endpointLabel(endpoint: PowerEndpoint) {
   const internal = endpoint.internal ? Object.values(endpoint.internal).filter(Boolean) : [];
 
-  return internal.length > 0
-    ? `${endpoint.entityId} / ${internal.join(' / ')}`
-    : endpoint.entityId;
+  return internal.length > 0 ? `${endpoint.entityId} / ${internal.join(' / ')}` : endpoint.entityId;
 }
 
 export default async function PowerPage() {

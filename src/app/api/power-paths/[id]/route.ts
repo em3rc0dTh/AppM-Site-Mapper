@@ -15,10 +15,7 @@ export async function DELETE(_request: Request, context: Context) {
   }
 
   const { id } = await context.params;
-  const service = new PowerService(
-    await createTopologyRepository(),
-    await createPowerRepository(),
-  );
+  const service = new PowerService(await createTopologyRepository(), await createPowerRepository());
   const result = await service.archive(id);
 
   if (!result.ok) {

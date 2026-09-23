@@ -10,10 +10,7 @@ import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type PowerError =
-  | EndpointValidationError
-  | 'IDENTICAL_ENDPOINTS'
-  | 'PATH_NOT_FOUND'
-  | 'INVALID_FEED';
+  EndpointValidationError | 'IDENTICAL_ENDPOINTS' | 'PATH_NOT_FOUND' | 'INVALID_FEED';
 
 export interface CreatePowerPathInput {
   readonly source: PowerEndpoint;

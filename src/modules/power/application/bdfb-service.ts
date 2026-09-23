@@ -5,10 +5,7 @@ import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type BdfbError =
-  | BdfbValidationError
-  | 'DEVICE_NOT_FOUND'
-  | 'NOT_A_DEVICE'
-  | 'DEVICE_ARCHIVED';
+  BdfbValidationError | 'DEVICE_NOT_FOUND' | 'NOT_A_DEVICE' | 'DEVICE_ARCHIVED';
 
 export class BdfbService {
   constructor(private readonly topology: TopologyRepository) {}

@@ -1,11 +1,7 @@
 import type { BdfbStructure } from '@/modules/topology/domain/entities';
 
 export type BdfbValidationError =
-  | 'EMPTY_BDFB'
-  | 'EMPTY_LABEL'
-  | 'DUPLICATE_ID'
-  | 'DUPLICATE_ENDPOINT_LABEL'
-  | 'INVALID_CAPACITY';
+  'EMPTY_BDFB' | 'EMPTY_LABEL' | 'DUPLICATE_ID' | 'DUPLICATE_ENDPOINT_LABEL' | 'INVALID_CAPACITY';
 
 export function validateBdfb(
   structure: BdfbStructure,

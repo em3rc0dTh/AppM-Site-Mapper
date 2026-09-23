@@ -61,11 +61,7 @@ function isShelf(value: unknown): value is Shelf {
 }
 
 function isBdfbStructure(value: unknown): value is BdfbStructure {
-  return (
-    isRecord(value) &&
-    Array.isArray(value.shelves) &&
-    value.shelves.every(isShelf)
-  );
+  return isRecord(value) && Array.isArray(value.shelves) && value.shelves.every(isShelf);
 }
 
 export async function PUT(request: Request, context: Context) {

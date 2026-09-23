@@ -17,6 +17,7 @@ function slotId(rect: RectMm): string {
 
 export function BlueprintCanvas({
   roomId,
+  navigationHrefs = {},
   roomName,
   polygon,
   clusters,
@@ -26,6 +27,7 @@ export function BlueprintCanvas({
   canEditBoundary,
 }: Readonly<{
   roomId: string;
+  navigationHrefs?: Readonly<Record<string, string>>;
   roomName: string;
   polygon: readonly PointMm[];
   clusters: readonly ClusterPlacementView[];
@@ -38,7 +40,8 @@ export function BlueprintCanvas({
     ...clusters.map((cluster) => ({
       id: cluster.id,
       name: cluster.name,
-      detail: `${cluster.positionCount} positions`,
+      ...(navigationHrefs[cluster.id] ? {href: navigationHrefs[cluster.id]} : {}),
+      detail: `${cluster.positionCount} positions · extent derived from positions`,
       kind: 'bay' as const,
       rect: cluster.rect,
     })),
@@ -51,7 +54,8 @@ export function BlueprintCanvas({
     ...positions.map((position) => ({
       id: position.id,
       name: position.name,
-      detail: position.coordinate,
+      detail: `${position.coordinate} · ${position.occupied ? "Occupied" : "Available"}`,
+      ...(navigationHrefs[position.id] ? {href: navigationHrefs[position.id]} : {}),
       kind: 'position' as const,
       rect: position.rect,
     })),

@@ -348,6 +348,20 @@ function embeddedBdfb(device: LegacyRecord): Record<string, unknown> | undefined
   return shelves.length ? { shelves } : undefined;
 }
 
+function coordinateFromRecord(
+  record: LegacyRecord,
+): Readonly<{ row: string; column: number }> | null {
+  const appMObject = asRecord(record.appMObject);
+  const source = Array.isArray(record.grid_coordinate)
+    ? record.grid_coordinate
+    : appMObject && Array.isArray(appMObject.grid_coordinate)
+      ? appMObject.grid_coordinate
+      : null;
+  const coordinate = source?.map((value) => scalar(value)).find(Boolean);
+  const match = coordinate?.match(/^([A-Za-z]+)[- ]?(\d+)$/);
+  return match ? { row: match[1]!.toUpperCase(), column: Number(match[2]) } : null;
+}
+
 function inferClusterRow(cluster: LegacyRecord | undefined): string {
   if (!cluster) return 'A';
   const clusterLabel = reference(cluster, ['label', 'name']) ?? '';
@@ -384,12 +398,14 @@ function deriveDirectContainerPositions(
     const next = (clusterCounters.get(parent) ?? 0) + 1;
     clusterCounters.set(parent, next);
 
+    const realCoordinate = coordinateFromRecord(container);
     const explicitPosition = numeric(container, ['position']);
     const column =
-      explicitPosition && Number.isInteger(explicitPosition) && explicitPosition > 0
+      realCoordinate?.column ??
+      (explicitPosition && Number.isInteger(explicitPosition) && explicitPosition > 0
         ? explicitPosition
-        : next;
-    const row = inferClusterRow(cluster);
+        : next);
+    const row = realCoordinate?.row ?? inferClusterRow(cluster);
     derivedPositions.push({
       id: derivedId,
       name: `Position ${row}-${column}`,
@@ -398,6 +414,11 @@ function deriveDirectContainerPositions(
       row,
       column,
       migrationDerived: true,
+      migrationCoordinateSource: realCoordinate
+        ? 'container.grid_coordinate'
+        : explicitPosition
+          ? 'container.position'
+          : 'cluster-order-fallback',
     });
     return { ...container, parentId: derivedId };
   });

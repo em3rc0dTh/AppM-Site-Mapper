@@ -66,11 +66,10 @@ async function applyPlan(plan: MigrationPlan): Promise<void> {
 
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const input = await loadJson<LegacyMigrationInput>(options.input);
-
-  if (options.idMap) {
-    input.idMap = await loadJson<Record<string, string>>(options.idMap);
-  }
+  const rawInput = await loadJson<LegacyMigrationInput>(options.input);
+  const input: LegacyMigrationInput = options.idMap
+    ? { ...rawInput, idMap: await loadJson<Record<string, string>>(options.idMap) }
+    : rawInput;
 
   const plan = planLegacyMigration(input);
 

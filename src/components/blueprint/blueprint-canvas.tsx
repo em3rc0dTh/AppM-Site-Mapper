@@ -65,6 +65,7 @@ export function BlueprintCanvas({
       kind: 'rack' as const,
       rect: rack.rect,
       href: `/rack/${rack.id}`,
+      popupHref: `/popup/container/${rack.id}`,
     })),
   ];
 

@@ -24,10 +24,12 @@ function parseArgs(argv: readonly string[]): CliOptions {
     throw new Error('Usage: --input <legacy.json> [--output report.json] [--id-map ids.json] [--apply]');
   }
 
+  const idMap = value('--id-map');
+
   return {
     input,
     output: value('--output') ?? 'migration-report.json',
-    ...(value('--id-map') ? { idMap: value('--id-map') } : {}),
+    ...(idMap ? { idMap } : {}),
     apply: argv.includes('--apply'),
   };
 }

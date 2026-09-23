@@ -1,6 +1,14 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent, type WheelEvent } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent,
+  type WheelEvent,
+} from 'react';
 import { useRouter } from 'next/navigation';
 
 import {

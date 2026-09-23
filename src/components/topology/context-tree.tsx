@@ -19,10 +19,10 @@ function iconFor(kind: TopologyKind): string {
 
 export function TopologyContextTree({
   trail,
-  children,
+  descendants,
 }: Readonly<{
   trail: readonly ContextTreeEntry[];
-  children: readonly ContextTreeEntry[];
+  descendants: readonly ContextTreeEntry[];
 }>) {
   const active = trail.at(-1);
 
@@ -50,11 +50,11 @@ export function TopologyContextTree({
         })}
       </ol>
 
-      {children.length > 0 && (
+      {descendants.length > 0 && (
         <div className="context-tree-children">
           <span className="context-tree-subtitle">Contained next</span>
           <ul>
-            {children.map((entry) => (
+            {descendants.map((entry) => (
               <li key={entry.id}>
                 <Link href={entry.href}>
                   <Icon name={iconFor(entry.kind)} />

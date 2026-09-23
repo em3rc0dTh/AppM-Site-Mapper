@@ -3412,9 +3412,7 @@ p {
 
 .spatial-context-shape text {
   fill: #8193a8;
-  font:
-    0.62rem ui-monospace,
-    monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   paint-order: stroke;
   stroke: #070b10;
   stroke-width: 4px;
@@ -3422,9 +3420,11 @@ p {
 
 .spatial-coordinate-labels text {
   fill: #7790a6;
-  font:
-    0.58rem ui-monospace,
-    monospace;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 700;
+  paint-order: stroke;
+  stroke: #05080c;
+  stroke-width: 3px;
 }
 
 .spatial-slot {
@@ -3459,10 +3459,9 @@ p {
 
 .spatial-rack text {
   fill: #f1f5fa;
-  font:
-    0.62rem ui-monospace,
-    monospace;
-  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   paint-order: stroke;
   stroke: #0a0f15;
   stroke-width: 5px;
@@ -3500,10 +3499,8 @@ p {
 
 .spatial-vertex-label {
   fill: #ffd28a;
-  font:
-    0.56rem ui-monospace,
-    monospace;
-  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 800;
   pointer-events: none;
   paint-order: stroke;
   stroke: #070b10;
@@ -3744,4 +3741,91 @@ p {
   grid-row: 1 / -1;
   color: #7ce0ee;
   font-size: 0.72rem;
+}
+
+
+/* Spatial Operations Studio v0.2 */
+.spatial-bay {
+  pointer-events: none;
+}
+
+.spatial-bay rect {
+  fill: rgba(255, 159, 10, 0.018);
+  stroke: rgba(255, 159, 10, 0.62);
+  stroke-width: 7;
+  stroke-dasharray: 24 16;
+  vector-effect: non-scaling-stroke;
+}
+
+.spatial-bay text {
+  fill: #ffb64c;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  paint-order: stroke;
+  stroke: #05080c;
+  stroke-width: 4px;
+}
+
+.spatial-bay .spatial-bay-detail {
+  fill: #8e7b61;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+}
+
+.spatial-position {
+  pointer-events: none;
+}
+
+.spatial-position rect {
+  fill: transparent;
+  stroke: rgba(173, 198, 255, 0.24);
+  stroke-width: 4;
+  vector-effect: non-scaling-stroke;
+}
+
+.spatial-position text {
+  fill: #8998aa;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 750;
+  paint-order: stroke;
+  stroke: #070b10;
+  stroke-width: 3px;
+}
+
+.spatial-rack-inner {
+  fill: transparent;
+  stroke: rgba(231, 239, 247, 0.34);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.spatial-segment-control {
+  pointer-events: none;
+}
+
+.spatial-segment-control .spatial-midpoint {
+  pointer-events: auto;
+}
+
+.spatial-segment-length {
+  fill: #9eb3c8;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  paint-order: stroke;
+  stroke: #05080c;
+  stroke-width: 4px;
+  pointer-events: none;
+}
+
+.is-editing .spatial-rack,
+.is-editing .spatial-position,
+.is-editing .spatial-bay {
+  opacity: 0.36;
+}
+
+.spatial-authoring-legend .status-badge {
+  white-space: nowrap;
 }

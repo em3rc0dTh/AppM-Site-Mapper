@@ -20,6 +20,7 @@ import {
 } from '@/modules/spatial/domain/geometry';
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
+import { openPhysicalPopup } from '@/shared/ui/physical-popup';
 
 export interface SpatialContextPolygon {
   readonly id: string;
@@ -36,6 +37,7 @@ export interface SpatialRectOverlay {
   readonly rect: RectMm;
   readonly detail?: string;
   readonly href?: string;
+  readonly popupHref?: string;
 }
 
 export interface SpatialNavigationItem {
@@ -525,12 +527,17 @@ export function SpatialAuthoringCanvas({
           ],
         },
       ],
-      ...(item.href
+      ...((item.popupHref ?? item.href)
         ? {
             actions: [
               {
-                label: item.kind === 'rack' ? 'Open rack elevation' : 'Open physical view',
-                href: item.href,
+                label:
+                  item.kind === 'rack' && item.popupHref
+                    ? 'Open container popup'
+                    : item.kind === 'rack'
+                      ? 'Open rack elevation'
+                      : 'Open physical view',
+                href: item.popupHref ?? item.href!,
               },
             ],
           }
@@ -1041,8 +1048,12 @@ export function SpatialAuthoringCanvas({
                 tabIndex={editing ? -1 : 0}
                 onClick={() => inspectRectangle(item)}
                 onDoubleClick={() => {
-                  if (!editing && tool === 'select' && item.href) {
-                    router.push(item.href);
+                  if (!editing && tool === 'select') {
+                    if (item.popupHref) {
+                      openPhysicalPopup(item.popupHref, 'container', item.id);
+                    } else if (item.href) {
+                      router.push(item.href);
+                    }
                   }
                 }}
                 onKeyDown={(event) => {
@@ -1203,7 +1214,18 @@ export function SpatialAuthoringCanvas({
             <span>{physical.kind}</span>
             <button onClick={() => setSelected(physical)}>Inspect</button>
             {physical.actions?.map((action) => (
-              <button key={action.href} onClick={() => router.push(action.href)}>
+              <button
+                key={action.href}
+                onClick={() => {
+                  if (action.href.startsWith('/popup/container/')) {
+                    openPhysicalPopup(action.href, 'container', physicalId ?? physical.name);
+                  } else if (action.href.startsWith('/popup/device/')) {
+                    openPhysicalPopup(action.href, 'device', physicalId ?? physical.name);
+                  } else {
+                    router.push(action.href);
+                  }
+                }}
+              >
                 {action.label} →
               </button>
             ))}

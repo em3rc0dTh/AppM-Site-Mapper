@@ -1203,3 +1203,19 @@
     display: none;
   }
 }
+
+
+.spatial-authoring-hud em {
+  grid-column: 1 / -1;
+  margin-top: 3px;
+  color: #88a0b3;
+  font: 700 9px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-style: normal;
+  letter-spacing: .04em;
+}
+
+.spatial-keyboard-hint {
+  color: #8da1b2;
+  font: 650 10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: nowrap;
+}

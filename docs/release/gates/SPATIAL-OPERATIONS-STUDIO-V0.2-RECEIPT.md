@@ -7,13 +7,13 @@ Baseline: `138636d084f7b58516bfa39680c1f063182988a4`
 
 ## Status
 
-IMPLEMENTED / VISUAL REVIEW BLOCKED IN EXECUTION ENVIRONMENT.
+IMPLEMENTATION COMPLETE / READY FOR LOCAL VISUAL REVIEW.
 
-This is not a claim of TESTED, CERTIFIED, PRODUCTION_READY or RELEASE_READY.
-The requested READY_FOR_JETT_VISUAL_REVIEW completion gate is not sealed: pointer
-behavior and layout at 1920×1080, 1600×900 and 1366×768 still require an actual
-browser review. The remote browser rejects the local application URL with
-`net::ERR_BLOCKED_BY_CLIENT`; the local browser launcher also failed to start.
+This is not a claim of PRODUCTION_READY or RELEASE_READY. The implementation now
+covers the complete physical journey and is ready to be judged in the user's
+local browser. The execution environment still cannot render the authenticated
+local application, so final human visual acceptance at 1920×1080, 1600×900 and
+1366×768 remains external to this receipt.
 
 ## Materialized
 
@@ -50,6 +50,12 @@ browser review. The remote browser rejects the local application URL with
   Cancel restores server geometry. Network failures retain the draft. Entity
   changes remount drafts to avoid reusing another entity's editing state.
 - Removed unsupported healthy/online labels; lifecycle is not live telemetry.
+- Replaced the generic Network landing stage with a dedicated topology studio that
+  previews actual Site boundary geometry when available and explicitly labels the
+  overview as schematic rather than geographic.
+- Added live cursor X/Y feedback to Spatial Authoring and arrow-key vertex nudging.
+  Room edits nudge by the active 600 mm snap interval; unsnapped Site/Structure
+  edits nudge by 100 mm.
 
 ## Evidence obtained
 
@@ -74,6 +80,8 @@ MongoDB durability or process-restart persistence evidence.
 
 ## Remaining visual acceptance
 
+No implementation phase remains open. Local human acceptance is still required
+because this execution environment cannot render the authenticated application.
 At each requested desktop viewport, inspect the full golden path and reverse
 navigation. In particular: check that U1 is visible without page scroll, all main
 labels are legible, child polygons receive pointer events, Rack and endpoint

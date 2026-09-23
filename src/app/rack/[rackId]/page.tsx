@@ -29,7 +29,9 @@ export default async function RackPage({
   const [trail, children, parent] = await Promise.all([
     topology.getTrail(rackId),
     topology.listChildren(rackId),
-    result.value.rack.parentId ? topology.getById(result.value.rack.parentId) : Promise.resolve(null),
+    result.value.rack.parentId
+      ? topology.getById(result.value.rack.parentId)
+      : Promise.resolve(null),
   ]);
   const trailEntries: ContextTreeEntry[] = await Promise.all(
     trail.map(async (node) => ({

@@ -35,6 +35,8 @@ export interface CasRange {
   readonly endU: number;
   readonly state: CasState;
   readonly occupantId?: string;
+  readonly mountStartU?: number;
+  readonly physicalSizeU?: number;
   readonly clearanceTopU?: number;
   readonly clearanceBottomU?: number;
 }

@@ -885,7 +885,6 @@
   color: #a4bacb;
 }
 
-
 /* Network topology studio */
 .studio-network {
   position: relative;
@@ -919,8 +918,13 @@
 .studio-network-hud small,
 .studio-network-selection small {
   color: #73d3df;
-  font: 700 10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  letter-spacing: .12em;
+  font:
+    700 10px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.12em;
 }
 
 .studio-network-hud strong {
@@ -941,13 +945,23 @@
 
 .studio-network-count b {
   color: #d9f7fb;
-  font: 800 24px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font:
+    800 24px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
 }
 
 .studio-network-count span {
   color: #7793a8;
-  font: 700 9px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  letter-spacing: .12em;
+  font:
+    700 9px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.12em;
 }
 
 .studio-network-canvas {
@@ -960,17 +974,16 @@
   overflow: hidden;
   padding: 54px 40px 42px;
   background:
-    radial-gradient(circle at 50% 44%, rgba(78, 181, 202, .08), transparent 32%),
-    #05090d;
+    radial-gradient(circle at 50% 44%, rgba(78, 181, 202, 0.08), transparent 32%), #05090d;
 }
 
 .studio-network-grid {
   position: absolute;
   inset: 0;
-  opacity: .62;
+  opacity: 0.62;
   background-image:
-    linear-gradient(rgba(74, 99, 119, .14) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(74, 99, 119, .14) 1px, transparent 1px);
+    linear-gradient(rgba(74, 99, 119, 0.14) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(74, 99, 119, 0.14) 1px, transparent 1px);
   background-size: 44px 44px;
   pointer-events: none;
 }
@@ -986,8 +999,13 @@
   gap: 12px;
   transform: translateX(-50%);
   color: #6f879a;
-  font: 700 9px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  letter-spacing: .1em;
+  font:
+    700 9px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.1em;
 }
 
 .studio-network-backbone span {
@@ -1017,9 +1035,8 @@
   gap: 12px;
   padding: 15px;
   border: 1px solid #415669;
-  background:
-    linear-gradient(145deg, rgba(32, 52, 67, .95), rgba(15, 24, 33, .96));
-  box-shadow: 10px 12px 0 rgba(0, 0, 0, .24);
+  background: linear-gradient(145deg, rgba(32, 52, 67, 0.95), rgba(15, 24, 33, 0.96));
+  box-shadow: 10px 12px 0 rgba(0, 0, 0, 0.24);
   cursor: pointer;
   transition:
     border-color 120ms ease,
@@ -1040,8 +1057,7 @@
 .studio-network-site:hover,
 .studio-network-site.is-selected {
   border-color: #82dce8;
-  background:
-    linear-gradient(145deg, rgba(37, 73, 89, .97), rgba(17, 31, 40, .97));
+  background: linear-gradient(145deg, rgba(37, 73, 89, 0.97), rgba(17, 31, 40, 0.97));
   transform: translateY(-2px);
 }
 
@@ -1053,9 +1069,8 @@
   overflow: hidden;
   border: 1px solid #2c4353;
   background:
-    repeating-linear-gradient(0deg, rgba(66, 91, 109, .12) 0 1px, transparent 1px 24px),
-    repeating-linear-gradient(90deg, rgba(66, 91, 109, .12) 0 1px, transparent 1px 24px),
-    #0a1118;
+    repeating-linear-gradient(0deg, rgba(66, 91, 109, 0.12) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgba(66, 91, 109, 0.12) 0 1px, transparent 1px 24px), #0a1118;
 }
 
 .studio-network-site-map svg {
@@ -1065,7 +1080,7 @@
 }
 
 .studio-network-site-map polygon {
-  fill: rgba(86, 182, 201, .13);
+  fill: rgba(86, 182, 201, 0.13);
   stroke: #8ee2ec;
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
@@ -1092,8 +1107,13 @@
 
 .studio-network-site-copy small {
   color: #7690a5;
-  font: 700 9px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  letter-spacing: .09em;
+  font:
+    700 9px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.09em;
 }
 
 .studio-network-site-copy strong {
@@ -1157,7 +1177,12 @@
 .studio-network-selection dd {
   margin: 0;
   color: #bacad5;
-  font: 700 10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font:
+    700 10px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
 }
 
 .studio-network-selection button {
@@ -1204,18 +1229,27 @@
   }
 }
 
-
 .spatial-authoring-hud em {
   grid-column: 1 / -1;
   margin-top: 3px;
   color: #88a0b3;
-  font: 700 9px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font:
+    700 9px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
   font-style: normal;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
 }
 
 .spatial-keyboard-hint {
   color: #8da1b2;
-  font: 650 10px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font:
+    650 10px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
   white-space: nowrap;
 }

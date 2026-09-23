@@ -26,7 +26,10 @@ function normalizePolygon(points: readonly Readonly<{ x: number; y: number }>[])
   const padding = 12;
   const targetWidth = 216;
   const targetHeight = 116;
-  const scale = Math.min((targetWidth - padding * 2) / width, (targetHeight - padding * 2) / height);
+  const scale = Math.min(
+    (targetWidth - padding * 2) / width,
+    (targetHeight - padding * 2) / height,
+  );
   const renderedWidth = width * scale;
   const renderedHeight = height * scale;
   const offsetX = (targetWidth - renderedWidth) / 2;
@@ -65,7 +68,9 @@ export function NetworkStudio({
         <div>
           <small>INFRASTRUCTURE ROOT</small>
           <strong>{node.name}</strong>
-          <span>Configured topology · site geometry is physical, placement on this view is schematic</span>
+          <span>
+            Configured topology · site geometry is physical, placement on this view is schematic
+          </span>
         </div>
         <div className="studio-network-count">
           <b>{sitePortals.length.toString().padStart(2, '0')}</b>

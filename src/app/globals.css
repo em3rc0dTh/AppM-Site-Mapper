@@ -300,7 +300,6 @@ textarea {
   padding: 1.25rem;
 }
 
-
 .operations-shell {
   width: min(1480px, calc(100% - 2rem));
   margin: 0 auto;

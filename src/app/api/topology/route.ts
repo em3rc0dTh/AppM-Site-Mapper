@@ -92,6 +92,21 @@ export async function POST(request: Request) {
   const parsedRoomVariant = roomVariant(body.roomVariant);
   const parsedClusterVariant = clusterVariant(body.clusterVariant);
   const parsedContainerVariant = containerVariant(body.containerVariant);
+  const dimensionsObject = asObject(body.dimensionsMm);
+  const dimensionsMm =
+    dimensionsObject &&
+    typeof dimensionsObject.width === 'number' &&
+    typeof dimensionsObject.depth === 'number' &&
+    dimensionsObject.width > 0 &&
+    dimensionsObject.depth > 0
+      ? {
+          width: dimensionsObject.width,
+          depth: dimensionsObject.depth,
+          ...(typeof dimensionsObject.height === 'number' && dimensionsObject.height > 0
+            ? { height: dimensionsObject.height }
+            : {}),
+        }
+      : undefined;
 
   const repository = await createTopologyRepository();
   const result = await new TopologyService(repository).create({
@@ -103,6 +118,7 @@ export async function POST(request: Request) {
     ...(parsedContainerVariant ? { containerVariant: parsedContainerVariant } : {}),
     ...(coordinate ? { coordinate } : {}),
     ...(typeof body.totalU === 'number' ? { totalU: body.totalU } : {}),
+    ...(dimensionsMm ? { dimensionsMm } : {}),
     ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
     ...(typeof body.category === 'string' ? { category: body.category } : {}),
   });

@@ -69,10 +69,19 @@ export function AppShell({ children }: { children: ReactNode }) {
           <Link href="/workspace" aria-current={pathname === '/workspace' ? 'page' : undefined}>
             Global
           </Link>
-          <Link href="/network" aria-current={active === '/network' && !immersive ? 'page' : undefined}>
+          <Link
+            href="/network"
+            aria-current={active === '/network' && !immersive ? 'page' : undefined}
+          >
             Regional
           </Link>
-          <span aria-current={pathname.startsWith('/topology') || pathname.startsWith('/blueprint') ? 'page' : undefined}>
+          <span
+            aria-current={
+              pathname.startsWith('/topology') || pathname.startsWith('/blueprint')
+                ? 'page'
+                : undefined
+            }
+          >
             Site
           </span>
           <span aria-current={pathname.startsWith('/rack') ? 'page' : undefined}>Rack</span>

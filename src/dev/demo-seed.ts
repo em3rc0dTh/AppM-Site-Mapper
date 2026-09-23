@@ -58,8 +58,7 @@ async function ensureNode(
     : await repository.listByKind(input.kind);
 
   const existing = candidates.find(
-    (node) =>
-      node.kind === input.kind && node.name === input.name && node.lifecycle === 'ACTIVE',
+    (node) => node.kind === input.kind && node.name === input.name && node.lifecycle === 'ACTIVE',
   );
 
   if (existing) {
@@ -87,10 +86,7 @@ async function ensureEquipped(
   }>,
 ): Promise<void> {
   const cas = new CasService(repository);
-  let current = expectKind(
-    (await repository.getById(rack.id)) as TopologyNode,
-    'CONTAINER_RACK',
-  );
+  let current = expectKind((await repository.getById(rack.id)) as TopologyNode, 'CONTAINER_RACK');
 
   if (current.cas.some((range) => range.state === 'EQUIPPED' && range.occupantId === occupant.id)) {
     return;
@@ -140,10 +136,7 @@ async function ensureReserved(
     clearanceBottomU?: number;
   }>,
 ): Promise<void> {
-  const current = expectKind(
-    (await repository.getById(rack.id)) as TopologyNode,
-    'CONTAINER_RACK',
-  );
+  const current = expectKind((await repository.getById(rack.id)) as TopologyNode, 'CONTAINER_RACK');
 
   if (
     current.cas.some(
@@ -435,7 +428,9 @@ export async function seedDevelopmentDemo(
     breakerHolderId: string,
     targetId: string,
   ): Promise<string> {
-    const existing = activePaths.find((path) => path.label === label && path.lifecycle === 'ACTIVE');
+    const existing = activePaths.find(
+      (path) => path.label === label && path.lifecycle === 'ACTIVE',
+    );
 
     if (existing) {
       return existing.id;

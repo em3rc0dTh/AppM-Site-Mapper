@@ -1,6 +1,6 @@
 # G7 — Rack / CAS Engine Receipt
 
-**Status:** READY FOR CI / REVIEW
+**Status:** PASS
 
 ## Delivered
 
@@ -19,4 +19,4 @@
 
 ## Gate verdict
 
-PASS requires final CI and integration into main.
+The final branch passed the complete CI pipeline. G7 is ready for integration into main.

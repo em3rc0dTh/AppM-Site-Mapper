@@ -53,7 +53,9 @@ function Branch({
             onClick={() => openPhysicalPopup(popupHref, popupKind, node.id)}
           >
             <Icon
-              name={node.kind === 'NETWORK' ? 'network' : node.kind.includes('ROOM') ? 'room' : 'box'}
+              name={
+                node.kind === 'NETWORK' ? 'network' : node.kind.includes('ROOM') ? 'room' : 'box'
+              }
             />
             <span>{node.name}</span>
             {node.children.length > 0 && <small>{node.children.length}</small>}
@@ -65,7 +67,9 @@ function Branch({
             title={node.kind.replaceAll('_', ' ')}
           >
             <Icon
-              name={node.kind === 'NETWORK' ? 'network' : node.kind.includes('ROOM') ? 'room' : 'box'}
+              name={
+                node.kind === 'NETWORK' ? 'network' : node.kind.includes('ROOM') ? 'room' : 'box'
+              }
             />
             <span>{node.name}</span>
             {node.children.length > 0 && <small>{node.children.length}</small>}

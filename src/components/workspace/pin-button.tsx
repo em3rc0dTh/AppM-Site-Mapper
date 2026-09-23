@@ -2,10 +2,7 @@
 
 import { useState } from 'react';
 
-export function PinButton({
-  id,
-  initialPinned,
-}: Readonly<{ id: string; initialPinned: boolean }>) {
+export function PinButton({ id, initialPinned }: Readonly<{ id: string; initialPinned: boolean }>) {
   const [pinned, setPinned] = useState(initialPinned);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,10 +21,7 @@ export function PinButton({
 
     if (!response.ok) {
       setError(
-        body &&
-          typeof body === 'object' &&
-          'error' in body &&
-          typeof body.error === 'string'
+        body && typeof body === 'object' && 'error' in body && typeof body.error === 'string'
           ? body.error
           : 'PIN_UPDATE_FAILED',
       );

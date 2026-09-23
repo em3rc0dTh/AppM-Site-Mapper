@@ -2,17 +2,69 @@ import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { BdfbService } from '@/modules/power/application/bdfb-service';
-import type { BdfbStructure } from '@/modules/topology/domain/entities';
+import type {
+  BdfbStructure,
+  BreakerHolder,
+  Frame,
+  Panel,
+  Shelf,
+} from '@/modules/topology/domain/entities';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function isEndpoint(value: unknown): value is BreakerHolder {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value.id === 'string' &&
+    (value.variant === 'BREAKER' || value.variant === 'HOLDER') &&
+    typeof value.label === 'string' &&
+    (value.capacity === undefined || typeof value.capacity === 'number')
+  );
+}
+
+function isPanel(value: unknown): value is Panel {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.label === 'string' &&
+    Array.isArray(value.endpoints) &&
+    value.endpoints.every(isEndpoint)
+  );
+}
+
+function isFrame(value: unknown): value is Frame {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.label === 'string' &&
+    Array.isArray(value.panels) &&
+    value.panels.every(isPanel)
+  );
+}
+
+function isShelf(value: unknown): value is Shelf {
+  return (
+    isRecord(value) &&
+    typeof value.id === 'string' &&
+    typeof value.label === 'string' &&
+    Array.isArray(value.frames) &&
+    value.frames.every(isFrame)
+  );
+}
+
 function isBdfbStructure(value: unknown): value is BdfbStructure {
-  return Boolean(
-    value &&
-      typeof value === 'object' &&
-      'shelves' in value &&
-      Array.isArray((value as { shelves?: unknown }).shelves),
+  return (
+    isRecord(value) &&
+    Array.isArray(value.shelves) &&
+    value.shelves.every(isShelf)
   );
 }
 

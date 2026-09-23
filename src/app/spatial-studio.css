@@ -1254,7 +1254,6 @@
   white-space: nowrap;
 }
 
-
 /* Physical popup windows */
 .physical-popup-shell {
   width: 100vw;
@@ -1286,8 +1285,13 @@
 
 .physical-popup-header small {
   color: #6fd8e7;
-  font: 750 9px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  letter-spacing: .12em;
+  font:
+    750 9px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
@@ -1396,7 +1400,6 @@
   }
 }
 
-
 .workspace-summary-popup {
   appearance: none;
   width: 100%;
@@ -1422,7 +1425,7 @@
 
 .workspace-tree-popup:hover {
   color: #d9f7fb;
-  background: rgba(61, 104, 122, .18);
+  background: rgba(61, 104, 122, 0.18);
 }
 
 .workspace-tree-popup > span {

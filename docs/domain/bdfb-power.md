@@ -17,6 +17,29 @@ Device(BDFB)
 
 BDFB structure is configured independently from rack placement/CAS.
 
+### Canonical Frame / physical presentation rule
+
+A Frame always exists in the canonical data model. Customer equipment may, however, expose no distinct physical frame. In that case the Frame remains the parent of its Panels and retains its stable identity for PowerPath resolution, but presentation marks it as physically implicit:
+
+```ts
+frame.presentation = {
+  physicalFrameVisible: false
+}
+```
+
+The UI then renders the Panels directly under the Shelf while preserving the canonical hierarchy:
+
+```text
+canonical truth              physical presentation
+
+Shelf                        Shelf
+└── Frame (implicit)   ->     ├── Panel A
+    ├── Panel A               └── Panel B
+    └── Panel B
+```
+
+This is presentation metadata only. It must never re-parent Panels, change endpoint IDs, or create a second BDFB schema.
+
 IDs are unique inside the Device-owned structure. Panel endpoint labels are unique within a Panel.
 
 ## PowerPath

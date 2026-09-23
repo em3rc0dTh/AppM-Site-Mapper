@@ -32,11 +32,7 @@ export default async function DevicePopupPage({
   );
 
   return (
-    <PopupChrome
-      eyebrow={device.kind}
-      title={device.name}
-      subtitle="Physical equipment workspace"
-    >
+    <PopupChrome eyebrow={device.kind} title={device.name} subtitle="Physical equipment workspace">
       <PopupDeviceSurface
         deviceId={deviceId}
         focus={focus}

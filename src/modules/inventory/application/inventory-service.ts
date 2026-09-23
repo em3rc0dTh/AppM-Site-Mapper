@@ -5,10 +5,7 @@ import { failure, success, type Result } from '@/shared/domain/result';
 
 export type InventoryItem = DeviceNode | EquipmentNode;
 export type InventoryError =
-  | 'RACK_NOT_FOUND'
-  | 'NOT_A_CONTAINER_RACK'
-  | 'ITEM_NOT_FOUND'
-  | 'NOT_INVENTORY_ITEM';
+  'RACK_NOT_FOUND' | 'NOT_A_CONTAINER_RACK' | 'ITEM_NOT_FOUND' | 'NOT_INVENTORY_ITEM';
 
 export class InventoryService {
   constructor(private readonly repository: TopologyRepository) {}

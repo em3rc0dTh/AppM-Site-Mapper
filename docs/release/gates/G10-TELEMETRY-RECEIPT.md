@@ -1,6 +1,6 @@
 # G10 — Telemetry Gateway Receipt
 
-**Status:** READY FOR CI / REVIEW
+**Status:** PASS
 
 ## Delivered
 
@@ -28,6 +28,18 @@ No MQTT secret value is committed.
 
 Legacy MQTT credentials must be rotated before enabling production telemetry.
 
+## Certification
+
+The complete CI pipeline passed on the certified implementation head:
+
+- typecheck;
+- lint;
+- format check;
+- unit tests;
+- integration tests;
+- production build;
+- production dependency audit.
+
 ## Gate verdict
 
-Final PASS requires the complete CI pipeline to succeed on the final G10 head.
+**PASS — G11 Operational Workspace is authorized after this PR is integrated into `main`.**

@@ -3621,3 +3621,126 @@ p {
     flex-wrap: wrap;
   }
 }
+
+
+/* Spatial authoring drill-down navigation */
+.spatial-context-shape.is-navigable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.spatial-context-shape.is-navigable polygon {
+  transition:
+    fill 140ms ease,
+    stroke 140ms ease,
+    filter 140ms ease;
+}
+
+.spatial-context-shape.is-navigable:hover polygon,
+.spatial-context-shape.is-navigable:focus polygon {
+  fill: rgba(93, 194, 214, 0.13);
+  stroke: #7ce0ee;
+  filter: drop-shadow(0 0 16px rgba(104, 211, 255, 0.22));
+}
+
+.spatial-context-kind,
+.spatial-context-enter {
+  fill: #6f879f;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  pointer-events: none;
+}
+
+.spatial-context-name {
+  fill: #d9edf4;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 750;
+  paint-order: stroke;
+  stroke: #070b10;
+  stroke-width: 4px;
+  pointer-events: none;
+}
+
+.spatial-context-enter {
+  fill: #7ce0ee;
+}
+
+.spatial-navigation-rail {
+  position: absolute;
+  z-index: 5;
+  top: 14px;
+  right: 14px;
+  width: min(250px, calc(100% - 28px));
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #2d3b49;
+  border-radius: 6px;
+  background: rgba(11, 16, 22, 0.94);
+  box-shadow: 0 14px 40px #0009;
+}
+
+.spatial-navigation-rail > span {
+  padding: 3px 5px 5px;
+  color: #73879a;
+  font:
+    0.52rem ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  font-weight: 750;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.spatial-navigation-rail a {
+  min-height: 52px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 2px 10px;
+  padding: 9px 10px;
+  border: 1px solid #314150;
+  border-radius: 5px;
+  background: #141c25;
+  color: inherit;
+  text-decoration: none;
+}
+
+.spatial-navigation-rail a:hover,
+.spatial-navigation-rail a:focus-visible {
+  border-color: #63cadb;
+  background: #172731;
+}
+
+.spatial-navigation-rail a small {
+  color: #71879b;
+  font:
+    0.5rem ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Consolas,
+    monospace;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.spatial-navigation-rail a strong {
+  min-width: 0;
+  overflow: hidden;
+  color: #dce8ef;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spatial-navigation-rail a b {
+  grid-column: 2;
+  grid-row: 1 / -1;
+  color: #7ce0ee;
+  font-size: 0.72rem;
+}

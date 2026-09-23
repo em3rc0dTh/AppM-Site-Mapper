@@ -520,8 +520,9 @@ function normalizeSiteParentedLevels(
           ? 'UNIQUE_STRUCTURE_WITHOUT_DIRECT_LEVEL'
           : undefined;
 
-    const structureId = structure ? recordId(structure) : null;
-    if (!structureId || !strategy) return level;
+    if (!structure || !strategy) return level;
+    const structureId = recordId(structure);
+    if (!structureId) return level;
 
     normalized.push({
       levelId,

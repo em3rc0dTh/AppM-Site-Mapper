@@ -18,10 +18,12 @@ export async function PopupDeviceSurface({
   deviceId,
   focus,
   powerReadable,
+  mode = 'device',
 }: Readonly<{
   deviceId: string;
   focus: PopupDeviceFocus;
   powerReadable: boolean;
+  mode?: 'device' | 'panel' | 'endpoint';
 }>) {
   const repository = await createTopologyRepository();
   const device = await repository.getById(deviceId);
@@ -83,6 +85,7 @@ export async function PopupDeviceSurface({
       focus={focus}
       powerReadable={powerReadable}
       popupMode
+      viewMode={mode}
     />
   );
 }

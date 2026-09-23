@@ -1,11 +1,11 @@
 type ProcessSingletonRegistry = Map<string, unknown>;
 
-type AppmGlobal = typeof globalThis & {
+type AppmProcess = NodeJS.Process & {
   __appmProcessSingletons?: ProcessSingletonRegistry;
 };
 
 function registry(): ProcessSingletonRegistry {
-  const scope = globalThis as AppmGlobal;
+  const scope = process as AppmProcess;
   scope.__appmProcessSingletons ??= new Map<string, unknown>();
   return scope.__appmProcessSingletons;
 }

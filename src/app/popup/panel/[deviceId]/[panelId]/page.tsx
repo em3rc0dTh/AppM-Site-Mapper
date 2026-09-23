@@ -45,6 +45,7 @@ export default async function PanelPopupPage({
         deviceId={deviceId}
         focus={{ shelf: shelfId, panel: panelId }}
         powerReadable={hasPermission(auth.value.role, 'power:read')}
+        mode="panel"
       />
     </PopupChrome>
   );

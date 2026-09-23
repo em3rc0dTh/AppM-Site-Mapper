@@ -1,11 +1,7 @@
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import { TopologyService } from '@/modules/topology/application/topology-service';
-import type {
-  DeviceNode,
-  EquipmentNode,
-  TopologyNode,
-} from '@/modules/topology/domain/entities';
+import type { DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
 
 export interface WorkspaceTreeNode {
   readonly id: string;
@@ -73,14 +69,11 @@ export class WorkspaceService {
     const activeNetworks = networks.filter((node) => node.lifecycle === 'ACTIVE');
     const inventory = [...devices, ...equipment].filter(
       (node): node is InventoryNode =>
-        (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') &&
-        node.lifecycle === 'ACTIVE',
+        (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && node.lifecycle === 'ACTIVE',
     );
 
     return {
-      navigation: await Promise.all(
-        activeNetworks.map((network) => this.buildTree(network)),
-      ),
+      navigation: await Promise.all(activeNetworks.map((network) => this.buildTree(network))),
       pinned: await this.buildPinned(inventory),
       notifications: this.buildNotifications(inventory),
       bdfb: await this.buildBdfbSummaries(

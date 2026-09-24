@@ -21,7 +21,7 @@ export function StructureStudio({
   node: StructureNode;
   levels: readonly StructureLevelEntry[];
   canWrite: boolean;
-  siteBoundary?: readonly PointMm[];
+  siteBoundary?: readonly PointMm[] | undefined;
 }>) {
   const orderedLevels = [...levels].sort((left, right) =>
     new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare(
@@ -43,7 +43,14 @@ export function StructureStudio({
           containmentPolygon={siteBoundary}
           contextPolygons={
             siteBoundary
-              ? [{ id: `${node.parentId}-site-boundary`, name: 'SITE LIMIT', kind: 'SITE', polygon: siteBoundary }]
+              ? [
+                  {
+                    id: `${node.parentId}-site-boundary`,
+                    name: 'SITE LIMIT',
+                    kind: 'SITE',
+                    polygon: siteBoundary,
+                  },
+                ]
               : []
           }
           title="Building footprint"

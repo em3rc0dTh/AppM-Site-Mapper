@@ -220,15 +220,14 @@ export class SpatialService {
             name: rack.name,
             variant: rack.variant,
             dimensionsMm,
-            rect:
-              resolved?.ok
-                ? resolved.rect
-                : {
-                    x: point.x,
-                    y: point.y,
-                    width: dimensionsMm.width,
-                    depth: dimensionsMm.depth,
-                  },
+            rect: resolved?.ok
+              ? resolved.rect
+              : {
+                  x: point.x,
+                  y: point.y,
+                  width: dimensionsMm.width,
+                  depth: dimensionsMm.depth,
+                },
           };
         });
       },
@@ -243,7 +242,8 @@ export class SpatialService {
         ...(rack
           ? {
               rack,
-              occupancyRole: rack.positionId === position.id ? ('ANCHOR' as const) : ('COVERED' as const),
+              occupancyRole:
+                rack.positionId === position.id ? ('ANCHOR' as const) : ('COVERED' as const),
             }
           : {}),
       };

@@ -6,6 +6,7 @@ import type {
   ContainerRackVariant,
   RoomSubstructureVariant,
 } from '@/modules/topology/domain/entities';
+import { RackPlacementService } from '@/modules/spatial/application/rack-placement-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
@@ -47,7 +48,9 @@ export async function PATCH(request: Request, context: Context) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
-  const service = new TopologyService(await createTopologyRepository());
+  const repository = await createTopologyRepository();
+  const service = new TopologyService(repository);
+  const existing = await service.getById(id);
   let result;
 
   if (body.action === 'archive') {
@@ -55,6 +58,18 @@ export async function PATCH(request: Request, context: Context) {
   } else if (body.action === 'restore') {
     result = await service.restore(id);
   } else if (body.action === 'move' && 'parentId' in body && typeof body.parentId === 'string') {
+    if (existing?.kind === 'CONTAINER_RACK') {
+      const placement = await new RackPlacementService(repository).validate(
+        body.parentId,
+        existing.dimensionsMm,
+        existing.id,
+      );
+
+      if (!placement.ok) {
+        return NextResponse.json({ error: placement.error }, { status: 422 });
+      }
+    }
+
     result = await service.move(id, body.parentId);
   } else if (body.action === 'update') {
     const coordinate =
@@ -83,6 +98,18 @@ export async function PATCH(request: Request, context: Context) {
               : {}),
           }
         : undefined;
+
+    if (existing?.kind === 'CONTAINER_RACK') {
+      const placement = await new RackPlacementService(repository).validate(
+        existing.parentId,
+        dimensions ?? existing.dimensionsMm,
+        existing.id,
+      );
+
+      if (!placement.ok) {
+        return NextResponse.json({ error: placement.error }, { status: 422 });
+      }
+    }
 
     result = await service.update(id, {
       ...('name' in body && typeof body.name === 'string' ? { name: body.name } : {}),

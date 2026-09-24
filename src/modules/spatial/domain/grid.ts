@@ -74,6 +74,15 @@ export function linearGridRun(
   start: GridCoordinate,
   end: GridCoordinate,
 ): readonly GridCoordinate[] {
+  if (
+    !Number.isInteger(start.column) ||
+    !Number.isInteger(end.column) ||
+    start.column < 1 ||
+    end.column < 1
+  ) {
+    throw new Error('Grid columns must be positive integers.');
+  }
+
   const startRow = rowToIndex(start.row);
   const endRow = rowToIndex(end.row);
 

@@ -658,10 +658,11 @@
 .studio-building-stack {
   display: flex;
   flex-direction: column;
-  padding: 20px 14px;
+  min-height: 0;
+  padding: 16px 12px;
   background: #131f2a;
   border: 1px solid #334b5d;
-  overflow: auto;
+  overflow: hidden;
 }
 .studio-building-stack header small {
   font-size: 11px;
@@ -678,21 +679,23 @@
 .studio-floor-stack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 9px;
   margin: auto 0;
-  padding: 30px 0;
+  padding: 18px 0;
+  min-height: 0;
 }
 .studio-floor-stack button {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
-  justify-content: space-between;
-  padding: 22px 12px;
+  padding: 12px 10px;
   border: 1px solid #526c81;
   background: linear-gradient(165deg, #263b4b, #152430);
   color: #d6e6ef;
-  box-shadow: 0 8px #080d12;
+  box-shadow: 0 6px #080d12;
   cursor: pointer;
+  text-align: left;
 }
 .studio-floor-stack button.is-active {
   border-color: #7fdae7;
@@ -703,6 +706,38 @@
 }
 .studio-floor-stack strong {
   font-size: 14px;
+}
+.studio-floor-kind,
+.studio-floor-enter {
+  flex: 0 0 auto;
+}
+.studio-floor-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.studio-floor-copy > strong,
+.studio-floor-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.studio-floor-copy > small {
+  font-size: 9px;
+  letter-spacing: 0.04em;
+}
+.studio-floor-copy .has-content {
+  color: #85e3ee;
+}
+.studio-floor-copy .is-empty {
+  color: #788b9c;
+}
+.studio-floor-preview {
+  color: #9aaebe;
+}
+.studio-floor-enter {
+  color: #8fdce8;
+  font-size: 13px;
 }
 .studio-building-stack .action-link {
   font-size: 13px;

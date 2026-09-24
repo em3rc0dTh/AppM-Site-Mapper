@@ -301,10 +301,7 @@ export class TopologyService {
         const nextTotalU = input.totalU ?? node.totalU;
         const nextDimensions = input.dimensionsMm ?? node.dimensionsMm;
 
-        if (
-          nextVariant === 'RACK' &&
-          (!Number.isInteger(nextTotalU) || (nextTotalU ?? 0) < 1)
-        ) {
+        if (nextVariant === 'RACK' && (!Number.isInteger(nextTotalU) || (nextTotalU ?? 0) < 1)) {
           return failure('INVALID_RACK_CAPACITY');
         }
         if (

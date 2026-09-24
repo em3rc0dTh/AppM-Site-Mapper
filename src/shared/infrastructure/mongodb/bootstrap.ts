@@ -42,4 +42,34 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
       { expireAfterSeconds: 0, name: 'ttl_auth_rate_expiry' },
     ),
   ]);
+
+  const telemetrySources = database.collection('telemetry_sources');
+  await Promise.all([
+    telemetrySources.createIndex({ id: 1 }, { unique: true, name: 'uq_telemetry_source_id' }),
+    telemetrySources.createIndex(
+      { topicSource: 1 },
+      { unique: true, name: 'uq_telemetry_source_topic' },
+    ),
+    telemetrySources.createIndex(
+      { entityId: 1, enabled: 1 },
+      { name: 'ix_telemetry_source_entity_enabled' },
+    ),
+    telemetrySources.createIndex(
+      { expectedSerialNumber: 1 },
+      { name: 'ix_telemetry_source_serial' },
+    ),
+  ]);
+
+  const telemetryLatest = database.collection('telemetry_latest');
+  await Promise.all([
+    telemetryLatest.createIndex(
+      { entityId: 1 },
+      { unique: true, name: 'uq_telemetry_latest_entity' },
+    ),
+    telemetryLatest.createIndex({ sourceId: 1 }, { name: 'ix_telemetry_latest_source' }),
+    telemetryLatest.createIndex(
+      { observedAt: -1, receivedAt: -1 },
+      { name: 'ix_telemetry_latest_recency' },
+    ),
+  ]);
 }

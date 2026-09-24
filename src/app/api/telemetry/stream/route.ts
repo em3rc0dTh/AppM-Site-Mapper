@@ -18,12 +18,13 @@ export async function GET() {
   }
 
   const telemetry = await getTelemetryRuntime();
+  const initialSnapshot = await telemetry.service.snapshot();
   let unsubscribe: (() => void) | null = null;
   let heartbeat: ReturnType<typeof setInterval> | null = null;
 
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
-      controller.enqueue(event('snapshot', telemetry.service.snapshot()));
+      controller.enqueue(event('snapshot', initialSnapshot));
 
       unsubscribe = telemetry.hub.subscribe((sample) => {
         try {

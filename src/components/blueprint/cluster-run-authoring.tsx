@@ -2,7 +2,10 @@
 
 import { useMemo, useRef, useState, type PointerEvent } from 'react';
 
-import { TopologyCreateForm } from '@/components/topology/topology-create-form';
+import {
+  TopologyCreateForm,
+  type ContainerRackDraft,
+} from '@/components/topology/topology-create-form';
 import type {
   PositionPlacementView,
   RackPlacementView,
@@ -15,7 +18,13 @@ import {
   rowToIndex,
   TILE_SIZE_MM,
 } from '@/modules/spatial/domain/grid';
-import { polygonBounds, rectInsidePolygon, type PointMm } from '@/modules/spatial/domain/geometry';
+import {
+  polygonBounds,
+  rectInsidePolygon,
+  rectsOverlap,
+  type PointMm,
+} from '@/modules/spatial/domain/geometry';
+import { resolveRackFootprint } from '@/modules/spatial/domain/rack-footprint';
 import type { ClusterRun, GridCoordinate } from '@/modules/topology/domain/entities';
 
 function keyOf(coordinate: GridCoordinate): string {
@@ -88,8 +97,61 @@ export function ClusterRunAuthoring({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPositionId, setSelectedPositionId] = useState<string | null>(null);
+  const [rackDraft, setRackDraft] = useState<ContainerRackDraft>({
+    widthMm: TILE_SIZE_MM,
+    depthMm: TILE_SIZE_MM,
+  });
 
   const selectedPosition = positions.find((position) => position.id === selectedPositionId) ?? null;
+
+  const rackDraftFootprint = useMemo(() => {
+    if (
+      !selectedPosition ||
+      !run ||
+      !Number.isFinite(rackDraft.widthMm) ||
+      !Number.isFinite(rackDraft.depthMm) ||
+      rackDraft.widthMm <= 0 ||
+      rackDraft.depthMm <= 0
+    ) {
+      return null;
+    }
+
+    return resolveRackFootprint(
+      selectedPosition.gridCoordinate,
+      run,
+      { width: rackDraft.widthMm, depth: rackDraft.depthMm },
+      roomPolygon,
+    );
+  }, [rackDraft.depthMm, rackDraft.widthMm, roomPolygon, run, selectedPosition]);
+
+  const rackDraftCollisions =
+    rackDraftFootprint?.ok && selectedPosition
+      ? racks.filter((rack) => rectsOverlap(rackDraftFootprint.rect, rack.rect))
+      : [];
+
+  const rackDraftBlockedReason = (() => {
+    if (!selectedPosition || selectedPosition.occupied) return null;
+    if (!Number.isFinite(rackDraft.widthMm) || !Number.isFinite(rackDraft.depthMm)) {
+      return 'Width and depth must be valid numbers.';
+    }
+    if (rackDraft.widthMm <= 0 || rackDraft.depthMm <= 0) {
+      return 'Width and depth must be greater than 0 mm.';
+    }
+    if (!rackDraftFootprint) return null;
+    if (!rackDraftFootprint.ok) {
+      const messages: Readonly<Record<string, string>> = {
+        RACK_ANCHOR_OUTSIDE_CLUSTER_RUN: 'The selected slot is outside this Bay run.',
+        RACK_WIDTH_EXCEEDS_CLUSTER_RUN:
+          'Not enough Bay slots remain for this width from the selected slot.',
+        RACK_FOOTPRINT_OUTSIDE_ROOM: 'This depth would extend outside the Room boundary.',
+      };
+      return messages[rackDraftFootprint.error] ?? rackDraftFootprint.error.replaceAll('_', ' ');
+    }
+    if (rackDraftCollisions.length > 0) {
+      return `Footprint collision with ${rackDraftCollisions.map((rack) => `${rack.name} (${rack.clusterName})`).join(', ')}.`;
+    }
+    return null;
+  })();
 
   const preview = useMemo(() => {
     if (!start || !end) return [];
@@ -340,6 +402,31 @@ export function ClusterRunAuthoring({
             ))}
 
           {!editing &&
+            selectedPosition &&
+            !selectedPosition.occupied &&
+            rackDraftFootprint?.ok && (
+              <g
+                className={`cluster-rack-preview ${rackDraftCollisions.length > 0 ? 'is-collision' : 'is-valid'}`}
+                pointerEvents="none"
+              >
+                <rect
+                  x={rackDraftFootprint.rect.x}
+                  y={rackDraftFootprint.rect.y}
+                  width={rackDraftFootprint.rect.width}
+                  height={rackDraftFootprint.rect.depth}
+                />
+                <text
+                  x={rackDraftFootprint.rect.x + rackDraftFootprint.rect.width / 2}
+                  y={rackDraftFootprint.rect.y + rackDraftFootprint.rect.depth / 2}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                >
+                  PREVIEW · {rackDraft.widthMm} × {rackDraft.depthMm} mm
+                </text>
+              </g>
+            )}
+
+          {!editing &&
             racks.map((rack) => (
               <g
                 key={rack.id}
@@ -441,7 +528,23 @@ export function ClusterRunAuthoring({
                 <p>Select another available slot to place new infrastructure.</p>
               </div>
             ) : canWrite ? (
-              <TopologyCreateForm kind="CONTAINER_RACK" parentId={selectedPosition.id} />
+              <>
+                <div
+                  className={`cluster-placement-preview-status ${rackDraftBlockedReason ? 'is-blocked' : 'is-valid'}`}
+                >
+                  <strong>{rackDraftBlockedReason ? 'PLACEMENT BLOCKED' : 'PLACEMENT FITS'}</strong>
+                  <span>
+                    {rackDraftBlockedReason ??
+                      `${rackDraftFootprint?.ok ? rackDraftFootprint.coveredCoordinates.length : 0} slot(s) across · ${rackDraft.depthMm} mm depth`}
+                  </span>
+                </div>
+                <TopologyCreateForm
+                  kind="CONTAINER_RACK"
+                  parentId={selectedPosition.id}
+                  onContainerRackDraftChange={setRackDraft}
+                  containerRackPlacementBlockedReason={rackDraftBlockedReason}
+                />
+              </>
             ) : (
               <p>Your role is read-only.</p>
             )}

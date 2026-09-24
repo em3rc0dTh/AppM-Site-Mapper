@@ -39,6 +39,7 @@ export function ProfileForm({ displayName }: Readonly<{ displayName: string }>) 
       <label>
         Display name
         <input defaultValue={displayName} maxLength={120} name="displayName" required />
+        <small>Name shown to users in Site Mapper. It does not change the sign-in email.</small>
       </label>
       <button disabled={busy} type="submit">
         {busy ? 'Saving…' : 'Save profile'}

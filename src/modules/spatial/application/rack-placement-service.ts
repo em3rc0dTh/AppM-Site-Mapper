@@ -3,10 +3,7 @@ import type { DimensionsMm, PositionNode } from '@/modules/topology/domain/entit
 import { failure, success, type Result } from '@/shared/domain/result';
 
 import { rectsOverlap } from '../domain/geometry';
-import {
-  resolveRackFootprint,
-  type RackFootprintError,
-} from '../domain/rack-footprint';
+import { resolveRackFootprint, type RackFootprintError } from '../domain/rack-footprint';
 import { TILE_SIZE_MM } from '../domain/grid';
 import { SpatialService } from './spatial-service';
 
@@ -59,7 +56,12 @@ export class RackPlacementService {
       return failure('RACK_ROOM_BOUNDARY_REQUIRED');
     }
 
-    const footprint = resolveRackFootprint(position.coordinate, cluster.run, dimensions, room.polygon);
+    const footprint = resolveRackFootprint(
+      position.coordinate,
+      cluster.run,
+      dimensions,
+      room.polygon,
+    );
 
     if (!footprint.ok) {
       return failure(footprint.error);

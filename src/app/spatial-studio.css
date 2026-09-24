@@ -2255,7 +2255,6 @@
   line-height: 1.35;
 }
 
-
 /* Linear ContainerCluster / Bay authoring */
 .cluster-run-authoring {
   display: flex;
@@ -2288,7 +2287,9 @@
 
 .cluster-run-toolbar span {
   color: #7890a2;
-  font: 10px ui-monospace, monospace;
+  font:
+    10px ui-monospace,
+    monospace;
 }
 
 .cluster-run-toolbar > div:last-child {
@@ -2346,7 +2347,9 @@
 
 .cluster-grid-label {
   fill: #7f9db3;
-  font: 92px ui-monospace, monospace;
+  font:
+    92px ui-monospace,
+    monospace;
   pointer-events: none;
 }
 
@@ -2380,7 +2383,9 @@
 
 .cluster-slot-label {
   fill: #e4f2f8;
-  font: 92px ui-monospace, monospace;
+  font:
+    92px ui-monospace,
+    monospace;
   font-weight: 700;
   pointer-events: none;
 }
@@ -2405,7 +2410,9 @@
 
 .cluster-run-state span {
   color: #94a9b8;
-  font: 10px ui-monospace, monospace;
+  font:
+    10px ui-monospace,
+    monospace;
   line-height: 1.4;
 }
 

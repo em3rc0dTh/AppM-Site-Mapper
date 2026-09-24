@@ -7,6 +7,7 @@ import type {
   RoomSubstructureVariant,
   TopologyKind,
 } from '@/modules/topology/domain/entities';
+import { RackPlacementService } from '@/modules/spatial/application/rack-placement-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
@@ -109,6 +110,17 @@ export async function POST(request: Request) {
       : undefined;
 
   const repository = await createTopologyRepository();
+
+  if (kind === 'CONTAINER_RACK' && typeof parentId === 'string') {
+    const placement = await new RackPlacementService(repository).validate(
+      parentId,
+      dimensionsMm,
+    );
+
+    if (!placement.ok) {
+      return NextResponse.json({ error: placement.error }, { status: 422 });
+    }
+  }
 
   const result = await new TopologyService(repository).create({
     kind,

@@ -67,17 +67,27 @@ export function TopologyCreateForm({
       payload.category = String(form.get('category') ?? '');
     }
 
-    const response = await fetch('/api/topology', {
+    const endpoint = kind === 'STRUCTURE' ? '/api/spatial/structures' : '/api/topology';
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(payload),
     });
 
-    const result = (await response.json()) as { error?: string };
+    const result = (await response.json()) as {
+      error?: string;
+      href?: string;
+      node?: { id: string };
+    };
 
     if (!response.ok) {
       setError(result.error ?? 'CREATE_FAILED');
       setBusy(false);
+      return;
+    }
+
+    if (kind === 'STRUCTURE' && result.href) {
+      window.location.assign(result.href);
       return;
     }
 

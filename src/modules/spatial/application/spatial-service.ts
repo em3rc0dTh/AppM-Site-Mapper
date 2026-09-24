@@ -45,6 +45,7 @@ export interface PositionPlacementView {
   readonly id: string;
   readonly name: string;
   readonly coordinate: string;
+  readonly gridCoordinate: PositionNode['coordinate'];
   readonly clusterId: string;
   readonly clusterName: string;
   readonly rect: RectMm;
@@ -176,6 +177,7 @@ export class SpatialService {
           id: position.id,
           name: position.name,
           coordinate: `${position.coordinate.row}-${position.coordinate.column}`,
+          gridCoordinate: position.coordinate,
           clusterId: cluster.id,
           clusterName: cluster.name,
           rect: {

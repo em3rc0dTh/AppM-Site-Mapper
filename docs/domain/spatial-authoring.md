@@ -80,6 +80,26 @@ Physical size is derived from polygon geometry:
 
 No second authoritative Structure width/depth record is introduced, avoiding divergence between scalar dimensions and polygon geometry.
 
+## Progressive physical-authoring flow
+
+Creation continues into the newly created child workspace rather than stopping at the parent CRUD panel.
+
+The physical authoring sequence is:
+
+```text
+Network
+→ Site                draw Site boundary when empty
+→ Structure           draw Structure footprint when empty
+→ Level               hierarchy / floor context only; no persisted polygon
+→ Room/Substructure   draw Room boundary when empty, with optional 600 mm snapping
+→ Bay/Cluster         placement context derived from contained Positions/Racks
+→ Position            explicit row/column grid coordinate
+→ Container/Rack      physical width/depth + rack capacity where applicable
+→ Device | Equipment  inventory identity mounted in the Container/Rack context
+```
+
+An empty Site, Structure or Room/Substructure with write permission enters Draw mode on first physical entry. Existing persisted boundaries always open in read mode and require an explicit Edit boundary action.
+
 ## Domain validation
 
 A polygon is valid only when:

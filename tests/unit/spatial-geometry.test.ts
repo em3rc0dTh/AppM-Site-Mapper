@@ -4,6 +4,7 @@ import {
   isValidPolygon,
   pointInPolygon,
   polygonBounds,
+  polygonContainedByPolygon,
   polygonSelfIntersects,
   rectsOverlap,
 } from '@/modules/spatial/domain/geometry';
@@ -51,6 +52,34 @@ describe('Blueprint geometry', () => {
       width: 1802,
       height: 1202,
     });
+  });
+
+  it('rejects a child polygon whose edge exits a concave parent', () => {
+    const concaveParent = [
+      { x: 0, y: 0 },
+      { x: 4000, y: 0 },
+      { x: 4000, y: 4000 },
+      { x: 3000, y: 4000 },
+      { x: 3000, y: 1000 },
+      { x: 1000, y: 1000 },
+      { x: 1000, y: 4000 },
+      { x: 0, y: 4000 },
+    ] as const;
+    const crossingChild = [
+      { x: 500, y: 3000 },
+      { x: 3500, y: 3000 },
+      { x: 2000, y: 500 },
+    ] as const;
+    const containedChild = [
+      { x: 250, y: 250 },
+      { x: 900, y: 250 },
+      { x: 900, y: 900 },
+      { x: 250, y: 900 },
+    ] as const;
+
+    expect(crossingChild.every((point) => pointInPolygon(point, concaveParent))).toBe(true);
+    expect(polygonContainedByPolygon(crossingChild, concaveParent)).toBe(false);
+    expect(polygonContainedByPolygon(containedChild, concaveParent)).toBe(true);
   });
 
   it('detects rectangle collisions', () => {

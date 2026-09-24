@@ -10,10 +10,7 @@ import {
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type TelemetryIngestError =
-  | TelemetryNormalizationError
-  | 'UNKNOWN_SOURCE'
-  | 'SOURCE_DISABLED'
-  | 'SOURCE_IDENTITY_MISMATCH';
+  TelemetryNormalizationError | 'UNKNOWN_SOURCE' | 'SOURCE_DISABLED' | 'SOURCE_IDENTITY_MISMATCH';
 
 export class TelemetryService {
   constructor(
@@ -60,7 +57,9 @@ export class TelemetryService {
       receivedAt: normalized.value.receivedAt,
       timestampProvenance: normalized.value.timestampProvenance,
       ...(normalized.value.sequence === undefined ? {} : { sequence: normalized.value.sequence }),
-      ...(normalized.value.messageId === undefined ? {} : { messageId: normalized.value.messageId }),
+      ...(normalized.value.messageId === undefined
+        ? {}
+        : { messageId: normalized.value.messageId }),
     };
 
     const becameLatest = await this.latestRepository.upsertIfNewer(sample);

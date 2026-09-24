@@ -120,7 +120,6 @@ export async function PATCH(request: Request, context: Context) {
   return NextResponse.json({ node: result.value });
 }
 
-
 export async function DELETE(_request: Request, context: Context) {
   const auth = await requirePermission('topology:write');
 

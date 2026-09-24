@@ -147,7 +147,9 @@ export function TopologyCreateForm({
         <label className="create-form-field">
           <span>Name</span>
           <input aria-label="Name" name="name" placeholder="e.g. Rack A-01" required />
-          <small>Human-readable identifier used in the hierarchy, search and operational views.</small>
+          <small>
+            Human-readable identifier used in the hierarchy, search and operational views.
+          </small>
         </label>
       ) : (
         <input aria-label="Name" name="name" placeholder="Name" required />
@@ -252,8 +254,8 @@ export function TopologyCreateForm({
                 defaultValue="42"
               />
               <small>
-                Vertical mounting capacity. 1U is one standard rack unit; 42U is a common full-height
-                rack.
+                Vertical mounting capacity. 1U is one standard rack unit; 42U is a common
+                full-height rack.
               </small>
             </label>
           )}

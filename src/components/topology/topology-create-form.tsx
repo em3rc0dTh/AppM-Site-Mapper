@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 
 import type { TopologyKind } from '@/modules/topology/domain/entities';
 
@@ -81,13 +81,33 @@ function namePlaceholder(kind: TopologyKind): string {
   return placeholders[kind];
 }
 
+export interface ContainerRackDraft {
+  readonly widthMm: number;
+  readonly depthMm: number;
+}
+
 export function TopologyCreateForm({
   kind,
   parentId,
-}: Readonly<{ kind: TopologyKind; parentId: string | null }>) {
+  onContainerRackDraftChange,
+  containerRackPlacementBlockedReason,
+}: Readonly<{
+  kind: TopologyKind;
+  parentId: string | null;
+  onContainerRackDraftChange?: ((draft: ContainerRackDraft) => void) | undefined;
+  containerRackPlacementBlockedReason?: string | null | undefined;
+}>) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [containerVariant, setContainerVariant] = useState<'RACK' | 'CONTAINER'>('RACK');
+  const [rackWidthMm, setRackWidthMm] = useState(600);
+  const [rackDepthMm, setRackDepthMm] = useState(600);
+
+  useEffect(() => {
+    if (kind === 'CONTAINER_RACK') {
+      onContainerRackDraftChange?.({ widthMm: rackWidthMm, depthMm: rackDepthMm });
+    }
+  }, [kind, onContainerRackDraftChange, rackDepthMm, rackWidthMm]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -389,7 +409,8 @@ export function TopologyCreateForm({
                 type="number"
                 min="1"
                 step="1"
-                defaultValue="600"
+                value={rackWidthMm}
+                onChange={(event) => setRackWidthMm(Number(event.target.value))}
                 required
               />
               <small>
@@ -406,7 +427,8 @@ export function TopologyCreateForm({
                 type="number"
                 min="1"
                 step="1"
-                defaultValue="600"
+                value={rackDepthMm}
+                onChange={(event) => setRackDepthMm(Number(event.target.value))}
                 required
               />
               <small>
@@ -446,7 +468,13 @@ export function TopologyCreateForm({
           </label>
         </fieldset>
       )}
-      <button type="submit" disabled={busy}>
+      {kind === 'CONTAINER_RACK' && containerRackPlacementBlockedReason && (
+        <span className="form-error">{containerRackPlacementBlockedReason}</span>
+      )}
+      <button
+        type="submit"
+        disabled={busy || (kind === 'CONTAINER_RACK' && Boolean(containerRackPlacementBlockedReason))}
+      >
         {busy
           ? 'Creating…'
           : kind === 'CONTAINER_RACK'

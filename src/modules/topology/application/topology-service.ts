@@ -73,6 +73,10 @@ export class TopologyService {
     return networks.filter((node) => node.lifecycle === 'ACTIVE');
   }
 
+  async listNetworksIncludingArchived(): Promise<readonly TopologyNode[]> {
+    return this.repository.listByKind('NETWORK');
+  }
+
   async create(input: CreateTopologyNodeInput): Promise<Result<TopologyNode, TopologyError>> {
     const name = input.name.trim();
 
@@ -339,21 +343,21 @@ export class TopologyService {
         break;
       }
       case 'DEVICE':
-      case 'EQUIPMENT':
-        updated = {
-          ...updated,
-          ...(input.serialNumber === undefined
-            ? {}
-            : input.serialNumber
-              ? { serialNumber: input.serialNumber.trim() }
-              : { serialNumber: undefined }),
-          ...(input.category === undefined
-            ? {}
-            : input.category
-              ? { category: input.category.trim() }
-              : { category: undefined }),
-        } as TopologyNode;
+      case 'EQUIPMENT': {
+        const next = { ...updated } as Record<string, unknown>;
+        if (input.serialNumber !== undefined) {
+          const serialNumber = input.serialNumber?.trim();
+          if (serialNumber) next.serialNumber = serialNumber;
+          else delete next.serialNumber;
+        }
+        if (input.category !== undefined) {
+          const category = input.category?.trim();
+          if (category) next.category = category;
+          else delete next.category;
+        }
+        updated = next as unknown as TopologyNode;
         break;
+      }
       default:
         break;
     }

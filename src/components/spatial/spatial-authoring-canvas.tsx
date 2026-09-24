@@ -1288,7 +1288,11 @@ export function SpatialAuthoringCanvas({
               <button type="button" onClick={cancel} disabled={busy}>
                 Cancel
               </button>
-              <button type="button" onClick={save} disabled={busy || !validDraft || !containedDraft || !dirty}>
+              <button
+                type="button"
+                onClick={save}
+                disabled={busy || !validDraft || !containedDraft || !dirty}
+              >
                 {busy ? 'Saving…' : 'Save boundary'}
               </button>
             </div>

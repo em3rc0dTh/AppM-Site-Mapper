@@ -2635,3 +2635,23 @@
 .cluster-slot-occupied > p {
   margin: 3px 0 0;
 }
+
+
+.cluster-rack-footprint.is-neighbor-cluster rect {
+  fill: #4a2228d9;
+  stroke: #ff7b86;
+  stroke-dasharray: 38 20;
+}
+
+.cluster-rack-footprint.is-neighbor-cluster text {
+  fill: #ffc0c6;
+}
+
+.cluster-rack-footprint.is-neighbor-cluster .cluster-rack-footprint-detail {
+  fill: #d58a93;
+}
+
+.cluster-rack-footprint.is-current-cluster rect {
+  fill: #5b431fc9;
+  stroke: #f0bf62;
+}

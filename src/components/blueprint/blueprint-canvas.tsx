@@ -25,6 +25,7 @@ export function BlueprintCanvas({
   racks,
   slots,
   canEditBoundary,
+  focusClusterId,
 }: Readonly<{
   roomId: string;
   navigationHrefs?: Readonly<Record<string, string>>;
@@ -35,6 +36,7 @@ export function BlueprintCanvas({
   racks: readonly RackPlacementView[];
   slots: readonly RectMm[];
   canEditBoundary: boolean;
+  focusClusterId?: string;
 }>) {
   const rectangles: SpatialRectOverlay[] = [
     ...clusters.flatMap((cluster) =>
@@ -80,16 +82,16 @@ export function BlueprintCanvas({
   return (
     <div className="blueprint-workspace">
       <SpatialAuthoringCanvas
-      key={roomId}
-      entityId={roomId}
-      entityName={roomName}
-      entityKind="ROOM / SUBSTRUCTURE"
-      initialPolygon={polygon}
-      canWrite={canEditBoundary}
-      autoEditWhenEmpty
-      gridSizeMm={600}
-      rectangles={rectangles}
-      title="Blueprint"
+        key={roomId}
+        entityId={roomId}
+        entityName={roomName}
+        entityKind="ROOM / SUBSTRUCTURE"
+        initialPolygon={polygon}
+        canWrite={canEditBoundary}
+        autoEditWhenEmpty
+        gridSizeMm={600}
+        rectangles={rectangles}
+        title="Blueprint"
         subtitle="600 mm operational grid"
       />
       {unplacedClusters.length > 0 && (
@@ -101,8 +103,10 @@ export function BlueprintCanvas({
               <small>
                 {cluster.variant.replaceAll('_', ' ')} · 0 positions · physical extent not defined
               </small>
-              {navigationHrefs[cluster.id] && (
-                <a href={navigationHrefs[cluster.id]}>Open cluster →</a>
+              {focusClusterId === cluster.id ? (
+                <b>CURRENT CLUSTER</b>
+              ) : (
+                navigationHrefs[cluster.id] && <a href={navigationHrefs[cluster.id]}>Open cluster →</a>
               )}
             </div>
           ))}

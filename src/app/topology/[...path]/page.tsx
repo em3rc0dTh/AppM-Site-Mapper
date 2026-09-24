@@ -387,6 +387,7 @@ export default async function TopologyNodePage({
                 positions={roomLayout.value.positions.filter(
                   (position) => position.clusterId === node.id,
                 )}
+                racks={roomLayout.value.racks.filter((rack) => rack.clusterId === node.id)}
                 blockedPositions={roomLayout.value.positions.filter(
                   (position) => position.clusterId !== node.id,
                 )}

@@ -58,6 +58,28 @@ Draw mode supports building a new boundary point-by-point, then closing it into 
 
 Unsaved editing state warns before browser navigation or page unload.
 
+## Structure authoring contract
+
+A Structure remains a direct child of Site and owns a polygon footprint in Site-local millimetre coordinates.
+
+Structure creation supports two equivalent entry paths:
+
+- create the topology node first and draw an irregular footprint in the Structure workspace;
+- optionally seed a rectangular footprint using width, depth, X and Y values.
+
+The rectangle is an authoring convenience, not a domain assumption. After creation, the persisted polygon remains the spatial authority and may be edited into any valid irregular shape.
+
+When the parent Site already has a persisted boundary, a Structure footprint must remain fully contained by that Site boundary. The same pure Spatial-domain containment rule drives UI feedback and server-side persistence validation.
+
+Physical size is derived from polygon geometry:
+
+- area;
+- perimeter;
+- bounding span (width × depth);
+- individual segment lengths while editing.
+
+No second authoritative Structure width/depth record is introduced, avoiding divergence between scalar dimensions and polygon geometry.
+
 ## Domain validation
 
 A polygon is valid only when:

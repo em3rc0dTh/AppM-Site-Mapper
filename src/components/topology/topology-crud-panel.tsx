@@ -61,8 +61,9 @@ export function TopologyCrudPanel({
       };
     }
     if (node.kind === 'CONTAINER_RACK') {
-      payload.containerVariant = String(form.get('variant') ?? node.variant);
-      if (node.variant === 'RACK' || form.get('variant') === 'RACK') {
+      const variant = String(form.get('variant') ?? node.variant);
+      payload.containerVariant = variant;
+      if (variant === 'RACK') {
         payload.totalU = Number(form.get('totalU') ?? node.totalU ?? 42);
       }
       payload.dimensionsMm = {

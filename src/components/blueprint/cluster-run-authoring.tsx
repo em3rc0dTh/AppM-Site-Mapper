@@ -401,30 +401,27 @@ export function ClusterRunAuthoring({
               </g>
             ))}
 
-          {!editing &&
-            selectedPosition &&
-            !selectedPosition.occupied &&
-            rackDraftFootprint?.ok && (
-              <g
-                className={`cluster-rack-preview ${rackDraftCollisions.length > 0 ? 'is-collision' : 'is-valid'}`}
-                pointerEvents="none"
+          {!editing && selectedPosition && !selectedPosition.occupied && rackDraftFootprint?.ok && (
+            <g
+              className={`cluster-rack-preview ${rackDraftCollisions.length > 0 ? 'is-collision' : 'is-valid'}`}
+              pointerEvents="none"
+            >
+              <rect
+                x={rackDraftFootprint.rect.x}
+                y={rackDraftFootprint.rect.y}
+                width={rackDraftFootprint.rect.width}
+                height={rackDraftFootprint.rect.depth}
+              />
+              <text
+                x={rackDraftFootprint.rect.x + rackDraftFootprint.rect.width / 2}
+                y={rackDraftFootprint.rect.y + rackDraftFootprint.rect.depth / 2}
+                textAnchor="middle"
+                dominantBaseline="middle"
               >
-                <rect
-                  x={rackDraftFootprint.rect.x}
-                  y={rackDraftFootprint.rect.y}
-                  width={rackDraftFootprint.rect.width}
-                  height={rackDraftFootprint.rect.depth}
-                />
-                <text
-                  x={rackDraftFootprint.rect.x + rackDraftFootprint.rect.width / 2}
-                  y={rackDraftFootprint.rect.y + rackDraftFootprint.rect.depth / 2}
-                  textAnchor="middle"
-                  dominantBaseline="middle"
-                >
-                  PREVIEW · {rackDraft.widthMm} × {rackDraft.depthMm} mm
-                </text>
-              </g>
-            )}
+                PREVIEW · {rackDraft.widthMm} × {rackDraft.depthMm} mm
+              </text>
+            </g>
+          )}
 
           {!editing &&
             racks.map((rack) => (

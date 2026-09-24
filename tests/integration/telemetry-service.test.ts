@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
 import type { TelemetrySource } from '@/modules/telemetry/domain/entities';
+import { MemoryTelemetryAcceptanceRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-acceptance-repository';
 import { MemoryTelemetryLatestRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-latest-repository';
+import { MemoryTelemetryQuarantineRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-quarantine-repository';
 import { MemoryTelemetrySourceRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-source-repository';
 
 const timestamp = '2026-09-22T00:00:00.000Z';
@@ -26,13 +28,23 @@ function source(overrides: Partial<TelemetrySource> = {}): TelemetrySource {
 function serviceWith(sources: readonly TelemetrySource[]) {
   const hub = new TelemetryHub(4);
   const latest = new MemoryTelemetryLatestRepository();
-  const service = new TelemetryService(new MemoryTelemetrySourceRepository(sources), latest, hub, {
-    topicPrefix: 'appmanager/v1/raw/',
-    topicSuffix: '/telemetry',
-    maxPayloadBytes: 1024,
-  });
+  const acceptance = new MemoryTelemetryAcceptanceRepository();
+  const quarantine = new MemoryTelemetryQuarantineRepository();
+  const service = new TelemetryService(
+    new MemoryTelemetrySourceRepository(sources),
+    latest,
+    acceptance,
+    quarantine,
+    hub,
+    {
+      topicPrefix: 'appmanager/v1/raw/',
+      topicSuffix: '/telemetry',
+      maxPayloadBytes: 1024,
+      quarantineRetentionDays: 14,
+    },
+  );
 
-  return { service, hub, latest };
+  return { service, hub, latest, acceptance, quarantine };
 }
 
 describe('TelemetryService', () => {
@@ -41,7 +53,9 @@ describe('TelemetryService', () => {
 
     const result = await service.ingest(
       'appmanager/v1/raw/mqtt-source-1/telemetry',
-      new TextEncoder().encode(JSON.stringify({ sn: 'SN-E', reported: { '0_1_1': { u: 48 } } })),
+      new TextEncoder().encode(
+        JSON.stringify({ sn: 'SN-E', reported: { '0_1_1': { u: 48 } } }),
+      ),
       timestamp,
     );
 
@@ -52,8 +66,8 @@ describe('TelemetryService', () => {
     expect((await service.latest('equipment-1'))?.serialNumber).toBe('SN-E');
   });
 
-  it('rejects unknown, disabled and forged serial bindings', async () => {
-    const { service } = serviceWith([
+  it('quarantines unknown, disabled and forged serial bindings without storing raw payload', async () => {
+    const { service, quarantine } = serviceWith([
       source(),
       source({ id: 'source-2', topicSource: 'disabled', enabled: false }),
     ]);
@@ -81,6 +95,15 @@ describe('TelemetryService', () => {
         timestamp,
       ),
     ).toEqual({ ok: false, error: 'SOURCE_IDENTITY_MISMATCH' });
+
+    const rejected = await quarantine.listRecent(10);
+    expect(rejected).toHaveLength(3);
+    expect(rejected.every((entry) => /^[a-f0-9]{64}$/.test(entry.payloadSha256))).toBe(true);
+    expect(rejected.map((entry) => entry.failureCode)).toEqual([
+      'SOURCE_IDENTITY_MISMATCH',
+      'SOURCE_DISABLED',
+      'UNKNOWN_SOURCE',
+    ]);
   });
 
   it('does not let an older observation replace durable latest state', async () => {
@@ -113,6 +136,107 @@ describe('TelemetryService', () => {
     expect((await service.latest('equipment-1'))?.reported).toEqual({
       '0_1_1': { u: 50 },
     });
+  });
+
+  it('deduplicates a repeated messageId before history delivery', async () => {
+    const { service, acceptance } = serviceWith([source()]);
+    const payload = new TextEncoder().encode(
+      JSON.stringify({
+        sn: 'SN-E',
+        messageId: 'msg-001',
+        reported: { '0_1_1': { u: 48 } },
+      }),
+    );
+
+    expect(
+      (
+        await service.ingest(
+          'appmanager/v1/raw/mqtt-source-1/telemetry',
+          payload,
+          '2026-09-22T00:00:01.000Z',
+        )
+      ).ok,
+    ).toBe(true);
+    expect(
+      (
+        await service.ingest(
+          'appmanager/v1/raw/mqtt-source-1/telemetry',
+          payload,
+          '2026-09-22T00:00:02.000Z',
+        )
+      ).ok,
+    ).toBe(true);
+
+    expect(await acceptance.listPendingHistory(10)).toHaveLength(1);
+  });
+
+  it('rejects an idempotency-key collision with different payload content', async () => {
+    const { service, acceptance, quarantine } = serviceWith([source()]);
+
+    await service.ingest(
+      'appmanager/v1/raw/mqtt-source-1/telemetry',
+      new TextEncoder().encode(
+        JSON.stringify({
+          sn: 'SN-E',
+          messageId: 'msg-collision',
+          reported: { '0_1_1': { u: 48 } },
+        }),
+      ),
+      '2026-09-22T00:00:01.000Z',
+    );
+
+    const conflict = await service.ingest(
+      'appmanager/v1/raw/mqtt-source-1/telemetry',
+      new TextEncoder().encode(
+        JSON.stringify({
+          sn: 'SN-E',
+          messageId: 'msg-collision',
+          reported: { '0_1_1': { u: 49 } },
+        }),
+      ),
+      '2026-09-22T00:00:02.000Z',
+    );
+
+    expect(conflict).toEqual({ ok: false, error: 'IDEMPOTENCY_CONFLICT' });
+    expect(await acceptance.listPendingHistory(10)).toHaveLength(1);
+    expect((await quarantine.listRecent(1))[0]?.failureCode).toBe('IDEMPOTENCY_CONFLICT');
+  });
+
+  it('uses producerEpoch + sequence for restart-safe dedupe when the device supplies both', async () => {
+    const { service, acceptance } = serviceWith([source()]);
+    const payload = new TextEncoder().encode(
+      JSON.stringify({
+        sn: 'SN-E',
+        producerEpoch: 'boot-001',
+        sequence: 7,
+        reported: { '0_1_1': { u: 48 } },
+      }),
+    );
+
+    await service.ingest('appmanager/v1/raw/mqtt-source-1/telemetry', payload, timestamp);
+    await service.ingest(
+      'appmanager/v1/raw/mqtt-source-1/telemetry',
+      payload,
+      '2026-09-22T00:00:01.000Z',
+    );
+
+    expect(await acceptance.listPendingHistory(10)).toHaveLength(1);
+  });
+
+  it('does not invent a dedupe guarantee for legacy payloads without stable message identity', async () => {
+    const { service, acceptance } = serviceWith([source()]);
+    const payload = new TextEncoder().encode(
+      JSON.stringify({ sn: 'SN-E', reported: { '0_1_1': { u: 48 } } }),
+    );
+
+    await service.ingest('appmanager/v1/raw/mqtt-source-1/telemetry', payload, timestamp);
+    await service.ingest(
+      'appmanager/v1/raw/mqtt-source-1/telemetry',
+      payload,
+      '2026-09-22T00:00:01.000Z',
+    );
+
+    expect(await acceptance.listPendingHistory(10)).toHaveLength(2);
   });
 
   it('enforces stream subscriber capacity', () => {

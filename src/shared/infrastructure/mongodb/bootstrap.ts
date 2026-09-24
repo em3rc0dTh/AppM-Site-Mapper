@@ -72,4 +72,41 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
       { name: 'ix_telemetry_latest_recency' },
     ),
   ]);
+
+  const telemetryOutbox = database.collection('telemetry_outbox');
+  await Promise.all([
+    telemetryOutbox.createIndex({ eventId: 1 }, { unique: true, name: 'uq_telemetry_event_id' }),
+    telemetryOutbox.createIndex(
+      { idempotencyKey: 1 },
+      {
+        unique: true,
+        name: 'uq_telemetry_idempotency',
+        partialFilterExpression: { idempotencyKey: { $type: 'string' } },
+      },
+    ),
+    telemetryOutbox.createIndex(
+      { historyState: 1, acceptedAt: 1 },
+      { name: 'ix_telemetry_history_pending' },
+    ),
+    telemetryOutbox.createIndex(
+      { 'sample.sourceId': 1, acceptedAt: -1 },
+      { name: 'ix_telemetry_outbox_source' },
+    ),
+  ]);
+
+  const telemetryQuarantine = database.collection('telemetry_quarantine');
+  await Promise.all([
+    telemetryQuarantine.createIndex(
+      { id: 1 },
+      { unique: true, name: 'uq_telemetry_quarantine_id' },
+    ),
+    telemetryQuarantine.createIndex(
+      { receivedAt: -1 },
+      { name: 'ix_telemetry_quarantine_received' },
+    ),
+    telemetryQuarantine.createIndex(
+      { expiresAt: 1 },
+      { expireAfterSeconds: 0, name: 'ttl_telemetry_quarantine_expiry' },
+    ),
+  ]);
 }

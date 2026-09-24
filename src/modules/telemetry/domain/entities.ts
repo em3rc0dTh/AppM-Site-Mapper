@@ -29,6 +29,7 @@ export interface TelemetrySample {
   readonly receivedAt: string;
   readonly timestampProvenance: TelemetryTimestampProvenance;
   readonly sequence?: number;
+  readonly producerEpoch?: string;
   readonly messageId?: string;
 }
 
@@ -41,5 +42,6 @@ export interface NormalizedTelemetryMessage {
   readonly receivedAt: string;
   readonly timestampProvenance: TelemetryTimestampProvenance;
   readonly sequence?: number;
+  readonly producerEpoch?: string;
   readonly messageId?: string;
 }

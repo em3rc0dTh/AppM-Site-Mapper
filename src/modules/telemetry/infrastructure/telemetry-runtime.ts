@@ -11,9 +11,26 @@ export interface TelemetryRuntime {
   readonly service: TelemetryService;
 }
 
-function positiveInt(value: string | undefined, fallback: number): number {
+function configuredPositiveInt(
+  name: string,
+  value: string | undefined,
+  fallback: number,
+  production: boolean,
+): number {
+  if (!value?.trim()) {
+    if (production) {
+      throw new Error(`Missing required production telemetry configuration: ${name}`);
+    }
+    return fallback;
+  }
+
   const parsed = Number(value);
-  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error(`${name} must be a positive integer.`);
+  }
+
+  return parsed;
 }
 
 function configuredOrDefault(
@@ -34,9 +51,30 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
   return getProcessSingleton<Promise<TelemetryRuntime>>('telemetry-runtime', async () => {
     const appEnvironment = parseAppEnvironment(process.env.APP_ENV);
     const production = appEnvironment === 'production';
-    const maxStreams = positiveInt(process.env.TELEMETRY_MAX_STREAMS, 100);
-    const maxPayloadBytes = positiveInt(process.env.TELEMETRY_MAX_PAYLOAD_BYTES, 262_144);
-    const maxReportedEntries = positiveInt(process.env.TELEMETRY_MAX_REPORTED_ENTRIES, 512);
+    const maxStreams = configuredPositiveInt(
+      'TELEMETRY_MAX_STREAMS',
+      process.env.TELEMETRY_MAX_STREAMS,
+      100,
+      production,
+    );
+    const maxPayloadBytes = configuredPositiveInt(
+      'TELEMETRY_MAX_PAYLOAD_BYTES',
+      process.env.TELEMETRY_MAX_PAYLOAD_BYTES,
+      262_144,
+      production,
+    );
+    const maxReportedEntries = configuredPositiveInt(
+      'TELEMETRY_MAX_REPORTED_ENTRIES',
+      process.env.TELEMETRY_MAX_REPORTED_ENTRIES,
+      512,
+      production,
+    );
+    const quarantineRetentionDays = configuredPositiveInt(
+      'TELEMETRY_QUARANTINE_RETENTION_DAYS',
+      process.env.TELEMETRY_QUARANTINE_RETENTION_DAYS,
+      14,
+      production,
+    );
     const topicPrefix = configuredOrDefault(
       'MQTT_TOPIC_PREFIX',
       process.env.MQTT_TOPIC_PREFIX,
@@ -52,12 +90,20 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
 
     const hub = new TelemetryHub(maxStreams);
     const repositories = await createTelemetryRepositories();
-    const service = new TelemetryService(repositories.sources, repositories.latest, hub, {
-      topicPrefix,
-      topicSuffix,
-      maxPayloadBytes,
-      maxReportedEntries,
-    });
+    const service = new TelemetryService(
+      repositories.sources,
+      repositories.latest,
+      repositories.acceptance,
+      repositories.quarantine,
+      hub,
+      {
+        topicPrefix,
+        topicSuffix,
+        maxPayloadBytes,
+        maxReportedEntries,
+        quarantineRetentionDays,
+      },
+    );
 
     if (process.env.TELEMETRY_ENABLED === 'true') {
       const brokerUrl = requireRuntimeSecret('MQTT_BROKER_URL', process.env.MQTT_BROKER_URL);

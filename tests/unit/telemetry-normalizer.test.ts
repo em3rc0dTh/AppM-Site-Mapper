@@ -37,6 +37,27 @@ describe('normalizeTelemetry', () => {
     });
   });
 
+  it('preserves optional producer message identity without making it mandatory for V1', () => {
+    const result = normalizeTelemetry(
+      'appmanager/v1/raw/source-001/telemetry',
+      new TextEncoder().encode(
+        JSON.stringify({
+          sn: 'SN-001',
+          messageId: 'message-7',
+          producerEpoch: 'boot-2',
+          sequence: 7,
+          reported: {},
+        }),
+      ),
+      options,
+      '2026-09-22T00:00:01.000Z',
+    );
+
+    expect(result.ok && result.value.messageId).toBe('message-7');
+    expect(result.ok && result.value.producerEpoch).toBe('boot-2');
+    expect(result.ok && result.value.sequence).toBe(7);
+  });
+
   it('uses receivedAt as an explicit fallback without pretending it came from hardware', () => {
     const result = normalizeTelemetry(
       'appmanager/v1/raw/source-001/telemetry',

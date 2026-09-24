@@ -14,7 +14,9 @@ import { RackElevationService } from '@/modules/rack/application/rack-elevation-
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
+import { MemoryTelemetryAcceptanceRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-acceptance-repository';
 import { MemoryTelemetryLatestRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-latest-repository';
+import { MemoryTelemetryQuarantineRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-quarantine-repository';
 import { MemoryTelemetrySourceRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-source-repository';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
@@ -241,11 +243,21 @@ describe('MK1 system golden path', () => {
       },
     ]);
     const telemetryLatest = new MemoryTelemetryLatestRepository();
-    const telemetry = new TelemetryService(telemetrySources, telemetryLatest, hub, {
-      topicPrefix: 'appmanager/v1/raw/',
-      topicSuffix: '/telemetry',
-      maxPayloadBytes: 4096,
-    });
+    const telemetryAcceptance = new MemoryTelemetryAcceptanceRepository();
+    const telemetryQuarantine = new MemoryTelemetryQuarantineRepository();
+    const telemetry = new TelemetryService(
+      telemetrySources,
+      telemetryLatest,
+      telemetryAcceptance,
+      telemetryQuarantine,
+      hub,
+      {
+        topicPrefix: 'appmanager/v1/raw/',
+        topicSuffix: '/telemetry',
+        maxPayloadBytes: 4096,
+        quarantineRetentionDays: 14,
+      },
+    );
 
     const sample = requireSuccess(
       await telemetry.ingest(

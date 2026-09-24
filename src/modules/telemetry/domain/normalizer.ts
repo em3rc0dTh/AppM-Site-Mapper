@@ -109,6 +109,14 @@ export function normalizeTelemetry(
     }
   }
 
+  let producerEpoch: string | undefined;
+  if (parsed.producerEpoch !== undefined) {
+    producerEpoch = optionalNonEmptyString(parsed.producerEpoch, 256);
+    if (!producerEpoch) {
+      return failure('INVALID_PAYLOAD');
+    }
+  }
+
   const candidateObservedAt = optionalNonEmptyString(parsed.observedAt, 64);
   const hasTrustedDeviceTime =
     candidateObservedAt !== undefined && isValidIsoTimestamp(candidateObservedAt);
@@ -123,6 +131,7 @@ export function normalizeTelemetry(
     receivedAt,
     timestampProvenance: hasTrustedDeviceTime ? 'DEVICE' : 'RECEIVED_TIME_FALLBACK',
     ...(sequence === undefined ? {} : { sequence }),
+    ...(producerEpoch === undefined ? {} : { producerEpoch }),
     ...(messageId === undefined ? {} : { messageId }),
   });
 }

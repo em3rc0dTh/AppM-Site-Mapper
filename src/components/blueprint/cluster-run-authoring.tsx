@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, type PointerEvent } from 'react';
 
+import { TopologyCreateForm } from '@/components/topology/topology-create-form';
 import type { PositionPlacementView } from '@/modules/spatial/application/spatial-service';
 import {
   gridCoordinateToPoint,
@@ -81,6 +82,10 @@ export function ClusterRunAuthoring({
   const [end, setEnd] = useState<GridCoordinate | null>(run?.end ?? null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPositionId, setSelectedPositionId] = useState<string | null>(null);
+
+  const selectedPosition =
+    positions.find((position) => position.id === selectedPositionId) ?? null;
 
   const preview = useMemo(() => {
     if (!start || !end) return [];
@@ -152,6 +157,7 @@ export function ClusterRunAuthoring({
   }
 
   function beginEdit() {
+    setSelectedPositionId(null);
     setEditing(true);
     setStart(run?.start ?? null);
     setEnd(run?.end ?? null);
@@ -302,9 +308,16 @@ export function ClusterRunAuthoring({
 
           {!editing &&
             positions.map((position) => (
-              <g key={position.id}>
+              <g
+                key={position.id}
+                className="cluster-position-hit"
+                onPointerDown={(event) => {
+                  event.stopPropagation();
+                  setSelectedPositionId(position.id);
+                }}
+              >
                 <rect
-                  className="cluster-slot is-current"
+                  className={`cluster-slot is-current ${selectedPositionId === position.id ? 'is-selected' : ''}`}
                   x={position.rect.x}
                   y={position.rect.y}
                   width={position.rect.width}
@@ -348,6 +361,32 @@ export function ClusterRunAuthoring({
               );
             })}
         </svg>
+
+        {!editing && selectedPosition && (
+          <aside className="cluster-slot-placement" aria-label="Selected cluster slot">
+            <div className="cluster-slot-placement-heading">
+              <div>
+                <span>SELECTED SLOT</span>
+                <strong>{selectedPosition.coordinate}</strong>
+              </div>
+              <button type="button" onClick={() => setSelectedPositionId(null)}>
+                ×
+              </button>
+            </div>
+            <small>
+              {selectedPosition.occupied
+                ? 'OCCUPIED · this Position already contains a Container/Rack.'
+                : 'AVAILABLE · place one Container or Rack in this Position.'}
+            </small>
+            {selectedPosition.occupied ? (
+              <p>Select another available slot to place new infrastructure.</p>
+            ) : canWrite ? (
+              <TopologyCreateForm kind="CONTAINER_RACK" parentId={selectedPosition.id} />
+            ) : (
+              <p>Your role is read-only.</p>
+            )}
+          </aside>
+        )}
 
         <div className="cluster-run-state">
           <strong>{clusterName}</strong>

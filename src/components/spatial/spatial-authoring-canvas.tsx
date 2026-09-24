@@ -162,6 +162,7 @@ export function SpatialAuthoringCanvas({
   rectangles = [],
   navigationItems = [],
   containmentPolygon,
+  autoEditWhenEmpty = false,
   title = 'Spatial boundary',
   subtitle = 'Polygon geometry · millimetres',
 }: Readonly<{
@@ -175,6 +176,7 @@ export function SpatialAuthoringCanvas({
   rectangles?: readonly SpatialRectOverlay[];
   navigationItems?: readonly SpatialNavigationItem[];
   containmentPolygon?: readonly PointMm[] | undefined;
+  autoEditWhenEmpty?: boolean;
   title?: string;
   subtitle?: string;
 }>) {
@@ -184,9 +186,10 @@ export function SpatialAuthoringCanvas({
     () => authoringBounds(sourcePolygon, contextPolygons, rectangles, gridSizeMm),
     [contextPolygons, gridSizeMm, rectangles, sourcePolygon],
   );
+  const shouldAutoEdit = autoEditWhenEmpty && canWrite && sourcePolygon.length < 3;
   const [draft, setDraft] = useState<PointMm[]>(sourcePolygon);
-  const [editing, setEditing] = useState(false);
-  const [tool, setTool] = useState<Tool>('select');
+  const [editing, setEditing] = useState(shouldAutoEdit);
+  const [tool, setTool] = useState<Tool>(shouldAutoEdit ? 'draw' : 'select');
   const [snap, setSnap] = useState(Boolean(gridSizeMm));
   const [selectedVertex, setSelectedVertex] = useState<number | null>(null);
   const [selected, setSelected] = useState<InspectorEntity | null>(null);

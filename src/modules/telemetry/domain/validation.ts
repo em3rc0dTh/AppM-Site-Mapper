@@ -47,9 +47,7 @@ export function isTelemetrySample(value: unknown): value is TelemetrySample {
   );
 }
 
-export function isTelemetryAcceptanceRecord(
-  value: unknown,
-): value is TelemetryAcceptanceRecord {
+export function isTelemetryAcceptanceRecord(value: unknown): value is TelemetryAcceptanceRecord {
   if (!isRecord(value)) return false;
 
   return (
@@ -66,9 +64,7 @@ export function isTelemetryAcceptanceRecord(
   );
 }
 
-export function isTelemetryQuarantineRecord(
-  value: unknown,
-): value is TelemetryQuarantineRecord {
+export function isTelemetryQuarantineRecord(value: unknown): value is TelemetryQuarantineRecord {
   if (!isRecord(value)) return false;
 
   return (
@@ -83,7 +79,6 @@ export function isTelemetryQuarantineRecord(
     typeof value.payloadSha256 === 'string' &&
     /^[a-f0-9]{64}$/.test(value.payloadSha256) &&
     (value.sourceId === undefined || typeof value.sourceId === 'string') &&
-    (value.claimedSerialNumber === undefined ||
-      typeof value.claimedSerialNumber === 'string')
+    (value.claimedSerialNumber === undefined || typeof value.claimedSerialNumber === 'string')
   );
 }

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 import type {
+  ContainerClusterBayNode,
   LevelNode,
   NetworkNode,
   RoomSubstructureNode,
@@ -71,6 +72,18 @@ const room: RoomSubstructureNode = {
   updatedAt: timestamp,
 };
 
+
+const emptyCluster: ContainerClusterBayNode = {
+  id: '00000000-0000-4000-8000-000000000105',
+  kind: 'CONTAINER_CLUSTER_BAY',
+  parentId: room.id,
+  name: 'Bay 1',
+  variant: 'BAY',
+  lifecycle: 'ACTIVE',
+  createdAt: timestamp,
+  updatedAt: timestamp,
+};
+
 const polygon = [
   { x: 0, y: 0 },
   { x: 1800, y: 0 },
@@ -130,6 +143,31 @@ describe('SpatialService boundary authoring', () => {
     expect(result.ok).toBe(true);
     const persisted = await repository.getById(structure.id);
     expect(persisted?.kind === 'STRUCTURE' ? persisted.polygon?.length : 0).toBe(4);
+  });
+
+
+  it('keeps an empty ContainerCluster/Bay visible as unplaced instead of dropping it', async () => {
+    const repository = new MemoryTopologyRepository([
+      network,
+      site,
+      structure,
+      level,
+      { ...room, polygon },
+      emptyCluster,
+    ]);
+    const result = await new SpatialService(repository).getRoomLayout(room.id);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.value.clusters).toEqual([
+      {
+        id: emptyCluster.id,
+        name: emptyCluster.name,
+        variant: emptyCluster.variant,
+        positionCount: 0,
+      },
+    ]);
   });
 
   it('does not invent persisted geometry for Level', async () => {

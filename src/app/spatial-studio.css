@@ -2184,3 +2184,74 @@
   font-size: 9px;
   line-height: 1.35;
 }
+
+
+/* Blueprint unplaced physical entities */
+.blueprint-workspace {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.blueprint-workspace > .spatial-authoring {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.blueprint-unplaced {
+  position: absolute;
+  left: 14px;
+  bottom: 42px;
+  z-index: 6;
+  display: grid;
+  gap: 7px;
+  width: min(360px, calc(100% - 28px));
+  padding: 10px 12px;
+  border: 1px solid #8a6b32;
+  background: #111922f2;
+  box-shadow: 0 12px 28px #0008;
+  color: #d5e3ec;
+}
+
+.blueprint-unplaced > span {
+  color: #e6b35d;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.blueprint-unplaced > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px 10px;
+  align-items: center;
+}
+
+.blueprint-unplaced strong {
+  font-size: 12px;
+}
+
+.blueprint-unplaced small {
+  grid-column: 1 / -1;
+  color: #8fa5b5;
+  font-size: 9px;
+}
+
+.blueprint-unplaced a,
+.blueprint-unplaced b {
+  grid-column: 2;
+  grid-row: 1;
+  color: #8ee8f3;
+  font-size: 9px;
+  text-decoration: none;
+}
+
+.blueprint-unplaced p {
+  margin: 0;
+  color: #8fa5b5;
+  font-size: 9px;
+  line-height: 1.35;
+}

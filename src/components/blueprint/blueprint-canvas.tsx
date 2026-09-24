@@ -101,7 +101,7 @@ export function BlueprintCanvas({
             <div key={cluster.id}>
               <strong>{cluster.name}</strong>
               <small>
-                {cluster.variant.replaceAll('_', ' ')} · 0 positions · physical extent not defined
+                {cluster.variant.replaceAll('_', ' ')} · UNPLACED · define start/end on the Room grid
               </small>
               {focusClusterId === cluster.id ? (
                 <b>CURRENT CLUSTER</b>
@@ -113,8 +113,8 @@ export function BlueprintCanvas({
             </div>
           ))}
           <p>
-            Add the first Position to establish this cluster&apos;s physical extent on the 600 mm
-            grid. No fake coordinates are invented.
+            Open the cluster and mark its start and end slots. Site Mapper will generate every
+            600 × 600 mm Position in that horizontal or vertical run.
           </p>
         </aside>
       )}

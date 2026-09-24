@@ -10,6 +10,15 @@ function createErrorMessage(error: string): string {
     INVALID_POLYGON: 'The physical footprint is invalid.',
     INVALID_PARENT: 'The selected parent is not valid for this entity.',
     INVALID_NAME: 'Name is required.',
+    RACK_CLUSTER_RUN_REQUIRED: 'Place this ContainerCluster/Bay on the Blueprint before adding a Rack or Container.',
+    RACK_ROOM_BOUNDARY_REQUIRED: 'Define the Room boundary before placing a Rack or Container.',
+    RACK_ANCHOR_OUTSIDE_CLUSTER_RUN: 'The selected Position is not part of this ContainerCluster/Bay run.',
+    RACK_WIDTH_EXCEEDS_CLUSTER_RUN:
+      'This width needs more 600 mm slots than remain from the selected Position to the end of the run.',
+    RACK_FOOTPRINT_OUTSIDE_ROOM:
+      'The Rack/Container depth would extend outside the Room boundary.',
+    RACK_FOOTPRINT_COLLISION:
+      'This Rack/Container footprint overlaps another placed Rack/Container.',
   };
 
   return known[error] ?? error.replaceAll('_', ' ');
@@ -382,7 +391,11 @@ export function TopologyCreateForm({
                 defaultValue="600"
                 required
               />
-              <small>Front-facing physical width of the asset.</small>
+              <small>
+                Width runs along the ContainerCluster/Bay. It consumes consecutive 600 mm slots:
+                900 mm uses 2 slots. It cannot extend past the end of the run or through occupied
+                slots.
+              </small>
             </label>
 
             <label className="create-form-field">
@@ -396,14 +409,17 @@ export function TopologyCreateForm({
                 defaultValue="600"
                 required
               />
-              <small>Front-to-back physical depth of the asset.</small>
+              <small>
+                Footprint depth perpendicular to the run — the vertical dimension you see on the
+                Blueprint. It may exceed 600 mm if it remains inside the Room and collision-free.
+              </small>
             </label>
           </div>
 
           <small className="create-form-help">
-            The selected Position is the placement anchor. These dimensions describe the asset; they
-            do not resize the ContainerCluster/Bay slot run. After creation, Site Mapper opens the
-            new asset so you can continue authoring below it.
+            The selected Position is the placement anchor. Width consumes the required slots from
+            that anchor toward the run end; depth may project beyond the 600 mm slot. These
+            dimensions do not resize the ContainerCluster/Bay itself.
           </small>
         </fieldset>
       )}

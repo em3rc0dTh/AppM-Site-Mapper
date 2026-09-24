@@ -44,8 +44,6 @@ export class MongoTelemetrySourceRepository implements TelemetrySourceRepository
   }
 
   async insert(source: TelemetrySource): Promise<void> {
-    await this.collection.insertOne(
-      source as OptionalUnlessRequiredId<TelemetrySourceDocument>,
-    );
+    await this.collection.insertOne(source as OptionalUnlessRequiredId<TelemetrySourceDocument>);
   }
 }

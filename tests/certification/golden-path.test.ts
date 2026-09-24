@@ -14,6 +14,8 @@ import { RackElevationService } from '@/modules/rack/application/rack-elevation-
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
+import { MemoryTelemetryLatestRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-latest-repository';
+import { MemoryTelemetrySourceRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-source-repository';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 import { WorkspaceService } from '@/modules/workspace/application/workspace-service';
@@ -225,16 +227,32 @@ describe('MK1 system golden path', () => {
     expect(path.targetEntityId).toBe(equipment.id);
 
     const hub = new TelemetryHub(8);
-    const telemetry = new TelemetryService(topologyRepository, hub, {
-      topicPrefix: 'data/dev/',
+    const telemetrySources = new MemoryTelemetrySourceRepository([
+      {
+        id: 'cert-telemetry-source-1',
+        entityId: device.id,
+        entityKind: 'DEVICE',
+        topicSource: 'cert-source-1',
+        expectedSerialNumber: 'CERT-DEVICE-001',
+        protocolProfile: 'telxius-v1',
+        rawSchemaVersion: 'telxius-v1',
+        staleAfterSeconds: 30,
+        enabled: true,
+      },
+    ]);
+    const telemetryLatest = new MemoryTelemetryLatestRepository();
+    const telemetry = new TelemetryService(telemetrySources, telemetryLatest, hub, {
+      topicPrefix: 'appmanager/v1/raw/',
+      topicSuffix: '/telemetry',
       maxPayloadBytes: 4096,
     });
 
     const sample = requireSuccess(
       await telemetry.ingest(
-        'data/dev/CERT-DEVICE-001/reported',
+        'appmanager/v1/raw/cert-source-1/telemetry',
         new TextEncoder().encode(
           JSON.stringify({
+            sn: 'CERT-DEVICE-001',
             reported: {
               voltage: 48.1,
               status: 'online',
@@ -246,7 +264,7 @@ describe('MK1 system golden path', () => {
     );
 
     expect(sample.entityId).toBe(device.id);
-    expect(telemetry.latest(device.id)?.reported).toMatchObject({
+    expect((await telemetry.latest(device.id))?.reported).toMatchObject({
       voltage: 48.1,
       status: 'online',
     });

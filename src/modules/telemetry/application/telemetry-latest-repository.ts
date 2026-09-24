@@ -6,10 +6,7 @@ export interface TelemetryLatestRepository {
   upsertIfNewer(sample: TelemetrySample): Promise<boolean>;
 }
 
-export function compareTelemetryRecency(
-  left: TelemetrySample,
-  right: TelemetrySample,
-): number {
+export function compareTelemetryRecency(left: TelemetrySample, right: TelemetrySample): number {
   const observed = left.observedAt.localeCompare(right.observedAt);
   if (observed !== 0) return observed;
   return left.receivedAt.localeCompare(right.receivedAt);

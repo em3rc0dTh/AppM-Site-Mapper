@@ -11,7 +11,7 @@
 - rack footprints cannot collide;
 - candidate placement must be within the room polygon;
 - empty assignable tiles are derived, not persisted.
-- ContainerCluster/Bay physical extent is derived from its contained Position tiles and Rack footprints.
+- ContainerCluster/Bay physical extent is exactly the union of its authored 600 × 600 mm Position slots; Rack/Container footprints do not resize the cluster.
 - an empty ContainerCluster/Bay remains visible as `UNPLACED`; no synthetic physical coordinates are invented.
 
 ## ContainerCluster / Bay run contract
@@ -66,7 +66,7 @@ Blueprint view state such as zoom or pan is not domain persistence.
 The UI receives:
 
 - room polygon;
-- ContainerCluster/Bay placement state (`PLACED` from contained geometry or `UNPLACED` when empty);
+- ContainerCluster/Bay placement state (`PLACED` only after an authored run, otherwise `UNPLACED`);
 - rack placement rectangles;
 - derived assignable slots.
 

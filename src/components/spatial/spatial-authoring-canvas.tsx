@@ -174,7 +174,7 @@ export function SpatialAuthoringCanvas({
   contextPolygons?: readonly SpatialContextPolygon[];
   rectangles?: readonly SpatialRectOverlay[];
   navigationItems?: readonly SpatialNavigationItem[];
-  containmentPolygon?: readonly PointMm[];
+  containmentPolygon?: readonly PointMm[] | undefined;
   title?: string;
   subtitle?: string;
 }>) {

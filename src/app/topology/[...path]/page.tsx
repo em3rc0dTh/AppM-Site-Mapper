@@ -353,7 +353,11 @@ export default async function TopologyNodePage({
 
       <div className="operational-layout">
         <aside className="operational-context">
-          <TopologyContextTree trail={trailEntries} tree={hierarchyTree} />
+          <TopologyContextTree
+            trail={trailEntries}
+            tree={hierarchyTree}
+            supplemental={node.kind === 'DEVICE' ? contextChildren : []}
+          />
         </aside>
 
         <section className="operational-stage">

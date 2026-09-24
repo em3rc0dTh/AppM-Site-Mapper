@@ -5,7 +5,7 @@ import type {
 } from '@/modules/topology/domain/entities';
 
 import { rectInsidePolygon, type PointMm, type RectMm } from './geometry';
-import { gridCoordinateToPoint, linearGridRun, TILE_SIZE_MM } from './grid';
+import { gridCoordinateToPoint, linearGridRun, rowToIndex, TILE_SIZE_MM } from './grid';
 
 export type RackFootprintError =
   | 'RACK_ANCHOR_OUTSIDE_CLUSTER_RUN'
@@ -56,17 +56,9 @@ export function resolveRackFootprint(
 
   const anchorPoint = gridCoordinateToPoint(anchor);
   const horizontal = run.orientation === 'HORIZONTAL';
-  const alongDirection =
-    horizontal
-      ? Math.sign(run.end.column - run.start.column) || 1
-      : Math.sign(
-          linearGridRun(run.start, run.end).findIndex(
-            (coordinate) => coordinateKey(coordinate) === coordinateKey(run.end),
-          ) -
-            linearGridRun(run.start, run.end).findIndex(
-              (coordinate) => coordinateKey(coordinate) === coordinateKey(run.start),
-            ),
-        ) || 1;
+  const alongDirection = horizontal
+    ? Math.sign(run.end.column - run.start.column) || 1
+    : Math.sign(rowToIndex(run.end.row) - rowToIndex(run.start.row)) || 1;
 
   const alongOrigin = horizontal
     ? alongDirection > 0

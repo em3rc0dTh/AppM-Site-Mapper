@@ -2,10 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import { TopologyContextTree } from '@/components/topology/context-tree';
-import {
-  buildContextTree,
-  buildTrailEntries,
-} from '@/components/topology/context-tree-data';
+import { buildContextTree, buildTrailEntries } from '@/components/topology/context-tree-data';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';

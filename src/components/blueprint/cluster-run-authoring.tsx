@@ -84,8 +84,7 @@ export function ClusterRunAuthoring({
   const [error, setError] = useState<string | null>(null);
   const [selectedPositionId, setSelectedPositionId] = useState<string | null>(null);
 
-  const selectedPosition =
-    positions.find((position) => position.id === selectedPositionId) ?? null;
+  const selectedPosition = positions.find((position) => position.id === selectedPositionId) ?? null;
 
   const preview = useMemo(() => {
     if (!start || !end) return [];

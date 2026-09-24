@@ -51,6 +51,14 @@ function errorMessage(error: string): string {
     INVALID_RACK_CAPACITY: 'Rack capacity must be a positive integer.',
     INVALID_DIMENSIONS: 'Physical dimensions must be positive numbers.',
     INVALID_NAME: 'Name is required.',
+    RACK_CLUSTER_RUN_REQUIRED:
+      'Place the parent ContainerCluster/Bay on the Blueprint before changing this footprint.',
+    RACK_ROOM_BOUNDARY_REQUIRED: 'Define the Room boundary before changing this footprint.',
+    RACK_ANCHOR_OUTSIDE_CLUSTER_RUN: 'The Rack/Container anchor is outside its cluster run.',
+    RACK_WIDTH_EXCEEDS_CLUSTER_RUN:
+      'This width needs more 600 mm slots than remain from the anchor to the end of the run.',
+    RACK_FOOTPRINT_OUTSIDE_ROOM: 'This depth would extend the asset outside the Room boundary.',
+    RACK_FOOTPRINT_COLLISION: 'This footprint would overlap another Rack/Container.',
   };
   return known[error] ?? error.replaceAll('_', ' ');
 }
@@ -265,8 +273,9 @@ export function TopologyCrudPanel({
           {node.kind === 'CONTAINER_RACK' && (
             <>
               <p className="topology-crud-help">
-                This asset occupies its parent Position. Dimensions describe the asset itself; they
-                do not resize the 600 × 600 mm cluster slot.
+                The parent Position anchors this asset. Width runs along the cluster and consumes
+                consecutive 600 mm slots; depth projects perpendicular to the run and may exceed
+                600 mm while remaining inside the Room and collision-free.
               </p>
               <label>
                 <span>Physical asset type</span>
@@ -302,7 +311,7 @@ export function TopologyCrudPanel({
                     min="1"
                     defaultValue={node.dimensionsMm?.width ?? 600}
                   />
-                  <small>Front-facing physical width.</small>
+                  <small>Along-run width; 900 mm consumes two 600 mm slots.</small>
                 </label>
                 <label>
                   <span>Depth (mm)</span>
@@ -312,7 +321,7 @@ export function TopologyCrudPanel({
                     min="1"
                     defaultValue={node.dimensionsMm?.depth ?? 600}
                   />
-                  <small>Front-to-back physical depth.</small>
+                  <small>Perpendicular Blueprint depth; it is not capped at 600 mm.</small>
                 </label>
                 <label>
                   <span>Height (mm) · optional</span>

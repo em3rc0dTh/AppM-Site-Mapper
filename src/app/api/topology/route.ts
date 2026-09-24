@@ -112,10 +112,7 @@ export async function POST(request: Request) {
   const repository = await createTopologyRepository();
 
   if (kind === 'CONTAINER_RACK' && typeof parentId === 'string') {
-    const placement = await new RackPlacementService(repository).validate(
-      parentId,
-      dimensionsMm,
-    );
+    const placement = await new RackPlacementService(repository).validate(parentId, dimensionsMm);
 
     if (!placement.ok) {
       return NextResponse.json({ error: placement.error }, { status: 422 });

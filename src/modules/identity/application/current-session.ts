@@ -5,8 +5,17 @@ import type { Permission } from '@/modules/identity/domain/roles';
 import { AUTH_COOKIE_NAME } from '@/modules/identity/infrastructure/auth-cookie';
 import { getIdentityRuntime } from '@/modules/identity/infrastructure/identity-runtime';
 
+export async function getCurrentSessionToken(): Promise<string | null> {
+  return (await cookies()).get(AUTH_COOKIE_NAME)?.value ?? null;
+}
+
+export async function authorizeSessionToken(token: string, permission: Permission) {
+  const runtime = await getIdentityRuntime();
+  return new AuthService(runtime.repository, runtime.throttle).authorize(token, permission);
+}
+
 export async function getCurrentSessionUser() {
-  const token = (await cookies()).get(AUTH_COOKIE_NAME)?.value;
+  const token = await getCurrentSessionToken();
 
   if (!token) {
     return null;
@@ -17,12 +26,11 @@ export async function getCurrentSessionUser() {
 }
 
 export async function requirePermission(permission: Permission) {
-  const token = (await cookies()).get(AUTH_COOKIE_NAME)?.value;
+  const token = await getCurrentSessionToken();
 
   if (!token) {
     return { ok: false as const, error: 'SESSION_INVALID' as const };
   }
 
-  const runtime = await getIdentityRuntime();
-  return new AuthService(runtime.repository, runtime.throttle).authorize(token, permission);
+  return authorizeSessionToken(token, permission);
 }

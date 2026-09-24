@@ -38,6 +38,15 @@ The generated Positions are the cluster slot list. Empty slots remain valid Posi
 
 Container/Rack placement is slot-driven: in the cluster workspace the operator selects an available Position tile and creates exactly one active `CONTAINER_RACK` child there. Occupied tiles cannot receive a second active Container/Rack.
 
+Rack/Container footprint authoring must remain visually explainable:
+
+- the current Bay/ContainerCluster view renders physical Rack/Container footprints, not only Position occupancy;
+- Rack/Container footprints from neighboring Bay/ContainerCluster runs in the same Room remain visible as blocking context;
+- current-cluster and neighboring-cluster assets use distinct visual treatment;
+- changing width/depth in the placement form previews the resulting footprint before persistence;
+- the preview identifies whether the footprint fits or which named Rack/Container blocks it;
+- invalid previews disable creation, while server-side spatial validation remains authoritative.
+
 The persisted cluster run records:
 
 - start grid coordinate;

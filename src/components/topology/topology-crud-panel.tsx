@@ -33,6 +33,9 @@ export function TopologyCrudPanel({
   const [creating, setCreating] = useState<TopologyKind | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editContainerVariant, setEditContainerVariant] = useState<'RACK' | 'CONTAINER'>(
+    node.kind === 'CONTAINER_RACK' ? node.variant : 'RACK',
+  );
 
   async function update(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -132,8 +135,8 @@ export function TopologyCrudPanel({
   return (
     <section className="topology-crud" aria-label="Entity CRUD">
       <div className="topology-crud-heading">
-        <span>ENTITY CONTROL</span>
-        <strong>CRUD · MongoDB</strong>
+        <span>ENTITY MANAGEMENT</span>
+        <strong>Persistent record</strong>
       </div>
 
       <div className="topology-crud-actions">
@@ -158,87 +161,125 @@ export function TopologyCrudPanel({
           <label>
             <span>Name</span>
             <input name="name" defaultValue={node.name} required />
+            <small>Display name used in the hierarchy and operational views.</small>
           </label>
 
           {node.kind === 'ROOM_SUBSTRUCTURE' && (
             <label>
-              <span>Variant</span>
+              <span>Area type</span>
               <select name="variant" defaultValue={node.variant}>
                 <option value="ROOM">Room</option>
                 <option value="SUBSTRUCTURE">Substructure</option>
               </select>
+              <small>
+                Changes how this physical area is classified; its Blueprint boundary remains the
+                same persisted polygon.
+              </small>
             </label>
           )}
 
           {node.kind === 'CONTAINER_CLUSTER_BAY' && (
             <label>
-              <span>Variant</span>
+              <span>Slot group type</span>
               <select name="variant" defaultValue={node.variant}>
                 <option value="CONTAINER_CLUSTER">Container cluster</option>
                 <option value="BAY">Bay</option>
               </select>
+              <small>
+                Classification only. Edit the start/end run on the map to change physical length or
+                orientation.
+              </small>
             </label>
           )}
 
           {node.kind === 'POSITION' && (
-            <div className="topology-crud-grid">
-              <label>
-                <span>Row</span>
-                <input name="row" defaultValue={node.coordinate.row} required />
-              </label>
-              <label>
-                <span>Column</span>
-                <input
-                  name="column"
-                  type="number"
-                  min="1"
-                  defaultValue={node.coordinate.column}
-                  required
-                />
-              </label>
-            </div>
+            <>
+              <p className="topology-crud-help">
+                Position is the 600 × 600 mm Blueprint slot address. Changing it moves the logical
+                slot coordinate; duplicate coordinates are rejected.
+              </p>
+              <div className="topology-crud-grid">
+                <label>
+                  <span>Row</span>
+                  <input name="row" defaultValue={node.coordinate.row} required />
+                  <small>Lettered Blueprint row, for example A or B.</small>
+                </label>
+                <label>
+                  <span>Column</span>
+                  <input
+                    name="column"
+                    type="number"
+                    min="1"
+                    defaultValue={node.coordinate.column}
+                    required
+                  />
+                  <small>Numbered Blueprint column, starting at 1.</small>
+                </label>
+              </div>
+            </>
           )}
 
           {node.kind === 'CONTAINER_RACK' && (
             <>
+              <p className="topology-crud-help">
+                This asset occupies its parent Position. Dimensions describe the asset itself; they
+                do not resize the 600 × 600 mm cluster slot.
+              </p>
               <label>
-                <span>Variant</span>
-                <select name="variant" defaultValue={node.variant}>
+                <span>Physical asset type</span>
+                <select
+                  name="variant"
+                  value={editContainerVariant}
+                  onChange={(event) =>
+                    setEditContainerVariant(
+                      event.target.value === 'CONTAINER' ? 'CONTAINER' : 'RACK',
+                    )
+                  }
+                >
                   <option value="RACK">Rack</option>
                   <option value="CONTAINER">Container</option>
                 </select>
+                <small>
+                  Rack has rack-unit capacity. Container is an enclosure/cabinet without U capacity.
+                </small>
               </label>
               <div className="topology-crud-grid">
+                {editContainerVariant === 'RACK' && (
+                  <label>
+                    <span>Rack capacity (U)</span>
+                    <input name="totalU" type="number" min="1" defaultValue={node.totalU ?? 42} />
+                    <small>Vertical mounting capacity; 1U is one standard rack unit.</small>
+                  </label>
+                )}
                 <label>
-                  <span>Total U</span>
-                  <input name="totalU" type="number" min="1" defaultValue={node.totalU ?? 42} />
-                </label>
-                <label>
-                  <span>Width mm</span>
+                  <span>Width (mm)</span>
                   <input
                     name="widthMm"
                     type="number"
                     min="1"
                     defaultValue={node.dimensionsMm?.width ?? 600}
                   />
+                  <small>Front-facing physical width.</small>
                 </label>
                 <label>
-                  <span>Depth mm</span>
+                  <span>Depth (mm)</span>
                   <input
                     name="depthMm"
                     type="number"
                     min="1"
                     defaultValue={node.dimensionsMm?.depth ?? 600}
                   />
+                  <small>Front-to-back physical depth.</small>
                 </label>
                 <label>
-                  <span>Height mm</span>
+                  <span>Height (mm) · optional</span>
                   <input
                     name="heightMm"
                     type="number"
                     min="1"
                     defaultValue={node.dimensionsMm?.height ?? ''}
                   />
+                  <small>Overall physical height when known.</small>
                 </label>
               </div>
             </>
@@ -247,12 +288,14 @@ export function TopologyCrudPanel({
           {(node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && (
             <>
               <label>
-                <span>Serial number</span>
+                <span>Serial number · optional</span>
                 <input name="serialNumber" defaultValue={node.serialNumber ?? ''} />
+                <small>Physical manufacturer or asset serial used to identify this unit.</small>
               </label>
               <label>
-                <span>Category</span>
+                <span>Category · optional</span>
                 <input name="category" defaultValue={node.category ?? ''} />
+                <small>Operational classification, for example Network switch, UPS or PDU.</small>
               </label>
             </>
           )}
@@ -265,7 +308,7 @@ export function TopologyCrudPanel({
 
       {node.lifecycle === 'ACTIVE' && childKinds.length > 0 && (
         <div className="topology-create-child">
-          <span>CREATE CHILD</span>
+          <span>ADD CONTAINED INFRASTRUCTURE</span>
           <div className="topology-create-kind-row">
             {childKinds.map((kind) => (
               <button

@@ -41,6 +41,7 @@ export function StructureStudio({
           initialPolygon={node.polygon ?? []}
           canWrite={canWrite}
           containmentPolygon={siteBoundary}
+          autoEditWhenEmpty
           contextPolygons={
             siteBoundary
               ? [

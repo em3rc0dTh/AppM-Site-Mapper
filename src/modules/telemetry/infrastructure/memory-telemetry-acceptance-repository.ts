@@ -141,11 +141,7 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
     errorCode: string,
   ): Promise<boolean> {
     const record = this.byEventId.get(eventId);
-    if (
-      !record ||
-      record.historyState !== 'IN_FLIGHT' ||
-      record.historyLeaseOwner !== workerId
-    ) {
+    if (!record || record.historyState !== 'IN_FLIGHT' || record.historyLeaseOwner !== workerId) {
       return false;
     }
 

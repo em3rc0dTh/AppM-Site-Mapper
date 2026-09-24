@@ -38,7 +38,6 @@ export function snapToGrid(point: PointMm): PointMm {
   };
 }
 
-
 export function rowFromIndex(index: number): string {
   if (!Number.isInteger(index) || index < 0) {
     throw new Error('Grid row index must be a non-negative integer.');

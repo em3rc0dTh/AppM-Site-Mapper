@@ -84,9 +84,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           ...(process.env.MQTT_USERNAME?.trim()
             ? { username: process.env.MQTT_USERNAME.trim() }
             : {}),
-          ...(process.env.MQTT_PASSWORD?.trim()
-            ? { password: process.env.MQTT_PASSWORD }
-            : {}),
+          ...(process.env.MQTT_PASSWORD?.trim() ? { password: process.env.MQTT_PASSWORD } : {}),
         },
         async (topic, payload) => {
           const result = await service.ingest(topic, payload);

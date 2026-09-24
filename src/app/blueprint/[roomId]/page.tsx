@@ -1,8 +1,8 @@
 import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
-import { RoomPolygonForm } from '@/components/blueprint/room-polygon-form';
-import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
+import { TopologyContextTree } from '@/components/topology/context-tree';
+import { buildContextTree, buildTrailEntries } from '@/components/topology/context-tree-data';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
@@ -28,25 +28,17 @@ export default async function BlueprintPage({
     notFound();
   }
 
-  const [trail, children] = await Promise.all([
-    topology.getTrail(roomId),
-    topology.listChildren(roomId),
-  ]);
-  const trailEntries: ContextTreeEntry[] = await Promise.all(
-    trail.map(async (node) => ({
-      id: node.id,
-      name: node.name,
-      kind: node.kind,
-      href: await topology.buildDeepLink(node.id),
-    })),
-  );
-  const childEntries: ContextTreeEntry[] = await Promise.all(
-    children.map(async (node) => ({
-      id: node.id,
-      name: node.name,
-      kind: node.kind,
-      href: await topology.buildDeepLink(node.id),
-    })),
+  const trail = await topology.getTrail(roomId);
+  const trailEntries = await buildTrailEntries(topology, trail);
+  const hierarchyTree =
+    trail[0] === undefined ? [] : [await buildContextTree(repository, topology, trail[0])];
+  const spatialHrefs = Object.fromEntries(
+    await Promise.all(
+      [...result.value.clusters, ...result.value.positions].map(async (item) => [
+        item.id,
+        await topology.buildDeepLink(item.id),
+      ]),
+    ),
   );
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
@@ -54,7 +46,7 @@ export default async function BlueprintPage({
     <main className="operational-page operational-page--blueprint">
       <div className="operational-layout operational-layout--blueprint">
         <aside className="operational-context">
-          <TopologyContextTree trail={trailEntries} descendants={childEntries} />
+          <TopologyContextTree trail={trailEntries} tree={hierarchyTree} />
         </aside>
 
         <section className="operational-stage operational-stage--wide">
@@ -66,26 +58,27 @@ export default async function BlueprintPage({
           />
 
           <div className="operational-stage-body">
-            {result.value.room.polygon ? (
+            {result.value.room.polygon || canWrite ? (
               <BlueprintCanvas
-                polygon={result.value.room.polygon}
+                key={roomId}
+                navigationHrefs={spatialHrefs}
+                roomId={roomId}
+                roomName={result.value.room.name}
+                polygon={result.value.room.polygon ?? []}
+                clusters={result.value.clusters}
+                positions={result.value.positions}
                 racks={result.value.racks}
                 slots={result.value.assignableSlots}
+                canEditBoundary={canWrite}
               />
             ) : (
               <StatePanel
                 title="No room boundary"
-                description="Define the physical boundary to render this room."
+                description="This room has no spatial boundary and your role is read-only."
+                kind="readonly"
               />
             )}
           </div>
-
-          {canWrite && (
-            <details className="edit-disclosure operational-blueprint-edit">
-              <summary>Edit room boundary</summary>
-              <RoomPolygonForm roomId={roomId} />
-            </details>
-          )}
         </section>
       </div>
     </main>

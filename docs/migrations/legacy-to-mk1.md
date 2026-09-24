@@ -100,3 +100,90 @@ The migration tooling never deletes the legacy database, and production promotio
 G13 certifies the migration engine, deterministic mapping, hierarchy enforcement and staging behavior.
 
 It does not claim that a production database has been migrated because no production dump or target credential is stored in this public repository.
+
+## Direct migration from the legacy MongoDB
+
+When the legacy data already lives in MongoDB, no production dump needs to be copied into the
+repository. The migration runner can read the source database directly and produce the same
+reviewable migration plan.
+
+Configure these variables locally only; never commit their values:
+
+```dotenv
+LEGACY_MONGODB_URI=mongodb://...
+LEGACY_MONGODB_DB_NAME=site_mapper
+LEGACY_NETWORK_ID=<stable canonical network id>
+LEGACY_NETWORK_NAME=<real network name>
+
+# Required only when applying the reviewed plan to MK1 staging:
+MONGODB_URI=mongodb://...
+MONGODB_DB_NAME=appm_site_mapper_mk1
+```
+
+The source and target may be different databases on the same MongoDB deployment, but `--apply`
+refuses to run when the legacy source database and MK1 target database are identical.
+
+Dry run directly from MongoDB:
+
+```bash
+npm run migration:legacy:mongo -- --output /secure/path/real-migration-report.json
+```
+
+The direct reader understands the legacy Site Mapper collections for sites, structures, levels,
+rooms, clusters/bays, positions, containers/racks, devices/equipment and BDFB internals
+(shelves, frames, panels and breakers). It preserves available Site/Structure/Room polygons,
+Position grid coordinates, Container/Rack footprint dimensions and BDFB Frame visibility.
+Level remains non-spatial in MK1.
+
+Persist the generated `idMap` from the reviewed report outside Git. Then stage the exact same
+logical source into the MK1 target:
+
+```bash
+npm run migration:legacy:mongo -- \
+  --id-map /secure/path/id-map.json \
+  --output /secure/path/staging-report.json \
+  --apply
+```
+
+This writes only to `topology_nodes_migration_staging`. Promotion into
+`topology_nodes` remains a separate controlled operation.
+
+## Verify MongoDB staging before promotion
+
+After a successful staging apply, validate the exact staged fingerprint before any promotion:
+
+```bash
+npm run migration:verify-staging -- \
+  --fingerprint <sourceFingerprint> \
+  --expected <staged-count>
+```
+
+The verifier checks staged count, unique canonical ids, the single Network root, canonical parent-kind
+relationships, Position coordinates, Rack/CAS shape and CAS occupant references. A non-empty
+`issues` array blocks promotion.
+
+The command is read-only and only inspects `topology_nodes_migration_staging`.
+
+## Promote verified staging to live topology
+
+After staging verification returns `valid: true` with an empty `issues` array, promote the exact
+fingerprint with an explicit confirmation:
+
+```bash
+npm run migration:promote-staging -- \
+  --fingerprint <sourceFingerprint> \
+  --expected <staged-count> \
+  --confirm-fingerprint <sourceFingerprint>
+```
+
+The promotion command:
+
+- refuses to run when the MK1 target database name matches the configured legacy source database;
+- revalidates canonical ids and parent-kind relationships;
+- builds a separate candidate collection and creates the production topology indexes there;
+- preserves the staging collection;
+- renames any existing live `topology_nodes` collection to a timestamped backup before swap;
+- restores that backup if the candidate rename fails;
+- verifies the final live document count.
+
+Promotion only changes the MK1 target database. It does not delete or modify the legacy source database.

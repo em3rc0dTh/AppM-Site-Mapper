@@ -1,8 +1,13 @@
+'use client';
+
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 import { Icon, StatusBadge } from '@/shared/ui/primitives';
+import { openPhysicalPopup, popupKindForTopology } from '@/shared/ui/physical-popup';
 
 export interface VisualStageChild {
   readonly node: TopologyNode;
@@ -63,8 +68,38 @@ function ChildLink({
   children?: ReactNode;
   style?: CSSProperties;
 }>) {
+  const [selected, setSelected] = useState(false);
+  const router = useRouter();
+  const popupKind = popupKindForTopology(child.kind);
+  const popupHref =
+    child.kind === 'CONTAINER_RACK'
+      ? `/popup/container/${child.id}`
+      : child.kind === 'DEVICE' || child.kind === 'EQUIPMENT'
+        ? `/popup/device/${child.id}`
+        : null;
+  const open = () => {
+    if (popupKind && popupHref) {
+      openPhysicalPopup(popupHref, popupKind, child.id);
+    } else {
+      router.push(href);
+    }
+  };
   return (
-    <Link className={`legacy-stage-node ${className}`} href={href} style={style}>
+    <div
+      className={`legacy-stage-node ${className} ${selected ? 'studio-node-selected' : ''}`}
+      style={style}
+      role="button"
+      tabIndex={0}
+      aria-label={`Select ${child.name}`}
+      onClick={() => setSelected(true)}
+      onDoubleClick={open}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          setSelected(true);
+        }
+      }}
+    >
       {children ?? (
         <>
           <span className="legacy-stage-node-icon">
@@ -85,7 +120,28 @@ function ChildLink({
           <span className="legacy-stage-enter">↗</span>
         </>
       )}
-    </Link>
+      {popupKind && popupHref ? (
+        <button
+          type="button"
+          className="studio-node-open"
+          onClick={(event) => {
+            event.stopPropagation();
+            openPhysicalPopup(popupHref, popupKind, child.id);
+          }}
+        >
+          Open popup ↗
+        </button>
+      ) : (
+        <Link
+          className="studio-node-open"
+          href={href}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          Open →
+        </Link>
+      )}
+    </div>
   );
 }
 
@@ -96,7 +152,7 @@ function NetworkSiteCanvas({ items }: { items: readonly VisualStageChild[] }) {
       <div className="legacy-site-hud">
         <span className="legacy-site-hud-target">◎</span>
         <span>SCHEMATIC SITE VIEW</span>
-        <b>● ONLINE</b>
+        <b>CONFIGURED TOPOLOGY</b>
       </div>
       <div className="legacy-site-boundary">
         <span className="legacy-corner legacy-corner--tl" />
@@ -233,20 +289,31 @@ function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
 
 function PositionCanvas({ items }: { items: readonly VisualStageChild[] }) {
   return (
-    <div className="legacy-position-canvas">
-      {items.map(({ node, href }) => (
-        <ChildLink key={node.id} child={node} href={href} className="legacy-cabinet-preview">
-          <div className="legacy-cabinet-top" />
-          <div className="legacy-cabinet-body">
-            <span className="legacy-cabinet-rails" aria-hidden="true" />
-            <span>
-              <small>{metadata(node)}</small>
+    <div className="studio-position-plan">
+      {items.map(({ node, href }) => {
+        const dimensions = node.kind === 'CONTAINER_RACK' ? node.dimensionsMm : undefined;
+        return (
+          <ChildLink
+            key={node.id}
+            child={node}
+            href={href}
+            className="studio-position-footprint"
+            style={{
+              aspectRatio: dimensions ? `${dimensions.width}/${dimensions.depth}` : '1/1.5',
+            }}
+          >
+            <div className="studio-cabinet-inner">
+              <small>CABINET FOOTPRINT</small>
               <strong>{node.name}</strong>
-            </span>
-          </div>
-          <div className="legacy-cabinet-bottom" />
-        </ChildLink>
-      ))}
+              <span>
+                {dimensions
+                  ? `${dimensions.width} × ${dimensions.depth} mm`
+                  : 'Dimensions unspecified · schematic'}
+              </span>
+            </div>
+          </ChildLink>
+        );
+      })}
     </div>
   );
 }
@@ -305,7 +372,11 @@ export function TopologyVisualStage({
         {items.length === 0 ? (
           <div className="legacy-stage-empty">
             <Icon name="box" />
-            <strong>No contained infrastructure</strong>
+            <strong>
+              {node.kind === 'POSITION'
+                ? 'Available position · no rack assigned'
+                : 'No contained infrastructure'}
+            </strong>
           </div>
         ) : (
           canvas

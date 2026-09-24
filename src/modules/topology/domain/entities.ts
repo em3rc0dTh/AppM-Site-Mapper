@@ -14,6 +14,7 @@ export type TopologyKind =
 
 export type RoomSubstructureVariant = 'ROOM' | 'SUBSTRUCTURE';
 export type ContainerClusterBayVariant = 'CONTAINER_CLUSTER' | 'BAY';
+export type ClusterOrientation = 'HORIZONTAL' | 'VERTICAL';
 export type ContainerRackVariant = 'CONTAINER' | 'RACK';
 export type BreakerHolderVariant = 'BREAKER' | 'HOLDER';
 export type CasState = 'AVAILABLE' | 'RESERVED' | 'EQUIPPED';
@@ -27,6 +28,12 @@ export interface DimensionsMm {
   readonly width: number;
   readonly depth: number;
   readonly height?: number;
+}
+
+export interface ClusterRun {
+  readonly start: GridCoordinate;
+  readonly end: GridCoordinate;
+  readonly orientation: ClusterOrientation;
 }
 
 export interface CasRange {
@@ -45,6 +52,7 @@ export interface BreakerHolder {
   readonly id: string;
   readonly variant: BreakerHolderVariant;
   readonly label: string;
+  readonly position?: number;
   readonly capacity?: number;
 }
 
@@ -94,11 +102,13 @@ export interface NetworkNode extends TopologyBase {
 export interface SiteNode extends TopologyBase {
   readonly kind: 'SITE';
   readonly parentId: string;
+  readonly polygon?: readonly Readonly<{ x: number; y: number }>[];
 }
 
 export interface StructureNode extends TopologyBase {
   readonly kind: 'STRUCTURE';
   readonly parentId: string;
+  readonly polygon?: readonly Readonly<{ x: number; y: number }>[];
 }
 
 export interface LevelNode extends TopologyBase {
@@ -117,6 +127,7 @@ export interface ContainerClusterBayNode extends TopologyBase {
   readonly kind: 'CONTAINER_CLUSTER_BAY';
   readonly parentId: string;
   readonly variant: ContainerClusterBayVariant;
+  readonly run?: ClusterRun;
 }
 
 export interface PositionNode extends TopologyBase {

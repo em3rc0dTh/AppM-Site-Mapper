@@ -7,6 +7,7 @@ import type {
   RoomSubstructureVariant,
   TopologyKind,
 } from '@/modules/topology/domain/entities';
+import { RackPlacementService } from '@/modules/spatial/application/rack-placement-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
@@ -92,8 +93,32 @@ export async function POST(request: Request) {
   const parsedRoomVariant = roomVariant(body.roomVariant);
   const parsedClusterVariant = clusterVariant(body.clusterVariant);
   const parsedContainerVariant = containerVariant(body.containerVariant);
+  const dimensionsObject = asObject(body.dimensionsMm);
+  const dimensionsMm =
+    dimensionsObject &&
+    typeof dimensionsObject.width === 'number' &&
+    typeof dimensionsObject.depth === 'number' &&
+    dimensionsObject.width > 0 &&
+    dimensionsObject.depth > 0
+      ? {
+          width: dimensionsObject.width,
+          depth: dimensionsObject.depth,
+          ...(typeof dimensionsObject.height === 'number' && dimensionsObject.height > 0
+            ? { height: dimensionsObject.height }
+            : {}),
+        }
+      : undefined;
 
   const repository = await createTopologyRepository();
+
+  if (kind === 'CONTAINER_RACK' && typeof parentId === 'string') {
+    const placement = await new RackPlacementService(repository).validate(parentId, dimensionsMm);
+
+    if (!placement.ok) {
+      return NextResponse.json({ error: placement.error }, { status: 422 });
+    }
+  }
+
   const result = await new TopologyService(repository).create({
     kind,
     parentId,
@@ -103,6 +128,7 @@ export async function POST(request: Request) {
     ...(parsedContainerVariant ? { containerVariant: parsedContainerVariant } : {}),
     ...(coordinate ? { coordinate } : {}),
     ...(typeof body.totalU === 'number' ? { totalU: body.totalU } : {}),
+    ...(dimensionsMm ? { dimensionsMm } : {}),
     ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
     ...(typeof body.category === 'string' ? { category: body.category } : {}),
   });
@@ -111,5 +137,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 422 });
   }
 
-  return NextResponse.json({ node: result.value }, { status: 201 });
+  const href = await new TopologyService(repository).buildDeepLink(result.value.id);
+
+  return NextResponse.json({ node: result.value, href }, { status: 201 });
 }

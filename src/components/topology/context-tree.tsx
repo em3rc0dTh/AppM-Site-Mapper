@@ -1,33 +1,139 @@
+'use client';
+
 import Link from 'next/link';
 import type { CSSProperties } from 'react';
 
-import type { TopologyKind } from '@/modules/topology/domain/entities';
 import { Icon } from '@/shared/ui/primitives';
+import { openPhysicalPopup, popupKindForTopology } from '@/shared/ui/physical-popup';
 
 export interface ContextTreeEntry {
   readonly id: string;
   readonly name: string;
-  readonly kind: TopologyKind;
+  readonly kind: string;
   readonly href: string;
+  readonly lifecycle?: 'ACTIVE' | 'ARCHIVED';
+  readonly children?: readonly ContextTreeEntry[];
 }
 
-function iconFor(kind: TopologyKind): string {
+function popupHref(entry: ContextTreeEntry): string {
+  if (entry.kind === 'CONTAINER_RACK') return `/popup/container/${entry.id}`;
+  if (entry.kind === 'DEVICE' || entry.kind === 'EQUIPMENT') return `/popup/device/${entry.id}`;
+  return entry.href;
+}
+
+function iconFor(kind: string): string {
   if (kind === 'NETWORK') return 'network';
   if (kind === 'ROOM_SUBSTRUCTURE') return 'room';
   return 'box';
 }
 
-export function TopologyContextTree({
-  trail,
-  descendants,
-}: Readonly<{
-  trail: readonly ContextTreeEntry[];
-  descendants: readonly ContextTreeEntry[];
-}>) {
-  const active = trail.at(-1);
+function EntryControl({ entry, current }: Readonly<{ entry: ContextTreeEntry; current: boolean }>) {
+  const popupKind = popupKindForTopology(entry.kind);
+  const content = (
+    <>
+      <Icon name={iconFor(entry.kind)} />
+      <span>
+        <small>
+          {entry.kind.replaceAll('_', ' ')}
+          {entry.lifecycle === 'ARCHIVED' ? ' · ARCHIVED' : ''}
+        </small>
+        <strong>{entry.name}</strong>
+      </span>
+    </>
+  );
+
+  if (popupKind) {
+    return (
+      <button
+        type="button"
+        className="context-tree-popup-link"
+        aria-current={current ? 'page' : undefined}
+        onClick={() => openPhysicalPopup(popupHref(entry), popupKind, entry.id)}
+      >
+        {content}
+      </button>
+    );
+  }
 
   return (
-    <nav className="context-tree legacy-context-tree" aria-label="Current infrastructure context">
+    <Link href={entry.href} aria-current={current ? 'page' : undefined}>
+      {content}
+    </Link>
+  );
+}
+
+function TreeNode({
+  entry,
+  currentId,
+  activePath,
+  depth,
+}: Readonly<{
+  entry: ContextTreeEntry;
+  currentId: string;
+  activePath: ReadonlySet<string>;
+  depth: number;
+}>) {
+  const children = entry.children ?? [];
+  const current = entry.id === currentId;
+  const expanded = activePath.has(entry.id) || depth === 0;
+
+  return (
+    <li
+      className={[
+        'context-tree-node',
+        current ? 'is-current' : '',
+        entry.lifecycle === 'ARCHIVED' ? 'is-archived' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      style={{ '--context-depth': depth } as CSSProperties}
+    >
+      {children.length > 0 ? (
+        <details open={expanded}>
+          <summary aria-label={`Toggle ${entry.name} descendants`}>
+            <span className="context-tree-disclosure">▸</span>
+            <EntryControl entry={entry} current={current} />
+          </summary>
+          <ol>
+            {children.map((child) => (
+              <TreeNode
+                key={child.id}
+                entry={child}
+                currentId={currentId}
+                activePath={activePath}
+                depth={depth + 1}
+              />
+            ))}
+          </ol>
+        </details>
+      ) : (
+        <div className="context-tree-leaf">
+          <span className="context-tree-disclosure is-empty">·</span>
+          <EntryControl entry={entry} current={current} />
+        </div>
+      )}
+    </li>
+  );
+}
+
+export function TopologyContextTree({
+  trail,
+  tree,
+  supplemental = [],
+  descendants = [],
+}: Readonly<{
+  trail: readonly ContextTreeEntry[];
+  tree?: readonly ContextTreeEntry[];
+  supplemental?: readonly ContextTreeEntry[];
+  descendants?: readonly ContextTreeEntry[];
+}>) {
+  const active = trail.at(-1);
+  const activePath = new Set(trail.map((entry) => entry.id));
+  const roots = tree ?? (trail[0] ? [{ ...trail[0], children: descendants }] : []);
+  const extras = supplemental.length > 0 ? supplemental : [];
+
+  return (
+    <nav className="context-tree legacy-context-tree" aria-label="Infrastructure hierarchy">
       <header className="legacy-context-heading">
         <span className="legacy-context-heading-icon">
           <Icon name="network" />
@@ -40,42 +146,29 @@ export function TopologyContextTree({
 
       <div className="legacy-context-scope">
         <span>Current location</span>
-        <small>{trail.length.toString().padStart(2, '0')} levels</small>
+        <small>DEPTH {trail.length.toString().padStart(2, '0')}</small>
       </div>
 
-      <ol className="context-tree-trail">
-        {trail.map((entry, index) => {
-          const isActive = entry.id === active?.id;
-          return (
-            <li key={entry.id} style={{ '--context-depth': index } as CSSProperties}>
-              <Link href={entry.href} aria-current={isActive ? 'page' : undefined}>
-                <Icon name={iconFor(entry.kind)} />
-                <span>
-                  <small>{entry.kind.replaceAll('_', ' ')}</small>
-                  <strong>{entry.name}</strong>
-                </span>
-              </Link>
-            </li>
-          );
-        })}
-      </ol>
+      <div className="context-tree-full">
+        <ol>
+          {roots.map((entry) => (
+            <TreeNode
+              key={entry.id}
+              entry={entry}
+              currentId={active?.id ?? ''}
+              activePath={activePath}
+              depth={0}
+            />
+          ))}
+        </ol>
+      </div>
 
-      {descendants.length > 0 && (
-        <div className="context-tree-children">
-          <span className="context-tree-subtitle">Contained next</span>
-          <ul>
-            {descendants.map((entry) => (
-              <li key={entry.id}>
-                <Link href={entry.href}>
-                  <Icon name={iconFor(entry.kind)} />
-                  <span>
-                    <small>{entry.kind.replaceAll('_', ' ')}</small>
-                    <strong>{entry.name}</strong>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+      {extras.length > 0 && (
+        <div className="context-tree-supplemental">
+          <span>INTERNAL / NEXT</span>
+          {extras.map((entry) => (
+            <EntryControl key={entry.id} entry={entry} current={entry.id === active?.id} />
+          ))}
         </div>
       )}
     </nav>

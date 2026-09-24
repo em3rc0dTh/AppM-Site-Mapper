@@ -3,6 +3,17 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
+function profileErrorMessage(error: string): string {
+  const messages: Readonly<Record<string, string>> = {
+    INVALID_INPUT: 'Display name is required and must be 120 characters or fewer.',
+    SESSION_INVALID: 'Your session has expired. Sign in again.',
+    USER_NOT_FOUND: 'Your user record is no longer available.',
+    PROFILE_UPDATE_FAILED: 'Profile could not be saved. Try again.',
+  };
+
+  return messages[error] ?? error.replaceAll('_', ' ');
+}
+
 export function ProfileForm({ displayName }: Readonly<{ displayName: string }>) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +35,7 @@ export function ProfileForm({ displayName }: Readonly<{ displayName: string }>) 
     const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
     if (!response.ok) {
-      setError(body?.error ?? 'PROFILE_UPDATE_FAILED');
+      setError(profileErrorMessage(body?.error ?? 'PROFILE_UPDATE_FAILED'));
       setBusy(false);
       return;
     }
@@ -39,6 +50,7 @@ export function ProfileForm({ displayName }: Readonly<{ displayName: string }>) 
       <label>
         Display name
         <input defaultValue={displayName} maxLength={120} name="displayName" required />
+        <small>Name shown to users in Site Mapper. It does not change the sign-in email.</small>
       </label>
       <button disabled={busy} type="submit">
         {busy ? 'Saving…' : 'Save profile'}

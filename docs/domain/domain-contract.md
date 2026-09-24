@@ -99,6 +99,15 @@ This node owns the physical context in which Device and Equipment are placed.
 
 Rack-specific behavior such as U capacity and CAS may apply where the Container/Rack instance supports that capability.
 
+The accepted MK1 Blueprint footprint rule is:
+
+- ContainerCluster/Bay Positions are 600 × 600 mm;
+- Container/Rack width runs along the cluster/bay axis and consumes consecutive Positions;
+- width cannot extend past the remaining run or through already occupied footprint;
+- depth is perpendicular to the run and may exceed 600 mm while remaining inside the Room boundary and collision-free;
+- a wider footprint may cover additional Positions without changing the single canonical parent Position;
+- vertical cluster/bay runs rotate the footprint while preserving width as the along-run dimension.
+
 ### Device
 
 Direct child of Container/Rack.

@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import type { WorkspaceTreeNode } from '@/modules/workspace/application/workspace-service';
 import { Icon, StatePanel } from '@/shared/ui/primitives';
+import { openPhysicalPopup, popupKindForTopology } from '@/shared/ui/physical-popup';
 
 function matches(node: WorkspaceTreeNode, query: string): boolean {
   return (
@@ -22,6 +23,13 @@ function Branch({
 }) {
   const [expanded, setExpanded] = useState(true);
   const children = node.children.filter((child) => matches(child, query));
+  const popupKind = popupKindForTopology(node.kind);
+  const popupHref =
+    node.kind === 'CONTAINER_RACK'
+      ? `/popup/container/${node.id}`
+      : node.kind === 'DEVICE' || node.kind === 'EQUIPMENT'
+        ? `/popup/device/${node.id}`
+        : null;
   return (
     <li>
       <div className="tree-node-line">
@@ -37,17 +45,36 @@ function Branch({
         ) : (
           <span className="tree-spacer" />
         )}
-        <Link
-          href={node.href}
-          aria-current={pathname === node.href ? 'page' : undefined}
-          title={node.kind.replaceAll('_', ' ')}
-        >
-          <Icon
-            name={node.kind === 'NETWORK' ? 'network' : node.kind.includes('ROOM') ? 'room' : 'box'}
-          />
-          <span>{node.name}</span>
-          {node.children.length > 0 && <small>{node.children.length}</small>}
-        </Link>
+        {popupKind && popupHref ? (
+          <button
+            type="button"
+            className="workspace-tree-popup"
+            title={node.kind.replaceAll('_', ' ')}
+            onClick={() => openPhysicalPopup(popupHref, popupKind, node.id)}
+          >
+            <Icon
+              name={
+                node.kind === 'NETWORK' ? 'network' : node.kind.includes('ROOM') ? 'room' : 'box'
+              }
+            />
+            <span>{node.name}</span>
+            {node.children.length > 0 && <small>{node.children.length}</small>}
+          </button>
+        ) : (
+          <Link
+            href={node.href}
+            aria-current={pathname === node.href ? 'page' : undefined}
+            title={node.kind.replaceAll('_', ' ')}
+          >
+            <Icon
+              name={
+                node.kind === 'NETWORK' ? 'network' : node.kind.includes('ROOM') ? 'room' : 'box'
+              }
+            />
+            <span>{node.name}</span>
+            {node.children.length > 0 && <small>{node.children.length}</small>}
+          </Link>
+        )}
       </div>
       {children.length > 0 && (query || expanded) && (
         <ul>

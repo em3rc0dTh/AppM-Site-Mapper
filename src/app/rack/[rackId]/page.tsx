@@ -1,6 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 
-import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
+import { TopologyContextTree } from '@/components/topology/context-tree';
+import { buildContextTree, buildTrailEntries } from '@/components/topology/context-tree-data';
 import { RackElevation } from '@/components/rack/rack-elevation';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
@@ -26,35 +27,21 @@ export default async function RackPage({
     notFound();
   }
 
-  const [trail, children, parent] = await Promise.all([
+  const [trail, parent] = await Promise.all([
     topology.getTrail(rackId),
-    topology.listChildren(rackId),
     result.value.rack.parentId
       ? topology.getById(result.value.rack.parentId)
       : Promise.resolve(null),
   ]);
-  const trailEntries: ContextTreeEntry[] = await Promise.all(
-    trail.map(async (node) => ({
-      id: node.id,
-      name: node.name,
-      kind: node.kind,
-      href: await topology.buildDeepLink(node.id),
-    })),
-  );
-  const childEntries: ContextTreeEntry[] = await Promise.all(
-    children.map(async (node) => ({
-      id: node.id,
-      name: node.name,
-      kind: node.kind,
-      href: await topology.buildDeepLink(node.id),
-    })),
-  );
+  const trailEntries = await buildTrailEntries(topology, trail);
+  const hierarchyTree =
+    trail[0] === undefined ? [] : [await buildContextTree(repository, topology, trail[0])];
 
   return (
     <main className="operational-page operational-page--rack">
       <div className="operational-layout operational-layout--rack">
         <aside className="operational-context">
-          <TopologyContextTree trail={trailEntries} descendants={childEntries} />
+          <TopologyContextTree trail={trailEntries} tree={hierarchyTree} />
         </aside>
         <section className="operational-stage operational-stage--wide">
           <RackElevation

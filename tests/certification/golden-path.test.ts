@@ -12,6 +12,7 @@ import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-pow
 import { CasService } from '@/modules/rack/application/cas-service';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
+import { StructureAuthoringService } from '@/modules/spatial/application/structure-authoring-service';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
@@ -56,13 +57,28 @@ describe('MK1 system golden path', () => {
     const site = requireSuccess(
       await topology.create({ kind: 'SITE', parentId: network.id, name: 'Certification Site' }),
     );
+    const spatial = new SpatialService(topologyRepository);
+    requireSuccess(
+      await spatial.updateBoundary(site.id, [
+        { x: 0, y: 0 },
+        { x: 8000, y: 0 },
+        { x: 8000, y: 6000 },
+        { x: 0, y: 6000 },
+      ]),
+    );
     const structure = requireSuccess(
-      await topology.create({
-        kind: 'STRUCTURE',
+      await new StructureAuthoringService(topologyRepository).create({
         parentId: site.id,
         name: 'Certification Structure',
+        polygon: [
+          { x: 500, y: 500 },
+          { x: 6500, y: 500 },
+          { x: 6500, y: 5000 },
+          { x: 500, y: 5000 },
+        ],
       }),
     );
+    expect(structure.polygon).toHaveLength(4);
     const level = requireSuccess(
       await topology.create({ kind: 'LEVEL', parentId: structure.id, name: 'Level 1' }),
     );
@@ -128,7 +144,6 @@ describe('MK1 system golden path', () => {
     );
     expect(resolved.id).toBe(device.id);
 
-    const spatial = new SpatialService(topologyRepository);
     requireSuccess(
       await spatial.updateRoomPolygon(room.id, [
         { x: 0, y: 0 },

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { seedDevelopmentDemo } from '@/dev/demo-seed';
 import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
+import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 
 describe('development demo seed', () => {
@@ -32,7 +33,19 @@ describe('development demo seed', () => {
       throw new Error('Expected demo room.');
     }
 
-    expect(room.polygon).toHaveLength(4);
+    expect(room.polygon).toHaveLength(6);
+
+    const layout = await new SpatialService(topology).getRoomLayout(room.id);
+    expect(layout.ok).toBe(true);
+
+    if (!layout.ok) {
+      throw new Error('Expected demo room layout.');
+    }
+
+    expect(layout.value.clusters).toHaveLength(2);
+    expect(layout.value.positions).toHaveLength(3);
+    expect(layout.value.racks).toHaveLength(3);
+    expect(layout.value.positions.every((position) => position.occupied)).toBe(true);
 
     const devices = await topology.listByKind('DEVICE');
     const bdfb = devices.find((node) => node.kind === 'DEVICE' && node.name === 'BDFB-A');

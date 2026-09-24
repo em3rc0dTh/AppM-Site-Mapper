@@ -3,6 +3,18 @@
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
+function userCreateErrorMessage(error: string): string {
+  const messages: Readonly<Record<string, string>> = {
+    USER_EXISTS: 'A user with this email already exists.',
+    FORBIDDEN: 'Your role cannot create a user with the selected role.',
+    INVALID_INPUT: 'Check the name, email and temporary password. Passwords require 12 characters.',
+    INVALID_REQUEST: 'Some required user information is missing or invalid.',
+    USER_CREATE_FAILED: 'User could not be created. Try again.',
+  };
+
+  return messages[error] ?? error.replaceAll('_', ' ');
+}
+
 export function UserCreateForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +39,7 @@ export function UserCreateForm() {
     const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
     if (!response.ok) {
-      setError(body?.error ?? 'USER_CREATE_FAILED');
+      setError(userCreateErrorMessage(body?.error ?? 'USER_CREATE_FAILED'));
       setBusy(false);
       return;
     }
@@ -42,10 +54,12 @@ export function UserCreateForm() {
       <label>
         Name
         <input name="displayName" required />
+        <small>Display name shown inside Site Mapper.</small>
       </label>
       <label>
         Email
         <input autoComplete="off" name="email" required type="email" />
+        <small>Sign-in identity for this user.</small>
       </label>
       <label>
         Role
@@ -54,10 +68,15 @@ export function UserCreateForm() {
           <option value="ADMIN">Admin</option>
           <option value="SUPERADMIN">Superadmin</option>
         </select>
+        <small>
+          Standard: read topology/power/telemetry. Admin: edit topology, power and settings.
+          Superadmin: also manage users and protected system actions.
+        </small>
       </label>
       <label>
         Temporary password
         <input minLength={12} name="temporaryPassword" required type="password" />
+        <small>Minimum 12 characters. The user signs in with this initial password.</small>
       </label>
       <button disabled={busy} type="submit">
         {busy ? 'Creating…' : 'Create user'}

@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge, Surface } from '@/shared/ui/primitives';
@@ -8,6 +9,7 @@ export interface PowerStage {
   id: string;
   kind: string;
   name: string;
+  href?: string;
 }
 export function PowerPathView({
   label,
@@ -37,6 +39,9 @@ export function PowerPathView({
                 setSelected({
                   name: stage.name,
                   kind: stage.kind,
+                  ...(stage.href
+                    ? { actions: [{ label: 'Open physical view', href: stage.href }] }
+                    : {}),
                   sections: [
                     {
                       title: 'Overview',
@@ -56,6 +61,11 @@ export function PowerPathView({
               </small>
               <strong>{stage.name}</strong>
             </button>
+            {stage.href && (
+              <Link className="action-link" href={stage.href}>
+                Open physical view →
+              </Link>
+            )}
             {index < stages.length - 1 && (
               <span className="power-step-arrow" aria-hidden="true">
                 ↓

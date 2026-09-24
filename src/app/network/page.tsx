@@ -23,7 +23,7 @@ export default async function NetworkPage() {
   }
 
   const service = new TopologyService(await createTopologyRepository());
-  const networks = await service.listNetworks();
+  const networks = await service.listNetworksIncludingArchived();
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
   return (

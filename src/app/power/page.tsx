@@ -3,6 +3,7 @@ import { PowerPathView, type PowerStage } from '@/components/power/power-path-vi
 import { requirePermission } from '@/modules/identity/application/current-session';
 import type { PowerEndpoint } from '@/modules/power/domain/entities';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
+import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { MetricTile, SectionHeader, StatePanel } from '@/shared/ui/primitives';
 
@@ -13,11 +14,13 @@ export default async function PowerPage() {
   const topology = await createTopologyRepository();
   async function stagesFor(endpoint: PowerEndpoint): Promise<PowerStage[]> {
     const node = await topology.getById(endpoint.entityId);
-    const result = [
+    const href = await new TopologyService(topology).buildDeepLink(endpoint.entityId);
+    const result: PowerStage[] = [
       {
         id: endpoint.entityId,
         kind: node?.kind ?? 'ENTITY',
         name: node?.name ?? endpoint.entityId,
+        href,
       },
     ];
     const internal = endpoint.internal;
@@ -41,7 +44,16 @@ export default async function PowerPage() {
         kind: breaker?.variant ?? 'BREAKER / HOLDER',
         name: breaker?.label ?? internal.breakerHolderId,
       });
-    return result;
+    return result.map((stage) => {
+      const stageParams = new URLSearchParams();
+      if (stage.kind !== 'DEVICE' && stage.kind !== 'EQUIPMENT' && internal.shelfId)
+        stageParams.set('shelf', internal.shelfId);
+      if (['PANEL', 'BREAKER', 'HOLDER'].includes(stage.kind) && internal.panelId)
+        stageParams.set('panel', internal.panelId);
+      if (['BREAKER', 'HOLDER'].includes(stage.kind) && internal.breakerHolderId)
+        stageParams.set('endpoint', internal.breakerHolderId);
+      return { ...stage, href: stageParams.size ? `${href}?${stageParams}` : href };
+    });
   }
   const views = await Promise.all(
     paths.map(async (path) => {

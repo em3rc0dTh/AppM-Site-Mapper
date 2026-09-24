@@ -26,7 +26,7 @@ const sourceSpecs: readonly SourceSpec[] = [
   { collection: 'levels', kind: 'LEVEL' },
   { collection: 'Room', kind: 'ROOM_SUBSTRUCTURE', variant: 'ROOM' },
   { collection: 'Substructure', kind: 'ROOM_SUBSTRUCTURE', variant: 'SUBSTRUCTURE' },
-  { collection: 'rooms', kind: 'ROOM_SUBSTRUCTURE', variant: 'SUBSTRUCTURE' },
+  { collection: 'rooms', kind: 'ROOM_SUBSTRUCTURE', variant: 'ROOM' },
   {
     collection: 'ContainerCluster',
     kind: 'CONTAINER_CLUSTER_BAY',
@@ -74,6 +74,16 @@ function scalar(value: unknown): string | null {
     return typeof oid === 'string' && oid.trim() ? oid.trim() : null;
   }
 
+  if (
+    value &&
+    typeof value === 'object' &&
+    'toHexString' in value &&
+    typeof (value as { toHexString?: unknown }).toHexString === 'function'
+  ) {
+    const hex = (value as { toHexString: () => string }).toHexString();
+    return hex.trim() ? hex.trim() : null;
+  }
+
   return null;
 }
 
@@ -100,6 +110,69 @@ function getNumber(record: LegacyRecord, keys: readonly string[]): number | null
   return null;
 }
 
+function getNestedNumber(record: LegacyRecord, path: readonly string[]): number | null {
+  let value: unknown = record;
+  for (const key of path) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    value = (value as Record<string, unknown>)[key];
+  }
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim() && Number.isFinite(Number(value))) {
+    return Number(value);
+  }
+  return null;
+}
+
+function normalizePolygon(
+  record: LegacyRecord,
+): readonly Readonly<{ x: number; y: number }>[] | undefined {
+  const spatialMetadata =
+    typeof record.spatialMetadata === 'string'
+      ? (() => {
+          try {
+            const parsed = JSON.parse(record.spatialMetadata);
+            return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+              ? (parsed as LegacyRecord)
+              : null;
+          } catch {
+            return null;
+          }
+        })()
+      : record.spatialMetadata &&
+          typeof record.spatialMetadata === 'object' &&
+          !Array.isArray(record.spatialMetadata)
+        ? (record.spatialMetadata as LegacyRecord)
+        : null;
+  const source = Array.isArray(record.polygon)
+    ? record.polygon
+    : Array.isArray(record.points)
+      ? record.points
+      : spatialMetadata && Array.isArray(spatialMetadata.points)
+        ? spatialMetadata.points
+        : null;
+  if (!source) return undefined;
+
+  const points = source.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+    const point = entry as Record<string, unknown>;
+    const x =
+      typeof point.x === 'number'
+        ? point.x
+        : typeof point.x === 'string' && Number.isFinite(Number(point.x))
+          ? Number(point.x)
+          : null;
+    const y =
+      typeof point.y === 'number'
+        ? point.y
+        : typeof point.y === 'string' && Number.isFinite(Number(point.y))
+          ? Number(point.y)
+          : null;
+    return x !== null && y !== null ? [{ x, y }] : [];
+  });
+
+  return points.length >= 3 ? points : undefined;
+}
+
 function legacyId(record: LegacyRecord): string | null {
   return getString(record, ['id', '_id', 'legacyId']);
 }
@@ -113,11 +186,11 @@ function parentLegacyId(kind: CanonicalKind, record: LegacyRecord): string | nul
     case 'SITE':
       return '__NETWORK__';
     case 'STRUCTURE':
-      return getString(record, ['siteId', 'site_id', 'site']);
+      return getString(record, ['siteId', 'site_id', 'site', 'parentId']);
     case 'LEVEL':
-      return getString(record, ['structureId', 'structure_id', 'structure']);
+      return getString(record, ['structureId', 'structure_id', 'structure', 'parentId']);
     case 'ROOM_SUBSTRUCTURE':
-      return getString(record, ['levelId', 'level_id', 'level']);
+      return getString(record, ['levelId', 'level_id', 'level', 'parentId']);
     case 'CONTAINER_CLUSTER_BAY':
       return getString(record, [
         'roomId',
@@ -137,7 +210,9 @@ function parentLegacyId(kind: CanonicalKind, record: LegacyRecord): string | nul
         'parentId',
       ]);
     case 'CONTAINER_RACK':
-      return getString(record, ['positionId', 'position_id', 'position', 'parentId']);
+      // "position" in the legacy Container is frequently a numeric display/order field,
+      // not a foreign key. Only explicit position ids or parentId are relationship refs.
+      return getString(record, ['positionId', 'position_id', 'parentId']);
     case 'DEVICE':
     case 'EQUIPMENT':
       return getString(record, ['containerId', 'rackId', 'container_id', 'rack_id', 'parentId']);
@@ -194,7 +269,20 @@ function normalizeCoordinate(
     return { row: row.toUpperCase(), column: column as number };
   }
 
-  const coordinate = getString(record, ['coordinate', 'gridCoordinate']);
+  const appMObject =
+    record.appMObject && typeof record.appMObject === 'object' && !Array.isArray(record.appMObject)
+      ? (record.appMObject as LegacyRecord)
+      : null;
+  const sourceGridCoordinate = Array.isArray(record.grid_coordinate)
+    ? record.grid_coordinate
+    : appMObject && Array.isArray(appMObject.grid_coordinate)
+      ? appMObject.grid_coordinate
+      : null;
+  const arrayCoordinate = sourceGridCoordinate
+    ? sourceGridCoordinate.map((value) => scalar(value)).find(Boolean)
+    : null;
+  const coordinate =
+    getString(record, ['coordinate', 'gridCoordinate', 'grid_coordinate']) ?? arrayCoordinate;
   const match = coordinate?.match(/^([A-Za-z]+)[- ]?(\d+)$/);
   if (!match) {
     return null;
@@ -208,12 +296,23 @@ function normalizeContainerVariant(spec: SourceSpec, record: LegacyRecord): 'CON
     return 'RACK';
   }
 
-  const explicit = getString(record, ['variant', 'containerVariant', 'type'])?.toUpperCase();
-  if (explicit === 'RACK') {
+  const explicit = getString(record, [
+    'variant',
+    'containerVariant',
+    'type',
+    'category',
+  ])?.toUpperCase();
+  if (explicit === 'RACK' || explicit === 'CABINET') {
     return 'RACK';
   }
 
-  return getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']) ? 'RACK' : 'CONTAINER';
+  const capacityTotal = getNestedNumber(record, ['capacity', 'total']);
+  const heightRu = getNestedNumber(record, ['dimensions', 'heightRu']);
+  return getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']) ||
+    capacityTotal ||
+    heightRu
+    ? 'RACK'
+    : 'CONTAINER';
 }
 
 function deterministicMigrationId(seed: string): string {
@@ -223,6 +322,26 @@ function deterministicMigrationId(seed: string): string {
   hex[16] = ((variant & 0x3) | 0x8).toString(16);
   const value = hex.join('');
   return `${value.slice(0, 8)}-${value.slice(8, 12)}-${value.slice(12, 16)}-${value.slice(16, 20)}-${value.slice(20)}`;
+}
+
+function totalUFromCas(record: LegacyRecord): number | undefined {
+  const source = Array.isArray(record.cas)
+    ? record.cas
+    : Array.isArray(record.CAS)
+      ? record.CAS
+      : null;
+  if (!source) return undefined;
+
+  const ends = source.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+    const item = entry as LegacyRecord;
+    const endU =
+      getNumber(item, ['endU', 'endPosition']) ??
+      getNestedNumber(item, ['mounting', 'endPosition']);
+    return Number.isInteger(endU) && (endU ?? 0) > 0 ? [endU as number] : [];
+  });
+
+  return ends.length ? Math.max(...ends) : undefined;
 }
 
 function normalizeCas(
@@ -263,9 +382,13 @@ function normalizeCas(
     }
 
     const item = entry as LegacyRecord;
-    const startU = getNumber(item, ['startU', 'startPosition']);
-    const endU = getNumber(item, ['endU', 'endPosition']);
-    const stateRaw = getString(item, ['state', 'status'])?.toUpperCase();
+    const startU =
+      getNumber(item, ['startU', 'startPosition']) ??
+      getNestedNumber(item, ['mounting', 'startPosition']);
+    const endU =
+      getNumber(item, ['endU', 'endPosition']) ??
+      getNestedNumber(item, ['mounting', 'endPosition']);
+    const stateRaw = getString(item, ['state', 'status', 'casStatus'])?.toUpperCase();
     const state =
       stateRaw === 'AVAILABLE' || stateRaw === 'RESERVED' || stateRaw === 'EQUIPPED'
         ? stateRaw
@@ -293,18 +416,40 @@ function normalizeCas(
       startU,
       endU,
       state,
-      ...(getString(item, ['deviceId', 'occupantId'])
-        ? { occupantLegacyId: getString(item, ['deviceId', 'occupantId']) }
-        : {}),
-      ...(getNumber(item, ['physicalSizeU', 'physicalSize']) !== null
-        ? { physicalSizeU: getNumber(item, ['physicalSizeU', 'physicalSize']) }
-        : {}),
-      ...(getNumber(item, ['clearanceTopU']) !== null
-        ? { clearanceTopU: getNumber(item, ['clearanceTopU']) }
-        : {}),
-      ...(getNumber(item, ['clearanceBottomU']) !== null
-        ? { clearanceBottomU: getNumber(item, ['clearanceBottomU']) }
-        : {}),
+      ...(() => {
+        const embeddedDevice =
+          item.device && typeof item.device === 'object' && !Array.isArray(item.device)
+            ? (item.device as LegacyRecord)
+            : null;
+        const occupantLegacyId =
+          getString(item, ['deviceId', 'occupantId']) ??
+          (embeddedDevice ? getString(embeddedDevice, ['id', '_id', 'originalId']) : null);
+        return occupantLegacyId ? { occupantLegacyId } : {};
+      })(),
+      ...(() => {
+        const mountStartU =
+          getNumber(item, ['mountStartU', 'mountStart', 'mountPosition']) ??
+          getNestedNumber(item, ['mounting', 'startPosition']);
+        return mountStartU !== null ? { mountStartU } : {};
+      })(),
+      ...(() => {
+        const physicalSizeU =
+          getNumber(item, ['physicalSizeU', 'physicalSize']) ??
+          getNestedNumber(item, ['mounting', 'physicalSize']);
+        return physicalSizeU !== null ? { physicalSizeU } : {};
+      })(),
+      ...(() => {
+        const clearanceTopU =
+          getNumber(item, ['clearanceTopU']) ??
+          getNestedNumber(item, ['mounting', 'clearance', 'top']);
+        return clearanceTopU !== null ? { clearanceTopU } : {};
+      })(),
+      ...(() => {
+        const clearanceBottomU =
+          getNumber(item, ['clearanceBottomU']) ??
+          getNestedNumber(item, ['mounting', 'clearance', 'bottom']);
+        return clearanceBottomU !== null ? { clearanceBottomU } : {};
+      })(),
     });
   }
 
@@ -318,26 +463,104 @@ function extraFields(
   id: string,
 ): Record<string, unknown> | null {
   switch (spec.kind) {
-    case 'ROOM_SUBSTRUCTURE':
-      return { variant: spec.variant };
-    case 'CONTAINER_CLUSTER_BAY':
-      return { variant: spec.variant };
+    case 'SITE':
+    case 'STRUCTURE': {
+      const polygon = normalizePolygon(record);
+      return polygon ? { polygon } : {};
+    }
+    case 'LEVEL': {
+      if (record.migrationParentSource === 'legacy-site-level-fallback') {
+        warnings.push({
+          sourceCollection: spec.collection,
+          legacyId: id,
+          message:
+            'Rebound Site-parented Level to the unique Structure without a direct Level, preserving the legacy structure fallback behavior.',
+        });
+      }
+      if (record.migrationParentSource === 'legacy-site-level-shared-fallback') {
+        warnings.push({
+          sourceCollection: spec.collection,
+          legacyId: id,
+          message:
+            'Materialized a Structure-scoped Level from a shared Site-parented legacy Level because the original Structure view reused that Level for Structures without direct Levels.',
+        });
+      }
+      return {};
+    }
+    case 'ROOM_SUBSTRUCTURE': {
+      const polygon = normalizePolygon(record);
+      return { variant: spec.variant, ...(polygon ? { polygon } : {}) };
+    }
+    case 'CONTAINER_CLUSTER_BAY': {
+      const explicit = getString(record, ['variant', 'category', 'type'])?.toUpperCase();
+      const variant =
+        explicit === 'BAY'
+          ? 'BAY'
+          : explicit === 'CONTAINER_CLUSTER'
+            ? 'CONTAINER_CLUSTER'
+            : spec.variant;
+      return { variant };
+    }
     case 'POSITION': {
       const coordinate = normalizeCoordinate(record);
-      return coordinate ? { coordinate } : null;
+      if (!coordinate) return null;
+      if (record.migrationDerived === true) {
+        warnings.push({
+          sourceCollection: spec.collection,
+          legacyId: id,
+          message:
+            'Canonical Position was derived because the legacy Container was attached directly to a ContainerCluster.',
+        });
+      }
+      return { coordinate };
     }
     case 'CONTAINER_RACK': {
       const variant = normalizeContainerVariant(spec, record);
-      const total = getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']);
-      const totalU = total && Number.isInteger(total) && total > 0 ? total : undefined;
+      const explicitTotal = getNumber(record, ['totalU', 'totalUnits', 'rackUnits', 'uHeight']);
+      const capacityTotal = getNestedNumber(record, ['capacity', 'total']);
+      const heightRu =
+        getNestedNumber(record, ['dimensions', 'heightRu']) ??
+        getNestedNumber(record, ['appMObject', 'heightRu']);
+      const mountedEnd = getNestedNumber(record, ['mounting', 'endPosition']);
+      const casEnd = totalUFromCas(record);
+      const totalCandidate = explicitTotal ?? capacityTotal ?? heightRu ?? casEnd ?? mountedEnd;
+      let totalU =
+        totalCandidate && Number.isInteger(totalCandidate) && totalCandidate > 0
+          ? totalCandidate
+          : undefined;
 
       if (variant === 'RACK' && !totalU) {
-        return null;
+        totalU = 42;
+        warnings.push({
+          sourceCollection: spec.collection,
+          legacyId: id,
+          message:
+            'Rack has no persisted RU capacity; applied the legacy Site Mapper rack-popup fallback of 42U.',
+        });
       }
+
+      const width =
+        getNestedNumber(record, ['dimensions', 'width']) ??
+        getNumber(record, ['widthMm', 'width', 'w']);
+      const depth =
+        getNestedNumber(record, ['dimensions', 'depth']) ??
+        getNumber(record, ['depthMm', 'depth', 'h']);
+      const height =
+        getNestedNumber(record, ['dimensions', 'height']) ??
+        getNumber(record, ['heightMm', 'height']);
+      const dimensionsMm =
+        width && width > 0 && depth && depth > 0
+          ? {
+              width,
+              depth,
+              ...(height && height > 0 ? { height } : {}),
+            }
+          : undefined;
 
       return {
         variant,
         ...(totalU ? { totalU } : {}),
+        ...(dimensionsMm ? { dimensionsMm } : {}),
         cas: normalizeCas(record, totalU, warnings, spec.collection, id),
       };
     }
@@ -350,8 +573,12 @@ function extraFields(
             'Embedded Equipment was not migrated under Device. Promote it explicitly as Container/Rack sibling input.',
         });
       }
+      const bdfb =
+        record.bdfb && typeof record.bdfb === 'object' && !Array.isArray(record.bdfb)
+          ? record.bdfb
+          : undefined;
       return {
-        pinned: Boolean(record.pinned),
+        pinned: Boolean(record.pinned ?? record.isPinned),
         ...(getString(record, ['serialNumber', 'serial', 'sn'])
           ? { serialNumber: getString(record, ['serialNumber', 'serial', 'sn']) }
           : {}),
@@ -359,6 +586,7 @@ function extraFields(
         ...(getString(record, ['deviceType', 'type'])
           ? { deviceType: getString(record, ['deviceType', 'type']) }
           : {}),
+        ...(bdfb ? { bdfb } : {}),
       };
     }
     case 'EQUIPMENT':

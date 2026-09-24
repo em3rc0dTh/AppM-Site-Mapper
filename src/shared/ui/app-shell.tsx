@@ -19,7 +19,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  if (pathname === '/login' || pathname === '/change-password') return children;
+  if (pathname === '/login' || pathname === '/change-password' || pathname.startsWith('/popup/'))
+    return children;
 
   const immersive =
     pathname.startsWith('/topology') ||

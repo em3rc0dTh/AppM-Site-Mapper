@@ -15,10 +15,7 @@ import {
   type SpatialNavigationItem,
 } from '@/components/spatial/spatial-authoring-canvas';
 import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
-import {
-  buildContextTree,
-  buildTrailEntries,
-} from '@/components/topology/context-tree-data';
+import { buildContextTree, buildTrailEntries } from '@/components/topology/context-tree-data';
 import { TopologyCrudPanel } from '@/components/topology/topology-crud-panel';
 import {
   TopologyVisualStage,

@@ -10,13 +10,14 @@ function createErrorMessage(error: string): string {
     INVALID_POLYGON: 'The physical footprint is invalid.',
     INVALID_PARENT: 'The selected parent is not valid for this entity.',
     INVALID_NAME: 'Name is required.',
-    RACK_CLUSTER_RUN_REQUIRED: 'Place this ContainerCluster/Bay on the Blueprint before adding a Rack or Container.',
+    RACK_CLUSTER_RUN_REQUIRED:
+      'Place this ContainerCluster/Bay on the Blueprint before adding a Rack or Container.',
     RACK_ROOM_BOUNDARY_REQUIRED: 'Define the Room boundary before placing a Rack or Container.',
-    RACK_ANCHOR_OUTSIDE_CLUSTER_RUN: 'The selected Position is not part of this ContainerCluster/Bay run.',
+    RACK_ANCHOR_OUTSIDE_CLUSTER_RUN:
+      'The selected Position is not part of this ContainerCluster/Bay run.',
     RACK_WIDTH_EXCEEDS_CLUSTER_RUN:
       'This width needs more 600 mm slots than remain from the selected Position to the end of the run.',
-    RACK_FOOTPRINT_OUTSIDE_ROOM:
-      'The Rack/Container depth would extend outside the Room boundary.',
+    RACK_FOOTPRINT_OUTSIDE_ROOM: 'The Rack/Container depth would extend outside the Room boundary.',
     RACK_FOOTPRINT_COLLISION:
       'This Rack/Container footprint overlaps another placed Rack/Container.',
   };
@@ -392,9 +393,8 @@ export function TopologyCreateForm({
                 required
               />
               <small>
-                Width runs along the ContainerCluster/Bay. It consumes consecutive 600 mm slots:
-                900 mm uses 2 slots. It cannot extend past the end of the run or through occupied
-                slots.
+                Width runs along the ContainerCluster/Bay. It consumes consecutive 600 mm slots: 900
+                mm uses 2 slots. It cannot extend past the end of the run or through occupied slots.
               </small>
             </label>
 

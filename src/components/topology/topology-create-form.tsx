@@ -23,6 +23,21 @@ export function TopologyCreateForm({
       name: String(form.get('name') ?? ''),
     };
 
+    if (kind === 'STRUCTURE') {
+      const width = Number(form.get('widthMm') ?? 0);
+      const depth = Number(form.get('depthMm') ?? 0);
+      const x = Number(form.get('xMm') ?? 0);
+      const y = Number(form.get('yMm') ?? 0);
+      if (width > 0 && depth > 0) {
+        payload.polygon = [
+          { x, y },
+          { x: x + width, y },
+          { x: x + width, y: y + depth },
+          { x, y: y + depth },
+        ];
+      }
+    }
+
     if (kind === 'ROOM_SUBSTRUCTURE') {
       payload.roomVariant = String(form.get('variant') ?? 'ROOM');
     }
@@ -73,6 +88,18 @@ export function TopologyCreateForm({
     <form className="create-form" onSubmit={submit}>
       <strong>Create {kind.replaceAll('_', ' ').toLowerCase()}</strong>
       <input aria-label="Name" name="name" placeholder="Name" required />
+      {kind === 'STRUCTURE' && (
+        <fieldset className="create-form-physical">
+          <legend>Initial physical footprint · optional</legend>
+          <div className="topology-crud-grid">
+            <input aria-label="Structure width in millimetres" name="widthMm" type="number" min="1" step="1" placeholder="Width mm" />
+            <input aria-label="Structure depth in millimetres" name="depthMm" type="number" min="1" step="1" placeholder="Depth mm" />
+            <input aria-label="Structure X coordinate in millimetres" name="xMm" type="number" step="1" defaultValue="0" placeholder="X mm" />
+            <input aria-label="Structure Y coordinate in millimetres" name="yMm" type="number" step="1" defaultValue="0" placeholder="Y mm" />
+          </div>
+          <small>Leave width/depth empty to draw an irregular footprint after creation.</small>
+        </fieldset>
+      )}
       {kind === 'ROOM_SUBSTRUCTURE' && (
         <select aria-label="Entity variant" name="variant" defaultValue="ROOM">
           <option value="ROOM">Room</option>

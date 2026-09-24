@@ -12,8 +12,8 @@ import { useRouter } from 'next/navigation';
 
 import {
   isValidPolygon,
-  pointInPolygon,
   polygonArea,
+  polygonContainedByPolygon,
   polygonBounds,
   polygonCentroid,
   type PointMm,
@@ -209,7 +209,8 @@ export function SpatialAuthoringCanvas({
   const containedDraft =
     !containmentPolygon ||
     containmentPolygon.length < 3 ||
-    draft.every((point) => pointInPolygon(point, containmentPolygon));
+    !validDraft ||
+    polygonContainedByPolygon(draft, containmentPolygon);
   const areaSqm = displayed.length >= 3 ? polygonArea(displayed) / 1_000_000 : 0;
   const perimeterMm = displayed.length >= 3 ? polygonPerimeter(displayed) : 0;
 

@@ -210,46 +210,81 @@ export function TopologyCreateForm({
         </>
       )}
       {kind === 'CONTAINER_RACK' && (
-        <>
-          <select
-            aria-label="Entity variant"
-            name="variant"
-            value={containerVariant}
-            onChange={(event) =>
-              setContainerVariant(event.target.value === 'CONTAINER' ? 'CONTAINER' : 'RACK')
-            }
-          >
-            <option value="RACK">Rack</option>
-            <option value="CONTAINER">Container</option>
-          </select>
+        <fieldset className="create-form-physical create-form-placement">
+          <legend>Physical asset</legend>
+          <p className="create-form-help">
+            Rack = equipment frame measured in rack units (U). Container = physical enclosure or
+            cabinet without rack-unit capacity.
+          </p>
+
+          <label className="create-form-field">
+            <span>Type</span>
+            <select
+              aria-label="Entity variant"
+              name="variant"
+              value={containerVariant}
+              onChange={(event) =>
+                setContainerVariant(event.target.value === 'CONTAINER' ? 'CONTAINER' : 'RACK')
+              }
+            >
+              <option value="RACK">Rack</option>
+              <option value="CONTAINER">Container</option>
+            </select>
+            <small>Choose what will physically occupy this 600 × 600 mm Position.</small>
+          </label>
+
           {containerVariant === 'RACK' && (
-            <input
-              aria-label="Rack capacity in U"
-              name="totalU"
-              type="number"
-              min="1"
-              defaultValue="42"
-            />
+            <label className="create-form-field">
+              <span>Rack capacity (U)</span>
+              <input
+                aria-label="Rack capacity in U"
+                name="totalU"
+                type="number"
+                min="1"
+                defaultValue="42"
+              />
+              <small>
+                Vertical mounting capacity. 1U is one standard rack unit; 42U is a common full-height
+                rack.
+              </small>
+            </label>
           )}
-          <input
-            aria-label="Physical width in millimetres"
-            name="widthMm"
-            type="number"
-            min="1"
-            step="1"
-            defaultValue="600"
-            required
-          />
-          <input
-            aria-label="Physical depth in millimetres"
-            name="depthMm"
-            type="number"
-            min="1"
-            step="1"
-            defaultValue="600"
-            required
-          />
-        </>
+
+          <div className="topology-crud-grid">
+            <label className="create-form-field">
+              <span>Width (mm)</span>
+              <input
+                aria-label="Physical width in millimetres"
+                name="widthMm"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue="600"
+                required
+              />
+              <small>Front-facing physical width of the asset.</small>
+            </label>
+
+            <label className="create-form-field">
+              <span>Depth (mm)</span>
+              <input
+                aria-label="Physical depth in millimetres"
+                name="depthMm"
+                type="number"
+                min="1"
+                step="1"
+                defaultValue="600"
+                required
+              />
+              <small>Front-to-back physical depth of the asset.</small>
+            </label>
+          </div>
+
+          <small className="create-form-help">
+            The selected Position is the placement anchor. These dimensions describe the asset; they
+            do not resize the ContainerCluster/Bay slot run.
+          </small>
+        </fieldset>
       )}
       {(kind === 'DEVICE' || kind === 'EQUIPMENT') && (
         <>

@@ -1,8 +1,27 @@
-import type { TelemetryAcceptanceRepository } from '@/modules/telemetry/application/telemetry-acceptance-repository';
+import type {
+  TelemetryAcceptanceRepository,
+  TelemetryHistoryClaimOptions,
+} from '@/modules/telemetry/application/telemetry-acceptance-repository';
 import type {
   TelemetryAcceptanceRecord,
   TelemetryAcceptanceResult,
 } from '@/modules/telemetry/domain/acceptance';
+
+function boundedLimit(limit: number): number {
+  return Math.min(Math.max(Math.trunc(limit), 1), 1000);
+}
+
+function isDue(record: TelemetryAcceptanceRecord, now: string): boolean {
+  if (record.historyState === 'PENDING') {
+    return record.nextHistoryAttemptAt === undefined || record.nextHistoryAttemptAt <= now;
+  }
+
+  return (
+    record.historyState === 'IN_FLIGHT' &&
+    record.historyLeaseUntil !== undefined &&
+    record.historyLeaseUntil <= now
+  );
+}
 
 export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceRepository {
   private readonly byEventId = new Map<string, TelemetryAcceptanceRecord>();
@@ -39,12 +58,107 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
   }
 
   async listPendingHistory(limit: number): Promise<readonly TelemetryAcceptanceRecord[]> {
-    const boundedLimit = Math.min(Math.max(Math.trunc(limit), 1), 1000);
-
     return [...this.byEventId.values()]
       .filter((record) => record.historyState === 'PENDING')
       .sort((left, right) => left.acceptedAt.localeCompare(right.acceptedAt))
-      .slice(0, boundedLimit)
+      .slice(0, boundedLimit(limit))
       .map((record) => structuredClone(record));
+  }
+
+  async claimPendingHistory(
+    options: TelemetryHistoryClaimOptions,
+  ): Promise<readonly TelemetryAcceptanceRecord[]> {
+    if (!options.workerId.trim()) {
+      throw new Error('Telemetry history workerId is required.');
+    }
+
+    if (!Number.isInteger(options.leaseSeconds) || options.leaseSeconds < 1) {
+      throw new Error('Telemetry history leaseSeconds must be a positive integer.');
+    }
+
+    const nowMs = Date.parse(options.now);
+    if (!Number.isFinite(nowMs)) {
+      throw new Error('Telemetry history claim now must be a valid ISO timestamp.');
+    }
+
+    const leaseUntil = new Date(nowMs + options.leaseSeconds * 1000).toISOString();
+    const eligible = [...this.byEventId.values()]
+      .filter((record) => isDue(record, options.now))
+      .sort((left, right) => left.acceptedAt.localeCompare(right.acceptedAt))
+      .slice(0, boundedLimit(options.limit));
+
+    const claimed: TelemetryAcceptanceRecord[] = [];
+
+    for (const record of eligible) {
+      const next: TelemetryAcceptanceRecord = {
+        ...record,
+        historyState: 'IN_FLIGHT',
+        historyAttempts: record.historyAttempts + 1,
+        historyLeaseOwner: options.workerId,
+        historyLeaseUntil: leaseUntil,
+        nextHistoryAttemptAt: undefined,
+      };
+
+      this.byEventId.set(record.eventId, next);
+      claimed.push(structuredClone(next));
+    }
+
+    return claimed;
+  }
+
+  async markHistoryDelivered(
+    eventId: string,
+    workerId: string,
+    deliveredAt: string,
+  ): Promise<boolean> {
+    const record = this.byEventId.get(eventId);
+    if (
+      !record ||
+      record.historyState !== 'IN_FLIGHT' ||
+      record.historyLeaseOwner !== workerId
+    ) {
+      return false;
+    }
+
+    const next: TelemetryAcceptanceRecord = {
+      ...record,
+      historyState: 'DELIVERED',
+      deliveredAt,
+      historyLeaseOwner: undefined,
+      historyLeaseUntil: undefined,
+      nextHistoryAttemptAt: undefined,
+      historyLastErrorCode: undefined,
+    };
+
+    this.byEventId.set(eventId, next);
+    return true;
+  }
+
+  async rescheduleHistory(
+    eventId: string,
+    workerId: string,
+    nextAttemptAt: string,
+    errorCode: string,
+  ): Promise<boolean> {
+    const record = this.byEventId.get(eventId);
+    if (
+      !record ||
+      record.historyState !== 'IN_FLIGHT' ||
+      record.historyLeaseOwner !== workerId
+    ) {
+      return false;
+    }
+
+    const next: TelemetryAcceptanceRecord = {
+      ...record,
+      historyState: 'PENDING',
+      nextHistoryAttemptAt,
+      historyLastErrorCode: errorCode,
+      historyLeaseOwner: undefined,
+      historyLeaseUntil: undefined,
+    };
+
+    this.byEventId.set(eventId, next);
+    return true;
   }
 }

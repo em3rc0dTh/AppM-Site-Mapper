@@ -31,9 +31,8 @@ Each ledger row contains:
 - history delivery state;
 - an optional idempotency key.
 
-The outbox is both the durable acceptance ledger and the future history-delivery queue. It removes
-the need for a second dedupe collection and avoids a multi-document transaction on the ingestion hot
-path.
+The outbox is both the durable acceptance ledger and the history-delivery queue. It removes the need
+for a second dedupe collection and avoids a multi-document transaction on the ingestion hot path.
 
 After acceptance, latest state is updated. If the process fails after the outbox write but before
 latest update/PUBACK, QoS 1 redelivery finds the same durable event and retries the latest projection.
@@ -63,6 +62,38 @@ other hardware-supported replay contract.
 If the same idempotency key is observed with a different payload SHA-256 fingerprint, ingestion
 returns `IDEMPOTENCY_CONFLICT`. The conflicting payload is not accepted as a second event and safe
 metadata is written to quarantine.
+
+## History delivery lease
+
+Historical delivery is a separate projection from durable acceptance. Multiple history workers may
+run, but an outbox event may be owned by only one worker lease at a time.
+
+The state machine is:
+
+```text
+PENDING
+  -> IN_FLIGHT (claim + lease owner + lease expiry + attempts++)
+  -> DELIVERED (sink write confirmed)
+  -> PENDING   (write failed; retry scheduled)
+
+IN_FLIGHT with an expired lease
+  -> IN_FLIGHT (reclaimed by another worker)
+```
+
+Claims are atomic in Mongo through `findOneAndUpdate`. A worker can acknowledge or reschedule only
+an event currently leased to its own `workerId`. This prevents two workers from intentionally
+delivering the same event concurrently and allows recovery after a process crash.
+
+Retries use bounded exponential backoff. Only a bounded error code is persisted; arbitrary exception
+messages are not copied into the outbox.
+
+The history sink is an application interface. G16 therefore does not couple the acceptance ledger to
+TimescaleDB, InfluxDB, Telegraf or another time-series implementation before the benchmark/ADR is
+closed.
+
+Exactly-once persistence is **not** claimed. The sink must remain idempotent by canonical event
+identity because a worker can fail after the sink commits but before the outbox row is marked
+`DELIVERED`.
 
 ## Quarantine
 
@@ -94,12 +125,15 @@ Positive:
 - idempotency collisions become observable security/integrity events;
 - minimal V1 payloads are not falsely collapsed;
 - rejected raw payloads are not copied into Mongo;
-- the future historical writer can drain one explicit pending outbox.
+- history delivery supports multiple workers without uncontrolled concurrent drains;
+- expired leases make worker crashes recoverable;
+- history retries are explicit and bounded;
+- the time-series backend remains replaceable behind a stable sink boundary.
 
 Remaining G16 work:
 
 - canonical metric adapter backed by real V1 fixtures;
-- history writer and TSDB delivery acknowledgement/retry;
+- concrete TSDB sink plus sink-level idempotency;
 - outbox backlog limits, metrics and alerting;
 - broker-side QoS/session/ACL certification;
 - audit events for administrative changes and DLQ replay;

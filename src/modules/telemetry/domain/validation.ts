@@ -6,6 +6,10 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || typeof value === 'string';
+}
+
 export function isTelemetrySource(value: unknown): value is TelemetrySource {
   if (!isRecord(value)) return false;
 
@@ -57,10 +61,17 @@ export function isTelemetryAcceptanceRecord(value: unknown): value is TelemetryA
     /^[a-f0-9]{64}$/.test(value.payloadSha256) &&
     isTelemetrySample(value.sample) &&
     typeof value.acceptedAt === 'string' &&
-    (value.historyState === 'PENDING' || value.historyState === 'DELIVERED') &&
+    (value.historyState === 'PENDING' ||
+      value.historyState === 'IN_FLIGHT' ||
+      value.historyState === 'DELIVERED') &&
     typeof value.historyAttempts === 'number' &&
     Number.isSafeInteger(value.historyAttempts) &&
-    value.historyAttempts >= 0
+    value.historyAttempts >= 0 &&
+    isOptionalString(value.nextHistoryAttemptAt) &&
+    isOptionalString(value.historyLeaseUntil) &&
+    isOptionalString(value.historyLeaseOwner) &&
+    isOptionalString(value.historyLastErrorCode) &&
+    isOptionalString(value.deliveredAt)
   );
 }
 

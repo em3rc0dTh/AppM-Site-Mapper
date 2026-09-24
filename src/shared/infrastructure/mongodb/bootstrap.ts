@@ -85,8 +85,12 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
       },
     ),
     telemetryOutbox.createIndex(
-      { historyState: 1, acceptedAt: 1 },
+      { historyState: 1, nextHistoryAttemptAt: 1, acceptedAt: 1 },
       { name: 'ix_telemetry_history_pending' },
+    ),
+    telemetryOutbox.createIndex(
+      { historyState: 1, historyLeaseUntil: 1, acceptedAt: 1 },
+      { name: 'ix_telemetry_history_lease' },
     ),
     telemetryOutbox.createIndex(
       { 'sample.sourceId': 1, acceptedAt: -1 },

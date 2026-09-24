@@ -274,8 +274,8 @@ export function TopologyCrudPanel({
             <>
               <p className="topology-crud-help">
                 The parent Position anchors this asset. Width runs along the cluster and consumes
-                consecutive 600 mm slots; depth projects perpendicular to the run and may exceed
-                600 mm while remaining inside the Room and collision-free.
+                consecutive 600 mm slots; depth projects perpendicular to the run and may exceed 600
+                mm while remaining inside the Room and collision-free.
               </p>
               <label>
                 <span>Physical asset type</span>

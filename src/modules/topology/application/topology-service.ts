@@ -328,18 +328,22 @@ export class TopologyService {
           return failure('CAS_RELEASE_REQUIRED');
         }
 
-        updated = {
-          ...updated,
-          variant: nextVariant,
-          ...(nextTotalU === undefined ? {} : { totalU: nextTotalU }),
-          ...(nextDimensions ? { dimensionsMm: nextDimensions } : {}),
-          cas:
-            nextVariant === 'RACK' && nextTotalU
-              ? capacityChanged
-                ? initializeCas(nextTotalU)
-                : node.cas
-              : [],
-        } as TopologyNode;
+        if (nextVariant === 'RACK' && nextTotalU) {
+          updated = {
+            ...updated,
+            variant: nextVariant,
+            totalU: nextTotalU,
+            ...(nextDimensions ? { dimensionsMm: nextDimensions } : {}),
+            cas: capacityChanged ? initializeCas(nextTotalU) : node.cas,
+          } as TopologyNode;
+        } else {
+          const container = { ...updated } as Record<string, unknown>;
+          container.variant = 'CONTAINER';
+          container.cas = [];
+          if (nextDimensions) container.dimensionsMm = nextDimensions;
+          delete container.totalU;
+          updated = container as unknown as TopologyNode;
+        }
         break;
       }
       case 'DEVICE':

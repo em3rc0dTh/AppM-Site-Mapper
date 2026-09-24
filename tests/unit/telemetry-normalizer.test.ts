@@ -51,11 +51,7 @@ describe('normalizeTelemetry', () => {
 
   it('rejects topics outside the exact source-scoped namespace', () => {
     expect(
-      normalizeTelemetry(
-        'other/source-001/telemetry',
-        new TextEncoder().encode('{}'),
-        options,
-      ),
+      normalizeTelemetry('other/source-001/telemetry', new TextEncoder().encode('{}'), options),
     ).toEqual({ ok: false, error: 'TOPIC_NOT_ALLOWED' });
 
     expect(
@@ -77,11 +73,7 @@ describe('normalizeTelemetry', () => {
     ).toEqual({ ok: false, error: 'INVALID_JSON' });
 
     expect(
-      normalizeTelemetry(
-        'appmanager/v1/raw/source-001/telemetry',
-        new Uint8Array(1025),
-        options,
-      ),
+      normalizeTelemetry('appmanager/v1/raw/source-001/telemetry', new Uint8Array(1025), options),
     ).toEqual({ ok: false, error: 'PAYLOAD_TOO_LARGE' });
 
     expect(

@@ -402,7 +402,8 @@ export function TopologyCreateForm({
 
           <small className="create-form-help">
             The selected Position is the placement anchor. These dimensions describe the asset; they
-            do not resize the ContainerCluster/Bay slot run.
+            do not resize the ContainerCluster/Bay slot run. After creation, Site Mapper opens the
+            new asset so you can continue authoring below it.
           </small>
         </fieldset>
       )}

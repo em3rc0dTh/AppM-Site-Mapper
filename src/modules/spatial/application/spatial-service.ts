@@ -48,7 +48,7 @@ export interface ClusterPlacementView {
   readonly id: string;
   readonly name: string;
   readonly variant: ContainerClusterBayNode['variant'];
-  readonly rect: RectMm;
+  readonly rect?: RectMm;
   readonly positionCount: number;
 }
 

@@ -393,7 +393,6 @@ reject the accidental implementation
 prove every trust boundary
 ```
 
-
 ## 14. Later branch correction / continuation
 
 A later branch, `feat/appM-build`, **does** add the historical pipeline remembered by the project owner:

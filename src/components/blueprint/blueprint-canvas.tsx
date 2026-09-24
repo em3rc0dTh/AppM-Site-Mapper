@@ -37,14 +37,20 @@ export function BlueprintCanvas({
   canEditBoundary: boolean;
 }>) {
   const rectangles: SpatialRectOverlay[] = [
-    ...clusters.map((cluster) => ({
-      id: cluster.id,
-      name: cluster.name,
-      ...(navigationHrefs[cluster.id] ? { href: navigationHrefs[cluster.id] } : {}),
-      detail: `${cluster.positionCount} positions · extent derived from positions + rack footprints`,
-      kind: 'bay' as const,
-      rect: cluster.rect,
-    })),
+    ...clusters.flatMap((cluster) =>
+      cluster.rect
+        ? [
+            {
+              id: cluster.id,
+              name: cluster.name,
+              ...(navigationHrefs[cluster.id] ? { href: navigationHrefs[cluster.id] } : {}),
+              detail: `${cluster.positionCount} positions · extent derived from positions + rack footprints`,
+              kind: 'bay' as const,
+              rect: cluster.rect,
+            },
+          ]
+        : [],
+    ),
     ...slots.map((rect) => ({
       id: slotId(rect),
       name: 'Assignable tile',
@@ -69,8 +75,11 @@ export function BlueprintCanvas({
     })),
   ];
 
+  const unplacedClusters = clusters.filter((cluster) => !cluster.rect);
+
   return (
-    <SpatialAuthoringCanvas
+    <div className="blueprint-workspace">
+      <SpatialAuthoringCanvas
       key={roomId}
       entityId={roomId}
       entityName={roomName}
@@ -81,7 +90,28 @@ export function BlueprintCanvas({
       gridSizeMm={600}
       rectangles={rectangles}
       title="Blueprint"
-      subtitle="600 mm operational grid"
-    />
+        subtitle="600 mm operational grid"
+      />
+      {unplacedClusters.length > 0 && (
+        <aside className="blueprint-unplaced" aria-label="Unplaced clusters">
+          <span>UNPLACED PHYSICAL ENTITY</span>
+          {unplacedClusters.map((cluster) => (
+            <div key={cluster.id}>
+              <strong>{cluster.name}</strong>
+              <small>
+                {cluster.variant.replaceAll('_', ' ')} · 0 positions · physical extent not defined
+              </small>
+              {navigationHrefs[cluster.id] && (
+                <a href={navigationHrefs[cluster.id]}>Open cluster →</a>
+              )}
+            </div>
+          ))}
+          <p>
+            Add the first Position to establish this cluster&apos;s physical extent on the 600 mm
+            grid. No fake coordinates are invented.
+          </p>
+        </aside>
+      )}
+    </div>
   );
 }

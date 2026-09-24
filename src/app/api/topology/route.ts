@@ -128,6 +128,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 422 });
   }
 
-
   return NextResponse.json({ node: result.value }, { status: 201 });
 }

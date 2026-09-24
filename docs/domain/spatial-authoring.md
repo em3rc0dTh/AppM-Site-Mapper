@@ -92,13 +92,19 @@ Network
 → Structure           draw Structure footprint when empty
 → Level               hierarchy / floor context only; no persisted polygon
 → Room/Substructure   draw Room boundary when empty, with optional 600 mm snapping
-→ Bay/Cluster         visible immediately; UNPLACED while empty, physical extent derived from Positions/Racks
-→ Position            explicit row/column grid coordinate; first Position establishes initial cluster extent
+→ Bay/Cluster         mark first + last 600 mm slot; run locks horizontal/vertical
+→ Position            inclusive slot list auto-materialized from the Bay/Cluster run
 → Container/Rack      physical width/depth + rack capacity where applicable
 → Device | Equipment  inventory identity mounted in the Container/Rack context
 ```
 
 An empty Site, Structure or Room/Substructure with write permission enters Draw mode on first physical entry. Existing persisted boundaries always open in read mode and require an explicit Edit boundary action.
+
+### ContainerCluster / Bay
+
+ContainerCluster/Bay authoring is linear, not polygonal. The user marks a start slot and an end slot on the Room Blueprint. The run is constrained to one grid axis and every inclusive 600 × 600 mm slot becomes a persisted Position child.
+
+A run may therefore contain empty Positions. Those are intentional capacity slots for future Container/Rack placement, not missing data.
 
 ## Domain validation
 

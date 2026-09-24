@@ -221,12 +221,12 @@ export class SpatialService {
 
     const clusterViews: ClusterPlacementView[] = positionsByCluster.map(
       ({ cluster, positions: clusterPositions }) => {
-        if (clusterPositions.length === 0) {
+        if (!cluster.run || clusterPositions.length === 0) {
           return {
             id: cluster.id,
             name: cluster.name,
             variant: cluster.variant,
-            positionCount: 0,
+            positionCount: clusterPositions.length,
             ...(cluster.run ? { orientation: cluster.run.orientation } : {}),
           };
         }

@@ -19,6 +19,7 @@ export type TopologyError =
   | 'INVALID_PARENT'
   | 'PARENT_ARCHIVED'
   | 'POSITION_OCCUPIED'
+  | 'POSITION_COORDINATE_OCCUPIED'
   | 'INVALID_VARIANT'
   | 'INVALID_COORDINATE'
   | 'INVALID_RACK_CAPACITY'
@@ -41,6 +42,18 @@ export interface CreateTopologyNodeInput {
   readonly dimensionsMm?: DimensionsMm;
   readonly serialNumber?: string;
   readonly category?: string;
+}
+
+export interface UpdateTopologyNodeInput {
+  readonly name?: string;
+  readonly roomVariant?: RoomSubstructureVariant;
+  readonly clusterVariant?: ContainerClusterBayVariant;
+  readonly containerVariant?: ContainerRackVariant;
+  readonly coordinate?: GridCoordinate;
+  readonly totalU?: number;
+  readonly dimensionsMm?: DimensionsMm;
+  readonly serialNumber?: string | null;
+  readonly category?: string | null;
 }
 
 export class TopologyService {
@@ -137,6 +150,21 @@ export class TopologyService {
         ) {
           return failure('INVALID_COORDINATE');
         }
+        if (parent) {
+          const normalizedRow = input.coordinate.row.trim().toUpperCase();
+          const siblings = await this.repository.listChildren(parent.id);
+          if (
+            siblings.some(
+              (candidate) =>
+                candidate.kind === 'POSITION' &&
+                candidate.lifecycle === 'ACTIVE' &&
+                candidate.coordinate.row === normalizedRow &&
+                candidate.coordinate.column === input.coordinate!.column,
+            )
+          ) {
+            return failure('POSITION_COORDINATE_OCCUPIED');
+          }
+        }
         node = {
           ...base,
           kind: 'POSITION',
@@ -200,6 +228,141 @@ export class TopologyService {
 
     await this.repository.insert(node);
     return success(node);
+  }
+
+  async update(
+    id: string,
+    input: UpdateTopologyNodeInput,
+  ): Promise<Result<TopologyNode, TopologyError>> {
+    const node = await this.repository.getById(id);
+
+    if (!node) {
+      return failure('NOT_FOUND');
+    }
+
+    if (node.lifecycle === 'ARCHIVED') {
+      return failure('PARENT_ARCHIVED');
+    }
+
+    const nextName = input.name === undefined ? node.name : input.name.trim();
+
+    if (!nextName) {
+      return failure('INVALID_NAME');
+    }
+
+    let updated: TopologyNode = {
+      ...node,
+      name: nextName,
+      updatedAt: nowIso(),
+    } as TopologyNode;
+
+    switch (node.kind) {
+      case 'ROOM_SUBSTRUCTURE':
+        if (input.roomVariant !== undefined) {
+          updated = { ...updated, variant: input.roomVariant } as TopologyNode;
+        }
+        break;
+      case 'CONTAINER_CLUSTER_BAY':
+        if (input.clusterVariant !== undefined) {
+          updated = { ...updated, variant: input.clusterVariant } as TopologyNode;
+        }
+        break;
+      case 'POSITION':
+        if (input.coordinate !== undefined) {
+          if (
+            !input.coordinate.row.trim() ||
+            !Number.isInteger(input.coordinate.column) ||
+            input.coordinate.column < 1
+          ) {
+            return failure('INVALID_COORDINATE');
+          }
+          const normalized = {
+            row: input.coordinate.row.trim().toUpperCase(),
+            column: input.coordinate.column,
+          };
+          const siblings = await this.repository.listChildren(node.parentId);
+          if (
+            siblings.some(
+              (candidate) =>
+                candidate.id !== node.id &&
+                candidate.kind === 'POSITION' &&
+                candidate.lifecycle === 'ACTIVE' &&
+                candidate.coordinate.row === normalized.row &&
+                candidate.coordinate.column === normalized.column,
+            )
+          ) {
+            return failure('POSITION_COORDINATE_OCCUPIED');
+          }
+          updated = { ...updated, coordinate: normalized } as TopologyNode;
+        }
+        break;
+      case 'CONTAINER_RACK': {
+        const nextVariant = input.containerVariant ?? node.variant;
+        const nextTotalU = input.totalU ?? node.totalU;
+        const nextDimensions = input.dimensionsMm ?? node.dimensionsMm;
+
+        if (
+          nextVariant === 'RACK' &&
+          (!Number.isInteger(nextTotalU) || (nextTotalU ?? 0) < 1)
+        ) {
+          return failure('INVALID_RACK_CAPACITY');
+        }
+        if (
+          nextDimensions &&
+          (!Number.isFinite(nextDimensions.width) ||
+            !Number.isFinite(nextDimensions.depth) ||
+            nextDimensions.width <= 0 ||
+            nextDimensions.depth <= 0 ||
+            (nextDimensions.height !== undefined &&
+              (!Number.isFinite(nextDimensions.height) || nextDimensions.height <= 0)))
+        ) {
+          return failure('INVALID_DIMENSIONS');
+        }
+
+        const capacityChanged = nextTotalU !== node.totalU || nextVariant !== node.variant;
+        if (
+          capacityChanged &&
+          node.cas.some((range) => range.state !== 'AVAILABLE' || range.occupantId)
+        ) {
+          return failure('CAS_RELEASE_REQUIRED');
+        }
+
+        updated = {
+          ...updated,
+          variant: nextVariant,
+          ...(nextTotalU === undefined ? {} : { totalU: nextTotalU }),
+          ...(nextDimensions ? { dimensionsMm: nextDimensions } : {}),
+          cas:
+            nextVariant === 'RACK' && nextTotalU
+              ? capacityChanged
+                ? initializeCas(nextTotalU)
+                : node.cas
+              : [],
+        } as TopologyNode;
+        break;
+      }
+      case 'DEVICE':
+      case 'EQUIPMENT':
+        updated = {
+          ...updated,
+          ...(input.serialNumber === undefined
+            ? {}
+            : input.serialNumber
+              ? { serialNumber: input.serialNumber.trim() }
+              : { serialNumber: undefined }),
+          ...(input.category === undefined
+            ? {}
+            : input.category
+              ? { category: input.category.trim() }
+              : { category: undefined }),
+        } as TopologyNode;
+        break;
+      default:
+        break;
+    }
+
+    await this.repository.replace(updated);
+    return success(updated);
   }
 
   async move(id: string, newParentId: string): Promise<Result<TopologyNode, TopologyError>> {

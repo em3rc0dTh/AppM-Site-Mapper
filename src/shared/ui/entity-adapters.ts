@@ -18,6 +18,14 @@ export function topologyInspector(node: TopologyNode, href?: string): InspectorE
       label: 'Footprint',
       value: `${node.dimensionsMm.width} × ${node.dimensionsMm.depth} mm`,
     });
+  if (node.kind === 'CONTAINER_CLUSTER_BAY' && node.run) {
+    const start = `${node.run.start.row}-${node.run.start.column}`;
+    const end = `${node.run.end.row}-${node.run.end.column}`;
+    fields.push(
+      { label: 'Run', value: `${start} → ${end}` },
+      { label: 'Orientation', value: node.run.orientation },
+    );
+  }
   const actions = href
     ? [
         {

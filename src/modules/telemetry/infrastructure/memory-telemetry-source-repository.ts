@@ -30,8 +30,7 @@ export class MemoryTelemetrySourceRepository implements TelemetrySourceRepositor
   private assertUnique(source: TelemetrySource): void {
     if (
       [...this.sources.values()].some(
-        (candidate) =>
-          candidate.id === source.id || candidate.topicSource === source.topicSource,
+        (candidate) => candidate.id === source.id || candidate.topicSource === source.topicSource,
       )
     ) {
       throw new Error('Telemetry source id/topicSource must be unique.');

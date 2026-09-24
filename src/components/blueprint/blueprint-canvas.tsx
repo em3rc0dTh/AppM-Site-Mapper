@@ -106,7 +106,9 @@ export function BlueprintCanvas({
               {focusClusterId === cluster.id ? (
                 <b>CURRENT CLUSTER</b>
               ) : (
-                navigationHrefs[cluster.id] && <a href={navigationHrefs[cluster.id]}>Open cluster →</a>
+                navigationHrefs[cluster.id] && (
+                  <a href={navigationHrefs[cluster.id]}>Open cluster →</a>
+                )
               )}
             </div>
           ))}

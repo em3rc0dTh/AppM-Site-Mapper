@@ -83,7 +83,7 @@ export function TopologyContextTree({
 
       <div className="legacy-context-scope">
         <span>Current location</span>
-        <small>{trail.length.toString().padStart(2, '0')} levels</small>
+        <small>DEPTH {trail.length.toString().padStart(2, '0')}</small>
       </div>
 
       <ol className="context-tree-trail">

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import type { StructureNode } from '@/modules/topology/domain/entities';
+import type { PointMm } from '@/modules/spatial/domain/geometry';
 import type { VisualStageChild } from './topology-visual-stage';
 
 export interface StructureLevelEntry extends VisualStageChild {
@@ -15,7 +16,13 @@ export function StructureStudio({
   node,
   levels,
   canWrite,
-}: Readonly<{ node: StructureNode; levels: readonly StructureLevelEntry[]; canWrite: boolean }>) {
+  siteBoundary,
+}: Readonly<{
+  node: StructureNode;
+  levels: readonly StructureLevelEntry[];
+  canWrite: boolean;
+  siteBoundary?: readonly PointMm[];
+}>) {
   const orderedLevels = [...levels].sort((left, right) =>
     new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' }).compare(
       right.node.name,
@@ -33,6 +40,12 @@ export function StructureStudio({
           entityKind="STRUCTURE"
           initialPolygon={node.polygon ?? []}
           canWrite={canWrite}
+          containmentPolygon={siteBoundary}
+          contextPolygons={
+            siteBoundary
+              ? [{ id: `${node.parentId}-site-boundary`, name: 'SITE LIMIT', kind: 'SITE', polygon: siteBoundary }]
+              : []
+          }
           title="Building footprint"
           subtitle="Site coordinates · millimetres"
         />

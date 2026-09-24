@@ -15,6 +15,61 @@ function createErrorMessage(error: string): string {
   return known[error] ?? error.replaceAll('_', ' ');
 }
 
+function createTitle(kind: TopologyKind): string {
+  const titles: Readonly<Record<TopologyKind, string>> = {
+    NETWORK: 'Create network',
+    SITE: 'Create site',
+    STRUCTURE: 'Create structure',
+    LEVEL: 'Create level',
+    ROOM_SUBSTRUCTURE: 'Create room / substructure',
+    CONTAINER_CLUSTER_BAY: 'Create container cluster / bay',
+    POSITION: 'Create position',
+    CONTAINER_RACK: 'Create rack / container',
+    DEVICE: 'Create device',
+    EQUIPMENT: 'Create equipment',
+  };
+
+  return titles[kind];
+}
+
+function createDescription(kind: TopologyKind): string {
+  const descriptions: Readonly<Record<TopologyKind, string>> = {
+    NETWORK: 'Top-level infrastructure network.',
+    SITE: 'Physical site or facility contained by this network.',
+    STRUCTURE: 'Physical building or structure inside the Site. Its footprint can be drawn after creation.',
+    LEVEL: 'Floor or hierarchy level inside the Structure. Levels do not own a separate polygon by default.',
+    ROOM_SUBSTRUCTURE:
+      'Physical room or substructure on this Level. Its boundary is drawn in the Blueprint after creation.',
+    CONTAINER_CLUSTER_BAY:
+      'Linear group of 600 × 600 mm slots. After creation, mark its first and last slot on the Room Blueprint.',
+    POSITION:
+      'One addressable 600 × 600 mm slot inside a ContainerCluster/Bay. Cluster runs normally generate these automatically.',
+    CONTAINER_RACK:
+      'Physical Rack or Container placed in the selected Position.',
+    DEVICE: 'Inventory device mounted inside the selected Rack or Container.',
+    EQUIPMENT: 'Operational equipment mounted inside the selected Rack or Container.',
+  };
+
+  return descriptions[kind];
+}
+
+function namePlaceholder(kind: TopologyKind): string {
+  const placeholders: Readonly<Record<TopologyKind, string>> = {
+    NETWORK: 'e.g. Site Mapper Network',
+    SITE: 'e.g. SANITAS PERÚ S.A.',
+    STRUCTURE: 'e.g. Main Building',
+    LEVEL: 'e.g. Level 1',
+    ROOM_SUBSTRUCTURE: 'e.g. Server Room',
+    CONTAINER_CLUSTER_BAY: 'e.g. Bay-01',
+    POSITION: 'e.g. A-1',
+    CONTAINER_RACK: 'e.g. Rack A-01',
+    DEVICE: 'e.g. Switch-01',
+    EQUIPMENT: 'e.g. UPS-01',
+  };
+
+  return placeholders[kind];
+}
+
 export function TopologyCreateForm({
   kind,
   parentId,
@@ -138,86 +193,140 @@ export function TopologyCreateForm({
 
   return (
     <form className="create-form" onSubmit={submit}>
-      <strong>
-        {kind === 'CONTAINER_RACK'
-          ? 'Create rack / container'
-          : `Create ${kind.replaceAll('_', ' ').toLowerCase()}`}
-      </strong>
-      {kind === 'CONTAINER_RACK' ? (
-        <label className="create-form-field">
-          <span>Name</span>
-          <input aria-label="Name" name="name" placeholder="e.g. Rack A-01" required />
-          <small>
-            Human-readable identifier used in the hierarchy, search and operational views.
-          </small>
-        </label>
-      ) : (
-        <input aria-label="Name" name="name" placeholder="Name" required />
-      )}
+      <div className="create-form-intro">
+        <strong>{createTitle(kind)}</strong>
+        <p>{createDescription(kind)}</p>
+      </div>
+
+      <label className="create-form-field">
+        <span>Name</span>
+        <input aria-label="Name" name="name" placeholder={namePlaceholder(kind)} required />
+        <small>Human-readable identifier shown in the hierarchy and operational views.</small>
+      </label>
       {kind === 'STRUCTURE' && (
         <fieldset className="create-form-physical">
           <legend>Initial physical footprint · optional</legend>
+          <p className="create-form-help">
+            Optional shortcut for a rectangular Structure. Leave width and depth empty if you want
+            to draw an irregular footprint point by point.
+          </p>
           <div className="topology-crud-grid">
-            <input
-              aria-label="Structure width in millimetres"
-              name="widthMm"
-              type="number"
-              min="1"
-              step="1"
-              placeholder="Width mm"
-            />
-            <input
-              aria-label="Structure depth in millimetres"
-              name="depthMm"
-              type="number"
-              min="1"
-              step="1"
-              placeholder="Depth mm"
-            />
-            <input
-              aria-label="Structure X coordinate in millimetres"
-              name="xMm"
-              type="number"
-              step="1"
-              defaultValue="0"
-              placeholder="X mm"
-            />
-            <input
-              aria-label="Structure Y coordinate in millimetres"
-              name="yMm"
-              type="number"
-              step="1"
-              defaultValue="0"
-              placeholder="Y mm"
-            />
+            <label className="create-form-field">
+              <span>Width (mm)</span>
+              <input
+                aria-label="Structure width in millimetres"
+                name="widthMm"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g. 12000"
+              />
+              <small>Left-to-right physical span of the initial rectangle.</small>
+            </label>
+            <label className="create-form-field">
+              <span>Depth (mm)</span>
+              <input
+                aria-label="Structure depth in millimetres"
+                name="depthMm"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g. 8000"
+              />
+              <small>Front-to-back physical span of the initial rectangle.</small>
+            </label>
+            <label className="create-form-field">
+              <span>Start X (mm)</span>
+              <input
+                aria-label="Structure X coordinate in millimetres"
+                name="xMm"
+                type="number"
+                step="1"
+                defaultValue="0"
+              />
+              <small>Horizontal offset from the Site drafting origin.</small>
+            </label>
+            <label className="create-form-field">
+              <span>Start Y (mm)</span>
+              <input
+                aria-label="Structure Y coordinate in millimetres"
+                name="yMm"
+                type="number"
+                step="1"
+                defaultValue="0"
+              />
+              <small>Vertical offset from the Site drafting origin.</small>
+            </label>
           </div>
-          <small>Leave width/depth empty to draw an irregular footprint after creation.</small>
         </fieldset>
       )}
       {kind === 'ROOM_SUBSTRUCTURE' && (
-        <select aria-label="Entity variant" name="variant" defaultValue="ROOM">
-          <option value="ROOM">Room</option>
-          <option value="SUBSTRUCTURE">Substructure</option>
-        </select>
+        <fieldset className="create-form-physical">
+          <legend>Physical area type</legend>
+          <label className="create-form-field">
+            <span>Type</span>
+            <select aria-label="Entity variant" name="variant" defaultValue="ROOM">
+              <option value="ROOM">Room</option>
+              <option value="SUBSTRUCTURE">Substructure</option>
+            </select>
+            <small>
+              Room is a normal enclosed area. Substructure is a physical area that does not need to
+              be presented as a conventional room.
+            </small>
+          </label>
+          <small className="create-form-help">
+            After creation, draw the boundary on the Level Blueprint. The polygon becomes the
+            physical footprint for contained clusters and bays.
+          </small>
+        </fieldset>
       )}
       {kind === 'CONTAINER_CLUSTER_BAY' && (
-        <select aria-label="Entity variant" name="variant" defaultValue="CONTAINER_CLUSTER">
-          <option value="CONTAINER_CLUSTER">ContainerCluster</option>
-          <option value="BAY">Bay</option>
-        </select>
+        <fieldset className="create-form-physical">
+          <legend>Slot group type</legend>
+          <label className="create-form-field">
+            <span>Type</span>
+            <select aria-label="Entity variant" name="variant" defaultValue="CONTAINER_CLUSTER">
+              <option value="CONTAINER_CLUSTER">Container cluster</option>
+              <option value="BAY">Bay</option>
+            </select>
+            <small>
+              Both types use the same physical rule in MK1: a straight horizontal or vertical run
+              of 600 × 600 mm slots.
+            </small>
+          </label>
+          <small className="create-form-help">
+            After creation, click the first slot and the last slot on the Room Blueprint. Site
+            Mapper creates every Position between them automatically.
+          </small>
+        </fieldset>
       )}
       {kind === 'POSITION' && (
-        <>
-          <input aria-label="Grid row" name="row" placeholder="Row (A)" required />
-          <input
-            aria-label="Grid column"
-            name="column"
-            type="number"
-            min="1"
-            placeholder="Column"
-            required
-          />
-        </>
+        <fieldset className="create-form-physical">
+          <legend>Grid address</legend>
+          <p className="create-form-help">
+            A Position is one 600 × 600 mm slot. ContainerCluster/Bay runs normally create these
+            slots automatically.
+          </p>
+          <div className="topology-crud-grid">
+            <label className="create-form-field">
+              <span>Row</span>
+              <input aria-label="Grid row" name="row" placeholder="e.g. A" required />
+              <small>Lettered Blueprint row.</small>
+            </label>
+            <label className="create-form-field">
+              <span>Column</span>
+              <input
+                aria-label="Grid column"
+                name="column"
+                type="number"
+                min="1"
+                placeholder="e.g. 1"
+                required
+              />
+              <small>Numbered Blueprint column.</small>
+            </label>
+          </div>
+        </fieldset>
       )}
       {kind === 'CONTAINER_RACK' && (
         <fieldset className="create-form-physical create-form-placement">
@@ -297,10 +406,27 @@ export function TopologyCreateForm({
         </fieldset>
       )}
       {(kind === 'DEVICE' || kind === 'EQUIPMENT') && (
-        <>
-          <input aria-label="Serial number" name="serialNumber" placeholder="Serial number" />
-          <input aria-label="Category" name="category" placeholder="Category" />
-        </>
+        <fieldset className="create-form-physical">
+          <legend>Inventory identity · optional</legend>
+          <label className="create-form-field">
+            <span>Serial number</span>
+            <input
+              aria-label="Serial number"
+              name="serialNumber"
+              placeholder="Manufacturer serial or asset serial"
+            />
+            <small>Use the physical serial when available; this field may be left empty.</small>
+          </label>
+          <label className="create-form-field">
+            <span>Category</span>
+            <input
+              aria-label="Category"
+              name="category"
+              placeholder={kind === 'DEVICE' ? 'e.g. Network switch' : 'e.g. UPS'}
+            />
+            <small>Operational classification used to describe what this asset is.</small>
+          </label>
+        </fieldset>
       )}
       <button type="submit" disabled={busy}>
         {busy ? 'Creating…' : 'Create'}

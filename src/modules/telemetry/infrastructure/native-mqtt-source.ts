@@ -162,11 +162,7 @@ export class NativeMqttSource {
 
             void Promise.resolve(this.onMessage(publish.topic, publish.payload))
               .then(() => {
-                if (
-                  publish.qos === 1 &&
-                  publish.packetId !== undefined &&
-                  !socket.destroyed
-                ) {
+                if (publish.qos === 1 && publish.packetId !== undefined && !socket.destroyed) {
                   socket.write(encodePubAck(publish.packetId));
                 }
               })

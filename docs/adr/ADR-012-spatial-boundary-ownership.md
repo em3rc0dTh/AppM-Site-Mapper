@@ -37,6 +37,8 @@ Positive:
 Constraints:
 
 - child geometry must be interpreted in the coordinate space documented for its parent;
+- when a Site boundary exists, a Structure footprint must remain fully contained by it;
+- rectangular Structure dimensions are an authoring convenience only; the persisted polygon remains authoritative;
 - no geospatial projection is implied;
 - Level does not gain an invented polygon;
 - self-intersecting polygons are rejected.

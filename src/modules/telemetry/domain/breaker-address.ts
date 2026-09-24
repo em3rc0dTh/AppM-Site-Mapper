@@ -11,9 +11,7 @@ export type BreakerAddressError = 'INVALID_BREAKER_ADDRESS';
 
 const breakerAddressPattern = /^(\d+)_(\d+)_(\d+)$/;
 
-export function parseBreakerAddress(
-  value: string,
-): Result<BreakerAddress, BreakerAddressError> {
+export function parseBreakerAddress(value: string): Result<BreakerAddress, BreakerAddressError> {
   const match = breakerAddressPattern.exec(value.trim());
 
   if (!match) {

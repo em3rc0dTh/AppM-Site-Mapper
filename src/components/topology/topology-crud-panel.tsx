@@ -96,7 +96,11 @@ export function TopologyCrudPanel({
   }
 
   async function archive() {
-    if (!window.confirm(`Archive ${node.name}? This keeps the record in MongoDB.`)) {
+    if (
+      !window.confirm(
+        `Archive ${node.name}? It will leave active views, but the record is kept and can be restored.`,
+      )
+    ) {
       return;
     }
 
@@ -137,7 +141,7 @@ export function TopologyCrudPanel({
     <section className="topology-crud" aria-label="Entity CRUD">
       <div className="topology-crud-heading">
         <span>ENTITY MANAGEMENT</span>
-        <strong>Persistent record</strong>
+        <strong>Changes are saved</strong>
       </div>
 
       <div className="topology-crud-actions">

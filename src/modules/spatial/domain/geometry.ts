@@ -222,6 +222,100 @@ export function pointInPolygon(point: PointMm, polygon: readonly PointMm[]): boo
   return inside;
 }
 
+export function polygonContainedByPolygon(
+  inner: readonly PointMm[],
+  outer: readonly PointMm[],
+): boolean {
+  if (!isValidPolygon(inner) || !isValidPolygon(outer)) {
+    return false;
+  }
+
+  if (!inner.every((point) => pointInPolygon(point, outer))) {
+    return false;
+  }
+
+  const cross = (ax: number, ay: number, bx: number, by: number) => ax * by - ay * bx;
+  const parameterOnSegment = (point: PointMm, start: PointMm, end: PointMm): number => {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const lengthSquared = dx * dx + dy * dy;
+    return lengthSquared <= EPSILON
+      ? 0
+      : ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared;
+  };
+
+  for (let innerIndex = 0; innerIndex < inner.length; innerIndex += 1) {
+    const start = inner[innerIndex];
+    const end = inner[(innerIndex + 1) % inner.length];
+
+    if (!start || !end) {
+      continue;
+    }
+
+    const rx = end.x - start.x;
+    const ry = end.y - start.y;
+    const parameters = [0, 1];
+
+    for (let outerIndex = 0; outerIndex < outer.length; outerIndex += 1) {
+      const edgeStart = outer[outerIndex];
+      const edgeEnd = outer[(outerIndex + 1) % outer.length];
+
+      if (!edgeStart || !edgeEnd) {
+        continue;
+      }
+
+      const sx = edgeEnd.x - edgeStart.x;
+      const sy = edgeEnd.y - edgeStart.y;
+      const qpx = edgeStart.x - start.x;
+      const qpy = edgeStart.y - start.y;
+      const denominator = cross(rx, ry, sx, sy);
+
+      if (Math.abs(denominator) > EPSILON) {
+        const t = cross(qpx, qpy, sx, sy) / denominator;
+        const u = cross(qpx, qpy, rx, ry) / denominator;
+
+        if (t >= -EPSILON && t <= 1 + EPSILON && u >= -EPSILON && u <= 1 + EPSILON) {
+          parameters.push(Math.min(1, Math.max(0, t)));
+        }
+        continue;
+      }
+
+      if (Math.abs(cross(qpx, qpy, rx, ry)) <= EPSILON) {
+        for (const point of [edgeStart, edgeEnd]) {
+          if (pointOnSegment(point, start, end)) {
+            parameters.push(Math.min(1, Math.max(0, parameterOnSegment(point, start, end))));
+          }
+        }
+      }
+    }
+
+    const ordered = [...new Set(parameters.map((value) => Number(value.toFixed(12))))].sort(
+      (left, right) => left - right,
+    );
+
+    for (let index = 0; index < ordered.length - 1; index += 1) {
+      const left = ordered[index];
+      const right = ordered[index + 1];
+
+      if (left === undefined || right === undefined || right - left <= EPSILON) {
+        continue;
+      }
+
+      const t = (left + right) / 2;
+      const midpoint = {
+        x: start.x + rx * t,
+        y: start.y + ry * t,
+      };
+
+      if (!pointInPolygon(midpoint, outer)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
 export function rectsOverlap(left: RectMm, right: RectMm): boolean {
   return !(
     left.x + left.width <= right.x ||

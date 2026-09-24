@@ -2582,3 +2582,57 @@
   font-size: 8px;
   line-height: 1.4;
 }
+
+
+.cluster-rack-footprint rect {
+  fill: #5b431fc9;
+  stroke: #f0bf62;
+  stroke-width: 16;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 0 18px #f0bf6233);
+}
+
+.cluster-rack-footprint text {
+  fill: #ffe3aa;
+  font:
+    118px ui-monospace,
+    monospace;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.cluster-rack-footprint .cluster-rack-footprint-detail {
+  fill: #d0b77f;
+  font-size: 72px;
+  font-weight: 600;
+}
+
+.cluster-slot-occupied {
+  display: grid;
+  gap: 5px;
+  margin-top: 7px;
+}
+
+.cluster-slot-occupied > strong {
+  color: #f6d48d;
+  font-size: 11px;
+}
+
+.cluster-slot-occupied > span {
+  color: #9eb1be;
+  font:
+    9px ui-monospace,
+    monospace;
+}
+
+.cluster-slot-occupied > a {
+  width: fit-content;
+  color: #9eeaf2;
+  font-size: 9px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.cluster-slot-occupied > p {
+  margin: 3px 0 0;
+}

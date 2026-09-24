@@ -2655,3 +2655,63 @@
   fill: #5b431fc9;
   stroke: #f0bf62;
 }
+
+
+.cluster-rack-preview rect {
+  fill: #2b596233;
+  stroke: #8ce9f3;
+  stroke-width: 12;
+  stroke-dasharray: 28 18;
+  vector-effect: non-scaling-stroke;
+}
+
+.cluster-rack-preview text {
+  fill: #bff6fb;
+  font:
+    76px ui-monospace,
+    monospace;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.cluster-rack-preview.is-collision rect {
+  fill: #6a252c55;
+  stroke: #ff7b86;
+}
+
+.cluster-rack-preview.is-collision text {
+  fill: #ffc0c6;
+}
+
+.cluster-placement-preview-status {
+  display: grid;
+  gap: 2px;
+  margin: 8px 0 10px;
+  padding: 8px 9px;
+  border: 1px solid #3b6870;
+  background: #10262b;
+}
+
+.cluster-placement-preview-status strong {
+  color: #aef2f7;
+  font-size: 8px;
+  letter-spacing: 0.09em;
+}
+
+.cluster-placement-preview-status span {
+  color: #90a8b6;
+  font:
+    9px ui-monospace,
+    monospace;
+  line-height: 1.35;
+}
+
+.cluster-placement-preview-status.is-blocked {
+  border-color: #7d454b;
+  background: #311a1f;
+}
+
+.cluster-placement-preview-status.is-blocked strong,
+.cluster-placement-preview-status.is-blocked span {
+  color: #f2b2ba;
+}

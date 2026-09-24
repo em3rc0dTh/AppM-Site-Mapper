@@ -118,6 +118,20 @@ describe('SpatialService boundary authoring', () => {
     expect(result).toEqual({ ok: false, error: 'BOUNDARY_OUTSIDE_PARENT' });
   });
 
+  it('persists a Structure footprint contained by its Site', async () => {
+    const repository = new MemoryTopologyRepository([network, site, structure, level, room]);
+    const result = await new SpatialService(repository).updateBoundary(structure.id, [
+      { x: 0, y: 0 },
+      { x: 1200, y: 0 },
+      { x: 1200, y: 1200 },
+      { x: 0, y: 1200 },
+    ]);
+
+    expect(result.ok).toBe(true);
+    const persisted = await repository.getById(structure.id);
+    expect(persisted?.kind === 'STRUCTURE' ? persisted.polygon?.length : 0).toBe(4);
+  });
+
   it('does not invent persisted geometry for Level', async () => {
     const repository = new MemoryTopologyRepository([network, site, structure, level, room]);
     const result = await new SpatialService(repository).updateBoundary(level.id, polygon);

@@ -213,6 +213,7 @@ export function SpatialAuthoringCanvas({
     polygonContainedByPolygon(draft, containmentPolygon);
   const areaSqm = displayed.length >= 3 ? polygonArea(displayed) / 1_000_000 : 0;
   const perimeterMm = displayed.length >= 3 ? polygonPerimeter(displayed) : 0;
+  const displayedBounds = displayed.length >= 3 ? polygonBounds(displayed) : null;
 
   const view: ViewState = {
     width: base.width / zoom,
@@ -1304,6 +1305,11 @@ export function SpatialAuthoringCanvas({
         {displayed.length >= 3 && <StatusBadge>{areaSqm.toFixed(2)} m²</StatusBadge>}
         {displayed.length >= 3 && (
           <StatusBadge>{formatDistance(perimeterMm)} PERIMETER</StatusBadge>
+        )}
+        {displayedBounds && (
+          <StatusBadge>
+            {formatDistance(displayedBounds.width)} × {formatDistance(displayedBounds.height)} SPAN
+          </StatusBadge>
         )}
         {selectedVertex !== null && draft[selectedVertex] && editing && (
           <StatusBadge>

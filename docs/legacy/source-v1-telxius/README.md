@@ -175,7 +175,6 @@ If legacy documentation conflicts with the current MK1 contract or a newer expli
 
 The original source package also contains binary PDFs and screenshots. The GitHub connector used for this ingestion supports UTF-8 repository writes, so this repository register captures their provenance and extracted product truth. Binary originals remain source evidence supplied by the project owner and should be added through the normal Git binary workflow if permanent in-repository archival is required.
 
-
 ## Cross-source use with legacy MyEMS implementation
 
 The uploaded V1 Telxius package and the historical `em3rc0dTh/myems` branches serve different evidence roles and must be read together.
@@ -217,15 +216,15 @@ When both sources describe the same concept, MK1 treats that concept as strongly
 
 Examples:
 
-| Product truth | V1 ZIP | appM-build | MK1 consequence |
-|---|---|---|---|
-| Per-breaker/port telemetry | yes | yes | model telemetry at explicit source/component level |
-| Voltage/current/power style metrics | yes | yes | formal metric catalog + units |
-| Historical analysis | yes | yes | retain time-series boundary |
-| 24-position panel example | yes | yes | support finite positions without hard-coding 24 globally |
-| Live + history separation | yes | yes | independent latest/realtime and historical read paths |
-| Source/equipment identity | domain relationships documented | `sn` used operationally | introduce explicit TelemetrySource binding |
-| Pinning | yes | product UI lineage | generic pinning remains product behavior |
+| Product truth                       | V1 ZIP                          | appM-build              | MK1 consequence                                          |
+| ----------------------------------- | ------------------------------- | ----------------------- | -------------------------------------------------------- |
+| Per-breaker/port telemetry          | yes                             | yes                     | model telemetry at explicit source/component level       |
+| Voltage/current/power style metrics | yes                             | yes                     | formal metric catalog + units                            |
+| Historical analysis                 | yes                             | yes                     | retain time-series boundary                              |
+| 24-position panel example           | yes                             | yes                     | support finite positions without hard-coding 24 globally |
+| Live + history separation           | yes                             | yes                     | independent latest/realtime and historical read paths    |
+| Source/equipment identity           | domain relationships documented | `sn` used operationally | introduce explicit TelemetrySource binding               |
+| Pinning                             | yes                             | product UI lineage      | generic pinning remains product behavior                 |
 
 ### Conflict rule
 

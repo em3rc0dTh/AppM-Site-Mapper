@@ -34,6 +34,7 @@ export interface RackPlacementView {
   readonly id: string;
   readonly positionId: string;
   readonly clusterId: string;
+  readonly clusterName: string;
   readonly name: string;
   readonly variant: ContainerRackNode['variant'];
   readonly dimensionsMm: Readonly<{ width: number; depth: number; height?: number }>;
@@ -217,6 +218,7 @@ export class SpatialService {
             id: rack.id,
             positionId: position.id,
             clusterId: cluster.id,
+            clusterName: cluster.name,
             name: rack.name,
             variant: rack.variant,
             dimensionsMm,

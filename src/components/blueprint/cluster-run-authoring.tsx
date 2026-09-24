@@ -374,8 +374,8 @@ export function ClusterRunAuthoring({
             </div>
             <small>
               {selectedPosition.occupied
-                ? 'OCCUPIED · this Position already contains a Container/Rack.'
-                : 'AVAILABLE · place one Container or Rack in this Position.'}
+                ? 'OCCUPIED · this 600 × 600 mm Position already contains a Container/Rack.'
+                : 'AVAILABLE · this is one 600 × 600 mm Position in the cluster run. Choose what physical asset will occupy it.'}
             </small>
             {selectedPosition.occupied ? (
               <p>Select another available slot to place new infrastructure.</p>

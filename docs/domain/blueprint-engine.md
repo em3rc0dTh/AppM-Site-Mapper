@@ -50,6 +50,7 @@ Authoring rules:
 - self-intersecting polygons are invalid;
 - duplicate consecutive vertices are invalid;
 - read mode is the default;
+- a newly created Room/Substructure with no polygon enters Draw mode on first writable entry;
 - edit/draw mode is explicit and ends in Save or Cancel;
 - Room editing can snap vertices to the canonical 600 mm grid;
 - Site/Structure boundaries are not forced onto the Room tile grid;

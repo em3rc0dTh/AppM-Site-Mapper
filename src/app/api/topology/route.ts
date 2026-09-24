@@ -128,5 +128,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 422 });
   }
 
-  return NextResponse.json({ node: result.value }, { status: 201 });
+  const href = await new TopologyService(repository).buildDeepLink(result.value.id);
+
+  return NextResponse.json({ node: result.value, href }, { status: 201 });
 }

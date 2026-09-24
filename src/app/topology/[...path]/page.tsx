@@ -421,6 +421,7 @@ export default async function TopologyNodePage({
                 entityKind={node.kind}
                 initialPolygon={node.polygon ?? []}
                 canWrite={canWrite}
+                autoEditWhenEmpty
                 contextPolygons={boundaryContext}
                 navigationItems={spatialNavigationItems}
                 title="Site operations canvas"

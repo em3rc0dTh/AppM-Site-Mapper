@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { StructureStudio, type StructureLevelEntry } from '@/components/topology/structure-studio';
 import { NetworkStudio } from '@/components/topology/network-studio';
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
+import { ClusterRunAuthoring } from '@/components/blueprint/cluster-run-authoring';
 import {
   DevicePhysicalView,
   type ElectricalConnection,
@@ -114,7 +115,7 @@ export default async function TopologyNodePage({
   ]);
   const hierarchyTree =
     trail[0] === undefined ? [] : [await buildContextTree(repository, service, trail[0])];
-  const childKinds = allowedChildKinds(node.kind);
+  const childKinds = node.kind === 'CONTAINER_CLUSTER_BAY' ? [] : allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
   const trailEntries: ContextTreeEntry[] = await buildTrailEntries(service, trail);
@@ -376,22 +377,20 @@ export default async function TopologyNodePage({
                 />
               )
             ) : node.kind === 'CONTAINER_CLUSTER_BAY' && roomLayout?.ok ? (
-              <BlueprintCanvas
+              <ClusterRunAuthoring
                 key={node.id}
-                roomId={roomLayout.value.room.id}
-                roomName={`${node.name} · ${roomLayout.value.room.name}`}
-                polygon={roomLayout.value.room.polygon ?? []}
-                clusters={roomLayout.value.clusters.filter((item) => item.id === node.id)}
-                positions={roomLayout.value.positions.filter((item) => item.clusterId === node.id)}
-                racks={roomLayout.value.racks.filter((item) =>
-                  roomLayout.value.positions.some(
-                    (position) => position.clusterId === node.id && position.id === item.positionId,
-                  ),
+                clusterId={node.id}
+                clusterName={node.name}
+                roomName={roomLayout.value.room.name}
+                roomPolygon={roomLayout.value.room.polygon ?? []}
+                run={node.run}
+                positions={roomLayout.value.positions.filter(
+                  (position) => position.clusterId === node.id,
                 )}
-                slots={[]}
-                navigationHrefs={spatialHrefs}
-                canEditBoundary={false}
-                focusClusterId={node.id}
+                blockedPositions={roomLayout.value.positions.filter(
+                  (position) => position.clusterId !== node.id,
+                )}
+                canWrite={canWrite}
               />
             ) : node.kind === 'STRUCTURE' ? (
               <StructureStudio

@@ -143,7 +143,15 @@ export function TopologyCreateForm({
           ? 'Create rack / container'
           : `Create ${kind.replaceAll('_', ' ').toLowerCase()}`}
       </strong>
-      <input aria-label="Name" name="name" placeholder="Name" required />
+      {kind === 'CONTAINER_RACK' ? (
+        <label className="create-form-field">
+          <span>Name</span>
+          <input aria-label="Name" name="name" placeholder="e.g. Rack A-01" required />
+          <small>Human-readable identifier used in the hierarchy, search and operational views.</small>
+        </label>
+      ) : (
+        <input aria-label="Name" name="name" placeholder="Name" required />
+      )}
       {kind === 'STRUCTURE' && (
         <fieldset className="create-form-physical">
           <legend>Initial physical footprint · optional</legend>

@@ -473,7 +473,9 @@ export function TopologyCreateForm({
       )}
       <button
         type="submit"
-        disabled={busy || (kind === 'CONTAINER_RACK' && Boolean(containerRackPlacementBlockedReason))}
+        disabled={
+          busy || (kind === 'CONTAINER_RACK' && Boolean(containerRackPlacementBlockedReason))
+        }
       >
         {busy
           ? 'Creating…'

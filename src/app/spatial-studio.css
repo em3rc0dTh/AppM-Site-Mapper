@@ -2527,3 +2527,21 @@
 .create-form-field select {
   width: 100%;
 }
+
+
+.create-form-intro {
+  display: grid;
+  gap: 3px;
+}
+
+.create-form-intro > strong {
+  color: #e3edf4;
+  font-size: 12px;
+}
+
+.create-form-intro > p {
+  margin: 0;
+  color: #8fa5b5;
+  font-size: 9px;
+  line-height: 1.4;
+}

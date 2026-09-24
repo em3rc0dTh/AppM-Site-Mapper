@@ -65,6 +65,8 @@ export default async function TopologyNodePage({
   const powerReadable = hasPermission(auth.value.role, 'power:read');
   const physicalHref = await service.buildDeepLink(node.id);
   const parent = node.parentId ? await repository.getById(node.parentId) : null;
+  const siteParentBoundary =
+    node.kind === 'STRUCTURE' && parent?.kind === 'SITE' ? parent.polygon : undefined;
   const connections: ElectricalConnection[] =
     (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && powerReadable
       ? await Promise.all(
@@ -396,6 +398,7 @@ export default async function TopologyNodePage({
                 node={node}
                 levels={structureLevels}
                 canWrite={canWrite}
+                siteBoundary={siteParentBoundary}
               />
             ) : node.kind === 'LEVEL' && (boundaryContext.length > 0 || childEntries.length > 0) ? (
               <SpatialAuthoringCanvas

@@ -4,6 +4,17 @@ import { useState, type FormEvent } from 'react';
 
 import type { TopologyKind } from '@/modules/topology/domain/entities';
 
+function createErrorMessage(error: string): string {
+  const known: Readonly<Record<string, string>> = {
+    BOUNDARY_OUTSIDE_PARENT: 'Structure footprint must stay inside the Site boundary.',
+    INVALID_POLYGON: 'The physical footprint is invalid.',
+    INVALID_PARENT: 'The selected parent is not valid for this entity.',
+    INVALID_NAME: 'Name is required.',
+  };
+
+  return known[error] ?? error.replaceAll('_', ' ');
+}
+
 export function TopologyCreateForm({
   kind,
   parentId,
@@ -24,11 +35,36 @@ export function TopologyCreateForm({
     };
 
     if (kind === 'STRUCTURE') {
-      const width = Number(form.get('widthMm') ?? 0);
-      const depth = Number(form.get('depthMm') ?? 0);
-      const x = Number(form.get('xMm') ?? 0);
-      const y = Number(form.get('yMm') ?? 0);
-      if (width > 0 && depth > 0) {
+      const widthValue = String(form.get('widthMm') ?? '').trim();
+      const depthValue = String(form.get('depthMm') ?? '').trim();
+      const hasWidth = widthValue.length > 0;
+      const hasDepth = depthValue.length > 0;
+
+      if (hasWidth !== hasDepth) {
+        setError('Enter both width and depth, or leave both empty to draw the footprint.');
+        setBusy(false);
+        return;
+      }
+
+      if (hasWidth && hasDepth) {
+        const width = Number(widthValue);
+        const depth = Number(depthValue);
+        const x = Number(form.get('xMm') ?? 0);
+        const y = Number(form.get('yMm') ?? 0);
+
+        if (
+          !Number.isFinite(width) ||
+          !Number.isFinite(depth) ||
+          !Number.isFinite(x) ||
+          !Number.isFinite(y) ||
+          width <= 0 ||
+          depth <= 0
+        ) {
+          setError('Structure dimensions and coordinates must be finite; width/depth must be positive.');
+          setBusy(false);
+          return;
+        }
+
         payload.polygon = [
           { x, y },
           { x: x + width, y },
@@ -81,7 +117,7 @@ export function TopologyCreateForm({
     };
 
     if (!response.ok) {
-      setError(result.error ?? 'CREATE_FAILED');
+      setError(createErrorMessage(result.error ?? 'CREATE_FAILED'));
       setBusy(false);
       return;
     }

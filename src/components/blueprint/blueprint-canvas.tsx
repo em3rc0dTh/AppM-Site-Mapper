@@ -77,6 +77,7 @@ export function BlueprintCanvas({
       entityKind="ROOM / SUBSTRUCTURE"
       initialPolygon={polygon}
       canWrite={canEditBoundary}
+      autoEditWhenEmpty
       gridSizeMm={600}
       rectangles={rectangles}
       title="Blueprint"

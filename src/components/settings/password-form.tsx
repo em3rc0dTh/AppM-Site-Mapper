@@ -6,7 +6,9 @@ import { useState, type FormEvent } from 'react';
 function passwordErrorMessage(error: string): string {
   const messages: Readonly<Record<string, string>> = {
     PASSWORD_MINIMUM_12_CHARACTERS: 'New password must contain at least 12 characters.',
-    INVALID_CURRENT_PASSWORD: 'Current password is incorrect.',
+    INVALID_CREDENTIALS: 'Current password is incorrect.',
+    INVALID_INPUT: 'New password must contain at least 12 characters.',
+    SESSION_INVALID: 'Your session has expired. Sign in again.',
     PASSWORD_CHANGE_FAILED: 'Password could not be changed. Try again.',
   };
 

@@ -133,6 +133,23 @@ describe('TopologyService', () => {
     }
   });
 
+  it('removes rack-only capacity when a Rack becomes a Container', async () => {
+    const service = new TopologyService(new MemoryTopologyRepository());
+    const { rack } = await buildHierarchy(service);
+
+    const updated = await service.update(rack.id, {
+      containerVariant: 'CONTAINER',
+      dimensionsMm: { width: 600, depth: 600 },
+    });
+
+    expect(updated.ok).toBe(true);
+    if (!updated.ok || updated.value.kind !== 'CONTAINER_RACK') return;
+
+    expect(updated.value.variant).toBe('CONTAINER');
+    expect(updated.value.totalU).toBeUndefined();
+    expect(updated.value.cas).toEqual([]);
+  });
+
   it('prevents duplicate active position coordinates', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());
     const { rack } = await buildHierarchy(service);

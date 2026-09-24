@@ -35,7 +35,8 @@ function errorMessage(error: string): string {
   const known: Readonly<Record<string, string>> = {
     CLUSTER_SLOT_OUTSIDE_ROOM: 'Every 600 × 600 slot must fit completely inside the Room.',
     CLUSTER_SLOT_OCCUPIED: 'One or more slots already belong to another Bay/ContainerCluster.',
-    CLUSTER_RUN_OCCUPIED: 'The run cannot remove a Position that already contains a Rack/Container.',
+    CLUSTER_RUN_OCCUPIED:
+      'The run cannot remove a Position that already contains a Rack/Container.',
     INVALID_CLUSTER_RUN: 'Choose a horizontal or vertical run.',
     CLUSTER_RUN_TOO_LONG: 'The run is too long.',
     ROOM_BOUNDARY_REQUIRED: 'Define the Room boundary before placing this cluster.',

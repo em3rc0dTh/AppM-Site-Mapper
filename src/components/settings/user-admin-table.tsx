@@ -7,6 +7,19 @@ import { useState } from 'react';
 import type { SafeUser } from '@/modules/identity/domain/entities';
 import type { Role } from '@/modules/identity/domain/roles';
 
+function userAdminErrorMessage(error: string): string {
+  const messages: Readonly<Record<string, string>> = {
+    FORBIDDEN: 'Your role cannot make this user-management change.',
+    SELF_MANAGEMENT_RESTRICTED: 'You cannot change your own role or archive your own account here.',
+    LAST_SUPERADMIN: 'The last active Superadmin cannot be archived or downgraded.',
+    INVALID_INPUT: 'The requested user change is invalid.',
+    USER_NOT_FOUND: 'This user no longer exists.',
+    USER_UPDATE_FAILED: 'User could not be updated. Try again.',
+  };
+
+  return messages[error] ?? error.replaceAll('_', ' ');
+}
+
 export function UserAdminTable({
   currentUserId,
   users,
@@ -27,7 +40,7 @@ export function UserAdminTable({
     const result = (await response.json().catch(() => null)) as { error?: string } | null;
 
     if (!response.ok) {
-      setError(result?.error ?? 'USER_UPDATE_FAILED');
+      setError(userAdminErrorMessage(result?.error ?? 'USER_UPDATE_FAILED'));
       setPendingId(null);
       return;
     }
@@ -38,6 +51,11 @@ export function UserAdminTable({
 
   return (
     <DataView mode="table" label="User administration">
+      <p className="settings-user-help">
+        Standard can read topology, power and telemetry. Admin can also edit topology, power and
+        settings. Superadmin can additionally manage users and protected system actions. Archive
+        disables the user while preserving the account record.
+      </p>
       <table className="settings-user-table">
         <thead>
           <tr>

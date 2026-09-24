@@ -58,7 +58,7 @@ export function ClusterRunAuthoring({
   clusterName: string;
   roomName: string;
   roomPolygon: readonly PointMm[];
-  run?: ClusterRun;
+  run?: ClusterRun | undefined;
   positions: readonly PositionPlacementView[];
   blockedPositions: readonly PositionPlacementView[];
   canWrite: boolean;
@@ -91,7 +91,6 @@ export function ClusterRunAuthoring({
     }
   }, [end, start]);
 
-  const previewKeys = new Set(preview.map(keyOf));
   const blockedKeys = new Set(blockedPositions.map((position) => position.coordinate));
 
   const gridBounds = bounds

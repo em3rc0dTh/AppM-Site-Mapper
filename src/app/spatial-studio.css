@@ -2493,3 +2493,38 @@
   padding-top: 9px;
   border-top: 1px solid #2f4352;
 }
+
+
+.create-form-placement {
+  gap: 10px;
+}
+
+.create-form-help {
+  margin: 0;
+  color: #8fa5b5;
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.create-form-field {
+  display: grid;
+  gap: 4px;
+}
+
+.create-form-field > span {
+  color: #c9d9e3;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.create-form-field > small {
+  color: #718697;
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.create-form-field input,
+.create-form-field select {
+  width: 100%;
+}

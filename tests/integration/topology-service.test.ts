@@ -109,6 +109,50 @@ describe('TopologyService', () => {
     expect(duplicate).toEqual({ ok: false, error: 'POSITION_OCCUPIED' });
   });
 
+  it('updates persistent entity fields without changing hierarchy', async () => {
+    const service = new TopologyService(new MemoryTopologyRepository());
+    const { rack } = await buildHierarchy(service);
+
+    const updatedRack = await service.update(rack.id, {
+      name: 'Rack 1A',
+      dimensionsMm: { width: 800, depth: 1000, height: 2200 },
+    });
+
+    expect(updatedRack.ok).toBe(true);
+    if (updatedRack.ok) {
+      expect(updatedRack.value.name).toBe('Rack 1A');
+      expect(updatedRack.value.parentId).toBe(rack.parentId);
+      expect(updatedRack.value.kind).toBe('CONTAINER_RACK');
+      if (updatedRack.value.kind === 'CONTAINER_RACK') {
+        expect(updatedRack.value.dimensionsMm).toEqual({
+          width: 800,
+          depth: 1000,
+          height: 2200,
+        });
+      }
+    }
+  });
+
+  it('prevents duplicate active position coordinates', async () => {
+    const service = new TopologyService(new MemoryTopologyRepository());
+    const { rack } = await buildHierarchy(service);
+    const rackNode = await service.getById(rack.id);
+    expect(rackNode?.parentId).toBeTruthy();
+
+    const position = rackNode?.parentId ? await service.getById(rackNode.parentId) : null;
+    expect(position?.kind).toBe('POSITION');
+    if (!position || position.kind !== 'POSITION') return;
+
+    const duplicate = await service.create({
+      kind: 'POSITION',
+      parentId: position.parentId,
+      name: 'A-1 duplicate',
+      coordinate: { row: 'a', column: 1 },
+    });
+
+    expect(duplicate).toEqual({ ok: false, error: 'POSITION_COORDINATE_OCCUPIED' });
+  });
+
   it('refuses to archive parents with active children', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());
     const { network } = await buildHierarchy(service);

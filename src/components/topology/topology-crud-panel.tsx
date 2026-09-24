@@ -6,7 +6,20 @@ import { TopologyCreateForm } from '@/components/topology/topology-create-form';
 import type { TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
 
 function label(kind: TopologyKind): string {
-  return kind.replaceAll('_', ' ').toLowerCase();
+  const labels: Readonly<Record<TopologyKind, string>> = {
+    NETWORK: 'network',
+    SITE: 'site',
+    STRUCTURE: 'structure',
+    LEVEL: 'level',
+    ROOM_SUBSTRUCTURE: 'room / substructure',
+    CONTAINER_CLUSTER_BAY: 'container cluster / bay',
+    POSITION: 'position',
+    CONTAINER_RACK: 'rack / container',
+    DEVICE: 'device',
+    EQUIPMENT: 'equipment',
+  };
+
+  return labels[kind];
 }
 
 function errorMessage(error: string): string {

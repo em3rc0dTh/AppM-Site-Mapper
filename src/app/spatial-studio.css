@@ -2370,9 +2370,10 @@
 }
 
 .cluster-slot.is-blocked {
-  fill: #43252a;
-  fill-opacity: 0.68;
-  stroke: #a75f68;
+  fill: #1a2730;
+  fill-opacity: 0.58;
+  stroke: #587080;
+  stroke-dasharray: 18 14;
   pointer-events: none;
 }
 

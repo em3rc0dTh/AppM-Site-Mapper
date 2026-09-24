@@ -26,7 +26,8 @@ function entityPurpose(kind: TopologyKind): string {
   const descriptions: Readonly<Record<TopologyKind, string>> = {
     NETWORK: 'Top-level infrastructure network.',
     SITE: 'Physical site or facility inside the network.',
-    STRUCTURE: 'Physical Structure inside the Site; its footprint is managed on the spatial canvas.',
+    STRUCTURE:
+      'Physical Structure inside the Site; its footprint is managed on the spatial canvas.',
     LEVEL: 'Floor/hierarchy context inside a Structure; it does not own a polygon by default.',
     ROOM_SUBSTRUCTURE: 'Physical area whose Blueprint boundary contains clusters and bays.',
     CONTAINER_CLUSTER_BAY:

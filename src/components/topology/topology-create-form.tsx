@@ -124,7 +124,7 @@ export function TopologyCreateForm({
       return;
     }
 
-    if (kind === 'STRUCTURE' && result.href) {
+    if (result.href) {
       window.location.assign(result.href);
       return;
     }

@@ -9,7 +9,12 @@ import type {
 } from '@/modules/topology/domain/entities';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
-import type { PointMm } from '@/modules/spatial/domain/geometry';
+import {
+  isValidPolygon,
+  polygonContainedByPolygon,
+  type PointMm,
+} from '@/modules/spatial/domain/geometry';
+import { SpatialService } from '@/modules/spatial/application/spatial-service';
 
 const topologyKinds = new Set<TopologyKind>([
   'NETWORK',
@@ -103,6 +108,14 @@ export async function POST(request: Request) {
 
   const parsedRoomVariant = roomVariant(body.roomVariant);
   const parsedPolygon = polygon(body.polygon);
+
+  if (body.polygon !== undefined && !parsedPolygon) {
+    return NextResponse.json({ error: 'INVALID_POLYGON' }, { status: 400 });
+  }
+
+  if (parsedPolygon && !isValidPolygon(parsedPolygon)) {
+    return NextResponse.json({ error: 'INVALID_POLYGON' }, { status: 422 });
+  }
   const parsedClusterVariant = clusterVariant(body.clusterVariant);
   const parsedContainerVariant = containerVariant(body.containerVariant);
   const dimensionsObject = asObject(body.dimensionsMm);
@@ -122,6 +135,18 @@ export async function POST(request: Request) {
       : undefined;
 
   const repository = await createTopologyRepository();
+
+  if (kind === 'STRUCTURE' && parsedPolygon && parentId) {
+    const parent = await repository.getById(parentId);
+    if (
+      parent?.kind === 'SITE' &&
+      parent.polygon &&
+      !polygonContainedByPolygon(parsedPolygon, parent.polygon)
+    ) {
+      return NextResponse.json({ error: 'BOUNDARY_OUTSIDE_PARENT' }, { status: 422 });
+    }
+  }
+
   const result = await new TopologyService(repository).create({
     kind,
     parentId,
@@ -141,7 +166,7 @@ export async function POST(request: Request) {
   }
 
   if (kind === 'STRUCTURE' && parsedPolygon) {
-    const spatial = await new (await import('@/modules/spatial/application/spatial-service')).SpatialService(repository).updateBoundary(result.value.id, parsedPolygon);
+    const spatial = await new SpatialService(repository).updateBoundary(result.value.id, parsedPolygon);
     if (!spatial.ok) {
       await new TopologyService(repository).archive(result.value.id);
       return NextResponse.json({ error: spatial.error }, { status: 422 });

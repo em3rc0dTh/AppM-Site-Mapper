@@ -92,10 +92,38 @@ export function TopologyCreateForm({
         <fieldset className="create-form-physical">
           <legend>Initial physical footprint · optional</legend>
           <div className="topology-crud-grid">
-            <input aria-label="Structure width in millimetres" name="widthMm" type="number" min="1" step="1" placeholder="Width mm" />
-            <input aria-label="Structure depth in millimetres" name="depthMm" type="number" min="1" step="1" placeholder="Depth mm" />
-            <input aria-label="Structure X coordinate in millimetres" name="xMm" type="number" step="1" defaultValue="0" placeholder="X mm" />
-            <input aria-label="Structure Y coordinate in millimetres" name="yMm" type="number" step="1" defaultValue="0" placeholder="Y mm" />
+            <input
+              aria-label="Structure width in millimetres"
+              name="widthMm"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="Width mm"
+            />
+            <input
+              aria-label="Structure depth in millimetres"
+              name="depthMm"
+              type="number"
+              min="1"
+              step="1"
+              placeholder="Depth mm"
+            />
+            <input
+              aria-label="Structure X coordinate in millimetres"
+              name="xMm"
+              type="number"
+              step="1"
+              defaultValue="0"
+              placeholder="X mm"
+            />
+            <input
+              aria-label="Structure Y coordinate in millimetres"
+              name="yMm"
+              type="number"
+              step="1"
+              defaultValue="0"
+              placeholder="Y mm"
+            />
           </div>
           <small>Leave width/depth empty to draw an irregular footprint after creation.</small>
         </fieldset>

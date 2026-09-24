@@ -1,10 +1,7 @@
 import { notFound, redirect } from 'next/navigation';
 
 import { TopologyContextTree } from '@/components/topology/context-tree';
-import {
-  buildContextTree,
-  buildTrailEntries,
-} from '@/components/topology/context-tree-data';
+import { buildContextTree, buildTrailEntries } from '@/components/topology/context-tree-data';
 import { RackElevation } from '@/components/rack/rack-elevation';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';

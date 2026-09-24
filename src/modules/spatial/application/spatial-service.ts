@@ -10,13 +10,22 @@ import type {
 } from '@/modules/topology/domain/entities';
 import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
-import { isValidPolygon, type PointMm, type RectMm } from '@/modules/spatial/domain/geometry';
+import {
+  isValidPolygon,
+  pointInPolygon,
+  type PointMm,
+  type RectMm,
+} from '@/modules/spatial/domain/geometry';
 import { generateAssignableSlots } from '@/modules/spatial/domain/placement';
 import { gridCoordinateToPoint, TILE_SIZE_MM } from '@/modules/spatial/domain/grid';
 
 export type SpatialBoundaryNode = SiteNode | StructureNode | RoomSubstructureNode;
 export type SpatialError =
-  'ROOM_NOT_FOUND' | 'BOUNDARY_NODE_NOT_FOUND' | 'UNSUPPORTED_BOUNDARY_KIND' | 'INVALID_POLYGON';
+  | 'ROOM_NOT_FOUND'
+  | 'BOUNDARY_NODE_NOT_FOUND'
+  | 'UNSUPPORTED_BOUNDARY_KIND'
+  | 'INVALID_POLYGON'
+  | 'BOUNDARY_OUTSIDE_PARENT';
 
 export interface RackPlacementView {
   readonly id: string;
@@ -74,6 +83,18 @@ export class SpatialService {
 
     if (!isValidPolygon(polygon)) {
       return failure('INVALID_POLYGON');
+    }
+
+    if (node.kind === 'STRUCTURE') {
+      const parent = node.parentId ? await this.repository.getById(node.parentId) : null;
+      if (
+        parent?.kind === 'SITE' &&
+        parent.polygon &&
+        parent.polygon.length >= 3 &&
+        !polygon.every((point) => pointInPolygon(point, parent.polygon!))
+      ) {
+        return failure('BOUNDARY_OUTSIDE_PARENT');
+      }
     }
 
     const updated: SpatialBoundaryNode = {

@@ -1,7 +1,11 @@
 import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
-import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
+import { TopologyContextTree } from '@/components/topology/context-tree';
+import {
+  buildContextTree,
+  buildTrailEntries,
+} from '@/components/topology/context-tree-data';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
@@ -27,26 +31,10 @@ export default async function BlueprintPage({
     notFound();
   }
 
-  const [trail, children] = await Promise.all([
-    topology.getTrail(roomId),
-    topology.listChildren(roomId),
-  ]);
-  const trailEntries: ContextTreeEntry[] = await Promise.all(
-    trail.map(async (node) => ({
-      id: node.id,
-      name: node.name,
-      kind: node.kind,
-      href: await topology.buildDeepLink(node.id),
-    })),
-  );
-  const childEntries: ContextTreeEntry[] = await Promise.all(
-    children.map(async (node) => ({
-      id: node.id,
-      name: node.name,
-      kind: node.kind,
-      href: await topology.buildDeepLink(node.id),
-    })),
-  );
+  const trail = await topology.getTrail(roomId);
+  const trailEntries = await buildTrailEntries(topology, trail);
+  const hierarchyTree =
+    trail[0] === undefined ? [] : [await buildContextTree(repository, topology, trail[0])];
   const spatialHrefs = Object.fromEntries(
     await Promise.all(
       [...result.value.clusters, ...result.value.positions].map(async (item) => [
@@ -61,7 +49,7 @@ export default async function BlueprintPage({
     <main className="operational-page operational-page--blueprint">
       <div className="operational-layout operational-layout--blueprint">
         <aside className="operational-context">
-          <TopologyContextTree trail={trailEntries} descendants={childEntries} />
+          <TopologyContextTree trail={trailEntries} tree={hierarchyTree} />
         </aside>
 
         <section className="operational-stage operational-stage--wide">

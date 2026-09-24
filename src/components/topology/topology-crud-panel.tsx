@@ -22,10 +22,29 @@ function label(kind: TopologyKind): string {
   return labels[kind];
 }
 
+function entityPurpose(kind: TopologyKind): string {
+  const descriptions: Readonly<Record<TopologyKind, string>> = {
+    NETWORK: 'Top-level infrastructure network.',
+    SITE: 'Physical site or facility inside the network.',
+    STRUCTURE: 'Physical Structure inside the Site; its footprint is managed on the spatial canvas.',
+    LEVEL: 'Floor/hierarchy context inside a Structure; it does not own a polygon by default.',
+    ROOM_SUBSTRUCTURE: 'Physical area whose Blueprint boundary contains clusters and bays.',
+    CONTAINER_CLUSTER_BAY:
+      'Straight horizontal or vertical run of 600 × 600 mm Positions on the Room Blueprint.',
+    POSITION: 'One addressable 600 × 600 mm slot inside a ContainerCluster/Bay run.',
+    CONTAINER_RACK: 'Physical Rack or Container occupying one Position.',
+    DEVICE: 'Inventory Device contained by a Rack or Container.',
+    EQUIPMENT: 'Inventory Equipment contained by a Rack or Container.',
+  };
+
+  return descriptions[kind];
+}
+
 function errorMessage(error: string): string {
   const known: Readonly<Record<string, string>> = {
     HAS_ACTIVE_CHILDREN: 'Archive contained entities first.',
-    CAS_RELEASE_REQUIRED: 'Release rack allocations before changing rack capacity or variant.',
+    CAS_RELEASE_REQUIRED:
+      'This Rack has active allocations. Release them before changing Rack capacity or type.',
     POSITION_COORDINATE_OCCUPIED: 'That grid coordinate is already occupied.',
     INVALID_COORDINATE: 'Enter a valid grid coordinate.',
     INVALID_RACK_CAPACITY: 'Rack capacity must be a positive integer.',
@@ -176,6 +195,11 @@ export function TopologyCrudPanel({
 
       {editing && node.lifecycle === 'ACTIVE' && (
         <form className="topology-crud-form" onSubmit={update}>
+          <div className="topology-crud-edit-intro">
+            <strong>Edit {label(node.kind)}</strong>
+            <small>{entityPurpose(node.kind)}</small>
+          </div>
+
           <label>
             <span>Name</span>
             <input name="name" defaultValue={node.name} required />

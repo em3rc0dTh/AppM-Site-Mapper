@@ -2254,3 +2254,165 @@
   font-size: 9px;
   line-height: 1.35;
 }
+
+
+/* Linear ContainerCluster / Bay authoring */
+.cluster-run-authoring {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: #071017;
+}
+
+.cluster-run-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid #2f4352;
+  background: #111c25;
+}
+
+.cluster-run-toolbar > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.cluster-run-toolbar strong {
+  font-size: 13px;
+  color: #dcebf4;
+}
+
+.cluster-run-toolbar span {
+  color: #7890a2;
+  font: 10px ui-monospace, monospace;
+}
+
+.cluster-run-toolbar > div:last-child {
+  display: flex;
+  gap: 7px;
+}
+
+.cluster-run-toolbar button {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid #466479;
+  background: #162633;
+  color: #d8e6ef;
+  cursor: pointer;
+}
+
+.cluster-run-toolbar button:last-child {
+  border-color: #77d9e8;
+  color: #b9f4fb;
+}
+
+.cluster-run-toolbar button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.cluster-run-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cluster-run-canvas svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: #050b10;
+  cursor: crosshair;
+}
+
+.cluster-grid-line {
+  fill: none;
+  stroke: #17303d;
+  stroke-width: 8;
+}
+
+.cluster-room-boundary {
+  fill: #102631;
+  fill-opacity: 0.84;
+  stroke: #8be7f1;
+  stroke-width: 16;
+}
+
+.cluster-grid-label {
+  fill: #7f9db3;
+  font: 92px ui-monospace, monospace;
+  pointer-events: none;
+}
+
+.cluster-slot {
+  stroke-width: 10;
+}
+
+.cluster-slot.is-current {
+  fill: #1e4f5d;
+  fill-opacity: 0.78;
+  stroke: #8ce9f3;
+}
+
+.cluster-slot.is-preview {
+  fill: #72511c;
+  fill-opacity: 0.72;
+  stroke: #f0b85e;
+}
+
+.cluster-slot.is-blocked {
+  fill: #43252a;
+  fill-opacity: 0.68;
+  stroke: #a75f68;
+  pointer-events: none;
+}
+
+.cluster-slot.is-conflict {
+  fill: #6a252c;
+  stroke: #ff7b86;
+}
+
+.cluster-slot-label {
+  fill: #e4f2f8;
+  font: 92px ui-monospace, monospace;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.cluster-run-state {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  display: grid;
+  gap: 3px;
+  max-width: min(620px, calc(100% - 24px));
+  padding: 9px 11px;
+  border: 1px solid #3f5b6c;
+  background: #0d171ff2;
+  box-shadow: 0 10px 24px #0008;
+}
+
+.cluster-run-state strong {
+  color: #dcebf4;
+  font-size: 12px;
+}
+
+.cluster-run-state span {
+  color: #94a9b8;
+  font: 10px ui-monospace, monospace;
+  line-height: 1.4;
+}
+
+.cluster-run-error {
+  padding: 8px 12px;
+  border-top: 1px solid #7d454b;
+  background: #311a1f;
+  color: #f2b2ba;
+  font-size: 10px;
+}

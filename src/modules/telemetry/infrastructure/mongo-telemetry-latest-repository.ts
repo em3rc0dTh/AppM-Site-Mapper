@@ -21,8 +21,7 @@ function toDomain(document: TelemetryLatestDocument): TelemetrySample {
     Array.isArray(copy.reported) ||
     typeof copy.observedAt !== 'string' ||
     typeof copy.receivedAt !== 'string' ||
-    (copy.timestampProvenance !== 'DEVICE' &&
-      copy.timestampProvenance !== 'RECEIVED_TIME_FALLBACK')
+    (copy.timestampProvenance !== 'DEVICE' && copy.timestampProvenance !== 'RECEIVED_TIME_FALLBACK')
   ) {
     throw new Error('Invalid telemetry latest document.');
   }

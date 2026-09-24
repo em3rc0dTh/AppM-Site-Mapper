@@ -112,11 +112,7 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
     deliveredAt: string,
   ): Promise<boolean> {
     const record = this.byEventId.get(eventId);
-    if (
-      !record ||
-      record.historyState !== 'IN_FLIGHT' ||
-      record.historyLeaseOwner !== workerId
-    ) {
+    if (!record || record.historyState !== 'IN_FLIGHT' || record.historyLeaseOwner !== workerId) {
       return false;
     }
 
@@ -153,11 +149,7 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
       return false;
     }
 
-    const {
-      historyLeaseOwner: _leaseOwner,
-      historyLeaseUntil: _leaseUntil,
-      ...rest
-    } = record;
+    const { historyLeaseOwner: _leaseOwner, historyLeaseUntil: _leaseUntil, ...rest } = record;
 
     const next: TelemetryAcceptanceRecord = {
       ...rest,

@@ -30,16 +30,24 @@ jobs:
       - name: Analyze
         uses: github/codeql-action/analyze@1c5b675653bb5c22dbe9b12b556ec555138e09fd # v4.38.1
 
-  dependency-review:
-    name: Dependency review
-    if: github.event_name == 'pull_request'
+  dependency-audit:
+    name: Dependency audit
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: read
 
     steps:
-      - name: Review dependency changes
-        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Setup Node
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
-          fail-on-severity: high
+          node-version: 22
+          cache: npm
+
+      - name: Audit lockfile dependencies
+        run: npm audit --audit-level=high
+
+# G16 open prerequisite:
+# GitHub Dependency Review remains required before G16 seal, but dependency-review-action
+# cannot run until the repository Dependency Graph is enabled in GitHub security settings.

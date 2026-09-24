@@ -90,13 +90,13 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
     const claimed: TelemetryAcceptanceRecord[] = [];
 
     for (const record of eligible) {
+      const { nextHistoryAttemptAt: _nextAttemptAt, ...withoutNextAttempt } = record;
       const next: TelemetryAcceptanceRecord = {
-        ...record,
+        ...withoutNextAttempt,
         historyState: 'IN_FLIGHT',
         historyAttempts: record.historyAttempts + 1,
         historyLeaseOwner: options.workerId,
         historyLeaseUntil: leaseUntil,
-        nextHistoryAttemptAt: undefined,
       };
 
       this.byEventId.set(record.eventId, next);
@@ -120,14 +120,18 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
       return false;
     }
 
+    const {
+      historyLeaseOwner: _leaseOwner,
+      historyLeaseUntil: _leaseUntil,
+      nextHistoryAttemptAt: _nextAttemptAt,
+      historyLastErrorCode: _lastErrorCode,
+      ...rest
+    } = record;
+
     const next: TelemetryAcceptanceRecord = {
-      ...record,
+      ...rest,
       historyState: 'DELIVERED',
       deliveredAt,
-      historyLeaseOwner: undefined,
-      historyLeaseUntil: undefined,
-      nextHistoryAttemptAt: undefined,
-      historyLastErrorCode: undefined,
     };
 
     this.byEventId.set(eventId, next);
@@ -149,13 +153,17 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
       return false;
     }
 
+    const {
+      historyLeaseOwner: _leaseOwner,
+      historyLeaseUntil: _leaseUntil,
+      ...rest
+    } = record;
+
     const next: TelemetryAcceptanceRecord = {
-      ...record,
+      ...rest,
       historyState: 'PENDING',
-      nextHistoryAttemptAt,
+      nextHistoryAttemptAt: nextAttemptAt,
       historyLastErrorCode: errorCode,
-      historyLeaseOwner: undefined,
-      historyLeaseUntil: undefined,
     };
 
     this.byEventId.set(eventId, next);

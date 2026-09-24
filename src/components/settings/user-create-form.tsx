@@ -42,10 +42,12 @@ export function UserCreateForm() {
       <label>
         Name
         <input name="displayName" required />
+        <small>Display name shown inside Site Mapper.</small>
       </label>
       <label>
         Email
         <input autoComplete="off" name="email" required type="email" />
+        <small>Sign-in identity for this user.</small>
       </label>
       <label>
         Role
@@ -54,10 +56,15 @@ export function UserCreateForm() {
           <option value="ADMIN">Admin</option>
           <option value="SUPERADMIN">Superadmin</option>
         </select>
+        <small>
+          Standard: read topology/power/telemetry. Admin: edit topology, power and settings.
+          Superadmin: also manage users and protected system actions.
+        </small>
       </label>
       <label>
         Temporary password
         <input minLength={12} name="temporaryPassword" required type="password" />
+        <small>Minimum 12 characters. The user signs in with this initial password.</small>
       </label>
       <button disabled={busy} type="submit">
         {busy ? 'Creating…' : 'Create user'}

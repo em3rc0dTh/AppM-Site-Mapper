@@ -96,14 +96,28 @@ The server-side SpatialService is authoritative for persistence validation.
 
 The topology repository stores the polygon on the owning topology node. No extra geometry collection is introduced in v0.1.
 
-This keeps the model aligned with the canonical topology while preserving the modular boundary:
+This keeps the model aligned with the canonical topology while preserving the modular boundary.
+
+Boundary edits use:
 
 ```text
 UI
-→ spatial API
+→ spatial boundary API
 → SpatialService
 → TopologyRepository
 ```
+
+Structure creation with an optional initial footprint uses the explicit authoring use case:
+
+```text
+UI
+→ spatial Structure API
+→ StructureAuthoringService
+→ TopologyService + SpatialService
+→ TopologyRepository
+```
+
+The generic topology POST does not own or validate polygon geometry.
 
 ## Non-goals for v0.1
 

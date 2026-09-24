@@ -64,8 +64,8 @@ A Structure remains a direct child of Site and owns a polygon footprint in Site-
 
 Structure creation supports two equivalent entry paths:
 
-- create the topology node first and draw an irregular footprint in the Structure workspace;
-- optionally seed a rectangular footprint using width, depth, X and Y values.
+- create the topology node first and, when no footprint exists, enter the Structure workspace directly in Draw mode to place the footprint vertices;
+- optionally seed a rectangular footprint using width, depth, X and Y values, in which case the Structure opens with that persisted polygon already defined.
 
 The rectangle is an authoring convenience, not a domain assumption. After creation, the persisted polygon remains the spatial authority and may be edited into any valid irregular shape.
 

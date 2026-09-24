@@ -2165,3 +2165,23 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+
+/* Structure spatial authoring */
+.create-form-physical {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 8px;
+  border: 1px solid #34495a;
+}
+.create-form-physical legend {
+  padding: 0 5px;
+  color: #8ca2b3;
+  font-size: 9px;
+}
+.create-form-physical small {
+  color: #718697;
+  font-size: 9px;
+  line-height: 1.35;
+}

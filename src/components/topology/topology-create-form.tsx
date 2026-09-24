@@ -36,16 +36,17 @@ function createDescription(kind: TopologyKind): string {
   const descriptions: Readonly<Record<TopologyKind, string>> = {
     NETWORK: 'Top-level infrastructure network.',
     SITE: 'Physical site or facility contained by this network.',
-    STRUCTURE: 'Physical building or structure inside the Site. Its footprint can be drawn after creation.',
-    LEVEL: 'Floor or hierarchy level inside the Structure. Levels do not own a separate polygon by default.',
+    STRUCTURE:
+      'Physical building or structure inside the Site. Its footprint can be drawn after creation.',
+    LEVEL:
+      'Floor or hierarchy level inside the Structure. Levels do not own a separate polygon by default.',
     ROOM_SUBSTRUCTURE:
       'Physical room or substructure on this Level. Its boundary is drawn in the Blueprint after creation.',
     CONTAINER_CLUSTER_BAY:
       'Linear group of 600 × 600 mm slots. After creation, mark its first and last slot on the Room Blueprint.',
     POSITION:
       'One addressable 600 × 600 mm slot inside a ContainerCluster/Bay. Cluster runs normally generate these automatically.',
-    CONTAINER_RACK:
-      'Physical Rack or Container placed in the selected Position.',
+    CONTAINER_RACK: 'Physical Rack or Container placed in the selected Position.',
     DEVICE: 'Inventory device mounted inside the selected Rack or Container.',
     EQUIPMENT: 'Operational equipment mounted inside the selected Rack or Container.',
   };
@@ -290,8 +291,8 @@ export function TopologyCreateForm({
               <option value="BAY">Bay</option>
             </select>
             <small>
-              Both types use the same physical rule in MK1: a straight horizontal or vertical run
-              of 600 × 600 mm slots.
+              Both types use the same physical rule in MK1: a straight horizontal or vertical run of
+              600 × 600 mm slots.
             </small>
           </label>
           <small className="create-form-help">

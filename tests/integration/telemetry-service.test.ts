@@ -26,16 +26,11 @@ function source(overrides: Partial<TelemetrySource> = {}): TelemetrySource {
 function serviceWith(sources: readonly TelemetrySource[]) {
   const hub = new TelemetryHub(4);
   const latest = new MemoryTelemetryLatestRepository();
-  const service = new TelemetryService(
-    new MemoryTelemetrySourceRepository(sources),
-    latest,
-    hub,
-    {
-      topicPrefix: 'appmanager/v1/raw/',
-      topicSuffix: '/telemetry',
-      maxPayloadBytes: 1024,
-    },
-  );
+  const service = new TelemetryService(new MemoryTelemetrySourceRepository(sources), latest, hub, {
+    topicPrefix: 'appmanager/v1/raw/',
+    topicSuffix: '/telemetry',
+    maxPayloadBytes: 1024,
+  });
 
   return { service, hub, latest };
 }
@@ -46,9 +41,7 @@ describe('TelemetryService', () => {
 
     const result = await service.ingest(
       'appmanager/v1/raw/mqtt-source-1/telemetry',
-      new TextEncoder().encode(
-        JSON.stringify({ sn: 'SN-E', reported: { '0_1_1': { u: 48 } } }),
-      ),
+      new TextEncoder().encode(JSON.stringify({ sn: 'SN-E', reported: { '0_1_1': { u: 48 } } })),
       timestamp,
     );
 

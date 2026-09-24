@@ -430,7 +430,11 @@ export function TopologyCreateForm({
         </fieldset>
       )}
       <button type="submit" disabled={busy}>
-        {busy ? 'Creating…' : 'Create'}
+        {busy
+          ? 'Creating…'
+          : kind === 'CONTAINER_RACK'
+            ? `Create ${containerVariant === 'RACK' ? 'Rack' : 'Container'}`
+            : 'Create'}
       </button>
       {error && <span className="form-error">{error}</span>}
     </form>

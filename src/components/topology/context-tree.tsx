@@ -27,10 +27,7 @@ function iconFor(kind: string): string {
   return 'box';
 }
 
-function EntryControl({
-  entry,
-  current,
-}: Readonly<{ entry: ContextTreeEntry; current: boolean }>) {
+function EntryControl({ entry, current }: Readonly<{ entry: ContextTreeEntry; current: boolean }>) {
   const popupKind = popupKindForTopology(entry.kind);
   const content = (
     <>

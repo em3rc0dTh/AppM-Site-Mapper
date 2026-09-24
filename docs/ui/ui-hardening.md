@@ -51,7 +51,6 @@ Entity-specific data is adapted into the shared EntityInspector and existing vis
 primitives. New components are justified only for distinct interaction models such as
 spatial Blueprint rendering or electrical path visualization.
 
-
 ## Form comprehension rule
 
 Operational forms must be understandable by a user who did not design the data model.

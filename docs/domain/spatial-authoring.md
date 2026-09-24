@@ -106,6 +106,8 @@ ContainerCluster/Bay authoring is linear, not polygonal. The user marks a start 
 
 A run may therefore contain empty Positions. Those are intentional capacity slots for future Container/Rack placement, not missing data.
 
+To populate the run, select an available slot in the ContainerCluster/Bay workspace and create a Rack or Container directly in that Position. The Position remains the physical ownership boundary for the placed asset.
+
 ## Domain validation
 
 A polygon is valid only when:

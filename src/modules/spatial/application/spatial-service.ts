@@ -1,5 +1,6 @@
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
+  ClusterOrientation,
   ContainerClusterBayNode,
   ContainerRackNode,
   PositionNode,
@@ -50,7 +51,7 @@ export interface ClusterPlacementView {
   readonly variant: ContainerClusterBayNode['variant'];
   readonly rect?: RectMm;
   readonly positionCount: number;
-  readonly orientation?: ContainerClusterBayNode['run'] extends { orientation: infer T } ? T : never;
+  readonly orientation?: ClusterOrientation;
 }
 
 export interface RoomLayout {

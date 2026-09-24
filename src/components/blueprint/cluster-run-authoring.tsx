@@ -341,7 +341,11 @@ export function ClusterRunAuthoring({
 
           {!editing &&
             racks.map((rack) => (
-              <g key={rack.id} className="cluster-rack-footprint" pointerEvents="none">
+              <g
+                key={rack.id}
+                className={`cluster-rack-footprint ${rack.clusterId === clusterId ? 'is-current-cluster' : 'is-neighbor-cluster'}`}
+                pointerEvents="none"
+              >
                 <rect
                   x={rack.rect.x}
                   y={rack.rect.y}
@@ -363,7 +367,8 @@ export function ClusterRunAuthoring({
                   textAnchor="middle"
                   dominantBaseline="middle"
                 >
-                  {rack.variant} · {rack.dimensionsMm.width} × {rack.dimensionsMm.depth} mm
+                  {rack.variant} · {rack.dimensionsMm.width} × {rack.dimensionsMm.depth} mm ·{' '}
+                  {rack.clusterName}
                 </text>
               </g>
             ))}

@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 
 import {
   isValidPolygon,
+  pointInPolygon,
   polygonArea,
   polygonBounds,
   polygonCentroid,
@@ -160,6 +161,7 @@ export function SpatialAuthoringCanvas({
   contextPolygons = [],
   rectangles = [],
   navigationItems = [],
+  containmentPolygon,
   title = 'Spatial boundary',
   subtitle = 'Polygon geometry · millimetres',
 }: Readonly<{
@@ -172,6 +174,7 @@ export function SpatialAuthoringCanvas({
   contextPolygons?: readonly SpatialContextPolygon[];
   rectangles?: readonly SpatialRectOverlay[];
   navigationItems?: readonly SpatialNavigationItem[];
+  containmentPolygon?: readonly PointMm[];
   title?: string;
   subtitle?: string;
 }>) {
@@ -203,6 +206,10 @@ export function SpatialAuthoringCanvas({
   const displayed = editing ? draft : sourcePolygon;
   const validDraft = draft.length >= 3 && isValidPolygon(draft);
   const dirty = editing && !samePolygon(draft, sourcePolygon);
+  const containedDraft =
+    !containmentPolygon ||
+    containmentPolygon.length < 3 ||
+    draft.every((point) => pointInPolygon(point, containmentPolygon));
   const areaSqm = displayed.length >= 3 ? polygonArea(displayed) / 1_000_000 : 0;
   const perimeterMm = displayed.length >= 3 ? polygonPerimeter(displayed) : 0;
 
@@ -642,6 +649,10 @@ export function SpatialAuthoringCanvas({
 
   async function save() {
     if (!validDraft || !dirty) {
+      return;
+    }
+    if (!containedDraft) {
+      setError('Boundary must stay inside its parent physical boundary.');
       return;
     }
 
@@ -1262,8 +1273,8 @@ export function SpatialAuthoringCanvas({
         {editing && (
           <div className="spatial-edit-state" role="status">
             <div>
-              <StatusBadge tone={validDraft ? 'warning' : 'danger'}>
-                {validDraft ? 'DRAFT VALID' : 'DRAFT INVALID'}
+              <StatusBadge tone={validDraft && containedDraft ? 'warning' : 'danger'}>
+                {validDraft ? (containedDraft ? 'DRAFT VALID' : 'OUTSIDE PARENT') : 'DRAFT INVALID'}
               </StatusBadge>
               <span>
                 {tool === 'draw'
@@ -1275,7 +1286,7 @@ export function SpatialAuthoringCanvas({
               <button type="button" onClick={cancel} disabled={busy}>
                 Cancel
               </button>
-              <button type="button" onClick={save} disabled={busy || !validDraft || !dirty}>
+              <button type="button" onClick={save} disabled={busy || !validDraft || !containedDraft || !dirty}>
                 {busy ? 'Saving…' : 'Save boundary'}
               </button>
             </div>

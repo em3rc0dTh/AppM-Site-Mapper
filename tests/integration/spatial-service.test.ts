@@ -72,7 +72,6 @@ const room: RoomSubstructureNode = {
   updatedAt: timestamp,
 };
 
-
 const emptyCluster: ContainerClusterBayNode = {
   id: '00000000-0000-4000-8000-000000000105',
   kind: 'CONTAINER_CLUSTER_BAY',
@@ -144,7 +143,6 @@ describe('SpatialService boundary authoring', () => {
     const persisted = await repository.getById(structure.id);
     expect(persisted?.kind === 'STRUCTURE' ? persisted.polygon?.length : 0).toBe(4);
   });
-
 
   it('keeps an empty ContainerCluster/Bay visible as unplaced instead of dropping it', async () => {
     const repository = new MemoryTopologyRepository([

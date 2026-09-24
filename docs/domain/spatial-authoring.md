@@ -92,8 +92,8 @@ Network
 → Structure           draw Structure footprint when empty
 → Level               hierarchy / floor context only; no persisted polygon
 → Room/Substructure   draw Room boundary when empty, with optional 600 mm snapping
-→ Bay/Cluster         placement context derived from contained Positions/Racks
-→ Position            explicit row/column grid coordinate
+→ Bay/Cluster         visible immediately; UNPLACED while empty, physical extent derived from Positions/Racks
+→ Position            explicit row/column grid coordinate; first Position establishes initial cluster extent
 → Container/Rack      physical width/depth + rack capacity where applicable
 → Device | Equipment  inventory identity mounted in the Container/Rack context
 ```

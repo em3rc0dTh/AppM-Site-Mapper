@@ -391,6 +391,7 @@ export default async function TopologyNodePage({
                 slots={[]}
                 navigationHrefs={spatialHrefs}
                 canEditBoundary={false}
+                focusClusterId={node.id}
               />
             ) : node.kind === 'STRUCTURE' ? (
               <StructureStudio

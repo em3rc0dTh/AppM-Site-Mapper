@@ -10,7 +10,7 @@ import type {
   PositionNode,
 } from '@/modules/topology/domain/entities';
 import { gridCoordinateToPoint, linearGridRun, TILE_SIZE_MM } from '@/modules/spatial/domain/grid';
-import { rectInsidePolygon } from '@/modules/spatial/domain/geometry';
+import { polygonContainedByPolygon } from '@/modules/spatial/domain/geometry';
 import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
@@ -100,7 +100,20 @@ export class ClusterRunAuthoringService {
       };
     });
 
-    if (candidateRects.some((rect) => !rectInsidePolygon(rect, room.polygon!))) {
+    if (
+      candidateRects.some(
+        (rect) =>
+          !polygonContainedByPolygon(
+            [
+              { x: rect.x, y: rect.y },
+              { x: rect.x + rect.width, y: rect.y },
+              { x: rect.x + rect.width, y: rect.y + rect.depth },
+              { x: rect.x, y: rect.y + rect.depth },
+            ],
+            room.polygon!,
+          ),
+      )
+    ) {
       return failure('CLUSTER_SLOT_OUTSIDE_ROOM');
     }
 

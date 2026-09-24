@@ -3,7 +3,10 @@
 import { useMemo, useRef, useState, type PointerEvent } from 'react';
 
 import { TopologyCreateForm } from '@/components/topology/topology-create-form';
-import type { PositionPlacementView } from '@/modules/spatial/application/spatial-service';
+import type {
+  PositionPlacementView,
+  RackPlacementView,
+} from '@/modules/spatial/application/spatial-service';
 import {
   gridCoordinateToPoint,
   linearGridRun,
@@ -53,6 +56,7 @@ export function ClusterRunAuthoring({
   roomPolygon,
   run,
   positions,
+  racks,
   blockedPositions,
   canWrite,
 }: Readonly<{
@@ -62,6 +66,7 @@ export function ClusterRunAuthoring({
   roomPolygon: readonly PointMm[];
   run?: ClusterRun | undefined;
   positions: readonly PositionPlacementView[];
+  racks: readonly RackPlacementView[];
   blockedPositions: readonly PositionPlacementView[];
   canWrite: boolean;
 }>) {
@@ -334,6 +339,35 @@ export function ClusterRunAuthoring({
               </g>
             ))}
 
+          {!editing &&
+            racks.map((rack) => (
+              <g key={rack.id} className="cluster-rack-footprint" pointerEvents="none">
+                <rect
+                  x={rack.rect.x}
+                  y={rack.rect.y}
+                  width={rack.rect.width}
+                  height={rack.rect.depth}
+                />
+                <text
+                  x={rack.rect.x + rack.rect.width / 2}
+                  y={rack.rect.y + rack.rect.depth / 2 - 34}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                >
+                  {rack.name}
+                </text>
+                <text
+                  className="cluster-rack-footprint-detail"
+                  x={rack.rect.x + rack.rect.width / 2}
+                  y={rack.rect.y + rack.rect.depth / 2 + 48}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                >
+                  {rack.variant} · {rack.dimensionsMm.width} × {rack.dimensionsMm.depth} mm
+                </text>
+              </g>
+            ))}
+
           {editing &&
             preview.map((coordinate) => {
               const point = gridCoordinateToPoint(coordinate);
@@ -374,11 +408,33 @@ export function ClusterRunAuthoring({
             </div>
             <small>
               {selectedPosition.occupied
-                ? 'OCCUPIED · this 600 × 600 mm Position already contains a Container/Rack.'
+                ? selectedPosition.occupancyRole === 'COVERED'
+                  ? `COVERED · ${selectedPosition.rack?.name ?? 'Container/Rack'} extends into this 600 × 600 mm Position from another anchor slot.`
+                  : `OCCUPIED · ${selectedPosition.rack?.name ?? 'Container/Rack'} is anchored in this 600 × 600 mm Position.`
                 : 'AVAILABLE · this is one 600 × 600 mm Position in the cluster run. Choose what physical asset will occupy it.'}
             </small>
             {selectedPosition.occupied ? (
-              <p>Select another available slot to place new infrastructure.</p>
+              <div className="cluster-slot-occupied">
+                {selectedPosition.rack && (
+                  <>
+                    <strong>{selectedPosition.rack.name}</strong>
+                    <span>
+                      {selectedPosition.rack.variant} · {selectedPosition.rack.dimensionsMm.width} ×{' '}
+                      {selectedPosition.rack.dimensionsMm.depth} mm
+                    </span>
+                    <a
+                      href={
+                        selectedPosition.rack.variant === 'RACK'
+                          ? `/rack/${selectedPosition.rack.id}`
+                          : `/popup/container/${selectedPosition.rack.id}`
+                      }
+                    >
+                      Open {selectedPosition.rack.variant === 'RACK' ? 'Rack' : 'Container'} →
+                    </a>
+                  </>
+                )}
+                <p>Select another available slot to place new infrastructure.</p>
+              </div>
             ) : canWrite ? (
               <TopologyCreateForm kind="CONTAINER_RACK" parentId={selectedPosition.id} />
             ) : (

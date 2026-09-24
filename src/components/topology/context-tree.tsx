@@ -122,9 +122,11 @@ function TreeNode({
 export function TopologyContextTree({
   trail,
   tree,
+  supplemental = [],
 }: Readonly<{
   trail: readonly ContextTreeEntry[];
   tree: readonly ContextTreeEntry[];
+  supplemental?: readonly ContextTreeEntry[];
 }>) {
   const active = trail.at(-1);
   const activePath = new Set(trail.map((entry) => entry.id));
@@ -159,6 +161,15 @@ export function TopologyContextTree({
           ))}
         </ol>
       </div>
+
+      {supplemental.length > 0 && (
+        <div className="context-tree-supplemental">
+          <span>INTERNAL / NEXT</span>
+          {supplemental.map((entry) => (
+            <EntryControl key={entry.id} entry={entry} current={entry.id === active?.id} />
+          ))}
+        </div>
+      )}
     </nav>
   );
 }

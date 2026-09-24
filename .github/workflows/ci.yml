@@ -34,10 +34,7 @@ jobs:
         run: npm run lint
 
       - name: Format check
-        run: |
-          npx prettier --write src/modules/telemetry/infrastructure/memory-telemetry-acceptance-repository.ts
-          git diff -- src/modules/telemetry/infrastructure/memory-telemetry-acceptance-repository.ts
-          git diff --exit-code -- src/modules/telemetry/infrastructure/memory-telemetry-acceptance-repository.ts
+        run: npm run format:check
 
       - name: Unit tests
         run: npm run test:unit

@@ -53,11 +53,7 @@ export class ClusterRunAuthoringService {
   ): Promise<Result<ClusterRunResult, ClusterRunError>> {
     const cluster = await this.repository.getById(clusterId);
 
-    if (
-      !cluster ||
-      cluster.kind !== 'CONTAINER_CLUSTER_BAY' ||
-      cluster.lifecycle !== 'ACTIVE'
-    ) {
+    if (!cluster || cluster.kind !== 'CONTAINER_CLUSTER_BAY' || cluster.lifecycle !== 'ACTIVE') {
       return failure('CLUSTER_NOT_FOUND');
     }
 
@@ -128,8 +124,7 @@ export class ClusterRunAuthoringService {
       await Promise.all(
         siblingClusters.map(async (sibling) =>
           (await this.repository.listChildren(sibling.id)).filter(
-            (node): node is PositionNode =>
-              node.kind === 'POSITION' && node.lifecycle === 'ACTIVE',
+            (node): node is PositionNode => node.kind === 'POSITION' && node.lifecycle === 'ACTIVE',
           ),
         ),
       )

@@ -50,6 +50,7 @@ export interface ClusterPlacementView {
   readonly variant: ContainerClusterBayNode['variant'];
   readonly rect?: RectMm;
   readonly positionCount: number;
+  readonly orientation?: ContainerClusterBayNode['run'] extends { orientation: infer T } ? T : never;
 }
 
 export interface RoomLayout {
@@ -217,10 +218,16 @@ export class SpatialService {
       occupied: occupiedPositionIds.has(position.id),
     }));
 
-    const clusterViews: ClusterPlacementView[] = positionsByCluster.flatMap(
+    const clusterViews: ClusterPlacementView[] = positionsByCluster.map(
       ({ cluster, positions: clusterPositions }) => {
         if (clusterPositions.length === 0) {
-          return [];
+          return {
+            id: cluster.id,
+            name: cluster.name,
+            variant: cluster.variant,
+            positionCount: 0,
+            ...(cluster.run ? { orientation: cluster.run.orientation } : {}),
+          };
         }
 
         const positionIds = new Set(clusterPositions.map((position) => position.id));
@@ -242,20 +249,19 @@ export class SpatialService {
         const maxX = Math.max(...rects.map((rect) => rect.x + rect.width));
         const maxY = Math.max(...rects.map((rect) => rect.y + rect.depth));
 
-        return [
-          {
-            id: cluster.id,
-            name: cluster.name,
-            variant: cluster.variant,
-            rect: {
-              x: minX,
-              y: minY,
-              width: maxX - minX,
-              depth: maxY - minY,
-            },
-            positionCount: clusterPositions.length,
+        return {
+          id: cluster.id,
+          name: cluster.name,
+          variant: cluster.variant,
+          rect: {
+            x: minX,
+            y: minY,
+            width: maxX - minX,
+            depth: maxY - minY,
           },
-        ];
+          positionCount: clusterPositions.length,
+          ...(cluster.run ? { orientation: cluster.run.orientation } : {}),
+        };
       },
     );
 

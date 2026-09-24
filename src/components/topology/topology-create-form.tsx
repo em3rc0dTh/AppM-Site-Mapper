@@ -60,7 +60,9 @@ export function TopologyCreateForm({
           width <= 0 ||
           depth <= 0
         ) {
-          setError('Structure dimensions and coordinates must be finite; width/depth must be positive.');
+          setError(
+            'Structure dimensions and coordinates must be finite; width/depth must be positive.',
+          );
           setBusy(false);
           return;
         }

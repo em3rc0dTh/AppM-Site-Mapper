@@ -6,9 +6,7 @@ import {
 } from '@/modules/telemetry/application/telemetry-idempotency';
 import type { NormalizedTelemetryMessage } from '@/modules/telemetry/domain/entities';
 
-function message(
-  overrides: Partial<NormalizedTelemetryMessage> = {},
-): NormalizedTelemetryMessage {
+function message(overrides: Partial<NormalizedTelemetryMessage> = {}): NormalizedTelemetryMessage {
   return {
     topic: 'appmanager/v1/raw/source-1/telemetry',
     topicSource: 'source-1',
@@ -32,10 +30,7 @@ describe('telemetry idempotency', () => {
 
   it('uses producerEpoch and sequence together, not sequence alone', () => {
     expect(
-      buildTelemetryIdempotencyKey(
-        'source-1',
-        message({ producerEpoch: 'boot-1', sequence: 42 }),
-      ),
+      buildTelemetryIdempotencyKey('source-1', message({ producerEpoch: 'boot-1', sequence: 42 })),
     ).toMatch(/^sha256:[a-f0-9]{64}$/);
 
     expect(buildTelemetryIdempotencyKey('source-1', message({ sequence: 42 }))).toBeUndefined();

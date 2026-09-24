@@ -49,8 +49,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
-  const polygon =
-    body.polygon === undefined ? undefined : parsePolygon(body.polygon);
+  const polygon = body.polygon === undefined ? undefined : parsePolygon(body.polygon);
 
   if (body.polygon !== undefined && !polygon) {
     return NextResponse.json({ error: 'INVALID_POLYGON' }, { status: 400 });

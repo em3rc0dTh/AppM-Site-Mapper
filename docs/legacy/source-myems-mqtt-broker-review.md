@@ -392,3 +392,18 @@ reuse the concept
 reject the accidental implementation
 prove every trust boundary
 ```
+
+
+## 14. Later branch correction / continuation
+
+A later branch, `feat/appM-build`, **does** add the historical pipeline remembered by the project owner:
+
+```text
+Mosquitto -> Telegraf mqtt_consumer -> InfluxDB v2
+```
+
+That later evolution is reviewed separately in:
+
+`docs/legacy/source-myems-appm-build-influx-telegraf-review.md`
+
+This does not invalidate the findings above; it scopes them correctly to `feat/mqtt-broker-no-encrypt`. The InfluxDB/Telegraf integration was added afterward, beginning with commit `805a748026f87c4ec25ac2e994fb186ecbdfb3e4` on 2026-03-20.

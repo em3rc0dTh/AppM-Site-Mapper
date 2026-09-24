@@ -15,7 +15,7 @@ import {
   type SpatialNavigationItem,
 } from '@/components/spatial/spatial-authoring-canvas';
 import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
-import { TopologyCreateForm } from '@/components/topology/topology-create-form';
+import { TopologyCrudPanel } from '@/components/topology/topology-crud-panel';
 import {
   TopologyVisualStage,
   type VisualStageChild,
@@ -24,12 +24,41 @@ import { PinButton } from '@/components/workspace/pin-button';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
+import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import { TopologyService } from '@/modules/topology/application/topology-service';
+import type { TopologyNode } from '@/modules/topology/domain/entities';
 import { allowedChildKinds } from '@/modules/topology/domain/hierarchy';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { InspectButton } from '@/shared/ui/entity-inspector';
 import { SectionHeader, StatePanel, StatusBadge } from '@/shared/ui/primitives';
+
+async function buildHierarchyTree(
+  repository: TopologyRepository,
+  service: TopologyService,
+  root: TopologyNode,
+  visited: ReadonlySet<string> = new Set(),
+): Promise<ContextTreeEntry> {
+  if (visited.has(root.id)) {
+    throw new Error(`Topology cycle detected while rendering hierarchy at ${root.id}.`);
+  }
+
+  const nextVisited = new Set(visited);
+  nextVisited.add(root.id);
+  const children = await repository.listChildren(root.id);
+  const childEntries = await Promise.all(
+    children.map((child) => buildHierarchyTree(repository, service, child, nextVisited)),
+  );
+
+  return {
+    id: root.id,
+    name: root.name,
+    kind: root.kind,
+    href: await service.buildDeepLink(root.id),
+    lifecycle: root.lifecycle,
+    children: childEntries,
+  };
+}
 
 export default async function TopologyNodePage({
   params,
@@ -109,6 +138,10 @@ export default async function TopologyNodePage({
     service.getTrail(node.id),
     service.listChildren(node.id),
   ]);
+  const hierarchyTree =
+    trail[0] === undefined
+      ? []
+      : [await buildHierarchyTree(repository, service, trail[0])];
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
@@ -320,7 +353,7 @@ export default async function TopologyNodePage({
 
       <div className="operational-layout">
         <aside className="operational-context">
-          <TopologyContextTree trail={trailEntries} descendants={contextChildren} />
+          <TopologyContextTree trail={trailEntries} tree={hierarchyTree} />
         </aside>
 
         <section className="operational-stage">
@@ -433,16 +466,6 @@ export default async function TopologyNodePage({
             )}
           </div>
 
-          {canWrite && childKinds.length > 0 && (
-            <div className="operational-edit-dock">
-              {childKinds.map((kind) => (
-                <details className="edit-disclosure" key={kind}>
-                  <summary>Edit · Create {kind.replaceAll('_', ' ').toLowerCase()}</summary>
-                  <TopologyCreateForm kind={kind} parentId={node.id} />
-                </details>
-              ))}
-            </div>
-          )}
         </section>
 
         <aside className="operational-inspector">
@@ -474,6 +497,7 @@ export default async function TopologyNodePage({
                 </Link>
               )}
             </div>
+            {canWrite && <TopologyCrudPanel node={node} childKinds={childKinds} />}
           </div>
         </aside>
       </div>

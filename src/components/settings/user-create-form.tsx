@@ -3,6 +3,18 @@
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
+function userCreateErrorMessage(error: string): string {
+  const messages: Readonly<Record<string, string>> = {
+    USER_EXISTS: 'A user with this email already exists.',
+    FORBIDDEN: 'Your role cannot create a user with the selected role.',
+    INVALID_INPUT: 'Check the name, email and temporary password. Passwords require 12 characters.',
+    INVALID_REQUEST: 'Some required user information is missing or invalid.',
+    USER_CREATE_FAILED: 'User could not be created. Try again.',
+  };
+
+  return messages[error] ?? error.replaceAll('_', ' ');
+}
+
 export function UserCreateForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +39,7 @@ export function UserCreateForm() {
     const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
     if (!response.ok) {
-      setError(body?.error ?? 'USER_CREATE_FAILED');
+      setError(userCreateErrorMessage(body?.error ?? 'USER_CREATE_FAILED'));
       setBusy(false);
       return;
     }

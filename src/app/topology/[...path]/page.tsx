@@ -1,10 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
-import {
-  StructureStudio,
-  type StructureLevelEntry,
-} from '@/components/topology/structure-studio';
+import { StructureStudio, type StructureLevelEntry } from '@/components/topology/structure-studio';
 import { NetworkStudio } from '@/components/topology/network-studio';
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import {

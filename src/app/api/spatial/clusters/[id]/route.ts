@@ -49,9 +49,10 @@ export async function PUT(request: Request, context: Context) {
   }
 
   const { id } = await context.params;
-  const result = await new ClusterRunAuthoringService(
-    await createTopologyRepository(),
-  ).configure(id, { start, end });
+  const result = await new ClusterRunAuthoringService(await createTopologyRepository()).configure(
+    id,
+    { start, end },
+  );
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 422 });

@@ -83,6 +83,25 @@ A Container/Rack may move from one Position to another only when:
 - spatial placement is valid;
 - the move does not violate accepted Blueprint collision rules.
 
+### Container / Rack physical footprint
+
+ContainerCluster/Bay Positions are 600 × 600 mm placement slots.
+
+For a Container/Rack anchored to a Position:
+
+- the Position is the stable topology parent and physical anchor;
+- footprint `width` is aligned with the ContainerCluster/Bay run;
+- width consumes `ceil(width / 600 mm)` consecutive Positions from the anchor toward the run end;
+- width may not extend beyond the remaining Positions in that run;
+- any Position touched by that along-run width is unavailable to another Container/Rack;
+- footprint `depth` projects perpendicular to the run and is not capped at 600 mm;
+- depth may exceed one slot (for example 600 × 900, 900 × 900 or 900 × 1200 mm) only while the full footprint remains inside the Room/Substructure polygon;
+- Container/Rack footprints may not overlap;
+- for a vertical run the footprint rotates with the run: width remains the along-run dimension and depth remains perpendicular;
+- optional physical `height` is independent of the 2D Blueprint footprint and does not consume additional Positions.
+
+Occupancy beyond the anchor Position is derived spatial occupancy; it does not create extra topology parents for the Container/Rack.
+
 ### Device and Equipment
 
 Device and Equipment are siblings.

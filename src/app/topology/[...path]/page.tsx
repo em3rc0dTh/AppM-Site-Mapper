@@ -114,7 +114,7 @@ export default async function TopologyNodePage({
     service.listChildren(node.id),
   ]);
   const hierarchyTree =
-    trail[0] === undefined ? [] : [await buildHierarchyTree(repository, service, trail[0])];
+    trail[0] === undefined ? [] : [await buildContextTree(repository, service, trail[0])];
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 

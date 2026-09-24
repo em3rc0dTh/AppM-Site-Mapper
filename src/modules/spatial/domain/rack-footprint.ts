@@ -1,8 +1,4 @@
-import type {
-  ClusterRun,
-  DimensionsMm,
-  GridCoordinate,
-} from '@/modules/topology/domain/entities';
+import type { ClusterRun, DimensionsMm, GridCoordinate } from '@/modules/topology/domain/entities';
 
 import { rectInsidePolygon, type PointMm, type RectMm } from './geometry';
 import { gridCoordinateToPoint, linearGridRun, rowToIndex, TILE_SIZE_MM } from './grid';

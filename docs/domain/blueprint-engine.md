@@ -36,6 +36,8 @@ Authoring is start/end based:
 
 The generated Positions are the cluster slot list. Empty slots remain valid Positions and may later receive a Container/Rack or remain unused.
 
+Container/Rack placement is slot-driven: in the cluster workspace the operator selects an available Position tile and creates exactly one active `CONTAINER_RACK` child there. Occupied tiles cannot receive a second active Container/Rack.
+
 The persisted cluster run records:
 
 - start grid coordinate;

@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
-import { StructureStudio } from '@/components/topology/structure-studio';
+import {
+  StructureStudio,
+  type StructureLevelEntry,
+} from '@/components/topology/structure-studio';
 import { NetworkStudio } from '@/components/topology/network-studio';
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import {
@@ -217,9 +220,26 @@ export default async function TopologyNodePage({
       });
   }
 
+  const structureLevels: StructureLevelEntry[] =
+    node.kind === 'STRUCTURE'
+      ? await Promise.all(
+          childEntries
+            .filter(({ node: child }) => child.kind === 'LEVEL')
+            .map(async ({ node: level, href }) => {
+              const contained = await service.listChildren(level.id);
+              return {
+                node: level,
+                href,
+                containedCount: contained.length,
+                containedNames: contained.map((child) => child.name),
+              };
+            }),
+        )
+      : [];
+
   const structurePreviewNodes =
-    node.kind === 'STRUCTURE' && children[0]?.kind === 'LEVEL'
-      ? await service.listChildren(children[0].id)
+    node.kind === 'STRUCTURE' && structureLevels.length > 0
+      ? await service.listChildren(structureLevels[0]!.node.id)
       : [];
 
   const structurePreviewEntries: VisualStageChild[] = await Promise.all(
@@ -377,7 +397,7 @@ export default async function TopologyNodePage({
               <StructureStudio
                 key={node.id}
                 node={node}
-                levels={childEntries}
+                levels={structureLevels}
                 canWrite={canWrite}
               />
             ) : node.kind === 'LEVEL' && (boundaryContext.length > 0 || childEntries.length > 0) ? (

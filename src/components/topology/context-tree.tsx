@@ -123,13 +123,17 @@ export function TopologyContextTree({
   trail,
   tree,
   supplemental = [],
+  descendants = [],
 }: Readonly<{
   trail: readonly ContextTreeEntry[];
-  tree: readonly ContextTreeEntry[];
+  tree?: readonly ContextTreeEntry[];
   supplemental?: readonly ContextTreeEntry[];
+  descendants?: readonly ContextTreeEntry[];
 }>) {
   const active = trail.at(-1);
   const activePath = new Set(trail.map((entry) => entry.id));
+  const roots = tree ?? (trail[0] ? [{ ...trail[0], children: descendants }] : []);
+  const extras = supplemental.length > 0 ? supplemental : [];
 
   return (
     <nav className="context-tree legacy-context-tree" aria-label="Infrastructure hierarchy">
@@ -150,7 +154,7 @@ export function TopologyContextTree({
 
       <div className="context-tree-full">
         <ol>
-          {tree.map((entry) => (
+          {roots.map((entry) => (
             <TreeNode
               key={entry.id}
               entry={entry}
@@ -162,10 +166,10 @@ export function TopologyContextTree({
         </ol>
       </div>
 
-      {supplemental.length > 0 && (
+      {extras.length > 0 && (
         <div className="context-tree-supplemental">
           <span>INTERNAL / NEXT</span>
-          {supplemental.map((entry) => (
+          {extras.map((entry) => (
             <EntryControl key={entry.id} entry={entry} current={entry.id === active?.id} />
           ))}
         </div>

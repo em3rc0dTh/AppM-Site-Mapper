@@ -52,7 +52,14 @@ function polygon(value: unknown): readonly PointMm[] | undefined {
   const points: PointMm[] = [];
   for (const item of value) {
     const point = asObject(item);
-    if (!point || typeof point.x !== 'number' || typeof point.y !== 'number' || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return undefined;
+    if (
+      !point ||
+      typeof point.x !== 'number' ||
+      typeof point.y !== 'number' ||
+      !Number.isFinite(point.x) ||
+      !Number.isFinite(point.y)
+    )
+      return undefined;
     points.push({ x: point.x, y: point.y });
   }
   return points;
@@ -166,7 +173,10 @@ export async function POST(request: Request) {
   }
 
   if (kind === 'STRUCTURE' && parsedPolygon) {
-    const spatial = await new SpatialService(repository).updateBoundary(result.value.id, parsedPolygon);
+    const spatial = await new SpatialService(repository).updateBoundary(
+      result.value.id,
+      parsedPolygon,
+    );
     if (!spatial.ok) {
       await new TopologyService(repository).archive(result.value.id);
       return NextResponse.json({ error: spatial.error }, { status: 422 });

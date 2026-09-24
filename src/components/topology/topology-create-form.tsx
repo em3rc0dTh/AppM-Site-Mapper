@@ -21,6 +21,7 @@ export function TopologyCreateForm({
 }: Readonly<{ kind: TopologyKind; parentId: string | null }>) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [containerVariant, setContainerVariant] = useState<'RACK' | 'CONTAINER'>('RACK');
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,8 +93,11 @@ export function TopologyCreateForm({
     }
 
     if (kind === 'CONTAINER_RACK') {
-      payload.containerVariant = String(form.get('variant') ?? 'RACK');
-      payload.totalU = Number(form.get('totalU') ?? 42);
+      const variant = String(form.get('variant') ?? 'RACK');
+      payload.containerVariant = variant;
+      if (variant === 'RACK') {
+        payload.totalU = Number(form.get('totalU') ?? 42);
+      }
       payload.dimensionsMm = {
         width: Number(form.get('widthMm') ?? 600),
         depth: Number(form.get('depthMm') ?? 600),
@@ -134,7 +138,11 @@ export function TopologyCreateForm({
 
   return (
     <form className="create-form" onSubmit={submit}>
-      <strong>Create {kind.replaceAll('_', ' ').toLowerCase()}</strong>
+      <strong>
+        {kind === 'CONTAINER_RACK'
+          ? 'Create rack / container'
+          : `Create ${kind.replaceAll('_', ' ').toLowerCase()}`}
+      </strong>
       <input aria-label="Name" name="name" placeholder="Name" required />
       {kind === 'STRUCTURE' && (
         <fieldset className="create-form-physical">
@@ -203,17 +211,26 @@ export function TopologyCreateForm({
       )}
       {kind === 'CONTAINER_RACK' && (
         <>
-          <select aria-label="Entity variant" name="variant" defaultValue="RACK">
+          <select
+            aria-label="Entity variant"
+            name="variant"
+            value={containerVariant}
+            onChange={(event) =>
+              setContainerVariant(event.target.value === 'CONTAINER' ? 'CONTAINER' : 'RACK')
+            }
+          >
             <option value="RACK">Rack</option>
             <option value="CONTAINER">Container</option>
           </select>
-          <input
-            aria-label="Rack capacity in U"
-            name="totalU"
-            type="number"
-            min="1"
-            defaultValue="42"
-          />
+          {containerVariant === 'RACK' && (
+            <input
+              aria-label="Rack capacity in U"
+              name="totalU"
+              type="number"
+              min="1"
+              defaultValue="42"
+            />
+          )}
           <input
             aria-label="Physical width in millimetres"
             name="widthMm"

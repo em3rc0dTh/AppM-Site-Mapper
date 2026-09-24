@@ -9,12 +9,6 @@ import type {
 } from '@/modules/topology/domain/entities';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
-import {
-  isValidPolygon,
-  polygonContainedByPolygon,
-  type PointMm,
-} from '@/modules/spatial/domain/geometry';
-import { SpatialService } from '@/modules/spatial/application/spatial-service';
 
 const topologyKinds = new Set<TopologyKind>([
   'NETWORK',
@@ -45,24 +39,6 @@ function roomVariant(value: unknown): RoomSubstructureVariant | undefined {
 
 function clusterVariant(value: unknown): ContainerClusterBayVariant | undefined {
   return value === 'CONTAINER_CLUSTER' || value === 'BAY' ? value : undefined;
-}
-
-function polygon(value: unknown): readonly PointMm[] | undefined {
-  if (!Array.isArray(value) || value.length < 3 || value.length > 256) return undefined;
-  const points: PointMm[] = [];
-  for (const item of value) {
-    const point = asObject(item);
-    if (
-      !point ||
-      typeof point.x !== 'number' ||
-      typeof point.y !== 'number' ||
-      !Number.isFinite(point.x) ||
-      !Number.isFinite(point.y)
-    )
-      return undefined;
-    points.push({ x: point.x, y: point.y });
-  }
-  return points;
 }
 
 function containerVariant(value: unknown): ContainerRackVariant | undefined {
@@ -114,15 +90,6 @@ export async function POST(request: Request) {
       : undefined;
 
   const parsedRoomVariant = roomVariant(body.roomVariant);
-  const parsedPolygon = polygon(body.polygon);
-
-  if (body.polygon !== undefined && !parsedPolygon) {
-    return NextResponse.json({ error: 'INVALID_POLYGON' }, { status: 400 });
-  }
-
-  if (parsedPolygon && !isValidPolygon(parsedPolygon)) {
-    return NextResponse.json({ error: 'INVALID_POLYGON' }, { status: 422 });
-  }
   const parsedClusterVariant = clusterVariant(body.clusterVariant);
   const parsedContainerVariant = containerVariant(body.containerVariant);
   const dimensionsObject = asObject(body.dimensionsMm);
@@ -143,17 +110,6 @@ export async function POST(request: Request) {
 
   const repository = await createTopologyRepository();
 
-  if (kind === 'STRUCTURE' && parsedPolygon && parentId) {
-    const parent = await repository.getById(parentId);
-    if (
-      parent?.kind === 'SITE' &&
-      parent.polygon &&
-      !polygonContainedByPolygon(parsedPolygon, parent.polygon)
-    ) {
-      return NextResponse.json({ error: 'BOUNDARY_OUTSIDE_PARENT' }, { status: 422 });
-    }
-  }
-
   const result = await new TopologyService(repository).create({
     kind,
     parentId,
@@ -172,17 +128,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status: 422 });
   }
 
-  if (kind === 'STRUCTURE' && parsedPolygon) {
-    const spatial = await new SpatialService(repository).updateBoundary(
-      result.value.id,
-      parsedPolygon,
-    );
-    if (!spatial.ok) {
-      await new TopologyService(repository).archive(result.value.id);
-      return NextResponse.json({ error: spatial.error }, { status: 422 });
-    }
-    return NextResponse.json({ node: spatial.value }, { status: 201 });
-  }
 
   return NextResponse.json({ node: result.value }, { status: 201 });
 }

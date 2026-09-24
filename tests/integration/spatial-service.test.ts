@@ -22,6 +22,13 @@ const network: NetworkNode = {
   updatedAt: timestamp,
 };
 
+const siteBoundary = [
+  { x: -1000, y: -1000 },
+  { x: 4000, y: -1000 },
+  { x: 4000, y: 4000 },
+  { x: -1000, y: 4000 },
+] as const;
+
 const site: SiteNode = {
   id: '00000000-0000-4000-8000-000000000101',
   kind: 'SITE',
@@ -30,6 +37,7 @@ const site: SiteNode = {
   lifecycle: 'ACTIVE',
   createdAt: timestamp,
   updatedAt: timestamp,
+  polygon: siteBoundary,
 };
 
 const structure: StructureNode = {
@@ -96,6 +104,18 @@ describe('SpatialService boundary authoring', () => {
     expect(persistedRoom?.kind === 'ROOM_SUBSTRUCTURE' ? persistedRoom.polygon : undefined).toEqual(
       polygon,
     );
+  });
+
+  it('rejects a Structure footprint outside its parent Site boundary', async () => {
+    const repository = new MemoryTopologyRepository([network, site, structure, level, room]);
+    const result = await new SpatialService(repository).updateBoundary(structure.id, [
+      { x: 0, y: 0 },
+      { x: 5000, y: 0 },
+      { x: 5000, y: 1200 },
+      { x: 0, y: 1200 },
+    ]);
+
+    expect(result).toEqual({ ok: false, error: 'BOUNDARY_OUTSIDE_PARENT' });
   });
 
   it('does not invent persisted geometry for Level', async () => {

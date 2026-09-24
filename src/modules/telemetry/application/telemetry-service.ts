@@ -48,10 +48,7 @@ export class TelemetryService {
     private readonly hub: TelemetryHub,
     private readonly options: TelemetryServiceOptions,
   ) {
-    if (
-      !Number.isInteger(options.quarantineRetentionDays) ||
-      options.quarantineRetentionDays < 1
-    ) {
+    if (!Number.isInteger(options.quarantineRetentionDays) || options.quarantineRetentionDays < 1) {
       throw new Error('Telemetry quarantineRetentionDays must be a positive integer.');
     }
   }

@@ -14,11 +14,13 @@ import { failure, success, type Result } from '@/shared/domain/result';
 import {
   isValidPolygon,
   polygonContainedByPolygon,
+  rectsOverlap,
   type PointMm,
   type RectMm,
 } from '@/modules/spatial/domain/geometry';
 import { generateAssignableSlots } from '@/modules/spatial/domain/placement';
 import { gridCoordinateToPoint, TILE_SIZE_MM } from '@/modules/spatial/domain/grid';
+import { resolveRackFootprint } from '@/modules/spatial/domain/rack-footprint';
 
 export type SpatialBoundaryNode = SiteNode | StructureNode | RoomSubstructureNode;
 export type SpatialError =
@@ -30,8 +32,11 @@ export type SpatialError =
 
 export interface RackPlacementView {
   readonly id: string;
-  readonly positionId?: string;
+  readonly positionId: string;
+  readonly clusterId: string;
   readonly name: string;
+  readonly variant: ContainerRackNode['variant'];
+  readonly dimensionsMm: Readonly<{ width: number; depth: number; height?: number }>;
   readonly rect: RectMm;
 }
 
@@ -43,6 +48,8 @@ export interface PositionPlacementView {
   readonly clusterName: string;
   readonly rect: RectMm;
   readonly occupied: boolean;
+  readonly occupancyRole?: 'ANCHOR' | 'COVERED';
+  readonly rack?: RackPlacementView;
 }
 
 export interface ClusterPlacementView {
@@ -181,43 +188,66 @@ export class SpatialService {
     );
 
     const racksByPosition = await Promise.all(
-      positionsByCluster.flatMap(({ positions: clusterPositions }) =>
+      positionsByCluster.flatMap(({ cluster, positions: clusterPositions }) =>
         clusterPositions.map(async (position) => {
           const racks = (await this.repository.listChildren(position.id)).filter(
             (child): child is ContainerRackNode =>
               child.kind === 'CONTAINER_RACK' && child.lifecycle === 'ACTIVE',
           );
-          return { position, racks };
+          return { cluster, position, racks };
         }),
       ),
     );
 
-    const racks = racksByPosition.flatMap(({ position, racks: positionRacks }) => {
-      const point = gridCoordinateToPoint(position.coordinate);
+    const racks: RackPlacementView[] = racksByPosition.flatMap(
+      ({ cluster, position, racks: positionRacks }) => {
+        const point = gridCoordinateToPoint(position.coordinate);
 
-      return positionRacks.map((rack) => ({
-        id: rack.id,
-        positionId: position.id,
-        name: rack.name,
-        rect: {
-          x: point.x,
-          y: point.y,
-          width: rack.dimensionsMm?.width ?? TILE_SIZE_MM,
-          depth: rack.dimensionsMm?.depth ?? TILE_SIZE_MM,
-        },
-      }));
-    });
+        return positionRacks.map((rack) => {
+          const dimensionsMm = rack.dimensionsMm ?? {
+            width: TILE_SIZE_MM,
+            depth: TILE_SIZE_MM,
+          };
+          const resolved =
+            cluster.run && node.polygon
+              ? resolveRackFootprint(position.coordinate, cluster.run, dimensionsMm, node.polygon)
+              : null;
 
-    const occupiedPositionIds = new Set(
-      racksByPosition
-        .filter(({ racks: positionRacks }) => positionRacks.length > 0)
-        .map(({ position }) => position.id),
+          return {
+            id: rack.id,
+            positionId: position.id,
+            clusterId: cluster.id,
+            name: rack.name,
+            variant: rack.variant,
+            dimensionsMm,
+            rect:
+              resolved?.ok
+                ? resolved.rect
+                : {
+                    x: point.x,
+                    y: point.y,
+                    width: dimensionsMm.width,
+                    depth: dimensionsMm.depth,
+                  },
+          };
+        });
+      },
     );
 
-    const positionViews: PositionPlacementView[] = positions.map((position) => ({
-      ...position,
-      occupied: occupiedPositionIds.has(position.id),
-    }));
+    const positionViews: PositionPlacementView[] = positions.map((position) => {
+      const rack = racks.find((candidate) => rectsOverlap(position.rect, candidate.rect));
+
+      return {
+        ...position,
+        occupied: Boolean(rack),
+        ...(rack
+          ? {
+              rack,
+              occupancyRole: rack.positionId === position.id ? ('ANCHOR' as const) : ('COVERED' as const),
+            }
+          : {}),
+      };
+    });
 
     const clusterViews: ClusterPlacementView[] = positionsByCluster.map(
       ({ cluster, positions: clusterPositions }) => {

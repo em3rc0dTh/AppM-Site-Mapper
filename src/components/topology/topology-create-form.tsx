@@ -41,14 +41,14 @@ function createDescription(kind: TopologyKind): string {
     LEVEL:
       'Floor or hierarchy level inside the Structure. Levels do not own a separate polygon by default.',
     ROOM_SUBSTRUCTURE:
-      'Physical room or substructure on this Level. Its boundary is drawn in the Blueprint after creation.',
+      'Physical area on this Level. Choose Room or Substructure; both use a Blueprint boundary.',
     CONTAINER_CLUSTER_BAY:
       'Linear group of 600 × 600 mm slots. After creation, mark its first and last slot on the Room Blueprint.',
     POSITION:
       'One addressable 600 × 600 mm slot inside a ContainerCluster/Bay. Cluster runs normally generate these automatically.',
     CONTAINER_RACK: 'Physical Rack or Container placed in the selected Position.',
-    DEVICE: 'Inventory device mounted inside the selected Rack or Container.',
-    EQUIPMENT: 'Operational equipment mounted inside the selected Rack or Container.',
+    DEVICE: 'Inventory Device mounted inside the selected Rack or Container.',
+    EQUIPMENT: 'Inventory Equipment mounted inside the selected Rack or Container.',
   };
 
   return descriptions[kind];
@@ -271,8 +271,8 @@ export function TopologyCreateForm({
               <option value="SUBSTRUCTURE">Substructure</option>
             </select>
             <small>
-              Room is a normal enclosed area. Substructure is a physical area that does not need to
-              be presented as a conventional room.
+              Choose the classification that matches your operational model. Both variants own a
+              Blueprint boundary.
             </small>
           </label>
           <small className="create-form-help">
@@ -333,8 +333,8 @@ export function TopologyCreateForm({
         <fieldset className="create-form-physical create-form-placement">
           <legend>Physical asset</legend>
           <p className="create-form-help">
-            Rack = equipment frame measured in rack units (U). Container = physical enclosure or
-            cabinet without rack-unit capacity.
+            Rack = physical asset with rack-unit capacity (U). Container = physical Container
+            variant without rack-unit capacity.
           </p>
 
           <label className="create-form-field">

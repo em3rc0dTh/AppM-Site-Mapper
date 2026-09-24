@@ -12,7 +12,7 @@ import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 import {
   isValidPolygon,
-  pointInPolygon,
+  polygonContainedByPolygon,
   type PointMm,
   type RectMm,
 } from '@/modules/spatial/domain/geometry';
@@ -91,7 +91,7 @@ export class SpatialService {
         parent?.kind === 'SITE' &&
         parent.polygon &&
         parent.polygon.length >= 3 &&
-        !polygon.every((point) => pointInPolygon(point, parent.polygon!))
+        !polygonContainedByPolygon(polygon, parent.polygon)
       ) {
         return failure('BOUNDARY_OUTSIDE_PARENT');
       }

@@ -214,7 +214,7 @@ export class MongoTelemetryAcceptanceRepository implements TelemetryAcceptanceRe
       {
         $set: {
           historyState: 'PENDING',
-          nextHistoryAttemptAt,
+          nextHistoryAttemptAt: nextAttemptAt,
           historyLastErrorCode: errorCode,
         },
         $unset: {

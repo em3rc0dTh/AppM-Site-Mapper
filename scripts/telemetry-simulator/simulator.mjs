@@ -177,6 +177,8 @@ class MqttPublisher {
       this.connected = false;
     });
 
+    const connack = this.waitFor('connack', 5_000);
+
     socket.write(
       encodeConnect({
         clientId: this.options.clientId,
@@ -185,7 +187,7 @@ class MqttPublisher {
       }),
     );
 
-    await this.waitFor('connack', 5_000);
+    await connack;
     this.connected = true;
   }
 
@@ -196,8 +198,10 @@ class MqttPublisher {
 
     const packetId = this.nextPacketId();
     const payload = Buffer.from(JSON.stringify(object), 'utf8');
+    const puback = this.waitFor(`puback:${packetId}`, 5_000);
+
     this.socket.write(encodePublish(topic, payload, packetId));
-    await this.waitFor(`puback:${packetId}`, 5_000);
+    await puback;
   }
 
   close() {

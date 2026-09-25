@@ -252,7 +252,7 @@ Legend:
 | CI / automated QA                | PASS                          | Far stronger than V1 AS-IS.                                                                                   |
 | Browser E2E evidence             | PASS                          | Site->Breaker, modal, history demo, recovery and viewport matrix certified.                                   |
 | Production observability         | PARTIAL                       | JSON logger exists; correlation IDs, metrics, tracing and readiness are open.                                 |
-| Production deployment            | OPEN                          | No environment-specific deployment has been certified by repository evidence.                                |
+| Production deployment            | OPEN                          | No environment-specific deployment has been certified by repository evidence.                                 |
 
 ## 6. Key current architecture strengths
 

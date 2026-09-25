@@ -19,14 +19,16 @@ That single command:
 9. opens the login page;
 10. shuts down the app, publisher and demo containers on Ctrl+C.
 
-The broker binds only to `127.0.0.1:1883`. Its anonymous/plaintext configuration exists solely for
-this local synthetic demo and is intentionally separate from the secured production/reference
-Mosquitto policy under `infra/mosquitto/`.
+The launcher chooses free loopback ports automatically, starting at Mongo `37017` and MQTT
+`18883`. Existing services on `27017`, `1883`, or the preferred demo ports are left untouched.
+The anonymous/plaintext broker exists solely for this loopback synthetic demo and is intentionally
+separate from the secured production/reference Mosquitto policy under `infra/mosquitto/`.
 
 Optional overrides:
 
 ```bash
 DEMO_PORT=3100 npm run demo:telemetry
+DEMO_MONGO_PORT=47017 DEMO_MQTT_PORT=28883 npm run demo:telemetry
 SIM_INTERVAL_MS=1000 npm run demo:telemetry
 DEMO_NO_BROWSER=true npm run demo:telemetry
 ```

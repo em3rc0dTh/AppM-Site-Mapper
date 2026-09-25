@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import net from 'node:net';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
@@ -10,8 +10,8 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const COMPOSE_FILE = path.join(ROOT, 'infra', 'demo', 'docker-compose.telemetry.yml');
 const COMPOSE_PROJECT = 'appm-telemetry-demo';
 const DATABASE_NAME = 'appm_site_mapper_demo';
-const MONGO_URI = 'mongodb://127.0.0.1:27017';
-const MQTT_URL = 'mqtt://127.0.0.1:1883';
+const DEFAULT_MONGO_PORT = 37017;
+const DEFAULT_MQTT_PORT = 18883;
 const SERIAL_NUMBER = 'DEMO25110703400009';
 const TOPIC_SOURCE = 'demo-qdf-01';
 const ENTITY_ID = 'demo-equipment-qdf-01';
@@ -21,7 +21,24 @@ const children = new Set();
 let shuttingDown = false;
 
 function commandName(base) {
-  return process.platform === 'win32' && base === 'npm' ? 'npm.cmd' : base;
+  if (process.platform !== 'win32') return base;
+  if (base === 'npm') return 'npm.cmd';
+
+  if (base === 'docker') {
+    const programFiles = process.env.ProgramFiles ?? 'C:\\Program Files';
+    const dockerDesktop = path.join(
+      programFiles,
+      'Docker',
+      'Docker',
+      'resources',
+      'bin',
+      'docker.exe',
+    );
+
+    if (existsSync(dockerDesktop)) return dockerDesktop;
+  }
+
+  return base;
 }
 
 function run(command, args, options = {}) {
@@ -85,6 +102,25 @@ async function ensureDocker() {
   await run(commandName('docker'), ['compose', 'version'], { stdio: 'ignore' }).catch(() => {
     throw new Error('Docker with Docker Compose is required and must be running.');
   });
+}
+
+function canBindPort(host, port) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+
+    server.once('error', () => resolve(false));
+    server.listen({ host, port, exclusive: true }, () => {
+      server.close(() => resolve(true));
+    });
+  });
+}
+
+async function findAvailablePort(startPort, host = '127.0.0.1') {
+  for (let port = startPort; port <= startPort + 100; port += 1) {
+    if (await canBindPort(host, port)) return port;
+  }
+
+  throw new Error(`No free local TCP port found from ${startPort} to ${startPort + 100}.`);
 }
 
 async function waitForPort(host, port, timeoutMs = 60_000) {
@@ -172,9 +208,9 @@ function topologyDocuments(now) {
   ];
 }
 
-async function seedDemoDatabase() {
+async function seedDemoDatabase(mongoUri) {
   const { MongoClient } = await import('mongodb');
-  const client = new MongoClient(MONGO_URI, { serverSelectionTimeoutMS: 5_000 });
+  const client = new MongoClient(mongoUri, { serverSelectionTimeoutMS: 5_000 });
   await client.connect();
 
   try {
@@ -222,15 +258,27 @@ async function bootstrapAdmin(baseUrl, token, email, password) {
   }
 }
 
+function isWsl() {
+  if (process.platform !== 'linux') return false;
+
+  try {
+    return /microsoft/i.test(readFileSync('/proc/version', 'utf8'));
+  } catch {
+    return false;
+  }
+}
+
 async function openBrowser(url) {
   if (process.env.DEMO_NO_BROWSER === 'true') return;
 
   const opener =
     process.platform === 'win32'
       ? { command: 'cmd', args: ['/c', 'start', '', url] }
-      : process.platform === 'darwin'
-        ? { command: 'open', args: [url] }
-        : { command: 'xdg-open', args: [url] };
+      : isWsl()
+        ? { command: 'cmd.exe', args: ['/c', 'start', '', url] }
+        : process.platform === 'darwin'
+          ? { command: 'open', args: [url] }
+          : { command: 'xdg-open', args: [url] };
 
   const child = spawn(opener.command, opener.args, {
     cwd: ROOT,
@@ -238,6 +286,7 @@ async function openBrowser(url) {
     detached: true,
     shell: false,
   });
+  child.once('error', () => undefined);
   child.unref();
 }
 
@@ -274,20 +323,34 @@ async function main() {
   await ensureDependencies();
   await ensureDocker();
 
-  console.log('[demo] Starting MongoDB + demo MQTT broker...');
-  await run(commandName('docker'), [
-    'compose',
-    '-p',
-    COMPOSE_PROJECT,
-    '-f',
-    COMPOSE_FILE,
-    'up',
-    '-d',
-    '--remove-orphans',
-  ]);
+  const mongoPort = await findAvailablePort(
+    Number(process.env.DEMO_MONGO_PORT ?? DEFAULT_MONGO_PORT),
+  );
+  const mqttPort = await findAvailablePort(
+    Number(process.env.DEMO_MQTT_PORT ?? DEFAULT_MQTT_PORT),
+  );
+  const mongoUri = `mongodb://127.0.0.1:${mongoPort}`;
+  const mqttUrl = `mqtt://127.0.0.1:${mqttPort}`;
+  const composeEnv = {
+    ...process.env,
+    DEMO_MONGO_PORT: String(mongoPort),
+    DEMO_MQTT_PORT: String(mqttPort),
+  };
 
-  await Promise.all([waitForPort('127.0.0.1', 27017), waitForPort('127.0.0.1', 1883)]);
-  await seedDemoDatabase();
+  console.log(
+    `[demo] Starting isolated MongoDB on ${mongoPort} + MQTT broker on ${mqttPort}...`,
+  );
+  await run(
+    commandName('docker'),
+    ['compose', '-p', COMPOSE_PROJECT, '-f', COMPOSE_FILE, 'up', '-d', '--remove-orphans'],
+    { env: composeEnv },
+  );
+
+  await Promise.all([
+    waitForPort('127.0.0.1', mongoPort),
+    waitForPort('127.0.0.1', mqttPort),
+  ]);
+  await seedDemoDatabase(mongoUri);
 
   const bootstrapToken = randomBytes(32).toString('hex');
   const adminPassword = `Demo-${randomBytes(10).toString('base64url')}!9`;
@@ -298,7 +361,7 @@ async function main() {
     ...process.env,
     APP_ENV: 'development',
     APP_PERSISTENCE: 'mongodb',
-    MONGODB_URI: MONGO_URI,
+    MONGODB_URI: mongoUri,
     MONGODB_DB_NAME: DATABASE_NAME,
     BOOTSTRAP_ADMIN_TOKEN: bootstrapToken,
     TELEMETRY_ENABLED: 'true',
@@ -306,7 +369,7 @@ async function main() {
     TELEMETRY_MAX_PAYLOAD_BYTES: '262144',
     TELEMETRY_MAX_REPORTED_ENTRIES: '512',
     TELEMETRY_QUARANTINE_RETENTION_DAYS: '14',
-    MQTT_BROKER_URL: MQTT_URL,
+    MQTT_BROKER_URL: mqttUrl,
     MQTT_CLIENT_ID: 'appmanager-site-mapper-demo',
     MQTT_TOPIC_PREFIX: 'appmanager/v1/raw/',
     MQTT_TOPIC_SUFFIX: '/telemetry',
@@ -325,7 +388,7 @@ async function main() {
 
   const simulatorEnv = {
     ...appEnv,
-    SIM_MQTT_BROKER_URL: MQTT_URL,
+    SIM_MQTT_BROKER_URL: mqttUrl,
     SIM_TOPIC_MODE: 'appmanager',
     SIM_TOPIC_SOURCE: TOPIC_SOURCE,
     SIM_SERIAL_NUMBER: SERIAL_NUMBER,
@@ -351,6 +414,8 @@ async function main() {
   console.log(` Password: ${adminPassword}`);
   console.log(` Device:   ${SERIAL_NUMBER}`);
   console.log(` Source:   ${TOPIC_SOURCE}`);
+  console.log(` Mongo:    127.0.0.1:${mongoPort} (isolated demo)`);
+  console.log(` MQTT:     127.0.0.1:${mqttPort} (isolated demo)`);
   console.log(' Data:     SYNTHETIC / SIMULATED');
   console.log('');
   console.log(' Sign in once in the opened browser, then visit /telemetry.');

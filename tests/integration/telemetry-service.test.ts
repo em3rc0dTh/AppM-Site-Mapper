@@ -149,7 +149,7 @@ describe('TelemetryService', () => {
           },
         }),
       ),
-      '2026-09-24T00:00:02.000Z',
+      '2026-09-24T00:00:01.000Z',
     );
 
     unsubscribe?.();
@@ -168,7 +168,7 @@ describe('TelemetryService', () => {
     });
     expect(latest?.reportedEntryRecency?.['0_1_11']).toMatchObject({
       observedAt: '2026-03-18T14:51:50.000Z',
-      receivedAt: '2026-09-24T00:00:02.000Z',
+      receivedAt: '2026-09-24T00:00:01.000Z',
       sourceMessageId: '599',
     });
 

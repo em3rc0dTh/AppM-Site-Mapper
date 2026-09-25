@@ -139,6 +139,10 @@ export class MongoTelemetryLatestRepository implements TelemetryLatestRepository
               observedAt: sample.observedAt,
               receivedAt: { $lt: sample.receivedAt },
             },
+            {
+              observedAt: sample.observedAt,
+              receivedAt: sample.receivedAt,
+            },
             { observedAt: { $exists: false } },
           ],
         },

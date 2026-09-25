@@ -22,7 +22,7 @@ export class MemoryTelemetryLatestRepository implements TelemetryLatestRepositor
   async upsertIfNewer(sample: TelemetrySample): Promise<boolean> {
     const current = this.latestByEntity.get(sample.entityId);
 
-    if (current && compareTelemetryRecency(sample, current) <= 0) {
+    if (current && compareTelemetryRecency(sample, current) < 0) {
       return false;
     }
 

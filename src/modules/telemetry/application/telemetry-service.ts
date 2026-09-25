@@ -213,6 +213,10 @@ export class TelemetryService {
       return failure('IDEMPOTENCY_CONFLICT');
     }
 
+    if (acceptanceResult.kind === 'DUPLICATE') {
+      return success(acceptanceResult.record.sample);
+    }
+
     const durableSample = acceptanceResult.record.sample;
     const becameLatest = await this.latestRepository.upsertIfNewer(durableSample);
 

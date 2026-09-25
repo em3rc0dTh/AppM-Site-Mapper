@@ -137,7 +137,10 @@ export class TimescaleTelemetryHistorySink implements TelemetryHistorySink {
       }
 
       const fingerprint = fingerprintPoint(event, metric);
-      const result = await this.client.query(UPSERT_POINT_SQL, pointValues(event, metric, fingerprint));
+      const result = await this.client.query(
+        UPSERT_POINT_SQL,
+        pointValues(event, metric, fingerprint),
+      );
       const persisted = result.rows[0]?.point_fingerprint;
 
       if (persisted !== fingerprint) {

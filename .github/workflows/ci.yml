@@ -24,6 +24,12 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Resolve Next security patch lockfile
+        run: |
+          npm install next@16.3.6 eslint-config-next@16.3.6 --save-exact --package-lock-only --ignore-scripts --no-audit --no-fund
+          git diff -- package.json package-lock.json
+          exit 1
+
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 

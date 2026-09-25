@@ -684,7 +684,6 @@
   }
 }
 
-
 /* The 24-position desktop BDFB is a single operational frame, not a scroll document. */
 .operational-page--bdfb {
   height: calc(100dvh - 56px);

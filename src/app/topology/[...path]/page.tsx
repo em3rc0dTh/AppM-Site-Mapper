@@ -77,7 +77,9 @@ export default async function TopologyNodePage({
       : null;
 
   return (
-    <main className={`operational-page${node.kind === 'DEVICE' && node.bdfb ? ' operational-page--bdfb' : ''}`}>
+    <main
+      className={`operational-page${node.kind === 'DEVICE' && node.bdfb ? ' operational-page--bdfb' : ''}`}
+    >
       <nav className="breadcrumbs operational-breadcrumbs" aria-label="Breadcrumb">
         <Link href="/network">Network index</Link>
         {trailEntries.map((item) => (

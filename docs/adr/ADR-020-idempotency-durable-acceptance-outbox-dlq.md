@@ -73,8 +73,9 @@ The state machine is:
 ```text
 PENDING
   -> IN_FLIGHT (claim + lease owner + lease expiry + attempts++)
-  -> DELIVERED (sink write confirmed)
-  -> PENDING   (write failed; retry scheduled)
+  -> DELIVERED (canonical sink write confirmed)
+  -> PENDING (transient sink failure; retry scheduled)
+  -> DEAD_LETTERED (permanent canonicalization/profile failure)
 
 IN_FLIGHT with an expired lease
   -> IN_FLIGHT (reclaimed by another worker)
@@ -84,12 +85,21 @@ Claims are atomic in Mongo through `findOneAndUpdate`. A worker can acknowledge 
 an event currently leased to its own `workerId`. This prevents two workers from intentionally
 delivering the same event concurrently and allows recovery after a process crash.
 
-Retries use bounded exponential backoff. Only a bounded error code is persisted; arbitrary exception
-messages are not copied into the outbox.
+The history worker canonicalizes the accepted raw-normalized sample before invoking the sink.
+Permanent projection failures such as an unsupported protocol profile, malformed breaker reading or
+invalid historically-known metric value transition to `DEAD_LETTERED` and are not retried
+automatically. The original accepted event remains in the durable ledger so an explicitly authorized
+future replay/migration can re-project it after the adapter contract changes.
 
-The history sink is an application interface. G16 therefore does not couple the acceptance ledger to
-TimescaleDB, InfluxDB, Telegraf or another time-series implementation before the benchmark/ADR is
-closed.
+Only transient sink failures are retried. Retries use bounded exponential backoff. Only a bounded
+error code is persisted; arbitrary exception messages are not copied into the outbox.
+
+Every state transition remains lease-owner guarded. A failed terminal/retry transition is counted as
+a lease-loss condition rather than silently reported as delivered or rescheduled.
+
+The history sink receives the canonical internal event, not the hardware payload or raw outbox row.
+It remains an application interface, so G16 does not couple the acceptance ledger to TimescaleDB,
+InfluxDB, Telegraf or another time-series implementation before the benchmark/ADR is closed.
 
 Exactly-once persistence is **not** claimed. The sink must remain idempotent by canonical event
 identity because a worker can fail after the sink commits but before the outbox row is marked
@@ -128,11 +138,13 @@ Positive:
 - history delivery supports multiple workers without uncontrolled concurrent drains;
 - expired leases make worker crashes recoverable;
 - history retries are explicit and bounded;
+- permanent projection failures terminate in an indexed dead-letter state instead of retrying forever;
+- canonicalization is separated from vendor-specific history persistence;
+- lease-loss accounting prevents worker ownership races from being hidden;
 - the time-series backend remains replaceable behind a stable sink boundary.
 
 Remaining G16 work:
 
-- canonical metric adapter backed by real V1 fixtures;
 - concrete TSDB sink plus sink-level idempotency;
 - outbox backlog limits, metrics and alerting;
 - broker-side QoS/session/ACL certification;

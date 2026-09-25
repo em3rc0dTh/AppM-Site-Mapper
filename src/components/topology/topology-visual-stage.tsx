@@ -9,6 +9,11 @@ export interface VisualStageChild {
   readonly href: string;
 }
 
+export interface VisualStageNotice {
+  readonly title: string;
+  readonly description: string;
+}
+
 function metadata(node: TopologyNode): string {
   switch (node.kind) {
     case 'POSITION':
@@ -201,6 +206,34 @@ function LevelCanvas({ items }: { items: readonly VisualStageChild[] }) {
   );
 }
 
+function RoomCanvas({ items }: { items: readonly VisualStageChild[] }) {
+  return (
+    <div className="legacy-room-contained-canvas">
+      <div className="legacy-room-contained-grid" aria-hidden="true" />
+      <div className="legacy-room-contained-field">
+        {items.map(({ node, href }, index) => (
+          <ChildLink
+            key={node.id}
+            child={node}
+            href={href}
+            className="legacy-room-contained-node"
+            style={{ '--node-order': index } as CSSProperties}
+          >
+            <span className="legacy-room-contained-index">
+              {(index + 1).toString().padStart(2, '0')}
+            </span>
+            <span>
+              <small>{metadata(node)}</small>
+              <strong>{node.name}</strong>
+            </span>
+            <span className="legacy-stage-enter">↗</span>
+          </ChildLink>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
   return (
     <div className="legacy-bay-canvas">
@@ -255,10 +288,12 @@ export function TopologyVisualStage({
   node,
   items,
   previewItems = [],
+  notice,
 }: Readonly<{
   node: TopologyNode;
   items: readonly VisualStageChild[];
   previewItems?: readonly VisualStageChild[];
+  notice?: VisualStageNotice;
 }>) {
   let canvas: ReactNode;
 
@@ -268,6 +303,8 @@ export function TopologyVisualStage({
     canvas = <StructureCanvas items={items} previewItems={previewItems} />;
   } else if (node.kind === 'LEVEL') {
     canvas = <LevelCanvas items={items} />;
+  } else if (node.kind === 'ROOM_SUBSTRUCTURE') {
+    canvas = <RoomCanvas items={items} />;
   } else if (node.kind === 'CONTAINER_CLUSTER_BAY') {
     canvas = <BayCanvas items={items} />;
   } else if (node.kind === 'POSITION') {
@@ -302,6 +339,12 @@ export function TopologyVisualStage({
       </header>
 
       <div className="legacy-stage-canvas">
+        {notice && (
+          <div className="legacy-stage-notice">
+            <strong>{notice.title}</strong>
+            <span>{notice.description}</span>
+          </div>
+        )}
         {items.length === 0 ? (
           <div className="legacy-stage-empty">
             <Icon name="box" />

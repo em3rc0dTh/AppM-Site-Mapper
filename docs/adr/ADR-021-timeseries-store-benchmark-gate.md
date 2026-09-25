@@ -246,3 +246,21 @@ Reviewed against official/current material on 2026-09-24:
   https://docs.tigerdata.com/self-hosted/latest/install/
 - TimescaleDB restore administration functions:
   https://docs.tigerdata.com/api/latest/administration
+
+
+## Implementation checkpoint — candidate sinks
+
+The repository now contains executable write mappings for both primary benchmark candidates without
+changing the vendor-neutral application boundary:
+
+- `InfluxDb3TelemetryHistorySink` uses the native v3 line-protocol write endpoint with explicit
+  nanosecond precision, partial writes disabled and asynchronous/no-sync acknowledgement disabled.
+- `TimescaleTelemetryHistorySink` uses a narrow SQL-client port plus a deterministic point
+  fingerprint so exact replay is idempotent and conflicting canonical content fails closed.
+- `infra/timescale/telemetry-history.sql` materializes only the benchmark candidate schema.
+- unit tests prove stable replay identity and conflict behavior without requiring either database in
+  ordinary CI.
+
+This checkpoint does **not** select a production backend. The benchmark, query SLOs, retention,
+backup/restore, outage recovery, load/soak, exact pinned images and licensing decision remain open
+before this ADR can be amended to a selected vendor.

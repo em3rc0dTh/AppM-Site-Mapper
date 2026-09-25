@@ -1,6 +1,6 @@
 # Telemetry & Time-Series Product Contract
 
-**Product:** Apana Air Site Mapper  
+**Product:** AppManager Site Mapper  
 **Status:** Proposed current product contract  
 **Scope:** Hardware telemetry from connected QDF/BDFB circuit breakers and other telemetry-capable assets.
 

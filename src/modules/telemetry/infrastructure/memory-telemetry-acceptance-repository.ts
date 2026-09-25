@@ -186,7 +186,7 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
     const next: TelemetryAcceptanceRecord = {
       ...rest,
       historyState: 'PENDING',
-      nextHistoryAttemptAt,
+      nextHistoryAttemptAt: nextAttemptAt,
       historyLastErrorCode: errorCode,
     };
 

@@ -132,9 +132,7 @@ export class MongoTelemetryAcceptanceRepository implements TelemetryAcceptanceRe
       delivered,
       deadLettered,
       unresolved: pending + inFlight + deadLettered,
-      ...(oldestAcceptedAt === undefined
-        ? {}
-        : { oldestUnresolvedAcceptedAt: oldestAcceptedAt }),
+      ...(oldestAcceptedAt === undefined ? {} : { oldestUnresolvedAcceptedAt: oldestAcceptedAt }),
       ...(oldestMs === null
         ? {}
         : { oldestUnresolvedAgeSeconds: Math.max(0, Math.floor((nowMs - oldestMs) / 1000)) }),

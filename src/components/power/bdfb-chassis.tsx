@@ -189,6 +189,11 @@ function PanelBoard({
   const reporting = panel.endpoints.filter(
     (endpoint) => endpointTelemetry(sample, endpoint.telemetryAddress) !== null,
   ).length;
+  const columnSize = Math.ceil(panel.endpoints.length / 2);
+  const endpointColumns = [
+    panel.endpoints.slice(0, columnSize),
+    panel.endpoints.slice(columnSize),
+  ] as const;
 
   return (
     <article className="bdfb-panel-board">
@@ -209,20 +214,24 @@ function PanelBoard({
       <div className="bdfb-panel-busbar bdfb-panel-busbar--b" aria-hidden="true">
         <span>BUS B</span>
       </div>
-      <div className="bdfb-endpoint-grid">
+      <div className="bdfb-endpoint-columns">
         {panel.endpoints.length ? (
-          panel.endpoints.map((endpoint, index) => (
-            <EndpointButton
-              key={endpoint.id}
-              device={device}
-              shelf={shelf}
-              frame={frame}
-              panel={panel}
-              endpoint={endpoint}
-              sample={sample}
-              index={index}
-              onInspect={onInspect}
-            />
+          endpointColumns.map((column, columnIndex) => (
+            <div className="bdfb-endpoint-column" key={`column-${columnIndex + 1}`}>
+              {column.map((endpoint, rowIndex) => (
+                <EndpointButton
+                  key={endpoint.id}
+                  device={device}
+                  shelf={shelf}
+                  frame={frame}
+                  panel={panel}
+                  endpoint={endpoint}
+                  sample={sample}
+                  index={columnIndex * columnSize + rowIndex}
+                  onInspect={onInspect}
+                />
+              ))}
+            </div>
           ))
         ) : (
           <div className="bdfb-empty-endpoints">No endpoints configured</div>

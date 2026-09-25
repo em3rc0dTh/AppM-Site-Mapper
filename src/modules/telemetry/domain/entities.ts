@@ -23,6 +23,7 @@ export interface TelemetrySample {
    */
   readonly sourceIdentity: string;
   readonly serialNumber: string;
+  readonly protocolProfile: string;
   readonly rawSchemaVersion: string;
   readonly reported: Readonly<Record<string, unknown>>;
   readonly observedAt: string;

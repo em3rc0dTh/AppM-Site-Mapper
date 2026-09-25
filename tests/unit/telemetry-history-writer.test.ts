@@ -18,6 +18,7 @@ function record(eventId: string): TelemetryAcceptanceRecord {
       sourceId: 'source-1',
       sourceIdentity: 'SN-1',
       serialNumber: 'SN-1',
+      protocolProfile: 'telxius-v1',
       rawSchemaVersion: 'telxius-v1',
       reported: { '0_1_1': { u: 48 } },
       observedAt: '2026-09-24T00:00:00.000Z',

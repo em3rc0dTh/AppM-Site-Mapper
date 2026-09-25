@@ -119,6 +119,7 @@ export class TelemetryService {
       sourceId: source.id,
       sourceIdentity: normalized.value.serialNumber,
       serialNumber: normalized.value.serialNumber,
+      protocolProfile: source.protocolProfile,
       rawSchemaVersion: source.rawSchemaVersion,
       reported: normalized.value.reported,
       observedAt: normalized.value.observedAt,

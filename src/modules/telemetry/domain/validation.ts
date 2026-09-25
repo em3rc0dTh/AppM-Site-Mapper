@@ -37,6 +37,7 @@ export function isTelemetrySample(value: unknown): value is TelemetrySample {
     typeof value.sourceId === 'string' &&
     typeof value.sourceIdentity === 'string' &&
     typeof value.serialNumber === 'string' &&
+    typeof value.protocolProfile === 'string' &&
     typeof value.rawSchemaVersion === 'string' &&
     typeof value.observedAt === 'string' &&
     typeof value.receivedAt === 'string' &&

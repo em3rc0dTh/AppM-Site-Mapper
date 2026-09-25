@@ -39,7 +39,7 @@ function event(eventId = 'event-1'): CanonicalTelemetryEvent {
 
 describe('InfluxDb3TelemetryHistorySink', () => {
   it('uses the durable v3 write endpoint with explicit sync and nanosecond precision', async () => {
-    const calls: Array<{ url: string; init?: RequestInit }> = [];
+    const calls: Array<{ url: string; init: RequestInit | undefined }> = [];
     const sink = new InfluxDb3TelemetryHistorySink(
       {
         endpoint: 'https://influx.internal:8181',
@@ -117,11 +117,10 @@ describe('InfluxDb3TelemetryHistorySink', () => {
 
 describe('TimescaleTelemetryHistorySink', () => {
   it('treats an exact point replay as idempotent using its canonical fingerprint', async () => {
-    const valuesSeen: readonly unknown[][] = [];
-    const mutableValues = valuesSeen as unknown[][];
+    const valuesSeen: Array<readonly unknown[]> = [];
     const client: TimescaleSqlClient = {
       async query(_sql, values) {
-        mutableValues.push(values);
+        valuesSeen.push(values);
         return { rows: [{ point_fingerprint: values[22] }] };
       },
     };

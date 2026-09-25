@@ -10,7 +10,11 @@ import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type PowerError =
-  EndpointValidationError | 'IDENTICAL_ENDPOINTS' | 'PATH_NOT_FOUND' | 'INVALID_FEED';
+  | EndpointValidationError
+  | 'IDENTICAL_ENDPOINTS'
+  | 'PATH_NOT_FOUND'
+  | 'INVALID_FEED'
+  | 'CONCURRENCY_CONFLICT';
 
 export interface CreatePowerPathInput {
   readonly source: PowerEndpoint;
@@ -63,6 +67,7 @@ export class PowerService {
       lifecycle: 'ACTIVE',
       createdAt: timestamp,
       updatedAt: timestamp,
+      revision: 0,
     };
 
     await this.paths.insert(path);
@@ -76,13 +81,18 @@ export class PowerService {
       return failure('PATH_NOT_FOUND');
     }
 
+    const expectedRevision = path.revision ?? 0;
     const archived: PowerPath = {
       ...path,
       lifecycle: 'ARCHIVED',
       updatedAt: nowIso(),
+      revision: expectedRevision + 1,
     };
 
-    await this.paths.replace(archived);
+    if (!(await this.paths.replace(archived, expectedRevision))) {
+      return failure('CONCURRENCY_CONFLICT');
+    }
+
     return success(archived);
   }
 

@@ -10,7 +10,7 @@ import { isValidPolygon, type PointMm, type RectMm } from '@/modules/spatial/dom
 import { generateAssignableSlots } from '@/modules/spatial/domain/placement';
 import { gridCoordinateToPoint, TILE_SIZE_MM } from '@/modules/spatial/domain/grid';
 
-export type SpatialError = 'ROOM_NOT_FOUND' | 'INVALID_POLYGON';
+export type SpatialError = 'ROOM_NOT_FOUND' | 'INVALID_POLYGON' | 'CONCURRENCY_CONFLICT';
 
 export interface RackPlacementView {
   readonly id: string;
@@ -41,13 +41,18 @@ export class SpatialService {
       return failure('INVALID_POLYGON');
     }
 
+    const expectedRevision = node.revision ?? 0;
     const updated: RoomSubstructureNode = {
       ...node,
       polygon,
       updatedAt: nowIso(),
+      revision: expectedRevision + 1,
     };
 
-    await this.repository.replace(updated);
+    if (!(await this.repository.replace(updated, expectedRevision))) {
+      return failure('CONCURRENCY_CONFLICT');
+    }
+
     return success(updated);
   }
 

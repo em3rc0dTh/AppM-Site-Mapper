@@ -27,7 +27,11 @@ function escapeMeasurement(value: string): string {
 }
 
 function escapeTag(value: string): string {
-  return value.replaceAll('\\', '\\\\').replaceAll(',', '\\,').replaceAll('=', '\\=').replaceAll(' ', '\\ ');
+  return value
+    .replaceAll('\\', '\\\\')
+    .replaceAll(',', '\\,')
+    .replaceAll('=', '\\=')
+    .replaceAll(' ', '\\ ');
 }
 
 function escapeStringField(value: string): string {
@@ -124,7 +128,9 @@ export class InfluxDb3TelemetryHistorySink implements TelemetryHistorySink {
     url.searchParams.set('accept_partial', 'false');
     url.searchParams.set('no_sync', 'false');
 
-    const body = event.metrics.map((metric) => metricLine(this.measurement, event, metric)).join('\n');
+    const body = event.metrics
+      .map((metric) => metricLine(this.measurement, event, metric))
+      .join('\n');
     const response = await this.fetchImpl(url, {
       method: 'POST',
       headers: {

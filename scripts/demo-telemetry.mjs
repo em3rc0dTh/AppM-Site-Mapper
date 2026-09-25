@@ -15,7 +15,7 @@ const DEFAULT_MQTT_PORT = 18883;
 const SERIAL_NUMBER = 'DEMO25110703400009';
 const TOPIC_SOURCE = 'demo-qdf-01';
 const ENTITY_ID = 'demo-equipment-qdf-01';
-const APP_PORT = Number(process.env.DEMO_PORT ?? '3000');
+const DEFAULT_APP_PORT = 3000;
 
 const children = new Set();
 let shuttingDown = false;
@@ -147,13 +147,17 @@ async function waitForPort(host, port, timeoutMs = 60_000) {
   throw new Error(`Timed out waiting for ${host}:${port}.`);
 }
 
-async function waitForHttp(url, timeoutMs = 90_000) {
+async function waitForHttp(url, child, timeoutMs = 90_000) {
   const deadline = Date.now() + timeoutMs;
 
   while (Date.now() < deadline) {
+    if (child.exitCode !== null) {
+      throw new Error(`Site Mapper exited before becoming ready (code=${child.exitCode}).`);
+    }
+
     try {
       const response = await fetch(url, { redirect: 'manual' });
-      if (response.status > 0) return;
+      if (response.status === 200 || (response.status >= 300 && response.status < 400)) return;
     } catch {
       // App is still starting.
     }
@@ -161,7 +165,7 @@ async function waitForHttp(url, timeoutMs = 90_000) {
     await new Promise((resolve) => setTimeout(resolve, 750));
   }
 
-  throw new Error(`Timed out waiting for ${url}.`);
+  throw new Error(`Timed out waiting for Site Mapper at ${url}.`);
 }
 
 function topologyDocuments(now) {
@@ -316,13 +320,15 @@ async function shutdown(exitCode = 0) {
 }
 
 async function main() {
-  if (!Number.isInteger(APP_PORT) || APP_PORT < 1 || APP_PORT > 65_535) {
+  const requestedAppPort = Number(process.env.DEMO_PORT ?? DEFAULT_APP_PORT);
+  if (!Number.isInteger(requestedAppPort) || requestedAppPort < 1 || requestedAppPort > 65_535) {
     throw new Error('DEMO_PORT must be a valid TCP port.');
   }
 
   await ensureDependencies();
   await ensureDocker();
 
+  const appPort = await findAvailablePort(requestedAppPort);
   const mongoPort = await findAvailablePort(
     Number(process.env.DEMO_MONGO_PORT ?? DEFAULT_MONGO_PORT),
   );
@@ -348,7 +354,7 @@ async function main() {
   const bootstrapToken = randomBytes(32).toString('hex');
   const adminPassword = `Demo-${randomBytes(10).toString('base64url')}!9`;
   const adminEmail = 'demo@appmanager.local';
-  const baseUrl = `http://127.0.0.1:${APP_PORT}`;
+  const baseUrl = `http://127.0.0.1:${appPort}`;
 
   const appEnv = {
     ...process.env,
@@ -369,14 +375,14 @@ async function main() {
     MQTT_TOPIC_FILTER: 'appmanager/v1/raw/+/telemetry',
   };
 
-  console.log('[demo] Starting AppManager Site Mapper...');
-  spawnPrefixed(
+  console.log(`[demo] Starting AppManager Site Mapper on ${appPort}...`);
+  const appProcess = spawnPrefixed(
     'app',
     commandName('npm'),
-    ['run', 'dev', '--', '--hostname', '127.0.0.1', '--port', String(APP_PORT)],
+    ['run', 'dev', '--', '--hostname', '127.0.0.1', '--port', String(appPort)],
     appEnv,
   );
-  await waitForHttp(`${baseUrl}/login`);
+  await waitForHttp(`${baseUrl}/login`, appProcess);
   await bootstrapAdmin(baseUrl, bootstrapToken, adminEmail, adminPassword);
 
   const simulatorEnv = {
@@ -403,6 +409,7 @@ async function main() {
   console.log(' AppManager Site Mapper — Synthetic Telemetry Demo');
   console.log('============================================================');
   console.log(` URL:      ${telemetryUrl}`);
+  console.log(` Web:      127.0.0.1:${appPort} (isolated demo)`);
   console.log(` Email:    ${adminEmail}`);
   console.log(` Password: ${adminPassword}`);
   console.log(` Device:   ${SERIAL_NUMBER}`);

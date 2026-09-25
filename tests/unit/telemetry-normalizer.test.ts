@@ -77,6 +77,82 @@ describe('normalizeTelemetry', () => {
     expect(result.ok && result.value.sequence).toBe(7);
   });
 
+  it('normalizes the observed legacy AppManager envelope and derives replay identity from msgid plus timestamp', () => {
+    const result = normalizeTelemetry(
+      'data/dev/25110703400009',
+      new TextEncoder().encode(
+        JSON.stringify({
+          msgid: '598',
+          method: 'update',
+          sn: '25110703400009',
+          timestamp: 1773845510,
+          sendtime: 1773845510,
+          version: 1,
+          reported: {
+            '0_1_1': {
+              state: 'ONLINE',
+              U1: '12.23',
+              I1: '9.57',
+              P1: '117.18',
+              EP1: '1.50',
+            },
+          },
+        }),
+      ),
+      {
+        topicPrefix: 'data/dev/',
+        topicSuffix: '',
+        maxPayloadBytes: 4096,
+      },
+      '2026-09-24T00:00:01.000Z',
+    );
+
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        topic: 'data/dev/25110703400009',
+        topicSource: '25110703400009',
+        serialNumber: '25110703400009',
+        reported: {
+          '0_1_1': {
+            state: 'ONLINE',
+            U1: '12.23',
+            I1: '9.57',
+            P1: '117.18',
+            EP1: '1.50',
+          },
+        },
+        observedAt: '2026-03-18T14:51:50.000Z',
+        receivedAt: '2026-09-24T00:00:01.000Z',
+        timestampProvenance: 'DEVICE',
+        messageId: 'legacy:598:ts:1773845510',
+        sourceMessageId: '598',
+        sourceTimestampSeconds: 1773845510,
+        sourceSendTimeSeconds: 1773845510,
+        sourceMethod: 'update',
+        sourceVersion: 1,
+      },
+    });
+  });
+
+  it('does not treat legacy msgid alone as a proven globally unique replay key', () => {
+    const result = normalizeTelemetry(
+      'appmanager/v1/raw/source-001/telemetry',
+      new TextEncoder().encode(
+        JSON.stringify({
+          msgid: '598',
+          sn: 'SN-001',
+          reported: {},
+        }),
+      ),
+      options,
+      '2026-09-22T00:00:01.000Z',
+    );
+
+    expect(result.ok && result.value.sourceMessageId).toBe('598');
+    expect(result.ok && result.value.messageId).toBeUndefined();
+  });
+
   it('uses receivedAt as an explicit fallback without pretending it came from hardware', () => {
     const result = normalizeTelemetry(
       'appmanager/v1/raw/source-001/telemetry',

@@ -89,6 +89,37 @@ describe('adaptMyemsAppmBreakerEvent', () => {
     );
   });
 
+  it('accepts observed legacy state and marks registry-declared synthetic metrics as simulated', () => {
+    const base = record({
+      '0_1_1': {
+        state: 'ONLINE',
+        U1: '12.23',
+        EP1: '1.50',
+      },
+    });
+    const result = adaptMyemsAppmBreakerEvent({
+      ...base,
+      sample: {
+        ...base.sample,
+        simulated: true,
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.value.simulated).toBe(true);
+    expect(result.value.metrics).toEqual([
+      expect.objectContaining({
+        componentAddress: '0_1_1',
+        key: 'voltage_v',
+        value: 12.23,
+        quality: 'SIMULATED',
+        sourceState: 'ONLINE',
+      }),
+    ]);
+  });
+
   it('does not infer breaker semantics for the ZIP-backed minimal telxius profile', () => {
     expect(adaptMyemsAppmBreakerEvent(record({}, 'telxius-v1'))).toEqual({
       ok: false,

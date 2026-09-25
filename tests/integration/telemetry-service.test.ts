@@ -104,6 +104,89 @@ describe('TelemetryService', () => {
     ]);
   });
 
+  it('merges partial breaker packets into latest while preserving packet-shaped durable acceptance', async () => {
+    const { service, acceptance, hub } = serviceWith([
+      source({
+        protocolProfile: 'myems-appm-breaker-v1',
+        rawSchemaVersion: 'legacy-appm-v1',
+        simulated: true,
+      }),
+    ]);
+    const published: unknown[] = [];
+    const unsubscribe = hub.subscribe((sample) => published.push(sample));
+
+    await service.ingest(
+      'appmanager/v1/raw/mqtt-source-1/telemetry',
+      new TextEncoder().encode(
+        JSON.stringify({
+          msgid: '598',
+          sn: 'SN-E',
+          timestamp: 1773845510,
+          sendtime: 1773845510,
+          method: 'update',
+          version: 1,
+          reported: {
+            '0_1_1': { state: 'ONLINE', U1: '12.23' },
+            '0_1_2': { state: 'ONLINE', U1: '0.00' },
+          },
+        }),
+      ),
+      '2026-09-24T00:00:01.000Z',
+    );
+
+    await service.ingest(
+      'appmanager/v1/raw/mqtt-source-1/telemetry',
+      new TextEncoder().encode(
+        JSON.stringify({
+          msgid: '599',
+          sn: 'SN-E',
+          timestamp: 1773845510,
+          sendtime: 1773845510,
+          method: 'update',
+          version: 1,
+          reported: {
+            '0_1_11': { state: 'ONLINE', U1: '0.00' },
+          },
+        }),
+      ),
+      '2026-09-24T00:00:02.000Z',
+    );
+
+    unsubscribe?.();
+
+    const latest = await service.latest('equipment-1');
+    expect(latest?.simulated).toBe(true);
+    expect(latest?.reported).toEqual({
+      '0_1_1': { state: 'ONLINE', U1: '12.23' },
+      '0_1_2': { state: 'ONLINE', U1: '0.00' },
+      '0_1_11': { state: 'ONLINE', U1: '0.00' },
+    });
+    expect(latest?.reportedEntryRecency?.['0_1_1']).toMatchObject({
+      observedAt: '2026-03-18T14:51:50.000Z',
+      receivedAt: '2026-09-24T00:00:01.000Z',
+      sourceMessageId: '598',
+    });
+    expect(latest?.reportedEntryRecency?.['0_1_11']).toMatchObject({
+      observedAt: '2026-03-18T14:51:50.000Z',
+      receivedAt: '2026-09-24T00:00:02.000Z',
+      sourceMessageId: '599',
+    });
+
+    const rawPackets = await acceptance.listPendingHistory(10);
+    expect(rawPackets).toHaveLength(2);
+    expect(Object.keys(rawPackets[0]?.sample.reported ?? {})).toEqual(['0_1_1', '0_1_2']);
+    expect(Object.keys(rawPackets[1]?.sample.reported ?? {})).toEqual(['0_1_11']);
+
+    expect(published).toHaveLength(2);
+    expect(published[1]).toMatchObject({
+      simulated: true,
+      reported: {
+        '0_1_1': { state: 'ONLINE', U1: '12.23' },
+        '0_1_11': { state: 'ONLINE', U1: '0.00' },
+      },
+    });
+  });
+
   it('does not let an older observation replace durable latest state', async () => {
     const { service } = serviceWith([source()]);
 

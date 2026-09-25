@@ -19,9 +19,25 @@
 - [x] G14 System Certification
 - [x] G15 Release Documentation
 
+## G16 hardening stream — active / not sealed
+
+- [x] telemetry source identity and source/serial binding;
+- [x] durable acceptance/idempotency/outbox foundation;
+- [x] MongoDB-backed canonical latest telemetry in production persistence mode;
+- [x] authenticated realtime fan-out;
+- [x] MQTT TLS/ACL reference certification;
+- [x] Site → Circuit Breaker browser certification and viewport evidence;
+- [x] fail-closed production runtime environment contract;
+- [ ] production historical TSDB selected and wired;
+- [ ] critical mutation concurrency contract closed;
+- [ ] privileged mutation audit atomicity closed;
+- [ ] environment-specific production security/operations certification complete.
+
+See `docs/release/g16-gap-register.md`.
+
 ## CI
 
-Before sealing G15:
+Current automated repository checks:
 
 - [x] typecheck green;
 - [x] lint green without application warnings;
@@ -52,6 +68,10 @@ These are not automatically satisfied by repository CI:
 
 ## Release interpretation
 
-G15 PASS means **the MK1 repository/software baseline is release-documented and CI-certified**.
+G15 PASS means **the original MK1 repository/software baseline is release-documented and
+CI-certified**.
 
-It does not turn unchecked environment items into completed facts.
+G16 is an active hardening stream and must not be called production-sealed while its unchecked
+history, mutation-integrity, audit-atomicity and environment-specific security items remain open.
+
+No repository gate turns unchecked environment items into completed facts.

@@ -11,13 +11,11 @@ import {
 } from '@/shared/ui/primitives';
 import { InspectButton } from '@/shared/ui/entity-inspector';
 import { telemetryMetrics } from './telemetry-presentation';
+import {
+  dedupeTelemetrySamples,
+  upsertTelemetrySample,
+} from '@/components/telemetry/telemetry-client-state';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
-
-function upsert(samples: readonly TelemetrySample[], sample: TelemetrySample): TelemetrySample[] {
-  const next = samples.filter((item) => item.entityId !== sample.entityId);
-  next.push(sample);
-  return next.sort((left, right) => left.entityId.localeCompare(right.entityId));
-}
 
 export function LiveTelemetry() {
   const [samples, setSamples] = useState<readonly TelemetrySample[]>([]);
@@ -27,13 +25,13 @@ export function LiveTelemetry() {
     const stream = new EventSource('/api/telemetry/stream');
 
     const onSnapshot = (event: MessageEvent<string>) => {
-      setSamples(JSON.parse(event.data) as TelemetrySample[]);
+      setSamples(dedupeTelemetrySamples(JSON.parse(event.data) as TelemetrySample[]));
       setState('live');
     };
 
     const onTelemetry = (event: MessageEvent<string>) => {
       const sample = JSON.parse(event.data) as TelemetrySample;
-      setSamples((current) => upsert(current, sample));
+      setSamples((current) => upsertTelemetrySample(current, sample));
       setState('live');
     };
 

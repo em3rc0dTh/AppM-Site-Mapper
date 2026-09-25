@@ -9,6 +9,7 @@ import { MemoryTelemetrySourceRepository } from '@/modules/telemetry/infrastruct
 import { MongoTelemetryAcceptanceRepository } from '@/modules/telemetry/infrastructure/mongo-telemetry-acceptance-repository';
 import { MongoTelemetryLatestRepository } from '@/modules/telemetry/infrastructure/mongo-telemetry-latest-repository';
 import { MongoTelemetryQuarantineRepository } from '@/modules/telemetry/infrastructure/mongo-telemetry-quarantine-repository';
+import { ensureTelemetryMongoIndexes } from '@/modules/telemetry/infrastructure/mongo-telemetry-indexes';
 import { MongoTelemetrySourceRepository } from '@/modules/telemetry/infrastructure/mongo-telemetry-source-repository';
 import { getPersistenceMode } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { getMongoDatabase } from '@/shared/infrastructure/mongodb/client';
@@ -33,12 +34,16 @@ export async function createTelemetryRepositories(): Promise<TelemetryRepositori
     }));
   }
 
-  mongoRepositories ??= getMongoDatabase().then((database) => ({
-    sources: new MongoTelemetrySourceRepository(database),
-    latest: new MongoTelemetryLatestRepository(database),
-    acceptance: new MongoTelemetryAcceptanceRepository(database),
-    quarantine: new MongoTelemetryQuarantineRepository(database),
-  }));
+  mongoRepositories ??= getMongoDatabase().then(async (database) => {
+    await ensureTelemetryMongoIndexes(database);
+
+    return {
+      sources: new MongoTelemetrySourceRepository(database),
+      latest: new MongoTelemetryLatestRepository(database),
+      acceptance: new MongoTelemetryAcceptanceRepository(database),
+      quarantine: new MongoTelemetryQuarantineRepository(database),
+    };
+  });
 
   return mongoRepositories;
 }

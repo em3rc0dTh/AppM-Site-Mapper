@@ -18,7 +18,7 @@ import { allowedChildKinds } from '@/modules/topology/domain/hierarchy';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { InspectButton } from '@/shared/ui/entity-inspector';
-import { SectionHeader, StatePanel, StatusBadge } from '@/shared/ui/primitives';
+import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 
 export default async function TopologyNodePage({
   params,
@@ -137,9 +137,15 @@ export default async function TopologyNodePage({
                 slots={roomLayout.value.assignableSlots}
               />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' && roomLayout?.ok ? (
-              <StatePanel
-                title="No room boundary"
-                description="Define the physical boundary to render the Blueprint."
+              <TopologyVisualStage
+                node={node}
+                items={childEntries}
+                previewItems={structurePreviewEntries}
+                notice={{
+                  title: 'No room boundary',
+                  description:
+                    'Blueprint geometry is unavailable, so contained infrastructure remains navigable schematically.',
+                }}
               />
             ) : (
               <TopologyVisualStage

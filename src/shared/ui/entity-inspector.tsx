@@ -70,7 +70,8 @@ export function EntityInspector({
 
     const focusableElements = () =>
       Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector)).filter(
-        (element) => !element.hasAttribute('hidden') && element.getAttribute('aria-hidden') !== 'true',
+        (element) =>
+          !element.hasAttribute('hidden') && element.getAttribute('aria-hidden') !== 'true',
       );
 
     const containFocus = (event: KeyboardEvent) => {

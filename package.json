@@ -20,7 +20,8 @@
     "migration:legacy": "node --experimental-strip-types scripts/migrations/legacy/migrate.ts",
     "test:certification": "vitest run tests/certification",
     "telemetry:sim": "node scripts/telemetry-simulator/simulator.mjs",
-    "telemetry:sim:provision": "node scripts/telemetry-simulator/provision-source.mjs"
+    "telemetry:sim:provision": "node scripts/telemetry-simulator/provision-source.mjs",
+    "demo:telemetry": "node scripts/demo-telemetry.mjs"
   },
   "dependencies": {
     "mongodb": "7.6.0",

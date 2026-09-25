@@ -49,9 +49,18 @@ Publishes the historical hardware topic exactly:
 data/dev/<SIM_SERIAL_NUMBER>
 ```
 
-This mode is for broker/protocol compatibility work. The current G16 Site Mapper ingestor does not
-yet subscribe to that topic contract, so selecting `legacy` alone does not make the application
-consume the messages.
+Site Mapper can consume this exact topic shape by selecting the matching runtime topic contract:
+
+```env
+MQTT_TOPIC_PREFIX=data/dev/
+MQTT_TOPIC_SUFFIX=
+MQTT_TOPIC_FILTER=data/dev/+
+```
+
+In legacy mode the source provisioner binds `topicSource` to the serial number, matching both the
+topic segment and payload `sn`. The repository-owned secured Mosquitto reference profile still
+authorizes hardware writes only in the reviewed `appmanager/v1/raw/%u/telemetry` namespace; do not
+broaden that production ACL until the legacy publisher principal mapping is evidenced and reviewed.
 
 ## Local setup
 
@@ -109,12 +118,14 @@ The synthetic publisher traverses the same MQTT ingestion, source/SN verificatio
 acceptance, latest-state and history delivery boundaries as any publisher accepted by that topic
 profile.
 
-## Important current limitation
+## Latest snapshot behavior
 
-The observed hardware sends partial breaker maps. The current latest repository stores the newest
-accepted message as the entity latest value rather than merging a full per-breaker device snapshot.
-This simulator deliberately preserves the partial-message behavior so that limitation remains
-visible instead of being hidden by demo-only data shaping.
+The observed hardware sends partial breaker maps. Site Mapper keeps each accepted raw packet intact
+for durable acceptance/history, while the operational latest projection incrementally merges
+top-level `reported` entries from the same source/serial/protocol stream.
 
-The legacy-topic adapter and merged operational snapshot remain separate G16 work; this provider
-does not fake either capability.
+Each merged reported entry carries its own observation/receive recency metadata. A source or serial
+change resets the operational snapshot instead of mixing readings from different hardware.
+
+Synthetic source bindings are explicitly marked `simulated: true`; canonical metrics produced from
+them use `SIMULATED` quality rather than being presented as physical hardware measurements.

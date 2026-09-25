@@ -241,6 +241,12 @@ For each source/metric, expose the most recent accepted value plus:
 
 Latest state must live outside browser memory and outside any single ephemeral web instance.
 
+When one hardware source fragments a logical device view across multiple packets, the operational
+latest projection may merge those top-level component entries only within the same source/serial/
+protocol stream. The original accepted packets remain separate historical events. Each merged entry
+must retain its own recency metadata so the UI does not imply that the complete snapshot was observed
+atomically at one instant.
+
 A process restart must not permanently destroy the latest operational state if historical storage already contains valid data.
 
 ## 13. Historical time-series contract

@@ -65,13 +65,27 @@ Unknown raw metric meanings are never guessed.
 
 ## Latest state
 
-Latest telemetry is durable repository state, not process memory. The current implementation stores
-one atomic latest packet per mapped entity so values from one hardware observation cannot become a
-mixed-time projection.
+Latest telemetry is durable repository state, not process memory.
 
-Updates are monotonic by `observedAt` and then `receivedAt`. Source sequence values are preserved
-when present but are not yet used as the primary ordering authority because restart/epoch semantics
-have not been proven for the hardware protocol.
+The observed AppManager hardware protocol can split one operational device view across multiple
+packets (for example breaker ranges 21..24, 1..10 and 11..20). Durable acceptance/history keeps
+each packet intact, while the operational latest projection incrementally merges top-level
+`reported` entries from the same source/serial/protocol stream.
+
+Each merged entry records the `observedAt` and `receivedAt` of the packet that last updated it.
+This avoids pretending that a merged device snapshot is one atomic hardware observation. A source,
+serial number, protocol profile or raw schema change resets the merged projection rather than mixing
+state from different hardware streams.
+
+Updates remain monotonic by packet `observedAt` and then `receivedAt`. Source sequence values are
+preserved when present but are not yet used as the primary ordering authority because restart/epoch
+semantics have not been proven for the hardware protocol.
+
+The observed legacy envelope fields `msgid`, Unix-second `timestamp`, `sendtime`, `method` and
+`version` are preserved when present. The pair `msgid + timestamp` may derive an internal replay
+identity; `msgid` alone is not treated as proven globally unique across device restarts.
+
+Synthetic publishers are registry-marked and canonical metrics from them carry `SIMULATED` quality.
 
 The in-process `TelemetryHub` is fanout only.
 

@@ -64,7 +64,8 @@ export function isTelemetryAcceptanceRecord(value: unknown): value is TelemetryA
     typeof value.acceptedAt === 'string' &&
     (value.historyState === 'PENDING' ||
       value.historyState === 'IN_FLIGHT' ||
-      value.historyState === 'DELIVERED') &&
+      value.historyState === 'DELIVERED' ||
+      value.historyState === 'DEAD_LETTERED') &&
     typeof value.historyAttempts === 'number' &&
     Number.isSafeInteger(value.historyAttempts) &&
     value.historyAttempts >= 0 &&
@@ -72,7 +73,8 @@ export function isTelemetryAcceptanceRecord(value: unknown): value is TelemetryA
     isOptionalString(value.historyLeaseUntil) &&
     isOptionalString(value.historyLeaseOwner) &&
     isOptionalString(value.historyLastErrorCode) &&
-    isOptionalString(value.deliveredAt)
+    isOptionalString(value.deliveredAt) &&
+    isOptionalString(value.deadLetteredAt)
   );
 }
 

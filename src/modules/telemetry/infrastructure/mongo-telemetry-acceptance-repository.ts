@@ -161,6 +161,37 @@ export class MongoTelemetryAcceptanceRepository implements TelemetryAcceptanceRe
           historyLeaseUntil: '',
           nextHistoryAttemptAt: '',
           historyLastErrorCode: '',
+          deadLetteredAt: '',
+        },
+      },
+    );
+
+    return result.modifiedCount === 1;
+  }
+
+  async markHistoryDeadLettered(
+    eventId: string,
+    workerId: string,
+    deadLetteredAt: string,
+    errorCode: string,
+  ): Promise<boolean> {
+    const result = await this.collection.updateOne(
+      {
+        eventId,
+        historyState: 'IN_FLIGHT',
+        historyLeaseOwner: workerId,
+      },
+      {
+        $set: {
+          historyState: 'DEAD_LETTERED',
+          deadLetteredAt,
+          historyLastErrorCode: errorCode,
+        },
+        $unset: {
+          historyLeaseOwner: '',
+          historyLeaseUntil: '',
+          nextHistoryAttemptAt: '',
+          deliveredAt: '',
         },
       },
     );
@@ -183,12 +214,13 @@ export class MongoTelemetryAcceptanceRepository implements TelemetryAcceptanceRe
       {
         $set: {
           historyState: 'PENDING',
-          nextHistoryAttemptAt: nextAttemptAt,
+          nextHistoryAttemptAt,
           historyLastErrorCode: errorCode,
         },
         $unset: {
           historyLeaseOwner: '',
           historyLeaseUntil: '',
+          deadLetteredAt: '',
         },
       },
     );

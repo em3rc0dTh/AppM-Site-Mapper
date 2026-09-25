@@ -121,6 +121,7 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
       historyLeaseUntil: _leaseUntil,
       nextHistoryAttemptAt: _nextAttemptAt,
       historyLastErrorCode: _lastErrorCode,
+      deadLetteredAt: _deadLetteredAt,
       ...rest
     } = record;
 
@@ -128,6 +129,36 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
       ...rest,
       historyState: 'DELIVERED',
       deliveredAt,
+    };
+
+    this.byEventId.set(eventId, next);
+    return true;
+  }
+
+  async markHistoryDeadLettered(
+    eventId: string,
+    workerId: string,
+    deadLetteredAt: string,
+    errorCode: string,
+  ): Promise<boolean> {
+    const record = this.byEventId.get(eventId);
+    if (!record || record.historyState !== 'IN_FLIGHT' || record.historyLeaseOwner !== workerId) {
+      return false;
+    }
+
+    const {
+      historyLeaseOwner: _leaseOwner,
+      historyLeaseUntil: _leaseUntil,
+      nextHistoryAttemptAt: _nextAttemptAt,
+      deliveredAt: _deliveredAt,
+      ...rest
+    } = record;
+
+    const next: TelemetryAcceptanceRecord = {
+      ...rest,
+      historyState: 'DEAD_LETTERED',
+      historyLastErrorCode: errorCode,
+      deadLetteredAt,
     };
 
     this.byEventId.set(eventId, next);
@@ -145,12 +176,17 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
       return false;
     }
 
-    const { historyLeaseOwner: _leaseOwner, historyLeaseUntil: _leaseUntil, ...rest } = record;
+    const {
+      historyLeaseOwner: _leaseOwner,
+      historyLeaseUntil: _leaseUntil,
+      deadLetteredAt: _deadLetteredAt,
+      ...rest
+    } = record;
 
     const next: TelemetryAcceptanceRecord = {
       ...rest,
       historyState: 'PENDING',
-      nextHistoryAttemptAt: nextAttemptAt,
+      nextHistoryAttemptAt,
       historyLastErrorCode: errorCode,
     };
 

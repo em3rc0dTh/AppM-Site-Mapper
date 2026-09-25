@@ -1,5 +1,5 @@
-import type { TelemetryAcceptanceRecord } from '@/modules/telemetry/domain/acceptance';
+import type { CanonicalTelemetryEvent } from '@/modules/telemetry/domain/canonical';
 
 export interface TelemetryHistorySink {
-  write(record: TelemetryAcceptanceRecord): Promise<void>;
+  write(event: CanonicalTelemetryEvent): Promise<void>;
 }

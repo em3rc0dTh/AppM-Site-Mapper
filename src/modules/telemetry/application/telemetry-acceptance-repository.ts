@@ -17,6 +17,12 @@ export interface TelemetryAcceptanceRepository {
     options: TelemetryHistoryClaimOptions,
   ): Promise<readonly TelemetryAcceptanceRecord[]>;
   markHistoryDelivered(eventId: string, workerId: string, deliveredAt: string): Promise<boolean>;
+  markHistoryDeadLettered(
+    eventId: string,
+    workerId: string,
+    deadLetteredAt: string,
+    errorCode: string,
+  ): Promise<boolean>;
   rescheduleHistory(
     eventId: string,
     workerId: string,

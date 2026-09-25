@@ -1,6 +1,6 @@
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
-export type TelemetryHistoryState = 'PENDING' | 'IN_FLIGHT' | 'DELIVERED';
+export type TelemetryHistoryState = 'PENDING' | 'IN_FLIGHT' | 'DELIVERED' | 'DEAD_LETTERED';
 
 export interface TelemetryAcceptanceRecord {
   readonly eventId: string;
@@ -15,6 +15,7 @@ export interface TelemetryAcceptanceRecord {
   readonly historyLeaseOwner?: string;
   readonly historyLastErrorCode?: string;
   readonly deliveredAt?: string;
+  readonly deadLetteredAt?: string;
 }
 
 export type TelemetryAcceptanceResult =

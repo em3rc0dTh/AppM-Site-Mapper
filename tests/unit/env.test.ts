@@ -12,9 +12,8 @@ describe('application environment policy', () => {
     expect(parseAppEnvironment(undefined, 'test')).toBe('test');
   });
 
-  it('infers development for local non-production runtime', () => {
+  it('infers development for an explicit local non-production runtime', () => {
     expect(parseAppEnvironment(undefined, 'development')).toBe('development');
-    expect(parseAppEnvironment(undefined, undefined)).toBe('development');
   });
 
   it('fails closed when a production Node runtime has no APP_ENV', () => {

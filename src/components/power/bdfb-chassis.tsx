@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { BreakerHistoryPanel } from '@/components/power/breaker-history-panel';
 import { endpointTelemetry, type EndpointTelemetryView } from '@/components/power/bdfb-telemetry';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type {
@@ -68,6 +69,17 @@ function endpointInspector(
       {
         title: 'Realtime telemetry',
         fields: telemetryFields,
+      },
+      {
+        title: 'History',
+        content: endpoint.telemetryAddress ? (
+          <BreakerHistoryPanel
+            entityId={device.id}
+            componentAddress={endpoint.telemetryAddress}
+          />
+        ) : (
+          <p>No telemetry address is bound to this endpoint.</p>
+        ),
       },
     ],
   };

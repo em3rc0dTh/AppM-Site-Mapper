@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { StatusBadge } from './primitives';
 
@@ -10,7 +11,8 @@ export interface InspectorEntity {
   status?: string;
   sections: readonly {
     title: string;
-    fields: readonly { label: string; value: string | number }[];
+    fields?: readonly { label: string; value: string | number }[];
+    content?: ReactNode;
   }[];
   actions?: readonly { label: string; href: string }[];
 }
@@ -151,14 +153,17 @@ export function EntityInspector({
             className="inspector-section"
           >
             <h2>{section.title}</h2>
-            <dl className="inspector-facts">
-              {section.fields.map((field) => (
-                <div key={`${section.title}-${field.label}`}>
-                  <dt>{field.label}</dt>
-                  <dd>{field.value}</dd>
-                </div>
-              ))}
-            </dl>
+            {section.content}
+            {section.fields && (
+              <dl className="inspector-facts">
+                {section.fields.map((field) => (
+                  <div key={`${section.title}-${field.label}`}>
+                    <dt>{field.label}</dt>
+                    <dd>{field.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </section>
         ) : null}
 

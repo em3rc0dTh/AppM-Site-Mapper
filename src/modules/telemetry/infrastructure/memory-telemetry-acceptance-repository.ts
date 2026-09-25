@@ -90,13 +90,11 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
       generatedAt: now,
       pending: pending.length,
       duePending: pending.filter(
-        (record) =>
-          record.nextHistoryAttemptAt === undefined || record.nextHistoryAttemptAt <= now,
+        (record) => record.nextHistoryAttemptAt === undefined || record.nextHistoryAttemptAt <= now,
       ).length,
       inFlight: inFlight.length,
       expiredLeases: inFlight.filter(
-        (record) =>
-          record.historyLeaseUntil !== undefined && record.historyLeaseUntil <= now,
+        (record) => record.historyLeaseUntil !== undefined && record.historyLeaseUntil <= now,
       ).length,
       delivered: records.filter((record) => record.historyState === 'DELIVERED').length,
       deadLettered: deadLettered.length,

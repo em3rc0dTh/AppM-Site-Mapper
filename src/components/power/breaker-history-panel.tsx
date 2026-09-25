@@ -15,6 +15,12 @@ interface HistoryResponse {
   readonly points: readonly DemoTelemetryHistoryPoint[];
 }
 
+interface HistoryResult {
+  readonly key: string;
+  readonly points: readonly DemoTelemetryHistoryPoint[];
+  readonly error: boolean;
+}
+
 function numericSeries(points: readonly DemoTelemetryHistoryPoint[], metric: HistoryMetric) {
   return points.flatMap((point) => {
     const raw = point.values[metric];
@@ -60,12 +66,11 @@ export function BreakerHistoryPanel({
 }>) {
   const [range, setRange] = useState<DemoTelemetryHistoryRange>('7d');
   const [metric, setMetric] = useState<HistoryMetric>('U1');
-  const [points, setPoints] = useState<readonly DemoTelemetryHistoryPoint[]>([]);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [result, setResult] = useState<HistoryResult | null>(null);
+  const queryKey = `${entityId}:${componentAddress}:${range}`;
 
   useEffect(() => {
     const controller = new AbortController();
-    setStatus('loading');
 
     const params = new URLSearchParams({
       entityId,
@@ -85,17 +90,27 @@ export function BreakerHistoryPanel({
         return (await response.json()) as HistoryResponse;
       })
       .then((payload) => {
-        setPoints(payload.points);
-        setStatus('ready');
+        setResult({
+          key: queryKey,
+          points: payload.points,
+          error: false,
+        });
       })
       .catch((error: unknown) => {
         if (error instanceof DOMException && error.name === 'AbortError') return;
-        setStatus('error');
+        setResult({
+          key: queryKey,
+          points: [],
+          error: true,
+        });
       });
 
     return () => controller.abort();
-  }, [componentAddress, entityId, range]);
+  }, [componentAddress, entityId, queryKey, range]);
 
+  const status =
+    result?.key === queryKey ? (result.error ? 'error' : 'ready') : 'loading';
+  const points = result?.key === queryKey && !result.error ? result.points : [];
   const series = useMemo(() => numericSeries(points, metric), [metric, points]);
   const path = useMemo(() => polyline(series), [series]);
   const onlineSamples = points.filter((point) => point.state.toUpperCase() === 'ONLINE').length;

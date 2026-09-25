@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import type { Collection, Document } from 'mongodb';
+import type { Document } from 'mongodb';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
 import {

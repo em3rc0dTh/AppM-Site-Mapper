@@ -14,7 +14,7 @@ const DEFAULT_MONGO_PORT = 37017;
 const DEFAULT_MQTT_PORT = 18883;
 const SERIAL_NUMBER = 'DEMO25110703400009';
 const TOPIC_SOURCE = 'demo-qdf-01';
-const ENTITY_ID = 'demo-equipment-qdf-01';
+const ENTITY_ID = 'demo-device-qdf-01';
 const DEFAULT_APP_PORT = 3000;
 
 const children = new Set();
@@ -168,6 +168,19 @@ async function waitForHttp(url, child, timeoutMs = 90_000) {
   throw new Error(`Timed out waiting for Site Mapper at ${url}.`);
 }
 
+function syntheticBreakers() {
+  return Array.from({ length: 24 }, (_, index) => {
+    const position = index + 1;
+
+    return {
+      id: `demo-breaker-panel-1-${position}`,
+      variant: 'BREAKER',
+      label: `CB-${String(position).padStart(2, '0')}`,
+      telemetryAddress: `0_1_${position}`,
+    };
+  });
+}
+
 function topologyDocuments(now) {
   const base = (id, parentId, name, kind) => ({
     id,
@@ -203,11 +216,33 @@ function topologyDocuments(now) {
       cas: [{ id: 'demo-cas-available', startU: 1, endU: 42, state: 'AVAILABLE' }],
     },
     {
-      ...base(ENTITY_ID, 'demo-rack', 'Synthetic QDF / BDFB', 'EQUIPMENT'),
+      ...base(ENTITY_ID, 'demo-rack', 'Synthetic QDF / BDFB', 'DEVICE'),
       serialNumber: SERIAL_NUMBER,
       category: 'QDF/BDFB DEMO',
-      equipmentType: 'QDF_BDFB',
+      deviceType: 'QDF_BDFB',
       pinned: true,
+      bdfb: {
+        shelves: [
+          {
+            id: 'demo-shelf-1',
+            label: 'Shelf 1',
+            frames: [
+              {
+                id: 'demo-frame-1',
+                label: 'Frame 1',
+                presentation: { physicalFrameVisible: false },
+                panels: [
+                  {
+                    id: 'demo-panel-1',
+                    label: 'Panel 1',
+                    endpoints: syntheticBreakers(),
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     },
   ];
 }
@@ -226,7 +261,7 @@ async function seedDemoDatabase(mongoUri) {
     await db.collection('telemetry_sources').insertOne({
       id: 'sim-demo-qdf-01',
       entityId: ENTITY_ID,
-      entityKind: 'EQUIPMENT',
+      entityKind: 'DEVICE',
       topicSource: TOPIC_SOURCE,
       expectedSerialNumber: SERIAL_NUMBER,
       protocolProfile: 'myems-appm-breaker-v1',
@@ -392,7 +427,7 @@ async function main() {
     SIM_TOPIC_SOURCE: TOPIC_SOURCE,
     SIM_SERIAL_NUMBER: SERIAL_NUMBER,
     SIM_ENTITY_ID: ENTITY_ID,
-    SIM_ENTITY_KIND: 'EQUIPMENT',
+    SIM_ENTITY_KIND: 'DEVICE',
     SIM_INTERVAL_MS: process.env.SIM_INTERVAL_MS ?? '3000',
     SIM_FRAGMENT_DELAY_MS: process.env.SIM_FRAGMENT_DELAY_MS ?? '150',
     SIM_START_MSGID: '597',

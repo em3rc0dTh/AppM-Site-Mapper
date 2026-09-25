@@ -46,6 +46,11 @@ export interface BreakerHolder {
   readonly variant: BreakerHolderVariant;
   readonly label: string;
   readonly capacity?: number;
+  /**
+   * External hardware component address used to bind raw telemetry to this canonical endpoint.
+   * It is integration metadata and must not replace the stable canonical endpoint ID.
+   */
+  readonly telemetryAddress?: string;
 }
 
 export interface Panel {

@@ -1,7 +1,13 @@
 import type { BdfbStructure } from '@/modules/topology/domain/entities';
 
 export type BdfbValidationError =
-  'EMPTY_BDFB' | 'EMPTY_LABEL' | 'DUPLICATE_ID' | 'DUPLICATE_ENDPOINT_LABEL' | 'INVALID_CAPACITY';
+  | 'EMPTY_BDFB'
+  | 'EMPTY_LABEL'
+  | 'DUPLICATE_ID'
+  | 'DUPLICATE_ENDPOINT_LABEL'
+  | 'DUPLICATE_TELEMETRY_ADDRESS'
+  | 'INVALID_TELEMETRY_ADDRESS'
+  | 'INVALID_CAPACITY';
 
 export function validateBdfb(
   structure: BdfbStructure,
@@ -11,6 +17,7 @@ export function validateBdfb(
   }
 
   const ids = new Set<string>();
+  const telemetryAddresses = new Set<string>();
 
   for (const shelf of structure.shelves) {
     if (!shelf.label.trim()) {
@@ -59,6 +66,20 @@ export function validateBdfb(
             return { ok: false, error: 'DUPLICATE_ENDPOINT_LABEL' };
           }
           endpointLabels.add(normalized);
+
+          if (endpoint.telemetryAddress !== undefined) {
+            const telemetryAddress = endpoint.telemetryAddress.trim();
+
+            if (!telemetryAddress) {
+              return { ok: false, error: 'INVALID_TELEMETRY_ADDRESS' };
+            }
+
+            if (telemetryAddresses.has(telemetryAddress)) {
+              return { ok: false, error: 'DUPLICATE_TELEMETRY_ADDRESS' };
+            }
+
+            telemetryAddresses.add(telemetryAddress);
+          }
         }
       }
     }

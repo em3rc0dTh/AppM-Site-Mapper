@@ -25,7 +25,8 @@ export type TopologyError =
   | 'HAS_ACTIVE_CHILDREN'
   | 'CAS_RELEASE_REQUIRED'
   | 'PARENT_ARCHIVED_ON_RESTORE'
-  | 'INVALID_DEEP_LINK';
+  | 'INVALID_DEEP_LINK'
+  | 'CONCURRENCY_CONFLICT';
 
 export interface CreateTopologyNodeInput {
   readonly kind: TopologyKind;
@@ -86,6 +87,7 @@ export class TopologyService {
       lifecycle: 'ACTIVE' as const,
       createdAt: timestamp,
       updatedAt: timestamp,
+      revision: 0,
     };
 
     let node: TopologyNode;
@@ -226,13 +228,18 @@ export class TopologyService {
       }
     }
 
+    const expectedRevision = node.revision ?? 0;
     const moved = {
       ...node,
       parentId: parent.id,
       updatedAt: nowIso(),
+      revision: expectedRevision + 1,
     } as TopologyNode;
 
-    await this.repository.replace(moved);
+    if (!(await this.repository.replace(moved, expectedRevision))) {
+      return failure('CONCURRENCY_CONFLICT');
+    }
+
     return success(moved);
   }
 
@@ -249,13 +256,18 @@ export class TopologyService {
       return failure('HAS_ACTIVE_CHILDREN');
     }
 
+    const expectedRevision = node.revision ?? 0;
     const archived = {
       ...node,
       lifecycle: 'ARCHIVED' as const,
       updatedAt: nowIso(),
+      revision: expectedRevision + 1,
     };
 
-    await this.repository.replace(archived);
+    if (!(await this.repository.replace(archived, expectedRevision))) {
+      return failure('CONCURRENCY_CONFLICT');
+    }
+
     return success(archived);
   }
 
@@ -274,13 +286,18 @@ export class TopologyService {
       }
     }
 
+    const expectedRevision = node.revision ?? 0;
     const restored = {
       ...node,
       lifecycle: 'ACTIVE' as const,
       updatedAt: nowIso(),
+      revision: expectedRevision + 1,
     };
 
-    await this.repository.replace(restored);
+    if (!(await this.repository.replace(restored, expectedRevision))) {
+      return failure('CONCURRENCY_CONFLICT');
+    }
+
     return success(restored);
   }
 

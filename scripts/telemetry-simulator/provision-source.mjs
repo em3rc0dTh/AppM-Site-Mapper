@@ -20,7 +20,9 @@ async function main() {
   const uri = required('MONGODB_URI');
   const databaseName = process.env.MONGODB_DB_NAME?.trim() || 'appm_site_mapper';
   const serialNumber = required('SIM_SERIAL_NUMBER');
-  const topicSource = process.env.SIM_TOPIC_SOURCE?.trim() || serialNumber;
+  const topicMode = process.env.SIM_TOPIC_MODE?.trim() || 'appmanager';
+  const topicSource =
+    topicMode === 'legacy' ? serialNumber : process.env.SIM_TOPIC_SOURCE?.trim() || serialNumber;
   const entityId = required('SIM_ENTITY_ID');
   const entityKind = process.env.SIM_ENTITY_KIND?.trim() || 'EQUIPMENT';
 
@@ -54,6 +56,7 @@ async function main() {
       rawSchemaVersion: 'legacy-appm-v1',
       staleAfterSeconds: 30,
       enabled: true,
+      simulated: true,
     });
 
     console.log(

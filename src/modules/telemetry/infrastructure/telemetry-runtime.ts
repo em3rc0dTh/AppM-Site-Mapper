@@ -47,6 +47,18 @@ function configuredOrDefault(
   return fallback;
 }
 
+function configuredTopicSuffix(value: string | undefined, production: boolean): string {
+  if (value !== undefined) {
+    return value.trim();
+  }
+
+  if (production) {
+    throw new Error('Missing required production telemetry configuration: MQTT_TOPIC_SUFFIX');
+  }
+
+  return '/telemetry';
+}
+
 export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
   return getProcessSingleton<Promise<TelemetryRuntime>>('telemetry-runtime', async () => {
     const appEnvironment = parseAppEnvironment(process.env.APP_ENV);
@@ -81,12 +93,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
       'appmanager/v1/raw/',
       production,
     );
-    const topicSuffix = configuredOrDefault(
-      'MQTT_TOPIC_SUFFIX',
-      process.env.MQTT_TOPIC_SUFFIX,
-      '/telemetry',
-      production,
-    );
+    const topicSuffix = configuredTopicSuffix(process.env.MQTT_TOPIC_SUFFIX, production);
 
     const hub = new TelemetryHub(maxStreams);
     const repositories = await createTelemetryRepositories();

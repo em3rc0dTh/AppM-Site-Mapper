@@ -10,9 +10,7 @@ export function upsertTelemetrySample(
   return next.sort((left, right) => left.entityId.localeCompare(right.entityId));
 }
 
-export function dedupeTelemetrySamples(
-  samples: readonly TelemetrySample[],
-): TelemetrySample[] {
+export function dedupeTelemetrySamples(samples: readonly TelemetrySample[]): TelemetrySample[] {
   const latestByEntity = new Map<string, TelemetrySample>();
 
   for (const sample of samples) {

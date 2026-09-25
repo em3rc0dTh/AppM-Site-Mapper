@@ -43,6 +43,24 @@ function literal(value: unknown): Document {
   return { $literal: value };
 }
 
+function latestSelector(sample: TelemetrySample): Document {
+  return {
+    entityId: sample.entityId,
+    $or: [
+      { observedAt: { $lt: sample.observedAt } },
+      {
+        observedAt: sample.observedAt,
+        receivedAt: { $lt: sample.receivedAt },
+      },
+      {
+        observedAt: sample.observedAt,
+        receivedAt: sample.receivedAt,
+      },
+      { observedAt: { $exists: false } },
+    ],
+  };
+}
+
 function latestUpdatePipeline(sample: TelemetrySample): Document[] {
   const incomingRecency = buildTelemetryReportedEntryRecency(sample);
   const sameStream = {
@@ -131,21 +149,7 @@ export class MongoTelemetryLatestRepository implements TelemetryLatestRepository
   async upsertIfNewer(sample: TelemetrySample): Promise<boolean> {
     try {
       const result = await this.collection.updateOne(
-        {
-          entityId: sample.entityId,
-          $or: [
-            { observedAt: { $lt: sample.observedAt } },
-            {
-              observedAt: sample.observedAt,
-              receivedAt: { $lt: sample.receivedAt },
-            },
-            {
-              observedAt: sample.observedAt,
-              receivedAt: sample.receivedAt,
-            },
-            { observedAt: { $exists: false } },
-          ],
-        },
+        latestSelector(sample),
         latestUpdatePipeline(sample),
         { upsert: true },
       );
@@ -153,7 +157,13 @@ export class MongoTelemetryLatestRepository implements TelemetryLatestRepository
       return result.matchedCount === 1 || result.upsertedCount === 1;
     } catch (error) {
       if (error instanceof MongoServerError && error.code === 11000) {
-        return false;
+        const retry = await this.collection.updateOne(
+          latestSelector(sample),
+          latestUpdatePipeline(sample),
+          { upsert: false },
+        );
+
+        return retry.matchedCount === 1;
       }
 
       throw error;

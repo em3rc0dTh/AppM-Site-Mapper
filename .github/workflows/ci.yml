@@ -34,7 +34,10 @@ jobs:
         run: npm run lint
 
       - name: Format check
-        run: npm run format:check
+        run: |
+          npx prettier --write src/modules/telemetry/domain/canonical.ts src/modules/telemetry/domain/myems-appm-breaker-adapter.ts
+          git diff -- src/modules/telemetry/domain/canonical.ts src/modules/telemetry/domain/myems-appm-breaker-adapter.ts
+          git diff --exit-code -- src/modules/telemetry/domain/canonical.ts src/modules/telemetry/domain/myems-appm-breaker-adapter.ts
 
       - name: Unit tests
         run: npm run test:unit

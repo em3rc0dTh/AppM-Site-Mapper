@@ -58,7 +58,23 @@ MK1 does not carry forward:
 
 G14 introduced a dedicated cross-module system certification step in CI.
 
-G15 completes repository documentation and operational truth boundaries.
+G15 completes the original repository documentation and operational truth boundaries.
+
+## G16 hardening stream
+
+G16 is active and not yet a sealed release gate. The current stream adds:
+
+- explicit telemetry source/serial binding and quarantine;
+- durable acceptance/idempotency/outbox foundations;
+- MongoDB-backed canonical latest telemetry in production persistence mode;
+- authenticated realtime fan-out;
+- hardened MQTT TLS/ACL reference policy;
+- browser-certified Site → Circuit Breaker navigation, modal behavior and viewport evidence;
+- production runtime fail-closed behavior when `APP_ENV` is ambiguous.
+
+Open G16 items are tracked in `docs/release/g16-gap-register.md`, including production historical
+telemetry selection/wiring, concurrency/audit atomicity and environment-specific production
+certification.
 
 ## Deployment boundary
 

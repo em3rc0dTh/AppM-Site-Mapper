@@ -39,11 +39,14 @@ export class MemoryPowerRepository implements PowerRepository {
     this.paths.set(path.id, structuredClone(path));
   }
 
-  async replace(path: PowerPath): Promise<void> {
-    if (!this.paths.has(path.id)) {
-      throw new Error(`PowerPath does not exist: ${path.id}`);
+  async replace(path: PowerPath, expectedRevision: number): Promise<boolean> {
+    const current = this.paths.get(path.id);
+
+    if (!current || (current.revision ?? 0) !== expectedRevision) {
+      return false;
     }
 
     this.paths.set(path.id, structuredClone(path));
+    return true;
   }
 }

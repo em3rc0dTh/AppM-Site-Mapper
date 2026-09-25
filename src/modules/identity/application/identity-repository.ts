@@ -5,6 +5,7 @@ export interface IdentityRepository {
   listUsers(): Promise<readonly User[]>;
   getUserById(id: string): Promise<User | null>;
   getUserByEmail(email: string): Promise<User | null>;
+  insertInitialUser(user: User): Promise<boolean>;
   insertUser(user: User): Promise<void>;
   replaceUser(user: User): Promise<void>;
   insertSession(session: SessionRecord): Promise<void>;

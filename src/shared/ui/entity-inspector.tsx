@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { StatusBadge } from './primitives';
 
@@ -10,7 +11,8 @@ export interface InspectorEntity {
   status?: string;
   sections: readonly {
     title: string;
-    fields: readonly { label: string; value: string | number }[];
+    fields?: readonly { label: string; value: string | number }[];
+    content?: ReactNode;
   }[];
   actions?: readonly { label: string; href: string }[];
 }
@@ -50,19 +52,67 @@ export function EntityInspector({
   const titleId = useId();
   const [tab, setTab] = useState(0);
 
+  const isOpen = entity !== null;
+
   useEffect(() => {
     const dialog = ref.current;
-    if (!entity || !dialog) return;
+    if (!isOpen || !dialog) return;
 
     const previous = document.activeElement as HTMLElement | null;
-    setTab(0);
+    const focusableSelector = [
+      'a[href]',
+      'button:not([disabled])',
+      'input:not([disabled])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      '[tabindex]:not([tabindex="-1"])',
+    ].join(',');
+
+    const focusableElements = () =>
+      Array.from(dialog.querySelectorAll<HTMLElement>(focusableSelector)).filter(
+        (element) =>
+          !element.hasAttribute('hidden') && element.getAttribute('aria-hidden') !== 'true',
+      );
+
+    const containFocus = (event: KeyboardEvent) => {
+      if (event.key !== 'Tab') return;
+
+      const focusable = focusableElements();
+      if (!focusable.length) {
+        event.preventDefault();
+        dialog.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (!dialog.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first)?.focus();
+        return;
+      }
+
+      if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first?.focus();
+      } else if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last?.focus();
+      }
+    };
+
     dialog.showModal();
+    document.addEventListener('keydown', containFocus, true);
+    requestAnimationFrame(() => focusableElements()[0]?.focus());
 
     return () => {
-      dialog.close();
+      document.removeEventListener('keydown', containFocus, true);
+      if (dialog.open) dialog.close();
       previous?.focus();
     };
-  }, [entity]);
+  }, [isOpen]);
 
   if (!entity) return null;
 
@@ -74,7 +124,11 @@ export function EntityInspector({
       ref={ref}
       className="inspector-dialog"
       aria-labelledby={titleId}
-      onCancel={onClose}
+      tabIndex={-1}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       onClick={(event) => {
         const rect = event.currentTarget.getBoundingClientRect();
         const outside =
@@ -151,14 +205,17 @@ export function EntityInspector({
             className="inspector-section"
           >
             <h2>{section.title}</h2>
-            <dl className="inspector-facts">
-              {section.fields.map((field) => (
-                <div key={`${section.title}-${field.label}`}>
-                  <dt>{field.label}</dt>
-                  <dd>{field.value}</dd>
-                </div>
-              ))}
-            </dl>
+            {section.content}
+            {section.fields && (
+              <dl className="inspector-facts">
+                {section.fields.map((field) => (
+                  <div key={`${section.title}-${field.label}`}>
+                    <dt>{field.label}</dt>
+                    <dd>{field.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
           </section>
         ) : null}
 

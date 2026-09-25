@@ -1,47 +1,221 @@
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 
 import { normalizeTelemetry } from '@/modules/telemetry/domain/normalizer';
 
-const options = { topicPrefix: 'data/dev/', maxPayloadBytes: 1024 };
+const options = {
+  topicPrefix: 'appmanager/v1/raw/',
+  topicSuffix: '/telemetry',
+  maxPayloadBytes: 1024,
+};
+
+const telxiusV1Minimum = readFileSync(
+  new URL('../fixtures/telemetry/telxius-v1-minimal.json', import.meta.url),
+  'utf8',
+);
 
 describe('normalizeTelemetry', () => {
-  it('normalizes legacy reported payloads', () => {
+  it('accepts the source-backed V1 minimum without inventing metric semantics', () => {
     const result = normalizeTelemetry(
-      'data/dev/SN-001',
-      new TextEncoder().encode(JSON.stringify({ reported: { voltage: 52.1 } })),
+      'appmanager/v1/raw/source-001/telemetry',
+      new TextEncoder().encode(telxiusV1Minimum),
       options,
-      '2026-09-22T00:00:00.000Z',
+      '2026-09-22T00:00:01.000Z',
     );
 
     expect(result).toEqual({
       ok: true,
       value: {
-        topic: 'data/dev/SN-001',
-        sourceIdentity: 'SN-001',
-        reported: { voltage: 52.1 },
-        receivedAt: '2026-09-22T00:00:00.000Z',
+        topic: 'appmanager/v1/raw/source-001/telemetry',
+        topicSource: 'source-001',
+        serialNumber: 'SERIAL-DEL-DISPOSITIVO',
+        reported: { metric_key: 13.09 },
+        observedAt: '2026-09-22T00:00:01.000Z',
+        receivedAt: '2026-09-22T00:00:01.000Z',
+        timestampProvenance: 'RECEIVED_TIME_FALLBACK',
       },
     });
   });
 
-  it('rejects topics outside the allowlisted prefix', () => {
-    const result = normalizeTelemetry('other/SN-001', new TextEncoder().encode('{}'), options);
+  it('preserves an explicitly valid device timestamp when a newer producer supplies one', () => {
+    const result = normalizeTelemetry(
+      'appmanager/v1/raw/source-001/telemetry',
+      new TextEncoder().encode(
+        JSON.stringify({
+          sn: 'SN-001',
+          observedAt: '2026-09-22T00:00:00.000Z',
+          reported: { metric_key: 13.09 },
+        }),
+      ),
+      options,
+      '2026-09-22T00:00:01.000Z',
+    );
+
+    expect(result.ok && result.value.observedAt).toBe('2026-09-22T00:00:00.000Z');
+    expect(result.ok && result.value.timestampProvenance).toBe('DEVICE');
+  });
+
+  it('preserves optional producer message identity without making it mandatory for V1', () => {
+    const result = normalizeTelemetry(
+      'appmanager/v1/raw/source-001/telemetry',
+      new TextEncoder().encode(
+        JSON.stringify({
+          sn: 'SN-001',
+          messageId: 'message-7',
+          producerEpoch: 'boot-2',
+          sequence: 7,
+          reported: {},
+        }),
+      ),
+      options,
+      '2026-09-22T00:00:01.000Z',
+    );
+
+    expect(result.ok && result.value.messageId).toBe('message-7');
+    expect(result.ok && result.value.producerEpoch).toBe('boot-2');
+    expect(result.ok && result.value.sequence).toBe(7);
+  });
+
+  it('normalizes the observed legacy AppManager envelope and derives replay identity from msgid plus timestamp', () => {
+    const result = normalizeTelemetry(
+      'data/dev/25110703400009',
+      new TextEncoder().encode(
+        JSON.stringify({
+          msgid: '598',
+          method: 'update',
+          sn: '25110703400009',
+          timestamp: 1773845510,
+          sendtime: 1773845510,
+          version: 1,
+          reported: {
+            '0_1_1': {
+              state: 'ONLINE',
+              U1: '12.23',
+              I1: '9.57',
+              P1: '117.18',
+              EP1: '1.50',
+            },
+          },
+        }),
+      ),
+      {
+        topicPrefix: 'data/dev/',
+        topicSuffix: '',
+        maxPayloadBytes: 4096,
+      },
+      '2026-09-24T00:00:01.000Z',
+    );
 
     expect(result).toEqual({
-      ok: false,
-      error: 'TOPIC_NOT_ALLOWED',
+      ok: true,
+      value: {
+        topic: 'data/dev/25110703400009',
+        topicSource: '25110703400009',
+        serialNumber: '25110703400009',
+        reported: {
+          '0_1_1': {
+            state: 'ONLINE',
+            U1: '12.23',
+            I1: '9.57',
+            P1: '117.18',
+            EP1: '1.50',
+          },
+        },
+        observedAt: '2026-03-18T14:51:50.000Z',
+        receivedAt: '2026-09-24T00:00:01.000Z',
+        timestampProvenance: 'DEVICE',
+        messageId: 'legacy:598:ts:1773845510',
+        sourceMessageId: '598',
+        sourceTimestampSeconds: 1773845510,
+        sourceSendTimeSeconds: 1773845510,
+        sourceMethod: 'update',
+        sourceVersion: 1,
+      },
     });
   });
 
-  it('rejects malformed JSON and oversized payloads', () => {
-    expect(normalizeTelemetry('data/dev/SN-001', new TextEncoder().encode('{'), options)).toEqual({
-      ok: false,
-      error: 'INVALID_JSON',
-    });
+  it('does not treat legacy msgid alone as a proven globally unique replay key', () => {
+    const result = normalizeTelemetry(
+      'appmanager/v1/raw/source-001/telemetry',
+      new TextEncoder().encode(
+        JSON.stringify({
+          msgid: '598',
+          sn: 'SN-001',
+          reported: {},
+        }),
+      ),
+      options,
+      '2026-09-22T00:00:01.000Z',
+    );
 
-    expect(normalizeTelemetry('data/dev/SN-001', new Uint8Array(1025), options)).toEqual({
-      ok: false,
-      error: 'PAYLOAD_TOO_LARGE',
-    });
+    expect(result.ok && result.value.sourceMessageId).toBe('598');
+    expect(result.ok && result.value.messageId).toBeUndefined();
+  });
+
+  it('uses receivedAt as an explicit fallback without pretending it came from hardware', () => {
+    const result = normalizeTelemetry(
+      'appmanager/v1/raw/source-001/telemetry',
+      new TextEncoder().encode(JSON.stringify({ sn: 'SN-001', reported: {} })),
+      options,
+      '2026-09-22T00:00:01.000Z',
+    );
+
+    expect(result.ok && result.value.timestampProvenance).toBe('RECEIVED_TIME_FALLBACK');
+    expect(result.ok && result.value.observedAt).toBe('2026-09-22T00:00:01.000Z');
+  });
+
+  it('rejects topics outside the exact source-scoped namespace', () => {
+    expect(
+      normalizeTelemetry('other/source-001/telemetry', new TextEncoder().encode('{}'), options),
+    ).toEqual({ ok: false, error: 'TOPIC_NOT_ALLOWED' });
+
+    expect(
+      normalizeTelemetry(
+        'appmanager/v1/raw/source-001/other',
+        new TextEncoder().encode('{}'),
+        options,
+      ),
+    ).toEqual({ ok: false, error: 'TOPIC_NOT_ALLOWED' });
+  });
+
+  it('rejects missing serial/reported, malformed JSON, oversized payloads and invalid slots', () => {
+    expect(
+      normalizeTelemetry(
+        'appmanager/v1/raw/source-001/telemetry',
+        new TextEncoder().encode('{'),
+        options,
+      ),
+    ).toEqual({ ok: false, error: 'INVALID_JSON' });
+
+    expect(
+      normalizeTelemetry('appmanager/v1/raw/source-001/telemetry', new Uint8Array(1025), options),
+    ).toEqual({ ok: false, error: 'PAYLOAD_TOO_LARGE' });
+
+    expect(
+      normalizeTelemetry(
+        'appmanager/v1/raw/source-001/telemetry',
+        new TextEncoder().encode(JSON.stringify({ reported: {} })),
+        options,
+      ),
+    ).toEqual({ ok: false, error: 'SERIAL_NUMBER_MISSING' });
+
+    expect(
+      normalizeTelemetry(
+        'appmanager/v1/raw/source-001/telemetry',
+        new TextEncoder().encode(JSON.stringify({ sn: 'SN-001' })),
+        options,
+      ),
+    ).toEqual({ ok: false, error: 'REPORTED_MISSING' });
+
+    expect(
+      normalizeTelemetry(
+        'appmanager/v1/raw/source-001/telemetry',
+        new TextEncoder().encode(
+          JSON.stringify({ sn: 'SN-001', reported: { '0_1_25': { metric_key: 13.09 } } }),
+        ),
+        options,
+      ),
+    ).toEqual({ ok: false, error: 'INVALID_BREAKER_ADDRESS' });
   });
 });

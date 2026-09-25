@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
+import { getAuditRuntime } from '@/modules/audit/infrastructure/audit-runtime';
 import { AuthService } from '@/modules/identity/application/auth-service';
 import { AUTH_COOKIE_NAME, clearAuthCookie } from '@/modules/identity/infrastructure/auth-cookie';
 import { getIdentityRuntime } from '@/modules/identity/infrastructure/identity-runtime';
@@ -35,6 +36,14 @@ export async function POST(request: Request) {
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 400 });
   }
+
+  const audit = await getAuditRuntime();
+  await audit.service.record({
+    actor: { type: 'USER', userId: result.value.id },
+    action: 'IDENTITY.PASSWORD_CHANGED',
+    target: { kind: 'USER', id: result.value.id },
+    metadata: { allUserSessionsRevoked: true },
+  });
 
   const response = NextResponse.json({
     user: result.value,

@@ -39,10 +39,6 @@ export function hasPermission(role: Role, permission: Permission): boolean {
   return permissions[role].has(permission);
 }
 
-export function canManageRole(actorRole: Role, targetRole: Role): boolean {
-  if (actorRole === 'SUPERADMIN') {
-    return true;
-  }
-
-  return actorRole === 'ADMIN' && targetRole === 'STANDARD';
+export function canManageRole(actorRole: Role, _targetRole: Role): boolean {
+  return actorRole === 'SUPERADMIN';
 }

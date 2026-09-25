@@ -3,7 +3,6 @@ import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 export type TelemetrySubscriber = (sample: TelemetrySample) => void;
 
 export class TelemetryHub {
-  private readonly latestByEntity = new Map<string, TelemetrySample>();
   private readonly subscribers = new Map<number, TelemetrySubscriber>();
   private nextSubscriberId = 1;
 
@@ -14,22 +13,9 @@ export class TelemetryHub {
   }
 
   publish(sample: TelemetrySample): void {
-    this.latestByEntity.set(sample.entityId, structuredClone(sample));
-
     for (const subscriber of this.subscribers.values()) {
       subscriber(structuredClone(sample));
     }
-  }
-
-  latest(entityId: string): TelemetrySample | null {
-    const sample = this.latestByEntity.get(entityId);
-    return sample ? structuredClone(sample) : null;
-  }
-
-  snapshot(): readonly TelemetrySample[] {
-    return [...this.latestByEntity.values()]
-      .sort((left, right) => left.entityId.localeCompare(right.entityId))
-      .map((sample) => structuredClone(sample));
   }
 
   subscribe(subscriber: TelemetrySubscriber): (() => void) | null {

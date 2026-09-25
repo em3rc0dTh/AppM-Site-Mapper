@@ -13,13 +13,25 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      APP_ENV: test
+      APP_PERSISTENCE: memory
+
+    services:
+      mongo:
+        image: mongo:8.0
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 22
           cache: npm
@@ -36,6 +48,11 @@ jobs:
       - name: Format check
         run: npm run format:check
 
+      - name: Validate one-command telemetry demo
+        run: |
+          node --check scripts/demo-telemetry.mjs
+          docker compose -f infra/demo/docker-compose.telemetry.yml config --quiet
+
       - name: Unit tests
         run: npm run test:unit
 
@@ -50,3 +67,18 @@ jobs:
 
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
+
+      - name: Install certification browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Physical flow browser certification
+        run: node scripts/certify-physical-flow.mjs
+
+      - name: Save physical flow evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: physical-flow-evidence
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

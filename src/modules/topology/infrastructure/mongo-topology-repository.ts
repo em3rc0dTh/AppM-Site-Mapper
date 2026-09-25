@@ -37,14 +37,17 @@ export class MongoTopologyRepository implements TopologyRepository {
     await this.collection.insertOne(node as OptionalUnlessRequiredId<TopologyDocument>);
   }
 
-  async replace(node: TopologyNode): Promise<void> {
+  async replace(node: TopologyNode, expectedRevision: number): Promise<boolean> {
+    const revisionFilter =
+      expectedRevision === 0
+        ? { $or: [{ revision: 0 }, { revision: { $exists: false } }] }
+        : { revision: expectedRevision };
+
     const result = await this.collection.replaceOne(
-      { id: node.id },
+      { id: node.id, ...revisionFilter },
       node as OptionalUnlessRequiredId<TopologyDocument>,
     );
 
-    if (result.matchedCount !== 1) {
-      throw new Error(`Topology node does not exist: ${node.id}`);
-    }
+    return result.matchedCount === 1;
   }
 }

@@ -4,7 +4,11 @@ import type {
 } from '@/modules/identity/application/identity-repository';
 import type { SafeUser, SessionRecord, User } from '@/modules/identity/domain/entities';
 import { toSafeUser } from '@/modules/identity/domain/entities';
-import { hashPassword, verifyPassword } from '@/modules/identity/domain/password';
+import {
+  hashPassword,
+  isPasswordLengthAcceptable,
+  verifyPassword,
+} from '@/modules/identity/domain/password';
 import { createSessionToken, hashSessionToken } from '@/modules/identity/domain/session-token';
 import type { Permission, Role } from '@/modules/identity/domain/roles';
 import { canManageRole, hasPermission } from '@/modules/identity/domain/roles';
@@ -54,6 +58,10 @@ export class AuthService {
 
     if (!(await this.throttle.consume(throttleKey, now, LOGIN_LIMIT, LOGIN_WINDOW_MS))) {
       return failure('RATE_LIMITED');
+    }
+
+    if (!isPasswordLengthAcceptable(password)) {
+      return failure('INVALID_CREDENTIALS');
     }
 
     const user = await this.repository.getUserByEmail(normalizeEmail(email));
@@ -136,14 +144,18 @@ export class AuthService {
       return failure('SESSION_INVALID');
     }
 
+    if (!isPasswordLengthAcceptable(currentPassword)) {
+      return failure('INVALID_CREDENTIALS');
+    }
+
+    if (!isPasswordLengthAcceptable(newPassword)) {
+      return failure('INVALID_INPUT');
+    }
+
     const user = await this.repository.getUserById(session.userId);
 
     if (!user || !(await verifyPassword(currentPassword, user.passwordHash))) {
       return failure('INVALID_CREDENTIALS');
-    }
-
-    if (newPassword.length < 12) {
-      return failure('INVALID_INPUT');
     }
 
     const updated: User = {
@@ -196,7 +208,7 @@ export class AuthService {
       return failure('BOOTSTRAP_CLOSED');
     }
 
-    if (password.length < 12 || !displayName.trim()) {
+    if (!isPasswordLengthAcceptable(password) || !displayName.trim()) {
       return failure('INVALID_INPUT');
     }
 
@@ -213,7 +225,10 @@ export class AuthService {
       updatedAt: timestamp,
     };
 
-    await this.repository.insertUser(user);
+    if (!(await this.repository.insertInitialUser(user))) {
+      return failure('BOOTSTRAP_CLOSED');
+    }
+
     return success(toSafeUser(user));
   }
 
@@ -233,7 +248,7 @@ export class AuthService {
     const email = normalizeEmail(input.email);
     const displayName = input.displayName.trim();
 
-    if (!email || !displayName || input.temporaryPassword.length < 12) {
+    if (!email || !displayName || !isPasswordLengthAcceptable(input.temporaryPassword)) {
       return failure('INVALID_INPUT');
     }
 

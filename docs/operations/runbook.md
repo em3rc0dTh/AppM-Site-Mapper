@@ -10,7 +10,8 @@ This runbook covers repository/runtime operation for the MK1 software baseline. 
 2. Confirm the latest `main` CI run is green.
 3. Confirm `npm audit --omit=dev --audit-level=high` passes.
 4. Configure runtime environment variables outside Git.
-5. Confirm `APP_ENV=production`.
+5. Confirm `APP_ENV=production` is explicitly present before process start. A production Node runtime
+   with a missing/blank `APP_ENV` is intentionally fail-closed and must not start.
 6. Confirm `APP_PERSISTENCE=mongodb`.
 7. Confirm MongoDB backup/restore capability.
 8. Confirm legacy MQTT credentials have been rotated before enabling telemetry.
@@ -116,4 +117,9 @@ Logs must not contain:
 
 Application shutdown must not delete canonical data.
 
-MongoDB remains the source of persisted production state. Telemetry latest-value state is in-process and may be reconstructed from future broker traffic after restart.
+MongoDB remains the source of persisted production state. In MongoDB mode, G16 persists canonical
+latest telemetry plus durable acceptance/outbox state. The realtime fan-out hub is process-local and
+is reconstructed on restart from persisted latest state and future broker traffic.
+
+Production historical time-series storage remains a separate open gate; do not describe the
+synthetic 24H/7D/30D demo as production history.

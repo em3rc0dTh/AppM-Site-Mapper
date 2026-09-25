@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { loginDestination } from '@/shared/ui/login-destination';
 import { AuthFrame } from '@/shared/ui/auth-frame';
 
 interface LoginResponse {
@@ -37,7 +38,8 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.href = result.user?.mustChangePassword ? '/change-password' : '/workspace';
+    const destination = loginDestination(new URLSearchParams(window.location.search).get('next'));
+    window.location.href = result.user?.mustChangePassword ? '/change-password' : destination;
   }
 
   return (

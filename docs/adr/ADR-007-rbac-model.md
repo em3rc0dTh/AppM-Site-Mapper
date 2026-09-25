@@ -22,7 +22,9 @@ Operational administration:
 - power write;
 - settings read/write.
 
-Admin may create/manage Standard users only through constrained user-management use cases.
+Admin does not receive `users:manage` in the current MK1 contract. Delegated management of
+Standard users is intentionally not enabled; introducing it requires a separate explicit permission
+and use-case contract.
 
 ### SUPERADMIN
 

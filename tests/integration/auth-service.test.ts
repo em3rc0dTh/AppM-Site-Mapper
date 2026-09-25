@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { AuthService } from '@/modules/identity/application/auth-service';
+import { MAX_PASSWORD_LENGTH } from '@/modules/identity/domain/password';
 import {
   MemoryAuthThrottle,
   MemoryIdentityRepository,
@@ -44,6 +45,40 @@ describe('AuthService', () => {
       email: 'admin@example.com',
       role: 'SUPERADMIN',
     });
+  });
+
+  it('rejects oversized login passwords before password derivation', async () => {
+    const repository = new MemoryIdentityRepository();
+    const throttle = new MemoryAuthThrottle();
+    const service = new AuthService(repository, throttle);
+
+    await service.bootstrapSuperadmin('admin@example.com', 'a strong initial password', 'Admin');
+
+    await expect(
+      service.authenticate(
+        'admin@example.com',
+        'x'.repeat(MAX_PASSWORD_LENGTH + 1),
+        'oversized-test-key',
+      ),
+    ).resolves.toEqual({ ok: false, error: 'INVALID_CREDENTIALS' });
+  });
+
+  it('allows only one initial superadmin under concurrent bootstrap attempts', async () => {
+    const repository = new MemoryIdentityRepository();
+    const throttle = new MemoryAuthThrottle();
+    const service = new AuthService(repository, throttle);
+
+    const [first, second] = await Promise.all([
+      service.bootstrapSuperadmin('first@example.com', 'first strong password', 'First'),
+      service.bootstrapSuperadmin('second@example.com', 'second strong password', 'Second'),
+    ]);
+
+    const results = [first, second];
+    expect(results.filter((result) => result.ok)).toHaveLength(1);
+    expect(results.filter((result) => !result.ok)).toEqual([
+      { ok: false, error: 'BOOTSTRAP_CLOSED' },
+    ]);
+    await expect(repository.countUsers()).resolves.toBe(1);
   });
 
   it('revokes every session after a password change', async () => {

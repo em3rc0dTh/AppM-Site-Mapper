@@ -5,5 +5,5 @@ export interface TopologyRepository {
   listChildren(parentId: string): Promise<readonly TopologyNode[]>;
   listByKind(kind: TopologyKind): Promise<readonly TopologyNode[]>;
   insert(node: TopologyNode): Promise<void>;
-  replace(node: TopologyNode): Promise<void>;
+  replace(node: TopologyNode, expectedRevision: number): Promise<boolean>;
 }

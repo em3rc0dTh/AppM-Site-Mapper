@@ -12,4 +12,6 @@
 | users:manage   | no       | no    | yes        |
 | system:danger  | no       | no    | yes        |
 
-Additional policy: Admin may manage Standard users through constrained user-management use cases, but may not grant Admin or Superadmin authority.
+User-management policy: `users:manage` is Superadmin-only. Admin does not create, list, archive or
+change Standard users through the current MK1 API. Any future delegated-admin workflow requires a
+separate explicit permission/contract rather than overloading `users:manage`.

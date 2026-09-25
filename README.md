@@ -10,7 +10,8 @@ The legacy repository is evidence and reference, not the architectural foundatio
 
 **Software milestone:** MK1  
 **Certified gates:** G0 through G15  
-**Current state:** MK1 repository/software baseline complete  
+**Active hardening stream:** G16 — telemetry identity, durability, security and browser-flow hardening  
+**Current state:** pre-production MK1/G16 software baseline; G16 is not sealed yet  
 **Repository contract:** `CONTRACT.md` and `docs/product/MK1-RECONSTRUCTION-CONTRACT.md`
 
 The integrated software golden path is certified in CI. This is **not** a claim that a production deployment, production-data migration, physical field integration or production-scale load test has already been executed.
@@ -55,7 +56,7 @@ Network
 ## Stack
 
 - Node.js 22
-- Next.js 16.3.5
+- Next.js 16.3.6
 - React 19.3.0
 - TypeScript 5.9.3
 - MongoDB Node driver 7.6.0
@@ -76,6 +77,9 @@ npm run dev
 The default non-production persistence mode is memory unless configured otherwise.
 
 ## Production configuration
+
+Production must set `APP_ENV` explicitly. When `NODE_ENV=production`, a missing or blank
+`APP_ENV` is a startup error; the runtime must not silently fall back to development.
 
 Production must use:
 
@@ -147,4 +151,9 @@ Never commit production secrets, customer topology, database dumps, MQTT credent
 
 MK1 is repository/software certified through the documented gates.
 
-G0 through G15 certify the repository/software baseline. Before a specific production deployment is declared certified, the environment-specific items in `docs/release/release-checklist.md` must also be completed.
+G0 through G15 certify the repository/software baseline. G16 is an active hardening stream with
+durable telemetry latest/acceptance foundations and browser-flow evidence, but it is not a sealed
+production gate. See `docs/release/g16-gap-register.md`.
+
+Before a specific production deployment is declared certified, the environment-specific items in
+`docs/release/release-checklist.md` must also be completed.

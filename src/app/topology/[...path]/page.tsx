@@ -6,6 +6,7 @@ import { BdfbChassis } from '@/components/power/bdfb-chassis';
 import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
 import { TopologyCreateForm } from '@/components/topology/topology-create-form';
 import {
+  TopologyChildren,
   TopologyVisualStage,
   type VisualStageChild,
 } from '@/components/topology/topology-visual-stage';
@@ -18,18 +19,21 @@ import { allowedChildKinds } from '@/modules/topology/domain/hierarchy';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { InspectButton } from '@/shared/ui/entity-inspector';
-import { SectionHeader, StatePanel, StatusBadge } from '@/shared/ui/primitives';
+import { topologyHref } from '@/shared/ui/topology-navigation';
+import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 
 export default async function TopologyNodePage({
   params,
 }: Readonly<{ params: Promise<{ path: string[] }> }>) {
+  const { path } = await params;
   const auth = await requirePermission('topology:read');
 
   if (!auth.ok) {
-    redirect('/login');
+    redirect(
+      `/login?next=${encodeURIComponent(`/topology/${path.map(encodeURIComponent).join('/')}`)}`,
+    );
   }
 
-  const { path } = await params;
   const repository = await createTopologyRepository();
   const service = new TopologyService(repository);
   const resolved = await service.resolveDeepLink(path);
@@ -39,6 +43,9 @@ export default async function TopologyNodePage({
   }
 
   const node = resolved.value;
+  if (node.kind === 'CONTAINER_RACK' && node.variant === 'RACK') {
+    redirect(await topologyHref(service, node));
+  }
   const [trail, children] = await Promise.all([
     service.getTrail(node.id),
     service.listChildren(node.id),
@@ -51,19 +58,11 @@ export default async function TopologyNodePage({
       id: item.id,
       name: item.name,
       kind: item.kind,
-      href: await service.buildDeepLink(item.id),
+      href: await topologyHref(service, item),
     })),
   );
   const childEntries: VisualStageChild[] = await Promise.all(
-    children.map(async (child) => {
-      const deepLink = await service.buildDeepLink(child.id);
-      const href =
-        child.kind === 'CONTAINER_RACK' && child.variant === 'RACK'
-          ? `/rack/${child.id}`
-          : deepLink;
-
-      return { node: child, href };
-    }),
+    children.map(async (child) => ({ node: child, href: await topologyHref(service, child) })),
   );
   const contextChildren: ContextTreeEntry[] = childEntries.map(({ node: child, href }) => ({
     id: child.id,
@@ -72,33 +71,23 @@ export default async function TopologyNodePage({
     href,
   }));
 
-  const structurePreviewNodes =
-    node.kind === 'STRUCTURE' && children[0]?.kind === 'LEVEL'
-      ? await service.listChildren(children[0].id)
-      : [];
-
-  const structurePreviewEntries: VisualStageChild[] = await Promise.all(
-    structurePreviewNodes.map(async (child) => ({
-      node: child,
-      href: await service.buildDeepLink(child.id),
-    })),
-  );
-
   const roomLayout =
     node.kind === 'ROOM_SUBSTRUCTURE'
       ? await new SpatialService(repository).getRoomLayout(node.id)
       : null;
 
-  const rackLink =
-    node.kind === 'CONTAINER_RACK' && node.variant === 'RACK' ? `/rack/${node.id}` : null;
-  const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
-
   return (
-    <main className="operational-page">
+    <main
+      className={`operational-page${node.kind === 'DEVICE' && node.bdfb ? ' operational-page--bdfb' : ''}`}
+    >
       <nav className="breadcrumbs operational-breadcrumbs" aria-label="Breadcrumb">
         <Link href="/network">Network index</Link>
         {trailEntries.map((item) => (
-          <Link key={item.id} href={item.href}>
+          <Link
+            key={item.id}
+            href={item.href}
+            aria-current={item.id === node.id ? 'page' : undefined}
+          >
             {item.name}
           </Link>
         ))}
@@ -113,7 +102,7 @@ export default async function TopologyNodePage({
           <SectionHeader
             eyebrow={node.kind.replaceAll('_', ' ')}
             title={node.name}
-            description="Navigate physically, inspect contextually, and keep the canonical hierarchy visible."
+            description={`${children.length} contained`}
             actions={
               <>
                 <StatusBadge>{node.lifecycle}</StatusBadge>
@@ -131,22 +120,26 @@ export default async function TopologyNodePage({
             ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
               roomLayout?.ok &&
               roomLayout.value.room.polygon ? (
-              <BlueprintCanvas
-                polygon={roomLayout.value.room.polygon}
-                racks={roomLayout.value.racks}
-                slots={roomLayout.value.assignableSlots}
-              />
+              <div className="physical-room">
+                <TopologyChildren items={childEntries} />
+                <BlueprintCanvas
+                  polygon={roomLayout.value.room.polygon}
+                  racks={roomLayout.value.racks}
+                  slots={roomLayout.value.assignableSlots}
+                />
+              </div>
             ) : node.kind === 'ROOM_SUBSTRUCTURE' && roomLayout?.ok ? (
-              <StatePanel
-                title="No room boundary"
-                description="Define the physical boundary to render the Blueprint."
-              />
-            ) : (
               <TopologyVisualStage
                 node={node}
                 items={childEntries}
-                previewItems={structurePreviewEntries}
+                notice={{
+                  title: 'No room boundary',
+                  description:
+                    'Blueprint geometry is unavailable, so contained infrastructure remains navigable schematically.',
+                }}
               />
+            ) : (
+              <TopologyVisualStage node={node} items={childEntries} />
             )}
           </div>
 
@@ -161,47 +154,6 @@ export default async function TopologyNodePage({
             </div>
           )}
         </section>
-
-        <aside className="operational-inspector">
-          <div className="operational-inspector-card">
-            <span className="eyebrow">Current selection</span>
-            <h2>{node.name}</h2>
-            <dl>
-              <div>
-                <dt>Canonical type</dt>
-                <dd>{node.kind.replaceAll('_', ' ')}</dd>
-              </div>
-              <div>
-                <dt>Contained</dt>
-                <dd>{children.length}</dd>
-              </div>
-              <div>
-                <dt>Lifecycle</dt>
-                <dd>{node.lifecycle}</dd>
-              </div>
-            </dl>
-            <div className="operational-inspector-actions">
-              <InspectButton label="Technical details" entity={topologyInspector(node)} />
-              {rackLink && (
-                <Link className="action-link" href={rackLink}>
-                  Open rack elevation →
-                </Link>
-              )}
-              {blueprintLink && (
-                <Link className="action-link" href={blueprintLink}>
-                  Open Blueprint fullscreen →
-                </Link>
-              )}
-            </div>
-          </div>
-          <div className="operational-hint">
-            <span>Navigation contract</span>
-            <p>
-              The left context grows as you move deeper. The center represents the selected physical
-              level; technical facts stay in the inspector.
-            </p>
-          </div>
-        </aside>
       </div>
     </main>
   );

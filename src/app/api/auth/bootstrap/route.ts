@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
 
 import { requireRuntimeSecret } from '@/config/env';
+import { getAuditRuntime } from '@/modules/audit/infrastructure/audit-runtime';
 import { AuthService } from '@/modules/identity/application/auth-service';
 import { getIdentityRuntime } from '@/modules/identity/infrastructure/identity-runtime';
 
@@ -52,6 +53,14 @@ export async function POST(request: Request) {
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: 409 });
   }
+
+  const audit = await getAuditRuntime();
+  await audit.service.record({
+    actor: { type: 'SYSTEM' },
+    action: 'IDENTITY.SUPERADMIN_BOOTSTRAPPED',
+    target: { kind: 'USER', id: result.value.id },
+    metadata: { role: result.value.role },
+  });
 
   return NextResponse.json({ user: result.value }, { status: 201 });
 }

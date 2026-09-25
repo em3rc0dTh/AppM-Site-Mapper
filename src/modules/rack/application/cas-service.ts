@@ -12,7 +12,12 @@ import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type CasServiceError =
-  CasError | 'RACK_NOT_FOUND' | 'NOT_A_RACK' | 'OCCUPANT_NOT_FOUND' | 'OCCUPANT_NOT_IN_RACK';
+  | CasError
+  | 'RACK_NOT_FOUND'
+  | 'NOT_A_RACK'
+  | 'OCCUPANT_NOT_FOUND'
+  | 'OCCUPANT_NOT_IN_RACK'
+  | 'CONCURRENCY_CONFLICT';
 
 export class CasService {
   constructor(private readonly repository: TopologyRepository) {}
@@ -35,13 +40,18 @@ export class CasService {
       return failure(result.error);
     }
 
+    const expectedRevision = rack.value.revision ?? 0;
     const updated: ContainerRackNode = {
       ...rack.value,
       cas: result.ranges,
       updatedAt: nowIso(),
+      revision: expectedRevision + 1,
     };
 
-    await this.repository.replace(updated);
+    if (!(await this.repository.replace(updated, expectedRevision))) {
+      return failure('CONCURRENCY_CONFLICT');
+    }
+
     return success(updated);
   }
 
@@ -72,13 +82,18 @@ export class CasService {
       return failure(result.error);
     }
 
+    const expectedRevision = rack.value.revision ?? 0;
     const updated: ContainerRackNode = {
       ...rack.value,
       cas: result.ranges,
       updatedAt: nowIso(),
+      revision: expectedRevision + 1,
     };
 
-    await this.repository.replace(updated);
+    if (!(await this.repository.replace(updated, expectedRevision))) {
+      return failure('CONCURRENCY_CONFLICT');
+    }
+
     return success(updated);
   }
 
@@ -98,13 +113,18 @@ export class CasService {
       return failure(result.error);
     }
 
+    const expectedRevision = rack.value.revision ?? 0;
     const updated: ContainerRackNode = {
       ...rack.value,
       cas: result.ranges,
       updatedAt: nowIso(),
+      revision: expectedRevision + 1,
     };
 
-    await this.repository.replace(updated);
+    if (!(await this.repository.replace(updated, expectedRevision))) {
+      return failure('CONCURRENCY_CONFLICT');
+    }
+
     return success(updated);
   }
 

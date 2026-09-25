@@ -1,75 +1,296 @@
+import type {
+  TelemetryAcceptanceRepository,
+  TelemetryDeadLetterReplayResult,
+  TelemetryHistoryStats,
+} from '@/modules/telemetry/application/telemetry-acceptance-repository';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
+import {
+  buildTelemetryIdempotencyKey,
+  sha256Payload,
+} from '@/modules/telemetry/application/telemetry-idempotency';
+import type { TelemetryLatestRepository } from '@/modules/telemetry/application/telemetry-latest-repository';
+import type { TelemetryQuarantineRepository } from '@/modules/telemetry/application/telemetry-quarantine-repository';
+import type { TelemetrySourceRepository } from '@/modules/telemetry/application/telemetry-source-repository';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import {
   normalizeTelemetry,
   type TelemetryNormalizationError,
   type TelemetryNormalizerOptions,
 } from '@/modules/telemetry/domain/normalizer';
-import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
-import type { DeviceNode, EquipmentNode } from '@/modules/topology/domain/entities';
+import { createDomainId } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
-export type TelemetryIngestError = TelemetryNormalizationError | 'UNKNOWN_SOURCE';
+export type TelemetryIngestError =
+  | TelemetryNormalizationError
+  | 'UNKNOWN_SOURCE'
+  | 'SOURCE_DISABLED'
+  | 'SOURCE_IDENTITY_MISMATCH'
+  | 'IDEMPOTENCY_CONFLICT';
 
-type TelemetryEntity = DeviceNode | EquipmentNode;
+export interface TelemetryServiceOptions extends TelemetryNormalizerOptions {
+  readonly quarantineRetentionDays: number;
+}
+
+export interface TelemetryDeadLetterSummary {
+  readonly eventId: string;
+  readonly sourceId: string;
+  readonly entityId: string;
+  readonly protocolProfile: string;
+  readonly acceptedAt: string;
+  readonly historyAttempts: number;
+  readonly errorCode?: string;
+  readonly deadLetteredAt?: string;
+}
+
+export interface TelemetryDeadLetterReplay {
+  readonly summary: TelemetryDeadLetterSummary;
+  readonly previousErrorCode?: string;
+  readonly previousDeadLetteredAt?: string;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_DEAD_LETTER_LIST = 100;
+
+function expiresAt(receivedAt: string, retentionDays: number): string {
+  const timestamp = Date.parse(receivedAt);
+
+  if (!Number.isFinite(timestamp)) {
+    throw new Error('Telemetry receivedAt must be a valid ISO timestamp.');
+  }
+
+  return new Date(timestamp + retentionDays * DAY_MS).toISOString();
+}
+
+function summarizeDeadLetter(
+  record: TelemetryDeadLetterReplayResult['record'],
+): TelemetryDeadLetterSummary {
+  return {
+    eventId: record.eventId,
+    sourceId: record.sample.sourceId,
+    entityId: record.sample.entityId,
+    protocolProfile: record.sample.protocolProfile,
+    acceptedAt: record.acceptedAt,
+    historyAttempts: record.historyAttempts,
+    ...(record.historyLastErrorCode === undefined
+      ? {}
+      : { errorCode: record.historyLastErrorCode }),
+    ...(record.deadLetteredAt === undefined ? {} : { deadLetteredAt: record.deadLetteredAt }),
+  };
+}
 
 export class TelemetryService {
   constructor(
-    private readonly topologyRepository: TopologyRepository,
+    private readonly sources: TelemetrySourceRepository,
+    private readonly latestRepository: TelemetryLatestRepository,
+    private readonly acceptance: TelemetryAcceptanceRepository,
+    private readonly quarantine: TelemetryQuarantineRepository,
     private readonly hub: TelemetryHub,
-    private readonly normalizerOptions: TelemetryNormalizerOptions,
-  ) {}
+    private readonly options: TelemetryServiceOptions,
+  ) {
+    if (!Number.isInteger(options.quarantineRetentionDays) || options.quarantineRetentionDays < 1) {
+      throw new Error('Telemetry quarantineRetentionDays must be a positive integer.');
+    }
+  }
 
   async ingest(
     topic: string,
     payload: Uint8Array,
     receivedAt?: string,
   ): Promise<Result<TelemetrySample, TelemetryIngestError>> {
-    const normalized = normalizeTelemetry(topic, payload, this.normalizerOptions, receivedAt);
+    const ingestReceivedAt = receivedAt ?? new Date().toISOString();
+    const payloadSha256 = sha256Payload(payload);
+    const normalized = normalizeTelemetry(topic, payload, this.options, ingestReceivedAt);
 
     if (!normalized.ok) {
-      return normalized;
+      await this.recordRejection({
+        topic,
+        payload,
+        payloadSha256,
+        receivedAt: ingestReceivedAt,
+        failureCode: normalized.error,
+      });
+      return failure(normalized.error);
     }
 
-    const entity = await this.resolveSource(normalized.value.sourceIdentity);
+    const source = await this.sources.findByTopicSource(normalized.value.topicSource);
 
-    if (!entity) {
+    if (!source) {
+      await this.recordRejection({
+        topic,
+        payload,
+        payloadSha256,
+        receivedAt: ingestReceivedAt,
+        failureCode: 'UNKNOWN_SOURCE',
+        claimedSerialNumber: normalized.value.serialNumber,
+      });
       return failure('UNKNOWN_SOURCE');
     }
 
+    if (!source.enabled) {
+      await this.recordRejection({
+        topic,
+        payload,
+        payloadSha256,
+        receivedAt: ingestReceivedAt,
+        failureCode: 'SOURCE_DISABLED',
+        sourceId: source.id,
+        claimedSerialNumber: normalized.value.serialNumber,
+      });
+      return failure('SOURCE_DISABLED');
+    }
+
+    if (source.expectedSerialNumber !== normalized.value.serialNumber) {
+      await this.recordRejection({
+        topic,
+        payload,
+        payloadSha256,
+        receivedAt: ingestReceivedAt,
+        failureCode: 'SOURCE_IDENTITY_MISMATCH',
+        sourceId: source.id,
+        claimedSerialNumber: normalized.value.serialNumber,
+      });
+      return failure('SOURCE_IDENTITY_MISMATCH');
+    }
+
     const sample: TelemetrySample = {
-      entityId: entity.id,
-      entityKind: entity.kind,
-      sourceIdentity: normalized.value.sourceIdentity,
+      entityId: source.entityId,
+      entityKind: source.entityKind,
+      sourceId: source.id,
+      sourceIdentity: normalized.value.serialNumber,
+      serialNumber: normalized.value.serialNumber,
+      protocolProfile: source.protocolProfile,
+      rawSchemaVersion: source.rawSchemaVersion,
       reported: normalized.value.reported,
+      observedAt: normalized.value.observedAt,
       receivedAt: normalized.value.receivedAt,
+      timestampProvenance: normalized.value.timestampProvenance,
+      ...(normalized.value.sequence === undefined ? {} : { sequence: normalized.value.sequence }),
+      ...(normalized.value.producerEpoch === undefined
+        ? {}
+        : { producerEpoch: normalized.value.producerEpoch }),
+      ...(normalized.value.messageId === undefined
+        ? {}
+        : { messageId: normalized.value.messageId }),
+      ...(normalized.value.sourceMessageId === undefined
+        ? {}
+        : { sourceMessageId: normalized.value.sourceMessageId }),
+      ...(normalized.value.sourceTimestampSeconds === undefined
+        ? {}
+        : { sourceTimestampSeconds: normalized.value.sourceTimestampSeconds }),
+      ...(normalized.value.sourceSendTimeSeconds === undefined
+        ? {}
+        : { sourceSendTimeSeconds: normalized.value.sourceSendTimeSeconds }),
+      ...(normalized.value.sourceMethod === undefined
+        ? {}
+        : { sourceMethod: normalized.value.sourceMethod }),
+      ...(normalized.value.sourceVersion === undefined
+        ? {}
+        : { sourceVersion: normalized.value.sourceVersion }),
+      ...(source.simulated === true ? { simulated: true } : {}),
     };
 
-    this.hub.publish(sample);
-    return success(sample);
+    const idempotencyKey = buildTelemetryIdempotencyKey(source.id, normalized.value);
+    const acceptanceResult = await this.acceptance.accept({
+      eventId: createDomainId(),
+      ...(idempotencyKey === undefined ? {} : { idempotencyKey }),
+      payloadSha256,
+      sample,
+      acceptedAt: ingestReceivedAt,
+      historyState: 'PENDING',
+      historyAttempts: 0,
+    });
+
+    if (acceptanceResult.kind === 'CONFLICT') {
+      await this.recordRejection({
+        topic,
+        payload,
+        payloadSha256,
+        receivedAt: ingestReceivedAt,
+        failureCode: 'IDEMPOTENCY_CONFLICT',
+        sourceId: source.id,
+        claimedSerialNumber: normalized.value.serialNumber,
+      });
+      return failure('IDEMPOTENCY_CONFLICT');
+    }
+
+    if (acceptanceResult.kind === 'DUPLICATE') {
+      return success(acceptanceResult.record.sample);
+    }
+
+    const durableSample = acceptanceResult.record.sample;
+    const becameLatest = await this.latestRepository.upsertIfNewer(durableSample);
+
+    if (becameLatest) {
+      const latestSnapshot = await this.latestRepository.getByEntityId(durableSample.entityId);
+      this.hub.publish(latestSnapshot ?? durableSample);
+    }
+
+    return success(durableSample);
   }
 
-  latest(entityId: string): TelemetrySample | null {
-    return this.hub.latest(entityId);
+  latest(entityId: string): Promise<TelemetrySample | null> {
+    return this.latestRepository.getByEntityId(entityId);
   }
 
-  snapshot(): readonly TelemetrySample[] {
-    return this.hub.snapshot();
+  snapshot(): Promise<readonly TelemetrySample[]> {
+    return this.latestRepository.list();
   }
 
-  private async resolveSource(sourceIdentity: string): Promise<TelemetryEntity | null> {
-    const [devices, equipment] = await Promise.all([
-      this.topologyRepository.listByKind('DEVICE'),
-      this.topologyRepository.listByKind('EQUIPMENT'),
-    ]);
+  historyStats(now = new Date().toISOString()): Promise<TelemetryHistoryStats> {
+    return this.acceptance.historyStats(now);
+  }
 
-    const candidates = [...devices, ...equipment].filter(
-      (node): node is TelemetryEntity =>
-        (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') &&
-        node.lifecycle === 'ACTIVE' &&
-        node.serialNumber === sourceIdentity,
-    );
+  async deadLetters(limit = 50): Promise<readonly TelemetryDeadLetterSummary[]> {
+    if (!Number.isInteger(limit) || limit < 1 || limit > MAX_DEAD_LETTER_LIST) {
+      throw new Error(`Dead-letter list limit must be between 1 and ${MAX_DEAD_LETTER_LIST}.`);
+    }
 
-    return candidates.length === 1 ? (candidates[0] ?? null) : null;
+    const records = await this.acceptance.listDeadLetteredHistory(limit);
+    return records.map(summarizeDeadLetter);
+  }
+
+  async requeueDeadLetter(eventId: string): Promise<TelemetryDeadLetterReplay | null> {
+    const normalizedEventId = eventId.trim();
+
+    if (!normalizedEventId || normalizedEventId.length > 128) {
+      throw new Error('Telemetry eventId is invalid.');
+    }
+
+    const replay = await this.acceptance.requeueDeadLettered(normalizedEventId);
+    if (!replay) return null;
+
+    return {
+      summary: summarizeDeadLetter(replay.record),
+      ...(replay.previousErrorCode === undefined
+        ? {}
+        : { previousErrorCode: replay.previousErrorCode }),
+      ...(replay.previousDeadLetteredAt === undefined
+        ? {}
+        : { previousDeadLetteredAt: replay.previousDeadLetteredAt }),
+    };
+  }
+
+  private async recordRejection(input: {
+    readonly topic: string;
+    readonly payload: Uint8Array;
+    readonly payloadSha256: string;
+    readonly receivedAt: string;
+    readonly failureCode: TelemetryIngestError;
+    readonly sourceId?: string;
+    readonly claimedSerialNumber?: string;
+  }): Promise<void> {
+    await this.quarantine.record({
+      id: createDomainId(),
+      receivedAt: input.receivedAt,
+      expiresAt: expiresAt(input.receivedAt, this.options.quarantineRetentionDays),
+      topic: input.topic,
+      failureCode: input.failureCode,
+      payloadBytes: input.payload.byteLength,
+      payloadSha256: input.payloadSha256,
+      ...(input.sourceId === undefined ? {} : { sourceId: input.sourceId }),
+      ...(input.claimedSerialNumber === undefined
+        ? {}
+        : { claimedSerialNumber: input.claimedSerialNumber }),
+    });
   }
 }

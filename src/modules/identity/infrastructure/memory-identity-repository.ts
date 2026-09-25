@@ -35,6 +35,19 @@ export class MemoryIdentityRepository implements IdentityRepository {
     return user ? structuredClone(user) : null;
   }
 
+  async insertInitialUser(user: User): Promise<boolean> {
+    if (
+      this.users.size !== 0 ||
+      this.users.has(user.id) ||
+      [...this.users.values()].some((candidate) => candidate.email === user.email)
+    ) {
+      return false;
+    }
+
+    this.users.set(user.id, structuredClone(user));
+    return true;
+  }
+
   async insertUser(user: User): Promise<void> {
     if (this.users.has(user.id) || (await this.getUserByEmail(user.email))) {
       throw new Error('User already exists.');

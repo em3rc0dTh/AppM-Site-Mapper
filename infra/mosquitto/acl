@@ -1,0 +1,9 @@
+# Raw hardware identity rule:
+# the authenticated publisher username MUST equal the topic source segment.
+pattern write appmanager/v1/raw/%u/telemetry
+pattern write appmanager/v1/raw/%u/status
+
+# Site Mapper ingestion service: consume raw source namespaces.
+user appmanager-ingestor
+topic read appmanager/v1/raw/+/telemetry
+topic read appmanager/v1/raw/+/status

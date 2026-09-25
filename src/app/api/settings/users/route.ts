@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { getAuditRuntime } from '@/modules/audit/infrastructure/audit-runtime';
 import { AuthService } from '@/modules/identity/application/auth-service';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import type { Role } from '@/modules/identity/domain/roles';
@@ -64,6 +65,14 @@ export async function POST(request: Request) {
     const status = result.error === 'USER_EXISTS' ? 409 : result.error === 'FORBIDDEN' ? 403 : 400;
     return NextResponse.json({ error: result.error }, { status });
   }
+
+  const audit = await getAuditRuntime();
+  await audit.service.record({
+    actor: { type: 'USER', userId: auth.value.id },
+    action: 'IDENTITY.USER_CREATED',
+    target: { kind: 'USER', id: result.value.id },
+    metadata: { role: result.value.role, lifecycle: result.value.lifecycle },
+  });
 
   return NextResponse.json({ user: result.value }, { status: 201 });
 }

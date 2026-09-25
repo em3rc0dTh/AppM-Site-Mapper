@@ -39,10 +39,14 @@ export class MemoryTopologyRepository implements TopologyRepository {
     this.nodes.set(node.id, structuredClone(node));
   }
 
-  async replace(node: TopologyNode): Promise<void> {
-    if (!this.nodes.has(node.id)) {
-      throw new Error(`Topology node does not exist: ${node.id}`);
+  async replace(node: TopologyNode, expectedRevision: number): Promise<boolean> {
+    const current = this.nodes.get(node.id);
+
+    if (!current || (current.revision ?? 0) !== expectedRevision) {
+      return false;
     }
+
     this.nodes.set(node.id, structuredClone(node));
+    return true;
   }
 }

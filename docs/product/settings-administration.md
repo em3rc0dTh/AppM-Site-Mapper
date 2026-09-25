@@ -23,7 +23,8 @@ Users created with temporary credentials are routed to the password-change surfa
 
 ## Users
 
-User management requires the `users:manage` permission.
+User management requires the `users:manage` permission, which is Superadmin-only in the current
+MK1 RBAC contract.
 
 Supported operations:
 

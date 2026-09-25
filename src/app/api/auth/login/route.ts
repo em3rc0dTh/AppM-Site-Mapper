@@ -6,12 +6,10 @@ import { AuthService } from '@/modules/identity/application/auth-service';
 import { setAuthCookie } from '@/modules/identity/infrastructure/auth-cookie';
 import { getIdentityRuntime } from '@/modules/identity/infrastructure/identity-runtime';
 
-function throttleKey(request: Request, email: string): string {
-  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+function throttleKey(email: string): string {
+  const normalizedEmail = email.trim().toLowerCase();
 
-  return createHash('sha256')
-    .update(`${forwarded}:${email.trim().toLowerCase()}`)
-    .digest('base64url');
+  return `login-account:${createHash('sha256').update(normalizedEmail).digest('base64url')}`;
 }
 
 export async function POST(request: Request) {
@@ -32,7 +30,7 @@ export async function POST(request: Request) {
   const result = await new AuthService(runtime.repository, runtime.throttle).authenticate(
     body.email,
     body.password,
-    throttleKey(request, body.email),
+    throttleKey(body.email),
   );
 
   if (!result.ok) {

@@ -10,11 +10,14 @@ CI does not prove connectivity or behavior for a specific production MongoDB ins
 
 G13 certifies migration tooling and staging behavior. No production customer dump is committed or migrated from this public repository.
 
-## No persisted telemetry history
+## Production telemetry history is not yet selected/wired
 
-The current telemetry runtime maintains latest values in-process and streams them to authenticated browser clients.
+G16 persists canonical latest telemetry in MongoDB production mode and durably records accepted
+telemetry/history-outbox state. Authenticated realtime fan-out remains process-local.
 
-It is not a historical time-series datastore.
+The product still does **not** have a selected and production-certified historical TSDB/query path.
+The 24H/7D/30D breaker History experience used by the demo is synthetic and must remain labeled as
+such until the history-store gate is closed.
 
 ## MQTT QoS
 

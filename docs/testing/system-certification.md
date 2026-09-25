@@ -52,6 +52,19 @@ The certification explicitly proves:
 - client-visible role state is not used for authorization;
 - logout invalidates the authoritative session.
 
+## Browser physical-flow extension
+
+The G14 domain/system suite is supplemented by the real-browser physical-flow certification in
+`tests/e2e/physical-flow.spec.mjs`.
+
+That certification exercises the visible Site → Structure → Level → Room → Bay → Position → Rack →
+Device/BDFB → Breaker journey, modal keyboard containment, realtime updates while the modal remains
+open, synthetic history ranges, deep-link recovery and the current viewport matrix.
+
+The desktop matrix includes 1920×1080, 1440×900, 1366×768, 1280×720 and 1100×800; narrow fallback is
+also exercised at 390×844. For the current 24-position panel contract, desktop evidence requires all
+24 positions to remain visible without an internal BDFB scrollbar.
+
 ## Exclusions
 
 CI certification does not prove:

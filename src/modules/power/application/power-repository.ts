@@ -5,5 +5,5 @@ export interface PowerRepository {
   listActive(): Promise<readonly PowerPath[]>;
   listForEntity(entityId: string): Promise<readonly PowerPath[]>;
   insert(path: PowerPath): Promise<void>;
-  replace(path: PowerPath): Promise<void>;
+  replace(path: PowerPath, expectedRevision: number): Promise<boolean>;
 }

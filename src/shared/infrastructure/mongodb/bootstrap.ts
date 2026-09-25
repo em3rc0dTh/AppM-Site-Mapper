@@ -24,6 +24,14 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
   await Promise.all([
     users.createIndex({ id: 1 }, { unique: true, name: 'uq_user_id' }),
     users.createIndex({ email: 1 }, { unique: true, name: 'uq_user_email' }),
+    users.createIndex(
+      { bootstrapSlot: 1 },
+      {
+        unique: true,
+        name: 'uq_user_bootstrap_slot',
+        partialFilterExpression: { bootstrapSlot: { $type: 'string' } },
+      },
+    ),
   ]);
 
   const sessions = database.collection('sessions');
@@ -40,6 +48,96 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     authRateLimits.createIndex(
       { expiresAt: 1 },
       { expireAfterSeconds: 0, name: 'ttl_auth_rate_expiry' },
+    ),
+  ]);
+
+  const auditEvents = database.collection('audit_events');
+  await Promise.all([
+    auditEvents.createIndex({ id: 1 }, { unique: true, name: 'uq_audit_event_id' }),
+    auditEvents.createIndex({ occurredAt: -1 }, { name: 'ix_audit_occurred' }),
+    auditEvents.createIndex(
+      { 'actor.userId': 1, occurredAt: -1 },
+      { name: 'ix_audit_actor_occurred', sparse: true },
+    ),
+    auditEvents.createIndex(
+      { 'target.kind': 1, 'target.id': 1, occurredAt: -1 },
+      { name: 'ix_audit_target_occurred', sparse: true },
+    ),
+    auditEvents.createIndex({ action: 1, occurredAt: -1 }, { name: 'ix_audit_action_occurred' }),
+  ]);
+
+  const telemetrySources = database.collection('telemetry_sources');
+  await Promise.all([
+    telemetrySources.createIndex({ id: 1 }, { unique: true, name: 'uq_telemetry_source_id' }),
+    telemetrySources.createIndex(
+      { topicSource: 1 },
+      { unique: true, name: 'uq_telemetry_source_topic' },
+    ),
+    telemetrySources.createIndex(
+      { entityId: 1, enabled: 1 },
+      { name: 'ix_telemetry_source_entity_enabled' },
+    ),
+    telemetrySources.createIndex(
+      { expectedSerialNumber: 1 },
+      { name: 'ix_telemetry_source_serial' },
+    ),
+  ]);
+
+  const telemetryLatest = database.collection('telemetry_latest');
+  await Promise.all([
+    telemetryLatest.createIndex(
+      { entityId: 1 },
+      { unique: true, name: 'uq_telemetry_latest_entity' },
+    ),
+    telemetryLatest.createIndex({ sourceId: 1 }, { name: 'ix_telemetry_latest_source' }),
+    telemetryLatest.createIndex(
+      { observedAt: -1, receivedAt: -1 },
+      { name: 'ix_telemetry_latest_recency' },
+    ),
+  ]);
+
+  const telemetryOutbox = database.collection('telemetry_outbox');
+  await Promise.all([
+    telemetryOutbox.createIndex({ eventId: 1 }, { unique: true, name: 'uq_telemetry_event_id' }),
+    telemetryOutbox.createIndex(
+      { idempotencyKey: 1 },
+      {
+        unique: true,
+        name: 'uq_telemetry_idempotency',
+        partialFilterExpression: { idempotencyKey: { $type: 'string' } },
+      },
+    ),
+    telemetryOutbox.createIndex(
+      { historyState: 1, nextHistoryAttemptAt: 1, acceptedAt: 1 },
+      { name: 'ix_telemetry_history_pending' },
+    ),
+    telemetryOutbox.createIndex(
+      { historyState: 1, historyLeaseUntil: 1, acceptedAt: 1 },
+      { name: 'ix_telemetry_history_lease' },
+    ),
+    telemetryOutbox.createIndex(
+      { historyState: 1, deadLetteredAt: -1 },
+      { name: 'ix_telemetry_history_dead_letter' },
+    ),
+    telemetryOutbox.createIndex(
+      { 'sample.sourceId': 1, acceptedAt: -1 },
+      { name: 'ix_telemetry_outbox_source' },
+    ),
+  ]);
+
+  const telemetryQuarantine = database.collection('telemetry_quarantine');
+  await Promise.all([
+    telemetryQuarantine.createIndex(
+      { id: 1 },
+      { unique: true, name: 'uq_telemetry_quarantine_id' },
+    ),
+    telemetryQuarantine.createIndex(
+      { receivedAt: -1 },
+      { name: 'ix_telemetry_quarantine_received' },
+    ),
+    telemetryQuarantine.createIndex(
+      { expiresAt: 1 },
+      { expireAfterSeconds: 0, name: 'ttl_telemetry_quarantine_expiry' },
     ),
   ]);
 }

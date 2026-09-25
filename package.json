@@ -12,26 +12,31 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --write . && git diff --exit-code",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration --passWithNoTests",
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build",
     "migration:legacy": "node --experimental-strip-types scripts/migrations/legacy/migrate.ts",
-    "test:certification": "vitest run tests/certification"
+    "test:certification": "vitest run tests/certification",
+    "telemetry:sim": "node scripts/telemetry-simulator/simulator.mjs",
+    "telemetry:sim:provision": "node scripts/telemetry-simulator/provision-source.mjs",
+    "demo:telemetry": "node scripts/demo-telemetry.mjs",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "mongodb": "7.6.0",
-    "next": "16.3.5",
+    "next": "16.3.6",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "22.20.4",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.3.6",
     "prettier": "3.9.8",
     "typescript": "5.9.3",
     "vitest": "5.0.1"

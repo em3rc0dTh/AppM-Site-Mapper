@@ -7,6 +7,11 @@ export interface DomainEntity {
   readonly lifecycle: LifecycleState;
   readonly createdAt: string;
   readonly updatedAt: string;
+  /**
+   * Monotonic aggregate revision used for optimistic concurrency control.
+   * Legacy documents without a revision are interpreted as revision 0.
+   */
+  readonly revision?: number;
   readonly legacyId?: string;
 }
 

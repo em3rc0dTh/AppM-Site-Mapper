@@ -17,11 +17,11 @@ export async function GET(request: Request) {
   const telemetry = await getTelemetryRuntime();
 
   if (entityId) {
-    const sample = telemetry.service.latest(entityId);
+    const sample = await telemetry.service.latest(entityId);
     return sample
       ? NextResponse.json({ sample })
       : NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
 
-  return NextResponse.json({ samples: telemetry.service.snapshot() });
+  return NextResponse.json({ samples: await telemetry.service.snapshot() });
 }

@@ -145,10 +145,7 @@ export class MongoAuthThrottle implements AuthThrottle {
                     expiredExpression,
                     1,
                     {
-                      $min: [
-                        { $add: [{ $ifNull: ['$count', 0] }, 1] },
-                        limit + 1,
-                      ],
+                      $min: [{ $add: [{ $ifNull: ['$count', 0] }, 1] }, limit + 1],
                     },
                   ],
                 },

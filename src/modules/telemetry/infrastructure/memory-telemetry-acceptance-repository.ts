@@ -1,5 +1,6 @@
 import type {
   TelemetryAcceptanceRepository,
+  TelemetryDeadLetterReplayResult,
   TelemetryHistoryClaimOptions,
   TelemetryHistoryStats,
 } from '@/modules/telemetry/application/telemetry-acceptance-repository';
@@ -30,6 +31,23 @@ function isDue(record: TelemetryAcceptanceRecord, now: string): boolean {
     record.historyLeaseUntil !== undefined &&
     record.historyLeaseUntil <= now
   );
+}
+
+function requeuedRecord(record: TelemetryAcceptanceRecord): TelemetryAcceptanceRecord {
+  const {
+    deadLetteredAt: _deadLetteredAt,
+    historyLastErrorCode: _historyLastErrorCode,
+    historyLeaseOwner: _historyLeaseOwner,
+    historyLeaseUntil: _historyLeaseUntil,
+    nextHistoryAttemptAt: _nextHistoryAttemptAt,
+    deliveredAt: _deliveredAt,
+    ...rest
+  } = record;
+
+  return {
+    ...rest,
+    historyState: 'PENDING',
+  };
 }
 
 export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceRepository {
@@ -70,6 +88,18 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
     return [...this.byEventId.values()]
       .filter((record) => record.historyState === 'PENDING')
       .sort((left, right) => left.acceptedAt.localeCompare(right.acceptedAt))
+      .slice(0, boundedLimit(limit))
+      .map((record) => structuredClone(record));
+  }
+
+  async listDeadLetteredHistory(limit: number): Promise<readonly TelemetryAcceptanceRecord[]> {
+    return [...this.byEventId.values()]
+      .filter((record) => record.historyState === 'DEAD_LETTERED')
+      .sort((left, right) => {
+        const leftTime = left.deadLetteredAt ?? left.acceptedAt;
+        const rightTime = right.deadLetteredAt ?? right.acceptedAt;
+        return rightTime.localeCompare(leftTime);
+      })
       .slice(0, boundedLimit(limit))
       .map((record) => structuredClone(record));
   }
@@ -200,6 +230,27 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
 
     this.byEventId.set(eventId, next);
     return true;
+  }
+
+  async requeueDeadLettered(eventId: string): Promise<TelemetryDeadLetterReplayResult | null> {
+    const record = this.byEventId.get(eventId);
+
+    if (!record || record.historyState !== 'DEAD_LETTERED') {
+      return null;
+    }
+
+    const next = requeuedRecord(record);
+    this.byEventId.set(eventId, next);
+
+    return {
+      record: structuredClone(next),
+      ...(record.historyLastErrorCode === undefined
+        ? {}
+        : { previousErrorCode: record.historyLastErrorCode }),
+      ...(record.deadLetteredAt === undefined
+        ? {}
+        : { previousDeadLetteredAt: record.deadLetteredAt }),
+    };
   }
 
   async rescheduleHistory(

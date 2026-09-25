@@ -1,5 +1,6 @@
 import type {
   TelemetryAcceptanceRepository,
+  TelemetryDeadLetterReplayResult,
   TelemetryHistoryStats,
 } from '@/modules/telemetry/application/telemetry-acceptance-repository';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
@@ -30,7 +31,25 @@ export interface TelemetryServiceOptions extends TelemetryNormalizerOptions {
   readonly quarantineRetentionDays: number;
 }
 
+export interface TelemetryDeadLetterSummary {
+  readonly eventId: string;
+  readonly sourceId: string;
+  readonly entityId: string;
+  readonly protocolProfile: string;
+  readonly acceptedAt: string;
+  readonly historyAttempts: number;
+  readonly errorCode?: string;
+  readonly deadLetteredAt?: string;
+}
+
+export interface TelemetryDeadLetterReplay {
+  readonly summary: TelemetryDeadLetterSummary;
+  readonly previousErrorCode?: string;
+  readonly previousDeadLetteredAt?: string;
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000;
+const MAX_DEAD_LETTER_LIST = 100;
 
 function expiresAt(receivedAt: string, retentionDays: number): string {
   const timestamp = Date.parse(receivedAt);
@@ -40,6 +59,23 @@ function expiresAt(receivedAt: string, retentionDays: number): string {
   }
 
   return new Date(timestamp + retentionDays * DAY_MS).toISOString();
+}
+
+function summarizeDeadLetter(
+  record: TelemetryDeadLetterReplayResult['record'],
+): TelemetryDeadLetterSummary {
+  return {
+    eventId: record.eventId,
+    sourceId: record.sample.sourceId,
+    entityId: record.sample.entityId,
+    protocolProfile: record.sample.protocolProfile,
+    acceptedAt: record.acceptedAt,
+    historyAttempts: record.historyAttempts,
+    ...(record.historyLastErrorCode === undefined
+      ? {}
+      : { errorCode: record.historyLastErrorCode }),
+    ...(record.deadLetteredAt === undefined ? {} : { deadLetteredAt: record.deadLetteredAt }),
+  };
 }
 
 export class TelemetryService {
@@ -181,6 +217,36 @@ export class TelemetryService {
 
   historyStats(now = new Date().toISOString()): Promise<TelemetryHistoryStats> {
     return this.acceptance.historyStats(now);
+  }
+
+  async deadLetters(limit = 50): Promise<readonly TelemetryDeadLetterSummary[]> {
+    if (!Number.isInteger(limit) || limit < 1 || limit > MAX_DEAD_LETTER_LIST) {
+      throw new Error(`Dead-letter list limit must be between 1 and ${MAX_DEAD_LETTER_LIST}.`);
+    }
+
+    const records = await this.acceptance.listDeadLetteredHistory(limit);
+    return records.map(summarizeDeadLetter);
+  }
+
+  async requeueDeadLetter(eventId: string): Promise<TelemetryDeadLetterReplay | null> {
+    const normalizedEventId = eventId.trim();
+
+    if (!normalizedEventId || normalizedEventId.length > 128) {
+      throw new Error('Telemetry eventId is invalid.');
+    }
+
+    const replay = await this.acceptance.requeueDeadLettered(normalizedEventId);
+    if (!replay) return null;
+
+    return {
+      summary: summarizeDeadLetter(replay.record),
+      ...(replay.previousErrorCode === undefined
+        ? {}
+        : { previousErrorCode: replay.previousErrorCode }),
+      ...(replay.previousDeadLetteredAt === undefined
+        ? {}
+        : { previousDeadLetteredAt: replay.previousDeadLetteredAt }),
+    };
   }
 
   private async recordRejection(input: {

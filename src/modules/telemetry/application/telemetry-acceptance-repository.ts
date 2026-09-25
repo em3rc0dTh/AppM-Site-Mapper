@@ -23,9 +23,16 @@ export interface TelemetryHistoryStats {
   readonly oldestUnresolvedAgeSeconds?: number;
 }
 
+export interface TelemetryDeadLetterReplayResult {
+  readonly record: TelemetryAcceptanceRecord;
+  readonly previousErrorCode?: string;
+  readonly previousDeadLetteredAt?: string;
+}
+
 export interface TelemetryAcceptanceRepository {
   accept(record: TelemetryAcceptanceRecord): Promise<TelemetryAcceptanceResult>;
   listPendingHistory(limit: number): Promise<readonly TelemetryAcceptanceRecord[]>;
+  listDeadLetteredHistory(limit: number): Promise<readonly TelemetryAcceptanceRecord[]>;
   historyStats(now: string): Promise<TelemetryHistoryStats>;
   claimPendingHistory(
     options: TelemetryHistoryClaimOptions,
@@ -37,6 +44,7 @@ export interface TelemetryAcceptanceRepository {
     deadLetteredAt: string,
     errorCode: string,
   ): Promise<boolean>;
+  requeueDeadLettered(eventId: string): Promise<TelemetryDeadLetterReplayResult | null>;
   rescheduleHistory(
     eventId: string,
     workerId: string,

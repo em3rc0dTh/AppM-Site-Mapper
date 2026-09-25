@@ -8,6 +8,7 @@ import {
 
 import type {
   TelemetryAcceptanceRepository,
+  TelemetryDeadLetterReplayResult,
   TelemetryHistoryClaimOptions,
   TelemetryHistoryStats,
 } from '@/modules/telemetry/application/telemetry-acceptance-repository';
@@ -40,6 +41,23 @@ function requireTimestamp(name: string, value: string): number {
     throw new Error(`${name} must be a valid ISO timestamp.`);
   }
   return parsed;
+}
+
+function requeuedRecord(record: TelemetryAcceptanceRecord): TelemetryAcceptanceRecord {
+  const {
+    deadLetteredAt: _deadLetteredAt,
+    historyLastErrorCode: _historyLastErrorCode,
+    historyLeaseOwner: _historyLeaseOwner,
+    historyLeaseUntil: _historyLeaseUntil,
+    nextHistoryAttemptAt: _nextHistoryAttemptAt,
+    deliveredAt: _deliveredAt,
+    ...rest
+  } = record;
+
+  return {
+    ...rest,
+    historyState: 'PENDING',
+  };
 }
 
 export class MongoTelemetryAcceptanceRepository implements TelemetryAcceptanceRepository {
@@ -81,6 +99,16 @@ export class MongoTelemetryAcceptanceRepository implements TelemetryAcceptanceRe
     const documents = await this.collection
       .find({ historyState: 'PENDING' })
       .sort({ acceptedAt: 1 })
+      .limit(boundedLimit(limit))
+      .toArray();
+
+    return documents.map(toDomain);
+  }
+
+  async listDeadLetteredHistory(limit: number): Promise<readonly TelemetryAcceptanceRecord[]> {
+    const documents = await this.collection
+      .find({ historyState: 'DEAD_LETTERED' })
+      .sort({ deadLetteredAt: -1, acceptedAt: -1 })
       .limit(boundedLimit(limit))
       .toArray();
 
@@ -254,6 +282,46 @@ export class MongoTelemetryAcceptanceRepository implements TelemetryAcceptanceRe
     );
 
     return result.modifiedCount === 1;
+  }
+
+  async requeueDeadLettered(eventId: string): Promise<TelemetryDeadLetterReplayResult | null> {
+    const previousDocument = await this.collection.findOneAndUpdate(
+      {
+        eventId,
+        historyState: 'DEAD_LETTERED',
+      },
+      {
+        $set: {
+          historyState: 'PENDING',
+        },
+        $unset: {
+          deadLetteredAt: '',
+          historyLastErrorCode: '',
+          historyLeaseOwner: '',
+          historyLeaseUntil: '',
+          nextHistoryAttemptAt: '',
+          deliveredAt: '',
+        },
+      },
+      {
+        returnDocument: 'before',
+      },
+    );
+
+    if (!previousDocument) {
+      return null;
+    }
+
+    const previous = toDomain(previousDocument);
+    return {
+      record: requeuedRecord(previous),
+      ...(previous.historyLastErrorCode === undefined
+        ? {}
+        : { previousErrorCode: previous.historyLastErrorCode }),
+      ...(previous.deadLetteredAt === undefined
+        ? {}
+        : { previousDeadLetteredAt: previous.deadLetteredAt }),
+    };
   }
 
   async rescheduleHistory(

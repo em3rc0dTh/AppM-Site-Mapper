@@ -4,14 +4,15 @@ export type AuditAction =
   | 'IDENTITY.PROFILE_UPDATED'
   | 'IDENTITY.SUPERADMIN_BOOTSTRAPPED'
   | 'IDENTITY.USER_CREATED'
-  | 'IDENTITY.USER_UPDATED';
+  | 'IDENTITY.USER_UPDATED'
+  | 'TELEMETRY.HISTORY_REQUEUED';
 
 export type AuditOutcome = 'SUCCEEDED';
 
 export type AuditActor = Readonly<{ type: 'SYSTEM' }> | Readonly<{ type: 'USER'; userId: string }>;
 
 export interface AuditTarget {
-  readonly kind: 'USER';
+  readonly kind: 'USER' | 'TELEMETRY_EVENT';
   readonly id: string;
 }
 

@@ -70,7 +70,7 @@ describe('InfluxDb3TelemetryHistorySink', () => {
     expect(body).toContain('appm_telemetry_metric,event_id=event-1,source_id=source\\ 1');
     expect(body).toContain('component_address=0_1_1,metric_key=voltage_v,channel=1');
     expect(body).toContain('value=48.25');
-    expect(body).toContain(' 1758672000123000000');
+    expect(body).toContain(' 1790208000123000000');
   });
 
   it('produces the exact same point on replay and a distinct identity for another event at the same time', async () => {

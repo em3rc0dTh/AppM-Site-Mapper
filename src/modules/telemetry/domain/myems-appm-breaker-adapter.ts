@@ -99,9 +99,7 @@ export function adaptMyemsAppmBreakerEvent(
     ...(sample.sequence === undefined ? {} : { sequence: sample.sequence }),
     ...(sample.producerEpoch === undefined ? {} : { producerEpoch: sample.producerEpoch }),
     ...(sample.messageId === undefined ? {} : { messageId: sample.messageId }),
-    ...(sample.sourceMessageId === undefined
-      ? {}
-      : { sourceMessageId: sample.sourceMessageId }),
+    ...(sample.sourceMessageId === undefined ? {} : { sourceMessageId: sample.sourceMessageId }),
     ...(sample.sourceTimestampSeconds === undefined
       ? {}
       : { sourceTimestampSeconds: sample.sourceTimestampSeconds }),

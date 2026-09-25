@@ -4,13 +4,7 @@ import type {
 } from '@/modules/telemetry/domain/entities';
 
 export type TelemetryMetricQuality =
-  | 'VALID'
-  | 'LAST_KNOWN'
-  | 'STALE'
-  | 'UNAVAILABLE'
-  | 'INVALID'
-  | 'CALCULATED'
-  | 'SIMULATED';
+  'VALID' | 'LAST_KNOWN' | 'STALE' | 'UNAVAILABLE' | 'INVALID' | 'CALCULATED' | 'SIMULATED';
 
 export type TelemetryMetricDerivation = 'RAW' | 'CALCULATED';
 

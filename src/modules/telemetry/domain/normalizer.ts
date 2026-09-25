@@ -137,7 +137,10 @@ export function normalizeTelemetry(
   let sourceTimestampSeconds: number | undefined;
   if (parsed.timestamp !== undefined) {
     sourceTimestampSeconds = optionalNonNegativeInteger(parsed.timestamp);
-    if (sourceTimestampSeconds === undefined || isoFromUnixSeconds(sourceTimestampSeconds) === null) {
+    if (
+      sourceTimestampSeconds === undefined ||
+      isoFromUnixSeconds(sourceTimestampSeconds) === null
+    ) {
       return failure('INVALID_PAYLOAD');
     }
   }

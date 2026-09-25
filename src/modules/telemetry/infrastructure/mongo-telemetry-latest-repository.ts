@@ -68,10 +68,7 @@ function latestUpdatePipeline(sample: TelemetrySample): Document[] {
           $cond: [
             sameStream,
             {
-              $mergeObjects: [
-                { $ifNull: ['$reported', literal({})] },
-                literal(sample.reported),
-              ],
+              $mergeObjects: [{ $ifNull: ['$reported', literal({})] }, literal(sample.reported)],
             },
             literal(sample.reported),
           ],
@@ -105,8 +102,7 @@ function latestUpdatePipeline(sample: TelemetrySample): Document[] {
           sample.sourceSendTimeSeconds === undefined
             ? '$$REMOVE'
             : literal(sample.sourceSendTimeSeconds),
-        sourceMethod:
-          sample.sourceMethod === undefined ? '$$REMOVE' : literal(sample.sourceMethod),
+        sourceMethod: sample.sourceMethod === undefined ? '$REMOVE' : literal(sample.sourceMethod),
         sourceVersion:
           sample.sourceVersion === undefined ? '$$REMOVE' : literal(sample.sourceVersion),
         simulated: sample.simulated === undefined ? '$$REMOVE' : literal(sample.simulated),

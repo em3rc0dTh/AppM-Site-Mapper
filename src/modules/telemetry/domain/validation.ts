@@ -12,8 +12,7 @@ function isOptionalString(value: unknown): boolean {
 
 function isOptionalNonNegativeInteger(value: unknown): boolean {
   return (
-    value === undefined ||
-    (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0)
+    value === undefined || (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0)
   );
 }
 

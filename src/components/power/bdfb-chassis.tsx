@@ -133,9 +133,7 @@ function EndpointButton({
     <button
       type="button"
       className={`bdfb-endpoint bdfb-endpoint--${endpoint.variant.toLowerCase()} ${telemetryClass}`}
-      onClick={() =>
-        onInspect(endpointInspector(device, shelf, frame, panel, endpoint, telemetry))
-      }
+      onClick={() => onInspect(endpointInspector(device, shelf, frame, panel, endpoint, telemetry))}
       title={endpoint.label}
     >
       <span className="bdfb-endpoint-index">{(index + 1).toString().padStart(2, '0')}</span>

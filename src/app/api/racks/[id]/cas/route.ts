@@ -59,7 +59,10 @@ export async function POST(request: Request, context: Context) {
   }
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 422 });
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.error === 'CONCURRENCY_CONFLICT' ? 409 : 422 },
+    );
   }
 
   return NextResponse.json({ rack: result.value });

@@ -64,7 +64,9 @@ function spawnPrefixed(label, command, args, env) {
   child.once('exit', (code, signal) => {
     children.delete(child);
     if (!shuttingDown && code !== 0) {
-      console.error(`[demo] ${label} stopped unexpectedly (code=${code}, signal=${signal ?? 'none'}).`);
+      console.error(
+        `[demo] ${label} stopped unexpectedly (code=${code}, signal=${signal ?? 'none'}).`,
+      );
       void shutdown(1);
     }
   });
@@ -312,7 +314,12 @@ async function main() {
   };
 
   console.log('[demo] Starting AppManager Site Mapper...');
-  spawnPrefixed('app', commandName('npm'), ['run', 'dev', '--', '--hostname', '127.0.0.1', '--port', String(APP_PORT)], appEnv);
+  spawnPrefixed(
+    'app',
+    commandName('npm'),
+    ['run', 'dev', '--', '--hostname', '127.0.0.1', '--port', String(APP_PORT)],
+    appEnv,
+  );
   await waitForHttp(`${baseUrl}/login`);
   await bootstrapAdmin(baseUrl, bootstrapToken, adminEmail, adminPassword);
 

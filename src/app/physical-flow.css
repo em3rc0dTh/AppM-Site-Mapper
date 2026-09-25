@@ -465,23 +465,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 5px 14px;
-  padding: 5px 8px;
+  flex-wrap: nowrap;
+  gap: 4px clamp(6px, 1vw, 12px);
+  padding: 4px 6px;
   min-width: 0;
   font:
-    0.8rem ui-monospace,
+    12px/1.1 ui-monospace,
     monospace;
   overflow-wrap: anywhere;
 }
 .bdfb-endpoint-reading {
   display: inline-flex;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
   align-items: baseline;
+  white-space: nowrap;
 }
 .bdfb-endpoint-reading b {
-  font-size: 0.75rem;
+  font-size: 11px;
   color: #89cee5;
   font-weight: 500;
 }
@@ -490,7 +491,7 @@
   overflow-wrap: anywhere;
 }
 .bdfb-endpoint-summary--state small {
-  font-size: 0.75rem;
+  font-size: 11px;
   color: #b7ccda;
 }
 .bdfb-endpoint--holder {

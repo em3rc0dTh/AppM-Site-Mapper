@@ -5,7 +5,11 @@ import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type BdfbError =
-  BdfbValidationError | 'DEVICE_NOT_FOUND' | 'NOT_A_DEVICE' | 'DEVICE_ARCHIVED';
+  | BdfbValidationError
+  | 'DEVICE_NOT_FOUND'
+  | 'NOT_A_DEVICE'
+  | 'DEVICE_ARCHIVED'
+  | 'CONCURRENCY_CONFLICT';
 
 export class BdfbService {
   constructor(private readonly topology: TopologyRepository) {}
@@ -34,14 +38,19 @@ export class BdfbService {
       return failure(validation.error);
     }
 
+    const expectedRevision = node.revision ?? 0;
     const updated: DeviceNode = {
       ...node,
       deviceType: 'BDFB',
       bdfb: structuredClone(structure),
       updatedAt: nowIso(),
+      revision: expectedRevision + 1,
     };
 
-    await this.topology.replace(updated);
+    if (!(await this.topology.replace(updated, expectedRevision))) {
+      return failure('CONCURRENCY_CONFLICT');
+    }
+
     return success(updated);
   }
 }

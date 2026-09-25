@@ -24,6 +24,14 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
   await Promise.all([
     users.createIndex({ id: 1 }, { unique: true, name: 'uq_user_id' }),
     users.createIndex({ email: 1 }, { unique: true, name: 'uq_user_email' }),
+    users.createIndex(
+      { bootstrapSlot: 1 },
+      {
+        unique: true,
+        name: 'uq_user_bootstrap_slot',
+        partialFilterExpression: { bootstrapSlot: { $type: 'string' } },
+      },
+    ),
   ]);
 
   const sessions = database.collection('sessions');

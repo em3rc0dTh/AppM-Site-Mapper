@@ -63,6 +63,24 @@ describe('AuthService', () => {
     ).resolves.toEqual({ ok: false, error: 'INVALID_CREDENTIALS' });
   });
 
+  it('allows only one initial superadmin under concurrent bootstrap attempts', async () => {
+    const repository = new MemoryIdentityRepository();
+    const throttle = new MemoryAuthThrottle();
+    const service = new AuthService(repository, throttle);
+
+    const [first, second] = await Promise.all([
+      service.bootstrapSuperadmin('first@example.com', 'first strong password', 'First'),
+      service.bootstrapSuperadmin('second@example.com', 'second strong password', 'Second'),
+    ]);
+
+    const results = [first, second];
+    expect(results.filter((result) => result.ok)).toHaveLength(1);
+    expect(results.filter((result) => !result.ok)).toEqual([
+      { ok: false, error: 'BOOTSTRAP_CLOSED' },
+    ]);
+    await expect(repository.countUsers()).resolves.toBe(1);
+  });
+
   it('revokes every session after a password change', async () => {
     const repository = new MemoryIdentityRepository();
     const throttle = new MemoryAuthThrottle();

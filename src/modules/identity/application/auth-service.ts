@@ -225,7 +225,10 @@ export class AuthService {
       updatedAt: timestamp,
     };
 
-    await this.repository.insertUser(user);
+    if (!(await this.repository.insertInitialUser(user))) {
+      return failure('BOOTSTRAP_CLOSED');
+    }
+
     return success(toSafeUser(user));
   }
 

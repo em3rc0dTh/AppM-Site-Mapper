@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import { endpointTelemetry, type EndpointTelemetryView } from '@/components/power/bdfb-telemetry';
+import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type {
   BreakerHolder,
   DeviceNode,
@@ -12,13 +14,36 @@ import type {
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
 
+type StreamState = 'connecting' | 'live' | 'reconnecting';
+
 function endpointInspector(
   device: DeviceNode,
   shelf: Shelf,
   frame: Frame,
   panel: Panel,
   endpoint: BreakerHolder,
+  telemetry: EndpointTelemetryView | null,
 ): InspectorEntity {
+  const telemetryFields = telemetry
+    ? [
+        { label: 'Telemetry address', value: telemetry.address },
+        ...(telemetry.state === undefined ? [] : [{ label: 'State', value: telemetry.state }]),
+        ...Object.entries(telemetry.rawFields)
+          .filter(([key]) => key !== 'state')
+          .map(([key, value]) => ({ label: key, value })),
+        ...(telemetry.receivedAt === undefined
+          ? []
+          : [{ label: 'Last received', value: telemetry.receivedAt }]),
+        { label: 'Source class', value: telemetry.simulated ? 'SIMULATED' : 'HARDWARE' },
+      ]
+    : [
+        {
+          label: 'Telemetry address',
+          value: endpoint.telemetryAddress ?? 'Not bound',
+        },
+        { label: 'Telemetry', value: 'No current reading' },
+      ];
+
   return {
     name: endpoint.label,
     kind: endpoint.variant,
@@ -39,6 +64,10 @@ function endpointInspector(
           { label: 'Capacity', value: endpoint.capacity ?? 'Not specified' },
           { label: 'Endpoint ID', value: endpoint.id },
         ],
+      },
+      {
+        title: 'Realtime telemetry',
+        fields: telemetryFields,
       },
     ],
   };
@@ -73,19 +102,87 @@ function panelInspector(
   };
 }
 
-function PanelBoard({
+function EndpointButton({
   device,
   shelf,
   frame,
   panel,
+  endpoint,
+  sample,
+  index,
   onInspect,
 }: Readonly<{
   device: DeviceNode;
   shelf: Shelf;
   frame: Frame;
   panel: Panel;
+  endpoint: BreakerHolder;
+  sample: TelemetrySample | null;
+  index: number;
   onInspect: (entity: InspectorEntity) => void;
 }>) {
+  const telemetry = endpointTelemetry(sample, endpoint.telemetryAddress);
+  const online = telemetry?.state?.toUpperCase() === 'ONLINE';
+  const telemetryClass = telemetry
+    ? online
+      ? 'bdfb-endpoint--telemetry-online'
+      : 'bdfb-endpoint--telemetry-present'
+    : 'bdfb-endpoint--telemetry-missing';
+
+  return (
+    <button
+      type="button"
+      className={`bdfb-endpoint bdfb-endpoint--${endpoint.variant.toLowerCase()} ${telemetryClass}`}
+      onClick={() =>
+        onInspect(endpointInspector(device, shelf, frame, panel, endpoint, telemetry))
+      }
+      title={endpoint.label}
+    >
+      <span className="bdfb-endpoint-index">{(index + 1).toString().padStart(2, '0')}</span>
+      <span className="bdfb-endpoint-copy">
+        <strong>{endpoint.label}</strong>
+        <small>{endpoint.telemetryAddress ?? endpoint.variant}</small>
+      </span>
+      <span className="bdfb-endpoint-state">
+        {telemetry?.state ?? (endpoint.telemetryAddress ? 'WAITING' : endpoint.variant)}
+      </span>
+      {telemetry?.displayMetrics.length ? (
+        <span className="bdfb-endpoint-metrics">
+          {telemetry.displayMetrics.map((metric) => (
+            <span key={metric.key}>
+              <b>{metric.key}</b>
+              {metric.value}
+            </span>
+          ))}
+        </span>
+      ) : (
+        <span className="bdfb-endpoint-metrics bdfb-endpoint-metrics--empty">
+          {telemetry ? 'STATE ONLY' : 'NO DATA'}
+        </span>
+      )}
+    </button>
+  );
+}
+
+function PanelBoard({
+  device,
+  shelf,
+  frame,
+  panel,
+  sample,
+  onInspect,
+}: Readonly<{
+  device: DeviceNode;
+  shelf: Shelf;
+  frame: Frame;
+  panel: Panel;
+  sample: TelemetrySample | null;
+  onInspect: (entity: InspectorEntity) => void;
+}>) {
+  const reporting = panel.endpoints.filter(
+    (endpoint) => endpointTelemetry(sample, endpoint.telemetryAddress) !== null,
+  ).length;
+
   return (
     <article className="bdfb-panel-board">
       <button
@@ -95,7 +192,9 @@ function PanelBoard({
       >
         <span>Panel</span>
         <strong>{panel.label}</strong>
-        <small>{panel.endpoints.length} endpoints</small>
+        <small>
+          {reporting}/{panel.endpoints.length} reporting
+        </small>
       </button>
       <div className="bdfb-panel-busbar bdfb-panel-busbar--a" aria-hidden="true">
         <span>BUS A</span>
@@ -106,17 +205,17 @@ function PanelBoard({
       <div className="bdfb-endpoint-grid">
         {panel.endpoints.length ? (
           panel.endpoints.map((endpoint, index) => (
-            <button
-              type="button"
+            <EndpointButton
               key={endpoint.id}
-              className={`bdfb-endpoint bdfb-endpoint--${endpoint.variant.toLowerCase()}`}
-              onClick={() => onInspect(endpointInspector(device, shelf, frame, panel, endpoint))}
-              title={endpoint.label}
-            >
-              <span>{(index + 1).toString().padStart(2, '0')}</span>
-              <strong>{endpoint.label}</strong>
-              <small>{endpoint.variant}</small>
-            </button>
+              device={device}
+              shelf={shelf}
+              frame={frame}
+              panel={panel}
+              endpoint={endpoint}
+              sample={sample}
+              index={index}
+              onInspect={onInspect}
+            />
           ))
         ) : (
           <div className="bdfb-empty-endpoints">No endpoints configured</div>
@@ -130,11 +229,13 @@ function ExplicitFrame({
   device,
   shelf,
   frame,
+  sample,
   onInspect,
 }: Readonly<{
   device: DeviceNode;
   shelf: Shelf;
   frame: Frame;
+  sample: TelemetrySample | null;
   onInspect: (entity: InspectorEntity) => void;
 }>) {
   return (
@@ -151,6 +252,7 @@ function ExplicitFrame({
             shelf={shelf}
             frame={frame}
             panel={panel}
+            sample={sample}
             onInspect={onInspect}
           />
         ))}
@@ -163,19 +265,26 @@ function ImplicitFrame({
   device,
   shelf,
   frame,
+  sample,
   onInspect,
 }: Readonly<{
   device: DeviceNode;
   shelf: Shelf;
   frame: Frame;
+  sample: TelemetrySample | null;
   onInspect: (entity: InspectorEntity) => void;
 }>) {
   return (
     <section
-      className="bdfb-frame-hidden"
-      aria-label={`${frame.label} hidden physical frame · panels rendered directly in shelf`}
+      className="bdfb-frame-implicit"
+      aria-label={`${frame.label} implicit physical frame · panels rendered directly in shelf`}
     >
-      <div className="bdfb-panel-grid bdfb-panel-grid--frame-hidden">
+      <div className="bdfb-implicit-note">
+        <span>Implicit frame</span>
+        <strong>{frame.label}</strong>
+        <small>Canonical hierarchy retained; physical presentation flattened.</small>
+      </div>
+      <div className="bdfb-panel-grid">
         {frame.panels.map((panel) => (
           <PanelBoard
             key={panel.id}
@@ -183,6 +292,7 @@ function ImplicitFrame({
             shelf={shelf}
             frame={frame}
             panel={panel}
+            sample={sample}
             onInspect={onInspect}
           />
         ))}
@@ -193,6 +303,8 @@ function ImplicitFrame({
 
 export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
+  const [sample, setSample] = useState<TelemetrySample | null>(null);
+  const [streamState, setStreamState] = useState<StreamState>('connecting');
   const shelves = device.bdfb?.shelves ?? [];
   const frames = shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
@@ -200,6 +312,43 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
   const implicitFrames = frames.filter(
     (frame) => frame.presentation?.physicalFrameVisible === false,
   ).length;
+
+  useEffect(() => {
+    const stream = new EventSource('/api/telemetry/stream');
+
+    const onSnapshot = (event: MessageEvent<string>) => {
+      const samples = JSON.parse(event.data) as TelemetrySample[];
+      setSample(samples.find((candidate) => candidate.entityId === device.id) ?? null);
+      setStreamState('live');
+    };
+
+    const onTelemetry = (event: MessageEvent<string>) => {
+      const next = JSON.parse(event.data) as TelemetrySample;
+      if (next.entityId !== device.id) return;
+
+      setSample(next);
+      setStreamState('live');
+    };
+
+    stream.addEventListener('snapshot', onSnapshot as EventListener);
+    stream.addEventListener('telemetry', onTelemetry as EventListener);
+    stream.onerror = () => setStreamState('reconnecting');
+
+    return () => stream.close();
+  }, [device.id]);
+
+  const reportingEndpoints = endpoints.filter(
+    (endpoint) => endpointTelemetry(sample, endpoint.telemetryAddress) !== null,
+  ).length;
+
+  const liveLabel =
+    streamState === 'live'
+      ? sample?.simulated
+        ? 'SIMULATED · LIVE'
+        : sample
+          ? 'HARDWARE · LIVE'
+          : 'LIVE · WAITING'
+      : streamState.toUpperCase();
 
   return (
     <section className="bdfb-chassis">
@@ -210,9 +359,14 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
           <small>Canonical Shelf → Frame → Panel → Breaker / Holder hierarchy</small>
         </div>
         <div className="bdfb-chassis-status">
+          <StatusBadge tone={sample?.simulated ? 'warning' : sample ? 'good' : 'accent'}>
+            {liveLabel}
+          </StatusBadge>
           <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>
           <StatusBadge>{panels.length} PANELS</StatusBadge>
-          <StatusBadge>{endpoints.length} ENDPOINTS</StatusBadge>
+          <StatusBadge>
+            {reportingEndpoints}/{endpoints.length} REPORTING
+          </StatusBadge>
           {implicitFrames > 0 && (
             <StatusBadge tone="warning">{implicitFrames} IMPLICIT FRAME</StatusBadge>
           )}
@@ -240,6 +394,7 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
                     device={device}
                     shelf={shelf}
                     frame={frame}
+                    sample={sample}
                     onInspect={setSelected}
                   />
                 ) : (
@@ -248,6 +403,7 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
                     device={device}
                     shelf={shelf}
                     frame={frame}
+                    sample={sample}
                     onInspect={setSelected}
                   />
                 ),

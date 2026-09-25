@@ -143,29 +143,27 @@ function EndpointButton({
       type="button"
       className={`bdfb-endpoint bdfb-endpoint--${endpoint.variant.toLowerCase()} ${telemetryClass}`}
       onClick={() => onInspect(endpointInspector(device, shelf, frame, panel, endpoint, telemetry))}
-      title={endpoint.label}
+      title={`${endpoint.label} · ${endpoint.telemetryAddress ?? endpoint.variant}`}
     >
       <span className="bdfb-endpoint-index">{(index + 1).toString().padStart(2, '0')}</span>
-      <span className="bdfb-endpoint-copy">
-        <strong>{endpoint.label}</strong>
-        <small>{endpoint.telemetryAddress ?? endpoint.variant}</small>
-      </span>
-      <span className="bdfb-endpoint-state">
-        {telemetry?.state ?? (endpoint.telemetryAddress ? 'WAITING' : endpoint.variant)}
-      </span>
-      {telemetry?.displayMetrics.length ? (
-        <span className="bdfb-endpoint-metrics">
+      {endpoint.variant === 'HOLDER' ? (
+        <span className="bdfb-endpoint-summary bdfb-endpoint-summary--holder">HOLDER</span>
+      ) : telemetry?.displayMetrics.length ? (
+        <span className="bdfb-endpoint-summary bdfb-endpoint-summary--metrics">
           {telemetry.displayMetrics.map((metric) => (
-            <span key={metric.key}>
+            <span className="bdfb-endpoint-reading" key={metric.key}>
               <b>{metric.key}</b>
-              {metric.value}
+              <span>{metric.value}</span>
             </span>
           ))}
         </span>
-      ) : (
-        <span className="bdfb-endpoint-metrics bdfb-endpoint-metrics--empty">
-          {telemetry ? 'STATE ONLY' : 'NO DATA'}
+      ) : telemetry ? (
+        <span className="bdfb-endpoint-summary bdfb-endpoint-summary--state">
+          <strong>{telemetry.state ?? 'STATE'}</strong>
+          <small>STATE ONLY</small>
         </span>
+      ) : (
+        <span className="bdfb-endpoint-summary bdfb-endpoint-summary--empty">NO DATA</span>
       )}
     </button>
   );
@@ -208,12 +206,6 @@ function PanelBoard({
           {reporting}/{panel.endpoints.length} reporting
         </small>
       </button>
-      <div className="bdfb-panel-busbar bdfb-panel-busbar--a" aria-hidden="true">
-        <span>BUS A</span>
-      </div>
-      <div className="bdfb-panel-busbar bdfb-panel-busbar--b" aria-hidden="true">
-        <span>BUS B</span>
-      </div>
       <div className="bdfb-endpoint-columns">
         {panel.endpoints.length ? (
           endpointColumns.map((column, columnIndex) => (

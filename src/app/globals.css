@@ -2870,7 +2870,7 @@ p {
   min-height: 0;
   display: grid;
   grid-template-rows: repeat(12, minmax(0, 1fr));
-  gap: 4px;
+  gap: 5px;
 }
 
 .bdfb-endpoint {
@@ -2881,131 +2881,111 @@ p {
   min-height: 0;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 28px minmax(54px, 0.55fr) auto minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
-  align-items: center;
-  gap: 6px;
-  border-color: #31404f;
-  background: #0a0f15;
-  color: #aebdcb;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: stretch;
+  gap: 0;
+  border: 1px solid #2d9fc6;
+  border-radius: 6px;
+  background: #091018;
+  color: #c8d6e2;
   text-align: left;
-  padding: 3px 6px;
+  padding: 0;
 }
 
 .bdfb-endpoint-index {
-  grid-column: 1;
-  grid-row: 1;
-  width: 22px;
-  height: 22px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
   display: grid;
   place-items: center;
-  align-self: center;
-  border: 1px solid #355364;
-  color: var(--accent);
+  border-right: 1px solid #2d9fc6;
+  color: #cfefff;
   font:
-    0.52rem ui-monospace,
+    0.7rem ui-monospace,
     monospace;
+  font-weight: 650;
 }
 
-.bdfb-endpoint-copy {
-  grid-column: 2;
-  grid-row: 1;
+.bdfb-endpoint-summary {
   min-width: 0;
-  display: grid;
-  gap: 1px;
-}
-
-.bdfb-endpoint-copy strong {
-  font-size: 0.58rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 1.25vw, 18px);
   overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0 12px;
+  color: #d9e5ed;
+  font:
+    clamp(0.66rem, 0.75vw, 0.82rem) ui-monospace,
+    monospace;
   white-space: nowrap;
 }
 
-.bdfb-endpoint-copy small {
-  color: #65778c;
-  font:
-    0.4rem ui-monospace,
-    monospace;
+.bdfb-endpoint-summary--metrics {
+  justify-content: flex-start;
 }
 
-.bdfb-endpoint-state {
-  grid-column: 3;
-  grid-row: 1;
-  color: #8296aa;
-  font:
-    0.44rem ui-monospace,
-    monospace;
-  letter-spacing: 0.06em;
-}
-
-.bdfb-endpoint-metrics {
-  grid-column: 4;
-  grid-row: 1;
+.bdfb-endpoint-reading {
   min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  margin: 0;
-}
-
-.bdfb-endpoint-metrics > span {
   display: inline-flex;
   align-items: baseline;
-  gap: 3px;
-  overflow: hidden;
-  min-width: 0;
-  padding: 2px 4px;
-  border: 1px solid #263541;
-  background: #080d12;
-  color: #d5e1e9;
-  font:
-    0.44rem ui-monospace,
-    monospace;
+  gap: 4px;
 }
 
-.bdfb-endpoint-metrics b {
-  color: #6f859a;
-  font-size: 0.4rem;
-  font-weight: 500;
+.bdfb-endpoint-reading b {
+  color: #73cde1;
+  font-size: 0.72em;
+  font-weight: 600;
 }
 
-.bdfb-endpoint-metrics--empty {
-  display: block;
-  color: #56697d;
-  text-align: right;
-  font:
-    0.48rem ui-monospace,
-    monospace;
-  text-align: center;
+.bdfb-endpoint-reading > span {
+  color: #eef7fb;
+  font-weight: 650;
 }
 
-.bdfb-endpoint--breaker {
-  border-color: #3d5967;
-  background: linear-gradient(90deg, rgba(121, 217, 232, 0.07), transparent 65%), #0a1016;
+.bdfb-endpoint-summary--holder,
+.bdfb-endpoint-summary--empty,
+.bdfb-endpoint-summary--state {
+  justify-content: center;
+  letter-spacing: 0.04em;
+}
+
+.bdfb-endpoint-summary--holder {
+  color: #91a1af;
+}
+
+.bdfb-endpoint-summary--empty {
+  color: #7d8c9a;
+}
+
+.bdfb-endpoint-summary--state strong {
+  color: #6fd0b9;
+  font-weight: 650;
+}
+
+.bdfb-endpoint-summary--state small {
+  color: #718292;
+  font-size: 0.72em;
 }
 
 .bdfb-endpoint--holder {
   border-style: dashed;
-  opacity: 0.68;
+  border-color: #536271;
+  background: #0a0f15;
 }
 
 .bdfb-endpoint--telemetry-online {
-  border-color: #3c7a73;
-  box-shadow: inset 0 0 0 1px rgba(85, 201, 177, 0.08);
-}
-
-.bdfb-endpoint--telemetry-online .bdfb-endpoint-state {
-  color: #6fd0b9;
+  border-color: #2d9fc6;
+  box-shadow: inset 0 0 0 1px rgba(85, 201, 177, 0.06);
 }
 
 .bdfb-endpoint--telemetry-present {
-  border-color: #705f3c;
+  border-color: #806d46;
 }
 
 .bdfb-endpoint--telemetry-missing {
-  opacity: 0.72;
+  border-color: #3d5262;
+  opacity: 0.9;
 }
 
 .bdfb-empty-endpoints {
@@ -3598,13 +3578,3 @@ p {
   overflow: hidden;
 }
 
-.bdfb-endpoint-copy,
-.bdfb-endpoint-state,
-.bdfb-endpoint-metrics,
-.bdfb-endpoint-metrics > span {
-  overflow-wrap: anywhere;
-}
-
-.bdfb-endpoint-metrics > span {
-  text-overflow: ellipsis;
-}

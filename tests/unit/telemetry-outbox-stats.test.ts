@@ -46,16 +46,6 @@ describe('telemetry outbox operational stats', () => {
       'TSDB_UNAVAILABLE',
     );
 
-    await repository.accept(record('in-flight', '2026-09-24T00:03:00.000Z'));
-
-    const inFlightClaim = await repository.claimPendingHistory({
-      limit: 1,
-      workerId: 'flight-worker',
-      now: '2026-09-24T00:04:00.000Z',
-      leaseSeconds: 30,
-    });
-    expect(inFlightClaim.map((entry) => entry.eventId)).toEqual(['in-flight']);
-
     await repository.accept(record('delivered', '2026-09-24T00:05:00.000Z'));
 
     const deliveredClaim = await repository.claimPendingHistory({
@@ -86,6 +76,16 @@ describe('telemetry outbox operational stats', () => {
       '2026-09-24T00:08:01.000Z',
       'INVALID_METRIC_VALUE',
     );
+
+    await repository.accept(record('in-flight', '2026-09-24T00:03:00.000Z'));
+
+    const inFlightClaim = await repository.claimPendingHistory({
+      limit: 1,
+      workerId: 'flight-worker',
+      now: '2026-09-24T00:09:00.000Z',
+      leaseSeconds: 30,
+    });
+    expect(inFlightClaim.map((entry) => entry.eventId)).toEqual(['in-flight']);
 
     await repository.accept(record('pending-due', '2026-09-24T00:00:00.000Z'));
 

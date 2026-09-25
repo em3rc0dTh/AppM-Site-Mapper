@@ -1,6 +1,7 @@
 # Legacy V1 Telxius Source Register
 
-**Product:** Apana Air Site Mapper  
+**Historical source label:** Apana Air Site Mapper  
+**Current product:** AppManager Site Mapper  
 **Purpose:** Preserve validated product knowledge from the prior Site Mapper implementation without importing legacy accidental architecture or security debt.
 
 ## Source package
@@ -148,7 +149,8 @@ These are compatible with the current MK1 direction and are retained as architec
 
 The current project direction further clarifies:
 
-- the product name remains **Apana Air Site Mapper**;
+- the current product name is **AppManager Site Mapper**; `Apana Air Site Mapper` is retained only
+  as historical source-label evidence where it appears in legacy material;
 - the immediate deployment scenario includes three QDF/BDFB units;
 - hardware-connected breakers publish operational measurements through MQTT;
 - not every holder/breaker is necessarily telemetry-connected;

@@ -9,6 +9,16 @@
 - `staging`
 - `production`
 
+Production runtime rule:
+
+- `APP_ENV` must be explicitly set when `NODE_ENV=production`;
+- missing/blank `APP_ENV` in a production Node runtime is a startup error;
+- test runtimes may infer `test` from `NODE_ENV=test`;
+- non-production local development may infer `development`.
+
+This prevents an ambiguously configured production process from silently receiving development
+cookies, persistence defaults or telemetry policy.
+
 ## Application persistence
 
 ### APP_PERSISTENCE

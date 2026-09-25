@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useMemo, useState, type CSSProperties } from 'react';
 
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
@@ -63,7 +64,12 @@ export interface RackElevationContext {
 export function RackElevation({
   view,
   context,
-}: Readonly<{ view: RackElevationView; context?: RackElevationContext }>) {
+  inventoryLinks,
+}: Readonly<{
+  view: RackElevationView;
+  context?: RackElevationContext;
+  inventoryLinks: Readonly<Record<string, string>>;
+}>) {
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const blocks = useMemo(() => buildBlocks(view), [view]);
   const count = (role: string) => view.rows.filter((row) => row.role === role).length;
@@ -184,16 +190,16 @@ export function RackElevation({
                   </>
                 );
 
-                return item ? (
-                  <button
+                return item && inventoryLinks[item.id] ? (
+                  <Link
                     key={block.key}
-                    type="button"
                     className={`legacy-rack-block legacy-rack-block--${block.role.toLowerCase()}`}
                     style={blockStyle}
-                    onClick={() => setSelected(topologyInspector(item))}
+                    href={inventoryLinks[item.id]}
+                    aria-label={`Open ${item.name}`}
                   >
                     {content}
-                  </button>
+                  </Link>
                 ) : (
                   <div
                     key={block.key}
@@ -261,25 +267,40 @@ export function RackElevation({
             <p>No mounted inventory.</p>
           ) : (
             <div className="legacy-rack-inventory-list">
-              {view.inventory.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setSelected(topologyInspector(item))}
-                >
-                  <span>
-                    <small>{item.kind}</small>
-                    <strong>{item.name}</strong>
-                  </span>
-                  <b>Inspect →</b>
-                </button>
-              ))}
+              {view.inventory.map((item) =>
+                inventoryLinks[item.id] ? (
+                  <Link key={item.id} href={inventoryLinks[item.id]}>
+                    <span>
+                      <small>{item.kind}</small>
+                      <strong>{item.name}</strong>
+                    </span>
+                    <b>Open device →</b>
+                  </Link>
+                ) : (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setSelected(topologyInspector(item))}
+                  >
+                    <span>
+                      <small>{item.kind}</small>
+                      <strong>{item.name}</strong>
+                    </span>
+                    <b>Inspect →</b>
+                  </button>
+                ),
+              )}
             </div>
           )}
         </section>
 
         {primaryInventory && (
           <div className="legacy-properties-actions">
+            {inventoryLinks[primaryInventory.id] && (
+              <Link className="action-link" href={inventoryLinks[primaryInventory.id]}>
+                Open mounted device →
+              </Link>
+            )}
             <button type="button" onClick={() => setSelected(topologyInspector(primaryInventory))}>
               Inspect mounted device
             </button>

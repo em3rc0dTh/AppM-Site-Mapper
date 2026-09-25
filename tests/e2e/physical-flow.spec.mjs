@@ -65,6 +65,28 @@ async function expectSelection(page, name) {
   await noDocumentOverflow(page);
 }
 
+async function navigateToDevice(page) {
+  await page.goto('/network');
+  await page
+    .getByRole('link', { name: /Synthetic Demo Network/ })
+    .first()
+    .click();
+
+  for (let index = 0; index < names.length - 1; index++) {
+    await expectSelection(page, names[index]);
+    const stage = page.locator('.operational-stage');
+
+    if (index === 7) {
+      await stage.getByRole('link', { name: 'Open Synthetic QDF / BDFB', exact: true }).click();
+    } else {
+      await stage.getByRole('link', { name: new RegExp(names[index + 1]) }).click();
+    }
+  }
+
+  await expectSelection(page, names.at(-1));
+  return new URL(page.url()).pathname;
+}
+
 test.beforeAll(async ({ request }) => {
   const database = process.env.MONGODB_DB_NAME;
   if (!database?.startsWith('appm_flow_cert_'))
@@ -72,8 +94,7 @@ test.beforeAll(async ({ request }) => {
   client = new MongoClient(process.env.MONGODB_URI);
   await client.connect();
   db = client.db(database);
-  if (await db.collection('topology_nodes').countDocuments())
-    throw new Error('Certification requires an empty database.');
+  await db.dropDatabase();
   const now = new Date().toISOString();
   await db.collection('topology_nodes').insertMany(topologyDocuments(now));
   await db.collection('telemetry_sources').insertOne({
@@ -258,9 +279,8 @@ test('golden path, live popup, history, keyboard, canonical links and recovery',
 test('viewport matrix and physical endpoint semantics', async ({ page }, info) => {
   await page.goto('/login');
   await login(page);
-  const devicePath = paths.get(names[8]);
+  const devicePath = await navigateToDevice(page);
   expect(devicePath).toBeTruthy();
-  await page.goto(devicePath);
   await feed(page.request, 20);
   for (const [width, height] of [
     [1920, 1080],

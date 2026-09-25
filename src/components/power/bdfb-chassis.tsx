@@ -15,7 +15,14 @@ import type {
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
 
-type StreamState = 'connecting' | 'live' | 'reconnecting';
+type StreamState = 'connecting' | 'live' | 'reconnecting' | 'session ended';
+
+interface PhysicalSelection {
+  readonly shelf: Shelf;
+  readonly frame: Frame;
+  readonly panel: Panel;
+  readonly endpoint?: BreakerHolder;
+}
 
 function endpointInspector(
   device: DeviceNode,
@@ -24,6 +31,7 @@ function endpointInspector(
   panel: Panel,
   endpoint: BreakerHolder,
   telemetry: EndpointTelemetryView | null,
+  streamState: StreamState,
 ): InspectorEntity {
   const telemetryFields = telemetry
     ? [
@@ -68,7 +76,7 @@ function endpointInspector(
       },
       {
         title: 'Realtime telemetry',
-        fields: telemetryFields,
+        fields: [{ label: 'Stream', value: streamState.toUpperCase() }, ...telemetryFields],
       },
       {
         title: 'History',
@@ -87,6 +95,7 @@ function panelInspector(
   shelf: Shelf,
   frame: Frame,
   panel: Panel,
+  sample: TelemetrySample | null,
 ): InspectorEntity {
   return {
     name: panel.label,
@@ -105,6 +114,21 @@ function panelInspector(
                 : frame.label,
           },
           { label: 'Endpoints', value: panel.endpoints.length },
+          {
+            label: 'Reporting',
+            value: panel.endpoints.filter((endpoint) =>
+              endpointTelemetry(sample, endpoint.telemetryAddress),
+            ).length,
+          },
+          {
+            label: 'Breakers',
+            value: panel.endpoints.filter((endpoint) => endpoint.variant === 'BREAKER').length,
+          },
+          {
+            label: 'Free holders',
+            value: panel.endpoints.filter((endpoint) => endpoint.variant === 'HOLDER').length,
+          },
+          { label: 'Panel ID', value: panel.id },
         ],
       },
     ],
@@ -112,7 +136,6 @@ function panelInspector(
 }
 
 function EndpointButton({
-  device,
   shelf,
   frame,
   panel,
@@ -121,14 +144,13 @@ function EndpointButton({
   index,
   onInspect,
 }: Readonly<{
-  device: DeviceNode;
   shelf: Shelf;
   frame: Frame;
   panel: Panel;
   endpoint: BreakerHolder;
   sample: TelemetrySample | null;
   index: number;
-  onInspect: (entity: InspectorEntity) => void;
+  onInspect: (selection: PhysicalSelection) => void;
 }>) {
   const telemetry = endpointTelemetry(sample, endpoint.telemetryAddress);
   const online = telemetry?.state?.toUpperCase() === 'ONLINE';
@@ -142,7 +164,8 @@ function EndpointButton({
     <button
       type="button"
       className={`bdfb-endpoint bdfb-endpoint--${endpoint.variant.toLowerCase()} ${telemetryClass}`}
-      onClick={() => onInspect(endpointInspector(device, shelf, frame, panel, endpoint, telemetry))}
+      onClick={() => onInspect({ shelf, frame, panel, endpoint })}
+      aria-label={`Open ${endpoint.label} · ${endpoint.variant}`}
       title={`${endpoint.label} · ${endpoint.telemetryAddress ?? endpoint.variant}`}
     >
       <span className="bdfb-endpoint-index">{(index + 1).toString().padStart(2, '0')}</span>
@@ -170,19 +193,17 @@ function EndpointButton({
 }
 
 function PanelBoard({
-  device,
   shelf,
   frame,
   panel,
   sample,
   onInspect,
 }: Readonly<{
-  device: DeviceNode;
   shelf: Shelf;
   frame: Frame;
   panel: Panel;
   sample: TelemetrySample | null;
-  onInspect: (entity: InspectorEntity) => void;
+  onInspect: (selection: PhysicalSelection) => void;
 }>) {
   const reporting = panel.endpoints.filter(
     (endpoint) => endpointTelemetry(sample, endpoint.telemetryAddress) !== null,
@@ -198,7 +219,7 @@ function PanelBoard({
       <button
         type="button"
         className="bdfb-panel-title"
-        onClick={() => onInspect(panelInspector(device, shelf, frame, panel))}
+        onClick={() => onInspect({ shelf, frame, panel })}
       >
         <span>Panel</span>
         <strong>{panel.label}</strong>
@@ -213,7 +234,6 @@ function PanelBoard({
               {column.map((endpoint, rowIndex) => (
                 <EndpointButton
                   key={endpoint.id}
-                  device={device}
                   shelf={shelf}
                   frame={frame}
                   panel={panel}
@@ -234,17 +254,15 @@ function PanelBoard({
 }
 
 function ExplicitFrame({
-  device,
   shelf,
   frame,
   sample,
   onInspect,
 }: Readonly<{
-  device: DeviceNode;
   shelf: Shelf;
   frame: Frame;
   sample: TelemetrySample | null;
-  onInspect: (entity: InspectorEntity) => void;
+  onInspect: (selection: PhysicalSelection) => void;
 }>) {
   return (
     <section className="bdfb-frame">
@@ -256,7 +274,6 @@ function ExplicitFrame({
         {frame.panels.map((panel) => (
           <PanelBoard
             key={panel.id}
-            device={device}
             shelf={shelf}
             frame={frame}
             panel={panel}
@@ -270,33 +287,25 @@ function ExplicitFrame({
 }
 
 function ImplicitFrame({
-  device,
   shelf,
   frame,
   sample,
   onInspect,
 }: Readonly<{
-  device: DeviceNode;
   shelf: Shelf;
   frame: Frame;
   sample: TelemetrySample | null;
-  onInspect: (entity: InspectorEntity) => void;
+  onInspect: (selection: PhysicalSelection) => void;
 }>) {
   return (
     <section
       className="bdfb-frame-implicit"
       aria-label={`${frame.label} implicit physical frame · panels rendered directly in shelf`}
     >
-      <div className="bdfb-implicit-note">
-        <span>Implicit frame</span>
-        <strong>{frame.label}</strong>
-        <small>Canonical hierarchy retained; physical presentation flattened.</small>
-      </div>
       <div className="bdfb-panel-grid">
         {frame.panels.map((panel) => (
           <PanelBoard
             key={panel.id}
-            device={device}
             shelf={shelf}
             frame={frame}
             panel={panel}
@@ -310,16 +319,13 @@ function ImplicitFrame({
 }
 
 export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
-  const [selected, setSelected] = useState<InspectorEntity | null>(null);
+  const [selected, setSelected] = useState<PhysicalSelection | null>(null);
   const [sample, setSample] = useState<TelemetrySample | null>(null);
   const [streamState, setStreamState] = useState<StreamState>('connecting');
   const shelves = device.bdfb?.shelves ?? [];
   const frames = shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
   const endpoints = panels.flatMap((panel) => panel.endpoints);
-  const implicitFrames = frames.filter(
-    (frame) => frame.presentation?.physicalFrameVisible === false,
-  ).length;
 
   useEffect(() => {
     const stream = new EventSource('/api/telemetry/stream');
@@ -341,6 +347,10 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
     stream.addEventListener('snapshot', onSnapshot as EventListener);
     stream.addEventListener('telemetry', onTelemetry as EventListener);
     stream.onerror = () => setStreamState('reconnecting');
+    stream.addEventListener('session', () => {
+      stream.close();
+      setStreamState('session ended');
+    });
 
     return () => stream.close();
   }, [device.id]);
@@ -360,25 +370,14 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
 
   return (
     <section className="bdfb-chassis">
-      <header className="bdfb-chassis-header">
-        <div>
-          <span>Power distribution chassis</span>
-          <strong>{device.name}</strong>
-          <small>Canonical Shelf → Frame → Panel → Breaker / Holder hierarchy</small>
-        </div>
-        <div className="bdfb-chassis-status">
-          <StatusBadge tone={sample?.simulated ? 'warning' : sample ? 'good' : 'accent'}>
-            {liveLabel}
-          </StatusBadge>
-          <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>
-          <StatusBadge>{panels.length} PANELS</StatusBadge>
-          <StatusBadge>
-            {reportingEndpoints}/{endpoints.length} REPORTING
-          </StatusBadge>
-          {implicitFrames > 0 && (
-            <StatusBadge tone="warning">{implicitFrames} IMPLICIT FRAME</StatusBadge>
-          )}
-        </div>
+      <header className="bdfb-chassis-header" aria-label="Device source and contents">
+        <StatusBadge tone={sample?.simulated ? 'warning' : sample ? 'good' : 'accent'}>
+          {liveLabel}
+        </StatusBadge>
+        <span>
+          {shelves.length} shelf · {panels.length} panels · {reportingEndpoints}/{endpoints.length}{' '}
+          reporting
+        </span>
       </header>
 
       <div className="bdfb-chassis-body">
@@ -388,18 +387,11 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
               <span>Shelf</span>
               <strong>{shelf.label}</strong>
             </header>
-            <div className="bdfb-shelf-hardware" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
             <div className="bdfb-frame-field">
               {shelf.frames.map((frame) =>
                 frame.presentation?.physicalFrameVisible === false ? (
                   <ImplicitFrame
                     key={frame.id}
-                    device={device}
                     shelf={shelf}
                     frame={frame}
                     sample={sample}
@@ -408,7 +400,6 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
                 ) : (
                   <ExplicitFrame
                     key={frame.id}
-                    device={device}
                     shelf={shelf}
                     frame={frame}
                     sample={sample}
@@ -421,7 +412,24 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
         ))}
       </div>
 
-      {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <EntityInspector
+          entity={
+            selected.endpoint
+              ? endpointInspector(
+                  device,
+                  selected.shelf,
+                  selected.frame,
+                  selected.panel,
+                  selected.endpoint,
+                  endpointTelemetry(sample, selected.endpoint.telemetryAddress),
+                  streamState,
+                )
+              : panelInspector(device, selected.shelf, selected.frame, selected.panel, sample)
+          }
+          onClose={() => setSelected(null)}
+        />
+      )}
     </section>
   );
 }

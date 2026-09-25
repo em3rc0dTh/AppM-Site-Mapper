@@ -52,19 +52,20 @@ export function EntityInspector({
   const titleId = useId();
   const [tab, setTab] = useState(0);
 
+  const isOpen = entity !== null;
+
   useEffect(() => {
     const dialog = ref.current;
-    if (!entity || !dialog) return;
+    if (!isOpen || !dialog) return;
 
     const previous = document.activeElement as HTMLElement | null;
-    setTab(0);
     dialog.showModal();
 
     return () => {
       dialog.close();
       previous?.focus();
     };
-  }, [entity]);
+  }, [isOpen]);
 
   if (!entity) return null;
 

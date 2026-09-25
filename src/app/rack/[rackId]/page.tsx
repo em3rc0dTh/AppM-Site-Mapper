@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { topologyHref } from '@/shared/ui/topology-navigation';
 import { notFound, redirect } from 'next/navigation';
 
 import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
@@ -10,13 +12,13 @@ import { createTopologyRepository } from '@/modules/topology/infrastructure/topo
 export default async function RackPage({
   params,
 }: Readonly<{ params: Promise<{ rackId: string }> }>) {
+  const { rackId } = await params;
   const auth = await requirePermission('topology:read');
 
   if (!auth.ok) {
-    redirect('/login');
+    redirect(`/login?next=${encodeURIComponent(`/rack/${encodeURIComponent(rackId)}`)}`);
   }
 
-  const { rackId } = await params;
   const repository = await createTopologyRepository();
   const elevation = new RackElevationService(repository);
   const topology = new TopologyService(repository);
@@ -38,7 +40,7 @@ export default async function RackPage({
       id: node.id,
       name: node.name,
       kind: node.kind,
-      href: await topology.buildDeepLink(node.id),
+      href: await topologyHref(topology, node),
     })),
   );
   const childEntries: ContextTreeEntry[] = await Promise.all(
@@ -46,7 +48,7 @@ export default async function RackPage({
       id: node.id,
       name: node.name,
       kind: node.kind,
-      href: await topology.buildDeepLink(node.id),
+      href: await topologyHref(topology, node),
     })),
   );
   const inventoryLinks = Object.fromEntries(
@@ -57,6 +59,18 @@ export default async function RackPage({
 
   return (
     <main className="operational-page operational-page--rack">
+      <nav className="breadcrumbs operational-breadcrumbs" aria-label="Breadcrumb">
+        <Link href="/network">Network index</Link>
+        {trailEntries.map((entry) => (
+          <Link
+            key={entry.id}
+            href={entry.href}
+            aria-current={entry.id === rackId ? 'page' : undefined}
+          >
+            {entry.name}
+          </Link>
+        ))}
+      </nav>
       <div className="operational-layout operational-layout--rack">
         <aside className="operational-context">
           <TopologyContextTree trail={trailEntries} descendants={childEntries} />

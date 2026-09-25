@@ -7,7 +7,9 @@ import type {
   DemoTelemetryHistoryRange,
 } from '@/modules/telemetry/application/demo-telemetry-history';
 
-const METRICS = ['U1', 'I1', 'P1', 'EP1'] as const;
+const EMPTY_POINTS: readonly DemoTelemetryHistoryPoint[] = [];
+
+const METRICS = ['U1', 'U2', 'I1', 'I2', 'P1', 'P2', 'EP1', 'EP2'] as const;
 type HistoryMetric = (typeof METRICS)[number];
 
 interface HistoryResponse {
@@ -109,7 +111,7 @@ export function BreakerHistoryPanel({
   }, [componentAddress, entityId, queryKey, range]);
 
   const status = result?.key === queryKey ? (result.error ? 'error' : 'ready') : 'loading';
-  const points = result?.key === queryKey && !result.error ? result.points : [];
+  const points = result?.key === queryKey && !result.error ? result.points : EMPTY_POINTS;
   const series = useMemo(() => numericSeries(points, metric), [metric, points]);
   const path = useMemo(() => polyline(series), [series]);
   const onlineSamples = points.filter((point) => point.state.toUpperCase() === 'ONLINE').length;
@@ -130,6 +132,7 @@ export function BreakerHistoryPanel({
             <button
               type="button"
               key={candidate}
+              aria-pressed={candidate === range}
               className={candidate === range ? 'is-active' : ''}
               onClick={() => setRange(candidate)}
             >
@@ -142,6 +145,7 @@ export function BreakerHistoryPanel({
             <button
               type="button"
               key={candidate}
+              aria-pressed={candidate === metric}
               className={candidate === metric ? 'is-active' : ''}
               onClick={() => setMetric(candidate)}
             >
@@ -200,10 +204,11 @@ export function BreakerHistoryPanel({
             </>
           ) : (
             <div className="breaker-history-empty">
-              <strong>State-only history</strong>
+              <strong>{points.length ? 'State-only history' : 'No historical samples'}</strong>
               <span>
-                The observed hardware profile does not provide scalar {metric} values for this
-                breaker address. Availability is shown without inventing measurements.
+                {points.length
+                  ? `The recorded samples do not provide scalar ${metric} values for this breaker address.`
+                  : 'No samples are available for this range.'}
               </span>
             </div>
           )}

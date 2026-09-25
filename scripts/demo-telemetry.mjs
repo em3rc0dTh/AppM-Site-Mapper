@@ -1,3 +1,9 @@
+import {
+  ENTITY_ID,
+  SERIAL_NUMBER,
+  topologyDocuments,
+  syntheticHistoryDocuments,
+} from './fixtures/physical-demo.mjs';
 import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import net from 'node:net';
@@ -12,9 +18,9 @@ const COMPOSE_PROJECT = 'appm-telemetry-demo';
 const DATABASE_NAME = 'appm_site_mapper_demo';
 const DEFAULT_MONGO_PORT = 37017;
 const DEFAULT_MQTT_PORT = 18883;
-const SERIAL_NUMBER = 'DEMO25110703400009';
+
 const TOPIC_SOURCE = 'demo-qdf-01';
-const ENTITY_ID = 'demo-device-qdf-01';
+
 const DEFAULT_APP_PORT = 3000;
 
 const children = new Set();
@@ -166,146 +172,6 @@ async function waitForHttp(url, child, timeoutMs = 90_000) {
   }
 
   throw new Error(`Timed out waiting for Site Mapper at ${url}.`);
-}
-
-function syntheticBreakers() {
-  return Array.from({ length: 24 }, (_, index) => {
-    const position = index + 1;
-
-    return {
-      id: `demo-breaker-panel-1-${position}`,
-      variant: 'BREAKER',
-      label: `CB-${String(position).padStart(2, '0')}`,
-      telemetryAddress: `0_1_${position}`,
-    };
-  });
-}
-
-function fixed(value) {
-  return Math.max(0, value).toFixed(2);
-}
-
-function syntheticHistoryDocuments(now) {
-  const end = new Date(now).getTime();
-  const hours = 30 * 24;
-  const documents = [];
-
-  for (let hourIndex = hours; hourIndex >= 0; hourIndex -= 1) {
-    const observedAt = new Date(end - hourIndex * 60 * 60 * 1000);
-    const cycle = hours - hourIndex;
-
-    for (let slot = 1; slot <= 24; slot += 1) {
-      const values = {};
-      const active = slot <= 12 && [1, 4, 7, 10].includes(slot);
-
-      if (slot <= 12) {
-        if (active) {
-          const phase = cycle / 5 + slot / 3;
-          const voltage = 12.2 + Math.sin(phase) * 0.12;
-          const current = 5.5 + slot * 0.42 + Math.sin(phase * 0.7) * 1.4;
-          const power = voltage * current;
-          const accumulatedEnergy = 1.5 + cycle * 0.015 + slot * 0.02;
-
-          values.U1 = fixed(voltage);
-          values.U2 = '0.00';
-          values.I1 = fixed(current);
-          values.I2 = '0.00';
-          values.P1 = fixed(power);
-          values.P2 = '0.00';
-          values.EP1 = fixed(accumulatedEnergy);
-          values.EP2 = '0.00';
-        } else {
-          Object.assign(values, {
-            U1: '0.00',
-            U2: '0.00',
-            I1: '0.00',
-            I2: '0.00',
-            P1: '0.00',
-            P2: '0.00',
-            EP1: '0.00',
-            EP2: '0.00',
-          });
-        }
-      }
-
-      documents.push({
-        entityId: ENTITY_ID,
-        componentAddress: `0_1_${slot}`,
-        observedAt,
-        state: 'ONLINE',
-        values,
-        simulated: true,
-      });
-    }
-  }
-
-  return documents;
-}
-
-function topologyDocuments(now) {
-  const base = (id, parentId, name, kind) => ({
-    id,
-    parentId,
-    name,
-    kind,
-    lifecycle: 'ACTIVE',
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  return [
-    { ...base('demo-network', null, 'Synthetic Demo Network', 'NETWORK') },
-    { ...base('demo-site', 'demo-network', 'Synthetic Demo Site', 'SITE') },
-    { ...base('demo-structure', 'demo-site', 'Synthetic Demo Structure', 'STRUCTURE') },
-    { ...base('demo-level', 'demo-structure', 'Synthetic Demo Level', 'LEVEL') },
-    {
-      ...base('demo-room', 'demo-level', 'Synthetic Demo Room', 'ROOM_SUBSTRUCTURE'),
-      variant: 'ROOM',
-    },
-    {
-      ...base('demo-bay', 'demo-room', 'Synthetic Demo Bay', 'CONTAINER_CLUSTER_BAY'),
-      variant: 'BAY',
-    },
-    {
-      ...base('demo-position', 'demo-bay', 'A1', 'POSITION'),
-      coordinate: { row: 'A', column: 1 },
-    },
-    {
-      ...base('demo-rack', 'demo-position', 'Synthetic Demo Rack', 'CONTAINER_RACK'),
-      variant: 'RACK',
-      totalU: 42,
-      cas: [{ id: 'demo-cas-available', startU: 1, endU: 42, state: 'AVAILABLE' }],
-    },
-    {
-      ...base(ENTITY_ID, 'demo-rack', 'Synthetic QDF / BDFB', 'DEVICE'),
-      serialNumber: SERIAL_NUMBER,
-      category: 'QDF/BDFB DEMO',
-      deviceType: 'QDF_BDFB',
-      pinned: true,
-      bdfb: {
-        shelves: [
-          {
-            id: 'demo-shelf-1',
-            label: 'Shelf 1',
-            frames: [
-              {
-                id: 'demo-frame-1',
-                label: 'Frame 1',
-                presentation: { physicalFrameVisible: false },
-                panels: [
-                  {
-                    id: 'demo-panel-1',
-                    label: 'Panel 1',
-                    endpoints: syntheticBreakers(),
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    },
-  ];
 }
 
 async function seedDemoDatabase(mongoUri) {
@@ -508,7 +374,7 @@ async function main() {
   console.log('[demo] Starting synthetic hardware publisher...');
   spawnPrefixed('sim', commandName('npm'), ['run', 'telemetry:sim'], simulatorEnv);
 
-  const telemetryUrl = `${baseUrl}/telemetry`;
+  const telemetryUrl = `${baseUrl}/network`;
   console.log('');
   console.log('============================================================');
   console.log(' AppManager Site Mapper — Synthetic Telemetry Demo');
@@ -523,7 +389,9 @@ async function main() {
   console.log(` MQTT:     127.0.0.1:${mqttPort} (isolated demo)`);
   console.log(' Data:     SYNTHETIC / SIMULATED');
   console.log('');
-  console.log(' Sign in once in the opened browser, then visit /telemetry.');
+  console.log(
+    ' Sign in once in the opened browser, then open the Network and follow the physical hierarchy.',
+  );
   console.log(' Press Ctrl+C here to stop the complete demo stack.');
   console.log('============================================================');
   console.log('');

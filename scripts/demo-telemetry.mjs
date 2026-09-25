@@ -326,9 +326,7 @@ async function main() {
   const mongoPort = await findAvailablePort(
     Number(process.env.DEMO_MONGO_PORT ?? DEFAULT_MONGO_PORT),
   );
-  const mqttPort = await findAvailablePort(
-    Number(process.env.DEMO_MQTT_PORT ?? DEFAULT_MQTT_PORT),
-  );
+  const mqttPort = await findAvailablePort(Number(process.env.DEMO_MQTT_PORT ?? DEFAULT_MQTT_PORT));
   const mongoUri = `mongodb://127.0.0.1:${mongoPort}`;
   const mqttUrl = `mqtt://127.0.0.1:${mqttPort}`;
   const composeEnv = {
@@ -337,19 +335,14 @@ async function main() {
     DEMO_MQTT_PORT: String(mqttPort),
   };
 
-  console.log(
-    `[demo] Starting isolated MongoDB on ${mongoPort} + MQTT broker on ${mqttPort}...`,
-  );
+  console.log(`[demo] Starting isolated MongoDB on ${mongoPort} + MQTT broker on ${mqttPort}...`);
   await run(
     commandName('docker'),
     ['compose', '-p', COMPOSE_PROJECT, '-f', COMPOSE_FILE, 'up', '-d', '--remove-orphans'],
     { env: composeEnv },
   );
 
-  await Promise.all([
-    waitForPort('127.0.0.1', mongoPort),
-    waitForPort('127.0.0.1', mqttPort),
-  ]);
+  await Promise.all([waitForPort('127.0.0.1', mongoPort), waitForPort('127.0.0.1', mqttPort)]);
   await seedDemoDatabase(mongoUri);
 
   const bootstrapToken = randomBytes(32).toString('hex');

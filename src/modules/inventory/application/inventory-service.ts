@@ -5,7 +5,11 @@ import { failure, success, type Result } from '@/shared/domain/result';
 
 export type InventoryItem = DeviceNode | EquipmentNode;
 export type InventoryError =
-  'RACK_NOT_FOUND' | 'NOT_A_CONTAINER_RACK' | 'ITEM_NOT_FOUND' | 'NOT_INVENTORY_ITEM';
+  | 'RACK_NOT_FOUND'
+  | 'NOT_A_CONTAINER_RACK'
+  | 'ITEM_NOT_FOUND'
+  | 'NOT_INVENTORY_ITEM'
+  | 'CONCURRENCY_CONFLICT';
 
 export class InventoryService {
   constructor(private readonly repository: TopologyRepository) {}
@@ -53,13 +57,18 @@ export class InventoryService {
       return failure('NOT_INVENTORY_ITEM');
     }
 
+    const expectedRevision = node.revision ?? 0;
     const updated: InventoryItem = {
       ...node,
       pinned,
       updatedAt: nowIso(),
+      revision: expectedRevision + 1,
     };
 
-    await this.repository.replace(updated);
+    if (!(await this.repository.replace(updated, expectedRevision))) {
+      return failure('CONCURRENCY_CONFLICT');
+    }
+
     return success(updated);
   }
 }

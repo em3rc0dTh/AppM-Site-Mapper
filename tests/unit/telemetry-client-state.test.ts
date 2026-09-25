@@ -27,7 +27,7 @@ describe('telemetry client state', () => {
     const older = sample('device-1', '2026-09-25T03:00:00.000Z');
     const newer = sample('device-1', '2026-09-25T03:00:01.000Z');
 
-    expect(dedupeTelemetrySamples([older, newer])).toEqual([newer]);
+    expect(dedupeTelemetrySamples([newer, older])).toEqual([newer]);
   });
 
   it('replaces an entity sample instead of appending a duplicate card', () => {

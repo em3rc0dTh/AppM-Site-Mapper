@@ -172,6 +172,8 @@ export function RackElevation({
                   minHeight: `max(${block.units * 3}px, ${block.units === 1 ? 18 : 26}px)`,
                 } as CSSProperties;
 
+                const href = item ? inventoryLinks[item.id] : undefined;
+
                 const content = (
                   <>
                     <span className="legacy-rack-scale">
@@ -190,12 +192,12 @@ export function RackElevation({
                   </>
                 );
 
-                return item && inventoryLinks[item.id] ? (
+                return item && href ? (
                   <Link
                     key={block.key}
                     className={`legacy-rack-block legacy-rack-block--${block.role.toLowerCase()}`}
                     style={blockStyle}
-                    href={inventoryLinks[item.id]}
+                    href={href}
                     aria-label={`Open ${item.name}`}
                   >
                     {content}
@@ -267,9 +269,11 @@ export function RackElevation({
             <p>No mounted inventory.</p>
           ) : (
             <div className="legacy-rack-inventory-list">
-              {view.inventory.map((item) =>
-                inventoryLinks[item.id] ? (
-                  <Link key={item.id} href={inventoryLinks[item.id]}>
+              {view.inventory.map((item) => {
+                const href = inventoryLinks[item.id];
+
+                return href ? (
+                  <Link key={item.id} href={href}>
                     <span>
                       <small>{item.kind}</small>
                       <strong>{item.name}</strong>
@@ -288,19 +292,22 @@ export function RackElevation({
                     </span>
                     <b>Inspect →</b>
                   </button>
-                ),
-              )}
+                );
+              })}
             </div>
           )}
         </section>
 
         {primaryInventory && (
           <div className="legacy-properties-actions">
-            {inventoryLinks[primaryInventory.id] && (
-              <Link className="action-link" href={inventoryLinks[primaryInventory.id]}>
-                Open mounted device →
-              </Link>
-            )}
+            {(() => {
+              const href = inventoryLinks[primaryInventory.id];
+              return href ? (
+                <Link className="action-link" href={href}>
+                  Open mounted device →
+                </Link>
+              ) : null;
+            })()}
             <button type="button" onClick={() => setSelected(topologyInspector(primaryInventory))}>
               Inspect mounted device
             </button>

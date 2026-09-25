@@ -42,6 +42,8 @@ docker run --rm   -v "$TMP_DIR/config:/mosquitto/config"   "$IMAGE"   mosquitto_
 
 docker run --rm   -v "$TMP_DIR/config:/mosquitto/config"   "$IMAGE"   mosquitto_passwd -b /mosquitto/config/passwd appmanager-ingestor "$INGESTOR_PASSWORD" >/dev/null
 
+docker run --rm --user 0   -v "$TMP_DIR/config:/mosquitto/config"   "$IMAGE"   sh -c 'chown mosquitto:mosquitto /mosquitto/config/passwd && chmod 0600 /mosquitto/config/passwd'
+
 
 docker network create "$NETWORK" >/dev/null
 

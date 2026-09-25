@@ -11,7 +11,7 @@ not contain password files, private keys or production certificates.
 - anonymous access is disabled;
 - MQTT 3.1.1 and MQTT 5 are accepted; MQTT 3.1 is excluded;
 - broker publish QoS is capped at QoS 1 for this boundary;
-- payload/packet, inflight and queue limits are explicit;
+- packet, inflight and queue limits are explicit;
 - each hardware publisher username maps to exactly one source namespace through `%u`;
 - the Site Mapper ingestion identity receives read access to source telemetry/status namespaces;
 - broker persistence is enabled for MQTT session/message state.
@@ -21,7 +21,7 @@ The application remains the trust/normalization boundary. Broker ACL success doe
 
 ## Runtime mounts
 
-The config expects:
+The password file is runtime-owned by the Mosquitto service account and must not be world-readable.\n\nThe config expects:
 
 - `/mosquitto/config/passwd`
 - `/mosquitto/config/acl`

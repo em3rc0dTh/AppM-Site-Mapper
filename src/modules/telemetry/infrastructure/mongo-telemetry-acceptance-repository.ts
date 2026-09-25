@@ -9,6 +9,7 @@ import {
 import type {
   TelemetryAcceptanceRepository,
   TelemetryHistoryClaimOptions,
+  TelemetryHistoryStats,
 } from '@/modules/telemetry/application/telemetry-acceptance-repository';
 import type {
   TelemetryAcceptanceRecord,
@@ -31,6 +32,14 @@ function toDomain(document: TelemetryAcceptanceDocument): TelemetryAcceptanceRec
 
 function boundedLimit(limit: number): number {
   return Math.min(Math.max(Math.trunc(limit), 1), 1000);
+}
+
+function requireTimestamp(name: string, value: string): number {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${name} must be a valid ISO timestamp.`);
+  }
+  return parsed;
 }
 
 export class MongoTelemetryAcceptanceRepository implements TelemetryAcceptanceRepository {
@@ -78,6 +87,60 @@ export class MongoTelemetryAcceptanceRepository implements TelemetryAcceptanceRe
     return documents.map(toDomain);
   }
 
+  async historyStats(now: string): Promise<TelemetryHistoryStats> {
+    const nowMs = requireTimestamp('Telemetry history stats now', now);
+    const unresolvedStates = ['PENDING', 'IN_FLIGHT', 'DEAD_LETTERED'] as const;
+    const [pending, duePending, inFlight, expiredLeases, delivered, deadLettered, oldest] =
+      await Promise.all([
+        this.collection.countDocuments({ historyState: 'PENDING' }),
+        this.collection.countDocuments({
+          historyState: 'PENDING',
+          $or: [
+            { nextHistoryAttemptAt: { $exists: false } },
+            { nextHistoryAttemptAt: { $lte: now } },
+          ],
+        }),
+        this.collection.countDocuments({ historyState: 'IN_FLIGHT' }),
+        this.collection.countDocuments({
+          historyState: 'IN_FLIGHT',
+          historyLeaseUntil: { $lte: now },
+        }),
+        this.collection.countDocuments({ historyState: 'DELIVERED' }),
+        this.collection.countDocuments({ historyState: 'DEAD_LETTERED' }),
+        this.collection.findOne(
+          { historyState: { $in: [...unresolvedStates] } },
+          {
+            projection: { _id: 0, acceptedAt: 1 },
+            sort: { acceptedAt: 1 },
+          },
+        ),
+      ]);
+
+    const oldestAcceptedAt =
+      oldest && typeof oldest.acceptedAt === 'string' ? oldest.acceptedAt : undefined;
+    const oldestMs =
+      oldestAcceptedAt === undefined
+        ? null
+        : requireTimestamp('Telemetry acceptedAt', oldestAcceptedAt);
+
+    return {
+      generatedAt: now,
+      pending,
+      duePending,
+      inFlight,
+      expiredLeases,
+      delivered,
+      deadLettered,
+      unresolved: pending + inFlight + deadLettered,
+      ...(oldestAcceptedAt === undefined
+        ? {}
+        : { oldestUnresolvedAcceptedAt: oldestAcceptedAt }),
+      ...(oldestMs === null
+        ? {}
+        : { oldestUnresolvedAgeSeconds: Math.max(0, Math.floor((nowMs - oldestMs) / 1000)) }),
+    };
+  }
+
   async claimPendingHistory(
     options: TelemetryHistoryClaimOptions,
   ): Promise<readonly TelemetryAcceptanceRecord[]> {
@@ -89,11 +152,7 @@ export class MongoTelemetryAcceptanceRepository implements TelemetryAcceptanceRe
       throw new Error('Telemetry history leaseSeconds must be a positive integer.');
     }
 
-    const nowMs = Date.parse(options.now);
-    if (!Number.isFinite(nowMs)) {
-      throw new Error('Telemetry history claim now must be a valid ISO timestamp.');
-    }
-
+    const nowMs = requireTimestamp('Telemetry history claim now', options.now);
     const leaseUntil = new Date(nowMs + options.leaseSeconds * 1000).toISOString();
     const claimed: TelemetryAcceptanceRecord[] = [];
 

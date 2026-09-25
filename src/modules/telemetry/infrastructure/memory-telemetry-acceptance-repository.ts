@@ -1,6 +1,7 @@
 import type {
   TelemetryAcceptanceRepository,
   TelemetryHistoryClaimOptions,
+  TelemetryHistoryStats,
 } from '@/modules/telemetry/application/telemetry-acceptance-repository';
 import type {
   TelemetryAcceptanceRecord,
@@ -9,6 +10,14 @@ import type {
 
 function boundedLimit(limit: number): number {
   return Math.min(Math.max(Math.trunc(limit), 1), 1000);
+}
+
+function requireTimestamp(name: string, value: string): number {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${name} must be a valid ISO timestamp.`);
+  }
+  return parsed;
 }
 
 function isDue(record: TelemetryAcceptanceRecord, now: string): boolean {
@@ -65,6 +74,40 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
       .map((record) => structuredClone(record));
   }
 
+  async historyStats(now: string): Promise<TelemetryHistoryStats> {
+    const nowMs = requireTimestamp('Telemetry history stats now', now);
+    const records = [...this.byEventId.values()];
+    const pending = records.filter((record) => record.historyState === 'PENDING');
+    const inFlight = records.filter((record) => record.historyState === 'IN_FLIGHT');
+    const deadLettered = records.filter((record) => record.historyState === 'DEAD_LETTERED');
+    const unresolved = [...pending, ...inFlight, ...deadLettered].sort((left, right) =>
+      left.acceptedAt.localeCompare(right.acceptedAt),
+    );
+    const oldest = unresolved[0];
+    const oldestMs = oldest ? requireTimestamp('Telemetry acceptedAt', oldest.acceptedAt) : null;
+
+    return {
+      generatedAt: now,
+      pending: pending.length,
+      duePending: pending.filter(
+        (record) =>
+          record.nextHistoryAttemptAt === undefined || record.nextHistoryAttemptAt <= now,
+      ).length,
+      inFlight: inFlight.length,
+      expiredLeases: inFlight.filter(
+        (record) =>
+          record.historyLeaseUntil !== undefined && record.historyLeaseUntil <= now,
+      ).length,
+      delivered: records.filter((record) => record.historyState === 'DELIVERED').length,
+      deadLettered: deadLettered.length,
+      unresolved: unresolved.length,
+      ...(oldest === undefined ? {} : { oldestUnresolvedAcceptedAt: oldest.acceptedAt }),
+      ...(oldestMs === null
+        ? {}
+        : { oldestUnresolvedAgeSeconds: Math.max(0, Math.floor((nowMs - oldestMs) / 1000)) }),
+    };
+  }
+
   async claimPendingHistory(
     options: TelemetryHistoryClaimOptions,
   ): Promise<readonly TelemetryAcceptanceRecord[]> {
@@ -76,11 +119,7 @@ export class MemoryTelemetryAcceptanceRepository implements TelemetryAcceptanceR
       throw new Error('Telemetry history leaseSeconds must be a positive integer.');
     }
 
-    const nowMs = Date.parse(options.now);
-    if (!Number.isFinite(nowMs)) {
-      throw new Error('Telemetry history claim now must be a valid ISO timestamp.');
-    }
-
+    const nowMs = requireTimestamp('Telemetry history claim now', options.now);
     const leaseUntil = new Date(nowMs + options.leaseSeconds * 1000).toISOString();
     const eligible = [...this.byEventId.values()]
       .filter((record) => isDue(record, options.now))

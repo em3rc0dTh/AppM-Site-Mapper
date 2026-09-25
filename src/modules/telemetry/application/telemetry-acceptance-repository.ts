@@ -10,9 +10,23 @@ export interface TelemetryHistoryClaimOptions {
   readonly leaseSeconds: number;
 }
 
+export interface TelemetryHistoryStats {
+  readonly generatedAt: string;
+  readonly pending: number;
+  readonly duePending: number;
+  readonly inFlight: number;
+  readonly expiredLeases: number;
+  readonly delivered: number;
+  readonly deadLettered: number;
+  readonly unresolved: number;
+  readonly oldestUnresolvedAcceptedAt?: string;
+  readonly oldestUnresolvedAgeSeconds?: number;
+}
+
 export interface TelemetryAcceptanceRepository {
   accept(record: TelemetryAcceptanceRecord): Promise<TelemetryAcceptanceResult>;
   listPendingHistory(limit: number): Promise<readonly TelemetryAcceptanceRecord[]>;
+  historyStats(now: string): Promise<TelemetryHistoryStats>;
   claimPendingHistory(
     options: TelemetryHistoryClaimOptions,
   ): Promise<readonly TelemetryAcceptanceRecord[]>;

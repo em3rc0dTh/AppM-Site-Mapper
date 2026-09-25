@@ -1,4 +1,7 @@
-import type { TelemetryAcceptanceRepository } from '@/modules/telemetry/application/telemetry-acceptance-repository';
+import type {
+  TelemetryAcceptanceRepository,
+  TelemetryHistoryStats,
+} from '@/modules/telemetry/application/telemetry-acceptance-repository';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import {
   buildTelemetryIdempotencyKey,
@@ -174,6 +177,10 @@ export class TelemetryService {
 
   snapshot(): Promise<readonly TelemetrySample[]> {
     return this.latestRepository.list();
+  }
+
+  historyStats(now = new Date().toISOString()): Promise<TelemetryHistoryStats> {
+    return this.acceptance.historyStats(now);
   }
 
   private async recordRejection(input: {

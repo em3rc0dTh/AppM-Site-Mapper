@@ -1377,19 +1377,26 @@ p {
 }
 .inspector-dialog {
   position: fixed;
-  inset: 0 0 0 auto;
+  inset: 50% auto auto 50%;
   margin: 0;
-  width: min(500px, 100%);
-  max-width: 100%;
-  height: 100dvh;
-  max-height: 100dvh;
-  border: 0;
-  border-left: 1px solid #3c4d5b;
+  width: min(920px, calc(100vw - 48px));
+  max-width: calc(100vw - 48px);
+  height: min(760px, calc(100dvh - 48px));
+  max-height: calc(100dvh - 48px);
+  transform: translate(-50%, -50%);
+  border: 1px solid #3c4d5b;
+  border-radius: 10px;
   background: var(--bg);
   color: var(--text);
   padding: 0;
-  box-shadow: -20px 0 100px #0008;
+  box-shadow: 0 30px 120px #000c;
+  overflow: hidden;
   animation: inspector-enter 0.18s ease-out;
+}
+
+.inspector-dialog[open] {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
 }
 .inspector-dialog::backdrop {
   background: #03070bbd;
@@ -1412,6 +1419,8 @@ p {
   padding: 6px;
 }
 .inspector-body {
+  min-height: 0;
+  overflow: auto;
   padding: 24px;
 }
 .inspector-tabs {
@@ -1453,11 +1462,11 @@ p {
 }
 @keyframes inspector-enter {
   from {
-    transform: translateX(24px);
+    transform: translate(-50%, calc(-50% + 16px)) scale(0.985);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
 }
@@ -3202,7 +3211,9 @@ p {
   .operational-layout--blueprint {
     grid-template-columns: 200px minmax(0, 1fr);
   }
+}
 
+@media (max-width: 1100px) {
   .bdfb-frame-implicit {
     grid-template-columns: 1fr;
   }
@@ -3211,9 +3222,7 @@ p {
     border-right: 0;
     border-bottom: 1px solid var(--border);
   }
-}
 
-@media (max-width: 1100px) {
   .operational-page {
     height: auto;
     min-height: 0;
@@ -3411,17 +3420,6 @@ p {
     0.58rem ui-monospace,
     monospace;
   letter-spacing: 0.08em;
-}
-
-@media (max-width: 1450px) {
-  .bdfb-endpoint-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: repeat(6, minmax(68px, 1fr));
-  }
-
-  .bdfb-endpoint {
-    min-height: 68px;
-  }
 }
 
 @media (max-width: 1080px) {

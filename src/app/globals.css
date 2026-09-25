@@ -2727,6 +2727,9 @@ p {
 }
 
 .bdfb-frame-field {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -2736,6 +2739,9 @@ p {
 
 .bdfb-frame,
 .bdfb-frame-implicit {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 0;
 }
 
@@ -2798,6 +2804,9 @@ p {
 }
 
 .bdfb-panel-grid {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -2805,6 +2814,9 @@ p {
 }
 
 .bdfb-panel-board {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 180px;
   display: flex;
   flex-direction: column;
@@ -2840,6 +2852,9 @@ p {
 
 .bdfb-endpoint-grid {
   flex: 1;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 0;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -2851,7 +2866,11 @@ p {
 
 .bdfb-endpoint {
   position: relative;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
   min-height: 72px;
+  overflow: hidden;
   display: grid;
   grid-template-columns: 26px minmax(0, 1fr);
   grid-template-rows: auto auto 1fr;
@@ -2909,6 +2928,7 @@ p {
 
 .bdfb-endpoint-metrics {
   grid-column: 1 / -1;
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 3px;
@@ -2917,6 +2937,7 @@ p {
 
 .bdfb-endpoint-metrics > span {
   display: grid;
+  overflow: hidden;
   gap: 1px;
   min-width: 0;
   padding: 3px 4px;
@@ -3541,4 +3562,27 @@ p {
     padding-left: 16px;
     padding-right: 16px;
   }
+}
+
+/* BDFB intrinsic sizing guard: telemetry content may never widen the physical panel. */
+.bdfb-frame-implicit > *,
+.bdfb-panel-grid > *,
+.bdfb-endpoint-grid > * {
+  min-width: 0;
+}
+
+.bdfb-panel-board,
+.bdfb-endpoint-grid {
+  overflow-x: hidden;
+}
+
+.bdfb-endpoint-copy,
+.bdfb-endpoint-state,
+.bdfb-endpoint-metrics,
+.bdfb-endpoint-metrics > span {
+  overflow-wrap: anywhere;
+}
+
+.bdfb-endpoint-metrics > span {
+  text-overflow: ellipsis;
 }

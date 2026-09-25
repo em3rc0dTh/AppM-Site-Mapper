@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSyntheticCycle, nextMessageId } from '../../scripts/telemetry-simulator/generator.mjs';
+import {
+  buildSyntheticCycle,
+  nextMessageId,
+} from '../../scripts/telemetry-simulator/generator.mjs';
 
 describe('synthetic telemetry generator', () => {
   it('mirrors the observed three-fragment legacy payload shape deterministically', () => {

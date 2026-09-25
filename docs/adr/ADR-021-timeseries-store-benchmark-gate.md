@@ -247,7 +247,6 @@ Reviewed against official/current material on 2026-09-24:
 - TimescaleDB restore administration functions:
   https://docs.tigerdata.com/api/latest/administration
 
-
 ## Implementation checkpoint — candidate sinks
 
 The repository now contains executable write mappings for both primary benchmark candidates without

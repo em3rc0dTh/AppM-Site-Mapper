@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGE="${MOSQUITTO_IMAGE:-eclipse-mosquitto:2.1.2}"
+IMAGE="${MOSQUITTO_IMAGE:-eclipse-mosquitto:2.1.2-alpine}"
 NETWORK="g16-mqtt-$$"
 BROKER="g16-mosquitto-$$"
 TMP_DIR="$(mktemp -d)"

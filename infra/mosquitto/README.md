@@ -2,7 +2,7 @@
 
 This directory is an executable **reference policy**, not a bundle of production secrets.
 
-The profile is certified in CI against Eclipse Mosquitto 2.1.2. The repository intentionally does
+The profile is certified in CI against Eclipse Mosquitto 2.1.2 using the official `2.1.2-alpine` image tag. The repository intentionally does
 not contain password files, private keys or production certificates.
 
 ## Security properties

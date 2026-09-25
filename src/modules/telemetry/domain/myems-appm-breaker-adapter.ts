@@ -10,9 +10,7 @@ import { failure, success, type Result } from '@/shared/domain/result';
 export const MYEMS_APPM_BREAKER_PROFILE = 'myems-appm-breaker-v1';
 
 export type MyemsAppmBreakerAdapterError =
-  | 'UNSUPPORTED_PROTOCOL_PROFILE'
-  | 'INVALID_BREAKER_READING'
-  | 'INVALID_METRIC_VALUE';
+  'UNSUPPORTED_PROTOCOL_PROFILE' | 'INVALID_BREAKER_READING' | 'INVALID_METRIC_VALUE';
 
 const metricMap = {
   U1: { key: 'voltage_v', channel: 1, unit: 'V' },

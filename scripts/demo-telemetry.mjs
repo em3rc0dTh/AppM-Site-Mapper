@@ -181,6 +181,67 @@ function syntheticBreakers() {
   });
 }
 
+function fixed(value) {
+  return Math.max(0, value).toFixed(2);
+}
+
+function syntheticHistoryDocuments(now) {
+  const end = new Date(now).getTime();
+  const hours = 30 * 24;
+  const documents = [];
+
+  for (let hourIndex = hours; hourIndex >= 0; hourIndex -= 1) {
+    const observedAt = new Date(end - hourIndex * 60 * 60 * 1000);
+    const cycle = hours - hourIndex;
+
+    for (let slot = 1; slot <= 24; slot += 1) {
+      const values = {};
+      const active = slot <= 12 && [1, 4, 7, 10].includes(slot);
+
+      if (slot <= 12) {
+        if (active) {
+          const phase = cycle / 5 + slot / 3;
+          const voltage = 12.2 + Math.sin(phase) * 0.12;
+          const current = 5.5 + slot * 0.42 + Math.sin(phase * 0.7) * 1.4;
+          const power = voltage * current;
+          const accumulatedEnergy = 1.5 + cycle * 0.015 + slot * 0.02;
+
+          values.U1 = fixed(voltage);
+          values.U2 = '0.00';
+          values.I1 = fixed(current);
+          values.I2 = '0.00';
+          values.P1 = fixed(power);
+          values.P2 = '0.00';
+          values.EP1 = fixed(accumulatedEnergy);
+          values.EP2 = '0.00';
+        } else {
+          Object.assign(values, {
+            U1: '0.00',
+            U2: '0.00',
+            I1: '0.00',
+            I2: '0.00',
+            P1: '0.00',
+            P2: '0.00',
+            EP1: '0.00',
+            EP2: '0.00',
+          });
+        }
+      }
+
+      documents.push({
+        entityId: ENTITY_ID,
+        componentAddress: `0_1_${slot}`,
+        observedAt,
+        state: 'ONLINE',
+        values,
+        simulated: true,
+      });
+    }
+  }
+
+  return documents;
+}
+
 function topologyDocuments(now) {
   const base = (id, parentId, name, kind) => ({
     id,
@@ -271,7 +332,15 @@ async function seedDemoDatabase(mongoUri) {
       simulated: true,
     });
 
+    const history = db.collection('telemetry_demo_history');
+    await history.insertMany(syntheticHistoryDocuments(now));
+    await history.createIndex(
+      { entityId: 1, componentAddress: 1, observedAt: 1 },
+      { name: 'demo_history_entity_component_time', unique: true },
+    );
+
     console.log(`[demo] Seeded isolated Mongo database: ${DATABASE_NAME}`);
+    console.log('[demo] Seeded 30 days of hourly synthetic breaker history.');
   } finally {
     await client.close();
   }
@@ -403,6 +472,7 @@ async function main() {
     TELEMETRY_MAX_PAYLOAD_BYTES: '262144',
     TELEMETRY_MAX_REPORTED_ENTRIES: '512',
     TELEMETRY_QUARANTINE_RETENTION_DAYS: '14',
+    TELEMETRY_DEMO_HISTORY: 'true',
     MQTT_BROKER_URL: mqttUrl,
     MQTT_CLIENT_ID: 'appmanager-site-mapper-demo',
     MQTT_TOPIC_PREFIX: 'appmanager/v1/raw/',

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 
 import { normalizeTelemetry } from '@/modules/telemetry/domain/normalizer';
@@ -8,17 +10,16 @@ const options = {
   maxPayloadBytes: 1024,
 };
 
+const telxiusV1Minimum = readFileSync(
+  new URL('../fixtures/telemetry/telxius-v1-minimal.json', import.meta.url),
+  'utf8',
+);
+
 describe('normalizeTelemetry', () => {
-  it('preserves the V1 raw sn/reported contract and breaker addresses', () => {
+  it('accepts the source-backed V1 minimum without inventing metric semantics', () => {
     const result = normalizeTelemetry(
       'appmanager/v1/raw/source-001/telemetry',
-      new TextEncoder().encode(
-        JSON.stringify({
-          sn: 'SN-001',
-          observedAt: '2026-09-22T00:00:00.000Z',
-          reported: { '0_1_1': { u: 52.1, se: 1 } },
-        }),
-      ),
+      new TextEncoder().encode(telxiusV1Minimum),
       options,
       '2026-09-22T00:00:01.000Z',
     );
@@ -28,13 +29,31 @@ describe('normalizeTelemetry', () => {
       value: {
         topic: 'appmanager/v1/raw/source-001/telemetry',
         topicSource: 'source-001',
-        serialNumber: 'SN-001',
-        reported: { '0_1_1': { u: 52.1, se: 1 } },
-        observedAt: '2026-09-22T00:00:00.000Z',
+        serialNumber: 'SERIAL-DEL-DISPOSITIVO',
+        reported: { metric_key: 13.09 },
+        observedAt: '2026-09-22T00:00:01.000Z',
         receivedAt: '2026-09-22T00:00:01.000Z',
-        timestampProvenance: 'DEVICE',
+        timestampProvenance: 'RECEIVED_TIME_FALLBACK',
       },
     });
+  });
+
+  it('preserves an explicitly valid device timestamp when a newer producer supplies one', () => {
+    const result = normalizeTelemetry(
+      'appmanager/v1/raw/source-001/telemetry',
+      new TextEncoder().encode(
+        JSON.stringify({
+          sn: 'SN-001',
+          observedAt: '2026-09-22T00:00:00.000Z',
+          reported: { metric_key: 13.09 },
+        }),
+      ),
+      options,
+      '2026-09-22T00:00:01.000Z',
+    );
+
+    expect(result.ok && result.value.observedAt).toBe('2026-09-22T00:00:00.000Z');
+    expect(result.ok && result.value.timestampProvenance).toBe('DEVICE');
   });
 
   it('preserves optional producer message identity without making it mandatory for V1', () => {
@@ -117,7 +136,7 @@ describe('normalizeTelemetry', () => {
       normalizeTelemetry(
         'appmanager/v1/raw/source-001/telemetry',
         new TextEncoder().encode(
-          JSON.stringify({ sn: 'SN-001', reported: { '0_1_25': { u: 48 } } }),
+          JSON.stringify({ sn: 'SN-001', reported: { '0_1_25': { metric_key: 13.09 } } }),
         ),
         options,
       ),

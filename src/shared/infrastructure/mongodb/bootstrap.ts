@@ -101,6 +101,10 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
       { name: 'ix_telemetry_history_lease' },
     ),
     telemetryOutbox.createIndex(
+      { historyState: 1, deadLetteredAt: -1 },
+      { name: 'ix_telemetry_history_dead_letter' },
+    ),
+    telemetryOutbox.createIndex(
       { 'sample.sourceId': 1, acceptedAt: -1 },
       { name: 'ix_telemetry_outbox_source' },
     ),

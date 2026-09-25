@@ -49,6 +49,11 @@ export default async function RackPage({
       href: await topology.buildDeepLink(node.id),
     })),
   );
+  const inventoryLinks = Object.fromEntries(
+    await Promise.all(
+      result.value.inventory.map(async (item) => [item.id, await topology.buildDeepLink(item.id)]),
+    ),
+  );
 
   return (
     <main className="operational-page operational-page--rack">
@@ -59,6 +64,7 @@ export default async function RackPage({
         <section className="operational-stage operational-stage--wide">
           <RackElevation
             view={result.value}
+            inventoryLinks={inventoryLinks}
             {...(parent?.kind === 'POSITION'
               ? {
                   context: {

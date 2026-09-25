@@ -48,14 +48,17 @@ export class MongoPowerRepository implements PowerRepository {
     await this.collection.insertOne(path as OptionalUnlessRequiredId<PowerPathDocument>);
   }
 
-  async replace(path: PowerPath): Promise<void> {
+  async replace(path: PowerPath, expectedRevision: number): Promise<boolean> {
+    const revisionFilter =
+      expectedRevision === 0
+        ? { $or: [{ revision: 0 }, { revision: { $exists: false } }] }
+        : { revision: expectedRevision };
+
     const result = await this.collection.replaceOne(
-      { id: path.id },
+      { id: path.id, ...revisionFilter },
       path as OptionalUnlessRequiredId<PowerPathDocument>,
     );
 
-    if (result.matchedCount !== 1) {
-      throw new Error(`PowerPath does not exist: ${path.id}`);
-    }
+    return result.matchedCount === 1;
   }
 }

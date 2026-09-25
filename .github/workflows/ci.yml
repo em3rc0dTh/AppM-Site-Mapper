@@ -36,6 +36,11 @@ jobs:
       - name: Format check
         run: npm run format:check
 
+      - name: Validate one-command telemetry demo
+        run: |
+          node --check scripts/demo-telemetry.mjs
+          docker compose -f infra/demo/docker-compose.telemetry.yml config --quiet
+
       - name: Unit tests
         run: npm run test:unit
 

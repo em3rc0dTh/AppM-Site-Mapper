@@ -17,7 +17,8 @@ Production runtime rule:
 - non-production local development may infer `development`.
 
 This prevents an ambiguously configured production process from silently receiving development
-cookies, persistence defaults or telemetry policy.
+cookies, persistence defaults or telemetry policy. The contract is enforced during Next.js server
+bootstrap by `src/instrumentation.ts`, before the server becomes ready to handle requests.
 
 ## Application persistence
 

@@ -24,7 +24,8 @@ environment-specific production certification.
 - realtime breaker updates while the modal stays open;
 - synthetic history presentation for 24H / 7D / 30D with explicit provenance;
 - desktop/narrow viewport browser matrix and 24-position panel evidence;
-- runtime fail-closed contract for missing `APP_ENV` when `NODE_ENV=production`;
+- runtime fail-closed contract for missing `APP_ENV` when `NODE_ENV=production`, enforced at
+  Next.js server bootstrap;
 - documentation reconciliation for current product naming, Next.js version, G16 telemetry durability
   and Superadmin-only user management.
 

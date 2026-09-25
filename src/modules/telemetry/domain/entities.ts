@@ -11,6 +11,15 @@ export interface TelemetrySource {
   readonly rawSchemaVersion: string;
   readonly staleAfterSeconds: number;
   readonly enabled: boolean;
+  readonly simulated?: boolean;
+}
+
+export interface TelemetryReportedEntryRecency {
+  readonly observedAt: string;
+  readonly receivedAt: string;
+  readonly timestampProvenance: TelemetryTimestampProvenance;
+  readonly messageId?: string;
+  readonly sourceMessageId?: string;
 }
 
 export interface TelemetrySample {
@@ -26,12 +35,23 @@ export interface TelemetrySample {
   readonly protocolProfile: string;
   readonly rawSchemaVersion: string;
   readonly reported: Readonly<Record<string, unknown>>;
+  /**
+   * Present only on the durable latest projection. Raw accepted events remain packet-shaped.
+   * Each key corresponds to one top-level reported entry such as a breaker address.
+   */
+  readonly reportedEntryRecency?: Readonly<Record<string, TelemetryReportedEntryRecency>>;
   readonly observedAt: string;
   readonly receivedAt: string;
   readonly timestampProvenance: TelemetryTimestampProvenance;
   readonly sequence?: number;
   readonly producerEpoch?: string;
   readonly messageId?: string;
+  readonly sourceMessageId?: string;
+  readonly sourceTimestampSeconds?: number;
+  readonly sourceSendTimeSeconds?: number;
+  readonly sourceMethod?: string;
+  readonly sourceVersion?: number;
+  readonly simulated?: boolean;
 }
 
 export interface NormalizedTelemetryMessage {
@@ -45,4 +65,9 @@ export interface NormalizedTelemetryMessage {
   readonly sequence?: number;
   readonly producerEpoch?: string;
   readonly messageId?: string;
+  readonly sourceMessageId?: string;
+  readonly sourceTimestampSeconds?: number;
+  readonly sourceSendTimeSeconds?: number;
+  readonly sourceMethod?: string;
+  readonly sourceVersion?: number;
 }

@@ -1,5 +1,6 @@
 import {
   compareTelemetryRecency,
+  mergeTelemetrySnapshot,
   type TelemetryLatestRepository,
 } from '@/modules/telemetry/application/telemetry-latest-repository';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
@@ -25,7 +26,10 @@ export class MemoryTelemetryLatestRepository implements TelemetryLatestRepositor
       return false;
     }
 
-    this.latestByEntity.set(sample.entityId, structuredClone(sample));
+    this.latestByEntity.set(
+      sample.entityId,
+      structuredClone(mergeTelemetrySnapshot(current ?? null, sample)),
+    );
     return true;
   }
 }

@@ -18,7 +18,9 @@
     "test:integration": "vitest run tests/integration --passWithNoTests",
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build",
     "migration:legacy": "node --experimental-strip-types scripts/migrations/legacy/migrate.ts",
-    "test:certification": "vitest run tests/certification"
+    "test:certification": "vitest run tests/certification",
+    "telemetry:sim": "node scripts/telemetry-simulator/simulator.mjs",
+    "telemetry:sim:provision": "node scripts/telemetry-simulator/provision-source.mjs"
   },
   "dependencies": {
     "mongodb": "7.6.0",

@@ -5,6 +5,13 @@ const BLOCK_SIZE = 8;
 const PARALLELIZATION = 1;
 const KEY_LENGTH = 64;
 
+export const MIN_PASSWORD_LENGTH = 12;
+export const MAX_PASSWORD_LENGTH = 256;
+
+export function isPasswordLengthAcceptable(password: string): boolean {
+  return password.length >= MIN_PASSWORD_LENGTH && password.length <= MAX_PASSWORD_LENGTH;
+}
+
 function derive(password: string, salt: Buffer): Promise<Buffer> {
   return new Promise((resolve, reject) => {
     scrypt(
@@ -30,8 +37,10 @@ function derive(password: string, salt: Buffer): Promise<Buffer> {
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  if (password.length < 12) {
-    throw new Error('Password must contain at least 12 characters.');
+  if (!isPasswordLengthAcceptable(password)) {
+    throw new Error(
+      `Password must contain between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters.`,
+    );
   }
 
   const salt = randomBytes(16);
@@ -48,6 +57,10 @@ export async function hashPassword(password: string): Promise<string> {
 }
 
 export async function verifyPassword(password: string, encoded: string): Promise<boolean> {
+  if (!isPasswordLengthAcceptable(password)) {
+    return false;
+  }
+
   const [algorithm, cost, blockSize, parallelization, saltEncoded, keyEncoded] = encoded.split('$');
 
   if (

@@ -21,7 +21,7 @@ const children = new Set();
 let shuttingDown = false;
 
 function commandName(base) {
-  return process.platform === 'win32' ? `${base}.cmd` : base;
+  return process.platform === 'win32' && base === 'npm' ? 'npm.cmd' : base;
 }
 
 function run(command, args, options = {}) {

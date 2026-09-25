@@ -3432,3 +3432,114 @@ p {
     overflow: auto;
   }
 }
+
+
+/* G11 continuous drill-down: schematic containment remains navigable without Blueprint geometry. */
+.legacy-stage-notice {
+  position: absolute;
+  z-index: 3;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid #4e4331;
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: rgba(34, 29, 19, 0.94);
+  color: #a69368;
+  font-size: 0.64rem;
+}
+
+.legacy-stage-notice strong {
+  color: var(--warning);
+}
+
+.legacy-room-contained-canvas {
+  position: relative;
+  min-height: 100%;
+  padding: 58px 24px 24px;
+}
+
+.legacy-room-contained-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(61, 80, 96, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(61, 80, 96, 0.16) 1px, transparent 1px);
+  background-size: 32px 32px;
+  pointer-events: none;
+}
+
+.legacy-room-contained-field {
+  position: relative;
+  z-index: 1;
+  min-height: 360px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-content: center;
+  gap: 16px;
+}
+
+.legacy-room-contained-node {
+  min-height: 130px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #3b5363;
+  background: rgba(12, 19, 27, 0.94);
+}
+
+.legacy-room-contained-index {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #4b6c7c;
+  color: var(--accent);
+  font:
+    0.64rem ui-monospace,
+    monospace;
+}
+
+.legacy-rack-block[href] {
+  text-decoration: none;
+}
+
+.legacy-rack-inventory-list a {
+  width: 100%;
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 8px 10px;
+  background: #0c1218;
+  color: inherit;
+  text-decoration: none;
+}
+
+.legacy-rack-inventory-list a:hover,
+.legacy-rack-block[href]:hover {
+  border-color: #52798a;
+  background-color: #111c24;
+}
+
+@media (max-width: 700px) {
+  .inspector-dialog {
+    width: calc(100vw - 20px);
+    max-width: calc(100vw - 20px);
+    height: calc(100dvh - 20px);
+    max-height: calc(100dvh - 20px);
+  }
+
+  .inspector-header,
+  .inspector-body {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}

@@ -3274,7 +3274,6 @@ p {
   }
 }
 
-
 /* Breaker history: demo-only time-series preview behind authenticated history API. */
 .breaker-history {
   display: grid;
@@ -3346,9 +3345,10 @@ p {
   padding: 8px;
   background:
     linear-gradient(rgba(48, 67, 82, 0.14) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(48, 67, 82, 0.1) 1px, transparent 1px),
-    #070c11;
-  background-size: 100% 25%, 20% 100%;
+    linear-gradient(90deg, rgba(48, 67, 82, 0.1) 1px, transparent 1px), #070c11;
+  background-size:
+    100% 25%,
+    20% 100%;
 }
 
 .breaker-history-chart svg {

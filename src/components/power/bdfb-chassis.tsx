@@ -73,10 +73,7 @@ function endpointInspector(
       {
         title: 'History',
         content: endpoint.telemetryAddress ? (
-          <BreakerHistoryPanel
-            entityId={device.id}
-            componentAddress={endpoint.telemetryAddress}
-          />
+          <BreakerHistoryPanel entityId={device.id} componentAddress={endpoint.telemetryAddress} />
         ) : (
           <p>No telemetry address is bound to this endpoint.</p>
         ),

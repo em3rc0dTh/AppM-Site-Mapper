@@ -108,8 +108,7 @@ export function BreakerHistoryPanel({
     return () => controller.abort();
   }, [componentAddress, entityId, queryKey, range]);
 
-  const status =
-    result?.key === queryKey ? (result.error ? 'error' : 'ready') : 'loading';
+  const status = result?.key === queryKey ? (result.error ? 'error' : 'ready') : 'loading';
   const points = result?.key === queryKey && !result.error ? result.points : [];
   const series = useMemo(() => numericSeries(points, metric), [metric, points]);
   const path = useMemo(() => polyline(series), [series]);

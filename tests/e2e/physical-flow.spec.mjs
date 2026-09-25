@@ -243,10 +243,11 @@ test('canonical rack navigation, deep-link recovery and surveyed room continuity
   const recoveredPaths = new Map();
   const devicePath = await navigateToDevice(page, recoveredPaths);
 
-  await page
-    .getByRole('navigation', { name: 'Breadcrumb', exact: true })
-    .getByRole('link', { name: 'Synthetic Demo Rack', exact: true })
-    .click();
+  const rackBreadcrumb = page
+    .locator('.operational-breadcrumbs a[href="/rack/demo-rack"]')
+    .filter({ hasText: 'Synthetic Demo Rack' });
+  await expect(rackBreadcrumb).toHaveCount(1);
+  await rackBreadcrumb.click();
   await expect(page).toHaveURL(/\/rack\/demo-rack$/);
   recoveredPaths.set('Synthetic Demo Rack', new URL(page.url()).pathname);
 

@@ -50,6 +50,7 @@
 }
 .operational-stage {
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #090d13;
@@ -81,6 +82,7 @@
 .operational-stage-body {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
 }
@@ -348,7 +350,10 @@
 /* One physical band per endpoint. 12 rows per column for the current panel. */
 .bdfb-chassis {
   min-width: 0;
+  min-height: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 .bdfb-chassis-header {
   display: flex;
@@ -361,13 +366,20 @@
   font-size: 0.8rem;
 }
 .bdfb-chassis-body {
-  padding: 12px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 10px 12px 12px;
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 .bdfb-shelf {
   min-width: 0;
-  padding: 10px;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 10px;
   border: 1px solid #8554b4;
   border-radius: 8px;
   background: #0e0f1b;
@@ -389,9 +401,12 @@
 }
 .bdfb-frame-field,
 .bdfb-panel-grid {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 8px;
   min-width: 0;
 }
 .bdfb-frame {
@@ -401,9 +416,16 @@
 }
 .bdfb-frame-implicit {
   min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 .bdfb-panel-board {
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   border: 1px solid #b26d33;
   border-radius: 6px;
   background: #0a1018;
@@ -432,18 +454,24 @@
   color: #f6b26d;
 }
 .bdfb-endpoint-columns {
+  flex: 1;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  padding: 10px;
+  grid-template-rows: minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px;
 }
 .bdfb-endpoint-column {
-  display: grid;
-  grid-auto-rows: minmax(clamp(30px, calc((100dvh - 345px) / 12), 52px), auto);
-  gap: 4px;
   min-width: 0;
+  min-height: 0;
+  height: 100%;
+  display: grid;
+  grid-template-rows: repeat(12, minmax(0, 1fr));
+  gap: 4px;
 }
 .bdfb-endpoint {
+  min-height: 0;
   display: grid;
   grid-template-columns: 36px minmax(0, 1fr);
   align-items: stretch;
@@ -653,5 +681,43 @@
   }
   .inspector-tabs {
     padding: 8px 12px 0;
+  }
+}
+
+
+/* The 24-position desktop BDFB is a single operational frame, not a scroll document. */
+.operational-page--bdfb {
+  height: calc(100dvh - 56px);
+  min-height: 0;
+  overflow: hidden;
+}
+
+.operational-page--bdfb .operational-layout,
+.operational-page--bdfb .operational-stage,
+.operational-page--bdfb .operational-stage-body {
+  min-height: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 800px) {
+  .operational-page--bdfb {
+    height: auto;
+    min-height: calc(100dvh - 56px);
+    overflow: visible;
+  }
+
+  .operational-page--bdfb .operational-layout,
+  .operational-page--bdfb .operational-stage,
+  .operational-page--bdfb .operational-stage-body {
+    overflow: visible;
+  }
+
+  .bdfb-chassis-body,
+  .bdfb-shelf,
+  .bdfb-panel-board,
+  .bdfb-endpoint-columns,
+  .bdfb-endpoint-column {
+    height: auto;
+    overflow: visible;
   }
 }

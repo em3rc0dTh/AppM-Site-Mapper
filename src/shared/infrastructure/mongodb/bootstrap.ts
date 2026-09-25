@@ -51,6 +51,21 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
   ]);
 
+  const auditEvents = database.collection('audit_events');
+  await Promise.all([
+    auditEvents.createIndex({ id: 1 }, { unique: true, name: 'uq_audit_event_id' }),
+    auditEvents.createIndex({ occurredAt: -1 }, { name: 'ix_audit_occurred' }),
+    auditEvents.createIndex(
+      { 'actor.userId': 1, occurredAt: -1 },
+      { name: 'ix_audit_actor_occurred', sparse: true },
+    ),
+    auditEvents.createIndex(
+      { 'target.kind': 1, 'target.id': 1, occurredAt: -1 },
+      { name: 'ix_audit_target_occurred', sparse: true },
+    ),
+    auditEvents.createIndex({ action: 1, occurredAt: -1 }, { name: 'ix_audit_action_occurred' }),
+  ]);
+
   const telemetrySources = database.collection('telemetry_sources');
   await Promise.all([
     telemetrySources.createIndex({ id: 1 }, { unique: true, name: 'uq_telemetry_source_id' }),

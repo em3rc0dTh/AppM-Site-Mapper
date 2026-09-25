@@ -52,11 +52,7 @@ describe('AuthService', () => {
     const throttle = new MemoryAuthThrottle();
     const service = new AuthService(repository, throttle);
 
-    await service.bootstrapSuperadmin(
-      'admin@example.com',
-      'a strong initial password',
-      'Admin',
-    );
+    await service.bootstrapSuperadmin('admin@example.com', 'a strong initial password', 'Admin');
 
     await expect(
       service.authenticate(

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-IMAGE="${MOSQUITTO_IMAGE:-eclipse-mosquitto:2.1.2-alpine}"
+IMAGE="${MOSQUITTO_IMAGE:-eclipse-mosquitto@sha256:38c0da4f2ef84284d47b3b3eeea1cb3bdeabe81ee10caf0cd5c5ff61ee3ea408}"
 NETWORK="g16-mqtt-$$"
 BROKER="g16-mosquitto-$$"
 TMP_DIR="$(mktemp -d)"
@@ -42,7 +42,6 @@ docker run --rm   -v "$TMP_DIR/config:/mosquitto/config"   "$IMAGE"   mosquitto_
 
 docker run --rm   -v "$TMP_DIR/config:/mosquitto/config"   "$IMAGE"   mosquitto_passwd -b /mosquitto/config/passwd appmanager-ingestor "$INGESTOR_PASSWORD" >/dev/null
 
-chmod 0644 "$TMP_DIR/config/passwd" "$TMP_DIR/config/acl"
 
 docker network create "$NETWORK" >/dev/null
 

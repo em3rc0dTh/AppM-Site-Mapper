@@ -2,7 +2,7 @@
 
 This directory is an executable **reference policy**, not a bundle of production secrets.
 
-The profile is certified in CI against Eclipse Mosquitto 2.1.2 using the official `2.1.2-alpine` image tag. The repository intentionally does
+The profile is certified in CI against Eclipse Mosquitto 2.1.2. CI resolves the official `2.1.2-alpine` release to an immutable image digest and uses that digest by default. The repository intentionally does
 not contain password files, private keys or production certificates.
 
 ## Security properties
@@ -46,7 +46,7 @@ major-version boundary.
 
 ## Remaining production gates
 
-- pin the broker image by immutable digest after the deployment registry is selected;
+- production deployment must reuse an explicitly reviewed immutable image digest; CI is already digest-pinned;
 - choose and document password-file plugin vs Dynamic Security for production lifecycle/rotation;
 - provision unique high-entropy credentials or mTLS per physical source;
 - certify certificate rotation and revocation;

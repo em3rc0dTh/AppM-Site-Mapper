@@ -30,7 +30,10 @@ export async function PATCH(request: Request, context: Context) {
   );
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 404 });
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.error === 'CONCURRENCY_CONFLICT' ? 409 : 404 },
+    );
   }
 
   return NextResponse.json({ item: result.value });

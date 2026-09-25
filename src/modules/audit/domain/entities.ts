@@ -8,9 +8,7 @@ export type AuditAction =
 
 export type AuditOutcome = 'SUCCEEDED';
 
-export type AuditActor =
-  | Readonly<{ type: 'SYSTEM' }>
-  | Readonly<{ type: 'USER'; userId: string }>;
+export type AuditActor = Readonly<{ type: 'SYSTEM' }> | Readonly<{ type: 'USER'; userId: string }>;
 
 export interface AuditTarget {
   readonly kind: 'USER';

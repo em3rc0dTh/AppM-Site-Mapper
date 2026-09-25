@@ -223,36 +223,36 @@ Legend:
 - **OPEN**: target capability is not yet materially implemented.
 - **INTENTIONAL DIFFERENCE**: V1 behavior should not be restored literally.
 
-| Capability | Current state | Audit |
-| --- | --- | --- |
-| Login / server session | PASS | Opaque token, hash persistence, revocation, RBAC. |
-| Workspace / pinning | PASS | Device and Equipment remain sibling inventory. |
-| Site directory / topology tree | PASS | Canonical hierarchy and deep links exist. |
-| Site Canvas | PARTIAL | Functional physical navigation exists; rich surveyed site geometry/properties remain below V1 reference. |
-| Structure / Level operating view | PARTIAL | Navigable and certified, but visually/operationally simpler than V1. |
-| Room Blueprint | PASS/PARTIAL | Canonical polygon/grid, racks, slots, pan/zoom work; graphical authoring remains incomplete. |
-| Rack elevation | PASS | Physical elevation and canonical deep link work. |
-| CAS administration | PARTIAL | Domain/API reserve/equip/free exists; complete operator/admin controls are not yet materialized. |
-| Generic Device internals | PARTIAL | Core inventory exists; V1-style redundancy pair / internal slot workflow is not broadly modeled/presented. |
-| BDFB internals | PASS | Shelf/Frame/Panel/Breaker/Holder model exists; implicit frame presentation is explicit. |
-| Current 24-position Panel UX | PASS for present contract | 01-12 / 13-24 desktop layout is browser-certified without internal desktop scroll. |
-| Breaker detail popup | PASS | Centered modal, keyboard containment, realtime and synthetic history are certified. |
-| Breaker provisioning | OPEN/PARTIAL | Canonical PowerPath exists, but port/target/slot configuration UX is not V1-equivalent. |
-| Power Path read view | PARTIAL | Configured paths render; V1-style contextual diagnostic and live validation experience is incomplete. |
-| Power Path write API | PASS foundation | Create/archive exists with canonical endpoint validation. |
-| Real telemetry latest | PASS foundation | Durable Mongo latest, source binding, identity validation, quarantine and fanout. |
-| Real telemetry history | OPEN | Candidate sinks exist; production TSDB is not selected/wired and query API is demo-only. |
-| Synthetic telemetry demo | PASS | Separate generator/demo path and clear simulated provenance. |
-| User administration | PASS with policy gap | Superadmin path works; Admin-vs-Standard management policy is inconsistent between code/docs. |
-| Audit ledger | PARTIAL | Identity and dead-letter actions wired; broader domain mutations are not fully audited and atomicity is open. |
-| JSON ingestion | INTENTIONAL DIFFERENCE / OPEN | Runtime mass ingestion should not return without a safe import/staging contract. |
-| Drafting Canvas authoring | PARTIAL | Read/pan/zoom + polygon persistence exist; graphical polygon editor is not complete. |
-| Cascade delete/reset | INTENTIONAL DIFFERENCE | Archive-first / controlled tooling is safer and should remain the baseline. |
-| Backup/restore | PARTIAL | Runbook exists; production restore drill evidence is absent. |
-| CI / automated QA | PASS | Far stronger than V1 AS-IS. |
-| Browser E2E evidence | PASS | Site->Breaker, modal, history demo, recovery and viewport matrix certified. |
-| Production observability | PARTIAL | JSON logger exists; correlation IDs, metrics, tracing and readiness are open. |
-| Production deployment | OPEN | No environment-specific deployment has been certified by repository evidence. |
+| Capability                       | Current state                 | Audit                                                                                                         |
+| -------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| Login / server session           | PASS                          | Opaque token, hash persistence, revocation, RBAC.                                                             |
+| Workspace / pinning              | PASS                          | Device and Equipment remain sibling inventory.                                                                |
+| Site directory / topology tree   | PASS                          | Canonical hierarchy and deep links exist.                                                                     |
+| Site Canvas                      | PARTIAL                       | Functional physical navigation exists; rich surveyed site geometry/properties remain below V1 reference.      |
+| Structure / Level operating view | PARTIAL                       | Navigable and certified, but visually/operationally simpler than V1.                                          |
+| Room Blueprint                   | PASS/PARTIAL                  | Canonical polygon/grid, racks, slots, pan/zoom work; graphical authoring remains incomplete.                  |
+| Rack elevation                   | PASS                          | Physical elevation and canonical deep link work.                                                              |
+| CAS administration               | PARTIAL                       | Domain/API reserve/equip/free exists; complete operator/admin controls are not yet materialized.              |
+| Generic Device internals         | PARTIAL                       | Core inventory exists; V1-style redundancy pair / internal slot workflow is not broadly modeled/presented.    |
+| BDFB internals                   | PASS                          | Shelf/Frame/Panel/Breaker/Holder model exists; implicit frame presentation is explicit.                       |
+| Current 24-position Panel UX     | PASS for present contract     | 01-12 / 13-24 desktop layout is browser-certified without internal desktop scroll.                            |
+| Breaker detail popup             | PASS                          | Centered modal, keyboard containment, realtime and synthetic history are certified.                           |
+| Breaker provisioning             | OPEN/PARTIAL                  | Canonical PowerPath exists, but port/target/slot configuration UX is not V1-equivalent.                       |
+| Power Path read view             | PARTIAL                       | Configured paths render; V1-style contextual diagnostic and live validation experience is incomplete.         |
+| Power Path write API             | PASS foundation               | Create/archive exists with canonical endpoint validation.                                                     |
+| Real telemetry latest            | PASS foundation               | Durable Mongo latest, source binding, identity validation, quarantine and fanout.                             |
+| Real telemetry history           | OPEN                          | Candidate sinks exist; production TSDB is not selected/wired and query API is demo-only.                      |
+| Synthetic telemetry demo         | PASS                          | Separate generator/demo path and clear simulated provenance.                                                  |
+| User administration              | PASS with policy gap          | Superadmin path works; Admin-vs-Standard management policy is inconsistent between code/docs.                 |
+| Audit ledger                     | PARTIAL                       | Identity and dead-letter actions wired; broader domain mutations are not fully audited and atomicity is open. |
+| JSON ingestion                   | INTENTIONAL DIFFERENCE / OPEN | Runtime mass ingestion should not return without a safe import/staging contract.                              |
+| Drafting Canvas authoring        | PARTIAL                       | Read/pan/zoom + polygon persistence exist; graphical polygon editor is not complete.                          |
+| Cascade delete/reset             | INTENTIONAL DIFFERENCE        | Archive-first / controlled tooling is safer and should remain the baseline.                                   |
+| Backup/restore                   | PARTIAL                       | Runbook exists; production restore drill evidence is absent.                                                  |
+| CI / automated QA                | PASS                          | Far stronger than V1 AS-IS.                                                                                   |
+| Browser E2E evidence             | PASS                          | Site->Breaker, modal, history demo, recovery and viewport matrix certified.                                   |
+| Production observability         | PARTIAL                       | JSON logger exists; correlation IDs, metrics, tracing and readiness are open.                                 |
+| Production deployment            | OPEN                          | No environment-specific deployment has been certified by repository evidence.                                |
 
 ## 6. Key current architecture strengths
 

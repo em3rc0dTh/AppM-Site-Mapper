@@ -171,6 +171,22 @@ export class TelemetryService {
       ...(normalized.value.messageId === undefined
         ? {}
         : { messageId: normalized.value.messageId }),
+      ...(normalized.value.sourceMessageId === undefined
+        ? {}
+        : { sourceMessageId: normalized.value.sourceMessageId }),
+      ...(normalized.value.sourceTimestampSeconds === undefined
+        ? {}
+        : { sourceTimestampSeconds: normalized.value.sourceTimestampSeconds }),
+      ...(normalized.value.sourceSendTimeSeconds === undefined
+        ? {}
+        : { sourceSendTimeSeconds: normalized.value.sourceSendTimeSeconds }),
+      ...(normalized.value.sourceMethod === undefined
+        ? {}
+        : { sourceMethod: normalized.value.sourceMethod }),
+      ...(normalized.value.sourceVersion === undefined
+        ? {}
+        : { sourceVersion: normalized.value.sourceVersion }),
+      ...(source.simulated === true ? { simulated: true } : {}),
     };
 
     const idempotencyKey = buildTelemetryIdempotencyKey(source.id, normalized.value);
@@ -201,7 +217,8 @@ export class TelemetryService {
     const becameLatest = await this.latestRepository.upsertIfNewer(durableSample);
 
     if (becameLatest) {
-      this.hub.publish(durableSample);
+      const latestSnapshot = await this.latestRepository.getByEntityId(durableSample.entityId);
+      this.hub.publish(latestSnapshot ?? durableSample);
     }
 
     return success(durableSample);

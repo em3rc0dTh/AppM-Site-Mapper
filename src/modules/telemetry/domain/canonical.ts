@@ -4,7 +4,13 @@ import type {
 } from '@/modules/telemetry/domain/entities';
 
 export type TelemetryMetricQuality =
-  'VALID' | 'LAST_KNOWN' | 'STALE' | 'UNAVAILABLE' | 'INVALID' | 'CALCULATED' | 'SIMULATED';
+  | 'VALID'
+  | 'LAST_KNOWN'
+  | 'STALE'
+  | 'UNAVAILABLE'
+  | 'INVALID'
+  | 'CALCULATED'
+  | 'SIMULATED';
 
 export type TelemetryMetricDerivation = 'RAW' | 'CALCULATED';
 
@@ -36,5 +42,11 @@ export interface CanonicalTelemetryEvent {
   readonly sequence?: number;
   readonly producerEpoch?: string;
   readonly messageId?: string;
+  readonly sourceMessageId?: string;
+  readonly sourceTimestampSeconds?: number;
+  readonly sourceSendTimeSeconds?: number;
+  readonly sourceMethod?: string;
+  readonly sourceVersion?: number;
+  readonly simulated?: boolean;
   readonly metrics: readonly CanonicalTelemetryMetric[];
 }

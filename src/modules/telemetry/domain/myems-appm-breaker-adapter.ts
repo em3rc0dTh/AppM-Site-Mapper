@@ -58,7 +58,7 @@ export function adaptMyemsAppmBreakerEvent(
       return failure('INVALID_BREAKER_READING');
     }
 
-    const state = sourceState(rawReading.s);
+    const state = sourceState(rawReading.state) ?? sourceState(rawReading.s);
 
     for (const rawKey of Object.keys(metricMap) as Array<keyof typeof metricMap>) {
       if (rawReading[rawKey] === undefined) continue;
@@ -75,7 +75,7 @@ export function adaptMyemsAppmBreakerEvent(
         channel: definition.channel,
         value,
         unit: definition.unit,
-        quality: 'VALID',
+        quality: sample.simulated === true ? 'SIMULATED' : 'VALID',
         derivation: 'RAW',
         rawKey,
         ...(state === undefined ? {} : { sourceState: state }),
@@ -99,6 +99,18 @@ export function adaptMyemsAppmBreakerEvent(
     ...(sample.sequence === undefined ? {} : { sequence: sample.sequence }),
     ...(sample.producerEpoch === undefined ? {} : { producerEpoch: sample.producerEpoch }),
     ...(sample.messageId === undefined ? {} : { messageId: sample.messageId }),
+    ...(sample.sourceMessageId === undefined
+      ? {}
+      : { sourceMessageId: sample.sourceMessageId }),
+    ...(sample.sourceTimestampSeconds === undefined
+      ? {}
+      : { sourceTimestampSeconds: sample.sourceTimestampSeconds }),
+    ...(sample.sourceSendTimeSeconds === undefined
+      ? {}
+      : { sourceSendTimeSeconds: sample.sourceSendTimeSeconds }),
+    ...(sample.sourceMethod === undefined ? {} : { sourceMethod: sample.sourceMethod }),
+    ...(sample.sourceVersion === undefined ? {} : { sourceVersion: sample.sourceVersion }),
+    ...(sample.simulated === undefined ? {} : { simulated: sample.simulated }),
     metrics,
   });
 }

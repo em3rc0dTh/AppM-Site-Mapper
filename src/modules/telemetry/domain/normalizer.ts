@@ -23,9 +23,22 @@ function optionalNonEmptyString(value: unknown, maxLength: number): string | und
   return trimmed && trimmed.length <= maxLength ? trimmed : undefined;
 }
 
+function optionalNonNegativeInteger(value: unknown): number | undefined {
+  if (value === undefined) return undefined;
+  return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+}
+
 function isValidIsoTimestamp(value: string): boolean {
   const time = Date.parse(value);
   return Number.isFinite(time) && new Date(time).toISOString() === value;
+}
+
+function isoFromUnixSeconds(value: number): string | null {
+  const milliseconds = value * 1000;
+  if (!Number.isSafeInteger(milliseconds)) return null;
+
+  const date = new Date(milliseconds);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : null;
 }
 
 export interface TelemetryNormalizerOptions {
@@ -91,20 +104,24 @@ export function normalizeTelemetry(
 
   let sequence: number | undefined;
   if (parsed.sequence !== undefined) {
-    if (
-      typeof parsed.sequence !== 'number' ||
-      !Number.isSafeInteger(parsed.sequence) ||
-      parsed.sequence < 0
-    ) {
+    sequence = optionalNonNegativeInteger(parsed.sequence);
+    if (sequence === undefined) {
       return failure('INVALID_PAYLOAD');
     }
-    sequence = parsed.sequence;
   }
 
-  let messageId: string | undefined;
+  let producerMessageId: string | undefined;
   if (parsed.messageId !== undefined) {
-    messageId = optionalNonEmptyString(parsed.messageId, 256);
-    if (!messageId) {
+    producerMessageId = optionalNonEmptyString(parsed.messageId, 256);
+    if (!producerMessageId) {
+      return failure('INVALID_PAYLOAD');
+    }
+  }
+
+  let sourceMessageId: string | undefined;
+  if (parsed.msgid !== undefined) {
+    sourceMessageId = optionalNonEmptyString(parsed.msgid, 256);
+    if (!sourceMessageId) {
       return failure('INVALID_PAYLOAD');
     }
   }
@@ -117,10 +134,65 @@ export function normalizeTelemetry(
     }
   }
 
-  const candidateObservedAt = optionalNonEmptyString(parsed.observedAt, 64);
-  const hasTrustedDeviceTime =
-    candidateObservedAt !== undefined && isValidIsoTimestamp(candidateObservedAt);
-  const observedAt = hasTrustedDeviceTime ? candidateObservedAt : receivedAt;
+  let sourceTimestampSeconds: number | undefined;
+  if (parsed.timestamp !== undefined) {
+    sourceTimestampSeconds = optionalNonNegativeInteger(parsed.timestamp);
+    if (sourceTimestampSeconds === undefined || isoFromUnixSeconds(sourceTimestampSeconds) === null) {
+      return failure('INVALID_PAYLOAD');
+    }
+  }
+
+  let sourceSendTimeSeconds: number | undefined;
+  if (parsed.sendtime !== undefined) {
+    sourceSendTimeSeconds = optionalNonNegativeInteger(parsed.sendtime);
+    if (sourceSendTimeSeconds === undefined || isoFromUnixSeconds(sourceSendTimeSeconds) === null) {
+      return failure('INVALID_PAYLOAD');
+    }
+  }
+
+  let sourceMethod: string | undefined;
+  if (parsed.method !== undefined) {
+    sourceMethod = optionalNonEmptyString(parsed.method, 64);
+    if (!sourceMethod) {
+      return failure('INVALID_PAYLOAD');
+    }
+  }
+
+  let sourceVersion: number | undefined;
+  if (parsed.version !== undefined) {
+    sourceVersion = optionalNonNegativeInteger(parsed.version);
+    if (sourceVersion === undefined) {
+      return failure('INVALID_PAYLOAD');
+    }
+  }
+
+  let observedAt = receivedAt;
+  let timestampProvenance: NormalizedTelemetryMessage['timestampProvenance'] =
+    'RECEIVED_TIME_FALLBACK';
+
+  if (parsed.observedAt !== undefined) {
+    const candidate = optionalNonEmptyString(parsed.observedAt, 64);
+    if (!candidate || !isValidIsoTimestamp(candidate)) {
+      return failure('INVALID_PAYLOAD');
+    }
+
+    observedAt = candidate;
+    timestampProvenance = 'DEVICE';
+  } else if (sourceTimestampSeconds !== undefined) {
+    const sourceObservedAt = isoFromUnixSeconds(sourceTimestampSeconds);
+    if (!sourceObservedAt) {
+      return failure('INVALID_PAYLOAD');
+    }
+
+    observedAt = sourceObservedAt;
+    timestampProvenance = 'DEVICE';
+  }
+
+  const messageId =
+    producerMessageId ??
+    (sourceMessageId !== undefined && sourceTimestampSeconds !== undefined
+      ? `legacy:${sourceMessageId}:ts:${sourceTimestampSeconds}`
+      : undefined);
 
   return success({
     topic,
@@ -129,9 +201,14 @@ export function normalizeTelemetry(
     reported,
     observedAt,
     receivedAt,
-    timestampProvenance: hasTrustedDeviceTime ? 'DEVICE' : 'RECEIVED_TIME_FALLBACK',
+    timestampProvenance,
     ...(sequence === undefined ? {} : { sequence }),
     ...(producerEpoch === undefined ? {} : { producerEpoch }),
     ...(messageId === undefined ? {} : { messageId }),
+    ...(sourceMessageId === undefined ? {} : { sourceMessageId }),
+    ...(sourceTimestampSeconds === undefined ? {} : { sourceTimestampSeconds }),
+    ...(sourceSendTimeSeconds === undefined ? {} : { sourceSendTimeSeconds }),
+    ...(sourceMethod === undefined ? {} : { sourceMethod }),
+    ...(sourceVersion === undefined ? {} : { sourceVersion }),
   });
 }

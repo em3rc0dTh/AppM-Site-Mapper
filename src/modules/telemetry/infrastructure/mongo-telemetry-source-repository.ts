@@ -18,7 +18,8 @@ function toDomain(document: TelemetrySourceDocument): TelemetrySource {
     typeof copy.protocolProfile !== 'string' ||
     typeof copy.rawSchemaVersion !== 'string' ||
     typeof copy.staleAfterSeconds !== 'number' ||
-    typeof copy.enabled !== 'boolean'
+    typeof copy.enabled !== 'boolean' ||
+    (copy.simulated !== undefined && typeof copy.simulated !== 'boolean')
   ) {
     throw new Error('Invalid telemetry source document.');
   }

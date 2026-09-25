@@ -10,6 +10,29 @@ function isOptionalString(value: unknown): boolean {
   return value === undefined || typeof value === 'string';
 }
 
+function isOptionalNonNegativeInteger(value: unknown): boolean {
+  return (
+    value === undefined ||
+    (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0)
+  );
+}
+
+function isReportedEntryRecency(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!isRecord(value)) return false;
+
+  return Object.values(value).every(
+    (entry) =>
+      isRecord(entry) &&
+      typeof entry.observedAt === 'string' &&
+      typeof entry.receivedAt === 'string' &&
+      (entry.timestampProvenance === 'DEVICE' ||
+        entry.timestampProvenance === 'RECEIVED_TIME_FALLBACK') &&
+      isOptionalString(entry.messageId) &&
+      isOptionalString(entry.sourceMessageId),
+  );
+}
+
 export function isTelemetrySource(value: unknown): value is TelemetrySource {
   if (!isRecord(value)) return false;
 
@@ -24,7 +47,8 @@ export function isTelemetrySource(value: unknown): value is TelemetrySource {
     typeof value.staleAfterSeconds === 'number' &&
     Number.isFinite(value.staleAfterSeconds) &&
     value.staleAfterSeconds > 0 &&
-    typeof value.enabled === 'boolean'
+    typeof value.enabled === 'boolean' &&
+    (value.simulated === undefined || typeof value.simulated === 'boolean')
   );
 }
 
@@ -39,16 +63,20 @@ export function isTelemetrySample(value: unknown): value is TelemetrySample {
     typeof value.serialNumber === 'string' &&
     typeof value.protocolProfile === 'string' &&
     typeof value.rawSchemaVersion === 'string' &&
+    isReportedEntryRecency(value.reportedEntryRecency) &&
     typeof value.observedAt === 'string' &&
     typeof value.receivedAt === 'string' &&
     (value.timestampProvenance === 'DEVICE' ||
       value.timestampProvenance === 'RECEIVED_TIME_FALLBACK') &&
-    (value.sequence === undefined ||
-      (typeof value.sequence === 'number' &&
-        Number.isSafeInteger(value.sequence) &&
-        value.sequence >= 0)) &&
-    (value.messageId === undefined || typeof value.messageId === 'string') &&
-    (value.producerEpoch === undefined || typeof value.producerEpoch === 'string')
+    isOptionalNonNegativeInteger(value.sequence) &&
+    isOptionalString(value.messageId) &&
+    isOptionalString(value.producerEpoch) &&
+    isOptionalString(value.sourceMessageId) &&
+    isOptionalNonNegativeInteger(value.sourceTimestampSeconds) &&
+    isOptionalNonNegativeInteger(value.sourceSendTimeSeconds) &&
+    isOptionalString(value.sourceMethod) &&
+    isOptionalNonNegativeInteger(value.sourceVersion) &&
+    (value.simulated === undefined || typeof value.simulated === 'boolean')
   );
 }
 

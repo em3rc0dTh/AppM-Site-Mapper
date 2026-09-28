@@ -39,7 +39,10 @@ function eyebrowFor(node: TopologyNode): string {
   }
 }
 
-function navigationContextRoot(trail: readonly TopologyNode[], node: TopologyNode): TopologyNode | null {
+function navigationContextRoot(
+  trail: readonly TopologyNode[],
+  node: TopologyNode,
+): TopologyNode | null {
   const byKind = (kind: TopologyNode['kind']) =>
     [...trail].reverse().find((candidate) => candidate.kind === kind) ?? null;
 

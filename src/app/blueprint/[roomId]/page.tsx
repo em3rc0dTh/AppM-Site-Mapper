@@ -53,6 +53,7 @@ export default async function BlueprintPage({
               <BlueprintCanvas
                 polygon={result.value.room.polygon}
                 clusters={result.value.clusters}
+                positions={result.value.positions}
                 racks={result.value.racks}
                 slots={result.value.assignableSlots}
               />

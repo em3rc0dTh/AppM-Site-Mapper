@@ -17,6 +17,16 @@ export interface RackPlacementView {
   readonly id: string;
   readonly name: string;
   readonly rect: RectMm;
+  readonly clusterId: string;
+  readonly positionId: string;
+}
+
+export interface PositionPlacementView {
+  readonly id: string;
+  readonly name: string;
+  readonly clusterId: string;
+  readonly coordinate: PositionNode['coordinate'];
+  readonly rect: RectMm;
 }
 
 export interface ClusterPlacementView {
@@ -28,6 +38,7 @@ export interface ClusterPlacementView {
 export interface RoomLayout {
   readonly room: RoomSubstructureNode;
   readonly clusters: readonly ClusterPlacementView[];
+  readonly positions: readonly PositionPlacementView[];
   readonly racks: readonly RackPlacementView[];
   readonly assignableSlots: readonly RectMm[];
 }
@@ -89,12 +100,37 @@ export class SpatialService {
       }),
     );
 
+    const clusterById = new Map(clusters.map((cluster) => [cluster.id, cluster]));
+    const positionPlacement = positions.map((position) => {
+      const point = gridCoordinateToPoint(position.coordinate);
+
+      return {
+        id: position.id,
+        name: position.name,
+        clusterId: position.parentId,
+        coordinate: position.coordinate,
+        rect: {
+          x: point.x,
+          y: point.y,
+          width: TILE_SIZE_MM,
+          depth: TILE_SIZE_MM,
+        },
+      };
+    });
+
     const racks = racksByPosition.flatMap(({ position, racks: positionRacks }) => {
       const point = gridCoordinateToPoint(position.coordinate);
+      const cluster = clusterById.get(position.parentId);
+
+      if (!cluster) {
+        return [];
+      }
 
       return positionRacks.map((rack) => ({
         id: rack.id,
         name: rack.name,
+        clusterId: cluster.id,
+        positionId: position.id,
         rect: {
           x: point.x,
           y: point.y,
@@ -114,6 +150,7 @@ export class SpatialService {
         name: cluster.name,
         ...(cluster.polygon ? { polygon: cluster.polygon } : {}),
       })),
+      positions: positionPlacement,
       racks,
       assignableSlots,
     });

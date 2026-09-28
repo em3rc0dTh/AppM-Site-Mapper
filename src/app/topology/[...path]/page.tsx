@@ -59,7 +59,7 @@ export default async function TopologyNodePage({
   searchParams,
 }: Readonly<{
   params: Promise<{ path: string[] }>;
-  searchParams: Promise<{ level?: string }>;
+  searchParams: Promise<{ level?: string; focus?: string }>;
 }>) {
   const auth = await requirePermission('topology:read');
 
@@ -82,6 +82,14 @@ export default async function TopologyNodePage({
     service.listChildren(node.id),
     service.buildDeepLink(node.id),
   ]);
+  if (node.kind === 'CONTAINER_CLUSTER_BAY' || node.kind === 'POSITION') {
+    const room = [...trail].reverse().find((item) => item.kind === 'ROOM_SUBSTRUCTURE');
+
+    if (room) {
+      redirect(`${await service.buildDeepLink(room.id)}?focus=${node.id}`);
+    }
+  }
+
   const root = trail[0];
   const navigationTree = root ? await service.buildNavigationTree(root.id) : null;
   const trailEntries = await Promise.all(
@@ -93,6 +101,34 @@ export default async function TopologyNodePage({
   );
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
+
+  if (node.kind === 'DEVICE' && node.bdfb) {
+    return (
+      <main className="operational-page zip-bdfb-page">
+        <nav
+          className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
+          aria-label="Breadcrumb"
+        >
+          {trailEntries.map((item) => (
+            <Link key={item.id} href={item.href}>
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+
+        <BdfbChassis
+          device={node}
+          trail={trail.map((item, index) => ({
+            id: item.id,
+            name: item.name,
+            kind: item.kind,
+            href: trailEntries[index]?.href ?? selfHref,
+          }))}
+          canWrite={canWrite}
+        />
+      </main>
+    );
+  }
 
   const childEntries: VisualStageChild[] = await Promise.all(
     children.map(async (child) => {
@@ -155,7 +191,12 @@ export default async function TopologyNodePage({
 
       <div className="operational-layout telxius-operational-layout">
         <aside className="operational-context">
-          {navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />}
+          {navigationTree && (
+            <TopologyContextTree
+              tree={navigationTree}
+              activeId={node.kind === 'ROOM_SUBSTRUCTURE' && query.focus ? query.focus : node.id}
+            />
+          )}
         </aside>
 
         <section className="operational-stage telxius-operational-stage">
@@ -184,16 +225,16 @@ export default async function TopologyNodePage({
           />
 
           <div className="operational-stage-body">
-            {node.kind === 'DEVICE' && node.bdfb ? (
-              <BdfbChassis device={node} />
-            ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
-              roomLayout?.ok &&
-              roomLayout.value.room.polygon ? (
+            {node.kind === 'ROOM_SUBSTRUCTURE' &&
+            roomLayout?.ok &&
+            roomLayout.value.room.polygon ? (
               <BlueprintCanvas
                 polygon={roomLayout.value.room.polygon}
                 clusters={roomLayout.value.clusters}
+                positions={roomLayout.value.positions}
                 racks={roomLayout.value.racks}
                 slots={roomLayout.value.assignableSlots}
+                {...(query.focus ? { focusId: query.focus } : {})}
               />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' && roomLayout?.ok ? (
               <StatePanel

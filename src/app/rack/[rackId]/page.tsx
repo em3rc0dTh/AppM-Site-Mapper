@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
-import { TopologyContextTree } from '@/components/topology/context-tree';
 import { RackElevation } from '@/components/rack/rack-elevation';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
@@ -27,24 +26,27 @@ export default async function RackPage({
     notFound();
   }
 
-  const [trail, parent] = await Promise.all([
+  const [trail, inventoryLinks] = await Promise.all([
     topology.getTrail(rackId),
-    result.value.rack.parentId
-      ? topology.getById(result.value.rack.parentId)
-      : Promise.resolve(null),
+    Promise.all(
+      result.value.inventory.map(async (item) => ({
+        id: item.id,
+        href: await topology.buildDeepLink(item.id),
+      })),
+    ),
   ]);
-  const root = trail[0];
-  const tree = root ? await topology.buildNavigationTree(root.id) : null;
+
   const trailEntries = await Promise.all(
     trail.map(async (item) => ({
       id: item.id,
       name: item.name,
+      kind: item.kind,
       href: await topology.buildDeepLink(item.id),
     })),
   );
 
   return (
-    <main className="operational-page operational-page--rack telxius-operational-page">
+    <main className="operational-page operational-page--rack zip-rack-page">
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
         aria-label="Breadcrumb"
@@ -55,24 +57,14 @@ export default async function RackPage({
           </Link>
         ))}
       </nav>
-      <div className="operational-layout telxius-operational-layout operational-layout--rack">
-        <aside className="operational-context">
-          {tree && <TopologyContextTree tree={tree} activeId={rackId} />}
-        </aside>
-        <section className="operational-stage operational-stage--wide">
-          <RackElevation
-            view={result.value}
-            {...(parent?.kind === 'POSITION'
-              ? {
-                  context: {
-                    positionName: parent.name,
-                    coordinate: `${parent.coordinate.row}-${parent.coordinate.column}`,
-                  },
-                }
-              : {})}
-          />
-        </section>
-      </div>
+
+      <RackElevation
+        view={result.value}
+        context={{
+          trail: trailEntries,
+          inventoryHrefs: Object.fromEntries(inventoryLinks.map((item) => [item.id, item.href])),
+        }}
+      />
     </main>
   );
 }

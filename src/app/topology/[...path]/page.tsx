@@ -158,7 +158,7 @@ export default async function TopologyNodePage({
           <SectionHeader
             eyebrow={eyebrowFor(node)}
             title={node.kind === 'ROOM_SUBSTRUCTURE' ? node.name.toUpperCase() : node.name}
-            description={descriptionFor(node)}
+            {...(descriptionFor(node) ? { description: descriptionFor(node) } : {})}
             actions={
               <>
                 {node.kind === 'STRUCTURE' && selectedLevel && (
@@ -201,7 +201,7 @@ export default async function TopologyNodePage({
                 node={node}
                 items={node.kind === 'STRUCTURE' ? structureLevelEntries : childEntries}
                 previewItems={structurePreviewEntries}
-                activeItemId={selectedLevel?.id}
+                {...(selectedLevel ? { activeItemId: selectedLevel.id } : {})}
               />
             )}
           </div>

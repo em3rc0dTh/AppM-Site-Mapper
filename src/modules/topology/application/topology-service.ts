@@ -27,6 +27,12 @@ export type TopologyError =
   | 'PARENT_ARCHIVED_ON_RESTORE'
   | 'INVALID_DEEP_LINK';
 
+export interface TopologyNavigationNode {
+  readonly node: TopologyNode;
+  readonly href: string;
+  readonly children: readonly TopologyNavigationNode[];
+}
+
 export interface CreateTopologyNodeInput {
   readonly kind: TopologyKind;
   readonly parentId: string | null;
@@ -310,6 +316,35 @@ export class TopologyService {
   async buildDeepLink(id: string): Promise<string> {
     const trail = await this.getTrail(id);
     return `/topology/${trail.flatMap((node) => [topologySlug[node.kind], node.id]).join('/')}`;
+  }
+
+  async buildNavigationTree(rootId: string, maxDepth = 8): Promise<TopologyNavigationNode | null> {
+    const root = await this.repository.getById(rootId);
+    if (!root || root.lifecycle !== 'ACTIVE') return null;
+
+    const visit = async (
+      node: TopologyNode,
+      segments: readonly string[],
+      depth: number,
+    ): Promise<TopologyNavigationNode> => {
+      const nextSegments = [...segments, topologySlug[node.kind], node.id];
+      const children =
+        depth >= maxDepth
+          ? []
+          : await Promise.all(
+              (await this.listChildren(node.id)).map((child) =>
+                visit(child, nextSegments, depth + 1),
+              ),
+            );
+
+      return {
+        node,
+        href: `/topology/${nextSegments.join('/')}`,
+        children,
+      };
+    };
+
+    return visit(root, [], 0);
   }
 
   async resolveDeepLink(segments: readonly string[]): Promise<Result<TopologyNode, TopologyError>> {

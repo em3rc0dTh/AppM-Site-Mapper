@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 
 import type { TopologyNode } from '@/modules/topology/domain/entities';
+import { PhysicalPolygonStage } from '@/components/topology/physical-polygon-stage';
 import { Icon, StatusBadge } from '@/shared/ui/primitives';
 
 export interface VisualStageChild {
@@ -126,52 +127,38 @@ function NetworkSiteCanvas({ items }: { items: readonly VisualStageChild[] }) {
 }
 
 function StructureCanvas({
+  node,
   items,
   previewItems,
+  activeItemId,
 }: {
+  node: TopologyNode;
   items: readonly VisualStageChild[];
   previewItems: readonly VisualStageChild[];
+  activeItemId?: string | undefined;
 }) {
-  const activeLevel = items[0];
-
   return (
-    <div className="legacy-structure-canvas">
-      <div className="legacy-structure-grid" aria-hidden="true" />
-      <div className="legacy-structure-outline">
-        <div className="legacy-structure-title">
-          <small>Selected floor</small>
-          <strong>{activeLevel?.node.name ?? 'No active level'}</strong>
+    <div className="telxius-structure-stage">
+      <PhysicalPolygonStage
+        boundary={'polygon' in node ? node.polygon : undefined}
+        items={previewItems}
+        mode="structure"
+      />
+      <div className="telxius-elevator">
+        <span>ELEVATOR</span>
+        <div>
+          {items.map(({ node: level, href }, index) => (
+            <Link
+              key={level.id}
+              href={href}
+              className={level.id === activeItemId ? 'is-active' : ''}
+              aria-current={level.id === activeItemId ? 'page' : undefined}
+            >
+              <small>↑</small>
+              <b>{index + 1}</b>
+            </Link>
+          ))}
         </div>
-
-        <div className="legacy-structure-room-map">
-          {previewItems.length > 0 ? (
-            previewItems.map(({ node, href }, index) => (
-              <ChildLink
-                key={node.id}
-                child={node}
-                href={href}
-                className={`legacy-structure-room legacy-structure-room--${(index % 3) + 1}`}
-              >
-                <span>
-                  <small>{metadata(node)}</small>
-                  <strong>{node.name}</strong>
-                </span>
-                <span className="legacy-stage-enter">↗</span>
-              </ChildLink>
-            ))
-          ) : (
-            <div className="legacy-stage-empty">No rooms on this level</div>
-          )}
-        </div>
-      </div>
-
-      <div className="legacy-floor-switcher">
-        <span>FLOORS</span>
-        {items.map(({ node, href }, index) => (
-          <Link key={node.id} href={href} className={index === 0 ? 'is-active' : ''}>
-            {(index + 1).toString().padStart(2, '0')}
-          </Link>
-        ))}
       </div>
     </div>
   );
@@ -255,17 +242,28 @@ export function TopologyVisualStage({
   node,
   items,
   previewItems = [],
+  activeItemId,
 }: Readonly<{
   node: TopologyNode;
   items: readonly VisualStageChild[];
   previewItems?: readonly VisualStageChild[];
+  activeItemId?: string | undefined;
 }>) {
   let canvas: ReactNode;
 
-  if (node.kind === 'NETWORK' || node.kind === 'SITE') {
+  if (node.kind === 'NETWORK') {
     canvas = <NetworkSiteCanvas items={items} />;
+  } else if (node.kind === 'SITE') {
+    canvas = <PhysicalPolygonStage boundary={node.polygon} items={items} mode="site" />;
   } else if (node.kind === 'STRUCTURE') {
-    canvas = <StructureCanvas items={items} previewItems={previewItems} />;
+    canvas = (
+      <StructureCanvas
+        node={node}
+        items={items}
+        previewItems={previewItems}
+        activeItemId={activeItemId}
+      />
+    );
   } else if (node.kind === 'LEVEL') {
     canvas = <LevelCanvas items={items} />;
   } else if (node.kind === 'CONTAINER_CLUSTER_BAY') {

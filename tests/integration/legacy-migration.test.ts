@@ -86,16 +86,75 @@ describe('legacy migration planner', () => {
       {
         network: { id: 'network-id', name: 'Network' },
         collections: {
-          Site: [{ id: 'site-1', name: 'Site' }],
-          Structure: [{ id: 'structure-1', name: 'Structure', parentId: 'site-1' }],
+          Site: [
+            {
+              id: 'site-1',
+              name: 'Site',
+              polygon: [
+                { x: 0, y: 0 },
+                { x: 20000, y: 0 },
+                { x: 20000, y: 20000 },
+                { x: 0, y: 20000 },
+              ],
+              category: 'DATACENTER',
+              alias: 'LURIN DATA CENTER',
+              district: 'Lurin',
+              totalAreaSqm: 40000,
+              geoCoords: '-12.2736,-76.8775',
+              details: {
+                totalPowerCapacity: 500,
+                activeAlarms: 0,
+                currentLoad: 320,
+              },
+            },
+          ],
+          Structure: [
+            {
+              id: 'structure-1',
+              name: 'Structure',
+              parentId: 'site-1',
+              polygon: [
+                { x: 1000, y: 1000 },
+                { x: 9000, y: 1000 },
+                { x: 9000, y: 9000 },
+                { x: 1000, y: 9000 },
+              ],
+            },
+          ],
           Level: [{ id: 'level-1', name: 'Level', parentId: 'structure-1' }],
-          Substructure: [{ id: 'room-1', name: 'Room', parentId: 'level-1' }],
-          ContainerCluster: [{ id: 'cluster-1', name: 'Cluster-Demo', substructureId: 'room-1' }],
+          Substructure: [
+            {
+              id: 'room-1',
+              name: 'Room',
+              parentId: 'level-1',
+              polygon: [
+                { x: 1200, y: 1200 },
+                { x: 4000, y: 1200 },
+                { x: 4000, y: 4000 },
+                { x: 1200, y: 4000 },
+              ],
+            },
+          ],
+          ContainerCluster: [
+            {
+              id: 'cluster-1',
+              name: 'Cluster-Demo',
+              substructureId: 'room-1',
+              polygon: [
+                { x: 1200, y: 1200 },
+                { x: 3600, y: 1200 },
+                { x: 3600, y: 1800 },
+                { x: 1200, y: 1800 },
+              ],
+            },
+          ],
           Container: [
             {
               id: 'rack-1',
               name: 'RACK-EATON-04',
               type: 'CABINET',
+              w: 900,
+              h: 1200,
               parentId: 'cluster-1',
               parentType: 'cluster',
               grid_coordinate: ['C-6'],
@@ -213,9 +272,30 @@ describe('legacy migration planner', () => {
 
     expect(plan.rejections).toEqual([]);
 
+    const site = plan.nodes.find((node) => node.legacyId === 'site-1');
+    const structure = plan.nodes.find((node) => node.legacyId === 'structure-1');
+    const room = plan.nodes.find((node) => node.legacyId === 'room-1');
+    const cluster = plan.nodes.find((node) => node.legacyId === 'cluster-1');
     const position = plan.nodes.find((node) => node.kind === 'POSITION');
     const rack = plan.nodes.find((node) => node.legacyId === 'rack-1');
     const device = plan.nodes.find((node) => node.legacyId === 'bdfb-1');
+
+    expect(site).toMatchObject({
+      category: 'DATACENTER',
+      alias: 'LURIN DATA CENTER',
+      district: 'Lurin',
+      totalAreaSqm: 40000,
+      geoCoords: '-12.2736,-76.8775',
+      details: {
+        totalPowerCapacity: 500,
+        activeAlarms: 0,
+        currentLoad: 320,
+      },
+    });
+    expect((site?.polygon as unknown[]).length).toBe(4);
+    expect((structure?.polygon as unknown[]).length).toBe(4);
+    expect((room?.polygon as unknown[]).length).toBe(4);
+    expect((cluster?.polygon as unknown[]).length).toBe(4);
 
     expect(position).toMatchObject({
       name: 'C-6',
@@ -226,6 +306,7 @@ describe('legacy migration planner', () => {
       kind: 'CONTAINER_RACK',
       variant: 'RACK',
       totalU: 42,
+      dimensionsMm: { width: 900, depth: 1200 },
     });
 
     const cas = (rack?.cas as readonly Record<string, unknown>[]) ?? [];

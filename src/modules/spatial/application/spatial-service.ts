@@ -1,5 +1,6 @@
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
+  ContainerClusterBayNode,
   ContainerRackNode,
   PositionNode,
   RoomSubstructureNode,
@@ -18,8 +19,15 @@ export interface RackPlacementView {
   readonly rect: RectMm;
 }
 
+export interface ClusterPlacementView {
+  readonly id: string;
+  readonly name: string;
+  readonly polygon?: readonly PointMm[];
+}
+
 export interface RoomLayout {
   readonly room: RoomSubstructureNode;
+  readonly clusters: readonly ClusterPlacementView[];
   readonly racks: readonly RackPlacementView[];
   readonly assignableSlots: readonly RectMm[];
 }
@@ -59,7 +67,8 @@ export class SpatialService {
     }
 
     const clusters = (await this.repository.listChildren(roomId)).filter(
-      (child) => child.kind === 'CONTAINER_CLUSTER_BAY' && child.lifecycle === 'ACTIVE',
+      (child): child is ContainerClusterBayNode =>
+        child.kind === 'CONTAINER_CLUSTER_BAY' && child.lifecycle === 'ACTIVE',
     );
 
     const positions = (
@@ -100,6 +109,11 @@ export class SpatialService {
 
     return success({
       room: node,
+      clusters: clusters.map((cluster) => ({
+        id: cluster.id,
+        name: cluster.name,
+        ...(cluster.polygon ? { polygon: cluster.polygon } : {}),
+      })),
       racks,
       assignableSlots,
     });

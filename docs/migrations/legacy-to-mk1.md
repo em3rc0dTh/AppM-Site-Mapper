@@ -113,19 +113,42 @@ Before promotion:
 1. create and verify a target-database backup;
 2. retain the exact source export, fingerprint, ID map and report in a secure operational store;
 3. confirm rejected count is zero;
-4. verify per-kind and staged counts;
-5. validate the accepted hierarchy;
-6. run application smoke tests against staging or a staging clone;
-7. schedule the approved migration window;
-8. promote through the environment-specific controlled database operation;
-9. run post-promotion verification;
-10. retain rollback evidence.
+4. run the promotion dry-run against the exact staging fingerprint;
+5. verify per-kind and staged counts;
+6. validate the accepted hierarchy;
+7. run application smoke tests against staging or a staging clone;
+8. schedule the approved migration window;
+9. promote with the controlled promotion command;
+10. run post-promotion verification and retain rollback evidence.
+
+Dry-run:
+
+```bash
+npm run migration:promote -- \
+  --fingerprint <reviewed-source-fingerprint> \
+  --expected <canonical-node-count>
+```
+
+Apply only after the dry-run passes:
+
+```bash
+npm run migration:promote -- \
+  --fingerprint <reviewed-source-fingerprint> \
+  --expected <canonical-node-count> \
+  --apply
+```
+
+The promotion command validates the exact staging fingerprint, count, unique IDs, one canonical Network root, every parent reference and every canonical parent kind. Apply builds a fully indexed candidate collection before swapping it into `topology_nodes`.
+
+If a live `topology_nodes` collection already exists, it is renamed to a timestamped `topology_nodes_backup_...` collection before the candidate becomes live. The backup collection is retained intentionally.
 
 ## Rollback
 
-Rollback is restore-based.
+Production still requires a verified database-level restore point.
 
-The migration tooling never deletes the legacy database, and production promotion requires a verified restore point.
+For a failed local/staging promotion, the retained `topology_nodes_backup_...` collection provides an additional operational rollback artifact. The promotion tool automatically restores the renamed live collection when the final candidate rename itself fails. It does not silently roll back after a post-promotion verification failure; that condition is surfaced explicitly for operator review.
+
+The migration tooling never deletes the legacy source collections.
 
 ## Certification boundary
 

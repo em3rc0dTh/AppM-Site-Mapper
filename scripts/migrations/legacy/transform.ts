@@ -360,7 +360,9 @@ function extraFields(
         ...(getString(record, ['deviceType', 'type'])
           ? { deviceType: getString(record, ['deviceType', 'type']) }
           : {}),
-        ...(record._mk1Bdfb && typeof record._mk1Bdfb === 'object' && !Array.isArray(record._mk1Bdfb)
+        ...(record._mk1Bdfb &&
+        typeof record._mk1Bdfb === 'object' &&
+        !Array.isArray(record._mk1Bdfb)
           ? { bdfb: record._mk1Bdfb }
           : {}),
       };

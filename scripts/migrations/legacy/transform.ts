@@ -10,6 +10,7 @@ import type {
   MigrationWarning,
 } from './model.ts';
 import { migrationKey } from './model.ts';
+import { prepareLegacyMigrationInput } from './prepare-real-shape.ts';
 
 interface SourceSpec {
   readonly collection: string;
@@ -359,6 +360,9 @@ function extraFields(
         ...(getString(record, ['deviceType', 'type'])
           ? { deviceType: getString(record, ['deviceType', 'type']) }
           : {}),
+        ...(record._mk1Bdfb && typeof record._mk1Bdfb === 'object' && !Array.isArray(record._mk1Bdfb)
+          ? { bdfb: record._mk1Bdfb }
+          : {}),
       };
     }
     case 'EQUIPMENT':
@@ -383,6 +387,7 @@ function sourceFingerprint(input: LegacyMigrationInput): string {
       JSON.stringify({
         network: input.network,
         collections: input.collections,
+        bfdbPanelTelemetryPrefixes: input.bfdbPanelTelemetryPrefixes ?? {},
       }),
     )
     .digest('hex');
@@ -395,7 +400,8 @@ export function planLegacyMigration(
   const timestamp = options.now ?? new Date().toISOString();
   const createId = options.createId ?? randomUUID;
   const idMap: Record<string, string> = { ...(input.idMap ?? {}) };
-  const warnings: MigrationWarning[] = [];
+  const prepared = prepareLegacyMigrationInput(input);
+  const warnings: MigrationWarning[] = [...prepared.warnings];
   const rejections: MigrationRejection[] = [];
   const nodes: CanonicalNode[] = [];
   const sourceRows: Array<Readonly<{ spec: SourceSpec; record: LegacyRecord }>> = [];
@@ -416,7 +422,7 @@ export function planLegacyMigration(
   });
 
   for (const spec of sourceSpecs) {
-    for (const record of input.collections[spec.collection] ?? []) {
+    for (const record of prepared.input.collections[spec.collection] ?? []) {
       sourceRows.push({ spec, record });
     }
   }

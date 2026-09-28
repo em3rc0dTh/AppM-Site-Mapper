@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import { RoomPolygonForm } from '@/components/blueprint/room-polygon-form';
-import { TopologyContextTree, type ContextTreeEntry } from '@/components/topology/context-tree';
+import { TopologyContextTree } from '@/components/topology/context-tree';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
@@ -28,40 +28,23 @@ export default async function BlueprintPage({
     notFound();
   }
 
-  const [trail, children] = await Promise.all([
-    topology.getTrail(roomId),
-    topology.listChildren(roomId),
-  ]);
-  const trailEntries: ContextTreeEntry[] = await Promise.all(
-    trail.map(async (node) => ({
-      id: node.id,
-      name: node.name,
-      kind: node.kind,
-      href: await topology.buildDeepLink(node.id),
-    })),
-  );
-  const childEntries: ContextTreeEntry[] = await Promise.all(
-    children.map(async (node) => ({
-      id: node.id,
-      name: node.name,
-      kind: node.kind,
-      href: await topology.buildDeepLink(node.id),
-    })),
-  );
+  const trail = await topology.getTrail(roomId);
+  const root = trail[0];
+  const tree = root ? await topology.buildNavigationTree(root.id) : null;
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
   return (
     <main className="operational-page operational-page--blueprint">
       <div className="operational-layout operational-layout--blueprint">
         <aside className="operational-context">
-          <TopologyContextTree trail={trailEntries} descendants={childEntries} />
+          {tree && <TopologyContextTree tree={tree} activeId={roomId} />}
         </aside>
 
         <section className="operational-stage operational-stage--wide">
           <SectionHeader
-            eyebrow="Spatial / Blueprint engine"
-            title={result.value.room.name}
-            description="Physical footprint and rack placement · 600 × 600 mm grid"
+            eyebrow="SUBSTRUCTURE / ROOM BLUEPRINT"
+            title={result.value.room.name.toUpperCase()}
+            description="Physical room boundary · cluster bays · 600 × 600 mm position grid"
             actions={<StatusBadge>{canWrite ? 'EDIT PERMITTED' : 'READ ONLY'}</StatusBadge>}
           />
 
@@ -69,6 +52,7 @@ export default async function BlueprintPage({
             {result.value.room.polygon ? (
               <BlueprintCanvas
                 polygon={result.value.room.polygon}
+                clusters={result.value.clusters}
                 racks={result.value.racks}
                 slots={result.value.assignableSlots}
               />

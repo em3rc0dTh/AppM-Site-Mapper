@@ -170,6 +170,7 @@ describe('legacy migration planner', () => {
                           id: 'panel-b1',
                           label: 'Panel B1',
                           position: 1,
+                          telemetryPrefix: '0_2_',
                           breakers: [
                             {
                               id: 'breaker-b1-1',

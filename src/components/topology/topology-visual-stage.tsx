@@ -254,13 +254,7 @@ export function TopologyVisualStage({
   if (node.kind === 'NETWORK') {
     canvas = <NetworkSiteCanvas items={items} />;
   } else if (node.kind === 'SITE') {
-    canvas = (
-      <PhysicalPolygonStage
-        boundary={node.polygon}
-        items={items}
-        mode="site"
-      />
-    );
+    canvas = <PhysicalPolygonStage boundary={node.polygon} items={items} mode="site" />;
   } else if (node.kind === 'STRUCTURE') {
     canvas = (
       <StructureCanvas

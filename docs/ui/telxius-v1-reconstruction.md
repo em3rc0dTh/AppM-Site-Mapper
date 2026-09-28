@@ -41,6 +41,35 @@ The screenshots are visual documentation. They do not establish runtime health, 
 | BDFB internals   | Device topology route / rack mounted-device inspection |
 | Power path       | `/power`                                               |
 
+
+## Room-to-BDFB fidelity contract
+
+For the deep physical workflow, the legacy visual source is authoritative for composition and density. The relevant source artifacts are the Telxius/Stitch design package and the legacy UI reference implementation:
+
+- Room uses a technical drafting surface with a 600 × 600 mm grid, explicit row/column coordinates, infrastructure-node footprints, a compact drafting toolbar, and a contextual properties column.
+- Deep navigation is context-isolated. Once the user enters Room or deeper, the left hierarchy focuses the active floor/room branch instead of rendering unrelated site siblings.
+- Cluster/Bay is rendered as a focused slice of the same physical grid. Position is a physical grid cell with its rack/cabinet footprint, not an abstract transition card.
+- Rack follows the source three-column Work UI: internal rack hierarchy, front elevation, contextual properties. The global topology tree remains outside that work surface.
+- Rack occupancy preserves AVAILABLE / RESERVED / EQUIPPED / CLEARANCE semantics; presentation may group contiguous units but must not invent capacity.
+- BDFB preserves the explicit visual hierarchy shelf → frame → panel → endpoint. Frame A and Frame B remain visually distinct, panels remain full technical boards, and the endpoint layout favors legibility over dashboard compactness.
+- BDFB colors are semantic: shelf boundary (equipment chassis), physical frame, panel boundary, A/B bus bars, and breaker/holder state. The view must not flatten the six panels into a generic dashboard matrix.
+- MQTT remains an overlay on existing breaker identities and never changes the physical hierarchy.
+
+Reference design tokens used by the deep workflow:
+
+```text
+surface-base         #000000
+surface-elevated     #1C1C1E
+surface-stroke       #38383A
+infrastructure-node  #2C2C2E
+primary              #ADC6FF
+secondary            #68D3FF
+editing-accent       #FF9F0A
+status-success       #32D74B
+status-warning       #FFD60A
+```
+
+
 ## Harmonic composition contract
 
 The application uses one visual grammar from overview to physical detail:

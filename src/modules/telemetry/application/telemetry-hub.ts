@@ -56,8 +56,7 @@ function mergeReading(
   };
 
   const state =
-    !incoming.state ||
-    (previous.state && incoming.state.observedAt < previous.state.observedAt)
+    !incoming.state || (previous.state && incoming.state.observedAt < previous.state.observedAt)
       ? previous.state
       : incoming.state;
 
@@ -94,7 +93,10 @@ function mergeReadings(
   });
 }
 
-function mergeSample(previous: TelemetrySample | undefined, incoming: TelemetrySample): TelemetrySample {
+function mergeSample(
+  previous: TelemetrySample | undefined,
+  incoming: TelemetrySample,
+): TelemetrySample {
   if (!previous) {
     return structuredClone(incoming);
   }

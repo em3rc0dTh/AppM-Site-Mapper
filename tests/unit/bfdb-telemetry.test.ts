@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  buildBfdbBreakerReadings,
-  resolveBfdbBreaker,
-} from '@/modules/telemetry/domain/bfdb';
+import { buildBfdbBreakerReadings, resolveBfdbBreaker } from '@/modules/telemetry/domain/bfdb';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 
 const timestamp = '2026-09-28T12:00:00.000Z';

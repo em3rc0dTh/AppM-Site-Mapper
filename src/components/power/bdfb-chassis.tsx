@@ -9,10 +9,7 @@ import type {
   Panel,
   Shelf,
 } from '@/modules/topology/domain/entities';
-import type {
-  BreakerTelemetryReading,
-  TelemetrySample,
-} from '@/modules/telemetry/domain/entities';
+import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
 

@@ -1,8 +1,5 @@
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
-import {
-  buildBfdbBreakerReadings,
-  type BfdbBindingMode,
-} from '@/modules/telemetry/domain/bfdb';
+import { buildBfdbBreakerReadings, type BfdbBindingMode } from '@/modules/telemetry/domain/bfdb';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import {
   normalizeTelemetry,

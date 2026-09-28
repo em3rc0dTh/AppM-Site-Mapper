@@ -119,7 +119,7 @@ Use it when the emulator/provider serial differs from the `serialNumber` stored 
 Example shape:
 
 ```json
-{"EMU-BFDB-01":"<appm-device-id>"}
+{ "EMU-BFDB-01": "<appm-device-id>" }
 ```
 
 Do not put customer data or secrets in the committed `.env.example`.

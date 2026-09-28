@@ -33,7 +33,10 @@ export default async function RackPage({
       ? topology.getById(result.value.rack.parentId)
       : Promise.resolve(null),
   ]);
-  const root = trail[0];
+  const root =
+    [...trail].reverse().find((item) => item.kind === 'ROOM_SUBSTRUCTURE') ??
+    [...trail].reverse().find((item) => item.kind === 'LEVEL') ??
+    trail[0];
   const tree = root ? await topology.buildNavigationTree(root.id) : null;
   const trailEntries = await Promise.all(
     trail.map(async (item) => ({

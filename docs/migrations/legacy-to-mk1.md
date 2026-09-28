@@ -14,6 +14,40 @@ The migration input is JSON with a canonical Network plus legacy collections.
 
 Known PascalCase/lowercase aliases are accepted **only** inside `scripts/migrations/legacy/`.
 
+
+## Deployed legacy Site Mapper shape
+
+The migration adapter also accepts the deployed legacy MongoDB shape observed in the original Site Mapper database. Compatibility remains isolated to `scripts/migrations/legacy/`.
+
+Supported evidence-backed translations include:
+
+- a legacy `Container` linked directly to a cluster through `parentId` + `parentType: "cluster"` may materialize the required MK1 `Position` when a valid `grid_coordinate` such as `["C-6"]` is present;
+- rack U capacity may be recovered from explicit capacity fields or the highest evidenced CAS/mounting end position;
+- legacy CAS fields such as `casStatus`, nested `mounting.startPosition/endPosition`, clearance and embedded `device.id` are normalized into the MK1 CAS contract;
+- a legacy object declared Rack/Cabinet without evidence of U capacity is retained as canonical `CONTAINER` with a migration warning rather than inventing rack capacity;
+- embedded BDFB `shelves → frames → panels → breakers/holders` are materialized into `Device.bdfb`;
+- a slot whose legacy label begins with `Holder` remains `HOLDER`; a named installed slot such as `CB-EATON-01` becomes `BREAKER`. Telemetry never promotes a holder into a breaker.
+
+### Explicit BDFB telemetry binding
+
+Legacy `panel.telemetryPrefix` is preserved when present. When the provider mapping is known outside the legacy document, the migration input may supply evidence-backed panel prefixes:
+
+```json
+{
+  "bfdbPanelTelemetryPrefixes": {
+    "<legacy-device-id>": {
+      "Panel A1": "0_1_",
+      "Panel A2": "0_2_",
+      "Panel B1": "0_3_",
+      "Panel B2": "0_4_"
+    }
+  }
+}
+```
+
+This produces explicit breaker bindings such as `0_1_1` without flattening or reordering the physical A/B panel hierarchy. Panels without an evidenced provider mapping remain physically present and unbound.
+
+
 ## Device / Equipment rule
 
 Device and Equipment are always migrated as siblings under Container/Rack.

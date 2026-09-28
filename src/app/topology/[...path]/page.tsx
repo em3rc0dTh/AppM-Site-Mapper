@@ -102,6 +102,34 @@ export default async function TopologyNodePage({
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
+  if (node.kind === 'DEVICE' && node.bdfb) {
+    return (
+      <main className="operational-page zip-bdfb-page">
+        <nav
+          className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
+          aria-label="Breadcrumb"
+        >
+          {trailEntries.map((item) => (
+            <Link key={item.id} href={item.href}>
+              {item.name}
+            </Link>
+          ))}
+        </nav>
+
+        <BdfbChassis
+          device={node}
+          trail={trail.map((item, index) => ({
+            id: item.id,
+            name: item.name,
+            kind: item.kind,
+            href: trailEntries[index]?.href ?? selfHref,
+          }))}
+          canWrite={canWrite}
+        />
+      </main>
+    );
+  }
+
   const childEntries: VisualStageChild[] = await Promise.all(
     children.map(async (child) => {
       const deepLink = await service.buildDeepLink(child.id);

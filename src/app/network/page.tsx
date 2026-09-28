@@ -27,7 +27,14 @@ export default async function NetworkPage() {
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
   if (networks.length === 1) {
-    redirect(await service.buildDeepLink(networks[0]!.id));
+    const network = networks[0]!;
+    const sites = (await service.listChildren(network.id)).filter((node) => node.kind === 'SITE');
+
+    if (sites.length === 1) {
+      redirect(await service.buildDeepLink(sites[0]!.id));
+    }
+
+    redirect(await service.buildDeepLink(network.id));
   }
 
   return (

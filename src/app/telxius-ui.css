@@ -68,7 +68,11 @@
   margin: 0 auto;
   padding: 0 18px;
   color: #c8d1df;
-  font: 700 0.62rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  font:
+    700 0.62rem ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
   letter-spacing: 0.08em;
 }
 
@@ -378,7 +382,9 @@
 }
 
 .telxius-map-footprint {
-  transition: opacity 120ms ease, filter 120ms ease;
+  transition:
+    opacity 120ms ease,
+    filter 120ms ease;
 }
 
 .telxius-physical-map--site .telxius-map-footprint {
@@ -616,7 +622,11 @@
 .telxius-property-list dd {
   margin: 0;
   color: #e6ebf2;
-  font: 0.62rem ui-monospace, SFMono-Regular, Menlo, monospace;
+  font:
+    0.62rem ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
 }
 
 .telxius-property-list dd.is-accent {
@@ -689,8 +699,7 @@
 .app-shell--immersive .blueprint-canvas {
   background:
     linear-gradient(rgba(26, 30, 36, 0.65) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(26, 30, 36, 0.65) 1px, transparent 1px),
-    #030303;
+    linear-gradient(90deg, rgba(26, 30, 36, 0.65) 1px, transparent 1px), #030303;
   background-size: 600px 600px;
 }
 

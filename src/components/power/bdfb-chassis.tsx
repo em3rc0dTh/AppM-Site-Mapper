@@ -373,11 +373,7 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
             onBack={() => setActivePanel(null)}
           />
         ) : (
-          <DeviceHierarchyOverview
-            device={device}
-            shelves={shelves}
-            onOpenPanel={setActivePanel}
-          />
+          <DeviceHierarchyOverview device={device} shelves={shelves} onOpenPanel={setActivePanel} />
         )}
       </div>
 

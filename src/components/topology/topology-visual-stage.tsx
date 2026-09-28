@@ -135,7 +135,7 @@ function StructureCanvas({
   node: TopologyNode;
   items: readonly VisualStageChild[];
   previewItems: readonly VisualStageChild[];
-  activeItemId?: string;
+  activeItemId?: string | undefined;
 }) {
   return (
     <div className="telxius-structure-stage">
@@ -247,7 +247,7 @@ export function TopologyVisualStage({
   node: TopologyNode;
   items: readonly VisualStageChild[];
   previewItems?: readonly VisualStageChild[];
-  activeItemId?: string;
+  activeItemId?: string | undefined;
 }>) {
   let canvas: ReactNode;
 

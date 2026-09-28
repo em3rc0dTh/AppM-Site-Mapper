@@ -168,78 +168,125 @@ function LevelCanvas({ items }: { items: readonly VisualStageChild[] }) {
   return <PhysicalPolygonStage boundary={undefined} items={items} mode="structure" />;
 }
 
-function rowIndex(row: string): number {
-  const normalized = row.trim().toUpperCase().charCodeAt(0) - 64;
-  return Math.max(1, Math.min(8, normalized || 1));
+function columnRange(items: readonly VisualStageChild[]): readonly number[] {
+  const columns = items
+    .filter(({ node }) => node.kind === 'POSITION')
+    .map(({ node }) => (node.kind === 'POSITION' ? node.coordinate.column : 1));
+
+  if (!columns.length) return [1];
+
+  const min = Math.min(...columns);
+  const max = Math.max(...columns);
+  return Array.from({ length: max - min + 1 }, (_, index) => min + index);
 }
 
 function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
-  return (
-    <div className="telxius-cluster-focus">
-      <div className="telxius-cluster-axis telxius-cluster-axis--top" aria-hidden="true">
-        {Array.from({ length: 8 }, (_, i) => (
-          <span key={i}>{i + 1}</span>
-        ))}
-      </div>
-      <div className="telxius-cluster-axis telxius-cluster-axis--left" aria-hidden="true">
-        {['A', 'B', 'C', 'D'].map((label) => (
-          <span key={label}>{label}</span>
-        ))}
-      </div>
-      <div className="telxius-cluster-grid">
-        {items.map(({ node, href }) => {
-          const gridStyle =
-            node.kind === 'POSITION'
-              ? {
-                  gridColumn: Math.max(1, Math.min(8, node.coordinate.column)),
-                  gridRow: rowIndex(node.coordinate.row),
-                }
-              : undefined;
+  const positions = items.filter(
+    ({ node }): node is Extract<VisualStageChild, { node: TopologyNode }> =>
+      node.kind === 'POSITION',
+  );
+  const columns = columnRange(items);
+  const row = positions.find(({ node }) => node.kind === 'POSITION')?.node;
+  const rowLabel = row?.kind === 'POSITION' ? row.coordinate.row.toUpperCase() : 'A';
+  const minColumn = columns[0] ?? 1;
 
-          return (
-            <ChildLink
-              key={node.id}
-              child={node}
-              href={href}
-              className="telxius-position-tile"
-              {...(gridStyle ? { style: gridStyle } : {})}
-            >
-              <span className="telxius-position-dot" aria-hidden="true" />
-              <span>
-                <small>{metadata(node)}</small>
-                <strong>{node.name}</strong>
-              </span>
-              <span className="legacy-stage-enter">↗</span>
-            </ChildLink>
-          );
-        })}
+  return (
+    <div className="zip-bay-workbench">
+      <div className="zip-bay-axis zip-bay-axis--top" aria-hidden="true">
+        <span />
+        {columns.map((column) => (
+          <span key={column}>{column}</span>
+        ))}
       </div>
+      <div className="zip-bay-row">
+        <div className="zip-bay-row-label">{rowLabel}</div>
+        <div
+          className="zip-bay-grid"
+          style={{ '--zip-bay-columns': columns.length } as CSSProperties}
+        >
+          {columns.map((column) => {
+            const item = items.find(
+              ({ node }) => node.kind === 'POSITION' && node.coordinate.column === column,
+            );
+
+            if (!item || item.node.kind !== 'POSITION') {
+              return <div className="zip-bay-cell zip-bay-cell--empty" key={column} />;
+            }
+
+            return (
+              <ChildLink
+                key={item.node.id}
+                child={item.node}
+                href={item.href}
+                className="zip-bay-cell zip-bay-cell--occupied"
+              >
+                <span className="zip-bay-cabinet-icon">
+                  <Icon name="box" />
+                </span>
+                <span className="zip-bay-cell-copy">
+                  <small>POSITION {item.node.coordinate.row.toUpperCase()}-{item.node.coordinate.column}</small>
+                  <strong>{item.node.name}</strong>
+                </span>
+                <span className="legacy-stage-enter">↗</span>
+              </ChildLink>
+            );
+          })}
+        </div>
+      </div>
+      <footer className="zip-bay-footer">
+        <span>600 × 600 mm POSITION GRID</span>
+        <b>
+          {rowLabel}-{minColumn} → {rowLabel}-{columns.at(-1) ?? minColumn}
+        </b>
+      </footer>
     </div>
   );
 }
 
-function PositionCanvas({ items }: { items: readonly VisualStageChild[] }) {
+function PositionCanvas({
+  node,
+  items,
+}: {
+  node: TopologyNode;
+  items: readonly VisualStageChild[];
+}) {
+  const coordinate =
+    node.kind === 'POSITION'
+      ? `${node.coordinate.row.toUpperCase()}-${node.coordinate.column}`
+      : node.name;
+
   return (
-    <div className="telxius-position-focus">
-      <div className="telxius-position-guide" aria-hidden="true">
+    <div className="zip-position-workbench">
+      <div className="zip-position-axis zip-position-axis--top">
         <span />
-        <span />
-        <span />
+        <b>{node.kind === 'POSITION' ? node.coordinate.column : '—'}</b>
       </div>
-      <div className="telxius-position-content">
-        {items.map(({ node, href }) => (
-          <ChildLink key={node.id} child={node} href={href} className="telxius-position-rack-card">
-            <span className="telxius-position-rack-icon">
-              <Icon name="box" />
-            </span>
-            <span>
-              <small>{metadata(node)}</small>
-              <strong>{node.name}</strong>
-            </span>
-            <span className="legacy-stage-enter">OPEN ↗</span>
-          </ChildLink>
-        ))}
+      <div className="zip-position-row">
+        <div className="zip-position-axis zip-position-axis--left">
+          {node.kind === 'POSITION' ? node.coordinate.row.toUpperCase() : '—'}
+        </div>
+        <div className="zip-position-cell">
+          {items.map(({ node: child, href }) => (
+            <ChildLink key={child.id} child={child} href={href} className="zip-position-rack">
+              <span className="zip-position-rack-frame" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </span>
+              <span className="zip-position-rack-copy">
+                <small>{metadata(child)}</small>
+                <strong>{child.name}</strong>
+                <em>{coordinate}</em>
+              </span>
+              <span className="legacy-stage-enter">OPEN RACK ↗</span>
+            </ChildLink>
+          ))}
+        </div>
       </div>
+      <footer className="zip-position-footer">
+        <span>SELECTED POSITION</span>
+        <strong>{coordinate}</strong>
+      </footer>
     </div>
   );
 }
@@ -275,7 +322,7 @@ export function TopologyVisualStage({
   } else if (node.kind === 'CONTAINER_CLUSTER_BAY') {
     canvas = <BayCanvas items={items} />;
   } else if (node.kind === 'POSITION') {
-    canvas = <PositionCanvas items={items} />;
+    canvas = <PositionCanvas node={node} items={items} />;
   } else {
     canvas = (
       <div className="legacy-generic-canvas">

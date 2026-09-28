@@ -1,14 +1,20 @@
 'use client';
 
 import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
-import { StatusBadge } from '@/shared/ui/primitives';
 import type {
   ClusterPlacementView,
+  PositionPlacementView,
   RackPlacementView,
 } from '@/modules/spatial/application/spatial-service';
-import type { PointMm, RectMm } from '@/modules/spatial/domain/geometry';
+import {
+  pointInPolygon,
+  type PointMm,
+  type RectMm,
+} from '@/modules/spatial/domain/geometry';
+import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
+import { StatusBadge } from '@/shared/ui/primitives';
 
 interface ViewState {
   readonly x: number;
@@ -63,49 +69,108 @@ function gridLabels(polygon: readonly PointMm[]) {
   };
 }
 
-function polygonCentroid(points: readonly PointMm[]): PointMm {
-  if (points.length === 0) return { x: 0, y: 0 };
+function polygonBounds(points: readonly PointMm[]) {
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
   return {
-    x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
-    y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
+    x: Math.min(...xs),
+    y: Math.min(...ys),
+    width: Math.max(...xs) - Math.min(...xs),
+    height: Math.max(...ys) - Math.min(...ys),
+  };
+}
+
+function slotCenter(slot: RectMm): PointMm {
+  return {
+    x: slot.x + slot.width / 2,
+    y: slot.y + slot.depth / 2,
+  };
+}
+
+function slotCluster(
+  slot: RectMm,
+  clusters: readonly ClusterPlacementView[],
+): ClusterPlacementView | undefined {
+  const center = slotCenter(slot);
+  return clusters.find(
+    (cluster) => cluster.polygon && pointInPolygon(center, cluster.polygon),
+  );
+}
+
+function clusterInspector(
+  cluster: ClusterPlacementView,
+  positions: readonly PositionPlacementView[],
+  racks: readonly RackPlacementView[],
+): InspectorEntity {
+  return {
+    name: cluster.name,
+    kind: 'CLUSTER / BAY',
+    sections: [
+      {
+        title: 'Physical context',
+        fields: [
+          {
+            label: 'Positions',
+            value: positions.filter((position) => position.clusterId === cluster.id).length,
+          },
+          {
+            label: 'Racks',
+            value: racks.filter((rack) => rack.clusterId === cluster.id).length,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+function rackInspector(rack: RackPlacementView): InspectorEntity {
+  return {
+    name: rack.name,
+    kind: 'CONTAINER / RACK',
+    sections: [
+      {
+        title: 'Physical',
+        fields: [
+          { label: 'Footprint', value: `${rack.rect.width} × ${rack.rect.depth} mm` },
+          { label: 'Coordinates', value: `X ${rack.rect.x} / Y ${rack.rect.y} mm` },
+        ],
+      },
+    ],
+    actions: [{ label: 'Open rack elevation', href: `/rack/${rack.id}` }],
   };
 }
 
 export function BlueprintCanvas({
   polygon,
   clusters,
+  positions,
   racks,
   slots,
+  focusId,
 }: Readonly<{
   polygon: readonly PointMm[];
   clusters: readonly ClusterPlacementView[];
+  positions: readonly PositionPlacementView[];
   racks: readonly RackPlacementView[];
   slots: readonly RectMm[];
+  focusId?: string;
 }>) {
+  const router = useRouter();
   const base = useMemo(() => boundsFor(polygon), [polygon]);
   const labels = useMemo(() => gridLabels(polygon), [polygon]);
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const [tool, setTool] = useState<'select' | 'pan'>('select');
-  function inspectRack(rack: RackPlacementView) {
-    setSelected({
-      name: rack.name,
-      kind: 'CONTAINER / RACK',
-      sections: [
-        {
-          title: 'Physical',
-          fields: [
-            { label: 'Footprint', value: `${rack.rect.width} × ${rack.rect.depth} mm` },
-            { label: 'Coordinates', value: `X ${rack.rect.x} / Y ${rack.rect.y} mm` },
-          ],
-        },
-      ],
-      actions: [{ label: 'Open rack elevation', href: `/rack/${rack.id}` }],
-    });
-  }
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const pointer = useRef<Readonly<{ x: number; y: number }> | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+
+  const focusedClusterId = clusters.some((cluster) => cluster.id === focusId)
+    ? focusId
+    : positions.find((position) => position.id === focusId)?.clusterId;
+  const focusedPositionId = positions.some((position) => position.id === focusId)
+    ? focusId
+    : undefined;
 
   const view: ViewState = {
     x: base.x + pan.x,
@@ -129,9 +194,7 @@ export function BlueprintCanvas({
     const start = pointer.current;
     const svg = svgRef.current;
 
-    if (!start || !svg) {
-      return;
-    }
+    if (!start || !svg) return;
 
     const box = svg.getBoundingClientRect();
     const dx = ((event.clientX - start.x) / box.width) * view.width;
@@ -143,55 +206,14 @@ export function BlueprintCanvas({
 
   function pointerUp(event: PointerEvent<SVGSVGElement>) {
     pointer.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId))
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
+    }
   }
 
   return (
-    <section className="blueprint-panel">
-      <header className="blueprint-toolbar">
-        <div>
-          <strong>Blueprint</strong>
-          <span>600 mm grid · {Math.round(zoom * 100)}%</span>
-        </div>
-        <div className="blueprint-actions">
-          <button type="button" aria-pressed={tool === 'select'} onClick={() => setTool('select')}>
-            Select
-          </button>
-          <button type="button" aria-pressed={tool === 'pan'} onClick={() => setTool('pan')}>
-            Pan
-          </button>
-          <button
-            type="button"
-            aria-label="Zoom in"
-            onClick={() => setZoom((value) => Math.min(5, value * 1.2))}
-          >
-            +
-          </button>
-          <button
-            type="button"
-            aria-label="Zoom out"
-            onClick={() => setZoom((value) => Math.max(0.5, value / 1.2))}
-          >
-            −
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setZoom(1);
-              setPan({ x: 0, y: 0 });
-            }}
-          >
-            Fit
-          </button>
-        </div>
-      </header>
-
+    <section className="blueprint-panel zip-room-blueprint">
       <div className="blueprint-canvas-shell">
-        <div className="blueprint-canvas-hud" aria-hidden="true">
-          <span>2D DRAFTING</span>
-          <b>600 × 600 mm TILE</b>
-        </div>
         <svg
           ref={svgRef}
           className="blueprint-canvas"
@@ -246,20 +268,66 @@ export function BlueprintCanvas({
             ))}
           </g>
 
-          {clusters.map((cluster) => {
-            if (!cluster.polygon || cluster.polygon.length < 3) return null;
-            const center = polygonCentroid(cluster.polygon);
+          {slots.map((slot) => {
+            const cluster = slotCluster(slot, clusters);
+            const isClusterSlot = Boolean(cluster);
+            const isFocused = cluster?.id === focusedClusterId;
 
             return (
-              <g key={cluster.id} className="blueprint-cluster-node">
+              <g key={rectKey(slot)} className={isFocused ? 'is-focused' : undefined}>
+                <rect
+                  x={slot.x}
+                  y={slot.y}
+                  width={slot.width}
+                  height={slot.depth}
+                  className={
+                    isClusterSlot
+                      ? 'blueprint-slot blueprint-slot--cluster'
+                      : 'blueprint-slot'
+                  }
+                />
+                {isClusterSlot && (
+                  <text
+                    x={slot.x + slot.width / 2}
+                    y={slot.y + slot.depth / 2}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    className="blueprint-slot-add"
+                  >
+                    + ADD
+                  </text>
+                )}
+              </g>
+            );
+          })}
+
+          {clusters.map((cluster) => {
+            if (!cluster.polygon || cluster.polygon.length < 3) return null;
+            const bounds = polygonBounds(cluster.polygon);
+            const focused = cluster.id === focusedClusterId;
+
+            return (
+              <g
+                key={cluster.id}
+                className={`blueprint-cluster-node${focused ? ' is-focused' : ''}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelected(clusterInspector(cluster, positions, racks))}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setSelected(clusterInspector(cluster, positions, racks));
+                  }
+                }}
+              >
                 <polygon
                   points={cluster.polygon.map((point) => `${point.x},${point.y}`).join(' ')}
                   className="blueprint-cluster"
                 />
                 <text
-                  x={center.x}
-                  y={center.y - 250}
-                  textAnchor="middle"
+                  x={bounds.x}
+                  y={bounds.y - 70}
+                  textAnchor="start"
                   className="blueprint-cluster-label"
                 >
                   {cluster.name.toUpperCase()}
@@ -268,78 +336,110 @@ export function BlueprintCanvas({
             );
           })}
 
-          {slots.map((slot) => (
+          {positions.map((position) => (
             <rect
-              key={rectKey(slot)}
-              x={slot.x}
-              y={slot.y}
-              width={slot.width}
-              height={slot.depth}
-              className="blueprint-slot"
+              key={position.id}
+              x={position.rect.x}
+              y={position.rect.y}
+              width={position.rect.width}
+              height={position.rect.depth}
+              className={`blueprint-position-focus${position.id === focusedPositionId ? ' is-focused' : ''}`}
+              aria-hidden="true"
             />
           ))}
 
-          {racks.map((rack) => (
-            <g
-              key={rack.id}
-              className="blueprint-rack-node"
-              role="button"
-              tabIndex={0}
-              aria-label={`Inspect ${rack.name}`}
-              onClick={() => {
-                if (tool === 'select') inspectRack(rack);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  inspectRack(rack);
-                }
-              }}
-            >
-              <rect
-                x={rack.rect.x}
-                y={rack.rect.y}
-                width={rack.rect.width}
-                height={rack.rect.depth}
-                className="blueprint-rack"
-              />
-              <rect
-                x={rack.rect.x + Math.min(65, rack.rect.width * 0.12)}
-                y={rack.rect.y + Math.min(65, rack.rect.depth * 0.12)}
-                width={Math.max(1, rack.rect.width - Math.min(130, rack.rect.width * 0.24))}
-                height={Math.max(1, rack.rect.depth - Math.min(130, rack.rect.depth * 0.24))}
-                className="blueprint-rack-inner"
-                aria-hidden="true"
-              />
-              <text
-                x={rack.rect.x + rack.rect.width / 2}
-                y={rack.rect.y + rack.rect.depth / 2}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="blueprint-rack-label"
+          {racks.map((rack) => {
+            const focused =
+              rack.positionId === focusedPositionId || rack.clusterId === focusedClusterId;
+
+            return (
+              <g
+                key={rack.id}
+                className={`blueprint-rack-node${focused ? ' is-focused' : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-label={`Inspect ${rack.name}`}
+                onClick={() => {
+                  if (tool === 'select') setSelected(rackInspector(rack));
+                }}
+                onDoubleClick={() => router.push(`/rack/${rack.id}`)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    router.push(`/rack/${rack.id}`);
+                  } else if (event.key === ' ') {
+                    event.preventDefault();
+                    setSelected(rackInspector(rack));
+                  }
+                }}
               >
-                {rack.name}
-              </text>
-            </g>
-          ))}
+                <rect
+                  x={rack.rect.x}
+                  y={rack.rect.y}
+                  width={rack.rect.width}
+                  height={rack.rect.depth}
+                  className="blueprint-rack"
+                />
+                <rect
+                  x={rack.rect.x + Math.min(50, rack.rect.width * 0.1)}
+                  y={rack.rect.y + Math.min(50, rack.rect.depth * 0.1)}
+                  width={Math.max(1, rack.rect.width - Math.min(100, rack.rect.width * 0.2))}
+                  height={Math.max(1, rack.rect.depth - Math.min(100, rack.rect.depth * 0.2))}
+                  className="blueprint-rack-inner"
+                  aria-hidden="true"
+                />
+                <circle
+                  cx={rack.rect.x + rack.rect.width - 70}
+                  cy={rack.rect.y + 70}
+                  r={18}
+                  className="blueprint-rack-led"
+                />
+                <text
+                  x={rack.rect.x + rack.rect.width / 2}
+                  y={rack.rect.y + rack.rect.depth / 2}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  className="blueprint-rack-label"
+                >
+                  {rack.name}
+                </text>
+              </g>
+            );
+          })}
         </svg>
-        <div className="blueprint-canvas-corners" aria-hidden="true">
-          <span />
-          <span />
-          <span />
-          <span />
+
+        <div className="zip-room-controls" aria-label="Room blueprint controls">
+          <button
+            type="button"
+            aria-label="Zoom in"
+            onClick={() => setZoom((value) => Math.min(5, value * 1.2))}
+          >
+            ⊕
+          </button>
+          <button
+            type="button"
+            aria-label={tool === 'pan' ? 'Select mode' : 'Pan mode'}
+            onClick={() => setTool((value) => (value === 'pan' ? 'select' : 'pan'))}
+          >
+            {tool === 'pan' ? '⌖' : '⌗'}
+          </button>
+          <button
+            type="button"
+            aria-label="Zoom out"
+            onClick={() => setZoom((value) => Math.max(0.5, value / 1.2))}
+          >
+            ⊖
+          </button>
         </div>
       </div>
-      <footer className="blueprint-legend">
+
+      <footer className="blueprint-legend zip-room-legend">
         <StatusBadge tone="accent">{clusters.length} CLUSTERS</StatusBadge>
-        <StatusBadge tone="accent">{racks.length} RACK FOOTPRINTS</StatusBadge>
-        <StatusBadge>{slots.length} ASSIGNABLE TILES</StatusBadge>
+        <StatusBadge tone="accent">{racks.length} RACKS</StatusBadge>
         <span>
-          {tool === 'pan'
-            ? 'Drag to pan · scroll to zoom'
-            : 'Select a rack to inspect · scroll to zoom'}
+          Click cluster or rack to inspect · double click rack to open · scroll to zoom
         </span>
       </footer>
+
       {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}
     </section>
   );

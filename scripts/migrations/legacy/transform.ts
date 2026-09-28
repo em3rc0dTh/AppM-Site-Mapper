@@ -101,6 +101,45 @@ function getNumber(record: LegacyRecord, keys: readonly string[]): number | null
   return null;
 }
 
+function asRecord(value: unknown): LegacyRecord | null {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as LegacyRecord)
+    : null;
+}
+
+function normalizePolygon(record: LegacyRecord): readonly Readonly<{ x: number; y: number }>[] | undefined {
+  const source = Array.isArray(record.polygon) ? record.polygon : null;
+  if (!source) return undefined;
+
+  const points = source.flatMap((value) => {
+    const point = asRecord(value);
+    if (!point) return [];
+
+    const x = getNumber(point, ['x']);
+    const y = getNumber(point, ['y']);
+    return x === null || y === null ? [] : [{ x, y }];
+  });
+
+  return points.length >= 3 ? points : undefined;
+}
+
+function normalizeSiteDetails(record: LegacyRecord): Record<string, number> | undefined {
+  const details = asRecord(record.details);
+  if (!details) return undefined;
+
+  const totalPowerCapacity = getNumber(details, ['totalPowerCapacity', 'totalPower']);
+  const activeAlarms = getNumber(details, ['activeAlarms', 'alarms']);
+  const currentLoad = getNumber(details, ['currentLoad', 'load']);
+
+  const normalized = {
+    ...(totalPowerCapacity !== null ? { totalPowerCapacity } : {}),
+    ...(activeAlarms !== null ? { activeAlarms } : {}),
+    ...(currentLoad !== null ? { currentLoad } : {}),
+  };
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+}
+
 function legacyId(record: LegacyRecord): string | null {
   return getString(record, ['id', '_id', 'legacyId']);
 }
@@ -319,10 +358,36 @@ function extraFields(
   id: string,
 ): Record<string, unknown> | null {
   switch (spec.kind) {
-    case 'ROOM_SUBSTRUCTURE':
-      return { variant: spec.variant };
-    case 'CONTAINER_CLUSTER_BAY':
-      return { variant: spec.variant };
+    case 'SITE': {
+      const polygon = normalizePolygon(record);
+      const details = normalizeSiteDetails(record);
+      const totalAreaSqm = getNumber(record, ['totalAreaSqm', 'areaSqm']);
+
+      return {
+        ...(polygon ? { polygon } : {}),
+        ...(getString(record, ['category']) ? { category: getString(record, ['category']) } : {}),
+        ...(getString(record, ['alias']) ? { alias: getString(record, ['alias']) } : {}),
+        ...(getString(record, ['district']) ? { district: getString(record, ['district']) } : {}),
+        ...(getString(record, ['address']) ? { address: getString(record, ['address']) } : {}),
+        ...(getString(record, ['geoCoords', 'coordinates'])
+          ? { geoCoords: getString(record, ['geoCoords', 'coordinates']) }
+          : {}),
+        ...(totalAreaSqm !== null ? { totalAreaSqm } : {}),
+        ...(details ? { details } : {}),
+      };
+    }
+    case 'STRUCTURE': {
+      const polygon = normalizePolygon(record);
+      return polygon ? { polygon } : {};
+    }
+    case 'ROOM_SUBSTRUCTURE': {
+      const polygon = normalizePolygon(record);
+      return { variant: spec.variant, ...(polygon ? { polygon } : {}) };
+    }
+    case 'CONTAINER_CLUSTER_BAY': {
+      const polygon = normalizePolygon(record);
+      return { variant: spec.variant, ...(polygon ? { polygon } : {}) };
+    }
     case 'POSITION': {
       const coordinate = normalizeCoordinate(record);
       return coordinate ? { coordinate } : null;
@@ -336,9 +401,15 @@ function extraFields(
         return null;
       }
 
+      const width = getNumber(record, ['w', 'width', 'widthMm']);
+      const depth = getNumber(record, ['h', 'depth', 'depthMm']);
+
       return {
         variant,
         ...(totalU ? { totalU } : {}),
+        ...(width !== null && depth !== null && width > 0 && depth > 0
+          ? { dimensionsMm: { width, depth } }
+          : {}),
         cas: normalizeCas(record, totalU, warnings, spec.collection, id),
       };
     }

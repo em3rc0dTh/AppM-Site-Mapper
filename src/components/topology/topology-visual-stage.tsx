@@ -202,7 +202,7 @@ function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
               child={node}
               href={href}
               className="telxius-position-tile"
-              style={gridStyle}
+              {...(gridStyle ? { style: gridStyle } : {})}
             >
               <span className="telxius-position-dot" aria-hidden="true" />
               <span>

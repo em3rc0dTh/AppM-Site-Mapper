@@ -107,7 +107,9 @@ function asRecord(value: unknown): LegacyRecord | null {
     : null;
 }
 
-function normalizePolygon(record: LegacyRecord): readonly Readonly<{ x: number; y: number }>[] | undefined {
+function normalizePolygon(
+  record: LegacyRecord,
+): readonly Readonly<{ x: number; y: number }>[] | undefined {
   const source = Array.isArray(record.polygon) ? record.polygon : null;
   if (!source) return undefined;
 

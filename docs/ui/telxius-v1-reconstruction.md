@@ -41,7 +41,6 @@ The screenshots are visual documentation. They do not establish runtime health, 
 | BDFB internals   | Device topology route / rack mounted-device inspection |
 | Power path       | `/power`                                               |
 
-
 ## Harmonic composition contract
 
 The application uses one visual grammar from overview to physical detail:
@@ -82,7 +81,6 @@ Rules:
 8. A single final stylesheet, `src/app/telxius-ui.css`, owns the SiteMapper visual system. New visual changes must modify that layer rather than append another override stylesheet.
 9. Single-network/single-site installations skip redundant index screens and enter the Site canvas directly.
 10. Missing physical evidence remains explicit; visual harmony never justifies inventing geometry or topology.
-
 
 ## Spatial fidelity boundary
 

@@ -225,11 +225,9 @@ export default async function TopologyNodePage({
           />
 
           <div className="operational-stage-body">
-            {node.kind === 'DEVICE' && node.bdfb ? (
-              <BdfbChassis device={node} />
-            ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
-              roomLayout?.ok &&
-              roomLayout.value.room.polygon ? (
+            {node.kind === 'ROOM_SUBSTRUCTURE' &&
+            roomLayout?.ok &&
+            roomLayout.value.room.polygon ? (
               <BlueprintCanvas
                 polygon={roomLayout.value.room.polygon}
                 clusters={roomLayout.value.clusters}

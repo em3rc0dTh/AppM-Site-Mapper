@@ -8,11 +8,7 @@ import type {
   PositionPlacementView,
   RackPlacementView,
 } from '@/modules/spatial/application/spatial-service';
-import {
-  pointInPolygon,
-  type PointMm,
-  type RectMm,
-} from '@/modules/spatial/domain/geometry';
+import { pointInPolygon, type PointMm, type RectMm } from '@/modules/spatial/domain/geometry';
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
 
@@ -92,9 +88,7 @@ function slotCluster(
   clusters: readonly ClusterPlacementView[],
 ): ClusterPlacementView | undefined {
   const center = slotCenter(slot);
-  return clusters.find(
-    (cluster) => cluster.polygon && pointInPolygon(center, cluster.polygon),
-  );
+  return clusters.find((cluster) => cluster.polygon && pointInPolygon(center, cluster.polygon));
 }
 
 function clusterInspector(
@@ -281,9 +275,7 @@ export function BlueprintCanvas({
                   width={slot.width}
                   height={slot.depth}
                   className={
-                    isClusterSlot
-                      ? 'blueprint-slot blueprint-slot--cluster'
-                      : 'blueprint-slot'
+                    isClusterSlot ? 'blueprint-slot blueprint-slot--cluster' : 'blueprint-slot'
                   }
                 />
                 {isClusterSlot && (
@@ -435,9 +427,7 @@ export function BlueprintCanvas({
       <footer className="blueprint-legend zip-room-legend">
         <StatusBadge tone="accent">{clusters.length} CLUSTERS</StatusBadge>
         <StatusBadge tone="accent">{racks.length} RACKS</StatusBadge>
-        <span>
-          Click cluster or rack to inspect · double click rack to open · scroll to zoom
-        </span>
+        <span>Click cluster or rack to inspect · double click rack to open · scroll to zoom</span>
       </footer>
 
       {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}

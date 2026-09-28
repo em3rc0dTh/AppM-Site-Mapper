@@ -165,54 +165,54 @@ function StructureCanvas({
 }
 
 function LevelCanvas({ items }: { items: readonly VisualStageChild[] }) {
+  return <PhysicalPolygonStage boundary={undefined} items={items} mode="structure" />;
+}
+
+function rowIndex(row: string): number {
+  const normalized = row.trim().toUpperCase().charCodeAt(0) - 64;
+  return Math.max(1, Math.min(8, normalized || 1));
+}
+
+function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
   return (
-    <div className="legacy-level-canvas">
-      <div className="legacy-level-grid" aria-hidden="true" />
-      <div className="legacy-level-boundary">
-        <span className="legacy-level-axis legacy-level-axis--x">01 · 02 · 03 · 04 · 05 · 06</span>
-        <span className="legacy-level-axis legacy-level-axis--y">A · B · C · D</span>
-        <div className="legacy-room-field">
-          {items.map(({ node, href }, index) => (
-            <ChildLink key={node.id} child={node} href={href} className="legacy-room-footprint">
-              <span className="legacy-room-index">{String.fromCharCode(65 + (index % 26))}</span>
+    <div className="telxius-cluster-focus">
+      <div className="telxius-cluster-axis telxius-cluster-axis--top" aria-hidden="true">
+        {Array.from({ length: 8 }, (_, i) => (
+          <span key={i}>{i + 1}</span>
+        ))}
+      </div>
+      <div className="telxius-cluster-axis telxius-cluster-axis--left" aria-hidden="true">
+        {['A', 'B', 'C', 'D'].map((label) => (
+          <span key={label}>{label}</span>
+        ))}
+      </div>
+      <div className="telxius-cluster-grid">
+        {items.map(({ node, href }) => {
+          const gridStyle =
+            node.kind === 'POSITION'
+              ? {
+                  gridColumn: Math.max(1, Math.min(8, node.coordinate.column)),
+                  gridRow: rowIndex(node.coordinate.row),
+                }
+              : undefined;
+
+          return (
+            <ChildLink
+              key={node.id}
+              child={node}
+              href={href}
+              className="telxius-position-tile"
+              style={gridStyle}
+            >
+              <span className="telxius-position-dot" aria-hidden="true" />
               <span>
                 <small>{metadata(node)}</small>
                 <strong>{node.name}</strong>
               </span>
               <span className="legacy-stage-enter">↗</span>
             </ChildLink>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
-  return (
-    <div className="legacy-bay-canvas">
-      <div className="legacy-bay-axis legacy-bay-axis--top">
-        {Array.from({ length: 8 }, (_, i) => (
-          <span key={i}>{i + 1}</span>
-        ))}
-      </div>
-      <div className="legacy-bay-axis legacy-bay-axis--left">
-        {['A', 'B', 'C', 'D'].map((label) => (
-          <span key={label}>{label}</span>
-        ))}
-      </div>
-      <div className="legacy-position-grid">
-        {items.map(({ node, href }) => (
-          <ChildLink key={node.id} child={node} href={href} className="legacy-position-tile">
-            <span className="legacy-position-marker">
-              <Icon name="box" />
-            </span>
-            <span>
-              <small>{metadata(node)}</small>
-              <strong>{node.name}</strong>
-            </span>
-          </ChildLink>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -220,20 +220,26 @@ function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
 
 function PositionCanvas({ items }: { items: readonly VisualStageChild[] }) {
   return (
-    <div className="legacy-position-canvas">
-      {items.map(({ node, href }) => (
-        <ChildLink key={node.id} child={node} href={href} className="legacy-cabinet-preview">
-          <div className="legacy-cabinet-top" />
-          <div className="legacy-cabinet-body">
-            <span className="legacy-cabinet-rails" aria-hidden="true" />
+    <div className="telxius-position-focus">
+      <div className="telxius-position-guide" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+      <div className="telxius-position-content">
+        {items.map(({ node, href }) => (
+          <ChildLink key={node.id} child={node} href={href} className="telxius-position-rack-card">
+            <span className="telxius-position-rack-icon">
+              <Icon name="box" />
+            </span>
             <span>
               <small>{metadata(node)}</small>
               <strong>{node.name}</strong>
             </span>
-          </div>
-          <div className="legacy-cabinet-bottom" />
-        </ChildLink>
-      ))}
+            <span className="legacy-stage-enter">OPEN ↗</span>
+          </ChildLink>
+        ))}
+      </div>
     </div>
   );
 }
@@ -293,7 +299,13 @@ export function TopologyVisualStage({
         <div>
           <strong>{titleFor(node)}</strong>
           <span>
-            Operational view · schematic geometry where surveyed coordinates are unavailable
+            {node.kind === 'SITE' || node.kind === 'STRUCTURE' || node.kind === 'LEVEL'
+              ? 'Physical layout · canonical surveyed geometry'
+              : node.kind === 'CONTAINER_CLUSTER_BAY'
+                ? 'Focused cluster context · canonical position coordinates'
+                : node.kind === 'POSITION'
+                  ? 'Selected position · contained rack or cabinet'
+                  : 'Canonical infrastructure context'}
           </span>
         </div>
         <StatusBadge>{items.length} CONTAINED</StatusBadge>

@@ -19,9 +19,7 @@ export interface PromotionValidation {
   readonly countsByKind: Readonly<Record<string, number>>;
 }
 
-export function validatePromotionCandidate(
-  nodes: readonly CanonicalNode[],
-): PromotionValidation {
+export function validatePromotionCandidate(nodes: readonly CanonicalNode[]): PromotionValidation {
   const errors: string[] = [];
   const byId = new Map<string, CanonicalNode>();
   const countsByKind: Record<string, number> = {};

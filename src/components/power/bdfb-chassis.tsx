@@ -13,6 +13,12 @@ import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemet
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
 
+interface PanelSelection {
+  readonly shelf: Shelf;
+  readonly frame: Frame;
+  readonly panel: Panel;
+}
+
 function formatMetric(value: number | undefined, unit: string, decimals = 2): string {
   return value === undefined ? '—' : `${value.toFixed(decimals)} ${unit}`;
 }
@@ -60,13 +66,7 @@ function endpointInspector(
         fields: [
           { label: 'BDFB', value: device.name },
           { label: 'Shelf', value: shelf.label },
-          {
-            label: 'Frame',
-            value:
-              frame.presentation?.physicalFrameVisible === false
-                ? `${frame.label} · implicit`
-                : frame.label,
-          },
+          { label: 'Frame', value: frame.label },
           { label: 'Panel', value: panel.label },
           { label: 'Capacity', value: endpoint.capacity ?? 'Not specified' },
           { label: 'Endpoint ID', value: endpoint.id },
@@ -103,13 +103,7 @@ function panelInspector(
         fields: [
           { label: 'BDFB', value: device.name },
           { label: 'Shelf', value: shelf.label },
-          {
-            label: 'Frame',
-            value:
-              frame.presentation?.physicalFrameVisible === false
-                ? `${frame.label} · implicit`
-                : frame.label,
-          },
+          { label: 'Frame', value: frame.label },
           { label: 'Endpoints', value: panel.endpoints.length },
         ],
       },
@@ -154,7 +148,7 @@ function PanelBoard({
   onInspect: (entity: InspectorEntity) => void;
 }>) {
   return (
-    <article className="bdfb-panel-board">
+    <article className="bdfb-panel-board bdfb-panel-board--detail">
       <button
         type="button"
         className="bdfb-panel-title"
@@ -164,12 +158,14 @@ function PanelBoard({
         <strong>{panel.label}</strong>
         <small>{panel.endpoints.length} endpoints</small>
       </button>
+
       <div className="bdfb-panel-busbar bdfb-panel-busbar--a" aria-hidden="true">
         <span>BUS A</span>
       </div>
       <div className="bdfb-panel-busbar bdfb-panel-busbar--b" aria-hidden="true">
         <span>BUS B</span>
       </div>
+
       <div className="bdfb-endpoint-grid">
         {panel.endpoints.length ? (
           panel.endpoints.map((endpoint, index) => {
@@ -199,72 +195,99 @@ function PanelBoard({
   );
 }
 
-function ExplicitFrame({
+function DeviceHierarchyOverview({
   device,
-  shelf,
-  frame,
-  readingsByBreaker,
-  onInspect,
+  shelves,
+  onOpenPanel,
 }: Readonly<{
   device: DeviceNode;
-  shelf: Shelf;
-  frame: Frame;
-  readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
-  onInspect: (entity: InspectorEntity) => void;
+  shelves: readonly Shelf[];
+  onOpenPanel: (selection: PanelSelection) => void;
 }>) {
   return (
-    <section className="bdfb-frame">
-      <header>
-        <span>Physical frame</span>
-        <strong>{frame.label}</strong>
-      </header>
-      <div className="bdfb-panel-grid">
-        {frame.panels.map((panel) => (
-          <PanelBoard
-            key={panel.id}
-            device={device}
-            shelf={shelf}
-            frame={frame}
-            panel={panel}
-            readingsByBreaker={readingsByBreaker}
-            onInspect={onInspect}
-          />
+    <div className="bdfb-device-overview">
+      <section className="bdfb-overview-device">
+        <header className="bdfb-overview-label bdfb-overview-label--device">
+          <span>DEVICE</span>
+          <strong>{device.name}</strong>
+        </header>
+
+        {shelves.map((shelf) => (
+          <section className="bdfb-overview-shelf" key={shelf.id}>
+            <header className="bdfb-overview-label bdfb-overview-label--shelf">
+              <span>SHELF</span>
+              <strong>{shelf.label}</strong>
+            </header>
+
+            <div className="bdfb-overview-frame-grid">
+              {shelf.frames.map((frame) => (
+                <section className="bdfb-overview-frame" key={frame.id}>
+                  <header className="bdfb-overview-label bdfb-overview-label--frame">
+                    <span>FRAME</span>
+                    <strong>{frame.label.replace(/^Frame\s+/i, '')}</strong>
+                  </header>
+
+                  <div className="bdfb-overview-panels">
+                    {frame.panels.map((panel) => (
+                      <button
+                        type="button"
+                        className="bdfb-overview-panel"
+                        key={panel.id}
+                        onClick={() => onOpenPanel({ shelf, frame, panel })}
+                        aria-label={`Open ${panel.label} breaker detail`}
+                      >
+                        <strong>{panel.label}</strong>
+                        <span>{panel.endpoints.length} ENDPOINTS</span>
+                      </button>
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </section>
         ))}
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
 
-function ImplicitFrame({
+function PanelDetail({
   device,
-  shelf,
-  frame,
+  selection,
   readingsByBreaker,
   onInspect,
+  onBack,
 }: Readonly<{
   device: DeviceNode;
-  shelf: Shelf;
-  frame: Frame;
+  selection: PanelSelection;
   readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
   onInspect: (entity: InspectorEntity) => void;
+  onBack: () => void;
 }>) {
   return (
-    <section
-      className="bdfb-frame-hidden"
-      aria-label={`${frame.label} hidden physical frame · panels rendered directly in shelf`}
-    >
-      <div className="bdfb-panel-grid bdfb-panel-grid--frame-hidden">
-        {frame.panels.map((panel) => (
-          <PanelBoard
-            key={panel.id}
-            device={device}
-            shelf={shelf}
-            frame={frame}
-            panel={panel}
-            readingsByBreaker={readingsByBreaker}
-            onInspect={onInspect}
-          />
-        ))}
+    <section className="bdfb-panel-detail">
+      <header className="bdfb-panel-detail-header">
+        <button type="button" onClick={onBack}>
+          ← DEVICE
+        </button>
+        <div>
+          <span>
+            {selection.shelf.label} / {selection.frame.label}
+          </span>
+          <strong>{selection.panel.label}</strong>
+          <small>Breaker and holder detail · live MQTT overlay</small>
+        </div>
+      </header>
+
+      <div className="bdfb-panel-detail-body">
+        <PanelBoard
+          device={device}
+          shelf={selection.shelf}
+          frame={selection.frame}
+          panel={selection.panel}
+          readingsByBreaker={readingsByBreaker}
+          onInspect={onInspect}
+        />
       </div>
     </section>
   );
@@ -299,14 +322,12 @@ function useBdfbTelemetry(deviceId: string): TelemetrySample | null {
 
 export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
+  const [activePanel, setActivePanel] = useState<PanelSelection | null>(null);
   const telemetry = useBdfbTelemetry(device.id);
   const shelves = device.bdfb?.shelves ?? [];
   const frames = shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
   const endpoints = panels.flatMap((panel) => panel.endpoints);
-  const implicitFrames = frames.filter(
-    (frame) => frame.presentation?.physicalFrameVisible === false,
-  ).length;
 
   const readingsByBreaker = useMemo(
     () =>
@@ -321,11 +342,17 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
       <header className="bdfb-chassis-header">
         <div>
           <span>Physical distribution</span>
-          <strong>Panel layout</strong>
-          <small>Canonical breaker hierarchy with live MQTT measurements when available</small>
+          <strong>{activePanel ? activePanel.panel.label : 'Panel layout'}</strong>
+          <small>
+            {activePanel
+              ? 'Breaker and holder detail with live MQTT measurements when available'
+              : 'Canonical device hierarchy · enter a panel for breaker detail'}
+          </small>
         </div>
+
         <div className="bdfb-chassis-status">
           <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>
+          <StatusBadge>{frames.length} FRAMES</StatusBadge>
           <StatusBadge>{panels.length} PANELS</StatusBadge>
           <StatusBadge>{endpoints.length} ENDPOINTS</StatusBadge>
           {telemetry?.breakerReadings?.length ? (
@@ -333,50 +360,25 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
           ) : (
             <StatusBadge tone="warning">MQTT WAITING</StatusBadge>
           )}
-          {implicitFrames > 0 && (
-            <StatusBadge tone="warning">{implicitFrames} IMPLICIT FRAME</StatusBadge>
-          )}
         </div>
       </header>
 
       <div className="bdfb-chassis-body">
-        {shelves.map((shelf) => (
-          <section className="bdfb-shelf" key={shelf.id}>
-            <header>
-              <span>Shelf</span>
-              <strong>{shelf.label}</strong>
-            </header>
-            <div className="bdfb-shelf-hardware" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-            <div className="bdfb-frame-field">
-              {shelf.frames.map((frame) =>
-                frame.presentation?.physicalFrameVisible === false ? (
-                  <ImplicitFrame
-                    key={frame.id}
-                    device={device}
-                    shelf={shelf}
-                    frame={frame}
-                    readingsByBreaker={readingsByBreaker}
-                    onInspect={setSelected}
-                  />
-                ) : (
-                  <ExplicitFrame
-                    key={frame.id}
-                    device={device}
-                    shelf={shelf}
-                    frame={frame}
-                    readingsByBreaker={readingsByBreaker}
-                    onInspect={setSelected}
-                  />
-                ),
-              )}
-            </div>
-          </section>
-        ))}
+        {activePanel ? (
+          <PanelDetail
+            device={device}
+            selection={activePanel}
+            readingsByBreaker={readingsByBreaker}
+            onInspect={setSelected}
+            onBack={() => setActivePanel(null)}
+          />
+        ) : (
+          <DeviceHierarchyOverview
+            device={device}
+            shelves={shelves}
+            onOpenPanel={setActivePanel}
+          />
+        )}
       </div>
 
       {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}

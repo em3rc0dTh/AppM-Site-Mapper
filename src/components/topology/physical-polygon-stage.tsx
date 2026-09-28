@@ -52,7 +52,7 @@ export function PhysicalPolygonStage({
   items,
   mode,
 }: Readonly<{
-  boundary?: readonly PhysicalPoint[];
+  boundary: readonly PhysicalPoint[] | undefined;
   items: readonly PhysicalPolygonItem[];
   mode: 'site' | 'structure';
 }>) {

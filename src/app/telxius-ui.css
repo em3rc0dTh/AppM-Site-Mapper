@@ -1079,7 +1079,6 @@
   display: none;
 }
 
-
 /* --------------------------------------------------------------------------
    Cluster / Position drill-down
    -------------------------------------------------------------------------- */
@@ -1491,9 +1490,7 @@
   overflow: hidden;
   border: 1px solid #161c2a;
   border-radius: 24px;
-  background:
-    radial-gradient(circle at center, rgba(15, 25, 47, 0.55), transparent 62%),
-    #090d18;
+  background: radial-gradient(circle at center, rgba(15, 25, 47, 0.55), transparent 62%), #090d18;
 }
 
 .zip-rack-cabinet {
@@ -1584,9 +1581,7 @@
   gap: 8px;
   padding: 5px 8px;
   border-color: #a93bb6;
-  background:
-    linear-gradient(90deg, rgba(177, 48, 181, 0.28), rgba(84, 15, 90, 0.44)),
-    #371039;
+  background: linear-gradient(90deg, rgba(177, 48, 181, 0.28), rgba(84, 15, 90, 0.44)), #371039;
 }
 
 .zip-rack-allocation.is-physical strong {
@@ -1789,7 +1784,6 @@
   font-size: 0.58rem;
   font-weight: 850;
 }
-
 
 /* --------------------------------------------------------------------------
    BDFB + Panel Audit — Telxius ZIP fidelity
@@ -2778,7 +2772,6 @@
 .zip-panel-pin {
   margin: 0 22px;
 }
-
 
 /* --------------------------------------------------------------------------
    Generic index fallback

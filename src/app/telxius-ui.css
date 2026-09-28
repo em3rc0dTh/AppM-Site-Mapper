@@ -807,3 +807,865 @@
     min-height: calc(100dvh - 86px);
   }
 }
+
+
+/* --------------------------------------------------------------------------
+   Harmonic composition pass
+   One visual grammar from overview to BDFB:
+   navigation -> context -> physical surface -> contextual properties.
+   -------------------------------------------------------------------------- */
+
+:root {
+  --telxius-nav-width: 236px;
+  --telxius-inspector-width: 264px;
+  --telxius-radius: 10px;
+  --telxius-surface: #070a0f;
+  --telxius-surface-raised: #0d1118;
+  --telxius-line: #1b2430;
+  --telxius-line-soft: #111923;
+  --telxius-accent: #00aee6;
+  --telxius-power: #d68a00;
+}
+
+/* Overview / non-immersive pages use the same proportions as the physical views. */
+.legacy-shell.app-shell:not(.app-shell--immersive) {
+  grid-template-columns: var(--telxius-nav-width) minmax(0, 1fr);
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-primary-rail {
+  top: 44px;
+  height: calc(100dvh - 44px);
+  border-right-color: var(--telxius-line-soft);
+  background: #01030a;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-rail-heading {
+  min-height: 66px;
+  padding: 12px 14px;
+  border-bottom-color: var(--telxius-line-soft);
+  background: #03060b;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-rail-heading-icon {
+  width: 32px;
+  height: 32px;
+  background: #07131d;
+  color: var(--telxius-accent);
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-rail-heading strong {
+  color: #eef3f8;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-rail-heading small {
+  margin-top: 2px;
+  color: #66778d;
+  font-size: 0.52rem;
+  letter-spacing: 0.1em;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-primary-rail nav {
+  padding: 8px;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-primary-rail nav a {
+  min-height: 38px;
+  margin: 2px 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 10px;
+  color: #8fa1b8;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-primary-rail nav a[aria-current='page'] {
+  border-color: #07597b;
+  background: #051925;
+  color: var(--telxius-accent);
+}
+
+.operations-shell {
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 22px 24px 40px;
+}
+
+.operations-shell > .section-header {
+  margin-bottom: 18px;
+}
+
+.operations-shell > .section-header h1 {
+  font-size: clamp(1.65rem, 2vw, 2rem);
+}
+
+.operations-shell > .section-header .eyebrow {
+  color: #7190b6;
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
+}
+
+.metric-grid {
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.metric-tile {
+  min-height: 104px;
+  border-color: var(--telxius-line);
+  border-radius: var(--telxius-radius);
+  padding: 16px 18px;
+  background: var(--telxius-surface-raised);
+}
+
+.metric-tile::before {
+  left: 18px;
+  width: 18px;
+  background: #31576b;
+}
+
+.metric-value {
+  margin: 9px 0 5px;
+  font-size: 1.7rem;
+}
+
+.workspace-mode {
+  margin: 10px 0 14px;
+  border-color: var(--telxius-line);
+  border-radius: 8px;
+  background: #070b11;
+}
+
+.operations-grid {
+  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 2fr) minmax(240px, 0.78fr);
+  gap: 10px;
+}
+
+.workspace-tree,
+.workspace-side-section,
+.workspace-summary-card {
+  border-color: var(--telxius-line);
+  border-radius: var(--telxius-radius);
+  background: var(--telxius-surface-raised);
+}
+
+.workspace-summary-card {
+  min-height: 72px;
+  padding: 13px 14px;
+}
+
+.workspace-summary-card strong {
+  color: #edf3f9;
+  font-size: 0.78rem;
+}
+
+.workspace-summary-card span {
+  color: #74859a;
+  font-size: 0.7rem;
+}
+
+.workspace-tree {
+  padding: 12px;
+}
+
+.workspace-tree li > a {
+  border-radius: 5px;
+  padding: 5px 7px;
+}
+
+.workspace-tree li > a:hover,
+.workspace-compact-list a:hover {
+  background: #07131d;
+}
+
+/* Common operational proportions. */
+.app-shell--immersive .operational-layout,
+.telxius-operational-layout {
+  grid-template-columns: var(--telxius-nav-width) minmax(0, 1fr) var(--telxius-inspector-width);
+}
+
+.telxius-tree-node > a {
+  min-height: 36px;
+}
+
+.telxius-tree-copy strong {
+  font-size: 0.66rem;
+  letter-spacing: 0.025em;
+}
+
+.telxius-operational-stage .operational-stage-body {
+  padding: 0 12px 12px;
+}
+
+.telxius-properties > header {
+  min-height: 46px;
+  padding: 0 16px;
+  letter-spacing: 0.18em;
+}
+
+.telxius-properties section {
+  padding: 14px 16px 0;
+}
+
+.telxius-property-card {
+  min-height: 58px;
+  border-color: var(--telxius-line);
+  border-radius: 9px;
+  padding: 12px 13px;
+  background: #0b0f16;
+}
+
+.telxius-stat-stack {
+  gap: 10px;
+}
+
+.telxius-inspect-hint {
+  gap: 12px;
+  margin-top: 38px;
+}
+
+.telxius-inspect-hint > span {
+  width: 48px;
+  height: 48px;
+}
+
+/* Site / Structure / Level: same drafting surface and controls. */
+.telxius-physical-map {
+  border-color: var(--telxius-line);
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 8px #0b0e12;
+}
+
+.telxius-physical-map svg {
+  padding: 20px;
+}
+
+.telxius-map-controls {
+  right: 16px;
+  bottom: 16px;
+  gap: 6px;
+}
+
+.telxius-map-controls span {
+  width: 36px;
+  height: 36px;
+  border-color: #20384a;
+  border-radius: 7px;
+  background: #09121b;
+  font-size: 0.82rem;
+}
+
+.telxius-structure-stage .telxius-physical-map {
+  padding-right: 54px;
+}
+
+.telxius-elevator {
+  top: 16px;
+  right: 14px;
+  bottom: 16px;
+  width: 44px;
+  gap: 12px;
+  border: 1px solid var(--telxius-line);
+  border-radius: 10px;
+  background: #090c11;
+}
+
+.telxius-elevator > span {
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+}
+
+.telxius-elevator > div {
+  padding: 0 5px;
+}
+
+.telxius-elevator a {
+  min-height: 36px;
+  border-radius: 6px;
+}
+
+.telxius-elevator a.is-active {
+  box-shadow: none;
+}
+
+/* Room: quieter drafting layer so cluster/rack content remains readable. */
+.telxius-operational-stage .blueprint-panel,
+.operational-page--blueprint .blueprint-panel {
+  border-radius: 12px;
+  box-shadow: inset 0 0 0 8px #0b0e12;
+}
+
+.blueprint-cluster {
+  fill: rgba(0, 120, 150, 0.08);
+  stroke: #087a9f;
+  stroke-width: 14px;
+}
+
+.blueprint-cluster-label {
+  fill: #29a7d0;
+  font-size: 104px;
+  font-weight: 800;
+  letter-spacing: 0.045em;
+}
+
+.app-shell--immersive .blueprint-slot {
+  fill: rgba(0, 78, 104, 0.055);
+  stroke: #175b75;
+  stroke-width: 7px;
+}
+
+.app-shell--immersive .blueprint-rack {
+  fill: rgba(0, 115, 91, 0.2);
+  stroke: #13856d;
+  stroke-width: 12px;
+}
+
+.app-shell--immersive .blueprint-rack-label {
+  font-size: 88px;
+}
+
+/* Cluster is a zoom of the room, not a separate visual language. */
+.legacy-visual-stage--container_cluster_bay .legacy-stage-canvas,
+.legacy-visual-stage--position .legacy-stage-canvas,
+.legacy-visual-stage--level .legacy-stage-canvas {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+.legacy-visual-stage--container_cluster_bay .legacy-stage-toolbar,
+.legacy-visual-stage--position .legacy-stage-toolbar,
+.legacy-visual-stage--level .legacy-stage-toolbar {
+  min-height: 46px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--telxius-line);
+  background: #06090e;
+}
+
+.legacy-visual-stage--container_cluster_bay .legacy-stage-toolbar strong,
+.legacy-visual-stage--position .legacy-stage-toolbar strong,
+.legacy-visual-stage--level .legacy-stage-toolbar strong {
+  font-size: 0.74rem;
+}
+
+.legacy-visual-stage--container_cluster_bay .legacy-stage-toolbar span,
+.legacy-visual-stage--position .legacy-stage-toolbar span,
+.legacy-visual-stage--level .legacy-stage-toolbar span {
+  font-size: 0.56rem;
+}
+
+.telxius-cluster-focus {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  padding: 44px 24px 22px 48px;
+  border: 1px solid var(--telxius-line);
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(22, 43, 57, 0.38) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(22, 43, 57, 0.38) 1px, transparent 1px),
+    #04070b;
+  background-size: 12.5% 25%;
+}
+
+.telxius-cluster-grid {
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.telxius-cluster-axis {
+  position: absolute;
+  display: grid;
+  color: #52667d;
+  font:
+    0.54rem ui-monospace,
+    monospace;
+}
+
+.telxius-cluster-axis--top {
+  top: 17px;
+  left: 48px;
+  right: 24px;
+  grid-template-columns: repeat(8, 1fr);
+  text-align: center;
+}
+
+.telxius-cluster-axis--left {
+  top: 44px;
+  bottom: 22px;
+  left: 18px;
+  grid-template-rows: repeat(4, 1fr);
+  align-items: center;
+}
+
+.telxius-position-tile {
+  min-width: 0;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
+  align-self: center;
+  gap: 8px;
+  border: 1px solid #27465a;
+  border-radius: 7px;
+  padding: 10px;
+  background: #09131b;
+  color: #b8c8d8;
+}
+
+.telxius-position-tile:hover {
+  border-color: #0b7fa9;
+  background: #0a1a25;
+}
+
+.telxius-position-dot {
+  width: 7px;
+  height: 7px;
+  align-self: center;
+  border-radius: 50%;
+  background: var(--telxius-accent);
+}
+
+.telxius-position-tile small {
+  color: #597288;
+  font-size: 0.5rem;
+}
+
+.telxius-position-tile strong {
+  color: #eef4f8;
+  font-size: 0.72rem;
+}
+
+.telxius-position-focus {
+  position: relative;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--telxius-line);
+  border-radius: 12px;
+  background: #04070b;
+}
+
+.telxius-position-guide {
+  position: absolute;
+  inset: 18%;
+  border: 1px dashed #1b2a38;
+  border-radius: 12px;
+}
+
+.telxius-position-guide span {
+  position: absolute;
+  background: #182633;
+}
+
+.telxius-position-guide span:nth-child(1) {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.telxius-position-guide span:nth-child(2) {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.telxius-position-guide span:nth-child(3) {
+  width: 8px;
+  height: 8px;
+  left: calc(50% - 4px);
+  top: calc(50% - 4px);
+  border-radius: 50%;
+  background: #33566c;
+}
+
+.telxius-position-content {
+  z-index: 1;
+  width: min(520px, 78%);
+  display: grid;
+  gap: 10px;
+}
+
+.telxius-position-rack-card {
+  min-height: 84px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #2a3b4c;
+  border-radius: 9px;
+  padding: 14px 16px;
+  background: #0b1017;
+  color: #cbd7e3;
+}
+
+.telxius-position-rack-card:hover {
+  border-color: #0e7195;
+  background: #0c1620;
+}
+
+.telxius-position-rack-icon {
+  width: 40px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #44576a;
+  background: #111821;
+}
+
+.telxius-position-rack-card small {
+  color: #6a7d91;
+  font-size: 0.54rem;
+}
+
+.telxius-position-rack-card strong {
+  color: #f0f4f8;
+  font-size: 0.88rem;
+}
+
+.telxius-position-rack-card .legacy-stage-enter {
+  color: var(--telxius-accent);
+  font-size: 0.55rem;
+}
+
+/* Rack: remove the nested navigation column and keep the same three-zone composition. */
+.app-shell--immersive .operational-layout--rack {
+  height: calc(100dvh - 86px);
+  grid-template-columns: var(--telxius-nav-width) minmax(0, 1fr);
+}
+
+.telxius-rack-view {
+  height: 100%;
+  grid-template-columns: minmax(0, 1fr) var(--telxius-inspector-width);
+  background: #030507;
+}
+
+.telxius-rack-main {
+  min-width: 0;
+  background: #030507;
+}
+
+.telxius-rack-main > .section-header {
+  min-height: 84px;
+  margin: 0;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--telxius-line-soft);
+  background: #030507;
+}
+
+.telxius-rack-main > .section-header h1 {
+  margin: 2px 0 4px;
+  font-size: 1.6rem;
+}
+
+.legacy-rack-canvas {
+  padding: 18px 24px 28px;
+  background:
+    linear-gradient(rgba(18, 26, 35, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 26, 35, 0.4) 1px, transparent 1px),
+    #030507;
+  background-size: 40px 40px;
+}
+
+.legacy-rack-heading,
+.legacy-rack-frame {
+  width: min(360px, 72%);
+}
+
+.legacy-rack-heading {
+  margin-bottom: 10px;
+}
+
+.legacy-rack-heading strong {
+  font-size: 1.15rem;
+}
+
+.legacy-rack-frame {
+  min-height: 0;
+  height: min(620px, calc(100dvh - 190px));
+  border: 1px solid #394858;
+  border-radius: 8px 8px 0 0;
+  box-shadow: none;
+}
+
+.telxius-rack-properties {
+  border-left: 1px solid var(--telxius-line-soft);
+  background: #01030a;
+}
+
+.telxius-rack-properties .legacy-properties-header,
+.telxius-rack-properties .legacy-property-section {
+  padding-inline: 16px;
+}
+
+.telxius-rack-properties .legacy-properties-header {
+  min-height: 94px;
+  border-bottom-color: var(--telxius-line-soft);
+}
+
+.telxius-rack-properties .legacy-property-section {
+  border-bottom-color: var(--telxius-line-soft);
+}
+
+/* BDFB: power remains amber; hierarchy and framing remain neutral. */
+.bdfb-chassis {
+  background: #030507;
+}
+
+.bdfb-chassis-header {
+  min-height: 60px;
+  flex-basis: 60px;
+  padding: 10px 14px;
+  border-bottom-color: var(--telxius-line-soft);
+  background: #05080d;
+}
+
+.bdfb-chassis-header > div:first-child > span {
+  color: #7088a5;
+}
+
+.bdfb-chassis-header > div:first-child > strong {
+  font-size: 1rem;
+}
+
+.bdfb-chassis-header > div:first-child > small {
+  font-size: 0.54rem;
+}
+
+.bdfb-chassis-status {
+  gap: 5px;
+}
+
+.bdfb-chassis-body {
+  align-content: start;
+  gap: 12px;
+  padding: 14px;
+}
+
+.bdfb-shelf {
+  width: min(1100px, 100%);
+  min-height: 0;
+  padding: 46px 12px 12px;
+  border: 1px solid #28323e;
+  border-radius: 10px;
+  background: #070a0f;
+  box-shadow: none;
+}
+
+.bdfb-shelf > header {
+  top: 13px;
+  left: 16px;
+}
+
+.bdfb-shelf > header strong {
+  color: #e5ebf1;
+  font-size: 0.82rem;
+}
+
+.bdfb-shelf-hardware {
+  top: 13px;
+  right: 16px;
+  gap: 6px;
+}
+
+.bdfb-shelf-hardware span {
+  width: 18px;
+  height: 12px;
+  border-color: #34404d;
+  border-radius: 3px;
+  background: #0c1017;
+  box-shadow: none;
+}
+
+.bdfb-frame-field {
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bdfb-frame,
+.bdfb-frame-hidden {
+  min-height: 0;
+}
+
+.bdfb-frame {
+  padding: 38px 10px 10px;
+  border: 1px solid #27384a;
+  border-radius: 8px;
+  background: #080c12;
+}
+
+.bdfb-frame::before,
+.bdfb-frame::after {
+  display: none;
+}
+
+.bdfb-frame > header {
+  top: 10px;
+  left: 12px;
+  right: 12px;
+}
+
+.bdfb-frame > header span {
+  color: #5f8aa3;
+}
+
+.bdfb-frame > header strong {
+  color: #dce5ed;
+  font-size: 0.72rem;
+}
+
+.bdfb-panel-grid,
+.bdfb-panel-grid--frame-hidden {
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.bdfb-panel-board {
+  min-height: 0;
+  border: 1px solid #2a3541;
+  border-radius: 7px;
+  background: #080b10;
+  box-shadow: none;
+}
+
+.bdfb-panel-board::before,
+.bdfb-panel-board::after {
+  opacity: 0.42;
+  top: 48px;
+  bottom: 10px;
+  width: 4px;
+  box-shadow: none;
+}
+
+.bdfb-panel-board::before {
+  left: 10px;
+}
+
+.bdfb-panel-board::after {
+  right: 10px;
+}
+
+.bdfb-panel-title {
+  min-height: 44px;
+  padding: 6px 12px;
+  border-bottom-color: #272d36;
+  background: #0e1218;
+}
+
+.bdfb-panel-title > span,
+.bdfb-panel-title > small {
+  font-size: 0.47rem;
+}
+
+.bdfb-panel-title > strong {
+  color: var(--telxius-power);
+  font-size: 0.72rem;
+}
+
+.bdfb-panel-busbar {
+  top: 58px;
+  bottom: 12px;
+  width: 4px;
+  opacity: 0.48;
+  box-shadow: none;
+}
+
+.bdfb-panel-busbar--a {
+  left: 10px;
+  box-shadow: none;
+}
+
+.bdfb-panel-busbar--b {
+  right: 10px;
+  box-shadow: none;
+}
+
+.bdfb-panel-busbar span {
+  display: none;
+}
+
+.bdfb-endpoint-grid {
+  height: auto;
+  min-height: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-content: start;
+  gap: 5px;
+  padding: 10px 20px 12px;
+}
+
+.bdfb-endpoint {
+  min-height: 40px;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 1px 5px;
+  padding: 5px 6px;
+  border-color: #283746;
+  border-radius: 5px;
+  background: #0b1016;
+  box-shadow: none;
+}
+
+.bdfb-endpoint::before,
+.bdfb-endpoint::after {
+  display: none;
+}
+
+.bdfb-endpoint > span {
+  width: 20px;
+  height: 22px;
+  border-color: #2c5e77;
+  font-size: 0.46rem;
+}
+
+.bdfb-endpoint > strong {
+  font-size: 0.55rem;
+}
+
+.bdfb-endpoint > small {
+  font-size: 0.42rem;
+}
+
+.bdfb-endpoint--breaker {
+  border-color: #176f8c;
+  background: #09151d;
+  box-shadow: none;
+}
+
+.bdfb-endpoint--holder {
+  opacity: 0.62;
+  background: #080c11;
+}
+
+/* Generic index fallback remains quiet and secondary. */
+.telxius-network-index .panel,
+.telxius-network-index .create-form {
+  border-color: var(--telxius-line);
+  border-radius: var(--telxius-radius);
+  background: var(--telxius-surface-raised);
+}
+
+@media (max-width: 1280px) {
+  :root {
+    --telxius-nav-width: 220px;
+    --telxius-inspector-width: 244px;
+  }
+
+  .bdfb-endpoint-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1040px) {
+  .operations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bdfb-frame-field {
+    grid-template-columns: 1fr;
+  }
+}

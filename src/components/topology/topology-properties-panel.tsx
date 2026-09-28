@@ -108,6 +108,54 @@ export function TopologyPropertiesPanel({
     );
   }
 
+
+  if (node.kind === 'DEVICE' && node.bdfb) {
+    const shelves = node.bdfb.shelves;
+    const frames = shelves.flatMap((shelf) => shelf.frames);
+    const panels = frames.flatMap((frame) => frame.panels);
+    const endpoints = panels.flatMap((panel) => panel.endpoints);
+    const breakers = endpoints.filter((endpoint) => endpoint.variant === 'BREAKER').length;
+
+    return (
+      <aside className="telxius-properties">
+        <header>BDFB PROPERTIES</header>
+        <section className="telxius-stat-stack">
+          <div className="telxius-property-card">
+            <span>SHELVES</span>
+            <strong>{shelves.length}</strong>
+          </div>
+          <div className="telxius-property-card">
+            <span>FRAMES / PANELS</span>
+            <strong>
+              {frames.length} / {panels.length}
+            </strong>
+          </div>
+          <div className="telxius-property-card">
+            <span>ACTIVE BREAKERS</span>
+            <strong>{breakers}</strong>
+          </div>
+        </section>
+        <section>
+          <h3>IDENTITY</h3>
+          <dl className="telxius-property-list">
+            <div>
+              <dt>CATEGORY</dt>
+              <dd>{value(node.category)}</dd>
+            </div>
+            <div>
+              <dt>SERIAL</dt>
+              <dd>{value(node.serialNumber)}</dd>
+            </div>
+            <div>
+              <dt>ENDPOINTS</dt>
+              <dd>{endpoints.length}</dd>
+            </div>
+          </dl>
+        </section>
+      </aside>
+    );
+  }
+
   if (node.kind === 'ROOM_SUBSTRUCTURE') {
     return (
       <aside className="telxius-properties">

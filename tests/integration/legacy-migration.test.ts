@@ -80,4 +80,251 @@ describe('legacy migration planner', () => {
     expect(first.nodes).toEqual(second.nodes);
     expect(first.idMap).toEqual(second.idMap);
   });
+  it('materializes deployed legacy positions, CAS and embedded BDFB bindings', () => {
+    let cursor = 0;
+    const plan = planLegacyMigration(
+      {
+        network: { id: 'network-id', name: 'Network' },
+        collections: {
+          Site: [{ id: 'site-1', name: 'Site' }],
+          Structure: [{ id: 'structure-1', name: 'Structure', siteId: 'site-1' }],
+          Level: [{ id: 'level-1', name: 'Level', structureId: 'structure-1' }],
+          Substructure: [{ id: 'room-1', name: 'Room', levelId: 'level-1' }],
+          ContainerCluster: [{ id: 'cluster-1', name: 'Cluster-Demo', substructureId: 'room-1' }],
+          Container: [
+            {
+              id: 'rack-1',
+              name: 'RACK-EATON-04',
+              type: 'CABINET',
+              parentId: 'cluster-1',
+              parentType: 'cluster',
+              grid_coordinate: ['C-6'],
+              CAS: [
+                {
+                  id: 'cas-1',
+                  casStatus: 'EQUIPPED',
+                  mounting: {
+                    startPosition: 1,
+                    endPosition: 42,
+                    physicalSize: 42,
+                    clearance: { top: 1, bottom: 1 },
+                  },
+                  device: { id: 'bdfb-1' },
+                },
+              ],
+            },
+          ],
+          Device: [
+            {
+              id: 'bdfb-1',
+              label: 'BDFB-TEST-1',
+              category: 'BDFB',
+              sn: '25110703400009',
+              parentId: 'rack-1',
+              shelves: [
+                {
+                  id: 'shelf-1',
+                  label: 'Main Shelf',
+                  frames: [
+                    {
+                      id: 'frame-a',
+                      label: 'Frame A',
+                      visible: true,
+                      panels: [
+                        {
+                          id: 'panel-a1',
+                          label: 'Panel A1',
+                          position: 1,
+                          breakers: [
+                            {
+                              id: 'breaker-a1-1',
+                              position: 1,
+                              label: 'CB-EATON-01',
+                              status: 'HOLDER',
+                              breaker: null,
+                              capacity: 25,
+                            },
+                            {
+                              id: 'holder-a1-2',
+                              position: 2,
+                              label: 'Holder 2',
+                              status: 'HOLDER',
+                              breaker: null,
+                            },
+                          ],
+                        },
+                        {
+                          id: 'panel-a2',
+                          label: 'Panel A2',
+                          position: 2,
+                          breakers: [],
+                        },
+                      ],
+                    },
+                    {
+                      id: 'frame-b',
+                      label: 'Frame B',
+                      visible: true,
+                      panels: [
+                        {
+                          id: 'panel-b1',
+                          label: 'Panel B1',
+                          position: 1,
+                          breakers: [
+                            {
+                              id: 'breaker-b1-1',
+                              position: 1,
+                              label: 'CB-Breaker-1',
+                              status: 'HOLDER',
+                              breaker: null,
+                              capacity: 30,
+                            },
+                          ],
+                        },
+                        {
+                          id: 'panel-b2',
+                          label: 'Panel B2',
+                          position: 2,
+                          breakers: [],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        bfdbPanelTelemetryPrefixes: {
+          'bdfb-1': {
+            'Panel A1': '0_1_',
+            'Panel A2': '0_2_',
+            'Panel B1': '0_3_',
+            'Panel B2': '0_4_',
+          },
+        },
+      },
+      {
+        now: '2026-09-28T00:00:00.000Z',
+        createId: () => `generated-${++cursor}`,
+      },
+    );
+
+    expect(plan.rejections).toEqual([]);
+
+    const position = plan.nodes.find((node) => node.kind === 'POSITION');
+    const rack = plan.nodes.find((node) => node.legacyId === 'rack-1');
+    const device = plan.nodes.find((node) => node.legacyId === 'bdfb-1');
+
+    expect(position).toMatchObject({
+      name: 'C-6',
+      coordinate: { row: 'C', column: 6 },
+    });
+    expect(rack).toMatchObject({
+      parentId: position?.id,
+      kind: 'CONTAINER_RACK',
+      variant: 'RACK',
+      totalU: 42,
+    });
+
+    const cas = (rack?.cas as readonly Record<string, unknown>[]) ?? [];
+    expect(cas).toHaveLength(1);
+    expect(cas[0]).toMatchObject({
+      startU: 1,
+      endU: 42,
+      state: 'EQUIPPED',
+      physicalSizeU: 42,
+      clearanceTopU: 1,
+      clearanceBottomU: 1,
+      occupantId: device?.id,
+    });
+
+    const bdfb = device?.bdfb as {
+      shelves: Array<{
+        frames: Array<{
+          label: string;
+          panels: Array<{
+            label: string;
+            endpoints: Array<{
+              id: string;
+              variant: string;
+              label: string;
+              telemetry?: { rawPointId: string };
+            }>;
+          }>;
+        }>;
+      }>;
+    };
+
+    const panels = bdfb.shelves[0]!.frames.flatMap((frame) => frame.panels);
+    const a1 = panels.find((panel) => panel.label === 'Panel A1')!;
+    const b1 = panels.find((panel) => panel.label === 'Panel B1')!;
+
+    expect(a1.endpoints[0]).toMatchObject({
+      id: 'breaker-a1-1',
+      variant: 'BREAKER',
+      label: 'CB-EATON-01',
+      telemetry: { rawPointId: '0_1_1' },
+    });
+    expect(a1.endpoints[1]).toMatchObject({
+      id: 'holder-a1-2',
+      variant: 'HOLDER',
+      label: 'Holder 2',
+    });
+    expect(a1.endpoints[1]?.telemetry).toBeUndefined();
+    expect(b1.endpoints[0]).toMatchObject({
+      variant: 'BREAKER',
+      telemetry: { rawPointId: '0_3_1' },
+    });
+
+    expect(plan.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceCollection: 'Container',
+          legacyId: 'rack-1',
+          message: expect.stringContaining('Derived canonical Position C-6'),
+        }),
+      ]),
+    );
+  });
+
+  it('preserves an unproven legacy rack as a container instead of inventing U capacity', () => {
+    const plan = planLegacyMigration(
+      {
+        network: { id: 'network-id', name: 'Network' },
+        collections: {
+          Site: [{ id: 'site-1', name: 'Site' }],
+          Structure: [{ id: 'structure-1', name: 'Structure', siteId: 'site-1' }],
+          Level: [{ id: 'level-1', name: 'Level', structureId: 'structure-1' }],
+          Substructure: [{ id: 'room-1', name: 'Room', levelId: 'level-1' }],
+          ContainerCluster: [{ id: 'cluster-1', name: 'Cluster-Demo', substructureId: 'room-1' }],
+          Container: [
+            {
+              id: 'rack-empty',
+              name: 'RACK-EATON-02',
+              type: 'RACK',
+              parentId: 'cluster-1',
+              parentType: 'cluster',
+              grid_coordinate: ['C-4'],
+            },
+          ],
+        },
+      },
+      { createId: () => 'generated-id' },
+    );
+
+    expect(plan.rejections).toEqual([]);
+    expect(plan.nodes.find((node) => node.legacyId === 'rack-empty')).toMatchObject({
+      kind: 'CONTAINER_RACK',
+      variant: 'CONTAINER',
+    });
+    expect(plan.warnings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          legacyId: 'rack-empty',
+          message: expect.stringContaining('without evidence of U capacity'),
+        }),
+      ]),
+    );
+  });
 });

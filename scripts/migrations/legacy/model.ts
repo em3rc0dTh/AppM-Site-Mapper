@@ -6,6 +6,12 @@ export interface LegacyMigrationInput {
     name: string;
   }>;
   readonly collections: Readonly<Record<string, readonly LegacyRecord[]>>;
+  /**
+   * Optional evidence-backed MQTT bindings for embedded legacy BDFB panels.
+   * Keyed by legacy Device ID, then exact panel label. Values are raw-point
+   * prefixes such as "0_1_". A legacy panel.telemetryPrefix wins when present.
+   */
+  readonly bfdbPanelTelemetryPrefixes?: Readonly<Record<string, Readonly<Record<string, string>>>>;
   readonly idMap?: Readonly<Record<string, string>>;
 }
 

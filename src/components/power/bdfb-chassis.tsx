@@ -70,7 +70,10 @@ function locationIcon(kind: string): string {
   }
 }
 
-function metric(reading: BreakerTelemetryReading | undefined, key: 'voltageV' | 'currentA' | 'powerW' | 'energyKwh') {
+function metric(
+  reading: BreakerTelemetryReading | undefined,
+  key: 'voltageV' | 'currentA' | 'powerW' | 'energyKwh',
+) {
   return reading?.metrics[key]?.value;
 }
 
@@ -124,9 +127,14 @@ function LocationContext({
         <ol>
           {trail
             .filter((item) =>
-              ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY', 'POSITION', 'CONTAINER_RACK'].includes(
-                item.kind,
-              ),
+              [
+                'SITE',
+                'STRUCTURE',
+                'ROOM_SUBSTRUCTURE',
+                'CONTAINER_CLUSTER_BAY',
+                'POSITION',
+                'CONTAINER_RACK',
+              ].includes(item.kind),
             )
             .map((item) => (
               <li key={item.id}>
@@ -140,11 +148,7 @@ function LocationContext({
       <section className="zip-bdfb-internals-tree">
         <h2>{activePanel ? 'PANEL INTERNALS' : 'DEVICE INTERNALS'}</h2>
 
-        <button
-          type="button"
-          className={activePanel ? '' : 'is-active'}
-          onClick={onDeviceOverview}
-        >
+        <button type="button" className={activePanel ? '' : 'is-active'} onClick={onDeviceOverview}>
           <span>〽</span>
           <strong>{device.name}</strong>
         </button>
@@ -393,7 +397,9 @@ function PanelAudit({
 
       <main className="zip-panel-center">
         <header className="zip-panel-titlebar">
-          <span>HIGH DENSITY AUDIT <i /></span>
+          <span>
+            HIGH DENSITY AUDIT <i />
+          </span>
           <h1>
             {context.panel.label} <b>/ {context.panel.endpoints.length} Slots</b>
           </h1>

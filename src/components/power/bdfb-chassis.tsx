@@ -1,7 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import { PinButton } from '@/components/workspace/pin-button';
 import type {
   BreakerHolder,
   DeviceNode,
@@ -10,264 +12,18 @@ import type {
   Shelf,
 } from '@/modules/topology/domain/entities';
 import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
-import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
-import { StatusBadge } from '@/shared/ui/primitives';
 
-function formatMetric(value: number | undefined, unit: string, decimals = 2): string {
-  return value === undefined ? '—' : `${value.toFixed(decimals)} ${unit}`;
+export interface BdfbAuditTrailItem {
+  readonly id: string;
+  readonly name: string;
+  readonly kind: string;
+  readonly href: string;
 }
 
-function telemetryFields(reading: BreakerTelemetryReading) {
-  return [
-    { label: 'MQTT source', value: reading.sourceIdentity },
-    { label: 'Raw point', value: reading.rawPointId },
-    { label: 'State', value: reading.state?.value ?? 'Not reported' },
-    {
-      label: 'Voltage',
-      value: formatMetric(reading.metrics.voltageV?.value, 'V'),
-    },
-    {
-      label: 'Current',
-      value: formatMetric(reading.metrics.currentA?.value, 'A'),
-    },
-    {
-      label: 'Power',
-      value: formatMetric(reading.metrics.powerW?.value, 'W'),
-    },
-    {
-      label: 'Energy',
-      value: formatMetric(reading.metrics.energyKwh?.value, 'kWh', 4),
-    },
-    { label: 'Last MQTT packet', value: reading.receivedAt },
-  ];
-}
-
-function endpointInspector(
-  device: DeviceNode,
-  shelf: Shelf,
-  frame: Frame,
-  panel: Panel,
-  endpoint: BreakerHolder,
-  reading?: BreakerTelemetryReading,
-): InspectorEntity {
-  return {
-    name: endpoint.label,
-    kind: endpoint.variant,
-    ...(reading?.state ? { status: reading.state.value } : {}),
-    sections: [
-      {
-        title: 'Electrical endpoint',
-        fields: [
-          { label: 'BDFB', value: device.name },
-          { label: 'Shelf', value: shelf.label },
-          {
-            label: 'Frame',
-            value:
-              frame.presentation?.physicalFrameVisible === false
-                ? `${frame.label} · implicit`
-                : frame.label,
-          },
-          { label: 'Panel', value: panel.label },
-          { label: 'Capacity', value: endpoint.capacity ?? 'Not specified' },
-          { label: 'Endpoint ID', value: endpoint.id },
-          {
-            label: 'MQTT binding',
-            value: endpoint.telemetry?.rawPointId ?? 'Panel order + position',
-          },
-        ],
-      },
-      ...(reading
-        ? [
-            {
-              title: 'MQTT telemetry',
-              fields: telemetryFields(reading),
-            },
-          ]
-        : []),
-    ],
-  };
-}
-
-function panelInspector(
-  device: DeviceNode,
-  shelf: Shelf,
-  frame: Frame,
-  panel: Panel,
-): InspectorEntity {
-  return {
-    name: panel.label,
-    kind: 'PANEL',
-    sections: [
-      {
-        title: 'Physical hierarchy',
-        fields: [
-          { label: 'BDFB', value: device.name },
-          { label: 'Shelf', value: shelf.label },
-          {
-            label: 'Frame',
-            value:
-              frame.presentation?.physicalFrameVisible === false
-                ? `${frame.label} · implicit`
-                : frame.label,
-          },
-          { label: 'Endpoints', value: panel.endpoints.length },
-        ],
-      },
-    ],
-  };
-}
-
-function endpointPreview(
-  endpoint: BreakerHolder,
-  reading: BreakerTelemetryReading | undefined,
-): string {
-  if (!reading) return endpoint.variant;
-
-  const voltage = reading.metrics.voltageV?.value;
-  const current = reading.metrics.currentA?.value;
-
-  if (voltage !== undefined || current !== undefined) {
-    return [
-      voltage === undefined ? null : `${voltage.toFixed(1)} V`,
-      current === undefined ? null : `${current.toFixed(1)} A`,
-    ]
-      .filter(Boolean)
-      .join(' · ');
-  }
-
-  return reading.state?.value ?? endpoint.variant;
-}
-
-function PanelBoard({
-  device,
-  shelf,
-  frame,
-  panel,
-  readingsByBreaker,
-  onInspect,
-}: Readonly<{
-  device: DeviceNode;
-  shelf: Shelf;
-  frame: Frame;
-  panel: Panel;
-  readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
-  onInspect: (entity: InspectorEntity) => void;
-}>) {
-  return (
-    <article className="bdfb-panel-board">
-      <button
-        type="button"
-        className="bdfb-panel-title"
-        onClick={() => onInspect(panelInspector(device, shelf, frame, panel))}
-      >
-        <span>Panel</span>
-        <strong>{panel.label}</strong>
-        <small>{panel.endpoints.length} endpoints</small>
-      </button>
-      <div className="bdfb-panel-busbar bdfb-panel-busbar--a" aria-hidden="true">
-        <span>BUS A</span>
-      </div>
-      <div className="bdfb-panel-busbar bdfb-panel-busbar--b" aria-hidden="true">
-        <span>BUS B</span>
-      </div>
-      <div className="bdfb-endpoint-grid">
-        {panel.endpoints.length ? (
-          panel.endpoints.map((endpoint, index) => {
-            const reading = readingsByBreaker[endpoint.id];
-
-            return (
-              <button
-                type="button"
-                key={endpoint.id}
-                className={`bdfb-endpoint bdfb-endpoint--${endpoint.variant.toLowerCase()}`}
-                onClick={() =>
-                  onInspect(endpointInspector(device, shelf, frame, panel, endpoint, reading))
-                }
-                title={endpoint.label}
-              >
-                <span>{(index + 1).toString().padStart(2, '0')}</span>
-                <strong>{endpoint.label}</strong>
-                <small>{endpointPreview(endpoint, reading)}</small>
-              </button>
-            );
-          })
-        ) : (
-          <div className="bdfb-empty-endpoints">No endpoints configured</div>
-        )}
-      </div>
-    </article>
-  );
-}
-
-function ExplicitFrame({
-  device,
-  shelf,
-  frame,
-  readingsByBreaker,
-  onInspect,
-}: Readonly<{
-  device: DeviceNode;
-  shelf: Shelf;
-  frame: Frame;
-  readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
-  onInspect: (entity: InspectorEntity) => void;
-}>) {
-  return (
-    <section className="bdfb-frame">
-      <header>
-        <span>Physical frame</span>
-        <strong>{frame.label}</strong>
-      </header>
-      <div className="bdfb-panel-grid">
-        {frame.panels.map((panel) => (
-          <PanelBoard
-            key={panel.id}
-            device={device}
-            shelf={shelf}
-            frame={frame}
-            panel={panel}
-            readingsByBreaker={readingsByBreaker}
-            onInspect={onInspect}
-          />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function ImplicitFrame({
-  device,
-  shelf,
-  frame,
-  readingsByBreaker,
-  onInspect,
-}: Readonly<{
-  device: DeviceNode;
-  shelf: Shelf;
-  frame: Frame;
-  readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
-  onInspect: (entity: InspectorEntity) => void;
-}>) {
-  return (
-    <section
-      className="bdfb-frame-hidden"
-      aria-label={`${frame.label} hidden physical frame · panels rendered directly in shelf`}
-    >
-      <div className="bdfb-panel-grid bdfb-panel-grid--frame-hidden">
-        {frame.panels.map((panel) => (
-          <PanelBoard
-            key={panel.id}
-            device={device}
-            shelf={shelf}
-            frame={frame}
-            panel={panel}
-            readingsByBreaker={readingsByBreaker}
-            onInspect={onInspect}
-          />
-        ))}
-      </div>
-    </section>
-  );
+interface PanelContext {
+  readonly shelf: Shelf;
+  readonly frame: Frame;
+  readonly panel: Panel;
 }
 
 function useBdfbTelemetry(deviceId: string): TelemetrySample | null {
@@ -283,9 +39,7 @@ function useBdfbTelemetry(deviceId: string): TelemetrySample | null {
 
     const onTelemetry = (event: MessageEvent<string>) => {
       const incoming = JSON.parse(event.data) as TelemetrySample;
-      if (incoming.entityId === deviceId) {
-        setSample(incoming);
-      }
+      if (incoming.entityId === deviceId) setSample(incoming);
     };
 
     stream.addEventListener('snapshot', onSnapshot as EventListener);
@@ -297,89 +51,551 @@ function useBdfbTelemetry(deviceId: string): TelemetrySample | null {
   return sample;
 }
 
-export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
-  const [selected, setSelected] = useState<InspectorEntity | null>(null);
-  const telemetry = useBdfbTelemetry(device.id);
+function locationIcon(kind: string): string {
+  switch (kind) {
+    case 'SITE':
+      return '📍';
+    case 'STRUCTURE':
+      return '🏢';
+    case 'ROOM_SUBSTRUCTURE':
+      return '🚪';
+    case 'CONTAINER_CLUSTER_BAY':
+      return '◆';
+    case 'POSITION':
+      return '◇';
+    case 'CONTAINER_RACK':
+      return '▥';
+    default:
+      return '·';
+  }
+}
+
+function metric(reading: BreakerTelemetryReading | undefined, key: 'voltageV' | 'currentA' | 'powerW' | 'energyKwh') {
+  return reading?.metrics[key]?.value;
+}
+
+function format(value: number | undefined, unit: string, decimals = 2): string {
+  return value === undefined ? '—' : `${value.toFixed(decimals)}${unit}`;
+}
+
+function aggregate(readings: readonly BreakerTelemetryReading[]) {
+  const currents = readings.flatMap((reading) =>
+    reading.metrics.currentA ? [reading.metrics.currentA.value] : [],
+  );
+  const powers = readings.flatMap((reading) =>
+    reading.metrics.powerW ? [reading.metrics.powerW.value] : [],
+  );
+  const energies = readings.flatMap((reading) =>
+    reading.metrics.energyKwh ? [reading.metrics.energyKwh.value] : [],
+  );
+  const voltages = readings.flatMap((reading) =>
+    reading.metrics.voltageV ? [reading.metrics.voltageV.value] : [],
+  );
+
+  return {
+    currentA: currents.length ? currents.reduce((sum, value) => sum + value, 0) : undefined,
+    powerW: powers.length ? powers.reduce((sum, value) => sum + value, 0) : undefined,
+    energyKwh: energies.length ? energies.reduce((sum, value) => sum + value, 0) : undefined,
+    voltageV: voltages.length
+      ? voltages.reduce((sum, value) => sum + value, 0) / voltages.length
+      : undefined,
+  };
+}
+
+function LocationContext({
+  trail,
+  device,
+  activePanel,
+  onSelectPanel,
+}: Readonly<{
+  trail: readonly BdfbAuditTrailItem[];
+  device: DeviceNode;
+  activePanel: PanelContext | null;
+  onSelectPanel: (panel: PanelContext) => void;
+}>) {
+  const shelves = device.bdfb?.shelves ?? [];
+
+  return (
+    <aside className="zip-bdfb-context">
+      <section className="zip-audit-location">
+        <h2>LOCATION CONTEXT</h2>
+        <ol>
+          {trail
+            .filter((item) =>
+              ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY', 'POSITION', 'CONTAINER_RACK'].includes(
+                item.kind,
+              ),
+            )
+            .map((item) => (
+              <li key={item.id}>
+                <span aria-hidden="true">{locationIcon(item.kind)}</span>
+                <Link href={item.href}>{item.name}</Link>
+              </li>
+            ))}
+        </ol>
+      </section>
+
+      <section className="zip-bdfb-internals-tree">
+        <h2>{activePanel ? 'PANEL INTERNALS' : 'DEVICE INTERNALS'}</h2>
+
+        <button
+          type="button"
+          className={activePanel ? '' : 'is-active'}
+          onClick={() => window.location.reload()}
+        >
+          <span>〽</span>
+          <strong>{device.name}</strong>
+        </button>
+
+        {!activePanel &&
+          shelves.map((shelf) => (
+            <div className="zip-bdfb-tree-shelf" key={shelf.id}>
+              <strong>▱ {shelf.label}</strong>
+              {shelf.frames.map((frame) => (
+                <div className="zip-bdfb-tree-frame" key={frame.id}>
+                  <span>◇ {frame.label}</span>
+                  {frame.panels.map((panel) => (
+                    <button
+                      type="button"
+                      key={panel.id}
+                      onClick={() => onSelectPanel({ shelf, frame, panel })}
+                    >
+                      · {panel.label}
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+          ))}
+
+        {activePanel && (
+          <div className="zip-panel-left-summary">
+            <span>ACTIVE PANEL</span>
+            <strong>{activePanel.panel.label}</strong>
+          </div>
+        )}
+      </section>
+    </aside>
+  );
+}
+
+function BdfbOverview({
+  device,
+  trail,
+  telemetry,
+  canWrite,
+  onSelectPanel,
+}: Readonly<{
+  device: DeviceNode;
+  trail: readonly BdfbAuditTrailItem[];
+  telemetry: TelemetrySample | null;
+  canWrite: boolean;
+  onSelectPanel: (panel: PanelContext) => void;
+}>) {
   const shelves = device.bdfb?.shelves ?? [];
   const frames = shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
-  const endpoints = panels.flatMap((panel) => panel.endpoints);
-  const implicitFrames = frames.filter(
-    (frame) => frame.presentation?.physicalFrameVisible === false,
-  ).length;
-
-  const readingsByBreaker = useMemo(
-    () =>
-      Object.fromEntries(
-        (telemetry?.breakerReadings ?? []).map((reading) => [reading.breakerId, reading]),
-      ) as Readonly<Record<string, BreakerTelemetryReading>>,
-    [telemetry],
-  );
+  const readings = telemetry?.breakerReadings ?? [];
+  const totals = aggregate(readings);
+  const shortId = device.legacyId ?? device.id.slice(0, 8).toUpperCase();
 
   return (
-    <section className="bdfb-chassis">
-      <header className="bdfb-chassis-header">
-        <div>
-          <span>Physical distribution</span>
-          <strong>Panel layout</strong>
-          <small>Canonical breaker hierarchy with live MQTT measurements when available</small>
-        </div>
-        <div className="bdfb-chassis-status">
-          <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>
-          <StatusBadge>{panels.length} PANELS</StatusBadge>
-          <StatusBadge>{endpoints.length} ENDPOINTS</StatusBadge>
-          {telemetry?.breakerReadings?.length ? (
-            <StatusBadge tone="good">{telemetry.breakerReadings.length} MQTT BREAKERS</StatusBadge>
-          ) : (
-            <StatusBadge tone="warning">MQTT WAITING</StatusBadge>
-          )}
-          {implicitFrames > 0 && (
-            <StatusBadge tone="warning">{implicitFrames} IMPLICIT FRAME</StatusBadge>
-          )}
-        </div>
-      </header>
+    <>
+      <LocationContext
+        trail={trail}
+        device={device}
+        activePanel={null}
+        onSelectPanel={onSelectPanel}
+      />
 
-      <div className="bdfb-chassis-body">
-        {shelves.map((shelf) => (
-          <section className="bdfb-shelf" key={shelf.id}>
-            <header>
-              <span>Shelf</span>
-              <strong>{shelf.label}</strong>
-            </header>
-            <div className="bdfb-shelf-hardware" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-              <span />
-            </div>
-            <div className="bdfb-frame-field">
-              {shelf.frames.map((frame) =>
-                frame.presentation?.physicalFrameVisible === false ? (
-                  <ImplicitFrame
-                    key={frame.id}
-                    device={device}
-                    shelf={shelf}
-                    frame={frame}
-                    readingsByBreaker={readingsByBreaker}
-                    onInspect={setSelected}
-                  />
-                ) : (
-                  <ExplicitFrame
-                    key={frame.id}
-                    device={device}
-                    shelf={shelf}
-                    frame={frame}
-                    readingsByBreaker={readingsByBreaker}
-                    onInspect={setSelected}
-                  />
-                ),
-              )}
-            </div>
-          </section>
-        ))}
-      </div>
+      <main className="zip-bdfb-center">
+        <header className="zip-bdfb-titlebar">
+          <div>
+            <span>TECHNICAL AUDIT VIEW</span>
+            <h1>{device.name}</h1>
+          </div>
+          <div className="zip-bdfb-system-id">
+            <span>SYSTEM: BDFB</span>
+            <small>UID: {shortId}</small>
+            <b>▣</b>
+          </div>
+        </header>
 
-      {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}
+        <div className="zip-bdfb-device-stage">
+          <div className="zip-bdfb-device-shell">
+            <div className="zip-bdfb-shell-topline">
+              <span className="zip-signal-dots" aria-hidden="true">
+                <i />
+                <i />
+                <i />
+              </span>
+              <strong>INTEGRATED POWER DISTRIBUTION CENTER</strong>
+            </div>
+
+            <div className="zip-bdfb-ports">
+              <div>
+                <span>PORT A2</span>
+                <b />
+              </div>
+              <div>
+                <span>PORT B2</span>
+                <b />
+              </div>
+            </div>
+
+            {shelves.map((shelf) => (
+              <section className="zip-bdfb-shelf-module" key={shelf.id}>
+                <header>
+                  <div>
+                    <span>MODULE UNIT</span>
+                    <h2>{shelf.label}</h2>
+                  </div>
+                  <div>
+                    <span>LOAD STATUS</span>
+                    <b>{readings.length ? 'NOMINAL' : 'WAITING'}</b>
+                  </div>
+                </header>
+
+                <div className="zip-bdfb-frame-columns">
+                  {shelf.frames.map((frame) => (
+                    <section className="zip-bdfb-frame-module" key={frame.id}>
+                      <header>
+                        <strong>{frame.label}</strong>
+                        <span>MODULE UNIT</span>
+                      </header>
+
+                      <div className="zip-bdfb-panel-cards">
+                        {frame.panels.map((panel) => (
+                          <button
+                            type="button"
+                            key={panel.id}
+                            onClick={() => onSelectPanel({ shelf, frame, panel })}
+                          >
+                            <span>PANEL</span>
+                            <strong>{panel.label}</strong>
+                            <i aria-hidden="true">
+                              <b />
+                              <b />
+                              <b />
+                              <b />
+                              <b />
+                              <b />
+                            </i>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+      </main>
+
+      <aside className="zip-bdfb-properties">
+        <header>PROPERTIES</header>
+
+        <section className="zip-bdfb-device-card">
+          <span aria-hidden="true">〽</span>
+          <strong>{device.name}</strong>
+          <p>Select any shelf, frame, or panel to inspect details.</p>
+          <small>ID: {shortId}</small>
+        </section>
+
+        {canWrite && (
+          <div className="zip-bdfb-pin-card">
+            <PinButton id={device.id} initialPinned={device.pinned} />
+          </div>
+        )}
+
+        <section className="zip-bdfb-capacity">
+          <h3>INFRAESTRUCTURA CAPACIDAD</h3>
+          <div>
+            <strong>{frames.length}</strong>
+            <span>FRAMES</span>
+          </div>
+          <div>
+            <strong>{panels.length}</strong>
+            <span>PANELES</span>
+          </div>
+        </section>
+
+        <section className="zip-bdfb-energy">
+          <h3>⚡ LIVE ENERGY AUDIT</h3>
+          <div className="zip-energy-primary">
+            <span>CONSUMO TOTAL</span>
+            <strong>{format(totals.currentA, 'A')}</strong>
+          </div>
+          <div className="zip-energy-pair">
+            <div>
+              <span>POTENCIA ACTIVA</span>
+              <strong>{format(totals.powerW, 'W')}</strong>
+            </div>
+            <div>
+              <span>ENERGÍA TOTAL</span>
+              <strong>{format(totals.energyKwh, 'kWh', 4)}</strong>
+            </div>
+          </div>
+          <div className="zip-energy-source-count">
+            <span>FUENTES MONITOREADAS</span>
+            <b>{readings.length ? `${readings.length} Breakers` : 'Waiting for MQTT'}</b>
+          </div>
+        </section>
+      </aside>
+    </>
+  );
+}
+
+function PanelAudit({
+  device,
+  trail,
+  context,
+  telemetry,
+  canWrite,
+  onBack,
+}: Readonly<{
+  device: DeviceNode;
+  trail: readonly BdfbAuditTrailItem[];
+  context: PanelContext;
+  telemetry: TelemetrySample | null;
+  canWrite: boolean;
+  onBack: () => void;
+}>) {
+  const [selectedEndpointId, setSelectedEndpointId] = useState<string | null>(null);
+  const readings = telemetry?.breakerReadings ?? [];
+  const readingsByBreaker = useMemo(
+    () =>
+      Object.fromEntries(readings.map((reading) => [reading.breakerId, reading])) as Readonly<
+        Record<string, BreakerTelemetryReading>
+      >,
+    [readings],
+  );
+
+  const panelReadings = readings.filter((reading) => reading.panelId === context.panel.id);
+  const totals = aggregate(panelReadings);
+  const selectedEndpoint =
+    context.panel.endpoints.find((endpoint) => endpoint.id === selectedEndpointId) ?? null;
+  const selectedReading = selectedEndpoint ? readingsByBreaker[selectedEndpoint.id] : undefined;
+
+  return (
+    <>
+      <LocationContext
+        trail={trail}
+        device={device}
+        activePanel={context}
+        onSelectPanel={() => undefined}
+      />
+
+      <main className="zip-panel-center">
+        <header className="zip-panel-titlebar">
+          <span>HIGH DENSITY AUDIT <i /></span>
+          <h1>
+            {context.panel.label} <b>/ {context.panel.endpoints.length} Slots</b>
+          </h1>
+        </header>
+
+        <div className="zip-panel-audit-stage">
+          <div className="zip-panel-source-row" aria-hidden="true">
+            <div>
+              <span>SOURCE B</span>
+              <b>BUS B</b>
+              <strong>TB</strong>
+            </div>
+            <div>
+              <span>SOURCE A</span>
+              <b>BUS A</b>
+              <strong>TB</strong>
+            </div>
+            <div className="is-return">
+              <span>SOURCE RTN</span>
+              <b>RTN</b>
+              <strong>IN</strong>
+            </div>
+          </div>
+
+          <div className="zip-panel-lanes">
+            <div className="zip-panel-bus zip-panel-bus--b">
+              <span>BUS B</span>
+            </div>
+            <div className="zip-panel-bus zip-panel-bus--a">
+              <span>BUS A</span>
+            </div>
+            <div className="zip-panel-bus zip-panel-bus--rtn">
+              <span>RTN</span>
+            </div>
+
+            <div className="zip-panel-endpoints">
+              {context.panel.endpoints.map((endpoint, index) => {
+                const reading = readingsByBreaker[endpoint.id];
+                const selected = selectedEndpointId === endpoint.id;
+
+                return (
+                  <button
+                    type="button"
+                    key={endpoint.id}
+                    className={[
+                      'zip-panel-endpoint',
+                      `is-${endpoint.variant.toLowerCase()}`,
+                      selected ? 'is-selected' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    onClick={() => setSelectedEndpointId(endpoint.id)}
+                  >
+                    <span>{index + 1}</span>
+                    <strong>{endpoint.label}</strong>
+                    {endpoint.variant === 'BREAKER' && <b aria-hidden="true">⌁</b>}
+                    <small>
+                      {reading
+                        ? `${format(metric(reading, 'voltageV'), 'V')} · ${format(metric(reading, 'currentA'), 'A')}`
+                        : endpoint.variant}
+                    </small>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <aside className="zip-panel-properties">
+        <header>INSPECCIÓN TÉCNICA</header>
+
+        <button type="button" className="zip-panel-back" onClick={onBack}>
+          ← VER RESUMEN GENERAL
+        </button>
+
+        {!selectedEndpoint ? (
+          <>
+            <section className="zip-panel-summary-card">
+              <span>PANEL SUMMARY</span>
+              <strong>{context.panel.label}</strong>
+            </section>
+
+            <section className="zip-panel-metrics">
+              <h3>GLOBAL LOAD AUDIT</h3>
+              <div>
+                <span>Used (Amps)</span>
+                <strong>{format(totals.currentA, 'A')}</strong>
+              </div>
+              <div>
+                <span>Total Power</span>
+                <strong>{format(totals.powerW, 'W')}</strong>
+              </div>
+              <div>
+                <span>Avg Voltage</span>
+                <strong>{format(totals.voltageV, 'V')}</strong>
+              </div>
+              <div>
+                <span>Total Energy</span>
+                <strong>{format(totals.energyKwh, 'kWh', 4)}</strong>
+              </div>
+            </section>
+
+            <div className="zip-panel-waiting">
+              <i />
+              {panelReadings.length ? 'LIVE TELEMETRY' : 'WAITING FOR TELEMETRY...'}
+            </div>
+          </>
+        ) : (
+          <>
+            <section className="zip-breaker-card">
+              <div>
+                <span>COMPONENTE</span>
+                <b>{selectedEndpoint.variant === 'BREAKER' ? 'ACTIVO' : 'HOLDER'}</b>
+              </div>
+              <strong>{selectedEndpoint.label}</strong>
+            </section>
+
+            <section className="zip-breaker-metrics">
+              <h3>MÉTRICAS EN TIEMPO REAL</h3>
+              <div>
+                <span>Capacidad Teórica</span>
+                <strong>
+                  {selectedEndpoint.capacity === undefined ? '—' : `${selectedEndpoint.capacity}A`}
+                </strong>
+              </div>
+              <div>
+                <span>Voltage</span>
+                <strong>{format(metric(selectedReading, 'voltageV'), 'V')}</strong>
+              </div>
+              <div>
+                <span>Current</span>
+                <strong>{format(metric(selectedReading, 'currentA'), 'A')}</strong>
+              </div>
+              <div>
+                <span>Power</span>
+                <strong>{format(metric(selectedReading, 'powerW'), 'W')}</strong>
+              </div>
+            </section>
+
+            <section className="zip-breaker-wiring">
+              <h3>CONEXIÓN / BINDING</h3>
+              <dl>
+                <div>
+                  <dt>Panel</dt>
+                  <dd>{context.panel.label}</dd>
+                </div>
+                <div>
+                  <dt>Frame</dt>
+                  <dd>{context.frame.label}</dd>
+                </div>
+                <div>
+                  <dt>MQTT point</dt>
+                  <dd>{selectedEndpoint.telemetry?.rawPointId ?? 'Not bound'}</dd>
+                </div>
+                <div>
+                  <dt>State</dt>
+                  <dd>{selectedReading?.state?.value ?? 'Not reported'}</dd>
+                </div>
+              </dl>
+            </section>
+          </>
+        )}
+
+        {canWrite && (
+          <div className="zip-panel-pin">
+            <PinButton id={device.id} initialPinned={device.pinned} />
+          </div>
+        )}
+      </aside>
+    </>
+  );
+}
+
+export function BdfbChassis({
+  device,
+  trail,
+  canWrite,
+}: Readonly<{
+  device: DeviceNode;
+  trail: readonly BdfbAuditTrailItem[];
+  canWrite: boolean;
+}>) {
+  const [activePanel, setActivePanel] = useState<PanelContext | null>(null);
+  const telemetry = useBdfbTelemetry(device.id);
+
+  return (
+    <section className="zip-bdfb-audit">
+      {activePanel ? (
+        <PanelAudit
+          device={device}
+          trail={trail}
+          context={activePanel}
+          telemetry={telemetry}
+          canWrite={canWrite}
+          onBack={() => setActivePanel(null)}
+        />
+      ) : (
+        <BdfbOverview
+          device={device}
+          trail={trail}
+          telemetry={telemetry}
+          canWrite={canWrite}
+          onSelectPanel={setActivePanel}
+        />
+      )}
     </section>
   );
 }

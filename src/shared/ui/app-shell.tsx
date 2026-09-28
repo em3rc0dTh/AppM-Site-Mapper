@@ -89,8 +89,8 @@ export function AppShell({ children }: { children: ReactNode }) {
               <Icon name="network" />
             </span>
             <div>
-              <strong>System Hierarchy</strong>
-              <small>Infrastructure Root</small>
+              <strong>Operations</strong>
+              <small>SiteMapper workspace</small>
             </div>
           </div>
 

@@ -37,7 +37,9 @@ function labelFor(kind: TopologyKind): string {
 }
 
 function containsActive(node: TopologyNavigationNode, activeId: string): boolean {
-  return node.node.id === activeId || node.children.some((child) => containsActive(child, activeId));
+  return (
+    node.node.id === activeId || node.children.some((child) => containsActive(child, activeId))
+  );
 }
 
 function TreeBranch({

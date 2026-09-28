@@ -84,6 +84,13 @@ export default async function TopologyNodePage({
   ]);
   const root = trail[0];
   const navigationTree = root ? await service.buildNavigationTree(root.id) : null;
+  const trailEntries = await Promise.all(
+    trail.map(async (item) => ({
+      id: item.id,
+      name: item.name,
+      href: await service.buildDeepLink(item.id),
+    })),
+  );
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
@@ -135,8 +142,8 @@ export default async function TopologyNodePage({
   return (
     <main className="operational-page telxius-operational-page">
       <nav className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs" aria-label="Breadcrumb">
-        {trail.map((item, index) => (
-          <Link key={item.id} href={index === trail.length - 1 ? selfHref : await service.buildDeepLink(item.id)}>
+        {trailEntries.map((item, index) => (
+          <Link key={item.id} href={index === trailEntries.length - 1 ? selfHref : item.href}>
             {item.name}
           </Link>
         ))}

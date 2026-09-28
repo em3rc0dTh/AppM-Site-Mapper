@@ -119,6 +119,24 @@ describe('TopologyService', () => {
     });
   });
 
+  it('builds a canonical navigation tree without UI-specific aliases', async () => {
+    const service = new TopologyService(new MemoryTopologyRepository());
+    const { network, rack } = await buildHierarchy(service);
+
+    const tree = await service.buildNavigationTree(network.id);
+
+    expect(tree?.node.id).toBe(network.id);
+    expect(tree?.children[0]?.node.kind).toBe('SITE');
+
+    let current = tree;
+    while (current && current.node.id !== rack.id) {
+      current = current.children[0];
+    }
+
+    expect(current?.node.id).toBe(rack.id);
+    expect(current?.href).toContain('/topology/');
+  });
+
   it('builds and resolves deterministic deep links', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());
     const { rack } = await buildHierarchy(service);

@@ -87,9 +87,9 @@ describe('legacy migration planner', () => {
         network: { id: 'network-id', name: 'Network' },
         collections: {
           Site: [{ id: 'site-1', name: 'Site' }],
-          Structure: [{ id: 'structure-1', name: 'Structure', siteId: 'site-1' }],
-          Level: [{ id: 'level-1', name: 'Level', structureId: 'structure-1' }],
-          Substructure: [{ id: 'room-1', name: 'Room', levelId: 'level-1' }],
+          Structure: [{ id: 'structure-1', name: 'Structure', parentId: 'site-1' }],
+          Level: [{ id: 'level-1', name: 'Level', parentId: 'structure-1' }],
+          Substructure: [{ id: 'room-1', name: 'Room', parentId: 'level-1' }],
           ContainerCluster: [{ id: 'cluster-1', name: 'Cluster-Demo', substructureId: 'room-1' }],
           Container: [
             {

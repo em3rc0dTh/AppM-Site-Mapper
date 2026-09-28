@@ -23,6 +23,17 @@ export interface GridCoordinate {
   readonly column: number;
 }
 
+export interface PhysicalPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+export interface SiteOperationalDetails {
+  readonly totalPowerCapacity?: number;
+  readonly activeAlarms?: number;
+  readonly currentLoad?: number;
+}
+
 export interface DimensionsMm {
   readonly width: number;
   readonly depth: number;
@@ -103,11 +114,20 @@ export interface NetworkNode extends TopologyBase {
 export interface SiteNode extends TopologyBase {
   readonly kind: 'SITE';
   readonly parentId: string;
+  readonly polygon?: readonly PhysicalPoint[];
+  readonly category?: string;
+  readonly alias?: string;
+  readonly district?: string;
+  readonly address?: string;
+  readonly geoCoords?: string;
+  readonly totalAreaSqm?: number;
+  readonly details?: SiteOperationalDetails;
 }
 
 export interface StructureNode extends TopologyBase {
   readonly kind: 'STRUCTURE';
   readonly parentId: string;
+  readonly polygon?: readonly PhysicalPoint[];
 }
 
 export interface LevelNode extends TopologyBase {
@@ -119,13 +139,14 @@ export interface RoomSubstructureNode extends TopologyBase {
   readonly kind: 'ROOM_SUBSTRUCTURE';
   readonly parentId: string;
   readonly variant: RoomSubstructureVariant;
-  readonly polygon?: readonly Readonly<{ x: number; y: number }>[];
+  readonly polygon?: readonly PhysicalPoint[];
 }
 
 export interface ContainerClusterBayNode extends TopologyBase {
   readonly kind: 'CONTAINER_CLUSTER_BAY';
   readonly parentId: string;
   readonly variant: ContainerClusterBayVariant;
+  readonly polygon?: readonly PhysicalPoint[];
 }
 
 export interface PositionNode extends TopologyBase {

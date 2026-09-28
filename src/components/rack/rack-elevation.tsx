@@ -75,66 +75,16 @@ export function RackElevation({
   const usedPercent = Math.round((physical / Math.max(totalU, 1)) * 100);
   const primaryInventory = view.inventory[0];
 
-  const occupiedBlocks = blocks.filter((block) => block.role === 'PHYSICAL');
-  const vacantBlocks = blocks.filter((block) => block.role === 'AVAILABLE');
-
   return (
-    <section className="legacy-rack-view">
-      <aside className="legacy-rack-internal">
-        <header>
-          <span>Rack context</span>
-          <strong>Internal Rack Hierarchy</strong>
-        </header>
-
-        <div className="legacy-rack-position-card">
-          <span>Selected position</span>
-          <strong>{context?.positionName ?? 'Rack position'}</strong>
-          {context?.coordinate && <small>{context.coordinate}</small>}
-        </div>
-
-        <div className="legacy-rack-internal-list">
-          {occupiedBlocks.map((block) => (
-            <button
-              type="button"
-              key={block.key}
-              className="is-equipped"
-              onClick={() => {
-                const item = block.occupant
-                  ? view.inventory.find((candidate) => candidate.id === block.occupant?.id)
-                  : undefined;
-                if (item) setSelected(topologyInspector(item));
-              }}
-            >
-              <span className="legacy-rack-tree-dot" />
-              <span>
-                <strong>
-                  U{block.bottomU}–U{block.topU}
-                </strong>
-                <small>{block.occupant?.name ?? 'Occupied'}</small>
-              </span>
-            </button>
-          ))}
-          {vacantBlocks.map((block) => (
-            <div key={block.key} className="legacy-rack-internal-vacant">
-              <span className="legacy-rack-tree-dot" />
-              <span>
-                <strong>
-                  U{block.bottomU}–U{block.topU}
-                </strong>
-                <small>{block.units}U available</small>
-              </span>
-            </div>
-          ))}
-        </div>
-      </aside>
-
-      <div className="legacy-rack-main">
+    <section className="legacy-rack-view telxius-rack-view">
+      <div className="legacy-rack-main telxius-rack-main">
         <SectionHeader
           eyebrow="Rack / physical elevation"
           title={view.rack.name}
           description="Front elevation · physical occupancy and clearance"
           actions={
             <>
+              {context?.coordinate && <StatusBadge tone="accent">{context.coordinate}</StatusBadge>}
               <StatusBadge tone="good">ACTIVE</StatusBadge>
               <InspectButton entity={topologyInspector(view.rack)} />
             </>
@@ -213,7 +163,7 @@ export function RackElevation({
         </div>
       </div>
 
-      <aside className="legacy-rack-properties">
+      <aside className="legacy-rack-properties telxius-rack-properties">
         <div className="legacy-properties-header">
           <span>Rack details</span>
           <strong>{view.rack.name}</strong>

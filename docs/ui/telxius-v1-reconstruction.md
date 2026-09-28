@@ -41,6 +41,47 @@ The screenshots are visual documentation. They do not establish runtime health, 
 | BDFB internals   | Device topology route / rack mounted-device inspection |
 | Power path       | `/power`                                               |
 
+## Harmonic composition contract
+
+The application uses one visual grammar from overview to physical detail:
+
+```text
+Workspace
+  ↓
+Site
+  ↓
+Structure / Level
+  ↓
+Room
+  ↓
+Cluster
+  ↓
+Position
+  ↓
+Rack
+  ↓
+BDFB
+```
+
+Every physical-detail route follows the same composition:
+
+```text
+canonical tree → physical context → focused work surface → contextual properties
+```
+
+Rules:
+
+1. The left column is navigation only. Nested pages must not introduce a second navigation tree.
+2. The center is always the primary physical or operational surface.
+3. The right column is contextual evidence/properties only; generic placeholders must not displace useful facts.
+4. Cluster and Position are drill-down states of the Room workflow, not independent visual products.
+5. Rack remains a physical elevation inside the same shell; mounted inventory is represented on the elevation and in the property column.
+6. BDFB uses neutral hierarchy framing and amber only for electrical/power semantics. Cyan remains the shared navigation/selection accent.
+7. Repeated identity headers are avoided. A nested surface describes the view rather than repeating the selected entity name.
+8. A single final stylesheet, `src/app/telxius-ui.css`, owns the SiteMapper visual system. New visual changes must modify that layer rather than append another override stylesheet.
+9. Single-network/single-site installations skip redundant index screens and enter the Site canvas directly.
+10. Missing physical evidence remains explicit; visual harmony never justifies inventing geometry or topology.
+
 ## Spatial fidelity boundary
 
 The legacy migration is responsible for preserving evidence-backed fields required by these views:

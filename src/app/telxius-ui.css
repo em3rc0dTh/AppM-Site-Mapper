@@ -1,26 +1,38 @@
-/* Telxius v1 visual reconstruction
-   Source of truth: v1_telxius.zip documentation screenshots.
-   This layer only controls presentation; canonical topology/spatial contracts remain in modules/. */
+/* Telxius v1 / SiteMapper harmonic UI
+   Source of truth: v1_telxius.zip and the current migrated physical topology.
+   This file is the single final visual layer for SiteMapper. Domain, persistence,
+   migration and telemetry semantics remain outside presentation. */
 
 :root {
   --telxius-bg: #020408;
-  --telxius-panel: #060913;
-  --telxius-panel-2: #0b0f18;
-  --telxius-stroke: #1c2634;
-  --telxius-stroke-strong: #2f3f52;
-  --telxius-text: #f4f6fb;
-  --telxius-muted: #8090a6;
-  --telxius-blue: #00b9f2;
-  --telxius-cyan: #00aee6;
-  --telxius-green: #00d792;
-  --telxius-amber: #b87a00;
-  --telxius-purple: #d335ff;
+  --telxius-surface: #070a0f;
+  --telxius-surface-raised: #0d1118;
+  --telxius-line: #1b2430;
+  --telxius-line-soft: #111923;
+  --telxius-line-strong: #2d3b49;
+  --telxius-text: #f2f5f8;
+  --telxius-muted: #788aa0;
+  --telxius-accent: #00aee6;
+  --telxius-green: #00ce8a;
+  --telxius-power: #d68a00;
+  --telxius-warning: #f39a18;
+  --telxius-nav-width: 236px;
+  --telxius-inspector-width: 264px;
+  --telxius-radius: 10px;
 }
+
+/* --------------------------------------------------------------------------
+   Global shell
+   -------------------------------------------------------------------------- */
 
 .legacy-shell.app-shell,
 .legacy-shell.app-shell--immersive {
   grid-template-rows: 44px minmax(0, 1fr);
   background: var(--telxius-bg);
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) {
+  grid-template-columns: var(--telxius-nav-width) minmax(0, 1fr);
 }
 
 .legacy-shell .app-content {
@@ -31,104 +43,283 @@
   height: 44px;
   padding: 0 12px;
   gap: 18px;
+  border-color: #303843;
   background: #030407;
-  border-color: #39404a;
 }
 
 .telxius-brand {
-  min-width: 310px;
+  min-width: 282px;
   gap: 10px;
   color: var(--telxius-text);
-  font-size: 1rem;
   letter-spacing: -0.015em;
 }
 
 .telxius-brand strong {
-  font-size: 1rem;
-  font-weight: 800;
+  font-size: 0.92rem;
+  font-weight: 850;
 }
 
 .telxius-brand > span {
+  min-height: 28px;
   display: inline-flex;
-  min-height: 30px;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 9px;
   border-radius: 4px;
-  background: #16191f;
-  color: #818b9c;
-  font-size: 0.92rem;
-  font-weight: 500;
+  background: #15181e;
+  color: #7c899b;
+  font-size: 0.82rem;
+  font-weight: 600;
 }
 
 .telxius-topbar-context {
-  min-width: 320px;
+  min-width: 280px;
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  gap: 12px;
   margin: 0 auto;
-  padding: 0 18px;
-  color: #c8d1df;
+  color: #aeb9c7;
   font:
-    700 0.62rem ui-monospace,
+    700 0.56rem ui-monospace,
     SFMono-Regular,
     Menlo,
     monospace;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 .telxius-topbar-context b {
-  color: #475466;
+  color: #465567;
 }
 
 .legacy-top-actions {
-  gap: 12px;
+  gap: 10px;
 }
 
 .legacy-icon-button,
 .telxius-user-button {
   border: 0;
   background: transparent;
-  color: #8b96a7;
+  color: #7f8da0;
 }
 
 .telxius-user-button {
   width: 34px;
   padding: 0;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
 }
+
+/* --------------------------------------------------------------------------
+   Overview / non-immersive navigation
+   -------------------------------------------------------------------------- */
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-primary-rail {
+  top: 44px;
+  height: calc(100dvh - 44px);
+  padding: 0;
+  border-right: 1px solid var(--telxius-line-soft);
+  background: #01030a;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-rail-heading {
+  min-height: 66px;
+  padding: 12px 14px;
+  gap: 10px;
+  border-bottom: 1px solid var(--telxius-line-soft);
+  background: #03060b;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-rail-heading-icon {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  background: #07131d;
+  color: var(--telxius-accent);
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-rail-heading strong {
+  color: #eef3f8;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-rail-heading small {
+  margin-top: 2px;
+  color: #66778d;
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-primary-rail nav {
+  padding: 8px;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-primary-rail nav a {
+  min-height: 38px;
+  margin: 2px 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 10px;
+  color: #8fa1b8;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-primary-rail nav a:hover {
+  background: #07131d;
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-primary-rail nav a[aria-current='page'] {
+  border-color: #07597b;
+  background: #051925;
+  color: var(--telxius-accent);
+}
+
+.legacy-shell.app-shell:not(.app-shell--immersive) .legacy-rail-footer {
+  border-top-color: var(--telxius-line-soft);
+}
+
+/* --------------------------------------------------------------------------
+   Workspace overview
+   -------------------------------------------------------------------------- */
+
+.operations-shell {
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 22px 24px 40px;
+}
+
+.operations-shell > .section-header {
+  margin-bottom: 18px;
+}
+
+.operations-shell > .section-header .eyebrow {
+  color: #7190b6;
+  font-size: 0.56rem;
+  letter-spacing: 0.2em;
+}
+
+.operations-shell > .section-header h1 {
+  font-size: clamp(1.65rem, 2vw, 2rem);
+}
+
+.metric-grid {
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.metric-tile {
+  min-height: 104px;
+  border-color: var(--telxius-line);
+  border-radius: var(--telxius-radius);
+  padding: 16px 18px;
+  background: var(--telxius-surface-raised);
+}
+
+.metric-tile::before {
+  left: 18px;
+  width: 18px;
+  background: #31576b;
+}
+
+.metric-value {
+  margin: 9px 0 5px;
+  font-size: 1.7rem;
+}
+
+.workspace-mode {
+  margin: 10px 0 14px;
+  border-color: var(--telxius-line);
+  border-radius: 8px;
+  background: #070b11;
+}
+
+.operations-grid {
+  grid-template-columns: minmax(220px, 0.72fr) minmax(0, 2fr) minmax(240px, 0.78fr);
+  gap: 10px;
+}
+
+.workspace-tree,
+.workspace-side-section,
+.workspace-summary-card {
+  border-color: var(--telxius-line);
+  border-radius: var(--telxius-radius);
+  background: var(--telxius-surface-raised);
+}
+
+.workspace-tree {
+  padding: 12px;
+}
+
+.workspace-tree li > a {
+  border-radius: 5px;
+  padding: 5px 7px;
+}
+
+.workspace-tree li > a:hover,
+.workspace-compact-list a:hover {
+  background: #07131d;
+}
+
+.workspace-summary-card {
+  min-height: 72px;
+  padding: 13px 14px;
+}
+
+.workspace-summary-card strong {
+  color: #edf3f9;
+  font-size: 0.78rem;
+}
+
+.workspace-summary-card span {
+  color: #74859a;
+  font-size: 0.7rem;
+}
+
+/* --------------------------------------------------------------------------
+   Common operational shell
+   -------------------------------------------------------------------------- */
 
 .app-shell--immersive .operational-page {
   height: calc(100dvh - 44px);
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
 }
 
 .app-shell--immersive .operational-breadcrumbs {
   height: 42px;
-  padding: 0 16px;
-  border-color: #151d28;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin: 0;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--telxius-line-soft);
   background: #04060a;
-  color: #8fa0b6;
+  color: #8597ad;
+  white-space: nowrap;
+  overflow-x: auto;
 }
 
 .telxius-breadcrumbs a {
-  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  color: #99a8bc;
+  color: #8ea0b6;
   text-decoration: none;
-  font-size: 0.66rem;
+  font-size: 0.62rem;
 }
 
 .telxius-breadcrumbs a + a::before {
   content: '›';
-  margin: 0 10px 0 4px;
-  color: #4f5d70;
+  margin: 0 10px;
+  color: #425164;
 }
 
 .app-shell--immersive .operational-layout,
 .telxius-operational-layout {
   height: calc(100dvh - 86px);
-  grid-template-columns: 250px minmax(0, 1fr) 290px;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--telxius-nav-width) minmax(0, 1fr) var(--telxius-inspector-width);
   gap: 0;
   background: var(--telxius-bg);
 }
@@ -136,9 +327,89 @@
 .operational-context {
   min-width: 0;
   overflow: hidden;
-  border-right: 1px solid #121a24;
+  border: 0;
+  border-right: 1px solid var(--telxius-line-soft);
+  border-radius: 0;
   background: #01030a;
 }
+
+.telxius-operational-stage {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  background: #030507;
+}
+
+.app-shell--immersive .telxius-operational-stage > .section-header,
+.telxius-rack-main > .section-header {
+  min-height: 82px;
+  flex: 0 0 82px;
+  margin: 0;
+  padding: 15px 18px 11px;
+  border-bottom: 1px solid var(--telxius-line-soft);
+  background: #030507;
+}
+
+.telxius-operational-stage > .section-header .eyebrow,
+.telxius-rack-main > .section-header .eyebrow {
+  margin-bottom: 6px;
+  color: #7190b6;
+  font-size: 0.53rem;
+  font-weight: 800;
+  letter-spacing: 0.24em;
+}
+
+.telxius-operational-stage > .section-header h1,
+.telxius-rack-main > .section-header h1 {
+  margin: 0;
+  color: #f7f9fb;
+  font-size: clamp(1.4rem, 1.8vw, 1.75rem);
+  font-weight: 850;
+  letter-spacing: -0.035em;
+}
+
+.telxius-operational-stage > .section-header .section-description,
+.telxius-rack-main > .section-header .section-description {
+  margin-top: 4px;
+  color: #66788f;
+  font-size: 0.6rem;
+}
+
+.telxius-operational-stage .operational-stage-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 12px 12px;
+  background: #030507;
+}
+
+.telxius-primary-action {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #07583f;
+  border-radius: 7px;
+  padding: 0 13px;
+  background: #022d22;
+  color: #00df99;
+  text-decoration: none;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+
+.telxius-hidden-actions {
+  display: none;
+}
+
+/* --------------------------------------------------------------------------
+   Canonical topology tree
+   -------------------------------------------------------------------------- */
 
 .telxius-topology-tree {
   height: 100%;
@@ -150,50 +421,50 @@
 }
 
 .telxius-tree-brand {
-  min-height: 48px;
+  min-height: 46px;
   display: grid;
-  grid-template-columns: 24px 1fr auto;
+  grid-template-columns: 20px 1fr auto;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
   padding: 0 10px;
-  border-bottom: 1px solid #111925;
+  border-bottom: 1px solid var(--telxius-line-soft);
 }
 
 .telxius-tree-brand-icon {
-  color: var(--telxius-blue);
+  color: var(--telxius-accent);
 }
 
 .telxius-tree-brand strong {
-  color: #ecf1f8;
-  font-size: 0.74rem;
+  color: #edf2f7;
+  font-size: 0.68rem;
   letter-spacing: 0.08em;
 }
 
 .telxius-tree-brand > a {
-  color: #7790b0;
+  color: #6e86a4;
   text-decoration: none;
-  font-size: 0.68rem;
+  font-size: 0.6rem;
 }
 
 .telxius-tree-heading {
-  min-height: 50px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 12px;
-  color: #8095b2;
-  font-size: 0.62rem;
+  padding: 0 10px;
+  color: #7189a8;
+  font-size: 0.55rem;
   font-weight: 800;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.18em;
 }
 
 .telxius-tree-heading b {
-  padding: 4px 8px;
+  padding: 3px 7px;
   border-radius: 999px;
   background: #052235;
-  color: var(--telxius-blue);
-  font-size: 0.54rem;
-  letter-spacing: 0.08em;
+  color: var(--telxius-accent);
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
 }
 
 .telxius-tree-root,
@@ -207,21 +478,20 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 0 8px 24px;
+  padding: 2px 7px 20px;
 }
 
 .telxius-tree-node > a {
-  position: relative;
-  min-height: 34px;
+  min-height: 36px;
   display: grid;
-  grid-template-columns: 14px 16px minmax(0, 1fr) 12px;
+  grid-template-columns: 12px 14px minmax(0, 1fr) 10px;
   align-items: center;
   gap: 5px;
   margin: 1px 0;
-  padding: 4px 8px 4px calc(8px + var(--tree-depth) * 13px);
+  padding: 4px 7px 4px calc(7px + var(--tree-depth) * 12px);
   border: 1px solid transparent;
-  border-radius: 4px;
-  color: #9db0ca;
+  border-radius: 5px;
+  color: #93a5bc;
   text-decoration: none;
 }
 
@@ -230,9 +500,9 @@
 }
 
 .telxius-tree-node > a.is-active {
-  border-color: #00557a;
-  background: #051926;
-  color: var(--telxius-blue);
+  border-color: #07597b;
+  background: #051925;
+  color: var(--telxius-accent);
 }
 
 .telxius-tree-guide {
@@ -243,8 +513,8 @@
 }
 
 .telxius-tree-node .icon {
-  width: 13px;
-  height: 13px;
+  width: 12px;
+  height: 12px;
 }
 
 .telxius-tree-copy {
@@ -258,79 +528,191 @@
 
 .telxius-tree-copy strong {
   overflow: hidden;
-  font-size: 0.64rem;
+  font-size: 0.66rem;
   font-weight: 750;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.025em;
   text-overflow: ellipsis;
   white-space: nowrap;
   text-transform: uppercase;
 }
 
 .telxius-tree-chevron {
-  color: #526479;
-  font-size: 0.66rem;
+  color: #4e6178;
+  font-size: 0.62rem;
 }
 
-.telxius-operational-stage {
+/* --------------------------------------------------------------------------
+   Contextual properties
+   -------------------------------------------------------------------------- */
+
+.telxius-properties {
   min-width: 0;
+  overflow: auto;
+  border-left: 1px solid var(--telxius-line-soft);
+  background: #01030a;
+  color: #dce5ef;
+}
+
+.telxius-properties > header {
+  min-height: 46px;
   display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: #030507;
-}
-
-.app-shell--immersive .telxius-operational-stage > .section-header {
-  min-height: 84px;
-  flex: 0 0 84px;
-  margin: 0;
-  padding: 18px 20px 12px;
-  border-bottom: 0;
-  background: #030507;
-}
-
-.telxius-operational-stage > .section-header .eyebrow {
-  margin-bottom: 8px;
-  color: #6f89ab;
-  font-size: 0.56rem;
-  font-weight: 800;
-  letter-spacing: 0.3em;
-}
-
-.telxius-operational-stage > .section-header h1 {
-  margin: 0;
-  color: #fff;
-  font-size: clamp(1.6rem, 2.3vw, 2.15rem);
-  font-weight: 850;
-  letter-spacing: -0.035em;
-}
-
-.telxius-operational-stage > .section-header .section-description {
-  margin-top: 5px;
-  color: #63758e;
-  font-size: 0.62rem;
-}
-
-.telxius-primary-action {
-  min-height: 32px;
-  display: inline-flex;
   align-items: center;
-  border: 1px solid #07583f;
-  border-radius: 10px;
   padding: 0 16px;
-  background: #022d22;
-  color: #00e19a;
-  text-decoration: none;
-  font-size: 0.62rem;
+  border-bottom: 1px solid var(--telxius-line-soft);
+  color: #7892b3;
+  font-size: 0.54rem;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+}
+
+.telxius-properties section {
+  padding: 14px 16px 0;
+}
+
+.telxius-properties h3 {
+  margin: 0 0 10px;
+  color: var(--telxius-accent);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+}
+
+.telxius-properties h3.is-warning {
+  color: var(--telxius-warning);
+}
+
+.telxius-property-card {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--telxius-line);
+  border-radius: 9px;
+  padding: 12px 13px;
+  background: #0b0f16;
+}
+
+.telxius-property-card strong {
+  color: #f1f4f7;
+  font-size: 1rem;
+}
+
+.telxius-property-card strong small {
+  color: #718196;
+  font-size: 0.58rem;
+}
+
+.telxius-property-card > span {
+  color: #6f8096;
+  font-size: 0.54rem;
   font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.telxius-power-card {
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
+
+.telxius-meter {
+  grid-column: 1 / -1;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #000;
+}
+
+.telxius-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--telxius-accent);
+}
+
+.telxius-health-card b {
+  border-radius: 999px;
+  padding: 5px 10px;
+  background: #05382d;
+  color: var(--telxius-green);
+  font-size: 0.54rem;
   letter-spacing: 0.05em;
 }
 
-.telxius-operational-stage .operational-stage-body {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-  padding: 0 14px 14px 18px;
+.telxius-property-list {
+  margin: 0;
 }
+
+.telxius-property-list div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--telxius-line-soft);
+}
+
+.telxius-property-list dt {
+  color: #5f7591;
+  font-size: 0.53rem;
+}
+
+.telxius-property-list dd {
+  margin: 0;
+  color: #e4eaf0;
+  font:
+    0.58rem ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+}
+
+.telxius-property-list dd.is-accent {
+  padding: 2px 5px;
+  background: #002338;
+  color: var(--telxius-accent);
+}
+
+.telxius-stat-stack {
+  display: grid;
+  gap: 10px;
+}
+
+.telxius-stat-stack .telxius-property-card strong {
+  margin-left: auto;
+  font-size: 0.86rem;
+}
+
+.telxius-inspect-hint {
+  display: grid;
+  place-items: center;
+  gap: 12px;
+  margin-top: 38px;
+  padding: 18px;
+  color: #4f5c6d;
+  text-align: center;
+}
+
+.telxius-inspect-hint > span {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--telxius-line);
+  border-radius: 50%;
+  font-size: 1.05rem;
+}
+
+.telxius-inspect-hint p {
+  margin: 0;
+  color: #5c6878;
+  font-size: 0.54rem;
+  font-weight: 750;
+  line-height: 1.55;
+  letter-spacing: 0.05em;
+}
+
+/* --------------------------------------------------------------------------
+   Site / Structure / Level physical maps
+   -------------------------------------------------------------------------- */
 
 .legacy-visual-stage {
   height: 100%;
@@ -345,7 +727,8 @@
 }
 
 .legacy-visual-stage--site .legacy-stage-canvas,
-.legacy-visual-stage--structure .legacy-stage-canvas {
+.legacy-visual-stage--structure .legacy-stage-canvas,
+.legacy-visual-stage--level .legacy-stage-canvas {
   height: 100%;
   min-height: 0;
   padding: 0;
@@ -356,28 +739,28 @@
   height: 100%;
   min-height: 0;
   overflow: hidden;
-  border: 1px solid #20242c;
-  border-radius: 18px;
+  border: 1px solid var(--telxius-line);
+  border-radius: 12px;
   background: #030303;
-  box-shadow: inset 0 0 0 14px #111315;
+  box-shadow: inset 0 0 0 8px #0b0e12;
 }
 
 .telxius-physical-map svg {
   width: 100%;
   height: 100%;
   display: block;
-  padding: 28px;
+  padding: 20px;
 }
 
 .telxius-map-grid-line {
   fill: none;
-  stroke: #11151b;
+  stroke: #111820;
   stroke-width: 1;
 }
 
 .telxius-map-boundary {
   fill: transparent;
-  stroke: #42474f;
+  stroke: #414a55;
   stroke-width: 1.2;
 }
 
@@ -388,25 +771,25 @@
 }
 
 .telxius-physical-map--site .telxius-map-footprint {
-  fill: rgba(145, 91, 0, 0.27);
-  stroke: #9c6500;
-  stroke-width: 1.4;
+  fill: rgba(139, 89, 5, 0.25);
+  stroke: #9a6504;
+  stroke-width: 1.35;
 }
 
 .telxius-physical-map--structure .telxius-map-footprint {
-  fill: rgba(0, 92, 127, 0.13);
-  stroke: #00688f;
+  fill: rgba(0, 91, 122, 0.12);
+  stroke: #08789f;
   stroke-width: 1.2;
 }
 
 .telxius-map-link:hover .telxius-map-footprint {
-  opacity: 0.82;
-  filter: brightness(1.35);
+  opacity: 0.86;
+  filter: brightness(1.22);
 }
 
 .telxius-map-label {
   pointer-events: none;
-  fill: #d8dde5;
+  fill: #e0e5eb;
   font-weight: 800;
   letter-spacing: 0.02em;
   paint-order: stroke;
@@ -416,35 +799,35 @@
 
 .telxius-map-controls {
   position: absolute;
-  right: 24px;
-  bottom: 24px;
+  right: 16px;
+  bottom: 16px;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .telxius-map-controls span {
-  width: 46px;
-  height: 46px;
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
-  border: 1px solid #2a405d;
-  border-radius: 9px;
-  background: #0d1420;
-  color: var(--telxius-blue);
-  font-size: 1rem;
+  border: 1px solid #20384a;
+  border-radius: 7px;
+  background: #09121b;
+  color: var(--telxius-accent);
+  font-size: 0.82rem;
 }
 
 .telxius-geometry-missing {
   height: 100%;
   display: grid;
   place-content: center;
-  gap: 8px;
+  gap: 7px;
   text-align: center;
-  color: #7d8ba0;
+  color: #718197;
 }
 
 .telxius-geometry-missing strong {
-  color: #dce3ed;
+  color: #dce3eb;
 }
 
 .telxius-structure-stage {
@@ -454,47 +837,48 @@
 }
 
 .telxius-structure-stage .telxius-physical-map {
-  padding-right: 72px;
+  padding-right: 54px;
 }
 
 .telxius-elevator {
   position: absolute;
-  top: 20px;
-  right: 18px;
-  bottom: 20px;
-  width: 58px;
+  top: 16px;
+  right: 14px;
+  bottom: 16px;
+  width: 44px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 18px;
-  border-radius: 16px;
-  background: #0d0e10;
-  color: #7c8ca4;
+  gap: 12px;
+  border: 1px solid var(--telxius-line);
+  border-radius: 10px;
+  background: #090c11;
+  color: #75869b;
 }
 
 .telxius-elevator > span {
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   margin: 0 auto;
-  font-size: 0.58rem;
+  font-size: 0.5rem;
   font-weight: 800;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.12em;
 }
 
 .telxius-elevator > div {
   display: grid;
-  gap: 7px;
-  padding: 0 8px;
+  gap: 6px;
+  padding: 0 5px;
 }
 
 .telxius-elevator a {
-  min-height: 44px;
+  min-height: 36px;
   display: grid;
   place-items: center;
   border: 1px solid #29313c;
-  border-radius: 9px;
-  background: #17191d;
-  color: #8897aa;
+  border-radius: 6px;
+  background: #14181e;
+  color: #8291a3;
   text-decoration: none;
 }
 
@@ -503,188 +887,21 @@
 }
 
 .telxius-elevator a.is-active {
-  border-color: #007ea8;
-  background: #003247;
-  color: var(--telxius-blue);
-  box-shadow: 0 0 20px rgba(0, 185, 242, 0.18);
+  border-color: #087ca4;
+  background: #063047;
+  color: var(--telxius-accent);
 }
 
-.telxius-properties {
-  min-width: 0;
-  overflow: auto;
-  border-left: 1px solid #121923;
-  background: #01030b;
-  color: #dfe6ef;
-}
+/* --------------------------------------------------------------------------
+   Room blueprint
+   -------------------------------------------------------------------------- */
 
-.telxius-properties > header {
-  min-height: 50px;
-  display: flex;
-  align-items: center;
-  padding: 0 22px;
-  border-bottom: 1px solid #101925;
-  color: #86a0c1;
-  font-size: 0.58rem;
-  font-weight: 850;
-  letter-spacing: 0.26em;
-}
-
-.telxius-properties section {
-  padding: 18px 22px 0;
-}
-
-.telxius-properties h3 {
-  margin: 0 0 12px;
-  color: var(--telxius-blue);
-  font-size: 0.64rem;
-  letter-spacing: 0.05em;
-}
-
-.telxius-properties h3.is-warning {
-  color: #ff9a00;
-}
-
-.telxius-property-card {
-  min-height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid #202531;
-  border-radius: 15px;
-  padding: 14px 16px;
-  background: #11131a;
-}
-
-.telxius-property-card strong {
-  color: #f1f4f8;
-  font-size: 1.15rem;
-}
-
-.telxius-property-card strong small {
-  color: #718196;
-  font-size: 0.62rem;
-}
-
-.telxius-property-card > span {
-  color: #76859a;
-  font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-
-.telxius-power-card {
-  display: grid;
-  grid-template-columns: 1fr auto;
-}
-
-.telxius-meter {
-  grid-column: 1 / -1;
-  height: 6px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #000;
-}
-
-.telxius-meter i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--telxius-blue);
-}
-
-.telxius-health-card b {
-  border-radius: 999px;
-  padding: 6px 12px;
-  background: #053b2f;
-  color: var(--telxius-green);
-  font-size: 0.58rem;
-  letter-spacing: 0.05em;
-}
-
-.telxius-property-list {
-  margin: 0;
-}
-
-.telxius-property-list div {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 10px;
-  padding: 13px 0;
-  border-bottom: 1px solid #111a26;
-}
-
-.telxius-property-list dt {
-  color: #5f789b;
-  font-size: 0.57rem;
-}
-
-.telxius-property-list dd {
-  margin: 0;
-  color: #e6ebf2;
-  font:
-    0.62rem ui-monospace,
-    SFMono-Regular,
-    Menlo,
-    monospace;
-}
-
-.telxius-property-list dd.is-accent {
-  padding: 2px 5px;
-  background: #002338;
-  color: var(--telxius-blue);
-}
-
-.telxius-stat-stack {
-  display: grid;
-  gap: 14px;
-}
-
-.telxius-stat-stack .telxius-property-card strong {
-  margin-left: auto;
-  font-size: 0.9rem;
-}
-
-.telxius-inspect-hint {
-  display: grid;
-  place-items: center;
-  gap: 18px;
-  margin-top: 56px;
-  padding: 20px;
-  color: #505c6c;
-  text-align: center;
-}
-
-.telxius-inspect-hint > span {
-  width: 62px;
-  height: 62px;
-  display: grid;
-  place-items: center;
-  border: 1px solid #141c27;
-  border-radius: 50%;
-  font-size: 1.4rem;
-}
-
-.telxius-inspect-hint p {
-  margin: 0;
-  color: #5e6878;
-  font-size: 0.6rem;
-  font-weight: 750;
-  line-height: 1.6;
-  letter-spacing: 0.05em;
-}
-
-.telxius-hidden-actions {
-  display: none;
-}
-
-/* Room blueprint fidelity */
 .telxius-operational-stage .blueprint-panel,
 .operational-page--blueprint .blueprint-panel {
   height: 100%;
-  border-radius: 18px;
+  border-radius: 12px;
   background: #030303;
-  box-shadow: inset 0 0 0 14px #111315;
+  box-shadow: inset 0 0 0 8px #0b0e12;
 }
 
 .telxius-operational-stage .blueprint-toolbar,
@@ -698,58 +915,55 @@
 
 .app-shell--immersive .blueprint-canvas {
   background:
-    linear-gradient(rgba(26, 30, 36, 0.65) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(26, 30, 36, 0.65) 1px, transparent 1px), #030303;
+    linear-gradient(rgba(26, 30, 36, 0.58) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 30, 36, 0.58) 1px, transparent 1px), #030303;
   background-size: 600px 600px;
 }
 
 .app-shell--immersive .blueprint-room {
   fill: #090b0f;
-  stroke: #8a8d95;
-  stroke-width: 55px;
+  stroke: #818790;
+  stroke-width: 48px;
 }
 
 .app-shell--immersive .blueprint-grid-line {
-  stroke: #20232a;
+  stroke: #202832;
   stroke-width: 5px;
 }
 
 .blueprint-cluster {
-  fill: rgba(0, 122, 95, 0.12);
-  stroke: #008966;
-  stroke-width: 20px;
+  fill: rgba(0, 120, 150, 0.08);
+  stroke: #087a9f;
+  stroke-width: 14px;
 }
 
 .blueprint-cluster-label {
-  fill: #00aee6;
-  font-size: 180px;
-  font-weight: 850;
-  letter-spacing: 0.08em;
+  fill: #29a7d0;
+  font-size: 104px;
+  font-weight: 800;
+  letter-spacing: 0.045em;
 }
 
 .app-shell--immersive .blueprint-slot {
-  fill: rgba(0, 79, 115, 0.08);
-  stroke: #006d95;
-  stroke-width: 10px;
+  fill: rgba(0, 78, 104, 0.055);
+  stroke: #175b75;
+  stroke-width: 7px;
   stroke-dasharray: 0;
 }
 
 .app-shell--immersive .blueprint-rack {
-  fill: rgba(0, 112, 89, 0.33);
-  stroke: #00aa80;
-  stroke-width: 18px;
+  fill: rgba(0, 115, 91, 0.2);
+  stroke: #13856d;
+  stroke-width: 12px;
 }
 
 .app-shell--immersive .blueprint-rack-label {
   fill: #f0f3f8;
-  font-size: 115px;
+  font-size: 88px;
   font-weight: 800;
 }
 
-.blueprint-canvas-hud {
-  display: none;
-}
-
+.blueprint-canvas-hud,
 .blueprint-canvas-corners {
   display: none;
 }
@@ -757,53 +971,693 @@
 .app-shell--immersive .blueprint-legend {
   min-height: 34px;
   flex-basis: 34px;
+  border-top: 1px solid var(--telxius-line-soft);
   background: #050609;
-  border-top: 1px solid #111720;
 }
 
-/* BDFB reference hierarchy */
+/* --------------------------------------------------------------------------
+   Cluster / Position drill-down
+   -------------------------------------------------------------------------- */
+
+.legacy-visual-stage--container_cluster_bay .legacy-stage-toolbar,
+.legacy-visual-stage--position .legacy-stage-toolbar,
+.legacy-visual-stage--level .legacy-stage-toolbar {
+  min-height: 46px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--telxius-line);
+  background: #06090e;
+}
+
+.legacy-visual-stage--container_cluster_bay .legacy-stage-toolbar strong,
+.legacy-visual-stage--position .legacy-stage-toolbar strong,
+.legacy-visual-stage--level .legacy-stage-toolbar strong {
+  font-size: 0.72rem;
+}
+
+.legacy-visual-stage--container_cluster_bay .legacy-stage-toolbar span,
+.legacy-visual-stage--position .legacy-stage-toolbar span,
+.legacy-visual-stage--level .legacy-stage-toolbar span {
+  font-size: 0.54rem;
+}
+
+.legacy-visual-stage--container_cluster_bay .legacy-stage-canvas,
+.legacy-visual-stage--position .legacy-stage-canvas {
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+}
+
+.telxius-cluster-focus {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  padding: 44px 24px 22px 48px;
+  border: 1px solid var(--telxius-line);
+  border-radius: 12px;
+  background:
+    linear-gradient(rgba(22, 43, 57, 0.38) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(22, 43, 57, 0.38) 1px, transparent 1px), #04070b;
+  background-size: 12.5% 25%;
+}
+
+.telxius-cluster-grid {
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.telxius-cluster-axis {
+  position: absolute;
+  display: grid;
+  color: #52667d;
+  font:
+    0.52rem ui-monospace,
+    monospace;
+}
+
+.telxius-cluster-axis--top {
+  top: 17px;
+  left: 48px;
+  right: 24px;
+  grid-template-columns: repeat(8, 1fr);
+  text-align: center;
+}
+
+.telxius-cluster-axis--left {
+  top: 44px;
+  bottom: 22px;
+  left: 18px;
+  grid-template-rows: repeat(4, 1fr);
+  align-items: center;
+}
+
+.telxius-position-tile {
+  min-width: 0;
+  min-height: 62px;
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
+  align-self: center;
+  gap: 8px;
+  border: 1px solid #27465a;
+  border-radius: 7px;
+  padding: 10px;
+  background: #09131b;
+  color: #b8c8d8;
+}
+
+.telxius-position-tile:hover {
+  border-color: #0b7fa9;
+  background: #0a1a25;
+}
+
+.telxius-position-dot {
+  width: 7px;
+  height: 7px;
+  align-self: center;
+  border-radius: 50%;
+  background: var(--telxius-accent);
+}
+
+.telxius-position-tile small {
+  color: #597288;
+  font-size: 0.5rem;
+}
+
+.telxius-position-tile strong {
+  color: #eef4f8;
+  font-size: 0.7rem;
+}
+
+.telxius-position-focus {
+  position: relative;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--telxius-line);
+  border-radius: 12px;
+  background: #04070b;
+}
+
+.telxius-position-guide {
+  position: absolute;
+  inset: 18%;
+  border: 1px dashed #1b2a38;
+  border-radius: 12px;
+}
+
+.telxius-position-guide span {
+  position: absolute;
+  background: #182633;
+}
+
+.telxius-position-guide span:nth-child(1) {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.telxius-position-guide span:nth-child(2) {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.telxius-position-guide span:nth-child(3) {
+  width: 8px;
+  height: 8px;
+  left: calc(50% - 4px);
+  top: calc(50% - 4px);
+  border-radius: 50%;
+  background: #33566c;
+}
+
+.telxius-position-content {
+  z-index: 1;
+  width: min(520px, 78%);
+  display: grid;
+  gap: 10px;
+}
+
+.telxius-position-rack-card {
+  min-height: 84px;
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid #2a3b4c;
+  border-radius: 9px;
+  padding: 14px 16px;
+  background: #0b1017;
+  color: #cbd7e3;
+}
+
+.telxius-position-rack-card:hover {
+  border-color: #0e7195;
+  background: #0c1620;
+}
+
+.telxius-position-rack-icon {
+  width: 40px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #44576a;
+  background: #111821;
+}
+
+.telxius-position-rack-card small {
+  color: #6a7d91;
+  font-size: 0.52rem;
+}
+
+.telxius-position-rack-card strong {
+  color: #f0f4f8;
+  font-size: 0.86rem;
+}
+
+.telxius-position-rack-card .legacy-stage-enter {
+  color: var(--telxius-accent);
+  font-size: 0.52rem;
+}
+
+/* --------------------------------------------------------------------------
+   Rack
+   -------------------------------------------------------------------------- */
+
+.app-shell--immersive .operational-layout--rack {
+  height: calc(100dvh - 86px);
+  grid-template-columns: var(--telxius-nav-width) minmax(0, 1fr);
+}
+
+.telxius-rack-view {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--telxius-inspector-width);
+  background: #030507;
+}
+
+.telxius-rack-main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #030507;
+}
+
+.legacy-rack-canvas {
+  flex: 1;
+  min-height: 0;
+  place-items: start center;
+  padding: 18px 24px 28px;
+  background:
+    linear-gradient(rgba(18, 26, 35, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(18, 26, 35, 0.4) 1px, transparent 1px), #030507;
+  background-size: 40px 40px;
+}
+
+.legacy-rack-heading,
+.legacy-rack-frame {
+  width: min(360px, 72%);
+}
+
+.legacy-rack-heading {
+  margin-bottom: 10px;
+}
+
+.legacy-rack-heading strong {
+  font-size: 1.15rem;
+}
+
+.legacy-rack-frame {
+  min-height: 0;
+  height: min(620px, calc(100dvh - 190px));
+  border: 1px solid #394858;
+  border-radius: 8px 8px 0 0;
+  background: #0b0f14;
+  box-shadow: none;
+}
+
+.legacy-rack-metal--top,
+.legacy-rack-metal--bottom {
+  background: #171b21;
+}
+
+.legacy-rack-block--available {
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 16px, rgba(56, 56, 58, 0.25) 17px), #14191f;
+}
+
+.legacy-rack-block--physical {
+  border-left-color: #1484ad;
+  background: linear-gradient(90deg, rgba(20, 132, 173, 0.12), transparent 70%), #102029;
+}
+
+.telxius-rack-properties {
+  min-width: 0;
+  overflow: auto;
+  border-left: 1px solid var(--telxius-line-soft);
+  background: #01030a;
+}
+
+.telxius-rack-properties .legacy-properties-header,
+.telxius-rack-properties .legacy-property-section {
+  padding-inline: 16px;
+  border-bottom-color: var(--telxius-line-soft);
+}
+
+.telxius-rack-properties .legacy-properties-header {
+  min-height: 88px;
+}
+
+.telxius-rack-properties .legacy-properties-header strong {
+  font-size: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   BDFB
+   -------------------------------------------------------------------------- */
+
 .bdfb-chassis {
-  background: #030303;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 0;
+  border-radius: 0;
+  background: #030507;
 }
 
 .bdfb-chassis-header {
-  background: #05070b;
+  min-height: 60px;
+  flex: 0 0 60px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--telxius-line-soft);
+  background: #05080d;
+}
+
+.bdfb-chassis-header > div:first-child {
+  gap: 2px;
+}
+
+.bdfb-chassis-header > div:first-child > span {
+  color: #7088a5;
+  font-size: 0.52rem;
+  letter-spacing: 0.12em;
+}
+
+.bdfb-chassis-header > div:first-child > strong {
+  color: #f0f4f7;
+  font-size: 1rem;
+}
+
+.bdfb-chassis-header > div:first-child > small {
+  color: #697a8f;
+  font-size: 0.52rem;
+}
+
+.bdfb-chassis-status {
+  gap: 5px;
+}
+
+.bdfb-chassis-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 14px;
 }
 
 .bdfb-shelf {
-  border-color: #7d1ca2;
-  background: #07050a;
+  position: relative;
+  width: min(1100px, 100%);
+  min-height: 0;
+  margin-inline: auto;
+  padding: 46px 12px 12px;
+  border: 1px solid #28323e;
+  border-radius: 10px;
+  background: #070a0f;
+  box-shadow: none;
+}
+
+.bdfb-shelf > header {
+  position: absolute;
+  top: 13px;
+  left: 16px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.bdfb-shelf > header span {
+  color: #738398;
+  font-size: 0.5rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.bdfb-shelf > header strong {
+  color: #e5ebf1;
+  font-size: 0.82rem;
+}
+
+.bdfb-shelf-hardware {
+  position: absolute;
+  top: 13px;
+  right: 16px;
+  display: flex;
+  gap: 6px;
+}
+
+.bdfb-shelf-hardware span {
+  width: 18px;
+  height: 12px;
+  border: 1px solid #34404d;
+  border-radius: 3px;
+  background: #0c1017;
+  box-shadow: none;
+}
+
+.bdfb-frame-field {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.bdfb-frame,
+.bdfb-frame-hidden {
+  min-height: 0;
 }
 
 .bdfb-frame {
-  border-color: #008cb4;
+  position: relative;
+  padding: 38px 10px 10px;
+  border: 1px solid #27384a;
+  border-radius: 8px;
+  background: #080c12;
+}
+
+.bdfb-frame::before,
+.bdfb-frame::after {
+  display: none;
+}
+
+.bdfb-frame > header {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.bdfb-frame > header span {
+  color: #5f8aa3;
+  font-size: 0.48rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.bdfb-frame > header strong {
+  margin-left: auto;
+  color: #dce5ed;
+  font-size: 0.72rem;
+}
+
+.bdfb-panel-grid,
+.bdfb-panel-grid--frame-hidden {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
 }
 
 .bdfb-panel-board {
-  border-color: #b85400;
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid #2a3541;
+  border-radius: 7px;
+  background: #080b10;
+  box-shadow: none;
 }
 
-@media (max-width: 1200px) {
-  .app-shell--immersive .operational-layout,
-  .telxius-operational-layout {
-    grid-template-columns: 220px minmax(0, 1fr) 250px;
+.bdfb-panel-board::before,
+.bdfb-panel-board::after {
+  content: '';
+  position: absolute;
+  top: 48px;
+  bottom: 10px;
+  width: 4px;
+  border-radius: 999px;
+  opacity: 0.42;
+  box-shadow: none;
+}
+
+.bdfb-panel-board::before {
+  left: 10px;
+  background: #245b96;
+}
+
+.bdfb-panel-board::after {
+  right: 10px;
+  background: #874069;
+}
+
+.bdfb-panel-title {
+  min-height: 44px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 0;
+  border-bottom: 1px solid #272d36;
+  border-radius: 0;
+  background: #0e1218;
+  text-align: left;
+}
+
+.bdfb-panel-title > span,
+.bdfb-panel-title > small {
+  color: #748297;
+  font-size: 0.46rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.bdfb-panel-title > strong {
+  color: var(--telxius-power);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.bdfb-panel-busbar {
+  position: absolute;
+  top: 58px;
+  bottom: 12px;
+  width: 4px;
+  border-radius: 999px;
+  opacity: 0.48;
+  box-shadow: none;
+}
+
+.bdfb-panel-busbar--a {
+  left: 10px;
+  background: #245b96;
+}
+
+.bdfb-panel-busbar--b {
+  right: 10px;
+  background: #874069;
+}
+
+.bdfb-panel-busbar span {
+  display: none;
+}
+
+.bdfb-endpoint-grid {
+  height: auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-content: start;
+  gap: 5px;
+  padding: 10px 20px 12px;
+}
+
+.bdfb-endpoint {
+  position: relative;
+  min-height: 40px;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 1px 5px;
+  padding: 5px 6px;
+  border: 1px solid #283746;
+  border-radius: 5px;
+  background: #0b1016;
+  color: #d8e0e8;
+  text-align: left;
+  box-shadow: none;
+}
+
+.bdfb-endpoint::before,
+.bdfb-endpoint::after {
+  display: none;
+}
+
+.bdfb-endpoint > span {
+  grid-row: 1 / -1;
+  width: 20px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #2c5e77;
+  border-radius: 3px;
+  color: #61b3d8;
+  font:
+    0.46rem ui-monospace,
+    monospace;
+}
+
+.bdfb-endpoint > strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 0.55rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bdfb-endpoint > small {
+  color: #657589;
+  font-size: 0.42rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.bdfb-endpoint--breaker {
+  border-color: #176f8c;
+  background: #09151d;
+}
+
+.bdfb-endpoint--holder {
+  border-style: dashed;
+  opacity: 0.62;
+  background: #080c11;
+}
+
+/* --------------------------------------------------------------------------
+   Generic index fallback
+   -------------------------------------------------------------------------- */
+
+.telxius-network-index .panel,
+.telxius-network-index .create-form {
+  border-color: var(--telxius-line);
+  border-radius: var(--telxius-radius);
+  background: var(--telxius-surface-raised);
+}
+
+/* --------------------------------------------------------------------------
+   Responsive
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1280px) {
+  :root {
+    --telxius-nav-width: 220px;
+    --telxius-inspector-width: 244px;
+  }
+
+  .bdfb-endpoint-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1040px) {
+  .operations-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bdfb-frame-field {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 940px) {
   .app-shell--immersive .operational-layout,
-  .telxius-operational-layout {
+  .telxius-operational-layout,
+  .app-shell--immersive .operational-layout--rack {
     grid-template-columns: 1fr;
     height: auto;
     overflow: visible;
   }
 
   .operational-context,
-  .telxius-properties {
+  .telxius-properties,
+  .telxius-rack-properties {
     display: none;
   }
 
-  .telxius-operational-stage {
+  .telxius-operational-stage,
+  .telxius-rack-main {
     min-height: calc(100dvh - 86px);
+  }
+
+  .telxius-rack-view {
+    grid-template-columns: 1fr;
   }
 }

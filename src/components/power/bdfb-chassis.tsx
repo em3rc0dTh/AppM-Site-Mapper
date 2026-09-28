@@ -320,9 +320,9 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
     <section className="bdfb-chassis">
       <header className="bdfb-chassis-header">
         <div>
-          <span>Power distribution chassis</span>
-          <strong>{device.name}</strong>
-          <small>MQTT measurements mapped onto the existing breaker hierarchy</small>
+          <span>Physical distribution</span>
+          <strong>Panel layout</strong>
+          <small>Canonical breaker hierarchy with live MQTT measurements when available</small>
         </div>
         <div className="bdfb-chassis-status">
           <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>

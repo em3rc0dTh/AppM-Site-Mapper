@@ -26,8 +26,19 @@ export default async function NetworkPage() {
   const networks = await service.listNetworks();
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
+  if (networks.length === 1) {
+    const network = networks[0]!;
+    const sites = (await service.listChildren(network.id)).filter((node) => node.kind === 'SITE');
+
+    if (sites.length === 1) {
+      redirect(await service.buildDeepLink(sites[0]!.id));
+    }
+
+    redirect(await service.buildDeepLink(network.id));
+  }
+
   return (
-    <main className="workspace-shell">
+    <main className="workspace-shell telxius-network-index">
       <SectionHeader
         eyebrow="Infrastructure / topology"
         title="Network"

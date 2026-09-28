@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { TopologyContextTree } from '@/components/topology/context-tree';
@@ -34,10 +35,27 @@ export default async function RackPage({
   ]);
   const root = trail[0];
   const tree = root ? await topology.buildNavigationTree(root.id) : null;
+  const trailEntries = await Promise.all(
+    trail.map(async (item) => ({
+      id: item.id,
+      name: item.name,
+      href: await topology.buildDeepLink(item.id),
+    })),
+  );
 
   return (
-    <main className="operational-page operational-page--rack">
-      <div className="operational-layout operational-layout--rack">
+    <main className="operational-page operational-page--rack telxius-operational-page">
+      <nav
+        className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
+        aria-label="Breadcrumb"
+      >
+        {trailEntries.map((item) => (
+          <Link key={item.id} href={item.href}>
+            {item.name}
+          </Link>
+        ))}
+      </nav>
+      <div className="operational-layout telxius-operational-layout operational-layout--rack">
         <aside className="operational-context">
           {tree && <TopologyContextTree tree={tree} activeId={rackId} />}
         </aside>

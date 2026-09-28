@@ -32,14 +32,14 @@ The screenshots are visual documentation. They do not establish runtime health, 
 
 ## Route mapping
 
-| Telxius view | MK1 route |
-| --- | --- |
-| Site canvas | `/topology/.../site/:id` |
-| Structure layout | `/topology/.../structure/:id?level=:levelId` |
-| Room blueprint | `/topology/.../room/:id` and `/blueprint/:id` |
-| Rack elevation | `/rack/:rackId` |
-| BDFB internals | Device topology route / rack mounted-device inspection |
-| Power path | `/power` |
+| Telxius view     | MK1 route                                              |
+| ---------------- | ------------------------------------------------------ |
+| Site canvas      | `/topology/.../site/:id`                               |
+| Structure layout | `/topology/.../structure/:id?level=:levelId`           |
+| Room blueprint   | `/topology/.../room/:id` and `/blueprint/:id`          |
+| Rack elevation   | `/rack/:rackId`                                        |
+| BDFB internals   | Device topology route / rack mounted-device inspection |
+| Power path       | `/power`                                               |
 
 ## Spatial fidelity boundary
 

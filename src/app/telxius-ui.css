@@ -943,27 +943,29 @@
   font: 400 11px/14px "Space Grotesk", monospace;
 }
 
-.zip-blueprint-actions {
-  display: flex;
-  gap: 6px;
-}
-
-.zip-blueprint-actions button {
+.zip-blueprint-mode {
   min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   border: 1px solid #414755;
   border-radius: 3px;
   padding: 0 10px;
   background: #181c23;
   color: #c1c6d7;
-  font: 700 10px/14px Inter, sans-serif;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
-.zip-blueprint-actions button[aria-pressed='true'] {
-  border-color: #ff9f0a;
-  color: #ffb595;
-  box-shadow: inset 0 0 0 1px rgba(255, 159, 10, 0.15);
+.zip-blueprint-mode-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #32d74b;
+  box-shadow: 0 0 8px rgba(50, 215, 75, 0.4);
+}
+
+.zip-blueprint-mode b {
+  font: 700 10px/14px Inter, sans-serif;
+  letter-spacing: 0.08em;
 }
 
 .blueprint-canvas-shell,

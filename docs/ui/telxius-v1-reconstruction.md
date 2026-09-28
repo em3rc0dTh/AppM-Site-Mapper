@@ -41,7 +41,6 @@ The screenshots are visual documentation. They do not establish runtime health, 
 | BDFB internals   | Device topology route / rack mounted-device inspection |
 | Power path       | `/power`                                               |
 
-
 ## Room-to-BDFB fidelity contract
 
 For the deep physical workflow, the legacy visual source is authoritative for composition and density. The relevant source artifacts are the Telxius/Stitch design package and the legacy UI reference implementation:
@@ -68,7 +67,6 @@ editing-accent       #FF9F0A
 status-success       #32D74B
 status-warning       #FFD60A
 ```
-
 
 ## Harmonic composition contract
 

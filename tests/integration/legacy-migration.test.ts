@@ -90,9 +90,7 @@ describe('legacy migration planner', () => {
           Structure: [{ id: 'structure-1', name: 'Structure', siteId: 'site-1' }],
           Level: [{ id: 'level-1', name: 'Level', structureId: 'structure-1' }],
           Substructure: [{ id: 'room-1', name: 'Room', levelId: 'level-1' }],
-          ContainerCluster: [
-            { id: 'cluster-1', name: 'Cluster-Demo', substructureId: 'room-1' },
-          ],
+          ContainerCluster: [{ id: 'cluster-1', name: 'Cluster-Demo', substructureId: 'room-1' }],
           Container: [
             {
               id: 'rack-1',
@@ -331,5 +329,4 @@ describe('legacy migration planner', () => {
       ]),
     );
   });
-
 });

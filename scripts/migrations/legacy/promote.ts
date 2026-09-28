@@ -26,9 +26,7 @@ function parseArgs(argv: readonly string[]): CliOptions {
   const expected = Number(expectedRaw);
 
   if (!fingerprint || !Number.isInteger(expected) || expected < 1) {
-    throw new Error(
-      'Usage: --fingerprint <sha256> --expected <count> [--apply]',
-    );
+    throw new Error('Usage: --fingerprint <sha256> --expected <count> [--apply]');
   }
 
   return {
@@ -57,14 +55,8 @@ async function ensureTopologyIndexes(collection: Collection<Document>): Promise<
       { parentId: 1, lifecycle: 1, name: 1 },
       { name: 'ix_topology_parent_lifecycle_name' },
     ),
-    collection.createIndex(
-      { kind: 1, lifecycle: 1 },
-      { name: 'ix_topology_kind_lifecycle' },
-    ),
-    collection.createIndex(
-      { serialNumber: 1 },
-      { name: 'ix_topology_serial', sparse: true },
-    ),
+    collection.createIndex({ kind: 1, lifecycle: 1 }, { name: 'ix_topology_kind_lifecycle' }),
+    collection.createIndex({ serialNumber: 1 }, { name: 'ix_topology_serial', sparse: true }),
   ]);
 }
 
@@ -74,9 +66,7 @@ async function collectionExists(
   collectionName: string,
 ): Promise<boolean> {
   const db = client.db(databaseName);
-  return Boolean(
-    await db.listCollections({ name: collectionName }, { nameOnly: true }).hasNext(),
-  );
+  return Boolean(await db.listCollections({ name: collectionName }, { nameOnly: true }).hasNext());
 }
 
 async function main(): Promise<void> {
@@ -107,9 +97,7 @@ async function main(): Promise<void> {
     }
 
     if (!validation.ok) {
-      throw new Error(
-        `Promotion validation failed: ${validation.errors.join(', ')}`,
-      );
+      throw new Error(`Promotion validation failed: ${validation.errors.join(', ')}`);
     }
 
     if (!options.apply) {
@@ -142,10 +130,7 @@ async function main(): Promise<void> {
     const candidateNodes = (await candidate.find({}).toArray()).map(canonicalDocument);
     const candidateValidation = validatePromotionCandidate(candidateNodes);
 
-    if (
-      candidateNodes.length !== options.expected ||
-      !candidateValidation.ok
-    ) {
+    if (candidateNodes.length !== options.expected || !candidateValidation.ok) {
       await candidate.drop();
       throw new Error('Candidate verification failed before live swap.');
     }
@@ -174,10 +159,7 @@ async function main(): Promise<void> {
     const promotedNodes = (await promoted.find({}).toArray()).map(canonicalDocument);
     const promotedValidation = validatePromotionCandidate(promotedNodes);
 
-    if (
-      promotedNodes.length !== options.expected ||
-      !promotedValidation.ok
-    ) {
+    if (promotedNodes.length !== options.expected || !promotedValidation.ok) {
       throw new Error(
         'Post-promotion verification failed. Live collection was not automatically rolled back; use the retained backup collection.',
       );

@@ -142,7 +142,10 @@ export default async function TopologyNodePage({
 
   return (
     <main className="operational-page telxius-operational-page">
-      <nav className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs" aria-label="Breadcrumb">
+      <nav
+        className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
+        aria-label="Breadcrumb"
+      >
         {trailEntries.map((item, index) => (
           <Link key={item.id} href={index === trailEntries.length - 1 ? selfHref : item.href}>
             {item.name}

@@ -56,7 +56,9 @@ export function PhysicalPolygonStage({
   items: readonly PhysicalPolygonItem[];
   mode: 'site' | 'structure';
 }>) {
-  const itemPolygons = items.map(({ node }) => pointsFor(node)).filter((polygon) => polygon.length >= 3);
+  const itemPolygons = items
+    .map(({ node }) => pointsFor(node))
+    .filter((polygon) => polygon.length >= 3);
   const polygons = [...(boundary && boundary.length >= 3 ? [boundary] : []), ...itemPolygons];
   const bounds = boundsOf(polygons);
 
@@ -82,7 +84,11 @@ export function PhysicalPolygonStage({
 
   return (
     <div className={`telxius-physical-map telxius-physical-map--${mode}`}>
-      <svg viewBox={viewBox} role="img" aria-label={mode === 'site' ? 'Site physical layout' : 'Structure floor layout'}>
+      <svg
+        viewBox={viewBox}
+        role="img"
+        aria-label={mode === 'site' ? 'Site physical layout' : 'Structure floor layout'}
+      >
         <defs>
           <pattern
             id={`telxius-grid-${mode}`}

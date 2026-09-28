@@ -39,6 +39,29 @@ function eyebrowFor(node: TopologyNode): string {
   }
 }
 
+function navigationContextRoot(
+  trail: readonly TopologyNode[],
+  node: TopologyNode,
+): TopologyNode | null {
+  const byKind = (kind: TopologyNode['kind']) =>
+    [...trail].reverse().find((candidate) => candidate.kind === kind) ?? null;
+
+  switch (node.kind) {
+    case 'ROOM_SUBSTRUCTURE':
+      return byKind('LEVEL') ?? trail[0] ?? null;
+    case 'CONTAINER_CLUSTER_BAY':
+    case 'POSITION':
+      return byKind('ROOM_SUBSTRUCTURE') ?? trail[0] ?? null;
+    case 'CONTAINER_RACK':
+      return byKind('ROOM_SUBSTRUCTURE') ?? trail[0] ?? null;
+    case 'DEVICE':
+    case 'EQUIPMENT':
+      return byKind('POSITION') ?? byKind('ROOM_SUBSTRUCTURE') ?? trail[0] ?? null;
+    default:
+      return trail[0] ?? null;
+  }
+}
+
 function descriptionFor(node: TopologyNode): string | undefined {
   switch (node.kind) {
     case 'SITE':
@@ -82,7 +105,7 @@ export default async function TopologyNodePage({
     service.listChildren(node.id),
     service.buildDeepLink(node.id),
   ]);
-  const root = trail[0];
+  const root = navigationContextRoot(trail, node);
   const navigationTree = root ? await service.buildNavigationTree(root.id) : null;
   const trailEntries = await Promise.all(
     trail.map(async (item) => ({

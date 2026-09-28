@@ -74,10 +74,66 @@ export function RackElevation({
   const totalU = view.rack.totalU ?? view.rows.length;
   const usedPercent = Math.round((physical / Math.max(totalU, 1)) * 100);
   const primaryInventory = view.inventory[0];
+  const physicalBlocks = blocks.filter((block) => block.role === 'PHYSICAL');
+  const nonPhysicalBlocks = blocks.filter((block) => block.role !== 'PHYSICAL');
 
   return (
-    <section className="legacy-rack-view telxius-rack-view">
-      <div className="legacy-rack-main telxius-rack-main">
+    <section className="legacy-rack-view telxius-rack-view zip-rack-view">
+      <aside className="zip-rack-context">
+        <header>
+          <span>Rack context</span>
+          <strong>Internal Rack Hierarchy</strong>
+        </header>
+
+        <div className="zip-rack-position">
+          <span>Selected position</span>
+          <strong>{context?.positionName ?? 'Rack position'}</strong>
+          <small>{context?.coordinate ?? view.rack.name}</small>
+        </div>
+
+        <div className="zip-rack-tree">
+          {physicalBlocks.map((block) => {
+            const item = block.occupant
+              ? view.inventory.find((candidate) => candidate.id === block.occupant?.id)
+              : undefined;
+
+            return (
+              <button
+                key={block.key}
+                type="button"
+                className="zip-rack-tree-row is-equipped"
+                onClick={() => {
+                  if (item) setSelected(topologyInspector(item));
+                }}
+              >
+                <span className="zip-rack-tree-dot" />
+                <span>
+                  <b>
+                    U{block.bottomU}–U{block.topU}
+                  </b>
+                  <small>{block.occupant?.name ?? 'Occupied'}</small>
+                </span>
+              </button>
+            );
+          })}
+
+          {nonPhysicalBlocks.map((block) => (
+            <div key={block.key} className={`zip-rack-tree-row is-${block.role.toLowerCase()}`}>
+              <span className="zip-rack-tree-dot" />
+              <span>
+                <b>
+                  U{block.bottomU}–U{block.topU}
+                </b>
+                <small>
+                  {block.units}U {roleLabel(block.role).toLowerCase()}
+                </small>
+              </span>
+            </div>
+          ))}
+        </div>
+      </aside>
+
+      <div className="legacy-rack-main telxius-rack-main zip-rack-main">
         <SectionHeader
           eyebrow="Rack / physical elevation"
           title={view.rack.name}

@@ -85,8 +85,10 @@ export function BlueprintCanvas({
   const base = useMemo(() => boundsFor(polygon), [polygon]);
   const labels = useMemo(() => gridLabels(polygon), [polygon]);
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
+  const [selectedRackId, setSelectedRackId] = useState<string | null>(null);
   const [tool, setTool] = useState<'select' | 'pan'>('select');
   function inspectRack(rack: RackPlacementView) {
+    setSelectedRackId(rack.id);
     setSelected({
       name: rack.name,
       kind: 'CONTAINER / RACK',
@@ -149,12 +151,13 @@ export function BlueprintCanvas({
 
   return (
     <section className="blueprint-panel">
-      <header className="blueprint-toolbar">
+      <header className="blueprint-toolbar zip-blueprint-toolbar">
         <div>
-          <strong>Blueprint</strong>
-          <span>600 mm grid · {Math.round(zoom * 100)}%</span>
+          <small>2D DRAFTING VIEW</small>
+          <strong>Room floor plan</strong>
+          <span>600 × 600 mm grid · {Math.round(zoom * 100)}%</span>
         </div>
-        <div className="blueprint-actions">
+        <div className="blueprint-actions zip-blueprint-actions">
           <button type="button" aria-pressed={tool === 'select'} onClick={() => setTool('select')}>
             Select
           </button>
@@ -187,10 +190,48 @@ export function BlueprintCanvas({
         </div>
       </header>
 
-      <div className="blueprint-canvas-shell">
-        <div className="blueprint-canvas-hud" aria-hidden="true">
-          <span>2D DRAFTING</span>
-          <b>600 × 600 mm TILE</b>
+      <div className="blueprint-canvas-shell zip-blueprint-shell">
+        <div className="zip-drafting-tools" aria-label="Drafting tools">
+          <button
+            type="button"
+            aria-pressed={tool === 'select'}
+            onClick={() => setTool('select')}
+            title="Select"
+          >
+            ↖
+          </button>
+          <button
+            type="button"
+            aria-pressed={tool === 'pan'}
+            onClick={() => setTool('pan')}
+            title="Pan"
+          >
+            ✥
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom((value) => Math.min(5, value * 1.2))}
+            title="Zoom in"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            onClick={() => setZoom((value) => Math.max(0.5, value / 1.2))}
+            title="Zoom out"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setZoom(1);
+              setPan({ x: 0, y: 0 });
+            }}
+            title="Fit"
+          >
+            ⌂
+          </button>
         </div>
         <svg
           ref={svgRef}
@@ -282,7 +323,7 @@ export function BlueprintCanvas({
           {racks.map((rack) => (
             <g
               key={rack.id}
-              className="blueprint-rack-node"
+              className={`blueprint-rack-node${selectedRackId === rack.id ? ' is-selected' : ''}`}
               role="button"
               tabIndex={0}
               aria-label={`Inspect ${rack.name}`}
@@ -340,7 +381,15 @@ export function BlueprintCanvas({
             : 'Select a rack to inspect · scroll to zoom'}
         </span>
       </footer>
-      {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <EntityInspector
+          entity={selected}
+          onClose={() => {
+            setSelected(null);
+            setSelectedRackId(null);
+          }}
+        />
+      )}
     </section>
   );
 }

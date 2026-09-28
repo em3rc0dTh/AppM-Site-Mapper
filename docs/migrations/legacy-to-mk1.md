@@ -14,7 +14,6 @@ The migration input is JSON with a canonical Network plus legacy collections.
 
 Known PascalCase/lowercase aliases are accepted **only** inside `scripts/migrations/legacy/`.
 
-
 ## Deployed legacy Site Mapper shape
 
 The migration adapter also accepts the deployed legacy MongoDB shape observed in the original Site Mapper database. Compatibility remains isolated to `scripts/migrations/legacy/`.
@@ -46,7 +45,6 @@ Legacy `panel.telemetryPrefix` is preserved when present. When the provider mapp
 ```
 
 This produces explicit breaker bindings such as `0_1_1` without flattening or reordering the physical A/B panel hierarchy. Panels without an evidenced provider mapping remain physically present and unbound.
-
 
 ## Device / Equipment rule
 

@@ -148,8 +148,8 @@ function normalizeCas(record: LegacyRecord): readonly LegacyRecord[] | undefined
         ...(clearance && getNumber(clearance, ['bottom']) !== null
           ? { clearanceBottomU: getNumber(clearance, ['bottom']) }
           : {}),
-        ...(getString(raw, ['deviceId', 'occupantId']) ??
-        (embeddedDevice ? getString(embeddedDevice, ['id', '_id']) : null)
+        ...((getString(raw, ['deviceId', 'occupantId']) ??
+        (embeddedDevice ? getString(embeddedDevice, ['id', '_id']) : null))
           ? {
               deviceId:
                 getString(raw, ['deviceId', 'occupantId']) ??
@@ -183,7 +183,8 @@ function normalizeBdfb(
   const shelves = record.shelves.flatMap((rawShelf, shelfIndex) => {
     if (!isRecord(rawShelf)) return [];
     const shelfId =
-      getString(rawShelf, ['id', '_id']) ?? deterministicId(`legacy-bdfb:${deviceId}:shelf:${shelfIndex}`);
+      getString(rawShelf, ['id', '_id']) ??
+      deterministicId(`legacy-bdfb:${deviceId}:shelf:${shelfIndex}`);
     const framesSource = Array.isArray(rawShelf.frames) ? rawShelf.frames : [];
 
     const frames = framesSource.flatMap((rawFrame, frameIndex) => {

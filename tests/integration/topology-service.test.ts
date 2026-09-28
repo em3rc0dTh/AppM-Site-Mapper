@@ -130,7 +130,7 @@ describe('TopologyService', () => {
 
     let current = tree;
     while (current && current.node.id !== rack.id) {
-      current = current.children[0];
+      current = current.children[0] ?? null;
     }
 
     expect(current?.node.id).toBe(rack.id);

@@ -221,7 +221,9 @@ function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
                   <Icon name="box" />
                 </span>
                 <span className="zip-bay-cell-copy">
-                  <small>POSITION {item.node.coordinate.row.toUpperCase()}-{item.node.coordinate.column}</small>
+                  <small>
+                    POSITION {item.node.coordinate.row.toUpperCase()}-{item.node.coordinate.column}
+                  </small>
                   <strong>{item.node.name}</strong>
                 </span>
                 <span className="legacy-stage-enter">↗</span>

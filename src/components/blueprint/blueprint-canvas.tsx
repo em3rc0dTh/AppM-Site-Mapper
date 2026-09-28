@@ -4,7 +4,10 @@ import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'r
 
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
-import type { RackPlacementView } from '@/modules/spatial/application/spatial-service';
+import type {
+  ClusterPlacementView,
+  RackPlacementView,
+} from '@/modules/spatial/application/spatial-service';
 import type { PointMm, RectMm } from '@/modules/spatial/domain/geometry';
 
 interface ViewState {
@@ -60,12 +63,22 @@ function gridLabels(polygon: readonly PointMm[]) {
   };
 }
 
+function polygonCentroid(points: readonly PointMm[]): PointMm {
+  if (points.length === 0) return { x: 0, y: 0 };
+  return {
+    x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
+    y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
+  };
+}
+
 export function BlueprintCanvas({
   polygon,
+  clusters,
   racks,
   slots,
 }: Readonly<{
   polygon: readonly PointMm[];
+  clusters: readonly ClusterPlacementView[];
   racks: readonly RackPlacementView[];
   slots: readonly RectMm[];
 }>) {
@@ -233,6 +246,28 @@ export function BlueprintCanvas({
             ))}
           </g>
 
+          {clusters.map((cluster) => {
+            if (!cluster.polygon || cluster.polygon.length < 3) return null;
+            const center = polygonCentroid(cluster.polygon);
+
+            return (
+              <g key={cluster.id} className="blueprint-cluster-node">
+                <polygon
+                  points={cluster.polygon.map((point) => `${point.x},${point.y}`).join(' ')}
+                  className="blueprint-cluster"
+                />
+                <text
+                  x={center.x}
+                  y={center.y - 250}
+                  textAnchor="middle"
+                  className="blueprint-cluster-label"
+                >
+                  {cluster.name.toUpperCase()}
+                </text>
+              </g>
+            );
+          })}
+
           {slots.map((slot) => (
             <rect
               key={rectKey(slot)}
@@ -296,6 +331,7 @@ export function BlueprintCanvas({
         </div>
       </div>
       <footer className="blueprint-legend">
+        <StatusBadge tone="accent">{clusters.length} CLUSTERS</StatusBadge>
         <StatusBadge tone="accent">{racks.length} RACK FOOTPRINTS</StatusBadge>
         <StatusBadge>{slots.length} ASSIGNABLE TILES</StatusBadge>
         <span>

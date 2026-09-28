@@ -1016,8 +1016,7 @@
   border-radius: 12px;
   background:
     linear-gradient(rgba(22, 43, 57, 0.38) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(22, 43, 57, 0.38) 1px, transparent 1px),
-    #04070b;
+    linear-gradient(90deg, rgba(22, 43, 57, 0.38) 1px, transparent 1px), #04070b;
   background-size: 12.5% 25%;
 }
 
@@ -1250,8 +1249,7 @@
 
 .legacy-rack-block--available {
   background:
-    repeating-linear-gradient(to bottom, transparent 0 16px, rgba(56, 56, 58, 0.25) 17px),
-    #14191f;
+    repeating-linear-gradient(to bottom, transparent 0 16px, rgba(56, 56, 58, 0.25) 17px), #14191f;
 }
 
 .legacy-rack-block--physical {

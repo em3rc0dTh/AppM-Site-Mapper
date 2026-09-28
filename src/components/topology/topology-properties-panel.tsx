@@ -108,7 +108,6 @@ export function TopologyPropertiesPanel({
     );
   }
 
-
   if (node.kind === 'DEVICE' && node.bdfb) {
     const shelves = node.bdfb.shelves;
     const frames = shelves.flatMap((shelf) => shelf.frames);

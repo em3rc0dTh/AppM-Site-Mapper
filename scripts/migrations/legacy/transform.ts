@@ -114,11 +114,11 @@ function parentLegacyId(kind: CanonicalKind, record: LegacyRecord): string | nul
     case 'SITE':
       return '__NETWORK__';
     case 'STRUCTURE':
-      return getString(record, ['siteId', 'site_id', 'site']);
+      return getString(record, ['siteId', 'site_id', 'site', 'parentId']);
     case 'LEVEL':
-      return getString(record, ['structureId', 'structure_id', 'structure']);
+      return getString(record, ['structureId', 'structure_id', 'structure', 'parentId']);
     case 'ROOM_SUBSTRUCTURE':
-      return getString(record, ['levelId', 'level_id', 'level']);
+      return getString(record, ['levelId', 'level_id', 'level', 'parentId']);
     case 'CONTAINER_CLUSTER_BAY':
       return getString(record, [
         'roomId',

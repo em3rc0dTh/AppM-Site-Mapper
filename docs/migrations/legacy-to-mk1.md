@@ -29,7 +29,7 @@ Supported evidence-backed translations include:
 
 ### Explicit BDFB telemetry binding
 
-Legacy `panel.telemetryPrefix` is preserved when present. When the provider mapping is known outside the legacy document, the migration input may supply evidence-backed panel prefixes:
+Legacy `panel.telemetryPrefix` is used as a fallback. When the current provider mapping is known outside the legacy document, the migration input may supply evidence-backed panel prefixes, and those explicit bindings take precedence:
 
 ```json
 {

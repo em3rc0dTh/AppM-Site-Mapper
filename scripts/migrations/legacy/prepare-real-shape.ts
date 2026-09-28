@@ -165,12 +165,11 @@ function panelPrefix(
   panel: LegacyRecord,
   configured: Readonly<Record<string, string>> | undefined,
 ): string | null {
-  const embedded = getString(panel, ['telemetryPrefix']);
-  if (embedded) return embedded;
-
   const label = getString(panel, ['label', 'name']);
   const configuredPrefix = label ? configured?.[label] : undefined;
-  return configuredPrefix?.trim() || null;
+  if (configuredPrefix?.trim()) return configuredPrefix.trim();
+
+  return getString(panel, ['telemetryPrefix']);
 }
 
 function normalizeBdfb(

@@ -55,44 +55,29 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
 
       <header className="app-topbar legacy-topbar">
-        <Link href="/workspace" className="legacy-brand">
-          <span className="legacy-brand-mark">
-            <Icon name="network" />
-          </span>
-          <span>
-            SITE MAPPER
-            <small>INFRASTRUCTURE OPERATIONS</small>
-          </span>
+        <Link href="/workspace" className="legacy-brand telxius-brand">
+          <strong>AppManager</strong>
+          <span>SiteMapper Module</span>
         </Link>
 
-        <nav className="legacy-topnav" aria-label="Operational scope">
-          <Link href="/workspace" aria-current={pathname === '/workspace' ? 'page' : undefined}>
-            Global
-          </Link>
-          <Link
-            href="/network"
-            aria-current={active === '/network' && !immersive ? 'page' : undefined}
-          >
-            Regional
-          </Link>
-          <span
-            aria-current={
-              pathname.startsWith('/topology') || pathname.startsWith('/blueprint')
-                ? 'page'
-                : undefined
-            }
-          >
-            Site
-          </span>
-          <span aria-current={pathname.startsWith('/rack') ? 'page' : undefined}>Rack</span>
-        </nav>
+        <div className="telxius-topbar-context" aria-hidden="true">
+          <span>NETWORK</span>
+          <b>›</b>
+          <span>SITE MAPPER</span>
+        </div>
 
         <div className="legacy-top-actions">
           <Link href="/settings" className="legacy-icon-button" aria-label="Settings">
             <Icon name="settings" />
           </Link>
-          <button className="legacy-signout" disabled={busy} onClick={logout}>
-            {busy ? 'Signing out…' : 'Sign out'}
+          <button
+            className="legacy-signout telxius-user-button"
+            disabled={busy}
+            onClick={logout}
+            aria-label="Sign out"
+            title="Sign out"
+          >
+            {busy ? '…' : '◎'}
           </button>
         </div>
       </header>

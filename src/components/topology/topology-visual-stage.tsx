@@ -181,10 +181,7 @@ function columnRange(items: readonly VisualStageChild[]): readonly number[] {
 }
 
 function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
-  const positions = items.filter(
-    ({ node }): node is Extract<VisualStageChild, { node: TopologyNode }> =>
-      node.kind === 'POSITION',
-  );
+  const positions = items.filter(({ node }) => node.kind === 'POSITION');
   const columns = columnRange(items);
   const row = positions.find(({ node }) => node.kind === 'POSITION')?.node;
   const rowLabel = row?.kind === 'POSITION' ? row.coordinate.row.toUpperCase() : 'A';

@@ -5,11 +5,7 @@ import { validatePromotionCandidate } from '../../scripts/migrations/legacy/prom
 
 const timestamp = '2026-09-28T00:00:00.000Z';
 
-function node(
-  id: string,
-  kind: CanonicalNode['kind'],
-  parentId: string | null,
-): CanonicalNode {
+function node(id: string, kind: CanonicalNode['kind'], parentId: string | null): CanonicalNode {
   return {
     id,
     kind,

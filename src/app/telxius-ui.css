@@ -2229,18 +2229,10 @@ button.zip-rack-tree-row {
     --telxius-nav-width: 220px;
     --telxius-inspector-width: 244px;
   }
-
-  .bdfb-endpoint-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
 }
 
 @media (max-width: 1040px) {
   .operations-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .bdfb-frame-field {
     grid-template-columns: 1fr;
   }
 }

@@ -1682,8 +1682,7 @@ button.zip-rack-tree-row {
   border: 0;
   background:
     linear-gradient(rgba(12, 36, 55, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(12, 36, 55, 0.12) 1px, transparent 1px),
-    #07111d;
+    linear-gradient(90deg, rgba(12, 36, 55, 0.12) 1px, transparent 1px), #07111d;
   background-size: 24px 24px;
 }
 
@@ -1742,8 +1741,7 @@ button.zip-rack-tree-row {
   background:
     radial-gradient(circle at 50% 45%, rgba(0, 210, 255, 0.045), transparent 42%),
     linear-gradient(rgba(14, 49, 73, 0.12) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(14, 49, 73, 0.12) 1px, transparent 1px),
-    #06101b;
+    linear-gradient(90deg, rgba(14, 49, 73, 0.12) 1px, transparent 1px), #06101b;
   background-size:
     auto,
     24px 24px,
@@ -1844,8 +1842,7 @@ button.zip-rack-tree-row {
   padding: 66px 26px 24px;
   border: 3px solid #29c9ff;
   border-radius: 22px;
-  background:
-    linear-gradient(180deg, rgba(8, 41, 64, 0.72), rgba(4, 22, 35, 0.84));
+  background: linear-gradient(180deg, rgba(8, 41, 64, 0.72), rgba(4, 22, 35, 0.84));
   box-shadow:
     0 0 22px rgba(41, 201, 255, 0.12),
     inset 0 0 22px rgba(41, 201, 255, 0.025);
@@ -1881,8 +1878,7 @@ button.zip-rack-tree-row {
   gap: 10px;
   border: 2px solid #27bfff;
   border-radius: 16px;
-  background:
-    linear-gradient(180deg, rgba(13, 49, 76, 0.92), rgba(7, 31, 50, 0.96));
+  background: linear-gradient(180deg, rgba(13, 49, 76, 0.92), rgba(7, 31, 50, 0.96));
   color: #edf6fb;
   cursor: pointer;
   box-shadow:
@@ -1899,8 +1895,7 @@ button.zip-rack-tree-row {
 .bdfb-overview-panel:focus-visible {
   transform: translateY(-1px);
   border-color: #61d4ff;
-  background:
-    linear-gradient(180deg, rgba(16, 61, 92, 0.96), rgba(8, 37, 59, 0.98));
+  background: linear-gradient(180deg, rgba(16, 61, 92, 0.96), rgba(8, 37, 59, 0.98));
   box-shadow:
     0 0 20px rgba(39, 191, 255, 0.18),
     inset 0 0 24px rgba(39, 191, 255, 0.055);
@@ -2207,7 +2202,6 @@ button.zip-rack-tree-row {
     grid-template-columns: 1fr;
   }
 }
-
 
 /* --------------------------------------------------------------------------
    Generic index fallback

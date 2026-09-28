@@ -138,6 +138,7 @@ export default async function TopologyNodePage({
   const rackLink =
     node.kind === 'CONTAINER_RACK' && node.variant === 'RACK' ? `/rack/${node.id}` : null;
   const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
+  const sectionDescription = descriptionFor(node);
 
   return (
     <main className="operational-page telxius-operational-page">
@@ -158,7 +159,7 @@ export default async function TopologyNodePage({
           <SectionHeader
             eyebrow={eyebrowFor(node)}
             title={node.kind === 'ROOM_SUBSTRUCTURE' ? node.name.toUpperCase() : node.name}
-            {...(descriptionFor(node) ? { description: descriptionFor(node) } : {})}
+            {...(sectionDescription === undefined ? {} : { description: sectionDescription })}
             actions={
               <>
                 {node.kind === 'STRUCTURE' && selectedLevel && (

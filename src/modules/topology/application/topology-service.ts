@@ -319,8 +319,14 @@ export class TopologyService {
   }
 
   async buildNavigationTree(rootId: string, maxDepth = 8): Promise<TopologyNavigationNode | null> {
-    const root = await this.repository.getById(rootId);
-    if (!root || root.lifecycle !== 'ACTIVE') return null;
+    const trail = await this.getTrail(rootId);
+    const root = trail.at(-1);
+
+    if (!root || root.id !== rootId || root.lifecycle !== 'ACTIVE') return null;
+
+    const canonicalPrefix = trail
+      .slice(0, -1)
+      .flatMap((node) => [topologySlug[node.kind], node.id]);
 
     const visit = async (
       node: TopologyNode,
@@ -344,7 +350,7 @@ export class TopologyService {
       };
     };
 
-    return visit(root, [], 0);
+    return visit(root, canonicalPrefix, 0);
   }
 
   async resolveDeepLink(segments: readonly string[]): Promise<Result<TopologyNode, TopologyError>> {

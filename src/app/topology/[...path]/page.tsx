@@ -59,7 +59,7 @@ export default async function TopologyNodePage({
   searchParams,
 }: Readonly<{
   params: Promise<{ path: string[] }>;
-  searchParams: Promise<{ level?: string }>;
+  searchParams: Promise<{ level?: string; focus?: string }>;
 }>) {
   const auth = await requirePermission('topology:read');
 
@@ -82,6 +82,14 @@ export default async function TopologyNodePage({
     service.listChildren(node.id),
     service.buildDeepLink(node.id),
   ]);
+  if (node.kind === 'CONTAINER_CLUSTER_BAY' || node.kind === 'POSITION') {
+    const room = [...trail].reverse().find((item) => item.kind === 'ROOM_SUBSTRUCTURE');
+
+    if (room) {
+      redirect(`${await service.buildDeepLink(room.id)}?focus=${node.id}`);
+    }
+  }
+
   const root = trail[0];
   const navigationTree = root ? await service.buildNavigationTree(root.id) : null;
   const trailEntries = await Promise.all(
@@ -155,7 +163,12 @@ export default async function TopologyNodePage({
 
       <div className="operational-layout telxius-operational-layout">
         <aside className="operational-context">
-          {navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />}
+          {navigationTree && (
+            <TopologyContextTree
+              tree={navigationTree}
+              activeId={node.kind === 'ROOM_SUBSTRUCTURE' && query.focus ? query.focus : node.id}
+            />
+          )}
         </aside>
 
         <section className="operational-stage telxius-operational-stage">
@@ -192,8 +205,10 @@ export default async function TopologyNodePage({
               <BlueprintCanvas
                 polygon={roomLayout.value.room.polygon}
                 clusters={roomLayout.value.clusters}
+                positions={roomLayout.value.positions}
                 racks={roomLayout.value.racks}
                 slots={roomLayout.value.assignableSlots}
+                {...(query.focus ? { focusId: query.focus } : {})}
               />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' && roomLayout?.ok ? (
               <StatePanel

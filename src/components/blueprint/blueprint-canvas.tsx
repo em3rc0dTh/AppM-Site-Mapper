@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
@@ -82,6 +83,7 @@ export function BlueprintCanvas({
   racks: readonly RackPlacementView[];
   slots: readonly RectMm[];
 }>) {
+  const router = useRouter();
   const base = useMemo(() => boundsFor(polygon), [polygon]);
   const labels = useMemo(() => gridLabels(polygon), [polygon]);
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
@@ -157,36 +159,9 @@ export function BlueprintCanvas({
           <strong>Room floor plan</strong>
           <span>600 × 600 mm grid · {Math.round(zoom * 100)}%</span>
         </div>
-        <div className="blueprint-actions zip-blueprint-actions">
-          <button type="button" aria-pressed={tool === 'select'} onClick={() => setTool('select')}>
-            Select
-          </button>
-          <button type="button" aria-pressed={tool === 'pan'} onClick={() => setTool('pan')}>
-            Pan
-          </button>
-          <button
-            type="button"
-            aria-label="Zoom in"
-            onClick={() => setZoom((value) => Math.min(5, value * 1.2))}
-          >
-            +
-          </button>
-          <button
-            type="button"
-            aria-label="Zoom out"
-            onClick={() => setZoom((value) => Math.max(0.5, value / 1.2))}
-          >
-            −
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setZoom(1);
-              setPan({ x: 0, y: 0 });
-            }}
-          >
-            Fit
-          </button>
+        <div className="zip-blueprint-mode">
+          <span className="zip-blueprint-mode-dot" />
+          <b>VIEW MODE</b>
         </div>
       </header>
 
@@ -329,6 +304,9 @@ export function BlueprintCanvas({
               aria-label={`Inspect ${rack.name}`}
               onClick={() => {
                 if (tool === 'select') inspectRack(rack);
+              }}
+              onDoubleClick={() => {
+                if (tool === 'select') router.push(`/rack/${rack.id}`);
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {

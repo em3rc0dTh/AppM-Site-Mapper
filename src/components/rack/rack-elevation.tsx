@@ -109,9 +109,13 @@ export function RackElevation({
           <ol>
             {context.trail
               .filter((item) =>
-                ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY', 'POSITION'].includes(
-                  item.kind,
-                ),
+                [
+                  'SITE',
+                  'STRUCTURE',
+                  'ROOM_SUBSTRUCTURE',
+                  'CONTAINER_CLUSTER_BAY',
+                  'POSITION',
+                ].includes(item.kind),
               )
               .map((item) => (
                 <li key={item.id}>
@@ -169,10 +173,7 @@ export function RackElevation({
           <div className="zip-rack-cabinet">
             <div className="zip-rack-cap">{view.rack.name}</div>
 
-            <div
-              className="zip-rack-units"
-              style={{ '--rack-total-u': totalU } as CSSProperties}
-            >
+            <div className="zip-rack-units" style={{ '--rack-total-u': totalU } as CSSProperties}>
               <div className="zip-rack-u-scale" aria-hidden="true">
                 {Array.from({ length: totalU }, (_, index) => totalU - index).map((u) => (
                   <span key={u}>{u}</span>
@@ -210,9 +211,7 @@ export function RackElevation({
                       }}
                     >
                       {block.role === 'CLEARANCE' ? (
-                        <span className="zip-rack-clearance">
-                          CLEARANCE ({block.units}U)
-                        </span>
+                        <span className="zip-rack-clearance">CLEARANCE ({block.units}U)</span>
                       ) : block.occupant ? (
                         <>
                           <strong>{block.occupant.name}</strong>
@@ -281,8 +280,7 @@ export function RackElevation({
                 <div>
                   <dt>Clearance</dt>
                   <dd>
-                    ↑{selectedRange?.clearanceTopU ?? 0}U / ↓
-                    {selectedRange?.clearanceBottomU ?? 0}U
+                    ↑{selectedRange?.clearanceTopU ?? 0}U / ↓{selectedRange?.clearanceBottomU ?? 0}U
                   </dd>
                 </div>
               </dl>
@@ -294,7 +292,9 @@ export function RackElevation({
                 <dl>
                   <div>
                     <dt>Category</dt>
-                    <dd>{selectedBlock.occupant.category ?? kindLabel(selectedBlock.occupant.kind)}</dd>
+                    <dd>
+                      {selectedBlock.occupant.category ?? kindLabel(selectedBlock.occupant.kind)}
+                    </dd>
                   </div>
                   <div>
                     <dt>Status</dt>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 
 import type { TopologyNavigationNode } from '@/modules/topology/application/topology-service';
 import type { TopologyKind } from '@/modules/topology/domain/entities';
@@ -57,7 +58,7 @@ function TreeBranch({
         className={active ? 'is-active' : ''}
         href={item.href}
         aria-current={active ? 'page' : undefined}
-        style={{ '--tree-depth': depth } as React.CSSProperties}
+        style={{ '--tree-depth': depth } as CSSProperties}
       >
         <span className="telxius-tree-guide" aria-hidden="true" />
         <Icon name={iconFor(item.node.kind)} />

@@ -107,11 +107,13 @@ function LocationContext({
   device,
   activePanel,
   onSelectPanel,
+  onDeviceOverview,
 }: Readonly<{
   trail: readonly BdfbAuditTrailItem[];
   device: DeviceNode;
   activePanel: PanelContext | null;
   onSelectPanel: (panel: PanelContext) => void;
+  onDeviceOverview: () => void;
 }>) {
   const shelves = device.bdfb?.shelves ?? [];
 
@@ -141,7 +143,7 @@ function LocationContext({
         <button
           type="button"
           className={activePanel ? '' : 'is-active'}
-          onClick={() => window.location.reload()}
+          onClick={onDeviceOverview}
         >
           <span>〽</span>
           <strong>{device.name}</strong>
@@ -206,6 +208,7 @@ function BdfbOverview({
         device={device}
         activePanel={null}
         onSelectPanel={onSelectPanel}
+        onDeviceOverview={() => undefined}
       />
 
       <main className="zip-bdfb-center">
@@ -385,6 +388,7 @@ function PanelAudit({
         device={device}
         activePanel={context}
         onSelectPanel={() => undefined}
+        onDeviceOverview={onBack}
       />
 
       <main className="zip-panel-center">

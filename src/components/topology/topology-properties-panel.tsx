@@ -93,8 +93,16 @@ export function TopologyPropertiesPanel({
         </section>
         <div className="telxius-inspect-hint">
           <span>⌗</span>
-          <p>CLICK A ROOM<br />TO INSPECT PROPERTIES</p>
-          <p>DOUBLE CLICK<br />TO OPEN</p>
+          <p>
+            CLICK A ROOM
+            <br />
+            TO INSPECT PROPERTIES
+          </p>
+          <p>
+            DOUBLE CLICK
+            <br />
+            TO OPEN
+          </p>
         </div>
       </aside>
     );
@@ -112,7 +120,11 @@ export function TopologyPropertiesPanel({
         </section>
         <div className="telxius-inspect-hint">
           <span>⌗</span>
-          <p>CLICK A CLUSTER OR CABINET<br />TO INSPECT PROPERTIES</p>
+          <p>
+            CLICK A CLUSTER OR CABINET
+            <br />
+            TO INSPECT PROPERTIES
+          </p>
         </div>
       </aside>
     );

@@ -61,7 +61,16 @@ async function buildHierarchy(service: TopologyService) {
   });
   if (!rack.ok) throw new Error(rack.error);
 
-  return { network: network.value, site: site.value, rack: rack.value };
+  return {
+    network: network.value,
+    site: site.value,
+    structure: structure.value,
+    level: level.value,
+    room: room.value,
+    cluster: cluster.value,
+    position: position.value,
+    rack: rack.value,
+  };
 }
 
 describe('TopologyService', () => {
@@ -135,6 +144,42 @@ describe('TopologyService', () => {
 
     expect(current?.node.id).toBe(rack.id);
     expect(current?.href).toContain('/topology/');
+  });
+
+  it('keeps deep links canonical when the navigation tree is rooted below Network', async () => {
+    const service = new TopologyService(new MemoryTopologyRepository());
+    const { room, cluster, position, rack } = await buildHierarchy(service);
+
+    const tree = await service.buildNavigationTree(room.id);
+
+    expect(tree?.node.id).toBe(room.id);
+    expect(tree?.href).toBe(await service.buildDeepLink(room.id));
+
+    const descendants = [
+      tree?.children[0],
+      tree?.children[0]?.children[0],
+      tree?.children[0]?.children[0]?.children[0],
+    ].filter(Boolean);
+
+    expect(descendants.map((item) => item?.node.id)).toEqual([
+      cluster.id,
+      position.id,
+      rack.id,
+    ]);
+
+    for (const item of descendants) {
+      if (!item) continue;
+
+      expect(item.href).toBe(await service.buildDeepLink(item.node.id));
+
+      const segments = item.href.replace('/topology/', '').split('/');
+      const resolved = await service.resolveDeepLink(segments);
+
+      expect(resolved.ok).toBe(true);
+      if (resolved.ok) {
+        expect(resolved.value.id).toBe(item.node.id);
+      }
+    }
   });
 
   it('builds and resolves deterministic deep links', async () => {

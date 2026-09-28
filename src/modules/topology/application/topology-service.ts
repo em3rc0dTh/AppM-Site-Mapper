@@ -318,10 +318,7 @@ export class TopologyService {
     return `/topology/${trail.flatMap((node) => [topologySlug[node.kind], node.id]).join('/')}`;
   }
 
-  async buildNavigationTree(
-    rootId: string,
-    maxDepth = 8,
-  ): Promise<TopologyNavigationNode | null> {
+  async buildNavigationTree(rootId: string, maxDepth = 8): Promise<TopologyNavigationNode | null> {
     const root = await this.repository.getById(rootId);
     if (!root || root.lifecycle !== 'ACTIVE') return null;
 

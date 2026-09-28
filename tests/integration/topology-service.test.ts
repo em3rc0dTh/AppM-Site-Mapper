@@ -161,11 +161,7 @@ describe('TopologyService', () => {
       tree?.children[0]?.children[0]?.children[0],
     ].filter(Boolean);
 
-    expect(descendants.map((item) => item?.node.id)).toEqual([
-      cluster.id,
-      position.id,
-      rack.id,
-    ]);
+    expect(descendants.map((item) => item?.node.id)).toEqual([cluster.id, position.id, rack.id]);
 
     for (const item of descendants) {
       if (!item) continue;

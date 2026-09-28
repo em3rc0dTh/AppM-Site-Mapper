@@ -1,4 +1,5 @@
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
+import { buildBfdbBreakerReadings, type BfdbBindingMode } from '@/modules/telemetry/domain/bfdb';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import {
   normalizeTelemetry,
@@ -13,11 +14,18 @@ export type TelemetryIngestError = TelemetryNormalizationError | 'UNKNOWN_SOURCE
 
 type TelemetryEntity = DeviceNode | EquipmentNode;
 
+export interface TelemetryIntegrationOptions {
+  readonly sourceDeviceMap?: Readonly<Record<string, string>>;
+  readonly bfdbBindingMode?: BfdbBindingMode;
+  readonly bfdbPositionsPerPanel?: number;
+}
+
 export class TelemetryService {
   constructor(
     private readonly topologyRepository: TopologyRepository,
     private readonly hub: TelemetryHub,
     private readonly normalizerOptions: TelemetryNormalizerOptions,
+    private readonly integrationOptions: TelemetryIntegrationOptions = {},
   ) {}
 
   async ingest(
@@ -37,16 +45,32 @@ export class TelemetryService {
       return failure('UNKNOWN_SOURCE');
     }
 
+    const bfdb =
+      entity.kind === 'DEVICE'
+        ? buildBfdbBreakerReadings(entity, normalized.value, {
+            mode: this.integrationOptions.bfdbBindingMode ?? 'panel-order-24',
+            positionsPerPanel: this.integrationOptions.bfdbPositionsPerPanel ?? 24,
+          })
+        : { readings: [], unmappedPointIds: [] };
+
     const sample: TelemetrySample = {
       entityId: entity.id,
       entityKind: entity.kind,
       sourceIdentity: normalized.value.sourceIdentity,
       reported: normalized.value.reported,
       receivedAt: normalized.value.receivedAt,
+      protocol: normalized.value.protocol,
+      ...(normalized.value.messageId ? { messageId: normalized.value.messageId } : {}),
+      ...(normalized.value.sourceObservedAt
+        ? { sourceObservedAt: normalized.value.sourceObservedAt }
+        : {}),
+      ...(normalized.value.sourceSentAt ? { sourceSentAt: normalized.value.sourceSentAt } : {}),
+      ...(bfdb.readings.length ? { breakerReadings: bfdb.readings } : {}),
+      ...(bfdb.unmappedPointIds.length ? { unmappedPointIds: bfdb.unmappedPointIds } : {}),
     };
 
     this.hub.publish(sample);
-    return success(sample);
+    return success(this.hub.latest(entity.id) ?? sample);
   }
 
   latest(entityId: string): TelemetrySample | null {
@@ -58,6 +82,21 @@ export class TelemetryService {
   }
 
   private async resolveSource(sourceIdentity: string): Promise<TelemetryEntity | null> {
+    const mappedDeviceId = this.integrationOptions.sourceDeviceMap?.[sourceIdentity];
+
+    if (mappedDeviceId) {
+      const mapped = await this.topologyRepository.getById(mappedDeviceId);
+      if (
+        mapped &&
+        (mapped.kind === 'DEVICE' || mapped.kind === 'EQUIPMENT') &&
+        mapped.lifecycle === 'ACTIVE'
+      ) {
+        return mapped;
+      }
+
+      return null;
+    }
+
     const [devices, equipment] = await Promise.all([
       this.topologyRepository.listByKind('DEVICE'),
       this.topologyRepository.listByKind('EQUIPMENT'),

@@ -41,11 +41,20 @@ export interface CasRange {
   readonly clearanceBottomU?: number;
 }
 
+export interface BreakerTelemetryBinding {
+  /**
+   * Optional explicit MQTT point binding. When absent, the emulator profile may
+   * resolve the point from panel order + 1-based endpoint position.
+   */
+  readonly rawPointId: string;
+}
+
 export interface BreakerHolder {
   readonly id: string;
   readonly variant: BreakerHolderVariant;
   readonly label: string;
   readonly capacity?: number;
+  readonly telemetry?: BreakerTelemetryBinding;
 }
 
 export interface Panel {

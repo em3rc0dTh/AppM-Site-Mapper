@@ -22,11 +22,16 @@ function isEndpoint(value: unknown): value is BreakerHolder {
     return false;
   }
 
+  const telemetryValid =
+    value.telemetry === undefined ||
+    (isRecord(value.telemetry) && typeof value.telemetry.rawPointId === 'string');
+
   return (
     typeof value.id === 'string' &&
     (value.variant === 'BREAKER' || value.variant === 'HOLDER') &&
     typeof value.label === 'string' &&
-    (value.capacity === undefined || typeof value.capacity === 'number')
+    (value.capacity === undefined || typeof value.capacity === 'number') &&
+    telemetryValid
   );
 }
 

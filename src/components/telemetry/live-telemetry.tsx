@@ -10,7 +10,10 @@ import {
   Surface,
 } from '@/shared/ui/primitives';
 import { InspectButton } from '@/shared/ui/entity-inspector';
-import { telemetryMetrics } from './telemetry-presentation';
+import {
+  breakerTelemetryMetrics,
+  telemetryMetrics,
+} from '@/components/telemetry/telemetry-presentation';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 function upsert(samples: readonly TelemetrySample[], sample: TelemetrySample): TelemetrySample[] {
@@ -47,39 +50,45 @@ export function LiveTelemetry() {
   return (
     <main>
       <SectionHeader
-        eyebrow="Realtime / measurements"
+        eyebrow="MQTT / measurements"
         title="Telemetry"
-        description="Latest reported measurements from mapped Device and Equipment identities."
+        description="Ordered measurements received from the configured MQTT data provider."
         actions={
           <span aria-live="polite">
             <StatusBadge tone={state === 'live' ? 'good' : 'warning'}>
-              {state === 'live' ? 'STREAM CONNECTED' : state.toUpperCase()}
+              {state === 'live' ? 'MQTT STREAM CONNECTED' : state.toUpperCase()}
             </StatusBadge>
           </span>
         }
       />
+
       {state === 'reconnecting' && (
         <StatePanel
           kind="reconnecting"
           title="Reconnecting to the stream"
-          description="Displayed measurements are the last received values. Automatic reconnection is in progress."
+          description="Displayed measurements are the last values received through MQTT. Automatic reconnection is in progress."
         />
       )}
+
       {samples.length === 0 ? (
         <StatePanel
           kind={state === 'connecting' ? 'loading' : 'empty'}
           title={state === 'connecting' ? 'Connecting to telemetry' : 'No measurements yet'}
-          description="Mapped identities will appear after a measurement is received."
+          description="Mapped MQTT identities will appear after a measurement is received."
         />
       ) : (
         <div className="telemetry-grid">
           {samples.map((sample) => {
             const metrics = telemetryMetrics(sample.reported);
+            const breakerReadings = sample.breakerReadings ?? [];
+
             return (
               <Surface key={sample.entityId} className="telemetry-card">
                 <header className="telemetry-card-header">
                   <div>
-                    <p className="eyebrow">{sample.entityKind}</p>
+                    <p className="eyebrow">
+                      {sample.protocol === 'BFDB' ? 'BFDB / MQTT' : sample.entityKind}
+                    </p>
                     <h2>{sample.sourceIdentity}</h2>
                     <time dateTime={sample.receivedAt}>
                       Last packet · {sample.receivedAt.replace('T', ' ').replace('Z', ' UTC')}
@@ -88,7 +97,7 @@ export function LiveTelemetry() {
                   <InspectButton
                     entity={{
                       name: sample.sourceIdentity,
-                      kind: sample.entityKind,
+                      kind: sample.protocol === 'BFDB' ? 'BFDB MQTT SOURCE' : sample.entityKind,
                       sections: [
                         {
                           title: 'Overview',
@@ -96,13 +105,52 @@ export function LiveTelemetry() {
                             { label: 'Source identity', value: sample.sourceIdentity },
                             { label: 'Entity ID', value: sample.entityId },
                             { label: 'Last received', value: sample.receivedAt },
+                            ...(sample.messageId
+                              ? [{ label: 'MQTT message ID', value: sample.messageId }]
+                              : []),
+                            ...(sample.sourceObservedAt
+                              ? [{ label: 'Source observed', value: sample.sourceObservedAt }]
+                              : []),
                           ],
                         },
                       ],
                     }}
                   />
                 </header>
-                {metrics.length ? (
+
+                {breakerReadings.length ? (
+                  <>
+                    <div className="metric-grid">
+                      <MetricTile
+                        label="Mapped breakers"
+                        value={breakerReadings.length}
+                        detail="Resolved from MQTT points"
+                      />
+                      <MetricTile
+                        label="Unmapped points"
+                        value={sample.unmappedPointIds?.length ?? 0}
+                        detail="No breaker binding"
+                      />
+                    </div>
+                    <div className="workspace-card-grid">
+                      {breakerReadings.map((reading) => (
+                        <div className="workspace-summary-card" key={reading.breakerId}>
+                          <strong>{reading.breakerLabel}</strong>
+                          <span>
+                            {reading.panelLabel} · {reading.rawPointId}
+                          </span>
+                          {reading.state && <span>State · {reading.state.value}</span>}
+                          {breakerTelemetryMetrics(reading).map((metric) => (
+                            <span key={metric.label}>
+                              {metric.label} · {metric.value}
+                              {metric.unit ? ` ${metric.unit}` : ''}
+                            </span>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                ) : metrics.length ? (
                   <div className="metric-grid">
                     {metrics.map((metric) => (
                       <MetricTile
@@ -119,12 +167,9 @@ export function LiveTelemetry() {
                     description="This packet contains structured data. Expand the raw payload to inspect it."
                   />
                 )}
-                <p className="telemetry-unit-note">
-                  Source labels and units preserved. Up to 24 scalar fields shown; full packet
-                  below.
-                </p>
+
                 <details className="raw-payload">
-                  <summary>Raw payload</summary>
+                  <summary>Raw MQTT payload state</summary>
                   <pre>{JSON.stringify(sample.reported, null, 2)}</pre>
                 </details>
               </Surface>

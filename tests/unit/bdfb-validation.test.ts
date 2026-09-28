@@ -19,7 +19,12 @@ describe('BDFB validation', () => {
                     id: 'panel-a',
                     label: 'Panel A',
                     endpoints: [
-                      { id: 'breaker-1', variant: 'BREAKER', label: 'CB-01' },
+                      {
+                        id: 'breaker-1',
+                        variant: 'BREAKER',
+                        label: 'CB-01',
+                        telemetry: { rawPointId: '0_1_1' },
+                      },
                       { id: 'holder-1', variant: 'HOLDER', label: 'H-01' },
                     ],
                   },
@@ -77,5 +82,44 @@ describe('BDFB validation', () => {
     });
 
     expect(result).toEqual({ ok: false, error: 'DUPLICATE_ID' });
+  });
+
+  it('rejects duplicate explicit MQTT point bindings', () => {
+    const result = validateBdfb({
+      shelves: [
+        {
+          id: 'shelf-a',
+          label: 'Shelf A',
+          frames: [
+            {
+              id: 'frame-a',
+              label: 'Frame A',
+              panels: [
+                {
+                  id: 'panel-a',
+                  label: 'Panel A',
+                  endpoints: [
+                    {
+                      id: 'breaker-1',
+                      variant: 'BREAKER',
+                      label: 'CB-01',
+                      telemetry: { rawPointId: '0_1_1' },
+                    },
+                    {
+                      id: 'breaker-2',
+                      variant: 'BREAKER',
+                      label: 'CB-02',
+                      telemetry: { rawPointId: '0_1_1' },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(result).toEqual({ ok: false, error: 'DUPLICATE_TELEMETRY_POINT' });
   });
 });

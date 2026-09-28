@@ -49,15 +49,17 @@ The bootstrap use case closes after the first user exists.
 
 Rotate or remove access to the bootstrap secret after first-user initialization according to the deployment platform's secret-management procedure.
 
-## Telemetry
+## Telemetry / MQTT data provider
 
 ### TELEMETRY_ENABLED
 
-`true` starts the server-side MQTT source.
+`true` starts the server-side MQTT consumer.
 
 Default:
 
 `false`
+
+AppM consumes an already-running MQTT provider. It does not start the BFDB emulator or broker.
 
 ### TELEMETRY_MAX_STREAMS
 
@@ -84,6 +86,8 @@ Supported transport schemes:
 - `mqtt://`
 - `mqtts://`
 
+Examples are intentionally omitted from committed configuration because the active provider endpoint is runtime data.
+
 ### MQTT_USERNAME / MQTT_PASSWORD
 
 Optional broker credentials depending on broker configuration.
@@ -105,6 +109,45 @@ Broker subscription filter.
 Default is derived from the topic prefix and normally resolves to:
 
 `data/dev/#`
+
+### MQTT_SOURCE_DEVICE_MAP
+
+Optional JSON object mapping an external MQTT source identity to an existing AppM Device ID.
+
+Use it when the emulator/provider serial differs from the `serialNumber` stored in MongoDB.
+
+Example shape:
+
+```json
+{ "EMU-BFDB-01": "<appm-device-id>" }
+```
+
+Do not put customer data or secrets in the committed `.env.example`.
+
+### BFDB_TELEMETRY_BINDING_MODE
+
+Allowed values:
+
+- `panel-order-24` — default emulator mapping using stored BDFB panel order and endpoint position;
+- `explicit` — only `breaker.telemetry.rawPointId` bindings are accepted.
+
+Default:
+
+`panel-order-24`
+
+### BFDB_POSITIONS_PER_PANEL
+
+Panel position boundary for the panel-order resolver.
+
+Default:
+
+`24`
+
+## Provider replacement
+
+A future provider change should normally be performed by changing runtime MQTT endpoint/configuration, not by copying provider implementation into AppM.
+
+If the future provider changes the wire contract rather than only the endpoint/credentials, that change requires a new telemetry adapter/contract review.
 
 ## Example
 

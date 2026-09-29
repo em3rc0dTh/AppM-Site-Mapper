@@ -114,7 +114,7 @@ export function BlueprintCanvas({
           ],
         },
       ],
-      actions: [{ label: 'Open rack elevation', href: `/rack/${rack.id}/focus` }],
+      actions: [{ label: 'Open rack focus', href: `/rack/${rack.id}/focus` }],
     });
   }
   const [zoom, setZoom] = useState(1);
@@ -168,7 +168,7 @@ export function BlueprintCanvas({
       <header className="blueprint-toolbar zip-blueprint-toolbar">
         <div>
           <small>2D DRAFTING VIEW</small>
-          <strong>Room floor plan</strong>
+          <strong>Room blueprint</strong>
           <span>600 × 600 mm grid · {Math.round(zoom * 100)}%</span>
         </div>
         <div className="zip-blueprint-mode">

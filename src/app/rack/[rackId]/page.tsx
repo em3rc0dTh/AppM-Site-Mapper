@@ -1,3 +1,6 @@
+import { CasEditor } from '@/components/rack/cas-editor';
+import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
+import { hasPermission } from '@/modules/identity/domain/roles';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
@@ -63,6 +66,8 @@ export default async function RackPage({
           {tree && <TopologyContextTree tree={tree} activeId={rackId} />}
         </aside>
         <section className="operational-stage operational-stage--wide">
+          <nav className="mk-rack-actions"><Link href={`/rack/${rackId}/focus`}>RACK FOCUS</Link><Link href={`/power?entity=${rackId}`}>POWER</Link>{root?.kind === 'ROOM_SUBSTRUCTURE' && <Link href={`/blueprint/${root.id}?rack=${rackId}`}>LOCATE</Link>}</nav>
+          <TelemetryLens label={result.value.rack.name} entityIds={result.value.inventory.map(item => item.id)} />
           <RackElevation
             view={result.value}
             {...(parent?.kind === 'POSITION'
@@ -74,6 +79,7 @@ export default async function RackPage({
                 }
               : {})}
           />
+          {hasPermission(auth.value.role, 'topology:write') && <CasEditor view={result.value} />}
         </section>
       </div>
     </main>

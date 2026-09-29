@@ -1,5 +1,7 @@
 'use client';
 
+import { useSearchParams } from 'next/navigation';
+import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { useEffect, useMemo, useState } from 'react';
 
 import type {
@@ -59,6 +61,7 @@ function endpointInspector(
   return {
     name: endpoint.label,
     kind: endpoint.variant,
+    actions: [{ label: 'TRACE PATH', href: `/power?entity=${device.id}&breaker=${encodeURIComponent(endpoint.id)}` }],
     ...(reading?.state ? { status: reading.state.value } : {}),
     sections: [
       {
@@ -160,10 +163,10 @@ function PanelBoard({
       </button>
 
       <div className="bdfb-panel-busbar bdfb-panel-busbar--a" aria-hidden="true">
-        <span>BUS A</span>
+        <span>PANEL BUS</span>
       </div>
       <div className="bdfb-panel-busbar bdfb-panel-busbar--b" aria-hidden="true">
-        <span>BUS B</span>
+        <span>ENDPOINTS</span>
       </div>
 
       <div className="bdfb-endpoint-grid">
@@ -223,7 +226,7 @@ function DeviceHierarchyOverview({
               {shelf.frames.map((frame) => (
                 <section className="bdfb-overview-frame" key={frame.id}>
                   <header className="bdfb-overview-label bdfb-overview-label--frame">
-                    <span>FRAME</span>
+                    <span>{frame.presentation?.physicalFrameVisible === false ? 'PANEL GROUP' : 'FRAME'}</span>
                     <strong>{frame.label.replace(/^Frame\s+/i, '')}</strong>
                   </header>
 
@@ -322,7 +325,12 @@ function useBdfbTelemetry(deviceId: string): TelemetrySample | null {
 
 export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
-  const [activePanel, setActivePanel] = useState<PanelSelection | null>(null);
+  const query=useSearchParams();
+  const [activePanel, setActivePanel] = useState<PanelSelection | null>(() => {
+    for (const shelf of device.bdfb?.shelves ?? []) for (const frame of shelf.frames) for (const panel of frame.panels) if (panel.id === query.get('panel')) return {shelf,frame,panel};
+    return null;
+  });
+  useEffect(()=>{ for (const shelf of device.bdfb?.shelves ?? []) for (const frame of shelf.frames) for (const panel of frame.panels) if (panel.id === query.get('panel')) {setActivePanel({shelf,frame,panel});const endpoint=panel.endpoints.find(e=>e.id===query.get('breaker'));if(endpoint)setSelected(endpointInspector(device,shelf,frame,panel,endpoint));} },[device,query]);
   const telemetry = useBdfbTelemetry(device.id);
   const shelves = device.bdfb?.shelves ?? [];
   const frames = shelves.flatMap((shelf) => shelf.frames);
@@ -338,7 +346,7 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
   );
 
   return (
-    <section className="bdfb-chassis">
+    <section className="bdfb-chassis"><TelemetryLens label={device.name} entityIds={[device.id]} breakerId={query.get('breaker') ?? undefined}/>
       <header className="bdfb-chassis-header">
         <div>
           <span>Physical distribution</span>

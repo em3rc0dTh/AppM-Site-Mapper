@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import './globals.css';
 import './legacy-fidelity.css';
 import './telxius-ui.css';
+import './mk1.css';
 import { AppShell } from '@/shared/ui/app-shell';
 
 export const metadata: Metadata = {

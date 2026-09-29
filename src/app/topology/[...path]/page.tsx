@@ -102,6 +102,8 @@ export default async function TopologyNodePage({
   }
 
   const node = resolved.value;
+  if (node.kind === 'CONTAINER_RACK') redirect(`/rack/${node.id}`);
+  if ((node.kind === 'DEVICE' && !node.bdfb) || node.kind === 'EQUIPMENT') redirect(`/device/${node.id}`);
   const [trail, children, selfHref] = await Promise.all([
     service.getTrail(node.id),
     service.listChildren(node.id),
@@ -151,7 +153,7 @@ export default async function TopologyNodePage({
     node.kind === 'STRUCTURE'
       ? levels.map((level) => ({
           node: level,
-          href: `${selfHref}?level=${level.id}`,
+          href: childEntries.find(entry => entry.node.id === level.id)!.href,
         }))
       : [];
 
@@ -160,13 +162,12 @@ export default async function TopologyNodePage({
       ? await new SpatialService(repository).getRoomLayout(node.id)
       : null;
 
-  const rackLink =
-    node.kind === 'CONTAINER_RACK' && node.variant === 'RACK' ? `/rack/${node.id}` : null;
+  const rackLink: string | null = null;
   const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
   const sectionDescription = descriptionFor(node);
 
   return (
-    <main className="operational-page telxius-operational-page">
+    <main className={`operational-page telxius-operational-page ${['NETWORK','SITE','STRUCTURE','LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''}`}>
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
         aria-label="Breadcrumb"
@@ -198,7 +199,7 @@ export default async function TopologyNodePage({
                     + ADD CLUSTER
                   </Link>
                 )}
-                {(node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && canWrite && (
+                {node.kind === 'DEVICE' && canWrite && (
                   <PinButton id={node.id} initialPinned={node.pinned} />
                 )}
                 {!['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE'].includes(node.kind) && (

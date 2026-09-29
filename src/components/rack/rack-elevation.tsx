@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useMemo, useState, type CSSProperties } from 'react';
 
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
@@ -63,7 +64,10 @@ export interface RackElevationContext {
 export function RackElevation({
   view,
   context,
-}: Readonly<{ view: RackElevationView; context?: RackElevationContext }>) {
+  focusDeviceId,
+}: Readonly<{ view: RackElevationView; context?: RackElevationContext; focusDeviceId?: string }>) {
+  const router = useRouter();
+  const [face, setFace] = useState<'front' | 'rear'>('front');
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const blocks = useMemo(() => buildBlocks(view), [view]);
   const count = (role: string) => view.rows.filter((row) => row.role === role).length;
@@ -137,11 +141,11 @@ export function RackElevation({
         <SectionHeader
           eyebrow="Rack / physical elevation"
           title={view.rack.name}
-          description="Front elevation · physical occupancy and clearance"
+          description={`${face === 'front' ? 'Front' : 'Rear'} elevation · shared mounting occupancy`}
           actions={
             <>
               {context?.coordinate && <StatusBadge tone="accent">{context.coordinate}</StatusBadge>}
-              <StatusBadge tone="good">ACTIVE</StatusBadge>
+              <button onClick={() => setFace('front')} aria-pressed={face === 'front'}>FRONT</button><button onClick={() => setFace('rear')} aria-pressed={face === 'rear'}>REAR</button>
               <InspectButton entity={topologyInspector(view.rack)} />
             </>
           }
@@ -194,9 +198,10 @@ export function RackElevation({
                   <button
                     key={block.key}
                     type="button"
-                    className={`legacy-rack-block legacy-rack-block--${block.role.toLowerCase()}`}
+                    className={`legacy-rack-block legacy-rack-block--${block.role.toLowerCase()} ${item?.id === focusDeviceId ? 'is-selected' : ''}`}
                     style={blockStyle}
-                    onClick={() => setSelected(topologyInspector(item))}
+                    onClick={() => setSelected({...topologyInspector(item), actions: [{label:'OPEN DEVICE',href:`/device/${item.id}`},{label:'TRACE POWER',href:`/power?entity=${item.id}`}]})}
+                    onDoubleClick={() => router.push(`/device/${item.id}`)}
                   >
                     {content}
                   </button>
@@ -223,7 +228,7 @@ export function RackElevation({
         <div className="legacy-properties-header">
           <span>Rack details</span>
           <strong>{view.rack.name}</strong>
-          <StatusBadge tone="good">OK · HEALTHY</StatusBadge>
+          <StatusBadge tone="good">PHYSICAL INVENTORY</StatusBadge>
         </div>
 
         <section className="legacy-property-section">
@@ -271,7 +276,8 @@ export function RackElevation({
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setSelected(topologyInspector(item))}
+                  onClick={() => setSelected({...topologyInspector(item), actions: [{label:'OPEN DEVICE',href:`/device/${item.id}`},{label:'TRACE POWER',href:`/power?entity=${item.id}`}]})}
+                    onDoubleClick={() => router.push(`/device/${item.id}`)}
                 >
                   <span>
                     <small>{item.kind}</small>

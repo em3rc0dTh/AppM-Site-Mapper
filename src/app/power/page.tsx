@@ -1,3 +1,6 @@
+import Link from 'next/link';
+import { TopologyService } from '@/modules/topology/application/topology-service';
+import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { redirect } from 'next/navigation';
 import { PowerPathView, type PowerStage } from '@/components/power/power-path-view';
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -6,18 +9,27 @@ import { createPowerRepository } from '@/modules/power/infrastructure/power-repo
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { MetricTile, SectionHeader, StatePanel } from '@/shared/ui/primitives';
 
-export default async function PowerPage() {
+export default async function PowerPage({searchParams}: {searchParams: Promise<{entity?:string; breaker?:string; path?:string; feed?:string}>}) {
+  const query=await searchParams;
   const auth = await requirePermission('power:read');
   if (!auth.ok) redirect('/login');
-  const paths = await (await createPowerRepository()).listActive();
+  const allPaths = await (await createPowerRepository()).listActive();
   const topology = await createTopologyRepository();
+  const service = new TopologyService(topology);
+  const related = new Set<string>();
+  if (query.entity) {
+    const visit = async (id:string, depth=0):Promise<void> => { if (depth>12 || related.has(id)) return; related.add(id); for(const child of await service.listChildren(id)) await visit(child.id,depth+1); };
+    await visit(query.entity);
+  }
+  const paths = allPaths.filter(path => (!query.entity || related.has(path.source.entityId) || related.has(path.target.entityId)) && (!query.breaker || path.source.internal?.breakerHolderId===query.breaker || path.target.internal?.breakerHolderId===query.breaker) && (!query.path || path.id===query.path) && (!query.feed || query.feed==='AB' || path.feed===query.feed));
   async function stagesFor(endpoint: PowerEndpoint): Promise<PowerStage[]> {
     const node = await topology.getById(endpoint.entityId);
-    const result = [
+    const result: PowerStage[] = [
       {
         id: endpoint.entityId,
         kind: node?.kind ?? 'ENTITY',
-        name: node?.name ?? endpoint.entityId,
+        name: node?.name ?? 'Unresolved endpoint',
+        href: node ? await service.buildDeepLink(node.id) : '',
       },
     ];
     const internal = endpoint.internal;
@@ -34,12 +46,13 @@ export default async function PowerPage() {
     if (internal.frameId)
       result.push({ id: internal.frameId, kind: 'FRAME', name: frame?.label ?? internal.frameId });
     if (internal.panelId)
-      result.push({ id: internal.panelId, kind: 'PANEL', name: panel?.label ?? internal.panelId });
+      result.push({ id: internal.panelId, kind: 'PANEL', name: panel?.label ?? internal.panelId, href: node ? `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(internal.panelId)}` : '' });
     if (internal.breakerHolderId)
       result.push({
         id: internal.breakerHolderId,
         kind: breaker?.variant ?? 'BREAKER / HOLDER',
         name: breaker?.label ?? internal.breakerHolderId,
+        href: node ? `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(internal.panelId ?? '')}&breaker=${encodeURIComponent(internal.breakerHolderId)}` : '',
       });
     return result;
   }
@@ -56,6 +69,8 @@ export default async function PowerPage() {
         title="Power Paths"
         description="Trace configured sources, distribution endpoints and connected inventory."
       />
+      <nav className="mk-rack-actions">{['A','B','AB'].map(feed => <Link key={feed} href={`/power?${new URLSearchParams({...query, feed}).toString()}`}>FEED {feed==='AB'?'A+B':feed}</Link>)}</nav>
+      <TelemetryLens label="Power path diagnostic" entityIds={[...new Set(paths.flatMap(p=>[p.source.entityId,p.target.entityId]))]} breakerId={query.breaker}/>
       <div className="metric-grid">
         <MetricTile label="Active paths" value={paths.length} detail="Configured relationships" />
         <MetricTile label="Feed A" value={paths.filter((path) => path.feed === 'A').length} />

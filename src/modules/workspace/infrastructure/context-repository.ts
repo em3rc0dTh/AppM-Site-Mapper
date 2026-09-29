@@ -10,6 +10,6 @@ export async function readContext(userId: string): Promise<WorkspaceContext> {
 }
 export async function writeContext(userId: string, context: WorkspaceContext): Promise<void> {
   if (getPersistenceMode() === 'memory') { memory().set(userId, structuredClone(context)); return; }
-  await (await getMongoDatabase()).collection<WorkspaceContext & { _id: string }>('workspace_context').replaceOne({ _id: userId }, { _id: userId, ...context }, { upsert: true });
+  await (await getMongoDatabase()).collection<WorkspaceContext & { _id: string }>('workspace_context').replaceOne({ _id: userId }, context, { upsert: true });
 }
 function memory() { return getProcessSingleton('workspace-context', () => new Map<string, WorkspaceContext>()); }

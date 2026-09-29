@@ -27,14 +27,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     pathname.startsWith('/blueprint') ||
     pathname.startsWith('/rack') || pathname.startsWith('/device') || pathname.startsWith('/power');
 
-  const active =
-    immersive || pathname === '/network'
+  const active = pathname.startsWith('/power')
+    ? '/power'
+    : immersive || pathname === '/network'
       ? '/network'
-      : pathname.startsWith('/power')
-        ? '/power'
-        : pathname.startsWith('/telemetry')
-          ? '/telemetry'
-          : '/workspace';
+      : '/workspace';
 
   async function logout() {
     setBusy(true);

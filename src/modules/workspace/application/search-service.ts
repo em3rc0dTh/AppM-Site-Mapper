@@ -13,7 +13,13 @@ export async function searchTopology(repository: TopologyRepository, query: stri
     const trail = await service.getTrail(node.id);
     if (trail.some(item => item.lifecycle !== 'ACTIVE')) continue;
     const breadcrumb = trail.map(item => item.name).join(' / ');
-    const href = node.kind === 'CONTAINER_RACK' ? `/rack/${node.id}` : node.kind === 'DEVICE' || node.kind === 'EQUIPMENT' ? `/device/${node.id}` : await service.buildDeepLink(node.id);
+    const href = node.kind === 'CONTAINER_RACK'
+      ? `/rack/${node.id}/focus`
+      : node.kind === 'DEVICE' && node.bdfb
+        ? await service.buildDeepLink(node.id)
+        : node.kind === 'DEVICE' || node.kind === 'EQUIPMENT'
+          ? `/device/${node.id}`
+          : await service.buildDeepLink(node.id);
     if (`${node.name} ${node.id}`.toLocaleLowerCase().includes(normalized)) results.push({ id: node.id, name: node.name, kind: node.kind, href, breadcrumb });
     if (node.kind === 'DEVICE' && node.bdfb) for (const shelf of node.bdfb.shelves) for (const frame of shelf.frames) for (const panel of frame.panels) {
       const base = `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(panel.id)}`;

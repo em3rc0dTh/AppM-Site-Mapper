@@ -21,6 +21,7 @@ Scope completed:
 - Screen 16 Settings / Administration.
 
 Integration closure:
+- Rack Focus is now a distinct room-context view; Rack Elevation remains a separate projection instead of being embedded in Screen 07.
 - Global search resolves racks to Rack Focus and BDFB devices to their physical deep link.
 - Recent-context tracking now preserves query context such as panel/breaker selections.
 - Main-shell active navigation no longer misclassifies the Power route.

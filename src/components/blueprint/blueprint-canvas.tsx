@@ -82,6 +82,7 @@ export function BlueprintCanvas({
   positions = [],
   onSelectPosition,
   onSelectRack,
+  focusRackId,
 }: Readonly<{
   polygon: readonly PointMm[];
   clusters: readonly ClusterPlacementView[];
@@ -90,6 +91,7 @@ export function BlueprintCanvas({
   positions?: readonly {id:string;name:string;row:string;column:number;occupied:boolean}[];
   onSelectPosition?: ((id:string)=>void) | undefined;
   onSelectRack?: ((id:string)=>void) | undefined;
+  focusRackId?: string | undefined;
 }>) {
   const router = useRouter();
   const base = useMemo(() => boundsFor(polygon), [polygon]);
@@ -120,7 +122,7 @@ export function BlueprintCanvas({
   const pointer = useRef<Readonly<{ x: number; y: number }> | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  useEffect(()=>{const id=new URLSearchParams(window.location.search).get('rack');const rack=racks.find(r=>r.id===id);if(rack){setSelectedRackId(rack.id);setZoom(2);setPan({x:rack.rect.x-base.x-base.width/4,y:rack.rect.y-base.y-base.height/4});}},[racks,base]);
+  useEffect(()=>{const id=focusRackId ?? new URLSearchParams(window.location.search).get('rack');const rack=racks.find(r=>r.id===id);if(rack){setSelectedRackId(rack.id);setZoom(2);setPan({x:rack.rect.x-base.x-base.width/4,y:rack.rect.y-base.y-base.height/4});}},[racks,base,focusRackId]);
   const view: ViewState = {
     x: base.x + pan.x,
     y: base.y + pan.y,

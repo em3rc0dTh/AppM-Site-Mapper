@@ -57,11 +57,7 @@ function navigationContextRoot(
     case 'DEVICE':
     case 'EQUIPMENT':
       return (
-        byKind('ROOM_SUBSTRUCTURE') ??
-        byKind('LEVEL') ??
-        byKind('POSITION') ??
-        trail[0] ??
-        null
+        byKind('ROOM_SUBSTRUCTURE') ?? byKind('LEVEL') ?? byKind('POSITION') ?? trail[0] ?? null
       );
     default:
       return trail[0] ?? null;

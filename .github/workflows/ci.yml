@@ -33,6 +33,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Build
+        run: npm run build
+
       - name: Format check
         run: npm run format:check
 
@@ -44,9 +47,6 @@ jobs:
 
       - name: System certification
         run: npm run test:certification
-
-      - name: Build
-        run: npm run build
 
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high

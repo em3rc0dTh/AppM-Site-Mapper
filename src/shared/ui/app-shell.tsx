@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 
+import { CommandPalette } from './command-palette';
+import { ContextTracker } from './context-tracker';
 import { Icon } from './primitives';
 
 const links = [
@@ -24,7 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const immersive =
     pathname.startsWith('/topology') ||
     pathname.startsWith('/blueprint') ||
-    pathname.startsWith('/rack');
+    pathname.startsWith('/rack') || pathname.startsWith('/device') || pathname.startsWith('/power');
 
   const active =
     immersive || pathname === '/network'
@@ -56,8 +58,8 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <header className="app-topbar legacy-topbar">
         <Link href="/workspace" className="legacy-brand telxius-brand">
-          <strong>AppManager</strong>
-          <span>SiteMapper Module</span>
+          <strong>⬡ SITE MAPPER</strong>
+          <span>Physical Infrastructure</span>
         </Link>
 
         <div className="telxius-topbar-context" aria-hidden="true">
@@ -66,7 +68,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span>SITE MAPPER</span>
         </div>
 
-        <div className="legacy-top-actions">
+        <ContextTracker /><CommandPalette /><div className="legacy-top-actions">
           <Link href="/settings" className="legacy-icon-button" aria-label="Settings">
             <Icon name="settings" />
           </Link>

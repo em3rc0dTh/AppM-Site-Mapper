@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 
+import { isWorkspaceHref } from '@/modules/workspace/domain/context';
 import { AuthFrame } from '@/shared/ui/auth-frame';
 
 interface LoginResponse {
@@ -21,6 +22,7 @@ export default function LoginPage() {
     setError(null);
 
     const form = new FormData(event.currentTarget);
+    try {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -37,7 +39,11 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.href = result.user?.mustChangePassword ? '/change-password' : '/workspace';
+    if (result.user?.mustChangePassword) { window.location.href = '/change-password'; return; }
+    const contextResponse = await fetch('/api/workspace/context');
+    const context = contextResponse.ok ? await contextResponse.json() as { lastContext?: string } : {};
+    window.location.href = isWorkspaceHref(context.lastContext) ? context.lastContext : '/workspace';
+    } catch { setError('Connection unavailable. Please try again.'); setBusy(false); }
   }
 
   return (
@@ -68,7 +74,7 @@ export default function LoginPage() {
           />
         </label>
         <button className="auth-submit" type="submit" disabled={busy}>
-          {busy ? 'Establishing secure session…' : 'Enter control center'}
+          {busy ? 'Establishing secure session…' : 'SIGN IN'}
         </button>
         {error ? (
           <p className="form-error auth-error" role="alert">

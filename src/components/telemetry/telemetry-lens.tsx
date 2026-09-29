@@ -8,7 +8,7 @@ import { breakerTelemetryMetrics, telemetryMetrics } from './telemetry-presentat
 
 function isTelemetrySample(value: unknown): value is TelemetrySample {
   return (
-    Boolean(value) &&
+    value !== null &&
     typeof value === 'object' &&
     'entityId' in value &&
     typeof value.entityId === 'string' &&

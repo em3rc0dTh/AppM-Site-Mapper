@@ -1,14 +1,16 @@
 'use client';
 
-import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
+import { InlineInspector } from '@/shared/ui/inline-inspector';
+import { type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
 import type {
   ClusterPlacementView,
   RackPlacementView,
 } from '@/modules/spatial/application/spatial-service';
+import { gridCoordinateToPoint } from '@/modules/spatial/domain/grid';
 import type { PointMm, RectMm } from '@/modules/spatial/domain/geometry';
 
 interface ViewState {
@@ -58,7 +60,7 @@ function gridLabels(polygon: readonly PointMm[]) {
       x: minX + index * tile + tile / 2,
     })),
     rows: Array.from({ length: rows }, (_, index) => ({
-      label: String.fromCharCode(65 + index),
+      label: (()=>{let n=index+1,s='';while(n>0){n--;s=String.fromCharCode(65+n%26)+s;n=Math.floor(n/26);}return s;})(),
       y: minY + index * tile + tile / 2,
     })),
   };
@@ -77,11 +79,17 @@ export function BlueprintCanvas({
   clusters,
   racks,
   slots,
+  positions = [],
+  onSelectPosition,
+  onSelectRack,
 }: Readonly<{
   polygon: readonly PointMm[];
   clusters: readonly ClusterPlacementView[];
   racks: readonly RackPlacementView[];
   slots: readonly RectMm[];
+  positions?: readonly {id:string;name:string;row:string;column:number;occupied:boolean}[];
+  onSelectPosition?: ((id:string)=>void) | undefined;
+  onSelectRack?: ((id:string)=>void) | undefined;
 }>) {
   const router = useRouter();
   const base = useMemo(() => boundsFor(polygon), [polygon]);
@@ -91,6 +99,7 @@ export function BlueprintCanvas({
   const [tool, setTool] = useState<'select' | 'pan'>('select');
   function inspectRack(rack: RackPlacementView) {
     setSelectedRackId(rack.id);
+    if(onSelectRack){onSelectRack(rack.id);return;}
     setSelected({
       name: rack.name,
       kind: 'CONTAINER / RACK',
@@ -103,7 +112,7 @@ export function BlueprintCanvas({
           ],
         },
       ],
-      actions: [{ label: 'Open rack elevation', href: `/rack/${rack.id}` }],
+      actions: [{ label: 'Open rack elevation', href: `/rack/${rack.id}/focus` }],
     });
   }
   const [zoom, setZoom] = useState(1);
@@ -111,6 +120,7 @@ export function BlueprintCanvas({
   const pointer = useRef<Readonly<{ x: number; y: number }> | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
+  useEffect(()=>{const id=new URLSearchParams(window.location.search).get('rack');const rack=racks.find(r=>r.id===id);if(rack){setSelectedRackId(rack.id);setZoom(2);setPan({x:rack.rect.x-base.x-base.width/4,y:rack.rect.y-base.y-base.height/4});}},[racks,base]);
   const view: ViewState = {
     x: base.x + pan.x,
     y: base.y + pan.y,
@@ -284,6 +294,7 @@ export function BlueprintCanvas({
             );
           })}
 
+          {positions.filter(p=>!p.occupied).map(position=>{let point;try{point=gridCoordinateToPoint(position);}catch{return null;}return <g key={position.id} role="button" tabIndex={0} aria-label={`Available ${position.name}`} onClick={()=>onSelectPosition?.(position.id)} onKeyDown={e=>{if(e.key==='Enter')onSelectPosition?.(position.id);}}><rect x={point.x} y={point.y} width="600" height="600" className="blueprint-slot"/><text x={point.x+300} y={point.y+300} textAnchor="middle" className="blueprint-cluster-label">{onSelectPosition?'+ ADD':position.name}</text></g>;})}
           {slots.map((slot) => (
             <rect
               key={rectKey(slot)}
@@ -306,7 +317,7 @@ export function BlueprintCanvas({
                 if (tool === 'select') inspectRack(rack);
               }}
               onDoubleClick={() => {
-                if (tool === 'select') router.push(`/rack/${rack.id}`);
+                if (tool === 'select' && !onSelectRack) router.push(`/rack/${rack.id}/focus`);
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -360,7 +371,7 @@ export function BlueprintCanvas({
         </span>
       </footer>
       {selected && (
-        <EntityInspector
+        <InlineInspector
           entity={selected}
           onClose={() => {
             setSelected(null);

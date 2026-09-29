@@ -48,7 +48,7 @@ export function TopologyPropertiesPanel({
           <h3 className="is-warning">⌁ ACTIVE ALARMS</h3>
           <div className="telxius-property-card telxius-health-card">
             <span>SYSTEM STATUS</span>
-            <b>{alarms === 0 ? 'HEALTHY' : `${value(alarms)} ACTIVE`}</b>
+            <b>{alarms === 0 ? 'CONFIGURED' : `${value(alarms)} ACTIVE`}</b>
           </div>
         </section>
 

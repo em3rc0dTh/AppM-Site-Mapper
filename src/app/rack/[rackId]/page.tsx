@@ -1,3 +1,4 @@
+import { ContextPin } from '@/components/workspace/context-pin';
 import { CasEditor } from '@/components/rack/cas-editor';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { hasPermission } from '@/modules/identity/domain/roles';
@@ -66,7 +67,7 @@ export default async function RackPage({
           {tree && <TopologyContextTree tree={tree} activeId={rackId} />}
         </aside>
         <section className="operational-stage operational-stage--wide">
-          <nav className="mk-rack-actions"><Link href={`/rack/${rackId}/focus`}>RACK FOCUS</Link><Link href={`/power?entity=${rackId}`}>POWER</Link>{root?.kind === 'ROOM_SUBSTRUCTURE' && <Link href={`/blueprint/${root.id}?rack=${rackId}`}>LOCATE</Link>}</nav>
+          <nav className="mk-rack-actions"><ContextPin entityId={rackId}/><Link href={`/rack/${rackId}/focus`}>RACK FOCUS</Link><Link href={`/power?entity=${rackId}`}>POWER</Link>{root?.kind === 'ROOM_SUBSTRUCTURE' && <Link href={`/blueprint/${root.id}?rack=${rackId}`}>LOCATE</Link>}</nav>
           <TelemetryLens label={result.value.rack.name} entityIds={result.value.inventory.map(item => item.id)} />
           <RackElevation
             view={result.value}

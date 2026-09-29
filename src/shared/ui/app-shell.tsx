@@ -12,7 +12,6 @@ const links = [
   { href: '/workspace', label: 'Workspace', icon: 'workspace' },
   { href: '/network', label: 'Network', icon: 'network' },
   { href: '/power', label: 'Power', icon: 'power' },
-  { href: '/telemetry', label: 'Telemetry', icon: 'telemetry' },
 ];
 
 export function AppShell({ children }: { children: ReactNode }) {

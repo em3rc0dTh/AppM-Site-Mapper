@@ -134,7 +134,7 @@ export class TopologyService {
       case 'POSITION':
         if (
           !input.coordinate ||
-          !input.coordinate.row.trim() ||
+          !/^[A-Za-z]{1,3}$/.test(input.coordinate.row.trim()) ||
           !Number.isInteger(input.coordinate.column) ||
           input.coordinate.column < 1
         ) {

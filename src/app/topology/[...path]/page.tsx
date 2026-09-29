@@ -102,6 +102,8 @@ export default async function TopologyNodePage({
   }
 
   const node = resolved.value;
+  function openRoom(candidate: TopologyNode): void { if (candidate.kind === 'ROOM_SUBSTRUCTURE') redirect(`/blueprint/${candidate.id}`); }
+  openRoom(node);
   if (node.kind === 'CONTAINER_RACK') redirect(`/rack/${node.id}`);
   if ((node.kind === 'DEVICE' && !node.bdfb) || node.kind === 'EQUIPMENT') redirect(`/device/${node.id}`);
   const [trail, children, selfHref] = await Promise.all([

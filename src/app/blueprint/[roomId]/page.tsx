@@ -1,14 +1,16 @@
+import Link from 'next/link';
+import { RoomLayoutEditor } from '@/components/blueprint/room-layout-editor';
+import { readLayoutDraft } from '@/modules/spatial/application/layout-editor-service';
+import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { notFound, redirect } from 'next/navigation';
 
-import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
-import { RoomPolygonForm } from '@/components/blueprint/room-polygon-form';
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
-import { SectionHeader, StatePanel, StatusBadge } from '@/shared/ui/primitives';
+import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 
 export default async function BlueprintPage({
   params,
@@ -28,13 +30,15 @@ export default async function BlueprintPage({
     notFound();
   }
 
+  const draft=await readLayoutDraft(repository,roomId);
   const trail = await topology.getTrail(roomId);
+  const inventory=(await Promise.all(result.value.racks.map(r=>repository.listChildren(r.id)))).flat();
   const root = trail[0];
   const tree = root ? await topology.buildNavigationTree(root.id) : null;
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
   return (
-    <main className="operational-page operational-page--blueprint">
+    <main className="operational-page operational-page--blueprint"><nav className="breadcrumbs"><Link href="/network">Network</Link><span>{result.value.room.name}</span></nav>
       <div className="operational-layout operational-layout--blueprint">
         <aside className="operational-context">
           {tree && <TopologyContextTree tree={tree} activeId={roomId} />}
@@ -48,28 +52,8 @@ export default async function BlueprintPage({
             actions={<StatusBadge>{canWrite ? 'EDIT PERMITTED' : 'READ ONLY'}</StatusBadge>}
           />
 
-          <div className="operational-stage-body">
-            {result.value.room.polygon ? (
-              <BlueprintCanvas
-                polygon={result.value.room.polygon}
-                clusters={result.value.clusters}
-                racks={result.value.racks}
-                slots={result.value.assignableSlots}
-              />
-            ) : (
-              <StatePanel
-                title="No room boundary"
-                description="Define the physical boundary to render this room."
-              />
-            )}
-          </div>
-
-          {canWrite && (
-            <details className="edit-disclosure operational-blueprint-edit">
-              <summary>Edit room boundary</summary>
-              <RoomPolygonForm roomId={roomId} />
-            </details>
-          )}
+          <TelemetryLens label={result.value.room.name} entityIds={inventory.map(n=>n.id)}/>
+          {draft&&<RoomLayoutEditor roomId={roomId} initial={draft.draft} canWrite={canWrite}/>}
         </section>
       </div>
     </main>

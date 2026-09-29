@@ -1,5 +1,6 @@
 'use client';
 
+import { ContextPin } from '@/components/workspace/context-pin';
 import { useSearchParams } from 'next/navigation';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { useEffect, useMemo, useState } from 'react';
@@ -358,7 +359,7 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
           </small>
         </div>
 
-        <div className="bdfb-chassis-status">
+        <div className="bdfb-chassis-status"><ContextPin entityId={device.id}/>
           <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>
           <StatusBadge>{frames.length} FRAMES</StatusBadge>
           <StatusBadge>{panels.length} PANELS</StatusBadge>

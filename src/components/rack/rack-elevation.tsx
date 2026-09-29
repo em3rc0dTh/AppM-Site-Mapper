@@ -5,7 +5,8 @@ import { useMemo, useState, type CSSProperties } from 'react';
 
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
-import { EntityInspector, InspectButton, type InspectorEntity } from '@/shared/ui/entity-inspector';
+import { InlineInspector } from '@/shared/ui/inline-inspector';
+import { InspectButton, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 
 interface RackBlock {
@@ -299,7 +300,7 @@ export function RackElevation({
         )}
       </aside>
 
-      {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}
+      {selected && <InlineInspector entity={selected} onClose={() => setSelected(null)} />}
     </section>
   );
 }

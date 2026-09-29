@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
-import { BdfbChassis } from '@/components/power/bdfb-chassis';
+import { BdfbChassis, type BreakerPowerBinding } from '@/components/power/bdfb-chassis';
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { TopologyCreateForm } from '@/components/topology/topology-create-form';
 import { TopologyPropertiesPanel } from '@/components/topology/topology-properties-panel';
@@ -12,6 +12,7 @@ import {
 } from '@/components/topology/topology-visual-stage';
 import { PinButton } from '@/components/workspace/pin-button';
 import { requirePermission } from '@/modules/identity/application/current-session';
+import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
@@ -164,6 +165,35 @@ export default async function TopologyNodePage({
       ? await new SpatialService(repository).getRoomLayout(node.id)
       : null;
 
+  const bdfbPowerBindings: BreakerPowerBinding[] = [];
+  if (node.kind === 'DEVICE' && node.bdfb) {
+    const activePaths = await (await createPowerRepository()).listActive();
+    for (const path of activePaths) {
+      const deviceEndpoint = path.source.entityId === node.id ? path.source : path.target.entityId === node.id ? path.target : null;
+      const counterpart = path.source.entityId === node.id ? path.target : path.target.entityId === node.id ? path.source : null;
+      const breakerId = deviceEndpoint?.internal?.breakerHolderId;
+      if (!breakerId || !counterpart) continue;
+      const counterpartNode = await repository.getById(counterpart.entityId);
+      const counterpartTrail = counterpartNode ? await service.getTrail(counterpart.entityId) : [];
+      const counterpartRack = [...counterpartTrail].reverse().find(item => item.kind === 'CONTAINER_RACK');
+      const allocation = counterpartRack?.kind === 'CONTAINER_RACK'
+        ? counterpartRack.cas.find(range => range.occupantId === counterpart.entityId && range.state === 'EQUIPPED')
+        : undefined;
+      const mount = allocation?.mountStartU && allocation.physicalSizeU
+        ? `U${allocation.mountStartU}–U${allocation.mountStartU + allocation.physicalSizeU - 1}`
+        : undefined;
+      bdfbPowerBindings.push({
+        breakerId,
+        pathId: path.id,
+        ...(path.feed ? { feed: path.feed } : {}),
+        counterpartName: counterpartNode?.name ?? counterpart.entityId,
+        counterpartHref: counterpartNode ? await service.buildDeepLink(counterpartNode.id) : '/power',
+        counterpartContext: counterpartTrail.map(item => item.name).join(' / ') || counterpart.entityId,
+        ...(mount ? { mount } : {}),
+      });
+    }
+  }
+
   const rackLink: string | null = null;
   const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
   const sectionDescription = descriptionFor(node);
@@ -213,7 +243,7 @@ export default async function TopologyNodePage({
 
           <div className="operational-stage-body">
             {node.kind === 'DEVICE' && node.bdfb ? (
-              <BdfbChassis device={node} />
+              <BdfbChassis device={node} powerBindings={bdfbPowerBindings} />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
               roomLayout?.ok &&
               roomLayout.value.room.polygon ? (

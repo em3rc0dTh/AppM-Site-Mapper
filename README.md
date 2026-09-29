@@ -66,10 +66,25 @@ Network
 
 ## Local development
 
+Fastest visual run with demo data:
+
 ```bash
 npm ci
+npm run local:dev
+```
+
+The local launcher starts Next.js with in-memory persistence, creates a temporary local Superadmin, seeds the development topology and opens the login page. It prints the temporary credentials in the terminal. Nothing from this launcher is a production credential and the data resets when the process stops.
+
+To keep the browser closed:
+
+```bash
+npm run local:dev -- --no-open
+```
+
+Manual development remains available:
+
+```bash
 cp .env.example .env.local
-npm run verify
 npm run dev
 ```
 

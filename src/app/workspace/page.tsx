@@ -41,7 +41,7 @@ export default async function WorkspacePage() {
     nodes.flatMap((node) => [node, ...flatten(node.children)]);
   const allNodes = flatten(snapshot.navigation);
   const latest=(await getTelemetryRuntime()).service.snapshot();
-  const telemetryAttention=allNodes.filter(n=>['DEVICE','EQUIPMENT'].includes(n.kind)).flatMap(n=>{const sample=latest.find(s=>s.entityId===n.id);if(sample&&Date.now()-Date.parse(sample.receivedAt)<=30000)return [];return [{id:`freshness-${n.id}`,severity:'WARNING' as const,title:sample?'Telemetry stale':'Telemetry offline',message:`${n.name}: ${sample?'last received '+sample.receivedAt:'no measurement received'}`,entityId:n.id}];});
+  const telemetryAttention=allNodes.filter(n=>['DEVICE','EQUIPMENT'].includes(n.kind)).flatMap(n=>{const sample=latest.find(s=>s.entityId===n.id);if(sample)return [];return [{id:`freshness-${n.id}`,severity:'WARNING' as const,title:'Telemetry offline',message:`${n.name}: no measurement received`,entityId:n.id}];});
   const canLoadDevelopmentDemo =
     process.env.APP_ENV === 'development' &&
     getPersistenceMode() === 'memory' &&

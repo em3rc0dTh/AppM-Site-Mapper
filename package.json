@@ -19,7 +19,8 @@
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build",
     "migration:legacy": "node --experimental-strip-types scripts/migrations/legacy/migrate.ts",
     "migration:promote": "node --experimental-strip-types scripts/migrations/legacy/promote.ts",
-    "test:certification": "vitest run tests/certification"
+    "test:certification": "vitest run tests/certification",
+    "local:dev": "node scripts/local-dev.mjs"
   },
   "dependencies": {
     "mongodb": "7.6.0",

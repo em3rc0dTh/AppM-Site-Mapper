@@ -14,14 +14,15 @@ import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 
 export default async function BlueprintPage({
   params,
-}: Readonly<{ params: Promise<{ roomId: string }> }>) {
+  searchParams,
+}: Readonly<{ params: Promise<{ roomId: string }>; searchParams: Promise<{ rack?: string }> }>) {
   const auth = await requirePermission('topology:read');
 
   if (!auth.ok) {
     redirect('/login');
   }
 
-  const { roomId } = await params;
+  const [{ roomId }, query] = await Promise.all([params, searchParams]);
   const repository = await createTopologyRepository();
   const topology = new TopologyService(repository);
   const result = await new SpatialService(repository).getRoomLayout(roomId);
@@ -53,7 +54,7 @@ export default async function BlueprintPage({
           />
 
           <TelemetryLens label={result.value.room.name} entityIds={inventory.map(n=>n.id)}/>
-          {draft&&<RoomLayoutEditor roomId={roomId} initial={draft.draft} canWrite={canWrite}/>}
+          {draft&&<RoomLayoutEditor roomId={roomId} initial={draft.draft} canWrite={canWrite} focusRackId={query.rack}/>}
         </section>
       </div>
     </main>

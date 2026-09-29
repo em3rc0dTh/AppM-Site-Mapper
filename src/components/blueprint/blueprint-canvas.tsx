@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
+import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { InlineInspector } from '@/shared/ui/inline-inspector';
@@ -96,8 +96,9 @@ export function BlueprintCanvas({
   const router = useRouter();
   const base = useMemo(() => boundsFor(polygon), [polygon]);
   const labels = useMemo(() => gridLabels(polygon), [polygon]);
+  const focusedRack = racks.find((rack) => rack.id === focusRackId);
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
-  const [selectedRackId, setSelectedRackId] = useState<string | null>(null);
+  const [selectedRackId, setSelectedRackId] = useState<string | null>(focusRackId ?? null);
   const [tool, setTool] = useState<'select' | 'pan'>('select');
   function inspectRack(rack: RackPlacementView) {
     setSelectedRackId(rack.id);
@@ -117,12 +118,18 @@ export function BlueprintCanvas({
       actions: [{ label: 'Open rack focus', href: `/rack/${rack.id}/focus` }],
     });
   }
-  const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(focusedRack ? 2 : 1);
+  const [pan, setPan] = useState(() =>
+    focusedRack
+      ? {
+          x: focusedRack.rect.x - base.x - base.width / 4,
+          y: focusedRack.rect.y - base.y - base.height / 4,
+        }
+      : { x: 0, y: 0 },
+  );
   const pointer = useRef<Readonly<{ x: number; y: number }> | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
-  useEffect(()=>{const id=focusRackId ?? new URLSearchParams(window.location.search).get('rack');const rack=racks.find(r=>r.id===id);if(rack){setSelectedRackId(rack.id);setZoom(2);setPan({x:rack.rect.x-base.x-base.width/4,y:rack.rect.y-base.y-base.height/4});}},[racks,base,focusRackId]);
   const view: ViewState = {
     x: base.x + pan.x,
     y: base.y + pan.y,

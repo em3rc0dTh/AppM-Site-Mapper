@@ -1,5 +1,6 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
 import { isWorkspaceHref } from '@/modules/workspace/domain/context';
@@ -13,6 +14,7 @@ interface LoginResponse {
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -22,28 +24,40 @@ export default function LoginPage() {
     setError(null);
 
     const form = new FormData(event.currentTarget);
+
     try {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        email: String(form.get('email') ?? ''),
-        password: String(form.get('password') ?? ''),
-      }),
-    });
-    const result = (await response.json()) as LoginResponse;
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email: String(form.get('email') ?? ''),
+          password: String(form.get('password') ?? ''),
+        }),
+      });
+      const result = (await response.json()) as LoginResponse;
 
-    if (!response.ok) {
-      setError(result.error ?? 'LOGIN_FAILED');
+      if (!response.ok) {
+        setError(result.error ?? 'LOGIN_FAILED');
+        setBusy(false);
+        return;
+      }
+
+      if (result.user?.mustChangePassword) {
+        router.replace('/change-password');
+        return;
+      }
+
+      const contextResponse = await fetch('/api/workspace/context');
+      const context = contextResponse.ok
+        ? ((await contextResponse.json()) as { lastContext?: string })
+        : {};
+
+      router.replace(isWorkspaceHref(context.lastContext) ? context.lastContext : '/workspace');
+      router.refresh();
+    } catch {
+      setError('Connection unavailable. Please try again.');
       setBusy(false);
-      return;
     }
-
-    if (result.user?.mustChangePassword) { window.location.href = '/change-password'; return; }
-    const contextResponse = await fetch('/api/workspace/context');
-    const context = contextResponse.ok ? await contextResponse.json() as { lastContext?: string } : {};
-    window.location.href = isWorkspaceHref(context.lastContext) ? context.lastContext : '/workspace';
-    } catch { setError('Connection unavailable. Please try again.'); setBusy(false); }
   }
 
   return (

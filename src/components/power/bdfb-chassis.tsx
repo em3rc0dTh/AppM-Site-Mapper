@@ -345,15 +345,52 @@ function useBdfbTelemetry(deviceId: string): TelemetrySample | null {
   return sample;
 }
 
-export function BdfbChassis({ device, powerBindings = [] }: Readonly<{ device: DeviceNode; powerBindings?: readonly BreakerPowerBinding[] }>) {
-  const [selected, setSelected] = useState<InspectorEntity | null>(null);
-  const query=useSearchParams();
-  const [activePanel, setActivePanel] = useState<PanelSelection | null>(() => {
-    for (const shelf of device.bdfb?.shelves ?? []) for (const frame of shelf.frames) for (const panel of frame.panels) if (panel.id === query.get('panel')) return {shelf,frame,panel};
+export function BdfbChassis({
+  device,
+  powerBindings = [],
+}: Readonly<{ device: DeviceNode; powerBindings?: readonly BreakerPowerBinding[] }>) {
+  const query = useSearchParams();
+  const bindingsByBreaker = useMemo(
+    () =>
+      Object.fromEntries(
+        powerBindings.map((binding) => [binding.breakerId, binding]),
+      ) as Readonly<Record<string, BreakerPowerBinding>>,
+    [powerBindings],
+  );
+  const initialPanel = (() => {
+    const requestedPanel = query.get('panel');
+    if (!requestedPanel) return null;
+
+    for (const shelf of device.bdfb?.shelves ?? []) {
+      for (const frame of shelf.frames) {
+        for (const panel of frame.panels) {
+          if (panel.id === requestedPanel) return { shelf, frame, panel };
+        }
+      }
+    }
+
     return null;
-  });
-  const bindingsByBreaker = useMemo(() => Object.fromEntries(powerBindings.map(binding => [binding.breakerId, binding])) as Readonly<Record<string, BreakerPowerBinding>>, [powerBindings]);
-  useEffect(()=>{ for (const shelf of device.bdfb?.shelves ?? []) for (const frame of shelf.frames) for (const panel of frame.panels) if (panel.id === query.get('panel')) {setActivePanel({shelf,frame,panel});const endpoint=panel.endpoints.find(e=>e.id===query.get('breaker'));if(endpoint)setSelected(endpointInspector(device,shelf,frame,panel,endpoint,undefined,bindingsByBreaker[endpoint.id]));} },[device,query,bindingsByBreaker]);
+  })();
+  const initialSelected = (() => {
+    const requestedBreaker = query.get('breaker');
+    if (!initialPanel || !requestedBreaker) return null;
+
+    const endpoint = initialPanel.panel.endpoints.find((item) => item.id === requestedBreaker);
+    if (!endpoint) return null;
+
+    return endpointInspector(
+      device,
+      initialPanel.shelf,
+      initialPanel.frame,
+      initialPanel.panel,
+      endpoint,
+      undefined,
+      bindingsByBreaker[endpoint.id],
+    );
+  })();
+
+  const [selected, setSelected] = useState<InspectorEntity | null>(initialSelected);
+  const [activePanel, setActivePanel] = useState<PanelSelection | null>(initialPanel);
   const telemetry = useBdfbTelemetry(device.id);
   const shelves = device.bdfb?.shelves ?? [];
   const frames = shelves.flatMap((shelf) => shelf.frames);

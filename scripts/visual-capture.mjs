@@ -170,7 +170,27 @@ if (bdfbLink) {
   const panel = page.locator('.bdfb-overview-panel').first();
   if (await panel.count()) {
     await panel.click();
-    await page.waitForTimeout(300);
+    await page.locator('.bdfb-endpoint').first().waitFor({ state: 'visible' });
+    // A CSS-only regression previously collapsed the board to its header while
+    // leaving every endpoint in the DOM. Check actual rendered dimensions.
+    const boardGeometry = await page.evaluate(() => {
+      const board = document.querySelector('.bdfb-panel-board--detail');
+      const grid = document.querySelector('.bdfb-endpoint-grid');
+      const endpoint = document.querySelector('.bdfb-endpoint');
+      if (!board || !grid || !endpoint) return null;
+      return {
+        boardHeight: board.getBoundingClientRect().height,
+        gridHeight: grid.getBoundingClientRect().height,
+        endpointHeight: endpoint.getBoundingClientRect().height,
+        endpointCount: grid.querySelectorAll('.bdfb-endpoint').length,
+      };
+    });
+    assert.ok(boardGeometry, 'BDFB panel board and endpoints must exist');
+    assert.ok(boardGeometry.endpointCount >= 1, 'Panel has no physical endpoints');
+    assert.ok(boardGeometry.boardHeight >= 380, 'BDFB board collapsed inside viewport');
+    assert.ok(boardGeometry.gridHeight >= 240, 'BDFB endpoint grid is clipped');
+    assert.ok(boardGeometry.endpointHeight >= 22, 'BDFB breaker buttons are not visible');
+    await snap('12a-panel-breaker-board');
     const breaker08 = page.locator('.bdfb-endpoint').nth(7);
     if (await breaker08.count()) {
       await breaker08.click();

@@ -1,8 +1,12 @@
+import { BdfbService } from '@/modules/power/application/bdfb-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { DeviceNode, EquipmentNode } from '@/modules/topology/domain/entities';
 import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
-import { snapshotTemplate } from '@/modules/warehouse/domain/template';
+import {
+  materializeBdfbBlueprint,
+  snapshotTemplate,
+} from '@/modules/warehouse/domain/template';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type WarehouseInstantiationError =
@@ -62,8 +66,23 @@ export class WarehouseInstantiationService {
     if (!created.ok || (created.value.kind !== 'DEVICE' && created.value.kind !== 'EQUIPMENT'))
       return failure('CREATE_FAILED');
 
+    let node = created.value;
+    if (
+      template.kind === 'DEVICE' &&
+      template.deviceType === 'BDFB' &&
+      template.physicalBlueprint?.type === 'BDFB'
+    ) {
+      if (node.kind !== 'DEVICE') return failure('CREATE_FAILED');
+      const configured = await new BdfbService(this.topologyRepository).configure(
+        node.id,
+        materializeBdfbBlueprint(template.physicalBlueprint, node.id),
+      );
+      if (!configured.ok) return failure('CREATE_FAILED');
+      node = configured.value;
+    }
+
     return success({
-      node: created.value,
+      node,
       recommendedMountSizeU: template.sizeU ?? null,
       state: 'UNMOUNTED',
     });

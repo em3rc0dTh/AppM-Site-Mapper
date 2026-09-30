@@ -1,3 +1,4 @@
+# Second normalization after contextual navigation fixes
 name: Temporary interaction recovery formatter
 on:
   push:

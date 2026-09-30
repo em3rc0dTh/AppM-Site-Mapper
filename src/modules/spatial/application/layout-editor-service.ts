@@ -40,7 +40,9 @@ export async function readLayoutDraft(
       racks: racks.map((r) => {
         const position = positions.find((candidate) => candidate.id === r.parentId);
         const legacyPoint =
-          position?.kind === 'POSITION' ? gridCoordinateToPoint(position.coordinate) : { x: 0, y: 0 };
+          position?.kind === 'POSITION'
+            ? gridCoordinateToPoint(position.coordinate)
+            : { x: 0, y: 0 };
 
         return {
           id: r.id,

@@ -25,8 +25,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Install capture browser
         run: |
-          npm install --no-save --no-package-lock playwright@1.55.0
-          npx playwright install --with-deps chromium
+          npm install --global playwright@1.55.0
+          playwright install --with-deps chromium
       - name: Start local seeded app
         run: |
           npm run local:dev -- --no-open > /tmp/site-mapper.log 2>&1 &
@@ -40,7 +40,7 @@ jobs:
           cat /tmp/site-mapper.log
           exit 1
       - name: Capture approved view family
-        run: node scripts/visual-capture.mjs
+        run: NODE_PATH="$(npm root --global)" node scripts/visual-capture.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: site-mapper-visual-current

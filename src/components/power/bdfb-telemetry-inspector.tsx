@@ -189,12 +189,7 @@ export function BdfbTelemetryInspector({
   const endpoints = panels.flatMap((panel) => panel.endpoints);
 
   useEffect(() => {
-    if (window === 'LIVE') {
-      setHistory(null);
-      setHistoryLoading(false);
-      setHistoryError(null);
-      return;
-    }
+    if (window === 'LIVE') return;
 
     const controller = new AbortController();
     const params = new URLSearchParams({
@@ -202,9 +197,6 @@ export function BdfbTelemetryInspector({
       window,
     });
     if (activePanelId) params.set('panelId', activePanelId);
-
-    setHistoryLoading(true);
-    setHistoryError(null);
 
     void fetch(`/api/telemetry/history?${params.toString()}`, {
       cache: 'no-store',
@@ -259,7 +251,12 @@ export function BdfbTelemetryInspector({
             type="button"
             role="tab"
             aria-selected={window === 'LIVE'}
-            onClick={() => setWindow('LIVE')}
+            onClick={() => {
+              setHistory(null);
+              setHistoryLoading(false);
+              setHistoryError(null);
+              setWindow('LIVE');
+            }}
           >
             LIVE
           </button>
@@ -269,7 +266,12 @@ export function BdfbTelemetryInspector({
               role="tab"
               aria-selected={window === historyWindow}
               key={historyWindow}
-              onClick={() => setWindow(historyWindow)}
+              onClick={() => {
+                setHistory(null);
+                setHistoryLoading(true);
+                setHistoryError(null);
+                setWindow(historyWindow);
+              }}
             >
               {historyWindow.toUpperCase()}
             </button>

@@ -1180,7 +1180,6 @@
   }
 }
 
-
 /* Canonical BDFB overview: one shelf, A/B columns, three vertical panel slots. */
 .zip-bdfb-page .bdfb-chassis-body:not(:has(.bdfb-panel-detail)) {
   display: flex !important;
@@ -1268,10 +1267,7 @@
   min-height: 0 !important;
   height: 100% !important;
   display: grid !important;
-  grid-template-rows: repeat(
-    var(--bdfb-overview-panel-count, 3),
-    minmax(0, 1fr)
-  ) !important;
+  grid-template-rows: repeat(var(--bdfb-overview-panel-count, 3), minmax(0, 1fr)) !important;
   gap: 8px !important;
   padding: 0 !important;
 }

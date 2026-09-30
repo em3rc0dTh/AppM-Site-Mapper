@@ -58,7 +58,7 @@ export function BdfbTelemetryInspector({
   const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
   const selectedPanel = activePanelId
-    ? panels.find((panel) => panel.id === activePanelId) ?? null
+    ? (panels.find((panel) => panel.id === activePanelId) ?? null)
     : null;
   const scopeEndpoints = selectedPanel
     ? selectedPanel.endpoints
@@ -155,7 +155,9 @@ export function BdfbTelemetryInspector({
         <div>
           <span>●</span>
           <strong>
-            {aggregate.activeBreakers > 0 ? 'Live breaker telemetry received' : 'Physical inventory recorded'}
+            {aggregate.activeBreakers > 0
+              ? 'Live breaker telemetry received'
+              : 'Physical inventory recorded'}
           </strong>
           <small>
             {aggregate.activeBreakers > 0
@@ -167,8 +169,8 @@ export function BdfbTelemetryInspector({
 
       <div className="zip-bdfb-actions">
         <span>
-          {endpoints.filter((endpoint) => Boolean(endpoint.telemetry?.rawPointId)).length}{' '}
-          explicit MQTT bindings
+          {endpoints.filter((endpoint) => Boolean(endpoint.telemetry?.rawPointId)).length} explicit
+          MQTT bindings
         </span>
         <span>
           {selectedPanel

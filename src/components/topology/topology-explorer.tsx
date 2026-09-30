@@ -52,7 +52,9 @@ export function TopologyExplorer({
   const minY = all.length ? Math.min(...all.map((point) => point.y)) : 0;
   const width = all.length ? Math.max(1, Math.max(...all.map((point) => point.x)) - minX) : 1200;
   const height = all.length ? Math.max(1, Math.max(...all.map((point) => point.y)) - minY) : 1200;
-  const unlocated = items.filter((entry) => !('polygon' in entry.node && entry.node.polygon?.length));
+  const unlocated = items.filter(
+    (entry) => !('polygon' in entry.node && entry.node.polygon?.length),
+  );
   const pad = Math.max(width, height) * 0.1;
   const points = (polygon: readonly PhysicalPoint[]) =>
     polygon.map((point) => `${point.x},${point.y}`).join(' ');

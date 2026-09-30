@@ -182,20 +182,11 @@ export function TopologyExplorer({
                         : entry.node.name.toUpperCase()}
                     </strong>
                     <span className="zip-graph-metrics">
-                      <small>▱ {Math.max(1, index + 1)}</small>
-                      <small>▯ {items.length}</small>
-                      <small>□ {Math.max(1, items.length * 8)}</small>
+                      <small>SCHEMATIC · UNSURVEYED</small>
                     </span>
                   </button>
                 ))}
-                <div className="zip-mini-map" aria-hidden="true">
-                  <b>MINI MAP</b>
-                  <span>
-                    <i />
-                    <i />
-                    <i />
-                  </span>
-                </div>
+
               </div>
             )}
           </div>

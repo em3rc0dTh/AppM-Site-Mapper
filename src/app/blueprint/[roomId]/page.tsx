@@ -70,6 +70,7 @@ export default async function BlueprintPage({
           <TelemetryLens label={result.value.room.name} entityIds={inventory.map((n) => n.id)} />
           {draft && (
             <RoomLayoutEditor
+              key={`${roomId}:${query.rack ?? ''}:${query.bay ?? ''}:${query.position ?? ''}`}
               roomId={roomId}
               initial={draft.draft}
               canWrite={canWrite}

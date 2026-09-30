@@ -23,11 +23,13 @@ Scope completed:
 
 Integration closure:
 
-- Rack Focus is now a distinct room-context view; Rack Elevation remains a separate projection instead of being embedded in Screen 07.
+- Rack Focus is a distinct room-context view; Rack Elevation remains a separate projection.
 - Global search resolves racks to Rack Focus and BDFB devices to their physical deep link.
-- Recent-context tracking now preserves query context such as panel/breaker selections.
-- Main-shell active navigation no longer misclassifies the Power route.
+- Recent-context tracking preserves query context such as panel/breaker selections.
+- Main-shell navigation resolves Power independently from topology navigation.
 - Existing rack placements cannot be reassigned across bays; cross-bay relocation requires delete/recreate, while same-bay position moves remain supported.
+- Breaker inspection exposes feed, provisioning, destination context and rack/U where the model can resolve them.
+- A local development launcher is available through `npm run local:dev`; it uses memory persistence, creates a temporary local administrator, seeds demo topology and prints local-only credentials.
 
 Persistence:
 
@@ -41,26 +43,16 @@ Telemetry:
 - LIVE / STALE / OFFLINE are based on stream connectivity and freshness.
 - Real telemetry still requires runtime broker configuration and canonical source mapping.
 
-Deliberately deferred:
+Verification evidence:
 
-- automated tests
-- QA
-- certification
-- release readiness
+- GitHub Actions verified TypeScript, ESLint and the Next.js production build after the integration refinements.
+- Repository formatting was normalized with the repository Prettier configuration.
+- The canonical CI workflow was restored after the temporary build-diagnostic ordering was removed.
+- Pull request #41 remains draft and `main` remains untouched.
+
+Deliberately outside the RAW BUILD claim:
+
 - production readiness
+- release readiness
 
-This receipt closes only the requested RAW BUILD pass. It is not a certification or release receipt.
-
-Post-close refinement checkpoints:
-
-- b738938c34b87796ddf938512ab2093ee1ddc6e4 — Rack Focus separated from Rack Elevation and grounded in Room context.
-- caa3f326edc9408fa9a3b0179a7fb71d362f9feb — Blueprint wording and topology explorer alignment.
-- 39f6a3c40132e1324e12b67ce912b4d1b075f98d — Operations aligned to Attention / Pinned / Pinned BDFB Telemetry / Recent.
-- 5eca8607c04b05e1a50a9e020f13b0421df4946e — Power Path diagnostic overview and A/B redundancy summary.
-- 0f5ec75dcef4a8d407a150e6b8c84e2865d68801 — Breaker inspector enriched with feed, provisioning, destination context and rack/U when resolvable.
-
-Validation note:
-
-- No automated test suites were run by this continuation, per directive.
-- A local build attempt from this ChatGPT runtime could not start because the runtime cannot resolve github.com for cloning. The previously reported Astra production build remains the latest successful build evidence for the branch lineage before these refinement commits.
-- Therefore the post-close refinement commits remain un-certified until a build/compiler pass runs in an environment with repository checkout access.
+This receipt closes the requested RAW BUILD and local-visualization preparation work. It is not a production or release certification receipt.

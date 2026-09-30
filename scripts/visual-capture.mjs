@@ -155,22 +155,18 @@ if (rackLink) {
   await snap('07-rack-focus');
   const elevation = focus.replace(/\/focus$/, '');
   await go(elevation);
-  const createDevice = page.getByRole('button', { name: '+ CREATE DEVICE' });
-  const createEquipment = page.getByRole('button', { name: '+ CREATE EQUIPMENT' });
-  await createDevice.waitFor({ state: 'visible', timeout: 10_000 });
-  await createEquipment.waitFor({ state: 'visible', timeout: 10_000 });
-  assert.ok(await createDevice.isVisible(), 'Rack elevation must expose Create Device');
-  assert.ok(await createEquipment.isVisible(), 'Rack elevation must expose Create Equipment');
+  const mountFromWarehouse = page.getByRole('button', { name: '+ MOUNT FROM WAREHOUSE' });
+  await mountFromWarehouse.waitFor({ state: 'visible', timeout: 10_000 });
+  assert.ok(
+    await mountFromWarehouse.isVisible(),
+    'Rack elevation must expose Mount from Warehouse',
+  );
 
-  await createDevice.click();
-  const deviceName = page.getByRole('textbox', { name: 'Name' }).last();
-  await deviceName.waitFor({ state: 'visible', timeout: 10_000 });
+  await mountFromWarehouse.click();
   const formGeometry = await page.evaluate(() => {
-    const popover = document.querySelector(
-      '.zip-rack-inventory-actions .spatial-create-popover',
-    );
-    if (!popover) return null;
-    const rect = popover.getBoundingClientRect();
+    const form = document.querySelector('.rack-warehouse-form');
+    if (!form) return null;
+    const rect = form.getBoundingClientRect();
     return {
       top: rect.top,
       right: rect.right,
@@ -180,19 +176,19 @@ if (rackLink) {
       viewportHeight: window.innerHeight,
     };
   });
-  assert.ok(formGeometry, 'Create Device popover must render');
-  assert.ok(formGeometry.top >= 0, 'Create Device form is clipped above the viewport');
-  assert.ok(formGeometry.left >= 0, 'Create Device form is clipped left of the viewport');
+  assert.ok(formGeometry, 'Warehouse mount form must render');
+  assert.ok(formGeometry.top >= 0, 'Warehouse mount form is clipped above the viewport');
+  assert.ok(formGeometry.left >= 0, 'Warehouse mount form is clipped left of the viewport');
   assert.ok(
     formGeometry.right <= formGeometry.viewportWidth,
-    'Create Device form is clipped right of the viewport',
+    'Warehouse mount form is clipped right of the viewport',
   );
   assert.ok(
     formGeometry.bottom <= formGeometry.viewportHeight,
-    'Create Device form is clipped below the viewport',
+    'Warehouse mount form is clipped below the viewport',
   );
-  await snap('08a-rack-create-device');
-  await page.getByRole('button', { name: 'Cancel' }).last().click();
+  await snap('08a-rack-mount-from-warehouse');
+  await page.getByRole('button', { name: 'Close warehouse mount' }).click();
 
   await snap('08-rack-elevation');
 }
@@ -248,6 +244,13 @@ if (bdfbLink) {
     await snap('12-panel-breaker');
   }
 }
+
+await go('/warehouse');
+await page.getByRole('heading', { name: 'Device & Equipment Templates' }).waitFor({
+  state: 'visible',
+  timeout: 10_000,
+});
+await snap('17-virtual-warehouse');
 
 await go('/settings');
 await snap('16-settings');

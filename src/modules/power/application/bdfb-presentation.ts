@@ -37,7 +37,10 @@ function orderedPanels(
     if (match) byNumber.set(Number(match[1]), panel);
   }
 
-  return [1, 2, 3].map((index) => byNumber.get(index) ?? emptyPanel(deviceId, side, index));
+  return [1, 2, 3].map((index) => {
+    const panel = byNumber.get(index);
+    return panel ? { ...panel, label: `Panel ${side}${index}` } : emptyPanel(deviceId, side, index);
+  });
 }
 
 function hasEmulatorBindings(device: DeviceNode): boolean {

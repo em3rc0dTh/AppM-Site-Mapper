@@ -107,6 +107,11 @@ if (bdfbLink) {
   if (await panel.count()) {
     await panel.click();
     await page.waitForTimeout(300);
+    const breaker08 = page.locator('.bdfb-endpoint').nth(7);
+    if (await breaker08.count()) {
+      await breaker08.click();
+      await page.waitForTimeout(250);
+    }
     await snap('12-panel-breaker');
   }
 }

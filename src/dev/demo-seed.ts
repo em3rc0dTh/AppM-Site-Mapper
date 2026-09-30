@@ -353,75 +353,68 @@ export async function seedDevelopmentDemo(
   await inventory.setPinned(bdfb.id, true);
   await inventory.setPinned(router.id, true);
 
+  const demoBreakers = (prefix: string, count: number, capacity = 20) =>
+    Array.from({ length: count }, (_, index) => ({
+      id: `demo-breaker-${prefix.toLowerCase()}${index + 1}`,
+      variant: 'BREAKER' as const,
+      label: `Breaker ${String(index + 1).padStart(2, '0')}`,
+      capacity,
+    }));
+
   const bdfbResult = await new BdfbService(topologyRepository).configure(bdfb.id, {
     shelves: [
       {
         id: 'demo-shelf-a',
-        label: 'Shelf A',
+        label: 'Shelf 01',
         frames: [
           {
             id: 'demo-frame-a',
             label: 'Frame A',
-            presentation: { physicalFrameVisible: false },
             panels: [
               {
                 id: 'demo-panel-a',
-                label: 'Panel A',
-                endpoints: [
-                  {
-                    id: 'demo-breaker-a1',
-                    variant: 'BREAKER',
-                    label: 'Breaker A1',
-                    capacity: 20,
-                  },
-                  {
-                    id: 'demo-breaker-a2',
-                    variant: 'BREAKER',
-                    label: 'Breaker A2',
-                    capacity: 20,
-                  },
-                  {
-                    id: 'demo-holder-a3',
-                    variant: 'HOLDER',
-                    label: 'Holder A3',
-                  },
-                  {
-                    id: 'demo-holder-a4',
-                    variant: 'HOLDER',
-                    label: 'Holder A4',
-                  },
-                ],
+                label: 'A1',
+                endpoints: demoBreakers('a', 36),
               },
               {
-                id: 'demo-panel-b',
-                label: 'Panel B',
-                endpoints: [
-                  {
-                    id: 'demo-breaker-b1',
-                    variant: 'BREAKER',
-                    label: 'Breaker B1',
-                    capacity: 30,
-                  },
-                  {
-                    id: 'demo-holder-b2',
-                    variant: 'HOLDER',
-                    label: 'Holder B2',
-                  },
-                  {
-                    id: 'demo-holder-b3',
-                    variant: 'HOLDER',
-                    label: 'Holder B3',
-                  },
-                  {
-                    id: 'demo-holder-b4',
-                    variant: 'HOLDER',
-                    label: 'Holder B4',
-                  },
-                ],
+                id: 'demo-panel-a2',
+                label: 'A2',
+                endpoints: demoBreakers('a2-', 12),
+              },
+              {
+                id: 'demo-panel-a3',
+                label: 'A3',
+                endpoints: demoBreakers('a3-', 12),
+              },
+            ],
+          },
+          {
+            id: 'demo-frame-b',
+            label: 'Frame B',
+            panels: [
+              {
+                id: 'demo-panel-b1',
+                label: 'B1',
+                endpoints: demoBreakers('b1-', 12, 30),
+              },
+              {
+                id: 'demo-panel-b2',
+                label: 'B2',
+                endpoints: demoBreakers('b2-', 12, 30),
+              },
+              {
+                id: 'demo-panel-b3',
+                label: 'B3',
+                endpoints: demoBreakers('b3-', 12, 30),
               },
             ],
           },
         ],
+      },
+      {
+        id: 'demo-shelf-b',
+        label: 'Shelf 02',
+        frames: [],
       },
     ],
   });
@@ -497,7 +490,7 @@ export async function seedDevelopmentDemo(
   }
 
   const powerPathIds = [
-    await ensurePowerPath('Feed A · Compute Node 01', 'A', 'demo-breaker-a1', compute.id),
+    await ensurePowerPath('Feed A · Compute Node 01', 'A', 'demo-breaker-a8', compute.id),
     await ensurePowerPath('Feed B · Edge Router 01', 'B', 'demo-breaker-a2', router.id),
   ];
 

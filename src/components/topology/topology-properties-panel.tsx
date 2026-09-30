@@ -13,10 +13,14 @@ export function TopologyPropertiesPanel({
   node,
   contained,
   previewContained,
+  location,
+  feeds,
 }: Readonly<{
   node: TopologyNode;
   contained: number;
   previewContained?: number;
+  location?: string;
+  feeds?: readonly string[];
 }>) {
   if (node.kind === 'SITE') {
     const load = node.details?.currentLoad;
@@ -114,43 +118,38 @@ export function TopologyPropertiesPanel({
     const panels = frames.flatMap((frame) => frame.panels);
     const endpoints = panels.flatMap((panel) => panel.endpoints);
     const breakers = endpoints.filter((endpoint) => endpoint.variant === 'BREAKER').length;
+    const hasA = feeds?.includes('A') ?? false;
+    const hasB = feeds?.includes('B') ?? false;
 
     return (
-      <aside className="telxius-properties">
-        <header>BDFB PROPERTIES</header>
-        <section className="telxius-stat-stack">
-          <div className="telxius-property-card">
-            <span>SHELVES</span>
-            <strong>{shelves.length}</strong>
+      <aside className="telxius-properties zip-bdfb-inspector">
+        <header>INSPECTOR <span>⌄</span></header>
+        <div className="zip-bdfb-inspector-id">
+          <span>▥</span>
+          <div>
+            <h2>{node.name}</h2>
+            <small>{location ?? 'Infrastructure'}</small>
           </div>
-          <div className="telxius-property-card">
-            <span>FRAMES / PANELS</span>
-            <strong>
-              {frames.length} / {panels.length}
-            </strong>
-          </div>
-          <div className="telxius-property-card">
-            <span>ACTIVE BREAKERS</span>
-            <strong>{breakers}</strong>
-          </div>
+        </div>
+        <dl>
+          <dt>Type</dt><dd>BDFB</dd>
+          <dt>Location</dt><dd>{location ?? '—'}</dd>
+          <dt>Shelves</dt><dd>{shelves.length}</dd>
+          <dt>Frames</dt><dd>{frames.length}</dd>
+          <dt>Panels</dt><dd>{panels.length}</dd>
+          <dt>Breakers</dt><dd>{breakers}</dd>
+          <dt>Feed A</dt><dd>{hasA ? 'Configured' : '—'}</dd>
+          <dt>Feed B</dt><dd>{hasB ? 'Configured' : '—'}</dd>
+          <dt>Telemetry</dt><dd><span className="zip-green-dot" /> READY</dd>
+        </dl>
+        <section className="zip-bdfb-status-card">
+          <h3>STATUS</h3>
+          <div><span>●</span><strong>Normal Operation</strong><small>Configured panels available</small></div>
         </section>
-        <section>
-          <h3>IDENTITY</h3>
-          <dl className="telxius-property-list">
-            <div>
-              <dt>CATEGORY</dt>
-              <dd>{value(node.category)}</dd>
-            </div>
-            <div>
-              <dt>SERIAL</dt>
-              <dd>{value(node.serialNumber)}</dd>
-            </div>
-            <div>
-              <dt>ENDPOINTS</dt>
-              <dd>{endpoints.length}</dd>
-            </div>
-          </dl>
-        </section>
+        <div className="zip-bdfb-actions">
+          <a href="#bdfb-details">VIEW DETAILS</a>
+          <a href="#bdfb-panels">OPEN PANELS</a>
+        </div>
       </aside>
     );
   }

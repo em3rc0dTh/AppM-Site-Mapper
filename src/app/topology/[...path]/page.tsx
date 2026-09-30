@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import { BdfbChassis, type BreakerPowerBinding } from '@/components/power/bdfb-chassis';
+import { BdfbPowerTree } from '@/components/power/bdfb-power-tree';
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { TopologyCreateForm } from '@/components/topology/topology-create-form';
 import { TopologyPropertiesPanel } from '@/components/topology/topology-properties-panel';
@@ -85,7 +86,7 @@ export default async function TopologyNodePage({
   searchParams,
 }: Readonly<{
   params: Promise<{ path: string[] }>;
-  searchParams: Promise<{ level?: string }>;
+  searchParams: Promise<{ level?: string; panel?: string; breaker?: string }>;
 }>) {
   const auth = await requirePermission('topology:read');
 
@@ -222,7 +223,7 @@ export default async function TopologyNodePage({
 
   return (
     <main
-      className={`operational-page telxius-operational-page ${['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''}`}
+      className={`operational-page telxius-operational-page ${['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''} ${node.kind === 'DEVICE' && node.bdfb ? 'zip-bdfb-page' : ''}`}
     >
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
@@ -237,13 +238,17 @@ export default async function TopologyNodePage({
 
       <div className="operational-layout telxius-operational-layout">
         <aside className="operational-context">
-          {navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />}
+          {node.kind === 'DEVICE' && node.bdfb ? (
+            <BdfbPowerTree device={node} trail={trail} selfHref={selfHref} activePanelId={query.panel} />
+          ) : (
+            navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />
+          )}
         </aside>
 
         <section className="operational-stage telxius-operational-stage">
           <SectionHeader
             eyebrow={eyebrowFor(node)}
-            title={node.kind === 'ROOM_SUBSTRUCTURE' ? node.name.toUpperCase() : node.name}
+            title={node.kind === 'DEVICE' && node.bdfb ? (query.panel ? (node.bdfb.shelves.flatMap((shelf) => shelf.frames).flatMap((frame) => frame.panels).find((panel) => panel.id === query.panel)?.label ?? 'PANEL') : 'BDFB PHYSICAL VIEW') : node.kind === 'ROOM_SUBSTRUCTURE' ? node.name.toUpperCase() : node.name}
             {...(sectionDescription === undefined ? {} : { description: sectionDescription })}
             actions={
               <>
@@ -267,7 +272,7 @@ export default async function TopologyNodePage({
 
           <div className="operational-stage-body">
             {node.kind === 'DEVICE' && node.bdfb ? (
-              <BdfbChassis device={node} powerBindings={bdfbPowerBindings} />
+              <BdfbChassis key={query.panel ?? 'bdfb-overview'} device={node} powerBindings={bdfbPowerBindings} />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
               roomLayout?.ok &&
               roomLayout.value.room.polygon ? (
@@ -308,6 +313,8 @@ export default async function TopologyNodePage({
           node={node}
           contained={children.length}
           previewContained={structurePreviewNodes.length}
+          location={trail.filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE').map((item) => item.name).join(' / ')}
+          feeds={bdfbPowerBindings.flatMap((binding) => binding.feed ? [binding.feed] : [])}
         />
       </div>
 

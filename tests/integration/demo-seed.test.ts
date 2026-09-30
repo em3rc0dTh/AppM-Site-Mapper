@@ -44,7 +44,7 @@ describe('development demo seed', () => {
     }
 
     expect(bdfb.deviceType).toBe('BDFB');
-    expect(bdfb.bdfb?.shelves).toHaveLength(1);
+    expect(bdfb.bdfb?.shelves).toHaveLength(2);
     expect(bdfb.pinned).toBe(true);
 
     const racks = await topology.listByKind('CONTAINER_RACK');

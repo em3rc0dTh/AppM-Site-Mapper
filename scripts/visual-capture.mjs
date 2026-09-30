@@ -110,6 +110,17 @@ if (roomLink) {
   });
 
   await snap('05-room-blueprint');
+
+  const rackInRoom = page.locator('.blueprint-rack-node').first();
+  if (await rackInRoom.count()) {
+    await rackInRoom.click();
+    await page.locator('.mk-selection-inspector').waitFor({ state: 'visible' });
+    await rackInRoom.dblclick();
+    await page.getByRole('dialog', { name: 'Rack focus' }).waitFor({ state: 'visible' });
+    await snap('07-rack-focus-popup');
+    await page.getByRole('button', { name: 'Close rack focus' }).click();
+  }
+
   const editButton = page.getByRole('button', { name: 'EDIT ROOM' }).first();
   if (await editButton.count()) {
     await editButton.click();

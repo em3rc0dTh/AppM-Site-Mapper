@@ -17,8 +17,8 @@ describe('development demo seed', () => {
     expect(await topology.listByKind('STRUCTURE')).toHaveLength(3);
     expect(await topology.listByKind('LEVEL')).toHaveLength(4);
     expect(await topology.listByKind('ROOM_SUBSTRUCTURE')).toHaveLength(4);
-    expect(await topology.listByKind('CONTAINER_CLUSTER_BAY')).toHaveLength(1);
-    expect(await topology.listByKind('POSITION')).toHaveLength(5);
+    expect(await topology.listByKind('CONTAINER_CLUSTER_BAY')).toHaveLength(2);
+    expect(await topology.listByKind('POSITION')).toHaveLength(12);
     expect(await topology.listByKind('CONTAINER_RACK')).toHaveLength(5);
     expect(await topology.listByKind('DEVICE')).toHaveLength(8);
     expect(await power.listActive()).toHaveLength(2);

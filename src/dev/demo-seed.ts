@@ -312,10 +312,11 @@ export async function seedDevelopmentDemo(
 
   // Room 202 is the approved ZIP drafting/focus scenario.
   const room202Polygon = await spatial.updateRoomPolygon(room202.id, [
-    { x: 0, y: 0 },
-    { x: 4800, y: 0 },
-    { x: 4800, y: 3000 },
-    { x: 0, y: 3000 },
+    { x: 600, y: 600 },
+    { x: 6000, y: 300 },
+    { x: 6000, y: 4800 },
+    { x: 300, y: 4800 },
+    { x: 250, y: 1800 },
   ]);
   if (!room202Polygon.ok) throw new Error('Demo seed could not configure Blueprint room.');
 
@@ -323,11 +324,47 @@ export async function seedDevelopmentDemo(
     await ensureNode(topologyRepository, topology, {
       kind: 'CONTAINER_CLUSTER_BAY',
       parentId: room202.id,
-      name: 'Rack Row D',
+      name: 'DEMO1',
       clusterVariant: 'BAY',
     }),
     'CONTAINER_CLUSTER_BAY',
   );
+  await topologyRepository.replace({
+    ...bay,
+    polygon: [
+      { x: 1200, y: 1650 },
+      { x: 4800, y: 1650 },
+      { x: 4800, y: 2450 },
+      { x: 1200, y: 2450 },
+    ],
+  });
+
+  const demo2 = expectKind(
+    await ensureNode(topologyRepository, topology, {
+      kind: 'CONTAINER_CLUSTER_BAY',
+      parentId: room202.id,
+      name: 'DEMO2',
+      clusterVariant: 'BAY',
+    }),
+    'CONTAINER_CLUSTER_BAY',
+  );
+  await topologyRepository.replace({
+    ...demo2,
+    polygon: [
+      { x: 1200, y: 2850 },
+      { x: 5400, y: 2850 },
+      { x: 5400, y: 3650 },
+      { x: 1200, y: 3650 },
+    ],
+  });
+  for (let column = 3; column <= 9; column += 1) {
+    await ensureNode(topologyRepository, topology, {
+      kind: 'POSITION',
+      parentId: demo2.id,
+      name: `Position F0${column}`,
+      coordinate: { row: 'F', column },
+    });
+  }
 
   const rackSpecs = [
     ['R-021', 'D', 3],

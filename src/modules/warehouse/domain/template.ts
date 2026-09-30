@@ -102,9 +102,7 @@ export function materializeBdfbBlueprint(
             variant: endpoint.variant,
             label: endpoint.label,
             ...(endpoint.capacity === undefined ? {} : { capacity: endpoint.capacity }),
-            ...(endpoint.rawPointId
-              ? { telemetry: { rawPointId: endpoint.rawPointId } }
-              : {}),
+            ...(endpoint.rawPointId ? { telemetry: { rawPointId: endpoint.rawPointId } } : {}),
           })),
         })),
       })),

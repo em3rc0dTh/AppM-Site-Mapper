@@ -4,6 +4,7 @@ import {
   pointInPolygon,
   polygonBounds,
   polygonInsidePolygon,
+  polygonsOverlapArea,
   rectInsidePolygon,
   rectOverlapsPolygon,
   rectsOverlap,
@@ -190,6 +191,14 @@ export function validateLayoutDraft(value: unknown): string | null {
       !polygonInsidePolygon(c.polygon, d.polygon)
     )
       return 'INVALID_CLUSTER_BOUNDARY';
+  for (let index = 0; index < d.clusters.length; index += 1) {
+    const current = d.clusters[index]!;
+    for (let otherIndex = index + 1; otherIndex < d.clusters.length; otherIndex += 1) {
+      const other = d.clusters[otherIndex]!;
+      if (polygonsOverlapArea(current.polygon, other.polygon)) return 'CLUSTER_COLLISION';
+    }
+  }
+
   const occupied = new Set<string>();
   const cells = new Set<string>();
   const rects: RectMm[] = [];

@@ -115,9 +115,12 @@ export function RoomLayoutEditor({ roomId, initial, canWrite, focusRackId, focus
       if (validChange({ ...draft, positions: draft.positions.map((p) => p.id === placement.id ? { ...p, ...coordinate } : p) })) setPlacement(null);
       return;
     }
-    const existing = draft.positions.find((p) => p.row === coordinate.row && p.column === coordinate.column);
-    if (existing && (placement.kind === 'position' || existing.clusterId !== placement.clusterId || draft.racks.some((r) => r.positionId === existing.id))) {
-      setError('This cell already belongs to a position or rack.'); return;
+    const existing = draft.positions.find(
+      (position) => position.row === coordinate.row && position.column === coordinate.column,
+    );
+    if (existing) {
+      setError('This cell already belongs to a position or rack.');
+      return;
     }
     const position =
       existing ??

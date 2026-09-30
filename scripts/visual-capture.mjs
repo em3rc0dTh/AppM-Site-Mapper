@@ -1,5 +1,8 @@
 import { mkdir } from 'node:fs/promises';
-import { chromium } from 'playwright';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const { chromium } = require('playwright');
 
 const base = process.env.VISUAL_BASE_URL ?? 'http://127.0.0.1:3000';
 const email = process.env.LOCAL_ADMIN_EMAIL ?? 'visual@local.test';

@@ -9,6 +9,7 @@ import { Icon, StatusBadge } from '@/shared/ui/primitives';
 export interface VisualStageChild {
   readonly node: TopologyNode;
   readonly href: string;
+  readonly directChildCount?: number;
 }
 
 function metadata(node: TopologyNode): string {

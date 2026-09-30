@@ -39,13 +39,8 @@ export function TopologyExplorer({
   const [selected, setSelected] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const item = items.find((entry) => entry.node.id === selected);
-  const visualItems =
-    node.kind === 'NETWORK'
-      ? [...items].sort((a, b) => {
-          const order = ['Lima', 'Arequipa', 'Trujillo'];
-          return order.indexOf(a.node.name) - order.indexOf(b.node.name);
-        })
-      : items;
+  // Retain persisted ordering; never impose a demo-specific geography on MongoDB.
+  const visualItems = items;
   const polygons = items.flatMap((entry) =>
     'polygon' in entry.node && entry.node.polygon ? [...entry.node.polygon] : [],
   );
@@ -203,7 +198,7 @@ export function TopologyExplorer({
             <button onClick={() => setZoom((value) => Math.min(2, value + 0.1))}>+</button>
           </div>
           <button onClick={() => setZoom(1)}>⌗ FIT VIEW</button>
-          <strong className="zip-synced">● SYNCED</strong>
+          <strong className="zip-synced">● INVENTORY VIEW</strong>
         </footer>
       </div>
 
@@ -229,9 +224,9 @@ export function TopologyExplorer({
             <dt>Type</dt>
             <dd>{displayKind(item?.node.kind ?? node.kind)}</dd>
             <dt>Contained</dt>
-            <dd>{items.length}</dd>
+            <dd>{item ? (item.directChildCount ?? '—') : items.length}</dd>
             <dt>Status</dt>
-            <dd>● Active</dd>
+            <dd>{(item?.node ?? node).lifecycle}</dd>
           </dl>
         </section>
         <section className="topology-telemetry-note">

@@ -32,16 +32,41 @@ export default async function WorkspacePage() {
     await createPowerRepository(),
   );
   const snapshot = await service.getSnapshot();
-  const context=await readContext(auth.value.id);
-  const repo=await createTopologyRepository();
-  const pinned=(await Promise.all(context.pinned.map(id=>repo.getById(id)))).filter(n=>n?.lifecycle==='ACTIVE');
-  const pinLinks=await Promise.all(pinned.map(async n=>({id:n!.id,name:n!.name,href:n!.kind==='CONTAINER_RACK'?`/rack/${n!.id}/focus`:await new TopologyService(repo).buildDeepLink(n!.id)})));
-  const personalBdfb=snapshot.bdfb.filter(b=>context.pinned.includes(b.deviceId));
+  const context = await readContext(auth.value.id);
+  const repo = await createTopologyRepository();
+  const pinned = (await Promise.all(context.pinned.map((id) => repo.getById(id)))).filter(
+    (n) => n?.lifecycle === 'ACTIVE',
+  );
+  const pinLinks = await Promise.all(
+    pinned.map(async (n) => ({
+      id: n!.id,
+      name: n!.name,
+      href:
+        n!.kind === 'CONTAINER_RACK'
+          ? `/rack/${n!.id}/focus`
+          : await new TopologyService(repo).buildDeepLink(n!.id),
+    })),
+  );
+  const personalBdfb = snapshot.bdfb.filter((b) => context.pinned.includes(b.deviceId));
   const flatten = (nodes: readonly WorkspaceTreeNode[]): WorkspaceTreeNode[] =>
     nodes.flatMap((node) => [node, ...flatten(node.children)]);
   const allNodes = flatten(snapshot.navigation);
-  const latest=(await getTelemetryRuntime()).service.snapshot();
-  const telemetryAttention=allNodes.filter(n=>['DEVICE','EQUIPMENT'].includes(n.kind)).flatMap(n=>{const sample=latest.find(s=>s.entityId===n.id);if(sample)return [];return [{id:`freshness-${n.id}`,severity:'WARNING' as const,title:'Telemetry offline',message:`${n.name}: no measurement received`,entityId:n.id}];});
+  const latest = (await getTelemetryRuntime()).service.snapshot();
+  const telemetryAttention = allNodes
+    .filter((n) => ['DEVICE', 'EQUIPMENT'].includes(n.kind))
+    .flatMap((n) => {
+      const sample = latest.find((s) => s.entityId === n.id);
+      if (sample) return [];
+      return [
+        {
+          id: `freshness-${n.id}`,
+          severity: 'WARNING' as const,
+          title: 'Telemetry offline',
+          message: `${n.name}: no measurement received`,
+          entityId: n.id,
+        },
+      ];
+    });
   const canLoadDevelopmentDemo =
     process.env.APP_ENV === 'development' &&
     getPersistenceMode() === 'memory' &&
@@ -68,7 +93,7 @@ export default async function WorkspacePage() {
         </aside>
 
         <section className="operations-main mk-operations-main">
-          <NotificationPanel notifications={[...snapshot.notifications,...telemetryAttention]} />
+          <NotificationPanel notifications={[...snapshot.notifications, ...telemetryAttention]} />
 
           <section className="panel">
             <div className="workspace-section-title">
@@ -76,10 +101,24 @@ export default async function WorkspacePage() {
               <strong>{pinLinks.length + snapshot.pinned.length}</strong>
             </div>
             <div className="workspace-card-grid">
-              {pinLinks.map(item=><Link className="workspace-summary-card" key={item.id} href={item.href}><strong>{item.name}</strong><span>OPEN →</span></Link>)}
-              {snapshot.pinned.filter(item=>!pinLinks.some(pin=>pin.id===item.id)).map(item=><Link className="workspace-summary-card" key={item.id} href={item.href}><strong>{item.name}</strong><span>{item.kind === 'DEVICE' ? 'DEVICE' : 'EQUIPMENT'} · OPEN →</span></Link>)}
+              {pinLinks.map((item) => (
+                <Link className="workspace-summary-card" key={item.id} href={item.href}>
+                  <strong>{item.name}</strong>
+                  <span>OPEN →</span>
+                </Link>
+              ))}
+              {snapshot.pinned
+                .filter((item) => !pinLinks.some((pin) => pin.id === item.id))
+                .map((item) => (
+                  <Link className="workspace-summary-card" key={item.id} href={item.href}>
+                    <strong>{item.name}</strong>
+                    <span>{item.kind === 'DEVICE' ? 'DEVICE' : 'EQUIPMENT'} · OPEN →</span>
+                  </Link>
+                ))}
             </div>
-            {!pinLinks.length&&!snapshot.pinned.length&&<p>Pin a rack, BDFB or device from its physical view.</p>}
+            {!pinLinks.length && !snapshot.pinned.length && (
+              <p>Pin a rack, BDFB or device from its physical view.</p>
+            )}
           </section>
 
           <section className="panel">
@@ -88,9 +127,16 @@ export default async function WorkspacePage() {
               <Link href="/power">Power</Link>
             </div>
             <div className="mk-pinned-telemetry-grid">
-              {personalBdfb.map(item=><article key={item.deviceId}><Link href={item.href}><strong>{item.deviceName}</strong></Link><TelemetryLens entityIds={[item.deviceId]} label={item.deviceName}/></article>)}
+              {personalBdfb.map((item) => (
+                <article key={item.deviceId}>
+                  <Link href={item.href}>
+                    <strong>{item.deviceName}</strong>
+                  </Link>
+                  <TelemetryLens entityIds={[item.deviceId]} label={item.deviceName} />
+                </article>
+              ))}
             </div>
-            {!personalBdfb.length&&<p>No BDFB devices pinned.</p>}
+            {!personalBdfb.length && <p>No BDFB devices pinned.</p>}
           </section>
 
           <section className="panel">
@@ -98,8 +144,19 @@ export default async function WorkspacePage() {
               <span>RECENT</span>
               <Link href="/network">Open topology</Link>
             </div>
-            <div className="mk-recent">{context.recent.filter(item=>item.href!=='/workspace').slice(0,8).map(item=><Link key={item.href} href={item.href}>{item.name} →</Link>)}</div>
-            {!context.recent.filter(item=>item.href!=='/workspace').length&&<p>No recent infrastructure context yet.</p>}
+            <div className="mk-recent">
+              {context.recent
+                .filter((item) => item.href !== '/workspace')
+                .slice(0, 8)
+                .map((item) => (
+                  <Link key={item.href} href={item.href}>
+                    {item.name} →
+                  </Link>
+                ))}
+            </div>
+            {!context.recent.filter((item) => item.href !== '/workspace').length && (
+              <p>No recent infrastructure context yet.</p>
+            )}
           </section>
         </section>
       </div>

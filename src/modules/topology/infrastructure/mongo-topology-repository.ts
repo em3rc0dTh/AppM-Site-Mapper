@@ -19,22 +19,36 @@ export class MongoTopologyRepository implements TopologyRepository {
     this.collection = database.collection<TopologyDocument>('topology_nodes');
   }
 
-  async commitLayout(before: readonly TopologyNode[], after: readonly TopologyNode[]): Promise<boolean> {
-    const session=(await getClient()).startSession();
+  async commitLayout(
+    before: readonly TopologyNode[],
+    after: readonly TopologyNode[],
+  ): Promise<boolean> {
+    const session = (await getClient()).startSession();
     try {
-      await session.withTransaction(async()=>{
-        const old=new Map(before.map(node=>[node.id,node]));
-        for(const node of after){
-          const previous=old.get(node.id);
-          if(previous){
-            const result=await this.collection.replaceOne({id:node.id,updatedAt:previous.updatedAt},node as OptionalUnlessRequiredId<TopologyDocument>,{session});
-            if(result.matchedCount!==1)throw new Error('LAYOUT_CONFLICT');
-          }else await this.collection.insertOne(node as OptionalUnlessRequiredId<TopologyDocument>,{session});
+      await session.withTransaction(async () => {
+        const old = new Map(before.map((node) => [node.id, node]));
+        for (const node of after) {
+          const previous = old.get(node.id);
+          if (previous) {
+            const result = await this.collection.replaceOne(
+              { id: node.id, updatedAt: previous.updatedAt },
+              node as OptionalUnlessRequiredId<TopologyDocument>,
+              { session },
+            );
+            if (result.matchedCount !== 1) throw new Error('LAYOUT_CONFLICT');
+          } else
+            await this.collection.insertOne(node as OptionalUnlessRequiredId<TopologyDocument>, {
+              session,
+            });
         }
       });
       return true;
-    } catch(error) { if(error instanceof Error && error.message==='LAYOUT_CONFLICT')return false;throw error; }
-    finally { await session.endSession(); }
+    } catch (error) {
+      if (error instanceof Error && error.message === 'LAYOUT_CONFLICT') return false;
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   }
 
   async getById(id: string): Promise<TopologyNode | null> {

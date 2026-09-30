@@ -13,11 +13,14 @@ export class MemoryTopologyRepository implements TopologyRepository {
     }
   }
 
-  async commitLayout(before: readonly TopologyNode[], after: readonly TopologyNode[]): Promise<boolean> {
-    if (before.some(node => this.nodes.get(node.id)?.updatedAt !== node.updatedAt)) return false;
-    const existing=new Set(before.map(node=>node.id));
-    if(after.some(node=>!existing.has(node.id)&&this.nodes.has(node.id)))return false;
-    for(const node of after)this.nodes.set(node.id,structuredClone(node));
+  async commitLayout(
+    before: readonly TopologyNode[],
+    after: readonly TopologyNode[],
+  ): Promise<boolean> {
+    if (before.some((node) => this.nodes.get(node.id)?.updatedAt !== node.updatedAt)) return false;
+    const existing = new Set(before.map((node) => node.id));
+    if (after.some((node) => !existing.has(node.id) && this.nodes.has(node.id))) return false;
+    for (const node of after) this.nodes.set(node.id, structuredClone(node));
     return true;
   }
 

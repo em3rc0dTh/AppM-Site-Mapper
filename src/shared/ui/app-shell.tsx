@@ -25,7 +25,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const immersive =
     pathname.startsWith('/topology') ||
     pathname.startsWith('/blueprint') ||
-    pathname.startsWith('/rack') || pathname.startsWith('/device') || pathname.startsWith('/power');
+    pathname.startsWith('/rack') ||
+    pathname.startsWith('/device') ||
+    pathname.startsWith('/power');
 
   const active = pathname.startsWith('/power')
     ? '/power'
@@ -64,7 +66,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span>SITE MAPPER</span>
         </div>
 
-        <ContextTracker /><CommandPalette /><div className="legacy-top-actions">
+        <ContextTracker />
+        <CommandPalette />
+        <div className="legacy-top-actions">
           <Link href="/settings" className="legacy-icon-button" aria-label="Settings">
             <Icon name="settings" />
           </Link>

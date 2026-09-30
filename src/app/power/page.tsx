@@ -9,8 +9,12 @@ import { createPowerRepository } from '@/modules/power/infrastructure/power-repo
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { MetricTile, SectionHeader, StatePanel } from '@/shared/ui/primitives';
 
-export default async function PowerPage({searchParams}: {searchParams: Promise<{entity?:string; breaker?:string; path?:string; feed?:string}>}) {
-  const query=await searchParams;
+export default async function PowerPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ entity?: string; breaker?: string; path?: string; feed?: string }>;
+}) {
+  const query = await searchParams;
   const auth = await requirePermission('power:read');
   if (!auth.ok) redirect('/login');
   const allPaths = await (await createPowerRepository()).listActive();
@@ -18,10 +22,22 @@ export default async function PowerPage({searchParams}: {searchParams: Promise<{
   const service = new TopologyService(topology);
   const related = new Set<string>();
   if (query.entity) {
-    const visit = async (id:string, depth=0):Promise<void> => { if (depth>12 || related.has(id)) return; related.add(id); for(const child of await service.listChildren(id)) await visit(child.id,depth+1); };
+    const visit = async (id: string, depth = 0): Promise<void> => {
+      if (depth > 12 || related.has(id)) return;
+      related.add(id);
+      for (const child of await service.listChildren(id)) await visit(child.id, depth + 1);
+    };
     await visit(query.entity);
   }
-  const paths = allPaths.filter(path => (!query.entity || related.has(path.source.entityId) || related.has(path.target.entityId)) && (!query.breaker || path.source.internal?.breakerHolderId===query.breaker || path.target.internal?.breakerHolderId===query.breaker) && (!query.path || path.id===query.path) && (!query.feed || query.feed==='AB' || path.feed===query.feed));
+  const paths = allPaths.filter(
+    (path) =>
+      (!query.entity || related.has(path.source.entityId) || related.has(path.target.entityId)) &&
+      (!query.breaker ||
+        path.source.internal?.breakerHolderId === query.breaker ||
+        path.target.internal?.breakerHolderId === query.breaker) &&
+      (!query.path || path.id === query.path) &&
+      (!query.feed || query.feed === 'AB' || path.feed === query.feed),
+  );
   async function stagesFor(endpoint: PowerEndpoint): Promise<PowerStage[]> {
     const node = await topology.getById(endpoint.entityId);
     const result: PowerStage[] = [
@@ -46,13 +62,22 @@ export default async function PowerPage({searchParams}: {searchParams: Promise<{
     if (internal.frameId)
       result.push({ id: internal.frameId, kind: 'FRAME', name: frame?.label ?? internal.frameId });
     if (internal.panelId)
-      result.push({ id: internal.panelId, kind: 'PANEL', name: panel?.label ?? internal.panelId, href: node ? `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(internal.panelId)}` : '' });
+      result.push({
+        id: internal.panelId,
+        kind: 'PANEL',
+        name: panel?.label ?? internal.panelId,
+        href: node
+          ? `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(internal.panelId)}`
+          : '',
+      });
     if (internal.breakerHolderId)
       result.push({
         id: internal.breakerHolderId,
         kind: breaker?.variant ?? 'BREAKER / HOLDER',
         name: breaker?.label ?? internal.breakerHolderId,
-        href: node ? `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(internal.panelId ?? '')}&breaker=${encodeURIComponent(internal.breakerHolderId)}` : '',
+        href: node
+          ? `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(internal.panelId ?? '')}&breaker=${encodeURIComponent(internal.breakerHolderId)}`
+          : '',
       });
     return result;
   }
@@ -62,10 +87,10 @@ export default async function PowerPage({searchParams}: {searchParams: Promise<{
       return { path, stages: [...source, ...target.reverse()] };
     }),
   );
-  const primary=views[0];
-  const feedA=views.find(item=>item.path.feed==='A');
-  const feedB=views.find(item=>item.path.feed==='B');
-  const targetName=primary?.stages.at(-1)?.name ?? 'Unresolved target';
+  const primary = views[0];
+  const feedA = views.find((item) => item.path.feed === 'A');
+  const feedB = views.find((item) => item.path.feed === 'B');
+  const targetName = primary?.stages.at(-1)?.name ?? 'Unresolved target';
   return (
     <main>
       <SectionHeader
@@ -73,20 +98,80 @@ export default async function PowerPage({searchParams}: {searchParams: Promise<{
         title="Power Paths"
         description="Trace configured sources, distribution endpoints and connected inventory."
       />
-      <nav className="mk-rack-actions">{['A','B','AB'].map(feed => <Link key={feed} href={`/power?${new URLSearchParams({...query, feed}).toString()}`}>FEED {feed==='AB'?'A+B':feed}</Link>)}</nav>
-      <TelemetryLens label="Power path diagnostic" entityIds={[...new Set(paths.flatMap(p=>[p.source.entityId,p.target.entityId]))]} breakerId={query.breaker}/>
-      {primary&&<section className="mk-power-diagnostic">
-        <div className="mk-power-primary">
-          <header><small>SELECTED POWER PATH</small><strong>{primary.path.label ?? primary.path.id}</strong><span>{primary.path.feed ? `FEED ${primary.path.feed}` : 'FEED UNSPECIFIED'}</span></header>
-          <div className="mk-power-chain">{primary.stages.map((stage,index)=><div key={`${stage.id}-${index}`} className="mk-power-chain-stage">{stage.href?<Link href={stage.href}><small>{stage.kind.replaceAll('_',' ')}</small><strong>{stage.name}</strong></Link>:<><small>{stage.kind.replaceAll('_',' ')}</small><strong>{stage.name}</strong></>}{index<primary.stages.length-1&&<span>→</span>}</div>)}</div>
-          <div className="mk-power-dual">
-            <div><small>PATH A</small><strong>{feedA ? 'ACTIVE CONFIGURATION' : 'NOT CONFIGURED'}</strong></div>
-            <span>→</span><b>{targetName}</b><span>←</span>
-            <div><small>PATH B</small><strong>{feedB ? 'ACTIVE CONFIGURATION' : 'NOT CONFIGURED'}</strong></div>
+      <nav className="mk-rack-actions">
+        {['A', 'B', 'AB'].map((feed) => (
+          <Link key={feed} href={`/power?${new URLSearchParams({ ...query, feed }).toString()}`}>
+            FEED {feed === 'AB' ? 'A+B' : feed}
+          </Link>
+        ))}
+      </nav>
+      <TelemetryLens
+        label="Power path diagnostic"
+        entityIds={[...new Set(paths.flatMap((p) => [p.source.entityId, p.target.entityId]))]}
+        breakerId={query.breaker}
+      />
+      {primary && (
+        <section className="mk-power-diagnostic">
+          <div className="mk-power-primary">
+            <header>
+              <small>SELECTED POWER PATH</small>
+              <strong>{primary.path.label ?? primary.path.id}</strong>
+              <span>{primary.path.feed ? `FEED ${primary.path.feed}` : 'FEED UNSPECIFIED'}</span>
+            </header>
+            <div className="mk-power-chain">
+              {primary.stages.map((stage, index) => (
+                <div key={`${stage.id}-${index}`} className="mk-power-chain-stage">
+                  {stage.href ? (
+                    <Link href={stage.href}>
+                      <small>{stage.kind.replaceAll('_', ' ')}</small>
+                      <strong>{stage.name}</strong>
+                    </Link>
+                  ) : (
+                    <>
+                      <small>{stage.kind.replaceAll('_', ' ')}</small>
+                      <strong>{stage.name}</strong>
+                    </>
+                  )}
+                  {index < primary.stages.length - 1 && <span>→</span>}
+                </div>
+              ))}
+            </div>
+            <div className="mk-power-dual">
+              <div>
+                <small>PATH A</small>
+                <strong>{feedA ? 'ACTIVE CONFIGURATION' : 'NOT CONFIGURED'}</strong>
+              </div>
+              <span>→</span>
+              <b>{targetName}</b>
+              <span>←</span>
+              <div>
+                <small>PATH B</small>
+                <strong>{feedB ? 'ACTIVE CONFIGURATION' : 'NOT CONFIGURED'}</strong>
+              </div>
+            </div>
           </div>
-        </div>
-        <aside className="mk-inline-inspector mk-power-inspector"><small>PATH INSPECTOR</small><h2>{primary.path.label ?? primary.path.id}</h2><dl><dt>Feed</dt><dd>{primary.path.feed ?? 'Not specified'}</dd><dt>Source</dt><dd>{primary.stages[0]?.name ?? 'Unresolved'}</dd><dt>Destination</dt><dd>{targetName}</dd><dt>Stages</dt><dd>{primary.stages.length}</dd><dt>Feed A</dt><dd>{feedA?'Configured':'Not configured'}</dd><dt>Feed B</dt><dd>{feedB?'Configured':'Not configured'}</dd><dt>Redundancy</dt><dd>{feedA&&feedB?'A + B':'Single feed'}</dd></dl></aside>
-      </section>}
+          <aside className="mk-inline-inspector mk-power-inspector">
+            <small>PATH INSPECTOR</small>
+            <h2>{primary.path.label ?? primary.path.id}</h2>
+            <dl>
+              <dt>Feed</dt>
+              <dd>{primary.path.feed ?? 'Not specified'}</dd>
+              <dt>Source</dt>
+              <dd>{primary.stages[0]?.name ?? 'Unresolved'}</dd>
+              <dt>Destination</dt>
+              <dd>{targetName}</dd>
+              <dt>Stages</dt>
+              <dd>{primary.stages.length}</dd>
+              <dt>Feed A</dt>
+              <dd>{feedA ? 'Configured' : 'Not configured'}</dd>
+              <dt>Feed B</dt>
+              <dd>{feedB ? 'Configured' : 'Not configured'}</dd>
+              <dt>Redundancy</dt>
+              <dd>{feedA && feedB ? 'A + B' : 'Single feed'}</dd>
+            </dl>
+          </aside>
+        </section>
+      )}
       <div className="metric-grid">
         <MetricTile label="Active paths" value={paths.length} detail="Configured relationships" />
         <MetricTile label="Feed A" value={paths.filter((path) => path.feed === 'A').length} />

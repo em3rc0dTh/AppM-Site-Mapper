@@ -60,7 +60,16 @@ function gridLabels(polygon: readonly PointMm[]) {
       x: minX + index * tile + tile / 2,
     })),
     rows: Array.from({ length: rows }, (_, index) => ({
-      label: (()=>{let n=index+1,s='';while(n>0){n--;s=String.fromCharCode(65+n%26)+s;n=Math.floor(n/26);}return s;})(),
+      label: (() => {
+        let n = index + 1,
+          s = '';
+        while (n > 0) {
+          n--;
+          s = String.fromCharCode(65 + (n % 26)) + s;
+          n = Math.floor(n / 26);
+        }
+        return s;
+      })(),
       y: minY + index * tile + tile / 2,
     })),
   };
@@ -88,9 +97,15 @@ export function BlueprintCanvas({
   clusters: readonly ClusterPlacementView[];
   racks: readonly RackPlacementView[];
   slots: readonly RectMm[];
-  positions?: readonly {id:string;name:string;row:string;column:number;occupied:boolean}[];
-  onSelectPosition?: ((id:string)=>void) | undefined;
-  onSelectRack?: ((id:string)=>void) | undefined;
+  positions?: readonly {
+    id: string;
+    name: string;
+    row: string;
+    column: number;
+    occupied: boolean;
+  }[];
+  onSelectPosition?: ((id: string) => void) | undefined;
+  onSelectRack?: ((id: string) => void) | undefined;
   focusRackId?: string | undefined;
 }>) {
   const router = useRouter();
@@ -102,7 +117,10 @@ export function BlueprintCanvas({
   const [tool, setTool] = useState<'select' | 'pan'>('select');
   function inspectRack(rack: RackPlacementView) {
     setSelectedRackId(rack.id);
-    if(onSelectRack){onSelectRack(rack.id);return;}
+    if (onSelectRack) {
+      onSelectRack(rack.id);
+      return;
+    }
     setSelected({
       name: rack.name,
       kind: 'CONTAINER / RACK',
@@ -303,7 +321,44 @@ export function BlueprintCanvas({
             );
           })}
 
-          {positions.filter(p=>!p.occupied).map(position=>{let point;try{point=gridCoordinateToPoint(position);}catch{return null;}return <g key={position.id} role="button" tabIndex={0} aria-label={`Available ${position.name}`} onClick={()=>onSelectPosition?.(position.id)} onKeyDown={e=>{if(e.key==='Enter')onSelectPosition?.(position.id);}}><rect x={point.x} y={point.y} width="600" height="600" className="blueprint-slot"/><text x={point.x+300} y={point.y+300} textAnchor="middle" className="blueprint-cluster-label">{onSelectPosition?'+ ADD':position.name}</text></g>;})}
+          {positions
+            .filter((p) => !p.occupied)
+            .map((position) => {
+              let point;
+              try {
+                point = gridCoordinateToPoint(position);
+              } catch {
+                return null;
+              }
+              return (
+                <g
+                  key={position.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Available ${position.name}`}
+                  onClick={() => onSelectPosition?.(position.id)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') onSelectPosition?.(position.id);
+                  }}
+                >
+                  <rect
+                    x={point.x}
+                    y={point.y}
+                    width="600"
+                    height="600"
+                    className="blueprint-slot"
+                  />
+                  <text
+                    x={point.x + 300}
+                    y={point.y + 300}
+                    textAnchor="middle"
+                    className="blueprint-cluster-label"
+                  >
+                    {onSelectPosition ? '+ ADD' : position.name}
+                  </text>
+                </g>
+              );
+            })}
           {slots.map((slot) => (
             <rect
               key={rectKey(slot)}

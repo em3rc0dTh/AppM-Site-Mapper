@@ -103,10 +103,13 @@ export default async function TopologyNodePage({
   }
 
   const node = resolved.value;
-  function openRoom(candidate: TopologyNode): void { if (candidate.kind === 'ROOM_SUBSTRUCTURE') redirect(`/blueprint/${candidate.id}`); }
+  function openRoom(candidate: TopologyNode): void {
+    if (candidate.kind === 'ROOM_SUBSTRUCTURE') redirect(`/blueprint/${candidate.id}`);
+  }
   openRoom(node);
   if (node.kind === 'CONTAINER_RACK') redirect(`/rack/${node.id}`);
-  if ((node.kind === 'DEVICE' && !node.bdfb) || node.kind === 'EQUIPMENT') redirect(`/device/${node.id}`);
+  if ((node.kind === 'DEVICE' && !node.bdfb) || node.kind === 'EQUIPMENT')
+    redirect(`/device/${node.id}`);
   const [trail, children, selfHref] = await Promise.all([
     service.getTrail(node.id),
     service.listChildren(node.id),
@@ -156,7 +159,7 @@ export default async function TopologyNodePage({
     node.kind === 'STRUCTURE'
       ? levels.map((level) => ({
           node: level,
-          href: childEntries.find(entry => entry.node.id === level.id)!.href,
+          href: childEntries.find((entry) => entry.node.id === level.id)!.href,
         }))
       : [];
 
@@ -169,26 +172,45 @@ export default async function TopologyNodePage({
   if (node.kind === 'DEVICE' && node.bdfb) {
     const activePaths = await (await createPowerRepository()).listActive();
     for (const path of activePaths) {
-      const deviceEndpoint = path.source.entityId === node.id ? path.source : path.target.entityId === node.id ? path.target : null;
-      const counterpart = path.source.entityId === node.id ? path.target : path.target.entityId === node.id ? path.source : null;
+      const deviceEndpoint =
+        path.source.entityId === node.id
+          ? path.source
+          : path.target.entityId === node.id
+            ? path.target
+            : null;
+      const counterpart =
+        path.source.entityId === node.id
+          ? path.target
+          : path.target.entityId === node.id
+            ? path.source
+            : null;
       const breakerId = deviceEndpoint?.internal?.breakerHolderId;
       if (!breakerId || !counterpart) continue;
       const counterpartNode = await repository.getById(counterpart.entityId);
       const counterpartTrail = counterpartNode ? await service.getTrail(counterpart.entityId) : [];
-      const counterpartRack = [...counterpartTrail].reverse().find(item => item.kind === 'CONTAINER_RACK');
-      const allocation = counterpartRack?.kind === 'CONTAINER_RACK'
-        ? counterpartRack.cas.find(range => range.occupantId === counterpart.entityId && range.state === 'EQUIPPED')
-        : undefined;
-      const mount = allocation?.mountStartU && allocation.physicalSizeU
-        ? `U${allocation.mountStartU}–U${allocation.mountStartU + allocation.physicalSizeU - 1}`
-        : undefined;
+      const counterpartRack = [...counterpartTrail]
+        .reverse()
+        .find((item) => item.kind === 'CONTAINER_RACK');
+      const allocation =
+        counterpartRack?.kind === 'CONTAINER_RACK'
+          ? counterpartRack.cas.find(
+              (range) => range.occupantId === counterpart.entityId && range.state === 'EQUIPPED',
+            )
+          : undefined;
+      const mount =
+        allocation?.mountStartU && allocation.physicalSizeU
+          ? `U${allocation.mountStartU}–U${allocation.mountStartU + allocation.physicalSizeU - 1}`
+          : undefined;
       bdfbPowerBindings.push({
         breakerId,
         pathId: path.id,
         ...(path.feed ? { feed: path.feed } : {}),
         counterpartName: counterpartNode?.name ?? counterpart.entityId,
-        counterpartHref: counterpartNode ? await service.buildDeepLink(counterpartNode.id) : '/power',
-        counterpartContext: counterpartTrail.map(item => item.name).join(' / ') || counterpart.entityId,
+        counterpartHref: counterpartNode
+          ? await service.buildDeepLink(counterpartNode.id)
+          : '/power',
+        counterpartContext:
+          counterpartTrail.map((item) => item.name).join(' / ') || counterpart.entityId,
         ...(mount ? { mount } : {}),
       });
     }
@@ -199,7 +221,9 @@ export default async function TopologyNodePage({
   const sectionDescription = descriptionFor(node);
 
   return (
-    <main className={`operational-page telxius-operational-page ${['NETWORK','SITE','STRUCTURE','LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''}`}>
+    <main
+      className={`operational-page telxius-operational-page ${['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''}`}
+    >
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
         aria-label="Breadcrumb"

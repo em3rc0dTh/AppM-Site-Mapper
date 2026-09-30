@@ -7,5 +7,8 @@ export async function GET(request: Request) {
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 401 });
   const query = new URL(request.url).searchParams.get('q') ?? '';
   if (query.length > 120) return NextResponse.json({ error: 'QUERY_TOO_LONG' }, { status: 400 });
-  return NextResponse.json({ results: await searchTopology(await createTopologyRepository(), query) }, { headers: { 'Cache-Control': 'no-store' } });
+  return NextResponse.json(
+    { results: await searchTopology(await createTopologyRepository(), query) },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }

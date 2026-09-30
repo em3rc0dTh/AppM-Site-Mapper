@@ -21,7 +21,13 @@ export function NotificationPanel({
           {notifications.map((notification) => (
             <li key={notification.id} data-severity={notification.severity}>
               <strong>{notification.title}</strong>
-              <p>{notification.message}</p>{notification.entityId && <><Link href={`/device/${notification.entityId}`}>LOCATE →</Link> <Link href={`/power?entity=${notification.entityId}`}>TRACE POWER →</Link></>}
+              <p>{notification.message}</p>
+              {notification.entityId && (
+                <>
+                  <Link href={`/device/${notification.entityId}`}>LOCATE →</Link>{' '}
+                  <Link href={`/power?entity=${notification.entityId}`}>TRACE POWER →</Link>
+                </>
+              )}
             </li>
           ))}
         </ul>

@@ -73,7 +73,14 @@ function endpointInspector(
   return {
     name: endpoint.label,
     kind: endpoint.variant,
-    actions: [{ label: 'TRACE PATH', href: binding ? `/power?path=${encodeURIComponent(binding.pathId)}&breaker=${encodeURIComponent(endpoint.id)}${binding.feed ? `&feed=${binding.feed}` : ''}` : `/power?entity=${device.id}&breaker=${encodeURIComponent(endpoint.id)}` }],
+    actions: [
+      {
+        label: 'TRACE PATH',
+        href: binding
+          ? `/power?path=${encodeURIComponent(binding.pathId)}&breaker=${encodeURIComponent(endpoint.id)}${binding.feed ? `&feed=${binding.feed}` : ''}`
+          : `/power?entity=${device.id}&breaker=${encodeURIComponent(endpoint.id)}`,
+      },
+    ],
     ...(reading?.state ? { status: reading.state.value } : {}),
     sections: [
       {
@@ -199,7 +206,17 @@ function PanelBoard({
                 key={endpoint.id}
                 className={`bdfb-endpoint bdfb-endpoint--${endpoint.variant.toLowerCase()}`}
                 onClick={() =>
-                  onInspect(endpointInspector(device, shelf, frame, panel, endpoint, reading, bindingsByBreaker[endpoint.id]))
+                  onInspect(
+                    endpointInspector(
+                      device,
+                      shelf,
+                      frame,
+                      panel,
+                      endpoint,
+                      reading,
+                      bindingsByBreaker[endpoint.id],
+                    ),
+                  )
                 }
                 title={endpoint.label}
               >
@@ -245,7 +262,9 @@ function DeviceHierarchyOverview({
               {shelf.frames.map((frame) => (
                 <section className="bdfb-overview-frame" key={frame.id}>
                   <header className="bdfb-overview-label bdfb-overview-label--frame">
-                    <span>{frame.presentation?.physicalFrameVisible === false ? 'PANEL GROUP' : 'FRAME'}</span>
+                    <span>
+                      {frame.presentation?.physicalFrameVisible === false ? 'PANEL GROUP' : 'FRAME'}
+                    </span>
                     <strong>{frame.label.replace(/^Frame\s+/i, '')}</strong>
                   </header>
 
@@ -352,9 +371,9 @@ export function BdfbChassis({
   const query = useSearchParams();
   const bindingsByBreaker = useMemo(
     () =>
-      Object.fromEntries(
-        powerBindings.map((binding) => [binding.breakerId, binding]),
-      ) as Readonly<Record<string, BreakerPowerBinding>>,
+      Object.fromEntries(powerBindings.map((binding) => [binding.breakerId, binding])) as Readonly<
+        Record<string, BreakerPowerBinding>
+      >,
     [powerBindings],
   );
   const initialPanel = (() => {
@@ -406,7 +425,12 @@ export function BdfbChassis({
   );
 
   return (
-    <section className="bdfb-chassis"><TelemetryLens label={device.name} entityIds={[device.id]} breakerId={query.get('breaker') ?? undefined}/>
+    <section className="bdfb-chassis">
+      <TelemetryLens
+        label={device.name}
+        entityIds={[device.id]}
+        breakerId={query.get('breaker') ?? undefined}
+      />
       <header className="bdfb-chassis-header">
         <div>
           <span>Physical distribution</span>
@@ -418,7 +442,8 @@ export function BdfbChassis({
           </small>
         </div>
 
-        <div className="bdfb-chassis-status"><ContextPin entityId={device.id}/>
+        <div className="bdfb-chassis-status">
+          <ContextPin entityId={device.id} />
           <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>
           <StatusBadge>{frames.length} FRAMES</StatusBadge>
           <StatusBadge>{panels.length} PANELS</StatusBadge>

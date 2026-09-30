@@ -146,7 +146,12 @@ export function RackElevation({
           actions={
             <>
               {context?.coordinate && <StatusBadge tone="accent">{context.coordinate}</StatusBadge>}
-              <button onClick={() => setFace('front')} aria-pressed={face === 'front'}>FRONT</button><button onClick={() => setFace('rear')} aria-pressed={face === 'rear'}>REAR</button>
+              <button onClick={() => setFace('front')} aria-pressed={face === 'front'}>
+                FRONT
+              </button>
+              <button onClick={() => setFace('rear')} aria-pressed={face === 'rear'}>
+                REAR
+              </button>
               <InspectButton entity={topologyInspector(view.rack)} />
             </>
           }
@@ -201,7 +206,15 @@ export function RackElevation({
                     type="button"
                     className={`legacy-rack-block legacy-rack-block--${block.role.toLowerCase()} ${item?.id === focusDeviceId ? 'is-selected' : ''}`}
                     style={blockStyle}
-                    onClick={() => setSelected({...topologyInspector(item), actions: [{label:'OPEN DEVICE',href:`/device/${item.id}`},{label:'TRACE POWER',href:`/power?entity=${item.id}`}]})}
+                    onClick={() =>
+                      setSelected({
+                        ...topologyInspector(item),
+                        actions: [
+                          { label: 'OPEN DEVICE', href: `/device/${item.id}` },
+                          { label: 'TRACE POWER', href: `/power?entity=${item.id}` },
+                        ],
+                      })
+                    }
                     onDoubleClick={() => router.push(`/device/${item.id}`)}
                   >
                     {content}
@@ -277,8 +290,16 @@ export function RackElevation({
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => setSelected({...topologyInspector(item), actions: [{label:'OPEN DEVICE',href:`/device/${item.id}`},{label:'TRACE POWER',href:`/power?entity=${item.id}`}]})}
-                    onDoubleClick={() => router.push(`/device/${item.id}`)}
+                  onClick={() =>
+                    setSelected({
+                      ...topologyInspector(item),
+                      actions: [
+                        { label: 'OPEN DEVICE', href: `/device/${item.id}` },
+                        { label: 'TRACE POWER', href: `/power?entity=${item.id}` },
+                      ],
+                    })
+                  }
+                  onDoubleClick={() => router.push(`/device/${item.id}`)}
                 >
                   <span>
                     <small>{item.kind}</small>

@@ -66,6 +66,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status });
   }
 
-  await recordAdminAudit(auth.value.id,'USER_CREATE',result.value.id);
+  await recordAdminAudit(auth.value.id, 'USER_CREATE', result.value.id);
   return NextResponse.json({ user: result.value }, { status: 201 });
 }

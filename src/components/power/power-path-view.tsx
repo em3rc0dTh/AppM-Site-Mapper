@@ -38,7 +38,7 @@ export function PowerPathView({
                 setSelected({
                   name: stage.name,
                   kind: stage.kind,
-                  actions: stage.href ? [{label:'OPEN PHYSICAL OBJECT', href:stage.href}] : [],
+                  actions: stage.href ? [{ label: 'OPEN PHYSICAL OBJECT', href: stage.href }] : [],
                   sections: [
                     {
                       title: 'Overview',

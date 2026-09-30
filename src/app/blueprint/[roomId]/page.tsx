@@ -31,15 +31,21 @@ export default async function BlueprintPage({
     notFound();
   }
 
-  const draft=await readLayoutDraft(repository,roomId);
+  const draft = await readLayoutDraft(repository, roomId);
   const trail = await topology.getTrail(roomId);
-  const inventory=(await Promise.all(result.value.racks.map(r=>repository.listChildren(r.id)))).flat();
+  const inventory = (
+    await Promise.all(result.value.racks.map((r) => repository.listChildren(r.id)))
+  ).flat();
   const root = trail[0];
   const tree = root ? await topology.buildNavigationTree(root.id) : null;
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
   return (
-    <main className="operational-page operational-page--blueprint"><nav className="breadcrumbs"><Link href="/network">Network</Link><span>{result.value.room.name}</span></nav>
+    <main className="operational-page operational-page--blueprint">
+      <nav className="breadcrumbs">
+        <Link href="/network">Network</Link>
+        <span>{result.value.room.name}</span>
+      </nav>
       <div className="operational-layout operational-layout--blueprint">
         <aside className="operational-context">
           {tree && <TopologyContextTree tree={tree} activeId={roomId} />}
@@ -53,8 +59,15 @@ export default async function BlueprintPage({
             actions={<StatusBadge>{canWrite ? 'EDIT PERMITTED' : 'READ ONLY'}</StatusBadge>}
           />
 
-          <TelemetryLens label={result.value.room.name} entityIds={inventory.map(n=>n.id)}/>
-          {draft&&<RoomLayoutEditor roomId={roomId} initial={draft.draft} canWrite={canWrite} focusRackId={query.rack}/>}
+          <TelemetryLens label={result.value.room.name} entityIds={inventory.map((n) => n.id)} />
+          {draft && (
+            <RoomLayoutEditor
+              roomId={roomId}
+              initial={draft.draft}
+              canWrite={canWrite}
+              focusRackId={query.rack}
+            />
+          )}
         </section>
       </div>
     </main>

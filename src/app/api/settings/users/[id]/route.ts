@@ -73,6 +73,6 @@ export async function PATCH(request: Request, context: Context) {
     return NextResponse.json({ error: result.error }, { status });
   }
 
-  await recordAdminAudit(auth.value.id,'USER_UPDATE',id);
+  await recordAdminAudit(auth.value.id, 'USER_UPDATE', id);
   return NextResponse.json({ user: result.value });
 }

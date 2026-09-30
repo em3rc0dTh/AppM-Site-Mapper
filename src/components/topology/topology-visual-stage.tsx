@@ -302,7 +302,14 @@ export function TopologyVisualStage({
   previewItems?: readonly VisualStageChild[];
   activeItemId?: string | undefined;
 }>) {
-  if (['NETWORK','SITE','STRUCTURE','LEVEL'].includes(node.kind)) return <TopologyExplorer node={node} items={items} boundary={'polygon' in node ? node.polygon : undefined} />;
+  if (['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind))
+    return (
+      <TopologyExplorer
+        node={node}
+        items={items}
+        boundary={'polygon' in node ? node.polygon : undefined}
+      />
+    );
   let canvas: ReactNode;
 
   if (node.kind === 'NETWORK') {

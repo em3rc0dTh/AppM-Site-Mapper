@@ -14,6 +14,39 @@ interface Stage {
   readonly href?: string;
 }
 
+function iconFor(kind: string) {
+  return kind === 'DEVICE' ? '▥' : kind === 'PANEL' ? '▤' : kind === 'BREAKER' ? '▯' : '♜';
+}
+
+function PathRow({
+  stages,
+  dim = false,
+}: {
+  stages: readonly Stage[];
+  dim?: boolean;
+}) {
+  return (
+    <div className={`zip-power-row ${dim ? 'is-dim' : ''}`}>
+      {stages.map((stage, index) => (
+        <div key={`${stage.id}-${index}`} className="zip-power-node-wrap">
+          {stage.href ? (
+            <Link className="zip-power-node" href={stage.href}>
+              <b>{iconFor(stage.kind)}</b>
+              <span>{stage.name}</span>
+            </Link>
+          ) : (
+            <div className="zip-power-node">
+              <b>{iconFor(stage.kind)}</b>
+              <span>{stage.name}</span>
+            </div>
+          )}
+          {index < stages.length - 1 && <i>→</i>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default async function PowerPage({
   searchParams,
 }: {
@@ -77,16 +110,6 @@ export default async function PowerPage({
   const destination=primary?.target[0];
   const source=primary?.source[0];
 
-  const iconFor=(kind:string)=>kind==='DEVICE'?'▥':kind==='PANEL'?'▤':kind==='BREAKER'?'▯':'♜';
-
-  function PathRow({stages,dim=false}:{stages:readonly Stage[];dim?:boolean}) {
-    return <div className={`zip-power-row ${dim?'is-dim':''}`}>
-      {stages.map((stage,index)=><div key={`${stage.id}-${index}`} className="zip-power-node-wrap">
-        {stage.href?<Link className="zip-power-node" href={stage.href}><b>{iconFor(stage.kind)}</b><span>{stage.name}</span></Link>:<div className="zip-power-node"><b>{iconFor(stage.kind)}</b><span>{stage.name}</span></div>}
-        {index<stages.length-1&&<i>→</i>}
-      </div>)}
-    </div>;
-  }
 
   return (
     <main className="zip-power-page">

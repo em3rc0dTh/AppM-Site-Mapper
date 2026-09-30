@@ -138,3 +138,49 @@ html,body{background:#fff;color:var(--zip-ink);font-family:Arial,Helvetica,sans-
 .mk-explorer-page .operational-stage-body{height:calc(100vh - 67px)!important;padding:0!important;overflow:hidden!important}
 .mk-explorer-page .zip-explorer{min-height:calc(100vh - 67px)!important;height:calc(100vh - 67px)!important}
 .mk-explorer-page .telxius-properties{display:none!important}
+
+
+/* Final screenshot-to-ZIP corrections. */
+.app-shell--blueprint .operational-context,
+.app-shell--blueprint .telxius-topology-tree,
+.app-shell--blueprint .telxius-tree-root{background:#05080e!important;color:#8ea7bd!important;border-color:#172331!important}
+.app-shell--blueprint .telxius-tree-brand{background:#05080e!important;border-color:#172331!important;color:#dce8f2!important}
+.app-shell--blueprint .telxius-tree-heading{background:#05080e!important;border-color:#172331!important;color:#6f91af!important}
+.app-shell--blueprint .telxius-tree-node>a{color:#7897b2!important;background:transparent!important}
+.app-shell--blueprint .telxius-tree-node>a.is-active{background:#07304a!important;color:#1dc6ff!important}
+.app-shell--blueprint .telxius-tree-copy strong{color:inherit!important}
+.app-shell--blueprint .operational-stage{background:#05070b!important}
+.app-shell--blueprint .section-header{background:#05070b!important;color:#f4f8fb!important}
+.app-shell--blueprint .section-header h1{color:#fff!important}
+.app-shell--blueprint .section-description{color:#71869a!important}
+
+.zip-level-reference{position:relative;min-height:590px;height:100%;background-image:linear-gradient(#edf0f2 1px,transparent 1px),linear-gradient(90deg,#edf0f2 1px,transparent 1px);background-size:52px 52px;padding:42px 35px 50px 48px}
+.zip-level-columns{position:absolute;top:8px;left:72px;right:45px;display:grid;grid-template-columns:repeat(6,1fr);text-align:center;font-size:11px}
+.zip-level-rows{position:absolute;left:8px;top:83px;bottom:76px;display:grid;grid-template-rows:repeat(5,1fr);font-size:11px;align-items:center}
+.zip-level-boundary{height:490px;border:2px solid #313940;position:relative;background:#fff8}
+.zip-level-room{position:absolute;border:2px solid #4f5860;background:#fff;display:grid;place-items:center;color:#1a222b;font-size:12px}
+.zip-level-room>span{position:absolute;bottom:8px;font-size:27px;color:#7f8992}
+.zip-level-room--1{left:12%;top:11%;width:34%;height:29%}
+.zip-level-room--2{right:12%;top:11%;width:34%;height:29%}
+.zip-level-room--3{left:12%;bottom:14%;width:35%;height:29%}
+.zip-level-room--4{right:12%;bottom:14%;width:35%;height:29%}
+.zip-level-room.is-selected{border:3px solid var(--zip-blue);background:#e9f3ff}
+.zip-level-scale{position:absolute;left:38px;bottom:12px;width:320px;display:flex;justify-content:space-between;align-items:end;font-size:9px;border-top:2px solid #46515a;padding-top:5px}.zip-level-scale b{margin-left:15px;font-weight:400}
+.zip-level-reference .zip-level-minimap{right:18px;bottom:18px}
+
+.zip-rack-topology{background:#fff;border-right:1px solid var(--zip-border)}
+.zip-rack-topology>header{height:50px;border-bottom:1px solid var(--zip-border);display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:14px;font-weight:800}
+.zip-rack-topology-path{display:grid;grid-template-columns:24px 1fr;gap:13px 10px;padding:18px 24px 7px;font-size:12px}
+.zip-rack-topology-path span{text-align:center}.zip-rack-topology-path strong{font-weight:500}
+.zip-rack-topology nav{display:grid;padding:3px 14px 20px}
+.zip-rack-topology nav a{height:39px;display:flex;align-items:center;gap:12px;padding:0 22px 0 46px;text-decoration:none;color:#28323b;border-radius:4px;font-size:12px}
+.zip-rack-topology nav a.is-active{background:#e4f1ff;color:#111;font-weight:800}.zip-rack-topology nav a span{font-size:17px}
+
+.zip-bdfb-page .telxius-operational-stage>.section-header{display:none!important}
+.zip-bdfb-page .telxius-operational-stage{padding:0!important;background:#fff!important}
+.zip-bdfb-page .operational-stage-body{padding:18px 26px!important;background:#fff!important}
+.zip-bdfb-page .telxius-properties,
+.zip-bdfb-page .telxius-properties *{color:#17202a!important;opacity:1!important}
+.zip-bdfb-page .telxius-properties{background:#fff!important}
+.zip-bdfb-page .telxius-properties .status-badge{color:#17202a!important}
+

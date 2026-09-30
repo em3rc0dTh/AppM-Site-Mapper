@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
-import { TopologyContextTree } from '@/components/topology/context-tree';
 import { ContextPin } from '@/components/workspace/context-pin';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
@@ -55,8 +54,35 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
 
   const trail = await topology.getTrail(rackId);
   const room = trail.find((node) => node.kind === 'ROOM_SUBSTRUCTURE');
-  const root = room ?? trail[0];
-  const tree = root ? await topology.buildNavigationTree(root.id) : null;
+  const roomRacks = room
+    ? (
+        await Promise.all(
+          (await repo.listChildren(room.id))
+            .filter((node) => node.kind === 'CONTAINER_CLUSTER_BAY')
+            .map(async (cluster) =>
+              (
+                await Promise.all(
+                  (await repo.listChildren(cluster.id))
+                    .filter((node) => node.kind === 'POSITION')
+                    .map(async (positionNode) =>
+                      (await repo.listChildren(positionNode.id))
+                        .filter((node) => node.kind === 'CONTAINER_RACK')
+                        .map((rackNode) => ({ rack: rackNode, position: positionNode })),
+                    ),
+                )
+              ).flat(),
+            ),
+        )
+      ).flat()
+    : [];
+  const rackLinks = await Promise.all(
+    roomRacks.map(async ({ rack, position: rackPosition }) => ({
+      id: rack.id,
+      name: rack.name,
+      position: rackPosition.name,
+      href: `/rack/${rack.id}/focus`,
+    })),
+  );
   const position = await repo.getById(view.value.rack.parentId ?? '');
   const bay = position?.parentId ? await repo.getById(position.parentId) : null;
   const blocks = focusBlocks(view.value.rows);
@@ -86,8 +112,21 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
       </nav>
 
       <div className="zip-rack-focus-layout">
-        <aside className="operational-context">
-          {tree && <TopologyContextTree tree={tree} activeId={rackId} />}
+        <aside className="zip-rack-topology">
+          <header>TOPOLOGY <span>⌄</span></header>
+          <div className="zip-rack-topology-path">
+            <span>◎</span><strong>Lima</strong>
+            <span>▦</span><strong>Building A</strong>
+            <span>▱</span><strong>Level 02</strong>
+            <span>□</span><strong>{room?.name ?? 'Room'}</strong>
+          </div>
+          <nav>
+            {rackLinks.map((item)=>(
+              <Link key={item.id} className={item.id===rackId?'is-active':''} href={item.href}>
+                <span>▥</span><strong>{item.name}</strong>
+              </Link>
+            ))}
+          </nav>
         </aside>
 
         <section className="zip-rack-focus-stage">

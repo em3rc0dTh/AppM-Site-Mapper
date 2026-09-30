@@ -15,7 +15,7 @@ interface Stage {
 }
 
 function iconFor(kind: string) {
-  return kind === 'DEVICE' ? '▥' : kind === 'PANEL' ? '▤' : kind === 'BREAKER' ? '▯' : '♜';
+  return kind === 'UTILITY' ? '♜' : kind === 'DEVICE' ? '▥' : kind === 'PANEL' ? '▤' : kind === 'BREAKER' ? '▯' : '♜';
 }
 
 function PathRow({
@@ -109,6 +109,7 @@ export default async function PowerPage({
   const primary=feedA ?? feedB;
   const destination=primary?.target[0];
   const source=primary?.source[0];
+  const utilityStage: Stage = { id: 'utility-source', kind: 'UTILITY', name: 'UTILITY / SOURCE' };
 
 
   return (
@@ -142,13 +143,13 @@ export default async function PowerPage({
             <>
               <article className="zip-power-box">
                 <h2>PATH {primary.path.feed ?? 'A'} (PRIMARY)</h2>
-                <PathRow stages={[...primary.source,...primary.target]} />
+                <PathRow stages={[utilityStage,...primary.source,...primary.target]} />
               </article>
               <article className="zip-power-box zip-power-dual-box">
                 <h2>DUAL FEED OVERVIEW</h2>
                 <div className="zip-power-dual-grid">
-                  {feedA && <><span className="zip-feed-label">Feed A</span><PathRow stages={[...feedA.source,...feedA.target]} /></>}
-                  {feedB && <><span className="zip-feed-label is-b">Feed B</span><PathRow stages={[...feedB.source,...feedB.target]} dim /></>}
+                  {feedA && <><span className="zip-feed-label">Feed A</span><PathRow stages={[utilityStage,...feedA.source,...feedA.target]} /></>}
+                  {feedB && <><span className="zip-feed-label is-b">Feed B</span><PathRow stages={[utilityStage,...feedB.source,...feedB.target]} dim /></>}
                   {!feedB && <div className="zip-power-missing">Feed B not configured</div>}
                 </div>
               </article>

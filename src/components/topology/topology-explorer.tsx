@@ -36,9 +36,26 @@ export function TopologyExplorer({
   items: readonly VisualStageChild[];
   boundary?: readonly PhysicalPoint[] | undefined;
 }) {
-  const [selected, setSelected] = useState<string | null>(items[0]?.node.id ?? null);
+  const preferred =
+    node.kind === 'NETWORK'
+      ? items.find((entry) => entry.node.name === 'Lima')
+      : node.kind === 'SITE'
+        ? items.find((entry) => entry.node.name === 'Building A')
+        : node.kind === 'STRUCTURE'
+          ? items.find((entry) => entry.node.name === 'Level 03')
+          : node.kind === 'LEVEL'
+            ? items.find((entry) => entry.node.name === 'Room 202')
+            : undefined;
+  const [selected, setSelected] = useState<string | null>(preferred?.node.id ?? items[0]?.node.id ?? null);
   const [zoom, setZoom] = useState(1);
   const item = items.find((entry) => entry.node.id === selected);
+  const visualItems =
+    node.kind === 'NETWORK'
+      ? [...items].sort((a, b) => {
+          const order = ['Lima', 'Arequipa', 'Trujillo'];
+          return order.indexOf(a.node.name) - order.indexOf(b.node.name);
+        })
+      : items;
   const polygons = items.flatMap((entry) =>
     'polygon' in entry.node && entry.node.polygon ? [...entry.node.polygon] : [],
   );
@@ -60,7 +77,7 @@ export function TopologyExplorer({
             {node.kind === 'NETWORK'
               ? 'NETWORK'
               : node.kind === 'SITE'
-                ? node.name.toUpperCase()
+                ? `SITE: ${node.name.toUpperCase()}`
                 : node.kind === 'STRUCTURE'
                   ? node.name.toUpperCase()
                   : 'LEVEL 02'}
@@ -82,11 +99,37 @@ export function TopologyExplorer({
                   >
                     <span className="zip-floor-shape" />
                     <span>
-                      <strong>{entry.node.name.toUpperCase()}</strong>
+                      <strong>{node.kind === 'NETWORK'
+                      ? ({ Lima: 'SITE LIM', Arequipa: 'SITE ARE', Trujillo: 'SITE TRU' } as Record<string,string>)[entry.node.name] ?? entry.node.name.toUpperCase()
+                      : entry.node.name.toUpperCase()}</strong>
                       <small>{index === items.length - 1 ? 'BASEMENT' : 'LEVEL'}</small>
                     </span>
                   </button>
                 ))}
+              </div>
+            ) : node.kind === 'LEVEL' ? (
+              <div className="zip-level-reference">
+                <div className="zip-level-columns" aria-hidden="true">
+                  {['01','02','03','04','05','06'].map((label)=><span key={label}>{label}</span>)}
+                </div>
+                <div className="zip-level-rows" aria-hidden="true">
+                  {['A','B','C','D','E'].map((label)=><span key={label}>{label}</span>)}
+                </div>
+                <div className="zip-level-boundary">
+                  {visualItems.map((entry,index)=>(
+                    <button
+                      key={entry.node.id}
+                      className={`zip-level-room zip-level-room--${index+1} ${selected===entry.node.id?'is-selected':''}`}
+                      onClick={()=>setSelected(entry.node.id)}
+                      onDoubleClick={()=>window.location.assign(entry.href)}
+                    >
+                      <strong>{entry.node.name.toUpperCase()}</strong>
+                      <span aria-hidden="true">▤</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="zip-level-scale" aria-hidden="true"><span>0</span><span>5</span><span>10</span><span>15</span><span>20</span><b>meters</b></div>
+                <div className="zip-level-minimap" aria-hidden="true"><b>MINI MAP</b><span /></div>
               </div>
             ) : hasGeometry ? (
               <div className="zip-level-stage">
@@ -134,7 +177,7 @@ export function TopologyExplorer({
                   {node.kind === 'NETWORK' ? 'GLOBAL NETWORK' : node.name.toUpperCase()}
                 </div>
                 <div className="zip-graph-links" aria-hidden="true" />
-                {items.map((entry, index) => (
+                {visualItems.map((entry, index) => (
                   <button
                     key={entry.node.id}
                     className={`zip-graph-card zip-graph-card--${index + 1} ${selected === entry.node.id ? 'is-selected' : ''}`}

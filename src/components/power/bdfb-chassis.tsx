@@ -36,6 +36,11 @@ function formatMetric(value: number | undefined, unit: string, decimals = 2): st
   return value === undefined ? '—' : `${value.toFixed(decimals)} ${unit}`;
 }
 
+function compactUtcTimestamp(value: string): string {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : `${parsed.toISOString().slice(11, 19)} UTC`;
+}
+
 function telemetryFields(reading: BreakerTelemetryReading) {
   return [
     { label: 'MQTT source', value: reading.sourceIdentity },
@@ -82,6 +87,25 @@ function endpointInspector(
         ]
       : [],
     ...(reading?.state ? { status: reading.state.value } : {}),
+    ...(reading
+      ? {
+          liveSummary: {
+            label: 'LIVE MQTT',
+            source: reading.sourceIdentity,
+            point: reading.rawPointId,
+            updatedAt: reading.receivedAt,
+            metrics: [
+              { label: 'Voltage', value: formatMetric(reading.metrics.voltageV?.value, 'V') },
+              { label: 'Current', value: formatMetric(reading.metrics.currentA?.value, 'A') },
+              { label: 'Power', value: formatMetric(reading.metrics.powerW?.value, 'W') },
+              {
+                label: 'Energy',
+                value: formatMetric(reading.metrics.energyKwh?.value, 'kWh', 4),
+              },
+            ],
+          },
+        }
+      : {}),
     sections: [
       {
         title: 'Electrical endpoint',
@@ -226,6 +250,9 @@ function PanelBoard({
                 type="button"
                 key={endpoint.id}
                 className={`bdfb-endpoint bdfb-endpoint--${endpoint.variant.toLowerCase()}`}
+                data-telemetry={
+                  reading ? 'live' : endpoint.telemetry?.rawPointId ? 'mapped' : 'unmapped'
+                }
                 onClick={() =>
                   onInspect(
                     endpointInspector(
@@ -245,6 +272,13 @@ function PanelBoard({
                 <span>{(index + 1).toString().padStart(2, '0')}</span>
                 <strong>{endpoint.label}</strong>
                 <small>{endpointPreview(endpoint, reading)}</small>
+                {reading && (
+                  <i
+                    className="bdfb-live-indicator"
+                    aria-hidden="true"
+                    title={`LIVE · ${compactUtcTimestamp(reading.receivedAt)}`}
+                  />
+                )}
               </button>
             );
           })

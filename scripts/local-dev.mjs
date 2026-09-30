@@ -203,7 +203,9 @@ try {
     console.log(`Diagnostics: ${baseUrl}/api/telemetry/diagnostics`);
   }
   console.log('');
-  console.log('This lab is synthetic, in memory and resets on stop. It is NOT real surveyed inventory.');
+  console.log(
+    'This lab is synthetic, in memory and resets on stop. It is NOT real surveyed inventory.',
+  );
   console.log('Press Ctrl+C to stop the local server.');
   console.log('');
   openBrowser(mqttLab ? `${baseUrl}/network` : loginUrl);

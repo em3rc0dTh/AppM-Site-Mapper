@@ -17,7 +17,7 @@ Source: `thradexIT/bfdb-telemetry-gateway`, `config/devices.yaml`,
 
 ## 1. Start your existing emulator
 
-In the `bfdb-telemetry-gateway` checkout (plain anonymous *local* broker):
+In the `bfdb-telemetry-gateway` checkout (plain anonymous _local_ broker):
 
 ```bash
 docker compose up -d --build
@@ -59,7 +59,7 @@ npm run local:emulator
 1. Starts the development app in memory mode and seeds the original visual demo.
 2. Creates a separate **synthetic, unsurveyed** MQTT emulator network with
    three BFDB nodes, four explicit 24-breaker panels each (288 breakers total).
-3. Connects to your *running* broker, verifies CONNACK and SUBACK.
+3. Connects to your _running_ broker, verifies CONNACK and SUBACK.
 4. Requires **live measured source data**, 96/96 points and 96/96 mapped
    breaker readings for **each** of the three serials before reporting success.
 5. Prints a local login and diagnostic endpoint. If any source fails, it exits

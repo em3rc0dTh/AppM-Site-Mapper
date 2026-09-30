@@ -20,7 +20,8 @@ export interface TelemetrySourceDiagnostic {
 
 export interface TelemetryDiagnostics {
   readonly enabled: boolean;
-  readonly connection: 'disabled' | 'idle' | 'connecting' | 'subscribing' | 'subscribed' | 'reconnecting' | 'stopped';
+  readonly connection:
+    'disabled' | 'idle' | 'connecting' | 'subscribing' | 'subscribed' | 'reconnecting' | 'stopped';
   readonly topicFilter: string;
   readonly lastSubscribedAt: string | null;
   readonly lastConnectionError: string | null;
@@ -74,7 +75,14 @@ function bindingMode(value: string | undefined): BfdbBindingMode {
 }
 
 function expectedSources(value: string | undefined): readonly string[] {
-  return [...new Set((value ?? '').split(',').map((s) => s.trim()).filter(Boolean))];
+  return [
+    ...new Set(
+      (value ?? '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
+  ];
 }
 
 export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {

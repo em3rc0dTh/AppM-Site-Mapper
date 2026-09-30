@@ -22,12 +22,7 @@ export interface NativeMqttOptions {
 
 export type MqttMessageHandler = (topic: string, payload: Uint8Array) => void | Promise<void>;
 export type MqttConnectionState =
-  | 'idle'
-  | 'connecting'
-  | 'subscribing'
-  | 'subscribed'
-  | 'reconnecting'
-  | 'stopped';
+  'idle' | 'connecting' | 'subscribing' | 'subscribed' | 'reconnecting' | 'stopped';
 
 export interface MqttSourceDiagnostics {
   readonly state: MqttConnectionState;

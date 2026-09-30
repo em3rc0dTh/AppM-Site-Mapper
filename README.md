@@ -164,7 +164,6 @@ MK1 is repository/software certified through the documented gates.
 
 G0 through G15 certify the repository/software baseline. Before a specific production deployment is declared certified, the environment-specific items in `docs/release/release-checklist.md` must also be completed.
 
-
 ## BFDB emulator (live MQTT)
 
 The visual-only `npm run local:dev` deliberately disables real telemetry. To use the

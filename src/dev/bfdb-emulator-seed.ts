@@ -11,11 +11,7 @@ import type {
   TopologyNode,
 } from '@/modules/topology/domain/entities';
 
-export const EMULATOR_SERIALS = [
-  'EMU-BFDB-01',
-  'EMU-BFDB-02',
-  'EMU-BFDB-03',
-] as const;
+export const EMULATOR_SERIALS = ['EMU-BFDB-01', 'EMU-BFDB-02', 'EMU-BFDB-03'] as const;
 
 const PANELS = ['A1', 'A2', 'B1', 'B2'] as const;
 const POSITIONS_PER_PANEL = 24;
@@ -29,10 +25,7 @@ async function ensureNode(
     ? await repository.listChildren(input.parentId)
     : await repository.listByKind('NETWORK');
   const existing = siblings.find(
-    (node) =>
-      node.lifecycle === 'ACTIVE' &&
-      node.kind === input.kind &&
-      node.name === input.name,
+    (node) => node.lifecycle === 'ACTIVE' && node.kind === input.kind && node.name === input.name,
   );
 
   if (existing) return existing;

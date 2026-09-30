@@ -98,16 +98,36 @@
 }
 .spatial-polygon-editor > header {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 12px;
+  padding: 10px 12px;
   font-size: 12px;
   border-bottom: 1px solid #d3deea;
+  background: #f9fbfe;
+  flex: 0 0 auto;
+}
+.spatial-editor-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
 }
 .spatial-polygon-editor > header span {
   color: #5b7088;
   font-size: 11px;
+}
+.spatial-editor-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+}
+.spatial-polygon-editor .spatial-editor-primary-action {
+  background: #2678e8;
+  border-color: #2678e8;
+  color: #fff;
 }
 .spatial-editor-tools {
   display: flex;
@@ -175,6 +195,8 @@
   gap: 8px;
   padding: 9px 12px;
   border-top: 1px solid #d3deea;
+  background: #f9fbfe;
+  flex: 0 0 auto;
 }
 .spatial-polygon-editor > footer span {
   flex: 1;

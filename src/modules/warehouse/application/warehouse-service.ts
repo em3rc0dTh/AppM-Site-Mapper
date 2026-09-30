@@ -1,10 +1,23 @@
+import { validateBdfb } from '@/modules/power/domain/bdfb-validation';
+import {
+  materializeBdfbBlueprint,
+  type AssetTemplate,
+  type AssetTemplateKind,
+  type PhysicalBlueprint,
+  type WarehouseDeviceType,
+} from '@/modules/warehouse/domain/template';
+import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
-import type { AssetTemplate, AssetTemplateKind } from '@/modules/warehouse/domain/template';
-import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
 
 export type WarehouseError =
-  'INVALID_NAME' | 'INVALID_KIND' | 'INVALID_SIZE_U' | 'INVALID_DIMENSIONS' | 'DUPLICATE_TEMPLATE';
+  | 'INVALID_NAME'
+  | 'INVALID_KIND'
+  | 'INVALID_SIZE_U'
+  | 'INVALID_DIMENSIONS'
+  | 'INVALID_DEVICE_TYPE'
+  | 'INVALID_PHYSICAL_BLUEPRINT'
+  | 'DUPLICATE_TEMPLATE';
 
 export interface CreateAssetTemplateInput {
   readonly kind: AssetTemplateKind;
@@ -16,6 +29,8 @@ export interface CreateAssetTemplateInput {
   readonly widthMm?: number;
   readonly depthMm?: number;
   readonly notes?: string;
+  readonly deviceType?: WarehouseDeviceType;
+  readonly physicalBlueprint?: PhysicalBlueprint;
 }
 
 function clean(value: string | undefined): string | undefined {
@@ -60,6 +75,19 @@ export class WarehouseService {
     )
       return failure('INVALID_DIMENSIONS');
 
+    if (input.deviceType || input.physicalBlueprint) {
+      if (input.kind !== 'DEVICE' || input.deviceType !== 'BDFB') {
+        return failure('INVALID_DEVICE_TYPE');
+      }
+      if (!input.physicalBlueprint || input.physicalBlueprint.type !== 'BDFB') {
+        return failure('INVALID_PHYSICAL_BLUEPRINT');
+      }
+      const validation = validateBdfb(
+        materializeBdfbBlueprint(input.physicalBlueprint, 'warehouse-template-validation'),
+      );
+      if (!validation.ok) return failure('INVALID_PHYSICAL_BLUEPRINT');
+    }
+
     const existing = await this.repository.listActive();
     const duplicate = existing.some(
       (template) =>
@@ -87,6 +115,10 @@ export class WarehouseService {
       ...(input.sizeU === undefined ? {} : { sizeU: input.sizeU }),
       ...(hasWidth ? { dimensionsMm: { width: input.widthMm!, depth: input.depthMm! } } : {}),
       ...(notes ? { notes } : {}),
+      ...(input.deviceType ? { deviceType: input.deviceType } : {}),
+      ...(input.physicalBlueprint
+        ? { physicalBlueprint: structuredClone(input.physicalBlueprint) }
+        : {}),
     };
 
     await this.repository.insert(template);

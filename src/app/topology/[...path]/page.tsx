@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import { BdfbChassis, type BreakerPowerBinding } from '@/components/power/bdfb-chassis';
+import { BdfbTelemetryInspector } from '@/components/power/bdfb-telemetry-inspector';
 import { BdfbPowerTree } from '@/components/power/bdfb-power-tree';
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { TopologyCreateControl } from '@/components/topology/topology-create-form';
@@ -373,16 +374,27 @@ export default async function TopologyNodePage({
           )}
         </section>
 
-        <TopologyPropertiesPanel
-          node={node}
-          contained={children.length}
-          previewContained={structurePreviewNodes.length}
-          location={trail
-            .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')
-            .map((item) => item.name)
-            .join(' / ')}
-          feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
-        />
+        {node.kind === 'DEVICE' && node.bdfb ? (
+          <BdfbTelemetryInspector
+            node={node}
+            location={trail
+              .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')
+              .map((item) => item.name)
+              .join(' / ')}
+            feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
+          />
+        ) : (
+          <TopologyPropertiesPanel
+            node={node}
+            contained={children.length}
+            previewContained={structurePreviewNodes.length}
+            location={trail
+              .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')
+              .map((item) => item.name)
+              .join(' / ')}
+            feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
+          />
+        )}
       </div>
 
       {(rackLink || blueprintLink) && (

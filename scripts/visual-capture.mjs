@@ -211,6 +211,51 @@ if (await powerTelemetryButton.count()) {
 const bdfbLink = await search('BDFB-A', 'DEVICE');
 if (bdfbLink) {
   await go(bdfbLink);
+  const overviewGeometry = await page.evaluate(() => {
+    const body = document.querySelector('.bdfb-chassis-body');
+    const device = document.querySelector('.bdfb-overview-device');
+    const frames = [...document.querySelectorAll('.bdfb-overview-frame')];
+    const panels = [...document.querySelectorAll('.bdfb-overview-panel')];
+    if (!body || !device) return null;
+    const frameRects = frames.map((frame) => frame.getBoundingClientRect());
+    const panelRects = panels.map((panel) => panel.getBoundingClientRect());
+    const bodyRect = body.getBoundingClientRect();
+    const deviceRect = device.getBoundingClientRect();
+    return {
+      frameCount: frames.length,
+      panelCount: panels.length,
+      bodyClientHeight: body.clientHeight,
+      bodyScrollHeight: body.scrollHeight,
+      deviceTop: deviceRect.top,
+      deviceBottom: deviceRect.bottom,
+      bodyTop: bodyRect.top,
+      bodyBottom: bodyRect.bottom,
+      framesSideBySide:
+        frameRects.length === 2 &&
+        Math.abs(frameRects[0].top - frameRects[1].top) <= 2 &&
+        frameRects[0].right <= frameRects[1].left + 2,
+      panelsStacked:
+        panelRects.length === 6 &&
+        panelRects[0].bottom <= panelRects[1].top + 2 &&
+        panelRects[1].bottom <= panelRects[2].top + 2 &&
+        panelRects[3].bottom <= panelRects[4].top + 2 &&
+        panelRects[4].bottom <= panelRects[5].top + 2,
+    };
+  });
+  assert.ok(overviewGeometry, 'BDFB overview geometry must exist');
+  assert.equal(overviewGeometry.frameCount, 2, 'BDFB overview must render A/B as two frames');
+  assert.equal(overviewGeometry.panelCount, 6, 'BDFB overview must render six physical panel slots');
+  assert.ok(overviewGeometry.framesSideBySide, 'BDFB A/B frames must render side-by-side');
+  assert.ok(overviewGeometry.panelsStacked, 'BDFB panel slots must stack vertically within A/B');
+  assert.ok(
+    overviewGeometry.bodyScrollHeight <= overviewGeometry.bodyClientHeight + 2,
+    'BDFB overview must fit the viewport without vertical scroll',
+  );
+  assert.ok(
+    overviewGeometry.deviceTop >= overviewGeometry.bodyTop - 2 &&
+      overviewGeometry.deviceBottom <= overviewGeometry.bodyBottom + 2,
+    'BDFB chassis must remain fully visible inside the overview frame',
+  );
   await snap('11-bdfb');
   const panel = page.locator('.bdfb-overview-panel').first();
   if (await panel.count()) {

@@ -67,7 +67,9 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
         <form onSubmit={submit} className="rack-warehouse-form">
           <header>
             <strong>Instantiate from template</strong>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close warehouse mount">×</button>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close warehouse mount">
+              ×
+            </button>
           </header>
           {templates.length ? (
             <>
@@ -84,8 +86,14 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
               {selected && (
                 <div className="rack-template-preview">
                   <strong>{selected.name}</strong>
-                  <span>{[selected.manufacturer, selected.model].filter(Boolean).join(' · ') || 'No manufacturer/model'}</span>
-                  <span>{selected.sizeU ? `${selected.sizeU}U` : 'U not defined'}{selected.category ? ` · ${selected.category}` : ''}</span>
+                  <span>
+                    {[selected.manufacturer, selected.model].filter(Boolean).join(' · ') ||
+                      'No manufacturer/model'}
+                  </span>
+                  <span>
+                    {selected.sizeU ? `${selected.sizeU}U` : 'U not defined'}
+                    {selected.category ? ` · ${selected.category}` : ''}
+                  </span>
                 </div>
               )}
               <label>
@@ -107,7 +115,11 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
           ) : (
             <p>No active templates. Create one in Virtual Warehouse first.</p>
           )}
-          {error && <p role="alert" className="form-error">{error}</p>}
+          {error && (
+            <p role="alert" className="form-error">
+              {error}
+            </p>
+          )}
         </form>
       )}
     </div>

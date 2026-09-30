@@ -11,7 +11,7 @@ export function BdfbPowerTree({
   device: DeviceNode;
   trail: readonly TopologyNode[];
   selfHref: string;
-  activePanelId?: string;
+  activePanelId?: string | undefined;
 }>) {
   const site = trail.find((node) => node.kind === 'SITE');
   const structure = trail.find((node) => node.kind === 'STRUCTURE');

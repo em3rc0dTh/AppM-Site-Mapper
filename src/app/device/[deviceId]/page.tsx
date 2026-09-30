@@ -29,6 +29,10 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   );
   const allocation =
     rack?.kind === 'CONTAINER_RACK' ? rack.cas.find((r) => r.occupantId === node.id) : undefined;
+  const mountLabel =
+    allocation?.mountStartU !== undefined && allocation.physicalSizeU !== undefined
+      ? `U${allocation.mountStartU} – U${allocation.mountStartU + allocation.physicalSizeU - 1}`
+      : 'Not mounted';
   return (
     <main className="operational-page mk-device-page">
       <nav className="breadcrumbs">
@@ -50,7 +54,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
         </section>
         <aside className="mk-inline-inspector zip-device-inspector">
           <header>DEVICE <span>⌄</span></header>
-          <div className="zip-device-identity"><span>▥</span><div><h2>{node.name}</h2><small>{room?.name ?? 'Room'} / {rack?.name ?? 'Rack'} / {allocation ? `U${allocation.mountStartU} – U${allocation.mountStartU + allocation.physicalSizeU - 1}` : 'Not mounted'}</small></div></div>
+          <div className="zip-device-identity"><span>▥</span><div><h2>{node.name}</h2><small>{room?.name ?? 'Room'} / {rack?.name ?? 'Rack'} / {mountLabel}</small></div></div>
           <ContextPin entityId={node.id} />
           <dl>
             <dt>Identity</dt>
@@ -62,7 +66,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             <dt>Rack</dt>
             <dd>{rack?.name ?? 'Not placed'}</dd>
             <dt>Placement</dt>
-            <dd>{rack?.name ?? 'Not placed'} {allocation ? ` U${allocation.mountStartU} – U${allocation.mountStartU + allocation.physicalSizeU - 1}` : ''}</dd>
+            <dd>{rack?.name ?? 'Not placed'} {mountLabel !== 'Not mounted' ? ` ${mountLabel}` : ''}</dd>
             <dt>Power A</dt><dd>Configured ✓</dd>
             <dt>Power B</dt><dd>Configured ✓</dd>
             <dt>Telemetry</dt><dd><span className="zip-green-dot" /> LIVE</dd>

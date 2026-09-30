@@ -6,10 +6,7 @@ import { snapshotTemplate } from '@/modules/warehouse/domain/template';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type WarehouseInstantiationError =
-  | 'TEMPLATE_NOT_FOUND'
-  | 'RACK_NOT_FOUND'
-  | 'INVALID_NAME'
-  | 'CREATE_FAILED';
+  'TEMPLATE_NOT_FOUND' | 'RACK_NOT_FOUND' | 'INVALID_NAME' | 'CREATE_FAILED';
 
 export interface InstantiateTemplateInput {
   readonly templateId: string;

@@ -161,8 +161,8 @@ export function TopologyPropertiesPanel({
           <h3>STATUS</h3>
           <div>
             <span>●</span>
-            <strong>Normal Operation</strong>
-            <small>Configured panels available</small>
+            <strong>Physical inventory recorded</strong>
+            <small>Live health requires an explicitly mapped MQTT reading.</small>
           </div>
         </section>
         <div className="zip-bdfb-actions">

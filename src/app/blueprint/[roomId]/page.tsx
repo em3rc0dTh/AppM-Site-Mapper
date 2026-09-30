@@ -106,7 +106,7 @@ export default async function BlueprintPage({
           <section className="room-rack-navigation">
             <small>RACKS IN THIS ROOM · {result.value.racks.length}</small>
             {result.value.racks.map((rack) => (
-              <Link key={rack.id} href={`/blueprint/${roomId}?rack=${encodeURIComponent(rack.id)}`}>
+              <Link key={rack.id} href={result.value.room.polygon?.length ? `/blueprint/${roomId}?rack=${encodeURIComponent(rack.id)}` : `/rack/${rack.id}`}>
                 {rack.name} <span>INSPECT ↗</span>
               </Link>
             ))}

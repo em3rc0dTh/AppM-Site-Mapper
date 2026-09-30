@@ -115,7 +115,38 @@ export function BlueprintCanvas({
   const base = useMemo(() => boundsFor(polygon), [polygon]);
   const labels = useMemo(() => gridLabels(polygon), [polygon]);
   const focusedRack = racks.find((rack) => rack.id === focusRackId);
-  const [selected, setSelected] = useState<InspectorEntity | null>(null);
+  const [selected, setSelected] = useState<InspectorEntity | null>(() => {
+    const bay = clusters.find((cluster) => cluster.id === focusBayId);
+    if (bay) {
+      return {
+        name: bay.name,
+        kind: 'CLUSTER / BAY',
+        sections: [{
+          title: 'Surveyed physical boundary',
+          fields: bay.polygon?.length
+            ? [
+                { label: 'Area', value: `${(polygonArea(bay.polygon) / 1_000_000).toFixed(2)} m²` },
+                { label: 'Vertices', value: bay.polygon.length },
+              ]
+            : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
+        }],
+      };
+    }
+    const position = positions.find((item) => item.id === focusPositionId);
+    return position
+      ? {
+          name: position.name,
+          kind: 'POSITION REFERENCE',
+          sections: [{
+            title: 'Grid anchor',
+            fields: [
+              { label: 'Coordinate', value: `${position.row}-${position.column}` },
+              { label: 'State', value: position.occupied ? 'Occupied' : 'Available' },
+            ],
+          }],
+        }
+      : null;
+  });
   const [selectedRackId, setSelectedRackId] = useState<string | null>(focusRackId ?? null);
   const [selectedBayId, setSelectedBayId] = useState<string | null>(focusBayId ?? null);
   const [focusedRackId, setFocusedRackId] = useState<string | null>(focusRackId ?? null);

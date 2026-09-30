@@ -649,3 +649,50 @@
   font-weight: 800;
   text-decoration: none;
 }
+
+
+/* Telemetry must be centered and scroll vertically, not clipped horizontally
+   by the rack's legacy absolute 620px diagnostic styling. */
+.zip-telemetry-overlay {
+  inset: 67px 0 0 !important;
+  overflow: auto !important;
+  overscroll-behavior: contain;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 2vw, 36px) !important;
+}
+.zip-telemetry-overlay > .zip-telemetry-diagnostic {
+  position: relative !important;
+  inset: auto !important;
+  right: auto !important;
+  left: auto !important;
+  top: auto !important;
+  display: block !important;
+  width: min(1050px, calc(100vw - 40px)) !important;
+  min-width: 0 !important;
+  height: min(730px, calc(100dvh - 105px));
+  max-height: calc(100dvh - 105px) !important;
+  min-height: 0 !important;
+  margin: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  box-sizing: border-box;
+}
+.zip-telemetry-overlay .mk-live-grid {
+  display: grid !important;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(auto-fit, minmax(min(165px, 100%), 1fr)) !important;
+  gap: 12px !important;
+}
+.zip-telemetry-overlay .mk-live-grid > div {
+  min-width: 0 !important;
+  overflow-wrap: anywhere;
+  color: #eff6ff;
+}
+.zip-telemetry-overlay .mk-live-grid small { color: #a7bdd8 !important; }
+.zip-telemetry-overlay .mk-live-grid strong { color: #f6f9ff !important; }
+@media (max-height: 620px) {
+  .zip-telemetry-overlay { align-items: flex-start !important; }
+}

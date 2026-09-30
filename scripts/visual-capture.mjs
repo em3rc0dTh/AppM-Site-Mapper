@@ -106,7 +106,7 @@ if (roomLink) {
     topbar: 'rgb(255, 255, 255)',
     stage: 'rgb(255, 255, 255)',
     inspector: 'rgb(255, 255, 255)',
-    draftingSurface: 'rgb(251, 252, 253)',
+    draftingSurface: 'rgb(248, 250, 252)',
   });
 
   await snap('05-room-blueprint');

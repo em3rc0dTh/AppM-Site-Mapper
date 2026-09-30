@@ -93,6 +93,21 @@ export function rectsOverlap(left: RectMm, right: RectMm): boolean {
   );
 }
 
+/**
+ * Proper edge crossings catch concave-room and concave-bay escapes where
+ * all four rectangle corners happen to be inside the surveyed polygon.
+ * Collinear/shared boundary edges remain allowed.
+ */
+function properCrossing(a: PointMm, b: PointMm, c: PointMm, d: PointMm): boolean {
+  const side = (p: PointMm, q: PointMm, r: PointMm) =>
+    (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+  const abC = side(a, b, c);
+  const abD = side(a, b, d);
+  const cdA = side(c, d, a);
+  const cdB = side(c, d, b);
+  return abC * abD < 0 && cdA * cdB < 0;
+}
+
 export function rectInsidePolygon(rect: RectMm, polygon: readonly PointMm[]): boolean {
   const corners: readonly PointMm[] = [
     { x: rect.x, y: rect.y },
@@ -101,5 +116,19 @@ export function rectInsidePolygon(rect: RectMm, polygon: readonly PointMm[]): bo
     { x: rect.x + rect.width, y: rect.y + rect.depth },
   ];
 
-  return corners.every((corner) => pointInPolygon(corner, polygon));
+  if (!corners.every((corner) => pointInPolygon(corner, polygon))) return false;
+
+  const rectEdges: readonly (readonly [PointMm, PointMm])[] = [
+    [corners[0]!, corners[1]!],
+    [corners[1]!, corners[3]!],
+    [corners[3]!, corners[2]!],
+    [corners[2]!, corners[0]!],
+  ];
+  for (let index = 0; index < polygon.length; index += 1) {
+    const start = polygon[index]!;
+    const end = polygon[(index + 1) % polygon.length]!;
+    if (rectEdges.some(([a, b]) => properCrossing(a, b, start, end))) return false;
+  }
+
+  return true;
 }

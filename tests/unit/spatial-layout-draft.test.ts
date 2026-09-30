@@ -219,6 +219,24 @@ describe('Bay frontage and downstream rack depth', () => {
     expect(validateLayoutDraft(draft)).toBe('DUPLICATE_RACK_NAME');
   });
 
+  it('allows separated Bays but rejects overlapping surveyed Bay boundaries', () => {
+    const valid = baseDraft();
+    expect(validateLayoutDraft(valid)).toBeNull();
+
+    const overlapping = baseDraft();
+    overlapping.clusters[1] = {
+      ...overlapping.clusters[1]!,
+      polygon: [
+        { x: 600, y: 300 },
+        { x: 1800, y: 300 },
+        { x: 1800, y: 900 },
+        { x: 600, y: 900 },
+      ],
+    };
+
+    expect(validateLayoutDraft(overlapping)).toBe('CLUSTER_COLLISION');
+  });
+
   it('still rejects depth that leaves the Room even when Bay frontage is valid', () => {
     const draft = baseDraft();
     draft.clusters = draft.clusters.filter((cluster) => cluster.id === 'bay-top');

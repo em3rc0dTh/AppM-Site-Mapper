@@ -6,15 +6,7 @@ export interface BdfbPresentation {
   readonly physicalFrameCount: number;
   readonly physicalPanelSlotCount: number;
   readonly configuredPanelCount: number;
-  readonly isCanonicalSixSlotProjection: boolean;
-}
-
-function emptyPanel(deviceId: string, frameLabel: string, index: number): Panel {
-  return {
-    id: `${deviceId}:presentation:${frameLabel.toLowerCase()}:slot-${index}`,
-    label: `Panel ${frameLabel}${index}`,
-    endpoints: [],
-  };
+  readonly isCanonicalEmulatorProjection: boolean;
 }
 
 function frameSide(frame: Frame): 'A' | 'B' | null {
@@ -26,17 +18,17 @@ function frameSide(frame: Frame): 'A' | 'B' | null {
   return null;
 }
 
-function orderedPanels(deviceId: string, side: 'A' | 'B', frame: Frame): readonly Panel[] {
-  const byNumber = new Map<number, Panel>();
-  for (const panel of frame.panels) {
-    const match = panel.label.match(/([123])\s*$/);
-    if (match) byNumber.set(Number(match[1]), panel);
-  }
-
-  return [1, 2, 3].map((index) => {
-    const panel = byNumber.get(index);
-    return panel ? { ...panel, label: `Panel ${side}${index}` } : emptyPanel(deviceId, side, index);
-  });
+function orderedPanels(side: 'A' | 'B', frame: Frame): readonly Panel[] {
+  return [...frame.panels]
+    .sort((left, right) => {
+      const leftNumber = Number(left.label.match(/(\d+)\s*$/)?.[1] ?? Number.MAX_SAFE_INTEGER);
+      const rightNumber = Number(right.label.match(/(\d+)\s*$/)?.[1] ?? Number.MAX_SAFE_INTEGER);
+      return leftNumber - rightNumber;
+    })
+    .map((panel, index) => ({
+      ...panel,
+      label: `Panel ${side}${index + 1}`,
+    }));
 }
 
 function hasEmulatorBindings(device: DeviceNode): boolean {
@@ -75,12 +67,12 @@ export function getBdfbPresentation(device: DeviceNode): BdfbPresentation {
         {
           ...frameA,
           label: 'A',
-          panels: orderedPanels(device.id, 'A', frameA),
+          panels: orderedPanels('A', frameA),
         },
         {
           ...frameB,
           label: 'B',
-          panels: orderedPanels(device.id, 'B', frameB),
+          panels: orderedPanels('B', frameB),
         },
       ];
       const projectedShelf: Shelf = {
@@ -88,14 +80,15 @@ export function getBdfbPresentation(device: DeviceNode): BdfbPresentation {
         label: 'Main Shelf',
         frames: projectedFrames,
       };
+      const projectedPanels = projectedFrames.flatMap((frame) => frame.panels);
 
       return {
         shelves: [projectedShelf],
         physicalShelfCount: 1,
         physicalFrameCount: 2,
-        physicalPanelSlotCount: 6,
-        configuredPanelCount: panels.length,
-        isCanonicalSixSlotProjection: true,
+        physicalPanelSlotCount: projectedPanels.length,
+        configuredPanelCount: projectedPanels.length,
+        isCanonicalEmulatorProjection: true,
       };
     }
   }
@@ -106,6 +99,6 @@ export function getBdfbPresentation(device: DeviceNode): BdfbPresentation {
     physicalFrameCount: frames.length,
     physicalPanelSlotCount: panels.length,
     configuredPanelCount: panels.length,
-    isCanonicalSixSlotProjection: false,
+    isCanonicalEmulatorProjection: false,
   };
 }

@@ -1,17 +1,10 @@
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
-import type {
-  AssetTemplate,
-  AssetTemplateKind,
-} from '@/modules/warehouse/domain/template';
+import type { AssetTemplate, AssetTemplateKind } from '@/modules/warehouse/domain/template';
 import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
 
 export type WarehouseError =
-  | 'INVALID_NAME'
-  | 'INVALID_KIND'
-  | 'INVALID_SIZE_U'
-  | 'INVALID_DIMENSIONS'
-  | 'DUPLICATE_TEMPLATE';
+  'INVALID_NAME' | 'INVALID_KIND' | 'INVALID_SIZE_U' | 'INVALID_DIMENSIONS' | 'DUPLICATE_TEMPLATE';
 
 export interface CreateAssetTemplateInput {
   readonly kind: AssetTemplateKind;
@@ -42,13 +35,10 @@ export class WarehouseService {
     return template?.lifecycle === 'ACTIVE' ? template : null;
   }
 
-  async create(
-    input: CreateAssetTemplateInput,
-  ): Promise<Result<AssetTemplate, WarehouseError>> {
+  async create(input: CreateAssetTemplateInput): Promise<Result<AssetTemplate, WarehouseError>> {
     const name = input.name.trim();
     if (!name) return failure('INVALID_NAME');
-    if (input.kind !== 'DEVICE' && input.kind !== 'EQUIPMENT')
-      return failure('INVALID_KIND');
+    if (input.kind !== 'DEVICE' && input.kind !== 'EQUIPMENT') return failure('INVALID_KIND');
 
     if (
       input.sizeU !== undefined &&
@@ -95,9 +85,7 @@ export class WarehouseService {
       ...(model ? { model } : {}),
       ...(category ? { category } : {}),
       ...(input.sizeU === undefined ? {} : { sizeU: input.sizeU }),
-      ...(hasWidth
-        ? { dimensionsMm: { width: input.widthMm!, depth: input.depthMm! } }
-        : {}),
+      ...(hasWidth ? { dimensionsMm: { width: input.widthMm!, depth: input.depthMm! } } : {}),
       ...(notes ? { notes } : {}),
     };
 

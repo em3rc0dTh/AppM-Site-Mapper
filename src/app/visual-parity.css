@@ -3283,7 +3283,6 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
 
-
 /* Approved ZIP parity: telemetry diagnostic overlay. */
 .zip-telemetry-overlay {
   position: fixed;
@@ -3304,8 +3303,7 @@ body {
   border: 1px solid #24314d !important;
   border-radius: 22px !important;
   background:
-    radial-gradient(circle at 50% 35%, rgba(23, 60, 100, 0.28), transparent 32rem),
-    #050918 !important;
+    radial-gradient(circle at 50% 35%, rgba(23, 60, 100, 0.28), transparent 32rem), #050918 !important;
   color: #eef5ff !important;
   box-shadow: 0 30px 100px #0008;
 }
@@ -3317,7 +3315,7 @@ body {
 .zip-telemetry-diagnostic > header h2 {
   margin: 6px 0 0;
   font-size: 23px !important;
-  letter-spacing: .02em;
+  letter-spacing: 0.02em;
 }
 .zip-telemetry-status {
   display: flex;
@@ -3331,7 +3329,7 @@ body {
   color: #7bc7ff;
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
 }
 .zip-telemetry-close {
   width: 38px;
@@ -3354,8 +3352,7 @@ body {
   color: #8092ad;
   background:
     linear-gradient(#0d1730 1px, transparent 1px),
-    linear-gradient(90deg, #0d1730 1px, transparent 1px),
-    #070c19;
+    linear-gradient(90deg, #0d1730 1px, transparent 1px), #070c19;
   background-size: 54px 54px;
 }
 .zip-telemetry-diagnostic article {
@@ -3380,11 +3377,17 @@ body {
   justify-content: center;
   padding-top: 18px;
   border-top: 1px solid #1d2b45;
-  letter-spacing: .06em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
 }
 @media (max-width: 900px) {
-  .zip-telemetry-overlay { padding: 18px; }
-  .zip-telemetry-diagnostic { min-height: 0; }
-  .zip-telemetry-diagnostic .mk-live-grid { grid-template-columns: 1fr 1fr; }
+  .zip-telemetry-overlay {
+    padding: 18px;
+  }
+  .zip-telemetry-diagnostic {
+    min-height: 0;
+  }
+  .zip-telemetry-diagnostic .mk-live-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }

@@ -88,7 +88,9 @@ export default async function PowerPage({
         kind: 'PANEL',
         name: panel?.label ?? internal.panelId,
         ...(node
-          ? { href: `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(internal.panelId)}` }
+          ? {
+              href: `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(internal.panelId)}`,
+            }
           : {}),
       });
     if (internal.breakerHolderId)
@@ -150,15 +152,21 @@ export default async function PowerPage({
       </nav>
 
       <div className="zip-power-top-controls">
-        <Link href={`/power?${new URLSearchParams({ ...query, feed: query.feed ?? 'AB' }).toString()}`}>
+        <Link
+          href={`/power?${new URLSearchParams({ ...query, feed: query.feed ?? 'AB' }).toString()}`}
+        >
           {query.feed === 'A' ? 'FEED A' : query.feed === 'B' ? 'FEED B' : 'A+B'} <b>⌄</b>
         </Link>
-        <strong><i /> {primary ? 'CONFIGURED' : 'NO PATH'}</strong>
+        <strong>
+          <i /> {primary ? 'CONFIGURED' : 'NO PATH'}
+        </strong>
       </div>
 
       <div className="zip-power-layout">
         <aside className="zip-power-tree">
-          <header>POWER TREE <span>⌄</span></header>
+          <header>
+            POWER TREE <span>⌄</span>
+          </header>
           <strong>{selectedEntity?.name ?? 'POWER CANVAS'}</strong>
           {breadcrumbs.map((node) => (
             <div className="zip-power-tree-feed" key={node.id}>
@@ -169,8 +177,16 @@ export default async function PowerPage({
           ))}
           {!breadcrumbs.length ? (
             <>
-              <div className="zip-power-tree-feed"><b>Feed A</b><span>Primary path</span><small>{feedA ? 'Configured' : 'Not configured'}</small></div>
-              <div className="zip-power-tree-feed"><b>Feed B</b><span>Secondary path</span><small>{feedB ? 'Configured' : 'Not configured'}</small></div>
+              <div className="zip-power-tree-feed">
+                <b>Feed A</b>
+                <span>Primary path</span>
+                <small>{feedA ? 'Configured' : 'Not configured'}</small>
+              </div>
+              <div className="zip-power-tree-feed">
+                <b>Feed B</b>
+                <span>Secondary path</span>
+                <small>{feedB ? 'Configured' : 'Not configured'}</small>
+              </div>
             </>
           ) : null}
         </aside>
@@ -191,9 +207,17 @@ export default async function PowerPage({
                 <h2>DUAL FEED OVERVIEW</h2>
                 <div className="zip-power-dual-grid">
                   <span className="zip-feed-label">FEED A</span>
-                  {feedA ? renderRow(feedA.stages) : <div className="zip-power-missing">Feed A not configured</div>}
+                  {feedA ? (
+                    renderRow(feedA.stages)
+                  ) : (
+                    <div className="zip-power-missing">Feed A not configured</div>
+                  )}
                   <span className="zip-feed-label is-b">FEED B</span>
-                  {feedB ? renderRow(feedB.stages, true) : <div className="zip-power-missing">Feed B not configured</div>}
+                  {feedB ? (
+                    renderRow(feedB.stages, true)
+                  ) : (
+                    <div className="zip-power-missing">Feed B not configured</div>
+                  )}
                 </div>
               </section>
             </>
@@ -203,39 +227,61 @@ export default async function PowerPage({
         </section>
 
         <aside className="zip-power-inspector">
-          <header>INSPECTOR <span>⌄</span></header>
+          <header>
+            INSPECTOR <span>⌄</span>
+          </header>
           <div className="zip-power-inspector-id">
             <b>▤</b>
             <strong>{targetName}</strong>
           </div>
           <dl>
-            <dt>Status</dt><dd className="is-good">● CONFIGURED</dd>
-            <dt>Feed</dt><dd>{primary?.path.feed ?? '—'}</dd>
-            <dt>Source</dt><dd>{primary?.stages[0]?.name ?? '—'}</dd>
-            <dt>Destination</dt><dd>{targetName}</dd>
-            <dt>Feed A</dt><dd>{feedA ? 'Configured' : 'Not configured'}</dd>
-            <dt>Feed B</dt><dd>{feedB ? 'Configured' : 'Not configured'}</dd>
-            <dt>Redundancy</dt><dd>{feedA && feedB ? 'A + B' : 'Single feed'}</dd>
+            <dt>Status</dt>
+            <dd className="is-good">● CONFIGURED</dd>
+            <dt>Feed</dt>
+            <dd>{primary?.path.feed ?? '—'}</dd>
+            <dt>Source</dt>
+            <dd>{primary?.stages[0]?.name ?? '—'}</dd>
+            <dt>Destination</dt>
+            <dd>{targetName}</dd>
+            <dt>Feed A</dt>
+            <dd>{feedA ? 'Configured' : 'Not configured'}</dd>
+            <dt>Feed B</dt>
+            <dd>{feedB ? 'Configured' : 'Not configured'}</dd>
+            <dt>Redundancy</dt>
+            <dd>{feedA && feedB ? 'A + B' : 'Single feed'}</dd>
           </dl>
           {selectedEntity ? (
-            <Link className="zip-outline-action" href={await service.buildDeepLink(selectedEntity.id)}>
+            <Link
+              className="zip-outline-action"
+              href={await service.buildDeepLink(selectedEntity.id)}
+            >
               OPEN DEVICE
             </Link>
           ) : null}
           <TelemetryLens
             label="Power path diagnostic"
-            entityIds={[...new Set(paths.flatMap((path) => [path.source.entityId, path.target.entityId]))]}
+            entityIds={[
+              ...new Set(paths.flatMap((path) => [path.source.entityId, path.target.entityId])),
+            ]}
             breakerId={query.breaker}
           />
         </aside>
       </div>
 
       <footer className="zip-power-footer">
-        <span>FEED A <b className={feedA ? "is-good" : ""}>{feedA ? "● ACTIVE" : "○ NOT CONFIGURED"}</b></span>
-        <span>FEED B <b className={feedB ? "is-good" : ""}>{feedB ? "● ACTIVE" : "○ NOT CONFIGURED"}</b></span>
-        <span>REDUNDANCY <b>{feedA && feedB ? "✓" : "—"}</b></span>
+        <span>
+          FEED A <b className={feedA ? 'is-good' : ''}>{feedA ? '● ACTIVE' : '○ NOT CONFIGURED'}</b>
+        </span>
+        <span>
+          FEED B <b className={feedB ? 'is-good' : ''}>{feedB ? '● ACTIVE' : '○ NOT CONFIGURED'}</b>
+        </span>
+        <span>
+          REDUNDANCY <b>{feedA && feedB ? '✓' : '—'}</b>
+        </span>
         <div />
-        {selectedEntity ? <Link href={await service.buildDeepLink(selectedEntity.id)}>SHOW ROOM</Link> : null}
+        {selectedEntity ? (
+          <Link href={await service.buildDeepLink(selectedEntity.id)}>SHOW ROOM</Link>
+        ) : null}
       </footer>
     </main>
   );

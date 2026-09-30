@@ -96,56 +96,68 @@ export function TelemetryLens({
 
       {open && (
         <div className="zip-telemetry-overlay">
-        <div className="mk-diagnostic zip-telemetry-diagnostic">
-          <header>
-            <div>
-              <small>CONTEXTUAL DIAGNOSTIC</small>
-              <h2>{label}</h2>
-            </div>
-            <div className="zip-telemetry-status"><span>{connected ? 'Stream connected' : 'Reconnecting'}</span><button type="button" className="zip-telemetry-close" onClick={() => setOpen(false)} aria-label="Close telemetry">×</button></div>
-          </header>
+          <div className="mk-diagnostic zip-telemetry-diagnostic">
+            <header>
+              <div>
+                <small>CONTEXTUAL DIAGNOSTIC</small>
+                <h2>{label}</h2>
+              </div>
+              <div className="zip-telemetry-status">
+                <span>{connected ? 'Stream connected' : 'Reconnecting'}</span>
+                <button
+                  type="button"
+                  className="zip-telemetry-close"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close telemetry"
+                >
+                  ×
+                </button>
+              </div>
+            </header>
 
-          {!samples.length ? (
-            <p>OFFLINE · No measurements received for this context.</p>
-          ) : (
-            samples.map((sample) => {
-              const age = now === 0 ? 0 : now - Date.parse(sample.receivedAt);
-              const state =
-                !connected || age > 300_000 ? 'OFFLINE' : age > 30_000 ? 'STALE' : 'LIVE';
-              const reading = sample.breakerReadings?.find((item) => item.breakerId === breakerId);
-              const metrics = breakerId
-                ? reading
-                  ? breakerTelemetryMetrics(reading)
-                  : []
-                : telemetryMetrics(sample.reported);
+            {!samples.length ? (
+              <p>OFFLINE · No measurements received for this context.</p>
+            ) : (
+              samples.map((sample) => {
+                const age = now === 0 ? 0 : now - Date.parse(sample.receivedAt);
+                const state =
+                  !connected || age > 300_000 ? 'OFFLINE' : age > 30_000 ? 'STALE' : 'LIVE';
+                const reading = sample.breakerReadings?.find(
+                  (item) => item.breakerId === breakerId,
+                );
+                const metrics = breakerId
+                  ? reading
+                    ? breakerTelemetryMetrics(reading)
+                    : []
+                  : telemetryMetrics(sample.reported);
 
-              return (
-                <article key={sample.entityId}>
-                  <header>
-                    <strong>{sample.sourceIdentity}</strong>
-                    <span data-state={state}>{state}</span>
-                  </header>
-                  <time>{sample.receivedAt}</time>
-                  <div className="mk-live-grid">
-                    {metrics.map((metric) => (
-                      <div key={metric.label}>
-                        <small>{metric.label}</small>
-                        <strong>
-                          {metric.value} <em>{metric.unit}</em>
-                        </strong>
-                      </div>
-                    ))}
-                  </div>
-                  {!metrics.length && <p>No mapped metrics for this object.</p>}
-                </article>
-              );
-            })
-          )}
+                return (
+                  <article key={sample.entityId}>
+                    <header>
+                      <strong>{sample.sourceIdentity}</strong>
+                      <span data-state={state}>{state}</span>
+                    </header>
+                    <time>{sample.receivedAt}</time>
+                    <div className="mk-live-grid">
+                      {metrics.map((metric) => (
+                        <div key={metric.label}>
+                          <small>{metric.label}</small>
+                          <strong>
+                            {metric.value} <em>{metric.unit}</em>
+                          </strong>
+                        </div>
+                      ))}
+                    </div>
+                    {!metrics.length && <p>No mapped metrics for this object.</p>}
+                  </article>
+                );
+              })
+            )}
 
-          <footer>
-            Normalized measurements · freshness: live ≤30s / stale ≤5m · no simulated connectivity
-          </footer>
-        </div>
+            <footer>
+              Normalized measurements · freshness: live ≤30s / stale ≤5m · no simulated connectivity
+            </footer>
+          </div>
         </div>
       )}
     </section>

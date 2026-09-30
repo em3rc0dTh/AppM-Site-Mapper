@@ -35,8 +35,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     power ||
     pathname === '/network';
 
-  const contextLabel =
-    pathname.startsWith('/settings') ? 'SETTINGS' : pathname === '/workspace' ? 'OPERATIONS' : 'NETWORK';
+  const contextLabel = pathname.startsWith('/settings')
+    ? 'SETTINGS'
+    : pathname === '/workspace'
+      ? 'OPERATIONS'
+      : 'NETWORK';
 
   async function logout() {
     setBusy(true);

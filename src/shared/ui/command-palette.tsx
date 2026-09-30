@@ -132,7 +132,9 @@ export function CommandPalette() {
               if (event.key === 'Enter' && visibleResults[index]) navigate(visibleResults[index]);
             }}
           />
-          <button onClick={close} aria-label="Close search">×</button>
+          <button onClick={close} aria-label="Close search">
+            ×
+          </button>
         </div>
 
         <p role="status">{visibleStatus}</p>

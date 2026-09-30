@@ -159,6 +159,8 @@ export interface ContainerRackNode extends TopologyBase {
   readonly kind: 'CONTAINER_RACK';
   readonly parentId: string;
   readonly variant: ContainerRackVariant;
+  /** Exact top-left physical placement in the Room plane. Position remains the grid reference. */
+  readonly placementMm?: PhysicalPoint;
   readonly dimensionsMm?: DimensionsMm;
   readonly totalU?: number;
   readonly cas: readonly CasRange[];

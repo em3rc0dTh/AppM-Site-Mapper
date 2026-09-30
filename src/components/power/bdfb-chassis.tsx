@@ -3,7 +3,7 @@
 import { ContextPin } from '@/components/workspace/context-pin';
 import { useSearchParams } from 'next/navigation';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
 import type {
   BreakerHolder,
@@ -99,15 +99,21 @@ function endpointInspector(
           { label: 'Endpoint ID', value: endpoint.id },
           {
             label: 'MQTT binding',
-            value: endpoint.telemetry?.rawPointId ?? 'UNMAPPED · configure an explicit binding',
+            value:
+              endpoint.telemetry?.rawPointId ??
+              (endpoint.variant === 'HOLDER'
+                ? 'NOT APPLICABLE · empty holder'
+                : 'UNMAPPED · configure an explicit binding'),
           },
           {
             label: 'Telemetry',
             value: reading
-              ? 'Measurements available for this exact breaker'
+              ? 'Measurements available for this exact endpoint'
               : endpoint.telemetry?.rawPointId
                 ? 'Bound, awaiting matched MQTT measurements'
-                : "No point mapping. Broker connectivity does not provide this breaker's data.",
+                : endpoint.variant === 'HOLDER'
+                  ? 'Empty holder. Breaker measurements are not expected without an installed and mapped breaker.'
+                  : "No point mapping. Broker connectivity does not provide this breaker's data.",
           },
         ],
       },
@@ -203,7 +209,10 @@ function PanelBoard({
         <span>ENDPOINTS</span>
       </div>
 
-      <div className="bdfb-endpoint-grid">
+      <div
+        className="bdfb-endpoint-grid"
+        style={{ '--bdfb-panel-rows': Math.max(1, Math.ceil(panel.endpoints.length / 2)) } as CSSProperties}
+      >
         {panel.endpoints.length ? (
           panel.endpoints.map((endpoint, index) => {
             const reading = readingsByBreaker[endpoint.id];

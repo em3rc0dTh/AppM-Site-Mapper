@@ -4,11 +4,20 @@ import { useEffect, useState } from 'react';
 
 import { getBdfbPresentation } from '@/modules/power/application/bdfb-presentation';
 import { aggregateBdfbTelemetry } from '@/modules/telemetry/application/bdfb-telemetry-aggregate';
+import type {
+  TelemetryHistoryPoint,
+  TelemetryHistoryResponse,
+  TelemetryHistoryWindow,
+} from '@/modules/telemetry/domain/history';
+import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
-function metric(value: number | undefined, unit: string, decimals = 2): string {
-  return value === undefined ? '—' : `${value.toFixed(decimals)} ${unit}`;
+type InspectorWindow = 'LIVE' | TelemetryHistoryWindow;
+type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
+
+function metric(value: number | null | undefined, unit: string, decimals = 2): string {
+  return value === undefined || value === null ? '—' : `${value.toFixed(decimals)} ${unit}`;
 }
 
 function compactUtc(value: string | undefined): string {
@@ -42,6 +51,111 @@ function useTelemetrySample(deviceId: string): TelemetrySample | null {
   return sample;
 }
 
+function HistoryMetric({
+  label,
+  unit,
+  decimals = 2,
+  metricKey,
+  points,
+}: Readonly<{
+  label: string;
+  unit: string;
+  decimals?: number;
+  metricKey: HistoryMetricKey;
+  points: readonly TelemetryHistoryPoint[];
+}>) {
+  const values = points.flatMap((point, index) => {
+    const value = point[metricKey];
+    return value === null ? [] : [{ index, value }];
+  });
+  const latest = values.at(-1)?.value;
+
+  if (values.length < 2) {
+    return (
+      <div className="zip-bdfb-history-metric">
+        <span>{label}</span>
+        <strong>{metric(latest, unit, decimals)}</strong>
+        <small>Not enough samples for trend</small>
+      </div>
+    );
+  }
+
+  const min = Math.min(...values.map((entry) => entry.value));
+  const max = Math.max(...values.map((entry) => entry.value));
+  const range = max - min || 1;
+  const width = 180;
+  const height = 48;
+  const path = values
+    .map((entry, position) => {
+      const x = values.length === 1 ? width / 2 : (position / (values.length - 1)) * width;
+      const y = height - ((entry.value - min) / range) * (height - 8) - 4;
+      return `${position === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`;
+    })
+    .join(' ');
+
+  return (
+    <div className="zip-bdfb-history-metric">
+      <span>{label}</span>
+      <strong>{metric(latest, unit, decimals)}</strong>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${label} historical trend`}>
+        <path d={path} />
+      </svg>
+      <small>
+        {metric(min, unit, decimals)} – {metric(max, unit, decimals)}
+      </small>
+    </div>
+  );
+}
+
+function HistoricalTelemetry({
+  history,
+  loading,
+  error,
+}: Readonly<{
+  history: TelemetryHistoryResponse | null;
+  loading: boolean;
+  error: string | null;
+}>) {
+  if (loading) return <div className="zip-bdfb-history-state">Loading TimescaleDB history…</div>;
+  if (error) return <div className="zip-bdfb-history-state is-error">{error}</div>;
+  if (!history?.points.length) {
+    return <div className="zip-bdfb-history-state">No historical samples in this window.</div>;
+  }
+
+  const latest = history.points.at(-1);
+
+  return (
+    <>
+      <div className="zip-bdfb-history-grid">
+        <HistoryMetric label="VOLTAGE" unit="V" metricKey="voltageV" points={history.points} />
+        <HistoryMetric label="CURRENT" unit="A" metricKey="currentA" points={history.points} />
+        <HistoryMetric label="POWER" unit="W" metricKey="powerW" points={history.points} />
+        <HistoryMetric
+          label="ENERGY"
+          unit="kWh"
+          decimals={4}
+          metricKey="energyKwh"
+          points={history.points}
+        />
+      </div>
+      <dl className="zip-bdfb-live-average-counts">
+        <dt>History scope</dt>
+        <dd>{history.scope.label}</dd>
+        <dt>Breakers in scope</dt>
+        <dd>{history.scope.breakerCount}</dd>
+        <dt>Empty holders</dt>
+        <dd>{history.scope.holderCount}</dd>
+        <dt>Buckets</dt>
+        <dd>{history.points.length}</dd>
+        <dt>Latest bucket active</dt>
+        <dd>{latest?.activeBreakers ?? 0}</dd>
+        <dt>Latest bucket</dt>
+        <dd>{compactUtc(latest?.observedAt)}</dd>
+      </dl>
+    </>
+  );
+}
+
 export function BdfbTelemetryInspector({
   node,
   activePanelId,
@@ -54,6 +168,10 @@ export function BdfbTelemetryInspector({
   feeds?: readonly string[];
 }>) {
   const telemetry = useTelemetrySample(node.id);
+  const [window, setWindow] = useState<InspectorWindow>('LIVE');
+  const [history, setHistory] = useState<TelemetryHistoryResponse | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const presentation = getBdfbPresentation(node);
   const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
@@ -63,13 +181,55 @@ export function BdfbTelemetryInspector({
   const scopeEndpoints = selectedPanel
     ? selectedPanel.endpoints
     : panels.flatMap((panel) => panel.endpoints);
-
   const aggregate = aggregateBdfbTelemetry(scopeEndpoints, telemetry?.breakerReadings ?? []);
 
   const hasA = feeds?.includes('A') ?? false;
   const hasB = feeds?.includes('B') ?? false;
   const scopeLabel = selectedPanel?.label ?? 'Entire BDFB';
   const endpoints = panels.flatMap((panel) => panel.endpoints);
+
+  useEffect(() => {
+    if (window === 'LIVE') {
+      setHistory(null);
+      setHistoryLoading(false);
+      setHistoryError(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      deviceId: node.id,
+      window,
+    });
+    if (activePanelId) params.set('panelId', activePanelId);
+
+    setHistoryLoading(true);
+    setHistoryError(null);
+
+    void fetch(`/api/telemetry/history?${params.toString()}`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const body = (await response.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(body?.error ?? `HTTP_${response.status}`);
+        }
+        return response.json() as Promise<TelemetryHistoryResponse>;
+      })
+      .then((payload) => {
+        setHistory(payload);
+        setHistoryLoading(false);
+      })
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        setHistory(null);
+        setHistoryLoading(false);
+        setHistoryError(error instanceof Error ? error.message : 'HISTORY_LOAD_FAILED');
+      });
+
+    return () => controller.abort();
+  }, [activePanelId, node.id, window]);
 
   return (
     <aside className="telxius-properties zip-bdfb-inspector">
@@ -85,44 +245,72 @@ export function BdfbTelemetryInspector({
         </div>
       </div>
 
-      <section className="zip-bdfb-live-average" aria-label="BDFB live telemetry average">
+      <section className="zip-bdfb-live-average" aria-label="BDFB telemetry">
         <header>
           <div>
             <i aria-hidden="true" data-live={aggregate.activeBreakers > 0 ? 'true' : 'false'} />
-            <strong>LIVE AVERAGE</strong>
+            <strong>{window === 'LIVE' ? 'LIVE AVERAGE' : 'HISTORICAL AVERAGE'}</strong>
           </div>
           <span>{scopeLabel}</span>
         </header>
 
-        <div className="zip-bdfb-live-average-grid">
-          <div>
-            <span>AVG VOLTAGE</span>
-            <strong>{metric(aggregate.averageVoltageV, 'V')}</strong>
-          </div>
-          <div>
-            <span>AVG CURRENT</span>
-            <strong>{metric(aggregate.averageCurrentA, 'A')}</strong>
-          </div>
-          <div>
-            <span>AVG POWER</span>
-            <strong>{metric(aggregate.averagePowerW, 'W')}</strong>
-          </div>
-          <div>
-            <span>AVG ENERGY</span>
-            <strong>{metric(aggregate.averageEnergyKwh, 'kWh', 4)}</strong>
-          </div>
+        <div className="zip-bdfb-window-tabs" role="tablist" aria-label="Telemetry time window">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={window === 'LIVE'}
+            onClick={() => setWindow('LIVE')}
+          >
+            LIVE
+          </button>
+          {TELEMETRY_HISTORY_WINDOWS.map((historyWindow) => (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={window === historyWindow}
+              key={historyWindow}
+              onClick={() => setWindow(historyWindow)}
+            >
+              {historyWindow.toUpperCase()}
+            </button>
+          ))}
         </div>
 
-        <dl className="zip-bdfb-live-average-counts">
-          <dt>Active breakers</dt>
-          <dd>{aggregate.activeBreakers}</dd>
-          <dt>Breakers without live reading</dt>
-          <dd>{aggregate.withoutLiveReading}</dd>
-          <dt>Empty holders</dt>
-          <dd>{aggregate.emptyHolders}</dd>
-          <dt>Last packet</dt>
-          <dd>{compactUtc(aggregate.latestReceivedAt)}</dd>
-        </dl>
+        {window === 'LIVE' ? (
+          <>
+            <div className="zip-bdfb-live-average-grid">
+              <div>
+                <span>AVG VOLTAGE</span>
+                <strong>{metric(aggregate.averageVoltageV, 'V')}</strong>
+              </div>
+              <div>
+                <span>AVG CURRENT</span>
+                <strong>{metric(aggregate.averageCurrentA, 'A')}</strong>
+              </div>
+              <div>
+                <span>AVG POWER</span>
+                <strong>{metric(aggregate.averagePowerW, 'W')}</strong>
+              </div>
+              <div>
+                <span>AVG ENERGY</span>
+                <strong>{metric(aggregate.averageEnergyKwh, 'kWh', 4)}</strong>
+              </div>
+            </div>
+
+            <dl className="zip-bdfb-live-average-counts">
+              <dt>Active breakers</dt>
+              <dd>{aggregate.activeBreakers}</dd>
+              <dt>Breakers without live reading</dt>
+              <dd>{aggregate.withoutLiveReading}</dd>
+              <dt>Empty holders</dt>
+              <dd>{aggregate.emptyHolders}</dd>
+              <dt>Last packet</dt>
+              <dd>{compactUtc(aggregate.latestReceivedAt)}</dd>
+            </dl>
+          </>
+        ) : (
+          <HistoricalTelemetry history={history} loading={historyLoading} error={historyError} />
+        )}
       </section>
 
       <dl>

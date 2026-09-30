@@ -1,6 +1,14 @@
 import type { PointMm, RectMm } from './geometry';
-import { isValidPolygon, polygonInsidePolygon, rectInsidePolygon, rectsOverlap } from './geometry';
-import { gridCoordinateToPoint } from './grid';
+import {
+  isValidPolygon,
+  pointInPolygon,
+  polygonBounds,
+  polygonInsidePolygon,
+  rectInsidePolygon,
+  rectOverlapsPolygon,
+  rectsOverlap,
+} from './geometry';
+import { gridCoordinateToPoint, pointToGridCoordinate, TILE_SIZE_MM } from './grid';
 export interface DraftCluster {
   variant?: 'BAY' | 'CONTAINER_CLUSTER';
   id: string;
@@ -28,6 +36,106 @@ export interface LayoutDraft {
   clusters: DraftCluster[];
   positions: DraftPosition[];
   racks: DraftRack[];
+}
+
+
+function rackRect(
+  rack: Pick<DraftRack, 'width' | 'depth'>,
+  position: Pick<DraftPosition, 'row' | 'column'>,
+): RectMm {
+  return { ...gridCoordinateToPoint(position), width: rack.width, depth: rack.depth };
+}
+
+function rackPlacementIssue(
+  draft: LayoutDraft,
+  rack: Pick<DraftRack, 'id' | 'width' | 'depth'>,
+  position: DraftPosition,
+): string | null {
+  const cluster = draft.clusters.find((candidate) => candidate.id === position.clusterId);
+  if (!cluster) return 'INVALID_CLUSTER';
+
+  const rect = rackRect(rack, position);
+  const bounds = polygonBounds(cluster.polygon);
+  if (!bounds) return 'INVALID_CLUSTER_BOUNDARY';
+
+  const epsilon = 1e-7;
+  const topLeft = { x: rect.x, y: rect.y };
+  const topRight = { x: rect.x + rect.width, y: rect.y };
+  if (
+    Math.abs(rect.y - bounds.minY) > epsilon ||
+    rect.x < bounds.minX - epsilon ||
+    rect.x + rect.width > bounds.maxX + epsilon ||
+    !pointInPolygon(topLeft, cluster.polygon) ||
+    !pointInPolygon(topRight, cluster.polygon)
+  )
+    return 'RACK_OUTSIDE_BAY_WIDTH';
+
+  if (!rectInsidePolygon(rect, draft.polygon)) return 'RACK_OUTSIDE_ROOM';
+
+  if (
+    draft.clusters.some(
+      (candidate) =>
+        candidate.id !== cluster.id && rectOverlapsPolygon(rect, candidate.polygon),
+    )
+  )
+    return 'RACK_DEPTH_BLOCKED_BY_BAY';
+
+  for (const other of draft.racks) {
+    if (other.id === rack.id) continue;
+    const otherPosition = draft.positions.find((candidate) => candidate.id === other.positionId);
+    if (!otherPosition) continue;
+    if (rectsOverlap(rect, rackRect(other, otherPosition))) return 'RACK_COLLISION';
+  }
+
+  return null;
+}
+
+export function findNextRackCoordinate(
+  draft: LayoutDraft,
+  clusterId: string,
+  width: number,
+  depth: number,
+): { row: string; column: number } | null {
+  const cluster = draft.clusters.find((candidate) => candidate.id === clusterId);
+  const bounds = cluster ? polygonBounds(cluster.polygon) : null;
+  if (!cluster || !bounds || width <= 0 || depth <= 0) return null;
+
+  const topGridY = Math.round(bounds.minY / TILE_SIZE_MM) * TILE_SIZE_MM;
+  if (Math.abs(topGridY - bounds.minY) > 1e-7 || topGridY < 0) return null;
+
+  const firstColumnIndex = Math.ceil(bounds.minX / TILE_SIZE_MM);
+  const lastColumnIndex = Math.floor((bounds.maxX - width) / TILE_SIZE_MM);
+
+  for (let columnIndex = firstColumnIndex; columnIndex <= lastColumnIndex; columnIndex += 1) {
+    const coordinate = pointToGridCoordinate({
+      x: columnIndex * TILE_SIZE_MM,
+      y: topGridY,
+    });
+    if (!coordinate) continue;
+
+    const occupiedByPosition = draft.positions.find(
+      (position) =>
+        position.row === coordinate.row &&
+        position.column === coordinate.column &&
+        position.clusterId !== clusterId,
+    );
+    if (occupiedByPosition) continue;
+
+    const candidatePosition: DraftPosition = {
+      id: '__rack_candidate__',
+      name: 'Rack candidate',
+      clusterId,
+      ...coordinate,
+    };
+    const issue = rackPlacementIssue(
+      draft,
+      { id: '__rack_candidate__', width, depth },
+      candidatePosition,
+    );
+    if (!issue) return coordinate;
+  }
+
+  return null;
 }
 export function validateLayoutDraft(value: unknown): string | null {
   if (!value || typeof value !== 'object') return 'INVALID_LAYOUT';
@@ -109,10 +217,9 @@ export function validateLayoutDraft(value: unknown): string | null {
     if (!p) return 'INVALID_POSITION';
     if (occupied.has(p.id)) return 'POSITION_OCCUPIED';
     occupied.add(p.id);
-    const cluster = d.clusters.find((c) => c.id === p.clusterId)!;
-    const rect = { ...gridCoordinateToPoint(p), width: r.width, depth: r.depth };
-    if (!rectInsidePolygon(rect, d.polygon) || !rectInsidePolygon(rect, cluster.polygon))
-      return 'RACK_OUTSIDE_BOUNDARY';
+    const rect = rackRect(r, p);
+    const placementIssue = rackPlacementIssue(d, r, p);
+    if (placementIssue) return placementIssue;
     if (rects.some((other) => rectsOverlap(rect, other))) return 'RACK_COLLISION';
     rects.push(rect);
   }

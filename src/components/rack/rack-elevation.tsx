@@ -121,7 +121,10 @@ export function RackElevation({
                       setSelected({
                         ...topologyInspector(item),
                         actions: [
-                          { label: item.kind === 'DEVICE' ? 'OPEN DEVICE' : 'OPEN EQUIPMENT', href: `/device/${item.id}` },
+                          {
+                            label: item.kind === 'DEVICE' ? 'OPEN DEVICE' : 'OPEN EQUIPMENT',
+                            href: `/device/${item.id}`,
+                          },
                           { label: 'TRACE POWER', href: `/power?entity=${item.id}` },
                         ],
                       })
@@ -214,7 +217,9 @@ export function RackElevation({
                       <strong>{item.name}</strong>
                       <small>
                         {item.kind}
-                        {item.template ? ` · ${item.template.templateName} v${item.template.templateVersion}` : ''}
+                        {item.template
+                          ? ` · ${item.template.templateName} v${item.template.templateVersion}`
+                          : ''}
                       </small>
                     </span>
                     <b data-state={mounted ? 'mounted' : 'unmounted'}>

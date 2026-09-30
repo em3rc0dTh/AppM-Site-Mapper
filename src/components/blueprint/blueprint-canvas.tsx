@@ -157,9 +157,7 @@ export function BlueprintCanvas({
     const handleWheel = (event: WheelEvent) => {
       if (!event.cancelable) return;
       event.preventDefault();
-      setZoom((current) =>
-        Math.min(5, Math.max(0.5, current * (event.deltaY > 0 ? 0.9 : 1.1))),
-      );
+      setZoom((current) => Math.min(5, Math.max(0.5, current * (event.deltaY > 0 ? 0.9 : 1.1))));
     };
 
     svg.addEventListener('wheel', handleWheel, { passive: false });

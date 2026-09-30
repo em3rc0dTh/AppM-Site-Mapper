@@ -311,7 +311,7 @@ function PanelDetail({
   selection: PanelSelection;
   readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
   bindingsByBreaker: Readonly<Record<string, BreakerPowerBinding>>;
-  onInspect: (entity: InspectorEntity) => void;
+  onInspect: (entity: InspectorEntity, breakerId?: string) => void;
   onBack: () => void;
 }>) {
   return (

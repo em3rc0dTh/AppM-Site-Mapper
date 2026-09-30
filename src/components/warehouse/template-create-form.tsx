@@ -86,12 +86,23 @@ export function TemplateCreateForm() {
       </div>
       <label>
         Notes
-        <textarea name="notes" rows={2} maxLength={500} placeholder="Reusable defaults and mounting notes" />
+        <textarea
+          name="notes"
+          rows={2}
+          maxLength={500}
+          placeholder="Reusable defaults and mounting notes"
+        />
       </label>
       <div className="warehouse-form-actions">
-        <button type="submit" disabled={busy}>{busy ? 'Creating…' : 'Create template'}</button>
+        <button type="submit" disabled={busy}>
+          {busy ? 'Creating…' : 'Create template'}
+        </button>
       </div>
-      {error && <p role="alert" className="form-error">{error}</p>}
+      {error && (
+        <p role="alert" className="form-error">
+          {error}
+        </p>
+      )}
     </form>
   );
 }

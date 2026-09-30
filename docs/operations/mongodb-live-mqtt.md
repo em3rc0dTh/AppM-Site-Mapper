@@ -56,7 +56,7 @@ The command never seeds topology, changes device serials, creates geometry or
 reorders breaker/panel connections. The layout shown is whatever canonical
 geometry and rack inventory actually exists in MongoDB.
 
-## 3. Mapping live MQTT to *existing* physical devices
+## 3. Mapping live MQTT to _existing_ physical devices
 
 The subscriber uses the existing Mongo Device/Equipment `serialNumber`.
 If the upstream emulated serial differs, set the exact, verified mapping
@@ -109,6 +109,7 @@ for `TSDB_CONNECTED`, `MQTT_RX`, `GATEWAY_ERROR` and
 prove the gateway has written rows to TimescaleDB.
 
 Data ownership remains:
+
 - MongoDB: persistent actual physical topology and power-path context.
 - MQTT: live normalized data, transient in Site Mapper's process.
 - Gateway Latest State: current merged measurement set.

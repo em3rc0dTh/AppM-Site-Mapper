@@ -87,14 +87,14 @@ export class SpatialService {
     );
 
     const racks = racksByPosition.flatMap(({ position, racks: positionRacks }) => {
-      const point = gridCoordinateToPoint(position.coordinate);
+      const gridPoint = gridCoordinateToPoint(position.coordinate);
 
       return positionRacks.map((rack) => ({
         id: rack.id,
         name: rack.name,
         rect: {
-          x: point.x,
-          y: point.y,
+          x: rack.placementMm?.x ?? gridPoint.x,
+          y: rack.placementMm?.y ?? gridPoint.y,
           width: rack.dimensionsMm?.width ?? TILE_SIZE_MM,
           depth: rack.dimensionsMm?.depth ?? TILE_SIZE_MM,
         },

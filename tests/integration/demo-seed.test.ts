@@ -29,7 +29,7 @@ describe('development demo seed', () => {
     );
     expect(room202?.kind).toBe('ROOM_SUBSTRUCTURE');
     if (!room202 || room202.kind !== 'ROOM_SUBSTRUCTURE') throw new Error('Expected Room 202.');
-    expect(room202.polygon).toHaveLength(4);
+    expect(room202.polygon).toHaveLength(5);
 
     const racks = await topology.listByKind('CONTAINER_RACK');
     const rack023 = racks.find((node) => node.kind === 'CONTAINER_RACK' && node.name === 'R-023');

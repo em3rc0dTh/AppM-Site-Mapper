@@ -87,6 +87,16 @@ http://127.0.0.1:3000/api/telemetry/diagnostics
 http://127.0.0.1:3000/api/telemetry/latest
 ```
 
+If diagnostics shows `connection: subscribed` but `rawMessages: 0`, verify the
+actual subscription filter first: `data/dev/` is an **exact MQTT topic**, not a
+wildcard subscription. Use `MQTT_TOPIC_FILTER=data/dev/#` for publications
+such as `data/dev/EMU-BFDB-01`. The local launcher now refuses the bare
+prefix to avoid displaying a misleading healthy connection. Verify the same
+broker host/port and source publishing in MQTT Explorer or a read-only
+`mosquitto_sub -h <broker-host> -p 1883 -t 'data/dev/#' -v` session
+(adjust port/auth locally). Do not assume mapping or invent bindings while
+`rawMessages` remains zero.
+
 A successful subscription alone is not proof of device mapping. Look at
 `acceptedMessages`, `rejectedMessages`, `mappedDeviceId`,
 `mappedBreakerCount` and `unmappedPointCount`.

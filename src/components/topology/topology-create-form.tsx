@@ -3,26 +3,37 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { TopologyKind } from '@/modules/topology/domain/entities';
-import type { PointMm } from '@/modules/spatial/domain/geometry';
+import { polygonInsidePolygon, type PointMm } from '@/modules/spatial/domain/geometry';
 import { PolygonEditor } from '@/components/spatial/polygon-editor';
 
-export function TopologyCreateControl({ kind, parentId }: { kind: TopologyKind; parentId: string | null }) {
+export function TopologyCreateControl({
+  kind,
+  parentId,
+  boundaryContext = [],
+}: {
+  kind: TopologyKind;
+  parentId: string | null;
+  boundaryContext?: readonly PointMm[];
+}) {
   const [open, setOpen] = useState(false);
   return <div className="spatial-create-control">
     <button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)}>+ CREATE {kind === 'ROOM_SUBSTRUCTURE' ? 'ROOM' : kind.replaceAll('_', ' ')}</button>
-    {open && <div className="spatial-create-popover"><TopologyCreateForm kind={kind} parentId={parentId} onCancel={() => setOpen(false)} /></div>}
+    {open && <div className="spatial-create-popover"><TopologyCreateForm kind={kind} parentId={parentId} boundaryContext={boundaryContext} onCancel={() => setOpen(false)} /></div>}
   </div>;
 }
 
-export function TopologyCreateForm({ kind, parentId, onCancel }: Readonly<{
-  kind: TopologyKind; parentId: string | null; onCancel?: () => void;
+export function TopologyCreateForm({ kind, parentId, boundaryContext = [], onCancel }: Readonly<{
+  kind: TopologyKind;
+  parentId: string | null;
+  boundaryContext?: readonly PointMm[];
+  onCancel?: () => void;
 }>) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<Record<string, unknown> | null>(null);
   const [host, setHost] = useState<Element | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const spatial = kind === 'SITE' || kind === 'ROOM_SUBSTRUCTURE';
+  const spatial = kind === 'SITE' || kind === 'STRUCTURE' || kind === 'ROOM_SUBSTRUCTURE';
   async function create(payload: Record<string, unknown>) {
     setBusy(true); setError(null);
     try {
@@ -50,10 +61,19 @@ export function TopologyCreateForm({ kind, parentId, onCancel }: Readonly<{
     return <p>Create and place this object in the Room Blueprint.</p>;
   }
   const editor = pending && <div className="spatial-create-overlay"><PolygonEditor
-    title={`DRAW ${kind === 'SITE' ? 'SITE' : 'ROOM'} BOUNDARY · ${String(pending.name)}`}
+    title={`DRAW ${kind === 'ROOM_SUBSTRUCTURE' ? 'ROOM' : kind} BOUNDARY · ${String(pending.name)}`}
+    context={boundaryContext}
+    validate={
+      kind === 'STRUCTURE' && boundaryContext.length >= 3
+        ? (polygon) =>
+            polygonInsidePolygon(polygon, boundaryContext)
+              ? null
+              : 'Structure boundary must remain inside the Site boundary.'
+        : undefined
+    }
     onConfirm={(polygon: PointMm[]) => void create({ ...pending, polygon })}
     onCancel={() => { setPending(null); setError(null); }} busy={busy} error={error}
-    confirmLabel={kind === 'SITE' ? 'Save Site' : 'Save Room'}
+    confirmLabel={kind === 'SITE' ? 'Save Site' : kind === 'STRUCTURE' ? 'Save Structure' : 'Save Room'}
   /></div>;
   return <>
     <form ref={formRef} className="create-form spatial-metadata-form" onSubmit={submit}>

@@ -3616,3 +3616,255 @@ body {
 .zip-level-room.is-selected:focus {
   background: #e9f3ff !important;
 }
+
+
+/* Virtual Warehouse catalog and rack instantiation. */
+.warehouse-page {
+  min-height: calc(100dvh - 67px);
+  padding: 28px clamp(24px, 4vw, 64px) 48px;
+  background: #f7f9fc;
+  color: #172536;
+}
+.warehouse-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+.warehouse-heading > div {
+  max-width: 760px;
+}
+.warehouse-heading span {
+  color: #2678e8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.warehouse-heading h1 {
+  margin: 6px 0 8px;
+  font-size: clamp(26px, 3vw, 40px);
+}
+.warehouse-heading p {
+  margin: 0;
+  color: #5c6f84;
+  line-height: 1.55;
+}
+.warehouse-heading > strong {
+  white-space: nowrap;
+  color: #5c6f84;
+  font-size: 11px;
+}
+.warehouse-create-card,
+.warehouse-template-card,
+.warehouse-empty {
+  border: 1px solid #d5dee8;
+  border-radius: 7px;
+  background: #fff;
+}
+.warehouse-create-card {
+  padding: 18px;
+  margin-bottom: 20px;
+}
+.warehouse-create-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+}
+.warehouse-template-form {
+  display: grid;
+  gap: 12px;
+}
+.warehouse-form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+.warehouse-template-form label {
+  display: grid;
+  gap: 5px;
+  color: #506277;
+  font-size: 10px;
+  font-weight: 700;
+}
+.warehouse-template-form input,
+.warehouse-template-form select,
+.warehouse-template-form textarea {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #cbd5df;
+  border-radius: 4px;
+  padding: 7px 9px;
+  background: #fff;
+  color: #172536;
+}
+.warehouse-template-form textarea {
+  resize: vertical;
+}
+.warehouse-form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.warehouse-form-actions button {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: 4px;
+  background: #2678e8;
+  color: #fff;
+  font-weight: 800;
+}
+.warehouse-template-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+.warehouse-template-card {
+  padding: 15px;
+}
+.warehouse-template-card > header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: #5c7087;
+  font-size: 9px;
+  font-weight: 800;
+}
+.warehouse-template-card h2 {
+  margin: 10px 0 4px;
+  font-size: 16px;
+}
+.warehouse-template-card > p,
+.warehouse-template-card > small {
+  color: #66798d;
+  font-size: 10px;
+}
+.warehouse-template-card dl {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 7px 10px;
+  margin: 14px 0;
+  font-size: 10px;
+}
+.warehouse-template-card dt {
+  color: #718296;
+}
+.warehouse-template-card dd {
+  margin: 0;
+  font-weight: 700;
+}
+.warehouse-empty {
+  grid-column: 1 / -1;
+  padding: 28px;
+  text-align: center;
+}
+.rack-warehouse-mount {
+  position: relative;
+  grid-column: 1 / -1;
+}
+.rack-warehouse-mount > button {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #1f6fbc;
+  border-radius: 4px;
+  background: #155b92;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+.rack-warehouse-form {
+  position: absolute;
+  z-index: 70;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: min(360px, calc(100vw - 48px));
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #b9cce2;
+  border-radius: 6px;
+  background: #fff;
+  color: #172536;
+  box-shadow: 0 14px 36px #173a5c2b;
+}
+.rack-warehouse-form > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rack-warehouse-form > header button {
+  min-height: 28px;
+  width: 28px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #5f7287;
+  font-size: 18px;
+}
+.rack-warehouse-form label {
+  display: grid;
+  gap: 4px;
+  color: #576a7f;
+  font-size: 9px;
+  font-weight: 700;
+}
+.rack-warehouse-form input,
+.rack-warehouse-form select {
+  width: 100%;
+  min-height: 34px;
+  border: 1px solid #cbd5df;
+  border-radius: 4px;
+  padding: 6px 8px;
+  background: #fff;
+  color: #172536;
+}
+.rack-warehouse-form > button[type='submit'] {
+  min-height: 35px;
+  border-radius: 4px;
+  background: #2678e8;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+.rack-template-preview {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid #dbe4ed;
+  border-radius: 4px;
+  background: #f7faff;
+}
+.rack-template-preview strong {
+  font-size: 10px;
+}
+.rack-template-preview span {
+  color: #66798d;
+  font-size: 9px;
+}
+.rack-one-off-create {
+  grid-column: 1 / -1;
+  border-top: 1px solid #dce4ec;
+  padding-top: 7px;
+}
+.rack-one-off-create > summary {
+  cursor: pointer;
+  color: #6c7e91;
+  font-size: 9px;
+  font-weight: 800;
+}
+.rack-one-off-create > div {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 7px;
+}
+.rack-one-off-create .spatial-create-control > button {
+  width: 100%;
+}
+@media (max-width: 1100px) {
+  .warehouse-form-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .zip-warehouse {
+    display: none !important;
+  }
+}

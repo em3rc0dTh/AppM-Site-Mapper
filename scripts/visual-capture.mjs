@@ -155,6 +155,12 @@ if (rackLink) {
   await snap('07-rack-focus');
   const elevation = focus.replace(/\/focus$/, '');
   await go(elevation);
+  const createDevice = page.getByRole('button', { name: '+ CREATE DEVICE' });
+  const createEquipment = page.getByRole('button', { name: '+ CREATE EQUIPMENT' });
+  await createDevice.waitFor({ state: 'visible', timeout: 10_000 });
+  await createEquipment.waitFor({ state: 'visible', timeout: 10_000 });
+  assert.ok(await createDevice.isVisible(), 'Rack elevation must expose Create Device');
+  assert.ok(await createEquipment.isVisible(), 'Rack elevation must expose Create Equipment');
   await snap('08-rack-elevation');
 }
 

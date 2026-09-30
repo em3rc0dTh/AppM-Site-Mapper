@@ -212,7 +212,10 @@ export function RackElevation({
                   >
                     <span>
                       <strong>{item.name}</strong>
-                      <small>{item.kind}</small>
+                      <small>
+                        {item.kind}
+                        {item.template ? ` · ${item.template.templateName} v${item.template.templateVersion}` : ''}
+                      </small>
                     </span>
                     <b data-state={mounted ? 'mounted' : 'unmounted'}>
                       {mounted ? 'MOUNTED' : 'UNMOUNTED'}

@@ -6,6 +6,20 @@ import { snapToGrid } from '@/modules/spatial/domain/grid';
 
 type Snapshot = { points: PointMm[]; closed: boolean };
 type View = { x: number; y: number; width: number; height: number };
+
+export interface PolygonContextOverlay {
+  readonly id: string;
+  readonly label: string;
+  readonly polygon: readonly PointMm[];
+}
+
+function centroid(points: readonly PointMm[]): PointMm {
+  if (!points.length) return { x: 0, y: 0 };
+  return {
+    x: points.reduce((sum, point) => sum + point.x, 0) / points.length,
+    y: points.reduce((sum, point) => sum + point.y, 0) / points.length,
+  };
+}
 function fit(points: readonly PointMm[]): View {
   if (!points.length) return { x: -600, y: -600, width: 14400, height: 9600 };
   const minX = Math.min(...points.map((p) => p.x)),
@@ -22,6 +36,7 @@ export function PolygonEditor({
   title,
   initial = [],
   context = [],
+  contextOverlays = [],
   onConfirm,
   onCancel,
   validate,
@@ -32,6 +47,7 @@ export function PolygonEditor({
   title: string;
   initial?: readonly PointMm[];
   context?: readonly PointMm[];
+  contextOverlays?: readonly PolygonContextOverlay[];
   onConfirm: (polygon: PointMm[]) => void;
   onCancel: () => void;
   validate?: (polygon: readonly PointMm[]) => string | null;
@@ -45,7 +61,8 @@ export function PolygonEditor({
   }));
   const [past, setPast] = useState<Snapshot[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
-  const [view, setView] = useState(() => fit([...initial, ...context]));
+  const contextualPoints = contextOverlays.flatMap((overlay) => [...overlay.polygon]);
+  const [view, setView] = useState(() => fit([...initial, ...context, ...contextualPoints]));
   const [tool, setTool] = useState<'draw' | 'pan'>('draw');
   const [snap, setSnap] = useState(true);
   const [cursor, setCursor] = useState<PointMm | null>(null);
@@ -173,7 +190,7 @@ export function PolygonEditor({
         <button
           type="button"
           disabled={busy}
-          onClick={() => setView(fit([...draft.points, ...context]))}
+          onClick={() => setView(fit([...draft.points, ...context, ...contextualPoints]))}
         >
           Fit
         </button>
@@ -257,6 +274,34 @@ export function PolygonEditor({
             pointerEvents="none"
           />
         )}
+        {contextOverlays.map((overlay) => {
+          if (overlay.polygon.length < 3) return null;
+          const center = centroid(overlay.polygon);
+          return (
+            <g key={overlay.id} className="spatial-context-overlay" pointerEvents="none">
+              <polygon
+                points={pointsText(overlay.polygon)}
+                fill="#14b8a612"
+                stroke="#0f8f83"
+                strokeWidth="2"
+                strokeDasharray="7 5"
+                vectorEffect="non-scaling-stroke"
+              />
+              <text
+                x={center.x}
+                y={center.y}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fill="#0a5f58"
+                fontWeight="700"
+                fontSize={Math.max(radius * 1.8, 26)}
+                vectorEffect="non-scaling-stroke"
+              >
+                {overlay.label}
+              </text>
+            </g>
+          );
+        })}
         {draft.closed ? (
           <polygon
             points={pointsText(draft.points)}

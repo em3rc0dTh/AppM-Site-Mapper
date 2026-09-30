@@ -113,10 +113,15 @@ export default async function PowerPage({
 
   return (
     <main className="zip-power-page">
-      <nav className="breadcrumbs">
+      <nav className="breadcrumbs zip-power-breadcrumbs">
         {destination?.href ? <Link href={destination.href}>← {destination.name}</Link> : <span>POWER</span>}
+        <span className="zip-breadcrumb-divider" />
         <strong>POWER PATH</strong>
       </nav>
+      <div className="zip-power-top-controls" aria-label="Power path status">
+        <Link href="/power?feed=AB">A+B <span>⌄</span></Link>
+        <strong><i /> HEALTHY</strong>
+      </div>
       <div className="zip-power-layout">
         <aside className="zip-power-tree">
           <header>POWER TREE <span>⌄</span></header>

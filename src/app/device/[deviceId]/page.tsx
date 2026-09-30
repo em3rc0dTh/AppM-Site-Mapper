@@ -35,12 +35,10 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
       : 'Not mounted';
   return (
     <main className="operational-page mk-device-page">
-      <nav className="breadcrumbs">
-        {links.map((n) => (
-          <Link key={n.id} href={n.href}>
-            {n.name}
-          </Link>
-        ))}
+      <nav className="breadcrumbs zip-device-breadcrumbs">
+        {rack ? <Link href={`/rack/${rack.id}/focus`}>← {rack.name}</Link> : links[0] ? <Link href={links[0].href}>← {links[0].name}</Link> : null}
+        <span className="zip-breadcrumb-divider" />
+        <strong>{node.name}</strong>
       </nav>
       <div className="mk-device-layout">
         <aside>{tree && <TopologyContextTree tree={tree} activeId={node.id} />}</aside>

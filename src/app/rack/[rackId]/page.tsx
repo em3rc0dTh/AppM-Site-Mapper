@@ -36,8 +36,9 @@ export default async function RackPage({
       ? topology.getById(result.value.rack.parentId)
       : Promise.resolve(null),
   ]);
+  const room = [...trail].reverse().find((item) => item.kind === 'ROOM_SUBSTRUCTURE') ?? null;
   const root =
-    [...trail].reverse().find((item) => item.kind === 'ROOM_SUBSTRUCTURE') ??
+    room ??
     [...trail].reverse().find((item) => item.kind === 'LEVEL') ??
     trail[0];
   const trailEntries = await Promise.all(
@@ -51,14 +52,12 @@ export default async function RackPage({
   return (
     <main className="operational-page operational-page--rack telxius-operational-page">
       <nav
-        className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
+        className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs zip-rack-elevation-breadcrumbs"
         aria-label="Breadcrumb"
       >
-        {trailEntries.map((item) => (
-          <Link key={item.id} href={item.href}>
-            {item.name}
-          </Link>
-        ))}
+        {room ? <Link href={await topology.buildDeepLink(room.id)}>← {room.name}</Link> : trailEntries[0] ? <Link href={trailEntries[0].href}>← {trailEntries[0].name}</Link> : null}
+        <span className="zip-breadcrumb-divider" />
+        <strong>{result.value.rack.name} &nbsp;/&nbsp; ELEVATION</strong>
       </nav>
       <div className="operational-layout telxius-operational-layout operational-layout--rack">
         <aside className="zip-rack-menu">

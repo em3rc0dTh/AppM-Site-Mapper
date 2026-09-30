@@ -79,10 +79,10 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
 
   return (
     <main className="operational-page zip-rack-focus-page">
-      <nav className="breadcrumbs" aria-label="Breadcrumb">
-        {breadcrumbs.map((item) => (
-          <Link key={item.id} href={item.href}>{item.name}</Link>
-        ))}
+      <nav className="breadcrumbs zip-rack-focus-breadcrumbs" aria-label="Breadcrumb">
+        {room ? <Link href={await topology.buildDeepLink(room.id)}>← {room.name}</Link> : breadcrumbs[0] ? <Link href={breadcrumbs[0].href}>← {breadcrumbs[0].name}</Link> : null}
+        <span className="zip-breadcrumb-divider" />
+        <strong>{room?.name ?? 'Room'} &nbsp;/&nbsp; {view.value.rack.name}</strong>
       </nav>
 
       <div className="zip-rack-focus-layout">

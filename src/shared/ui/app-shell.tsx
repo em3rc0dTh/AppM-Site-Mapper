@@ -26,6 +26,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const blueprint = pathname.startsWith('/blueprint');
   const settings = pathname.startsWith('/settings');
+  const power = pathname.startsWith('/power');
   const immersive =
     pathname.startsWith('/topology') ||
     pathname.startsWith('/blueprint') ||
@@ -54,6 +55,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         immersive ? 'app-shell--immersive' : '',
         blueprint ? 'app-shell--blueprint' : '',
         settings ? 'app-shell--settings' : '',
+        power ? 'app-shell--power' : '',
       ].join(' ')}
     >
       <a className="skip-link" href="#main-content">

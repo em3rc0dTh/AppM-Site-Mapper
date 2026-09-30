@@ -221,12 +221,25 @@ export function TopologyExplorer({
       </div>
 
       <aside className="mk-inline-inspector zip-inspector">
-        {node.kind === 'SITE' && <div className="spatial-site-facts">
-          <strong>{node.name}</strong>
-          <dl><dt>Boundary</dt><dd>{boundary?.length ? `${boundary.length} vertices` : 'Not drawn'}</dd>
-            <dt>Area</dt><dd>{isValidPolygon(boundary) ? `${(polygonArea(boundary) / 1_000_000).toFixed(2)} m²` : '—'}</dd>
-            <dt>Status</dt><dd>{node.lifecycle}</dd><dt>Contained objects</dt><dd>{items.length}</dd></dl>
-        </div>}
+        {node.kind === 'SITE' && (
+          <div className="spatial-site-facts">
+            <strong>{node.name}</strong>
+            <dl>
+              <dt>Boundary</dt>
+              <dd>{boundary?.length ? `${boundary.length} vertices` : 'Not drawn'}</dd>
+              <dt>Area</dt>
+              <dd>
+                {isValidPolygon(boundary)
+                  ? `${(polygonArea(boundary) / 1_000_000).toFixed(2)} m²`
+                  : '—'}
+              </dd>
+              <dt>Status</dt>
+              <dd>{node.lifecycle}</dd>
+              <dt>Contained objects</dt>
+              <dd>{items.length}</dd>
+            </dl>
+          </div>
+        )}
         <header className="zip-inspector-heading">
           <strong>INSPECTOR</strong>
           <span>⌄</span>

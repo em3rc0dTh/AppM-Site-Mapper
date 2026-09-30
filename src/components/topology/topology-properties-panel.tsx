@@ -62,7 +62,11 @@ export function TopologyPropertiesPanel({
           <dl className="telxius-property-list">
             <div>
               <dt>TOTAL AREA</dt>
-              <dd>{isValidPolygon(node.polygon) ? `${(polygonArea(node.polygon) / 1_000_000).toFixed(2)} m²` : '—'}</dd>
+              <dd>
+                {isValidPolygon(node.polygon)
+                  ? `${(polygonArea(node.polygon) / 1_000_000).toFixed(2)} m²`
+                  : '—'}
+              </dd>
             </div>
             <div>
               <dt>BOUNDARY</dt>

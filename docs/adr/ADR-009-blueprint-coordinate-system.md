@@ -61,12 +61,14 @@ The generic Bay-create path checks containment and increments the Room version
 in the same layout transaction to invalidate stale drafts.
 
 Empty Position anchors and explicit Position moves are picked on the canvas and converted
-to the canonical A-1 grid. New Rack anchors are assigned automatically from the Bay
-top edge, left-to-right, using that same grid. Width/depth remain independent physical
-dimensions, including multi-cell footprints. No operator coordinate text entry is
-required. Existing positive grid coordinates remain the supported anchor range;
-negative plane coordinates can describe boundaries but do not create negative-row
-Position references.
+to the canonical A-1 grid. New Rack footprints are assigned automatically from the Bay top edge, left-to-right.
+Their exact physical top-left anchor is persisted in millimetres and advances by the
+real width of the preceding rack, so non-grid widths such as 900 mm remain flush with
+their neighbours. The parent Position remains a 600 mm grid reference for topology;
+it is not the authoritative physical X/Y of the rack. Width/depth remain independent
+physical dimensions. No operator coordinate text entry is required. Existing positive
+grid coordinates remain the supported Position-reference range; negative plane
+coordinates can describe boundaries but do not create negative-row Position references.
 
 Implementation recorded without running tests, typecheck, lint, browser checks or
 build at the user's explicit request. This addendum does not certify acceptance.

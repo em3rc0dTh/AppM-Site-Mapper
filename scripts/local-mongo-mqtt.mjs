@@ -7,18 +7,24 @@ import { MongoClient } from 'mongodb';
 const args = new Set(process.argv.slice(2));
 const inspectOnly = args.has('--inspect');
 const initAdmin = args.has('--init-admin');
+const crudTest = args.has('--crud-test');
+const reuseCrudTest = args.has('--reuse');
+const telemetryEnabled = !crudTest;
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
 
 const uri = process.env.MONGODB_URI?.trim();
-const databaseName = process.env.MONGODB_DB_NAME?.trim() || 'appm_site_mapper';
+const databaseName = crudTest
+  ? process.env.MONGODB_CRUD_DB_NAME?.trim() || 'site_mapper_crud_acceptance'
+  : process.env.MONGODB_DB_NAME?.trim() || 'appm_site_mapper';
 const host = process.env.HOST ?? '127.0.0.1';
 const port = Number(process.env.PORT ?? '3000');
 const baseUrl = 'http://' + host + ':' + port;
 // A bare topic prefix is a valid MQTT subscription but never matches
-// data/dev/<serial> messages. Fail before reporting a misleading healthy broker.
+// data/dev/<serial> messages. The CRUD clean-room mode intentionally disables
+// telemetry so topology/spatial acceptance can be tested without external data.
 const topicPrefix = process.env.MQTT_TOPIC_PREFIX || 'data/dev/';
 const topicFilter = process.env.MQTT_TOPIC_FILTER || 'data/dev/#';
-if (topicFilter === topicPrefix && topicFilter.endsWith('/')) {
+if (telemetryEnabled && topicFilter === topicPrefix && topicFilter.endsWith('/')) {
   throw new Error(
     'MQTT_TOPIC_FILTER=' +
       topicFilter +
@@ -93,7 +99,7 @@ async function inspectMongo() {
       ? await db.collection('topology_nodes').countDocuments({})
       : 0;
 
-    if (count === 0) {
+    if (count === 0 && !crudTest) {
       const possibleLegacy = names.filter((name) =>
         /network|site|structure|substructure|cluster|container|device|rack|room/i.test(name),
       );
@@ -110,10 +116,12 @@ async function inspectMongo() {
       );
     }
 
-    const roots = await db
-      .collection('topology_nodes')
-      .countDocuments({ kind: 'NETWORK', parentId: null, lifecycle: 'ACTIVE' });
-    if (roots === 0) {
+    const roots = names.includes('topology_nodes')
+      ? await db
+          .collection('topology_nodes')
+          .countDocuments({ kind: 'NETWORK', parentId: null, lifecycle: 'ACTIVE' })
+      : 0;
+    if (!crudTest && roots === 0) {
       throw new Error(
         'topology_nodes contains ' +
           count +
@@ -126,20 +134,38 @@ async function inspectMongo() {
     const paths = names.includes('power_paths')
       ? await db.collection('power_paths').countDocuments({ lifecycle: 'ACTIVE' })
       : 0;
-    const inventory = await db
-      .collection('topology_nodes')
-      .find({
-        kind: { $in: ['DEVICE', 'EQUIPMENT'] },
-        lifecycle: 'ACTIVE',
-      })
-      .project({
-        _id: 0,
-        id: 1,
-        kind: 1,
-        serialNumber: 1,
-        bdfb: 1,
-      })
-      .toArray();
+
+    if (crudTest && !reuseCrudTest && (count > 0 || users > 0 || paths > 0)) {
+      throw new Error(
+        'CRUD clean-room database is not empty. Refusing to mix a new acceptance run with old data.\n' +
+          'Database: ' +
+          databaseName +
+          '\n' +
+          'Canonical nodes: ' +
+          count +
+          '\nUsers: ' +
+          users +
+          '\nActive power paths: ' +
+          paths +
+          '\nUse --reuse only to continue the same acceptance run, or choose a new MONGODB_CRUD_DB_NAME.',
+      );
+    }
+    const inventory = names.includes('topology_nodes')
+      ? await db
+          .collection('topology_nodes')
+          .find({
+            kind: { $in: ['DEVICE', 'EQUIPMENT'] },
+            lifecycle: 'ACTIVE',
+          })
+          .project({
+            _id: 0,
+            id: 1,
+            kind: 1,
+            serialNumber: 1,
+            bdfb: 1,
+          })
+          .toArray()
+      : [];
 
     const map = parseMap();
     const mappedIds = new Set();
@@ -147,7 +173,7 @@ async function inspectMongo() {
     const required = new Set(expectedPoints());
     let complete = true;
 
-    for (const serial of serials) {
+    for (const serial of telemetryEnabled ? serials : []) {
       const mappedId = map[serial];
       const candidates = mappedId
         ? inventory.filter((item) => item.id === mappedId)
@@ -196,22 +222,24 @@ async function inspectMongo() {
     }
 
     console.log('');
-    console.log('READ-ONLY MONGODB PREFLIGHT');
+    console.log(crudTest ? 'CRUD CLEAN-ROOM MONGODB PREFLIGHT' : 'READ-ONLY MONGODB PREFLIGHT');
     console.log('Database: ' + databaseName);
     console.log('Canonical nodes: ' + count);
     console.log('Active root Networks: ' + roots);
     console.log('Active power paths: ' + paths);
     console.log('Existing users: ' + users);
     console.log(
-      'MQTT binding: ' +
-        (complete && matched.length === serials.length
-          ? '3-source explicit mapping ready'
-          : 'INCOMPLETE — do not assume all breaker values are mapped'),
+      crudTest
+        ? 'Telemetry: DISABLED for isolated CRUD/spatial acceptance'
+        : 'MQTT binding: ' +
+            (complete && matched.length === serials.length
+              ? '3-source explicit mapping ready'
+              : 'INCOMPLETE — do not assume all breaker values are mapped'),
     );
     console.log('No MongoDB records have been created, seeded, migrated or modified.');
     console.log('');
 
-    if (args.has('--strict') && !complete) {
+    if (!crudTest && args.has('--strict') && !complete) {
       throw new Error(
         'Strict MQTT binding check failed. Inspect existing serials and approved raw-point bindings.',
       );
@@ -244,7 +272,8 @@ const childEnv = {
   ...process.env,
   APP_ENV: 'development',
   APP_PERSISTENCE: 'mongodb',
-  TELEMETRY_ENABLED: 'true',
+  MONGODB_DB_NAME: databaseName,
+  TELEMETRY_ENABLED: telemetryEnabled ? 'true' : 'false',
   MQTT_BROKER_URL: process.env.MQTT_BROKER_URL || 'mqtt://127.0.0.1:1883',
   MQTT_TOPIC_PREFIX: topicPrefix,
   MQTT_TOPIC_FILTER: topicFilter,
@@ -330,9 +359,22 @@ try {
     await waitForServer();
     await bootstrapUser();
     console.log('');
-    console.log('SITE MAPPER MONGODB + MQTT READY FOR LOCAL REVIEW');
-    console.log('Inventory: existing MongoDB ' + databaseName + ' (NO SEED)');
-    console.log('Telemetry: subscribed on demand to ' + childEnv.MQTT_TOPIC_FILTER);
+    console.log(
+      crudTest
+        ? 'SITE MAPPER CRUD CLEAN-ROOM READY FOR LOCAL REVIEW'
+        : 'SITE MAPPER MONGODB + MQTT READY FOR LOCAL REVIEW',
+    );
+    console.log(
+      'Inventory: ' +
+        (crudTest ? 'isolated CRUD database ' : 'existing MongoDB ') +
+        databaseName +
+        ' (NO SEED)',
+    );
+    console.log(
+      crudTest
+        ? 'Telemetry: disabled for this acceptance run'
+        : 'Telemetry: subscribed on demand to ' + childEnv.MQTT_TOPIC_FILTER,
+    );
     console.log('The actual broker subscription and breaker mapping must be checked after login.');
     console.log('Login: ' + baseUrl + '/login');
     console.log('Diagnostics: ' + baseUrl + '/api/telemetry/diagnostics');

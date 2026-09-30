@@ -69,3 +69,38 @@ boundaries but do not create negative-row Position references.
 
 Implementation recorded without running tests, typecheck, lint, browser checks or
 build at the user's explicit request. This addendum does not certify acceptance.
+
+
+## Bay frontage and rack depth — 2026-09-30
+
+Rack placement is directional.
+
+For a Bay, the surveyed polygon defines the rack **frontage capacity on X** and the
+top reference edge. A rack is anchored to the Bay's top edge and new racks are
+assigned from left to right on the canonical 600 mm grid.
+
+The rack's declared width consumes Bay frontage. Therefore a 1200 mm-wide Bay may
+contain two 600 mm racks, while two 900 mm racks cannot fit. Width is never allowed
+to cross the Bay's X envelope.
+
+Rack depth extends in positive Y from the Bay top edge and is not required to remain
+inside the Bay polygon. This represents cabinets that are deeper than one 600 mm
+Bay/grid row. The complete rack rectangle must still remain inside the Room boundary.
+
+Depth beyond the Bay footprint consumes physical clearance below the Bay. It is
+valid only while that projected rack footprint does not overlap another Bay/Cluster.
+For example, a 900 mm or 1200 mm deep rack may use available aisle space below a
+600 mm-deep Bay, whereas a 1500 mm rack is rejected when the next Bay begins before
+that depth can clear.
+
+This rule is intentionally asymmetric:
+
+- X controls Bay capacity.
+- Y controls downstream physical clearance.
+- racks start at the Bay top edge;
+- new racks are packed left-to-right;
+- arbitrary rack Y placement is not a supported operation;
+- rack depth never changes the persisted Bay polygon.
+
+The Room boundary, other Bay polygons and existing rack footprints remain hard
+collision constraints.

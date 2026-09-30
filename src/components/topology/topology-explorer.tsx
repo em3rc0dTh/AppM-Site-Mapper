@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { isValidPolygon, polygonArea } from '@/modules/spatial/domain/geometry';
 import { useState, type CSSProperties } from 'react';
 
 import type { PhysicalPoint, TopologyNode } from '@/modules/topology/domain/entities';
@@ -45,7 +46,7 @@ export function TopologyExplorer({
     'polygon' in entry.node && entry.node.polygon ? [...entry.node.polygon] : [],
   );
   const all = [...(boundary ?? []), ...polygons];
-  const hasGeometry = polygons.length > 0 && (node.kind === 'LEVEL' || node.kind === 'SITE');
+  const hasGeometry = all.length > 0 && (node.kind === 'LEVEL' || node.kind === 'SITE');
   // Preserve the saved coordinate envelope. Anchoring it to zero distorts
   // georeferenced rooms whose surveyed origin is not (0, 0).
   const minX = all.length ? Math.min(...all.map((point) => point.x)) : 0;
@@ -220,6 +221,12 @@ export function TopologyExplorer({
       </div>
 
       <aside className="mk-inline-inspector zip-inspector">
+        {node.kind === 'SITE' && <div className="spatial-site-facts">
+          <strong>{node.name}</strong>
+          <dl><dt>Boundary</dt><dd>{boundary?.length ? `${boundary.length} vertices` : 'Not drawn'}</dd>
+            <dt>Area</dt><dd>{isValidPolygon(boundary) ? `${(polygonArea(boundary) / 1_000_000).toFixed(2)} m²` : '—'}</dd>
+            <dt>Status</dt><dd>{node.lifecycle}</dd><dt>Contained objects</dt><dd>{items.length}</dd></dl>
+        </div>}
         <header className="zip-inspector-heading">
           <strong>INSPECTOR</strong>
           <span>⌄</span>

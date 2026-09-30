@@ -1,23 +1,19 @@
 'use client';
+
 import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { BlueprintCanvas } from './blueprint-canvas';
+import { PolygonEditor } from '@/components/spatial/polygon-editor';
 import { validateLayoutDraft, type LayoutDraft } from '@/modules/spatial/domain/layout-draft';
-import { gridCoordinateToPoint } from '@/modules/spatial/domain/grid';
-export function RoomLayoutEditor({
-  roomId,
-  initial,
-  canWrite,
-  focusRackId,
-  focusBayId,
-  focusPositionId,
-}: {
-  roomId: string;
-  initial: LayoutDraft;
-  canWrite: boolean;
-  focusRackId?: string | undefined;
-  focusBayId?: string | undefined;
-  focusPositionId?: string | undefined;
+import { gridCoordinateToPoint, pointToGridCoordinate } from '@/modules/spatial/domain/grid';
+import { polygonInsidePolygon, type PointMm } from '@/modules/spatial/domain/geometry';
+
+type BoundaryEdit = { kind: 'room' } | { kind: 'bay'; id: string; name: string; polygon: PointMm[]; variant: 'BAY' | 'CONTAINER_CLUSTER' };
+type Placement = { kind: 'rack'; name: string; clusterId: string; width: number; depth: number; totalU: number } | { kind: 'position'; name: string; clusterId: string } | { kind: 'move'; id: string };
+
+export function RoomLayoutEditor({ roomId, initial, canWrite, focusRackId, focusBayId, focusPositionId }: {
+  roomId: string; initial: LayoutDraft; canWrite: boolean;
+  focusRackId?: string | undefined; focusBayId?: string | undefined; focusPositionId?: string | undefined;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState(initial);
@@ -27,456 +23,166 @@ export function RoomLayoutEditor({
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [selected, setSelected] = useState('');
+  const [selected, setSelected] = useState(focusRackId ?? focusPositionId ?? focusBayId ?? '');
+  const [boundary, setBoundary] = useState<BoundaryEdit | null>(null);
+  const [placement, setPlacement] = useState<Placement | null>(null);
+  const validation = useMemo(() => validateLayoutDraft(draft), [draft]);
   function change(next: LayoutDraft) {
-    setPast((p) => [...p, draft].slice(-50));
-    setFuture([]);
-    setDraft(next);
-    setError('');
+    setPast((history) => [...history, draft].slice(-100)); setFuture([]); setDraft(next); setError('');
   }
-  const layout = useMemo(() => {
-    const racks = draft.racks.flatMap((r) => {
-      const p = draft.positions.find((p) => p.id === r.positionId);
+  function validChange(next: LayoutDraft) {
+    const issue = validateLayoutDraft(next);
+    if (issue) { setError(issue); return false; }
+    change(next); return true;
+  }
+  const layout = useMemo(() => ({
+    racks: draft.racks.flatMap((rack) => {
+      const p = draft.positions.find((p) => p.id === rack.positionId);
       if (!p) return [];
-      try {
-        return [
-          {
-            id: r.id,
-            name: r.name,
-            rect: { ...gridCoordinateToPoint(p), width: r.width, depth: r.depth },
-          },
-        ];
-      } catch {
-        return [];
-      }
-    });
-    const positions = draft.positions.map((p) => ({
-      ...p,
-      occupied: draft.racks.some((r) => r.positionId === p.id),
-    }));
-    return { racks, positions };
-  }, [draft]);
-  const validation = validateLayoutDraft(draft);
+      try { return [{ id: rack.id, name: rack.name, rect: { ...gridCoordinateToPoint(p), width: rack.width, depth: rack.depth } }]; } catch { return []; }
+    }),
+    positions: draft.positions.map((p) => ({ ...p, occupied: draft.racks.some((r) => r.positionId === p.id) })),
+  }), [draft]);
   function add(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const f = new FormData(event.currentTarget);
-    const kind = String(f.get('kind'));
-    const id = crypto.randomUUID();
-    const name = String(f.get('name')).trim();
-    if (kind === 'cluster') {
-      const x = Number(f.get('x')) * 600,
-        y = Number(f.get('y')) * 600,
-        w = Number(f.get('width')) * 600,
-        d = Number(f.get('depth')) * 600;
-      change({
-        ...draft,
-        clusters: [
-          ...draft.clusters,
-          {
-            id,
-            name,
-            polygon: [
-              { x, y },
-              { x: x + w, y },
-              { x: x + w, y: y + d },
-              { x, y: y + d },
-            ],
-          },
-        ],
-      });
-    } else if (kind === 'position') {
-      change({
-        ...draft,
-        positions: [
-          ...draft.positions,
-          {
-            id,
-            name,
-            clusterId: String(f.get('clusterId')),
-            row: String(f.get('row')).toUpperCase(),
-            column: Number(f.get('column')),
-          },
-        ],
-      });
+    const name = String(f.get('name') ?? '').trim();
+    setError(''); setPlacement(null);
+    if (f.get('kind') === 'bay') {
+      setBoundary({ kind: 'bay', id: crypto.randomUUID(), name, polygon: [], variant: f.get('variant') === 'CONTAINER_CLUSTER' ? 'CONTAINER_CLUSTER' : 'BAY' });
+    } else if (f.get('kind') === 'position') {
+      setPlacement({ kind: 'position', name, clusterId: String(f.get('clusterId')) });
     } else {
-      change({
-        ...draft,
-        racks: [
-          ...draft.racks,
-          {
-            id,
-            name,
-            positionId: String(f.get('positionId')),
-            width: Number(f.get('width')),
-            depth: Number(f.get('depth')),
-            totalU: Number(f.get('totalU')),
-          },
-        ],
-      });
+      setPlacement({ kind: 'rack', name, clusterId: String(f.get('clusterId')), width: Number(f.get('width')), depth: Number(f.get('depth')), totalU: Number(f.get('totalU')) });
     }
-    setSelected(id);
+  }
+  function place(point: PointMm) {
+    if (!placement || busy) return;
+    const coordinate = pointToGridCoordinate(point);
+    if (!coordinate) { setError('Choose a supported grid cell inside the room and bay.'); return; }
+    if (placement.kind === 'move') {
+      if (validChange({ ...draft, positions: draft.positions.map((p) => p.id === placement.id ? { ...p, ...coordinate } : p) })) setPlacement(null);
+      return;
+    }
+    const existing = draft.positions.find((p) => p.row === coordinate.row && p.column === coordinate.column);
+    if (existing && (placement.kind === 'position' || existing.clusterId !== placement.clusterId || draft.racks.some((r) => r.positionId === existing.id))) {
+      setError('This cell already belongs to a position or rack.'); return;
+    }
+    const position = existing ?? { id: crypto.randomUUID(), name: placement.kind === 'rack' ? `${placement.name} anchor` : placement.name, clusterId: placement.clusterId, ...coordinate };
+    const next: LayoutDraft = { ...draft, positions: existing ? draft.positions : [...draft.positions, position] };
+    let id = position.id;
+    if (placement.kind === 'rack') {
+      id = crypto.randomUUID();
+      next.racks = [...draft.racks, { id, name: placement.name, positionId: position.id, width: placement.width, depth: placement.depth, totalU: placement.totalU }];
+    }
+    if (validChange(next)) { setSelected(id); setPlacement(null); }
   }
   function remove() {
     if (draft.clusters.some((c) => c.id === selected)) {
-      if (draft.positions.some((p) => p.clusterId === selected)) {
-        setError('Remove positions before deleting the cluster.');
-        return;
-      }
+      if (draft.positions.some((p) => p.clusterId === selected)) { setError('Remove positions before archiving the bay.'); return; }
       change({ ...draft, clusters: draft.clusters.filter((c) => c.id !== selected) });
     } else if (draft.positions.some((p) => p.id === selected)) {
-      if (draft.racks.some((r) => r.positionId === selected)) {
-        setError('Assign or remove the rack before deleting its position.');
-        return;
-      }
+      if (draft.racks.some((r) => r.positionId === selected)) { setError('Remove the rack placement before its position.'); return; }
       change({ ...draft, positions: draft.positions.filter((p) => p.id !== selected) });
     } else change({ ...draft, racks: draft.racks.filter((r) => r.id !== selected) });
     setSelected('');
   }
   async function save() {
-    if (validation) {
-      setError(validation);
-      return;
-    }
-    setBusy(true);
+    if (validation || boundary || placement) { setError(validation ?? 'Finish the canvas operation first.'); return; }
+    setBusy(true); setError('');
     try {
-      const response = await fetch(`/api/spatial/rooms/${roomId}/layout`, {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(draft),
-      });
-      const result = (await response.json()) as { error?: string; draft: LayoutDraft };
+      const response = await fetch(`/api/spatial/rooms/${roomId}/layout`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(draft) });
+      const result = await response.json() as { error?: string; draft: LayoutDraft };
       if (!response.ok) throw new Error(result.error ?? 'Save failed');
-      setDraft(result.draft);
-      setSaved(result.draft);
-      setPast([]);
-      setFuture([]);
-      setEditing(false);
-      router.refresh();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Save failed');
-    } finally {
-      setBusy(false);
-    }
+      setDraft(result.draft); setSaved(result.draft); setPast([]); setFuture([]); setEditing(false); router.refresh();
+    } catch (e) { setError(e instanceof Error ? e.message : 'Save failed'); } finally { setBusy(false); }
   }
-  const position = draft.positions.find((p) => p.id === selected);
+  function applyBoundary(polygon: PointMm[]) {
+    if (!boundary) return;
+    if (boundary.kind === 'room') {
+      change({ ...draft, polygon });
+    } else {
+      const updated = { id: boundary.id, name: boundary.name, polygon, variant: boundary.variant };
+      change({ ...draft, clusters: draft.clusters.some((c) => c.id === boundary.id) ? draft.clusters.map((c) => c.id === boundary.id ? updated : c) : [...draft.clusters, updated] });
+      setSelected(boundary.id);
+    }
+    setBoundary(null);
+  }
+  const bay = draft.clusters.find((c) => c.id === selected);
   const rack = draft.racks.find((r) => r.id === selected);
-  const persistedRack = rack ? saved.racks.find((r) => r.id === rack.id) : undefined;
-  const persistedPosition = persistedRack
-    ? saved.positions.find((p) => p.id === persistedRack.positionId)
-    : undefined;
-  return (
-    <section className="mk-room-editor">
-      <header className="mk-draft-toolbar">
-        <strong>{editing ? 'EDIT' : 'EXPLORE'}</strong>
-        {canWrite && !editing && <button onClick={() => setEditing(true)}>EDIT ROOM</button>}
-        {editing && (
-          <>
-            <button
-              disabled={!past.length || busy}
-              onClick={() => {
-                const prev = past.at(-1);
-                if (prev) {
-                  setFuture((f) => [draft, ...f]);
-                  setDraft(prev);
-                  setPast((p) => p.slice(0, -1));
-                }
-              }}
-            >
-              Undo
-            </button>
-            <button
-              disabled={!future.length || busy}
-              onClick={() => {
-                const next = future[0];
-                if (next) {
-                  setPast((p) => [...p, draft]);
-                  setDraft(next);
-                  setFuture((f) => f.slice(1));
-                }
-              }}
-            >
-              Redo
-            </button>
-            <button
-              disabled={busy}
-              onClick={() => {
-                setDraft(saved);
-                setPast([]);
-                setFuture([]);
-                setEditing(false);
-                setError('');
-              }}
-            >
-              Cancel
-            </button>
-            <button disabled={busy || !!validation} onClick={save}>
-              {busy ? 'Saving…' : 'SAVE LAYOUT'}
-            </button>
-          </>
-        )}
-      </header>
-      <div className={`mk-draft-workbench ${editing ? 'is-editing' : ''}`}>
-        <div>
-          {draft.polygon.length >= 3 ? (
-            <BlueprintCanvas
-              polygon={draft.polygon}
-              clusters={draft.clusters}
-              racks={layout.racks}
-              slots={[]}
-              positions={layout.positions}
-              onSelectPosition={editing ? setSelected : undefined}
-              onSelectRack={editing ? setSelected : undefined}
-              focusRackId={
-                focusRackId ?? draft.racks.find((rack) => rack.positionId === focusPositionId)?.id
-              }
-              focusBayId={
-                focusBayId ??
-                draft.positions.find((position) => position.id === focusPositionId)?.clusterId
-              }
-              focusPositionId={focusPositionId}
-            />
-          ) : (
-            <div className="mk-empty-boundary">Define the surveyed room boundary to begin.</div>
-          )}
-        </div>
-        {editing && (
-          <aside className="mk-draft-inspector">
-            <fieldset disabled={busy}>
-              <h3>ROOM GEOMETRY</h3>
-              <label>
-                Surveyed polygon · x,y in mm
-                <textarea
-                  rows={5}
-                  defaultValue={draft.polygon.map((p) => `${p.x},${p.y}`).join('\n')}
-                  key={saved.version}
-                  onBlur={(e) => {
-                    const polygon = e.target.value
-                      .trim()
-                      .split('\n')
-                      .map((line) => {
-                        const [x, y] = line.split(',').map(Number);
-                        return { x: x ?? NaN, y: y ?? NaN };
-                      });
-                    change({ ...draft, polygon });
-                  }}
-                />
-              </label>
-              <details>
-                <summary>+ Add Cluster</summary>
-                <form onSubmit={add}>
-                  <input type="hidden" name="kind" value="cluster" />
-                  <label>
-                    Name
-                    <input name="name" required maxLength={120} />
-                  </label>
-                  <div className="mk-input-pair">
-                    <label>
-                      X tile
-                      <input name="x" type="number" min="0" defaultValue="0" required />
-                    </label>
-                    <label>
-                      Y tile
-                      <input name="y" type="number" min="0" defaultValue="0" required />
-                    </label>
-                    <label>
-                      Width tiles
-                      <input name="width" type="number" min="1" defaultValue="6" required />
-                    </label>
-                    <label>
-                      Depth tiles
-                      <input name="depth" type="number" min="1" defaultValue="2" required />
-                    </label>
-                  </div>
-                  <button>Add cluster</button>
-                </form>
-              </details>
-              <details>
-                <summary>+ Add Position (rack anchor)</summary>
-                <form onSubmit={add}>
-                  <input type="hidden" name="kind" value="position" />
-                  <label>
-                    Name
-                    <input name="name" required maxLength={120} />
-                  </label>
-                  <label>
-                    Cluster
-                    <select name="clusterId" required>
-                      <option value="">Select</option>
-                      {draft.clusters.map((c) => (
-                        <option value={c.id} key={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="mk-input-pair">
-                    <label>
-                      Row
-                      <input name="row" pattern="[A-Za-z]{1,3}" defaultValue="A" required />
-                    </label>
-                    <label>
-                      Column
-                      <input name="column" type="number" min="1" defaultValue="1" required />
-                    </label>
-                  </div>
-                  <button>Add position</button>
-                </form>
-              </details>
-              <details>
-                <summary>+ Add Rack / Container with footprint</summary>
-                <form onSubmit={add}>
-                  <input type="hidden" name="kind" value="rack" />
-                  <label>
-                    Name
-                    <input name="name" required maxLength={120} />
-                  </label>
-                  <label>
-                    Available position
-                    <select name="positionId" required>
-                      <option value="">Select</option>
-                      {draft.positions
-                        .filter((p) => !draft.racks.some((r) => r.positionId === p.id))
-                        .map((p) => (
-                          <option value={p.id} key={p.id}>
-                            {p.name} · {p.row}-{p.column}
-                          </option>
-                        ))}
-                    </select>
-                  </label>
-                  <div className="mk-input-pair">
-                    <label>
-                      Footprint width mm (can span multiple 600 mm cells)
-                      <input name="width" type="number" min="1" defaultValue="600" required />
-                    </label>
-                    <label>
-                      Footprint depth mm
-                      <input name="depth" type="number" min="1" defaultValue="600" required />
-                    </label>
-                    <label>
-                      Capacity U
-                      <input
-                        name="totalU"
-                        type="number"
-                        min="1"
-                        max="100"
-                        defaultValue="42"
-                        required
-                      />
-                    </label>
-                  </div>
-                  <button>Place rack</button>
-                </form>
-              </details>
-              <h3>SELECT / MOVE / ASSIGN</h3>
-              <select
-                aria-label="Selected layout object"
-                value={selected}
-                onChange={(e) => setSelected(e.target.value)}
-              >
-                <option value="">Select an object</option>
-                {[...draft.clusters, ...draft.positions, ...draft.racks].map((n) => (
-                  <option key={n.id} value={n.id}>
-                    {n.name}
-                  </option>
-                ))}
-              </select>
-              {position && (
-                <div className="mk-input-pair">
-                  <label>
-                    Grid row
-                    <input
-                      value={position.row}
-                      onChange={(e) =>
-                        change({
-                          ...draft,
-                          positions: draft.positions.map((p) =>
-                            p.id === selected ? { ...p, row: e.target.value.toUpperCase() } : p,
-                          ),
-                        })
-                      }
-                    />
-                  </label>
-                  <label>
-                    Grid column
-                    <input
-                      type="number"
-                      min="1"
-                      value={position.column}
-                      onChange={(e) =>
-                        change({
-                          ...draft,
-                          positions: draft.positions.map((p) =>
-                            p.id === selected ? { ...p, column: Number(e.target.value) } : p,
-                          ),
-                        })
-                      }
-                    />
-                  </label>
-                </div>
-              )}
-              {rack && (
-                <p className="rack-footprint-summary">
-                  Footprint: {rack.width} × {rack.depth} mm · covers {Math.ceil(rack.width / 600)} ×{' '}
-                  {Math.ceil(rack.depth / 600)} grid cells from its anchor. Server validation
-                  enforces room/bay boundaries and collisions.
-                </p>
-              )}
-              {rack && (
-                <label>
-                  Explicitly assign rack to position
-                  <select
-                    value={rack.positionId}
-                    onChange={(e) =>
-                      change({
-                        ...draft,
-                        racks: draft.racks.map((r) =>
-                          r.id === selected ? { ...r, positionId: e.target.value } : r,
-                        ),
-                      })
-                    }
-                  >
-                    {draft.positions
-                      .filter(
-                        (p) =>
-                          p.id === rack.positionId ||
-                          (!draft.racks.some((r) => r.positionId === p.id) &&
-                            (!persistedPosition || p.clusterId === persistedPosition.clusterId)),
-                      )
-                      .map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {draft.clusters.find((c) => c.id === p.clusterId)?.name} / {p.name}
-                        </option>
-                      ))}
-                  </select>
-                  {persistedPosition && (
-                    <small>
-                      Move is limited to this bay. To change bay, delete the rack placement and
-                      create it again.
-                    </small>
-                  )}
-                </label>
-              )}
-              <button disabled={!selected} onClick={remove}>
-                Delete selected
-              </button>
-              <p>
-                Delete archives empty physical objects on Save. Inventory-bearing racks cannot be
-                removed.
-              </p>
-            </fieldset>
-          </aside>
-        )}
+  const position = draft.positions.find((p) => p.id === (rack?.positionId ?? selected));
+  const selectBay = <label>Bay / Cluster<select name="clusterId" required defaultValue=""><option value="">Select a bay</option>{draft.clusters.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>;
+  return <section className="mk-room-editor">
+    <header className="mk-draft-toolbar">
+      <strong>{editing ? 'EDIT · UNSAVED DRAFT' : 'EXPLORE'}</strong>
+      {canWrite && !editing && <button onClick={() => setEditing(true)}>EDIT ROOM</button>}
+      {editing && <>
+        <button disabled={busy || !!boundary || !!placement || !past.length} onClick={() => { const prev = past.at(-1); if (prev) { setFuture((f) => [draft, ...f]); setDraft(prev); setPast((p) => p.slice(0, -1)); } }}>Undo</button>
+        <button disabled={busy || !!boundary || !!placement || !future.length} onClick={() => { const next = future[0]; if (next) { setPast((p) => [...p, draft]); setDraft(next); setFuture((f) => f.slice(1)); } }}>Redo</button>
+        <button disabled={busy} onClick={() => { setDraft(saved); setPast([]); setFuture([]); setEditing(false); setBoundary(null); setPlacement(null); setError(''); }}>Cancel</button>
+        <button disabled={busy || !!validation || !!boundary || !!placement} onClick={() => void save()}>{busy ? 'Saving…' : 'SAVE LAYOUT'}</button>
+      </>}
+    </header>
+    <div className={`mk-draft-workbench ${editing ? 'is-editing' : ''}`}>
+      <div className="spatial-room-stage">
+        {boundary ? <PolygonEditor key={boundary.kind === 'room' ? 'room' : boundary.id}
+          title={boundary.kind === 'room' ? 'EDIT ROOM BOUNDARY' : `DRAW / EDIT BAY · ${boundary.name}`}
+          initial={boundary.kind === 'room' ? draft.polygon : boundary.polygon}
+          context={boundary.kind === 'bay' ? draft.polygon : []}
+          validate={(polygon) => boundary.kind === 'bay' && !polygonInsidePolygon(polygon, draft.polygon) ? 'The complete bay boundary must stay inside the room.' : null}
+          onConfirm={applyBoundary} onCancel={() => setBoundary(null)} confirmLabel="Apply to draft" /> : draft.polygon.length >= 3 ? <BlueprintCanvas
+          polygon={draft.polygon} clusters={draft.clusters} racks={layout.racks} slots={[]} positions={layout.positions}
+          onSelectPosition={editing && !busy ? setSelected : undefined} onSelectRack={editing && !busy ? setSelected : undefined} onSelectBay={editing && !busy ? setSelected : undefined}
+          onPlace={editing && placement && !busy ? place : undefined}
+          focusRackId={focusRackId ?? draft.racks.find((r) => r.positionId === focusPositionId)?.id}
+          focusBayId={focusBayId ?? draft.positions.find((p) => p.id === focusPositionId)?.clusterId} focusPositionId={focusPositionId}
+        /> : <div className="mk-empty-boundary">Draw the room boundary to begin.</div>}
       </div>
-      {editing && validation && (
-        <p className="mk-draft-feedback" role="status">
-          Layout requires correction: {validation}
-        </p>
-      )}
-      {error && (
-        <p className="mk-draft-feedback" role="alert">
-          {error}
-        </p>
-      )}
-    </section>
-  );
+      {editing && <aside className="mk-draft-inspector"><fieldset disabled={busy || !!boundary}>
+        <h3>ROOM GEOMETRY</h3>
+        <button type="button" onClick={() => { setPlacement(null); setBoundary({ kind: 'room' }); }}>{draft.polygon.length ? 'EDIT ROOM BOUNDARY' : 'DRAW ROOM BOUNDARY'}</button>
+        <p>Draw and edit on the canvas. Apply updates the draft; SAVE LAYOUT persists all changes.</p>
+        {placement && <div className="spatial-placement-prompt" role="status"><strong>Click the canvas to {placement.kind === 'move' ? 'move the selected anchor' : `place ${placement.name}`}.</strong><button type="button" onClick={() => { setPlacement(null); setError(''); }}>Cancel placement</button></div>}
+        <details><summary>+ Draw Bay / Cluster</summary><form onSubmit={add}>
+          <input type="hidden" name="kind" value="bay" /><label>Name<input name="name" required maxLength={120} /></label>
+          <label>Type<select name="variant"><option value="BAY">Bay</option><option value="CONTAINER_CLUSTER">Cluster</option></select></label>
+          <button disabled={draft.polygon.length < 3}>Draw boundary</button>
+        </form></details>
+        <details><summary>+ Place Rack</summary><form onSubmit={add}>
+          <input type="hidden" name="kind" value="rack" /><label>Name<input name="name" required maxLength={120} /></label>{selectBay}
+          <label>Footprint width (mm)<input name="width" type="number" min="1" max="10000" step="1" defaultValue="600" required /></label>
+          <label>Footprint depth (mm)<input name="depth" type="number" min="1" max="10000" step="1" defaultValue="600" required /></label>
+          <label>Capacity (U)<input name="totalU" type="number" min="1" max="100" step="1" defaultValue="42" required /></label>
+          <button>Choose placement on canvas</button>
+        </form></details>
+        <details><summary>+ Place Empty Position</summary><form onSubmit={add}>
+          <input type="hidden" name="kind" value="position" /><label>Name<input name="name" required maxLength={120} /></label>{selectBay}
+          <button>Choose cell on canvas</button>
+        </form></details>
+        <h3>SELECT / EDIT</h3>
+        <select aria-label="Selected layout object" value={selected} onChange={(e) => setSelected(e.target.value)}>
+          <option value="">Select an object</option>{[...draft.clusters, ...draft.positions, ...draft.racks].map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
+        </select>
+        {bay && <button type="button" onClick={() => { setPlacement(null); setBoundary({ kind: 'bay', ...bay, variant: bay.variant ?? 'BAY' }); }}>EDIT BAY BOUNDARY</button>}
+        {position && <><p>Anchor: {position.row}-{position.column}</p><button type="button" onClick={() => setPlacement({ kind: 'move', id: position.id })}>Move anchor on canvas</button></>}
+        {rack && <label>Assign to an empty position in this bay
+          <select value={rack.positionId} onChange={(e) => validChange({ ...draft, racks: draft.racks.map((r) => r.id === rack.id ? { ...r, positionId: e.target.value } : r) })}>
+            {draft.positions.filter((p) => p.id === rack.positionId || (p.clusterId === position?.clusterId && !draft.racks.some((r) => r.positionId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          </select>
+        </label>}
+        {rack && <form key={rack.id} onSubmit={(e) => {
+          e.preventDefault(); const f = new FormData(e.currentTarget);
+          validChange({ ...draft, racks: draft.racks.map((r) => r.id === rack.id ? { ...r, name: String(f.get('name')).trim(), width: Number(f.get('width')), depth: Number(f.get('depth')) } : r) });
+        }}><label>Name<input name="name" defaultValue={rack.name} required maxLength={120} /></label>
+          <label>Width (mm)<input name="width" type="number" min="1" max="10000" defaultValue={rack.width} required /></label>
+          <label>Depth (mm)<input name="depth" type="number" min="1" max="10000" defaultValue={rack.depth} required /></label>
+          <p>{rack.totalU} U · capacity changes require a separate CAS migration.</p><button>Apply rack properties</button>
+        </form>}
+        <button type="button" disabled={!selected || !!placement} onClick={remove}>Remove selected from layout</button>
+        <p>On Save, persisted empty objects are archived. Racks containing inventory or reserved capacity cannot be removed.</p>
+      </fieldset></aside>}
+    </div>
+    {editing && validation && <p className="mk-draft-feedback" role="status">Layout requires correction: {validation}</p>}
+    {error && <p className="mk-draft-feedback" role="alert">{error}</p>}
+  </section>;
 }

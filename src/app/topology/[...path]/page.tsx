@@ -1,3 +1,4 @@
+import { SiteBoundaryWorkspace } from '@/components/topology/site-boundary-workspace';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
@@ -5,7 +6,7 @@ import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import { BdfbChassis, type BreakerPowerBinding } from '@/components/power/bdfb-chassis';
 import { BdfbPowerTree } from '@/components/power/bdfb-power-tree';
 import { TopologyContextTree } from '@/components/topology/context-tree';
-import { TopologyCreateForm } from '@/components/topology/topology-create-form';
+import { TopologyCreateControl } from '@/components/topology/topology-create-form';
 import { TopologyPropertiesPanel } from '@/components/topology/topology-properties-panel';
 import {
   TopologyVisualStage,
@@ -329,6 +330,10 @@ export default async function TopologyNodePage({
                 title="Physical geometry unavailable"
                 description="This room has no preserved polygon, so MK1 will not invent a blueprint."
               />
+            ) : node.kind === 'SITE' ? (
+              <SiteBoundaryWorkspace node={node} canWrite={canWrite}>
+                <TopologyVisualStage node={node} items={childEntries} />
+              </SiteBoundaryWorkspace>
             ) : (
               <TopologyVisualStage
                 node={node}
@@ -342,10 +347,7 @@ export default async function TopologyNodePage({
           {canWrite && childKinds.length > 0 && (
             <div className="operational-edit-dock">
               {childKinds.map((kind) => (
-                <details className="edit-disclosure" key={kind}>
-                  <summary>Create {kind.replaceAll('_', ' ').toLowerCase()}</summary>
-                  <TopologyCreateForm kind={kind} parentId={node.id} />
-                </details>
+                <TopologyCreateControl key={kind} kind={kind} parentId={node.id} />
               ))}
             </div>
           )}

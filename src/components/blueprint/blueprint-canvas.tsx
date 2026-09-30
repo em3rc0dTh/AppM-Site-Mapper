@@ -10,7 +10,7 @@ import type {
   ClusterPlacementView,
   RackPlacementView,
 } from '@/modules/spatial/application/spatial-service';
-import { gridCoordinateToPoint } from '@/modules/spatial/domain/grid';
+import { gridCoordinateToPoint, pointToGridCoordinate } from '@/modules/spatial/domain/grid';
 import { polygonArea, type PointMm, type RectMm } from '@/modules/spatial/domain/geometry';
 
 interface ViewState {
@@ -44,9 +44,9 @@ function rectKey(rect: RectMm): string {
 function gridLabels(polygon: readonly PointMm[]) {
   const xs = polygon.map((point) => point.x);
   const ys = polygon.map((point) => point.y);
-  const minX = Math.min(...xs);
+  const minX = Math.floor(Math.min(...xs) / 600) * 600;
   const maxX = Math.max(...xs);
-  const minY = Math.min(...ys);
+  const minY = Math.floor(Math.min(...ys) / 600) * 600;
   const maxY = Math.max(...ys);
   const tile = 600;
   const columns = Math.max(1, Math.ceil((maxX - minX) / tile));
@@ -56,20 +56,11 @@ function gridLabels(polygon: readonly PointMm[]) {
     minX,
     minY,
     columns: Array.from({ length: columns }, (_, index) => ({
-      label: String(index + 1),
+      label: String(Math.floor(minX / tile) + index + 1),
       x: minX + index * tile + tile / 2,
     })),
     rows: Array.from({ length: rows }, (_, index) => ({
-      label: (() => {
-        let n = index + 1,
-          s = '';
-        while (n > 0) {
-          n--;
-          s = String.fromCharCode(65 + (n % 26)) + s;
-          n = Math.floor(n / 26);
-        }
-        return s;
-      })(),
+      label: pointToGridCoordinate({ x: 0, y: minY + index * tile })?.row ?? '—',
       y: minY + index * tile + tile / 2,
     })),
   };
@@ -91,6 +82,8 @@ export function BlueprintCanvas({
   positions = [],
   onSelectPosition,
   onSelectRack,
+  onSelectBay,
+  onPlace,
   focusRackId,
   focusBayId,
   focusPositionId,
@@ -108,6 +101,8 @@ export function BlueprintCanvas({
   }[];
   onSelectPosition?: ((id: string) => void) | undefined;
   onSelectRack?: ((id: string) => void) | undefined;
+  onSelectBay?: ((id: string) => void) | undefined;
+  onPlace?: ((point: PointMm) => void) | undefined;
   focusRackId?: string | undefined;
   focusBayId?: string | undefined;
   focusPositionId?: string | undefined;
@@ -159,6 +154,7 @@ export function BlueprintCanvas({
   const [focusedRackId, setFocusedRackId] = useState<string | null>(focusRackId ?? null);
   const [tool, setTool] = useState<'select' | 'pan'>('select');
   function inspectBay(cluster: ClusterPlacementView) {
+    if (onSelectBay) { onSelectBay(cluster.id); return; }
     setSelectedBayId(cluster.id);
     setSelectedRackId(null);
     const polygon = cluster.polygon;
@@ -275,7 +271,7 @@ export function BlueprintCanvas({
         </div>
         <div className="zip-blueprint-mode">
           <span className="zip-blueprint-mode-dot" />
-          <b>VIEW MODE</b>
+          <b>{onPlace ? 'CLICK TO PLACE' : 'VIEW MODE'}</b>
         </div>
       </header>
 
@@ -326,6 +322,13 @@ export function BlueprintCanvas({
           ref={svgRef}
           className="blueprint-canvas"
           viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
+          onClick={(event) => {
+            if (!onPlace || tool !== 'select') return;
+            const matrix = svgRef.current?.getScreenCTM();
+            if (!matrix) return;
+            const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+            onPlace({ x: p.x, y: p.y });
+          }}
           onPointerDown={pointerDown}
           onPointerMove={pointerMove}
           onPointerUp={pointerUp}
@@ -387,7 +390,7 @@ export function BlueprintCanvas({
                 role="button"
                 aria-label={`Inspect bay ${cluster.name}`}
                 onClick={() => {
-                  if (tool === 'select') inspectBay(cluster);
+                  if (tool === 'select' && !onPlace) inspectBay(cluster);
                 }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') inspectBay(cluster);
@@ -425,6 +428,7 @@ export function BlueprintCanvas({
                   tabIndex={0}
                   aria-label={`Available ${position.name}`}
                   onClick={() => {
+                    if (onPlace) return;
                     if (onSelectPosition) onSelectPosition(position.id);
                     else {
                       setSelectedBayId(null);
@@ -487,10 +491,10 @@ export function BlueprintCanvas({
               tabIndex={0}
               aria-label={`Inspect ${rack.name}`}
               onClick={() => {
-                if (tool === 'select') inspectRack(rack);
+                if (tool === 'select' && !onPlace) inspectRack(rack);
               }}
               onDoubleClick={() => {
-                if (tool === 'select' && !onSelectRack) {
+                if (tool === 'select' && !onSelectRack && !onPlace) {
                   inspectRack(rack);
                   setFocusedRackId(rack.id);
                 }

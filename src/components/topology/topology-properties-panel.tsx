@@ -1,3 +1,4 @@
+import { isValidPolygon, polygonArea } from '@/modules/spatial/domain/geometry';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 
 function value(value: string | number | undefined, fallback = '—'): string {
@@ -61,7 +62,11 @@ export function TopologyPropertiesPanel({
           <dl className="telxius-property-list">
             <div>
               <dt>TOTAL AREA</dt>
-              <dd>{node.totalAreaSqm !== undefined ? `${node.totalAreaSqm} m²` : '—'}</dd>
+              <dd>{isValidPolygon(node.polygon) ? `${(polygonArea(node.polygon) / 1_000_000).toFixed(2)} m²` : '—'}</dd>
+            </div>
+            <div>
+              <dt>BOUNDARY</dt>
+              <dd>{node.polygon?.length ? `${node.polygon.length} vertices` : 'Not drawn'}</dd>
             </div>
             <div>
               <dt>CATEGORY</dt>

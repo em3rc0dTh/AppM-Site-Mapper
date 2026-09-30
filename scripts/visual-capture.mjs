@@ -244,7 +244,11 @@ if (bdfbLink) {
   });
   assert.ok(overviewGeometry, 'BDFB overview geometry must exist');
   assert.equal(overviewGeometry.frameCount, 2, 'BDFB overview must render A/B as two frames');
-  assert.equal(overviewGeometry.panelCount, 6, 'BDFB overview must render six physical panel slots');
+  assert.equal(
+    overviewGeometry.panelCount,
+    6,
+    'BDFB overview must render six physical panel slots',
+  );
   assert.ok(overviewGeometry.framesSideBySide, 'BDFB A/B frames must render side-by-side');
   assert.ok(overviewGeometry.panelsStacked, 'BDFB panel slots must stack vertically within A/B');
   assert.ok(

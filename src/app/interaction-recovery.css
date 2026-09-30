@@ -947,3 +947,100 @@
     flex: 0 0 auto;
   }
 }
+
+
+/* BDFB live-at-a-glance telemetry summary. */
+.zip-bdfb-page .inspector-live-summary {
+  margin: 14px 18px 12px;
+  border: 1px solid #b9d9cf;
+  border-radius: 6px;
+  padding: 12px;
+  background: #f5fbf8;
+  color: #17352d;
+}
+.zip-bdfb-page .inspector-live-summary > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.zip-bdfb-page .inspector-live-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.zip-bdfb-page .inspector-live-label > i,
+.zip-bdfb-page .bdfb-live-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #11a36a;
+  box-shadow: 0 0 0 3px #11a36a1f;
+}
+.zip-bdfb-page .inspector-live-summary > header small {
+  min-width: 0;
+  overflow: hidden;
+  color: #507066;
+  font-size: 9px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zip-bdfb-page .inspector-live-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.zip-bdfb-page .inspector-live-metrics > div {
+  min-width: 0;
+  border: 1px solid #dbeae5;
+  border-radius: 4px;
+  padding: 9px 10px;
+  background: #fff;
+}
+.zip-bdfb-page .inspector-live-metrics span,
+.zip-bdfb-page .inspector-live-summary > footer span {
+  display: block;
+  color: #658078;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.zip-bdfb-page .inspector-live-metrics strong {
+  display: block;
+  margin-top: 3px;
+  color: #142c25;
+  font-size: 15px;
+  line-height: 1.2;
+}
+.zip-bdfb-page .inspector-live-summary > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid #dbeae5;
+}
+.zip-bdfb-page .inspector-live-summary > footer time {
+  color: #2f5a4d;
+  font-size: 10px;
+  font-weight: 800;
+}
+.zip-bdfb-page .bdfb-endpoint {
+  position: relative;
+}
+.zip-bdfb-page .bdfb-endpoint[data-telemetry='live'] {
+  outline: 2px solid #19a66f66;
+  outline-offset: -2px;
+}
+.zip-bdfb-page .bdfb-live-indicator {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 4;
+}

@@ -76,19 +76,32 @@ if (roomLink) {
 
   // A successful screenshot alone does not prove the requested light theme.
   // Fail the visual gate if the operational surfaces regress to the dark palette.
-  const roomColors = await page.evaluate(() => {
-    const color = (selector) => {
-      const element = document.querySelector(selector);
-      if (!element) throw new Error(`Missing room element: ${selector}`);
-      return getComputedStyle(element).backgroundColor;
-    };
-    return {
-      topbar: color('.zip-topbar'),
-      stage: color('.operational-stage'),
-      inspector: color('.zip-room-properties'),
-      draftingSurface: color('.blueprint-canvas-shell'),
-    };
-  });
+  let roomColors;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    await page.locator('.zip-room-properties').waitFor({ state: 'visible', timeout: 15_000 });
+    try {
+      roomColors = await page.evaluate(() => {
+        const color = (selector) => {
+          const element = document.querySelector(selector);
+          if (!element) throw new Error(`Missing room element: ${selector}`);
+          return getComputedStyle(element).backgroundColor;
+        };
+        return {
+          topbar: color('.zip-topbar'),
+          stage: color('.operational-stage'),
+          inspector: color('.zip-room-properties'),
+          draftingSurface: color('.blueprint-canvas-shell'),
+        };
+      });
+      break;
+    } catch (error) {
+      // Next can replace the evaluation context while hydrating the deep link.
+      if (attempt === 4 || !String(error).includes('Execution context was destroyed')) {
+        throw error;
+      }
+      await page.waitForTimeout(500);
+    }
+  }
   assert.deepEqual(roomColors, {
     topbar: 'rgb(255, 255, 255)',
     stage: 'rgb(255, 255, 255)',

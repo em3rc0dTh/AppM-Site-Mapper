@@ -118,3 +118,75 @@ Classify each item as `PASS`, `FAIL`, or `GAP`. A missing product capability is 
 ## Safety
 
 Never point `MONGODB_CRUD_DB_NAME` at the current production/customer-style test inventory. The clean-room launcher intentionally uses a separate database variable so CRUD certification cannot silently overwrite the existing Site Mapper dataset.
+
+## Spatial implementation delivery — 2026-09-30 (not certified)
+
+The user explicitly requested execution and GitHub push **without tests**. No
+unit/integration/browser tests, typecheck, lint, production build or database
+acceptance run were executed for this delivery. No tests were added. Commit
+messages request `[skip ci]`; no green CI or release gate is claimed.
+
+Implemented source changes:
+
+- A controlled Create Site/Room action replaces the explorer's conflicting
+  native disclosure positioning. Metadata appears above the dock inside the
+  viewport; Define boundary opens a stage-local drawing surface.
+- Site/Room creation keeps metadata and polygon local until explicit Save,
+  then POSTs the complete entity. Cancel does not insert an incomplete entity.
+- A shared light canvas supports vertices, open-edge preview, Finish boundary,
+  vertex dragging, edge insertion, removal, Undo, Clear, Cancel, optional grid
+  snapping, pan and zoom. No coordinate textboxes or default rectangles.
+- Site boundary editing uses optimistic concurrency. The Site explorer displays
+  the saved boundary even when it has no structures; area derives from polygon.
+- Room/Bay boundary changes apply to the local layout draft. SAVE LAYOUT remains
+  the only persistence operation; it validates all boundaries and rack footprints.
+- Rack/Position placement and moves use canvas clicks, with separately specified
+  width, depth and rack U capacity. Existing rack capacity remains immutable
+  without a CAS migration; name/footprint updates and same-bay reassignment remain.
+- Domain validation rejects malformed polygons, crossings, degeneracy, concave
+  boundary escapes, invalid placement/capacity and rack collisions. Server write
+  permission checks remain authoritative. Archived ancestors reject spatial writes.
+
+### Manual sequence for the operator (not executed in this delivery)
+
+1. Continue the existing dataset with `npm run local:mongo-crud`, **not** `:new`.
+   Use the existing Perú Network; do not seed/reset/import any topology.
+2. Open the Network, click CREATE SITE, enter a name, choose Define boundary.
+   Draw at least three vertices, Finish boundary, Save Site. Open the new Site.
+3. Reload and compare the boundary. Click EDIT BOUNDARY, move a vertex, insert
+   another by clicking an edge, remove a selected vertex, exercise Undo/Cancel.
+   Save an intentional edit, reload and compare it again.
+4. Create Structure → Level. Create Room with its name/type and a drawn boundary.
+   Open the Room Blueprint → EDIT ROOM → edit/apply its boundary.
+5. Draw a Bay/Cluster inside the Room and Apply to draft. SAVE LAYOUT and reload.
+   Select the Bay visually or in the inspector and edit/apply/save its boundary.
+6. Choose Place Rack, enter name, Bay, footprint width/depth and capacity. Click
+   a valid cell in the Room. SAVE LAYOUT; reload. Select the rack and move its
+   anchor by canvas click; edit supported properties and save again.
+7. Exercise degenerate/self-crossing polygons, concave escapes, Bay outside Room,
+   rack outside Bay/Room, collisions, unauthorized writes and two-tab stale saves.
+   Invalid changes must remain unpersisted. Exercise Cancel, reload, restart and
+   deep-link recovery. Record actual results, never assume success from this code.
+8. Remove empty rack → position → bay in dependency order and save. Removal
+   archives existing objects; it never physically deletes records. Restore is
+   available at the topology application/API layer; a dedicated archived-object
+   restore control in Blueprint is still a UI GAP.
+
+### Acceptance status and remaining gaps
+
+| Capability | Current evidence |
+| --- | --- |
+| Create Network | Prior user-reported PASS; not repeated here |
+| Canvas Site/Room/Bay creation and edits | Implemented; execution/acceptance pending |
+| Viewport, pointer transform, Undo, Cancel | Implemented; visual acceptance pending |
+| Persistence, reload, restart, deep-link recovery | Implemented paths; acceptance pending |
+| Domain/auth/concurrency rejection | Implemented; runtime acceptance pending |
+| Generic topology rename/property update | GAP (layout-specific updates only) |
+| Physical topology DELETE | GAP; archive is not delete |
+| Blueprint archived-object restore control | GAP; existing restore API retained |
+| Tests, build, CI certification | Not executed / not certified by instruction |
+
+No running MongoDB inventory was connected to or modified during implementation.
+No clean-room database was recreated. MQTT mappings, TimescaleDB, BDFB and
+telemetry implementation were not changed. `main` is not the delivery target;
+all changes belong on `feat/mk1-raw-build`, without merge.

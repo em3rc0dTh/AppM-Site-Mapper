@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { parseAssetTemplateJson } from '@/modules/warehouse/application/template-json-parser';
 import { WarehouseInstantiationService } from '@/modules/warehouse/application/warehouse-instantiation-service';
 import { WarehouseService } from '@/modules/warehouse/application/warehouse-service';
 import { MemoryWarehouseRepository } from '@/modules/warehouse/infrastructure/memory-warehouse-repository';
@@ -94,5 +95,112 @@ describe('Virtual Warehouse', () => {
     const stored = await topology.getById(result.value.node.id);
     expect(stored).toEqual(result.value.node);
     expect(rack.cas.every((range) => range.state !== 'EQUIPPED')).toBe(true);
+  });
+
+
+  it('materializes a BDFB template into a navigable BDFB device with telemetry bindings', async () => {
+    const input = parseAssetTemplateJson({
+      kind: 'DEVICE',
+      name: 'BDFB Emulator 96P',
+      manufacturer: 'Eaton',
+      model: 'BDFB-EMU-96',
+      category: 'Power distribution',
+      deviceType: 'BDFB',
+      sizeU: 4,
+      dimensionsMm: { width: 482, depth: 600 },
+      physicalBlueprint: {
+        type: 'BDFB',
+        shelves: [
+          {
+            label: 'Feed A (synthetic)',
+            frames: [
+              {
+                label: 'Feed A',
+                panels: [
+                  {
+                    label: 'A1',
+                    endpointCount: 24,
+                    endpointVariant: 'BREAKER',
+                    rawPointPrefix: '0_1_',
+                  },
+                  {
+                    label: 'A2',
+                    endpointCount: 24,
+                    endpointVariant: 'BREAKER',
+                    rawPointPrefix: '0_2_',
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            label: 'Feed B (synthetic)',
+            frames: [
+              {
+                label: 'Feed B',
+                panels: [
+                  {
+                    label: 'B1',
+                    endpointCount: 24,
+                    endpointVariant: 'BREAKER',
+                    rawPointPrefix: '0_3_',
+                  },
+                  {
+                    label: 'B2',
+                    endpointCount: 24,
+                    endpointVariant: 'BREAKER',
+                    rawPointPrefix: '0_4_',
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    });
+    if (!input) throw new Error('BDFB template JSON did not parse');
+
+    const warehouse = new MemoryWarehouseRepository();
+    const createdTemplate = await new WarehouseService(warehouse).create(input);
+    if (!createdTemplate.ok) throw new Error(createdTemplate.error);
+
+    const rack: ContainerRackNode = {
+      id: 'rack-bdfb',
+      kind: 'CONTAINER_RACK',
+      variant: 'RACK',
+      parentId: 'position-bdfb',
+      name: 'Rack BDFB',
+      totalU: 42,
+      cas: initializeCas(42),
+      lifecycle: 'ACTIVE',
+      createdAt: '2026-09-30T00:00:00.000Z',
+      updatedAt: '2026-09-30T00:00:00.000Z',
+    };
+    const topology = new MemoryTopologyRepository([rack]);
+
+    const result = await new WarehouseInstantiationService(warehouse, topology).instantiate({
+      templateId: createdTemplate.value.id,
+      rackId: rack.id,
+      name: 'BDFB-LURIN-02',
+      serialNumber: 'EMU-BFDB-02',
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.value.node.kind).toBe('DEVICE');
+    if (result.value.node.kind !== 'DEVICE') return;
+    expect(result.value.node.deviceType).toBe('BDFB');
+    expect(result.value.node.bdfb?.shelves).toHaveLength(2);
+    const endpoints =
+      result.value.node.bdfb?.shelves.flatMap((shelf) =>
+        shelf.frames.flatMap((frame) => frame.panels.flatMap((panel) => panel.endpoints)),
+      ) ?? [];
+    expect(endpoints).toHaveLength(96);
+    expect(endpoints[0]?.telemetry?.rawPointId).toBe('0_1_1');
+    expect(endpoints.at(-1)?.telemetry?.rawPointId).toBe('0_4_24');
+    expect(result.value.node.template?.deviceType).toBe('BDFB');
+
+    const persisted = await topology.getById(result.value.node.id);
+    expect(persisted?.kind === 'DEVICE' ? persisted.bdfb?.shelves.length : 0).toBe(2);
   });
 });

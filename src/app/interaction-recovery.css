@@ -701,3 +701,33 @@
     align-items: flex-start !important;
   }
 }
+
+/* Show factual general room properties before any object selection. */
+.zip-room-properties .room-general-info {
+  display: block !important;
+  padding: 14px 18px !important;
+  background: #fff !important;
+  color: #172536 !important;
+}
+.room-general-info h3 {
+  font-size: 12px;
+  margin: 0 0 12px;
+  color: #1b3045;
+}
+.room-general-info dl {
+  display: grid;
+  grid-template-columns: minmax(80px, 1fr) minmax(110px, 1.3fr);
+  margin: 0;
+  font-size: 12px;
+}
+.room-general-info dt,
+.room-general-info dd {
+  margin: 0;
+  padding: 8px 0;
+  border-bottom: 1px solid #e6edf4;
+  color: #253b52 !important;
+  overflow-wrap: anywhere;
+}
+.room-general-info dd {
+  font-weight: 700;
+}

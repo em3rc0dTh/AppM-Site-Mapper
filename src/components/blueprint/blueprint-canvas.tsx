@@ -154,7 +154,10 @@ export function BlueprintCanvas({
   const [focusedRackId, setFocusedRackId] = useState<string | null>(focusRackId ?? null);
   const [tool, setTool] = useState<'select' | 'pan'>('select');
   function inspectBay(cluster: ClusterPlacementView) {
-    if (onSelectBay) { onSelectBay(cluster.id); return; }
+    if (onSelectBay) {
+      onSelectBay(cluster.id);
+      return;
+    }
     setSelectedBayId(cluster.id);
     setSelectedRackId(null);
     const polygon = cluster.polygon;

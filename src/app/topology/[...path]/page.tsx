@@ -137,9 +137,7 @@ export default async function TopologyNodePage({
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
   const siteContext =
-    node.kind === 'STRUCTURE'
-      ? [...trail].reverse().find((entry) => entry.kind === 'SITE')
-      : null;
+    node.kind === 'STRUCTURE' ? [...trail].reverse().find((entry) => entry.kind === 'SITE') : null;
   const siteBoundary =
     siteContext?.kind === 'SITE' && siteContext.polygon ? siteContext.polygon : [];
 

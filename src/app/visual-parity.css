@@ -1983,6 +1983,101 @@ body {
   text-align: right;
   font-weight: 800;
 }
+.zip-rack-inventory {
+  margin: 0 16px 12px;
+  border: 1px solid var(--zip-border);
+  padding: 12px;
+  background: #fff;
+}
+.zip-rack-inventory > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+.zip-rack-inventory > header h3 {
+  margin: 0;
+  font-size: 12px;
+}
+.zip-rack-inventory > header span {
+  color: #687b8f;
+  font-size: 10px;
+  font-weight: 700;
+}
+.zip-rack-inventory-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 9px;
+}
+.zip-rack-inventory-actions .spatial-create-control > button {
+  width: 100%;
+  min-height: 34px;
+  padding: 6px 8px;
+  font-size: 10px;
+}
+.zip-rack-inventory-actions .spatial-create-popover {
+  top: calc(100% + 6px);
+  bottom: auto;
+  right: 0;
+  left: auto;
+}
+.zip-rack-inventory-list {
+  display: grid;
+  gap: 5px;
+  max-height: 116px;
+  overflow-y: auto;
+}
+.zip-rack-inventory-list > p {
+  margin: 2px 0;
+  color: #64778a;
+  font-size: 10px;
+  line-height: 1.4;
+}
+.zip-rack-inventory-list > button {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid #d8e0e8;
+  border-radius: 4px;
+  background: #fff;
+  color: #172536;
+  text-align: left;
+  cursor: pointer;
+}
+.zip-rack-inventory-list > button > span {
+  min-width: 0;
+}
+.zip-rack-inventory-list > button strong,
+.zip-rack-inventory-list > button small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zip-rack-inventory-list > button strong {
+  font-size: 10px;
+}
+.zip-rack-inventory-list > button small {
+  margin-top: 2px;
+  color: #738397;
+  font-size: 8px;
+}
+.zip-rack-inventory-list > button b {
+  font-size: 8px;
+  letter-spacing: 0.04em;
+}
+.zip-rack-inventory-list > button b[data-state='mounted'] {
+  color: #137a52;
+}
+.zip-rack-inventory-list > button b[data-state='unmounted'] {
+  color: #a16012;
+}
+
 .zip-equipment-summary {
   margin: 0 16px;
   border: 1px solid var(--zip-border);

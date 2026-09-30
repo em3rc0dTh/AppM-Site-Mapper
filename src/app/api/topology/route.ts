@@ -1,3 +1,4 @@
+import { parsePolygon } from '@/modules/spatial/domain/geometry';
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -78,6 +79,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
+  const spatial = ['SITE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(kind);
+  const polygon = spatial ? parsePolygon(body.polygon) : null;
+  if (spatial && !polygon) return NextResponse.json({ error: 'INVALID_POLYGON' }, { status: 422 });
+
   const parentId =
     body.parentId === null || typeof body.parentId === 'string' ? body.parentId : null;
 
@@ -98,6 +103,7 @@ export async function POST(request: Request) {
     kind,
     parentId,
     name: body.name,
+    ...(polygon ? { polygon } : {}),
     ...(parsedRoomVariant ? { roomVariant: parsedRoomVariant } : {}),
     ...(parsedClusterVariant ? { clusterVariant: parsedClusterVariant } : {}),
     ...(parsedContainerVariant ? { containerVariant: parsedContainerVariant } : {}),
@@ -108,7 +114,7 @@ export async function POST(request: Request) {
   });
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 422 });
+    return NextResponse.json({ error: result.error }, { status: result.error === 'LAYOUT_CONFLICT' ? 409 : 422 });
   }
 
   return NextResponse.json({ node: result.value }, { status: 201 });

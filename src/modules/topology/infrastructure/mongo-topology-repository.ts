@@ -80,4 +80,12 @@ export class MongoTopologyRepository implements TopologyRepository {
       throw new Error(`Topology node does not exist: ${node.id}`);
     }
   }
+
+  async replaceIfVersion(node: TopologyNode, expectedVersion: string): Promise<boolean> {
+    const result = await this.collection.replaceOne(
+      { id: node.id, updatedAt: expectedVersion, lifecycle: 'ACTIVE' },
+      node as OptionalUnlessRequiredId<TopologyDocument>,
+    );
+    return result.matchedCount === 1;
+  }
 }

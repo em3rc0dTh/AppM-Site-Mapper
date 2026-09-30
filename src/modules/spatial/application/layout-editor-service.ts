@@ -1,3 +1,4 @@
+import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 import { initializeCas } from '@/modules/rack/domain/cas';
@@ -25,6 +26,7 @@ export async function readLayoutDraft(
       clusters: clusters.map((c) => ({
         id: c.id,
         name: c.name,
+        variant: c.kind === 'CONTAINER_CLUSTER_BAY' ? c.variant : 'BAY',
         polygon: c.kind === 'CONTAINER_CLUSTER_BAY' ? [...(c.polygon ?? [])] : [],
       })),
       positions: positions.map((p) => ({
@@ -55,6 +57,8 @@ export async function prepareLayoutSave(
   const draft = input as LayoutDraft;
   const current = await readLayoutDraft(repo, roomId);
   if (!current) return { error: 'ROOM_NOT_FOUND' };
+  if ((await new TopologyService(repo).getTrail(roomId)).some((node) => node.lifecycle !== 'ACTIVE'))
+    return { error: 'PARENT_ARCHIVED' };
   if (current.draft.version !== draft.version) return { error: 'LAYOUT_CONFLICT' };
   const original = new Map(current.nodes.map((n) => [n.id, n]));
   const now = new Date(Math.max(Date.now(), Date.parse(draft.version) + 1)).toISOString();
@@ -103,7 +107,7 @@ export async function prepareLayoutSave(
       ...old,
       ...base(c.id, c.name),
       kind: 'CONTAINER_CLUSTER_BAY',
-      variant: 'BAY',
+      variant: c.variant ?? (old?.kind === 'CONTAINER_CLUSTER_BAY' ? old.variant : 'BAY'),
       parentId: roomId,
       polygon: c.polygon,
     });

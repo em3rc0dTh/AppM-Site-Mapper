@@ -31,15 +31,62 @@ export function polygonArea(points: readonly PointMm[]): number {
   return Math.abs(area) / 2;
 }
 
-export function isValidPolygon(points: readonly PointMm[]): boolean {
-  return (
-    points.length >= 3 &&
-    points.every((point) => Number.isFinite(point.x) && Number.isFinite(point.y)) &&
-    polygonArea(points) > 0
-  );
+export function isValidPolygon(points: unknown): points is readonly PointMm[] {
+  if (!Array.isArray(points) || points.length < 3 || points.length > 256) return false;
+  if (!points.every((p) => p && typeof p === 'object' &&
+    typeof p.x === 'number' && typeof p.y === 'number' &&
+    Number.isFinite(p.x) && Number.isFinite(p.y) &&
+    Math.abs(p.x) <= 1_000_000 && Math.abs(p.y) <= 1_000_000)) return false;
+  if (!Number.isFinite(polygonArea(points)) || polygonArea(points) <= 1e-7) return false;
+  for (let i = 0; i < points.length; i += 1) {
+    const a = points[i]!;
+    const b = points[(i + 1) % points.length]!;
+    const previous = points[(i + points.length - 1) % points.length]!;
+    if (a.x === b.x && a.y === b.y) return false;
+    // Adjacent edges may be collinear but may never double back.
+    if (pointOnSegment(b, previous, a) || pointOnSegment(previous, a, b)) return false;
+    for (let j = i + 1; j < points.length; j += 1) {
+      if (j === i + 1 || (i === 0 && j === points.length - 1)) continue;
+      if (segmentsIntersect(a, b, points[j]!, points[(j + 1) % points.length]!)) return false;
+    }
+  }
+  return true;
+}
+
+export function parsePolygon(value: unknown): PointMm[] | null {
+  return isValidPolygon(value) ? value.map(({ x, y }) => ({ x, y })) : null;
+}
+
+function segmentsIntersect(a: PointMm, b: PointMm, c: PointMm, d: PointMm): boolean {
+  return properCrossing(a, b, c, d) || pointOnSegment(a, c, d) ||
+    pointOnSegment(b, c, d) || pointOnSegment(c, a, b) || pointOnSegment(d, a, b);
+}
+
+/** Split edges at boundary contacts so concave escapes through vertices are rejected too. */
+export function polygonInsidePolygon(inner: readonly PointMm[], outer: readonly PointMm[]): boolean {
+  if (!isValidPolygon(inner) || !isValidPolygon(outer)) return false;
+  if (!inner.every((point) => pointInPolygon(point, outer))) return false;
+  for (let i = 0; i < inner.length; i += 1) {
+    const a = inner[i]!, b = inner[(i + 1) % inner.length]!;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const length2 = dx * dx + dy * dy;
+    const cuts = [0, 1];
+    for (let j = 0; j < outer.length; j += 1) {
+      const c = outer[j]!, d = outer[(j + 1) % outer.length]!;
+      if (properCrossing(a, b, c, d)) return false;
+      if (pointOnSegment(c, a, b)) cuts.push(((c.x - a.x) * dx + (c.y - a.y) * dy) / length2);
+    }
+    cuts.sort((left, right) => left - right);
+    for (let k = 1; k < cuts.length; k += 1) {
+      const t = (cuts[k - 1]! + cuts[k]!) / 2;
+      if (!pointInPolygon({ x: a.x + t * dx, y: a.y + t * dy }, outer)) return false;
+    }
+  }
+  return true;
 }
 
 function pointOnSegment(point: PointMm, start: PointMm, end: PointMm): boolean {
+  if (start.x === end.x && start.y === end.y) return point.x === start.x && point.y === start.y;
   const cross = (point.y - start.y) * (end.x - start.x) - (point.x - start.x) * (end.y - start.y);
 
   if (Math.abs(cross) > 1e-7) {
@@ -109,26 +156,11 @@ function properCrossing(a: PointMm, b: PointMm, c: PointMm, d: PointMm): boolean
 }
 
 export function rectInsidePolygon(rect: RectMm, polygon: readonly PointMm[]): boolean {
-  const corners: readonly PointMm[] = [
+  if (![rect.x, rect.y, rect.width, rect.depth].every(Number.isFinite) || rect.width <= 0 || rect.depth <= 0) return false;
+  return polygonInsidePolygon([
     { x: rect.x, y: rect.y },
     { x: rect.x + rect.width, y: rect.y },
-    { x: rect.x, y: rect.y + rect.depth },
     { x: rect.x + rect.width, y: rect.y + rect.depth },
-  ];
-
-  if (!corners.every((corner) => pointInPolygon(corner, polygon))) return false;
-
-  const rectEdges: readonly (readonly [PointMm, PointMm])[] = [
-    [corners[0]!, corners[1]!],
-    [corners[1]!, corners[3]!],
-    [corners[3]!, corners[2]!],
-    [corners[2]!, corners[0]!],
-  ];
-  for (let index = 0; index < polygon.length; index += 1) {
-    const start = polygon[index]!;
-    const end = polygon[(index + 1) % polygon.length]!;
-    if (rectEdges.some(([a, b]) => properCrossing(a, b, start, end))) return false;
-  }
-
-  return true;
+    { x: rect.x, y: rect.y + rect.depth },
+  ], polygon);
 }

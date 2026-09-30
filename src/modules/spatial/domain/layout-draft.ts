@@ -1,7 +1,8 @@
 import type { PointMm, RectMm } from './geometry';
-import { isValidPolygon, pointInPolygon, rectInsidePolygon, rectsOverlap } from './geometry';
+import { isValidPolygon, polygonInsidePolygon, rectInsidePolygon, rectsOverlap } from './geometry';
 import { gridCoordinateToPoint } from './grid';
 export interface DraftCluster {
+  variant?: 'BAY' | 'CONTAINER_CLUSTER';
   id: string;
   name: string;
   polygon: PointMm[];
@@ -67,7 +68,7 @@ export function validateLayoutDraft(value: unknown): string | null {
     !ids.has(v.id) &&
     !!ids.add(v.id);
   for (const c of d.clusters)
-    if (!named(c) || !polygon(c.polygon) || !c.polygon.every((p) => pointInPolygon(p, d.polygon)))
+    if (!named(c) || (c.variant !== undefined && c.variant !== 'BAY' && c.variant !== 'CONTAINER_CLUSTER') || !polygon(c.polygon) || !polygonInsidePolygon(c.polygon, d.polygon))
       return 'INVALID_CLUSTER_BOUNDARY';
   const occupied = new Set<string>();
   const cells = new Set<string>();

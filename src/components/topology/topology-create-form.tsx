@@ -63,14 +63,14 @@ export function TopologyCreateForm({ kind, parentId, boundaryContext = [], onCan
   const editor = pending && <div className="spatial-create-overlay"><PolygonEditor
     title={`DRAW ${kind === 'ROOM_SUBSTRUCTURE' ? 'ROOM' : kind} BOUNDARY · ${String(pending.name)}`}
     context={boundaryContext}
-    validate={
-      kind === 'STRUCTURE' && boundaryContext.length >= 3
-        ? (polygon) =>
+    {...(kind === 'STRUCTURE' && boundaryContext.length >= 3
+      ? {
+          validate: (polygon: readonly PointMm[]) =>
             polygonInsidePolygon(polygon, boundaryContext)
               ? null
-              : 'Structure boundary must remain inside the Site boundary.'
-        : undefined
-    }
+              : 'Structure boundary must remain inside the Site boundary.',
+        }
+      : {})}
     onConfirm={(polygon: PointMm[]) => void create({ ...pending, polygon })}
     onCancel={() => { setPending(null); setError(null); }} busy={busy} error={error}
     confirmLabel={kind === 'SITE' ? 'Save Site' : kind === 'STRUCTURE' ? 'Save Structure' : 'Save Room'}

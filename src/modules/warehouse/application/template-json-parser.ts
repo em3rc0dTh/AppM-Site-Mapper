@@ -111,17 +111,14 @@ export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput
   if (!body || typeof body.name !== 'string') return null;
 
   const kind =
-    body.kind === 'DEVICE' || body.kind === 'EQUIPMENT'
-      ? (body.kind as AssetTemplateKind)
-      : null;
+    body.kind === 'DEVICE' || body.kind === 'EQUIPMENT' ? (body.kind as AssetTemplateKind) : null;
   if (!kind) return null;
 
   const dimensions = object(body.dimensionsMm);
   const widthMm = number(body.widthMm) ?? (dimensions ? number(dimensions.width) : undefined);
   const depthMm = number(body.depthMm) ?? (dimensions ? number(dimensions.depth) : undefined);
 
-  const deviceType =
-    body.deviceType === 'BDFB' ? ('BDFB' as WarehouseDeviceType) : undefined;
+  const deviceType = body.deviceType === 'BDFB' ? ('BDFB' as WarehouseDeviceType) : undefined;
   const physicalBlueprint =
     body.physicalBlueprint === undefined ? undefined : parseBdfbBlueprint(body.physicalBlueprint);
   if (body.physicalBlueprint !== undefined && !physicalBlueprint) return null;
@@ -129,7 +126,9 @@ export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput
   return {
     kind,
     name: body.name,
-    ...(string(body.manufacturer) !== undefined ? { manufacturer: string(body.manufacturer)! } : {}),
+    ...(string(body.manufacturer) !== undefined
+      ? { manufacturer: string(body.manufacturer)! }
+      : {}),
     ...(string(body.model) !== undefined ? { model: string(body.model)! } : {}),
     ...(string(body.category) !== undefined ? { category: string(body.category)! } : {}),
     ...(number(body.sizeU) !== undefined ? { sizeU: number(body.sizeU)! } : {}),

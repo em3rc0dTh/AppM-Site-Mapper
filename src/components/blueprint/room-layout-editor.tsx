@@ -9,11 +9,15 @@ export function RoomLayoutEditor({
   initial,
   canWrite,
   focusRackId,
+  focusBayId,
+  focusPositionId,
 }: {
   roomId: string;
   initial: LayoutDraft;
   canWrite: boolean;
   focusRackId?: string | undefined;
+  focusBayId?: string | undefined;
+  focusPositionId?: string | undefined;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState(initial);
@@ -222,7 +226,9 @@ export function RoomLayoutEditor({
               positions={layout.positions}
               onSelectPosition={editing ? setSelected : undefined}
               onSelectRack={editing ? setSelected : undefined}
-              focusRackId={focusRackId}
+              focusRackId={focusRackId ?? draft.racks.find((rack) => rack.positionId === focusPositionId)?.id}
+              focusBayId={focusBayId ?? draft.positions.find((position) => position.id === focusPositionId)?.clusterId}
+              focusPositionId={focusPositionId}
             />
           ) : (
             <div className="mk-empty-boundary">Define the surveyed room boundary to begin.</div>
@@ -280,7 +286,7 @@ export function RoomLayoutEditor({
                 </form>
               </details>
               <details>
-                <summary>+ Add Position</summary>
+                <summary>+ Add Position (rack anchor)</summary>
                 <form onSubmit={add}>
                   <input type="hidden" name="kind" value="position" />
                   <label>
@@ -312,7 +318,7 @@ export function RoomLayoutEditor({
                 </form>
               </details>
               <details>
-                <summary>+ Add Rack</summary>
+                <summary>+ Add Rack / Container with footprint</summary>
                 <form onSubmit={add}>
                   <input type="hidden" name="kind" value="rack" />
                   <label>
@@ -334,11 +340,11 @@ export function RoomLayoutEditor({
                   </label>
                   <div className="mk-input-pair">
                     <label>
-                      Width mm
+                      Footprint width mm (can span multiple 600 mm cells)
                       <input name="width" type="number" min="1" defaultValue="600" required />
                     </label>
                     <label>
-                      Depth mm
+                      Footprint depth mm
                       <input name="depth" type="number" min="1" defaultValue="600" required />
                     </label>
                     <label>
@@ -402,6 +408,13 @@ export function RoomLayoutEditor({
                     />
                   </label>
                 </div>
+              )}
+              {rack && (
+                <p className="rack-footprint-summary">
+                  Footprint: {rack.width} × {rack.depth} mm · covers
+                  {' '}{Math.ceil(rack.width / 600)} × {Math.ceil(rack.depth / 600)} grid cells
+                  from its anchor. Server validation enforces room/bay boundaries and collisions.
+                </p>
               )}
               {rack && (
                 <label>

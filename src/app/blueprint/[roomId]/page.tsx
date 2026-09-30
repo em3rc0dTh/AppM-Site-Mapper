@@ -15,7 +15,7 @@ import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 export default async function BlueprintPage({
   params,
   searchParams,
-}: Readonly<{ params: Promise<{ roomId: string }>; searchParams: Promise<{ rack?: string }> }>) {
+}: Readonly<{ params: Promise<{ roomId: string }>; searchParams: Promise<{ rack?: string; bay?: string; position?: string }> }>) {
   const auth = await requirePermission('topology:read');
 
   if (!auth.ok) {
@@ -33,6 +33,12 @@ export default async function BlueprintPage({
 
   const draft = await readLayoutDraft(repository, roomId);
   const trail = await topology.getTrail(roomId);
+  const breadcrumbItems = await Promise.all(
+    trail.filter((entry) =>
+      entry.kind === 'SITE' || entry.kind === 'STRUCTURE' || entry.kind === 'LEVEL' ||
+      entry.kind === 'ROOM_SUBSTRUCTURE'
+    ).map(async (entry) => ({ id: entry.id, name: entry.name, href: await topology.buildDeepLink(entry.id) })),
+  );
   const inventory = (
     await Promise.all(result.value.racks.map((r) => repository.listChildren(r.id)))
   ).flat();
@@ -43,8 +49,10 @@ export default async function BlueprintPage({
   return (
     <main className="operational-page operational-page--blueprint">
       <nav className="breadcrumbs">
-        <Link href="/network">Network</Link>
-        <span>{result.value.room.name}</span>
+        {breadcrumbItems.map((entry) => (
+          <Link key={entry.id} href={entry.id === roomId ? `/blueprint/${roomId}` : entry.href}
+            title={entry.name}>{entry.name}</Link>
+        ))}
       </nav>
       <div className="operational-layout operational-layout--blueprint">
         <aside className="operational-context">
@@ -66,6 +74,8 @@ export default async function BlueprintPage({
               initial={draft.draft}
               canWrite={canWrite}
               focusRackId={query.rack}
+              focusBayId={query.bay}
+              focusPositionId={query.position}
             />
           )}
         </section>
@@ -74,6 +84,14 @@ export default async function BlueprintPage({
           <section>
             <small>TOTAL CLUSTERS</small>
             <strong>{result.value.clusters.length}</strong>
+          </section>
+          <section className="room-rack-navigation">
+            <small>RACKS IN THIS ROOM · {result.value.racks.length}</small>
+            {result.value.racks.map((rack) => (
+              <Link key={rack.id} href={`/blueprint/${roomId}?rack=${encodeURIComponent(rack.id)}`}>
+                {rack.name} <span>INSPECT ↗</span>
+              </Link>
+            ))}
           </section>
           <div>
             <span>⌗</span>

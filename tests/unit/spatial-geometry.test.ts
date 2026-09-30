@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { pointInPolygon, rectsOverlap } from '@/modules/spatial/domain/geometry';
+import { pointInPolygon, rectInsidePolygon, rectsOverlap } from '@/modules/spatial/domain/geometry';
 import { generateAssignableSlots, validatePlacement } from '@/modules/spatial/domain/placement';
 
 const room = [

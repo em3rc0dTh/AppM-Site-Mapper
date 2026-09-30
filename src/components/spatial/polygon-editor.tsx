@@ -156,13 +156,30 @@ export function PolygonEditor({
   return (
     <section className="spatial-polygon-editor" aria-label={title}>
       <header>
-        <strong>{title}</strong>
-        <span>
-          {draft.points.length} vertices ·{' '}
-          {draft.closed && !invalid
-            ? `${(polygonArea(draft.points) / 1_000_000).toFixed(2)} m²`
-            : 'Draft boundary'}
-        </span>
+        <div className="spatial-editor-heading">
+          <strong>{title}</strong>
+          <span>
+            {draft.points.length} vertices ·{' '}
+            {draft.closed && !invalid
+              ? `${(polygonArea(draft.points) / 1_000_000).toFixed(2)} m²`
+              : 'Draft boundary'}
+          </span>
+        </div>
+        <div className="spatial-editor-header-actions">
+          <button type="button" disabled={busy} onClick={onCancel}>
+            Cancel
+          </button>
+          {draft.closed && (
+            <button
+              type="button"
+              className="spatial-editor-primary-action"
+              disabled={busy || !!invalid}
+              onClick={() => onConfirm(draft.points.map((point) => ({ ...point })))}
+            >
+              {busy ? 'Applying…' : confirmLabel}
+            </button>
+          )}
+        </div>
       </header>
       <div className="spatial-editor-tools">
         <button

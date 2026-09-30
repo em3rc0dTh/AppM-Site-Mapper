@@ -3,6 +3,7 @@ import type { TopologyRepository } from '@/modules/topology/application/topology
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 import { initializeCas } from '@/modules/rack/domain/cas';
 import { validateLayoutDraft, type LayoutDraft } from '@/modules/spatial/domain/layout-draft';
+import { gridCoordinateToPoint } from '@/modules/spatial/domain/grid';
 export async function readLayoutDraft(
   repo: TopologyRepository,
   roomId: string,
@@ -36,14 +37,22 @@ export async function readLayoutDraft(
         row: p.kind === 'POSITION' ? p.coordinate.row : 'A',
         column: p.kind === 'POSITION' ? p.coordinate.column : 1,
       })),
-      racks: racks.map((r) => ({
-        id: r.id,
-        name: r.name,
-        positionId: r.parentId!,
-        width: r.kind === 'CONTAINER_RACK' ? (r.dimensionsMm?.width ?? 600) : 600,
-        depth: r.kind === 'CONTAINER_RACK' ? (r.dimensionsMm?.depth ?? 600) : 600,
-        totalU: r.kind === 'CONTAINER_RACK' ? (r.totalU ?? 42) : 42,
-      })),
+      racks: racks.map((r) => {
+        const position = positions.find((candidate) => candidate.id === r.parentId);
+        const legacyPoint =
+          position?.kind === 'POSITION' ? gridCoordinateToPoint(position.coordinate) : { x: 0, y: 0 };
+
+        return {
+          id: r.id,
+          name: r.name,
+          positionId: r.parentId!,
+          x: r.kind === 'CONTAINER_RACK' ? (r.placementMm?.x ?? legacyPoint.x) : legacyPoint.x,
+          y: r.kind === 'CONTAINER_RACK' ? (r.placementMm?.y ?? legacyPoint.y) : legacyPoint.y,
+          width: r.kind === 'CONTAINER_RACK' ? (r.dimensionsMm?.width ?? 600) : 600,
+          depth: r.kind === 'CONTAINER_RACK' ? (r.dimensionsMm?.depth ?? 600) : 600,
+          totalU: r.kind === 'CONTAINER_RACK' ? (r.totalU ?? 42) : 42,
+        };
+      }),
     },
   };
 }
@@ -135,6 +144,7 @@ export async function prepareLayoutSave(
       kind: 'CONTAINER_RACK',
       variant: 'RACK',
       parentId: r.positionId,
+      placementMm: { x: r.x, y: r.y },
       dimensionsMm: { width: r.width, depth: r.depth },
       totalU: r.totalU,
       cas: old?.kind === 'CONTAINER_RACK' ? old.cas : initializeCas(r.totalU),

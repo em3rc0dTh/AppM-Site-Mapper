@@ -79,6 +79,10 @@ export class WarehouseService {
     if (duplicate) return failure('DUPLICATE_TEMPLATE');
 
     const timestamp = nowIso();
+    const manufacturer = clean(input.manufacturer);
+    const model = clean(input.model);
+    const category = clean(input.category);
+    const notes = clean(input.notes);
     const template: AssetTemplate = {
       id: createDomainId(),
       lifecycle: 'ACTIVE',
@@ -87,14 +91,14 @@ export class WarehouseService {
       kind: input.kind,
       version: 1,
       name,
-      ...(clean(input.manufacturer) ? { manufacturer: clean(input.manufacturer) } : {}),
-      ...(clean(input.model) ? { model: clean(input.model) } : {}),
-      ...(clean(input.category) ? { category: clean(input.category) } : {}),
+      ...(manufacturer ? { manufacturer } : {}),
+      ...(model ? { model } : {}),
+      ...(category ? { category } : {}),
       ...(input.sizeU === undefined ? {} : { sizeU: input.sizeU }),
       ...(hasWidth
         ? { dimensionsMm: { width: input.widthMm!, depth: input.depthMm! } }
         : {}),
-      ...(clean(input.notes) ? { notes: clean(input.notes) } : {}),
+      ...(notes ? { notes } : {}),
     };
 
     await this.repository.insert(template);

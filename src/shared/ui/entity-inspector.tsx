@@ -22,6 +22,11 @@ export interface InspectorEntity {
   actions?: readonly { label: string; href: string }[];
 }
 
+function compactInspectorTimestamp(value: string): string {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : `${parsed.toISOString().slice(11, 19)} UTC`;
+}
+
 function toneForStatus(status: string | undefined) {
   if (!status) return 'neutral' as const;
 
@@ -133,7 +138,9 @@ export function EntityInspector({
           </div>
           <footer>
             <span>Last packet</span>
-            <time dateTime={entity.liveSummary.updatedAt}>{entity.liveSummary.updatedAt}</time>
+            <time dateTime={entity.liveSummary.updatedAt}>
+              {compactInspectorTimestamp(entity.liveSummary.updatedAt)}
+            </time>
           </footer>
         </section>
       )}

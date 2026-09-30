@@ -3392,7 +3392,6 @@ body {
   }
 }
 
-
 /* Approved ZIP parity: lighter technical rack chassis. */
 .zip-elevation-rack {
   background: #eef1f3 !important;
@@ -3408,7 +3407,14 @@ body {
   border-color: #9ca4aa !important;
 }
 .zip-elevation-rack .legacy-rack-metal {
-  background: linear-gradient(90deg, #b8bec3, #e8eaec 18%, #c7ccd0 50%, #eef0f1 82%, #aeb5ba) !important;
+  background: linear-gradient(
+    90deg,
+    #b8bec3,
+    #e8eaec 18%,
+    #c7ccd0 50%,
+    #eef0f1 82%,
+    #aeb5ba
+  ) !important;
   border-color: #7f878d !important;
   color: #31383e !important;
 }

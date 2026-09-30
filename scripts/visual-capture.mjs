@@ -84,7 +84,6 @@ if (roomLink) {
   await page.waitForTimeout(500);
   await snap('15-global-search');
   await page.keyboard.press('Escape');
-
 }
 
 const rackLink = await search('R-023', 'CONTAINER_RACK');

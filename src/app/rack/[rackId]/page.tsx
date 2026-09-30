@@ -1,4 +1,5 @@
 import { ContextPin } from '@/components/workspace/context-pin';
+import { TopologyContextTree } from '@/components/topology/context-tree';
 import { CasEditor } from '@/components/rack/cas-editor';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { hasPermission } from '@/modules/identity/domain/roles';
@@ -37,7 +38,8 @@ export default async function RackPage({
       : Promise.resolve(null),
   ]);
   const room = [...trail].reverse().find((item) => item.kind === 'ROOM_SUBSTRUCTURE') ?? null;
-  const root = room ?? [...trail].reverse().find((item) => item.kind === 'LEVEL') ?? trail[0];
+  const root = trail[0];
+  const navigationTree = root ? await topology.buildNavigationTree(root.id) : null;
   const trailEntries = await Promise.all(
     trail.map(async (item) => ({
       id: item.id,
@@ -61,22 +63,14 @@ export default async function RackPage({
         <strong>{result.value.rack.name} &nbsp;/&nbsp; ELEVATION</strong>
       </nav>
       <div className="operational-layout telxius-operational-layout operational-layout--rack">
-        <aside className="zip-rack-menu">
-          <header>
-            RACK <span>⌄</span>
-          </header>
-          <Link href={`/rack/${rackId}/focus`}>
-            <span>▤</span>Overview
-          </Link>
-          <Link className="is-active" href={`/rack/${rackId}`}>
-            <span>▥</span>Elevation
-          </Link>
-          <Link href={`/power?entity=${rackId}`}>
-            <span>ϟ</span>Power
-          </Link>
-          <a href="#telemetry">
-            <span>▥</span>Telemetry
-          </a>
+        <aside className="zip-rack-menu zip-rack-tree-menu">
+          {navigationTree && <TopologyContextTree tree={navigationTree} activeId={rackId} />}
+          <details className="rack-tools-disclosure">
+            <summary>Rack actions</summary>
+            {room && <Link href={`/blueprint/${room.id}?rack=${rackId}`}>LOCATE IN ROOM</Link>}
+            <Link href={`/rack/${rackId}/focus`}>RACK FOCUS</Link>
+            <Link href={`/power?entity=${rackId}`}>POWER PATH</Link>
+          </details>
         </aside>
         <section className="operational-stage operational-stage--wide zip-rack-elevation-stage">
           <RackElevation

@@ -73,14 +73,12 @@ function endpointInspector(
   return {
     name: endpoint.label,
     kind: endpoint.variant,
-    actions: [
+    actions: binding ? [
       {
         label: 'TRACE PATH',
-        href: binding
-          ? `/power?path=${encodeURIComponent(binding.pathId)}&breaker=${encodeURIComponent(endpoint.id)}${binding.feed ? `&feed=${binding.feed}` : ''}`
-          : `/power?entity=${device.id}&breaker=${encodeURIComponent(endpoint.id)}`,
+        href: `/power?path=${encodeURIComponent(binding.pathId)}&breaker=${encodeURIComponent(endpoint.id)}${binding.feed ? `&feed=${binding.feed}` : ''}`,
       },
-    ],
+    ] : [],
     ...(reading?.state ? { status: reading.state.value } : {}),
     sections: [
       {
@@ -99,7 +97,15 @@ function endpointInspector(
           { label: 'Endpoint ID', value: endpoint.id },
           {
             label: 'MQTT binding',
-            value: endpoint.telemetry?.rawPointId ?? 'Panel order + position',
+            value: endpoint.telemetry?.rawPointId ?? 'UNMAPPED · configure an explicit binding',
+          },
+          {
+            label: 'Telemetry',
+            value: reading
+              ? 'Measurements available for this exact breaker'
+              : endpoint.telemetry?.rawPointId
+                ? 'Bound, awaiting matched MQTT measurements'
+                : 'No point mapping. Broker connectivity does not provide this breaker\'s data.',
           },
         ],
       },
@@ -174,7 +180,7 @@ function PanelBoard({
   panel: Panel;
   readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
   bindingsByBreaker: Readonly<Record<string, BreakerPowerBinding>>;
-  onInspect: (entity: InspectorEntity) => void;
+  onInspect: (entity: InspectorEntity, breakerId?: string) => void;
 }>) {
   return (
     <article className="bdfb-panel-board bdfb-panel-board--detail">
@@ -216,6 +222,7 @@ function PanelBoard({
                       reading,
                       bindingsByBreaker[endpoint.id],
                     ),
+                    endpoint.id,
                   )
                 }
                 title={endpoint.label}
@@ -409,6 +416,9 @@ export function BdfbChassis({
   })();
 
   const [selected, setSelected] = useState<InspectorEntity | null>(initialSelected);
+  const [selectedBreakerId, setSelectedBreakerId] = useState<string | null>(
+    query.get('breaker'),
+  );
   const [activePanel, setActivePanel] = useState<PanelSelection | null>(initialPanel);
   const telemetry = useBdfbTelemetry(device.id);
   const shelves = device.bdfb?.shelves ?? [];
@@ -423,13 +433,31 @@ export function BdfbChassis({
       ) as Readonly<Record<string, BreakerTelemetryReading>>,
     [telemetry],
   );
+  // Store the selected identity, not a stale copy of its measurements.
+  const liveInspector = useMemo(() => {
+    if (!selectedBreakerId) return selected;
+    for (const shelf of device.bdfb?.shelves ?? []) {
+      for (const frame of shelf.frames) {
+        for (const panel of frame.panels) {
+          const endpoint = panel.endpoints.find((item) => item.id === selectedBreakerId);
+          if (endpoint) {
+            return endpointInspector(
+              device, shelf, frame, panel, endpoint,
+              readingsByBreaker[endpoint.id], bindingsByBreaker[endpoint.id],
+            );
+          }
+        }
+      }
+    }
+    return selected;
+  }, [selected, selectedBreakerId, readingsByBreaker, bindingsByBreaker, device]);
 
   return (
     <section className="bdfb-chassis">
       <TelemetryLens
         label={device.name}
         entityIds={[device.id]}
-        breakerId={query.get('breaker') ?? undefined}
+        breakerId={selectedBreakerId ?? query.get('breaker') ?? undefined}
       />
       <header className="bdfb-chassis-header">
         <div>
@@ -449,7 +477,7 @@ export function BdfbChassis({
           <StatusBadge>{panels.length} PANELS</StatusBadge>
           <StatusBadge>{endpoints.length} ENDPOINTS</StatusBadge>
           {telemetry?.breakerReadings?.length ? (
-            <StatusBadge tone="good">{telemetry.breakerReadings.length} MQTT BREAKERS</StatusBadge>
+            <StatusBadge tone="good">{telemetry.breakerReadings.length} MAPPED MQTT READINGS</StatusBadge>
           ) : (
             <StatusBadge tone="warning">MQTT WAITING</StatusBadge>
           )}
@@ -463,7 +491,10 @@ export function BdfbChassis({
             selection={activePanel}
             readingsByBreaker={readingsByBreaker}
             bindingsByBreaker={bindingsByBreaker}
-            onInspect={setSelected}
+            onInspect={(entity, breakerId) => {
+              setSelected(entity);
+              setSelectedBreakerId(breakerId ?? null);
+            }}
             onBack={() => setActivePanel(null)}
           />
         ) : (
@@ -471,7 +502,12 @@ export function BdfbChassis({
         )}
       </div>
 
-      {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <EntityInspector entity={liveInspector} onClose={() => {
+          setSelected(null);
+          setSelectedBreakerId(null);
+        }} />
+      )}
     </section>
   );
 }

@@ -58,7 +58,7 @@ export function RackElevation({
   focusDeviceId,
 }: Readonly<{ view: RackElevationView; context?: RackElevationContext; focusDeviceId?: string }>) {
   const router = useRouter();
-  const [face, setFace] = useState<'front' | 'rear'>('front');
+
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const blocks = useMemo(() => buildBlocks(view), [view]);
   const count = (role: string) => view.rows.filter((row) => row.role === role).length;
@@ -71,18 +71,8 @@ export function RackElevation({
     <section className="legacy-rack-view zip-rack-elevation-view">
       <div className="legacy-rack-main zip-rack-elevation-main">
         <header className="zip-elevation-heading">
-          <h1>{face === 'front' ? 'FRONT ELEVATION' : 'REAR ELEVATION'}</h1>
-          <div>
-            <button
-              className={face === 'front' ? 'is-active' : ''}
-              onClick={() => setFace('front')}
-            >
-              FRONT
-            </button>
-            <button className={face === 'rear' ? 'is-active' : ''} onClick={() => setFace('rear')}>
-              REAR
-            </button>
-          </div>
+          <h1>FRONT ELEVATION</h1>
+          <small>Only the documented front-face projection is available. Rear geometry has not been recorded.</small>
         </header>
 
         <div className="legacy-rack-canvas zip-elevation-canvas">

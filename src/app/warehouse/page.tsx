@@ -41,7 +41,10 @@ export default async function WarehousePage() {
           templates.map((template) => (
             <article key={template.id} className="warehouse-template-card">
               <header>
-                <span>{template.kind}</span>
+                <span>
+                  {template.kind}
+                  {template.deviceType ? ` · ${template.deviceType}` : ''}
+                </span>
                 <b>v{template.version}</b>
               </header>
               <h2>{template.name}</h2>
@@ -52,6 +55,8 @@ export default async function WarehousePage() {
               <dl>
                 <dt>Category</dt>
                 <dd>{template.category ?? '—'}</dd>
+                <dt>Profile</dt>
+                <dd>{template.deviceType ?? 'Generic'}</dd>
                 <dt>Rack size</dt>
                 <dd>{template.sizeU ? `${template.sizeU}U` : '—'}</dd>
                 <dt>Dimensions</dt>

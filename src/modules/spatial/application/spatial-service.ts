@@ -42,13 +42,17 @@ export class SpatialService {
   ): Promise<Result<RoomSubstructureNode, SpatialError>> {
     const current = await readLayoutDraft(this.repository, roomId);
     if (!current) return failure('ROOM_NOT_FOUND');
-    if (!expectedVersion || expectedVersion !== current.draft.version) return failure('LAYOUT_CONFLICT');
+    if (!expectedVersion || expectedVersion !== current.draft.version)
+      return failure('LAYOUT_CONFLICT');
     const prepared = await prepareLayoutSave(this.repository, roomId, {
-      ...current.draft, polygon: [...polygon], version: expectedVersion,
+      ...current.draft,
+      polygon: [...polygon],
+      version: expectedVersion,
     });
     if ('error' in prepared) return failure(prepared.error);
     if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
-    if (!(await this.repository.commitLayout(prepared.before, prepared.after))) return failure('LAYOUT_CONFLICT');
+    if (!(await this.repository.commitLayout(prepared.before, prepared.after)))
+      return failure('LAYOUT_CONFLICT');
     return success(prepared.after[0] as RoomSubstructureNode);
   }
 

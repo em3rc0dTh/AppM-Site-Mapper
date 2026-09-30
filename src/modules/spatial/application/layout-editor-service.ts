@@ -57,7 +57,9 @@ export async function prepareLayoutSave(
   const draft = input as LayoutDraft;
   const current = await readLayoutDraft(repo, roomId);
   if (!current) return { error: 'ROOM_NOT_FOUND' };
-  if ((await new TopologyService(repo).getTrail(roomId)).some((node) => node.lifecycle !== 'ACTIVE'))
+  if (
+    (await new TopologyService(repo).getTrail(roomId)).some((node) => node.lifecycle !== 'ACTIVE')
+  )
     return { error: 'PARENT_ARCHIVED' };
   if (current.draft.version !== draft.version) return { error: 'LAYOUT_CONFLICT' };
   const original = new Map(current.nodes.map((n) => [n.id, n]));

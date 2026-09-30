@@ -4,8 +4,14 @@ import { parsePolygon } from '@/modules/spatial/domain/geometry';
 import { failure, success } from '@/shared/domain/result';
 
 export async function updateSiteBoundary(repo: TopologyRepository, id: string, input: unknown) {
-  if (!input || typeof input !== 'object' || !('polygon' in input) ||
-    !('version' in input) || typeof input.version !== 'string') return failure('INVALID_REQUEST');
+  if (
+    !input ||
+    typeof input !== 'object' ||
+    !('polygon' in input) ||
+    !('version' in input) ||
+    typeof input.version !== 'string'
+  )
+    return failure('INVALID_REQUEST');
   const polygon = parsePolygon(input.polygon);
   if (!polygon) return failure('INVALID_POLYGON');
   const node = await repo.getById(id);
@@ -15,7 +21,11 @@ export async function updateSiteBoundary(repo: TopologyRepository, id: string, i
   if (node.updatedAt !== input.version) return failure('BOUNDARY_CONFLICT');
   if (!repo.replaceIfVersion) return failure('ATOMIC_BOUNDARY_STORAGE_REQUIRED');
   // Area remains a derivation; an old manually entered area must not compete with it.
-  const updated = { ...node, polygon, updatedAt: new Date(Math.max(Date.now(), Date.parse(node.updatedAt) + 1)).toISOString() };
+  const updated = {
+    ...node,
+    polygon,
+    updatedAt: new Date(Math.max(Date.now(), Date.parse(node.updatedAt) + 1)).toISOString(),
+  };
   const { totalAreaSqm: _previousArea, ...canonical } = updated;
   void _previousArea;
   if (!(await repo.replaceIfVersion(canonical, input.version))) return failure('BOUNDARY_CONFLICT');

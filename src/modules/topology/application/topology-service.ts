@@ -16,6 +16,7 @@ import { failure, success, type Result } from '@/shared/domain/result';
 
 export type TopologyError =
   | 'INVALID_POLYGON'
+  | 'BOUNDARY_OUTSIDE_SITE'
   | 'BOUNDARY_OUTSIDE_ROOM'
   | 'ATOMIC_LAYOUT_STORAGE_REQUIRED'
   | 'LAYOUT_CONFLICT'
@@ -91,9 +92,16 @@ export class TopologyService {
       return failure('POSITION_OCCUPIED');
     }
 
-    const spatial = ['SITE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(input.kind);
+    const spatial = ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(input.kind);
     const polygon = spatial ? parsePolygon(input.polygon) : null;
     if (spatial && !polygon) return failure('INVALID_POLYGON');
+    if (
+      input.kind === 'STRUCTURE' &&
+      (parent?.kind !== 'SITE' ||
+        !parent.polygon ||
+        !polygonInsidePolygon(polygon!, parent.polygon))
+    )
+      return failure('BOUNDARY_OUTSIDE_SITE');
     if (input.kind === 'CONTAINER_CLUSTER_BAY' &&
       (parent?.kind !== 'ROOM_SUBSTRUCTURE' || !parent.polygon ||
         !polygonInsidePolygon(polygon!, parent.polygon))) return failure('BOUNDARY_OUTSIDE_ROOM');
@@ -122,7 +130,12 @@ export class TopologyService {
         node = { ...base, kind: 'SITE', parentId: input.parentId as string, polygon: polygon! };
         break;
       case 'STRUCTURE':
-        node = { ...base, kind: 'STRUCTURE', parentId: input.parentId as string };
+        node = {
+          ...base,
+          kind: 'STRUCTURE',
+          parentId: input.parentId as string,
+          polygon: polygon!,
+        };
         break;
       case 'LEVEL':
         node = { ...base, kind: 'LEVEL', parentId: input.parentId as string };

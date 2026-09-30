@@ -97,6 +97,49 @@ describe('Virtual Warehouse', () => {
     expect(rack.cas.every((range) => range.state !== 'EQUIPPED')).toBe(true);
   });
 
+  it('rejects a warehouse instance when its telemetry serial is already active', async () => {
+    const warehouse = new MemoryWarehouseRepository();
+    const template = await new WarehouseService(warehouse).create({
+      kind: 'DEVICE',
+      name: 'Telemetry Device',
+    });
+    if (!template.ok) throw new Error(template.error);
+
+    const rack: ContainerRackNode = {
+      id: 'rack-conflict',
+      kind: 'CONTAINER_RACK',
+      variant: 'RACK',
+      parentId: 'position-conflict',
+      name: 'Rack conflict',
+      totalU: 42,
+      cas: initializeCas(42),
+      lifecycle: 'ACTIVE',
+      createdAt: '2026-09-30T00:00:00.000Z',
+      updatedAt: '2026-09-30T00:00:00.000Z',
+    };
+    const existingDevice = {
+      id: 'device-existing',
+      kind: 'DEVICE' as const,
+      parentId: rack.id,
+      name: 'Existing telemetry device',
+      serialNumber: 'EMU-BFDB-02',
+      pinned: false,
+      lifecycle: 'ACTIVE' as const,
+      createdAt: '2026-09-30T00:00:00.000Z',
+      updatedAt: '2026-09-30T00:00:00.000Z',
+    };
+    const topology = new MemoryTopologyRepository([rack, existingDevice]);
+
+    const result = await new WarehouseInstantiationService(warehouse, topology).instantiate({
+      templateId: template.value.id,
+      rackId: rack.id,
+      name: 'Duplicate serial device',
+      serialNumber: 'EMU-BFDB-02',
+    });
+
+    expect(result).toEqual({ ok: false, error: 'SERIAL_ALREADY_ASSIGNED' });
+  });
+
   it('materializes a BDFB template into a navigable BDFB device with telemetry bindings', async () => {
     const input = parseAssetTemplateJson({
       kind: 'DEVICE',

@@ -50,7 +50,8 @@
 .zip-topbar .mk-search-trigger span,
 .zip-topbar .mk-search-trigger kbd,
 .zip-account,
-.zip-explore {
+.zip-explore,
+.zip-warehouse {
   color: #172536 !important;
 }
 .zip-topbar .mk-search-trigger {

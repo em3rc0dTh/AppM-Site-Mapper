@@ -29,9 +29,7 @@ function parseTemplate(value: unknown): CreateAssetTemplateInput | null {
   if (!body || typeof body.name !== 'string') return null;
 
   const kind =
-    body.kind === 'DEVICE' || body.kind === 'EQUIPMENT'
-      ? (body.kind as AssetTemplateKind)
-      : null;
+    body.kind === 'DEVICE' || body.kind === 'EQUIPMENT' ? (body.kind as AssetTemplateKind) : null;
   if (!kind) return null;
 
   const dimensions = object(body.dimensionsMm);
@@ -77,10 +75,7 @@ export async function POST(request: Request) {
   const inputs = values.map(parseTemplate);
   const invalidIndex = inputs.findIndex((input) => input === null);
   if (invalidIndex >= 0)
-    return NextResponse.json(
-      { error: 'INVALID_TEMPLATE', index: invalidIndex },
-      { status: 400 },
-    );
+    return NextResponse.json({ error: 'INVALID_TEMPLATE', index: invalidIndex }, { status: 400 });
 
   const service = new WarehouseService(await createWarehouseRepository());
   const created = [];

@@ -49,10 +49,6 @@ const BDFB_EMULATOR_EXAMPLE = `{
                 "endpointCount": 24,
                 "endpointVariant": "BREAKER",
                 "rawPointPrefix": "0_2_"
-              },
-              {
-                "label": "Panel A3",
-                "endpoints": []
               }
             ]
           },
@@ -70,10 +66,6 @@ const BDFB_EMULATOR_EXAMPLE = `{
                 "endpointCount": 24,
                 "endpointVariant": "BREAKER",
                 "rawPointPrefix": "0_4_"
-              },
-              {
-                "label": "Panel B3",
-                "endpoints": []
               }
             ]
           }
@@ -81,7 +73,7 @@ const BDFB_EMULATOR_EXAMPLE = `{
       }
     ]
   },
-  "notes": "Six-slot physical chassis; 96 emulator points populate A1, A2, B1 and B2. A3/B3 remain empty physical panel slots."
+  "notes": "96-point emulator profile: A1, A2, B1 and B2 with 24 mapped breakers each."
 }`;
 
 export function TemplateCreateForm() {

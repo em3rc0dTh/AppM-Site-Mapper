@@ -54,13 +54,29 @@ describe('MK1 system golden path', () => {
       await topology.create({ kind: 'NETWORK', parentId: null, name: 'Certification Network' }),
     );
     const site = requireSuccess(
-      await topology.create({ kind: 'SITE', parentId: network.id, name: 'Certification Site' }),
+      await topology.create({
+        kind: 'SITE',
+        parentId: network.id,
+        name: 'Certification Site',
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 6000, y: 0 },
+          { x: 6000, y: 6000 },
+          { x: 0, y: 6000 },
+        ],
+      }),
     );
     const structure = requireSuccess(
       await topology.create({
         kind: 'STRUCTURE',
         parentId: site.id,
         name: 'Certification Structure',
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 4800, y: 0 },
+          { x: 4800, y: 4800 },
+          { x: 0, y: 4800 },
+        ],
       }),
     );
     const level = requireSuccess(
@@ -72,6 +88,12 @@ describe('MK1 system golden path', () => {
         parentId: level.id,
         name: 'Equipment Room',
         roomVariant: 'ROOM',
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 2400, y: 0 },
+          { x: 2400, y: 1800 },
+          { x: 0, y: 1800 },
+        ],
       }),
     );
     const bay = requireSuccess(
@@ -80,6 +102,12 @@ describe('MK1 system golden path', () => {
         parentId: room.id,
         name: 'Bay A',
         clusterVariant: 'BAY',
+        polygon: [
+          { x: 0, y: 0 },
+          { x: 1200, y: 0 },
+          { x: 1200, y: 600 },
+          { x: 0, y: 600 },
+        ],
       }),
     );
     const position = requireSuccess(
@@ -129,14 +157,6 @@ describe('MK1 system golden path', () => {
     expect(resolved.id).toBe(device.id);
 
     const spatial = new SpatialService(topologyRepository);
-    requireSuccess(
-      await spatial.updateRoomPolygon(room.id, [
-        { x: 0, y: 0 },
-        { x: 2400, y: 0 },
-        { x: 2400, y: 1800 },
-        { x: 0, y: 1800 },
-      ]),
-    );
     const layout = requireSuccess(await spatial.getRoomLayout(room.id));
     expect(layout.racks).toEqual([
       expect.objectContaining({

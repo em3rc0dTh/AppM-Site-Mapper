@@ -1,3 +1,4 @@
+import { getBdfbPresentation } from '@/modules/power/application/bdfb-presentation';
 import { isValidPolygon, polygonArea } from '@/modules/spatial/domain/geometry';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 
@@ -122,7 +123,8 @@ export function TopologyPropertiesPanel({
   }
 
   if (node.kind === 'DEVICE' && node.bdfb) {
-    const shelves = node.bdfb.shelves;
+    const presentation = getBdfbPresentation(node);
+    const shelves = presentation.shelves;
     const frames = shelves.flatMap((shelf) => shelf.frames);
     const panels = frames.flatMap((frame) => frame.panels);
     const endpoints = panels.flatMap((panel) => panel.endpoints);
@@ -148,11 +150,17 @@ export function TopologyPropertiesPanel({
           <dt>Location</dt>
           <dd>{location ?? '—'}</dd>
           <dt>Shelves</dt>
-          <dd>{shelves.length}</dd>
+          <dd>{presentation.physicalShelfCount}</dd>
           <dt>Frames</dt>
-          <dd>{frames.length}</dd>
-          <dt>Panels</dt>
-          <dd>{panels.length}</dd>
+          <dd>{presentation.physicalFrameCount}</dd>
+          <dt>Panel slots</dt>
+          <dd>{presentation.physicalPanelSlotCount}</dd>
+          {presentation.configuredPanelCount !== presentation.physicalPanelSlotCount && (
+            <>
+              <dt>Configured panels</dt>
+              <dd>{presentation.configuredPanelCount}</dd>
+            </>
+          )}
           <dt>Breakers</dt>
           <dd>{breakers}</dd>
           <dt>Feed A</dt>

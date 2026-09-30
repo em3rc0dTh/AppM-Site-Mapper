@@ -3436,7 +3436,6 @@ body {
   color: #626b73 !important;
 }
 
-
 /* ZIP parity: prevent global button states from tinting topology cards. */
 .zip-graph-card,
 .zip-graph-card:hover,

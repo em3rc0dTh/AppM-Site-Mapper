@@ -25,7 +25,10 @@ export function CommandPalette() {
   const [index, setIndex] = useState(0);
   const [status, setStatus] = useState(EMPTY_STATUS);
   const hasQuery = Boolean(query.trim());
-  const visibleResults = open && hasQuery ? results : [];
+  const visibleResults = useMemo(
+    () => (open && hasQuery ? results : []),
+    [open, hasQuery, results],
+  );
   const visibleStatus = hasQuery ? status : EMPTY_STATUS;
   const groups = useMemo(() => {
     const map = new Map<string, SearchResult[]>();

@@ -161,6 +161,39 @@ if (rackLink) {
   await createEquipment.waitFor({ state: 'visible', timeout: 10_000 });
   assert.ok(await createDevice.isVisible(), 'Rack elevation must expose Create Device');
   assert.ok(await createEquipment.isVisible(), 'Rack elevation must expose Create Equipment');
+
+  await createDevice.click();
+  const deviceName = page.getByRole('textbox', { name: 'Name' }).last();
+  await deviceName.waitFor({ state: 'visible', timeout: 10_000 });
+  const formGeometry = await page.evaluate(() => {
+    const popover = document.querySelector(
+      '.zip-rack-inventory-actions .spatial-create-popover',
+    );
+    if (!popover) return null;
+    const rect = popover.getBoundingClientRect();
+    return {
+      top: rect.top,
+      right: rect.right,
+      bottom: rect.bottom,
+      left: rect.left,
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+    };
+  });
+  assert.ok(formGeometry, 'Create Device popover must render');
+  assert.ok(formGeometry.top >= 0, 'Create Device form is clipped above the viewport');
+  assert.ok(formGeometry.left >= 0, 'Create Device form is clipped left of the viewport');
+  assert.ok(
+    formGeometry.right <= formGeometry.viewportWidth,
+    'Create Device form is clipped right of the viewport',
+  );
+  assert.ok(
+    formGeometry.bottom <= formGeometry.viewportHeight,
+    'Create Device form is clipped below the viewport',
+  );
+  await snap('08a-rack-create-device');
+  await page.getByRole('button', { name: 'Cancel' }).last().click();
+
   await snap('08-rack-elevation');
 }
 

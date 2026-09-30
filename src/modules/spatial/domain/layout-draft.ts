@@ -38,7 +38,6 @@ export interface LayoutDraft {
   racks: DraftRack[];
 }
 
-
 function rackRect(
   rack: Pick<DraftRack, 'width' | 'depth'>,
   position: Pick<DraftPosition, 'row' | 'column'>,
@@ -74,8 +73,7 @@ function rackPlacementIssue(
 
   if (
     draft.clusters.some(
-      (candidate) =>
-        candidate.id !== cluster.id && rectOverlapsPolygon(rect, candidate.polygon),
+      (candidate) => candidate.id !== cluster.id && rectOverlapsPolygon(rect, candidate.polygon),
     )
   )
     return 'RACK_DEPTH_BLOCKED_BY_BAY';
@@ -176,7 +174,12 @@ export function validateLayoutDraft(value: unknown): string | null {
     !ids.has(v.id) &&
     !!ids.add(v.id);
   for (const c of d.clusters)
-    if (!named(c) || (c.variant !== undefined && c.variant !== 'BAY' && c.variant !== 'CONTAINER_CLUSTER') || !polygon(c.polygon) || !polygonInsidePolygon(c.polygon, d.polygon))
+    if (
+      !named(c) ||
+      (c.variant !== undefined && c.variant !== 'BAY' && c.variant !== 'CONTAINER_CLUSTER') ||
+      !polygon(c.polygon) ||
+      !polygonInsidePolygon(c.polygon, d.polygon)
+    )
       return 'INVALID_CLUSTER_BOUNDARY';
   const occupied = new Set<string>();
   const cells = new Set<string>();

@@ -92,7 +92,9 @@ export class TopologyService {
       return failure('POSITION_OCCUPIED');
     }
 
-    const spatial = ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(input.kind);
+    const spatial = ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(
+      input.kind,
+    );
     const polygon = spatial ? parsePolygon(input.polygon) : null;
     if (spatial && !polygon) return failure('INVALID_POLYGON');
     if (
@@ -102,12 +104,17 @@ export class TopologyService {
         !polygonInsidePolygon(polygon!, parent.polygon))
     )
       return failure('BOUNDARY_OUTSIDE_SITE');
-    if (input.kind === 'CONTAINER_CLUSTER_BAY' &&
-      (parent?.kind !== 'ROOM_SUBSTRUCTURE' || !parent.polygon ||
-        !polygonInsidePolygon(polygon!, parent.polygon))) return failure('BOUNDARY_OUTSIDE_ROOM');
+    if (
+      input.kind === 'CONTAINER_CLUSTER_BAY' &&
+      (parent?.kind !== 'ROOM_SUBSTRUCTURE' ||
+        !parent.polygon ||
+        !polygonInsidePolygon(polygon!, parent.polygon))
+    )
+      return failure('BOUNDARY_OUTSIDE_ROOM');
     if (parent) {
       const ancestry = await this.getTrail(parent.id);
-      if (ancestry.some((ancestor) => ancestor.lifecycle !== 'ACTIVE')) return failure('PARENT_ARCHIVED');
+      if (ancestry.some((ancestor) => ancestor.lifecycle !== 'ACTIVE'))
+        return failure('PARENT_ARCHIVED');
     }
 
     const timestamp = nowIso();
@@ -226,7 +233,9 @@ export class TopologyService {
 
     if (node.kind === 'CONTAINER_CLUSTER_BAY' && parent) {
       if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
-      const updatedAt = new Date(Math.max(Date.now(), Date.parse(parent.updatedAt) + 1)).toISOString();
+      const updatedAt = new Date(
+        Math.max(Date.now(), Date.parse(parent.updatedAt) + 1),
+      ).toISOString();
       if (!(await this.repository.commitLayout([parent], [{ ...parent, updatedAt }, node])))
         return failure('LAYOUT_CONFLICT');
     } else {

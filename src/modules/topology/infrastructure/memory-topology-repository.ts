@@ -59,7 +59,8 @@ export class MemoryTopologyRepository implements TopologyRepository {
 
   async replaceIfVersion(node: TopologyNode, expectedVersion: string): Promise<boolean> {
     const current = this.nodes.get(node.id);
-    if (!current || current.updatedAt !== expectedVersion || current.lifecycle !== 'ACTIVE') return false;
+    if (!current || current.updatedAt !== expectedVersion || current.lifecycle !== 'ACTIVE')
+      return false;
     this.nodes.set(node.id, structuredClone(node));
     return true;
   }

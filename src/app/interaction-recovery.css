@@ -1043,3 +1043,139 @@
   right: 6px;
   z-index: 4;
 }
+
+
+/* Clean-room topology creation surfaces. */
+/* /network is the clean-room entry point and must use the same light operational
+   language as the rest of Site Mapper. Legacy generic panel/form rules are dark. */
+.telxius-network-index {
+  min-height: calc(100dvh - 67px);
+  padding: 28px clamp(22px, 5vw, 72px) 42px !important;
+  background: #fff !important;
+  color: #172536 !important;
+}
+.telxius-network-index .section-header,
+.telxius-network-index .panel,
+.telxius-network-index .create-form,
+.telxius-network-index .state-panel {
+  background: #fff !important;
+  color: #172536 !important;
+  border-color: #d7dde4 !important;
+}
+.telxius-network-index .panel,
+.telxius-network-index .create-form {
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+.telxius-network-index .state-panel {
+  min-height: 160px;
+  border-style: dashed !important;
+}
+.telxius-network-index .state-panel strong,
+.telxius-network-index .panel h2,
+.telxius-network-index .create-form strong {
+  color: #172536 !important;
+}
+.telxius-network-index .state-panel p {
+  color: #5d6f82 !important;
+}
+.telxius-network-index .create-form input,
+.telxius-network-index .create-form select {
+  background: #fff !important;
+  color: #172536 !important;
+  border-color: #cbd5df !important;
+}
+.telxius-network-index .create-form input::placeholder {
+  color: #7b8997 !important;
+  opacity: 1;
+}
+.telxius-network-index .create-form button {
+  background: #2678e8 !important;
+  color: #fff !important;
+  border: 1px solid #2678e8 !important;
+}
+
+/* Explorer pages fill the viewport. The edit dock previously rendered after a
+   100vh stage body and was therefore unreachable. Keep it as a compact,
+   explicit action overlay above the canvas footer without changing CRUD. */
+.mk-explorer-page .telxius-operational-stage {
+  position: relative !important;
+}
+.mk-explorer-page .operational-edit-dock {
+  position: absolute;
+  left: 18px;
+  bottom: 60px;
+  z-index: 25;
+  width: min(320px, calc(100% - 430px));
+  min-width: 235px;
+  margin: 0 !important;
+  pointer-events: none;
+}
+.mk-explorer-page .operational-edit-dock .edit-disclosure {
+  margin: 0 !important;
+  overflow: hidden;
+  border: 1px solid #b8c7d8 !important;
+  border-radius: 5px !important;
+  background: #fff !important;
+  box-shadow: 0 8px 24px rgba(28, 48, 70, 0.14);
+  pointer-events: auto;
+}
+.mk-explorer-page .operational-edit-dock .edit-disclosure > summary {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px !important;
+  cursor: pointer;
+  background: #f4f8fd !important;
+  color: #176fe8 !important;
+  font-size: 11px !important;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.mk-explorer-page .operational-edit-dock .edit-disclosure > summary::before {
+  content: '+';
+  margin-right: 8px;
+  font-size: 16px;
+  line-height: 1;
+}
+.mk-explorer-page .operational-edit-dock .create-form {
+  grid-template-columns: 1fr auto !important;
+  gap: 8px !important;
+  margin: 0 !important;
+  padding: 12px !important;
+  border: 0 !important;
+  border-top: 1px solid #dbe3ec !important;
+  border-radius: 0 !important;
+  background: #fff !important;
+  color: #172536 !important;
+}
+.mk-explorer-page .operational-edit-dock .create-form > strong {
+  display: none;
+}
+.mk-explorer-page .operational-edit-dock .create-form input,
+.mk-explorer-page .operational-edit-dock .create-form select {
+  min-height: 36px;
+  background: #fff !important;
+  color: #172536 !important;
+  border: 1px solid #cbd5df !important;
+  border-radius: 4px !important;
+}
+.mk-explorer-page .operational-edit-dock .create-form button {
+  min-height: 36px;
+  background: #2678e8 !important;
+  color: #fff !important;
+  border: 1px solid #2678e8 !important;
+  border-radius: 4px !important;
+}
+.mk-explorer-page .operational-edit-dock .form-error {
+  grid-column: 1 / -1;
+  color: #b42318 !important;
+}
+@media (max-width: 980px) {
+  .mk-explorer-page .operational-edit-dock {
+    right: 14px;
+    left: 14px;
+    width: auto;
+    min-width: 0;
+  }
+}

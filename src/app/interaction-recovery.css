@@ -1394,3 +1394,80 @@
 .zip-bdfb-inspector {
   overflow-y: auto;
 }
+
+
+/* BDFB history windows. */
+.zip-bdfb-window-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+.zip-bdfb-window-tabs button {
+  min-width: 0;
+  padding: 6px 3px;
+  border: 1px solid #cedbd5;
+  border-radius: 4px;
+  background: #fff;
+  color: #415365;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.zip-bdfb-window-tabs button[aria-selected='true'] {
+  border-color: #168d72;
+  background: #e8f7f1;
+  color: #0c6e57;
+}
+.zip-bdfb-history-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.zip-bdfb-history-metric {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid #d7e8e1;
+  border-radius: 4px;
+  background: #fff;
+}
+.zip-bdfb-history-metric > span {
+  color: #697b8c;
+  font-size: 8px;
+  font-weight: 700;
+}
+.zip-bdfb-history-metric > strong {
+  font-size: 12px;
+}
+.zip-bdfb-history-metric svg {
+  width: 100%;
+  height: 38px;
+  overflow: visible;
+}
+.zip-bdfb-history-metric path {
+  fill: none;
+  stroke: #137b66;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.zip-bdfb-history-metric > small {
+  overflow: hidden;
+  color: #718190;
+  font-size: 7px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zip-bdfb-history-state {
+  padding: 18px 10px;
+  border: 1px dashed #c6d4ce;
+  border-radius: 4px;
+  background: #fff;
+  color: #607286;
+  font-size: 9px;
+  text-align: center;
+}
+.zip-bdfb-history-state.is-error {
+  border-color: #e1b7ae;
+  color: #8c382a;
+}

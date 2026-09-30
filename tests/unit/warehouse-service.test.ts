@@ -242,9 +242,7 @@ describe('Virtual Warehouse', () => {
       'Panel B3',
     ]);
 
-    const endpoints = frames.flatMap((frame) =>
-      frame.panels.flatMap((panel) => panel.endpoints),
-    );
+    const endpoints = frames.flatMap((frame) => frame.panels.flatMap((panel) => panel.endpoints));
     expect(endpoints).toHaveLength(96);
     expect(frames[0]?.panels[2]?.endpoints).toHaveLength(0);
     expect(frames[1]?.panels[2]?.endpoints).toHaveLength(0);

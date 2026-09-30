@@ -731,3 +731,36 @@
 .room-general-info dd {
   font-weight: 700;
 }
+
+/* Unsurveyed inventory remains accessible without creating fictitious polygons. */
+.zip-level-stage .topology-unlocated-inline {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(100% - 36px);
+  max-height: 32%;
+  overflow: auto;
+  padding: 10px 12px;
+  background: #ffffffed;
+  border: 1px solid #b9c8d9;
+  box-shadow: 0 6px 20px #172b3c24;
+  color: #263c50;
+  font-size: 12px;
+}
+.zip-level-stage .topology-unlocated-inline button {
+  padding: 6px 9px;
+  border: 1px solid #b9c8d9;
+  border-radius: 4px;
+  background: #fff;
+  color: #1c486f;
+  cursor: pointer;
+}
+.zip-level-stage .topology-unlocated-inline button.is-selected {
+  border-color: #126fe6;
+  background: #eaf3ff;
+}

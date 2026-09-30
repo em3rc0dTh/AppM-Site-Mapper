@@ -46,10 +46,13 @@ export function TopologyExplorer({
   );
   const all = [...(boundary ?? []), ...polygons];
   const hasGeometry = polygons.length > 0 && (node.kind === 'LEVEL' || node.kind === 'SITE');
-  const minX = Math.min(...all.map((point) => point.x), 0);
-  const minY = Math.min(...all.map((point) => point.y), 0);
-  const width = Math.max(...all.map((point) => point.x), 1200) - minX;
-  const height = Math.max(...all.map((point) => point.y), 1200) - minY;
+  // Preserve the saved coordinate envelope. Anchoring it to zero distorts
+  // georeferenced rooms whose surveyed origin is not (0, 0).
+  const minX = all.length ? Math.min(...all.map((point) => point.x)) : 0;
+  const minY = all.length ? Math.min(...all.map((point) => point.y)) : 0;
+  const width = all.length ? Math.max(1, Math.max(...all.map((point) => point.x)) - minX) : 1200;
+  const height = all.length ? Math.max(1, Math.max(...all.map((point) => point.y)) - minY) : 1200;
+  const unlocated = items.filter((entry) => !('polygon' in entry.node && entry.node.polygon?.length));
   const pad = Math.max(width, height) * 0.1;
   const points = (polygon: readonly PhysicalPoint[]) =>
     polygon.map((point) => `${point.x},${point.y}`).join(' ');
@@ -85,7 +88,7 @@ export function TopologyExplorer({
                     <span className="zip-floor-shape" />
                     <span>
                       <strong>{entry.node.name.toUpperCase()}</strong>
-                      <small>{index === items.length - 1 ? 'BASEMENT' : 'LEVEL'}</small>
+                      <small>{entry.node.kind.replaceAll('_', ' ')}</small>
                     </span>
                   </button>
                 ))}
@@ -127,10 +130,22 @@ export function TopologyExplorer({
                     );
                   })}
                 </svg>
-                <div className="zip-level-minimap" aria-hidden="true">
-                  <b>MINI MAP</b>
-                  <span />
-                </div>
+                {unlocated.length > 0 && (
+                  <div className="topology-unlocated-inline" aria-label="Unsurveyed inventory">
+                    <strong>{unlocated.length} objects without surveyed coordinates</strong>
+                    {unlocated.map((entry) => (
+                      <button
+                        key={entry.node.id}
+                        type="button"
+                        className={selected === entry.node.id ? 'is-selected' : ''}
+                        onClick={() => setSelected(entry.node.id)}
+                        onDoubleClick={() => window.location.assign(entry.href)}
+                      >
+                        {entry.node.name} · inspect
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             ) : node.kind === 'LEVEL' ? (
               <div className="topology-unlocated-list" aria-label="Rooms without surveyed geometry">

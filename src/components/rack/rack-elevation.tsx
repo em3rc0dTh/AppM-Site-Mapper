@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useMemo, useState, type CSSProperties } from 'react';
 
+import { TopologyCreateControl } from '@/components/topology/topology-create-form';
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { InlineInspector } from '@/shared/ui/inline-inspector';
@@ -56,7 +57,13 @@ export function RackElevation({
   view,
   context,
   focusDeviceId,
-}: Readonly<{ view: RackElevationView; context?: RackElevationContext; focusDeviceId?: string }>) {
+  canWrite = false,
+}: Readonly<{
+  view: RackElevationView;
+  context?: RackElevationContext;
+  focusDeviceId?: string;
+  canWrite?: boolean;
+}>) {
   const router = useRouter();
 
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
@@ -165,6 +172,53 @@ export function RackElevation({
           <dt>Reserved</dt>
           <dd>{reserved}U</dd>
         </dl>
+        <section className="zip-rack-inventory">
+          <header>
+            <h3>RACK INVENTORY</h3>
+            <span>{view.inventory.length} objects</span>
+          </header>
+          {canWrite && (
+            <div className="zip-rack-inventory-actions">
+              <TopologyCreateControl kind="DEVICE" parentId={view.rack.id} />
+              <TopologyCreateControl kind="EQUIPMENT" parentId={view.rack.id} />
+            </div>
+          )}
+          <div className="zip-rack-inventory-list">
+            {view.inventory.length ? (
+              view.inventory.map((item) => {
+                const mounted = view.rack.cas.some(
+                  (range) => range.state === 'EQUIPPED' && range.occupantId === item.id,
+                );
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() =>
+                      setSelected({
+                        ...topologyInspector(item),
+                        actions: [
+                          { label: 'OPEN DEVICE', href: `/device/${item.id}` },
+                          { label: 'TRACE POWER', href: `/power?entity=${item.id}` },
+                        ],
+                      })
+                    }
+                  >
+                    <span>
+                      <strong>{item.name}</strong>
+                      <small>{item.kind}</small>
+                    </span>
+                    <b data-state={mounted ? 'mounted' : 'unmounted'}>
+                      {mounted ? 'MOUNTED' : 'UNMOUNTED'}
+                    </b>
+                  </button>
+                );
+              })
+            ) : (
+              <p>No devices or equipment created in this rack yet.</p>
+            )}
+          </div>
+        </section>
+
         <section className="zip-equipment-summary">
           <h3>EQUIPMENT SUMMARY</h3>
           <div>

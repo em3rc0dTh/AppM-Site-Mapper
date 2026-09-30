@@ -8,6 +8,13 @@ export interface InspectorEntity {
   name: string;
   kind: string;
   status?: string;
+  liveSummary?: {
+    label: string;
+    source: string;
+    point: string;
+    updatedAt: string;
+    metrics: readonly { label: string; value: string | number }[];
+  };
   sections: readonly {
     title: string;
     fields: readonly { label: string; value: string | number }[];
@@ -104,6 +111,32 @@ export function EntityInspector({
           ✕
         </button>
       </header>
+
+      {entity.liveSummary && (
+        <section className="inspector-live-summary" aria-label={entity.liveSummary.label}>
+          <header>
+            <span className="inspector-live-label">
+              <i aria-hidden="true" />
+              {entity.liveSummary.label}
+            </span>
+            <small>
+              {entity.liveSummary.source} · {entity.liveSummary.point}
+            </small>
+          </header>
+          <div className="inspector-live-metrics">
+            {entity.liveSummary.metrics.map((metric) => (
+              <div key={metric.label}>
+                <span>{metric.label}</span>
+                <strong>{metric.value}</strong>
+              </div>
+            ))}
+          </div>
+          <footer>
+            <span>Last packet</span>
+            <time dateTime={entity.liveSummary.updatedAt}>{entity.liveSummary.updatedAt}</time>
+          </footer>
+        </section>
+      )}
 
       {entity.sections.length > 1 && (
         <div className="inspector-tabs" role="tablist" aria-label="Entity details">

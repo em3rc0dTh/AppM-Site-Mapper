@@ -764,3 +764,178 @@
   border-color: #126fe6;
   background: #eaf3ff;
 }
+
+
+/* Acceptance hardening: fit surveyed geometry and dense panels to the viewport. */
+/* The topology floor previously grew beyond the fixed application frame. */
+.mk-explorer-page .zip-explorer {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+.mk-explorer-page .zip-explorer-main {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.mk-explorer-page .zip-canvas-title,
+.mk-explorer-page .zip-canvas-footer {
+  flex: 0 0 auto;
+}
+.mk-explorer-page .zip-map-canvas {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0 !important;
+  overflow: hidden;
+  padding: 8px 18px;
+}
+.mk-explorer-page .zip-map-canvas > .mk-map-zoom,
+.mk-explorer-page .zip-level-stage,
+.mk-explorer-page .zip-level-stage svg {
+  width: 100%;
+  height: 100%;
+  min-height: 0 !important;
+  max-height: 100%;
+}
+.mk-explorer-page .zip-level-stage svg {
+  display: block;
+}
+
+/* Room boundary is scaled by the existing SVG viewBox, not by document scroll.
+   Preserve the stored millimetre coordinates and room/bay/rack geometry. */
+.app-shell--blueprint .operational-stage--wide {
+  display: flex;
+  flex-direction: column;
+  min-height: 0 !important;
+  overflow: hidden;
+  padding-bottom: 8px !important;
+}
+.app-shell--blueprint .operational-stage--wide > .section-header,
+.app-shell--blueprint .operational-stage--wide > .mk-lens {
+  flex: 0 0 auto;
+}
+.app-shell--blueprint .mk-room-editor {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0 !important;
+  overflow: hidden;
+}
+.app-shell--blueprint .mk-draft-toolbar {
+  flex: 0 0 auto;
+}
+.app-shell--blueprint .mk-draft-workbench {
+  flex: 1 1 0;
+  display: flex;
+  min-height: 0 !important;
+  overflow: hidden;
+}
+.app-shell--blueprint .mk-draft-workbench.is-editing {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+}
+.app-shell--blueprint .mk-draft-workbench > div {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.app-shell--blueprint .mk-draft-workbench .blueprint-panel {
+  flex: 1 1 0;
+  height: 100%;
+  min-height: 0 !important;
+}
+.app-shell--blueprint .blueprint-canvas-shell,
+.app-shell--blueprint .zip-blueprint-shell {
+  flex: 1 1 0;
+  height: auto;
+  min-height: 0 !important;
+  max-height: none !important;
+}
+.app-shell--blueprint .blueprint-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* A panel has a real data-dependent row count; never stretch 24 endpoints
+   into an 18-row schematic or force a 690px minimum on a shorter viewport. */
+.zip-bdfb-page .operational-stage-body {
+  flex: 1 1 0;
+  height: auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.zip-bdfb-page .bdfb-chassis-body {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden !important;
+  padding-bottom: 4px !important;
+}
+.zip-bdfb-page .bdfb-panel-detail {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  gap: 6px;
+}
+.zip-bdfb-page .bdfb-panel-detail-header {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+.zip-bdfb-page .bdfb-panel-detail-body {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  overflow: hidden;
+}
+.zip-bdfb-page .bdfb-panel-board--detail {
+  display: flex;
+  flex-direction: column;
+  width: min(540px, 95%);
+  height: 100%;
+  max-height: 100%;
+  min-height: 0 !important;
+  padding: 58px clamp(20px, 3vw, 54px) 20px !important;
+}
+.zip-bdfb-page .bdfb-endpoint-grid {
+  flex: 1 1 0;
+  min-height: 0;
+  grid-template-rows: repeat(var(--bdfb-panel-rows, 12), minmax(28px, 1fr)) !important;
+  overflow: auto;
+}
+.zip-bdfb-page .inspector-dialog {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.zip-bdfb-page .inspector-header {
+  flex: 0 0 auto;
+}
+.zip-bdfb-page .inspector-body {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+}
+@media (max-height: 680px) {
+  .zip-bdfb-page .bdfb-chassis-body {
+    overflow-y: auto !important;
+  }
+}
+@media (max-width: 850px) {
+  .app-shell--blueprint .mk-draft-workbench.is-editing {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .app-shell--blueprint .mk-draft-inspector {
+    max-height: none;
+    flex: 0 0 auto;
+  }
+}

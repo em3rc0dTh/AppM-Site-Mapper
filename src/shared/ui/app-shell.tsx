@@ -6,13 +6,15 @@ import { useState, type ReactNode } from 'react';
 
 import { CommandPalette } from './command-palette';
 import { ContextTracker } from './context-tracker';
-import { Icon } from './primitives';
 
-const links = [
-  { href: '/workspace', label: 'Workspace', icon: 'workspace' },
-  { href: '/network', label: 'Network', icon: 'network' },
-  { href: '/power', label: 'Power', icon: 'power' },
-];
+function SiteMapperMark() {
+  return (
+    <svg className="zip-brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+      <path d="M16 2 28 9v14l-12 7L4 23V9Z" />
+      <path d="m4 9 12 7 12-7M16 16v14M10 12l12-7M10 12v8l6 4 6-4v-8" />
+    </svg>
+  );
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -22,18 +24,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (pathname === '/login' || pathname === '/change-password') return children;
 
+  const blueprint = pathname.startsWith('/blueprint');
+  const settings = pathname.startsWith('/settings');
   const immersive =
     pathname.startsWith('/topology') ||
     pathname.startsWith('/blueprint') ||
     pathname.startsWith('/rack') ||
     pathname.startsWith('/device') ||
     pathname.startsWith('/power');
-
-  const active = pathname.startsWith('/power')
-    ? '/power'
-    : immersive || pathname === '/network'
-      ? '/network'
-      : '/workspace';
 
   async function logout() {
     setBusy(true);
@@ -49,78 +47,55 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className={`app-shell legacy-shell ${immersive ? 'app-shell--immersive' : ''}`}>
+    <div
+      className={[
+        'app-shell',
+        'zip-app-shell',
+        immersive ? 'app-shell--immersive' : '',
+        blueprint ? 'app-shell--blueprint' : '',
+        settings ? 'app-shell--settings' : '',
+      ].join(' ')}
+    >
       <a className="skip-link" href="#main-content">
         Skip to workspace
       </a>
 
-      <header className="app-topbar legacy-topbar">
-        <Link href="/workspace" className="legacy-brand telxius-brand">
-          <strong>⬡ SITE MAPPER</strong>
-          <span>Physical Infrastructure</span>
+      <header className="app-topbar zip-topbar">
+        <Link href="/workspace" className="zip-brand">
+          <SiteMapperMark />
+          <span>
+            <strong>{blueprint ? 'AppManager' : 'SITE MAPPER'}</strong>
+            <small>{blueprint ? 'SiteMapper Module' : 'Physical Infrastructure'}</small>
+          </span>
         </Link>
 
-        <div className="telxius-topbar-context" aria-hidden="true">
-          <span>NETWORK</span>
-          <b>›</b>
-          <span>SITE MAPPER</span>
-        </div>
+        {settings ? <div className="zip-static-context">SETTINGS</div> : <div className="zip-context-slot" />}
 
         <ContextTracker />
         <CommandPalette />
-        <div className="legacy-top-actions">
-          <Link href="/settings" className="legacy-icon-button" aria-label="Settings">
-            <Icon name="settings" />
-          </Link>
-          <button
-            className="legacy-signout telxius-user-button"
-            disabled={busy}
-            onClick={logout}
-            aria-label="Sign out"
-            title="Sign out"
-          >
-            {busy ? '…' : '◎'}
+
+        <Link href="/network" className="zip-explore">
+          <span aria-hidden="true">⌑</span>
+          EXPLORE
+          <b aria-hidden="true">⌄</b>
+        </Link>
+
+        {settings ? (
+          <button className="zip-account" type="button" onClick={logout} disabled={busy}>
+            <span aria-hidden="true">◎</span>
+            {busy ? '…' : 'Account'}
+            <b aria-hidden="true">⌄</b>
           </button>
-        </div>
+        ) : (
+          <button className="zip-more" type="button" onClick={logout} disabled={busy} aria-label="Sign out">
+            {busy ? '…' : '•••'}
+          </button>
+        )}
       </header>
 
-      {!immersive && (
-        <aside className="app-rail legacy-primary-rail">
-          <div className="legacy-rail-heading">
-            <span className="legacy-rail-heading-icon">
-              <Icon name="network" />
-            </span>
-            <div>
-              <strong>Operations</strong>
-              <small>SiteMapper workspace</small>
-            </div>
-          </div>
-
-          <nav aria-label="Main navigation">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={active === link.href ? 'page' : undefined}
-              >
-                <Icon name={link.icon} />
-                <span>{link.label}</span>
-              </Link>
-            ))}
-          </nav>
-
-          <div className="legacy-rail-footer">
-            <Link href="/settings">
-              <Icon name="settings" />
-              <span>Settings</span>
-            </Link>
-          </div>
-        </aside>
-      )}
-
-      <div className="app-content" id="main-content" tabIndex={-1}>
+      <div className="app-content zip-app-content" id="main-content" tabIndex={-1}>
         {error && (
-          <p className="form-error" role="alert">
+          <p className="form-error zip-shell-error" role="alert">
             {error}
           </p>
         )}

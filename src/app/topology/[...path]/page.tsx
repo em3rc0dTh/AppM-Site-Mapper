@@ -136,6 +136,12 @@ export default async function TopologyNodePage({
   );
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
+  const siteContext =
+    node.kind === 'STRUCTURE'
+      ? [...trail].reverse().find((entry) => entry.kind === 'SITE')
+      : null;
+  const siteBoundary =
+    siteContext?.kind === 'SITE' && siteContext.polygon ? siteContext.polygon : [];
 
   const childEntries: VisualStageChild[] = await Promise.all(
     children.map(async (child) => {
@@ -330,14 +336,23 @@ export default async function TopologyNodePage({
                 title="Physical geometry unavailable"
                 description="This room has no preserved polygon, so MK1 will not invent a blueprint."
               />
-            ) : node.kind === 'SITE' ? (
-              <SiteBoundaryWorkspace node={node} canWrite={canWrite}>
-                <TopologyVisualStage node={node} items={childEntries} />
+            ) : node.kind === 'SITE' || node.kind === 'STRUCTURE' ? (
+              <SiteBoundaryWorkspace
+                node={node}
+                canWrite={canWrite}
+                {...(node.kind === 'STRUCTURE' ? { context: siteBoundary } : {})}
+              >
+                <TopologyVisualStage
+                  node={node}
+                  items={node.kind === 'STRUCTURE' ? structureLevelEntries : childEntries}
+                  previewItems={structurePreviewEntries}
+                  {...(selectedLevel ? { activeItemId: selectedLevel.id } : {})}
+                />
               </SiteBoundaryWorkspace>
             ) : (
               <TopologyVisualStage
                 node={node}
-                items={node.kind === 'STRUCTURE' ? structureLevelEntries : childEntries}
+                items={childEntries}
                 previewItems={structurePreviewEntries}
                 {...(selectedLevel ? { activeItemId: selectedLevel.id } : {})}
               />
@@ -347,7 +362,14 @@ export default async function TopologyNodePage({
           {canWrite && childKinds.length > 0 && (
             <div className="operational-edit-dock">
               {childKinds.map((kind) => (
-                <TopologyCreateControl key={kind} kind={kind} parentId={node.id} />
+                <TopologyCreateControl
+                  key={kind}
+                  kind={kind}
+                  parentId={node.id}
+                  {...(node.kind === 'SITE' && kind === 'STRUCTURE' && node.polygon
+                    ? { boundaryContext: node.polygon }
+                    : {})}
+                />
               ))}
             </div>
           )}

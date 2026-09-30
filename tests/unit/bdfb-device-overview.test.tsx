@@ -77,4 +77,75 @@ describe('BDFB device hierarchy overview', () => {
 
     expect(markup.match(/Open Panel [AB][123] breaker detail/g)).toHaveLength(6);
   });
+
+
+  it('projects the legacy 96-point emulator as one shelf with A/B columns and six physical slots', () => {
+    const legacyPanel = (
+      id: string,
+      label: string,
+      rawPointPrefix: string,
+    ): Panel => ({
+      id,
+      label,
+      endpoints: Array.from({ length: 24 }, (_, index) => ({
+        id: `${id}-${index + 1}`,
+        variant: 'BREAKER' as const,
+        label: `${label}-${index + 1}`,
+        telemetry: { rawPointId: `${rawPointPrefix}${index + 1}` },
+      })),
+    });
+
+    const legacy: DeviceNode = {
+      ...device,
+      id: 'legacy-emulator',
+      name: 'Legacy emulator',
+      bdfb: {
+        shelves: [
+          {
+            id: 'legacy-shelf-a',
+            label: 'Feed A (synthetic)',
+            frames: [
+              {
+                id: 'legacy-frame-a',
+                label: 'Feed A',
+                panels: [
+                  legacyPanel('legacy-a1', 'A1', '0_1_'),
+                  legacyPanel('legacy-a2', 'A2', '0_2_'),
+                ],
+              },
+            ],
+          },
+          {
+            id: 'legacy-shelf-b',
+            label: 'Feed B (synthetic)',
+            frames: [
+              {
+                id: 'legacy-frame-b',
+                label: 'Feed B',
+                panels: [
+                  legacyPanel('legacy-b1', 'B1', '0_3_'),
+                  legacyPanel('legacy-b2', 'B2', '0_4_'),
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const markup = renderToStaticMarkup(<BdfbChassis device={legacy} />);
+
+    expect(markup).toContain('Main Shelf');
+    expect(markup).toContain('Panel A1');
+    expect(markup).toContain('Panel A2');
+    expect(markup).toContain('Panel A3');
+    expect(markup).toContain('Panel B1');
+    expect(markup).toContain('Panel B2');
+    expect(markup).toContain('Panel B3');
+    expect(markup.match(/EMPTY SLOT/g)).toHaveLength(2);
+    expect(markup).toContain('1 SHELF');
+    expect(markup).toContain('2 FRAMES');
+    expect(markup).toContain('6 PANELS');
+    expect(markup).toContain('96 ENDPOINTS');
+  });
 });

@@ -51,20 +51,28 @@ await snap('14-operations');
 await go('/network');
 await snap('01-network');
 
-for (const [name, selector] of [
-  ['02-site', '.zip-graph-card'],
-  ['03-structure', '.zip-graph-card'],
-  ['04-level', '.zip-floor-slab'],
-]) {
-  const target = page.locator(selector).first();
-  if (await target.count()) {
-    await target.dblclick();
-    await page.waitForTimeout(450);
-    await snap(name);
-  }
+const siteCard = page.getByRole('button', { name: /Lima/i }).first();
+if (await siteCard.count()) {
+  await siteCard.dblclick();
+  await page.waitForTimeout(450);
+  await snap('02-site');
 }
 
-const roomLink = await search('Data Hall', 'ROOM_SUBSTRUCTURE');
+const structureCard = page.getByRole('button', { name: /Building A/i }).first();
+if (await structureCard.count()) {
+  await structureCard.dblclick();
+  await page.waitForTimeout(450);
+  await snap('03-structure');
+}
+
+const level02 = page.getByRole('button', { name: /Level 02/i }).first();
+if (await level02.count()) {
+  await level02.dblclick();
+  await page.waitForTimeout(450);
+  await snap('04-level');
+}
+
+const roomLink = await search('Room 202', 'ROOM_SUBSTRUCTURE');
 if (roomLink) {
   await go(roomLink);
   await snap('05-room-blueprint');
@@ -82,7 +90,7 @@ if (roomLink) {
   }
 }
 
-const rackLink = await search('RACK-A01', 'CONTAINER_RACK');
+const rackLink = await search('R-023', 'CONTAINER_RACK');
 if (rackLink) {
   const focus = rackLink.endsWith('/focus') ? rackLink : rackLink.includes('/rack/') ? rackLink.replace(/\/$/, '') + '/focus' : rackLink;
   await go(focus);
@@ -91,7 +99,7 @@ if (rackLink) {
   await snap('08-rack-elevation');
 }
 
-const deviceLink = await search('Compute Node', 'DEVICE');
+const deviceLink = await search('SERVER-01', 'DEVICE');
 if (deviceLink) {
   await go(deviceLink);
   await snap('09-device-focus');

@@ -128,3 +128,13 @@ html,body{background:#fff;color:var(--zip-ink);font-family:Arial,Helvetica,sans-
 .zip-power-top-controls>strong i{width:20px;height:20px;border-radius:50%;background:#0bb65b;display:inline-block}
 .app-shell--power .breadcrumbs{right:320px!important}
 @media(max-width:1100px){.zip-power-top-controls>a{margin-left:10px;margin-right:10px;min-width:92px}.zip-power-top-controls>strong{min-width:135px}.app-shell--power .breadcrumbs{right:235px!important}}
+
+
+/* Explorer pages are exactly three visible zones: topology + canvas + inspector.
+   The inspector is owned by TopologyExplorer, so collapse the outer hidden property column. */
+.mk-explorer-page .operational-layout{grid-template-columns:310px minmax(0,1fr)!important}
+.mk-explorer-page .telxius-operational-stage>.section-header{display:none!important}
+.mk-explorer-page .telxius-operational-stage{padding:0!important;overflow:hidden!important}
+.mk-explorer-page .operational-stage-body{height:calc(100vh - 67px)!important;padding:0!important;overflow:hidden!important}
+.mk-explorer-page .zip-explorer{min-height:calc(100vh - 67px)!important;height:calc(100vh - 67px)!important}
+.mk-explorer-page .telxius-properties{display:none!important}

@@ -191,7 +191,6 @@ No clean-room database was recreated. MQTT mappings, TimescaleDB, BDFB and
 telemetry implementation were not changed. `main` is not the delivery target;
 all changes belong on `feat/mk1-raw-build`, without merge.
 
-
 ## Virtual Warehouse acceptance
 
 The reusable hardware catalog is separate from physical inventory.

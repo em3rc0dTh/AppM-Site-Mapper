@@ -17,6 +17,70 @@ const JSON_EXAMPLE = `{
   "notes": "Reusable defaults and mounting notes"
 }`;
 
+const BDFB_EMULATOR_EXAMPLE = `{
+  "kind": "DEVICE",
+  "name": "BDFB Emulator 96P",
+  "manufacturer": "Eaton",
+  "model": "BDFB-EMU-96",
+  "category": "Power distribution",
+  "deviceType": "BDFB",
+  "sizeU": 4,
+  "dimensionsMm": {
+    "width": 482,
+    "depth": 600
+  },
+  "physicalBlueprint": {
+    "type": "BDFB",
+    "shelves": [
+      {
+        "label": "Feed A (synthetic)",
+        "frames": [
+          {
+            "label": "Feed A",
+            "panels": [
+              {
+                "label": "A1",
+                "endpointCount": 24,
+                "endpointVariant": "BREAKER",
+                "rawPointPrefix": "0_1_"
+              },
+              {
+                "label": "A2",
+                "endpointCount": 24,
+                "endpointVariant": "BREAKER",
+                "rawPointPrefix": "0_2_"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "label": "Feed B (synthetic)",
+        "frames": [
+          {
+            "label": "Feed B",
+            "panels": [
+              {
+                "label": "B1",
+                "endpointCount": 24,
+                "endpointVariant": "BREAKER",
+                "rawPointPrefix": "0_3_"
+              },
+              {
+                "label": "B2",
+                "endpointCount": 24,
+                "endpointVariant": "BREAKER",
+                "rawPointPrefix": "0_4_"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "notes": "Synthetic 96-point profile for EMU-BFDB-01/02/03."
+}`;
+
 export function TemplateCreateForm() {
   const router = useRouter();
   const [mode, setMode] = useState<'form' | 'json'>('form');
@@ -188,7 +252,8 @@ export function TemplateCreateForm() {
             <strong>Paste one template or an array of templates.</strong>
             <span>
               Accepted dimensions: <code>dimensionsMm.width/depth</code> or flat{' '}
-              <code>widthMm/depthMm</code>.
+              <code>widthMm/depthMm</code>. BDFB templates may declare a compact physical blueprint
+              with panel <code>endpointCount</code> and <code>rawPointPrefix</code>.
             </span>
           </div>
           <textarea
@@ -199,7 +264,14 @@ export function TemplateCreateForm() {
           />
           <div className="warehouse-json-actions">
             <button type="button" onClick={() => setJsonValue(JSON_EXAMPLE)} disabled={busy}>
-              Load example
+              Generic example
+            </button>
+            <button
+              type="button"
+              onClick={() => setJsonValue(BDFB_EMULATOR_EXAMPLE)}
+              disabled={busy}
+            >
+              BDFB emulator 96P
             </button>
             <button type="button" onClick={() => void importJson()} disabled={busy}>
               {busy ? 'Importing…' : 'Import JSON'}

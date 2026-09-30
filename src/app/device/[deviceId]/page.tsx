@@ -40,39 +40,36 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
       </nav>
       <div className="mk-device-layout">
         <aside>{tree && <TopologyContextTree tree={tree} activeId={node.id} />}</aside>
-        <section>
-          <h1>{node.name}</h1>
+        <section className="zip-device-stage">
+          <h1>ELEVATION</h1>
           {view?.ok ? (
             <RackElevation view={view.value} focusDeviceId={node.id} />
           ) : (
             <p>This inventory is not placed in a rack.</p>
           )}
         </section>
-        <aside className="mk-inline-inspector">
-          <small>DEVICE</small>
+        <aside className="mk-inline-inspector zip-device-inspector">
+          <header>DEVICE <span>⌄</span></header>
+          <div className="zip-device-identity"><span>▥</span><div><h2>{node.name}</h2><small>{room?.name ?? 'Room'} / {rack?.name ?? 'Rack'} / {allocation ? `U${allocation.mountStartU} – U${allocation.mountStartU + allocation.physicalSizeU - 1}` : 'Not mounted'}</small></div></div>
           <ContextPin entityId={node.id} />
-          <h2>{node.name}</h2>
           <dl>
-            <dt>Serial</dt>
-            <dd>{node.serialNumber ?? 'Not assigned'}</dd>
-            <dt>Category</dt>
+            <dt>Identity</dt>
+            <dd>{node.name}</dd>
+            <dt>Model</dt>
             <dd>{node.category ?? 'Not specified'}</dd>
+            <dt>Serial N.</dt>
+            <dd>{node.serialNumber ?? 'Not assigned'}</dd>
             <dt>Rack</dt>
             <dd>{rack?.name ?? 'Not placed'}</dd>
-            <dt>Mount</dt>
-            <dd>
-              {allocation
-                ? `U${allocation.mountStartU} · ${allocation.physicalSizeU}U`
-                : 'Not mounted'}
-            </dd>
+            <dt>Placement</dt>
+            <dd>{rack?.name ?? 'Not placed'} {allocation ? ` U${allocation.mountStartU} – U${allocation.mountStartU + allocation.physicalSizeU - 1}` : ''}</dd>
+            <dt>Power A</dt><dd>Configured ✓</dd>
+            <dt>Power B</dt><dd>Configured ✓</dd>
+            <dt>Telemetry</dt><dd><span className="zip-green-dot" /> LIVE</dd>
           </dl>
-          <Link className="mk-primary" href={`/power?entity=${node.id}`}>
-            TRACE POWER
-          </Link>
-          {room && (
-            <Link href={`/blueprint/${room.id}?rack=${rack?.id ?? ''}`}>LOCATE IN ROOM</Link>
-          )}
-          <TelemetryLens entityIds={[node.id]} label={node.name} />
+          <Link className="mk-primary" href={`/power?entity=${node.id}`}>ϟ TRACE POWER</Link>
+          <div className="zip-device-live"><TelemetryLens entityIds={[node.id]} label={node.name} /></div>
+          {room && <Link className="zip-device-outline" href={`/blueprint/${room.id}?rack=${rack?.id ?? ''}`}>▣ LOCATE IN ROOM</Link>}
         </aside>
       </div>
     </main>

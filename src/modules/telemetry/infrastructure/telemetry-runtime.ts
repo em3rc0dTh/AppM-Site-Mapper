@@ -7,7 +7,8 @@ import { createTopologyRepository } from '@/modules/topology/infrastructure/topo
 import { logger } from '@/shared/infrastructure/logger';
 import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
 
-// Live MQTT diagnostics count actual accepted source messages; never simulate broker health.\nexport interface TelemetrySourceDiagnostic {
+// Live MQTT diagnostics count actual accepted source messages; never simulate broker health.
+export interface TelemetrySourceDiagnostic {
   readonly serial: string;
   readonly rawMessages: number;
   readonly lastRawAt: string | null;

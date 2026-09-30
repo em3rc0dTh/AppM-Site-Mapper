@@ -3669,6 +3669,94 @@ body {
   margin: 0 0 14px;
   font-size: 15px;
 }
+.warehouse-template-create {
+  display: grid;
+  gap: 12px;
+}
+.warehouse-create-mode {
+  display: inline-flex;
+  width: fit-content;
+  border: 1px solid #cbd5df;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.warehouse-create-mode button {
+  min-width: 84px;
+  min-height: 32px;
+  border: 0;
+  border-right: 1px solid #cbd5df;
+  background: #fff;
+  color: #5b6e83;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+.warehouse-create-mode button:last-child {
+  border-right: 0;
+}
+.warehouse-create-mode button.is-active {
+  background: #2678e8;
+  color: #fff;
+}
+.warehouse-json-import {
+  display: grid;
+  gap: 10px;
+}
+.warehouse-json-copy {
+  display: grid;
+  gap: 3px;
+  color: #5a6d82;
+  font-size: 10px;
+}
+.warehouse-json-copy strong {
+  color: #172536;
+  font-size: 11px;
+}
+.warehouse-json-copy code {
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: #eef4fb;
+  color: #244b76;
+}
+.warehouse-json-import textarea {
+  width: 100%;
+  min-height: 310px;
+  resize: vertical;
+  border: 1px solid #cbd5df;
+  border-radius: 5px;
+  padding: 13px 14px;
+  background: #0d1520;
+  color: #d8e7f5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  line-height: 1.55;
+  tab-size: 2;
+}
+.warehouse-json-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.warehouse-json-actions button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #c7d2de;
+  border-radius: 4px;
+  background: #fff;
+  color: #243446;
+  font-weight: 800;
+}
+.warehouse-json-actions button:last-child {
+  border-color: #2678e8;
+  background: #2678e8;
+  color: #fff;
+}
+.warehouse-form-success {
+  margin: 0;
+  color: #147a52;
+  font-size: 10px;
+  font-weight: 700;
+}
 .warehouse-template-form {
   display: grid;
   gap: 12px;

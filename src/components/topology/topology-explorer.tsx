@@ -99,9 +99,7 @@ export function TopologyExplorer({
                   >
                     <span className="zip-floor-shape" />
                     <span>
-                      <strong>{node.kind === 'NETWORK'
-                      ? ({ Lima: 'SITE LIM', Arequipa: 'SITE ARE', Trujillo: 'SITE TRU' } as Record<string,string>)[entry.node.name] ?? entry.node.name.toUpperCase()
-                      : entry.node.name.toUpperCase()}</strong>
+                      <strong>{entry.node.name.toUpperCase()}</strong>
                       <small>{index === items.length - 1 ? 'BASEMENT' : 'LEVEL'}</small>
                     </span>
                   </button>
@@ -187,7 +185,9 @@ export function TopologyExplorer({
                     <span className="zip-graph-glyph" aria-hidden="true">
                       {nodeGlyph(entry.node.kind)}
                     </span>
-                    <strong>{entry.node.name.toUpperCase()}</strong>
+                    <strong>{node.kind === 'NETWORK'
+                      ? ({ Lima: 'SITE LIM', Arequipa: 'SITE ARE', Trujillo: 'SITE TRU' } as Record<string,string>)[entry.node.name] ?? entry.node.name.toUpperCase()
+                      : entry.node.name.toUpperCase()}</strong>
                     <span className="zip-graph-metrics">
                       <small>▱ {Math.max(1, index + 1)}</small>
                       <small>▯ {items.length}</small>

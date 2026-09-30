@@ -99,7 +99,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               ϟ TRACE POWER
             </Link>
           ) : (
-            <p className="device-power-unconfigured">No active power path is recorded for this device.</p>
+            <p className="device-power-unconfigured">
+              No active power path is recorded for this device.
+            </p>
           )}
           <div className="zip-device-live">
             <TelemetryLens entityIds={[node.id]} label={node.name} />

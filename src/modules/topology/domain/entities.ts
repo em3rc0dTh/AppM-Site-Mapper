@@ -1,4 +1,5 @@
 import type { DomainEntity } from '@/shared/domain/entity';
+import type { AssetTemplateSnapshot } from '@/modules/warehouse/domain/template';
 
 export type TopologyKind =
   | 'NETWORK'
@@ -173,6 +174,7 @@ export interface DeviceNode extends TopologyBase {
   readonly category?: string;
   readonly pinned: boolean;
   readonly deviceType?: string;
+  readonly template?: AssetTemplateSnapshot;
   readonly bdfb?: BdfbStructure;
 }
 
@@ -183,6 +185,7 @@ export interface EquipmentNode extends TopologyBase {
   readonly category?: string;
   readonly pinned: boolean;
   readonly equipmentType?: string;
+  readonly template?: AssetTemplateSnapshot;
 }
 
 export type TopologyNode =

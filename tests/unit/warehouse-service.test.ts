@@ -170,7 +170,7 @@ describe('Virtual Warehouse', () => {
                     endpointCount: 24,
                     endpointVariant: 'BREAKER',
                     rawPointPrefix: '0_2_',
-                  }
+                  },
                 ],
               },
               {
@@ -187,7 +187,7 @@ describe('Virtual Warehouse', () => {
                     endpointCount: 24,
                     endpointVariant: 'BREAKER',
                     rawPointPrefix: '0_4_',
-                  }
+                  },
                 ],
               },
             ],

@@ -174,17 +174,17 @@ Implemented source changes:
 
 ### Acceptance status and remaining gaps
 
-| Capability | Current evidence |
-| --- | --- |
-| Create Network | Prior user-reported PASS; not repeated here |
-| Canvas Site/Room/Bay creation and edits | Implemented; execution/acceptance pending |
-| Viewport, pointer transform, Undo, Cancel | Implemented; visual acceptance pending |
-| Persistence, reload, restart, deep-link recovery | Implemented paths; acceptance pending |
-| Domain/auth/concurrency rejection | Implemented; runtime acceptance pending |
-| Generic topology rename/property update | GAP (layout-specific updates only) |
-| Physical topology DELETE | GAP; archive is not delete |
-| Blueprint archived-object restore control | GAP; existing restore API retained |
-| Tests, build, CI certification | Not executed / not certified by instruction |
+| Capability                                       | Current evidence                            |
+| ------------------------------------------------ | ------------------------------------------- |
+| Create Network                                   | Prior user-reported PASS; not repeated here |
+| Canvas Site/Room/Bay creation and edits          | Implemented; execution/acceptance pending   |
+| Viewport, pointer transform, Undo, Cancel        | Implemented; visual acceptance pending      |
+| Persistence, reload, restart, deep-link recovery | Implemented paths; acceptance pending       |
+| Domain/auth/concurrency rejection                | Implemented; runtime acceptance pending     |
+| Generic topology rename/property update          | GAP (layout-specific updates only)          |
+| Physical topology DELETE                         | GAP; archive is not delete                  |
+| Blueprint archived-object restore control        | GAP; existing restore API retained          |
+| Tests, build, CI certification                   | Not executed / not certified by instruction |
 
 No running MongoDB inventory was connected to or modified during implementation.
 No clean-room database was recreated. MQTT mappings, TimescaleDB, BDFB and

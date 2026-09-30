@@ -35,7 +35,10 @@ export async function PUT(request: Request, context: Context) {
   const polygon =
     body && typeof body === 'object' && 'polygon' in body ? parsePolygon(body.polygon) : null;
 
-  const version = body && typeof body === 'object' && 'version' in body && typeof body.version === 'string' ? body.version : undefined;
+  const version =
+    body && typeof body === 'object' && 'version' in body && typeof body.version === 'string'
+      ? body.version
+      : undefined;
   if (!polygon || !version) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
@@ -48,7 +51,10 @@ export async function PUT(request: Request, context: Context) {
   );
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.error === 'LAYOUT_CONFLICT' ? 409 : 422 });
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.error === 'LAYOUT_CONFLICT' ? 409 : 422 },
+    );
   }
 
   return NextResponse.json({ room: result.value });

@@ -51,8 +51,7 @@ in mm² divided by 1,000,000 for m²; manual area is not authoritative.
 
 Site/Room creation stores metadata and the drawn polygon in one insert.
 `PUT /api/spatial/sites/:id/boundary` accepts `{polygon, version}` and performs
-an atomic version-filtered replacement of an active Site. A stale version returns
-409. Read remains `GET /api/topology/:id`.
+an atomic version-filtered replacement of an active Site. A stale version returns 409. Read remains `GET /api/topology/:id`.
 
 Room/Bay edits, positions and rack footprints remain part of the existing atomic,
 versioned Room layout transaction. The older Room polygon PUT now also requires
@@ -71,7 +70,6 @@ Position references.
 
 Implementation recorded without running tests, typecheck, lint, browser checks or
 build at the user's explicit request. This addendum does not certify acceptance.
-
 
 ## Bay frontage and rack depth — 2026-09-30
 

@@ -79,7 +79,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
-  const spatial = ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(kind);
+  const spatial = ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(
+    kind,
+  );
   const polygon = spatial ? parsePolygon(body.polygon) : null;
   if (spatial && !polygon) return NextResponse.json({ error: 'INVALID_POLYGON' }, { status: 422 });
 
@@ -114,7 +116,10 @@ export async function POST(request: Request) {
   });
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.error === 'LAYOUT_CONFLICT' ? 409 : 422 });
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.error === 'LAYOUT_CONFLICT' ? 409 : 422 },
+    );
   }
 
   return NextResponse.json({ node: result.value }, { status: 201 });

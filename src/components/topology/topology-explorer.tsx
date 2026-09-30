@@ -36,18 +36,8 @@ export function TopologyExplorer({
   items: readonly VisualStageChild[];
   boundary?: readonly PhysicalPoint[] | undefined;
 }) {
-  const preferred =
-    node.kind === 'NETWORK'
-      ? items.find((entry) => entry.node.name === 'Lima')
-      : node.kind === 'SITE'
-        ? items.find((entry) => entry.node.name === 'Building A')
-        : node.kind === 'STRUCTURE'
-          ? items.find((entry) => entry.node.name === 'Level 03')
-          : node.kind === 'LEVEL'
-            ? items.find((entry) => entry.node.name === 'Room 202')
-            : undefined;
   const [selected, setSelected] = useState<string | null>(
-    preferred?.node.id ?? items[0]?.node.id ?? null,
+    null,
   );
   const [zoom, setZoom] = useState(1);
   const item = items.find((entry) => entry.node.id === selected);
@@ -62,7 +52,7 @@ export function TopologyExplorer({
     'polygon' in entry.node && entry.node.polygon ? [...entry.node.polygon] : [],
   );
   const all = [...(boundary ?? []), ...polygons];
-  const hasGeometry = polygons.length > 0 && node.kind === 'LEVEL';
+  const hasGeometry = polygons.length > 0 && (node.kind === 'LEVEL' || node.kind === 'SITE');
   const minX = Math.min(...all.map((point) => point.x), 0);
   const minY = Math.min(...all.map((point) => point.y), 0);
   const width = Math.max(...all.map((point) => point.x), 1200) - minX;
@@ -82,9 +72,9 @@ export function TopologyExplorer({
                 ? `SITE: ${node.name.toUpperCase()}`
                 : node.kind === 'STRUCTURE'
                   ? node.name.toUpperCase()
-                  : 'LEVEL 02'}
+                  : node.name.toUpperCase()}
           </strong>
-          <small>{hasGeometry ? 'Level dimensions · 600 mm grid' : 'TOPOLOGICAL VIEW'}</small>
+          <small>{hasGeometry ? 'SURVEYED GEOMETRY' : 'SCHEMATIC · NO SURVEYED COORDINATES'}</small>
         </header>
 
         <div className="mk-map-canvas zip-map-canvas">
@@ -106,44 +96,6 @@ export function TopologyExplorer({
                     </span>
                   </button>
                 ))}
-              </div>
-            ) : node.kind === 'LEVEL' ? (
-              <div className="zip-level-reference">
-                <div className="zip-level-columns" aria-hidden="true">
-                  {['01', '02', '03', '04', '05', '06'].map((label) => (
-                    <span key={label}>{label}</span>
-                  ))}
-                </div>
-                <div className="zip-level-rows" aria-hidden="true">
-                  {['A', 'B', 'C', 'D', 'E'].map((label) => (
-                    <span key={label}>{label}</span>
-                  ))}
-                </div>
-                <div className="zip-level-boundary">
-                  {visualItems.map((entry, index) => (
-                    <button
-                      key={entry.node.id}
-                      className={`zip-level-room zip-level-room--${index + 1} ${selected === entry.node.id ? 'is-selected' : ''}`}
-                      onClick={() => setSelected(entry.node.id)}
-                      onDoubleClick={() => window.location.assign(entry.href)}
-                    >
-                      <strong>{entry.node.name.toUpperCase()}</strong>
-                      <span aria-hidden="true">▤</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="zip-level-scale" aria-hidden="true">
-                  <span>0</span>
-                  <span>5</span>
-                  <span>10</span>
-                  <span>15</span>
-                  <span>20</span>
-                  <b>meters</b>
-                </div>
-                <div className="zip-level-minimap" aria-hidden="true">
-                  <b>MINI MAP</b>
-                  <span />
-                </div>
               </div>
             ) : hasGeometry ? (
               <div className="zip-level-stage">
@@ -185,6 +137,21 @@ export function TopologyExplorer({
                 <div className="zip-level-minimap" aria-hidden="true">
                   <b>MINI MAP</b>
                   <span />
+                </div>
+              </div>
+            ) : node.kind === 'LEVEL' ? (
+              <div className="topology-unlocated-list" aria-label="Rooms without surveyed geometry">
+                <p>Room footprints are not surveyed. This is a topology list, not a physical map.</p>
+                <div>
+                  {visualItems.map((entry) => (
+                    <button key={entry.node.id} type="button"
+                      className={selected === entry.node.id ? 'is-selected' : ''}
+                      onClick={() => setSelected(entry.node.id)}
+                      onDoubleClick={() => window.location.assign(entry.href)}>
+                      <strong>{entry.node.name}</strong>
+                      <small>Click to inspect · double click to open</small>
+                    </button>
+                  ))}
                 </div>
               </div>
             ) : (
@@ -236,9 +203,7 @@ export function TopologyExplorer({
 
         <footer className="zip-canvas-footer">
           <span>{node.kind === 'NETWORK' ? 'Network' : node.name}</span>
-          <span className="zip-grid-indicator">
-            ▦ GRID {node.kind === 'NETWORK' ? '200 km' : '600 mm'}
-          </span>
+          <span className="zip-grid-indicator">{hasGeometry ? '▦ SURVEYED' : 'SCHEMATIC'}</span>
           <div className="zip-zoom-controls">
             <button onClick={() => setZoom((value) => Math.max(0.5, value - 0.1))}>−</button>
             <b>{Math.round(zoom * 100)}%</b>
@@ -276,23 +241,9 @@ export function TopologyExplorer({
             <dd>● Active</dd>
           </dl>
         </section>
-        <section>
-          <h3>TELEMETRY INFORMATION</h3>
-          <div className="zip-health-card">
-            <strong>⌁ Network Health</strong>
-            <span>● HEALTHY</span>
-          </div>
-          <div className="zip-health-stats">
-            <span>
-              <b>{items.length}</b> Online
-            </span>
-            <span>
-              <b>0</b> Warning
-            </span>
-            <span>
-              <b>0</b> Offline
-            </span>
-          </div>
+        <section className="topology-telemetry-note">
+          <h3>TELEMETRY</h3>
+          <p>Live status appears on a mapped device or breaker. Topology alone does not prove connectivity.</p>
         </section>
         {item ? (
           <Link className="mk-primary zip-open-action" href={item.href}>

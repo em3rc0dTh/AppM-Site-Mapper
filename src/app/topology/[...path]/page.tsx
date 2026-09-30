@@ -104,6 +104,14 @@ export default async function TopologyNodePage({
   }
 
   const node = resolved.value;
+  if (node.kind === 'CONTAINER_CLUSTER_BAY' || node.kind === 'POSITION') {
+    const ancestry = await service.getTrail(node.id);
+    const room = [...ancestry].reverse().find((entry) => entry.kind === 'ROOM_SUBSTRUCTURE');
+    if (room) {
+      const context = node.kind === 'POSITION' ? 'position' : 'bay';
+      redirect(`/blueprint/${room.id}?${context}=${encodeURIComponent(node.id)}`);
+    }
+  }
   function openRoom(candidate: TopologyNode): void {
     if (candidate.kind === 'ROOM_SUBSTRUCTURE') redirect(`/blueprint/${candidate.id}`);
   }
@@ -229,24 +237,32 @@ export default async function TopologyNodePage({
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
         aria-label="Breadcrumb"
       >
-        {trailEntries.map((item, index) => (
-          <Link key={item.id} href={index === trailEntries.length - 1 ? selfHref : item.href}>
-            {item.name}
-          </Link>
-        ))}
+        {trailEntries
+          .filter((item, index) => {
+            const kind = trail[index]?.kind;
+            return kind === 'SITE' || kind === 'STRUCTURE' || kind === 'LEVEL' ||
+              kind === 'ROOM_SUBSTRUCTURE' || kind === 'CONTAINER_RACK' || item.id === node.id;
+          })
+          .map((item) => (
+            <Link key={item.id} href={item.id === node.id ? selfHref : item.href} title={item.name}>
+              {item.name}
+            </Link>
+          ))}
       </nav>
 
       <div className="operational-layout telxius-operational-layout">
         <aside className="operational-context">
-          {node.kind === 'DEVICE' && node.bdfb ? (
-            <BdfbPowerTree
-              device={node}
-              trail={trail}
-              selfHref={selfHref}
-              activePanelId={query.panel}
-            />
-          ) : (
-            navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />
+          {navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />}
+          {node.kind === 'DEVICE' && node.bdfb && (
+            <details className="context-power-disclosure">
+              <summary>Electrical hierarchy · panels</summary>
+              <BdfbPowerTree
+                device={node}
+                trail={trail}
+                selfHref={selfHref}
+                activePanelId={query.panel}
+              />
+            </details>
           )}
         </aside>
 

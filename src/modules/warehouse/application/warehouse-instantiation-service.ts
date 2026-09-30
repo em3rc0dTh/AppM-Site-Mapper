@@ -7,7 +7,11 @@ import { materializeBdfbBlueprint, snapshotTemplate } from '@/modules/warehouse/
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type WarehouseInstantiationError =
-  'TEMPLATE_NOT_FOUND' | 'RACK_NOT_FOUND' | 'INVALID_NAME' | 'CREATE_FAILED';
+  | 'TEMPLATE_NOT_FOUND'
+  | 'RACK_NOT_FOUND'
+  | 'INVALID_NAME'
+  | 'SERIAL_ALREADY_ASSIGNED'
+  | 'CREATE_FAILED';
 
 export interface InstantiateTemplateInput {
   readonly templateId: string;
@@ -38,6 +42,25 @@ export class WarehouseInstantiationService {
     if (!template || template.lifecycle !== 'ACTIVE') return failure('TEMPLATE_NOT_FOUND');
 
     const topology = new TopologyService(this.topologyRepository);
+
+    const serialNumber = input.serialNumber?.trim();
+    if (serialNumber) {
+      const [devices, equipment] = await Promise.all([
+        this.topologyRepository.listByKind('DEVICE'),
+        this.topologyRepository.listByKind('EQUIPMENT'),
+      ]);
+      if (
+        [...devices, ...equipment].some(
+          (node) =>
+            node.lifecycle === 'ACTIVE' &&
+            (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') &&
+            node.serialNumber === serialNumber,
+        )
+      ) {
+        return failure('SERIAL_ALREADY_ASSIGNED');
+      }
+    }
+
     const rack = await topology.getById(input.rackId);
     if (
       !rack ||
@@ -51,7 +74,7 @@ export class WarehouseInstantiationService {
       kind: template.kind,
       parentId: rack.id,
       name: input.name,
-      ...(input.serialNumber ? { serialNumber: input.serialNumber } : {}),
+      ...(serialNumber ? { serialNumber } : {}),
       ...(input.category?.trim()
         ? { category: input.category }
         : template.category

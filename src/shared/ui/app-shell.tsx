@@ -7,11 +7,12 @@ import { useState, type ReactNode } from 'react';
 import { CommandPalette } from './command-palette';
 import { ContextTracker } from './context-tracker';
 
-function SiteMapperMark() {
+function BrandMark() {
   return (
-    <svg className="zip-brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-      <path d="M16 2 28 9v14l-12 7L4 23V9Z" />
-      <path d="m4 9 12 7 12-7M16 16v14M10 12l12-7M10 12v8l6 4 6-4v-8" />
+    <svg className="zip-brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M32 4 56 17v30L32 60 8 47V17Z" />
+      <path d="m8 17 24 14 24-14M32 31v29M20 24 43 11M20 24v16l12 8 12-8V24" />
+      <path d="M21 25v7m0 0-3 2m3-2 3 1" />
     </svg>
   );
 }
@@ -25,14 +26,17 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (pathname === '/login' || pathname === '/change-password') return children;
 
   const blueprint = pathname.startsWith('/blueprint');
-  const settings = pathname.startsWith('/settings');
   const power = pathname.startsWith('/power');
   const immersive =
     pathname.startsWith('/topology') ||
-    pathname.startsWith('/blueprint') ||
+    blueprint ||
     pathname.startsWith('/rack') ||
     pathname.startsWith('/device') ||
-    pathname.startsWith('/power');
+    power ||
+    pathname === '/network';
+
+  const contextLabel =
+    pathname.startsWith('/settings') ? 'SETTINGS' : pathname === '/workspace' ? 'OPERATIONS' : 'NETWORK';
 
   async function logout() {
     setBusy(true);
@@ -54,9 +58,10 @@ export function AppShell({ children }: { children: ReactNode }) {
         'zip-app-shell',
         immersive ? 'app-shell--immersive' : '',
         blueprint ? 'app-shell--blueprint' : '',
-        settings ? 'app-shell--settings' : '',
         power ? 'app-shell--power' : '',
-      ].join(' ')}
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       <a className="skip-link" href="#main-content">
         Skip to workspace
@@ -64,53 +69,43 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <header className="app-topbar zip-topbar">
         <Link href="/workspace" className="zip-brand">
-          <SiteMapperMark />
+          <BrandMark />
           <span>
-            <strong>{blueprint ? 'AppManager' : 'SITE MAPPER'}</strong>
-            <small>{blueprint ? 'SiteMapper Module' : 'Physical Infrastructure'}</small>
+            <strong>SITE MAPPER</strong>
+            <small>Physical Infrastructure</small>
           </span>
         </Link>
 
-        {settings ? (
-          <div className="zip-static-context">SETTINGS</div>
-        ) : (
-          <div className="zip-context-slot" />
-        )}
+        <div className="zip-context-slot">
+          {!immersive ? <div className="zip-static-context">{contextLabel}</div> : null}
+        </div>
 
         <ContextTracker />
         <CommandPalette />
 
-        <Link href="/network" className="zip-explore">
-          <span aria-hidden="true">⌑</span>
-          EXPLORE
-          <b aria-hidden="true">⌄</b>
+        <Link className="zip-explore" href="/network">
+          EXPLORE <b>⌄</b>
         </Link>
-
-        {settings ? (
-          <button className="zip-account" type="button" onClick={logout} disabled={busy}>
-            <span aria-hidden="true">◎</span>
-            {busy ? '…' : 'Account'}
-            <b aria-hidden="true">⌄</b>
-          </button>
-        ) : (
-          <button
-            className="zip-more"
-            type="button"
-            onClick={logout}
-            disabled={busy}
-            aria-label="Sign out"
-          >
-            {busy ? '…' : '•••'}
-          </button>
-        )}
+        <Link className="zip-account" href="/settings">
+          ADMIN <b>⌄</b>
+        </Link>
+        <button
+          className="zip-more"
+          disabled={busy}
+          onClick={logout}
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          {busy ? '…' : '⋮'}
+        </button>
       </header>
 
       <div className="app-content zip-app-content" id="main-content" tabIndex={-1}>
-        {error && (
+        {error ? (
           <p className="form-error zip-shell-error" role="alert">
             {error}
           </p>
-        )}
+        ) : null}
         {children}
       </div>
     </div>

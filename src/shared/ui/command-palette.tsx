@@ -7,20 +7,11 @@ import type { SearchResult } from '@/modules/workspace/application/search-servic
 
 const EMPTY_STATUS = 'Type a name or ID to search.';
 
-function displayKind(kind: string) {
-  if (kind === 'CONTAINER_RACK') return 'RACK';
-  if (kind === 'ROOM_SUBSTRUCTURE') return 'ROOM';
-  if (kind === 'STRUCTURE') return 'BUILDING';
-  return kind.replaceAll('_', ' ');
-}
-
-function resultIcon(kind: string) {
-  if (kind === 'DEVICE' || kind === 'EQUIPMENT') return '▤';
-  if (kind === 'CONTAINER_RACK') return '▥';
-  if (kind === 'ROOM_SUBSTRUCTURE') return '▭';
-  if (kind === 'STRUCTURE') return '▦';
-  if (kind === 'PANEL') return '▧';
-  if (kind === 'BREAKER') return '▯';
+function glyph(kind: string) {
+  if (kind.includes('RACK')) return '▥';
+  if (kind.includes('DEVICE') || kind.includes('EQUIPMENT')) return '▤';
+  if (kind.includes('ROOM')) return '▭';
+  if (kind.includes('SITE')) return '▦';
   return '◇';
 }
 
@@ -36,29 +27,13 @@ export function CommandPalette() {
   const hasQuery = Boolean(query.trim());
   const visibleResults = open && hasQuery ? results : [];
   const visibleStatus = hasQuery ? status : EMPTY_STATUS;
-
   const groups = useMemo(() => {
-    const ordered = [
-      'DEVICE',
-      'EQUIPMENT',
-      'CONTAINER_RACK',
-      'ROOM_SUBSTRUCTURE',
-      'STRUCTURE',
-      'SITE',
-      'PANEL',
-      'BREAKER',
-      'LEVEL',
-      'NETWORK',
-    ];
-    const byKind = new Map<string, SearchResult[]>();
+    const map = new Map<string, SearchResult[]>();
     for (const result of visibleResults) {
-      const list = byKind.get(result.kind) ?? [];
-      list.push(result);
-      byKind.set(result.kind, list);
+      const label = result.kind.replaceAll('_', ' ');
+      map.set(label, [...(map.get(label) ?? []), result]);
     }
-    return [...ordered, ...[...byKind.keys()].filter((kind) => !ordered.includes(kind))]
-      .filter((kind) => byKind.has(kind))
-      .map((kind) => ({ kind, items: byKind.get(kind)! }));
+    return [...map.entries()];
   }, [visibleResults]);
 
   useEffect(() => {
@@ -79,7 +54,6 @@ export function CommandPalette() {
 
   useEffect(() => {
     if (!open || !hasQuery) return;
-
     const controller = new AbortController();
     const timer = setTimeout(async () => {
       setStatus('Searching…');
@@ -98,7 +72,6 @@ export function CommandPalette() {
         }
       }
     }, 180);
-
     return () => {
       clearTimeout(timer);
       controller.abort();
@@ -118,8 +91,7 @@ export function CommandPalette() {
   return (
     <>
       <button ref={trigger} className="mk-search-trigger" onClick={() => setOpen(true)}>
-        <span className="zip-search-icon">⌕</span>
-        <span>Search...</span>
+        ⌕ <span>Search...</span>
         <kbd>⌘ K</kbd>
       </button>
 
@@ -133,7 +105,7 @@ export function CommandPalette() {
         aria-label="Global infrastructure search"
       >
         <div className="mk-command-input zip-command-input">
-          <span>⌕</span>
+          <span aria-hidden="true">⌕</span>
           <input
             autoFocus
             value={query}
@@ -160,24 +132,20 @@ export function CommandPalette() {
               if (event.key === 'Enter' && visibleResults[index]) navigate(visibleResults[index]);
             }}
           />
-          <button onClick={close} aria-label="Close search">
-            ×
-          </button>
+          <button onClick={close} aria-label="Close search">×</button>
         </div>
 
-        {!hasQuery && <p role="status">{visibleStatus}</p>}
+        <p role="status">{visibleStatus}</p>
         <div id="search-results" role="listbox" className="zip-command-results">
-          {groups.map((group) => (
-            <section key={group.kind} className="zip-command-group">
+          {groups.map(([group, items]) => (
+            <section className="zip-command-group" key={group}>
               <header>
-                <strong>{displayKind(group.kind)}</strong>
-                <span>
-                  {group.items.length} {group.items.length === 1 ? 'result' : 'results'}
-                </span>
+                <strong>{group}</strong>
+                <span>{items.length}</span>
               </header>
-              {group.items.map((result) => {
+              {items.map((result) => {
                 const resultIndex = visibleResults.findIndex(
-                  (item) => item.id === result.id && item.kind === result.kind,
+                  (candidate) => candidate.id === result.id && candidate.kind === result.kind,
                 );
                 return (
                   <button
@@ -186,14 +154,15 @@ export function CommandPalette() {
                     role="option"
                     aria-selected={index === resultIndex}
                     className={index === resultIndex ? 'is-selected' : ''}
+                    onMouseEnter={() => setIndex(resultIndex)}
                     onClick={() => navigate(result)}
                   >
-                    <b className="zip-command-icon">{resultIcon(result.kind)}</b>
+                    <b className="zip-command-icon">{glyph(result.kind)}</b>
                     <span>
                       <strong>{result.name}</strong>
                       <em>{result.breadcrumb}</em>
                     </span>
-                    <kbd>{resultIndex === 0 ? '↵ Open' : `⌘ ${resultIndex + 1}`}</kbd>
+                    <kbd>↵</kbd>
                   </button>
                 );
               })}

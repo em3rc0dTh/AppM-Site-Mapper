@@ -75,6 +75,7 @@ export default async function RackPage({
         <section className="operational-stage operational-stage--wide zip-rack-elevation-stage">
           <RackElevation
             view={result.value}
+            canWrite={hasPermission(auth.value.role, 'topology:write')}
             {...(parent?.kind === 'POSITION'
               ? {
                   context: {

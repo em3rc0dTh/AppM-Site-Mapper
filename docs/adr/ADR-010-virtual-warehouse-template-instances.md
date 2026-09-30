@@ -68,6 +68,11 @@ The main Rack action is `MOUNT FROM WAREHOUSE`.
 
 Virtual Warehouse is available as a first-class top-level application surface.
 
+Template creation supports both the structured Form and raw JSON import. JSON import accepts
+one template object or an array of up to 100 templates and routes every item through the
+same Warehouse domain validation used by the Form. Dimensions may be supplied as
+`dimensionsMm: { width, depth }` or the flat `widthMm/depthMm` fields.
+
 ## Current scope
 
 Implemented:

@@ -1,0 +1,48 @@
+name: Visual parity capture
+
+on:
+  push:
+    branches:
+      - feat/mk1-raw-build
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      LOCAL_ADMIN_EMAIL: visual@local.test
+      LOCAL_ADMIN_PASSWORD: Visual-Local-Only!2026
+      LOCAL_ADMIN_NAME: Visual Capture
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Install capture browser
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Start local seeded app
+        run: |
+          npm run local:dev -- --no-open > /tmp/site-mapper.log 2>&1 &
+          for i in {1..120}; do
+            if grep -q "Site Mapper local demo is ready." /tmp/site-mapper.log; then
+              cat /tmp/site-mapper.log
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/site-mapper.log
+          exit 1
+      - name: Capture approved view family
+        run: node scripts/visual-capture.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site-mapper-visual-current
+          path: visual-artifacts/current
+          if-no-files-found: error

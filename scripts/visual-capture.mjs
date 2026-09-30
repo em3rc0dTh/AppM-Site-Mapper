@@ -51,24 +51,21 @@ await snap('14-operations');
 await go('/network');
 await snap('01-network');
 
-const siteCard = page.getByRole('button', { name: /Lima/i }).first();
-if (await siteCard.count()) {
-  await siteCard.dblclick();
-  await page.waitForTimeout(450);
+const siteLink = await search('Lima', 'SITE');
+if (siteLink) {
+  await go(siteLink);
   await snap('02-site');
 }
 
-const structureCard = page.getByRole('button', { name: /Building A/i }).first();
-if (await structureCard.count()) {
-  await structureCard.dblclick();
-  await page.waitForTimeout(450);
+const structureLink = await search('Building A', 'STRUCTURE');
+if (structureLink) {
+  await go(structureLink);
   await snap('03-structure');
 }
 
-const level02 = page.getByRole('button', { name: /Level 02/i }).first();
-if (await level02.count()) {
-  await level02.dblclick();
-  await page.waitForTimeout(450);
+const levelLink = await search('Level 02', 'LEVEL');
+if (levelLink) {
+  await go(levelLink);
   await snap('04-level');
 }
 
@@ -76,18 +73,18 @@ const roomLink = await search('Room 202', 'ROOM_SUBSTRUCTURE');
 if (roomLink) {
   await go(roomLink);
   await snap('05-room-blueprint');
+  const editButton = page.getByRole('button', { name: 'EDIT ROOM' }).first();
+  if (await editButton.count()) {
+    await editButton.click();
+    await page.waitForTimeout(300);
+    await snap('06-room-blueprint-edit');
+  }
   await page.keyboard.press('Control+K');
   await page.getByLabel('Search infrastructure').fill('R-');
   await page.waitForTimeout(500);
   await snap('15-global-search');
   await page.keyboard.press('Escape');
 
-  const telemetryButton = page.getByRole('button', { name: 'TELEMETRY' }).first();
-  if (await telemetryButton.count()) {
-    await telemetryButton.click();
-    await page.waitForTimeout(400);
-    await snap('13-telemetry-lens');
-  }
 }
 
 const rackLink = await search('R-023', 'CONTAINER_RACK');
@@ -112,6 +109,12 @@ if (deviceLink) {
 
 await go('/power?feed=AB');
 await snap('10-power-path');
+const powerTelemetryButton = page.getByRole('button', { name: 'TELEMETRY' }).first();
+if (await powerTelemetryButton.count()) {
+  await powerTelemetryButton.click();
+  await page.waitForTimeout(400);
+  await snap('13-telemetry-lens');
+}
 
 const bdfbLink = await search('BDFB-A', 'DEVICE');
 if (bdfbLink) {

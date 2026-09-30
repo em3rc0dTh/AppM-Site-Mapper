@@ -3391,3 +3391,41 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* Approved ZIP parity: lighter technical rack chassis. */
+.zip-elevation-rack {
+  background: #eef1f3 !important;
+  border: 1px solid #8c949b !important;
+  box-shadow:
+    0 0 0 7px #e3e6e8,
+    0 0 0 9px #9ba2a8,
+    0 8px 18px #0002 !important;
+}
+.zip-elevation-rack .legacy-rack-frame,
+.zip-elevation-rack .legacy-rack-units {
+  background: #fbfcfc !important;
+  border-color: #9ca4aa !important;
+}
+.zip-elevation-rack .legacy-rack-metal {
+  background: linear-gradient(90deg, #b8bec3, #e8eaec 18%, #c7ccd0 50%, #eef0f1 82%, #aeb5ba) !important;
+  border-color: #7f878d !important;
+  color: #31383e !important;
+}
+.zip-elevation-rack .legacy-rack-block {
+  color: #31383e !important;
+  border-color: #b4bbc0 !important;
+  box-shadow: inset 0 0 0 1px #eef0f2 !important;
+}
+.zip-elevation-rack .legacy-rack-block--physical {
+  background: #d9dde0 !important;
+}
+.zip-elevation-rack .legacy-rack-block--available {
+  background: #f5f7f8 !important;
+}
+.zip-elevation-rack .legacy-rack-block--reserved {
+  background: #fff7e7 !important;
+}
+.zip-elevation-rack .legacy-rack-scale {
+  color: #626b73 !important;
+}

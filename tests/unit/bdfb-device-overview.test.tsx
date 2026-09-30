@@ -66,9 +66,8 @@ describe('BDFB device hierarchy overview', () => {
     expect(markup).toContain('Frame A');
     expect(markup).toContain('Frame B');
     expect(markup).toContain('Panel A1');
-    expect(markup).toContain('Panel B3');
     expect(markup).toContain('2 FRAMES');
-    expect(markup).toContain('6 PANELS');
+    expect(markup).toContain('4 PANELS');
 
     expect(markup).not.toContain('Holder 1');
     expect(markup).not.toContain('Breaker 2');
@@ -78,7 +77,7 @@ describe('BDFB device hierarchy overview', () => {
     expect(markup.match(/Open Panel [AB][123] breaker detail/g)).toHaveLength(6);
   });
 
-  it('projects the legacy 96-point emulator as one shelf with A/B columns and six physical slots', () => {
+  it('projects the legacy 96-point emulator as one shelf with A/B columns and only configured panels', () => {
     const legacyPanel = (id: string, label: string, rawPointPrefix: string): Panel => ({
       id,
       label,
@@ -133,14 +132,14 @@ describe('BDFB device hierarchy overview', () => {
     expect(markup).toContain('Main Shelf');
     expect(markup).toContain('Panel A1');
     expect(markup).toContain('Panel A2');
-    expect(markup).toContain('Panel A3');
     expect(markup).toContain('Panel B1');
     expect(markup).toContain('Panel B2');
     expect(markup).toContain('Panel B3');
-    expect(markup.match(/EMPTY SLOT/g)).toHaveLength(2);
     expect(markup).toContain('1 SHELF');
     expect(markup).toContain('2 FRAMES');
     expect(markup).toContain('6 PANELS');
     expect(markup).toContain('96 ENDPOINTS');
+    expect(markup).not.toContain('Panel A3');
+    expect(markup).not.toContain('Panel B3');
   });
 });

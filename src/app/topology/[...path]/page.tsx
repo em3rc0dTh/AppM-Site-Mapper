@@ -377,6 +377,7 @@ export default async function TopologyNodePage({
         {node.kind === 'DEVICE' && node.bdfb ? (
           <BdfbTelemetryInspector
             node={node}
+            activePanelId={query.panel}
             location={trail
               .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')
               .map((item) => item.name)

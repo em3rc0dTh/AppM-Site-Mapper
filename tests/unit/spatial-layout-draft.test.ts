@@ -177,4 +177,26 @@ describe('Bay frontage and downstream rack depth', () => {
 
     expect(validateLayoutDraft(draft)).toBe('RACK_OUTSIDE_BAY_WIDTH');
   });
+
+  it('still rejects depth that leaves the Room even when Bay frontage is valid', () => {
+    const draft = baseDraft();
+    draft.clusters = draft.clusters.filter((cluster) => cluster.id === 'bay-top');
+    draft.positions.push({
+      id: 'p1',
+      name: 'Room overflow anchor',
+      clusterId: 'bay-top',
+      row: 'A',
+      column: 1,
+    });
+    draft.racks.push({
+      id: 'r1',
+      name: 'Room overflow',
+      positionId: 'p1',
+      width: 600,
+      depth: 4200,
+      totalU: 42,
+    });
+
+    expect(validateLayoutDraft(draft)).toBe('RACK_OUTSIDE_ROOM');
+  });
 });

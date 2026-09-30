@@ -2006,10 +2006,14 @@ body {
   font-weight: 700;
 }
 .zip-rack-inventory-actions {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 7px;
   margin-bottom: 9px;
+}
+.zip-rack-inventory-actions .spatial-create-control {
+  position: static;
 }
 .zip-rack-inventory-actions .spatial-create-control > button {
   width: 100%;
@@ -2018,10 +2022,53 @@ body {
   font-size: 10px;
 }
 .zip-rack-inventory-actions .spatial-create-popover {
-  top: calc(100% + 6px);
-  bottom: auto;
+  top: auto;
   right: 0;
-  left: auto;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: 100%;
+  max-height: none;
+  overflow: visible;
+  background: #fff;
+  color: #172536;
+  border: 1px solid #b9cce2;
+  border-radius: 6px;
+  box-shadow: 0 14px 36px #173a5c2b;
+}
+.zip-rack-inventory-actions .spatial-metadata-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 !important;
+  padding: 12px !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: #fff !important;
+  color: #172536 !important;
+}
+.zip-rack-inventory-actions .spatial-metadata-form > strong {
+  color: #172536 !important;
+  font-size: 11px;
+}
+.zip-rack-inventory-actions .spatial-metadata-form input,
+.zip-rack-inventory-actions .spatial-metadata-form select {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid #cbd5df !important;
+  border-radius: 4px !important;
+  background: #fff !important;
+  color: #172536 !important;
+}
+.zip-rack-inventory-actions .spatial-metadata-form input::placeholder {
+  color: #7b8997 !important;
+  opacity: 1;
+}
+.zip-rack-inventory-actions .spatial-form-actions {
+  margin-top: 2px;
+}
+.zip-rack-inventory-actions .spatial-form-actions button {
+  min-height: 34px;
+  border-radius: 4px !important;
 }
 .zip-rack-inventory-list {
   display: grid;

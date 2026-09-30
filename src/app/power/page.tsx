@@ -153,7 +153,7 @@ export default async function PowerPage({
         <Link href={`/power?${new URLSearchParams({ ...query, feed: query.feed ?? 'AB' }).toString()}`}>
           {query.feed === 'A' ? 'FEED A' : query.feed === 'B' ? 'FEED B' : 'A+B'} <b>⌄</b>
         </Link>
-        <strong><i /> HEALTHY</strong>
+        <strong><i /> {primary ? 'CONFIGURED' : 'NO PATH'}</strong>
       </div>
 
       <div className="zip-power-layout">
@@ -209,7 +209,7 @@ export default async function PowerPage({
             <strong>{targetName}</strong>
           </div>
           <dl>
-            <dt>Status</dt><dd className="is-good">● LIVE</dd>
+            <dt>Status</dt><dd className="is-good">● CONFIGURED</dd>
             <dt>Feed</dt><dd>{primary?.path.feed ?? '—'}</dd>
             <dt>Source</dt><dd>{primary?.stages[0]?.name ?? '—'}</dd>
             <dt>Destination</dt><dd>{targetName}</dd>
@@ -231,9 +231,9 @@ export default async function PowerPage({
       </div>
 
       <footer className="zip-power-footer">
-        <span>FEED A <b className="is-good">● ACTIVE</b></span>
-        <span>FEED B <b className="is-good">● ACTIVE</b></span>
-        <span>REDUNDANCY <b>✓</b></span>
+        <span>FEED A <b className={feedA ? "is-good" : ""}>{feedA ? "● ACTIVE" : "○ NOT CONFIGURED"}</b></span>
+        <span>FEED B <b className={feedB ? "is-good" : ""}>{feedB ? "● ACTIVE" : "○ NOT CONFIGURED"}</b></span>
+        <span>REDUNDANCY <b>{feedA && feedB ? "✓" : "—"}</b></span>
         <div />
         {selectedEntity ? <Link href={await service.buildDeepLink(selectedEntity.id)}>SHOW ROOM</Link> : null}
       </footer>

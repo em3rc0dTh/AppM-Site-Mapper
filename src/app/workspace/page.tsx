@@ -178,7 +178,7 @@ export default async function WorkspacePage() {
                     <strong>{item.name}</strong>
                     <small>{item.context}</small>
                     <span>
-                      <i /> {item.kind === 'CONTAINER_RACK' ? 'Healthy' : 'Live'}
+                      <i /> Pinned
                     </span>
                   </div>
                   <span className="zip-pin-mark">⌁</span>
@@ -217,16 +217,14 @@ export default async function WorkspacePage() {
                           {item.panels} panels · {item.endpoints} endpoints
                         </small>
                       </div>
-                      <b>● Live</b>
+                      <b>{sample ? '● Live' : '○ No data'}</b>
                     </div>
                     <div className="zip-bdfb-card-metrics">
                       {labels.map((label, metricIndex) => (
                         <span key={label}>
                           <small>{label}</small>
                           <strong>
-                            {values[metricIndex]
-                              ? String(values[metricIndex]![1])
-                              : ['231 V', '232 V', '229 V', '28 °C'][(index + metricIndex) % 4]}
+                            {values[metricIndex] ? String(values[metricIndex]![1]) : '—'}
                           </strong>
                         </span>
                       ))}

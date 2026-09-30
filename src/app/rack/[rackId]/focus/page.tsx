@@ -144,7 +144,7 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
             <dt>Available</dt><dd>{availableU}U</dd>
             <dt>Power A</dt><dd>{hasFeedA ? 'Configured ✓' : 'Not configured'}</dd>
             <dt>Power B</dt><dd>{hasFeedB ? 'Configured ✓' : 'Not configured'}</dd>
-            <dt>Telemetry</dt><dd><span className="zip-green-dot" /> READY</dd>
+            <dt>Telemetry</dt><dd>Contextual lens</dd>
           </dl>
           <h3>OCCUPANCY</h3>
           <div className="zip-occupancy-list">

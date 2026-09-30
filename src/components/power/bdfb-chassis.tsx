@@ -345,7 +345,9 @@ function DeviceHierarchyOverview({
                           aria-label={`Open ${panel.label} breaker detail`}
                         >
                           <strong>{panel.label}</strong>
-                          <span>{empty ? 'EMPTY SLOT' : `${panel.endpoints.length} ENDPOINTS`}</span>
+                          <span>
+                            {empty ? 'EMPTY SLOT' : `${panel.endpoints.length} ENDPOINTS`}
+                          </span>
                         </button>
                       );
                     })}

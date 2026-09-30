@@ -190,3 +190,28 @@ No running MongoDB inventory was connected to or modified during implementation.
 No clean-room database was recreated. MQTT mappings, TimescaleDB, BDFB and
 telemetry implementation were not changed. `main` is not the delivery target;
 all changes belong on `feat/mk1-raw-build`, without merge.
+
+
+## Virtual Warehouse acceptance
+
+The reusable hardware catalog is separate from physical inventory.
+
+Acceptance sequence:
+
+1. open `/warehouse`;
+2. create a DEVICE template with manufacturer/model/category/U size and dimensions;
+3. reload and verify the template persists;
+4. open a Rack;
+5. choose `MOUNT FROM WAREHOUSE`;
+6. select the template and enter only instance-specific identity such as name and serial number;
+7. create the instance;
+8. verify Rack Inventory shows the instance as `UNMOUNTED` and shows template provenance/version;
+9. reload and verify the instance and provenance persist;
+10. use CAS to reserve U and equip the instance;
+11. verify the Rack elevation changes from reserved capacity to equipped capacity.
+
+The template itself must never occupy U. CAS mounts a physical topology instance, never a Warehouse template.
+
+`CREATE ONE-OFF` is an exception path and should not be used to duplicate reusable models during catalog acceptance.
+
+Current gaps: template edit/version bump UI, template archive/restore UI, bulk instantiation, and atomic instantiate+CAS mount are not yet certified.

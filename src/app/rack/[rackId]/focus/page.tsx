@@ -1,15 +1,47 @@
 import Link from 'next/link';
-import { redirect, notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
-import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
-import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
+import { TopologyContextTree } from '@/components/topology/context-tree';
 import { ContextPin } from '@/components/workspace/context-pin';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
-import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+
+interface FocusBlock {
+  readonly key: string;
+  readonly role: string;
+  readonly topU: number;
+  readonly bottomU: number;
+  readonly units: number;
+  readonly name: string;
+}
+
+function focusBlocks(rows: readonly { u: number; role: string; occupant?: { id: string; name: string } }[]) {
+  const blocks: FocusBlock[] = [];
+  for (const row of rows) {
+    const previous = blocks.at(-1);
+    const name = row.occupant?.name ?? row.role;
+    if (previous && previous.role === row.role && previous.name === name && previous.bottomU - 1 === row.u) {
+      blocks[blocks.length - 1] = {
+        ...previous,
+        bottomU: row.u,
+        units: previous.units + 1,
+      };
+    } else {
+      blocks.push({
+        key: `${row.role}-${row.occupant?.id ?? row.u}`,
+        role: row.role,
+        topU: row.u,
+        bottomU: row.u,
+        units: 1,
+        name,
+      });
+    }
+  }
+  return blocks;
+}
 
 export default async function RackFocus({ params }: { params: Promise<{ rackId: string }> }) {
   const auth = await requirePermission('topology:read');
@@ -23,25 +55,19 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
 
   const trail = await topology.getTrail(rackId);
   const room = trail.find((node) => node.kind === 'ROOM_SUBSTRUCTURE');
+  const root = room ?? trail[0];
+  const tree = root ? await topology.buildNavigationTree(root.id) : null;
   const position = await repo.getById(view.value.rack.parentId ?? '');
   const bay = position?.parentId ? await repo.getById(position.parentId) : null;
-  const layout = room ? await new SpatialService(repo).getRoomLayout(room.id) : null;
-  const rackPlacement = layout?.ok
-    ? layout.value.racks.find((rack) => rack.id === rackId)
-    : undefined;
-
-  const inventoryIds = new Set(view.value.inventory.map((item) => item.id));
+  const blocks = focusBlocks(view.value.rows);
   const relatedPower = (await (await createPowerRepository()).listActive()).filter(
     (path) =>
-      inventoryIds.has(path.source.entityId) ||
-      inventoryIds.has(path.target.entityId) ||
-      path.source.entityId === rackId ||
-      path.target.entityId === rackId,
+      view.value.inventory.some((item) => item.id === path.source.entityId || item.id === path.target.entityId),
   );
   const hasFeedA = relatedPower.some((path) => path.feed === 'A');
   const hasFeedB = relatedPower.some((path) => path.feed === 'B');
-  const availableU = view.value.rows.filter((row) => row.role === 'AVAILABLE').length;
-  const equippedU = view.value.rows.filter((row) => row.role === 'PHYSICAL').length;
+  const availableSpans = blocks.filter((block) => block.role === 'AVAILABLE');
+  const availableU = availableSpans.reduce((sum, block) => sum + block.units, 0);
 
   const breadcrumbs = await Promise.all(
     trail.map(async (node) => ({
@@ -52,85 +78,93 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
   );
 
   return (
-    <main className="operational-page mk-rack-focus">
+    <main className="operational-page zip-rack-focus-page">
       <nav className="breadcrumbs" aria-label="Breadcrumb">
         {breadcrumbs.map((item) => (
-          <Link key={item.id} href={item.href}>
-            {item.name}
-          </Link>
+          <Link key={item.id} href={item.href}>{item.name}</Link>
         ))}
       </nav>
 
-      <header className="mk-rack-focus-header">
-        <div>
-          <small>ROOM / RACK FOCUS</small>
-          <h1>{view.value.rack.name}</h1>
-          <p>Physical rack context inside {room?.name ?? 'its room'}.</p>
-        </div>
-        <nav className="mk-rack-actions" aria-label="Rack actions">
-          <ContextPin entityId={rackId} />
-          <Link href={`/rack/${rackId}`}>ELEVATION</Link>
-          <Link href={`/power?entity=${rackId}`}>POWER</Link>
-          {room && <Link href={`/blueprint/${room.id}?rack=${rackId}`}>LOCATE IN ROOM</Link>}
-        </nav>
-      </header>
+      <div className="zip-rack-focus-layout">
+        <aside className="operational-context">
+          {tree && <TopologyContextTree tree={tree} activeId={rackId} />}
+        </aside>
 
-      <div className="mk-rack-focus-layout">
-        <section className="mk-rack-room-context">
-          {room && layout?.ok && room.polygon ? (
-            <BlueprintCanvas
-              polygon={layout.value.room.polygon ?? []}
-              clusters={layout.value.clusters}
-              racks={layout.value.racks}
-              slots={layout.value.assignableSlots}
-              focusRackId={rackId}
-            />
-          ) : (
-            <div className="mk-empty-boundary">Room geometry is unavailable for this rack.</div>
-          )}
+        <section className="zip-rack-focus-stage">
+          <h1>RACK FOCUS</h1>
+          <div className="zip-rack-room">
+            <div className="zip-rack-perspective" aria-hidden="true" />
+            {[-2,-1,1,2].map((offset,index)=>(
+              <div key={offset} className={`zip-neighbor-rack zip-neighbor-rack--${index+1}`}>
+                <strong>{['R-021','R-022','R-024','R-025'][index]}</strong>
+                <span />
+              </div>
+            ))}
+            <div className="zip-focus-rack">
+              <strong className="zip-focus-rack-name">{view.value.rack.name}</strong>
+              <div className="zip-focus-rack-frame">
+                {blocks.map((block)=>(
+                  <div
+                    key={block.key}
+                    className={`zip-focus-rack-block is-${block.role.toLowerCase()}`}
+                    style={{ flexGrow:block.units, flexBasis:0 }}
+                  >
+                    <span>U{block.topU}</span>
+                    <strong>{block.role === 'PHYSICAL' ? block.name : block.role}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <footer className="zip-rack-focus-footer">
+            <span>⌑ {position?.name ?? 'Position'}</span>
+            <span>{room?.name ?? 'Room'}</span>
+            <span>▥ {view.value.rack.name}</span>
+            <span>⌖ LOCATE</span>
+            <div>
+              <button>−</button><b>100%</b><button>+</button>
+            </div>
+            <button>⌗ FIT RACK</button>
+            <strong>● SYNCED</strong>
+          </footer>
         </section>
 
-        <aside className="mk-inline-inspector mk-rack-focus-inspector">
-          <small>RACK INSPECTOR</small>
-          <h2>{view.value.rack.name}</h2>
+        <aside className="zip-rack-inspector">
+          <header>INSPECTOR <span>⌄</span></header>
+          <div className="zip-rack-identity">
+            <span>▥</span>
+            <div>
+              <h2>{view.value.rack.name}</h2>
+              <small>{room?.name ?? 'Room'} / {bay?.name ?? 'Bay'} / {position?.name ?? 'Position'}</small>
+            </div>
+          </div>
           <dl>
-            <dt>Room</dt>
-            <dd>{room?.name ?? 'Unknown'}</dd>
-            <dt>Bay</dt>
-            <dd>{bay?.name ?? 'Not assigned'}</dd>
-            <dt>Position</dt>
-            <dd>{position?.name ?? 'Not assigned'}</dd>
-            <dt>Footprint</dt>
-            <dd>
-              {rackPlacement
-                ? `${rackPlacement.rect.width} × ${rackPlacement.rect.depth} mm`
-                : 'Not available'}
-            </dd>
-            <dt>Capacity</dt>
-            <dd>{view.value.rack.totalU ?? view.value.rows.length} U</dd>
-            <dt>Equipped</dt>
-            <dd>{equippedU} U</dd>
-            <dt>Available</dt>
-            <dd>{availableU} U</dd>
-            <dt>Devices</dt>
-            <dd>{view.value.inventory.length}</dd>
-            <dt>Power A</dt>
-            <dd>{hasFeedA ? 'Configured' : 'Not configured'}</dd>
-            <dt>Power B</dt>
-            <dd>{hasFeedB ? 'Configured' : 'Not configured'}</dd>
+            <dt>Position</dt><dd>{position?.name ?? '—'}</dd>
+            <dt>Height</dt><dd>{view.value.rack.totalU ?? view.value.rows.length}U</dd>
+            <dt>Devices</dt><dd>{view.value.inventory.length}</dd>
+            <dt>Available slots</dt><dd>{availableSpans.length} spans ({availableU}U)</dd>
+            <dt>Power</dt><dd>A {hasFeedA?'✓':'—'} &nbsp;&nbsp; B {hasFeedB?'✓':'—'}</dd>
+            <dt>Status</dt><dd><span className="zip-green-dot" /> ONLINE</dd>
+            <dt>Mounting clearance</dt><dd>Standard (front/rear)</dd>
           </dl>
-          <Link className="mk-primary" href={`/rack/${rackId}`}>
-            OPEN RACK ELEVATION
-          </Link>
-          {view.value.inventory.map((item) => (
-            <Link key={item.id} href={`/device/${item.id}`}>
-              {item.name} →
-            </Link>
-          ))}
-          <TelemetryLens
-            label={view.value.rack.name}
-            entityIds={view.value.inventory.map((item) => item.id)}
-          />
+          <h3>DEVICE OCCUPANCY</h3>
+          <div className="zip-occupancy-list">
+            {blocks.map((block)=>(
+              <div key={block.key}>
+                <span>U{String(block.topU).padStart(2,'0')} – U{String(block.bottomU).padStart(2,'0')}</span>
+                <strong>{block.role === 'PHYSICAL' ? block.name : block.role}</strong>
+                <small>{block.units}U</small>
+              </div>
+            ))}
+          </div>
+          <div className="zip-rack-inspector-actions">
+            <Link className="is-primary" href={`/rack/${rackId}`}>ELEVATION</Link>
+            <Link href={`/power?entity=${rackId}`}>POWER</Link>
+            <a href="#telemetry">TELEMETRY</a>
+            {room ? <Link href={`/blueprint/${room.id}?rack=${rackId}`}>LOCATE</Link> : <span>LOCATE</span>}
+          </div>
+          <ContextPin entityId={rackId} />
         </aside>
       </div>
     </main>

@@ -69,6 +69,17 @@ export default async function BlueprintPage({
             />
           )}
         </section>
+        <aside className="zip-room-properties">
+          <header>ROOM PROPERTIES</header>
+          <section>
+            <small>TOTAL CLUSTERS</small>
+            <strong>{result.value.clusters.length}</strong>
+          </section>
+          <div>
+            <span>⌗</span>
+            <p>CLICK A CLUSTER OR CABINET<br/>TO INSPECT PROPERTIES</p>
+          </div>
+        </aside>
       </div>
     </main>
   );

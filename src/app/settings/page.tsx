@@ -66,11 +66,7 @@ export default async function SettingsPage({
   const roles: Role[] = ['STANDARD', 'ADMIN', 'SUPERADMIN'];
   return (
     <main className="settings-shell">
-      <SectionHeader
-        eyebrow="Administration"
-        title="Settings"
-        actions={<StatusBadge>{auth.value.role}</StatusBadge>}
-      />
+      <div className="zip-settings-page-title" aria-hidden="true">SETTINGS</div>
       <div className="mk-settings-layout">
         <nav className="mk-settings-nav" aria-label="Settings areas">
           {visible.map((tab) => (
@@ -79,7 +75,8 @@ export default async function SettingsPage({
               href={`/settings?tab=${tab.toLowerCase().replaceAll(' ', '-')}`}
               aria-current={active === tab ? 'page' : undefined}
             >
-              {tab}
+              <span className="zip-settings-icon" aria-hidden="true">{tab === 'Profile' ? '♙' : tab === 'Security' || tab === 'Roles' ? '◇' : tab === 'Users' ? '♧' : tab === 'Data Import' ? '⇥' : tab === 'Drafting' ? '◩' : tab === 'System' ? '⚙' : '△'}</span>
+              <span>{tab}</span>
             </Link>
           ))}
         </nav>
@@ -104,11 +101,7 @@ export default async function SettingsPage({
           )}
           {active === 'Users' && canManageUsers && (
             <>
-              <h2>USERS</h2>
-              <details>
-                <summary>+ ADD USER</summary>
-                <UserCreateForm />
-              </details>
+              <div className="zip-users-heading"><h2>USERS</h2><details><summary>＋ ADD USER</summary><UserCreateForm /></details></div>
               <UserAdminTable currentUserId={auth.value.id} users={users} />
             </>
           )}

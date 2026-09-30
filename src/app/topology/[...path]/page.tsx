@@ -376,6 +376,7 @@ export default async function TopologyNodePage({
 
         {node.kind === 'DEVICE' && node.bdfb ? (
           <BdfbTelemetryInspector
+            key={query.panel ?? 'bdfb-inspector'}
             node={node}
             {...(query.panel ? { activePanelId: query.panel } : {})}
             location={trail

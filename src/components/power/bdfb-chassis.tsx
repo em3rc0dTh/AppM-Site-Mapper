@@ -211,7 +211,11 @@ function PanelBoard({
 
       <div
         className="bdfb-endpoint-grid"
-        style={{ '--bdfb-panel-rows': Math.max(1, Math.ceil(panel.endpoints.length / 2)) } as CSSProperties}
+        style={
+          {
+            '--bdfb-panel-rows': Math.max(1, Math.ceil(panel.endpoints.length / 2)),
+          } as CSSProperties
+        }
       >
         {panel.endpoints.length ? (
           panel.endpoints.map((endpoint, index) => {

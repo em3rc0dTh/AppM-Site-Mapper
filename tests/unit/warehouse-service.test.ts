@@ -97,7 +97,6 @@ describe('Virtual Warehouse', () => {
     expect(rack.cas.every((range) => range.state !== 'EQUIPPED')).toBe(true);
   });
 
-
   it('materializes a BDFB template into a navigable BDFB device with telemetry bindings', async () => {
     const input = parseAssetTemplateJson({
       kind: 'DEVICE',

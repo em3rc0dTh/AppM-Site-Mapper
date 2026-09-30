@@ -575,7 +575,7 @@ export async function seedDevelopmentDemo(
         entityId: sourceDevice.id,
         internal: {
           shelfId: `demo-shelf-${feed.toLowerCase()}`,
-          frameId: `demo-frame-${feed.toLowerCase()}-a`,
+          frameId: `demo-frame-${feed.toLowerCase()}-${feed.toLowerCase()}`,
           panelId,
           breakerHolderId,
         },

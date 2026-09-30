@@ -61,11 +61,13 @@ shrink the Room around existing inventory. Bay/Cluster variants are retained.
 The generic Bay-create path checks containment and increments the Room version
 in the same layout transaction to invalidate stale drafts.
 
-Rack anchors are picked on the canvas and converted to the canonical A-1 grid;
-width/depth remain independent dimensions, including multi-cell footprints.
-No operator coordinate text entry is required. Existing positive grid coordinates
-remain the supported rack-anchor range; negative plane coordinates can describe
-boundaries but do not create negative-row Position references.
+Empty Position anchors and explicit Position moves are picked on the canvas and converted
+to the canonical A-1 grid. New Rack anchors are assigned automatically from the Bay
+top edge, left-to-right, using that same grid. Width/depth remain independent physical
+dimensions, including multi-cell footprints. No operator coordinate text entry is
+required. Existing positive grid coordinates remain the supported anchor range;
+negative plane coordinates can describe boundaries but do not create negative-row
+Position references.
 
 Implementation recorded without running tests, typecheck, lint, browser checks or
 build at the user's explicit request. This addendum does not certify acceptance.

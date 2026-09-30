@@ -3617,7 +3617,6 @@ body {
   background: #e9f3ff !important;
 }
 
-
 /* Virtual Warehouse catalog and rack instantiation. */
 .warehouse-page {
   min-height: calc(100dvh - 67px);

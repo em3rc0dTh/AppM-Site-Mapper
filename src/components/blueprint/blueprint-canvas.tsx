@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { InlineInspector } from '@/shared/ui/inline-inspector';
@@ -148,17 +148,30 @@ export function BlueprintCanvas({
   const pointer = useRef<Readonly<{ x: number; y: number }> | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
 
+  // React delegates wheel listeners as passive. The drafting canvas needs
+  // a direct non-passive listener so zoom does not also scroll the page.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+
+    const handleWheel = (event: WheelEvent) => {
+      if (!event.cancelable) return;
+      event.preventDefault();
+      setZoom((current) =>
+        Math.min(5, Math.max(0.5, current * (event.deltaY > 0 ? 0.9 : 1.1))),
+      );
+    };
+
+    svg.addEventListener('wheel', handleWheel, { passive: false });
+    return () => svg.removeEventListener('wheel', handleWheel);
+  }, []);
+
   const view: ViewState = {
     x: base.x + pan.x,
     y: base.y + pan.y,
     width: base.width / zoom,
     height: base.height / zoom,
   };
-
-  function wheel(event: WheelEvent<SVGSVGElement>) {
-    event.preventDefault();
-    setZoom((current) => Math.min(5, Math.max(0.5, current * (event.deltaY > 0 ? 0.9 : 1.1))));
-  }
 
   function pointerDown(event: PointerEvent<SVGSVGElement>) {
     if (tool !== 'pan') return;
@@ -249,7 +262,6 @@ export function BlueprintCanvas({
           ref={svgRef}
           className="blueprint-canvas"
           viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
-          onWheel={wheel}
           onPointerDown={pointerDown}
           onPointerMove={pointerMove}
           onPointerUp={pointerUp}

@@ -15,8 +15,6 @@ export async function createWarehouseRepository(): Promise<WarehouseRepository> 
     );
   }
 
-  mongoRepository ??= getMongoDatabase().then(
-    (database) => new MongoWarehouseRepository(database),
-  );
+  mongoRepository ??= getMongoDatabase().then((database) => new MongoWarehouseRepository(database));
   return mongoRepository;
 }

@@ -11,6 +11,7 @@ import type {
 } from '@/modules/topology/domain/entities';
 import { isAllowedParent, topologySlug } from '@/modules/topology/domain/hierarchy';
 import { initializeCas } from '@/modules/rack/domain/cas';
+import type { AssetTemplateSnapshot } from '@/modules/warehouse/domain/template';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
@@ -52,6 +53,7 @@ export interface CreateTopologyNodeInput {
   readonly serialNumber?: string;
   readonly category?: string;
   readonly polygon?: readonly PhysicalPoint[];
+  readonly template?: AssetTemplateSnapshot;
 }
 
 export class TopologyService {
@@ -217,6 +219,7 @@ export class TopologyService {
           pinned: false,
           ...(input.serialNumber ? { serialNumber: input.serialNumber.trim() } : {}),
           ...(input.category ? { category: input.category.trim() } : {}),
+          ...(input.template ? { template: structuredClone(input.template) } : {}),
         };
         break;
       case 'EQUIPMENT':
@@ -227,6 +230,7 @@ export class TopologyService {
           pinned: false,
           ...(input.serialNumber ? { serialNumber: input.serialNumber.trim() } : {}),
           ...(input.category ? { category: input.category.trim() } : {}),
+          ...(input.template ? { template: structuredClone(input.template) } : {}),
         };
         break;
     }

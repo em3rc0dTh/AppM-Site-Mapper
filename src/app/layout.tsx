@@ -6,6 +6,7 @@ import './legacy-fidelity.css';
 import './telxius-ui.css';
 import './mk1.css';
 import './visual-parity.css';
+import './room-light.css';
 import { AppShell } from '@/shared/ui/app-shell';
 
 export const metadata: Metadata = {

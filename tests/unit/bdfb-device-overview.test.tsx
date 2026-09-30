@@ -78,13 +78,8 @@ describe('BDFB device hierarchy overview', () => {
     expect(markup.match(/Open Panel [AB][123] breaker detail/g)).toHaveLength(6);
   });
 
-
   it('projects the legacy 96-point emulator as one shelf with A/B columns and six physical slots', () => {
-    const legacyPanel = (
-      id: string,
-      label: string,
-      rawPointPrefix: string,
-    ): Panel => ({
+    const legacyPanel = (id: string, label: string, rawPointPrefix: string): Panel => ({
       id,
       label,
       endpoints: Array.from({ length: 24 }, (_, index) => ({

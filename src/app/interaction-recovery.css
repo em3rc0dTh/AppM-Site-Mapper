@@ -650,7 +650,6 @@
   text-decoration: none;
 }
 
-
 /* Telemetry must be centered and scroll vertically, not clipped horizontally
    by the rack's legacy absolute 620px diagnostic styling. */
 .zip-telemetry-overlay {
@@ -691,8 +690,14 @@
   overflow-wrap: anywhere;
   color: #eff6ff;
 }
-.zip-telemetry-overlay .mk-live-grid small { color: #a7bdd8 !important; }
-.zip-telemetry-overlay .mk-live-grid strong { color: #f6f9ff !important; }
+.zip-telemetry-overlay .mk-live-grid small {
+  color: #a7bdd8 !important;
+}
+.zip-telemetry-overlay .mk-live-grid strong {
+  color: #f6f9ff !important;
+}
 @media (max-height: 620px) {
-  .zip-telemetry-overlay { align-items: flex-start !important; }
+  .zip-telemetry-overlay {
+    align-items: flex-start !important;
+  }
 }

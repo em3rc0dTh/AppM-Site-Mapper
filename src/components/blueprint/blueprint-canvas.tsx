@@ -121,15 +121,20 @@ export function BlueprintCanvas({
       return {
         name: bay.name,
         kind: 'CLUSTER / BAY',
-        sections: [{
-          title: 'Surveyed physical boundary',
-          fields: bay.polygon?.length
-            ? [
-                { label: 'Area', value: `${(polygonArea(bay.polygon) / 1_000_000).toFixed(2)} m²` },
-                { label: 'Vertices', value: bay.polygon.length },
-              ]
-            : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
-        }],
+        sections: [
+          {
+            title: 'Surveyed physical boundary',
+            fields: bay.polygon?.length
+              ? [
+                  {
+                    label: 'Area',
+                    value: `${(polygonArea(bay.polygon) / 1_000_000).toFixed(2)} m²`,
+                  },
+                  { label: 'Vertices', value: bay.polygon.length },
+                ]
+              : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
+          },
+        ],
       };
     }
     const position = positions.find((item) => item.id === focusPositionId);
@@ -137,13 +142,15 @@ export function BlueprintCanvas({
       ? {
           name: position.name,
           kind: 'POSITION REFERENCE',
-          sections: [{
-            title: 'Grid anchor',
-            fields: [
-              { label: 'Coordinate', value: `${position.row}-${position.column}` },
-              { label: 'State', value: position.occupied ? 'Occupied' : 'Available' },
-            ],
-          }],
+          sections: [
+            {
+              title: 'Grid anchor',
+              fields: [
+                { label: 'Coordinate', value: `${position.row}-${position.column}` },
+                { label: 'State', value: position.occupied ? 'Occupied' : 'Available' },
+              ],
+            },
+          ],
         }
       : null;
   });

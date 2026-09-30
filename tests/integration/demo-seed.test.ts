@@ -43,7 +43,8 @@ describe('development demo seed', () => {
     expect(bdfbB?.kind).toBe('DEVICE');
     if (!bdfbA || bdfbA.kind !== 'DEVICE') throw new Error('Expected BDFB-A.');
     expect(bdfbA.deviceType).toBe('BDFB');
-    expect(bdfbA.bdfb?.shelves).toHaveLength(1);
+    expect(bdfbA.bdfb?.shelves).toHaveLength(2);
+    expect(bdfbA.bdfb?.shelves[0]?.frames).toHaveLength(2);
     expect(bdfbA.pinned).toBe(true);
 
     const second = await seedDevelopmentDemo(topology, power);

@@ -18,6 +18,7 @@ export function BdfbPowerTree({
 
   return (
     <nav className="zip-bdfb-tree" aria-label="BDFB power tree">
+      <Link className="zip-bdfb-back" href="/power">← POWER PATH</Link>
       <header>POWER TREE <span>⌄</span></header>
       <div className="zip-bdfb-tree-body">
         {site && <div className="zip-bdfb-tree-row level-0"><span>⌄</span><b>◎</b><strong>{site.name}</strong></div>}

@@ -184,3 +184,10 @@ html,body{background:#fff;color:var(--zip-ink);font-family:Arial,Helvetica,sans-
 .zip-bdfb-page .telxius-properties{background:#fff!important}
 .zip-bdfb-page .telxius-properties .status-badge{color:#17202a!important}
 
+
+/* BDFB approved-reference closure. */
+.zip-bdfb-back{height:43px;display:flex;align-items:center;padding:0 22px;border-bottom:1px solid var(--zip-border);color:#17202a;text-decoration:none;font-size:11px;font-weight:800}
+.zip-bdfb-page .telxius-operational-stage{position:relative;padding-top:58px!important}
+.zip-bdfb-page .telxius-operational-stage:before{content:'BDFB PHYSICAL VIEW';position:absolute;left:28px;top:19px;font-size:22px;line-height:1;font-weight:800;color:#17202a;z-index:2}
+.zip-bdfb-page .operational-stage-body{height:calc(100vh - 125px)!important;padding-top:0!important}
+.zip-bdfb-page .bdfb-overview-frame-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}

@@ -169,14 +169,28 @@ async function configureBdfb(
         frames: [
           {
             id: `demo-frame-${side.toLowerCase()}-a`,
-            label: `Frame ${side}`,
+            label: 'Frame A',
             panels: [
-              { id: `demo-panel-${side.toLowerCase()}1`, label: `${side}1`, endpoints: breakers(`${side.toLowerCase()}1`, 36) },
-              { id: `demo-panel-${side.toLowerCase()}2`, label: `${side}2`, endpoints: breakers(`${side.toLowerCase()}2`, 12) },
-              { id: `demo-panel-${side.toLowerCase()}3`, label: `${side}3`, endpoints: breakers(`${side.toLowerCase()}3`, 12) },
+              { id: 'demo-panel-a1', label: 'A1', endpoints: breakers('a1', 36) },
+              { id: 'demo-panel-a2', label: 'A2', endpoints: breakers('a2', 12) },
+              { id: 'demo-panel-a3', label: 'A3', endpoints: breakers('a3', 12) },
+            ],
+          },
+          {
+            id: `demo-frame-${side.toLowerCase()}-b`,
+            label: 'Frame B',
+            panels: [
+              { id: 'demo-panel-b1', label: 'B1', endpoints: breakers('b1', 36, 30) },
+              { id: 'demo-panel-b2', label: 'B2', endpoints: breakers('b2', 12, 30) },
+              { id: 'demo-panel-b3', label: 'B3', endpoints: breakers('b3', 12, 30) },
             ],
           },
         ],
+      },
+      {
+        id: `demo-shelf-${side.toLowerCase()}-2`,
+        label: 'Shelf 02',
+        frames: [],
       },
     ],
   });

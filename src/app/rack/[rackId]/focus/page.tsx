@@ -22,23 +22,15 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
 
   const trail = await topology.getTrail(rackId);
   const room = trail.find((node) => node.kind === 'ROOM_SUBSTRUCTURE');
+  // The room Blueprint owns surveyed footprints and the rack-focus popup.
+  // Never render arbitrary neighbour coordinates in a standalone page.
+  if (room?.kind === 'ROOM_SUBSTRUCTURE' && room.polygon?.length) {
+    redirect(`/blueprint/${room.id}?rack=${encodeURIComponent(rackId)}`);
+  }
   const position = await repo.getById(view.value.rack.parentId ?? '');
   const bay = position?.parentId ? await repo.getById(position.parentId) : null;
   const root = trail[0];
   const tree = root ? await topology.buildNavigationTree(root.id) : null;
-
-  const siblingPositions =
-    bay?.kind === 'CONTAINER_CLUSTER_BAY' ? await repo.listChildren(bay.id) : [];
-  const siblingRacks = (
-    await Promise.all(
-      siblingPositions
-        .filter((node) => node.kind === 'POSITION')
-        .map((node) => repo.listChildren(node.id)),
-    )
-  )
-    .flat()
-    .filter((node) => node.kind === 'CONTAINER_RACK' && node.id !== rackId)
-    .slice(0, 4);
 
   const inventoryIds = new Set(view.value.inventory.map((item) => item.id));
   const relatedPower = (await (await createPowerRepository()).listActive()).filter(
@@ -70,28 +62,10 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
         <section className="zip-rack-focus-stage">
           <h1>RACK FOCUS</h1>
           <div className="zip-rack-room">
-            <div className="zip-rack-perspective" aria-hidden="true" />
-            {siblingRacks.map((rack, index) => (
-              <div
-                key={rack.id}
-                className={`zip-neighbor-rack zip-neighbor-rack--${index + 1}`}
-                aria-hidden="true"
-              >
-                <strong>{rack.name}</strong>
-                <span />
-              </div>
-            ))}
-            {Array.from({ length: Math.max(0, 4 - siblingRacks.length) }).map((_, index) => (
-              <div
-                key={`ghost-${index}`}
-                className={`zip-neighbor-rack zip-neighbor-rack--${siblingRacks.length + index + 1}`}
-                aria-hidden="true"
-              >
-                <strong>RACK</strong>
-                <span />
-              </div>
-            ))}
-
+            <div className="rack-unsurveyed-hint">
+              No surveyed room footprint is available. This is the saved rack
+              occupancy view, not an invented room layout.
+            </div>
             <div className="zip-focus-rack">
               <strong className="zip-focus-rack-name">{view.value.rack.name}</strong>
               <div className="zip-focus-rack-frame">
@@ -115,7 +89,7 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
           </div>
           <footer className="zip-rack-focus-footer">
             <span>{room?.name ?? 'ROOM'}</span>
-            <span>{bay?.name ?? 'BAY'}</span>
+            <span>{bay?.name ?? 'BAY NOT RECORDED'}</span>
             <span>{position?.name ?? 'POSITION'}</span>
             <div>
               <button type="button">−</button>

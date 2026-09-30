@@ -16,6 +16,34 @@ export const EMULATOR_SERIALS = ['EMU-BFDB-01', 'EMU-BFDB-02', 'EMU-BFDB-03'] as
 const PANELS = ['A1', 'A2', 'B1', 'B2'] as const;
 const POSITIONS_PER_PANEL = 24;
 
+const LAB_SITE_BOUNDARY = [
+  { x: 0, y: 0 },
+  { x: 6000, y: 0 },
+  { x: 6000, y: 4800 },
+  { x: 0, y: 4800 },
+] as const;
+
+const LAB_STRUCTURE_BOUNDARY = [
+  { x: 0, y: 0 },
+  { x: 5400, y: 0 },
+  { x: 5400, y: 4200 },
+  { x: 0, y: 4200 },
+] as const;
+
+const LAB_ROOM_BOUNDARY = [
+  { x: 0, y: 0 },
+  { x: 3600, y: 0 },
+  { x: 3600, y: 3600 },
+  { x: 0, y: 3600 },
+] as const;
+
+const LAB_BAY_BOUNDARY = [
+  { x: 0, y: 2400 },
+  { x: 1800, y: 2400 },
+  { x: 1800, y: 3000 },
+  { x: 0, y: 3000 },
+] as const;
+
 async function ensureNode(
   repository: TopologyRepository,
   service: TopologyService,
@@ -118,8 +146,8 @@ export async function seedBfdbEmulatorLab(
 ): Promise<readonly EmulatorLabDevice[]> {
   const topology = new TopologyService(repository);
 
-  // The lab lives in its own explicitly synthetic network. No surveyed
-  // coordinates are manufactured and the existing ZIP demo is untouched.
+  // The lab lives in its own explicitly synthetic network. Its geometry is a
+  // deterministic test fixture only and is never customer physical inventory.
   const network = requireKind(
     await ensureNode(repository, topology, {
       kind: 'NETWORK',
@@ -132,11 +160,13 @@ export async function seedBfdbEmulatorLab(
     kind: 'SITE',
     parentId: network.id,
     name: 'Virtual emulator',
+    polygon: LAB_SITE_BOUNDARY,
   });
   const building = await ensureNode(repository, topology, {
     kind: 'STRUCTURE',
     parentId: site.id,
     name: 'Unsurveyed emulator topology',
+    polygon: LAB_STRUCTURE_BOUNDARY,
   });
   const level = await ensureNode(repository, topology, {
     kind: 'LEVEL',
@@ -148,12 +178,14 @@ export async function seedBfdbEmulatorLab(
     parentId: level.id,
     name: 'Virtual BFDB room (no physical geometry)',
     roomVariant: 'ROOM',
+    polygon: LAB_ROOM_BOUNDARY,
   });
   const bay = await ensureNode(repository, topology, {
     kind: 'CONTAINER_CLUSTER_BAY',
     parentId: room.id,
     name: 'Logical devices (unplaced)',
     clusterVariant: 'BAY',
+    polygon: LAB_BAY_BOUNDARY,
   });
   const bdfbService = new BdfbService(repository);
   const output: EmulatorLabDevice[] = [];

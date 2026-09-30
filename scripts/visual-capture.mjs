@@ -24,7 +24,8 @@ async function snap(name) {
 }
 
 async function go(path) {
-  await page.goto(`${base}${path}`, { waitUntil: 'networkidle' });
+  await page.goto(`${base}${path}`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  await page.waitForTimeout(450);
 }
 
 async function search(term, kind) {
@@ -44,7 +45,7 @@ await page.getByLabel('Email').fill(email);
 await page.getByLabel('Password').fill(password);
 await page.getByRole('button', { name: 'SIGN IN' }).click();
 await page.waitForURL(/\/workspace|\/network|\/topology/);
-await page.waitForLoadState('networkidle');
+await page.waitForTimeout(450);
 await snap('14-operations');
 
 await go('/network');
@@ -58,7 +59,7 @@ for (const [name, selector] of [
   const target = page.locator(selector).first();
   if (await target.count()) {
     await target.dblclick();
-    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(450);
     await snap(name);
   }
 }

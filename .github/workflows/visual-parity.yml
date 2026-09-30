@@ -42,6 +42,7 @@ jobs:
       - name: Capture approved view family
         run: NODE_PATH="$(npm root --global)" node scripts/visual-capture.mjs
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: site-mapper-visual-current
           path: visual-artifacts/current

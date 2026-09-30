@@ -423,3 +423,35 @@
   .zip-app-shell .mk-selection-inspector { width: min(320px, 58%) !important; }
   .zip-app-shell .blueprint-canvas-shell { max-height: none; }
 }
+
+/* One click selects the spatial object; double click drills. */
+.telxius-tree-node > a.is-selected {
+  outline: 1px solid #297ae9 !important;
+  outline-offset: -1px;
+  background: #deedff !important;
+  color: #164c82 !important;
+}
+.topology-tree-selection {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 6px;
+  padding: 12px 16px;
+  border-top: 1px solid #dce3eb;
+  background: #f6faff !important;
+  color: #233c56 !important;
+  font-size: 12px;
+}
+.topology-tree-selection strong {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.topology-tree-selection small { color: #5b7085; }
+.topology-tree-selection a {
+  width: fit-content;
+  padding: 8px 12px;
+  border: 1px solid #1a6cdd;
+  border-radius: 4px;
+  color: #1a64cb;
+  font-weight: 800;
+  text-decoration: none;
+}

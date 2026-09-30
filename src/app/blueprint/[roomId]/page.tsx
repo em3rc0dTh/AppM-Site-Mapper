@@ -8,6 +8,7 @@ import { TopologyContextTree } from '@/components/topology/context-tree';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
+import { polygonArea } from '@/modules/spatial/domain/geometry';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
@@ -80,7 +81,11 @@ export default async function BlueprintPage({
           <SectionHeader
             eyebrow="SUBSTRUCTURE / ROOM BLUEPRINT"
             title={result.value.room.name.toUpperCase()}
-            description="Physical room boundary · cluster bays · 600 × 600 mm position grid"
+            description={
+              result.value.room.polygon?.length
+                ? 'Surveyed room boundary · bay footprints · 600 × 600 mm position grid'
+                : 'Unsurveyed room · inventory topology only; no layout invented'
+            }
             actions={<StatusBadge>{canWrite ? 'EDIT PERMITTED' : 'READ ONLY'}</StatusBadge>}
           />
 
@@ -99,6 +104,29 @@ export default async function BlueprintPage({
         </section>
         <aside className="zip-room-properties">
           <header>ROOM PROPERTIES</header>
+          <section className="room-general-info">
+            <h3>GENERAL INFORMATION</h3>
+            <dl>
+              <dt>Name</dt>
+              <dd>{result.value.room.name}</dd>
+              <dt>Type</dt>
+              <dd>{result.value.room.variant}</dd>
+              <dt>Geometry</dt>
+              <dd>
+                {result.value.room.polygon?.length
+                  ? `${result.value.room.polygon.length} surveyed vertices`
+                  : 'Not surveyed'}
+              </dd>
+              {result.value.room.polygon?.length ? (
+                <>
+                  <dt>Area</dt>
+                  <dd>{(polygonArea(result.value.room.polygon) / 1_000_000).toFixed(2)} m²</dd>
+                </>
+              ) : null}
+              <dt>Rack footprints</dt>
+              <dd>{result.value.racks.length}</dd>
+            </dl>
+          </section>
           <section>
             <small>TOTAL CLUSTERS</small>
             <strong>{result.value.clusters.length}</strong>

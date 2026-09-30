@@ -37,9 +37,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const contextLabel = pathname.startsWith('/settings')
     ? 'SETTINGS'
-    : pathname === '/workspace'
-      ? 'OPERATIONS'
-      : 'NETWORK';
+    : pathname.startsWith('/warehouse')
+      ? 'VIRTUAL WAREHOUSE'
+      : pathname === '/workspace'
+        ? 'OPERATIONS'
+        : 'NETWORK';
 
   async function logout() {
     setBusy(true);
@@ -88,6 +90,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
         <Link className="zip-explore" href="/network">
           EXPLORE <b>⌄</b>
+        </Link>
+        <Link className="zip-warehouse" href="/warehouse">
+          WAREHOUSE
         </Link>
         <Link className="zip-account" href="/settings">
           ADMIN <b>⌄</b>

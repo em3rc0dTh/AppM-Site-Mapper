@@ -72,7 +72,10 @@ export function RackElevation({
       <div className="legacy-rack-main zip-rack-elevation-main">
         <header className="zip-elevation-heading">
           <h1>FRONT ELEVATION</h1>
-          <small>Only the documented front-face projection is available. Rear geometry has not been recorded.</small>
+          <small>
+            Only the documented front-face projection is available. Rear geometry has not been
+            recorded.
+          </small>
         </header>
 
         <div className="legacy-rack-canvas zip-elevation-canvas">

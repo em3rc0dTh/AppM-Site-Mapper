@@ -16,16 +16,26 @@ function iconFor(kind: TopologyKind): string {
 
 function labelFor(kind: TopologyKind): string {
   switch (kind) {
-    case 'NETWORK': return 'NETWORK';
-    case 'SITE': return 'SITE';
-    case 'STRUCTURE': return 'STRUCTURE';
-    case 'LEVEL': return 'LEVEL';
-    case 'ROOM_SUBSTRUCTURE': return 'ROOM';
-    case 'CONTAINER_CLUSTER_BAY': return 'BAY';
-    case 'POSITION': return 'POSITION REFERENCE';
-    case 'CONTAINER_RACK': return 'RACK';
-    case 'DEVICE': return 'DEVICE';
-    case 'EQUIPMENT': return 'EQUIPMENT';
+    case 'NETWORK':
+      return 'NETWORK';
+    case 'SITE':
+      return 'SITE';
+    case 'STRUCTURE':
+      return 'STRUCTURE';
+    case 'LEVEL':
+      return 'LEVEL';
+    case 'ROOM_SUBSTRUCTURE':
+      return 'ROOM';
+    case 'CONTAINER_CLUSTER_BAY':
+      return 'BAY';
+    case 'POSITION':
+      return 'POSITION REFERENCE';
+    case 'CONTAINER_RACK':
+      return 'RACK';
+    case 'DEVICE':
+      return 'DEVICE';
+    case 'EQUIPMENT':
+      return 'EQUIPMENT';
   }
 }
 
@@ -34,7 +44,12 @@ function containsActive(node: TopologyNavigationNode, id: string): boolean {
 }
 
 function TreeBranch({
-  item, activeId, selectedId, depth, onSelect, onOpen,
+  item,
+  activeId,
+  selectedId,
+  depth,
+  onSelect,
+  onOpen,
 }: Readonly<{
   item: TopologyNavigationNode;
   activeId: string;
@@ -45,7 +60,9 @@ function TreeBranch({
 }>) {
   const active = item.node.id === activeId;
   const chosen = item.node.id === selectedId;
-  const expanded = depth < 3 || containsActive(item, activeId) ||
+  const expanded =
+    depth < 3 ||
+    containsActive(item, activeId) ||
     (selectedId !== null && containsActive(item, selectedId));
 
   const select = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -83,9 +100,15 @@ function TreeBranch({
       {expanded && item.children.length > 0 && (
         <ul>
           {item.children.map((child) => (
-            <TreeBranch key={child.node.id} item={child}
-              activeId={activeId} selectedId={selectedId}
-              depth={depth + 1} onSelect={onSelect} onOpen={onOpen} />
+            <TreeBranch
+              key={child.node.id}
+              item={child}
+              activeId={activeId}
+              selectedId={selectedId}
+              depth={depth + 1}
+              onSelect={onSelect}
+              onOpen={onOpen}
+            />
           ))}
         </ul>
       )}
@@ -94,7 +117,8 @@ function TreeBranch({
 }
 
 export function TopologyContextTree({
-  tree, activeId,
+  tree,
+  activeId,
 }: Readonly<{ tree: TopologyNavigationNode; activeId: string }>) {
   const router = useRouter();
   const [selected, setSelected] = useState<TopologyNavigationNode | null>(null);
@@ -102,7 +126,9 @@ export function TopologyContextTree({
   return (
     <nav className="telxius-topology-tree" aria-label="Global topology">
       <header className="telxius-tree-brand">
-        <span className="telxius-tree-brand-icon"><Icon name="network" /></span>
+        <span className="telxius-tree-brand-icon">
+          <Icon name="network" />
+        </span>
         <strong>APPMANAGER</strong>
         <Link href="/workspace">Home</Link>
       </header>
@@ -111,8 +137,14 @@ export function TopologyContextTree({
         <b>ALL</b>
       </div>
       <ul className="telxius-tree-root">
-        <TreeBranch item={tree} activeId={activeId} selectedId={selected?.node.id ?? null}
-          depth={0} onSelect={setSelected} onOpen={(item) => router.push(item.href)} />
+        <TreeBranch
+          item={tree}
+          activeId={activeId}
+          selectedId={selected?.node.id ?? null}
+          depth={0}
+          onSelect={setSelected}
+          onOpen={(item) => router.push(item.href)}
+        />
       </ul>
       {selected && (
         <div className="topology-tree-selection" role="status">

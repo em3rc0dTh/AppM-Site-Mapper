@@ -127,16 +127,18 @@ export function BlueprintCanvas({
     setSelected({
       name: cluster.name,
       kind: 'CLUSTER / BAY',
-      sections: [{
-        title: 'Surveyed physical boundary',
-        fields: polygon?.length
-          ? [
-              { label: 'Area', value: `${(polygonArea(polygon) / 1_000_000).toFixed(2)} m²` },
-              { label: 'Vertices', value: polygon.length },
-              { label: 'Coordinates', value: 'Preserved from the room layout' },
-            ]
-          : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
-      }],
+      sections: [
+        {
+          title: 'Surveyed physical boundary',
+          fields: polygon?.length
+            ? [
+                { label: 'Area', value: `${(polygonArea(polygon) / 1_000_000).toFixed(2)} m²` },
+                { label: 'Vertices', value: polygon.length },
+                { label: 'Coordinates', value: 'Preserved from the room layout' },
+              ]
+            : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
+        },
+      ],
     });
   }
 
@@ -340,12 +342,19 @@ export function BlueprintCanvas({
             const center = polygonCentroid(cluster.polygon);
 
             return (
-              <g key={cluster.id} className={`blueprint-cluster-node${selectedBayId === cluster.id ? ' is-selected' : ''}`}
-                tabIndex={0} role="button" aria-label={`Inspect bay ${cluster.name}`}
-                onClick={() => { if (tool === 'select') inspectBay(cluster); }}
+              <g
+                key={cluster.id}
+                className={`blueprint-cluster-node${selectedBayId === cluster.id ? ' is-selected' : ''}`}
+                tabIndex={0}
+                role="button"
+                aria-label={`Inspect bay ${cluster.name}`}
+                onClick={() => {
+                  if (tool === 'select') inspectBay(cluster);
+                }}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter') inspectBay(cluster);
-                }}>
+                }}
+              >
                 <polygon
                   points={cluster.polygon.map((point) => `${point.x},${point.y}`).join(' ')}
                   className="blueprint-cluster"
@@ -384,10 +393,18 @@ export function BlueprintCanvas({
                       setSelected({
                         name: position.name,
                         kind: 'POSITION REFERENCE',
-                        sections: [{ title: 'Grid origin', fields: [
-                          { label: 'Coordinate', value: `${position.row}-${position.column}` },
-                          { label: 'State', value: 'Available; choose a rack footprint when placing' },
-                        ] }],
+                        sections: [
+                          {
+                            title: 'Grid origin',
+                            fields: [
+                              { label: 'Coordinate', value: `${position.row}-${position.column}` },
+                              {
+                                label: 'State',
+                                value: 'Available; choose a rack footprint when placing',
+                              },
+                            ],
+                          },
+                        ],
                       });
                     }
                   }}
@@ -492,33 +509,59 @@ export function BlueprintCanvas({
         </span>
       </footer>
       {focusedRackId && (
-        <div className="blueprint-rack-backdrop" role="presentation" onClick={() => setFocusedRackId(null)}>
-          <section className="blueprint-rack-dialog" role="dialog" aria-modal="true"
-            aria-label="Rack focus" onClick={(event) => event.stopPropagation()}>
+        <div
+          className="blueprint-rack-backdrop"
+          role="presentation"
+          onClick={() => setFocusedRackId(null)}
+        >
+          <section
+            className="blueprint-rack-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Rack focus"
+            onClick={(event) => event.stopPropagation()}
+          >
             <header>
-              <div><small>RACK FOCUS · ROOM CONTEXT</small>
+              <div>
+                <small>RACK FOCUS · ROOM CONTEXT</small>
                 <h2>{racks.find((rack) => rack.id === focusedRackId)?.name}</h2>
               </div>
-              <button type="button" onClick={() => setFocusedRackId(null)} aria-label="Close rack focus">×</button>
+              <button
+                type="button"
+                onClick={() => setFocusedRackId(null)}
+                aria-label="Close rack focus"
+              >
+                ×
+              </button>
             </header>
-            {racks.filter((rack) => rack.id === focusedRackId).map((rack) => (
-              <div key={rack.id} className="blueprint-rack-dialog-body">
-                <div className="blueprint-rack-footprint" aria-label="Rack physical footprint">
-                  <div style={{ aspectRatio: `${rack.rect.width} / ${rack.rect.depth}` }}>
-                    <strong>{rack.name}</strong><small>Top view</small>
+            {racks
+              .filter((rack) => rack.id === focusedRackId)
+              .map((rack) => (
+                <div key={rack.id} className="blueprint-rack-dialog-body">
+                  <div className="blueprint-rack-footprint" aria-label="Rack physical footprint">
+                    <div style={{ aspectRatio: `${rack.rect.width} / ${rack.rect.depth}` }}>
+                      <strong>{rack.name}</strong>
+                      <small>Top view</small>
+                    </div>
+                  </div>
+                  <dl>
+                    <dt>Footprint</dt>
+                    <dd>
+                      {rack.rect.width} × {rack.rect.depth} mm
+                    </dd>
+                    <dt>Position (mm)</dt>
+                    <dd>
+                      X {rack.rect.x} · Y {rack.rect.y}
+                    </dd>
+                    <dt>Data origin</dt>
+                    <dd>Saved MongoDB room geometry</dd>
+                  </dl>
+                  <div className="blueprint-rack-dialog-actions">
+                    <Link href={`/rack/${rack.id}`}>OPEN RACK ELEVATION</Link>
+                    <Link href={`/power?entity=${rack.id}`}>TRACE POWER</Link>
                   </div>
                 </div>
-                <dl>
-                  <dt>Footprint</dt><dd>{rack.rect.width} × {rack.rect.depth} mm</dd>
-                  <dt>Position (mm)</dt><dd>X {rack.rect.x} · Y {rack.rect.y}</dd>
-                  <dt>Data origin</dt><dd>Saved MongoDB room geometry</dd>
-                </dl>
-                <div className="blueprint-rack-dialog-actions">
-                  <Link href={`/rack/${rack.id}`}>OPEN RACK ELEVATION</Link>
-                  <Link href={`/power?entity=${rack.id}`}>TRACE POWER</Link>
-                </div>
-              </div>
-            ))}
+              ))}
           </section>
         </div>
       )}

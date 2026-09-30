@@ -240,8 +240,14 @@ export default async function TopologyNodePage({
         {trailEntries
           .filter((item, index) => {
             const kind = trail[index]?.kind;
-            return kind === 'SITE' || kind === 'STRUCTURE' || kind === 'LEVEL' ||
-              kind === 'ROOM_SUBSTRUCTURE' || kind === 'CONTAINER_RACK' || item.id === node.id;
+            return (
+              kind === 'SITE' ||
+              kind === 'STRUCTURE' ||
+              kind === 'LEVEL' ||
+              kind === 'ROOM_SUBSTRUCTURE' ||
+              kind === 'CONTAINER_RACK' ||
+              item.id === node.id
+            );
           })
           .map((item) => (
             <Link key={item.id} href={item.id === node.id ? selfHref : item.href} title={item.name}>

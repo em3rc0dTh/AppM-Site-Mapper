@@ -226,8 +226,13 @@ export function RoomLayoutEditor({
               positions={layout.positions}
               onSelectPosition={editing ? setSelected : undefined}
               onSelectRack={editing ? setSelected : undefined}
-              focusRackId={focusRackId ?? draft.racks.find((rack) => rack.positionId === focusPositionId)?.id}
-              focusBayId={focusBayId ?? draft.positions.find((position) => position.id === focusPositionId)?.clusterId}
+              focusRackId={
+                focusRackId ?? draft.racks.find((rack) => rack.positionId === focusPositionId)?.id
+              }
+              focusBayId={
+                focusBayId ??
+                draft.positions.find((position) => position.id === focusPositionId)?.clusterId
+              }
               focusPositionId={focusPositionId}
             />
           ) : (
@@ -411,9 +416,9 @@ export function RoomLayoutEditor({
               )}
               {rack && (
                 <p className="rack-footprint-summary">
-                  Footprint: {rack.width} × {rack.depth} mm · covers
-                  {' '}{Math.ceil(rack.width / 600)} × {Math.ceil(rack.depth / 600)} grid cells
-                  from its anchor. Server validation enforces room/bay boundaries and collisions.
+                  Footprint: {rack.width} × {rack.depth} mm · covers {Math.ceil(rack.width / 600)} ×{' '}
+                  {Math.ceil(rack.depth / 600)} grid cells from its anchor. Server validation
+                  enforces room/bay boundaries and collisions.
                 </p>
               )}
               {rack && (

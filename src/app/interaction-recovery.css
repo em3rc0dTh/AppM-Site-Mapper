@@ -20,7 +20,9 @@
   border: 0 !important;
   background: #fff !important;
 }
-.zip-app-shell.app-shell--immersive .breadcrumbs::-webkit-scrollbar { display: none; }
+.zip-app-shell.app-shell--immersive .breadcrumbs::-webkit-scrollbar {
+  display: none;
+}
 .zip-app-shell.app-shell--immersive .breadcrumbs a,
 .zip-app-shell.app-shell--immersive .breadcrumbs strong,
 .zip-app-shell.app-shell--immersive .breadcrumbs span {
@@ -39,15 +41,22 @@
   max-width: 210px !important;
   font-weight: 800;
 }
-.zip-app-shell.app-shell--immersive .breadcrumbs a + a::before { margin: 0 7px; }
+.zip-app-shell.app-shell--immersive .breadcrumbs a + a::before {
+  margin: 0 7px;
+}
 
 /* Header search and palette must never inherit white-on-white legacy ink. */
 .zip-topbar .mk-search-trigger,
 .zip-topbar .mk-search-trigger span,
 .zip-topbar .mk-search-trigger kbd,
 .zip-account,
-.zip-explore { color: #172536 !important; }
-.zip-topbar .mk-search-trigger { background: #fff !important; border-color: #cbd5df !important; }
+.zip-explore {
+  color: #172536 !important;
+}
+.zip-topbar .mk-search-trigger {
+  background: #fff !important;
+  border-color: #cbd5df !important;
+}
 .zip-command,
 .zip-command .zip-command-input,
 .zip-command .zip-command-results,
@@ -62,10 +71,19 @@
   opacity: 1 !important;
   -webkit-text-fill-color: #172536 !important;
 }
-.zip-command .zip-command-input input::placeholder { color: #63758b !important; opacity: 1 !important; }
-.zip-command .zip-command-group button.is-selected { background: #e9f2fe !important; }
-.zip-command .zip-command-group button strong { color: #172536 !important; }
-.zip-command .zip-command-group button em { color: #5e7083 !important; }
+.zip-command .zip-command-input input::placeholder {
+  color: #63758b !important;
+  opacity: 1 !important;
+}
+.zip-command .zip-command-group button.is-selected {
+  background: #e9f2fe !important;
+}
+.zip-command .zip-command-group button strong {
+  color: #172536 !important;
+}
+.zip-command .zip-command-group button em {
+  color: #5e7083 !important;
+}
 
 /* Each region owns its scroll only when its content actually needs it. */
 .zip-app-shell.app-shell--immersive .operational-page {
@@ -113,8 +131,12 @@
   background: #fff !important;
   border-color: #dce3eb !important;
 }
-.zip-app-shell.app-shell--immersive .section-header h1 { color: #172536 !important; }
-.zip-app-shell.app-shell--immersive .section-header .section-description { color: #53687c !important; }
+.zip-app-shell.app-shell--immersive .section-header h1 {
+  color: #172536 !important;
+}
+.zip-app-shell.app-shell--immersive .section-header .section-description {
+  color: #53687c !important;
+}
 
 /* Keep spatial ancestry in the left column. No fabricated bay/position screens. */
 .zip-app-shell .telxius-topology-tree,
@@ -162,10 +184,16 @@
   font-weight: 700;
   border-bottom: 1px solid #dce3eb;
 }
-.context-power-disclosure .zip-bdfb-tree { height: auto !important; }
-.context-power-disclosure .zip-bdfb-tree-row { overflow: hidden; }
+.context-power-disclosure .zip-bdfb-tree {
+  height: auto !important;
+}
+.context-power-disclosure .zip-bdfb-tree-row {
+  overflow: hidden;
+}
 .context-power-disclosure .zip-bdfb-tree-row strong {
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .zip-rack-tree-menu {
   display: flex !important;
@@ -175,17 +203,28 @@
   background: #fff !important;
   overflow: hidden;
 }
-.zip-rack-tree-menu .telxius-topology-tree { flex: 1; overflow: auto; }
+.zip-rack-tree-menu .telxius-topology-tree {
+  flex: 1;
+  overflow: auto;
+}
 .rack-tools-disclosure {
-  flex: 0 0 auto; max-height: 42%; overflow: auto;
+  flex: 0 0 auto;
+  max-height: 42%;
+  overflow: auto;
   border-top: 1px solid #dce3eb;
 }
 .rack-tools-disclosure a {
-  display: block; padding: 11px 20px;
-  color: #176de0; background: #fff; text-decoration: none;
-  border-bottom: 1px solid #eef2f6; font-weight: 700;
+  display: block;
+  padding: 11px 20px;
+  color: #176de0;
+  background: #fff;
+  text-decoration: none;
+  border-bottom: 1px solid #eef2f6;
+  font-weight: 700;
 }
-.rack-tools-disclosure a:hover { background: #eaf3ff; }
+.rack-tools-disclosure a:hover {
+  background: #eaf3ff;
+}
 
 /* Only a surveyed polygon justifies a geometric floor view. */
 .topology-unlocated-list {
@@ -199,7 +238,10 @@
   color: #32475b;
   overflow: auto;
 }
-.topology-unlocated-list > p { font-size: 13px; color: #53687c; }
+.topology-unlocated-list > p {
+  font-size: 13px;
+  color: #53687c;
+}
 .topology-unlocated-list > div {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -216,12 +258,23 @@
   cursor: pointer;
 }
 .topology-unlocated-list button.is-selected {
-  background: #eaf3ff !important; border-color: #217bf5 !important;
+  background: #eaf3ff !important;
+  border-color: #217bf5 !important;
 }
 .topology-unlocated-list button strong,
-.topology-unlocated-list button small { display: block; color: inherit; }
-.topology-unlocated-list button small { margin-top: 10px; opacity: .76; }
-.topology-telemetry-note { color: #30485e; font-size: 12px; padding: 12px; }
+.topology-unlocated-list button small {
+  display: block;
+  color: inherit;
+}
+.topology-unlocated-list button small {
+  margin-top: 10px;
+  opacity: 0.76;
+}
+.topology-telemetry-note {
+  color: #30485e;
+  font-size: 12px;
+  padding: 12px;
+}
 
 /* Blueprint: measured white grid, rack footprints and selected bay are visible. */
 .zip-app-shell .mk-room-editor,
@@ -240,32 +293,59 @@
   overflow: hidden !important;
   background: #f8fafc !important;
 }
-.zip-app-shell .blueprint-room { fill: #fbfcfe !important; stroke: #748599 !important; }
-.zip-app-shell .blueprint-grid-line { stroke: #e3eaf1 !important; opacity: 1 !important; }
+.zip-app-shell .blueprint-room {
+  fill: #fbfcfe !important;
+  stroke: #748599 !important;
+}
+.zip-app-shell .blueprint-grid-line {
+  stroke: #e3eaf1 !important;
+  opacity: 1 !important;
+}
 .zip-app-shell .blueprint-cluster {
-  fill: #eaf8fb !important; fill-opacity: .35;
+  fill: #eaf8fb !important;
+  fill-opacity: 0.35;
   stroke: #309aac !important;
   stroke-width: 16;
   stroke-dasharray: 38 24;
 }
-.zip-app-shell .blueprint-cluster-node { cursor: pointer; }
+.zip-app-shell .blueprint-cluster-node {
+  cursor: pointer;
+}
 .zip-app-shell .blueprint-cluster-node.is-selected .blueprint-cluster {
-  fill: #dbf3ff !important; stroke: #176fe6 !important; stroke-width: 23;
+  fill: #dbf3ff !important;
+  stroke: #176fe6 !important;
+  stroke-width: 23;
 }
 .zip-app-shell .blueprint-rack {
-  fill: #d7ecde !important; stroke: #278a62 !important; stroke-width: 10;
+  fill: #d7ecde !important;
+  stroke: #278a62 !important;
+  stroke-width: 10;
 }
 .zip-app-shell .blueprint-rack-label {
-  fill: #163d2f !important; font-weight: 800; paint-order: stroke;
-  stroke: #eaf9ef; stroke-width: 1.5px;
+  fill: #163d2f !important;
+  font-weight: 800;
+  paint-order: stroke;
+  stroke: #eaf9ef;
+  stroke-width: 1.5px;
 }
 .zip-app-shell .blueprint-rack-node.is-selected .blueprint-rack {
-  fill: #d9edff !important; stroke: #126fe6 !important;
+  fill: #d9edff !important;
+  stroke: #126fe6 !important;
 }
-.zip-app-shell .blueprint-coordinate-labels text { fill: #4b627a !important; }
-.zip-app-shell .blueprint-slot { fill: #eff7fe !important; stroke: #91b8db !important; }
-.zip-app-shell .blueprint-slot.is-selected { stroke: #126fe6 !important; stroke-width: 12; }
-.zip-app-shell .blueprint-rack-node { cursor: pointer; }
+.zip-app-shell .blueprint-coordinate-labels text {
+  fill: #4b627a !important;
+}
+.zip-app-shell .blueprint-slot {
+  fill: #eff7fe !important;
+  stroke: #91b8db !important;
+}
+.zip-app-shell .blueprint-slot.is-selected {
+  stroke: #126fe6 !important;
+  stroke-width: 12;
+}
+.zip-app-shell .blueprint-rack-node {
+  cursor: pointer;
+}
 .zip-app-shell .mk-selection-inspector {
   position: absolute !important;
   z-index: 8;
@@ -281,76 +361,150 @@
   border: 1px solid #cbd5df;
   box-shadow: 0 10px 30px #263b511e;
 }
-.room-rack-navigation { display: grid; gap: 5px; }
-.room-rack-navigation > small { margin-bottom: 7px; }
-.room-rack-navigation a {
-  display: flex; justify-content: space-between; align-items: center;
-  gap: 8px; color: #1d4e7d; padding: 10px;
-  text-decoration: none; font-size: 12px;
-  border: 1px solid #e0e8f1; border-radius: 4px;
+.room-rack-navigation {
+  display: grid;
+  gap: 5px;
 }
-.room-rack-navigation a:hover { border-color: #126fe6; background: #edf6ff; }
-.room-rack-navigation a span { color: #126fe6; font-size: 10px; white-space: nowrap; }
+.room-rack-navigation > small {
+  margin-bottom: 7px;
+}
+.room-rack-navigation a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: #1d4e7d;
+  padding: 10px;
+  text-decoration: none;
+  font-size: 12px;
+  border: 1px solid #e0e8f1;
+  border-radius: 4px;
+}
+.room-rack-navigation a:hover {
+  border-color: #126fe6;
+  background: #edf6ff;
+}
+.room-rack-navigation a span {
+  color: #126fe6;
+  font-size: 10px;
+  white-space: nowrap;
+}
 .rack-footprint-summary {
-  font-size: 12px; line-height: 1.5; color: #1b4e75;
-  padding: 10px; background: #f0f8ff; border: 1px solid #cbdfee;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #1b4e75;
+  padding: 10px;
+  background: #f0f8ff;
+  border: 1px solid #cbdfee;
 }
 .blueprint-rack-backdrop {
-  position: fixed; inset: 67px 0 0;
-  display: grid; place-items: center; z-index: 105;
-  padding: 18px; background: #17283a96;
+  position: fixed;
+  inset: 67px 0 0;
+  display: grid;
+  place-items: center;
+  z-index: 105;
+  padding: 18px;
+  background: #17283a96;
 }
 .blueprint-rack-dialog {
   width: min(740px, 92vw);
   max-height: calc(100dvh - 110px);
   overflow: auto;
-  background: #fff; color: #172536;
-  box-shadow: 0 24px 90px #0005; border: 1px solid #cfdae5; border-radius: 14px;
+  background: #fff;
+  color: #172536;
+  box-shadow: 0 24px 90px #0005;
+  border: 1px solid #cfdae5;
+  border-radius: 14px;
   padding: 0;
 }
 .blueprint-rack-dialog > header {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 18px 26px; border-bottom: 1px solid #dde5ed;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 26px;
+  border-bottom: 1px solid #dde5ed;
 }
-.blueprint-rack-dialog h2 { margin: 3px 0; color: #172536; }
+.blueprint-rack-dialog h2 {
+  margin: 3px 0;
+  color: #172536;
+}
 .blueprint-rack-dialog > header button {
-  font-size: 26px; border: 0; background: transparent; color: #263749; cursor: pointer;
+  font-size: 26px;
+  border: 0;
+  background: transparent;
+  color: #263749;
+  cursor: pointer;
 }
-.blueprint-rack-dialog-body { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 24px; }
+.blueprint-rack-dialog-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 24px;
+}
 .blueprint-rack-footprint {
-  min-height: 240px; display: grid; place-items: center; padding: 26px;
-  border: 1px solid #dce5ee; background-image: linear-gradient(#e1eaf2 1px,transparent 1px), linear-gradient(90deg,#e1eaf2 1px,transparent 1px);
+  min-height: 240px;
+  display: grid;
+  place-items: center;
+  padding: 26px;
+  border: 1px solid #dce5ee;
+  background-image:
+    linear-gradient(#e1eaf2 1px, transparent 1px),
+    linear-gradient(90deg, #e1eaf2 1px, transparent 1px);
   background-size: 30px 30px;
 }
 .blueprint-rack-footprint > div {
-  display: grid; place-content: center; gap: 8px; text-align: center;
-  background: #e4f1e8; color: #1a3b2d; border: 2px solid #21845c;
-  width: min(80%, 210px); min-height: 90px;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+  background: #e4f1e8;
+  color: #1a3b2d;
+  border: 2px solid #21845c;
+  width: min(80%, 210px);
+  min-height: 90px;
 }
 .blueprint-rack-dialog-body dl {
-  display: grid; align-content: center; grid-template-columns: auto 1fr;
-  gap: 10px; font-size: 13px;
+  display: grid;
+  align-content: center;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  font-size: 13px;
 }
-.blueprint-rack-dialog-body dd { margin: 0; font-weight: 700; }
+.blueprint-rack-dialog-body dd {
+  margin: 0;
+  font-weight: 700;
+}
 .blueprint-rack-dialog-actions {
-  grid-column: 1 / -1; display: flex; gap: 12px; flex-wrap: wrap;
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .blueprint-rack-dialog-actions a {
-  padding: 13px 18px; border-radius: 4px; text-decoration: none;
-  background: #176fe8; color: #fff; font-weight: 800;
+  padding: 13px 18px;
+  border-radius: 4px;
+  text-decoration: none;
+  background: #176fe8;
+  color: #fff;
+  font-weight: 800;
 }
 .blueprint-rack-dialog-actions a + a {
-  background: #fff; color: #176fe8; border: 1px solid #176fe8;
+  background: #fff;
+  color: #176fe8;
+  border: 1px solid #176fe8;
 }
 
 /* Elevation fits available space. Scroll only its sub-area when truly necessary. */
 .zip-app-shell .zip-rack-elevation-view {
-  height: auto; min-height: 0 !important;
+  height: auto;
+  min-height: 0 !important;
   grid-template-columns: minmax(0, 1fr) minmax(270px, 30%) !important;
   background: #fff !important;
 }
 .zip-app-shell .zip-rack-elevation-main {
-  min-height: 0; color: #172536 !important; background: #fff !important;
+  min-height: 0;
+  color: #172536 !important;
+  background: #fff !important;
 }
 .zip-app-shell .zip-elevation-canvas {
   height: max(410px, calc(100dvh - 245px)) !important;
@@ -373,44 +527,76 @@
   border: 1px solid #7d8da0 !important;
 }
 .zip-app-shell .zip-elevation-rack .legacy-rack-block-copy strong,
-.zip-app-shell .zip-elevation-rack .legacy-rack-scale { color: #233548 !important; }
+.zip-app-shell .zip-elevation-rack .legacy-rack-scale {
+  color: #233548 !important;
+}
 .zip-app-shell .zip-elevation-inspector,
-.zip-app-shell .zip-equipment-summary { color: #172536 !important; background: #fff !important; }
+.zip-app-shell .zip-equipment-summary {
+  color: #172536 !important;
+  background: #fff !important;
+}
 .zip-app-shell .zip-rack-elevation-footer {
-  min-height: 60px; height: auto !important;
-  flex-wrap: wrap; gap: 12px; padding: 12px 18px;
-  background: #fff; color: #24384c;
+  min-height: 60px;
+  height: auto !important;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px 18px;
+  background: #fff;
+  color: #24384c;
 }
 
 /* Panels are real data, not a fixed six-panel decoration. */
-.zip-bdfb-page .bdfb-overview-shelf:not(:first-of-type) { display: block !important; }
-.zip-bdfb-page .bdfb-overview-device { min-height: 0 !important; height: auto !important; }
-.zip-bdfb-page .bdfb-overview-shelf { min-height: 0 !important; height: auto !important; }
-.zip-bdfb-page .bdfb-chassis-body { overflow: auto !important; align-items: start; }
+.zip-bdfb-page .bdfb-overview-shelf:not(:first-of-type) {
+  display: block !important;
+}
+.zip-bdfb-page .bdfb-overview-device {
+  min-height: 0 !important;
+  height: auto !important;
+}
+.zip-bdfb-page .bdfb-overview-shelf {
+  min-height: 0 !important;
+  height: auto !important;
+}
+.zip-bdfb-page .bdfb-chassis-body {
+  overflow: auto !important;
+  align-items: start;
+}
 .zip-bdfb-page .bdfb-panel-detail-header > button {
   display: inline-flex !important;
   align-items: center;
   justify-content: center;
-  color: #176fe8; background: #fff;
-  border: 1px solid #a7c3e5; padding: 6px 10px;
+  color: #176fe8;
+  background: #fff;
+  border: 1px solid #a7c3e5;
+  padding: 6px 10px;
 }
 .zip-bdfb-page .zip-bdfb-inspector,
 .zip-bdfb-page .zip-bdfb-inspector dl,
 .zip-bdfb-page .zip-bdfb-inspector dd,
-.zip-bdfb-page .zip-bdfb-inspector dt { color: #172536 !important; background: #fff !important; }
+.zip-bdfb-page .zip-bdfb-inspector dt {
+  color: #172536 !important;
+  background: #fff !important;
+}
 .zip-bdfb-page .zip-bdfb-actions {
-  display: flex; flex-direction: column; gap: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   border: 1px solid #d7e2ec;
 }
 .zip-bdfb-page .zip-bdfb-actions span {
-  padding: 10px 12px; font-size: 12px; color: #39546a;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #39546a;
 }
 
 /* Allow content to scroll in its own panel if the viewport is actually smaller. */
 @media (max-width: 1180px) {
   .zip-app-shell.app-shell--immersive .breadcrumbs {
-    position: relative !important; inset: auto !important;
-    width: 100%; height: 44px !important; min-height: 44px !important;
+    position: relative !important;
+    inset: auto !important;
+    width: 100%;
+    height: 44px !important;
+    min-height: 44px !important;
     border-bottom: 1px solid #dce3eb !important;
   }
   .zip-app-shell.app-shell--immersive .operational-page,
@@ -419,9 +605,15 @@
   }
 }
 @media (max-width: 860px) {
-  .blueprint-rack-dialog-body { grid-template-columns: 1fr; }
-  .zip-app-shell .mk-selection-inspector { width: min(320px, 58%) !important; }
-  .zip-app-shell .blueprint-canvas-shell { max-height: none; }
+  .blueprint-rack-dialog-body {
+    grid-template-columns: 1fr;
+  }
+  .zip-app-shell .mk-selection-inspector {
+    width: min(320px, 58%) !important;
+  }
+  .zip-app-shell .blueprint-canvas-shell {
+    max-height: none;
+  }
 }
 
 /* One click selects the spatial object; double click drills. */
@@ -445,7 +637,9 @@
   font-size: 13px;
   overflow-wrap: anywhere;
 }
-.topology-tree-selection small { color: #5b7085; }
+.topology-tree-selection small {
+  color: #5b7085;
+}
 .topology-tree-selection a {
   width: fit-content;
   padding: 8px 12px;

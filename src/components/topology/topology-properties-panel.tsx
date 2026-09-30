@@ -152,7 +152,9 @@ export function TopologyPropertiesPanel({
           <dd>{hasB ? 'Configured' : '—'}</dd>
           <dt>Telemetry</dt>
           <dd>
-            {endpoints.some((endpoint) => endpoint.telemetry?.rawPointId) ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}
+            {endpoints.some((endpoint) => endpoint.telemetry?.rawPointId)
+              ? 'EXPLICIT BINDINGS'
+              : 'UNMAPPED'}
           </dd>
         </dl>
         <section className="zip-bdfb-status-card">
@@ -164,7 +166,10 @@ export function TopologyPropertiesPanel({
           </div>
         </section>
         <div className="zip-bdfb-actions">
-          <span>{endpoints.filter((endpoint) => Boolean(endpoint.telemetry?.rawPointId)).length} explicit MQTT bindings</span>
+          <span>
+            {endpoints.filter((endpoint) => Boolean(endpoint.telemetry?.rawPointId)).length}{' '}
+            explicit MQTT bindings
+          </span>
           <span>Select a panel to inspect its breakers.</span>
         </div>
       </aside>

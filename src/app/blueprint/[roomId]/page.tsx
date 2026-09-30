@@ -15,7 +15,10 @@ import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 export default async function BlueprintPage({
   params,
   searchParams,
-}: Readonly<{ params: Promise<{ roomId: string }>; searchParams: Promise<{ rack?: string; bay?: string; position?: string }> }>) {
+}: Readonly<{
+  params: Promise<{ roomId: string }>;
+  searchParams: Promise<{ rack?: string; bay?: string; position?: string }>;
+}>) {
   const auth = await requirePermission('topology:read');
 
   if (!auth.ok) {
@@ -34,10 +37,19 @@ export default async function BlueprintPage({
   const draft = await readLayoutDraft(repository, roomId);
   const trail = await topology.getTrail(roomId);
   const breadcrumbItems = await Promise.all(
-    trail.filter((entry) =>
-      entry.kind === 'SITE' || entry.kind === 'STRUCTURE' || entry.kind === 'LEVEL' ||
-      entry.kind === 'ROOM_SUBSTRUCTURE'
-    ).map(async (entry) => ({ id: entry.id, name: entry.name, href: await topology.buildDeepLink(entry.id) })),
+    trail
+      .filter(
+        (entry) =>
+          entry.kind === 'SITE' ||
+          entry.kind === 'STRUCTURE' ||
+          entry.kind === 'LEVEL' ||
+          entry.kind === 'ROOM_SUBSTRUCTURE',
+      )
+      .map(async (entry) => ({
+        id: entry.id,
+        name: entry.name,
+        href: await topology.buildDeepLink(entry.id),
+      })),
   );
   const inventory = (
     await Promise.all(result.value.racks.map((r) => repository.listChildren(r.id)))
@@ -50,8 +62,13 @@ export default async function BlueprintPage({
     <main className="operational-page operational-page--blueprint">
       <nav className="breadcrumbs">
         {breadcrumbItems.map((entry) => (
-          <Link key={entry.id} href={entry.id === roomId ? `/blueprint/${roomId}` : entry.href}
-            title={entry.name}>{entry.name}</Link>
+          <Link
+            key={entry.id}
+            href={entry.id === roomId ? `/blueprint/${roomId}` : entry.href}
+            title={entry.name}
+          >
+            {entry.name}
+          </Link>
         ))}
       </nav>
       <div className="operational-layout operational-layout--blueprint">

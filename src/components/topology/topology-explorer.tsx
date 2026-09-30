@@ -36,9 +36,7 @@ export function TopologyExplorer({
   items: readonly VisualStageChild[];
   boundary?: readonly PhysicalPoint[] | undefined;
 }) {
-  const [selected, setSelected] = useState<string | null>(
-    null,
-  );
+  const [selected, setSelected] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const item = items.find((entry) => entry.node.id === selected);
   const visualItems =
@@ -141,13 +139,18 @@ export function TopologyExplorer({
               </div>
             ) : node.kind === 'LEVEL' ? (
               <div className="topology-unlocated-list" aria-label="Rooms without surveyed geometry">
-                <p>Room footprints are not surveyed. This is a topology list, not a physical map.</p>
+                <p>
+                  Room footprints are not surveyed. This is a topology list, not a physical map.
+                </p>
                 <div>
                   {visualItems.map((entry) => (
-                    <button key={entry.node.id} type="button"
+                    <button
+                      key={entry.node.id}
+                      type="button"
                       className={selected === entry.node.id ? 'is-selected' : ''}
                       onClick={() => setSelected(entry.node.id)}
-                      onDoubleClick={() => window.location.assign(entry.href)}>
+                      onDoubleClick={() => window.location.assign(entry.href)}
+                    >
                       <strong>{entry.node.name}</strong>
                       <small>Click to inspect · double click to open</small>
                     </button>
@@ -186,7 +189,6 @@ export function TopologyExplorer({
                     </span>
                   </button>
                 ))}
-
               </div>
             )}
           </div>
@@ -234,7 +236,10 @@ export function TopologyExplorer({
         </section>
         <section className="topology-telemetry-note">
           <h3>TELEMETRY</h3>
-          <p>Live status appears on a mapped device or breaker. Topology alone does not prove connectivity.</p>
+          <p>
+            Live status appears on a mapped device or breaker. Topology alone does not prove
+            connectivity.
+          </p>
         </section>
         {item ? (
           <Link className="mk-primary zip-open-action" href={item.href}>

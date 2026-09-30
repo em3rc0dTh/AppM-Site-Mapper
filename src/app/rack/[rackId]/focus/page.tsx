@@ -63,8 +63,8 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
           <h1>RACK FOCUS</h1>
           <div className="zip-rack-room">
             <div className="rack-unsurveyed-hint">
-              No surveyed room footprint is available. This is the saved rack
-              occupancy view, not an invented room layout.
+              No surveyed room footprint is available. This is the saved rack occupancy view, not an
+              invented room layout.
             </div>
             <div className="zip-focus-rack">
               <strong className="zip-focus-rack-name">{view.value.rack.name}</strong>

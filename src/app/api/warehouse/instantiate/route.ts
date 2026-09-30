@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
-import { TopologyService } from '@/modules/topology/application/topology-service';
+import { WarehouseInstantiationService } from '@/modules/warehouse/application/warehouse-instantiation-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
-import { snapshotTemplate } from '@/modules/warehouse/domain/template';
-import { WarehouseService } from '@/modules/warehouse/application/warehouse-service';
 import { createWarehouseRepository } from '@/modules/warehouse/infrastructure/warehouse-repository-factory';
 
 function object(value: unknown): Record<string, unknown> | null {
@@ -24,44 +22,26 @@ export async function POST(request: Request) {
   )
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
 
-  const warehouse = new WarehouseService(await createWarehouseRepository());
-  const template = await warehouse.getById(body.templateId);
-  if (!template)
-    return NextResponse.json({ error: 'TEMPLATE_NOT_FOUND' }, { status: 404 });
-
-  const topologyRepository = await createTopologyRepository();
-  const topology = new TopologyService(topologyRepository);
-  const rack = await topology.getById(body.rackId);
-  if (
-    !rack ||
-    rack.kind !== 'CONTAINER_RACK' ||
-    rack.variant !== 'RACK' ||
-    rack.lifecycle !== 'ACTIVE'
-  )
-    return NextResponse.json({ error: 'RACK_NOT_FOUND' }, { status: 404 });
-
-  const result = await topology.create({
-    kind: template.kind,
-    parentId: rack.id,
+  const result = await new WarehouseInstantiationService(
+    await createWarehouseRepository(),
+    await createTopologyRepository(),
+  ).instantiate({
+    templateId: body.templateId,
+    rackId: body.rackId,
     name: body.name,
     ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
-    ...(typeof body.category === 'string' && body.category.trim()
-      ? { category: body.category }
-      : template.category
-        ? { category: template.category }
-        : {}),
-    template: snapshotTemplate(template),
+    ...(typeof body.category === 'string' ? { category: body.category } : {}),
   });
 
-  if (!result.ok)
-    return NextResponse.json({ error: result.error }, { status: 422 });
+  if (!result.ok) {
+    const status =
+      result.error === 'TEMPLATE_NOT_FOUND' || result.error === 'RACK_NOT_FOUND'
+        ? 404
+        : result.error === 'INVALID_NAME'
+          ? 400
+          : 422;
+    return NextResponse.json({ error: result.error }, { status });
+  }
 
-  return NextResponse.json(
-    {
-      node: result.value,
-      recommendedMountSizeU: template.sizeU ?? null,
-      state: 'UNMOUNTED',
-    },
-    { status: 201 },
-  );
+  return NextResponse.json(result.value, { status: 201 });
 }

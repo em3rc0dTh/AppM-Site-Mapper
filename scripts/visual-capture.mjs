@@ -1,3 +1,4 @@
+import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 
@@ -72,6 +73,29 @@ if (levelLink) {
 const roomLink = await search('Room 202', 'ROOM_SUBSTRUCTURE');
 if (roomLink) {
   await go(roomLink);
+
+  // A successful screenshot alone does not prove the requested light theme.
+  // Fail the visual gate if the operational surfaces regress to the dark palette.
+  const roomColors = await page.evaluate(() => {
+    const color = (selector) => {
+      const element = document.querySelector(selector);
+      if (!element) throw new Error(`Missing room element: ${selector}`);
+      return getComputedStyle(element).backgroundColor;
+    };
+    return {
+      topbar: color('.zip-topbar'),
+      stage: color('.operational-stage'),
+      inspector: color('.zip-room-properties'),
+      draftingSurface: color('.blueprint-canvas-shell'),
+    };
+  });
+  assert.deepEqual(roomColors, {
+    topbar: 'rgb(255, 255, 255)',
+    stage: 'rgb(255, 255, 255)',
+    inspector: 'rgb(255, 255, 255)',
+    draftingSurface: 'rgb(251, 252, 253)',
+  });
+
   await snap('05-room-blueprint');
   const editButton = page.getByRole('button', { name: 'EDIT ROOM' }).first();
   if (await editButton.count()) {

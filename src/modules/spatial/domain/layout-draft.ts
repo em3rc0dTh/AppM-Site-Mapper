@@ -8,7 +8,7 @@ import {
   rectOverlapsPolygon,
   rectsOverlap,
 } from './geometry';
-import { gridCoordinateToPoint, pointToGridCoordinate, TILE_SIZE_MM } from './grid';
+import { gridCoordinateToPoint, pointToGridCoordinate } from './grid';
 export interface DraftCluster {
   variant?: 'BAY' | 'CONTAINER_CLUSTER';
   id: string;
@@ -26,6 +26,9 @@ export interface DraftRack {
   id: string;
   name: string;
   positionId: string;
+  /** Exact physical top-left anchor in the Room plane; independent from the 600 mm grid reference. */
+  x: number;
+  y: number;
   width: number;
   depth: number;
   totalU: number;
@@ -38,22 +41,19 @@ export interface LayoutDraft {
   racks: DraftRack[];
 }
 
-function rackRect(
-  rack: Pick<DraftRack, 'width' | 'depth'>,
-  position: Pick<DraftPosition, 'row' | 'column'>,
-): RectMm {
-  return { ...gridCoordinateToPoint(position), width: rack.width, depth: rack.depth };
+function rackRect(rack: Pick<DraftRack, 'x' | 'y' | 'width' | 'depth'>): RectMm {
+  return { x: rack.x, y: rack.y, width: rack.width, depth: rack.depth };
 }
 
 function rackPlacementIssue(
   draft: LayoutDraft,
-  rack: Pick<DraftRack, 'id' | 'width' | 'depth'>,
+  rack: Pick<DraftRack, 'id' | 'x' | 'y' | 'width' | 'depth'>,
   position: DraftPosition,
 ): string | null {
   const cluster = draft.clusters.find((candidate) => candidate.id === position.clusterId);
   if (!cluster) return 'INVALID_CLUSTER';
 
-  const rect = rackRect(rack, position);
+  const rect = rackRect(rack);
   const bounds = polygonBounds(cluster.polygon);
   if (!bounds) return 'INVALID_CLUSTER_BOUNDARY';
 
@@ -80,44 +80,46 @@ function rackPlacementIssue(
 
   for (const other of draft.racks) {
     if (other.id === rack.id) continue;
-    const otherPosition = draft.positions.find((candidate) => candidate.id === other.positionId);
-    if (!otherPosition) continue;
-    if (rectsOverlap(rect, rackRect(other, otherPosition))) return 'RACK_COLLISION';
+    if (rectsOverlap(rect, rackRect(other))) return 'RACK_COLLISION';
   }
 
   return null;
 }
 
-export function findNextRackCoordinate(
+export interface RackPlacement {
+  readonly point: PointMm;
+  readonly coordinate: { row: string; column: number };
+}
+
+export function findNextRackPlacement(
   draft: LayoutDraft,
   clusterId: string,
   width: number,
   depth: number,
-): { row: string; column: number } | null {
+): RackPlacement | null {
   const cluster = draft.clusters.find((candidate) => candidate.id === clusterId);
   const bounds = cluster ? polygonBounds(cluster.polygon) : null;
-  if (!cluster || !bounds || width <= 0 || depth <= 0) return null;
+  if (!cluster || !bounds || width <= 0 || depth <= 0 || bounds.minY < 0) return null;
 
-  const topGridY = Math.round(bounds.minY / TILE_SIZE_MM) * TILE_SIZE_MM;
-  if (Math.abs(topGridY - bounds.minY) > 1e-7 || topGridY < 0) return null;
+  const candidates = new Set<number>([bounds.minX]);
 
-  const firstColumnIndex = Math.ceil(bounds.minX / TILE_SIZE_MM);
-  const lastColumnIndex = Math.floor((bounds.maxX - width) / TILE_SIZE_MM);
+  for (const existing of draft.racks) {
+    const position = draft.positions.find((candidate) => candidate.id === existing.positionId);
+    if (position?.clusterId === clusterId) candidates.add(existing.x + existing.width);
+  }
 
-  for (let columnIndex = firstColumnIndex; columnIndex <= lastColumnIndex; columnIndex += 1) {
-    const coordinate = pointToGridCoordinate({
-      x: columnIndex * TILE_SIZE_MM,
-      y: topGridY,
-    });
+  for (const other of draft.clusters) {
+    if (other.id === clusterId) continue;
+    const otherBounds = polygonBounds(other.polygon);
+    if (otherBounds) candidates.add(otherBounds.maxX);
+  }
+
+  for (const x of [...candidates].sort((left, right) => left - right)) {
+    if (x < bounds.minX || x + width > bounds.maxX) continue;
+
+    const point = { x, y: bounds.minY };
+    const coordinate = pointToGridCoordinate(point);
     if (!coordinate) continue;
-
-    const occupiedByPosition = draft.positions.find(
-      (position) =>
-        position.row === coordinate.row &&
-        position.column === coordinate.column &&
-        position.clusterId !== clusterId,
-    );
-    if (occupiedByPosition) continue;
 
     const candidatePosition: DraftPosition = {
       id: '__rack_candidate__',
@@ -127,14 +129,21 @@ export function findNextRackCoordinate(
     };
     const issue = rackPlacementIssue(
       draft,
-      { id: '__rack_candidate__', width, depth },
+      {
+        id: '__rack_candidate__',
+        x: point.x,
+        y: point.y,
+        width,
+        depth,
+      },
       candidatePosition,
     );
-    if (!issue) return coordinate;
+    if (!issue) return { point, coordinate };
   }
 
   return null;
 }
+
 export function validateLayoutDraft(value: unknown): string | null {
   if (!value || typeof value !== 'object') return 'INVALID_LAYOUT';
   const d = value as LayoutDraft;
@@ -211,7 +220,9 @@ export function validateLayoutDraft(value: unknown): string | null {
     rackNames.add(normalizedRackName);
     if (
       !named(r) ||
-      ![r.width, r.depth, r.totalU].every(Number.isInteger) ||
+      ![r.x, r.y, r.width, r.depth, r.totalU].every(Number.isInteger) ||
+      r.x < 0 ||
+      r.y < 0 ||
       r.width < 1 ||
       r.depth < 1 ||
       r.width > 10000 ||
@@ -224,7 +235,7 @@ export function validateLayoutDraft(value: unknown): string | null {
     if (!p) return 'INVALID_POSITION';
     if (occupied.has(p.id)) return 'POSITION_OCCUPIED';
     occupied.add(p.id);
-    const rect = rackRect(r, p);
+    const rect = rackRect(r);
     const placementIssue = rackPlacementIssue(d, r, p);
     if (placementIssue) return placementIssue;
     if (rects.some((other) => rectsOverlap(rect, other))) return 'RACK_COLLISION';

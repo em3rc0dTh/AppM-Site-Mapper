@@ -234,23 +234,21 @@ if (bdfbLink) {
         frameRects.length === 2 &&
         Math.abs(frameRects[0].top - frameRects[1].top) <= 2 &&
         frameRects[0].right <= frameRects[1].left + 2,
-      panelsStacked:
-        panelRects.length === 6 &&
-        panelRects[0].bottom <= panelRects[1].top + 2 &&
-        panelRects[1].bottom <= panelRects[2].top + 2 &&
-        panelRects[3].bottom <= panelRects[4].top + 2 &&
-        panelRects[4].bottom <= panelRects[5].top + 2,
+      panelsStacked: frames.every((frame) => {
+        const children = [...frame.querySelectorAll('.bdfb-overview-panel')].map((panel) =>
+          panel.getBoundingClientRect(),
+        );
+        return children.every(
+          (panel, index) => index === 0 || children[index - 1].bottom <= panel.top + 2,
+        );
+      }),
     };
   });
   assert.ok(overviewGeometry, 'BDFB overview geometry must exist');
   assert.equal(overviewGeometry.frameCount, 2, 'BDFB overview must render A/B as two frames');
-  assert.equal(
-    overviewGeometry.panelCount,
-    6,
-    'BDFB overview must render six physical panel slots',
-  );
+  assert.ok(overviewGeometry.panelCount >= 1, 'BDFB overview must render configured panels');
   assert.ok(overviewGeometry.framesSideBySide, 'BDFB A/B frames must render side-by-side');
-  assert.ok(overviewGeometry.panelsStacked, 'BDFB panel slots must stack vertically within A/B');
+  assert.ok(overviewGeometry.panelsStacked, 'BDFB panels must stack vertically within A/B');
   assert.ok(
     overviewGeometry.bodyScrollHeight <= overviewGeometry.bodyClientHeight + 2,
     'BDFB overview must fit the viewport without vertical scroll',

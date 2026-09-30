@@ -5,6 +5,7 @@ import { requirePermission } from '@/modules/identity/application/current-sessio
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
+import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { RackElevation } from '@/components/rack/rack-elevation';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
@@ -22,8 +23,13 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const trail = await service.getTrail(node.id);
   const room = trail.find((n) => n.kind === 'ROOM_SUBSTRUCTURE');
   const rack = trail.find((n) => n.kind === 'CONTAINER_RACK');
-  const tree = await service.buildNavigationTree(room?.id ?? trail[0]!.id);
+  const tree = await service.buildNavigationTree(trail[0]!.id);
   const view = rack ? await new RackElevationService(repo).getView(rack.id) : null;
+  const relatedPower = (await (await createPowerRepository()).listActive()).filter(
+    (path) => path.source.entityId === node.id || path.target.entityId === node.id,
+  );
+  const hasFeedA = relatedPower.some((path) => path.feed === 'A');
+  const hasFeedB = relatedPower.some((path) => path.feed === 'B');
   const links = await Promise.all(
     trail.map(async (n) => ({ id: n.id, name: n.name, href: await service.buildDeepLink(n.id) })),
   );
@@ -82,21 +88,23 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               {rack?.name ?? 'Not placed'} {mountLabel !== 'Not mounted' ? ` ${mountLabel}` : ''}
             </dd>
             <dt>Power A</dt>
-            <dd>Configured ✓</dd>
+            <dd>{hasFeedA ? 'Path recorded' : 'No recorded path'}</dd>
             <dt>Power B</dt>
-            <dd>Configured ✓</dd>
+            <dd>{hasFeedB ? 'Path recorded' : 'No recorded path'}</dd>
             <dt>Telemetry</dt>
-            <dd>
-              <span className="zip-green-dot" /> LIVE
-            </dd>
+            <dd>Open diagnostic to verify mapped LIVE readings</dd>
           </dl>
-          <Link className="mk-primary" href={`/power?entity=${node.id}`}>
-            ϟ TRACE POWER
-          </Link>
+          {relatedPower.length > 0 ? (
+            <Link className="mk-primary" href={`/power?entity=${node.id}`}>
+              ϟ TRACE POWER
+            </Link>
+          ) : (
+            <p className="device-power-unconfigured">No active power path is recorded for this device.</p>
+          )}
           <div className="zip-device-live">
             <TelemetryLens entityIds={[node.id]} label={node.name} />
           </div>
-          {room && (
+          {room && rack && (
             <Link
               className="zip-device-outline"
               href={`/blueprint/${room.id}?rack=${rack?.id ?? ''}`}

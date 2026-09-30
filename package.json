@@ -22,7 +22,9 @@
     "test:certification": "vitest run tests/certification",
     "local:dev": "node scripts/local-dev.mjs",
     "local:emulator": "node scripts/local-dev.mjs --mqtt",
-    "local:mongo-mqtt": "node scripts/local-mongo-mqtt.mjs"
+    "local:mongo-mqtt": "node scripts/local-mongo-mqtt.mjs",
+    "local:mongo-crud:new": "node scripts/local-mongo-mqtt.mjs --crud-test --init-admin",
+    "local:mongo-crud": "node scripts/local-mongo-mqtt.mjs --crud-test --reuse"
   },
   "dependencies": {
     "mongodb": "7.6.0",

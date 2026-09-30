@@ -3,10 +3,7 @@ import type { TopologyRepository } from '@/modules/topology/application/topology
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { DeviceNode, EquipmentNode } from '@/modules/topology/domain/entities';
 import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
-import {
-  materializeBdfbBlueprint,
-  snapshotTemplate,
-} from '@/modules/warehouse/domain/template';
+import { materializeBdfbBlueprint, snapshotTemplate } from '@/modules/warehouse/domain/template';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type WarehouseInstantiationError =

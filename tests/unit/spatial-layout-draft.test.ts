@@ -178,6 +178,68 @@ describe('Bay frontage and downstream rack depth', () => {
     expect(validateLayoutDraft(draft)).toBe('RACK_OUTSIDE_BAY_WIDTH');
   });
 
+  it('packs 1200 mm racks flush by skipping the overlapping 600 mm anchor', () => {
+    const draft = baseDraft();
+    draft.clusters[0] = {
+      ...draft.clusters[0]!,
+      polygon: [
+        { x: 0, y: 0 },
+        { x: 2400, y: 0 },
+        { x: 2400, y: 600 },
+        { x: 0, y: 600 },
+      ],
+    };
+
+    const first = findNextRackCoordinate(draft, 'bay-top', 1200, 900);
+    expect(first).toEqual({ row: 'A', column: 1 });
+
+    draft.positions.push({
+      id: 'p1',
+      name: 'Rack 1 anchor',
+      clusterId: 'bay-top',
+      ...first!,
+    });
+    draft.racks.push({
+      id: 'r1',
+      name: 'Rack 1',
+      positionId: 'p1',
+      width: 1200,
+      depth: 900,
+      totalU: 42,
+    });
+
+    const second = findNextRackCoordinate(draft, 'bay-top', 1200, 900);
+    expect(second).toEqual({ row: 'A', column: 3 });
+  });
+
+  it('rejects duplicate rack names in the same room draft', () => {
+    const draft = baseDraft();
+    draft.positions.push(
+      { id: 'p1', name: 'Rack 1 anchor', clusterId: 'bay-top', row: 'A', column: 1 },
+      { id: 'p2', name: 'Rack 2 anchor', clusterId: 'bay-top', row: 'A', column: 2 },
+    );
+    draft.racks.push(
+      {
+        id: 'r1',
+        name: 'RACK-EATON-01',
+        positionId: 'p1',
+        width: 600,
+        depth: 900,
+        totalU: 42,
+      },
+      {
+        id: 'r2',
+        name: 'rack-eaton-01',
+        positionId: 'p2',
+        width: 600,
+        depth: 900,
+        totalU: 42,
+      },
+    );
+
+    expect(validateLayoutDraft(draft)).toBe('DUPLICATE_RACK_NAME');
+  });
+
   it('still rejects depth that leaves the Room even when Bay frontage is valid', () => {
     const draft = baseDraft();
     draft.clusters = draft.clusters.filter((cluster) => cluster.id === 'bay-top');

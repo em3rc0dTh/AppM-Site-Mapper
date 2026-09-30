@@ -50,7 +50,9 @@ await page.waitForTimeout(450);
 await snap('14-operations');
 
 await go('/network');
-const createSite = page.locator('.operational-edit-dock summary').filter({ hasText: 'Create site' });
+const createSite = page
+  .locator('.operational-edit-dock summary')
+  .filter({ hasText: 'Create site' });
 if (/\/topology\/network\//.test(page.url())) {
   await createSite.waitFor({ state: 'visible', timeout: 10_000 });
   assert.ok(

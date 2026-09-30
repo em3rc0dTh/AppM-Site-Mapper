@@ -93,6 +93,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                   <span>
                     {selected.sizeU ? `${selected.sizeU}U` : 'U not defined'}
                     {selected.category ? ` · ${selected.category}` : ''}
+                    {selected.deviceType ? ` · ${selected.deviceType}` : ''}
                   </span>
                 </div>
               )}

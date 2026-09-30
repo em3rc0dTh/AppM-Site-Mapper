@@ -10,7 +10,11 @@ import {
   type LayoutDraft,
 } from '@/modules/spatial/domain/layout-draft';
 import { gridCoordinateToPoint, pointToGridCoordinate } from '@/modules/spatial/domain/grid';
-import { polygonInsidePolygon, type PointMm } from '@/modules/spatial/domain/geometry';
+import {
+  polygonInsidePolygon,
+  polygonsOverlapArea,
+  type PointMm,
+} from '@/modules/spatial/domain/geometry';
 
 type BoundaryEdit =
   | { kind: 'room' }
@@ -340,11 +344,26 @@ export function RoomLayoutEditor({
               }
               initial={boundary.kind === 'room' ? draft.polygon : boundary.polygon}
               context={boundary.kind === 'bay' ? draft.polygon : []}
-              validate={(polygon) =>
-                boundary.kind === 'bay' && !polygonInsidePolygon(polygon, draft.polygon)
-                  ? 'The complete bay boundary must stay inside the room.'
-                  : null
-              }
+              contextOverlays={draft.clusters
+                .filter((cluster) => boundary.kind === 'room' || cluster.id !== boundary.id)
+                .map((cluster) => ({
+                  id: cluster.id,
+                  label: cluster.name,
+                  polygon: cluster.polygon,
+                }))}
+              validate={(polygon) => {
+                if (boundary.kind !== 'bay') return null;
+                if (!polygonInsidePolygon(polygon, draft.polygon))
+                  return 'The complete bay boundary must stay inside the room.';
+                if (
+                  draft.clusters.some(
+                    (cluster) =>
+                      cluster.id !== boundary.id && polygonsOverlapArea(polygon, cluster.polygon),
+                  )
+                )
+                  return 'Bay / Cluster boundary must not overlap an existing Bay / Cluster.';
+                return null;
+              }}
               onConfirm={applyBoundary}
               onCancel={() => setBoundary(null)}
               confirmLabel="Apply to draft"

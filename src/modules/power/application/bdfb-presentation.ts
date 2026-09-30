@@ -26,11 +26,7 @@ function frameSide(frame: Frame): 'A' | 'B' | null {
   return null;
 }
 
-function orderedPanels(
-  deviceId: string,
-  side: 'A' | 'B',
-  frame: Frame,
-): readonly Panel[] {
+function orderedPanels(deviceId: string, side: 'A' | 'B', frame: Frame): readonly Panel[] {
   const byNumber = new Map<number, Panel>();
   for (const panel of frame.panels) {
     const match = panel.label.match(/([123])\s*$/);

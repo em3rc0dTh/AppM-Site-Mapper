@@ -11,6 +11,12 @@ async function buildHierarchy(service: TopologyService) {
     kind: 'SITE',
     parentId: network.value.id,
     name: 'Site',
+    polygon: [
+      { x: 0, y: 0 },
+      { x: 6000, y: 0 },
+      { x: 6000, y: 6000 },
+      { x: 0, y: 6000 },
+    ],
   });
   if (!site.ok) throw new Error(site.error);
 
@@ -18,6 +24,12 @@ async function buildHierarchy(service: TopologyService) {
     kind: 'STRUCTURE',
     parentId: site.value.id,
     name: 'Structure',
+    polygon: [
+      { x: 0, y: 0 },
+      { x: 4800, y: 0 },
+      { x: 4800, y: 4800 },
+      { x: 0, y: 4800 },
+    ],
   });
   if (!structure.ok) throw new Error(structure.error);
 
@@ -33,6 +45,12 @@ async function buildHierarchy(service: TopologyService) {
     parentId: level.value.id,
     name: 'Room',
     roomVariant: 'ROOM',
+    polygon: [
+      { x: 0, y: 0 },
+      { x: 3600, y: 0 },
+      { x: 3600, y: 3600 },
+      { x: 0, y: 3600 },
+    ],
   });
   if (!room.ok) throw new Error(room.error);
 
@@ -41,6 +59,12 @@ async function buildHierarchy(service: TopologyService) {
     parentId: room.value.id,
     name: 'Bay',
     clusterVariant: 'BAY',
+    polygon: [
+      { x: 0, y: 0 },
+      { x: 1200, y: 0 },
+      { x: 1200, y: 600 },
+      { x: 0, y: 600 },
+    ],
   });
   if (!cluster.ok) throw new Error(cluster.error);
 

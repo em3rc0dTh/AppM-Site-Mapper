@@ -120,7 +120,7 @@ export function RackElevation({
                       setSelected({
                         ...topologyInspector(item),
                         actions: [
-                          { label: 'OPEN DEVICE', href: `/device/${item.id}` },
+                          { label: item.kind === 'DEVICE' ? 'OPEN DEVICE' : 'OPEN EQUIPMENT', href: `/device/${item.id}` },
                           { label: 'TRACE POWER', href: `/power?entity=${item.id}` },
                         ],
                       })

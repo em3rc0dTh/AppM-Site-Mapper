@@ -14,6 +14,21 @@ const databaseName = process.env.MONGODB_DB_NAME?.trim() || 'appm_site_mapper';
 const host = process.env.HOST ?? '127.0.0.1';
 const port = Number(process.env.PORT ?? '3000');
 const baseUrl = 'http://' + host + ':' + port;
+// A bare topic prefix is a valid MQTT subscription but never matches
+// data/dev/<serial> messages. Fail before reporting a misleading healthy broker.
+const topicPrefix = process.env.MQTT_TOPIC_PREFIX || 'data/dev/';
+const topicFilter = process.env.MQTT_TOPIC_FILTER || 'data/dev/#';
+if (topicFilter === topicPrefix && topicFilter.endsWith('/')) {
+  throw new Error(
+    'MQTT_TOPIC_FILTER=' +
+      topicFilter +
+      ' subscribes only to the prefix topic and will miss the per-device publications. ' +
+      'Set MQTT_TOPIC_FILTER=' +
+      topicPrefix +
+      '# in ignored .env.local, then restart Site Mapper.',
+  );
+}
+
 const serials = [
   ...new Set(
     (process.env.MQTT_EXPECTED_SOURCES || 'EMU-BFDB-01,EMU-BFDB-02,EMU-BFDB-03')
@@ -231,8 +246,8 @@ const childEnv = {
   APP_PERSISTENCE: 'mongodb',
   TELEMETRY_ENABLED: 'true',
   MQTT_BROKER_URL: process.env.MQTT_BROKER_URL || 'mqtt://127.0.0.1:1883',
-  MQTT_TOPIC_PREFIX: process.env.MQTT_TOPIC_PREFIX || 'data/dev/',
-  MQTT_TOPIC_FILTER: process.env.MQTT_TOPIC_FILTER || 'data/dev/#',
+  MQTT_TOPIC_PREFIX: topicPrefix,
+  MQTT_TOPIC_FILTER: topicFilter,
   BFDB_TELEMETRY_BINDING_MODE: process.env.BFDB_TELEMETRY_BINDING_MODE || 'explicit',
   BFDB_POSITIONS_PER_PANEL: process.env.BFDB_POSITIONS_PER_PANEL || '24',
   MQTT_EXPECTED_SOURCES: serials.join(','),

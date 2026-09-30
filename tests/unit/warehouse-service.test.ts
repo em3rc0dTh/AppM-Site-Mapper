@@ -140,7 +140,7 @@ describe('Virtual Warehouse', () => {
     expect(result).toEqual({ ok: false, error: 'SERIAL_ALREADY_ASSIGNED' });
   });
 
-  it('materializes the 96-point emulator into a six-slot physical BDFB chassis', async () => {
+  it('materializes the 96-point emulator into the configured four-panel BDFB chassis', async () => {
     const input = parseAssetTemplateJson({
       kind: 'DEVICE',
       name: 'BDFB Emulator 96P Chassis',
@@ -170,8 +170,7 @@ describe('Virtual Warehouse', () => {
                     endpointCount: 24,
                     endpointVariant: 'BREAKER',
                     rawPointPrefix: '0_2_',
-                  },
-                  { label: 'Panel A3', endpoints: [] },
+                  }
                 ],
               },
               {
@@ -188,8 +187,7 @@ describe('Virtual Warehouse', () => {
                     endpointCount: 24,
                     endpointVariant: 'BREAKER',
                     rawPointPrefix: '0_4_',
-                  },
-                  { label: 'Panel B3', endpoints: [] },
+                  }
                 ],
               },
             ],
@@ -236,16 +234,12 @@ describe('Virtual Warehouse', () => {
     expect(frames.flatMap((frame) => frame.panels).map((panel) => panel.label)).toEqual([
       'Panel A1',
       'Panel A2',
-      'Panel A3',
       'Panel B1',
       'Panel B2',
-      'Panel B3',
     ]);
 
     const endpoints = frames.flatMap((frame) => frame.panels.flatMap((panel) => panel.endpoints));
     expect(endpoints).toHaveLength(96);
-    expect(frames[0]?.panels[2]?.endpoints).toHaveLength(0);
-    expect(frames[1]?.panels[2]?.endpoints).toHaveLength(0);
     expect(endpoints[0]?.telemetry?.rawPointId).toBe('0_1_1');
     expect(endpoints.at(-1)?.telemetry?.rawPointId).toBe('0_4_24');
     expect(result.value.node.template?.deviceType).toBe('BDFB');

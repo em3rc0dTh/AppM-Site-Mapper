@@ -92,7 +92,11 @@ if (roomLink) {
 
 const rackLink = await search('R-023', 'CONTAINER_RACK');
 if (rackLink) {
-  const focus = rackLink.endsWith('/focus') ? rackLink : rackLink.includes('/rack/') ? rackLink.replace(/\/$/, '') + '/focus' : rackLink;
+  const focus = rackLink.endsWith('/focus')
+    ? rackLink
+    : rackLink.includes('/rack/')
+      ? rackLink.replace(/\/$/, '') + '/focus'
+      : rackLink;
   await go(focus);
   await snap('07-rack-focus');
   await go(rackLink);

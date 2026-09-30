@@ -73,14 +73,23 @@ export function RackElevation({
         <header className="zip-elevation-heading">
           <h1>{face === 'front' ? 'FRONT ELEVATION' : 'REAR ELEVATION'}</h1>
           <div>
-            <button className={face === 'front' ? 'is-active' : ''} onClick={() => setFace('front')}>FRONT</button>
-            <button className={face === 'rear' ? 'is-active' : ''} onClick={() => setFace('rear')}>REAR</button>
+            <button
+              className={face === 'front' ? 'is-active' : ''}
+              onClick={() => setFace('front')}
+            >
+              FRONT
+            </button>
+            <button className={face === 'rear' ? 'is-active' : ''} onClick={() => setFace('rear')}>
+              REAR
+            </button>
           </div>
         </header>
 
         <div className="legacy-rack-canvas zip-elevation-canvas">
           <div className="legacy-rack-frame zip-elevation-rack">
-            <div className="legacy-rack-metal legacy-rack-metal--top"><span /></div>
+            <div className="legacy-rack-metal legacy-rack-metal--top">
+              <span />
+            </div>
             <div className="legacy-rack-units">
               {blocks.map((block) => {
                 const item = block.occupant
@@ -131,31 +140,55 @@ export function RackElevation({
                 );
               })}
             </div>
-            <div className="legacy-rack-metal legacy-rack-metal--bottom"><span /><span /></div>
+            <div className="legacy-rack-metal legacy-rack-metal--bottom">
+              <span />
+              <span />
+            </div>
           </div>
         </div>
       </div>
 
       <aside className="legacy-rack-properties zip-elevation-inspector">
-        <header>INSPECTOR <span>⌄</span></header>
+        <header>
+          INSPECTOR <span>⌄</span>
+        </header>
         <div className="zip-elevation-identity">
           <span>▥</span>
           <div>
             <h2>{view.rack.name}</h2>
-            <small>{context?.positionName ?? 'Rack position'} {context?.coordinate ? `/ ${context.coordinate}` : ''}</small>
+            <small>
+              {context?.positionName ?? 'Rack position'}{' '}
+              {context?.coordinate ? `/ ${context.coordinate}` : ''}
+            </small>
           </div>
         </div>
         <dl className="zip-elevation-stats">
-          <dt>Capacity</dt><dd>{totalU}U</dd>
-          <dt>Used</dt><dd>{physical}U</dd>
-          <dt>Free</dt><dd>{available}U</dd>
-          <dt>Reserved</dt><dd>{reserved}U</dd>
+          <dt>Capacity</dt>
+          <dd>{totalU}U</dd>
+          <dt>Used</dt>
+          <dd>{physical}U</dd>
+          <dt>Free</dt>
+          <dd>{available}U</dd>
+          <dt>Reserved</dt>
+          <dd>{reserved}U</dd>
         </dl>
         <section className="zip-equipment-summary">
           <h3>EQUIPMENT SUMMARY</h3>
-          <div><span className="is-available" /><b>Available</b><strong>{available}U</strong></div>
-          <div><span className="is-reserved" /><b>Reserved</b><strong>{reserved}U</strong></div>
-          <div><span className="is-equipped" /><b>Equipped</b><strong>{physical}U</strong></div>
+          <div>
+            <span className="is-available" />
+            <b>Available</b>
+            <strong>{available}U</strong>
+          </div>
+          <div>
+            <span className="is-reserved" />
+            <b>Reserved</b>
+            <strong>{reserved}U</strong>
+          </div>
+          <div>
+            <span className="is-equipped" />
+            <b>Equipped</b>
+            <strong>{physical}U</strong>
+          </div>
         </section>
       </aside>
 

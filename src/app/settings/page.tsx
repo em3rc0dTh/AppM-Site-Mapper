@@ -66,7 +66,9 @@ export default async function SettingsPage({
   const roles: Role[] = ['STANDARD', 'ADMIN', 'SUPERADMIN'];
   return (
     <main className="settings-shell">
-      <div className="zip-settings-page-title" aria-hidden="true">SETTINGS</div>
+      <div className="zip-settings-page-title" aria-hidden="true">
+        SETTINGS
+      </div>
       <div className="mk-settings-layout">
         <nav className="mk-settings-nav" aria-label="Settings areas">
           {visible.map((tab) => (
@@ -75,7 +77,21 @@ export default async function SettingsPage({
               href={`/settings?tab=${tab.toLowerCase().replaceAll(' ', '-')}`}
               aria-current={active === tab ? 'page' : undefined}
             >
-              <span className="zip-settings-icon" aria-hidden="true">{tab === 'Profile' ? '♙' : tab === 'Security' || tab === 'Roles' ? '◇' : tab === 'Users' ? '♧' : tab === 'Data Import' ? '⇥' : tab === 'Drafting' ? '◩' : tab === 'System' ? '⚙' : '△'}</span>
+              <span className="zip-settings-icon" aria-hidden="true">
+                {tab === 'Profile'
+                  ? '♙'
+                  : tab === 'Security' || tab === 'Roles'
+                    ? '◇'
+                    : tab === 'Users'
+                      ? '♧'
+                      : tab === 'Data Import'
+                        ? '⇥'
+                        : tab === 'Drafting'
+                          ? '◩'
+                          : tab === 'System'
+                            ? '⚙'
+                            : '△'}
+              </span>
               <span>{tab}</span>
             </Link>
           ))}
@@ -101,7 +117,13 @@ export default async function SettingsPage({
           )}
           {active === 'Users' && canManageUsers && (
             <>
-              <div className="zip-users-heading"><h2>USERS</h2><details><summary>＋ ADD USER</summary><UserCreateForm /></details></div>
+              <div className="zip-users-heading">
+                <h2>USERS</h2>
+                <details>
+                  <summary>＋ ADD USER</summary>
+                  <UserCreateForm />
+                </details>
+              </div>
               <UserAdminTable currentUserId={auth.value.id} users={users} />
             </>
           )}

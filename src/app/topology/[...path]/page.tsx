@@ -239,7 +239,12 @@ export default async function TopologyNodePage({
       <div className="operational-layout telxius-operational-layout">
         <aside className="operational-context">
           {node.kind === 'DEVICE' && node.bdfb ? (
-            <BdfbPowerTree device={node} trail={trail} selfHref={selfHref} activePanelId={query.panel} />
+            <BdfbPowerTree
+              device={node}
+              trail={trail}
+              selfHref={selfHref}
+              activePanelId={query.panel}
+            />
           ) : (
             navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />
           )}
@@ -248,7 +253,18 @@ export default async function TopologyNodePage({
         <section className="operational-stage telxius-operational-stage">
           <SectionHeader
             eyebrow={eyebrowFor(node)}
-            title={node.kind === 'DEVICE' && node.bdfb ? (query.panel ? (node.bdfb.shelves.flatMap((shelf) => shelf.frames).flatMap((frame) => frame.panels).find((panel) => panel.id === query.panel)?.label ?? 'PANEL') : 'BDFB PHYSICAL VIEW') : node.kind === 'ROOM_SUBSTRUCTURE' ? node.name.toUpperCase() : node.name}
+            title={
+              node.kind === 'DEVICE' && node.bdfb
+                ? query.panel
+                  ? (node.bdfb.shelves
+                      .flatMap((shelf) => shelf.frames)
+                      .flatMap((frame) => frame.panels)
+                      .find((panel) => panel.id === query.panel)?.label ?? 'PANEL')
+                  : 'BDFB PHYSICAL VIEW'
+                : node.kind === 'ROOM_SUBSTRUCTURE'
+                  ? node.name.toUpperCase()
+                  : node.name
+            }
             {...(sectionDescription === undefined ? {} : { description: sectionDescription })}
             actions={
               <>
@@ -272,7 +288,11 @@ export default async function TopologyNodePage({
 
           <div className="operational-stage-body">
             {node.kind === 'DEVICE' && node.bdfb ? (
-              <BdfbChassis key={query.panel ?? 'bdfb-overview'} device={node} powerBindings={bdfbPowerBindings} />
+              <BdfbChassis
+                key={query.panel ?? 'bdfb-overview'}
+                device={node}
+                powerBindings={bdfbPowerBindings}
+              />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
               roomLayout?.ok &&
               roomLayout.value.room.polygon ? (
@@ -313,8 +333,11 @@ export default async function TopologyNodePage({
           node={node}
           contained={children.length}
           previewContained={structurePreviewNodes.length}
-          location={trail.filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE').map((item) => item.name).join(' / ')}
-          feeds={bdfbPowerBindings.flatMap((binding) => binding.feed ? [binding.feed] : [])}
+          location={trail
+            .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')
+            .map((item) => item.name)
+            .join(' / ')}
+          feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
         />
       </div>
 

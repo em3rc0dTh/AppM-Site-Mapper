@@ -77,7 +77,8 @@ async function ensureEquipped(
   const cas = new CasService(repository);
   let current = expectKind((await repository.getById(rack.id)) as TopologyNode, 'CONTAINER_RACK');
 
-  if (current.cas.some((range) => range.state === 'EQUIPPED' && range.occupantId === occupant.id)) return;
+  if (current.cas.some((range) => range.state === 'EQUIPPED' && range.occupantId === occupant.id))
+    return;
 
   let allocation = current.cas.find(
     (range) =>
@@ -88,7 +89,8 @@ async function ensureEquipped(
 
   if (!allocation) {
     const reserved = await cas.reserve(rack.id, placement);
-    if (!reserved.ok) throw new Error('Demo seed could not reserve rack capacity: ' + reserved.error);
+    if (!reserved.ok)
+      throw new Error('Demo seed could not reserve rack capacity: ' + reserved.error);
     current = reserved.value;
     allocation = current.cas.find(
       (range) =>
@@ -121,7 +123,8 @@ async function ensureReserved(
         range.mountStartU === placement.mountStartU &&
         range.physicalSizeU === placement.physicalSizeU,
     )
-  ) return;
+  )
+    return;
 
   const result = await new CasService(repository).reserve(rack.id, placement);
   if (!result.ok) throw new Error('Demo seed could not create reserved capacity: ' + result.error);
@@ -225,8 +228,16 @@ export async function seedDevelopmentDemo(
     }),
     'SITE',
   );
-  await ensureNode(topologyRepository, topology, { kind: 'SITE', parentId: network.id, name: 'Arequipa' });
-  await ensureNode(topologyRepository, topology, { kind: 'SITE', parentId: network.id, name: 'Trujillo' });
+  await ensureNode(topologyRepository, topology, {
+    kind: 'SITE',
+    parentId: network.id,
+    name: 'Arequipa',
+  });
+  await ensureNode(topologyRepository, topology, {
+    kind: 'SITE',
+    parentId: network.id,
+    name: 'Trujillo',
+  });
 
   const buildingA = expectKind(
     await ensureNode(topologyRepository, topology, {
@@ -236,8 +247,16 @@ export async function seedDevelopmentDemo(
     }),
     'STRUCTURE',
   );
-  await ensureNode(topologyRepository, topology, { kind: 'STRUCTURE', parentId: lima.id, name: 'Building B' });
-  await ensureNode(topologyRepository, topology, { kind: 'STRUCTURE', parentId: lima.id, name: 'DC Hall' });
+  await ensureNode(topologyRepository, topology, {
+    kind: 'STRUCTURE',
+    parentId: lima.id,
+    name: 'Building B',
+  });
+  await ensureNode(topologyRepository, topology, {
+    kind: 'STRUCTURE',
+    parentId: lima.id,
+    name: 'DC Hall',
+  });
 
   const basement = expectKind(
     await ensureNode(topologyRepository, topology, {
@@ -314,10 +333,42 @@ export async function seedDevelopmentDemo(
 
   const spatial = new SpatialService(topologyRepository);
   const roomPolygons: readonly [RoomSubstructureNode, readonly { x: number; y: number }[]][] = [
-    [room201, [{x:600,y:600},{x:2400,y:600},{x:2400,y:1500},{x:600,y:1500}]],
-    [room202, [{x:3000,y:600},{x:4800,y:600},{x:4800,y:1500},{x:3000,y:1500}]],
-    [room203, [{x:600,y:1900},{x:2500,y:1900},{x:2500,y:3000},{x:600,y:3000}]],
-    [room204, [{x:2900,y:1900},{x:4800,y:1900},{x:4800,y:3000},{x:2900,y:3000}]],
+    [
+      room201,
+      [
+        { x: 600, y: 600 },
+        { x: 2400, y: 600 },
+        { x: 2400, y: 1500 },
+        { x: 600, y: 1500 },
+      ],
+    ],
+    [
+      room202,
+      [
+        { x: 3000, y: 600 },
+        { x: 4800, y: 600 },
+        { x: 4800, y: 1500 },
+        { x: 3000, y: 1500 },
+      ],
+    ],
+    [
+      room203,
+      [
+        { x: 600, y: 1900 },
+        { x: 2500, y: 1900 },
+        { x: 2500, y: 3000 },
+        { x: 600, y: 3000 },
+      ],
+    ],
+    [
+      room204,
+      [
+        { x: 2900, y: 1900 },
+        { x: 4800, y: 1900 },
+        { x: 4800, y: 3000 },
+        { x: 2900, y: 3000 },
+      ],
+    ],
   ];
   for (const [room, polygon] of roomPolygons) {
     const result = await spatial.updateRoomPolygon(room.id, polygon);
@@ -414,24 +465,92 @@ export async function seedDevelopmentDemo(
   const [rack021, rack022, rack023] = racks;
   if (!rack021 || !rack022 || !rack023) throw new Error('Demo rack scenario incomplete.');
 
-  const server01 = await createDevice(topologyRepository, topology, rack023, 'SERVER-01', 'Compute', 'SRV-001');
-  const server02 = await createDevice(topologyRepository, topology, rack023, 'SERVER-02', 'Compute', 'SRV-002');
-  const server03 = await createDevice(topologyRepository, topology, rack023, 'SERVER-03', 'Compute', 'SRV-003');
-  const switch01 = await createDevice(topologyRepository, topology, rack023, 'SWITCH-01', 'Network', 'SWT-001');
-  const pduA = await createDevice(topologyRepository, topology, rack023, 'PDU-A', 'Power', 'PDU-A-001');
-  const pduB = await createDevice(topologyRepository, topology, rack023, 'PDU-B', 'Power', 'PDU-B-001');
-  const bdfbA = await createDevice(topologyRepository, topology, rack021, 'BDFB-A', 'Power Distribution', 'BDFB-A-001');
-  const bdfbB = await createDevice(topologyRepository, topology, rack022, 'BDFB-B', 'Power Distribution', 'BDFB-B-001');
+  const server01 = await createDevice(
+    topologyRepository,
+    topology,
+    rack023,
+    'SERVER-01',
+    'Compute',
+    'SRV-001',
+  );
+  const server02 = await createDevice(
+    topologyRepository,
+    topology,
+    rack023,
+    'SERVER-02',
+    'Compute',
+    'SRV-002',
+  );
+  const server03 = await createDevice(
+    topologyRepository,
+    topology,
+    rack023,
+    'SERVER-03',
+    'Compute',
+    'SRV-003',
+  );
+  const switch01 = await createDevice(
+    topologyRepository,
+    topology,
+    rack023,
+    'SWITCH-01',
+    'Network',
+    'SWT-001',
+  );
+  const pduA = await createDevice(
+    topologyRepository,
+    topology,
+    rack023,
+    'PDU-A',
+    'Power',
+    'PDU-A-001',
+  );
+  const pduB = await createDevice(
+    topologyRepository,
+    topology,
+    rack023,
+    'PDU-B',
+    'Power',
+    'PDU-B-001',
+  );
+  const bdfbA = await createDevice(
+    topologyRepository,
+    topology,
+    rack021,
+    'BDFB-A',
+    'Power Distribution',
+    'BDFB-A-001',
+  );
+  const bdfbB = await createDevice(
+    topologyRepository,
+    topology,
+    rack022,
+    'BDFB-B',
+    'Power Distribution',
+    'BDFB-B-001',
+  );
 
   await Promise.all([inventory.setPinned(rack023.id, true), inventory.setPinned(bdfbA.id, true)]);
 
   await configureBdfb(topologyRepository, bdfbA, 'A');
   await configureBdfb(topologyRepository, bdfbB, 'B');
 
-  await ensureEquipped(topologyRepository, rack023, server01, { mountStartU: 41, physicalSizeU: 2 });
-  await ensureEquipped(topologyRepository, rack023, server02, { mountStartU: 37, physicalSizeU: 2 });
-  await ensureEquipped(topologyRepository, rack023, server03, { mountStartU: 33, physicalSizeU: 2 });
-  await ensureEquipped(topologyRepository, rack023, switch01, { mountStartU: 24, physicalSizeU: 3 });
+  await ensureEquipped(topologyRepository, rack023, server01, {
+    mountStartU: 41,
+    physicalSizeU: 2,
+  });
+  await ensureEquipped(topologyRepository, rack023, server02, {
+    mountStartU: 37,
+    physicalSizeU: 2,
+  });
+  await ensureEquipped(topologyRepository, rack023, server03, {
+    mountStartU: 33,
+    physicalSizeU: 2,
+  });
+  await ensureEquipped(topologyRepository, rack023, switch01, {
+    mountStartU: 24,
+    physicalSizeU: 3,
+  });
   await ensureEquipped(topologyRepository, rack023, pduA, { mountStartU: 20, physicalSizeU: 2 });
   await ensureEquipped(topologyRepository, rack023, pduB, { mountStartU: 16, physicalSizeU: 2 });
   await ensureReserved(topologyRepository, rack023, { mountStartU: 28, physicalSizeU: 4 });
@@ -447,7 +566,9 @@ export async function seedDevelopmentDemo(
     breakerHolderId: string,
     feed: 'A' | 'B',
   ): Promise<string> {
-    const existing = activePaths.find((path) => path.label === label && path.lifecycle === 'ACTIVE');
+    const existing = activePaths.find(
+      (path) => path.label === label && path.lifecycle === 'ACTIVE',
+    );
     if (existing) return existing.id;
     const result = await power.create({
       source: {
@@ -477,7 +598,16 @@ export async function seedDevelopmentDemo(
     networkId: network.id,
     roomId: room202.id,
     rackIds: racks.map((rack) => rack.id),
-    inventoryIds: [server01.id, server02.id, server03.id, switch01.id, pduA.id, pduB.id, bdfbA.id, bdfbB.id],
+    inventoryIds: [
+      server01.id,
+      server02.id,
+      server03.id,
+      switch01.id,
+      pduA.id,
+      pduB.id,
+      bdfbA.id,
+      bdfbB.id,
+    ],
     powerPathIds,
     links: {
       workspace: '/workspace',

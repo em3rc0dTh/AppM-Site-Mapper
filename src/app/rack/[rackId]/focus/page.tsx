@@ -17,12 +17,19 @@ interface FocusBlock {
   readonly name: string;
 }
 
-function focusBlocks(rows: readonly { u: number; role: string; occupant?: { id: string; name: string } }[]) {
+function focusBlocks(
+  rows: readonly { u: number; role: string; occupant?: { id: string; name: string } }[],
+) {
   const blocks: FocusBlock[] = [];
   for (const row of rows) {
     const previous = blocks.at(-1);
     const name = row.occupant?.name ?? row.role;
-    if (previous && previous.role === row.role && previous.name === name && previous.bottomU - 1 === row.u) {
+    if (
+      previous &&
+      previous.role === row.role &&
+      previous.name === name &&
+      previous.bottomU - 1 === row.u
+    ) {
       blocks[blocks.length - 1] = {
         ...previous,
         bottomU: row.u,
@@ -86,9 +93,10 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
   const position = await repo.getById(view.value.rack.parentId ?? '');
   const bay = position?.parentId ? await repo.getById(position.parentId) : null;
   const blocks = focusBlocks(view.value.rows);
-  const relatedPower = (await (await createPowerRepository()).listActive()).filter(
-    (path) =>
-      view.value.inventory.some((item) => item.id === path.source.entityId || item.id === path.target.entityId),
+  const relatedPower = (await (await createPowerRepository()).listActive()).filter((path) =>
+    view.value.inventory.some(
+      (item) => item.id === path.source.entityId || item.id === path.target.entityId,
+    ),
   );
   const hasFeedA = relatedPower.some((path) => path.feed === 'A');
   const hasFeedB = relatedPower.some((path) => path.feed === 'B');
@@ -106,24 +114,41 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
   return (
     <main className="operational-page zip-rack-focus-page">
       <nav className="breadcrumbs zip-rack-focus-breadcrumbs" aria-label="Breadcrumb">
-        {room ? <Link href={await topology.buildDeepLink(room.id)}>← {room.name}</Link> : breadcrumbs[0] ? <Link href={breadcrumbs[0].href}>← {breadcrumbs[0].name}</Link> : null}
+        {room ? (
+          <Link href={await topology.buildDeepLink(room.id)}>← {room.name}</Link>
+        ) : breadcrumbs[0] ? (
+          <Link href={breadcrumbs[0].href}>← {breadcrumbs[0].name}</Link>
+        ) : null}
         <span className="zip-breadcrumb-divider" />
-        <strong>{room?.name ?? 'Room'} &nbsp;/&nbsp; {view.value.rack.name}</strong>
+        <strong>
+          {room?.name ?? 'Room'} &nbsp;/&nbsp; {view.value.rack.name}
+        </strong>
       </nav>
 
       <div className="zip-rack-focus-layout">
         <aside className="zip-rack-topology">
-          <header>TOPOLOGY <span>⌄</span></header>
+          <header>
+            TOPOLOGY <span>⌄</span>
+          </header>
           <div className="zip-rack-topology-path">
-            <span>◎</span><strong>Lima</strong>
-            <span>▦</span><strong>Building A</strong>
-            <span>▱</span><strong>Level 02</strong>
-            <span>□</span><strong>{room?.name ?? 'Room'}</strong>
+            <span>◎</span>
+            <strong>Lima</strong>
+            <span>▦</span>
+            <strong>Building A</strong>
+            <span>▱</span>
+            <strong>Level 02</strong>
+            <span>□</span>
+            <strong>{room?.name ?? 'Room'}</strong>
           </div>
           <nav>
-            {rackLinks.map((item)=>(
-              <Link key={item.id} className={item.id===rackId?'is-active':''} href={item.href}>
-                <span>▥</span><strong>{item.name}</strong>
+            {rackLinks.map((item) => (
+              <Link
+                key={item.id}
+                className={item.id === rackId ? 'is-active' : ''}
+                href={item.href}
+              >
+                <span>▥</span>
+                <strong>{item.name}</strong>
               </Link>
             ))}
           </nav>
@@ -133,20 +158,20 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
           <h1>RACK FOCUS</h1>
           <div className="zip-rack-room">
             <div className="zip-rack-perspective" aria-hidden="true" />
-            {[-2,-1,1,2].map((offset,index)=>(
-              <div key={offset} className={`zip-neighbor-rack zip-neighbor-rack--${index+1}`}>
-                <strong>{['R-021','R-022','R-024','R-025'][index]}</strong>
+            {[-2, -1, 1, 2].map((offset, index) => (
+              <div key={offset} className={`zip-neighbor-rack zip-neighbor-rack--${index + 1}`}>
+                <strong>{['R-021', 'R-022', 'R-024', 'R-025'][index]}</strong>
                 <span />
               </div>
             ))}
             <div className="zip-focus-rack">
               <strong className="zip-focus-rack-name">{view.value.rack.name}</strong>
               <div className="zip-focus-rack-frame">
-                {blocks.map((block)=>(
+                {blocks.map((block) => (
                   <div
                     key={block.key}
                     className={`zip-focus-rack-block is-${block.role.toLowerCase()}`}
-                    style={{ flexGrow:block.units, flexBasis:0 }}
+                    style={{ flexGrow: block.units, flexBasis: 0 }}
                   >
                     <span>U{block.topU}</span>
                     <strong>{block.role === 'PHYSICAL' ? block.name : block.role}</strong>
@@ -162,7 +187,9 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
             <span>▥ {view.value.rack.name}</span>
             <span>⌖ LOCATE</span>
             <div>
-              <button>−</button><b>100%</b><button>+</button>
+              <button>−</button>
+              <b>100%</b>
+              <button>+</button>
             </div>
             <button>⌗ FIT RACK</button>
             <strong>● SYNCED</strong>
@@ -170,38 +197,63 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
         </section>
 
         <aside className="zip-rack-inspector">
-          <header>INSPECTOR <span>⌄</span></header>
+          <header>
+            INSPECTOR <span>⌄</span>
+          </header>
           <div className="zip-rack-identity">
             <span>▥</span>
             <div>
               <h2>{view.value.rack.name}</h2>
-              <small>{room?.name ?? 'Room'} / {bay?.name ?? 'Bay'} / {position?.name ?? 'Position'}</small>
+              <small>
+                {room?.name ?? 'Room'} / {bay?.name ?? 'Bay'} / {position?.name ?? 'Position'}
+              </small>
             </div>
           </div>
           <dl>
-            <dt>Position</dt><dd>{position?.name ?? '—'}</dd>
-            <dt>Height</dt><dd>{view.value.rack.totalU ?? view.value.rows.length}U</dd>
-            <dt>Devices</dt><dd>{view.value.inventory.length}</dd>
-            <dt>Available slots</dt><dd>{availableSpans.length} spans ({availableU}U)</dd>
-            <dt>Power</dt><dd>A {hasFeedA?'✓':'—'} &nbsp;&nbsp; B {hasFeedB?'✓':'—'}</dd>
-            <dt>Status</dt><dd><span className="zip-green-dot" /> ONLINE</dd>
-            <dt>Mounting clearance</dt><dd>Standard (front/rear)</dd>
+            <dt>Position</dt>
+            <dd>{position?.name ?? '—'}</dd>
+            <dt>Height</dt>
+            <dd>{view.value.rack.totalU ?? view.value.rows.length}U</dd>
+            <dt>Devices</dt>
+            <dd>{view.value.inventory.length}</dd>
+            <dt>Available slots</dt>
+            <dd>
+              {availableSpans.length} spans ({availableU}U)
+            </dd>
+            <dt>Power</dt>
+            <dd>
+              A {hasFeedA ? '✓' : '—'} &nbsp;&nbsp; B {hasFeedB ? '✓' : '—'}
+            </dd>
+            <dt>Status</dt>
+            <dd>
+              <span className="zip-green-dot" /> ONLINE
+            </dd>
+            <dt>Mounting clearance</dt>
+            <dd>Standard (front/rear)</dd>
           </dl>
           <h3>DEVICE OCCUPANCY</h3>
           <div className="zip-occupancy-list">
-            {blocks.map((block)=>(
+            {blocks.map((block) => (
               <div key={block.key}>
-                <span>U{String(block.topU).padStart(2,'0')} – U{String(block.bottomU).padStart(2,'0')}</span>
+                <span>
+                  U{String(block.topU).padStart(2, '0')} – U{String(block.bottomU).padStart(2, '0')}
+                </span>
                 <strong>{block.role === 'PHYSICAL' ? block.name : block.role}</strong>
                 <small>{block.units}U</small>
               </div>
             ))}
           </div>
           <div className="zip-rack-inspector-actions">
-            <Link className="is-primary" href={`/rack/${rackId}`}>ELEVATION</Link>
+            <Link className="is-primary" href={`/rack/${rackId}`}>
+              ELEVATION
+            </Link>
             <Link href={`/power?entity=${rackId}`}>POWER</Link>
             <a href="#telemetry">TELEMETRY</a>
-            {room ? <Link href={`/blueprint/${room.id}?rack=${rackId}`}>LOCATE</Link> : <span>LOCATE</span>}
+            {room ? (
+              <Link href={`/blueprint/${room.id}?rack=${rackId}`}>LOCATE</Link>
+            ) : (
+              <span>LOCATE</span>
+            )}
           </div>
           <ContextPin entityId={rackId} />
         </aside>

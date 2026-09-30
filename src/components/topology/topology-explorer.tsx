@@ -46,7 +46,9 @@ export function TopologyExplorer({
           : node.kind === 'LEVEL'
             ? items.find((entry) => entry.node.name === 'Room 202')
             : undefined;
-  const [selected, setSelected] = useState<string | null>(preferred?.node.id ?? items[0]?.node.id ?? null);
+  const [selected, setSelected] = useState<string | null>(
+    preferred?.node.id ?? items[0]?.node.id ?? null,
+  );
   const [zoom, setZoom] = useState(1);
   const item = items.find((entry) => entry.node.id === selected);
   const visualItems =
@@ -108,26 +110,40 @@ export function TopologyExplorer({
             ) : node.kind === 'LEVEL' ? (
               <div className="zip-level-reference">
                 <div className="zip-level-columns" aria-hidden="true">
-                  {['01','02','03','04','05','06'].map((label)=><span key={label}>{label}</span>)}
+                  {['01', '02', '03', '04', '05', '06'].map((label) => (
+                    <span key={label}>{label}</span>
+                  ))}
                 </div>
                 <div className="zip-level-rows" aria-hidden="true">
-                  {['A','B','C','D','E'].map((label)=><span key={label}>{label}</span>)}
+                  {['A', 'B', 'C', 'D', 'E'].map((label) => (
+                    <span key={label}>{label}</span>
+                  ))}
                 </div>
                 <div className="zip-level-boundary">
-                  {visualItems.map((entry,index)=>(
+                  {visualItems.map((entry, index) => (
                     <button
                       key={entry.node.id}
-                      className={`zip-level-room zip-level-room--${index+1} ${selected===entry.node.id?'is-selected':''}`}
-                      onClick={()=>setSelected(entry.node.id)}
-                      onDoubleClick={()=>window.location.assign(entry.href)}
+                      className={`zip-level-room zip-level-room--${index + 1} ${selected === entry.node.id ? 'is-selected' : ''}`}
+                      onClick={() => setSelected(entry.node.id)}
+                      onDoubleClick={() => window.location.assign(entry.href)}
                     >
                       <strong>{entry.node.name.toUpperCase()}</strong>
                       <span aria-hidden="true">▤</span>
                     </button>
                   ))}
                 </div>
-                <div className="zip-level-scale" aria-hidden="true"><span>0</span><span>5</span><span>10</span><span>15</span><span>20</span><b>meters</b></div>
-                <div className="zip-level-minimap" aria-hidden="true"><b>MINI MAP</b><span /></div>
+                <div className="zip-level-scale" aria-hidden="true">
+                  <span>0</span>
+                  <span>5</span>
+                  <span>10</span>
+                  <span>15</span>
+                  <span>20</span>
+                  <b>meters</b>
+                </div>
+                <div className="zip-level-minimap" aria-hidden="true">
+                  <b>MINI MAP</b>
+                  <span />
+                </div>
               </div>
             ) : hasGeometry ? (
               <div className="zip-level-stage">
@@ -139,8 +155,10 @@ export function TopologyExplorer({
                   {items.map((entry) => {
                     const polygon = 'polygon' in entry.node ? entry.node.polygon : undefined;
                     if (!polygon?.length) return null;
-                    const centerX = polygon.reduce((sum, value) => sum + value.x, 0) / polygon.length;
-                    const centerY = polygon.reduce((sum, value) => sum + value.y, 0) / polygon.length;
+                    const centerX =
+                      polygon.reduce((sum, value) => sum + value.x, 0) / polygon.length;
+                    const centerY =
+                      polygon.reduce((sum, value) => sum + value.y, 0) / polygon.length;
                     return (
                       <g
                         key={entry.node.id}
@@ -185,9 +203,17 @@ export function TopologyExplorer({
                     <span className="zip-graph-glyph" aria-hidden="true">
                       {nodeGlyph(entry.node.kind)}
                     </span>
-                    <strong>{node.kind === 'NETWORK'
-                      ? ({ Lima: 'SITE LIM', Arequipa: 'SITE ARE', Trujillo: 'SITE TRU' } as Record<string,string>)[entry.node.name] ?? entry.node.name.toUpperCase()
-                      : entry.node.name.toUpperCase()}</strong>
+                    <strong>
+                      {node.kind === 'NETWORK'
+                        ? ((
+                            {
+                              Lima: 'SITE LIM',
+                              Arequipa: 'SITE ARE',
+                              Trujillo: 'SITE TRU',
+                            } as Record<string, string>
+                          )[entry.node.name] ?? entry.node.name.toUpperCase())
+                        : entry.node.name.toUpperCase()}
+                    </strong>
                     <span className="zip-graph-metrics">
                       <small>▱ {Math.max(1, index + 1)}</small>
                       <small>▯ {items.length}</small>
@@ -210,7 +236,9 @@ export function TopologyExplorer({
 
         <footer className="zip-canvas-footer">
           <span>{node.kind === 'NETWORK' ? 'Network' : node.name}</span>
-          <span className="zip-grid-indicator">▦ GRID {node.kind === 'NETWORK' ? '200 km' : '600 mm'}</span>
+          <span className="zip-grid-indicator">
+            ▦ GRID {node.kind === 'NETWORK' ? '200 km' : '600 mm'}
+          </span>
           <div className="zip-zoom-controls">
             <button onClick={() => setZoom((value) => Math.max(0.5, value - 0.1))}>−</button>
             <b>{Math.round(zoom * 100)}%</b>
@@ -230,7 +258,9 @@ export function TopologyExplorer({
           <span className="zip-inspector-glyph">{nodeGlyph(item?.node.kind ?? node.kind)}</span>
           <div>
             <h2>{(item?.node.name ?? node.name).toUpperCase()}</h2>
-            <small>{node.name} / {item?.node.name ?? node.name}</small>
+            <small>
+              {node.name} / {item?.node.name ?? node.name}
+            </small>
           </div>
         </div>
         <section>
@@ -253,9 +283,15 @@ export function TopologyExplorer({
             <span>● HEALTHY</span>
           </div>
           <div className="zip-health-stats">
-            <span><b>{items.length}</b> Online</span>
-            <span><b>0</b> Warning</span>
-            <span><b>0</b> Offline</span>
+            <span>
+              <b>{items.length}</b> Online
+            </span>
+            <span>
+              <b>0</b> Warning
+            </span>
+            <span>
+              <b>0</b> Offline
+            </span>
           </div>
         </section>
         {item ? (

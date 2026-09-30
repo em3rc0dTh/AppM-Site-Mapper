@@ -77,7 +77,11 @@ export default async function BlueprintPage({
           </section>
           <div>
             <span>⌗</span>
-            <p>CLICK A CLUSTER OR CABINET<br/>TO INSPECT PROPERTIES</p>
+            <p>
+              CLICK A CLUSTER OR CABINET
+              <br />
+              TO INSPECT PROPERTIES
+            </p>
           </div>
         </aside>
       </div>

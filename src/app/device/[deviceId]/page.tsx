@@ -36,7 +36,11 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   return (
     <main className="operational-page mk-device-page">
       <nav className="breadcrumbs zip-device-breadcrumbs">
-        {rack ? <Link href={`/rack/${rack.id}/focus`}>← {rack.name}</Link> : links[0] ? <Link href={links[0].href}>← {links[0].name}</Link> : null}
+        {rack ? (
+          <Link href={`/rack/${rack.id}/focus`}>← {rack.name}</Link>
+        ) : links[0] ? (
+          <Link href={links[0].href}>← {links[0].name}</Link>
+        ) : null}
         <span className="zip-breadcrumb-divider" />
         <strong>{node.name}</strong>
       </nav>
@@ -51,8 +55,18 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           )}
         </section>
         <aside className="mk-inline-inspector zip-device-inspector">
-          <header>DEVICE <span>⌄</span></header>
-          <div className="zip-device-identity"><span>▥</span><div><h2>{node.name}</h2><small>{room?.name ?? 'Room'} / {rack?.name ?? 'Rack'} / {mountLabel}</small></div></div>
+          <header>
+            DEVICE <span>⌄</span>
+          </header>
+          <div className="zip-device-identity">
+            <span>▥</span>
+            <div>
+              <h2>{node.name}</h2>
+              <small>
+                {room?.name ?? 'Room'} / {rack?.name ?? 'Rack'} / {mountLabel}
+              </small>
+            </div>
+          </div>
           <ContextPin entityId={node.id} />
           <dl>
             <dt>Identity</dt>
@@ -64,14 +78,32 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             <dt>Rack</dt>
             <dd>{rack?.name ?? 'Not placed'}</dd>
             <dt>Placement</dt>
-            <dd>{rack?.name ?? 'Not placed'} {mountLabel !== 'Not mounted' ? ` ${mountLabel}` : ''}</dd>
-            <dt>Power A</dt><dd>Configured ✓</dd>
-            <dt>Power B</dt><dd>Configured ✓</dd>
-            <dt>Telemetry</dt><dd><span className="zip-green-dot" /> LIVE</dd>
+            <dd>
+              {rack?.name ?? 'Not placed'} {mountLabel !== 'Not mounted' ? ` ${mountLabel}` : ''}
+            </dd>
+            <dt>Power A</dt>
+            <dd>Configured ✓</dd>
+            <dt>Power B</dt>
+            <dd>Configured ✓</dd>
+            <dt>Telemetry</dt>
+            <dd>
+              <span className="zip-green-dot" /> LIVE
+            </dd>
           </dl>
-          <Link className="mk-primary" href={`/power?entity=${node.id}`}>ϟ TRACE POWER</Link>
-          <div className="zip-device-live"><TelemetryLens entityIds={[node.id]} label={node.name} /></div>
-          {room && <Link className="zip-device-outline" href={`/blueprint/${room.id}?rack=${rack?.id ?? ''}`}>▣ LOCATE IN ROOM</Link>}
+          <Link className="mk-primary" href={`/power?entity=${node.id}`}>
+            ϟ TRACE POWER
+          </Link>
+          <div className="zip-device-live">
+            <TelemetryLens entityIds={[node.id]} label={node.name} />
+          </div>
+          {room && (
+            <Link
+              className="zip-device-outline"
+              href={`/blueprint/${room.id}?rack=${rack?.id ?? ''}`}
+            >
+              ▣ LOCATE IN ROOM
+            </Link>
+          )}
         </aside>
       </div>
     </main>

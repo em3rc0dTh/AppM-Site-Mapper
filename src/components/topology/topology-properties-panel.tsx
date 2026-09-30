@@ -123,7 +123,9 @@ export function TopologyPropertiesPanel({
 
     return (
       <aside className="telxius-properties zip-bdfb-inspector">
-        <header>INSPECTOR <span>⌄</span></header>
+        <header>
+          INSPECTOR <span>⌄</span>
+        </header>
         <div className="zip-bdfb-inspector-id">
           <span>▥</span>
           <div>
@@ -132,19 +134,34 @@ export function TopologyPropertiesPanel({
           </div>
         </div>
         <dl>
-          <dt>Type</dt><dd>BDFB</dd>
-          <dt>Location</dt><dd>{location ?? '—'}</dd>
-          <dt>Shelves</dt><dd>{shelves.length}</dd>
-          <dt>Frames</dt><dd>{frames.length}</dd>
-          <dt>Panels</dt><dd>{panels.length}</dd>
-          <dt>Breakers</dt><dd>{breakers}</dd>
-          <dt>Feed A</dt><dd>{hasA ? 'Configured' : '—'}</dd>
-          <dt>Feed B</dt><dd>{hasB ? 'Configured' : '—'}</dd>
-          <dt>Telemetry</dt><dd><span className="zip-green-dot" /> READY</dd>
+          <dt>Type</dt>
+          <dd>BDFB</dd>
+          <dt>Location</dt>
+          <dd>{location ?? '—'}</dd>
+          <dt>Shelves</dt>
+          <dd>{shelves.length}</dd>
+          <dt>Frames</dt>
+          <dd>{frames.length}</dd>
+          <dt>Panels</dt>
+          <dd>{panels.length}</dd>
+          <dt>Breakers</dt>
+          <dd>{breakers}</dd>
+          <dt>Feed A</dt>
+          <dd>{hasA ? 'Configured' : '—'}</dd>
+          <dt>Feed B</dt>
+          <dd>{hasB ? 'Configured' : '—'}</dd>
+          <dt>Telemetry</dt>
+          <dd>
+            <span className="zip-green-dot" /> READY
+          </dd>
         </dl>
         <section className="zip-bdfb-status-card">
           <h3>STATUS</h3>
-          <div><span>●</span><strong>Normal Operation</strong><small>Configured panels available</small></div>
+          <div>
+            <span>●</span>
+            <strong>Normal Operation</strong>
+            <small>Configured panels available</small>
+          </div>
         </section>
         <div className="zip-bdfb-actions">
           <a href="#bdfb-details">VIEW DETAILS</a>

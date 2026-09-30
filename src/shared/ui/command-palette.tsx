@@ -38,7 +38,18 @@ export function CommandPalette() {
   const visibleStatus = hasQuery ? status : EMPTY_STATUS;
 
   const groups = useMemo(() => {
-    const ordered = ['DEVICE', 'EQUIPMENT', 'CONTAINER_RACK', 'ROOM_SUBSTRUCTURE', 'STRUCTURE', 'SITE', 'PANEL', 'BREAKER', 'LEVEL', 'NETWORK'];
+    const ordered = [
+      'DEVICE',
+      'EQUIPMENT',
+      'CONTAINER_RACK',
+      'ROOM_SUBSTRUCTURE',
+      'STRUCTURE',
+      'SITE',
+      'PANEL',
+      'BREAKER',
+      'LEVEL',
+      'NETWORK',
+    ];
     const byKind = new Map<string, SearchResult[]>();
     for (const result of visibleResults) {
       const list = byKind.get(result.kind) ?? [];
@@ -73,7 +84,9 @@ export function CommandPalette() {
     const timer = setTimeout(async () => {
       setStatus('Searching…');
       try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+        });
         if (!response.ok) throw new Error();
         const data = (await response.json()) as { results: SearchResult[] };
         setResults(data.results);
@@ -147,7 +160,9 @@ export function CommandPalette() {
               if (event.key === 'Enter' && visibleResults[index]) navigate(visibleResults[index]);
             }}
           />
-          <button onClick={close} aria-label="Close search">×</button>
+          <button onClick={close} aria-label="Close search">
+            ×
+          </button>
         </div>
 
         {!hasQuery && <p role="status">{visibleStatus}</p>}
@@ -156,10 +171,14 @@ export function CommandPalette() {
             <section key={group.kind} className="zip-command-group">
               <header>
                 <strong>{displayKind(group.kind)}</strong>
-                <span>{group.items.length} {group.items.length === 1 ? 'result' : 'results'}</span>
+                <span>
+                  {group.items.length} {group.items.length === 1 ? 'result' : 'results'}
+                </span>
               </header>
               {group.items.map((result) => {
-                const resultIndex = visibleResults.findIndex((item) => item.id === result.id && item.kind === result.kind);
+                const resultIndex = visibleResults.findIndex(
+                  (item) => item.id === result.id && item.kind === result.kind,
+                );
                 return (
                   <button
                     key={`${result.kind}-${result.id}`}

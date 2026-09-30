@@ -24,7 +24,9 @@ describe('development demo seed', () => {
     expect(await power.listActive()).toHaveLength(2);
 
     const rooms = await topology.listByKind('ROOM_SUBSTRUCTURE');
-    const room202 = rooms.find((node) => node.kind === 'ROOM_SUBSTRUCTURE' && node.name === 'Room 202');
+    const room202 = rooms.find(
+      (node) => node.kind === 'ROOM_SUBSTRUCTURE' && node.name === 'Room 202',
+    );
     expect(room202?.kind).toBe('ROOM_SUBSTRUCTURE');
     if (!room202 || room202.kind !== 'ROOM_SUBSTRUCTURE') throw new Error('Expected Room 202.');
     expect(room202.polygon).toHaveLength(4);

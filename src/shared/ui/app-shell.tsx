@@ -71,7 +71,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           </span>
         </Link>
 
-        {settings ? <div className="zip-static-context">SETTINGS</div> : <div className="zip-context-slot" />}
+        {settings ? (
+          <div className="zip-static-context">SETTINGS</div>
+        ) : (
+          <div className="zip-context-slot" />
+        )}
 
         <ContextTracker />
         <CommandPalette />
@@ -89,7 +93,13 @@ export function AppShell({ children }: { children: ReactNode }) {
             <b aria-hidden="true">⌄</b>
           </button>
         ) : (
-          <button className="zip-more" type="button" onClick={logout} disabled={busy} aria-label="Sign out">
+          <button
+            className="zip-more"
+            type="button"
+            onClick={logout}
+            disabled={busy}
+            aria-label="Sign out"
+          >
             {busy ? '…' : '•••'}
           </button>
         )}

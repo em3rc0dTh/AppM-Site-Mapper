@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
+import { getBdfbPresentation } from '@/modules/power/application/bdfb-presentation';
 import type {
   BreakerHolder,
   DeviceNode,
@@ -324,19 +325,30 @@ function DeviceHierarchyOverview({
                     <strong>{frame.label.replace(/^Frame\s+/i, '')}</strong>
                   </header>
 
-                  <div className="bdfb-overview-panels">
-                    {frame.panels.map((panel) => (
-                      <button
-                        type="button"
-                        className="bdfb-overview-panel"
-                        key={panel.id}
-                        onClick={() => onOpenPanel({ shelf, frame, panel })}
-                        aria-label={`Open ${panel.label} breaker detail`}
-                      >
-                        <strong>{panel.label}</strong>
-                        <span>{panel.endpoints.length} ENDPOINTS</span>
-                      </button>
-                    ))}
+                  <div
+                    className="bdfb-overview-panels"
+                    style={
+                      {
+                        '--bdfb-overview-panel-count': Math.max(1, frame.panels.length),
+                      } as CSSProperties
+                    }
+                  >
+                    {frame.panels.map((panel) => {
+                      const empty = panel.endpoints.length === 0;
+                      return (
+                        <button
+                          type="button"
+                          className="bdfb-overview-panel"
+                          data-empty={empty ? 'true' : 'false'}
+                          key={panel.id}
+                          onClick={() => onOpenPanel({ shelf, frame, panel })}
+                          aria-label={`Open ${panel.label} breaker detail`}
+                        >
+                          <strong>{panel.label}</strong>
+                          <span>{empty ? 'EMPTY SLOT' : `${panel.endpoints.length} ENDPOINTS`}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </section>
               ))}
@@ -468,7 +480,8 @@ export function BdfbChassis({
   const [selectedBreakerId, setSelectedBreakerId] = useState<string | null>(query.get('breaker'));
   const [activePanel, setActivePanel] = useState<PanelSelection | null>(initialPanel);
   const telemetry = useBdfbTelemetry(device.id);
-  const shelves = device.bdfb?.shelves ?? [];
+  const presentation = getBdfbPresentation(device);
+  const shelves = presentation.shelves;
   const frames = shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
   const endpoints = panels.flatMap((panel) => panel.endpoints);

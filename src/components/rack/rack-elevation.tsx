@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useMemo, useState, type CSSProperties } from 'react';
 
 import { TopologyCreateControl } from '@/components/topology/topology-create-form';
+import { RackTemplateInstantiator } from '@/components/warehouse/rack-template-instantiator';
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { InlineInspector } from '@/shared/ui/inline-inspector';
@@ -179,8 +180,14 @@ export function RackElevation({
           </header>
           {canWrite && (
             <div className="zip-rack-inventory-actions">
-              <TopologyCreateControl kind="DEVICE" parentId={view.rack.id} />
-              <TopologyCreateControl kind="EQUIPMENT" parentId={view.rack.id} />
+              <RackTemplateInstantiator rackId={view.rack.id} />
+              <details className="rack-one-off-create">
+                <summary>+ CREATE ONE-OFF</summary>
+                <div>
+                  <TopologyCreateControl kind="DEVICE" parentId={view.rack.id} />
+                  <TopologyCreateControl kind="EQUIPMENT" parentId={view.rack.id} />
+                </div>
+              </details>
             </div>
           )}
           <div className="zip-rack-inventory-list">

@@ -3435,3 +3435,37 @@ body {
 .zip-elevation-rack .legacy-rack-scale {
   color: #626b73 !important;
 }
+
+
+/* ZIP parity: prevent global button states from tinting topology cards. */
+.zip-graph-card,
+.zip-graph-card:hover,
+.zip-graph-card:focus,
+.zip-graph-card:focus-visible {
+  background: #fff !important;
+  color: #141b23 !important;
+}
+.zip-graph-card.is-selected,
+.zip-graph-card.is-selected:hover,
+.zip-graph-card.is-selected:focus,
+.zip-graph-card.is-selected:focus-visible {
+  background: #edf5ff !important;
+  color: #141b23 !important;
+}
+.zip-floor-slab,
+.zip-floor-slab:hover,
+.zip-floor-slab:focus {
+  background: transparent !important;
+  color: #202832 !important;
+}
+.zip-level-room,
+.zip-level-room:hover,
+.zip-level-room:focus {
+  background: #fff !important;
+  color: #1a222b !important;
+}
+.zip-level-room.is-selected,
+.zip-level-room.is-selected:hover,
+.zip-level-room.is-selected:focus {
+  background: #e9f3ff !important;
+}

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { BlueprintCanvas } from './blueprint-canvas';
 import { PolygonEditor } from '@/components/spatial/polygon-editor';
 import {
-  findNextRackCoordinate,
+  findNextRackPlacement,
   validateLayoutDraft,
   type LayoutDraft,
 } from '@/modules/spatial/domain/layout-draft';
@@ -76,7 +76,7 @@ export function RoomLayoutEditor({
             {
               id: rack.id,
               name: rack.name,
-              rect: { ...gridCoordinateToPoint(p), width: rack.width, depth: rack.depth },
+              rect: { x: rack.x, y: rack.y, width: rack.width, depth: rack.depth },
             },
           ];
         } catch {
@@ -111,15 +111,16 @@ export function RoomLayoutEditor({
       const width = Number(f.get('width'));
       const depth = Number(f.get('depth'));
       const totalU = Number(f.get('totalU'));
-      const coordinate = findNextRackCoordinate(draft, clusterId, width, depth);
+      const placementResult = findNextRackPlacement(draft, clusterId, width, depth);
 
-      if (!coordinate) {
+      if (!placementResult) {
         setError(
           'No valid left-to-right rack slot is available. Check Bay width, Room depth clearance and spacing to the next Bay.',
         );
         return;
       }
 
+      const { point, coordinate } = placementResult;
       const existing = draft.positions.find(
         (position) =>
           position.row === coordinate.row &&
@@ -143,6 +144,8 @@ export function RoomLayoutEditor({
             id: rackId,
             name,
             positionId: position.id,
+            x: point.x,
+            y: point.y,
             width,
             depth,
             totalU,
@@ -523,8 +526,8 @@ export function RoomLayoutEditor({
               )}
               {rack && position && (
                 <p>
-                  Placement: automatic left-to-right · top-anchored to Bay · {position.row}-
-                  {position.column}
+                  Placement: automatic left-to-right · X {rack.x}–{rack.x + rack.width} mm · Y{' '}
+                  {rack.y} mm · grid ref {position.row}-{position.column}
                 </p>
               )}
               {rack && (

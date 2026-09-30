@@ -765,7 +765,6 @@
   background: #eaf3ff;
 }
 
-
 /* Acceptance hardening: fit surveyed geometry and dense panels to the viewport. */
 /* The topology floor previously grew beyond the fixed application frame. */
 .mk-explorer-page .zip-explorer {

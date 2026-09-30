@@ -19,7 +19,7 @@ const JSON_EXAMPLE = `{
 
 const BDFB_EMULATOR_EXAMPLE = `{
   "kind": "DEVICE",
-  "name": "BDFB Emulator 96P",
+  "name": "BDFB Emulator 96P Chassis",
   "manufacturer": "Eaton",
   "model": "BDFB-EMU-96",
   "category": "Power distribution",
@@ -33,44 +33,47 @@ const BDFB_EMULATOR_EXAMPLE = `{
     "type": "BDFB",
     "shelves": [
       {
-        "label": "Feed A (synthetic)",
+        "label": "Main Shelf",
         "frames": [
           {
-            "label": "Feed A",
+            "label": "A",
             "panels": [
               {
-                "label": "A1",
+                "label": "Panel A1",
                 "endpointCount": 24,
                 "endpointVariant": "BREAKER",
                 "rawPointPrefix": "0_1_"
               },
               {
-                "label": "A2",
+                "label": "Panel A2",
                 "endpointCount": 24,
                 "endpointVariant": "BREAKER",
                 "rawPointPrefix": "0_2_"
+              },
+              {
+                "label": "Panel A3",
+                "endpoints": []
               }
             ]
-          }
-        ]
-      },
-      {
-        "label": "Feed B (synthetic)",
-        "frames": [
+          },
           {
-            "label": "Feed B",
+            "label": "B",
             "panels": [
               {
-                "label": "B1",
+                "label": "Panel B1",
                 "endpointCount": 24,
                 "endpointVariant": "BREAKER",
                 "rawPointPrefix": "0_3_"
               },
               {
-                "label": "B2",
+                "label": "Panel B2",
                 "endpointCount": 24,
                 "endpointVariant": "BREAKER",
                 "rawPointPrefix": "0_4_"
+              },
+              {
+                "label": "Panel B3",
+                "endpoints": []
               }
             ]
           }
@@ -78,7 +81,7 @@ const BDFB_EMULATOR_EXAMPLE = `{
       }
     ]
   },
-  "notes": "Synthetic 96-point profile for EMU-BFDB-01/02/03."
+  "notes": "Six-slot physical chassis; 96 emulator points populate A1, A2, B1 and B2. A3/B3 remain empty physical panel slots."
 }`;
 
 export function TemplateCreateForm() {

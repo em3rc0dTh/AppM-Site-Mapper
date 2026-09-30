@@ -5,7 +5,6 @@ import { hasPermission } from '@/modules/identity/domain/roles';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
-import { TopologyContextTree } from '@/components/topology/context-tree';
 import { RackElevation } from '@/components/rack/rack-elevation';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
@@ -41,7 +40,6 @@ export default async function RackPage({
     [...trail].reverse().find((item) => item.kind === 'ROOM_SUBSTRUCTURE') ??
     [...trail].reverse().find((item) => item.kind === 'LEVEL') ??
     trail[0];
-  const tree = root ? await topology.buildNavigationTree(root.id) : null;
   const trailEntries = await Promise.all(
     trail.map(async (item) => ({
       id: item.id,
@@ -63,22 +61,14 @@ export default async function RackPage({
         ))}
       </nav>
       <div className="operational-layout telxius-operational-layout operational-layout--rack">
-        <aside className="operational-context">
-          {tree && <TopologyContextTree tree={tree} activeId={rackId} />}
+        <aside className="zip-rack-menu">
+          <header>RACK <span>⌄</span></header>
+          <Link href={`/rack/${rackId}/focus`}><span>▤</span>Overview</Link>
+          <Link className="is-active" href={`/rack/${rackId}`}><span>▥</span>Elevation</Link>
+          <Link href={`/power?entity=${rackId}`}><span>ϟ</span>Power</Link>
+          <a href="#telemetry"><span>▥</span>Telemetry</a>
         </aside>
-        <section className="operational-stage operational-stage--wide">
-          <nav className="mk-rack-actions">
-            <ContextPin entityId={rackId} />
-            <Link href={`/rack/${rackId}/focus`}>RACK FOCUS</Link>
-            <Link href={`/power?entity=${rackId}`}>POWER</Link>
-            {root?.kind === 'ROOM_SUBSTRUCTURE' && (
-              <Link href={`/blueprint/${root.id}?rack=${rackId}`}>LOCATE</Link>
-            )}
-          </nav>
-          <TelemetryLens
-            label={result.value.rack.name}
-            entityIds={result.value.inventory.map((item) => item.id)}
-          />
+        <section className="operational-stage operational-stage--wide zip-rack-elevation-stage">
           <RackElevation
             view={result.value}
             {...(parent?.kind === 'POSITION'
@@ -90,7 +80,15 @@ export default async function RackPage({
                 }
               : {})}
           />
-          {hasPermission(auth.value.role, 'topology:write') && <CasEditor view={result.value} />}
+          <div className="zip-rack-elevation-footer">
+            <span className="is-available">□ AVAILABLE <b>{result.value.rows.filter((row)=>row.role==='AVAILABLE').length}U</b></span>
+            <span className="is-reserved">□ RESERVED <b>{result.value.rows.filter((row)=>row.role==='RESERVED').length}U</b></span>
+            <span className="is-equipped">□ EQUIPPED <b>{result.value.rows.filter((row)=>row.role==='PHYSICAL').length}U</b></span>
+            <div />
+            {hasPermission(auth.value.role, 'topology:write') && <details className="zip-cas-popover"><summary>✎ EDIT CAS</summary><CasEditor view={result.value} /></details>}
+            <ContextPin entityId={rackId} />
+          </div>
+          <div id="telemetry" className="zip-rack-telemetry"><TelemetryLens label={result.value.rack.name} entityIds={result.value.inventory.map((item) => item.id)} /></div>
         </section>
       </div>
     </main>

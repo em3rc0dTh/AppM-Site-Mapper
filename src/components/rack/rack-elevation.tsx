@@ -6,8 +6,7 @@ import { useMemo, useState, type CSSProperties } from 'react';
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { InlineInspector } from '@/shared/ui/inline-inspector';
-import { InspectButton, type InspectorEntity } from '@/shared/ui/entity-inspector';
-import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
+import type { InspectorEntity } from '@/shared/ui/entity-inspector';
 
 interface RackBlock {
   readonly key: string;
@@ -20,25 +19,18 @@ interface RackBlock {
 
 function buildBlocks(view: RackElevationView): RackBlock[] {
   const blocks: RackBlock[] = [];
-
   for (const row of view.rows) {
     const occupantId = row.occupant?.id ?? '';
     const previous = blocks.at(-1);
-
     if (
       previous &&
       previous.role === row.role &&
       (previous.occupant?.id ?? '') === occupantId &&
       previous.bottomU - 1 === row.u
     ) {
-      blocks[blocks.length - 1] = {
-        ...previous,
-        bottomU: row.u,
-        units: previous.units + 1,
-      };
+      blocks[blocks.length - 1] = { ...previous, bottomU: row.u, units: previous.units + 1 };
       continue;
     }
-
     blocks.push({
       key: `${row.role}-${occupantId || 'empty'}-${row.u}`,
       role: row.role,
@@ -48,13 +40,11 @@ function buildBlocks(view: RackElevationView): RackBlock[] {
       occupant: row.occupant,
     });
   }
-
   return blocks;
 }
 
 function roleLabel(role: string) {
-  if (role === 'PHYSICAL') return 'EQUIPPED';
-  return role;
+  return role === 'PHYSICAL' ? 'EQUIPPED' : role;
 }
 
 export interface RackElevationContext {
@@ -74,138 +64,49 @@ export function RackElevation({
   const count = (role: string) => view.rows.filter((row) => row.role === role).length;
   const physical = count('PHYSICAL');
   const reserved = count('RESERVED');
-  const clearance = count('CLEARANCE');
   const available = count('AVAILABLE');
   const totalU = view.rack.totalU ?? view.rows.length;
-  const usedPercent = Math.round((physical / Math.max(totalU, 1)) * 100);
-  const primaryInventory = view.inventory[0];
-  const physicalBlocks = blocks.filter((block) => block.role === 'PHYSICAL');
-  const nonPhysicalBlocks = blocks.filter((block) => block.role !== 'PHYSICAL');
 
   return (
-    <section className="legacy-rack-view telxius-rack-view zip-rack-view">
-      <aside className="zip-rack-context">
-        <header>
-          <span>Rack context</span>
-          <strong>Internal Rack Hierarchy</strong>
+    <section className="legacy-rack-view zip-rack-elevation-view">
+      <div className="legacy-rack-main zip-rack-elevation-main">
+        <header className="zip-elevation-heading">
+          <h1>{face === 'front' ? 'FRONT ELEVATION' : 'REAR ELEVATION'}</h1>
+          <div>
+            <button className={face === 'front' ? 'is-active' : ''} onClick={() => setFace('front')}>FRONT</button>
+            <button className={face === 'rear' ? 'is-active' : ''} onClick={() => setFace('rear')}>REAR</button>
+          </div>
         </header>
 
-        <div className="zip-rack-position">
-          <span>Selected position</span>
-          <strong>{context?.positionName ?? 'Rack position'}</strong>
-          <small>{context?.coordinate ?? view.rack.name}</small>
-        </div>
-
-        <div className="zip-rack-tree">
-          {physicalBlocks.map((block) => {
-            const item = block.occupant
-              ? view.inventory.find((candidate) => candidate.id === block.occupant?.id)
-              : undefined;
-
-            return (
-              <button
-                key={block.key}
-                type="button"
-                className="zip-rack-tree-row is-equipped"
-                onClick={() => {
-                  if (item) setSelected(topologyInspector(item));
-                }}
-              >
-                <span className="zip-rack-tree-dot" />
-                <span>
-                  <b>
-                    U{block.bottomU}–U{block.topU}
-                  </b>
-                  <small>{block.occupant?.name ?? 'Occupied'}</small>
-                </span>
-              </button>
-            );
-          })}
-
-          {nonPhysicalBlocks.map((block) => (
-            <div key={block.key} className={`zip-rack-tree-row is-${block.role.toLowerCase()}`}>
-              <span className="zip-rack-tree-dot" />
-              <span>
-                <b>
-                  U{block.bottomU}–U{block.topU}
-                </b>
-                <small>
-                  {block.units}U {roleLabel(block.role).toLowerCase()}
-                </small>
-              </span>
-            </div>
-          ))}
-        </div>
-      </aside>
-
-      <div className="legacy-rack-main telxius-rack-main zip-rack-main">
-        <SectionHeader
-          eyebrow="Rack / physical elevation"
-          title={view.rack.name}
-          description={`${face === 'front' ? 'Front' : 'Rear'} elevation · shared mounting occupancy`}
-          actions={
-            <>
-              {context?.coordinate && <StatusBadge tone="accent">{context.coordinate}</StatusBadge>}
-              <button onClick={() => setFace('front')} aria-pressed={face === 'front'}>
-                FRONT
-              </button>
-              <button onClick={() => setFace('rear')} aria-pressed={face === 'rear'}>
-                REAR
-              </button>
-              <InspectButton entity={topologyInspector(view.rack)} />
-            </>
-          }
-        />
-
-        <div className="legacy-rack-canvas">
-          <div className="legacy-rack-canvas-grid" aria-hidden="true" />
-          <div className="legacy-rack-heading">
-            <div>
-              <strong>{totalU}RU Cabinet</strong>
-              <span>{view.rack.variant}</span>
-            </div>
-            <small>{view.rack.name}</small>
-          </div>
-
-          <div className="legacy-rack-frame">
-            <div className="legacy-rack-metal legacy-rack-metal--top">
-              <span />
-            </div>
+        <div className="legacy-rack-canvas zip-elevation-canvas">
+          <div className="legacy-rack-frame zip-elevation-rack">
+            <div className="legacy-rack-metal legacy-rack-metal--top"><span /></div>
             <div className="legacy-rack-units">
               {blocks.map((block) => {
                 const item = block.occupant
                   ? view.inventory.find((candidate) => candidate.id === block.occupant?.id)
                   : undefined;
-
-                const blockStyle = {
+                const style = {
                   '--rack-block-units': block.units,
                   minHeight: `max(${block.units * 3}px, ${block.units === 1 ? 18 : 26}px)`,
                 } as CSSProperties;
-
-                const content = (
+                const body = (
                   <>
                     <span className="legacy-rack-scale">
-                      <b>{block.topU}</b>
-                      {block.units > 1 && <b>{block.bottomU}</b>}
+                      <b>{String(block.topU).padStart(2, '0')}U</b>
+                      {block.units > 1 && <b>{String(block.bottomU).padStart(2, '0')}U</b>}
                     </span>
                     <span className="legacy-rack-block-copy">
                       <strong>{block.occupant?.name ?? roleLabel(block.role)}</strong>
-                      <small>
-                        {block.occupant?.kind
-                          ? `${block.occupant.kind} · ${block.units}RU`
-                          : `${block.units}RU ${roleLabel(block.role)}`}
-                      </small>
                     </span>
-                    {block.role === 'PHYSICAL' && <span className="legacy-rack-led">● ACTIVE</span>}
                   </>
                 );
-
                 return item ? (
                   <button
                     key={block.key}
                     type="button"
-                    className={`legacy-rack-block legacy-rack-block--${block.role.toLowerCase()} ${item?.id === focusDeviceId ? 'is-selected' : ''}`}
-                    style={blockStyle}
+                    className={`legacy-rack-block legacy-rack-block--${block.role.toLowerCase()} ${item.id === focusDeviceId ? 'is-selected' : ''}`}
+                    style={style}
                     onClick={() =>
                       setSelected({
                         ...topologyInspector(item),
@@ -217,108 +118,45 @@ export function RackElevation({
                     }
                     onDoubleClick={() => router.push(`/device/${item.id}`)}
                   >
-                    {content}
+                    {body}
                   </button>
                 ) : (
                   <div
                     key={block.key}
                     className={`legacy-rack-block legacy-rack-block--${block.role.toLowerCase()}`}
-                    style={blockStyle}
+                    style={style}
                   >
-                    {content}
+                    {body}
                   </div>
                 );
               })}
             </div>
-            <div className="legacy-rack-metal legacy-rack-metal--bottom">
-              <span />
-              <span />
-            </div>
+            <div className="legacy-rack-metal legacy-rack-metal--bottom"><span /><span /></div>
           </div>
         </div>
       </div>
 
-      <aside className="legacy-rack-properties telxius-rack-properties">
-        <div className="legacy-properties-header">
-          <span>Rack details</span>
-          <strong>{view.rack.name}</strong>
-          <StatusBadge tone="good">PHYSICAL INVENTORY</StatusBadge>
+      <aside className="legacy-rack-properties zip-elevation-inspector">
+        <header>INSPECTOR <span>⌄</span></header>
+        <div className="zip-elevation-identity">
+          <span>▥</span>
+          <div>
+            <h2>{view.rack.name}</h2>
+            <small>{context?.positionName ?? 'Rack position'} {context?.coordinate ? `/ ${context.coordinate}` : ''}</small>
+          </div>
         </div>
-
-        <section className="legacy-property-section">
-          <div className="legacy-property-title">
-            <span>RU Usage</span>
-            <strong>
-              {physical} / {totalU} U
-            </strong>
-          </div>
-          <div className="legacy-progress">
-            <span style={{ width: `${usedPercent}%` }} />
-          </div>
-          <small>{usedPercent}% occupied capacity</small>
+        <dl className="zip-elevation-stats">
+          <dt>Capacity</dt><dd>{totalU}U</dd>
+          <dt>Used</dt><dd>{physical}U</dd>
+          <dt>Free</dt><dd>{available}U</dd>
+          <dt>Reserved</dt><dd>{reserved}U</dd>
+        </dl>
+        <section className="zip-equipment-summary">
+          <h3>EQUIPMENT SUMMARY</h3>
+          <div><span className="is-available" /><b>Available</b><strong>{available}U</strong></div>
+          <div><span className="is-reserved" /><b>Reserved</b><strong>{reserved}U</strong></div>
+          <div><span className="is-equipped" /><b>Equipped</b><strong>{physical}U</strong></div>
         </section>
-
-        <section className="legacy-property-section">
-          <h3>Capacity state</h3>
-          <dl>
-            <div>
-              <dt>Physical</dt>
-              <dd>{physical} U</dd>
-            </div>
-            <div>
-              <dt>Reserved</dt>
-              <dd>{reserved} U</dd>
-            </div>
-            <div>
-              <dt>Clearance</dt>
-              <dd>{clearance} U</dd>
-            </div>
-            <div>
-              <dt>Available</dt>
-              <dd>{available} U</dd>
-            </div>
-          </dl>
-        </section>
-
-        <section className="legacy-property-section">
-          <h3>Mounted identities</h3>
-          {view.inventory.length === 0 ? (
-            <p>No mounted inventory.</p>
-          ) : (
-            <div className="legacy-rack-inventory-list">
-              {view.inventory.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() =>
-                    setSelected({
-                      ...topologyInspector(item),
-                      actions: [
-                        { label: 'OPEN DEVICE', href: `/device/${item.id}` },
-                        { label: 'TRACE POWER', href: `/power?entity=${item.id}` },
-                      ],
-                    })
-                  }
-                  onDoubleClick={() => router.push(`/device/${item.id}`)}
-                >
-                  <span>
-                    <small>{item.kind}</small>
-                    <strong>{item.name}</strong>
-                  </span>
-                  <b>Inspect →</b>
-                </button>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {primaryInventory && (
-          <div className="legacy-properties-actions">
-            <button type="button" onClick={() => setSelected(topologyInspector(primaryInventory))}>
-              Inspect mounted device
-            </button>
-          </div>
-        )}
       </aside>
 
       {selected && <InlineInspector entity={selected} onClose={() => setSelected(null)} />}

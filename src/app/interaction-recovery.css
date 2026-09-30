@@ -1302,3 +1302,96 @@
     overflow: hidden !important;
   }
 }
+
+
+/* BDFB live aggregate inspector. */
+.zip-bdfb-live-average {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #b9dfd2;
+  border-radius: 6px;
+  background: #f3fbf7;
+}
+.zip-bdfb-live-average > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 !important;
+  border: 0 !important;
+  min-height: 0 !important;
+  background: transparent !important;
+}
+.zip-bdfb-live-average > header > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.zip-bdfb-live-average > header i {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #8796a5;
+}
+.zip-bdfb-live-average > header i[data-live='true'] {
+  background: #0ea86b;
+  box-shadow: 0 0 0 3px #0ea86b1f;
+}
+.zip-bdfb-live-average > header strong {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+.zip-bdfb-live-average > header > span {
+  color: #607286;
+  font-size: 9px;
+  font-weight: 700;
+}
+.zip-bdfb-live-average-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+}
+.zip-bdfb-live-average-grid > div {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid #d7e8e1;
+  border-radius: 4px;
+  background: #fff;
+}
+.zip-bdfb-live-average-grid span {
+  color: #697b8c;
+  font-size: 8px;
+  font-weight: 700;
+}
+.zip-bdfb-live-average-grid strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zip-bdfb-live-average-counts {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  border-top: 1px solid #d8e8e2;
+}
+.zip-bdfb-live-average-counts dt,
+.zip-bdfb-live-average-counts dd {
+  margin: 0 !important;
+  padding: 6px 0 !important;
+  border-bottom: 1px solid #e3eee9 !important;
+  font-size: 9px !important;
+}
+.zip-bdfb-live-average-counts dd {
+  padding-left: 12px !important;
+  text-align: right;
+  font-weight: 800;
+}
+.zip-bdfb-inspector {
+  overflow-y: auto;
+}

@@ -250,7 +250,11 @@ await page.getByRole('heading', { name: 'Device & Equipment Templates' }).waitFo
   state: 'visible',
   timeout: 10_000,
 });
-await snap('17-virtual-warehouse');
+await page.getByRole('tab', { name: 'JSON' }).click();
+const warehouseJson = page.getByRole('textbox', { name: 'Template JSON' });
+await warehouseJson.waitFor({ state: 'visible', timeout: 10_000 });
+assert.ok(await warehouseJson.isVisible(), 'Warehouse JSON editor must be visible');
+await snap('17-virtual-warehouse-json');
 
 await go('/settings');
 await snap('16-settings');

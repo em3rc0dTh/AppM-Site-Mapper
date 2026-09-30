@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 
 import type { PhysicalPoint, TopologyNode } from '@/modules/topology/domain/entities';
 
@@ -78,7 +78,7 @@ export function TopologyExplorer({
                     className={`zip-floor-slab ${selected === entry.node.id ? 'is-selected' : ''}`}
                     onClick={() => setSelected(entry.node.id)}
                     onDoubleClick={() => window.location.assign(entry.href)}
-                    style={{ '--floor-order': index } as React.CSSProperties}
+                    style={{ '--floor-order': index } as CSSProperties}
                   >
                     <span className="zip-floor-shape" />
                     <span>

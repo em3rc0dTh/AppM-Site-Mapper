@@ -65,10 +65,7 @@ export function NavigationTree({ roots }: { roots: readonly WorkspaceTreeNode[] 
   const filtered = roots.filter((node) => matches(node, query.toLowerCase()));
   return (
     <nav className="workspace-tree" aria-label="Infrastructure topology">
-      <div className="workspace-section-title">
-        <span>Topology explorer</span>
-        <Link href="/network">Manage</Link>
-      </div>
+      <div className="workspace-section-title"><span>TOPOLOGY</span><b>⌄</b></div>
       <input
         type="search"
         aria-label="Search topology"

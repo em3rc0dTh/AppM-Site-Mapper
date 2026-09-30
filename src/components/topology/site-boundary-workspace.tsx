@@ -59,14 +59,14 @@ export function SiteBoundaryWorkspace({
           title={`${node.polygon?.length ? 'EDIT' : 'DRAW'} ${label} BOUNDARY · ${node.name}`}
           initial={node.polygon ?? []}
           context={context}
-          validate={
-            node.kind === 'STRUCTURE' && context.length >= 3
-              ? (polygon) =>
+          {...(node.kind === 'STRUCTURE' && context.length >= 3
+            ? {
+                validate: (polygon: readonly PointMm[]) =>
                   polygonInsidePolygon(polygon, context)
                     ? null
-                    : 'Structure boundary must remain inside the Site boundary.'
-              : undefined
-          }
+                    : 'Structure boundary must remain inside the Site boundary.',
+              }
+            : {})}
           onConfirm={(polygon) => void save(polygon)}
           onCancel={() => {
             setEditing(false);

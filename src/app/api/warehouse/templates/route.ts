@@ -23,9 +23,7 @@ export async function POST(request: Request) {
 
   const body = object(await request.json().catch(() => null));
   const kind =
-    body?.kind === 'DEVICE' || body?.kind === 'EQUIPMENT'
-      ? (body.kind as AssetTemplateKind)
-      : null;
+    body?.kind === 'DEVICE' || body?.kind === 'EQUIPMENT' ? (body.kind as AssetTemplateKind) : null;
 
   if (!body || !kind || typeof body.name !== 'string')
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
@@ -42,8 +40,7 @@ export async function POST(request: Request) {
     ...(typeof body.notes === 'string' ? { notes: body.notes } : {}),
   });
 
-  if (!result.ok)
-    return NextResponse.json({ error: result.error }, { status: 422 });
+  if (!result.ok) return NextResponse.json({ error: result.error }, { status: 422 });
 
   return NextResponse.json({ template: result.value }, { status: 201 });
 }

@@ -204,7 +204,11 @@ export function validateLayoutDraft(value: unknown): string | null {
     if (cells.has(cell)) return 'POSITION_COLLISION';
     cells.add(cell);
   }
+  const rackNames = new Set<string>();
   for (const r of d.racks) {
+    const normalizedRackName = r.name.trim().toLocaleLowerCase();
+    if (rackNames.has(normalizedRackName)) return 'DUPLICATE_RACK_NAME';
+    rackNames.add(normalizedRackName);
     if (
       !named(r) ||
       ![r.width, r.depth, r.totalU].every(Number.isInteger) ||

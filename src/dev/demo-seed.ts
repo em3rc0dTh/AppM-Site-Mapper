@@ -3,7 +3,6 @@ import { BdfbService } from '@/modules/power/application/bdfb-service';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import { PowerService } from '@/modules/power/application/power-service';
 import { CasService } from '@/modules/rack/application/cas-service';
-import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import {
   TopologyService,
@@ -13,12 +12,68 @@ import type {
   ContainerRackNode,
   DeviceNode,
   EquipmentNode,
-  RoomSubstructureNode,
   TopologyKind,
   TopologyNode,
 } from '@/modules/topology/domain/entities';
 
 const DEMO_NETWORK_NAME = 'Network';
+
+const DEMO_SITE_BOUNDARY = [
+  { x: 0, y: 0 },
+  { x: 7200, y: 0 },
+  { x: 7200, y: 6000 },
+  { x: 0, y: 6000 },
+] as const;
+
+const DEMO_STRUCTURE_BOUNDARY = [
+  { x: 0, y: 0 },
+  { x: 6600, y: 0 },
+  { x: 6600, y: 5400 },
+  { x: 0, y: 5400 },
+] as const;
+
+const ROOM_201_BOUNDARY = [
+  { x: 600, y: 600 },
+  { x: 2400, y: 600 },
+  { x: 2400, y: 1500 },
+  { x: 600, y: 1500 },
+] as const;
+
+const ROOM_202_BOUNDARY = [
+  { x: 600, y: 600 },
+  { x: 6000, y: 300 },
+  { x: 6000, y: 4800 },
+  { x: 300, y: 4800 },
+  { x: 250, y: 1800 },
+] as const;
+
+const ROOM_203_BOUNDARY = [
+  { x: 600, y: 1900 },
+  { x: 2500, y: 1900 },
+  { x: 2500, y: 3000 },
+  { x: 600, y: 3000 },
+] as const;
+
+const ROOM_204_BOUNDARY = [
+  { x: 2900, y: 1900 },
+  { x: 4800, y: 1900 },
+  { x: 4800, y: 3000 },
+  { x: 2900, y: 3000 },
+] as const;
+
+const DEMO1_BOUNDARY = [
+  { x: 1200, y: 1800 },
+  { x: 4800, y: 1800 },
+  { x: 4800, y: 2400 },
+  { x: 1200, y: 2400 },
+] as const;
+
+const DEMO2_BOUNDARY = [
+  { x: 1200, y: 3000 },
+  { x: 5400, y: 3000 },
+  { x: 5400, y: 3600 },
+  { x: 1200, y: 3600 },
+] as const;
 
 export interface DemoSeedSummary {
   readonly alreadyPresent: boolean;
@@ -225,6 +280,7 @@ export async function seedDevelopmentDemo(
       kind: 'SITE',
       parentId: network.id,
       name: 'Lima',
+      polygon: DEMO_SITE_BOUNDARY,
     }),
     'SITE',
   );
@@ -232,11 +288,13 @@ export async function seedDevelopmentDemo(
     kind: 'SITE',
     parentId: network.id,
     name: 'Arequipa',
+    polygon: DEMO_SITE_BOUNDARY,
   });
   await ensureNode(topologyRepository, topology, {
     kind: 'SITE',
     parentId: network.id,
     name: 'Trujillo',
+    polygon: DEMO_SITE_BOUNDARY,
   });
 
   const buildingA = expectKind(
@@ -244,6 +302,7 @@ export async function seedDevelopmentDemo(
       kind: 'STRUCTURE',
       parentId: lima.id,
       name: 'Building A',
+      polygon: DEMO_STRUCTURE_BOUNDARY,
     }),
     'STRUCTURE',
   );
@@ -251,11 +310,13 @@ export async function seedDevelopmentDemo(
     kind: 'STRUCTURE',
     parentId: lima.id,
     name: 'Building B',
+    polygon: DEMO_STRUCTURE_BOUNDARY,
   });
   await ensureNode(topologyRepository, topology, {
     kind: 'STRUCTURE',
     parentId: lima.id,
     name: 'DC Hall',
+    polygon: DEMO_STRUCTURE_BOUNDARY,
   });
 
   const basement = expectKind(
@@ -300,6 +361,7 @@ export async function seedDevelopmentDemo(
       parentId: level02.id,
       name: 'Room 201',
       roomVariant: 'ROOM',
+      polygon: ROOM_201_BOUNDARY,
     }),
     'ROOM_SUBSTRUCTURE',
   );
@@ -309,6 +371,7 @@ export async function seedDevelopmentDemo(
       parentId: level02.id,
       name: 'Room 202',
       roomVariant: 'ROOM',
+      polygon: ROOM_202_BOUNDARY,
     }),
     'ROOM_SUBSTRUCTURE',
   );
@@ -318,6 +381,7 @@ export async function seedDevelopmentDemo(
       parentId: level02.id,
       name: 'Room 203',
       roomVariant: 'ROOM',
+      polygon: ROOM_203_BOUNDARY,
     }),
     'ROOM_SUBSTRUCTURE',
   );
@@ -327,63 +391,10 @@ export async function seedDevelopmentDemo(
       parentId: level02.id,
       name: 'Room 204',
       roomVariant: 'ROOM',
+      polygon: ROOM_204_BOUNDARY,
     }),
     'ROOM_SUBSTRUCTURE',
   );
-
-  const spatial = new SpatialService(topologyRepository);
-  const roomPolygons: readonly [RoomSubstructureNode, readonly { x: number; y: number }[]][] = [
-    [
-      room201,
-      [
-        { x: 600, y: 600 },
-        { x: 2400, y: 600 },
-        { x: 2400, y: 1500 },
-        { x: 600, y: 1500 },
-      ],
-    ],
-    [
-      room202,
-      [
-        { x: 3000, y: 600 },
-        { x: 4800, y: 600 },
-        { x: 4800, y: 1500 },
-        { x: 3000, y: 1500 },
-      ],
-    ],
-    [
-      room203,
-      [
-        { x: 600, y: 1900 },
-        { x: 2500, y: 1900 },
-        { x: 2500, y: 3000 },
-        { x: 600, y: 3000 },
-      ],
-    ],
-    [
-      room204,
-      [
-        { x: 2900, y: 1900 },
-        { x: 4800, y: 1900 },
-        { x: 4800, y: 3000 },
-        { x: 2900, y: 3000 },
-      ],
-    ],
-  ];
-  for (const [room, polygon] of roomPolygons) {
-    const result = await spatial.updateRoomPolygon(room.id, polygon);
-    if (!result.ok) throw new Error('Demo seed could not configure room geometry: ' + result.error);
-  }
-
-  // Room 202 is the approved ZIP drafting/focus scenario.
-  const room202Polygon = await spatial.updateRoomPolygon(room202.id, [
-    { x: 600, y: 600 },
-    { x: 6000, y: 300 },
-    { x: 6000, y: 4800 },
-    { x: 300, y: 4800 },
-    { x: 250, y: 1800 },
-  ]);
-  if (!room202Polygon.ok) throw new Error('Demo seed could not configure Blueprint room.');
 
   const bay = expectKind(
     await ensureNode(topologyRepository, topology, {
@@ -391,37 +402,20 @@ export async function seedDevelopmentDemo(
       parentId: room202.id,
       name: 'DEMO1',
       clusterVariant: 'BAY',
+      polygon: DEMO1_BOUNDARY,
     }),
     'CONTAINER_CLUSTER_BAY',
   );
-  await topologyRepository.replace({
-    ...bay,
-    polygon: [
-      { x: 1200, y: 1650 },
-      { x: 4800, y: 1650 },
-      { x: 4800, y: 2450 },
-      { x: 1200, y: 2450 },
-    ],
-  });
-
   const demo2 = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'CONTAINER_CLUSTER_BAY',
       parentId: room202.id,
       name: 'DEMO2',
       clusterVariant: 'BAY',
+      polygon: DEMO2_BOUNDARY,
     }),
     'CONTAINER_CLUSTER_BAY',
   );
-  await topologyRepository.replace({
-    ...demo2,
-    polygon: [
-      { x: 1200, y: 2850 },
-      { x: 5400, y: 2850 },
-      { x: 5400, y: 3650 },
-      { x: 1200, y: 3650 },
-    ],
-  });
   for (let column = 3; column <= 9; column += 1) {
     await ensureNode(topologyRepository, topology, {
       kind: 'POSITION',

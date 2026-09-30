@@ -3282,3 +3282,109 @@ body {
 .zip-bdfb-page .bdfb-overview-frame-grid {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
+
+
+/* Approved ZIP parity: telemetry diagnostic overlay. */
+.zip-telemetry-overlay {
+  position: fixed;
+  inset: 67px 0 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 46px;
+  background: rgba(4, 8, 18, 0.92);
+}
+.zip-telemetry-diagnostic {
+  width: min(1120px, 92vw);
+  min-height: 620px;
+  max-height: calc(100vh - 140px);
+  overflow: auto;
+  margin: 0 !important;
+  padding: 34px 42px !important;
+  border: 1px solid #24314d !important;
+  border-radius: 22px !important;
+  background:
+    radial-gradient(circle at 50% 35%, rgba(23, 60, 100, 0.28), transparent 32rem),
+    #050918 !important;
+  color: #eef5ff !important;
+  box-shadow: 0 30px 100px #0008;
+}
+.zip-telemetry-diagnostic > header {
+  min-height: 72px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #1f2d49;
+}
+.zip-telemetry-diagnostic > header h2 {
+  margin: 6px 0 0;
+  font-size: 23px !important;
+  letter-spacing: .02em;
+}
+.zip-telemetry-status {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.zip-telemetry-status > span {
+  border: 1px solid #244365;
+  border-radius: 999px;
+  padding: 8px 14px;
+  color: #7bc7ff;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+.zip-telemetry-close {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  border-radius: 50% !important;
+  border: 1px solid #26344e !important;
+  background: #0b1120 !important;
+  color: #91a1bb !important;
+  font-size: 20px !important;
+  padding: 0 !important;
+}
+.zip-telemetry-diagnostic > p {
+  min-height: 360px;
+  margin: 22px 0;
+  border: 1px solid #172642;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  color: #8092ad;
+  background:
+    linear-gradient(#0d1730 1px, transparent 1px),
+    linear-gradient(90deg, #0d1730 1px, transparent 1px),
+    #070c19;
+  background-size: 54px 54px;
+}
+.zip-telemetry-diagnostic article {
+  min-height: 360px;
+  border-radius: 18px !important;
+  background: #091126 !important;
+  border-color: #203151 !important;
+}
+.zip-telemetry-diagnostic .mk-live-grid {
+  grid-template-columns: repeat(4, minmax(130px, 1fr));
+  margin-top: 34px;
+}
+.zip-telemetry-diagnostic .mk-live-grid > div {
+  min-height: 108px;
+  border: 1px solid #1d3152;
+  border-radius: 12px;
+  place-content: center;
+  text-align: center;
+}
+.zip-telemetry-diagnostic footer {
+  display: flex;
+  justify-content: center;
+  padding-top: 18px;
+  border-top: 1px solid #1d2b45;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+@media (max-width: 900px) {
+  .zip-telemetry-overlay { padding: 18px; }
+  .zip-telemetry-diagnostic { min-height: 0; }
+  .zip-telemetry-diagnostic .mk-live-grid { grid-template-columns: 1fr 1fr; }
+}

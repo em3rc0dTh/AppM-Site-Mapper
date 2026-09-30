@@ -77,7 +77,7 @@ if (roomLink) {
   await go(roomLink);
   await snap('05-room-blueprint');
   await page.keyboard.press('Control+K');
-  await page.getByLabel('Search infrastructure').fill('RACK');
+  await page.getByLabel('Search infrastructure').fill('R-');
   await page.waitForTimeout(500);
   await snap('15-global-search');
   await page.keyboard.press('Escape');
@@ -99,7 +99,8 @@ if (rackLink) {
       : rackLink;
   await go(focus);
   await snap('07-rack-focus');
-  await go(rackLink);
+  const elevation = focus.replace(/\/focus$/, '');
+  await go(elevation);
   await snap('08-rack-elevation');
 }
 

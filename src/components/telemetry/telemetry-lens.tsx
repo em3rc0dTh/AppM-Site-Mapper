@@ -84,7 +84,7 @@ export function TelemetryLens({
   }, [open, key]);
 
   return (
-    <section className={`mk-lens ${open ? 'is-open' : ''}`}>
+    <section className={`mk-lens zip-telemetry-lens ${open ? 'is-open' : ''}`}>
       <div className="mk-lens-switch">
         <button aria-pressed={!open} onClick={() => setOpen(false)}>
           PHYSICAL
@@ -95,13 +95,14 @@ export function TelemetryLens({
       </div>
 
       {open && (
-        <div className="mk-diagnostic">
+        <div className="zip-telemetry-overlay">
+        <div className="mk-diagnostic zip-telemetry-diagnostic">
           <header>
             <div>
               <small>CONTEXTUAL DIAGNOSTIC</small>
               <h2>{label}</h2>
             </div>
-            <span>{connected ? 'Stream connected' : 'Reconnecting'}</span>
+            <div className="zip-telemetry-status"><span>{connected ? 'Stream connected' : 'Reconnecting'}</span><button type="button" className="zip-telemetry-close" onClick={() => setOpen(false)} aria-label="Close telemetry">×</button></div>
           </header>
 
           {!samples.length ? (
@@ -144,6 +145,7 @@ export function TelemetryLens({
           <footer>
             Normalized measurements · freshness: live ≤30s / stale ≤5m · no simulated connectivity
           </footer>
+        </div>
         </div>
       )}
     </section>

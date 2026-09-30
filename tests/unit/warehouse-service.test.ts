@@ -140,10 +140,10 @@ describe('Virtual Warehouse', () => {
     expect(result).toEqual({ ok: false, error: 'SERIAL_ALREADY_ASSIGNED' });
   });
 
-  it('materializes a BDFB template into a navigable BDFB device with telemetry bindings', async () => {
+  it('materializes the 96-point emulator into a six-slot physical BDFB chassis', async () => {
     const input = parseAssetTemplateJson({
       kind: 'DEVICE',
-      name: 'BDFB Emulator 96P',
+      name: 'BDFB Emulator 96P Chassis',
       manufacturer: 'Eaton',
       model: 'BDFB-EMU-96',
       category: 'Power distribution',
@@ -154,45 +154,42 @@ describe('Virtual Warehouse', () => {
         type: 'BDFB',
         shelves: [
           {
-            label: 'Feed A (synthetic)',
+            label: 'Main Shelf',
             frames: [
               {
-                label: 'Feed A',
+                label: 'A',
                 panels: [
                   {
-                    label: 'A1',
+                    label: 'Panel A1',
                     endpointCount: 24,
                     endpointVariant: 'BREAKER',
                     rawPointPrefix: '0_1_',
                   },
                   {
-                    label: 'A2',
+                    label: 'Panel A2',
                     endpointCount: 24,
                     endpointVariant: 'BREAKER',
                     rawPointPrefix: '0_2_',
                   },
+                  { label: 'Panel A3', endpoints: [] },
                 ],
               },
-            ],
-          },
-          {
-            label: 'Feed B (synthetic)',
-            frames: [
               {
-                label: 'Feed B',
+                label: 'B',
                 panels: [
                   {
-                    label: 'B1',
+                    label: 'Panel B1',
                     endpointCount: 24,
                     endpointVariant: 'BREAKER',
                     rawPointPrefix: '0_3_',
                   },
                   {
-                    label: 'B2',
+                    label: 'Panel B2',
                     endpointCount: 24,
                     endpointVariant: 'BREAKER',
                     rawPointPrefix: '0_4_',
                   },
+                  { label: 'Panel B3', endpoints: [] },
                 ],
               },
             ],
@@ -224,7 +221,6 @@ describe('Virtual Warehouse', () => {
       templateId: createdTemplate.value.id,
       rackId: rack.id,
       name: 'BDFB-LURIN-02',
-      serialNumber: 'EMU-BFDB-02',
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
@@ -232,17 +228,31 @@ describe('Virtual Warehouse', () => {
     expect(result.value.node.kind).toBe('DEVICE');
     if (result.value.node.kind !== 'DEVICE') return;
     expect(result.value.node.deviceType).toBe('BDFB');
-    expect(result.value.node.bdfb?.shelves).toHaveLength(2);
-    const endpoints =
-      result.value.node.bdfb?.shelves.flatMap((shelf) =>
-        shelf.frames.flatMap((frame) => frame.panels.flatMap((panel) => panel.endpoints)),
-      ) ?? [];
+    expect(result.value.node.bdfb?.shelves).toHaveLength(1);
+
+    const frames = result.value.node.bdfb?.shelves[0]?.frames ?? [];
+    expect(frames).toHaveLength(2);
+    expect(frames.map((frame) => frame.label)).toEqual(['A', 'B']);
+    expect(frames.flatMap((frame) => frame.panels).map((panel) => panel.label)).toEqual([
+      'Panel A1',
+      'Panel A2',
+      'Panel A3',
+      'Panel B1',
+      'Panel B2',
+      'Panel B3',
+    ]);
+
+    const endpoints = frames.flatMap((frame) =>
+      frame.panels.flatMap((panel) => panel.endpoints),
+    );
     expect(endpoints).toHaveLength(96);
+    expect(frames[0]?.panels[2]?.endpoints).toHaveLength(0);
+    expect(frames[1]?.panels[2]?.endpoints).toHaveLength(0);
     expect(endpoints[0]?.telemetry?.rawPointId).toBe('0_1_1');
     expect(endpoints.at(-1)?.telemetry?.rawPointId).toBe('0_4_24');
     expect(result.value.node.template?.deviceType).toBe('BDFB');
 
     const persisted = await topology.getById(result.value.node.id);
-    expect(persisted?.kind === 'DEVICE' ? persisted.bdfb?.shelves.length : 0).toBe(2);
+    expect(persisted?.kind === 'DEVICE' ? persisted.bdfb?.shelves.length : 0).toBe(1);
   });
 });

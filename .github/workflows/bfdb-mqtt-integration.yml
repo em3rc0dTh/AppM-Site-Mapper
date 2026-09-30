@@ -1,0 +1,76 @@
+name: BFDB MQTT transport integration
+
+on:
+  push:
+    branches: [feat/mk1-raw-build]
+    paths:
+      - '.github/workflows/bfdb-mqtt-integration.yml'
+      - 'scripts/local-dev.mjs'
+      - 'scripts/bfdb-lab-contract-publisher.mjs'
+      - 'src/dev/bfdb-emulator-seed.ts'
+      - 'src/modules/telemetry/**'
+      - 'src/app/api/telemetry/**'
+      - 'src/app/api/dev/seed-bfdb-emulator/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  real-broker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Start a real local Mosquitto broker
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mosquitto mosquitto-clients
+          sudo systemctl restart mosquitto
+          for i in {1..20}; do
+            if timeout 1 bash -c '</dev/tcp/127.0.0.1/1883' 2>/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+      - name: Run the Site Mapper MQTT commissioning launcher
+        env:
+          CI: 'true'
+          LOCAL_ADMIN_EMAIL: mqtt-ci@local.test
+          LOCAL_ADMIN_PASSWORD: Mqtt-Ci-Only-2026!
+          MQTT_BROKER_URL: mqtt://127.0.0.1:1883
+        run: |
+          npm run local:emulator -- --no-open > /tmp/site-mapper-mqtt.log 2>&1 &
+          for i in {1..90}; do
+            if grep -q '"message":"mqtt.subscribed"' /tmp/site-mapper-mqtt.log; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+      - name: Publish three-source four-panel batches into Mosquitto
+        run: node scripts/bfdb-lab-contract-publisher.mjs
+      - name: Require 288 of 288 mapped breaker readings
+        run: |
+          for i in {1..45}; do
+            if grep -q 'MQTT EMULATOR VERIFIED' /tmp/site-mapper-mqtt.log; then
+              grep 'EMU-BFDB-01: 96/96 raw points, 96/96 breakers, LIVE' /tmp/site-mapper-mqtt.log
+              grep 'EMU-BFDB-02: 96/96 raw points, 96/96 breakers, LIVE' /tmp/site-mapper-mqtt.log
+              grep 'EMU-BFDB-03: 96/96 raw points, 96/96 breakers, LIVE' /tmp/site-mapper-mqtt.log
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Show non-secret commissioning evidence on failure
+        if: failure()
+        run: |
+          if [ -f /tmp/site-mapper-mqtt.log ]; then
+            grep -E 'mqtt\.|telemetry\.|Error|Failed|UNKNOWN_SOURCE|EMULATOR' /tmp/site-mapper-mqtt.log || true
+          fi

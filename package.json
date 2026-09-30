@@ -21,7 +21,8 @@
     "migration:promote": "node --experimental-strip-types scripts/migrations/legacy/promote.ts",
     "test:certification": "vitest run tests/certification",
     "local:dev": "node scripts/local-dev.mjs",
-    "local:emulator": "node scripts/local-dev.mjs --mqtt"
+    "local:emulator": "node scripts/local-dev.mjs --mqtt",
+    "local:mongo-mqtt": "node scripts/local-mongo-mqtt.mjs"
   },
   "dependencies": {
     "mongodb": "7.6.0",

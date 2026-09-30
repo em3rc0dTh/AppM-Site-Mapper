@@ -215,9 +215,6 @@ export function validateLayoutDraft(value: unknown): string | null {
   }
   const rackNames = new Set<string>();
   for (const r of d.racks) {
-    const normalizedRackName = r.name.trim().toLocaleLowerCase();
-    if (rackNames.has(normalizedRackName)) return 'DUPLICATE_RACK_NAME';
-    rackNames.add(normalizedRackName);
     if (
       !named(r) ||
       ![r.x, r.y, r.width, r.depth, r.totalU].every(Number.isInteger) ||
@@ -231,6 +228,9 @@ export function validateLayoutDraft(value: unknown): string | null {
       r.totalU > 100
     )
       return 'INVALID_RACK';
+    const normalizedRackName = r.name.trim().toLocaleLowerCase();
+    if (rackNames.has(normalizedRackName)) return 'DUPLICATE_RACK_NAME';
+    rackNames.add(normalizedRackName);
     const p = d.positions.find((p) => p.id === r.positionId);
     if (!p) return 'INVALID_POSITION';
     if (occupied.has(p.id)) return 'POSITION_OCCUPIED';

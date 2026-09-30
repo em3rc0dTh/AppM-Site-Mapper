@@ -4,12 +4,18 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { BlueprintCanvas } from './blueprint-canvas';
 import { PolygonEditor } from '@/components/spatial/polygon-editor';
-import { validateLayoutDraft, type LayoutDraft } from '@/modules/spatial/domain/layout-draft';
+import {
+  findNextRackCoordinate,
+  validateLayoutDraft,
+  type LayoutDraft,
+} from '@/modules/spatial/domain/layout-draft';
 import { gridCoordinateToPoint, pointToGridCoordinate } from '@/modules/spatial/domain/grid';
 import { polygonInsidePolygon, type PointMm } from '@/modules/spatial/domain/geometry';
 
 type BoundaryEdit = { kind: 'room' } | { kind: 'bay'; id: string; name: string; polygon: PointMm[]; variant: 'BAY' | 'CONTAINER_CLUSTER' };
-type Placement = { kind: 'rack'; name: string; clusterId: string; width: number; depth: number; totalU: number } | { kind: 'position'; name: string; clusterId: string } | { kind: 'move'; id: string };
+type Placement =
+  | { kind: 'position'; name: string; clusterId: string }
+  | { kind: 'move'; id: string };
 
 export function RoomLayoutEditor({ roomId, initial, canWrite, focusRackId, focusBayId, focusPositionId }: {
   roomId: string; initial: LayoutDraft; canWrite: boolean;
@@ -53,7 +59,52 @@ export function RoomLayoutEditor({ roomId, initial, canWrite, focusRackId, focus
     } else if (f.get('kind') === 'position') {
       setPlacement({ kind: 'position', name, clusterId: String(f.get('clusterId')) });
     } else {
-      setPlacement({ kind: 'rack', name, clusterId: String(f.get('clusterId')), width: Number(f.get('width')), depth: Number(f.get('depth')), totalU: Number(f.get('totalU')) });
+      const clusterId = String(f.get('clusterId'));
+      const width = Number(f.get('width'));
+      const depth = Number(f.get('depth'));
+      const totalU = Number(f.get('totalU'));
+      const coordinate = findNextRackCoordinate(draft, clusterId, width, depth);
+
+      if (!coordinate) {
+        setError(
+          'No valid left-to-right rack slot is available. Check Bay width, Room depth clearance and spacing to the next Bay.',
+        );
+        return;
+      }
+
+      const existing = draft.positions.find(
+        (position) =>
+          position.row === coordinate.row &&
+          position.column === coordinate.column &&
+          position.clusterId === clusterId &&
+          !draft.racks.some((rack) => rack.positionId === position.id),
+      );
+      const position =
+        existing ??
+        {
+          id: crypto.randomUUID(),
+          name: `${name} anchor`,
+          clusterId,
+          ...coordinate,
+        };
+      const rackId = crypto.randomUUID();
+      const next: LayoutDraft = {
+        ...draft,
+        positions: existing ? draft.positions : [...draft.positions, position],
+        racks: [
+          ...draft.racks,
+          {
+            id: rackId,
+            name,
+            positionId: position.id,
+            width,
+            depth,
+            totalU,
+          },
+        ],
+      };
+
+      if (validChange(next)) setSelected(rackId);
     }
   }
   function place(point: PointMm) {
@@ -68,14 +119,22 @@ export function RoomLayoutEditor({ roomId, initial, canWrite, focusRackId, focus
     if (existing && (placement.kind === 'position' || existing.clusterId !== placement.clusterId || draft.racks.some((r) => r.positionId === existing.id))) {
       setError('This cell already belongs to a position or rack.'); return;
     }
-    const position = existing ?? { id: crypto.randomUUID(), name: placement.kind === 'rack' ? `${placement.name} anchor` : placement.name, clusterId: placement.clusterId, ...coordinate };
-    const next: LayoutDraft = { ...draft, positions: existing ? draft.positions : [...draft.positions, position] };
-    let id = position.id;
-    if (placement.kind === 'rack') {
-      id = crypto.randomUUID();
-      next.racks = [...draft.racks, { id, name: placement.name, positionId: position.id, width: placement.width, depth: placement.depth, totalU: placement.totalU }];
+    const position =
+      existing ??
+      {
+        id: crypto.randomUUID(),
+        name: placement.name,
+        clusterId: placement.clusterId,
+        ...coordinate,
+      };
+    const next: LayoutDraft = {
+      ...draft,
+      positions: existing ? draft.positions : [...draft.positions, position],
+    };
+    if (validChange(next)) {
+      setSelected(position.id);
+      setPlacement(null);
     }
-    if (validChange(next)) { setSelected(id); setPlacement(null); }
   }
   function remove() {
     if (draft.clusters.some((c) => c.id === selected)) {
@@ -153,7 +212,7 @@ export function RoomLayoutEditor({ roomId, initial, canWrite, focusRackId, focus
           <label>Footprint width (mm)<input name="width" type="number" min="1" max="10000" step="1" defaultValue="600" required /></label>
           <label>Footprint depth (mm)<input name="depth" type="number" min="1" max="10000" step="1" defaultValue="600" required /></label>
           <label>Capacity (U)<input name="totalU" type="number" min="1" max="100" step="1" defaultValue="42" required /></label>
-          <button>Choose placement on canvas</button>
+          <button>Add rack left-to-right</button>
         </form></details>
         <details><summary>+ Place Empty Position</summary><form onSubmit={add}>
           <input type="hidden" name="kind" value="position" /><label>Name<input name="name" required maxLength={120} /></label>{selectBay}
@@ -164,12 +223,20 @@ export function RoomLayoutEditor({ roomId, initial, canWrite, focusRackId, focus
           <option value="">Select an object</option>{[...draft.clusters, ...draft.positions, ...draft.racks].map((n) => <option key={n.id} value={n.id}>{n.name}</option>)}
         </select>
         {bay && <button type="button" onClick={() => { setPlacement(null); setBoundary({ kind: 'bay', ...bay, variant: bay.variant ?? 'BAY' }); }}>EDIT BAY BOUNDARY</button>}
-        {position && <><p>Anchor: {position.row}-{position.column}</p><button type="button" onClick={() => setPlacement({ kind: 'move', id: position.id })}>Move anchor on canvas</button></>}
-        {rack && <label>Assign to an empty position in this bay
-          <select value={rack.positionId} onChange={(e) => validChange({ ...draft, racks: draft.racks.map((r) => r.id === rack.id ? { ...r, positionId: e.target.value } : r) })}>
-            {draft.positions.filter((p) => p.id === rack.positionId || (p.clusterId === position?.clusterId && !draft.racks.some((r) => r.positionId === p.id))).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-        </label>}
+        {position && !rack && (
+          <>
+            <p>Anchor: {position.row}-{position.column}</p>
+            <button type="button" onClick={() => setPlacement({ kind: 'move', id: position.id })}>
+              Move anchor on canvas
+            </button>
+          </>
+        )}
+        {rack && position && (
+          <p>
+            Placement: automatic left-to-right · top-anchored to Bay · {position.row}-
+            {position.column}
+          </p>
+        )}
         {rack && <form key={rack.id} onSubmit={(e) => {
           e.preventDefault(); const f = new FormData(e.currentTarget);
           validChange({ ...draft, racks: draft.racks.map((r) => r.id === rack.id ? { ...r, name: String(f.get('name')).trim(), width: Number(f.get('width')), depth: Number(f.get('depth')) } : r) });

@@ -95,6 +95,7 @@ body {
   display: none;
 }
 .zip-explore,
+.zip-warehouse,
 .zip-account,
 .zip-more {
   height: 40px;
@@ -124,6 +125,9 @@ body {
 }
 .zip-account {
   min-width: 150px;
+}
+.zip-warehouse {
+  min-width: 122px;
 }
 .zip-shell-error {
   position: fixed;
@@ -706,6 +710,7 @@ body {
 }
 .app-shell--blueprint .mk-search-trigger,
 .app-shell--blueprint .zip-explore,
+.app-shell--blueprint .zip-warehouse,
 .app-shell--blueprint .zip-more {
   background: #0f151d;
   border-color: #253442;
@@ -3084,6 +3089,7 @@ body {
 }
 .app-shell--power .mk-search-trigger,
 .app-shell--power .zip-explore,
+.app-shell--power .zip-warehouse,
 .app-shell--power .zip-more {
   display: none !important;
 }

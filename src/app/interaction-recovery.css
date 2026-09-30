@@ -1044,7 +1044,6 @@
   z-index: 4;
 }
 
-
 /* Clean-room topology creation surfaces. */
 /* /network is the clean-room entry point and must use the same light operational
    language as the rest of Site Mapper. Legacy generic panel/form rules are dark. */

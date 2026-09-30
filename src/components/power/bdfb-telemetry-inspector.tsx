@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { getBdfbPresentation } from '@/modules/power/application/bdfb-presentation';
 import { aggregateBdfbTelemetry } from '@/modules/telemetry/application/bdfb-telemetry-aggregate';
@@ -64,10 +64,7 @@ export function BdfbTelemetryInspector({
     ? selectedPanel.endpoints
     : panels.flatMap((panel) => panel.endpoints);
 
-  const aggregate = useMemo(
-    () => aggregateBdfbTelemetry(scopeEndpoints, telemetry?.breakerReadings ?? []),
-    [scopeEndpoints, telemetry],
-  );
+  const aggregate = aggregateBdfbTelemetry(scopeEndpoints, telemetry?.breakerReadings ?? []);
 
   const hasA = feeds?.includes('A') ?? false;
   const hasB = feeds?.includes('B') ?? false;

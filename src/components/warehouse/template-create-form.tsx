@@ -89,8 +89,7 @@ export function TemplateCreateForm() {
         imported?: number;
       };
       if (!response.ok) {
-        const index =
-          typeof data.index === 'number' ? ` · item ${data.index + 1}` : '';
+        const index = typeof data.index === 'number' ? ` · item ${data.index + 1}` : '';
         const imported =
           typeof data.imported === 'number' && data.imported > 0
             ? ` · ${data.imported} imported before failure`

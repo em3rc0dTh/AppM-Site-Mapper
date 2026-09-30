@@ -10,6 +10,24 @@ export interface RectMm {
   readonly depth: number;
 }
 
+export interface PolygonBounds {
+  readonly minX: number;
+  readonly minY: number;
+  readonly maxX: number;
+  readonly maxY: number;
+  readonly width: number;
+  readonly depth: number;
+}
+
+export function polygonBounds(points: readonly PointMm[]): PolygonBounds | null {
+  if (!points.length) return null;
+  const minX = Math.min(...points.map((point) => point.x));
+  const minY = Math.min(...points.map((point) => point.y));
+  const maxX = Math.max(...points.map((point) => point.x));
+  const maxY = Math.max(...points.map((point) => point.y));
+  return { minX, minY, maxX, maxY, width: maxX - minX, depth: maxY - minY };
+}
+
 export function polygonArea(points: readonly PointMm[]): number {
   if (points.length < 3) {
     return 0;
@@ -153,6 +171,56 @@ function properCrossing(a: PointMm, b: PointMm, c: PointMm, d: PointMm): boolean
   const cdA = side(c, d, a);
   const cdB = side(c, d, b);
   return abC * abD < 0 && cdA * cdB < 0;
+}
+
+function pointStrictlyInPolygon(point: PointMm, polygon: readonly PointMm[]): boolean {
+  for (let index = 0; index < polygon.length; index += 1) {
+    if (pointOnSegment(point, polygon[index]!, polygon[(index + 1) % polygon.length]!)) return false;
+  }
+  return pointInPolygon(point, polygon);
+}
+
+export function polygonsOverlapArea(
+  left: readonly PointMm[],
+  right: readonly PointMm[],
+): boolean {
+  if (!isValidPolygon(left) || !isValidPolygon(right)) return false;
+
+  for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1) {
+    const a = left[leftIndex]!;
+    const b = left[(leftIndex + 1) % left.length]!;
+    for (let rightIndex = 0; rightIndex < right.length; rightIndex += 1) {
+      const c = right[rightIndex]!;
+      const d = right[(rightIndex + 1) % right.length]!;
+      if (properCrossing(a, b, c, d)) return true;
+    }
+  }
+
+  if (left.some((point) => pointStrictlyInPolygon(point, right))) return true;
+  if (right.some((point) => pointStrictlyInPolygon(point, left))) return true;
+
+  const centroid = (polygon: readonly PointMm[]) => ({
+    x: polygon.reduce((sum, point) => sum + point.x, 0) / polygon.length,
+    y: polygon.reduce((sum, point) => sum + point.y, 0) / polygon.length,
+  });
+
+  return (
+    pointStrictlyInPolygon(centroid(left), right) ||
+    pointStrictlyInPolygon(centroid(right), left)
+  );
+}
+
+export function rectOverlapsPolygon(rect: RectMm, polygon: readonly PointMm[]): boolean {
+  if (rect.width <= 0 || rect.depth <= 0) return false;
+  return polygonsOverlapArea(
+    [
+      { x: rect.x, y: rect.y },
+      { x: rect.x + rect.width, y: rect.y },
+      { x: rect.x + rect.width, y: rect.y + rect.depth },
+      { x: rect.x, y: rect.y + rect.depth },
+    ],
+    polygon,
+  );
 }
 
 export function rectInsidePolygon(rect: RectMm, polygon: readonly PointMm[]): boolean {

@@ -51,10 +51,20 @@ export function polygonArea(points: readonly PointMm[]): number {
 
 export function isValidPolygon(points: unknown): points is readonly PointMm[] {
   if (!Array.isArray(points) || points.length < 3 || points.length > 256) return false;
-  if (!points.every((p) => p && typeof p === 'object' &&
-    typeof p.x === 'number' && typeof p.y === 'number' &&
-    Number.isFinite(p.x) && Number.isFinite(p.y) &&
-    Math.abs(p.x) <= 1_000_000 && Math.abs(p.y) <= 1_000_000)) return false;
+  if (
+    !points.every(
+      (p) =>
+        p &&
+        typeof p === 'object' &&
+        typeof p.x === 'number' &&
+        typeof p.y === 'number' &&
+        Number.isFinite(p.x) &&
+        Number.isFinite(p.y) &&
+        Math.abs(p.x) <= 1_000_000 &&
+        Math.abs(p.y) <= 1_000_000,
+    )
+  )
+    return false;
   if (!Number.isFinite(polygonArea(points)) || polygonArea(points) <= 1e-7) return false;
   for (let i = 0; i < points.length; i += 1) {
     const a = points[i]!;
@@ -76,21 +86,32 @@ export function parsePolygon(value: unknown): PointMm[] | null {
 }
 
 function segmentsIntersect(a: PointMm, b: PointMm, c: PointMm, d: PointMm): boolean {
-  return properCrossing(a, b, c, d) || pointOnSegment(a, c, d) ||
-    pointOnSegment(b, c, d) || pointOnSegment(c, a, b) || pointOnSegment(d, a, b);
+  return (
+    properCrossing(a, b, c, d) ||
+    pointOnSegment(a, c, d) ||
+    pointOnSegment(b, c, d) ||
+    pointOnSegment(c, a, b) ||
+    pointOnSegment(d, a, b)
+  );
 }
 
 /** Split edges at boundary contacts so concave escapes through vertices are rejected too. */
-export function polygonInsidePolygon(inner: readonly PointMm[], outer: readonly PointMm[]): boolean {
+export function polygonInsidePolygon(
+  inner: readonly PointMm[],
+  outer: readonly PointMm[],
+): boolean {
   if (!isValidPolygon(inner) || !isValidPolygon(outer)) return false;
   if (!inner.every((point) => pointInPolygon(point, outer))) return false;
   for (let i = 0; i < inner.length; i += 1) {
-    const a = inner[i]!, b = inner[(i + 1) % inner.length]!;
-    const dx = b.x - a.x, dy = b.y - a.y;
+    const a = inner[i]!,
+      b = inner[(i + 1) % inner.length]!;
+    const dx = b.x - a.x,
+      dy = b.y - a.y;
     const length2 = dx * dx + dy * dy;
     const cuts = [0, 1];
     for (let j = 0; j < outer.length; j += 1) {
-      const c = outer[j]!, d = outer[(j + 1) % outer.length]!;
+      const c = outer[j]!,
+        d = outer[(j + 1) % outer.length]!;
       if (properCrossing(a, b, c, d)) return false;
       if (pointOnSegment(c, a, b)) cuts.push(((c.x - a.x) * dx + (c.y - a.y) * dy) / length2);
     }
@@ -175,15 +196,13 @@ function properCrossing(a: PointMm, b: PointMm, c: PointMm, d: PointMm): boolean
 
 function pointStrictlyInPolygon(point: PointMm, polygon: readonly PointMm[]): boolean {
   for (let index = 0; index < polygon.length; index += 1) {
-    if (pointOnSegment(point, polygon[index]!, polygon[(index + 1) % polygon.length]!)) return false;
+    if (pointOnSegment(point, polygon[index]!, polygon[(index + 1) % polygon.length]!))
+      return false;
   }
   return pointInPolygon(point, polygon);
 }
 
-export function polygonsOverlapArea(
-  left: readonly PointMm[],
-  right: readonly PointMm[],
-): boolean {
+export function polygonsOverlapArea(left: readonly PointMm[], right: readonly PointMm[]): boolean {
   if (!isValidPolygon(left) || !isValidPolygon(right)) return false;
 
   for (let leftIndex = 0; leftIndex < left.length; leftIndex += 1) {
@@ -205,8 +224,7 @@ export function polygonsOverlapArea(
   });
 
   return (
-    pointStrictlyInPolygon(centroid(left), right) ||
-    pointStrictlyInPolygon(centroid(right), left)
+    pointStrictlyInPolygon(centroid(left), right) || pointStrictlyInPolygon(centroid(right), left)
   );
 }
 
@@ -224,11 +242,19 @@ export function rectOverlapsPolygon(rect: RectMm, polygon: readonly PointMm[]): 
 }
 
 export function rectInsidePolygon(rect: RectMm, polygon: readonly PointMm[]): boolean {
-  if (![rect.x, rect.y, rect.width, rect.depth].every(Number.isFinite) || rect.width <= 0 || rect.depth <= 0) return false;
-  return polygonInsidePolygon([
-    { x: rect.x, y: rect.y },
-    { x: rect.x + rect.width, y: rect.y },
-    { x: rect.x + rect.width, y: rect.y + rect.depth },
-    { x: rect.x, y: rect.y + rect.depth },
-  ], polygon);
+  if (
+    ![rect.x, rect.y, rect.width, rect.depth].every(Number.isFinite) ||
+    rect.width <= 0 ||
+    rect.depth <= 0
+  )
+    return false;
+  return polygonInsidePolygon(
+    [
+      { x: rect.x, y: rect.y },
+      { x: rect.x + rect.width, y: rect.y },
+      { x: rect.x + rect.width, y: rect.y + rect.depth },
+      { x: rect.x, y: rect.y + rect.depth },
+    ],
+    polygon,
+  );
 }

@@ -29,8 +29,7 @@ export async function updateStructureBoundary(
   if (!polygonInsidePolygon(polygon, parent.polygon)) return failure('BOUNDARY_OUTSIDE_SITE');
 
   const trail = await new TopologyService(repo).getTrail(id);
-  if (trail.some((ancestor) => ancestor.lifecycle !== 'ACTIVE'))
-    return failure('ENTITY_ARCHIVED');
+  if (trail.some((ancestor) => ancestor.lifecycle !== 'ACTIVE')) return failure('ENTITY_ARCHIVED');
   if (node.updatedAt !== input.version) return failure('BOUNDARY_CONFLICT');
   if (!repo.replaceIfVersion) return failure('ATOMIC_BOUNDARY_STORAGE_REQUIRED');
 

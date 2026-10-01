@@ -29,14 +29,16 @@ export async function PUT(request: Request, context: Context) {
   }
 
   const body: unknown = await request.json().catch(() => null);
-  if (!isRecord(body) || !Array.isArray(body.accessPorts) || !body.accessPorts.every(isAccessPort)) {
+  if (
+    !isRecord(body) ||
+    !Array.isArray(body.accessPorts) ||
+    !body.accessPorts.every(isAccessPort)
+  ) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
   const redundancy: PowerRedundancyPolicy | null =
-    body.redundancy === 'NONE' || body.redundancy === 'A_B_REQUIRED'
-      ? body.redundancy
-      : null;
+    body.redundancy === 'NONE' || body.redundancy === 'A_B_REQUIRED' ? body.redundancy : null;
   if (!redundancy) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }

@@ -1,4 +1,4 @@
-import { requireRuntimeSecret } from '@/config/env';
+import { parseAppEnvironment, requireRuntimeSecret, type AppEnvironment } from '@/config/env';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
 import type { TelemetryHistoryWriterDiagnostics } from '@/modules/telemetry/application/telemetry-history-writer';
@@ -42,6 +42,25 @@ export interface TelemetryRuntime {
   readonly hub: TelemetryHub;
   readonly service: TelemetryService;
   readonly diagnostics: () => TelemetryDiagnostics;
+}
+
+export function validateMqttBrokerUrl(value: string, environment: AppEnvironment): string {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new Error('MQTT_BROKER_URL must be a valid mqtt:// or mqtts:// URL.');
+  }
+
+  if (url.protocol !== 'mqtt:' && url.protocol !== 'mqtts:') {
+    throw new Error('MQTT_BROKER_URL must use mqtt:// or mqtts://.');
+  }
+
+  if (environment === 'production' && url.protocol !== 'mqtts:') {
+    throw new Error('Production telemetry requires MQTT_BROKER_URL to use mqtts://.');
+  }
+
+  return value;
 }
 
 function positiveInt(value: string | undefined, fallback: number): number {
@@ -123,7 +142,10 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     let source: NativeMqttSource | null = null;
 
     if (enabled) {
-      const brokerUrl = requireRuntimeSecret('MQTT_BROKER_URL', process.env.MQTT_BROKER_URL);
+      const brokerUrl = validateMqttBrokerUrl(
+        requireRuntimeSecret('MQTT_BROKER_URL', process.env.MQTT_BROKER_URL),
+        parseAppEnvironment(process.env.APP_ENV),
+      );
       source = new NativeMqttSource(
         {
           brokerUrl,

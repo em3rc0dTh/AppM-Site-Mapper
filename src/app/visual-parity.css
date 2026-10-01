@@ -81,15 +81,34 @@ body {
   border-right: 1px solid var(--zip-border);
 }
 .zip-topbar .mk-search-trigger {
+  position: relative;
+  z-index: 90;
   margin: auto 19px auto auto !important;
   width: 260px;
   min-width: 260px;
   height: 40px;
+  flex: 0 0 260px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  overflow: hidden;
   background: #fff;
   border: 1px solid #cfd6dd;
   border-radius: 4px;
   padding: 0 14px;
+  color: #17202a;
   font-size: 14px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.zip-topbar .mk-search-trigger > span {
+  display: inline !important;
+  min-width: 0;
+  overflow: hidden;
+  color: #17202a !important;
+  opacity: 1 !important;
+  text-overflow: ellipsis;
 }
 .zip-topbar .mk-search-trigger kbd {
   display: none;
@@ -152,7 +171,7 @@ body {
   z-index: 85;
   top: 0;
   left: 310px;
-  right: 610px;
+  right: 790px;
   height: 67px;
   margin: 0 !important;
   padding: 0 31px;
@@ -729,11 +748,12 @@ body {
   }
   .zip-app-shell.app-shell--immersive .breadcrumbs {
     left: 240px;
-    right: 430px;
+    right: 565px;
   }
   .zip-topbar .mk-search-trigger {
     width: 190px;
     min-width: 190px;
+    flex-basis: 190px;
   }
   .operational-layout {
     grid-template-columns: 240px minmax(0, 1fr) 300px !important;

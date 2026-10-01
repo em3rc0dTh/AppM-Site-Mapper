@@ -44,7 +44,11 @@ export default async function ConnectPowerPage({
     },
   };
   const resolved = resolvePowerEndpoint(owner, sourceEndpoint);
-  if (!resolved.ok || !resolved.value.breakerHolder || resolved.value.breakerHolder.variant !== 'BREAKER') {
+  if (
+    !resolved.ok ||
+    !resolved.value.breakerHolder ||
+    resolved.value.breakerHolder.variant !== 'BREAKER'
+  ) {
     notFound();
   }
 
@@ -54,8 +58,7 @@ export default async function ConnectPowerPage({
   }
 
   const selfHref = await topologyService.buildDeepLink(sourceOwner.id);
-  const returnHref =
-    `${selfHref}?panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(breakerHolder.id)}`;
+  const returnHref = `${selfHref}?panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(breakerHolder.id)}`;
 
   const activePaths = await (await createPowerRepository()).listActive();
   const existing = activePaths.find((path) => {
@@ -74,7 +77,10 @@ export default async function ConnectPowerPage({
           <div>
             <p>POWER / COMMISSIONING</p>
             <h1>Breaker already connected</h1>
-            <span>This breaker already has an active PowerPath. Trace or review it before changing the physical model.</span>
+            <span>
+              This breaker already has an active PowerPath. Trace or review it before changing the
+              physical model.
+            </span>
           </div>
           <Link href={returnHref}>← Back to breaker</Link>
         </header>
@@ -137,9 +143,7 @@ export default async function ConnectPowerPage({
         panelLabel: panel.label,
         breakerId: breakerHolder.id,
         breakerLabel: breakerHolder.label,
-        ...(breakerHolder.capacity === undefined
-          ? {}
-          : { capacity: breakerHolder.capacity }),
+        ...(breakerHolder.capacity === undefined ? {} : { capacity: breakerHolder.capacity }),
       }}
       destinations={destinations}
       returnHref={returnHref}

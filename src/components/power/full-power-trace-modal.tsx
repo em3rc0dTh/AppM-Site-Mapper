@@ -25,7 +25,7 @@ function FeedBadge({ feed }: Readonly<{ feed: 'A' | 'B' }>) {
 function SourceCard({
   feed,
   leg,
-}: Readonly<{ feed: 'A' | 'B'; leg?: FullPowerTraceLeg }>) {
+}: Readonly<{ feed: 'A' | 'B'; leg: FullPowerTraceLeg | undefined }>) {
   return (
     <article className="trace-source-card" data-feed={feed} data-empty={leg ? 'false' : 'true'}>
       <header>
@@ -65,8 +65,8 @@ function DestinationCard({
   feedB,
 }: Readonly<{
   trace: FullPowerTrace;
-  feedA?: FullPowerTraceLeg;
-  feedB?: FullPowerTraceLeg;
+  feedA: FullPowerTraceLeg | undefined;
+  feedB: FullPowerTraceLeg | undefined;
 }>) {
   const portA = feedA?.target.accessPort;
   const portB = feedB?.target.accessPort;

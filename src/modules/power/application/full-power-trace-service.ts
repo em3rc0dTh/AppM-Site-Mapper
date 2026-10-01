@@ -167,6 +167,10 @@ export class FullPowerTraceService {
       : rawPointId
         ? 'MAPPED'
         : 'UNMAPPED';
+    const voltageV = metricValue(reading?.metrics.voltageV);
+    const currentA = metricValue(reading?.metrics.currentA);
+    const powerW = metricValue(reading?.metrics.powerW);
+    const energyKwh = metricValue(reading?.metrics.energyKwh);
 
     return {
       pathId: path.id,
@@ -192,18 +196,10 @@ export class FullPowerTraceService {
         ...(rawPointId ? { rawPointId } : {}),
         ...(reading?.sourceIdentity ? { sourceIdentity: reading.sourceIdentity } : {}),
         ...(reading?.receivedAt ? { receivedAt: reading.receivedAt } : {}),
-        ...(metricValue(reading?.metrics.voltageV) === undefined
-          ? {}
-          : { voltageV: metricValue(reading?.metrics.voltageV) }),
-        ...(metricValue(reading?.metrics.currentA) === undefined
-          ? {}
-          : { currentA: metricValue(reading?.metrics.currentA) }),
-        ...(metricValue(reading?.metrics.powerW) === undefined
-          ? {}
-          : { powerW: metricValue(reading?.metrics.powerW) }),
-        ...(metricValue(reading?.metrics.energyKwh) === undefined
-          ? {}
-          : { energyKwh: metricValue(reading?.metrics.energyKwh) }),
+        ...(voltageV !== undefined ? { voltageV } : {}),
+        ...(currentA !== undefined ? { currentA } : {}),
+        ...(powerW !== undefined ? { powerW } : {}),
+        ...(energyKwh !== undefined ? { energyKwh } : {}),
       },
     };
   }

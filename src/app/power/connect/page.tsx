@@ -4,7 +4,6 @@ import { ConnectPowerForm } from '@/components/power/connect-power-form';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import type { PowerEndpoint } from '@/modules/power/domain/entities';
 import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
-import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
@@ -66,7 +65,8 @@ export default async function ConnectPowerPage({
     (node): node is Extract<TopologyNode, { kind: 'DEVICE' | 'EQUIPMENT' }> =>
       (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') &&
       node.lifecycle === 'ACTIVE' &&
-      node.id !== sourceOwner.id,
+      node.id !== sourceOwner.id &&
+      Boolean(node.accessPorts?.some((port) => port.kind === 'POWER')),
   );
 
   const destinations = await Promise.all(

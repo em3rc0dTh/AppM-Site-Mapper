@@ -6,6 +6,7 @@ import {
   MemoryIdentityRepository,
 } from '@/modules/identity/infrastructure/memory-identity-repository';
 import { InventoryService } from '@/modules/inventory/application/inventory-service';
+import { PowerContractService } from '@/modules/inventory/application/power-contract-service';
 import { BdfbService } from '@/modules/power/application/bdfb-service';
 import { PowerService } from '@/modules/power/application/power-service';
 import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
@@ -136,10 +137,19 @@ describe('MK1 system golden path', () => {
         category: 'BDFB',
       }),
     );
+    const loadDevice = requireSuccess(
+      await topology.create({
+        kind: 'DEVICE',
+        parentId: rack.id,
+        name: 'Load Chassis-01',
+        serialNumber: 'CERT-LOAD-DEVICE-001',
+        category: 'LOAD CHASSIS',
+      }),
+    );
     const equipment = requireSuccess(
       await topology.create({
         kind: 'EQUIPMENT',
-        parentId: rack.id,
+        parentId: loadDevice.id,
         name: 'Load-01',
         serialNumber: 'CERT-EQUIPMENT-001',
         category: 'LOAD',
@@ -147,8 +157,8 @@ describe('MK1 system golden path', () => {
     );
 
     expect(device.parentId).toBe(rack.id);
-    expect(equipment.parentId).toBe(rack.id);
-    expect(device.parentId).toBe(equipment.parentId);
+    expect(loadDevice.parentId).toBe(rack.id);
+    expect(equipment.parentId).toBe(loadDevice.id);
 
     const deepLink = await topology.buildDeepLink(device.id);
     const resolved = requireSuccess(
@@ -223,6 +233,13 @@ describe('MK1 system golden path', () => {
       }),
     );
 
+    requireSuccess(
+      await new PowerContractService(topologyRepository).update(equipment.id, {
+        accessPorts: [{ id: 'cert-power-a', label: 'Power A', kind: 'POWER', feed: 'A' }],
+        redundancy: 'NONE',
+      }),
+    );
+
     const powerRepository = new MemoryPowerRepository();
     const power = new PowerService(topologyRepository, powerRepository);
     const path = requireSuccess(
@@ -236,7 +253,7 @@ describe('MK1 system golden path', () => {
             breakerHolderId: 'cert-breaker-1',
           },
         },
-        target: { entityId: equipment.id },
+        target: { entityId: equipment.id, internal: { accessPortId: 'cert-power-a' } },
         feed: 'A',
         label: 'Certification Feed A',
       }),

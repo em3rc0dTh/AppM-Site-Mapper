@@ -207,10 +207,26 @@ export default async function TopologyNodePage({
       const counterpartRack = [...counterpartTrail]
         .reverse()
         .find((item) => item.kind === 'CONTAINER_RACK');
+      const mountedDevice = [...counterpartTrail]
+        .reverse()
+        .find(
+          (item) =>
+            item.kind === 'DEVICE' &&
+            counterpartRack?.kind === 'CONTAINER_RACK' &&
+            item.parentId === counterpartRack.id,
+        );
       const allocation =
         counterpartRack?.kind === 'CONTAINER_RACK'
           ? counterpartRack.cas.find(
-              (range) => range.occupantId === counterpart.entityId && range.state === 'EQUIPPED',
+              (range) =>
+                range.occupantId === (mountedDevice?.id ?? counterpart.entityId) &&
+                range.state === 'EQUIPPED',
+            )
+          : undefined;
+      const accessPort =
+        counterpartNode?.kind === 'DEVICE' || counterpartNode?.kind === 'EQUIPMENT'
+          ? counterpartNode.accessPorts?.find(
+              (port) => port.id === counterpart.internal?.accessPortId,
             )
           : undefined;
       const mount =
@@ -227,6 +243,7 @@ export default async function TopologyNodePage({
           : '/power',
         counterpartContext:
           counterpartTrail.map((item) => item.name).join(' / ') || counterpart.entityId,
+        ...(accessPort ? { accessPortLabel: accessPort.label } : {}),
         ...(mount ? { mount } : {}),
       });
     }

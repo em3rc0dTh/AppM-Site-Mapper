@@ -89,8 +89,8 @@ LOGIN
   └── si no ─────────────────► NETWORK
 ```
 
+## FALTA LA VISTA HOME en donde se muestran los BDFB pineados y la información "telemétrica" de cada uno de ellos.
 
-## FALTA LA VISTA HOME en donde se muestran los BDFB pineados y la información "telemétrica" de cada uno de ellos. 
 ---
 
 # SCREEN 01 — NETWORK
@@ -172,13 +172,13 @@ Ahora vemos **qué contiene este Site**. --> Repite la misma estructura que el s
 └────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Importante: si no tenemos geometría real del Site, **no fingimos que esto es un plano arquitectónico**. Puede ser una representación topológica. La vista está dibujada en un canvas por tanto, siempre muestra salvo que no seteemos nada aún. 
+Importante: si no tenemos geometría real del Site, **no fingimos que esto es un plano arquitectónico**. Puede ser una representación topológica. La vista está dibujada en un canvas por tanto, siempre muestra salvo que no seteemos nada aún.
 
 ---
 
 # SCREEN 03 — STRUCTURE
 
-Entramos a una estructura. 
+Entramos a una estructura.
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
@@ -213,7 +213,7 @@ Es navegación jerárquica. Todavía **no estamos en Blueprint**. --> Estos "lev
 
 # SCREEN 04 — LEVEL
 
-Este es el puente hacia el espacio físico. 
+Este es el puente hacia el espacio físico.
 Se encuentra delimitado por la forma del Structure. Y me permite visualizar en la parte izquierda los levels presentes para moverme entre ellos (así no tengan data)
 
 ```text
@@ -263,7 +263,7 @@ Recuerda que los racks no se colocan en el aire, tienen una bahía definida (que
 │                   │                                                                     │                   │
 │ ▼ Lima            │       01      02      03      04      05      06      07           │ ROOM 202          │
 │   ▼ Building A    │    ┌───────┬───────┬───────┬───────┬───────┬───────┬───────┐     │                   │
-│     ▼ Level 02    │ A  │       │       │       │       │       │       │       │     │ Devices: #Devices |  
+│     ▼ Level 02    │ A  │       │       │       │       │       │       │       │     │ Devices: #Devices |
 │       ● Room 202  │    ├───────┼───────┼───────┼───────┼───────┼───────┼───────┤     │                   │
 │       ○ Room 203  │ B  │       │┌─────┐│       │       │┌─────┐│       │       │     │                   │
 │                   │    │       ││R-021││       │       ││R-025││       │       │     │ Grid DEFAULT      │
@@ -396,7 +396,8 @@ Al abrir R-023 no destruyo Room.
 │ Position D05                  Room 202                  [ LOCATE ]                                  │
 └────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
-NOTA: SE PRESENTAN LOS DEVICES PRESENTES EN EL RACK, SE PRESENTAN LOS SLOTS VACÍOS COMO "AVAILABLE" Y, recuerda en cada asociación de un device (BDFB, OCCUPIED SPACE, ETC) SIEMPRE SE DEJA UN SLOT ARRIBA Y UNO ABAJO PARA MONTAJE. 
+
+NOTA: SE PRESENTAN LOS DEVICES PRESENTES EN EL RACK, SE PRESENTAN LOS SLOTS VACÍOS COMO "AVAILABLE" Y, recuerda en cada asociación de un device (BDFB, OCCUPIED SPACE, ETC) SIEMPRE SE DEJA UN SLOT ARRIBA Y UNO ABAJO PARA MONTAJE.
 ---
 
 # SCREEN 08 — RACK ELEVATION
@@ -478,8 +479,8 @@ El Rack permanece visible.
 └────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Aquí se respetan las separaciones contractuales entre identidad, especificaciones, placement, operational state y telemetry state. :chatgpt-content-reference{index="6"} 
-Nota: En la parte izquierda ves toda la jerarquía en árbol, no los racks occupied. 
+Aquí se respetan las separaciones contractuales entre identidad, especificaciones, placement, operational state y telemetry state. :chatgpt-content-reference{index="6"}
+Nota: En la parte izquierda ves toda la jerarquía en árbol, no los racks occupied.
 
 ---
 
@@ -487,8 +488,8 @@ Nota: En la parte izquierda ves toda la jerarquía en árbol, no los racks occup
 
 `TRACE POWER`.
 
-El centro cambia de blueprint físico a **grafo eléctrico**. Ok, este paso muestra en un popup la data siguiente, cuando se selecciona un circuit breaker con telemetría, al hacer doble click abre esta pestaña. 
-¿Qué hace? te muestra el punto A y punto B de ese circuit breaker, de dónde viene y de dónde se provisiona. 
+El centro cambia de blueprint físico a **grafo eléctrico**. Ok, este paso muestra en un popup la data siguiente, cuando se selecciona un circuit breaker con telemetría, al hacer doble click abre esta pestaña.
+¿Qué hace? te muestra el punto A y punto B de ese circuit breaker, de dónde viene y de dónde se provisiona.
 
 El shell no cambia.
 
@@ -579,7 +580,7 @@ Ahora vuelve a aparecer una representación **física**.
 ```
 
 La jerarquía contractual que estamos materializando aquí es `BDFB → Shelf → Frame → Panel → Holder/Breaker`. :chatgpt-content-reference{index="8"}
-Recuerda, puede o no puede tener frame, eso se setea cuando creas el device (si es un bdfb), entonces, muestras ello o no, todo depende de la configuración pero siempre lo usas como rferencia de posición. 
+Recuerda, puede o no puede tener frame, eso se setea cuando creas el device (si es un bdfb), entonces, muestras ello o no, todo depende de la configuración pero siempre lo usas como rferencia de posición.
 Por otro lado, los panels van uno bajo el otro dentro del mismo frame, nunca derecha.
 ---
 
@@ -700,7 +701,7 @@ La arquitectura prevista precisamente normaliza MQTT antes de llegar al navegado
 
 Ahora sí podemos tener algo parecido a dashboard.
 
-Pero sólo como **launcher hacia el mapa físico**. los BDFB tienen su estructura ya diseñada en el zip. 
+Pero sólo como **launcher hacia el mapa físico**. los BDFB tienen su estructura ya diseñada en el zip.
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────────────────────────────────┐

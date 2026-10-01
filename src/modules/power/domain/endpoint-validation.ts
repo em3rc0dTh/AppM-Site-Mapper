@@ -1,5 +1,6 @@
 import type { PowerEndpoint } from '@/modules/power/domain/entities';
 import type {
+  AccessPort,
   BreakerHolder,
   DeviceNode,
   Frame,
@@ -18,6 +19,8 @@ export type EndpointValidationError =
   | 'FRAME_NOT_FOUND'
   | 'PANEL_NOT_FOUND'
   | 'BREAKER_HOLDER_NOT_FOUND'
+  | 'ACCESS_PORT_NOT_FOUND'
+  | 'ACCESS_PORT_NOT_POWER'
   | 'INVALID_INTERNAL_PATH';
 
 export interface ResolvedPowerEndpoint {
@@ -26,14 +29,39 @@ export interface ResolvedPowerEndpoint {
   readonly frame?: Frame;
   readonly panel?: Panel;
   readonly breakerHolder?: BreakerHolder;
+  readonly accessPort?: AccessPort;
 }
 
-function hasAnyInternalPart(endpoint: PowerEndpoint): boolean {
-  if (!endpoint.internal) {
-    return false;
+function hasBdfbInternalPart(endpoint: PowerEndpoint): boolean {
+  const internal = endpoint.internal;
+  return Boolean(
+    internal?.shelfId || internal?.frameId || internal?.panelId || internal?.breakerHolderId,
+  );
+}
+
+function resolveAccessPort(
+  owner: Extract<TopologyNode, { kind: 'DEVICE' | 'EQUIPMENT' }>,
+  endpoint: PowerEndpoint,
+): { ok: true; value: ResolvedPowerEndpoint } | { ok: false; error: EndpointValidationError } {
+  const accessPortId = endpoint.internal?.accessPortId;
+  if (!accessPortId) {
+    return { ok: true, value: { owner } };
   }
 
-  return Object.values(endpoint.internal).some(Boolean);
+  if (hasBdfbInternalPart(endpoint)) {
+    return { ok: false, error: 'INVALID_INTERNAL_PATH' };
+  }
+
+  const accessPort = owner.accessPorts?.find((candidate) => candidate.id === accessPortId);
+  if (!accessPort) {
+    return { ok: false, error: 'ACCESS_PORT_NOT_FOUND' };
+  }
+
+  if (accessPort.kind !== 'POWER') {
+    return { ok: false, error: 'ACCESS_PORT_NOT_POWER' };
+  }
+
+  return { ok: true, value: { owner, accessPort } };
 }
 
 export function resolvePowerEndpoint(
@@ -52,7 +80,11 @@ export function resolvePowerEndpoint(
     return { ok: false, error: 'OWNER_NOT_POWER_CAPABLE' };
   }
 
-  if (!hasAnyInternalPart(endpoint)) {
+  if (endpoint.internal?.accessPortId) {
+    return resolveAccessPort(owner, endpoint);
+  }
+
+  if (!hasBdfbInternalPart(endpoint)) {
     return { ok: true, value: { owner } };
   }
 
@@ -78,7 +110,6 @@ function resolveDeviceInternalEndpoint(
   }
 
   const shelf = device.bdfb.shelves.find((candidate) => candidate.id === internal.shelfId);
-
   if (!shelf) {
     return { ok: false, error: 'SHELF_NOT_FOUND' };
   }
@@ -90,7 +121,6 @@ function resolveDeviceInternalEndpoint(
   }
 
   const frame = shelf.frames.find((candidate) => candidate.id === internal.frameId);
-
   if (!frame) {
     return { ok: false, error: 'FRAME_NOT_FOUND' };
   }
@@ -102,7 +132,6 @@ function resolveDeviceInternalEndpoint(
   }
 
   const panel = frame.panels.find((candidate) => candidate.id === internal.panelId);
-
   if (!panel) {
     return { ok: false, error: 'PANEL_NOT_FOUND' };
   }
@@ -114,7 +143,6 @@ function resolveDeviceInternalEndpoint(
   const breakerHolder = panel.endpoints.find(
     (candidate) => candidate.id === internal.breakerHolderId,
   );
-
   if (!breakerHolder) {
     return { ok: false, error: 'BREAKER_HOLDER_NOT_FOUND' };
   }
@@ -132,5 +160,6 @@ export function powerEndpointKey(endpoint: PowerEndpoint): string {
     frameId: endpoint.internal?.frameId ?? null,
     panelId: endpoint.internal?.panelId ?? null,
     breakerHolderId: endpoint.internal?.breakerHolderId ?? null,
+    accessPortId: endpoint.internal?.accessPortId ?? null,
   });
 }

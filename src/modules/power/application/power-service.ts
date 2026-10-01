@@ -10,7 +10,13 @@ import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type PowerError =
-  EndpointValidationError | 'IDENTICAL_ENDPOINTS' | 'PATH_NOT_FOUND' | 'INVALID_FEED';
+  | EndpointValidationError
+  | 'IDENTICAL_ENDPOINTS'
+  | 'PATH_NOT_FOUND'
+  | 'INVALID_FEED'
+  | 'SOURCE_MUST_BE_BREAKER'
+  | 'TARGET_MUST_BE_POWER_PORT'
+  | 'ACCESS_PORT_FEED_MISMATCH';
 
 export interface CreatePowerPathInput {
   readonly source: PowerEndpoint;
@@ -49,6 +55,18 @@ export class PowerService {
 
     if (!target.ok) {
       return failure(target.error);
+    }
+
+    if (!source.value.breakerHolder || source.value.breakerHolder.variant !== 'BREAKER') {
+      return failure('SOURCE_MUST_BE_BREAKER');
+    }
+
+    if (!target.value.accessPort || target.value.accessPort.kind !== 'POWER') {
+      return failure('TARGET_MUST_BE_POWER_PORT');
+    }
+
+    if (input.feed && target.value.accessPort.feed && input.feed !== target.value.accessPort.feed) {
+      return failure('ACCESS_PORT_FEED_MISMATCH');
     }
 
     const timestamp = nowIso();

@@ -19,7 +19,7 @@ function isInternalEndpoint(value: unknown): value is InternalPowerEndpoint {
     return false;
   }
 
-  const allowed = ['shelfId', 'frameId', 'panelId', 'breakerHolderId'] as const;
+  const allowed = ['shelfId', 'frameId', 'panelId', 'breakerHolderId', 'accessPortId'] as const;
 
   return allowed.every((key) => value[key] === undefined || typeof value[key] === 'string');
 }

@@ -58,7 +58,7 @@ export class CasService {
 
     const occupant = await this.repository.getById(occupantId);
 
-    if (!occupant || !['DEVICE', 'EQUIPMENT'].includes(occupant.kind)) {
+    if (!occupant || occupant.kind !== 'DEVICE') {
       return failure('OCCUPANT_NOT_FOUND');
     }
 

@@ -25,8 +25,7 @@ export class InventoryService {
 
     const children = await this.repository.listChildren(rack.id);
     const items = children.filter(
-      (node): node is InventoryItem =>
-        node.lifecycle === 'ACTIVE' && (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT'),
+      (node): node is DeviceNode => node.lifecycle === 'ACTIVE' && node.kind === 'DEVICE',
     );
 
     return success(items);

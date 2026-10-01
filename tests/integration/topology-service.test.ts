@@ -98,7 +98,7 @@ async function buildHierarchy(service: TopologyService) {
 }
 
 describe('TopologyService', () => {
-  it('preserves the accepted hierarchy and Device/Equipment sibling relationship', async () => {
+  it('preserves Rack → Device → recursive Equipment hierarchy', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());
     const { rack } = await buildHierarchy(service);
 
@@ -107,17 +107,31 @@ describe('TopologyService', () => {
       parentId: rack.id,
       name: 'Device A',
     });
+    if (!device.ok) throw new Error(device.error);
     const equipment = await service.create({
       kind: 'EQUIPMENT',
-      parentId: rack.id,
+      parentId: device.value.id,
       name: 'Equipment A',
     });
+    if (!equipment.ok) throw new Error(equipment.error);
+    const nested = await service.create({
+      kind: 'EQUIPMENT',
+      parentId: equipment.value.id,
+      name: 'Equipment A.1',
+    });
 
-    expect(device.ok).toBe(true);
-    expect(equipment.ok).toBe(true);
+    expect(nested.ok).toBe(true);
+    expect((await service.listChildren(rack.id)).map((node) => node.kind)).toEqual(['DEVICE']);
+    expect((await service.listChildren(device.value.id)).map((node) => node.kind)).toEqual([
+      'EQUIPMENT',
+    ]);
+    expect((await service.listChildren(equipment.value.id)).map((node) => node.kind)).toEqual([
+      'EQUIPMENT',
+    ]);
 
-    const children = await service.listChildren(rack.id);
-    expect(children.map((node) => node.kind).sort()).toEqual(['DEVICE', 'EQUIPMENT']);
+    await expect(
+      service.create({ kind: 'EQUIPMENT', parentId: rack.id, name: 'Invalid Rack Equipment' }),
+    ).resolves.toEqual({ ok: false, error: 'INVALID_PARENT' });
   });
 
   it('rejects hierarchy skips and occupied positions', async () => {

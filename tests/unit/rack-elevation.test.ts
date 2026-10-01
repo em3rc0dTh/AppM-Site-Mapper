@@ -49,7 +49,7 @@ const device: DeviceNode = {
 const equipment: EquipmentNode = {
   id: 'equipment-1',
   kind: 'EQUIPMENT',
-  parentId: rack.id,
+  parentId: device.id,
   name: 'Equipment A',
   lifecycle: 'ACTIVE',
   pinned: false,
@@ -58,7 +58,7 @@ const equipment: EquipmentNode = {
 };
 
 describe('RackElevationService', () => {
-  it('renders Device and Equipment as sibling rack inventory while projecting CAS by U', async () => {
+  it('renders Device as rack inventory while Equipment remains nested under the Device', async () => {
     const repository = new MemoryTopologyRepository([rack, device, equipment]);
     const result = await new RackElevationService(repository).getView(rack.id);
 
@@ -68,7 +68,7 @@ describe('RackElevationService', () => {
       throw new Error('Expected rack elevation.');
     }
 
-    expect(result.value.inventory.map((item) => item.kind).sort()).toEqual(['DEVICE', 'EQUIPMENT']);
+    expect(result.value.inventory.map((item) => item.kind).sort()).toEqual(['DEVICE']);
     expect(result.value.rows).toHaveLength(6);
     expect(result.value.rows.find((row) => row.u === 3)).toMatchObject({
       role: 'PHYSICAL',

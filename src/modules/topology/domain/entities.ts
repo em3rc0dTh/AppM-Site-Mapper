@@ -18,6 +18,21 @@ export type ContainerClusterBayVariant = 'CONTAINER_CLUSTER' | 'BAY';
 export type ContainerRackVariant = 'CONTAINER' | 'RACK';
 export type BreakerHolderVariant = 'BREAKER' | 'HOLDER';
 export type CasState = 'AVAILABLE' | 'RESERVED' | 'EQUIPPED';
+export type AccessPortKind = 'POWER';
+export type AccessPortFeed = 'A' | 'B';
+export type PowerRedundancyPolicy = 'NONE' | 'A_B_REQUIRED';
+
+export interface AccessPort {
+  readonly id: string;
+  readonly label: string;
+  readonly kind: AccessPortKind;
+  readonly feed?: AccessPortFeed;
+}
+
+export interface PowerRequirement {
+  readonly redundancy: PowerRedundancyPolicy;
+  readonly requiredFeeds?: readonly AccessPortFeed[];
+}
 
 export interface GridCoordinate {
   readonly row: string;
@@ -175,6 +190,8 @@ export interface DeviceNode extends TopologyBase {
   readonly pinned: boolean;
   readonly deviceType?: string;
   readonly template?: AssetTemplateSnapshot;
+  readonly accessPorts?: readonly AccessPort[];
+  readonly powerRequirement?: PowerRequirement;
   readonly bdfb?: BdfbStructure;
 }
 
@@ -186,6 +203,8 @@ export interface EquipmentNode extends TopologyBase {
   readonly pinned: boolean;
   readonly equipmentType?: string;
   readonly template?: AssetTemplateSnapshot;
+  readonly accessPorts?: readonly AccessPort[];
+  readonly powerRequirement?: PowerRequirement;
 }
 
 export type TopologyNode =

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
+import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import type { PowerEndpoint } from '@/modules/power/domain/entities';
@@ -257,6 +258,12 @@ export default async function PowerPage({
             >
               OPEN DEVICE
             </Link>
+          ) : null}
+          {primary ? (
+            <FullPowerTraceModal
+              entityId={primary.path.target.entityId}
+              label="ϟ FULL POWER TRACE"
+            />
           ) : null}
           <TelemetryLens
             label="Power path diagnostic"

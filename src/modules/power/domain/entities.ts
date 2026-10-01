@@ -7,6 +7,7 @@ export interface InternalPowerEndpoint {
   readonly frameId?: string;
   readonly panelId?: string;
   readonly breakerHolderId?: string;
+  readonly accessPortId?: string;
 }
 
 export interface PowerEndpoint {

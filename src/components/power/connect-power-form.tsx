@@ -18,6 +18,12 @@ interface PowerSource {
   readonly capacity?: number;
 }
 
+interface DestinationPort {
+  readonly id: string;
+  readonly label: string;
+  readonly feed?: 'A' | 'B';
+}
+
 interface DestinationOption {
   readonly id: string;
   readonly name: string;
@@ -25,6 +31,7 @@ interface DestinationOption {
   readonly context: string;
   readonly category?: string;
   readonly serialNumber?: string;
+  readonly ports: readonly DestinationPort[];
 }
 
 export function ConnectPowerForm({
@@ -39,6 +46,7 @@ export function ConnectPowerForm({
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [destinationId, setDestinationId] = useState('');
+  const [accessPortId, setAccessPortId] = useState('');
   const [feed, setFeed] = useState<'A' | 'B'>('A');
   const [label, setLabel] = useState('');
   const [saving, setSaving] = useState(false);
@@ -48,14 +56,41 @@ export function ConnectPowerForm({
     const needle = query.trim().toLowerCase();
     if (!needle) return destinations;
     return destinations.filter((item) =>
-      [item.name, item.kind, item.context, item.category, item.serialNumber]
+      [
+        item.name,
+        item.kind,
+        item.context,
+        item.category,
+        item.serialNumber,
+        ...item.ports.flatMap((port) => [port.id, port.label, port.feed]),
+      ]
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(needle)),
     );
   }, [destinations, query]);
 
+  const selectedDestination = destinations.find((item) => item.id === destinationId);
+  const selectedPort = selectedDestination?.ports.find((port) => port.id === accessPortId);
+
+  function selectPort(item: DestinationOption, port: DestinationPort) {
+    setDestinationId(item.id);
+    setAccessPortId(port.id);
+    if (port.feed) setFeed(port.feed);
+  }
+
+  function selectFeed(value: 'A' | 'B') {
+    setFeed(value);
+
+    if (!selectedDestination) return;
+    if (!selectedPort?.feed || selectedPort.feed === value) return;
+
+    const compatible = selectedDestination.ports.find((port) => !port.feed || port.feed === value);
+
+    setAccessPortId(compatible?.id ?? '');
+  }
+
   async function connect() {
-    if (!destinationId || saving) return;
+    if (!destinationId || !accessPortId || saving) return;
     setSaving(true);
     setError(null);
 
@@ -73,7 +108,10 @@ export function ConnectPowerForm({
               breakerHolderId: source.breakerId,
             },
           },
-          target: { entityId: destinationId },
+          target: {
+            entityId: destinationId,
+            internal: { accessPortId },
+          },
           feed,
           ...(label.trim() ? { label: label.trim() } : {}),
         }),
@@ -104,7 +142,7 @@ export function ConnectPowerForm({
         <div>
           <p>POWER / COMMISSIONING</p>
           <h1>Connect power</h1>
-          <span>Choose the physical destination for this breaker. No IDs need to be typed.</span>
+          <span>Choose the exact POWER access port fed by this breaker.</span>
         </div>
         <Link href={returnHref}>← Back to breaker</Link>
       </header>
@@ -114,7 +152,7 @@ export function ConnectPowerForm({
           <div className="power-connect-step">
             <span>1</span>
             <div>
-              <strong>Source</strong>
+              <strong>Source circuit</strong>
               <small>Fixed from the breaker you selected</small>
             </div>
           </div>
@@ -143,49 +181,61 @@ export function ConnectPowerForm({
           <div className="power-connect-step">
             <span>2</span>
             <div>
-              <strong>Destination</strong>
-              <small>Select the Device or Equipment physically fed by this breaker</small>
+              <strong>Destination POWER port</strong>
+              <small>Select a Device or recursively nested Equipment access port</small>
             </div>
           </div>
 
           <label className="power-destination-search">
-            <span>Search inventory</span>
+            <span>Search inventory or port</span>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name, serial, type or location..."
+              placeholder="Search by name, serial, location or power port..."
             />
           </label>
 
-          <div className="power-destination-list" role="radiogroup" aria-label="Power destination">
-            {visibleDestinations.map((item) => (
-              <label
-                key={item.id}
-                className="power-destination-option"
-                data-selected={destinationId === item.id ? 'true' : 'false'}
-              >
-                <input
-                  type="radio"
-                  name="destination"
-                  value={item.id}
-                  checked={destinationId === item.id}
-                  onChange={() => setDestinationId(item.id)}
-                />
-                <span className="power-destination-glyph">
-                  {item.kind === 'DEVICE' ? '▤' : '▥'}
-                </span>
-                <span>
-                  <strong>{item.name}</strong>
-                  <small>
-                    {item.kind} {item.category ? `· ${item.category}` : ''}
-                  </small>
-                  <em>{item.context || 'No physical context available'}</em>
-                </span>
-                {item.serialNumber ? <code>{item.serialNumber}</code> : null}
-              </label>
-            ))}
-            {!visibleDestinations.length ? (
-              <div className="power-connect-empty">No matching Device or Equipment.</div>
+          <div
+            className="power-destination-list"
+            role="radiogroup"
+            aria-label="Power destination port"
+          >
+            {visibleDestinations.flatMap((item) =>
+              item.ports.map((port) => {
+                const selected = destinationId === item.id && accessPortId === port.id;
+                return (
+                  <label
+                    key={`${item.id}:${port.id}`}
+                    className="power-destination-option"
+                    data-selected={selected ? 'true' : 'false'}
+                  >
+                    <input
+                      type="radio"
+                      name="destination-port"
+                      value={`${item.id}:${port.id}`}
+                      checked={selected}
+                      onChange={() => selectPort(item, port)}
+                    />
+                    <span className="power-destination-glyph">
+                      {item.kind === 'DEVICE' ? '▤' : '▥'}
+                    </span>
+                    <span>
+                      <strong>{item.name}</strong>
+                      <small>
+                        {item.kind} · {port.label}
+                        {port.feed ? ` · FEED ${port.feed}` : ''}
+                      </small>
+                      <em>{item.context || 'No physical context available'}</em>
+                    </span>
+                    <code>{port.id}</code>
+                  </label>
+                );
+              }),
+            )}
+            {!visibleDestinations.some((item) => item.ports.length) ? (
+              <div className="power-connect-empty">
+                No matching POWER access ports. Configure the destination power contract first.
+              </div>
             ) : null}
           </div>
         </section>
@@ -205,7 +255,7 @@ export function ConnectPowerForm({
                 type="button"
                 key={value}
                 data-selected={feed === value ? 'true' : 'false'}
-                onClick={() => setFeed(value)}
+                onClick={() => selectFeed(value)}
               >
                 <span>FEED {value}</span>
                 <strong>{feed === value ? '● Selected' : '○ Select'}</strong>
@@ -233,14 +283,15 @@ export function ConnectPowerForm({
               <b>→</b>
               <span>{source.breakerLabel}</span>
               <b>→</b>
-              <span>
-                {destinations.find((item) => item.id === destinationId)?.name ??
-                  'Select destination'}
-              </span>
+              <span>{selectedDestination?.name ?? 'Select destination'}</span>
+              <b>→</b>
+              <span>{selectedPort?.label ?? 'Select POWER port'}</span>
             </div>
             <dl>
               <dt>Feed</dt>
               <dd>{feed}</dd>
+              <dt>Target port</dt>
+              <dd>{selectedPort?.id ?? 'Not selected'}</dd>
               <dt>Status after save</dt>
               <dd>Configured</dd>
             </dl>
@@ -250,7 +301,11 @@ export function ConnectPowerForm({
 
           <div className="power-connect-actions">
             <Link href={returnHref}>Cancel</Link>
-            <button type="button" disabled={!destinationId || saving} onClick={connect}>
+            <button
+              type="button"
+              disabled={!destinationId || !accessPortId || saving}
+              onClick={connect}
+            >
               {saving ? 'Connecting…' : 'CONNECT POWER'}
             </button>
           </div>

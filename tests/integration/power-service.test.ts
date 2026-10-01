@@ -20,10 +20,11 @@ const device: DeviceNode = {
 const equipment: EquipmentNode = {
   id: 'equipment-1',
   kind: 'EQUIPMENT',
-  parentId: 'rack-1',
+  parentId: device.id,
   name: 'Load A',
   lifecycle: 'ACTIVE',
   pinned: false,
+  accessPorts: [{ id: 'power-a', label: 'Power A', kind: 'POWER', feed: 'A' }],
   createdAt: '2026-09-22T00:00:00.000Z',
   updatedAt: '2026-09-22T00:00:00.000Z',
 };
@@ -69,7 +70,7 @@ describe('Power domain', () => {
           breakerHolderId: 'breaker-a',
         },
       },
-      target: { entityId: equipment.id },
+      target: { entityId: equipment.id, internal: { accessPortId: 'power-a' } },
       feed: 'A',
       label: 'Primary feed',
     });

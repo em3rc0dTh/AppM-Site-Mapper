@@ -1,4 +1,7 @@
+import { PowerContractService } from '@/modules/inventory/application/power-contract-service';
 import { BdfbService } from '@/modules/power/application/bdfb-service';
+import type { PowerRepository } from '@/modules/power/application/power-repository';
+import { PowerService } from '@/modules/power/application/power-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import {
   TopologyService,
@@ -143,6 +146,7 @@ export interface EmulatorLabDevice {
 
 export async function seedBfdbEmulatorLab(
   repository: TopologyRepository,
+  powerRepository: PowerRepository,
 ): Promise<readonly EmulatorLabDevice[]> {
   const topology = new TopologyService(repository);
 
@@ -243,6 +247,118 @@ export async function seedBfdbEmulatorLab(
       href: await topology.buildDeepLink(node.id),
     });
   }
+
+  const loadPosition = await ensureNode(repository, topology, {
+    kind: 'POSITION',
+    parentId: bay.id,
+    name: 'Logical dual-feed load position',
+    coordinate: { row: 'E', column: 4 },
+  });
+  const loadRack = await ensureNode(repository, topology, {
+    kind: 'CONTAINER_RACK',
+    parentId: loadPosition.id,
+    name: 'LAB-RACK-LOAD',
+    containerVariant: 'RACK',
+    totalU: 42,
+  });
+  const load = requireKind(
+    await ensureNode(repository, topology, {
+      kind: 'DEVICE',
+      parentId: loadRack.id,
+      name: 'DEVICE-X (dual-feed MQTT demo)',
+      serialNumber: 'EMU-LOAD-DEVICE-X',
+      category: 'Synthetic dual-feed commissioning load',
+    }),
+    'DEVICE',
+  );
+
+  const powerContract = await new PowerContractService(repository).update(load.id, {
+    accessPorts: [
+      { id: 'power-in-a', label: 'POWER-IN-A', kind: 'POWER', feed: 'A' },
+      { id: 'power-in-b', label: 'POWER-IN-B', kind: 'POWER', feed: 'B' },
+    ],
+    redundancy: 'A_B_REQUIRED',
+  });
+  if (!powerContract.ok) {
+    throw new Error(`Emulator load power contract failed: ${powerContract.error}`);
+  }
+
+  const deviceBySerial = new Map(
+    output.map((item) => [item.serial, item.deviceId] as const),
+  );
+  const sourceAId = deviceBySerial.get('EMU-BFDB-01');
+  const sourceBId = deviceBySerial.get('EMU-BFDB-02');
+  if (!sourceAId || !sourceBId) {
+    throw new Error('Dual-feed emulator fixture requires EMU-BFDB-01 and EMU-BFDB-02.');
+  }
+
+  const activePaths = await powerRepository.listActive();
+  const power = new PowerService(repository, powerRepository);
+
+  async function ensurePath(input: {
+    sourceEntityId: string;
+    shelfId: string;
+    frameId: string;
+    panelId: string;
+    breakerHolderId: string;
+    targetPortId: 'power-in-a' | 'power-in-b';
+    feed: 'A' | 'B';
+    label: string;
+  }): Promise<void> {
+    const exists = activePaths.some(
+      (path) =>
+        path.lifecycle === 'ACTIVE' &&
+        path.source.entityId === input.sourceEntityId &&
+        path.source.internal?.breakerHolderId === input.breakerHolderId &&
+        path.target.entityId === load.id &&
+        path.target.internal?.accessPortId === input.targetPortId &&
+        path.feed === input.feed,
+    );
+    if (exists) return;
+
+    const created = await power.create({
+      source: {
+        entityId: input.sourceEntityId,
+        internal: {
+          shelfId: input.shelfId,
+          frameId: input.frameId,
+          panelId: input.panelId,
+          breakerHolderId: input.breakerHolderId,
+        },
+      },
+      target: {
+        entityId: load.id,
+        internal: { accessPortId: input.targetPortId },
+      },
+      feed: input.feed,
+      label: input.label,
+    });
+    if (!created.ok) {
+      throw new Error(`Dual-feed emulator PowerPath failed: ${created.error}`);
+    }
+  }
+
+  await ensurePath({
+    sourceEntityId: sourceAId,
+    shelfId: 'lab-EMU-BFDB-01-shelf-a',
+    frameId: 'lab-EMU-BFDB-01-frame-a',
+    panelId: 'lab-EMU-BFDB-01-panel-a1',
+    breakerHolderId: 'lab-EMU-BFDB-01-breaker-a1-07',
+    targetPortId: 'power-in-a',
+    feed: 'A',
+    label: 'Primary feed · EMU-BFDB-01 / A1-07',
+  });
+
+  await ensurePath({
+    sourceEntityId: sourceBId,
+    shelfId: 'lab-EMU-BFDB-02-shelf-b',
+    frameId: 'lab-EMU-BFDB-02-frame-b',
+    panelId: 'lab-EMU-BFDB-02-panel-b1',
+    breakerHolderId: 'lab-EMU-BFDB-02-breaker-b1-12',
+    targetPortId: 'power-in-b',
+    feed: 'B',
+    label: 'Secondary feed · EMU-BFDB-02 / B1-12',
+  });
 
   return output;
 }

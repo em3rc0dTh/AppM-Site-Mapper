@@ -19,7 +19,11 @@ function statusLabel(leg: FullPowerTraceLeg | undefined): string {
 }
 
 function FeedBadge({ feed }: Readonly<{ feed: 'A' | 'B' }>) {
-  return <span className="trace-feed-badge" data-feed={feed}>{feed}</span>;
+  return (
+    <span className="trace-feed-badge" data-feed={feed}>
+      {feed}
+    </span>
+  );
 }
 
 function SourceCard({
@@ -44,7 +48,11 @@ function TelemetryCard({
   leg,
 }: Readonly<{ feed: 'A' | 'B'; leg: FullPowerTraceLeg | undefined }>) {
   return (
-    <article className="trace-telemetry-card" data-feed={feed} data-live={leg?.telemetry.status === 'LIVE'}>
+    <article
+      className="trace-telemetry-card"
+      data-feed={feed}
+      data-live={leg?.telemetry.status === 'LIVE'}
+    >
       <header>
         <span>ϟ</span>
         <small>LIVE TELEMETRY ({feed})</small>
@@ -54,7 +62,9 @@ function TelemetryCard({
         <strong>{metric(leg?.telemetry.currentA, 'A')}</strong>
         <strong>{metric(leg?.telemetry.energyKwh, 'kWh', 4)}</strong>
       </div>
-      <small>{leg?.telemetry.sourceIdentity ?? leg?.telemetry.rawPointId ?? 'No MQTT reading'}</small>
+      <small>
+        {leg?.telemetry.sourceIdentity ?? leg?.telemetry.rawPointId ?? 'No MQTT reading'}
+      </small>
     </article>
   );
 }
@@ -124,7 +134,10 @@ function FeedTrace({
     return (
       <section className="trace-detail-column" data-feed={feed}>
         <header>
-          <div><FeedBadge feed={feed} /><strong>TRACE PATH — FEED {feed}</strong></div>
+          <div>
+            <FeedBadge feed={feed} />
+            <strong>TRACE PATH — FEED {feed}</strong>
+          </div>
           <span className="trace-status-badge is-missing">NOT CONFIGURED</span>
         </header>
         <div className="trace-empty-column">No configured Feed {feed} path.</div>
@@ -142,20 +155,74 @@ function FeedTrace({
   return (
     <section className="trace-detail-column" data-feed={feed}>
       <header>
-        <div><FeedBadge feed={feed} /><strong>TRACE PATH — FEED {feed}</strong></div>
-        <span className="trace-status-badge" data-ok={leg.topologyStatus === 'VALID' ? 'true' : 'false'}>
+        <div>
+          <FeedBadge feed={feed} />
+          <strong>TRACE PATH — FEED {feed}</strong>
+        </div>
+        <span
+          className="trace-status-badge"
+          data-ok={leg.topologyStatus === 'VALID' ? 'true' : 'false'}
+        >
           {leg.topologyStatus === 'VALID' ? 'VERIFIED' : leg.topologyStatus.replaceAll('_', ' ')}
         </span>
       </header>
 
-      <TraceStep index={1} label="Source Device (BDFB)" value={leg.source.entityName} detail={leg.telemetry.sourceIdentity} status={leg.telemetry.status === 'LIVE' ? 'Online' : leg.telemetry.status} />
-      <TraceStep index={2} label="BDFB Side" value={leg.source.shelf ?? '—'} detail={leg.source.frame} status="Active" />
-      <TraceStep index={3} label="Panel" value={leg.source.panel ?? '—'} detail={leg.telemetry.rawPointId} status="Active" />
-      <TraceStep index={4} label="Circuit Breaker" value={leg.source.breaker ?? '—'} detail={leg.source.breakerId} status={leg.telemetry.status === 'LIVE' ? 'Live' : 'Mapped'} />
-      <TraceStep index={5} label="Electrical Path" value={leg.label ?? leg.pathId} detail={`Feed ${feed}`} status={leg.topologyStatus === 'VALID' ? 'Valid' : 'Invalid'} />
-      <TraceStep index={6} label="Telemetry" value={telemetry} detail={leg.telemetry.receivedAt} status={leg.telemetry.status} />
-      <TraceStep index={7} label="Access Port" value={targetPort?.label ?? 'Legacy / unresolved port'} detail={targetPort?.id} status={targetPort ? 'Connected' : 'Missing'} />
-      <TraceStep index={8} label="Destination Device" value={leg.target.entityName} detail={leg.target.hierarchy.join(' › ')} status="Present" />
+      <TraceStep
+        index={1}
+        label="Source Device (BDFB)"
+        value={leg.source.entityName}
+        detail={leg.telemetry.sourceIdentity}
+        status={leg.telemetry.status === 'LIVE' ? 'Online' : leg.telemetry.status}
+      />
+      <TraceStep
+        index={2}
+        label="BDFB Side"
+        value={leg.source.shelf ?? '—'}
+        detail={leg.source.frame}
+        status="Active"
+      />
+      <TraceStep
+        index={3}
+        label="Panel"
+        value={leg.source.panel ?? '—'}
+        detail={leg.telemetry.rawPointId}
+        status="Active"
+      />
+      <TraceStep
+        index={4}
+        label="Circuit Breaker"
+        value={leg.source.breaker ?? '—'}
+        detail={leg.source.breakerId}
+        status={leg.telemetry.status === 'LIVE' ? 'Live' : 'Mapped'}
+      />
+      <TraceStep
+        index={5}
+        label="Electrical Path"
+        value={leg.label ?? leg.pathId}
+        detail={`Feed ${feed}`}
+        status={leg.topologyStatus === 'VALID' ? 'Valid' : 'Invalid'}
+      />
+      <TraceStep
+        index={6}
+        label="Telemetry"
+        value={telemetry}
+        detail={leg.telemetry.receivedAt}
+        status={leg.telemetry.status}
+      />
+      <TraceStep
+        index={7}
+        label="Access Port"
+        value={targetPort?.label ?? 'Legacy / unresolved port'}
+        detail={targetPort?.id}
+        status={targetPort ? 'Connected' : 'Missing'}
+      />
+      <TraceStep
+        index={8}
+        label="Destination Device"
+        value={leg.target.entityName}
+        detail={leg.target.hierarchy.join(' › ')}
+        status="Present"
+      />
     </section>
   );
 }
@@ -186,11 +253,8 @@ export function FullPowerTraceModal({
       feedA?.topologyStatus === 'VALID' &&
       feedB?.topologyStatus === 'VALID';
     const telemetryVerified =
-      feedA?.telemetry.status === 'LIVE' &&
-      feedB?.telemetry.status === 'LIVE';
-    const redundancyVerified =
-      policy?.policy === 'A_B_REQUIRED' &&
-      policy.status === 'SATISFIED';
+      feedA?.telemetry.status === 'LIVE' && feedB?.telemetry.status === 'LIVE';
+    const redundancyVerified = policy?.policy === 'A_B_REQUIRED' && policy.status === 'SATISFIED';
 
     return {
       feedA,
@@ -232,7 +296,11 @@ export function FullPowerTraceModal({
       </button>
 
       {open ? (
-        <div className="full-power-trace-backdrop" role="presentation" onMouseDown={() => setOpen(false)}>
+        <div
+          className="full-power-trace-backdrop"
+          role="presentation"
+          onMouseDown={() => setOpen(false)}
+        >
           <section
             className="full-power-trace-dialog trace-reference-dialog"
             role="dialog"
@@ -249,14 +317,30 @@ export function FullPowerTraceModal({
                 </div>
               </div>
               <div className="trace-reference-summary">
-                <b className={view?.verified ? 'is-ok' : ''}>{view?.verified ? '✓ VERIFIED' : 'INCOMPLETE'}</b>
-                <span>REDUNDANCY: <strong>A + B</strong></span>
-                <span>AUDIT STATE: <strong>{view?.verified ? 'NOMINAL' : 'REVIEW'}</strong></span>
+                <b className={view?.verified ? 'is-ok' : ''}>
+                  {view?.verified ? '✓ VERIFIED' : 'INCOMPLETE'}
+                </b>
+                <span>
+                  REDUNDANCY: <strong>A + B</strong>
+                </span>
+                <span>
+                  AUDIT STATE: <strong>{view?.verified ? 'NOMINAL' : 'REVIEW'}</strong>
+                </span>
               </div>
-              <button type="button" aria-label="Close full power trace" onClick={() => setOpen(false)}>×</button>
+              <button
+                type="button"
+                aria-label="Close full power trace"
+                onClick={() => setOpen(false)}
+              >
+                ×
+              </button>
             </header>
 
-            {loading ? <div className="full-power-trace-state">Resolving physical power paths and MQTT telemetry…</div> : null}
+            {loading ? (
+              <div className="full-power-trace-state">
+                Resolving physical power paths and MQTT telemetry…
+              </div>
+            ) : null}
             {error ? <div className="full-power-trace-state is-error">{error}</div> : null}
 
             {trace && view ? (
@@ -293,17 +377,33 @@ export function FullPowerTraceModal({
                 <footer className="trace-reference-footer">
                   <article>
                     <small>REDUNDANCY STATUS</small>
-                    <strong>{view.redundancyVerified ? 'DOUBLE PATH A + B' : 'NOT VERIFIED'}</strong>
-                    <span>{view.policy?.policy === 'A_B_REQUIRED' ? 'Independent feeds required by policy.' : 'A+B policy is not declared.'}</span>
+                    <strong>
+                      {view.redundancyVerified ? 'DOUBLE PATH A + B' : 'NOT VERIFIED'}
+                    </strong>
+                    <span>
+                      {view.policy?.policy === 'A_B_REQUIRED'
+                        ? 'Independent feeds required by policy.'
+                        : 'A+B policy is not declared.'}
+                    </span>
                   </article>
                   <article>
                     <small>VALIDATION</small>
-                    <strong>{view.topologyVerified && view.telemetryVerified ? 'ALL CHECKS PASSED' : 'CHECKS PENDING'}</strong>
-                    <span>Topology, exact breaker mapping and live telemetry are evaluated independently.</span>
+                    <strong>
+                      {view.topologyVerified && view.telemetryVerified
+                        ? 'ALL CHECKS PASSED'
+                        : 'CHECKS PENDING'}
+                    </strong>
+                    <span>
+                      Topology, exact breaker mapping and live telemetry are evaluated
+                      independently.
+                    </span>
                   </article>
                   <article>
                     <small>MQTT SOURCES</small>
-                    <strong>{view.feedA?.telemetry.sourceIdentity ?? '—'} + {view.feedB?.telemetry.sourceIdentity ?? '—'}</strong>
+                    <strong>
+                      {view.feedA?.telemetry.sourceIdentity ?? '—'} +{' '}
+                      {view.feedB?.telemetry.sourceIdentity ?? '—'}
+                    </strong>
                     <span>No simulated connectivity is used in this trace.</span>
                   </article>
                 </footer>

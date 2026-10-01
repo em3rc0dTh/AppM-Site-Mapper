@@ -30,6 +30,7 @@ export interface BreakerPowerBinding {
   readonly counterpartName: string;
   readonly counterpartHref: string;
   readonly counterpartContext: string;
+  readonly accessPortLabel?: string;
   readonly mount?: string;
 }
 
@@ -74,27 +75,36 @@ function endpointInspector(
   panel: Panel,
   endpoint: BreakerHolder,
   reading?: BreakerTelemetryReading,
-  binding?: BreakerPowerBinding,
+  bindings: readonly BreakerPowerBinding[] = [],
   canWritePower = false,
 ): InspectorEntity {
   const connectHref =
     endpoint.variant === 'BREAKER' && canWritePower
       ? `/power/connect?entity=${encodeURIComponent(device.id)}&shelf=${encodeURIComponent(shelf.id)}&frame=${encodeURIComponent(frame.id)}&panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(endpoint.id)}`
       : null;
+  const feeds = [...new Set(bindings.map((binding) => binding.feed).filter(Boolean))].join(' + ');
+  const destinations = bindings
+    .map((binding) =>
+      binding.accessPortLabel
+        ? `${binding.counterpartName} / ${binding.accessPortLabel}`
+        : binding.counterpartName,
+    )
+    .join(' · ');
+  const contexts = [...new Set(bindings.map((binding) => binding.counterpartContext))].join(' · ');
+  const mounts = [...new Set(bindings.map((binding) => binding.mount).filter(Boolean))].join(' · ');
+
+  const actions = [
+    ...bindings.map((binding) => ({
+      label: `TRACE ${binding.counterpartName}`,
+      href: `/power?path=${encodeURIComponent(binding.pathId)}&breaker=${encodeURIComponent(endpoint.id)}${binding.feed ? `&feed=${binding.feed}` : ''}`,
+    })),
+    ...(connectHref ? [{ label: bindings.length ? 'CONNECT ANOTHER LOAD' : 'CONNECT POWER', href: connectHref }] : []),
+  ];
 
   return {
     name: endpoint.label,
     kind: endpoint.variant,
-    actions: binding
-      ? [
-          {
-            label: 'TRACE PATH',
-            href: `/power?path=${encodeURIComponent(binding.pathId)}&breaker=${encodeURIComponent(endpoint.id)}${binding.feed ? `&feed=${binding.feed}` : ''}`,
-          },
-        ]
-      : connectHref
-        ? [{ label: 'CONNECT POWER', href: connectHref }]
-        : [],
+    actions,
     ...(reading?.state ? { status: reading.state.value } : {}),
     ...(reading
       ? {
@@ -124,11 +134,11 @@ function endpointInspector(
           { label: 'Frame', value: frame.label },
           { label: 'Panel', value: panel.label },
           { label: 'Capacity', value: endpoint.capacity ?? 'Not specified' },
-          { label: 'Feed', value: binding?.feed ?? 'Not configured' },
-          { label: 'Provisioned', value: binding ? 'Yes' : 'No' },
-          { label: 'Destination', value: binding?.counterpartName ?? 'Not provisioned' },
-          { label: 'Destination context', value: binding?.counterpartContext ?? 'Not available' },
-          { label: 'Rack / U', value: binding?.mount ?? 'Not available' },
+          { label: 'Feed', value: feeds || 'Not configured' },
+          { label: 'Connected loads', value: bindings.length },
+          { label: 'Destination', value: destinations || 'Not provisioned' },
+          { label: 'Destination context', value: contexts || 'Not available' },
+          { label: 'Rack / U', value: mounts || 'Not available' },
           { label: 'Endpoint ID', value: endpoint.id },
           {
             label: 'MQTT binding',
@@ -161,7 +171,6 @@ function endpointInspector(
     ],
   };
 }
-
 function panelInspector(
   device: DeviceNode,
   shelf: Shelf,
@@ -221,7 +230,7 @@ function PanelBoard({
   frame: Frame;
   panel: Panel;
   readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
-  bindingsByBreaker: Readonly<Record<string, BreakerPowerBinding>>;
+  bindingsByBreaker: Readonly<Record<string, readonly BreakerPowerBinding[]>>;
   canWritePower: boolean;
   onInspect: (entity: InspectorEntity, breakerId?: string) => void;
 }>) {
@@ -273,7 +282,7 @@ function PanelBoard({
                       panel,
                       endpoint,
                       reading,
-                      bindingsByBreaker[endpoint.id],
+                      bindingsByBreaker[endpoint.id] ?? [],
                       canWritePower,
                     ),
                     endpoint.id,
@@ -385,7 +394,7 @@ function PanelDetail({
   device: DeviceNode;
   selection: PanelSelection;
   readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
-  bindingsByBreaker: Readonly<Record<string, BreakerPowerBinding>>;
+  bindingsByBreaker: Readonly<Record<string, readonly BreakerPowerBinding[]>>;
   canWritePower: boolean;
   onInspect: (entity: InspectorEntity, breakerId?: string) => void;
   onBack: () => void;
@@ -458,13 +467,13 @@ export function BdfbChassis({
   canWritePower?: boolean;
 }>) {
   const query = useSearchParams();
-  const bindingsByBreaker = useMemo(
-    () =>
-      Object.fromEntries(powerBindings.map((binding) => [binding.breakerId, binding])) as Readonly<
-        Record<string, BreakerPowerBinding>
-      >,
-    [powerBindings],
-  );
+  const bindingsByBreaker = useMemo(() => {
+    const grouped: Record<string, BreakerPowerBinding[]> = {};
+    for (const binding of powerBindings) {
+      (grouped[binding.breakerId] ??= []).push(binding);
+    }
+    return grouped as Readonly<Record<string, readonly BreakerPowerBinding[]>>;
+  }, [powerBindings]);
   const initialPanel = (() => {
     const requestedPanel = query.get('panel');
     if (!requestedPanel) return null;
@@ -493,7 +502,7 @@ export function BdfbChassis({
       initialPanel.panel,
       endpoint,
       undefined,
-      bindingsByBreaker[endpoint.id],
+      bindingsByBreaker[endpoint.id] ?? [],
       canWritePower,
     );
   })();
@@ -530,7 +539,7 @@ export function BdfbChassis({
               panel,
               endpoint,
               readingsByBreaker[endpoint.id],
-              bindingsByBreaker[endpoint.id],
+              bindingsByBreaker[endpoint.id] ?? [],
               canWritePower,
             );
           }

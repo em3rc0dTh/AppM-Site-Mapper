@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { PowerContractService } from '@/modules/inventory/application/power-contract-service';
+import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import type { AccessPort, PowerRedundancyPolicy } from '@/modules/topology/domain/entities';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
@@ -41,7 +42,34 @@ export async function PUT(request: Request, context: Context) {
   }
 
   const { id } = await context.params;
-  const result = await new PowerContractService(await createTopologyRepository()).update(id, {
+  const topology = await createTopologyRepository();
+  const power = await createPowerRepository();
+  const current = await topology.getById(id);
+  if (!current || (current.kind !== 'DEVICE' && current.kind !== 'EQUIPMENT')) {
+    return NextResponse.json({ error: 'ITEM_NOT_FOUND' }, { status: 404 });
+  }
+
+  const nextPorts = new Map(body.accessPorts.map((port) => [port.id.trim(), port]));
+  const referencedPaths = (await power.listForEntity(id)).filter(
+    (path) => path.target.entityId === id && path.target.internal?.accessPortId,
+  );
+
+  for (const path of referencedPaths) {
+    const portId = path.target.internal?.accessPortId;
+    if (!portId) continue;
+    const nextPort = nextPorts.get(portId);
+    if (!nextPort) {
+      return NextResponse.json({ error: 'PORT_IN_USE', pathId: path.id, portId }, { status: 409 });
+    }
+    if (path.feed && nextPort.feed && path.feed !== nextPort.feed) {
+      return NextResponse.json(
+        { error: 'PORT_FEED_CONFLICT', pathId: path.id, portId, pathFeed: path.feed },
+        { status: 409 },
+      );
+    }
+  }
+
+  const result = await new PowerContractService(topology).update(id, {
     accessPorts: body.accessPorts,
     redundancy,
   });

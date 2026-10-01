@@ -14,8 +14,7 @@ if (existsSync('.env.local')) process.loadEnvFile('.env.local');
 
 const historyEnabled =
   telemetryEnabled && process.env.TELEMETRY_HISTORY_ENABLED?.trim().toLowerCase() !== 'false';
-const telemetryStoreUrl =
-  process.env.TELEMETRY_STORE_URL?.trim() || 'http://127.0.0.1:18081';
+const telemetryStoreUrl = process.env.TELEMETRY_STORE_URL?.trim() || 'http://127.0.0.1:18081';
 
 const uri = process.env.MONGODB_URI?.trim();
 const databaseName = crudTest

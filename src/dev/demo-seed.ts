@@ -1,4 +1,5 @@
 import { InventoryService } from '@/modules/inventory/application/inventory-service';
+import { PowerContractService } from '@/modules/inventory/application/power-contract-service';
 import { BdfbService } from '@/modules/power/application/bdfb-service';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import { PowerService } from '@/modules/power/application/power-service';
@@ -11,7 +12,6 @@ import {
 import type {
   ContainerRackNode,
   DeviceNode,
-  EquipmentNode,
   TopologyKind,
   TopologyNode,
 } from '@/modules/topology/domain/entities';
@@ -121,7 +121,7 @@ async function ensureNode(
 async function ensureEquipped(
   repository: TopologyRepository,
   rack: ContainerRackNode,
-  occupant: DeviceNode | EquipmentNode,
+  occupant: DeviceNode,
   placement: Readonly<{
     mountStartU: number;
     physicalSizeU: number;
@@ -529,6 +529,17 @@ export async function seedDevelopmentDemo(
   await configureBdfb(topologyRepository, bdfbA, 'A');
   await configureBdfb(topologyRepository, bdfbB, 'B');
 
+  const server01Power = await new PowerContractService(topologyRepository).update(server01.id, {
+    accessPorts: [
+      { id: 'server01-psu-a', label: 'PSU A', kind: 'POWER', feed: 'A' },
+      { id: 'server01-psu-b', label: 'PSU B', kind: 'POWER', feed: 'B' },
+    ],
+    redundancy: 'A_B_REQUIRED',
+  });
+  if (!server01Power.ok) {
+    throw new Error('Demo seed could not configure SERVER-01 power ports: ' + server01Power.error);
+  }
+
   await ensureEquipped(topologyRepository, rack023, server01, {
     mountStartU: 41,
     physicalSizeU: 2,
@@ -559,6 +570,7 @@ export async function seedDevelopmentDemo(
     panelId: string,
     breakerHolderId: string,
     feed: 'A' | 'B',
+    accessPortId: string,
   ): Promise<string> {
     const existing = activePaths.find(
       (path) => path.label === label && path.lifecycle === 'ACTIVE',
@@ -574,7 +586,7 @@ export async function seedDevelopmentDemo(
           breakerHolderId,
         },
       },
-      target: { entityId: server01.id },
+      target: { entityId: server01.id, internal: { accessPortId } },
       feed,
       label,
     });
@@ -583,8 +595,22 @@ export async function seedDevelopmentDemo(
   }
 
   const powerPathIds = [
-    await ensurePowerPath('Feed A · SERVER-01', bdfbA, 'demo-panel-a1', 'demo-breaker-a1-8', 'A'),
-    await ensurePowerPath('Feed B · SERVER-01', bdfbB, 'demo-panel-b1', 'demo-breaker-b1-11', 'B'),
+    await ensurePowerPath(
+      'Feed A · SERVER-01 / PSU A',
+      bdfbA,
+      'demo-panel-a1',
+      'demo-breaker-a1-8',
+      'A',
+      'server01-psu-a',
+    ),
+    await ensurePowerPath(
+      'Feed B · SERVER-01 / PSU B',
+      bdfbB,
+      'demo-panel-b1',
+      'demo-breaker-b1-11',
+      'B',
+      'server01-psu-b',
+    ),
   ];
 
   return {

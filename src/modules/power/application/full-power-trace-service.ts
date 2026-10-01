@@ -3,15 +3,17 @@ import type { PowerFeed, PowerPath } from '@/modules/power/domain/entities';
 import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
-import type { AccessPort, DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
+import type {
+  AccessPort,
+  DeviceNode,
+  EquipmentNode,
+  TopologyNode,
+} from '@/modules/topology/domain/entities';
 
 type InventoryNode = DeviceNode | EquipmentNode;
 
 export type PowerTraceTopologyStatus =
-  | 'VALID'
-  | 'BROKEN_SOURCE'
-  | 'BROKEN_TARGET'
-  | 'LEGACY_TARGET_WITHOUT_PORT';
+  'VALID' | 'BROKEN_SOURCE' | 'BROKEN_TARGET' | 'LEGACY_TARGET_WITHOUT_PORT';
 
 export type PowerTraceTelemetryStatus = 'LIVE' | 'MAPPED' | 'UNMAPPED';
 
@@ -255,8 +257,7 @@ export class FullPowerTraceService {
       entityId: node.id,
       entityName: node.name,
       policy,
-      status:
-        validFeeds.includes('A') && validFeeds.includes('B') ? 'SATISFIED' : 'NOT_SATISFIED',
+      status: validFeeds.includes('A') && validFeeds.includes('B') ? 'SATISFIED' : 'NOT_SATISFIED',
       feedsPresent: validFeeds,
     };
   }

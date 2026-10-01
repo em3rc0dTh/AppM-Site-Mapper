@@ -106,9 +106,10 @@ export function ConnectPowerForm({
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | { path?: { id?: string }; error?: string }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        path?: { id?: string };
+        error?: string;
+      } | null;
 
       if (!response.ok || !payload?.path?.id) {
         setError(payload?.error ?? `Unable to create power path (HTTP ${response.status}).`);
@@ -183,7 +184,11 @@ export function ConnectPowerForm({
             />
           </label>
 
-          <div className="power-destination-list" role="radiogroup" aria-label="Power destination port">
+          <div
+            className="power-destination-list"
+            role="radiogroup"
+            aria-label="Power destination port"
+          >
             {visibleDestinations.flatMap((item) =>
               item.ports.map((port) => {
                 const selected = destinationId === item.id && accessPortId === port.id;

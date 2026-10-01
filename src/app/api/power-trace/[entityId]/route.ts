@@ -21,7 +21,9 @@ export async function GET(_request: Request, context: Context) {
     getTelemetryRuntime(),
   ]);
 
-  const trace = await new FullPowerTraceService(topology, power, telemetry.service).resolve(entityId);
+  const trace = await new FullPowerTraceService(topology, power, telemetry.service).resolve(
+    entityId,
+  );
   if (!trace) {
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }

@@ -285,9 +285,7 @@ export async function seedBfdbEmulatorLab(
     throw new Error(`Emulator load power contract failed: ${powerContract.error}`);
   }
 
-  const deviceBySerial = new Map(
-    output.map((item) => [item.serial, item.deviceId] as const),
-  );
+  const deviceBySerial = new Map(output.map((item) => [item.serial, item.deviceId] as const));
   const sourceAId = deviceBySerial.get('EMU-BFDB-01');
   const sourceBId = deviceBySerial.get('EMU-BFDB-02');
   if (!sourceAId || !sourceBId) {

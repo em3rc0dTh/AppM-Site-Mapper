@@ -2,6 +2,7 @@ import { PowerContractService } from '@/modules/inventory/application/power-cont
 import { BdfbService } from '@/modules/power/application/bdfb-service';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import { PowerService } from '@/modules/power/application/power-service';
+import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import {
   TopologyService,
@@ -146,8 +147,9 @@ export interface EmulatorLabDevice {
 
 export async function seedBfdbEmulatorLab(
   repository: TopologyRepository,
-  powerRepository: PowerRepository,
+  powerRepository?: PowerRepository,
 ): Promise<readonly EmulatorLabDevice[]> {
+  const paths = powerRepository ?? new MemoryPowerRepository();
   const topology = new TopologyService(repository);
 
   // The lab lives in its own explicitly synthetic network. Its geometry is a
@@ -292,8 +294,8 @@ export async function seedBfdbEmulatorLab(
     throw new Error('Dual-feed emulator fixture requires EMU-BFDB-01 and EMU-BFDB-02.');
   }
 
-  const activePaths = await powerRepository.listActive();
-  const power = new PowerService(repository, powerRepository);
+  const activePaths = await paths.listActive();
+  const power = new PowerService(repository, paths);
 
   async function ensurePath(input: {
     sourceEntityId: string;

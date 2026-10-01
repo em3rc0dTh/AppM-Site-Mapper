@@ -115,6 +115,14 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
 
     const counts = new Map<string, { messages: number; lastRawAt: string }>();
     const rejectionReasons: Record<string, number> = {};
+    const rejectionLogState = new Map<
+      string,
+      { lastLoggedAt: number; suppressedSinceLastLog: number }
+    >();
+    const rejectionLogIntervalMs = positiveInt(
+      process.env.TELEMETRY_REJECTION_LOG_INTERVAL_MS,
+      30_000,
+    );
     let rawMessages = 0;
     let acceptedMessages = 0;
     let rejectedMessages = 0;
@@ -151,7 +159,29 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           if (!result.ok) {
             rejectedMessages += 1;
             rejectionReasons[result.error] = (rejectionReasons[result.error] ?? 0) + 1;
-            logger.warn('telemetry.message.rejected', { topic, reason: result.error });
+
+            const rejectionKey = `${serial || topic}:${result.error}`;
+            const previousLog = rejectionLogState.get(rejectionKey);
+            const nowMs = Date.now();
+
+            if (!previousLog || nowMs - previousLog.lastLoggedAt >= rejectionLogIntervalMs) {
+              logger.warn('telemetry.message.rejected', {
+                topic,
+                reason: result.error,
+                ...(previousLog?.suppressedSinceLastLog
+                  ? { suppressedSinceLastLog: previousLog.suppressedSinceLastLog }
+                  : {}),
+              });
+              rejectionLogState.set(rejectionKey, {
+                lastLoggedAt: nowMs,
+                suppressedSinceLastLog: 0,
+              });
+            } else {
+              rejectionLogState.set(rejectionKey, {
+                ...previousLog,
+                suppressedSinceLastLog: previousLog.suppressedSinceLastLog + 1,
+              });
+            }
           } else {
             acceptedMessages += 1;
             lastAcceptedAt = now;

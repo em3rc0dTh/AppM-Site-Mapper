@@ -181,15 +181,14 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           lastRawAt,
           lastAcceptedAt,
           rejectionReasons: { ...rejectionReasons },
-          history:
-            historyStore?.diagnostics() ?? {
-              enabled: false,
-              writes: 0,
-              rowsAccepted: 0,
-              failures: 0,
-              lastWriteAt: null,
-              lastError: null,
-            },
+          history: historyStore?.diagnostics() ?? {
+            enabled: false,
+            writes: 0,
+            rowsAccepted: 0,
+            failures: 0,
+            lastWriteAt: null,
+            lastError: null,
+          },
           sources: identities.map((serial) => {
             const incoming = counts.get(serial);
             const sample = allSamples.find((item) => item.sourceIdentity === serial);

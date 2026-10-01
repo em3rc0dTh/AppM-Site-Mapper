@@ -1,7 +1,10 @@
 import { ContextPin } from '@/components/workspace/context-pin';
+import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
+import { PowerContractEditor } from '@/components/power/power-contract-editor';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { requirePermission } from '@/modules/identity/application/current-session';
+import { hasPermission } from '@/modules/identity/domain/roles';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
@@ -12,6 +15,7 @@ import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 export default async function DevicePage({ params }: { params: Promise<{ deviceId: string }> }) {
   const auth = await requirePermission('topology:read');
   if (!auth.ok) redirect('/login');
+  const canWritePower = hasPermission(auth.value.role, 'power:write');
   const { deviceId } = await params;
   const repo = await createTopologyRepository();
   const service = new TopologyService(repo);
@@ -33,8 +37,18 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const links = await Promise.all(
     trail.map(async (n) => ({ id: n.id, name: n.name, href: await service.buildDeepLink(n.id) })),
   );
+  const mountedDevice = [...trail]
+    .reverse()
+    .find(
+      (candidate) =>
+        candidate.kind === 'DEVICE' &&
+        rack?.kind === 'CONTAINER_RACK' &&
+        candidate.parentId === rack.id,
+    );
   const allocation =
-    rack?.kind === 'CONTAINER_RACK' ? rack.cas.find((r) => r.occupantId === node.id) : undefined;
+    rack?.kind === 'CONTAINER_RACK'
+      ? rack.cas.find((r) => r.occupantId === (mountedDevice?.id ?? node.id))
+      : undefined;
   const mountLabel =
     allocation?.mountStartU !== undefined && allocation.physicalSizeU !== undefined
       ? `U${allocation.mountStartU} – U${allocation.mountStartU + allocation.physicalSizeU - 1}`
@@ -94,15 +108,20 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             <dt>Telemetry</dt>
             <dd>Open diagnostic to verify mapped LIVE readings</dd>
           </dl>
-          {relatedPower.length > 0 ? (
-            <Link className="mk-primary" href={`/power?entity=${node.id}`}>
-              ϟ TRACE POWER
-            </Link>
-          ) : (
+          <FullPowerTraceModal entityId={node.id} />
+          {canWritePower ? (
+            <PowerContractEditor
+              entityId={node.id}
+              accessPorts={node.accessPorts ?? []}
+              redundancy={node.powerRequirement?.redundancy ?? 'NONE'}
+            />
+          ) : null}
+          {!relatedPower.length ? (
             <p className="device-power-unconfigured">
-              No active power path is recorded for this device.
+              No direct PowerPath is recorded for this inventory item. The full trace also checks
+              recursively nested Equipment.
             </p>
-          )}
+          ) : null}
           <div className="zip-device-live">
             <TelemetryLens entityIds={[node.id]} label={node.name} />
           </div>

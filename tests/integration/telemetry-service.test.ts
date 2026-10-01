@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
+import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/telemetry-history-writer';
+import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
 import type { DeviceNode, EquipmentNode } from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
@@ -156,6 +158,76 @@ describe('TelemetryService', () => {
     expect(reading?.metrics.powerW?.value).toBe(47.83);
     expect(reading?.metrics.energyKwh?.value).toBe(0.5074);
     expect(reading?.state?.value).toBe('ONLINE');
+  });
+
+  it('sends the accepted MQTT patch to history before Latest State merge', async () => {
+    const repository = new MemoryTopologyRepository([bdfbDevice('device-1')]);
+    const written: TelemetrySample[] = [];
+    const historyWriter: TelemetryHistoryWriter = {
+      async write(sample) {
+        written.push(structuredClone(sample));
+      },
+    };
+    const service = new TelemetryService(
+      repository,
+      new TelemetryHub(4),
+      {
+        topicPrefix: 'data/dev/',
+        maxPayloadBytes: 4096,
+      },
+      {
+        sourceDeviceMap: { 'EMU-BFDB-01': 'device-1' },
+        bfdbBindingMode: 'panel-order-24',
+        bfdbPositionsPerPanel: 2,
+      },
+      historyWriter,
+    );
+
+    await service.ingest(
+      'data/dev/EMU-BFDB-01',
+      new TextEncoder().encode(
+        JSON.stringify({
+          msgid: '20',
+          method: 'update',
+          sn: 'EMU-BFDB-01',
+          timestamp: 1_790_580_000,
+          sendtime: 1_790_580_000,
+          reported: {
+            '0_1_1': { U1: '13.82', I1: '3.46', P1: '47.83', EP1: '0.5074' },
+          },
+        }),
+      ),
+      '2026-09-28T12:00:00.000Z',
+    );
+
+    await service.ingest(
+      'data/dev/EMU-BFDB-01',
+      new TextEncoder().encode(
+        JSON.stringify({
+          msgid: '21',
+          method: 'update',
+          sn: 'EMU-BFDB-01',
+          timestamp: 1_790_580_001,
+          sendtime: 1_790_580_001,
+          reported: {
+            '0_1_1': { I1: '4.00' },
+          },
+        }),
+      ),
+      '2026-09-28T12:00:01.000Z',
+    );
+
+    expect(written).toHaveLength(2);
+    expect(written[1]?.breakerReadings?.[0]?.metrics.currentA?.value).toBe(4);
+    expect(written[1]?.breakerReadings?.[0]?.metrics.voltageV).toBeUndefined();
+    expect(written[1]?.breakerReadings?.[0]?.metrics.powerW).toBeUndefined();
+    expect(written[1]?.breakerReadings?.[0]?.metrics.energyKwh).toBeUndefined();
+
+    const latest = service.latest('device-1')?.breakerReadings?.[0];
+    expect(latest?.metrics.voltageV?.value).toBe(13.82);
+    expect(latest?.metrics.currentA?.value).toBe(4);
+    expect(latest?.metrics.powerW?.value).toBe(47.83);
+    expect(latest?.metrics.energyKwh?.value).toBe(0.5074);
   });
 
   it('rejects unknown and ambiguous source identities', async () => {

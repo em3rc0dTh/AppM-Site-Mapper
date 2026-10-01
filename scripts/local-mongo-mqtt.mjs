@@ -12,6 +12,11 @@ const reuseCrudTest = args.has('--reuse');
 const telemetryEnabled = !crudTest;
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
 
+const historyEnabled =
+  telemetryEnabled && process.env.TELEMETRY_HISTORY_ENABLED?.trim().toLowerCase() !== 'false';
+const telemetryStoreUrl =
+  process.env.TELEMETRY_STORE_URL?.trim() || 'http://127.0.0.1:18081';
+
 const uri = process.env.MONGODB_URI?.trim();
 const databaseName = crudTest
   ? process.env.MONGODB_CRUD_DB_NAME?.trim() || 'site_mapper_crud_acceptance'
@@ -274,6 +279,9 @@ const childEnv = {
   APP_PERSISTENCE: 'mongodb',
   MONGODB_DB_NAME: databaseName,
   TELEMETRY_ENABLED: telemetryEnabled ? 'true' : 'false',
+  TELEMETRY_HISTORY_ENABLED: historyEnabled ? 'true' : 'false',
+  TELEMETRY_STORE_URL: telemetryStoreUrl,
+  TELEMETRY_STORE_TIMEOUT_MS: process.env.TELEMETRY_STORE_TIMEOUT_MS || '5000',
   MQTT_BROKER_URL: process.env.MQTT_BROKER_URL || 'mqtt://127.0.0.1:1883',
   MQTT_TOPIC_PREFIX: topicPrefix,
   MQTT_TOPIC_FILTER: topicFilter,
@@ -285,6 +293,59 @@ const childEnv = {
 
 let child;
 let exited = false;
+
+function runCommand(command, commandArgs) {
+  return new Promise((resolve, reject) => {
+    const processHandle = spawn(command, commandArgs, {
+      env: process.env,
+      stdio: 'inherit',
+      shell: process.platform === 'win32',
+    });
+    processHandle.once('error', reject);
+    processHandle.once('exit', (code) => {
+      if (code === 0) resolve();
+      else reject(new Error(command + ' exited with code ' + String(code)));
+    });
+  });
+}
+
+async function waitForTelemetryStore() {
+  const healthUrl = telemetryStoreUrl.replace(/\/$/, '') + '/health';
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    try {
+      const response = await fetch(healthUrl);
+      if (response.ok) return;
+    } catch {
+      // TimescaleDB and the Site Mapper store adapter are starting.
+    }
+    await new Promise((resolve) => setTimeout(resolve, 750));
+  }
+  throw new Error(
+    'Site Mapper telemetry history store did not become ready at ' +
+      healthUrl +
+      '. Check docker compose -f docker-compose.telemetry.yml ps.',
+  );
+}
+
+async function ensureTelemetryStore() {
+  if (!historyEnabled) return;
+
+  if (process.env.TELEMETRY_STORE_AUTOSTART?.trim().toLowerCase() !== 'false') {
+    console.log('Starting Site Mapper-owned TimescaleDB telemetry store...');
+    await runCommand('docker', [
+      'compose',
+      '-f',
+      'docker-compose.telemetry.yml',
+      'up',
+      '-d',
+      '--build',
+    ]);
+  }
+
+  await waitForTelemetryStore();
+  console.log('TimescaleDB history store: READY (' + telemetryStoreUrl + ')');
+}
+
 async function waitForServer() {
   for (let i = 0; i < 120; i++) {
     if (exited) throw new Error('Next.js exited before becoming ready.');
@@ -343,6 +404,7 @@ try {
   if (inspectOnly) {
     console.log('Inspection completed. No server started.');
   } else {
+    await ensureTelemetryStore();
     child = spawn(process.execPath, [nextBin, 'dev', '-H', host, '-p', String(port)], {
       env: childEnv,
       stdio: 'inherit',
@@ -374,6 +436,11 @@ try {
       crudTest
         ? 'Telemetry: disabled for this acceptance run'
         : 'Telemetry: subscribed on demand to ' + childEnv.MQTT_TOPIC_FILTER,
+    );
+    console.log(
+      historyEnabled
+        ? 'History: Site Mapper TimescaleDB enabled via ' + telemetryStoreUrl
+        : 'History: disabled',
     );
     console.log('The actual broker subscription and breaker mapping must be checked after login.');
     console.log('Login: ' + baseUrl + '/login');

@@ -84,9 +84,7 @@ export function ConnectPowerForm({
     if (!selectedDestination) return;
     if (!selectedPort?.feed || selectedPort.feed === value) return;
 
-    const compatible = selectedDestination.ports.find(
-      (port) => !port.feed || port.feed === value,
-    );
+    const compatible = selectedDestination.ports.find((port) => !port.feed || port.feed === value);
 
     setAccessPortId(compatible?.id ?? '');
   }

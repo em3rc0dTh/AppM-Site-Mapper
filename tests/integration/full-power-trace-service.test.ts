@@ -90,7 +90,7 @@ describe('FullPowerTraceService', () => {
       createdAt: timestamp,
       updatedAt: timestamp,
     };
-    const module: EquipmentNode = {
+    const computeModule: EquipmentNode = {
       id: 'equipment-module',
       kind: 'EQUIPMENT',
       parentId: root.id,
@@ -103,7 +103,7 @@ describe('FullPowerTraceService', () => {
     const controller: EquipmentNode = {
       id: 'equipment-controller',
       kind: 'EQUIPMENT',
-      parentId: module.id,
+      parentId: computeModule.id,
       name: 'Power Controller',
       lifecycle: 'ACTIVE',
       pinned: false,
@@ -121,7 +121,7 @@ describe('FullPowerTraceService', () => {
     const topology = new MemoryTopologyRepository([
       rack,
       root,
-      module,
+      computeModule,
       controller,
       bdfbA,
       bdfbB,

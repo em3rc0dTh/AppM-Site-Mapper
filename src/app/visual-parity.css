@@ -3956,7 +3956,6 @@ body {
   }
 }
 
-
 /* Operations visual hardening — compact, scan-first dashboard */
 .zip-operations-page {
   --ops-surface: #ffffff;
@@ -4456,7 +4455,6 @@ body {
   }
 }
 
-
 /* Click-first PowerPath commissioning */
 .power-connect-page {
   min-height: calc(100vh - 67px);
@@ -4677,7 +4675,10 @@ body {
   border-radius: 9px;
   background: #fff;
   cursor: pointer;
-  transition: border-color 130ms ease, background-color 130ms ease, box-shadow 130ms ease;
+  transition:
+    border-color 130ms ease,
+    background-color 130ms ease,
+    box-shadow 130ms ease;
 }
 
 .power-destination-option:hover {

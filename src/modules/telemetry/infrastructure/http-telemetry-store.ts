@@ -50,9 +50,9 @@ export function serializeTelemetryStoreSample(
   const readings = (sample.breakerReadings ?? []).flatMap((reading, index) => {
     const hasMetric = Boolean(
       reading.metrics.voltageV ||
-        reading.metrics.currentA ||
-        reading.metrics.powerW ||
-        reading.metrics.energyKwh,
+      reading.metrics.currentA ||
+      reading.metrics.powerW ||
+      reading.metrics.energyKwh,
     );
     if (!hasMetric) return [];
 
@@ -175,7 +175,6 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
 export function createTelemetryStoreClient(): HttpTelemetryStore {
   const baseUrl = process.env.TELEMETRY_STORE_URL?.trim() || 'http://127.0.0.1:18081';
   const parsedTimeout = Number(process.env.TELEMETRY_STORE_TIMEOUT_MS);
-  const timeoutMs =
-    Number.isInteger(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 5_000;
+  const timeoutMs = Number.isInteger(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 5_000;
   return new HttpTelemetryStore(baseUrl, timeoutMs);
 }

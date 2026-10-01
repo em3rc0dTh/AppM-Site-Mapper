@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { ConnectPowerForm } from '@/components/power/connect-power-form';
@@ -60,48 +59,6 @@ export default async function ConnectPowerPage({
   const selfHref = await topologyService.buildDeepLink(sourceOwner.id);
   const returnHref = `${selfHref}?panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(breakerHolder.id)}`;
 
-  const activePaths = await (await createPowerRepository()).listActive();
-  const existing = activePaths.find((path) => {
-    const endpoints = [path.source, path.target];
-    return endpoints.some(
-      (endpoint) =>
-        endpoint.entityId === sourceOwner.id &&
-        endpoint.internal?.breakerHolderId === breakerHolder.id,
-    );
-  });
-
-  if (existing) {
-    return (
-      <main className="power-connect-page">
-        <header className="power-connect-header">
-          <div>
-            <p>POWER / COMMISSIONING</p>
-            <h1>Breaker already connected</h1>
-            <span>
-              This breaker already has an active PowerPath. Trace or review it before changing the
-              physical model.
-            </span>
-          </div>
-          <Link href={returnHref}>← Back to breaker</Link>
-        </header>
-        <section className="power-connect-existing">
-          <span>✓</span>
-          <div>
-            <strong>{breakerHolder.label}</strong>
-            <small>
-              {sourceOwner.name} / {panel.label} / Feed {existing.feed ?? 'unspecified'}
-            </small>
-          </div>
-          <Link
-            href={`/power?path=${encodeURIComponent(existing.id)}&breaker=${encodeURIComponent(breakerHolder.id)}${existing.feed ? `&feed=${existing.feed}` : ''}`}
-          >
-            TRACE PATH →
-          </Link>
-        </section>
-      </main>
-    );
-  }
-
   const candidates = [
     ...(await topology.listByKind('DEVICE')),
     ...(await topology.listByKind('EQUIPMENT')),
@@ -126,6 +83,13 @@ export default async function ConnectPowerPage({
           .join(' › '),
         ...(node.category ? { category: node.category } : {}),
         ...(node.serialNumber ? { serialNumber: node.serialNumber } : {}),
+        ports: (node.accessPorts ?? [])
+          .filter((port) => port.kind === 'POWER')
+          .map((port) => ({
+            id: port.id,
+            label: port.label,
+            ...(port.feed ? { feed: port.feed } : {}),
+          })),
       };
     }),
   );

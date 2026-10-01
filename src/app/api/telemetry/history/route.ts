@@ -7,6 +7,7 @@ import {
   type TelemetryHistoryResponse,
   type TelemetryHistoryWindow,
 } from '@/modules/telemetry/domain/history';
+import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -60,34 +61,12 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'NO_HISTORY_BINDINGS' }, { status: 409 });
   }
 
-  const historyBase = (process.env.TELEMETRY_HISTORY_URL || 'http://127.0.0.1:18080').replace(
-    /\/$/,
-    '',
-  );
-  const upstream = new URL(`${historyBase}/history`);
-  upstream.searchParams.set('serial', sourceIdentity);
-  upstream.searchParams.set('window', window);
-  for (const rawPointId of rawPointIds) upstream.searchParams.append('rawPointId', rawPointId);
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5_000);
+  if (process.env.TELEMETRY_HISTORY_ENABLED !== 'true') {
+    return Response.json({ error: 'HISTORY_STORE_DISABLED' }, { status: 503 });
+  }
 
   try {
-    const response = await fetch(upstream, {
-      cache: 'no-store',
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      return Response.json(
-        { error: 'HISTORY_PROVIDER_ERROR', upstreamStatus: response.status },
-        { status: 502 },
-      );
-    }
-
-    const body = (await response.json()) as {
-      points?: TelemetryHistoryResponse['points'];
-    };
+    const points = await createTelemetryStoreClient().query(sourceIdentity, window, rawPointIds);
 
     const payload: TelemetryHistoryResponse = {
       deviceId: node.id,
@@ -100,7 +79,7 @@ export async function GET(request: NextRequest) {
         holderCount: scopedEndpoints.filter((endpoint) => endpoint.variant === 'HOLDER').length,
       },
       window,
-      points: Array.isArray(body.points) ? body.points : [],
+      points,
     };
 
     return Response.json(payload, {
@@ -109,12 +88,10 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     return Response.json(
       {
-        error: 'HISTORY_PROVIDER_UNAVAILABLE',
-        detail: error instanceof Error ? error.name : 'unknown',
+        error: 'HISTORY_STORE_UNAVAILABLE',
+        detail: error instanceof Error ? error.message : 'unknown',
       },
       { status: 503 },
     );
-  } finally {
-    clearTimeout(timeout);
   }
 }

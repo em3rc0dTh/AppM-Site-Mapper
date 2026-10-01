@@ -78,6 +78,19 @@ export function ConnectPowerForm({
     if (port.feed) setFeed(port.feed);
   }
 
+  function selectFeed(value: 'A' | 'B') {
+    setFeed(value);
+
+    if (!selectedDestination) return;
+    if (!selectedPort?.feed || selectedPort.feed === value) return;
+
+    const compatible = selectedDestination.ports.find(
+      (port) => !port.feed || port.feed === value,
+    );
+
+    setAccessPortId(compatible?.id ?? '');
+  }
+
   async function connect() {
     if (!destinationId || !accessPortId || saving) return;
     setSaving(true);
@@ -244,8 +257,7 @@ export function ConnectPowerForm({
                 type="button"
                 key={value}
                 data-selected={feed === value ? 'true' : 'false'}
-                disabled={Boolean(selectedPort?.feed && selectedPort.feed !== value)}
-                onClick={() => setFeed(value)}
+                onClick={() => selectFeed(value)}
               >
                 <span>FEED {value}</span>
                 <strong>{feed === value ? '● Selected' : '○ Select'}</strong>

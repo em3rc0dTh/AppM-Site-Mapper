@@ -42,7 +42,7 @@ function SourceCard({
 function TelemetryCard({
   feed,
   leg,
-}: Readonly<{ feed: 'A' | 'B'; leg?: FullPowerTraceLeg }>) {
+}: Readonly<{ feed: 'A' | 'B'; leg: FullPowerTraceLeg | undefined }>) {
   return (
     <article className="trace-telemetry-card" data-feed={feed} data-live={leg?.telemetry.status === 'LIVE'}>
       <header>
@@ -99,7 +99,7 @@ function TraceStep({
   index: number;
   label: string;
   value: string;
-  detail?: string;
+  detail: string | undefined;
   status: string;
 }>) {
   return (
@@ -119,7 +119,7 @@ function TraceStep({
 function FeedTrace({
   feed,
   leg,
-}: Readonly<{ feed: 'A' | 'B'; leg?: FullPowerTraceLeg }>) {
+}: Readonly<{ feed: 'A' | 'B'; leg: FullPowerTraceLeg | undefined }>) {
   if (!leg) {
     return (
       <section className="trace-detail-column" data-feed={feed}>

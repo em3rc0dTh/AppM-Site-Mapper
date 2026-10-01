@@ -137,6 +137,7 @@ export default async function TopologyNodePage({
   );
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
+  const canWritePower = hasPermission(auth.value.role, 'power:write');
   const siteContext =
     node.kind === 'STRUCTURE' ? [...trail].reverse().find((entry) => entry.kind === 'SITE') : null;
   const siteBoundary =
@@ -320,6 +321,7 @@ export default async function TopologyNodePage({
                 key={query.panel ?? 'bdfb-overview'}
                 device={node}
                 powerBindings={bdfbPowerBindings}
+                canWritePower={canWritePower}
               />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
               roomLayout?.ok &&

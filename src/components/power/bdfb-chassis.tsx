@@ -98,7 +98,9 @@ function endpointInspector(
       label: `TRACE ${binding.counterpartName}`,
       href: `/power?path=${encodeURIComponent(binding.pathId)}&breaker=${encodeURIComponent(endpoint.id)}${binding.feed ? `&feed=${binding.feed}` : ''}`,
     })),
-    ...(connectHref ? [{ label: bindings.length ? 'CONNECT ANOTHER LOAD' : 'CONNECT POWER', href: connectHref }] : []),
+    ...(connectHref
+      ? [{ label: bindings.length ? 'CONNECT ANOTHER LOAD' : 'CONNECT POWER', href: connectHref }]
+      : []),
   ];
 
   return {

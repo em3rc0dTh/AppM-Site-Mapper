@@ -83,10 +83,40 @@ Required runtime secret/config when telemetry is enabled.
 
 Supported transport schemes:
 
-- `mqtt://`
-- `mqtts://`
+- `mqtt://` — development/test/staging only;
+- `mqtts://` — required in production.
+
+When `APP_ENV=production`, Site Mapper fails closed if `MQTT_BROKER_URL` uses plaintext `mqtt://`.
 
 Examples are intentionally omitted from committed configuration because the active provider endpoint is runtime data.
+
+## Historical telemetry store
+
+### TELEMETRY_HISTORY_ENABLED
+
+Enables Site Mapper-owned historical persistence in the TimescaleDB telemetry store. History is written from accepted normalized telemetry patches and is independent from in-process Latest State.
+
+Default:
+
+`false`
+
+### TELEMETRY_STORE_URL
+
+Private/internal URL for the Site Mapper telemetry-store adapter.
+
+Development default:
+
+`http://127.0.0.1:18081`
+
+Do not expose this adapter directly to an untrusted/shared network without an explicit service-to-service authentication or private-network boundary.
+
+### TELEMETRY_STORE_TIMEOUT_MS
+
+Timeout used by Site Mapper when writing/querying the telemetry-store adapter.
+
+Default:
+
+`5000`
 
 ### MQTT_USERNAME / MQTT_PASSWORD
 

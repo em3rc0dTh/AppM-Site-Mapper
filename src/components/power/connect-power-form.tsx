@@ -79,9 +79,10 @@ export function ConnectPowerForm({
         }),
       });
 
-      const payload = (await response.json().catch(() => null)) as
-        | { path?: { id?: string }; error?: string }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        path?: { id?: string };
+        error?: string;
+      } | null;
 
       if (!response.ok || !payload?.path?.id) {
         setError(payload?.error ?? `Unable to create power path (HTTP ${response.status}).`);
@@ -170,7 +171,9 @@ export function ConnectPowerForm({
                   checked={destinationId === item.id}
                   onChange={() => setDestinationId(item.id)}
                 />
-                <span className="power-destination-glyph">{item.kind === 'DEVICE' ? '▤' : '▥'}</span>
+                <span className="power-destination-glyph">
+                  {item.kind === 'DEVICE' ? '▤' : '▥'}
+                </span>
                 <span>
                   <strong>{item.name}</strong>
                   <small>
@@ -211,7 +214,9 @@ export function ConnectPowerForm({
           </div>
 
           <label className="power-path-label">
-            <span>Connection label <small>Optional</small></span>
+            <span>
+              Connection label <small>Optional</small>
+            </span>
             <input
               value={label}
               onChange={(event) => setLabel(event.target.value)}

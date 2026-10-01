@@ -1,7 +1,9 @@
 import { requireRuntimeSecret } from '@/config/env';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
+import type { TelemetryHistoryWriterDiagnostics } from '@/modules/telemetry/application/telemetry-history-writer';
 import type { BfdbBindingMode } from '@/modules/telemetry/domain/bfdb';
+import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
 import { NativeMqttSource } from '@/modules/telemetry/infrastructure/native-mqtt-source';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { logger } from '@/shared/infrastructure/logger';
@@ -33,6 +35,7 @@ export interface TelemetryDiagnostics {
   readonly lastAcceptedAt: string | null;
   readonly rejectionReasons: Readonly<Record<string, number>>;
   readonly sources: readonly TelemetrySourceDiagnostic[];
+  readonly history: TelemetryHistoryWriterDiagnostics;
 }
 
 export interface TelemetryRuntime {
@@ -94,6 +97,8 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     const topicFilter = process.env.MQTT_TOPIC_FILTER?.trim() || `${topicPrefix}#`;
     const expected = expectedSources(process.env.MQTT_EXPECTED_SOURCES);
     const enabled = process.env.TELEMETRY_ENABLED === 'true';
+    const historyEnabled = enabled && process.env.TELEMETRY_HISTORY_ENABLED === 'true';
+    const historyStore = historyEnabled ? createTelemetryStoreClient() : null;
     const hub = new TelemetryHub(maxStreams);
     const topologyRepository = await createTopologyRepository();
     const service = new TelemetryService(
@@ -105,6 +110,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
         bfdbBindingMode: bindingMode(process.env.BFDB_TELEMETRY_BINDING_MODE),
         bfdbPositionsPerPanel: positiveInt(process.env.BFDB_POSITIONS_PER_PANEL, 24),
       },
+      historyStore ?? undefined,
     );
 
     const counts = new Map<string, { messages: number; lastRawAt: string }>();
@@ -175,6 +181,15 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           lastRawAt,
           lastAcceptedAt,
           rejectionReasons: { ...rejectionReasons },
+          history:
+            historyStore?.diagnostics() ?? {
+              enabled: false,
+              writes: 0,
+              rowsAccepted: 0,
+              failures: 0,
+              lastWriteAt: null,
+              lastError: null,
+            },
           sources: identities.map((serial) => {
             const incoming = counts.get(serial);
             const sample = allSamples.find((item) => item.sourceIdentity === serial);

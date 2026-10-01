@@ -12,7 +12,13 @@ function metric(value: number | undefined, unit: string, decimals = 2): string {
 }
 
 function TraceLeg({ leg }: Readonly<{ leg: FullPowerTraceLeg }>) {
-  const sourcePath = [leg.source.entityName, leg.source.shelf, leg.source.frame, leg.source.panel, leg.source.breaker]
+  const sourcePath = [
+    leg.source.entityName,
+    leg.source.shelf,
+    leg.source.frame,
+    leg.source.panel,
+    leg.source.breaker,
+  ]
     .filter(Boolean)
     .join(' › ');
 
@@ -78,7 +84,9 @@ function FeedColumn({
     <section className="full-power-trace-feed" data-feed={feed}>
       <header>
         <span>FEED {feed}</span>
-        <strong>{legs.length} configured trace{legs.length === 1 ? '' : 's'}</strong>
+        <strong>
+          {legs.length} configured trace{legs.length === 1 ? '' : 's'}
+        </strong>
       </header>
       {legs.length ? (
         legs.map((leg) => <TraceLeg key={leg.pathId} leg={leg} />)
@@ -106,9 +114,10 @@ export function FullPowerTraceModal({
       const response = await fetch(`/api/power-trace/${encodeURIComponent(entityId)}`, {
         cache: 'no-store',
       });
-      const payload = (await response.json().catch(() => null)) as
-        | { trace?: FullPowerTrace; error?: string }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        trace?: FullPowerTrace;
+        error?: string;
+      } | null;
       if (!response.ok || !payload?.trace) {
         setError(payload?.error ?? `Unable to resolve power trace (HTTP ${response.status}).`);
         return;
@@ -126,7 +135,11 @@ export function FullPowerTraceModal({
       </button>
 
       {open ? (
-        <div className="full-power-trace-backdrop" role="presentation" onMouseDown={() => setOpen(false)}>
+        <div
+          className="full-power-trace-backdrop"
+          role="presentation"
+          onMouseDown={() => setOpen(false)}
+        >
           <section
             className="full-power-trace-dialog"
             role="dialog"
@@ -143,12 +156,18 @@ export function FullPowerTraceModal({
                   policy is explicitly configured.
                 </p>
               </div>
-              <button type="button" aria-label="Close full power trace" onClick={() => setOpen(false)}>
+              <button
+                type="button"
+                aria-label="Close full power trace"
+                onClick={() => setOpen(false)}
+              >
                 ×
               </button>
             </header>
 
-            {loading ? <div className="full-power-trace-state">Resolving physical power paths…</div> : null}
+            {loading ? (
+              <div className="full-power-trace-state">Resolving physical power paths…</div>
+            ) : null}
             {error ? <div className="full-power-trace-state is-error">{error}</div> : null}
 
             {trace ? (
@@ -161,7 +180,9 @@ export function FullPowerTraceModal({
                 {trace.unspecified.length ? (
                   <section className="full-power-trace-unspecified">
                     <h3>Feed not classified</h3>
-                    {trace.unspecified.map((leg) => <TraceLeg key={leg.pathId} leg={leg} />)}
+                    {trace.unspecified.map((leg) => (
+                      <TraceLeg key={leg.pathId} leg={leg} />
+                    ))}
                   </section>
                 ) : null}
 
@@ -172,7 +193,11 @@ export function FullPowerTraceModal({
                       <strong>{policy.entityName}</strong>
                       <span>{policy.policy.replaceAll('_', ' ')}</span>
                       <b data-status={policy.status}>{policy.status.replaceAll('_', ' ')}</b>
-                      <code>{policy.feedsPresent.length ? policy.feedsPresent.join(' + ') : 'No valid feeds'}</code>
+                      <code>
+                        {policy.feedsPresent.length
+                          ? policy.feedsPresent.join(' + ')
+                          : 'No valid feeds'}
+                      </code>
                     </div>
                   ))}
                 </section>

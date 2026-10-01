@@ -35,19 +35,14 @@ export interface ResolvedPowerEndpoint {
 function hasBdfbInternalPart(endpoint: PowerEndpoint): boolean {
   const internal = endpoint.internal;
   return Boolean(
-    internal?.shelfId ||
-      internal?.frameId ||
-      internal?.panelId ||
-      internal?.breakerHolderId,
+    internal?.shelfId || internal?.frameId || internal?.panelId || internal?.breakerHolderId,
   );
 }
 
 function resolveAccessPort(
   owner: Extract<TopologyNode, { kind: 'DEVICE' | 'EQUIPMENT' }>,
   endpoint: PowerEndpoint,
-):
-  | { ok: true; value: ResolvedPowerEndpoint }
-  | { ok: false; error: EndpointValidationError } {
+): { ok: true; value: ResolvedPowerEndpoint } | { ok: false; error: EndpointValidationError } {
   const accessPortId = endpoint.internal?.accessPortId;
   if (!accessPortId) {
     return { ok: true, value: { owner } };

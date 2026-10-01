@@ -3,10 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import type {
-  AccessPort,
-  PowerRedundancyPolicy,
-} from '@/modules/topology/domain/entities';
+import type { AccessPort, PowerRedundancyPolicy } from '@/modules/topology/domain/entities';
 
 interface EditablePort {
   readonly key: string;
@@ -57,9 +54,7 @@ export function PowerContractEditor({
   }
 
   function patchPort(key: string, patch: Partial<EditablePort>) {
-    setPorts((current) =>
-      current.map((port) => (port.key === key ? { ...port, ...patch } : port)),
-    );
+    setPorts((current) => current.map((port) => (port.key === key ? { ...port, ...patch } : port)));
   }
 
   function removePort(key: string) {
@@ -71,23 +66,27 @@ export function PowerContractEditor({
     setSaving(true);
     setError(null);
     try {
-      const response = await fetch(`/api/inventory/${encodeURIComponent(entityId)}/power-contract`, {
-        method: 'PUT',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          redundancy: policy,
-          accessPorts: ports.map((port) => ({
-            id: port.id.trim(),
-            label: port.label.trim(),
-            kind: 'POWER',
-            ...(port.feed ? { feed: port.feed } : {}),
-          })),
-        }),
-      });
+      const response = await fetch(
+        `/api/inventory/${encodeURIComponent(entityId)}/power-contract`,
+        {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            redundancy: policy,
+            accessPorts: ports.map((port) => ({
+              id: port.id.trim(),
+              label: port.label.trim(),
+              kind: 'POWER',
+              ...(port.feed ? { feed: port.feed } : {}),
+            })),
+          }),
+        },
+      );
 
-      const payload = (await response.json().catch(() => null)) as
-        | { item?: unknown; error?: string }
-        | null;
+      const payload = (await response.json().catch(() => null)) as {
+        item?: unknown;
+        error?: string;
+      } | null;
       if (!response.ok || !payload?.item) {
         setError(payload?.error ?? `Unable to save power ports (HTTP ${response.status}).`);
         return;
@@ -107,7 +106,11 @@ export function PowerContractEditor({
       </button>
 
       {open ? (
-        <div className="power-contract-backdrop" role="presentation" onMouseDown={() => setOpen(false)}>
+        <div
+          className="power-contract-backdrop"
+          role="presentation"
+          onMouseDown={() => setOpen(false)}
+        >
           <section
             className="power-contract-dialog"
             role="dialog"
@@ -124,14 +127,21 @@ export function PowerContractEditor({
                   declared requirement, not an inferred state.
                 </p>
               </div>
-              <button type="button" aria-label="Close power port editor" onClick={() => setOpen(false)}>
+              <button
+                type="button"
+                aria-label="Close power port editor"
+                onClick={() => setOpen(false)}
+              >
                 ×
               </button>
             </header>
 
             <label className="power-contract-policy">
               <span>Redundancy policy</span>
-              <select value={policy} onChange={(event) => setPolicy(event.target.value as PowerRedundancyPolicy)}>
+              <select
+                value={policy}
+                onChange={(event) => setPolicy(event.target.value as PowerRedundancyPolicy)}
+              >
                 <option value="NONE">No declared A/B requirement</option>
                 <option value="A_B_REQUIRED">A + B required</option>
               </select>
@@ -143,7 +153,10 @@ export function PowerContractEditor({
                   <span>{String(index + 1).padStart(2, '0')}</span>
                   <label>
                     <small>Port ID</small>
-                    <input value={port.id} onChange={(event) => patchPort(port.key, { id: event.target.value })} />
+                    <input
+                      value={port.id}
+                      onChange={(event) => patchPort(port.key, { id: event.target.value })}
+                    />
                   </label>
                   <label>
                     <small>Label</small>
@@ -165,7 +178,11 @@ export function PowerContractEditor({
                       <option value="B">Feed B</option>
                     </select>
                   </label>
-                  <button type="button" aria-label={`Remove ${port.label}`} onClick={() => removePort(port.key)}>
+                  <button
+                    type="button"
+                    aria-label={`Remove ${port.label}`}
+                    onClick={() => removePort(port.key)}
+                  >
                     Remove
                   </button>
                 </article>

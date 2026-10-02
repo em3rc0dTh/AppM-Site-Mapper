@@ -1,3 +1,5 @@
+import { getBdfbPresentation } from '@/modules/power/application/bdfb-presentation';
+import { isValidPolygon, polygonArea } from '@/modules/spatial/domain/geometry';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 
 function value(value: string | number | undefined, fallback = '—'): string {
@@ -13,10 +15,14 @@ export function TopologyPropertiesPanel({
   node,
   contained,
   previewContained,
+  location,
+  feeds,
 }: Readonly<{
   node: TopologyNode;
   contained: number;
   previewContained?: number;
+  location?: string;
+  feeds?: readonly string[];
 }>) {
   if (node.kind === 'SITE') {
     const load = node.details?.currentLoad;
@@ -48,7 +54,7 @@ export function TopologyPropertiesPanel({
           <h3 className="is-warning">⌁ ACTIVE ALARMS</h3>
           <div className="telxius-property-card telxius-health-card">
             <span>SYSTEM STATUS</span>
-            <b>{alarms === 0 ? 'HEALTHY' : `${value(alarms)} ACTIVE`}</b>
+            <b>{alarms === 0 ? 'CONFIGURED' : `${value(alarms)} ACTIVE`}</b>
           </div>
         </section>
 
@@ -57,7 +63,15 @@ export function TopologyPropertiesPanel({
           <dl className="telxius-property-list">
             <div>
               <dt>TOTAL AREA</dt>
-              <dd>{node.totalAreaSqm !== undefined ? `${node.totalAreaSqm} m²` : '—'}</dd>
+              <dd>
+                {isValidPolygon(node.polygon)
+                  ? `${(polygonArea(node.polygon) / 1_000_000).toFixed(2)} m²`
+                  : '—'}
+              </dd>
+            </div>
+            <div>
+              <dt>BOUNDARY</dt>
+              <dd>{node.polygon?.length ? `${node.polygon.length} vertices` : 'Not drawn'}</dd>
             </div>
             <div>
               <dt>CATEGORY</dt>
@@ -109,48 +123,72 @@ export function TopologyPropertiesPanel({
   }
 
   if (node.kind === 'DEVICE' && node.bdfb) {
-    const shelves = node.bdfb.shelves;
+    const presentation = getBdfbPresentation(node);
+    const shelves = presentation.shelves;
     const frames = shelves.flatMap((shelf) => shelf.frames);
     const panels = frames.flatMap((frame) => frame.panels);
     const endpoints = panels.flatMap((panel) => panel.endpoints);
     const breakers = endpoints.filter((endpoint) => endpoint.variant === 'BREAKER').length;
+    const hasA = feeds?.includes('A') ?? false;
+    const hasB = feeds?.includes('B') ?? false;
 
     return (
-      <aside className="telxius-properties">
-        <header>BDFB PROPERTIES</header>
-        <section className="telxius-stat-stack">
-          <div className="telxius-property-card">
-            <span>SHELVES</span>
-            <strong>{shelves.length}</strong>
+      <aside className="telxius-properties zip-bdfb-inspector">
+        <header>
+          INSPECTOR <span>⌄</span>
+        </header>
+        <div className="zip-bdfb-inspector-id">
+          <span>▥</span>
+          <div>
+            <h2>{node.name}</h2>
+            <small>{location ?? 'Infrastructure'}</small>
           </div>
-          <div className="telxius-property-card">
-            <span>FRAMES / PANELS</span>
-            <strong>
-              {frames.length} / {panels.length}
-            </strong>
-          </div>
-          <div className="telxius-property-card">
-            <span>ACTIVE BREAKERS</span>
-            <strong>{breakers}</strong>
+        </div>
+        <dl>
+          <dt>Type</dt>
+          <dd>BDFB</dd>
+          <dt>Location</dt>
+          <dd>{location ?? '—'}</dd>
+          <dt>Shelves</dt>
+          <dd>{presentation.physicalShelfCount}</dd>
+          <dt>Frames</dt>
+          <dd>{presentation.physicalFrameCount}</dd>
+          <dt>Panel slots</dt>
+          <dd>{presentation.physicalPanelSlotCount}</dd>
+          {presentation.configuredPanelCount !== presentation.physicalPanelSlotCount && (
+            <>
+              <dt>Configured panels</dt>
+              <dd>{presentation.configuredPanelCount}</dd>
+            </>
+          )}
+          <dt>Breakers</dt>
+          <dd>{breakers}</dd>
+          <dt>Feed A</dt>
+          <dd>{hasA ? 'Configured' : '—'}</dd>
+          <dt>Feed B</dt>
+          <dd>{hasB ? 'Configured' : '—'}</dd>
+          <dt>Telemetry</dt>
+          <dd>
+            {endpoints.some((endpoint) => endpoint.telemetry?.rawPointId)
+              ? 'EXPLICIT BINDINGS'
+              : 'UNMAPPED'}
+          </dd>
+        </dl>
+        <section className="zip-bdfb-status-card">
+          <h3>STATUS</h3>
+          <div>
+            <span>●</span>
+            <strong>Physical inventory recorded</strong>
+            <small>Live health requires an explicitly mapped MQTT reading.</small>
           </div>
         </section>
-        <section>
-          <h3>IDENTITY</h3>
-          <dl className="telxius-property-list">
-            <div>
-              <dt>CATEGORY</dt>
-              <dd>{value(node.category)}</dd>
-            </div>
-            <div>
-              <dt>SERIAL</dt>
-              <dd>{value(node.serialNumber)}</dd>
-            </div>
-            <div>
-              <dt>ENDPOINTS</dt>
-              <dd>{endpoints.length}</dd>
-            </div>
-          </dl>
-        </section>
+        <div className="zip-bdfb-actions">
+          <span>
+            {endpoints.filter((endpoint) => Boolean(endpoint.telemetry?.rawPointId)).length}{' '}
+            explicit MQTT bindings
+          </span>
+          <span>Select a panel to inspect its breakers.</span>
+        </div>
       </aside>
     );
   }

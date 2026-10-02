@@ -19,11 +19,19 @@
     "verify": "npm run typecheck && npm run lint && npm run format:check && npm run test && npm run build",
     "migration:legacy": "node --experimental-strip-types scripts/migrations/legacy/migrate.ts",
     "migration:promote": "node --experimental-strip-types scripts/migrations/legacy/promote.ts",
-    "test:certification": "vitest run tests/certification"
+    "test:certification": "vitest run tests/certification",
+    "local:dev": "node scripts/local-dev.mjs",
+    "local:emulator": "node scripts/local-dev.mjs --mqtt",
+    "local:mongo-mqtt": "node scripts/local-mongo-mqtt.mjs",
+    "telemetry:store:up": "docker compose -f docker-compose.telemetry.yml up -d --build",
+    "telemetry:store:down": "docker compose -f docker-compose.telemetry.yml down",
+    "telemetry:store:logs": "docker compose -f docker-compose.telemetry.yml logs -f telemetry-store timescaledb",
+    "local:mongo-crud:new": "node scripts/local-mongo-mqtt.mjs --crud-test --init-admin",
+    "local:mongo-crud": "node scripts/local-mongo-mqtt.mjs --crud-test --reuse"
   },
   "dependencies": {
     "mongodb": "7.6.0",
-    "next": "16.3.5",
+    "next": "16.3.8",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
@@ -32,7 +40,7 @@
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.3.8",
     "prettier": "3.9.8",
     "typescript": "5.9.3",
     "vitest": "5.0.1"

@@ -1,4 +1,5 @@
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
+import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/telemetry-history-writer';
 import { buildBfdbBreakerReadings, type BfdbBindingMode } from '@/modules/telemetry/domain/bfdb';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import {
@@ -26,6 +27,7 @@ export class TelemetryService {
     private readonly hub: TelemetryHub,
     private readonly normalizerOptions: TelemetryNormalizerOptions,
     private readonly integrationOptions: TelemetryIntegrationOptions = {},
+    private readonly historyWriter?: TelemetryHistoryWriter,
   ) {}
 
   async ingest(
@@ -70,6 +72,7 @@ export class TelemetryService {
     };
 
     this.hub.publish(sample);
+    await this.historyWriter?.write(sample);
     return success(this.hub.latest(entity.id) ?? sample);
   }
 

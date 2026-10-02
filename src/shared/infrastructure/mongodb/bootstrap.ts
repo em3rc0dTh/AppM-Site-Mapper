@@ -13,6 +13,15 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     topology.createIndex({ serialNumber: 1 }, { name: 'ix_topology_serial', sparse: true }),
   ]);
 
+  const warehouseTemplates = database.collection('warehouse_templates');
+  await Promise.all([
+    warehouseTemplates.createIndex({ id: 1 }, { unique: true, name: 'uq_warehouse_template_id' }),
+    warehouseTemplates.createIndex(
+      { lifecycle: 1, kind: 1, name: 1 },
+      { name: 'ix_warehouse_lifecycle_kind_name' },
+    ),
+  ]);
+
   const powerPaths = database.collection('power_paths');
   await Promise.all([
     powerPaths.createIndex({ id: 1 }, { unique: true, name: 'uq_power_path_id' }),

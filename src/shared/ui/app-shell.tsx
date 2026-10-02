@@ -4,14 +4,18 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, type ReactNode } from 'react';
 
-import { Icon } from './primitives';
+import { CommandPalette } from './command-palette';
+import { ContextTracker } from './context-tracker';
 
-const links = [
-  { href: '/workspace', label: 'Workspace', icon: 'workspace' },
-  { href: '/network', label: 'Network', icon: 'network' },
-  { href: '/power', label: 'Power', icon: 'power' },
-  { href: '/telemetry', label: 'Telemetry', icon: 'telemetry' },
-];
+function BrandMark() {
+  return (
+    <svg className="zip-brand-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M32 4 56 17v30L32 60 8 47V17Z" />
+      <path d="m8 17 24 14 24-14M32 31v29M20 24 43 11M20 24v16l12 8 12-8V24" />
+      <path d="M21 25v7m0 0-3 2m3-2 3 1" />
+    </svg>
+  );
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -21,19 +25,23 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (pathname === '/login' || pathname === '/change-password') return children;
 
+  const blueprint = pathname.startsWith('/blueprint');
+  const power = pathname.startsWith('/power');
   const immersive =
     pathname.startsWith('/topology') ||
-    pathname.startsWith('/blueprint') ||
-    pathname.startsWith('/rack');
+    blueprint ||
+    pathname.startsWith('/rack') ||
+    pathname.startsWith('/device') ||
+    power ||
+    pathname === '/network';
 
-  const active =
-    immersive || pathname === '/network'
-      ? '/network'
-      : pathname.startsWith('/power')
-        ? '/power'
-        : pathname.startsWith('/telemetry')
-          ? '/telemetry'
-          : '/workspace';
+  const contextLabel = pathname.startsWith('/settings')
+    ? 'SETTINGS'
+    : pathname.startsWith('/warehouse')
+      ? 'VIRTUAL WAREHOUSE'
+      : pathname === '/workspace'
+        ? 'OPERATIONS'
+        : 'NETWORK';
 
   async function logout() {
     setBusy(true);
@@ -49,79 +57,63 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className={`app-shell legacy-shell ${immersive ? 'app-shell--immersive' : ''}`}>
+    <div
+      className={[
+        'app-shell',
+        'zip-app-shell',
+        immersive ? 'app-shell--immersive' : '',
+        blueprint ? 'app-shell--blueprint' : '',
+        power ? 'app-shell--power' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <a className="skip-link" href="#main-content">
         Skip to workspace
       </a>
 
-      <header className="app-topbar legacy-topbar">
-        <Link href="/workspace" className="legacy-brand telxius-brand">
-          <strong>AppManager</strong>
-          <span>SiteMapper Module</span>
+      <header className="app-topbar zip-topbar">
+        <Link href="/workspace" className="zip-brand">
+          <BrandMark />
+          <span>
+            <strong>SITE MAPPER</strong>
+            <small>Physical Infrastructure</small>
+          </span>
         </Link>
 
-        <div className="telxius-topbar-context" aria-hidden="true">
-          <span>NETWORK</span>
-          <b>›</b>
-          <span>SITE MAPPER</span>
+        <div className="zip-context-slot">
+          {!immersive ? <div className="zip-static-context">{contextLabel}</div> : null}
         </div>
 
-        <div className="legacy-top-actions">
-          <Link href="/settings" className="legacy-icon-button" aria-label="Settings">
-            <Icon name="settings" />
-          </Link>
-          <button
-            className="legacy-signout telxius-user-button"
-            disabled={busy}
-            onClick={logout}
-            aria-label="Sign out"
-            title="Sign out"
-          >
-            {busy ? '…' : '◎'}
-          </button>
-        </div>
+        <ContextTracker />
+        <CommandPalette />
+
+        <Link className="zip-explore" href="/network">
+          EXPLORE <b>⌄</b>
+        </Link>
+        <Link className="zip-warehouse" href="/warehouse">
+          WAREHOUSE
+        </Link>
+        <Link className="zip-account" href="/settings">
+          ADMIN <b>⌄</b>
+        </Link>
+        <button
+          className="zip-more"
+          disabled={busy}
+          onClick={logout}
+          aria-label="Sign out"
+          title="Sign out"
+        >
+          {busy ? '…' : '⋮'}
+        </button>
       </header>
 
-      {!immersive && (
-        <aside className="app-rail legacy-primary-rail">
-          <div className="legacy-rail-heading">
-            <span className="legacy-rail-heading-icon">
-              <Icon name="network" />
-            </span>
-            <div>
-              <strong>Operations</strong>
-              <small>SiteMapper workspace</small>
-            </div>
-          </div>
-
-          <nav aria-label="Main navigation">
-            {links.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                aria-current={active === link.href ? 'page' : undefined}
-              >
-                <Icon name={link.icon} />
-                <span>{link.label}</span>
-              </Link>
-            ))}
-          </nav>
-
-          <div className="legacy-rail-footer">
-            <Link href="/settings">
-              <Icon name="settings" />
-              <span>Settings</span>
-            </Link>
-          </div>
-        </aside>
-      )}
-
-      <div className="app-content" id="main-content" tabIndex={-1}>
-        {error && (
-          <p className="form-error" role="alert">
+      <div className="app-content zip-app-content" id="main-content" tabIndex={-1}>
+        {error ? (
+          <p className="form-error zip-shell-error" role="alert">
             {error}
           </p>
-        )}
+        ) : null}
         {children}
       </div>
     </div>

@@ -4,7 +4,7 @@ import { requireRuntimeSecret } from '@/config/env';
 
 let clientPromise: Promise<MongoClient> | undefined;
 
-function getClient(): Promise<MongoClient> {
+export function getClient(): Promise<MongoClient> {
   const uri = requireRuntimeSecret('MONGODB_URI', process.env.MONGODB_URI);
 
   clientPromise ??= new MongoClient(uri, {

@@ -1,10 +1,13 @@
+import { SiteBoundaryWorkspace } from '@/components/topology/site-boundary-workspace';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
-import { BdfbChassis } from '@/components/power/bdfb-chassis';
+import { BdfbChassis, type BreakerPowerBinding } from '@/components/power/bdfb-chassis';
+import { BdfbTelemetryInspector } from '@/components/power/bdfb-telemetry-inspector';
+import { BdfbPowerTree } from '@/components/power/bdfb-power-tree';
 import { TopologyContextTree } from '@/components/topology/context-tree';
-import { TopologyCreateForm } from '@/components/topology/topology-create-form';
+import { TopologyCreateControl } from '@/components/topology/topology-create-form';
 import { TopologyPropertiesPanel } from '@/components/topology/topology-properties-panel';
 import {
   TopologyVisualStage,
@@ -12,6 +15,7 @@ import {
 } from '@/components/topology/topology-visual-stage';
 import { PinButton } from '@/components/workspace/pin-button';
 import { requirePermission } from '@/modules/identity/application/current-session';
+import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
@@ -84,7 +88,7 @@ export default async function TopologyNodePage({
   searchParams,
 }: Readonly<{
   params: Promise<{ path: string[] }>;
-  searchParams: Promise<{ level?: string }>;
+  searchParams: Promise<{ level?: string; panel?: string; breaker?: string }>;
 }>) {
   const auth = await requirePermission('topology:read');
 
@@ -102,6 +106,21 @@ export default async function TopologyNodePage({
   }
 
   const node = resolved.value;
+  if (node.kind === 'CONTAINER_CLUSTER_BAY' || node.kind === 'POSITION') {
+    const ancestry = await service.getTrail(node.id);
+    const room = [...ancestry].reverse().find((entry) => entry.kind === 'ROOM_SUBSTRUCTURE');
+    if (room) {
+      const context = node.kind === 'POSITION' ? 'position' : 'bay';
+      redirect(`/blueprint/${room.id}?${context}=${encodeURIComponent(node.id)}`);
+    }
+  }
+  function openRoom(candidate: TopologyNode): void {
+    if (candidate.kind === 'ROOM_SUBSTRUCTURE') redirect(`/blueprint/${candidate.id}`);
+  }
+  openRoom(node);
+  if (node.kind === 'CONTAINER_RACK') redirect(`/rack/${node.id}`);
+  if ((node.kind === 'DEVICE' && !node.bdfb) || node.kind === 'EQUIPMENT')
+    redirect(`/device/${node.id}`);
   const [trail, children, selfHref] = await Promise.all([
     service.getTrail(node.id),
     service.listChildren(node.id),
@@ -118,6 +137,11 @@ export default async function TopologyNodePage({
   );
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
+  const canWritePower = hasPermission(auth.value.role, 'power:write');
+  const siteContext =
+    node.kind === 'STRUCTURE' ? [...trail].reverse().find((entry) => entry.kind === 'SITE') : null;
+  const siteBoundary =
+    siteContext?.kind === 'SITE' && siteContext.polygon ? siteContext.polygon : [];
 
   const childEntries: VisualStageChild[] = await Promise.all(
     children.map(async (child) => {
@@ -127,7 +151,7 @@ export default async function TopologyNodePage({
           ? `/rack/${child.id}`
           : deepLink;
 
-      return { node: child, href };
+      return { node: child, href, directChildCount: (await service.listChildren(child.id)).length };
     }),
   );
 
@@ -151,7 +175,7 @@ export default async function TopologyNodePage({
     node.kind === 'STRUCTURE'
       ? levels.map((level) => ({
           node: level,
-          href: `${selfHref}?level=${level.id}`,
+          href: childEntries.find((entry) => entry.node.id === level.id)!.href,
         }))
       : [];
 
@@ -160,33 +184,116 @@ export default async function TopologyNodePage({
       ? await new SpatialService(repository).getRoomLayout(node.id)
       : null;
 
-  const rackLink =
-    node.kind === 'CONTAINER_RACK' && node.variant === 'RACK' ? `/rack/${node.id}` : null;
+  const bdfbPowerBindings: BreakerPowerBinding[] = [];
+  if (node.kind === 'DEVICE' && node.bdfb) {
+    const activePaths = await (await createPowerRepository()).listActive();
+    for (const path of activePaths) {
+      const deviceEndpoint =
+        path.source.entityId === node.id
+          ? path.source
+          : path.target.entityId === node.id
+            ? path.target
+            : null;
+      const counterpart =
+        path.source.entityId === node.id
+          ? path.target
+          : path.target.entityId === node.id
+            ? path.source
+            : null;
+      const breakerId = deviceEndpoint?.internal?.breakerHolderId;
+      if (!breakerId || !counterpart) continue;
+      const counterpartNode = await repository.getById(counterpart.entityId);
+      const counterpartTrail = counterpartNode ? await service.getTrail(counterpart.entityId) : [];
+      const counterpartRack = [...counterpartTrail]
+        .reverse()
+        .find((item) => item.kind === 'CONTAINER_RACK');
+      const allocation =
+        counterpartRack?.kind === 'CONTAINER_RACK'
+          ? counterpartRack.cas.find(
+              (range) => range.occupantId === counterpart.entityId && range.state === 'EQUIPPED',
+            )
+          : undefined;
+      const mount =
+        allocation?.mountStartU && allocation.physicalSizeU
+          ? `U${allocation.mountStartU}–U${allocation.mountStartU + allocation.physicalSizeU - 1}`
+          : undefined;
+      bdfbPowerBindings.push({
+        breakerId,
+        pathId: path.id,
+        ...(path.feed ? { feed: path.feed } : {}),
+        counterpartName: counterpartNode?.name ?? counterpart.entityId,
+        counterpartHref: counterpartNode
+          ? await service.buildDeepLink(counterpartNode.id)
+          : '/power',
+        counterpartContext:
+          counterpartTrail.map((item) => item.name).join(' / ') || counterpart.entityId,
+        ...(mount ? { mount } : {}),
+      });
+    }
+  }
+
+  const rackLink: string | null = null;
   const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
   const sectionDescription = descriptionFor(node);
 
   return (
-    <main className="operational-page telxius-operational-page">
+    <main
+      className={`operational-page telxius-operational-page ${['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''} ${node.kind === 'DEVICE' && node.bdfb ? 'zip-bdfb-page' : ''}`}
+    >
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
         aria-label="Breadcrumb"
       >
-        {trailEntries.map((item, index) => (
-          <Link key={item.id} href={index === trailEntries.length - 1 ? selfHref : item.href}>
-            {item.name}
-          </Link>
-        ))}
+        {trailEntries
+          .filter((item, index) => {
+            const kind = trail[index]?.kind;
+            return (
+              kind === 'SITE' ||
+              kind === 'STRUCTURE' ||
+              kind === 'LEVEL' ||
+              kind === 'ROOM_SUBSTRUCTURE' ||
+              kind === 'CONTAINER_RACK' ||
+              item.id === node.id
+            );
+          })
+          .map((item) => (
+            <Link key={item.id} href={item.id === node.id ? selfHref : item.href} title={item.name}>
+              {item.name}
+            </Link>
+          ))}
       </nav>
 
       <div className="operational-layout telxius-operational-layout">
         <aside className="operational-context">
           {navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />}
+          {node.kind === 'DEVICE' && node.bdfb && (
+            <details className="context-power-disclosure">
+              <summary>Electrical hierarchy · panels</summary>
+              <BdfbPowerTree
+                device={node}
+                trail={trail}
+                selfHref={selfHref}
+                activePanelId={query.panel}
+              />
+            </details>
+          )}
         </aside>
 
         <section className="operational-stage telxius-operational-stage">
           <SectionHeader
             eyebrow={eyebrowFor(node)}
-            title={node.kind === 'ROOM_SUBSTRUCTURE' ? node.name.toUpperCase() : node.name}
+            title={
+              node.kind === 'DEVICE' && node.bdfb
+                ? query.panel
+                  ? (node.bdfb.shelves
+                      .flatMap((shelf) => shelf.frames)
+                      .flatMap((frame) => frame.panels)
+                      .find((panel) => panel.id === query.panel)?.label ?? 'PANEL')
+                  : 'BDFB PHYSICAL VIEW'
+                : node.kind === 'ROOM_SUBSTRUCTURE'
+                  ? node.name.toUpperCase()
+                  : node.name
+            }
             {...(sectionDescription === undefined ? {} : { description: sectionDescription })}
             actions={
               <>
@@ -198,7 +305,7 @@ export default async function TopologyNodePage({
                     + ADD CLUSTER
                   </Link>
                 )}
-                {(node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && canWrite && (
+                {node.kind === 'DEVICE' && canWrite && (
                   <PinButton id={node.id} initialPinned={node.pinned} />
                 )}
                 {!['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE'].includes(node.kind) && (
@@ -210,7 +317,12 @@ export default async function TopologyNodePage({
 
           <div className="operational-stage-body">
             {node.kind === 'DEVICE' && node.bdfb ? (
-              <BdfbChassis device={node} />
+              <BdfbChassis
+                key={query.panel ?? 'bdfb-overview'}
+                device={node}
+                powerBindings={bdfbPowerBindings}
+                canWritePower={canWritePower}
+              />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
               roomLayout?.ok &&
               roomLayout.value.room.polygon ? (
@@ -225,10 +337,23 @@ export default async function TopologyNodePage({
                 title="Physical geometry unavailable"
                 description="This room has no preserved polygon, so MK1 will not invent a blueprint."
               />
+            ) : node.kind === 'SITE' || node.kind === 'STRUCTURE' ? (
+              <SiteBoundaryWorkspace
+                node={node}
+                canWrite={canWrite}
+                {...(node.kind === 'STRUCTURE' ? { context: siteBoundary } : {})}
+              >
+                <TopologyVisualStage
+                  node={node}
+                  items={node.kind === 'STRUCTURE' ? structureLevelEntries : childEntries}
+                  previewItems={structurePreviewEntries}
+                  {...(selectedLevel ? { activeItemId: selectedLevel.id } : {})}
+                />
+              </SiteBoundaryWorkspace>
             ) : (
               <TopologyVisualStage
                 node={node}
-                items={node.kind === 'STRUCTURE' ? structureLevelEntries : childEntries}
+                items={childEntries}
                 previewItems={structurePreviewEntries}
                 {...(selectedLevel ? { activeItemId: selectedLevel.id } : {})}
               />
@@ -238,20 +363,42 @@ export default async function TopologyNodePage({
           {canWrite && childKinds.length > 0 && (
             <div className="operational-edit-dock">
               {childKinds.map((kind) => (
-                <details className="edit-disclosure" key={kind}>
-                  <summary>Create {kind.replaceAll('_', ' ').toLowerCase()}</summary>
-                  <TopologyCreateForm kind={kind} parentId={node.id} />
-                </details>
+                <TopologyCreateControl
+                  key={kind}
+                  kind={kind}
+                  parentId={node.id}
+                  {...(node.kind === 'SITE' && kind === 'STRUCTURE' && node.polygon
+                    ? { boundaryContext: node.polygon }
+                    : {})}
+                />
               ))}
             </div>
           )}
         </section>
 
-        <TopologyPropertiesPanel
-          node={node}
-          contained={children.length}
-          previewContained={structurePreviewNodes.length}
-        />
+        {node.kind === 'DEVICE' && node.bdfb ? (
+          <BdfbTelemetryInspector
+            key={query.panel ?? 'bdfb-inspector'}
+            node={node}
+            {...(query.panel ? { activePanelId: query.panel } : {})}
+            location={trail
+              .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')
+              .map((item) => item.name)
+              .join(' / ')}
+            feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
+          />
+        ) : (
+          <TopologyPropertiesPanel
+            node={node}
+            contained={children.length}
+            previewContained={structurePreviewNodes.length}
+            location={trail
+              .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')
+              .map((item) => item.name)
+              .join(' / ')}
+            feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
+          />
+        )}
       </div>
 
       {(rackLink || blueprintLink) && (

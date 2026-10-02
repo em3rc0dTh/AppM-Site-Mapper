@@ -1,7 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { ContextPin } from '@/components/workspace/context-pin';
+import { useSearchParams } from 'next/navigation';
+import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
+import { getBdfbPresentation } from '@/modules/power/application/bdfb-presentation';
 import type {
   BreakerHolder,
   DeviceNode,
@@ -19,8 +23,23 @@ interface PanelSelection {
   readonly panel: Panel;
 }
 
+export interface BreakerPowerBinding {
+  readonly breakerId: string;
+  readonly pathId: string;
+  readonly feed?: 'A' | 'B';
+  readonly counterpartName: string;
+  readonly counterpartHref: string;
+  readonly counterpartContext: string;
+  readonly mount?: string;
+}
+
 function formatMetric(value: number | undefined, unit: string, decimals = 2): string {
   return value === undefined ? '—' : `${value.toFixed(decimals)} ${unit}`;
+}
+
+function compactUtcTimestamp(value: string): string {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : `${parsed.toISOString().slice(11, 19)} UTC`;
 }
 
 function telemetryFields(reading: BreakerTelemetryReading) {
@@ -55,11 +74,47 @@ function endpointInspector(
   panel: Panel,
   endpoint: BreakerHolder,
   reading?: BreakerTelemetryReading,
+  binding?: BreakerPowerBinding,
+  canWritePower = false,
 ): InspectorEntity {
+  const connectHref =
+    endpoint.variant === 'BREAKER' && canWritePower
+      ? `/power/connect?entity=${encodeURIComponent(device.id)}&shelf=${encodeURIComponent(shelf.id)}&frame=${encodeURIComponent(frame.id)}&panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(endpoint.id)}`
+      : null;
+
   return {
     name: endpoint.label,
     kind: endpoint.variant,
+    actions: binding
+      ? [
+          {
+            label: 'TRACE PATH',
+            href: `/power?path=${encodeURIComponent(binding.pathId)}&breaker=${encodeURIComponent(endpoint.id)}${binding.feed ? `&feed=${binding.feed}` : ''}`,
+          },
+        ]
+      : connectHref
+        ? [{ label: 'CONNECT POWER', href: connectHref }]
+        : [],
     ...(reading?.state ? { status: reading.state.value } : {}),
+    ...(reading
+      ? {
+          liveSummary: {
+            label: 'LIVE MQTT',
+            source: reading.sourceIdentity,
+            point: reading.rawPointId,
+            updatedAt: reading.receivedAt,
+            metrics: [
+              { label: 'Voltage', value: formatMetric(reading.metrics.voltageV?.value, 'V') },
+              { label: 'Current', value: formatMetric(reading.metrics.currentA?.value, 'A') },
+              { label: 'Power', value: formatMetric(reading.metrics.powerW?.value, 'W') },
+              {
+                label: 'Energy',
+                value: formatMetric(reading.metrics.energyKwh?.value, 'kWh', 4),
+              },
+            ],
+          },
+        }
+      : {}),
     sections: [
       {
         title: 'Electrical endpoint',
@@ -69,10 +124,29 @@ function endpointInspector(
           { label: 'Frame', value: frame.label },
           { label: 'Panel', value: panel.label },
           { label: 'Capacity', value: endpoint.capacity ?? 'Not specified' },
+          { label: 'Feed', value: binding?.feed ?? 'Not configured' },
+          { label: 'Provisioned', value: binding ? 'Yes' : 'No' },
+          { label: 'Destination', value: binding?.counterpartName ?? 'Not provisioned' },
+          { label: 'Destination context', value: binding?.counterpartContext ?? 'Not available' },
+          { label: 'Rack / U', value: binding?.mount ?? 'Not available' },
           { label: 'Endpoint ID', value: endpoint.id },
           {
             label: 'MQTT binding',
-            value: endpoint.telemetry?.rawPointId ?? 'Panel order + position',
+            value:
+              endpoint.telemetry?.rawPointId ??
+              (endpoint.variant === 'HOLDER'
+                ? 'NOT APPLICABLE · empty holder'
+                : 'UNMAPPED · configure an explicit binding'),
+          },
+          {
+            label: 'Telemetry',
+            value: reading
+              ? 'Measurements available for this exact endpoint'
+              : endpoint.telemetry?.rawPointId
+                ? 'Bound, awaiting matched MQTT measurements'
+                : endpoint.variant === 'HOLDER'
+                  ? 'Empty holder. Breaker measurements are not expected without an installed and mapped breaker.'
+                  : "No point mapping. Broker connectivity does not provide this breaker's data.",
           },
         ],
       },
@@ -138,6 +212,8 @@ function PanelBoard({
   frame,
   panel,
   readingsByBreaker,
+  bindingsByBreaker,
+  canWritePower,
   onInspect,
 }: Readonly<{
   device: DeviceNode;
@@ -145,7 +221,9 @@ function PanelBoard({
   frame: Frame;
   panel: Panel;
   readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
-  onInspect: (entity: InspectorEntity) => void;
+  bindingsByBreaker: Readonly<Record<string, BreakerPowerBinding>>;
+  canWritePower: boolean;
+  onInspect: (entity: InspectorEntity, breakerId?: string) => void;
 }>) {
   return (
     <article className="bdfb-panel-board bdfb-panel-board--detail">
@@ -160,13 +238,20 @@ function PanelBoard({
       </button>
 
       <div className="bdfb-panel-busbar bdfb-panel-busbar--a" aria-hidden="true">
-        <span>BUS A</span>
+        <span>PANEL BUS</span>
       </div>
       <div className="bdfb-panel-busbar bdfb-panel-busbar--b" aria-hidden="true">
-        <span>BUS B</span>
+        <span>ENDPOINTS</span>
       </div>
 
-      <div className="bdfb-endpoint-grid">
+      <div
+        className="bdfb-endpoint-grid"
+        style={
+          {
+            '--bdfb-panel-rows': Math.max(1, Math.ceil(panel.endpoints.length / 2)),
+          } as CSSProperties
+        }
+      >
         {panel.endpoints.length ? (
           panel.endpoints.map((endpoint, index) => {
             const reading = readingsByBreaker[endpoint.id];
@@ -176,14 +261,36 @@ function PanelBoard({
                 type="button"
                 key={endpoint.id}
                 className={`bdfb-endpoint bdfb-endpoint--${endpoint.variant.toLowerCase()}`}
+                data-telemetry={
+                  reading ? 'live' : endpoint.telemetry?.rawPointId ? 'mapped' : 'unmapped'
+                }
                 onClick={() =>
-                  onInspect(endpointInspector(device, shelf, frame, panel, endpoint, reading))
+                  onInspect(
+                    endpointInspector(
+                      device,
+                      shelf,
+                      frame,
+                      panel,
+                      endpoint,
+                      reading,
+                      bindingsByBreaker[endpoint.id],
+                      canWritePower,
+                    ),
+                    endpoint.id,
+                  )
                 }
                 title={endpoint.label}
               >
                 <span>{(index + 1).toString().padStart(2, '0')}</span>
                 <strong>{endpoint.label}</strong>
                 <small>{endpointPreview(endpoint, reading)}</small>
+                {reading && (
+                  <i
+                    className="bdfb-live-indicator"
+                    aria-hidden="true"
+                    title={`LIVE · ${compactUtcTimestamp(reading.receivedAt)}`}
+                  />
+                )}
               </button>
             );
           })
@@ -223,23 +330,38 @@ function DeviceHierarchyOverview({
               {shelf.frames.map((frame) => (
                 <section className="bdfb-overview-frame" key={frame.id}>
                   <header className="bdfb-overview-label bdfb-overview-label--frame">
-                    <span>FRAME</span>
+                    <span>
+                      {frame.presentation?.physicalFrameVisible === false ? 'PANEL GROUP' : 'FRAME'}
+                    </span>
                     <strong>{frame.label.replace(/^Frame\s+/i, '')}</strong>
                   </header>
 
-                  <div className="bdfb-overview-panels">
-                    {frame.panels.map((panel) => (
-                      <button
-                        type="button"
-                        className="bdfb-overview-panel"
-                        key={panel.id}
-                        onClick={() => onOpenPanel({ shelf, frame, panel })}
-                        aria-label={`Open ${panel.label} breaker detail`}
-                      >
-                        <strong>{panel.label}</strong>
-                        <span>{panel.endpoints.length} ENDPOINTS</span>
-                      </button>
-                    ))}
+                  <div
+                    className="bdfb-overview-panels"
+                    style={
+                      {
+                        '--bdfb-overview-panel-count': Math.max(1, frame.panels.length),
+                      } as CSSProperties
+                    }
+                  >
+                    {frame.panels.map((panel) => {
+                      const empty = panel.endpoints.length === 0;
+                      return (
+                        <button
+                          type="button"
+                          className="bdfb-overview-panel"
+                          data-empty={empty ? 'true' : 'false'}
+                          key={panel.id}
+                          onClick={() => onOpenPanel({ shelf, frame, panel })}
+                          aria-label={`Open ${panel.label} breaker detail`}
+                        >
+                          <strong>{panel.label}</strong>
+                          <span>
+                            {empty ? 'EMPTY SLOT' : `${panel.endpoints.length} ENDPOINTS`}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </section>
               ))}
@@ -255,13 +377,17 @@ function PanelDetail({
   device,
   selection,
   readingsByBreaker,
+  bindingsByBreaker,
+  canWritePower,
   onInspect,
   onBack,
 }: Readonly<{
   device: DeviceNode;
   selection: PanelSelection;
   readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
-  onInspect: (entity: InspectorEntity) => void;
+  bindingsByBreaker: Readonly<Record<string, BreakerPowerBinding>>;
+  canWritePower: boolean;
+  onInspect: (entity: InspectorEntity, breakerId?: string) => void;
   onBack: () => void;
 }>) {
   return (
@@ -286,6 +412,8 @@ function PanelDetail({
           frame={selection.frame}
           panel={selection.panel}
           readingsByBreaker={readingsByBreaker}
+          bindingsByBreaker={bindingsByBreaker}
+          canWritePower={canWritePower}
           onInspect={onInspect}
         />
       </div>
@@ -320,11 +448,62 @@ function useBdfbTelemetry(deviceId: string): TelemetrySample | null {
   return sample;
 }
 
-export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
-  const [selected, setSelected] = useState<InspectorEntity | null>(null);
-  const [activePanel, setActivePanel] = useState<PanelSelection | null>(null);
+export function BdfbChassis({
+  device,
+  powerBindings = [],
+  canWritePower = false,
+}: Readonly<{
+  device: DeviceNode;
+  powerBindings?: readonly BreakerPowerBinding[];
+  canWritePower?: boolean;
+}>) {
+  const query = useSearchParams();
+  const bindingsByBreaker = useMemo(
+    () =>
+      Object.fromEntries(powerBindings.map((binding) => [binding.breakerId, binding])) as Readonly<
+        Record<string, BreakerPowerBinding>
+      >,
+    [powerBindings],
+  );
+  const initialPanel = (() => {
+    const requestedPanel = query.get('panel');
+    if (!requestedPanel) return null;
+
+    for (const shelf of device.bdfb?.shelves ?? []) {
+      for (const frame of shelf.frames) {
+        for (const panel of frame.panels) {
+          if (panel.id === requestedPanel) return { shelf, frame, panel };
+        }
+      }
+    }
+
+    return null;
+  })();
+  const initialSelected = (() => {
+    const requestedBreaker = query.get('breaker');
+    if (!initialPanel || !requestedBreaker) return null;
+
+    const endpoint = initialPanel.panel.endpoints.find((item) => item.id === requestedBreaker);
+    if (!endpoint) return null;
+
+    return endpointInspector(
+      device,
+      initialPanel.shelf,
+      initialPanel.frame,
+      initialPanel.panel,
+      endpoint,
+      undefined,
+      bindingsByBreaker[endpoint.id],
+      canWritePower,
+    );
+  })();
+
+  const [selected, setSelected] = useState<InspectorEntity | null>(initialSelected);
+  const [selectedBreakerId, setSelectedBreakerId] = useState<string | null>(query.get('breaker'));
+  const [activePanel, setActivePanel] = useState<PanelSelection | null>(initialPanel);
   const telemetry = useBdfbTelemetry(device.id);
-  const shelves = device.bdfb?.shelves ?? [];
+  const presentation = getBdfbPresentation(device);
+  const shelves = presentation.shelves;
   const frames = shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
   const endpoints = panels.flatMap((panel) => panel.endpoints);
@@ -336,9 +515,38 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
       ) as Readonly<Record<string, BreakerTelemetryReading>>,
     [telemetry],
   );
+  // Store the selected identity, not a stale copy of its measurements.
+  const liveInspector = useMemo(() => {
+    if (!selectedBreakerId) return selected;
+    for (const shelf of device.bdfb?.shelves ?? []) {
+      for (const frame of shelf.frames) {
+        for (const panel of frame.panels) {
+          const endpoint = panel.endpoints.find((item) => item.id === selectedBreakerId);
+          if (endpoint) {
+            return endpointInspector(
+              device,
+              shelf,
+              frame,
+              panel,
+              endpoint,
+              readingsByBreaker[endpoint.id],
+              bindingsByBreaker[endpoint.id],
+              canWritePower,
+            );
+          }
+        }
+      }
+    }
+    return selected;
+  }, [selected, selectedBreakerId, readingsByBreaker, bindingsByBreaker, device, canWritePower]);
 
   return (
     <section className="bdfb-chassis">
+      <TelemetryLens
+        label={device.name}
+        entityIds={[device.id]}
+        breakerId={selectedBreakerId ?? query.get('breaker') ?? undefined}
+      />
       <header className="bdfb-chassis-header">
         <div>
           <span>Physical distribution</span>
@@ -351,12 +559,15 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
         </div>
 
         <div className="bdfb-chassis-status">
+          <ContextPin entityId={device.id} />
           <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>
           <StatusBadge>{frames.length} FRAMES</StatusBadge>
           <StatusBadge>{panels.length} PANELS</StatusBadge>
           <StatusBadge>{endpoints.length} ENDPOINTS</StatusBadge>
           {telemetry?.breakerReadings?.length ? (
-            <StatusBadge tone="good">{telemetry.breakerReadings.length} MQTT BREAKERS</StatusBadge>
+            <StatusBadge tone="good">
+              {telemetry.breakerReadings.length} MAPPED MQTT READINGS
+            </StatusBadge>
           ) : (
             <StatusBadge tone="warning">MQTT WAITING</StatusBadge>
           )}
@@ -369,7 +580,12 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
             device={device}
             selection={activePanel}
             readingsByBreaker={readingsByBreaker}
-            onInspect={setSelected}
+            bindingsByBreaker={bindingsByBreaker}
+            canWritePower={canWritePower}
+            onInspect={(entity, breakerId) => {
+              setSelected(entity);
+              setSelectedBreakerId(breakerId ?? null);
+            }}
             onBack={() => setActivePanel(null)}
           />
         ) : (
@@ -377,7 +593,15 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
         )}
       </div>
 
-      {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <EntityInspector
+          entity={liveInspector}
+          onClose={() => {
+            setSelected(null);
+            setSelectedBreakerId(null);
+          }}
+        />
+      )}
     </section>
   );
 }

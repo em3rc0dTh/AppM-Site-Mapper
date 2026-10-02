@@ -1,18 +1,26 @@
+import { parsePolygon, polygonInsidePolygon } from '@/modules/spatial/domain/geometry';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
   ContainerClusterBayVariant,
   ContainerRackVariant,
   GridCoordinate,
+  PhysicalPoint,
   RoomSubstructureVariant,
   TopologyKind,
   TopologyNode,
 } from '@/modules/topology/domain/entities';
 import { isAllowedParent, topologySlug } from '@/modules/topology/domain/hierarchy';
 import { initializeCas } from '@/modules/rack/domain/cas';
+import type { AssetTemplateSnapshot } from '@/modules/warehouse/domain/template';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type TopologyError =
+  | 'INVALID_POLYGON'
+  | 'BOUNDARY_OUTSIDE_SITE'
+  | 'BOUNDARY_OUTSIDE_ROOM'
+  | 'ATOMIC_LAYOUT_STORAGE_REQUIRED'
+  | 'LAYOUT_CONFLICT'
   | 'NOT_FOUND'
   | 'INVALID_NAME'
   | 'INVALID_PARENT'
@@ -44,6 +52,8 @@ export interface CreateTopologyNodeInput {
   readonly totalU?: number;
   readonly serialNumber?: string;
   readonly category?: string;
+  readonly polygon?: readonly PhysicalPoint[];
+  readonly template?: AssetTemplateSnapshot;
 }
 
 export class TopologyService {
@@ -84,6 +94,31 @@ export class TopologyService {
       return failure('POSITION_OCCUPIED');
     }
 
+    const spatial = ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(
+      input.kind,
+    );
+    const polygon = spatial ? parsePolygon(input.polygon) : null;
+    if (spatial && !polygon) return failure('INVALID_POLYGON');
+    if (
+      input.kind === 'STRUCTURE' &&
+      (parent?.kind !== 'SITE' ||
+        !parent.polygon ||
+        !polygonInsidePolygon(polygon!, parent.polygon))
+    )
+      return failure('BOUNDARY_OUTSIDE_SITE');
+    if (
+      input.kind === 'CONTAINER_CLUSTER_BAY' &&
+      (parent?.kind !== 'ROOM_SUBSTRUCTURE' ||
+        !parent.polygon ||
+        !polygonInsidePolygon(polygon!, parent.polygon))
+    )
+      return failure('BOUNDARY_OUTSIDE_ROOM');
+    if (parent) {
+      const ancestry = await this.getTrail(parent.id);
+      if (ancestry.some((ancestor) => ancestor.lifecycle !== 'ACTIVE'))
+        return failure('PARENT_ARCHIVED');
+    }
+
     const timestamp = nowIso();
     const base = {
       id: createDomainId(),
@@ -101,10 +136,15 @@ export class TopologyService {
         node = { ...base, kind: 'NETWORK', parentId: null };
         break;
       case 'SITE':
-        node = { ...base, kind: 'SITE', parentId: input.parentId as string };
+        node = { ...base, kind: 'SITE', parentId: input.parentId as string, polygon: polygon! };
         break;
       case 'STRUCTURE':
-        node = { ...base, kind: 'STRUCTURE', parentId: input.parentId as string };
+        node = {
+          ...base,
+          kind: 'STRUCTURE',
+          parentId: input.parentId as string,
+          polygon: polygon!,
+        };
         break;
       case 'LEVEL':
         node = { ...base, kind: 'LEVEL', parentId: input.parentId as string };
@@ -118,6 +158,7 @@ export class TopologyService {
           kind: 'ROOM_SUBSTRUCTURE',
           parentId: input.parentId as string,
           variant: input.roomVariant,
+          polygon: polygon!,
         };
         break;
       case 'CONTAINER_CLUSTER_BAY':
@@ -129,12 +170,13 @@ export class TopologyService {
           kind: 'CONTAINER_CLUSTER_BAY',
           parentId: input.parentId as string,
           variant: input.clusterVariant,
+          polygon: polygon!,
         };
         break;
       case 'POSITION':
         if (
           !input.coordinate ||
-          !input.coordinate.row.trim() ||
+          !/^[A-Za-z]{1,3}$/.test(input.coordinate.row.trim()) ||
           !Number.isInteger(input.coordinate.column) ||
           input.coordinate.column < 1
         ) {
@@ -177,6 +219,7 @@ export class TopologyService {
           pinned: false,
           ...(input.serialNumber ? { serialNumber: input.serialNumber.trim() } : {}),
           ...(input.category ? { category: input.category.trim() } : {}),
+          ...(input.template ? { template: structuredClone(input.template) } : {}),
         };
         break;
       case 'EQUIPMENT':
@@ -187,11 +230,21 @@ export class TopologyService {
           pinned: false,
           ...(input.serialNumber ? { serialNumber: input.serialNumber.trim() } : {}),
           ...(input.category ? { category: input.category.trim() } : {}),
+          ...(input.template ? { template: structuredClone(input.template) } : {}),
         };
         break;
     }
 
-    await this.repository.insert(node);
+    if (node.kind === 'CONTAINER_CLUSTER_BAY' && parent) {
+      if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+      const updatedAt = new Date(
+        Math.max(Date.now(), Date.parse(parent.updatedAt) + 1),
+      ).toISOString();
+      if (!(await this.repository.commitLayout([parent], [{ ...parent, updatedAt }, node])))
+        return failure('LAYOUT_CONFLICT');
+    } else {
+      await this.repository.insert(node);
+    }
     return success(node);
   }
 

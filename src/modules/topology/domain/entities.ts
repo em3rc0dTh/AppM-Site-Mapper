@@ -15,8 +15,44 @@ export type TopologyKind =
 export type RoomSubstructureVariant = 'ROOM' | 'SUBSTRUCTURE';
 export type ContainerClusterBayVariant = 'CONTAINER_CLUSTER' | 'BAY';
 export type ContainerRackVariant = 'CONTAINER' | 'RACK';
-export type BreakerHolderVariant = 'BREAKER' | 'HOLDER';
 export type CasState = 'AVAILABLE' | 'RESERVED' | 'EQUIPPED';
+
+export type DeviceType =
+  | 'NETWORK_ELEMENT'
+  | 'BDFB'
+  | 'SERVER'
+  | 'UPS'
+  | 'RECTIFIER'
+  | 'POWER_SYSTEM'
+  | 'CUSTOM';
+
+export type EquipmentType =
+  | 'CHASSIS'
+  | 'SHELF'
+  | 'SUB_SHELF'
+  | 'FRAME'
+  | 'PANEL'
+  | 'CIRCUIT_BREAKER'
+  | 'POWER_SUPPLY'
+  | 'POWER_MODULE'
+  | 'CONTROLLER_BOARD'
+  | 'NETWORK_BOARD'
+  | 'PLUGGABLE_MODULE'
+  | 'FAN'
+  | 'CUSTOM';
+
+export type EquipmentFunction =
+  | 'CONTROL'
+  | 'NETWORKING'
+  | 'POWER_CONVERSION'
+  | 'POWER_DISTRIBUTION'
+  | 'PROTECTION'
+  | 'COOLING';
+
+export type EquipmentChildMode = 'DYNAMIC' | 'POSITIONAL';
+export type AccessPortType = 'POWER' | 'NETWORK' | 'CONTROL' | 'DATA' | 'GROUND' | 'CUSTOM';
+export type AccessPortDirection = 'INPUT' | 'OUTPUT' | 'BIDIRECTIONAL';
+export type AccessPortExposure = 'INTERNAL' | 'EXTERNAL';
 
 export interface GridCoordinate {
   readonly row: string;
@@ -52,55 +88,36 @@ export interface CasRange {
   readonly clearanceBottomU?: number;
 }
 
-export interface BreakerTelemetryBinding {
-  /**
-   * Optional explicit MQTT point binding. When absent, the emulator profile may
-   * resolve the point from panel order + 1-based endpoint position.
-   */
-  readonly rawPointId: string;
+export interface RackPlacement {
+  readonly rackId: string;
+  readonly mode: 'FULL_RACK' | 'U_RANGE';
+  readonly startU?: number;
+  readonly sizeU?: number;
+  readonly clearanceTopU?: number;
+  readonly clearanceBottomU?: number;
 }
 
-export interface BreakerHolder {
+export interface AccessPort {
   readonly id: string;
-  readonly variant: BreakerHolderVariant;
-  readonly label: string;
-  readonly capacity?: number;
-  readonly telemetry?: BreakerTelemetryBinding;
-}
-
-export interface Panel {
-  readonly id: string;
-  readonly label: string;
-  readonly endpoints: readonly BreakerHolder[];
-}
-
-export interface FramePresentation {
-  /**
-   * The canonical Frame always exists in the data model.
-   * false means the customer does not expose a distinct physical frame, so presentation flattens
-   * its panels directly under the Shelf without changing hierarchy or power-path identities.
-   */
-  readonly physicalFrameVisible?: boolean;
-}
-
-export interface Frame {
-  readonly id: string;
-  readonly label: string;
-  readonly panels: readonly Panel[];
-  readonly presentation?: FramePresentation;
-}
-
-export interface Shelf {
-  readonly id: string;
-  readonly label: string;
-  readonly frames: readonly Frame[];
-}
-
-export interface BdfbStructure {
-  readonly shelves: readonly Shelf[];
+  readonly deviceId: string;
+  readonly equipmentId: string;
+  readonly name: string;
+  readonly portType: AccessPortType;
+  readonly direction?: AccessPortDirection;
+  readonly exposure: AccessPortExposure;
+  readonly connectorType?: string;
+  readonly protocol?: string;
+  readonly customType?: string;
+  readonly attributes?: Readonly<Record<string, unknown>>;
+  readonly lifecycle: 'ACTIVE' | 'ARCHIVED';
 }
 
 interface TopologyBase extends DomainEntity {
+  /**
+   * Navigation/context pointer. For Equipment this mirrors the canonical immediate
+   * physical parent: root Equipment points to Device; nested Equipment points to
+   * its parent Equipment. parentEquipmentId remains the physical authority.
+   */
   readonly parentId: string | null;
   readonly name: string;
   readonly kind: TopologyKind;
@@ -164,23 +181,39 @@ export interface ContainerRackNode extends TopologyBase {
   readonly cas: readonly CasRange[];
 }
 
+/** Device is the abstract operational identity of a managed system. */
 export interface DeviceNode extends TopologyBase {
   readonly kind: 'DEVICE';
+  /** Rack is context only; physical occupancy belongs to Equipment.rackPlacement. */
   readonly parentId: string;
   readonly serialNumber?: string;
   readonly category?: string;
   readonly pinned: boolean;
-  readonly deviceType?: string;
-  readonly bdfb?: BdfbStructure;
+  readonly deviceType: DeviceType;
+  readonly rootEquipmentIds: readonly string[];
+  readonly attributes?: Readonly<Record<string, unknown>>;
 }
 
+/** Equipment is the canonical physical object in Domain Contract v1.2. */
 export interface EquipmentNode extends TopologyBase {
   readonly kind: 'EQUIPMENT';
   readonly parentId: string;
+  readonly deviceId: string;
+  readonly equipmentType: EquipmentType;
+  readonly parentEquipmentId: string | null;
+  readonly childMode: EquipmentChildMode;
+  readonly children: readonly (string | null)[];
+  readonly accessPorts: readonly AccessPort[];
+  readonly functions?: readonly EquipmentFunction[];
+  readonly manufacturer?: string;
+  readonly manufacturerTypeName?: string;
+  readonly model?: string;
   readonly serialNumber?: string;
+  readonly aliases?: readonly string[];
+  readonly rackPlacement?: RackPlacement;
   readonly category?: string;
   readonly pinned: boolean;
-  readonly equipmentType?: string;
+  readonly attributes?: Readonly<Record<string, unknown>>;
 }
 
 export type TopologyNode =

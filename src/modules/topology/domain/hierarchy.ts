@@ -10,7 +10,7 @@ export const parentKind: Readonly<Record<TopologyKind, TopologyKind | null>> = {
   POSITION: 'CONTAINER_CLUSTER_BAY',
   CONTAINER_RACK: 'POSITION',
   DEVICE: 'CONTAINER_RACK',
-  EQUIPMENT: 'CONTAINER_RACK',
+  EQUIPMENT: 'DEVICE',
 };
 
 const childKinds: Readonly<Partial<Record<TopologyKind, readonly TopologyKind[]>>> = {
@@ -21,7 +21,9 @@ const childKinds: Readonly<Partial<Record<TopologyKind, readonly TopologyKind[]>
   ROOM_SUBSTRUCTURE: ['CONTAINER_CLUSTER_BAY'],
   CONTAINER_CLUSTER_BAY: ['POSITION'],
   POSITION: ['CONTAINER_RACK'],
-  CONTAINER_RACK: ['DEVICE', 'EQUIPMENT'],
+  CONTAINER_RACK: ['DEVICE'],
+  DEVICE: ['EQUIPMENT'],
+  EQUIPMENT: ['EQUIPMENT'],
 };
 
 export const topologySlug: Readonly<Record<TopologyKind, string>> = {
@@ -42,6 +44,10 @@ export function allowedChildKinds(kind: TopologyKind): readonly TopologyKind[] {
 }
 
 export function isAllowedParent(childKind: TopologyKind, parent: TopologyNode | null): boolean {
+  if (childKind === 'EQUIPMENT') {
+    return parent?.kind === 'DEVICE' || parent?.kind === 'EQUIPMENT';
+  }
+
   const expected = parentKind[childKind];
   return expected === null ? parent === null : parent?.kind === expected;
 }

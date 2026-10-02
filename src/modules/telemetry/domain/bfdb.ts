@@ -1,33 +1,23 @@
+import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import type {
   BreakerTelemetryMetrics,
   BreakerTelemetryReading,
   NormalizedTelemetryMessage,
+  TelemetryBinding,
   TelemetryMetricValue,
 } from '@/modules/telemetry/domain/entities';
-import type {
-  BreakerHolder,
-  DeviceNode,
-  Frame,
-  Panel,
-  Shelf,
-} from '@/modules/topology/domain/entities';
-
-export type BfdbBindingMode = 'panel-order-24' | 'explicit';
-
-export interface BfdbBindingOptions {
-  readonly mode: BfdbBindingMode;
-  readonly positionsPerPanel: number;
-}
 
 interface ResolvedBreaker {
-  readonly shelf: Shelf;
-  readonly frame: Frame;
-  readonly panel: Panel;
-  readonly breaker: BreakerHolder;
+  readonly shelfId: string;
+  readonly frameId: string;
+  readonly panelId: string;
+  readonly panelLabel: string;
+  readonly breakerId: string;
+  readonly breakerLabel: string;
   readonly position: number;
 }
 
-export interface BfdbBreakerBuildResult {
+export interface BdfbBreakerBuildResult {
   readonly readings: readonly BreakerTelemetryReading[];
   readonly unmappedPointIds: readonly string[];
 }
@@ -37,14 +27,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function finiteNumber(value: unknown): number | null {
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : null;
-  }
-
-  if (typeof value !== 'string' || !value.trim()) {
-    return null;
-  }
-
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (typeof value !== 'string' || !value.trim()) return null;
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : null;
 }
@@ -54,104 +38,40 @@ function metric(value: unknown, observedAt: string): TelemetryMetricValue | unde
   return numeric === null ? undefined : { value: numeric, observedAt };
 }
 
-function explicitMatches(device: DeviceNode, rawPointId: string): ResolvedBreaker[] {
-  const matches: ResolvedBreaker[] = [];
+function breakerMap(presentation: BdfbPresentation): ReadonlyMap<string, ResolvedBreaker> {
+  const map = new Map<string, ResolvedBreaker>();
 
-  for (const shelf of device.bdfb?.shelves ?? []) {
+  for (const shelf of presentation.shelves) {
     for (const frame of shelf.frames) {
       for (const panel of frame.panels) {
-        panel.endpoints.forEach((breaker, index) => {
-          if (breaker.telemetry?.rawPointId === rawPointId) {
-            matches.push({
-              shelf,
-              frame,
-              panel,
-              breaker,
-              position: index + 1,
-            });
-          }
+        panel.positions.forEach((breaker, index) => {
+          if (!breaker) return;
+          map.set(breaker.id, {
+            shelfId: shelf.id,
+            frameId: frame.id,
+            panelId: panel.id,
+            panelLabel: panel.label,
+            breakerId: breaker.id,
+            breakerLabel: breaker.label,
+            position: index + 1,
+          });
         });
       }
     }
   }
 
-  return matches;
-}
-
-function panelOrderMatch(
-  device: DeviceNode,
-  rawPointId: string,
-  positionsPerPanel: number,
-): ResolvedBreaker | null {
-  const match = /^0_([0-9]+)_([0-9]+)$/.exec(rawPointId);
-  if (!match) return null;
-
-  const panelIndex = Number(match[1]);
-  const position = Number(match[2]);
-
-  if (
-    !Number.isInteger(panelIndex) ||
-    !Number.isInteger(position) ||
-    panelIndex < 1 ||
-    position < 1 ||
-    position > positionsPerPanel
-  ) {
-    return null;
-  }
-
-  const panels: Array<Readonly<{ shelf: Shelf; frame: Frame; panel: Panel }>> = [];
-  for (const shelf of device.bdfb?.shelves ?? []) {
-    for (const frame of shelf.frames) {
-      for (const panel of frame.panels) {
-        panels.push({ shelf, frame, panel });
-      }
-    }
-  }
-
-  const owner = panels[panelIndex - 1];
-  const breaker = owner?.panel.endpoints[position - 1];
-
-  if (!owner || !breaker) {
-    return null;
-  }
-
-  return {
-    shelf: owner.shelf,
-    frame: owner.frame,
-    panel: owner.panel,
-    breaker,
-    position,
-  };
-}
-
-export function resolveBfdbBreaker(
-  device: DeviceNode,
-  rawPointId: string,
-  options: BfdbBindingOptions,
-): ResolvedBreaker | null {
-  const explicit = explicitMatches(device, rawPointId);
-
-  if (explicit.length === 1) {
-    return explicit[0] ?? null;
-  }
-
-  if (explicit.length > 1 || options.mode === 'explicit') {
-    return null;
-  }
-
-  return panelOrderMatch(device, rawPointId, options.positionsPerPanel);
+  return map;
 }
 
 export function buildBfdbBreakerReadings(
-  device: DeviceNode,
+  presentation: BdfbPresentation,
   message: NormalizedTelemetryMessage,
-  options: BfdbBindingOptions,
-): BfdbBreakerBuildResult {
-  if (message.protocol !== 'BFDB' || !device.bdfb) {
-    return { readings: [], unmappedPointIds: [] };
-  }
+  bindings: readonly TelemetryBinding[],
+): BdfbBreakerBuildResult {
+  if (message.protocol !== 'BFDB') return { readings: [], unmappedPointIds: [] };
 
   const observedAt = message.sourceObservedAt ?? message.receivedAt;
+  const byBreaker = breakerMap(presentation);
   const readings: BreakerTelemetryReading[] = [];
   const unmappedPointIds: string[] = [];
 
@@ -161,9 +81,21 @@ export function buildBfdbBreakerReadings(
       continue;
     }
 
-    const resolved = resolveBfdbBreaker(device, rawPointId, options);
+    const matching = bindings.filter(
+      (binding) =>
+        binding.lifecycle === 'ACTIVE' &&
+        binding.sourceIdentity === message.sourceIdentity &&
+        binding.sourcePointId === rawPointId &&
+        binding.targetType === 'EQUIPMENT',
+    );
 
-    if (!resolved || resolved.breaker.variant !== 'BREAKER') {
+    if (matching.length !== 1) {
+      unmappedPointIds.push(rawPointId);
+      continue;
+    }
+
+    const resolved = byBreaker.get(matching[0]!.targetId);
+    if (!resolved) {
       unmappedPointIds.push(rawPointId);
       continue;
     }
@@ -172,7 +104,6 @@ export function buildBfdbBreakerReadings(
     const currentA = metric(rawPoint.I1, observedAt);
     const powerW = metric(rawPoint.P1, observedAt);
     const energyKwh = metric(rawPoint.EP1, observedAt);
-
     const metrics: BreakerTelemetryMetrics = {
       ...(voltageV ? { voltageV } : {}),
       ...(currentA ? { currentA } : {}),
@@ -183,20 +114,17 @@ export function buildBfdbBreakerReadings(
     const state =
       rawPoint.state === undefined
         ? undefined
-        : {
-            value: String(rawPoint.state),
-            observedAt,
-          };
+        : { value: String(rawPoint.state), observedAt };
 
     readings.push({
-      deviceId: device.id,
+      deviceId: presentation.deviceId,
       sourceIdentity: message.sourceIdentity,
-      shelfId: resolved.shelf.id,
-      frameId: resolved.frame.id,
-      panelId: resolved.panel.id,
-      panelLabel: resolved.panel.label,
-      breakerId: resolved.breaker.id,
-      breakerLabel: resolved.breaker.label,
+      shelfId: resolved.shelfId,
+      frameId: resolved.frameId,
+      panelId: resolved.panelId,
+      panelLabel: resolved.panelLabel,
+      breakerId: resolved.breakerId,
+      breakerLabel: resolved.breakerLabel,
       rawPointId,
       position: resolved.position,
       metrics,
@@ -205,8 +133,5 @@ export function buildBfdbBreakerReadings(
     });
   }
 
-  return {
-    readings,
-    unmappedPointIds,
-  };
+  return { readings, unmappedPointIds };
 }

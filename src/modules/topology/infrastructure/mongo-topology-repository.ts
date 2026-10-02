@@ -1,7 +1,7 @@
 import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
 
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
-import type { TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
+import type { EquipmentNode, TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
 
 type TopologyDocument = TopologyNode & Document;
 
@@ -31,6 +31,24 @@ export class MongoTopologyRepository implements TopologyRepository {
   async listByKind(kind: TopologyKind): Promise<readonly TopologyNode[]> {
     const documents = await this.collection.find({ kind }).sort({ name: 1 }).toArray();
     return documents.map(toDomain);
+  }
+
+  async listEquipmentForDevice(deviceId: string): Promise<readonly EquipmentNode[]> {
+    const documents = await this.collection
+      .find({ kind: 'EQUIPMENT', deviceId })
+      .sort({ name: 1 })
+      .toArray();
+
+    return documents.map((document) => toDomain(document) as EquipmentNode);
+  }
+
+  async getEquipmentByAccessPortId(accessPortId: string): Promise<EquipmentNode | null> {
+    const document = await this.collection.findOne({
+      kind: 'EQUIPMENT',
+      'accessPorts.id': accessPortId,
+    });
+
+    return document ? (toDomain(document) as EquipmentNode) : null;
   }
 
   async insert(node: TopologyNode): Promise<void> {

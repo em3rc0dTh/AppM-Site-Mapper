@@ -1,5 +1,5 @@
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
-import type { TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
+import type { EquipmentNode, TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
 
 export class MemoryTopologyRepository implements TopologyRepository {
   private readonly nodes = new Map<string, TopologyNode>();
@@ -30,6 +30,23 @@ export class MemoryTopologyRepository implements TopologyRepository {
       .filter((node) => node.kind === kind)
       .sort((left, right) => left.name.localeCompare(right.name))
       .map((node) => structuredClone(node));
+  }
+
+  async listEquipmentForDevice(deviceId: string): Promise<readonly EquipmentNode[]> {
+    return [...this.nodes.values()]
+      .filter(
+        (node): node is EquipmentNode => node.kind === 'EQUIPMENT' && node.deviceId === deviceId,
+      )
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map((node) => structuredClone(node));
+  }
+
+  async getEquipmentByAccessPortId(accessPortId: string): Promise<EquipmentNode | null> {
+    const match = [...this.nodes.values()].find(
+      (node): node is EquipmentNode =>
+        node.kind === 'EQUIPMENT' && node.accessPorts.some((port) => port.id === accessPortId),
+    );
+    return match ? structuredClone(match) : null;
   }
 
   async insert(node: TopologyNode): Promise<void> {

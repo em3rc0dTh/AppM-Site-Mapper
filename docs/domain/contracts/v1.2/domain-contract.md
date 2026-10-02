@@ -37,3 +37,15 @@ This version is considered internally coherent against these required scenarios:
 This file is a new versioned volume. Existing domain documentation is intentionally preserved and is not deleted or rewritten by this publication.
 
 The prior repository files remain historical evidence. When an older document contradicts v1.2, this v1.2 contract is authoritative for new implementation work.
+
+
+---
+
+# 38. Visual References
+
+The supplied review diagrams are preserved alongside this version:
+
+- [Visual references and v1.2 reconciliation](./visual-references.md)
+- [Validation & verification record](./validation.md)
+
+These images document the iteration path. Where they show `Holder` nodes or Device-level physical AccessPort containment, those shapes are superseded by the normative v1.2 rules in this contract.

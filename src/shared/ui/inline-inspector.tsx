@@ -33,7 +33,7 @@ export function InlineInspector({
         </section>
       ))}
       {entity.actions?.map((action) => (
-        <Link key={action.href} className="mk-primary" href={action.href}>
+        <Link key={action.href} className="mk-primary" href={action.href} prefetch={false}>
           {action.label}
         </Link>
       ))}

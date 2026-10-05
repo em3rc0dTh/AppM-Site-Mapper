@@ -1,4 +1,5 @@
 import type { PowerRepository } from '@/modules/power/application/power-repository';
+import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
@@ -50,12 +51,14 @@ type InventoryNode = DeviceNode | EquipmentNode;
 
 export class WorkspaceService {
   private readonly topologyService: TopologyService;
+  private readonly bdfbProjection: BdfbProjectionService;
 
   constructor(
     private readonly topology: TopologyRepository,
     private readonly power: PowerRepository,
   ) {
     this.topologyService = new TopologyService(topology);
+    this.bdfbProjection = new BdfbProjectionService(topology);
   }
 
   async getSnapshot(): Promise<WorkspaceSnapshot> {
@@ -134,25 +137,31 @@ export class WorkspaceService {
   private async buildBdfbSummaries(
     devices: readonly DeviceNode[],
   ): Promise<readonly WorkspaceBdfbSummary[]> {
-    const summaries = devices
-      .filter((device) => device.bdfb)
-      .map(async (device) => {
-        const shelves = device.bdfb?.shelves ?? [];
-        const frames = shelves.flatMap((shelf) => shelf.frames);
-        const panels = frames.flatMap((frame) => frame.panels);
-        const endpoints = panels.flatMap((panel) => panel.endpoints);
+    const summaries = await Promise.all(
+      devices
+        .filter((device) => device.deviceType === 'BDFB')
+        .map(async (device) => {
+          const presentation = await this.bdfbProjection.get(device.id);
+          if (!presentation) return null;
 
-        return {
-          deviceId: device.id,
-          deviceName: device.name,
-          shelves: shelves.length,
-          frames: frames.length,
-          panels: panels.length,
-          endpoints: endpoints.length,
-          href: await this.topologyService.buildDeepLink(device.id),
-        };
-      });
+          const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
+          const panels = frames.flatMap((frame) => frame.panels);
+          const endpoints = panels.flatMap((panel) => panel.positions).filter(Boolean);
 
-    return Promise.all(summaries);
+          return {
+            deviceId: device.id,
+            deviceName: device.name,
+            shelves: presentation.shelves.length,
+            frames: frames.length,
+            panels: panels.length,
+            endpoints: endpoints.length,
+            href: await this.topologyService.buildDeepLink(device.id),
+          };
+        }),
+    );
+
+    return summaries.filter(
+      (summary): summary is WorkspaceBdfbSummary => summary !== null,
+    );
   }
 }

@@ -11,6 +11,12 @@ async function buildHierarchy(service: TopologyService) {
     kind: 'SITE',
     parentId: network.value.id,
     name: 'Site',
+    polygon: [
+      { x: 0, y: 0 },
+      { x: 6000, y: 0 },
+      { x: 6000, y: 6000 },
+      { x: 0, y: 6000 },
+    ],
   });
   if (!site.ok) throw new Error(site.error);
 
@@ -18,6 +24,12 @@ async function buildHierarchy(service: TopologyService) {
     kind: 'STRUCTURE',
     parentId: site.value.id,
     name: 'Structure',
+    polygon: [
+      { x: 0, y: 0 },
+      { x: 4800, y: 0 },
+      { x: 4800, y: 4800 },
+      { x: 0, y: 4800 },
+    ],
   });
   if (!structure.ok) throw new Error(structure.error);
 
@@ -33,6 +45,12 @@ async function buildHierarchy(service: TopologyService) {
     parentId: level.value.id,
     name: 'Room',
     roomVariant: 'ROOM',
+    polygon: [
+      { x: 0, y: 0 },
+      { x: 3600, y: 0 },
+      { x: 3600, y: 3600 },
+      { x: 0, y: 3600 },
+    ],
   });
   if (!room.ok) throw new Error(room.error);
 
@@ -41,6 +59,12 @@ async function buildHierarchy(service: TopologyService) {
     parentId: room.value.id,
     name: 'Bay',
     clusterVariant: 'BAY',
+    polygon: [
+      { x: 0, y: 0 },
+      { x: 1200, y: 0 },
+      { x: 1200, y: 600 },
+      { x: 0, y: 600 },
+    ],
   });
   if (!cluster.ok) throw new Error(cluster.error);
 
@@ -74,7 +98,7 @@ async function buildHierarchy(service: TopologyService) {
 }
 
 describe('TopologyService', () => {
-  it('preserves the accepted hierarchy and Device → Equipment ownership', async () => {
+  it('preserves Rack → Device → recursive Equipment hierarchy', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());
     const { rack } = await buildHierarchy(service);
 
@@ -82,30 +106,32 @@ describe('TopologyService', () => {
       kind: 'DEVICE',
       parentId: rack.id,
       name: 'Device A',
-      deviceType: 'SERVER',
     });
-    expect(device.ok).toBe(true);
     if (!device.ok) throw new Error(device.error);
-
     const equipment = await service.create({
       kind: 'EQUIPMENT',
       parentId: device.value.id,
       name: 'Equipment A',
-      equipmentType: 'CHASSIS',
     });
-    expect(equipment.ok).toBe(true);
     if (!equipment.ok) throw new Error(equipment.error);
+    const nested = await service.create({
+      kind: 'EQUIPMENT',
+      parentId: equipment.value.id,
+      name: 'Equipment A.1',
+    });
 
-    const rackChildren = await service.listChildren(rack.id);
-    expect(rackChildren.map((node) => node.kind)).toEqual(['DEVICE']);
+    expect(nested.ok).toBe(true);
+    expect((await service.listChildren(rack.id)).map((node) => node.kind)).toEqual(['DEVICE']);
+    expect((await service.listChildren(device.value.id)).map((node) => node.kind)).toEqual([
+      'EQUIPMENT',
+    ]);
+    expect((await service.listChildren(equipment.value.id)).map((node) => node.kind)).toEqual([
+      'EQUIPMENT',
+    ]);
 
-    const deviceChildren = await service.listChildren(device.value.id);
-    expect(deviceChildren.map((node) => node.kind)).toEqual(['EQUIPMENT']);
-
-    const persistedDevice = await service.getById(device.value.id);
-    expect(persistedDevice?.kind === 'DEVICE' ? persistedDevice.rootEquipmentIds : []).toContain(
-      equipment.value.id,
-    );
+    await expect(
+      service.create({ kind: 'EQUIPMENT', parentId: rack.id, name: 'Invalid Rack Equipment' }),
+    ).resolves.toEqual({ ok: false, error: 'INVALID_PARENT' });
   });
 
   it('rejects hierarchy skips and occupied positions', async () => {

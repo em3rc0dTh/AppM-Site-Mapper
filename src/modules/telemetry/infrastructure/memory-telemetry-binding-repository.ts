@@ -22,6 +22,20 @@ export class MemoryTelemetryBindingRepository implements TelemetryBindingReposit
       .map((binding) => structuredClone(binding));
   }
 
+  async listForTarget(
+    targetType: TelemetryBinding['targetType'],
+    targetId: string,
+  ): Promise<readonly TelemetryBinding[]> {
+    return [...this.bindings.values()]
+      .filter(
+        (binding) =>
+          binding.lifecycle === 'ACTIVE' &&
+          binding.targetType === targetType &&
+          binding.targetId === targetId,
+      )
+      .map((binding) => structuredClone(binding));
+  }
+
   async insert(binding: TelemetryBinding): Promise<void> {
     if (this.bindings.has(binding.id))
       throw new Error('TelemetryBinding already exists: ' + binding.id);

@@ -5,6 +5,10 @@ export interface TelemetryBindingRepository {
     protocol: TelemetryBinding['protocol'],
     sourceIdentity: string,
   ): Promise<readonly TelemetryBinding[]>;
+  listForTarget(
+    targetType: TelemetryBinding['targetType'],
+    targetId: string,
+  ): Promise<readonly TelemetryBinding[]>;
   insert(binding: TelemetryBinding): Promise<void>;
   replace(binding: TelemetryBinding): Promise<void>;
 }

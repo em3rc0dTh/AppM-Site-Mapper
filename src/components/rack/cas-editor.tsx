@@ -1,0 +1,124 @@
+'use client';
+import { useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
+export function CasEditor({ view }: { view: RackElevationView }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const action = String(form.get('action'));
+    const payload =
+      action === 'reserve'
+        ? {
+            action,
+            mountStartU: Number(form.get('mountStartU')),
+            physicalSizeU: Number(form.get('physicalSizeU')),
+            clearanceTopU: 1,
+            clearanceBottomU: 1,
+          }
+        : {
+            action,
+            allocationId: String(form.get('allocationId')),
+            occupantId: String(form.get('occupantId') ?? ''),
+          };
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch(`/api/racks/${view.rack.id}/cas`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error ?? 'Save failed');
+      router.refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Save failed');
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <details className="mk-cas-editor">
+      <summary>EDIT CAS</summary>
+      <p>Reservations include 1U clearance above and below the physical device.</p>
+      <form onSubmit={submit}>
+        <input type="hidden" name="action" value="reserve" />
+        <label>
+          Start U
+          <input
+            required
+            name="mountStartU"
+            type="number"
+            min="2"
+            max={view.rack.totalU}
+            defaultValue="2"
+          />
+        </label>
+        <label>
+          Physical size U
+          <input
+            required
+            name="physicalSizeU"
+            type="number"
+            min="1"
+            max={view.rack.totalU}
+            defaultValue="1"
+          />
+        </label>
+        <button disabled={busy}>Reserve / split available span</button>
+      </form>
+      <form onSubmit={submit}>
+        <input type="hidden" name="action" value="equip" />
+        <label>
+          Reservation
+          <select required name="allocationId">
+            <option value="">Select reservation</option>
+            {view.rack.cas
+              .filter((r) => r.state === 'RESERVED')
+              .map((r) => (
+                <option key={r.id} value={r.id}>
+                  U{r.startU}–U{r.endU}
+                </option>
+              ))}
+          </select>
+        </label>
+        <label>
+          Inventory
+          <select required name="occupantId">
+            <option value="">Select device</option>
+            {view.inventory
+              .filter((i) => !view.rack.cas.some((r) => r.occupantId === i.id))
+              .map((i) => (
+                <option key={i.id} value={i.id}>
+                  {i.name}
+                </option>
+              ))}
+          </select>
+        </label>
+        <button disabled={busy}>Mount device</button>
+      </form>
+      <form onSubmit={submit}>
+        <input type="hidden" name="action" value="free" />
+        <label>
+          Allocation
+          <select required name="allocationId">
+            <option value="">Select allocation</option>
+            {view.rack.cas
+              .filter((r) => r.state !== 'AVAILABLE')
+              .map((r) => (
+                <option key={r.id} value={r.id}>
+                  U{r.startU}–U{r.endU} · {r.state}
+                </option>
+              ))}
+          </select>
+        </label>
+        <button disabled={busy}>Free allocation</button>
+      </form>
+      {error && <p role="alert">{error}</p>}
+    </details>
+  );
+}

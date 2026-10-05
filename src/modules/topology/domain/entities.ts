@@ -1,4 +1,5 @@
 import type { DomainEntity } from '@/shared/domain/entity';
+import type { AssetTemplateSnapshot } from '@/modules/warehouse/domain/template';
 
 export type TopologyKind =
   | 'NETWORK'
@@ -165,6 +166,7 @@ export interface ContainerRackNode extends TopologyBase {
   readonly kind: 'CONTAINER_RACK';
   readonly parentId: string;
   readonly variant: ContainerRackVariant;
+  readonly placementMm?: PhysicalPoint;
   readonly dimensionsMm?: DimensionsMm;
   readonly totalU?: number;
   readonly cas: readonly CasRange[];
@@ -180,6 +182,7 @@ export interface DeviceNode extends TopologyBase {
   readonly pinned: boolean;
   readonly deviceType: DeviceType;
   readonly rootEquipmentIds: readonly string[];
+  readonly template?: AssetTemplateSnapshot;
   readonly attributes?: Readonly<Record<string, unknown>>;
 }
 
@@ -202,6 +205,7 @@ export interface EquipmentNode extends TopologyBase {
   readonly rackPlacement?: RackPlacement;
   readonly category?: string;
   readonly pinned: boolean;
+  readonly template?: AssetTemplateSnapshot;
   readonly attributes?: Readonly<Record<string, unknown>>;
 }
 

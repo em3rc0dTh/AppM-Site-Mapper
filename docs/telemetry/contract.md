@@ -27,12 +27,13 @@ BFDB emulator / future provider
 → topic + payload validation
 → source identity resolution
 → BFDB breaker binding
-→ in-process Latest State
-→ authenticated SSE
-→ AppM interface
+├→ accepted electrical patch → Site Mapper history writer → TimescaleDB
+└→ in-process Latest State → authenticated SSE → AppM interface
 ```
 
 The browser never receives MQTT credentials and never connects directly to the broker.
+
+TimescaleDB is part of the Site Mapper persistence boundary. It is not owned by the emulator or BFDB gateway repository. The field source may disappear or be replaced without changing Site Mapper historical ownership.
 
 ## BFDB wire envelope
 
@@ -170,6 +171,48 @@ Each normalized electrical metric retains the source observation time from the M
 
 The raw `reported` object is also merged per point so rotating 24-point batches accumulate into the current source state instead of replacing previous panels.
 
+
+## Historical telemetry persistence
+
+Historical electrical telemetry is durable Site Mapper data.
+
+The accepted normalized MQTT patch is persisted before Latest State carry-forward can alter its meaning.
+
+Therefore:
+
+```text
+accepted MQTT patch
+├→ TimescaleDB historical sample
+└→ Latest State merge
+```
+
+Only metrics present in the accepted patch are written historically.
+
+A state-only patch does not create an electrical history row. A missing V/I/P/E value never causes the previous Latest State value to be copied into a new historical sample.
+
+The canonical local table is `telemetry_samples`, keyed operationally by source identity, AppM device/breaker identity, raw point identity and observation time.
+
+Historical UI/query windows are:
+
+```text
+24h
+7d
+15d
+1M
+```
+
+Panel history includes only BREAKER bindings that belong to that panel. Whole-BDFB history includes all configured BREAKER bindings. HOLDER endpoints are excluded.
+
+The query path is owned by Site Mapper:
+
+```text
+AppM history API
+→ Site Mapper telemetry-store adapter
+→ Site Mapper TimescaleDB
+```
+
+It does not query a gateway/emulator-owned database.
+
 ## Browser realtime transport
 
 `GET /api/telemetry/stream`:
@@ -222,4 +265,5 @@ It does not claim:
 - a production MQTT endpoint has been approved;
 - Metasys has been commissioned;
 - AppM implements the Modbus server from `bfdb-telemetry-gateway`;
-- Timescale historical persistence is implemented by this change.
+- the field emulator is a production dependency;
+- the BFDB gateway owns Site Mapper historical telemetry.

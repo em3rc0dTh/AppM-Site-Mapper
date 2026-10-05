@@ -5,6 +5,7 @@ import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspec
 import { StatusBadge, Surface } from '@/shared/ui/primitives';
 
 export interface PowerStage {
+  href?: string;
   id: string;
   kind: string;
   name: string;
@@ -37,6 +38,7 @@ export function PowerPathView({
                 setSelected({
                   name: stage.name,
                   kind: stage.kind,
+                  actions: stage.href ? [{ label: 'OPEN PHYSICAL OBJECT', href: stage.href }] : [],
                   sections: [
                     {
                       title: 'Overview',

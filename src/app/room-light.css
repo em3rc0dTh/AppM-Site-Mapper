@@ -1,0 +1,244 @@
+/*
+ * User-approved light room presentation.
+ * Scoped to Room / Blueprint so dark telemetry diagnostics remain independent.
+ * This file is imported AFTER visual-parity.css to retire inherited dark-only
+ * room overrides without changing topology geometry or editing behavior.
+ */
+.app-shell--blueprint {
+  color-scheme: light;
+  background: #ffffff !important;
+  color: #121923;
+}
+
+.app-shell--blueprint .zip-topbar {
+  background: #ffffff !important;
+  border-color: #d7dde4 !important;
+  color: #121923 !important;
+}
+
+.app-shell--blueprint .zip-brand {
+  border-color: #d7dde4 !important;
+  color: #121923 !important;
+}
+
+.app-shell--blueprint .zip-brand-mark {
+  stroke: #121923 !important;
+}
+
+.app-shell--blueprint .zip-brand small,
+.app-shell--blueprint .breadcrumbs,
+.app-shell--blueprint .breadcrumbs a {
+  color: #68727e !important;
+}
+
+.app-shell--blueprint .zip-topbar .mk-search-trigger,
+.app-shell--blueprint .zip-explore,
+.app-shell--blueprint .zip-account,
+.app-shell--blueprint .zip-more {
+  background: #ffffff !important;
+  border-color: #d7dde4 !important;
+  color: #17202a !important;
+}
+
+.app-shell--blueprint .operational-page--blueprint,
+.app-shell--blueprint .operational-layout--blueprint,
+.app-shell--blueprint .operational-stage,
+.app-shell--blueprint .operational-stage-body,
+.app-shell--blueprint .section-header {
+  background: #ffffff !important;
+  color: #121923 !important;
+  border-color: #d7dde4 !important;
+}
+
+.app-shell--blueprint .section-header h1 {
+  color: #121923 !important;
+}
+
+.app-shell--blueprint .section-description {
+  color: #68727e !important;
+}
+
+.app-shell--blueprint .operational-context,
+.app-shell--blueprint .telxius-topology-tree,
+.app-shell--blueprint .telxius-tree-root,
+.app-shell--blueprint .telxius-tree-brand,
+.app-shell--blueprint .telxius-tree-heading {
+  background: #ffffff !important;
+  color: #27323b !important;
+  border-color: #d7dde4 !important;
+}
+
+.app-shell--blueprint .telxius-tree-node > a {
+  background: transparent !important;
+  color: #354452 !important;
+}
+
+.app-shell--blueprint .telxius-tree-node > a:hover {
+  background: #f0f5fb !important;
+  color: #121923 !important;
+}
+
+.app-shell--blueprint .telxius-tree-node > a.is-active,
+.app-shell--blueprint .telxius-tree-node > a.is-active:hover {
+  background: #e7f2ff !important;
+  color: #126ae8 !important;
+}
+
+.app-shell--blueprint .telxius-tree-copy strong,
+.app-shell--blueprint .telxius-tree-brand strong {
+  color: inherit !important;
+}
+
+.app-shell--blueprint .telxius-tree-copy small,
+.app-shell--blueprint .telxius-tree-heading span {
+  color: #68727e !important;
+}
+
+.app-shell--blueprint .mk-room-editor,
+.app-shell--blueprint .mk-draft-workbench,
+.app-shell--blueprint .blueprint-panel {
+  background: #ffffff !important;
+  color: #121923 !important;
+  border-color: #d7dde4 !important;
+}
+
+.app-shell--blueprint .mk-draft-toolbar,
+.app-shell--blueprint .blueprint-toolbar,
+.app-shell--blueprint .blueprint-legend {
+  background: #f8fafc !important;
+  color: #425364 !important;
+  border-color: #d7dde4 !important;
+}
+
+.app-shell--blueprint .mk-draft-toolbar strong,
+.app-shell--blueprint .zip-blueprint-toolbar strong {
+  color: #152331 !important;
+}
+
+.app-shell--blueprint .zip-blueprint-toolbar small,
+.app-shell--blueprint .zip-blueprint-toolbar span {
+  color: #667789 !important;
+}
+
+.app-shell--blueprint .zip-blueprint-mode {
+  background: #ffffff !important;
+  border-color: #cad4de !important;
+  color: #27323b !important;
+}
+
+.app-shell--blueprint .blueprint-canvas-shell,
+.app-shell--blueprint .zip-blueprint-shell {
+  background-color: #fbfcfd !important;
+  background-image:
+    linear-gradient(#edf1f5 1px, transparent 1px),
+    linear-gradient(90deg, #edf1f5 1px, transparent 1px) !important;
+  background-size: 40px 40px !important;
+}
+
+.app-shell--blueprint .blueprint-canvas {
+  background: transparent !important;
+}
+
+.app-shell--blueprint .blueprint-room {
+  fill: #fcfdfe !important;
+  stroke: #7f8a95 !important;
+}
+
+.app-shell--blueprint .blueprint-grid-line {
+  stroke: #dce4eb !important;
+  opacity: 1 !important;
+}
+
+.app-shell--blueprint .blueprint-coordinate-labels text {
+  fill: #63778a !important;
+}
+
+.app-shell--blueprint .blueprint-cluster {
+  fill: rgba(31, 139, 159, 0.065) !important;
+  stroke: #52a5af !important;
+}
+
+.app-shell--blueprint .blueprint-cluster-label {
+  fill: #227d8b !important;
+}
+
+.app-shell--blueprint .blueprint-slot {
+  fill: rgba(45, 127, 249, 0.035) !important;
+  stroke: #a9c8df !important;
+}
+
+.app-shell--blueprint .blueprint-rack {
+  fill: #e1f2eb !important;
+  stroke: #268b74 !important;
+  filter: none !important;
+}
+
+.app-shell--blueprint .blueprint-rack-inner {
+  fill: #eaf7f1 !important;
+  stroke: #9bc8b6 !important;
+}
+
+.app-shell--blueprint .blueprint-rack-label {
+  fill: #183e34 !important;
+}
+
+.app-shell--blueprint .blueprint-rack-node:hover .blueprint-rack,
+.app-shell--blueprint .blueprint-rack-node.is-selected .blueprint-rack {
+  fill: #d7ebfd !important;
+  stroke: #2d7ff9 !important;
+  filter: none !important;
+}
+
+.app-shell--blueprint .zip-drafting-tools {
+  background: #ffffff !important;
+  border-color: #ccd6e0 !important;
+  box-shadow: 0 8px 24px #1728381c !important;
+}
+
+.app-shell--blueprint .zip-drafting-tools button,
+.app-shell--blueprint .mk-draft-toolbar button:not(:last-child) {
+  background: #f7f9fb !important;
+  color: #30475c !important;
+  border-color: #dce2e8 !important;
+}
+
+.app-shell--blueprint .zip-drafting-tools button:hover,
+.app-shell--blueprint .zip-drafting-tools button[aria-pressed='true'] {
+  background: #e7f2ff !important;
+  color: #126ae8 !important;
+  border-color: #2d7ff9 !important;
+}
+
+.app-shell--blueprint .mk-draft-inspector {
+  background: #ffffff !important;
+  color: #27323b !important;
+  border-color: #d7dde4 !important;
+}
+
+.app-shell--blueprint .mk-draft-inspector h3,
+.app-shell--blueprint .mk-draft-inspector label,
+.app-shell--blueprint .mk-draft-inspector summary {
+  color: #354452 !important;
+}
+
+.app-shell--blueprint .mk-draft-inspector input,
+.app-shell--blueprint .mk-draft-inspector select,
+.app-shell--blueprint .mk-draft-inspector textarea {
+  background: #ffffff !important;
+  color: #121923 !important;
+  border-color: #cad4de !important;
+}
+
+.app-shell--blueprint .zip-room-properties,
+.app-shell--blueprint .zip-room-properties > header,
+.app-shell--blueprint .zip-room-properties > section {
+  background: #ffffff !important;
+  color: #27323b !important;
+  border-color: #d7dde4 !important;
+}
+
+.app-shell--blueprint .zip-room-properties > section small,
+.app-shell--blueprint .zip-room-properties > div,
+.app-shell--blueprint .zip-room-properties > div p {
+  color: #687b8c !important;
+}

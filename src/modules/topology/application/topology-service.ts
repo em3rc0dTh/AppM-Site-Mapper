@@ -60,10 +60,7 @@ export interface CreateTopologyNodeInput {
   readonly accessPorts?: readonly AccessPort[];
 }
 
-function canonicalChildren(
-  mode: EquipmentChildMode,
-  childCapacity?: number,
-): readonly null[] {
+function canonicalChildren(mode: EquipmentChildMode, childCapacity?: number): readonly null[] {
   if (mode === 'DYNAMIC') return [];
 
   if (!Number.isInteger(childCapacity) || (childCapacity ?? 0) < 1) {

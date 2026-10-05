@@ -78,7 +78,7 @@ export class WorkspaceService {
     return {
       navigation: await Promise.all(activeNetworks.map((network) => this.buildTree(network))),
       pinned: await this.buildPinned(inventory),
-      notifications: this.buildNotifications(inventory),
+      notifications: [],
       bdfb: await this.buildBdfbSummaries(
         inventory.filter((node): node is DeviceNode => node.kind === 'DEVICE'),
       ),
@@ -117,21 +117,6 @@ export class WorkspaceService {
         href: await this.topologyService.buildDeepLink(item.id),
       })),
     );
-  }
-
-  private buildNotifications(
-    inventory: readonly InventoryNode[],
-  ): readonly WorkspaceNotification[] {
-    return inventory
-      .filter((item) => !item.serialNumber?.trim())
-      .map((item) => ({
-        id: `telemetry-identity-${item.id}`,
-        severity: 'WARNING' as const,
-        title: 'Telemetry identity missing',
-        message: `${item.name} cannot be matched to realtime telemetry until a serial number is assigned.`,
-        entityId: item.id,
-      }))
-      .sort((left, right) => left.message.localeCompare(right.message));
   }
 
   private async buildBdfbSummaries(

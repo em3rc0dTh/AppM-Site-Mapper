@@ -141,7 +141,8 @@ async function ensurePowerInputPort(
   equipment: EquipmentNode,
 ): Promise<EquipmentNode> {
   const existing = equipment.accessPorts.find(
-    (port) => port.lifecycle === 'ACTIVE' && port.portType === 'POWER' && port.direction === 'INPUT',
+    (port) =>
+      port.lifecycle === 'ACTIVE' && port.portType === 'POWER' && port.direction === 'INPUT',
   );
   if (existing) return equipment;
 
@@ -197,19 +198,35 @@ export async function seedDevelopmentDemo(
   );
 
   const network = expectKind(
-    await ensureNode(topologyRepository, topology, { kind: 'NETWORK', parentId: null, name: DEMO_NETWORK_NAME }),
+    await ensureNode(topologyRepository, topology, {
+      kind: 'NETWORK',
+      parentId: null,
+      name: DEMO_NETWORK_NAME,
+    }),
     'NETWORK',
   );
   const site = expectKind(
-    await ensureNode(topologyRepository, topology, { kind: 'SITE', parentId: network.id, name: 'Lima Operations Campus' }),
+    await ensureNode(topologyRepository, topology, {
+      kind: 'SITE',
+      parentId: network.id,
+      name: 'Lima Operations Campus',
+    }),
     'SITE',
   );
   const structure = expectKind(
-    await ensureNode(topologyRepository, topology, { kind: 'STRUCTURE', parentId: site.id, name: 'Data Center A' }),
+    await ensureNode(topologyRepository, topology, {
+      kind: 'STRUCTURE',
+      parentId: site.id,
+      name: 'Data Center A',
+    }),
     'STRUCTURE',
   );
   const level = expectKind(
-    await ensureNode(topologyRepository, topology, { kind: 'LEVEL', parentId: structure.id, name: 'Level 01' }),
+    await ensureNode(topologyRepository, topology, {
+      kind: 'LEVEL',
+      parentId: structure.id,
+      name: 'Level 01',
+    }),
     'LEVEL',
   );
   const room = expectKind(
@@ -399,14 +416,38 @@ export async function seedDevelopmentDemo(
     throw new Error('Demo seed could not configure BDFB: ' + bdfbResult.error);
   }
 
-  const currentBdfb = expectKind((await topologyRepository.getById(bdfb.id)) as TopologyNode, 'DEVICE');
+  const currentBdfb = expectKind(
+    (await topologyRepository.getById(bdfb.id)) as TopologyNode,
+    'DEVICE',
+  );
   const chassisId = currentBdfb.rootEquipmentIds[0];
   if (!chassisId) throw new Error('Demo seed BDFB has no root Equipment.');
-  const chassis = expectKind((await topologyRepository.getById(chassisId)) as TopologyNode, 'EQUIPMENT');
+  const chassis = expectKind(
+    (await topologyRepository.getById(chassisId)) as TopologyNode,
+    'EQUIPMENT',
+  );
 
-  let computeEquipment = await rootEquipment(topologyRepository, topology, compute, 'Compute Node 01 Chassis', 'CHASSIS');
-  let routerEquipment = await rootEquipment(topologyRepository, topology, router, 'Edge Router 01 Chassis', 'CHASSIS');
-  const patchPanelEquipment = await rootEquipment(topologyRepository, topology, patchPanel, 'Patch Panel 01', 'NETWORK_BOARD');
+  let computeEquipment = await rootEquipment(
+    topologyRepository,
+    topology,
+    compute,
+    'Compute Node 01 Chassis',
+    'CHASSIS',
+  );
+  let routerEquipment = await rootEquipment(
+    topologyRepository,
+    topology,
+    router,
+    'Edge Router 01 Chassis',
+    'CHASSIS',
+  );
+  const patchPanelEquipment = await rootEquipment(
+    topologyRepository,
+    topology,
+    patchPanel,
+    'Patch Panel 01',
+    'NETWORK_BOARD',
+  );
   computeEquipment = await ensurePowerInputPort(topologyRepository, computeEquipment);
   routerEquipment = await ensurePowerInputPort(topologyRepository, routerEquipment);
 
@@ -446,7 +487,9 @@ export async function seedDevelopmentDemo(
     breakerId: string,
     target: EquipmentNode,
   ): Promise<string> {
-    const existing = activePaths.find((path) => path.label === label && path.lifecycle === 'ACTIVE');
+    const existing = activePaths.find(
+      (path) => path.label === label && path.lifecycle === 'ACTIVE',
+    );
     if (existing) return existing.id;
 
     const sourceAccessPortId = bdfb.id + ':equipment:' + breakerId + ':power-out';

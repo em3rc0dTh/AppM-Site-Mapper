@@ -1,16 +1,19 @@
+import type { BdfbStructureSpec } from '@/modules/power/domain/bdfb-model';
+import type { DimensionsMm } from '@/modules/topology/domain/entities';
 import type { DomainEntity } from '@/shared/domain/entity';
-import type {
-  BreakerHolderVariant,
-  BdfbStructure,
-  DimensionsMm,
-} from '@/modules/topology/domain/entities';
 
 export type AssetTemplateKind = 'DEVICE' | 'EQUIPMENT';
 export type WarehouseDeviceType = 'BDFB';
 
+/**
+ * Warehouse import compatibility only. HOLDER is translated to a null positional
+ * slot before materialization and never enters the canonical v1.2 topology model.
+ */
+export type BdfbEndpointBlueprintVariant = 'BREAKER' | 'HOLDER';
+
 export interface BdfbEndpointBlueprint {
   readonly label: string;
-  readonly variant: BreakerHolderVariant;
+  readonly variant: BdfbEndpointBlueprintVariant;
   readonly capacity?: number;
   readonly rawPointId?: string;
 }
@@ -83,7 +86,7 @@ export function snapshotTemplate(template: AssetTemplate): AssetTemplateSnapshot
 export function materializeBdfbBlueprint(
   blueprint: BdfbPhysicalBlueprint,
   deviceId: string,
-): BdfbStructure {
+): BdfbStructureSpec {
   return {
     shelves: blueprint.shelves.map((shelf, shelfIndex) => ({
       id: `${deviceId}:bdfb:s${shelfIndex + 1}`,
@@ -93,17 +96,19 @@ export function materializeBdfbBlueprint(
         label: frame.label,
         ...(frame.physicalFrameVisible === undefined
           ? {}
-          : { presentation: { physicalFrameVisible: frame.physicalFrameVisible } }),
+          : { physicalFrameVisible: frame.physicalFrameVisible }),
         panels: frame.panels.map((panel, panelIndex) => ({
           id: `${deviceId}:bdfb:s${shelfIndex + 1}:f${frameIndex + 1}:p${panelIndex + 1}`,
           label: panel.label,
-          endpoints: panel.endpoints.map((endpoint, endpointIndex) => ({
-            id: `${deviceId}:bdfb:s${shelfIndex + 1}:f${frameIndex + 1}:p${panelIndex + 1}:e${endpointIndex + 1}`,
-            variant: endpoint.variant,
-            label: endpoint.label,
-            ...(endpoint.capacity === undefined ? {} : { capacity: endpoint.capacity }),
-            ...(endpoint.rawPointId ? { telemetry: { rawPointId: endpoint.rawPointId } } : {}),
-          })),
+          positions: panel.endpoints.map((endpoint, endpointIndex) => {
+            if (endpoint.variant === 'HOLDER') return null;
+            return {
+              id: `${deviceId}:bdfb:s${shelfIndex + 1}:f${frameIndex + 1}:p${panelIndex + 1}:e${endpointIndex + 1}`,
+              label: endpoint.label,
+              ...(endpoint.capacity === undefined ? {} : { capacity: endpoint.capacity }),
+              ...(endpoint.rawPointId ? { telemetry: { rawPointId: endpoint.rawPointId } } : {}),
+            };
+          }),
         })),
       })),
     })),

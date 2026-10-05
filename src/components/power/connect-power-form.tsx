@@ -17,6 +17,7 @@ interface PowerSource {
   readonly breakerId: string;
   readonly breakerLabel: string;
   readonly capacity?: number;
+  readonly feed?: 'A' | 'B';
 }
 
 interface DestinationPort {
@@ -35,6 +36,13 @@ interface DestinationOption {
   readonly ports: readonly DestinationPort[];
 }
 
+interface CommissioningCandidate {
+  readonly key: string;
+  readonly destinationId: string;
+  readonly accessPortId: string;
+  readonly feed: 'A' | 'B';
+}
+
 export function ConnectPowerForm({
   source,
   destinations,
@@ -48,8 +56,10 @@ export function ConnectPowerForm({
   const [query, setQuery] = useState('');
   const [destinationId, setDestinationId] = useState('');
   const [accessPortId, setAccessPortId] = useState('');
-  const [feed, setFeed] = useState<'A' | 'B'>('A');
+  const [feed, setFeed] = useState<'A' | 'B'>(source.feed ?? 'A');
   const [label, setLabel] = useState('');
+  const [candidates, setCandidates] = useState<readonly CommissioningCandidate[]>([]);
+  const [selectedCandidateKey, setSelectedCandidateKey] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,26 +82,70 @@ export function ConnectPowerForm({
 
   const selectedDestination = destinations.find((item) => item.id === destinationId);
   const selectedPort = selectedDestination?.ports.find((port) => port.id === accessPortId);
+  const selectedCandidate = candidates.find((candidate) => candidate.key === selectedCandidateKey);
+
+  function candidateDetails(candidate: CommissioningCandidate) {
+    const destination = destinations.find((item) => item.id === candidate.destinationId);
+    const port = destination?.ports.find((item) => item.id === candidate.accessPortId);
+    return { destination, port };
+  }
 
   function selectPort(item: DestinationOption, port: DestinationPort) {
+    const nextFeed = port.feed ?? source.feed ?? feed;
     setDestinationId(item.id);
     setAccessPortId(port.id);
-    if (port.feed) setFeed(port.feed);
+    setFeed(nextFeed);
+    setError(null);
   }
 
   function selectFeed(value: 'A' | 'B') {
+    if (source.feed && source.feed !== value) return;
     setFeed(value);
 
     if (!selectedDestination) return;
     if (!selectedPort?.feed || selectedPort.feed === value) return;
 
     const compatible = selectedDestination.ports.find((port) => !port.feed || port.feed === value);
-
     setAccessPortId(compatible?.id ?? '');
   }
 
+  function addCandidate() {
+    if (!selectedDestination || !selectedPort) {
+      setError('Select a destination POWER port before adding a candidate.');
+      return;
+    }
+    const candidateFeed = selectedPort.feed ?? source.feed ?? feed;
+    if (source.feed && candidateFeed !== source.feed) {
+      setError(`This breaker belongs to Feed ${source.feed}; choose a compatible destination port.`);
+      return;
+    }
+
+    const key = `${selectedDestination.id}:${selectedPort.id}:${candidateFeed}`;
+    const existing = candidates.find((candidate) => candidate.key === key);
+    if (existing) {
+      setSelectedCandidateKey(existing.key);
+      setError(null);
+      return;
+    }
+
+    const candidate: CommissioningCandidate = {
+      key,
+      destinationId: selectedDestination.id,
+      accessPortId: selectedPort.id,
+      feed: candidateFeed,
+    };
+    setCandidates((current) => [...current, candidate]);
+    setSelectedCandidateKey(key);
+    setError(null);
+  }
+
+  function removeCandidate(key: string) {
+    setCandidates((current) => current.filter((candidate) => candidate.key !== key));
+    if (selectedCandidateKey === key) setSelectedCandidateKey('');
+  }
+
   async function connect() {
-    if (!destinationId || !accessPortId || saving) return;
+    if (!selectedCandidate || saving) return;
     setSaving(true);
     setError(null);
 
@@ -101,8 +155,8 @@ export function ConnectPowerForm({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           sourceAccessPortId: source.accessPortId,
-          targetAccessPortId: accessPortId,
-          feed,
+          targetAccessPortId: selectedCandidate.accessPortId,
+          feed: selectedCandidate.feed,
           ...(label.trim() ? { label: label.trim() } : {}),
         }),
       });
@@ -113,12 +167,18 @@ export function ConnectPowerForm({
       } | null;
 
       if (!response.ok || !payload?.path?.id) {
-        setError(payload?.error ?? `Unable to create power path (HTTP ${response.status}).`);
+        const message =
+          payload?.error === 'TARGET_ALREADY_CONNECTED'
+            ? 'That physical POWER input is already connected. Choose another candidate.'
+            : payload?.error === 'FEED_MISMATCH'
+              ? 'The selected target port belongs to the other electrical feed.'
+              : payload?.error;
+        setError(message ?? `Unable to create power path (HTTP ${response.status}).`);
         return;
       }
 
       router.push(
-        `/power?path=${encodeURIComponent(payload.path.id)}&breaker=${encodeURIComponent(source.breakerId)}&feed=${feed}`,
+        `/power?path=${encodeURIComponent(payload.path.id)}&breaker=${encodeURIComponent(source.breakerId)}&feed=${selectedCandidate.feed}`,
       );
       router.refresh();
     } finally {
@@ -132,7 +192,7 @@ export function ConnectPowerForm({
         <div>
           <p>POWER / COMMISSIONING</p>
           <h1>Connect power</h1>
-          <span>Choose the exact POWER access port fed by this breaker.</span>
+          <span>Add candidate endpoints, then confirm the one that is physically connected.</span>
         </div>
         <Link href={returnHref}>← Back to breaker</Link>
       </header>
@@ -165,14 +225,18 @@ export function ConnectPowerForm({
                 <dt>Capacity</dt>
                 <dd>{source.capacity === undefined ? 'Not specified' : `${source.capacity} A`}</dd>
               </div>
+              <div>
+                <dt>Physical feed</dt>
+                <dd>{source.feed ?? 'Not declared'}</dd>
+              </div>
             </dl>
           </article>
 
           <div className="power-connect-step">
             <span>2</span>
             <div>
-              <strong>Destination POWER port</strong>
-              <small>Select a Device or recursively nested Equipment access port</small>
+              <strong>Candidate POWER ports</strong>
+              <small>Evaluate several endpoints without declaring them physically connected</small>
             </div>
           </div>
 
@@ -185,30 +249,27 @@ export function ConnectPowerForm({
             />
           </label>
 
-          <div
-            className="power-destination-list"
-            role="radiogroup"
-            aria-label="Power destination port"
-          >
+          <div className="power-destination-list" role="radiogroup" aria-label="Candidate power port">
             {visibleDestinations.flatMap((item) =>
               item.ports.map((port) => {
                 const selected = destinationId === item.id && accessPortId === port.id;
+                const incompatible = Boolean(source.feed && port.feed && source.feed !== port.feed);
                 return (
                   <label
                     key={`${item.id}:${port.id}`}
                     className="power-destination-option"
                     data-selected={selected ? 'true' : 'false'}
+                    aria-disabled={incompatible}
                   >
                     <input
                       type="radio"
                       name="destination-port"
                       value={`${item.id}:${port.id}`}
                       checked={selected}
+                      disabled={incompatible}
                       onChange={() => selectPort(item, port)}
                     />
-                    <span className="power-destination-glyph">
-                      {item.kind === 'DEVICE' ? '▤' : '▥'}
-                    </span>
+                    <span className="power-destination-glyph">{item.kind === 'DEVICE' ? '▤' : '▥'}</span>
                     <span>
                       <strong>{item.name}</strong>
                       <small>
@@ -228,6 +289,15 @@ export function ConnectPowerForm({
               </div>
             ) : null}
           </div>
+
+          <button
+            type="button"
+            className="power-connect-candidate-add"
+            disabled={!destinationId || !accessPortId}
+            onClick={addCandidate}
+          >
+            + ADD CANDIDATE
+          </button>
         </section>
 
         <aside className="power-connect-summary">
@@ -235,7 +305,7 @@ export function ConnectPowerForm({
             <span>3</span>
             <div>
               <strong>Feed</strong>
-              <small>Assign the electrical feed identity</small>
+              <small>{source.feed ? `Locked by physical source: Feed ${source.feed}` : 'Assign the electrical feed identity'}</small>
             </div>
           </div>
 
@@ -244,6 +314,7 @@ export function ConnectPowerForm({
               <button
                 type="button"
                 key={value}
+                disabled={Boolean(source.feed && source.feed !== value)}
                 data-selected={feed === value ? 'true' : 'false'}
                 onClick={() => selectFeed(value)}
               >
@@ -253,6 +324,45 @@ export function ConnectPowerForm({
             ))}
           </div>
 
+          <section className="power-connect-review">
+            <h2>Commissioning candidates</h2>
+            <p>
+              Candidates are drafts only. They do not appear in Full Power Trace until one is confirmed.
+            </p>
+            {candidates.length ? (
+              <div className="power-candidate-list">
+                {candidates.map((candidate) => {
+                  const details = candidateDetails(candidate);
+                  return (
+                    <label
+                      key={candidate.key}
+                      className="power-destination-option"
+                      data-selected={selectedCandidateKey === candidate.key ? 'true' : 'false'}
+                    >
+                      <input
+                        type="radio"
+                        name="confirmed-candidate"
+                        checked={selectedCandidateKey === candidate.key}
+                        onChange={() => setSelectedCandidateKey(candidate.key)}
+                      />
+                      <span>
+                        <strong>{details.destination?.name ?? candidate.destinationId}</strong>
+                        <small>
+                          {details.port?.label ?? candidate.accessPortId} · FEED {candidate.feed}
+                        </small>
+                      </span>
+                      <button type="button" onClick={() => removeCandidate(candidate.key)}>
+                        REMOVE
+                      </button>
+                    </label>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="power-connect-empty">No candidates added yet.</div>
+            )}
+          </section>
+
           <label className="power-path-label">
             <span>
               Connection label <small>Optional</small>
@@ -260,43 +370,48 @@ export function ConnectPowerForm({
             <input
               value={label}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder={feed === 'A' ? 'Primary feed' : 'Secondary feed'}
+              placeholder={selectedCandidate?.feed === 'B' ? 'Secondary feed' : 'Primary feed'}
             />
           </label>
 
           <section className="power-connect-review">
-            <h2>Connection preview</h2>
-            <div>
-              <span>{source.deviceName}</span>
-              <b>→</b>
-              <span>{source.panelLabel}</span>
-              <b>→</b>
-              <span>{source.breakerLabel}</span>
-              <b>→</b>
-              <span>{selectedDestination?.name ?? 'Select destination'}</span>
-              <b>→</b>
-              <span>{selectedPort?.label ?? 'Select POWER port'}</span>
-            </div>
-            <dl>
-              <dt>Feed</dt>
-              <dd>{feed}</dd>
-              <dt>Target port</dt>
-              <dd>{selectedPort?.id ?? 'Not selected'}</dd>
-              <dt>Status after save</dt>
-              <dd>Configured</dd>
-            </dl>
+            <h2>Physical connection to confirm</h2>
+            {selectedCandidate ? (
+              (() => {
+                const details = candidateDetails(selectedCandidate);
+                return (
+                  <>
+                    <div>
+                      <span>{source.deviceName}</span>
+                      <b>→</b>
+                      <span>{source.panelLabel}</span>
+                      <b>→</b>
+                      <span>{source.breakerLabel}</span>
+                      <b>→</b>
+                      <span>{details.destination?.name ?? selectedCandidate.destinationId}</span>
+                      <b>→</b>
+                      <span>{details.port?.label ?? selectedCandidate.accessPortId}</span>
+                    </div>
+                    <dl>
+                      <dt>Feed</dt>
+                      <dd>{selectedCandidate.feed}</dd>
+                      <dt>Status after save</dt>
+                      <dd>CONNECTED / PowerPath ACTIVE</dd>
+                    </dl>
+                  </>
+                );
+              })()
+            ) : (
+              <div className="power-connect-empty">Select one candidate to confirm.</div>
+            )}
           </section>
 
           {error ? <p className="power-connect-error">{error}</p> : null}
 
           <div className="power-connect-actions">
             <Link href={returnHref}>Cancel</Link>
-            <button
-              type="button"
-              disabled={!destinationId || !accessPortId || saving}
-              onClick={connect}
-            >
-              {saving ? 'Connecting…' : 'CONNECT POWER'}
+            <button type="button" disabled={!selectedCandidate || saving} onClick={connect}>
+              {saving ? 'Connecting…' : 'CONFIRM PHYSICAL CONNECTION'}
             </button>
           </div>
         </aside>

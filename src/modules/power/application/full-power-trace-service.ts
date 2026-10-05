@@ -96,6 +96,14 @@ function feedOf(port: AccessPort): PowerFeed | undefined {
   return value === 'A' || value === 'B' ? value : undefined;
 }
 
+function feedFromLabel(label: string | undefined): PowerFeed | undefined {
+  if (!label) return undefined;
+  const normalized = label.trim().toUpperCase();
+  if (/^A(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*A\b/.test(normalized)) return 'A';
+  if (/^B(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*B\b/.test(normalized)) return 'B';
+  return undefined;
+}
+
 export class FullPowerTraceService {
   constructor(
     private readonly topology: TopologyRepository,
@@ -120,7 +128,15 @@ export class FullPowerTraceService {
     const paths = (await this.power.listActive()).filter((path) =>
       targetPortIds.has(path.targetAccessPortId),
     );
-    const legs = await Promise.all(paths.map((path) => this.resolveLeg(path)));
+    const uniquePaths: PowerPath[] = [];
+    const seenPhysicalPaths = new Set<string>();
+    for (const path of paths) {
+      const key = `${path.sourceAccessPortId}\u0000${path.targetAccessPortId}`;
+      if (seenPhysicalPaths.has(key)) continue;
+      seenPhysicalPaths.add(key);
+      uniquePaths.push(path);
+    }
+    const legs = await Promise.all(uniquePaths.map((path) => this.resolveLeg(path)));
     const policy = this.resolvePolicy(root, familyEquipment, legs);
 
     return {
@@ -179,6 +195,11 @@ export class FullPowerTraceService {
       (sourceEquipment ? stringAttribute(sourceEquipment, 'telemetryRawPointId') : undefined) ??
       reading?.rawPointId;
     const targetFeed = target?.port ? feedOf(target.port) : undefined;
+    const physicalFeed =
+      feedFromLabel(sourceHierarchy.panel) ??
+      feedFromLabel(sourceHierarchy.frame) ??
+      feedFromLabel(sourceHierarchy.shelf);
+    const effectiveFeed = physicalFeed ?? targetFeed ?? path.feed;
     const voltageV = metricValue(reading?.metrics.voltageV);
     const currentA = metricValue(reading?.metrics.currentA);
     const powerW = metricValue(reading?.metrics.powerW);
@@ -192,7 +213,7 @@ export class FullPowerTraceService {
     return {
       pathId: path.id,
       ...(path.label ? { label: path.label } : {}),
-      ...(path.feed ? { feed: path.feed } : {}),
+      ...(effectiveFeed ? { feed: effectiveFeed } : {}),
       topologyStatus: !source || !isBreaker ? 'BROKEN_SOURCE' : !target ? 'BROKEN_TARGET' : 'VALID',
       source: {
         entityId: sourceEquipment?.deviceId ?? path.sourceAccessPortId,

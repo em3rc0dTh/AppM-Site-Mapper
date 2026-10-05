@@ -112,9 +112,7 @@ export function buildBfdbBreakerReadings(
     };
 
     const state =
-      rawPoint.state === undefined
-        ? undefined
-        : { value: String(rawPoint.state), observedAt };
+      rawPoint.state === undefined ? undefined : { value: String(rawPoint.state), observedAt };
 
     readings.push({
       deviceId: presentation.deviceId,

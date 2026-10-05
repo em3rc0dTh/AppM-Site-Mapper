@@ -17,6 +17,7 @@ import type {
   TopologyKind,
   TopologyNode,
 } from '@/modules/topology/domain/entities';
+import { nowIso } from '@/shared/domain/entity';
 
 const DEMO_NETWORK_NAME = 'MK1 Demo Network';
 
@@ -41,10 +42,7 @@ function expectKind<K extends TopologyKind>(
   node: TopologyNode,
   kind: K,
 ): Extract<TopologyNode, { kind: K }> {
-  if (node.kind !== kind) {
-    throw new Error('Demo seed topology kind mismatch.');
-  }
-
+  if (node.kind !== kind) throw new Error('Demo seed topology kind mismatch.');
   return node as Extract<TopologyNode, { kind: K }>;
 }
 
@@ -60,24 +58,17 @@ async function ensureNode(
   const existing = candidates.find(
     (node) => node.kind === input.kind && node.name === input.name && node.lifecycle === 'ACTIVE',
   );
-
-  if (existing) {
-    return existing;
-  }
+  if (existing) return existing;
 
   const result = await service.create(input);
-
-  if (!result.ok) {
-    throw new Error('Demo seed could not create ' + input.kind + ': ' + result.error);
-  }
-
+  if (!result.ok) throw new Error('Demo seed could not create ' + input.kind + ': ' + result.error);
   return result.value;
 }
 
 async function ensureEquipped(
   repository: TopologyRepository,
   rack: ContainerRackNode,
-  occupant: DeviceNode | EquipmentNode,
+  occupant: EquipmentNode,
   placement: Readonly<{
     mountStartU: number;
     physicalSizeU: number;
@@ -101,11 +92,9 @@ async function ensureEquipped(
 
   if (!allocation) {
     const reserved = await cas.reserve(rack.id, placement);
-
     if (!reserved.ok) {
       throw new Error('Demo seed could not reserve rack capacity: ' + reserved.error);
     }
-
     current = reserved.value;
     allocation = current.cas.find(
       (range) =>
@@ -115,15 +104,10 @@ async function ensureEquipped(
     );
   }
 
-  if (!allocation) {
-    throw new Error('Demo seed reservation was not materialized.');
-  }
+  if (!allocation) throw new Error('Demo seed reservation was not materialized.');
 
   const equipped = await cas.equip(rack.id, allocation.id, occupant.id);
-
-  if (!equipped.ok) {
-    throw new Error('Demo seed could not equip rack capacity: ' + equipped.error);
-  }
+  if (!equipped.ok) throw new Error('Demo seed could not equip rack capacity: ' + equipped.error);
 }
 
 async function ensureReserved(
@@ -150,10 +134,56 @@ async function ensureReserved(
   }
 
   const result = await new CasService(repository).reserve(rack.id, placement);
+  if (!result.ok) throw new Error('Demo seed could not create reserved capacity: ' + result.error);
+}
 
-  if (!result.ok) {
-    throw new Error('Demo seed could not create reserved capacity: ' + result.error);
-  }
+async function ensurePowerInputPort(
+  repository: TopologyRepository,
+  equipment: EquipmentNode,
+): Promise<EquipmentNode> {
+  const existing = equipment.accessPorts.find(
+    (port) => port.lifecycle === 'ACTIVE' && port.portType === 'POWER' && port.direction === 'INPUT',
+  );
+  if (existing) return equipment;
+
+  const timestamp = nowIso();
+  const updated: EquipmentNode = {
+    ...equipment,
+    accessPorts: [
+      ...equipment.accessPorts,
+      {
+        id: equipment.id + ':power-in',
+        deviceId: equipment.deviceId,
+        equipmentId: equipment.id,
+        name: 'Power input',
+        portType: 'POWER',
+        direction: 'INPUT',
+        exposure: 'EXTERNAL',
+        lifecycle: 'ACTIVE',
+      },
+    ],
+    updatedAt: timestamp,
+  };
+  await repository.replace(updated);
+  return updated;
+}
+
+async function rootEquipment(
+  repository: TopologyRepository,
+  topology: TopologyService,
+  device: DeviceNode,
+  name: string,
+  equipmentType: 'CHASSIS' | 'NETWORK_BOARD' | 'CUSTOM',
+): Promise<EquipmentNode> {
+  return expectKind(
+    await ensureNode(repository, topology, {
+      kind: 'EQUIPMENT',
+      parentId: device.id,
+      name,
+      equipmentType,
+    }),
+    'EQUIPMENT',
+  );
 }
 
 export async function seedDevelopmentDemo(
@@ -168,41 +198,21 @@ export async function seedDevelopmentDemo(
   );
 
   const network = expectKind(
-    await ensureNode(topologyRepository, topology, {
-      kind: 'NETWORK',
-      parentId: null,
-      name: DEMO_NETWORK_NAME,
-    }),
+    await ensureNode(topologyRepository, topology, { kind: 'NETWORK', parentId: null, name: DEMO_NETWORK_NAME }),
     'NETWORK',
   );
-
   const site = expectKind(
-    await ensureNode(topologyRepository, topology, {
-      kind: 'SITE',
-      parentId: network.id,
-      name: 'Lima Operations Campus',
-    }),
+    await ensureNode(topologyRepository, topology, { kind: 'SITE', parentId: network.id, name: 'Lima Operations Campus' }),
     'SITE',
   );
-
   const structure = expectKind(
-    await ensureNode(topologyRepository, topology, {
-      kind: 'STRUCTURE',
-      parentId: site.id,
-      name: 'Data Center A',
-    }),
+    await ensureNode(topologyRepository, topology, { kind: 'STRUCTURE', parentId: site.id, name: 'Data Center A' }),
     'STRUCTURE',
   );
-
   const level = expectKind(
-    await ensureNode(topologyRepository, topology, {
-      kind: 'LEVEL',
-      parentId: structure.id,
-      name: 'Level 01',
-    }),
+    await ensureNode(topologyRepository, topology, { kind: 'LEVEL', parentId: structure.id, name: 'Level 01' }),
     'LEVEL',
   );
-
   const room = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'ROOM_SUBSTRUCTURE',
@@ -219,7 +229,6 @@ export async function seedDevelopmentDemo(
     { x: 3600, y: 2400 },
     { x: 0, y: 2400 },
   ]);
-
   if (!polygonResult.ok) {
     throw new Error('Demo seed could not configure Blueprint room: ' + polygonResult.error);
   }
@@ -233,7 +242,6 @@ export async function seedDevelopmentDemo(
     }),
     'CONTAINER_CLUSTER_BAY',
   );
-
   const bayB = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'CONTAINER_CLUSTER_BAY',
@@ -253,7 +261,6 @@ export async function seedDevelopmentDemo(
     }),
     'POSITION',
   );
-
   const positionA02 = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'POSITION',
@@ -263,7 +270,6 @@ export async function seedDevelopmentDemo(
     }),
     'POSITION',
   );
-
   const positionB01 = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'POSITION',
@@ -284,7 +290,6 @@ export async function seedDevelopmentDemo(
     }),
     'CONTAINER_RACK',
   );
-
   const rackA02 = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'CONTAINER_RACK',
@@ -295,7 +300,6 @@ export async function seedDevelopmentDemo(
     }),
     'CONTAINER_RACK',
   );
-
   const rackB01 = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'CONTAINER_RACK',
@@ -314,10 +318,10 @@ export async function seedDevelopmentDemo(
       name: 'BDFB-A',
       serialNumber: 'BDFB-DEMO-001',
       category: 'Power Distribution',
+      deviceType: 'BDFB',
     }),
     'DEVICE',
   );
-
   const compute = expectKind(
     await ensureNode(topologyRepository, topology, {
       kind: 'DEVICE',
@@ -325,29 +329,30 @@ export async function seedDevelopmentDemo(
       name: 'Compute Node 01',
       serialNumber: 'SRV-DEMO-001',
       category: 'Compute',
+      deviceType: 'SERVER',
     }),
     'DEVICE',
   );
-
   const router = expectKind(
     await ensureNode(topologyRepository, topology, {
-      kind: 'EQUIPMENT',
+      kind: 'DEVICE',
       parentId: rackA02.id,
       name: 'Edge Router 01',
       serialNumber: 'RTR-DEMO-001',
       category: 'Network',
+      deviceType: 'NETWORK_ELEMENT',
     }),
-    'EQUIPMENT',
+    'DEVICE',
   );
-
   const patchPanel = expectKind(
     await ensureNode(topologyRepository, topology, {
-      kind: 'EQUIPMENT',
+      kind: 'DEVICE',
       parentId: rackA02.id,
       name: 'Legacy Patch Panel 01',
       category: 'Passive Network',
+      deviceType: 'CUSTOM',
     }),
-    'EQUIPMENT',
+    'DEVICE',
   );
 
   await inventory.setPinned(bdfb.id, true);
@@ -362,61 +367,26 @@ export async function seedDevelopmentDemo(
           {
             id: 'demo-frame-a',
             label: 'Frame A',
-            presentation: { physicalFrameVisible: false },
+            physicalFrameVisible: false,
             panels: [
               {
                 id: 'demo-panel-a',
                 label: 'Panel A',
-                endpoints: [
-                  {
-                    id: 'demo-breaker-a1',
-                    variant: 'BREAKER',
-                    label: 'Breaker A1',
-                    capacity: 20,
-                  },
-                  {
-                    id: 'demo-breaker-a2',
-                    variant: 'BREAKER',
-                    label: 'Breaker A2',
-                    capacity: 20,
-                  },
-                  {
-                    id: 'demo-holder-a3',
-                    variant: 'HOLDER',
-                    label: 'Holder A3',
-                  },
-                  {
-                    id: 'demo-holder-a4',
-                    variant: 'HOLDER',
-                    label: 'Holder A4',
-                  },
+                positions: [
+                  { id: 'demo-breaker-a1', label: 'Breaker A1', capacity: 20 },
+                  { id: 'demo-breaker-a2', label: 'Breaker A2', capacity: 20 },
+                  null,
+                  null,
                 ],
               },
               {
                 id: 'demo-panel-b',
                 label: 'Panel B',
-                endpoints: [
-                  {
-                    id: 'demo-breaker-b1',
-                    variant: 'BREAKER',
-                    label: 'Breaker B1',
-                    capacity: 30,
-                  },
-                  {
-                    id: 'demo-holder-b2',
-                    variant: 'HOLDER',
-                    label: 'Holder B2',
-                  },
-                  {
-                    id: 'demo-holder-b3',
-                    variant: 'HOLDER',
-                    label: 'Holder B3',
-                  },
-                  {
-                    id: 'demo-holder-b4',
-                    variant: 'HOLDER',
-                    label: 'Holder B4',
-                  },
+                positions: [
+                  { id: 'demo-breaker-b1', label: 'Breaker B1', capacity: 30 },
+                  null,
+                  null,
+                  null,
                 ],
               },
             ],
@@ -426,27 +396,38 @@ export async function seedDevelopmentDemo(
     ],
   });
 
-  if (!bdfbResult.ok) {
+  if (!bdfbResult.ok && bdfbResult.error !== 'DEVICE_ALREADY_MATERIALIZED') {
     throw new Error('Demo seed could not configure BDFB: ' + bdfbResult.error);
   }
 
-  await ensureEquipped(topologyRepository, rackA01, bdfb, {
+  const currentBdfb = expectKind((await topologyRepository.getById(bdfb.id)) as TopologyNode, 'DEVICE');
+  const chassisId = currentBdfb.rootEquipmentIds[0];
+  if (!chassisId) throw new Error('Demo seed BDFB has no root Equipment.');
+  const chassis = expectKind((await topologyRepository.getById(chassisId)) as TopologyNode, 'EQUIPMENT');
+
+  let computeEquipment = await rootEquipment(topologyRepository, topology, compute, 'Compute Node 01 Chassis', 'CHASSIS');
+  let routerEquipment = await rootEquipment(topologyRepository, topology, router, 'Edge Router 01 Chassis', 'CHASSIS');
+  const patchPanelEquipment = await rootEquipment(topologyRepository, topology, patchPanel, 'Patch Panel 01', 'NETWORK_BOARD');
+  computeEquipment = await ensurePowerInputPort(topologyRepository, computeEquipment);
+  routerEquipment = await ensurePowerInputPort(topologyRepository, routerEquipment);
+
+  await ensureEquipped(topologyRepository, rackA01, chassis, {
     mountStartU: 34,
     physicalSizeU: 6,
     clearanceTopU: 1,
     clearanceBottomU: 1,
   });
-  await ensureEquipped(topologyRepository, rackB01, compute, {
+  await ensureEquipped(topologyRepository, rackB01, computeEquipment, {
     mountStartU: 10,
     physicalSizeU: 2,
     clearanceTopU: 1,
   });
-  await ensureEquipped(topologyRepository, rackA02, router, {
+  await ensureEquipped(topologyRepository, rackA02, routerEquipment, {
     mountStartU: 20,
     physicalSizeU: 1,
     clearanceTopU: 1,
   });
-  await ensureEquipped(topologyRepository, rackA02, patchPanel, {
+  await ensureEquipped(topologyRepository, rackA02, patchPanelEquipment, {
     mountStartU: 12,
     physicalSizeU: 2,
   });
@@ -463,42 +444,22 @@ export async function seedDevelopmentDemo(
   async function ensurePowerPath(
     label: string,
     feed: 'A' | 'B',
-    breakerHolderId: string,
-    targetId: string,
+    breakerId: string,
+    target: EquipmentNode,
   ): Promise<string> {
-    const existing = activePaths.find(
-      (path) => path.label === label && path.lifecycle === 'ACTIVE',
-    );
+    const existing = activePaths.find((path) => path.label === label && path.lifecycle === 'ACTIVE');
+    if (existing) return existing.id;
 
-    if (existing) {
-      return existing.id;
-    }
-
-    const result = await power.create({
-      source: {
-        entityId: bdfb.id,
-        internal: {
-          shelfId: 'demo-shelf-a',
-          frameId: 'demo-frame-a',
-          panelId: 'demo-panel-a',
-          breakerHolderId,
-        },
-      },
-      target: { entityId: targetId },
-      feed,
-      label,
-    });
-
-    if (!result.ok) {
-      throw new Error('Demo seed could not create power path: ' + result.error);
-    }
-
+    const sourceAccessPortId = bdfb.id + ':equipment:' + breakerId + ':power-out';
+    const targetAccessPortId = target.id + ':power-in';
+    const result = await power.create({ sourceAccessPortId, targetAccessPortId, feed, label });
+    if (!result.ok) throw new Error('Demo seed could not create power path: ' + result.error);
     return result.value.id;
   }
 
   const powerPathIds = [
-    await ensurePowerPath('Feed A · Compute Node 01', 'A', 'demo-breaker-a1', compute.id),
-    await ensurePowerPath('Feed B · Edge Router 01', 'B', 'demo-breaker-a2', router.id),
+    await ensurePowerPath('Feed A · Compute Node 01', 'A', 'demo-breaker-a1', computeEquipment),
+    await ensurePowerPath('Feed B · Edge Router 01', 'B', 'demo-breaker-a2', routerEquipment),
   ];
 
   return {
@@ -506,7 +467,16 @@ export async function seedDevelopmentDemo(
     networkId: network.id,
     roomId: room.id,
     rackIds: [rackA01.id, rackA02.id, rackB01.id],
-    inventoryIds: [bdfb.id, compute.id, router.id, patchPanel.id],
+    inventoryIds: [
+      bdfb.id,
+      compute.id,
+      router.id,
+      patchPanel.id,
+      chassis.id,
+      computeEquipment.id,
+      routerEquipment.id,
+      patchPanelEquipment.id,
+    ],
     powerPathIds,
     links: {
       workspace: '/workspace',

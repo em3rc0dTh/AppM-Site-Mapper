@@ -13,6 +13,8 @@ export type PowerError =
   | 'TARGET_PORT_NOT_FOUND'
   | 'INVALID_SOURCE_DIRECTION'
   | 'INVALID_TARGET_DIRECTION'
+  | 'FEED_MISMATCH'
+  | 'TARGET_ALREADY_CONNECTED'
   | 'SAME_ENDPOINT'
   | 'PATH_NOT_FOUND';
 
@@ -29,6 +31,11 @@ function sourceAllowed(endpoint: ResolvedPowerEndpoint): boolean {
 
 function targetAllowed(endpoint: ResolvedPowerEndpoint): boolean {
   return endpoint.port.direction !== 'OUTPUT';
+}
+
+function feedOf(endpoint: ResolvedPowerEndpoint): PowerFeed | undefined {
+  const value = endpoint.port.attributes?.feed;
+  return value === 'A' || value === 'B' ? value : undefined;
 }
 
 export class PowerService {
@@ -53,6 +60,21 @@ export class PowerService {
     if (!target) return failure('TARGET_PORT_NOT_FOUND');
     if (!sourceAllowed(source)) return failure('INVALID_SOURCE_DIRECTION');
     if (!targetAllowed(target)) return failure('INVALID_TARGET_DIRECTION');
+
+    const targetFeed = feedOf(target);
+    if (input.feed && targetFeed && input.feed !== targetFeed) return failure('FEED_MISMATCH');
+
+    const targetPaths = await this.repository.listForAccessPort(target.port.id);
+    const exact = targetPaths.find(
+      (path) =>
+        path.sourceAccessPortId === source.port.id &&
+        path.targetAccessPortId === target.port.id,
+    );
+    if (exact) return success(exact);
+
+    if (targetPaths.some((path) => path.targetAccessPortId === target.port.id)) {
+      return failure('TARGET_ALREADY_CONNECTED');
+    }
 
     const timestamp = nowIso();
     const path: PowerPath = {

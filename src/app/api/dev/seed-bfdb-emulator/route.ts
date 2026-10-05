@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { seedBfdbEmulatorLab } from '@/dev/bfdb-emulator-seed';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import {
   createTopologyRepository,
   getPersistenceMode,
@@ -23,6 +24,7 @@ export async function POST() {
   const devices = await seedBfdbEmulatorLab(
     await createTopologyRepository(),
     await createPowerRepository(),
+    await createTelemetryBindingRepository(),
   );
   return NextResponse.json({
     profile: 'bfdb-emulator-panelized-24',

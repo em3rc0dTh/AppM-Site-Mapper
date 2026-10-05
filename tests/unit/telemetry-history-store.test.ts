@@ -6,6 +6,9 @@ import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 describe('Site Mapper telemetry history serialization', () => {
   it('persists only metrics present in the accepted MQTT patch', () => {
     const sample: TelemetrySample = {
+      bindingId: 'binding-device-1',
+      targetId: 'device-1',
+      targetType: 'DEVICE',
       entityId: 'device-1',
       entityKind: 'DEVICE',
       sourceIdentity: 'EMU-BFDB-03',
@@ -80,6 +83,9 @@ describe('Site Mapper telemetry history serialization', () => {
 
   it('does not create a historical row for a state-only patch', () => {
     const sample: TelemetrySample = {
+      bindingId: 'binding-device-1',
+      targetId: 'device-1',
+      targetType: 'DEVICE',
       entityId: 'device-1',
       entityKind: 'DEVICE',
       sourceIdentity: 'EMU-BFDB-03',

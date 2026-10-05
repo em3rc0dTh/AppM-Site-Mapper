@@ -4,9 +4,10 @@ import { redirect } from 'next/navigation';
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { requirePermission } from '@/modules/identity/application/current-session';
-import type { PowerEndpoint } from '@/modules/power/domain/entities';
+import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { TopologyService } from '@/modules/topology/application/topology-service';
+import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 interface Stage {
@@ -18,9 +19,10 @@ interface Stage {
 
 function glyph(kind: string) {
   if (kind === 'PANEL') return '▥';
-  if (kind.includes('BREAKER') || kind.includes('HOLDER')) return '▣';
+  if (kind.includes('BREAKER')) return '▣';
   if (kind.includes('DEVICE')) return '▤';
   if (kind.includes('SHELF') || kind.includes('FRAME')) return '□';
+  if (kind === 'ACCESS_PORT') return '◉';
   return 'ϟ';
 }
 
@@ -34,94 +36,136 @@ export default async function PowerPage({
   if (!auth.ok) redirect('/login');
 
   const powerRepo = await createPowerRepository();
-  const allPaths = await powerRepo.listActive();
   const topology = await createTopologyRepository();
   const service = new TopologyService(topology);
-  const related = new Set<string>();
+  const allPaths = await powerRepo.listActive();
 
-  if (query.entity) {
-    const visit = async (id: string, depth = 0): Promise<void> => {
-      if (depth > 12 || related.has(id)) return;
-      related.add(id);
-      for (const child of await service.listChildren(id)) await visit(child.id, depth + 1);
-    };
-    await visit(query.entity);
-  }
+  const selectedEntity = query.entity ? await topology.getById(query.entity) : null;
+  const allEquipment = (await topology.listByKind('EQUIPMENT')).filter(
+    (node): node is EquipmentNode => node.kind === 'EQUIPMENT' && node.lifecycle === 'ACTIVE',
+  );
+  const byEquipmentId = new Map(allEquipment.map((item) => [item.id, item]));
 
-  const paths = allPaths.filter(
-    (path) =>
-      (!query.entity || related.has(path.source.entityId) || related.has(path.target.entityId)) &&
-      (!query.breaker ||
-        path.source.internal?.breakerHolderId === query.breaker ||
-        path.target.internal?.breakerHolderId === query.breaker) &&
-      (!query.path || path.id === query.path) &&
-      (!query.feed || query.feed === 'AB' || path.feed === query.feed),
+  const inSubtree = (candidate: EquipmentNode, rootId: string): boolean => {
+    let current: EquipmentNode | undefined = candidate;
+    const visited = new Set<string>();
+    while (current && !visited.has(current.id)) {
+      if (current.id === rootId) return true;
+      visited.add(current.id);
+      current = current.parentEquipmentId
+        ? byEquipmentId.get(current.parentEquipmentId)
+        : undefined;
+    }
+    return false;
+  };
+
+  const contextEquipment =
+    selectedEntity?.kind === 'DEVICE'
+      ? allEquipment.filter((item) => item.deviceId === selectedEntity.id)
+      : selectedEntity?.kind === 'EQUIPMENT'
+        ? allEquipment.filter((item) => inSubtree(item, selectedEntity.id))
+        : [];
+  const contextPortIds = new Set(
+    contextEquipment.flatMap((item) => item.accessPorts.map((port) => port.id)),
   );
 
-  async function stagesFor(endpoint: PowerEndpoint): Promise<Stage[]> {
-    const node = await topology.getById(endpoint.entityId);
-    const result: Stage[] = [
-      {
-        id: endpoint.entityId,
-        kind: node?.kind ?? 'ENTITY',
-        name: node?.name ?? 'Unresolved endpoint',
-        ...(node ? { href: await service.buildDeepLink(node.id) } : {}),
-      },
-    ];
-    const internal = endpoint.internal;
-    if (!internal) return result;
+  const enriched = await Promise.all(
+    allPaths.map(async (path) => ({
+      path,
+      source: await resolvePowerEndpoint(topology, path.sourceAccessPortId),
+      target: await resolvePowerEndpoint(topology, path.targetAccessPortId),
+    })),
+  );
 
-    const shelf =
-      node?.kind === 'DEVICE'
-        ? node.bdfb?.shelves.find((item) => item.id === internal.shelfId)
+  const filtered = enriched.filter(({ path, source, target }) => {
+    if (
+      query.entity &&
+      !contextPortIds.has(path.sourceAccessPortId) &&
+      !contextPortIds.has(path.targetAccessPortId)
+    ) {
+      return false;
+    }
+    if (
+      query.breaker &&
+      source?.equipment.id !== query.breaker &&
+      target?.equipment.id !== query.breaker
+    ) {
+      return false;
+    }
+    if (query.path && path.id !== query.path) return false;
+    if (query.feed && query.feed !== 'AB' && path.feed !== query.feed) return false;
+    return true;
+  });
+
+  async function stagesFor(
+    resolved: Awaited<ReturnType<typeof resolvePowerEndpoint>>,
+    fallbackId: string,
+  ): Promise<Stage[]> {
+    if (!resolved) return [{ id: fallbackId, kind: 'ACCESS_PORT', name: fallbackId }];
+
+    const trail: EquipmentNode[] = [];
+    let current: EquipmentNode | undefined = resolved.equipment;
+    const visited = new Set<string>();
+    while (current && !visited.has(current.id)) {
+      visited.add(current.id);
+      trail.push(current);
+      current = current.parentEquipmentId
+        ? byEquipmentId.get(current.parentEquipmentId)
         : undefined;
-    const frame = shelf?.frames.find((item) => item.id === internal.frameId);
-    const panel = frame?.panels.find((item) => item.id === internal.panelId);
-    const breaker = panel?.endpoints.find((item) => item.id === internal.breakerHolderId);
+    }
 
-    if (internal.shelfId)
-      result.push({ id: internal.shelfId, kind: 'SHELF', name: shelf?.label ?? internal.shelfId });
-    if (internal.frameId)
-      result.push({ id: internal.frameId, kind: 'FRAME', name: frame?.label ?? internal.frameId });
-    if (internal.panelId)
-      result.push({
-        id: internal.panelId,
-        kind: 'PANEL',
-        name: panel?.label ?? internal.panelId,
-        ...(node
-          ? {
-              href: `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(internal.panelId)}`,
-            }
-          : {}),
-      });
-    if (internal.breakerHolderId)
-      result.push({
-        id: internal.breakerHolderId,
-        kind: breaker?.variant ?? 'BREAKER / HOLDER',
-        name: breaker?.label ?? internal.breakerHolderId,
-        ...(node
-          ? {
-              href: `${await service.buildDeepLink(node.id)}?panel=${encodeURIComponent(internal.panelId ?? '')}&breaker=${encodeURIComponent(internal.breakerHolderId)}`,
-            }
-          : {}),
-      });
-
-    return result;
+    const device = await topology.getById(resolved.equipment.deviceId);
+    return [
+      ...(device?.kind === 'DEVICE'
+        ? [
+            {
+              id: device.id,
+              kind: 'DEVICE',
+              name: device.name,
+              href: await service.buildDeepLink(device.id),
+            },
+          ]
+        : []),
+      ...trail.reverse().map((equipment) => ({
+        id: equipment.id,
+        kind: equipment.equipmentType,
+        name: equipment.name,
+        href: `/device/${equipment.id}`,
+      })),
+      { id: resolved.port.id, kind: 'ACCESS_PORT', name: resolved.port.name },
+    ];
   }
 
   const views = await Promise.all(
-    paths.map(async (path) => {
-      const [source, target] = await Promise.all([stagesFor(path.source), stagesFor(path.target)]);
-      return { path, stages: [...source, ...target.reverse()] };
+    filtered.map(async ({ path, source, target }) => {
+      const [sourceStages, targetStages] = await Promise.all([
+        stagesFor(source, path.sourceAccessPortId),
+        stagesFor(target, path.targetAccessPortId),
+      ]);
+      return {
+        path,
+        source,
+        target,
+        stages: [...sourceStages, ...targetStages.reverse()],
+      };
     }),
   );
 
   const primary = views[0];
   const feedA = views.find((item) => item.path.feed === 'A');
   const feedB = views.find((item) => item.path.feed === 'B');
-  const targetName = primary?.stages.at(-1)?.name ?? 'Unresolved target';
-  const selectedEntity = query.entity ? await topology.getById(query.entity) : null;
+  const targetName =
+    primary?.target?.equipment.name ?? primary?.stages.at(-1)?.name ?? 'Unresolved target';
   const breadcrumbs = selectedEntity ? await service.getTrail(selectedEntity.id) : [];
+  const traceEntityId = primary?.target?.equipment.deviceId ?? selectedEntity?.id;
+  const telemetryEntityIds = [
+    ...new Set(
+      views.flatMap((item) => [
+        ...(item.source ? [item.source.equipment.deviceId] : []),
+        ...(item.target ? [item.target.equipment.deviceId] : []),
+      ]),
+    ),
+  ];
 
   const renderRow = (stages: readonly Stage[], dim = false) => (
     <div className={`zip-power-row ${dim ? 'is-dim' : ''}`}>
@@ -241,7 +285,7 @@ export default async function PowerPage({
             <dt>Feed</dt>
             <dd>{primary?.path.feed ?? '—'}</dd>
             <dt>Source</dt>
-            <dd>{primary?.stages[0]?.name ?? '—'}</dd>
+            <dd>{primary?.source?.equipment.name ?? primary?.stages[0]?.name ?? '—'}</dd>
             <dt>Destination</dt>
             <dd>{targetName}</dd>
             <dt>Feed A</dt>
@@ -259,17 +303,12 @@ export default async function PowerPage({
               OPEN DEVICE
             </Link>
           ) : null}
-          {primary ? (
-            <FullPowerTraceModal
-              entityId={primary.path.target.entityId}
-              label="ϟ FULL POWER TRACE"
-            />
+          {primary && traceEntityId ? (
+            <FullPowerTraceModal entityId={traceEntityId} label="ϟ FULL POWER TRACE" />
           ) : null}
           <TelemetryLens
             label="Power path diagnostic"
-            entityIds={[
-              ...new Set(paths.flatMap((path) => [path.source.entityId, path.target.entityId])),
-            ]}
+            entityIds={telemetryEntityIds}
             breakerId={query.breaker}
           />
         </aside>

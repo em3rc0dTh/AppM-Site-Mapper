@@ -1,4 +1,4 @@
-import type { BreakerHolder } from '@/modules/topology/domain/entities';
+import type { BdfbBreakerView } from '@/modules/power/domain/bdfb-model';
 import type { BreakerTelemetryReading } from '@/modules/telemetry/domain/entities';
 
 export interface BdfbTelemetryAggregate {
@@ -19,11 +19,11 @@ function average(values: readonly number[]): number | undefined {
 }
 
 export function aggregateBdfbTelemetry(
-  endpoints: readonly BreakerHolder[],
+  positions: readonly (BdfbBreakerView | null)[],
   readings: readonly BreakerTelemetryReading[],
 ): BdfbTelemetryAggregate {
-  const breakers = endpoints.filter((endpoint) => endpoint.variant === 'BREAKER');
-  const emptyHolders = endpoints.filter((endpoint) => endpoint.variant === 'HOLDER').length;
+  const breakers = positions.filter((item): item is BdfbBreakerView => item !== null);
+  const emptyHolders = positions.length - breakers.length;
   const eligibleIds = new Set(breakers.map((breaker) => breaker.id));
   const liveReadings = readings.filter((reading) => eligibleIds.has(reading.breakerId));
   const latestReceivedAt = liveReadings

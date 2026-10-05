@@ -32,13 +32,17 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
   const root = trail[0];
   const tree = root ? await topology.buildNavigationTree(root.id) : null;
 
-  const inventoryIds = new Set(view.value.inventory.map((item) => item.id));
+  const inventoryPortIds = new Set(
+    view.value.inventory.flatMap((item) =>
+      item.kind === 'EQUIPMENT'
+        ? item.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').map((port) => port.id)
+        : [],
+    ),
+  );
   const relatedPower = (await (await createPowerRepository()).listActive()).filter(
     (path) =>
-      inventoryIds.has(path.source.entityId) ||
-      inventoryIds.has(path.target.entityId) ||
-      path.source.entityId === rackId ||
-      path.target.entityId === rackId,
+      inventoryPortIds.has(path.sourceAccessPortId) ||
+      inventoryPortIds.has(path.targetAccessPortId),
   );
   const hasFeedA = relatedPower.some((path) => path.feed === 'A');
   const hasFeedB = relatedPower.some((path) => path.feed === 'B');
@@ -133,7 +137,7 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
           <div className="zip-occupancy-list">
             {view.value.inventory.slice(0, 8).map((item) => (
               <div key={item.id}>
-                <span>DEVICE</span>
+                <span>{item.kind}</span>
                 <strong>{item.name}</strong>
                 <span>›</span>
               </div>
@@ -147,7 +151,17 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
           <ContextPin entityId={rackId} />
           <TelemetryLens
             label={view.value.rack.name}
-            entityIds={view.value.inventory.map((item) => item.id)}
+            entityIds={[
+              ...new Set(
+                view.value.inventory.flatMap((item) =>
+                  item.kind === 'EQUIPMENT'
+                    ? [item.deviceId]
+                    : item.kind === 'DEVICE'
+                      ? [item.id]
+                      : [],
+                ),
+              ),
+            ]}
           />
         </aside>
       </div>

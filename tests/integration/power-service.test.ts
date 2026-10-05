@@ -6,6 +6,8 @@ import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-pow
 import type { DeviceNode, EquipmentNode } from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 
+const timestamp = '2026-09-22T00:00:00.000Z';
+
 const device: DeviceNode = {
   id: 'device-1',
   kind: 'DEVICE',
@@ -13,25 +15,56 @@ const device: DeviceNode = {
   name: 'BDFB A',
   lifecycle: 'ACTIVE',
   pinned: false,
-  createdAt: '2026-09-22T00:00:00.000Z',
-  updatedAt: '2026-09-22T00:00:00.000Z',
+  deviceType: 'BDFB',
+  rootEquipmentIds: [],
+  createdAt: timestamp,
+  updatedAt: timestamp,
+};
+
+const loadDevice: DeviceNode = {
+  id: 'load-device-1',
+  kind: 'DEVICE',
+  parentId: 'rack-1',
+  name: 'Load A',
+  lifecycle: 'ACTIVE',
+  pinned: false,
+  deviceType: 'SERVER',
+  rootEquipmentIds: ['equipment-1'],
+  createdAt: timestamp,
+  updatedAt: timestamp,
 };
 
 const equipment: EquipmentNode = {
   id: 'equipment-1',
   kind: 'EQUIPMENT',
-  parentId: device.id,
-  name: 'Load A',
+  parentId: loadDevice.id,
+  deviceId: loadDevice.id,
+  name: 'Load A Chassis',
+  equipmentType: 'CHASSIS',
+  parentEquipmentId: null,
+  childMode: 'DYNAMIC',
+  children: [],
+  accessPorts: [
+    {
+      id: 'equipment-1:power-in',
+      deviceId: loadDevice.id,
+      equipmentId: 'equipment-1',
+      name: 'Power input',
+      portType: 'POWER',
+      direction: 'INPUT',
+      exposure: 'EXTERNAL',
+      lifecycle: 'ACTIVE',
+    },
+  ],
   lifecycle: 'ACTIVE',
   pinned: false,
-  accessPorts: [{ id: 'power-a', label: 'Power A', kind: 'POWER', feed: 'A' }],
-  createdAt: '2026-09-22T00:00:00.000Z',
-  updatedAt: '2026-09-22T00:00:00.000Z',
+  createdAt: timestamp,
+  updatedAt: timestamp,
 };
 
 describe('Power domain', () => {
-  it('configures BDFB independently of placement and creates an explicit breaker-to-equipment path', async () => {
-    const topology = new MemoryTopologyRepository([device, equipment]);
+  it('materializes BDFB Equipment and creates an AccessPort-to-AccessPort path', async () => {
+    const topology = new MemoryTopologyRepository([device, loadDevice, equipment]);
     const configured = await new BdfbService(topology).configure(device.id, {
       shelves: [
         {
@@ -45,9 +78,7 @@ describe('Power domain', () => {
                 {
                   id: 'panel-a',
                   label: 'Panel A',
-                  endpoints: [
-                    { id: 'breaker-a', variant: 'BREAKER', label: 'CB-A1', capacity: 20 },
-                  ],
+                  positions: [{ id: 'breaker-a', label: 'CB-A1', capacity: 20 }],
                 },
               ],
             },
@@ -58,38 +89,28 @@ describe('Power domain', () => {
 
     expect(configured.ok).toBe(true);
 
+    const sourceAccessPortId = 'device-1:equipment:breaker-a:power-out';
     const paths = new MemoryPowerRepository();
     const service = new PowerService(topology, paths);
     const created = await service.create({
-      source: {
-        entityId: device.id,
-        internal: {
-          shelfId: 'shelf-a',
-          frameId: 'frame-a',
-          panelId: 'panel-a',
-          breakerHolderId: 'breaker-a',
-        },
-      },
-      target: { entityId: equipment.id, internal: { accessPortId: 'power-a' } },
+      sourceAccessPortId,
+      targetAccessPortId: 'equipment-1:power-in',
       feed: 'A',
       label: 'Primary feed',
     });
 
     expect(created.ok).toBe(true);
-    expect(await paths.listForEntity(equipment.id)).toHaveLength(1);
+    expect(await paths.listForAccessPort('equipment-1:power-in')).toHaveLength(1);
   });
 
-  it('rejects a nonexistent internal endpoint', async () => {
-    const topology = new MemoryTopologyRepository([device, equipment]);
+  it('rejects a nonexistent AccessPort', async () => {
+    const topology = new MemoryTopologyRepository([device, loadDevice, equipment]);
     const paths = new MemoryPowerRepository();
     const result = await new PowerService(topology, paths).create({
-      source: {
-        entityId: device.id,
-        internal: { shelfId: 'missing' },
-      },
-      target: { entityId: equipment.id },
+      sourceAccessPortId: 'missing',
+      targetAccessPortId: 'equipment-1:power-in',
     });
 
-    expect(result).toEqual({ ok: false, error: 'BDFB_NOT_CONFIGURED' });
+    expect(result).toEqual({ ok: false, error: 'SOURCE_PORT_NOT_FOUND' });
   });
 });

@@ -61,8 +61,6 @@ export function EntityInspector({
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const [tab, setTab] = useState(0);
-  const visible = Boolean(entity);
-
   useEffect(() => {
     const dialog = ref.current;
     if (!entity || !dialog) return;
@@ -75,7 +73,7 @@ export function EntityInspector({
       dialog.close();
       previous?.focus();
     };
-  }, [visible]);
+  }, [entity]);
 
   if (!entity) return null;
 

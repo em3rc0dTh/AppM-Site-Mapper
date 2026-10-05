@@ -2,14 +2,14 @@ import { requireRuntimeSecret } from '@/config/env';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
 import type { TelemetryHistoryWriterDiagnostics } from '@/modules/telemetry/application/telemetry-history-writer';
-import type { BfdbBindingMode } from '@/modules/telemetry/domain/bfdb';
+import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
 import { NativeMqttSource } from '@/modules/telemetry/infrastructure/native-mqtt-source';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { logger } from '@/shared/infrastructure/logger';
 import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
 
-// Live MQTT diagnostics count actual accepted source messages; never simulate broker health.
 export interface TelemetrySourceDiagnostic {
   readonly serial: string;
   readonly rawMessages: number;
@@ -49,8 +49,8 @@ function positiveInt(value: string | undefined, fallback: number): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function sourceDeviceMap(value: string | undefined): Readonly<Record<string, string>> {
-  if (!value?.trim()) return {};
+function configuredBindings(value: string | undefined): readonly TelemetryBinding[] {
+  if (!value?.trim()) return [];
   let parsed: unknown;
   try {
     parsed = JSON.parse(value);
@@ -60,22 +60,23 @@ function sourceDeviceMap(value: string | undefined): Readonly<Record<string, str
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     throw new Error('MQTT_SOURCE_DEVICE_MAP must be a JSON object.');
   }
-  return Object.fromEntries(
-    Object.entries(parsed).map(([source, target]) => {
-      if (!source.trim() || typeof target !== 'string' || !target.trim()) {
-        throw new Error('MQTT_SOURCE_DEVICE_MAP must map source identities to device IDs.');
-      }
-      return [source.trim(), target.trim()] as const;
-    }),
-  );
-}
 
-function bindingMode(value: string | undefined): BfdbBindingMode {
-  const candidate = value?.trim() || 'panel-order-24';
-  if (candidate !== 'panel-order-24' && candidate !== 'explicit') {
-    throw new Error('BFDB_TELEMETRY_BINDING_MODE must be panel-order-24 or explicit.');
-  }
-  return candidate;
+  const timestamp = new Date().toISOString();
+  return Object.entries(parsed).map(([source, target]) => {
+    if (!source.trim() || typeof target !== 'string' || !target.trim()) {
+      throw new Error('MQTT_SOURCE_DEVICE_MAP values must map source identities to device IDs.');
+    }
+    return {
+      id: `env:mqtt:${source.trim()}`,
+      protocol: 'MQTT' as const,
+      sourceIdentity: source.trim(),
+      targetType: 'DEVICE' as const,
+      targetId: target.trim(),
+      lifecycle: 'ACTIVE' as const,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+  });
 }
 
 function expectedSources(value: string | undefined): readonly string[] {
@@ -83,7 +84,7 @@ function expectedSources(value: string | undefined): readonly string[] {
     ...new Set(
       (value ?? '')
         .split(',')
-        .map((s) => s.trim())
+        .map((item) => item.trim())
         .filter(Boolean),
     ),
   ];
@@ -95,34 +96,25 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     const maxPayloadBytes = positiveInt(process.env.TELEMETRY_MAX_PAYLOAD_BYTES, 262_144);
     const topicPrefix = process.env.MQTT_TOPIC_PREFIX?.trim() || 'data/dev/';
     const topicFilter = process.env.MQTT_TOPIC_FILTER?.trim() || `${topicPrefix}#`;
-    const expected = expectedSources(process.env.MQTT_EXPECTED_SOURCES);
     const enabled = process.env.TELEMETRY_ENABLED === 'true';
+    const expected = expectedSources(process.env.MQTT_EXPECTED_SOURCES);
     const historyEnabled = enabled && process.env.TELEMETRY_HISTORY_ENABLED === 'true';
     const historyStore = historyEnabled ? createTelemetryStoreClient() : null;
+
     const hub = new TelemetryHub(maxStreams);
     const topologyRepository = await createTopologyRepository();
+    const bindingRepository = await createTelemetryBindingRepository();
     const service = new TelemetryService(
       topologyRepository,
       hub,
       { topicPrefix, maxPayloadBytes },
-      {
-        sourceDeviceMap: sourceDeviceMap(process.env.MQTT_SOURCE_DEVICE_MAP),
-        bfdbBindingMode: bindingMode(process.env.BFDB_TELEMETRY_BINDING_MODE),
-        bfdbPositionsPerPanel: positiveInt(process.env.BFDB_POSITIONS_PER_PANEL, 24),
-      },
+      { configuredBindings: configuredBindings(process.env.MQTT_SOURCE_DEVICE_MAP) },
+      bindingRepository,
       historyStore ?? undefined,
     );
 
     const counts = new Map<string, { messages: number; lastRawAt: string }>();
     const rejectionReasons: Record<string, number> = {};
-    const rejectionLogState = new Map<
-      string,
-      { lastLoggedAt: number; suppressedSinceLastLog: number }
-    >();
-    const rejectionLogIntervalMs = positiveInt(
-      process.env.TELEMETRY_REJECTION_LOG_INTERVAL_MS,
-      30_000,
-    );
     let rawMessages = 0;
     let acceptedMessages = 0;
     let rejectedMessages = 0;
@@ -159,29 +151,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           if (!result.ok) {
             rejectedMessages += 1;
             rejectionReasons[result.error] = (rejectionReasons[result.error] ?? 0) + 1;
-
-            const rejectionKey = `${serial || topic}:${result.error}`;
-            const previousLog = rejectionLogState.get(rejectionKey);
-            const nowMs = Date.now();
-
-            if (!previousLog || nowMs - previousLog.lastLoggedAt >= rejectionLogIntervalMs) {
-              logger.warn('telemetry.message.rejected', {
-                topic,
-                reason: result.error,
-                ...(previousLog?.suppressedSinceLastLog
-                  ? { suppressedSinceLastLog: previousLog.suppressedSinceLastLog }
-                  : {}),
-              });
-              rejectionLogState.set(rejectionKey, {
-                lastLoggedAt: nowMs,
-                suppressedSinceLastLog: 0,
-              });
-            } else {
-              rejectionLogState.set(rejectionKey, {
-                ...previousLog,
-                suppressedSinceLastLog: previousLog.suppressedSinceLastLog + 1,
-              });
-            }
+            logger.warn('telemetry.message.rejected', { topic, reason: result.error });
           } else {
             acceptedMessages += 1;
             lastAcceptedAt = now;
@@ -196,9 +166,12 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
       service,
       diagnostics: () => {
         const allSamples = service.snapshot();
-        const identities = [...new Set([...expected, ...counts.keys()])];
+        const identities = [
+          ...new Set([...expected, ...counts.keys(), ...allSamples.map((s) => s.sourceIdentity)]),
+        ];
         const now = Date.now();
         const state = source?.diagnostics();
+
         return {
           enabled,
           connection: state?.state ?? 'disabled',
@@ -227,7 +200,8 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
               serial,
               rawMessages: incoming?.messages ?? 0,
               lastRawAt: incoming?.lastRawAt ?? null,
-              mappedDeviceId: sample?.entityId ?? null,
+              mappedDeviceId:
+                sample?.targetType === 'DEVICE' ? sample.targetId : (sample?.entityId ?? null),
               pointCount: sample ? Object.keys(sample.reported).length : 0,
               mappedBreakerCount: sample?.breakerReadings?.length ?? 0,
               unmappedPointCount: sample?.unmappedPointIds?.length ?? 0,

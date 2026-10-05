@@ -3,7 +3,10 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import type { AccessPort, PowerRedundancyPolicy } from '@/modules/topology/domain/entities';
+import type {
+  PowerContractPortInput,
+  PowerRedundancyPolicy,
+} from '@/modules/inventory/application/power-contract-service';
 
 interface EditablePort {
   readonly key: string;
@@ -12,7 +15,7 @@ interface EditablePort {
   readonly feed: '' | 'A' | 'B';
 }
 
-function toEditable(port: AccessPort): EditablePort {
+function toEditable(port: PowerContractPortInput): EditablePort {
   return {
     key: port.id,
     id: port.id,
@@ -27,7 +30,7 @@ export function PowerContractEditor({
   redundancy,
 }: Readonly<{
   entityId: string;
-  accessPorts: readonly AccessPort[];
+  accessPorts: readonly PowerContractPortInput[];
   redundancy: PowerRedundancyPolicy;
 }>) {
   const router = useRouter();
@@ -76,7 +79,6 @@ export function PowerContractEditor({
             accessPorts: ports.map((port) => ({
               id: port.id.trim(),
               label: port.label.trim(),
-              kind: 'POWER',
               ...(port.feed ? { feed: port.feed } : {}),
             })),
           }),

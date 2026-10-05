@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import { seedDevelopmentDemo } from '@/dev/demo-seed';
+import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 
 describe('development demo seed', () => {
-  it('creates the approved visual-parity demo topology idempotently', async () => {
+  it('creates a representative idempotent v1.2 demo topology', async () => {
     const topology = new MemoryTopologyRepository();
     const power = new MemoryPowerRepository();
 
@@ -13,47 +14,50 @@ describe('development demo seed', () => {
 
     expect(first.alreadyPresent).toBe(false);
     expect(await topology.listByKind('NETWORK')).toHaveLength(1);
-    expect(await topology.listByKind('SITE')).toHaveLength(3);
-    expect(await topology.listByKind('STRUCTURE')).toHaveLength(3);
-    expect(await topology.listByKind('LEVEL')).toHaveLength(4);
-    expect(await topology.listByKind('ROOM_SUBSTRUCTURE')).toHaveLength(4);
+    expect(await topology.listByKind('SITE')).toHaveLength(1);
+    expect(await topology.listByKind('STRUCTURE')).toHaveLength(1);
+    expect(await topology.listByKind('LEVEL')).toHaveLength(1);
+    expect(await topology.listByKind('ROOM_SUBSTRUCTURE')).toHaveLength(1);
     expect(await topology.listByKind('CONTAINER_CLUSTER_BAY')).toHaveLength(2);
-    expect(await topology.listByKind('POSITION')).toHaveLength(12);
-    expect(await topology.listByKind('CONTAINER_RACK')).toHaveLength(5);
-    expect(await topology.listByKind('DEVICE')).toHaveLength(8);
+    expect(await topology.listByKind('POSITION')).toHaveLength(3);
+    expect(await topology.listByKind('CONTAINER_RACK')).toHaveLength(3);
+    expect(await topology.listByKind('DEVICE')).toHaveLength(4);
+    expect((await topology.listByKind('EQUIPMENT')).length).toBeGreaterThanOrEqual(10);
     expect(await power.listActive()).toHaveLength(2);
 
     const rooms = await topology.listByKind('ROOM_SUBSTRUCTURE');
-    const room202 = rooms.find(
-      (node) => node.kind === 'ROOM_SUBSTRUCTURE' && node.name === 'Room 202',
-    );
-    expect(room202?.kind).toBe('ROOM_SUBSTRUCTURE');
-    if (!room202 || room202.kind !== 'ROOM_SUBSTRUCTURE') throw new Error('Expected Room 202.');
-    expect(room202.polygon).toHaveLength(5);
-
-    const racks = await topology.listByKind('CONTAINER_RACK');
-    const rack023 = racks.find((node) => node.kind === 'CONTAINER_RACK' && node.name === 'R-023');
-    expect(rack023?.kind).toBe('CONTAINER_RACK');
-    if (!rack023 || rack023.kind !== 'CONTAINER_RACK') throw new Error('Expected R-023.');
-    expect(rack023.cas.filter((range) => range.state === 'EQUIPPED')).toHaveLength(6);
-    expect(rack023.cas.some((range) => range.state === 'RESERVED')).toBe(true);
+    const room = rooms[0];
+    if (!room || room.kind !== 'ROOM_SUBSTRUCTURE') throw new Error('Expected demo room.');
+    expect(room.polygon).toHaveLength(4);
 
     const devices = await topology.listByKind('DEVICE');
-    const bdfbA = devices.find((node) => node.kind === 'DEVICE' && node.name === 'BDFB-A');
-    const bdfbB = devices.find((node) => node.kind === 'DEVICE' && node.name === 'BDFB-B');
-    expect(bdfbA?.kind).toBe('DEVICE');
-    expect(bdfbB?.kind).toBe('DEVICE');
-    if (!bdfbA || bdfbA.kind !== 'DEVICE') throw new Error('Expected BDFB-A.');
-    expect(bdfbA.deviceType).toBe('BDFB');
-    expect(bdfbA.bdfb?.shelves).toHaveLength(2);
-    expect(bdfbA.bdfb?.shelves[0]?.frames).toHaveLength(2);
-    expect(bdfbA.pinned).toBe(true);
+    const bdfb = devices.find((node) => node.kind === 'DEVICE' && node.name === 'BDFB-A');
+    if (!bdfb || bdfb.kind !== 'DEVICE') throw new Error('Expected demo BDFB.');
+
+    expect(bdfb.deviceType).toBe('BDFB');
+    expect(bdfb.rootEquipmentIds).toHaveLength(1);
+    expect(bdfb.pinned).toBe(true);
+
+    const projection = await new BdfbProjectionService(topology).get(bdfb.id);
+    expect(projection?.shelves).toHaveLength(1);
+    expect(projection?.shelves[0]?.frames[0]?.panels).toHaveLength(2);
+    expect(projection?.shelves[0]?.frames[0]?.panels[0]?.positions.filter(Boolean)).toHaveLength(2);
+
+    const racks = await topology.listByKind('CONTAINER_RACK');
+    const rackA02 = racks.find(
+      (node) => node.kind === 'CONTAINER_RACK' && node.name === 'RACK-A02',
+    );
+    if (!rackA02 || rackA02.kind !== 'CONTAINER_RACK') throw new Error('Expected RACK-A02.');
+
+    expect(rackA02.cas.some((range) => range.state === 'EQUIPPED')).toBe(true);
+    expect(rackA02.cas.some((range) => range.state === 'RESERVED')).toBe(true);
 
     const second = await seedDevelopmentDemo(topology, power);
+
     expect(second.alreadyPresent).toBe(true);
-    expect(await topology.listByKind('SITE')).toHaveLength(3);
-    expect(await topology.listByKind('CONTAINER_RACK')).toHaveLength(5);
-    expect(await topology.listByKind('DEVICE')).toHaveLength(8);
+    expect(await topology.listByKind('NETWORK')).toHaveLength(1);
+    expect(await topology.listByKind('CONTAINER_RACK')).toHaveLength(3);
+    expect(await topology.listByKind('DEVICE')).toHaveLength(4);
     expect(await power.listActive()).toHaveLength(2);
     expect(second.networkId).toBe(first.networkId);
     expect(second.roomId).toBe(first.roomId);

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 
 interface PowerSource {
   readonly entityId: string;
+  readonly accessPortId: string;
   readonly deviceName: string;
   readonly shelfId: string;
   readonly shelfLabel: string;
@@ -99,19 +100,8 @@ export function ConnectPowerForm({
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          source: {
-            entityId: source.entityId,
-            internal: {
-              shelfId: source.shelfId,
-              frameId: source.frameId,
-              panelId: source.panelId,
-              breakerHolderId: source.breakerId,
-            },
-          },
-          target: {
-            entityId: destinationId,
-            internal: { accessPortId },
-          },
+          sourceAccessPortId: source.accessPortId,
+          targetAccessPortId: accessPortId,
           feed,
           ...(label.trim() ? { label: label.trim() } : {}),
         }),

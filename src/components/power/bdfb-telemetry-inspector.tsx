@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { getBdfbPresentation } from '@/modules/power/application/bdfb-presentation';
+import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import { aggregateBdfbTelemetry } from '@/modules/telemetry/application/bdfb-telemetry-aggregate';
 import type {
   TelemetryHistoryPoint,
@@ -158,11 +158,13 @@ function HistoricalTelemetry({
 
 export function BdfbTelemetryInspector({
   node,
+  presentation,
   activePanelId,
   location,
   feeds,
 }: Readonly<{
   node: DeviceNode;
+  presentation: BdfbPresentation;
   activePanelId?: string;
   location?: string;
   feeds?: readonly string[];
@@ -172,21 +174,21 @@ export function BdfbTelemetryInspector({
   const [history, setHistory] = useState<TelemetryHistoryResponse | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
-  const presentation = getBdfbPresentation(node);
   const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
   const selectedPanel = activePanelId
     ? (panels.find((panel) => panel.id === activePanelId) ?? null)
     : null;
-  const scopeEndpoints = selectedPanel
-    ? selectedPanel.endpoints
-    : panels.flatMap((panel) => panel.endpoints);
-  const aggregate = aggregateBdfbTelemetry(scopeEndpoints, telemetry?.breakerReadings ?? []);
+  const scopePositions = selectedPanel
+    ? selectedPanel.positions
+    : panels.flatMap((panel) => panel.positions);
+  const aggregate = aggregateBdfbTelemetry(scopePositions, telemetry?.breakerReadings ?? []);
 
   const hasA = feeds?.includes('A') ?? false;
   const hasB = feeds?.includes('B') ?? false;
   const scopeLabel = selectedPanel?.label ?? 'Entire BDFB';
-  const endpoints = panels.flatMap((panel) => panel.endpoints);
+  const positions = panels.flatMap((panel) => panel.positions);
+  const breakers = positions.filter((item) => item !== null);
 
   useEffect(() => {
     if (window === 'LIVE') return;
@@ -321,23 +323,19 @@ export function BdfbTelemetryInspector({
         <dt>Location</dt>
         <dd>{location ?? '—'}</dd>
         <dt>Shelves</dt>
-        <dd>{presentation.physicalShelfCount}</dd>
+        <dd>{presentation.shelves.length}</dd>
         <dt>Frames</dt>
-        <dd>{presentation.physicalFrameCount}</dd>
+        <dd>{frames.length}</dd>
         <dt>Panel slots</dt>
-        <dd>{presentation.physicalPanelSlotCount}</dd>
+        <dd>{panels.length}</dd>
         <dt>Breakers</dt>
-        <dd>{endpoints.filter((endpoint) => endpoint.variant === 'BREAKER').length}</dd>
+        <dd>{breakers.length}</dd>
         <dt>Feed A</dt>
         <dd>{hasA ? 'Configured' : '—'}</dd>
         <dt>Feed B</dt>
         <dd>{hasB ? 'Configured' : '—'}</dd>
         <dt>Telemetry</dt>
-        <dd>
-          {endpoints.some((endpoint) => endpoint.telemetry?.rawPointId)
-            ? 'EXPLICIT BINDINGS'
-            : 'UNMAPPED'}
-        </dd>
+        <dd>{breakers.some((breaker) => breaker.rawPointId) ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}</dd>
       </dl>
 
       <section className="zip-bdfb-status-card">
@@ -359,8 +357,7 @@ export function BdfbTelemetryInspector({
 
       <div className="zip-bdfb-actions">
         <span>
-          {endpoints.filter((endpoint) => Boolean(endpoint.telemetry?.rawPointId)).length} explicit
-          MQTT bindings
+          {breakers.filter((breaker) => Boolean(breaker.rawPointId)).length} explicit MQTT bindings
         </span>
         <span>
           {selectedPanel

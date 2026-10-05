@@ -25,39 +25,59 @@ import { SectionHeader, StatePanel, StatusBadge } from '@/shared/ui/primitives';
 
 function eyebrowFor(node: TopologyNode): string {
   switch (node.kind) {
-    case 'SITE': return 'INFRASTRUCTURE / SITE CANVAS';
-    case 'STRUCTURE': return 'BUILDING / STRUCTURE LAYOUT';
-    case 'LEVEL': return 'LEVEL / FLOOR LAYOUT';
-    case 'ROOM_SUBSTRUCTURE': return 'SUBSTRUCTURE / ROOM BLUEPRINT';
-    case 'DEVICE': return node.deviceType === 'BDFB' ? 'POWER / BDFB INTERNALS' : 'DEVICE';
-    default: return node.kind.replaceAll('_', ' ');
+    case 'SITE':
+      return 'INFRASTRUCTURE / SITE CANVAS';
+    case 'STRUCTURE':
+      return 'BUILDING / STRUCTURE LAYOUT';
+    case 'LEVEL':
+      return 'LEVEL / FLOOR LAYOUT';
+    case 'ROOM_SUBSTRUCTURE':
+      return 'SUBSTRUCTURE / ROOM BLUEPRINT';
+    case 'DEVICE':
+      return node.deviceType === 'BDFB' ? 'POWER / BDFB INTERNALS' : 'DEVICE';
+    default:
+      return node.kind.replaceAll('_', ' ');
   }
 }
 
-function navigationContextRoot(trail: readonly TopologyNode[], node: TopologyNode): TopologyNode | null {
+function navigationContextRoot(
+  trail: readonly TopologyNode[],
+  node: TopologyNode,
+): TopologyNode | null {
   const byKind = (kind: TopologyNode['kind']) =>
     [...trail].reverse().find((candidate) => candidate.kind === kind) ?? null;
 
   switch (node.kind) {
-    case 'ROOM_SUBSTRUCTURE': return byKind('LEVEL') ?? trail[0] ?? null;
+    case 'ROOM_SUBSTRUCTURE':
+      return byKind('LEVEL') ?? trail[0] ?? null;
     case 'CONTAINER_CLUSTER_BAY':
     case 'POSITION':
     case 'CONTAINER_RACK':
       return byKind('ROOM_SUBSTRUCTURE') ?? trail[0] ?? null;
     case 'DEVICE':
     case 'EQUIPMENT':
-      return byKind('ROOM_SUBSTRUCTURE') ?? byKind('LEVEL') ?? byKind('POSITION') ?? trail[0] ?? null;
-    default: return trail[0] ?? null;
+      return (
+        byKind('ROOM_SUBSTRUCTURE') ?? byKind('LEVEL') ?? byKind('POSITION') ?? trail[0] ?? null
+      );
+    default:
+      return trail[0] ?? null;
   }
 }
 
 function descriptionFor(node: TopologyNode): string | undefined {
   switch (node.kind) {
-    case 'SITE': return node.kind;
-    case 'STRUCTURE': return undefined;
-    case 'ROOM_SUBSTRUCTURE': return 'Physical room boundary · cluster bays · 600 × 600 mm position grid';
-    case 'DEVICE': return node.deviceType === 'BDFB' ? 'Physical Equipment hierarchy · live MQTT overlay' : undefined;
-    default: return undefined;
+    case 'SITE':
+      return node.kind;
+    case 'STRUCTURE':
+      return undefined;
+    case 'ROOM_SUBSTRUCTURE':
+      return 'Physical room boundary · cluster bays · 600 × 600 mm position grid';
+    case 'DEVICE':
+      return node.deviceType === 'BDFB'
+        ? 'Physical Equipment hierarchy · live MQTT overlay'
+        : undefined;
+    default:
+      return undefined;
   }
 }
 
@@ -91,7 +111,11 @@ export default async function TopologyNodePage({
   const root = navigationContextRoot(trail, node);
   const navigationTree = root ? await service.buildNavigationTree(root.id) : null;
   const trailEntries = await Promise.all(
-    trail.map(async (item) => ({ id: item.id, name: item.name, href: await service.buildDeepLink(item.id) })),
+    trail.map(async (item) => ({
+      id: item.id,
+      name: item.name,
+      href: await service.buildDeepLink(item.id),
+    })),
   );
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
@@ -100,7 +124,9 @@ export default async function TopologyNodePage({
     children.map(async (child) => {
       const deepLink = await service.buildDeepLink(child.id);
       const href =
-        child.kind === 'CONTAINER_RACK' && child.variant === 'RACK' ? `/rack/${child.id}` : deepLink;
+        child.kind === 'CONTAINER_RACK' && child.variant === 'RACK'
+          ? `/rack/${child.id}`
+          : deepLink;
       return { node: child, href };
     }),
   );
@@ -113,7 +139,10 @@ export default async function TopologyNodePage({
   const structurePreviewNodes =
     selectedLevel?.kind === 'LEVEL' ? await service.listChildren(selectedLevel.id) : [];
   const structurePreviewEntries: VisualStageChild[] = await Promise.all(
-    structurePreviewNodes.map(async (child) => ({ node: child, href: await service.buildDeepLink(child.id) })),
+    structurePreviewNodes.map(async (child) => ({
+      node: child,
+      href: await service.buildDeepLink(child.id),
+    })),
   );
   const structureLevelEntries: VisualStageChild[] =
     node.kind === 'STRUCTURE'
@@ -131,7 +160,10 @@ export default async function TopologyNodePage({
 
   return (
     <main className="operational-page telxius-operational-page">
-      <nav className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs" aria-label="Breadcrumb">
+      <nav
+        className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
+        aria-label="Breadcrumb"
+      >
         {trailEntries.map((item, index) => (
           <Link key={item.id} href={index === trailEntries.length - 1 ? selfHref : item.href}>
             {item.name}
@@ -151,9 +183,13 @@ export default async function TopologyNodePage({
             {...(sectionDescription === undefined ? {} : { description: sectionDescription })}
             actions={
               <>
-                {node.kind === 'STRUCTURE' && selectedLevel && <StatusBadge tone="accent">{selectedLevel.name}</StatusBadge>}
+                {node.kind === 'STRUCTURE' && selectedLevel && (
+                  <StatusBadge tone="accent">{selectedLevel.name}</StatusBadge>
+                )}
                 {node.kind === 'ROOM_SUBSTRUCTURE' && canWrite && (
-                  <Link className="telxius-primary-action" href={blueprintLink ?? selfHref}>+ ADD CLUSTER</Link>
+                  <Link className="telxius-primary-action" href={blueprintLink ?? selfHref}>
+                    + ADD CLUSTER
+                  </Link>
                 )}
                 {(node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && canWrite && (
                   <PinButton id={node.id} initialPinned={node.pinned} />
@@ -168,7 +204,9 @@ export default async function TopologyNodePage({
           <div className="operational-stage-body">
             {node.kind === 'DEVICE' && bdfbPresentation ? (
               <BdfbChassis device={node} presentation={bdfbPresentation} />
-            ) : node.kind === 'ROOM_SUBSTRUCTURE' && roomLayout?.ok && roomLayout.value.room.polygon ? (
+            ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
+              roomLayout?.ok &&
+              roomLayout.value.room.polygon ? (
               <BlueprintCanvas
                 polygon={roomLayout.value.room.polygon}
                 clusters={roomLayout.value.clusters}

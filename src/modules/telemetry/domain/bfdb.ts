@@ -41,15 +41,19 @@ function metric(value: unknown, observedAt: string): TelemetryMetricValue | unde
   return numeric === null ? undefined : { value: numeric, observedAt };
 }
 
-function breakerMap(presentation: BdfbPresentation): ReadonlyMap<string, ResolvedBreaker> {
-  const map = new Map<string, ResolvedBreaker>();
+function breakerMaps(presentation: BdfbPresentation): {
+  readonly byId: ReadonlyMap<string, ResolvedBreaker>;
+  readonly byRawPointId: ReadonlyMap<string, ResolvedBreaker>;
+} {
+  const byId = new Map<string, ResolvedBreaker>();
+  const byRawPointId = new Map<string, ResolvedBreaker>();
 
   for (const shelf of presentation.shelves) {
     for (const frame of shelf.frames) {
       for (const panel of frame.panels) {
         panel.positions.forEach((breaker, index) => {
           if (!breaker) return;
-          map.set(breaker.id, {
+          const resolved: ResolvedBreaker = {
             shelfId: shelf.id,
             frameId: frame.id,
             panelId: panel.id,
@@ -57,13 +61,15 @@ function breakerMap(presentation: BdfbPresentation): ReadonlyMap<string, Resolve
             breakerId: breaker.id,
             breakerLabel: breaker.label,
             position: index + 1,
-          });
+          };
+          byId.set(breaker.id, resolved);
+          if (breaker.rawPointId) byRawPointId.set(breaker.rawPointId, resolved);
         });
       }
     }
   }
 
-  return map;
+  return { byId, byRawPointId };
 }
 
 function metricBindingMap(
@@ -106,7 +112,7 @@ export function buildBfdbBreakerReadings(
   if (message.protocol !== 'BFDB') return { readings: [], unmappedPointIds: [] };
 
   const observedAt = message.sourceObservedAt ?? message.receivedAt;
-  const byBreaker = breakerMap(presentation);
+  const { byId: byBreaker, byRawPointId } = breakerMaps(presentation);
   const readings: BreakerTelemetryReading[] = [];
   const unmappedPointIds: string[] = [];
 
@@ -117,21 +123,17 @@ export function buildBfdbBreakerReadings(
     }
 
     const mapping = metricBindingMap(bindings, message.sourceIdentity, rawPointId);
-    if (!mapping) {
-      unmappedPointIds.push(rawPointId);
-      continue;
-    }
-
-    const resolved = byBreaker.get(mapping.targetId);
+    const resolved = mapping ? byBreaker.get(mapping.targetId) : byRawPointId.get(rawPointId);
     if (!resolved) {
       unmappedPointIds.push(rawPointId);
       continue;
     }
 
-    const voltageV = mapping.metrics.has('VOLTAGE') ? metric(rawPoint.U1, observedAt) : undefined;
-    const currentA = mapping.metrics.has('CURRENT') ? metric(rawPoint.I1, observedAt) : undefined;
-    const powerW = mapping.metrics.has('POWER') ? metric(rawPoint.P1, observedAt) : undefined;
-    const energyKwh = mapping.metrics.has('ENERGY') ? metric(rawPoint.EP1, observedAt) : undefined;
+    const accepts = (name: BfdbMetric) => !mapping || mapping.metrics.has(name);
+    const voltageV = accepts('VOLTAGE') ? metric(rawPoint.U1, observedAt) : undefined;
+    const currentA = accepts('CURRENT') ? metric(rawPoint.I1, observedAt) : undefined;
+    const powerW = accepts('POWER') ? metric(rawPoint.P1, observedAt) : undefined;
+    const energyKwh = accepts('ENERGY') ? metric(rawPoint.EP1, observedAt) : undefined;
     const metrics: BreakerTelemetryMetrics = {
       ...(voltageV ? { voltageV } : {}),
       ...(currentA ? { currentA } : {}),

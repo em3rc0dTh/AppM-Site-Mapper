@@ -48,8 +48,7 @@ export default async function ConnectPowerPage({
   if (!presentation || !shelf || !frame || !panel || !breaker) notFound();
 
   const selfHref = await topologyService.buildDeepLink(sourceDevice.id);
-  const returnHref =
-    `${selfHref}?panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(breaker.id)}`;
+  const returnHref = `${selfHref}?panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(breaker.id)}`;
 
   const equipment = (await topology.listByKind('EQUIPMENT')).filter(
     (node): node is EquipmentNode =>
@@ -58,9 +57,7 @@ export default async function ConnectPowerPage({
       node.deviceId !== sourceDevice.id &&
       node.accessPorts.some(
         (port) =>
-          port.lifecycle === 'ACTIVE' &&
-          port.portType === 'POWER' &&
-          port.direction !== 'OUTPUT',
+          port.lifecycle === 'ACTIVE' && port.portType === 'POWER' && port.direction !== 'OUTPUT',
       ),
   );
 

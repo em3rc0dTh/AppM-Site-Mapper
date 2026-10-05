@@ -67,7 +67,12 @@ export async function PUT(request: Request, context: Context) {
     for (const path of targetPaths) {
       if (path.feed && nextPort.feed && path.feed !== nextPort.feed) {
         return NextResponse.json(
-          { error: 'PORT_FEED_CONFLICT', pathId: path.id, portId: existing.id, pathFeed: path.feed },
+          {
+            error: 'PORT_FEED_CONFLICT',
+            pathId: path.id,
+            portId: existing.id,
+            pathFeed: path.feed,
+          },
           { status: 409 },
         );
       }

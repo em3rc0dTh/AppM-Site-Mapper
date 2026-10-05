@@ -335,9 +335,7 @@ export function BdfbTelemetryInspector({
         <dt>Feed B</dt>
         <dd>{hasB ? 'Configured' : '—'}</dd>
         <dt>Telemetry</dt>
-        <dd>
-          {breakers.some((breaker) => breaker.rawPointId) ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}
-        </dd>
+        <dd>{breakers.some((breaker) => breaker.rawPointId) ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}</dd>
       </dl>
 
       <section className="zip-bdfb-status-card">
@@ -359,8 +357,7 @@ export function BdfbTelemetryInspector({
 
       <div className="zip-bdfb-actions">
         <span>
-          {breakers.filter((breaker) => Boolean(breaker.rawPointId)).length} explicit
-          MQTT bindings
+          {breakers.filter((breaker) => Boolean(breaker.rawPointId)).length} explicit MQTT bindings
         </span>
         <span>
           {selectedPanel

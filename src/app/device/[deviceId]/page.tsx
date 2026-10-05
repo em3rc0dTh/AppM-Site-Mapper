@@ -51,9 +51,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           while (current && !visited.has(current.id)) {
             if (current.id === node.id) return true;
             visited.add(current.id);
-            current = current.parentEquipmentId
-              ? byId.get(current.parentEquipmentId)
-              : undefined;
+            current = current.parentEquipmentId ? byId.get(current.parentEquipmentId) : undefined;
           }
           return false;
         });
@@ -62,10 +60,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     node.kind === 'EQUIPMENT' && node.rackPlacement
       ? node
       : familyEquipment.find((item) => item.rackPlacement);
-  const rack =
-    physical?.rackPlacement
-      ? await repo.getById(physical.rackPlacement.rackId)
-      : null;
+  const rack = physical?.rackPlacement ? await repo.getById(physical.rackPlacement.rackId) : null;
   const rackNode = rack?.kind === 'CONTAINER_RACK' ? rack : null;
   const contextTrail = rackNode
     ? await service.getTrail(rackNode.id)
@@ -90,9 +85,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
 
   const placement = physical?.rackPlacement;
   const mountLabel =
-    placement?.mode === 'U_RANGE' &&
-    placement.startU !== undefined &&
-    placement.sizeU !== undefined
+    placement?.mode === 'U_RANGE' && placement.startU !== undefined && placement.sizeU !== undefined
       ? `U${placement.startU} – U${placement.startU + placement.sizeU - 1}`
       : placement?.mode === 'FULL_RACK'
         ? 'Full rack'
@@ -150,14 +143,19 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             <dt>Identity</dt>
             <dd>{node.name}</dd>
             <dt>Model</dt>
-            <dd>{node.kind === 'EQUIPMENT' ? node.model ?? node.category ?? 'Not specified' : node.category ?? 'Not specified'}</dd>
+            <dd>
+              {node.kind === 'EQUIPMENT'
+                ? (node.model ?? node.category ?? 'Not specified')
+                : (node.category ?? 'Not specified')}
+            </dd>
             <dt>Serial N.</dt>
             <dd>{node.serialNumber ?? 'Not assigned'}</dd>
             <dt>Rack</dt>
             <dd>{rackNode?.name ?? 'Not placed'}</dd>
             <dt>Placement</dt>
             <dd>
-              {rackNode?.name ?? 'Not placed'} {mountLabel !== 'Not mounted' ? ` ${mountLabel}` : ''}
+              {rackNode?.name ?? 'Not placed'}{' '}
+              {mountLabel !== 'Not mounted' ? ` ${mountLabel}` : ''}
             </dd>
             <dt>Power A</dt>
             <dd>{hasFeedA ? 'Path recorded' : 'No recorded path'}</dd>
@@ -189,10 +187,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           </div>
 
           {room && rackNode ? (
-            <Link
-              className="zip-device-outline"
-              href={`/blueprint/${room.id}?rack=${rackNode.id}`}
-            >
+            <Link className="zip-device-outline" href={`/blueprint/${room.id}?rack=${rackNode.id}`}>
               ▣ LOCATE IN ROOM
             </Link>
           ) : null}

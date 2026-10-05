@@ -113,9 +113,7 @@ export class FullPowerTraceService {
     );
     const targetPortIds = new Set(
       familyEquipment.flatMap((node) =>
-        node.accessPorts
-          .filter((port) => port.lifecycle === 'ACTIVE')
-          .map((port) => port.id),
+        node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').map((port) => port.id),
       ),
     );
 
@@ -160,8 +158,9 @@ export class FullPowerTraceService {
 
     const sourceEquipment = source?.equipment;
     const targetEquipment = target?.equipment;
-    const sourceDevice =
-      sourceEquipment ? await this.topology.getById(sourceEquipment.deviceId) : null;
+    const sourceDevice = sourceEquipment
+      ? await this.topology.getById(sourceEquipment.deviceId)
+      : null;
     const sourceHierarchy = sourceEquipment
       ? await this.equipmentHierarchy(sourceEquipment)
       : { shelf: undefined, frame: undefined, panel: undefined };
@@ -197,10 +196,7 @@ export class FullPowerTraceService {
       topologyStatus: !source || !isBreaker ? 'BROKEN_SOURCE' : !target ? 'BROKEN_TARGET' : 'VALID',
       source: {
         entityId: sourceEquipment?.deviceId ?? path.sourceAccessPortId,
-        entityName:
-          sourceDevice?.name ??
-          sourceEquipment?.name ??
-          path.sourceAccessPortId,
+        entityName: sourceDevice?.name ?? sourceEquipment?.name ?? path.sourceAccessPortId,
         ...(sourceHierarchy.shelf ? { shelf: sourceHierarchy.shelf } : {}),
         ...(sourceHierarchy.frame ? { frame: sourceHierarchy.frame } : {}),
         ...(sourceHierarchy.panel ? { panel: sourceHierarchy.panel } : {}),
@@ -287,12 +283,10 @@ export class FullPowerTraceService {
     const policyEquipment =
       root.kind === 'EQUIPMENT'
         ? root
-        : family.find((item) => item.attributes?.powerContractRoot === true) ??
-          family.find((item) => item.attributes?.powerRedundancy === 'A_B_REQUIRED');
+        : (family.find((item) => item.attributes?.powerContractRoot === true) ??
+          family.find((item) => item.attributes?.powerRedundancy === 'A_B_REQUIRED'));
     const policy =
-      policyEquipment?.attributes?.powerRedundancy === 'A_B_REQUIRED'
-        ? 'A_B_REQUIRED'
-        : 'NONE';
+      policyEquipment?.attributes?.powerRedundancy === 'A_B_REQUIRED' ? 'A_B_REQUIRED' : 'NONE';
     const targetIds = new Set(family.map((item) => item.id));
     const validFeeds = [
       ...new Set(

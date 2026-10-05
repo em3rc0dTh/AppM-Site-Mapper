@@ -24,13 +24,7 @@ export interface TelemetrySourceDiagnostic {
 export interface TelemetryDiagnostics {
   readonly enabled: boolean;
   readonly connection:
-    | 'disabled'
-    | 'idle'
-    | 'connecting'
-    | 'subscribing'
-    | 'subscribed'
-    | 'reconnecting'
-    | 'stopped';
+    'disabled' | 'idle' | 'connecting' | 'subscribing' | 'subscribed' | 'reconnecting' | 'stopped';
   readonly topicFilter: string;
   readonly lastSubscribedAt: string | null;
   readonly lastConnectionError: string | null;
@@ -172,7 +166,9 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
       service,
       diagnostics: () => {
         const allSamples = service.snapshot();
-        const identities = [...new Set([...expected, ...counts.keys(), ...allSamples.map((s) => s.sourceIdentity)])];
+        const identities = [
+          ...new Set([...expected, ...counts.keys(), ...allSamples.map((s) => s.sourceIdentity)]),
+        ];
         const now = Date.now();
         const state = source?.diagnostics();
 
@@ -205,7 +201,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
               rawMessages: incoming?.messages ?? 0,
               lastRawAt: incoming?.lastRawAt ?? null,
               mappedDeviceId:
-                sample?.targetType === 'DEVICE' ? sample.targetId : sample?.entityId ?? null,
+                sample?.targetType === 'DEVICE' ? sample.targetId : (sample?.entityId ?? null),
               pointCount: sample ? Object.keys(sample.reported).length : 0,
               mappedBreakerCount: sample?.breakerReadings?.length ?? 0,
               unmappedPointCount: sample?.unmappedPointIds?.length ?? 0,

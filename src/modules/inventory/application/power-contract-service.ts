@@ -121,11 +121,7 @@ export class PowerContractService {
     const equipment = await this.ensureContractEquipment(node);
     const preserved = equipment.accessPorts.filter(
       (port) =>
-        !(
-          port.portType === 'POWER' &&
-          port.exposure === 'EXTERNAL' &&
-          port.direction !== 'OUTPUT'
-        ),
+        !(port.portType === 'POWER' && port.exposure === 'EXTERNAL' && port.direction !== 'OUTPUT'),
     );
     const ports: AccessPort[] = normalized.map((port) => ({
       id: port.id,
@@ -185,9 +181,7 @@ export class PowerContractService {
     );
   }
 
-  private async ensureContractEquipment(
-    node: DeviceNode | EquipmentNode,
-  ): Promise<EquipmentNode> {
+  private async ensureContractEquipment(node: DeviceNode | EquipmentNode): Promise<EquipmentNode> {
     const existing = await this.findContractEquipment(node);
     if (existing) return existing;
     if (node.kind === 'EQUIPMENT') return node;

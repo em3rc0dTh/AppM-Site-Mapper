@@ -67,20 +67,24 @@ function structureFor(serial: string): BdfbStructureSpec {
       {
         id: `lab-${serial}-shelf-a`,
         label: 'Feed A (synthetic)',
-        frames: [{
-          id: `lab-${serial}-frame-a`,
-          label: 'Feed A',
-          panels: [panel('A1', 1), panel('A2', 2)],
-        }],
+        frames: [
+          {
+            id: `lab-${serial}-frame-a`,
+            label: 'Feed A',
+            panels: [panel('A1', 1), panel('A2', 2)],
+          },
+        ],
       },
       {
         id: `lab-${serial}-shelf-b`,
         label: 'Feed B (synthetic)',
-        frames: [{
-          id: `lab-${serial}-frame-b`,
-          label: 'Feed B',
-          panels: [panel('B1', 3), panel('B2', 4)],
-        }],
+        frames: [
+          {
+            id: `lab-${serial}-frame-b`,
+            label: 'Feed B',
+            panels: [panel('B1', 3), panel('B2', 4)],
+          },
+        ],
       },
     ],
   };

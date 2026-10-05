@@ -80,10 +80,12 @@ function breakerInspector(
       href: `/power?path=${encodeURIComponent(binding.pathId)}&breaker=${encodeURIComponent(breaker.id)}${binding.feed ? `&feed=${binding.feed}` : ''}`,
     })),
     ...(canWritePower
-      ? [{
-          label: bindings.length ? 'CONNECT ANOTHER LOAD' : 'CONNECT POWER',
-          href: `/power/connect?entity=${encodeURIComponent(device.id)}&shelf=${encodeURIComponent(shelf.id)}&frame=${encodeURIComponent(frame.id)}&panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(breaker.id)}`,
-        }]
+      ? [
+          {
+            label: bindings.length ? 'CONNECT ANOTHER LOAD' : 'CONNECT POWER',
+            href: `/power/connect?entity=${encodeURIComponent(device.id)}&shelf=${encodeURIComponent(shelf.id)}&frame=${encodeURIComponent(frame.id)}&panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(breaker.id)}`,
+          },
+        ]
       : []),
   ];
 
@@ -139,16 +141,18 @@ function panelInspector(
   return {
     name: panel.label,
     kind: 'PANEL',
-    sections: [{
-      title: 'Physical hierarchy',
-      fields: [
-        { label: 'BDFB', value: device.name },
-        { label: 'Shelf', value: shelf.label },
-        { label: 'Frame', value: frame.label },
-        { label: 'Positions', value: panel.positions.length },
-        { label: 'Breakers', value: panel.positions.filter(Boolean).length },
-      ],
-    }],
+    sections: [
+      {
+        title: 'Physical hierarchy',
+        fields: [
+          { label: 'BDFB', value: device.name },
+          { label: 'Shelf', value: shelf.label },
+          { label: 'Frame', value: frame.label },
+          { label: 'Positions', value: panel.positions.length },
+          { label: 'Breakers', value: panel.positions.filter(Boolean).length },
+        ],
+      },
+    ],
   };
 }
 
@@ -163,7 +167,9 @@ function breakerPreview(
     return [
       voltage === undefined ? null : `${voltage.toFixed(1)} V`,
       current === undefined ? null : `${current.toFixed(1)} A`,
-    ].filter(Boolean).join(' · ');
+    ]
+      .filter(Boolean)
+      .join(' · ');
   }
   return reading.state?.value ?? 'BREAKER';
 }
@@ -208,7 +214,11 @@ function PanelBoard({
 
       <div
         className="bdfb-endpoint-grid"
-        style={{ '--bdfb-panel-rows': Math.max(1, Math.ceil(panel.positions.length / 2)) } as CSSProperties}
+        style={
+          {
+            '--bdfb-panel-rows': Math.max(1, Math.ceil(panel.positions.length / 2)),
+          } as CSSProperties
+        }
       >
         {panel.positions.map((breaker, index) =>
           breaker ? (
@@ -295,13 +305,19 @@ function DeviceHierarchyOverview({
                   </header>
                   <div
                     className="bdfb-overview-panels"
-                    style={{ '--bdfb-overview-panel-count': Math.max(1, frame.panels.length) } as CSSProperties}
+                    style={
+                      {
+                        '--bdfb-overview-panel-count': Math.max(1, frame.panels.length),
+                      } as CSSProperties
+                    }
                   >
                     {frame.panels.map((panel) => (
                       <button
                         type="button"
                         className="bdfb-overview-panel"
-                        data-empty={panel.positions.every((item) => item === null) ? 'true' : 'false'}
+                        data-empty={
+                          panel.positions.every((item) => item === null) ? 'true' : 'false'
+                        }
                         key={panel.id}
                         onClick={() => onOpenPanel({ shelf, frame, panel })}
                       >
@@ -403,7 +419,15 @@ export function BdfbChassis({
       }
     }
     return selected;
-  }, [presentation, selected, selectedBreakerId, device, readingsByBreaker, bindingsByBreaker, canWritePower]);
+  }, [
+    presentation,
+    selected,
+    selectedBreakerId,
+    device,
+    readingsByBreaker,
+    bindingsByBreaker,
+    canWritePower,
+  ]);
 
   const shelves = presentation.shelves;
   const frames = shelves.flatMap((shelf) => shelf.frames);
@@ -445,9 +469,13 @@ export function BdfbChassis({
         {activePanel ? (
           <section className="bdfb-panel-detail">
             <header className="bdfb-panel-detail-header">
-              <button type="button" onClick={() => setActivePanel(null)}>← DEVICE</button>
+              <button type="button" onClick={() => setActivePanel(null)}>
+                ← DEVICE
+              </button>
               <div>
-                <span>{activePanel.shelf.label} / {activePanel.frame.label}</span>
+                <span>
+                  {activePanel.shelf.label} / {activePanel.frame.label}
+                </span>
                 <strong>{activePanel.panel.label}</strong>
                 <small>Breaker detail · live MQTT overlay</small>
               </div>

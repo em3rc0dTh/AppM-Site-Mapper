@@ -59,9 +59,9 @@ describe('BFDB emulator three-source contract', () => {
       expect(Object.keys(sample?.reported ?? {})).toHaveLength(96);
       expect(sample?.breakerReadings).toHaveLength(96);
       expect(sample?.unmappedPointIds ?? []).toEqual([]);
-      expect(sample?.breakerReadings?.find((item) => item.rawPointId === '0_3_24')?.panelLabel).toBe(
-        'B1',
-      );
+      expect(
+        sample?.breakerReadings?.find((item) => item.rawPointId === '0_3_24')?.panelLabel,
+      ).toBe('B1');
       expect(sample?.breakerReadings?.find((item) => item.rawPointId === '0_4_1')?.panelLabel).toBe(
         'B2',
       );
@@ -73,12 +73,14 @@ describe('BFDB emulator three-source contract', () => {
       expect(partial.ok).toBe(true);
       expect(service.latest(device.deviceId)?.breakerReadings).toHaveLength(96);
       expect(
-        service.latest(device.deviceId)?.breakerReadings?.find((item) => item.rawPointId === '0_1_1')
-          ?.metrics.currentA?.value,
+        service
+          .latest(device.deviceId)
+          ?.breakerReadings?.find((item) => item.rawPointId === '0_1_1')?.metrics.currentA?.value,
       ).toBe(0);
       expect(
-        service.latest(device.deviceId)?.breakerReadings?.find((item) => item.rawPointId === '0_1_1')
-          ?.metrics.energyKwh?.value,
+        service
+          .latest(device.deviceId)
+          ?.breakerReadings?.find((item) => item.rawPointId === '0_1_1')?.metrics.energyKwh?.value,
       ).toBe(1.2345);
     }
 

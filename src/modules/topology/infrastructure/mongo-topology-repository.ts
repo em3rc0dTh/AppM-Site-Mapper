@@ -37,10 +37,9 @@ export class MongoTopologyRepository implements TopologyRepository {
             );
             if (result.matchedCount !== 1) throw new Error('LAYOUT_CONFLICT');
           } else {
-            await this.collection.insertOne(
-              node as OptionalUnlessRequiredId<TopologyDocument>,
-              { session },
-            );
+            await this.collection.insertOne(node as OptionalUnlessRequiredId<TopologyDocument>, {
+              session,
+            });
           }
         }
       });

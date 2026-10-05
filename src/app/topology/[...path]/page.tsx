@@ -79,7 +79,9 @@ function descriptionFor(node: TopologyNode): string | undefined {
     case 'ROOM_SUBSTRUCTURE':
       return 'Physical room boundary · cluster bays · 600 × 600 mm position grid';
     case 'DEVICE':
-      return node.deviceType === 'BDFB' ? 'Physical distribution hierarchy · live MQTT overlay' : undefined;
+      return node.deviceType === 'BDFB'
+        ? 'Physical distribution hierarchy · live MQTT overlay'
+        : undefined;
     default:
       return undefined;
   }

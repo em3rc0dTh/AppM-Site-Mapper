@@ -26,7 +26,10 @@ export function aggregateBdfbTelemetry(
   const emptyHolders = positions.length - breakers.length;
   const eligibleIds = new Set(breakers.map((breaker) => breaker.id));
   const liveReadings = readings.filter((reading) => eligibleIds.has(reading.breakerId));
-  const latestReceivedAt = liveReadings.map((reading) => reading.receivedAt).sort().at(-1);
+  const latestReceivedAt = liveReadings
+    .map((reading) => reading.receivedAt)
+    .sort()
+    .at(-1);
 
   const voltages = liveReadings.flatMap((reading) =>
     reading.metrics.voltageV ? [reading.metrics.voltageV.value] : [],

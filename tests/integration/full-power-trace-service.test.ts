@@ -36,7 +36,12 @@ function powerPort(
   };
 }
 
-function device(id: string, parentId: string, deviceType: DeviceNode['deviceType'], rootIds: string[]): DeviceNode {
+function device(
+  id: string,
+  parentId: string,
+  deviceType: DeviceNode['deviceType'],
+  rootIds: string[],
+): DeviceNode {
   return {
     id,
     kind: 'DEVICE',

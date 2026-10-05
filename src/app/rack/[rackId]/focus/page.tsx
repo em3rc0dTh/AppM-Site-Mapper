@@ -154,7 +154,11 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
             entityIds={[
               ...new Set(
                 view.value.inventory.flatMap((item) =>
-                  item.kind === 'EQUIPMENT' ? [item.deviceId] : item.kind === 'DEVICE' ? [item.id] : [],
+                  item.kind === 'EQUIPMENT'
+                    ? [item.deviceId]
+                    : item.kind === 'DEVICE'
+                      ? [item.id]
+                      : [],
                 ),
               ),
             ]}

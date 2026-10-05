@@ -21,9 +21,11 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   if (pathname === '/login' || pathname === '/change-password') return children;
 
+  const blueprint = pathname.startsWith('/blueprint');
+  const power = pathname.startsWith('/power');
   const immersive =
     pathname.startsWith('/topology') ||
-    pathname.startsWith('/blueprint') ||
+    blueprint ||
     pathname.startsWith('/rack');
 
   const active =
@@ -49,12 +51,23 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className={`app-shell legacy-shell ${immersive ? 'app-shell--immersive' : ''}`}>
+    <div
+      className={[
+        'app-shell',
+        'legacy-shell',
+        'zip-app-shell',
+        immersive ? 'app-shell--immersive' : '',
+        blueprint ? 'app-shell--blueprint' : '',
+        power ? 'app-shell--power' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <a className="skip-link" href="#main-content">
         Skip to workspace
       </a>
 
-      <header className="app-topbar legacy-topbar">
+      <header className="app-topbar legacy-topbar zip-topbar">
         <Link href="/workspace" className="legacy-brand telxius-brand">
           <strong>AppManager</strong>
           <span>SiteMapper Module</span>
@@ -116,7 +129,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </aside>
       )}
 
-      <div className="app-content" id="main-content" tabIndex={-1}>
+      <div className="app-content zip-app-content" id="main-content" tabIndex={-1}>
         {error && (
           <p className="form-error" role="alert">
             {error}

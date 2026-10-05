@@ -18,8 +18,8 @@ function numberAttribute(node: EquipmentNode, key: string): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
-function breakerView(node: EquipmentNode): BdfbBreakerView | null {
-  if (node.equipmentType !== 'CIRCUIT_BREAKER') return null;
+function breakerView(node: EquipmentNode | undefined): BdfbBreakerView | null {
+  if (!node || node.equipmentType !== 'CIRCUIT_BREAKER') return null;
   const power = node.accessPorts.find(
     (port) => port.lifecycle === 'ACTIVE' && port.portType === 'POWER' && port.direction === 'OUTPUT',
   );
@@ -44,7 +44,7 @@ function panelView(
   return {
     id: node.id,
     label: node.name,
-    positions: node.children.map((id) => (id ? breakerView(byId.get(id)!) : null)),
+    positions: node.children.map((id) => (id ? breakerView(byId.get(id)) : null)),
   };
 }
 

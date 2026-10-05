@@ -28,6 +28,13 @@ import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { InspectButton } from '@/shared/ui/entity-inspector';
 import { SectionHeader, StatePanel, StatusBadge } from '@/shared/ui/primitives';
 
+function feedFromLabel(label: string): 'A' | 'B' | undefined {
+  const normalized = label.trim().toUpperCase();
+  if (/^A(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*A\b/.test(normalized)) return 'A';
+  if (/^B(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*B\b/.test(normalized)) return 'B';
+  return undefined;
+}
+
 function eyebrowFor(node: TopologyNode): string {
   switch (node.kind) {
     case 'SITE':
@@ -200,16 +207,35 @@ export default async function TopologyNodePage({
         shelf.frames.flatMap((frame) =>
           frame.panels.flatMap((panel) =>
             panel.positions.flatMap((breaker) =>
-              breaker ? [[breaker.accessPortId, breaker.id] as const] : [],
+              breaker
+                ? [
+                    [
+                      breaker.accessPortId,
+                      {
+                        breakerId: breaker.id,
+                        feed:
+                          feedFromLabel(panel.label) ??
+                          feedFromLabel(frame.label) ??
+                          feedFromLabel(shelf.label),
+                      },
+                    ] as const,
+                  ]
+                : [],
             ),
           ),
         ),
       ),
     );
+    const seenPhysicalPaths = new Set<string>();
     const activePaths = await (await createPowerRepository()).listActive();
     for (const path of activePaths) {
-      const breakerId = breakerByPort.get(path.sourceAccessPortId);
-      if (!breakerId) continue;
+      const breaker = breakerByPort.get(path.sourceAccessPortId);
+      if (!breaker) continue;
+
+      const effectiveFeed = breaker.feed ?? path.feed;
+      const physicalKey = `${path.sourceAccessPortId}\u0000${path.targetAccessPortId}`;
+      if (seenPhysicalPaths.has(physicalKey)) continue;
+      seenPhysicalPaths.add(physicalKey);
 
       const counterpart = await resolvePowerEndpoint(repository, path.targetAccessPortId);
       if (!counterpart) continue;
@@ -226,9 +252,9 @@ export default async function TopologyNodePage({
             : undefined;
 
       bdfbPowerBindings.push({
-        breakerId,
+        breakerId: breaker.breakerId,
         pathId: path.id,
-        ...(path.feed ? { feed: path.feed } : {}),
+        ...(effectiveFeed ? { feed: effectiveFeed } : {}),
         counterpartName: counterpartNode.name,
         counterpartHref: `/device/${counterpartNode.id}`,
         counterpartContext:

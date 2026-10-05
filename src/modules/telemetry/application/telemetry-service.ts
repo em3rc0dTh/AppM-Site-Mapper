@@ -1,5 +1,6 @@
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
+import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/telemetry-history-writer';
 import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import { buildBfdbBreakerReadings } from '@/modules/telemetry/domain/bfdb';
 import type {
@@ -37,6 +38,7 @@ export class TelemetryService {
     private readonly normalizerOptions: TelemetryNormalizerOptions,
     private readonly integrationOptions: TelemetryIntegrationOptions = {},
     private readonly bindingRepository?: TelemetryBindingRepository,
+    private readonly historyWriter?: TelemetryHistoryWriter,
   ) {}
 
   async ingest(
@@ -90,6 +92,7 @@ export class TelemetryService {
     };
 
     this.hub.publish(sample);
+    await this.historyWriter?.write(sample);
     return success(this.hub.latest(target.id) ?? sample);
   }
 

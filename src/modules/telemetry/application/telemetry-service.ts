@@ -50,7 +50,9 @@ export class TelemetryService {
     if (!normalized.ok) return normalized;
 
     const bindings = await this.bindingsFor(normalized.value.sourceIdentity);
-    const sourceBindings = bindings.filter(\n      (binding) => !binding.sourcePointId && binding.metric.toUpperCase() === 'SOURCE',\n    );
+    const sourceBindings = bindings.filter(
+      (binding) => !binding.sourcePointId && binding.metric.toUpperCase() === 'SOURCE',
+    );
     if (sourceBindings.length === 0) return failure('UNKNOWN_SOURCE');
     if (sourceBindings.length !== 1) return failure('AMBIGUOUS_SOURCE_BINDING');
 

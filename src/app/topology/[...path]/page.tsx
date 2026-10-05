@@ -15,6 +15,8 @@ import {
 } from '@/components/topology/topology-visual-stage';
 import { PinButton } from '@/components/workspace/pin-button';
 import { requirePermission } from '@/modules/identity/application/current-session';
+import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
+import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
@@ -37,7 +39,7 @@ function eyebrowFor(node: TopologyNode): string {
     case 'ROOM_SUBSTRUCTURE':
       return 'SUBSTRUCTURE / ROOM BLUEPRINT';
     case 'DEVICE':
-      return node.bdfb ? 'POWER / BDFB INTERNALS' : 'DEVICE';
+      return node.deviceType === 'BDFB' ? 'POWER / BDFB INTERNALS' : 'DEVICE';
     default:
       return node.kind.replaceAll('_', ' ');
   }
@@ -77,7 +79,7 @@ function descriptionFor(node: TopologyNode): string | undefined {
     case 'ROOM_SUBSTRUCTURE':
       return 'Physical room boundary · cluster bays · 600 × 600 mm position grid';
     case 'DEVICE':
-      return node.bdfb ? 'Physical distribution hierarchy · live MQTT overlay' : undefined;
+      return node.deviceType === 'BDFB' ? 'Physical distribution hierarchy · live MQTT overlay' : undefined;
     default:
       return undefined;
   }
@@ -119,8 +121,13 @@ export default async function TopologyNodePage({
   }
   openRoom(node);
   if (node.kind === 'CONTAINER_RACK') redirect(`/rack/${node.id}`);
-  if ((node.kind === 'DEVICE' && !node.bdfb) || node.kind === 'EQUIPMENT')
+  const bdfbPresentation =
+    node.kind === 'DEVICE' && node.deviceType === 'BDFB'
+      ? await new BdfbProjectionService(repository).get(node.id)
+      : null;
+  if ((node.kind === 'DEVICE' && !bdfbPresentation) || node.kind === 'EQUIPMENT') {
     redirect(`/device/${node.id}`);
+  }
   const [trail, children, selfHref] = await Promise.all([
     service.getTrail(node.id),
     service.listChildren(node.id),
@@ -185,65 +192,46 @@ export default async function TopologyNodePage({
       : null;
 
   const bdfbPowerBindings: BreakerPowerBinding[] = [];
-  if (node.kind === 'DEVICE' && node.bdfb) {
+  if (node.kind === 'DEVICE' && bdfbPresentation) {
+    const breakerByPort = new Map(
+      bdfbPresentation.shelves.flatMap((shelf) =>
+        shelf.frames.flatMap((frame) =>
+          frame.panels.flatMap((panel) =>
+            panel.positions.flatMap((breaker) =>
+              breaker ? [[breaker.accessPortId, breaker.id] as const] : [],
+            ),
+          ),
+        ),
+      ),
+    );
     const activePaths = await (await createPowerRepository()).listActive();
     for (const path of activePaths) {
-      const deviceEndpoint =
-        path.source.entityId === node.id
-          ? path.source
-          : path.target.entityId === node.id
-            ? path.target
-            : null;
-      const counterpart =
-        path.source.entityId === node.id
-          ? path.target
-          : path.target.entityId === node.id
-            ? path.source
-            : null;
-      const breakerId = deviceEndpoint?.internal?.breakerHolderId;
-      if (!breakerId || !counterpart) continue;
-      const counterpartNode = await repository.getById(counterpart.entityId);
-      const counterpartTrail = counterpartNode ? await service.getTrail(counterpart.entityId) : [];
-      const counterpartRack = [...counterpartTrail]
-        .reverse()
-        .find((item) => item.kind === 'CONTAINER_RACK');
-      const mountedDevice = [...counterpartTrail]
-        .reverse()
-        .find(
-          (item) =>
-            item.kind === 'DEVICE' &&
-            counterpartRack?.kind === 'CONTAINER_RACK' &&
-            item.parentId === counterpartRack.id,
-        );
-      const allocation =
-        counterpartRack?.kind === 'CONTAINER_RACK'
-          ? counterpartRack.cas.find(
-              (range) =>
-                range.occupantId === (mountedDevice?.id ?? counterpart.entityId) &&
-                range.state === 'EQUIPPED',
-            )
-          : undefined;
-      const accessPort =
-        counterpartNode?.kind === 'DEVICE' || counterpartNode?.kind === 'EQUIPMENT'
-          ? counterpartNode.accessPorts?.find(
-              (port) => port.id === counterpart.internal?.accessPortId,
-            )
-          : undefined;
+      const breakerId = breakerByPort.get(path.sourceAccessPortId);
+      if (!breakerId) continue;
+
+      const counterpart = await resolvePowerEndpoint(repository, path.targetAccessPortId);
+      if (!counterpart) continue;
+      const counterpartNode = counterpart.equipment;
+      const counterpartTrail = await service.getTrail(counterpartNode.id);
+      const placement = counterpartNode.rackPlacement;
       const mount =
-        allocation?.mountStartU && allocation.physicalSizeU
-          ? `U${allocation.mountStartU}–U${allocation.mountStartU + allocation.physicalSizeU - 1}`
-          : undefined;
+        placement?.mode === 'U_RANGE' &&
+        placement.startU !== undefined &&
+        placement.sizeU !== undefined
+          ? `U${placement.startU}–U${placement.startU + placement.sizeU - 1}`
+          : placement?.mode === 'FULL_RACK'
+            ? 'Full rack'
+            : undefined;
+
       bdfbPowerBindings.push({
         breakerId,
         pathId: path.id,
         ...(path.feed ? { feed: path.feed } : {}),
-        counterpartName: counterpartNode?.name ?? counterpart.entityId,
-        counterpartHref: counterpartNode
-          ? await service.buildDeepLink(counterpartNode.id)
-          : '/power',
+        counterpartName: counterpartNode.name,
+        counterpartHref: `/device/${counterpartNode.id}`,
         counterpartContext:
-          counterpartTrail.map((item) => item.name).join(' / ') || counterpart.entityId,
-        ...(accessPort ? { accessPortLabel: accessPort.label } : {}),
+          counterpartTrail.map((item) => item.name).join(' / ') || counterpartNode.id,
+        accessPortLabel: counterpart.port.name,
         ...(mount ? { mount } : {}),
       });
     }
@@ -255,7 +243,7 @@ export default async function TopologyNodePage({
 
   return (
     <main
-      className={`operational-page telxius-operational-page ${['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''} ${node.kind === 'DEVICE' && node.bdfb ? 'zip-bdfb-page' : ''}`}
+      className={`operational-page telxius-operational-page ${['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''} ${node.kind === 'DEVICE' && bdfbPresentation ? 'zip-bdfb-page' : ''}`}
     >
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
@@ -283,7 +271,7 @@ export default async function TopologyNodePage({
       <div className="operational-layout telxius-operational-layout">
         <aside className="operational-context">
           {navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />}
-          {node.kind === 'DEVICE' && node.bdfb && (
+          {node.kind === 'DEVICE' && bdfbPresentation && (
             <details className="context-power-disclosure">
               <summary>Electrical hierarchy · panels</summary>
               <BdfbPowerTree
@@ -291,6 +279,7 @@ export default async function TopologyNodePage({
                 trail={trail}
                 selfHref={selfHref}
                 activePanelId={query.panel}
+                presentation={bdfbPresentation}
               />
             </details>
           )}
@@ -300,9 +289,9 @@ export default async function TopologyNodePage({
           <SectionHeader
             eyebrow={eyebrowFor(node)}
             title={
-              node.kind === 'DEVICE' && node.bdfb
+              node.kind === 'DEVICE' && bdfbPresentation
                 ? query.panel
-                  ? (node.bdfb.shelves
+                  ? (bdfbPresentation.shelves
                       .flatMap((shelf) => shelf.frames)
                       .flatMap((frame) => frame.panels)
                       .find((panel) => panel.id === query.panel)?.label ?? 'PANEL')
@@ -333,10 +322,11 @@ export default async function TopologyNodePage({
           />
 
           <div className="operational-stage-body">
-            {node.kind === 'DEVICE' && node.bdfb ? (
+            {node.kind === 'DEVICE' && bdfbPresentation ? (
               <BdfbChassis
                 key={query.panel ?? 'bdfb-overview'}
                 device={node}
+                presentation={bdfbPresentation}
                 powerBindings={bdfbPowerBindings}
                 canWritePower={canWritePower}
               />
@@ -393,16 +383,18 @@ export default async function TopologyNodePage({
           )}
         </section>
 
-        {node.kind === 'DEVICE' && node.bdfb ? (
+        {node.kind === 'DEVICE' && bdfbPresentation ? (
           <BdfbTelemetryInspector
             key={query.panel ?? 'bdfb-inspector'}
             node={node}
+            presentation={bdfbPresentation}
             {...(query.panel ? { activePanelId: query.panel } : {})}
             location={trail
               .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')
               .map((item) => item.name)
               .join(' / ')}
             feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
+            bdfb={bdfbPresentation}
           />
         ) : (
           <TopologyPropertiesPanel

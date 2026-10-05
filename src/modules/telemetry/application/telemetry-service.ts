@@ -56,7 +56,7 @@ export class TelemetryService {
     const target = await this.resolveTarget(sourceBinding);
     if (!target) return failure('INVALID_BINDING_TARGET');
 
-    let breakerReadings: ReturnType<typeof buildBdfbBreakerReadings> = {
+    let breakerReadings: ReturnType<typeof buildBfdbBreakerReadings> = {
       readings: [],
       unmappedPointIds: [],
     };
@@ -64,7 +64,7 @@ export class TelemetryService {
     if (target.type === 'DEVICE') {
       const projection = await new BdfbProjectionService(this.topologyRepository).get(target.id);
       if (projection) {
-        breakerReadings = buildBdfbBreakerReadings(projection, normalized.value, bindings);
+        breakerReadings = buildBfdbBreakerReadings(projection, normalized.value, bindings);
       }
     }
 

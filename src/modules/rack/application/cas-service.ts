@@ -17,7 +17,8 @@ export type CasServiceError =
   | 'NOT_A_RACK'
   | 'OCCUPANT_NOT_FOUND'
   | 'OCCUPANT_NOT_EQUIPMENT'
-  | 'EQUIPMENT_ALREADY_PLACED';
+  | 'EQUIPMENT_ALREADY_PLACED'
+  | 'RANGE_NOT_RESERVED';
 
 export class CasService {
   constructor(private readonly repository: TopologyRepository) {}
@@ -108,10 +109,7 @@ export class CasService {
 
     if (occupantId) {
       const occupant = await this.repository.getById(occupantId);
-      if (
-        occupant?.kind === 'EQUIPMENT' &&
-        occupant.rackPlacement?.rackId === rack.value.id
-      ) {
+      if (occupant?.kind === 'EQUIPMENT' && occupant.rackPlacement?.rackId === rack.value.id) {
         const { rackPlacement: _placement, ...rest } = occupant;
         await this.repository.replace({ ...rest, updatedAt: nowIso() } as EquipmentNode);
       }

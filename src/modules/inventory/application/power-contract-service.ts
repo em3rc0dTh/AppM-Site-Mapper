@@ -161,7 +161,7 @@ export class PowerContractService {
 
     const equipment = await this.repository.listEquipmentForDevice(node.id);
     const roots = new Set(Array.isArray(node.rootEquipmentIds) ? node.rootEquipmentIds : []);
-    return
+    return (
       equipment.find(
         (item) =>
           item.lifecycle === 'ACTIVE' &&
@@ -181,7 +181,8 @@ export class PowerContractService {
           ),
       ) ??
       equipment.find((item) => item.lifecycle === 'ACTIVE' && roots.has(item.id)) ??
-      null;
+      null
+    );
   }
 
   private async ensureContractEquipment(

@@ -1,15 +1,20 @@
 # ADR-001 — Canonical Domain Terminology and Hierarchy
 
-**Status:** Accepted — Amended  
+**Status:** Accepted  
 **Gate:** G2 — Canonical Domain Contract  
-**Original decision:** 2026-09-22  
-**Amendment:** 2026-10-01
+**Decision date:** 2026-09-22
 
 ## Context
 
-The legacy product uses paired terminology at several physical levels. The original ADR also treated Device and Equipment as peers under Rack.
+The legacy product uses paired terminology at several physical levels.
 
-The Full Power Trace / physical-composition directive clarified that this peer model is incorrect for MK1: Rack mounts a Device, while Equipment represents recursively composable parts of that Device.
+An earlier G2 draft proposed normalizing:
+
+- Room / Substructure -> Room;
+- ContainerCluster / Bay -> Zone;
+- Container / Rack -> Rack.
+
+That proposal is superseded by the explicit product decision to preserve the established hierarchy and paired vocabulary.
 
 ## Decision
 
@@ -24,13 +29,12 @@ Network
                 └── ContainerCluster / Bay
                     └── Position
                         └── Container / Rack
-                            └── Device
-                                ├── Equipment
-                                │   └── Equipment (...)
-                                └── Shelf
-                                    └── Frame
-                                        └── Panel
-                                            └── Breaker / Holder
+                            ├── Device
+                            │   └── Shelf
+                            │       └── Frame
+                            │           └── Panel
+                            │               └── Breaker / Holder
+                            └── Equipment
 ```
 
 ## Accepted terminology semantics
@@ -46,35 +50,33 @@ A slash does not represent parent/child nesting.
 
 ## Device and Equipment decision
 
-The original peer decision is superseded.
+`Device` and `Equipment` are hierarchical peers.
 
-Canonical composition is:
+Both are direct children of `Container / Rack`.
+
+Therefore:
 
 ```text
 Container / Rack
-└── Device
-    └── Equipment
-        └── Equipment (...)
+├── Device
+└── Equipment
 ```
 
-Consequences:
+is authoritative.
 
-- Rack CAS mounts Device identities only;
-- Equipment may be nested recursively beneath Device/Equipment;
-- Equipment inherits rack placement from its mounted Device ancestor;
-- legacy Rack → Equipment records are preserved as migration evidence and are not silently reparented.
+`Equipment` must not be modeled as a child of `Device`.
 
-A Device may independently own the specialized internal BDFB structure:
+A Device may independently own:
 
 ```text
 Shelf -> Frame -> Panel -> Breaker / Holder
 ```
 
-Device/Equipment may also expose explicit capability ports such as `AccessPort(POWER)`.
+without changing the equal topology rank of Device and Equipment.
 
 ## Zone decision
 
-The proposed `Zone` abstraction remains rejected.
+The proposed `Zone` abstraction is rejected.
 
 No Zone layer exists between:
 
@@ -86,12 +88,19 @@ ContainerCluster / Bay
 
 ## Technical naming consequence
 
-Implementation naming must preserve the accepted hierarchy and product meaning without creating extra runtime levels.
+G3 may select one internal technical identifier for an accepted paired concept when required by schema/code constraints.
+
+That technical decision must:
+
+- preserve the accepted hierarchy;
+- preserve the product meaning;
+- avoid creating an extra runtime hierarchy level;
+- remain traceable to the paired domain vocabulary.
 
 ## Consequences
 
-Persistence, routes, migrations, rack elevation, power tracing and UI reconstruction must conform to the amended hierarchy.
+Persistence, routes, migrations and UI reconstruction must conform to this hierarchy.
 
-New PowerPaths terminate on explicit capability endpoints where the domain requires them; for electrical loads that endpoint is `AccessPort(POWER)`.
+Legacy records that differ must be normalized during migration rather than redefining MK1.
 
 Any future change to this topology requires an explicit domain-contract amendment.

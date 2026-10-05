@@ -25,34 +25,6 @@ function requireSuccess<T, E>(result: { ok: true; value: T } | { ok: false; erro
   return result.value;
 }
 
-const SITE_POLYGON = [
-  { x: 0, y: 0 },
-  { x: 4800, y: 0 },
-  { x: 4800, y: 3000 },
-  { x: 0, y: 3000 },
-] as const;
-
-const STRUCTURE_POLYGON = [
-  { x: 100, y: 100 },
-  { x: 4700, y: 100 },
-  { x: 4700, y: 2900 },
-  { x: 100, y: 2900 },
-] as const;
-
-const ROOM_POLYGON = [
-  { x: 0, y: 0 },
-  { x: 2400, y: 0 },
-  { x: 2400, y: 1800 },
-  { x: 0, y: 1800 },
-] as const;
-
-const BAY_POLYGON = [
-  { x: 0, y: 0 },
-  { x: 1200, y: 0 },
-  { x: 1200, y: 600 },
-  { x: 0, y: 600 },
-] as const;
-
 describe('MK1 system golden path', () => {
   it('certifies v1.2 identity → topology → Equipment → CAS → power → telemetry → workspace', async () => {
     const identityRepository = new MemoryIdentityRepository();
@@ -80,19 +52,13 @@ describe('MK1 system golden path', () => {
       await topology.create({ kind: 'NETWORK', parentId: null, name: 'Certification Network' }),
     );
     const site = requireSuccess(
-      await topology.create({
-        kind: 'SITE',
-        parentId: network.id,
-        name: 'Certification Site',
-        polygon: SITE_POLYGON,
-      }),
+      await topology.create({ kind: 'SITE', parentId: network.id, name: 'Certification Site' }),
     );
     const structure = requireSuccess(
       await topology.create({
         kind: 'STRUCTURE',
         parentId: site.id,
         name: 'Certification Structure',
-        polygon: STRUCTURE_POLYGON,
       }),
     );
     const level = requireSuccess(
@@ -104,7 +70,6 @@ describe('MK1 system golden path', () => {
         parentId: level.id,
         name: 'Equipment Room',
         roomVariant: 'ROOM',
-        polygon: ROOM_POLYGON,
       }),
     );
     const bay = requireSuccess(
@@ -113,7 +78,6 @@ describe('MK1 system golden path', () => {
         parentId: room.id,
         name: 'Bay A',
         clusterVariant: 'BAY',
-        polygon: BAY_POLYGON,
       }),
     );
     const position = requireSuccess(
@@ -229,6 +193,14 @@ describe('MK1 system golden path', () => {
     expect(resolved.id).toBe(bdfb.id);
 
     const spatial = new SpatialService(topologyRepository);
+    requireSuccess(
+      await spatial.updateRoomPolygon(room.id, [
+        { x: 0, y: 0 },
+        { x: 2400, y: 0 },
+        { x: 2400, y: 1800 },
+        { x: 0, y: 1800 },
+      ]),
+    );
     const layout = requireSuccess(await spatial.getRoomLayout(room.id));
     expect(layout.racks).toEqual([
       expect.objectContaining({

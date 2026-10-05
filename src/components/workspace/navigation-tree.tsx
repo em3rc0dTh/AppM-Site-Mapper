@@ -66,8 +66,8 @@ export function NavigationTree({ roots }: { roots: readonly WorkspaceTreeNode[] 
   return (
     <nav className="workspace-tree" aria-label="Infrastructure topology">
       <div className="workspace-section-title">
-        <span>TOPOLOGY</span>
-        <b>⌄</b>
+        <span>Topology explorer</span>
+        <Link href="/network">Manage</Link>
       </div>
       <input
         type="search"

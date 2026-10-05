@@ -1,4 +1,3 @@
-import { TopologyExplorer } from './topology-explorer';
 import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 
@@ -9,7 +8,6 @@ import { Icon, StatusBadge } from '@/shared/ui/primitives';
 export interface VisualStageChild {
   readonly node: TopologyNode;
   readonly href: string;
-  readonly directChildCount?: number;
 }
 
 function metadata(node: TopologyNode): string {
@@ -303,14 +301,6 @@ export function TopologyVisualStage({
   previewItems?: readonly VisualStageChild[];
   activeItemId?: string | undefined;
 }>) {
-  if (['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind))
-    return (
-      <TopologyExplorer
-        node={node}
-        items={items}
-        boundary={'polygon' in node ? node.polygon : undefined}
-      />
-    );
   let canvas: ReactNode;
 
   if (node.kind === 'NETWORK') {

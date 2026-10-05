@@ -1,4 +1,3 @@
-import { recordAdminAudit } from '@/modules/settings/infrastructure/admin-audit';
 import { NextResponse } from 'next/server';
 
 import { AuthService } from '@/modules/identity/application/auth-service';
@@ -73,6 +72,5 @@ export async function PATCH(request: Request, context: Context) {
     return NextResponse.json({ error: result.error }, { status });
   }
 
-  await recordAdminAudit(auth.value.id, 'USER_UPDATE', id);
   return NextResponse.json({ user: result.value });
 }

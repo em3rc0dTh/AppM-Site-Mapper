@@ -1,11 +1,5 @@
 import { validateBdfb, type BdfbValidationError } from '@/modules/power/domain/bdfb-validation';
-import type {
-  BdfbBreakerSpec,
-  BdfbFrameSpec,
-  BdfbPanelSpec,
-  BdfbShelfSpec,
-  BdfbStructureSpec,
-} from '@/modules/power/domain/bdfb-model';
+import type { BdfbBreakerSpec, BdfbStructureSpec } from '@/modules/power/domain/bdfb-model';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
   AccessPort,
@@ -73,11 +67,6 @@ function baseEquipment(
   };
 }
 
-interface MaterializedChildren {
-  readonly childIds: readonly string[];
-  readonly equipment: readonly EquipmentNode[];
-}
-
 export class BdfbService {
   constructor(private readonly topology: TopologyRepository) {}
 
@@ -96,136 +85,7 @@ export class BdfbService {
 
     const timestamp = nowIso();
     const chassisId = equipmentId(node.id, 'bdfb-chassis');
-
-    const materializePanel = (
-      panel: BdfbPanelSpec,
-      parentId: string,
-      presentationFrame?: BdfbFrameSpec,
-    ): readonly EquipmentNode[] => {
-      const panelId = equipmentId(node.id, panel.id);
-      const children = panel.positions.map((breaker) =>
-        breaker ? equipmentId(node.id, breaker.id) : null,
-      );
-      const panelNode = baseEquipment(
-        node,
-        panelId,
-        parentId,
-        parentId,
-        panel.label,
-        'PANEL',
-        children,
-        'POSITIONAL',
-        timestamp,
-        {
-          bdfbRole: 'PANEL',
-          legacyId: panel.id,
-          ...(presentationFrame
-            ? {
-                presentationFrameId: presentationFrame.id,
-                presentationFrameLabel: presentationFrame.label,
-                presentationFramePhysical: false,
-              }
-            : {}),
-        },
-      );
-
-      const breakers = panel.positions.flatMap((breaker) => {
-        if (!breaker) return [];
-        const breakerId = equipmentId(node.id, breaker.id);
-        return [
-          baseEquipment(
-            node,
-            breakerId,
-            panelId,
-            panelId,
-            breaker.label,
-            'CIRCUIT_BREAKER',
-            [],
-            'DYNAMIC',
-            timestamp,
-            {
-              bdfbRole: 'CIRCUIT_BREAKER',
-              legacyId: breaker.id,
-              ...(breaker.capacity === undefined ? {} : { capacity: breaker.capacity }),
-              ...(breaker.telemetry?.rawPointId
-                ? { telemetryRawPointId: breaker.telemetry.rawPointId }
-                : {}),
-            },
-            [powerPort(node.id, breaker)],
-          ),
-        ];
-      });
-
-      return [panelNode, ...breakers];
-    };
-
-    const materializeFrame = (frame: BdfbFrameSpec, parentId: string): MaterializedChildren => {
-      const physical = frame.physicalFrameVisible !== false;
-      const frameId = equipmentId(node.id, frame.id);
-      const panelIds = frame.panels.map((panel) => equipmentId(node.id, panel.id));
-
-      if (!physical) {
-        return {
-          childIds: panelIds,
-          equipment: frame.panels.flatMap((panel) => materializePanel(panel, parentId, frame)),
-        };
-      }
-
-      return {
-        childIds: [frameId],
-        equipment: [
-          baseEquipment(
-            node,
-            frameId,
-            parentId,
-            parentId,
-            frame.label,
-            'FRAME',
-            panelIds,
-            'DYNAMIC',
-            timestamp,
-            { bdfbRole: 'FRAME', legacyId: frame.id },
-          ),
-          ...frame.panels.flatMap((panel) => materializePanel(panel, frameId)),
-        ],
-      };
-    };
-
-    const materializeShelf = (shelf: BdfbShelfSpec): readonly EquipmentNode[] => {
-      const shelfId = equipmentId(node.id, shelf.id);
-      const nestedFrames = (shelf.frames ?? []).map((frame) => materializeFrame(frame, shelfId));
-      const directPanels = shelf.panels ?? [];
-      const childIds = [
-        ...nestedFrames.flatMap((entry) => entry.childIds),
-        ...directPanels.map((panel) => equipmentId(node.id, panel.id)),
-      ];
-
-      return [
-        baseEquipment(
-          node,
-          shelfId,
-          chassisId,
-          chassisId,
-          shelf.label,
-          'SHELF',
-          childIds,
-          'DYNAMIC',
-          timestamp,
-          { bdfbRole: 'SHELF', legacyId: shelf.id },
-        ),
-        ...nestedFrames.flatMap((entry) => entry.equipment),
-        ...directPanels.flatMap((panel) => materializePanel(panel, shelfId)),
-      ];
-    };
-
-    const shelves = structure.shelves ?? [];
-    const directFrames = (structure.frames ?? []).map((frame) => materializeFrame(frame, chassisId));
-    const directPanels = structure.panels ?? [];
-    const chassisChildren = [
-      ...shelves.map((shelf) => equipmentId(node.id, shelf.id)),
-      ...directFrames.flatMap((entry) => entry.childIds),
-      ...directPanels.map((panel) => equipmentId(node.id, panel.id)),
-    ];
+    const shelfIds = structure.shelves.map((shelf) => equipmentId(node.id, shelf.id));
 
     const materialized: EquipmentNode[] = [
       baseEquipment(
@@ -235,15 +95,115 @@ export class BdfbService {
         null,
         node.name + ' Chassis',
         'CHASSIS',
-        chassisChildren,
+        shelfIds,
         'DYNAMIC',
         timestamp,
         { bdfbRole: 'CHASSIS' },
       ),
-      ...shelves.flatMap(materializeShelf),
-      ...directFrames.flatMap((entry) => entry.equipment),
-      ...directPanels.flatMap((panel) => materializePanel(panel, chassisId)),
     ];
+
+    for (const shelf of structure.shelves) {
+      const shelfId = equipmentId(node.id, shelf.id);
+      const shelfChildren: string[] = [];
+
+      for (const frame of shelf.frames) {
+        const physical = frame.physicalFrameVisible !== false;
+        const frameId = equipmentId(node.id, frame.id);
+
+        if (physical) {
+          shelfChildren.push(frameId);
+          materialized.push(
+            baseEquipment(
+              node,
+              frameId,
+              shelfId,
+              shelfId,
+              frame.label,
+              'FRAME',
+              frame.panels.map((panel) => equipmentId(node.id, panel.id)),
+              'DYNAMIC',
+              timestamp,
+              { bdfbRole: 'FRAME', legacyId: frame.id },
+            ),
+          );
+        }
+
+        for (const panel of frame.panels) {
+          const panelId = equipmentId(node.id, panel.id);
+          const panelParentId = physical ? frameId : shelfId;
+          if (!physical) shelfChildren.push(panelId);
+
+          const children = panel.positions.map((breaker) =>
+            breaker ? equipmentId(node.id, breaker.id) : null,
+          );
+
+          materialized.push(
+            baseEquipment(
+              node,
+              panelId,
+              panelParentId,
+              panelParentId,
+              panel.label,
+              'PANEL',
+              children,
+              'POSITIONAL',
+              timestamp,
+              {
+                bdfbRole: 'PANEL',
+                legacyId: panel.id,
+                presentationFrameId: frame.id,
+                presentationFrameLabel: frame.label,
+                presentationFramePhysical: physical,
+              },
+            ),
+          );
+
+          for (const breaker of panel.positions) {
+            if (!breaker) continue;
+            const breakerId = equipmentId(node.id, breaker.id);
+            const port = powerPort(node.id, breaker);
+
+            materialized.push(
+              baseEquipment(
+                node,
+                breakerId,
+                panelId,
+                panelId,
+                breaker.label,
+                'CIRCUIT_BREAKER',
+                [],
+                'DYNAMIC',
+                timestamp,
+                {
+                  bdfbRole: 'CIRCUIT_BREAKER',
+                  legacyId: breaker.id,
+                  ...(breaker.capacity === undefined ? {} : { capacity: breaker.capacity }),
+                  ...(breaker.telemetry?.rawPointId
+                    ? { telemetryRawPointId: breaker.telemetry.rawPointId }
+                    : {}),
+                },
+                [port],
+              ),
+            );
+          }
+        }
+      }
+
+      materialized.push(
+        baseEquipment(
+          node,
+          shelfId,
+          chassisId,
+          chassisId,
+          shelf.label,
+          'SHELF',
+          shelfChildren,
+          'DYNAMIC',
+          timestamp,
+          { bdfbRole: 'SHELF', legacyId: shelf.id },
+        ),
+      );
+    }
 
     for (const equipment of materialized) {
       await this.topology.insert(equipment);

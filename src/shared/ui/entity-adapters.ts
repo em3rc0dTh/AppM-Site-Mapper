@@ -9,13 +9,6 @@ export function topologyInspector(node: TopologyNode, href?: string): InspectorE
   if ('category' in node && node.category) fields.push({ label: 'Category', value: node.category });
   if ('serialNumber' in node && node.serialNumber)
     fields.push({ label: 'Serial number', value: node.serialNumber });
-  if ('template' in node && node.template) {
-    fields.push({ label: 'Template', value: node.template.templateName });
-    fields.push({ label: 'Template version', value: `v${node.template.templateVersion}` });
-    if (node.template.manufacturer)
-      fields.push({ label: 'Manufacturer', value: node.template.manufacturer });
-    if (node.template.model) fields.push({ label: 'Model', value: node.template.model });
-  }
   if ('coordinate' in node)
     fields.push({ label: 'Position', value: `${node.coordinate.row}-${node.coordinate.column}` });
   if ('totalU' in node && node.totalU)

@@ -29,17 +29,6 @@ export class MongoTelemetryBindingRepository implements TelemetryBindingReposito
     return documents.map(toDomain);
   }
 
-  async listForTarget(
-    targetType: TelemetryBinding['targetType'],
-    targetId: string,
-  ): Promise<readonly TelemetryBinding[]> {
-    const documents = await this.collection
-      .find({ lifecycle: 'ACTIVE', targetType, targetId })
-      .sort({ sourceIdentity: 1, sourcePointId: 1 })
-      .toArray();
-    return documents.map(toDomain);
-  }
-
   async insert(binding: TelemetryBinding): Promise<void> {
     await this.collection.insertOne(binding as OptionalUnlessRequiredId<BindingDocument>);
   }

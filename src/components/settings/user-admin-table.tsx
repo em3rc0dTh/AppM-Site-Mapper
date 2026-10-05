@@ -41,9 +41,9 @@ export function UserAdminTable({
       <table className="settings-user-table">
         <thead>
           <tr>
-            <th>NAME⌃</th>
-            <th>ROLE⌁</th>
-            <th>STATUS⌁</th>
+            <th>User</th>
+            <th>Role</th>
+            <th>Status</th>
             <th>Password</th>
             <th>Actions</th>
           </tr>
@@ -85,7 +85,7 @@ export function UserAdminTable({
                     }
                     type="button"
                   >
-                    •••
+                    {user.lifecycle === 'ACTIVE' ? 'Archive' : 'Restore'}
                   </button>
                 </td>
               </tr>

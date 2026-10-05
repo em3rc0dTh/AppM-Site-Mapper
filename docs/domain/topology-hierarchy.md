@@ -1,13 +1,12 @@
 # Site Mapper MK1 — Accepted Topology Hierarchy
 
-**Status:** ACCEPTED — AMENDED  
+**Status:** ACCEPTED  
 **Gate:** G2 — Canonical Domain Contract  
-**Original decision:** 2026-09-22  
-**Amendment:** 2026-10-01 — Device / Equipment composition
+**Decision date:** 2026-09-22
 
 ## Authoritative hierarchy
 
-The Site Mapper MK1 topology is:
+The Site Mapper MK1 topology preserves the following hierarchy:
 
 ```text
 Network
@@ -18,16 +17,15 @@ Network
                 └── ContainerCluster / Bay
                     └── Position
                         └── Container / Rack
-                            └── Device
-                                ├── Equipment
-                                │   └── Equipment (...)
-                                └── Shelf
-                                    └── Frame
-                                        └── Panel
-                                            └── Breaker / Holder
+                            ├── Device
+                            │   └── Shelf
+                            │       └── Frame
+                            │           └── Panel
+                            │               └── Breaker / Holder
+                            └── Equipment
 ```
 
-This hierarchy remains a product/domain decision. The 2026-10-01 amendment changes only the Device/Equipment relationship; the prior rejection of `Zone` and the accepted physical levels remain unchanged.
+This hierarchy is a product/domain decision and supersedes the earlier G2 proposal that introduced `Zone`.
 
 ## Slash notation
 
@@ -40,30 +38,39 @@ The following pairs occupy one and the same hierarchical slot:
 - `Container / Rack`;
 - `Breaker / Holder`.
 
+The persistence and implementation naming strategy may later define one technical identifier for each accepted concept, but it must preserve this domain hierarchy and its product vocabulary.
+
 No extra intermediary level may be inserted merely to normalize these paired labels.
 
 ## Device and Equipment
 
-`Device` is the rack-mounted inventory root.
+`Device` and `Equipment` are at the **same hierarchical level**.
 
-A Rack/Container may mount Device identities. Rack CAS therefore references Device, not Equipment.
+Both are direct children of:
 
-`Equipment` is a managed component beneath Device and may recurse:
+```text
+Container / Rack
+```
+
+Therefore this is correct:
+
+```text
+Container / Rack
+├── Device
+└── Equipment
+```
+
+and this is incorrect:
 
 ```text
 Container / Rack
 └── Device
     └── Equipment
-        └── Equipment (...)
 ```
-
-This supports chassis/module/board/pluggable-component assemblies without introducing artificial topology kinds.
-
-Equipment does not claim Rack CAS directly. Its rack location is inherited from the nearest mounted Device ancestor.
 
 ### Device internal structure
 
-A Device may also own the specialized internal hierarchy:
+A Device may own the confirmed internal hierarchy:
 
 ```text
 Device
@@ -73,35 +80,25 @@ Device
             └── Breaker / Holder
 ```
 
-This internal BDFB/power structure is distinct from recursive Equipment composition.
-
-## Capability ports
-
-Device and Equipment may expose explicit capability endpoints. Power consumers use:
-
-```text
-AccessPort
-└── kind = POWER
-    └── feed = A | B | unspecified
-```
-
-PowerPath terminates on the exact POWER AccessPort rather than on an undifferentiated entity.
+That internal structure does not change the fact that `Device` and `Equipment` have equal topology rank beneath `Container / Rack`.
 
 ## Persistence rule
 
-Persistence must not:
+G3 must design persistence around this hierarchy.
 
-- create new direct Rack → Equipment relationships;
+Persistence is not allowed to:
+
+- move Equipment beneath Device;
 - insert a Zone between Room/Substructure and ContainerCluster/Bay;
 - flatten Position away;
 - collapse Container/Rack into Position;
-- promote Shelf, Frame, Panel or Breaker/Holder into normal topology ranks.
+- promote Shelf, Frame, Panel or Breaker/Holder into the same topology rank as Device/Equipment without a later explicit domain amendment.
 
 ## Migration rule
 
-Legacy direct Rack → Equipment records are retained as migration evidence.
+Legacy records must be transformed to this hierarchy.
 
-MK1 must not invent a Device owner for an ambiguous record. New create/move operations use the canonical Device → Equipment relationship, while legacy records may remain readable until an explicit migration mapping is available.
+Compatibility aliases may be handled inside migration tooling, but the resulting MK1 domain relationships must resolve to this accepted structure.
 
 ## Change control
 

@@ -25,13 +25,12 @@ Network
                 └── ContainerCluster / Bay
                     └── Position
                         └── Container / Rack
-                            └── Device
-                                ├── Equipment
-                                │   └── Equipment (...)
-                                └── Shelf
-                                    └── Frame
-                                        └── Panel
-                                            └── Breaker / Holder
+                            ├── Device
+                            │   └── Shelf
+                            │       └── Frame
+                            │           └── Panel
+                            │               └── Breaker / Holder
+                            └── Equipment
 ```
 
 The detailed authority for this hierarchy is recorded in:
@@ -96,9 +95,9 @@ Direct child of Position.
 
 `Container` and `Rack` occupy the same hierarchy level.
 
-This node owns the physical context in which Device is placed.
+This node owns the physical context in which Device and Equipment are placed.
 
-Rack-specific behavior such as U capacity and CAS applies to mounted Device identities. Equipment is not a direct rack/CAS occupant in the canonical model.
+Rack-specific behavior such as U capacity and CAS may apply where the Container/Rack instance supports that capability.
 
 ### Device
 
@@ -106,16 +105,13 @@ Direct child of Container/Rack.
 
 Device is an independently identifiable managed object.
 
-A Device may contain recursive managed Equipment and may also expose specialized internal physical/electrical structure:
+A Device may contain the internal physical/electrical structure:
 
 ```text
-Device
-├── Equipment
-│   └── Equipment (...)
-└── Shelf
-    └── Frame
-        └── Panel
-            └── Breaker / Holder
+Shelf
+└── Frame
+    └── Panel
+        └── Breaker / Holder
 ```
 
 Device identity remains separate from placement identity.
@@ -124,24 +120,21 @@ Moving a Device does not create a new Device.
 
 ### Equipment
 
-Direct child of a Device or another Equipment node.
+Direct child of Container/Rack.
 
-Equipment is a managed component of a Device assembly and may recurse to represent chassis/module/board/pluggable-component relationships without inventing additional topology kinds.
+**Equipment and Device have the same hierarchical rank.**
 
-Canonical relationship:
+Equipment is not a child of Device.
+
+This relationship is authoritative:
 
 ```text
 Container / Rack
-└── Device
-    └── Equipment
-        └── Equipment (...)
+├── Device
+└── Equipment
 ```
 
-Equipment does **not** occupy Rack CAS directly. Its physical rack position is inherited through its mounted Device ancestor.
-
-Legacy records where Equipment is a direct child of Container/Rack are preserved as migration evidence and must be reported as ambiguous; runtime code must not invent a Device owner for them.
-
-Equipment may expose explicit AccessPorts, including `POWER` ports, and may participate in telemetry and PowerPath according to its declared capabilities.
+Any legacy structure that nests Equipment under Device must be treated as migration evidence rather than the MK1 topology contract.
 
 ### Shelf
 
@@ -224,32 +217,165 @@ G9 will formalize its electrical and provisioning rules.
 
 ## 7. Power domain
 
-The canonical electrical relationship is explicit and port-addressed:
+Confirmed concepts include:
 
-```text
-BDFB Device
-→ Shelf
-→ Frame
-→ Panel
-→ Breaker
-→ PowerPath
-→ Device / Equipment
-→ AccessPort(POWER)
-```
-
-Rules:
-
-- a new PowerPath source must resolve to a concrete `BREAKER`;
-- a new PowerPath target must resolve to a concrete `AccessPort` whose kind is `POWER`;
-- Feed A and Feed B are independent traces and may originate from the same BDFB or different BDFBs;
-- a target POWER port may declare its feed identity; a conflicting PowerPath feed is invalid;
-- breaker telemetry remains associated with the source circuit/raw telemetry point, not copied onto the target;
-- redundancy is not inferred from the existence of two paths. It is evaluated only when the target declares an explicit policy such as `A_B_REQUIRED`;
-- entity-only legacy targets remain readable for migration/diagnostics and are marked ambiguous rather than assigned an invented port;
-- one breaker may have multiple explicitly modeled downstream loads when the physical model requires it.
+- source Device or Equipment as applicable;
+- Panel;
+- Breaker/Holder;
+- target Device or Equipment;
+- A/B provisioning;
+- source-to-target Power Path.
 
 Domain principle:
 
 > Electrical topology is an explicit domain relationship and must not be inferred solely from UI state.
 
-The Full Power Trace is a projection over these domain facts. It reports topology validity, telemetry availability and redundancy-policy satisfaction as separate concerns.
+Still open for G9:
+
+- exact endpoint type rules;
+- A/B semantics;
+- redundancy;
+- path lifecycle;
+- PowerPath aggregate/value semantics;
+- persistence versus derivation.
+
+## 8. Telemetry identity
+
+Telemetry state does not define topology identity.
+
+A Device or Equipment identity may map to an external telemetry identity without making topic/serial naming the primary domain ID.
+
+Transport details remain G10.
+
+## 9. Identity and roles
+
+Legacy role vocabulary remains evidence:
+
+- Superadmin;
+- Admin;
+- Standard.
+
+G4 owns their final permissions, sessions, password policy, lifecycle and audit semantics.
+
+## 10. Lifecycle principles
+
+Current domain principles:
+
+1. Identity and placement are separate.
+2. Moving a Device or Equipment does not recreate its identity.
+3. Parent-child deletion must never silently destroy operational descendants.
+4. Archival is preferred where an entity has operational history or references.
+5. Hard deletion requires an explicitly safe use case.
+6. Domain mutations are explicit use cases, not generic collection CRUD.
+
+Exact archive/delete policy remains open for later G2/G3 decisions.
+
+## 11. Identifier principles
+
+Canonical domain identifiers must:
+
+- remain stable across movement and renaming;
+- be opaque to presentation code;
+- not encode the hierarchy;
+- not depend on legacy collection names;
+- permit legacy identifiers as migration metadata where required.
+
+The concrete identifier strategy belongs to ADR-005.
+
+## 12. Module boundaries
+
+### Topology
+
+Owns the accepted hierarchy and parent/child relationships.
+
+### Spatial
+
+Owns coordinates, geometry, polygons, snapping and collision.
+
+### Inventory
+
+Owns Device and Equipment identity/specification concerns.
+
+### Rack
+
+Owns Container/Rack capacity and occupancy behavior.
+
+### Power
+
+Owns Shelf/Frame/Panel/Breaker/Holder electrical relationships and Power Path.
+
+### Telemetry
+
+Owns normalization and association of realtime state to Device/Equipment identities.
+
+### Identity
+
+Owns users, sessions, roles and authorization.
+
+These are modular-monolith boundaries, not microservices.
+
+## 13. Rejected domain drift
+
+The following are prohibited:
+
+- introducing Zone into the accepted topology;
+- nesting Equipment below Device;
+- removing Position as a domain level without explicit amendment;
+- treating persistence collection names as domain nouns;
+- caller-provided collection/entity names as business contracts;
+- UI shape becoming persistence shape;
+- a Prisma schema being treated as domain authority merely because it exists;
+- browser/client role state becoming authorization authority.
+
+## 14. Remaining G2 open decisions
+
+Topology order is no longer open.
+
+Remaining decisions include:
+
+1. exact meaning/behavioral distinction, if any, inside each accepted slash pair;
+2. whether Network is persisted or contextual only;
+3. Device and Equipment uniqueness scopes;
+4. entity archive/delete behavior;
+5. Container/Rack movement semantics;
+6. Device movement semantics;
+7. Equipment movement semantics;
+8. CAS authority/ownership model;
+9. BDFB aggregate interpretation;
+10. PowerPath entity semantics;
+11. identifier format/strategy;
+12. exact parent deletion restrictions and lifecycle rules.
+
+## 15. G2 exit criteria
+
+G2 passes only when:
+
+- ADR-001 reflects the accepted hierarchy;
+- parent/child cardinalities are documented;
+- Device and Equipment sibling semantics are preserved;
+- lifecycle/movement invariants are explicit enough for persistence design;
+- aggregate candidates are clear enough for G3;
+- no persistence implementation is used to resolve a domain ambiguity;
+- remaining external inputs are explicit rather than guessed.
+
+Until then, **G3 persistence implementation is not authorized**.
+
+## 16. Accepted G2 closure decisions
+
+The following decisions are accepted and remove the remaining architecture-blocking ambiguity:
+
+- lifecycle is `ACTIVE | ARCHIVED`; hard delete is exceptional;
+- new domain identifiers use stable opaque UUIDv4 values;
+- movement preserves identity;
+- Container/Rack movement requires a valid unconflicted Position;
+- Device and Equipment may move between compatible Container/Rack parents while preserving identity;
+- Device and Equipment remain siblings;
+- CAS is rack-owned authoritative occupancy state, not a topology node;
+- BDFB is a specialized Device capability/type;
+- PowerPath is an explicit aggregate;
+- telemetry identity is a binding to Device/Equipment identity, not the identity itself;
+- slash-pair concepts preserve variant semantics at one hierarchy level.
+
+Detailed invariants are defined in `docs/domain/invariants.md`.
+
+With these decisions, G3 may design persistence without using database structure to resolve domain ambiguity.

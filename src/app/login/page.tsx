@@ -1,9 +1,7 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
-import { isWorkspaceHref } from '@/modules/workspace/domain/context';
 import { AuthFrame } from '@/shared/ui/auth-frame';
 
 interface LoginResponse {
@@ -14,7 +12,6 @@ interface LoginResponse {
 }
 
 export default function LoginPage() {
-  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -24,40 +21,23 @@ export default function LoginPage() {
     setError(null);
 
     const form = new FormData(event.currentTarget);
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email: String(form.get('email') ?? ''),
+        password: String(form.get('password') ?? ''),
+      }),
+    });
+    const result = (await response.json()) as LoginResponse;
 
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          email: String(form.get('email') ?? ''),
-          password: String(form.get('password') ?? ''),
-        }),
-      });
-      const result = (await response.json()) as LoginResponse;
-
-      if (!response.ok) {
-        setError(result.error ?? 'LOGIN_FAILED');
-        setBusy(false);
-        return;
-      }
-
-      if (result.user?.mustChangePassword) {
-        router.replace('/change-password');
-        return;
-      }
-
-      const contextResponse = await fetch('/api/workspace/context');
-      const context = contextResponse.ok
-        ? ((await contextResponse.json()) as { lastContext?: string })
-        : {};
-
-      router.replace(isWorkspaceHref(context.lastContext) ? context.lastContext : '/workspace');
-      router.refresh();
-    } catch {
-      setError('Connection unavailable. Please try again.');
+    if (!response.ok) {
+      setError(result.error ?? 'LOGIN_FAILED');
       setBusy(false);
+      return;
     }
+
+    window.location.href = result.user?.mustChangePassword ? '/change-password' : '/workspace';
   }
 
   return (
@@ -88,7 +68,7 @@ export default function LoginPage() {
           />
         </label>
         <button className="auth-submit" type="submit" disabled={busy}>
-          {busy ? 'Establishing secure session…' : 'SIGN IN'}
+          {busy ? 'Establishing secure session…' : 'Enter control center'}
         </button>
         {error ? (
           <p className="form-error auth-error" role="alert">

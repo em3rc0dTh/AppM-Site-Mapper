@@ -1,17 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import Link from 'next/link';
+import { useMemo, useRef, useState, type PointerEvent, type WheelEvent } from 'react';
+import { useRouter } from 'next/navigation';
 
-import { InlineInspector } from '@/shared/ui/inline-inspector';
-import { type InspectorEntity } from '@/shared/ui/entity-inspector';
+import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
 import type {
   ClusterPlacementView,
   RackPlacementView,
 } from '@/modules/spatial/application/spatial-service';
-import { gridCoordinateToPoint, pointToGridCoordinate } from '@/modules/spatial/domain/grid';
-import { polygonArea, type PointMm, type RectMm } from '@/modules/spatial/domain/geometry';
+import type { PointMm, RectMm } from '@/modules/spatial/domain/geometry';
 
 interface ViewState {
   readonly x: number;
@@ -44,9 +42,9 @@ function rectKey(rect: RectMm): string {
 function gridLabels(polygon: readonly PointMm[]) {
   const xs = polygon.map((point) => point.x);
   const ys = polygon.map((point) => point.y);
-  const minX = Math.floor(Math.min(...xs) / 600) * 600;
+  const minX = Math.min(...xs);
   const maxX = Math.max(...xs);
-  const minY = Math.floor(Math.min(...ys) / 600) * 600;
+  const minY = Math.min(...ys);
   const maxY = Math.max(...ys);
   const tile = 600;
   const columns = Math.max(1, Math.ceil((maxX - minX) / tile));
@@ -56,11 +54,11 @@ function gridLabels(polygon: readonly PointMm[]) {
     minX,
     minY,
     columns: Array.from({ length: columns }, (_, index) => ({
-      label: String(Math.floor(minX / tile) + index + 1),
+      label: String(index + 1),
       x: minX + index * tile + tile / 2,
     })),
     rows: Array.from({ length: rows }, (_, index) => ({
-      label: pointToGridCoordinate({ x: 0, y: minY + index * tile })?.row ?? '—',
+      label: String.fromCharCode(65 + index),
       y: minY + index * tile + tile / 2,
     })),
   };
@@ -79,113 +77,20 @@ export function BlueprintCanvas({
   clusters,
   racks,
   slots,
-  positions = [],
-  onSelectPosition,
-  onSelectRack,
-  onSelectBay,
-  onPlace,
-  focusRackId,
-  focusBayId,
-  focusPositionId,
 }: Readonly<{
   polygon: readonly PointMm[];
   clusters: readonly ClusterPlacementView[];
   racks: readonly RackPlacementView[];
   slots: readonly RectMm[];
-  positions?: readonly {
-    id: string;
-    name: string;
-    row: string;
-    column: number;
-    occupied: boolean;
-  }[];
-  onSelectPosition?: ((id: string) => void) | undefined;
-  onSelectRack?: ((id: string) => void) | undefined;
-  onSelectBay?: ((id: string) => void) | undefined;
-  onPlace?: ((point: PointMm) => void) | undefined;
-  focusRackId?: string | undefined;
-  focusBayId?: string | undefined;
-  focusPositionId?: string | undefined;
 }>) {
+  const router = useRouter();
   const base = useMemo(() => boundsFor(polygon), [polygon]);
   const labels = useMemo(() => gridLabels(polygon), [polygon]);
-  const focusedRack = racks.find((rack) => rack.id === focusRackId);
-  const [selected, setSelected] = useState<InspectorEntity | null>(() => {
-    const bay = clusters.find((cluster) => cluster.id === focusBayId);
-    if (bay) {
-      return {
-        name: bay.name,
-        kind: 'CLUSTER / BAY',
-        sections: [
-          {
-            title: 'Surveyed physical boundary',
-            fields: bay.polygon?.length
-              ? [
-                  {
-                    label: 'Area',
-                    value: `${(polygonArea(bay.polygon) / 1_000_000).toFixed(2)} m²`,
-                  },
-                  { label: 'Vertices', value: bay.polygon.length },
-                ]
-              : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
-          },
-        ],
-      };
-    }
-    const position = positions.find((item) => item.id === focusPositionId);
-    return position
-      ? {
-          name: position.name,
-          kind: 'POSITION REFERENCE',
-          sections: [
-            {
-              title: 'Grid anchor',
-              fields: [
-                { label: 'Coordinate', value: `${position.row}-${position.column}` },
-                { label: 'State', value: position.occupied ? 'Occupied' : 'Available' },
-              ],
-            },
-          ],
-        }
-      : null;
-  });
-  const [selectedRackId, setSelectedRackId] = useState<string | null>(focusRackId ?? null);
-  const [selectedBayId, setSelectedBayId] = useState<string | null>(focusBayId ?? null);
-  const [focusedRackId, setFocusedRackId] = useState<string | null>(focusRackId ?? null);
+  const [selected, setSelected] = useState<InspectorEntity | null>(null);
+  const [selectedRackId, setSelectedRackId] = useState<string | null>(null);
   const [tool, setTool] = useState<'select' | 'pan'>('select');
-  function inspectBay(cluster: ClusterPlacementView) {
-    if (onSelectBay) {
-      onSelectBay(cluster.id);
-      return;
-    }
-    setSelectedBayId(cluster.id);
-    setSelectedRackId(null);
-    const polygon = cluster.polygon;
-    setSelected({
-      name: cluster.name,
-      kind: 'CLUSTER / BAY',
-      sections: [
-        {
-          title: 'Surveyed physical boundary',
-          fields: polygon?.length
-            ? [
-                { label: 'Area', value: `${(polygonArea(polygon) / 1_000_000).toFixed(2)} m²` },
-                { label: 'Vertices', value: polygon.length },
-                { label: 'Coordinates', value: 'Preserved from the room layout' },
-              ]
-            : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
-        },
-      ],
-    });
-  }
-
   function inspectRack(rack: RackPlacementView) {
     setSelectedRackId(rack.id);
-    setSelectedBayId(null);
-    if (onSelectRack) {
-      onSelectRack(rack.id);
-      return;
-    }
     setSelected({
       name: rack.name,
       kind: 'CONTAINER / RACK',
@@ -198,36 +103,13 @@ export function BlueprintCanvas({
           ],
         },
       ],
-      actions: [{ label: 'Open rack focus', href: `/rack/${rack.id}/focus` }],
+      actions: [{ label: 'Open rack elevation', href: `/rack/${rack.id}` }],
     });
   }
-  const [zoom, setZoom] = useState(focusedRack ? 2 : 1);
-  const [pan, setPan] = useState(() =>
-    focusedRack
-      ? {
-          x: focusedRack.rect.x - base.x - base.width / 4,
-          y: focusedRack.rect.y - base.y - base.height / 4,
-        }
-      : { x: 0, y: 0 },
-  );
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
   const pointer = useRef<Readonly<{ x: number; y: number }> | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
-
-  // React delegates wheel listeners as passive. The drafting canvas needs
-  // a direct non-passive listener so zoom does not also scroll the page.
-  useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg) return;
-
-    const handleWheel = (event: WheelEvent) => {
-      if (!event.cancelable) return;
-      event.preventDefault();
-      setZoom((current) => Math.min(5, Math.max(0.5, current * (event.deltaY > 0 ? 0.9 : 1.1))));
-    };
-
-    svg.addEventListener('wheel', handleWheel, { passive: false });
-    return () => svg.removeEventListener('wheel', handleWheel);
-  }, []);
 
   const view: ViewState = {
     x: base.x + pan.x,
@@ -235,6 +117,11 @@ export function BlueprintCanvas({
     width: base.width / zoom,
     height: base.height / zoom,
   };
+
+  function wheel(event: WheelEvent<SVGSVGElement>) {
+    event.preventDefault();
+    setZoom((current) => Math.min(5, Math.max(0.5, current * (event.deltaY > 0 ? 0.9 : 1.1))));
+  }
 
   function pointerDown(event: PointerEvent<SVGSVGElement>) {
     if (tool !== 'pan') return;
@@ -269,12 +156,12 @@ export function BlueprintCanvas({
       <header className="blueprint-toolbar zip-blueprint-toolbar">
         <div>
           <small>2D DRAFTING VIEW</small>
-          <strong>Room blueprint</strong>
+          <strong>Room floor plan</strong>
           <span>600 × 600 mm grid · {Math.round(zoom * 100)}%</span>
         </div>
         <div className="zip-blueprint-mode">
           <span className="zip-blueprint-mode-dot" />
-          <b>{onPlace ? 'CLICK TO PLACE' : 'VIEW MODE'}</b>
+          <b>VIEW MODE</b>
         </div>
       </header>
 
@@ -325,13 +212,7 @@ export function BlueprintCanvas({
           ref={svgRef}
           className="blueprint-canvas"
           viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
-          onClick={(event) => {
-            if (!onPlace || tool !== 'select') return;
-            const matrix = svgRef.current?.getScreenCTM();
-            if (!matrix) return;
-            const p = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
-            onPlace({ x: p.x, y: p.y });
-          }}
+          onWheel={wheel}
           onPointerDown={pointerDown}
           onPointerMove={pointerMove}
           onPointerUp={pointerUp}
@@ -386,19 +267,7 @@ export function BlueprintCanvas({
             const center = polygonCentroid(cluster.polygon);
 
             return (
-              <g
-                key={cluster.id}
-                className={`blueprint-cluster-node${selectedBayId === cluster.id ? ' is-selected' : ''}`}
-                tabIndex={0}
-                role="button"
-                aria-label={`Inspect bay ${cluster.name}`}
-                onClick={() => {
-                  if (tool === 'select' && !onPlace) inspectBay(cluster);
-                }}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') inspectBay(cluster);
-                }}
-              >
+              <g key={cluster.id} className="blueprint-cluster-node">
                 <polygon
                   points={cluster.polygon.map((point) => `${point.x},${point.y}`).join(' ')}
                   className="blueprint-cluster"
@@ -415,66 +284,6 @@ export function BlueprintCanvas({
             );
           })}
 
-          {positions
-            .filter((p) => !p.occupied)
-            .map((position) => {
-              let point;
-              try {
-                point = gridCoordinateToPoint(position);
-              } catch {
-                return null;
-              }
-              return (
-                <g
-                  key={position.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Available ${position.name}`}
-                  onClick={() => {
-                    if (onPlace) return;
-                    if (onSelectPosition) onSelectPosition(position.id);
-                    else {
-                      setSelectedBayId(null);
-                      setSelected({
-                        name: position.name,
-                        kind: 'POSITION REFERENCE',
-                        sections: [
-                          {
-                            title: 'Grid origin',
-                            fields: [
-                              { label: 'Coordinate', value: `${position.row}-${position.column}` },
-                              {
-                                label: 'State',
-                                value: 'Available; choose a rack footprint when placing',
-                              },
-                            ],
-                          },
-                        ],
-                      });
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') onSelectPosition?.(position.id);
-                  }}
-                >
-                  <rect
-                    x={point.x}
-                    y={point.y}
-                    width="600"
-                    height="600"
-                    className={`blueprint-slot${focusPositionId === position.id ? ' is-selected' : ''}`}
-                  />
-                  <text
-                    x={point.x + 300}
-                    y={point.y + 300}
-                    textAnchor="middle"
-                    className="blueprint-cluster-label"
-                  >
-                    {onSelectPosition ? '+ ADD' : position.name}
-                  </text>
-                </g>
-              );
-            })}
           {slots.map((slot) => (
             <rect
               key={rectKey(slot)}
@@ -494,13 +303,10 @@ export function BlueprintCanvas({
               tabIndex={0}
               aria-label={`Inspect ${rack.name}`}
               onClick={() => {
-                if (tool === 'select' && !onPlace) inspectRack(rack);
+                if (tool === 'select') inspectRack(rack);
               }}
               onDoubleClick={() => {
-                if (tool === 'select' && !onSelectRack && !onPlace) {
-                  inspectRack(rack);
-                  setFocusedRackId(rack.id);
-                }
+                if (tool === 'select') router.push(`/rack/${rack.id}`);
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
@@ -553,65 +359,8 @@ export function BlueprintCanvas({
             : 'Select a rack to inspect · scroll to zoom'}
         </span>
       </footer>
-      {focusedRackId && (
-        <div
-          className="blueprint-rack-backdrop"
-          role="presentation"
-          onClick={() => setFocusedRackId(null)}
-        >
-          <section
-            className="blueprint-rack-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Rack focus"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <header>
-              <div>
-                <small>RACK FOCUS · ROOM CONTEXT</small>
-                <h2>{racks.find((rack) => rack.id === focusedRackId)?.name}</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setFocusedRackId(null)}
-                aria-label="Close rack focus"
-              >
-                ×
-              </button>
-            </header>
-            {racks
-              .filter((rack) => rack.id === focusedRackId)
-              .map((rack) => (
-                <div key={rack.id} className="blueprint-rack-dialog-body">
-                  <div className="blueprint-rack-footprint" aria-label="Rack physical footprint">
-                    <div style={{ aspectRatio: `${rack.rect.width} / ${rack.rect.depth}` }}>
-                      <strong>{rack.name}</strong>
-                      <small>Top view</small>
-                    </div>
-                  </div>
-                  <dl>
-                    <dt>Footprint</dt>
-                    <dd>
-                      {rack.rect.width} × {rack.rect.depth} mm
-                    </dd>
-                    <dt>Position (mm)</dt>
-                    <dd>
-                      X {rack.rect.x} · Y {rack.rect.y}
-                    </dd>
-                    <dt>Data origin</dt>
-                    <dd>Saved MongoDB room geometry</dd>
-                  </dl>
-                  <div className="blueprint-rack-dialog-actions">
-                    <Link href={`/rack/${rack.id}`}>OPEN RACK ELEVATION</Link>
-                    <Link href={`/power?entity=${rack.id}`}>TRACE POWER</Link>
-                  </div>
-                </div>
-              ))}
-          </section>
-        </div>
-      )}
       {selected && (
-        <InlineInspector
+        <EntityInspector
           entity={selected}
           onClose={() => {
             setSelected(null);

@@ -3,6 +3,7 @@ import { BdfbService } from '@/modules/power/application/bdfb-service';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import { PowerService } from '@/modules/power/application/power-service';
 import { CasService } from '@/modules/rack/application/cas-service';
+import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import {
   TopologyService,
@@ -18,41 +19,6 @@ import type {
 import { nowIso } from '@/shared/domain/entity';
 
 const DEMO_NETWORK_NAME = 'MK1 Demo Network';
-
-const DEMO_SITE_POLYGON = [
-  { x: 0, y: 0 },
-  { x: 6000, y: 0 },
-  { x: 6000, y: 4000 },
-  { x: 0, y: 4000 },
-] as const;
-
-const DEMO_STRUCTURE_POLYGON = [
-  { x: 200, y: 200 },
-  { x: 5800, y: 200 },
-  { x: 5800, y: 3800 },
-  { x: 200, y: 3800 },
-] as const;
-
-const DEMO_ROOM_POLYGON = [
-  { x: 0, y: 0 },
-  { x: 3600, y: 0 },
-  { x: 3600, y: 2400 },
-  { x: 0, y: 2400 },
-] as const;
-
-const DEMO_BAY_A_POLYGON = [
-  { x: 0, y: 0 },
-  { x: 1800, y: 0 },
-  { x: 1800, y: 600 },
-  { x: 0, y: 600 },
-] as const;
-
-const DEMO_BAY_B_POLYGON = [
-  { x: 1800, y: 0 },
-  { x: 3600, y: 0 },
-  { x: 3600, y: 600 },
-  { x: 1800, y: 600 },
-] as const;
 
 export interface DemoSeedSummary {
   readonly alreadyPresent: boolean;
@@ -244,7 +210,6 @@ export async function seedDevelopmentDemo(
       kind: 'SITE',
       parentId: network.id,
       name: 'Lima Operations Campus',
-      polygon: DEMO_SITE_POLYGON,
     }),
     'SITE',
   );
@@ -253,7 +218,6 @@ export async function seedDevelopmentDemo(
       kind: 'STRUCTURE',
       parentId: site.id,
       name: 'Data Center A',
-      polygon: DEMO_STRUCTURE_POLYGON,
     }),
     'STRUCTURE',
   );
@@ -271,10 +235,19 @@ export async function seedDevelopmentDemo(
       parentId: level.id,
       name: 'Data Hall 01',
       roomVariant: 'ROOM',
-      polygon: DEMO_ROOM_POLYGON,
     }),
     'ROOM_SUBSTRUCTURE',
   );
+
+  const polygonResult = await new SpatialService(topologyRepository).updateRoomPolygon(room.id, [
+    { x: 0, y: 0 },
+    { x: 3600, y: 0 },
+    { x: 3600, y: 2400 },
+    { x: 0, y: 2400 },
+  ]);
+  if (!polygonResult.ok) {
+    throw new Error('Demo seed could not configure Blueprint room: ' + polygonResult.error);
+  }
 
   const bayA = expectKind(
     await ensureNode(topologyRepository, topology, {
@@ -282,7 +255,6 @@ export async function seedDevelopmentDemo(
       parentId: room.id,
       name: 'Bay A',
       clusterVariant: 'BAY',
-      polygon: DEMO_BAY_A_POLYGON,
     }),
     'CONTAINER_CLUSTER_BAY',
   );
@@ -292,7 +264,6 @@ export async function seedDevelopmentDemo(
       parentId: room.id,
       name: 'Bay B',
       clusterVariant: 'BAY',
-      polygon: DEMO_BAY_B_POLYGON,
     }),
     'CONTAINER_CLUSTER_BAY',
   );

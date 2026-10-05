@@ -49,44 +49,6 @@ function panelView(
   };
 }
 
-function frameViews(
-  childIds: readonly (string | null)[],
-  byId: ReadonlyMap<string, EquipmentNode>,
-): readonly BdfbFrameView[] {
-  const frames = new Map<string, BdfbFrameView>();
-
-  for (const childId of childIds) {
-    if (!childId) continue;
-    const child = byId.get(childId);
-    if (!child) continue;
-
-    if (child.equipmentType === 'FRAME') {
-      const panels = child.children
-        .map((id) => (id ? byId.get(id) : undefined))
-        .filter((item): item is EquipmentNode => Boolean(item))
-        .map((item) => panelView(item, byId))
-        .filter((item): item is BdfbPanelView => Boolean(item));
-      frames.set(child.id, { id: child.id, label: child.name, physical: true, panels });
-      continue;
-    }
-
-    if (child.equipmentType === 'PANEL') {
-      const view = panelView(child, byId);
-      if (!view) continue;
-      const key = stringAttribute(child, 'presentationFrameId') ?? child.parentId + ':direct';
-      const current = frames.get(key);
-      frames.set(key, {
-        id: key,
-        label: stringAttribute(child, 'presentationFrameLabel') ?? 'Direct mount',
-        physical: false,
-        panels: [...(current?.panels ?? []), view],
-      });
-    }
-  }
-
-  return [...frames.values()];
-}
-
 export class BdfbProjectionService {
   constructor(private readonly topology: TopologyRepository) {}
 
@@ -98,38 +60,58 @@ export class BdfbProjectionService {
       (item) => item.lifecycle === 'ACTIVE',
     );
     const byId = new Map(equipment.map((item) => [item.id, item]));
-    const rootEquipmentIds = Array.isArray(device.rootEquipmentIds) ? device.rootEquipmentIds : [];
-    const chassis = rootEquipmentIds
+    const chassis = device.rootEquipmentIds
       .map((id) => byId.get(id))
       .find((item) => item?.equipmentType === 'CHASSIS');
     if (!chassis) return null;
 
     const shelves: BdfbShelfView[] = [];
-    const directChildIds: (string | null)[] = [];
 
-    for (const childId of chassis.children) {
-      if (!childId) continue;
-      const child = byId.get(childId);
-      if (!child) continue;
+    for (const shelfId of chassis.children) {
+      if (!shelfId) continue;
+      const shelf = byId.get(shelfId);
+      if (!shelf || shelf.equipmentType !== 'SHELF') continue;
 
-      if (child.equipmentType === 'SHELF') {
-        shelves.push({
-          id: child.id,
-          label: child.name,
-          physical: true,
-          frames: frameViews(child.children, byId),
-        });
-      } else if (child.equipmentType === 'FRAME' || child.equipmentType === 'PANEL') {
-        directChildIds.push(child.id);
+      const frames = new Map<string, BdfbFrameView>();
+      for (const childId of shelf.children) {
+        if (!childId) continue;
+        const child = byId.get(childId);
+        if (!child) continue;
+
+        if (child.equipmentType === 'FRAME') {
+          const panels = child.children
+            .map((id) => (id ? byId.get(id) : undefined))
+            .filter((item): item is EquipmentNode => Boolean(item))
+            .map((item) => panelView(item, byId))
+            .filter((item): item is BdfbPanelView => Boolean(item));
+
+          frames.set(child.id, {
+            id: child.id,
+            label: child.name,
+            physical: true,
+            panels,
+          });
+          continue;
+        }
+
+        if (child.equipmentType === 'PANEL') {
+          const view = panelView(child, byId);
+          if (!view) continue;
+          const key = stringAttribute(child, 'presentationFrameId') ?? shelf.id + ':direct';
+          const current = frames.get(key);
+          frames.set(key, {
+            id: key,
+            label: stringAttribute(child, 'presentationFrameLabel') ?? 'Direct mount',
+            physical: false,
+            panels: [...(current?.panels ?? []), view],
+          });
+        }
       }
-    }
 
-    if (directChildIds.length > 0) {
       shelves.push({
-        id: chassis.id + ':presentation:direct',
-        label: 'Direct chassis mount',
-        physical: false,
-        frames: frameViews(directChildIds, byId),
+        id: shelf.id,
+        label: shelf.name,
+        frames: [...frames.values()],
       });
     }
 

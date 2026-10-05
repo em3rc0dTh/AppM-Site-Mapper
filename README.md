@@ -66,25 +66,10 @@ Network
 
 ## Local development
 
-Fastest visual run with demo data:
-
 ```bash
 npm ci
-npm run local:dev
-```
-
-The local launcher starts Next.js with in-memory persistence, creates a temporary local Superadmin, seeds the development topology and opens the login page. It prints the temporary credentials in the terminal. Nothing from this launcher is a production credential and the data resets when the process stops.
-
-To keep the browser closed:
-
-```bash
-npm run local:dev -- --no-open
-```
-
-Manual development remains available:
-
-```bash
 cp .env.example .env.local
+npm run verify
 npm run dev
 ```
 
@@ -163,23 +148,3 @@ Never commit production secrets, customer topology, database dumps, MQTT credent
 MK1 is repository/software certified through the documented gates.
 
 G0 through G15 certify the repository/software baseline. Before a specific production deployment is declared certified, the environment-specific items in `docs/release/release-checklist.md` must also be completed.
-
-## BFDB emulator (live MQTT)
-
-The visual-only `npm run local:dev` deliberately disables real telemetry. To use the
-separate **synthetic three-device BFDB commissioning lab**, start the running
-`thradexIT/bfdb-telemetry-gateway` Compose broker and emulator, set the broker
-endpoint and optional credentials in your ignored `.env.local`, then run:
-
-```bash
-npm run local:emulator
-```
-
-This opt-in mode seeds three explicitly synthetic BFDB lab devices, binds all
-96 points on each device using the upstream four-panel × 24 contract, and
-**waits for actual subscribed MQTT data** before reporting success. The
-original ZIP visual demo is seeded separately and remains unchanged.
-
-See `docs/operations/bfdb-emulator-local.md` for the exact emulator Compose
-commands, local settings and diagnostic endpoint. Do not treat synthetic lab
-coordinates as real surveyed site data.

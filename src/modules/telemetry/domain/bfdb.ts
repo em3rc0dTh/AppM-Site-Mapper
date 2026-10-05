@@ -22,9 +22,6 @@ export interface BdfbBreakerBuildResult {
   readonly unmappedPointIds: readonly string[];
 }
 
-const BFDB_METRICS = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const;
-type BfdbMetric = (typeof BFDB_METRICS)[number];
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
@@ -66,38 +63,6 @@ function breakerMap(presentation: BdfbPresentation): ReadonlyMap<string, Resolve
   return map;
 }
 
-function metricBindingMap(
-  bindings: readonly TelemetryBinding[],
-  sourceIdentity: string,
-  rawPointId: string,
-): { targetId: string; metrics: ReadonlyMap<BfdbMetric, TelemetryBinding> } | null {
-  const candidates = bindings.filter(
-    (binding) =>
-      binding.lifecycle === 'ACTIVE' &&
-      binding.protocol === 'MQTT' &&
-      binding.sourceIdentity === sourceIdentity &&
-      binding.sourcePointId === rawPointId &&
-      binding.targetType === 'EQUIPMENT',
-  );
-  if (candidates.length === 0) return null;
-
-  const targetIds = new Set(candidates.map((binding) => binding.targetId));
-  if (targetIds.size !== 1) return null;
-  const targetId = [...targetIds][0];
-  if (!targetId) return null;
-
-  const metrics = new Map<BfdbMetric, TelemetryBinding>();
-  for (const binding of candidates) {
-    const name = binding.metric.toUpperCase();
-    if (!BFDB_METRICS.includes(name as BfdbMetric)) continue;
-    const typed = name as BfdbMetric;
-    if (metrics.has(typed)) return null;
-    metrics.set(typed, binding);
-  }
-
-  return metrics.size > 0 ? { targetId, metrics } : null;
-}
-
 export function buildBfdbBreakerReadings(
   presentation: BdfbPresentation,
   message: NormalizedTelemetryMessage,
@@ -116,22 +81,29 @@ export function buildBfdbBreakerReadings(
       continue;
     }
 
-    const mapping = metricBindingMap(bindings, message.sourceIdentity, rawPointId);
-    if (!mapping) {
+    const matching = bindings.filter(
+      (binding) =>
+        binding.lifecycle === 'ACTIVE' &&
+        binding.sourceIdentity === message.sourceIdentity &&
+        binding.sourcePointId === rawPointId &&
+        binding.targetType === 'EQUIPMENT',
+    );
+
+    if (matching.length !== 1) {
       unmappedPointIds.push(rawPointId);
       continue;
     }
 
-    const resolved = byBreaker.get(mapping.targetId);
+    const resolved = byBreaker.get(matching[0]!.targetId);
     if (!resolved) {
       unmappedPointIds.push(rawPointId);
       continue;
     }
 
-    const voltageV = mapping.metrics.has('VOLTAGE') ? metric(rawPoint.U1, observedAt) : undefined;
-    const currentA = mapping.metrics.has('CURRENT') ? metric(rawPoint.I1, observedAt) : undefined;
-    const powerW = mapping.metrics.has('POWER') ? metric(rawPoint.P1, observedAt) : undefined;
-    const energyKwh = mapping.metrics.has('ENERGY') ? metric(rawPoint.EP1, observedAt) : undefined;
+    const voltageV = metric(rawPoint.U1, observedAt);
+    const currentA = metric(rawPoint.I1, observedAt);
+    const powerW = metric(rawPoint.P1, observedAt);
+    const energyKwh = metric(rawPoint.EP1, observedAt);
     const metrics: BreakerTelemetryMetrics = {
       ...(voltageV ? { voltageV } : {}),
       ...(currentA ? { currentA } : {}),

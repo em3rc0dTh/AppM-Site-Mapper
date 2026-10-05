@@ -3,14 +3,12 @@ import type { DomainEntity } from '@/shared/domain/entity';
 export type TelemetryTargetType = 'DEVICE' | 'EQUIPMENT' | 'ACCESS_PORT';
 
 export interface TelemetryBinding extends DomainEntity {
-  /** Protocol names are integration data, not a closed runtime enum. */
-  readonly protocol: string;
+  readonly protocol: 'MQTT' | 'MODBUS' | 'SNMP';
   readonly sourceIdentity: string;
   readonly sourcePointId?: string;
-  /** Mandatory semantic discriminator. Source-level routing uses SOURCE. */
-  readonly metric: string;
   readonly targetType: TelemetryTargetType;
   readonly targetId: string;
+  readonly metric?: string;
   readonly unit?: string;
   readonly attributes?: Readonly<Record<string, unknown>>;
 }

@@ -37,19 +37,3 @@ export function snapToGrid(point: PointMm): PointMm {
     y: Math.round(point.y / TILE_SIZE_MM) * TILE_SIZE_MM,
   };
 }
-
-/** The clicked cell's top-left anchor; labels remain internal placement data. */
-export function pointToGridCoordinate(point: PointMm): GridCoordinate | null {
-  if (!Number.isFinite(point.x) || !Number.isFinite(point.y) || point.x < 0 || point.y < 0)
-    return null;
-  const column = Math.floor(point.x / TILE_SIZE_MM) + 1;
-  let index = Math.floor(point.y / TILE_SIZE_MM) + 1;
-  if (column > 1000 || index > 18278) return null;
-  let row = '';
-  while (index > 0) {
-    index -= 1;
-    row = String.fromCharCode(65 + (index % 26)) + row;
-    index = Math.floor(index / 26);
-  }
-  return { row, column };
-}

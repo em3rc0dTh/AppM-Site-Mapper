@@ -1,4 +1,4 @@
-import { getBdfbPresentation } from '@/modules/power/application/bdfb-presentation';
+import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import { isValidPolygon, polygonArea } from '@/modules/spatial/domain/geometry';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 
@@ -17,12 +17,14 @@ export function TopologyPropertiesPanel({
   previewContained,
   location,
   feeds,
+  bdfb,
 }: Readonly<{
   node: TopologyNode;
   contained: number;
   previewContained?: number;
   location?: string;
   feeds?: readonly string[];
+  bdfb?: BdfbPresentation | null;
 }>) {
   if (node.kind === 'SITE') {
     const load = node.details?.currentLoad;
@@ -122,13 +124,11 @@ export function TopologyPropertiesPanel({
     );
   }
 
-  if (node.kind === 'DEVICE' && node.bdfb) {
-    const presentation = getBdfbPresentation(node);
-    const shelves = presentation.shelves;
-    const frames = shelves.flatMap((shelf) => shelf.frames);
+  if (node.kind === 'DEVICE' && bdfb) {
+    const frames = bdfb.shelves.flatMap((shelf) => shelf.frames);
     const panels = frames.flatMap((frame) => frame.panels);
-    const endpoints = panels.flatMap((panel) => panel.endpoints);
-    const breakers = endpoints.filter((endpoint) => endpoint.variant === 'BREAKER').length;
+    const positions = panels.flatMap((panel) => panel.positions);
+    const breakers = positions.filter(Boolean);
     const hasA = feeds?.includes('A') ?? false;
     const hasB = feeds?.includes('B') ?? false;
 
@@ -150,29 +150,19 @@ export function TopologyPropertiesPanel({
           <dt>Location</dt>
           <dd>{location ?? '—'}</dd>
           <dt>Shelves</dt>
-          <dd>{presentation.physicalShelfCount}</dd>
+          <dd>{bdfb.shelves.length}</dd>
           <dt>Frames</dt>
-          <dd>{presentation.physicalFrameCount}</dd>
+          <dd>{frames.length}</dd>
           <dt>Panel slots</dt>
-          <dd>{presentation.physicalPanelSlotCount}</dd>
-          {presentation.configuredPanelCount !== presentation.physicalPanelSlotCount && (
-            <>
-              <dt>Configured panels</dt>
-              <dd>{presentation.configuredPanelCount}</dd>
-            </>
-          )}
+          <dd>{panels.length}</dd>
           <dt>Breakers</dt>
-          <dd>{breakers}</dd>
+          <dd>{breakers.length}</dd>
           <dt>Feed A</dt>
           <dd>{hasA ? 'Configured' : '—'}</dd>
           <dt>Feed B</dt>
           <dd>{hasB ? 'Configured' : '—'}</dd>
           <dt>Telemetry</dt>
-          <dd>
-            {endpoints.some((endpoint) => endpoint.telemetry?.rawPointId)
-              ? 'EXPLICIT BINDINGS'
-              : 'UNMAPPED'}
-          </dd>
+          <dd>{breakers.some((breaker) => breaker?.rawPointId) ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}</dd>
         </dl>
         <section className="zip-bdfb-status-card">
           <h3>STATUS</h3>
@@ -183,10 +173,7 @@ export function TopologyPropertiesPanel({
           </div>
         </section>
         <div className="zip-bdfb-actions">
-          <span>
-            {endpoints.filter((endpoint) => Boolean(endpoint.telemetry?.rawPointId)).length}{' '}
-            explicit MQTT bindings
-          </span>
+          <span>{breakers.filter((breaker) => Boolean(breaker?.rawPointId)).length} explicit MQTT bindings</span>
           <span>Select a panel to inspect its breakers.</span>
         </div>
       </aside>

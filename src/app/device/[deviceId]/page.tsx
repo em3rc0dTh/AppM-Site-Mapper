@@ -60,8 +60,22 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     node.kind === 'EQUIPMENT' && node.rackPlacement
       ? node
       : familyEquipment.find((item) => item.rackPlacement);
-  const rack = physical?.rackPlacement ? await repo.getById(physical.rackPlacement.rackId) : null;
-  const rackNode = rack?.kind === 'CONTAINER_RACK' ? rack : null;
+
+  const owningDevice =
+    node.kind === 'DEVICE' ? node : await repo.getById(node.deviceId);
+  const physicalRack = physical?.rackPlacement
+    ? await repo.getById(physical.rackPlacement.rackId)
+    : null;
+  const contextualRack =
+    !physicalRack && owningDevice?.kind === 'DEVICE' && owningDevice.parentId
+      ? await repo.getById(owningDevice.parentId)
+      : null;
+  const rackNode =
+    physicalRack?.kind === 'CONTAINER_RACK'
+      ? physicalRack
+      : contextualRack?.kind === 'CONTAINER_RACK'
+        ? contextualRack
+        : null;
   const contextTrail = rackNode
     ? await service.getTrail(rackNode.id)
     : await service.getTrail(node.id);
@@ -117,9 +131,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
         <section className="zip-device-stage">
           <h1>ELEVATION</h1>
           {view?.ok ? (
-            <RackElevation view={view.value} focusDeviceId={physical?.id ?? node.id} />
+            <RackElevation view={view.value} focusDeviceId={physical?.id} />
           ) : (
-            <p>This inventory is not placed in a rack.</p>
+            <p>No rack context is recorded for this inventory.</p>
           )}
         </section>
 
@@ -151,11 +165,14 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             <dt>Serial N.</dt>
             <dd>{node.serialNumber ?? 'Not assigned'}</dd>
             <dt>Rack</dt>
-            <dd>{rackNode?.name ?? 'Not placed'}</dd>
+            <dd>{rackNode?.name ?? 'No rack context'}</dd>
             <dt>Placement</dt>
             <dd>
-              {rackNode?.name ?? 'Not placed'}{' '}
-              {mountLabel !== 'Not mounted' ? ` ${mountLabel}` : ''}
+              {placement
+                ? `${rackNode?.name ?? placement.rackId} · ${mountLabel}`
+                : rackNode
+                  ? 'Rack context recorded · physical Equipment not mounted'
+                  : 'No physical placement recorded'}
             </dd>
             <dt>Power A</dt>
             <dd>{hasFeedA ? 'Path recorded' : 'No recorded path'}</dd>

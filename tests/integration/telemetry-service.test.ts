@@ -75,9 +75,7 @@ describe('TelemetryService', () => {
       hub,
       { topicPrefix: 'data/dev/', maxPayloadBytes: 1024 },
       {
-        configuredBindings: [
-          binding('source-equipment', 'SN-E', 'EQUIPMENT', physical.id),
-        ],
+        configuredBindings: [binding('source-equipment', 'SN-E', 'EQUIPMENT', physical.id)],
       },
     );
 

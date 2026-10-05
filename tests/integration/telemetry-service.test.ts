@@ -197,6 +197,59 @@ describe('TelemetryService', () => {
     expect(reading?.state?.value).toBe('ONLINE');
   });
 
+  it('infers the source Device from explicit point bindings when SOURCE is absent', async () => {
+    const bdfb: DeviceNode = {
+      ...device('device-inferred', 'LOCAL-BFDB-INFERRED'),
+      deviceType: 'BDFB',
+    };
+    const repository = new MemoryTopologyRepository([bdfb]);
+    const configured = await new BdfbService(repository).configure(bdfb.id, {
+      panels: [
+        {
+          id: 'panel-a1',
+          label: 'A1',
+          positions: [{ id: 'breaker-1', label: 'CB-01' }],
+        },
+      ],
+    });
+    expect(configured.ok).toBe(true);
+
+    const service = new TelemetryService(
+      repository,
+      new TelemetryHub(4),
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 4096 },
+      {
+        configuredBindings: (['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const).map((metric) =>
+          binding(
+            `point-inferred-${metric.toLowerCase()}`,
+            'EMU-BFDB-INFERRED',
+            'EQUIPMENT',
+            'device-inferred:equipment:breaker-1',
+            '0_1_1',
+            metric,
+          ),
+        ),
+      },
+    );
+
+    const result = await service.ingest(
+      'data/dev/EMU-BFDB-INFERRED',
+      new TextEncoder().encode(
+        JSON.stringify({
+          sn: 'EMU-BFDB-INFERRED',
+          reported: {
+            '0_1_1': { state: 'ONLINE', U1: '13.8', I1: '2', P1: '27.6', EP1: '0.1' },
+          },
+        }),
+      ),
+      timestamp,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.ok ? result.value.targetId : null).toBe(bdfb.id);
+    expect(result.ok ? result.value.breakerReadings?.[0]?.rawPointId : null).toBe('0_1_1');
+  });
+
   it('rejects unknown source identities', async () => {
     const repository = new MemoryTopologyRepository([device('device-1', 'DUP')]);
     const service = new TelemetryService(repository, new TelemetryHub(4), {

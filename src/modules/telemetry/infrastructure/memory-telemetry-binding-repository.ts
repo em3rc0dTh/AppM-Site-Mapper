@@ -23,12 +23,14 @@ export class MemoryTelemetryBindingRepository implements TelemetryBindingReposit
   }
 
   async insert(binding: TelemetryBinding): Promise<void> {
-    if (this.bindings.has(binding.id)) throw new Error('TelemetryBinding already exists: ' + binding.id);
+    if (this.bindings.has(binding.id))
+      throw new Error('TelemetryBinding already exists: ' + binding.id);
     this.bindings.set(binding.id, structuredClone(binding));
   }
 
   async replace(binding: TelemetryBinding): Promise<void> {
-    if (!this.bindings.has(binding.id)) throw new Error('TelemetryBinding does not exist: ' + binding.id);
+    if (!this.bindings.has(binding.id))
+      throw new Error('TelemetryBinding does not exist: ' + binding.id);
     this.bindings.set(binding.id, structuredClone(binding));
   }
 }

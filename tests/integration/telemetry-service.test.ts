@@ -1,11 +1,33 @@
 import { describe, expect, it } from 'vitest';
 
+import { BdfbService } from '@/modules/power/application/bdfb-service';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
+import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import type { DeviceNode, EquipmentNode } from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 
 const timestamp = '2026-09-22T00:00:00.000Z';
+
+function binding(
+  id: string,
+  sourceIdentity: string,
+  targetType: TelemetryBinding['targetType'],
+  targetId: string,
+  sourcePointId?: string,
+): TelemetryBinding {
+  return {
+    id,
+    protocol: 'MQTT',
+    sourceIdentity,
+    ...(sourcePointId ? { sourcePointId } : {}),
+    targetType,
+    targetId,
+    lifecycle: 'ACTIVE',
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
 
 function device(id: string, serialNumber: string): DeviceNode {
   return {
@@ -15,16 +37,65 @@ function device(id: string, serialNumber: string): DeviceNode {
     kind: 'DEVICE',
     pinned: false,
     serialNumber,
+    deviceType: 'CUSTOM',
+    rootEquipmentIds: [],
     lifecycle: 'ACTIVE',
     createdAt: timestamp,
     updatedAt: timestamp,
   };
 }
 
-function bdfbDevice(id: string): DeviceNode {
+function equipment(id: string, owner: DeviceNode): EquipmentNode {
   return {
-    ...device(id, 'LOCAL-BFDB-01'),
-    bdfb: {
+    id,
+    parentId: owner.id,
+    deviceId: owner.id,
+    name: id,
+    kind: 'EQUIPMENT',
+    equipmentType: 'CHASSIS',
+    parentEquipmentId: null,
+    childMode: 'DYNAMIC',
+    children: [],
+    accessPorts: [],
+    pinned: false,
+    lifecycle: 'ACTIVE',
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
+describe('TelemetryService', () => {
+  it('maps generic telemetry only through an explicit source binding', async () => {
+    const owner = device('device-1', 'SN-D');
+    const physical = equipment('equipment-1', owner);
+    const repository = new MemoryTopologyRepository([owner, physical]);
+    const hub = new TelemetryHub(4);
+    const service = new TelemetryService(
+      repository,
+      hub,
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 1024 },
+      {
+        configuredBindings: [binding('source-equipment', 'SN-E', 'EQUIPMENT', physical.id)],
+      },
+    );
+
+    const result = await service.ingest(
+      'data/dev/SN-E',
+      new TextEncoder().encode(JSON.stringify({ reported: { current: 5 } })),
+      timestamp,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(service.latest(physical.id)?.reported).toEqual({ current: 5 });
+  });
+
+  it('maps BFDB point telemetry through explicit Device and Equipment bindings', async () => {
+    const bdfb: DeviceNode = {
+      ...device('device-1', 'LOCAL-BFDB-01'),
+      deviceType: 'BDFB',
+    };
+    const repository = new MemoryTopologyRepository([bdfb]);
+    const configured = await new BdfbService(repository).configure(bdfb.id, {
       shelves: [
         {
           id: 'shelf-a',
@@ -37,9 +108,9 @@ function bdfbDevice(id: string): DeviceNode {
                 {
                   id: 'panel-a1',
                   label: 'A1',
-                  endpoints: [
-                    { id: 'breaker-1', variant: 'BREAKER', label: 'CB-01' },
-                    { id: 'breaker-2', variant: 'BREAKER', label: 'CB-02' },
+                  positions: [
+                    { id: 'breaker-1', label: 'CB-01' },
+                    { id: 'breaker-2', label: 'CB-02' },
                   ],
                 },
               ],
@@ -47,61 +118,24 @@ function bdfbDevice(id: string): DeviceNode {
           ],
         },
       ],
-    },
-  };
-}
-
-function equipment(id: string, serialNumber: string): EquipmentNode {
-  return {
-    id,
-    parentId: 'rack',
-    name: id,
-    kind: 'EQUIPMENT',
-    pinned: false,
-    serialNumber,
-    lifecycle: 'ACTIVE',
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  };
-}
-
-describe('TelemetryService', () => {
-  it('maps generic telemetry to sibling Device and Equipment by external serial identity', async () => {
-    const repository = new MemoryTopologyRepository([
-      device('device-1', 'SN-D'),
-      equipment('equipment-1', 'SN-E'),
-    ]);
-    const hub = new TelemetryHub(4);
-    const service = new TelemetryService(repository, hub, {
-      topicPrefix: 'data/dev/',
-      maxPayloadBytes: 1024,
     });
+    expect(configured.ok).toBe(true);
 
-    const result = await service.ingest(
-      'data/dev/SN-E',
-      new TextEncoder().encode(JSON.stringify({ reported: { current: 5 } })),
-      timestamp,
-    );
-
-    expect(result.ok).toBe(true);
-    expect(service.latest('equipment-1')?.reported).toEqual({
-      current: 5,
-    });
-  });
-
-  it('maps emulator identity to a local BDFB and keeps partial metrics in Latest State', async () => {
-    const repository = new MemoryTopologyRepository([bdfbDevice('device-1')]);
     const service = new TelemetryService(
       repository,
       new TelemetryHub(4),
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 4096 },
       {
-        topicPrefix: 'data/dev/',
-        maxPayloadBytes: 4096,
-      },
-      {
-        sourceDeviceMap: { 'EMU-BFDB-01': 'device-1' },
-        bfdbBindingMode: 'panel-order-24',
-        bfdbPositionsPerPanel: 2,
+        configuredBindings: [
+          binding('source-bdfb', 'EMU-BFDB-01', 'DEVICE', bdfb.id),
+          binding(
+            'point-bdfb-1',
+            'EMU-BFDB-01',
+            'EQUIPMENT',
+            'device-1:equipment:breaker-1',
+            '0_1_1',
+          ),
+        ],
       },
     );
 
@@ -129,8 +163,10 @@ describe('TelemetryService', () => {
     );
 
     expect(full.ok).toBe(true);
-    expect(service.latest('device-1')?.breakerReadings?.[0]?.breakerId).toBe('breaker-1');
-    expect(service.latest('device-1')?.breakerReadings?.[0]?.metrics.currentA?.value).toBe(3.46);
+    expect(service.latest(bdfb.id)?.breakerReadings?.[0]?.breakerId).toBe(
+      'device-1:equipment:breaker-1',
+    );
+    expect(service.latest(bdfb.id)?.breakerReadings?.[0]?.metrics.currentA?.value).toBe(3.46);
 
     const partial = await service.ingest(
       'data/dev/EMU-BFDB-01',
@@ -141,16 +177,14 @@ describe('TelemetryService', () => {
           sn: 'EMU-BFDB-01',
           timestamp: 1_790_580_001,
           sendtime: 1_790_580_001,
-          reported: {
-            '0_1_1': { state: 'ONLINE' },
-          },
+          reported: { '0_1_1': { state: 'ONLINE' } },
         }),
       ),
       '2026-09-28T12:00:01.000Z',
     );
 
     expect(partial.ok).toBe(true);
-    const reading = service.latest('device-1')?.breakerReadings?.[0];
+    const reading = service.latest(bdfb.id)?.breakerReadings?.[0];
     expect(reading?.metrics.voltageV?.value).toBe(13.82);
     expect(reading?.metrics.currentA?.value).toBe(3.46);
     expect(reading?.metrics.powerW?.value).toBe(47.83);
@@ -158,11 +192,8 @@ describe('TelemetryService', () => {
     expect(reading?.state?.value).toBe('ONLINE');
   });
 
-  it('rejects unknown and ambiguous source identities', async () => {
-    const repository = new MemoryTopologyRepository([
-      device('device-1', 'DUP'),
-      equipment('equipment-1', 'DUP'),
-    ]);
+  it('rejects unknown source identities', async () => {
+    const repository = new MemoryTopologyRepository([device('device-1', 'DUP')]);
     const service = new TelemetryService(repository, new TelemetryHub(4), {
       topicPrefix: 'data/dev/',
       maxPayloadBytes: 1024,
@@ -171,10 +202,6 @@ describe('TelemetryService', () => {
     expect(
       await service.ingest('data/dev/MISSING', new TextEncoder().encode('{}'), timestamp),
     ).toEqual({ ok: false, error: 'UNKNOWN_SOURCE' });
-
-    expect(await service.ingest('data/dev/DUP', new TextEncoder().encode('{}'), timestamp)).toEqual(
-      { ok: false, error: 'UNKNOWN_SOURCE' },
-    );
   });
 
   it('enforces stream subscriber capacity', () => {

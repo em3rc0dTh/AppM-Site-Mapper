@@ -1,3 +1,4 @@
+import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 
 function value(value: string | number | undefined, fallback = '—'): string {
@@ -13,10 +14,12 @@ export function TopologyPropertiesPanel({
   node,
   contained,
   previewContained,
+  bdfb,
 }: Readonly<{
   node: TopologyNode;
   contained: number;
   previewContained?: number;
+  bdfb?: BdfbPresentation | null;
 }>) {
   if (node.kind === 'SITE') {
     const load = node.details?.currentLoad;
@@ -30,7 +33,6 @@ export function TopologyPropertiesPanel({
     return (
       <aside className="telxius-properties">
         <header>SITE PROPERTIES</header>
-
         <section>
           <h3>⚡ POWER LOAD</h3>
           <div className="telxius-property-card telxius-power-card">
@@ -43,7 +45,6 @@ export function TopologyPropertiesPanel({
             </div>
           </div>
         </section>
-
         <section>
           <h3 className="is-warning">⌁ ACTIVE ALARMS</h3>
           <div className="telxius-property-card telxius-health-card">
@@ -51,7 +52,6 @@ export function TopologyPropertiesPanel({
             <b>{alarms === 0 ? 'HEALTHY' : `${value(alarms)} ACTIVE`}</b>
           </div>
         </section>
-
         <section>
           <h3>METADATA</h3>
           <dl className="telxius-property-list">
@@ -108,12 +108,10 @@ export function TopologyPropertiesPanel({
     );
   }
 
-  if (node.kind === 'DEVICE' && node.bdfb) {
-    const shelves = node.bdfb.shelves;
-    const frames = shelves.flatMap((shelf) => shelf.frames);
+  if (node.kind === 'DEVICE' && bdfb) {
+    const frames = bdfb.shelves.flatMap((shelf) => shelf.frames);
     const panels = frames.flatMap((frame) => frame.panels);
-    const endpoints = panels.flatMap((panel) => panel.endpoints);
-    const breakers = endpoints.filter((endpoint) => endpoint.variant === 'BREAKER').length;
+    const breakers = panels.flatMap((panel) => panel.positions).filter(Boolean);
 
     return (
       <aside className="telxius-properties">
@@ -121,7 +119,7 @@ export function TopologyPropertiesPanel({
         <section className="telxius-stat-stack">
           <div className="telxius-property-card">
             <span>SHELVES</span>
-            <strong>{shelves.length}</strong>
+            <strong>{bdfb.shelves.length}</strong>
           </div>
           <div className="telxius-property-card">
             <span>FRAMES / PANELS</span>
@@ -131,7 +129,7 @@ export function TopologyPropertiesPanel({
           </div>
           <div className="telxius-property-card">
             <span>ACTIVE BREAKERS</span>
-            <strong>{breakers}</strong>
+            <strong>{breakers.length}</strong>
           </div>
         </section>
         <section>
@@ -146,8 +144,8 @@ export function TopologyPropertiesPanel({
               <dd>{value(node.serialNumber)}</dd>
             </div>
             <div>
-              <dt>ENDPOINTS</dt>
-              <dd>{endpoints.length}</dd>
+              <dt>ACCESS POINTS</dt>
+              <dd>{breakers.length}</dd>
             </div>
           </dl>
         </section>

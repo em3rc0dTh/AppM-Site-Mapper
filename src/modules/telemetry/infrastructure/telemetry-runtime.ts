@@ -1,7 +1,8 @@
 import { requireRuntimeSecret } from '@/config/env';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
-import type { BfdbBindingMode } from '@/modules/telemetry/domain/bfdb';
+import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { NativeMqttSource } from '@/modules/telemetry/infrastructure/native-mqtt-source';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { logger } from '@/shared/infrastructure/logger';
@@ -17,8 +18,8 @@ function positiveInt(value: string | undefined, fallback: number): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function sourceDeviceMap(value: string | undefined): Readonly<Record<string, string>> {
-  if (!value?.trim()) return {};
+function configuredBindings(value: string | undefined): readonly TelemetryBinding[] {
+  if (!value?.trim()) return [];
 
   let parsed: unknown;
   try {
@@ -31,25 +32,23 @@ function sourceDeviceMap(value: string | undefined): Readonly<Record<string, str
     throw new Error('MQTT_SOURCE_DEVICE_MAP must be a JSON object.');
   }
 
-  const entries = Object.entries(parsed).map(([source, target]) => {
+  const timestamp = new Date().toISOString();
+  return Object.entries(parsed).map(([source, target]) => {
     if (!source.trim() || typeof target !== 'string' || !target.trim()) {
       throw new Error('MQTT_SOURCE_DEVICE_MAP values must map source identities to device IDs.');
     }
 
-    return [source.trim(), target.trim()] as const;
+    return {
+      id: `env:mqtt:${source.trim()}`,
+      protocol: 'MQTT' as const,
+      sourceIdentity: source.trim(),
+      targetType: 'DEVICE' as const,
+      targetId: target.trim(),
+      lifecycle: 'ACTIVE' as const,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
   });
-
-  return Object.fromEntries(entries);
-}
-
-function bindingMode(value: string | undefined): BfdbBindingMode {
-  const candidate = value?.trim() || 'panel-order-24';
-
-  if (candidate !== 'panel-order-24' && candidate !== 'explicit') {
-    throw new Error('BFDB_TELEMETRY_BINDING_MODE must be panel-order-24 or explicit.');
-  }
-
-  return candidate;
 }
 
 export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
@@ -59,18 +58,13 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     const topicPrefix = process.env.MQTT_TOPIC_PREFIX?.trim() || 'data/dev/';
     const hub = new TelemetryHub(maxStreams);
     const topologyRepository = await createTopologyRepository();
+    const bindingRepository = await createTelemetryBindingRepository();
     const service = new TelemetryService(
       topologyRepository,
       hub,
-      {
-        topicPrefix,
-        maxPayloadBytes,
-      },
-      {
-        sourceDeviceMap: sourceDeviceMap(process.env.MQTT_SOURCE_DEVICE_MAP),
-        bfdbBindingMode: bindingMode(process.env.BFDB_TELEMETRY_BINDING_MODE),
-        bfdbPositionsPerPanel: positiveInt(process.env.BFDB_POSITIONS_PER_PANEL, 24),
-      },
+      { topicPrefix, maxPayloadBytes },
+      { configuredBindings: configuredBindings(process.env.MQTT_SOURCE_DEVICE_MAP) },
+      bindingRepository,
     );
 
     if (process.env.TELEMETRY_ENABLED === 'true') {
@@ -90,10 +84,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           const result = await service.ingest(topic, payload);
 
           if (!result.ok) {
-            logger.warn('telemetry.message.rejected', {
-              topic,
-              reason: result.error,
-            });
+            logger.warn('telemetry.message.rejected', { topic, reason: result.error });
           }
         },
       );

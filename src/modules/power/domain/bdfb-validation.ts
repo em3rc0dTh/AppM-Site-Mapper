@@ -1,83 +1,61 @@
-import type { BdfbStructure } from '@/modules/topology/domain/entities';
+import type { BdfbStructureSpec } from '@/modules/power/domain/bdfb-model';
 
 export type BdfbValidationError =
   | 'EMPTY_BDFB'
   | 'EMPTY_LABEL'
   | 'DUPLICATE_ID'
-  | 'DUPLICATE_ENDPOINT_LABEL'
   | 'INVALID_CAPACITY'
   | 'INVALID_TELEMETRY_BINDING'
-  | 'DUPLICATE_TELEMETRY_POINT';
+  | 'DUPLICATE_TELEMETRY_POINT'
+  | 'EMPTY_PANEL';
 
 export function validateBdfb(
-  structure: BdfbStructure,
+  structure: BdfbStructureSpec,
 ): { ok: true } | { ok: false; error: BdfbValidationError } {
-  if (structure.shelves.length === 0) {
-    return { ok: false, error: 'EMPTY_BDFB' };
-  }
+  if (structure.shelves.length === 0) return { ok: false, error: 'EMPTY_BDFB' };
 
   const ids = new Set<string>();
   const telemetryPoints = new Set<string>();
 
-  for (const shelf of structure.shelves) {
-    if (!shelf.label.trim()) {
-      return { ok: false, error: 'EMPTY_LABEL' };
-    }
+  const claim = (id: string, label: string): BdfbValidationError | null => {
+    if (!label.trim()) return 'EMPTY_LABEL';
+    if (!id.trim() || ids.has(id)) return 'DUPLICATE_ID';
+    ids.add(id);
+    return null;
+  };
 
-    if (ids.has(shelf.id)) {
-      return { ok: false, error: 'DUPLICATE_ID' };
-    }
-    ids.add(shelf.id);
+  for (const shelf of structure.shelves) {
+    const shelfError = claim(shelf.id, shelf.label);
+    if (shelfError) return { ok: false, error: shelfError };
 
     for (const frame of shelf.frames) {
-      if (!frame.label.trim() || ids.has(frame.id)) {
-        return { ok: false, error: !frame.label.trim() ? 'EMPTY_LABEL' : 'DUPLICATE_ID' };
-      }
-      ids.add(frame.id);
+      const frameError = claim(frame.id, frame.label);
+      if (frameError) return { ok: false, error: frameError };
 
       for (const panel of frame.panels) {
-        if (!panel.label.trim() || ids.has(panel.id)) {
-          return { ok: false, error: !panel.label.trim() ? 'EMPTY_LABEL' : 'DUPLICATE_ID' };
-        }
-        ids.add(panel.id);
+        const panelError = claim(panel.id, panel.label);
+        if (panelError) return { ok: false, error: panelError };
+        if (panel.positions.length === 0) return { ok: false, error: 'EMPTY_PANEL' };
 
-        const endpointLabels = new Set<string>();
+        for (const breaker of panel.positions) {
+          if (!breaker) continue;
 
-        for (const endpoint of panel.endpoints) {
-          if (!endpoint.label.trim()) {
-            return { ok: false, error: 'EMPTY_LABEL' };
-          }
+          const breakerError = claim(breaker.id, breaker.label);
+          if (breakerError) return { ok: false, error: breakerError };
 
           if (
-            endpoint.capacity !== undefined &&
-            (!Number.isFinite(endpoint.capacity) || endpoint.capacity <= 0)
+            breaker.capacity !== undefined &&
+            (!Number.isFinite(breaker.capacity) || breaker.capacity <= 0)
           ) {
             return { ok: false, error: 'INVALID_CAPACITY' };
           }
 
-          if (ids.has(endpoint.id)) {
-            return { ok: false, error: 'DUPLICATE_ID' };
-          }
-          ids.add(endpoint.id);
-
-          const normalized = endpoint.label.trim().toLowerCase();
-
-          if (endpointLabels.has(normalized)) {
-            return { ok: false, error: 'DUPLICATE_ENDPOINT_LABEL' };
-          }
-          endpointLabels.add(normalized);
-
-          if (endpoint.telemetry) {
-            const rawPointId = endpoint.telemetry.rawPointId.trim();
-
-            if (!rawPointId) {
-              return { ok: false, error: 'INVALID_TELEMETRY_BINDING' };
-            }
-
+          if (breaker.telemetry) {
+            const rawPointId = breaker.telemetry.rawPointId.trim();
+            if (!rawPointId) return { ok: false, error: 'INVALID_TELEMETRY_BINDING' };
             if (telemetryPoints.has(rawPointId)) {
               return { ok: false, error: 'DUPLICATE_TELEMETRY_POINT' };
             }
-
             telemetryPoints.add(rawPointId);
           }
         }

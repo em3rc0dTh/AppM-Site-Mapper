@@ -161,14 +161,7 @@ interface Device {
 
   name: string;
 
-  type:
-    | "NETWORK_ELEMENT"
-    | "BDFB"
-    | "SERVER"
-    | "UPS"
-    | "RECTIFIER"
-    | "POWER_SYSTEM"
-    | "CUSTOM";
+  type: 'NETWORK_ELEMENT' | 'BDFB' | 'SERVER' | 'UPS' | 'RECTIFIER' | 'POWER_SYSTEM' | 'CUSTOM';
 
   rootEquipmentIds: EquipmentId[];
 
@@ -176,9 +169,7 @@ interface Device {
 
   attributes?: Record<string, unknown>;
 
-  lifecycle:
-    | "ACTIVE"
-    | "ARCHIVED";
+  lifecycle: 'ACTIVE' | 'ARCHIVED';
 }
 ```
 
@@ -239,9 +230,7 @@ interface Equipment {
 
   parentEquipmentId: EquipmentId | null;
 
-  childMode:
-    | "DYNAMIC"
-    | "POSITIONAL";
+  childMode: 'DYNAMIC' | 'POSITIONAL';
 
   children: Array<EquipmentId | null>;
 
@@ -260,9 +249,7 @@ interface Equipment {
 
   attributes?: Record<string, unknown>;
 
-  lifecycle:
-    | "ACTIVE"
-    | "ARCHIVED";
+  lifecycle: 'ACTIVE' | 'ARCHIVED';
 }
 ```
 
@@ -371,10 +358,7 @@ Example:
   "id": "eq-frame-a",
   "type": "FRAME",
   "childMode": "DYNAMIC",
-  "children": [
-    "eq-panel-a1",
-    "eq-panel-a2"
-  ]
+  "children": ["eq-panel-a1", "eq-panel-a2"]
 }
 ```
 
@@ -401,12 +385,7 @@ Example:
   "id": "eq-panel-a1",
   "type": "PANEL",
   "childMode": "POSITIONAL",
-  "children": [
-    null,
-    null,
-    "eq-breaker-a1-03",
-    null
-  ]
+  "children": [null, null, "eq-breaker-a1-03", null]
 }
 ```
 
@@ -442,7 +421,7 @@ This rule is CANONICAL for v1.2:
 Therefore every positional entry is exactly:
 
 ```ts
-EquipmentId | null
+EquipmentId | null;
 ```
 
 and never:
@@ -549,12 +528,7 @@ For `POSITIONAL` mode, an Equipment may have configured child capacity while cur
 ```json
 {
   "childMode": "POSITIONAL",
-  "children": [
-    null,
-    null,
-    null,
-    null
-  ]
+  "children": [null, null, null, null]
 }
 ```
 
@@ -621,19 +595,19 @@ Canonical vocabulary:
 
 ```ts
 type EquipmentType =
-  | "CHASSIS"
-  | "SHELF"
-  | "SUB_SHELF"
-  | "FRAME"
-  | "PANEL"
-  | "CIRCUIT_BREAKER"
-  | "POWER_SUPPLY"
-  | "POWER_MODULE"
-  | "CONTROLLER_BOARD"
-  | "NETWORK_BOARD"
-  | "PLUGGABLE_MODULE"
-  | "FAN"
-  | "CUSTOM";
+  | 'CHASSIS'
+  | 'SHELF'
+  | 'SUB_SHELF'
+  | 'FRAME'
+  | 'PANEL'
+  | 'CIRCUIT_BREAKER'
+  | 'POWER_SUPPLY'
+  | 'POWER_MODULE'
+  | 'CONTROLLER_BOARD'
+  | 'NETWORK_BOARD'
+  | 'PLUGGABLE_MODULE'
+  | 'FAN'
+  | 'CUSTOM';
 ```
 
 `CHASSIS` is common and is not BDFB-specific.
@@ -650,12 +624,7 @@ Type and function remain orthogonal.
 
 ```ts
 type EquipmentFunction =
-  | "CONTROL"
-  | "NETWORKING"
-  | "POWER_CONVERSION"
-  | "POWER_DISTRIBUTION"
-  | "PROTECTION"
-  | "COOLING";
+  'CONTROL' | 'NETWORKING' | 'POWER_CONVERSION' | 'POWER_DISTRIBUTION' | 'PROTECTION' | 'COOLING';
 ```
 
 Example:
@@ -663,9 +632,7 @@ Example:
 ```json
 {
   "type": "CONTROLLER_BOARD",
-  "functions": [
-    "CONTROL"
-  ]
+  "functions": ["CONTROL"]
 }
 ```
 
@@ -674,9 +641,7 @@ Another:
 ```json
 {
   "type": "NETWORK_BOARD",
-  "functions": [
-    "NETWORKING"
-  ]
+  "functions": ["NETWORKING"]
 }
 ```
 
@@ -739,22 +704,11 @@ interface AccessPort {
 
   name: string;
 
-  portType:
-    | "POWER"
-    | "NETWORK"
-    | "CONTROL"
-    | "DATA"
-    | "GROUND"
-    | "CUSTOM";
+  portType: 'POWER' | 'NETWORK' | 'CONTROL' | 'DATA' | 'GROUND' | 'CUSTOM';
 
-  direction?:
-    | "INPUT"
-    | "OUTPUT"
-    | "BIDIRECTIONAL";
+  direction?: 'INPUT' | 'OUTPUT' | 'BIDIRECTIONAL';
 
-  exposure:
-    | "INTERNAL"
-    | "EXTERNAL";
+  exposure: 'INTERNAL' | 'EXTERNAL';
 
   connectorType?: string;
 
@@ -764,9 +718,7 @@ interface AccessPort {
 
   attributes?: Record<string, unknown>;
 
-  lifecycle:
-    | "ACTIVE"
-    | "ARCHIVED";
+  lifecycle: 'ACTIVE' | 'ARCHIVED';
 }
 ```
 
@@ -845,9 +797,7 @@ Therefore physical Rack occupation belongs to Equipment.
 interface RackPlacement {
   rackId: RackId;
 
-  mode:
-    | "FULL_RACK"
-    | "U_RANGE";
+  mode: 'FULL_RACK' | 'U_RANGE';
 
   startU?: number;
 
@@ -1123,12 +1073,7 @@ Network Board example:
 
   "childMode": "POSITIONAL",
 
-  "children": [
-    "eq-sw01-sfp-01",
-    null,
-    null,
-    null
-  ],
+  "children": ["eq-sw01-sfp-01", null, null, null],
 
   "accessPorts": []
 }
@@ -1168,17 +1113,13 @@ interface PowerPath {
 
   targetAccessPortId: AccessPortId;
 
-  feed?:
-    | "A"
-    | "B";
+  feed?: 'A' | 'B';
 
   label?: string;
 
   attributes?: Record<string, unknown>;
 
-  lifecycle:
-    | "ACTIVE"
-    | "ARCHIVED";
+  lifecycle: 'ACTIVE' | 'ARCHIVED';
 }
 ```
 
@@ -1264,21 +1205,13 @@ interface TelemetryBinding {
 
   unit?: string;
 
-  targetType:
-    | "DEVICE"
-    | "EQUIPMENT"
-    | "ACCESS_PORT";
+  targetType: 'DEVICE' | 'EQUIPMENT' | 'ACCESS_PORT';
 
-  targetId:
-    | DeviceId
-    | EquipmentId
-    | AccessPortId;
+  targetId: DeviceId | EquipmentId | AccessPortId;
 
   attributes?: Record<string, unknown>;
 
-  lifecycle:
-    | "ACTIVE"
-    | "ARCHIVED";
+  lifecycle: 'ACTIVE' | 'ARCHIVED';
 }
 ```
 

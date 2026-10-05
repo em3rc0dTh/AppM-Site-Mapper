@@ -8,6 +8,8 @@ import type {
 } from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 
+const timestamp = '2026-09-22T00:00:00.000Z';
+
 const rack: ContainerRackNode = {
   id: 'rack-1',
   kind: 'CONTAINER_RACK',
@@ -27,12 +29,12 @@ const rack: ContainerRackNode = {
       physicalSizeU: 2,
       clearanceBottomU: 1,
       clearanceTopU: 1,
-      occupantId: 'device-1',
+      occupantId: 'equipment-1',
     },
     { id: 'available-2', startU: 6, endU: 6, state: 'AVAILABLE' },
   ],
-  createdAt: '2026-09-22T00:00:00.000Z',
-  updatedAt: '2026-09-22T00:00:00.000Z',
+  createdAt: timestamp,
+  updatedAt: timestamp,
 };
 
 const device: DeviceNode = {
@@ -42,40 +44,51 @@ const device: DeviceNode = {
   name: 'Device A',
   lifecycle: 'ACTIVE',
   pinned: false,
-  createdAt: '2026-09-22T00:00:00.000Z',
-  updatedAt: '2026-09-22T00:00:00.000Z',
+  deviceType: 'SERVER',
+  rootEquipmentIds: ['equipment-1'],
+  createdAt: timestamp,
+  updatedAt: timestamp,
 };
 
 const equipment: EquipmentNode = {
   id: 'equipment-1',
   kind: 'EQUIPMENT',
-  parentId: rack.id,
+  parentId: device.id,
+  deviceId: device.id,
   name: 'Equipment A',
+  equipmentType: 'CHASSIS',
+  parentEquipmentId: null,
+  childMode: 'DYNAMIC',
+  children: [],
+  accessPorts: [],
+  rackPlacement: {
+    rackId: rack.id,
+    mode: 'U_RANGE',
+    startU: 3,
+    sizeU: 2,
+    clearanceBottomU: 1,
+    clearanceTopU: 1,
+  },
   lifecycle: 'ACTIVE',
   pinned: false,
-  createdAt: '2026-09-22T00:00:00.000Z',
-  updatedAt: '2026-09-22T00:00:00.000Z',
+  createdAt: timestamp,
+  updatedAt: timestamp,
 };
 
 describe('RackElevationService', () => {
-  it('renders Device and Equipment as sibling rack inventory while projecting CAS by U', async () => {
+  it('renders physical Equipment by U while Device remains an abstract identity', async () => {
     const repository = new MemoryTopologyRepository([rack, device, equipment]);
     const result = await new RackElevationService(repository).getView(rack.id);
 
     expect(result.ok).toBe(true);
+    if (!result.ok) throw new Error('Expected rack elevation.');
 
-    if (!result.ok) {
-      throw new Error('Expected rack elevation.');
-    }
-
-    expect(result.value.inventory.map((item) => item.kind).sort()).toEqual(['DEVICE', 'EQUIPMENT']);
+    expect(result.value.inventory.map((item) => item.kind)).toEqual(['EQUIPMENT']);
     expect(result.value.rows).toHaveLength(6);
     expect(result.value.rows.find((row) => row.u === 3)).toMatchObject({
       role: 'PHYSICAL',
-      occupant: { id: device.id, kind: 'DEVICE' },
+      occupant: { id: equipment.id, kind: 'EQUIPMENT' },
     });
-    expect(result.value.rows.find((row) => row.u === 2)).toMatchObject({
-      role: 'CLEARANCE',
-    });
+    expect(result.value.rows.find((row) => row.u === 2)).toMatchObject({ role: 'CLEARANCE' });
   });
 });

@@ -28,19 +28,17 @@ export class MongoPowerRepository implements PowerRepository {
       .find({ lifecycle: 'ACTIVE' })
       .sort({ createdAt: -1 })
       .toArray();
-
     return documents.map(toDomain);
   }
 
-  async listForEntity(entityId: string): Promise<readonly PowerPath[]> {
+  async listForAccessPort(accessPortId: string): Promise<readonly PowerPath[]> {
     const documents = await this.collection
       .find({
         lifecycle: 'ACTIVE',
-        $or: [{ sourceEntityId: entityId }, { targetEntityId: entityId }],
+        $or: [{ sourceAccessPortId: accessPortId }, { targetAccessPortId: accessPortId }],
       })
       .sort({ createdAt: -1 })
       .toArray();
-
     return documents.map(toDomain);
   }
 
@@ -53,9 +51,6 @@ export class MongoPowerRepository implements PowerRepository {
       { id: path.id },
       path as OptionalUnlessRequiredId<PowerPathDocument>,
     );
-
-    if (result.matchedCount !== 1) {
-      throw new Error(`PowerPath does not exist: ${path.id}`);
-    }
+    if (result.matchedCount !== 1) throw new Error('PowerPath does not exist: ' + path.id);
   }
 }

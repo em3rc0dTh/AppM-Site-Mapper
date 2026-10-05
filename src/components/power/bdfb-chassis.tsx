@@ -3,20 +3,21 @@
 import { useEffect, useMemo, useState } from 'react';
 
 import type {
-  BreakerHolder,
-  DeviceNode,
-  Frame,
-  Panel,
-  Shelf,
-} from '@/modules/topology/domain/entities';
+  BdfbBreakerView,
+  BdfbFrameView,
+  BdfbPanelView,
+  BdfbPresentation,
+  BdfbShelfView,
+} from '@/modules/power/domain/bdfb-model';
+import type { DeviceNode } from '@/modules/topology/domain/entities';
 import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
 
 interface PanelSelection {
-  readonly shelf: Shelf;
-  readonly frame: Frame;
-  readonly panel: Panel;
+  readonly shelf: BdfbShelfView;
+  readonly frame: BdfbFrameView;
+  readonly panel: BdfbPanelView;
 }
 
 function formatMetric(value: number | undefined, unit: string, decimals = 2): string {
@@ -28,37 +29,25 @@ function telemetryFields(reading: BreakerTelemetryReading) {
     { label: 'MQTT source', value: reading.sourceIdentity },
     { label: 'Raw point', value: reading.rawPointId },
     { label: 'State', value: reading.state?.value ?? 'Not reported' },
-    {
-      label: 'Voltage',
-      value: formatMetric(reading.metrics.voltageV?.value, 'V'),
-    },
-    {
-      label: 'Current',
-      value: formatMetric(reading.metrics.currentA?.value, 'A'),
-    },
-    {
-      label: 'Power',
-      value: formatMetric(reading.metrics.powerW?.value, 'W'),
-    },
-    {
-      label: 'Energy',
-      value: formatMetric(reading.metrics.energyKwh?.value, 'kWh', 4),
-    },
+    { label: 'Voltage', value: formatMetric(reading.metrics.voltageV?.value, 'V') },
+    { label: 'Current', value: formatMetric(reading.metrics.currentA?.value, 'A') },
+    { label: 'Power', value: formatMetric(reading.metrics.powerW?.value, 'W') },
+    { label: 'Energy', value: formatMetric(reading.metrics.energyKwh?.value, 'kWh', 4) },
     { label: 'Last MQTT packet', value: reading.receivedAt },
   ];
 }
 
-function endpointInspector(
+function breakerInspector(
   device: DeviceNode,
-  shelf: Shelf,
-  frame: Frame,
-  panel: Panel,
-  endpoint: BreakerHolder,
+  shelf: BdfbShelfView,
+  frame: BdfbFrameView,
+  panel: BdfbPanelView,
+  breaker: BdfbBreakerView,
   reading?: BreakerTelemetryReading,
 ): InspectorEntity {
   return {
-    name: endpoint.label,
-    kind: endpoint.variant,
+    name: breaker.label,
+    kind: 'CIRCUIT BREAKER',
     ...(reading?.state ? { status: reading.state.value } : {}),
     sections: [
       {
@@ -68,31 +57,22 @@ function endpointInspector(
           { label: 'Shelf', value: shelf.label },
           { label: 'Frame', value: frame.label },
           { label: 'Panel', value: panel.label },
-          { label: 'Capacity', value: endpoint.capacity ?? 'Not specified' },
-          { label: 'Endpoint ID', value: endpoint.id },
-          {
-            label: 'MQTT binding',
-            value: endpoint.telemetry?.rawPointId ?? 'Panel order + position',
-          },
+          { label: 'Capacity', value: breaker.capacity ?? 'Not specified' },
+          { label: 'Equipment ID', value: breaker.id },
+          { label: 'AccessPort', value: breaker.accessPortId },
+          { label: 'MQTT binding', value: breaker.rawPointId ?? 'Explicit TelemetryBinding' },
         ],
       },
-      ...(reading
-        ? [
-            {
-              title: 'MQTT telemetry',
-              fields: telemetryFields(reading),
-            },
-          ]
-        : []),
+      ...(reading ? [{ title: 'MQTT telemetry', fields: telemetryFields(reading) }] : []),
     ],
   };
 }
 
 function panelInspector(
   device: DeviceNode,
-  shelf: Shelf,
-  frame: Frame,
-  panel: Panel,
+  shelf: BdfbShelfView,
+  frame: BdfbFrameView,
+  panel: BdfbPanelView,
 ): InspectorEntity {
   return {
     name: panel.label,
@@ -104,22 +84,22 @@ function panelInspector(
           { label: 'BDFB', value: device.name },
           { label: 'Shelf', value: shelf.label },
           { label: 'Frame', value: frame.label },
-          { label: 'Endpoints', value: panel.endpoints.length },
+          { label: 'Positions', value: panel.positions.length },
+          { label: 'Breakers', value: panel.positions.filter(Boolean).length },
         ],
       },
     ],
   };
 }
 
-function endpointPreview(
-  endpoint: BreakerHolder,
+function breakerPreview(
+  breaker: BdfbBreakerView,
   reading: BreakerTelemetryReading | undefined,
 ): string {
-  if (!reading) return endpoint.variant;
+  if (!reading) return 'BREAKER';
 
   const voltage = reading.metrics.voltageV?.value;
   const current = reading.metrics.currentA?.value;
-
   if (voltage !== undefined || current !== undefined) {
     return [
       voltage === undefined ? null : `${voltage.toFixed(1)} V`,
@@ -129,7 +109,7 @@ function endpointPreview(
       .join(' · ');
   }
 
-  return reading.state?.value ?? endpoint.variant;
+  return reading.state?.value ?? 'BREAKER';
 }
 
 function PanelBoard({
@@ -141,9 +121,9 @@ function PanelBoard({
   onInspect,
 }: Readonly<{
   device: DeviceNode;
-  shelf: Shelf;
-  frame: Frame;
-  panel: Panel;
+  shelf: BdfbShelfView;
+  frame: BdfbFrameView;
+  panel: BdfbPanelView;
   readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
   onInspect: (entity: InspectorEntity) => void;
 }>) {
@@ -156,7 +136,7 @@ function PanelBoard({
       >
         <span>Panel</span>
         <strong>{panel.label}</strong>
-        <small>{panel.endpoints.length} endpoints</small>
+        <small>{panel.positions.filter(Boolean).length} breakers</small>
       </button>
 
       <div className="bdfb-panel-busbar bdfb-panel-busbar--a" aria-hidden="true">
@@ -167,28 +147,45 @@ function PanelBoard({
       </div>
 
       <div className="bdfb-endpoint-grid">
-        {panel.endpoints.length ? (
-          panel.endpoints.map((endpoint, index) => {
-            const reading = readingsByBreaker[endpoint.id];
-
-            return (
+        {panel.positions.length ? (
+          panel.positions.map((breaker, index) =>
+            breaker ? (
               <button
                 type="button"
-                key={endpoint.id}
-                className={`bdfb-endpoint bdfb-endpoint--${endpoint.variant.toLowerCase()}`}
+                key={breaker.id}
+                className="bdfb-endpoint bdfb-endpoint--breaker"
                 onClick={() =>
-                  onInspect(endpointInspector(device, shelf, frame, panel, endpoint, reading))
+                  onInspect(
+                    breakerInspector(
+                      device,
+                      shelf,
+                      frame,
+                      panel,
+                      breaker,
+                      readingsByBreaker[breaker.id],
+                    ),
+                  )
                 }
-                title={endpoint.label}
+                title={breaker.label}
               >
                 <span>{(index + 1).toString().padStart(2, '0')}</span>
-                <strong>{endpoint.label}</strong>
-                <small>{endpointPreview(endpoint, reading)}</small>
+                <strong>{breaker.label}</strong>
+                <small>{breakerPreview(breaker, readingsByBreaker[breaker.id])}</small>
               </button>
-            );
-          })
+            ) : (
+              <div
+                key={`empty-${index}`}
+                className="bdfb-endpoint bdfb-endpoint--holder"
+                aria-label={`Empty position ${index + 1}`}
+              >
+                <span>{(index + 1).toString().padStart(2, '0')}</span>
+                <strong>EMPTY</strong>
+                <small>AVAILABLE</small>
+              </div>
+            ),
+          )
         ) : (
-          <div className="bdfb-empty-endpoints">No endpoints configured</div>
+          <div className="bdfb-empty-endpoints">No positions configured</div>
         )}
       </div>
     </article>
@@ -201,7 +198,7 @@ function DeviceHierarchyOverview({
   onOpenPanel,
 }: Readonly<{
   device: DeviceNode;
-  shelves: readonly Shelf[];
+  shelves: readonly BdfbShelfView[];
   onOpenPanel: (selection: PanelSelection) => void;
 }>) {
   return (
@@ -223,7 +220,7 @@ function DeviceHierarchyOverview({
               {shelf.frames.map((frame) => (
                 <section className="bdfb-overview-frame" key={frame.id}>
                   <header className="bdfb-overview-label bdfb-overview-label--frame">
-                    <span>FRAME</span>
+                    <span>{frame.physical ? 'FRAME' : 'DIRECT'}</span>
                     <strong>{frame.label.replace(/^Frame\s+/i, '')}</strong>
                   </header>
 
@@ -237,7 +234,7 @@ function DeviceHierarchyOverview({
                         aria-label={`Open ${panel.label} breaker detail`}
                       >
                         <strong>{panel.label}</strong>
-                        <span>{panel.endpoints.length} ENDPOINTS</span>
+                        <span>{panel.positions.filter(Boolean).length} BREAKERS</span>
                       </button>
                     ))}
                   </div>
@@ -275,7 +272,7 @@ function PanelDetail({
             {selection.shelf.label} / {selection.frame.label}
           </span>
           <strong>{selection.panel.label}</strong>
-          <small>Breaker and holder detail · live MQTT overlay</small>
+          <small>Breaker detail · live MQTT overlay</small>
         </div>
       </header>
 
@@ -306,28 +303,28 @@ function useBdfbTelemetry(deviceId: string): TelemetrySample | null {
 
     const onTelemetry = (event: MessageEvent<string>) => {
       const incoming = JSON.parse(event.data) as TelemetrySample;
-      if (incoming.entityId === deviceId) {
-        setSample(incoming);
-      }
+      if (incoming.entityId === deviceId) setSample(incoming);
     };
 
     stream.addEventListener('snapshot', onSnapshot as EventListener);
     stream.addEventListener('telemetry', onTelemetry as EventListener);
-
     return () => stream.close();
   }, [deviceId]);
 
   return sample;
 }
 
-export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
+export function BdfbChassis({
+  device,
+  presentation,
+}: Readonly<{ device: DeviceNode; presentation: BdfbPresentation }>) {
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const [activePanel, setActivePanel] = useState<PanelSelection | null>(null);
   const telemetry = useBdfbTelemetry(device.id);
-  const shelves = device.bdfb?.shelves ?? [];
+  const shelves = presentation.shelves;
   const frames = shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
-  const endpoints = panels.flatMap((panel) => panel.endpoints);
+  const breakers = panels.flatMap((panel) => panel.positions).filter(Boolean);
 
   const readingsByBreaker = useMemo(
     () =>
@@ -345,8 +342,8 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
           <strong>{activePanel ? activePanel.panel.label : 'Panel layout'}</strong>
           <small>
             {activePanel
-              ? 'Breaker and holder detail with live MQTT measurements when available'
-              : 'Canonical device hierarchy · enter a panel for breaker detail'}
+              ? 'Circuit-breaker detail with live MQTT measurements when available'
+              : 'Canonical Device → Equipment hierarchy · enter a panel for breaker detail'}
           </small>
         </div>
 
@@ -354,7 +351,7 @@ export function BdfbChassis({ device }: Readonly<{ device: DeviceNode }>) {
           <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>
           <StatusBadge>{frames.length} FRAMES</StatusBadge>
           <StatusBadge>{panels.length} PANELS</StatusBadge>
-          <StatusBadge>{endpoints.length} ENDPOINTS</StatusBadge>
+          <StatusBadge>{breakers.length} BREAKERS</StatusBadge>
           {telemetry?.breakerReadings?.length ? (
             <StatusBadge tone="good">{telemetry.breakerReadings.length} MQTT BREAKERS</StatusBadge>
           ) : (

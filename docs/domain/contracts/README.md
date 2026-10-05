@@ -4,7 +4,7 @@ This directory is the versioned publication history for the Site Mapper MK1 cano
 
 ## Current canonical version
 
-- [v1.2 — Canonical Domain Contract](./v1.2/domain-contract.md) — **CANONICAL**, validated 2026-10-02.\n  - [Validation & verification](./v1.2/validation.md)\n  - [Visual references](./v1.2/visual-references.md)
+- [v1.2 — Canonical Domain Contract](./v1.2/domain-contract.md) — **CANONICAL**, validated 2026-10-02.\n - [Validation & verification](./v1.2/validation.md)\n - [Visual references](./v1.2/visual-references.md)
 
 ## Preserved prior documentation
 

@@ -1,14 +1,29 @@
 import { describe, expect, it } from 'vitest';
 
+import type { BdfbBreakerView } from '@/modules/power/domain/bdfb-model';
 import { aggregateBdfbTelemetry } from '@/modules/telemetry/application/bdfb-telemetry-aggregate';
-import type { BreakerHolder } from '@/modules/topology/domain/entities';
 import type { BreakerTelemetryReading } from '@/modules/telemetry/domain/entities';
 
-const endpoints: BreakerHolder[] = [
-  { id: 'breaker-1', variant: 'BREAKER', label: 'CB-01', telemetry: { rawPointId: '0_1_1' } },
-  { id: 'holder-2', variant: 'HOLDER', label: 'Holder 02' },
-  { id: 'breaker-3', variant: 'BREAKER', label: 'CB-03', telemetry: { rawPointId: '0_1_3' } },
-  { id: 'breaker-4', variant: 'BREAKER', label: 'CB-04', telemetry: { rawPointId: '0_1_4' } },
+const positions: readonly (BdfbBreakerView | null)[] = [
+  {
+    id: 'breaker-1',
+    label: 'CB-01',
+    accessPortId: 'breaker-1:power-out',
+    rawPointId: '0_1_1',
+  },
+  null,
+  {
+    id: 'breaker-3',
+    label: 'CB-03',
+    accessPortId: 'breaker-3:power-out',
+    rawPointId: '0_1_3',
+  },
+  {
+    id: 'breaker-4',
+    label: 'CB-04',
+    accessPortId: 'breaker-4:power-out',
+    rawPointId: '0_1_4',
+  },
 ];
 
 function reading(
@@ -42,8 +57,8 @@ function reading(
 }
 
 describe('BDFB telemetry aggregate', () => {
-  it('averages only breakers with live readings and never counts empty holders', () => {
-    const aggregate = aggregateBdfbTelemetry(endpoints, [
+  it('averages only physical breakers with live readings and counts null positional slots as empty', () => {
+    const aggregate = aggregateBdfbTelemetry(positions, [
       reading('breaker-1', 12, 2, 24, 1, '2026-09-30T22:48:00.000Z'),
       reading('breaker-3', 14, 4, 56, 3, '2026-09-30T22:48:02.000Z'),
     ]);
@@ -60,7 +75,7 @@ describe('BDFB telemetry aggregate', () => {
   });
 
   it('returns no averages when breakers exist but no live readings are available', () => {
-    const aggregate = aggregateBdfbTelemetry(endpoints, []);
+    const aggregate = aggregateBdfbTelemetry(positions, []);
 
     expect(aggregate.activeBreakers).toBe(0);
     expect(aggregate.emptyHolders).toBe(1);

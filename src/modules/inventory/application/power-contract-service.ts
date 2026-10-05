@@ -70,8 +70,12 @@ export class PowerContractService {
     if (!node) return failure('ITEM_NOT_FOUND');
     if (node.kind !== 'DEVICE' && node.kind !== 'EQUIPMENT') return failure('NOT_INVENTORY_ITEM');
 
-    const equipment = await this.resolveContractEquipment(node);
-    return success(toView(node.id, equipment));
+    const equipment = await this.findContractEquipment(node);
+    return success(
+      equipment
+        ? toView(node.id, equipment)
+        : { ownerId: node.id, equipmentId: '', accessPorts: [], redundancy: 'NONE' },
+    );
   }
 
   async update(
@@ -111,7 +115,7 @@ export class PowerContractService {
       labels.add(labelKey);
     }
 
-    const equipment = await this.resolveContractEquipment(node);
+    const equipment = await this.ensureContractEquipment(node);
     const preserved = equipment.accessPorts.filter(
       (port) =>
         !(
@@ -147,14 +151,14 @@ export class PowerContractService {
     return success(toView(node.id, updated));
   }
 
-  private async resolveContractEquipment(
+  private async findContractEquipment(
     node: DeviceNode | EquipmentNode,
-  ): Promise<EquipmentNode> {
+  ): Promise<EquipmentNode | null> {
     if (node.kind === 'EQUIPMENT') return node;
 
     const equipment = await this.repository.listEquipmentForDevice(node.id);
-    const roots = new Set(node.rootEquipmentIds ?? []);
-    const candidate =
+    const roots = new Set(Array.isArray(node.rootEquipmentIds) ? node.rootEquipmentIds : []);
+    return
       equipment.find(
         (item) =>
           item.lifecycle === 'ACTIVE' &&
@@ -173,9 +177,16 @@ export class PowerContractService {
               port.direction !== 'OUTPUT',
           ),
       ) ??
-      equipment.find((item) => item.lifecycle === 'ACTIVE' && roots.has(item.id));
+      equipment.find((item) => item.lifecycle === 'ACTIVE' && roots.has(item.id)) ??
+      null;
+  }
 
-    if (candidate) return candidate;
+  private async ensureContractEquipment(
+    node: DeviceNode | EquipmentNode,
+  ): Promise<EquipmentNode> {
+    const existing = await this.findContractEquipment(node);
+    if (existing) return existing;
+    if (node.kind === 'EQUIPMENT') return node;
 
     const timestamp = nowIso();
     const id = createDomainId();

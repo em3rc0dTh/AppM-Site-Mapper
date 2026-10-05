@@ -1,0 +1,41 @@
+name: Upgrade Next.js security patch
+
+on:
+  push:
+    branches:
+      - feat/domain-v1-2-runtime-migration
+    paths:
+      - .github/workflows/upgrade-next-security.yml
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: feat/domain-v1-2-runtime-migration
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Upgrade patched Next.js packages
+        run: npm install --save-exact next@16.3.8 eslint-config-next@16.3.8 --no-audit --no-fund
+
+      - name: Verify production audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Commit dependency lock update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(security): upgrade Next.js to 16.3.8"
+          git push origin HEAD:feat/domain-v1-2-runtime-migration

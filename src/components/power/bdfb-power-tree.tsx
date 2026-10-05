@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import type { DeviceNode, TopologyNode } from '@/modules/topology/domain/entities';
 
 export function BdfbPowerTree({
@@ -7,11 +8,13 @@ export function BdfbPowerTree({
   trail,
   selfHref,
   activePanelId,
+  presentation,
 }: Readonly<{
   device: DeviceNode;
   trail: readonly TopologyNode[];
   selfHref: string;
   activePanelId?: string | undefined;
+  presentation: BdfbPresentation;
 }>) {
   const site = trail.find((node) => node.kind === 'SITE');
   const structure = trail.find((node) => node.kind === 'STRUCTURE');
@@ -44,7 +47,7 @@ export function BdfbPowerTree({
           <b>▥</b>
           <strong>{device.name}</strong>
         </Link>
-        {(device.bdfb?.shelves ?? []).map((shelf) => (
+        {presentation.shelves.map((shelf) => (
           <div key={shelf.id}>
             <div className="zip-bdfb-tree-row level-3">
               <span>⌄</span>

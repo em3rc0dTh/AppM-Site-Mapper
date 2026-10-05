@@ -289,11 +289,17 @@ export default async function TopologyNodePage({
               item.id === node.id
             );
           })
-          .map((item) => (
-            <Link key={item.id} href={item.id === node.id ? selfHref : item.href} title={item.name}>
-              {item.name}
-            </Link>
-          ))}
+          .map((item) =>
+            item.id === node.id ? (
+              <span key={item.id} aria-current="page" title={item.name}>
+                {item.name}
+              </span>
+            ) : (
+              <Link key={item.id} href={item.href} title={item.name} prefetch={false}>
+                {item.name}
+              </Link>
+            ),
+          )}
       </nav>
 
       <div className="operational-layout telxius-operational-layout">
@@ -439,8 +445,8 @@ export default async function TopologyNodePage({
 
       {(rackLink || blueprintLink) && (
         <div className="telxius-hidden-actions" aria-hidden="true">
-          {rackLink && <Link href={rackLink}>Rack</Link>}
-          {blueprintLink && <Link href={blueprintLink}>Blueprint</Link>}
+          {rackLink && <Link href={rackLink} prefetch={false}>Rack</Link>}
+          {blueprintLink && <Link href={blueprintLink} prefetch={false}>Blueprint</Link>}
         </div>
       )}
     </main>

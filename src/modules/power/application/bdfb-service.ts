@@ -1,8 +1,5 @@
 import { validateBdfb, type BdfbValidationError } from '@/modules/power/domain/bdfb-validation';
-import type {
-  BdfbBreakerSpec,
-  BdfbStructureSpec,
-} from '@/modules/power/domain/bdfb-model';
+import type { BdfbBreakerSpec, BdfbStructureSpec } from '@/modules/power/domain/bdfb-model';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
   AccessPort,

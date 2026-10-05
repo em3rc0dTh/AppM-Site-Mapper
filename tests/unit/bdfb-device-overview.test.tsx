@@ -2,28 +2,10 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
 import { BdfbChassis } from '../../src/components/power/bdfb-chassis';
-import type { DeviceNode, Panel } from '../../src/modules/topology/domain/entities';
+import type { BdfbPresentation } from '../../src/modules/power/domain/bdfb-model';
+import type { DeviceNode } from '../../src/modules/topology/domain/entities';
 
 const timestamp = '2026-09-28T00:00:00.000Z';
-
-function panel(id: string, label: string): Panel {
-  return {
-    id,
-    label,
-    endpoints: [
-      {
-        id: `${id}-1`,
-        variant: 'HOLDER',
-        label: 'Holder 1',
-      },
-      {
-        id: `${id}-2`,
-        variant: 'BREAKER',
-        label: 'Breaker 2',
-      },
-    ],
-  };
-}
 
 const device: DeviceNode = {
   id: 'device-bdfb',
@@ -35,31 +17,55 @@ const device: DeviceNode = {
   updatedAt: timestamp,
   pinned: false,
   category: 'BDFB',
-  bdfb: {
-    shelves: [
+  deviceType: 'BDFB',
+  rootEquipmentIds: ['chassis-1'],
+};
+
+function panel(id: string, label: string) {
+  return {
+    id,
+    label,
+    positions: [
+      null,
       {
-        id: 'shelf-1',
-        label: 'Main Shelf',
-        frames: [
-          {
-            id: 'frame-a',
-            label: 'Frame A',
-            panels: [panel('a1', 'Panel A1'), panel('a2', 'Panel A2'), panel('a3', 'Panel A3')],
-          },
-          {
-            id: 'frame-b',
-            label: 'Frame B',
-            panels: [panel('b1', 'Panel B1'), panel('b2', 'Panel B2'), panel('b3', 'Panel B3')],
-          },
-        ],
+        id: `${id}-breaker-2`,
+        label: 'Breaker 2',
+        accessPortId: `${id}-breaker-2:power-out`,
       },
     ],
-  },
+  };
+}
+
+const presentation: BdfbPresentation = {
+  deviceId: device.id,
+  chassisId: 'chassis-1',
+  shelves: [
+    {
+      id: 'shelf-1',
+      label: 'Main Shelf',
+      frames: [
+        {
+          id: 'frame-a',
+          label: 'Frame A',
+          physical: true,
+          panels: [panel('a1', 'Panel A1'), panel('a2', 'Panel A2'), panel('a3', 'Panel A3')],
+        },
+        {
+          id: 'frame-b',
+          label: 'Frame B',
+          physical: true,
+          panels: [panel('b1', 'Panel B1'), panel('b2', 'Panel B2'), panel('b3', 'Panel B3')],
+        },
+      ],
+    },
+  ],
 };
 
 describe('BDFB device hierarchy overview', () => {
-  it('shows Device → Shelf → Frame → Panel without endpoint detail at device level', () => {
-    const markup = renderToStaticMarkup(<BdfbChassis device={device} />);
+  it('shows Device → Equipment hierarchy without breaker detail at device level', () => {
+    const markup = renderToStaticMarkup(
+      <BdfbChassis device={device} presentation={presentation} />,
+    );
 
     expect(markup).toContain('DEVICE');
     expect(markup).toContain('Main Shelf');
@@ -70,11 +76,9 @@ describe('BDFB device hierarchy overview', () => {
     expect(markup).toContain('2 FRAMES');
     expect(markup).toContain('6 PANELS');
 
-    expect(markup).not.toContain('Holder 1');
     expect(markup).not.toContain('Breaker 2');
     expect(markup).not.toContain('BUS A');
     expect(markup).not.toContain('BUS B');
-
     expect(markup.match(/Open Panel [AB][123] breaker detail/g)).toHaveLength(6);
   });
 });

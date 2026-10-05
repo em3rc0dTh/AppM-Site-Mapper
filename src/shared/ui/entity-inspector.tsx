@@ -207,6 +207,7 @@ export function EntityInspector({
               className="action-link"
               key={`${action.href}-${action.label}`}
               href={action.href}
+              prefetch={false}
               onClick={onClose}
             >
               {action.label} →

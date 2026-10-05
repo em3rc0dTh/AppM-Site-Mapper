@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
-import type { DeviceNode, EquipmentNode, NetworkNode } from '@/modules/topology/domain/entities';
+import type {
+  DeviceNode,
+  EquipmentNode,
+  NetworkNode,
+} from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 import { WorkspaceService } from '@/modules/workspace/application/workspace-service';
 
@@ -24,47 +28,78 @@ const device: DeviceNode = {
   kind: 'DEVICE',
   pinned: true,
   serialNumber: 'BDFB-1',
+  deviceType: 'BDFB',
+  rootEquipmentIds: ['chassis'],
   lifecycle: 'ACTIVE',
   createdAt: timestamp,
   updatedAt: timestamp,
-  bdfb: {
-    shelves: [
+};
+
+const loadDevice: DeviceNode = {
+  id: 'load-device',
+  parentId: 'rack',
+  name: 'Load A',
+  kind: 'DEVICE',
+  pinned: false,
+  deviceType: 'SERVER',
+  rootEquipmentIds: ['load-equipment'],
+  lifecycle: 'ACTIVE',
+  createdAt: timestamp,
+  updatedAt: timestamp,
+};
+
+function equipment(
+  id: string,
+  parentId: string,
+  deviceId: string,
+  equipmentType: EquipmentNode['equipmentType'],
+  children: readonly (string | null)[] = [],
+): EquipmentNode {
+  return {
+    id,
+    parentId,
+    deviceId,
+    name: id,
+    kind: 'EQUIPMENT',
+    equipmentType,
+    parentEquipmentId: parentId === deviceId ? null : parentId,
+    childMode: equipmentType === 'PANEL' ? 'POSITIONAL' : 'DYNAMIC',
+    children,
+    accessPorts: [],
+    pinned: id === 'load-equipment',
+    lifecycle: 'ACTIVE',
+    createdAt: timestamp,
+    updatedAt: timestamp,
+  };
+}
+
+const graph: EquipmentNode[] = [
+  equipment('chassis', device.id, device.id, 'CHASSIS', ['shelf']),
+  equipment('shelf', 'chassis', device.id, 'SHELF', ['frame']),
+  equipment('frame', 'shelf', device.id, 'FRAME', ['panel']),
+  equipment('panel', 'frame', device.id, 'PANEL', ['breaker']),
+  {
+    ...equipment('breaker', 'panel', device.id, 'CIRCUIT_BREAKER'),
+    accessPorts: [
       {
-        id: 'shelf',
-        label: 'Shelf',
-        frames: [
-          {
-            id: 'frame',
-            label: 'Frame',
-            panels: [
-              {
-                id: 'panel',
-                label: 'Panel',
-                endpoints: [{ id: 'breaker', variant: 'BREAKER', label: 'B1' }],
-              },
-            ],
-          },
-        ],
+        id: 'breaker:power-out',
+        deviceId: device.id,
+        equipmentId: 'breaker',
+        name: 'Power output',
+        portType: 'POWER',
+        direction: 'OUTPUT',
+        exposure: 'EXTERNAL',
+        lifecycle: 'ACTIVE',
       },
     ],
   },
-};
-
-const equipment: EquipmentNode = {
-  id: 'equipment',
-  parentId: 'rack',
-  name: 'Load A',
-  kind: 'EQUIPMENT',
-  pinned: true,
-  lifecycle: 'ACTIVE',
-  createdAt: timestamp,
-  updatedAt: timestamp,
-};
+  equipment('load-equipment', loadDevice.id, loadDevice.id, 'CHASSIS'),
+];
 
 describe('WorkspaceService', () => {
-  it('projects navigation, pinned siblings, BDFB and factual warnings', async () => {
+  it('projects navigation, pinned inventory and BDFB from v1.2 Equipment', async () => {
     const service = new WorkspaceService(
-      new MemoryTopologyRepository([network, device, equipment]),
+      new MemoryTopologyRepository([network, device, loadDevice, ...graph]),
       new MemoryPowerRepository(),
     );
 
@@ -83,7 +118,11 @@ describe('WorkspaceService', () => {
     ]);
     expect(snapshot.notifications).toEqual([
       expect.objectContaining({
-        entityId: 'equipment',
+        entityId: 'load-equipment',
+        title: 'Telemetry identity missing',
+      }),
+      expect.objectContaining({
+        entityId: 'load-device',
         title: 'Telemetry identity missing',
       }),
     ]);

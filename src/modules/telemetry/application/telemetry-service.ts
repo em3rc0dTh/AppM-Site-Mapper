@@ -53,10 +53,16 @@ export class TelemetryService {
     const sourceBindings = bindings.filter(
       (binding) => !binding.sourcePointId && binding.metric.toUpperCase() === 'SOURCE',
     );
-    if (sourceBindings.length === 0) return failure('UNKNOWN_SOURCE');
-    if (sourceBindings.length !== 1) return failure('AMBIGUOUS_SOURCE_BINDING');
 
-    const sourceBinding = sourceBindings[0]!;
+    let sourceBinding = sourceBindings[0];
+    if (sourceBindings.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
+
+    if (!sourceBinding) {
+      const inferred = await this.inferSourceBinding(normalized.value.sourceIdentity, bindings);
+      if (!inferred.ok) return inferred;
+      sourceBinding = inferred.value;
+    }
+
     const target = await this.resolveTarget(sourceBinding);
     if (!target) return failure('INVALID_BINDING_TARGET');
 
@@ -120,6 +126,64 @@ export class TelemetryService {
     const merged = new Map<string, TelemetryBinding>();
     for (const binding of [...persisted, ...configured]) merged.set(binding.id, binding);
     return [...merged.values()];
+  }
+
+  private async inferSourceBinding(
+    sourceIdentity: string,
+    bindings: readonly TelemetryBinding[],
+  ): Promise<Result<TelemetryBinding, TelemetryIngestError>> {
+    const deviceIds = new Set<string>();
+
+    for (const binding of bindings) {
+      if (
+        binding.lifecycle !== 'ACTIVE' ||
+        binding.protocol !== 'MQTT' ||
+        binding.sourceIdentity !== sourceIdentity ||
+        !binding.sourcePointId
+      ) {
+        continue;
+      }
+
+      if (binding.targetType === 'DEVICE') {
+        deviceIds.add(binding.targetId);
+        continue;
+      }
+
+      if (binding.targetType === 'EQUIPMENT') {
+        const equipment = await this.topologyRepository.getById(binding.targetId);
+        if (equipment?.kind === 'EQUIPMENT' && equipment.lifecycle === 'ACTIVE') {
+          deviceIds.add(equipment.deviceId);
+        }
+        continue;
+      }
+
+      if (binding.targetType === 'ACCESS_PORT') {
+        const equipment = await this.topologyRepository.getEquipmentByAccessPortId(binding.targetId);
+        if (equipment?.lifecycle === 'ACTIVE') deviceIds.add(equipment.deviceId);
+      }
+    }
+
+    if (deviceIds.size === 0) return failure('UNKNOWN_SOURCE');
+    if (deviceIds.size !== 1) return failure('AMBIGUOUS_SOURCE_BINDING');
+
+    const targetId = [...deviceIds][0]!;
+    const target = await this.topologyRepository.getById(targetId);
+    if (!target || target.kind !== 'DEVICE' || target.lifecycle !== 'ACTIVE') {
+      return failure('INVALID_BINDING_TARGET');
+    }
+
+    const timestamp = new Date().toISOString();
+    return success({
+      id: `inferred:mqtt:${sourceIdentity}`,
+      protocol: 'MQTT',
+      sourceIdentity,
+      metric: 'SOURCE',
+      targetType: 'DEVICE',
+      targetId,
+      lifecycle: 'ACTIVE',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
   }
 
   private async resolveTarget(binding: TelemetryBinding): Promise<ResolvedTarget | null> {

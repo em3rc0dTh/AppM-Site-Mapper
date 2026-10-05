@@ -1,52 +1,29 @@
 import { PowerContractService } from '@/modules/inventory/application/power-contract-service';
+import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import { BdfbService } from '@/modules/power/application/bdfb-service';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import { PowerService } from '@/modules/power/application/power-service';
+import type { BdfbStructureSpec } from '@/modules/power/domain/bdfb-model';
 import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
+import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
+import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import {
   TopologyService,
   type CreateTopologyNodeInput,
 } from '@/modules/topology/application/topology-service';
-import type {
-  BdfbStructure,
-  DeviceNode,
-  TopologyKind,
-  TopologyNode,
-} from '@/modules/topology/domain/entities';
+import type { TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
 
 export const EMULATOR_SERIALS = ['EMU-BFDB-01', 'EMU-BFDB-02', 'EMU-BFDB-03'] as const;
 
 const PANELS = ['A1', 'A2', 'B1', 'B2'] as const;
 const POSITIONS_PER_PANEL = 24;
-
-const LAB_SITE_BOUNDARY = [
+const polygon = (width: number, height: number) => [
   { x: 0, y: 0 },
-  { x: 6000, y: 0 },
-  { x: 6000, y: 4800 },
-  { x: 0, y: 4800 },
-] as const;
-
-const LAB_STRUCTURE_BOUNDARY = [
-  { x: 0, y: 0 },
-  { x: 5400, y: 0 },
-  { x: 5400, y: 4200 },
-  { x: 0, y: 4200 },
-] as const;
-
-const LAB_ROOM_BOUNDARY = [
-  { x: 0, y: 0 },
-  { x: 3600, y: 0 },
-  { x: 3600, y: 3600 },
-  { x: 0, y: 3600 },
-] as const;
-
-const LAB_BAY_BOUNDARY = [
-  { x: 0, y: 2400 },
-  { x: 1800, y: 2400 },
-  { x: 1800, y: 3000 },
-  { x: 0, y: 3000 },
-] as const;
+  { x: width, y: 0 },
+  { x: width, y: height },
+  { x: 0, y: height },
+];
 
 async function ensureNode(
   repository: TopologyRepository,
@@ -59,13 +36,10 @@ async function ensureNode(
   const existing = siblings.find(
     (node) => node.lifecycle === 'ACTIVE' && node.kind === input.kind && node.name === input.name,
   );
-
   if (existing) return existing;
 
   const result = await service.create(input);
-  if (!result.ok) {
-    throw new Error(`Cannot create isolated MQTT emulator lab: ${result.error}`);
-  }
+  if (!result.ok) throw new Error(`Cannot create isolated MQTT emulator lab: ${result.error}`);
   return result.value;
 }
 
@@ -73,24 +47,16 @@ function requireKind<K extends TopologyKind>(
   node: TopologyNode,
   kind: K,
 ): Extract<TopologyNode, { kind: K }> {
-  if (node.kind !== kind) {
-    throw new Error(`Emulator lab topology conflict: expected ${kind}`);
-  }
+  if (node.kind !== kind) throw new Error(`Emulator lab topology conflict: expected ${kind}`);
   return node as Extract<TopologyNode, { kind: K }>;
 }
 
-/**
- * A synthetic MQTT commissioning fixture, never customer physical inventory.
- * Point identities are copied from the current bfdb-telemetry-gateway lab
- * contract (A1, A2, B1, B2; 24 positions per panel).
- */
-function structureFor(serial: string): BdfbStructure {
+function structureFor(serial: string): BdfbStructureSpec {
   const panel = (name: (typeof PANELS)[number], index: number) => ({
     id: `lab-${serial}-panel-${name.toLowerCase()}`,
     label: name,
-    endpoints: Array.from({ length: POSITIONS_PER_PANEL }, (_, position) => ({
+    positions: Array.from({ length: POSITIONS_PER_PANEL }, (_, position) => ({
       id: `lab-${serial}-breaker-${name.toLowerCase()}-${String(position + 1).padStart(2, '0')}`,
-      variant: 'BREAKER' as const,
       label: `${name}-${String(position + 1).padStart(2, '0')}`,
       telemetry: { rawPointId: `0_${index}_${position + 1}` },
     })),
@@ -101,41 +67,34 @@ function structureFor(serial: string): BdfbStructure {
       {
         id: `lab-${serial}-shelf-a`,
         label: 'Feed A (synthetic)',
-        frames: [
-          {
-            id: `lab-${serial}-frame-a`,
-            label: 'Feed A',
-            panels: [panel('A1', 1), panel('A2', 2)],
-          },
-        ],
+        frames: [{
+          id: `lab-${serial}-frame-a`,
+          label: 'Feed A',
+          panels: [panel('A1', 1), panel('A2', 2)],
+        }],
       },
       {
         id: `lab-${serial}-shelf-b`,
         label: 'Feed B (synthetic)',
-        frames: [
-          {
-            id: `lab-${serial}-frame-b`,
-            label: 'Feed B',
-            panels: [panel('B1', 3), panel('B2', 4)],
-          },
-        ],
+        frames: [{
+          id: `lab-${serial}-frame-b`,
+          label: 'Feed B',
+          panels: [panel('B1', 3), panel('B2', 4)],
+        }],
       },
     ],
   };
 }
 
-function explicitPoints(device: DeviceNode): Set<string> {
-  return new Set(
-    (device.bdfb?.shelves ?? []).flatMap((shelf) =>
-      shelf.frames.flatMap((frame) =>
-        frame.panels.flatMap((panel) =>
-          panel.endpoints.flatMap((breaker) =>
-            breaker.telemetry?.rawPointId ? [breaker.telemetry.rawPointId] : [],
-          ),
-        ),
-      ),
-    ),
+async function upsertBinding(
+  repository: TelemetryBindingRepository,
+  binding: TelemetryBinding,
+): Promise<void> {
+  const existing = (await repository.listForSource(binding.protocol, binding.sourceIdentity)).find(
+    (candidate) => candidate.id === binding.id,
   );
+  if (existing) await repository.replace(binding);
+  else await repository.insert(binding);
 }
 
 export interface EmulatorLabDevice {
@@ -148,12 +107,11 @@ export interface EmulatorLabDevice {
 export async function seedBfdbEmulatorLab(
   repository: TopologyRepository,
   powerRepository?: PowerRepository,
+  telemetryBindings?: TelemetryBindingRepository,
 ): Promise<readonly EmulatorLabDevice[]> {
   const paths = powerRepository ?? new MemoryPowerRepository();
   const topology = new TopologyService(repository);
 
-  // The lab lives in its own explicitly synthetic network. Its geometry is a
-  // deterministic test fixture only and is never customer physical inventory.
   const network = requireKind(
     await ensureNode(repository, topology, {
       kind: 'NETWORK',
@@ -166,13 +124,13 @@ export async function seedBfdbEmulatorLab(
     kind: 'SITE',
     parentId: network.id,
     name: 'Virtual emulator',
-    polygon: LAB_SITE_BOUNDARY,
+    polygon: polygon(6000, 4800),
   });
   const building = await ensureNode(repository, topology, {
     kind: 'STRUCTURE',
     parentId: site.id,
     name: 'Unsurveyed emulator topology',
-    polygon: LAB_STRUCTURE_BOUNDARY,
+    polygon: polygon(5400, 4200),
   });
   const level = await ensureNode(repository, topology, {
     kind: 'LEVEL',
@@ -184,16 +142,23 @@ export async function seedBfdbEmulatorLab(
     parentId: level.id,
     name: 'Virtual BFDB room (no physical geometry)',
     roomVariant: 'ROOM',
-    polygon: LAB_ROOM_BOUNDARY,
+    polygon: polygon(3600, 3600),
   });
   const bay = await ensureNode(repository, topology, {
     kind: 'CONTAINER_CLUSTER_BAY',
     parentId: room.id,
     name: 'Logical devices (unplaced)',
     clusterVariant: 'BAY',
-    polygon: LAB_BAY_BOUNDARY,
+    polygon: [
+      { x: 0, y: 2400 },
+      { x: 1800, y: 2400 },
+      { x: 1800, y: 3000 },
+      { x: 0, y: 3000 },
+    ],
   });
+
   const bdfbService = new BdfbService(repository);
+  const projectionService = new BdfbProjectionService(repository);
   const output: EmulatorLabDevice[] = [];
 
   for (const [index, serial] of EMULATOR_SERIALS.entries()) {
@@ -210,43 +175,72 @@ export async function seedBfdbEmulatorLab(
       containerVariant: 'RACK',
       totalU: 42,
     });
-    const node = requireKind(
+    const device = requireKind(
       await ensureNode(repository, topology, {
         kind: 'DEVICE',
         parentId: rack.id,
         name: `BFDB-${String(index + 1).padStart(2, '0')} (emulated)`,
         serialNumber: serial,
         category: 'MQTT synthetic commissioning fixture',
+        deviceType: 'BDFB',
       }),
       'DEVICE',
     );
-
-    if (node.serialNumber !== serial) {
+    if (device.serialNumber !== serial) {
       throw new Error(`Lab identity conflict for ${serial}; refusing silent remapping`);
     }
-    const existingPoints = explicitPoints(node);
-    const expectedPoints = explicitPoints({
-      ...node,
-      bdfb: structureFor(serial),
-    });
 
-    if (!node.bdfb) {
-      const configured = await bdfbService.configure(node.id, structureFor(serial));
+    if (!Array.isArray(device.rootEquipmentIds) || device.rootEquipmentIds.length === 0) {
+      const configured = await bdfbService.configure(device.id, structureFor(serial));
       if (!configured.ok) {
         throw new Error(`Emulator lab BFDB binding failed: ${configured.error}`);
       }
-    } else if (
-      existingPoints.size !== 96 ||
-      [...expectedPoints].some((point) => !existingPoints.has(point))
-    ) {
-      throw new Error(`Emulator lab binding drift for ${serial}; refusing to overwrite it`);
+    }
+
+    const presentation = await projectionService.get(device.id);
+    if (!presentation) throw new Error(`Emulator lab projection unavailable for ${serial}`);
+    const breakers = presentation.shelves.flatMap((shelf) =>
+      shelf.frames.flatMap((frame) =>
+        frame.panels.flatMap((panel) => panel.positions.filter((item) => item !== null)),
+      ),
+    );
+    if (breakers.length !== 96) {
+      throw new Error(`Emulator lab binding drift for ${serial}; expected 96 breakers`);
+    }
+
+    if (telemetryBindings) {
+      const timestamp = new Date().toISOString();
+      await upsertBinding(telemetryBindings, {
+        id: `lab:mqtt:${serial}:source`,
+        protocol: 'MQTT',
+        sourceIdentity: serial,
+        targetType: 'DEVICE',
+        targetId: device.id,
+        lifecycle: 'ACTIVE',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      });
+      for (const breaker of breakers) {
+        if (!breaker.rawPointId) continue;
+        await upsertBinding(telemetryBindings, {
+          id: `lab:mqtt:${serial}:${breaker.rawPointId}`,
+          protocol: 'MQTT',
+          sourceIdentity: serial,
+          sourcePointId: breaker.rawPointId,
+          targetType: 'EQUIPMENT',
+          targetId: breaker.id,
+          lifecycle: 'ACTIVE',
+          createdAt: timestamp,
+          updatedAt: timestamp,
+        });
+      }
     }
 
     output.push({
       serial,
-      deviceId: node.id,
-      breakerCount: 96,
-      href: await topology.buildDeepLink(node.id),
+      deviceId: device.id,
+      breakerCount: breakers.length,
+      href: await topology.buildDeepLink(device.id),
     });
   }
 
@@ -270,14 +264,17 @@ export async function seedBfdbEmulatorLab(
       name: 'DEVICE-X (dual-feed MQTT demo)',
       serialNumber: 'EMU-LOAD-DEVICE-X',
       category: 'Synthetic dual-feed commissioning load',
+      deviceType: 'NETWORK_ELEMENT',
     }),
     'DEVICE',
   );
 
+  const portA = `${load.id}:power-in-a`;
+  const portB = `${load.id}:power-in-b`;
   const powerContract = await new PowerContractService(repository).update(load.id, {
     accessPorts: [
-      { id: 'power-in-a', label: 'POWER-IN-A', kind: 'POWER', feed: 'A' },
-      { id: 'power-in-b', label: 'POWER-IN-B', kind: 'POWER', feed: 'B' },
+      { id: portA, label: 'POWER-IN-A', feed: 'A' },
+      { id: portB, label: 'POWER-IN-B', feed: 'B' },
     ],
     redundancy: 'A_B_REQUIRED',
   });
@@ -292,73 +289,49 @@ export async function seedBfdbEmulatorLab(
     throw new Error('Dual-feed emulator fixture requires EMU-BFDB-01 and EMU-BFDB-02.');
   }
 
+  const sourceA = await projectionService.get(sourceAId);
+  const sourceB = await projectionService.get(sourceBId);
+  const breakerA = sourceA?.shelves
+    .flatMap((shelf) => shelf.frames)
+    .flatMap((frame) => frame.panels)
+    .flatMap((panel) => panel.positions)
+    .find((breaker) => breaker?.rawPointId === '0_1_7');
+  const breakerB = sourceB?.shelves
+    .flatMap((shelf) => shelf.frames)
+    .flatMap((frame) => frame.panels)
+    .flatMap((panel) => panel.positions)
+    .find((breaker) => breaker?.rawPointId === '0_3_12');
+  if (!breakerA || !breakerB) throw new Error('Dual-feed emulator breaker fixtures unavailable.');
+
   const activePaths = await paths.listActive();
   const power = new PowerService(repository, paths);
 
-  async function ensurePath(input: {
-    sourceEntityId: string;
-    shelfId: string;
-    frameId: string;
-    panelId: string;
-    breakerHolderId: string;
-    targetPortId: 'power-in-a' | 'power-in-b';
-    feed: 'A' | 'B';
-    label: string;
-  }): Promise<void> {
+  for (const input of [
+    {
+      sourceAccessPortId: breakerA.accessPortId,
+      targetAccessPortId: portA,
+      feed: 'A' as const,
+      label: 'Primary feed · EMU-BFDB-01 / A1-07',
+    },
+    {
+      sourceAccessPortId: breakerB.accessPortId,
+      targetAccessPortId: portB,
+      feed: 'B' as const,
+      label: 'Secondary feed · EMU-BFDB-02 / B1-12',
+    },
+  ]) {
     const exists = activePaths.some(
       (path) =>
         path.lifecycle === 'ACTIVE' &&
-        path.source.entityId === input.sourceEntityId &&
-        path.source.internal?.breakerHolderId === input.breakerHolderId &&
-        path.target.entityId === load.id &&
-        path.target.internal?.accessPortId === input.targetPortId &&
+        path.sourceAccessPortId === input.sourceAccessPortId &&
+        path.targetAccessPortId === input.targetAccessPortId &&
         path.feed === input.feed,
     );
-    if (exists) return;
+    if (exists) continue;
 
-    const created = await power.create({
-      source: {
-        entityId: input.sourceEntityId,
-        internal: {
-          shelfId: input.shelfId,
-          frameId: input.frameId,
-          panelId: input.panelId,
-          breakerHolderId: input.breakerHolderId,
-        },
-      },
-      target: {
-        entityId: load.id,
-        internal: { accessPortId: input.targetPortId },
-      },
-      feed: input.feed,
-      label: input.label,
-    });
-    if (!created.ok) {
-      throw new Error(`Dual-feed emulator PowerPath failed: ${created.error}`);
-    }
+    const created = await power.create(input);
+    if (!created.ok) throw new Error(`Dual-feed emulator PowerPath failed: ${created.error}`);
   }
-
-  await ensurePath({
-    sourceEntityId: sourceAId,
-    shelfId: 'lab-EMU-BFDB-01-shelf-a',
-    frameId: 'lab-EMU-BFDB-01-frame-a',
-    panelId: 'lab-EMU-BFDB-01-panel-a1',
-    breakerHolderId: 'lab-EMU-BFDB-01-breaker-a1-07',
-    targetPortId: 'power-in-a',
-    feed: 'A',
-    label: 'Primary feed · EMU-BFDB-01 / A1-07',
-  });
-
-  await ensurePath({
-    sourceEntityId: sourceBId,
-    shelfId: 'lab-EMU-BFDB-02-shelf-b',
-    frameId: 'lab-EMU-BFDB-02-frame-b',
-    panelId: 'lab-EMU-BFDB-02-panel-b1',
-    breakerHolderId: 'lab-EMU-BFDB-02-breaker-b1-12',
-    targetPortId: 'power-in-b',
-    feed: 'B',
-    label: 'Secondary feed · EMU-BFDB-02 / B1-12',
-  });
 
   return output;
 }

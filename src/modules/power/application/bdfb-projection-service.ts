@@ -60,7 +60,8 @@ export class BdfbProjectionService {
       (item) => item.lifecycle === 'ACTIVE',
     );
     const byId = new Map(equipment.map((item) => [item.id, item]));
-    const chassis = device.rootEquipmentIds
+    const rootEquipmentIds = Array.isArray(device.rootEquipmentIds) ? device.rootEquipmentIds : [];
+    const chassis = rootEquipmentIds
       .map((id) => byId.get(id))
       .find((item) => item?.equipmentType === 'CHASSIS');
     if (!chassis) return null;

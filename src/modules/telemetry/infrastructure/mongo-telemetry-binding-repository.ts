@@ -38,6 +38,7 @@ export class MongoTelemetryBindingRepository implements TelemetryBindingReposito
       { id: binding.id },
       binding as OptionalUnlessRequiredId<BindingDocument>,
     );
-    if (result.matchedCount !== 1) throw new Error('TelemetryBinding does not exist: ' + binding.id);
+    if (result.matchedCount !== 1)
+      throw new Error('TelemetryBinding does not exist: ' + binding.id);
   }
 }

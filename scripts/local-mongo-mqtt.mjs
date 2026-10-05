@@ -138,6 +138,14 @@ async function inspectMongo() {
     const paths = names.includes('power_paths')
       ? await db.collection('power_paths').countDocuments({ lifecycle: 'ACTIVE' })
       : 0;
+    const canonicalPaths = names.includes('power_paths')
+      ? await db.collection('power_paths').countDocuments({
+          lifecycle: 'ACTIVE',
+          sourceAccessPortId: { $type: 'string' },
+          targetAccessPortId: { $type: 'string' },
+        })
+      : 0;
+    const incompletePaths = Math.max(0, paths - canonicalPaths);
 
     if (crudTest && !reuseCrudTest && (count > 0 || users > 0 || paths > 0)) {
       throw new Error(
@@ -230,7 +238,15 @@ async function inspectMongo() {
     console.log('Database: ' + databaseName);
     console.log('Canonical nodes: ' + count);
     console.log('Active root Networks: ' + roots);
-    console.log('Active power paths: ' + paths);
+    console.log(
+      'Active power paths: ' +
+        paths +
+        ' (canonical=' +
+        canonicalPaths +
+        ', legacy/incomplete=' +
+        incompletePaths +
+        ')',
+    );
     console.log('Existing users: ' + users);
     console.log(
       crudTest
@@ -260,7 +276,7 @@ async function inspectMongo() {
         'MongoDB already has users. Sign in with an existing account; --init-admin is first-user only.',
       );
     }
-    return { count, roots, users, complete };
+    return { count, roots, users, complete, paths, canonicalPaths, incompletePaths };
   } finally {
     await client.close();
   }

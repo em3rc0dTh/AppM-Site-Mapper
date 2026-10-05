@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import { parseAssetTemplateJson } from '@/modules/warehouse/application/template-json-parser';
 import { WarehouseInstantiationService } from '@/modules/warehouse/application/warehouse-instantiation-service';
 import { WarehouseService } from '@/modules/warehouse/application/warehouse-service';
@@ -124,6 +125,8 @@ describe('Virtual Warehouse', () => {
       name: 'Existing telemetry device',
       serialNumber: 'EMU-BFDB-02',
       pinned: false,
+      deviceType: 'CUSTOM' as const,
+      rootEquipmentIds: [],
       lifecycle: 'ACTIVE' as const,
       createdAt: '2026-09-30T00:00:00.000Z',
       updatedAt: '2026-09-30T00:00:00.000Z',
@@ -226,9 +229,12 @@ describe('Virtual Warehouse', () => {
     expect(result.value.node.kind).toBe('DEVICE');
     if (result.value.node.kind !== 'DEVICE') return;
     expect(result.value.node.deviceType).toBe('BDFB');
-    expect(result.value.node.bdfb?.shelves).toHaveLength(1);
+    expect(result.value.node.rootEquipmentIds).toHaveLength(1);
 
-    const frames = result.value.node.bdfb?.shelves[0]?.frames ?? [];
+    const presentation = await new BdfbProjectionService(topology).get(result.value.node.id);
+    expect(presentation?.shelves).toHaveLength(1);
+
+    const frames = presentation?.shelves[0]?.frames ?? [];
     expect(frames).toHaveLength(2);
     expect(frames.map((frame) => frame.label)).toEqual(['A', 'B']);
     expect(frames.flatMap((frame) => frame.panels).map((panel) => panel.label)).toEqual([
@@ -238,13 +244,19 @@ describe('Virtual Warehouse', () => {
       'Panel B2',
     ]);
 
-    const endpoints = frames.flatMap((frame) => frame.panels.flatMap((panel) => panel.endpoints));
-    expect(endpoints).toHaveLength(96);
-    expect(endpoints[0]?.telemetry?.rawPointId).toBe('0_1_1');
-    expect(endpoints.at(-1)?.telemetry?.rawPointId).toBe('0_4_24');
+    const breakers = frames.flatMap((frame) =>
+      frame.panels.flatMap((panel) => panel.positions.filter((position) => position !== null)),
+    );
+    expect(breakers).toHaveLength(96);
+    expect(breakers[0]?.rawPointId).toBe('0_1_1');
+    expect(breakers.at(-1)?.rawPointId).toBe('0_4_24');
     expect(result.value.node.template?.deviceType).toBe('BDFB');
 
     const persisted = await topology.getById(result.value.node.id);
-    expect(persisted?.kind === 'DEVICE' ? persisted.bdfb?.shelves.length : 0).toBe(1);
+    expect(
+      persisted?.kind === 'DEVICE' && Array.isArray(persisted.rootEquipmentIds)
+        ? persisted.rootEquipmentIds.length
+        : 0,
+    ).toBe(1);
   });
 });

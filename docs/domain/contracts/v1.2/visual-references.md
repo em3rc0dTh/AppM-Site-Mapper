@@ -28,3 +28,8 @@ These images were supplied during the domain-model review and are preserved with
 - Device-level AccessPort rendering is interpreted only as an aggregate projection; physical containment is Equipment -> AccessPort.
 
 These visual references are retained to preserve iteration history, as required by the documentation versioning policy.
+
+## Runtime UI preservation
+
+The v1.2 runtime port intentionally preserves the approved Full Power Trace / BDFB / Power Canvas presentation from `feat/full-power-trace-access-ports`. Canonical Device → Equipment → AccessPort semantics are supplied through projections and application adapters rather than by replacing that visual composition.
+

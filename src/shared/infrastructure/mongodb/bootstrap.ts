@@ -1,4 +1,11 @@
-import type { Db } from 'mongodb';
+import type { Collection, Db, Document } from 'mongodb';
+
+async function dropIndexIfPresent(collection: Collection<Document>, name: string): Promise<void> {
+  const indexes = await collection.indexes();
+  if (indexes.some((index) => index.name === name)) {
+    await collection.dropIndex(name);
+  }
+}
 
 export async function ensurePersistenceIndexes(database: Db): Promise<void> {
   const topology = database.collection('topology_nodes');
@@ -11,6 +18,14 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
     topology.createIndex({ kind: 1, lifecycle: 1 }, { name: 'ix_topology_kind_lifecycle' }),
     topology.createIndex({ serialNumber: 1 }, { name: 'ix_topology_serial', sparse: true }),
+    topology.createIndex(
+      { deviceId: 1, kind: 1, lifecycle: 1 },
+      { name: 'ix_topology_device_equipment' },
+    ),
+    topology.createIndex(
+      { 'accessPorts.id': 1 },
+      { unique: true, sparse: true, name: 'uq_topology_access_port_id' },
+    ),
   ]);
 
   const warehouseTemplates = database.collection('warehouse_templates');
@@ -24,9 +39,47 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
 
   const powerPaths = database.collection('power_paths');
   await Promise.all([
+    dropIndexIfPresent(powerPaths, 'ix_power_path_source'),
+    dropIndexIfPresent(powerPaths, 'ix_power_path_target'),
+  ]);
+  await Promise.all([
     powerPaths.createIndex({ id: 1 }, { unique: true, name: 'uq_power_path_id' }),
-    powerPaths.createIndex({ sourceEntityId: 1 }, { name: 'ix_power_path_source' }),
-    powerPaths.createIndex({ targetEntityId: 1 }, { name: 'ix_power_path_target' }),
+    powerPaths.createIndex(
+      { sourceAccessPortId: 1, lifecycle: 1 },
+      { name: 'ix_power_path_source_access_port' },
+    ),
+    powerPaths.createIndex(
+      { targetAccessPortId: 1, lifecycle: 1 },
+      { name: 'ix_power_path_target_access_port' },
+    ),
+    powerPaths.createIndex(
+      { sourceAccessPortId: 1, targetAccessPortId: 1, feed: 1 },
+      {
+        unique: true,
+        name: 'uq_active_power_path_endpoints_feed',
+        partialFilterExpression: { lifecycle: 'ACTIVE' },
+      },
+    ),
+  ]);
+
+  const telemetryBindings = database.collection('telemetry_bindings');
+  await Promise.all([
+    telemetryBindings.createIndex(
+      { id: 1 },
+      { unique: true, name: 'uq_telemetry_binding_id' },
+    ),
+    telemetryBindings.createIndex(
+      { protocol: 1, sourceIdentity: 1, sourcePointId: 1, metric: 1 },
+      {
+        unique: true,
+        name: 'uq_active_telemetry_source_point_metric',
+        partialFilterExpression: { lifecycle: 'ACTIVE' },
+      },
+    ),
+    telemetryBindings.createIndex(
+      { targetType: 1, targetId: 1, lifecycle: 1 },
+      { name: 'ix_telemetry_target' },
+    ),
   ]);
 
   const users = database.collection('users');

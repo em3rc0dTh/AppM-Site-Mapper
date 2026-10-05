@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
-import type {
-  DeviceNode,
-  EquipmentNode,
-  NetworkNode,
-} from '@/modules/topology/domain/entities';
+import type { DeviceNode, EquipmentNode, NetworkNode } from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 import { WorkspaceService } from '@/modules/workspace/application/workspace-service';
 

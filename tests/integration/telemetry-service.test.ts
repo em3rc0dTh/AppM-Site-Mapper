@@ -15,12 +15,14 @@ function binding(
   targetType: TelemetryBinding['targetType'],
   targetId: string,
   sourcePointId?: string,
+  metric = 'SOURCE',
 ): TelemetryBinding {
   return {
     id,
     protocol: 'MQTT',
     sourceIdentity,
     ...(sourcePointId ? { sourcePointId } : {}),
+    metric,
     targetType,
     targetId,
     lifecycle: 'ACTIVE',
@@ -128,12 +130,15 @@ describe('TelemetryService', () => {
       {
         configuredBindings: [
           binding('source-bdfb', 'EMU-BFDB-01', 'DEVICE', bdfb.id),
-          binding(
-            'point-bdfb-1',
-            'EMU-BFDB-01',
-            'EQUIPMENT',
-            'device-1:equipment:breaker-1',
-            '0_1_1',
+          ...(['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const).map((metric) =>
+            binding(
+              `point-bdfb-1-${metric.toLowerCase()}`,
+              'EMU-BFDB-01',
+              'EQUIPMENT',
+              'device-1:equipment:breaker-1',
+              '0_1_1',
+              metric,
+            ),
           ),
         ],
       },

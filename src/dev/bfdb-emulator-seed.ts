@@ -218,6 +218,7 @@ export async function seedBfdbEmulatorLab(
         id: `lab:mqtt:${serial}:source`,
         protocol: 'MQTT',
         sourceIdentity: serial,
+        metric: 'SOURCE',
         targetType: 'DEVICE',
         targetId: device.id,
         lifecycle: 'ACTIVE',
@@ -226,17 +227,20 @@ export async function seedBfdbEmulatorLab(
       });
       for (const breaker of breakers) {
         if (!breaker.rawPointId) continue;
-        await upsertBinding(telemetryBindings, {
-          id: `lab:mqtt:${serial}:${breaker.rawPointId}`,
-          protocol: 'MQTT',
-          sourceIdentity: serial,
-          sourcePointId: breaker.rawPointId,
-          targetType: 'EQUIPMENT',
-          targetId: breaker.id,
-          lifecycle: 'ACTIVE',
-          createdAt: timestamp,
-          updatedAt: timestamp,
-        });
+        for (const metric of ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const) {
+          await upsertBinding(telemetryBindings, {
+            id: `lab:mqtt:${serial}:${breaker.rawPointId}:${metric.toLowerCase()}`,
+            protocol: 'MQTT',
+            sourceIdentity: serial,
+            sourcePointId: breaker.rawPointId,
+            metric,
+            targetType: 'EQUIPMENT',
+            targetId: breaker.id,
+            lifecycle: 'ACTIVE',
+            createdAt: timestamp,
+            updatedAt: timestamp,
+          });
+        }
       }
     }
 

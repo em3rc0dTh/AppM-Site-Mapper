@@ -35,13 +35,11 @@ export default async function PowerPage() {
     const device = await topology.getById(resolved.equipment.deviceId);
     return [
       ...(device?.kind === 'DEVICE' ? [{ id: device.id, kind: 'DEVICE', name: device.name }] : []),
-      ...equipmentTrail
-        .reverse()
-        .map((equipment) => ({
-          id: equipment.id,
-          kind: equipment.equipmentType,
-          name: equipment.name,
-        })),
+      ...equipmentTrail.reverse().map((equipment) => ({
+        id: equipment.id,
+        kind: equipment.equipmentType,
+        name: equipment.name,
+      })),
       { id: resolved.port.id, kind: 'ACCESS_PORT', name: resolved.port.name },
     ];
   }

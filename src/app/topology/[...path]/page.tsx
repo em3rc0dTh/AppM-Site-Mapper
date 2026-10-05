@@ -394,7 +394,6 @@ export default async function TopologyNodePage({
               .map((item) => item.name)
               .join(' / ')}
             feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
-            bdfb={bdfbPresentation}
           />
         ) : (
           <TopologyPropertiesPanel

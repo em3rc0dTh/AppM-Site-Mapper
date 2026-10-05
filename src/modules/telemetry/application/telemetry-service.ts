@@ -83,9 +83,7 @@ export class TelemetryService {
         ? { sourceObservedAt: normalized.value.sourceObservedAt }
         : {}),
       ...(normalized.value.sourceSentAt ? { sourceSentAt: normalized.value.sourceSentAt } : {}),
-      ...(breakerReadings.readings.length
-        ? { breakerReadings: breakerReadings.readings }
-        : {}),
+      ...(breakerReadings.readings.length ? { breakerReadings: breakerReadings.readings } : {}),
       ...(breakerReadings.unmappedPointIds.length
         ? { unmappedPointIds: breakerReadings.unmappedPointIds }
         : {}),
@@ -129,11 +127,7 @@ export class TelemetryService {
     }
 
     const node = await this.topologyRepository.getById(binding.targetId);
-    if (
-      !node ||
-      node.lifecycle !== 'ACTIVE' ||
-      node.kind !== binding.targetType
-    ) {
+    if (!node || node.lifecycle !== 'ACTIVE' || node.kind !== binding.targetType) {
       return null;
     }
 

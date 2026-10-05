@@ -42,7 +42,7 @@ export function BdfbPowerTree({
             <strong>{structure.name}</strong>
           </div>
         )}
-        <Link className="zip-bdfb-tree-row level-2 is-selected" href={selfHref}>
+        <Link className="zip-bdfb-tree-row level-2 is-selected" href={selfHref} prefetch={false}>
           <span>⌄</span>
           <b>▥</b>
           <strong>{device.name}</strong>

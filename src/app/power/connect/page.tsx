@@ -85,11 +85,14 @@ export default async function ConnectPowerPage({
               port.portType === 'POWER' &&
               port.direction !== 'OUTPUT',
           )
-          .map((port) => ({
-            id: port.id,
-            label: port.name,
-            ...(feedOf(port.attributes) ? { feed: feedOf(port.attributes) } : {}),
-          })),
+          .map((port) => {
+            const feed = feedOf(port.attributes);
+            return {
+              id: port.id,
+              label: port.name,
+              ...(feed ? { feed } : {}),
+            };
+          }),
       };
     }),
   );

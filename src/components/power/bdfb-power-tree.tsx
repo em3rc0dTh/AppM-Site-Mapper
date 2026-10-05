@@ -21,7 +21,7 @@ export function BdfbPowerTree({
 
   return (
     <nav className="zip-bdfb-tree" aria-label="BDFB power tree">
-      <Link className="zip-bdfb-back" href="/power">
+      <Link className="zip-bdfb-back" href="/power" prefetch={false}>
         ← POWER PATH
       </Link>
       <header>
@@ -66,6 +66,7 @@ export function BdfbPowerTree({
                     key={panel.id}
                     className={`zip-bdfb-tree-row level-5 ${activePanelId === panel.id ? 'is-selected' : ''}`}
                     href={`${selfHref}?panel=${encodeURIComponent(panel.id)}`}
+                    prefetch={false}
                   >
                     <span />
                     <b>▧</b>

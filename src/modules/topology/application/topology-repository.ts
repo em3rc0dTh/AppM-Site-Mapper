@@ -1,8 +1,4 @@
-import type {
-  EquipmentNode,
-  TopologyKind,
-  TopologyNode,
-} from '@/modules/topology/domain/entities';
+import type { EquipmentNode, TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
 
 export interface TopologyRepository {
   getById(id: string): Promise<TopologyNode | null>;

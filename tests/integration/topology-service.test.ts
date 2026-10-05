@@ -103,9 +103,9 @@ describe('TopologyService', () => {
     expect(deviceChildren.map((node) => node.kind)).toEqual(['EQUIPMENT']);
 
     const persistedDevice = await service.getById(device.value.id);
-    expect(
-      persistedDevice?.kind === 'DEVICE' ? persistedDevice.rootEquipmentIds : [],
-    ).toContain(equipment.value.id);
+    expect(persistedDevice?.kind === 'DEVICE' ? persistedDevice.rootEquipmentIds : []).toContain(
+      equipment.value.id,
+    );
   });
 
   it('rejects hierarchy skips and occupied positions', async () => {

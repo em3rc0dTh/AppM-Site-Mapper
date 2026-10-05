@@ -1,5 +1,5 @@
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
-import type { TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
+import type { EquipmentNode, TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
 
 export class MemoryTopologyRepository implements TopologyRepository {
   private readonly nodes = new Map<string, TopologyNode>();
@@ -11,17 +11,6 @@ export class MemoryTopologyRepository implements TopologyRepository {
       }
       this.nodes.set(node.id, structuredClone(node));
     }
-  }
-
-  async commitLayout(
-    before: readonly TopologyNode[],
-    after: readonly TopologyNode[],
-  ): Promise<boolean> {
-    if (before.some((node) => this.nodes.get(node.id)?.updatedAt !== node.updatedAt)) return false;
-    const existing = new Set(before.map((node) => node.id));
-    if (after.some((node) => !existing.has(node.id) && this.nodes.has(node.id))) return false;
-    for (const node of after) this.nodes.set(node.id, structuredClone(node));
-    return true;
   }
 
   async getById(id: string): Promise<TopologyNode | null> {
@@ -43,6 +32,23 @@ export class MemoryTopologyRepository implements TopologyRepository {
       .map((node) => structuredClone(node));
   }
 
+  async listEquipmentForDevice(deviceId: string): Promise<readonly EquipmentNode[]> {
+    return [...this.nodes.values()]
+      .filter(
+        (node): node is EquipmentNode => node.kind === 'EQUIPMENT' && node.deviceId === deviceId,
+      )
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map((node) => structuredClone(node));
+  }
+
+  async getEquipmentByAccessPortId(accessPortId: string): Promise<EquipmentNode | null> {
+    const match = [...this.nodes.values()].find(
+      (node): node is EquipmentNode =>
+        node.kind === 'EQUIPMENT' && node.accessPorts.some((port) => port.id === accessPortId),
+    );
+    return match ? structuredClone(match) : null;
+  }
+
   async insert(node: TopologyNode): Promise<void> {
     if (this.nodes.has(node.id)) {
       throw new Error(`Topology node already exists: ${node.id}`);
@@ -55,13 +61,5 @@ export class MemoryTopologyRepository implements TopologyRepository {
       throw new Error(`Topology node does not exist: ${node.id}`);
     }
     this.nodes.set(node.id, structuredClone(node));
-  }
-
-  async replaceIfVersion(node: TopologyNode, expectedVersion: string): Promise<boolean> {
-    const current = this.nodes.get(node.id);
-    if (!current || current.updatedAt !== expectedVersion || current.lifecycle !== 'ACTIVE')
-      return false;
-    this.nodes.set(node.id, structuredClone(node));
-    return true;
   }
 }

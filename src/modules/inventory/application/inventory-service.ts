@@ -12,52 +12,37 @@ export class InventoryService {
 
   async listRackInventory(
     rackId: string,
-  ): Promise<Result<readonly InventoryItem[], InventoryError>> {
+  ): Promise<Result<readonly EquipmentNode[], InventoryError>> {
     const rack = await this.repository.getById(rackId);
 
-    if (!rack) {
-      return failure('RACK_NOT_FOUND');
-    }
+    if (!rack) return failure('RACK_NOT_FOUND');
+    if (rack.kind !== 'CONTAINER_RACK') return failure('NOT_A_CONTAINER_RACK');
 
-    if (rack.kind !== 'CONTAINER_RACK') {
-      return failure('NOT_A_CONTAINER_RACK');
-    }
-
-    const children = await this.repository.listChildren(rack.id);
-    const items = children.filter(
-      (node): node is DeviceNode => node.lifecycle === 'ACTIVE' && node.kind === 'DEVICE',
+    const equipment = await this.repository.listByKind('EQUIPMENT');
+    return success(
+      equipment.filter(
+        (node): node is EquipmentNode =>
+          node.kind === 'EQUIPMENT' &&
+          node.lifecycle === 'ACTIVE' &&
+          node.rackPlacement?.rackId === rack.id,
+      ),
     );
-
-    return success(items);
   }
 
   async getInventoryItem(id: string): Promise<InventoryItem | null> {
     const node: TopologyNode | null = await this.repository.getById(id);
-
-    if (!node || (node.kind !== 'DEVICE' && node.kind !== 'EQUIPMENT')) {
-      return null;
-    }
-
-    return node;
+    return node && (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') ? node : null;
   }
 
   async setPinned(id: string, pinned: boolean): Promise<Result<InventoryItem, InventoryError>> {
     const node = await this.repository.getById(id);
 
-    if (!node) {
-      return failure('ITEM_NOT_FOUND');
-    }
-
+    if (!node) return failure('ITEM_NOT_FOUND');
     if (node.kind !== 'DEVICE' && node.kind !== 'EQUIPMENT') {
       return failure('NOT_INVENTORY_ITEM');
     }
 
-    const updated: InventoryItem = {
-      ...node,
-      pinned,
-      updatedAt: nowIso(),
-    };
-
+    const updated: InventoryItem = { ...node, pinned, updatedAt: nowIso() };
     await this.repository.replace(updated);
     return success(updated);
   }

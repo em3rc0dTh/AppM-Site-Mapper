@@ -3,12 +3,12 @@ import { NextResponse } from 'next/server';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { BdfbService } from '@/modules/power/application/bdfb-service';
 import type {
-  BdfbStructure,
-  BreakerHolder,
-  Frame,
-  Panel,
-  Shelf,
-} from '@/modules/topology/domain/entities';
+  BdfbBreakerSpec,
+  BdfbFrameSpec,
+  BdfbPanelSpec,
+  BdfbShelfSpec,
+  BdfbStructureSpec,
+} from '@/modules/power/domain/bdfb-model';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
@@ -17,10 +17,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
-function isEndpoint(value: unknown): value is BreakerHolder {
-  if (!isRecord(value)) {
-    return false;
-  }
+function isBreaker(value: unknown): value is BdfbBreakerSpec {
+  if (!isRecord(value)) return false;
 
   const telemetryValid =
     value.telemetry === undefined ||
@@ -28,34 +26,34 @@ function isEndpoint(value: unknown): value is BreakerHolder {
 
   return (
     typeof value.id === 'string' &&
-    (value.variant === 'BREAKER' || value.variant === 'HOLDER') &&
     typeof value.label === 'string' &&
     (value.capacity === undefined || typeof value.capacity === 'number') &&
     telemetryValid
   );
 }
 
-function isPanel(value: unknown): value is Panel {
+function isPanel(value: unknown): value is BdfbPanelSpec {
   return (
     isRecord(value) &&
     typeof value.id === 'string' &&
     typeof value.label === 'string' &&
-    Array.isArray(value.endpoints) &&
-    value.endpoints.every(isEndpoint)
+    Array.isArray(value.positions) &&
+    value.positions.every((position) => position === null || isBreaker(position))
   );
 }
 
-function isFrame(value: unknown): value is Frame {
+function isFrame(value: unknown): value is BdfbFrameSpec {
   return (
     isRecord(value) &&
     typeof value.id === 'string' &&
     typeof value.label === 'string' &&
+    (value.physicalFrameVisible === undefined || typeof value.physicalFrameVisible === 'boolean') &&
     Array.isArray(value.panels) &&
     value.panels.every(isPanel)
   );
 }
 
-function isShelf(value: unknown): value is Shelf {
+function isShelf(value: unknown): value is BdfbShelfSpec {
   return (
     isRecord(value) &&
     typeof value.id === 'string' &&
@@ -65,7 +63,7 @@ function isShelf(value: unknown): value is Shelf {
   );
 }
 
-function isBdfbStructure(value: unknown): value is BdfbStructure {
+function isBdfbStructure(value: unknown): value is BdfbStructureSpec {
   return isRecord(value) && Array.isArray(value.shelves) && value.shelves.every(isShelf);
 }
 

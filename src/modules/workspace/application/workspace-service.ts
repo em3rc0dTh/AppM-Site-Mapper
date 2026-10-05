@@ -1,4 +1,5 @@
 import type { PowerRepository } from '@/modules/power/application/power-repository';
+import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
@@ -50,12 +51,14 @@ type InventoryNode = DeviceNode | EquipmentNode;
 
 export class WorkspaceService {
   private readonly topologyService: TopologyService;
+  private readonly bdfbProjection: BdfbProjectionService;
 
   constructor(
     private readonly topology: TopologyRepository,
     private readonly power: PowerRepository,
   ) {
     this.topologyService = new TopologyService(topology);
+    this.bdfbProjection = new BdfbProjectionService(topology);
   }
 
   async getSnapshot(): Promise<WorkspaceSnapshot> {
@@ -75,7 +78,7 @@ export class WorkspaceService {
     return {
       navigation: await Promise.all(activeNetworks.map((network) => this.buildTree(network))),
       pinned: await this.buildPinned(inventory),
-      notifications: this.buildNotifications(inventory),
+      notifications: [],
       bdfb: await this.buildBdfbSummaries(
         inventory.filter((node): node is DeviceNode => node.kind === 'DEVICE'),
       ),
@@ -116,43 +119,32 @@ export class WorkspaceService {
     );
   }
 
-  private buildNotifications(
-    inventory: readonly InventoryNode[],
-  ): readonly WorkspaceNotification[] {
-    return inventory
-      .filter((item) => !item.serialNumber?.trim())
-      .map((item) => ({
-        id: `telemetry-identity-${item.id}`,
-        severity: 'WARNING' as const,
-        title: 'Telemetry identity missing',
-        message: `${item.name} cannot be matched to realtime telemetry until a serial number is assigned.`,
-        entityId: item.id,
-      }))
-      .sort((left, right) => left.message.localeCompare(right.message));
-  }
-
   private async buildBdfbSummaries(
     devices: readonly DeviceNode[],
   ): Promise<readonly WorkspaceBdfbSummary[]> {
-    const summaries = devices
-      .filter((device) => device.bdfb)
-      .map(async (device) => {
-        const shelves = device.bdfb?.shelves ?? [];
-        const frames = shelves.flatMap((shelf) => shelf.frames);
-        const panels = frames.flatMap((frame) => frame.panels);
-        const endpoints = panels.flatMap((panel) => panel.endpoints);
+    const summaries = await Promise.all(
+      devices
+        .filter((device) => device.deviceType === 'BDFB')
+        .map(async (device) => {
+          const presentation = await this.bdfbProjection.get(device.id);
+          if (!presentation) return null;
 
-        return {
-          deviceId: device.id,
-          deviceName: device.name,
-          shelves: shelves.length,
-          frames: frames.length,
-          panels: panels.length,
-          endpoints: endpoints.length,
-          href: await this.topologyService.buildDeepLink(device.id),
-        };
-      });
+          const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
+          const panels = frames.flatMap((frame) => frame.panels);
+          const endpoints = panels.flatMap((panel) => panel.positions).filter(Boolean);
 
-    return Promise.all(summaries);
+          return {
+            deviceId: device.id,
+            deviceName: device.name,
+            shelves: presentation.shelves.length,
+            frames: frames.length,
+            panels: panels.length,
+            endpoints: endpoints.length,
+            href: await this.topologyService.buildDeepLink(device.id),
+          };
+        }),
+    );
+
+    return summaries.filter((summary): summary is WorkspaceBdfbSummary => summary !== null);
   }
 }

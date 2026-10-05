@@ -236,8 +236,9 @@ function findPolicy(trace: FullPowerTrace): PowerTracePolicyStatus | undefined {
 
 export function FullPowerTraceModal({
   entityId,
+  selectedPathId,
   label = 'ϟ FULL POWER TRACE',
-}: Readonly<{ entityId: string; label?: string }>) {
+}: Readonly<{ entityId: string; selectedPathId?: string; label?: string }>) {
   const [open, setOpen] = useState(false);
   const [trace, setTrace] = useState<FullPowerTrace | null>(null);
   const [loading, setLoading] = useState(false);
@@ -245,8 +246,13 @@ export function FullPowerTraceModal({
 
   const view = useMemo(() => {
     if (!trace) return null;
-    const feedA = trace.feedA[0];
-    const feedB = trace.feedB[0];
+    const selected = selectedPathId
+      ? trace.legs.find((leg) => leg.pathId === selectedPathId)
+      : undefined;
+    const feedA =
+      selected?.feed === 'A' ? selected : trace.feedA.find((leg) => leg.pathId !== selectedPathId);
+    const feedB =
+      selected?.feed === 'B' ? selected : trace.feedB.find((leg) => leg.pathId !== selectedPathId);
     const policy = findPolicy(trace);
     const topologyVerified =
       Boolean(feedA && feedB) &&
@@ -265,7 +271,7 @@ export function FullPowerTraceModal({
       redundancyVerified,
       verified: topologyVerified && telemetryVerified && redundancyVerified,
     };
-  }, [trace]);
+  }, [trace, selectedPathId]);
 
   async function openTrace() {
     setOpen(true);

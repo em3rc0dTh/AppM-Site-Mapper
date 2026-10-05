@@ -2,13 +2,17 @@ import { notFound, redirect } from 'next/navigation';
 
 import { ConnectPowerForm } from '@/components/power/connect-power-form';
 import { requirePermission } from '@/modules/identity/application/current-session';
-import type { PowerEndpoint } from '@/modules/power/domain/entities';
-import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
+import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
-import type { TopologyNode } from '@/modules/topology/domain/entities';
+import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 export const dynamic = 'force-dynamic';
+
+function feedOf(attributes: Readonly<Record<string, unknown>> | undefined): 'A' | 'B' | undefined {
+  const value = attributes?.feed;
+  return value === 'A' || value === 'B' ? value : undefined;
+}
 
 export default async function ConnectPowerPage({
   searchParams,
@@ -31,51 +35,42 @@ export default async function ConnectPowerPage({
 
   const topology = await createTopologyRepository();
   const topologyService = new TopologyService(topology);
-  const owner = await topology.getById(query.entity);
-  const sourceEndpoint: PowerEndpoint = {
-    entityId: query.entity,
-    internal: {
-      shelfId: query.shelf,
-      frameId: query.frame,
-      panelId: query.panel,
-      breakerHolderId: query.breaker,
-    },
-  };
-  const resolved = resolvePowerEndpoint(owner, sourceEndpoint);
-  if (
-    !resolved.ok ||
-    !resolved.value.breakerHolder ||
-    resolved.value.breakerHolder.variant !== 'BREAKER'
-  ) {
+  const sourceDevice = await topology.getById(query.entity);
+  if (!sourceDevice || sourceDevice.kind !== 'DEVICE' || sourceDevice.lifecycle !== 'ACTIVE') {
     notFound();
   }
 
-  const { owner: sourceOwner, shelf, frame, panel, breakerHolder } = resolved.value;
-  if (!shelf || !frame || !panel || !breakerHolder || breakerHolder.variant !== 'BREAKER') {
-    notFound();
-  }
+  const presentation = await new BdfbProjectionService(topology).get(sourceDevice.id);
+  const shelf = presentation?.shelves.find((item) => item.id === query.shelf);
+  const frame = shelf?.frames.find((item) => item.id === query.frame);
+  const panel = frame?.panels.find((item) => item.id === query.panel);
+  const breaker = panel?.positions.find((item) => item?.id === query.breaker) ?? null;
+  if (!presentation || !shelf || !frame || !panel || !breaker) notFound();
 
-  const selfHref = await topologyService.buildDeepLink(sourceOwner.id);
-  const returnHref = `${selfHref}?panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(breakerHolder.id)}`;
+  const selfHref = await topologyService.buildDeepLink(sourceDevice.id);
+  const returnHref =
+    `${selfHref}?panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(breaker.id)}`;
 
-  const candidates = [
-    ...(await topology.listByKind('DEVICE')),
-    ...(await topology.listByKind('EQUIPMENT')),
-  ].filter(
-    (node): node is Extract<TopologyNode, { kind: 'DEVICE' | 'EQUIPMENT' }> =>
-      (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') &&
+  const equipment = (await topology.listByKind('EQUIPMENT')).filter(
+    (node): node is EquipmentNode =>
+      node.kind === 'EQUIPMENT' &&
       node.lifecycle === 'ACTIVE' &&
-      node.id !== sourceOwner.id &&
-      Boolean(node.accessPorts?.some((port) => port.kind === 'POWER')),
+      node.deviceId !== sourceDevice.id &&
+      node.accessPorts.some(
+        (port) =>
+          port.lifecycle === 'ACTIVE' &&
+          port.portType === 'POWER' &&
+          port.direction !== 'OUTPUT',
+      ),
   );
 
   const destinations = await Promise.all(
-    candidates.map(async (node) => {
+    equipment.map(async (node) => {
       const trail = await topologyService.getTrail(node.id);
       return {
         id: node.id,
         name: node.name,
-        kind: node.kind as 'DEVICE' | 'EQUIPMENT',
+        kind: 'EQUIPMENT' as const,
         context: trail
           .filter((item) => item.id !== node.id)
           .slice(-4)
@@ -83,12 +78,17 @@ export default async function ConnectPowerPage({
           .join(' › '),
         ...(node.category ? { category: node.category } : {}),
         ...(node.serialNumber ? { serialNumber: node.serialNumber } : {}),
-        ports: (node.accessPorts ?? [])
-          .filter((port) => port.kind === 'POWER')
+        ports: node.accessPorts
+          .filter(
+            (port) =>
+              port.lifecycle === 'ACTIVE' &&
+              port.portType === 'POWER' &&
+              port.direction !== 'OUTPUT',
+          )
           .map((port) => ({
             id: port.id,
-            label: port.label,
-            ...(port.feed ? { feed: port.feed } : {}),
+            label: port.name,
+            ...(feedOf(port.attributes) ? { feed: feedOf(port.attributes) } : {}),
           })),
       };
     }),
@@ -97,17 +97,18 @@ export default async function ConnectPowerPage({
   return (
     <ConnectPowerForm
       source={{
-        entityId: sourceOwner.id,
-        deviceName: sourceOwner.name,
+        entityId: sourceDevice.id,
+        accessPortId: breaker.accessPortId,
+        deviceName: sourceDevice.name,
         shelfId: shelf.id,
         shelfLabel: shelf.label,
         frameId: frame.id,
         frameLabel: frame.label,
         panelId: panel.id,
         panelLabel: panel.label,
-        breakerId: breakerHolder.id,
-        breakerLabel: breakerHolder.label,
-        ...(breakerHolder.capacity === undefined ? {} : { capacity: breakerHolder.capacity }),
+        breakerId: breaker.id,
+        breakerLabel: breaker.label,
+        ...(breaker.capacity === undefined ? {} : { capacity: breaker.capacity }),
       }}
       destinations={destinations}
       returnHref={returnHref}

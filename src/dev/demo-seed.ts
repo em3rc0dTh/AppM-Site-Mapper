@@ -3,7 +3,6 @@ import { BdfbService } from '@/modules/power/application/bdfb-service';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import { PowerService } from '@/modules/power/application/power-service';
 import { CasService } from '@/modules/rack/application/cas-service';
-import { SpatialService } from '@/modules/spatial/application/spatial-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import {
   TopologyService,
@@ -276,14 +275,6 @@ export async function seedDevelopmentDemo(
     }),
     'ROOM_SUBSTRUCTURE',
   );
-
-  const polygonResult = await new SpatialService(topologyRepository).updateRoomPolygon(
-    room.id,
-    DEMO_ROOM_POLYGON,
-  );
-  if (!polygonResult.ok) {
-    throw new Error('Demo seed could not configure Blueprint room: ' + polygonResult.error);
-  }
 
   const bayA = expectKind(
     await ensureNode(topologyRepository, topology, {

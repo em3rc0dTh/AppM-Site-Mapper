@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { validateBdfb } from '@/modules/power/domain/bdfb-validation';
 
 describe('BDFB validation', () => {
-  it('accepts a unique Shelf Frame Panel Breaker hierarchy', () => {
+  it('accepts a unique Shelf Frame Panel Breaker hierarchy with empty positions', () => {
     expect(
       validateBdfb({
         shelves: [
@@ -18,14 +18,13 @@ describe('BDFB validation', () => {
                   {
                     id: 'panel-a',
                     label: 'Panel A',
-                    endpoints: [
+                    positions: [
                       {
                         id: 'breaker-1',
-                        variant: 'BREAKER',
                         label: 'CB-01',
                         telemetry: { rawPointId: '0_1_1' },
                       },
-                      { id: 'holder-1', variant: 'HOLDER', label: 'H-01' },
+                      null,
                     ],
                   },
                 ],
@@ -37,7 +36,7 @@ describe('BDFB validation', () => {
     ).toEqual({ ok: true });
   });
 
-  it('keeps an implicit physical frame valid in the canonical hierarchy', () => {
+  it('keeps a presentation-flattened physical frame valid', () => {
     expect(
       validateBdfb({
         shelves: [
@@ -48,12 +47,12 @@ describe('BDFB validation', () => {
               {
                 id: 'frame-a',
                 label: 'Frame A',
-                presentation: { physicalFrameVisible: false },
+                physicalFrameVisible: false,
                 panels: [
                   {
                     id: 'panel-a',
                     label: 'Panel A',
-                    endpoints: [{ id: 'breaker-1', variant: 'BREAKER', label: 'CB-01' }],
+                    positions: [{ id: 'breaker-1', label: 'CB-01' }],
                   },
                 ],
               },
@@ -70,13 +69,7 @@ describe('BDFB validation', () => {
         {
           id: 'same',
           label: 'Shelf',
-          frames: [
-            {
-              id: 'same',
-              label: 'Frame',
-              panels: [],
-            },
-          ],
+          frames: [{ id: 'same', label: 'Frame', panels: [] }],
         },
       ],
     });
@@ -98,16 +91,14 @@ describe('BDFB validation', () => {
                 {
                   id: 'panel-a',
                   label: 'Panel A',
-                  endpoints: [
+                  positions: [
                     {
                       id: 'breaker-1',
-                      variant: 'BREAKER',
                       label: 'CB-01',
                       telemetry: { rawPointId: '0_1_1' },
                     },
                     {
                       id: 'breaker-2',
-                      variant: 'BREAKER',
                       label: 'CB-02',
                       telemetry: { rawPointId: '0_1_1' },
                     },

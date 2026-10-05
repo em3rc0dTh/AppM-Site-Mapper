@@ -41,6 +41,7 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
   await Promise.all([
     dropIndexIfPresent(powerPaths, 'ix_power_path_source'),
     dropIndexIfPresent(powerPaths, 'ix_power_path_target'),
+    dropIndexIfPresent(powerPaths, 'uq_active_power_path_endpoints_feed'),
   ]);
   await Promise.all([
     powerPaths.createIndex({ id: 1 }, { unique: true, name: 'uq_power_path_id' }),
@@ -53,11 +54,14 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
       { name: 'ix_power_path_target_access_port' },
     ),
     powerPaths.createIndex(
-      { sourceAccessPortId: 1, targetAccessPortId: 1, feed: 1 },
+      { connectionKey: 1 },
       {
         unique: true,
-        name: 'uq_active_power_path_endpoints_feed',
-        partialFilterExpression: { lifecycle: 'ACTIVE' },
+        name: 'uq_active_power_path_connection_key',
+        partialFilterExpression: {
+          lifecycle: 'ACTIVE',
+          connectionKey: { $type: 'string' },
+        },
       },
     ),
   ]);

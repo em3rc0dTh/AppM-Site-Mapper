@@ -14,6 +14,13 @@ function feedOf(attributes: Readonly<Record<string, unknown>> | undefined): 'A' 
   return value === 'A' || value === 'B' ? value : undefined;
 }
 
+function feedFromLabel(label: string): 'A' | 'B' | undefined {
+  const normalized = label.trim().toUpperCase();
+  if (/^A(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*A\b/.test(normalized)) return 'A';
+  if (/^B(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*B\b/.test(normalized)) return 'B';
+  return undefined;
+}
+
 export default async function ConnectPowerPage({
   searchParams,
 }: Readonly<{
@@ -108,6 +115,14 @@ export default async function ConnectPowerPage({
         panelLabel: panel.label,
         breakerId: breaker.id,
         breakerLabel: breaker.label,
+        ...(feedFromLabel(panel.label) ?? feedFromLabel(frame.label) ?? feedFromLabel(shelf.label)
+          ? {
+              feed:
+                feedFromLabel(panel.label) ??
+                feedFromLabel(frame.label) ??
+                feedFromLabel(shelf.label),
+            }
+          : {}),
         ...(breaker.capacity === undefined ? {} : { capacity: breaker.capacity }),
       }}
       destinations={destinations}

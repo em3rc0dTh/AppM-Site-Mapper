@@ -21,7 +21,8 @@ function numberAttribute(node: EquipmentNode, key: string): number | undefined {
 function breakerView(node: EquipmentNode | undefined): BdfbBreakerView | null {
   if (!node || node.equipmentType !== 'CIRCUIT_BREAKER') return null;
   const power = node.accessPorts.find(
-    (port) => port.lifecycle === 'ACTIVE' && port.portType === 'POWER' && port.direction === 'OUTPUT',
+    (port) =>
+      port.lifecycle === 'ACTIVE' && port.portType === 'POWER' && port.direction === 'OUTPUT',
   );
   if (!power) return null;
 

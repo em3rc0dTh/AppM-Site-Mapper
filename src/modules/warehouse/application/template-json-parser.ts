@@ -2,7 +2,10 @@ import type { CreateAssetTemplateInput } from '@/modules/warehouse/application/w
 import type {
   AssetTemplateKind,
   BdfbEndpointBlueprint,
+  BdfbFrameBlueprint,
+  BdfbPanelBlueprint,
   BdfbPhysicalBlueprint,
+  BdfbShelfBlueprint,
   WarehouseDeviceType,
 } from '@/modules/warehouse/domain/template';
 
@@ -24,86 +27,107 @@ function boolean(value: unknown): boolean | undefined {
   return typeof value === 'boolean' ? value : undefined;
 }
 
-function parseEndpoint(value: unknown): BdfbEndpointBlueprint | null {
+function parseBreakerEndpoint(value: unknown): BdfbEndpointBlueprint | null {
   const endpoint = object(value);
   if (!endpoint || typeof endpoint.label !== 'string') return null;
-  const variant =
-    endpoint.variant === 'BREAKER' || endpoint.variant === 'HOLDER' ? endpoint.variant : null;
-  if (!variant) return null;
+  if (endpoint.variant !== undefined && endpoint.variant !== 'BREAKER') return null;
 
   return {
     label: endpoint.label,
-    variant,
     ...(number(endpoint.capacity) === undefined ? {} : { capacity: number(endpoint.capacity)! }),
     ...(string(endpoint.rawPointId) ? { rawPointId: string(endpoint.rawPointId)! } : {}),
   };
 }
 
-function expandPanelEndpoints(panel: Record<string, unknown>): BdfbEndpointBlueprint[] | null {
+function expandPanelEndpoints(panel: Record<string, unknown>): (BdfbEndpointBlueprint | null)[] | null {
   if (Array.isArray(panel.endpoints)) {
-    const endpoints = panel.endpoints.map(parseEndpoint);
-    return endpoints.every((endpoint): endpoint is BdfbEndpointBlueprint => endpoint !== null)
-      ? endpoints
-      : null;
+    const endpoints: (BdfbEndpointBlueprint | null)[] = [];
+    for (const value of panel.endpoints) {
+      if (value === null) {
+        endpoints.push(null);
+        continue;
+      }
+      const endpoint = parseBreakerEndpoint(value);
+      if (!endpoint) return null;
+      endpoints.push(endpoint);
+    }
+    return endpoints;
   }
 
   const count = number(panel.endpointCount);
   if (!Number.isInteger(count) || (count ?? 0) < 1 || (count ?? 0) > 256) return null;
-
-  const variant =
-    panel.endpointVariant === 'HOLDER'
-      ? ('HOLDER' as const)
-      : panel.endpointVariant === undefined || panel.endpointVariant === 'BREAKER'
-        ? ('BREAKER' as const)
-        : null;
-  if (!variant) return null;
+  if (panel.endpointVariant !== undefined && panel.endpointVariant !== 'BREAKER') return null;
 
   const rawPointPrefix = string(panel.rawPointPrefix);
   const endpointLabelPrefix = string(panel.endpointLabelPrefix) ?? string(panel.label) ?? 'EP';
 
   return Array.from({ length: count! }, (_, index) => ({
     label: `${endpointLabelPrefix}-${String(index + 1).padStart(2, '0')}`,
-    variant,
     ...(rawPointPrefix ? { rawPointId: `${rawPointPrefix}${index + 1}` } : {}),
   }));
 }
 
+function parsePanel(value: unknown): BdfbPanelBlueprint | null {
+  const panel = object(value);
+  if (!panel || typeof panel.label !== 'string') return null;
+  const endpoints = expandPanelEndpoints(panel);
+  return endpoints ? { label: panel.label, endpoints } : null;
+}
+
+function parseFrame(value: unknown): BdfbFrameBlueprint | null {
+  const frame = object(value);
+  if (!frame || typeof frame.label !== 'string' || !Array.isArray(frame.panels)) return null;
+  const panels = frame.panels.map(parsePanel);
+  if (!panels.every((panel): panel is BdfbPanelBlueprint => panel !== null)) return null;
+  return {
+    label: frame.label,
+    ...(boolean(frame.physicalFrameVisible) === undefined
+      ? {}
+      : { physicalFrameVisible: boolean(frame.physicalFrameVisible)! }),
+    panels,
+  };
+}
+
+function parseShelf(value: unknown): BdfbShelfBlueprint | null {
+  const shelf = object(value);
+  if (!shelf || typeof shelf.label !== 'string') return null;
+  if (shelf.frames !== undefined && !Array.isArray(shelf.frames)) return null;
+  if (shelf.panels !== undefined && !Array.isArray(shelf.panels)) return null;
+
+  const frames = (shelf.frames ?? []).map(parseFrame);
+  const panels = (shelf.panels ?? []).map(parsePanel);
+  if (!frames.every((frame): frame is BdfbFrameBlueprint => frame !== null)) return null;
+  if (!panels.every((panel): panel is BdfbPanelBlueprint => panel !== null)) return null;
+  if (frames.length === 0 && panels.length === 0) return null;
+
+  return {
+    label: shelf.label,
+    ...(frames.length ? { frames } : {}),
+    ...(panels.length ? { panels } : {}),
+  };
+}
+
 function parseBdfbBlueprint(value: unknown): BdfbPhysicalBlueprint | null {
   const blueprint = object(value);
-  if (!blueprint || blueprint.type !== 'BDFB' || !Array.isArray(blueprint.shelves)) return null;
+  if (!blueprint || blueprint.type !== 'BDFB') return null;
+  if (blueprint.shelves !== undefined && !Array.isArray(blueprint.shelves)) return null;
+  if (blueprint.frames !== undefined && !Array.isArray(blueprint.frames)) return null;
+  if (blueprint.panels !== undefined && !Array.isArray(blueprint.panels)) return null;
 
-  const shelves = [];
-  for (const shelfValue of blueprint.shelves) {
-    const shelf = object(shelfValue);
-    if (!shelf || typeof shelf.label !== 'string' || !Array.isArray(shelf.frames)) return null;
+  const shelves = (blueprint.shelves ?? []).map(parseShelf);
+  const frames = (blueprint.frames ?? []).map(parseFrame);
+  const panels = (blueprint.panels ?? []).map(parsePanel);
+  if (!shelves.every((shelf): shelf is BdfbShelfBlueprint => shelf !== null)) return null;
+  if (!frames.every((frame): frame is BdfbFrameBlueprint => frame !== null)) return null;
+  if (!panels.every((panel): panel is BdfbPanelBlueprint => panel !== null)) return null;
+  if (shelves.length === 0 && frames.length === 0 && panels.length === 0) return null;
 
-    const frames = [];
-    for (const frameValue of shelf.frames) {
-      const frame = object(frameValue);
-      if (!frame || typeof frame.label !== 'string' || !Array.isArray(frame.panels)) return null;
-
-      const panels = [];
-      for (const panelValue of frame.panels) {
-        const panel = object(panelValue);
-        if (!panel || typeof panel.label !== 'string') return null;
-        const endpoints = expandPanelEndpoints(panel);
-        if (!endpoints) return null;
-        panels.push({ label: panel.label, endpoints });
-      }
-
-      frames.push({
-        label: frame.label,
-        ...(boolean(frame.physicalFrameVisible) === undefined
-          ? {}
-          : { physicalFrameVisible: boolean(frame.physicalFrameVisible)! }),
-        panels,
-      });
-    }
-
-    shelves.push({ label: shelf.label, frames });
-  }
-
-  return { type: 'BDFB', shelves };
+  return {
+    type: 'BDFB',
+    ...(shelves.length ? { shelves } : {}),
+    ...(frames.length ? { frames } : {}),
+    ...(panels.length ? { panels } : {}),
+  };
 }
 
 export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput | null {

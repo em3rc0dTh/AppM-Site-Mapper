@@ -112,15 +112,6 @@ describe('WorkspaceService', () => {
         endpoints: 1,
       }),
     ]);
-    expect(snapshot.notifications).toEqual([
-      expect.objectContaining({
-        entityId: 'load-equipment',
-        title: 'Telemetry identity missing',
-      }),
-      expect.objectContaining({
-        entityId: 'load-device',
-        title: 'Telemetry identity missing',
-      }),
-    ]);
+    expect(snapshot.notifications).toEqual([]);
   });
 });

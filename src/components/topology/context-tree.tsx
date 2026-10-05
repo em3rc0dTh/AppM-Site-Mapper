@@ -76,6 +76,7 @@ function TreeBranch({
       <Link
         className={`${active ? 'is-active' : ''}${chosen ? ' is-selected' : ''}`}
         href={item.href}
+        prefetch={false}
         aria-current={active ? 'page' : undefined}
         aria-label={`${item.node.name}. Click to inspect, double click to open.`}
         style={{ '--tree-depth': depth } as CSSProperties}
@@ -151,7 +152,7 @@ export function TopologyContextTree({
           <span>{labelFor(selected.node.kind)}</span>
           <strong title={selected.node.name}>{selected.node.name}</strong>
           <small>{selected.children.length} direct child objects</small>
-          <Link href={selected.href}>OPEN SELECTED ↗</Link>
+          <Link href={selected.href} prefetch={false}>OPEN SELECTED ↗</Link>
         </div>
       )}
     </nav>

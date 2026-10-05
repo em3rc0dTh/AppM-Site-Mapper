@@ -160,8 +160,6 @@ export class WorkspaceService {
         }),
     );
 
-    return summaries.filter(
-      (summary): summary is WorkspaceBdfbSummary => summary !== null,
-    );
+    return summaries.filter((summary): summary is WorkspaceBdfbSummary => summary !== null);
   }
 }

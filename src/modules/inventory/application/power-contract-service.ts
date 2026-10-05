@@ -53,11 +53,14 @@ function toView(ownerId: string, equipment: EquipmentNode): PowerContractView {
           port.exposure === 'EXTERNAL' &&
           port.direction !== 'OUTPUT',
       )
-      .map((port) => ({
-        id: port.id,
-        label: port.name,
-        ...(feedOf(port) ? { feed: feedOf(port) } : {}),
-      })),
+      .map((port) => {
+        const feed = feedOf(port);
+        return {
+          id: port.id,
+          label: port.name,
+          ...(feed ? { feed } : {}),
+        };
+      }),
     redundancy: redundancyOf(equipment),
   };
 }

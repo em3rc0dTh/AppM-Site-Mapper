@@ -17,6 +17,16 @@ interface Stage {
   readonly href?: string;
 }
 
+function feedFromStages(stages: readonly Stage[], fallback?: 'A' | 'B'): 'A' | 'B' | undefined {
+  const names = stages.filter((stage) => stage.kind === 'PANEL' || stage.kind === 'FRAME' || stage.kind === 'SHELF').map((stage) => stage.name);
+  for (const name of names) {
+    const normalized = name.trim().toUpperCase();
+    if (/^A(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*A\b/.test(normalized)) return 'A';
+    if (/^B(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*B\b/.test(normalized)) return 'B';
+  }
+  return fallback;
+}
+
 function glyph(kind: string) {
   if (kind === 'PANEL') return '▥';
   if (kind.includes('BREAKER')) return '▣';
@@ -93,7 +103,7 @@ export default async function PowerPage({
       return false;
     }
     if (query.path && path.id !== query.path) return false;
-    if (query.feed && query.feed !== 'AB' && path.feed !== query.feed) return false;
+    if (!query.path && query.feed && query.feed !== 'AB' && path.feed !== query.feed) return false;
     return true;
   });
 
@@ -146,14 +156,15 @@ export default async function PowerPage({
         path,
         source,
         target,
+        feed: feedFromStages(sourceStages, path.feed),
         stages: [...sourceStages, ...targetStages.reverse()],
       };
     }),
   );
 
   const primary = views[0];
-  const feedA = views.find((item) => item.path.feed === 'A');
-  const feedB = views.find((item) => item.path.feed === 'B');
+  const feedA = views.find((item) => item.feed === 'A');
+  const feedB = views.find((item) => item.feed === 'B');
   const targetName =
     primary?.target?.equipment.name ?? primary?.stages.at(-1)?.name ?? 'Unresolved target';
   const breadcrumbs = selectedEntity ? await service.getTrail(selectedEntity.id) : [];
@@ -239,13 +250,13 @@ export default async function PowerPage({
         <section className="zip-power-canvas">
           <header>
             <h1>POWER CANVAS</h1>
-            <span>PATH {primary?.path.feed ?? 'A'} (PRIMARY)</span>
+            <span>PATH {primary?.feed ?? 'A'} (PRIMARY)</span>
           </header>
 
           {primary ? (
             <>
               <section className="zip-power-box">
-                <h2>PATH {primary.path.feed ?? 'A'} (PRIMARY)</h2>
+                <h2>PATH {primary.feed ?? 'A'} (PRIMARY)</h2>
                 {renderRow(primary.stages)}
               </section>
               <section className="zip-power-box zip-power-dual-box">
@@ -283,7 +294,7 @@ export default async function PowerPage({
             <dt>Status</dt>
             <dd className="is-good">● CONFIGURED</dd>
             <dt>Feed</dt>
-            <dd>{primary?.path.feed ?? '—'}</dd>
+            <dd>{primary?.feed ?? '—'}</dd>
             <dt>Source</dt>
             <dd>{primary?.source?.equipment.name ?? primary?.stages[0]?.name ?? '—'}</dd>
             <dt>Destination</dt>
@@ -304,7 +315,11 @@ export default async function PowerPage({
             </Link>
           ) : null}
           {primary && traceEntityId ? (
-            <FullPowerTraceModal entityId={traceEntityId} label="ϟ FULL POWER TRACE" />
+            <FullPowerTraceModal
+              entityId={traceEntityId}
+              selectedPathId={primary.path.id}
+              label="ϟ FULL POWER TRACE"
+            />
           ) : null}
           <TelemetryLens
             label="Power path diagnostic"

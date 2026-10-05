@@ -18,13 +18,7 @@ export type ContainerRackVariant = 'CONTAINER' | 'RACK';
 export type CasState = 'AVAILABLE' | 'RESERVED' | 'EQUIPPED';
 
 export type DeviceType =
-  | 'NETWORK_ELEMENT'
-  | 'BDFB'
-  | 'SERVER'
-  | 'UPS'
-  | 'RECTIFIER'
-  | 'POWER_SYSTEM'
-  | 'CUSTOM';
+  'NETWORK_ELEMENT' | 'BDFB' | 'SERVER' | 'UPS' | 'RECTIFIER' | 'POWER_SYSTEM' | 'CUSTOM';
 
 export type EquipmentType =
   | 'CHASSIS'
@@ -42,12 +36,7 @@ export type EquipmentType =
   | 'CUSTOM';
 
 export type EquipmentFunction =
-  | 'CONTROL'
-  | 'NETWORKING'
-  | 'POWER_CONVERSION'
-  | 'POWER_DISTRIBUTION'
-  | 'PROTECTION'
-  | 'COOLING';
+  'CONTROL' | 'NETWORKING' | 'POWER_CONVERSION' | 'POWER_DISTRIBUTION' | 'PROTECTION' | 'COOLING';
 
 export type EquipmentChildMode = 'DYNAMIC' | 'POSITIONAL';
 export type AccessPortType = 'POWER' | 'NETWORK' | 'CONTROL' | 'DATA' | 'GROUND' | 'CUSTOM';

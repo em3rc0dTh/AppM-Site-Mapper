@@ -82,6 +82,7 @@ export class PowerService {
       sourceAccessPortId: source.port.id,
       targetAccessPortId: target.port.id,
       lifecycle: 'ACTIVE',
+      connectionKey: target.port.id,
       createdAt: timestamp,
       updatedAt: timestamp,
       ...(input.feed ? { feed: input.feed } : {}),

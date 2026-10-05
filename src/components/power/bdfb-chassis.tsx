@@ -357,7 +357,7 @@ export function BdfbChassis({
     return grouped as Readonly<Record<string, readonly BreakerPowerBinding[]>>;
   }, [powerBindings]);
 
-  const initialPanel = useMemo(() => {
+  const initialPanel = (() => {
     const requested = query.get('panel');
     if (!requested) return null;
     for (const shelf of presentation.shelves) {
@@ -367,7 +367,7 @@ export function BdfbChassis({
       }
     }
     return null;
-  }, [presentation, query]);
+  })();
 
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const [selectedBreakerId, setSelectedBreakerId] = useState<string | null>(query.get('breaker'));
@@ -380,26 +380,6 @@ export function BdfbChassis({
       ) as Readonly<Record<string, BreakerTelemetryReading>>,
     [telemetry],
   );
-
-  useEffect(() => {
-    const breakerId = query.get('breaker');
-    if (!breakerId || !activePanel) return;
-    const breaker = activePanel.panel.positions.find((item) => item?.id === breakerId);
-    if (!breaker) return;
-    setSelectedBreakerId(breaker.id);
-    setSelected(
-      breakerInspector(
-        device,
-        activePanel.shelf,
-        activePanel.frame,
-        activePanel.panel,
-        breaker,
-        readingsByBreaker[breaker.id],
-        bindingsByBreaker[breaker.id] ?? [],
-        canWritePower,
-      ),
-    );
-  }, [query, activePanel, device, readingsByBreaker, bindingsByBreaker, canWritePower]);
 
   const liveInspector = useMemo(() => {
     if (!selectedBreakerId) return selected;
@@ -493,7 +473,15 @@ export function BdfbChassis({
         )}
       </div>
 
-      {liveInspector ? <EntityInspector entity={liveInspector} onClose={() => setSelected(null)} /> : null}
+      {liveInspector ? (
+        <EntityInspector
+          entity={liveInspector}
+          onClose={() => {
+            setSelected(null);
+            setSelectedBreakerId(null);
+          }}
+        />
+      ) : null}
     </section>
   );
 }

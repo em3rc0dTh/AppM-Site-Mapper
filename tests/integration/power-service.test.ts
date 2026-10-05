@@ -100,7 +100,47 @@ describe('Power domain', () => {
     });
 
     expect(created.ok).toBe(true);
+
+    const duplicate = await service.create({
+      sourceAccessPortId,
+      targetAccessPortId: 'equipment-1:power-in',
+      feed: 'A',
+      label: 'Repeated commissioning click',
+    });
+
+    expect(duplicate.ok).toBe(true);
+    expect(duplicate.ok && created.ok ? duplicate.value.id : null).toBe(
+      created.ok ? created.value.id : null,
+    );
     expect(await paths.listForAccessPort('equipment-1:power-in')).toHaveLength(1);
+  });
+
+  it('rejects a feed that contradicts the destination POWER port contract', async () => {
+    const feedLockedEquipment: EquipmentNode = {
+      ...equipment,
+      accessPorts: equipment.accessPorts.map((port) => ({
+        ...port,
+        attributes: { feed: 'A' },
+      })),
+    };
+    const topology = new MemoryTopologyRepository([device, loadDevice, feedLockedEquipment]);
+    await new BdfbService(topology).configure(device.id, {
+      panels: [
+        {
+          id: 'panel-b1',
+          label: 'B1',
+          positions: [{ id: 'breaker-b1', label: 'B1-01' }],
+        },
+      ],
+    });
+
+    const result = await new PowerService(topology, new MemoryPowerRepository()).create({
+      sourceAccessPortId: 'device-1:equipment:breaker-b1:power-out',
+      targetAccessPortId: 'equipment-1:power-in',
+      feed: 'B',
+    });
+
+    expect(result).toEqual({ ok: false, error: 'FEED_MISMATCH' });
   });
 
   it('rejects a nonexistent AccessPort', async () => {

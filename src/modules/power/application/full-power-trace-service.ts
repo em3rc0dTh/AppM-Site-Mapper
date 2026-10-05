@@ -179,6 +179,11 @@ export class FullPowerTraceService {
     const rawPointId =
       (sourceEquipment ? stringAttribute(sourceEquipment, 'telemetryRawPointId') : undefined) ??
       reading?.rawPointId;
+    const targetFeed = target?.port ? feedOf(target.port) : undefined;
+    const voltageV = metricValue(reading?.metrics.voltageV);
+    const currentA = metricValue(reading?.metrics.currentA);
+    const powerW = metricValue(reading?.metrics.powerW);
+    const energyKwh = metricValue(reading?.metrics.energyKwh);
     const telemetryStatus: PowerTraceTelemetryStatus = reading
       ? 'LIVE'
       : rawPointId
@@ -212,7 +217,7 @@ export class FullPowerTraceService {
               accessPort: {
                 id: target.port.id,
                 label: target.port.name,
-                ...(feedOf(target.port) ? { feed: feedOf(target.port) } : {}),
+                ...(targetFeed ? { feed: targetFeed } : {}),
               },
             }
           : {}),
@@ -222,18 +227,10 @@ export class FullPowerTraceService {
         ...(rawPointId ? { rawPointId } : {}),
         ...(reading?.sourceIdentity ? { sourceIdentity: reading.sourceIdentity } : {}),
         ...(reading?.receivedAt ? { receivedAt: reading.receivedAt } : {}),
-        ...(metricValue(reading?.metrics.voltageV) !== undefined
-          ? { voltageV: metricValue(reading?.metrics.voltageV) }
-          : {}),
-        ...(metricValue(reading?.metrics.currentA) !== undefined
-          ? { currentA: metricValue(reading?.metrics.currentA) }
-          : {}),
-        ...(metricValue(reading?.metrics.powerW) !== undefined
-          ? { powerW: metricValue(reading?.metrics.powerW) }
-          : {}),
-        ...(metricValue(reading?.metrics.energyKwh) !== undefined
-          ? { energyKwh: metricValue(reading?.metrics.energyKwh) }
-          : {}),
+        ...(voltageV !== undefined ? { voltageV } : {}),
+        ...(currentA !== undefined ? { currentA } : {}),
+        ...(powerW !== undefined ? { powerW } : {}),
+        ...(energyKwh !== undefined ? { energyKwh } : {}),
       },
     };
   }

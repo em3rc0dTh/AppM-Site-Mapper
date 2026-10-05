@@ -13,7 +13,6 @@ import type {
   ContainerRackNode,
   DeviceNode,
   EquipmentNode,
-  RoomSubstructureNode,
   TopologyKind,
   TopologyNode,
 } from '@/modules/topology/domain/entities';

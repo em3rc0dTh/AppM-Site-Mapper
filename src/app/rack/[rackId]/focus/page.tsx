@@ -34,7 +34,9 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
 
   const inventoryPortIds = new Set(
     view.value.inventory.flatMap((item) =>
-      item.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').map((port) => port.id),
+      item.kind === 'EQUIPMENT'
+        ? item.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').map((port) => port.id)
+        : [],
     ),
   );
   const relatedPower = (await (await createPowerRepository()).listActive()).filter(
@@ -149,7 +151,13 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
           <ContextPin entityId={rackId} />
           <TelemetryLens
             label={view.value.rack.name}
-            entityIds={[...new Set(view.value.inventory.map((item) => item.deviceId))]}
+            entityIds={[
+              ...new Set(
+                view.value.inventory.flatMap((item) =>
+                  item.kind === 'EQUIPMENT' ? [item.deviceId] : item.kind === 'DEVICE' ? [item.id] : [],
+                ),
+              ),
+            ]}
           />
         </aside>
       </div>

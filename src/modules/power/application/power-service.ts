@@ -13,7 +13,8 @@ export type PowerError =
   | 'TARGET_PORT_NOT_FOUND'
   | 'INVALID_SOURCE_DIRECTION'
   | 'INVALID_TARGET_DIRECTION'
-  | 'SAME_ENDPOINT';
+  | 'SAME_ENDPOINT'
+  | 'PATH_NOT_FOUND';
 
 export interface CreatePowerPathInput {
   readonly sourceAccessPortId: string;
@@ -35,6 +36,10 @@ export class PowerService {
     private readonly topology: TopologyRepository,
     private readonly repository: PowerRepository,
   ) {}
+
+  async listActive(): Promise<readonly PowerPath[]> {
+    return this.repository.listActive();
+  }
 
   async create(input: CreatePowerPathInput): Promise<Result<PowerPath, PowerError>> {
     if (input.sourceAccessPortId === input.targetAccessPortId) return failure('SAME_ENDPOINT');
@@ -63,5 +68,18 @@ export class PowerService {
 
     await this.repository.insert(path);
     return success(path);
+  }
+
+  async archive(id: string): Promise<Result<PowerPath, PowerError>> {
+    const current = await this.repository.getById(id);
+    if (!current) return failure('PATH_NOT_FOUND');
+
+    const archived: PowerPath = {
+      ...current,
+      lifecycle: 'ARCHIVED',
+      updatedAt: nowIso(),
+    };
+    await this.repository.replace(archived);
+    return success(archived);
   }
 }

@@ -41,9 +41,7 @@ describe('development demo seed', () => {
     const projection = await new BdfbProjectionService(topology).get(bdfb.id);
     expect(projection?.shelves).toHaveLength(1);
     expect(projection?.shelves[0]?.frames[0]?.panels).toHaveLength(2);
-    expect(
-      projection?.shelves[0]?.frames[0]?.panels[0]?.positions.filter(Boolean),
-    ).toHaveLength(2);
+    expect(projection?.shelves[0]?.frames[0]?.panels[0]?.positions.filter(Boolean)).toHaveLength(2);
 
     const racks = await topology.listByKind('CONTAINER_RACK');
     const rackA02 = racks.find(

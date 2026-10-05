@@ -2,72 +2,191 @@ import { describe, expect, it } from 'vitest';
 
 import { FullPowerTraceService } from '@/modules/power/application/full-power-trace-service';
 import { PowerService } from '@/modules/power/application/power-service';
+import type { PowerPath } from '@/modules/power/domain/entities';
 import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type {
+  AccessPort,
   ContainerRackNode,
   DeviceNode,
   EquipmentNode,
+  EquipmentType,
 } from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 
 const timestamp = '2026-10-01T18:00:00.000Z';
 
-function bdfb(id: string, breakerId: string, rawPointId: string): DeviceNode {
+function powerPort(
+  deviceId: string,
+  equipmentId: string,
+  id: string,
+  direction: 'INPUT' | 'OUTPUT',
+  feed?: 'A' | 'B',
+): AccessPort {
+  return {
+    id,
+    deviceId,
+    equipmentId,
+    name: id,
+    portType: 'POWER',
+    direction,
+    exposure: 'EXTERNAL',
+    lifecycle: 'ACTIVE',
+    ...(feed ? { attributes: { feed } } : {}),
+  };
+}
+
+function device(id: string, parentId: string, deviceType: DeviceNode['deviceType'], rootIds: string[]): DeviceNode {
   return {
     id,
     kind: 'DEVICE',
-    parentId: 'rack-power',
+    parentId,
     name: id.toUpperCase(),
+    deviceType,
+    rootEquipmentIds: rootIds,
     lifecycle: 'ACTIVE',
     pinned: false,
     createdAt: timestamp,
     updatedAt: timestamp,
-    bdfb: {
-      shelves: [
-        {
-          id: `${id}-shelf`,
-          label: 'Shelf',
-          frames: [
-            {
-              id: `${id}-frame`,
-              label: 'Frame',
-              panels: [
-                {
-                  id: `${id}-panel`,
-                  label: 'Panel',
-                  endpoints: [
-                    {
-                      id: breakerId,
-                      variant: 'BREAKER',
-                      label: breakerId.toUpperCase(),
-                      telemetry: { rawPointId },
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
   };
 }
 
-function source(id: string, breakerId: string) {
+function equipment(input: {
+  id: string;
+  deviceId: string;
+  parentId: string;
+  parentEquipmentId: string | null;
+  equipmentType: EquipmentType;
+  name?: string;
+  children?: readonly (string | null)[];
+  accessPorts?: readonly AccessPort[];
+  attributes?: Readonly<Record<string, unknown>>;
+}): EquipmentNode {
   return {
-    entityId: id,
-    internal: {
-      shelfId: `${id}-shelf`,
-      frameId: `${id}-frame`,
-      panelId: `${id}-panel`,
-      breakerHolderId: breakerId,
-    },
+    id: input.id,
+    kind: 'EQUIPMENT',
+    parentId: input.parentId,
+    deviceId: input.deviceId,
+    equipmentType: input.equipmentType,
+    parentEquipmentId: input.parentEquipmentId,
+    childMode: 'DYNAMIC',
+    children: input.children ?? [],
+    accessPorts: input.accessPorts ?? [],
+    name: input.name ?? input.id,
+    pinned: false,
+    lifecycle: 'ACTIVE',
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    ...(input.attributes ? { attributes: input.attributes } : {}),
+  };
+}
+
+function sourceFixture(id: string, breakerId: string, rawPointId: string) {
+  const chassisId = `${id}-chassis`;
+  const shelfId = `${id}-shelf`;
+  const frameId = `${id}-frame`;
+  const panelId = `${id}-panel`;
+  const portId = `${breakerId}-out`;
+  const sourceDevice = device(id, 'rack-power', 'BDFB', [chassisId]);
+
+  const chassis = equipment({
+    id: chassisId,
+    deviceId: id,
+    parentId: id,
+    parentEquipmentId: null,
+    equipmentType: 'CHASSIS',
+    children: [shelfId],
+    name: 'Chassis',
+  });
+  const shelf = equipment({
+    id: shelfId,
+    deviceId: id,
+    parentId: chassisId,
+    parentEquipmentId: chassisId,
+    equipmentType: 'SHELF',
+    children: [frameId],
+    name: 'Shelf',
+  });
+  const frame = equipment({
+    id: frameId,
+    deviceId: id,
+    parentId: shelfId,
+    parentEquipmentId: shelfId,
+    equipmentType: 'FRAME',
+    children: [panelId],
+    name: 'Frame',
+  });
+  const panel = equipment({
+    id: panelId,
+    deviceId: id,
+    parentId: frameId,
+    parentEquipmentId: frameId,
+    equipmentType: 'PANEL',
+    children: [breakerId],
+    name: 'Panel',
+  });
+  const breakerPort = powerPort(id, breakerId, portId, 'OUTPUT');
+  const breaker = equipment({
+    id: breakerId,
+    deviceId: id,
+    parentId: panelId,
+    parentEquipmentId: panelId,
+    equipmentType: 'CIRCUIT_BREAKER',
+    name: breakerId.toUpperCase(),
+    accessPorts: [breakerPort],
+    attributes: { telemetryRawPointId: rawPointId },
+  });
+
+  return {
+    device: sourceDevice,
+    equipment: [chassis, shelf, frame, panel, breaker] as const,
+    breaker,
+    port: breakerPort,
+  };
+}
+
+function sample(
+  sourceDeviceId: string,
+  breaker: EquipmentNode,
+  sourceIdentity: string,
+  rawPointId: string,
+  voltageV: number,
+  currentA: number,
+): TelemetrySample {
+  return {
+    bindingId: `binding:${sourceIdentity}`,
+    targetId: sourceDeviceId,
+    targetType: 'DEVICE',
+    entityId: sourceDeviceId,
+    entityKind: 'DEVICE',
+    sourceIdentity,
+    reported: {},
+    receivedAt: timestamp,
+    protocol: 'BFDB',
+    breakerReadings: [
+      {
+        deviceId: sourceDeviceId,
+        sourceIdentity,
+        shelfId: `${sourceDeviceId}-shelf`,
+        frameId: `${sourceDeviceId}-frame`,
+        panelId: `${sourceDeviceId}-panel`,
+        panelLabel: 'Panel',
+        breakerId: breaker.id,
+        breakerLabel: breaker.name,
+        rawPointId,
+        position: 1,
+        metrics: {
+          voltageV: { value: voltageV, observedAt: timestamp },
+          currentA: { value: currentA, observedAt: timestamp },
+        },
+        receivedAt: timestamp,
+      },
+    ],
   };
 }
 
 describe('FullPowerTraceService', () => {
-  it('resolves independent A/B feeds across different BDFBs to recursively nested Equipment ports', async () => {
+  it('resolves independent A/B feeds from breaker AccessPorts to recursively nested Equipment', async () => {
     const rack: ContainerRackNode = {
       id: 'rack-load',
       kind: 'CONTAINER_RACK',
@@ -80,129 +199,75 @@ describe('FullPowerTraceService', () => {
       createdAt: timestamp,
       updatedAt: timestamp,
     };
-    const root: DeviceNode = {
-      id: 'device-root',
-      kind: 'DEVICE',
-      parentId: rack.id,
-      name: 'Compute Chassis',
-      lifecycle: 'ACTIVE',
-      pinned: false,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-    const computeModule: EquipmentNode = {
+
+    const root = device('device-root', rack.id, 'SERVER', ['equipment-module']);
+    const computeModule = equipment({
       id: 'equipment-module',
-      kind: 'EQUIPMENT',
+      deviceId: root.id,
       parentId: root.id,
+      parentEquipmentId: null,
+      equipmentType: 'CHASSIS',
       name: 'Compute Module',
-      lifecycle: 'ACTIVE',
-      pinned: false,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-    const controller: EquipmentNode = {
+      children: ['equipment-controller'],
+    });
+    const portA = powerPort(root.id, 'equipment-controller', 'power-a', 'INPUT', 'A');
+    const portB = powerPort(root.id, 'equipment-controller', 'power-b', 'INPUT', 'B');
+    const controller = equipment({
       id: 'equipment-controller',
-      kind: 'EQUIPMENT',
+      deviceId: root.id,
       parentId: computeModule.id,
+      parentEquipmentId: computeModule.id,
+      equipmentType: 'POWER_MODULE',
       name: 'Power Controller',
-      lifecycle: 'ACTIVE',
-      pinned: false,
-      accessPorts: [
-        { id: 'power-a', label: 'Power A', kind: 'POWER', feed: 'A' },
-        { id: 'power-b', label: 'Power B', kind: 'POWER', feed: 'B' },
-      ],
-      powerRequirement: { redundancy: 'A_B_REQUIRED', requiredFeeds: ['A', 'B'] },
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-    const bdfbA = bdfb('bdfb-a', 'breaker-a', '0_1_8');
-    const bdfbB = bdfb('bdfb-b', 'breaker-b', '0_3_11');
+      accessPorts: [portA, portB],
+      attributes: {
+        powerContractRoot: true,
+        powerRedundancy: 'A_B_REQUIRED',
+        requiredFeeds: ['A', 'B'],
+      },
+    });
+
+    const sourceA = sourceFixture('bdfb-a', 'breaker-a', '0_1_8');
+    const sourceB = sourceFixture('bdfb-b', 'breaker-b', '0_3_11');
 
     const topology = new MemoryTopologyRepository([
       rack,
       root,
       computeModule,
       controller,
-      bdfbA,
-      bdfbB,
+      sourceA.device,
+      ...sourceA.equipment,
+      sourceB.device,
+      ...sourceB.equipment,
     ]);
     const power = new MemoryPowerRepository();
     const service = new PowerService(topology, power);
 
-    const feedA = await service.create({
-      source: source(bdfbA.id, 'breaker-a'),
-      target: { entityId: controller.id, internal: { accessPortId: 'power-a' } },
-      feed: 'A',
-      label: 'Primary feed',
-    });
-    const feedB = await service.create({
-      source: source(bdfbB.id, 'breaker-b'),
-      target: { entityId: controller.id, internal: { accessPortId: 'power-b' } },
-      feed: 'B',
-      label: 'Secondary feed',
-    });
-
-    expect(feedA.ok).toBe(true);
-    expect(feedB.ok).toBe(true);
+    expect(
+      await service.create({
+        sourceAccessPortId: sourceA.port.id,
+        targetAccessPortId: portA.id,
+        feed: 'A',
+        label: 'Primary feed',
+      }),
+    ).toMatchObject({ ok: true });
+    expect(
+      await service.create({
+        sourceAccessPortId: sourceB.port.id,
+        targetAccessPortId: portB.id,
+        feed: 'B',
+        label: 'Secondary feed',
+      }),
+    ).toMatchObject({ ok: true });
 
     const samples = new Map<string, TelemetrySample>([
       [
-        bdfbA.id,
-        {
-          entityId: bdfbA.id,
-          entityKind: 'DEVICE',
-          sourceIdentity: 'EMU-BFDB-01',
-          reported: {},
-          receivedAt: timestamp,
-          breakerReadings: [
-            {
-              deviceId: bdfbA.id,
-              sourceIdentity: 'EMU-BFDB-01',
-              shelfId: 'bdfb-a-shelf',
-              frameId: 'bdfb-a-frame',
-              panelId: 'bdfb-a-panel',
-              panelLabel: 'Panel',
-              breakerId: 'breaker-a',
-              breakerLabel: 'BREAKER-A',
-              rawPointId: '0_1_8',
-              position: 8,
-              metrics: {
-                voltageV: { value: 12.2, observedAt: timestamp },
-                currentA: { value: 8.1, observedAt: timestamp },
-              },
-              receivedAt: timestamp,
-            },
-          ],
-        },
+        sourceA.device.id,
+        sample(sourceA.device.id, sourceA.breaker, 'EMU-BFDB-01', '0_1_8', 12.2, 8.1),
       ],
       [
-        bdfbB.id,
-        {
-          entityId: bdfbB.id,
-          entityKind: 'DEVICE',
-          sourceIdentity: 'EMU-BFDB-02',
-          reported: {},
-          receivedAt: timestamp,
-          breakerReadings: [
-            {
-              deviceId: bdfbB.id,
-              sourceIdentity: 'EMU-BFDB-02',
-              shelfId: 'bdfb-b-shelf',
-              frameId: 'bdfb-b-frame',
-              panelId: 'bdfb-b-panel',
-              panelLabel: 'Panel',
-              breakerId: 'breaker-b',
-              breakerLabel: 'BREAKER-B',
-              rawPointId: '0_3_11',
-              position: 11,
-              metrics: {
-                voltageV: { value: 12.3, observedAt: timestamp },
-                currentA: { value: 7.9, observedAt: timestamp },
-              },
-              receivedAt: timestamp,
-            },
-          ],
-        },
+        sourceB.device.id,
+        sample(sourceB.device.id, sourceB.breaker, 'EMU-BFDB-02', '0_3_11', 12.3, 7.9),
       ],
     ]);
 
@@ -213,58 +278,61 @@ describe('FullPowerTraceService', () => {
     expect(trace).not.toBeNull();
     expect(trace?.feedA).toHaveLength(1);
     expect(trace?.feedB).toHaveLength(1);
-    expect(trace?.feedA[0]?.source.entityId).toBe(bdfbA.id);
-    expect(trace?.feedB[0]?.source.entityId).toBe(bdfbB.id);
+    expect(trace?.feedA[0]?.source.entityId).toBe(sourceA.device.id);
+    expect(trace?.feedB[0]?.source.entityId).toBe(sourceB.device.id);
     expect(trace?.feedA[0]?.target.hierarchy).toEqual([
       'RACK-LOAD',
-      'Compute Chassis',
+      'DEVICE-ROOT',
       'Compute Module',
       'Power Controller',
     ]);
-    expect(trace?.feedA[0]?.target.accessPort?.id).toBe('power-a');
-    expect(trace?.feedB[0]?.target.accessPort?.id).toBe('power-b');
+    expect(trace?.feedA[0]?.target.accessPort).toMatchObject({ id: 'power-a', feed: 'A' });
+    expect(trace?.feedB[0]?.target.accessPort).toMatchObject({ id: 'power-b', feed: 'B' });
     expect(trace?.feedA[0]?.telemetry).toMatchObject({
       status: 'LIVE',
       rawPointId: '0_1_8',
       sourceIdentity: 'EMU-BFDB-01',
       voltageV: 12.2,
+      currentA: 8.1,
     });
-    expect(trace?.policies.find((policy) => policy.entityId === controller.id)).toMatchObject({
-      policy: 'A_B_REQUIRED',
-      status: 'SATISFIED',
-      feedsPresent: ['A', 'B'],
-    });
+    expect(trace?.policies).toEqual([
+      expect.objectContaining({
+        entityId: root.id,
+        policy: 'A_B_REQUIRED',
+        status: 'SATISFIED',
+        feedsPresent: ['A', 'B'],
+      }),
+    ]);
   });
 
-  it('preserves legacy entity-only targets but marks them as ambiguous instead of inventing a port', async () => {
-    const load: DeviceNode = {
-      id: 'legacy-load',
-      kind: 'DEVICE',
-      parentId: 'rack-load',
-      name: 'Legacy Load',
+  it('keeps a target leg visible and marks a missing source AccessPort as broken', async () => {
+    const root = device('load', 'rack-load', 'SERVER', ['load-power']);
+    const input = powerPort(root.id, 'load-power', 'load-in', 'INPUT', 'A');
+    const powerModule = equipment({
+      id: 'load-power',
+      deviceId: root.id,
+      parentId: root.id,
+      parentEquipmentId: null,
+      equipmentType: 'POWER_MODULE',
+      name: 'Load power',
+      accessPorts: [input],
+    });
+    const topology = new MemoryTopologyRepository([root, powerModule]);
+    const broken: PowerPath = {
+      id: 'broken-path',
+      sourceAccessPortId: 'missing-source',
+      targetAccessPortId: input.id,
+      feed: 'A',
       lifecycle: 'ACTIVE',
-      pinned: false,
       createdAt: timestamp,
       updatedAt: timestamp,
     };
-    const sourceDevice = bdfb('legacy-bdfb', 'legacy-breaker', '0_1_1');
-    const topology = new MemoryTopologyRepository([load, sourceDevice]);
-    const power = new MemoryPowerRepository([
-      {
-        id: 'legacy-path',
-        sourceEntityId: sourceDevice.id,
-        targetEntityId: load.id,
-        source: source(sourceDevice.id, 'legacy-breaker'),
-        target: { entityId: load.id },
-        feed: 'A',
-        lifecycle: 'ACTIVE',
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      },
-    ]);
+    const power = new MemoryPowerRepository([broken]);
 
-    const trace = await new FullPowerTraceService(topology, power).resolve(load.id);
-    expect(trace?.feedA[0]?.topologyStatus).toBe('LEGACY_TARGET_WITHOUT_PORT');
-    expect(trace?.feedA[0]?.target.accessPort).toBeUndefined();
+    const trace = await new FullPowerTraceService(topology, power).resolve(root.id);
+
+    expect(trace?.feedA).toHaveLength(1);
+    expect(trace?.feedA[0]?.topologyStatus).toBe('BROKEN_SOURCE');
+    expect(trace?.feedA[0]?.target.accessPort?.id).toBe(input.id);
   });
 });

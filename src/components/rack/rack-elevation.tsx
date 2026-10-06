@@ -188,7 +188,6 @@ export function RackElevation({
                 <summary>+ CREATE ONE-OFF</summary>
                 <div>
                   <TopologyCreateControl kind="DEVICE" parentId={view.rack.id} />
-                  <TopologyCreateControl kind="EQUIPMENT" parentId={view.rack.id} />
                 </div>
               </details>
             </div>
@@ -207,7 +206,7 @@ export function RackElevation({
                       setSelected({
                         ...topologyInspector(item),
                         actions: [
-                          { label: 'OPEN DEVICE', href: `/device/${item.id}` },
+                          { label: 'OPEN EQUIPMENT', href: `/device/${item.id}` },
                           { label: 'TRACE POWER', href: `/power?entity=${item.id}` },
                         ],
                       })
@@ -229,7 +228,7 @@ export function RackElevation({
                 );
               })
             ) : (
-              <p>No devices or equipment created in this rack yet.</p>
+              <p>No Equipment instances have been created for this rack yet.</p>
             )}
           </div>
         </section>

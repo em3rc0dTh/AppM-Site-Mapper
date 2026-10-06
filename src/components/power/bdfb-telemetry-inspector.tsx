@@ -176,6 +176,9 @@ export function BdfbTelemetryInspector({
   const [historyError, setHistoryError] = useState<string | null>(null);
   const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
+  const physicalShelves = presentation.shelves.filter((shelf) => shelf.physical !== false).length;
+  const physicalFrames = frames.filter((frame) => frame.physical).length;
+  const panelGroups = frames.filter((frame) => !frame.physical).length;
   const selectedPanel = activePanelId
     ? (panels.find((panel) => panel.id === activePanelId) ?? null)
     : null;
@@ -322,11 +325,13 @@ export function BdfbTelemetryInspector({
         <dd>BDFB</dd>
         <dt>Location</dt>
         <dd>{location ?? '—'}</dd>
-        <dt>Shelves</dt>
-        <dd>{presentation.shelves.length}</dd>
-        <dt>Frames</dt>
-        <dd>{frames.length}</dd>
-        <dt>Panel slots</dt>
+        <dt>Physical shelves</dt>
+        <dd>{physicalShelves}</dd>
+        <dt>Physical frames</dt>
+        <dd>{physicalFrames}</dd>
+        <dt>Panel groups</dt>
+        <dd>{panelGroups}</dd>
+        <dt>Panels</dt>
         <dd>{panels.length}</dd>
         <dt>Breakers</dt>
         <dd>{breakers.length}</dd>

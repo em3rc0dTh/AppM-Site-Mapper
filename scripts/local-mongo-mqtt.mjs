@@ -7,6 +7,7 @@ import { MongoClient } from 'mongodb';
 const args = new Set(process.argv.slice(2));
 const inspectOnly = args.has('--inspect');
 const initAdmin = args.has('--init-admin');
+const newDatabase = args.has('--new');
 const crudTest = args.has('--crud-test');
 const reuseCrudTest = args.has('--reuse');
 const telemetryEnabled = !crudTest;
@@ -103,7 +104,7 @@ async function inspectMongo() {
       ? await db.collection('topology_nodes').countDocuments({})
       : 0;
 
-    if (count === 0 && !crudTest) {
+    if (count === 0 && !crudTest && !newDatabase) {
       const possibleLegacy = names.filter((name) =>
         /network|site|structure|substructure|cluster|container|device|rack|room/i.test(name),
       );
@@ -125,7 +126,7 @@ async function inspectMongo() {
           .collection('topology_nodes')
           .countDocuments({ kind: 'NETWORK', parentId: null, lifecycle: 'ACTIVE' })
       : 0;
-    if (!crudTest && roots === 0) {
+    if (!crudTest && !newDatabase && roots === 0) {
       throw new Error(
         'topology_nodes contains ' +
           count +
@@ -147,9 +148,12 @@ async function inspectMongo() {
       : 0;
     const incompletePaths = Math.max(0, paths - canonicalPaths);
 
-    if (crudTest && !reuseCrudTest && (count > 0 || users > 0 || paths > 0)) {
+    if ((crudTest && !reuseCrudTest) || newDatabase) {
+      if (count > 0 || users > 0 || paths > 0) {
       throw new Error(
-        'CRUD clean-room database is not empty. Refusing to mix a new acceptance run with old data.\n' +
+        (newDatabase
+          ? 'Requested new Site Mapper database is not empty. Refusing to reuse existing data.\n'
+          : 'CRUD clean-room database is not empty. Refusing to mix a new acceptance run with old data.\n') +
           'Database: ' +
           databaseName +
           '\n' +
@@ -159,8 +163,11 @@ async function inspectMongo() {
           users +
           '\nActive power paths: ' +
           paths +
-          '\nUse --reuse only to continue the same acceptance run, or choose a new MONGODB_CRUD_DB_NAME.',
-      );
+          (newDatabase
+            ? '\nChoose a new MONGODB_DB_NAME or remove --new.'
+            : '\nUse --reuse only to continue the same acceptance run, or choose a new MONGODB_CRUD_DB_NAME.'),
+        );
+      }
     }
     const inventory = names.includes('topology_nodes')
       ? await db
@@ -234,7 +241,13 @@ async function inspectMongo() {
     }
 
     console.log('');
-    console.log(crudTest ? 'CRUD CLEAN-ROOM MONGODB PREFLIGHT' : 'READ-ONLY MONGODB PREFLIGHT');
+    console.log(
+      newDatabase
+        ? 'NEW CLEAN MONGODB PREFLIGHT'
+        : crudTest
+          ? 'CRUD CLEAN-ROOM MONGODB PREFLIGHT'
+          : 'READ-ONLY MONGODB PREFLIGHT',
+    );
     console.log('Database: ' + databaseName);
     console.log('Canonical nodes: ' + count);
     console.log('Active root Networks: ' + roots);
@@ -256,7 +269,11 @@ async function inspectMongo() {
               ? '3-source explicit mapping ready'
               : 'INCOMPLETE — do not assume all breaker values are mapped'),
     );
-    console.log('No MongoDB records have been created, seeded, migrated or modified.');
+    console.log(
+      newDatabase
+        ? 'Database is empty and approved for first initialization. No topology seed will be injected.'
+        : 'No MongoDB records have been created, seeded, migrated or modified.',
+    );
     console.log('');
 
     if (!crudTest && args.has('--strict') && !complete) {
@@ -276,7 +293,7 @@ async function inspectMongo() {
         'MongoDB already has users. Sign in with an existing account; --init-admin is first-user only.',
       );
     }
-    return { count, roots, users, complete, paths, canonicalPaths, incompletePaths };
+    return { count, roots, users, complete, paths, canonicalPaths, incompletePaths, newDatabase };
   } finally {
     await client.close();
   }

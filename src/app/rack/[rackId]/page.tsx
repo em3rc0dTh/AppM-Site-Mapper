@@ -98,10 +98,9 @@ export default async function RackPage({
             </span>
             <div />
             {hasPermission(auth.value.role, 'topology:write') && (
-              <details className="zip-cas-popover">
-                <summary>✎ EDIT CAS</summary>
+              <div className="zip-cas-popover">
                 <CasEditor view={result.value} />
-              </details>
+              </div>
             )}
             <ContextPin entityId={rackId} />
           </div>

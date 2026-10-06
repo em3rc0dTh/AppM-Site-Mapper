@@ -4992,3 +4992,74 @@ body {
     grid-column: 3;
   }
 }
+
+
+/* Device/BDFB viewport recovery: keep approved light surface and never clip inspectors. */
+.zip-bdfb-recovery-state {
+  flex: 1;
+  min-height: 420px;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  border: 1px solid var(--zip-border);
+  background: #fff;
+  color: #17202a;
+}
+.zip-bdfb-recovery-state > div {
+  width: min(560px, 100%);
+  padding: 34px;
+  text-align: center;
+  border: 1px solid var(--zip-border);
+  border-radius: 6px;
+  background: #f8fafc;
+}
+.zip-bdfb-recovery-state > div > span {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 42px;
+  color: #5f6d79;
+}
+.zip-bdfb-recovery-state h2 {
+  margin: 0 0 10px;
+  font-size: 20px;
+  color: #17202a;
+}
+.zip-bdfb-recovery-state p,
+.zip-bdfb-recovery-state small {
+  display: block;
+  margin: 0 auto;
+  max-width: 470px;
+  color: #68727e;
+  line-height: 1.55;
+}
+.zip-bdfb-recovery-state small {
+  margin-top: 12px;
+  font-size: 11px;
+}
+.zip-bdfb-inspector--unavailable {
+  background: #fff !important;
+  color: #17202a !important;
+}
+
+@media (min-width: 721px) {
+  .mk-device-layout {
+    height: calc(100dvh - 67px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+  .mk-device-layout > aside:first-child,
+  .zip-device-stage,
+  .zip-device-inspector {
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  .zip-device-inspector {
+    padding-bottom: 28px !important;
+  }
+  .zip-device-stage {
+    padding-bottom: 24px !important;
+  }
+}

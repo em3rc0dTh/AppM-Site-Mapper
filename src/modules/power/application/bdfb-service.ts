@@ -95,6 +95,9 @@ export class BdfbService {
       node.rootEquipmentIds.length === 1
         ? await this.topology.getById(node.rootEquipmentIds[0]!)
         : null;
+    if (node.rootEquipmentIds.length === 1 && !existingRoot) {
+      return failure('DEVICE_ALREADY_MATERIALIZED');
+    }
     if (
       existingRoot &&
       (existingRoot.kind !== 'EQUIPMENT' ||

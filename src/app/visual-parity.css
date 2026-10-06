@@ -5179,3 +5179,208 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Rack Elevation viewport contract:
+   preserve the approved rack/CAS composition while preventing clipping. */
+@media (min-width: 941px) {
+  .zip-rack-elevation-page {
+    height: calc(100dvh - 67px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .zip-rack-elevation-page .operational-layout--rack {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    grid-template-columns: 310px minmax(0, 1fr) !important;
+  }
+
+  .zip-rack-elevation-page .zip-rack-tree-menu {
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-stage {
+    height: 100%;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    overflow: hidden;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-view {
+    height: 100% !important;
+    min-height: 0 !important;
+    overflow: hidden;
+    grid-template-columns: minmax(0, 1fr) clamp(320px, 24vw, 378px) !important;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-main {
+    min-height: 0;
+    height: 100%;
+    display: grid;
+    grid-template-rows: 64px minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  .zip-rack-elevation-page .zip-elevation-canvas {
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 8px 0 10px !important;
+    overflow: auto;
+    place-items: center !important;
+    scrollbar-gutter: stable;
+  }
+
+  .zip-rack-elevation-page .zip-elevation-rack {
+    width: min(285px, calc(100% - 72px)) !important;
+    height: min(665px, calc(100% - 4px)) !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  .zip-rack-elevation-page .zip-elevation-inspector {
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+    padding-bottom: 20px !important;
+  }
+
+  .zip-rack-elevation-page .rack-warehouse-form {
+    position: static;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    margin-top: 8px;
+    overflow: visible;
+    box-shadow: none;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-footer {
+    position: relative;
+    z-index: 15;
+    min-height: 78px;
+    height: 78px;
+    flex: 0 0 78px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    background: #fff;
+    white-space: nowrap;
+  }
+
+  .zip-rack-elevation-page .zip-rack-telemetry {
+    right: clamp(332px, 25vw, 390px);
+  }
+}
+
+@media (min-width: 941px) and (max-width: 1280px) {
+  .zip-rack-elevation-page .operational-layout--rack {
+    grid-template-columns: 230px minmax(0, 1fr) !important;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-view {
+    grid-template-columns: minmax(0, 1fr) 320px !important;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-footer {
+    gap: 18px;
+    padding-inline: 18px;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-footer > span {
+    padding-right: 16px;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-footer > span:before {
+    width: 24px;
+    height: 24px;
+    margin-right: 9px;
+  }
+
+  .zip-rack-elevation-page .zip-cas-popover summary {
+    min-width: 160px;
+  }
+}
+
+@media (max-width: 940px) {
+  .zip-rack-elevation-page {
+    height: auto !important;
+    min-height: calc(100dvh - 67px) !important;
+    overflow: visible !important;
+  }
+
+  .zip-rack-elevation-page .operational-layout--rack {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .zip-rack-elevation-page .zip-rack-tree-menu {
+    display: none;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-stage {
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-view {
+    min-height: 0 !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-main,
+  .zip-rack-elevation-page .zip-elevation-inspector {
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .zip-rack-elevation-page .zip-elevation-canvas {
+    height: auto !important;
+    min-height: 560px !important;
+  }
+
+  .zip-rack-elevation-page .zip-elevation-rack {
+    height: min(665px, 72dvh) !important;
+    min-height: 480px !important;
+    width: min(285px, calc(100% - 64px)) !important;
+  }
+
+  .zip-rack-elevation-page .rack-warehouse-form {
+    position: static;
+    width: 100%;
+    max-width: none;
+    margin-top: 8px;
+    box-shadow: none;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-footer {
+    position: static;
+    height: auto;
+    min-height: 78px;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    padding: 14px 18px;
+    white-space: normal;
+  }
+
+  .zip-rack-elevation-page .zip-rack-elevation-footer > div {
+    display: none;
+  }
+
+  .zip-rack-elevation-page .zip-rack-telemetry {
+    position: static;
+    margin: 10px 16px;
+  }
+}

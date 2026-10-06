@@ -18,13 +18,29 @@ export class InventoryService {
     if (!rack) return failure('RACK_NOT_FOUND');
     if (rack.kind !== 'CONTAINER_RACK') return failure('NOT_A_CONTAINER_RACK');
 
-    const equipment = await this.repository.listByKind('EQUIPMENT');
+    const [devices, equipment] = await Promise.all([
+      this.repository.listByKind('DEVICE'),
+      this.repository.listByKind('EQUIPMENT'),
+    ]);
+
+    const rackDeviceIds = new Set(
+      devices
+        .filter(
+          (node): node is DeviceNode =>
+            node.kind === 'DEVICE' &&
+            node.lifecycle === 'ACTIVE' &&
+            node.parentId === rack.id,
+        )
+        .map((node) => node.id),
+    );
+
     return success(
       equipment.filter(
         (node): node is EquipmentNode =>
           node.kind === 'EQUIPMENT' &&
           node.lifecycle === 'ACTIVE' &&
-          node.rackPlacement?.rackId === rack.id,
+          ((node.parentEquipmentId === null && rackDeviceIds.has(node.deviceId)) ||
+            node.rackPlacement?.rackId === rack.id),
       ),
     );
   }

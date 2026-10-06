@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
 const JSON_EXAMPLE = `{
-  "kind": "DEVICE",
+  "kind": "EQUIPMENT",
   "name": "Cisco Catalyst 9300-48P",
   "manufacturer": "Cisco",
   "model": "C9300-48P",
@@ -15,65 +15,6 @@ const JSON_EXAMPLE = `{
     "depth": 445
   },
   "notes": "Reusable defaults and mounting notes"
-}`;
-
-const BDFB_EMULATOR_EXAMPLE = `{
-  "kind": "DEVICE",
-  "name": "BDFB Emulator 96P Chassis",
-  "manufacturer": "Eaton",
-  "model": "BDFB-EMU-96",
-  "category": "Power distribution",
-  "deviceType": "BDFB",
-  "sizeU": 4,
-  "dimensionsMm": {
-    "width": 482,
-    "depth": 600
-  },
-  "physicalBlueprint": {
-    "type": "BDFB",
-    "shelves": [
-      {
-        "label": "Main Shelf",
-        "frames": [
-          {
-            "label": "A",
-            "panels": [
-              {
-                "label": "Panel A1",
-                "endpointCount": 24,
-                "endpointVariant": "BREAKER",
-                "rawPointPrefix": "0_1_"
-              },
-              {
-                "label": "Panel A2",
-                "endpointCount": 24,
-                "endpointVariant": "BREAKER",
-                "rawPointPrefix": "0_2_"
-              }
-            ]
-          },
-          {
-            "label": "B",
-            "panels": [
-              {
-                "label": "Panel B1",
-                "endpointCount": 24,
-                "endpointVariant": "BREAKER",
-                "rawPointPrefix": "0_3_"
-              },
-              {
-                "label": "Panel B2",
-                "endpointCount": 24,
-                "endpointVariant": "BREAKER",
-                "rawPointPrefix": "0_4_"
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  "notes": "96-point emulator profile: A1, A2, B1 and B2 with 24 mapped breakers each."
 }`;
 
 export function TemplateCreateForm() {
@@ -100,7 +41,7 @@ export function TemplateCreateForm() {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          kind: String(form.get('kind')),
+          kind: 'EQUIPMENT',
           name: String(form.get('name') ?? ''),
           manufacturer: String(form.get('manufacturer') ?? ''),
           model: String(form.get('model') ?? ''),
@@ -191,13 +132,6 @@ export function TemplateCreateForm() {
         <form className="warehouse-template-form" onSubmit={submit}>
           <div className="warehouse-form-grid">
             <label>
-              Type
-              <select name="kind" defaultValue="DEVICE">
-                <option value="DEVICE">Device</option>
-                <option value="EQUIPMENT">Equipment</option>
-              </select>
-            </label>
-            <label>
               Template name
               <input name="name" required maxLength={120} placeholder="Cisco Catalyst 9300-48P" />
             </label>
@@ -246,9 +180,8 @@ export function TemplateCreateForm() {
           <div className="warehouse-json-copy">
             <strong>Paste one template or an array of templates.</strong>
             <span>
-              Accepted dimensions: <code>dimensionsMm.width/depth</code> or flat{' '}
-              <code>widthMm/depthMm</code>. BDFB templates may declare a compact physical blueprint
-              with panel <code>endpointCount</code> and <code>rawPointPrefix</code>.
+              Equipment templates only. Accepted dimensions: <code>dimensionsMm.width/depth</code>{' '}
+              or flat <code>widthMm/depthMm</code>. Device identities are created in Topology.
             </span>
           </div>
           <textarea
@@ -259,14 +192,7 @@ export function TemplateCreateForm() {
           />
           <div className="warehouse-json-actions">
             <button type="button" onClick={() => setJsonValue(JSON_EXAMPLE)} disabled={busy}>
-              Generic example
-            </button>
-            <button
-              type="button"
-              onClick={() => setJsonValue(BDFB_EMULATOR_EXAMPLE)}
-              disabled={busy}
-            >
-              BDFB emulator 96P
+              Equipment example
             </button>
             <button type="button" onClick={() => void importJson()} disabled={busy}>
               {busy ? 'Importing…' : 'Import JSON'}

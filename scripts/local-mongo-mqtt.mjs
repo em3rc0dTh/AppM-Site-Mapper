@@ -266,10 +266,12 @@ async function inspectMongo() {
     console.log(
       crudTest
         ? 'Telemetry: DISABLED for isolated CRUD/spatial acceptance'
-        : 'MQTT binding: ' +
-            (complete && matched.length === serials.length
-              ? '3-source explicit mapping ready'
-              : 'INCOMPLETE — do not assume all breaker values are mapped'),
+        : newDatabase
+          ? 'Telemetry: DISABLED for first clean initialization'
+          : 'MQTT binding: ' +
+              (complete && matched.length === serials.length
+                ? '3-source explicit mapping ready'
+                : 'INCOMPLETE — do not assume all breaker values are mapped'),
     );
     console.log(
       newDatabase
@@ -458,11 +460,17 @@ try {
     console.log(
       crudTest
         ? 'SITE MAPPER CRUD CLEAN-ROOM READY FOR LOCAL REVIEW'
-        : 'SITE MAPPER MONGODB + MQTT READY FOR LOCAL REVIEW',
+        : newDatabase
+          ? 'SITE MAPPER NEW CLEAN MONGODB READY FOR INITIAL CONFIGURATION'
+          : 'SITE MAPPER MONGODB + MQTT READY FOR LOCAL REVIEW',
     );
     console.log(
       'Inventory: ' +
-        (crudTest ? 'isolated CRUD database ' : 'existing MongoDB ') +
+        (crudTest
+          ? 'isolated CRUD database '
+          : newDatabase
+            ? 'new clean MongoDB '
+            : 'existing MongoDB ') +
         databaseName +
         ' (NO SEED)',
     );

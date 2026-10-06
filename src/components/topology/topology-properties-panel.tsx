@@ -127,6 +127,9 @@ export function TopologyPropertiesPanel({
   if (node.kind === 'DEVICE' && bdfb) {
     const frames = bdfb.shelves.flatMap((shelf) => shelf.frames);
     const panels = frames.flatMap((frame) => frame.panels);
+    const physicalShelves = bdfb.shelves.filter((shelf) => shelf.physical !== false).length;
+    const physicalFrames = frames.filter((frame) => frame.physical).length;
+    const panelGroups = frames.filter((frame) => !frame.physical).length;
     const positions = panels.flatMap((panel) => panel.positions);
     const breakers = positions.filter(Boolean);
     const hasA = feeds?.includes('A') ?? false;
@@ -149,11 +152,13 @@ export function TopologyPropertiesPanel({
           <dd>BDFB</dd>
           <dt>Location</dt>
           <dd>{location ?? '—'}</dd>
-          <dt>Shelves</dt>
-          <dd>{bdfb.shelves.length}</dd>
-          <dt>Frames</dt>
-          <dd>{frames.length}</dd>
-          <dt>Panel slots</dt>
+          <dt>Physical shelves</dt>
+          <dd>{physicalShelves}</dd>
+          <dt>Physical frames</dt>
+          <dd>{physicalFrames}</dd>
+          <dt>Panel groups</dt>
+          <dd>{panelGroups}</dd>
+          <dt>Panels</dt>
           <dd>{panels.length}</dd>
           <dt>Breakers</dt>
           <dd>{breakers.length}</dd>

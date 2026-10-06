@@ -1,3 +1,5 @@
+import { BdfbService } from '@/modules/power/application/bdfb-service';
+import { canonicalBdfb96Structure } from '@/modules/power/domain/bdfb-model';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
   DeviceNode,
@@ -16,7 +18,8 @@ export type WarehouseInstantiationError =
   | 'INVALID_NAME'
   | 'SERIAL_ALREADY_ASSIGNED'
   | 'ATOMIC_CREATE_REQUIRED'
-  | 'CREATE_FAILED';
+  | 'CREATE_FAILED'
+  | 'BDFB_MATERIALIZATION_FAILED';
 
 export interface InstantiateTemplateInput {
   readonly templateId: string;
@@ -127,6 +130,24 @@ export class WarehouseInstantiationService {
       if (!committed) return failure('CREATE_FAILED');
     } catch {
       return failure('CREATE_FAILED');
+    }
+
+    if (device.deviceType === 'BDFB') {
+      const materialized = await new BdfbService(this.topologyRepository).configure(
+        device.id,
+        canonicalBdfb96Structure(),
+      );
+      if (!materialized.ok) return failure('BDFB_MATERIALIZATION_FAILED');
+
+      const root = await this.topologyRepository.getById(equipment.id);
+      if (!root || root.kind !== 'EQUIPMENT') return failure('BDFB_MATERIALIZATION_FAILED');
+
+      return success({
+        device: materialized.value,
+        equipment: root,
+        recommendedMountSizeU: template.sizeU ?? null,
+        state: 'UNMOUNTED',
+      });
     }
 
     return success({

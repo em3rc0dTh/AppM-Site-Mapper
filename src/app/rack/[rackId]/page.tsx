@@ -49,7 +49,7 @@ export default async function RackPage({
   );
 
   return (
-    <main className="operational-page operational-page--rack telxius-operational-page">
+    <main className="operational-page operational-page--rack telxius-operational-page zip-rack-elevation-page">
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs zip-rack-elevation-breadcrumbs"
         aria-label="Breadcrumb"

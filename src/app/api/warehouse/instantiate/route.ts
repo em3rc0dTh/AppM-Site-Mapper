@@ -4,9 +4,26 @@ import { requirePermission } from '@/modules/identity/application/current-sessio
 import { WarehouseInstantiationService } from '@/modules/warehouse/application/warehouse-instantiation-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { createWarehouseRepository } from '@/modules/warehouse/infrastructure/warehouse-repository-factory';
+import type { DeviceType } from '@/modules/topology/domain/entities';
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+}
+
+const deviceTypes = new Set<DeviceType>([
+  'NETWORK_ELEMENT',
+  'BDFB',
+  'SERVER',
+  'UPS',
+  'RECTIFIER',
+  'POWER_SYSTEM',
+  'CUSTOM',
+]);
+
+function deviceType(value: unknown): DeviceType | undefined {
+  return typeof value === 'string' && deviceTypes.has(value as DeviceType)
+    ? (value as DeviceType)
+    : undefined;
 }
 
 export async function POST(request: Request) {
@@ -31,6 +48,7 @@ export async function POST(request: Request) {
     name: body.name,
     ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
     ...(typeof body.category === 'string' ? { category: body.category } : {}),
+    ...(deviceType(body.deviceType) ? { deviceType: deviceType(body.deviceType)! } : {}),
   });
 
   if (!result.ok) {

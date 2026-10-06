@@ -134,7 +134,10 @@ export default async function TopologyNodePage({
     node.kind === 'DEVICE' && node.deviceType === 'BDFB'
       ? await new BdfbProjectionService(repository).get(node.id)
       : null;
-  if ((node.kind === 'DEVICE' && !bdfbPresentation) || node.kind === 'EQUIPMENT') {
+  if (
+    (node.kind === 'DEVICE' && node.deviceType !== 'BDFB') ||
+    node.kind === 'EQUIPMENT'
+  ) {
     redirect(`/device/${node.id}`);
   }
   const [trail, children, selfHref] = await Promise.all([

@@ -147,9 +147,13 @@ async function inspectMongo() {
         })
       : 0;
     const incompletePaths = Math.max(0, paths - canonicalPaths);
-
+    const nonEmptyCollections = [];
     if ((crudTest && !reuseCrudTest) || newDatabase) {
-      if (names.length > 0 || count > 0 || users > 0 || paths > 0) {
+      for (const name of names) {
+        const sample = await db.collection(name).findOne({}, { projection: { _id: 1 } });
+        if (sample) nonEmptyCollections.push(name);
+      }
+      if (nonEmptyCollections.length > 0 || count > 0 || users > 0 || paths > 0) {
       throw new Error(
         (newDatabase
           ? 'Requested new Site Mapper database is not empty. Refusing to reuse existing data.\n'
@@ -163,8 +167,8 @@ async function inspectMongo() {
           users +
           '\nActive power paths: ' +
           paths +
-          '\nExisting collections: ' +
-          (names.join(', ') || 'none') +
+          '\nNon-empty collections: ' +
+          (nonEmptyCollections.join(', ') || 'none') +
           (newDatabase
             ? '\nChoose a new MONGODB_DB_NAME or remove --new.'
             : '\nUse --reuse only to continue the same acceptance run, or choose a new MONGODB_CRUD_DB_NAME.'),
@@ -275,7 +279,7 @@ async function inspectMongo() {
     );
     console.log(
       newDatabase
-        ? 'Database is empty and approved for first initialization. No topology seed will be injected; telemetry stays disabled until the canonical inventory is created.'
+        ? 'Database has no records and is approved for first initialization. Empty namespaces from an interrupted bootstrap are safe to reuse. No topology seed will be injected; telemetry stays disabled until the canonical inventory is created.'
         : 'No MongoDB records have been created, seeded, migrated or modified.',
     );
     console.log('');

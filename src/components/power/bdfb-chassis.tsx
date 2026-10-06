@@ -293,7 +293,7 @@ function DeviceHierarchyOverview({
         {shelves.map((shelf) => (
           <section className="bdfb-overview-shelf" key={shelf.id}>
             <header className="bdfb-overview-label bdfb-overview-label--shelf">
-              <span>SHELF</span>
+              <span>{shelf.physical === false ? 'CHASSIS MOUNT' : 'SHELF'}</span>
               <strong>{shelf.label}</strong>
             </header>
             <div className="bdfb-overview-frame-grid">
@@ -433,6 +433,9 @@ export function BdfbChassis({
   const frames = shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
   const breakers = panels.flatMap((panel) => panel.positions).filter(Boolean);
+  const physicalShelves = shelves.filter((shelf) => shelf.physical !== false).length;
+  const physicalFrames = frames.filter((frame) => frame.physical).length;
+  const panelGroups = frames.filter((frame) => !frame.physical).length;
 
   return (
     <section className="bdfb-chassis">
@@ -453,8 +456,11 @@ export function BdfbChassis({
         </div>
         <div className="bdfb-chassis-status">
           <ContextPin entityId={device.id} />
-          <StatusBadge tone="accent">{shelves.length} SHELF</StatusBadge>
-          <StatusBadge>{frames.length} FRAMES</StatusBadge>
+          <StatusBadge tone="accent">
+            {physicalShelves > 0 ? `${physicalShelves} SHELVES` : 'DIRECT CHASSIS'}
+          </StatusBadge>
+          {physicalFrames > 0 ? <StatusBadge>{physicalFrames} FRAMES</StatusBadge> : null}
+          {panelGroups > 0 ? <StatusBadge>{panelGroups} PANEL GROUPS</StatusBadge> : null}
           <StatusBadge>{panels.length} PANELS</StatusBadge>
           <StatusBadge>{breakers.length} BREAKERS</StatusBadge>
           {telemetry?.breakerReadings?.length ? (

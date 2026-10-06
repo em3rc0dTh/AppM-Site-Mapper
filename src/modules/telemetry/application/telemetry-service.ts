@@ -75,8 +75,33 @@ export class TelemetryService {
       }
     }
 
-    const target = await this.resolveTarget(sourceBinding);
-    if (!target) return failure('INVALID_BINDING_TARGET');
+    let target = await this.resolveTarget(sourceBinding);
+    if (!target) {
+      const inferred = await this.inferSourceBinding(normalized.value.sourceIdentity, bindings);
+      if (inferred.ok) {
+        const inferredTarget = await this.resolveTarget(inferred.value);
+        if (inferredTarget) {
+          sourceBinding = inferred.value;
+          target = inferredTarget;
+        }
+      }
+
+      if (!target) {
+        const canonical = await this.inferCanonicalBdfbSource(
+          normalized.value.sourceIdentity,
+          normalized.value.reported,
+        );
+        if (canonical.ok) {
+          const canonicalTarget = await this.resolveTarget(canonical.value);
+          if (canonicalTarget) {
+            sourceBinding = canonical.value;
+            target = canonicalTarget;
+          }
+        }
+      }
+
+      if (!target) return failure('INVALID_BINDING_TARGET');
+    }
 
     let breakerReadings: ReturnType<typeof buildBfdbBreakerReadings> = {
       readings: [],

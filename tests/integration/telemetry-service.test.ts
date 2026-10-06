@@ -197,6 +197,64 @@ describe('TelemetryService', () => {
     expect(reading?.state?.value).toBe('ONLINE');
   });
 
+  it('recovers from a stale SOURCE binding when canonical BDFB evidence is valid', async () => {
+    const bdfb: DeviceNode = {
+      ...device('device-stale-source', 'EMU-BFDB-STALE'),
+      deviceType: 'BDFB',
+    };
+    const repository = new MemoryTopologyRepository([bdfb]);
+    const configured = await new BdfbService(repository).configure(bdfb.id, {
+      panels: [
+        {
+          id: 'panel-a1',
+          label: 'A1',
+          positions: [
+            {
+              id: 'breaker-1',
+              label: 'CB-01',
+              telemetry: { rawPointId: '0_1_1' },
+            },
+          ],
+        },
+      ],
+    });
+    expect(configured.ok).toBe(true);
+
+    const service = new TelemetryService(
+      repository,
+      new TelemetryHub(4),
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 4096 },
+      {
+        configuredBindings: [
+          binding('stale-source', 'EMU-BFDB-STALE', 'DEVICE', 'missing-device'),
+        ],
+      },
+    );
+
+    const result = await service.ingest(
+      'data/dev/EMU-BFDB-STALE',
+      new TextEncoder().encode(
+        JSON.stringify({
+          sn: 'EMU-BFDB-STALE',
+          reported: {
+            '0_1_1': {
+              state: 'ONLINE',
+              U1: '13.8',
+              I1: '2.0',
+              P1: '27.6',
+              EP1: '0.1234',
+            },
+          },
+        }),
+      ),
+      timestamp,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.ok ? result.value.targetId : null).toBe(bdfb.id);
+    expect(result.ok ? result.value.bindingId : null).toBe('canonical:mqtt:EMU-BFDB-STALE');
+  });
+
   it('accepts a canonical BDFB source from exact serial and explicit breaker rawPointId', async () => {
     const bdfb: DeviceNode = {
       ...device('device-canonical', 'EMU-BFDB-CANONICAL'),

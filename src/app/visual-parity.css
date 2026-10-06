@@ -5063,3 +5063,119 @@ body {
     padding-bottom: 24px !important;
   }
 }
+
+
+/* Warehouse catalog usability: independently scrollable page and scalable filtering. */
+.zip-app-shell:not(.app-shell--immersive) .zip-app-content {
+  height: calc(100dvh - 67px);
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+}
+
+.warehouse-create-card {
+  padding: 0;
+}
+.warehouse-create-card > summary {
+  min-height: 52px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #172536;
+  font-size: 13px;
+  font-weight: 800;
+  list-style: none;
+}
+.warehouse-create-card > summary::-webkit-details-marker {
+  display: none;
+}
+.warehouse-create-card > summary::after {
+  content: '+';
+  margin-left: auto;
+  color: #2678e8;
+  font-size: 18px;
+}
+.warehouse-create-card[open] > summary::after {
+  content: '−';
+}
+.warehouse-create-card[open] > summary {
+  border-bottom: 1px solid #e0e7ef;
+}
+.warehouse-create-body {
+  padding: 18px;
+}
+
+.warehouse-catalog {
+  display: grid;
+  gap: 14px;
+}
+.warehouse-catalog-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: minmax(240px, 1.6fr) minmax(180px, 0.8fr) auto auto;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  border: 1px solid #d5dee8;
+  border-radius: 7px;
+  background: rgba(247, 249, 252, 0.97);
+  backdrop-filter: blur(8px);
+}
+.warehouse-catalog-toolbar > div {
+  display: grid;
+  gap: 5px;
+}
+.warehouse-catalog-toolbar label {
+  color: #5c6f84;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.warehouse-catalog-toolbar input,
+.warehouse-catalog-toolbar select {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid #cbd5df;
+  border-radius: 4px;
+  background: #fff;
+  color: #172536;
+}
+.warehouse-catalog-toolbar > strong {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  color: #5c6f84;
+  font-size: 10px;
+}
+.warehouse-catalog-toolbar > button,
+.warehouse-empty button {
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid #cbd5df;
+  border-radius: 4px;
+  background: #fff;
+  color: #244b76;
+  font-size: 10px;
+  font-weight: 800;
+}
+.warehouse-empty button {
+  margin-top: 12px;
+}
+@media (max-width: 900px) {
+  .warehouse-catalog-toolbar {
+    position: static;
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 620px) {
+  .warehouse-catalog-toolbar {
+    grid-template-columns: 1fr;
+  }
+}

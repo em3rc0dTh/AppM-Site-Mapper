@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import { BdfbChassis, type BreakerPowerBinding } from '@/components/power/bdfb-chassis';
+import { BdfbMaterializeControl } from '@/components/power/bdfb-materialize-control';
 import { BdfbTelemetryInspector } from '@/components/power/bdfb-telemetry-inspector';
 import { BdfbPowerTree } from '@/components/power/bdfb-power-tree';
 import { TopologyContextTree } from '@/components/topology/context-tree';
@@ -377,9 +378,10 @@ export default async function TopologyNodePage({
                     projected. Site Mapper will not replace it with a generic dark canvas.
                   </p>
                   <small>
-                    Restore or materialize the BDFB chassis and panel Equipment hierarchy to recover
-                    the physical view.
+                    Materialize the canonical 96-circuit BDFB hierarchy. The existing mounted
+                    chassis is preserved and reused.
                   </small>
+                  {canWrite ? <BdfbMaterializeControl deviceId={node.id} /> : null}
                 </div>
               </section>
             ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
@@ -419,7 +421,9 @@ export default async function TopologyNodePage({
             )}
           </div>
 
-          {canWrite && childKinds.length > 0 && (
+          {canWrite &&
+            childKinds.length > 0 &&
+            !(node.kind === 'DEVICE' && node.deviceType === 'BDFB') && (
             <div className="operational-edit-dock">
               {childKinds.map((kind) => (
                 <TopologyCreateControl

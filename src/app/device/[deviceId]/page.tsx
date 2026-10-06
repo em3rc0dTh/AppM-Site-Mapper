@@ -37,6 +37,22 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     redirect(await service.buildDeepLink(node.id));
   }
 
+  if (node.kind === 'EQUIPMENT') {
+    const owner = await repo.getById(node.deviceId);
+    if (owner?.kind === 'DEVICE' && owner.deviceType === 'BDFB') {
+      const href = await service.buildDeepLink(owner.id);
+      if (node.equipmentType === 'PANEL') {
+        redirect(`${href}?panel=${encodeURIComponent(node.id)}`);
+      }
+      if (node.equipmentType === 'CIRCUIT_BREAKER' && node.parentEquipmentId) {
+        redirect(
+          `${href}?panel=${encodeURIComponent(node.parentEquipmentId)}&breaker=${encodeURIComponent(node.id)}`,
+        );
+      }
+      redirect(href);
+    }
+  }
+
   const owningDeviceId = node.kind === 'DEVICE' ? node.id : node.deviceId;
   const deviceEquipment = (await repo.listEquipmentForDevice(owningDeviceId)).filter(
     (item) => item.lifecycle === 'ACTIVE',

@@ -22,8 +22,7 @@ export async function POST(request: Request) {
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 });
 
   const body = object(await request.json().catch(() => null));
-  const kind =
-    body?.kind === 'DEVICE' || body?.kind === 'EQUIPMENT' ? (body.kind as AssetTemplateKind) : null;
+  const kind = body?.kind === 'EQUIPMENT' ? (body.kind as AssetTemplateKind) : null;
 
   if (!body || !kind || typeof body.name !== 'string')
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });

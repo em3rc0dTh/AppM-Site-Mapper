@@ -274,7 +274,7 @@ export default async function TopologyNodePage({
 
   return (
     <main
-      className={`operational-page telxius-operational-page ${['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''} ${node.kind === 'DEVICE' && bdfbPresentation ? 'zip-bdfb-page' : ''}`}
+      className={`operational-page telxius-operational-page ${['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''} ${node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? 'zip-bdfb-page' : ''}`}
     >
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
@@ -367,6 +367,21 @@ export default async function TopologyNodePage({
                 powerBindings={bdfbPowerBindings}
                 canWritePower={canWritePower}
               />
+            ) : node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? (
+              <section className="zip-bdfb-recovery-state" role="status">
+                <div>
+                  <span aria-hidden="true">▥</span>
+                  <h2>Physical BDFB structure unavailable</h2>
+                  <p>
+                    The Device exists, but its canonical Equipment hierarchy cannot currently be
+                    projected. Site Mapper will not replace it with a generic dark canvas.
+                  </p>
+                  <small>
+                    Restore or materialize the BDFB chassis and panel Equipment hierarchy to recover
+                    the physical view.
+                  </small>
+                </div>
+              </section>
             ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
               roomLayout?.ok &&
               roomLayout.value.room.polygon ? (
@@ -436,6 +451,7 @@ export default async function TopologyNodePage({
           <TopologyPropertiesPanel
             node={node}
             contained={children.length}
+            bdfb={bdfbPresentation}
             previewContained={structurePreviewNodes.length}
             location={trail
               .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')

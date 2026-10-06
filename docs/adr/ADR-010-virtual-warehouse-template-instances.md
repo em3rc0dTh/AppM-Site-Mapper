@@ -6,7 +6,7 @@ Accepted for MK1 clean-room inventory flow.
 
 ## Context
 
-Repeated Device and Equipment models must not be re-entered for every Rack. Site Mapper needs a reusable catalog while preserving the identity and history of each physical asset.
+Repeated physical Equipment models must not be re-entered for every Rack. Site Mapper needs a reusable physical catalog while Device remains the operational identity owned by Topology.
 
 ## Decision
 
@@ -16,7 +16,7 @@ Virtual Warehouse is a catalog separate from topology and CAS.
 
 A Warehouse template describes reusable defaults:
 
-- kind: DEVICE or EQUIPMENT;
+- kind: EQUIPMENT only;
 - template name;
 - manufacturer;
 - model;
@@ -29,14 +29,16 @@ Templates are stored in `warehouse_templates`.
 
 ### Physical instance
 
-Selecting a template from a Rack creates a new topology inventory instance. The instance owns its unique operational identity, including:
+Selecting an Equipment template from a Rack creates a new Device identity in Topology and one root Equipment instance from the selected template. The Device owns the operational identity while the Equipment owns physical composition and rack occupancy. The workflow captures:
 
 - name;
 - serial number;
 - optional instance category override;
-- Rack parent;
-- lifecycle;
-- pinned state.
+- Device name and serial number;
+- Device operational type;
+- Rack context on the Device;
+- Equipment template snapshot;
+- lifecycle and pinned state.
 
 The instance persists a template snapshot containing `templateId`, `templateVersion` and the reusable attributes that were active when the instance was created.
 
@@ -51,12 +53,12 @@ A newly instantiated item is `UNMOUNTED` until CAS explicitly allocates and equi
 The flow is:
 
 ```text
-Virtual Warehouse Template
+Virtual Warehouse Equipment Template
         ↓ instantiate
-Physical DEVICE / EQUIPMENT
-        ↓ UNMOUNTED
+RACK → DEVICE identity → root EQUIPMENT
+                           ↓ UNMOUNTED
 CAS reservation
-        ↓ equip
+        ↓ equip root Equipment
 MOUNTED physical inventory
 ```
 
@@ -91,6 +93,6 @@ Not yet implemented:
 - edit/version-bump UI for an existing template;
 - template archive/restore UI;
 - bulk instantiation;
-- atomic instantiate + CAS mount in one transaction.
+- automatic CAS mount during Warehouse instantiation (intentionally separate; CAS remains explicit).
 
 These remain explicit follow-up gaps and are not implied by this ADR.

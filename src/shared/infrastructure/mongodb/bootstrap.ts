@@ -1,7 +1,21 @@
 import type { Collection, Db, Document } from 'mongodb';
 
 async function dropIndexIfPresent(collection: Collection<Document>, name: string): Promise<void> {
-  const indexes = await collection.indexes();
+  let indexes;
+  try {
+    indexes = await collection.indexes();
+  } catch (error) {
+    if (
+      typeof error === 'object' &&
+      error !== null &&
+      'code' in error &&
+      error.code === 26
+    ) {
+      return;
+    }
+    throw error;
+  }
+
   if (indexes.some((index) => index.name === name)) {
     await collection.dropIndex(name);
   }

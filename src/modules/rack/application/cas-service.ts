@@ -18,7 +18,9 @@ export type CasServiceError =
   | 'OCCUPANT_NOT_FOUND'
   | 'OCCUPANT_NOT_EQUIPMENT'
   | 'EQUIPMENT_ALREADY_PLACED'
-  | 'RANGE_NOT_RESERVED';
+  | 'RANGE_NOT_RESERVED'
+  | 'ATOMIC_CAS_STORAGE_REQUIRED'
+  | 'CAS_WRITE_CONFLICT';
 
 export class CasService {
   constructor(private readonly repository: TopologyRepository) {}
@@ -87,8 +89,15 @@ export class CasService {
       updatedAt: nowIso(),
     };
 
-    await this.repository.replace(updatedRack);
-    await this.repository.replace(updatedEquipment);
+    if (!this.repository.commitLayout) return failure('ATOMIC_CAS_STORAGE_REQUIRED');
+    if (
+      !(await this.repository.commitLayout(
+        [rack.value, occupant],
+        [updatedRack, updatedEquipment],
+      ))
+    ) {
+      return failure('CAS_WRITE_CONFLICT');
+    }
     return success(updatedRack);
   }
 
@@ -105,14 +114,31 @@ export class CasService {
     if (!result.ok) return failure(result.error);
 
     const updated: ContainerRackNode = { ...rack.value, cas: result.ranges, updatedAt: nowIso() };
-    await this.repository.replace(updated);
 
-    if (occupantId) {
-      const occupant = await this.repository.getById(occupantId);
-      if (occupant?.kind === 'EQUIPMENT' && occupant.rackPlacement?.rackId === rack.value.id) {
-        const { rackPlacement: _placement, ...rest } = occupant;
-        await this.repository.replace({ ...rest, updatedAt: nowIso() } as EquipmentNode);
-      }
+    if (!occupantId) {
+      await this.repository.replace(updated);
+      return success(updated);
+    }
+
+    const occupant = await this.repository.getById(occupantId);
+    if (
+      occupant?.kind !== 'EQUIPMENT' ||
+      occupant.rackPlacement?.rackId !== rack.value.id
+    ) {
+      await this.repository.replace(updated);
+      return success(updated);
+    }
+
+    if (!this.repository.commitLayout) return failure('ATOMIC_CAS_STORAGE_REQUIRED');
+    const { rackPlacement: _placement, ...rest } = occupant;
+    const released = { ...rest, updatedAt: nowIso() } as EquipmentNode;
+    if (
+      !(await this.repository.commitLayout(
+        [rack.value, occupant],
+        [updated, released],
+      ))
+    ) {
+      return failure('CAS_WRITE_CONFLICT');
     }
 
     return success(updated);

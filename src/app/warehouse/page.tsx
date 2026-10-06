@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 
 import { TemplateCreateForm } from '@/components/warehouse/template-create-form';
+import { WarehouseTemplateCatalog } from '@/components/warehouse/warehouse-template-catalog';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { WarehouseService } from '@/modules/warehouse/application/warehouse-service';
@@ -31,49 +32,24 @@ export default async function WarehousePage() {
       </header>
 
       {canWrite && (
-        <section className="warehouse-create-card">
-          <h2>Create template</h2>
-          <TemplateCreateForm />
-        </section>
+        <details className="warehouse-create-card">
+          <summary>Create Equipment template</summary>
+          <div className="warehouse-create-body">
+            <TemplateCreateForm />
+          </div>
+        </details>
       )}
 
-      <section className="warehouse-template-grid" aria-label="Warehouse templates">
-        {templates.length ? (
-          templates.map((template) => (
-            <article key={template.id} className="warehouse-template-card">
-              <header>
-                <span>EQUIPMENT</span>
-                <b>v{template.version}</b>
-              </header>
-              <h2>{template.name}</h2>
-              <p>
-                {[template.manufacturer, template.model].filter(Boolean).join(' · ') ||
-                  'Manufacturer/model not defined'}
-              </p>
-              <dl>
-                <dt>Category</dt>
-                <dd>{template.category ?? '—'}</dd>
-                <dt>Profile</dt>
-                <dd>Physical equipment</dd>
-                <dt>Rack size</dt>
-                <dd>{template.sizeU ? `${template.sizeU}U` : '—'}</dd>
-                <dt>Dimensions</dt>
-                <dd>
-                  {template.dimensionsMm
-                    ? `${template.dimensionsMm.width} × ${template.dimensionsMm.depth} mm`
-                    : '—'}
-                </dd>
-              </dl>
-              {template.notes && <small>{template.notes}</small>}
-            </article>
-          ))
-        ) : (
+      {templates.length ? (
+        <WarehouseTemplateCatalog templates={templates} />
+      ) : (
+        <section className="warehouse-template-grid" aria-label="Equipment templates">
           <div className="warehouse-empty">
             <strong>No templates yet</strong>
             <p>Create the first reusable Equipment template above.</p>
           </div>
-        )}
-      </section>
+        </section>
+      )}
     </main>
   );
 }

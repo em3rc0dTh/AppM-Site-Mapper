@@ -53,7 +53,7 @@ export class WarehouseService {
   async create(input: CreateAssetTemplateInput): Promise<Result<AssetTemplate, WarehouseError>> {
     const name = input.name.trim();
     if (!name) return failure('INVALID_NAME');
-    if (input.kind !== 'DEVICE' && input.kind !== 'EQUIPMENT') return failure('INVALID_KIND');
+    if (input.kind !== 'EQUIPMENT') return failure('INVALID_KIND');
 
     if (
       input.sizeU !== undefined &&

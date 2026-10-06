@@ -10,7 +10,7 @@ const initAdmin = args.has('--init-admin');
 const newDatabase = args.has('--new');
 const crudTest = args.has('--crud-test');
 const reuseCrudTest = args.has('--reuse');
-const telemetryEnabled = !crudTest;
+const telemetryEnabled = !crudTest && !newDatabase;
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
 
 const historyEnabled =
@@ -149,7 +149,7 @@ async function inspectMongo() {
     const incompletePaths = Math.max(0, paths - canonicalPaths);
 
     if ((crudTest && !reuseCrudTest) || newDatabase) {
-      if (count > 0 || users > 0 || paths > 0) {
+      if (names.length > 0 || count > 0 || users > 0 || paths > 0) {
       throw new Error(
         (newDatabase
           ? 'Requested new Site Mapper database is not empty. Refusing to reuse existing data.\n'
@@ -163,6 +163,8 @@ async function inspectMongo() {
           users +
           '\nActive power paths: ' +
           paths +
+          '\nExisting collections: ' +
+          (names.join(', ') || 'none') +
           (newDatabase
             ? '\nChoose a new MONGODB_DB_NAME or remove --new.'
             : '\nUse --reuse only to continue the same acceptance run, or choose a new MONGODB_CRUD_DB_NAME.'),
@@ -271,7 +273,7 @@ async function inspectMongo() {
     );
     console.log(
       newDatabase
-        ? 'Database is empty and approved for first initialization. No topology seed will be injected.'
+        ? 'Database is empty and approved for first initialization. No topology seed will be injected; telemetry stays disabled until the canonical inventory is created.'
         : 'No MongoDB records have been created, seeded, migrated or modified.',
     );
     console.log('');
@@ -467,7 +469,9 @@ try {
     console.log(
       crudTest
         ? 'Telemetry: disabled for this acceptance run'
-        : 'Telemetry: subscribed on demand to ' + childEnv.MQTT_TOPIC_FILTER,
+        : newDatabase
+          ? 'Telemetry: disabled for clean initialization; restart with local:mongo-mqtt after canonical inventory is created'
+          : 'Telemetry: subscribed on demand to ' + childEnv.MQTT_TOPIC_FILTER,
     );
     console.log(
       historyEnabled

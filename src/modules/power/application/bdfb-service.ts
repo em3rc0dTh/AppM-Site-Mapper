@@ -89,13 +89,31 @@ export class BdfbService {
     if (!node) return failure('DEVICE_NOT_FOUND');
     if (node.kind !== 'DEVICE') return failure('NOT_A_DEVICE');
     if (node.lifecycle !== 'ACTIVE') return failure('DEVICE_ARCHIVED');
-    if (node.rootEquipmentIds.length > 0) return failure('DEVICE_ALREADY_MATERIALIZED');
+    if (node.rootEquipmentIds.length > 1) return failure('DEVICE_ALREADY_MATERIALIZED');
+
+    const existingRoot =
+      node.rootEquipmentIds.length === 1
+        ? await this.topology.getById(node.rootEquipmentIds[0]!)
+        : null;
+    if (
+      existingRoot &&
+      (existingRoot.kind !== 'EQUIPMENT' ||
+        existingRoot.lifecycle !== 'ACTIVE' ||
+        existingRoot.deviceId !== node.id ||
+        existingRoot.parentEquipmentId !== null ||
+        existingRoot.children.length > 0)
+    ) {
+      return failure('DEVICE_ALREADY_MATERIALIZED');
+    }
 
     const validation = validateBdfb(structure);
     if (!validation.ok) return failure(validation.error);
 
     const timestamp = nowIso();
-    const chassisId = equipmentId(node.id, 'bdfb-chassis');
+    const chassisId =
+      existingRoot?.kind === 'EQUIPMENT'
+        ? existingRoot.id
+        : equipmentId(node.id, 'bdfb-chassis');
 
     const materializePanel = (
       panel: BdfbPanelSpec,
@@ -227,25 +245,47 @@ export class BdfbService {
       ...directPanels.map((panel) => equipmentId(node.id, panel.id)),
     ];
 
-    const materialized: EquipmentNode[] = [
-      baseEquipment(
-        node,
-        chassisId,
-        node.id,
-        null,
-        node.name + ' Chassis',
-        'CHASSIS',
-        chassisChildren,
-        'DYNAMIC',
-        timestamp,
-        { bdfbRole: 'CHASSIS' },
-      ),
+    const chassis: EquipmentNode =
+      existingRoot?.kind === 'EQUIPMENT'
+        ? {
+            ...existingRoot,
+            parentId: node.id,
+            deviceId: node.id,
+            equipmentType: 'CHASSIS',
+            parentEquipmentId: null,
+            childMode: 'DYNAMIC',
+            children: chassisChildren,
+            attributes: {
+              ...(existingRoot.attributes ?? {}),
+              bdfbRole: 'CHASSIS',
+            },
+            updatedAt: timestamp,
+          }
+        : baseEquipment(
+            node,
+            chassisId,
+            node.id,
+            null,
+            node.name + ' Chassis',
+            'CHASSIS',
+            chassisChildren,
+            'DYNAMIC',
+            timestamp,
+            { bdfbRole: 'CHASSIS' },
+          );
+
+    const descendants: EquipmentNode[] = [
       ...shelves.flatMap(materializeShelf),
       ...directFrames.flatMap((entry) => entry.equipment),
       ...directPanels.flatMap((panel) => materializePanel(panel, chassisId)),
     ];
 
-    for (const equipment of materialized) {
+    if (existingRoot?.kind === 'EQUIPMENT') {
+      await this.topology.replace(chassis);
+    } else {
+      await this.topology.insert(chassis);
+    }
+    for (const equipment of descendants) {
       await this.topology.insert(equipment);
     }
 

@@ -185,6 +185,44 @@ export function TopologyPropertiesPanel({
     );
   }
 
+  if (node.kind === 'DEVICE' && node.deviceType === 'BDFB') {
+    return (
+      <aside className="telxius-properties zip-bdfb-inspector zip-bdfb-inspector--unavailable">
+        <header>
+          BDFB STATUS <span>⌄</span>
+        </header>
+        <div className="zip-bdfb-inspector-id">
+          <span>▥</span>
+          <div>
+            <h2>{node.name}</h2>
+            <small>{location ?? 'Infrastructure'}</small>
+          </div>
+        </div>
+        <dl>
+          <dt>Type</dt>
+          <dd>BDFB</dd>
+          <dt>Location</dt>
+          <dd>{location ?? '—'}</dd>
+          <dt>Physical model</dt>
+          <dd>Unavailable</dd>
+          <dt>Telemetry</dt>
+          <dd>Waiting for canonical physical mapping</dd>
+        </dl>
+        <section className="zip-bdfb-status-card">
+          <h3>RECOVERY REQUIRED</h3>
+          <div>
+            <span>○</span>
+            <strong>Canonical Equipment hierarchy is incomplete</strong>
+            <small>
+              The Device is preserved. Site Mapper will not invent shelves, frames, panels or
+              breakers.
+            </small>
+          </div>
+        </section>
+      </aside>
+    );
+  }
+
   if (node.kind === 'ROOM_SUBSTRUCTURE') {
     return (
       <aside className="telxius-properties">

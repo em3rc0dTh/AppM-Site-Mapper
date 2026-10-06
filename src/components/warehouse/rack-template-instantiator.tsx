@@ -45,6 +45,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
           name: String(form.get('name') ?? ''),
           serialNumber: String(form.get('serialNumber') ?? ''),
           category: String(form.get('category') ?? ''),
+          deviceType: String(form.get('deviceType') ?? 'CUSTOM'),
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -93,13 +94,24 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                   <span>
                     {selected.sizeU ? `${selected.sizeU}U` : 'U not defined'}
                     {selected.category ? ` · ${selected.category}` : ''}
-                    {selected.deviceType ? ` · ${selected.deviceType}` : ''}
                   </span>
                 </div>
               )}
               <label>
-                Instance name
-                <input name="name" required maxLength={120} placeholder="SW-CORE-01" />
+                Device identity
+                <input name="name" required maxLength={120} placeholder="BDFB-01" />
+              </label>
+              <label>
+                Operational type
+                <select name="deviceType" defaultValue="CUSTOM">
+                  <option value="CUSTOM">Custom</option>
+                  <option value="NETWORK_ELEMENT">Network element</option>
+                  <option value="BDFB">BDFB</option>
+                  <option value="SERVER">Server</option>
+                  <option value="UPS">UPS</option>
+                  <option value="RECTIFIER">Rectifier</option>
+                  <option value="POWER_SYSTEM">Power system</option>
+                </select>
               </label>
               <label>
                 Serial number
@@ -110,7 +122,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                 <input name="category" maxLength={120} placeholder={selected?.category ?? ''} />
               </label>
               <button type="submit" disabled={busy || !templateId}>
-                {busy ? 'Creating…' : 'Create unmounted instance'}
+                {busy ? 'Creating…' : 'Create Device + unmounted Equipment'}
               </button>
             </>
           ) : (

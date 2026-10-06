@@ -52,14 +52,14 @@ export function BdfbPowerTree({
             <div className="zip-bdfb-tree-row level-3">
               <span>⌄</span>
               <b>▤</b>
-              <strong>{shelf.label}</strong>
+              <strong>{shelf.physical === false ? 'DIRECT CHASSIS' : shelf.label}</strong>
             </div>
             {shelf.frames.map((frame) => (
               <div key={frame.id}>
                 <div className="zip-bdfb-tree-row level-4">
                   <span>⌄</span>
                   <b>▥</b>
-                  <strong>{frame.label}</strong>
+                  <strong>{frame.physical ? frame.label : `GROUP ${frame.label}`}</strong>
                 </div>
                 {frame.panels.map((panel) => (
                   <Link

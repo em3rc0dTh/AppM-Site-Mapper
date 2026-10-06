@@ -154,7 +154,7 @@ async function inspectMongo() {
         if (sample) nonEmptyCollections.push(name);
       }
       if (nonEmptyCollections.length > 0 || count > 0 || users > 0 || paths > 0) {
-      throw new Error(
+        throw new Error(
         (newDatabase
           ? 'Requested new Site Mapper database is not empty. Refusing to reuse existing data.\n'
           : 'CRUD clean-room database is not empty. Refusing to mix a new acceptance run with old data.\n') +
@@ -172,7 +172,7 @@ async function inspectMongo() {
           (newDatabase
             ? '\nChoose a new MONGODB_DB_NAME or remove --new.'
             : '\nUse --reuse only to continue the same acceptance run, or choose a new MONGODB_CRUD_DB_NAME.'),
-        );
+          );
       }
     }
     const inventory = names.includes('topology_nodes')

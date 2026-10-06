@@ -134,8 +134,7 @@ export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput
   const body = object(value);
   if (!body || typeof body.name !== 'string') return null;
 
-  const kind =
-    body.kind === 'DEVICE' || body.kind === 'EQUIPMENT' ? (body.kind as AssetTemplateKind) : null;
+  const kind = body.kind === 'EQUIPMENT' ? (body.kind as AssetTemplateKind) : null;
   if (!kind) return null;
 
   const dimensions = object(body.dimensionsMm);

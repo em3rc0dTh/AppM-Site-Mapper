@@ -27,7 +27,8 @@
     "telemetry:store:down": "docker compose -f docker-compose.telemetry.yml down",
     "telemetry:store:logs": "docker compose -f docker-compose.telemetry.yml logs -f telemetry-store timescaledb",
     "local:mongo-crud:new": "node scripts/local-mongo-mqtt.mjs --crud-test --init-admin",
-    "local:mongo-crud": "node scripts/local-mongo-mqtt.mjs --crud-test --reuse"
+    "local:mongo-crud": "node scripts/local-mongo-mqtt.mjs --crud-test --reuse",
+    "local:mongo:new": "node scripts/local-mongo-mqtt.mjs --new --init-admin"
   },
   "dependencies": {
     "mongodb": "7.6.0",

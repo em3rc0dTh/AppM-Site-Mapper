@@ -43,8 +43,9 @@ export function CasEditor({ view }: { view: RackElevationView }) {
   }
   return (
     <details className="mk-cas-editor">
-      <summary>EDIT CAS</summary>
-      <p>Reservations include 1U clearance above and below the physical device.</p>
+      <summary>✎ EDIT CAS</summary>
+      <div className="mk-cas-editor-panel">
+        <p>Reservations include 1U clearance above and below the physical Equipment.</p>
       <form onSubmit={submit}>
         <input type="hidden" name="action" value="reserve" />
         <label>
@@ -89,7 +90,7 @@ export function CasEditor({ view }: { view: RackElevationView }) {
         <label>
           Inventory
           <select required name="occupantId">
-            <option value="">Select device</option>
+            <option value="">Select Equipment</option>
             {view.inventory
               .filter((i) => !view.rack.cas.some((r) => r.occupantId === i.id))
               .map((i) => (
@@ -99,7 +100,7 @@ export function CasEditor({ view }: { view: RackElevationView }) {
               ))}
           </select>
         </label>
-        <button disabled={busy}>Mount device</button>
+        <button disabled={busy}>Mount Equipment</button>
       </form>
       <form onSubmit={submit}>
         <input type="hidden" name="action" value="free" />
@@ -118,7 +119,8 @@ export function CasEditor({ view }: { view: RackElevationView }) {
         </label>
         <button disabled={busy}>Free allocation</button>
       </form>
-      {error && <p role="alert">{error}</p>}
+        {error && <p role="alert">{error}</p>}
+      </div>
     </details>
   );
 }

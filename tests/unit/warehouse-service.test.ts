@@ -147,6 +147,39 @@ describe('Virtual Warehouse', () => {
     ]);
   });
 
+  it('auto-materializes the canonical BDFB hierarchy for a BDFB Device identity', async () => {
+    const warehouse = new MemoryWarehouseRepository();
+    const template = await new WarehouseService(warehouse).create({
+      kind: 'EQUIPMENT',
+      name: 'BDFB Chassis',
+      category: 'Battery distribution fuse bay chassis',
+    });
+    if (!template.ok) throw new Error(template.error);
+
+    const rackNode = rack('rack-bdfb');
+    const topology = new MemoryTopologyRepository([rackNode]);
+
+    const result = await new WarehouseInstantiationService(warehouse, topology).instantiate({
+      templateId: template.value.id,
+      rackId: rackNode.id,
+      name: 'BDFB-01',
+      serialNumber: 'EMU-BFDB-01',
+      deviceType: 'BDFB',
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.value.device.deviceType).toBe('BDFB');
+    expect(result.value.equipment.equipmentType).toBe('CHASSIS');
+
+    const equipment = await topology.listEquipmentForDevice(result.value.device.id);
+    expect(equipment.filter((item) => item.equipmentType === 'PANEL')).toHaveLength(4);
+    expect(equipment.filter((item) => item.equipmentType === 'CIRCUIT_BREAKER')).toHaveLength(96);
+    expect(equipment.filter((item) => item.equipmentType === 'SHELF')).toHaveLength(0);
+    expect(equipment.filter((item) => item.equipmentType === 'FRAME')).toHaveLength(0);
+  });
+
   it('rejects a Warehouse instance when its Device serial is already active', async () => {
     const warehouse = new MemoryWarehouseRepository();
     const template = await new WarehouseService(warehouse).create({

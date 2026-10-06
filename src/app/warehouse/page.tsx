@@ -20,10 +20,11 @@ export default async function WarehousePage() {
       <header className="warehouse-heading">
         <div>
           <span>VIRTUAL WAREHOUSE</span>
-          <h1>Device & Equipment Templates</h1>
+          <h1>Equipment Templates</h1>
           <p>
-            Define reusable hardware once. Rack inventory instances keep their own identity and a
-            versioned snapshot of the template used to create them.
+            Define reusable physical equipment once. Device identities belong to Topology; each
+            Equipment instance keeps its own identity and a versioned snapshot of the template used
+            to create it.
           </p>
         </div>
         <strong>{templates.length} active templates</strong>
@@ -41,10 +42,7 @@ export default async function WarehousePage() {
           templates.map((template) => (
             <article key={template.id} className="warehouse-template-card">
               <header>
-                <span>
-                  {template.kind}
-                  {template.deviceType ? ` · ${template.deviceType}` : ''}
-                </span>
+                <span>EQUIPMENT</span>
                 <b>v{template.version}</b>
               </header>
               <h2>{template.name}</h2>
@@ -56,7 +54,7 @@ export default async function WarehousePage() {
                 <dt>Category</dt>
                 <dd>{template.category ?? '—'}</dd>
                 <dt>Profile</dt>
-                <dd>{template.deviceType ?? 'Generic'}</dd>
+                <dd>Physical equipment</dd>
                 <dt>Rack size</dt>
                 <dd>{template.sizeU ? `${template.sizeU}U` : '—'}</dd>
                 <dt>Dimensions</dt>
@@ -72,7 +70,7 @@ export default async function WarehousePage() {
         ) : (
           <div className="warehouse-empty">
             <strong>No templates yet</strong>
-            <p>Create the first reusable Device or Equipment template above.</p>
+            <p>Create the first reusable Equipment template above.</p>
           </div>
         )}
       </section>

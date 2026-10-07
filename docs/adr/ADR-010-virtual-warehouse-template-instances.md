@@ -23,6 +23,10 @@ A Warehouse template describes reusable defaults:
 - category;
 - nominal rack size in U;
 - physical width/depth;
+- Equipment type;
+- child mode: DYNAMIC or POSITIONAL;
+- child capacity for POSITIONAL Equipment;
+- optional allowed child Equipment types;
 - notes.
 
 Templates are stored in `warehouse_templates`.
@@ -43,6 +47,29 @@ Selecting an Equipment template from a Rack creates a new Device identity in Top
 The instance persists a template snapshot containing `templateId`, `templateVersion` and the reusable attributes that were active when the instance was created.
 
 A later template change must not silently rewrite historical or installed instances.
+
+### Recursive Equipment composition
+
+Equipment is recursively composable. Every nested Equipment carries its immediate
+`parentEquipmentId`; the parent carries the inverse relationship in `children`.
+
+For `POSITIONAL` Equipment, the array length is the physical child capacity and each
+array index is a slot. A free slot is represented by `null`; Site Mapper does not create
+a runtime Holder entity.
+
+Example:
+
+```text
+DEVICE BDFB-01
+└── CHASSIS      children[0] = Shelf-01
+    └── SHELF    children = [Frame-A, Frame-B]
+        └── FRAME children = [Panel-A1, Panel-A2, null]
+            └── PANEL children[0..23] = EquipmentId | null
+```
+
+Creation, movement, archive and restore of nested Equipment must update both sides of
+the parent-child relationship atomically. A template may supply composition defaults,
+but it does not hardcode a product-specific hierarchy into the topology domain.
 
 ### CAS
 
@@ -81,11 +108,15 @@ Implemented:
 
 - create template;
 - list active templates;
-- instantiate template into a Rack;
-- instance-level name/serial/category override;
+- instantiate a root Equipment template into a Rack through a Device identity;
+- recursively instantiate Equipment templates into explicit parent slots;
+- positional child capacity represented by `children: (EquipmentId | null)[]`;
+- atomic parent/child placement and movement;
+- template defaults for Equipment type, child mode, capacity and allowed child types;
+- instance-level name/serial/category/composition overrides;
 - versioned template snapshot on instance;
 - Rack inventory provenance;
-- one-off fallback;
+- one-off recursive Equipment creation;
 - MongoDB and memory repositories.
 
 Not yet implemented:

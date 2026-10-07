@@ -22,6 +22,13 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
+function allowedChildTypes(value: unknown) {
+  if (!Array.isArray(value) || value.length > 32) return undefined;
+  const parsed = value.map(parseEquipmentType);
+  if (parsed.some((item) => item === undefined)) return undefined;
+  return parsed.filter((item): item is NonNullable<typeof item> => item !== undefined);
+}
+
 export async function GET() {
   const auth = await requirePermission('topology:read');
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 401 });

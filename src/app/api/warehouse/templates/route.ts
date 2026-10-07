@@ -2,49 +2,24 @@ import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { WarehouseService } from '@/modules/warehouse/application/warehouse-service';
-import type {
-  EquipmentChildMode,
-  EquipmentType,
-} from '@/modules/topology/domain/entities';
+import {
+  parseEquipmentChildMode,
+  parseEquipmentType,
+} from '@/modules/topology/domain/type-parsers';
 import type { AssetTemplateKind } from '@/modules/warehouse/domain/template';
 import { createWarehouseRepository } from '@/modules/warehouse/infrastructure/warehouse-repository-factory';
+import {
+  hasOnlyKeys,
+  isBoundedString,
+  isSafeMutationRequest,
+  jsonBodyErrorStatus,
+  readBoundedJson,
+} from '@/shared/http/request-security';
 
 function object(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
-}
-
-const equipmentTypes = new Set<EquipmentType>([
-  'CHASSIS',
-  'SHELF',
-  'SUB_SHELF',
-  'FRAME',
-  'PANEL',
-  'CIRCUIT_BREAKER',
-  'POWER_SUPPLY',
-  'POWER_MODULE',
-  'CONTROLLER_BOARD',
-  'NETWORK_BOARD',
-  'PLUGGABLE_MODULE',
-  'FAN',
-  'CUSTOM',
-]);
-
-function equipmentType(value: unknown): EquipmentType | undefined {
-  return typeof value === 'string' && equipmentTypes.has(value as EquipmentType)
-    ? (value as EquipmentType)
-    : undefined;
-}
-
-function childMode(value: unknown): EquipmentChildMode | undefined {
-  return value === 'DYNAMIC' || value === 'POSITIONAL' ? value : undefined;
-}
-
-function allowedChildTypes(value: unknown): readonly EquipmentType[] | undefined {
-  if (value === undefined) return undefined;
-  if (!Array.isArray(value)) return undefined;
-  const parsed = value.map(equipmentType);
-  if (parsed.some((item) => item === undefined)) return undefined;
-  return parsed as EquipmentType[];
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
 export async function GET() {
@@ -59,11 +34,62 @@ export async function POST(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 });
 
-  const body = object(await request.json().catch(() => null));
+  if (!isSafeMutationRequest(request)) {
+    return NextResponse.json({ error: 'CROSS_SITE_MUTATION_REJECTED' }, { status: 403 });
+  }
+
+  const parsed = await readBoundedJson(request, {
+    maxBytes: 32_768,
+    maxDepth: 8,
+    maxNodes: 256,
+  });
+  if (!parsed.ok) {
+    return NextResponse.json(
+      { error: parsed.error },
+      { status: jsonBodyErrorStatus(parsed.error) },
+    );
+  }
+
+  const body = object(parsed.value);
   const kind = body?.kind === 'EQUIPMENT' ? (body.kind as AssetTemplateKind) : null;
 
-  if (!body || !kind || typeof body.name !== 'string')
+  if (
+    !body ||
+    !hasOnlyKeys(body, [
+      'kind',
+      'name',
+      'manufacturer',
+      'model',
+      'category',
+      'sizeU',
+      'widthMm',
+      'depthMm',
+      'notes',
+      'equipmentType',
+      'childMode',
+      'childCapacity',
+      'allowedChildTypes',
+    ]) ||
+    !kind ||
+    !isBoundedString(body.name, 120) ||
+    (body.manufacturer !== undefined &&
+      !isBoundedString(body.manufacturer, 120, { allowEmpty: true })) ||
+    (body.model !== undefined &&
+      !isBoundedString(body.model, 120, { allowEmpty: true })) ||
+    (body.category !== undefined &&
+      !isBoundedString(body.category, 120, { allowEmpty: true })) ||
+    (body.notes !== undefined &&
+      !isBoundedString(body.notes, 500, { allowEmpty: true })) ||
+    (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
+    (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
+    (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity)) ||
+    (body.allowedChildTypes !== undefined &&
+      (!Array.isArray(body.allowedChildTypes) ||
+        body.allowedChildTypes.length > 32 ||
+        body.allowedChildTypes.some((item) => !parseEquipmentType(item))))
+  ) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+  }
 
   const result = await new WarehouseService(await createWarehouseRepository()).create({
     kind,
@@ -75,10 +101,10 @@ export async function POST(request: Request) {
     ...(typeof body.widthMm === 'number' ? { widthMm: body.widthMm } : {}),
     ...(typeof body.depthMm === 'number' ? { depthMm: body.depthMm } : {}),
     ...(typeof body.notes === 'string' ? { notes: body.notes } : {}),
-    ...(equipmentType(body.equipmentType)
-      ? { equipmentType: equipmentType(body.equipmentType)! }
+    ...(parseEquipmentType(body.equipmentType)
+      ? { equipmentType: parseEquipmentType(body.equipmentType)! }
       : {}),
-    ...(childMode(body.childMode) ? { childMode: childMode(body.childMode)! } : {}),
+    ...(parseEquipmentChildMode(body.childMode) ? { childMode: parseEquipmentChildMode(body.childMode)! } : {}),
     ...(typeof body.childCapacity === 'number'
       ? { childCapacity: body.childCapacity }
       : {}),

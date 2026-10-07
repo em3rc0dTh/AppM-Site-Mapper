@@ -50,7 +50,11 @@ export async function PATCH(request: Request, context: Context) {
   } else if (body.action === 'restore') {
     result = await service.restore(id);
   } else if (body.action === 'move' && 'parentId' in body && typeof body.parentId === 'string') {
-    result = await service.move(id, body.parentId);
+    result = await service.move(
+      id,
+      body.parentId,
+      'slotIndex' in body && typeof body.slotIndex === 'number' ? body.slotIndex : undefined,
+    );
   } else {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }

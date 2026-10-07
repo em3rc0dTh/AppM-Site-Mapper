@@ -748,8 +748,10 @@ export class TopologyService {
           updatedAt: timestamp,
         };
       } else if (parent.childMode === 'POSITIONAL') {
-        if (!Number.isInteger(archivedSlot)) return failure('POSITION_SLOT_REQUIRED');
-        const slot = archivedSlot as number;
+        if (typeof archivedSlot !== 'number' || !Number.isInteger(archivedSlot)) {
+          return failure('POSITION_SLOT_REQUIRED');
+        }
+        const slot = archivedSlot;
         if (slot < 0 || slot >= parent.children.length) return failure('SLOT_OUT_OF_RANGE');
         if (parent.children[slot] !== null) return failure('SLOT_OCCUPIED');
         const nextChildren = [...parent.children];

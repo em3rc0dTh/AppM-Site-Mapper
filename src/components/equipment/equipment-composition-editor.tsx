@@ -49,6 +49,7 @@ export function EquipmentCompositionEditor({
   );
   const [targetSlot, setTargetSlot] = useState<number | null>(null);
   const [mode, setMode] = useState<'warehouse' | 'one-off'>('warehouse');
+  const [oneOffChildMode, setOneOffChildMode] = useState<EquipmentChildMode>('DYNAMIC');
   const [templates, setTemplates] = useState<readonly AssetTemplate[]>([]);
   const [templateId, setTemplateId] = useState('');
   const [loadingTemplates, setLoadingTemplates] = useState(false);
@@ -160,7 +161,7 @@ export function EquipmentCompositionEditor({
   async function createOneOff(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const childMode = String(form.get('childMode') ?? 'DYNAMIC') as EquipmentChildMode;
+    const childMode = oneOffChildMode;
     setBusy(true);
     setError('');
     try {
@@ -564,15 +565,30 @@ export function EquipmentCompositionEditor({
               </label>
               <label>
                 Children mode
-                <select name="childMode" defaultValue="DYNAMIC">
+                <select
+                  name="childMode"
+                  value={oneOffChildMode}
+                  onChange={(event) =>
+                    setOneOffChildMode(event.target.value as EquipmentChildMode)
+                  }
+                >
                   <option value="DYNAMIC">Dynamic</option>
                   <option value="POSITIONAL">Positional</option>
                 </select>
               </label>
-              <label>
-                Child slots
-                <input name="childCapacity" type="number" min="1" max="256" placeholder="Only positional" />
-              </label>
+              {oneOffChildMode === 'POSITIONAL' ? (
+                <label>
+                  Child slots
+                  <input
+                    name="childCapacity"
+                    type="number"
+                    min="1"
+                    max="256"
+                    required
+                    placeholder="Number of physical positions"
+                  />
+                </label>
+              ) : null}
               <label>
                 Serial number
                 <input name="serialNumber" maxLength={120} />

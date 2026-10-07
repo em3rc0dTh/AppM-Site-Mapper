@@ -4,7 +4,11 @@ import { requirePermission } from '@/modules/identity/application/current-sessio
 import { WarehouseInstantiationService } from '@/modules/warehouse/application/warehouse-instantiation-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { createWarehouseRepository } from '@/modules/warehouse/infrastructure/warehouse-repository-factory';
-import type { DeviceType } from '@/modules/topology/domain/entities';
+import type {
+  DeviceType,
+  EquipmentChildMode,
+  EquipmentType,
+} from '@/modules/topology/domain/entities';
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
@@ -24,6 +28,32 @@ function deviceType(value: unknown): DeviceType | undefined {
   return typeof value === 'string' && deviceTypes.has(value as DeviceType)
     ? (value as DeviceType)
     : undefined;
+}
+
+const equipmentTypes = new Set<EquipmentType>([
+  'CHASSIS',
+  'SHELF',
+  'SUB_SHELF',
+  'FRAME',
+  'PANEL',
+  'CIRCUIT_BREAKER',
+  'POWER_SUPPLY',
+  'POWER_MODULE',
+  'CONTROLLER_BOARD',
+  'NETWORK_BOARD',
+  'PLUGGABLE_MODULE',
+  'FAN',
+  'CUSTOM',
+]);
+
+function equipmentType(value: unknown): EquipmentType | undefined {
+  return typeof value === 'string' && equipmentTypes.has(value as EquipmentType)
+    ? (value as EquipmentType)
+    : undefined;
+}
+
+function childMode(value: unknown): EquipmentChildMode | undefined {
+  return value === 'DYNAMIC' || value === 'POSITIONAL' ? value : undefined;
 }
 
 export async function POST(request: Request) {
@@ -49,6 +79,13 @@ export async function POST(request: Request) {
     ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
     ...(typeof body.category === 'string' ? { category: body.category } : {}),
     ...(deviceType(body.deviceType) ? { deviceType: deviceType(body.deviceType)! } : {}),
+    ...(equipmentType(body.equipmentType)
+      ? { equipmentType: equipmentType(body.equipmentType)! }
+      : {}),
+    ...(childMode(body.childMode) ? { childMode: childMode(body.childMode)! } : {}),
+    ...(typeof body.childCapacity === 'number'
+      ? { childCapacity: body.childCapacity }
+      : {}),
   });
 
   if (!result.ok) {

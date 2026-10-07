@@ -223,6 +223,73 @@ describe('TopologyService', () => {
     );
   });
 
+
+  it('reconfigures capacity and releases/restores positional slots without breaking links', async () => {
+    const service = new TopologyService(new MemoryTopologyRepository());
+    const { rack } = await buildHierarchy(service);
+    const device = await service.create({
+      kind: 'DEVICE',
+      parentId: rack.id,
+      name: 'Device recursive',
+    });
+    if (!device.ok) throw new Error(device.error);
+
+    const panel = await service.create({
+      kind: 'EQUIPMENT',
+      parentId: device.value.id,
+      name: 'Panel A1',
+      equipmentType: 'PANEL',
+      childMode: 'POSITIONAL',
+      childCapacity: 2,
+    });
+    if (!panel.ok || panel.value.kind !== 'EQUIPMENT') throw new Error('Expected panel');
+
+    const breaker = await service.create({
+      kind: 'EQUIPMENT',
+      parentId: panel.value.id,
+      parentSlotIndex: 0,
+      name: 'Breaker 01',
+      equipmentType: 'CIRCUIT_BREAKER',
+    });
+    if (!breaker.ok || breaker.value.kind !== 'EQUIPMENT') throw new Error('Expected breaker');
+    expect(breaker.value.accessPorts).toMatchObject([
+      { portType: 'POWER', direction: 'OUTPUT', equipmentId: breaker.value.id },
+    ]);
+
+    const expanded = await service.configureEquipment(panel.value.id, {
+      equipmentType: 'PANEL',
+      childMode: 'POSITIONAL',
+      childCapacity: 3,
+    });
+    expect(expanded.ok).toBe(true);
+    expect(expanded.ok ? expanded.value.children : []).toEqual([breaker.value.id, null, null]);
+
+    const archived = await service.archive(breaker.value.id);
+    expect(archived.ok).toBe(true);
+    const afterArchive = await service.getById(panel.value.id);
+    expect(afterArchive?.kind === 'EQUIPMENT' ? afterArchive.children : []).toEqual([
+      null,
+      null,
+      null,
+    ]);
+
+    const restored = await service.restore(breaker.value.id);
+    expect(restored.ok).toBe(true);
+    const afterRestore = await service.getById(panel.value.id);
+    expect(afterRestore?.kind === 'EQUIPMENT' ? afterRestore.children : []).toEqual([
+      breaker.value.id,
+      null,
+      null,
+    ]);
+
+    await expect(
+      service.configureEquipment(panel.value.id, {
+        childMode: 'POSITIONAL',
+        childCapacity: 0,
+      }),
+    ).resolves.toEqual({ ok: false, error: 'INVALID_CHILD_CAPACITY' });
+  });
+
   it('rejects hierarchy skips and occupied positions', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());
     const { network, rack } = await buildHierarchy(service);

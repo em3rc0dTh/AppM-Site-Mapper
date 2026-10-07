@@ -5825,3 +5825,28 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+
+.equipment-lifecycle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.equipment-lifecycle-actions .is-danger {
+  border-color: #c93f3f;
+  color: #b42318;
+}
+.equipment-lifecycle-actions .is-restore {
+  border-color: #27865d;
+  color: #18794e;
+}
+.equipment-lifecycle-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+@media (max-width: 940px) {
+  .equipment-lifecycle-actions {
+    justify-content: flex-start;
+  }
+}

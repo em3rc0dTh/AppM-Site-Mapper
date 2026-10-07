@@ -105,8 +105,20 @@ export function WarehouseTemplateCatalog({
               <dl>
                 <dt>Category</dt>
                 <dd>{template.category ?? '—'}</dd>
-                <dt>Profile</dt>
-                <dd>Physical equipment</dd>
+                <dt>Equipment type</dt>
+                <dd>{template.equipmentType?.replaceAll('_', ' ') ?? 'CUSTOM'}</dd>
+                <dt>Children</dt>
+                <dd>
+                  {template.childMode === 'POSITIONAL'
+                    ? `${template.childCapacity ?? 0} positional slots`
+                    : 'Dynamic'}
+                </dd>
+                <dt>Allowed child types</dt>
+                <dd>
+                  {template.allowedChildTypes?.length
+                    ? template.allowedChildTypes.map((type) => type.replaceAll('_', ' ')).join(', ')
+                    : 'Any Equipment type'}
+                </dd>
                 <dt>Rack size</dt>
                 <dd>{template.sizeU ? `${template.sizeU}U` : '—'}</dd>
                 <dt>Dimensions</dt>

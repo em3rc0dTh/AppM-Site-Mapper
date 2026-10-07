@@ -149,6 +149,20 @@ export async function POST(request: Request) {
     }
   }
 
+  if (
+    (body.parentId !== undefined &&
+      body.parentId !== null &&
+      typeof body.parentId !== 'string') ||
+    (body.deviceType !== undefined && !parseDeviceType(body.deviceType)) ||
+    (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
+    (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
+    (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity)) ||
+    (body.parentSlotIndex !== undefined && !Number.isInteger(body.parentSlotIndex)) ||
+    (body.totalU !== undefined && !Number.isInteger(body.totalU))
+  ) {
+    return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+  }
+
   const spatial = ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(
     kind,
   );

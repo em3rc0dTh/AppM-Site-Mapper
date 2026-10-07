@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
+import { EquipmentCompositionEditor } from '@/components/equipment/equipment-composition-editor';
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { PowerContractEditor } from '@/components/power/power-contract-editor';
 import { RackElevation } from '@/components/rack/rack-elevation';
@@ -21,6 +22,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   if (!auth.ok) redirect('/login');
 
   const canWritePower = hasPermission(auth.value.role, 'power:write');
+  const canWriteTopology = hasPermission(auth.value.role, 'topology:write');
   const { deviceId } = await params;
   const repo = await createTopologyRepository();
   const service = new TopologyService(repo);
@@ -37,23 +39,13 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     redirect(await service.buildDeepLink(node.id));
   }
 
-  if (node.kind === 'EQUIPMENT') {
-    const owner = await repo.getById(node.deviceId);
-    if (owner?.kind === 'DEVICE' && owner.deviceType === 'BDFB') {
-      const href = await service.buildDeepLink(owner.id);
-      if (node.equipmentType === 'PANEL') {
-        redirect(`${href}?panel=${encodeURIComponent(node.id)}`);
-      }
-      if (node.equipmentType === 'CIRCUIT_BREAKER' && node.parentEquipmentId) {
-        redirect(
-          `${href}?panel=${encodeURIComponent(node.parentEquipmentId)}&breaker=${encodeURIComponent(node.id)}`,
-        );
-      }
-      redirect(href);
-    }
-  }
-
   const owningDeviceId = node.kind === 'DEVICE' ? node.id : node.deviceId;
+  const directEquipmentChildren =
+    node.kind === 'EQUIPMENT'
+      ? (await service.listChildren(node.id)).filter(
+          (child): child is EquipmentNode => child.kind === 'EQUIPMENT',
+        )
+      : [];
   const deviceEquipment = (await repo.listEquipmentForDevice(owningDeviceId)).filter(
     (item) => item.lifecycle === 'ACTIVE',
   );
@@ -145,8 +137,14 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
         <aside>{tree && <TopologyContextTree tree={tree} activeId={node.id} />}</aside>
 
         <section className="zip-device-stage">
-          <h1>ELEVATION</h1>
-          {view?.ok ? (
+          <h1>{node.kind === 'EQUIPMENT' ? 'EQUIPMENT COMPOSITION' : 'ELEVATION'}</h1>
+          {node.kind === 'EQUIPMENT' ? (
+            <EquipmentCompositionEditor
+              equipment={node}
+              children={directEquipmentChildren}
+              canWrite={canWriteTopology}
+            />
+          ) : view?.ok ? (
             <RackElevation view={view.value} focusDeviceId={physical?.id} />
           ) : (
             <p>No rack context is recorded for this inventory.</p>
@@ -178,6 +176,18 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                 ? (node.model ?? node.category ?? 'Not specified')
                 : (node.category ?? 'Not specified')}
             </dd>
+            {node.kind === 'EQUIPMENT' ? (
+              <>
+                <dt>Equipment type</dt>
+                <dd>{node.equipmentType.replaceAll('_', ' ')}</dd>
+                <dt>Children mode</dt>
+                <dd>{node.childMode}</dd>
+                <dt>Child capacity</dt>
+                <dd>{node.childMode === 'POSITIONAL' ? node.children.length : 'Dynamic'}</dd>
+                <dt>Parent Equipment</dt>
+                <dd>{node.parentEquipmentId ?? 'Device root'}</dd>
+              </>
+            ) : null}
             <dt>Serial N.</dt>
             <dd>{node.serialNumber ?? 'Not assigned'}</dd>
             <dt>Rack</dt>

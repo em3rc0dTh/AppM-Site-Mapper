@@ -1,8 +1,10 @@
 import type { CreateAssetTemplateInput } from '@/modules/warehouse/application/warehouse-service';
-import type {
-  EquipmentChildMode,
-  EquipmentType,
-} from '@/modules/topology/domain/entities';
+import type { EquipmentType } from '@/modules/topology/domain/entities';
+import {
+  parseEquipmentChildMode,
+  parseEquipmentType,
+} from '@/modules/topology/domain/type-parsers';
+import { hasOnlyKeys, isBoundedString } from '@/shared/http/request-security';
 
 function object(value: unknown): Record<string, unknown> | null {
   return value && typeof value === 'object' && !Array.isArray(value)
@@ -18,50 +20,54 @@ function number(value: unknown): number | undefined {
   return typeof value === 'number' ? value : undefined;
 }
 
-const equipmentTypes = new Set<EquipmentType>([
-  'CHASSIS',
-  'SHELF',
-  'SUB_SHELF',
-  'FRAME',
-  'PANEL',
-  'CIRCUIT_BREAKER',
-  'POWER_SUPPLY',
-  'POWER_MODULE',
-  'CONTROLLER_BOARD',
-  'NETWORK_BOARD',
-  'PLUGGABLE_MODULE',
-  'FAN',
-  'CUSTOM',
-]);
-
-function equipmentType(value: unknown): EquipmentType | undefined {
-  return typeof value === 'string' && equipmentTypes.has(value as EquipmentType)
-    ? (value as EquipmentType)
-    : undefined;
-}
-
-function childMode(value: unknown): EquipmentChildMode | undefined {
-  return value === 'DYNAMIC' || value === 'POSITIONAL' ? value : undefined;
-}
-
 function allowedChildTypes(value: unknown): readonly EquipmentType[] | undefined {
   if (value === undefined) return undefined;
-  if (!Array.isArray(value)) return undefined;
-  const parsed = value.map(equipmentType);
+  if (!Array.isArray(value) || value.length > 32) return undefined;
+  const parsed = value.map(parseEquipmentType);
   if (parsed.some((item) => item === undefined)) return undefined;
   return parsed as EquipmentType[];
 }
 
 export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput | null {
   const body = object(value);
-  if (!body || body.kind !== 'EQUIPMENT' || typeof body.name !== 'string') return null;
+  if (
+    !body ||
+    !hasOnlyKeys(body, [
+      'kind',
+      'name',
+      'manufacturer',
+      'model',
+      'category',
+      'sizeU',
+      'dimensionsMm',
+      'widthMm',
+      'depthMm',
+      'notes',
+      'equipmentType',
+      'childMode',
+      'childCapacity',
+      'allowedChildTypes',
+    ]) ||
+    body.kind !== 'EQUIPMENT' ||
+    !isBoundedString(body.name, 120) ||
+    (body.manufacturer !== undefined &&
+      !isBoundedString(body.manufacturer, 120, { allowEmpty: true })) ||
+    (body.model !== undefined &&
+      !isBoundedString(body.model, 120, { allowEmpty: true })) ||
+    (body.category !== undefined &&
+      !isBoundedString(body.category, 120, { allowEmpty: true })) ||
+    (body.notes !== undefined &&
+      !isBoundedString(body.notes, 500, { allowEmpty: true }))
+  ) {
+    return null;
+  }
 
   const dimensions = object(body.dimensionsMm);
   const widthMm = number(body.widthMm) ?? (dimensions ? number(dimensions.width) : undefined);
   const depthMm = number(body.depthMm) ?? (dimensions ? number(dimensions.depth) : undefined);
   const parsedEquipmentType =
-    body.equipmentType === undefined ? undefined : equipmentType(body.equipmentType);
-  const parsedChildMode = body.childMode === undefined ? undefined : childMode(body.childMode);
+    body.equipmentType === undefined ? undefined : parseEquipmentType(body.equipmentType);
+  const parsedChildMode = body.childMode === undefined ? undefined : parseEquipmentChildMode(body.childMode);
   const parsedAllowed =
     body.allowedChildTypes === undefined ? undefined : allowedChildTypes(body.allowedChildTypes);
 

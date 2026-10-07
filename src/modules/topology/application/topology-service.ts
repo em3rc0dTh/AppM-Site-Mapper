@@ -41,6 +41,9 @@ export type TopologyError =
   | 'INVALID_DEEP_LINK'
   | 'INVALID_CHILD_CAPACITY'
   | 'POSITION_SLOT_REQUIRED'
+  | 'SLOT_OUT_OF_RANGE'
+  | 'SLOT_OCCUPIED'
+  | 'CHILD_TYPE_NOT_ALLOWED'
   | 'INVALID_DEVICE_OWNERSHIP'
   | 'EQUIPMENT_CYCLE';
 
@@ -65,6 +68,9 @@ export interface CreateTopologyNodeInput {
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
+  readonly parentSlotIndex?: number;
+  readonly manufacturer?: string;
+  readonly model?: string;
   readonly accessPorts?: readonly AccessPort[];
   readonly polygon?: readonly PhysicalPoint[];
   readonly template?: AssetTemplateSnapshot;
@@ -256,8 +262,13 @@ export class TopologyService {
           return failure('INVALID_PARENT');
         }
 
-        if (parent.kind === 'EQUIPMENT' && parent.childMode === 'POSITIONAL') {
-          return failure('POSITION_SLOT_REQUIRED');
+        const equipmentType = input.equipmentType ?? 'CUSTOM';
+        if (
+          parent.kind === 'EQUIPMENT' &&
+          parent.template?.allowedChildTypes?.length &&
+          !parent.template.allowedChildTypes.includes(equipmentType)
+        ) {
+          return failure('CHILD_TYPE_NOT_ALLOWED');
         }
 
         const childMode = input.childMode ?? 'DYNAMIC';
@@ -273,19 +284,49 @@ export class TopologyService {
           kind: 'EQUIPMENT',
           parentId: parent.id,
           deviceId: parent.kind === 'DEVICE' ? parent.id : parent.deviceId,
-          equipmentType: input.equipmentType ?? 'CUSTOM',
+          equipmentType,
           parentEquipmentId: parent.kind === 'EQUIPMENT' ? parent.id : null,
           childMode,
           children,
           accessPorts: structuredClone(input.accessPorts ?? []),
           pinned: false,
+          ...(input.manufacturer?.trim() ? { manufacturer: input.manufacturer.trim() } : {}),
+          ...(input.model?.trim() ? { model: input.model.trim() } : {}),
           ...(input.serialNumber?.trim() ? { serialNumber: input.serialNumber.trim() } : {}),
           ...(input.category?.trim() ? { category: input.category.trim() } : {}),
           ...(input.template ? { template: structuredClone(input.template) } : {}),
         };
 
-        await this.repository.insert(equipment);
-        await this.attachEquipment(parent, equipment.id);
+        if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+
+        let updatedParent: DeviceNode | EquipmentNode;
+        if (parent.kind === 'DEVICE') {
+          updatedParent = {
+            ...parent,
+            rootEquipmentIds: [...parent.rootEquipmentIds, equipment.id],
+            updatedAt: nowIso(),
+          };
+        } else if (parent.childMode === 'POSITIONAL') {
+          if (!Number.isInteger(input.parentSlotIndex)) {
+            return failure('POSITION_SLOT_REQUIRED');
+          }
+          const slot = input.parentSlotIndex as number;
+          if (slot < 0 || slot >= parent.children.length) return failure('SLOT_OUT_OF_RANGE');
+          if (parent.children[slot] !== null) return failure('SLOT_OCCUPIED');
+          const nextChildren = [...parent.children];
+          nextChildren[slot] = equipment.id;
+          updatedParent = { ...parent, children: nextChildren, updatedAt: nowIso() };
+        } else {
+          updatedParent = {
+            ...parent,
+            children: [...parent.children, equipment.id],
+            updatedAt: nowIso(),
+          };
+        }
+
+        if (!(await this.repository.commitLayout([parent], [updatedParent, equipment]))) {
+          return failure('LAYOUT_CONFLICT');
+        }
         return success(equipment);
       }
     }
@@ -304,7 +345,11 @@ export class TopologyService {
     return success(node);
   }
 
-  async move(id: string, newParentId: string): Promise<Result<TopologyNode, TopologyError>> {
+  async move(
+    id: string,
+    newParentId: string,
+    targetSlotIndex?: number,
+  ): Promise<Result<TopologyNode, TopologyError>> {
     const node = await this.repository.getById(id);
     const parent = await this.repository.getById(newParentId);
 
@@ -340,23 +385,108 @@ export class TopologyService {
       if (targetDeviceId !== node.deviceId) return failure('INVALID_DEVICE_OWNERSHIP');
 
       if (parent.kind === 'EQUIPMENT') {
-        if (parent.childMode === 'POSITIONAL') return failure('POSITION_SLOT_REQUIRED');
+        if (
+          parent.template?.allowedChildTypes?.length &&
+          !parent.template.allowedChildTypes.includes(node.equipmentType)
+        ) {
+          return failure('CHILD_TYPE_NOT_ALLOWED');
+        }
         if (await this.isDescendant(node.id, parent.id)) return failure('EQUIPMENT_CYCLE');
       }
 
       const oldParent = await this.repository.getById(node.parentId);
-      if (oldParent && (oldParent.kind === 'DEVICE' || oldParent.kind === 'EQUIPMENT')) {
-        await this.detachEquipment(oldParent, node.id);
+      if (!oldParent || (oldParent.kind !== 'DEVICE' && oldParent.kind !== 'EQUIPMENT')) {
+        return failure('INVALID_PARENT');
       }
-      await this.attachEquipment(parent, node.id);
 
+      if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+
+      const timestamp = nowIso();
       const moved: EquipmentNode = {
         ...node,
         parentId: parent.id,
         parentEquipmentId: parent.kind === 'EQUIPMENT' ? parent.id : null,
-        updatedAt: nowIso(),
+        updatedAt: timestamp,
       };
-      await this.repository.replace(moved);
+
+      if (oldParent.id === parent.id) {
+        if (parent.kind === 'DEVICE' || parent.childMode === 'DYNAMIC') {
+          return success(moved);
+        }
+        if (!Number.isInteger(targetSlotIndex)) return failure('POSITION_SLOT_REQUIRED');
+        const slot = targetSlotIndex as number;
+        if (slot < 0 || slot >= parent.children.length) return failure('SLOT_OUT_OF_RANGE');
+        const currentSlot = parent.children.findIndex((candidate) => candidate === node.id);
+        if (currentSlot < 0) return failure('INVALID_PARENT');
+        if (slot === currentSlot) return success(node);
+        if (parent.children[slot] !== null) return failure('SLOT_OCCUPIED');
+
+        const nextChildren = [...parent.children];
+        nextChildren[currentSlot] = null;
+        nextChildren[slot] = node.id;
+        const updatedParent: EquipmentNode = {
+          ...parent,
+          children: nextChildren,
+          updatedAt: timestamp,
+        };
+        if (!(await this.repository.commitLayout([parent, node], [updatedParent, moved]))) {
+          return failure('LAYOUT_CONFLICT');
+        }
+        return success(moved);
+      }
+
+      let updatedOldParent: DeviceNode | EquipmentNode;
+      if (oldParent.kind === 'DEVICE') {
+        updatedOldParent = {
+          ...oldParent,
+          rootEquipmentIds: oldParent.rootEquipmentIds.filter((candidate) => candidate !== node.id),
+          updatedAt: timestamp,
+        };
+      } else {
+        updatedOldParent = {
+          ...oldParent,
+          children: oldParent.children
+            .map((candidate) => (candidate === node.id ? null : candidate))
+            .filter((candidate) => (oldParent.childMode === 'DYNAMIC' ? candidate !== null : true)),
+          updatedAt: timestamp,
+        };
+      }
+
+      let updatedParent: DeviceNode | EquipmentNode;
+      if (parent.kind === 'DEVICE') {
+        updatedParent = {
+          ...parent,
+          rootEquipmentIds: parent.rootEquipmentIds.includes(node.id)
+            ? parent.rootEquipmentIds
+            : [...parent.rootEquipmentIds, node.id],
+          updatedAt: timestamp,
+        };
+      } else if (parent.childMode === 'POSITIONAL') {
+        if (!Number.isInteger(targetSlotIndex)) return failure('POSITION_SLOT_REQUIRED');
+        const slot = targetSlotIndex as number;
+        if (slot < 0 || slot >= parent.children.length) return failure('SLOT_OUT_OF_RANGE');
+        if (parent.children[slot] !== null) return failure('SLOT_OCCUPIED');
+        const nextChildren = [...parent.children];
+        nextChildren[slot] = node.id;
+        updatedParent = { ...parent, children: nextChildren, updatedAt: timestamp };
+      } else {
+        updatedParent = {
+          ...parent,
+          children: parent.children.includes(node.id)
+            ? parent.children
+            : [...parent.children, node.id],
+          updatedAt: timestamp,
+        };
+      }
+
+      if (
+        !(await this.repository.commitLayout(
+          [oldParent, parent, node],
+          [updatedOldParent, updatedParent, moved],
+        ))
+      ) {
+        return failure('LAYOUT_CONFLICT');
+      }
       return success(moved);
     }
 

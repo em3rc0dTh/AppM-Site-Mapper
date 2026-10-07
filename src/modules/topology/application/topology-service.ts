@@ -27,6 +27,7 @@ export type TopologyError =
   | 'ATOMIC_LAYOUT_STORAGE_REQUIRED'
   | 'LAYOUT_CONFLICT'
   | 'NOT_FOUND'
+  | 'NOT_EQUIPMENT'
   | 'INVALID_NAME'
   | 'INVALID_PARENT'
   | 'PARENT_ARCHIVED'
@@ -46,6 +47,12 @@ export type TopologyError =
   | 'CHILD_TYPE_NOT_ALLOWED'
   | 'INVALID_DEVICE_OWNERSHIP'
   | 'EQUIPMENT_CYCLE';
+
+export interface ConfigureEquipmentInput {
+  readonly equipmentType?: EquipmentType;
+  readonly childMode?: EquipmentChildMode;
+  readonly childCapacity?: number;
+}
 
 export interface TopologyNavigationNode {
   readonly node: TopologyNode;
@@ -360,6 +367,80 @@ export class TopologyService {
       await this.repository.insert(node);
     }
     return success(node);
+  }
+
+  async configureEquipment(
+    id: string,
+    input: ConfigureEquipmentInput,
+  ): Promise<Result<EquipmentNode, TopologyError>> {
+    const node = await this.repository.getById(id);
+    if (!node) return failure('NOT_FOUND');
+    if (node.kind !== 'EQUIPMENT') return failure('NOT_EQUIPMENT');
+    if (node.lifecycle !== 'ACTIVE') return failure('PARENT_ARCHIVED');
+
+    const parent = await this.repository.getById(node.parentId);
+    if (!parent || (parent.kind !== 'DEVICE' && parent.kind !== 'EQUIPMENT')) {
+      return failure('INVALID_PARENT');
+    }
+
+    const equipmentType = input.equipmentType ?? node.equipmentType;
+    if (
+      parent.kind === 'EQUIPMENT' &&
+      parent.template?.allowedChildTypes?.length &&
+      !parent.template.allowedChildTypes.includes(equipmentType)
+    ) {
+      return failure('CHILD_TYPE_NOT_ALLOWED');
+    }
+
+    const childMode = input.childMode ?? node.childMode;
+    const occupied = node.children.filter((childId): childId is string => childId !== null);
+    let children: readonly (string | null)[];
+
+    if (childMode === 'DYNAMIC') {
+      children = occupied;
+    } else {
+      const requestedCapacity =
+        input.childCapacity ?? (node.childMode === 'POSITIONAL' ? node.children.length : undefined);
+      if (
+        !Number.isInteger(requestedCapacity) ||
+        (requestedCapacity ?? 0) < 1 ||
+        (requestedCapacity ?? 0) > 256
+      ) {
+        return failure('INVALID_CHILD_CAPACITY');
+      }
+
+      const capacity = requestedCapacity as number;
+      if (node.childMode === 'POSITIONAL') {
+        const highestOccupied = node.children.reduce(
+          (highest, childId, index) => (childId === null ? highest : Math.max(highest, index)),
+          -1,
+        );
+        if (highestOccupied >= capacity) return failure('INVALID_CHILD_CAPACITY');
+        children = Array.from(
+          { length: capacity },
+          (_, index) => node.children[index] ?? null,
+        );
+      } else {
+        if (occupied.length > capacity) return failure('INVALID_CHILD_CAPACITY');
+        children = Array.from(
+          { length: capacity },
+          (_, index) => occupied[index] ?? null,
+        );
+      }
+    }
+
+    if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+    const updated: EquipmentNode = {
+      ...node,
+      equipmentType,
+      childMode,
+      children,
+      updatedAt: nowIso(),
+    };
+    if (!(await this.repository.commitLayout([node], [updated]))) {
+      return failure('LAYOUT_CONFLICT');
+    }
+    return success(updated);
   }
 
   async move(

@@ -3,6 +3,7 @@
 import { useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { EquipmentChildMode, TopologyKind } from '@/modules/topology/domain/entities';
+import { DEVICE_TYPES, EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
 import { polygonInsidePolygon, type PointMm } from '@/modules/spatial/domain/geometry';
 import { PolygonEditor } from '@/components/spatial/polygon-editor';
 
@@ -154,31 +155,21 @@ export function TopologyCreateForm({
         )}
         {kind === 'DEVICE' && (
           <select aria-label="Device type" name="deviceType" defaultValue="CUSTOM">
-            <option value="CUSTOM">Custom</option>
-            <option value="NETWORK_ELEMENT">Network element</option>
-            <option value="BDFB">BDFB</option>
-            <option value="SERVER">Server</option>
-            <option value="UPS">UPS</option>
-            <option value="RECTIFIER">Rectifier</option>
-            <option value="POWER_SYSTEM">Power system</option>
+            {DEVICE_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type.replaceAll('_', ' ')}
+              </option>
+            ))}
           </select>
         )}
         {kind === 'EQUIPMENT' && (
           <>
             <select aria-label="Equipment type" name="equipmentType" defaultValue="CUSTOM">
-              <option value="CUSTOM">Custom</option>
-              <option value="CHASSIS">Chassis</option>
-              <option value="SHELF">Shelf</option>
-              <option value="SUB_SHELF">Sub-shelf</option>
-              <option value="FRAME">Frame</option>
-              <option value="PANEL">Panel</option>
-              <option value="CIRCUIT_BREAKER">Circuit breaker</option>
-              <option value="POWER_SUPPLY">Power supply</option>
-              <option value="POWER_MODULE">Power module</option>
-              <option value="CONTROLLER_BOARD">Controller board</option>
-              <option value="NETWORK_BOARD">Network board</option>
-              <option value="PLUGGABLE_MODULE">Pluggable module</option>
-              <option value="FAN">Fan</option>
+              {EQUIPMENT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type.replaceAll('_', ' ')}
+                </option>
+              ))}
             </select>
             <select
               aria-label="Children mode"

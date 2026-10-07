@@ -4,6 +4,11 @@ import { requirePermission } from '@/modules/identity/application/current-sessio
 import { parseAssetTemplateJson } from '@/modules/warehouse/application/template-json-parser';
 import { WarehouseService } from '@/modules/warehouse/application/warehouse-service';
 import { createWarehouseRepository } from '@/modules/warehouse/infrastructure/warehouse-repository-factory';
+import {
+  isSafeMutationRequest,
+  jsonBodyErrorStatus,
+  readBoundedJson,
+} from '@/shared/http/request-security';
 
 const MAX_IMPORT_ITEMS = 100;
 
@@ -11,18 +16,23 @@ export async function POST(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 });
 
-  const raw = await request.text();
-  if (raw.length > 256_000)
-    return NextResponse.json({ error: 'IMPORT_TOO_LARGE' }, { status: 413 });
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return NextResponse.json({ error: 'INVALID_JSON' }, { status: 400 });
+  if (!isSafeMutationRequest(request)) {
+    return NextResponse.json({ error: 'CROSS_SITE_MUTATION_REJECTED' }, { status: 403 });
   }
 
-  const values = Array.isArray(parsed) ? parsed : [parsed];
+  const parsedBody = await readBoundedJson(request, {
+    maxBytes: 256_000,
+    maxDepth: 10,
+    maxNodes: 8_000,
+  });
+  if (!parsedBody.ok) {
+    return NextResponse.json(
+      { error: parsedBody.error },
+      { status: jsonBodyErrorStatus(parsedBody.error) },
+    );
+  }
+
+  const values = Array.isArray(parsedBody.value) ? parsedBody.value : [parsedBody.value];
   if (!values.length || values.length > MAX_IMPORT_ITEMS)
     return NextResponse.json({ error: 'INVALID_IMPORT_SIZE' }, { status: 400 });
 

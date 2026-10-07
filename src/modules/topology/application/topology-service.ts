@@ -279,16 +279,33 @@ export class TopologyService {
           return failure('INVALID_CHILD_CAPACITY');
         }
 
+        const deviceId = parent.kind === 'DEVICE' ? parent.id : parent.deviceId;
+        const defaultAccessPorts: readonly AccessPort[] =
+          equipmentType === 'CIRCUIT_BREAKER' && !input.accessPorts?.length
+            ? [
+                {
+                  id: base.id + ':power-out',
+                  deviceId,
+                  equipmentId: base.id,
+                  name: 'Power output',
+                  portType: 'POWER',
+                  direction: 'OUTPUT',
+                  exposure: 'EXTERNAL',
+                  lifecycle: 'ACTIVE',
+                },
+              ]
+            : [];
+
         const equipment: EquipmentNode = {
           ...base,
           kind: 'EQUIPMENT',
           parentId: parent.id,
-          deviceId: parent.kind === 'DEVICE' ? parent.id : parent.deviceId,
+          deviceId,
           equipmentType,
           parentEquipmentId: parent.kind === 'EQUIPMENT' ? parent.id : null,
           childMode,
           children,
-          accessPorts: structuredClone(input.accessPorts ?? []),
+          accessPorts: structuredClone(input.accessPorts?.length ? input.accessPorts : defaultAccessPorts),
           pinned: false,
           ...(input.manufacturer?.trim() ? { manufacturer: input.manufacturer.trim() } : {}),
           ...(input.model?.trim() ? { model: input.model.trim() } : {}),

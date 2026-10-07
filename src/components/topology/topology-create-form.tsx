@@ -2,7 +2,7 @@
 
 import { useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
-import type { TopologyKind } from '@/modules/topology/domain/entities';
+import type { EquipmentChildMode, TopologyKind } from '@/modules/topology/domain/entities';
 import { polygonInsidePolygon, type PointMm } from '@/modules/spatial/domain/geometry';
 import { PolygonEditor } from '@/components/spatial/polygon-editor';
 
@@ -49,6 +49,7 @@ export function TopologyCreateForm({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<Record<string, unknown> | null>(null);
+  const [equipmentChildMode, setEquipmentChildMode] = useState<EquipmentChildMode>('DYNAMIC');
   const [host, setHost] = useState<Element | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const spatial = kind === 'SITE' || kind === 'STRUCTURE' || kind === 'ROOM_SUBSTRUCTURE';
@@ -81,6 +82,16 @@ export function TopologyCreateForm({
     if (kind === 'DEVICE' || kind === 'EQUIPMENT') {
       payload.serialNumber = String(form.get('serialNumber') ?? '');
       payload.category = String(form.get('category') ?? '');
+    }
+    if (kind === 'DEVICE') {
+      payload.deviceType = String(form.get('deviceType') ?? 'CUSTOM');
+    }
+    if (kind === 'EQUIPMENT') {
+      payload.equipmentType = String(form.get('equipmentType') ?? 'CUSTOM');
+      payload.childMode = equipmentChildMode;
+      if (equipmentChildMode === 'POSITIONAL') {
+        payload.childCapacity = Number(form.get('childCapacity'));
+      }
     }
     if (spatial) {
       setError(null);
@@ -140,6 +151,58 @@ export function TopologyCreateForm({
             <option value="ROOM">Room</option>
             <option value="SUBSTRUCTURE">Substructure</option>
           </select>
+        )}
+        {kind === 'DEVICE' && (
+          <select aria-label="Device type" name="deviceType" defaultValue="CUSTOM">
+            <option value="CUSTOM">Custom</option>
+            <option value="NETWORK_ELEMENT">Network element</option>
+            <option value="BDFB">BDFB</option>
+            <option value="SERVER">Server</option>
+            <option value="UPS">UPS</option>
+            <option value="RECTIFIER">Rectifier</option>
+            <option value="POWER_SYSTEM">Power system</option>
+          </select>
+        )}
+        {kind === 'EQUIPMENT' && (
+          <>
+            <select aria-label="Equipment type" name="equipmentType" defaultValue="CUSTOM">
+              <option value="CUSTOM">Custom</option>
+              <option value="CHASSIS">Chassis</option>
+              <option value="SHELF">Shelf</option>
+              <option value="SUB_SHELF">Sub-shelf</option>
+              <option value="FRAME">Frame</option>
+              <option value="PANEL">Panel</option>
+              <option value="CIRCUIT_BREAKER">Circuit breaker</option>
+              <option value="POWER_SUPPLY">Power supply</option>
+              <option value="POWER_MODULE">Power module</option>
+              <option value="CONTROLLER_BOARD">Controller board</option>
+              <option value="NETWORK_BOARD">Network board</option>
+              <option value="PLUGGABLE_MODULE">Pluggable module</option>
+              <option value="FAN">Fan</option>
+            </select>
+            <select
+              aria-label="Children mode"
+              name="childMode"
+              value={equipmentChildMode}
+              onChange={(event) =>
+                setEquipmentChildMode(event.target.value as EquipmentChildMode)
+              }
+            >
+              <option value="DYNAMIC">Dynamic children</option>
+              <option value="POSITIONAL">Positional slots</option>
+            </select>
+            {equipmentChildMode === 'POSITIONAL' ? (
+              <input
+                aria-label="Child capacity"
+                name="childCapacity"
+                type="number"
+                min="1"
+                max="256"
+                required
+                placeholder="Number of child slots"
+              />
+            ) : null}
+          </>
         )}
         {(kind === 'DEVICE' || kind === 'EQUIPMENT') && (
           <>

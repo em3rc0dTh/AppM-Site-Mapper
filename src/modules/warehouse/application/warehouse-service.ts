@@ -1,12 +1,12 @@
-import { validateBdfb } from '@/modules/power/domain/bdfb-validation';
+import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
+import type {
+  EquipmentChildMode,
+  EquipmentType,
+} from '@/modules/topology/domain/entities';
 import {
-  materializeBdfbBlueprint,
   type AssetTemplate,
   type AssetTemplateKind,
-  type PhysicalBlueprint,
-  type WarehouseDeviceType,
 } from '@/modules/warehouse/domain/template';
-import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
@@ -15,8 +15,7 @@ export type WarehouseError =
   | 'INVALID_KIND'
   | 'INVALID_SIZE_U'
   | 'INVALID_DIMENSIONS'
-  | 'INVALID_DEVICE_TYPE'
-  | 'INVALID_PHYSICAL_BLUEPRINT'
+  | 'INVALID_CHILD_CAPACITY'
   | 'DUPLICATE_TEMPLATE';
 
 export interface CreateAssetTemplateInput {
@@ -29,8 +28,10 @@ export interface CreateAssetTemplateInput {
   readonly widthMm?: number;
   readonly depthMm?: number;
   readonly notes?: string;
-  readonly deviceType?: WarehouseDeviceType;
-  readonly physicalBlueprint?: PhysicalBlueprint;
+  readonly equipmentType?: EquipmentType;
+  readonly childMode?: EquipmentChildMode;
+  readonly childCapacity?: number;
+  readonly allowedChildTypes?: readonly EquipmentType[];
 }
 
 function clean(value: string | undefined): string | undefined {
@@ -58,8 +59,26 @@ export class WarehouseService {
     if (
       input.sizeU !== undefined &&
       (!Number.isInteger(input.sizeU) || input.sizeU < 1 || input.sizeU > 100)
-    )
+    ) {
       return failure('INVALID_SIZE_U');
+    }
+
+    const childMode = input.childMode ?? 'DYNAMIC';
+    if (
+      childMode === 'POSITIONAL' &&
+      (!Number.isInteger(input.childCapacity) ||
+        (input.childCapacity ?? 0) < 1 ||
+        (input.childCapacity ?? 0) > 256)
+    ) {
+      return failure('INVALID_CHILD_CAPACITY');
+    }
+    if (
+      childMode === 'DYNAMIC' &&
+      input.childCapacity !== undefined &&
+      input.childCapacity !== 0
+    ) {
+      return failure('INVALID_CHILD_CAPACITY');
+    }
 
     const hasWidth = input.widthMm !== undefined;
     const hasDepth = input.depthMm !== undefined;
@@ -72,20 +91,8 @@ export class WarehouseService {
           (input.depthMm ?? 0) < 1 ||
           (input.widthMm ?? 0) > 10000 ||
           (input.depthMm ?? 0) > 10000))
-    )
+    ) {
       return failure('INVALID_DIMENSIONS');
-
-    if (input.deviceType || input.physicalBlueprint) {
-      if (input.kind !== 'DEVICE' || input.deviceType !== 'BDFB') {
-        return failure('INVALID_DEVICE_TYPE');
-      }
-      if (!input.physicalBlueprint || input.physicalBlueprint.type !== 'BDFB') {
-        return failure('INVALID_PHYSICAL_BLUEPRINT');
-      }
-      const validation = validateBdfb(
-        materializeBdfbBlueprint(input.physicalBlueprint, 'warehouse-template-validation'),
-      );
-      if (!validation.ok) return failure('INVALID_PHYSICAL_BLUEPRINT');
     }
 
     const existing = await this.repository.listActive();
@@ -101,12 +108,14 @@ export class WarehouseService {
     const model = clean(input.model);
     const category = clean(input.category);
     const notes = clean(input.notes);
+    const allowedChildTypes = [...new Set(input.allowedChildTypes ?? [])];
+
     const template: AssetTemplate = {
       id: createDomainId(),
       lifecycle: 'ACTIVE',
       createdAt: timestamp,
       updatedAt: timestamp,
-      kind: input.kind,
+      kind: 'EQUIPMENT',
       version: 1,
       name,
       ...(manufacturer ? { manufacturer } : {}),
@@ -115,10 +124,10 @@ export class WarehouseService {
       ...(input.sizeU === undefined ? {} : { sizeU: input.sizeU }),
       ...(hasWidth ? { dimensionsMm: { width: input.widthMm!, depth: input.depthMm! } } : {}),
       ...(notes ? { notes } : {}),
-      ...(input.deviceType ? { deviceType: input.deviceType } : {}),
-      ...(input.physicalBlueprint
-        ? { physicalBlueprint: structuredClone(input.physicalBlueprint) }
-        : {}),
+      ...(input.equipmentType ? { equipmentType: input.equipmentType } : {}),
+      childMode,
+      ...(childMode === 'POSITIONAL' ? { childCapacity: input.childCapacity! } : {}),
+      ...(allowedChildTypes.length ? { allowedChildTypes } : {}),
     };
 
     await this.repository.insert(template);

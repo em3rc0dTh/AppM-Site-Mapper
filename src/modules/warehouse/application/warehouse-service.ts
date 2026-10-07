@@ -12,6 +12,7 @@ import { failure, success, type Result } from '@/shared/domain/result';
 
 export type WarehouseError =
   | 'INVALID_NAME'
+  | 'INVALID_TEXT_FIELD'
   | 'INVALID_KIND'
   | 'INVALID_SIZE_U'
   | 'INVALID_DIMENSIONS'
@@ -53,8 +54,20 @@ export class WarehouseService {
 
   async create(input: CreateAssetTemplateInput): Promise<Result<AssetTemplate, WarehouseError>> {
     const name = input.name.trim();
-    if (!name) return failure('INVALID_NAME');
+    if (!name || name.length > 120) return failure('INVALID_NAME');
     if (input.kind !== 'EQUIPMENT') return failure('INVALID_KIND');
+
+    for (const value of [input.manufacturer, input.model, input.category]) {
+      if (value !== undefined && value.length > 120) {
+        return failure('INVALID_TEXT_FIELD');
+      }
+    }
+    if (input.notes !== undefined && input.notes.length > 500) {
+      return failure('INVALID_TEXT_FIELD');
+    }
+    if ((input.allowedChildTypes?.length ?? 0) > 32) {
+      return failure('INVALID_TEXT_FIELD');
+    }
 
     if (
       input.sizeU !== undefined &&

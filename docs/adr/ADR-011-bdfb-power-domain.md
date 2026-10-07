@@ -1,32 +1,60 @@
 # ADR-011 — BDFB and Power Domain
 
-**Status:** Accepted  
-**Gate:** G2
+**Status:** Accepted — aligned with Canonical Domain Contract v1.2  
+**Gate:** G9  
+**Supersedes:** the earlier Device-owned BDFB sub-schema interpretation.
 
 ## BDFB decision
 
-BDFB is a specialized Device capability/type.
+BDFB is a specialized `DeviceType`, not a topology level and not a second physical
+persistence model.
 
-Its internal physical/electrical hierarchy is owned by the Device aggregate:
+Its physical composition is expressed exclusively through canonical recursive Equipment:
 
 ```text
 Device(BDFB)
-→ Shelf
-→ Frame
-→ Panel
-→ Breaker / Holder
+└── Equipment(CHASSIS)
+    └── Equipment*
+        └── Equipment*
+            └── ...
 ```
+
+Typical physical Equipment types include `SHELF`, `FRAME`, `PANEL` and
+`CIRCUIT_BREAKER`, but no intermediate type is mandatory unless the represented hardware
+actually contains it.
+
+Fixed child positions use:
+
+```text
+childMode = POSITIONAL
+children[index] = EquipmentId | null
+```
+
+There is no runtime `Holder` entity.
+
+The BDFB application surface is a read/projection layer over this Equipment graph. It
+must never materialize a parallel BDFB hierarchy.
 
 ## PowerPath decision
 
-PowerPath is an explicit aggregate with stable identity and endpoint references.
+PowerPath is an explicit aggregate with stable identity and physical AccessPort endpoints:
 
-It may connect supported Device/Equipment/internal electrical endpoints and may carry an A/B feed designation.
+```text
+AccessPort → AccessPort
+```
 
-The UI visualizes PowerPath; it does not define it.
+A circuit breaker is Equipment and owns its POWER OUTPUT AccessPort. Loads own their
+POWER INPUT AccessPorts.
+
+Feed A/B is PowerPath/domain metadata; the UI renders it but does not infer electrical
+truth from visual placement.
 
 ## Consequences
 
-- BDFB construction is independent from CAS mounting.
-- G9 implements internal-device editing and PowerPath validation.
-- Persistence must preserve referential integrity between PowerPath endpoints and their owners.
+- BDFB composition uses the same recursive Equipment write path as all other hardware.
+- There is no BDFB-specific structure-write API or materialization service.
+- Shelf and Frame are optional physical Equipment.
+- Rack CAS remains independent from internal Equipment composition.
+- BDFB projection may specialize presentation without changing canonical parent/child links.
+- PowerPath persistence references AccessPorts, not presentation-only endpoint paths.
+- TelemetryBinding observes Device/Equipment/AccessPort identity without redefining it.

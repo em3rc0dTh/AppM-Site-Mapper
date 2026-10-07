@@ -2,7 +2,10 @@ import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { TopologyService } from '@/modules/topology/application/topology-service';
-import type { EquipmentChildMode, EquipmentType } from '@/modules/topology/domain/entities';
+import {
+  parseEquipmentChildMode,
+  parseEquipmentType,
+} from '@/modules/topology/domain/type-parsers';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import {
   hasOnlyKeys,
@@ -12,32 +15,6 @@ import {
 } from '@/shared/http/request-security';
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
-
-const equipmentTypes = new Set<EquipmentType>([
-  'CHASSIS',
-  'SHELF',
-  'SUB_SHELF',
-  'FRAME',
-  'PANEL',
-  'CIRCUIT_BREAKER',
-  'POWER_SUPPLY',
-  'POWER_MODULE',
-  'CONTROLLER_BOARD',
-  'NETWORK_BOARD',
-  'PLUGGABLE_MODULE',
-  'FAN',
-  'CUSTOM',
-]);
-
-function equipmentType(value: unknown): EquipmentType | undefined {
-  return typeof value === 'string' && equipmentTypes.has(value as EquipmentType)
-    ? (value as EquipmentType)
-    : undefined;
-}
-
-function childMode(value: unknown): EquipmentChildMode | undefined {
-  return value === 'DYNAMIC' || value === 'POSITIONAL' ? value : undefined;
-}
 
 export async function GET(_request: Request, context: Context) {
   const auth = await requirePermission('topology:read');
@@ -121,17 +98,17 @@ export async function PATCH(request: Request, context: Context) {
   } else if (body.action === 'configure-equipment') {
     if (
       !hasOnlyKeys(body, ['action', 'equipmentType', 'childMode', 'childCapacity']) ||
-      (body.equipmentType !== undefined && !equipmentType(body.equipmentType)) ||
-      (body.childMode !== undefined && !childMode(body.childMode)) ||
+      (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
+      (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
       (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity))
     ) {
       return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
     }
     result = await service.configureEquipment(id, {
-      ...(equipmentType(body.equipmentType)
-        ? { equipmentType: equipmentType(body.equipmentType)! }
+      ...(parseEquipmentType(body.equipmentType)
+        ? { equipmentType: parseEquipmentType(body.equipmentType)! }
         : {}),
-      ...(childMode(body.childMode) ? { childMode: childMode(body.childMode)! } : {}),
+      ...(parseEquipmentChildMode(body.childMode) ? { childMode: parseEquipmentChildMode(body.childMode)! } : {}),
       ...(typeof body.childCapacity === 'number'
         ? { childCapacity: body.childCapacity }
         : {}),

@@ -1,53 +1,72 @@
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
-import type {
-  EquipmentChildMode,
-  EquipmentType,
-} from '@/modules/topology/domain/entities';
+import {
+  parseEquipmentChildMode,
+  parseEquipmentType,
+} from '@/modules/topology/domain/type-parsers';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { WarehouseInstantiationService } from '@/modules/warehouse/application/warehouse-instantiation-service';
 import { createWarehouseRepository } from '@/modules/warehouse/infrastructure/warehouse-repository-factory';
+import {
+  hasOnlyKeys,
+  isBoundedString,
+  isSafeMutationRequest,
+  jsonBodyErrorStatus,
+  readBoundedJson,
+} from '@/shared/http/request-security';
 
 function object(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
-}
-
-const equipmentTypes = new Set<EquipmentType>([
-  'CHASSIS',
-  'SHELF',
-  'SUB_SHELF',
-  'FRAME',
-  'PANEL',
-  'CIRCUIT_BREAKER',
-  'POWER_SUPPLY',
-  'POWER_MODULE',
-  'CONTROLLER_BOARD',
-  'NETWORK_BOARD',
-  'PLUGGABLE_MODULE',
-  'FAN',
-  'CUSTOM',
-]);
-
-function equipmentType(value: unknown): EquipmentType | undefined {
-  return typeof value === 'string' && equipmentTypes.has(value as EquipmentType)
-    ? (value as EquipmentType)
-    : undefined;
-}
-
-function childMode(value: unknown): EquipmentChildMode | undefined {
-  return value === 'DYNAMIC' || value === 'POSITIONAL' ? value : undefined;
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }
 
 export async function POST(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 });
 
-  const body = object(await request.json().catch(() => null));
+  if (!isSafeMutationRequest(request)) {
+    return NextResponse.json({ error: 'CROSS_SITE_MUTATION_REJECTED' }, { status: 403 });
+  }
+
+  const parsed = await readBoundedJson(request, {
+    maxBytes: 16_384,
+    maxDepth: 6,
+    maxNodes: 128,
+  });
+  if (!parsed.ok) {
+    return NextResponse.json(
+      { error: parsed.error },
+      { status: jsonBodyErrorStatus(parsed.error) },
+    );
+  }
+
+  const body = object(parsed.value);
   if (
     !body ||
-    typeof body.templateId !== 'string' ||
-    typeof body.parentEquipmentId !== 'string'
+    !hasOnlyKeys(body, [
+      'templateId',
+      'parentEquipmentId',
+      'slotIndex',
+      'name',
+      'serialNumber',
+      'category',
+      'equipmentType',
+      'childMode',
+      'childCapacity',
+    ]) ||
+    !isBoundedString(body.templateId, 160) ||
+    !isBoundedString(body.parentEquipmentId, 160) ||
+    (body.slotIndex !== undefined && !Number.isInteger(body.slotIndex)) ||
+    (body.name !== undefined && !isBoundedString(body.name, 120, { allowEmpty: true })) ||
+    (body.serialNumber !== undefined &&
+      !isBoundedString(body.serialNumber, 120, { allowEmpty: true })) ||
+    (body.category !== undefined &&
+      !isBoundedString(body.category, 120, { allowEmpty: true })) ||
+    (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
+    (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
+    (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity))
   ) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
@@ -62,10 +81,10 @@ export async function POST(request: Request) {
     ...(typeof body.name === 'string' ? { name: body.name } : {}),
     ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
     ...(typeof body.category === 'string' ? { category: body.category } : {}),
-    ...(equipmentType(body.equipmentType)
-      ? { equipmentType: equipmentType(body.equipmentType)! }
+    ...(parseEquipmentType(body.equipmentType)
+      ? { equipmentType: parseEquipmentType(body.equipmentType)! }
       : {}),
-    ...(childMode(body.childMode) ? { childMode: childMode(body.childMode)! } : {}),
+    ...(parseEquipmentChildMode(body.childMode) ? { childMode: parseEquipmentChildMode(body.childMode)! } : {}),
     ...(typeof body.childCapacity === 'number'
       ? { childCapacity: body.childCapacity }
       : {}),

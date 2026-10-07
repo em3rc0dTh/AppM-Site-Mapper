@@ -650,6 +650,9 @@ export class TopologyService {
     }
 
     if (node.kind === 'EQUIPMENT') {
+      if (node.children.some((childId) => childId !== null)) {
+        return failure('HAS_ACTIVE_CHILDREN');
+      }
       if (node.rackPlacement) return failure('CAS_RELEASE_REQUIRED');
       if (node.parentEquipmentId !== null) return failure('DETACH_REQUIRED');
     }

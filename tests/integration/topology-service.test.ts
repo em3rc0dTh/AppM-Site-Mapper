@@ -224,7 +224,7 @@ describe('TopologyService', () => {
   });
 
 
-  it('reconfigures capacity and releases/restores positional slots without breaking links', async () => {
+  it('requires explicit detach before Equipment archive and restores without hidden slot metadata', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());
     const { rack } = await buildHierarchy(service);
     const device = await service.create({
@@ -264,20 +264,36 @@ describe('TopologyService', () => {
     expect(expanded.ok).toBe(true);
     expect(expanded.ok ? expanded.value.children : []).toEqual([breaker.value.id, null, null]);
 
-    const archived = await service.archive(breaker.value.id);
-    expect(archived.ok).toBe(true);
-    const afterArchive = await service.getById(panel.value.id);
-    expect(afterArchive?.kind === 'EQUIPMENT' ? afterArchive.children : []).toEqual([
+    await expect(service.archive(breaker.value.id)).resolves.toEqual({
+      ok: false,
+      error: 'DETACH_REQUIRED',
+    });
+
+    const detached = await service.move(breaker.value.id, device.value.id);
+    expect(detached.ok).toBe(true);
+
+    const afterDetach = await service.getById(panel.value.id);
+    expect(afterDetach?.kind === 'EQUIPMENT' ? afterDetach.children : []).toEqual([
       null,
       null,
       null,
     ]);
 
+    const archived = await service.archive(breaker.value.id);
+    expect(archived.ok).toBe(true);
+    if (archived.ok) expect(archived.value.lifecycle).toBe('ARCHIVED');
+
     const restored = await service.restore(breaker.value.id);
     expect(restored.ok).toBe(true);
+    if (restored.ok && restored.value.kind === 'EQUIPMENT') {
+      expect(restored.value.lifecycle).toBe('ACTIVE');
+      expect(restored.value.parentEquipmentId).toBeNull();
+      expect(restored.value.parentId).toBe(device.value.id);
+    }
+
     const afterRestore = await service.getById(panel.value.id);
     expect(afterRestore?.kind === 'EQUIPMENT' ? afterRestore.children : []).toEqual([
-      breaker.value.id,
+      null,
       null,
       null,
     ]);

@@ -6,7 +6,6 @@ import {
   MemoryIdentityRepository,
 } from '@/modules/identity/infrastructure/memory-identity-repository';
 import { InventoryService } from '@/modules/inventory/application/inventory-service';
-import { BdfbService } from '@/modules/power/application/bdfb-service';
 import { PowerService } from '@/modules/power/application/power-service';
 import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
 import { CasService } from '@/modules/rack/application/cas-service';
@@ -145,41 +144,65 @@ describe('MK1 system golden path', () => {
       }),
     ) as DeviceNode;
 
-    requireSuccess(
-      await new BdfbService(topologyRepository).configure(bdfb.id, {
-        shelves: [
-          {
-            id: 'cert-shelf-1',
-            label: 'Shelf 1',
-            frames: [
-              {
-                id: 'cert-frame-1',
-                label: 'Frame 1',
-                panels: [
-                  {
-                    id: 'cert-panel-1',
-                    label: 'Panel A',
-                    positions: [
-                      {
-                        id: 'cert-breaker-1',
-                        label: 'Breaker 1',
-                        capacity: 20,
-                      },
-                      null,
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
+    const chassis = requireSuccess(
+      await topology.create({
+        kind: 'EQUIPMENT',
+        parentId: bdfb.id,
+        name: 'BDFB-01 Chassis',
+        equipmentType: 'CHASSIS',
+        childMode: 'POSITIONAL',
+        childCapacity: 1,
       }),
-    );
+    ) as EquipmentNode;
 
-    const refreshedBdfb = (await topologyRepository.getById(bdfb.id)) as DeviceNode;
-    const chassisId = refreshedBdfb.rootEquipmentIds[0];
-    expect(chassisId).toBeDefined();
-    const chassis = (await topologyRepository.getById(chassisId!)) as EquipmentNode;
+    const shelf = requireSuccess(
+      await topology.create({
+        kind: 'EQUIPMENT',
+        parentId: chassis.id,
+        parentSlotIndex: 0,
+        name: 'Shelf 1',
+        equipmentType: 'SHELF',
+        childMode: 'POSITIONAL',
+        childCapacity: 1,
+      }),
+    ) as EquipmentNode;
+
+    const frame = requireSuccess(
+      await topology.create({
+        kind: 'EQUIPMENT',
+        parentId: shelf.id,
+        parentSlotIndex: 0,
+        name: 'Frame 1',
+        equipmentType: 'FRAME',
+        childMode: 'POSITIONAL',
+        childCapacity: 1,
+      }),
+    ) as EquipmentNode;
+
+    const panel = requireSuccess(
+      await topology.create({
+        kind: 'EQUIPMENT',
+        parentId: frame.id,
+        parentSlotIndex: 0,
+        name: 'Panel A',
+        equipmentType: 'PANEL',
+        childMode: 'POSITIONAL',
+        childCapacity: 2,
+      }),
+    ) as EquipmentNode;
+
+    const breaker = requireSuccess(
+      await topology.create({
+        kind: 'EQUIPMENT',
+        parentId: panel.id,
+        parentSlotIndex: 0,
+        name: 'Breaker 1',
+        equipmentType: 'CIRCUIT_BREAKER',
+      }),
+    ) as EquipmentNode;
+
+    expect(chassis.deviceId).toBe(bdfb.id);
+    expect(breaker.parentEquipmentId).toBe(panel.id);
 
     const loadDevice = requireSuccess(
       await topology.create({
@@ -219,7 +242,6 @@ describe('MK1 system golden path', () => {
     };
     await topologyRepository.replace(loadEquipment);
 
-    expect(chassis.deviceId).toBe(bdfb.id);
     expect(loadEquipment.deviceId).toBe(loadDevice.id);
 
     const deepLink = await topology.buildDeepLink(bdfb.id);
@@ -265,7 +287,7 @@ describe('MK1 system golden path', () => {
 
     const powerRepository = new MemoryPowerRepository();
     const power = new PowerService(topologyRepository, powerRepository);
-    const sourceAccessPortId = bdfb.id + ':equipment:cert-breaker-1:power-out';
+    const sourceAccessPortId = breaker.id + ':power-out';
     const path = requireSuccess(
       await power.create({
         sourceAccessPortId,

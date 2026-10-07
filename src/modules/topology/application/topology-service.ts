@@ -29,6 +29,7 @@ export type TopologyError =
   | 'NOT_FOUND'
   | 'NOT_EQUIPMENT'
   | 'INVALID_NAME'
+  | 'INVALID_TEXT_FIELD'
   | 'INVALID_PARENT'
   | 'PARENT_ARCHIVED'
   | 'POSITION_OCCUPIED'
@@ -118,8 +119,19 @@ export class TopologyService {
   async create(input: CreateTopologyNodeInput): Promise<Result<TopologyNode, TopologyError>> {
     const name = input.name.trim();
 
-    if (!name) {
+    if (!name || name.length > 120) {
       return failure('INVALID_NAME');
+    }
+
+    for (const value of [
+      input.serialNumber,
+      input.category,
+      input.manufacturer,
+      input.model,
+    ]) {
+      if (value !== undefined && value.length > 120) {
+        return failure('INVALID_TEXT_FIELD');
+      }
     }
 
     const parent = input.parentId ? await this.repository.getById(input.parentId) : null;
@@ -222,6 +234,7 @@ export class TopologyService {
         if (
           !input.coordinate ||
           !input.coordinate.row.trim() ||
+          input.coordinate.row.trim().length > 16 ||
           !Number.isInteger(input.coordinate.column) ||
           input.coordinate.column < 1
         ) {
@@ -243,7 +256,9 @@ export class TopologyService {
         }
         if (
           input.containerVariant === 'RACK' &&
-          (!Number.isInteger(input.totalU) || (input.totalU ?? 0) < 1)
+          (!Number.isInteger(input.totalU) ||
+            (input.totalU ?? 0) < 1 ||
+            (input.totalU ?? 0) > 1000)
         ) {
           return failure('INVALID_RACK_CAPACITY');
         }

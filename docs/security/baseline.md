@@ -40,6 +40,23 @@ Roles:
 
 Permissions are server evaluated. See `docs/security/rbac-matrix.md`.
 
+## HTTP mutation boundaries
+
+Implemented for the recursive Equipment / Topology / Warehouse write paths:
+
+- server-side RBAC before mutation;
+- same-origin / cross-site browser mutation rejection;
+- bounded JSON byte size;
+- bounded JSON depth and structural node count;
+- rejection of prototype-pollution keys;
+- strict allowed-field validation;
+- canonical Device / Equipment type parsing from one domain source;
+- server-side text and positional-capacity limits;
+- domain invariants revalidated after the HTTP boundary;
+- atomic parent/child mutations through repository transactions.
+
+These controls are enforced server-side and do not rely on HTML form constraints.
+
 ## Telemetry
 
 Implemented:

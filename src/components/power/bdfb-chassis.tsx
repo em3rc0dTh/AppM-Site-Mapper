@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 
@@ -456,6 +457,12 @@ export function BdfbChassis({
         </div>
         <div className="bdfb-chassis-status">
           <ContextPin entityId={device.id} />
+          <Link
+            className="bdfb-open-chassis"
+            href={'/device/' + encodeURIComponent(presentation.chassisId)}
+          >
+            OPEN CHASSIS
+          </Link>
           <StatusBadge tone="accent">
             {physicalShelves > 0 ? `${physicalShelves} SHELVES` : 'DIRECT CHASSIS'}
           </StatusBadge>

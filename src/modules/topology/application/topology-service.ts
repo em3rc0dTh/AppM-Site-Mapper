@@ -529,10 +529,57 @@ export class TopologyService {
       return failure('CAS_RELEASE_REQUIRED');
     }
 
+    const timestamp = nowIso();
+
+    if (node.kind === 'EQUIPMENT') {
+      const parent = await this.repository.getById(node.parentId);
+      if (!parent || (parent.kind !== 'DEVICE' && parent.kind !== 'EQUIPMENT')) {
+        return failure('INVALID_PARENT');
+      }
+      if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+
+      const archivedSlotIndex =
+        parent.kind === 'EQUIPMENT' && parent.childMode === 'POSITIONAL'
+          ? parent.children.findIndex((candidate) => candidate === node.id)
+          : -1;
+
+      const archived: EquipmentNode = {
+        ...node,
+        lifecycle: 'ARCHIVED',
+        updatedAt: timestamp,
+        attributes: {
+          ...(node.attributes ?? {}),
+          ...(archivedSlotIndex >= 0 ? { archivedParentSlotIndex: archivedSlotIndex } : {}),
+        },
+      };
+
+      const updatedParent: DeviceNode | EquipmentNode =
+        parent.kind === 'DEVICE'
+          ? {
+              ...parent,
+              rootEquipmentIds: parent.rootEquipmentIds.filter(
+                (candidate) => candidate !== node.id,
+              ),
+              updatedAt: timestamp,
+            }
+          : {
+              ...parent,
+              children: parent.children
+                .map((candidate) => (candidate === node.id ? null : candidate))
+                .filter((candidate) => (parent.childMode === 'DYNAMIC' ? candidate !== null : true)),
+              updatedAt: timestamp,
+            };
+
+      if (!(await this.repository.commitLayout([parent, node], [updatedParent, archived]))) {
+        return failure('LAYOUT_CONFLICT');
+      }
+      return success(archived);
+    }
+
     const archived = {
       ...node,
       lifecycle: 'ARCHIVED' as const,
-      updatedAt: nowIso(),
+      updatedAt: timestamp,
     };
 
     await this.repository.replace(archived);
@@ -546,12 +593,73 @@ export class TopologyService {
       return failure('NOT_FOUND');
     }
 
-    if (node.parentId) {
-      const parent = await this.repository.getById(node.parentId);
+    if (!node.parentId) {
+      const restored = { ...node, lifecycle: 'ACTIVE' as const, updatedAt: nowIso() };
+      await this.repository.replace(restored);
+      return success(restored);
+    }
 
-      if (!parent || parent.lifecycle !== 'ACTIVE') {
-        return failure('PARENT_ARCHIVED_ON_RESTORE');
+    const parent = await this.repository.getById(node.parentId);
+    if (!parent || parent.lifecycle !== 'ACTIVE') {
+      return failure('PARENT_ARCHIVED_ON_RESTORE');
+    }
+
+    if (node.kind === 'EQUIPMENT') {
+      if (parent.kind !== 'DEVICE' && parent.kind !== 'EQUIPMENT') {
+        return failure('INVALID_PARENT');
       }
+      if (
+        parent.kind === 'EQUIPMENT' &&
+        parent.template?.allowedChildTypes?.length &&
+        !parent.template.allowedChildTypes.includes(node.equipmentType)
+      ) {
+        return failure('CHILD_TYPE_NOT_ALLOWED');
+      }
+      if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+
+      const timestamp = nowIso();
+      const archivedSlot = node.attributes?.archivedParentSlotIndex;
+      const { archivedParentSlotIndex: _archivedSlot, ...restAttributes } =
+        node.attributes ?? {};
+
+      const restored: EquipmentNode = {
+        ...node,
+        lifecycle: 'ACTIVE',
+        updatedAt: timestamp,
+        attributes: restAttributes,
+      };
+
+      let updatedParent: DeviceNode | EquipmentNode;
+      if (parent.kind === 'DEVICE') {
+        updatedParent = {
+          ...parent,
+          rootEquipmentIds: parent.rootEquipmentIds.includes(node.id)
+            ? parent.rootEquipmentIds
+            : [...parent.rootEquipmentIds, node.id],
+          updatedAt: timestamp,
+        };
+      } else if (parent.childMode === 'POSITIONAL') {
+        if (!Number.isInteger(archivedSlot)) return failure('POSITION_SLOT_REQUIRED');
+        const slot = archivedSlot as number;
+        if (slot < 0 || slot >= parent.children.length) return failure('SLOT_OUT_OF_RANGE');
+        if (parent.children[slot] !== null) return failure('SLOT_OCCUPIED');
+        const nextChildren = [...parent.children];
+        nextChildren[slot] = node.id;
+        updatedParent = { ...parent, children: nextChildren, updatedAt: timestamp };
+      } else {
+        updatedParent = {
+          ...parent,
+          children: parent.children.includes(node.id)
+            ? parent.children
+            : [...parent.children, node.id],
+          updatedAt: timestamp,
+        };
+      }
+
+      if (!(await this.repository.commitLayout([parent, node], [updatedParent, restored]))) {
+        return failure('LAYOUT_CONFLICT');
+      }
+      return success(restored);
     }
 
     const restored = {

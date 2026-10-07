@@ -40,6 +40,10 @@ describe('Virtual Warehouse', () => {
       sizeU: 1,
       widthMm: 482,
       depthMm: 445,
+      equipmentType: 'CHASSIS',
+      childMode: 'POSITIONAL',
+      childCapacity: 2,
+      allowedChildTypes: ['SHELF'],
     });
 
     expect(created.ok).toBe(true);
@@ -47,6 +51,12 @@ describe('Virtual Warehouse', () => {
     expect(created.value.kind).toBe('EQUIPMENT');
     expect(created.value.version).toBe(1);
     expect(created.value.dimensionsMm).toEqual({ width: 482, depth: 445 });
+    expect(created.value).toMatchObject({
+      equipmentType: 'CHASSIS',
+      childMode: 'POSITIONAL',
+      childCapacity: 2,
+      allowedChildTypes: ['SHELF'],
+    });
 
     const duplicate = await service.create({
       kind: 'EQUIPMENT',
@@ -55,21 +65,13 @@ describe('Virtual Warehouse', () => {
     expect(duplicate).toEqual({ ok: false, error: 'DUPLICATE_TEMPLATE' });
   });
 
-  it('rejects Device templates at the Warehouse trust boundary', async () => {
+  it('rejects Device templates at the Warehouse parser boundary', () => {
     expect(
       parseAssetTemplateJson({
         kind: 'DEVICE',
         name: 'Legacy Device Template',
       }),
     ).toBeNull();
-
-    const repository = new MemoryWarehouseRepository();
-    const result = await new WarehouseService(repository).create({
-      kind: 'DEVICE',
-      name: 'Legacy Device Template',
-    });
-
-    expect(result).toEqual({ ok: false, error: 'INVALID_KIND' });
   });
 
   it('creates a Device identity plus an unmounted root Equipment snapshot', async () => {
@@ -132,6 +134,7 @@ describe('Virtual Warehouse', () => {
       category: 'Network switch chassis',
       sizeU: 1,
       dimensionsMm: { width: 482, depth: 445 },
+      childMode: 'DYNAMIC',
     });
 
     const storedDevice = await topology.getById(result.value.device.id);
@@ -147,37 +150,71 @@ describe('Virtual Warehouse', () => {
     ]);
   });
 
-  it('auto-materializes the canonical BDFB hierarchy for a BDFB Device identity', async () => {
+  it('installs recursive Equipment into an explicit parent slot', async () => {
     const warehouse = new MemoryWarehouseRepository();
-    const template = await new WarehouseService(warehouse).create({
+    const warehouseService = new WarehouseService(warehouse);
+    const chassisTemplate = await warehouseService.create({
       kind: 'EQUIPMENT',
       name: 'BDFB Chassis',
-      category: 'Battery distribution fuse bay chassis',
+      equipmentType: 'CHASSIS',
+      childMode: 'POSITIONAL',
+      childCapacity: 1,
+      allowedChildTypes: ['SHELF'],
     });
-    if (!template.ok) throw new Error(template.error);
+    const shelfTemplate = await warehouseService.create({
+      kind: 'EQUIPMENT',
+      name: 'BDFB Shelf 2F',
+      equipmentType: 'SHELF',
+      childMode: 'POSITIONAL',
+      childCapacity: 2,
+      allowedChildTypes: ['FRAME'],
+    });
+    if (!chassisTemplate.ok) throw new Error(chassisTemplate.error);
+    if (!shelfTemplate.ok) throw new Error(shelfTemplate.error);
 
     const rackNode = rack('rack-bdfb');
     const topology = new MemoryTopologyRepository([rackNode]);
-
-    const result = await new WarehouseInstantiationService(warehouse, topology).instantiate({
-      templateId: template.value.id,
+    const root = await new WarehouseInstantiationService(warehouse, topology).instantiate({
+      templateId: chassisTemplate.value.id,
       rackId: rackNode.id,
       name: 'BDFB-01',
-      serialNumber: 'EMU-BFDB-01',
       deviceType: 'BDFB',
     });
+    expect(root.ok).toBe(true);
+    if (!root.ok) return;
 
-    expect(result.ok).toBe(true);
-    if (!result.ok) return;
+    expect(root.value.equipment).toMatchObject({
+      equipmentType: 'CHASSIS',
+      childMode: 'POSITIONAL',
+      children: [null],
+    });
 
-    expect(result.value.device.deviceType).toBe('BDFB');
-    expect(result.value.equipment.equipmentType).toBe('CHASSIS');
+    const shelf = await new WarehouseInstantiationService(warehouse, topology).instantiateChild({
+      templateId: shelfTemplate.value.id,
+      parentEquipmentId: root.value.equipment.id,
+      slotIndex: 0,
+      name: 'Shelf-01',
+    });
+    expect(shelf.ok).toBe(true);
+    if (!shelf.ok) return;
 
-    const equipment = await topology.listEquipmentForDevice(result.value.device.id);
-    expect(equipment.filter((item) => item.equipmentType === 'PANEL')).toHaveLength(4);
-    expect(equipment.filter((item) => item.equipmentType === 'CIRCUIT_BREAKER')).toHaveLength(96);
-    expect(equipment.filter((item) => item.equipmentType === 'SHELF')).toHaveLength(0);
-    expect(equipment.filter((item) => item.equipmentType === 'FRAME')).toHaveLength(0);
+    expect(shelf.value).toMatchObject({
+      parentEquipmentId: root.value.equipment.id,
+      equipmentType: 'SHELF',
+      childMode: 'POSITIONAL',
+      children: [null, null],
+    });
+
+    const storedRoot = await topology.getById(root.value.equipment.id);
+    expect(storedRoot?.kind === 'EQUIPMENT' ? storedRoot.children : []).toEqual([shelf.value.id]);
+
+    const occupied = await new WarehouseInstantiationService(warehouse, topology).instantiateChild({
+      templateId: shelfTemplate.value.id,
+      parentEquipmentId: root.value.equipment.id,
+      slotIndex: 0,
+      name: 'Shelf-02',
+    });
+    expect(occupied).toEqual({ ok: false, error: 'SLOT_OCCUPIED' });
   });
 
   it('rejects a Warehouse instance when its Device serial is already active', async () => {

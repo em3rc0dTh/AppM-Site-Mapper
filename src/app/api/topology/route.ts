@@ -5,6 +5,9 @@ import { requirePermission } from '@/modules/identity/application/current-sessio
 import type {
   ContainerClusterBayVariant,
   ContainerRackVariant,
+  DeviceType,
+  EquipmentChildMode,
+  EquipmentType,
   RoomSubstructureVariant,
   TopologyKind,
 } from '@/modules/topology/domain/entities';
@@ -44,6 +47,48 @@ function clusterVariant(value: unknown): ContainerClusterBayVariant | undefined 
 
 function containerVariant(value: unknown): ContainerRackVariant | undefined {
   return value === 'CONTAINER' || value === 'RACK' ? value : undefined;
+}
+
+const deviceTypes = new Set<DeviceType>([
+  'NETWORK_ELEMENT',
+  'BDFB',
+  'SERVER',
+  'UPS',
+  'RECTIFIER',
+  'POWER_SYSTEM',
+  'CUSTOM',
+]);
+
+const equipmentTypes = new Set<EquipmentType>([
+  'CHASSIS',
+  'SHELF',
+  'SUB_SHELF',
+  'FRAME',
+  'PANEL',
+  'CIRCUIT_BREAKER',
+  'POWER_SUPPLY',
+  'POWER_MODULE',
+  'CONTROLLER_BOARD',
+  'NETWORK_BOARD',
+  'PLUGGABLE_MODULE',
+  'FAN',
+  'CUSTOM',
+]);
+
+function asDeviceType(value: unknown): DeviceType | undefined {
+  return typeof value === 'string' && deviceTypes.has(value as DeviceType)
+    ? (value as DeviceType)
+    : undefined;
+}
+
+function asEquipmentType(value: unknown): EquipmentType | undefined {
+  return typeof value === 'string' && equipmentTypes.has(value as EquipmentType)
+    ? (value as EquipmentType)
+    : undefined;
+}
+
+function asChildMode(value: unknown): EquipmentChildMode | undefined {
+  return value === 'DYNAMIC' || value === 'POSITIONAL' ? value : undefined;
 }
 
 export async function GET(request: Request) {
@@ -113,6 +158,17 @@ export async function POST(request: Request) {
     ...(typeof body.totalU === 'number' ? { totalU: body.totalU } : {}),
     ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
     ...(typeof body.category === 'string' ? { category: body.category } : {}),
+    ...(asDeviceType(body.deviceType) ? { deviceType: asDeviceType(body.deviceType)! } : {}),
+    ...(asEquipmentType(body.equipmentType)
+      ? { equipmentType: asEquipmentType(body.equipmentType)! }
+      : {}),
+    ...(asChildMode(body.childMode) ? { childMode: asChildMode(body.childMode)! } : {}),
+    ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
+    ...(typeof body.parentSlotIndex === 'number'
+      ? { parentSlotIndex: body.parentSlotIndex }
+      : {}),
+    ...(typeof body.manufacturer === 'string' ? { manufacturer: body.manufacturer } : {}),
+    ...(typeof body.model === 'string' ? { model: body.model } : {}),
   });
 
   if (!result.ok) {

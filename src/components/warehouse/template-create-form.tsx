@@ -3,23 +3,43 @@
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
-const JSON_EXAMPLE = `{
-  "kind": "EQUIPMENT",
-  "name": "Cisco Catalyst 9300-48P",
-  "manufacturer": "Cisco",
-  "model": "C9300-48P",
-  "category": "Network switch",
-  "sizeU": 1,
-  "dimensionsMm": {
-    "width": 482,
-    "depth": 445
+import type { EquipmentChildMode, EquipmentType } from '@/modules/topology/domain/entities';
+
+const EQUIPMENT_TYPES: readonly EquipmentType[] = [
+  'CHASSIS',
+  'SHELF',
+  'SUB_SHELF',
+  'FRAME',
+  'PANEL',
+  'CIRCUIT_BREAKER',
+  'POWER_SUPPLY',
+  'POWER_MODULE',
+  'CONTROLLER_BOARD',
+  'NETWORK_BOARD',
+  'PLUGGABLE_MODULE',
+  'FAN',
+  'CUSTOM',
+];
+
+const JSON_EXAMPLE = JSON.stringify(
+  {
+    kind: 'EQUIPMENT',
+    name: 'BDFB Panel 24P',
+    category: 'BDFB distribution panel',
+    equipmentType: 'PANEL',
+    childMode: 'POSITIONAL',
+    childCapacity: 24,
+    allowedChildTypes: ['CIRCUIT_BREAKER'],
+    notes: '24 positional slots; empty positions are null',
   },
-  "notes": "Reusable defaults and mounting notes"
-}`;
+  null,
+  2,
+);
 
 export function TemplateCreateForm() {
   const router = useRouter();
   const [mode, setMode] = useState<'form' | 'json'>('form');
+  const [childMode, setChildMode] = useState<EquipmentChildMode>('DYNAMIC');
   const [jsonValue, setJsonValue] = useState(JSON_EXAMPLE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -50,11 +70,16 @@ export function TemplateCreateForm() {
           widthMm: number('widthMm'),
           depthMm: number('depthMm'),
           notes: String(form.get('notes') ?? ''),
+          equipmentType: String(form.get('equipmentType') ?? 'CUSTOM'),
+          childMode,
+          childCapacity: childMode === 'POSITIONAL' ? number('childCapacity') : undefined,
+          allowedChildTypes: form.getAll('allowedChildTypes').map(String),
         }),
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? 'CREATE_FAILED');
       event.currentTarget.reset();
+      setChildMode('DYNAMIC');
       setResult('Template created.');
       router.refresh();
     } catch (cause) {
@@ -133,8 +158,35 @@ export function TemplateCreateForm() {
           <div className="warehouse-form-grid">
             <label>
               Template name
-              <input name="name" required maxLength={120} placeholder="Cisco Catalyst 9300-48P" />
+              <input name="name" required maxLength={120} placeholder="BDFB Panel 24P" />
             </label>
+            <label>
+              Equipment type
+              <select name="equipmentType" defaultValue="CUSTOM">
+                {EQUIPMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type.replaceAll('_', ' ')}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Children mode
+              <select
+                name="childMode"
+                value={childMode}
+                onChange={(event) => setChildMode(event.target.value as EquipmentChildMode)}
+              >
+                <option value="DYNAMIC">Dynamic</option>
+                <option value="POSITIONAL">Positional slots</option>
+              </select>
+            </label>
+            {childMode === 'POSITIONAL' ? (
+              <label>
+                Child slots
+                <input name="childCapacity" type="number" min="1" max="256" required placeholder="24" />
+              </label>
+            ) : null}
             <label>
               Manufacturer
               <input name="manufacturer" maxLength={120} placeholder="Cisco" />
@@ -161,6 +213,16 @@ export function TemplateCreateForm() {
             </label>
           </div>
           <label>
+            Allowed child Equipment types
+            <select name="allowedChildTypes" multiple size={5}>
+              {EQUIPMENT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {type.replaceAll('_', ' ')}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
             Notes
             <textarea
               name="notes"
@@ -180,8 +242,8 @@ export function TemplateCreateForm() {
           <div className="warehouse-json-copy">
             <strong>Paste one template or an array of templates.</strong>
             <span>
-              Equipment templates only. Accepted dimensions: <code>dimensionsMm.width/depth</code>{' '}
-              or flat <code>widthMm/depthMm</code>. Device identities are created in Topology.
+              Equipment templates only. Recursive defaults use <code>equipmentType</code>,{' '}
+              <code>childMode</code>, <code>childCapacity</code> and <code>allowedChildTypes</code>.
             </span>
           </div>
           <textarea

@@ -134,6 +134,95 @@ describe('TopologyService', () => {
     ).resolves.toEqual({ ok: false, error: 'INVALID_PARENT' });
   });
 
+
+  it('creates, repositions and detaches Equipment through positional slots', async () => {
+    const service = new TopologyService(new MemoryTopologyRepository());
+    const { rack } = await buildHierarchy(service);
+
+    const device = await service.create({
+      kind: 'DEVICE',
+      parentId: rack.id,
+      name: 'BDFB-01',
+      deviceType: 'BDFB',
+    });
+    if (!device.ok) throw new Error(device.error);
+
+    const chassis = await service.create({
+      kind: 'EQUIPMENT',
+      parentId: device.value.id,
+      name: 'BDFB Chassis',
+      equipmentType: 'CHASSIS',
+      childMode: 'POSITIONAL',
+      childCapacity: 2,
+    });
+    if (!chassis.ok || chassis.value.kind !== 'EQUIPMENT') {
+      throw new Error(chassis.ok ? 'Expected Equipment' : chassis.error);
+    }
+
+    await expect(
+      service.create({
+        kind: 'EQUIPMENT',
+        parentId: chassis.value.id,
+        name: 'Shelf missing slot',
+        equipmentType: 'SHELF',
+      }),
+    ).resolves.toEqual({ ok: false, error: 'POSITION_SLOT_REQUIRED' });
+
+    const shelf = await service.create({
+      kind: 'EQUIPMENT',
+      parentId: chassis.value.id,
+      parentSlotIndex: 0,
+      name: 'Shelf 01',
+      equipmentType: 'SHELF',
+      childMode: 'POSITIONAL',
+      childCapacity: 2,
+    });
+    expect(shelf.ok).toBe(true);
+    if (!shelf.ok || shelf.value.kind !== 'EQUIPMENT') return;
+
+    let storedChassis = await service.getById(chassis.value.id);
+    expect(storedChassis?.kind === 'EQUIPMENT' ? storedChassis.children : []).toEqual([
+      shelf.value.id,
+      null,
+    ]);
+    expect(shelf.value.parentEquipmentId).toBe(chassis.value.id);
+
+    await expect(
+      service.create({
+        kind: 'EQUIPMENT',
+        parentId: chassis.value.id,
+        parentSlotIndex: 0,
+        name: 'Shelf collision',
+        equipmentType: 'SHELF',
+      }),
+    ).resolves.toEqual({ ok: false, error: 'SLOT_OCCUPIED' });
+
+    const repositioned = await service.move(shelf.value.id, chassis.value.id, 1);
+    expect(repositioned.ok).toBe(true);
+    storedChassis = await service.getById(chassis.value.id);
+    expect(storedChassis?.kind === 'EQUIPMENT' ? storedChassis.children : []).toEqual([
+      null,
+      shelf.value.id,
+    ]);
+
+    const detached = await service.move(shelf.value.id, device.value.id);
+    expect(detached.ok).toBe(true);
+    if (detached.ok && detached.value.kind === 'EQUIPMENT') {
+      expect(detached.value.parentEquipmentId).toBeNull();
+      expect(detached.value.parentId).toBe(device.value.id);
+    }
+
+    storedChassis = await service.getById(chassis.value.id);
+    expect(storedChassis?.kind === 'EQUIPMENT' ? storedChassis.children : []).toEqual([
+      null,
+      null,
+    ]);
+    const storedDevice = await service.getById(device.value.id);
+    expect(storedDevice?.kind === 'DEVICE' ? storedDevice.rootEquipmentIds : []).toEqual(
+      expect.arrayContaining([chassis.value.id, shelf.value.id]),
+    );
+  });
+
   it('rejects hierarchy skips and occupied positions', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());
     const { network, rack } = await buildHierarchy(service);

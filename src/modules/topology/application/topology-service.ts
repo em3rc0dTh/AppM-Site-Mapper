@@ -86,7 +86,11 @@ export interface CreateTopologyNodeInput {
 function canonicalChildren(mode: EquipmentChildMode, childCapacity?: number): readonly null[] {
   if (mode === 'DYNAMIC') return [];
 
-  if (!Number.isInteger(childCapacity) || (childCapacity ?? 0) < 1) {
+  if (
+    !Number.isInteger(childCapacity) ||
+    (childCapacity ?? 0) < 1 ||
+    (childCapacity ?? 0) > 256
+  ) {
     throw new Error('INVALID_CHILD_CAPACITY');
   }
 

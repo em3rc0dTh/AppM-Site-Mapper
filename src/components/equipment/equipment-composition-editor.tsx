@@ -63,6 +63,12 @@ export function EquipmentCompositionEditor({
       : [];
 
   const selectedTemplate = templates.find((template) => template.id === templateId);
+  const isActive = equipment.lifecycle === 'ACTIVE';
+  const canArchive =
+    isActive &&
+    equipment.parentEquipmentId === null &&
+    !equipment.rackPlacement &&
+    equipment.children.every((childId) => childId === null);
 
   async function loadTemplates() {
     if (templates.length || loadingTemplates) return;
@@ -92,6 +98,27 @@ export function EquipmentCompositionEditor({
     setComposerOpen(true);
     setError('');
     void loadTemplates();
+  }
+
+  async function changeLifecycle(action: 'archive' | 'restore') {
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/topology/' + encodeURIComponent(equipment.id), {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? action.toUpperCase() + '_FAILED');
+      router.refresh();
+    } catch (cause) {
+      setError(
+        cause instanceof Error ? cause.message : action.toUpperCase() + '_FAILED',
+      );
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function configureEquipment(event: FormEvent<HTMLFormElement>) {
@@ -253,7 +280,7 @@ export function EquipmentCompositionEditor({
           <span>PHYSICAL COMPOSITION</span>
           <h2>{equipment.name}</h2>
           <small>
-            {label(equipment.equipmentType)} · {equipment.childMode}
+            {label(equipment.equipmentType)} · {equipment.lifecycle} · {equipment.childMode}
             {equipment.childMode === 'POSITIONAL'
               ? ' · ' + equipment.children.length + ' slots'
               : ' · ' + equipment.children.length + ' children'}
@@ -266,20 +293,52 @@ export function EquipmentCompositionEditor({
             <p>Allowed children: any Equipment type</p>
           )}
           {canWrite ? (
-            <button
-              type="button"
-              onClick={() => {
-                setConfigurationMode(equipment.childMode);
-                setConfigurationOpen((value) => !value);
-              }}
-            >
-              CONFIGURE EQUIPMENT
-            </button>
+            <div className="equipment-lifecycle-actions">
+              {isActive ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConfigurationMode(equipment.childMode);
+                      setConfigurationOpen((value) => !value);
+                    }}
+                  >
+                    CONFIGURE EQUIPMENT
+                  </button>
+                  <button
+                    type="button"
+                    className="is-danger"
+                    disabled={busy || !canArchive}
+                    title={
+                      canArchive
+                        ? 'Archive Equipment'
+                        : equipment.parentEquipmentId !== null
+                          ? 'Detach this Equipment to the Device before archiving'
+                          : equipment.rackPlacement
+                            ? 'Release CAS placement before archiving'
+                            : 'Archive requires no installed child Equipment'
+                    }
+                    onClick={() => void changeLifecycle('archive')}
+                  >
+                    ARCHIVE
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="is-restore"
+                  disabled={busy}
+                  onClick={() => void changeLifecycle('restore')}
+                >
+                  RESTORE
+                </button>
+              )}
+            </div>
           ) : null}
         </div>
       </header>
 
-      {configurationOpen ? (
+      {isActive && configurationOpen ? (
         <form className="equipment-configuration-form" onSubmit={configureEquipment}>
           <label>
             Equipment type
@@ -382,7 +441,7 @@ export function EquipmentCompositionEditor({
                     <strong>Referenced Equipment unavailable</strong>
                     <small>{childId}</small>
                   </div>
-                ) : canWrite ? (
+                ) : canWrite && isActive ? (
                   <button type="button" onClick={() => openComposer(index)}>
                     + ADD EQUIPMENT
                   </button>
@@ -425,7 +484,7 @@ export function EquipmentCompositionEditor({
           ) : (
             <p>No child Equipment installed.</p>
           )}
-          {canWrite ? (
+          {canWrite && isActive ? (
             <button type="button" onClick={() => openComposer(null)}>
               + ADD EQUIPMENT
             </button>
@@ -433,7 +492,7 @@ export function EquipmentCompositionEditor({
         </div>
       )}
 
-      {composerOpen ? (
+      {isActive && composerOpen ? (
         <div className="equipment-composer">
           <header>
             <div>

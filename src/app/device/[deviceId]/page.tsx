@@ -30,7 +30,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   if (
     !node ||
     (node.kind !== 'DEVICE' && node.kind !== 'EQUIPMENT') ||
-    node.lifecycle !== 'ACTIVE'
+    (node.kind === 'DEVICE' && node.lifecycle !== 'ACTIVE')
   ) {
     notFound();
   }

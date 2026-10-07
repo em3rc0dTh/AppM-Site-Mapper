@@ -60,16 +60,15 @@ export interface InstantiatedAsset {
   readonly state: 'UNMOUNTED';
 }
 
+type ResolvedComposition =
+  | { readonly childMode: 'DYNAMIC' }
+  | { readonly childMode: 'POSITIONAL'; readonly childCapacity: number };
+
 function resolvedComposition(
   template: AssetTemplate,
   childModeOverride?: EquipmentChildMode,
   childCapacityOverride?: number,
-):
-  | {
-      readonly childMode: EquipmentChildMode;
-      readonly childCapacity?: number;
-    }
-  | null {
+): ResolvedComposition | null {
   const childMode = childModeOverride ?? template.childMode ?? 'DYNAMIC';
   const childCapacity = childCapacityOverride ?? template.childCapacity;
 

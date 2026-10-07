@@ -434,11 +434,35 @@ export class TopologyService {
     }
 
     if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+    const accessPorts =
+      equipmentType === 'CIRCUIT_BREAKER' &&
+      !node.accessPorts.some(
+        (port) =>
+          port.lifecycle === 'ACTIVE' &&
+          port.portType === 'POWER' &&
+          port.direction === 'OUTPUT',
+      )
+        ? [
+            ...node.accessPorts,
+            {
+              id: node.id + ':power-out',
+              deviceId: node.deviceId,
+              equipmentId: node.id,
+              name: 'Power output',
+              portType: 'POWER' as const,
+              direction: 'OUTPUT' as const,
+              exposure: 'EXTERNAL' as const,
+              lifecycle: 'ACTIVE' as const,
+            },
+          ]
+        : node.accessPorts;
+
     const updated: EquipmentNode = {
       ...node,
       equipmentType,
       childMode,
       children,
+      accessPorts,
       updatedAt: nowIso(),
     };
     if (!(await this.repository.commitLayout([node], [updated]))) {

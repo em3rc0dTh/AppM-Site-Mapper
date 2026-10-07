@@ -9,23 +9,8 @@ import type {
   EquipmentNode,
   EquipmentType,
 } from '@/modules/topology/domain/entities';
+import { EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
 import type { AssetTemplate } from '@/modules/warehouse/domain/template';
-
-const EQUIPMENT_TYPES: readonly EquipmentType[] = [
-  'CHASSIS',
-  'SHELF',
-  'SUB_SHELF',
-  'FRAME',
-  'PANEL',
-  'CIRCUIT_BREAKER',
-  'POWER_SUPPLY',
-  'POWER_MODULE',
-  'CONTROLLER_BOARD',
-  'NETWORK_BOARD',
-  'PLUGGABLE_MODULE',
-  'FAN',
-  'CUSTOM',
-];
 
 function label(type: EquipmentType): string {
   return type.replaceAll('_', ' ');

@@ -5759,3 +5759,69 @@ body {
     grid-column: 1;
   }
 }
+
+
+.equipment-composition-policy {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+.equipment-composition-policy p {
+  margin: 0;
+}
+.equipment-composition-policy button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid #1976d2;
+  border-radius: 4px;
+  background: #fff;
+  color: #1976d2;
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.equipment-configuration-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid #c9d5e2;
+  border-radius: 6px;
+  background: #fff;
+}
+.equipment-configuration-form label {
+  display: grid;
+  gap: 5px;
+  color: #51667b;
+  font-size: 10px;
+}
+.equipment-configuration-form select,
+.equipment-configuration-form input {
+  min-width: 0;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid #c9d5e2;
+  border-radius: 4px;
+  background: #fff;
+  color: #172536;
+}
+.equipment-configuration-form > button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid #1976d2;
+  border-radius: 4px;
+  background: #1976d2;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+}
+@media (max-width: 940px) {
+  .equipment-composition-policy {
+    justify-items: start;
+  }
+  .equipment-configuration-form {
+    grid-template-columns: 1fr;
+  }
+}

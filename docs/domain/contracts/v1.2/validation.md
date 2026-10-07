@@ -30,6 +30,8 @@ This record certifies the domain decisions frozen by v1.2. It does not delete or
 | FULL_RACK                  | User/template/model/import decision; not implied by Device type  | VERIFIED      |
 | PowerPath                  | POWER AccessPort -> POWER AccessPort                             | VERIFIED      |
 | Telemetry                  | External identity bound to canonical domain identity             | VERIFIED      |
+| Lifecycle archive          | Nested Equipment must detach before archive; no hidden slot metadata | VERIFIED   |
+| Lifecycle restore          | Restore reactivates root Equipment; it does not guess prior slots | VERIFIED      |
 | Persistence                | Must reconstruct the canonical domain; does not redefine it      | VERIFIED      |
 
 ## Normative fixture scenarios

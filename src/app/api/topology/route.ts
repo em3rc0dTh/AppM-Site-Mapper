@@ -13,6 +13,13 @@ import type {
 } from '@/modules/topology/domain/entities';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import {
+  hasOnlyKeys,
+  isBoundedString,
+  isSafeMutationRequest,
+  jsonBodyErrorStatus,
+  readBoundedJson,
+} from '@/shared/http/request-security';
 
 const topologyKinds = new Set<TopologyKind>([
   'NETWORK',
@@ -28,8 +35,31 @@ const topologyKinds = new Set<TopologyKind>([
 ]);
 
 function asObject(value: unknown): Record<string, unknown> | null {
-  return value && typeof value === 'object' ? (value as Record<string, unknown>) : null;
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
 }
+
+const topologyCreateKeys = [
+  'kind',
+  'parentId',
+  'name',
+  'polygon',
+  'roomVariant',
+  'clusterVariant',
+  'containerVariant',
+  'coordinate',
+  'totalU',
+  'serialNumber',
+  'category',
+  'deviceType',
+  'equipmentType',
+  'childMode',
+  'childCapacity',
+  'parentSlotIndex',
+  'manufacturer',
+  'model',
+] as const;
 
 function asKind(value: unknown): TopologyKind | null {
   return typeof value === 'string' && topologyKinds.has(value as TopologyKind)
@@ -117,11 +147,46 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: 403 });
   }
 
-  const body = asObject(await request.json().catch(() => null));
+  if (!isSafeMutationRequest(request)) {
+    return NextResponse.json({ error: 'CROSS_SITE_MUTATION_REJECTED' }, { status: 403 });
+  }
+
+  const parsed = await readBoundedJson(request, {
+    maxBytes: 32_768,
+    maxDepth: 8,
+    maxNodes: 512,
+  });
+  if (!parsed.ok) {
+    return NextResponse.json(
+      { error: parsed.error },
+      { status: jsonBodyErrorStatus(parsed.error) },
+    );
+  }
+
+  const body = asObject(parsed.value);
   const kind = asKind(body?.kind);
 
-  if (!body || !kind || typeof body.name !== 'string') {
+  if (
+    !body ||
+    !hasOnlyKeys(body, topologyCreateKeys) ||
+    !kind ||
+    !isBoundedString(body.name, 120)
+  ) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+  }
+
+  for (const optionalText of [
+    body.serialNumber,
+    body.category,
+    body.manufacturer,
+    body.model,
+  ]) {
+    if (
+      optionalText !== undefined &&
+      !isBoundedString(optionalText, 120, { allowEmpty: true })
+    ) {
+      return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+    }
   }
 
   const spatial = ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(

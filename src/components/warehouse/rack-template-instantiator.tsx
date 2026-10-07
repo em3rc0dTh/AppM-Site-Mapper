@@ -46,6 +46,11 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
           serialNumber: String(form.get('serialNumber') ?? ''),
           category: String(form.get('category') ?? ''),
           deviceType: String(form.get('deviceType') ?? 'CUSTOM'),
+          equipmentType: String(form.get('equipmentType') ?? '') || undefined,
+          childMode: String(form.get('childMode') ?? '') || undefined,
+          childCapacity: String(form.get('childCapacity') ?? '').trim()
+            ? Number(form.get('childCapacity'))
+            : undefined,
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -95,6 +100,12 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                     {selected.sizeU ? `${selected.sizeU}U` : 'U not defined'}
                     {selected.category ? ` · ${selected.category}` : ''}
                   </span>
+                  <span>
+                    {selected.equipmentType ?? 'CUSTOM'} ·{' '}
+                    {selected.childMode === 'POSITIONAL'
+                      ? `${selected.childCapacity ?? 0} slots`
+                      : 'dynamic children'}
+                  </span>
                 </div>
               )}
               <label>
@@ -112,6 +123,51 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                   <option value="RECTIFIER">Rectifier</option>
                   <option value="POWER_SYSTEM">Power system</option>
                 </select>
+              </label>
+              <label>
+                Physical Equipment type
+                <select name="equipmentType" defaultValue="">
+                  <option value="">
+                    Use template ({selected?.equipmentType ?? 'CUSTOM'})
+                  </option>
+                  <option value="CHASSIS">Chassis</option>
+                  <option value="SHELF">Shelf</option>
+                  <option value="SUB_SHELF">Sub-shelf</option>
+                  <option value="FRAME">Frame</option>
+                  <option value="PANEL">Panel</option>
+                  <option value="CIRCUIT_BREAKER">Circuit breaker</option>
+                  <option value="POWER_SUPPLY">Power supply</option>
+                  <option value="POWER_MODULE">Power module</option>
+                  <option value="CONTROLLER_BOARD">Controller board</option>
+                  <option value="NETWORK_BOARD">Network board</option>
+                  <option value="PLUGGABLE_MODULE">Pluggable module</option>
+                  <option value="FAN">Fan</option>
+                  <option value="CUSTOM">Custom</option>
+                </select>
+              </label>
+              <label>
+                Children mode
+                <select name="childMode" defaultValue="">
+                  <option value="">
+                    Use template ({selected?.childMode ?? 'DYNAMIC'})
+                  </option>
+                  <option value="DYNAMIC">Dynamic</option>
+                  <option value="POSITIONAL">Positional slots</option>
+                </select>
+              </label>
+              <label>
+                Child slots
+                <input
+                  name="childCapacity"
+                  type="number"
+                  min="1"
+                  max="256"
+                  placeholder={
+                    selected?.childMode === 'POSITIONAL'
+                      ? String(selected.childCapacity ?? '')
+                      : 'Only for positional mode'
+                  }
+                />
               </label>
               <label>
                 Serial number

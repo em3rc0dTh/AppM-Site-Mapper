@@ -76,13 +76,20 @@ Previously committed legacy MQTT credentials remain considered compromised and m
 
 Configured globally:
 
+- nonce-based Content-Security-Policy on rendered application pages;
+- production scripts require a per-request nonce and use `strict-dynamic`;
+- inline script attributes are disabled;
+- `unsafe-eval` is allowed only by the development CSP;
+- object embedding is disabled;
+- framing is denied by CSP and `X-Frame-Options: DENY`;
 - `X-Content-Type-Options: nosniff`;
-- `X-Frame-Options: DENY`;
 - `Referrer-Policy: strict-origin-when-cross-origin`;
 - restrictive `Permissions-Policy`;
 - Next.js powered-by header disabled.
 
-A full Content-Security-Policy is not yet configured and is recorded as a release limitation requiring environment-specific design/validation.
+Inline styles remain allowed because the current React/Next UI uses runtime style
+attributes. Script execution does not use `unsafe-inline`. Production CSP also upgrades
+insecure subresource requests.
 
 ## Repository controls
 

@@ -4,6 +4,12 @@ import { requirePermission } from '@/modules/identity/application/current-sessio
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { EquipmentChildMode, EquipmentType } from '@/modules/topology/domain/entities';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import {
+  hasOnlyKeys,
+  isSafeMutationRequest,
+  jsonBodyErrorStatus,
+  readBoundedJson,
+} from '@/shared/http/request-security';
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
 
@@ -62,35 +68,71 @@ export async function PATCH(request: Request, context: Context) {
     return NextResponse.json({ error: auth.error }, { status: 403 });
   }
 
-  const { id } = await context.params;
-  const body: unknown = await request.json().catch(() => null);
+  if (!isSafeMutationRequest(request)) {
+    return NextResponse.json({ error: 'CROSS_SITE_MUTATION_REJECTED' }, { status: 403 });
+  }
 
-  if (!body || typeof body !== 'object' || !('action' in body)) {
+  const { id } = await context.params;
+  const parsed = await readBoundedJson(request, {
+    maxBytes: 8_192,
+    maxDepth: 4,
+    maxNodes: 64,
+  });
+  if (!parsed.ok) {
+    return NextResponse.json(
+      { error: parsed.error },
+      { status: jsonBodyErrorStatus(parsed.error) },
+    );
+  }
+
+  if (!parsed.value || typeof parsed.value !== 'object' || Array.isArray(parsed.value)) {
+    return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+  }
+
+  const body = parsed.value as Record<string, unknown>;
+  if (typeof body.action !== 'string') {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
   const service = new TopologyService(await createTopologyRepository());
   let result;
 
-  if (body.action === 'archive') {
-    result = await service.archive(id);
-  } else if (body.action === 'restore') {
-    result = await service.restore(id);
-  } else if (body.action === 'move' && 'parentId' in body && typeof body.parentId === 'string') {
+  if (body.action === 'archive' || body.action === 'restore') {
+    if (!hasOnlyKeys(body, ['action'])) {
+      return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+    }
+    result =
+      body.action === 'archive' ? await service.archive(id) : await service.restore(id);
+  } else if (body.action === 'move') {
+    if (
+      !hasOnlyKeys(body, ['action', 'parentId', 'slotIndex']) ||
+      typeof body.parentId !== 'string' ||
+      body.parentId.length < 1 ||
+      body.parentId.length > 160 ||
+      (body.slotIndex !== undefined && !Number.isInteger(body.slotIndex))
+    ) {
+      return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+    }
     result = await service.move(
       id,
       body.parentId,
-      'slotIndex' in body && typeof body.slotIndex === 'number' ? body.slotIndex : undefined,
+      typeof body.slotIndex === 'number' ? body.slotIndex : undefined,
     );
   } else if (body.action === 'configure-equipment') {
+    if (
+      !hasOnlyKeys(body, ['action', 'equipmentType', 'childMode', 'childCapacity']) ||
+      (body.equipmentType !== undefined && !equipmentType(body.equipmentType)) ||
+      (body.childMode !== undefined && !childMode(body.childMode)) ||
+      (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity))
+    ) {
+      return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+    }
     result = await service.configureEquipment(id, {
-      ...('equipmentType' in body && equipmentType(body.equipmentType)
+      ...(equipmentType(body.equipmentType)
         ? { equipmentType: equipmentType(body.equipmentType)! }
         : {}),
-      ...('childMode' in body && childMode(body.childMode)
-        ? { childMode: childMode(body.childMode)! }
-        : {}),
-      ...('childCapacity' in body && typeof body.childCapacity === 'number'
+      ...(childMode(body.childMode) ? { childMode: childMode(body.childMode)! } : {}),
+      ...(typeof body.childCapacity === 'number'
         ? { childCapacity: body.childCapacity }
         : {}),
     });
@@ -99,7 +141,15 @@ export async function PATCH(request: Request, context: Context) {
   }
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 422 });
+    const status =
+      result.error === 'NOT_FOUND'
+        ? 404
+        : result.error === 'LAYOUT_CONFLICT' ||
+            result.error === 'SLOT_OCCUPIED' ||
+            result.error === 'POSITION_OCCUPIED'
+          ? 409
+          : 422;
+    return NextResponse.json({ error: result.error }, { status });
   }
 
   return NextResponse.json({ node: result.value });

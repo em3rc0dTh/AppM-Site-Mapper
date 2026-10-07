@@ -236,7 +236,14 @@ export function EquipmentCompositionEditor({
     }
   }
 
-  const defaultOneOffType = allowed.length === 1 ? allowed[0] : 'CUSTOM';
+  const defaultOneOffType: EquipmentType =
+    allowed.length === 1 && allowed[0] ? allowed[0] : 'CUSTOM';
+  const defaultWarehouseType: EquipmentType | '' =
+    selectedTemplate?.equipmentType
+      ? ''
+      : allowed.length === 1 && allowed[0]
+        ? allowed[0]
+        : '';
 
   return (
     <section className="equipment-composition">
@@ -502,7 +509,11 @@ export function EquipmentCompositionEditor({
               </label>
               <label>
                 Equipment type override
-                <select name="equipmentType" defaultValue="">
+                <select
+                  key={templateId + ':' + defaultWarehouseType}
+                  name="equipmentType"
+                  defaultValue={defaultWarehouseType}
+                >
                   <option value="">Use template</option>
                   {EQUIPMENT_TYPES.map((type) => (
                     <option key={type} value={type}>

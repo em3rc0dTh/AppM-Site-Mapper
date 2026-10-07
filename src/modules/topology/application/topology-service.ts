@@ -428,7 +428,7 @@ export class TopologyService {
 
       if (oldParent.id === parent.id) {
         if (parent.kind === 'DEVICE' || parent.childMode === 'DYNAMIC') {
-          return success(moved);
+          return success(node);
         }
         if (!Number.isInteger(targetSlotIndex)) return failure('POSITION_SLOT_REQUIRED');
         const slot = targetSlotIndex as number;
@@ -653,53 +653,6 @@ export class TopologyService {
     }
 
     return current ? success(current) : failure('INVALID_DEEP_LINK');
-  }
-
-  private async attachEquipment(
-    parent: Extract<TopologyNode, { kind: 'DEVICE' | 'EQUIPMENT' }>,
-    equipmentId: string,
-  ): Promise<void> {
-    if (parent.kind === 'DEVICE') {
-      if (parent.rootEquipmentIds.includes(equipmentId)) return;
-      await this.repository.replace({
-        ...parent,
-        rootEquipmentIds: [...parent.rootEquipmentIds, equipmentId],
-        updatedAt: nowIso(),
-      });
-      return;
-    }
-
-    if (parent.childMode === 'POSITIONAL') throw new Error('POSITION_SLOT_REQUIRED');
-    const current = parent.children.filter((id): id is string => id !== null);
-    if (current.includes(equipmentId)) return;
-
-    await this.repository.replace({
-      ...parent,
-      children: [...current, equipmentId],
-      updatedAt: nowIso(),
-    });
-  }
-
-  private async detachEquipment(
-    parent: Extract<TopologyNode, { kind: 'DEVICE' | 'EQUIPMENT' }>,
-    equipmentId: string,
-  ): Promise<void> {
-    if (parent.kind === 'DEVICE') {
-      await this.repository.replace({
-        ...parent,
-        rootEquipmentIds: parent.rootEquipmentIds.filter((id) => id !== equipmentId),
-        updatedAt: nowIso(),
-      });
-      return;
-    }
-
-    await this.repository.replace({
-      ...parent,
-      children: parent.children
-        .map((id) => (id === equipmentId ? null : id))
-        .filter((id) => (parent.childMode === 'DYNAMIC' ? id !== null : true)),
-      updatedAt: nowIso(),
-    });
   }
 
   private async isDescendant(rootId: string, candidateId: string): Promise<boolean> {

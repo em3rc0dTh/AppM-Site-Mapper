@@ -43,6 +43,10 @@ export function EquipmentCompositionEditor({
   const router = useRouter();
   const byId = useMemo(() => new Map(children.map((child) => [child.id, child])), [children]);
   const [composerOpen, setComposerOpen] = useState(false);
+  const [configurationOpen, setConfigurationOpen] = useState(false);
+  const [configurationMode, setConfigurationMode] = useState<EquipmentChildMode>(
+    equipment.childMode,
+  );
   const [targetSlot, setTargetSlot] = useState<number | null>(null);
   const [mode, setMode] = useState<'warehouse' | 'one-off'>('warehouse');
   const [templates, setTemplates] = useState<readonly AssetTemplate[]>([]);
@@ -87,6 +91,36 @@ export function EquipmentCompositionEditor({
     setComposerOpen(true);
     setError('');
     void loadTemplates();
+  }
+
+  async function configureEquipment(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setBusy(true);
+    setError('');
+    try {
+      const response = await fetch('/api/topology/' + encodeURIComponent(equipment.id), {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action: 'configure-equipment',
+          equipmentType: String(form.get('equipmentType') ?? equipment.equipmentType),
+          childMode: configurationMode,
+          childCapacity:
+            configurationMode === 'POSITIONAL'
+              ? Number(form.get('childCapacity'))
+              : undefined,
+        }),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? 'CONFIGURE_FAILED');
+      setConfigurationOpen(false);
+      router.refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'CONFIGURE_FAILED');
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function createFromWarehouse(event: FormEvent<HTMLFormElement>) {
@@ -217,12 +251,73 @@ export function EquipmentCompositionEditor({
               : ' · ' + equipment.children.length + ' children'}
           </small>
         </div>
-        {allowed.length ? (
-          <p>Allowed children: {allowed.map(label).join(', ')}</p>
-        ) : (
-          <p>Allowed children: any Equipment type</p>
-        )}
+        <div className="equipment-composition-policy">
+          {allowed.length ? (
+            <p>Allowed children: {allowed.map(label).join(', ')}</p>
+          ) : (
+            <p>Allowed children: any Equipment type</p>
+          )}
+          {canWrite ? (
+            <button
+              type="button"
+              onClick={() => {
+                setConfigurationMode(equipment.childMode);
+                setConfigurationOpen((value) => !value);
+              }}
+            >
+              CONFIGURE EQUIPMENT
+            </button>
+          ) : null}
+        </div>
       </header>
+
+      {configurationOpen ? (
+        <form className="equipment-configuration-form" onSubmit={configureEquipment}>
+          <label>
+            Equipment type
+            <select name="equipmentType" defaultValue={equipment.equipmentType}>
+              {EQUIPMENT_TYPES.map((type) => (
+                <option key={type} value={type}>
+                  {label(type)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Children mode
+            <select
+              name="childMode"
+              value={configurationMode}
+              onChange={(event) =>
+                setConfigurationMode(event.target.value as EquipmentChildMode)
+              }
+            >
+              <option value="DYNAMIC">Dynamic</option>
+              <option value="POSITIONAL">Positional slots</option>
+            </select>
+          </label>
+          {configurationMode === 'POSITIONAL' ? (
+            <label>
+              Child slots
+              <input
+                name="childCapacity"
+                type="number"
+                min="1"
+                max="256"
+                required
+                defaultValue={
+                  equipment.childMode === 'POSITIONAL'
+                    ? equipment.children.length
+                    : Math.max(1, equipment.children.length)
+                }
+              />
+            </label>
+          ) : null}
+          <button type="submit" disabled={busy}>
+            {busy ? 'Saving…' : 'Save composition'}
+          </button>
+        </form>
+      ) : null}
 
       {equipment.childMode === 'POSITIONAL' ? (
         <div className="equipment-slot-grid">

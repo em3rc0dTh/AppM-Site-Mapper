@@ -67,9 +67,15 @@ DEVICE BDFB-01
             └── PANEL children[0..23] = EquipmentId | null
 ```
 
-Creation, movement, archive and restore of nested Equipment must update both sides of
-the parent-child relationship atomically. A template may supply composition defaults,
-but it does not hardcode a product-specific hierarchy into the topology domain.
+Creation and movement of nested Equipment update both sides of the parent-child
+relationship atomically. Archive is intentionally separate from physical composition:
+a nested Equipment must first be detached or moved to the Device root, and Rack CAS
+must be released when applicable. Restore reactivates that root Equipment and never
+guesses a former parent or slot. No lifecycle placement metadata is hidden in generic
+attributes.
+
+A template may supply composition defaults, but it does not hardcode a product-specific
+hierarchy into the topology domain.
 
 ### CAS
 
@@ -126,4 +132,6 @@ Not yet implemented:
 - bulk instantiation;
 - automatic CAS mount during Warehouse instantiation (intentionally separate; CAS remains explicit).
 
-These remain explicit follow-up gaps and are not implied by this ADR.
+These are explicit product-scope exclusions for this milestone, not alternate domain
+models or deferred integrity/security work. The implemented flows above are the only
+authoritative runtime paths for Equipment composition.

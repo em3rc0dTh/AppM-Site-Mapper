@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { WarehouseService } from '@/modules/warehouse/application/warehouse-service';
+import type { EquipmentType } from '@/modules/topology/domain/entities';
 import {
   parseEquipmentChildMode,
   parseEquipmentType,
@@ -22,11 +23,11 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-function allowedChildTypes(value: unknown) {
+function allowedChildTypes(value: unknown): readonly EquipmentType[] | undefined {
   if (!Array.isArray(value) || value.length > 32) return undefined;
   const parsed = value.map(parseEquipmentType);
   if (parsed.some((item) => item === undefined)) return undefined;
-  return parsed.filter((item): item is NonNullable<typeof item> => item !== undefined);
+  return parsed as EquipmentType[];
 }
 
 export async function GET() {
@@ -111,7 +112,9 @@ export async function POST(request: Request) {
     ...(parseEquipmentType(body.equipmentType)
       ? { equipmentType: parseEquipmentType(body.equipmentType)! }
       : {}),
-    ...(parseEquipmentChildMode(body.childMode) ? { childMode: parseEquipmentChildMode(body.childMode)! } : {}),
+    ...(parseEquipmentChildMode(body.childMode)
+      ? { childMode: parseEquipmentChildMode(body.childMode)! }
+      : {}),
     ...(typeof body.childCapacity === 'number'
       ? { childCapacity: body.childCapacity }
       : {}),

@@ -70,9 +70,40 @@ export async function readBoundedJson(
     return { ok: false, error: 'JSON_TOO_LARGE' };
   }
 
-  const raw = await request.text();
-  if (new TextEncoder().encode(raw).byteLength > maxBytes) {
-    return { ok: false, error: 'JSON_TOO_LARGE' };
+  const body = request.body;
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  if (body) {
+    const reader = body.getReader();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        totalBytes += value.byteLength;
+        if (totalBytes > maxBytes) {
+          await reader.cancel('JSON_TOO_LARGE');
+          return { ok: false, error: 'JSON_TOO_LARGE' };
+        }
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+  }
+
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  let raw: string;
+  try {
+    raw = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+  } catch {
+    return { ok: false, error: 'INVALID_JSON' };
   }
 
   let value: unknown;

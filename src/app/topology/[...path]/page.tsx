@@ -4,7 +4,6 @@ import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import { BdfbChassis, type BreakerPowerBinding } from '@/components/power/bdfb-chassis';
-import { BdfbMaterializeControl } from '@/components/power/bdfb-materialize-control';
 import { BdfbTelemetryInspector } from '@/components/power/bdfb-telemetry-inspector';
 import { BdfbPowerTree } from '@/components/power/bdfb-power-tree';
 import { TopologyContextTree } from '@/components/topology/context-tree';
@@ -372,16 +371,24 @@ export default async function TopologyNodePage({
               <section className="zip-bdfb-recovery-state" role="status">
                 <div>
                   <span aria-hidden="true">▥</span>
-                  <h2>Physical BDFB structure unavailable</h2>
+                  <h2>BDFB physical composition is incomplete</h2>
                   <p>
-                    The Device exists, but its canonical Equipment hierarchy cannot currently be
-                    projected. Site Mapper will not replace it with a generic dark canvas.
+                    Build the real Equipment hierarchy recursively. Shelf, Frame, Panel and
+                    Circuit Breaker are Equipment only when they physically exist.
                   </p>
                   <small>
-                    Materialize the canonical 96-circuit BDFB hierarchy. The existing mounted
-                    chassis is preserved and reused.
+                    Open the root Equipment and fill its available child slots. Empty positions
+                    remain null; Site Mapper does not create Holder entities.
                   </small>
-                  {canWrite ? <BdfbMaterializeControl deviceId={node.id} /> : null}
+                  <div className="zip-bdfb-recovery-links">
+                    {childEntries
+                      .filter((entry) => entry.node.kind === 'EQUIPMENT')
+                      .map((entry) => (
+                        <Link key={entry.node.id} href={`/device/${entry.node.id}`} prefetch={false}>
+                          CONFIGURE {entry.node.name}
+                        </Link>
+                      ))}
+                  </div>
                 </div>
               </section>
             ) : node.kind === 'ROOM_SUBSTRUCTURE' &&
@@ -421,9 +428,7 @@ export default async function TopologyNodePage({
             )}
           </div>
 
-          {canWrite &&
-            childKinds.length > 0 &&
-            !(node.kind === 'DEVICE' && node.deviceType === 'BDFB') && (
+          {canWrite && childKinds.length > 0 && (
             <div className="operational-edit-dock">
               {childKinds.map((kind) => (
                 <TopologyCreateControl

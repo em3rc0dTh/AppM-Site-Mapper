@@ -4,6 +4,7 @@ import {
 } from '@/modules/topology/application/topology-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
+  AccessPort,
   DeviceNode,
   DeviceType,
   EquipmentChildMode,
@@ -142,6 +143,22 @@ export class WarehouseInstantiationService {
     const equipmentId = createDomainId();
     const category = input.category?.trim() || template.category;
     const serialNumber = input.serialNumber?.trim();
+    const equipmentType = input.equipmentType ?? template.equipmentType ?? 'CUSTOM';
+    const rootAccessPorts: readonly AccessPort[] =
+      equipmentType === 'CIRCUIT_BREAKER'
+        ? [
+            {
+              id: equipmentId + ':power-out',
+              deviceId,
+              equipmentId,
+              name: 'Power output',
+              portType: 'POWER',
+              direction: 'OUTPUT',
+              exposure: 'EXTERNAL',
+              lifecycle: 'ACTIVE',
+            },
+          ]
+        : [];
     const device: DeviceNode = {
       id: deviceId,
       parentId: rack.id,
@@ -166,14 +183,14 @@ export class WarehouseInstantiationService {
       createdAt: timestamp,
       updatedAt: timestamp,
       deviceId: device.id,
-      equipmentType: input.equipmentType ?? template.equipmentType ?? 'CUSTOM',
+      equipmentType,
       parentEquipmentId: null,
       childMode: composition.childMode,
       children:
         composition.childMode === 'POSITIONAL'
           ? Array.from({ length: composition.childCapacity! }, () => null)
           : [],
-      accessPorts: [],
+      accessPorts: rootAccessPorts,
       pinned: false,
       ...(category ? { category } : {}),
       ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
@@ -215,6 +232,7 @@ export class WarehouseInstantiationService {
     const composition = resolvedComposition(template, input.childMode, input.childCapacity);
     if (!composition) return failure('INVALID_CHILD_CAPACITY');
 
+    const category = input.category?.trim() || template.category;
     const result = await new TopologyService(this.topologyRepository).create({
       kind: 'EQUIPMENT',
       parentId: parent.id,
@@ -226,9 +244,7 @@ export class WarehouseInstantiationService {
         ? { childCapacity: composition.childCapacity }
         : {}),
       ...(input.serialNumber?.trim() ? { serialNumber: input.serialNumber.trim() } : {}),
-      ...(input.category?.trim() || template.category
-        ? { category: input.category?.trim() || template.category }
-        : {}),
+      ...(category ? { category } : {}),
       ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
       ...(template.model ? { model: template.model } : {}),
       template: snapshotTemplate(template),

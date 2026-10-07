@@ -104,3 +104,23 @@ export function isSafeMutationRequest(request: Request): boolean {
 export function jsonBodyErrorStatus(error: JsonBodyError): number {
   return error === 'JSON_TOO_LARGE' ? 413 : 400;
 }
+
+export function hasOnlyKeys(
+  value: Record<string, unknown>,
+  allowedKeys: readonly string[],
+): boolean {
+  const allowed = new Set(allowedKeys);
+  return Object.keys(value).every((key) => allowed.has(key));
+}
+
+export function isBoundedString(
+  value: unknown,
+  maxLength: number,
+  options: Readonly<{ allowEmpty?: boolean }> = {},
+): value is string {
+  return (
+    typeof value === 'string' &&
+    value.length <= maxLength &&
+    (options.allowEmpty === true || value.trim().length > 0)
+  );
+}

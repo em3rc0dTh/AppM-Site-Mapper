@@ -3,23 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
-import type { EquipmentChildMode, EquipmentType } from '@/modules/topology/domain/entities';
-
-const EQUIPMENT_TYPES: readonly EquipmentType[] = [
-  'CHASSIS',
-  'SHELF',
-  'SUB_SHELF',
-  'FRAME',
-  'PANEL',
-  'CIRCUIT_BREAKER',
-  'POWER_SUPPLY',
-  'POWER_MODULE',
-  'CONTROLLER_BOARD',
-  'NETWORK_BOARD',
-  'PLUGGABLE_MODULE',
-  'FAN',
-  'CUSTOM',
-];
+import type { EquipmentChildMode } from '@/modules/topology/domain/entities';
+import { EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
 
 const JSON_EXAMPLE = JSON.stringify(
   {

@@ -46,79 +46,79 @@ export function CasEditor({ view }: { view: RackElevationView }) {
       <summary>✎ EDIT CAS</summary>
       <div className="mk-cas-editor-panel">
         <p>Reservations include 1U clearance above and below the physical Equipment.</p>
-      <form onSubmit={submit}>
-        <input type="hidden" name="action" value="reserve" />
-        <label>
-          Start U
-          <input
-            required
-            name="mountStartU"
-            type="number"
-            min="2"
-            max={view.rack.totalU}
-            defaultValue="2"
-          />
-        </label>
-        <label>
-          Physical size U
-          <input
-            required
-            name="physicalSizeU"
-            type="number"
-            min="1"
-            max={view.rack.totalU}
-            defaultValue="1"
-          />
-        </label>
-        <button disabled={busy}>Reserve / split available span</button>
-      </form>
-      <form onSubmit={submit}>
-        <input type="hidden" name="action" value="equip" />
-        <label>
-          Reservation
-          <select required name="allocationId">
-            <option value="">Select reservation</option>
-            {view.rack.cas
-              .filter((r) => r.state === 'RESERVED')
-              .map((r) => (
-                <option key={r.id} value={r.id}>
-                  U{r.startU}–U{r.endU}
-                </option>
-              ))}
-          </select>
-        </label>
-        <label>
-          Inventory
-          <select required name="occupantId">
-            <option value="">Select Equipment</option>
-            {view.inventory
-              .filter((i) => !view.rack.cas.some((r) => r.occupantId === i.id))
-              .map((i) => (
-                <option key={i.id} value={i.id}>
-                  {i.name}
-                </option>
-              ))}
-          </select>
-        </label>
-        <button disabled={busy}>Mount Equipment</button>
-      </form>
-      <form onSubmit={submit}>
-        <input type="hidden" name="action" value="free" />
-        <label>
-          Allocation
-          <select required name="allocationId">
-            <option value="">Select allocation</option>
-            {view.rack.cas
-              .filter((r) => r.state !== 'AVAILABLE')
-              .map((r) => (
-                <option key={r.id} value={r.id}>
-                  U{r.startU}–U{r.endU} · {r.state}
-                </option>
-              ))}
-          </select>
-        </label>
-        <button disabled={busy}>Free allocation</button>
-      </form>
+        <form onSubmit={submit}>
+          <input type="hidden" name="action" value="reserve" />
+          <label>
+            Start U
+            <input
+              required
+              name="mountStartU"
+              type="number"
+              min="2"
+              max={view.rack.totalU}
+              defaultValue="2"
+            />
+          </label>
+          <label>
+            Physical size U
+            <input
+              required
+              name="physicalSizeU"
+              type="number"
+              min="1"
+              max={view.rack.totalU}
+              defaultValue="1"
+            />
+          </label>
+          <button disabled={busy}>Reserve / split available span</button>
+        </form>
+        <form onSubmit={submit}>
+          <input type="hidden" name="action" value="equip" />
+          <label>
+            Reservation
+            <select required name="allocationId">
+              <option value="">Select reservation</option>
+              {view.rack.cas
+                .filter((r) => r.state === 'RESERVED')
+                .map((r) => (
+                  <option key={r.id} value={r.id}>
+                    U{r.startU}–U{r.endU}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <label>
+            Inventory
+            <select required name="occupantId">
+              <option value="">Select Equipment</option>
+              {view.inventory
+                .filter((i) => !view.rack.cas.some((r) => r.occupantId === i.id))
+                .map((i) => (
+                  <option key={i.id} value={i.id}>
+                    {i.name}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <button disabled={busy}>Mount Equipment</button>
+        </form>
+        <form onSubmit={submit}>
+          <input type="hidden" name="action" value="free" />
+          <label>
+            Allocation
+            <select required name="allocationId">
+              <option value="">Select allocation</option>
+              {view.rack.cas
+                .filter((r) => r.state !== 'AVAILABLE')
+                .map((r) => (
+                  <option key={r.id} value={r.id}>
+                    U{r.startU}–U{r.endU} · {r.state}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <button disabled={busy}>Free allocation</button>
+        </form>
         {error && <p role="alert">{error}</p>}
       </div>
     </details>

@@ -1,112 +1,176 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
-import type { CSSProperties, ReactNode } from 'react';
-import type { EquipmentNode } from '@/modules/topology/domain/entities';
+import { useMemo, useState, type CSSProperties, type ReactNode } from 'react';
+
+import type { AccessPort, EquipmentNode } from '@/modules/topology/domain/entities';
 
 interface Props {
-  root: EquipmentNode;
-  equipment: readonly EquipmentNode[];
-  onAdd?: (slot: number | null) => void;
+  readonly root: EquipmentNode;
+  readonly equipment: readonly EquipmentNode[];
+  readonly onAdd?: (slot: number | null) => void;
 }
 
-const frameStyle: CSSProperties = {
-  border: '2px solid #64748b', borderRadius: 8, padding: 12,
-  background: '#f6f3e5', minWidth: 0, minHeight: 0, overflowWrap: 'anywhere',
+const sectionStyle: CSSProperties = {
+  minWidth: 0,
+  width: '100%',
+  boxSizing: 'border-box',
+  border: '2px solid #7b8d96',
+  borderRadius: 7,
+  padding: 'clamp(9px, 1.4vw, 18px)',
+  background: '#fff5dc',
 };
-const headStyle: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 12 };
+
+function PortTerminals({ ports }: { readonly ports: readonly AccessPort[] }) {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const active = ports.filter((port) => port.lifecycle === 'ACTIVE');
+  const selected = active.find((port) => port.id === selectedId);
+  if (!active.length) return null;
+
+  return (
+    <div className="equipment-port-terminals" aria-label="Access ports">
+      <div className="equipment-port-terminal-list">
+        {active.map((port) => (
+          <button
+            key={port.id}
+            type="button"
+            aria-pressed={selectedId === port.id}
+            title={port.name}
+            onClick={() => setSelectedId((value) => (value === port.id ? null : port.id))}
+          >
+            <span aria-hidden="true">●</span> {port.name} · {port.portType}
+          </button>
+        ))}
+      </div>
+      {selected && (
+        <dl className="equipment-port-detail">
+          <dt>Port</dt><dd>{selected.name}</dd>
+          <dt>Type</dt><dd>{selected.portType}</dd>
+          <dt>Direction</dt><dd>{selected.direction ?? 'Unspecified'}</dd>
+          <dt>Exposure</dt><dd>{selected.exposure}</dd>
+          <dt>Connector</dt><dd>{selected.connectorType ?? 'Not configured'}</dd>
+          <dt>Protocol</dt><dd>{selected.protocol ?? 'Not configured'}</dd>
+        </dl>
+      )}
+    </div>
+  );
+}
 
 export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
-  const byId = useMemo(() => new Map(equipment.map(item => [item.id, item])), [equipment]);
+  const byId = useMemo(() => new Map(equipment.map((item) => [item.id, item])), [equipment]);
   const [expanded, setExpanded] = useState<ReadonlySet<string>>(() => new Set());
+
   function toggle(id: string) {
-    setExpanded(previous => {
+    setExpanded((previous) => {
       const next = new Set(previous);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
+
   function render(node: EquipmentNode, depth: number, ancestry: ReadonlySet<string>): ReactNode {
     if (ancestry.has(node.id)) return <p role="alert">Equipment hierarchy cycle detected.</p>;
     const visited = new Set(ancestry);
     visited.add(node.id);
-    const occupied = node.children.filter(Boolean).length;
     const count = node.children.length;
-    const type = node.equipmentType;
-    const isPanel = type === 'PANEL';
-    const isLeaf = count === 0;
+    const occupied = node.children.filter(Boolean).length;
+    const positional = node.childMode === 'POSITIONAL';
     const policy = node.presentation?.childrenVisibility ?? 'AUTO';
-    const collapse = count > 4 && policy !== 'INLINE' && !expanded.has(node.id);
-    const limit = node.presentation?.maxPerLine ?? (isPanel ? 12 : count);
-    const columns = Math.max(1, Math.min(12, limit || 1));
-    const compositionColumns = isPanel ? columns : Math.min(4, columns);
+    const dense = positional && count > 4;
+    const collapsed = !expanded.has(node.id) &&
+      (policy === 'SUMMARY' || (policy === 'AUTO' && count > 4));
     const direction = node.presentation?.direction ?? 'ROW';
-    const gridStyle: CSSProperties = {
-      display: 'grid',
-      gridTemplateColumns: direction === 'COLUMN'
-        ? 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))'
-        : `repeat(${compositionColumns}, minmax(0, 1fr))`,
-      ...(direction === 'COLUMN' ? { gridAutoFlow: 'column', gridTemplateRows: `repeat(${Math.max(1, Math.ceil(count / columns))}, auto)` } : {}),
-      gap: isPanel ? 4 : 10,
-      minHeight: !isPanel && depth < 2 ? 'clamp(240px, 48vh, 700px)' : undefined,
-      gridAutoRows: !isPanel ? 'minmax(0, 1fr)' : undefined,
-      alignItems: 'stretch',
-      overflowX: 'auto',
-    };
+    const lineLimit = node.presentation?.maxPerLine ?? (dense ? 12 : count);
+    const columns = Math.max(1, Math.min(lineLimit, count || 1, dense ? 12 : 4));
+    const occupiedSlots = node.children.map((id, index) => ({ id, index }));
+    const positionPreview = (
+      <div className="equipment-physical-slot-preview" aria-label={`${occupied} of ${count} positions occupied`}>
+        {occupiedSlots.slice(0, 48).map(({ id, index }) => (
+          <span
+            key={index}
+            className={id ? 'is-occupied' : ''}
+            title={`Position ${index + 1}: ${id ? byId.get(id)?.name ?? 'Occupied' : 'Available'}`}
+          />
+        ))}
+        {count > 48 && <small>+{count - 48} positions</small>}
+      </div>
+    );
+
     return (
-      <section key={node.id} className="equipment-physical-box" style={{ ...frameStyle, display: 'flex', flexDirection: 'column', flex: 1, height: '100%', background: depth === 0 ? '#edf0e6' : depth === 1 ? '#e9f5e8' : '#fff5e6' }}>
-        <header style={headStyle}>
+      <section
+        key={node.id}
+        className="equipment-physical-box"
+        style={{ ...sectionStyle, background: depth === 0 ? '#eaf2e6' : depth === 1 ? '#f0f4e8' : '#fff2d5' }}
+      >
+        <header className="equipment-physical-header">
           <div>
-            <div style={{ fontSize: 10, letterSpacing: 1 }}>{type.replaceAll('_', ' ')} · EQUIPMENT</div>
-            <strong style={{ display: 'block' }}>{node.name}</strong>
-            <small>{occupied} / {count} occupied {node.childMode === 'POSITIONAL' ? 'positions' : 'children'}</small>
+            <small>{node.equipmentType.replaceAll('_', ' ')} · EQUIPMENT</small>
+            <strong>{node.name}</strong>
+            <span>{positional ? `${occupied} / ${count} positions` : `${occupied} children`}</span>
           </div>
-          <Link href={'/device/' + encodeURIComponent(node.id)} style={{ fontSize: 12 }}>OPEN DETAILS ↗</Link>
+          <Link href={'/device/' + encodeURIComponent(node.id)}>OPEN DETAILS ↗</Link>
         </header>
-        {isLeaf ? (
-          <p style={{ margin: 0, fontSize: 12 }}>
-            {node.accessPorts.filter(port => port.lifecycle === 'ACTIVE').length} access ports · Leaf equipment
-          </p>
-        ) : collapse ? (
-          <button type="button" onClick={() => toggle(node.id)}>
-            EXPLORE {count} POSITIONS · {occupied} OCCUPIED
-          </button>
+
+        {count === 0 ? (
+          <PortTerminals ports={node.accessPorts} />
+        ) : collapsed ? (
+          <div className="equipment-physical-summary">
+            {dense && positionPreview}
+            <button type="button" onClick={() => toggle(node.id)}>
+              EXPLORE {count} {positional ? 'POSITIONS' : 'CHILDREN'} · {occupied} OCCUPIED
+            </button>
+          </div>
         ) : (
           <>
-            <div className={isPanel ? 'equipment-physical-slots' : 'equipment-physical-children'} style={gridStyle}>
-              {node.children.map((id, index) => {
+            <div
+              className={dense ? 'equipment-physical-slots' : 'equipment-physical-children'}
+              style={{
+                '--composition-columns': columns,
+                '--composition-direction': direction,
+              } as CSSProperties}
+            >
+              {occupiedSlots.map(({ id, index }) => {
                 const child = id ? byId.get(id) : undefined;
-                if (child) {
+                if (dense) {
                   return (
-                    <div key={index} style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-                      {isPanel ? (
-                        <Link title={child.name} href={'/device/' + encodeURIComponent(child.id)}
-                          style={{ display: 'block', minHeight: 46, padding: 5, background: '#d1e8eb', border: '1px solid #4a7581', textDecoration: 'none', color: '#183943', fontSize: 10 }}>
-                          <b>{String(index + 1).padStart(2, '0')}</b>
-                          <span style={{ display: 'block' }}>{child.equipmentType.replaceAll('_', ' ')}</span>
+                    <div key={index} className={id ? 'equipment-physical-slot is-occupied' : 'equipment-physical-slot'}>
+                      <small>{String(index + 1).padStart(2, '0')}</small>
+                      {child ? (
+                        <Link href={'/device/' + encodeURIComponent(child.id)}>
+                          {child.name}
                         </Link>
-                      ) : render(child, depth + 1, visited)}
+                      ) : id ? <span>Missing reference</span> : <span>Available</span>}
+                      {depth === 0 && !id && onAdd && <button type="button" onClick={() => onAdd(index)}>+ ADD</button>}
                     </div>
                   );
                 }
+
+                if (child) return <div key={index} className="equipment-physical-child">{render(child, depth + 1, visited)}</div>;
                 return (
-                  <div key={index} title={id ? 'Referenced Equipment unavailable' : 'Available position'}
-                    style={{ border: '1px dashed #9aa8ad', padding: isPanel ? 4 : 12, minHeight: isPanel ? 36 : 96, fontSize: 11, background: '#fffefa' }}>
-                    <span>{String(index + 1).padStart(2, '0')}</span>
-                    {!isPanel && <p>{id ? 'Missing reference' : 'AVAILABLE'}</p>}
-                    {depth === 0 && onAdd && !id && <button type="button" onClick={() => onAdd(index)}>+ ADD</button>}
+                  <div key={index} className="equipment-physical-empty">
+                    <small>POSITION {String(index + 1).padStart(2, '0')}</small>
+                    <span>{id ? 'Referenced Equipment unavailable' : 'Available'}</span>
+                    {depth === 0 && !id && onAdd && <button type="button" onClick={() => onAdd(index)}>+ ADD EQUIPMENT</button>}
                   </div>
                 );
               })}
             </div>
-            {count > 4 && policy !== 'INLINE' && (
-              <button type="button" onClick={() => toggle(node.id)} style={{ marginTop: 12 }}>COLLAPSE POSITIONS</button>
+            {policy !== 'INLINE' && count > 4 && (
+              <button className="equipment-physical-collapse" type="button" onClick={() => toggle(node.id)}>
+                COLLAPSE POSITIONS
+              </button>
             )}
+            <PortTerminals ports={node.accessPorts} />
           </>
         )}
       </section>
     );
   }
-  return <div className="equipment-physical-canvas" aria-label="Nested physical Equipment diagram" style={{ display: 'flex', minHeight: 'clamp(500px, 70vh, 1100px)', width: '100%', alignItems: 'stretch' }}>{render(root, 0, new Set())}</div>;
+
+  return (
+    <div className="equipment-physical-canvas" aria-label="Nested physical Equipment diagram">
+      {render(root, 0, new Set())}
+    </div>
+  );
 }

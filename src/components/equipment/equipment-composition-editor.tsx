@@ -268,8 +268,10 @@ export function EquipmentCompositionEditor({
   const compositionStyle = {
     display: 'grid',
     gridTemplateColumns: equipment.presentation?.direction === 'COLUMN'
-      ? `repeat(${Math.max(1, Math.ceil(visibleCount / itemCount))}, minmax(0, 1fr))`
+      ? 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))'
       : `repeat(${itemCount}, minmax(0, 1fr))`,
+    gridAutoFlow: equipment.presentation?.direction === 'COLUMN' ? 'column' : 'row',
+    ...(equipment.presentation?.direction === 'COLUMN' ? { gridTemplateRows: `repeat(${itemCount}, auto)` } : {}),
     maxWidth: '100%',
   };
   return (

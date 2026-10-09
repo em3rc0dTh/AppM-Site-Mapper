@@ -6,6 +6,7 @@ import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
 import { NativeMqttSource } from '@/modules/telemetry/infrastructure/native-mqtt-source';
+import { TelemetryRejectionLogThrottle } from '@/modules/telemetry/infrastructure/telemetry-rejection-log-throttle';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { logger } from '@/shared/infrastructure/logger';
 import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
@@ -101,6 +102,11 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     const expected = expectedSources(process.env.MQTT_EXPECTED_SOURCES);
     const historyEnabled = enabled && process.env.TELEMETRY_HISTORY_ENABLED === 'true';
     const historyStore = historyEnabled ? createTelemetryStoreClient() : null;
+    const rejectionLogIntervalMs = positiveInt(
+      process.env.TELEMETRY_REJECTION_LOG_INTERVAL_MS,
+      60_000,
+    );
+    const rejectionLogThrottle = new TelemetryRejectionLogThrottle(rejectionLogIntervalMs);
 
     const hub = new TelemetryHub(maxStreams);
     const topologyRepository = await createTopologyRepository();
@@ -152,7 +158,16 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           if (!result.ok) {
             rejectedMessages += 1;
             rejectionReasons[result.error] = (rejectionReasons[result.error] ?? 0) + 1;
-            logger.warn('telemetry.message.rejected', { topic, reason: result.error });
+            const decision = rejectionLogThrottle.record(`${topic}\u0000${result.error}`);
+            if (decision.shouldLog) {
+              logger.warn('telemetry.message.rejected', {
+                topic,
+                reason: result.error,
+                ...(decision.suppressedSinceLastLog > 0
+                  ? { suppressedSinceLastLog: decision.suppressedSinceLastLog }
+                  : {}),
+              });
+            }
           } else {
             acceptedMessages += 1;
             lastAcceptedAt = now;

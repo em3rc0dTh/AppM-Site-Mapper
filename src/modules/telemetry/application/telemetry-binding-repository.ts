@@ -9,6 +9,10 @@ export interface TelemetryBindingRepository {
     targetType: TelemetryBinding['targetType'],
     targetId: string,
   ): Promise<readonly TelemetryBinding[]>;
+  listForTargets(
+    targetType: TelemetryBinding['targetType'],
+    targetIds: readonly string[],
+  ): Promise<readonly TelemetryBinding[]>;
   insert(binding: TelemetryBinding): Promise<void>;
   replace(binding: TelemetryBinding): Promise<void>;
 }

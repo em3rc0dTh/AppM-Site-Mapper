@@ -162,12 +162,14 @@ export function BdfbTelemetryInspector({
   activePanelId,
   location,
   feeds,
+  mappedBreakerCount = 0,
 }: Readonly<{
   node: DeviceNode;
   presentation: BdfbPresentation;
   activePanelId?: string;
   location?: string;
   feeds?: readonly string[];
+  mappedBreakerCount?: number;
 }>) {
   const telemetry = useTelemetrySample(node.id);
   const [window, setWindow] = useState<InspectorWindow>('LIVE');
@@ -340,7 +342,7 @@ export function BdfbTelemetryInspector({
         <dt>Feed B</dt>
         <dd>{hasB ? 'Configured' : '—'}</dd>
         <dt>Telemetry</dt>
-        <dd>{breakers.some((breaker) => breaker.rawPointId) ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}</dd>
+        <dd>{mappedBreakerCount > 0 ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}</dd>
       </dl>
 
       <section className="zip-bdfb-status-card">
@@ -362,7 +364,7 @@ export function BdfbTelemetryInspector({
 
       <div className="zip-bdfb-actions">
         <span>
-          {breakers.filter((breaker) => Boolean(breaker.rawPointId)).length} explicit MQTT bindings
+          {mappedBreakerCount} mapped breakers
         </span>
         <span>
           {selectedPanel

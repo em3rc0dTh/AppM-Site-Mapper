@@ -92,6 +92,59 @@ export interface RackPlacement {
   readonly coordinate: { row: string; column: number };
 }
 
+export type RackPlacementFailure =
+  | 'INVALID_CLUSTER'
+  | 'INVALID_DIMENSIONS'
+  | 'NEGATIVE_POSITION_REFERENCE'
+  | 'BAY_FRONTAGE_TOO_NARROW'
+  | 'RACK_OUTSIDE_ROOM'
+  | 'RACK_DEPTH_BLOCKED_BY_BAY'
+  | 'RACK_COLLISION'
+  | 'NO_VALID_GRID_ANCHOR';
+
+export function explainRackPlacementFailure(
+  draft: LayoutDraft,
+  clusterId: string,
+  width: number,
+  depth: number,
+): RackPlacementFailure {
+  const cluster = draft.clusters.find((candidate) => candidate.id === clusterId);
+  const bounds = cluster ? polygonBounds(cluster.polygon) : null;
+  if (!cluster || !bounds) return 'INVALID_CLUSTER';
+  if (!Number.isFinite(width) || !Number.isFinite(depth) || width <= 0 || depth <= 0)
+    return 'INVALID_DIMENSIONS';
+  if (bounds.minX < 0 || bounds.minY < 0) return 'NEGATIVE_POSITION_REFERENCE';
+  if (bounds.maxX - bounds.minX < width) return 'BAY_FRONTAGE_TOO_NARROW';
+
+  const reasons = new Set<string>();
+  const candidateXs = new Set<number>([bounds.minX]);
+  for (const existing of draft.racks) {
+    const position = draft.positions.find((candidate) => candidate.id === existing.positionId);
+    if (position?.clusterId === clusterId) candidateXs.add(existing.x + existing.width);
+  }
+  for (const other of draft.clusters) {
+    if (other.id === clusterId) continue;
+    const otherBounds = polygonBounds(other.polygon);
+    if (otherBounds) candidateXs.add(otherBounds.maxX);
+  }
+  for (const x of [...candidateXs].sort((a, b) => a - b)) {
+    if (x < bounds.minX || x + width > bounds.maxX) continue;
+    const coordinate = pointToGridCoordinate({ x, y: bounds.minY });
+    if (!coordinate) continue;
+    const issue = rackPlacementIssue(
+      draft,
+      { id: '__rack_candidate__', x, y: bounds.minY, width, depth },
+      { id: '__rack_candidate_position__', name: 'Candidate', clusterId, ...coordinate },
+    );
+    if (issue) reasons.add(issue);
+  }
+  if (reasons.has('RACK_OUTSIDE_ROOM')) return 'RACK_OUTSIDE_ROOM';
+  if (reasons.has('RACK_DEPTH_BLOCKED_BY_BAY')) return 'RACK_DEPTH_BLOCKED_BY_BAY';
+  if (reasons.has('RACK_COLLISION')) return 'RACK_COLLISION';
+  if (reasons.has('RACK_OUTSIDE_BAY_WIDTH')) return 'BAY_FRONTAGE_TOO_NARROW';
+  return 'NO_VALID_GRID_ANCHOR';
+}
+
 export function findNextRackPlacement(
   draft: LayoutDraft,
   clusterId: string,

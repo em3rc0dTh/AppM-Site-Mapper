@@ -1,7 +1,4 @@
-export function buildContentSecurityPolicy(
-  nonce: string,
-  development: boolean,
-): string {
+export function buildContentSecurityPolicy(nonce: string, development: boolean): string {
   if (!/^[A-Za-z0-9+/_=-]+$/.test(nonce)) {
     throw new Error('INVALID_CSP_NONCE');
   }

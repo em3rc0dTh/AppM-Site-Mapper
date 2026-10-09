@@ -132,6 +132,7 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
             <button type="button" onClick={() => toggle(node.id)}>
               EXPLORE {count} {positional ? 'POSITIONS' : 'CHILDREN'} · {occupied} OCCUPIED
             </button>
+            <PortTerminals ports={node.accessPorts} />
           </div>
         ) : (
           <>

@@ -164,6 +164,19 @@ MK1 is repository/software certified through the documented gates.
 
 G0 through G15 certify the repository/software baseline. Before a specific production deployment is declared certified, the environment-specific items in `docs/release/release-checklist.md` must also be completed.
 
+## MQTT-only manual topology mode
+
+When the broker/emulator is already running and you want to create every Site Mapper entity
+manually without any demo or BFDB seed:
+
+```bash
+npm run local:mqtt
+```
+
+This mode enables MQTT, verifies broker subscription + RAW emulator traffic, and leaves the
+topology empty. Use `npm run local:emulator` only when you explicitly want the synthetic
+three-BFDB commissioning fixture.
+
 ## BFDB emulator (live MQTT)
 
 The visual-only `npm run local:dev` deliberately disables real telemetry. To use the

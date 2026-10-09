@@ -2,7 +2,6 @@ export interface BdfbBreakerView {
   readonly id: string;
   readonly label: string;
   readonly capacity?: number;
-  readonly rawPointId?: string;
   readonly accessPortId: string;
 }
 

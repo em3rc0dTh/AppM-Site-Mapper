@@ -118,6 +118,9 @@ export class AccessPortService {
     if (input.feed) attributes.feed = input.feed;
     else delete attributes.feed;
 
+    const connectorType = clean(input.connectorType);
+    const protocol = clean(input.protocol);
+    const customType = clean(input.customType);
     const port: AccessPort = {
       id: existing?.id ?? createDomainId(),
       deviceId: node.deviceId,
@@ -127,9 +130,9 @@ export class AccessPortService {
       direction: input.direction,
       exposure: input.exposure,
       lifecycle: 'ACTIVE',
-      ...(clean(input.connectorType) ? { connectorType: clean(input.connectorType) } : {}),
-      ...(clean(input.protocol) ? { protocol: clean(input.protocol) } : {}),
-      ...(clean(input.customType) ? { customType: clean(input.customType) } : {}),
+      ...(connectorType ? { connectorType } : {}),
+      ...(protocol ? { protocol } : {}),
+      ...(customType ? { customType } : {}),
       ...(Object.keys(attributes).length ? { attributes } : {}),
     };
 

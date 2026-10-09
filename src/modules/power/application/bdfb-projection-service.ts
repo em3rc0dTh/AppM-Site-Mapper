@@ -8,11 +8,6 @@ import type {
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 
-function stringAttribute(node: EquipmentNode, key: string): string | undefined {
-  const value = node.attributes?.[key];
-  return typeof value === 'string' ? value : undefined;
-}
-
 function numberAttribute(node: EquipmentNode, key: string): number | undefined {
   const value = node.attributes?.[key];
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
@@ -27,13 +22,11 @@ function breakerView(node: EquipmentNode | undefined): BdfbBreakerView | null {
   if (!power) return null;
 
   const capacity = numberAttribute(node, 'capacity');
-  const rawPointId = stringAttribute(node, 'telemetryRawPointId');
   return {
     id: node.id,
     label: node.name,
     accessPortId: power.id,
     ...(capacity === undefined ? {} : { capacity }),
-    ...(rawPointId ? { rawPointId } : {}),
   };
 }
 
@@ -73,11 +66,11 @@ function frameViews(
     if (child.equipmentType === 'PANEL') {
       const view = panelView(child, byId);
       if (!view) continue;
-      const key = stringAttribute(child, 'presentationFrameId') ?? child.parentId + ':direct';
+      const key = child.parentId + ':direct';
       const current = frames.get(key);
       frames.set(key, {
         id: key,
-        label: stringAttribute(child, 'presentationFrameLabel') ?? 'Direct mount',
+        label: 'Direct mount',
         physical: false,
         panels: [...(current?.panels ?? []), view],
       });

@@ -27,6 +27,49 @@ describe('request security', () => {
     });
   });
 
+
+  it('accepts same-origin browser mutations when the framework rewrites request.url internally', () => {
+    const request = new Request('http://localhost:3000/api/warehouse/templates/import', {
+      method: 'POST',
+      headers: {
+        origin: 'http://127.0.0.1:3000',
+        host: '127.0.0.1:3000',
+        'sec-fetch-site': 'same-origin',
+      },
+      body: '{}',
+    });
+
+    expect(isSafeMutationRequest(request)).toBe(true);
+  });
+
+  it('uses the browser-visible forwarded authority when sec-fetch metadata is unavailable', () => {
+    const request = new Request('http://internal-next:3000/api/warehouse/templates/import', {
+      method: 'POST',
+      headers: {
+        origin: 'https://mapper.example',
+        host: 'internal-next:3000',
+        'x-forwarded-host': 'mapper.example',
+        'x-forwarded-proto': 'https',
+      },
+      body: '{}',
+    });
+
+    expect(isSafeMutationRequest(request)).toBe(true);
+  });
+
+  it('still rejects mismatched origins without same-origin browser evidence', () => {
+    const request = new Request('http://localhost:3000/api/warehouse/templates/import', {
+      method: 'POST',
+      headers: {
+        origin: 'https://attacker.example',
+        host: '127.0.0.1:3000',
+      },
+      body: '{}',
+    });
+
+    expect(isSafeMutationRequest(request)).toBe(false);
+  });
+
   it('rejects cross-site cookie-authenticated mutations', () => {
     expect(
       isSafeMutationRequest(

@@ -145,6 +145,7 @@ Production apply is staging-first and requires an externally retained stable ID 
 
 - Architecture: `docs/architecture/`
 - Domain: `docs/domain/`
+- Design / presentation contracts: `docs/design/`
 - Security: `docs/security/`
 - Telemetry: `docs/telemetry/`
 - Testing: `docs/testing/`

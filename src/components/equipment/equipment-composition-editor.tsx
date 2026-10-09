@@ -520,12 +520,18 @@ export function EquipmentCompositionEditor({
       />
       <div className="equipment-composition-workbench-actions">
         {canWrite && isActive && equipment.childMode === 'DYNAMIC' && (
-          <button type="button" onClick={() => openComposer(null)}>+ ADD EQUIPMENT</button>
+          <button type="button" onClick={() => openComposer(null)}>
+            + ADD EQUIPMENT
+          </button>
         )}
         <button type="button" onClick={() => setShowPositionEditor((value) => !value)}>
           {equipment.childMode === 'POSITIONAL'
-            ? showPositionEditor ? 'HIDE POSITION EDITOR' : 'MANAGE POSITIONS'
-            : showPositionEditor ? 'HIDE CHILD MANAGER' : 'MANAGE CHILD EQUIPMENT'}
+            ? showPositionEditor
+              ? 'HIDE POSITION EDITOR'
+              : 'MANAGE POSITIONS'
+            : showPositionEditor
+              ? 'HIDE CHILD MANAGER'
+              : 'MANAGE CHILD EQUIPMENT'}
         </button>
       </div>
       {showPositionEditor ? (

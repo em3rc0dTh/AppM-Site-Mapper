@@ -3,7 +3,10 @@
 import Link from 'next/link';
 import { useMemo, useState, type CSSProperties } from 'react';
 
-import { projectEquipmentComposition, shouldSummarizeFocus } from '@/modules/topology/application/equipment-composition-projection';
+import {
+  projectEquipmentComposition,
+  shouldSummarizeFocus,
+} from '@/modules/topology/application/equipment-composition-projection';
 import type { AccessPort, EquipmentNode } from '@/modules/topology/domain/entities';
 
 interface Props {
@@ -31,37 +34,68 @@ function EquipmentPreview({
   return (
     <article className="equipment-physical-preview">
       <div className="equipment-physical-preview-heading">
-        <span className="equipment-physical-position">POSITION {String(slotIndex + 1).padStart(2, '0')}</span>
-        <span className="equipment-physical-type">{equipment.equipmentType.replaceAll('_', ' ')}</span>
+        <span className="equipment-physical-position">
+          POSITION {String(slotIndex + 1).padStart(2, '0')}
+        </span>
+        <span className="equipment-physical-type">
+          {equipment.equipmentType.replaceAll('_', ' ')}
+        </span>
       </div>
-      <Link href={'/device/' + encodeURIComponent(equipment.id)} className="equipment-physical-preview-name">
+      <Link
+        href={'/device/' + encodeURIComponent(equipment.id)}
+        className="equipment-physical-preview-name"
+      >
         {equipment.name}
       </Link>
       <div className="equipment-physical-preview-meta">
-        <span>{countLabel(composition.occupied, composition.capacity, composition.positional)}</span>
-        {ports.length > 0 && <span>{ports.length} access {ports.length === 1 ? 'port' : 'ports'}</span>}
+        <span>
+          {countLabel(composition.occupied, composition.capacity, composition.positional)}
+        </span>
+        {ports.length > 0 && (
+          <span>
+            {ports.length} access {ports.length === 1 ? 'port' : 'ports'}
+          </span>
+        )}
       </div>
       {preview.length > 0 && (
-        <div className="equipment-physical-preview-children" aria-label={equipment.name + ' child preview'}>
+        <div
+          className="equipment-physical-preview-children"
+          aria-label={equipment.name + ' child preview'}
+        >
           {preview.map((item) => {
             const child = item.equipment!;
             const childComposition = projectEquipmentComposition(child, equipmentById);
             return (
-              <Link key={item.index} href={'/device/' + encodeURIComponent(child.id)} className="equipment-physical-preview-child">
+              <Link
+                key={item.index}
+                href={'/device/' + encodeURIComponent(child.id)}
+                className="equipment-physical-preview-child"
+              >
                 <span>{child.equipmentType.replaceAll('_', ' ')}</span>
                 <strong>{child.name}</strong>
-                <small>{countLabel(childComposition.occupied, childComposition.capacity, childComposition.positional)}</small>
+                <small>
+                  {countLabel(
+                    childComposition.occupied,
+                    childComposition.capacity,
+                    childComposition.positional,
+                  )}
+                </small>
               </Link>
             );
           })}
           {composition.occupied > preview.length && (
-            <span className="equipment-physical-preview-more">+{composition.occupied - preview.length} more — open to inspect</span>
+            <span className="equipment-physical-preview-more">
+              +{composition.occupied - preview.length} more — open to inspect
+            </span>
           )}
         </div>
       )}
       {composition.capacity > 4 && (
         <div className="equipment-physical-mini-capacity">
-          <span>{composition.capacity} {composition.positional ? 'positions' : 'children'} · Open for detail</span>
+          <span>
+            {composition.capacity} {composition.positional ? 'positions' : 'children'} · Open for
+            detail
+          </span>
         </div>
       )}
     </article>
@@ -96,50 +130,75 @@ function PortFace({ ports }: Readonly<{ ports: readonly AccessPort[] }>) {
               aria-label={`Inspect ${port.name}, ${port.portType} port`}
               aria-pressed={selectedPortId === port.id}
               title={`${port.name} · ${port.connectorType ?? port.portType}`}
-              onClick={() => setSelectedPortId((current) => current === port.id ? null : port.id)}
+              onClick={() => setSelectedPortId((current) => (current === port.id ? null : port.id))}
             >
-              <span className="equipment-faceplate-port-socket" aria-hidden="true"><span /></span>
+              <span className="equipment-faceplate-port-socket" aria-hidden="true">
+                <span />
+              </span>
               <strong>{port.name}</strong>
               <small>{port.connectorType || port.portType}</small>
             </button>
           ))}
         </div>
         {active.length > 48 && (
-          <button className="equipment-faceplate-more" type="button" onClick={() => setShowAll((v) => !v)}>
+          <button
+            className="equipment-faceplate-more"
+            type="button"
+            onClick={() => setShowAll((v) => !v)}
+          >
             {showAll ? 'SHOW FIRST 48' : `SHOW ALL ${active.length} RECORDED PORTS`}
           </button>
         )}
       </div>
       {selected ? (
-        <div className="equipment-faceplate-selection" role="region" aria-label={`Selected port ${selected.name}`}>
+        <div
+          className="equipment-faceplate-selection"
+          role="region"
+          aria-label={`Selected port ${selected.name}`}
+        >
           <div>
             <small>SELECTED ACCESS PORT</small>
             <strong>{selected.name}</strong>
-            <span>{selected.portType} · {selected.direction ?? 'Unspecified direction'}</span>
+            <span>
+              {selected.portType} · {selected.direction ?? 'Unspecified direction'}
+            </span>
           </div>
           <dl>
-            <dt>Exposure</dt><dd>{selected.exposure}</dd>
-            <dt>Connector</dt><dd>{selected.connectorType || 'Not recorded'}</dd>
-            <dt>Protocol</dt><dd>{selected.protocol || 'Not recorded'}</dd>
+            <dt>Exposure</dt>
+            <dd>{selected.exposure}</dd>
+            <dt>Connector</dt>
+            <dd>{selected.connectorType || 'Not recorded'}</dd>
+            <dt>Protocol</dt>
+            <dd>{selected.protocol || 'Not recorded'}</dd>
           </dl>
-          <button type="button" onClick={() => setSelectedPortId(null)}>CLOSE</button>
+          <button type="button" onClick={() => setSelectedPortId(null)}>
+            CLOSE
+          </button>
         </div>
       ) : (
-        <p className="equipment-faceplate-hint">Select a terminal to inspect its recorded identity. Connections are managed separately.</p>
+        <p className="equipment-faceplate-hint">
+          Select a terminal to inspect its recorded identity. Connections are managed separately.
+        </p>
       )}
     </section>
   );
 }
 
 export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
-  const equipmentById = useMemo(() => new Map(equipment.map((item) => [item.id, item])), [equipment]);
+  const equipmentById = useMemo(
+    () => new Map(equipment.map((item) => [item.id, item])),
+    [equipment],
+  );
   const projection = projectEquipmentComposition(root, equipmentById);
   const [expanded, setExpanded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(48);
   const hasPorts = root.accessPorts.some((port) => port.lifecycle === 'ACTIVE');
   const summarized = !expanded && shouldSummarizeFocus(projection);
   const lineLimit = projection.maxPerLine ?? (projection.positional ? 8 : 2);
-  const columns = Math.max(1, Math.min(projection.capacity || 1, lineLimit, projection.positional ? 12 : 4));
+  const columns = Math.max(
+    1,
+    Math.min(projection.capacity || 1, lineLimit, projection.positional ? 12 : 4),
+  );
   const slots = projection.slots.slice(0, visibleCount);
   const style = {
     '--composition-columns': columns,
@@ -152,12 +211,23 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
           <div>
             <span>FOCUSED EQUIPMENT</span>
             <strong>{root.name}</strong>
-            <small>{root.equipmentType.replaceAll('_', ' ')} · {root.childMode}</small>
+            <small>
+              {root.equipmentType.replaceAll('_', ' ')} · {root.childMode}
+            </small>
           </div>
           <div className="equipment-physical-shell-stats">
-            <span><b>{projection.occupied}</b> Installed</span>
-            {projection.positional && <span><b>{projection.available}</b> Free positions</span>}
-            <span><b>{root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length}</b> Access ports</span>
+            <span>
+              <b>{projection.occupied}</b> Installed
+            </span>
+            {projection.positional && (
+              <span>
+                <b>{projection.available}</b> Free positions
+              </span>
+            )}
+            <span>
+              <b>{root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length}</b> Access
+              ports
+            </span>
           </div>
         </header>
 
@@ -165,12 +235,19 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
           <section className="equipment-physical-bays" aria-label="Immediate child composition">
             <header className="equipment-physical-subheading">
               <strong>INTERNAL COMPOSITION</strong>
-              <small>{countLabel(projection.occupied, projection.capacity, projection.positional)}</small>
+              <small>
+                {countLabel(projection.occupied, projection.capacity, projection.positional)}
+              </small>
             </header>
             {summarized ? (
               <div className="equipment-physical-summary">
-                <p>{projection.capacity} immediate {projection.positional ? 'positions' : 'children'} · {projection.occupied} occupied.</p>
-                <button type="button" onClick={() => setExpanded(true)}>EXPLORE COMPOSITION</button>
+                <p>
+                  {projection.capacity} immediate {projection.positional ? 'positions' : 'children'}{' '}
+                  · {projection.occupied} occupied.
+                </p>
+                <button type="button" onClick={() => setExpanded(true)}>
+                  EXPLORE COMPOSITION
+                </button>
               </div>
             ) : (
               <>
@@ -192,14 +269,26 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
                             <span>{slot.equipment.name}</span>
                           </Link>
                         ) : (
-                          <EquipmentPreview equipment={slot.equipment} equipmentById={equipmentById} slotIndex={slot.index} />
+                          <EquipmentPreview
+                            equipment={slot.equipment}
+                            equipmentById={equipmentById}
+                            slotIndex={slot.index}
+                          />
                         )
                       ) : (
-                        <div className={`equipment-physical-empty ${projection.positional && projection.capacity > 4 ? 'is-dense' : ''}`}>
+                        <div
+                          className={`equipment-physical-empty ${projection.positional && projection.capacity > 4 ? 'is-dense' : ''}`}
+                        >
                           <small>POSITION {String(slot.index + 1).padStart(2, '0')}</small>
-                          <span>{slot.equipmentId ? 'Missing equipment reference' : 'Available'}</span>
+                          <span>
+                            {slot.equipmentId ? 'Missing equipment reference' : 'Available'}
+                          </span>
                           {!slot.equipmentId && onAdd && (
-                            <button type="button" onClick={() => onAdd(projection.positional ? slot.index : null)} aria-label={`Add Equipment in position ${slot.index + 1}`}>
+                            <button
+                              type="button"
+                              onClick={() => onAdd(projection.positional ? slot.index : null)}
+                              aria-label={`Add Equipment in position ${slot.index + 1}`}
+                            >
                               + ADD
                             </button>
                           )}
@@ -209,12 +298,25 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
                   ))}
                 </div>
                 {projection.capacity > visibleCount && (
-                  <button className="equipment-physical-more" type="button" onClick={() => setVisibleCount((current) => Math.min(current + 48, projection.capacity))}>
+                  <button
+                    className="equipment-physical-more"
+                    type="button"
+                    onClick={() =>
+                      setVisibleCount((current) => Math.min(current + 48, projection.capacity))
+                    }
+                  >
                     SHOW NEXT {Math.min(48, projection.capacity - visibleCount)} POSITIONS
                   </button>
                 )}
                 {expanded && shouldSummarizeFocus(projection) && (
-                  <button className="equipment-physical-more" type="button" onClick={() => { setExpanded(false); setVisibleCount(48); }}>
+                  <button
+                    className="equipment-physical-more"
+                    type="button"
+                    onClick={() => {
+                      setExpanded(false);
+                      setVisibleCount(48);
+                    }}
+                  >
                     BACK TO SUMMARY
                   </button>
                 )}
@@ -227,8 +329,15 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
         {!hasPorts && projection.capacity === 0 && (
           <div className="equipment-physical-no-content">
             <strong>No internal Equipment or Access Ports installed</strong>
-            <span>The physical view reflects recorded inventory; it does not create virtual ports or modules.</span>
-            {onAdd && root.childMode === 'DYNAMIC' && <button type="button" onClick={() => onAdd(null)}>+ ADD EQUIPMENT</button>}
+            <span>
+              The physical view reflects recorded inventory; it does not create virtual ports or
+              modules.
+            </span>
+            {onAdd && root.childMode === 'DYNAMIC' && (
+              <button type="button" onClick={() => onAdd(null)}>
+                + ADD EQUIPMENT
+              </button>
+            )}
           </div>
         )}
       </div>

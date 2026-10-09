@@ -47,7 +47,11 @@ describe('contract v1.0 Equipment focused physical composition', () => {
   it('shows BDFB Frame and Panel previews without recursively exploding 24 breakers', () => {
     const chassis = equipment('BDFB Chassis', 'CHASSIS', ['frame-a', 'frame-b']);
     const frameA = equipment('frame-a', 'FRAME', ['panel-a1', null]);
-    const panelA = equipment('panel-a1', 'PANEL', Array.from({ length: 24 }, (_, n) => n === 0 ? 'breaker-1' : null));
+    const panelA = equipment(
+      'panel-a1',
+      'PANEL',
+      Array.from({ length: 24 }, (_, n) => (n === 0 ? 'breaker-1' : null)),
+    );
     const breaker = equipment('breaker-1', 'CIRCUIT_BREAKER', [], 'DYNAMIC');
     const markup = renderToStaticMarkup(
       <PhysicalEquipmentDiagram root={chassis} equipment={[chassis, frameA, panelA, breaker]} />,
@@ -86,7 +90,9 @@ describe('contract v1.0 Equipment focused physical composition', () => {
       },
     ];
     const chassis = equipment('switch-1', 'CHASSIS', [], 'DYNAMIC', ports);
-    const markup = renderToStaticMarkup(<PhysicalEquipmentDiagram root={chassis} equipment={[chassis]} />);
+    const markup = renderToStaticMarkup(
+      <PhysicalEquipmentDiagram root={chassis} equipment={[chassis]} />,
+    );
     expect(markup).toContain('PHYSICAL TERMINALS');
     expect(markup).toContain('ap-01');
     expect(markup).toContain('Power input');

@@ -1,12 +1,6 @@
 import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
-import type {
-  EquipmentChildMode,
-  EquipmentType,
-} from '@/modules/topology/domain/entities';
-import {
-  type AssetTemplate,
-  type AssetTemplateKind,
-} from '@/modules/warehouse/domain/template';
+import type { EquipmentChildMode, EquipmentType } from '@/modules/topology/domain/entities';
+import { type AssetTemplate, type AssetTemplateKind } from '@/modules/warehouse/domain/template';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
@@ -85,11 +79,7 @@ export class WarehouseService {
     ) {
       return failure('INVALID_CHILD_CAPACITY');
     }
-    if (
-      childMode === 'DYNAMIC' &&
-      input.childCapacity !== undefined &&
-      input.childCapacity !== 0
-    ) {
+    if (childMode === 'DYNAMIC' && input.childCapacity !== undefined && input.childCapacity !== 0) {
       return failure('INVALID_CHILD_CAPACITY');
     }
 

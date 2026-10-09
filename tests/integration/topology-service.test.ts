@@ -134,7 +134,6 @@ describe('TopologyService', () => {
     ).resolves.toEqual({ ok: false, error: 'INVALID_PARENT' });
   });
 
-
   it('creates, repositions and detaches Equipment through positional slots', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());
     const { rack } = await buildHierarchy(service);
@@ -213,16 +212,12 @@ describe('TopologyService', () => {
     }
 
     storedChassis = await service.getById(chassis.value.id);
-    expect(storedChassis?.kind === 'EQUIPMENT' ? storedChassis.children : []).toEqual([
-      null,
-      null,
-    ]);
+    expect(storedChassis?.kind === 'EQUIPMENT' ? storedChassis.children : []).toEqual([null, null]);
     const storedDevice = await service.getById(device.value.id);
     expect(storedDevice?.kind === 'DEVICE' ? storedDevice.rootEquipmentIds : []).toEqual(
       expect.arrayContaining([chassis.value.id, shelf.value.id]),
     );
   });
-
 
   it('requires explicit detach before Equipment archive and restores without hidden slot metadata', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());

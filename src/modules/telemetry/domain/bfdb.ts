@@ -41,12 +41,8 @@ function metric(value: unknown, observedAt: string): TelemetryMetricValue | unde
   return numeric === null ? undefined : { value: numeric, observedAt };
 }
 
-function breakerMaps(presentation: BdfbPresentation): {
-  readonly byId: ReadonlyMap<string, ResolvedBreaker>;
-  readonly byRawPointId: ReadonlyMap<string, ResolvedBreaker>;
-} {
+function breakerMap(presentation: BdfbPresentation): ReadonlyMap<string, ResolvedBreaker> {
   const byId = new Map<string, ResolvedBreaker>();
-  const byRawPointId = new Map<string, ResolvedBreaker>();
 
   for (const shelf of presentation.shelves) {
     for (const frame of shelf.frames) {
@@ -63,13 +59,12 @@ function breakerMaps(presentation: BdfbPresentation): {
             position: index + 1,
           };
           byId.set(breaker.id, resolved);
-          if (breaker.rawPointId) byRawPointId.set(breaker.rawPointId, resolved);
         });
       }
     }
   }
 
-  return { byId, byRawPointId };
+  return byId;
 }
 
 function metricBindingMap(
@@ -112,7 +107,7 @@ export function buildBfdbBreakerReadings(
   if (message.protocol !== 'BFDB') return { readings: [], unmappedPointIds: [] };
 
   const observedAt = message.sourceObservedAt ?? message.receivedAt;
-  const { byId: byBreaker, byRawPointId } = breakerMaps(presentation);
+  const byBreaker = breakerMap(presentation);
   const readings: BreakerTelemetryReading[] = [];
   const unmappedPointIds: string[] = [];
 
@@ -123,7 +118,7 @@ export function buildBfdbBreakerReadings(
     }
 
     const mapping = metricBindingMap(bindings, message.sourceIdentity, rawPointId);
-    const resolved = mapping ? byBreaker.get(mapping.targetId) : byRawPointId.get(rawPointId);
+    const resolved = mapping ? byBreaker.get(mapping.targetId) : undefined;
     if (!resolved) {
       unmappedPointIds.push(rawPointId);
       continue;

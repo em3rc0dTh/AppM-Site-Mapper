@@ -141,6 +141,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             <EquipmentCompositionEditor
               equipment={node}
               childEquipment={directEquipmentChildren}
+              familyEquipment={familyEquipment}
               canWrite={canWriteTopology}
             />
           ) : view?.ok ? (

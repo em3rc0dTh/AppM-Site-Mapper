@@ -32,8 +32,6 @@ interface ResolvedTarget {
 }
 
 export class TelemetryService {
-  private readonly inferredCanonicalSources = new Map<string, TelemetryBinding>();
-
   constructor(
     private readonly topologyRepository: TopologyRepository,
     private readonly hub: TelemetryHub,
@@ -61,18 +59,8 @@ export class TelemetryService {
 
     if (!sourceBinding) {
       const inferred = await this.inferSourceBinding(normalized.value.sourceIdentity, bindings);
-      if (inferred.ok) {
-        sourceBinding = inferred.value;
-      } else if (inferred.error === 'UNKNOWN_SOURCE') {
-        const canonical = await this.inferCanonicalBdfbSource(
-          normalized.value.sourceIdentity,
-          normalized.value.reported,
-        );
-        if (!canonical.ok) return canonical;
-        sourceBinding = canonical.value;
-      } else {
-        return inferred;
-      }
+      if (!inferred.ok) return inferred;
+      sourceBinding = inferred.value;
     }
 
     let target = await this.resolveTarget(sourceBinding);
@@ -85,21 +73,6 @@ export class TelemetryService {
           target = inferredTarget;
         }
       }
-
-      if (!target) {
-        const canonical = await this.inferCanonicalBdfbSource(
-          normalized.value.sourceIdentity,
-          normalized.value.reported,
-        );
-        if (canonical.ok) {
-          const canonicalTarget = await this.resolveTarget(canonical.value);
-          if (canonicalTarget) {
-            sourceBinding = canonical.value;
-            target = canonicalTarget;
-          }
-        }
-      }
-
       if (!target) return failure('INVALID_BINDING_TARGET');
     }
 
@@ -221,58 +194,6 @@ export class TelemetryService {
       createdAt: timestamp,
       updatedAt: timestamp,
     });
-  }
-
-  private async inferCanonicalBdfbSource(
-    sourceIdentity: string,
-    reported: Readonly<Record<string, unknown>>,
-  ): Promise<Result<TelemetryBinding, TelemetryIngestError>> {
-    const cached = this.inferredCanonicalSources.get(sourceIdentity);
-    if (cached) return success(cached);
-
-    const devices = (await this.topologyRepository.listByKind('DEVICE')).filter(
-      (node) =>
-        node.kind === 'DEVICE' &&
-        node.lifecycle === 'ACTIVE' &&
-        node.deviceType === 'BDFB' &&
-        node.serialNumber === sourceIdentity,
-    );
-    if (devices.length === 0) return failure('UNKNOWN_SOURCE');
-    if (devices.length !== 1) return failure('AMBIGUOUS_SOURCE_BINDING');
-
-    const device = devices[0]!;
-    const projection = await new BdfbProjectionService(this.topologyRepository).get(device.id);
-    if (!projection) return failure('INVALID_BINDING_TARGET');
-
-    const rawPointIds = new Set(
-      projection.shelves.flatMap((shelf) =>
-        shelf.frames.flatMap((frame) =>
-          frame.panels.flatMap((panel) =>
-            panel.positions.flatMap((breaker) =>
-              breaker?.rawPointId ? [breaker.rawPointId] : [],
-            ),
-          ),
-        ),
-      ),
-    );
-    if (!Object.keys(reported).some((rawPointId) => rawPointIds.has(rawPointId))) {
-      return failure('UNKNOWN_SOURCE');
-    }
-
-    const timestamp = new Date().toISOString();
-    const binding: TelemetryBinding = {
-      id: `canonical:mqtt:${sourceIdentity}`,
-      protocol: 'MQTT',
-      sourceIdentity,
-      metric: 'SOURCE',
-      targetType: 'DEVICE',
-      targetId: device.id,
-      lifecycle: 'ACTIVE',
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-    this.inferredCanonicalSources.set(sourceIdentity, binding);
-    return success(binding);
   }
 
   private async resolveTarget(binding: TelemetryBinding): Promise<ResolvedTarget | null> {

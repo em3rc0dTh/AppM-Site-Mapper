@@ -9,20 +9,17 @@ const positions: readonly (BdfbBreakerView | null)[] = [
     id: 'breaker-1',
     label: 'CB-01',
     accessPortId: 'breaker-1:power-out',
-    rawPointId: '0_1_1',
   },
   null,
   {
     id: 'breaker-3',
     label: 'CB-03',
     accessPortId: 'breaker-3:power-out',
-    rawPointId: '0_1_3',
   },
   {
     id: 'breaker-4',
     label: 'CB-04',
     accessPortId: 'breaker-4:power-out',
-    rawPointId: '0_1_4',
   },
 ];
 
@@ -65,7 +62,7 @@ describe('BDFB telemetry aggregate', () => {
 
     expect(aggregate.totalBreakers).toBe(3);
     expect(aggregate.activeBreakers).toBe(2);
-    expect(aggregate.emptyHolders).toBe(1);
+    expect(aggregate.emptyPositions).toBe(1);
     expect(aggregate.withoutLiveReading).toBe(1);
     expect(aggregate.averageVoltageV).toBe(13);
     expect(aggregate.averageCurrentA).toBe(3);
@@ -78,7 +75,7 @@ describe('BDFB telemetry aggregate', () => {
     const aggregate = aggregateBdfbTelemetry(positions, []);
 
     expect(aggregate.activeBreakers).toBe(0);
-    expect(aggregate.emptyHolders).toBe(1);
+    expect(aggregate.emptyPositions).toBe(1);
     expect(aggregate.withoutLiveReading).toBe(3);
     expect(aggregate.averageVoltageV).toBeUndefined();
     expect(aggregate.averageCurrentA).toBeUndefined();

@@ -1286,7 +1286,6 @@ body {
   }
 }
 
-
 /* Generic recursive Equipment canvas (CHASSIS, NETWORK_BOARD, PANEL and any future type). */
 .equipment-physical-canvas {
   width: 100%;
@@ -1425,7 +1424,7 @@ body {
   padding: 5px 8px;
   font-size: 10px;
 }
-.equipment-port-terminal-list button[aria-pressed="true"] {
+.equipment-port-terminal-list button[aria-pressed='true'] {
   outline: 2px solid #2a94b8;
 }
 .equipment-port-detail {
@@ -1457,7 +1456,6 @@ body {
     grid-template-columns: repeat(8, minmax(0, 1fr));
   }
 }
-
 
 /* Unified per-Equipment Access Port management. */
 .equipment-port-editor {

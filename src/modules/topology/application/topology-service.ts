@@ -300,11 +300,18 @@ export class TopologyService {
           return failure('INVALID_CHILD_CAPACITY');
         }
 
-        if (input.presentation && (
-          !['ROW', 'COLUMN'].includes(input.presentation.direction) ||
-          !(input.presentation.maxPerLine === null || (Number.isInteger(input.presentation.maxPerLine) && input.presentation.maxPerLine >= 1 && input.presentation.maxPerLine <= 256)) ||
-          !['AUTO', 'INLINE', 'SUMMARY'].includes(input.presentation.childrenVisibility)
-        )) return failure('INVALID_EQUIPMENT_PRESENTATION');
+        if (
+          input.presentation &&
+          (!['ROW', 'COLUMN'].includes(input.presentation.direction) ||
+            !(
+              input.presentation.maxPerLine === null ||
+              (Number.isInteger(input.presentation.maxPerLine) &&
+                input.presentation.maxPerLine >= 1 &&
+                input.presentation.maxPerLine <= 256)
+            ) ||
+            !['AUTO', 'INLINE', 'SUMMARY'].includes(input.presentation.childrenVisibility))
+        )
+          return failure('INVALID_EQUIPMENT_PRESENTATION');
         const deviceId = parent.kind === 'DEVICE' ? parent.id : parent.deviceId;
         const defaultAccessPorts: readonly AccessPort[] =
           equipmentType === 'CIRCUIT_BREAKER' && !input.accessPorts?.length
@@ -331,7 +338,9 @@ export class TopologyService {
           parentEquipmentId: parent.kind === 'EQUIPMENT' ? parent.id : null,
           childMode,
           children,
-          ...((input.presentation ?? input.template?.presentation) ? { presentation: { ...(input.presentation ?? input.template!.presentation!) } } : {}),
+          ...((input.presentation ?? input.template?.presentation)
+            ? { presentation: { ...(input.presentation ?? input.template!.presentation!) } }
+            : {}),
           accessPorts: structuredClone(
             input.accessPorts?.length ? input.accessPorts : defaultAccessPorts,
           ),
@@ -418,10 +427,16 @@ export class TopologyService {
     const presentation = input.presentation ?? node.presentation;
     if (
       presentation &&
-      ( !['ROW', 'COLUMN'].includes(presentation.direction) ||
-        !(presentation.maxPerLine === null || (Number.isInteger(presentation.maxPerLine) && presentation.maxPerLine >= 1 && presentation.maxPerLine <= 256)) ||
+      (!['ROW', 'COLUMN'].includes(presentation.direction) ||
+        !(
+          presentation.maxPerLine === null ||
+          (Number.isInteger(presentation.maxPerLine) &&
+            presentation.maxPerLine >= 1 &&
+            presentation.maxPerLine <= 256)
+        ) ||
         !['AUTO', 'INLINE', 'SUMMARY'].includes(presentation.childrenVisibility))
-    ) return failure('INVALID_EQUIPMENT_PRESENTATION');
+    )
+      return failure('INVALID_EQUIPMENT_PRESENTATION');
     const occupied = node.children.filter((childId): childId is string => childId !== null);
     let children: readonly (string | null)[];
 

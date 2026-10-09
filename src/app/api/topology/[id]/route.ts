@@ -96,11 +96,37 @@ export async function PATCH(request: Request, context: Context) {
     );
   } else if (body.action === 'configure-equipment') {
     if (
-      !hasOnlyKeys(body, ['action', 'equipmentType', 'childMode', 'childCapacity', 'presentation']) ||
+      !hasOnlyKeys(body, [
+        'action',
+        'equipmentType',
+        'childMode',
+        'childCapacity',
+        'presentation',
+      ]) ||
       (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
       (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
       (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity)) ||
-      (body.presentation !== undefined && (!body.presentation || typeof body.presentation !== 'object' || Array.isArray(body.presentation) || !hasOnlyKeys(body.presentation as Record<string, unknown>, ['direction', 'maxPerLine', 'childrenVisibility']) || !['ROW', 'COLUMN'].includes((body.presentation as Record<string, unknown>).direction as string) || !['AUTO', 'INLINE', 'SUMMARY'].includes((body.presentation as Record<string, unknown>).childrenVisibility as string) || !((body.presentation as Record<string, unknown>).maxPerLine === null || (Number.isInteger((body.presentation as Record<string, unknown>).maxPerLine) && ((body.presentation as Record<string, unknown>).maxPerLine as number) >= 1 && ((body.presentation as Record<string, unknown>).maxPerLine as number) <= 256))))
+      (body.presentation !== undefined &&
+        (!body.presentation ||
+          typeof body.presentation !== 'object' ||
+          Array.isArray(body.presentation) ||
+          !hasOnlyKeys(body.presentation as Record<string, unknown>, [
+            'direction',
+            'maxPerLine',
+            'childrenVisibility',
+          ]) ||
+          !['ROW', 'COLUMN'].includes(
+            (body.presentation as Record<string, unknown>).direction as string,
+          ) ||
+          !['AUTO', 'INLINE', 'SUMMARY'].includes(
+            (body.presentation as Record<string, unknown>).childrenVisibility as string,
+          ) ||
+          !(
+            (body.presentation as Record<string, unknown>).maxPerLine === null ||
+            (Number.isInteger((body.presentation as Record<string, unknown>).maxPerLine) &&
+              ((body.presentation as Record<string, unknown>).maxPerLine as number) >= 1 &&
+              ((body.presentation as Record<string, unknown>).maxPerLine as number) <= 256)
+          )))
     ) {
       return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
     }
@@ -112,7 +138,15 @@ export async function PATCH(request: Request, context: Context) {
         ? { childMode: parseEquipmentChildMode(body.childMode)! }
         : {}),
       ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
-      ...(body.presentation ? { presentation: body.presentation as { direction: 'ROW' | 'COLUMN'; maxPerLine: number | null; childrenVisibility: 'AUTO' | 'INLINE' | 'SUMMARY' } } : {}),
+      ...(body.presentation
+        ? {
+            presentation: body.presentation as {
+              direction: 'ROW' | 'COLUMN';
+              maxPerLine: number | null;
+              childrenVisibility: 'AUTO' | 'INLINE' | 'SUMMARY';
+            },
+          }
+        : {}),
     });
   } else {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });

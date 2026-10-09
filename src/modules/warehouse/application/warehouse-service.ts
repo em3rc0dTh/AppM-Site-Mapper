@@ -1,5 +1,9 @@
 import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
-import type { EquipmentChildMode, EquipmentType, EquipmentPresentation } from '@/modules/topology/domain/entities';
+import type {
+  EquipmentChildMode,
+  EquipmentType,
+  EquipmentPresentation,
+} from '@/modules/topology/domain/entities';
 import { type AssetTemplate, type AssetTemplateKind } from '@/modules/warehouse/domain/template';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
@@ -85,11 +89,18 @@ export class WarehouseService {
       return failure('INVALID_CHILD_CAPACITY');
     }
 
-    if (input.presentation && (
-      !['ROW', 'COLUMN'].includes(input.presentation.direction) ||
-      !(input.presentation.maxPerLine === null || (Number.isInteger(input.presentation.maxPerLine) && input.presentation.maxPerLine >= 1 && input.presentation.maxPerLine <= 256)) ||
-      !['AUTO', 'INLINE', 'SUMMARY'].includes(input.presentation.childrenVisibility)
-    )) return failure('INVALID_EQUIPMENT_PRESENTATION');
+    if (
+      input.presentation &&
+      (!['ROW', 'COLUMN'].includes(input.presentation.direction) ||
+        !(
+          input.presentation.maxPerLine === null ||
+          (Number.isInteger(input.presentation.maxPerLine) &&
+            input.presentation.maxPerLine >= 1 &&
+            input.presentation.maxPerLine <= 256)
+        ) ||
+        !['AUTO', 'INLINE', 'SUMMARY'].includes(input.presentation.childrenVisibility))
+    )
+      return failure('INVALID_EQUIPMENT_PRESENTATION');
 
     const hasWidth = input.widthMm !== undefined;
     const hasDepth = input.depthMm !== undefined;

@@ -75,35 +75,47 @@ describe('AccessPortService', () => {
       lifecycle: 'ACTIVE' as const,
     };
     const repository = new MemoryTopologyRepository([{ ...equipment, accessPorts: [port] }]);
-    const power = new MemoryPowerRepository([{
-      id: 'path-1',
-      sourceAccessPortId: 'power-1',
-      targetAccessPortId: 'other-input',
-      feed: 'A',
-      lifecycle: 'ACTIVE',
-      createdAt: '2026-10-09T00:00:00.000Z',
-      updatedAt: '2026-10-09T00:00:00.000Z',
-    }]);
+    const power = new MemoryPowerRepository([
+      {
+        id: 'path-1',
+        sourceAccessPortId: 'power-1',
+        targetAccessPortId: 'other-input',
+        feed: 'A',
+        lifecycle: 'ACTIVE',
+        createdAt: '2026-10-09T00:00:00.000Z',
+        updatedAt: '2026-10-09T00:00:00.000Z',
+      },
+    ]);
     const service = new AccessPortService(repository, power);
 
     expect(await service.archive('equipment-1', 'power-1')).toEqual({
       ok: false,
       error: 'PORT_IN_USE',
     });
-    expect(await service.upsert('equipment-1', {
-      name: 'Ethernet output',
-      portType: 'NETWORK',
-      direction: 'OUTPUT',
-      exposure: 'EXTERNAL',
-    }, 'power-1')).toEqual({ ok: false, error: 'PORT_IN_USE' });
+    expect(
+      await service.upsert(
+        'equipment-1',
+        {
+          name: 'Ethernet output',
+          portType: 'NETWORK',
+          direction: 'OUTPUT',
+          exposure: 'EXTERNAL',
+        },
+        'power-1',
+      ),
+    ).toEqual({ ok: false, error: 'PORT_IN_USE' });
 
-    const renamed = await service.upsert('equipment-1', {
-      name: 'DC output renamed',
-      portType: 'POWER',
-      direction: 'OUTPUT',
-      exposure: 'EXTERNAL',
-      feed: 'A',
-    }, 'power-1');
+    const renamed = await service.upsert(
+      'equipment-1',
+      {
+        name: 'DC output renamed',
+        portType: 'POWER',
+        direction: 'OUTPUT',
+        exposure: 'EXTERNAL',
+        feed: 'A',
+      },
+      'power-1',
+    );
     expect(renamed.ok).toBe(true);
     if (renamed.ok) expect(renamed.value.id).toBe('power-1');
   });

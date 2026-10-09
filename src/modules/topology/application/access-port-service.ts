@@ -97,21 +97,25 @@ export class AccessPortService {
     if (!existing && node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length >= 512)
       return failure('TOO_MANY_PORTS');
 
-    if (node.accessPorts.some(
-      (port) =>
-        port.lifecycle === 'ACTIVE' &&
-        port.id !== existingId &&
-        port.name.trim().toLowerCase() === input.name.trim().toLowerCase(),
-    )) return failure('PORT_NAME_CONFLICT');
+    if (
+      node.accessPorts.some(
+        (port) =>
+          port.lifecycle === 'ACTIVE' &&
+          port.id !== existingId &&
+          port.name.trim().toLowerCase() === input.name.trim().toLowerCase(),
+      )
+    )
+      return failure('PORT_NAME_CONFLICT');
 
     const oldFeed = existing?.attributes?.feed;
-    if (existing && await this.linked(existing.id)) {
+    if (existing && (await this.linked(existing.id))) {
       if (
         existing.portType !== input.portType ||
         existing.direction !== input.direction ||
         existing.exposure !== input.exposure ||
         oldFeed !== input.feed
-      ) return failure('PORT_IN_USE');
+      )
+        return failure('PORT_IN_USE');
     }
 
     const attributes: Record<string, unknown> = { ...(existing?.attributes ?? {}) };
@@ -140,7 +144,7 @@ export class AccessPortService {
     const updated: EquipmentNode = {
       ...node,
       accessPorts: existing
-        ? node.accessPorts.map((item) => item.id === existing.id ? port : item)
+        ? node.accessPorts.map((item) => (item.id === existing.id ? port : item))
         : [...node.accessPorts, port],
       updatedAt: nowIso(),
     };
@@ -148,14 +152,13 @@ export class AccessPortService {
     return success(port);
   }
 
-  async archive(
-    equipmentId: string,
-    portId: string,
-  ): Promise<Result<AccessPort, AccessPortError>> {
+  async archive(equipmentId: string, portId: string): Promise<Result<AccessPort, AccessPortError>> {
     const owner = await this.findEquipment(equipmentId);
     if (!owner.ok) return failure(owner.error);
     const node = owner.value;
-    const current = node.accessPorts.find((port) => port.id === portId && port.lifecycle === 'ACTIVE');
+    const current = node.accessPorts.find(
+      (port) => port.id === portId && port.lifecycle === 'ACTIVE',
+    );
     if (!current) return failure('PORT_NOT_FOUND');
     if (await this.linked(current.id)) return failure('PORT_IN_USE');
     if (!this.topology.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
@@ -163,7 +166,7 @@ export class AccessPortService {
     const archived: AccessPort = { ...current, lifecycle: 'ARCHIVED' };
     const updated: EquipmentNode = {
       ...node,
-      accessPorts: node.accessPorts.map((port) => port.id === portId ? archived : port),
+      accessPorts: node.accessPorts.map((port) => (port.id === portId ? archived : port)),
       updatedAt: nowIso(),
     };
     if (!(await this.topology.commitLayout([node], [updated]))) return failure('LAYOUT_CONFLICT');

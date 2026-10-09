@@ -40,9 +40,15 @@ export function EquipmentCompositionEditor({
   const [configurationMode, setConfigurationMode] = useState<EquipmentChildMode>(
     equipment.childMode,
   );
-  const [layoutDirection, setLayoutDirection] = useState<'ROW' | 'COLUMN'>(equipment.presentation?.direction ?? 'ROW');
-  const [maxPerLine, setMaxPerLine] = useState(equipment.presentation?.maxPerLine?.toString() ?? 'auto');
-  const [childrenVisibility, setChildrenVisibility] = useState<'AUTO' | 'INLINE' | 'SUMMARY'>(equipment.presentation?.childrenVisibility ?? 'AUTO');
+  const [layoutDirection, setLayoutDirection] = useState<'ROW' | 'COLUMN'>(
+    equipment.presentation?.direction ?? 'ROW',
+  );
+  const [maxPerLine, setMaxPerLine] = useState(
+    equipment.presentation?.maxPerLine?.toString() ?? 'auto',
+  );
+  const [childrenVisibility, setChildrenVisibility] = useState<'AUTO' | 'INLINE' | 'SUMMARY'>(
+    equipment.presentation?.childrenVisibility ?? 'AUTO',
+  );
   const [targetSlot, setTargetSlot] = useState<number | null>(null);
   const [mode, setMode] = useState<'warehouse' | 'one-off'>('warehouse');
   const [warehouseChildMode, setWarehouseChildMode] = useState('');
@@ -92,9 +98,12 @@ export function EquipmentCompositionEditor({
   function compositionFromForm(form: FormData) {
     return {
       direction: String(form.get('presentationDirection') ?? 'ROW') as 'ROW' | 'COLUMN',
-      maxPerLine: form.get('presentationMaxPerLine') === 'auto'
-        ? null : Number(form.get('presentationMaxPerLine') ?? 2),
-      childrenVisibility: String(form.get('presentationVisibility') ?? 'AUTO') as 'AUTO' | 'INLINE' | 'SUMMARY',
+      maxPerLine:
+        form.get('presentationMaxPerLine') === 'auto'
+          ? null
+          : Number(form.get('presentationMaxPerLine') ?? 2),
+      childrenVisibility: String(form.get('presentationVisibility') ?? 'AUTO') as
+        'AUTO' | 'INLINE' | 'SUMMARY',
     };
   }
 
@@ -102,20 +111,42 @@ export function EquipmentCompositionEditor({
     return (
       <fieldset>
         <legend>Child composition layout</legend>
-        <label>Layout direction
-          <select key={'direction:' + (defaults?.direction ?? 'ROW')} name="presentationDirection" defaultValue={defaults?.direction ?? 'ROW'}>
-            <option value="ROW">Row</option><option value="COLUMN">Column</option>
+        <label>
+          Layout direction
+          <select
+            key={'direction:' + (defaults?.direction ?? 'ROW')}
+            name="presentationDirection"
+            defaultValue={defaults?.direction ?? 'ROW'}
+          >
+            <option value="ROW">Row</option>
+            <option value="COLUMN">Column</option>
           </select>
         </label>
-        <label>Max items per line
-          <select key={'max:' + String(defaults?.maxPerLine)} name="presentationMaxPerLine" defaultValue={defaults?.maxPerLine?.toString() ?? 'auto'}>
+        <label>
+          Max items per line
+          <select
+            key={'max:' + String(defaults?.maxPerLine)}
+            name="presentationMaxPerLine"
+            defaultValue={defaults?.maxPerLine?.toString() ?? 'auto'}
+          >
             <option value="auto">Auto</option>
-            {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => <option key={n} value={n}>{n}</option>)}
+            {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
+              <option key={n} value={n}>
+                {n}
+              </option>
+            ))}
           </select>
         </label>
-        <label>Child display
-          <select key={'visibility:' + (defaults?.childrenVisibility ?? 'AUTO')} name="presentationVisibility" defaultValue={defaults?.childrenVisibility ?? 'AUTO'}>
-            <option value="AUTO">Auto</option><option value="INLINE">Inline</option><option value="SUMMARY">Summary</option>
+        <label>
+          Child display
+          <select
+            key={'visibility:' + (defaults?.childrenVisibility ?? 'AUTO')}
+            name="presentationVisibility"
+            defaultValue={defaults?.childrenVisibility ?? 'AUTO'}
+          >
+            <option value="AUTO">Auto</option>
+            <option value="INLINE">Inline</option>
+            <option value="SUMMARY">Summary</option>
           </select>
         </label>
       </fieldset>
@@ -187,8 +218,13 @@ export function EquipmentCompositionEditor({
     const resolvedMode = warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC';
     const resolvedCapacity = warehouseChildCapacity.trim()
       ? Number(warehouseChildCapacity)
-      : warehouseChildMode === 'POSITIONAL' ? selectedTemplate?.childCapacity : undefined;
-    if (resolvedMode === 'POSITIONAL' && (!Number.isInteger(resolvedCapacity) || (resolvedCapacity ?? 0) < 1)) {
+      : warehouseChildMode === 'POSITIONAL'
+        ? selectedTemplate?.childCapacity
+        : undefined;
+    if (
+      resolvedMode === 'POSITIONAL' &&
+      (!Number.isInteger(resolvedCapacity) || (resolvedCapacity ?? 0) < 1)
+    ) {
       setError('POSITIONAL_REQUIRES_CHILD_SLOTS: choose 1–256 or use Dynamic for leaf Equipment.');
       return;
     }
@@ -311,16 +347,22 @@ export function EquipmentCompositionEditor({
 
   const visibleCount = equipment.children.length;
   const displayPolicy = equipment.presentation?.childrenVisibility ?? 'AUTO';
-  const summary = !showFullComposition && visibleCount > 4 && (displayPolicy === 'AUTO' || displayPolicy === 'SUMMARY');
+  const summary =
+    !showFullComposition &&
+    visibleCount > 4 &&
+    (displayPolicy === 'AUTO' || displayPolicy === 'SUMMARY');
   const lineLimit = equipment.presentation?.maxPerLine ?? visibleCount;
   const itemCount = Math.max(1, Math.min(visibleCount || 1, lineLimit));
   const compositionStyle = {
     display: 'grid',
-    gridTemplateColumns: equipment.presentation?.direction === 'COLUMN'
-      ? 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))'
-      : `repeat(${itemCount}, minmax(0, 1fr))`,
+    gridTemplateColumns:
+      equipment.presentation?.direction === 'COLUMN'
+        ? 'repeat(auto-fit, minmax(min(100%, 180px), 1fr))'
+        : `repeat(${itemCount}, minmax(0, 1fr))`,
     gridAutoFlow: equipment.presentation?.direction === 'COLUMN' ? 'column' : 'row',
-    ...(equipment.presentation?.direction === 'COLUMN' ? { gridTemplateRows: `repeat(${itemCount}, auto)` } : {}),
+    ...(equipment.presentation?.direction === 'COLUMN'
+      ? { gridTemplateRows: `repeat(${itemCount}, auto)` }
+      : {}),
     maxWidth: '100%',
   };
   return (
@@ -433,7 +475,10 @@ export function EquipmentCompositionEditor({
           ) : null}
           <label>
             Layout direction
-            <select value={layoutDirection} onChange={(event) => setLayoutDirection(event.target.value as 'ROW' | 'COLUMN')}>
+            <select
+              value={layoutDirection}
+              onChange={(event) => setLayoutDirection(event.target.value as 'ROW' | 'COLUMN')}
+            >
               <option value="ROW">Row</option>
               <option value="COLUMN">Column</option>
             </select>
@@ -442,12 +487,21 @@ export function EquipmentCompositionEditor({
             Max items per {layoutDirection === 'ROW' ? 'row' : 'column'}
             <select value={maxPerLine} onChange={(event) => setMaxPerLine(event.target.value)}>
               <option value="auto">Auto</option>
-              {Array.from({ length: 256 }, (_, index) => index + 1).map((amount) => <option key={amount} value={amount}>{amount}</option>)}
+              {Array.from({ length: 256 }, (_, index) => index + 1).map((amount) => (
+                <option key={amount} value={amount}>
+                  {amount}
+                </option>
+              ))}
             </select>
           </label>
           <label>
             Child display
-            <select value={childrenVisibility} onChange={(event) => setChildrenVisibility(event.target.value as 'AUTO' | 'INLINE' | 'SUMMARY')}>
+            <select
+              value={childrenVisibility}
+              onChange={(event) =>
+                setChildrenVisibility(event.target.value as 'AUTO' | 'INLINE' | 'SUMMARY')
+              }
+            >
               <option value="AUTO">Auto</option>
               <option value="INLINE">Inline</option>
               <option value="SUMMARY">Summary</option>
@@ -459,57 +513,112 @@ export function EquipmentCompositionEditor({
         </form>
       ) : null}
 
-      <PhysicalEquipmentDiagram root={equipment} equipment={familyEquipment} onAdd={canWrite && isActive ? openComposer : undefined} />
-      <button type="button" onClick={() => setShowPositionEditor(value => !value)}>
+      <PhysicalEquipmentDiagram
+        root={equipment}
+        equipment={familyEquipment}
+        onAdd={canWrite && isActive ? openComposer : undefined}
+      />
+      <button type="button" onClick={() => setShowPositionEditor((value) => !value)}>
         {showPositionEditor ? 'HIDE POSITION EDITOR' : 'MANAGE POSITIONS'}
       </button>
       {showPositionEditor ? (
         <>
-      {showFullComposition && visibleCount > 4 ? <button type="button" onClick={() => setShowFullComposition(false)}>BACK TO SUMMARY</button> : null}
-      {summary ? (
-        <div className="equipment-slot-grid">
-          <article className="equipment-slot"><strong>{equipment.children.filter(Boolean).length} occupied / {visibleCount} positions</strong><p>Large compositions open in summary mode to keep the workspace usable.</p><button type="button" onClick={() => setShowFullComposition(true)}>EXPLORE POSITIONS</button></article>
-        </div>
-      ) : equipment.childMode === 'POSITIONAL' ? (
-        <div className="equipment-slot-grid" style={compositionStyle}>
-          {equipment.children.map((childId, index) => {
-            const child = childId ? byId.get(childId) : undefined;
-            return (
-              <article
-                className={'equipment-slot ' + (childId ? 'is-occupied' : 'is-available')}
-                key={String(index)}
-              >
-                <header>
-                  <span>POSITION {String(index + 1).padStart(2, '0')}</span>
-                  <b>{childId ? 'OCCUPIED' : 'AVAILABLE'}</b>
-                </header>
-                {child ? (
-                  <>
-                    <Link href={'/device/' + encodeURIComponent(child.id)}>
-                      <strong>{child.name}</strong>
-                      <small>{label(child.equipmentType)}</small>
-                    </Link>
-                    {canWrite ? (
-                      <div className="equipment-slot-actions">
-                        {availableSlots.length ? (
-                          <select
-                            aria-label={'Move ' + child.name + ' to slot'}
-                            defaultValue=""
-                            disabled={busy}
-                            onChange={(event) => {
-                              const value = event.target.value;
-                              if (value) void moveChild(child.id, Number(value));
-                              event.currentTarget.value = '';
-                            }}
-                          >
-                            <option value="">Move to…</option>
-                            {availableSlots.map((slot) => (
-                              <option key={slot} value={slot}>
-                                Position {String(slot + 1).padStart(2, '0')}
-                              </option>
-                            ))}
-                          </select>
+          {showFullComposition && visibleCount > 4 ? (
+            <button type="button" onClick={() => setShowFullComposition(false)}>
+              BACK TO SUMMARY
+            </button>
+          ) : null}
+          {summary ? (
+            <div className="equipment-slot-grid">
+              <article className="equipment-slot">
+                <strong>
+                  {equipment.children.filter(Boolean).length} occupied / {visibleCount} positions
+                </strong>
+                <p>Large compositions open in summary mode to keep the workspace usable.</p>
+                <button type="button" onClick={() => setShowFullComposition(true)}>
+                  EXPLORE POSITIONS
+                </button>
+              </article>
+            </div>
+          ) : equipment.childMode === 'POSITIONAL' ? (
+            <div className="equipment-slot-grid" style={compositionStyle}>
+              {equipment.children.map((childId, index) => {
+                const child = childId ? byId.get(childId) : undefined;
+                return (
+                  <article
+                    className={'equipment-slot ' + (childId ? 'is-occupied' : 'is-available')}
+                    key={String(index)}
+                  >
+                    <header>
+                      <span>POSITION {String(index + 1).padStart(2, '0')}</span>
+                      <b>{childId ? 'OCCUPIED' : 'AVAILABLE'}</b>
+                    </header>
+                    {child ? (
+                      <>
+                        <Link href={'/device/' + encodeURIComponent(child.id)}>
+                          <strong>{child.name}</strong>
+                          <small>{label(child.equipmentType)}</small>
+                        </Link>
+                        {canWrite ? (
+                          <div className="equipment-slot-actions">
+                            {availableSlots.length ? (
+                              <select
+                                aria-label={'Move ' + child.name + ' to slot'}
+                                defaultValue=""
+                                disabled={busy}
+                                onChange={(event) => {
+                                  const value = event.target.value;
+                                  if (value) void moveChild(child.id, Number(value));
+                                  event.currentTarget.value = '';
+                                }}
+                              >
+                                <option value="">Move to…</option>
+                                {availableSlots.map((slot) => (
+                                  <option key={slot} value={slot}>
+                                    Position {String(slot + 1).padStart(2, '0')}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : null}
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => void detachChild(child.id)}
+                            >
+                              Detach to Device
+                            </button>
+                          </div>
                         ) : null}
+                      </>
+                    ) : childId ? (
+                      <div className="equipment-slot-missing">
+                        <strong>Referenced Equipment unavailable</strong>
+                        <small>{childId}</small>
+                      </div>
+                    ) : canWrite && isActive ? (
+                      <button type="button" onClick={() => openComposer(index)}>
+                        + ADD EQUIPMENT
+                      </button>
+                    ) : (
+                      <span>Empty slot</span>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="equipment-dynamic-list">
+              {equipment.children.length ? (
+                equipment.children.map((childId) => {
+                  if (!childId) return null;
+                  const child = byId.get(childId);
+                  return child ? (
+                    <article key={child.id}>
+                      <Link href={'/device/' + encodeURIComponent(child.id)}>
+                        <strong>{child.name}</strong>
+                        <small>{label(child.equipmentType)}</small>
+                      </Link>
+                      {canWrite ? (
                         <button
                           type="button"
                           disabled={busy}
@@ -517,65 +626,25 @@ export function EquipmentCompositionEditor({
                         >
                           Detach to Device
                         </button>
-                      </div>
-                    ) : null}
-                  </>
-                ) : childId ? (
-                  <div className="equipment-slot-missing">
-                    <strong>Referenced Equipment unavailable</strong>
-                    <small>{childId}</small>
-                  </div>
-                ) : canWrite && isActive ? (
-                  <button type="button" onClick={() => openComposer(index)}>
-                    + ADD EQUIPMENT
-                  </button>
-                ) : (
-                  <span>Empty slot</span>
-                )}
-              </article>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="equipment-dynamic-list">
-          {equipment.children.length ? (
-            equipment.children.map((childId) => {
-              if (!childId) return null;
-              const child = byId.get(childId);
-              return child ? (
-                <article key={child.id}>
-                  <Link href={'/device/' + encodeURIComponent(child.id)}>
-                    <strong>{child.name}</strong>
-                    <small>{label(child.equipmentType)}</small>
-                  </Link>
-                  {canWrite ? (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => void detachChild(child.id)}
-                    >
-                      Detach to Device
-                    </button>
-                  ) : null}
-                </article>
+                      ) : null}
+                    </article>
+                  ) : (
+                    <article key={childId} className="equipment-slot-missing">
+                      <strong>Referenced Equipment unavailable</strong>
+                      <small>{childId}</small>
+                    </article>
+                  );
+                })
               ) : (
-                <article key={childId} className="equipment-slot-missing">
-                  <strong>Referenced Equipment unavailable</strong>
-                  <small>{childId}</small>
-                </article>
-              );
-            })
-          ) : (
-            <p>No child Equipment installed.</p>
+                <p>No child Equipment installed.</p>
+              )}
+              {canWrite && isActive ? (
+                <button type="button" onClick={() => openComposer(null)}>
+                  + ADD EQUIPMENT
+                </button>
+              ) : null}
+            </div>
           )}
-          {canWrite && isActive ? (
-            <button type="button" onClick={() => openComposer(null)}>
-              + ADD EQUIPMENT
-            </button>
-          ) : null}
-        </div>
-      )}
-
         </>
       ) : null}
 
@@ -619,7 +688,11 @@ export function EquipmentCompositionEditor({
                 Equipment template
                 <select
                   value={templateId}
-                  onChange={(event) => { setTemplateId(event.target.value); setWarehouseChildMode(''); setWarehouseChildCapacity(''); }}
+                  onChange={(event) => {
+                    setTemplateId(event.target.value);
+                    setWarehouseChildMode('');
+                    setWarehouseChildCapacity('');
+                  }}
                   disabled={loadingTemplates}
                   required
                 >
@@ -671,7 +744,14 @@ export function EquipmentCompositionEditor({
               </label>
               <label>
                 Children mode override
-                <select name="childMode" value={warehouseChildMode} onChange={(event) => { setWarehouseChildMode(event.target.value); setWarehouseChildCapacity(''); }}>
+                <select
+                  name="childMode"
+                  value={warehouseChildMode}
+                  onChange={(event) => {
+                    setWarehouseChildMode(event.target.value);
+                    setWarehouseChildCapacity('');
+                  }}
+                >
                   <option value="">Use template</option>
                   <option value="DYNAMIC">Dynamic</option>
                   <option value="POSITIONAL">Positional</option>
@@ -679,7 +759,23 @@ export function EquipmentCompositionEditor({
               </label>
               <label>
                 Child slots override
-                <input name="childCapacity" type="number" min="1" max="256" value={warehouseChildCapacity} disabled={(warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC') !== 'POSITIONAL'} placeholder={(warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC') === 'DYNAMIC' ? 'Not applicable (leaf / dynamic)' : String(selectedTemplate?.childCapacity ?? '1–256')} onChange={(event) => setWarehouseChildCapacity(event.target.value)} />
+                <input
+                  name="childCapacity"
+                  type="number"
+                  min="1"
+                  max="256"
+                  value={warehouseChildCapacity}
+                  disabled={
+                    (warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC') !==
+                    'POSITIONAL'
+                  }
+                  placeholder={
+                    (warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC') === 'DYNAMIC'
+                      ? 'Not applicable (leaf / dynamic)'
+                      : String(selectedTemplate?.childCapacity ?? '1–256')
+                  }
+                  onChange={(event) => setWarehouseChildCapacity(event.target.value)}
+                />
               </label>
               <label>
                 Serial number

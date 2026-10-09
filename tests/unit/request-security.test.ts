@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  isSafeMutationRequest,
-  readBoundedJson,
-} from '@/shared/http/request-security';
+import { isSafeMutationRequest, readBoundedJson } from '@/shared/http/request-security';
 
 function jsonRequest(body: string, headers: Record<string, string> = {}) {
   return new Request('https://site-mapper.example/api/test', {
@@ -52,15 +49,17 @@ describe('request security', () => {
       readBoundedJson(jsonRequest('{"a":{"b":{"c":1}}}'), { maxDepth: 2 }),
     ).resolves.toEqual({ ok: false, error: 'JSON_TOO_DEEP' });
 
-    await expect(
-      readBoundedJson(jsonRequest('[1,2,3,4]'), { maxNodes: 3 }),
-    ).resolves.toEqual({ ok: false, error: 'JSON_TOO_COMPLEX' });
+    await expect(readBoundedJson(jsonRequest('[1,2,3,4]'), { maxNodes: 3 })).resolves.toEqual({
+      ok: false,
+      error: 'JSON_TOO_COMPLEX',
+    });
   });
 
   it('rejects prototype-pollution keys and non-json content types', async () => {
-    await expect(
-      readBoundedJson(jsonRequest('{"__proto__":{"admin":true}}')),
-    ).resolves.toEqual({ ok: false, error: 'UNSAFE_JSON_KEY' });
+    await expect(readBoundedJson(jsonRequest('{"__proto__":{"admin":true}}'))).resolves.toEqual({
+      ok: false,
+      error: 'UNSAFE_JSON_KEY',
+    });
 
     const request = new Request('https://site-mapper.example/api/test', {
       method: 'POST',

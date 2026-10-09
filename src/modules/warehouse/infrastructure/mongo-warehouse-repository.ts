@@ -19,13 +19,13 @@ export class MongoWarehouseRepository implements WarehouseRepository {
   }
 
   async getById(id: string): Promise<AssetTemplate | null> {
-    const document = await this.collection.findOne({ id });
+    const document = await this.collection.findOne({ id, kind: 'EQUIPMENT' });
     return document ? toDomain(document) : null;
   }
 
   async listActive(): Promise<readonly AssetTemplate[]> {
     const documents = await this.collection
-      .find({ lifecycle: 'ACTIVE' })
+      .find({ lifecycle: 'ACTIVE', kind: 'EQUIPMENT' })
       .sort({ name: 1 })
       .toArray();
     return documents.map(toDomain);

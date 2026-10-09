@@ -41,19 +41,19 @@ const presentation: BdfbPresentation = {
   ],
 };
 
-function binding(sourcePointId: string, targetId: string): TelemetryBinding {
-  return {
-    id: 'binding-' + sourcePointId,
+function bindings(sourcePointId: string, targetId: string): readonly TelemetryBinding[] {
+  return (['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const).map((metric) => ({
+    id: 'binding-' + sourcePointId + '-' + metric.toLowerCase(),
     protocol: 'MQTT',
     sourceIdentity: 'EMU-BFDB-01',
     sourcePointId,
-    metric: 'VOLTAGE',
-    targetType: 'EQUIPMENT',
+    metric,
+    targetType: 'EQUIPMENT' as const,
     targetId,
-    lifecycle: 'ACTIVE',
+    lifecycle: 'ACTIVE' as const,
     createdAt: timestamp,
     updatedAt: timestamp,
-  };
+  }));
 }
 
 function message(reported: Readonly<Record<string, unknown>>): NormalizedTelemetryMessage {
@@ -70,9 +70,7 @@ function message(reported: Readonly<Record<string, unknown>>): NormalizedTelemet
 
 describe('BFDB telemetry binding', () => {
   it('maps a raw point only through an explicit TelemetryBinding', () => {
-    const result = buildBfdbBreakerReadings(presentation, message({ '0_9_9': { U1: '13.82' } }), [
-      binding('0_9_9', 'breaker-a1'),
-    ]);
+    const result = buildBfdbBreakerReadings(presentation, message({ '0_9_9': { U1: '13.82' } }), bindings('0_9_9', 'breaker-a1'));
 
     expect(result.readings[0]?.breakerId).toBe('breaker-a1');
     expect(result.unmappedPointIds).toEqual([]);
@@ -90,7 +88,7 @@ describe('BFDB telemetry binding', () => {
           EP1: '0.5074',
         },
       }),
-      [binding('0_9_9', 'breaker-a1')],
+      bindings('0_9_9', 'breaker-a1'),
     );
 
     expect(result.readings).toHaveLength(1);

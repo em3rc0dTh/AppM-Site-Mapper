@@ -82,6 +82,39 @@ export function EquipmentCompositionEditor({
     }
   }
 
+  function compositionFromForm(form: FormData) {
+    return {
+      direction: String(form.get('presentationDirection') ?? 'ROW') as 'ROW' | 'COLUMN',
+      maxPerLine: form.get('presentationMaxPerLine') === 'auto'
+        ? null : Number(form.get('presentationMaxPerLine') ?? 2),
+      childrenVisibility: String(form.get('presentationVisibility') ?? 'AUTO') as 'AUTO' | 'INLINE' | 'SUMMARY',
+    };
+  }
+
+  function presentationFields(defaults?: AssetTemplate['presentation']) {
+    return (
+      <fieldset>
+        <legend>Child composition layout</legend>
+        <label>Layout direction
+          <select key={'direction:' + (defaults?.direction ?? 'ROW')} name="presentationDirection" defaultValue={defaults?.direction ?? 'ROW'}>
+            <option value="ROW">Row</option><option value="COLUMN">Column</option>
+          </select>
+        </label>
+        <label>Max items per line
+          <select key={'max:' + String(defaults?.maxPerLine)} name="presentationMaxPerLine" defaultValue={defaults?.maxPerLine?.toString() ?? 'auto'}>
+            <option value="auto">Auto</option>
+            {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </label>
+        <label>Child display
+          <select key={'visibility:' + (defaults?.childrenVisibility ?? 'AUTO')} name="presentationVisibility" defaultValue={defaults?.childrenVisibility ?? 'AUTO'}>
+            <option value="AUTO">Auto</option><option value="INLINE">Inline</option><option value="SUMMARY">Summary</option>
+          </select>
+        </label>
+      </fieldset>
+    );
+  }
+
   function openComposer(slot: number | null) {
     setTargetSlot(slot);
     setComposerOpen(true);
@@ -152,6 +185,7 @@ export function EquipmentCompositionEditor({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           templateId,
+          presentation: compositionFromForm(form),
           parentEquipmentId: equipment.id,
           ...(targetSlot === null ? {} : { slotIndex: targetSlot }),
           name: String(form.get('name') ?? ''),
@@ -187,6 +221,7 @@ export function EquipmentCompositionEditor({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           kind: 'EQUIPMENT',
+          presentation: compositionFromForm(form),
           parentId: equipment.id,
           ...(targetSlot === null ? {} : { parentSlotIndex: targetSlot }),
           name: String(form.get('name') ?? ''),
@@ -630,6 +665,7 @@ export function EquipmentCompositionEditor({
                 Category override
                 <input name="category" maxLength={120} />
               </label>
+              {presentationFields(selectedTemplate?.presentation)}
               <button type="submit" disabled={busy || !templateId}>
                 {busy ? 'Creating…' : 'Install Equipment'}
               </button>
@@ -682,6 +718,7 @@ export function EquipmentCompositionEditor({
                 Category
                 <input name="category" maxLength={120} />
               </label>
+              {presentationFields()}
               <button type="submit" disabled={busy}>
                 {busy ? 'Creating…' : 'Create and install'}
               </button>

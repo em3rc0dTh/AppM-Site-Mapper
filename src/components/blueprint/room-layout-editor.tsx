@@ -6,6 +6,7 @@ import { BlueprintCanvas } from './blueprint-canvas';
 import { PolygonEditor } from '@/components/spatial/polygon-editor';
 import {
   findNextRackPlacement,
+  explainRackPlacementFailure,
   validateLayoutDraft,
   type LayoutDraft,
 } from '@/modules/spatial/domain/layout-draft';
@@ -118,9 +119,21 @@ export function RoomLayoutEditor({
       const placementResult = findNextRackPlacement(draft, clusterId, width, depth);
 
       if (!placementResult) {
-        setError(
-          'No valid left-to-right rack slot is available. Check Bay width, Room depth clearance and spacing to the next Bay.',
-        );
+        const reason = explainRackPlacementFailure(draft, clusterId, width, depth);
+        const messages = {
+          INVALID_CLUSTER: 'Select an existing Bay with a valid boundary.',
+          INVALID_DIMENSIONS: 'Rack width and depth must be positive finite dimensions.',
+          NEGATIVE_POSITION_REFERENCE:
+            'Bay frontage uses negative coordinates. Rack Positions begin at X = 0 and Y = 0 (A-1). Move the Bay frontage onto the canonical positive grid.',
+          BAY_FRONTAGE_TOO_NARROW:
+            'Bay frontage is too narrow or has no continuous space for this rack width.',
+          RACK_OUTSIDE_ROOM: 'Rack depth would extend outside the Room boundary.',
+          RACK_DEPTH_BLOCKED_BY_BAY: 'Another Bay blocks the proposed rack footprint.',
+          RACK_COLLISION: 'The proposed rack would overlap an existing rack.',
+          NO_VALID_GRID_ANCHOR:
+            'No valid grid anchor is available. Check the Bay top edge and existing positions.',
+        } satisfies Record<ReturnType<typeof explainRackPlacementFailure>, string>;
+        setError(`RACK AUTO-PLACEMENT BLOCKED [${reason}]: ${messages[reason]}`);
         return;
       }
 

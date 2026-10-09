@@ -18,6 +18,7 @@ export function TopologyPropertiesPanel({
   location,
   feeds,
   bdfb,
+  mappedBreakers = 0,
 }: Readonly<{
   node: TopologyNode;
   contained: number;
@@ -25,6 +26,7 @@ export function TopologyPropertiesPanel({
   location?: string;
   feeds?: readonly string[];
   bdfb?: BdfbPresentation | null;
+  mappedBreakers?: number;
 }>) {
   if (node.kind === 'SITE') {
     const load = node.details?.currentLoad;
@@ -167,9 +169,7 @@ export function TopologyPropertiesPanel({
           <dt>Feed B</dt>
           <dd>{hasB ? 'Configured' : '—'}</dd>
           <dt>Telemetry</dt>
-          <dd>
-            {breakers.some((breaker) => breaker?.rawPointId) ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}
-          </dd>
+          <dd>{mappedBreakers > 0 ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}</dd>
         </dl>
         <section className="zip-bdfb-status-card">
           <h3>STATUS</h3>
@@ -180,10 +180,7 @@ export function TopologyPropertiesPanel({
           </div>
         </section>
         <div className="zip-bdfb-actions">
-          <span>
-            {breakers.filter((breaker) => Boolean(breaker?.rawPointId)).length} explicit MQTT
-            bindings
-          </span>
+          <span>{mappedBreakers} mapped breakers</span>
           <span>Select a panel to inspect its breakers.</span>
         </div>
       </aside>

@@ -8,6 +8,7 @@ import type {
   DeviceType,
   EquipmentChildMode,
   EquipmentNode,
+  EquipmentPresentation,
   EquipmentType,
   GridCoordinate,
   PhysicalPoint,
@@ -44,6 +45,7 @@ export type TopologyError =
   | 'PARENT_ARCHIVED_ON_RESTORE'
   | 'INVALID_DEEP_LINK'
   | 'INVALID_CHILD_CAPACITY'
+  | 'INVALID_EQUIPMENT_PRESENTATION'
   | 'POSITION_SLOT_REQUIRED'
   | 'SLOT_OUT_OF_RANGE'
   | 'SLOT_OCCUPIED'
@@ -52,6 +54,7 @@ export type TopologyError =
   | 'EQUIPMENT_CYCLE';
 
 export interface ConfigureEquipmentInput {
+  readonly presentation?: EquipmentPresentation;
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
@@ -322,6 +325,7 @@ export class TopologyService {
           parentEquipmentId: parent.kind === 'EQUIPMENT' ? parent.id : null,
           childMode,
           children,
+          ...(input.template?.presentation ? { presentation: { ...input.template.presentation } } : {}),
           accessPorts: structuredClone(
             input.accessPorts?.length ? input.accessPorts : defaultAccessPorts,
           ),
@@ -405,6 +409,13 @@ export class TopologyService {
     }
 
     const childMode = input.childMode ?? node.childMode;
+    const presentation = input.presentation ?? node.presentation;
+    if (
+      presentation &&
+      ( !['ROW', 'COLUMN'].includes(presentation.direction) ||
+        !(presentation.maxPerLine === null || (Number.isInteger(presentation.maxPerLine) && presentation.maxPerLine >= 1 && presentation.maxPerLine <= 256)) ||
+        !['AUTO', 'INLINE', 'SUMMARY'].includes(presentation.childrenVisibility))
+    ) return failure('INVALID_EQUIPMENT_PRESENTATION');
     const occupied = node.children.filter((childId): childId is string => childId !== null);
     let children: readonly (string | null)[];
 
@@ -462,6 +473,7 @@ export class TopologyService {
       equipmentType,
       childMode,
       children,
+      ...(presentation ? { presentation: { ...presentation } } : {}),
       accessPorts,
       updatedAt: nowIso(),
     };

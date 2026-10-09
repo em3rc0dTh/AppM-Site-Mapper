@@ -62,8 +62,7 @@ export async function POST(request: Request) {
     !isBoundedString(body.name, 120) ||
     (body.serialNumber !== undefined &&
       !isBoundedString(body.serialNumber, 120, { allowEmpty: true })) ||
-    (body.category !== undefined &&
-      !isBoundedString(body.category, 120, { allowEmpty: true })) ||
+    (body.category !== undefined && !isBoundedString(body.category, 120, { allowEmpty: true })) ||
     (body.deviceType !== undefined && !parseDeviceType(body.deviceType)) ||
     (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
     (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
@@ -85,10 +84,10 @@ export async function POST(request: Request) {
     ...(parseEquipmentType(body.equipmentType)
       ? { equipmentType: parseEquipmentType(body.equipmentType)! }
       : {}),
-    ...(parseEquipmentChildMode(body.childMode) ? { childMode: parseEquipmentChildMode(body.childMode)! } : {}),
-    ...(typeof body.childCapacity === 'number'
-      ? { childCapacity: body.childCapacity }
+    ...(parseEquipmentChildMode(body.childMode)
+      ? { childMode: parseEquipmentChildMode(body.childMode)! }
       : {}),
+    ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
   });
 
   if (!result.ok) {

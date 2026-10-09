@@ -3,7 +3,11 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
-import { BdfbChassis, type BreakerPowerBinding } from '@/components/power/bdfb-chassis';
+import {
+  BdfbChassis,
+  type BreakerPowerBinding,
+  type BreakerTelemetryBindingSummary,
+} from '@/components/power/bdfb-chassis';
 import { BdfbTelemetryInspector } from '@/components/power/bdfb-telemetry-inspector';
 import { BdfbPowerTree } from '@/components/power/bdfb-power-tree';
 import { TopologyContextTree } from '@/components/topology/context-tree';
@@ -20,6 +24,7 @@ import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { allowedChildKinds } from '@/modules/topology/domain/hierarchy';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
@@ -203,6 +208,38 @@ export default async function TopologyNodePage({
       ? await new SpatialService(repository).getRoomLayout(node.id)
       : null;
 
+  const bdfbTelemetryBindings: BreakerTelemetryBindingSummary[] = [];
+  if (node.kind === 'DEVICE' && bdfbPresentation) {
+    const breakerIds = bdfbPresentation.shelves.flatMap((shelf) =>
+      shelf.frames.flatMap((frame) =>
+        frame.panels.flatMap((panel) =>
+          panel.positions.flatMap((breaker) => (breaker ? [breaker.id] : [])),
+        ),
+      ),
+    );
+    const explicitBindings = await (
+      await createTelemetryBindingRepository()
+    ).listForTargets('EQUIPMENT', breakerIds);
+    for (const binding of explicitBindings) {
+      if (
+        binding.lifecycle !== 'ACTIVE' ||
+        binding.protocol !== 'MQTT' ||
+        !binding.sourcePointId
+      ) {
+        continue;
+      }
+      bdfbTelemetryBindings.push({
+        breakerId: binding.targetId,
+        sourceIdentity: binding.sourceIdentity,
+        sourcePointId: binding.sourcePointId,
+        metric: binding.metric,
+      });
+    }
+  }
+  const mappedBdfbBreakerCount = new Set(
+    bdfbTelemetryBindings.map((binding) => binding.breakerId),
+  ).size;
+
   const bdfbPowerBindings: BreakerPowerBinding[] = [];
   if (node.kind === 'DEVICE' && bdfbPresentation) {
     const breakerByPort = new Map(
@@ -365,6 +402,7 @@ export default async function TopologyNodePage({
                 device={node}
                 presentation={bdfbPresentation}
                 powerBindings={bdfbPowerBindings}
+                telemetryBindings={bdfbTelemetryBindings}
                 canWritePower={canWritePower}
               />
             ) : node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? (
@@ -455,18 +493,21 @@ export default async function TopologyNodePage({
               .map((item) => item.name)
               .join(' / ')}
             feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
+            mappedBreakerCount={mappedBdfbBreakerCount}
           />
         ) : (
           <TopologyPropertiesPanel
             node={node}
             contained={children.length}
             bdfb={bdfbPresentation}
+            mappedBreakers={mappedBdfbBreakerCount}
             previewContained={structurePreviewNodes.length}
             location={trail
               .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')
               .map((item) => item.name)
               .join(' / ')}
             feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
+            mappedBreakers={mappedBdfbBreakerCount}
           />
         )}
       </div>

@@ -19,7 +19,7 @@ export interface TelemetryHistoryResponse {
     readonly label: string;
     readonly panelId?: string;
     readonly breakerCount: number;
-    readonly holderCount: number;
+    readonly emptyPositionCount: number;
   };
   readonly window: TelemetryHistoryWindow;
   readonly points: readonly TelemetryHistoryPoint[];

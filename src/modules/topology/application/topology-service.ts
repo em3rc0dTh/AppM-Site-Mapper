@@ -89,11 +89,7 @@ export interface CreateTopologyNodeInput {
 function canonicalChildren(mode: EquipmentChildMode, childCapacity?: number): readonly null[] {
   if (mode === 'DYNAMIC') return [];
 
-  if (
-    !Number.isInteger(childCapacity) ||
-    (childCapacity ?? 0) < 1 ||
-    (childCapacity ?? 0) > 256
-  ) {
+  if (!Number.isInteger(childCapacity) || (childCapacity ?? 0) < 1 || (childCapacity ?? 0) > 256) {
     throw new Error('INVALID_CHILD_CAPACITY');
   }
 
@@ -124,12 +120,7 @@ export class TopologyService {
       return failure('INVALID_NAME');
     }
 
-    for (const value of [
-      input.serialNumber,
-      input.category,
-      input.manufacturer,
-      input.model,
-    ]) {
+    for (const value of [input.serialNumber, input.category, input.manufacturer, input.model]) {
       if (value !== undefined && value.length > 120) {
         return failure('INVALID_TEXT_FIELD');
       }
@@ -257,9 +248,7 @@ export class TopologyService {
         }
         if (
           input.containerVariant === 'RACK' &&
-          (!Number.isInteger(input.totalU) ||
-            (input.totalU ?? 0) < 1 ||
-            (input.totalU ?? 0) > 1000)
+          (!Number.isInteger(input.totalU) || (input.totalU ?? 0) < 1 || (input.totalU ?? 0) > 1000)
         ) {
           return failure('INVALID_RACK_CAPACITY');
         }
@@ -333,7 +322,9 @@ export class TopologyService {
           parentEquipmentId: parent.kind === 'EQUIPMENT' ? parent.id : null,
           childMode,
           children,
-          accessPorts: structuredClone(input.accessPorts?.length ? input.accessPorts : defaultAccessPorts),
+          accessPorts: structuredClone(
+            input.accessPorts?.length ? input.accessPorts : defaultAccessPorts,
+          ),
           pinned: false,
           ...(input.manufacturer?.trim() ? { manufacturer: input.manufacturer.trim() } : {}),
           ...(input.model?.trim() ? { model: input.model.trim() } : {}),
@@ -437,16 +428,10 @@ export class TopologyService {
           -1,
         );
         if (highestOccupied >= capacity) return failure('INVALID_CHILD_CAPACITY');
-        children = Array.from(
-          { length: capacity },
-          (_, index) => node.children[index] ?? null,
-        );
+        children = Array.from({ length: capacity }, (_, index) => node.children[index] ?? null);
       } else {
         if (occupied.length > capacity) return failure('INVALID_CHILD_CAPACITY');
-        children = Array.from(
-          { length: capacity },
-          (_, index) => occupied[index] ?? null,
-        );
+        children = Array.from({ length: capacity }, (_, index) => occupied[index] ?? null);
       }
     }
 
@@ -455,9 +440,7 @@ export class TopologyService {
       equipmentType === 'CIRCUIT_BREAKER' &&
       !node.accessPorts.some(
         (port) =>
-          port.lifecycle === 'ACTIVE' &&
-          port.portType === 'POWER' &&
-          port.direction === 'OUTPUT',
+          port.lifecycle === 'ACTIVE' && port.portType === 'POWER' && port.direction === 'OUTPUT',
       )
         ? [
             ...node.accessPorts,

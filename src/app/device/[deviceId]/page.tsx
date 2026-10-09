@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { EquipmentCompositionEditor } from '@/components/equipment/equipment-composition-editor';
+import { AccessPortEditor } from '@/components/equipment/access-port-editor';
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { PowerContractEditor } from '@/components/power/power-contract-editor';
 import { RackElevation } from '@/components/rack/rack-elevation';
@@ -210,6 +211,14 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             <dt>Telemetry</dt>
             <dd>Open diagnostic to verify mapped LIVE readings</dd>
           </dl>
+
+          {node.kind === 'EQUIPMENT' && canWriteTopology && (
+            <AccessPortEditor
+              equipmentId={node.id}
+              accessPorts={node.accessPorts}
+              canWritePower={canWritePower}
+            />
+          )}
 
           <FullPowerTraceModal entityId={node.id} />
 

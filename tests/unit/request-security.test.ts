@@ -27,7 +27,6 @@ describe('request security', () => {
     });
   });
 
-
   it('accepts same-origin browser mutations when the framework rewrites request.url internally', () => {
     const request = new Request('http://localhost:3000/api/warehouse/templates/import', {
       method: 'POST',

@@ -40,6 +40,11 @@ export type EquipmentFunction =
   'CONTROL' | 'NETWORKING' | 'POWER_CONVERSION' | 'POWER_DISTRIBUTION' | 'PROTECTION' | 'COOLING';
 
 export type EquipmentChildMode = 'DYNAMIC' | 'POSITIONAL';
+export interface EquipmentPresentation {
+  readonly direction: 'ROW' | 'COLUMN';
+  readonly maxPerLine: number | null;
+  readonly childrenVisibility: 'AUTO' | 'INLINE' | 'SUMMARY';
+}
 export type AccessPortType = 'POWER' | 'NETWORK' | 'CONTROL' | 'DATA' | 'GROUND' | 'CUSTOM';
 export type AccessPortDirection = 'INPUT' | 'OUTPUT' | 'BIDIRECTIONAL';
 export type AccessPortExposure = 'INTERNAL' | 'EXTERNAL';
@@ -194,6 +199,7 @@ export interface EquipmentNode extends TopologyBase {
   readonly equipmentType: EquipmentType;
   readonly parentEquipmentId: string | null;
   readonly childMode: EquipmentChildMode;
+  readonly presentation?: EquipmentPresentation;
   readonly children: readonly (string | null)[];
   readonly accessPorts: readonly AccessPort[];
   readonly functions?: readonly EquipmentFunction[];

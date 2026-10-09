@@ -9,6 +9,7 @@ import type {
   DeviceType,
   EquipmentChildMode,
   EquipmentNode,
+  EquipmentPresentation,
   EquipmentType,
 } from '@/modules/topology/domain/entities';
 import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
@@ -43,6 +44,7 @@ export interface InstantiateTemplateInput {
 }
 
 export interface InstantiateChildEquipmentInput {
+  readonly presentation?: EquipmentPresentation;
   readonly templateId: string;
   readonly parentEquipmentId: string;
   readonly slotIndex?: number;
@@ -249,6 +251,7 @@ export class WarehouseInstantiationService {
       ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
       ...(template.model ? { model: template.model } : {}),
       template: snapshotTemplate(template),
+      ...(input.presentation ? { presentation: input.presentation } : {}),
     });
 
     if (!result.ok) return failure(result.error);

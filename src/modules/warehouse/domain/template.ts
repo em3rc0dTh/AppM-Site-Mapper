@@ -46,6 +46,7 @@ export interface AssetTemplateSnapshot {
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
+  readonly presentation?: EquipmentPresentation;
   readonly allowedChildTypes?: readonly EquipmentType[];
 }
 

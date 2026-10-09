@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { BdfbService } from '@/modules/power/application/bdfb-service';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
+import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { DeviceNode, EquipmentNode } from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 
@@ -66,6 +66,48 @@ function equipment(id: string, owner: DeviceNode): EquipmentNode {
   };
 }
 
+async function createBdfbBreakers(
+  repository: MemoryTopologyRepository,
+  owner: DeviceNode,
+  count: number,
+): Promise<readonly EquipmentNode[]> {
+  const topology = new TopologyService(repository);
+  const chassis = await topology.create({
+    kind: 'EQUIPMENT',
+    parentId: owner.id,
+    name: owner.name + ' Chassis',
+    equipmentType: 'CHASSIS',
+    childMode: 'POSITIONAL',
+    childCapacity: 1,
+  });
+  if (!chassis.ok || chassis.value.kind !== 'EQUIPMENT') throw new Error('Expected chassis');
+
+  const panel = await topology.create({
+    kind: 'EQUIPMENT',
+    parentId: chassis.value.id,
+    parentSlotIndex: 0,
+    name: 'A1',
+    equipmentType: 'PANEL',
+    childMode: 'POSITIONAL',
+    childCapacity: count,
+  });
+  if (!panel.ok || panel.value.kind !== 'EQUIPMENT') throw new Error('Expected panel');
+
+  const breakers: EquipmentNode[] = [];
+  for (let index = 0; index < count; index += 1) {
+    const created = await topology.create({
+      kind: 'EQUIPMENT',
+      parentId: panel.value.id,
+      parentSlotIndex: index,
+      name: 'A1-' + String(index + 1).padStart(2, '0'),
+      equipmentType: 'CIRCUIT_BREAKER',
+    });
+    if (!created.ok || created.value.kind !== 'EQUIPMENT') throw new Error('Expected breaker');
+    breakers.push(created.value);
+  }
+  return breakers;
+}
+
 describe('TelemetryService', () => {
   it('maps generic telemetry only through an explicit source binding', async () => {
     const owner = device('device-1', 'SN-D');
@@ -97,32 +139,8 @@ describe('TelemetryService', () => {
       deviceType: 'BDFB',
     };
     const repository = new MemoryTopologyRepository([bdfb]);
-    const configured = await new BdfbService(repository).configure(bdfb.id, {
-      shelves: [
-        {
-          id: 'shelf-a',
-          label: 'Shelf A',
-          frames: [
-            {
-              id: 'frame-a',
-              label: 'Frame A',
-              panels: [
-                {
-                  id: 'panel-a1',
-                  label: 'A1',
-                  positions: [
-                    { id: 'breaker-1', label: 'CB-01' },
-                    { id: 'breaker-2', label: 'CB-02' },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    });
-    expect(configured.ok).toBe(true);
-
+    const breakers = await createBdfbBreakers(repository, bdfb, 2);
+    const breaker = breakers[0]!;
     const service = new TelemetryService(
       repository,
       new TelemetryHub(4),
@@ -135,7 +153,7 @@ describe('TelemetryService', () => {
               `point-bdfb-1-${metric.toLowerCase()}`,
               'EMU-BFDB-01',
               'EQUIPMENT',
-              'device-1:equipment:breaker-1',
+              breaker.id,
               '0_1_1',
               metric,
             ),
@@ -169,7 +187,7 @@ describe('TelemetryService', () => {
 
     expect(full.ok).toBe(true);
     expect(service.latest(bdfb.id)?.breakerReadings?.[0]?.breakerId).toBe(
-      'device-1:equipment:breaker-1',
+      breaker.id,
     );
     expect(service.latest(bdfb.id)?.breakerReadings?.[0]?.metrics.currentA?.value).toBe(3.46);
 
@@ -197,28 +215,13 @@ describe('TelemetryService', () => {
     expect(reading?.state?.value).toBe('ONLINE');
   });
 
-  it('recovers from a stale SOURCE binding when canonical BDFB evidence is valid', async () => {
+  it('rejects a stale SOURCE binding instead of guessing physical telemetry mappings', async () => {
     const bdfb: DeviceNode = {
       ...device('device-stale-source', 'EMU-BFDB-STALE'),
       deviceType: 'BDFB',
     };
     const repository = new MemoryTopologyRepository([bdfb]);
-    const configured = await new BdfbService(repository).configure(bdfb.id, {
-      panels: [
-        {
-          id: 'panel-a1',
-          label: 'A1',
-          positions: [
-            {
-              id: 'breaker-1',
-              label: 'CB-01',
-              telemetry: { rawPointId: '0_1_1' },
-            },
-          ],
-        },
-      ],
-    });
-    expect(configured.ok).toBe(true);
+    await createBdfbBreakers(repository, bdfb, 1);
 
     const service = new TelemetryService(
       repository,
@@ -236,47 +239,22 @@ describe('TelemetryService', () => {
       new TextEncoder().encode(
         JSON.stringify({
           sn: 'EMU-BFDB-STALE',
-          reported: {
-            '0_1_1': {
-              state: 'ONLINE',
-              U1: '13.8',
-              I1: '2.0',
-              P1: '27.6',
-              EP1: '0.1234',
-            },
-          },
+          reported: { '0_1_1': { state: 'ONLINE', U1: '13.8' } },
         }),
       ),
       timestamp,
     );
 
-    expect(result.ok).toBe(true);
-    expect(result.ok ? result.value.targetId : null).toBe(bdfb.id);
-    expect(result.ok ? result.value.bindingId : null).toBe('canonical:mqtt:EMU-BFDB-STALE');
+    expect(result).toEqual({ ok: false, error: 'INVALID_BINDING_TARGET' });
   });
 
-  it('accepts a canonical BDFB source from exact serial and explicit breaker rawPointId', async () => {
+  it('requires TelemetryBinding even when a BDFB serial matches the MQTT source', async () => {
     const bdfb: DeviceNode = {
       ...device('device-canonical', 'EMU-BFDB-CANONICAL'),
       deviceType: 'BDFB',
     };
     const repository = new MemoryTopologyRepository([bdfb]);
-    const configured = await new BdfbService(repository).configure(bdfb.id, {
-      panels: [
-        {
-          id: 'panel-a1',
-          label: 'A1',
-          positions: [
-            {
-              id: 'breaker-1',
-              label: 'CB-01',
-              telemetry: { rawPointId: '0_1_1' },
-            },
-          ],
-        },
-      ],
-    });
-    expect(configured.ok).toBe(true);
+    await createBdfbBreakers(repository, bdfb, 1);
 
     const service = new TelemetryService(
       repository,
@@ -289,24 +267,13 @@ describe('TelemetryService', () => {
       new TextEncoder().encode(
         JSON.stringify({
           sn: 'EMU-BFDB-CANONICAL',
-          reported: {
-            '0_1_1': {
-              state: 'ONLINE',
-              U1: '13.8',
-              I1: '2.0',
-              P1: '27.6',
-              EP1: '0.1234',
-            },
-          },
+          reported: { '0_1_1': { state: 'ONLINE', U1: '13.8' } },
         }),
       ),
       timestamp,
     );
 
-    expect(result.ok).toBe(true);
-    expect(result.ok ? result.value.targetId : null).toBe(bdfb.id);
-    expect(result.ok ? result.value.breakerReadings?.[0]?.rawPointId : null).toBe('0_1_1');
-    expect(result.ok ? result.value.breakerReadings?.[0]?.metrics.powerW?.value : null).toBe(27.6);
+    expect(result).toEqual({ ok: false, error: 'UNKNOWN_SOURCE' });
   });
 
   it('infers the source Device from explicit point bindings when SOURCE is absent', async () => {
@@ -315,17 +282,7 @@ describe('TelemetryService', () => {
       deviceType: 'BDFB',
     };
     const repository = new MemoryTopologyRepository([bdfb]);
-    const configured = await new BdfbService(repository).configure(bdfb.id, {
-      panels: [
-        {
-          id: 'panel-a1',
-          label: 'A1',
-          positions: [{ id: 'breaker-1', label: 'CB-01' }],
-        },
-      ],
-    });
-    expect(configured.ok).toBe(true);
-
+    const breaker = (await createBdfbBreakers(repository, bdfb, 1))[0]!;
     const service = new TelemetryService(
       repository,
       new TelemetryHub(4),
@@ -336,7 +293,7 @@ describe('TelemetryService', () => {
             `point-inferred-${metric.toLowerCase()}`,
             'EMU-BFDB-INFERRED',
             'EQUIPMENT',
-            'device-inferred:equipment:breaker-1',
+            breaker.id,
             '0_1_1',
             metric,
           ),

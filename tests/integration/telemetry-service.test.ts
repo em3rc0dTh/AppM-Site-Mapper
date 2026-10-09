@@ -186,9 +186,7 @@ describe('TelemetryService', () => {
     );
 
     expect(full.ok).toBe(true);
-    expect(service.latest(bdfb.id)?.breakerReadings?.[0]?.breakerId).toBe(
-      breaker.id,
-    );
+    expect(service.latest(bdfb.id)?.breakerReadings?.[0]?.breakerId).toBe(breaker.id);
     expect(service.latest(bdfb.id)?.breakerReadings?.[0]?.metrics.currentA?.value).toBe(3.46);
 
     const partial = await service.ingest(
@@ -228,9 +226,7 @@ describe('TelemetryService', () => {
       new TelemetryHub(4),
       { topicPrefix: 'data/dev/', maxPayloadBytes: 4096 },
       {
-        configuredBindings: [
-          binding('stale-source', 'EMU-BFDB-STALE', 'DEVICE', 'missing-device'),
-        ],
+        configuredBindings: [binding('stale-source', 'EMU-BFDB-STALE', 'DEVICE', 'missing-device')],
       },
     );
 
@@ -256,11 +252,10 @@ describe('TelemetryService', () => {
     const repository = new MemoryTopologyRepository([bdfb]);
     await createBdfbBreakers(repository, bdfb, 1);
 
-    const service = new TelemetryService(
-      repository,
-      new TelemetryHub(4),
-      { topicPrefix: 'data/dev/', maxPayloadBytes: 4096 },
-    );
+    const service = new TelemetryService(repository, new TelemetryHub(4), {
+      topicPrefix: 'data/dev/',
+      maxPayloadBytes: 4096,
+    });
 
     const result = await service.ingest(
       'data/dev/EMU-BFDB-CANONICAL',

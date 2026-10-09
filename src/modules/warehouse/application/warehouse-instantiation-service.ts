@@ -186,6 +186,7 @@ export class WarehouseInstantiationService {
       equipmentType,
       parentEquipmentId: null,
       childMode: composition.childMode,
+      ...(template.presentation ? { presentation: { ...template.presentation } } : {}),
       children:
         composition.childMode === 'POSITIONAL'
           ? Array.from({ length: composition.childCapacity! }, () => null)

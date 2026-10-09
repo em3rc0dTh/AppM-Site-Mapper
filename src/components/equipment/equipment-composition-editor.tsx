@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { PhysicalEquipmentDiagram } from './physical-equipment-diagram';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -19,10 +20,12 @@ function label(type: EquipmentType): string {
 export function EquipmentCompositionEditor({
   equipment,
   childEquipment,
+  familyEquipment,
   canWrite,
 }: Readonly<{
   equipment: EquipmentNode;
   childEquipment: readonly EquipmentNode[];
+  familyEquipment: readonly EquipmentNode[];
   canWrite: boolean;
 }>) {
   const router = useRouter();
@@ -456,47 +459,10 @@ export function EquipmentCompositionEditor({
         </form>
       ) : null}
 
-      <section aria-label="Physical equipment hierarchy" style={{ border: '2px solid #64748b', borderRadius: 8, padding: 16, marginBottom: 16, background: 'var(--surface, #fffdf3)' }}>
-        <header style={{ display: 'flex', gap: 12, justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap' }}>
-          <div>
-            <strong>PHYSICAL VIEW · {label(equipment.equipmentType)}</strong>
-            <p style={{ margin: '4px 0', fontSize: 12 }}>{equipment.children.filter(Boolean).length} installed / {equipment.children.length} {equipment.childMode === 'POSITIONAL' ? 'positions' : 'children'} · select a child to drill down</p>
-          </div>
-          <button type="button" onClick={() => setShowPositionEditor((value) => !value)}>
-            {showPositionEditor ? 'HIDE POSITION EDITOR' : 'MANAGE POSITIONS'}
-          </button>
-        </header>
-        {equipment.children.length ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))', gap: 14 }}>
-            {equipment.children.map((childId, index) => {
-              const child = childId ? byId.get(childId) : undefined;
-              return (
-                <div key={index} style={{ border: '2px solid #94a3b8', padding: 10, background: child ? '#eaf1f7' : '#f8fafc', borderRadius: 4, minWidth: 0 }}>
-                  <div style={{ fontSize: 11, letterSpacing: 1, color: '#475569' }}>POSITION {String(index + 1).padStart(2, '0')}</div>
-                  {child ? (
-                    <Link href={'/device/' + encodeURIComponent(child.id)} style={{ display: 'block', color: '#172b42', textDecoration: 'none', marginTop: 7 }}>
-                      <strong style={{ display: 'block', overflowWrap: 'anywhere' }}>{child.name}</strong>
-                      <small>{label(child.equipmentType)} · {child.children.filter(Boolean).length}/{child.children.length} occupied</small>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(12px, 1fr))', gap: 3, marginTop: 12 }}>
-                        {child.children.slice(0, 24).map((slot, childIndex) => (
-                          <span key={childIndex} title={`Position ${childIndex + 1}: ${slot ? 'Occupied' : 'Available'}`} style={{ height: 18, minWidth: 8, border: '1px solid #64748b', background: slot ? '#357a9f' : '#fff' }} />
-                        ))}
-                      </div>
-                      {child.children.length > 24 ? <small>+{child.children.length - 24} more positions</small> : null}
-                      <div style={{ marginTop: 10, fontSize: 12, fontWeight: 700 }}>OPEN EQUIPMENT →</div>
-                    </Link>
-                  ) : (
-                    <div style={{ padding: '16px 0', color: '#64748b', fontSize: 12 }}>
-                      AVAILABLE
-                      {canWrite && isActive ? <button type="button" onClick={() => openComposer(index)} style={{ display: 'block', marginTop: 8 }}>+ ADD EQUIPMENT</button> : null}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        ) : <p>No child Equipment installed.</p>}
-      </section>
+      <PhysicalEquipmentDiagram root={equipment} equipment={familyEquipment} onAdd={canWrite && isActive ? openComposer : undefined} />
+      <button type="button" onClick={() => setShowPositionEditor(value => !value)}>
+        {showPositionEditor ? 'HIDE POSITION EDITOR' : 'MANAGE POSITIONS'}
+      </button>
       {showPositionEditor ? (
         <>
       {showFullComposition && visibleCount > 4 ? <button type="button" onClick={() => setShowFullComposition(false)}>BACK TO SUMMARY</button> : null}

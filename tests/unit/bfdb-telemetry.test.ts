@@ -47,6 +47,7 @@ function binding(sourcePointId: string, targetId: string): TelemetryBinding {
     protocol: 'MQTT',
     sourceIdentity: 'EMU-BFDB-01',
     sourcePointId,
+    metric: 'VOLTAGE',
     targetType: 'EQUIPMENT',
     targetId,
     lifecycle: 'ACTIVE',

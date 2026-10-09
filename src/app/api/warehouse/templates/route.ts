@@ -77,6 +77,7 @@ export async function POST(request: Request) {
       'childMode',
       'childCapacity',
       'allowedChildTypes',
+      'presentation',
     ]) ||
     !kind ||
     !isBoundedString(body.name, 120) ||
@@ -88,6 +89,7 @@ export async function POST(request: Request) {
     (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
     (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
     (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity)) ||
+    (body.presentation !== undefined && (!object(body.presentation) || !hasOnlyKeys(object(body.presentation)!, ['direction', 'maxPerLine', 'childrenVisibility']) || !['ROW', 'COLUMN'].includes(object(body.presentation)!.direction as string) || !['AUTO', 'INLINE', 'SUMMARY'].includes(object(body.presentation)!.childrenVisibility as string) || !(object(body.presentation)!.maxPerLine === null || (Number.isInteger(object(body.presentation)!.maxPerLine) && (object(body.presentation)!.maxPerLine as number) >= 1 && (object(body.presentation)!.maxPerLine as number) <= 256)))) ||
     (body.allowedChildTypes !== undefined &&
       (!Array.isArray(body.allowedChildTypes) ||
         body.allowedChildTypes.length > 32 ||
@@ -113,6 +115,7 @@ export async function POST(request: Request) {
       ? { childMode: parseEquipmentChildMode(body.childMode)! }
       : {}),
     ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
+    ...(body.presentation ? { presentation: body.presentation as { direction: 'ROW' | 'COLUMN'; maxPerLine: number | null; childrenVisibility: 'AUTO' | 'INLINE' | 'SUMMARY' } } : {}),
     ...(allowedChildTypes(body.allowedChildTypes)
       ? { allowedChildTypes: allowedChildTypes(body.allowedChildTypes)! }
       : {}),

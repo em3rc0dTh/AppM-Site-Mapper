@@ -168,7 +168,9 @@ export class TelemetryService {
       }
 
       if (binding.targetType === 'ACCESS_PORT') {
-        const equipment = await this.topologyRepository.getEquipmentByAccessPortId(binding.targetId);
+        const equipment = await this.topologyRepository.getEquipmentByAccessPortId(
+          binding.targetId,
+        );
         if (equipment?.lifecycle === 'ACTIVE') deviceIds.add(equipment.deviceId);
       }
     }

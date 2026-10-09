@@ -6,9 +6,7 @@ describe('Content Security Policy', () => {
   it('uses a nonce and strict-dynamic without unsafe-inline scripts in production', () => {
     const csp = buildContentSecurityPolicy('nonce123=', false);
 
-    const scriptPolicy = csp.split('; ').find((directive) =>
-      directive.startsWith('script-src '),
-    );
+    const scriptPolicy = csp.split('; ').find((directive) => directive.startsWith('script-src '));
     expect(scriptPolicy).toBe("script-src 'self' 'nonce-nonce123=' 'strict-dynamic'");
     expect(csp).toContain("script-src-attr 'none'");
     expect(scriptPolicy).not.toContain("'unsafe-inline'");

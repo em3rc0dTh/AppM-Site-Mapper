@@ -10,12 +10,12 @@ export class MemoryWarehouseRepository implements WarehouseRepository {
 
   async getById(id: string): Promise<AssetTemplate | null> {
     const template = this.templates.get(id);
-    return template ? structuredClone(template) : null;
+    return template?.kind === 'EQUIPMENT' ? structuredClone(template) : null;
   }
 
   async listActive(): Promise<readonly AssetTemplate[]> {
     return [...this.templates.values()]
-      .filter((template) => template.lifecycle === 'ACTIVE')
+      .filter((template) => template.lifecycle === 'ACTIVE' && template.kind === 'EQUIPMENT')
       .sort((left, right) => left.name.localeCompare(right.name))
       .map((template) => structuredClone(template));
   }

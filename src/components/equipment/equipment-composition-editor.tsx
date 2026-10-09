@@ -68,9 +68,7 @@ export function EquipmentCompositionEditor({
       if (!response.ok) throw new Error(data.error ?? 'WAREHOUSE_LOAD_FAILED');
       const next = (data.templates ?? []).filter(
         (template) =>
-          !allowed.length ||
-          !template.equipmentType ||
-          allowed.includes(template.equipmentType),
+          !allowed.length || !template.equipmentType || allowed.includes(template.equipmentType),
       );
       setTemplates(next);
       setTemplateId(next[0]?.id ?? '');
@@ -101,9 +99,7 @@ export function EquipmentCompositionEditor({
       if (!response.ok) throw new Error(data.error ?? action.toUpperCase() + '_FAILED');
       router.refresh();
     } catch (cause) {
-      setError(
-        cause instanceof Error ? cause.message : action.toUpperCase() + '_FAILED',
-      );
+      setError(cause instanceof Error ? cause.message : action.toUpperCase() + '_FAILED');
     } finally {
       setBusy(false);
     }
@@ -123,9 +119,7 @@ export function EquipmentCompositionEditor({
           equipmentType: String(form.get('equipmentType') ?? equipment.equipmentType),
           childMode: configurationMode,
           childCapacity:
-            configurationMode === 'POSITIONAL'
-              ? Number(form.get('childCapacity'))
-              : undefined,
+            configurationMode === 'POSITIONAL' ? Number(form.get('childCapacity')) : undefined,
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -192,8 +186,7 @@ export function EquipmentCompositionEditor({
           category: String(form.get('category') ?? ''),
           equipmentType: String(form.get('equipmentType') ?? 'CUSTOM'),
           childMode,
-          childCapacity:
-            childMode === 'POSITIONAL' ? Number(form.get('childCapacity')) : undefined,
+          childCapacity: childMode === 'POSITIONAL' ? Number(form.get('childCapacity')) : undefined,
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -254,12 +247,11 @@ export function EquipmentCompositionEditor({
 
   const defaultOneOffType: EquipmentType =
     allowed.length === 1 && allowed[0] ? allowed[0] : 'CUSTOM';
-  const defaultWarehouseType: EquipmentType | '' =
-    selectedTemplate?.equipmentType
-      ? ''
-      : allowed.length === 1 && allowed[0]
-        ? allowed[0]
-        : '';
+  const defaultWarehouseType: EquipmentType | '' = selectedTemplate?.equipmentType
+    ? ''
+    : allowed.length === 1 && allowed[0]
+      ? allowed[0]
+      : '';
 
   return (
     <section className="equipment-composition">
@@ -343,9 +335,7 @@ export function EquipmentCompositionEditor({
             <select
               name="childMode"
               value={configurationMode}
-              onChange={(event) =>
-                setConfigurationMode(event.target.value as EquipmentChildMode)
-              }
+              onChange={(event) => setConfigurationMode(event.target.value as EquipmentChildMode)}
             >
               <option value="DYNAMIC">Dynamic</option>
               <option value="POSITIONAL">Positional slots</option>
@@ -615,9 +605,7 @@ export function EquipmentCompositionEditor({
                 <select
                   name="childMode"
                   value={oneOffChildMode}
-                  onChange={(event) =>
-                    setOneOffChildMode(event.target.value as EquipmentChildMode)
-                  }
+                  onChange={(event) => setOneOffChildMode(event.target.value as EquipmentChildMode)}
                 >
                   <option value="DYNAMIC">Dynamic</option>
                   <option value="POSITIONAL">Positional</option>
@@ -654,7 +642,11 @@ export function EquipmentCompositionEditor({
         </div>
       ) : null}
 
-      {!composerOpen && error ? <p className="form-error" role="alert">{error}</p> : null}
+      {!composerOpen && error ? (
+        <p className="form-error" role="alert">
+          {error}
+        </p>
+      ) : null}
     </section>
   );
 }

@@ -10,7 +10,6 @@ import type {
   EquipmentType,
 } from '@/modules/topology/domain/entities';
 import { EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
-import { EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
 import type { AssetTemplate } from '@/modules/warehouse/domain/template';
 
 function label(type: EquipmentType): string {

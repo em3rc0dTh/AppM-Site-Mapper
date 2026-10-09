@@ -82,12 +82,9 @@ export async function POST(request: Request) {
     !isBoundedString(body.name, 120) ||
     (body.manufacturer !== undefined &&
       !isBoundedString(body.manufacturer, 120, { allowEmpty: true })) ||
-    (body.model !== undefined &&
-      !isBoundedString(body.model, 120, { allowEmpty: true })) ||
-    (body.category !== undefined &&
-      !isBoundedString(body.category, 120, { allowEmpty: true })) ||
-    (body.notes !== undefined &&
-      !isBoundedString(body.notes, 500, { allowEmpty: true })) ||
+    (body.model !== undefined && !isBoundedString(body.model, 120, { allowEmpty: true })) ||
+    (body.category !== undefined && !isBoundedString(body.category, 120, { allowEmpty: true })) ||
+    (body.notes !== undefined && !isBoundedString(body.notes, 500, { allowEmpty: true })) ||
     (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
     (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
     (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity)) ||
@@ -115,9 +112,7 @@ export async function POST(request: Request) {
     ...(parseEquipmentChildMode(body.childMode)
       ? { childMode: parseEquipmentChildMode(body.childMode)! }
       : {}),
-    ...(typeof body.childCapacity === 'number'
-      ? { childCapacity: body.childCapacity }
-      : {}),
+    ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
     ...(allowedChildTypes(body.allowedChildTypes)
       ? { allowedChildTypes: allowedChildTypes(body.allowedChildTypes)! }
       : {}),

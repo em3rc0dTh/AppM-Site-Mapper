@@ -31,6 +31,7 @@ export function EquipmentCompositionEditor({
     [childEquipment],
   );
   const [composerOpen, setComposerOpen] = useState(false);
+  const [showFullComposition, setShowFullComposition] = useState(false);
   const [configurationOpen, setConfigurationOpen] = useState(false);
   const [configurationMode, setConfigurationMode] = useState<EquipmentChildMode>(
     equipment.childMode,
@@ -297,7 +298,8 @@ export function EquipmentCompositionEditor({
       : '';
 
   const visibleCount = equipment.children.length;
-  const summary = equipment.presentation?.childrenVisibility === 'SUMMARY' && visibleCount > 0;
+  const displayPolicy = equipment.presentation?.childrenVisibility ?? 'AUTO';
+  const summary = !showFullComposition && visibleCount > 4 && (displayPolicy === 'AUTO' || displayPolicy === 'SUMMARY');
   const lineLimit = equipment.presentation?.maxPerLine ?? visibleCount;
   const itemCount = Math.max(1, Math.min(visibleCount || 1, lineLimit));
   const compositionStyle = {
@@ -445,9 +447,10 @@ export function EquipmentCompositionEditor({
         </form>
       ) : null}
 
+      {showFullComposition && visibleCount > 4 ? <button type="button" onClick={() => setShowFullComposition(false)}>BACK TO SUMMARY</button> : null}
       {summary ? (
         <div className="equipment-slot-grid">
-          <article className="equipment-slot"><strong>{equipment.children.filter(Boolean).length} occupied / {visibleCount} positions</strong><p>Open this Equipment to manage its immediate children.</p><button type="button" onClick={() => setConfigurationOpen(true)}>Show composition settings</button></article>
+          <article className="equipment-slot"><strong>{equipment.children.filter(Boolean).length} occupied / {visibleCount} positions</strong><p>Large compositions open in summary mode to keep the workspace usable.</p><button type="button" onClick={() => setShowFullComposition(true)}>EXPLORE POSITIONS</button></article>
         </div>
       ) : equipment.childMode === 'POSITIONAL' ? (
         <div className="equipment-slot-grid" style={compositionStyle}>

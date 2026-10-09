@@ -30,7 +30,8 @@ function EquipmentPreview({
 }>) {
   const composition = projectEquipmentComposition(equipment, equipmentById);
   const ports = equipment.accessPorts.filter((port) => port.lifecycle === 'ACTIVE');
-  const preview = composition.capacity > 4 ? [] : composition.slots.filter((slot) => slot.equipment).slice(0, 4);
+  const preview =
+    composition.capacity > 4 ? [] : composition.slots.filter((slot) => slot.equipment).slice(0, 4);
   return (
     <article className="equipment-physical-preview">
       <div className="equipment-physical-preview-heading">

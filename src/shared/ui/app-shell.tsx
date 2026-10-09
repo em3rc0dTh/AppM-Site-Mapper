@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, type ReactNode } from 'react';
+import { Suspense, useState, type ReactNode } from 'react';
 
 import { CommandPalette } from './command-palette';
 import { ContextTracker } from './context-tracker';
@@ -85,7 +85,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           {!immersive ? <div className="zip-static-context">{contextLabel}</div> : null}
         </div>
 
-        <ContextTracker />
+        <Suspense fallback={null}>
+          <ContextTracker />
+        </Suspense>
         <CommandPalette />
 
         <Link className="zip-explore" href="/network">

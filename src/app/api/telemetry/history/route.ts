@@ -18,7 +18,6 @@ function isWindow(value: string | null): value is TelemetryHistoryWindow {
   return Boolean(value && TELEMETRY_HISTORY_WINDOWS.includes(value as TelemetryHistoryWindow));
 }
 
-
 export async function GET(request: NextRequest) {
   const auth = await requirePermission('telemetry:read');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 401 });

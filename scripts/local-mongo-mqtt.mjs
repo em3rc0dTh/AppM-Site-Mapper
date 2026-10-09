@@ -155,24 +155,24 @@ async function inspectMongo() {
       }
       if (nonEmptyCollections.length > 0 || count > 0 || users > 0 || paths > 0) {
         throw new Error(
-        (newDatabase
-          ? 'Requested new Site Mapper database is not empty. Refusing to reuse existing data.\n'
-          : 'CRUD clean-room database is not empty. Refusing to mix a new acceptance run with old data.\n') +
-          'Database: ' +
-          databaseName +
-          '\n' +
-          'Canonical nodes: ' +
-          count +
-          '\nUsers: ' +
-          users +
-          '\nActive power paths: ' +
-          paths +
-          '\nNon-empty collections: ' +
-          (nonEmptyCollections.join(', ') || 'none') +
           (newDatabase
-            ? '\nChoose a new MONGODB_DB_NAME or remove --new.'
-            : '\nUse --reuse only to continue the same acceptance run, or choose a new MONGODB_CRUD_DB_NAME.'),
-          );
+            ? 'Requested new Site Mapper database is not empty. Refusing to reuse existing data.\n'
+            : 'CRUD clean-room database is not empty. Refusing to mix a new acceptance run with old data.\n') +
+            'Database: ' +
+            databaseName +
+            '\n' +
+            'Canonical nodes: ' +
+            count +
+            '\nUsers: ' +
+            users +
+            '\nActive power paths: ' +
+            paths +
+            '\nNon-empty collections: ' +
+            (nonEmptyCollections.join(', ') || 'none') +
+            (newDatabase
+              ? '\nChoose a new MONGODB_DB_NAME or remove --new.'
+              : '\nUse --reuse only to continue the same acceptance run, or choose a new MONGODB_CRUD_DB_NAME.'),
+        );
       }
     }
     const inventory = names.includes('topology_nodes')
@@ -273,9 +273,9 @@ async function inspectMongo() {
         : newDatabase
           ? 'Telemetry: DISABLED for first clean initialization'
           : 'MQTT binding: ' +
-              (complete && matched.length === serials.length
-                ? '3-source explicit mapping ready'
-                : 'INCOMPLETE — do not assume all breaker values are mapped'),
+            (complete && matched.length === serials.length
+              ? '3-source explicit mapping ready'
+              : 'INCOMPLETE — do not assume all breaker values are mapped'),
     );
     console.log(
       newDatabase

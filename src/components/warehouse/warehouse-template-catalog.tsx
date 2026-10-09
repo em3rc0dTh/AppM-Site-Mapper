@@ -11,13 +11,7 @@ function normalized(value: string | undefined): string {
 function matches(template: AssetTemplate, query: string): boolean {
   if (!query) return true;
 
-  return [
-    template.name,
-    template.category,
-    template.manufacturer,
-    template.model,
-    template.notes,
-  ]
+  return [template.name, template.category, template.manufacturer, template.model, template.notes]
     .map(normalized)
     .some((value) => value.includes(query));
 }
@@ -30,16 +24,16 @@ export function WarehouseTemplateCatalog({
 
   const categories = useMemo(
     () =>
-      [...new Set(templates.flatMap((template) => (template.category ? [template.category] : [])))]
-        .sort((left, right) => left.localeCompare(right)),
+      [
+        ...new Set(templates.flatMap((template) => (template.category ? [template.category] : []))),
+      ].sort((left, right) => left.localeCompare(right)),
     [templates],
   );
 
   const filtered = useMemo(() => {
     const needle = normalized(query);
     return templates.filter(
-      (template) =>
-        matches(template, needle) && (!category || template.category === category),
+      (template) => matches(template, needle) && (!category || template.category === category),
     );
   }, [templates, query, category]);
 

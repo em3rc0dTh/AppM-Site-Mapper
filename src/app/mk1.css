@@ -1842,3 +1842,21 @@ body {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.equipment-composition-workbench-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+}
+.equipment-composition-workbench-actions button {
+  min-width: 132px;
+  padding: 10px 14px;
+  border-radius: 4px;
+  background: #244b59;
+  color: #fff;
+  font-size: 11px;
+}
+.equipment-composition-workbench-actions button:first-child:not(:last-child) {
+  background: #0076ac;
+}

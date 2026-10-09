@@ -8,7 +8,7 @@ import type { AccessPort, EquipmentNode } from '@/modules/topology/domain/entiti
 interface Props {
   readonly root: EquipmentNode;
   readonly equipment: readonly EquipmentNode[];
-  readonly onAdd?: (slot: number | null) => void;
+  readonly onAdd?: ((slot: number | null) => void) | undefined;
 }
 
 const sectionStyle: CSSProperties = {

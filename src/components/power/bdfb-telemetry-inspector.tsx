@@ -143,8 +143,8 @@ function HistoricalTelemetry({
         <dd>{history.scope.label}</dd>
         <dt>Breakers in scope</dt>
         <dd>{history.scope.breakerCount}</dd>
-        <dt>Empty holders</dt>
-        <dd>{history.scope.holderCount}</dd>
+        <dt>Empty positions</dt>
+        <dd>{history.scope.emptyPositionCount}</dd>
         <dt>Buckets</dt>
         <dd>{history.points.length}</dd>
         <dt>Latest bucket active</dt>
@@ -309,8 +309,8 @@ export function BdfbTelemetryInspector({
               <dd>{aggregate.activeBreakers}</dd>
               <dt>Breakers without live reading</dt>
               <dd>{aggregate.withoutLiveReading}</dd>
-              <dt>Empty holders</dt>
-              <dd>{aggregate.emptyHolders}</dd>
+              <dt>Empty positions</dt>
+              <dd>{aggregate.emptyPositions}</dd>
               <dt>Last packet</dt>
               <dd>{compactUtc(aggregate.latestReceivedAt)}</dd>
             </dl>

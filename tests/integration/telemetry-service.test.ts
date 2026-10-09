@@ -234,7 +234,10 @@ describe('TelemetryService', () => {
       'data/dev/EMU-BFDB-STALE',
       new TextEncoder().encode(
         JSON.stringify({
+          method: 'update',
           sn: 'EMU-BFDB-STALE',
+          timestamp: 1_790_580_000,
+          sendtime: 1_790_580_000,
           reported: { '0_1_1': { state: 'ONLINE', U1: '13.8' } },
         }),
       ),
@@ -261,7 +264,10 @@ describe('TelemetryService', () => {
       'data/dev/EMU-BFDB-CANONICAL',
       new TextEncoder().encode(
         JSON.stringify({
+          method: 'update',
           sn: 'EMU-BFDB-CANONICAL',
+          timestamp: 1_790_580_000,
+          sendtime: 1_790_580_000,
           reported: { '0_1_1': { state: 'ONLINE', U1: '13.8' } },
         }),
       ),
@@ -300,7 +306,10 @@ describe('TelemetryService', () => {
       'data/dev/EMU-BFDB-INFERRED',
       new TextEncoder().encode(
         JSON.stringify({
+          method: 'update',
           sn: 'EMU-BFDB-INFERRED',
+          timestamp: 1_790_580_000,
+          sendtime: 1_790_580_000,
           reported: {
             '0_1_1': { state: 'ONLINE', U1: '13.8', I1: '2', P1: '27.6', EP1: '0.1' },
           },

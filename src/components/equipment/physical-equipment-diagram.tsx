@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 
 interface Props {
@@ -27,7 +27,7 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
       return next;
     });
   }
-  function render(node: EquipmentNode, depth: number, ancestry: ReadonlySet<string>): React.ReactNode {
+  function render(node: EquipmentNode, depth: number, ancestry: ReadonlySet<string>): ReactNode {
     if (ancestry.has(node.id)) return <p role="alert">Equipment hierarchy cycle detected.</p>;
     const visited = new Set(ancestry);
     visited.add(node.id);

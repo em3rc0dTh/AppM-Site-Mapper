@@ -360,7 +360,7 @@ export function BlueprintCanvas({
           <g className="blueprint-coordinate-labels" aria-hidden="true">
             {labels.columns.map((column) => (
               <text
-                key={`column-${column.label}`}
+                key={`column-${column.label}-${column.x}`}
                 x={column.x}
                 y={labels.minY - 115}
                 textAnchor="middle"
@@ -370,7 +370,7 @@ export function BlueprintCanvas({
             ))}
             {labels.rows.map((row) => (
               <text
-                key={`row-${row.label}`}
+                key={`row-${row.label}-${row.y}`}
                 x={labels.minX - 115}
                 y={row.y}
                 textAnchor="middle"

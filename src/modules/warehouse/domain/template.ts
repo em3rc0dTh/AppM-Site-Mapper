@@ -2,6 +2,7 @@ import type {
   DimensionsMm,
   EquipmentChildMode,
   EquipmentType,
+  EquipmentPresentation,
 } from '@/modules/topology/domain/entities';
 import type { DomainEntity } from '@/shared/domain/entity';
 
@@ -24,6 +25,7 @@ export interface AssetTemplate extends DomainEntity {
    * DYNAMIC Equipment does not use a fixed capacity.
    */
   readonly childCapacity?: number;
+  readonly presentation?: EquipmentPresentation;
   /**
    * Optional template-level guard. Runtime hierarchy remains Equipment-recursive;
    * this only restricts which Equipment types may occupy this template's children.
@@ -61,6 +63,7 @@ export function snapshotTemplate(template: AssetTemplate): AssetTemplateSnapshot
     ...(template.equipmentType ? { equipmentType: template.equipmentType } : {}),
     ...(template.childMode ? { childMode: template.childMode } : {}),
     ...(template.childCapacity === undefined ? {} : { childCapacity: template.childCapacity }),
+    ...(template.presentation ? { presentation: { ...template.presentation } } : {}),
     ...(template.allowedChildTypes?.length
       ? { allowedChildTypes: [...template.allowedChildTypes] }
       : {}),

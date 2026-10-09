@@ -1,5 +1,4 @@
 import { InventoryService } from '@/modules/inventory/application/inventory-service';
-import { BdfbService } from '@/modules/power/application/bdfb-service';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import { PowerService } from '@/modules/power/application/power-service';
 import { CasService } from '@/modules/rack/application/cas-service';
@@ -220,6 +219,142 @@ async function rootEquipment(
   );
 }
 
+async function ensurePositionalEquipment(
+  repository: TopologyRepository,
+  topology: TopologyService,
+  parent: EquipmentNode,
+  slotIndex: number,
+  name: string,
+  equipmentType: EquipmentNode['equipmentType'],
+  childCapacity?: number,
+): Promise<EquipmentNode> {
+  const freshParent = expectKind(
+    (await repository.getById(parent.id)) as TopologyNode,
+    'EQUIPMENT',
+  );
+  const existingId = freshParent.children[slotIndex];
+  if (existingId) {
+    const existing = expectKind(
+      (await repository.getById(existingId)) as TopologyNode,
+      'EQUIPMENT',
+    );
+    if (
+      existing.lifecycle !== 'ACTIVE' ||
+      existing.parentEquipmentId !== freshParent.id ||
+      existing.equipmentType !== equipmentType
+    ) {
+      throw new Error(`Demo seed Equipment conflict at ${freshParent.name} slot ${slotIndex + 1}`);
+    }
+    return existing;
+  }
+
+  const created = await topology.create({
+    kind: 'EQUIPMENT',
+    parentId: freshParent.id,
+    parentSlotIndex: slotIndex,
+    name,
+    equipmentType,
+    ...(childCapacity
+      ? { childMode: 'POSITIONAL' as const, childCapacity }
+      : {}),
+  });
+  if (!created.ok || created.value.kind !== 'EQUIPMENT') {
+    throw new Error(
+      `Demo seed could not create Equipment ${name}: ${created.ok ? 'INVALID_KIND' : created.error}`,
+    );
+  }
+  return created.value;
+}
+
+async function ensureDemoBdfbEquipment(
+  repository: TopologyRepository,
+  topology: TopologyService,
+  device: DeviceNode,
+): Promise<Readonly<{
+  chassis: EquipmentNode;
+  breakerA: EquipmentNode;
+  breakerB: EquipmentNode;
+}>> {
+  let chassis: EquipmentNode;
+  if (device.rootEquipmentIds.length === 0) {
+    const created = await topology.create({
+      kind: 'EQUIPMENT',
+      parentId: device.id,
+      name: device.name + ' Chassis',
+      equipmentType: 'CHASSIS',
+      childMode: 'POSITIONAL',
+      childCapacity: 2,
+    });
+    if (!created.ok || created.value.kind !== 'EQUIPMENT') {
+      throw new Error(
+        `Demo seed could not create BDFB chassis: ${created.ok ? 'INVALID_KIND' : created.error}`,
+      );
+    }
+    chassis = created.value;
+  } else if (device.rootEquipmentIds.length === 1) {
+    chassis = expectKind(
+      (await repository.getById(device.rootEquipmentIds[0]!)) as TopologyNode,
+      'EQUIPMENT',
+    );
+    if (
+      chassis.lifecycle !== 'ACTIVE' ||
+      chassis.equipmentType !== 'CHASSIS' ||
+      chassis.childMode !== 'POSITIONAL' ||
+      chassis.children.length !== 2
+    ) {
+      throw new Error('Demo seed BDFB root does not match the canonical Equipment fixture.');
+    }
+  } else {
+    throw new Error('Demo seed BDFB has multiple root Equipment.');
+  }
+
+  const panelA = await ensurePositionalEquipment(
+    repository,
+    topology,
+    chassis,
+    0,
+    'A1',
+    'PANEL',
+    4,
+  );
+  const panelB = await ensurePositionalEquipment(
+    repository,
+    topology,
+    chassis,
+    1,
+    'B1',
+    'PANEL',
+    4,
+  );
+
+  const breakerA = await ensurePositionalEquipment(
+    repository,
+    topology,
+    panelA,
+    0,
+    'A1-01',
+    'CIRCUIT_BREAKER',
+  );
+  await ensurePositionalEquipment(
+    repository,
+    topology,
+    panelA,
+    1,
+    'A1-02',
+    'CIRCUIT_BREAKER',
+  );
+  const breakerB = await ensurePositionalEquipment(
+    repository,
+    topology,
+    panelB,
+    0,
+    'B1-01',
+    'CIRCUIT_BREAKER',
+  );
+
+  return { chassis, breakerA, breakerB };
+}
+
 export async function seedDevelopmentDemo(
   topologyRepository: TopologyRepository,
   powerRepository: PowerRepository,
@@ -403,58 +538,8 @@ export async function seedDevelopmentDemo(
   await inventory.setPinned(bdfb.id, true);
   await inventory.setPinned(router.id, true);
 
-  const bdfbResult = await new BdfbService(topologyRepository).configure(bdfb.id, {
-    shelves: [
-      {
-        id: 'demo-shelf-a',
-        label: 'Shelf A',
-        frames: [
-          {
-            id: 'demo-frame-a',
-            label: 'Frame A',
-            physicalFrameVisible: false,
-            panels: [
-              {
-                id: 'demo-panel-a',
-                label: 'Panel A',
-                positions: [
-                  { id: 'demo-breaker-a1', label: 'Breaker A1', capacity: 20 },
-                  { id: 'demo-breaker-a2', label: 'Breaker A2', capacity: 20 },
-                  null,
-                  null,
-                ],
-              },
-              {
-                id: 'demo-panel-b',
-                label: 'Panel B',
-                positions: [
-                  { id: 'demo-breaker-b1', label: 'Breaker B1', capacity: 30 },
-                  null,
-                  null,
-                  null,
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  });
-
-  if (!bdfbResult.ok && bdfbResult.error !== 'DEVICE_ALREADY_MATERIALIZED') {
-    throw new Error('Demo seed could not configure BDFB: ' + bdfbResult.error);
-  }
-
-  const currentBdfb = expectKind(
-    (await topologyRepository.getById(bdfb.id)) as TopologyNode,
-    'DEVICE',
-  );
-  const chassisId = currentBdfb.rootEquipmentIds[0];
-  if (!chassisId) throw new Error('Demo seed BDFB has no root Equipment.');
-  const chassis = expectKind(
-    (await topologyRepository.getById(chassisId)) as TopologyNode,
-    'EQUIPMENT',
-  );
+  const demoBdfb = await ensureDemoBdfbEquipment(topologyRepository, topology, bdfb);
+  const chassis = demoBdfb.chassis;
 
   let computeEquipment = await rootEquipment(
     topologyRepository,
@@ -513,7 +598,7 @@ export async function seedDevelopmentDemo(
   async function ensurePowerPath(
     label: string,
     feed: 'A' | 'B',
-    breakerId: string,
+    breaker: EquipmentNode,
     target: EquipmentNode,
   ): Promise<string> {
     const existing = activePaths.find(
@@ -521,7 +606,7 @@ export async function seedDevelopmentDemo(
     );
     if (existing) return existing.id;
 
-    const sourceAccessPortId = bdfb.id + ':equipment:' + breakerId + ':power-out';
+    const sourceAccessPortId = breaker.id + ':power-out';
     const targetAccessPortId = target.id + ':power-in';
     const result = await power.create({ sourceAccessPortId, targetAccessPortId, feed, label });
     if (!result.ok) throw new Error('Demo seed could not create power path: ' + result.error);
@@ -529,8 +614,8 @@ export async function seedDevelopmentDemo(
   }
 
   const powerPathIds = [
-    await ensurePowerPath('Feed A · Compute Node 01', 'A', 'demo-breaker-a1', computeEquipment),
-    await ensurePowerPath('Feed B · Edge Router 01', 'B', 'demo-breaker-a2', routerEquipment),
+    await ensurePowerPath('Feed A · Compute Node 01', 'A', demoBdfb.breakerA, computeEquipment),
+    await ensurePowerPath('Feed B · Edge Router 01', 'B', demoBdfb.breakerB, routerEquipment),
   ];
 
   return {

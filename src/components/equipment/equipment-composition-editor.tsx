@@ -41,6 +41,8 @@ export function EquipmentCompositionEditor({
   const [childrenVisibility, setChildrenVisibility] = useState<'AUTO' | 'INLINE' | 'SUMMARY'>(equipment.presentation?.childrenVisibility ?? 'AUTO');
   const [targetSlot, setTargetSlot] = useState<number | null>(null);
   const [mode, setMode] = useState<'warehouse' | 'one-off'>('warehouse');
+  const [warehouseChildMode, setWarehouseChildMode] = useState('');
+  const [warehouseChildCapacity, setWarehouseChildCapacity] = useState('');
   const [oneOffChildMode, setOneOffChildMode] = useState<EquipmentChildMode>('DYNAMIC');
   const [templates, setTemplates] = useState<readonly AssetTemplate[]>([]);
   const [templateId, setTemplateId] = useState('');
@@ -178,6 +180,14 @@ export function EquipmentCompositionEditor({
   async function createFromWarehouse(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const resolvedMode = warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC';
+    const resolvedCapacity = warehouseChildCapacity.trim()
+      ? Number(warehouseChildCapacity)
+      : warehouseChildMode === 'POSITIONAL' ? selectedTemplate?.childCapacity : undefined;
+    if (resolvedMode === 'POSITIONAL' && (!Number.isInteger(resolvedCapacity) || (resolvedCapacity ?? 0) < 1)) {
+      setError('POSITIONAL_REQUIRES_CHILD_SLOTS: choose 1–256 or use Dynamic for leaf Equipment.');
+      return;
+    }
     setBusy(true);
     setError('');
     try {
@@ -193,10 +203,8 @@ export function EquipmentCompositionEditor({
           serialNumber: String(form.get('serialNumber') ?? ''),
           category: String(form.get('category') ?? ''),
           equipmentType: String(form.get('equipmentType') ?? '') || undefined,
-          childMode: String(form.get('childMode') ?? '') || undefined,
-          childCapacity: String(form.get('childCapacity') ?? '').trim()
-            ? Number(form.get('childCapacity'))
-            : undefined,
+          childMode: warehouseChildMode || undefined,
+          childCapacity: resolvedMode === 'POSITIONAL' ? resolvedCapacity : undefined,
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -598,7 +606,7 @@ export function EquipmentCompositionEditor({
                 Equipment template
                 <select
                   value={templateId}
-                  onChange={(event) => setTemplateId(event.target.value)}
+                  onChange={(event) => { setTemplateId(event.target.value); setWarehouseChildMode(''); setWarehouseChildCapacity(''); }}
                   disabled={loadingTemplates}
                   required
                 >
@@ -650,7 +658,7 @@ export function EquipmentCompositionEditor({
               </label>
               <label>
                 Children mode override
-                <select name="childMode" defaultValue="">
+                <select name="childMode" value={warehouseChildMode} onChange={(event) => { setWarehouseChildMode(event.target.value); setWarehouseChildCapacity(''); }}>
                   <option value="">Use template</option>
                   <option value="DYNAMIC">Dynamic</option>
                   <option value="POSITIONAL">Positional</option>
@@ -658,7 +666,7 @@ export function EquipmentCompositionEditor({
               </label>
               <label>
                 Child slots override
-                <input name="childCapacity" type="number" min="1" max="256" />
+                <input name="childCapacity" type="number" min="1" max="256" value={warehouseChildCapacity} disabled={(warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC') !== 'POSITIONAL'} placeholder={(warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC') === 'DYNAMIC' ? 'Not applicable (leaf / dynamic)' : String(selectedTemplate?.childCapacity ?? '1–256')} onChange={(event) => setWarehouseChildCapacity(event.target.value)} />
               </label>
               <label>
                 Serial number

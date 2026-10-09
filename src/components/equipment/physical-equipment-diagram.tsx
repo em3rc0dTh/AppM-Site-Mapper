@@ -13,7 +13,7 @@ interface Props {
 
 const frameStyle: CSSProperties = {
   border: '2px solid #64748b', borderRadius: 8, padding: 12,
-  background: '#f6f3e5', minWidth: 0, overflowWrap: 'anywhere',
+  background: '#f6f3e5', minWidth: 0, minHeight: 0, overflowWrap: 'anywhere',
 };
 const headStyle: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 12 };
 
@@ -40,18 +40,22 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
     const collapse = count > 4 && policy !== 'INLINE' && !expanded.has(node.id);
     const limit = node.presentation?.maxPerLine ?? (isPanel ? 12 : count);
     const columns = Math.max(1, Math.min(12, limit || 1));
+    const compositionColumns = isPanel ? columns : Math.min(4, columns);
     const direction = node.presentation?.direction ?? 'ROW';
     const gridStyle: CSSProperties = {
       display: 'grid',
       gridTemplateColumns: direction === 'COLUMN'
         ? 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))'
-        : `repeat(${columns}, minmax(0, 1fr))`,
+        : `repeat(${compositionColumns}, minmax(0, 1fr))`,
       ...(direction === 'COLUMN' ? { gridAutoFlow: 'column', gridTemplateRows: `repeat(${Math.max(1, Math.ceil(count / columns))}, auto)` } : {}),
       gap: isPanel ? 4 : 10,
+      minHeight: !isPanel && depth < 2 ? 'clamp(240px, 48vh, 700px)' : undefined,
+      gridAutoRows: !isPanel ? 'minmax(0, 1fr)' : undefined,
+      alignItems: 'stretch',
       overflowX: 'auto',
     };
     return (
-      <section key={node.id} className="equipment-physical-box" style={{ ...frameStyle, background: depth === 0 ? '#edf0e6' : depth === 1 ? '#e9f5e8' : '#fff5e6' }}>
+      <section key={node.id} className="equipment-physical-box" style={{ ...frameStyle, display: 'flex', flexDirection: 'column', flex: 1, height: '100%', background: depth === 0 ? '#edf0e6' : depth === 1 ? '#e9f5e8' : '#fff5e6' }}>
         <header style={headStyle}>
           <div>
             <div style={{ fontSize: 10, letterSpacing: 1 }}>{type.replaceAll('_', ' ')} · EQUIPMENT</div>
@@ -75,7 +79,7 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
                 const child = id ? byId.get(id) : undefined;
                 if (child) {
                   return (
-                    <div key={index} style={{ minWidth: 0 }}>
+                    <div key={index} style={{ minWidth: 0, display: 'flex', flexDirection: 'column' }}>
                       {isPanel ? (
                         <Link title={child.name} href={'/device/' + encodeURIComponent(child.id)}
                           style={{ display: 'block', minHeight: 46, padding: 5, background: '#d1e8eb', border: '1px solid #4a7581', textDecoration: 'none', color: '#183943', fontSize: 10 }}>
@@ -104,5 +108,5 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
       </section>
     );
   }
-  return <div aria-label="Nested physical Equipment diagram">{render(root, 0, new Set())}</div>;
+  return <div className="equipment-physical-canvas" aria-label="Nested physical Equipment diagram" style={{ display: 'flex', minHeight: 'clamp(500px, 70vh, 1100px)', width: '100%', alignItems: 'stretch' }}>{render(root, 0, new Set())}</div>;
 }

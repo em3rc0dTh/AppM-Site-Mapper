@@ -27,9 +27,7 @@ export class InventoryService {
       devices
         .filter(
           (node): node is DeviceNode =>
-            node.kind === 'DEVICE' &&
-            node.lifecycle === 'ACTIVE' &&
-            node.parentId === rack.id,
+            node.kind === 'DEVICE' && node.lifecycle === 'ACTIVE' && node.parentId === rack.id,
         )
         .map((node) => node.id),
     );

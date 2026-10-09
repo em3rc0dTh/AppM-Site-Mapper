@@ -70,7 +70,11 @@ function message(reported: Readonly<Record<string, unknown>>): NormalizedTelemet
 
 describe('BFDB telemetry binding', () => {
   it('maps a raw point only through an explicit TelemetryBinding', () => {
-    const result = buildBfdbBreakerReadings(presentation, message({ '0_9_9': { U1: '13.82' } }), bindings('0_9_9', 'breaker-a1'));
+    const result = buildBfdbBreakerReadings(
+      presentation,
+      message({ '0_9_9': { U1: '13.82' } }),
+      bindings('0_9_9', 'breaker-a1'),
+    );
 
     expect(result.readings[0]?.breakerId).toBe('breaker-a1');
     expect(result.unmappedPointIds).toEqual([]);

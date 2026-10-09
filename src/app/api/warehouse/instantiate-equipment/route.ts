@@ -62,8 +62,7 @@ export async function POST(request: Request) {
     (body.name !== undefined && !isBoundedString(body.name, 120, { allowEmpty: true })) ||
     (body.serialNumber !== undefined &&
       !isBoundedString(body.serialNumber, 120, { allowEmpty: true })) ||
-    (body.category !== undefined &&
-      !isBoundedString(body.category, 120, { allowEmpty: true })) ||
+    (body.category !== undefined && !isBoundedString(body.category, 120, { allowEmpty: true })) ||
     (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
     (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
     (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity))
@@ -84,10 +83,10 @@ export async function POST(request: Request) {
     ...(parseEquipmentType(body.equipmentType)
       ? { equipmentType: parseEquipmentType(body.equipmentType)! }
       : {}),
-    ...(parseEquipmentChildMode(body.childMode) ? { childMode: parseEquipmentChildMode(body.childMode)! } : {}),
-    ...(typeof body.childCapacity === 'number'
-      ? { childCapacity: body.childCapacity }
+    ...(parseEquipmentChildMode(body.childMode)
+      ? { childMode: parseEquipmentChildMode(body.childMode)! }
       : {}),
+    ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
   });
 
   if (!result.ok) {

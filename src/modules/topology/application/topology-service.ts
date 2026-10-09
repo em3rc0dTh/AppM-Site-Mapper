@@ -4,6 +4,7 @@ import type {
   AccessPort,
   ContainerClusterBayVariant,
   ContainerRackVariant,
+  DeviceNode,
   DeviceType,
   EquipmentChildMode,
   EquipmentNode,

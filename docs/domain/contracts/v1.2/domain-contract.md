@@ -43,6 +43,11 @@ EXTERNAL ADAPTERS
 
 Persistence, UI, MQTT, TAPI, migration tooling or legacy schemas must not redefine the domain.
 
+Visual projection of recursive Equipment is governed separately by
+[`Equipment Composition Presentation Contract v1.0`](../../../design/equipment-composition-presentation-contract-v1.0.md).
+That presentation contract may control layout density, direction and drill-down behavior, but it
+must not alter `parentEquipmentId`, `children[]`, Equipment identity or physical capacity.
+
 ---
 
 # 2. Fundamental model

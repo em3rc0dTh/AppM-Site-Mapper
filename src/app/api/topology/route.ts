@@ -135,24 +135,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
-  for (const optionalText of [
-    body.serialNumber,
-    body.category,
-    body.manufacturer,
-    body.model,
-  ]) {
-    if (
-      optionalText !== undefined &&
-      !isBoundedString(optionalText, 120, { allowEmpty: true })
-    ) {
+  for (const optionalText of [body.serialNumber, body.category, body.manufacturer, body.model]) {
+    if (optionalText !== undefined && !isBoundedString(optionalText, 120, { allowEmpty: true })) {
       return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
     }
   }
 
   if (
-    (body.parentId !== undefined &&
-      body.parentId !== null &&
-      typeof body.parentId !== 'string') ||
+    (body.parentId !== undefined && body.parentId !== null && typeof body.parentId !== 'string') ||
     (body.deviceType !== undefined && !parseDeviceType(body.deviceType)) ||
     (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
     (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
@@ -201,11 +191,11 @@ export async function POST(request: Request) {
     ...(parseEquipmentType(body.equipmentType)
       ? { equipmentType: parseEquipmentType(body.equipmentType)! }
       : {}),
-    ...(parseEquipmentChildMode(body.childMode) ? { childMode: parseEquipmentChildMode(body.childMode)! } : {}),
-    ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
-    ...(typeof body.parentSlotIndex === 'number'
-      ? { parentSlotIndex: body.parentSlotIndex }
+    ...(parseEquipmentChildMode(body.childMode)
+      ? { childMode: parseEquipmentChildMode(body.childMode)! }
       : {}),
+    ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
+    ...(typeof body.parentSlotIndex === 'number' ? { parentSlotIndex: body.parentSlotIndex } : {}),
     ...(typeof body.manufacturer === 'string' ? { manufacturer: body.manufacturer } : {}),
     ...(typeof body.model === 'string' ? { model: body.model } : {}),
   });

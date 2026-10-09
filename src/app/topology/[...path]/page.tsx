@@ -139,10 +139,7 @@ export default async function TopologyNodePage({
     node.kind === 'DEVICE' && node.deviceType === 'BDFB'
       ? await new BdfbProjectionService(repository).get(node.id)
       : null;
-  if (
-    (node.kind === 'DEVICE' && node.deviceType !== 'BDFB') ||
-    node.kind === 'EQUIPMENT'
-  ) {
+  if ((node.kind === 'DEVICE' && node.deviceType !== 'BDFB') || node.kind === 'EQUIPMENT') {
     redirect(`/device/${node.id}`);
   }
   const [trail, children, selfHref] = await Promise.all([
@@ -221,11 +218,7 @@ export default async function TopologyNodePage({
       await createTelemetryBindingRepository()
     ).listForTargets('EQUIPMENT', breakerIds);
     for (const binding of explicitBindings) {
-      if (
-        binding.lifecycle !== 'ACTIVE' ||
-        binding.protocol !== 'MQTT' ||
-        !binding.sourcePointId
-      ) {
+      if (binding.lifecycle !== 'ACTIVE' || binding.protocol !== 'MQTT' || !binding.sourcePointId) {
         continue;
       }
       bdfbTelemetryBindings.push({
@@ -236,9 +229,8 @@ export default async function TopologyNodePage({
       });
     }
   }
-  const mappedBdfbBreakerCount = new Set(
-    bdfbTelemetryBindings.map((binding) => binding.breakerId),
-  ).size;
+  const mappedBdfbBreakerCount = new Set(bdfbTelemetryBindings.map((binding) => binding.breakerId))
+    .size;
 
   const bdfbPowerBindings: BreakerPowerBinding[] = [];
   if (node.kind === 'DEVICE' && bdfbPresentation) {
@@ -411,8 +403,8 @@ export default async function TopologyNodePage({
                   <span aria-hidden="true">▥</span>
                   <h2>BDFB physical composition is incomplete</h2>
                   <p>
-                    Build the real Equipment hierarchy recursively. Shelf, Frame, Panel and
-                    Circuit Breaker are Equipment only when they physically exist.
+                    Build the real Equipment hierarchy recursively. Shelf, Frame, Panel and Circuit
+                    Breaker are Equipment only when they physically exist.
                   </p>
                   <small>
                     Open the root Equipment and fill its available child slots. Empty positions
@@ -422,7 +414,11 @@ export default async function TopologyNodePage({
                     {childEntries
                       .filter((entry) => entry.node.kind === 'EQUIPMENT')
                       .map((entry) => (
-                        <Link key={entry.node.id} href={`/device/${entry.node.id}`} prefetch={false}>
+                        <Link
+                          key={entry.node.id}
+                          href={`/device/${entry.node.id}`}
+                          prefetch={false}
+                        >
                           CONFIGURE {entry.node.name}
                         </Link>
                       ))}
@@ -513,8 +509,16 @@ export default async function TopologyNodePage({
 
       {(rackLink || blueprintLink) && (
         <div className="telxius-hidden-actions" aria-hidden="true">
-          {rackLink && <Link href={rackLink} prefetch={false}>Rack</Link>}
-          {blueprintLink && <Link href={blueprintLink} prefetch={false}>Blueprint</Link>}
+          {rackLink && (
+            <Link href={rackLink} prefetch={false}>
+              Rack
+            </Link>
+          )}
+          {blueprintLink && (
+            <Link href={blueprintLink} prefetch={false}>
+              Blueprint
+            </Link>
+          )}
         </div>
       )}
     </main>

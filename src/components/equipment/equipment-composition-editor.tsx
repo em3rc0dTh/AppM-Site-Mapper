@@ -18,15 +18,18 @@ function label(type: EquipmentType): string {
 
 export function EquipmentCompositionEditor({
   equipment,
-  children,
+  childEquipment,
   canWrite,
 }: Readonly<{
   equipment: EquipmentNode;
-  children: readonly EquipmentNode[];
+  childEquipment: readonly EquipmentNode[];
   canWrite: boolean;
 }>) {
   const router = useRouter();
-  const byId = useMemo(() => new Map(children.map((child) => [child.id, child])), [children]);
+  const byId = useMemo(
+    () => new Map(childEquipment.map((child) => [child.id, child])),
+    [childEquipment],
+  );
   const [composerOpen, setComposerOpen] = useState(false);
   const [configurationOpen, setConfigurationOpen] = useState(false);
   const [configurationMode, setConfigurationMode] = useState<EquipmentChildMode>(

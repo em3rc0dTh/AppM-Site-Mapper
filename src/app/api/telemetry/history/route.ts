@@ -102,7 +102,7 @@ export async function GET(request: NextRequest) {
         label: selectedPanel?.label ?? node.name,
         ...(selectedPanel ? { panelId: selectedPanel.id } : {}),
         breakerCount: breakers.length,
-        holderCount: positions.filter((item) => item === null).length,
+        emptyPositionCount: positions.filter((item) => item === null).length,
       },
       window,
       points,

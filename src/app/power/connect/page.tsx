@@ -56,6 +56,8 @@ export default async function ConnectPowerPage({
 
   const selfHref = await topologyService.buildDeepLink(sourceDevice.id);
   const returnHref = `${selfHref}?panel=${encodeURIComponent(panel.id)}&breaker=${encodeURIComponent(breaker.id)}`;
+  const sourceFeed =
+    feedFromLabel(panel.label) ?? feedFromLabel(frame.label) ?? feedFromLabel(shelf.label);
 
   const equipment = (await topology.listByKind('EQUIPMENT')).filter(
     (node): node is EquipmentNode =>
@@ -115,14 +117,7 @@ export default async function ConnectPowerPage({
         panelLabel: panel.label,
         breakerId: breaker.id,
         breakerLabel: breaker.label,
-        ...(feedFromLabel(panel.label) ?? feedFromLabel(frame.label) ?? feedFromLabel(shelf.label)
-          ? {
-              feed:
-                feedFromLabel(panel.label) ??
-                feedFromLabel(frame.label) ??
-                feedFromLabel(shelf.label),
-            }
-          : {}),
+        ...(sourceFeed ? { feed: sourceFeed } : {}),
         ...(breaker.capacity === undefined ? {} : { capacity: breaker.capacity }),
       }}
       destinations={destinations}

@@ -152,7 +152,9 @@ export function TopologyContextTree({
           <span>{labelFor(selected.node.kind)}</span>
           <strong title={selected.node.name}>{selected.node.name}</strong>
           <small>{selected.children.length} direct child objects</small>
-          <Link href={selected.href} prefetch={false}>OPEN SELECTED ↗</Link>
+          <Link href={selected.href} prefetch={false}>
+            OPEN SELECTED ↗
+          </Link>
         </div>
       )}
     </nav>

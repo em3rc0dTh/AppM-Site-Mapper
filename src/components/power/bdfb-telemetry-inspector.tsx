@@ -363,9 +363,7 @@ export function BdfbTelemetryInspector({
       </section>
 
       <div className="zip-bdfb-actions">
-        <span>
-          {mappedBreakerCount} mapped breakers
-        </span>
+        <span>{mappedBreakerCount} mapped breakers</span>
         <span>
           {selectedPanel
             ? `Average scope: ${selectedPanel.label}`

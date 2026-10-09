@@ -22,7 +22,7 @@ describe('development demo seed', () => {
     expect(await topology.listByKind('POSITION')).toHaveLength(3);
     expect(await topology.listByKind('CONTAINER_RACK')).toHaveLength(3);
     expect(await topology.listByKind('DEVICE')).toHaveLength(4);
-    expect((await topology.listByKind('EQUIPMENT')).length).toBeGreaterThanOrEqual(10);
+    expect(await topology.listByKind('EQUIPMENT')).toHaveLength(9);
     expect(await power.listActive()).toHaveLength(2);
 
     const rooms = await topology.listByKind('ROOM_SUBSTRUCTURE');

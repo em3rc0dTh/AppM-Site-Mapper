@@ -18,18 +18,6 @@ function isWindow(value: string | null): value is TelemetryHistoryWindow {
   return Boolean(value && TELEMETRY_HISTORY_WINDOWS.includes(value as TelemetryHistoryWindow));
 }
 
-function configuredSourceFor(deviceId: string): string | null {
-  const raw = process.env.MQTT_SOURCE_DEVICE_MAP?.trim();
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-    const match = Object.entries(parsed).find(([, target]) => target === deviceId);
-    return match?.[0] ?? null;
-  } catch {
-    return null;
-  }
-}
 
 export async function GET(request: NextRequest) {
   const auth = await requirePermission('telemetry:read');
@@ -54,20 +42,6 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
   }
 
-  const bindingRepository = await createTelemetryBindingRepository();
-  const sourceBindings = (await bindingRepository.listForTarget('DEVICE', node.id)).filter(
-    (binding) => binding.protocol === 'MQTT' && !binding.sourcePointId,
-  );
-  const sourceIdentity =
-    (sourceBindings.length === 1 ? sourceBindings[0]?.sourceIdentity : null) ??
-    configuredSourceFor(node.id) ??
-    node.serialNumber?.trim() ??
-    null;
-
-  if (!sourceIdentity) {
-    return Response.json({ error: 'HISTORY_SOURCE_UNAVAILABLE' }, { status: 409 });
-  }
-
   const panels = presentation.shelves.flatMap((shelf) =>
     shelf.frames.flatMap((frame) => frame.panels),
   );
@@ -80,9 +54,33 @@ export async function GET(request: NextRequest) {
     ? selectedPanel.positions
     : panels.flatMap((panel) => panel.positions);
   const breakers = positions.filter((item) => item !== null);
-  const rawPointIds = breakers.flatMap((breaker) =>
-    breaker.rawPointId ? [breaker.rawPointId] : [],
+  const breakerIds = breakers.map((breaker) => breaker.id);
+  const bindingRepository = await createTelemetryBindingRepository();
+  const pointBindings = (await bindingRepository.listForTargets('EQUIPMENT', breakerIds)).filter(
+    (binding) =>
+      binding.lifecycle === 'ACTIVE' &&
+      binding.protocol === 'MQTT' &&
+      Boolean(binding.sourcePointId),
   );
+
+  const sourceIdentities = [...new Set(pointBindings.map((binding) => binding.sourceIdentity))];
+  if (sourceIdentities.length === 0) {
+    return Response.json({ error: 'NO_HISTORY_BINDINGS' }, { status: 409 });
+  }
+  if (sourceIdentities.length !== 1) {
+    return Response.json({ error: 'HISTORY_SOURCE_AMBIGUOUS' }, { status: 409 });
+  }
+
+  const sourceIdentity = sourceIdentities[0]!;
+  const rawPointIds = [
+    ...new Set(
+      pointBindings.flatMap((binding) =>
+        binding.sourceIdentity === sourceIdentity && binding.sourcePointId
+          ? [binding.sourcePointId]
+          : [],
+      ),
+    ),
+  ];
 
   if (!rawPointIds.length) {
     return Response.json({ error: 'NO_HISTORY_BINDINGS' }, { status: 409 });

@@ -1,5 +1,5 @@
 import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
-import type { EquipmentChildMode, EquipmentType } from '@/modules/topology/domain/entities';
+import type { EquipmentChildMode, EquipmentType, EquipmentPresentation } from '@/modules/topology/domain/entities';
 import { type AssetTemplate, type AssetTemplateKind } from '@/modules/warehouse/domain/template';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
@@ -11,6 +11,7 @@ export type WarehouseError =
   | 'INVALID_SIZE_U'
   | 'INVALID_DIMENSIONS'
   | 'INVALID_CHILD_CAPACITY'
+  | 'INVALID_EQUIPMENT_PRESENTATION'
   | 'DUPLICATE_TEMPLATE';
 
 export interface CreateAssetTemplateInput {
@@ -27,6 +28,7 @@ export interface CreateAssetTemplateInput {
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
   readonly allowedChildTypes?: readonly EquipmentType[];
+  readonly presentation?: EquipmentPresentation;
 }
 
 function clean(value: string | undefined): string | undefined {
@@ -83,6 +85,12 @@ export class WarehouseService {
       return failure('INVALID_CHILD_CAPACITY');
     }
 
+    if (input.presentation && (
+      !['ROW', 'COLUMN'].includes(input.presentation.direction) ||
+      !(input.presentation.maxPerLine === null || (Number.isInteger(input.presentation.maxPerLine) && input.presentation.maxPerLine >= 1 && input.presentation.maxPerLine <= 256)) ||
+      !['AUTO', 'INLINE', 'SUMMARY'].includes(input.presentation.childrenVisibility)
+    )) return failure('INVALID_EQUIPMENT_PRESENTATION');
+
     const hasWidth = input.widthMm !== undefined;
     const hasDepth = input.depthMm !== undefined;
     if (
@@ -131,6 +139,7 @@ export class WarehouseService {
       childMode,
       ...(childMode === 'POSITIONAL' ? { childCapacity: input.childCapacity! } : {}),
       ...(allowedChildTypes.length ? { allowedChildTypes } : {}),
+      ...(input.presentation ? { presentation: { ...input.presentation } } : {}),
     };
 
     await this.repository.insert(template);

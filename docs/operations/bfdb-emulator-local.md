@@ -71,6 +71,11 @@ At this stage RAW MQTT may be visible while `acceptedMessages` remains zero. Tha
 until Device/Equipment telemetry bindings exist. MQTT transport and domain binding are deliberately
 separate concerns.
 
+Repeated `UNKNOWN_SOURCE` / `INVALID_BINDING_TARGET` events remain fully counted in diagnostics,
+but console warnings are rate-limited per topic + reason (60 seconds by default) so manual
+commissioning does not flood the terminal. Override with
+`TELEMETRY_REJECTION_LOG_INTERVAL_MS` only when a different diagnostic cadence is required.
+
 ## 4. Start the opt-in synthetic lab (preserves the ZIP demo)
 
 ```bash

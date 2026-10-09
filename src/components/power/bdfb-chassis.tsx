@@ -41,7 +41,6 @@ export interface BreakerTelemetryBindingSummary {
   readonly metric: string;
 }
 
-
 function formatMetric(value: number | undefined, unit: string, decimals = 2): string {
   return value === undefined ? '—' : `${value.toFixed(decimals)} ${unit}`;
 }
@@ -137,11 +136,13 @@ function breakerInspector(
             label: 'MQTT binding',
             value:
               telemetryBindings.length > 0
-                ? [...new Set(
-                    telemetryBindings.map(
-                      (binding) => binding.sourceIdentity + ' / ' + binding.sourcePointId,
+                ? [
+                    ...new Set(
+                      telemetryBindings.map(
+                        (binding) => binding.sourceIdentity + ' / ' + binding.sourcePointId,
+                      ),
                     ),
-                  )].join(' · ')
+                  ].join(' · ')
                 : 'Not mapped',
           },
         ],
@@ -210,9 +211,7 @@ function PanelBoard({
   panel: BdfbPanelView;
   readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
   bindingsByBreaker: Readonly<Record<string, readonly BreakerPowerBinding[]>>;
-  telemetryBindingsByBreaker: Readonly<
-    Record<string, readonly BreakerTelemetryBindingSummary[]>
-  >;
+  telemetryBindingsByBreaker: Readonly<Record<string, readonly BreakerTelemetryBindingSummary[]>>;
   canWritePower: boolean;
   onInspect: (entity: InspectorEntity, breakerId?: string) => void;
 }>) {

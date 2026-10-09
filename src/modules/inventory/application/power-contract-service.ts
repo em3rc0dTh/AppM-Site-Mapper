@@ -142,7 +142,7 @@ export class PowerContractService {
         direction: 'INPUT',
         exposure: 'EXTERNAL',
         lifecycle: 'ACTIVE',
-        ...(Object.keys(attributes).length ? { attributes } : {}),
+        attributes,
       };
     });
 

@@ -69,8 +69,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
       ? node
       : familyEquipment.find((item) => item.rackPlacement);
 
-  const owningDevice =
-    node.kind === 'DEVICE' ? node : await repo.getById(node.deviceId);
+  const owningDevice = node.kind === 'DEVICE' ? node : await repo.getById(node.deviceId);
   const physicalRack = physical?.rackPlacement
     ? await repo.getById(physical.rackPlacement.rackId)
     : null;

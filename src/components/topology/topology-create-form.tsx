@@ -175,9 +175,7 @@ export function TopologyCreateForm({
               aria-label="Children mode"
               name="childMode"
               value={equipmentChildMode}
-              onChange={(event) =>
-                setEquipmentChildMode(event.target.value as EquipmentChildMode)
-              }
+              onChange={(event) => setEquipmentChildMode(event.target.value as EquipmentChildMode)}
             >
               <option value="DYNAMIC">Dynamic children</option>
               <option value="POSITIONAL">Positional slots</option>

@@ -82,6 +82,7 @@ export interface CreateTopologyNodeInput {
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
   readonly parentSlotIndex?: number;
+  readonly presentation?: EquipmentPresentation;
   readonly manufacturer?: string;
   readonly model?: string;
   readonly accessPorts?: readonly AccessPort[];
@@ -299,6 +300,11 @@ export class TopologyService {
           return failure('INVALID_CHILD_CAPACITY');
         }
 
+        if (input.presentation && (
+          !['ROW', 'COLUMN'].includes(input.presentation.direction) ||
+          !(input.presentation.maxPerLine === null || (Number.isInteger(input.presentation.maxPerLine) && input.presentation.maxPerLine >= 1 && input.presentation.maxPerLine <= 256)) ||
+          !['AUTO', 'INLINE', 'SUMMARY'].includes(input.presentation.childrenVisibility)
+        )) return failure('INVALID_EQUIPMENT_PRESENTATION');
         const deviceId = parent.kind === 'DEVICE' ? parent.id : parent.deviceId;
         const defaultAccessPorts: readonly AccessPort[] =
           equipmentType === 'CIRCUIT_BREAKER' && !input.accessPorts?.length
@@ -325,7 +331,7 @@ export class TopologyService {
           parentEquipmentId: parent.kind === 'EQUIPMENT' ? parent.id : null,
           childMode,
           children,
-          ...(input.template?.presentation ? { presentation: { ...input.template.presentation } } : {}),
+          ...((input.presentation ?? input.template?.presentation) ? { presentation: { ...(input.presentation ?? input.template!.presentation!) } } : {}),
           accessPorts: structuredClone(
             input.accessPorts?.length ? input.accessPorts : defaultAccessPorts,
           ),

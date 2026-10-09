@@ -116,7 +116,9 @@ export function ConnectPowerForm({
     }
     const candidateFeed = selectedPort.feed ?? source.feed ?? feed;
     if (source.feed && candidateFeed !== source.feed) {
-      setError(`This breaker belongs to Feed ${source.feed}; choose a compatible destination port.`);
+      setError(
+        `This breaker belongs to Feed ${source.feed}; choose a compatible destination port.`,
+      );
       return;
     }
 
@@ -249,7 +251,11 @@ export function ConnectPowerForm({
             />
           </label>
 
-          <div className="power-destination-list" role="radiogroup" aria-label="Candidate power port">
+          <div
+            className="power-destination-list"
+            role="radiogroup"
+            aria-label="Candidate power port"
+          >
             {visibleDestinations.flatMap((item) =>
               item.ports.map((port) => {
                 const selected = destinationId === item.id && accessPortId === port.id;
@@ -269,7 +275,9 @@ export function ConnectPowerForm({
                       disabled={incompatible}
                       onChange={() => selectPort(item, port)}
                     />
-                    <span className="power-destination-glyph">{item.kind === 'DEVICE' ? '▤' : '▥'}</span>
+                    <span className="power-destination-glyph">
+                      {item.kind === 'DEVICE' ? '▤' : '▥'}
+                    </span>
                     <span>
                       <strong>{item.name}</strong>
                       <small>
@@ -305,7 +313,11 @@ export function ConnectPowerForm({
             <span>3</span>
             <div>
               <strong>Feed</strong>
-              <small>{source.feed ? `Locked by physical source: Feed ${source.feed}` : 'Assign the electrical feed identity'}</small>
+              <small>
+                {source.feed
+                  ? `Locked by physical source: Feed ${source.feed}`
+                  : 'Assign the electrical feed identity'}
+              </small>
             </div>
           </div>
 
@@ -327,7 +339,8 @@ export function ConnectPowerForm({
           <section className="power-connect-review">
             <h2>Commissioning candidates</h2>
             <p>
-              Candidates are drafts only. They do not appear in Full Power Trace until one is confirmed.
+              Candidates are drafts only. They do not appear in Full Power Trace until one is
+              confirmed.
             </p>
             {candidates.length ? (
               <div className="power-candidate-list">

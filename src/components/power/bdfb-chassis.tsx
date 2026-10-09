@@ -34,6 +34,13 @@ export interface BreakerPowerBinding {
   readonly accessPortLabel?: string;
   readonly mount?: string;
 }
+export interface BreakerTelemetryBindingSummary {
+  readonly breakerId: string;
+  readonly sourceIdentity: string;
+  readonly sourcePointId: string;
+  readonly metric: string;
+}
+
 
 function formatMetric(value: number | undefined, unit: string, decimals = 2): string {
   return value === undefined ? '—' : `${value.toFixed(decimals)} ${unit}`;
@@ -65,6 +72,7 @@ function breakerInspector(
   breaker: BdfbBreakerView,
   reading: BreakerTelemetryReading | undefined,
   bindings: readonly BreakerPowerBinding[],
+  telemetryBindings: readonly BreakerTelemetryBindingSummary[],
   canWritePower: boolean,
 ): InspectorEntity {
   const feeds = [...new Set(bindings.map((binding) => binding.feed).filter(Boolean))].join(' + ');
@@ -125,7 +133,17 @@ function breakerInspector(
           { label: 'Destination', value: destinations || 'Not provisioned' },
           { label: 'Equipment ID', value: breaker.id },
           { label: 'AccessPort', value: breaker.accessPortId },
-          { label: 'MQTT binding', value: breaker.rawPointId ?? 'Explicit TelemetryBinding' },
+          {
+            label: 'MQTT binding',
+            value:
+              telemetryBindings.length > 0
+                ? [...new Set(
+                    telemetryBindings.map(
+                      (binding) => binding.sourceIdentity + ' / ' + binding.sourcePointId,
+                    ),
+                  )].join(' · ')
+                : 'Not mapped',
+          },
         ],
       },
       ...(reading ? [{ title: 'MQTT telemetry', fields: telemetryFields(reading) }] : []),
@@ -182,6 +200,7 @@ function PanelBoard({
   panel,
   readingsByBreaker,
   bindingsByBreaker,
+  telemetryBindingsByBreaker,
   canWritePower,
   onInspect,
 }: Readonly<{
@@ -191,6 +210,9 @@ function PanelBoard({
   panel: BdfbPanelView;
   readingsByBreaker: Readonly<Record<string, BreakerTelemetryReading>>;
   bindingsByBreaker: Readonly<Record<string, readonly BreakerPowerBinding[]>>;
+  telemetryBindingsByBreaker: Readonly<
+    Record<string, readonly BreakerTelemetryBindingSummary[]>
+  >;
   canWritePower: boolean;
   onInspect: (entity: InspectorEntity, breakerId?: string) => void;
 }>) {
@@ -228,7 +250,11 @@ function PanelBoard({
               key={breaker.id}
               className="bdfb-endpoint bdfb-endpoint--breaker"
               data-telemetry={
-                readingsByBreaker[breaker.id] ? 'live' : breaker.rawPointId ? 'mapped' : 'unmapped'
+                readingsByBreaker[breaker.id]
+                  ? 'live'
+                  : telemetryBindingsByBreaker[breaker.id]?.length
+                    ? 'mapped'
+                    : 'unmapped'
               }
               onClick={() =>
                 onInspect(
@@ -240,6 +266,7 @@ function PanelBoard({
                     breaker,
                     readingsByBreaker[breaker.id],
                     bindingsByBreaker[breaker.id] ?? [],
+                    telemetryBindingsByBreaker[breaker.id] ?? [],
                     canWritePower,
                   ),
                   breaker.id,
@@ -360,11 +387,13 @@ export function BdfbChassis({
   device,
   presentation,
   powerBindings = [],
+  telemetryBindings = [],
   canWritePower = false,
 }: Readonly<{
   device: DeviceNode;
   presentation: BdfbPresentation;
   powerBindings?: readonly BreakerPowerBinding[];
+  telemetryBindings?: readonly BreakerTelemetryBindingSummary[];
   canWritePower?: boolean;
 }>) {
   const query = useSearchParams();
@@ -373,6 +402,13 @@ export function BdfbChassis({
     for (const binding of powerBindings) (grouped[binding.breakerId] ??= []).push(binding);
     return grouped as Readonly<Record<string, readonly BreakerPowerBinding[]>>;
   }, [powerBindings]);
+  const telemetryBindingsByBreaker = useMemo(() => {
+    const grouped: Record<string, BreakerTelemetryBindingSummary[]> = {};
+    for (const binding of telemetryBindings) {
+      (grouped[binding.breakerId] ??= []).push(binding);
+    }
+    return grouped as Readonly<Record<string, readonly BreakerTelemetryBindingSummary[]>>;
+  }, [telemetryBindings]);
 
   const initialPanel = (() => {
     const requested = query.get('panel');
@@ -413,6 +449,7 @@ export function BdfbChassis({
               breaker,
               readingsByBreaker[breaker.id],
               bindingsByBreaker[breaker.id] ?? [],
+              telemetryBindingsByBreaker[breaker.id] ?? [],
               canWritePower,
             );
           }
@@ -427,6 +464,7 @@ export function BdfbChassis({
     device,
     readingsByBreaker,
     bindingsByBreaker,
+    telemetryBindingsByBreaker,
     canWritePower,
   ]);
 
@@ -501,6 +539,7 @@ export function BdfbChassis({
                 panel={activePanel.panel}
                 readingsByBreaker={readingsByBreaker}
                 bindingsByBreaker={bindingsByBreaker}
+                telemetryBindingsByBreaker={telemetryBindingsByBreaker}
                 canWritePower={canWritePower}
                 onInspect={(entity, breakerId) => {
                   setSelected(entity);

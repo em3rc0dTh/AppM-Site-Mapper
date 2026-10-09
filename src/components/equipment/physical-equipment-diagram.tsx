@@ -124,7 +124,7 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
         ) : (
           <>
             <div
-              className={dense ? 'equipment-physical-slots' : 'equipment-physical-children'}
+              className={dense ? 'equipment-physical-slots' : `equipment-physical-children ${direction === 'COLUMN' ? 'is-column' : 'is-row'}`}
               style={{
                 '--composition-columns': columns,
                 '--composition-direction': direction,

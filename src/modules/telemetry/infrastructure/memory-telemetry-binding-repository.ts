@@ -49,10 +49,11 @@ export class MemoryTelemetryBindingRepository implements TelemetryBindingReposit
           binding.targetType === targetType &&
           ids.has(binding.targetId),
       )
-      .sort((left, right) =>
-        left.targetId.localeCompare(right.targetId) ||
-        left.sourceIdentity.localeCompare(right.sourceIdentity) ||
-        (left.sourcePointId ?? '').localeCompare(right.sourcePointId ?? ''),
+      .sort(
+        (left, right) =>
+          left.targetId.localeCompare(right.targetId) ||
+          left.sourceIdentity.localeCompare(right.sourceIdentity) ||
+          (left.sourcePointId ?? '').localeCompare(right.sourcePointId ?? ''),
       )
       .map((binding) => structuredClone(binding));
   }

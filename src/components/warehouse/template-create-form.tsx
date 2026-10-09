@@ -169,7 +169,14 @@ export function TemplateCreateForm() {
             {childMode === 'POSITIONAL' ? (
               <label>
                 Child slots
-                <input name="childCapacity" type="number" min="1" max="256" required placeholder="24" />
+                <input
+                  name="childCapacity"
+                  type="number"
+                  min="1"
+                  max="256"
+                  required
+                  placeholder="24"
+                />
               </label>
             ) : null}
             <label>

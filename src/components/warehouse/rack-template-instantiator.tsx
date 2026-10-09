@@ -126,9 +126,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
               <label>
                 Physical Equipment type
                 <select name="equipmentType" defaultValue="">
-                  <option value="">
-                    Use template ({selected?.equipmentType ?? 'CUSTOM'})
-                  </option>
+                  <option value="">Use template ({selected?.equipmentType ?? 'CUSTOM'})</option>
                   {EQUIPMENT_TYPES.map((type) => (
                     <option key={type} value={type}>
                       {type.replaceAll('_', ' ')}
@@ -139,9 +137,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
               <label>
                 Children mode
                 <select name="childMode" defaultValue="">
-                  <option value="">
-                    Use template ({selected?.childMode ?? 'DYNAMIC'})
-                  </option>
+                  <option value="">Use template ({selected?.childMode ?? 'DYNAMIC'})</option>
                   <option value="DYNAMIC">Dynamic</option>
                   <option value="POSITIONAL">Positional slots</option>
                 </select>

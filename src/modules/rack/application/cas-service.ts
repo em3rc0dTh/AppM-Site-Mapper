@@ -91,10 +91,7 @@ export class CasService {
 
     if (!this.repository.commitLayout) return failure('ATOMIC_CAS_STORAGE_REQUIRED');
     if (
-      !(await this.repository.commitLayout(
-        [rack.value, occupant],
-        [updatedRack, updatedEquipment],
-      ))
+      !(await this.repository.commitLayout([rack.value, occupant], [updatedRack, updatedEquipment]))
     ) {
       return failure('CAS_WRITE_CONFLICT');
     }
@@ -121,10 +118,7 @@ export class CasService {
     }
 
     const occupant = await this.repository.getById(occupantId);
-    if (
-      occupant?.kind !== 'EQUIPMENT' ||
-      occupant.rackPlacement?.rackId !== rack.value.id
-    ) {
+    if (occupant?.kind !== 'EQUIPMENT' || occupant.rackPlacement?.rackId !== rack.value.id) {
       await this.repository.replace(updated);
       return success(updated);
     }
@@ -132,12 +126,7 @@ export class CasService {
     if (!this.repository.commitLayout) return failure('ATOMIC_CAS_STORAGE_REQUIRED');
     const { rackPlacement: _placement, ...rest } = occupant;
     const released = { ...rest, updatedAt: nowIso() } as EquipmentNode;
-    if (
-      !(await this.repository.commitLayout(
-        [rack.value, occupant],
-        [updated, released],
-      ))
-    ) {
+    if (!(await this.repository.commitLayout([rack.value, occupant], [updated, released]))) {
       return failure('CAS_WRITE_CONFLICT');
     }
 

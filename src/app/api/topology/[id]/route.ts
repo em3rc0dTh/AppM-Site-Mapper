@@ -78,8 +78,7 @@ export async function PATCH(request: Request, context: Context) {
     if (!hasOnlyKeys(body, ['action'])) {
       return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
     }
-    result =
-      body.action === 'archive' ? await service.archive(id) : await service.restore(id);
+    result = body.action === 'archive' ? await service.archive(id) : await service.restore(id);
   } else if (body.action === 'move') {
     if (
       !hasOnlyKeys(body, ['action', 'parentId', 'slotIndex']) ||
@@ -108,10 +107,10 @@ export async function PATCH(request: Request, context: Context) {
       ...(parseEquipmentType(body.equipmentType)
         ? { equipmentType: parseEquipmentType(body.equipmentType)! }
         : {}),
-      ...(parseEquipmentChildMode(body.childMode) ? { childMode: parseEquipmentChildMode(body.childMode)! } : {}),
-      ...(typeof body.childCapacity === 'number'
-        ? { childCapacity: body.childCapacity }
+      ...(parseEquipmentChildMode(body.childMode)
+        ? { childMode: parseEquipmentChildMode(body.childMode)! }
         : {}),
+      ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
     });
   } else {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });

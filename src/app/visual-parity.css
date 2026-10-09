@@ -4993,7 +4993,6 @@ body {
   }
 }
 
-
 /* Device/BDFB viewport recovery: keep approved light surface and never clip inspectors. */
 .zip-bdfb-recovery-state {
   flex: 1;
@@ -5063,7 +5062,6 @@ body {
     padding-bottom: 24px !important;
   }
 }
-
 
 /* Warehouse catalog usability: independently scrollable page and scalable filtering. */
 .zip-app-shell:not(.app-shell--immersive) .zip-app-content {
@@ -5179,7 +5177,6 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
 
 /* Rack Elevation viewport contract:
    preserve the approved rack/CAS composition while preventing clipping. */
@@ -5385,7 +5382,6 @@ body {
   }
 }
 
-
 /* CAS editor: one disclosure, viewport-safe panel, never clipped by rack footer. */
 .zip-cas-popover {
   position: relative;
@@ -5454,7 +5450,6 @@ body {
   }
 }
 
-
 /* Canonical BDFB recovery: one explicit action, no manual Equipment construction. */
 .zip-bdfb-materialize-control {
   display: grid;
@@ -5482,7 +5477,6 @@ body {
   color: #b42318;
   font-size: 10px;
 }
-
 
 /* Recursive Equipment composition */
 .equipment-composition {
@@ -5760,7 +5754,6 @@ body {
   }
 }
 
-
 .equipment-composition-policy {
   display: grid;
   justify-items: end;
@@ -5825,7 +5818,6 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
 
 .equipment-lifecycle-actions {
   display: flex;

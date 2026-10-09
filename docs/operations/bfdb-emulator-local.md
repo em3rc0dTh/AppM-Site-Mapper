@@ -47,7 +47,31 @@ with the address reachable **from the process running Site Mapper**. Pinggy
 host/port are ephemeral. Never assume an old tunnel is still active. This
 laboratory `mqtt://` transport is not the final encrypted production design.
 
-## 3. Start the opt-in synthetic lab (preserves the ZIP demo)
+## 3. Start Site Mapper against MQTT with an empty topology
+
+Use this mode when the operator will create Network/Site/Room/Rack/Device/Equipment manually:
+
+```bash
+npm ci
+npm run local:mqtt
+```
+
+`local:mqtt`:
+
+1. starts Site Mapper in development + in-memory persistence;
+2. bootstraps only the temporary local administrator needed to sign in;
+3. does **not** call `seed-demo`;
+4. does **not** call `seed-bfdb-emulator`;
+5. enables the native MQTT subscriber using `.env.local`;
+6. subscribes to `data/dev/#`;
+7. waits for broker subscription plus RAW traffic from the three current emulator sources;
+8. leaves topology empty so all physical entities can be created manually.
+
+At this stage RAW MQTT may be visible while `acceptedMessages` remains zero. That is expected
+until Device/Equipment telemetry bindings exist. MQTT transport and domain binding are deliberately
+separate concerns.
+
+## 4. Start the opt-in synthetic lab (preserves the ZIP demo)
 
 ```bash
 npm ci
@@ -70,7 +94,7 @@ inventory. Persistent MongoDB onboarding requires matching actual
 `Device.serialNumber`, explicit `breaker.telemetry.rawPointId` or an approved
 `MQTT_SOURCE_DEVICE_MAP`, and surveyed geometry independent of this lab.
 
-## 4. Observe the real ingestion
+## 5. Observe the real ingestion
 
 After signing in:
 

@@ -498,6 +498,7 @@ export function EquipmentCompositionEditor({
         ) : <p>No child Equipment installed.</p>}
       </section>
       {showPositionEditor ? (
+        <>
       {showFullComposition && visibleCount > 4 ? <button type="button" onClick={() => setShowFullComposition(false)}>BACK TO SUMMARY</button> : null}
       {summary ? (
         <div className="equipment-slot-grid">
@@ -609,6 +610,7 @@ export function EquipmentCompositionEditor({
         </div>
       )}
 
+        </>
       ) : null}
 
       {isActive && composerOpen ? (

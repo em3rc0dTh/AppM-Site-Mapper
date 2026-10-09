@@ -52,12 +52,9 @@ export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput
     !isBoundedString(body.name, 120) ||
     (body.manufacturer !== undefined &&
       !isBoundedString(body.manufacturer, 120, { allowEmpty: true })) ||
-    (body.model !== undefined &&
-      !isBoundedString(body.model, 120, { allowEmpty: true })) ||
-    (body.category !== undefined &&
-      !isBoundedString(body.category, 120, { allowEmpty: true })) ||
-    (body.notes !== undefined &&
-      !isBoundedString(body.notes, 500, { allowEmpty: true }))
+    (body.model !== undefined && !isBoundedString(body.model, 120, { allowEmpty: true })) ||
+    (body.category !== undefined && !isBoundedString(body.category, 120, { allowEmpty: true })) ||
+    (body.notes !== undefined && !isBoundedString(body.notes, 500, { allowEmpty: true }))
   ) {
     return null;
   }
@@ -67,7 +64,8 @@ export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput
   const depthMm = number(body.depthMm) ?? (dimensions ? number(dimensions.depth) : undefined);
   const parsedEquipmentType =
     body.equipmentType === undefined ? undefined : parseEquipmentType(body.equipmentType);
-  const parsedChildMode = body.childMode === undefined ? undefined : parseEquipmentChildMode(body.childMode);
+  const parsedChildMode =
+    body.childMode === undefined ? undefined : parseEquipmentChildMode(body.childMode);
   const parsedAllowed =
     body.allowedChildTypes === undefined ? undefined : allowedChildTypes(body.allowedChildTypes);
 

@@ -117,16 +117,43 @@ export async function readBoundedJson(
   return shapeError ? { ok: false, error: shapeError } : { ok: true, value };
 }
 
+function firstForwardedValue(value: string | null): string | null {
+  const first = value?.split(',')[0]?.trim();
+  return first || null;
+}
+
 /** Cookie-authenticated browser mutations must not accept cross-site requests. */
 export function isSafeMutationRequest(request: Request): boolean {
   const fetchSite = request.headers.get('sec-fetch-site')?.toLowerCase();
   if (fetchSite === 'cross-site') return false;
 
+  // Sec-Fetch-Site is a browser-controlled forbidden header. If the browser
+  // explicitly classified the request as same-origin, do not reject it merely
+  // because a framework/reverse proxy rewrote request.url internally.
+  if (fetchSite === 'same-origin') return true;
+
   const origin = request.headers.get('origin');
   if (!origin) return true;
 
   try {
-    return new URL(origin).origin === new URL(request.url).origin;
+    const supplied = new URL(origin);
+    const internal = new URL(request.url);
+    if (supplied.origin === internal.origin) return true;
+
+    // Next.js/reverse proxies can expose an internal request.url origin while
+    // preserving the browser-visible authority in Host/X-Forwarded-*.
+    // Validate against that effective HTTP authority rather than special-casing
+    // localhost/127.0.0.1 aliases.
+    const host =
+      firstForwardedValue(request.headers.get('x-forwarded-host')) ??
+      firstForwardedValue(request.headers.get('host'));
+    if (!host) return false;
+
+    const proto =
+      firstForwardedValue(request.headers.get('x-forwarded-proto')) ??
+      internal.protocol.replace(':', '');
+    const effective = new URL(`${proto}://${host}`);
+    return supplied.origin === effective.origin;
   } catch {
     return false;
   }

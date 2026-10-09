@@ -5,12 +5,7 @@ async function dropIndexIfPresent(collection: Collection<Document>, name: string
   try {
     indexes = await collection.indexes();
   } catch (error) {
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      'code' in error &&
-      error.code === 26
-    ) {
+    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 26) {
       return;
     }
     throw error;
@@ -82,10 +77,7 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
 
   const telemetryBindings = database.collection('telemetry_bindings');
   await Promise.all([
-    telemetryBindings.createIndex(
-      { id: 1 },
-      { unique: true, name: 'uq_telemetry_binding_id' },
-    ),
+    telemetryBindings.createIndex({ id: 1 }, { unique: true, name: 'uq_telemetry_binding_id' }),
     telemetryBindings.createIndex(
       { protocol: 1, sourceIdentity: 1, sourcePointId: 1, metric: 1 },
       {

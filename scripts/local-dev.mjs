@@ -5,7 +5,9 @@ import { fileURLToPath } from 'node:url';
 
 const args = new Set(process.argv.slice(2));
 const mqttLab = args.has('--mqtt');
-if (mqttLab && existsSync('.env.local')) {
+const mqttOnly = args.has('--mqtt-only');
+const mqttEnabled = mqttLab || mqttOnly;
+if (mqttEnabled && existsSync('.env.local')) {
   // Node 22 loads credentials locally without copying secrets into Git.
   process.loadEnvFile('.env.local');
 }
@@ -29,8 +31,8 @@ const child = spawn(process.execPath, [nextBin, 'dev', '-H', host, '-p', String(
     APP_ENV: 'development',
     APP_PERSISTENCE: 'memory',
     BOOTSTRAP_ADMIN_TOKEN: bootstrapToken,
-    TELEMETRY_ENABLED: mqttLab ? 'true' : 'false',
-    ...(mqttLab
+    TELEMETRY_ENABLED: mqttEnabled ? 'true' : 'false',
+    ...(mqttEnabled
       ? {
           MQTT_BROKER_URL: process.env.MQTT_BROKER_URL || 'mqtt://127.0.0.1:1883',
           MQTT_TOPIC_PREFIX: 'data/dev/',
@@ -71,7 +73,7 @@ async function waitForHealth() {
   throw new Error('Timed out waiting for Site Mapper local server.');
 }
 
-async function bootstrapAndSeed() {
+async function bootstrapAndLogin() {
   const bootstrap = await fetch(`${baseUrl}/api/auth/bootstrap`, {
     method: 'POST',
     headers: {
@@ -93,11 +95,13 @@ async function bootstrapAndSeed() {
   const cookie = login.headers.get('set-cookie')?.split(';', 1)[0];
   if (!cookie) throw new Error('Local login did not return a session cookie.');
 
-  const seed = await fetch(`${baseUrl}/api/dev/seed-demo`, {
-    method: 'POST',
-    headers: { cookie },
-  });
-  if (!seed.ok) throw new Error(`Demo seed failed with HTTP ${seed.status}.`);
+  if (!mqttOnly) {
+    const seed = await fetch(`${baseUrl}/api/dev/seed-demo`, {
+      method: 'POST',
+      headers: { cookie },
+    });
+    if (!seed.ok) throw new Error(`Demo seed failed with HTTP ${seed.status}.`);
+  }
 
   if (mqttLab) {
     const lab = await fetch(`${baseUrl}/api/dev/seed-bfdb-emulator`, {
@@ -113,6 +117,61 @@ async function bootstrapAndSeed() {
     }
   }
   return cookie;
+}
+
+async function verifyMqttTransport(cookie) {
+  const deadline = Date.now() + 90_000;
+  let last = null;
+  console.log('Waiting for MQTT broker subscription and RAW emulator traffic…');
+
+  while (Date.now() < deadline) {
+    if (childExited) throw new Error('Next.js exited during MQTT transport verification.');
+    try {
+      const response = await fetch(`${baseUrl}/api/telemetry/diagnostics`, {
+        headers: { cookie },
+        cache: 'no-store',
+      });
+      if (!response.ok) throw new Error(`Diagnostics HTTP ${response.status}`);
+      last = await response.json();
+
+      const expectedTraffic =
+        serials.length === 0 ||
+        serials.every((serial) => {
+          const source = last.sources?.find((candidate) => candidate.serial === serial);
+          return (source?.rawMessages ?? 0) > 0;
+        });
+
+      if (last.connection === 'subscribed' && last.rawMessages > 0 && expectedTraffic) {
+        return last;
+      }
+    } catch (error) {
+      last = { status: error instanceof Error ? error.message : 'Unknown diagnostics error' };
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+  }
+
+  throw new Error(
+    'MQTT transport did not reach subscribed + RAW traffic.\n' +
+      JSON.stringify(
+        {
+          connection: last?.connection ?? last?.status ?? 'unknown',
+          lastError: last?.lastConnectionError,
+          rawMessages: last?.rawMessages ?? 0,
+          acceptedMessages: last?.acceptedMessages ?? 0,
+          rejectedMessages: last?.rejectedMessages ?? 0,
+          sources: last?.sources?.map((source) => ({
+            serial: source.serial,
+            raw: source.rawMessages,
+            mappedDeviceId: source.mappedDeviceId,
+            points: source.pointCount,
+          })),
+        },
+        null,
+        2,
+      ) +
+      '\nThis mode intentionally does not seed or bind topology. Start the emulator/broker and check .env.local.',
+  );
 }
 
 async function verifyEmulator(cookie) {
@@ -186,29 +245,50 @@ function openBrowser(url) {
 
 try {
   await waitForHealth();
-  const cookie = await bootstrapAndSeed();
-  const verified = mqttLab ? await verifyEmulator(cookie) : null;
+  const cookie = await bootstrapAndLogin();
+  const verified = mqttLab
+    ? await verifyEmulator(cookie)
+    : mqttOnly
+      ? await verifyMqttTransport(cookie)
+      : null;
   console.log('');
-  console.log(mqttLab ? 'Site Mapper MQTT EMULATOR VERIFIED.' : 'Site Mapper local demo is ready.');
+  console.log(
+    mqttLab
+      ? 'Site Mapper MQTT EMULATOR VERIFIED.'
+      : mqttOnly
+        ? 'Site Mapper MQTT TRANSPORT VERIFIED — topology remains empty.'
+        : 'Site Mapper local demo is ready.',
+  );
   console.log(`URL:      ${loginUrl}`);
   console.log(`Email:    ${email}`);
   console.log(`Password: ${password}`);
   if (verified) {
     console.log('Broker:   subscribed to data/dev/# (confirmed SUBACK)');
-    for (const sample of verified.sources) {
-      console.log(
-        `${sample.serial}: ${sample.pointCount}/96 raw points, ${sample.mappedBreakerCount}/96 breakers, ${sample.freshness}`,
-      );
+    if (mqttLab) {
+      for (const sample of verified.sources) {
+        console.log(
+          `${sample.serial}: ${sample.pointCount}/96 raw points, ${sample.mappedBreakerCount}/96 breakers, ${sample.freshness}`,
+        );
+      }
+    } else {
+      for (const sample of verified.sources) {
+        console.log(
+          `${sample.serial}: RAW=${sample.rawMessages}, mappedDevice=${sample.mappedDeviceId ?? 'none yet'}`,
+        );
+      }
+      console.log('Topology: EMPTY — create Network/Site/.../Equipment manually in the UI.');
     }
     console.log(`Diagnostics: ${baseUrl}/api/telemetry/diagnostics`);
   }
   console.log('');
   console.log(
-    'This lab is synthetic, in memory and resets on stop. It is NOT real surveyed inventory.',
+    mqttOnly
+      ? 'MQTT-only mode uses in-memory persistence and creates no topology seed. Data resets on stop.'
+      : 'This lab is synthetic, in memory and resets on stop. It is NOT real surveyed inventory.',
   );
   console.log('Press Ctrl+C to stop the local server.');
   console.log('');
-  openBrowser(mqttLab ? `${baseUrl}/network` : loginUrl);
+  openBrowser(mqttEnabled ? `${baseUrl}/network` : loginUrl);
 } catch (error) {
   console.error('');
   console.error(error instanceof Error ? error.message : error);

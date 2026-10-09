@@ -67,8 +67,7 @@ export class PowerService {
     const targetPaths = await this.repository.listForAccessPort(target.port.id);
     const exact = targetPaths.find(
       (path) =>
-        path.sourceAccessPortId === source.port.id &&
-        path.targetAccessPortId === target.port.id,
+        path.sourceAccessPortId === source.port.id && path.targetAccessPortId === target.port.id,
     );
     if (exact) return success(exact);
 

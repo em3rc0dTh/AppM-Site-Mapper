@@ -123,17 +123,28 @@ export class PowerContractService {
       (port) =>
         !(port.portType === 'POWER' && port.exposure === 'EXTERNAL' && port.direction !== 'OUTPUT'),
     );
-    const ports: AccessPort[] = normalized.map((port) => ({
-      id: port.id,
-      deviceId: equipment.deviceId,
-      equipmentId: equipment.id,
-      name: port.label,
-      portType: 'POWER',
-      direction: 'INPUT',
-      exposure: 'EXTERNAL',
-      lifecycle: 'ACTIVE',
-      ...(port.feed ? { attributes: { feed: port.feed } } : {}),
-    }));
+    if (normalized.some((port) => preserved.some((existing) => existing.id === port.id))) {
+      return failure('DUPLICATE_PORT_ID');
+    }
+    const existingById = new Map(equipment.accessPorts.map((port) => [port.id, port]));
+    const ports: AccessPort[] = normalized.map((port) => {
+      const existing = existingById.get(port.id);
+      const attributes: Record<string, unknown> = { ...(existing?.attributes ?? {}) };
+      if (port.feed) attributes.feed = port.feed;
+      else delete attributes.feed;
+      return {
+        ...(existing ?? {}),
+        id: port.id,
+        deviceId: equipment.deviceId,
+        equipmentId: equipment.id,
+        name: port.label,
+        portType: 'POWER',
+        direction: 'INPUT',
+        exposure: 'EXTERNAL',
+        lifecycle: 'ACTIVE',
+        ...(Object.keys(attributes).length ? { attributes } : {}),
+      };
+    });
 
     const updated: EquipmentNode = {
       ...equipment,

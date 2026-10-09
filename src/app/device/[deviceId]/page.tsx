@@ -145,7 +145,10 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               canWrite={canWriteTopology}
             />
           ) : view?.ok ? (
-            <RackElevation view={view.value} focusDeviceId={physical?.id} />
+            <RackElevation
+              view={view.value}
+              {...(physical?.id ? { focusDeviceId: physical.id } : {})}
+            />
           ) : (
             <p>No rack context is recorded for this inventory.</p>
           )}

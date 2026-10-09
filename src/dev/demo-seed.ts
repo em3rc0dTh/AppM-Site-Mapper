@@ -254,9 +254,7 @@ async function ensurePositionalEquipment(
     parentSlotIndex: slotIndex,
     name,
     equipmentType,
-    ...(childCapacity
-      ? { childMode: 'POSITIONAL' as const, childCapacity }
-      : {}),
+    ...(childCapacity ? { childMode: 'POSITIONAL' as const, childCapacity } : {}),
   });
   if (!created.ok || created.value.kind !== 'EQUIPMENT') {
     throw new Error(
@@ -270,11 +268,13 @@ async function ensureDemoBdfbEquipment(
   repository: TopologyRepository,
   topology: TopologyService,
   device: DeviceNode,
-): Promise<Readonly<{
-  chassis: EquipmentNode;
-  breakerA: EquipmentNode;
-  breakerB: EquipmentNode;
-}>> {
+): Promise<
+  Readonly<{
+    chassis: EquipmentNode;
+    breakerA: EquipmentNode;
+    breakerB: EquipmentNode;
+  }>
+> {
   let chassis: EquipmentNode;
   if (device.rootEquipmentIds.length === 0) {
     const created = await topology.create({
@@ -335,14 +335,7 @@ async function ensureDemoBdfbEquipment(
     'A1-01',
     'CIRCUIT_BREAKER',
   );
-  await ensurePositionalEquipment(
-    repository,
-    topology,
-    panelA,
-    1,
-    'A1-02',
-    'CIRCUIT_BREAKER',
-  );
+  await ensurePositionalEquipment(repository, topology, panelA, 1, 'A1-02', 'CIRCUIT_BREAKER');
   const breakerB = await ensurePositionalEquipment(
     repository,
     topology,

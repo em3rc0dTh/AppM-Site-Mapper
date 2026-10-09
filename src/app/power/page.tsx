@@ -18,7 +18,9 @@ interface Stage {
 }
 
 function feedFromStages(stages: readonly Stage[], fallback?: 'A' | 'B'): 'A' | 'B' | undefined {
-  const names = stages.filter((stage) => stage.kind === 'PANEL' || stage.kind === 'FRAME' || stage.kind === 'SHELF').map((stage) => stage.name);
+  const names = stages
+    .filter((stage) => stage.kind === 'PANEL' || stage.kind === 'FRAME' || stage.kind === 'SHELF')
+    .map((stage) => stage.name);
   for (const name of names) {
     const normalized = name.trim().toUpperCase();
     if (/^A(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*A\b/.test(normalized)) return 'A';

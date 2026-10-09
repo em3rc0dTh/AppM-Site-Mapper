@@ -4,7 +4,7 @@ import type { BreakerTelemetryReading } from '@/modules/telemetry/domain/entitie
 export interface BdfbTelemetryAggregate {
   readonly totalBreakers: number;
   readonly activeBreakers: number;
-  readonly emptyHolders: number;
+  readonly emptyPositions: number;
   readonly withoutLiveReading: number;
   readonly averageVoltageV?: number;
   readonly averageCurrentA?: number;
@@ -23,7 +23,7 @@ export function aggregateBdfbTelemetry(
   readings: readonly BreakerTelemetryReading[],
 ): BdfbTelemetryAggregate {
   const breakers = positions.filter((item): item is BdfbBreakerView => item !== null);
-  const emptyHolders = positions.length - breakers.length;
+  const emptyPositions = positions.length - breakers.length;
   const eligibleIds = new Set(breakers.map((breaker) => breaker.id));
   const liveReadings = readings.filter((reading) => eligibleIds.has(reading.breakerId));
   const latestReceivedAt = liveReadings
@@ -47,7 +47,7 @@ export function aggregateBdfbTelemetry(
   return {
     totalBreakers: breakers.length,
     activeBreakers: liveReadings.length,
-    emptyHolders,
+    emptyPositions,
     withoutLiveReading: Math.max(0, breakers.length - liveReadings.length),
     ...(average(voltages) === undefined ? {} : { averageVoltageV: average(voltages)! }),
     ...(average(currents) === undefined ? {} : { averageCurrentA: average(currents)! }),

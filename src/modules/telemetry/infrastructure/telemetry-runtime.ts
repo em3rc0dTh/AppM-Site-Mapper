@@ -70,6 +70,7 @@ function configuredBindings(value: string | undefined): readonly TelemetryBindin
       id: `env:mqtt:${source.trim()}`,
       protocol: 'MQTT' as const,
       sourceIdentity: source.trim(),
+      metric: 'SOURCE',
       targetType: 'DEVICE' as const,
       targetId: target.trim(),
       lifecycle: 'ACTIVE' as const,

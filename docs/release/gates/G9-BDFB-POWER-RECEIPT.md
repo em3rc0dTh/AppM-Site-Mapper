@@ -1,20 +1,15 @@
 # G9 — BDFB / Power Receipt
 
-**Status:** SUPERSEDED — historical receipt, not current-head certification  
-**Original gate:** G9  
-**Current authority:** Canonical Domain Contract v1.2
+**Status:** PASS  
+**Gate:** G9  
+**Current authority:** Canonical Domain Contract v1.2  
+**Certified implementation SHA:** `3dfeebb7822d3d3404d911352470721cb5b859a9`  
+**Certification workflow:** CI run #1039  
+**Workflow run ID:** `37961416613`
 
-## Historical note
+## Canonical v1.2 acceptance criteria
 
-The original G9 implementation was certified with an earlier BDFB-specific structure
-model. That implementation included concepts such as mandatory/implicit Frame handling,
-Holder terminology and a dedicated BDFB configuration service.
-
-Those concepts are no longer authoritative.
-
-## Current v1.2 acceptance criteria
-
-The current implementation must certify:
+The certified implementation verifies that:
 
 - BDFB is a Device specialization only;
 - physical hierarchy is canonical recursive Equipment;
@@ -28,10 +23,29 @@ The current implementation must certify:
 - PowerPath connects AccessPort → AccessPort;
 - Rack CAS remains independent from internal Equipment composition;
 - mutations respect RBAC, strict request validation and atomic persistence;
-- unit, integration, certification, build and dependency audit gates pass on the
-  implementation head being certified.
+- Equipment archive/restore is separated from physical topology mutation;
+- recursive Equipment / Warehouse / Topology HTTP write boundaries enforce
+  bounded JSON, strict fields and same-origin protections;
+- production browser security includes nonce-based CSP;
+- dependency audit is part of the certification gate.
 
-## Certification state
+## Executed certification gate
 
-A prior historical CI result does not certify later implementation heads. This receipt
-must only be marked PASS for a concrete current SHA after the full CI gate succeeds.
+The following steps completed successfully on CI run #1039:
+
+- Typecheck;
+- Lint;
+- Format check;
+- Unit tests;
+- Integration tests;
+- System certification;
+- Production build;
+- Production dependency audit.
+
+This receipt supersedes the earlier historical G9 interpretation that used a parallel
+BDFB structure model, Holder terminology or a dedicated BDFB materialization service.
+
+## Certification rule
+
+A later code or contract change must not inherit this PASS implicitly. It must pass the
+same CI gate again before being called certified.

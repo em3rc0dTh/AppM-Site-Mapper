@@ -305,6 +305,7 @@ describe('MK1 system golden path', () => {
       id: 'cert-source-binding',
       protocol: 'MQTT',
       sourceIdentity: 'CERT-BDFB-001',
+      metric: 'SOURCE',
       targetType: 'DEVICE',
       targetId: bdfb.id,
       lifecycle: 'ACTIVE',

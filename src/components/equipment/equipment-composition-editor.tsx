@@ -35,6 +35,9 @@ export function EquipmentCompositionEditor({
   const [configurationMode, setConfigurationMode] = useState<EquipmentChildMode>(
     equipment.childMode,
   );
+  const [layoutDirection, setLayoutDirection] = useState<'ROW' | 'COLUMN'>(equipment.presentation?.direction ?? 'ROW');
+  const [maxPerLine, setMaxPerLine] = useState(equipment.presentation?.maxPerLine?.toString() ?? 'auto');
+  const [childrenVisibility, setChildrenVisibility] = useState<'AUTO' | 'INLINE' | 'SUMMARY'>(equipment.presentation?.childrenVisibility ?? 'AUTO');
   const [targetSlot, setTargetSlot] = useState<number | null>(null);
   const [mode, setMode] = useState<'warehouse' | 'one-off'>('warehouse');
   const [oneOffChildMode, setOneOffChildMode] = useState<EquipmentChildMode>('DYNAMIC');
@@ -118,6 +121,11 @@ export function EquipmentCompositionEditor({
           action: 'configure-equipment',
           equipmentType: String(form.get('equipmentType') ?? equipment.equipmentType),
           childMode: configurationMode,
+          presentation: {
+            direction: layoutDirection,
+            maxPerLine: maxPerLine === 'auto' ? null : Number(maxPerLine),
+            childrenVisibility,
+          },
           childCapacity:
             configurationMode === 'POSITIONAL' ? Number(form.get('childCapacity')) : undefined,
         }),
@@ -253,6 +261,17 @@ export function EquipmentCompositionEditor({
       ? allowed[0]
       : '';
 
+  const visibleCount = equipment.children.length;
+  const summary = equipment.presentation?.childrenVisibility === 'SUMMARY' && visibleCount > 0;
+  const lineLimit = equipment.presentation?.maxPerLine ?? visibleCount;
+  const itemCount = Math.max(1, Math.min(visibleCount || 1, lineLimit));
+  const compositionStyle = {
+    display: 'grid',
+    gridTemplateColumns: equipment.presentation?.direction === 'COLUMN'
+      ? `repeat(${Math.max(1, Math.ceil(visibleCount / itemCount))}, minmax(0, 1fr))`
+      : `repeat(${itemCount}, minmax(0, 1fr))`,
+    maxWidth: '100%',
+  };
   return (
     <section className="equipment-composition">
       <header className="equipment-composition-header">
@@ -280,6 +299,9 @@ export function EquipmentCompositionEditor({
                     type="button"
                     onClick={() => {
                       setConfigurationMode(equipment.childMode);
+                      setLayoutDirection(equipment.presentation?.direction ?? 'ROW');
+                      setMaxPerLine(equipment.presentation?.maxPerLine?.toString() ?? 'auto');
+                      setChildrenVisibility(equipment.presentation?.childrenVisibility ?? 'AUTO');
                       setConfigurationOpen((value) => !value);
                     }}
                   >
@@ -358,14 +380,40 @@ export function EquipmentCompositionEditor({
               />
             </label>
           ) : null}
+          <label>
+            Layout direction
+            <select value={layoutDirection} onChange={(event) => setLayoutDirection(event.target.value as 'ROW' | 'COLUMN')}>
+              <option value="ROW">Row</option>
+              <option value="COLUMN">Column</option>
+            </select>
+          </label>
+          <label>
+            Max items per {layoutDirection === 'ROW' ? 'row' : 'column'}
+            <select value={maxPerLine} onChange={(event) => setMaxPerLine(event.target.value)}>
+              <option value="auto">Auto</option>
+              {Array.from({ length: 256 }, (_, index) => index + 1).map((amount) => <option key={amount} value={amount}>{amount}</option>)}
+            </select>
+          </label>
+          <label>
+            Child display
+            <select value={childrenVisibility} onChange={(event) => setChildrenVisibility(event.target.value as 'AUTO' | 'INLINE' | 'SUMMARY')}>
+              <option value="AUTO">Auto</option>
+              <option value="INLINE">Inline</option>
+              <option value="SUMMARY">Summary</option>
+            </select>
+          </label>
           <button type="submit" disabled={busy}>
             {busy ? 'Saving…' : 'Save composition'}
           </button>
         </form>
       ) : null}
 
-      {equipment.childMode === 'POSITIONAL' ? (
+      {summary ? (
         <div className="equipment-slot-grid">
+          <article className="equipment-slot"><strong>{equipment.children.filter(Boolean).length} occupied / {visibleCount} positions</strong><p>Open this Equipment to manage its immediate children.</p><button type="button" onClick={() => setConfigurationOpen(true)}>Show composition settings</button></article>
+        </div>
+      ) : equipment.childMode === 'POSITIONAL' ? (
+        <div className="equipment-slot-grid" style={compositionStyle}>
           {equipment.children.map((childId, index) => {
             const child = childId ? byId.get(childId) : undefined;
             return (

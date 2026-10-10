@@ -41,15 +41,15 @@ Clicking a terminal does not create a Power Path or a network link.
 
 ## Representative acceptance cases
 
-| Focus | Expected presentation |
-|---|---|
-| BDFB Chassis (2 Frames) | Two navigable Frame boxes; small Panel previews, no exploded breakers |
-| BDFB Frame (2 Panels) | Two Panel boxes with capacity summaries |
-| BDFB Panel (24 positions) | Focused numbered positional grid; occupied slots link to their Equipment |
-| BDFB Circuit Breaker | Leaf faceplate with only its recorded Access Ports |
-| Network Switch Chassis (0 children, 2 ports) | Recorded DATA and POWER terminals; no invented 48 RJ45 ports |
-| Network Board (48 positions) | Focused grid; a parent sees only its board summary |
-| 1000-position Equipment | Summary first, incremental display when explicitly expanded |
+| Focus                                        | Expected presentation                                                    |
+| -------------------------------------------- | ------------------------------------------------------------------------ |
+| BDFB Chassis (2 Frames)                      | Two navigable Frame boxes; small Panel previews, no exploded breakers    |
+| BDFB Frame (2 Panels)                        | Two Panel boxes with capacity summaries                                  |
+| BDFB Panel (24 positions)                    | Focused numbered positional grid; occupied slots link to their Equipment |
+| BDFB Circuit Breaker                         | Leaf faceplate with only its recorded Access Ports                       |
+| Network Switch Chassis (0 children, 2 ports) | Recorded DATA and POWER terminals; no invented 48 RJ45 ports             |
+| Network Board (48 positions)                 | Focused grid; a parent sees only its board summary                       |
+| 1000-position Equipment                      | Summary first, incremental display when explicitly expanded              |
 
 ## Limitations
 

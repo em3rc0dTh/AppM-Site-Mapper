@@ -125,7 +125,7 @@ export function TopologyCreateForm({
       <PolygonEditor
         title={`DRAW ${kind === 'ROOM_SUBSTRUCTURE' ? 'ROOM' : kind} BOUNDARY · ${String(pending.name)}`}
         context={boundaryContext}
-        contextLabel={boundaryLabel}
+        {...(boundaryLabel ? { contextLabel: boundaryLabel } : {})}
         contextOverlays={contextOverlays}
         validate={(polygon: readonly PointMm[]) => {
           if (kind === 'STRUCTURE' && boundaryContext.length >= 3) {

@@ -39,6 +39,9 @@ function SourceCard({
       <strong>{leg?.source.entityName ?? `Feed ${feed} not configured`}</strong>
       <small>{leg?.source.panel ? `Panel ${leg.source.panel}` : 'No source panel'}</small>
       <small>{leg?.source.breaker ? `CB ${leg.source.breaker}` : 'No breaker'}</small>
+      {leg?.source.breakerSerialNumber ? (
+        <small>Breaker SN: {leg.source.breakerSerialNumber}</small>
+      ) : null}
     </article>
   );
 }
@@ -171,8 +174,12 @@ function FeedTrace({
         index={1}
         label="Source Device (BDFB)"
         value={leg.source.entityName}
-        detail={leg.telemetry.sourceIdentity}
-        status={leg.telemetry.status === 'LIVE' ? 'Online' : leg.telemetry.status}
+        detail={
+          leg.source.deviceSerialNumber
+            ? `Device SN: ${leg.source.deviceSerialNumber}`
+            : 'Device SN not assigned'
+        }
+        status="Recorded"
       />
       <TraceStep
         index={2}
@@ -192,8 +199,12 @@ function FeedTrace({
         index={4}
         label="Circuit Breaker"
         value={leg.source.breaker ?? '—'}
-        detail={leg.source.breakerId}
-        status={leg.telemetry.status === 'LIVE' ? 'Live' : 'Mapped'}
+        detail={
+          leg.source.breakerSerialNumber
+            ? `Breaker SN: ${leg.source.breakerSerialNumber} · ID: ${leg.source.breakerId ?? '—'}`
+            : `Breaker ID: ${leg.source.breakerId ?? '—'} · SN not assigned`
+        }
+        status={leg.telemetry.status}
       />
       <TraceStep
         index={5}
@@ -206,7 +217,11 @@ function FeedTrace({
         index={6}
         label="Telemetry"
         value={telemetry}
-        detail={leg.telemetry.receivedAt}
+        detail={
+          leg.telemetry.sourceIdentity
+            ? `MQTT sn: ${leg.telemetry.sourceIdentity}${leg.telemetry.rawPointId ? ` · Raw point: ${leg.telemetry.rawPointId}` : ''}${leg.telemetry.receivedAt ? ` · Received: ${leg.telemetry.receivedAt}` : ''}`
+            : 'No breaker-specific MQTT binding'
+        }
         status={leg.telemetry.status}
       />
       <TraceStep

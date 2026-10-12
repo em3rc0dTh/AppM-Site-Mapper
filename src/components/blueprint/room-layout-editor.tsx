@@ -12,6 +12,7 @@ import {
 } from '@/modules/spatial/domain/layout-draft';
 import { gridCoordinateToPoint, pointToGridCoordinate } from '@/modules/spatial/domain/grid';
 import {
+  polygonBounds,
   polygonInsidePolygon,
   polygonsOverlapArea,
   type PointMm,
@@ -124,7 +125,7 @@ export function RoomLayoutEditor({
           INVALID_CLUSTER: 'Select an existing Bay with a valid boundary.',
           INVALID_DIMENSIONS: 'Rack width and depth must be positive finite dimensions.',
           NEGATIVE_POSITION_REFERENCE:
-            'Bay frontage uses negative coordinates. Rack Positions begin at X = 0 and Y = 0 (A-1). Move the Bay frontage onto the canonical positive grid.',
+            'Bay frontal edge is outside the representable Position grid (Y < 0 or entirely X <= 0). Edit the Bay boundary; moving/zooming the canvas does not change physical coordinates.',
           BAY_FRONTAGE_TOO_NARROW:
             'Bay frontage is too narrow or has no continuous space for this rack width.',
           RACK_OUTSIDE_ROOM: 'Rack depth would extend outside the Room boundary.',
@@ -133,7 +134,13 @@ export function RoomLayoutEditor({
           NO_VALID_GRID_ANCHOR:
             'No valid grid anchor is available. Check the Bay top edge and existing positions.',
         } satisfies Record<ReturnType<typeof explainRackPlacementFailure>, string>;
-        setError(`RACK AUTO-PLACEMENT BLOCKED [${reason}]: ${messages[reason]}`);
+        const cluster = draft.clusters.find((candidate) => candidate.id === clusterId);
+        const bounds = cluster ? polygonBounds(cluster.polygon) : null;
+        const measured = bounds
+          ? ` Bay "${cluster?.name}": X ${Math.round(bounds.minX)}–${Math.round(bounds.maxX)} mm, frontal Y ${Math.round(bounds.minY)} mm. Rack ${width} × ${depth} mm.`
+          : '';
+        setSelected(clusterId);
+        setError(`RACK AUTO-PLACEMENT BLOCKED [${reason}]: ${messages[reason]}${measured}`);
         return;
       }
 

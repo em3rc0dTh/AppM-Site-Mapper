@@ -172,7 +172,7 @@ export class TopologyService {
       const structure = parent.parentId ? await this.repository.getById(parent.parentId) : null;
       if (structure?.kind !== 'STRUCTURE' || !structure.polygon)
         return failure('STRUCTURE_BOUNDARY_REQUIRED');
-      if (!polygonInsidePolygon(polygon!, structure.polygon))
+      if (structure.polygon && !polygonInsidePolygon(polygon!, structure.polygon))
         return failure('ROOM_OUTSIDE_STRUCTURE');
       const siblings = await this.repository.listChildren(parent.id);
       if (

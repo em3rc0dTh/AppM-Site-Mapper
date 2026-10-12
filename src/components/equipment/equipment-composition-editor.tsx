@@ -746,8 +746,8 @@ export function EquipmentCompositionEditor({
               {allowed.length > 0 ? (
                 <p className="equipment-child-type-notice">
                   This {label(equipment.equipmentType)} accepts only{' '}
-                  <strong>{allowed.map(label).join(', ')}</strong> children. Install the
-                  allowed Equipment first; add its own children inside that Equipment.
+                  <strong>{allowed.map(label).join(', ')}</strong> children. Install the allowed
+                  Equipment first; add its own children inside that Equipment.
                 </p>
               ) : null}
               <label>
@@ -757,7 +757,9 @@ export function EquipmentCompositionEditor({
                   name="equipmentType"
                   defaultValue={defaultWarehouseType}
                 >
-                  <option value="">Use template ({selectedTemplate?.equipmentType ?? 'CUSTOM'})</option>
+                  <option value="">
+                    Use template ({selectedTemplate?.equipmentType ?? 'CUSTOM'})
+                  </option>
                   {permissibleChildTypes.map((type) => (
                     <option key={type} value={type}>
                       {label(type)}

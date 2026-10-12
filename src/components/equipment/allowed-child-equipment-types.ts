@@ -8,7 +8,9 @@ import { EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
 export function allowedChildEquipmentTypes(
   allowed: readonly EquipmentType[],
 ): readonly EquipmentType[] {
-  return allowed.length ? EQUIPMENT_TYPES.filter((type) => allowed.includes(type)) : EQUIPMENT_TYPES;
+  return allowed.length
+    ? EQUIPMENT_TYPES.filter((type) => allowed.includes(type))
+    : EQUIPMENT_TYPES;
 }
 
 export function canInstallChildType(

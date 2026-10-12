@@ -228,3 +228,38 @@ It does not claim:
 [ADR-017](../adr/ADR-017-independent-equipment-telemetry.md) is authoritative for independent identities, source authentication, transition and aggregation. Every active Equipment can own a source, including a nested module or breaker. Matching a unique SN binds to that exact Equipment, not its owning Device. Own measurements and explicit gateway point measurements are available through the reusable inspector.
 
 `GET /api/telemetry/entity` provides authenticated exact-target LIVE/history. `telemetry_entity_samples` stores generic patches with original target and source identity; existing `telemetry_samples` remains the BDFB electrical projection. History does not infer attribution from the current serial number. BDFB aggregates explicitly select canonical breaker readings across source Equipment while retaining per-reading provenance.
+
+
+## Telemetry on every breaker bar (2026-10-12)
+
+In the BDFB chassis, opening a panel renders a separate LIVE status and four values
+(V, A, W and kWh) **inside each existing Circuit Breaker bar**. Selecting the
+breaker opens its per-breaker inspector with the same exact source identity,
+raw point (when applicable), timestamp and available metrics. The whole-BDFB
+average remains a separate aggregate and never replaces an individual reading.
+
+The display accepts exactly two proven attribution paths:
+
+1. **Explicit BFDB gateway binding:** a canonical Breaker Equipment ID has
+   active source identity + raw point + metric bindings. The BDFB projection
+   attaches the resulting measurement to that breaker only.
+2. **Independent Equipment SOURCE:** the breaker itself owns a verified
+   Equipment target binding (for example through its unique serial number)
+   and reports canonical scalar fields `voltageV`, `currentA`, `powerW`,
+   `energyKwh`. Reported units must agree with V/A/W/kWh.
+
+A raw panel payload such as `0_1_1`, `0_1_2` **does not** prove which
+physical breaker owns each point. There is no automatic panel-order
+assignment and no copying of the panel payload to its children.
+Explicit commissioning/bindings remain required if the publisher reports
+the whole panel and its individual breakers do not have their own source.
+
+Metric values are only labeled LIVE while fresh (30 seconds).
+An explicitly mapped breaker without a fresh accepted measurement shows
+`MAPPED · NO LIVE READING`. An unbound breaker shows
+`UNMAPPED · NO BREAKER BINDING` and four placeholders.
+An empty Holder position is not treated as a breaker and never shows readings.
+Source serial, raw point and last packet time remain visible on the bar.
+
+This UI change does not create missing persisted bindings, import a new
+source or certify the physical correspondence of points in the field.

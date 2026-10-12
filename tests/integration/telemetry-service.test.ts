@@ -281,7 +281,7 @@ describe('TelemetryService', () => {
 
     expect(result.ok).toBe(true);
     expect(result.ok ? result.value.targetId : null).toBe(bdfb.id);
-    expect(result.ok ? result.value.breakerReadings?.length ?? 0 : -1).toBe(0);
+    expect(result.ok ? (result.value.breakerReadings?.length ?? 0) : -1).toBe(0);
     const stored = await bindings.listForSource('MQTT', 'EMU-BFDB-CANONICAL');
     expect(stored).toHaveLength(1);
     expect(stored[0]).toMatchObject({
@@ -293,10 +293,14 @@ describe('TelemetryService', () => {
     // Repeated messages do not insert duplicate SOURCE bindings.
     const again = await service.ingest(
       'data/dev/EMU-BFDB-CANONICAL',
-      new TextEncoder().encode(JSON.stringify({
-        method: 'update', sn: 'EMU-BFDB-CANONICAL', timestamp: 1790580001,
-        reported: {},
-      })),
+      new TextEncoder().encode(
+        JSON.stringify({
+          method: 'update',
+          sn: 'EMU-BFDB-CANONICAL',
+          timestamp: 1790580001,
+          reported: {},
+        }),
+      ),
     );
     expect(again.ok).toBe(true);
     expect(await bindings.listForSource('MQTT', 'EMU-BFDB-CANONICAL')).toHaveLength(1);
@@ -360,20 +364,33 @@ describe('TelemetryService', () => {
     ).toEqual({ ok: false, error: 'UNKNOWN_SOURCE' });
   });
 
-
   it('discovers a BDFB root Chassis SN through its Device without confusing breaker serials', async () => {
-    const owner = { ...device('bdfb-chassis-owner', 'DEVICE-OTHER-SN'), deviceType: 'BDFB' as const };
+    const owner = {
+      ...device('bdfb-chassis-owner', 'DEVICE-OTHER-SN'),
+      deviceType: 'BDFB' as const,
+    };
     const chassis = { ...equipment('bdfb-root-chassis', owner), serialNumber: 'EMU-BFDB-03' };
     const withRoot = { ...owner, rootEquipmentIds: [chassis.id] };
     const repo = new MemoryTopologyRepository([withRoot, chassis]);
     const bindings = new MemoryTelemetryBindingRepository();
-    const service = new TelemetryService(repo, new TelemetryHub(5), {
-      topicPrefix: 'data/dev/', maxPayloadBytes: 4096,
-    }, {}, bindings);
-    const payload = new TextEncoder().encode(JSON.stringify({
-      method: 'update', sn: 'EMU-BFDB-03', timestamp: 1790580000,
-      reported: { '0_1_1': { U1: 12.3 } },
-    }));
+    const service = new TelemetryService(
+      repo,
+      new TelemetryHub(5),
+      {
+        topicPrefix: 'data/dev/',
+        maxPayloadBytes: 4096,
+      },
+      {},
+      bindings,
+    );
+    const payload = new TextEncoder().encode(
+      JSON.stringify({
+        method: 'update',
+        sn: 'EMU-BFDB-03',
+        timestamp: 1790580000,
+        reported: { '0_1_1': { U1: 12.3 } },
+      }),
+    );
     const result = await service.ingest('data/dev/EMU-BFDB-03', payload);
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -389,16 +406,32 @@ describe('TelemetryService', () => {
     const owner = { ...device('duplicate-owner', 'SOME-OTHER-SN'), deviceType: 'BDFB' as const };
     const root = { ...equipment('root-one', owner), serialNumber: 'EMU-DUP' };
     const nested = { ...equipment('root-two', owner), serialNumber: 'EMU-DUP' };
-    const repo = new MemoryTopologyRepository([{ ...owner, rootEquipmentIds: [root.id] }, root, nested]);
+    const repo = new MemoryTopologyRepository([
+      { ...owner, rootEquipmentIds: [root.id] },
+      root,
+      nested,
+    ]);
     const bindings = new MemoryTelemetryBindingRepository();
-    const service = new TelemetryService(repo, new TelemetryHub(3), {
-      topicPrefix: 'data/dev/', maxPayloadBytes: 4096,
-    }, {}, bindings);
+    const service = new TelemetryService(
+      repo,
+      new TelemetryHub(3),
+      {
+        topicPrefix: 'data/dev/',
+        maxPayloadBytes: 4096,
+      },
+      {},
+      bindings,
+    );
     const result = await service.ingest(
       'data/dev/EMU-DUP',
-      new TextEncoder().encode(JSON.stringify({
-        method: 'update', sn: 'EMU-DUP', timestamp: 1790580000, reported: {},
-      })),
+      new TextEncoder().encode(
+        JSON.stringify({
+          method: 'update',
+          sn: 'EMU-DUP',
+          timestamp: 1790580000,
+          reported: {},
+        }),
+      ),
     );
     expect(result).toEqual({ ok: false, error: 'AMBIGUOUS_SOURCE_BINDING' });
     expect(await bindings.listForSource('MQTT', 'EMU-DUP')).toHaveLength(0);
@@ -413,48 +446,101 @@ describe('TelemetryService', () => {
     };
     const repo = new MemoryTopologyRepository([owner, breaker]);
     const bindings = new MemoryTelemetryBindingRepository();
-    const service = new TelemetryService(repo, new TelemetryHub(3), {
-      topicPrefix: 'data/dev/', maxPayloadBytes: 4096,
-    }, {}, bindings);
-    const result = await service.ingest('data/dev/BREAKER-SN',
-      new TextEncoder().encode(JSON.stringify({
-        method: 'update', sn: 'BREAKER-SN', timestamp: 1790580000, reported: {},
-      })));
+    const service = new TelemetryService(
+      repo,
+      new TelemetryHub(3),
+      {
+        topicPrefix: 'data/dev/',
+        maxPayloadBytes: 4096,
+      },
+      {},
+      bindings,
+    );
+    const result = await service.ingest(
+      'data/dev/BREAKER-SN',
+      new TextEncoder().encode(
+        JSON.stringify({
+          method: 'update',
+          sn: 'BREAKER-SN',
+          timestamp: 1790580000,
+          reported: {},
+        }),
+      ),
+    );
     expect(result).toEqual({ ok: false, error: 'INVALID_BINDING_TARGET' });
     expect(await bindings.listForSource('MQTT', 'BREAKER-SN')).toHaveLength(0);
   });
 
   it('recovers from a stale environment map when inventory uniquely identifies the BDFB', async () => {
-    const owner = { ...device('correct-owner', 'EMU-BFDB-STALENVMAP'), deviceType: 'BDFB' as const };
+    const owner = {
+      ...device('correct-owner', 'EMU-BFDB-STALENVMAP'),
+      deviceType: 'BDFB' as const,
+    };
     const bindings = new MemoryTelemetryBindingRepository();
     const repo = new MemoryTopologyRepository([owner]);
-    const service = new TelemetryService(repo, new TelemetryHub(5), {
-      topicPrefix: 'data/dev/', maxPayloadBytes: 4096,
-    }, { configuredBindings: [binding('env:mqtt:EMU-BFDB-STALENVMAP',
-      'EMU-BFDB-STALENVMAP', 'DEVICE', 'old-db-id')] }, bindings);
-    const result = await service.ingest('data/dev/EMU-BFDB-STALENVMAP',
-      new TextEncoder().encode(JSON.stringify({
-        method: 'update', sn: 'EMU-BFDB-STALENVMAP',
-        timestamp: 1790580000, reported: {},
-      })));
+    const service = new TelemetryService(
+      repo,
+      new TelemetryHub(5),
+      {
+        topicPrefix: 'data/dev/',
+        maxPayloadBytes: 4096,
+      },
+      {
+        configuredBindings: [
+          binding('env:mqtt:EMU-BFDB-STALENVMAP', 'EMU-BFDB-STALENVMAP', 'DEVICE', 'old-db-id'),
+        ],
+      },
+      bindings,
+    );
+    const result = await service.ingest(
+      'data/dev/EMU-BFDB-STALENVMAP',
+      new TextEncoder().encode(
+        JSON.stringify({
+          method: 'update',
+          sn: 'EMU-BFDB-STALENVMAP',
+          timestamp: 1790580000,
+          reported: {},
+        }),
+      ),
+    );
     expect(result.ok).toBe(true);
     expect(result.ok ? result.value.targetId : null).toBe(owner.id);
-    expect((await bindings.listForSource('MQTT', 'EMU-BFDB-STALENVMAP'))[0]?.targetId).toBe(owner.id);
+    expect((await bindings.listForSource('MQTT', 'EMU-BFDB-STALENVMAP'))[0]?.targetId).toBe(
+      owner.id,
+    );
   });
 
   it('fails closed for a stale persisted SOURCE mapping, never silently retargeting it', async () => {
-    const owner = { ...device('not-old-owner', 'EMU-STALE-PERSISTED'), deviceType: 'BDFB' as const };
+    const owner = {
+      ...device('not-old-owner', 'EMU-STALE-PERSISTED'),
+      deviceType: 'BDFB' as const,
+    };
     const bindings = new MemoryTelemetryBindingRepository([
       binding('manual-source', 'EMU-STALE-PERSISTED', 'DEVICE', 'missing-id'),
     ]);
-    const service = new TelemetryService(new MemoryTopologyRepository([owner]), new TelemetryHub(5), {
-      topicPrefix: 'data/dev/', maxPayloadBytes: 4096,
-    }, {}, bindings);
-    expect(await service.ingest('data/dev/EMU-STALE-PERSISTED',
-      new TextEncoder().encode(JSON.stringify({
-        method: 'update', sn: 'EMU-STALE-PERSISTED',
-        timestamp: 1790580000, reported: {},
-      })))).toEqual({ ok: false, error: 'INVALID_BINDING_TARGET' });
+    const service = new TelemetryService(
+      new MemoryTopologyRepository([owner]),
+      new TelemetryHub(5),
+      {
+        topicPrefix: 'data/dev/',
+        maxPayloadBytes: 4096,
+      },
+      {},
+      bindings,
+    );
+    expect(
+      await service.ingest(
+        'data/dev/EMU-STALE-PERSISTED',
+        new TextEncoder().encode(
+          JSON.stringify({
+            method: 'update',
+            sn: 'EMU-STALE-PERSISTED',
+            timestamp: 1790580000,
+            reported: {},
+          }),
+        ),
+      ),
+    ).toEqual({ ok: false, error: 'INVALID_BINDING_TARGET' });
   });
 
   it('enforces stream subscriber capacity', () => {

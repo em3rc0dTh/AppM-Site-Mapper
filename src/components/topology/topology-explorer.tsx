@@ -105,9 +105,8 @@ export function TopologyExplorer({
           <div className="level-room-overlap-warning" role="alert">
             <strong>ROOM GEOMETRY CONFLICT · {roomPairs.length} overlapping pair(s)</strong>
             <span>
-              Existing surveyed Rooms share floor area. Inspect and correct their boundaries;
-              new rooms cannot overlap.
-              {' '}{roomPairs.slice(0, 3).join(' · ')}
+              Existing surveyed Rooms share floor area. Inspect and correct their boundaries; new
+              rooms cannot overlap. {roomPairs.slice(0, 3).join(' · ')}
             </span>
           </div>
         )}

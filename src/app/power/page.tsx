@@ -158,8 +158,11 @@ export default async function PowerPage({
         path,
         source,
         target,
-        feed: feedFromStages(sourceStages, path.feed),
-        stages: [...sourceStages, ...targetStages.reverse()],
+        // The persisted PowerPath feed is authoritative; labels are hints only.
+        feed: path.feed ?? feedFromStages(sourceStages),
+        sourceStages,
+        targetStages,
+        stages: [...sourceStages, ...targetStages.toReversed()],
       };
     }),
   );
@@ -180,9 +183,9 @@ export default async function PowerPage({
     ),
   ];
 
-  const renderRow = (stages: readonly Stage[], dim = false) => (
-    <div className={`zip-power-row ${dim ? 'is-dim' : ''}`}>
-      {stages.slice(0, 6).map((stage, index) => (
+  const renderRow = (stages: readonly Stage[]) => (
+    <div className="zip-power-row">
+      {stages.map((stage, index) => (
         <div className="zip-power-node-wrap" key={`${stage.id}-${index}`}>
           {stage.href ? (
             <Link className="zip-power-node" href={stage.href}>
@@ -195,9 +198,51 @@ export default async function PowerPage({
               <span>{stage.name}</span>
             </span>
           )}
-          {index < Math.min(stages.length, 6) - 1 ? <i>→</i> : null}
+          {index < stages.length - 1 ? <i aria-hidden="true">→</i> : null}
         </div>
       ))}
+    </div>
+  );
+
+  const renderConnection = (view: (typeof views)[number]) => (
+    <div className="zip-power-connection" aria-label={`Feed ${view.feed ?? 'unspecified'} complete physical path`}>
+      <div className="zip-power-route-segment">
+        <h3>Source equipment hierarchy</h3>
+        {renderRow(view.sourceStages.slice(0, -1))}
+      </div>
+      <div className="zip-power-physical-link">
+        <div className="zip-power-terminal">
+          <small>POWER OUTPUT · {view.source?.equipment.name ?? 'Unresolved source'}</small>
+          <strong>{view.source?.port.name ?? view.path.sourceAccessPortId}</strong>
+        </div>
+        <div className="zip-power-wire-arrow">
+          <span>POWER PATH · FEED {view.feed ?? 'UNSPECIFIED'} · CONFIGURED</span>
+          <b aria-hidden="true">⟶</b>
+        </div>
+        <div className="zip-power-terminal">
+          <small>POWER INPUT · {view.target?.equipment.name ?? 'Unresolved destination'}</small>
+          <strong>{view.target?.port.name ?? view.path.targetAccessPortId}</strong>
+        </div>
+      </div>
+      <div className="zip-power-route-segment">
+        <h3>Destination equipment hierarchy</h3>
+        {renderRow(view.targetStages.slice(0, -1))}
+      </div>
+    </div>
+  );
+
+  const renderFeedSummary = (view: (typeof views)[number]) => (
+    <div className="zip-power-feed-summary">
+      <strong>FEED {view.feed ?? '—'} · CONFIGURED</strong>
+      <span>
+        {view.source?.equipment.name ?? view.path.sourceAccessPortId} /{' '}
+        {view.source?.port.name ?? 'POWER OUTPUT'}
+      </span>
+      <b aria-hidden="true">→</b>
+      <span>
+        {view.target?.equipment.name ?? view.path.targetAccessPortId} /{' '}
+        {view.target?.port.name ?? 'POWER INPUT'}
+      </span>
     </div>
   );
 
@@ -259,23 +304,13 @@ export default async function PowerPage({
             <>
               <section className="zip-power-box">
                 <h2>PATH {primary.feed ?? 'A'} (PRIMARY)</h2>
-                {renderRow(primary.stages)}
+                {renderConnection(primary)}
               </section>
               <section className="zip-power-box zip-power-dual-box">
                 <h2>DUAL FEED OVERVIEW</h2>
                 <div className="zip-power-dual-grid">
-                  <span className="zip-feed-label">FEED A</span>
-                  {feedA ? (
-                    renderRow(feedA.stages)
-                  ) : (
-                    <div className="zip-power-missing">Feed A not configured</div>
-                  )}
-                  <span className="zip-feed-label is-b">FEED B</span>
-                  {feedB ? (
-                    renderRow(feedB.stages, true)
-                  ) : (
-                    <div className="zip-power-missing">Feed B not configured</div>
-                  )}
+                  {feedA ? renderFeedSummary(feedA) : <div className="zip-power-missing">Feed A not configured</div>}
+                  {feedB ? renderFeedSummary(feedB) : <div className="zip-power-missing">Feed B not configured</div>}
                 </div>
               </section>
             </>
@@ -333,10 +368,10 @@ export default async function PowerPage({
 
       <footer className="zip-power-footer">
         <span>
-          FEED A <b className={feedA ? 'is-good' : ''}>{feedA ? '● ACTIVE' : '○ NOT CONFIGURED'}</b>
+          FEED A <b className={feedA ? 'is-good' : ''}>{feedA ? '● CONFIGURED' : '○ NOT CONFIGURED'}</b>
         </span>
         <span>
-          FEED B <b className={feedB ? 'is-good' : ''}>{feedB ? '● ACTIVE' : '○ NOT CONFIGURED'}</b>
+          FEED B <b className={feedB ? 'is-good' : ''}>{feedB ? '● CONFIGURED' : '○ NOT CONFIGURED'}</b>
         </span>
         <span>
           REDUNDANCY <b>{feedA && feedB ? '✓' : '—'}</b>

@@ -9,10 +9,7 @@ import {
   polygonsOverlapArea,
   type PointMm,
 } from '@/modules/spatial/domain/geometry';
-import {
-  PolygonEditor,
-  type PolygonContextOverlay,
-} from '@/components/spatial/polygon-editor';
+import { PolygonEditor, type PolygonContextOverlay } from '@/components/spatial/polygon-editor';
 
 export function TopologyCreateControl({
   kind,

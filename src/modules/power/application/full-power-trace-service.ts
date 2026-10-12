@@ -2,6 +2,7 @@ import type { PowerRepository } from '@/modules/power/application/power-reposito
 import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
 import type { PowerFeed, PowerPath } from '@/modules/power/domain/entities';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
+import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
   AccessPort,
@@ -29,6 +30,8 @@ export interface FullPowerTraceLeg {
   readonly source: {
     readonly entityId: string;
     readonly entityName: string;
+    readonly deviceSerialNumber?: string;
+    readonly breakerSerialNumber?: string;
     readonly shelf?: string;
     readonly frame?: string;
     readonly panel?: string;
@@ -86,11 +89,6 @@ function metricValue(value: { readonly value: number } | undefined): number | un
   return value?.value;
 }
 
-function stringAttribute(node: EquipmentNode, key: string): string | undefined {
-  const value = node.attributes?.[key];
-  return typeof value === 'string' ? value : undefined;
-}
-
 function feedOf(port: AccessPort): PowerFeed | undefined {
   const value = port.attributes?.feed;
   return value === 'A' || value === 'B' ? value : undefined;
@@ -109,6 +107,7 @@ export class FullPowerTraceService {
     private readonly topology: TopologyRepository,
     private readonly power: PowerRepository,
     private readonly telemetry?: PowerTraceTelemetryReader,
+    private readonly telemetryBindings?: TelemetryBindingRepository,
   ) {}
 
   async resolve(rootId: string): Promise<FullPowerTrace | null> {
@@ -199,15 +198,50 @@ export class FullPowerTraceService {
       : [path.targetAccessPortId];
 
     const isBreaker = sourceEquipment?.equipmentType === 'CIRCUIT_BREAKER';
+    // The BFDB publishes one MQTT envelope for the Device. Its `sn` is a
+    // source identity, not the individual Breaker's inventory serial number.
+    // A measurement belongs to this Breaker only when its canonical IDs agree.
     const latest =
       sourceEquipment && isBreaker ? this.telemetry?.latest(sourceEquipment.deviceId) : null;
     const reading =
-      sourceEquipment && isBreaker
-        ? latest?.breakerReadings?.find((candidate) => candidate.breakerId === sourceEquipment.id)
+      sourceEquipment && isBreaker && latest?.targetId === sourceEquipment.deviceId
+        ? latest.breakerReadings?.find(
+            (candidate) =>
+              candidate.breakerId === sourceEquipment.id &&
+              candidate.deviceId === sourceEquipment.deviceId &&
+              candidate.sourceIdentity === latest.sourceIdentity,
+          )
         : undefined;
-    const rawPointId =
-      (sourceEquipment ? stringAttribute(sourceEquipment, 'telemetryRawPointId') : undefined) ??
-      reading?.rawPointId;
+    const breakerBindings =
+      sourceEquipment && isBreaker
+        ? await this.telemetryBindings?.listForTarget('EQUIPMENT', sourceEquipment.id)
+        : undefined;
+    const pairs = new Map<string, { sourceIdentity: string; rawPointId: string }>();
+    for (const binding of breakerBindings ?? []) {
+      if (
+        binding.lifecycle !== 'ACTIVE' ||
+        binding.protocol !== 'MQTT' ||
+        !['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].includes(binding.metric.toUpperCase()) ||
+        !binding.sourcePointId
+      )
+        continue;
+      const key = `${binding.sourceIdentity}\u0000${binding.sourcePointId}`;
+      pairs.set(key, {
+        sourceIdentity: binding.sourceIdentity,
+        rawPointId: binding.sourcePointId,
+      });
+    }
+    // A free-form telemetryRawPointId attribute is not a certified binding.
+    // A single explicit binding pair may be shown as MAPPED before MQTT arrives.
+    const boundPoint = pairs.size === 1 ? [...pairs.values()][0] : undefined;
+    const readingMatchesBinding =
+      !breakerBindings ||
+      (reading &&
+        pairs.has(`${reading.sourceIdentity}\u0000${reading.rawPointId}`));
+    const verifiedReading = readingMatchesBinding ? reading : undefined;
+    const rawPointId = verifiedReading?.rawPointId ?? boundPoint?.rawPointId;
+    const mqttSourceIdentity =
+      verifiedReading?.sourceIdentity ?? boundPoint?.sourceIdentity;
     const sourceFeed = source?.port ? feedOf(source.port) : undefined;
     const targetFeed = target?.port ? feedOf(target.port) : undefined;
     const physicalFeed =
@@ -215,13 +249,13 @@ export class FullPowerTraceService {
       feedFromLabel(sourceHierarchy.frame) ??
       feedFromLabel(sourceHierarchy.shelf);
     const effectiveFeed = path.feed ?? sourceFeed ?? targetFeed ?? physicalFeed;
-    const voltageV = metricValue(reading?.metrics.voltageV);
-    const currentA = metricValue(reading?.metrics.currentA);
-    const powerW = metricValue(reading?.metrics.powerW);
-    const energyKwh = metricValue(reading?.metrics.energyKwh);
-    const telemetryStatus: PowerTraceTelemetryStatus = reading
+    const voltageV = metricValue(verifiedReading?.metrics.voltageV);
+    const currentA = metricValue(verifiedReading?.metrics.currentA);
+    const powerW = metricValue(verifiedReading?.metrics.powerW);
+    const energyKwh = metricValue(verifiedReading?.metrics.energyKwh);
+    const telemetryStatus: PowerTraceTelemetryStatus = verifiedReading
       ? 'LIVE'
-      : rawPointId
+      : boundPoint
         ? 'MAPPED'
         : 'UNMAPPED';
 
@@ -238,6 +272,12 @@ export class FullPowerTraceService {
       source: {
         entityId: sourceEquipment?.deviceId ?? path.sourceAccessPortId,
         entityName: sourceDevice?.name ?? sourceEquipment?.name ?? path.sourceAccessPortId,
+        ...(sourceDevice?.kind === 'DEVICE' && sourceDevice.serialNumber
+          ? { deviceSerialNumber: sourceDevice.serialNumber }
+          : {}),
+        ...(isBreaker && sourceEquipment.serialNumber
+          ? { breakerSerialNumber: sourceEquipment.serialNumber }
+          : {}),
         ...(sourceHierarchy.shelf ? { shelf: sourceHierarchy.shelf } : {}),
         ...(sourceHierarchy.frame ? { frame: sourceHierarchy.frame } : {}),
         ...(sourceHierarchy.panel ? { panel: sourceHierarchy.panel } : {}),
@@ -262,8 +302,8 @@ export class FullPowerTraceService {
       telemetry: {
         status: telemetryStatus,
         ...(rawPointId ? { rawPointId } : {}),
-        ...(reading?.sourceIdentity ? { sourceIdentity: reading.sourceIdentity } : {}),
-        ...(reading?.receivedAt ? { receivedAt: reading.receivedAt } : {}),
+        ...(mqttSourceIdentity ? { sourceIdentity: mqttSourceIdentity } : {}),
+        ...(verifiedReading?.receivedAt ? { receivedAt: verifiedReading.receivedAt } : {}),
         ...(voltageV !== undefined ? { voltageV } : {}),
         ...(currentA !== undefined ? { currentA } : {}),
         ...(powerW !== undefined ? { powerW } : {}),

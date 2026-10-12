@@ -276,3 +276,24 @@
   border: 2px dashed #0f8f83;
   background: #14b8a626;
 }
+
+
+.level-room-overlap-warning {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 9px 14px;
+  border: 1px solid #dc8d52;
+  border-radius: 5px;
+  background: #fff1dc;
+  color: #86451e;
+  font-size: 11px;
+}
+.level-room-overlap-warning strong {
+  font-weight: 800;
+}
+.level-room-overlap-warning span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}

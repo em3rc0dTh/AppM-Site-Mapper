@@ -80,10 +80,10 @@ export async function prepareLayoutSave(
     return { error: 'LEVEL_NOT_FOUND' };
   }
   const structure = level.parentId ? await repo.getById(level.parentId) : null;
-  if (!structure || structure.kind !== 'STRUCTURE' || !structure.polygon) {
+  if (!structure || structure.kind !== 'STRUCTURE' || !structure.polygon?.length) {
     return { error: 'STRUCTURE_BOUNDARY_REQUIRED' };
   }
-  if (!polygonInsidePolygon(draft.polygon, structure.polygon)) {
+  if (structure.polygon && !polygonInsidePolygon(draft.polygon, structure.polygon)) {
     return { error: 'ROOM_OUTSIDE_STRUCTURE' };
   }
   const siblingRooms = await repo.listChildren(level.id);

@@ -228,6 +228,65 @@ export function polygonsOverlapArea(left: readonly PointMm[], right: readonly Po
   if (left.some((point) => pointStrictlyInPolygon(point, right))) return true;
   if (right.some((point) => pointStrictlyInPolygon(point, left))) return true;
 
+  // Axis-aligned or collinear boundaries may share positive area without
+  // proper edge crossings or interior vertices (e.g. shifted rectangles).
+  // Split edges at contacts with the other polygon and sample each interval.
+  const interiorEdgeInterval = (aPolygon: readonly PointMm[], bPolygon: readonly PointMm[]) => {
+    for (let index = 0; index < aPolygon.length; index += 1) {
+      const a = aPolygon[index]!;
+      const b = aPolygon[(index + 1) % aPolygon.length]!;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len2 = dx * dx + dy * dy;
+      if (len2 === 0) continue;
+      const cuts = [0, 1];
+      for (const vertex of bPolygon) {
+        if (!pointOnSegment(vertex, a, b)) continue;
+        const t = ((vertex.x - a.x) * dx + (vertex.y - a.y) * dy) / len2;
+        if (t > 0 && t < 1) cuts.push(t);
+      }
+      cuts.sort((left, right) => left - right);
+      for (let part = 1; part < cuts.length; part += 1) {
+        const t = (cuts[part - 1]! + cuts[part]!) / 2;
+        if (pointStrictlyInPolygon({ x: a.x + t * dx, y: a.y + t * dy }, bPolygon)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+  if (interiorEdgeInterval(left, right) || interiorEdgeInterval(right, left)) return true;
+
+  // For identical concave polygons, a vertex and centroid can both lie
+  // outside the other's strict interior. Sample just inside a real edge.
+  const interiorBoundarySample = (polygon: readonly PointMm[]) => {
+    let twiceArea = 0;
+    for (let i = 0; i < polygon.length; i += 1) {
+      const a = polygon[i]!;
+      const b = polygon[(i + 1) % polygon.length]!;
+      twiceArea += a.x * b.y - b.x * a.y;
+    }
+    const sign = twiceArea >= 0 ? 1 : -1;
+    for (let i = 0; i < polygon.length; i += 1) {
+      const a = polygon[i]!;
+      const b = polygon[(i + 1) % polygon.length]!;
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const length = Math.hypot(dx, dy);
+      if (!length) continue;
+      const inward = Math.max(0.0001, Math.min(0.5, length / 1000));
+      const sample = {
+        x: (a.x + b.x) / 2 + (sign * -dy * inward) / length,
+        y: (a.y + b.y) / 2 + (sign * dx * inward) / length,
+      };
+      if (pointStrictlyInPolygon(sample, polygon) && pointStrictlyInPolygon(sample, right)) {
+        return true;
+      }
+    }
+    return false;
+  };
+  if (interiorBoundarySample(left)) return true;
+
   const centroid = (polygon: readonly PointMm[]) => ({
     x: polygon.reduce((sum, point) => sum + point.x, 0) / polygon.length,
     y: polygon.reduce((sum, point) => sum + point.y, 0) / polygon.length,

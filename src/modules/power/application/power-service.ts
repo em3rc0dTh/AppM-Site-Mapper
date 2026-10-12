@@ -100,7 +100,11 @@ export class PowerService {
       // Mongo enforces one ACTIVE path per target through connectionKey.
       // Two concurrent operators may both pass the pre-flight read; present
       // the unique-index conflict as a domain error rather than HTTP 500.
-      const conflict = error as { code?: number; keyPattern?: { connectionKey?: unknown }; message?: string };
+      const conflict = error as {
+        code?: number;
+        keyPattern?: { connectionKey?: unknown };
+        message?: string;
+      };
       if (
         conflict.code === 11000 &&
         (conflict.keyPattern?.connectionKey !== undefined ||

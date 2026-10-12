@@ -144,6 +144,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               childEquipment={directEquipmentChildren}
               familyEquipment={familyEquipment}
               canWrite={canWriteTopology}
+              canWritePower={canWritePower}
             />
           ) : view?.ok ? (
             <RackElevation

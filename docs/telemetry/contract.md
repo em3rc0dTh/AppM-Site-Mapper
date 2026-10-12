@@ -1,7 +1,7 @@
 # Telemetry Contract
 
 **Gate:** G10 extension  
-**Status:** Accepted — BFDB MQTT consumer integration
+**Status:** Accepted — independent Equipment identity and BFDB point projections (2026-10-12)
 
 ## Product boundary
 
@@ -103,53 +103,7 @@ This is useful when local MongoDB contains a stable customer/device identity whi
 
 MQTT raw point identity is a binding, not the breaker primary identity.
 
-Two modes are supported.
-
-### panel-order-24
-
-Default emulator mode:
-
-```text
-0_1_1 .. 0_1_24  → first stored panel, positions 1..24
-0_2_1 .. 0_2_24  → second stored panel, positions 1..24
-...
-```
-
-The panel and endpoint arrays already stored in the BDFB structure are used in their canonical order.
-
-The default is:
-
-```text
-BFDB_TELEMETRY_BINDING_MODE=panel-order-24
-BFDB_POSITIONS_PER_PANEL=24
-```
-
-Only endpoints whose variant is `BREAKER` receive breaker telemetry. A `HOLDER` remains a holder even if an MQTT point exists for that physical position.
-
-### explicit
-
-A breaker may carry:
-
-```json
-{
-  "id": "breaker-id",
-  "variant": "BREAKER",
-  "label": "CB-01",
-  "telemetry": {
-    "rawPointId": "0_1_1"
-  }
-}
-```
-
-With:
-
-```text
-BFDB_TELEMETRY_BINDING_MODE=explicit
-```
-
-AppM uses only explicit bindings. Duplicate explicit point bindings are rejected by BDFB validation.
-
-An explicit breaker binding takes precedence over panel-order resolution.
+Only explicit, active `TelemetryBinding` records are authoritative: source identity, raw point ID, target Equipment ID and metric. Physical panel order, a free-form `rawPointId` attribute or `BFDB_TELEMETRY_BINDING_MODE=panel-order-24` do not certify a mapping. Unmapped points remain visible as unmapped; they never become invented breaker readings.
 
 ## Latest State and partial MQTT updates
 
@@ -267,3 +221,10 @@ It does not claim:
 - AppM implements the Modbus server from `bfdb-telemetry-gateway`;
 - the field emulator is a production dependency;
 - the BFDB gateway owns Site Mapper historical telemetry.
+
+
+## Independent Equipment telemetry — current rule
+
+[ADR-017](../adr/ADR-017-independent-equipment-telemetry.md) is authoritative for independent identities, source authentication, transition and aggregation. Every active Equipment can own a source, including a nested module or breaker. Matching a unique SN binds to that exact Equipment, not its owning Device. Own measurements and explicit gateway point measurements are available through the reusable inspector.
+
+`GET /api/telemetry/entity` provides authenticated exact-target LIVE/history. `telemetry_entity_samples` stores generic patches with original target and source identity; existing `telemetry_samples` remains the BDFB electrical projection. History does not infer attribution from the current serial number. BDFB aggregates explicitly select canonical breaker readings across source Equipment while retaining per-reading provenance.

@@ -1,8 +1,10 @@
 'use client';
 
+import { useBdfbTelemetry } from '@/components/telemetry/use-bdfb-telemetry';
+
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { ContextPin } from '@/components/workspace/context-pin';
@@ -13,7 +15,7 @@ import type {
   BdfbPresentation,
   BdfbShelfView,
 } from '@/modules/power/domain/bdfb-model';
-import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
+import type { BreakerTelemetryReading } from '@/modules/telemetry/domain/entities';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
@@ -361,25 +363,6 @@ function DeviceHierarchyOverview({
       </section>
     </div>
   );
-}
-
-function useBdfbTelemetry(deviceId: string): TelemetrySample | null {
-  const [sample, setSample] = useState<TelemetrySample | null>(null);
-  useEffect(() => {
-    const stream = new EventSource('/api/telemetry/stream');
-    const onSnapshot = (event: MessageEvent<string>) => {
-      const samples = JSON.parse(event.data) as TelemetrySample[];
-      setSample(samples.find((candidate) => candidate.entityId === deviceId) ?? null);
-    };
-    const onTelemetry = (event: MessageEvent<string>) => {
-      const incoming = JSON.parse(event.data) as TelemetrySample;
-      if (incoming.entityId === deviceId) setSample(incoming);
-    };
-    stream.addEventListener('snapshot', onSnapshot as EventListener);
-    stream.addEventListener('telemetry', onTelemetry as EventListener);
-    return () => stream.close();
-  }, [deviceId]);
-  return sample;
 }
 
 export function BdfbChassis({

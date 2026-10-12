@@ -16,6 +16,8 @@ export interface TelemetrySourceDiagnostic {
   readonly rawMessages: number;
   readonly lastRawAt: string | null;
   readonly mappedDeviceId: string | null;
+  readonly mappedTargetId: string | null;
+  readonly mappedTargetType: string | null;
   readonly pointCount: number;
   readonly mappedBreakerCount: number;
   readonly unmappedPointCount: number;
@@ -238,14 +240,17 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           },
           sources: identities.map((serial) => {
             const incoming = counts.get(serial);
-            const sample = allSamples.find((item) => item.sourceIdentity === serial);
+            const sample = allSamples.find(
+              (item) => item.sourceIdentity === serial && !item.sourcePointId,
+            );
             const age = sample ? now - Date.parse(sample.receivedAt) : Number.POSITIVE_INFINITY;
             return {
               serial,
               rawMessages: incoming?.messages ?? 0,
               lastRawAt: incoming?.lastRawAt ?? null,
-              mappedDeviceId:
-                sample?.targetType === 'DEVICE' ? sample.targetId : (sample?.entityId ?? null),
+              mappedDeviceId: sample?.targetType === 'DEVICE' ? sample.targetId : null,
+              mappedTargetId: sample?.targetId ?? null,
+              mappedTargetType: sample?.targetType ?? null,
               pointCount: sample ? Object.keys(sample.reported).length : 0,
               mappedBreakerCount: sample?.breakerReadings?.length ?? 0,
               unmappedPointCount: sample?.unmappedPointIds?.length ?? 0,

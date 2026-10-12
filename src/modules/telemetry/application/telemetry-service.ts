@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { TelemetryIdentityResolver } from './telemetry-identity-resolver';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/telemetry-history-writer';
@@ -73,83 +74,72 @@ export class TelemetryService {
     }
 
     if (!target) {
-      // First honor verified point bindings; next try unambiguous physical SN.
-      const inferred = await this.inferSourceBinding(normalized.value.sourceIdentity, bindings);
-      if (inferred.ok) {
-        sourceBinding = inferred.value;
-        target = await this.resolveTarget(inferred.value);
-      } else if (inferred.error === 'AMBIGUOUS_SOURCE_BINDING') {
-        return inferred;
-      }
-    }
-
-    if (!target) {
       const discovered = await this.discoverSourceBinding(normalized.value.sourceIdentity);
-      if (!discovered.ok) {
+      const resolved =
+        discovered.ok || discovered.error !== 'UNKNOWN_SOURCE'
+          ? discovered
+          : await this.inferSourceBinding(normalized.value.sourceIdentity, bindings);
+      if (!resolved.ok)
         return failure(
-          sourceBinding && !target && discovered.error === 'UNKNOWN_SOURCE'
+          sourceBinding && resolved.error === 'UNKNOWN_SOURCE'
             ? 'INVALID_BINDING_TARGET'
-            : discovered.error,
+            : resolved.error,
         );
-      }
-      sourceBinding = discovered.value;
+      sourceBinding = resolved.value;
       target = await this.resolveTarget(sourceBinding);
     }
     if (!target || !sourceBinding) return failure('INVALID_BINDING_TARGET');
 
-    // A legacy environment alias must not override a real SN currently owned
-    // by another Device. Explicit aliases remain supported for unmatched SNs.
-    if (sourceBinding.id.startsWith('env:mqtt:')) {
+    if (sourceBinding.attributes?.discovery === 'UNIQUE_INVENTORY_SN' && target.type === 'DEVICE') {
       const matches = await this.topologyRepository.findActiveBySerialNumber(
         normalized.value.sourceIdentity,
       );
-      if (matches.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
-      if (matches.length === 1) {
-        const match = matches[0]!;
-        let deviceId: string | null = null;
-        if (match.kind === 'DEVICE' && match.deviceType === 'BDFB') deviceId = match.id;
-        if (match.kind === 'EQUIPMENT' && match.equipmentType === 'CHASSIS') {
-          const device = await this.topologyRepository.getById(match.deviceId);
-          if (
-            device?.kind === 'DEVICE' &&
-            device.lifecycle === 'ACTIVE' &&
-            device.deviceType === 'BDFB' &&
-            match.parentEquipmentId === null &&
-            match.parentId === device.id &&
-            device.rootEquipmentIds.includes(match.id)
-          )
-            deviceId = device.id;
-        }
-        if (!deviceId || target.id !== deviceId) return failure('AMBIGUOUS_SOURCE_BINDING');
+      const match = matches.length === 1 ? matches[0] : undefined;
+      if (
+        match?.kind === 'EQUIPMENT' &&
+        match.id === sourceBinding.attributes.matchedNodeId &&
+        match.equipmentType === 'CHASSIS' &&
+        match.parentEquipmentId === null &&
+        match.deviceId === target.id &&
+        (await new TelemetryIdentityResolver(this.topologyRepository).valid(match))
+      ) {
+        sourceBinding = {
+          ...sourceBinding,
+          targetId: match.id,
+          targetType: 'EQUIPMENT',
+          attributes: {
+            ...sourceBinding.attributes,
+            previousTargetId: target.id,
+            identityVersion: 2,
+          },
+          updatedAt: new Date().toISOString(),
+        };
+        await this.bindingRepository?.replace(sourceBinding);
+        target = { id: match.id, type: 'EQUIPMENT' };
       }
     }
 
-    // Auto-discovered sources are bound to an inventory identity, not merely
-    // the old UUID. Re-check on ingestion so renaming/archive/duplicate SN
-    // cannot silently redirect measurements through a stale SOURCE binding.
-    if (sourceBinding.attributes?.discovery === 'UNIQUE_INVENTORY_SN') {
+    // Revalidate every unique-SN association. Never silently migrate old parent bindings.
+    if (
+      sourceBinding.id.startsWith('env:mqtt:') ||
+      sourceBinding.attributes?.discovery === 'UNIQUE_INVENTORY_SN'
+    ) {
       const matches = await this.topologyRepository.findActiveBySerialNumber(
         normalized.value.sourceIdentity,
       );
       if (matches.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
       const match = matches[0];
-      if (!match || match.id !== sourceBinding.attributes.matchedNodeId)
+      if (
+        sourceBinding.attributes?.discovery === 'UNIQUE_INVENTORY_SN' &&
+        (!match || match.id !== sourceBinding.attributes.matchedNodeId)
+      )
         return failure('INVALID_BINDING_TARGET');
-      if (match.kind === 'EQUIPMENT') {
-        const device = await this.topologyRepository.getById(match.deviceId);
-        if (
-          match.equipmentType !== 'CHASSIS' ||
-          match.parentEquipmentId !== null ||
-          match.parentId !== target.id ||
-          device?.kind !== 'DEVICE' ||
-          device.deviceType !== 'BDFB' ||
-          device.lifecycle !== 'ACTIVE' ||
-          !device.rootEquipmentIds.includes(match.id)
-        )
-          return failure('INVALID_BINDING_TARGET');
-      } else if (match.kind !== 'DEVICE' || match.deviceType !== 'BDFB' || match.id !== target.id) {
-        return failure('INVALID_BINDING_TARGET');
-      }
+      if (
+        match &&
+        (match.id !== target.id ||
+          !(await new TelemetryIdentityResolver(this.topologyRepository).valid(match)))
+      )
+        return failure('AMBIGUOUS_SOURCE_BINDING');
     }
 
     let breakerReadings: ReturnType<typeof buildBfdbBreakerReadings> = {
@@ -157,8 +147,10 @@ export class TelemetryService {
       unmappedPointIds: [],
     };
 
-    if (target.type === 'DEVICE') {
-      const projection = await new BdfbProjectionService(this.topologyRepository).get(target.id);
+    const sourceNode = await this.topologyRepository.getById(target.id);
+    const ownerId = sourceNode?.kind === 'EQUIPMENT' ? sourceNode.deviceId : target.id;
+    if (target.type === 'DEVICE' || target.type === 'EQUIPMENT') {
+      const projection = await new BdfbProjectionService(this.topologyRepository).get(ownerId);
       if (projection) {
         breakerReadings = buildBfdbBreakerReadings(projection, normalized.value, bindings);
       }
@@ -187,6 +179,42 @@ export class TelemetryService {
 
     this.hub.publish(sample);
     await this.historyWriter?.write(sample);
+    // Exact point mappings also provide the Breaker's own view; never copy the parent payload.
+    for (const reading of breakerReadings.readings) {
+      if (reading.breakerId === target.id) continue;
+      const ownBindings =
+        (await this.bindingRepository?.listForTarget('EQUIPMENT', reading.breakerId)) ?? [];
+      if (ownBindings.some((b) => !b.sourcePointId && b.metric.toUpperCase() === 'SOURCE'))
+        continue;
+      const metricBindings = bindings.filter(
+        (b) =>
+          b.targetId === reading.breakerId &&
+          b.targetType === 'EQUIPMENT' &&
+          b.sourcePointId === reading.rawPointId &&
+          ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].includes(b.metric.toUpperCase()),
+      );
+      const first = metricBindings[0];
+      if (!first) continue;
+      const reported: Record<string, unknown> = {};
+      const units = { voltageV: 'V', currentA: 'A', powerW: 'W', energyKwh: 'kWh' };
+      for (const [key, value] of Object.entries(reading.metrics))
+        reported[key] = { ...value, unit: units[key as keyof typeof units] };
+      const own: TelemetrySample = {
+        bindingId: first.id,
+        metricBindingIds: metricBindings.map((b) => b.id),
+        sourcePointId: reading.rawPointId,
+        targetId: reading.breakerId,
+        targetType: 'EQUIPMENT',
+        entityId: reading.breakerId,
+        entityKind: 'EQUIPMENT',
+        sourceIdentity: reading.sourceIdentity,
+        receivedAt: reading.receivedAt,
+        reported,
+        ...(sample.sourceObservedAt ? { sourceObservedAt: sample.sourceObservedAt } : {}),
+      };
+      this.hub.publish(own);
+      await this.historyWriter?.write(own);
+    }
     return success(this.hub.latest(target.id) ?? sample);
   }
 
@@ -274,12 +302,7 @@ export class TelemetryService {
     });
   }
 
-  /**
-   * Auto-resolve a BFDB MQTT publisher from its *unique active* inventory SN.
-   * Only a BDFB Device or its active root CHASSIS can identify a publisher.
-   * Breaker SNs, nested modules, duplicates and stale parents are not eligible.
-   * The SOURCE binding is durable; raw circuit points are NEVER guessed.
-   */
+  /** Resolve any uniquely identified active Equipment or Device; never guess circuit points. */
   private async discoverSourceBinding(
     sourceIdentity: string,
   ): Promise<Result<TelemetryBinding, TelemetryIngestError>> {
@@ -287,32 +310,11 @@ export class TelemetryService {
     const matches = await this.topologyRepository.findActiveBySerialNumber(sourceIdentity);
     if (matches.length === 0) return failure('UNKNOWN_SOURCE');
     if (matches.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
-
     const match = matches[0]!;
-    let deviceId: string;
-    if (match.kind === 'DEVICE') {
-      if (match.deviceType !== 'BDFB') return failure('INVALID_BINDING_TARGET');
-      deviceId = match.id;
-    } else if (match.kind === 'EQUIPMENT') {
-      if (match.equipmentType !== 'CHASSIS' || match.parentEquipmentId !== null)
-        return failure('INVALID_BINDING_TARGET');
-      deviceId = match.deviceId;
-      const device = await this.topologyRepository.getById(deviceId);
-      if (
-        !device ||
-        device.kind !== 'DEVICE' ||
-        device.lifecycle !== 'ACTIVE' ||
-        device.deviceType !== 'BDFB' ||
-        match.parentId !== device.id ||
-        !device.rootEquipmentIds.includes(match.id)
-      )
-        return failure('INVALID_BINDING_TARGET');
-    } else {
-      return failure('INVALID_BINDING_TARGET');
-    }
-
-    const target = await this.topologyRepository.getById(deviceId);
-    if (!target || target.kind !== 'DEVICE' || target.lifecycle !== 'ACTIVE')
+    if (
+      (match.kind !== 'DEVICE' && match.kind !== 'EQUIPMENT') ||
+      !(await new TelemetryIdentityResolver(this.topologyRepository).valid(match))
+    )
       return failure('INVALID_BINDING_TARGET');
 
     const timestamp = new Date().toISOString();
@@ -321,8 +323,8 @@ export class TelemetryService {
       protocol: 'MQTT',
       sourceIdentity,
       metric: 'SOURCE',
-      targetType: 'DEVICE',
-      targetId: deviceId,
+      targetType: match.kind,
+      targetId: match.id,
       lifecycle: 'ACTIVE',
       attributes: { discovery: 'UNIQUE_INVENTORY_SN', matchedNodeId: match.id },
       createdAt: timestamp,
@@ -347,8 +349,8 @@ export class TelemetryService {
         );
         if (
           persisted.length !== 1 ||
-          persisted[0]?.targetType !== 'DEVICE' ||
-          persisted[0]?.targetId !== deviceId
+          persisted[0]?.targetType !== match.kind ||
+          persisted[0]?.targetId !== match.id
         )
           return failure('AMBIGUOUS_SOURCE_BINDING');
         return success(persisted[0]);

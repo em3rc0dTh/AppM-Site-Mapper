@@ -187,6 +187,9 @@ describe('TelemetryService', () => {
     );
 
     expect(full.ok).toBe(true);
+    expect(service.latest(breaker.id)?.sourcePointId).toBe('0_1_1');
+    expect(service.latest(breaker.id)?.reported.currentA).toMatchObject({ value: 3.46, unit: 'A' });
+    expect(service.latest(breakers[1]!.id)).toBeNull();
     expect(service.latest(bdfb.id)?.breakerReadings?.[0]?.breakerId).toBe(breaker.id);
     expect(service.latest(bdfb.id)?.breakerReadings?.[0]?.metrics.currentA?.value).toBe(3.46);
 
@@ -364,7 +367,7 @@ describe('TelemetryService', () => {
     ).toEqual({ ok: false, error: 'UNKNOWN_SOURCE' });
   });
 
-  it('discovers a BDFB root Chassis SN through its Device without confusing breaker serials', async () => {
+  it('binds a BDFB root Chassis SN to the Chassis itself', async () => {
     const owner = {
       ...device('bdfb-chassis-owner', 'DEVICE-OTHER-SN'),
       deviceType: 'BDFB' as const,
@@ -394,7 +397,7 @@ describe('TelemetryService', () => {
     const result = await service.ingest('data/dev/EMU-BFDB-03', payload);
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.value.targetId).toBe(owner.id);
+      expect(result.value.targetId).toBe(chassis.id);
       expect(result.value.breakerReadings ?? []).toHaveLength(0);
       expect(result.value.unmappedPointIds).toEqual(['0_1_1']);
     }
@@ -437,7 +440,7 @@ describe('TelemetryService', () => {
     expect(await bindings.listForSource('MQTT', 'EMU-DUP')).toHaveLength(0);
   });
 
-  it('rejects a nested breaker serial as an MQTT publisher identity', async () => {
+  it('rejects an orphan breaker SN without a validated inventory chain', async () => {
     const owner = { ...device('breaker-owner', 'DEVICE-NO-MATCH'), deviceType: 'BDFB' as const };
     const breaker = {
       ...equipment('breaker-in-bdfb', owner),
@@ -577,5 +580,85 @@ describe('TelemetryService', () => {
 
     first?.();
     expect(hub.subscriberCount()).toBe(0);
+  });
+});
+
+describe('independent Equipment identity', () => {
+  it('discovers a nested non-BDFB Equipment and isolates it from its parent and sibling', async () => {
+    const owner = device('switch', 'SWITCH-SN');
+    const root = {
+      ...equipment('root', owner),
+      serialNumber: 'ROOT-SN',
+      children: ['child', 'sibling'],
+    };
+    const child = {
+      ...equipment('child', owner),
+      serialNumber: 'CHILD-SN',
+      parentId: root.id,
+      parentEquipmentId: root.id,
+    };
+    const sibling = { ...child, id: 'sibling', serialNumber: 'SIBLING-SN' };
+    const repo = new MemoryTopologyRepository([
+      { ...owner, rootEquipmentIds: [root.id] },
+      root,
+      child,
+      sibling,
+    ]);
+    const bindings = new MemoryTelemetryBindingRepository();
+    const hub = new TelemetryHub(3);
+    const written: string[] = [];
+    const service = new TelemetryService(
+      repo,
+      hub,
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 4096 },
+      {},
+      bindings,
+      {
+        write: async (sample) => {
+          written.push(sample.targetId);
+        },
+      },
+    );
+    const payload = new TextEncoder().encode(
+      JSON.stringify({ reported: { temperature: { value: 33, unit: 'C' } } }),
+    );
+    const result = await service.ingest('data/dev/CHILD-SN', payload);
+    expect(result.ok && result.value.targetId).toBe(child.id);
+    expect((await bindings.listForSource('MQTT', 'CHILD-SN'))[0]?.targetType).toBe('EQUIPMENT');
+    expect(hub.latest(root.id)).toBeNull();
+    expect(hub.latest(sibling.id)).toBeNull();
+    expect(written).toEqual([child.id]);
+    await repo.replace({ ...root, lifecycle: 'ARCHIVED' });
+    expect((await service.ingest('data/dev/CHILD-SN', payload)).ok).toBe(false);
+  });
+
+  it('migrates only the proven old automatic root-Chassis SOURCE binding', async () => {
+    const owner = {
+      ...device('bdfb', 'DEVICE-SN'),
+      deviceType: 'BDFB' as const,
+      rootEquipmentIds: ['root'],
+    };
+    const root = { ...equipment('root', owner), serialNumber: 'ROOT-SN' };
+    const repo = new MemoryTopologyRepository([owner, root]);
+    const old = {
+      ...binding('auto:old', 'ROOT-SN', 'DEVICE', owner.id),
+      attributes: { discovery: 'UNIQUE_INVENTORY_SN', matchedNodeId: root.id },
+    };
+    const bindings = new MemoryTelemetryBindingRepository([old]);
+    const service = new TelemetryService(
+      repo,
+      new TelemetryHub(3),
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 4096 },
+      {},
+      bindings,
+    );
+    const result = await service.ingest(
+      'data/dev/ROOT-SN',
+      new TextEncoder().encode('{"reported":{"temperature":32}}'),
+    );
+    expect(result.ok && result.value.targetId).toBe(root.id);
+    const stored = (await bindings.listForSource('MQTT', 'ROOT-SN'))[0];
+    expect(stored?.targetType).toBe('EQUIPMENT');
+    expect(stored?.attributes?.previousTargetId).toBe(owner.id);
   });
 });

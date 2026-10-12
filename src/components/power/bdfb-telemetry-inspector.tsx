@@ -1,5 +1,7 @@
 'use client';
 
+import { useBdfbTelemetry } from '@/components/telemetry/use-bdfb-telemetry';
+
 import { useEffect, useState } from 'react';
 
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
@@ -11,7 +13,6 @@ import type {
 } from '@/modules/telemetry/domain/history';
 import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
-import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 type InspectorWindow = 'LIVE' | TelemetryHistoryWindow;
 type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
@@ -24,31 +25,6 @@ function compactUtc(value: string | undefined): string {
   if (!value) return '—';
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : `${parsed.toISOString().slice(11, 19)} UTC`;
-}
-
-function useTelemetrySample(deviceId: string): TelemetrySample | null {
-  const [sample, setSample] = useState<TelemetrySample | null>(null);
-
-  useEffect(() => {
-    const stream = new EventSource('/api/telemetry/stream');
-
-    const onSnapshot = (event: MessageEvent<string>) => {
-      const samples = JSON.parse(event.data) as TelemetrySample[];
-      setSample(samples.find((candidate) => candidate.entityId === deviceId) ?? null);
-    };
-
-    const onTelemetry = (event: MessageEvent<string>) => {
-      const incoming = JSON.parse(event.data) as TelemetrySample;
-      if (incoming.entityId === deviceId) setSample(incoming);
-    };
-
-    stream.addEventListener('snapshot', onSnapshot as EventListener);
-    stream.addEventListener('telemetry', onTelemetry as EventListener);
-
-    return () => stream.close();
-  }, [deviceId]);
-
-  return sample;
 }
 
 function HistoryMetric({
@@ -171,7 +147,7 @@ export function BdfbTelemetryInspector({
   feeds?: readonly string[];
   mappedBreakerCount?: number;
 }>) {
-  const telemetry = useTelemetrySample(node.id);
+  const telemetry = useBdfbTelemetry(node.id);
   const [window, setWindow] = useState<InspectorWindow>('LIVE');
   const [history, setHistory] = useState<TelemetryHistoryResponse | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);

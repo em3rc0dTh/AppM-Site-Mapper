@@ -6,7 +6,7 @@ import { AccessPortEditor } from '@/components/equipment/access-port-editor';
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { PowerContractEditor } from '@/components/power/power-contract-editor';
 import { RackElevation } from '@/components/rack/rack-elevation';
-import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
+import { EquipmentTelemetryInspector } from '@/components/telemetry/equipment-telemetry-inspector';
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { ContextPin } from '@/components/workspace/context-pin';
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -239,7 +239,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           ) : null}
 
           <div className="zip-device-live">
-            <TelemetryLens entityIds={[node.id]} label={node.name} />
+            <EquipmentTelemetryInspector key={node.id} targetId={node.id} label={node.name} />
           </div>
 
           {room && rackNode ? (

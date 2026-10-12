@@ -49,6 +49,9 @@ export interface BreakerTelemetryReading {
 }
 
 export interface TelemetrySample {
+  /** Exact point and metric bindings for measurements relayed by a gateway. */
+  readonly sourcePointId?: string;
+  readonly metricBindingIds?: readonly string[];
   readonly bindingId: string;
   readonly targetId: string;
   readonly targetType: TelemetryTargetType;

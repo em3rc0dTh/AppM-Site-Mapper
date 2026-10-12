@@ -77,7 +77,7 @@ export function serializeTelemetryStoreSample(
 
   return {
     sourceIdentity: sample.sourceIdentity,
-    deviceId: sample.entityId,
+    deviceId: sample.breakerReadings?.[0]?.deviceId ?? sample.entityId,
     receivedAt: sample.receivedAt,
     ...(sample.messageId ? { messageId: sample.messageId } : {}),
     readings,
@@ -98,8 +98,7 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
   ) {}
 
   async write(sample: TelemetrySample): Promise<void> {
-    const body = serializeTelemetryStoreSample(sample);
-    if (!body) return;
+    const body = { ...serializeTelemetryStoreSample(sample), entitySample: sample };
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
@@ -143,6 +142,25 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
       lastWriteAt: this.lastWriteAt,
       lastError: this.lastError,
     };
+  }
+
+  async queryEntity(
+    targetId: string,
+    targetType: string,
+    window: TelemetryHistoryWindow,
+  ): Promise<readonly TelemetrySample[]> {
+    const url = new URL(`${this.baseUrl.replace(/\/$/, '')}/entity-history`);
+    url.searchParams.set('targetId', targetId);
+    url.searchParams.set('targetType', targetType);
+    url.searchParams.set('window', window);
+    const response = await fetch(url, {
+      headers: this.accessToken ? { authorization: `Bearer ${this.accessToken}` } : {},
+      cache: 'no-store',
+      signal: AbortSignal.timeout(this.timeoutMs),
+    });
+    if (!response.ok) throw new Error(`HISTORY_STORE_HTTP_${response.status}`);
+    const body = (await response.json()) as { samples?: TelemetrySample[] };
+    return Array.isArray(body.samples) ? body.samples : [];
   }
 
   async query(

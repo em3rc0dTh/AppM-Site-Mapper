@@ -79,6 +79,7 @@ export interface FullPowerTrace {
 
 export interface PowerTraceTelemetryReader {
   latest(entityId: string): TelemetrySample | null;
+  snapshot?(): readonly TelemetrySample[];
 }
 
 function isInventoryNode(node: TopologyNode | null): node is InventoryNode {
@@ -198,20 +199,25 @@ export class FullPowerTraceService {
       : [path.targetAccessPortId];
 
     const isBreaker = sourceEquipment?.equipmentType === 'CIRCUIT_BREAKER';
-    // The BFDB publishes one MQTT envelope for the Device. Its `sn` is a
-    // source identity, not the individual Breaker's inventory serial number.
-    // A measurement belongs to this Breaker only when its canonical IDs agree.
-    const latest =
-      sourceEquipment && isBreaker ? this.telemetry?.latest(sourceEquipment.deviceId) : null;
-    const reading =
-      sourceEquipment && isBreaker && latest?.targetId === sourceEquipment.deviceId
-        ? latest.breakerReadings?.find(
-            (candidate) =>
-              candidate.breakerId === sourceEquipment.id &&
-              candidate.deviceId === sourceEquipment.deviceId &&
-              candidate.sourceIdentity === latest.sourceIdentity,
+    const samples =
+      this.telemetry?.snapshot?.() ??
+      (sourceEquipment
+        ? [this.telemetry?.latest(sourceEquipment.deviceId)].filter((s): s is TelemetrySample =>
+            Boolean(s),
           )
-        : undefined;
+        : []);
+    const readings =
+      sourceEquipment && isBreaker
+        ? samples.flatMap((sample) =>
+            (sample.breakerReadings ?? []).filter(
+              (candidate) =>
+                candidate.breakerId === sourceEquipment.id &&
+                candidate.deviceId === sourceEquipment.deviceId &&
+                candidate.sourceIdentity === sample.sourceIdentity,
+            ),
+          )
+        : [];
+    const reading = readings.length === 1 ? readings[0] : undefined;
     const breakerBindings =
       sourceEquipment && isBreaker
         ? await this.telemetryBindings?.listForTarget('EQUIPMENT', sourceEquipment.id)

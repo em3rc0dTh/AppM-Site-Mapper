@@ -1,12 +1,14 @@
 import hmac
 import json
 import os
+from pathlib import Path
 from datetime import datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.parse import parse_qs, urlparse
 
 import psycopg
+from psycopg.types.json import Jsonb
 
 WINDOWS = {
     "24h": ("24 hours", "5 minutes"),
@@ -150,6 +152,41 @@ def insert_samples(payload):
     return len(rows)
 
 
+def insert_entity_sample(sample):
+    if not isinstance(sample, dict):
+        raise ValueError("invalid entity sample")
+    target_id = text_value(sample.get("targetId"))
+    target_type = sample.get("targetType")
+    source = text_value(sample.get("sourceIdentity"))
+    binding = text_value(sample.get("bindingId"))
+    received = timestamp(sample.get("receivedAt"))
+    if (not target_id or target_type not in ("DEVICE", "EQUIPMENT", "ACCESS_PORT")
+            or not source or not binding or received is None or received.tzinfo is None
+            or not isinstance(sample.get("reported"), dict)):
+        raise ValueError("invalid entity identity")
+    with psycopg.connect(DSN) as conn:
+        conn.execute("""INSERT INTO telemetry_entity_samples
+          (target_id, target_type, source_identity, binding_id, received_at, sample)
+          VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING""",
+          (target_id, target_type, source, binding, received, Jsonb(sample)))
+    return 1
+
+
+def query_entity_history(target_id, target_type, window):
+    interval, bucket = WINDOWS[window]
+    # One last packet per source/binding per bucket, not an invented average of incompatible metrics.
+    with psycopg.connect(DSN) as conn:
+        rows = conn.execute("""SELECT sample FROM (
+          SELECT DISTINCT ON (time_bucket(%s::interval, received_at), source_identity, binding_id)
+            sample, received_at FROM telemetry_entity_samples
+          WHERE target_id = %s AND target_type = %s
+            AND received_at >= NOW() - %s::interval
+          ORDER BY time_bucket(%s::interval, received_at) DESC, source_identity, binding_id, received_at DESC
+          LIMIT 1000
+        ) recent ORDER BY received_at ASC""", (bucket, target_id, target_type, interval, bucket)).fetchall()
+    return [row[0] for row in rows]
+
+
 def query_history(serial, window, raw_point_ids):
     if window not in WINDOWS:
         raise ValueError("unsupported window")
@@ -238,8 +275,22 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "unavailable"})
             return
 
-        if parsed.path == "/history" and not self.authorized():
+        if parsed.path in ("/history", "/entity-history") and not self.authorized():
             self.send_json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
+            return
+
+        if parsed.path == "/entity-history":
+            query = parse_qs(parsed.query)
+            target_id = text_value(query.get("targetId", [None])[0])
+            target_type = query.get("targetType", [None])[0]
+            window = query.get("window", ["24h"])[0]
+            if not target_id or target_type not in ("DEVICE", "EQUIPMENT", "ACCESS_PORT") or window not in WINDOWS:
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": "invalid entity query"})
+                return
+            try:
+                self.send_json(HTTPStatus.OK, {"samples": query_entity_history(target_id, target_type, window)})
+            except Exception:
+                self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "entity history query failed"})
             return
 
         if parsed.path != "/history":
@@ -289,7 +340,13 @@ class Handler(BaseHTTPRequestHandler):
 
         try:
             payload = json.loads(self.rfile.read(length))
-            inserted = insert_samples(payload)
+            inserted = 0
+            if isinstance(payload, dict) and "entitySample" in payload:
+                inserted += insert_entity_sample(payload["entitySample"])
+            if isinstance(payload, dict) and "readings" in payload:
+                inserted += insert_samples(payload)
+            elif not isinstance(payload, dict) or "entitySample" not in payload:
+                raise ValueError("invalid sample envelope")
             self.send_json(HTTPStatus.ACCEPTED, {"accepted": inserted})
         except ValueError as error:
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
@@ -301,6 +358,8 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    with psycopg.connect(DSN) as conn:
+        conn.execute(Path(__file__).with_name("002-entity-telemetry.sql").read_text())
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"SITE_MAPPER_TELEMETRY_STORE_READY host={HOST} port={PORT}", flush=True)
     server.serve_forever()

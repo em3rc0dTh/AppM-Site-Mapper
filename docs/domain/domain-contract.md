@@ -253,3 +253,7 @@ Domain principle:
 > Electrical topology is an explicit domain relationship and must not be inferred solely from UI state.
 
 The Full Power Trace is a projection over these domain facts. It reports topology validity, telemetry availability and redundancy-policy satisfaction as separate concerns.
+
+## Equipment telemetry identity (2026-10-12)
+
+Every Equipment can own telemetry independently of its Device and ancestors. A unique active SN identifies the physical Equipment; an authenticated provider and validated SOURCE/point bindings determine accepted readings. Hierarchy supplies context and explicitly defined aggregate scopes, never implicit measurement ownership. See [ADR-017](../adr/ADR-017-independent-equipment-telemetry.md).

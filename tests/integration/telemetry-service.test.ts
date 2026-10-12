@@ -510,6 +510,25 @@ describe('TelemetryService', () => {
     );
   });
 
+  it('rejects a legacy map to a different valid BFDB when this SN belongs to another Device', async () => {
+    const actual = { ...device('actual-publisher', 'EMU-REAL-02'), deviceType: 'BDFB' as const };
+    const wrong = { ...device('wrong-legacy-target', 'OTHER-SN'), deviceType: 'BDFB' as const };
+    const service = new TelemetryService(
+      new MemoryTopologyRepository([actual, wrong]),
+      new TelemetryHub(5),
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 4096 },
+      { configuredBindings: [binding('env:mqtt:EMU-REAL-02', 'EMU-REAL-02', 'DEVICE', wrong.id)] },
+      new MemoryTelemetryBindingRepository(),
+    );
+    const result = await service.ingest(
+      'data/dev/EMU-REAL-02',
+      new TextEncoder().encode(JSON.stringify({
+        method: 'update', sn: 'EMU-REAL-02', timestamp: 1790580000, reported: {},
+      })),
+    );
+    expect(result).toEqual({ ok: false, error: 'AMBIGUOUS_SOURCE_BINDING' });
+  });
+
   it('fails closed for a stale persisted SOURCE mapping, never silently retargeting it', async () => {
     const owner = {
       ...device('not-old-owner', 'EMU-STALE-PERSISTED'),

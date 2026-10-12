@@ -181,6 +181,32 @@ describe('Power domain', () => {
     expect(result).toEqual({ ok: false, error: 'FEED_MISMATCH' });
   });
 
+  it('reports concurrent Mongo target uniqueness conflicts as domain errors', async () => {
+    const topology = new MemoryTopologyRepository([device, loadDevice, equipment]);
+    const breaker = await createBreaker(topology, device, 'Panel A');
+    const targetPort = 'equipment-1:power-in';
+    const power = new MemoryPowerRepository();
+    const concurrentRepository = {
+      ...power,
+      getById: (id: string) => power.getById(id),
+      listActive: () => power.listActive(),
+      listForAccessPort: (id: string) => power.listForAccessPort(id),
+      replace: (path: Parameters<typeof power.replace>[0]) => power.replace(path),
+      insert: async () => {
+        throw {
+          code: 11000,
+          keyPattern: { connectionKey: 1 },
+        };
+      },
+    };
+    const result = await new PowerService(topology, concurrentRepository).create({
+      sourceAccessPortId: breaker.id + ':power-out',
+      targetAccessPortId: targetPort,
+      feed: 'A',
+    });
+    expect(result).toEqual({ ok: false, error: 'TARGET_ALREADY_CONNECTED' });
+  });
+
   it('rejects a nonexistent AccessPort', async () => {
     const topology = new MemoryTopologyRepository([device, loadDevice, equipment]);
     const paths = new MemoryPowerRepository();

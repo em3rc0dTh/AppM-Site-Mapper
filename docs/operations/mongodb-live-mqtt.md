@@ -159,3 +159,30 @@ Data ownership remains:
 - Historical caveat: the gateway currently persists merged wide values in
   partial electrical updates. See the gateway's ingestion policy before
   interpreting its historical charts as new measurements for every field.
+
+
+## Automatic BFDB source discovery from the inventory
+
+On MQTT `data/dev/<serial>`, Site Mapper validates `payload.sn == topic serial` and
+attempts an explicit persisted SOURCE binding first. Without one it can discover
+a single active physical inventory serial matching a BDFB Device or its ACTIVE
+root CHASSIS (the owner must be an ACTIVE BDFB Device). This creates one durable
+MQTT `SOURCE` binding to the owning Device. Duplicate serials, archived items,
+nested Breaker SNs or invalid owners fail closed; no UUID is guessed. Stored
+auto-discovery bindings are rechecked against current topology on ingestion.
+
+Legacy `MQTT_SOURCE_DEVICE_MAP` is optional compatibility configuration, not
+required for new devices. Remove stale local mappings instead of copying UUIDs
+from another MongoDB database.
+
+**Identity is not circuit mapping.** Raw `reported` keys cannot be mapped to
+breaker serials by SN alone. Only explicit, verified per-point bindings
+(`sourceIdentity`, `sourcePointId`, `metric`, target Breaker Equipment ID)
+produce breaker readings and TSDB rows. Unmapped raw circuit points stay
+UNMAPPED until a physical register/position contract is provided.
+
+Production prerequisites: set `APP_ENV=production`, authenticated
+`mqtts://` broker credentials, broker topic ACLs, `TELEMETRY_STORE_TOKEN`
+shared with the history store, and private network reachability. Production
+store must set `STORE_ENV=production`; unauthenticated local compose settings
+must never be deployed to a publicly accessible network.

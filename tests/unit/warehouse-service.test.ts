@@ -179,6 +179,8 @@ describe('Virtual Warehouse', () => {
       rackId: rackNode.id,
       name: 'BDFB-01',
       deviceType: 'BDFB',
+      childMode: 'POSITIONAL',
+      childCapacity: 1,
     });
     expect(root.ok).toBe(true);
     if (!root.ok) return;
@@ -194,6 +196,8 @@ describe('Virtual Warehouse', () => {
       parentEquipmentId: root.value.equipment.id,
       slotIndex: 0,
       name: 'Shelf-01',
+      childMode: 'POSITIONAL',
+      childCapacity: 2,
     });
     expect(shelf.ok).toBe(true);
     if (!shelf.ok) return;
@@ -213,6 +217,8 @@ describe('Virtual Warehouse', () => {
       parentEquipmentId: root.value.equipment.id,
       slotIndex: 0,
       name: 'Shelf-02',
+      childMode: 'POSITIONAL',
+      childCapacity: 2,
     });
     expect(occupied).toEqual({ ok: false, error: 'SLOT_OCCUPIED' });
   });

@@ -1730,7 +1730,8 @@ body {
 .equipment-physical-children.is-mixed.is-row > .equipment-physical-child {
   flex: 1 1 180px;
 }
-.equipment-physical-children.is-mixed.is-row > .equipment-physical-child:has(.equipment-physical-preview) {
+.equipment-physical-children.is-mixed.is-row
+  > .equipment-physical-child:has(.equipment-physical-preview) {
   flex: 2 1 350px;
 }
 .equipment-physical-empty.is-dense {

@@ -244,7 +244,11 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
         </header>
 
         {projection.capacity > 0 && (
-          <section ref={compositionRef} className="equipment-physical-bays" aria-label="Immediate child composition">
+          <section
+            ref={compositionRef}
+            className="equipment-physical-bays"
+            aria-label="Immediate child composition"
+          >
             <header className="equipment-physical-subheading">
               <strong>INTERNAL COMPOSITION</strong>
               <small>

@@ -69,7 +69,10 @@ export function projectResponsiveCompositionGrid(
   const dense = projection.positional && projection.capacity > 4;
   const cellWidth = dense ? 96 : 255;
   const gap = dense ? 6 : 14;
-  const availableColumns = Math.max(1, Math.floor((Math.max(1, widthPx) + gap) / (cellWidth + gap)));
+  const availableColumns = Math.max(
+    1,
+    Math.floor((Math.max(1, widthPx) + gap) / (cellWidth + gap)),
+  );
   const count = Math.max(1, projection.capacity);
   const limit = projection.maxPerLine ?? (dense ? 12 : 4);
   const requiredRows = Math.ceil(count / availableColumns);

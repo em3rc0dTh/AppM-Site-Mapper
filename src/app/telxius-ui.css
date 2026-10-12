@@ -3354,3 +3354,191 @@ button.zip-rack-tree-row {
     grid-column: 1;
   }
 }
+
+
+/* Canonical Equipment Power commissioning — source POWER output → load POWER input. */
+.equipment-access-port-connect {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 9px;
+  background: #006e94;
+  color: white;
+  border: 1px solid #005778;
+  border-radius: 3px;
+  font-size: 10px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.power-port-connect-page {
+  width: min(1280px, 100%);
+  margin: 0 auto;
+  padding: clamp(18px, 3vw, 42px);
+  color: #142d39;
+  overflow-wrap: anywhere;
+}
+.power-port-connect-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+  border-bottom: 2px solid #c7d3d0;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+}
+.power-port-connect-header small {
+  display: block;
+  font-size: 11px;
+  color: #59777c;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.power-port-connect-header h1 {
+  font-size: clamp(22px, 3vw, 34px);
+  margin: 8px 0;
+}
+.power-port-connect-header p,
+.power-port-connect-panel p {
+  color: #4b6972;
+  font-size: 12px;
+}
+.power-port-connect-header a {
+  color: #006d9e;
+  font-size: 11px;
+  font-weight: 800;
+}
+.power-port-connect-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.power-port-connect-panel,
+.power-port-connect-review {
+  min-width: 0;
+  background: #fff9e9;
+  border: 1px solid #c9d2c8;
+  border-radius: 10px;
+  padding: clamp(14px, 2vw, 22px);
+  display: grid;
+  align-content: start;
+  gap: 14px;
+}
+.power-port-connect-panel h2,
+.power-port-connect-review h2 {
+  font-size: 15px;
+  margin: 0;
+}
+.power-port-connect-panel label,
+.power-port-connect-fields label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 700;
+}
+.power-port-connect-panel input,
+.power-port-connect-panel select,
+.power-port-connect-fields input,
+.power-port-connect-fields select {
+  min-width: 0;
+  width: 100%;
+  background: #fff;
+  color: #203e4b;
+  border: 1px solid #a8b8bc;
+  border-radius: 5px;
+  min-height: 40px;
+  padding: 9px 12px;
+  font-size: 12px;
+}
+.power-port-connect-preview {
+  display: grid;
+  gap: 4px;
+  background: #ecf4ec;
+  padding: 12px;
+  border: 1px solid #bad2c4;
+  min-width: 0;
+}
+.power-port-connect-preview small {
+  font-size: 10px;
+  font-weight: 800;
+  color: #53727b;
+}
+.power-port-connect-preview strong {
+  font-size: 13px;
+}
+.power-port-connect-preview span {
+  font-size: 11px;
+}
+.power-port-connect-review {
+  margin-top: 18px;
+}
+.power-port-connect-fields {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) minmax(0, 2fr);
+  gap: 14px;
+}
+.power-port-connect-path {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  background: #e8f1e9;
+  border: 1px solid #b9c9bd;
+  padding: 12px;
+  font-size: 12px;
+}
+.power-port-connect-path span {
+  color: #0a7aa4;
+  font-size: 20px;
+}
+.power-port-connect-review [role='alert'] {
+  color: #a52920;
+  border-left: 3px solid #d5382b;
+  padding: 8px 12px;
+  background: #fff0e9;
+  font-size: 12px;
+}
+.power-port-connect-caution {
+  color: #61717b;
+  font-size: 11px;
+}
+.power-port-connect-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+.power-port-connect-actions > a,
+.power-port-connect-actions > button {
+  padding: 12px 16px;
+  font-weight: 800;
+  border-radius: 5px;
+  font-size: 11px;
+}
+.power-port-connect-actions button {
+  color: #fff;
+  background: #007fb3;
+}
+.power-port-connect-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.power-port-connect-empty {
+  width: min(1280px, 94%);
+  margin: 0 auto;
+  color: #985b31;
+  padding: 16px;
+}
+@media (max-width: 760px) {
+  .power-port-connect-columns,
+  .power-port-connect-fields,
+  .power-port-connect-path {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .power-port-connect-path span {
+    text-align: center;
+    transform: rotate(90deg);
+  }
+}

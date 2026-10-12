@@ -11,6 +11,7 @@ import type {
   EquipmentType,
 } from '@/modules/topology/domain/entities';
 import { EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
+import { allowedChildEquipmentTypes, canInstallChildType } from './allowed-child-equipment-types';
 import type { AssetTemplate } from '@/modules/warehouse/domain/template';
 
 function label(type: EquipmentType): string {
@@ -63,6 +64,7 @@ export function EquipmentCompositionEditor({
   const [error, setError] = useState('');
 
   const allowed = equipment.template?.allowedChildTypes ?? [];
+  const permissibleChildTypes = allowedChildEquipmentTypes(allowed);
   const availableSlots =
     equipment.childMode === 'POSITIONAL'
       ? equipment.children.flatMap((childId, index) => (childId === null ? [index] : []))
@@ -205,6 +207,15 @@ export function EquipmentCompositionEditor({
   async function createFromWarehouse(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const typeOverride = String(form.get('equipmentType') ?? '');
+    const effectiveType = typeOverride || selectedTemplate?.equipmentType || 'CUSTOM';
+    if (!canInstallChildType(allowed, effectiveType as EquipmentType)) {
+      setError(
+        `INCOMPATIBLE_CHILD_TYPE: The parent accepts only ${allowed.map(label).join(', ')}. ` +
+          `You selected ${effectiveType.replaceAll('_', ' ')}.`,
+      );
+      return;
+    }
     const resolvedMode = warehouseChildMode;
     const resolvedCapacity = warehouseChildCapacity.trim()
       ? Number(warehouseChildCapacity)
@@ -249,6 +260,11 @@ export function EquipmentCompositionEditor({
   async function createOneOff(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const type = String(form.get('equipmentType') ?? 'CUSTOM') as EquipmentType;
+    if (!canInstallChildType(allowed, type)) {
+      setError(`INCOMPATIBLE_CHILD_TYPE: This parent accepts ${allowed.map(label).join(', ')}.`);
+      return;
+    }
     const childMode = oneOffChildMode;
     setBusy(true);
     setError('');
@@ -727,6 +743,13 @@ export function EquipmentCompositionEditor({
                   placeholder={selectedTemplate?.name ?? 'Equipment name'}
                 />
               </label>
+              {allowed.length > 0 ? (
+                <p className="equipment-child-type-notice">
+                  This {label(equipment.equipmentType)} accepts only{' '}
+                  <strong>{allowed.map(label).join(', ')}</strong> children. Install the
+                  allowed Equipment first; add its own children inside that Equipment.
+                </p>
+              ) : null}
               <label>
                 Equipment type override
                 <select
@@ -734,8 +757,8 @@ export function EquipmentCompositionEditor({
                   name="equipmentType"
                   defaultValue={defaultWarehouseType}
                 >
-                  <option value="">Use template</option>
-                  {EQUIPMENT_TYPES.map((type) => (
+                  <option value="">Use template ({selectedTemplate?.equipmentType ?? 'CUSTOM'})</option>
+                  {permissibleChildTypes.map((type) => (
                     <option key={type} value={type}>
                       {label(type)}
                     </option>
@@ -793,7 +816,7 @@ export function EquipmentCompositionEditor({
               <label>
                 Equipment type
                 <select name="equipmentType" defaultValue={defaultOneOffType}>
-                  {EQUIPMENT_TYPES.map((type) => (
+                  {permissibleChildTypes.map((type) => (
                     <option key={type} value={type}>
                       {label(type)}
                     </option>

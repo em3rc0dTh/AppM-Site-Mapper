@@ -50,7 +50,12 @@ try {
       }
       for (const rootId of array(node.rootEquipmentIds)) {
         const root = byId.get(rootId);
-        if (!root || root.kind !== 'EQUIPMENT' || root.deviceId !== node.id || root.parentEquipmentId !== null) {
+        if (
+          !root ||
+          root.kind !== 'EQUIPMENT' ||
+          root.deviceId !== node.id ||
+          root.parentEquipmentId !== null
+        ) {
           issue('INVALID_DEVICE_EQUIPMENT_ROOT', node.id, String(rootId));
         }
       }
@@ -139,7 +144,10 @@ try {
     const sFeed = feed(source?.attributes?.feed);
     const tFeed = feed(target?.attributes?.feed);
     const pFeed = feed(path.feed);
-    if ((sFeed && tFeed && sFeed !== tFeed) || (pFeed && ((sFeed && pFeed !== sFeed) || (tFeed && pFeed !== tFeed)))) {
+    if (
+      (sFeed && tFeed && sFeed !== tFeed) ||
+      (pFeed && ((sFeed && pFeed !== sFeed) || (tFeed && pFeed !== tFeed)))
+    ) {
       issue('POWER_FEED_MISMATCH', path.id);
     }
   }

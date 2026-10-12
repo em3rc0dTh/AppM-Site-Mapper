@@ -5842,3 +5842,128 @@ body {
     justify-content: flex-start;
   }
 }
+
+/* Full PowerPath: inventory ancestry and the actual electrical endpoints stay visible. */
+.zip-power-connection {
+  display: grid;
+  gap: 20px;
+}
+.zip-power-route-segment {
+  min-width: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  padding-bottom: 8px;
+}
+.zip-power-route-segment h3 {
+  margin: 0 0 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #455d71;
+}
+.zip-power-route-segment .zip-power-row {
+  width: max-content;
+  min-width: 100%;
+  justify-content: flex-start;
+  gap: 18px;
+}
+.zip-power-route-segment .zip-power-node-wrap {
+  flex: 0 0 auto;
+}
+.zip-power-route-segment .zip-power-node {
+  width: 128px;
+  min-width: 104px;
+}
+.zip-power-route-segment .zip-power-node span {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.25;
+}
+.zip-power-physical-link {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(95px, 160px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  background: #edf6fa;
+  border: 1px solid #9dbbcb;
+  border-radius: 8px;
+  padding: 14px;
+}
+.zip-power-terminal {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+  border: 1px solid #9db4c4;
+  background: #fff;
+  border-radius: 6px;
+  padding: 12px;
+}
+.zip-power-terminal small {
+  color: #536575;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.zip-power-terminal strong {
+  color: #122f44;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.zip-power-wire-arrow {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  color: #087db4;
+}
+.zip-power-wire-arrow span {
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+.zip-power-wire-arrow b {
+  font-size: 27px;
+  line-height: 1;
+}
+.zip-power-feed-summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  border: 1px solid #b6c9d8;
+  border-radius: 6px;
+  background: #fff9eb;
+}
+.zip-power-feed-summary > strong {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  color: #214961;
+}
+.zip-power-feed-summary > span {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.zip-power-feed-summary > b {
+  color: #087db4;
+  font-size: 20px;
+}
+.zip-power-dual-grid {
+  gap: 12px;
+}
+.zip-power-dual-box {
+  min-height: 0;
+}
+@media (max-width: 680px) {
+  .zip-power-physical-link {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .zip-power-wire-arrow b {
+    transform: rotate(90deg);
+  }
+  .zip-power-feed-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .zip-power-feed-summary > strong {
+    grid-column: 1;
+  }
+}

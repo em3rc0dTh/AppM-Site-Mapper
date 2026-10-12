@@ -158,17 +158,19 @@ describe('Power domain', () => {
       parentId: device.id,
       parentEquipmentId: null,
       name: 'BDFB Circuit Breaker',
-      accessPorts: [{
-        id: 'source-power-out',
-        deviceId: device.id,
-        equipmentId: 'source-equipment',
-        name: 'Power output',
-        portType: 'POWER',
-        direction: 'OUTPUT',
-        exposure: 'EXTERNAL',
-        lifecycle: 'ACTIVE',
-        attributes: { feed: 'A' },
-      }],
+      accessPorts: [
+        {
+          id: 'source-power-out',
+          deviceId: device.id,
+          equipmentId: 'source-equipment',
+          name: 'Power output',
+          portType: 'POWER',
+          direction: 'OUTPUT',
+          exposure: 'EXTERNAL',
+          lifecycle: 'ACTIVE',
+          attributes: { feed: 'A' },
+        },
+      ],
     };
     const topology = new MemoryTopologyRepository([device, loadDevice, equipment, sourceEquipment]);
     const result = await new PowerService(topology, new MemoryPowerRepository()).create({

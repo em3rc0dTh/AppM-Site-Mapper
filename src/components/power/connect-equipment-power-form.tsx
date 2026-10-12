@@ -41,7 +41,9 @@ export function ConnectEquipmentPowerForm({
   const target = targets.find((port) => port.id === targetId);
   const chosenFeed = source?.feed ?? target?.feed ?? feed;
   const mismatch = Boolean(source?.feed && target?.feed && source.feed !== target.feed);
-  const sourceAndTargetSameEquipment = Boolean(source && target && source.equipmentId === target.equipmentId);
+  const sourceAndTargetSameEquipment = Boolean(
+    source && target && source.equipmentId === target.equipmentId,
+  );
   const canConfirm = Boolean(
     source && target && !target.connected && !mismatch && !sourceAndTargetSameEquipment && !saving,
   );
@@ -50,8 +52,9 @@ export function ConnectEquipmentPowerForm({
     const text = search.trim().toLowerCase();
     if (!text) return targets;
     return targets.filter((port) =>
-      [port.equipmentName, port.name, port.id, port.deviceId]
-        .some((value) => value.toLowerCase().includes(text)),
+      [port.equipmentName, port.name, port.id, port.deviceId].some((value) =>
+        value.toLowerCase().includes(text),
+      ),
     );
   }, [search, targets]);
 
@@ -78,9 +81,7 @@ export function ConnectEquipmentPowerForm({
         setError(result?.error ?? `CONNECT_FAILED_${response.status}`);
         return;
       }
-      router.push(
-        `/power?path=${encodeURIComponent(result.path.id)}&feed=${chosenFeed}`,
-      );
+      router.push(`/power?path=${encodeURIComponent(result.path.id)}&feed=${chosenFeed}`);
       router.refresh();
     } catch {
       setError('NETWORK_ERROR: Connection could not be confirmed. Nothing was recorded.');
@@ -108,12 +109,16 @@ export function ConnectEquipmentPowerForm({
             Source Equipment / POWER OUTPUT
             <select
               value={sourceId}
-              onChange={(event) => { setSourceId(event.target.value); setError(''); }}
+              onChange={(event) => {
+                setSourceId(event.target.value);
+                setError('');
+              }}
             >
               <option value="">Select source port</option>
               {sources.map((port) => (
                 <option key={port.id} value={port.id}>
-                  {port.equipmentName} / {port.name}{port.feed ? ` · Feed ${port.feed}` : ''}
+                  {port.equipmentName} / {port.name}
+                  {port.feed ? ` · Feed ${port.feed}` : ''}
                 </option>
               ))}
             </select>
@@ -122,7 +127,9 @@ export function ConnectEquipmentPowerForm({
             <div className="power-port-connect-preview">
               <small>SELECTED SOURCE</small>
               <strong>{source.equipmentName}</strong>
-              <span>{source.name} · {source.direction}</span>
+              <span>
+                {source.name} · {source.direction}
+              </span>
             </div>
           )}
         </section>
@@ -142,7 +149,10 @@ export function ConnectEquipmentPowerForm({
             Destination Equipment / POWER INPUT
             <select
               value={targetId}
-              onChange={(event) => { setTargetId(event.target.value); setError(''); }}
+              onChange={(event) => {
+                setTargetId(event.target.value);
+                setError('');
+              }}
             >
               <option value="">Select destination port</option>
               {filteredTargets.map((port) => (
@@ -153,7 +163,9 @@ export function ConnectEquipmentPowerForm({
                 </option>
               ))}
               {target && !filteredTargets.some((port) => port.id === target.id) && (
-                <option value={target.id}>{target.equipmentName} / {target.name}</option>
+                <option value={target.id}>
+                  {target.equipmentName} / {target.name}
+                </option>
               )}
             </select>
           </label>
@@ -161,7 +173,9 @@ export function ConnectEquipmentPowerForm({
             <div className="power-port-connect-preview">
               <small>SELECTED DESTINATION</small>
               <strong>{target.equipmentName}</strong>
-              <span>{target.name} · {target.direction}</span>
+              <span>
+                {target.name} · {target.direction}
+              </span>
             </div>
           )}
         </section>
@@ -172,7 +186,9 @@ export function ConnectEquipmentPowerForm({
         <div className="power-port-connect-path">
           <strong>{source ? `${source.equipmentName} / ${source.name}` : 'Select source'}</strong>
           <span aria-hidden="true">→</span>
-          <strong>{target ? `${target.equipmentName} / ${target.name}` : 'Select destination'}</strong>
+          <strong>
+            {target ? `${target.equipmentName} / ${target.name}` : 'Select destination'}
+          </strong>
         </div>
         <div className="power-port-connect-fields">
           <label>
@@ -188,12 +204,21 @@ export function ConnectEquipmentPowerForm({
           </label>
           <label>
             Connection label (optional)
-            <input value={label} maxLength={120} onChange={(event) => setLabel(event.target.value)} placeholder="BDFB Panel A1 → Switch input" />
+            <input
+              value={label}
+              maxLength={120}
+              onChange={(event) => setLabel(event.target.value)}
+              placeholder="BDFB Panel A1 → Switch input"
+            />
           </label>
         </div>
-        {sourceAndTargetSameEquipment && <p role="alert">Source and destination must be different Equipment.</p>}
+        {sourceAndTargetSameEquipment && (
+          <p role="alert">Source and destination must be different Equipment.</p>
+        )}
         {target?.connected && <p role="alert">That POWER INPUT is already connected.</p>}
-        {mismatch && <p role="alert">FEED_MISMATCH: Source and destination have different fixed feeds.</p>}
+        {mismatch && (
+          <p role="alert">FEED_MISMATCH: Source and destination have different fixed feeds.</p>
+        )}
         {error && <p role="alert">{error}</p>}
         <p className="power-port-connect-caution">
           Confirmation records a real PowerPath. Verify the electrical connection on site first;

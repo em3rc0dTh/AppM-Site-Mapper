@@ -64,9 +64,7 @@ export default async function ConnectEquipmentPowerPage({
   const selectedSource = sources.find((port) => port.id === params.source);
   const selectedTarget = targets.find((port) => port.id === params.target);
   const origin = selectedSource ?? selectedTarget;
-  const returnHref = origin
-    ? `/device/${encodeURIComponent(origin.equipmentId)}`
-    : '/power';
+  const returnHref = origin ? `/device/${encodeURIComponent(origin.equipmentId)}` : '/power';
 
   return (
     <>

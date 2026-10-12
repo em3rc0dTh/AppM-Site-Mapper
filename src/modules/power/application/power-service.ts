@@ -67,7 +67,8 @@ export class PowerService {
       (sourceFeed && targetFeed && sourceFeed !== targetFeed) ||
       (input.feed && sourceFeed && input.feed !== sourceFeed) ||
       (input.feed && targetFeed && input.feed !== targetFeed)
-    ) return failure('FEED_MISMATCH');
+    )
+      return failure('FEED_MISMATCH');
 
     const targetPaths = await this.repository.listForAccessPort(target.port.id);
     const exact = targetPaths.find(

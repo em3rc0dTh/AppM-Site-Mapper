@@ -105,7 +105,10 @@ function EquipmentPreview({
   );
 }
 
-function PortFace({ ports, canWritePower = false }: Readonly<{ ports: readonly AccessPort[]; canWritePower?: boolean }>) {
+function PortFace({
+  ports,
+  canWritePower = false,
+}: Readonly<{ ports: readonly AccessPort[]; canWritePower?: boolean }>) {
   const active = useMemo(() => ports.filter((port) => port.lifecycle === 'ACTIVE'), [ports]);
   const [selectedPortId, setSelectedPortId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);

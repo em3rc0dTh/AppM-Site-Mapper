@@ -1888,3 +1888,76 @@ body {
 .equipment-composition-workbench-actions button:first-child:not(:last-child) {
   background: #0076ac;
 }
+
+/* Exact breaker telemetry lives in the Equipment Composition bars. */
+.equipment-breaker-telemetry {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #c8d9ce;
+  border-radius: 4px;
+  background: #f8fbf2;
+  color: #213c40;
+  overflow-wrap: anywhere;
+}
+.equipment-breaker-telemetry-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.equipment-breaker-telemetry-header strong,
+.equipment-physical-slot .equipment-breaker-telemetry-header strong {
+  color: #657585;
+  font: 750 10px/13px Inter, sans-serif;
+}
+.equipment-breaker-telemetry[data-state='LIVE'] {
+  border-color: #42a781;
+  background: #ecf9f0;
+}
+.equipment-breaker-telemetry[data-state='LIVE'] .equipment-breaker-telemetry-header strong {
+  color: #098357;
+}
+.equipment-breaker-telemetry[data-state='STALE'] {
+  border-color: #d9ac59;
+  background: #fff8e8;
+}
+.equipment-breaker-telemetry[data-state='CONFLICT'],
+.equipment-breaker-telemetry[data-state='OFFLINE'] {
+  border-color: #d8a39a;
+  background: #fff4ee;
+}
+.equipment-breaker-telemetry-values {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.equipment-physical-slot .equipment-breaker-telemetry-values span,
+.equipment-breaker-telemetry-values span {
+  min-width: 0;
+  font: 650 11px/16px 'Space Grotesk', sans-serif;
+  overflow-wrap: anywhere;
+}
+.equipment-breaker-telemetry-values b {
+  display: inline-block;
+  margin-right: 3px;
+  color: #38738a;
+}
+.equipment-breaker-telemetry > small {
+  color: #5b7180;
+  font-size: 9px;
+  line-height: 13px;
+  overflow-wrap: anywhere;
+}
+.equipment-physical-children.is-dense .equipment-physical-slot:has(.equipment-breaker-telemetry) {
+  min-height: 134px;
+}
+@container (max-width: 550px) {
+  .equipment-breaker-telemetry-values {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,5 +1,6 @@
 import type { PointMm, RectMm } from './geometry';
 import {
+  isCanonicalPolygon,
   isValidPolygon,
   pointInPolygon,
   polygonBounds,
@@ -113,15 +114,11 @@ export function explainRackPlacementFailure(
   if (!cluster || !bounds) return 'INVALID_CLUSTER';
   if (!Number.isFinite(width) || !Number.isFinite(depth) || width <= 0 || depth <= 0)
     return 'INVALID_DIMENSIONS';
-  // Coordinates in a Position always start at X >= 0 and Y >= 0.
-  // A Bay may extend left of the origin; that alone does not disqualify
-  // the usable part of its frontage on the positive side of the grid.
-  if (bounds.minY < 0 || bounds.maxX <= 0) return 'NEGATIVE_POSITION_REFERENCE';
-  const firstPositiveX = Math.max(0, bounds.minX);
-  if (bounds.maxX - firstPositiveX < width) return 'BAY_FRONTAGE_TOO_NARROW';
+  if (bounds.minX < 0 || bounds.minY < 0) return 'NEGATIVE_POSITION_REFERENCE';
+  if (bounds.maxX - bounds.minX < width) return 'BAY_FRONTAGE_TOO_NARROW';
 
   const reasons = new Set<string>();
-  const candidateXs = new Set<number>([firstPositiveX]);
+  const candidateXs = new Set<number>([bounds.minX]);
   for (const existing of draft.racks) {
     const position = draft.positions.find((candidate) => candidate.id === existing.positionId);
     if (position?.clusterId === clusterId) candidateXs.add(existing.x + existing.width);
@@ -164,11 +161,12 @@ export function findNextRackPlacement(
     !Number.isFinite(depth) ||
     width <= 0 ||
     depth <= 0 ||
+    bounds.minX < 0 ||
     bounds.minY < 0
   )
     return null;
 
-  const candidates = new Set<number>([Math.max(0, bounds.minX)]);
+  const candidates = new Set<number>([bounds.minX]);
 
   for (const existing of draft.racks) {
     const position = draft.positions.find((candidate) => candidate.id === existing.positionId);
@@ -215,19 +213,7 @@ export function validateLayoutDraft(value: unknown): string | null {
   if (!value || typeof value !== 'object') return 'INVALID_LAYOUT';
   const d = value as LayoutDraft;
   const polygon = (p: unknown): p is PointMm[] =>
-    Array.isArray(p) &&
-    p.length >= 3 &&
-    p.length <= 256 &&
-    p.every(
-      (v) =>
-        v &&
-        typeof v === 'object' &&
-        typeof v.x === 'number' &&
-        typeof v.y === 'number' &&
-        Math.abs(v.x) <= 1000000 &&
-        Math.abs(v.y) <= 1000000,
-    ) &&
-    isValidPolygon(p);
+    isCanonicalPolygon(p) && p.every((v) => v.x <= 1_000_000 && v.y <= 1_000_000);
   if (
     typeof d.version !== 'string' ||
     !polygon(d.polygon) ||

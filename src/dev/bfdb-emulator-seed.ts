@@ -347,9 +347,20 @@ export async function seedBfdbEmulatorLab(
     'DEVICE',
   );
 
+  // The lab fixture must explicitly define its synthetic physical PSU.
+  // PowerContractService may configure ports, but must not invent Equipment.
+  const loadPowerEquipment = requireKind(
+    await ensureNode(repository, topology, {
+      kind: 'EQUIPMENT',
+      parentId: load.id,
+      name: 'DEVICE-X synthetic dual-feed PSU',
+      equipmentType: 'POWER_SUPPLY',
+    }),
+    'EQUIPMENT',
+  );
   const portA = `${load.id}:power-in-a`;
   const portB = `${load.id}:power-in-b`;
-  const powerContract = await new PowerContractService(repository).update(load.id, {
+  const powerContract = await new PowerContractService(repository, paths).update(loadPowerEquipment.id, {
     accessPorts: [
       { id: portA, label: 'POWER-IN-A', feed: 'A' },
       { id: portB, label: 'POWER-IN-B', feed: 'B' },

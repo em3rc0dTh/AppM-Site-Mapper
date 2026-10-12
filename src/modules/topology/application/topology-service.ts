@@ -27,6 +27,8 @@ export type TopologyError =
   | 'BOUNDARY_OUTSIDE_SITE'
   | 'BOUNDARY_OUTSIDE_ROOM'
   | 'ROOM_OVERLAP'
+  | 'ROOM_OUTSIDE_STRUCTURE'
+  | 'STRUCTURE_BOUNDARY_REQUIRED'
   | 'ATOMIC_LAYOUT_STORAGE_REQUIRED'
   | 'LAYOUT_CONFLICT'
   | 'NOT_FOUND'
@@ -167,6 +169,11 @@ export class TopologyService {
       return failure('BOUNDARY_OUTSIDE_ROOM');
     }
     if (input.kind === 'ROOM_SUBSTRUCTURE' && parent?.kind === 'LEVEL') {
+      const structure = parent.parentId ? await this.repository.getById(parent.parentId) : null;
+      if (structure?.kind !== 'STRUCTURE' || !structure.polygon)
+        return failure('STRUCTURE_BOUNDARY_REQUIRED');
+      if (!polygonInsidePolygon(polygon!, structure.polygon))
+        return failure('ROOM_OUTSIDE_STRUCTURE');
       const siblings = await this.repository.listChildren(parent.id);
       if (
         siblings.some(

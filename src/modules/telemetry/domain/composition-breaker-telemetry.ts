@@ -1,7 +1,4 @@
-import type {
-  BreakerTelemetryReading,
-  TelemetrySample,
-} from '@/modules/telemetry/domain/entities';
+import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 export interface CompositionBreakerBinding {
   readonly id: string;
@@ -11,13 +8,7 @@ export interface CompositionBreakerBinding {
   readonly metric: string;
 }
 
-export type BreakerLiveStatus =
-  | 'LIVE'
-  | 'STALE'
-  | 'OFFLINE'
-  | 'NO DATA'
-  | 'UNMAPPED'
-  | 'CONFLICT';
+export type BreakerLiveStatus = 'LIVE' | 'STALE' | 'OFFLINE' | 'NO DATA' | 'UNMAPPED' | 'CONFLICT';
 
 export interface CompositionBreakerTelemetry {
   readonly status: BreakerLiveStatus;
@@ -110,7 +101,9 @@ function fromOwnSample(
       ? String(stateValue)
       : undefined;
   if (!Object.keys(values).length && !state) return null;
-  const timestamp = observed.length ? observed.sort().at(-1)! : sample.sourceObservedAt ?? sample.receivedAt;
+  const timestamp = observed.length
+    ? observed.sort().at(-1)!
+    : (sample.sourceObservedAt ?? sample.receivedAt);
 
   return {
     status: freshness(timestamp, now),
@@ -131,8 +124,7 @@ function fromGatewayReading(
   if (source.sourceIdentity !== reading.sourceIdentity) return null;
   const matches = links.filter(
     (link) =>
-      link.sourceIdentity === reading.sourceIdentity &&
-      link.sourcePointId === reading.rawPointId,
+      link.sourceIdentity === reading.sourceIdentity && link.sourcePointId === reading.rawPointId,
   );
   if (!matches.length) return null;
   const permitted = new Set(matches.map((link) => link.metric.toUpperCase()));
@@ -146,8 +138,9 @@ function fromGatewayReading(
     observed.push(metric.observedAt);
   }
   if (!Object.keys(values).length && !reading.state) return null;
-  const timestamp =
-    observed.length ? observed.sort().at(-1)! : reading.state?.observedAt ?? reading.receivedAt;
+  const timestamp = observed.length
+    ? observed.sort().at(-1)!
+    : (reading.state?.observedAt ?? reading.receivedAt);
   return {
     status: freshness(timestamp, now),
     ...values,
@@ -181,7 +174,8 @@ export function compositionBreakerTelemetry(
   const direct = own.filter((reading) => reading.sourcePointId === undefined);
   if (new Set(direct.map((reading) => reading.sourceIdentity)).size > 1)
     return { status: 'CONFLICT' };
-  if (direct.length) return direct.sort((a, b) => (b.receivedAt ?? '').localeCompare(a.receivedAt ?? ''))[0]!;
+  if (direct.length)
+    return direct.sort((a, b) => (b.receivedAt ?? '').localeCompare(a.receivedAt ?? ''))[0]!;
 
   const derived = [...own.filter((reading) => reading.sourcePointId !== undefined)];
   for (const source of samples)
@@ -190,7 +184,9 @@ export function compositionBreakerTelemetry(
       const projection = fromGatewayReading(reading, source, links, now);
       if (projection) derived.push(projection);
     }
-  if (new Set(derived.map((reading) => reading.sourceIdentity + '/' + reading.sourcePointId)).size > 1)
+  if (
+    new Set(derived.map((reading) => reading.sourceIdentity + '/' + reading.sourcePointId)).size > 1
+  )
     return { status: 'CONFLICT' };
   if (!derived.length) return { status: 'NO DATA' };
   return derived.sort((a, b) => (b.receivedAt ?? '').localeCompare(a.receivedAt ?? ''))[0]!;

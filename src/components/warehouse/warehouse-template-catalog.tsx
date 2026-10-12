@@ -107,12 +107,6 @@ export function WarehouseTemplateCatalog({
                     ? `${template.childCapacity ?? 0} positional slots`
                     : 'Dynamic'}
                 </dd>
-                <dt>Presentation</dt>
-                <dd>
-                  {template.presentation?.direction ?? 'ROW'} · Max per line{' '}
-                  {template.presentation?.maxPerLine ?? 'Auto'} ·{' '}
-                  {template.presentation?.childrenVisibility ?? 'AUTO'}
-                </dd>
                 <dt>Allowed child types</dt>
                 <dd>
                   {template.allowedChildTypes?.length

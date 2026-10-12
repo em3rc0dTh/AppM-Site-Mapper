@@ -46,6 +46,7 @@ export function PolygonEditor({
   title,
   initial = [],
   context = [],
+  contextLabel,
   contextOverlays = [],
   onConfirm,
   onCancel,
@@ -57,6 +58,7 @@ export function PolygonEditor({
   title: string;
   initial?: readonly PointMm[];
   context?: readonly PointMm[];
+  contextLabel?: string;
   contextOverlays?: readonly PolygonContextOverlay[];
   onConfirm: (polygon: PointMm[]) => void;
   onCancel: () => void;
@@ -274,6 +276,23 @@ export function PolygonEditor({
           Remove vertex
         </button>
       </div>
+      {(context.length >= 3 || contextOverlays.length > 0) && (
+        <div className="spatial-editor-context-legend" aria-label="Existing surveyed geometry">
+          {context.length >= 3 && (
+            <span>
+              <i className="spatial-editor-context-boundary" aria-hidden="true" />
+              {contextLabel ?? 'Existing boundary'} · drawing limit
+            </span>
+          )}
+          {contextOverlays.length > 0 && (
+            <span>
+              <i className="spatial-editor-context-rooms" aria-hidden="true" />
+              {contextOverlays.length} existing space(s) · read-only
+            </span>
+          )}
+          <span>New Room · blue drawing</span>
+        </div>
+      )}
       <svg
         ref={svg}
         viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
@@ -328,8 +347,8 @@ export function PolygonEditor({
         {context.length >= 3 && (
           <polygon
             points={pointsText(context)}
-            fill="#e8eff755"
-            stroke="#829bb7"
+            fill="#7c97b313"
+            stroke="#3d6c91"
             strokeWidth="2"
             vectorEffect="non-scaling-stroke"
             pointerEvents="none"
@@ -342,7 +361,7 @@ export function PolygonEditor({
             <g key={overlay.id} className="spatial-context-overlay" pointerEvents="none">
               <polygon
                 points={pointsText(overlay.polygon)}
-                fill="#14b8a612"
+                fill="#14b8a626"
                 stroke="#0f8f83"
                 strokeWidth="2"
                 strokeDasharray="7 5"
@@ -363,6 +382,19 @@ export function PolygonEditor({
             </g>
           );
         })}
+        {context.length >= 3 && (
+          <text
+            x={Math.min(...context.map((p) => p.x))}
+            y={Math.min(...context.map((p) => p.y))}
+            dy={-Math.max(radius * 1.25, 22)}
+            fontSize={Math.max(radius * 1.3, 22)}
+            fill="#315a79"
+            fontWeight="700"
+            pointerEvents="none"
+          >
+            {contextLabel ?? 'Surveyed boundary'}
+          </text>
+        )}
         {draft.closed ? (
           <polygon
             points={pointsText(draft.points)}
@@ -484,7 +516,7 @@ export function PolygonEditor({
           : 'Draw only at X ≥ 0 and Y ≥ 0 (A-1 origin). Red shading marks an invalid negative plane. Pan does not change physical coordinates.'}
       </p>
       <footer>
-        <span role="status">{error || (draft.points.length >= 3 ? invalid : null)}</span>
+        <span role="status">{error || coordinateError || (draft.points.length >= 3 ? invalid : null)}</span>
         <button type="button" disabled={busy} onClick={onCancel}>
           Cancel
         </button>

@@ -1913,7 +1913,9 @@ body {
 .equipment-breaker-telemetry-header strong,
 .equipment-physical-slot .equipment-breaker-telemetry-header strong {
   color: #657585;
-  font: 750 10px/13px Inter, sans-serif;
+  font:
+    750 10px/13px Inter,
+    sans-serif;
 }
 .equipment-breaker-telemetry[data-state='LIVE'] {
   border-color: #42a781;
@@ -1939,7 +1941,9 @@ body {
 .equipment-physical-slot .equipment-breaker-telemetry-values span,
 .equipment-breaker-telemetry-values span {
   min-width: 0;
-  font: 650 11px/16px 'Space Grotesk', sans-serif;
+  font:
+    650 11px/16px 'Space Grotesk',
+    sans-serif;
   overflow-wrap: anywhere;
 }
 .equipment-breaker-telemetry-values b {

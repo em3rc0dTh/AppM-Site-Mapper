@@ -3,6 +3,22 @@
 Unlike `npm run local:emulator`, this mode does **not** use memory, seed a
 synthetic Network or change the existing Mongo topology.
 
+## Repository integrity audit (read-only)
+
+Before attempting any migration or trusting the Power Trace in an existing database, run:
+
+```powershell
+npm run audit:mongo
+```
+
+This connects to the configured `MONGODB_URI` / `MONGODB_DB_NAME` and reads
+`topology_nodes`, active `power_paths`, and active `telemetry_bindings`.
+It reports omitted/invalid Equipment arrays, broken parent links, AccessPort
+ownership, missing endpoints, Feed mismatches and dangling telemetry targets.
+**It never changes data or indexes.** Exit code 2 means the audit found violations.
+Back up the database and review the reported IDs before any targeted migration.
+A clean read-only report is not a substitute for real connection/field tests.
+
 ## 1. Read-only inspection FIRST
 
 Configure ignored `.env.local` in Site Mapper:

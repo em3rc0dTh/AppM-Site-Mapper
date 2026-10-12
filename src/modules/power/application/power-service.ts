@@ -94,7 +94,30 @@ export class PowerService {
       ...(input.label?.trim() ? { label: input.label.trim() } : {}),
     };
 
-    await this.repository.insert(path);
+    try {
+      await this.repository.insert(path);
+    } catch (error) {
+      // Mongo enforces one ACTIVE path per target through connectionKey.
+      // Two concurrent operators may both pass the pre-flight read; present
+      // the unique-index conflict as a domain error rather than HTTP 500.
+      const conflict = error as { code?: number; keyPattern?: { connectionKey?: unknown }; message?: string };
+      if (
+        conflict.code === 11000 &&
+        (conflict.keyPattern?.connectionKey !== undefined ||
+          conflict.message?.includes('uq_active_power_path_connection_key'))
+      ) {
+        const linked = await this.repository.listForAccessPort(target.port.id);
+        const same = linked.find(
+          (candidate) =>
+            candidate.lifecycle === 'ACTIVE' &&
+            candidate.sourceAccessPortId === source.port.id &&
+            candidate.targetAccessPortId === target.port.id,
+        );
+        if (same) return success(same);
+        return failure('TARGET_ALREADY_CONNECTED');
+      }
+      throw error;
+    }
     return success(path);
   }
 

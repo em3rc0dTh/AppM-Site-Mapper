@@ -3,7 +3,6 @@
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
-import type { EquipmentChildMode } from '@/modules/topology/domain/entities';
 import { EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
 
 const JSON_EXAMPLE = JSON.stringify(
@@ -12,10 +11,8 @@ const JSON_EXAMPLE = JSON.stringify(
     name: 'BDFB Panel 24P',
     category: 'BDFB distribution panel',
     equipmentType: 'PANEL',
-    childMode: 'POSITIONAL',
-    childCapacity: 24,
     allowedChildTypes: ['CIRCUIT_BREAKER'],
-    notes: '24 positional slots; empty positions are null',
+    notes: 'Reusable Panel Equipment type; configure physical slots when instantiating',
   },
   null,
   2,
@@ -24,7 +21,6 @@ const JSON_EXAMPLE = JSON.stringify(
 export function TemplateCreateForm() {
   const router = useRouter();
   const [mode, setMode] = useState<'form' | 'json'>('form');
-  const [childMode, setChildMode] = useState<EquipmentChildMode>('DYNAMIC');
   const [jsonValue, setJsonValue] = useState(JSON_EXAMPLE);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -56,15 +52,12 @@ export function TemplateCreateForm() {
           depthMm: number('depthMm'),
           notes: String(form.get('notes') ?? ''),
           equipmentType: String(form.get('equipmentType') ?? 'CUSTOM'),
-          childMode,
-          childCapacity: childMode === 'POSITIONAL' ? number('childCapacity') : undefined,
           allowedChildTypes: form.getAll('allowedChildTypes').map(String),
         }),
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? 'CREATE_FAILED');
       event.currentTarget.reset();
-      setChildMode('DYNAMIC');
       setResult('Template created.');
       router.refresh();
     } catch (cause) {
@@ -156,30 +149,6 @@ export function TemplateCreateForm() {
               </select>
             </label>
             <label>
-              Children mode
-              <select
-                name="childMode"
-                value={childMode}
-                onChange={(event) => setChildMode(event.target.value as EquipmentChildMode)}
-              >
-                <option value="DYNAMIC">Dynamic</option>
-                <option value="POSITIONAL">Positional slots</option>
-              </select>
-            </label>
-            {childMode === 'POSITIONAL' ? (
-              <label>
-                Child slots
-                <input
-                  name="childCapacity"
-                  type="number"
-                  min="1"
-                  max="256"
-                  required
-                  placeholder="24"
-                />
-              </label>
-            ) : null}
-            <label>
               Manufacturer
               <input name="manufacturer" maxLength={120} placeholder="Cisco" />
             </label>
@@ -235,8 +204,9 @@ export function TemplateCreateForm() {
             <strong>Paste one template or an array of templates.</strong>
             <span>
               Equipment templates only. Recursive defaults use <code>equipmentType</code>,{' '}
-              <code>childMode</code>, <code>childCapacity</code> and <code>allowedChildTypes</code>.
-              Instance layout is configured when Equipment is placed, not in Warehouse.
+              <code>equipmentType</code> and <code>allowedChildTypes</code>. Configure
+              children, slots and layout when instantiating Equipment in a Rack or a parent
+              Equipment.
             </span>
           </div>
           <textarea

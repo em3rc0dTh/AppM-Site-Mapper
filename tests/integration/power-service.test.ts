@@ -150,6 +150,35 @@ describe('Power domain', () => {
     expect(result).toEqual({ ok: false, error: 'FEED_MISMATCH' });
   });
 
+  it('rejects a Feed that contradicts a POWER source even when the target has no feed', async () => {
+    const sourceEquipment: EquipmentNode = {
+      ...equipment,
+      id: 'source-equipment',
+      deviceId: device.id,
+      parentId: device.id,
+      parentEquipmentId: null,
+      name: 'BDFB Circuit Breaker',
+      accessPorts: [{
+        id: 'source-power-out',
+        deviceId: device.id,
+        equipmentId: 'source-equipment',
+        name: 'Power output',
+        portType: 'POWER',
+        direction: 'OUTPUT',
+        exposure: 'EXTERNAL',
+        lifecycle: 'ACTIVE',
+        attributes: { feed: 'A' },
+      }],
+    };
+    const topology = new MemoryTopologyRepository([device, loadDevice, equipment, sourceEquipment]);
+    const result = await new PowerService(topology, new MemoryPowerRepository()).create({
+      sourceAccessPortId: 'source-power-out',
+      targetAccessPortId: 'equipment-1:power-in',
+      feed: 'B',
+    });
+    expect(result).toEqual({ ok: false, error: 'FEED_MISMATCH' });
+  });
+
   it('rejects a nonexistent AccessPort', async () => {
     const topology = new MemoryTopologyRepository([device, loadDevice, equipment]);
     const paths = new MemoryPowerRepository();

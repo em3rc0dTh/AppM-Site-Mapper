@@ -1,7 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { isValidPolygon, polygonArea } from '@/modules/spatial/domain/geometry';
+import {
+  isValidPolygon,
+  polygonArea,
+  polygonsOverlapArea,
+} from '@/modules/spatial/domain/geometry';
 import { useState, type CSSProperties } from 'react';
 
 import type { PhysicalPoint, TopologyNode } from '@/modules/topology/domain/entities';
@@ -45,6 +49,27 @@ export function TopologyExplorer({
   const polygons = items.flatMap((entry) =>
     'polygon' in entry.node && entry.node.polygon ? [...entry.node.polygon] : [],
   );
+  const roomPairs: string[] = [];
+  if (node.kind === 'LEVEL') {
+    const rooms = items.filter(
+      (entry) => entry.node.kind === 'ROOM_SUBSTRUCTURE' && entry.node.polygon?.length,
+    );
+    for (let i = 0; i < rooms.length; i += 1) {
+      for (let j = i + 1; j < rooms.length; j += 1) {
+        const a = rooms[i]!.node;
+        const b = rooms[j]!.node;
+        if (
+          a.kind === 'ROOM_SUBSTRUCTURE' &&
+          b.kind === 'ROOM_SUBSTRUCTURE' &&
+          a.polygon &&
+          b.polygon &&
+          polygonsOverlapArea(a.polygon, b.polygon)
+        ) {
+          roomPairs.push(`${a.name} / ${b.name}`);
+        }
+      }
+    }
+  }
   const all = [...(boundary ?? []), ...polygons];
   const hasGeometry = all.length > 0 && (node.kind === 'LEVEL' || node.kind === 'SITE');
   // Preserve the saved coordinate envelope. Anchoring it to zero distorts
@@ -76,6 +101,16 @@ export function TopologyExplorer({
           <small>{hasGeometry ? 'SURVEYED GEOMETRY' : 'SCHEMATIC · NO SURVEYED COORDINATES'}</small>
         </header>
 
+        {roomPairs.length > 0 && (
+          <div className="level-room-overlap-warning" role="alert">
+            <strong>ROOM GEOMETRY CONFLICT · {roomPairs.length} overlapping pair(s)</strong>
+            <span>
+              Existing surveyed Rooms share floor area. Inspect and correct their boundaries;
+              new rooms cannot overlap.
+              {' '}{roomPairs.slice(0, 3).join(' · ')}
+            </span>
+          </div>
+        )}
         <div className="mk-map-canvas zip-map-canvas">
           <div className="mk-map-zoom" style={{ transform: `scale(${zoom})` }}>
             {node.kind === 'STRUCTURE' ? (

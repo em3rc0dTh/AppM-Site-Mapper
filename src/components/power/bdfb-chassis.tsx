@@ -519,7 +519,9 @@ export function BdfbChassis({
           <StatusBadge>{panels.length} PANELS</StatusBadge>
           <StatusBadge>{breakers.length} BREAKERS</StatusBadge>
           {Object.keys(readingsByBreaker).length ? (
-            <StatusBadge tone="good">{Object.keys(readingsByBreaker).length} MQTT BREAKERS</StatusBadge>
+            <StatusBadge tone="good">
+              {Object.keys(readingsByBreaker).length} MQTT BREAKERS
+            </StatusBadge>
           ) : (
             <StatusBadge tone="warning">MQTT WAITING</StatusBadge>
           )}

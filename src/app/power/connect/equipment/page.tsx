@@ -41,6 +41,7 @@ export default async function ConnectEquipmentPowerPage({
   for (const node of equipment) {
     for (const port of node.accessPorts) {
       if (port.lifecycle !== 'ACTIVE' || port.portType !== 'POWER') continue;
+      const fixedFeed = feedOf(port.attributes?.feed);
       const item: CommissioningPort = {
         id: port.id,
         name: port.name,
@@ -48,7 +49,7 @@ export default async function ConnectEquipmentPowerPage({
         equipmentName: node.name,
         deviceId: node.deviceId,
         direction: port.direction ?? 'BIDIRECTIONAL',
-        ...(feedOf(port.attributes?.feed) ? { feed: feedOf(port.attributes?.feed) } : {}),
+        ...(fixedFeed ? { feed: fixedFeed } : {}),
       };
       if (port.direction !== 'INPUT') sources.push(item);
       if (port.direction !== 'OUTPUT') {

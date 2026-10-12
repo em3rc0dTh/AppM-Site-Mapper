@@ -157,13 +157,27 @@ export class FullPowerTraceService {
       return [root, ...equipment];
     }
 
-    const device = await this.topology.getById(root.deviceId);
+    // An Equipment trace is scoped to this Equipment and its descendants.
+    // Do not mix the power inputs of sibling Equipment from the same Device.
     const equipment = (await this.topology.listEquipmentForDevice(root.deviceId)).filter(
       (item) => item.lifecycle === 'ACTIVE',
     );
-    return device?.kind === 'DEVICE' && device.lifecycle === 'ACTIVE'
-      ? [device, ...equipment]
-      : equipment;
+    const descendants = new Set<string>([root.id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const item of equipment) {
+        if (
+          item.parentEquipmentId &&
+          descendants.has(item.parentEquipmentId) &&
+          !descendants.has(item.id)
+        ) {
+          descendants.add(item.id);
+          changed = true;
+        }
+      }
+    }
+    return equipment.filter((item) => descendants.has(item.id));
   }
 
   private async resolveLeg(path: PowerPath): Promise<FullPowerTraceLeg> {
@@ -194,12 +208,13 @@ export class FullPowerTraceService {
     const rawPointId =
       (sourceEquipment ? stringAttribute(sourceEquipment, 'telemetryRawPointId') : undefined) ??
       reading?.rawPointId;
+    const sourceFeed = source?.port ? feedOf(source.port) : undefined;
     const targetFeed = target?.port ? feedOf(target.port) : undefined;
     const physicalFeed =
       feedFromLabel(sourceHierarchy.panel) ??
       feedFromLabel(sourceHierarchy.frame) ??
       feedFromLabel(sourceHierarchy.shelf);
-    const effectiveFeed = physicalFeed ?? targetFeed ?? path.feed;
+    const effectiveFeed = path.feed ?? sourceFeed ?? targetFeed ?? physicalFeed;
     const voltageV = metricValue(reading?.metrics.voltageV);
     const currentA = metricValue(reading?.metrics.currentA);
     const powerW = metricValue(reading?.metrics.powerW);
@@ -214,7 +229,12 @@ export class FullPowerTraceService {
       pathId: path.id,
       ...(path.label ? { label: path.label } : {}),
       ...(effectiveFeed ? { feed: effectiveFeed } : {}),
-      topologyStatus: !source || !isBreaker ? 'BROKEN_SOURCE' : !target ? 'BROKEN_TARGET' : 'VALID',
+      topologyStatus:
+        !source || source.port.direction === 'INPUT'
+          ? 'BROKEN_SOURCE'
+          : !target || target.port.direction === 'OUTPUT'
+            ? 'BROKEN_TARGET'
+            : 'VALID',
       source: {
         entityId: sourceEquipment?.deviceId ?? path.sourceAccessPortId,
         entityName: sourceDevice?.name ?? sourceEquipment?.name ?? path.sourceAccessPortId,

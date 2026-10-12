@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { bdfbSourceView } from '@/modules/telemetry/domain/bdfb-source-view';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
-export function useBdfbTelemetry(deviceId: string) {
+function useTelemetryStream() {
   const [now, setNow] = useState(() => Date.now());
   const [samples, setSamples] = useState<readonly TelemetrySample[]>([]);
   useEffect(() => {
@@ -36,5 +36,16 @@ export function useBdfbTelemetry(deviceId: string) {
       stream.close();
     };
   }, []);
+  return { samples, now };
+}
+
+export function useBdfbTelemetry(deviceId: string) {
+  const { samples, now } = useTelemetryStream();
   return bdfbSourceView(samples, deviceId, now);
+}
+
+/** One SSE subscription for the chassis, including independent child Equipment. */
+export function useBdfbTelemetrySnapshot(deviceId: string) {
+  const { samples, now } = useTelemetryStream();
+  return { aggregate: bdfbSourceView(samples, deviceId, now), samples, now };
 }

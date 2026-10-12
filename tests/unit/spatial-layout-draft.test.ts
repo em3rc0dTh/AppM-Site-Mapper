@@ -188,14 +188,19 @@ describe('Bay frontage and downstream rack depth', () => {
     expect(validateLayoutDraft(draft)).toBeNull();
   });
 
-  it('uses positive frontage when a valid Bay extends left of X = 0', () => {
+  it('rejects negative X in a Room even if the geometry is otherwise valid', () => {
     const draft = baseDraft();
     draft.polygon = [
-      { x: -1200, y: 0 },
+      { x: -600, y: 0 },
       { x: 3600, y: 0 },
       { x: 3600, y: 3600 },
-      { x: -1200, y: 3600 },
+      { x: -600, y: 3600 },
     ];
+    expect(validateLayoutDraft(draft)).toBe('INVALID_LAYOUT');
+  });
+
+  it('rejects negative X in a Bay instead of placing a Rack at its positive portion', () => {
+    const draft = baseDraft();
     draft.clusters[0] = {
       ...draft.clusters[0]!,
       polygon: [
@@ -205,17 +210,14 @@ describe('Bay frontage and downstream rack depth', () => {
         { x: -600, y: 600 },
       ],
     };
-
-    expect(explainRackPlacementFailure(draft, 'bay-top', 1200, 900)).not.toBe(
+    expect(findNextRackPlacement(draft, 'bay-top', 1200, 900)).toBeNull();
+    expect(explainRackPlacementFailure(draft, 'bay-top', 1200, 900)).toBe(
       'NEGATIVE_POSITION_REFERENCE',
     );
-    const placed = addRack(draft, 'r-left', 'Rack with positive anchor', 1200, 900);
-    expect(placed.point).toEqual({ x: 0, y: 0 });
-    expect(placed.coordinate).toEqual({ row: 'A', column: 1 });
-    expect(validateLayoutDraft(draft)).toBeNull();
+    expect(validateLayoutDraft(draft)).toBe('INVALID_CLUSTER_BOUNDARY');
   });
 
-  it('still blocks auto placement when Bay frontage starts above Y = 0', () => {
+  it('rejects negative Y in a Room or Bay without accepting a valid rack', () => {
     const draft = baseDraft();
     draft.polygon = [
       { x: 0, y: -600 },
@@ -223,6 +225,8 @@ describe('Bay frontage and downstream rack depth', () => {
       { x: 3600, y: 3600 },
       { x: 0, y: 3600 },
     ];
+    expect(validateLayoutDraft(draft)).toBe('INVALID_LAYOUT');
+    draft.polygon = baseDraft().polygon;
     draft.clusters[0] = {
       ...draft.clusters[0]!,
       polygon: [
@@ -233,9 +237,7 @@ describe('Bay frontage and downstream rack depth', () => {
       ],
     };
     expect(findNextRackPlacement(draft, 'bay-top', 1200, 900)).toBeNull();
-    expect(explainRackPlacementFailure(draft, 'bay-top', 1200, 900)).toBe(
-      'NEGATIVE_POSITION_REFERENCE',
-    );
+    expect(validateLayoutDraft(draft)).toBe('INVALID_CLUSTER_BOUNDARY');
   });
 
   it('rejects duplicate rack names in the same Room draft', () => {

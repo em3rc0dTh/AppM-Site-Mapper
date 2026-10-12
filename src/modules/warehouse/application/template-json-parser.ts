@@ -1,5 +1,5 @@
 import type { CreateAssetTemplateInput } from '@/modules/warehouse/application/warehouse-service';
-import type { EquipmentPresentation, EquipmentType } from '@/modules/topology/domain/entities';
+import type { EquipmentType } from '@/modules/topology/domain/entities';
 import {
   parseEquipmentChildMode,
   parseEquipmentType,
@@ -28,25 +28,6 @@ function allowedChildTypes(value: unknown): readonly EquipmentType[] | undefined
   return parsed as EquipmentType[];
 }
 
-function presentation(value: unknown): EquipmentPresentation | null {
-  const body = object(value);
-  if (
-    !body ||
-    !hasOnlyKeys(body, ['direction', 'maxPerLine', 'childrenVisibility']) ||
-    !['ROW', 'COLUMN'].includes(body.direction as string) ||
-    !['AUTO', 'INLINE', 'SUMMARY'].includes(body.childrenVisibility as string) ||
-    !(
-      body.maxPerLine === null ||
-      (Number.isInteger(body.maxPerLine) &&
-        (body.maxPerLine as number) >= 1 &&
-        (body.maxPerLine as number) <= 256)
-    )
-  )
-    return null;
-
-  return body as unknown as EquipmentPresentation;
-}
-
 export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput | null {
   const body = object(value);
   if (
@@ -66,7 +47,6 @@ export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput
       'childMode',
       'childCapacity',
       'allowedChildTypes',
-      'presentation',
     ]) ||
     body.kind !== 'EQUIPMENT' ||
     !isBoundedString(body.name, 120) ||
@@ -92,9 +72,6 @@ export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput
   if (body.equipmentType !== undefined && !parsedEquipmentType) return null;
   if (body.childMode !== undefined && !parsedChildMode) return null;
   if (body.allowedChildTypes !== undefined && !parsedAllowed) return null;
-  const parsedPresentation =
-    body.presentation === undefined ? undefined : presentation(body.presentation);
-  if (body.presentation !== undefined && !parsedPresentation) return null;
 
   return {
     kind: 'EQUIPMENT',
@@ -114,6 +91,5 @@ export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput
       ? { childCapacity: number(body.childCapacity)! }
       : {}),
     ...(parsedAllowed ? { allowedChildTypes: parsedAllowed } : {}),
-    ...(parsedPresentation ? { presentation: parsedPresentation } : {}),
   };
 }

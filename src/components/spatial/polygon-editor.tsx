@@ -516,7 +516,9 @@ export function PolygonEditor({
           : 'Draw only at X ≥ 0 and Y ≥ 0 (A-1 origin). Red shading marks an invalid negative plane. Pan does not change physical coordinates.'}
       </p>
       <footer>
-        <span role="status">{error || coordinateError || (draft.points.length >= 3 ? invalid : null)}</span>
+        <span role="status">
+          {error || coordinateError || (draft.points.length >= 3 ? invalid : null)}
+        </span>
         <button type="button" disabled={busy} onClick={onCancel}>
           Cancel
         </button>

@@ -108,3 +108,28 @@ It does not replace:
 - penetration testing;
 - production CSP validation;
 - production load/DoS validation.
+
+
+## October 2026 assessment — remaining deployment blockers
+
+Automated BFDB source discovery now requires a unique active inventory SN
+belonging to an active BDFB Device or root CHASSIS. Revalidation on ingestion
+rejects archived, duplicate or reassigned identities. This is a data identity
+control, **not device cryptographic authentication**. The broker must enforce
+authenticated clients and per-topic write ACLs; `payload.sn` alone is spoofable.
+
+The production telemetry runtime refuses plaintext MQTT and missing broker
+credentials; the history-store HTTP interface supports bearer authentication
+and the production client requires `TELEMETRY_STORE_TOKEN`. The history-store
+process itself must set `STORE_ENV=production` to refuse startup without a
+token. Store TLS/private network segmentation and database credentials must
+still be configured externally.
+
+**Not production-certified yet**: review and rotate any historical secrets,
+replace `POSTGRES_HOST_AUTH_METHOD=trust` in local compose for production,
+validate reverse-proxy forwarded headers and same-origin request policy,
+confirm all HTTP handlers use bounded inputs, verify broker ACLs and TLS
+certificates, run infrastructure scanning and a penetration test, and inspect
+operational logs under realistic message load. Passing CI is not proof of these
+controls. Do not expose MongoDB, TimescaleDB, or the telemetry-store port to
+the public Internet.

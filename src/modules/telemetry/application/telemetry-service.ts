@@ -117,7 +117,8 @@ export class TelemetryService {
             match.parentEquipmentId === null &&
             match.parentId === device.id &&
             device.rootEquipmentIds.includes(match.id)
-          ) deviceId = device.id;
+          )
+            deviceId = device.id;
         }
         if (!deviceId || target.id !== deviceId) return failure('AMBIGUOUS_SOURCE_BINDING');
       }

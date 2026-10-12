@@ -58,6 +58,15 @@ export class MongoTopologyRepository implements TopologyRepository {
     return document ? toDomain(document) : null;
   }
 
+  async findActiveBySerialNumber(serialNumber: string): Promise<readonly TopologyNode[]> {
+    const documents = await this.collection.find({
+      serialNumber,
+      kind: { $in: ['DEVICE', 'EQUIPMENT'] },
+      lifecycle: 'ACTIVE',
+    }).limit(3).toArray();
+    return documents.map(toDomain);
+  }
+
   async listChildren(parentId: string): Promise<readonly TopologyNode[]> {
     const documents = await this.collection.find({ parentId }).sort({ name: 1 }).toArray();
     return documents.map(toDomain);

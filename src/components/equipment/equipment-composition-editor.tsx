@@ -53,7 +53,7 @@ export function EquipmentCompositionEditor({
   );
   const [targetSlot, setTargetSlot] = useState<number | null>(null);
   const [mode, setMode] = useState<'warehouse' | 'one-off'>('warehouse');
-  const [warehouseChildMode, setWarehouseChildMode] = useState('');
+  const [warehouseChildMode, setWarehouseChildMode] = useState<EquipmentChildMode>('DYNAMIC');
   const [warehouseChildCapacity, setWarehouseChildCapacity] = useState('');
   const [oneOffChildMode, setOneOffChildMode] = useState<EquipmentChildMode>('DYNAMIC');
   const [templates, setTemplates] = useState<readonly AssetTemplate[]>([]);
@@ -109,16 +109,16 @@ export function EquipmentCompositionEditor({
     };
   }
 
-  function presentationFields(defaults?: AssetTemplate['presentation']) {
+  function presentationFields() {
     return (
       <fieldset>
         <legend>Child composition layout</legend>
         <label>
           Layout direction
           <select
-            key={'direction:' + (defaults?.direction ?? 'ROW')}
+            key="instance-direction"
             name="presentationDirection"
-            defaultValue={defaults?.direction ?? 'ROW'}
+            defaultValue="ROW"
           >
             <option value="ROW">Row</option>
             <option value="COLUMN">Column</option>
@@ -127,9 +127,9 @@ export function EquipmentCompositionEditor({
         <label>
           Max items per line
           <select
-            key={'max:' + String(defaults?.maxPerLine)}
+            key="instance-max"
             name="presentationMaxPerLine"
-            defaultValue={defaults?.maxPerLine?.toString() ?? 'auto'}
+            defaultValue="auto"
           >
             <option value="auto">Auto</option>
             {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
@@ -142,9 +142,9 @@ export function EquipmentCompositionEditor({
         <label>
           Child display
           <select
-            key={'visibility:' + (defaults?.childrenVisibility ?? 'AUTO')}
+            key="instance-visibility"
             name="presentationVisibility"
-            defaultValue={defaults?.childrenVisibility ?? 'AUTO'}
+            defaultValue="AUTO"
           >
             <option value="AUTO">Auto</option>
             <option value="INLINE">Inline</option>
@@ -217,12 +217,10 @@ export function EquipmentCompositionEditor({
   async function createFromWarehouse(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const resolvedMode = warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC';
+    const resolvedMode = warehouseChildMode;
     const resolvedCapacity = warehouseChildCapacity.trim()
       ? Number(warehouseChildCapacity)
-      : warehouseChildMode === 'POSITIONAL'
-        ? selectedTemplate?.childCapacity
-        : undefined;
+      : undefined;
     if (
       resolvedMode === 'POSITIONAL' &&
       (!Number.isInteger(resolvedCapacity) || (resolvedCapacity ?? 0) < 1)
@@ -245,7 +243,7 @@ export function EquipmentCompositionEditor({
           serialNumber: String(form.get('serialNumber') ?? ''),
           category: String(form.get('category') ?? ''),
           equipmentType: String(form.get('equipmentType') ?? '') || undefined,
-          childMode: warehouseChildMode || undefined,
+          childMode: warehouseChildMode,
           childCapacity: resolvedMode === 'POSITIONAL' ? resolvedCapacity : undefined,
         }),
       });
@@ -706,7 +704,7 @@ export function EquipmentCompositionEditor({
                   value={templateId}
                   onChange={(event) => {
                     setTemplateId(event.target.value);
-                    setWarehouseChildMode('');
+                    setWarehouseChildMode('DYNAMIC');
                     setWarehouseChildCapacity('');
                   }}
                   disabled={loadingTemplates}
@@ -728,10 +726,8 @@ export function EquipmentCompositionEditor({
                 <div className="equipment-template-preview">
                   <strong>{selectedTemplate.name}</strong>
                   <span>
-                    {selectedTemplate.equipmentType ?? 'CUSTOM'} ·{' '}
-                    {selectedTemplate.childMode === 'POSITIONAL'
-                      ? String(selectedTemplate.childCapacity ?? 0) + ' slots'
-                      : 'dynamic'}
+                    {selectedTemplate.equipmentType ?? 'CUSTOM'} · Choose child slots and
+                    presentation for this instance
                   </span>
                 </div>
               ) : null}
@@ -759,40 +755,34 @@ export function EquipmentCompositionEditor({
                 </select>
               </label>
               <label>
-                Children mode override
+                Children mode · This instance
                 <select
                   name="childMode"
                   value={warehouseChildMode}
                   onChange={(event) => {
-                    setWarehouseChildMode(event.target.value);
+                    setWarehouseChildMode(event.target.value as EquipmentChildMode);
                     setWarehouseChildCapacity('');
                   }}
                 >
-                  <option value="">Use template</option>
                   <option value="DYNAMIC">Dynamic</option>
                   <option value="POSITIONAL">Positional</option>
                 </select>
               </label>
-              <label>
-                Child slots override
-                <input
-                  name="childCapacity"
-                  type="number"
-                  min="1"
-                  max="256"
-                  value={warehouseChildCapacity}
-                  disabled={
-                    (warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC') !==
-                    'POSITIONAL'
-                  }
-                  placeholder={
-                    (warehouseChildMode || selectedTemplate?.childMode || 'DYNAMIC') === 'DYNAMIC'
-                      ? 'Not applicable (leaf / dynamic)'
-                      : String(selectedTemplate?.childCapacity ?? '1–256')
-                  }
-                  onChange={(event) => setWarehouseChildCapacity(event.target.value)}
-                />
-              </label>
+              {warehouseChildMode === 'POSITIONAL' ? (
+                <label>
+                  Child slots · This instance
+                  <input
+                    name="childCapacity"
+                    type="number"
+                    min="1"
+                    max="256"
+                    required
+                    value={warehouseChildCapacity}
+                    placeholder="Physical slots (1–256)"
+                    onChange={(event) => setWarehouseChildCapacity(event.target.value)}
+                  />
+                </label>
+              ) : null}
               <label>
                 Serial number
                 <input name="serialNumber" maxLength={120} />
@@ -801,7 +791,7 @@ export function EquipmentCompositionEditor({
                 Category override
                 <input name="category" maxLength={120} />
               </label>
-              {presentationFields(selectedTemplate?.presentation)}
+              {presentationFields()}
               <button type="submit" disabled={busy || !templateId}>
                 {busy ? 'Creating…' : 'Install Equipment'}
               </button>

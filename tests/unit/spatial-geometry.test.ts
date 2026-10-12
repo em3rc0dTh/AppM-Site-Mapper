@@ -4,6 +4,7 @@ import {
   isInPositiveDrawingPlane,
   parsePolygon,
   pointInPolygon,
+  polygonsOverlapArea,
   rectInsidePolygon,
   rectsOverlap,
 } from '@/modules/spatial/domain/geometry';
@@ -91,5 +92,45 @@ describe('Canonical nonnegative drawing plane', () => {
     expect(isInPositiveDrawingPlane({ x: -0.5, y: 0 })).toBe(false);
     expect(isInPositiveDrawingPlane({ x: 0, y: -0.5 })).toBe(false);
     expect(isInPositiveDrawingPlane({ x: 0.1, y: 0.1 })).toBe(true);
+  });
+});
+
+describe('Room-to-Room surveyed surface overlap', () => {
+  const room = [
+    { x: 0, y: 0 },
+    { x: 2400, y: 0 },
+    { x: 2400, y: 2400 },
+    { x: 0, y: 2400 },
+  ];
+  it('detects partially overlapping, axis-aligned rectangles sharing top and bottom edges', () => {
+    expect(
+      polygonsOverlapArea(room, [
+        { x: 1200, y: 0 },
+        { x: 3600, y: 0 },
+        { x: 3600, y: 2400 },
+        { x: 1200, y: 2400 },
+      ]),
+    ).toBe(true);
+  });
+  it('allows adjacent Rooms sharing a boundary but having no common surface area', () => {
+    expect(
+      polygonsOverlapArea(room, [
+        { x: 2400, y: 0 },
+        { x: 4800, y: 0 },
+        { x: 4800, y: 2400 },
+        { x: 2400, y: 2400 },
+      ]),
+    ).toBe(false);
+  });
+  it('detects coincident Rooms including concave polygon boundaries', () => {
+    const concave = [
+      { x: 0, y: 0 },
+      { x: 3600, y: 0 },
+      { x: 3600, y: 1000 },
+      { x: 1000, y: 1000 },
+      { x: 1000, y: 3600 },
+      { x: 0, y: 3600 },
+    ];
+    expect(polygonsOverlapArea(concave, concave)).toBe(true);
   });
 });

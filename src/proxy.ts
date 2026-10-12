@@ -2,8 +2,23 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 
 import { buildContentSecurityPolicy } from '@/shared/http/content-security-policy';
+import { isSafeMutationRequest } from '@/shared/http/request-security';
 
 export function proxy(request: NextRequest) {
+  // Apply a common same-origin fence to cookie-authenticated mutations,
+  // including handlers that have not yet adopted bounded JSON parsing.
+  if (
+    request.nextUrl.pathname.startsWith('/api/') &&
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method)
+  ) {
+    if (!isSafeMutationRequest(request)) {
+      return NextResponse.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+    }
+    const length = Number(request.headers.get('content-length'));
+    if (Number.isFinite(length) && length > 1_048_576) {
+      return NextResponse.json({ error: 'JSON_TOO_LARGE' }, { status: 413 });
+    }
+  }
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const csp = buildContentSecurityPolicy(nonce, process.env.NODE_ENV !== 'production');
 
@@ -22,6 +37,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/api/:path*',
     {
       source: '/((?!api|_next/static|_next/image|favicon.ico).*)',
       missing: [

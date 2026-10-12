@@ -38,7 +38,10 @@ export class CasService {
     if (!result.ok) return failure(result.error);
 
     const updated: ContainerRackNode = { ...rack.value, cas: result.ranges, updatedAt: nowIso() };
-    await this.repository.replace(updated);
+    if (!this.repository.commitLayout) return failure('ATOMIC_CAS_STORAGE_REQUIRED');
+    if (!(await this.repository.commitLayout([rack.value], [updated]))) {
+      return failure('CAS_WRITE_CONFLICT');
+    }
     return success(updated);
   }
 
@@ -113,13 +116,19 @@ export class CasService {
     const updated: ContainerRackNode = { ...rack.value, cas: result.ranges, updatedAt: nowIso() };
 
     if (!occupantId) {
-      await this.repository.replace(updated);
+      if (!this.repository.commitLayout) return failure('ATOMIC_CAS_STORAGE_REQUIRED');
+      if (!(await this.repository.commitLayout([rack.value], [updated]))) {
+        return failure('CAS_WRITE_CONFLICT');
+      }
       return success(updated);
     }
 
     const occupant = await this.repository.getById(occupantId);
     if (occupant?.kind !== 'EQUIPMENT' || occupant.rackPlacement?.rackId !== rack.value.id) {
-      await this.repository.replace(updated);
+      if (!this.repository.commitLayout) return failure('ATOMIC_CAS_STORAGE_REQUIRED');
+      if (!(await this.repository.commitLayout([rack.value], [updated]))) {
+        return failure('CAS_WRITE_CONFLICT');
+      }
       return success(updated);
     }
 

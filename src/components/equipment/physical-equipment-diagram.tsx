@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 
 import {
   projectEquipmentComposition,
+  projectResponsiveCompositionGrid,
   shouldSummarizeFocus,
 } from '@/modules/topology/application/equipment-composition-projection';
 import type { AccessPort, EquipmentNode } from '@/modules/topology/domain/entities';
@@ -206,28 +207,13 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
   }, [projection.capacity]);
   const hasPorts = root.accessPorts.some((port) => port.lifecycle === 'ACTIVE');
   const summarized = !expanded && shouldSummarizeFocus(projection);
-  // Presentation maxima are upper bounds. The available canvas width decides
-  // the effective arrangement, so 24 slots never become a 24-row list.
   const dense = projection.positional && projection.capacity > 4;
-  const minCellWidth = dense ? 96 : 255;
-  const gap = dense ? 6 : 14;
-  const fit = Math.max(1, Math.floor(((compositionWidth || 900) + gap) / (minCellWidth + gap)));
-  const maxPerLine = projection.maxPerLine ?? (dense ? 12 : 4);
-  const count = Math.max(1, projection.capacity);
-  const columnDirection = projection.direction === 'COLUMN';
-  const requiredRows = Math.max(1, Math.ceil(count / fit));
-  const columnFits = !columnDirection || requiredRows <= maxPerLine;
-  const useColumnDirection = columnDirection && columnFits;
-  const lines = useColumnDirection
-    ? Math.max(requiredRows, Math.min(maxPerLine, Math.ceil(Math.sqrt(count))))
-    : 1;
-  const columns = useColumnDirection
-    ? Math.ceil(count / lines)
-    : Math.max(1, Math.min(count, fit, maxPerLine));
+  const grid = projectResponsiveCompositionGrid(projection, compositionWidth || 900);
+  const useColumnDirection = grid.direction === 'COLUMN';
   const slots = projection.slots.slice(0, visibleCount);
   const style = {
-    '--composition-columns': columns,
-    '--composition-rows': useColumnDirection ? lines : 1,
+    '--composition-columns': grid.columns,
+    '--composition-rows': grid.rows,
   } as CSSProperties;
 
   return (

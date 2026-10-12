@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { PhysicalEquipmentDiagram } from '@/components/equipment/physical-equipment-diagram';
 import {
   projectEquipmentComposition,
+  projectResponsiveCompositionGrid,
   shouldSummarizeFocus,
 } from '@/modules/topology/application/equipment-composition-projection';
 import type { AccessPort, EquipmentNode } from '@/modules/topology/domain/entities';
@@ -99,6 +100,47 @@ describe('contract v1.0 Equipment focused physical composition', () => {
     expect(markup).toContain('2');
     expect(markup.match(/class="equipment-faceplate-port"/g)).toHaveLength(2);
     expect(markup).not.toContain('48 positions');
+  });
+
+  it('packs 24 positions into responsive rows without changing slot identity', () => {
+    const panel = equipment('panel-1', 'PANEL', Array(24).fill(null));
+    const projection = projectEquipmentComposition(panel, new Map());
+
+    expect(projectResponsiveCompositionGrid(projection, 820)).toEqual({
+      columns: 8,
+      rows: 3,
+      direction: 'ROW',
+    });
+    expect(projectResponsiveCompositionGrid(projection, 350)).toEqual({
+      columns: 3,
+      rows: 8,
+      direction: 'ROW',
+    });
+    expect(projection.slots.map((slot) => slot.index)).toEqual(
+      Array.from({ length: 24 }, (_, index) => index),
+    );
+  });
+
+  it('keeps column-first arrangement when it fits and falls back for narrow screens', () => {
+    const node = {
+      ...equipment('board-1', 'NETWORK_BOARD', Array(24).fill(null)),
+      presentation: {
+        direction: 'COLUMN' as const,
+        maxPerLine: 4,
+        childrenVisibility: 'INLINE' as const,
+      },
+    };
+    const projection = projectEquipmentComposition(node, new Map());
+    expect(projectResponsiveCompositionGrid(projection, 820)).toEqual({
+      columns: 8,
+      rows: 3,
+      direction: 'COLUMN',
+    });
+    expect(projectResponsiveCompositionGrid(projection, 350)).toEqual({
+      columns: 3,
+      rows: 8,
+      direction: 'ROW',
+    });
   });
 
   it('supports Network Board positions without a BDFB-specific renderer', () => {

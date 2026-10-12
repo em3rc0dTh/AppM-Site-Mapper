@@ -47,7 +47,9 @@ describe('Equipment Composition breaker telemetry', () => {
       powerW: { value: 117.9, unit: 'W' },
       energyKwh: { value: 0.4224, unit: 'kWh' },
     });
-    expect(compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now)).toMatchObject({
+    expect(
+      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now),
+    ).toMatchObject({
       status: 'LIVE',
       voltageV: 13.79,
       currentA: 8.55,
@@ -55,7 +57,9 @@ describe('Equipment Composition breaker telemetry', () => {
       energyKwh: 0.4224,
       sourceIdentity: 'BRK-SN-01',
     });
-    expect(compositionBreakerTelemetry('breaker-02', 'device', [reading], [sourceLink], now)).toEqual({
+    expect(
+      compositionBreakerTelemetry('breaker-02', 'device', [reading], [sourceLink], now),
+    ).toEqual({
       status: 'UNMAPPED',
     });
   });
@@ -67,7 +71,9 @@ describe('Equipment Composition breaker telemetry', () => {
     expect(compositionBreakerTelemetry('breaker-01', 'device', [packet], [], now)).toEqual({
       status: 'UNMAPPED',
     });
-    expect(compositionBreakerTelemetry('breaker-01', 'device', [packet], [voltageLink], now)).toEqual({
+    expect(
+      compositionBreakerTelemetry('breaker-01', 'device', [packet], [voltageLink], now),
+    ).toEqual({
       status: 'NO DATA',
     });
   });
@@ -95,25 +101,45 @@ describe('Equipment Composition breaker telemetry', () => {
         },
       ],
     };
-    const reading = compositionBreakerTelemetry('breaker-01', 'device', [packet], [voltageLink], now);
+    const reading = compositionBreakerTelemetry(
+      'breaker-01',
+      'device',
+      [packet],
+      [voltageLink],
+      now,
+    );
     expect(reading.status).toBe('LIVE');
     expect(reading.voltageV).toBe(13.79);
     expect(reading.currentA).toBeUndefined();
     expect(reading.sourcePointId).toBe('0_1_1');
     expect(
-      compositionBreakerTelemetry('breaker-01', 'unrelated-device', [packet], [voltageLink], now).status,
+      compositionBreakerTelemetry('breaker-01', 'unrelated-device', [packet], [voltageLink], now)
+        .status,
     ).toBe('NO DATA');
   });
 
   it('distinguishes STALE and OFFLINE and excludes wrong-unit measurements', () => {
-    const reading = sample('breaker-01', 'BRK-SN-01', { voltageV: { value: 20, unit: 'C' }, currentA: 1.2 });
-    expect(compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now)).toMatchObject({
+    const reading = sample('breaker-01', 'BRK-SN-01', {
+      voltageV: { value: 20, unit: 'C' },
+      currentA: 1.2,
+    });
+    expect(
+      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now),
+    ).toMatchObject({
       status: 'LIVE',
       currentA: 1.2,
     });
-    expect(compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now).voltageV).toBeUndefined();
-    expect(compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now + 90_000).status).toBe('STALE');
-    expect(compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now + 301_000).status).toBe('OFFLINE');
+    expect(
+      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now).voltageV,
+    ).toBeUndefined();
+    expect(
+      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now + 90_000)
+        .status,
+    ).toBe('STALE');
+    expect(
+      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now + 301_000)
+        .status,
+    ).toBe('OFFLINE');
   });
 
   it('fails closed when competing authenticated sources claim the same breaker', () => {

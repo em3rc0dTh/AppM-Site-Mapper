@@ -1,7 +1,12 @@
 'use client';
 
 import { useId, useRef, useState, type PointerEvent } from 'react';
-import { isValidPolygon, polygonArea, type PointMm } from '@/modules/spatial/domain/geometry';
+import {
+  isCanonicalPolygon,
+  isInPositiveDrawingPlane,
+  polygonArea,
+  type PointMm,
+} from '@/modules/spatial/domain/geometry';
 import { snapToGrid } from '@/modules/spatial/domain/grid';
 
 type Snapshot = { points: PointMm[]; closed: boolean };
@@ -21,13 +26,18 @@ function centroid(points: readonly PointMm[]): PointMm {
   };
 }
 function fit(points: readonly PointMm[]): View {
-  if (!points.length) return { x: -600, y: -600, width: 14400, height: 9600 };
+  if (!points.length) return { x: 0, y: 0, width: 14400, height: 9600 };
   const minX = Math.min(...points.map((p) => p.x)),
     minY = Math.min(...points.map((p) => p.y));
   const width = Math.max(1200, Math.max(...points.map((p) => p.x)) - minX);
   const height = Math.max(1200, Math.max(...points.map((p) => p.y)) - minY);
   const pad = Math.max(width, height) * 0.12;
-  return { x: minX - pad, y: minY - pad, width: width + 2 * pad, height: height + 2 * pad };
+  return {
+    x: minX < 0 ? minX - pad : Math.max(0, minX - pad),
+    y: minY < 0 ? minY - pad : Math.max(0, minY - pad),
+    width: width + 2 * pad,
+    height: height + 2 * pad,
+  };
 }
 const pointsText = (points: readonly PointMm[]) => points.map((p) => `${p.x},${p.y}`).join(' ');
 
@@ -66,6 +76,7 @@ export function PolygonEditor({
   const [tool, setTool] = useState<'draw' | 'pan'>('draw');
   const [snap, setSnap] = useState(true);
   const [cursor, setCursor] = useState<PointMm | null>(null);
+  const [coordinateError, setCoordinateError] = useState('');
   const svg = useRef<SVGSVGElement>(null);
   const drag = useRef<{ index: number; before: Snapshot } | null>(null);
   const pan = useRef<{
@@ -76,9 +87,11 @@ export function PolygonEditor({
     scaleY: number;
   } | null>(null);
   const gridId = useId().replaceAll(':', '');
-  const invalid = !isValidPolygon(draft.points)
-    ? 'Draw a simple, non-zero-area boundary with 3–256 vertices.'
-    : (validate?.(draft.points) ?? null);
+  const invalid = draft.points.some((p) => !isInPositiveDrawingPlane(p))
+    ? 'The boundary contains negative coordinates. Move its vertices to X >= 0 and Y >= 0 before saving.'
+    : !isCanonicalPolygon(draft.points)
+      ? 'Draw a simple, non-zero-area boundary with 3–256 vertices.'
+      : (validate?.(draft.points) ?? null);
   function change(next: Snapshot) {
     setPast((history) => [...history, draft].slice(-100));
     setDraft(next);
@@ -89,6 +102,8 @@ export function PolygonEditor({
     if (!matrix) return null;
     const result = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
     const raw = { x: result.x, y: result.y };
+    // Validate the physical pointer BEFORE snapping: -1 mm must not become 0 mm.
+    if (!isInPositiveDrawingPlane(raw)) return null;
     return snap && snapped ? snapToGrid(raw) : raw;
   }
   function beginPan(event: PointerEvent<SVGSVGElement>) {
@@ -112,7 +127,12 @@ export function PolygonEditor({
     }
     if (draft.closed || draft.points.length >= 256) return;
     const next = point(event);
-    if (next) change({ points: [...draft.points, next], closed: false });
+    if (!next) {
+      setCoordinateError('OUTSIDE DRAWING GRID: X and Y must be 0 or greater.');
+      return;
+    }
+    setCoordinateError('');
+    change({ points: [...draft.points, next], closed: false });
   }
   function move(event: PointerEvent<SVGSVGElement>) {
     if (busy) return;
@@ -126,7 +146,10 @@ export function PolygonEditor({
       return;
     }
     const next = point(event);
-    if (!next) return;
+    if (!next) {
+      setCursor(null);
+      return;
+    }
     setCursor(next);
     const dragging = drag.current;
     if (dragging)
@@ -281,6 +304,27 @@ export function PolygonEditor({
           height={view.height}
           fill={`url(#${gridId})`}
         />
+        {/* Display uneditable negative plane when panning across the origin. */}
+        {view.x < 0 && (
+          <rect
+            x={view.x}
+            y={view.y}
+            width={Math.min(view.width, -view.x)}
+            height={view.height}
+            fill="#df56681c"
+            pointerEvents="none"
+          />
+        )}
+        {view.y < 0 && (
+          <rect
+            x={view.x}
+            y={view.y}
+            width={view.width}
+            height={Math.min(view.height, -view.y)}
+            fill="#df56681c"
+            pointerEvents="none"
+          />
+        )}
         {context.length >= 3 && (
           <polygon
             points={pointsText(context)}
@@ -369,7 +413,11 @@ export function PolygonEditor({
                   e.stopPropagation();
                   if (busy || draft.points.length >= 256) return;
                   const p = point(e, false);
-                  if (!p) return;
+                  if (!p) {
+                    setCoordinateError('OUTSIDE DRAWING GRID: X and Y must be 0 or greater.');
+                    return;
+                  }
+                  setCoordinateError('');
                   const dx = b.x - a.x,
                     dy = b.y - a.y,
                     length = dx * dx + dy * dy;
@@ -433,7 +481,7 @@ export function PolygonEditor({
       <p className="spatial-editor-hint">
         {draft.closed
           ? 'Drag a vertex. Click an edge to add one. Select a vertex to remove it.'
-          : 'Click to draw vertices, then Finish boundary or click the first vertex. Pan to extend the drawing plane.'}
+          : 'Draw only at X ≥ 0 and Y ≥ 0 (A-1 origin). Red shading marks an invalid negative plane. Pan does not change physical coordinates.'}
       </p>
       <footer>
         <span role="status">{error || (draft.points.length >= 3 ? invalid : null)}</span>

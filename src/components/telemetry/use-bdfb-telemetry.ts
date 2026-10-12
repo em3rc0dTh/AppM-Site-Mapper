@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react';
 import { bdfbSourceView } from '@/modules/telemetry/domain/bdfb-source-view';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
-function useTelemetryStream() {
+export function useTelemetryStream(enabled = true) {
   const [now, setNow] = useState(() => Date.now());
   const [samples, setSamples] = useState<readonly TelemetrySample[]>([]);
   useEffect(() => {
+    if (!enabled) return;
     const clock = setInterval(() => setNow(Date.now()), 5000);
     const stream = new EventSource('/api/telemetry/stream');
     const snapshot = (event: MessageEvent<string>) => {
@@ -35,7 +36,7 @@ function useTelemetryStream() {
       clearInterval(clock);
       stream.close();
     };
-  }, []);
+  }, [enabled]);
   return { samples, now };
 }
 

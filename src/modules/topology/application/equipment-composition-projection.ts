@@ -54,3 +54,36 @@ export function shouldSummarizeFocus(projection: CompositionProjection): boolean
   if (projection.positional) return projection.capacity > 96;
   return projection.capacity > 4;
 }
+
+export interface ResponsiveCompositionGrid {
+  readonly columns: number;
+  readonly rows: number;
+  readonly direction: 'ROW' | 'COLUMN';
+}
+
+/** The maximum per row/column is a hint; available width wins over overflow. */
+export function projectResponsiveCompositionGrid(
+  projection: CompositionProjection,
+  widthPx: number,
+): ResponsiveCompositionGrid {
+  const dense = projection.positional && projection.capacity > 4;
+  const cellWidth = dense ? 96 : 255;
+  const gap = dense ? 6 : 14;
+  const availableColumns = Math.max(1, Math.floor((Math.max(1, widthPx) + gap) / (cellWidth + gap)));
+  const count = Math.max(1, projection.capacity);
+  const limit = projection.maxPerLine ?? (dense ? 12 : 4);
+  const requiredRows = Math.ceil(count / availableColumns);
+  if (projection.direction === 'COLUMN' && requiredRows <= limit) {
+    return {
+      columns: Math.ceil(count / requiredRows),
+      rows: requiredRows,
+      direction: 'COLUMN',
+    };
+  }
+  const columns = Math.max(1, Math.min(count, availableColumns, limit));
+  return {
+    columns,
+    rows: Math.ceil(count / columns),
+    direction: 'ROW',
+  };
+}

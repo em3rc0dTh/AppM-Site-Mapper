@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   findNextRackPlacement,
+  explainRackPlacementFailure,
   validateLayoutDraft,
   type LayoutDraft,
 } from '@/modules/spatial/domain/layout-draft';
@@ -205,6 +206,9 @@ describe('Bay frontage and downstream rack depth', () => {
       ],
     };
 
+    expect(explainRackPlacementFailure(draft, 'bay-top', 1200, 900)).not.toBe(
+      'NEGATIVE_POSITION_REFERENCE',
+    );
     const placed = addRack(draft, 'r-left', 'Rack with positive anchor', 1200, 900);
     expect(placed.point).toEqual({ x: 0, y: 0 });
     expect(placed.coordinate).toEqual({ row: 'A', column: 1 });
@@ -229,6 +233,9 @@ describe('Bay frontage and downstream rack depth', () => {
       ],
     };
     expect(findNextRackPlacement(draft, 'bay-top', 1200, 900)).toBeNull();
+    expect(explainRackPlacementFailure(draft, 'bay-top', 1200, 900)).toBe(
+      'NEGATIVE_POSITION_REFERENCE',
+    );
   });
 
   it('rejects duplicate rack names in the same Room draft', () => {

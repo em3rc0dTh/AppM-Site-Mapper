@@ -26,10 +26,10 @@ const DEMO_SITE_POLYGON = [
 ] as const;
 
 const DEMO_STRUCTURE_POLYGON = [
-  { x: 200, y: 200 },
-  { x: 5800, y: 200 },
+  { x: 0, y: 0 },
+  { x: 5800, y: 0 },
   { x: 5800, y: 3800 },
-  { x: 200, y: 3800 },
+  { x: 0, y: 3800 },
 ] as const;
 
 const DEMO_ROOM_POLYGON = [

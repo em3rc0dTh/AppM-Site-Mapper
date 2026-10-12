@@ -183,7 +183,7 @@ function BreakerReadout({
   reading,
   mapped,
 }: Readonly<{
-  reading?: BreakerTelemetryReading;
+  reading: BreakerTelemetryReading | undefined;
   mapped: boolean;
 }>) {
   const values = [

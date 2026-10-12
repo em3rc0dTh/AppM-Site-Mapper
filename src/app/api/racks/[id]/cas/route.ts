@@ -3,7 +3,12 @@ import { NextResponse } from 'next/server';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { CasService } from '@/modules/rack/application/cas-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
-import { hasOnlyKeys, isSafeMutationRequest, jsonBodyErrorStatus, readBoundedJson } from '@/shared/http/request-security';
+import {
+  hasOnlyKeys,
+  isSafeMutationRequest,
+  jsonBodyErrorStatus,
+  readBoundedJson,
+} from '@/shared/http/request-security';
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
 
@@ -19,7 +24,10 @@ export async function POST(request: Request, context: Context) {
   }
   const parsed = await readBoundedJson(request, { maxBytes: 4096, maxDepth: 3, maxNodes: 32 });
   if (!parsed.ok) {
-    return NextResponse.json({ error: parsed.error }, { status: jsonBodyErrorStatus(parsed.error) });
+    return NextResponse.json(
+      { error: parsed.error },
+      { status: jsonBodyErrorStatus(parsed.error) },
+    );
   }
   const { id } = await context.params;
   const body = parsed.value;

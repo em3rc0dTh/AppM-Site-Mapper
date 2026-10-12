@@ -84,7 +84,9 @@ describe('PowerContractService linked-port integrity', () => {
       }),
     ).toMatchObject({ ok: true });
     const saved = await topology.getById(chassis.id);
-    expect(saved?.kind === 'EQUIPMENT' ? saved.accessPorts[0]?.name : null).toBe('Renamed power input');
+    expect(saved?.kind === 'EQUIPMENT' ? saved.accessPorts[0]?.name : null).toBe(
+      'Renamed power input',
+    );
     expect(await paths.listForAccessPort('in-a')).toHaveLength(1);
   });
 

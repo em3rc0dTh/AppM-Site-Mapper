@@ -369,8 +369,20 @@ describe('FullPowerTraceService', () => {
       accessPorts: [bIn],
     });
     const sourceDevice = device('rectifier', 'rack-power', 'RECTIFIER', ['rectifier-output']);
-    const outputA = powerPort(sourceDevice.id, 'rectifier-output', 'rectifier-a-out', 'OUTPUT', 'A');
-    const outputB = powerPort(sourceDevice.id, 'rectifier-output', 'rectifier-b-out', 'OUTPUT', 'B');
+    const outputA = powerPort(
+      sourceDevice.id,
+      'rectifier-output',
+      'rectifier-a-out',
+      'OUTPUT',
+      'A',
+    );
+    const outputB = powerPort(
+      sourceDevice.id,
+      'rectifier-output',
+      'rectifier-b-out',
+      'OUTPUT',
+      'B',
+    );
     const rectifier = equipment({
       id: 'rectifier-output',
       deviceId: sourceDevice.id,
@@ -383,10 +395,18 @@ describe('FullPowerTraceService', () => {
     const power = new MemoryPowerRepository();
     const service = new PowerService(topology, power);
     expect(
-      await service.create({ sourceAccessPortId: outputA.id, targetAccessPortId: aIn.id, feed: 'A' }),
+      await service.create({
+        sourceAccessPortId: outputA.id,
+        targetAccessPortId: aIn.id,
+        feed: 'A',
+      }),
     ).toMatchObject({ ok: true });
     expect(
-      await service.create({ sourceAccessPortId: outputB.id, targetAccessPortId: bIn.id, feed: 'B' }),
+      await service.create({
+        sourceAccessPortId: outputB.id,
+        targetAccessPortId: bIn.id,
+        feed: 'B',
+      }),
     ).toMatchObject({ ok: true });
 
     const trace = new FullPowerTraceService(topology, power);
@@ -401,5 +421,4 @@ describe('FullPowerTraceService', () => {
     expect(wholeDevice?.legs).toHaveLength(2);
     expect(wholeDevice?.feedB).toHaveLength(1);
   });
-
 });

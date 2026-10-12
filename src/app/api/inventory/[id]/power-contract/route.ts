@@ -8,7 +8,13 @@ import {
 } from '@/modules/inventory/application/power-contract-service';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
-import { hasOnlyKeys, isBoundedString, isSafeMutationRequest, jsonBodyErrorStatus, readBoundedJson } from '@/shared/http/request-security';
+import {
+  hasOnlyKeys,
+  isBoundedString,
+  isSafeMutationRequest,
+  jsonBodyErrorStatus,
+  readBoundedJson,
+} from '@/shared/http/request-security';
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
 
@@ -37,7 +43,10 @@ export async function PUT(request: Request, context: Context) {
   }
   const parsed = await readBoundedJson(request, { maxBytes: 32768, maxDepth: 5, maxNodes: 512 });
   if (!parsed.ok) {
-    return NextResponse.json({ error: parsed.error }, { status: jsonBodyErrorStatus(parsed.error) });
+    return NextResponse.json(
+      { error: parsed.error },
+      { status: jsonBodyErrorStatus(parsed.error) },
+    );
   }
   const body = parsed.value;
   if (

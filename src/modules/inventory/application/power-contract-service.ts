@@ -141,7 +141,8 @@ export class PowerContractService {
         existing.portType !== 'POWER' ||
         existing.exposure !== 'EXTERNAL' ||
         existing.direction === 'OUTPUT'
-      ) continue;
+      )
+        continue;
       const links = await this.power.listForAccessPort(existing.id);
       if (!links.some((path) => path.lifecycle === 'ACTIVE')) continue;
       const future = proposed.get(existing.id);
@@ -223,5 +224,4 @@ export class PowerContractService {
       null
     );
   }
-
 }

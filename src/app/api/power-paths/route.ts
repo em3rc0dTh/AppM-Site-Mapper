@@ -5,7 +5,13 @@ import { PowerService } from '@/modules/power/application/power-service';
 import type { PowerFeed } from '@/modules/power/domain/entities';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
-import { hasOnlyKeys, isBoundedString, isSafeMutationRequest, jsonBodyErrorStatus, readBoundedJson } from '@/shared/http/request-security';
+import {
+  hasOnlyKeys,
+  isBoundedString,
+  isSafeMutationRequest,
+  jsonBodyErrorStatus,
+  readBoundedJson,
+} from '@/shared/http/request-security';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
@@ -34,7 +40,10 @@ export async function POST(request: Request) {
   }
   const parsed = await readBoundedJson(request, { maxBytes: 4096, maxDepth: 3, maxNodes: 32 });
   if (!parsed.ok) {
-    return NextResponse.json({ error: parsed.error }, { status: jsonBodyErrorStatus(parsed.error) });
+    return NextResponse.json(
+      { error: parsed.error },
+      { status: jsonBodyErrorStatus(parsed.error) },
+    );
   }
   const body = parsed.value;
   if (

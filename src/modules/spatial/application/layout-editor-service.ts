@@ -4,6 +4,7 @@ import type { TopologyNode } from '@/modules/topology/domain/entities';
 import { initializeCas } from '@/modules/rack/domain/cas';
 import { validateLayoutDraft, type LayoutDraft } from '@/modules/spatial/domain/layout-draft';
 import { gridCoordinateToPoint } from '@/modules/spatial/domain/grid';
+import { polygonsOverlapArea } from '@/modules/spatial/domain/geometry';
 export async function readLayoutDraft(
   repo: TopologyRepository,
   roomId: string,
@@ -73,6 +74,23 @@ export async function prepareLayoutSave(
   )
     return { error: 'PARENT_ARCHIVED' };
   if (current.draft.version !== draft.version) return { error: 'LAYOUT_CONFLICT' };
+  const roomNode = current.nodes[0];
+  const level = roomNode?.parentId ? await repo.getById(roomNode.parentId) : null;
+  if (!level || level.kind !== 'LEVEL' || level.lifecycle !== 'ACTIVE') {
+    return { error: 'LEVEL_NOT_FOUND' };
+  }
+  const siblingRooms = await repo.listChildren(level.id);
+  if (
+    siblingRooms.some(
+      (sibling) =>
+        sibling.kind === 'ROOM_SUBSTRUCTURE' &&
+        sibling.id !== roomId &&
+        sibling.lifecycle === 'ACTIVE' &&
+        polygonsOverlapArea(draft.polygon, sibling.polygon),
+    )
+  ) {
+    return { error: 'ROOM_OVERLAP' };
+  }
   const original = new Map(current.nodes.map((n) => [n.id, n]));
   const now = new Date(Math.max(Date.now(), Date.parse(draft.version) + 1)).toISOString();
   const requested = [...draft.clusters, ...draft.positions, ...draft.racks];
@@ -155,5 +173,12 @@ export async function prepareLayoutSave(
   for (const old of current.nodes)
     if (!after.some((n) => n.id === old.id))
       after.push({ ...old, lifecycle: 'ARCHIVED', updatedAt: now });
-  return { before: current.nodes, after };
+  // The Level is the shared concurrency guard for every Room footprint.
+  // A concurrent sibling create/update changes its version and invalidates
+  // this transaction, so two geometries cannot both commit from stale reads.
+  const updatedLevel = {
+    ...level,
+    updatedAt: new Date(Math.max(Date.now(), Date.parse(level.updatedAt) + 1)).toISOString(),
+  };
+  return { before: [...current.nodes, level], after: [...after, updatedLevel] };
 }

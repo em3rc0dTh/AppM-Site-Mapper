@@ -94,6 +94,7 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
   constructor(
     private readonly baseUrl: string,
     private readonly timeoutMs = 5_000,
+    private readonly accessToken?: string,
   ) {}
 
   async write(sample: TelemetrySample): Promise<void> {
@@ -106,7 +107,10 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     try {
       const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/samples`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          ...(this.accessToken ? { authorization: `Bearer ${this.accessToken}` } : {}),
+        },
         body: JSON.stringify(body),
         cache: 'no-store',
         signal: controller.signal,
@@ -156,6 +160,7 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
 
     try {
       const response = await fetch(url, {
+        ...(this.accessToken ? { headers: { authorization: `Bearer ${this.accessToken}` } } : {}),
         cache: 'no-store',
         signal: controller.signal,
       });
@@ -176,5 +181,9 @@ export function createTelemetryStoreClient(): HttpTelemetryStore {
   const baseUrl = process.env.TELEMETRY_STORE_URL?.trim() || 'http://127.0.0.1:18081';
   const parsedTimeout = Number(process.env.TELEMETRY_STORE_TIMEOUT_MS);
   const timeoutMs = Number.isInteger(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 5_000;
-  return new HttpTelemetryStore(baseUrl, timeoutMs);
+  const token = process.env.TELEMETRY_STORE_TOKEN?.trim();
+  if ((process.env.APP_ENV === 'production' || process.env.NODE_ENV === 'production') && !token) {
+    throw new Error('Production telemetry history store requires TELEMETRY_STORE_TOKEN.');
+  }
+  return new HttpTelemetryStore(baseUrl, timeoutMs, token);
 }

@@ -45,6 +45,28 @@ export interface TelemetryRuntime {
   readonly diagnostics: () => TelemetryDiagnostics;
 }
 
+/** Disallow unauthenticated or unencrypted MQTT in production. */
+export function assertMqttProductionSecurity(
+  brokerUrl: string,
+  username: string | undefined,
+  password: string | undefined,
+  production: boolean,
+): void {
+  if (!production) return;
+  let url: URL;
+  try {
+    url = new URL(brokerUrl);
+  } catch {
+    throw new Error('Invalid MQTT_BROKER_URL');
+  }
+  if (url.protocol !== 'mqtts:') {
+    throw new Error('Production MQTT requires mqtts:// with certificate validation.');
+  }
+  if (!username?.trim() || !password?.trim()) {
+    throw new Error('Production MQTT requires an authenticated broker account.');
+  }
+}
+
 function positiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
@@ -131,6 +153,12 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
 
     if (enabled) {
       const brokerUrl = requireRuntimeSecret('MQTT_BROKER_URL', process.env.MQTT_BROKER_URL);
+      assertMqttProductionSecurity(
+        brokerUrl,
+        process.env.MQTT_USERNAME,
+        process.env.MQTT_PASSWORD,
+        process.env.APP_ENV === 'production' || process.env.NODE_ENV === 'production',
+      );
       source = new NativeMqttSource(
         {
           brokerUrl,

@@ -1,4 +1,4 @@
-import { parsePolygon, polygonInsidePolygon } from '@/modules/spatial/domain/geometry';
+import { parsePolygon, polygonInsidePolygon, polygonsOverlapArea } from '@/modules/spatial/domain/geometry';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
   AccessPort,
@@ -26,6 +26,7 @@ export type TopologyError =
   | 'INVALID_POLYGON'
   | 'BOUNDARY_OUTSIDE_SITE'
   | 'BOUNDARY_OUTSIDE_ROOM'
+  | 'ROOM_OVERLAP'
   | 'ATOMIC_LAYOUT_STORAGE_REQUIRED'
   | 'LAYOUT_CONFLICT'
   | 'NOT_FOUND'
@@ -164,6 +165,19 @@ export class TopologyService {
         !polygonInsidePolygon(polygon!, parent.polygon))
     ) {
       return failure('BOUNDARY_OUTSIDE_ROOM');
+    }
+    if (input.kind === 'ROOM_SUBSTRUCTURE' && parent?.kind === 'LEVEL') {
+      const siblings = await this.repository.listChildren(parent.id);
+      if (
+        siblings.some(
+          (sibling) =>
+            sibling.kind === 'ROOM_SUBSTRUCTURE' &&
+            sibling.lifecycle === 'ACTIVE' &&
+            polygonsOverlapArea(polygon!, sibling.polygon),
+        )
+      ) {
+        return failure('ROOM_OVERLAP');
+      }
     }
     if (parent) {
       const ancestry = await this.getTrail(parent.id);
@@ -386,7 +400,17 @@ export class TopologyService {
       }
     }
 
-    if (node.kind === 'CONTAINER_CLUSTER_BAY' && parent) {
+    if (node.kind === 'ROOM_SUBSTRUCTURE' && parent?.kind === 'LEVEL') {
+      // Serialize sibling Room creates against the Level version so concurrent
+      // requests cannot both pass the overlap pre-flight against stale siblings.
+      if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+      const updatedAt = new Date(
+        Math.max(Date.now(), Date.parse(parent.updatedAt) + 1),
+      ).toISOString();
+      if (!(await this.repository.commitLayout([parent], [{ ...parent, updatedAt }, node]))) {
+        return failure('LAYOUT_CONFLICT');
+      }
+    } else if (node.kind === 'CONTAINER_CLUSTER_BAY' && parent) {
       if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
       const updatedAt = new Date(
         Math.max(Date.now(), Date.parse(parent.updatedAt) + 1),

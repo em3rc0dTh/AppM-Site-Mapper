@@ -4,6 +4,7 @@ import { requirePermission } from '@/modules/identity/application/current-sessio
 import { FullPowerTraceService } from '@/modules/power/application/full-power-trace-service';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { getTelemetryRuntime } from '@/modules/telemetry/infrastructure/telemetry-runtime';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 type Context = Readonly<{ params: Promise<{ entityId: string }> }>;
@@ -15,13 +16,14 @@ export async function GET(_request: Request, context: Context) {
   }
 
   const { entityId } = await context.params;
-  const [topology, power, telemetry] = await Promise.all([
+  const [topology, power, telemetry, bindings] = await Promise.all([
     createTopologyRepository(),
     createPowerRepository(),
     getTelemetryRuntime(),
+    createTelemetryBindingRepository(),
   ]);
 
-  const trace = await new FullPowerTraceService(topology, power, telemetry.service).resolve(
+  const trace = await new FullPowerTraceService(topology, power, telemetry.service, bindings).resolve(
     entityId,
   );
   if (!trace) {

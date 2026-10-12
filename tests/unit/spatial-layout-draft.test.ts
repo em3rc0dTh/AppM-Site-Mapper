@@ -187,6 +187,50 @@ describe('Bay frontage and downstream rack depth', () => {
     expect(validateLayoutDraft(draft)).toBeNull();
   });
 
+  it('uses positive frontage when a valid Bay extends left of X = 0', () => {
+    const draft = baseDraft();
+    draft.polygon = [
+      { x: -1200, y: 0 },
+      { x: 3600, y: 0 },
+      { x: 3600, y: 3600 },
+      { x: -1200, y: 3600 },
+    ];
+    draft.clusters[0] = {
+      ...draft.clusters[0]!,
+      polygon: [
+        { x: -600, y: 0 },
+        { x: 1200, y: 0 },
+        { x: 1200, y: 600 },
+        { x: -600, y: 600 },
+      ],
+    };
+
+    const placed = addRack(draft, 'r-left', 'Rack with positive anchor', 1200, 900);
+    expect(placed.point).toEqual({ x: 0, y: 0 });
+    expect(placed.coordinate).toEqual({ row: 'A', column: 1 });
+    expect(validateLayoutDraft(draft)).toBeNull();
+  });
+
+  it('still blocks auto placement when Bay frontage starts above Y = 0', () => {
+    const draft = baseDraft();
+    draft.polygon = [
+      { x: 0, y: -600 },
+      { x: 3600, y: -600 },
+      { x: 3600, y: 3600 },
+      { x: 0, y: 3600 },
+    ];
+    draft.clusters[0] = {
+      ...draft.clusters[0]!,
+      polygon: [
+        { x: 0, y: -300 },
+        { x: 1800, y: -300 },
+        { x: 1800, y: 300 },
+        { x: 0, y: 300 },
+      ],
+    };
+    expect(findNextRackPlacement(draft, 'bay-top', 1200, 900)).toBeNull();
+  });
+
   it('rejects duplicate rack names in the same Room draft', () => {
     const draft = baseDraft();
     draft.positions.push(

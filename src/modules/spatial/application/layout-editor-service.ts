@@ -93,6 +93,7 @@ export async function prepareLayoutSave(
         sibling.kind === 'ROOM_SUBSTRUCTURE' &&
         sibling.id !== roomId &&
         sibling.lifecycle === 'ACTIVE' &&
+        sibling.polygon !== undefined &&
         polygonsOverlapArea(draft.polygon, sibling.polygon),
     )
   ) {

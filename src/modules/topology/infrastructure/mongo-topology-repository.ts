@@ -3,13 +3,14 @@ import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb
 
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { EquipmentNode, TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
+import { hydrateTopologyDocument } from '@/modules/topology/infrastructure/topology-document-hydration';
 
 type TopologyDocument = TopologyNode & Document;
 
 function toDomain(document: TopologyDocument): TopologyNode {
   const copy = { ...document } as Record<string, unknown>;
   delete copy._id;
-  return copy as unknown as TopologyNode;
+  return hydrateTopologyDocument(copy);
 }
 
 export class MongoTopologyRepository implements TopologyRepository {

@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { prepareLayoutSave, readLayoutDraft } from '@/modules/spatial/application/layout-editor-service';
+import {
+  prepareLayoutSave,
+  readLayoutDraft,
+} from '@/modules/spatial/application/layout-editor-service';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 

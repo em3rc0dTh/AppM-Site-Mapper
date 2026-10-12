@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { CasService } from '@/modules/rack/application/cas-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import { hasOnlyKeys, isSafeMutationRequest, jsonBodyErrorStatus, readBoundedJson } from '@/shared/http/request-security';
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
 
@@ -13,10 +14,31 @@ export async function POST(request: Request, context: Context) {
     return NextResponse.json({ error: auth.error }, { status: 403 });
   }
 
+  if (!isSafeMutationRequest(request)) {
+    return NextResponse.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  }
+  const parsed = await readBoundedJson(request, { maxBytes: 4096, maxDepth: 3, maxNodes: 32 });
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: jsonBodyErrorStatus(parsed.error) });
+  }
   const { id } = await context.params;
-  const body: unknown = await request.json().catch(() => null);
+  const body = parsed.value;
 
-  if (!body || typeof body !== 'object' || !('action' in body)) {
+  if (
+    !body ||
+    typeof body !== 'object' ||
+    Array.isArray(body) ||
+    !('action' in body) ||
+    !hasOnlyKeys(body as Record<string, unknown>, [
+      'action',
+      'mountStartU',
+      'physicalSizeU',
+      'clearanceTopU',
+      'clearanceBottomU',
+      'allocationId',
+      'occupantId',
+    ])
+  ) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 

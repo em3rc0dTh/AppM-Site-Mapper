@@ -9,26 +9,76 @@ import {
   shouldSummarizeFocus,
 } from '@/modules/topology/application/equipment-composition-projection';
 import type { AccessPort, EquipmentNode } from '@/modules/topology/domain/entities';
+import { useTelemetryStream } from '@/components/telemetry/use-bdfb-telemetry';
+import {
+  compositionBreakerTelemetry,
+  type CompositionBreakerBinding,
+  type CompositionBreakerTelemetry,
+} from '@/modules/telemetry/domain/composition-breaker-telemetry';
 
 interface Props {
   readonly root: EquipmentNode;
   readonly equipment: readonly EquipmentNode[];
   readonly onAdd?: ((slot: number | null) => void) | undefined;
   readonly canWritePower?: boolean | undefined;
+  readonly canReadTelemetry?: boolean | undefined;
+  readonly breakerTelemetryBindings?: readonly CompositionBreakerBinding[] | undefined;
 }
 
 function countLabel(occupied: number, count: number, positional: boolean) {
   return positional ? `${occupied} / ${count} occupied` : `${occupied} installed`;
 }
 
+function BreakerMeasurementStrip({
+  reading,
+}: Readonly<{ reading: CompositionBreakerTelemetry }>) {
+  const metrics = [
+    { label: 'V', value: reading.voltageV, unit: 'V' },
+    { label: 'I', value: reading.currentA, unit: 'A' },
+    { label: 'P', value: reading.powerW, unit: 'W' },
+    { label: 'E', value: reading.energyKwh, unit: 'kWh' },
+  ];
+  return (
+    <div className="equipment-breaker-telemetry" data-state={reading.status}>
+      <div className="equipment-breaker-telemetry-header">
+        <strong>MQTT · {reading.status}</strong>
+        {reading.state && <span>{reading.state}</span>}
+      </div>
+      <div className="equipment-breaker-telemetry-values" aria-label="Circuit breaker telemetry">
+        {metrics.map((metric) => (
+          <span key={metric.label}>
+            <b>{metric.label}</b>{' '}
+            {metric.value === undefined
+              ? '—'
+              : `${metric.value.toFixed(metric.label === 'E' ? 4 : 2)} ${metric.unit}`}
+          </span>
+        ))}
+      </div>
+      <small>
+        {reading.sourceIdentity
+          ? `${reading.sourceIdentity}${reading.sourcePointId ? ` / ${reading.sourcePointId}` : ' / OWN SOURCE'} · ${reading.receivedAt ?? '—'}`
+          : reading.status === 'UNMAPPED'
+            ? 'No verified circuit binding'
+            : reading.status === 'NO DATA'
+              ? 'Mapped · waiting for a reading'
+              : reading.status === 'CONFLICT'
+                ? 'Conflicting circuit sources'
+                : 'Telemetry unavailable'}
+      </small>
+    </div>
+  );
+}
+
 function EquipmentPreview({
   equipment,
   equipmentById,
   slotIndex,
+  breakerTelemetry,
 }: Readonly<{
   equipment: EquipmentNode;
   equipmentById: ReadonlyMap<string, EquipmentNode>;
   slotIndex: number;
+  breakerTelemetry?: CompositionBreakerTelemetry;
 }>) {
   const composition = projectEquipmentComposition(equipment, equipmentById);
   const ports = equipment.accessPorts.filter((port) => port.lifecycle === 'ACTIVE');
@@ -50,6 +100,9 @@ function EquipmentPreview({
       >
         {equipment.name}
       </Link>
+      {equipment.equipmentType === 'CIRCUIT_BREAKER' && breakerTelemetry && (
+        <BreakerMeasurementStrip reading={breakerTelemetry} />
+      )}
       <div className="equipment-physical-preview-meta">
         <span>
           {countLabel(composition.occupied, composition.capacity, composition.positional)}
@@ -200,12 +253,40 @@ function PortFace({
   );
 }
 
-export function PhysicalEquipmentDiagram({ root, equipment, onAdd, canWritePower = false }: Props) {
+export function PhysicalEquipmentDiagram({
+  root,
+  equipment,
+  onAdd,
+  canWritePower = false,
+  canReadTelemetry = false,
+  breakerTelemetryBindings = [],
+}: Props) {
   const equipmentById = useMemo(
     () => new Map(equipment.map((item) => [item.id, item])),
     [equipment],
   );
   const projection = projectEquipmentComposition(root, equipmentById);
+  const { samples, now } = useTelemetryStream(canReadTelemetry);
+  const breakerReadings = useMemo(
+    () =>
+      Object.fromEntries(
+        equipment
+          .filter((item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'CIRCUIT_BREAKER')
+          .map((item) => [
+            item.id,
+            canReadTelemetry
+              ? compositionBreakerTelemetry(
+                  item.id,
+                  item.deviceId,
+                  samples,
+                  breakerTelemetryBindings,
+                  now,
+                )
+              : ({ status: 'NO DATA' } as const),
+          ]),
+      ) as Readonly<Record<string, CompositionBreakerTelemetry>>,
+    [equipment, canReadTelemetry, samples, breakerTelemetryBindings, now],
+  );
   const [expanded, setExpanded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(48);
   const compositionRef = useRef<HTMLElement | null>(null);
@@ -297,12 +378,20 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd, canWritePower
                             <small>{String(slot.index + 1).padStart(2, '0')}</small>
                             <strong>{slot.equipment.equipmentType.replaceAll('_', ' ')}</strong>
                             <span>{slot.equipment.name}</span>
+                            {slot.equipment.equipmentType === 'CIRCUIT_BREAKER' && (
+                              <BreakerMeasurementStrip
+                                reading={breakerReadings[slot.equipment.id] ?? { status: 'UNMAPPED' }}
+                              />
+                            )}
                           </Link>
                         ) : (
                           <EquipmentPreview
                             equipment={slot.equipment}
                             equipmentById={equipmentById}
                             slotIndex={slot.index}
+                            {...(slot.equipment.equipmentType === 'CIRCUIT_BREAKER'
+                              ? { breakerTelemetry: breakerReadings[slot.equipment.id] ?? { status: 'UNMAPPED' } }
+                              : {})}
                           />
                         )
                       ) : (

@@ -6,6 +6,7 @@
  */
 import { existsSync } from 'node:fs';
 import { MongoClient } from 'mongodb';
+import { auditActivePowerPaths } from './power-path-audit.mjs';
 
 if (existsSync('.env.local')) process.loadEnvFile('.env.local');
 const uri = process.env.MONGODB_URI?.trim();
@@ -26,10 +27,6 @@ function issue(code, id, details = '') {
 function array(value) {
   return Array.isArray(value) ? value : [];
 }
-function feed(value) {
-  return value === 'A' || value === 'B' ? value : null;
-}
-
 try {
   await client.connect();
   const db = client.db(dbName);
@@ -127,30 +124,7 @@ try {
     }
   }
 
-  const activeTargetKeys = new Set();
-  for (const path of paths) {
-    const source = activePortById.get(path.sourceAccessPortId);
-    const target = activePortById.get(path.targetAccessPortId);
-    if (!source || source.portType !== 'POWER' || source.direction === 'INPUT') {
-      issue('INVALID_POWER_SOURCE', path.id, String(path.sourceAccessPortId));
-    }
-    if (!target || target.portType !== 'POWER' || target.direction === 'OUTPUT') {
-      issue('INVALID_POWER_TARGET', path.id, String(path.targetAccessPortId));
-    }
-    if (activeTargetKeys.has(path.targetAccessPortId)) {
-      issue('MULTIPLE_ACTIVE_POWER_PATHS_FOR_INPUT', path.id);
-    }
-    activeTargetKeys.add(path.targetAccessPortId);
-    const sFeed = feed(source?.attributes?.feed);
-    const tFeed = feed(target?.attributes?.feed);
-    const pFeed = feed(path.feed);
-    if (
-      (sFeed && tFeed && sFeed !== tFeed) ||
-      (pFeed && ((sFeed && pFeed !== sFeed) || (tFeed && pFeed !== tFeed)))
-    ) {
-      issue('POWER_FEED_MISMATCH', path.id);
-    }
-  }
+  const powerSummary = auditActivePowerPaths(paths, activePortById, issue);
 
   for (const binding of bindings) {
     if (!byId.has(binding.targetId) && binding.targetType !== 'ACCESS_PORT') {
@@ -163,11 +137,16 @@ try {
 
   const report = {
     database: dbName,
+    databaseProfile: /(^|_)crud_acceptance(_|$)/i.test(dbName)
+      ? 'POSSIBLE_CRUD_ACCEPTANCE_DATABASE'
+      : 'UNCLASSIFIED',
     mode: 'READ_ONLY',
     totals: {
       topologyNodes: nodes.length,
       equipment: equipment.length,
       activePowerPaths: paths.length,
+      canonicalPowerPaths: powerSummary.canonicalPowerPaths,
+      incompletePowerPaths: powerSummary.incompletePowerPaths,
       activeTelemetryBindings: bindings.length,
     },
     violations: counts,

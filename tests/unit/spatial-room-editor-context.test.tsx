@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 
@@ -6,7 +7,7 @@ import { PolygonEditor } from '@/components/spatial/polygon-editor';
 describe('Polygon Editor surveyed context', () => {
   it('renders the surveyed Structure extent and named sibling Rooms as non-editable overlays', () => {
     const html = renderToStaticMarkup(
-      PolygonEditor({
+      createElement(PolygonEditor, {
         title: 'DRAW ROOM BOUNDARY · Prueba1',
         contextLabel: 'Structure boundary (Level reference)',
         context: [

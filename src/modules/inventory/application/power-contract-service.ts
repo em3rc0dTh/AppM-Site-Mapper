@@ -1,6 +1,7 @@
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
+import type { PowerRepository } from '@/modules/power/application/power-repository';
 import type { AccessPort, DeviceNode, EquipmentNode } from '@/modules/topology/domain/entities';
-import { createDomainId, nowIso } from '@/shared/domain/entity';
+import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type PowerRedundancyPolicy = 'NONE' | 'A_B_REQUIRED';
@@ -25,7 +26,12 @@ export type PowerContractError =
   | 'INVALID_PORT'
   | 'DUPLICATE_PORT_ID'
   | 'DUPLICATE_PORT_LABEL'
-  | 'INVALID_REDUNDANCY';
+  | 'INVALID_REDUNDANCY'
+  | 'EQUIPMENT_REQUIRED'
+  | 'POWER_REPOSITORY_REQUIRED'
+  | 'PORT_IN_USE'
+  | 'LAYOUT_CONFLICT'
+  | 'ATOMIC_LAYOUT_STORAGE_REQUIRED';
 
 export interface UpdatePowerContractInput {
   readonly accessPorts: readonly PowerContractPortInput[];
@@ -66,7 +72,10 @@ function toView(ownerId: string, equipment: EquipmentNode): PowerContractView {
 }
 
 export class PowerContractService {
-  constructor(private readonly repository: TopologyRepository) {}
+  constructor(
+    private readonly repository: TopologyRepository,
+    private readonly power?: PowerRepository,
+  ) {}
 
   async get(id: string): Promise<Result<PowerContractView, PowerContractError>> {
     const node = await this.repository.getById(id);
@@ -118,7 +127,28 @@ export class PowerContractService {
       labels.add(labelKey);
     }
 
-    const equipment = await this.ensureContractEquipment(node);
+    // Contracts configure documented physical terminals; they never invent
+    // a POWER_MODULE just to make a UI form submit successfully.
+    const equipment = await this.findContractEquipment(node);
+    if (!equipment) return failure('EQUIPMENT_REQUIRED');
+    if (!this.power) return failure('POWER_REPOSITORY_REQUIRED');
+    if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+
+    const proposed = new Map(normalized.map((port) => [port.id, port]));
+    for (const existing of equipment.accessPorts) {
+      if (
+        existing.lifecycle !== 'ACTIVE' ||
+        existing.portType !== 'POWER' ||
+        existing.exposure !== 'EXTERNAL' ||
+        existing.direction === 'OUTPUT'
+      ) continue;
+      const links = await this.power.listForAccessPort(existing.id);
+      if (!links.some((path) => path.lifecycle === 'ACTIVE')) continue;
+      const future = proposed.get(existing.id);
+      // A linked AccessPort may be renamed, but its identity and feed must
+      // remain stable until all its PowerPaths have been disconnected.
+      if (!future || feedOf(existing) !== future.feed) return failure('PORT_IN_USE');
+    }
     const preserved = equipment.accessPorts.filter(
       (port) =>
         !(port.portType === 'POWER' && port.exposure === 'EXTERNAL' && port.direction !== 'OUTPUT'),
@@ -157,7 +187,9 @@ export class PowerContractService {
       },
       updatedAt: nowIso(),
     };
-    await this.repository.replace(updated);
+    if (!(await this.repository.commitLayout([equipment], [updated]))) {
+      return failure('LAYOUT_CONFLICT');
+    }
     return success(toView(node.id, updated));
   }
 
@@ -192,36 +224,4 @@ export class PowerContractService {
     );
   }
 
-  private async ensureContractEquipment(node: DeviceNode | EquipmentNode): Promise<EquipmentNode> {
-    const existing = await this.findContractEquipment(node);
-    if (existing) return existing;
-    if (node.kind === 'EQUIPMENT') return node;
-
-    const timestamp = nowIso();
-    const id = createDomainId();
-    const created: EquipmentNode = {
-      id,
-      kind: 'EQUIPMENT',
-      parentId: node.id,
-      deviceId: node.id,
-      equipmentType: 'POWER_MODULE',
-      parentEquipmentId: null,
-      childMode: 'DYNAMIC',
-      children: [],
-      accessPorts: [],
-      name: node.name + ' Power Interface',
-      pinned: false,
-      attributes: { powerContractRoot: true, powerRedundancy: 'NONE' },
-      lifecycle: 'ACTIVE',
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    };
-    await this.repository.insert(created);
-    await this.repository.replace({
-      ...node,
-      rootEquipmentIds: [...(node.rootEquipmentIds ?? []), created.id],
-      updatedAt: timestamp,
-    });
-    return created;
-  }
 }

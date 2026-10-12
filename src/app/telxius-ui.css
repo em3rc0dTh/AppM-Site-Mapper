@@ -3542,7 +3542,6 @@ button.zip-rack-tree-row {
   }
 }
 
-
 /* MK1: real electrical readouts belong to each canonical breaker bar. */
 .bdfb-panel-board--detail .bdfb-endpoint-grid {
   height: auto;
@@ -3555,7 +3554,9 @@ button.zip-rack-tree-row {
 }
 .bdfb-panel-board--detail .bdfb-endpoint--breaker[data-telemetry='live'] {
   border-color: #28bf91;
-  box-shadow: inset 0 0 0 1px #28bf9133, 0 0 18px #28bf911a;
+  box-shadow:
+    inset 0 0 0 1px #28bf9133,
+    0 0 18px #28bf911a;
 }
 .bdfb-breaker-status,
 .bdfb-breaker-provenance,
@@ -3566,7 +3567,7 @@ button.zip-rack-tree-row {
 .bdfb-panel-board--detail .bdfb-breaker-status {
   color: #32d4a3;
   font-size: 9px;
-  letter-spacing: .035em;
+  letter-spacing: 0.035em;
 }
 .bdfb-panel-board--detail .bdfb-endpoint[data-telemetry='mapped'] .bdfb-breaker-status {
   color: #f2b94a;
@@ -3586,12 +3587,16 @@ button.zip-rack-tree-row {
   gap: 1px;
 }
 .bdfb-breaker-readouts span {
-  font: 700 9px/12px Inter, sans-serif;
+  font:
+    700 9px/12px Inter,
+    sans-serif;
   color: #8bbdd3;
 }
 .bdfb-breaker-readouts strong {
   color: #f4fafc;
-  font: 700 11px/15px 'Space Grotesk', sans-serif;
+  font:
+    700 11px/15px 'Space Grotesk',
+    sans-serif;
   overflow-wrap: anywhere;
 }
 .bdfb-panel-board--detail .bdfb-breaker-provenance {

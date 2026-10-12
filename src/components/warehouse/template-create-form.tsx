@@ -66,9 +66,10 @@ export function TemplateCreateForm() {
           allowedChildTypes: form.getAll('allowedChildTypes').map(String),
           presentation: {
             direction: String(form.get('presentationDirection') ?? 'ROW'),
-            maxPerLine: form.get('presentationMaxPerLine') === 'auto'
-              ? null
-              : Number(form.get('presentationMaxPerLine')),
+            maxPerLine:
+              form.get('presentationMaxPerLine') === 'auto'
+                ? null
+                : Number(form.get('presentationMaxPerLine')),
             childrenVisibility: String(form.get('presentationVisibility') ?? 'AUTO'),
           },
         }),
@@ -203,7 +204,9 @@ export function TemplateCreateForm() {
               <select name="presentationMaxPerLine" defaultValue="auto">
                 <option value="auto">Auto · Responsive</option>
                 {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
-                  <option value={n} key={n}>{n}</option>
+                  <option value={n} key={n}>
+                    {n}
+                  </option>
                 ))}
               </select>
             </label>
@@ -271,7 +274,8 @@ export function TemplateCreateForm() {
             <strong>Paste one template or an array of templates.</strong>
             <span>
               Equipment templates only. Recursive defaults use <code>equipmentType</code>,{' '}
-              <code>childMode</code>, <code>childCapacity</code>, <code>allowedChildTypes</code> and <code>presentation</code>.
+              <code>childMode</code>, <code>childCapacity</code>, <code>allowedChildTypes</code> and{' '}
+              <code>presentation</code>.
             </span>
           </div>
           <textarea

@@ -38,11 +38,13 @@ describe('Warehouse presentation contract — JSON to physical Equipment', () =>
       presentation,
     });
     expect(input?.presentation).toEqual(presentation);
-    expect(parseAssetTemplateJson({
-      kind: 'EQUIPMENT',
-      name: 'Frame Auto',
-      presentation: { direction: 'ROW', maxPerLine: null, childrenVisibility: 'AUTO' },
-    })?.presentation?.maxPerLine).toBeNull();
+    expect(
+      parseAssetTemplateJson({
+        kind: 'EQUIPMENT',
+        name: 'Frame Auto',
+        presentation: { direction: 'ROW', maxPerLine: null, childrenVisibility: 'AUTO' },
+      })?.presentation?.maxPerLine,
+    ).toBeNull();
   });
 
   it('rejects malformed and unknown presentation values instead of losing them', () => {
@@ -54,11 +56,13 @@ describe('Warehouse presentation contract — JSON to physical Equipment', () =>
       { direction: 'COLUMN', maxPerLine: 2, childrenVisibility: 'EXPANDED' },
       { direction: 'ROW', maxPerLine: 2, childrenVisibility: 'AUTO', extra: true },
     ]) {
-      expect(parseAssetTemplateJson({
-        kind: 'EQUIPMENT',
-        name: 'Invalid',
-        presentation: invalid,
-      })).toBeNull();
+      expect(
+        parseAssetTemplateJson({
+          kind: 'EQUIPMENT',
+          name: 'Invalid',
+          presentation: invalid,
+        }),
+      ).toBeNull();
     }
   });
 

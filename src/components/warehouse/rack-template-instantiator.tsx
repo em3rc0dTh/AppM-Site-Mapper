@@ -54,9 +54,10 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
             : undefined,
           presentation: {
             direction: String(form.get('presentationDirection') ?? 'ROW'),
-            maxPerLine: form.get('presentationMaxPerLine') === 'auto'
-              ? null
-              : Number(form.get('presentationMaxPerLine')),
+            maxPerLine:
+              form.get('presentationMaxPerLine') === 'auto'
+                ? null
+                : Number(form.get('presentationMaxPerLine')),
             childrenVisibility: String(form.get('presentationVisibility') ?? 'AUTO'),
           },
         }),
@@ -190,7 +191,9 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                   >
                     <option value="auto">Auto · Responsive</option>
                     {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
-                      <option key={n} value={n}>{n}</option>
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
                     ))}
                   </select>
                 </label>
@@ -206,7 +209,9 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                     <option value="SUMMARY">SUMMARY</option>
                   </select>
                 </label>
-                <small>Preloaded from the template; you may override the layout for this Equipment only.</small>
+                <small>
+                  Preloaded from the template; you may override the layout for this Equipment only.
+                </small>
               </fieldset>
               <label>
                 Serial number

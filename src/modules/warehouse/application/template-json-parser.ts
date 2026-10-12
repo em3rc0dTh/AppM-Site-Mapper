@@ -35,11 +35,14 @@ function presentation(value: unknown): EquipmentPresentation | null {
     !hasOnlyKeys(body, ['direction', 'maxPerLine', 'childrenVisibility']) ||
     !['ROW', 'COLUMN'].includes(body.direction as string) ||
     !['AUTO', 'INLINE', 'SUMMARY'].includes(body.childrenVisibility as string) ||
-    !(body.maxPerLine === null ||
+    !(
+      body.maxPerLine === null ||
       (Number.isInteger(body.maxPerLine) &&
         (body.maxPerLine as number) >= 1 &&
-        (body.maxPerLine as number) <= 256))
-  ) return null;
+        (body.maxPerLine as number) <= 256)
+    )
+  )
+    return null;
 
   return body as unknown as EquipmentPresentation;
 }
@@ -89,7 +92,8 @@ export function parseAssetTemplateJson(value: unknown): CreateAssetTemplateInput
   if (body.equipmentType !== undefined && !parsedEquipmentType) return null;
   if (body.childMode !== undefined && !parsedChildMode) return null;
   if (body.allowedChildTypes !== undefined && !parsedAllowed) return null;
-  const parsedPresentation = body.presentation === undefined ? undefined : presentation(body.presentation);
+  const parsedPresentation =
+    body.presentation === undefined ? undefined : presentation(body.presentation);
   if (body.presentation !== undefined && !parsedPresentation) return null;
 
   return {

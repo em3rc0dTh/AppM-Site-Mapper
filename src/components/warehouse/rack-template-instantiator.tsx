@@ -52,6 +52,13 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
           childCapacity: String(form.get('childCapacity') ?? '').trim()
             ? Number(form.get('childCapacity'))
             : undefined,
+          presentation: {
+            direction: String(form.get('presentationDirection') ?? 'ROW'),
+            maxPerLine: form.get('presentationMaxPerLine') === 'auto'
+              ? null
+              : Number(form.get('presentationMaxPerLine')),
+            childrenVisibility: String(form.get('presentationVisibility') ?? 'AUTO'),
+          },
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -107,6 +114,11 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                       ? `${selected.childCapacity ?? 0} slots`
                       : 'dynamic children'}
                   </span>
+                  <span>
+                    Layout: {selected.presentation?.direction ?? 'ROW'} · Max per line:{' '}
+                    {selected.presentation?.maxPerLine ?? 'Auto'} · Display:{' '}
+                    {selected.presentation?.childrenVisibility ?? 'AUTO'}
+                  </span>
                 </div>
               )}
               <label>
@@ -156,6 +168,46 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                   }
                 />
               </label>
+              <fieldset className="warehouse-presentation-controls">
+                <legend>Physical child layout · Equipment presentation</legend>
+                <label>
+                  Direction
+                  <select
+                    key={templateId + ':direction'}
+                    name="presentationDirection"
+                    defaultValue={selected?.presentation?.direction ?? 'ROW'}
+                  >
+                    <option value="ROW">ROW · Left to right</option>
+                    <option value="COLUMN">COLUMN · Top to bottom</option>
+                  </select>
+                </label>
+                <label>
+                  Max per line
+                  <select
+                    key={templateId + ':max'}
+                    name="presentationMaxPerLine"
+                    defaultValue={selected?.presentation?.maxPerLine?.toString() ?? 'auto'}
+                  >
+                    <option value="auto">Auto · Responsive</option>
+                    {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Child visibility
+                  <select
+                    key={templateId + ':visibility'}
+                    name="presentationVisibility"
+                    defaultValue={selected?.presentation?.childrenVisibility ?? 'AUTO'}
+                  >
+                    <option value="AUTO">AUTO</option>
+                    <option value="INLINE">INLINE</option>
+                    <option value="SUMMARY">SUMMARY</option>
+                  </select>
+                </label>
+                <small>Preloaded from the template; you may override the layout for this Equipment only.</small>
+              </fieldset>
               <label>
                 Serial number
                 <input name="serialNumber" maxLength={120} />

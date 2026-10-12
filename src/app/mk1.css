@@ -1291,7 +1291,6 @@ body {
   container-type: inline-size;
   min-width: 0;
   width: 100%;
-  min-height: clamp(430px, calc(100svh - 260px), 850px);
   display: flex;
   background: #f6f2e5;
   border: 1px solid #aab4b6;
@@ -1301,7 +1300,6 @@ body {
 }
 .equipment-physical-shell {
   display: flex;
-  flex: 1;
   flex-direction: column;
   gap: clamp(12px, 1.5vw, 22px);
   min-width: 0;
@@ -1384,8 +1382,7 @@ body {
 }
 .equipment-physical-children.is-column {
   grid-auto-flow: column;
-  grid-template-columns: none;
-  grid-template-rows: repeat(var(--composition-columns, 2), auto);
+  grid-template-rows: repeat(var(--composition-rows, 1), auto);
   grid-auto-columns: minmax(0, 1fr);
 }
 .equipment-physical-child {
@@ -1475,7 +1472,7 @@ body {
 }
 .equipment-physical-empty {
   min-width: 0;
-  min-height: 110px;
+  min-height: 96px;
   display: flex;
   flex-direction: column;
   align-items: start;
@@ -1548,7 +1545,6 @@ body {
 }
 .equipment-faceplate {
   display: flex;
-  flex: 1;
   flex-direction: column;
   gap: 12px;
   min-height: 0;
@@ -1580,15 +1576,14 @@ body {
   font-weight: 700;
 }
 .equipment-faceplate-surface {
-  flex: 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 18px;
-  min-height: 170px;
+  min-height: 152px;
   width: 100%;
-  padding: clamp(14px, 2vw, 28px);
-  border: 6px solid #344850;
+  padding: clamp(12px, 1.5vw, 22px);
+  border: 4px solid #344850;
   border-radius: 12px;
   background: linear-gradient(160deg, #36454e, #19272f);
   box-shadow:
@@ -1597,9 +1592,9 @@ body {
 }
 .equipment-faceplate-ports {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 120px), 1fr));
-  gap: 12px;
-  align-items: start;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+  gap: clamp(10px, 2vw, 24px);
+  align-items: stretch;
   width: 100%;
 }
 .equipment-faceplate-port {
@@ -1607,8 +1602,8 @@ body {
   justify-items: center;
   gap: 7px;
   min-width: 0;
-  min-height: 105px;
-  padding: 10px 5px;
+  min-height: 98px;
+  padding: 10px 8px;
   border: 1px solid #7d979f;
   border-radius: 4px;
   background: #283840;
@@ -1715,40 +1710,63 @@ body {
   color: #647883;
 }
 .equipment-physical-no-content {
-  flex: 1;
   display: grid;
   align-content: center;
   justify-items: center;
   text-align: center;
   gap: 12px;
-  min-height: 220px;
+  min-height: 140px;
   font-size: 12px;
 }
 .equipment-physical-no-content span {
   color: #576e76;
 }
-@container (max-width: 850px) {
+/* An occupied Equipment needs more width than an unoccupied mounting position. */
+.equipment-physical-children.is-mixed.is-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+.equipment-physical-children.is-mixed.is-row > .equipment-physical-child {
+  flex: 1 1 180px;
+}
+.equipment-physical-children.is-mixed.is-row > .equipment-physical-child:has(.equipment-physical-preview) {
+  flex: 2 1 350px;
+}
+.equipment-physical-empty.is-dense {
+  min-height: 60px;
+  gap: 3px;
+  padding: 7px;
+}
+.equipment-physical-empty.is-dense > span {
+  font-size: 10px;
+}
+.equipment-physical-empty.is-dense > button {
+  min-height: 25px;
+  padding: 3px 7px;
+}
+.equipment-physical-children.is-dense .equipment-physical-slot {
+  min-height: 60px;
+}
+.equipment-physical-children.is-dense .equipment-physical-slot strong {
+  font-size: 10px;
+}
+.equipment-physical-bays .equipment-physical-more {
+  min-height: 34px;
+}
+@container (max-width: 570px) {
   .equipment-physical-children:not(.is-dense) {
     grid-template-columns: minmax(0, 1fr);
-  }
-  .equipment-physical-children.is-column {
     grid-auto-flow: row;
     grid-template-rows: none;
-    grid-auto-columns: auto;
-  }
-  .equipment-physical-children.is-dense {
-    grid-template-columns: repeat(min(var(--composition-columns, 8), 6), minmax(0, 1fr));
-  }
-}
-@container (max-width: 475px) {
-  .equipment-physical-children.is-dense {
-    grid-template-columns: repeat(min(var(--composition-columns, 8), 3), minmax(0, 1fr));
   }
   .equipment-faceplate-selection {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+@container (max-width: 440px) {
   .equipment-faceplate-ports {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

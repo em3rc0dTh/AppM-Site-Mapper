@@ -94,6 +94,34 @@ try {
     }
   }
 
+  const serialOwners = new Map();
+  for (const node of nodes) {
+    if (
+      node.lifecycle === 'ACTIVE' &&
+      (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') &&
+      typeof node.serialNumber === 'string' &&
+      node.serialNumber.trim()
+    ) {
+      const serial = node.serialNumber.trim();
+      const existing = serialOwners.get(serial);
+      if (existing) issue('DUPLICATE_ACTIVE_SERIAL', node.id, 'Also assigned to ' + existing);
+      else serialOwners.set(serial, node.id);
+    }
+  }
+  for (const item of equipment) {
+    const seen = new Set();
+    let current = item;
+    while (current?.kind === 'EQUIPMENT') {
+      if (seen.has(current.id)) {
+        issue('CYCLIC_EQUIPMENT_PARENT', item.id);
+        break;
+      }
+      seen.add(current.id);
+      if (!current.parentEquipmentId) break;
+      current = byId.get(current.parentEquipmentId);
+    }
+  }
+
   const activeTargetKeys = new Set();
   for (const path of paths) {
     const source = activePortById.get(path.sourceAccessPortId);

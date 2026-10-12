@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -169,6 +170,14 @@ export function AccessPortEditor({
               )}
             </div>
             <div>
+              {canWritePower && port.portType === 'POWER' && (
+                <Link
+                  className="equipment-access-port-connect"
+                  href={`/power/connect/equipment?${port.direction === 'INPUT' ? 'target' : 'source'}=${encodeURIComponent(port.id)}`}
+                >
+                  {port.direction === 'INPUT' ? 'CONNECT SOURCE' : 'CONNECT LOAD'}
+                </Link>
+              )}
               <button
                 type="button"
                 disabled={busy}

@@ -4,17 +4,28 @@ import { useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
 import type { EquipmentChildMode, TopologyKind } from '@/modules/topology/domain/entities';
 import { DEVICE_TYPES, EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
-import { polygonInsidePolygon, type PointMm } from '@/modules/spatial/domain/geometry';
-import { PolygonEditor } from '@/components/spatial/polygon-editor';
+import {
+  polygonInsidePolygon,
+  polygonsOverlapArea,
+  type PointMm,
+} from '@/modules/spatial/domain/geometry';
+import {
+  PolygonEditor,
+  type PolygonContextOverlay,
+} from '@/components/spatial/polygon-editor';
 
 export function TopologyCreateControl({
   kind,
   parentId,
   boundaryContext = [],
+  boundaryLabel,
+  contextOverlays = [],
 }: {
   kind: TopologyKind;
   parentId: string | null;
   boundaryContext?: readonly PointMm[];
+  boundaryLabel?: string;
+  contextOverlays?: readonly PolygonContextOverlay[];
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -28,6 +39,8 @@ export function TopologyCreateControl({
             kind={kind}
             parentId={parentId}
             boundaryContext={boundaryContext}
+            {...(boundaryLabel ? { boundaryLabel } : {})}
+            contextOverlays={contextOverlays}
             onCancel={() => setOpen(false)}
           />
         </div>
@@ -40,11 +53,15 @@ export function TopologyCreateForm({
   kind,
   parentId,
   boundaryContext = [],
+  boundaryLabel,
+  contextOverlays = [],
   onCancel,
 }: Readonly<{
   kind: TopologyKind;
   parentId: string | null;
   boundaryContext?: readonly PointMm[];
+  boundaryLabel?: string;
+  contextOverlays?: readonly PolygonContextOverlay[];
   onCancel?: () => void;
 }>) {
   const [error, setError] = useState<string | null>(null);
@@ -108,14 +125,24 @@ export function TopologyCreateForm({
       <PolygonEditor
         title={`DRAW ${kind === 'ROOM_SUBSTRUCTURE' ? 'ROOM' : kind} BOUNDARY · ${String(pending.name)}`}
         context={boundaryContext}
-        {...(kind === 'STRUCTURE' && boundaryContext.length >= 3
-          ? {
-              validate: (polygon: readonly PointMm[]) =>
-                polygonInsidePolygon(polygon, boundaryContext)
-                  ? null
-                  : 'Structure boundary must remain inside the Site boundary.',
-            }
-          : {})}
+        contextLabel={boundaryLabel}
+        contextOverlays={contextOverlays}
+        validate={(polygon: readonly PointMm[]) => {
+          if (kind === 'STRUCTURE' && boundaryContext.length >= 3) {
+            if (!polygonInsidePolygon(polygon, boundaryContext))
+              return 'Structure must stay inside its surveyed Site boundary.';
+          }
+          if (kind === 'ROOM_SUBSTRUCTURE') {
+            if (boundaryContext.length >= 3 && !polygonInsidePolygon(polygon, boundaryContext))
+              return 'Room must stay within the Structure boundary (Level reference).';
+            const overlapping = contextOverlays.find((existing) =>
+              polygonsOverlapArea(polygon, existing.polygon),
+            );
+            if (overlapping)
+              return `Room overlaps existing space: ${overlapping.label}. Shared walls are allowed, shared area is not.`;
+          }
+          return null;
+        }}
         onConfirm={(polygon: PointMm[]) => void create({ ...pending, polygon })}
         onCancel={() => {
           setPending(null);

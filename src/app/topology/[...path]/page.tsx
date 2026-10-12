@@ -167,8 +167,7 @@ export default async function TopologyNodePage({
   // show its parent Structure boundary and every active sibling footprint.
   const roomStructure =
     node.kind === 'LEVEL' && node.parentId ? await repository.getById(node.parentId) : null;
-  const roomBoundaryContext =
-    roomStructure?.kind === 'STRUCTURE' ? roomStructure.polygon : [];
+  const roomBoundaryContext = roomStructure?.kind === 'STRUCTURE' ? roomStructure.polygon : [];
   const siblingRoomOverlays =
     node.kind === 'LEVEL'
       ? children.flatMap((child) => {

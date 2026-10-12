@@ -67,8 +67,9 @@ real width of the preceding rack, so non-grid widths such as 900 mm remain flush
 their neighbours. The parent Position remains a 600 mm grid reference for topology;
 it is not the authoritative physical X/Y of the rack. Width/depth remain independent
 physical dimensions. No operator coordinate text entry is required. Existing positive
-grid coordinates remain the supported Position-reference range; negative plane
-coordinates can describe boundaries but do not create negative-row Position references.
+grid coordinates remain the supported Position-reference range; newly authored boundary coordinates are constrained to X ≥ 0 and Y ≥ 0 before
+snap, while previously persisted negative polygons require explicit data review.
+No negative-row Position references are permitted.
 
 Implementation recorded without running tests, typecheck, lint, browser checks or
 build at the user's explicit request. This addendum does not certify acceptance.
@@ -106,3 +107,27 @@ This rule is intentionally asymmetric:
 
 The Room boundary, other Bay polygons and existing rack footprints remain hard
 collision constraints.
+
+## Level Room authoring and surveyed context — 2026-10-12
+
+A Level is a topological child of a Structure, not an independently surveyed
+polygon entity in MK1. When drawing a Room in a Level, the editor shows the
+parent Structure's surveyed outline as a labeled reference and all active
+sibling Rooms as read-only named polygons. These are persisted facts, not
+randomly inferred canvas extents. The viewport FIT action accounts for them.
+
+New or edited Room polygons must have nonnegative coordinates, remain inside
+the Structure surveyed boundary, and not share positive area with another
+active Room in the same Level. Shared walls and touching borders are allowed.
+The application domain enforces these rules on both creation and editing;
+the Level version is included in atomic writes to detect concurrent changes.
+Room-to-Room area overlap is calculated in geometry domain functions, including
+collinear and axis-aligned overlaps that do not intersect at proper crossing
+vertices. Existing conflicting polygons remain unchanged until explicitly
+reviewed and corrected; the Level view highlights the conflict.
+
+The Structure boundary is a physical reference inherited by the Level; MK1
+does not persist a fabricated Level polygon. Any future requirement for a
+Level-local coordinate frame or a different surveyed footprint needs an
+explicit survey and coordinate transformation contract rather than an
+implicit translation during rendering.

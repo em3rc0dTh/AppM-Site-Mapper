@@ -97,6 +97,32 @@ export class TelemetryService {
     }
     if (!target || !sourceBinding) return failure('INVALID_BINDING_TARGET');
 
+    // A legacy environment alias must not override a real SN currently owned
+    // by another Device. Explicit aliases remain supported for unmatched SNs.
+    if (sourceBinding.id.startsWith('env:mqtt:')) {
+      const matches = await this.topologyRepository.findActiveBySerialNumber(
+        normalized.value.sourceIdentity,
+      );
+      if (matches.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
+      if (matches.length === 1) {
+        const match = matches[0]!;
+        let deviceId: string | null = null;
+        if (match.kind === 'DEVICE' && match.deviceType === 'BDFB') deviceId = match.id;
+        if (match.kind === 'EQUIPMENT' && match.equipmentType === 'CHASSIS') {
+          const device = await this.topologyRepository.getById(match.deviceId);
+          if (
+            device?.kind === 'DEVICE' &&
+            device.lifecycle === 'ACTIVE' &&
+            device.deviceType === 'BDFB' &&
+            match.parentEquipmentId === null &&
+            match.parentId === device.id &&
+            device.rootEquipmentIds.includes(match.id)
+          ) deviceId = device.id;
+        }
+        if (!deviceId || target.id !== deviceId) return failure('AMBIGUOUS_SOURCE_BINDING');
+      }
+    }
+
     // Auto-discovered sources are bound to an inventory identity, not merely
     // the old UUID. Re-check on ingestion so renaming/archive/duplicate SN
     // cannot silently redirect measurements through a stale SOURCE binding.

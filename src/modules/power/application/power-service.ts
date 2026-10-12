@@ -61,8 +61,13 @@ export class PowerService {
     if (!sourceAllowed(source)) return failure('INVALID_SOURCE_DIRECTION');
     if (!targetAllowed(target)) return failure('INVALID_TARGET_DIRECTION');
 
+    const sourceFeed = feedOf(source);
     const targetFeed = feedOf(target);
-    if (input.feed && targetFeed && input.feed !== targetFeed) return failure('FEED_MISMATCH');
+    if (
+      (sourceFeed && targetFeed && sourceFeed !== targetFeed) ||
+      (input.feed && sourceFeed && input.feed !== sourceFeed) ||
+      (input.feed && targetFeed && input.feed !== targetFeed)
+    ) return failure('FEED_MISMATCH');
 
     const targetPaths = await this.repository.listForAccessPort(target.port.id);
     const exact = targetPaths.find(

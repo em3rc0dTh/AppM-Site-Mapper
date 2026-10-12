@@ -24,10 +24,13 @@ A Warehouse template describes reusable defaults:
 - nominal rack size in U;
 - physical width/depth;
 - Equipment type;
-- child mode: DYNAMIC or POSITIONAL;
-- child capacity for POSITIONAL Equipment;
 - optional allowed child Equipment types;
 - notes.
+
+Legacy stored templates may contain `childMode`, `childCapacity` or `presentation`
+fields. These are retained for backward compatibility when reading historical
+records, **not inherited into new Equipment instances**. New template forms do
+not collect instance-specific composition settings.
 
 Templates are stored in `warehouse_templates`.
 
@@ -42,6 +45,10 @@ Selecting an Equipment template from a Rack creates a new Device identity in Top
 - Device operational type;
 - Rack context on the Device;
 - Equipment template snapshot;
+- child mode: DYNAMIC or POSITIONAL, selected for this installation;
+- positional child capacity (1–256), selected for this installation;
+- presentation: direction ROW/COLUMN, maxPerLine (number or Auto), and
+  childrenVisibility AUTO/INLINE/SUMMARY, selected for this installation;
 - lifecycle and pinned state.
 
 The instance persists a template snapshot containing `templateId`, `templateVersion` and the reusable attributes that were active when the instance was created.
@@ -74,8 +81,11 @@ must be released when applicable. Restore reactivates that root Equipment and ne
 guesses a former parent or slot. No lifecycle placement metadata is hidden in generic
 attributes.
 
-A template may supply composition defaults, but it does not hardcode a product-specific
-hierarchy into the topology domain.
+The same template can produce Equipment instances with different child modes,
+slot counts, directions, maxPerLine and visibility. No duplicate Warehouse
+template is required for a different layout. Visual composition is never
+inherited from a legacy template. The topology domain does not hardcode
+product-specific hierarchies.
 
 ### CAS
 
@@ -118,8 +128,9 @@ Implemented:
 - recursively instantiate Equipment templates into explicit parent slots;
 - positional child capacity represented by `children: (EquipmentId | null)[]`;
 - atomic parent/child placement and movement;
-- template defaults for Equipment type, child mode, capacity and allowed child types;
-- instance-level name/serial/category/composition overrides;
+- template identity, Equipment type and allowed child Equipment types;
+- instance-level name/serial/category, child mode, positional capacity and
+  presentation configuration at root and recursive child instantiation;
 - versioned template snapshot on instance;
 - Rack inventory provenance;
 - one-off recursive Equipment creation;

@@ -41,6 +41,7 @@ export interface InstantiateTemplateInput {
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
+  readonly presentation?: EquipmentPresentation;
 }
 
 export interface InstantiateChildEquipmentInput {
@@ -188,7 +189,9 @@ export class WarehouseInstantiationService {
       equipmentType,
       parentEquipmentId: null,
       childMode: composition.childMode,
-      ...(template.presentation ? { presentation: { ...template.presentation } } : {}),
+      ...((input.presentation ?? template.presentation)
+        ? { presentation: { ...(input.presentation ?? template.presentation)! } }
+        : {}),
       children:
         composition.childMode === 'POSITIONAL'
           ? Array.from({ length: composition.childCapacity! }, () => null)
@@ -251,7 +254,9 @@ export class WarehouseInstantiationService {
       ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
       ...(template.model ? { model: template.model } : {}),
       template: snapshotTemplate(template),
-      ...(input.presentation ? { presentation: input.presentation } : {}),
+      ...((input.presentation ?? template.presentation)
+        ? { presentation: { ...(input.presentation ?? template.presentation)! } }
+        : {}),
     });
 
     if (!result.ok) return failure(result.error);

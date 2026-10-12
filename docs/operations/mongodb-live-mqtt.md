@@ -160,7 +160,6 @@ Data ownership remains:
   partial electrical updates. See the gateway's ingestion policy before
   interpreting its historical charts as new measurements for every field.
 
-
 ## Automatic BFDB source discovery from the inventory
 
 On MQTT `data/dev/<serial>`, Site Mapper validates `payload.sn == topic serial` and

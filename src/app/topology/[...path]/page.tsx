@@ -171,11 +171,12 @@ export default async function TopologyNodePage({
     roomStructure?.kind === 'STRUCTURE' ? roomStructure.polygon : [];
   const siblingRoomOverlays =
     node.kind === 'LEVEL'
-      ? children.flatMap((child) =>
-          child.kind === 'ROOM_SUBSTRUCTURE' && child.polygon.length >= 3
-            ? [{ id: child.id, label: child.name, polygon: child.polygon }]
-            : [],
-        )
+      ? children.flatMap((child) => {
+          const polygon = child.kind === 'ROOM_SUBSTRUCTURE' ? child.polygon : undefined;
+          return child.kind === 'ROOM_SUBSTRUCTURE' && polygon && polygon.length >= 3
+            ? [{ id: child.id, label: child.name, polygon }]
+            : [];
+        })
       : [];
 
   const childEntries: VisualStageChild[] = await Promise.all(

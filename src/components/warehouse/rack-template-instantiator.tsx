@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
+import type { EquipmentChildMode } from '@/modules/topology/domain/entities';
 
 import { DEVICE_TYPES, EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
 import type { AssetTemplate } from '@/modules/warehouse/domain/template';
@@ -11,6 +12,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
   const [open, setOpen] = useState(false);
   const [templates, setTemplates] = useState<readonly AssetTemplate[]>([]);
   const [templateId, setTemplateId] = useState('');
+  const [childMode, setChildMode] = useState<EquipmentChildMode>('DYNAMIC');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -48,7 +50,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
           category: String(form.get('category') ?? ''),
           deviceType: String(form.get('deviceType') ?? 'CUSTOM'),
           equipmentType: String(form.get('equipmentType') ?? '') || undefined,
-          childMode: String(form.get('childMode') ?? '') || undefined,
+          childMode,
           childCapacity: String(form.get('childCapacity') ?? '').trim()
             ? Number(form.get('childCapacity'))
             : undefined,
@@ -110,15 +112,8 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                     {selected.category ? ` · ${selected.category}` : ''}
                   </span>
                   <span>
-                    {selected.equipmentType ?? 'CUSTOM'} ·{' '}
-                    {selected.childMode === 'POSITIONAL'
-                      ? `${selected.childCapacity ?? 0} slots`
-                      : 'dynamic children'}
-                  </span>
-                  <span>
-                    Layout: {selected.presentation?.direction ?? 'ROW'} · Max per line:{' '}
-                    {selected.presentation?.maxPerLine ?? 'Auto'} · Display:{' '}
-                    {selected.presentation?.childrenVisibility ?? 'AUTO'}
+                    {selected.equipmentType ?? 'CUSTOM'} · Configure child slots and layout for
+                    this instance below
                   </span>
                 </div>
               )}
@@ -148,35 +143,36 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                 </select>
               </label>
               <label>
-                Children mode
-                <select name="childMode" defaultValue="">
-                  <option value="">Use template ({selected?.childMode ?? 'DYNAMIC'})</option>
+                Children mode · This instance
+                <select
+                  name="childMode"
+                  value={childMode}
+                  onChange={(event) => setChildMode(event.target.value as EquipmentChildMode)}
+                >
                   <option value="DYNAMIC">Dynamic</option>
                   <option value="POSITIONAL">Positional slots</option>
                 </select>
               </label>
-              <label>
-                Child slots
-                <input
-                  name="childCapacity"
-                  type="number"
-                  min="1"
-                  max="256"
-                  placeholder={
-                    selected?.childMode === 'POSITIONAL'
-                      ? String(selected.childCapacity ?? '')
-                      : 'Only for positional mode'
-                  }
-                />
-              </label>
+              {childMode === 'POSITIONAL' ? (
+                <label>
+                  Child slots · This instance
+                  <input
+                    name="childCapacity"
+                    type="number"
+                    min="1"
+                    max="256"
+                    required
+                    placeholder="Number of physical slots (1–256)"
+                  />
+                </label>
+              ) : null}
               <fieldset className="warehouse-presentation-controls">
                 <legend>Physical child layout · Equipment presentation</legend>
                 <label>
                   Direction
                   <select
-                    key={templateId + ':direction'}
                     name="presentationDirection"
-                    defaultValue={selected?.presentation?.direction ?? 'ROW'}
+                    defaultValue="ROW"
                   >
                     <option value="ROW">ROW · Left to right</option>
                     <option value="COLUMN">COLUMN · Top to bottom</option>
@@ -185,9 +181,8 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                 <label>
                   Max per line
                   <select
-                    key={templateId + ':max'}
                     name="presentationMaxPerLine"
-                    defaultValue={selected?.presentation?.maxPerLine?.toString() ?? 'auto'}
+                    defaultValue="auto"
                   >
                     <option value="auto">Auto · Responsive</option>
                     {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
@@ -200,9 +195,8 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                 <label>
                   Child visibility
                   <select
-                    key={templateId + ':visibility'}
                     name="presentationVisibility"
-                    defaultValue={selected?.presentation?.childrenVisibility ?? 'AUTO'}
+                    defaultValue="AUTO"
                   >
                     <option value="AUTO">AUTO</option>
                     <option value="INLINE">INLINE</option>
@@ -210,7 +204,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                   </select>
                 </label>
                 <small>
-                  Preloaded from the template; you may override the layout for this Equipment only.
+                  These settings belong only to the new Equipment, not the Warehouse template.
                 </small>
               </fieldset>
               <label>

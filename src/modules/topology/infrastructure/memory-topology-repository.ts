@@ -31,9 +31,11 @@ export class MemoryTopologyRepository implements TopologyRepository {
 
   async findActiveBySerialNumber(serialNumber: string): Promise<readonly TopologyNode[]> {
     return [...this.nodes.values()]
-      .filter((node) =>
-        (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') &&
-        node.lifecycle === 'ACTIVE' && node.serialNumber === serialNumber,
+      .filter(
+        (node) =>
+          (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') &&
+          node.lifecycle === 'ACTIVE' &&
+          node.serialNumber === serialNumber,
       )
       .map((node) => structuredClone(node));
   }

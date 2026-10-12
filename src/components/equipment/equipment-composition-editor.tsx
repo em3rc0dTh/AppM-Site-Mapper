@@ -13,6 +13,7 @@ import type {
 import { EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
 import { allowedChildEquipmentTypes, canInstallChildType } from './allowed-child-equipment-types';
 import type { AssetTemplate } from '@/modules/warehouse/domain/template';
+import type { CompositionBreakerBinding } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 
 function label(type: EquipmentType): string {
   return type.replaceAll('_', ' ');
@@ -24,12 +25,16 @@ export function EquipmentCompositionEditor({
   familyEquipment,
   canWrite,
   canWritePower,
+  canReadTelemetry = false,
+  breakerTelemetryBindings = [],
 }: Readonly<{
   equipment: EquipmentNode;
   childEquipment: readonly EquipmentNode[];
   familyEquipment: readonly EquipmentNode[];
   canWrite: boolean;
   canWritePower: boolean;
+  canReadTelemetry?: boolean;
+  breakerTelemetryBindings?: readonly CompositionBreakerBinding[];
 }>) {
   const router = useRouter();
   const byId = useMemo(
@@ -521,6 +526,8 @@ export function EquipmentCompositionEditor({
         root={equipment}
         equipment={familyEquipment}
         canWritePower={canWritePower}
+        canReadTelemetry={canReadTelemetry}
+        breakerTelemetryBindings={breakerTelemetryBindings}
         onAdd={canWrite && isActive ? openComposer : undefined}
       />
       <div className="equipment-composition-workbench-actions">

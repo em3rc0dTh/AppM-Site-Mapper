@@ -522,9 +522,14 @@ describe('TelemetryService', () => {
     );
     const result = await service.ingest(
       'data/dev/EMU-REAL-02',
-      new TextEncoder().encode(JSON.stringify({
-        method: 'update', sn: 'EMU-REAL-02', timestamp: 1790580000, reported: {},
-      })),
+      new TextEncoder().encode(
+        JSON.stringify({
+          method: 'update',
+          sn: 'EMU-REAL-02',
+          timestamp: 1790580000,
+          reported: {},
+        }),
+      ),
     );
     expect(result).toEqual({ ok: false, error: 'AMBIGUOUS_SOURCE_BINDING' });
   });

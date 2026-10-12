@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/telemetry-history-writer';
@@ -54,27 +55,44 @@ export class TelemetryService {
       (binding) => !binding.sourcePointId && binding.metric.toUpperCase() === 'SOURCE',
     );
 
-    let sourceBinding = sourceBindings[0];
-    if (sourceBindings.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
+    // Persisted SOURCE mappings take priority over deprecated environment aliases.
+    // An invalid persisted mapping fails closed; it is never silently reassigned.
+    const persistedSourceBindings = sourceBindings.filter((binding) => !binding.id.startsWith('env:mqtt:'));
+    if (persistedSourceBindings.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
+    const configuredSourceBindings = sourceBindings.filter((binding) => binding.id.startsWith('env:mqtt:'));
+    if (configuredSourceBindings.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
 
-    if (!sourceBinding) {
-      const inferred = await this.inferSourceBinding(normalized.value.sourceIdentity, bindings);
-      if (!inferred.ok) return inferred;
-      sourceBinding = inferred.value;
+    let sourceBinding = persistedSourceBindings[0] ?? configuredSourceBindings[0];
+    let target = sourceBinding ? await this.resolveTarget(sourceBinding) : null;
+    if (sourceBinding && !target && !sourceBinding.id.startsWith('env:mqtt:')) {
+      return failure('INVALID_BINDING_TARGET');
     }
 
-    let target = await this.resolveTarget(sourceBinding);
     if (!target) {
+      // First honor verified point bindings; next try unambiguous physical SN.
       const inferred = await this.inferSourceBinding(normalized.value.sourceIdentity, bindings);
       if (inferred.ok) {
-        const inferredTarget = await this.resolveTarget(inferred.value);
-        if (inferredTarget) {
-          sourceBinding = inferred.value;
-          target = inferredTarget;
-        }
+        sourceBinding = inferred.value;
+        target = await this.resolveTarget(inferred.value);
+      } else if (inferred.error === 'AMBIGUOUS_SOURCE_BINDING') {
+        return inferred;
       }
-      if (!target) return failure('INVALID_BINDING_TARGET');
     }
+
+    if (!target) {
+      const discovered = await this.discoverSourceBinding(normalized.value.sourceIdentity);
+      if (!discovered.ok) {
+        return failure(
+          sourceBinding && !target && discovered.error === 'UNKNOWN_SOURCE'
+            ? 'INVALID_BINDING_TARGET'
+            : discovered.error,
+        );
+      }
+      sourceBinding = discovered.value;
+      target = await this.resolveTarget(sourceBinding);
+    }
+    if (!target || !sourceBinding) return failure('INVALID_BINDING_TARGET');
+
 
     let breakerReadings: ReturnType<typeof buildBfdbBreakerReadings> = {
       readings: [],
@@ -196,6 +214,85 @@ export class TelemetryService {
       createdAt: timestamp,
       updatedAt: timestamp,
     });
+  }
+
+  /**
+   * Auto-resolve a BFDB MQTT publisher from its *unique active* inventory SN.
+   * Only a BDFB Device or its active root CHASSIS can identify a publisher.
+   * Breaker SNs, nested modules, duplicates and stale parents are not eligible.
+   * The SOURCE binding is durable; raw circuit points are NEVER guessed.
+   */
+  private async discoverSourceBinding(
+    sourceIdentity: string,
+  ): Promise<Result<TelemetryBinding, TelemetryIngestError>> {
+    if (!sourceIdentity || sourceIdentity.length > 120) return failure('UNKNOWN_SOURCE');
+    const matches = await this.topologyRepository.findActiveBySerialNumber(sourceIdentity);
+    if (matches.length === 0) return failure('UNKNOWN_SOURCE');
+    if (matches.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
+
+    const match = matches[0]!;
+    let deviceId: string;
+    if (match.kind === 'DEVICE') {
+      if (match.deviceType !== 'BDFB') return failure('INVALID_BINDING_TARGET');
+      deviceId = match.id;
+    } else if (match.kind === 'EQUIPMENT') {
+      if (match.equipmentType !== 'CHASSIS' || match.parentEquipmentId !== null)
+        return failure('INVALID_BINDING_TARGET');
+      deviceId = match.deviceId;
+      const device = await this.topologyRepository.getById(deviceId);
+      if (
+        !device ||
+        device.kind !== 'DEVICE' ||
+        device.lifecycle !== 'ACTIVE' ||
+        device.deviceType !== 'BDFB' ||
+        match.parentId !== device.id ||
+        !device.rootEquipmentIds.includes(match.id)
+      ) return failure('INVALID_BINDING_TARGET');
+    } else {
+      return failure('INVALID_BINDING_TARGET');
+    }
+
+    const target = await this.topologyRepository.getById(deviceId);
+    if (!target || target.kind !== 'DEVICE' || target.lifecycle !== 'ACTIVE')
+      return failure('INVALID_BINDING_TARGET');
+
+    const timestamp = new Date().toISOString();
+    const binding: TelemetryBinding = {
+      id: `auto:mqtt:${createHash('sha256').update(sourceIdentity).digest('hex')}`,
+      protocol: 'MQTT',
+      sourceIdentity,
+      metric: 'SOURCE',
+      targetType: 'DEVICE',
+      targetId: deviceId,
+      lifecycle: 'ACTIVE',
+      attributes: { discovery: 'UNIQUE_INVENTORY_SN', matchedNodeId: match.id },
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+
+    // Durable when a repository is provided (always true in the real runtime).
+    // Unique Mongo index makes concurrent publications idempotent and prevents
+    // two active SOURCE bindings for the same publisher identity.
+    if (this.bindingRepository) {
+      try {
+        await this.bindingRepository.insert(binding);
+      } catch (error) {
+        // A competing process may have inserted the same source atomically.
+        // Never swallow database outages or other persistence errors.
+        if (
+          !error ||
+          typeof error !== 'object' ||
+          !('code' in error) ||
+          error.code !== 11000
+        ) throw error;
+        const persisted = (await this.bindingRepository.listForSource('MQTT', sourceIdentity))
+          .filter((candidate) => !candidate.sourcePointId && candidate.metric.toUpperCase() === 'SOURCE');
+        if (persisted.length !== 1 || persisted[0]?.targetType !== 'DEVICE' || persisted[0]?.targetId !== deviceId)
+          return failure('AMBIGUOUS_SOURCE_BINDING');
+        return success(persisted[0]);
+      }
+    }
+    return success(binding);
   }
 
   private async resolveTarget(binding: TelemetryBinding): Promise<ResolvedTarget | null> {

@@ -360,13 +360,16 @@ export async function seedBfdbEmulatorLab(
   );
   const portA = `${load.id}:power-in-a`;
   const portB = `${load.id}:power-in-b`;
-  const powerContract = await new PowerContractService(repository, paths).update(loadPowerEquipment.id, {
-    accessPorts: [
-      { id: portA, label: 'POWER-IN-A', feed: 'A' },
-      { id: portB, label: 'POWER-IN-B', feed: 'B' },
-    ],
-    redundancy: 'A_B_REQUIRED',
-  });
+  const powerContract = await new PowerContractService(repository, paths).update(
+    loadPowerEquipment.id,
+    {
+      accessPorts: [
+        { id: portA, label: 'POWER-IN-A', feed: 'A' },
+        { id: portB, label: 'POWER-IN-B', feed: 'B' },
+      ],
+      redundancy: 'A_B_REQUIRED',
+    },
+  );
   if (!powerContract.ok) {
     throw new Error(`Emulator load power contract failed: ${powerContract.error}`);
   }

@@ -14,6 +14,7 @@ interface Props {
   readonly root: EquipmentNode;
   readonly equipment: readonly EquipmentNode[];
   readonly onAdd?: ((slot: number | null) => void) | undefined;
+  readonly canWritePower?: boolean | undefined;
 }
 
 function countLabel(occupied: number, count: number, positional: boolean) {
@@ -104,7 +105,7 @@ function EquipmentPreview({
   );
 }
 
-function PortFace({ ports }: Readonly<{ ports: readonly AccessPort[] }>) {
+function PortFace({ ports, canWritePower = false }: Readonly<{ ports: readonly AccessPort[]; canWritePower?: boolean }>) {
   const active = useMemo(() => ports.filter((port) => port.lifecycle === 'ACTIVE'), [ports]);
   const [selectedPortId, setSelectedPortId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -173,9 +174,19 @@ function PortFace({ ports }: Readonly<{ ports: readonly AccessPort[] }>) {
             <dt>Protocol</dt>
             <dd>{selected.protocol || 'Not recorded'}</dd>
           </dl>
-          <button type="button" onClick={() => setSelectedPortId(null)}>
-            CLOSE
-          </button>
+          <div className="equipment-faceplate-selection-actions">
+            {canWritePower && selected.portType === 'POWER' && (
+              <Link
+                className="equipment-access-port-connect"
+                href={`/power/connect/equipment?${selected.direction === 'INPUT' ? 'target' : 'source'}=${encodeURIComponent(selected.id)}`}
+              >
+                {selected.direction === 'INPUT' ? 'CONNECT SOURCE' : 'CONNECT LOAD'}
+              </Link>
+            )}
+            <button type="button" onClick={() => setSelectedPortId(null)}>
+              CLOSE
+            </button>
+          </div>
         </div>
       ) : (
         <p className="equipment-faceplate-hint">
@@ -186,7 +197,7 @@ function PortFace({ ports }: Readonly<{ ports: readonly AccessPort[] }>) {
   );
 }
 
-export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
+export function PhysicalEquipmentDiagram({ root, equipment, onAdd, canWritePower = false }: Props) {
   const equipmentById = useMemo(
     () => new Map(equipment.map((item) => [item.id, item])),
     [equipment],
@@ -341,7 +352,7 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
           </section>
         )}
 
-        {hasPorts && <PortFace ports={root.accessPorts} />}
+        {hasPorts && <PortFace ports={root.accessPorts} canWritePower={canWritePower} />}
         {!hasPorts && projection.capacity === 0 && (
           <div className="equipment-physical-no-content">
             <strong>No internal Equipment or Access Ports installed</strong>

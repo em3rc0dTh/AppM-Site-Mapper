@@ -22,11 +22,13 @@ export function EquipmentCompositionEditor({
   childEquipment,
   familyEquipment,
   canWrite,
+  canWritePower,
 }: Readonly<{
   equipment: EquipmentNode;
   childEquipment: readonly EquipmentNode[];
   familyEquipment: readonly EquipmentNode[];
   canWrite: boolean;
+  canWritePower: boolean;
 }>) {
   const router = useRouter();
   const byId = useMemo(
@@ -516,6 +518,7 @@ export function EquipmentCompositionEditor({
       <PhysicalEquipmentDiagram
         root={equipment}
         equipment={familyEquipment}
+        canWritePower={canWritePower}
         onAdd={canWrite && isActive ? openComposer : undefined}
       />
       <div className="equipment-composition-workbench-actions">

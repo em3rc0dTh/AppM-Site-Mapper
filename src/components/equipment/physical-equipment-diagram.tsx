@@ -29,9 +29,7 @@ function countLabel(occupied: number, count: number, positional: boolean) {
   return positional ? `${occupied} / ${count} occupied` : `${occupied} installed`;
 }
 
-function BreakerMeasurementStrip({
-  reading,
-}: Readonly<{ reading: CompositionBreakerTelemetry }>) {
+function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBreakerTelemetry }>) {
   const metrics = [
     { label: 'V', value: reading.voltageV, unit: 'V' },
     { label: 'I', value: reading.currentA, unit: 'A' },
@@ -380,7 +378,9 @@ export function PhysicalEquipmentDiagram({
                             <span>{slot.equipment.name}</span>
                             {slot.equipment.equipmentType === 'CIRCUIT_BREAKER' && (
                               <BreakerMeasurementStrip
-                                reading={breakerReadings[slot.equipment.id] ?? { status: 'UNMAPPED' }}
+                                reading={
+                                  breakerReadings[slot.equipment.id] ?? { status: 'UNMAPPED' }
+                                }
                               />
                             )}
                           </Link>
@@ -390,7 +390,11 @@ export function PhysicalEquipmentDiagram({
                             equipmentById={equipmentById}
                             slotIndex={slot.index}
                             {...(slot.equipment.equipmentType === 'CIRCUIT_BREAKER'
-                              ? { breakerTelemetry: breakerReadings[slot.equipment.id] ?? { status: 'UNMAPPED' } }
+                              ? {
+                                  breakerTelemetry: breakerReadings[slot.equipment.id] ?? {
+                                    status: 'UNMAPPED',
+                                  },
+                                }
                               : {})}
                           />
                         )

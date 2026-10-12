@@ -1,3 +1,4 @@
+import hmac
 import json
 import os
 from datetime import datetime
@@ -19,6 +20,9 @@ HOST = os.getenv("STORE_HOST", "0.0.0.0")
 PORT = int(os.getenv("STORE_PORT", "8080"))
 MAX_BODY = 2_000_000
 MAX_READINGS = 256
+ACCESS_TOKEN = os.getenv("TELEMETRY_STORE_TOKEN", "").strip()
+if os.getenv("STORE_ENV") == "production" and not ACCESS_TOKEN:
+    raise RuntimeError("Production telemetry store requires TELEMETRY_STORE_TOKEN")
 
 
 def record(value):
@@ -213,6 +217,13 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def authorized(self):
+        if not ACCESS_TOKEN:
+            return True
+        supplied = self.headers.get("Authorization", "")
+        expected = "Bearer " + ACCESS_TOKEN
+        return hmac.compare_digest(supplied, expected)
+
     def do_GET(self):
         parsed = urlparse(self.path)
 
@@ -225,6 +236,10 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.OK, {"status": "ok"})
             except Exception:
                 self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "unavailable"})
+            return
+
+        if parsed.path == "/history" and not self.authorized():
+            self.send_json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
             return
 
         if parsed.path != "/history":
@@ -258,6 +273,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if urlparse(self.path).path != "/samples":
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
+            return
+        if not self.authorized():
+            self.send_json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
             return
 
         try:

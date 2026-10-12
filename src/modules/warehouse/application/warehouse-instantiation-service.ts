@@ -68,13 +68,11 @@ type ResolvedComposition =
   | { readonly childMode: 'DYNAMIC' }
   | { readonly childMode: 'POSITIONAL'; readonly childCapacity: number };
 
+/** Layout, child mode and capacity are properties of a concrete Equipment instance. */
 function resolvedComposition(
-  template: AssetTemplate,
-  childModeOverride?: EquipmentChildMode,
-  childCapacityOverride?: number,
+  childMode: EquipmentChildMode = 'DYNAMIC',
+  childCapacity?: number,
 ): ResolvedComposition | null {
-  const childMode = childModeOverride ?? template.childMode ?? 'DYNAMIC';
-  const childCapacity = childCapacityOverride ?? template.childCapacity;
 
   if (childMode === 'POSITIONAL') {
     if (
@@ -137,7 +135,7 @@ export class WarehouseInstantiationService {
       return failure('SERIAL_ALREADY_ASSIGNED');
     }
 
-    const composition = resolvedComposition(template, input.childMode, input.childCapacity);
+    const composition = resolvedComposition(input.childMode, input.childCapacity);
     if (!composition) return failure('INVALID_CHILD_CAPACITY');
     if (!this.topologyRepository.commitLayout) return failure('ATOMIC_CREATE_REQUIRED');
 
@@ -189,9 +187,7 @@ export class WarehouseInstantiationService {
       equipmentType,
       parentEquipmentId: null,
       childMode: composition.childMode,
-      ...((input.presentation ?? template.presentation)
-        ? { presentation: { ...(input.presentation ?? template.presentation)! } }
-        : {}),
+      ...(input.presentation ? { presentation: { ...input.presentation } } : {}),
       children:
         composition.childMode === 'POSITIONAL'
           ? Array.from({ length: composition.childCapacity! }, () => null)
@@ -235,7 +231,7 @@ export class WarehouseInstantiationService {
       return failure('SERIAL_ALREADY_ASSIGNED');
     }
 
-    const composition = resolvedComposition(template, input.childMode, input.childCapacity);
+    const composition = resolvedComposition(input.childMode, input.childCapacity);
     if (!composition) return failure('INVALID_CHILD_CAPACITY');
 
     const category = input.category?.trim() || template.category;
@@ -254,9 +250,7 @@ export class WarehouseInstantiationService {
       ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
       ...(template.model ? { model: template.model } : {}),
       template: snapshotTemplate(template),
-      ...((input.presentation ?? template.presentation)
-        ? { presentation: { ...(input.presentation ?? template.presentation)! } }
-        : {}),
+      ...(input.presentation ? { presentation: { ...input.presentation } } : {}),
     });
 
     if (!result.ok) return failure(result.error);

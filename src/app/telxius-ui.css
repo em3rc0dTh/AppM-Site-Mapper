@@ -3541,3 +3541,64 @@ button.zip-rack-tree-row {
     transform: rotate(90deg);
   }
 }
+
+
+/* MK1: real electrical readouts belong to each canonical breaker bar. */
+.bdfb-panel-board--detail .bdfb-endpoint-grid {
+  height: auto;
+  align-content: start;
+}
+.bdfb-panel-board--detail .bdfb-endpoint--breaker {
+  min-height: 152px;
+  grid-template-rows: auto auto auto auto;
+  align-content: center;
+}
+.bdfb-panel-board--detail .bdfb-endpoint--breaker[data-telemetry='live'] {
+  border-color: #28bf91;
+  box-shadow: inset 0 0 0 1px #28bf9133, 0 0 18px #28bf911a;
+}
+.bdfb-breaker-status,
+.bdfb-breaker-provenance,
+.bdfb-breaker-readouts {
+  grid-column: 2;
+  min-width: 0;
+}
+.bdfb-panel-board--detail .bdfb-breaker-status {
+  color: #32d4a3;
+  font-size: 9px;
+  letter-spacing: .035em;
+}
+.bdfb-panel-board--detail .bdfb-endpoint[data-telemetry='mapped'] .bdfb-breaker-status {
+  color: #f2b94a;
+}
+.bdfb-panel-board--detail .bdfb-endpoint[data-telemetry='unmapped'] .bdfb-breaker-status {
+  color: #a5aebc;
+}
+.bdfb-breaker-readouts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 5px 9px;
+  padding: 5px 0;
+}
+.bdfb-breaker-readouts > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.bdfb-breaker-readouts span {
+  font: 700 9px/12px Inter, sans-serif;
+  color: #8bbdd3;
+}
+.bdfb-breaker-readouts strong {
+  color: #f4fafc;
+  font: 700 11px/15px 'Space Grotesk', sans-serif;
+  overflow-wrap: anywhere;
+}
+.bdfb-panel-board--detail .bdfb-breaker-provenance {
+  color: #9aaabb;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 9px;
+  line-height: 12px;
+  overflow-wrap: anywhere;
+}

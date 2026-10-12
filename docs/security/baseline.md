@@ -109,7 +109,6 @@ It does not replace:
 - production CSP validation;
 - production load/DoS validation.
 
-
 ## October 2026 assessment — remaining deployment blockers
 
 Automated BFDB source discovery now requires a unique active inventory SN

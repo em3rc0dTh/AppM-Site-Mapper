@@ -81,8 +81,18 @@ export function isValidPolygon(points: unknown): points is readonly PointMm[] {
   return true;
 }
 
+/** Canonical Site Mapper drawing plane: A-1 begins at X = 0, Y = 0. */
+export function isInPositiveDrawingPlane(point: PointMm): boolean {
+  return Number.isFinite(point.x) && Number.isFinite(point.y) && point.x >= 0 && point.y >= 0;
+}
+
+export function isCanonicalPolygon(value: unknown): value is readonly PointMm[] {
+  return isValidPolygon(value) && value.every(isInPositiveDrawingPlane);
+}
+
+/** Write boundary: forbid negative physical coordinates, including JSON imports. */
 export function parsePolygon(value: unknown): PointMm[] | null {
-  return isValidPolygon(value) ? value.map(({ x, y }) => ({ x, y })) : null;
+  return isCanonicalPolygon(value) ? value.map(({ x, y }) => ({ x, y })) : null;
 }
 
 function segmentsIntersect(a: PointMm, b: PointMm, c: PointMm, d: PointMm): boolean {

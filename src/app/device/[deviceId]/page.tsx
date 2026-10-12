@@ -7,6 +7,7 @@ import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { PowerContractEditor } from '@/components/power/power-contract-editor';
 import { RackElevation } from '@/components/rack/rack-elevation';
 import { EquipmentTelemetryInspector } from '@/components/telemetry/equipment-telemetry-inspector';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { ContextPin } from '@/components/workspace/context-pin';
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -24,6 +25,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
 
   const canWritePower = hasPermission(auth.value.role, 'power:write');
   const canWriteTopology = hasPermission(auth.value.role, 'topology:write');
+  const canReadTelemetry = hasPermission(auth.value.role, 'telemetry:read');
   const { deviceId } = await params;
   const repo = await createTopologyRepository();
   const service = new TopologyService(repo);
@@ -92,6 +94,22 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const tree = nodeTrail[0] ? await service.buildNavigationTree(nodeTrail[0].id) : null;
   const view = rackNode ? await new RackElevationService(repo).getView(rackNode.id) : null;
 
+  const breakerIds = directEquipmentChildren
+    .filter((item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'CIRCUIT_BREAKER')
+    .map((item) => item.id);
+  const breakerTelemetryBindings =
+    canReadTelemetry && breakerIds.length
+      ? (await (await createTelemetryBindingRepository()).listForTargets('EQUIPMENT', breakerIds))
+          .filter((binding) => binding.lifecycle === 'ACTIVE' && binding.protocol === 'MQTT')
+          .map((binding) => ({
+            id: binding.id,
+            targetId: binding.targetId,
+            sourceIdentity: binding.sourceIdentity,
+            ...(binding.sourcePointId ? { sourcePointId: binding.sourcePointId } : {}),
+            metric: binding.metric,
+          }))
+      : [];
+
   const familyPortIds = new Set(
     familyEquipment.flatMap((item) =>
       item.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').map((port) => port.id),
@@ -145,6 +163,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               familyEquipment={familyEquipment}
               canWrite={canWriteTopology}
               canWritePower={canWritePower}
+              canReadTelemetry={canReadTelemetry}
+              breakerTelemetryBindings={breakerTelemetryBindings}
             />
           ) : view?.ok ? (
             <RackElevation

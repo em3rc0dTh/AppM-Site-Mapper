@@ -93,6 +93,33 @@ export class TelemetryService {
     }
     if (!target || !sourceBinding) return failure('INVALID_BINDING_TARGET');
 
+    // Auto-discovered sources are bound to an inventory identity, not merely
+    // the old UUID. Re-check on ingestion so renaming/archive/duplicate SN
+    // cannot silently redirect measurements through a stale SOURCE binding.
+    if (sourceBinding.attributes?.discovery === 'UNIQUE_INVENTORY_SN') {
+      const matches = await this.topologyRepository.findActiveBySerialNumber(
+        normalized.value.sourceIdentity,
+      );
+      if (matches.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
+      const match = matches[0];
+      if (!match || match.id !== sourceBinding.attributes.matchedNodeId)
+        return failure('INVALID_BINDING_TARGET');
+      if (match.kind === 'EQUIPMENT') {
+        const device = await this.topologyRepository.getById(match.deviceId);
+        if (
+          match.equipmentType !== 'CHASSIS' ||
+          match.parentEquipmentId !== null ||
+          match.parentId !== target.id ||
+          device?.kind !== 'DEVICE' ||
+          device.deviceType !== 'BDFB' ||
+          device.lifecycle !== 'ACTIVE' ||
+          !device.rootEquipmentIds.includes(match.id)
+        ) return failure('INVALID_BINDING_TARGET');
+      } else if (match.kind !== 'DEVICE' || match.deviceType !== 'BDFB' || match.id !== target.id) {
+        return failure('INVALID_BINDING_TARGET');
+      }
+    }
+
 
     let breakerReadings: ReturnType<typeof buildBfdbBreakerReadings> = {
       readings: [],

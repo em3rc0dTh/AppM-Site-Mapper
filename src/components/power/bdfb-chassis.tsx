@@ -1,6 +1,6 @@
 'use client';
 
-import { useBdfbTelemetry } from '@/components/telemetry/use-bdfb-telemetry';
+import { useBdfbTelemetrySnapshot } from '@/components/telemetry/use-bdfb-telemetry';
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -16,6 +16,7 @@ import type {
   BdfbShelfView,
 } from '@/modules/power/domain/bdfb-model';
 import type { BreakerTelemetryReading } from '@/modules/telemetry/domain/entities';
+import { resolveBdfbBreakerReadings } from '@/modules/telemetry/domain/breaker-telemetry-view';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 import { EntityInspector, type InspectorEntity } from '@/shared/ui/entity-inspector';
 import { StatusBadge } from '@/shared/ui/primitives';
@@ -178,22 +179,49 @@ function panelInspector(
   };
 }
 
-function breakerPreview(
-  breaker: BdfbBreakerView,
-  reading: BreakerTelemetryReading | undefined,
-): string {
-  if (!reading) return 'BREAKER';
-  const voltage = reading.metrics.voltageV?.value;
-  const current = reading.metrics.currentA?.value;
-  if (voltage !== undefined || current !== undefined) {
-    return [
-      voltage === undefined ? null : `${voltage.toFixed(1)} V`,
-      current === undefined ? null : `${current.toFixed(1)} A`,
-    ]
-      .filter(Boolean)
-      .join(' · ');
-  }
-  return reading.state?.value ?? 'BREAKER';
+function BreakerReadout({
+  reading,
+  mapped,
+}: Readonly<{
+  reading?: BreakerTelemetryReading;
+  mapped: boolean;
+}>) {
+  const values = [
+    { label: 'V', value: reading?.metrics.voltageV?.value, unit: 'V' },
+    { label: 'I', value: reading?.metrics.currentA?.value, unit: 'A' },
+    { label: 'P', value: reading?.metrics.powerW?.value, unit: 'W' },
+    { label: 'E', value: reading?.metrics.energyKwh?.value, unit: 'kWh' },
+  ];
+  return (
+    <>
+      <small className="bdfb-breaker-status">
+        {reading
+          ? `LIVE · ${reading.state?.value ?? 'MQTT'}`
+          : mapped
+            ? 'MAPPED · NO LIVE READING'
+            : 'UNMAPPED · NO BREAKER BINDING'}
+      </small>
+      <div className="bdfb-breaker-readouts" aria-label="Breaker electrical measurements">
+        {values.map((metric) => (
+          <div key={metric.label}>
+            <span>{metric.label}</span>
+            <strong>
+              {metric.value === undefined
+                ? '—'
+                : `${metric.value.toFixed(metric.label === 'E' ? 4 : 2)} ${metric.unit}`}
+            </strong>
+          </div>
+        ))}
+      </div>
+      <small className="bdfb-breaker-provenance">
+        {reading
+          ? `${reading.sourceIdentity} / ${reading.rawPointId} · ${compactUtcTimestamp(reading.receivedAt)}`
+          : mapped
+            ? 'Waiting for the mapped MQTT point'
+            : 'Assign a verified MQTT point to this breaker'}
+      </small>
+    </>
+  );
 }
 
 function PanelBoard({
@@ -277,7 +305,10 @@ function PanelBoard({
             >
               <span>{String(index + 1).padStart(2, '0')}</span>
               <strong>{breaker.label}</strong>
-              <small>{breakerPreview(breaker, readingsByBreaker[breaker.id])}</small>
+              <BreakerReadout
+                reading={readingsByBreaker[breaker.id]}
+                mapped={Boolean(telemetryBindingsByBreaker[breaker.id]?.length)}
+              />
               {readingsByBreaker[breaker.id] ? (
                 <i
                   className="bdfb-live-indicator"
@@ -407,13 +438,10 @@ export function BdfbChassis({
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
   const [selectedBreakerId, setSelectedBreakerId] = useState<string | null>(query.get('breaker'));
   const [activePanel, setActivePanel] = useState<PanelSelection | null>(initialPanel);
-  const telemetry = useBdfbTelemetry(device.id);
+  const { aggregate: telemetry, samples, now } = useBdfbTelemetrySnapshot(device.id);
   const readingsByBreaker = useMemo(
-    () =>
-      Object.fromEntries(
-        (telemetry?.breakerReadings ?? []).map((reading) => [reading.breakerId, reading]),
-      ) as Readonly<Record<string, BreakerTelemetryReading>>,
-    [telemetry],
+    () => resolveBdfbBreakerReadings(presentation, telemetry, samples, now),
+    [presentation, telemetry, samples, now],
   );
 
   const liveInspector = useMemo(() => {
@@ -490,8 +518,8 @@ export function BdfbChassis({
           {panelGroups > 0 ? <StatusBadge>{panelGroups} PANEL GROUPS</StatusBadge> : null}
           <StatusBadge>{panels.length} PANELS</StatusBadge>
           <StatusBadge>{breakers.length} BREAKERS</StatusBadge>
-          {telemetry?.breakerReadings?.length ? (
-            <StatusBadge tone="good">{telemetry.breakerReadings.length} MQTT BREAKERS</StatusBadge>
+          {Object.keys(readingsByBreaker).length ? (
+            <StatusBadge tone="good">{Object.keys(readingsByBreaker).length} MQTT BREAKERS</StatusBadge>
           ) : (
             <StatusBadge tone="warning">MQTT WAITING</StatusBadge>
           )}

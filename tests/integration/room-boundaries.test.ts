@@ -38,11 +38,12 @@ async function fixture() {
     name: 'Level 01',
   });
   if (!level.ok) throw new Error(level.error);
+  const levelId = level.value.id;
   async function createRoom(name: string, polygon: ReturnType<typeof rect>) {
     return topology.create({
       kind: 'ROOM_SUBSTRUCTURE',
       roomVariant: 'ROOM',
-      parentId: level.value.id,
+      parentId: levelId,
       name,
       polygon,
     });

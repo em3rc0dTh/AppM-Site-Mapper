@@ -8,6 +8,7 @@ import {
 } from '@/modules/inventory/application/power-contract-service';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import { hasOnlyKeys, isBoundedString, isSafeMutationRequest, jsonBodyErrorStatus, readBoundedJson } from '@/shared/http/request-security';
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
 
@@ -18,8 +19,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isPort(value: unknown): value is PowerContractPortInput {
   return (
     isRecord(value) &&
-    typeof value.id === 'string' &&
-    typeof value.label === 'string' &&
+    hasOnlyKeys(value, ['id', 'label', 'feed']) &&
+    isBoundedString(value.id, 128) &&
+    isBoundedString(value.label, 120) &&
     (value.feed === undefined || value.feed === 'A' || value.feed === 'B')
   );
 }
@@ -30,8 +32,21 @@ export async function PUT(request: Request, context: Context) {
     return NextResponse.json({ error: auth.error }, { status: 403 });
   }
 
-  const body: unknown = await request.json().catch(() => null);
-  if (!isRecord(body) || !Array.isArray(body.accessPorts) || !body.accessPorts.every(isPort)) {
+  if (!isSafeMutationRequest(request)) {
+    return NextResponse.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  }
+  const parsed = await readBoundedJson(request, { maxBytes: 32768, maxDepth: 5, maxNodes: 512 });
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: jsonBodyErrorStatus(parsed.error) });
+  }
+  const body = parsed.value;
+  if (
+    !isRecord(body) ||
+    !hasOnlyKeys(body, ['accessPorts', 'redundancy']) ||
+    !Array.isArray(body.accessPorts) ||
+    body.accessPorts.length > 256 ||
+    !body.accessPorts.every(isPort)
+  ) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
@@ -44,7 +59,7 @@ export async function PUT(request: Request, context: Context) {
   const { id } = await context.params;
   const topology = await createTopologyRepository();
   const power = await createPowerRepository();
-  const service = new PowerContractService(topology);
+  const service = new PowerContractService(topology, power);
   const current = await service.get(id);
   if (!current.ok) {
     return NextResponse.json({ error: current.error }, { status: 404 });

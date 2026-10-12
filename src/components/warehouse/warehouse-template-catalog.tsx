@@ -101,12 +101,8 @@ export function WarehouseTemplateCatalog({
                 <dd>{template.category ?? '—'}</dd>
                 <dt>Equipment type</dt>
                 <dd>{template.equipmentType?.replaceAll('_', ' ') ?? 'CUSTOM'}</dd>
-                <dt>Children</dt>
-                <dd>
-                  {template.childMode === 'POSITIONAL'
-                    ? `${template.childCapacity ?? 0} positional slots`
-                    : 'Dynamic'}
-                </dd>
+                <dt>Instance composition</dt>
+                <dd>Set child mode, slots and layout during placement</dd>
                 <dt>Allowed child types</dt>
                 <dd>
                   {template.allowedChildTypes?.length

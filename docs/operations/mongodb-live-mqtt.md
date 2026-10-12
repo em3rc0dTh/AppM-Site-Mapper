@@ -24,7 +24,7 @@ The report distinguishes `canonicalPowerPaths` (both Access Port references
 present) from `incompletePowerPaths` (historical or otherwise noncanonical
 records). Incomplete paths are **not** checked for invalid endpoints or
 duplicate targets because that would falsely compare `undefined` with
-`undefined`. The report lists only field *names*, not the stored values;
+`undefined`. The report lists only field _names_, not the stored values;
 those records require a separate evidence-backed migration review.
 
 This connects to the configured `MONGODB_URI` / `MONGODB_DB_NAME` and reads

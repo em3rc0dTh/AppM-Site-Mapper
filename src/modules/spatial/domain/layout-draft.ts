@@ -113,11 +113,15 @@ export function explainRackPlacementFailure(
   if (!cluster || !bounds) return 'INVALID_CLUSTER';
   if (!Number.isFinite(width) || !Number.isFinite(depth) || width <= 0 || depth <= 0)
     return 'INVALID_DIMENSIONS';
-  if (bounds.minX < 0 || bounds.minY < 0) return 'NEGATIVE_POSITION_REFERENCE';
-  if (bounds.maxX - bounds.minX < width) return 'BAY_FRONTAGE_TOO_NARROW';
+  // Coordinates in a Position always start at X >= 0 and Y >= 0.
+  // A Bay may extend left of the origin; that alone does not disqualify
+  // the usable part of its frontage on the positive side of the grid.
+  if (bounds.minY < 0 || bounds.maxX <= 0) return 'NEGATIVE_POSITION_REFERENCE';
+  const firstPositiveX = Math.max(0, bounds.minX);
+  if (bounds.maxX - firstPositiveX < width) return 'BAY_FRONTAGE_TOO_NARROW';
 
   const reasons = new Set<string>();
-  const candidateXs = new Set<number>([bounds.minX]);
+  const candidateXs = new Set<number>([firstPositiveX]);
   for (const existing of draft.racks) {
     const position = draft.positions.find((candidate) => candidate.id === existing.positionId);
     if (position?.clusterId === clusterId) candidateXs.add(existing.x + existing.width);
@@ -153,9 +157,18 @@ export function findNextRackPlacement(
 ): RackPlacement | null {
   const cluster = draft.clusters.find((candidate) => candidate.id === clusterId);
   const bounds = cluster ? polygonBounds(cluster.polygon) : null;
-  if (!cluster || !bounds || width <= 0 || depth <= 0 || bounds.minY < 0) return null;
+  if (
+    !cluster ||
+    !bounds ||
+    !Number.isFinite(width) ||
+    !Number.isFinite(depth) ||
+    width <= 0 ||
+    depth <= 0 ||
+    bounds.minY < 0
+  )
+    return null;
 
-  const candidates = new Set<number>([bounds.minX]);
+  const candidates = new Set<number>([Math.max(0, bounds.minX)]);
 
   for (const existing of draft.racks) {
     const position = draft.positions.find((candidate) => candidate.id === existing.positionId);

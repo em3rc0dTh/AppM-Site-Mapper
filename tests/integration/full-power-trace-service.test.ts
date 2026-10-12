@@ -450,44 +450,41 @@ describe('Breaker identity and evidence isolation in FULL POWER TRACE', () => {
       input,
     ];
     const topology = new MemoryTopologyRepository(nodes);
-    const power = new MemoryPowerRepository([{
-      id: 'physical-path',
-      sourceAccessPortId: bdfb.port.id,
-      targetAccessPortId: inputPort.id,
-      feed: 'A',
-      lifecycle: 'ACTIVE',
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    }]);
-    const bindings = new MemoryTelemetryBindingRepository([{
-      id: 'binding-for-breaker',
-      protocol: 'MQTT',
-      sourceIdentity: 'MQTT-BFDB-GATEWAY',
-      sourcePointId: '0_1_1',
-      metric: 'VOLTAGE',
-      targetType: 'EQUIPMENT',
-      targetId: bdfb.breaker.id,
-      lifecycle: 'ACTIVE',
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    }]);
+    const power = new MemoryPowerRepository([
+      {
+        id: 'physical-path',
+        sourceAccessPortId: bdfb.port.id,
+        targetAccessPortId: inputPort.id,
+        feed: 'A',
+        lifecycle: 'ACTIVE',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    ]);
+    const bindings = new MemoryTelemetryBindingRepository([
+      {
+        id: 'binding-for-breaker',
+        protocol: 'MQTT',
+        sourceIdentity: 'MQTT-BFDB-GATEWAY',
+        sourcePointId: '0_1_1',
+        metric: 'VOLTAGE',
+        targetType: 'EQUIPMENT',
+        targetId: bdfb.breaker.id,
+        lifecycle: 'ACTIVE',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+    ]);
     return { bdfb, load, topology, power, bindings };
   }
 
   it('separates Breaker serial, Device serial, and MQTT sn while matching exact Breaker telemetry', async () => {
     const { bdfb, load, topology, power, bindings } = await fixture();
-    const msg = sample(
-      bdfb.device.id,
-      bdfb.breaker,
-      'MQTT-BFDB-GATEWAY',
-      '0_1_1',
-      48.7,
-      1.3,
-    );
+    const msg = sample(bdfb.device.id, bdfb.breaker, 'MQTT-BFDB-GATEWAY', '0_1_1', 48.7, 1.3);
     const trace = await new FullPowerTraceService(
       topology,
       power,
-      { latest: (id) => id === bdfb.device.id ? msg : null },
+      { latest: (id) => (id === bdfb.device.id ? msg : null) },
       bindings,
     ).resolve(load.id);
     const leg = trace?.feedA[0];
@@ -534,7 +531,7 @@ describe('Breaker identity and evidence isolation in FULL POWER TRACE', () => {
     const trace = await new FullPowerTraceService(
       topology,
       power,
-      { latest: (id) => id === bdfb.device.id ? msg : null },
+      { latest: (id) => (id === bdfb.device.id ? msg : null) },
       bindings,
     ).resolve(load.id);
     expect(trace?.feedA[0]?.telemetry.status).toBe('MAPPED');

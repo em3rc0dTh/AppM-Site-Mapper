@@ -23,9 +23,12 @@ export async function GET(_request: Request, context: Context) {
     createTelemetryBindingRepository(),
   ]);
 
-  const trace = await new FullPowerTraceService(topology, power, telemetry.service, bindings).resolve(
-    entityId,
-  );
+  const trace = await new FullPowerTraceService(
+    topology,
+    power,
+    telemetry.service,
+    bindings,
+  ).resolve(entityId);
   if (!trace) {
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }

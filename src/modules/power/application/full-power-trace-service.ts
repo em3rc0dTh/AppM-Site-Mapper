@@ -236,12 +236,10 @@ export class FullPowerTraceService {
     const boundPoint = pairs.size === 1 ? [...pairs.values()][0] : undefined;
     const readingMatchesBinding =
       !breakerBindings ||
-      (reading &&
-        pairs.has(`${reading.sourceIdentity}\u0000${reading.rawPointId}`));
+      (reading && pairs.has(`${reading.sourceIdentity}\u0000${reading.rawPointId}`));
     const verifiedReading = readingMatchesBinding ? reading : undefined;
     const rawPointId = verifiedReading?.rawPointId ?? boundPoint?.rawPointId;
-    const mqttSourceIdentity =
-      verifiedReading?.sourceIdentity ?? boundPoint?.sourceIdentity;
+    const mqttSourceIdentity = verifiedReading?.sourceIdentity ?? boundPoint?.sourceIdentity;
     const sourceFeed = source?.port ? feedOf(source.port) : undefined;
     const targetFeed = target?.port ? feedOf(target.port) : undefined;
     const physicalFeed =

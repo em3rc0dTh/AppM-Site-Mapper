@@ -40,6 +40,9 @@ jobs:
       - name: Unit tests
         run: npm run test:unit
 
+      - name: Mongo audit regression tests
+        run: npm run test:audit-mongo
+
       - name: Integration tests
         run: npm run test:integration
 

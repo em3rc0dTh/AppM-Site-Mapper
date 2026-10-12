@@ -340,4 +340,66 @@ describe('FullPowerTraceService', () => {
     expect(trace?.feedA[0]?.topologyStatus).toBe('BROKEN_SOURCE');
     expect(trace?.feedA[0]?.target.accessPort?.id).toBe(input.id);
   });
+  it('isolates focused Equipment descendants and accepts non-breaker POWER source', async () => {
+    const load = device('load-switch', 'rack-load', 'NETWORK_ELEMENT', ['root']);
+    const root = equipment({
+      id: 'root',
+      deviceId: load.id,
+      parentId: load.id,
+      parentEquipmentId: null,
+      equipmentType: 'CHASSIS',
+      children: ['psu-a', 'psu-b'],
+    });
+    const aIn = powerPort(load.id, 'psu-a', 'psu-a-in', 'INPUT', 'A');
+    const bIn = powerPort(load.id, 'psu-b', 'psu-b-in', 'INPUT', 'B');
+    const a = equipment({
+      id: 'psu-a',
+      deviceId: load.id,
+      parentId: root.id,
+      parentEquipmentId: root.id,
+      equipmentType: 'POWER_SUPPLY',
+      accessPorts: [aIn],
+    });
+    const b = equipment({
+      id: 'psu-b',
+      deviceId: load.id,
+      parentId: root.id,
+      parentEquipmentId: root.id,
+      equipmentType: 'POWER_SUPPLY',
+      accessPorts: [bIn],
+    });
+    const sourceDevice = device('rectifier', 'rack-power', 'RECTIFIER', ['rectifier-output']);
+    const outputA = powerPort(sourceDevice.id, 'rectifier-output', 'rectifier-a-out', 'OUTPUT', 'A');
+    const outputB = powerPort(sourceDevice.id, 'rectifier-output', 'rectifier-b-out', 'OUTPUT', 'B');
+    const rectifier = equipment({
+      id: 'rectifier-output',
+      deviceId: sourceDevice.id,
+      parentId: sourceDevice.id,
+      parentEquipmentId: null,
+      equipmentType: 'POWER_MODULE',
+      accessPorts: [outputA, outputB],
+    });
+    const topology = new MemoryTopologyRepository([load, root, a, b, sourceDevice, rectifier]);
+    const power = new MemoryPowerRepository();
+    const service = new PowerService(topology, power);
+    expect(
+      await service.create({ sourceAccessPortId: outputA.id, targetAccessPortId: aIn.id, feed: 'A' }),
+    ).toMatchObject({ ok: true });
+    expect(
+      await service.create({ sourceAccessPortId: outputB.id, targetAccessPortId: bIn.id, feed: 'B' }),
+    ).toMatchObject({ ok: true });
+
+    const trace = new FullPowerTraceService(topology, power);
+    const focused = await trace.resolve(a.id);
+    expect(focused?.legs).toHaveLength(1);
+    expect(focused?.feedA).toHaveLength(1);
+    expect(focused?.feedB).toHaveLength(0);
+    expect(focused?.feedA[0]?.topologyStatus).toBe('VALID');
+    expect(focused?.feedA[0]?.telemetry.status).toBe('UNMAPPED');
+
+    const wholeDevice = await trace.resolve(load.id);
+    expect(wholeDevice?.legs).toHaveLength(2);
+    expect(wholeDevice?.feedB).toHaveLength(1);
+  });
+
 });

@@ -260,8 +260,16 @@ export default async function PowerPage({
               <section className="zip-power-box zip-power-dual-box">
                 <h2>DUAL FEED OVERVIEW</h2>
                 <div className="zip-power-dual-grid">
-                  {feedA ? renderFeedSummary(feedA) : <div className="zip-power-missing">Feed A not configured</div>}
-                  {feedB ? renderFeedSummary(feedB) : <div className="zip-power-missing">Feed B not configured</div>}
+                  {feedA ? (
+                    renderFeedSummary(feedA)
+                  ) : (
+                    <div className="zip-power-missing">Feed A not configured</div>
+                  )}
+                  {feedB ? (
+                    renderFeedSummary(feedB)
+                  ) : (
+                    <div className="zip-power-missing">Feed B not configured</div>
+                  )}
                 </div>
               </section>
             </>
@@ -319,10 +327,12 @@ export default async function PowerPage({
 
       <footer className="zip-power-footer">
         <span>
-          FEED A <b className={feedA ? 'is-good' : ''}>{feedA ? '● CONFIGURED' : '○ NOT CONFIGURED'}</b>
+          FEED A{' '}
+          <b className={feedA ? 'is-good' : ''}>{feedA ? '● CONFIGURED' : '○ NOT CONFIGURED'}</b>
         </span>
         <span>
-          FEED B <b className={feedB ? 'is-good' : ''}>{feedB ? '● CONFIGURED' : '○ NOT CONFIGURED'}</b>
+          FEED B{' '}
+          <b className={feedB ? 'is-good' : ''}>{feedB ? '● CONFIGURED' : '○ NOT CONFIGURED'}</b>
         </span>
         <span>
           REDUNDANCY <b>{feedA && feedB ? '✓' : '—'}</b>

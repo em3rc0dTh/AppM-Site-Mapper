@@ -97,7 +97,7 @@ describe('normalizeTelemetry', () => {
       'data/dev/EMU-BFDB-01+',
       'data/dev/EMU-BFDB-01#',
       'data/dev/ EMU-BFDB-01',
-      'data/dev/EMU-BFDB-01\\n',
+      'data/dev/EMU-BFDB-01' + String.fromCharCode(10),
       'data/dev/' + 'S'.repeat(121),
     ]) {
       const result = normalizeTelemetry(

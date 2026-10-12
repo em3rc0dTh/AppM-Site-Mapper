@@ -54,7 +54,8 @@ export function normalizeTelemetry(
     sourceIdentity !== sourceIdentity.trim() ||
     sourceIdentity.length > 120 ||
     /[\/+#\u0000-\u001f\u007f]/.test(sourceIdentity)
-  ) return failure('TOPIC_NOT_ALLOWED');
+  )
+    return failure('TOPIC_NOT_ALLOWED');
 
   if (payload.byteLength > options.maxPayloadBytes) {
     return failure('PAYLOAD_TOO_LARGE');

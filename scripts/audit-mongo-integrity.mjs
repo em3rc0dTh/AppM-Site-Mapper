@@ -19,7 +19,9 @@ const expectedDb = process.argv
   .find((argument) => argument.startsWith('--expect-db='))
   ?.slice('--expect-db='.length);
 if (expectedDb && dbName !== expectedDb) {
-  console.error(`Wrong MongoDB database: expected ${expectedDb}, configured ${dbName}. No query ran.`);
+  console.error(
+    `Wrong MongoDB database: expected ${expectedDb}, configured ${dbName}. No query ran.`,
+  );
   process.exit(1);
 }
 const client = new MongoClient(uri, { serverSelectionTimeoutMS: 5000, maxPoolSize: 2 });

@@ -85,7 +85,10 @@ describe('read-only audit of canonical and historical PowerPaths', () => {
         ['load-a', target],
       ]),
     );
-    assert.deepEqual(result.violations.map((item) => item.code), ['POWER_FEED_MISMATCH']);
+    assert.deepEqual(
+      result.violations.map((item) => item.code),
+      ['POWER_FEED_MISMATCH'],
+    );
   });
 
   it('does not flag a well-formed valid power connection', () => {

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import {
   projectEquipmentComposition,
@@ -193,16 +193,41 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
   const projection = projectEquipmentComposition(root, equipmentById);
   const [expanded, setExpanded] = useState(false);
   const [visibleCount, setVisibleCount] = useState(48);
+  const compositionRef = useRef<HTMLElement | null>(null);
+  const [compositionWidth, setCompositionWidth] = useState(0);
+  useEffect(() => {
+    const element = compositionRef.current;
+    if (!element) return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setCompositionWidth(Math.round(entry.contentRect.width));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [projection.capacity]);
   const hasPorts = root.accessPorts.some((port) => port.lifecycle === 'ACTIVE');
   const summarized = !expanded && shouldSummarizeFocus(projection);
-  const lineLimit = projection.maxPerLine ?? (projection.positional ? 8 : 2);
-  const columns = Math.max(
-    1,
-    Math.min(projection.capacity || 1, lineLimit, projection.positional ? 12 : 4),
-  );
+  // Presentation maxima are upper bounds. The available canvas width decides
+  // the effective arrangement, so 24 slots never become a 24-row list.
+  const dense = projection.positional && projection.capacity > 4;
+  const minCellWidth = dense ? 96 : 255;
+  const gap = dense ? 6 : 14;
+  const fit = Math.max(1, Math.floor(((compositionWidth || 900) + gap) / (minCellWidth + gap)));
+  const maxPerLine = projection.maxPerLine ?? (dense ? 12 : 4);
+  const count = Math.max(1, projection.capacity);
+  const columnDirection = projection.direction === 'COLUMN';
+  const requiredRows = Math.max(1, Math.ceil(count / fit));
+  const columnFits = !columnDirection || requiredRows <= maxPerLine;
+  const useColumnDirection = columnDirection && columnFits;
+  const lines = useColumnDirection
+    ? Math.max(requiredRows, Math.min(maxPerLine, Math.ceil(Math.sqrt(count))))
+    : 1;
+  const columns = useColumnDirection
+    ? Math.ceil(count / lines)
+    : Math.max(1, Math.min(count, fit, maxPerLine));
   const slots = projection.slots.slice(0, visibleCount);
   const style = {
     '--composition-columns': columns,
+    '--composition-rows': useColumnDirection ? lines : 1,
   } as CSSProperties;
 
   return (
@@ -233,7 +258,7 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
         </header>
 
         {projection.capacity > 0 && (
-          <section className="equipment-physical-bays" aria-label="Immediate child composition">
+          <section ref={compositionRef} className="equipment-physical-bays" aria-label="Immediate child composition">
             <header className="equipment-physical-subheading">
               <strong>INTERNAL COMPOSITION</strong>
               <small>
@@ -253,7 +278,7 @@ export function PhysicalEquipmentDiagram({ root, equipment, onAdd }: Props) {
             ) : (
               <>
                 <div
-                  className={`equipment-physical-children ${projection.direction === 'COLUMN' ? 'is-column' : 'is-row'} ${projection.positional && projection.capacity > 4 ? 'is-dense' : ''}`}
+                  className={`equipment-physical-children ${useColumnDirection ? 'is-column' : 'is-row'} ${dense ? 'is-dense' : ''} ${projection.capacity <= 4 && projection.occupied > 0 && projection.available > 0 ? 'is-mixed' : ''}`}
                   style={style}
                 >
                   {slots.map((slot) => (

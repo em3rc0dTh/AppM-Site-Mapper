@@ -163,6 +163,20 @@ export default async function TopologyNodePage({
     node.kind === 'STRUCTURE' ? [...trail].reverse().find((entry) => entry.kind === 'SITE') : null;
   const siteBoundary =
     siteContext?.kind === 'SITE' && siteContext.polygon ? siteContext.polygon : [];
+  // Level has no independent surveyed polygon in MK1. For Room creation,
+  // show its parent Structure boundary and every active sibling footprint.
+  const roomStructure =
+    node.kind === 'LEVEL' && node.parentId ? await repository.getById(node.parentId) : null;
+  const roomBoundaryContext =
+    roomStructure?.kind === 'STRUCTURE' ? roomStructure.polygon : [];
+  const siblingRoomOverlays =
+    node.kind === 'LEVEL'
+      ? children.flatMap((child) =>
+          child.kind === 'ROOM_SUBSTRUCTURE' && child.polygon.length >= 3
+            ? [{ id: child.id, label: child.name, polygon: child.polygon }]
+            : [],
+        )
+      : [];
 
   const childEntries: VisualStageChild[] = await Promise.all(
     children.map(async (child) => {
@@ -470,7 +484,17 @@ export default async function TopologyNodePage({
                   kind={kind}
                   parentId={node.id}
                   {...(node.kind === 'SITE' && kind === 'STRUCTURE' && node.polygon
-                    ? { boundaryContext: node.polygon }
+                    ? { boundaryContext: node.polygon, boundaryLabel: 'Site boundary' }
+                    : {})}
+                  {...(node.kind === 'LEVEL' && kind === 'ROOM_SUBSTRUCTURE'
+                    ? {
+                        boundaryContext: roomBoundaryContext,
+                        boundaryLabel:
+                          roomStructure?.kind === 'STRUCTURE'
+                            ? 'Structure boundary (Level reference)'
+                            : 'No surveyed Structure boundary',
+                        contextOverlays: siblingRoomOverlays,
+                      }
                     : {})}
                 />
               ))}

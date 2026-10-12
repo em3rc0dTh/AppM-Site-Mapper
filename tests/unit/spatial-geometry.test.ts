@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { pointInPolygon, rectInsidePolygon, rectsOverlap } from '@/modules/spatial/domain/geometry';
+import {
+  isInPositiveDrawingPlane,
+  parsePolygon,
+  pointInPolygon,
+  rectInsidePolygon,
+  rectsOverlap,
+} from '@/modules/spatial/domain/geometry';
 import { generateAssignableSlots, validatePlacement } from '@/modules/spatial/domain/placement';
 
 const room = [
@@ -60,5 +66,30 @@ describe('multi-cell rack footprints inside concave bays', () => {
       { x: 0, y: 2400 },
     ];
     expect(rectInsidePolygon({ x: 300, y: 300, width: 1800, depth: 600 }, concaveBay)).toBe(false);
+  });
+});
+
+describe('Canonical nonnegative drawing plane', () => {
+  const boundary = [
+    { x: 0, y: 0 },
+    { x: 1200, y: 0 },
+    { x: 1200, y: 1200 },
+    { x: 0, y: 1200 },
+  ];
+
+  it('accepts a polygon on the canonical origin', () => {
+    expect(parsePolygon(boundary)).toEqual(boundary);
+    expect(isInPositiveDrawingPlane({ x: 0, y: 0 })).toBe(true);
+  });
+
+  it('rejects a negative vertex from Site, Structure, or Room API boundaries', () => {
+    expect(parsePolygon(boundary.map((p, i) => (i === 0 ? { ...p, x: -1 } : p)))).toBeNull();
+    expect(parsePolygon(boundary.map((p, i) => (i === 1 ? { ...p, y: -0.01 } : p)))).toBeNull();
+  });
+
+  it('rejects a raw negative click before snapping it to the A-1 origin', () => {
+    expect(isInPositiveDrawingPlane({ x: -0.5, y: 0 })).toBe(false);
+    expect(isInPositiveDrawingPlane({ x: 0, y: -0.5 })).toBe(false);
+    expect(isInPositiveDrawingPlane({ x: 0.1, y: 0.1 })).toBe(true);
   });
 });

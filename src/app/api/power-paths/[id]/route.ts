@@ -4,14 +4,19 @@ import { requirePermission } from '@/modules/identity/application/current-sessio
 import { PowerService } from '@/modules/power/application/power-service';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import { isSafeMutationRequest } from '@/shared/http/request-security';
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
 
-export async function DELETE(_request: Request, context: Context) {
+export async function DELETE(request: Request, context: Context) {
   const auth = await requirePermission('power:write');
 
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: 403 });
+  }
+
+  if (!isSafeMutationRequest(request)) {
+    return NextResponse.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
   }
 
   const { id } = await context.params;

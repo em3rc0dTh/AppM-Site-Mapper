@@ -37,7 +37,12 @@ function ownMetric(
     value = record.value;
     if (typeof record.observedAt === 'string') timestamp = record.observedAt;
   }
-  const numeric = typeof value === 'number' ? value : typeof value === 'string' && value.trim() ? Number(value) : NaN;
+  const numeric =
+    typeof value === 'number'
+      ? value
+      : typeof value === 'string' && value.trim()
+        ? Number(value)
+        : NaN;
   return Number.isFinite(numeric) && isFresh(timestamp, now)
     ? { value: numeric as number, observedAt: timestamp }
     : undefined;
@@ -106,8 +111,7 @@ export function resolveBdfbBreakerReadings(
     };
     const stateValue = sample.reported.state;
     const state =
-      (typeof stateValue === 'string' || typeof stateValue === 'number') &&
-      isFresh(observedAt, now)
+      (typeof stateValue === 'string' || typeof stateValue === 'number') && isFresh(observedAt, now)
         ? { value: String(stateValue), observedAt }
         : undefined;
     if (!Object.keys(metrics).length && !state) continue;

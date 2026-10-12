@@ -115,22 +115,14 @@ export function EquipmentCompositionEditor({
         <legend>Child composition layout</legend>
         <label>
           Layout direction
-          <select
-            key="instance-direction"
-            name="presentationDirection"
-            defaultValue="ROW"
-          >
+          <select key="instance-direction" name="presentationDirection" defaultValue="ROW">
             <option value="ROW">Row</option>
             <option value="COLUMN">Column</option>
           </select>
         </label>
         <label>
           Max items per line
-          <select
-            key="instance-max"
-            name="presentationMaxPerLine"
-            defaultValue="auto"
-          >
+          <select key="instance-max" name="presentationMaxPerLine" defaultValue="auto">
             <option value="auto">Auto</option>
             {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
               <option key={n} value={n}>
@@ -141,11 +133,7 @@ export function EquipmentCompositionEditor({
         </label>
         <label>
           Child display
-          <select
-            key="instance-visibility"
-            name="presentationVisibility"
-            defaultValue="AUTO"
-          >
+          <select key="instance-visibility" name="presentationVisibility" defaultValue="AUTO">
             <option value="AUTO">Auto</option>
             <option value="INLINE">Inline</option>
             <option value="SUMMARY">Summary</option>

@@ -112,8 +112,8 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                     {selected.category ? ` · ${selected.category}` : ''}
                   </span>
                   <span>
-                    {selected.equipmentType ?? 'CUSTOM'} · Configure child slots and layout for
-                    this instance below
+                    {selected.equipmentType ?? 'CUSTOM'} · Configure child slots and layout for this
+                    instance below
                   </span>
                 </div>
               )}
@@ -170,20 +170,14 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                 <legend>Physical child layout · Equipment presentation</legend>
                 <label>
                   Direction
-                  <select
-                    name="presentationDirection"
-                    defaultValue="ROW"
-                  >
+                  <select name="presentationDirection" defaultValue="ROW">
                     <option value="ROW">ROW · Left to right</option>
                     <option value="COLUMN">COLUMN · Top to bottom</option>
                   </select>
                 </label>
                 <label>
                   Max per line
-                  <select
-                    name="presentationMaxPerLine"
-                    defaultValue="auto"
-                  >
+                  <select name="presentationMaxPerLine" defaultValue="auto">
                     <option value="auto">Auto · Responsive</option>
                     {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
                       <option key={n} value={n}>
@@ -194,10 +188,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                 </label>
                 <label>
                   Child visibility
-                  <select
-                    name="presentationVisibility"
-                    defaultValue="AUTO"
-                  >
+                  <select name="presentationVisibility" defaultValue="AUTO">
                     <option value="AUTO">AUTO</option>
                     <option value="INLINE">INLINE</option>
                     <option value="SUMMARY">SUMMARY</option>

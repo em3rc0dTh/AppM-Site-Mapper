@@ -204,9 +204,8 @@ export function TemplateCreateForm() {
             <strong>Paste one template or an array of templates.</strong>
             <span>
               Equipment templates only. Recursive defaults use <code>equipmentType</code>,{' '}
-              <code>equipmentType</code> and <code>allowedChildTypes</code>. Configure
-              children, slots and layout when instantiating Equipment in a Rack or a parent
-              Equipment.
+              <code>equipmentType</code> and <code>allowedChildTypes</code>. Configure children,
+              slots and layout when instantiating Equipment in a Rack or a parent Equipment.
             </span>
           </div>
           <textarea

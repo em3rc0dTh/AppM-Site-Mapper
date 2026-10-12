@@ -73,7 +73,6 @@ function resolvedComposition(
   childMode: EquipmentChildMode = 'DYNAMIC',
   childCapacity?: number,
 ): ResolvedComposition | null {
-
   if (childMode === 'POSITIONAL') {
     if (
       !Number.isInteger(childCapacity) ||

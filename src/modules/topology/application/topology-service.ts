@@ -180,6 +180,7 @@ export class TopologyService {
           (sibling) =>
             sibling.kind === 'ROOM_SUBSTRUCTURE' &&
             sibling.lifecycle === 'ACTIVE' &&
+            sibling.polygon !== undefined &&
             polygonsOverlapArea(polygon!, sibling.polygon),
         )
       ) {

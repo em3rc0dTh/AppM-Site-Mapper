@@ -32,10 +32,10 @@ const SITE_POLYGON = [
 ] as const;
 
 const STRUCTURE_POLYGON = [
-  { x: 100, y: 100 },
-  { x: 4700, y: 100 },
+  { x: 0, y: 0 },
+  { x: 4700, y: 0 },
   { x: 4700, y: 2900 },
-  { x: 100, y: 2900 },
+  { x: 0, y: 2900 },
 ] as const;
 
 const ROOM_POLYGON = [

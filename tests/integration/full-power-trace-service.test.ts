@@ -5,6 +5,7 @@ import { PowerService } from '@/modules/power/application/power-service';
 import type { PowerPath } from '@/modules/power/domain/entities';
 import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
+import { MemoryTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-binding-repository';
 import type {
   AccessPort,
   ContainerRackNode,
@@ -420,5 +421,124 @@ describe('FullPowerTraceService', () => {
     const wholeDevice = await trace.resolve(load.id);
     expect(wholeDevice?.legs).toHaveLength(2);
     expect(wholeDevice?.feedB).toHaveLength(1);
+  });
+});
+
+describe('Breaker identity and evidence isolation in FULL POWER TRACE', () => {
+  async function fixture() {
+    const bdfb = sourceFixture('bdfb-identity', 'breaker-own', '0_1_1');
+    const load = device('switch-load', 'rack-load', 'NETWORK_ELEMENT', ['switch-chassis']);
+    const inputPort = powerPort(load.id, 'switch-chassis', 'switch-a-input', 'INPUT', 'A');
+    const input = equipment({
+      id: 'switch-chassis',
+      deviceId: load.id,
+      parentId: load.id,
+      parentEquipmentId: null,
+      equipmentType: 'CHASSIS',
+      accessPorts: [inputPort],
+    });
+    const nodes = [
+      { ...bdfb.device, serialNumber: 'BFDB-DEVICE-SN' },
+      ...bdfb.equipment.map((node) =>
+        node.id === bdfb.breaker.id
+          ? { ...node, serialNumber: 'BREAKER-OWN-SN' }
+          : node.equipmentType === 'CHASSIS'
+            ? { ...node, serialNumber: 'CHASSIS-DIFFERENT-SN' }
+            : node,
+      ),
+      load,
+      input,
+    ];
+    const topology = new MemoryTopologyRepository(nodes);
+    const power = new MemoryPowerRepository([{
+      id: 'physical-path',
+      sourceAccessPortId: bdfb.port.id,
+      targetAccessPortId: inputPort.id,
+      feed: 'A',
+      lifecycle: 'ACTIVE',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }]);
+    const bindings = new MemoryTelemetryBindingRepository([{
+      id: 'binding-for-breaker',
+      protocol: 'MQTT',
+      sourceIdentity: 'MQTT-BFDB-GATEWAY',
+      sourcePointId: '0_1_1',
+      metric: 'VOLTAGE',
+      targetType: 'EQUIPMENT',
+      targetId: bdfb.breaker.id,
+      lifecycle: 'ACTIVE',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }]);
+    return { bdfb, load, topology, power, bindings };
+  }
+
+  it('separates Breaker serial, Device serial, and MQTT sn while matching exact Breaker telemetry', async () => {
+    const { bdfb, load, topology, power, bindings } = await fixture();
+    const msg = sample(
+      bdfb.device.id,
+      bdfb.breaker,
+      'MQTT-BFDB-GATEWAY',
+      '0_1_1',
+      48.7,
+      1.3,
+    );
+    const trace = await new FullPowerTraceService(
+      topology,
+      power,
+      { latest: (id) => id === bdfb.device.id ? msg : null },
+      bindings,
+    ).resolve(load.id);
+    const leg = trace?.feedA[0];
+    expect(leg?.source.entityId).toBe(bdfb.device.id);
+    expect(leg?.source.deviceSerialNumber).toBe('BFDB-DEVICE-SN');
+    expect(leg?.source.breakerSerialNumber).toBe('BREAKER-OWN-SN');
+    expect(leg?.source.breakerSerialNumber).not.toBe('CHASSIS-DIFFERENT-SN');
+    expect(leg?.telemetry.sourceIdentity).toBe('MQTT-BFDB-GATEWAY');
+    expect(leg?.telemetry.status).toBe('LIVE');
+    expect(leg?.telemetry.rawPointId).toBe('0_1_1');
+    expect(leg?.telemetry.voltageV).toBe(48.7);
+  });
+
+  it('does not present a free-form rawPointId on the Breaker as a commissioned binding', async () => {
+    const { bdfb, load, topology, power } = await fixture();
+    const trace = await new FullPowerTraceService(
+      topology,
+      power,
+      { latest: () => null },
+      new MemoryTelemetryBindingRepository(),
+    ).resolve(load.id);
+    expect(bdfb.breaker.attributes?.telemetryRawPointId).toBe('0_1_1');
+    expect(trace?.feedA[0]?.telemetry).toEqual({ status: 'UNMAPPED' });
+  });
+
+  it('reports a configured binding as MAPPED without claiming LIVE MQTT', async () => {
+    const { load, topology, power, bindings } = await fixture();
+    const trace = await new FullPowerTraceService(
+      topology,
+      power,
+      { latest: () => null },
+      bindings,
+    ).resolve(load.id);
+    expect(trace?.feedA[0]?.telemetry).toEqual({
+      status: 'MAPPED',
+      rawPointId: '0_1_1',
+      sourceIdentity: 'MQTT-BFDB-GATEWAY',
+    });
+  });
+
+  it('does not misattribute an MQTT reading from a different gateway to the Breaker', async () => {
+    const { bdfb, load, topology, power, bindings } = await fixture();
+    const msg = sample(bdfb.device.id, bdfb.breaker, 'WRONG-MQTT-GATEWAY', '0_1_1', 19, 5);
+    const trace = await new FullPowerTraceService(
+      topology,
+      power,
+      { latest: (id) => id === bdfb.device.id ? msg : null },
+      bindings,
+    ).resolve(load.id);
+    expect(trace?.feedA[0]?.telemetry.status).toBe('MAPPED');
+    expect(trace?.feedA[0]?.telemetry.voltageV).toBeUndefined();
+    expect(trace?.feedA[0]?.telemetry.sourceIdentity).toBe('MQTT-BFDB-GATEWAY');
   });
 });

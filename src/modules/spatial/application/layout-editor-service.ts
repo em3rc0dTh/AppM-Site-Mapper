@@ -4,7 +4,7 @@ import type { TopologyNode } from '@/modules/topology/domain/entities';
 import { initializeCas } from '@/modules/rack/domain/cas';
 import { validateLayoutDraft, type LayoutDraft } from '@/modules/spatial/domain/layout-draft';
 import { gridCoordinateToPoint } from '@/modules/spatial/domain/grid';
-import { polygonsOverlapArea } from '@/modules/spatial/domain/geometry';
+import { polygonInsidePolygon, polygonsOverlapArea } from '@/modules/spatial/domain/geometry';
 export async function readLayoutDraft(
   repo: TopologyRepository,
   roomId: string,
@@ -78,6 +78,13 @@ export async function prepareLayoutSave(
   const level = roomNode?.parentId ? await repo.getById(roomNode.parentId) : null;
   if (!level || level.kind !== 'LEVEL' || level.lifecycle !== 'ACTIVE') {
     return { error: 'LEVEL_NOT_FOUND' };
+  }
+  const structure = level.parentId ? await repo.getById(level.parentId) : null;
+  if (!structure || structure.kind !== 'STRUCTURE' || !structure.polygon) {
+    return { error: 'STRUCTURE_BOUNDARY_REQUIRED' };
+  }
+  if (!polygonInsidePolygon(draft.polygon, structure.polygon)) {
+    return { error: 'ROOM_OUTSIDE_STRUCTURE' };
   }
   const siblingRooms = await repo.listChildren(level.id);
   if (

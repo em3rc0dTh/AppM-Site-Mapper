@@ -15,11 +15,6 @@ const JSON_EXAMPLE = JSON.stringify(
     childMode: 'POSITIONAL',
     childCapacity: 24,
     allowedChildTypes: ['CIRCUIT_BREAKER'],
-    presentation: {
-      direction: 'ROW',
-      maxPerLine: 8,
-      childrenVisibility: 'INLINE',
-    },
     notes: '24 positional slots; empty positions are null',
   },
   null,
@@ -64,14 +59,6 @@ export function TemplateCreateForm() {
           childMode,
           childCapacity: childMode === 'POSITIONAL' ? number('childCapacity') : undefined,
           allowedChildTypes: form.getAll('allowedChildTypes').map(String),
-          presentation: {
-            direction: String(form.get('presentationDirection') ?? 'ROW'),
-            maxPerLine:
-              form.get('presentationMaxPerLine') === 'auto'
-                ? null
-                : Number(form.get('presentationMaxPerLine')),
-            childrenVisibility: String(form.get('presentationVisibility') ?? 'AUTO'),
-          },
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -193,32 +180,6 @@ export function TemplateCreateForm() {
               </label>
             ) : null}
             <label>
-              Layout direction
-              <select name="presentationDirection" defaultValue="ROW">
-                <option value="ROW">ROW · Left to right</option>
-                <option value="COLUMN">COLUMN · Top to bottom</option>
-              </select>
-            </label>
-            <label>
-              Max per line
-              <select name="presentationMaxPerLine" defaultValue="auto">
-                <option value="auto">Auto · Responsive</option>
-                {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
-                  <option value={n} key={n}>
-                    {n}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Children visibility
-              <select name="presentationVisibility" defaultValue="AUTO">
-                <option value="AUTO">AUTO</option>
-                <option value="INLINE">INLINE</option>
-                <option value="SUMMARY">SUMMARY</option>
-              </select>
-            </label>
-            <label>
               Manufacturer
               <input name="manufacturer" maxLength={120} placeholder="Cisco" />
             </label>
@@ -274,8 +235,8 @@ export function TemplateCreateForm() {
             <strong>Paste one template or an array of templates.</strong>
             <span>
               Equipment templates only. Recursive defaults use <code>equipmentType</code>,{' '}
-              <code>childMode</code>, <code>childCapacity</code>, <code>allowedChildTypes</code> and{' '}
-              <code>presentation</code>.
+              <code>childMode</code>, <code>childCapacity</code> and <code>allowedChildTypes</code>.
+              Instance layout is configured when Equipment is placed, not in Warehouse.
             </span>
           </div>
           <textarea

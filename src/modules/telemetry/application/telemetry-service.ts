@@ -57,9 +57,13 @@ export class TelemetryService {
 
     // Persisted SOURCE mappings take priority over deprecated environment aliases.
     // An invalid persisted mapping fails closed; it is never silently reassigned.
-    const persistedSourceBindings = sourceBindings.filter((binding) => !binding.id.startsWith('env:mqtt:'));
+    const persistedSourceBindings = sourceBindings.filter(
+      (binding) => !binding.id.startsWith('env:mqtt:'),
+    );
     if (persistedSourceBindings.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
-    const configuredSourceBindings = sourceBindings.filter((binding) => binding.id.startsWith('env:mqtt:'));
+    const configuredSourceBindings = sourceBindings.filter((binding) =>
+      binding.id.startsWith('env:mqtt:'),
+    );
     if (configuredSourceBindings.length > 1) return failure('AMBIGUOUS_SOURCE_BINDING');
 
     let sourceBinding = persistedSourceBindings[0] ?? configuredSourceBindings[0];
@@ -114,12 +118,12 @@ export class TelemetryService {
           device.deviceType !== 'BDFB' ||
           device.lifecycle !== 'ACTIVE' ||
           !device.rootEquipmentIds.includes(match.id)
-        ) return failure('INVALID_BINDING_TARGET');
+        )
+          return failure('INVALID_BINDING_TARGET');
       } else if (match.kind !== 'DEVICE' || match.deviceType !== 'BDFB' || match.id !== target.id) {
         return failure('INVALID_BINDING_TARGET');
       }
     }
-
 
     let breakerReadings: ReturnType<typeof buildBfdbBreakerReadings> = {
       readings: [],
@@ -274,7 +278,8 @@ export class TelemetryService {
         device.deviceType !== 'BDFB' ||
         match.parentId !== device.id ||
         !device.rootEquipmentIds.includes(match.id)
-      ) return failure('INVALID_BINDING_TARGET');
+      )
+        return failure('INVALID_BINDING_TARGET');
     } else {
       return failure('INVALID_BINDING_TARGET');
     }
@@ -306,15 +311,18 @@ export class TelemetryService {
       } catch (error) {
         // A competing process may have inserted the same source atomically.
         // Never swallow database outages or other persistence errors.
+        if (!error || typeof error !== 'object' || !('code' in error) || error.code !== 11000)
+          throw error;
+        const persisted = (
+          await this.bindingRepository.listForSource('MQTT', sourceIdentity)
+        ).filter(
+          (candidate) => !candidate.sourcePointId && candidate.metric.toUpperCase() === 'SOURCE',
+        );
         if (
-          !error ||
-          typeof error !== 'object' ||
-          !('code' in error) ||
-          error.code !== 11000
-        ) throw error;
-        const persisted = (await this.bindingRepository.listForSource('MQTT', sourceIdentity))
-          .filter((candidate) => !candidate.sourcePointId && candidate.metric.toUpperCase() === 'SOURCE');
-        if (persisted.length !== 1 || persisted[0]?.targetType !== 'DEVICE' || persisted[0]?.targetId !== deviceId)
+          persisted.length !== 1 ||
+          persisted[0]?.targetType !== 'DEVICE' ||
+          persisted[0]?.targetId !== deviceId
+        )
           return failure('AMBIGUOUS_SOURCE_BINDING');
         return success(persisted[0]);
       }

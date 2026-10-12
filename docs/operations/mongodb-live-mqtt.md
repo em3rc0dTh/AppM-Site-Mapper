@@ -9,7 +9,23 @@ Before attempting any migration or trusting the Power Trace in an existing datab
 
 ```powershell
 npm run audit:mongo
+# Optional: stop with exit code 1 if the selected .env database is not the reviewed one
+npm run audit:mongo -- --expect-db=appm_site_mapper
 ```
+
+The effective `MONGODB_DB_NAME` can come from the process environment and
+may override `.env.local`. On PowerShell inspect the intended name only
+(`$env:MONGODB_DB_NAME` and the `MONGODB_DB_NAME=` entry in ignored
+`.env.local`); never print or paste `MONGODB_URI` credentials.
+Databases named like `site_mapper_crud_acceptance_01` are likely isolated
+CRUD acceptance environments rather than the operational inventory.
+
+The report distinguishes `canonicalPowerPaths` (both Access Port references
+present) from `incompletePowerPaths` (historical or otherwise noncanonical
+records). Incomplete paths are **not** checked for invalid endpoints or
+duplicate targets because that would falsely compare `undefined` with
+`undefined`. The report lists only field *names*, not the stored values;
+those records require a separate evidence-backed migration review.
 
 This connects to the configured `MONGODB_URI` / `MONGODB_DB_NAME` and reads
 `topology_nodes`, active `power_paths`, and active `telemetry_bindings`.

@@ -263,3 +263,30 @@ Source serial, raw point and last packet time remain visible on the bar.
 
 This UI change does not create missing persisted bindings, import a new
 source or certify the physical correspondence of points in the field.
+
+
+## Equipment Composition breaker readouts (2026-10-12)
+
+The canonical Equipment page at `/device/<panel-equipment-id>` now uses the
+same authenticated Latest State transport as the BDFB chassis. Every installed
+CIRCUIT_BREAKER occupying a positional slot displays a compact readout with
+Voltage (V), Current (A), Power (W), Energy (kWh), data freshness, MQTT publisher
+identity, raw point where applicable, and receive timestamp. A free/empty
+position remains a pure capacity slot, with no invented metrics.
+
+This is deliberately **not** an automatic 24P point allocator. The parent Panel
+having serial `EMU-BFDB-03` only authenticates/resolves the Panel source.
+To show `0_1_1` on its existing child Circuit Breaker, create explicit ACTIVE
+MQTT TelemetryBindings for that breaker Equipment ID, source serial, raw point
+ID and each supported electrical metric. Alternatively the breaker itself can
+publish canonical scalar telemetry from an independently bound SOURCE SN.
+The server supplies active breaker bindings to the client only for users with
+`telemetry:read`, and the UI rejects raw parent readings as attribution
+evidence.
+
+With an explicit binding but no usable sample, the bar says `NO DATA`.
+Without a binding, it says `UNMAPPED`. Data between 30 seconds and 5
+minutes old says `STALE`; older data says `OFFLINE`. Incompatible metric
+units are ignored, and multiple competing sources produce `CONFLICT`.
+Historical data, Device power paths and Mongo Equipment topology are
+unchanged. No data migration is required.

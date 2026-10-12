@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
+import { PowerCanvasRoute } from '@/components/power/power-canvas-route';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
@@ -27,15 +28,6 @@ function feedFromStages(stages: readonly Stage[], fallback?: 'A' | 'B'): 'A' | '
     if (/^B(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*B\b/.test(normalized)) return 'B';
   }
   return fallback;
-}
-
-function glyph(kind: string) {
-  if (kind === 'PANEL') return '▥';
-  if (kind.includes('BREAKER')) return '▣';
-  if (kind.includes('DEVICE')) return '▤';
-  if (kind.includes('SHELF') || kind.includes('FRAME')) return '□';
-  if (kind === 'ACCESS_PORT') return '◉';
-  return 'ϟ';
 }
 
 export default async function PowerPage({
@@ -162,7 +154,6 @@ export default async function PowerPage({
         feed: path.feed ?? feedFromStages(sourceStages),
         sourceStages,
         targetStages,
-        stages: [...sourceStages, ...targetStages.toReversed()],
       };
     }),
   );
@@ -171,7 +162,7 @@ export default async function PowerPage({
   const feedA = views.find((item) => item.feed === 'A');
   const feedB = views.find((item) => item.feed === 'B');
   const targetName =
-    primary?.target?.equipment.name ?? primary?.stages.at(-1)?.name ?? 'Unresolved target';
+    primary?.target?.equipment.name ?? primary?.targetStages.at(-2)?.name ?? 'Unresolved target';
   const breadcrumbs = selectedEntity ? await service.getTrail(selectedEntity.id) : [];
   const traceEntityId = primary?.target?.equipment.deviceId ?? selectedEntity?.id;
   const telemetryEntityIds = [
@@ -182,54 +173,6 @@ export default async function PowerPage({
       ]),
     ),
   ];
-
-  const renderRow = (stages: readonly Stage[]) => (
-    <div className="zip-power-row">
-      {stages.map((stage, index) => (
-        <div className="zip-power-node-wrap" key={`${stage.id}-${index}`}>
-          {stage.href ? (
-            <Link className="zip-power-node" href={stage.href}>
-              <b>{glyph(stage.kind)}</b>
-              <span>{stage.name}</span>
-            </Link>
-          ) : (
-            <span className="zip-power-node">
-              <b>{glyph(stage.kind)}</b>
-              <span>{stage.name}</span>
-            </span>
-          )}
-          {index < stages.length - 1 ? <i aria-hidden="true">→</i> : null}
-        </div>
-      ))}
-    </div>
-  );
-
-  const renderConnection = (view: (typeof views)[number]) => (
-    <div className="zip-power-connection" aria-label={`Feed ${view.feed ?? 'unspecified'} complete physical path`}>
-      <div className="zip-power-route-segment">
-        <h3>Source equipment hierarchy</h3>
-        {renderRow(view.sourceStages.slice(0, -1))}
-      </div>
-      <div className="zip-power-physical-link">
-        <div className="zip-power-terminal">
-          <small>POWER OUTPUT · {view.source?.equipment.name ?? 'Unresolved source'}</small>
-          <strong>{view.source?.port.name ?? view.path.sourceAccessPortId}</strong>
-        </div>
-        <div className="zip-power-wire-arrow">
-          <span>POWER PATH · FEED {view.feed ?? 'UNSPECIFIED'} · CONFIGURED</span>
-          <b aria-hidden="true">⟶</b>
-        </div>
-        <div className="zip-power-terminal">
-          <small>POWER INPUT · {view.target?.equipment.name ?? 'Unresolved destination'}</small>
-          <strong>{view.target?.port.name ?? view.path.targetAccessPortId}</strong>
-        </div>
-      </div>
-      <div className="zip-power-route-segment">
-        <h3>Destination equipment hierarchy</h3>
-        {renderRow(view.targetStages.slice(0, -1))}
-      </div>
-    </div>
-  );
 
   const renderFeedSummary = (view: (typeof views)[number]) => (
     <div className="zip-power-feed-summary">
@@ -304,7 +247,15 @@ export default async function PowerPage({
             <>
               <section className="zip-power-box">
                 <h2>PATH {primary.feed ?? 'A'} (PRIMARY)</h2>
-                {renderConnection(primary)}
+                <PowerCanvasRoute
+                  sourceStages={primary.sourceStages}
+                  targetStages={primary.targetStages}
+                  sourceEquipmentName={primary.source?.equipment.name ?? 'Unresolved source'}
+                  targetEquipmentName={primary.target?.equipment.name ?? 'Unresolved destination'}
+                  sourcePortName={primary.source?.port.name ?? primary.path.sourceAccessPortId}
+                  targetPortName={primary.target?.port.name ?? primary.path.targetAccessPortId}
+                  {...(primary.feed ? { feed: primary.feed } : {})}
+                />
               </section>
               <section className="zip-power-box zip-power-dual-box">
                 <h2>DUAL FEED OVERVIEW</h2>
@@ -333,7 +284,7 @@ export default async function PowerPage({
             <dt>Feed</dt>
             <dd>{primary?.feed ?? '—'}</dd>
             <dt>Source</dt>
-            <dd>{primary?.source?.equipment.name ?? primary?.stages[0]?.name ?? '—'}</dd>
+            <dd>{primary?.source?.equipment.name ?? primary?.sourceStages.at(-2)?.name ?? '—'}</dd>
             <dt>Destination</dt>
             <dd>{targetName}</dd>
             <dt>Feed A</dt>

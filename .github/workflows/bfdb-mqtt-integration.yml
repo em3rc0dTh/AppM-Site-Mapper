@@ -2,7 +2,7 @@ name: BFDB MQTT transport integration
 
 on:
   push:
-    branches: [feat/mk1-raw-build]
+    branches: [feat/mk1-raw-build, 'feat/full-power-trace-access-ports']
     paths:
       - '.github/workflows/bfdb-mqtt-integration.yml'
       - 'scripts/local-dev.mjs'

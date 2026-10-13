@@ -8,7 +8,8 @@
   },
   "dependencies": {
     "mongodb": "7.6.0",
-    "pg": "8.16.3"
+    "pg": "8.16.3",
+    "mqtt": "5.14.1"
   },
   "scripts": {
     "start": "node server.mjs",

@@ -1,4 +1,5 @@
 import type { BreakerTelemetryReading } from '@/modules/telemetry/domain/entities';
+import { normalizedTelemetryPointPrefix } from '@/modules/topology/domain/telemetry-point-prefix';
 
 export interface TelemetryMetric {
   label: string;
@@ -11,7 +12,7 @@ export function telemetryMetrics(reported: Readonly<Record<string, unknown>>): T
   const result: TelemetryMetric[] = [];
 
   function visit(value: unknown, path: string, depth: number) {
-    if (depth > 5 || result.length >= 24) return;
+    if (depth > 5) return;
 
     if (typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean') {
       result.push({ label: path, value: String(value) });
@@ -57,4 +58,27 @@ export function breakerTelemetryMetrics(reading: BreakerTelemetryReading): Telem
       ? [{ label: 'Energy', value: reading.metrics.energyKwh.value.toFixed(4), unit: 'kWh' }]
       : []),
   ];
+}
+
+/**
+ * Filter a panel's own RAW point group for contextual display only.
+ * No mutation of the incoming MQTT sample or durable Timescale record.
+ */
+export function panelReportedPoints(
+  reported: Readonly<Record<string, unknown>>,
+  pointPrefix: string | undefined,
+  capacity: number | undefined,
+): Readonly<Record<string, unknown>> {
+  const prefix = normalizedTelemetryPointPrefix(pointPrefix);
+  if (!prefix) return reported;
+  const entries = Object.entries(reported).filter(([key]) => {
+    if (!key.startsWith(prefix + '_')) return false;
+    const position = key.slice(prefix.length + 1);
+    if (!/^[1-9][0-9]*$/.test(position)) return false;
+    const index = Number(position);
+    return Number.isSafeInteger(index) && (capacity === undefined || (index <= capacity && index >= 1));
+  });
+  return Object.fromEntries(entries.sort(([a], [b]) =>
+    Number(a.slice(prefix.length + 1)) - Number(b.slice(prefix.length + 1)),
+  ));
 }

@@ -21,7 +21,8 @@ export class ModbusLatestState {
   constructor(sourceMap, staleMs = 30000) {
     if (!Number.isInteger(staleMs) || staleMs < 1000) throw new Error('Invalid stale threshold');
     const identities = Object.entries(sourceMap);
-    if (identities.length < 1 || identities.length > 247) throw new Error('Configure Modbus source identities');
+    if (identities.length < 1 || identities.length > 247)
+      throw new Error('Configure Modbus source identities');
     this.sourceUnits = new Map();
     this.values = new Map();
     this.staleMs = staleMs;
@@ -58,8 +59,15 @@ export class ModbusLatestState {
 
   read(unit, offset, count, now = Date.now()) {
     if (!this.values.has(unit)) return null;
-    if (!Number.isInteger(offset) || !Number.isInteger(count) || count < 1 ||
-        count > 125 || offset < 0 || offset + count > REGISTERS_PER_UNIT) return null;
+    if (
+      !Number.isInteger(offset) ||
+      !Number.isInteger(count) ||
+      count < 1 ||
+      count > 125 ||
+      offset < 0 ||
+      offset + count > REGISTERS_PER_UNIT
+    )
+      return null;
     const slots = this.values.get(unit);
     return Array.from({ length: count }, (_, index) => {
       const addr = offset + index;
@@ -88,7 +96,8 @@ export function handleFrame(frame, state, now = Date.now()) {
   const fn = frame[7];
   if (fn !== 3) return response(transaction, unit, fn | 0x80, Buffer.from([1]));
   if (frame.length !== 12) return response(transaction, unit, fn | 0x80, Buffer.from([3]));
-  const offset = frame.readUInt16BE(8), count = frame.readUInt16BE(10);
+  const offset = frame.readUInt16BE(8),
+    count = frame.readUInt16BE(10);
   const registers = state.read(unit, offset, count, now);
   if (!registers) return response(transaction, unit, fn | 0x80, Buffer.from([2]));
   const body = Buffer.alloc(1 + registers.length * 2);
@@ -98,8 +107,13 @@ export function handleFrame(frame, state, now = Date.now()) {
 }
 
 export function startBridge({
-  sourceMap, staleMs = 30000, modbusHost = '127.0.0.1', modbusPort = 1502,
-  ingestHost = '127.0.0.1', ingestPort = 18082, token,
+  sourceMap,
+  staleMs = 30000,
+  modbusHost = '127.0.0.1',
+  modbusPort = 1502,
+  ingestHost = '127.0.0.1',
+  ingestPort = 18082,
+  token,
 }) {
   if (!token || token.length < 24) throw new Error('MODBUS_BRIDGE_TOKEN must be set (24+ chars)');
   const state = new ModbusLatestState(sourceMap, staleMs);
@@ -107,10 +121,16 @@ export function startBridge({
     let pending = Buffer.alloc(0);
     socket.on('data', (chunk) => {
       pending = Buffer.concat([pending, chunk]);
-      if (pending.length > 65536) { socket.destroy(); return; }
+      if (pending.length > 65536) {
+        socket.destroy();
+        return;
+      }
       while (pending.length >= 7) {
         const length = pending.readUInt16BE(4);
-        if (length < 2 || length > 254) { socket.destroy(); return; }
+        if (length < 2 || length > 254) {
+          socket.destroy();
+          return;
+        }
         const total = 6 + length;
         if (pending.length < total) break;
         const frame = pending.subarray(0, total);
@@ -128,19 +148,27 @@ export function startBridge({
       reply.writeHead(status, { 'content-type': 'application/json', 'cache-control': 'no-store' });
       reply.end(JSON.stringify({ status: message }));
     };
-    if (request.method === 'GET' && request.url === '/health') { finish(200, 'ok'); return; }
+    if (request.method === 'GET' && request.url === '/health') {
+      finish(200, 'ok');
+      return;
+    }
     if (request.method !== 'POST' || request.url !== '/internal/accepted-breaker') {
-      finish(404, 'not_found'); return;
+      finish(404, 'not_found');
+      return;
     }
     // Never use this service as a public ingress; token and loopback binding both required.
     if (request.headers.authorization !== `Bearer ${token}`) {
-      finish(401, 'unauthorized'); return;
+      finish(401, 'unauthorized');
+      return;
     }
     const chunks = [];
     let size = 0;
     for await (const chunk of request) {
       size += chunk.length;
-      if (size > 65536) { finish(413, 'too_large'); return; }
+      if (size > 65536) {
+        finish(413, 'too_large');
+        return;
+      }
       chunks.push(chunk);
     }
     try {
@@ -153,9 +181,14 @@ export function startBridge({
 
   modbus.listen(modbusPort, modbusHost);
   ingest.listen(ingestPort, ingestHost);
-  return { state, modbus, ingest, close: async () => {
-    await Promise.all([new Promise(r => modbus.close(r)), new Promise(r => ingest.close(r))]);
-  } };
+  return {
+    state,
+    modbus,
+    ingest,
+    close: async () => {
+      await Promise.all([new Promise((r) => modbus.close(r)), new Promise((r) => ingest.close(r))]);
+    },
+  };
 }
 
 if (process.argv[1] && import.meta.url === new URL('file://' + process.argv[1]).href) {

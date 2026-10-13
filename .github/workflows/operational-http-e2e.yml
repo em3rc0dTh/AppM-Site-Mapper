@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'test/adversarial-g10-cross-target-20261013'
       - 'feat/full-power-trace-access-ports'
     paths:
       - 'scripts/ci/http-operational-journey.mjs'

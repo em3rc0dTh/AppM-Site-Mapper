@@ -172,16 +172,34 @@ async function main() {
   assert.deepEqual(nodes.nodes.map((n) => n.id).sort(), [lima.site.id, quito.site.id].sort());
   record('Topology: independently persisted Sites are discoverable');
 
-  const duplicatedSerial = await request('POST', '/api/topology', {
-    kind: 'EQUIPMENT', parentId: lima.device.id, name: 'Forbidden duplicate BFDB source',
-    equipmentType: 'PANEL', childMode: 'POSITIONAL', childCapacity: 24,
-    serialNumber: lima.source, telemetryPointPrefix: '0_1',
-  }, 409);
+  const duplicatedSerial = await request(
+    'POST',
+    '/api/topology',
+    {
+      kind: 'EQUIPMENT',
+      parentId: lima.device.id,
+      name: 'Forbidden duplicate BFDB source',
+      equipmentType: 'PANEL',
+      childMode: 'POSITIONAL',
+      childCapacity: 24,
+      serialNumber: lima.source,
+      telemetryPointPrefix: '0_1',
+    },
+    409,
+  );
   assert.equal(duplicatedSerial.body.error, 'SERIAL_ALREADY_ASSIGNED');
-  const independentSerial = await request('POST', '/api/topology', {
-    kind: 'DEVICE', parentId: quito.rack.id, name: 'Forbidden duplicate publisher',
-    deviceType: 'CUSTOM', serialNumber: lima.source,
-  }, 409);
+  const independentSerial = await request(
+    'POST',
+    '/api/topology',
+    {
+      kind: 'DEVICE',
+      parentId: quito.rack.id,
+      name: 'Forbidden duplicate publisher',
+      deviceType: 'CUSTOM',
+      serialNumber: lima.source,
+    },
+    409,
+  );
   assert.equal(independentSerial.body.error, 'SERIAL_ALREADY_ASSIGNED');
   record('Active MQTT serial unique across Device, Equipment and Sites');
 
@@ -251,9 +269,14 @@ async function main() {
   assert.equal(physicalTarget.node.deviceId, recipientDevice.id);
   assert.notEqual(physicalTarget.node.deviceId, physicalSource.node.deviceId);
   const { body: physicalPaths } = await request('GET', '/api/power-paths');
-  assert.ok(physicalPaths.paths.some((path) =>
-    path.id === remotePath.id && path.sourceAccessPortId === secondOutput &&
-      path.targetAccessPortId === remotePort));
+  assert.ok(
+    physicalPaths.paths.some(
+      (path) =>
+        path.id === remotePath.id &&
+        path.sourceAccessPortId === secondOutput &&
+        path.targetAccessPortId === remotePort,
+    ),
+  );
   const { body: fullTrace } = await request('GET', '/api/power-trace/' + recipient.id);
   assert.ok(fullTrace.trace, 'Power trace did not resolve remote Equipment');
   record('Network to BDFB breaker AP to independent Device Equipment AP and power trace');

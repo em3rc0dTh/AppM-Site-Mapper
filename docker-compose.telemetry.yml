@@ -47,5 +47,25 @@ services:
       - '127.0.0.1:18082:18082'
     restart: unless-stopped
 
+  operational-console:
+    build:
+      context: .
+      dockerfile: infra/operational-console/Dockerfile
+    environment:
+      MONGODB_URI: '${MONGODB_URI:?Configure Site Mapper MongoDB endpoint accessible from Docker}'
+      MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
+      TIMESCALE_DSN: postgresql://site_mapper@timescaledb:5432/site_mapper_telemetry
+      SITE_MAPPER_API_URL: '${SITE_MAPPER_API_URL:-http://host.docker.internal:3000}'
+      CONSOLE_HOST: 0.0.0.0
+      CONSOLE_PORT: '3100'
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    ports:
+      - '127.0.0.1:3100:3100'
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   site_mapper_timescale_data:

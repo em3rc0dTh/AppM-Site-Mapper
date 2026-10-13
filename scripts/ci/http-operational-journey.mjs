@@ -275,30 +275,56 @@ async function main() {
   assert.equal(other.rows[0].ready, false);
   record('Commissioning: four real Mongo bindings, consent required, no cross-Site leakage');
 
-  const wrongSource = await request('POST', '/api/telemetry/panel-commissioning', {
-    panelId: lima.panel.id, breakerId: lima.breaker.id, confirmPoint: true,
-    confirmSource: quito.source, confirmRawPoint: '0_1_1',
-  }, 409);
+  const wrongSource = await request(
+    'POST',
+    '/api/telemetry/panel-commissioning',
+    {
+      panelId: lima.panel.id,
+      breakerId: lima.breaker.id,
+      confirmPoint: true,
+      confirmSource: quito.source,
+      confirmRawPoint: '0_1_1',
+    },
+    409,
+  );
   assert.equal(wrongSource.body.error, 'CONFIRMATION_MISMATCH');
-  const wrongPoint = await request('POST', '/api/telemetry/panel-commissioning', {
-    panelId: lima.panel.id, breakerId: lima.breaker.id, confirmPoint: true,
-    confirmSource: lima.source, confirmRawPoint: '0_2_1',
-  }, 409);
+  const wrongPoint = await request(
+    'POST',
+    '/api/telemetry/panel-commissioning',
+    {
+      panelId: lima.panel.id,
+      breakerId: lima.breaker.id,
+      confirmPoint: true,
+      confirmSource: lima.source,
+      confirmRawPoint: '0_2_1',
+    },
+    409,
+  );
   assert.equal(wrongPoint.body.error, 'CONFIRMATION_MISMATCH');
-  const anotherSiteBreaker = await request('POST', '/api/telemetry/panel-commissioning', {
-    panelId: lima.panel.id, breakerId: quito.breaker.id, confirmPoint: true,
-    confirmSource: lima.source, confirmRawPoint: '0_1_1',
-  }, 409);
+  const anotherSiteBreaker = await request(
+    'POST',
+    '/api/telemetry/panel-commissioning',
+    {
+      panelId: lima.panel.id,
+      breakerId: quito.breaker.id,
+      confirmPoint: true,
+      confirmSource: lima.source,
+      confirmRawPoint: '0_1_1',
+    },
+    409,
+  );
   assert.equal(anotherSiteBreaker.body.error, 'CONFIRMATION_MISMATCH');
   record('Adversarial commissioning: wrong source, point and cross-Site breaker rejected');
 
   const retry = await request('POST', '/api/telemetry/panel-commissioning', {
-    panelId: lima.panel.id, breakerId: lima.breaker.id, confirmPoint: true,
-    confirmSource: lima.source, confirmRawPoint: '0_1_1',
+    panelId: lima.panel.id,
+    breakerId: lima.breaker.id,
+    confirmPoint: true,
+    confirmSource: lima.source,
+    confirmRawPoint: '0_1_1',
   });
   assert.equal(retry.body.created.length, 0, 'Repeated confirmation duplicated bindings');
   record('Adversarial idempotence: retry creates zero duplicate bindings');
-
 
   if (process.env.CI_COMBINED_E2E === 'true') {
     const { execFileSync } = await import('node:child_process');

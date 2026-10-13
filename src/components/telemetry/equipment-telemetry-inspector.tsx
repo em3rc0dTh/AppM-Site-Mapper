@@ -21,7 +21,7 @@ export function EquipmentTelemetryInspector({
   targetId: string;
   label: string;
   pointPrefix?: string;
-  pointCapacity?: number;
+  pointCapacity?: number | undefined;
 }) {
   const [window, setWindow] = useState('LIVE');
   const [view, setView] = useState<View | null>(null);

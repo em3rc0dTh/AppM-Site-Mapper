@@ -59,7 +59,27 @@ const breaker = all.find((node) => node.name === 'CI LIMA Circuit Breaker 01');
 assert.ok(panel && breaker, 'Saved panel or breaker missing after restart');
 assert.equal(panel.telemetryPointPrefix, '0_1');
 const power = await get('/api/power-paths');
-assert.equal(power.paths.length, 3);
+assert.equal(power.paths.length, 4);
+const recipient = all.find((node) => node.name === 'CI LIMA Remote Load');
+const recipientDevice = all.find((node) => node.name === 'CI LIMA Second Device');
+assert.ok(recipient && recipientDevice, 'Remote Equipment or owner Device lost on restart');
+assert.equal(recipient.deviceId, recipientDevice.id);
+assert.notEqual(recipient.deviceId, breaker.deviceId);
+const remoteOut = breaker.accessPorts.find((port) => port.name === 'Remote feed output A');
+const remoteIn = recipient.accessPorts.find((port) => port.name === 'Remote Equipment A input');
+assert.ok(remoteOut && remoteIn, 'Remote AccessPorts not persisted');
+const physicalRemote = power.paths.find(
+  (path) =>
+    path.sourceAccessPortId === remoteOut.id &&
+    path.targetAccessPortId === remoteIn.id &&
+    path.feed === 'A',
+);
+assert.ok(physicalRemote, 'Exact cross-Device BDFB power path lost after restart');
+const trace = await get('/api/power-trace/' + recipient.id);
+const leg = trace.trace.legs.find((candidate) => candidate.pathId === physicalRemote.id);
+assert.equal(leg?.topologyStatus, 'VALID');
+assert.equal(leg?.source.breakerId, breaker.id);
+assert.equal(leg?.target.accessPort.id, remoteIn.id);
 const commissioning = await get('/api/telemetry/panel-commissioning?panelId=' + panel.id);
 assert.equal(commissioning.rows[0].ready, true);
 const history = await get('/api/telemetry/entity?targetId=' + breaker.id + '&window=24h');
@@ -69,5 +89,5 @@ assert.ok(
   'Timescale history not durable across restart',
 );
 console.log(
-  '[PASS] Restart: both Sites, 3 power paths, commissioned breaker and TimescaleDB history restored',
+  '[PASS] Restart: both Sites, 4 power paths including cross-Device AP, commissioned breaker and TimescaleDB history restored',
 );

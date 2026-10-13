@@ -78,7 +78,7 @@ describe('Operational journeys: isolated sites, physical connections and MQTT', 
       // A load Equipment receives two distinct power feeds.
       const load = must(await topology.create({
         kind: 'EQUIPMENT', parentId: device.id, name: name + ' UPS',
-        equipmentType: 'UPS',
+        equipmentType: 'CHASSIS',
       })) as EquipmentNode;
       const sourcePortA = breaker.id + ':out-a';
       const sourcePortB = breaker.id + ':out-b';

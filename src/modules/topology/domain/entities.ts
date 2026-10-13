@@ -199,6 +199,8 @@ export interface EquipmentNode extends TopologyBase {
   readonly equipmentType: EquipmentType;
   readonly parentEquipmentId: string | null;
   readonly childMode: EquipmentChildMode;
+  /** Configured MQTT raw-point group, e.g. 0_2. Not a proven physical binding. */
+  readonly telemetryPointPrefix?: string;
   readonly presentation?: EquipmentPresentation;
   readonly children: readonly (string | null)[];
   readonly accessPorts: readonly AccessPort[];

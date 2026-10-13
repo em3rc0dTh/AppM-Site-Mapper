@@ -95,7 +95,7 @@ jobs:
 
       - name: Start application against disposable MongoDB
         run: |
-          npm run start -- -H 127.0.0.1 -p 3100 > /tmp/mk1-http-e2e.log 2>&1 &
+          npm run dev -- -H 127.0.0.1 -p 3100 > /tmp/mk1-http-e2e.log 2>&1 &
           echo $! > /tmp/mk1-http-e2e.pid
 
       - name: Create Sites, Equipment, PowerPaths and commissioning via HTTP
@@ -105,7 +105,7 @@ jobs:
         run: |
           kill "$(cat /tmp/mk1-http-e2e.pid)" || true
           sleep 2
-          npm run start -- -H 127.0.0.1 -p 3100 > /tmp/mk1-http-e2e-restart.log 2>&1 &
+          npm run dev -- -H 127.0.0.1 -p 3100 > /tmp/mk1-http-e2e-restart.log 2>&1 &
           echo $! > /tmp/mk1-http-e2e.pid
           node scripts/ci/http-operational-restart.mjs
 

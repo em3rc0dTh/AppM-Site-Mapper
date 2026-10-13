@@ -3,6 +3,7 @@ name: MK1 HTTP & MongoDB operational acceptance
 on:
   push:
     branches:
+      - main
       - 'feat/full-power-trace-access-ports'
     paths:
       - 'scripts/ci/http-operational-journey.mjs'

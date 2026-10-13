@@ -58,7 +58,7 @@ function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBre
           : reading.status === 'UNMAPPED'
             ? 'No verified circuit binding'
             : reading.status === 'NO DATA'
-              ? 'Mapped · waiting for a reading'
+              ? (reading.diagnostic ?? 'Mapped · waiting for a reading')
               : reading.status === 'CONFLICT'
                 ? 'Conflicting circuit sources'
                 : 'Telemetry unavailable'}

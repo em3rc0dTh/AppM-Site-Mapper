@@ -40,6 +40,8 @@ async function inspect(panelId: string) {
     rows.push({
       position: i + 1, breakerId: id, breakerName: breaker.name,
       point, existingMetrics: current.map(b => b.metric),
+      conflictingOwnSources: foreign.filter(b => !b.sourcePointId && b.metric.toUpperCase() === 'SOURCE')
+        .map(b => ({ id: b.id, source: b.sourceIdentity })),
       conflicts: [...foreign.map(b => `Existing ${b.metric} source ${b.sourceIdentity}`),
         ...conflictingPoints.map(b => `Point assigned to ${b.targetId}`)],
       ready: !foreign.length && !conflictingPoints.length && current.length === 4,
@@ -72,7 +74,23 @@ export async function POST(request: Request) {
   const row = preview.rows.find(r => r.breakerId === payload.breakerId);
   if (!row || payload.confirmSource !== preview.sourceIdentity ||
       payload.confirmRawPoint !== row.point) return Response.json({ error: 'CONFIRMATION_MISMATCH' }, { status: 409 });
-  if (row.conflicts.length) return Response.json({ error: 'EXISTING_BINDING_CONFLICT', conflicts: row.conflicts }, { status: 409 });
+  if (payload.action === 'retire-own-source') {
+    if (payload.confirmRetirement !== true || typeof payload.bindingId !== 'string') {
+      return Response.json({ error: 'RETIREMENT_CONFIRMATION_REQUIRED' }, { status: 400 });
+    }
+    const repository = await createTelemetryBindingRepository();
+    const bindings = await repository.listForTarget('EQUIPMENT', row.breakerId);
+    const existing = bindings.find(b => b.id === payload.bindingId &&
+      b.lifecycle === 'ACTIVE' && b.protocol === 'MQTT' && !b.sourcePointId &&
+      b.metric.toUpperCase() === 'SOURCE' && b.sourceIdentity !== preview.sourceIdentity);
+    if (!existing || payload.retiredSource !== existing.sourceIdentity)
+      return Response.json({ error: 'RETIREMENT_BINDING_MISMATCH' }, { status: 409 });
+    await repository.replace({ ...existing, lifecycle: 'ARCHIVED', updatedAt: new Date().toISOString(),
+      attributes: { ...existing.attributes, retiredForPanel: preview.panelId,
+        retirementReason: 'EXPLICIT_PANEL_COMMISSIONING' } });
+    return Response.json({ ok: true, retired: existing.id, preservedSerial: true });
+  }
+    if (row.conflicts.length) return Response.json({ error: 'EXISTING_BINDING_CONFLICT', conflicts: row.conflicts }, { status: 409 });
   const repository = await createTelemetryBindingRepository();
   const now = new Date().toISOString();
   const saved: string[] = [];

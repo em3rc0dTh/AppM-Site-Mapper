@@ -161,9 +161,14 @@ export async function createServer({database,login=globalThis.fetch}={}){
         const credentials=await body(req);
         const x=await login(new URL('/api/auth/login',appUrl),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(credentials),signal:AbortSignal.timeout(5000)});
         if(!x.ok){respond(res,401,{error:'INVALID_CREDENTIALS'});return;}
+        const profile=await x.json().catch(()=>({}));
+        const role=profile?.user?.role;
+        if(!['SUPERADMIN','ADMIN','STANDARD'].includes(role)||profile.user.mustChangePassword){
+          respond(res,403,{error:'ROLE_NOT_AUTHORIZED_OR_PASSWORD_CHANGE_REQUIRED'});return;
+        }
         const cookie=x.headers.get('set-cookie')?.split(';')[0];
         if(!cookie?.startsWith('appm_session=')){respond(res,502,{error:'SESSION_UNAVAILABLE'});return;}
-        const key=randomBytes(24).toString('hex');sessions.set(key,{cookie,expire:Date.now()+3600000});
+        const key=randomBytes(24).toString('hex');sessions.set(key,{cookie,role,expire:Date.now()+3600000});
         respond(res,200,{status:'authenticated'},{'set-cookie':'oc_session='+key+'; HttpOnly; SameSite=Strict; Path=/; Max-Age=3600'});return;
       }
       const user=session(req);
@@ -184,6 +189,7 @@ export async function createServer({database,login=globalThis.fetch}={}){
         respond(res,200,{columns,rows});return;
       }
       if(url.pathname==='/api/mutate'&&req.method==='POST'){
+        if(user.role==='STANDARD'){respond(res,403,{error:'WRITE_PERMISSION_REQUIRED'});return;}
         const [path,payload]=operation(await body(req));
         const result=await upstream(user,path,payload,new URL(appUrl).origin);
         respond(res,result.status,result.body);return;

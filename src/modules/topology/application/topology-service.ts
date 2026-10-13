@@ -43,6 +43,7 @@ export type TopologyError =
   | 'NOT_EQUIPMENT'
   | 'INVALID_NAME'
   | 'INVALID_TEXT_FIELD'
+  | 'SERIAL_ALREADY_ASSIGNED'
   | 'INVALID_PARENT'
   | 'PARENT_ARCHIVED'
   | 'POSITION_OCCUPIED'
@@ -142,6 +143,14 @@ export class TopologyService {
       if (value !== undefined && value.length > 120) {
         return failure('INVALID_TEXT_FIELD');
       }
+    }
+
+    if (
+      (input.kind === 'DEVICE' || input.kind === 'EQUIPMENT') &&
+      input.serialNumber?.trim() &&
+      (await this.repository.findActiveBySerialNumber(input.serialNumber.trim())).length
+    ) {
+      return failure('SERIAL_ALREADY_ASSIGNED');
     }
 
     const parent = input.parentId ? await this.repository.getById(input.parentId) : null;

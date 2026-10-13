@@ -23,6 +23,10 @@ import type {
 import { isAllowedParent, topologySlug } from '@/modules/topology/domain/hierarchy';
 import { initializeCas } from '@/modules/rack/domain/cas';
 import type { AssetTemplateSnapshot } from '@/modules/warehouse/domain/template';
+import {
+  normalizedTelemetryPointPrefix,
+  validTelemetryPointPrefix,
+} from '@/modules/topology/domain/telemetry-point-prefix';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
@@ -53,6 +57,7 @@ export type TopologyError =
   | 'INVALID_DEEP_LINK'
   | 'INVALID_CHILD_CAPACITY'
   | 'INVALID_EQUIPMENT_PRESENTATION'
+  | 'INVALID_TELEMETRY_POINT_PREFIX'
   | 'POSITION_SLOT_REQUIRED'
   | 'SLOT_OUT_OF_RANGE'
   | 'SLOT_OCCUPIED'
@@ -61,6 +66,7 @@ export type TopologyError =
   | 'EQUIPMENT_CYCLE';
 
 export interface ConfigureEquipmentInput {
+  readonly telemetryPointPrefix?: string | null;
   readonly presentation?: EquipmentPresentation;
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
@@ -88,6 +94,7 @@ export interface CreateTopologyNodeInput {
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
+  readonly telemetryPointPrefix?: string;
   readonly parentSlotIndex?: number;
   readonly presentation?: EquipmentPresentation;
   readonly manufacturer?: string;
@@ -319,6 +326,11 @@ export class TopologyService {
         }
 
         const childMode = input.childMode ?? 'DYNAMIC';
+        if (
+          !validTelemetryPointPrefix(input.telemetryPointPrefix) ||
+          (input.telemetryPointPrefix?.trim() && childMode !== 'POSITIONAL')
+        ) return failure('INVALID_TELEMETRY_POINT_PREFIX');
+        const telemetryPointPrefix = normalizedTelemetryPointPrefix(input.telemetryPointPrefix);
         let children: readonly (string | null)[];
         try {
           children = canonicalChildren(childMode, input.childCapacity);
@@ -364,6 +376,7 @@ export class TopologyService {
           parentEquipmentId: parent.kind === 'EQUIPMENT' ? parent.id : null,
           childMode,
           children,
+          ...(telemetryPointPrefix ? { telemetryPointPrefix } : {}),
           ...((input.presentation ?? input.template?.presentation)
             ? { presentation: { ...(input.presentation ?? input.template!.presentation!) } }
             : {}),
@@ -460,6 +473,14 @@ export class TopologyService {
     }
 
     const childMode = input.childMode ?? node.childMode;
+    const configuredPrefix = input.telemetryPointPrefix === undefined
+      ? node.telemetryPointPrefix
+      : input.telemetryPointPrefix;
+    if (
+      !validTelemetryPointPrefix(configuredPrefix) ||
+      (configuredPrefix?.trim() && childMode !== 'POSITIONAL')
+    ) return failure('INVALID_TELEMETRY_POINT_PREFIX');
+    const telemetryPointPrefix = normalizedTelemetryPointPrefix(configuredPrefix);
     const presentation = input.presentation ?? node.presentation;
     if (
       presentation &&
@@ -532,8 +553,12 @@ export class TopologyService {
       children,
       ...(presentation ? { presentation: { ...presentation } } : {}),
       accessPorts,
+      ...(telemetryPointPrefix ? { telemetryPointPrefix } : {}),
       updatedAt: nowIso(),
     };
+    if (!telemetryPointPrefix && 'telemetryPointPrefix' in updated) {
+      delete (updated as { telemetryPointPrefix?: string }).telemetryPointPrefix;
+    }
     if (!(await this.repository.commitLayout([node], [updated]))) {
       return failure('LAYOUT_CONFLICT');
     }

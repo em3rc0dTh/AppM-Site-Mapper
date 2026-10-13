@@ -2,6 +2,7 @@ import http from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { MongoClient } from 'mongodb';
 import pg from 'pg';
+import { IndependentLiveReader } from './live.mjs';
 
 const allowKinds = new Set([
   'NETWORK',

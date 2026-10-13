@@ -206,7 +206,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
             if (bridgeUrl && bridgeToken && result.value.protocol === 'BFDB') {
               // The Modbus service is an optional downstream consumer of accepted,
               // explicitly commissioned breaker metrics. History remains independent.
-              const mappedReadings = [...(result.value.breakerReadings ?? [])].map((reading) => ({
+              const mappedReadings: Array<{ sourceIdentity: string; rawPointId: string; receivedAt: string; metrics: unknown }> = [...(result.value.breakerReadings ?? [])].map((reading) => ({
                 sourceIdentity: reading.sourceIdentity,
                 rawPointId: reading.rawPointId,
                 receivedAt: reading.receivedAt,

@@ -46,4 +46,6 @@ for (let attempt = 0; attempt < 35; attempt++) {
 assert.ok(Math.abs(voltage - 13.79) < 0.001, 'MQTT reading not exported to Modbus TCP');
 const other = await read(2, 0, 8);
 assert.equal(other.readFloatBE(9), 0, 'Second BFDB Unit ID leaked first BFDB voltage');
-console.log('[PASS] MQTT -> Site Mapper accepted breaker -> Modbus FC03 TCP FLOAT32, 4 metrics, isolated Unit IDs');
+console.log(
+  '[PASS] MQTT -> Site Mapper accepted breaker -> Modbus FC03 TCP FLOAT32, 4 metrics, isolated Unit IDs',
+);

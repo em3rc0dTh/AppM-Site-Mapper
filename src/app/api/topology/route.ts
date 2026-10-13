@@ -58,6 +58,7 @@ const topologyCreateKeys = [
   'equipmentType',
   'childMode',
   'childCapacity',
+  'telemetryPointPrefix',
   'parentSlotIndex',
   'presentation',
   'manufacturer',
@@ -136,7 +137,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
-  for (const optionalText of [body.serialNumber, body.category, body.manufacturer, body.model]) {
+  for (const optionalText of [body.serialNumber, body.category, body.manufacturer, body.model, body.telemetryPointPrefix]) {
     if (optionalText !== undefined && !isBoundedString(optionalText, 120, { allowEmpty: true })) {
       return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
     }
@@ -217,6 +218,9 @@ export async function POST(request: Request) {
       ? { childMode: parseEquipmentChildMode(body.childMode)! }
       : {}),
     ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
+    ...(typeof body.telemetryPointPrefix === 'string'
+      ? { telemetryPointPrefix: body.telemetryPointPrefix }
+      : {}),
     ...(typeof body.parentSlotIndex === 'number' ? { parentSlotIndex: body.parentSlotIndex } : {}),
     ...(body.presentation
       ? {

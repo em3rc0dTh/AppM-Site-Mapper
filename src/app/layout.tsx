@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { headers } from 'next/headers';
 
 import './globals.css';
 import './legacy-fidelity.css';
@@ -16,7 +17,10 @@ export const metadata: Metadata = {
   description: 'Physical infrastructure mapping and operations platform.',
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  // Nonce-based CSP requires per-request dynamic rendering. Without it,
+  // Next.js may serve HTML whose inline scripts lack the request nonce.
+  await headers();
   return (
     <html lang="en">
       <body>

@@ -333,3 +333,33 @@ and the broker ACL separately.
 
 This change is additive. No topology changes, schema migrations, fabricated
 power paths or implicit binding reassignments are performed.
+
+## Equipment MQTT point prefix commissioning
+
+For an Equipment with `childMode=POSITIONAL`, the operator may declare
+`telemetryPointPrefix` when the Equipment is created or later through
+**Configure Equipment**. Example: `0_2` on a 24-position Panel describes
+candidate external point labels `0_2_1` ... `0_2_24`. A 22-slot or 48-slot
+Equipment may use its own independent prefix. Prefix is not derived from
+the Equipment's position among siblings and is never forced to `0_1`.
+
+- `telemetryPointPrefix` is optional; existing Equipment remain valid.
+- The field is stored on the canonical Equipment in MongoDB and returned by
+  existing Topology GET endpoints. It is not a Warehouse template default.
+- Create routes, root/child Warehouse instantiation, and authenticated
+  `PATCH /api/topology/<equipment-id>` (`action=configure-equipment`) use
+  the same validation. Blank input clears the prefix. For a non-empty prefix,
+  `childMode=POSITIONAL` is mandatory.
+- Allowed prefix syntax: 1-80 ASCII letters/digits joined by underscores.
+  Topic wildcards, paths, whitespace and raw JSON are rejected.
+- Changing prefix never rewrites existing breaker TelemetryBindings or migrates
+  source/historical data. The UI clearly identifies the prefix as an **address
+  declaration**, not a certified source/Breaker identity.
+- To display individual breaker values, commission the exact source SN,
+  `sourcePointId`, metric and breaker Equipment target with verified bindings.
+  The operator-defined prefix provides the candidate raw-point group but does
+  not authorize silently inferring the physical wiring.
+- Panel slot count does not establish that every numbered point actually
+  exists in the source payload. Source/group range must be verified independently.
+
+No data migration is required to add this optional field to existing Equipment.

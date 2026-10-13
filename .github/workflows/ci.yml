@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - 'fix/mk1-serial-identity-and-powerpath-e2e'
       - 'feat/**'
 
 permissions:

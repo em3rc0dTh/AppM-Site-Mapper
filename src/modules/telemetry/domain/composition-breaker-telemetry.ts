@@ -20,6 +20,7 @@ export interface CompositionBreakerTelemetry {
   readonly sourceIdentity?: string;
   readonly sourcePointId?: string;
   readonly receivedAt?: string;
+  readonly diagnostic?: string;
 }
 
 type ElectricalKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
@@ -188,6 +189,28 @@ export function compositionBreakerTelemetry(
     new Set(derived.map((reading) => reading.sourceIdentity + '/' + reading.sourcePointId)).size > 1
   )
     return { status: 'CONFLICT' };
-  if (!derived.length) return { status: 'NO DATA' };
+  if (!derived.length) {
+    const pointLinks = links.filter((link) => link.sourcePointId);
+    const expectations = [
+      ...new Set(
+        pointLinks.length
+          ? pointLinks.map((link) => `${link.sourceIdentity} / ${link.sourcePointId}`)
+          : links.map((link) => `Own source ${link.sourceIdentity}`),
+      ),
+    ];
+    const receivedPoint = pointLinks.some((link) =>
+      samples.some(
+        (sample) =>
+          sample.sourceIdentity === link.sourceIdentity &&
+          Boolean(sample.reported[link.sourcePointId!]),
+      ),
+    );
+    return {
+      status: 'NO DATA',
+      diagnostic: receivedPoint
+        ? `Point observed but no valid breaker sample. Check ${expectations.join(', ')} target binding.`
+        : `Awaiting ${expectations.join(', ')}`,
+    };
+  }
   return derived.sort((a, b) => (b.receivedAt ?? '').localeCompare(a.receivedAt ?? ''))[0]!;
 }

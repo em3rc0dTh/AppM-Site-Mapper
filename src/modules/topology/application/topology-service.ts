@@ -329,7 +329,8 @@ export class TopologyService {
         if (
           !validTelemetryPointPrefix(input.telemetryPointPrefix) ||
           (input.telemetryPointPrefix?.trim() && childMode !== 'POSITIONAL')
-        ) return failure('INVALID_TELEMETRY_POINT_PREFIX');
+        )
+          return failure('INVALID_TELEMETRY_POINT_PREFIX');
         const telemetryPointPrefix = normalizedTelemetryPointPrefix(input.telemetryPointPrefix);
         let children: readonly (string | null)[];
         try {
@@ -473,13 +474,15 @@ export class TopologyService {
     }
 
     const childMode = input.childMode ?? node.childMode;
-    const configuredPrefix = input.telemetryPointPrefix === undefined
-      ? node.telemetryPointPrefix
-      : input.telemetryPointPrefix;
+    const configuredPrefix =
+      input.telemetryPointPrefix === undefined
+        ? node.telemetryPointPrefix
+        : input.telemetryPointPrefix;
     if (
       !validTelemetryPointPrefix(configuredPrefix) ||
       (configuredPrefix?.trim() && childMode !== 'POSITIONAL')
-    ) return failure('INVALID_TELEMETRY_POINT_PREFIX');
+    )
+      return failure('INVALID_TELEMETRY_POINT_PREFIX');
     const telemetryPointPrefix = normalizedTelemetryPointPrefix(configuredPrefix);
     const presentation = input.presentation ?? node.presentation;
     if (

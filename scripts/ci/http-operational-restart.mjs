@@ -59,7 +59,12 @@ const breaker = all.find((node) => node.name === 'CI LIMA Circuit Breaker 01');
 assert.ok(panel && breaker, 'Saved panel or breaker missing after restart');
 assert.equal(panel.telemetryPointPrefix, '0_1');
 const power = await get('/api/power-paths');
-assert.equal(power.paths.length, 3);
+assert.equal(power.paths.length, 4);
+const physicalRemote = power.paths.find(
+  (path) => path.sourceAccessPortId && path.targetAccessPortId &&
+    path.sourceAccessPortId !== path.targetAccessPortId,
+);
+assert.ok(physicalRemote, 'Missing persisted AccessPort-to-AccessPort path');
 const commissioning = await get('/api/telemetry/panel-commissioning?panelId=' + panel.id);
 assert.equal(commissioning.rows[0].ready, true);
 const history = await get('/api/telemetry/entity?targetId=' + breaker.id + '&window=24h');

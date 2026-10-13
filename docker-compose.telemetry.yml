@@ -32,6 +32,37 @@ services:
       retries: 20
     restart: unless-stopped
 
+  site-mapper:
+    build:
+      context: .
+      dockerfile: infra/site-mapper/Dockerfile
+    environment:
+      APP_ENV: development
+      APP_PERSISTENCE: mongodb
+      MONGODB_URI: mongodb://mongodb:27017/
+      MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
+      BOOTSTRAP_ADMIN_TOKEN: '${BOOTSTRAP_ADMIN_TOKEN:?Set a private bootstrap admin token}'
+      TELEMETRY_ENABLED: '${TELEMETRY_ENABLED:-false}'
+      MQTT_BROKER_URL: '${MQTT_BROKER_URL:-}'
+      MQTT_USERNAME: '${MQTT_USERNAME:-}'
+      MQTT_PASSWORD: '${MQTT_PASSWORD:-}'
+      MQTT_TOPIC_FILTER: '${MQTT_TOPIC_FILTER:-data/dev/#}'
+      MQTT_TOPIC_PREFIX: '${MQTT_TOPIC_PREFIX:-data/dev/}'
+      TELEMETRY_HISTORY_ENABLED: '${TELEMETRY_HISTORY_ENABLED:-true}'
+      TELEMETRY_STORE_URL: http://telemetry-store:8080
+      TELEMETRY_STORE_AUTOSTART: 'false'
+      MODBUS_BRIDGE_URL: http://modbus-tcp:18082
+      MODBUS_BRIDGE_TOKEN: '${MODBUS_BRIDGE_TOKEN:?Set a private Modbus bridge token}'
+      MODBUS_SOURCE_UNITS_JSON: '${MODBUS_SOURCE_UNITS_JSON:?Set the approved serial-to-unit map}'
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      telemetry-store:
+        condition: service_started
+    restart: unless-stopped
+
   telemetry-store:
     build:
       context: ./infra/telemetry-store
@@ -70,7 +101,7 @@ services:
       MONGODB_URI: mongodb://mongodb:27017/
       MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
       TIMESCALE_DSN: postgresql://site_mapper@timescaledb:5432/site_mapper_telemetry
-      SITE_MAPPER_API_URL: '${SITE_MAPPER_API_URL:-http://host.docker.internal:3000}'
+      SITE_MAPPER_API_URL: http://site-mapper:3000
       MQTT_BROKER_URL: '${MQTT_BROKER_URL:-}'
       MQTT_USERNAME: '${MQTT_USERNAME:-}'
       MQTT_PASSWORD: '${MQTT_PASSWORD:-}'
@@ -84,6 +115,8 @@ services:
     depends_on:
       mongodb:
         condition: service_healthy
+      site-mapper:
+        condition: service_started
       timescaledb:
         condition: service_healthy
     restart: unless-stopped

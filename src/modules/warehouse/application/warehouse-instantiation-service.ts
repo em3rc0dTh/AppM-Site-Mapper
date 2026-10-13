@@ -13,6 +13,10 @@ import type {
   EquipmentType,
 } from '@/modules/topology/domain/entities';
 import type { WarehouseRepository } from '@/modules/warehouse/application/warehouse-repository';
+import {
+  normalizedTelemetryPointPrefix,
+  validTelemetryPointPrefix,
+} from '@/modules/topology/domain/telemetry-point-prefix';
 import { snapshotTemplate, type AssetTemplate } from '@/modules/warehouse/domain/template';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
@@ -41,6 +45,7 @@ export interface InstantiateTemplateInput {
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
+  readonly telemetryPointPrefix?: string;
   readonly presentation?: EquipmentPresentation;
 }
 
@@ -55,6 +60,7 @@ export interface InstantiateChildEquipmentInput {
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
+  readonly telemetryPointPrefix?: string;
 }
 
 export interface InstantiatedAsset {
@@ -136,6 +142,10 @@ export class WarehouseInstantiationService {
 
     const composition = resolvedComposition(input.childMode, input.childCapacity);
     if (!composition) return failure('INVALID_CHILD_CAPACITY');
+    if (!validTelemetryPointPrefix(input.telemetryPointPrefix) ||
+      (input.telemetryPointPrefix?.trim() && composition.childMode !== 'POSITIONAL'))
+      return failure('INVALID_TELEMETRY_POINT_PREFIX');
+    const telemetryPointPrefix = normalizedTelemetryPointPrefix(input.telemetryPointPrefix);
     if (!this.topologyRepository.commitLayout) return failure('ATOMIC_CREATE_REQUIRED');
 
     const timestamp = nowIso();
@@ -186,6 +196,7 @@ export class WarehouseInstantiationService {
       equipmentType,
       parentEquipmentId: null,
       childMode: composition.childMode,
+      ...(telemetryPointPrefix ? { telemetryPointPrefix } : {}),
       ...(input.presentation ? { presentation: { ...input.presentation } } : {}),
       children:
         composition.childMode === 'POSITIONAL'
@@ -243,6 +254,9 @@ export class WarehouseInstantiationService {
       childMode: composition.childMode,
       ...(composition.childMode === 'POSITIONAL'
         ? { childCapacity: composition.childCapacity }
+        : {}),
+      ...(input.telemetryPointPrefix !== undefined
+        ? { telemetryPointPrefix: input.telemetryPointPrefix }
         : {}),
       ...(input.serialNumber?.trim() ? { serialNumber: input.serialNumber.trim() } : {}),
       ...(category ? { category } : {}),

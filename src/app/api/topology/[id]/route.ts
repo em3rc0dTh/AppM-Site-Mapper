@@ -107,8 +107,10 @@ export async function PATCH(request: Request, context: Context) {
       (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
       (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
       (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity)) ||
-      (body.telemetryPointPrefix !== undefined && body.telemetryPointPrefix !== null &&
-        (typeof body.telemetryPointPrefix !== 'string' || body.telemetryPointPrefix.length > 120)) ||
+      (body.telemetryPointPrefix !== undefined &&
+        body.telemetryPointPrefix !== null &&
+        (typeof body.telemetryPointPrefix !== 'string' ||
+          body.telemetryPointPrefix.length > 120)) ||
       (body.presentation !== undefined &&
         (!body.presentation ||
           typeof body.presentation !== 'object' ||

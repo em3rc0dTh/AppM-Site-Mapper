@@ -27,6 +27,13 @@ jobs:
       MONGODB_DB_NAME: site_mapper_http_ci_${{ github.run_id }}
       BOOTSTRAP_ADMIN_TOKEN: isolated-mk1-http-ci-token
       CI_HTTP_ACCEPTANCE: 'true'
+      CI_COMBINED_E2E: 'true'
+      TELEMETRY_ENABLED: 'true'
+      MQTT_BROKER_URL: mqtt://127.0.0.1:1883
+      MQTT_TOPIC_FILTER: data/dev/#
+      TELEMETRY_HISTORY_ENABLED: 'true'
+      TELEMETRY_STORE_URL: http://127.0.0.1:18081
+      TELEMETRY_STORE_TOKEN: mk1-ci-isolated-store-secret
       CI_HTTP_BASE_URL: http://127.0.0.1:3100
 
     steps:
@@ -61,6 +68,27 @@ jobs:
           echo 'Mongo replica set failed to become primary.'
           exit 1
 
+      - name: Start real Mosquitto broker
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mosquitto mosquitto-clients
+          sudo systemctl restart mosquitto
+          for i in {1..20}; do
+            if timeout 1 bash -c '</dev/tcp/127.0.0.1/1883' 2>/dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Start TimescaleDB and telemetry-store
+        run: |
+          docker compose -f docker-compose.telemetry.yml up -d --build
+          for i in {1..90}; do
+            if curl -fsS http://127.0.0.1:18081/health; then exit 0; fi
+            sleep 2
+          done
+          docker compose -f docker-compose.telemetry.yml logs --tail=60
+          exit 1
+
       - name: Build actual Next.js application
         run: npm run build
 
@@ -71,6 +99,14 @@ jobs:
 
       - name: Create Sites, Equipment, PowerPaths and commissioning via HTTP
         run: node scripts/ci/http-operational-journey.mjs
+
+      - name: Restart Next.js and certify persisted inventory and history
+        run: |
+          kill "$(cat /tmp/mk1-http-e2e.pid)" || true
+          sleep 2
+          npm run start -- -H 127.0.0.1 -p 3100 > /tmp/mk1-http-e2e-restart.log 2>&1 &
+          echo $! > /tmp/mk1-http-e2e.pid
+          node scripts/ci/http-operational-restart.mjs
 
       - name: Verify canonical MongoDB integrity
         run: npm run audit:mongo -- --expect-db=${{ env.MONGODB_DB_NAME }}
@@ -83,6 +119,8 @@ jobs:
           fi
           docker logs --tail 35 mk1-e2e-mongo 2>&1 | grep -E 'ERROR|Error|FATAL' || true
 
-      - name: Remove disposable MongoDB
+      - name: Cleanup disposable services
         if: always()
-        run: docker rm -f mk1-e2e-mongo || true
+        run: |
+          docker compose -f docker-compose.telemetry.yml down -v || true
+          docker rm -f mk1-e2e-mongo || true

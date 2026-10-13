@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'feat/modbus-tcp-site-mapper-sidecar'
       - 'feat/full-power-trace-access-ports'
     paths:
       - 'scripts/ci/http-operational-journey.mjs'
@@ -14,6 +15,8 @@ on:
       - 'src/modules/topology/**'
       - 'src/modules/power/**'
       - 'src/modules/telemetry/**'
+      - 'infra/modbus-tcp/**'
+      - 'scripts/ci/modbus-tcp-operational.mjs'
   workflow_dispatch:
 
 permissions:

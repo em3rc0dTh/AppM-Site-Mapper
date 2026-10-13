@@ -290,3 +290,46 @@ minutes old says `STALE`; older data says `OFFLINE`. Incompatible metric
 units are ignored, and multiple competing sources produce `CONFLICT`.
 Historical data, Device power paths and Mongo Equipment topology are
 unchanged. No data migration is required.
+
+## Incident: Panel LIVE but child Circuit Breaker NO DATA (2026-10-13)
+
+Observed in Equipment Composition: the panel Equipment publishes MQTT source
+`EMU-BFDB-03` with raw `0_1_1` values (U1/I1/P1/EP1), while its occupied
+Circuit Breaker slot shows `MQTT · NO DATA`.
+
+The original fanout assumed that a BDFB power-path presentation exists and
+includes that breaker. Its `breakerView` requires an active `POWER OUTPUT`
+AccessPort. Thus a physical inventory breaker could have a verified telemetry
+point mapping but still fail to receive its own projected sample before its
+electrical wiring was commissioned. Recognizing the parent SN does not
+authenticate an individual circuit-to-breaker relationship.
+
+The accepted BFDB ingest path now **also** derives a canonical individual
+Equipment patch for an ACTIVE, physically valid CIRCUIT_BREAKER with an
+explicit and unambiguous `TelemetryBinding` tuple:
+`MQTT / sourceIdentity / sourcePointId / EQUIPMENT / breakerId / metric`.
+The Equipment must belong to the source's owning Device; its ancestor chain
+must remain valid. The parent still retains its original raw payload;
+the child patch contains only its bound scalar metrics and its own target ID.
+This path does not require an AccessPort or a BDFB electrical-path projection.
+Competing targets, duplicate metric claims and breakers owning an independent
+SOURCE binding are excluded. Existing history writes retain their original
+source, target, raw point, and timestamps. No automatic positional inference
+has been introduced.
+
+For the observed values, when the physical relationship is **verified** and
+the four bindings target the actual installed breaker ID, the child patch
+contains `voltageV=13.78 V`, `currentA=1.93 A`, `powerW=26.64 W` and
+`energyKwh=0.2795 kWh`. Values are an observed example, not defaults.
+
+If the breaker still shows NO DATA after updating, the bar displays the
+expected source/point (or independent SN). A missing, stale, wrong-target or
+wrong-source binding must be corrected at the inventory/telemetry binding
+level; a panel SN alone never assigns `0_1_1` to position 01.
+To diagnose using the authenticated application, inspect:
+`GET /api/telemetry/entity?targetId=<breakerEquipmentId>&window=LIVE`,
+and `GET /api/telemetry/diagnostics`. Verify the source's accepted packets
+and the broker ACL separately.
+
+This change is additive. No topology changes, schema migrations, fabricated
+power paths or implicit binding reassignments are performed.

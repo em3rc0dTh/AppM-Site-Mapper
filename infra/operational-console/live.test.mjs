@@ -16,6 +16,7 @@ const db = {
               { protocol: 'MQTT', sourceIdentity: 'EMU-BFDB-01', sourcePointId: '0_1_1', targetType: 'EQUIPMENT', targetId: 'breaker', metric: 'CURRENT', lifecycle: 'ACTIVE' },
             ];
         if (query?.id?.$in) data = data.filter(item => query.id.$in.includes(item.id));
+        if (query?.serialNumber) data = data.filter(item => item.serialNumber === query.serialNumber);
         return { limit() { return this; }, toArray: async () => data };
       },
     };

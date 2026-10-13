@@ -283,35 +283,71 @@ async function main() {
       const current = await request('GET', '/api/telemetry/diagnostics');
       if (current.body.connection === 'subscribed') break;
       assert.ok(tries !== 39, 'MQTT subscriber never obtained SUBACK');
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
     const mqttPayload = {
-      method: 'update', sn: lima.source, msgid: 900001,
+      method: 'update',
+      sn: lima.source,
+      msgid: 900001,
       timestamp: Math.floor(Date.now() / 1000),
-      reported: { '0_1_1': {
-        state: 'ONLINE', U1: 13.79, U2: 0, I1: 9.91, I2: 0,
-        P1: 136.72, P2: 0, EP1: 0.4155, EP2: 0,
-      } },
+      reported: {
+        '0_1_1': {
+          state: 'ONLINE',
+          U1: 13.79,
+          U2: 0,
+          I1: 9.91,
+          I2: 0,
+          P1: 136.72,
+          P2: 0,
+          EP1: 0.4155,
+          EP2: 0,
+        },
+      },
     };
     execFileSync('mosquitto_pub', [
-      '-h', '127.0.0.1', '-p', '1883', '-t', 'data/dev/' + lima.source,
-      '-m', JSON.stringify(mqttPayload),
+      '-h',
+      '127.0.0.1',
+      '-p',
+      '1883',
+      '-t',
+      'data/dev/' + lima.source,
+      '-m',
+      JSON.stringify(mqttPayload),
     ]);
     let latest;
     let history;
     for (let attempt = 0; attempt < 60; attempt++) {
-      const live = await request('GET', '/api/telemetry/entity?targetId=' + lima.breaker.id + '&window=LIVE');
-      const prior = await request('GET', '/api/telemetry/entity?targetId=' + lima.breaker.id + '&window=24h');
+      const live = await request(
+        'GET',
+        '/api/telemetry/entity?targetId=' + lima.breaker.id + '&window=LIVE',
+      );
+      const prior = await request(
+        'GET',
+        '/api/telemetry/entity?targetId=' + lima.breaker.id + '&window=24h',
+      );
       latest = live.body;
       history = prior.body;
-      if (live.body.sample?.sourceIdentity === lima.source &&
-          Array.isArray(prior.body.history) && prior.body.history.length > 0) break;
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (
+        live.body.sample?.sourceIdentity === lima.source &&
+        Array.isArray(prior.body.history) &&
+        prior.body.history.length > 0
+      )
+        break;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
-    assert.equal(latest?.sample?.sourceIdentity, lima.source, 'MQTT point did not reach breaker LIVE');
-    assert.ok(history?.history?.some(sample => sample.sourceIdentity === lima.source),
-      'TimescaleDB history does not include commissioned breaker sample');
-    const quitoLive = await request('GET', '/api/telemetry/entity?targetId=' + quito.breaker.id + '&window=LIVE');
+    assert.equal(
+      latest?.sample?.sourceIdentity,
+      lima.source,
+      'MQTT point did not reach breaker LIVE',
+    );
+    assert.ok(
+      history?.history?.some((sample) => sample.sourceIdentity === lima.source),
+      'TimescaleDB history does not include commissioned breaker sample',
+    );
+    const quitoLive = await request(
+      'GET',
+      '/api/telemetry/entity?targetId=' + quito.breaker.id + '&window=LIVE',
+    );
     assert.ok(quitoLive.body.sample == null, 'LIVE data leaked into unrelated Site');
     record('Broker to MQTT subscriber to commissioned breaker LIVE');
     record('TimescaleDB durable breaker history and second-Site isolation');

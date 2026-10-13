@@ -106,6 +106,7 @@ export function TopologyCreateForm({
       payload.childMode = equipmentChildMode;
       if (equipmentChildMode === 'POSITIONAL') {
         payload.childCapacity = Number(form.get('childCapacity'));
+        payload.telemetryPointPrefix = String(form.get('telemetryPointPrefix') ?? '');
       }
     }
     if (spatial) {
@@ -215,6 +216,18 @@ export function TopologyCreateForm({
                 placeholder="Number of child slots"
               />
             ) : null}
+            {equipmentChildMode === 'POSITIONAL' && (
+              <label>
+                MQTT point prefix
+                <input
+                  name="telemetryPointPrefix"
+                  maxLength={80}
+                  pattern="[A-Za-z0-9]+(_[A-Za-z0-9]+)*"
+                  placeholder="0_2 (optional)"
+                  aria-label="MQTT point prefix"
+                />
+              </label>
+            )}
           </>
         )}
         {(kind === 'DEVICE' || kind === 'EQUIPMENT') && (

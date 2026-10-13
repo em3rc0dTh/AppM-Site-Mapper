@@ -28,6 +28,18 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     topology.createIndex({ kind: 1, lifecycle: 1 }, { name: 'ix_topology_kind_lifecycle' }),
     topology.createIndex({ serialNumber: 1 }, { name: 'ix_topology_serial', sparse: true }),
     topology.createIndex(
+      { serialNumber: 1 },
+      {
+        name: 'uq_active_publisher_serial',
+        unique: true,
+        partialFilterExpression: {
+          lifecycle: 'ACTIVE',
+          kind: { $in: ['DEVICE', 'EQUIPMENT'] },
+          serialNumber: { $type: 'string' },
+        },
+      },
+    ),
+    topology.createIndex(
       { deviceId: 1, kind: 1, lifecycle: 1 },
       { name: 'ix_topology_device_equipment' },
     ),

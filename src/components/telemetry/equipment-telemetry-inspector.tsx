@@ -72,7 +72,9 @@ export function EquipmentTelemetryInspector({
     <section className="zip-bdfb-live-average" aria-label={`Telemetry ${label}`}>
       <header>
         <strong>{window === 'LIVE' ? 'LIVE TELEMETRY' : 'HISTORY'}</strong>
-        <span>{label} · {pointGroupConfigured ? `Point group ${pointPrefix}` : 'Own readings'}</span>
+        <span>
+          {label} · {pointGroupConfigured ? `Point group ${pointPrefix}` : 'Own readings'}
+        </span>
       </header>
       <div className="zip-bdfb-window-tabs" role="tablist" aria-label="Telemetry time window">
         {['LIVE', ...TELEMETRY_HISTORY_WINDOWS].map((value) => (
@@ -115,7 +117,9 @@ export function EquipmentTelemetryInspector({
               {sample.sourceIdentity} · <time>{sample.sourceObservedAt ?? sample.receivedAt}</time>
             </small>
             <div className="zip-bdfb-live-average-grid">
-              {telemetryMetrics(panelReportedPoints(sample.reported, pointPrefix, pointCapacity)).map((metric) => (
+              {telemetryMetrics(
+                panelReportedPoints(sample.reported, pointPrefix, pointCapacity),
+              ).map((metric) => (
                 <div key={metric.label}>
                   <span>{metric.label}</span>
                   <strong>
@@ -124,9 +128,14 @@ export function EquipmentTelemetryInspector({
                 </div>
               ))}
             </div>
-            {pointGroupConfigured && !Object.keys(panelReportedPoints(sample.reported, pointPrefix, pointCapacity)).length && (
-              <p>No received points for {pointPrefix} in this packet. RAW data from other groups is preserved.</p>
-            )}
+            {pointGroupConfigured &&
+              !Object.keys(panelReportedPoints(sample.reported, pointPrefix, pointCapacity))
+                .length && (
+                <p>
+                  No received points for {pointPrefix} in this packet. RAW data from other groups is
+                  preserved.
+                </p>
+              )}
           </article>
         ))}
       </div>

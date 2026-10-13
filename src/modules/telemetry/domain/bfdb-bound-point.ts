@@ -67,7 +67,10 @@ export function buildBoundBfdbEquipmentPatches(
         reported[field.key] = { value, unit: field.unit, observedAt };
       }
     }
-    if (rawFields.state !== undefined && (typeof rawFields.state === 'string' || typeof rawFields.state === 'number')) {
+    if (
+      rawFields.state !== undefined &&
+      (typeof rawFields.state === 'string' || typeof rawFields.state === 'number')
+    ) {
       reported.state = String(rawFields.state);
     }
     if (!Object.keys(reported).length) continue;

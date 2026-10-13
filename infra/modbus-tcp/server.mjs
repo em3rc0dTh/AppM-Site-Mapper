@@ -8,7 +8,7 @@ export const REGISTERS_PER_UNIT = CIRCUITS * METRICS.length * 2;
 export function rawPointIndex(rawPointId) {
   const match = /^0_([1-4])_([1-9]|1\d|2[0-4])$/.exec(rawPointId);
   if (!match) return null;
-  return (Number(match[1]) - 1) * 24 + Number(match[2]) - 1;
+  return (Number(match[1]) - 1) * 48 + Number(match[2]) - 1;
 }
 
 export function floatRegisters(value) {

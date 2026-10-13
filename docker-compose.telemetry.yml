@@ -56,6 +56,10 @@ services:
       MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
       TIMESCALE_DSN: postgresql://site_mapper@timescaledb:5432/site_mapper_telemetry
       SITE_MAPPER_API_URL: '${SITE_MAPPER_API_URL:-http://host.docker.internal:3000}'
+      MQTT_BROKER_URL: '${MQTT_BROKER_URL:-}'
+      MQTT_USERNAME: '${MQTT_USERNAME:-}'
+      MQTT_PASSWORD: '${MQTT_PASSWORD:-}'
+      MQTT_TOPIC_FILTER: '${MQTT_TOPIC_FILTER:-data/dev/#}'
       CONSOLE_HOST: 0.0.0.0
       CONSOLE_PORT: '3100'
     extra_hosts:

@@ -6,7 +6,7 @@ export const METRICS = ['voltageV', 'currentA', 'powerW', 'energyKwh'];
 export const REGISTERS_PER_UNIT = CIRCUITS * METRICS.length * 2;
 
 export function rawPointIndex(rawPointId) {
-  const match = /^0_([1-4])_([1-9]|1\d|2[0-4])$/.exec(rawPointId);
+  const match = /^0_([12])_([1-9]|[1-3][0-9]|4[0-8])$/.exec(rawPointId);
   if (!match) return null;
   return (Number(match[1]) - 1) * 48 + Number(match[2]) - 1;
 }

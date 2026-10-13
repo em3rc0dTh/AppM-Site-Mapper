@@ -163,8 +163,8 @@ export function EquipmentCompositionEditor({
           title="Raw MQTT group such as 0_2. Leave empty if not commissioned."
         />
         <small>
-          Point 1 becomes prefix_1. This records the address only; it does not
-          reassign existing circuit bindings or prove their physical wiring.
+          Point 1 becomes prefix_1. This records the address only; it does not reassign existing
+          circuit bindings or prove their physical wiring.
         </small>
       </label>
     );

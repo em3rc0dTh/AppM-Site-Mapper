@@ -5,6 +5,7 @@ import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/telemetry-history-writer';
 import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import { buildBfdbBreakerReadings } from '@/modules/telemetry/domain/bfdb';
+import { buildBoundBfdbEquipmentPatches } from '@/modules/telemetry/domain/bfdb-bound-point';
 import type {
   TelemetryBinding,
   TelemetrySample,
@@ -179,41 +180,59 @@ export class TelemetryService {
 
     this.hub.publish(sample);
     await this.historyWriter?.write(sample);
-    // Exact point mappings also provide the Breaker's own view; never copy the parent payload.
-    for (const reading of breakerReadings.readings) {
-      if (reading.breakerId === target.id) continue;
-      const ownBindings =
-        (await this.bindingRepository?.listForTarget('EQUIPMENT', reading.breakerId)) ?? [];
-      if (ownBindings.some((b) => !b.sourcePointId && b.metric.toUpperCase() === 'SOURCE'))
-        continue;
-      const metricBindings = bindings.filter(
-        (b) =>
-          b.targetId === reading.breakerId &&
-          b.targetType === 'EQUIPMENT' &&
-          b.sourcePointId === reading.rawPointId &&
-          ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].includes(b.metric.toUpperCase()),
+    // Point-level telemetry belongs to its canonical Equipment even when the
+    // BDFB electrical path is not yet commissioned (no POWER OUTPUT AccessPort).
+    // Source identity and raw point mapping must both be explicit and active.
+    if (normalized.value.protocol === 'BFDB' && target.type !== 'ACCESS_PORT') {
+      const breakerTargets = new Set(
+        bindings
+          .filter(
+            (b) =>
+              b.lifecycle === 'ACTIVE' &&
+              b.protocol === 'MQTT' &&
+              b.targetType === 'EQUIPMENT' &&
+              b.sourcePointId &&
+              ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].includes(b.metric.toUpperCase()),
+          )
+          .map((b) => b.targetId),
       );
-      const first = metricBindings[0];
-      if (!first) continue;
-      const reported: Record<string, unknown> = {};
-      const units = { voltageV: 'V', currentA: 'A', powerW: 'W', energyKwh: 'kWh' };
-      for (const [key, value] of Object.entries(reading.metrics))
-        reported[key] = { ...value, unit: units[key as keyof typeof units] };
-      const own: TelemetrySample = {
-        bindingId: first.id,
-        metricBindingIds: metricBindings.map((b) => b.id),
-        sourcePointId: reading.rawPointId,
-        targetId: reading.breakerId,
-        targetType: 'EQUIPMENT',
-        entityId: reading.breakerId,
-        entityKind: 'EQUIPMENT',
-        sourceIdentity: reading.sourceIdentity,
-        receivedAt: reading.receivedAt,
-        reported,
-        ...(sample.sourceObservedAt ? { sourceObservedAt: sample.sourceObservedAt } : {}),
-      };
-      this.hub.publish(own);
-      await this.historyWriter?.write(own);
+      if (breakerTargets.size) {
+        // Resolve inventory once per source packet, not once for every circuit.
+        const equipment = await this.topologyRepository.listEquipmentForDevice(ownerId);
+        const byId = new Map(equipment.map((item) => [item.id, item]));
+        const verified = new Set<string>();
+        const identityResolver = new TelemetryIdentityResolver(this.topologyRepository);
+        const ownSourceBindings = this.bindingRepository
+          ? await this.bindingRepository.listForTargets('EQUIPMENT', [...breakerTargets])
+          : bindings;
+        for (const id of breakerTargets) {
+          if (id === target.id) continue;
+          const breaker = byId.get(id);
+          if (
+            !breaker ||
+            breaker.lifecycle !== 'ACTIVE' ||
+            breaker.equipmentType !== 'CIRCUIT_BREAKER' ||
+            !(await identityResolver.valid(breaker))
+          ) continue;
+          // A breaker with an independent publisher owns its telemetry.
+          if (
+            ownSourceBindings.some(
+              (b) =>
+                b.targetType === 'EQUIPMENT' &&
+                b.targetId === id &&
+                b.lifecycle === 'ACTIVE' &&
+                b.protocol === 'MQTT' &&
+                !b.sourcePointId &&
+                b.metric.toUpperCase() === 'SOURCE',
+            )
+          ) continue;
+          verified.add(id);
+        }
+        for (const own of buildBoundBfdbEquipmentPatches(normalized.value, bindings, verified)) {
+          this.hub.publish(own);
+          await this.historyWriter?.write(own);
+        }
+      }
     }
     return success(this.hub.latest(target.id) ?? sample);
   }

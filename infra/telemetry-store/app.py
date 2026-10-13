@@ -174,16 +174,23 @@ def insert_entity_sample(sample):
 
 def query_entity_history(target_id, target_type, window):
     interval, bucket = WINDOWS[window]
-    # One last packet per source/binding per bucket, not an invented average of incompatible metrics.
+    # One last packet per source/binding per bucket, not an invented average
+    # of incompatible metrics. Calculate bucket once: psycopg creates separate
+    # PostgreSQL parameters for repeated %s, even if the same value is passed.
+    # DISTINCT ON must use exactly the same expression as the first ORDER BY.
     with psycopg.connect(DSN) as conn:
         rows = conn.execute("""SELECT sample FROM (
-          SELECT DISTINCT ON (time_bucket(%s::interval, received_at), source_identity, binding_id)
-            sample, received_at FROM telemetry_entity_samples
-          WHERE target_id = %s AND target_type = %s
-            AND received_at >= NOW() - %s::interval
-          ORDER BY time_bucket(%s::interval, received_at) DESC, source_identity, binding_id, received_at DESC
+          SELECT DISTINCT ON (bucket, source_identity, binding_id)
+            sample, received_at FROM (
+              SELECT sample, received_at, source_identity, binding_id,
+                time_bucket(%s::interval, received_at) AS bucket
+              FROM telemetry_entity_samples
+              WHERE target_id = %s AND target_type = %s
+                AND received_at >= NOW() - %s::interval
+            ) bucketed
+          ORDER BY bucket DESC, source_identity, binding_id, received_at DESC
           LIMIT 1000
-        ) recent ORDER BY received_at ASC""", (bucket, target_id, target_type, interval, bucket)).fetchall()
+        ) recent ORDER BY received_at ASC""", (bucket, target_id, target_type, interval)).fetchall()
     return [row[0] for row in rows]
 
 

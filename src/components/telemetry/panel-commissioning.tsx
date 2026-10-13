@@ -10,6 +10,7 @@ interface Row {
   point: string;
   existingMetrics: string[];
   conflicts: string[];
+  conflictingOwnSources: { id: string; source: string }[];
   ready: boolean;
 }
 interface Preview {
@@ -37,6 +38,23 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'COMMISSIONING_UNAVAILABLE'); }
   }
   useEffect(() => { void refresh(); }, [panelId]);
+
+  async function retireSource(row: Row, binding: { id: string; source: string }) {
+    if (!preview || !canWrite || confirm !== row.breakerId) return;
+    setBusy(row.breakerId);
+    try {
+      const response = await fetch('/api/telemetry/panel-commissioning', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ action: 'retire-own-source', panelId, breakerId: row.breakerId,
+          confirmPoint: true, confirmSource: preview.sourceIdentity, confirmRawPoint: row.point,
+          bindingId: binding.id, retiredSource: binding.source, confirmRetirement: true }),
+      });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error ?? 'SOURCE_RETIREMENT_FAILED');
+      setConfirm(null); await refresh(); router.refresh();
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'SOURCE_RETIREMENT_FAILED'); }
+    finally { setBusy(null); }
+  }
 
   async function commission(row: Row) {
     if (!preview || !canWrite || confirm !== row.breakerId) return;
@@ -68,7 +86,21 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
               <strong>Position {row.position} · {row.breakerName}</strong>
               <p>{row.point} · {row.existingMetrics.length}/4 metric bindings {row.ready ? '· VERIFIED MAPPING' : ''}</p>
               {row.conflicts.length ? (
-                <p role="alert">CONFLICT: {row.conflicts.join('; ')}. Retire or resolve the conflicting SOURCE binding first; inventory SN is not overwritten.</p>
+                <div>
+                  <p role="alert">CONFLICT: {row.conflicts.join('; ')}. Inventory SN will not be overwritten.</p>
+                  {canWrite && row.conflictingOwnSources.length > 0 && (
+                    <>
+                      <label><input type="checkbox" checked={confirm === row.breakerId}
+                        onChange={event => setConfirm(event.target.checked ? row.breakerId : null)} />
+                        I confirm the previous independent SOURCE must be retired for this breaker.
+                      </label>
+                      {row.conflictingOwnSources.map(binding => (
+                        <button type="button" key={binding.id} disabled={confirm !== row.breakerId || busy !== null}
+                          onClick={() => void retireSource(row, binding)}>Retire SOURCE {binding.source}</button>
+                      ))}
+                    </>
+                  )}
+                </div>
               ) : !row.ready && canWrite ? (
                 <>
                   <label>

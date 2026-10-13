@@ -89,7 +89,7 @@ services:
       MODBUS_INGEST_HOST: 0.0.0.0
       MODBUS_INGEST_PORT: '18082'
     ports:
-      - '127.0.0.1:1502:1502'
+      - '127.0.0.1:1503:1502'
       - '127.0.0.1:18082:18082'
     restart: unless-stopped
 

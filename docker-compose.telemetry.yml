@@ -1,7 +1,7 @@
 services:
   mongodb:
     image: mongo:7.0
-    command: ['mongod', '--bind_ip_all']
+    command: ['mongod', '--bind_ip_all', '--replSet', 'rs0']
     ports:
       - '127.0.0.1:27017:27017'
     volumes:
@@ -13,6 +13,32 @@ services:
       retries: 20
       start_period: 10s
     restart: unless-stopped
+
+  mongo-init:
+    image: mongo:7.0
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    entrypoint: ['/bin/sh', '-ec']
+    command:
+      - |
+        mongosh --quiet --host mongodb:27017 --eval '
+          try {
+            const status = rs.status();
+            if (status.ok !== 1) quit(1);
+          } catch (error) {
+            if (error.codeName !== "NotYetInitialized" && error.code !== 94) throw error;
+            rs.initiate({_id:"rs0",members:[{_id:0,host:"mongodb:27017"}]});
+          }
+        '
+        for attempt in $(seq 1 30); do
+          if mongosh --quiet --host mongodb:27017 --eval 'if (!db.hello().isWritablePrimary) quit(1)' >/dev/null 2>&1; then
+            exit 0
+          fi
+          sleep 2
+        done
+        exit 1
+    restart: 'no'
 
   timescaledb:
     image: timescale/timescaledb:latest-pg16
@@ -39,7 +65,7 @@ services:
     environment:
       APP_ENV: development
       APP_PERSISTENCE: mongodb
-      MONGODB_URI: mongodb://mongodb:27017/
+      MONGODB_URI: mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
       MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
       BOOTSTRAP_ADMIN_TOKEN: '${BOOTSTRAP_ADMIN_TOKEN:?Set a private bootstrap admin token}'
       TELEMETRY_ENABLED: '${TELEMETRY_ENABLED:-false}'
@@ -57,8 +83,8 @@ services:
     ports:
       - '127.0.0.1:3000:3000'
     depends_on:
-      mongodb:
-        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
       telemetry-store:
         condition: service_started
     restart: unless-stopped
@@ -98,7 +124,7 @@ services:
       context: .
       dockerfile: infra/operational-console/Dockerfile
     environment:
-      MONGODB_URI: mongodb://mongodb:27017/
+      MONGODB_URI: mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
       MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
       TIMESCALE_DSN: postgresql://site_mapper@timescaledb:5432/site_mapper_telemetry
       SITE_MAPPER_API_URL: http://site-mapper:3000
@@ -113,8 +139,8 @@ services:
     ports:
       - '127.0.0.1:3100:3100'
     depends_on:
-      mongodb:
-        condition: service_healthy
+      mongo-init:
+        condition: service_completed_successfully
       site-mapper:
         condition: service_started
       timescaledb:

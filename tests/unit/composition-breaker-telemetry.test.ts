@@ -73,8 +73,9 @@ describe('Equipment Composition breaker telemetry', () => {
     });
     expect(
       compositionBreakerTelemetry('breaker-01', 'device', [packet], [voltageLink], now),
-    ).toEqual({
+    ).toMatchObject({
       status: 'NO DATA',
+      diagnostic: 'Point observed but no valid breaker sample. Check EMU-BFDB-03 / 0_1_1 target binding.',
     });
   });
 

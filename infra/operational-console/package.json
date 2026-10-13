@@ -1,0 +1,17 @@
+{
+  "name": "site-mapper-operational-console",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22 <23"
+  },
+  "dependencies": {
+    "mongodb": "7.6.0",
+    "pg": "8.16.3"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test *.test.mjs"
+  }
+}

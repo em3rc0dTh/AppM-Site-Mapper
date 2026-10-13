@@ -259,7 +259,17 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           ) : null}
 
           <div className="zip-device-live">
-            <EquipmentTelemetryInspector key={node.id} targetId={node.id} label={node.name} />
+            <EquipmentTelemetryInspector
+              key={node.id}
+              targetId={node.id}
+              label={node.name}
+              {...(node.kind === 'EQUIPMENT' && node.telemetryPointPrefix
+                ? {
+                    pointPrefix: node.telemetryPointPrefix,
+                    pointCapacity: node.childMode === 'POSITIONAL' ? node.children.length : undefined,
+                  }
+                : {})}
+            />
           </div>
 
           {room && rackNode ? (

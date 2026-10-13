@@ -213,7 +213,8 @@ export class TelemetryService {
             breaker.lifecycle !== 'ACTIVE' ||
             breaker.equipmentType !== 'CIRCUIT_BREAKER' ||
             !(await identityResolver.valid(breaker))
-          ) continue;
+          )
+            continue;
           // A breaker with an independent publisher owns its telemetry.
           if (
             ownSourceBindings.some(
@@ -225,7 +226,8 @@ export class TelemetryService {
                 !b.sourcePointId &&
                 b.metric.toUpperCase() === 'SOURCE',
             )
-          ) continue;
+          )
+            continue;
           verified.add(id);
         }
         for (const own of buildBoundBfdbEquipmentPatches(normalized.value, bindings, verified)) {

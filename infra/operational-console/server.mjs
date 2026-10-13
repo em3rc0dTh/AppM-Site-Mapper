@@ -12,7 +12,7 @@ const allowKinds = new Set([
   'DEVICE',
   'EQUIPMENT',
 ]);
-const views = new Set(['inventory', 'power', 'telemetry', 'bindings']);
+const views = new Set(['inventory', 'access-ports', 'power', 'telemetry', 'bindings']);
 const sessions = new Map();
 const maxRows = 5000;
 const mongoUri = process.env.MONGODB_URI;
@@ -75,15 +75,15 @@ function dashboard() {
 body{margin:0}.shell{max-width:1500px;margin:auto;padding:24px}h1{font-size:24px;margin:8px 0}p{color:#a2b1c7}
 nav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}button,input,select{background:#1a293e;color:#f5f7fd;border:1px solid #35465e;border-radius:7px;padding:9px}button{cursor:pointer}button:hover{border-color:#83ceb5}.active{border-color:#63dbad;color:#63dbad}
 .panel{border:1px solid #26354b;border-radius:12px;padding:16px;margin:12px 0;background:#121d2d}
-#table{overflow:auto;max-height:65vh}table{border-collapse:collapse;width:100%;white-space:nowrap}td,th{border-bottom:1px solid #2b3b53;padding:9px 12px;text-align:left}th{position:sticky;top:0;background:#17273a;color:#9cc6e7}td{font:12px ui-monospace,monospace}
+#table{overflow:auto;max-height:65vh}.guide{color:#a2b1c7;margin:6px 0 12px}.status-pill{display:inline-block;border:1px solid #466176;border-radius:14px;padding:3px 7px}.row-link{color:#80dfca;text-decoration:underline;text-underline-offset:3px}.details{margin-top:12px;white-space:pre-wrap;overflow-wrap:anywhere}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}table{border-collapse:collapse;width:100%;white-space:nowrap}td,th{border-bottom:1px solid #2b3b53;padding:9px 12px;text-align:left}th{position:sticky;top:0;background:#17273a;color:#9cc6e7}td{font:12px ui-monospace,monospace}
 .form{display:flex;flex-wrap:wrap;gap:10px;align-items:center}label{display:grid;gap:6px;color:#bdc8d7}#status{color:#75d8b7}
 </style>
 <div class="shell"><header><h1>Site Mapper / Operational Console</h1><p>Independent operational tables and audited mutations — no Blueprint dependency</p></header>
 <section id="login" class="panel"><b>Authenticate with your Site Mapper account</b><form id="loginform" class="form"><label>Email<input name="email" type="email" required autocomplete="username"></label><label>Password<input name="password" type="password" required autocomplete="current-password"></label><button>Log in</button></form></section>
 <section id="workspace" hidden><nav id="tabs"></nav><div class="panel form">
 <label>Search<input id="search" placeholder="ID, serial, name, location…"></label>
-<button id="reload">Refresh</button><button id="export">Export CSV</button><button id="logout">Log out</button><span id="status"></span>
-</div><div id="table" class="panel"></div>
+<label id="portfilterlabel" hidden>Connection<select id="portfilter"><option value="all">All ports</option><option value="connected">Connected</option><option value="unconnected">No recorded path</option></select></label><button id="reload">Refresh</button><button id="export">Export CSV</button><button id="logout">Log out</button><span id="status"></span>
+</div><p id="guide" class="guide"></p><div id="table" class="panel"></div><div id="details" class="panel details" hidden></div>
 <div class="panel"><b>Verified creation / connection</b><p>Spatial polygons (Site, Structure, Room, Bay) cannot be authored here. Level uses its existing parent; Position uses discrete row/column.</p>
 <form id="createform" class="form"><label>Operation<select name="operation" id="operation"><option value="topology">Create inventory</option><option value="port">Create AccessPort</option><option value="power">Connect PowerPath</option><option value="commission">Commission telemetry</option></select></label>
 <label>Entity kind<select name="kind"><option>NETWORK</option><option>LEVEL</option><option>POSITION</option><option>CONTAINER_RACK</option><option>DEVICE</option><option>EQUIPMENT</option></select></label>
@@ -97,12 +97,12 @@ let current='inventory',columns=[],rows=[];
 const qs=x=>document.querySelector(x);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function call(url,opt){let r=await fetch(url,{credentials:'same-origin',...opt});let j=await r.json();if(!r.ok)throw Error(j.error||j.status||r.status);return j;}
-async function load(){qs('#status').textContent='Loading';try{let data=await call('/api/table?view='+current);columns=data.columns;rows=data.rows;render();qs('#status').textContent=rows.length+' rows · '+new Date().toLocaleTimeString();}catch(e){qs('#status').textContent=e.message;}}
-function render(){let query=qs('#search').value.toLowerCase();let filtered=rows.filter(r=>!query||Object.values(r).some(v=>String(v??'').toLowerCase().includes(query)));qs('#table').innerHTML='<table><thead><tr>'+columns.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+filtered.map(r=>'<tr>'+columns.map(c=>'<td>'+esc(typeof r[c]==='object'?JSON.stringify(r[c]):r[c])+'</td>').join('')+'</tr>').join('')+'</tbody></table>';}
+async function load(){qs('#status').textContent='Loading';qs('#details').hidden=true;qs('#portfilterlabel').hidden=current!=='access-ports';qs('#guide').textContent=current==='access-ports'?'Recorded Access Ports belong to Equipment. Connected means a recorded active Power Path; it does not prove electrical energization. Select a port for full physical context.':'';try{let data=await call('/api/table?view='+current);columns=data.columns;rows=data.rows;render();qs('#status').textContent=rows.length+' rows · '+new Date().toLocaleTimeString();}catch(e){qs('#status').textContent=e.message;}}
+function render(){let query=qs('#search').value.toLowerCase();let filter=qs('#portfilter').value;let filtered=rows.filter(r=>(!query||Object.values(r).some(v=>String(v??'').toLowerCase().includes(query)))&&(current!=='access-ports'||filter==='all'||(filter==='connected'?r.connection==='CONNECTED':r.connection==='NO_RECORDED_PATH')));qs('#table').innerHTML='<table><thead><tr>'+columns.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+filtered.map((r,i)=>'<tr>'+columns.map(c=>'<td>'+(current==='access-ports'&&c==='name'?'<button type="button" data-row="'+i+'" class="row-link">'+esc(r[c])+'</button>':esc(typeof r[c]==='object'?JSON.stringify(r[c]):r[c]))+'</td>').join('')+'</tr>').join('')+'</tbody></table>';qs('#table').querySelectorAll('[data-row]').forEach((b)=>b.onclick=()=>{let r=filtered[Number(b.dataset.row)];qs('#details').hidden=false;qs('#details').textContent='ACCESS PORT · '+r.name+'\nEquipment: '+r.equipment+'\nLocation: '+r.path+'\nPort ID: '+r.id+'\nEquipment ID: '+r.equipmentId+'\nType: '+r.portType+' / '+r.direction+' / '+r.exposure+'\nPower path: '+r.connection+'\nFeed: '+(r.feed||'Not recorded')+'\nNote: connected means recorded Power Path, not electrically energized.';};}
 async function init(){try{await call('/api/me');qs('#login').hidden=true;qs('#workspace').hidden=false;load();}catch{qs('#login').hidden=false;qs('#workspace').hidden=true;}}
-qs('#tabs').innerHTML=['inventory','power','telemetry','bindings'].map(t=>'<button data-view="'+t+'">'+t.toUpperCase()+'</button>').join('');
+qs('#tabs').innerHTML=['inventory','access-ports','power','telemetry','bindings'].map(t=>'<button data-view="'+t+'">'+t.toUpperCase()+'</button>').join('');
 qs('#tabs').addEventListener('click',e=>{let v=e.target.dataset.view;if(v){current=v;load();}});
-qs('#search').addEventListener('input',render);
+qs('#search').addEventListener('input',render);qs('#portfilter').addEventListener('change',render);
 qs('#reload').onclick=load;qs('#export').onclick=()=>{location.href='/api/export?view='+current;};
 qs('#loginform').onsubmit=async e=>{e.preventDefault();let a=Object.fromEntries(new FormData(e.target));try{await call('/api/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(a)});e.target.reset();init();}catch(x){alert(x.message);}};
 qs('#logout').onclick=async()=>{await call('/api/logout',{method:'POST'});init();};
@@ -154,6 +154,24 @@ async function table(view, db, live) {
     const nodes = await db.collection('topology_nodes').find({}).limit(maxRows).toArray();
     const map = new Map(nodes.map((n) => [n.id, n]));
     return nodes.map((n) => flatten(n, map));
+  }
+  if (view === 'access-ports') {
+    const [nodes, paths] = await Promise.all([
+      db.collection('topology_nodes').find({}).limit(maxRows).toArray(),
+      db.collection('power_paths').find({ lifecycle: 'ACTIVE' }).limit(maxRows).toArray(),
+    ]);
+    const map = new Map(nodes.map((n) => [n.id, n]));
+    const connected = new Set(paths.flatMap((p) => [p.sourceAccessPortId, p.targetAccessPortId]));
+    return nodes.filter((n) => n.kind === 'EQUIPMENT').flatMap((equipment) =>
+      (equipment.accessPorts || []).map((port) => ({
+        id: port.id, name: port.name, equipmentId: equipment.id,
+        equipment: equipment.name, path: flatten(equipment, map).path,
+        rack: flatten(equipment, map).rack, site: flatten(equipment, map).site,
+        portType: port.portType, direction: port.direction, exposure: port.exposure,
+        feed: port.feed || '', lifecycle: port.lifecycle,
+        connection: connected.has(port.id) ? 'CONNECTED' : 'NO_RECORDED_PATH',
+      })),
+    );
   }
   if (view === 'power') {
     const [paths, nodes] = await Promise.all([
@@ -235,6 +253,7 @@ function columnsFor(view) {
       'state',
       'ports',
     ],
+    'access-ports': ['name', 'equipment', 'rack', 'site', 'portType', 'direction', 'exposure', 'feed', 'connection', 'lifecycle', 'id', 'equipmentId', 'path'],
     power: [
       'id',
       'feed',

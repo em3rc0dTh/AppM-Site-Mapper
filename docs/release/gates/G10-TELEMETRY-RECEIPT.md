@@ -19,12 +19,18 @@
 - authenticated latest-value API;
 - non-production authenticated ingestion hook;
 - live Telemetry UI;
-- protocol, normalizer and service tests;
+- Site Mapper-owned TimescaleDB historical persistence;
+- accepted-patch history writer that does not carry stale Latest State metrics forward;
+- 24h / 7d / 15d / 1M historical query windows;
+- panel-scoped and whole-BDFB history filtering by explicit breaker bindings;
+- protocol, normalizer, history-store and service tests;
 - telemetry contract documentation.
 
 ## Security boundary
 
 No MQTT secret value is committed.
+
+The local TimescaleDB stack uses loopback-only development exposure and does not introduce a committed database password.
 
 Legacy MQTT credentials must be rotated before enabling production telemetry.
 

@@ -40,6 +40,23 @@ Roles:
 
 Permissions are server evaluated. See `docs/security/rbac-matrix.md`.
 
+## HTTP mutation boundaries
+
+Implemented for the recursive Equipment / Topology / Warehouse write paths:
+
+- server-side RBAC before mutation;
+- same-origin / cross-site browser mutation rejection;
+- bounded JSON byte size;
+- bounded JSON depth and structural node count;
+- rejection of prototype-pollution keys;
+- strict allowed-field validation;
+- canonical Device / Equipment type parsing from one domain source;
+- server-side text and positional-capacity limits;
+- domain invariants revalidated after the HTTP boundary;
+- atomic parent/child mutations through repository transactions.
+
+These controls are enforced server-side and do not rely on HTML form constraints.
+
 ## Telemetry
 
 Implemented:
@@ -59,13 +76,20 @@ Previously committed legacy MQTT credentials remain considered compromised and m
 
 Configured globally:
 
+- nonce-based Content-Security-Policy on rendered application pages;
+- production scripts require a per-request nonce and use `strict-dynamic`;
+- inline script attributes are disabled;
+- `unsafe-eval` is allowed only by the development CSP;
+- object embedding is disabled;
+- framing is denied by CSP and `X-Frame-Options: DENY`;
 - `X-Content-Type-Options: nosniff`;
-- `X-Frame-Options: DENY`;
 - `Referrer-Policy: strict-origin-when-cross-origin`;
 - restrictive `Permissions-Policy`;
 - Next.js powered-by header disabled.
 
-A full Content-Security-Policy is not yet configured and is recorded as a release limitation requiring environment-specific design/validation.
+Inline styles remain allowed because the current React/Next UI uses runtime style
+attributes. Script execution does not use `unsafe-inline`. Production CSP also upgrades
+insecure subresource requests.
 
 ## Repository controls
 
@@ -84,3 +108,27 @@ It does not replace:
 - penetration testing;
 - production CSP validation;
 - production load/DoS validation.
+
+## October 2026 assessment — remaining deployment blockers
+
+Automated BFDB source discovery now requires a unique active inventory SN
+belonging to an active BDFB Device or root CHASSIS. Revalidation on ingestion
+rejects archived, duplicate or reassigned identities. This is a data identity
+control, **not device cryptographic authentication**. The broker must enforce
+authenticated clients and per-topic write ACLs; `payload.sn` alone is spoofable.
+
+The production telemetry runtime refuses plaintext MQTT and missing broker
+credentials; the history-store HTTP interface supports bearer authentication
+and the production client requires `TELEMETRY_STORE_TOKEN`. The history-store
+process itself must set `STORE_ENV=production` to refuse startup without a
+token. Store TLS/private network segmentation and database credentials must
+still be configured externally.
+
+**Not production-certified yet**: review and rotate any historical secrets,
+replace `POSTGRES_HOST_AUTH_METHOD=trust` in local compose for production,
+validate reverse-proxy forwarded headers and same-origin request policy,
+confirm all HTTP handlers use bounded inputs, verify broker ACLs and TLS
+certificates, run infrastructure scanning and a penetration test, and inspect
+operational logs under realistic message load. Passing CI is not proof of these
+controls. Do not expose MongoDB, TimescaleDB, or the telemetry-store port to
+the public Internet.

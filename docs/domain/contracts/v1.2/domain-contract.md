@@ -43,6 +43,11 @@ EXTERNAL ADAPTERS
 
 Persistence, UI, MQTT, TAPI, migration tooling or legacy schemas must not redefine the domain.
 
+Visual projection of recursive Equipment is governed separately by
+[`Equipment Composition Presentation Contract v1.0`](../../../design/equipment-composition-presentation-contract-v1.0.md).
+That presentation contract may control layout density, direction and drill-down behavior, but it
+must not alter `parentEquipmentId`, `children[]`, Equipment identity or physical capacity.
+
 ---
 
 # 2. Fundamental model
@@ -586,6 +591,42 @@ in parent.children
 ```
 
 A child Equipment cannot simultaneously have two immediate parents.
+
+## 14.1 Archive / restore invariant
+
+Archive is a lifecycle operation, not an implicit topology mutation.
+
+For nested Equipment:
+
+```text
+parentEquipmentId != null
+```
+
+the Equipment must first be explicitly detached or moved before it may be archived.
+
+This rule prevents lifecycle operations from hiding physical placement history in generic
+`attributes` metadata or silently rewriting positional slots.
+
+For archived root Equipment:
+
+```text
+parentEquipmentId = null
+parentId = owning Device.id
+```
+
+Restore only changes lifecycle back to `ACTIVE`; it does not guess or recreate a previous
+Equipment parent or positional slot.
+
+If the Equipment occupies Rack CAS, CAS must be released before archive.
+
+Therefore:
+
+```text
+detach / move = physical composition mutation
+archive / restore = lifecycle mutation
+```
+
+These concerns are intentionally separate.
 
 ---
 

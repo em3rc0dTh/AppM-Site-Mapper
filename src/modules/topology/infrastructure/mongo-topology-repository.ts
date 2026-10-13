@@ -1,14 +1,16 @@
+import { getClient } from '@/shared/infrastructure/mongodb/client';
 import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
 
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { EquipmentNode, TopologyKind, TopologyNode } from '@/modules/topology/domain/entities';
+import { hydrateTopologyDocument } from '@/modules/topology/infrastructure/topology-document-hydration';
 
 type TopologyDocument = TopologyNode & Document;
 
 function toDomain(document: TopologyDocument): TopologyNode {
   const copy = { ...document } as Record<string, unknown>;
   delete copy._id;
-  return copy as unknown as TopologyNode;
+  return hydrateTopologyDocument(copy);
 }
 
 export class MongoTopologyRepository implements TopologyRepository {
@@ -18,9 +20,54 @@ export class MongoTopologyRepository implements TopologyRepository {
     this.collection = database.collection<TopologyDocument>('topology_nodes');
   }
 
+  async commitLayout(
+    before: readonly TopologyNode[],
+    after: readonly TopologyNode[],
+  ): Promise<boolean> {
+    const session = (await getClient()).startSession();
+    try {
+      await session.withTransaction(async () => {
+        const old = new Map(before.map((node) => [node.id, node]));
+        for (const node of after) {
+          const previous = old.get(node.id);
+          if (previous) {
+            const result = await this.collection.replaceOne(
+              { id: node.id, updatedAt: previous.updatedAt },
+              node as OptionalUnlessRequiredId<TopologyDocument>,
+              { session },
+            );
+            if (result.matchedCount !== 1) throw new Error('LAYOUT_CONFLICT');
+          } else {
+            await this.collection.insertOne(node as OptionalUnlessRequiredId<TopologyDocument>, {
+              session,
+            });
+          }
+        }
+      });
+      return true;
+    } catch (error) {
+      if (error instanceof Error && error.message === 'LAYOUT_CONFLICT') return false;
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
+
   async getById(id: string): Promise<TopologyNode | null> {
     const document = await this.collection.findOne({ id });
     return document ? toDomain(document) : null;
+  }
+
+  async findActiveBySerialNumber(serialNumber: string): Promise<readonly TopologyNode[]> {
+    const documents = await this.collection
+      .find({
+        serialNumber,
+        kind: { $in: ['DEVICE', 'EQUIPMENT'] },
+        lifecycle: 'ACTIVE',
+      })
+      .limit(3)
+      .toArray();
+    return documents.map(toDomain);
   }
 
   async listChildren(parentId: string): Promise<readonly TopologyNode[]> {
@@ -64,5 +111,13 @@ export class MongoTopologyRepository implements TopologyRepository {
     if (result.matchedCount !== 1) {
       throw new Error(`Topology node does not exist: ${node.id}`);
     }
+  }
+
+  async replaceIfVersion(node: TopologyNode, expectedVersion: string): Promise<boolean> {
+    const result = await this.collection.replaceOne(
+      { id: node.id, updatedAt: expectedVersion, lifecycle: 'ACTIVE' },
+      node as OptionalUnlessRequiredId<TopologyDocument>,
+    );
+    return result.matchedCount === 1;
   }
 }

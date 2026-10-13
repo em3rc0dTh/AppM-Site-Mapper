@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - 'feat/**'
 
 permissions:
   contents: read
@@ -39,8 +40,14 @@ jobs:
       - name: Unit tests
         run: npm run test:unit
 
+      - name: Mongo audit regression tests
+        run: npm run test:audit-mongo
+
       - name: Integration tests
         run: npm run test:integration
+
+      - name: Telemetry history SQL regression
+        run: python3 -m unittest discover -s infra/telemetry-store -p 'test_*.py'
 
       - name: System certification
         run: npm run test:certification

@@ -1,10 +1,12 @@
 import { MongoClient, type Db } from 'mongodb';
 
 import { requireRuntimeSecret } from '@/config/env';
+import { ensurePersistenceIndexes } from '@/shared/infrastructure/mongodb/bootstrap';
 
 let clientPromise: Promise<MongoClient> | undefined;
+let databasePromise: Promise<Db> | undefined;
 
-function getClient(): Promise<MongoClient> {
+export function getClient(): Promise<MongoClient> {
   const uri = requireRuntimeSecret('MONGODB_URI', process.env.MONGODB_URI);
 
   clientPromise ??= new MongoClient(uri, {
@@ -16,9 +18,13 @@ function getClient(): Promise<MongoClient> {
   return clientPromise;
 }
 
-export async function getMongoDatabase(): Promise<Db> {
-  const client = await getClient();
-  const databaseName = process.env.MONGODB_DB_NAME?.trim() || 'appm_site_mapper';
+export function getMongoDatabase(): Promise<Db> {
+  databasePromise ??= getClient().then(async (client) => {
+    const databaseName = process.env.MONGODB_DB_NAME?.trim() || 'appm_site_mapper';
+    const database = client.db(databaseName);
+    await ensurePersistenceIndexes(database);
+    return database;
+  });
 
-  return client.db(databaseName);
+  return databasePromise;
 }

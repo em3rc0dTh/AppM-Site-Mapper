@@ -5,6 +5,13 @@ import { PowerService } from '@/modules/power/application/power-service';
 import type { PowerFeed } from '@/modules/power/domain/entities';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import {
+  hasOnlyKeys,
+  isBoundedString,
+  isSafeMutationRequest,
+  jsonBodyErrorStatus,
+  readBoundedJson,
+} from '@/shared/http/request-security';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
@@ -28,12 +35,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: auth.error }, { status: 403 });
   }
 
-  const body: unknown = await request.json().catch(() => null);
-
+  if (!isSafeMutationRequest(request)) {
+    return NextResponse.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  }
+  const parsed = await readBoundedJson(request, { maxBytes: 4096, maxDepth: 3, maxNodes: 32 });
+  if (!parsed.ok) {
+    return NextResponse.json(
+      { error: parsed.error },
+      { status: jsonBodyErrorStatus(parsed.error) },
+    );
+  }
+  const body = parsed.value;
   if (
     !isRecord(body) ||
-    typeof body.sourceAccessPortId !== 'string' ||
-    typeof body.targetAccessPortId !== 'string'
+    !hasOnlyKeys(body, ['sourceAccessPortId', 'targetAccessPortId', 'feed', 'label']) ||
+    !isBoundedString(body.sourceAccessPortId, 128) ||
+    !isBoundedString(body.targetAccessPortId, 128) ||
+    (body.label !== undefined && !isBoundedString(body.label, 120, { allowEmpty: true }))
   ) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }

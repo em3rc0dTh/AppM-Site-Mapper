@@ -1,74 +1,96 @@
 # BDFB and Power Domain
 
 **Gate:** G9  
-**Status:** Accepted
+**Status:** Canonical for Domain Contract v1.2
 
 ## BDFB
 
-BDFB is a Device specialization. It does not introduce a topology level.
+BDFB is a Device specialization:
+
+```text
+Device.deviceType = BDFB
+```
+
+It does not introduce a topology level or its own persisted child schema.
+
+### Physical composition
+
+All physical composition uses recursive Equipment.
+
+A valid real installation may be:
 
 ```text
 Device(BDFB)
-└── Shelf
-    └── Frame
-        └── Panel
-            └── Breaker / Holder
+└── CHASSIS
+    └── SHELF
+        └── FRAME
+            └── PANEL
+                └── CIRCUIT_BREAKER
 ```
 
-BDFB structure is configured independently from rack placement/CAS.
-
-### Canonical Frame / physical presentation rule
-
-A Frame always exists in the canonical data model. Customer equipment may, however, expose no distinct physical frame. In that case the Frame remains the parent of its Panels and retains its stable identity for PowerPath resolution, but presentation marks it as physically implicit:
-
-```ts
-frame.presentation = {
-  physicalFrameVisible: false,
-};
-```
-
-The UI then renders the Panels directly under the Shelf while preserving the canonical hierarchy:
+but these shorter paths are equally valid when they reflect the real hardware:
 
 ```text
-canonical truth              physical presentation
-
-Shelf                        Shelf
-└── Frame (implicit)   ->     ├── Panel A
-    ├── Panel A               └── Panel B
-    └── Panel B
+Device → CHASSIS → PANEL → CIRCUIT_BREAKER
+Device → CHASSIS → SHELF → PANEL → CIRCUIT_BREAKER
 ```
 
-This is presentation metadata only. It must never re-parent Panels, change endpoint IDs, or create a second BDFB schema.
+No Shelf or Frame may be invented merely to normalize appearance.
 
-IDs are unique inside the Device-owned structure. Panel endpoint labels are unique within a Panel.
+Every non-root Equipment obeys:
+
+```text
+child.parentEquipmentId = parent.id
+parent.children contains child.id
+```
+
+For POSITIONAL Equipment:
+
+```text
+children.length = configured physical child capacity
+children[index] = EquipmentId | null
+```
+
+A free position is `null`. There is no Holder entity.
+
+### BDFB presentation
+
+The BDFB physical view is a specialized read projection over canonical Equipment. It may
+group direct-mounted panels for presentation, but presentation metadata must never
+re-parent Equipment or create authoritative physical nodes.
+
+There is no BDFB-specific structure-write endpoint. Users create/configure/move Equipment
+through the canonical Topology/Warehouse Equipment flows.
 
 ## PowerPath
 
-PowerPath is a separately persisted aggregate.
-
-It contains:
-
-- stable ID;
-- source endpoint;
-- target endpoint;
-- optional A/B feed;
-- optional label;
-- lifecycle.
-
-An endpoint always starts at an ACTIVE Device or Equipment.
-
-Internal endpoint paths may only traverse a Device BDFB and must resolve in order:
+PowerPath is separately persisted and connects physical AccessPorts:
 
 ```text
-Device
-→ Shelf
-→ Frame
-→ Panel
-→ Breaker / Holder
+sourceAccessPortId → targetAccessPortId
 ```
 
-A PowerPath may therefore represent a breaker feeding a sibling Equipment without nesting Equipment below Device.
+For a breaker source:
+
+```text
+Equipment(CIRCUIT_BREAKER)
+└── AccessPort(POWER, OUTPUT)
+```
+
+For a load:
+
+```text
+Equipment(...)
+└── AccessPort(POWER, INPUT)
+```
+
+Optional Feed A/B semantics belong to PowerPath and explicit redundancy policy. They are
+not inferred from Equipment names or visual placement.
 
 ## Truth boundary
 
-UI overlays and labels render PowerPath. They never define or reconstruct electrical truth.
+Topology/Equipment owns physical containment.
+CAS owns Rack U occupancy.
+PowerPath owns electrical connectivity.
+TelemetryBinding owns source-to-domain observation mapping.
+BDFB UI is a projection of those truths and never an alternate source of truth.

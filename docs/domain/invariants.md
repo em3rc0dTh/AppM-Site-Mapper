@@ -44,7 +44,9 @@ Network
 → ContainerCluster / Bay
 → Position
 → Container / Rack
-→ Device | Equipment
+→ Device
+→ Equipment
+→ Equipment (...)
 ```
 
 Internal Device structure is:
@@ -85,9 +87,7 @@ A Container/Rack may move from one Position to another only when:
 
 ### Device and Equipment
 
-Device and Equipment are siblings.
-
-Either may move between compatible Container/Rack parents while preserving identity.
+A Device may move between compatible Container/Rack parents while preserving identity.
 
 For a Device using U-space:
 
@@ -95,7 +95,7 @@ For a Device using U-space:
 - destination occupancy must not overlap;
 - CAS transition must succeed atomically with the move.
 
-Equipment that does not consume U-space is not forced into CAS semantics.
+Equipment may move between compatible Device/Equipment parents while preserving identity. Equipment never claims Rack CAS directly; it inherits rack placement from its mounted Device ancestor.
 
 ## CAS ownership
 
@@ -117,10 +117,13 @@ CAS operations must be deterministic and invariant-safe.
 
 ## Device and Equipment
 
-- Device and Equipment have equal topology rank.
-- Equipment is never implicitly nested under Device.
+- Device is the rack-mounted inventory root.
+- Equipment is a child of Device or Equipment and may recurse.
+- Equipment never occupies Rack CAS directly.
 - Device may expose richer internal chassis/electrical structure.
-- Equipment may still participate in telemetry and PowerPath where its capabilities permit.
+- Device and Equipment may expose explicit capability ports such as `AccessPort(POWER)`.
+- Equipment may participate in telemetry and PowerPath where its capabilities permit.
+- legacy rack-direct Equipment is migration evidence and is never silently reparented.
 
 ## BDFB
 
@@ -150,7 +153,15 @@ It has:
 - feed designation where applicable;
 - lifecycle state.
 
-Endpoints reference accepted Device/Equipment/internal electrical identities.
+For newly created power relationships:
+
+- source resolves to a concrete BDFB `BREAKER`;
+- target resolves to a concrete Device/Equipment `AccessPort(POWER)`;
+- A/B feed identity must not contradict a feed-constrained target port;
+- A and B remain independent paths and may originate in different BDFBs;
+- breaker telemetry belongs to the source circuit;
+- redundancy is reported only against an explicit target policy;
+- legacy entity-only targets may be read, but are marked ambiguous and cannot be used as the canonical model.
 
 PowerPath is not derived solely from UI labels.
 

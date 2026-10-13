@@ -1,25 +1,48 @@
+import {
+  parsePolygon,
+  polygonInsidePolygon,
+  polygonsOverlapArea,
+} from '@/modules/spatial/domain/geometry';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
   AccessPort,
   ContainerClusterBayVariant,
   ContainerRackVariant,
+  DeviceNode,
   DeviceType,
   EquipmentChildMode,
   EquipmentNode,
+  EquipmentPresentation,
   EquipmentType,
   GridCoordinate,
+  PhysicalPoint,
   RoomSubstructureVariant,
   TopologyKind,
   TopologyNode,
 } from '@/modules/topology/domain/entities';
 import { isAllowedParent, topologySlug } from '@/modules/topology/domain/hierarchy';
 import { initializeCas } from '@/modules/rack/domain/cas';
+import type { AssetTemplateSnapshot } from '@/modules/warehouse/domain/template';
+import {
+  normalizedTelemetryPointPrefix,
+  validTelemetryPointPrefix,
+} from '@/modules/topology/domain/telemetry-point-prefix';
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
 
 export type TopologyError =
+  | 'INVALID_POLYGON'
+  | 'BOUNDARY_OUTSIDE_SITE'
+  | 'BOUNDARY_OUTSIDE_ROOM'
+  | 'ROOM_OVERLAP'
+  | 'ROOM_OUTSIDE_STRUCTURE'
+  | 'STRUCTURE_BOUNDARY_REQUIRED'
+  | 'ATOMIC_LAYOUT_STORAGE_REQUIRED'
+  | 'LAYOUT_CONFLICT'
   | 'NOT_FOUND'
+  | 'NOT_EQUIPMENT'
   | 'INVALID_NAME'
+  | 'INVALID_TEXT_FIELD'
   | 'INVALID_PARENT'
   | 'PARENT_ARCHIVED'
   | 'POSITION_OCCUPIED'
@@ -28,13 +51,27 @@ export type TopologyError =
   | 'INVALID_RACK_CAPACITY'
   | 'MOVE_NOT_ALLOWED'
   | 'HAS_ACTIVE_CHILDREN'
+  | 'DETACH_REQUIRED'
   | 'CAS_RELEASE_REQUIRED'
   | 'PARENT_ARCHIVED_ON_RESTORE'
   | 'INVALID_DEEP_LINK'
   | 'INVALID_CHILD_CAPACITY'
+  | 'INVALID_EQUIPMENT_PRESENTATION'
+  | 'INVALID_TELEMETRY_POINT_PREFIX'
   | 'POSITION_SLOT_REQUIRED'
+  | 'SLOT_OUT_OF_RANGE'
+  | 'SLOT_OCCUPIED'
+  | 'CHILD_TYPE_NOT_ALLOWED'
   | 'INVALID_DEVICE_OWNERSHIP'
   | 'EQUIPMENT_CYCLE';
+
+export interface ConfigureEquipmentInput {
+  readonly telemetryPointPrefix?: string | null;
+  readonly presentation?: EquipmentPresentation;
+  readonly equipmentType?: EquipmentType;
+  readonly childMode?: EquipmentChildMode;
+  readonly childCapacity?: number;
+}
 
 export interface TopologyNavigationNode {
   readonly node: TopologyNode;
@@ -57,13 +94,20 @@ export interface CreateTopologyNodeInput {
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
+  readonly telemetryPointPrefix?: string;
+  readonly parentSlotIndex?: number;
+  readonly presentation?: EquipmentPresentation;
+  readonly manufacturer?: string;
+  readonly model?: string;
   readonly accessPorts?: readonly AccessPort[];
+  readonly polygon?: readonly PhysicalPoint[];
+  readonly template?: AssetTemplateSnapshot;
 }
 
 function canonicalChildren(mode: EquipmentChildMode, childCapacity?: number): readonly null[] {
   if (mode === 'DYNAMIC') return [];
 
-  if (!Number.isInteger(childCapacity) || (childCapacity ?? 0) < 1) {
+  if (!Number.isInteger(childCapacity) || (childCapacity ?? 0) < 1 || (childCapacity ?? 0) > 256) {
     throw new Error('INVALID_CHILD_CAPACITY');
   }
 
@@ -90,8 +134,14 @@ export class TopologyService {
   async create(input: CreateTopologyNodeInput): Promise<Result<TopologyNode, TopologyError>> {
     const name = input.name.trim();
 
-    if (!name) {
+    if (!name || name.length > 120) {
       return failure('INVALID_NAME');
+    }
+
+    for (const value of [input.serialNumber, input.category, input.manufacturer, input.model]) {
+      if (value !== undefined && value.length > 120) {
+        return failure('INVALID_TEXT_FIELD');
+      }
     }
 
     const parent = input.parentId ? await this.repository.getById(input.parentId) : null;
@@ -106,6 +156,53 @@ export class TopologyService {
 
     if (input.kind === 'CONTAINER_RACK' && parent && (await this.hasActiveRack(parent.id))) {
       return failure('POSITION_OCCUPIED');
+    }
+
+    const spatial = ['SITE', 'STRUCTURE', 'ROOM_SUBSTRUCTURE', 'CONTAINER_CLUSTER_BAY'].includes(
+      input.kind,
+    );
+    const polygon = spatial ? parsePolygon(input.polygon) : null;
+    if (spatial && !polygon) return failure('INVALID_POLYGON');
+    if (
+      input.kind === 'STRUCTURE' &&
+      (parent?.kind !== 'SITE' ||
+        !parent.polygon ||
+        !polygonInsidePolygon(polygon!, parent.polygon))
+    ) {
+      return failure('BOUNDARY_OUTSIDE_SITE');
+    }
+    if (
+      input.kind === 'CONTAINER_CLUSTER_BAY' &&
+      (parent?.kind !== 'ROOM_SUBSTRUCTURE' ||
+        !parent.polygon ||
+        !polygonInsidePolygon(polygon!, parent.polygon))
+    ) {
+      return failure('BOUNDARY_OUTSIDE_ROOM');
+    }
+    if (input.kind === 'ROOM_SUBSTRUCTURE' && parent?.kind === 'LEVEL') {
+      const structure = parent.parentId ? await this.repository.getById(parent.parentId) : null;
+      if (structure?.kind !== 'STRUCTURE' || !structure.polygon)
+        return failure('STRUCTURE_BOUNDARY_REQUIRED');
+      if (structure.polygon && !polygonInsidePolygon(polygon!, structure.polygon))
+        return failure('ROOM_OUTSIDE_STRUCTURE');
+      const siblings = await this.repository.listChildren(parent.id);
+      if (
+        siblings.some(
+          (sibling) =>
+            sibling.kind === 'ROOM_SUBSTRUCTURE' &&
+            sibling.lifecycle === 'ACTIVE' &&
+            sibling.polygon !== undefined &&
+            polygonsOverlapArea(polygon!, sibling.polygon),
+        )
+      ) {
+        return failure('ROOM_OVERLAP');
+      }
+    }
+    if (parent) {
+      const ancestry = await this.getTrail(parent.id);
+      if (ancestry.some((ancestor) => ancestor.lifecycle !== 'ACTIVE')) {
+        return failure('PARENT_ARCHIVED');
+      }
     }
 
     const timestamp = nowIso();
@@ -125,10 +222,15 @@ export class TopologyService {
         node = { ...base, kind: 'NETWORK', parentId: null };
         break;
       case 'SITE':
-        node = { ...base, kind: 'SITE', parentId: input.parentId as string };
+        node = { ...base, kind: 'SITE', parentId: input.parentId as string, polygon: polygon! };
         break;
       case 'STRUCTURE':
-        node = { ...base, kind: 'STRUCTURE', parentId: input.parentId as string };
+        node = {
+          ...base,
+          kind: 'STRUCTURE',
+          parentId: input.parentId as string,
+          polygon: polygon!,
+        };
         break;
       case 'LEVEL':
         node = { ...base, kind: 'LEVEL', parentId: input.parentId as string };
@@ -142,6 +244,7 @@ export class TopologyService {
           kind: 'ROOM_SUBSTRUCTURE',
           parentId: input.parentId as string,
           variant: input.roomVariant,
+          polygon: polygon!,
         };
         break;
       case 'CONTAINER_CLUSTER_BAY':
@@ -153,12 +256,14 @@ export class TopologyService {
           kind: 'CONTAINER_CLUSTER_BAY',
           parentId: input.parentId as string,
           variant: input.clusterVariant,
+          polygon: polygon!,
         };
         break;
       case 'POSITION':
         if (
           !input.coordinate ||
           !input.coordinate.row.trim() ||
+          input.coordinate.row.trim().length > 16 ||
           !Number.isInteger(input.coordinate.column) ||
           input.coordinate.column < 1
         ) {
@@ -180,7 +285,7 @@ export class TopologyService {
         }
         if (
           input.containerVariant === 'RACK' &&
-          (!Number.isInteger(input.totalU) || (input.totalU ?? 0) < 1)
+          (!Number.isInteger(input.totalU) || (input.totalU ?? 0) < 1 || (input.totalU ?? 0) > 1000)
         ) {
           return failure('INVALID_RACK_CAPACITY');
         }
@@ -203,6 +308,7 @@ export class TopologyService {
           rootEquipmentIds: [],
           ...(input.serialNumber?.trim() ? { serialNumber: input.serialNumber.trim() } : {}),
           ...(input.category?.trim() ? { category: input.category.trim() } : {}),
+          ...(input.template ? { template: structuredClone(input.template) } : {}),
         };
         break;
       case 'EQUIPMENT': {
@@ -210,11 +316,22 @@ export class TopologyService {
           return failure('INVALID_PARENT');
         }
 
-        if (parent.kind === 'EQUIPMENT' && parent.childMode === 'POSITIONAL') {
-          return failure('POSITION_SLOT_REQUIRED');
+        const equipmentType = input.equipmentType ?? 'CUSTOM';
+        if (
+          parent.kind === 'EQUIPMENT' &&
+          parent.template?.allowedChildTypes?.length &&
+          !parent.template.allowedChildTypes.includes(equipmentType)
+        ) {
+          return failure('CHILD_TYPE_NOT_ALLOWED');
         }
 
         const childMode = input.childMode ?? 'DYNAMIC';
+        if (
+          !validTelemetryPointPrefix(input.telemetryPointPrefix) ||
+          (input.telemetryPointPrefix?.trim() && childMode !== 'POSITIONAL')
+        )
+          return failure('INVALID_TELEMETRY_POINT_PREFIX');
+        const telemetryPointPrefix = normalizedTelemetryPointPrefix(input.telemetryPointPrefix);
         let children: readonly (string | null)[];
         try {
           children = canonicalChildren(childMode, input.childCapacity);
@@ -222,32 +339,240 @@ export class TopologyService {
           return failure('INVALID_CHILD_CAPACITY');
         }
 
+        if (
+          input.presentation &&
+          (!['ROW', 'COLUMN'].includes(input.presentation.direction) ||
+            !(
+              input.presentation.maxPerLine === null ||
+              (Number.isInteger(input.presentation.maxPerLine) &&
+                input.presentation.maxPerLine >= 1 &&
+                input.presentation.maxPerLine <= 256)
+            ) ||
+            !['AUTO', 'INLINE', 'SUMMARY'].includes(input.presentation.childrenVisibility))
+        )
+          return failure('INVALID_EQUIPMENT_PRESENTATION');
+        const deviceId = parent.kind === 'DEVICE' ? parent.id : parent.deviceId;
+        const defaultAccessPorts: readonly AccessPort[] =
+          equipmentType === 'CIRCUIT_BREAKER' && !input.accessPorts?.length
+            ? [
+                {
+                  id: base.id + ':power-out',
+                  deviceId,
+                  equipmentId: base.id,
+                  name: 'Power output',
+                  portType: 'POWER',
+                  direction: 'OUTPUT',
+                  exposure: 'EXTERNAL',
+                  lifecycle: 'ACTIVE',
+                },
+              ]
+            : [];
+
         const equipment: EquipmentNode = {
           ...base,
           kind: 'EQUIPMENT',
           parentId: parent.id,
-          deviceId: parent.kind === 'DEVICE' ? parent.id : parent.deviceId,
-          equipmentType: input.equipmentType ?? 'CUSTOM',
+          deviceId,
+          equipmentType,
           parentEquipmentId: parent.kind === 'EQUIPMENT' ? parent.id : null,
           childMode,
           children,
-          accessPorts: structuredClone(input.accessPorts ?? []),
+          ...(telemetryPointPrefix ? { telemetryPointPrefix } : {}),
+          ...((input.presentation ?? input.template?.presentation)
+            ? { presentation: { ...(input.presentation ?? input.template!.presentation!) } }
+            : {}),
+          accessPorts: structuredClone(
+            input.accessPorts?.length ? input.accessPorts : defaultAccessPorts,
+          ),
           pinned: false,
+          ...(input.manufacturer?.trim() ? { manufacturer: input.manufacturer.trim() } : {}),
+          ...(input.model?.trim() ? { model: input.model.trim() } : {}),
           ...(input.serialNumber?.trim() ? { serialNumber: input.serialNumber.trim() } : {}),
           ...(input.category?.trim() ? { category: input.category.trim() } : {}),
+          ...(input.template ? { template: structuredClone(input.template) } : {}),
         };
 
-        await this.repository.insert(equipment);
-        await this.attachEquipment(parent, equipment.id);
+        if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+
+        let updatedParent: DeviceNode | EquipmentNode;
+        if (parent.kind === 'DEVICE') {
+          updatedParent = {
+            ...parent,
+            rootEquipmentIds: [...parent.rootEquipmentIds, equipment.id],
+            updatedAt: nowIso(),
+          };
+        } else if (parent.childMode === 'POSITIONAL') {
+          if (!Number.isInteger(input.parentSlotIndex)) {
+            return failure('POSITION_SLOT_REQUIRED');
+          }
+          const slot = input.parentSlotIndex as number;
+          if (slot < 0 || slot >= parent.children.length) return failure('SLOT_OUT_OF_RANGE');
+          if (parent.children[slot] !== null) return failure('SLOT_OCCUPIED');
+          const nextChildren = [...parent.children];
+          nextChildren[slot] = equipment.id;
+          updatedParent = { ...parent, children: nextChildren, updatedAt: nowIso() };
+        } else {
+          updatedParent = {
+            ...parent,
+            children: [...parent.children, equipment.id],
+            updatedAt: nowIso(),
+          };
+        }
+
+        if (!(await this.repository.commitLayout([parent], [updatedParent, equipment]))) {
+          return failure('LAYOUT_CONFLICT');
+        }
         return success(equipment);
       }
     }
 
-    await this.repository.insert(node);
+    if (node.kind === 'ROOM_SUBSTRUCTURE' && parent?.kind === 'LEVEL') {
+      // Serialize sibling Room creates against the Level version so concurrent
+      // requests cannot both pass the overlap pre-flight against stale siblings.
+      if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+      const updatedAt = new Date(
+        Math.max(Date.now(), Date.parse(parent.updatedAt) + 1),
+      ).toISOString();
+      if (!(await this.repository.commitLayout([parent], [{ ...parent, updatedAt }, node]))) {
+        return failure('LAYOUT_CONFLICT');
+      }
+    } else if (node.kind === 'CONTAINER_CLUSTER_BAY' && parent) {
+      if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+      const updatedAt = new Date(
+        Math.max(Date.now(), Date.parse(parent.updatedAt) + 1),
+      ).toISOString();
+      if (!(await this.repository.commitLayout([parent], [{ ...parent, updatedAt }, node]))) {
+        return failure('LAYOUT_CONFLICT');
+      }
+    } else {
+      await this.repository.insert(node);
+    }
     return success(node);
   }
 
-  async move(id: string, newParentId: string): Promise<Result<TopologyNode, TopologyError>> {
+  async configureEquipment(
+    id: string,
+    input: ConfigureEquipmentInput,
+  ): Promise<Result<EquipmentNode, TopologyError>> {
+    const node = await this.repository.getById(id);
+    if (!node) return failure('NOT_FOUND');
+    if (node.kind !== 'EQUIPMENT') return failure('NOT_EQUIPMENT');
+    if (node.lifecycle !== 'ACTIVE') return failure('PARENT_ARCHIVED');
+
+    const parent = await this.repository.getById(node.parentId);
+    if (!parent || (parent.kind !== 'DEVICE' && parent.kind !== 'EQUIPMENT')) {
+      return failure('INVALID_PARENT');
+    }
+
+    const equipmentType = input.equipmentType ?? node.equipmentType;
+    if (
+      parent.kind === 'EQUIPMENT' &&
+      parent.template?.allowedChildTypes?.length &&
+      !parent.template.allowedChildTypes.includes(equipmentType)
+    ) {
+      return failure('CHILD_TYPE_NOT_ALLOWED');
+    }
+
+    const childMode = input.childMode ?? node.childMode;
+    const configuredPrefix =
+      input.telemetryPointPrefix === undefined
+        ? node.telemetryPointPrefix
+        : input.telemetryPointPrefix;
+    if (
+      !validTelemetryPointPrefix(configuredPrefix) ||
+      (configuredPrefix?.trim() && childMode !== 'POSITIONAL')
+    )
+      return failure('INVALID_TELEMETRY_POINT_PREFIX');
+    const telemetryPointPrefix = normalizedTelemetryPointPrefix(configuredPrefix);
+    const presentation = input.presentation ?? node.presentation;
+    if (
+      presentation &&
+      (!['ROW', 'COLUMN'].includes(presentation.direction) ||
+        !(
+          presentation.maxPerLine === null ||
+          (Number.isInteger(presentation.maxPerLine) &&
+            presentation.maxPerLine >= 1 &&
+            presentation.maxPerLine <= 256)
+        ) ||
+        !['AUTO', 'INLINE', 'SUMMARY'].includes(presentation.childrenVisibility))
+    )
+      return failure('INVALID_EQUIPMENT_PRESENTATION');
+    const occupied = node.children.filter((childId): childId is string => childId !== null);
+    let children: readonly (string | null)[];
+
+    if (childMode === 'DYNAMIC') {
+      children = occupied;
+    } else {
+      const requestedCapacity =
+        input.childCapacity ?? (node.childMode === 'POSITIONAL' ? node.children.length : undefined);
+      if (
+        !Number.isInteger(requestedCapacity) ||
+        (requestedCapacity ?? 0) < 1 ||
+        (requestedCapacity ?? 0) > 256
+      ) {
+        return failure('INVALID_CHILD_CAPACITY');
+      }
+
+      const capacity = requestedCapacity as number;
+      if (node.childMode === 'POSITIONAL') {
+        const highestOccupied = node.children.reduce(
+          (highest, childId, index) => (childId === null ? highest : Math.max(highest, index)),
+          -1,
+        );
+        if (highestOccupied >= capacity) return failure('INVALID_CHILD_CAPACITY');
+        children = Array.from({ length: capacity }, (_, index) => node.children[index] ?? null);
+      } else {
+        if (occupied.length > capacity) return failure('INVALID_CHILD_CAPACITY');
+        children = Array.from({ length: capacity }, (_, index) => occupied[index] ?? null);
+      }
+    }
+
+    if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+    const accessPorts =
+      equipmentType === 'CIRCUIT_BREAKER' &&
+      !node.accessPorts.some(
+        (port) =>
+          port.lifecycle === 'ACTIVE' && port.portType === 'POWER' && port.direction === 'OUTPUT',
+      )
+        ? [
+            ...node.accessPorts,
+            {
+              id: node.id + ':power-out',
+              deviceId: node.deviceId,
+              equipmentId: node.id,
+              name: 'Power output',
+              portType: 'POWER' as const,
+              direction: 'OUTPUT' as const,
+              exposure: 'EXTERNAL' as const,
+              lifecycle: 'ACTIVE' as const,
+            },
+          ]
+        : node.accessPorts;
+
+    const updated: EquipmentNode = {
+      ...node,
+      equipmentType,
+      childMode,
+      children,
+      ...(presentation ? { presentation: { ...presentation } } : {}),
+      accessPorts,
+      ...(telemetryPointPrefix ? { telemetryPointPrefix } : {}),
+      updatedAt: nowIso(),
+    };
+    if (!telemetryPointPrefix && 'telemetryPointPrefix' in updated) {
+      delete (updated as { telemetryPointPrefix?: string }).telemetryPointPrefix;
+    }
+    if (!(await this.repository.commitLayout([node], [updated]))) {
+      return failure('LAYOUT_CONFLICT');
+    }
+    return success(updated);
+  }
+
+  async move(
+    id: string,
+    newParentId: string,
+    targetSlotIndex?: number,
+  ): Promise<Result<TopologyNode, TopologyError>> {
     const node = await this.repository.getById(id);
     const parent = await this.repository.getById(newParentId);
 
@@ -283,23 +608,108 @@ export class TopologyService {
       if (targetDeviceId !== node.deviceId) return failure('INVALID_DEVICE_OWNERSHIP');
 
       if (parent.kind === 'EQUIPMENT') {
-        if (parent.childMode === 'POSITIONAL') return failure('POSITION_SLOT_REQUIRED');
+        if (
+          parent.template?.allowedChildTypes?.length &&
+          !parent.template.allowedChildTypes.includes(node.equipmentType)
+        ) {
+          return failure('CHILD_TYPE_NOT_ALLOWED');
+        }
         if (await this.isDescendant(node.id, parent.id)) return failure('EQUIPMENT_CYCLE');
       }
 
       const oldParent = await this.repository.getById(node.parentId);
-      if (oldParent && (oldParent.kind === 'DEVICE' || oldParent.kind === 'EQUIPMENT')) {
-        await this.detachEquipment(oldParent, node.id);
+      if (!oldParent || (oldParent.kind !== 'DEVICE' && oldParent.kind !== 'EQUIPMENT')) {
+        return failure('INVALID_PARENT');
       }
-      await this.attachEquipment(parent, node.id);
 
+      if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+
+      const timestamp = nowIso();
       const moved: EquipmentNode = {
         ...node,
         parentId: parent.id,
         parentEquipmentId: parent.kind === 'EQUIPMENT' ? parent.id : null,
-        updatedAt: nowIso(),
+        updatedAt: timestamp,
       };
-      await this.repository.replace(moved);
+
+      if (oldParent.id === parent.id) {
+        if (parent.kind === 'DEVICE' || parent.childMode === 'DYNAMIC') {
+          return success(node);
+        }
+        if (!Number.isInteger(targetSlotIndex)) return failure('POSITION_SLOT_REQUIRED');
+        const slot = targetSlotIndex as number;
+        if (slot < 0 || slot >= parent.children.length) return failure('SLOT_OUT_OF_RANGE');
+        const currentSlot = parent.children.findIndex((candidate) => candidate === node.id);
+        if (currentSlot < 0) return failure('INVALID_PARENT');
+        if (slot === currentSlot) return success(node);
+        if (parent.children[slot] !== null) return failure('SLOT_OCCUPIED');
+
+        const nextChildren = [...parent.children];
+        nextChildren[currentSlot] = null;
+        nextChildren[slot] = node.id;
+        const updatedParent: EquipmentNode = {
+          ...parent,
+          children: nextChildren,
+          updatedAt: timestamp,
+        };
+        if (!(await this.repository.commitLayout([parent, node], [updatedParent, moved]))) {
+          return failure('LAYOUT_CONFLICT');
+        }
+        return success(moved);
+      }
+
+      let updatedOldParent: DeviceNode | EquipmentNode;
+      if (oldParent.kind === 'DEVICE') {
+        updatedOldParent = {
+          ...oldParent,
+          rootEquipmentIds: oldParent.rootEquipmentIds.filter((candidate) => candidate !== node.id),
+          updatedAt: timestamp,
+        };
+      } else {
+        updatedOldParent = {
+          ...oldParent,
+          children: oldParent.children
+            .map((candidate) => (candidate === node.id ? null : candidate))
+            .filter((candidate) => (oldParent.childMode === 'DYNAMIC' ? candidate !== null : true)),
+          updatedAt: timestamp,
+        };
+      }
+
+      let updatedParent: DeviceNode | EquipmentNode;
+      if (parent.kind === 'DEVICE') {
+        updatedParent = {
+          ...parent,
+          rootEquipmentIds: parent.rootEquipmentIds.includes(node.id)
+            ? parent.rootEquipmentIds
+            : [...parent.rootEquipmentIds, node.id],
+          updatedAt: timestamp,
+        };
+      } else if (parent.childMode === 'POSITIONAL') {
+        if (!Number.isInteger(targetSlotIndex)) return failure('POSITION_SLOT_REQUIRED');
+        const slot = targetSlotIndex as number;
+        if (slot < 0 || slot >= parent.children.length) return failure('SLOT_OUT_OF_RANGE');
+        if (parent.children[slot] !== null) return failure('SLOT_OCCUPIED');
+        const nextChildren = [...parent.children];
+        nextChildren[slot] = node.id;
+        updatedParent = { ...parent, children: nextChildren, updatedAt: timestamp };
+      } else {
+        updatedParent = {
+          ...parent,
+          children: parent.children.includes(node.id)
+            ? parent.children
+            : [...parent.children, node.id],
+          updatedAt: timestamp,
+        };
+      }
+
+      if (
+        !(await this.repository.commitLayout(
+          [oldParent, parent, node],
+          [updatedOldParent, updatedParent, moved],
+        ))
+      ) {
+        return failure('LAYOUT_CONFLICT');
+      }
       return success(moved);
     }
 
@@ -316,13 +726,16 @@ export class TopologyService {
     }
 
     const children = await this.repository.listChildren(id);
-
     if (children.some((child) => child.lifecycle === 'ACTIVE')) {
       return failure('HAS_ACTIVE_CHILDREN');
     }
 
-    if (node.kind === 'EQUIPMENT' && node.rackPlacement) {
-      return failure('CAS_RELEASE_REQUIRED');
+    if (node.kind === 'EQUIPMENT') {
+      if (node.children.some((childId) => childId !== null)) {
+        return failure('HAS_ACTIVE_CHILDREN');
+      }
+      if (node.rackPlacement) return failure('CAS_RELEASE_REQUIRED');
+      if (node.parentEquipmentId !== null) return failure('DETACH_REQUIRED');
     }
 
     const archived = {
@@ -344,9 +757,15 @@ export class TopologyService {
 
     if (node.parentId) {
       const parent = await this.repository.getById(node.parentId);
-
       if (!parent || parent.lifecycle !== 'ACTIVE') {
         return failure('PARENT_ARCHIVED_ON_RESTORE');
+      }
+
+      if (
+        node.kind === 'EQUIPMENT' &&
+        (parent.kind !== 'DEVICE' || node.parentEquipmentId !== null)
+      ) {
+        return failure('DETACH_REQUIRED');
       }
     }
 
@@ -449,53 +868,6 @@ export class TopologyService {
     }
 
     return current ? success(current) : failure('INVALID_DEEP_LINK');
-  }
-
-  private async attachEquipment(
-    parent: Extract<TopologyNode, { kind: 'DEVICE' | 'EQUIPMENT' }>,
-    equipmentId: string,
-  ): Promise<void> {
-    if (parent.kind === 'DEVICE') {
-      if (parent.rootEquipmentIds.includes(equipmentId)) return;
-      await this.repository.replace({
-        ...parent,
-        rootEquipmentIds: [...parent.rootEquipmentIds, equipmentId],
-        updatedAt: nowIso(),
-      });
-      return;
-    }
-
-    if (parent.childMode === 'POSITIONAL') throw new Error('POSITION_SLOT_REQUIRED');
-    const current = parent.children.filter((id): id is string => id !== null);
-    if (current.includes(equipmentId)) return;
-
-    await this.repository.replace({
-      ...parent,
-      children: [...current, equipmentId],
-      updatedAt: nowIso(),
-    });
-  }
-
-  private async detachEquipment(
-    parent: Extract<TopologyNode, { kind: 'DEVICE' | 'EQUIPMENT' }>,
-    equipmentId: string,
-  ): Promise<void> {
-    if (parent.kind === 'DEVICE') {
-      await this.repository.replace({
-        ...parent,
-        rootEquipmentIds: parent.rootEquipmentIds.filter((id) => id !== equipmentId),
-        updatedAt: nowIso(),
-      });
-      return;
-    }
-
-    await this.repository.replace({
-      ...parent,
-      children: parent.children
-        .map((id) => (id === equipmentId ? null : id))
-        .filter((id) => (parent.childMode === 'DYNAMIC' ? id !== null : true)),
-      updatedAt: nowIso(),
-    });
   }
 
   private async isDescendant(rootId: string, candidateId: string): Promise<boolean> {

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { telemetryMetrics } from '@/components/telemetry/telemetry-presentation';
+import {
+  panelReportedPoints,
+  telemetryMetrics,
+} from '@/components/telemetry/telemetry-presentation';
 
 describe('telemetry presentation truth boundary', () => {
   it('preserves explicit units and nested source labels without inventing units', () => {
@@ -20,11 +23,27 @@ describe('telemetry presentation truth boundary', () => {
       { label: 'cpu', value: '0' },
     ]);
   });
-  it('bounds nested and oversized packets without mutating raw payload', () => {
+  it('preserves every reported point without mutating raw payload', () => {
     const packet = Object.fromEntries(Array.from({ length: 100 }, (_, i) => [`field-${i}`, i]));
     const copy = JSON.stringify(packet);
-    expect(telemetryMetrics(packet)).toHaveLength(24);
+    expect(telemetryMetrics(packet)).toHaveLength(100);
     expect(JSON.stringify(packet)).toBe(copy);
     expect(telemetryMetrics({ a: { b: { c: { d: { e: { f: { g: 1 } } } } } } })).toEqual([]);
+  });
+  it('restricts only the panel view to the configured group and positional capacity', () => {
+    const raw = {
+      '0_1_1': { U1: 13.78, I1: 1.93 },
+      '0_1_24': { U1: 12.3 },
+      '0_1_25': { U1: 10 },
+      '0_4_1': { U1: 20 },
+      '0_10_1': { U1: 30 },
+      serial: 'EMU-BFDB-03',
+    };
+    const copy = JSON.stringify(raw);
+    expect(Object.keys(panelReportedPoints(raw, '0_1', 24))).toEqual(['0_1_1', '0_1_24']);
+    expect(telemetryMetrics(panelReportedPoints(raw, '0_1', 24))).toHaveLength(3);
+    expect(Object.keys(panelReportedPoints(raw, '0_3', 24))).toEqual([]);
+    expect(panelReportedPoints(raw, undefined, 24)).toEqual(raw);
+    expect(JSON.stringify(raw)).toBe(copy);
   });
 });

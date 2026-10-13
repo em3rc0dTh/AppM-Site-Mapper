@@ -1,3 +1,4 @@
+import { prepareLayoutSave, readLayoutDraft } from './layout-editor-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
   ContainerClusterBayNode,
@@ -5,13 +6,12 @@ import type {
   PositionNode,
   RoomSubstructureNode,
 } from '@/modules/topology/domain/entities';
-import { nowIso } from '@/shared/domain/entity';
 import { failure, success, type Result } from '@/shared/domain/result';
-import { isValidPolygon, type PointMm, type RectMm } from '@/modules/spatial/domain/geometry';
+import { type PointMm, type RectMm } from '@/modules/spatial/domain/geometry';
 import { generateAssignableSlots } from '@/modules/spatial/domain/placement';
 import { gridCoordinateToPoint, TILE_SIZE_MM } from '@/modules/spatial/domain/grid';
 
-export type SpatialError = 'ROOM_NOT_FOUND' | 'INVALID_POLYGON';
+export type SpatialError = string;
 
 export interface RackPlacementView {
   readonly id: string;
@@ -38,25 +38,22 @@ export class SpatialService {
   async updateRoomPolygon(
     roomId: string,
     polygon: readonly PointMm[],
+    expectedVersion?: string,
   ): Promise<Result<RoomSubstructureNode, SpatialError>> {
-    const node = await this.repository.getById(roomId);
-
-    if (!node || node.kind !== 'ROOM_SUBSTRUCTURE') {
-      return failure('ROOM_NOT_FOUND');
-    }
-
-    if (!isValidPolygon(polygon)) {
-      return failure('INVALID_POLYGON');
-    }
-
-    const updated: RoomSubstructureNode = {
-      ...node,
-      polygon,
-      updatedAt: nowIso(),
-    };
-
-    await this.repository.replace(updated);
-    return success(updated);
+    const current = await readLayoutDraft(this.repository, roomId);
+    if (!current) return failure('ROOM_NOT_FOUND');
+    if (!expectedVersion || expectedVersion !== current.draft.version)
+      return failure('LAYOUT_CONFLICT');
+    const prepared = await prepareLayoutSave(this.repository, roomId, {
+      ...current.draft,
+      polygon: [...polygon],
+      version: expectedVersion,
+    });
+    if ('error' in prepared) return failure(prepared.error);
+    if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+    if (!(await this.repository.commitLayout(prepared.before, prepared.after)))
+      return failure('LAYOUT_CONFLICT');
+    return success(prepared.after[0] as RoomSubstructureNode);
   }
 
   async getRoomLayout(roomId: string): Promise<Result<RoomLayout, SpatialError>> {
@@ -90,14 +87,14 @@ export class SpatialService {
     );
 
     const racks = racksByPosition.flatMap(({ position, racks: positionRacks }) => {
-      const point = gridCoordinateToPoint(position.coordinate);
+      const gridPoint = gridCoordinateToPoint(position.coordinate);
 
       return positionRacks.map((rack) => ({
         id: rack.id,
         name: rack.name,
         rect: {
-          x: point.x,
-          y: point.y,
+          x: rack.placementMm?.x ?? gridPoint.x,
+          y: rack.placementMm?.y ?? gridPoint.y,
           width: rack.dimensionsMm?.width ?? TILE_SIZE_MM,
           depth: rack.dimensionsMm?.depth ?? TILE_SIZE_MM,
         },

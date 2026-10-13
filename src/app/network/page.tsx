@@ -28,11 +28,6 @@ export default async function NetworkPage() {
 
   if (networks.length === 1) {
     const network = networks[0]!;
-    const sites = (await service.listChildren(network.id)).filter((node) => node.kind === 'SITE');
-
-    if (sites.length === 1) {
-      redirect(await service.buildDeepLink(sites[0]!.id));
-    }
 
     redirect(await service.buildDeepLink(network.id));
   }

@@ -1,67 +1,38 @@
 import type { ReactNode } from 'react';
 
-import { Icon, StatusBadge } from './primitives';
+function LoginMark() {
+  return (
+    <svg className="zip-login-mark" viewBox="0 0 64 64" aria-hidden="true">
+      <path d="M32 4 56 17v30L32 60 8 47V17Z" />
+      <path d="m8 17 24 14 24-14M32 31v29M20 24 43 11M20 24v16l12 8 12-8V24" />
+      <path d="M21 25v7m0 0-3 2m3-2 3 1" />
+    </svg>
+  );
+}
 
 export function AuthFrame({
-  eyebrow,
   title,
   description,
   children,
-}: Readonly<{
-  eyebrow: string;
-  title: string;
-  description: string;
-  children: ReactNode;
-}>) {
+}: Readonly<{ eyebrow: string; title: string; description: string; children: ReactNode }>) {
   return (
-    <main className="auth-shell">
-      <aside className="auth-stage" aria-label="Site Mapper identity">
-        <div className="auth-brand">
-          <span className="brand-mark">
-            <Icon name="network" />
-          </span>
-          <span>
-            SITE MAPPER
-            <small>INFRASTRUCTURE OPERATIONS</small>
-          </span>
-        </div>
-
-        <div className="auth-stage-copy">
-          <p className="eyebrow">APP MANAGER / CONTROL CENTER</p>
-          <h2>Physical infrastructure. One trusted operational view.</h2>
-          <p>Topology, rack capacity, power and telemetry share the same certified MK1 domain.</p>
-        </div>
-
-        <div className="auth-proof-grid" aria-label="Platform capabilities">
-          <div className="auth-proof">
-            <span>01</span>
-            <strong>TOPOLOGY</strong>
-            <small>Canonical physical hierarchy</small>
+    <main className="mk-login zip-login-page">
+      <section className="mk-login-content zip-login-content">
+        <header>
+          <LoginMark />
+          <div>
+            <strong>SITE MAPPER</strong>
+            <small>Physical Infrastructure</small>
           </div>
-          <div className="auth-proof">
-            <span>02</span>
-            <strong>POWER</strong>
-            <small>Explicit distribution paths</small>
-          </div>
-          <div className="auth-proof">
-            <span>03</span>
-            <strong>TELEMETRY</strong>
-            <small>Authenticated realtime stream</small>
-          </div>
-        </div>
-      </aside>
-
-      <section className="auth-panel">
-        <div className="auth-panel-status">
-          <StatusBadge tone="good">SECURE SESSION</StatusBadge>
-          <span>MK1</span>
-        </div>
-        <div className="auth-card">
-          <p className="eyebrow">{eyebrow}</p>
-          <h1>{title}</h1>
-          <p className="auth-description">{description}</p>
+        </header>
+        <div className="mk-login-card zip-login-card" aria-label={title}>
+          <h1 className="sr-only">{title}</h1>
+          <p className="sr-only">{description}</p>
           {children}
         </div>
+        <footer>
+          System <span>●</span> Available
+        </footer>
       </section>
     </main>
   );

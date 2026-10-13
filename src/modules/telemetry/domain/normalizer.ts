@@ -45,11 +45,17 @@ export function normalizeTelemetry(
     return failure('TOPIC_NOT_ALLOWED');
   }
 
-  const sourceIdentity = topic.slice(options.topicPrefix.length).split('/')[0]?.trim();
+  const sourceIdentity = topic.slice(options.topicPrefix.length);
 
-  if (!sourceIdentity) {
-    return failure('SOURCE_IDENTITY_MISSING');
-  }
+  if (!sourceIdentity) return failure('SOURCE_IDENTITY_MISSING');
+  // MQTT publishers have exactly one canonical serial path segment. Reject
+  // trailing paths, wildcard names and control characters before SN lookup.
+  if (
+    sourceIdentity !== sourceIdentity.trim() ||
+    sourceIdentity.length > 120 ||
+    /[\/+#\u0000-\u001f\u007f]/.test(sourceIdentity)
+  )
+    return failure('TOPIC_NOT_ALLOWED');
 
   if (payload.byteLength > options.maxPayloadBytes) {
     return failure('PAYLOAD_TOO_LARGE');
@@ -83,7 +89,7 @@ export function normalizeTelemetry(
       return failure('SOURCE_IDENTITY_MISMATCH');
     }
 
-    if (!isRecord(parsed.reported)) {
+    if (!isRecord(parsed.reported) || Object.keys(parsed.reported).length > 1024) {
       return failure('INVALID_PAYLOAD');
     }
 
@@ -114,6 +120,7 @@ export function normalizeTelemetry(
   }
 
   const reported = isRecord(parsed.reported) ? parsed.reported : parsed;
+  if (Object.keys(reported).length > 1024) return failure('INVALID_PAYLOAD');
 
   return success({
     topic,

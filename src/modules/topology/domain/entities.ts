@@ -1,4 +1,5 @@
 import type { DomainEntity } from '@/shared/domain/entity';
+import type { AssetTemplateSnapshot } from '@/modules/warehouse/domain/template';
 
 export type TopologyKind =
   | 'NETWORK'
@@ -39,6 +40,11 @@ export type EquipmentFunction =
   'CONTROL' | 'NETWORKING' | 'POWER_CONVERSION' | 'POWER_DISTRIBUTION' | 'PROTECTION' | 'COOLING';
 
 export type EquipmentChildMode = 'DYNAMIC' | 'POSITIONAL';
+export interface EquipmentPresentation {
+  readonly direction: 'ROW' | 'COLUMN';
+  readonly maxPerLine: number | null;
+  readonly childrenVisibility: 'AUTO' | 'INLINE' | 'SUMMARY';
+}
 export type AccessPortType = 'POWER' | 'NETWORK' | 'CONTROL' | 'DATA' | 'GROUND' | 'CUSTOM';
 export type AccessPortDirection = 'INPUT' | 'OUTPUT' | 'BIDIRECTIONAL';
 export type AccessPortExposure = 'INTERNAL' | 'EXTERNAL';
@@ -165,6 +171,7 @@ export interface ContainerRackNode extends TopologyBase {
   readonly kind: 'CONTAINER_RACK';
   readonly parentId: string;
   readonly variant: ContainerRackVariant;
+  readonly placementMm?: PhysicalPoint;
   readonly dimensionsMm?: DimensionsMm;
   readonly totalU?: number;
   readonly cas: readonly CasRange[];
@@ -180,6 +187,7 @@ export interface DeviceNode extends TopologyBase {
   readonly pinned: boolean;
   readonly deviceType: DeviceType;
   readonly rootEquipmentIds: readonly string[];
+  readonly template?: AssetTemplateSnapshot;
   readonly attributes?: Readonly<Record<string, unknown>>;
 }
 
@@ -191,6 +199,9 @@ export interface EquipmentNode extends TopologyBase {
   readonly equipmentType: EquipmentType;
   readonly parentEquipmentId: string | null;
   readonly childMode: EquipmentChildMode;
+  /** Configured MQTT raw-point group, e.g. 0_2. Not a proven physical binding. */
+  readonly telemetryPointPrefix?: string;
+  readonly presentation?: EquipmentPresentation;
   readonly children: readonly (string | null)[];
   readonly accessPorts: readonly AccessPort[];
   readonly functions?: readonly EquipmentFunction[];
@@ -202,6 +213,7 @@ export interface EquipmentNode extends TopologyBase {
   readonly rackPlacement?: RackPlacement;
   readonly category?: string;
   readonly pinned: boolean;
+  readonly template?: AssetTemplateSnapshot;
   readonly attributes?: Readonly<Record<string, unknown>>;
 }
 

@@ -6,7 +6,6 @@ import {
   MemoryIdentityRepository,
 } from '@/modules/identity/infrastructure/memory-identity-repository';
 import { InventoryService } from '@/modules/inventory/application/inventory-service';
-import { BdfbService } from '@/modules/power/application/bdfb-service';
 import { PowerService } from '@/modules/power/application/power-service';
 import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
 import { CasService } from '@/modules/rack/application/cas-service';
@@ -24,6 +23,34 @@ function requireSuccess<T, E>(result: { ok: true; value: T } | { ok: false; erro
   if (!result.ok) throw new Error(`Expected success, received: ${String(result.error)}`);
   return result.value;
 }
+
+const SITE_POLYGON = [
+  { x: 0, y: 0 },
+  { x: 4800, y: 0 },
+  { x: 4800, y: 3000 },
+  { x: 0, y: 3000 },
+] as const;
+
+const STRUCTURE_POLYGON = [
+  { x: 0, y: 0 },
+  { x: 4700, y: 0 },
+  { x: 4700, y: 2900 },
+  { x: 0, y: 2900 },
+] as const;
+
+const ROOM_POLYGON = [
+  { x: 0, y: 0 },
+  { x: 2400, y: 0 },
+  { x: 2400, y: 1800 },
+  { x: 0, y: 1800 },
+] as const;
+
+const BAY_POLYGON = [
+  { x: 0, y: 0 },
+  { x: 1200, y: 0 },
+  { x: 1200, y: 600 },
+  { x: 0, y: 600 },
+] as const;
 
 describe('MK1 system golden path', () => {
   it('certifies v1.2 identity → topology → Equipment → CAS → power → telemetry → workspace', async () => {
@@ -52,13 +79,19 @@ describe('MK1 system golden path', () => {
       await topology.create({ kind: 'NETWORK', parentId: null, name: 'Certification Network' }),
     );
     const site = requireSuccess(
-      await topology.create({ kind: 'SITE', parentId: network.id, name: 'Certification Site' }),
+      await topology.create({
+        kind: 'SITE',
+        parentId: network.id,
+        name: 'Certification Site',
+        polygon: SITE_POLYGON,
+      }),
     );
     const structure = requireSuccess(
       await topology.create({
         kind: 'STRUCTURE',
         parentId: site.id,
         name: 'Certification Structure',
+        polygon: STRUCTURE_POLYGON,
       }),
     );
     const level = requireSuccess(
@@ -70,6 +103,7 @@ describe('MK1 system golden path', () => {
         parentId: level.id,
         name: 'Equipment Room',
         roomVariant: 'ROOM',
+        polygon: ROOM_POLYGON,
       }),
     );
     const bay = requireSuccess(
@@ -78,6 +112,7 @@ describe('MK1 system golden path', () => {
         parentId: room.id,
         name: 'Bay A',
         clusterVariant: 'BAY',
+        polygon: BAY_POLYGON,
       }),
     );
     const position = requireSuccess(
@@ -109,41 +144,65 @@ describe('MK1 system golden path', () => {
       }),
     ) as DeviceNode;
 
-    requireSuccess(
-      await new BdfbService(topologyRepository).configure(bdfb.id, {
-        shelves: [
-          {
-            id: 'cert-shelf-1',
-            label: 'Shelf 1',
-            frames: [
-              {
-                id: 'cert-frame-1',
-                label: 'Frame 1',
-                panels: [
-                  {
-                    id: 'cert-panel-1',
-                    label: 'Panel A',
-                    positions: [
-                      {
-                        id: 'cert-breaker-1',
-                        label: 'Breaker 1',
-                        capacity: 20,
-                      },
-                      null,
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
+    const chassis = requireSuccess(
+      await topology.create({
+        kind: 'EQUIPMENT',
+        parentId: bdfb.id,
+        name: 'BDFB-01 Chassis',
+        equipmentType: 'CHASSIS',
+        childMode: 'POSITIONAL',
+        childCapacity: 1,
       }),
-    );
+    ) as EquipmentNode;
 
-    const refreshedBdfb = (await topologyRepository.getById(bdfb.id)) as DeviceNode;
-    const chassisId = refreshedBdfb.rootEquipmentIds[0];
-    expect(chassisId).toBeDefined();
-    const chassis = (await topologyRepository.getById(chassisId!)) as EquipmentNode;
+    const shelf = requireSuccess(
+      await topology.create({
+        kind: 'EQUIPMENT',
+        parentId: chassis.id,
+        parentSlotIndex: 0,
+        name: 'Shelf 1',
+        equipmentType: 'SHELF',
+        childMode: 'POSITIONAL',
+        childCapacity: 1,
+      }),
+    ) as EquipmentNode;
+
+    const frame = requireSuccess(
+      await topology.create({
+        kind: 'EQUIPMENT',
+        parentId: shelf.id,
+        parentSlotIndex: 0,
+        name: 'Frame 1',
+        equipmentType: 'FRAME',
+        childMode: 'POSITIONAL',
+        childCapacity: 1,
+      }),
+    ) as EquipmentNode;
+
+    const panel = requireSuccess(
+      await topology.create({
+        kind: 'EQUIPMENT',
+        parentId: frame.id,
+        parentSlotIndex: 0,
+        name: 'Panel A',
+        equipmentType: 'PANEL',
+        childMode: 'POSITIONAL',
+        childCapacity: 2,
+      }),
+    ) as EquipmentNode;
+
+    const breaker = requireSuccess(
+      await topology.create({
+        kind: 'EQUIPMENT',
+        parentId: panel.id,
+        parentSlotIndex: 0,
+        name: 'Breaker 1',
+        equipmentType: 'CIRCUIT_BREAKER',
+      }),
+    ) as EquipmentNode;
+
+    expect(chassis.deviceId).toBe(bdfb.id);
+    expect(breaker.parentEquipmentId).toBe(panel.id);
 
     const loadDevice = requireSuccess(
       await topology.create({
@@ -183,7 +242,6 @@ describe('MK1 system golden path', () => {
     };
     await topologyRepository.replace(loadEquipment);
 
-    expect(chassis.deviceId).toBe(bdfb.id);
     expect(loadEquipment.deviceId).toBe(loadDevice.id);
 
     const deepLink = await topology.buildDeepLink(bdfb.id);
@@ -193,14 +251,6 @@ describe('MK1 system golden path', () => {
     expect(resolved.id).toBe(bdfb.id);
 
     const spatial = new SpatialService(topologyRepository);
-    requireSuccess(
-      await spatial.updateRoomPolygon(room.id, [
-        { x: 0, y: 0 },
-        { x: 2400, y: 0 },
-        { x: 2400, y: 1800 },
-        { x: 0, y: 1800 },
-      ]),
-    );
     const layout = requireSuccess(await spatial.getRoomLayout(room.id));
     expect(layout.racks).toEqual([
       expect.objectContaining({
@@ -237,7 +287,7 @@ describe('MK1 system golden path', () => {
 
     const powerRepository = new MemoryPowerRepository();
     const power = new PowerService(topologyRepository, powerRepository);
-    const sourceAccessPortId = bdfb.id + ':equipment:cert-breaker-1:power-out';
+    const sourceAccessPortId = breaker.id + ':power-out';
     const path = requireSuccess(
       await power.create({
         sourceAccessPortId,
@@ -255,6 +305,7 @@ describe('MK1 system golden path', () => {
       id: 'cert-source-binding',
       protocol: 'MQTT',
       sourceIdentity: 'CERT-BDFB-001',
+      metric: 'SOURCE',
       targetType: 'DEVICE',
       targetId: bdfb.id,
       lifecycle: 'ACTIVE',

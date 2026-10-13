@@ -6,6 +6,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app.py .
+COPY init/002-entity-telemetry.sql .
 
 EXPOSE 8080
 

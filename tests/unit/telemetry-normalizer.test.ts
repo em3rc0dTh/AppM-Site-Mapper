@@ -90,6 +90,37 @@ describe('normalizeTelemetry', () => {
     });
   });
 
+  it('rejects noncanonical MQTT source topics before automatic SN enrollment', () => {
+    for (const topic of [
+      'data/dev/EMU-BFDB-01/subtopic',
+      'data/dev/EMU-BFDB-01/',
+      'data/dev/EMU-BFDB-01+',
+      'data/dev/EMU-BFDB-01#',
+      'data/dev/ EMU-BFDB-01',
+      'data/dev/EMU-BFDB-01' + String.fromCharCode(10),
+      'data/dev/' + 'S'.repeat(121),
+    ]) {
+      const result = normalizeTelemetry(
+        topic,
+        new TextEncoder().encode(JSON.stringify({ reported: {} })),
+        options,
+      );
+      expect(result).toEqual({ ok: false, error: 'TOPIC_NOT_ALLOWED' });
+    }
+  });
+
+  it('bounds reported point count before telemetry distribution and history', () => {
+    const points = Object.fromEntries(
+      Array.from({ length: 1025 }, (_, i) => [`point-${i}`, { U1: 12 }]),
+    );
+    const bytes = new TextEncoder().encode(JSON.stringify({ reported: points }));
+    const result = normalizeTelemetry('data/dev/EMU-BFDB-01', bytes, {
+      ...options,
+      maxPayloadBytes: 2_000_000,
+    });
+    expect(result).toEqual({ ok: false, error: 'INVALID_PAYLOAD' });
+  });
+
   it('rejects malformed JSON and oversized payloads', () => {
     expect(normalizeTelemetry('data/dev/SN-001', new TextEncoder().encode('{'), options)).toEqual({
       ok: false,

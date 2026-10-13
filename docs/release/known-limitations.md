@@ -10,11 +10,13 @@ CI does not prove connectivity or behavior for a specific production MongoDB ins
 
 G13 certifies migration tooling and staging behavior. No production customer dump is committed or migrated from this public repository.
 
-## No persisted telemetry history
+## Conditional persisted telemetry history
 
-The current telemetry runtime maintains latest values in-process and streams them to authenticated browser clients.
-
-It is not a historical time-series datastore.
+The runtime maintains latest telemetry values in-process and streams them to authenticated browser clients.
+When `TELEMETRY_HISTORY_ENABLED=true`, the optional HTTP telemetry-store writer and history
+API can persist/query history in a separately deployed Timescale-backed service.
+This capability does not prove that a particular deployment has the store enabled, available,
+backed up, or monitored. The in-process LIVE hub remains distinct from historical storage.
 
 ## MQTT QoS
 
@@ -24,9 +26,9 @@ QoS 1 publish acknowledgement is handled where applicable; a complete QoS 2 stat
 
 ## Content Security Policy
 
-Baseline browser security headers are configured, but a full CSP is not currently defined.
-
-CSP should be designed and validated against the actual deployment and allowed asset origins before production security sign-off.
+A nonce-based CSP is configured in the application proxy, including `strict-dynamic` and
+`frame-ancestors 'none'`. Production validation is still required against actual deployed
+asset origins, browser behavior and all frontend interactions before security sign-off.
 
 ## Load/scalability
 

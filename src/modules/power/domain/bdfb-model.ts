@@ -1,43 +1,7 @@
-export interface BdfbTelemetryPointSpec {
-  readonly rawPointId: string;
-}
-
-export interface BdfbBreakerSpec {
-  readonly id: string;
-  readonly label: string;
-  readonly capacity?: number;
-  readonly telemetry?: BdfbTelemetryPointSpec;
-}
-
-export interface BdfbPanelSpec {
-  readonly id: string;
-  readonly label: string;
-  /** Positional semantics are explicit: an empty physical position is null. */
-  readonly positions: readonly (BdfbBreakerSpec | null)[];
-}
-
-export interface BdfbFrameSpec {
-  readonly id: string;
-  readonly label: string;
-  readonly physicalFrameVisible?: boolean;
-  readonly panels: readonly BdfbPanelSpec[];
-}
-
-export interface BdfbShelfSpec {
-  readonly id: string;
-  readonly label: string;
-  readonly frames: readonly BdfbFrameSpec[];
-}
-
-export interface BdfbStructureSpec {
-  readonly shelves: readonly BdfbShelfSpec[];
-}
-
 export interface BdfbBreakerView {
   readonly id: string;
   readonly label: string;
   readonly capacity?: number;
-  readonly rawPointId?: string;
   readonly accessPortId: string;
 }
 
@@ -57,9 +21,15 @@ export interface BdfbFrameView {
 export interface BdfbShelfView {
   readonly id: string;
   readonly label: string;
+  /** False means this group exists only in the presentation model. */
+  readonly physical?: boolean;
   readonly frames: readonly BdfbFrameView[];
 }
 
+/**
+ * Read-only BDFB projection built from canonical recursive Equipment.
+ * This model never materializes topology and is not a second write model.
+ */
 export interface BdfbPresentation {
   readonly deviceId: string;
   readonly chassisId: string;

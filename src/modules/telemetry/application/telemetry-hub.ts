@@ -97,10 +97,15 @@ function mergeSample(
   previous: TelemetrySample | undefined,
   incoming: TelemetrySample,
 ): TelemetrySample {
-  if (!previous) {
+  if (
+    !previous ||
+    previous.sourceIdentity !== incoming.sourceIdentity ||
+    previous.bindingId !== incoming.bindingId
+  ) {
     return structuredClone(incoming);
   }
 
+  if (incoming.receivedAt < previous.receivedAt) return structuredClone(previous);
   const breakerReadings = mergeReadings(previous.breakerReadings, incoming.breakerReadings);
   const unmappedPointIds = [
     ...new Set([...(previous.unmappedPointIds ?? []), ...(incoming.unmappedPointIds ?? [])]),

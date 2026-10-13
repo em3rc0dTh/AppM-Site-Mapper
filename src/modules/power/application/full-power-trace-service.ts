@@ -1,0 +1,402 @@
+import type { PowerRepository } from '@/modules/power/application/power-repository';
+import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
+import type { PowerFeed, PowerPath } from '@/modules/power/domain/entities';
+import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
+import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
+import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
+import type {
+  AccessPort,
+  DeviceNode,
+  EquipmentNode,
+  TopologyNode,
+} from '@/modules/topology/domain/entities';
+
+type InventoryNode = DeviceNode | EquipmentNode;
+
+export type PowerTraceTopologyStatus = 'VALID' | 'BROKEN_SOURCE' | 'BROKEN_TARGET';
+export type PowerTraceTelemetryStatus = 'LIVE' | 'MAPPED' | 'UNMAPPED';
+
+export interface PowerTraceAccessPortView {
+  readonly id: string;
+  readonly label: string;
+  readonly feed?: PowerFeed;
+}
+
+export interface FullPowerTraceLeg {
+  readonly pathId: string;
+  readonly label?: string;
+  readonly feed?: PowerFeed;
+  readonly topologyStatus: PowerTraceTopologyStatus;
+  readonly source: {
+    readonly entityId: string;
+    readonly entityName: string;
+    readonly deviceSerialNumber?: string;
+    readonly breakerSerialNumber?: string;
+    readonly shelf?: string;
+    readonly frame?: string;
+    readonly panel?: string;
+    readonly breakerId?: string;
+    readonly breaker?: string;
+  };
+  readonly target: {
+    readonly entityId: string;
+    readonly entityName: string;
+    readonly hierarchy: readonly string[];
+    readonly accessPort?: PowerTraceAccessPortView;
+  };
+  readonly telemetry: {
+    readonly status: PowerTraceTelemetryStatus;
+    readonly rawPointId?: string;
+    readonly sourceIdentity?: string;
+    readonly receivedAt?: string;
+    readonly voltageV?: number;
+    readonly currentA?: number;
+    readonly powerW?: number;
+    readonly energyKwh?: number;
+  };
+}
+
+export interface PowerTracePolicyStatus {
+  readonly entityId: string;
+  readonly entityName: string;
+  readonly policy: 'NONE' | 'A_B_REQUIRED';
+  readonly status: 'NOT_DECLARED' | 'SATISFIED' | 'NOT_SATISFIED';
+  readonly feedsPresent: readonly PowerFeed[];
+}
+
+export interface FullPowerTrace {
+  readonly root: {
+    readonly id: string;
+    readonly name: string;
+    readonly kind: 'DEVICE' | 'EQUIPMENT';
+  };
+  readonly legs: readonly FullPowerTraceLeg[];
+  readonly feedA: readonly FullPowerTraceLeg[];
+  readonly feedB: readonly FullPowerTraceLeg[];
+  readonly unspecified: readonly FullPowerTraceLeg[];
+  readonly policies: readonly PowerTracePolicyStatus[];
+}
+
+export interface PowerTraceTelemetryReader {
+  latest(entityId: string): TelemetrySample | null;
+  snapshot?(): readonly TelemetrySample[];
+}
+
+function isInventoryNode(node: TopologyNode | null): node is InventoryNode {
+  return Boolean(node && (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT'));
+}
+
+function metricValue(value: { readonly value: number } | undefined): number | undefined {
+  return value?.value;
+}
+
+function feedOf(port: AccessPort): PowerFeed | undefined {
+  const value = port.attributes?.feed;
+  return value === 'A' || value === 'B' ? value : undefined;
+}
+
+function feedFromLabel(label: string | undefined): PowerFeed | undefined {
+  if (!label) return undefined;
+  const normalized = label.trim().toUpperCase();
+  if (/^A(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*A\b/.test(normalized)) return 'A';
+  if (/^B(?:\d|\b|[\s_-])/.test(normalized) || /FEED\s*B\b/.test(normalized)) return 'B';
+  return undefined;
+}
+
+export class FullPowerTraceService {
+  constructor(
+    private readonly topology: TopologyRepository,
+    private readonly power: PowerRepository,
+    private readonly telemetry?: PowerTraceTelemetryReader,
+    private readonly telemetryBindings?: TelemetryBindingRepository,
+  ) {}
+
+  async resolve(rootId: string): Promise<FullPowerTrace | null> {
+    const root = await this.topology.getById(rootId);
+    if (!isInventoryNode(root) || root.lifecycle !== 'ACTIVE') return null;
+
+    const family = await this.collectFamily(root);
+    const familyEquipment = family.filter(
+      (node): node is EquipmentNode => node.kind === 'EQUIPMENT',
+    );
+    const targetPortIds = new Set(
+      familyEquipment.flatMap((node) =>
+        node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').map((port) => port.id),
+      ),
+    );
+
+    const paths = (await this.power.listActive()).filter((path) =>
+      targetPortIds.has(path.targetAccessPortId),
+    );
+    const uniquePaths: PowerPath[] = [];
+    const seenPhysicalPaths = new Set<string>();
+    for (const path of paths) {
+      const key = `${path.sourceAccessPortId}\u0000${path.targetAccessPortId}`;
+      if (seenPhysicalPaths.has(key)) continue;
+      seenPhysicalPaths.add(key);
+      uniquePaths.push(path);
+    }
+    const legs = await Promise.all(uniquePaths.map((path) => this.resolveLeg(path)));
+    const policy = this.resolvePolicy(root, familyEquipment, legs);
+
+    return {
+      root: { id: root.id, name: root.name, kind: root.kind },
+      legs,
+      feedA: legs.filter((leg) => leg.feed === 'A'),
+      feedB: legs.filter((leg) => leg.feed === 'B'),
+      unspecified: legs.filter((leg) => !leg.feed),
+      policies: [policy],
+    };
+  }
+
+  private async collectFamily(root: InventoryNode): Promise<readonly InventoryNode[]> {
+    if (root.kind === 'DEVICE') {
+      const equipment = (await this.topology.listEquipmentForDevice(root.id)).filter(
+        (item) => item.lifecycle === 'ACTIVE',
+      );
+      return [root, ...equipment];
+    }
+
+    // An Equipment trace is scoped to this Equipment and its descendants.
+    // Do not mix the power inputs of sibling Equipment from the same Device.
+    const equipment = (await this.topology.listEquipmentForDevice(root.deviceId)).filter(
+      (item) => item.lifecycle === 'ACTIVE',
+    );
+    const descendants = new Set<string>([root.id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const item of equipment) {
+        if (
+          item.parentEquipmentId &&
+          descendants.has(item.parentEquipmentId) &&
+          !descendants.has(item.id)
+        ) {
+          descendants.add(item.id);
+          changed = true;
+        }
+      }
+    }
+    return equipment.filter((item) => descendants.has(item.id));
+  }
+
+  private async resolveLeg(path: PowerPath): Promise<FullPowerTraceLeg> {
+    const [source, target] = await Promise.all([
+      resolvePowerEndpoint(this.topology, path.sourceAccessPortId),
+      resolvePowerEndpoint(this.topology, path.targetAccessPortId),
+    ]);
+
+    const sourceEquipment = source?.equipment;
+    const targetEquipment = target?.equipment;
+    const sourceDevice = sourceEquipment
+      ? await this.topology.getById(sourceEquipment.deviceId)
+      : null;
+    const sourceHierarchy = sourceEquipment
+      ? await this.equipmentHierarchy(sourceEquipment)
+      : { shelf: undefined, frame: undefined, panel: undefined };
+    const targetHierarchy = targetEquipment
+      ? await this.inventoryHierarchy(targetEquipment)
+      : [path.targetAccessPortId];
+
+    const isBreaker = sourceEquipment?.equipmentType === 'CIRCUIT_BREAKER';
+    const samples =
+      this.telemetry?.snapshot?.() ??
+      (sourceEquipment
+        ? [this.telemetry?.latest(sourceEquipment.deviceId)].filter((s): s is TelemetrySample =>
+            Boolean(s),
+          )
+        : []);
+    const readings =
+      sourceEquipment && isBreaker
+        ? samples.flatMap((sample) =>
+            (sample.breakerReadings ?? []).filter(
+              (candidate) =>
+                candidate.breakerId === sourceEquipment.id &&
+                candidate.deviceId === sourceEquipment.deviceId &&
+                candidate.sourceIdentity === sample.sourceIdentity,
+            ),
+          )
+        : [];
+    const reading = readings.length === 1 ? readings[0] : undefined;
+    const breakerBindings =
+      sourceEquipment && isBreaker
+        ? await this.telemetryBindings?.listForTarget('EQUIPMENT', sourceEquipment.id)
+        : undefined;
+    const pairs = new Map<string, { sourceIdentity: string; rawPointId: string }>();
+    for (const binding of breakerBindings ?? []) {
+      if (
+        binding.lifecycle !== 'ACTIVE' ||
+        binding.protocol !== 'MQTT' ||
+        !['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].includes(binding.metric.toUpperCase()) ||
+        !binding.sourcePointId
+      )
+        continue;
+      const key = `${binding.sourceIdentity}\u0000${binding.sourcePointId}`;
+      pairs.set(key, {
+        sourceIdentity: binding.sourceIdentity,
+        rawPointId: binding.sourcePointId,
+      });
+    }
+    // A free-form telemetryRawPointId attribute is not a certified binding.
+    // A single explicit binding pair may be shown as MAPPED before MQTT arrives.
+    const boundPoint = pairs.size === 1 ? [...pairs.values()][0] : undefined;
+    const readingMatchesBinding =
+      !breakerBindings ||
+      (reading && pairs.has(`${reading.sourceIdentity}\u0000${reading.rawPointId}`));
+    const verifiedReading = readingMatchesBinding ? reading : undefined;
+    const rawPointId = verifiedReading?.rawPointId ?? boundPoint?.rawPointId;
+    const mqttSourceIdentity = verifiedReading?.sourceIdentity ?? boundPoint?.sourceIdentity;
+    const sourceFeed = source?.port ? feedOf(source.port) : undefined;
+    const targetFeed = target?.port ? feedOf(target.port) : undefined;
+    const physicalFeed =
+      feedFromLabel(sourceHierarchy.panel) ??
+      feedFromLabel(sourceHierarchy.frame) ??
+      feedFromLabel(sourceHierarchy.shelf);
+    const effectiveFeed = path.feed ?? sourceFeed ?? targetFeed ?? physicalFeed;
+    const voltageV = metricValue(verifiedReading?.metrics.voltageV);
+    const currentA = metricValue(verifiedReading?.metrics.currentA);
+    const powerW = metricValue(verifiedReading?.metrics.powerW);
+    const energyKwh = metricValue(verifiedReading?.metrics.energyKwh);
+    const telemetryStatus: PowerTraceTelemetryStatus = verifiedReading
+      ? 'LIVE'
+      : boundPoint
+        ? 'MAPPED'
+        : 'UNMAPPED';
+
+    return {
+      pathId: path.id,
+      ...(path.label ? { label: path.label } : {}),
+      ...(effectiveFeed ? { feed: effectiveFeed } : {}),
+      topologyStatus:
+        !source || source.port.direction === 'INPUT'
+          ? 'BROKEN_SOURCE'
+          : !target || target.port.direction === 'OUTPUT'
+            ? 'BROKEN_TARGET'
+            : 'VALID',
+      source: {
+        entityId: sourceEquipment?.deviceId ?? path.sourceAccessPortId,
+        entityName: sourceDevice?.name ?? sourceEquipment?.name ?? path.sourceAccessPortId,
+        ...(sourceDevice?.kind === 'DEVICE' && sourceDevice.serialNumber
+          ? { deviceSerialNumber: sourceDevice.serialNumber }
+          : {}),
+        ...(isBreaker && sourceEquipment.serialNumber
+          ? { breakerSerialNumber: sourceEquipment.serialNumber }
+          : {}),
+        ...(sourceHierarchy.shelf ? { shelf: sourceHierarchy.shelf } : {}),
+        ...(sourceHierarchy.frame ? { frame: sourceHierarchy.frame } : {}),
+        ...(sourceHierarchy.panel ? { panel: sourceHierarchy.panel } : {}),
+        ...(sourceEquipment && isBreaker
+          ? { breakerId: sourceEquipment.id, breaker: sourceEquipment.name }
+          : {}),
+      },
+      target: {
+        entityId: targetEquipment?.id ?? path.targetAccessPortId,
+        entityName: targetEquipment?.name ?? path.targetAccessPortId,
+        hierarchy: targetHierarchy,
+        ...(target?.port
+          ? {
+              accessPort: {
+                id: target.port.id,
+                label: target.port.name,
+                ...(targetFeed ? { feed: targetFeed } : {}),
+              },
+            }
+          : {}),
+      },
+      telemetry: {
+        status: telemetryStatus,
+        ...(rawPointId ? { rawPointId } : {}),
+        ...(mqttSourceIdentity ? { sourceIdentity: mqttSourceIdentity } : {}),
+        ...(verifiedReading?.receivedAt ? { receivedAt: verifiedReading.receivedAt } : {}),
+        ...(voltageV !== undefined ? { voltageV } : {}),
+        ...(currentA !== undefined ? { currentA } : {}),
+        ...(powerW !== undefined ? { powerW } : {}),
+        ...(energyKwh !== undefined ? { energyKwh } : {}),
+      },
+    };
+  }
+
+  private async equipmentHierarchy(
+    node: EquipmentNode,
+  ): Promise<{ shelf?: string; frame?: string; panel?: string }> {
+    let current: EquipmentNode | null = node;
+    const visited = new Set<string>();
+    let shelf: string | undefined;
+    let frame: string | undefined;
+    let panel: string | undefined;
+
+    while (current && !visited.has(current.id)) {
+      visited.add(current.id);
+      if (current.equipmentType === 'SHELF') shelf = current.name;
+      if (current.equipmentType === 'FRAME') frame = current.name;
+      if (current.equipmentType === 'PANEL') panel = current.name;
+      if (!current.parentEquipmentId) break;
+      const parent = await this.topology.getById(current.parentEquipmentId);
+      current = parent?.kind === 'EQUIPMENT' ? parent : null;
+    }
+
+    return {
+      ...(shelf ? { shelf } : {}),
+      ...(frame ? { frame } : {}),
+      ...(panel ? { panel } : {}),
+    };
+  }
+
+  private async inventoryHierarchy(node: EquipmentNode): Promise<readonly string[]> {
+    const names: string[] = [];
+    const visited = new Set<string>();
+    let current: TopologyNode | null = node;
+
+    while (current && !visited.has(current.id)) {
+      visited.add(current.id);
+      names.unshift(current.name);
+      if (!current.parentId) break;
+      current = await this.topology.getById(current.parentId);
+      if (current?.kind === 'CONTAINER_RACK') {
+        names.unshift(current.name);
+        break;
+      }
+    }
+    return names;
+  }
+
+  private resolvePolicy(
+    root: InventoryNode,
+    family: readonly EquipmentNode[],
+    legs: readonly FullPowerTraceLeg[],
+  ): PowerTracePolicyStatus {
+    const policyEquipment =
+      root.kind === 'EQUIPMENT'
+        ? root
+        : (family.find((item) => item.attributes?.powerContractRoot === true) ??
+          family.find((item) => item.attributes?.powerRedundancy === 'A_B_REQUIRED'));
+    const policy =
+      policyEquipment?.attributes?.powerRedundancy === 'A_B_REQUIRED' ? 'A_B_REQUIRED' : 'NONE';
+    const targetIds = new Set(family.map((item) => item.id));
+    const validFeeds = [
+      ...new Set(
+        legs
+          .filter(
+            (leg) =>
+              targetIds.has(leg.target.entityId) &&
+              leg.topologyStatus === 'VALID' &&
+              (leg.feed === 'A' || leg.feed === 'B'),
+          )
+          .map((leg) => leg.feed as PowerFeed),
+      ),
+    ].sort() as PowerFeed[];
+
+    return {
+      entityId: root.id,
+      entityName: root.name,
+      policy,
+      status:
+        policy !== 'A_B_REQUIRED'
+          ? 'NOT_DECLARED'
+          : validFeeds.includes('A') && validFeeds.includes('B')
+            ? 'SATISFIED'
+            : 'NOT_SATISFIED',
+      feedsPresent: validFeeds,
+    };
+  }
+}

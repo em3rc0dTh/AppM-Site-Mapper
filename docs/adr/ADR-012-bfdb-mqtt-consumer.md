@@ -69,4 +69,4 @@ Trade-offs:
 
 - `panel-order-24` assumes stored panel order intentionally matches the emulator group order;
 - field commissioning should prefer explicit evidence-backed point bindings;
-- historical Timescale persistence is outside this ADR/change.
+- historical persistence is owned by Site Mapper's telemetry module and is specified separately in ADR-016; the MQTT provider/emulator never owns Site Mapper history.

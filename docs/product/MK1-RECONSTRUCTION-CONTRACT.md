@@ -1387,3 +1387,11 @@ The objective is:
 The legacy system proves what the product can do.
 
 **MK1 must prove that we can trust it.**
+
+# 35. Decisión de producto — Telemetría por Equipment (2026-10-12)
+
+> Todo Equipment puede actuar como entidad telemétrica independiente, identificable mediante su SN y asociable automáticamente a una fuente autenticada. Sus mediciones son propias y pueden participar en agregaciones jerárquicas explícitas sin perder trazabilidad ni mezclar lecturas de equipos distintos.
+
+Esta decisión amplía G2, G8, G10 y G11. El SN resuelve al Equipment físico propietario, también cuando es descendiente, sin convertirlo en un Device. El inspector permite lecturas propias LIVE e históricas. La jerarquía no autoriza a copiar datos del padre, sumar métricas incompatibles ni adivinar puntos eléctricos.
+
+La autenticación de la fuente exige la configuración verificada del broker; coincidir en SN no la demuestra. La política implementada, transición de bindings y límites están en [ADR-017](../adr/ADR-017-independent-equipment-telemetry.md).

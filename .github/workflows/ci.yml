@@ -46,6 +46,9 @@ jobs:
       - name: Integration tests
         run: npm run test:integration
 
+      - name: Telemetry history SQL regression
+        run: python3 -m unittest discover -s infra/telemetry-store -p 'test_*.py'
+
       - name: System certification
         run: npm run test:certification
 

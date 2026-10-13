@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - 'test/adversarial-g10-cross-target-20261013'
       - 'feat/**'
 
 permissions:

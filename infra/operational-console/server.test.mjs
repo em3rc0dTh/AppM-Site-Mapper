@@ -16,7 +16,7 @@ const fixtures={
   power_paths:[{id:'pp',sourceAccessPortId:'ap-out',targetAccessPortId:'ap-in',feed:'A',lifecycle:'ACTIVE'}],
   telemetry_bindings:[{id:'bind',sourceIdentity:'EMU-01',sourcePointId:'0_1_1',metric:'VOLTAGE',targetId:'breaker',targetType:'EQUIPMENT',lifecycle:'ACTIVE'}],
 };
-function fakeDB(){return {collection(name){return {find(){return {sort(){return this},limit(){return this},toArray:async()=>fixtures[name]||[]}}}}}}}
+function fakeDB() { return { collection(name) { return { find() { return { sort() { return this; }, limit() { return this; }, toArray: async () => fixtures[name] || [] }; } }; } }; }
 async function runServer() {
   const server=await createServer({database:fakeDB(),login:async()=>new Response('{}',{status:200,headers:{'set-cookie':'appm_session=unit-test-cookie; HttpOnly'}})});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));

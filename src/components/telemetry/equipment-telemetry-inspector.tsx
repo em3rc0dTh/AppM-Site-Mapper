@@ -67,6 +67,9 @@ export function EquipmentTelemetryInspector({
           ? [current.sample]
           : []
         : (current?.history ?? []);
+  const visibleSamples = pointPrefix
+    ? samples.filter(sample => Object.keys(panelReportedPoints(sample.reported, pointPrefix, pointCapacity)).length > 0)
+    : samples;
   const pointGroupConfigured = Boolean(pointPrefix);
   return (
     <section className="zip-bdfb-live-average" aria-label={`Telemetry ${label}`}>
@@ -98,9 +101,9 @@ export function EquipmentTelemetryInspector({
         {loading
           ? 'Loading…'
           : (error ??
-            (window === 'LIVE' ? current?.status : `${samples.length} historical packets`))}
+            (window === 'LIVE' ? current?.status : `${visibleSamples.length} historical packets for this panel`))}
       </p>
-      {!loading && !error && !samples.length && (
+      {!loading && !error && !visibleSamples.length && (
         <p>
           {window === 'LIVE'
             ? 'No own measurements received.'
@@ -108,7 +111,7 @@ export function EquipmentTelemetryInspector({
         </p>
       )}
       <div style={{ maxHeight: 420, overflowY: 'auto' }}>
-        {samples.map((sample) => (
+        {visibleSamples.map((sample) => (
           <article
             key={`${sample.bindingId}:${sample.receivedAt}`}
             style={{ overflowWrap: 'anywhere' }}
@@ -139,7 +142,7 @@ export function EquipmentTelemetryInspector({
           </article>
         ))}
       </div>
-      <small>Last packet: {current?.sample?.receivedAt ?? '—'}</small>
+      <small>Last matching packet: {visibleSamples.at(-1)?.receivedAt ?? '—'}</small>
       {window !== 'LIVE' && (
         <p>Last packet per time bucket; source labels and units preserved. Up to 1000 packets.</p>
       )}

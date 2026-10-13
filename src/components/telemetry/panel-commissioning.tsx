@@ -37,7 +37,21 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
       setError('');
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'COMMISSIONING_UNAVAILABLE'); }
   }
-  useEffect(() => { void refresh(); }, [panelId]);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch('/api/telemetry/panel-commissioning?' + new URLSearchParams({ panelId }), {
+      cache: 'no-store',
+      signal: controller.signal,
+    }).then(async response => {
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.error ?? 'COMMISSIONING_UNAVAILABLE');
+      if (!controller.signal.aborted) setPreview(body as Preview);
+    }).catch(cause => {
+      if (!controller.signal.aborted)
+        setError(cause instanceof Error ? cause.message : 'COMMISSIONING_UNAVAILABLE');
+    });
+    return () => controller.abort();
+  }, [panelId]);
 
   async function retireSource(row: Row, binding: { id: string; source: string }) {
     if (!preview || !canWrite || confirm !== row.breakerId) return;

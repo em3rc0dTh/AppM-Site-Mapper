@@ -266,7 +266,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               {...(node.kind === 'EQUIPMENT' && node.telemetryPointPrefix
                 ? {
                     pointPrefix: node.telemetryPointPrefix,
-                    pointCapacity: node.childMode === 'POSITIONAL' ? node.children.length : undefined,
+                    pointCapacity:
+                      node.childMode === 'POSITIONAL' ? node.children.length : undefined,
                   }
                 : {})}
             />

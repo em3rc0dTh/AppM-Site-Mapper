@@ -275,6 +275,54 @@ async function main() {
   assert.equal(other.rows[0].ready, false);
   record('Commissioning: four real Mongo bindings, consent required, no cross-Site leakage');
 
+  if (process.env.CI_COMBINED_E2E === 'true') {
+    const { execFileSync } = await import('node:child_process');
+    const diag = await request('GET', '/api/telemetry/diagnostics');
+    assert.equal(diag.body.enabled, true);
+    for (let tries = 0; tries < 40; tries++) {
+      const current = await request('GET', '/api/telemetry/diagnostics');
+      if (current.body.connection === 'subscribed') break;
+      assert.ok(tries !== 39, 'MQTT subscriber never obtained SUBACK');
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+    const mqttPayload = {
+      method: 'update', sn: lima.source, msgid: 900001,
+      timestamp: Math.floor(Date.now() / 1000),
+      reported: { '0_1_1': {
+        state: 'ONLINE', U1: 13.79, U2: 0, I1: 9.91, I2: 0,
+        P1: 136.72, P2: 0, EP1: 0.4155, EP2: 0,
+      } },
+    };
+    execFileSync('mosquitto_pub', [
+      '-h', '127.0.0.1', '-p', '1883', '-t', 'data/dev/' + lima.source,
+      '-m', JSON.stringify(mqttPayload),
+    ]);
+    let latest;
+    let history;
+    for (let attempt = 0; attempt < 60; attempt++) {
+      const live = await request('GET', '/api/telemetry/entity?targetId=' + lima.breaker.id + '&window=LIVE');
+      const prior = await request('GET', '/api/telemetry/entity?targetId=' + lima.breaker.id + '&window=24h');
+      latest = live.body;
+      history = prior.body;
+      if (live.body.sample?.sourceIdentity === lima.source &&
+          Array.isArray(prior.body.history) && prior.body.history.length > 0) break;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+    assert.equal(latest?.sample?.sourceIdentity, lima.source, 'MQTT point did not reach breaker LIVE');
+    assert.ok(history?.history?.some(sample => sample.sourceIdentity === lima.source),
+      'TimescaleDB history does not include commissioned breaker sample');
+    const quitoLive = await request('GET', '/api/telemetry/entity?targetId=' + quito.breaker.id + '&window=LIVE');
+    assert.ok(quitoLive.body.sample == null, 'LIVE data leaked into unrelated Site');
+    record('Broker to MQTT subscriber to commissioned breaker LIVE');
+    record('TimescaleDB durable breaker history and second-Site isolation');
+
+    const { body: diagAfter } = await request('GET', '/api/telemetry/diagnostics');
+    assert.ok(diagAfter.acceptedMessages >= 1);
+    assert.ok(diagAfter.history.writes >= 1);
+    assert.equal(diagAfter.history.failures, 0);
+    record('Telemetry diagnostics: accepted MQTT and successful time-series writes');
+  }
+
   const { body: networks } = await request('GET', '/api/topology');
   assert.equal(networks.nodes.length, 1);
   record('Final: isolated MongoDB inventory survives independent HTTP readback');

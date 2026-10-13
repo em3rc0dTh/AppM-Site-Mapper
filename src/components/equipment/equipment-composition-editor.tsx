@@ -150,6 +150,26 @@ export function EquipmentCompositionEditor({
     );
   }
 
+  function telemetryPrefixField(defaultValue = '') {
+    return (
+      <label>
+        MQTT point prefix · Panel/group
+        <input
+          name="telemetryPointPrefix"
+          defaultValue={defaultValue}
+          maxLength={80}
+          pattern="[A-Za-z0-9]+(_[A-Za-z0-9]+)*"
+          placeholder="e.g. 0_2"
+          title="Raw MQTT group such as 0_2. Leave empty if not commissioned."
+        />
+        <small>
+          Point 1 becomes prefix_1. This records the address only; it does not
+          reassign existing circuit bindings or prove their physical wiring.
+        </small>
+      </label>
+    );
+  }
+
   function openComposer(slot: number | null) {
     setTargetSlot(slot);
     setComposerOpen(true);
@@ -196,6 +216,7 @@ export function EquipmentCompositionEditor({
           },
           childCapacity:
             configurationMode === 'POSITIONAL' ? Number(form.get('childCapacity')) : undefined,
+          telemetryPointPrefix: String(form.get('telemetryPointPrefix') ?? ''),
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -249,6 +270,7 @@ export function EquipmentCompositionEditor({
           equipmentType: String(form.get('equipmentType') ?? '') || undefined,
           childMode: warehouseChildMode,
           childCapacity: resolvedMode === 'POSITIONAL' ? resolvedCapacity : undefined,
+          telemetryPointPrefix: String(form.get('telemetryPointPrefix') ?? ''),
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -288,6 +310,7 @@ export function EquipmentCompositionEditor({
           equipmentType: String(form.get('equipmentType') ?? 'CUSTOM'),
           childMode,
           childCapacity: childMode === 'POSITIONAL' ? Number(form.get('childCapacity')) : undefined,
+          telemetryPointPrefix: String(form.get('telemetryPointPrefix') ?? ''),
         }),
       });
       const data = (await response.json()) as { error?: string };
@@ -385,6 +408,7 @@ export function EquipmentCompositionEditor({
             {equipment.childMode === 'POSITIONAL'
               ? ' · ' + equipment.children.length + ' slots'
               : ' · ' + equipment.children.length + ' children'}
+            {equipment.telemetryPointPrefix ? ' · MQTT ' + equipment.telemetryPointPrefix : ''}
           </small>
         </div>
         <div className="equipment-composition-policy">
@@ -482,6 +506,9 @@ export function EquipmentCompositionEditor({
               />
             </label>
           ) : null}
+          {configurationMode === 'POSITIONAL'
+            ? telemetryPrefixField(equipment.telemetryPointPrefix ?? '')
+            : null}
           <label>
             Layout direction
             <select
@@ -803,6 +830,7 @@ export function EquipmentCompositionEditor({
                   />
                 </label>
               ) : null}
+              {warehouseChildMode === 'POSITIONAL' ? telemetryPrefixField() : null}
               <label>
                 Serial number
                 <input name="serialNumber" maxLength={120} />
@@ -856,6 +884,7 @@ export function EquipmentCompositionEditor({
                   />
                 </label>
               ) : null}
+              {oneOffChildMode === 'POSITIONAL' ? telemetryPrefixField() : null}
               <label>
                 Serial number
                 <input name="serialNumber" maxLength={120} />

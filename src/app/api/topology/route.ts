@@ -204,7 +204,9 @@ export async function POST(request: Request) {
   const parsedContainerVariant = containerVariant(body.containerVariant);
 
   const repository = await createTopologyRepository();
-  const result = await new TopologyService(repository).create({
+  let result;
+  try {
+    result = await new TopologyService(repository).create({
     kind,
     parentId,
     name: body.name,
@@ -239,12 +241,24 @@ export async function POST(request: Request) {
       : {}),
     ...(typeof body.manufacturer === 'string' ? { manufacturer: body.manufacturer } : {}),
     ...(typeof body.model === 'string' ? { model: body.model } : {}),
-  });
+    });
+  } catch (error) {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 11000 &&
+      String(error).includes('uq_active_publisher_serial')
+    ) {
+      return NextResponse.json({ error: 'SERIAL_ALREADY_ASSIGNED' }, { status: 409 });
+    }
+    throw error;
+  }
 
   if (!result.ok) {
     return NextResponse.json(
       { error: result.error },
-      { status: result.error === 'LAYOUT_CONFLICT' ? 409 : 422 },
+      { status: result.error === 'LAYOUT_CONFLICT' || result.error === 'SERIAL_ALREADY_ASSIGNED' ? 409 : 422 },
     );
   }
 

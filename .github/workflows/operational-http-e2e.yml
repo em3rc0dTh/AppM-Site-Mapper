@@ -7,6 +7,7 @@ on:
     paths:
       - 'scripts/ci/http-operational-journey.mjs'
       - 'scripts/ci/http-operational-restart.mjs'
+      - 'scripts/ci/browser-operational-journey.mjs'
       - '.github/workflows/operational-http-e2e.yml'
       - 'src/app/api/**'
       - 'src/modules/topology/**'
@@ -101,10 +102,23 @@ jobs:
       - name: Create Sites, Equipment, PowerPaths and commissioning via HTTP
         run: node scripts/ci/http-operational-journey.mjs
 
+      - name: Install isolated Chromium automation
+        run: |
+          npm install --no-save --package-lock=false playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Exercise real browser login and Equipment UI
+        run: node scripts/ci/browser-operational-journey.mjs
+
       - name: Restart Next.js and certify persisted inventory and history
         run: |
           kill "$(cat /tmp/mk1-http-e2e.pid)" || true
+          sudo fuser -k 3100/tcp || true
           sleep 2
+          if curl -fsS http://127.0.0.1:3100/api/health; then
+            echo 'Old Next.js process still serves requests; restart was not verified.'
+            exit 1
+          fi
           npm run dev -- -H 127.0.0.1 -p 3100 > /tmp/mk1-http-e2e-restart.log 2>&1 &
           echo $! > /tmp/mk1-http-e2e.pid
           node scripts/ci/http-operational-restart.mjs
@@ -119,6 +133,14 @@ jobs:
             grep -E 'Error|error|Failed|POST /api/|PATCH /api/|GET /api/' /tmp/mk1-http-e2e.log | tail -100 || true
           fi
           docker logs --tail 35 mk1-e2e-mongo 2>&1 | grep -E 'ERROR|Error|FATAL' || true
+
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mk1-browser-evidence
+          path: /tmp/mk1-operational-browser.png
+          if-no-files-found: ignore
 
       - name: Cleanup disposable services
         if: always()

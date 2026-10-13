@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { PhysicalEquipmentDiagram } from './physical-equipment-diagram';
+import { PanelCommissioning } from '@/components/telemetry/panel-commissioning';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -557,6 +558,11 @@ export function EquipmentCompositionEditor({
         breakerTelemetryBindings={breakerTelemetryBindings}
         onAdd={canWrite && isActive ? openComposer : undefined}
       />
+      {canReadTelemetry && equipment.equipmentType === 'PANEL' &&
+        equipment.childMode === 'POSITIONAL' && equipment.telemetryPointPrefix &&
+        equipment.serialNumber ? (
+          <PanelCommissioning panelId={equipment.id} canWrite={canWrite} />
+        ) : null}
       <div className="equipment-composition-workbench-actions">
         {canWrite && isActive && equipment.childMode === 'DYNAMIC' && (
           <button type="button" onClick={() => openComposer(null)}>

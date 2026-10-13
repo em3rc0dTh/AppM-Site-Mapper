@@ -76,9 +76,13 @@ export function panelReportedPoints(
     const position = key.slice(prefix.length + 1);
     if (!/^[1-9][0-9]*$/.test(position)) return false;
     const index = Number(position);
-    return Number.isSafeInteger(index) && (capacity === undefined || (index <= capacity && index >= 1));
+    return (
+      Number.isSafeInteger(index) && (capacity === undefined || (index <= capacity && index >= 1))
+    );
   });
-  return Object.fromEntries(entries.sort(([a], [b]) =>
-    Number(a.slice(prefix.length + 1)) - Number(b.slice(prefix.length + 1)),
-  ));
+  return Object.fromEntries(
+    entries.sort(
+      ([a], [b]) => Number(a.slice(prefix.length + 1)) - Number(b.slice(prefix.length + 1)),
+    ),
+  );
 }

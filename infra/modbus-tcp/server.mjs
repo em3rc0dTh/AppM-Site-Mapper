@@ -145,7 +145,7 @@ export function startBridge({
     }
     try {
       const sample = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-      finish(state.apply(sample) ? 202 : 422, state.applyResult ?? 'processed');
+      finish(state.apply(sample) ? 202 : 422, 'processed');
     } catch {
       finish(400, 'invalid_json');
     }

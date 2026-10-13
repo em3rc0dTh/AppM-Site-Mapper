@@ -110,6 +110,58 @@ async function createBdfbBreakers(
 }
 
 describe('TelemetryService', () => {
+  it('delivers exact BFDB panel points to nested breaker Equipment without a BDFB path projection', async () => {
+    // A generic owning Device intentionally has no BDFB electrical projection.
+    // Its canonical nested Equipment and exact MQTT point bindings still exist.
+    const owner = device('device-no-power-projection', 'DEVICE-SN');
+    const repository = new MemoryTopologyRepository([owner]);
+    const breakers = await createBdfbBreakers(repository, owner, 2);
+    const breaker = breakers[0]!;
+    const panelId = breaker.parentEquipmentId;
+    if (!panelId) throw new Error('Expected recorded parent panel');
+    const bindings = new MemoryTelemetryBindingRepository([
+      binding('panel-source', 'EMU-BFDB-03', 'EQUIPMENT', panelId),
+      ...(['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const).map((metric) =>
+        binding('breaker-1-' + metric, 'EMU-BFDB-03', 'EQUIPMENT', breaker.id, '0_1_1', metric),
+      ),
+    ]);
+    const service = new TelemetryService(
+      repository,
+      new TelemetryHub(10),
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 8192 },
+      {},
+      bindings,
+    );
+    const receivedAt = '2026-10-13T13:54:08.000Z';
+    const result = await service.ingest(
+      'data/dev/EMU-BFDB-03',
+      new TextEncoder().encode(JSON.stringify({
+        method: 'update',
+        sn: 'EMU-BFDB-03',
+        timestamp: Date.parse(receivedAt) / 1000,
+        reported: {
+          '0_1_1': { state: 'ONLINE', U1: '13.78', I1: '1.93', P1: '26.64', EP1: '0.2795' },
+          '0_1_2': { state: 'ONLINE', U1: '15.00' },
+        },
+      })),
+      receivedAt,
+    );
+    expect(result.ok).toBe(true);
+    expect(service.latest(panelId)?.reported['0_1_1']).toMatchObject({ U1: '13.78' });
+    expect(service.latest(breaker.id)).toMatchObject({
+      sourceIdentity: 'EMU-BFDB-03',
+      targetId: breaker.id,
+      sourcePointId: '0_1_1',
+      reported: {
+        voltageV: { value: 13.78, unit: 'V' },
+        currentA: { value: 1.93, unit: 'A' },
+        powerW: { value: 26.64, unit: 'W' },
+        energyKwh: { value: 0.2795, unit: 'kWh' },
+      },
+    });
+    expect(service.latest(breakers[1]!.id)).toBeNull();
+  });
+
   it('maps generic telemetry only through an explicit source binding', async () => {
     const owner = device('device-1', 'SN-D');
     const physical = equipment('equipment-1', owner);

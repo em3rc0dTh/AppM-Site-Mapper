@@ -135,15 +135,17 @@ describe('TelemetryService', () => {
     const receivedAt = '2026-10-13T13:54:08.000Z';
     const result = await service.ingest(
       'data/dev/EMU-BFDB-03',
-      new TextEncoder().encode(JSON.stringify({
-        method: 'update',
-        sn: 'EMU-BFDB-03',
-        timestamp: Date.parse(receivedAt) / 1000,
-        reported: {
-          '0_1_1': { state: 'ONLINE', U1: '13.78', I1: '1.93', P1: '26.64', EP1: '0.2795' },
-          '0_1_2': { state: 'ONLINE', U1: '15.00' },
-        },
-      })),
+      new TextEncoder().encode(
+        JSON.stringify({
+          method: 'update',
+          sn: 'EMU-BFDB-03',
+          timestamp: Date.parse(receivedAt) / 1000,
+          reported: {
+            '0_1_1': { state: 'ONLINE', U1: '13.78', I1: '1.93', P1: '26.64', EP1: '0.2795' },
+            '0_1_2': { state: 'ONLINE', U1: '15.00' },
+          },
+        }),
+      ),
       receivedAt,
     );
     expect(result.ok).toBe(true);

@@ -23,12 +23,12 @@ function command(unit, offset, count, fn = 3) {
   return frame;
 }
 
-test('maps 4x24 positions to exactly 96 circuits per BFDB', () => {
+test('maps two BFDB blocks of 48 circuits to exactly 96 positions', () => {
   assert.equal(rawPointIndex('0_1_1'), 0);
-  assert.equal(rawPointIndex('0_2_1'), 24);
-  assert.equal(rawPointIndex('0_3_24'), 71);
-  assert.equal(rawPointIndex('0_4_24'), 95);
-  for (const malformed of ['0_5_1', '0_1_0', '0_1_25', 'garbage']) {
+  assert.equal(rawPointIndex('0_1_25'), 24);
+  assert.equal(rawPointIndex('0_2_24'), 71);
+  assert.equal(rawPointIndex('0_2_48'), 95);
+  for (const malformed of ['0_5_1', '0_1_0', '0_1_49', 'garbage']) {
     assert.equal(rawPointIndex(malformed), null);
   }
 });
@@ -37,7 +37,7 @@ test('holding registers preserve FLOAT32 network byte order, source isolation an
   const state = new ModbusLatestState(sourceMap);
   const now = Date.now();
   assert.equal(state.apply(sample('EMU-BFDB-01','0_1_1',12.5, new Date(now).toISOString()),now),true);
-  assert.equal(state.apply(sample('EMU-BFDB-02','0_4_24',15.5, new Date(now).toISOString()),now),true);
+  assert.equal(state.apply(sample('EMU-BFDB-02','0_2_48',15.5, new Date(now).toISOString()),now),true);
   const r = handleFrame(command(1,0,8),state,now);
   assert.equal(r[7],3);
   assert.equal(r[8],16);

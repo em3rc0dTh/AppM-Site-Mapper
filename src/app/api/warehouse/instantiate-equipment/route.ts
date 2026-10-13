@@ -55,6 +55,7 @@ export async function POST(request: Request) {
       'equipmentType',
       'childMode',
       'childCapacity',
+      'telemetryPointPrefix',
       'presentation',
     ]) ||
     !isBoundedString(body.templateId, 160) ||
@@ -67,6 +68,8 @@ export async function POST(request: Request) {
     (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
     (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
     (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity)) ||
+    (body.telemetryPointPrefix !== undefined &&
+      !isBoundedString(body.telemetryPointPrefix, 80, { allowEmpty: true })) ||
     (body.presentation !== undefined &&
       (!object(body.presentation) ||
         !hasOnlyKeys(object(body.presentation)!, [
@@ -105,6 +108,9 @@ export async function POST(request: Request) {
       ? { childMode: parseEquipmentChildMode(body.childMode)! }
       : {}),
     ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
+    ...(typeof body.telemetryPointPrefix === 'string'
+      ? { telemetryPointPrefix: body.telemetryPointPrefix }
+      : {}),
     ...(body.presentation
       ? {
           presentation: body.presentation as {

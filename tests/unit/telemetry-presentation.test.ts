@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { panelReportedPoints, telemetryMetrics } from '@/components/telemetry/telemetry-presentation';
+import {
+  panelReportedPoints,
+  telemetryMetrics,
+} from '@/components/telemetry/telemetry-presentation';
 
 describe('telemetry presentation truth boundary', () => {
   it('preserves explicit units and nested source labels without inventing units', () => {

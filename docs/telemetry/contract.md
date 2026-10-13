@@ -12,11 +12,11 @@ The data provider is replaceable. Today it may be the BFDB emulator/broker envir
 AppM does **not** clone or own:
 
 - the BFDB field emulator;
-- the BFDB Telemetry Gateway Modbus server;
+- the external BFDB Telemetry Gateway Modbus server (Site Mapper now owns its own independent Modbus TCP output sidecar);
 - the broker lifecycle;
 - Metasys commissioning logic.
 
-AppM consumes MQTT.
+AppM consumes MQTT and exports only **accepted, explicitly commissioned** breaker measurements through its own isolated Modbus TCP service. That service is not a dependency of historical TimescaleDB writes. See [Modbus TCP output](./modbus-tcp-output.md).
 
 ## Flow
 
@@ -218,7 +218,7 @@ It does not claim:
 - real AMC/AWT physical identity has been commissioned;
 - a production MQTT endpoint has been approved;
 - Metasys has been commissioned;
-- AppM implements the Modbus server from `bfdb-telemetry-gateway`;
+- AppM reuses or implements the external `bfdb-telemetry-gateway` Modbus server (it operates a **separate, Site Mapper-owned** Modbus TCP output sidecar instead);
 - the field emulator is a production dependency;
 - the BFDB gateway owns Site Mapper historical telemetry.
 

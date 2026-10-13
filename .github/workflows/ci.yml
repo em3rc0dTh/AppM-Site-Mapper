@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - 'feat/modbus-tcp-site-mapper-sidecar'
       - 'feat/**'
 
 permissions:

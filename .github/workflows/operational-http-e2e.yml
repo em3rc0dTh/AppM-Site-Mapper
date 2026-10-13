@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'feat/modbus-tcp-site-mapper-sidecar'
       - 'feat/full-power-trace-access-ports'
     paths:
       - 'scripts/ci/http-operational-journey.mjs'
@@ -14,6 +15,8 @@ on:
       - 'src/modules/topology/**'
       - 'src/modules/power/**'
       - 'src/modules/telemetry/**'
+      - 'infra/modbus-tcp/**'
+      - 'scripts/ci/modbus-tcp-operational.mjs'
   workflow_dispatch:
 
 permissions:
@@ -38,6 +41,9 @@ jobs:
       TELEMETRY_STORE_URL: http://127.0.0.1:18081
       TELEMETRY_STORE_TOKEN: mk1-ci-isolated-store-secret
       CI_HTTP_BASE_URL: http://127.0.0.1:3100
+      MODBUS_BRIDGE_URL: http://127.0.0.1:18082
+      MODBUS_BRIDGE_TOKEN: ci-only-internal-modbus-bridge-secret-2026
+      MODBUS_SOURCE_UNITS_JSON: '{"CI-BFDB-LIMA":1,"CI-BFDB-QUITO":2}'
 
     steps:
       - name: Checkout
@@ -92,6 +98,16 @@ jobs:
           docker compose -f docker-compose.telemetry.yml logs --tail=60
           exit 1
 
+      - name: Start Site Mapper Modbus TCP bridge on localhost
+        run: |
+          docker compose -f docker-compose.telemetry.yml ps modbus-tcp
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:18082/health; then exit 0; fi
+            sleep 1
+          done
+          docker compose -f docker-compose.telemetry.yml logs modbus-tcp
+          exit 1
+
       - name: Build actual Next.js application
         run: npm run build
 
@@ -102,6 +118,9 @@ jobs:
 
       - name: Create Sites, Equipment, PowerPaths and commissioning via HTTP
         run: node scripts/ci/http-operational-journey.mjs
+
+      - name: Certify Modbus TCP register values from accepted MQTT readings
+        run: node scripts/ci/modbus-tcp-operational.mjs
 
       - name: Install isolated Chromium automation
         run: |

@@ -201,6 +201,105 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           } else {
             acceptedMessages += 1;
             lastAcceptedAt = now;
+            const bridgeUrl = process.env.MODBUS_BRIDGE_URL?.trim();
+            const bridgeToken = process.env.MODBUS_BRIDGE_TOKEN?.trim();
+            if (bridgeUrl && bridgeToken && result.value.protocol === 'BFDB') {
+              // The Modbus service is an optional downstream consumer of accepted,
+              // explicitly commissioned breaker metrics. History remains independent.
+              const mappedReadings: Array<{
+                sourceIdentity: string;
+                rawPointId: string;
+                receivedAt: string;
+                metrics: unknown;
+              }> = [...(result.value.breakerReadings ?? [])].map((reading) => ({
+                sourceIdentity: reading.sourceIdentity,
+                rawPointId: reading.rawPointId,
+                receivedAt: reading.receivedAt,
+                metrics: reading.metrics,
+              }));
+              // A physically configured breaker may have point-level Equipment
+              // bindings without a legacy BDFB shelf/frame projection.
+              // Read only accepted exact-target patches, never raw unbound points.
+              const directSamples = service
+                .snapshot()
+                .filter(
+                  (item) =>
+                    item.targetType === 'EQUIPMENT' &&
+                    Boolean(item.sourcePointId) &&
+                    item.sourceIdentity === result.value.sourceIdentity &&
+                    item.receivedAt === result.value.receivedAt &&
+                    Boolean(item.metricBindingIds?.length),
+                );
+              const rawPacket: unknown = JSON.parse(new TextDecoder().decode(payload));
+              const rawReported =
+                rawPacket && typeof rawPacket === 'object' && 'reported' in rawPacket
+                  ? rawPacket.reported
+                  : null;
+              const freshPoints =
+                rawReported && typeof rawReported === 'object' && !Array.isArray(rawReported)
+                  ? (rawReported as Record<string, unknown>)
+                  : {};
+              for (const item of directSamples) {
+                const point = item.sourcePointId!;
+                const raw = freshPoints[point];
+                if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+                const source = raw as Record<string, unknown>;
+                const fields = [
+                  ['U1', 'voltageV'],
+                  ['I1', 'currentA'],
+                  ['P1', 'powerW'],
+                  ['EP1', 'energyKwh'],
+                ] as const;
+                const metrics: Record<string, { value: number }> = {};
+                for (const [wire, normalized] of fields) {
+                  // Direct Equipment sample contains only commissioned metric
+                  // fields; require it before forwarding fresh raw values.
+                  if (!(normalized in item.reported)) continue;
+                  const rawValue = source[wire];
+                  const numeric =
+                    typeof rawValue === 'number'
+                      ? rawValue
+                      : typeof rawValue === 'string' && rawValue.trim()
+                        ? Number(rawValue)
+                        : Number.NaN;
+                  if (Number.isFinite(numeric)) metrics[normalized] = { value: numeric };
+                }
+                if (Object.keys(metrics).length) {
+                  mappedReadings.push({
+                    sourceIdentity: item.sourceIdentity,
+                    rawPointId: point,
+                    receivedAt: item.receivedAt,
+                    metrics,
+                  });
+                }
+              }
+              for (const reading of mappedReadings) {
+                if (!reading.rawPointId) continue;
+                try {
+                  const response = await fetch(bridgeUrl + '/internal/accepted-breaker', {
+                    method: 'POST',
+                    headers: {
+                      authorization: 'Bearer ' + bridgeToken,
+                      'content-type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      sourceIdentity: reading.sourceIdentity,
+                      rawPointId: reading.rawPointId,
+                      receivedAt: reading.receivedAt,
+                      metrics: reading.metrics,
+                    }),
+                    signal: AbortSignal.timeout(1500),
+                  });
+                  if (!response.ok) {
+                    logger.warn('modbus.bridge.write_rejected', { status: response.status });
+                  }
+                } catch (error) {
+                  logger.warn('modbus.bridge.unavailable', {
+                    reason: error instanceof Error ? error.message : 'unknown',
+                  });
+                }
+              }
+            }
           }
         },
       );

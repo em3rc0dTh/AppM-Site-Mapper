@@ -1,0 +1,31 @@
+name: Site Mapper Modbus TCP certification
+on:
+  push:
+    branches:
+      - 'feat/modbus-tcp-site-mapper-sidecar'
+      - main
+    paths:
+      - 'infra/modbus-tcp/**'
+      - 'src/modules/telemetry/infrastructure/telemetry-runtime.ts'
+      - '.github/workflows/modbus-tcp.yml'
+      - 'docker-compose.telemetry.yml'
+  pull_request:
+    paths:
+      - 'infra/modbus-tcp/**'
+      - 'src/modules/telemetry/infrastructure/telemetry-runtime.ts'
+      - '.github/workflows/modbus-tcp.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  modbus:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Test 96 circuits, FLOAT32, 3 Unit IDs and real TCP reader
+        run: node --test infra/modbus-tcp/server.test.mjs

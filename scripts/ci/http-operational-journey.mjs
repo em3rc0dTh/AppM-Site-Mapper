@@ -364,6 +364,20 @@ async function main() {
   assert.equal(new Set(rowRace.existingMetrics).size, 4, 'Duplicate metric binding detected');
   record('Adversarial concurrency: 16 simultaneous commissioning requests remain atomic');
 
+  const cloned = await create('EQUIPMENT', lima.device.id, 'CI Conflict Panel', {
+    equipmentType: 'PANEL', childMode: 'POSITIONAL', childCapacity: 24,
+    serialNumber: lima.source, telemetryPointPrefix: '0_1',
+  });
+  const clonedBreaker = await create('EQUIPMENT', cloned.id, 'CI Conflict Breaker', {
+    equipmentType: 'CIRCUIT_BREAKER', parentSlotIndex: 0,
+  });
+  const conflicting = await request('POST', '/api/telemetry/panel-commissioning', {
+    panelId: cloned.id, breakerId: clonedBreaker.id, confirmPoint: true,
+    confirmSource: lima.source, confirmRawPoint: '0_1_1',
+  }, 409);
+  assert.equal(conflicting.body.error, 'EXISTING_BINDING_CONFLICT');
+  record('Cross-panel MQTT duplicate point blocked');
+
   if (process.env.CI_COMBINED_E2E === 'true') {
     const { execFileSync } = await import('node:child_process');
     const diag = await request('GET', '/api/telemetry/diagnostics');

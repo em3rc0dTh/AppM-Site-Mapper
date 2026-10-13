@@ -279,6 +279,13 @@ async function main() {
   );
   const { body: fullTrace } = await request('GET', '/api/power-trace/' + recipient.id);
   assert.ok(fullTrace.trace, 'Power trace did not resolve remote Equipment');
+  const remoteLeg = fullTrace.trace.legs.find((leg) => leg.pathId === remotePath.id);
+  assert.ok(remoteLeg, 'Power trace lost BDFB to remote Equipment PowerPath');
+  assert.equal(remoteLeg.topologyStatus, 'VALID');
+  assert.equal(remoteLeg.source.breakerId, lima.breaker.id);
+  assert.equal(remoteLeg.target.entityId, recipient.id);
+  assert.equal(remoteLeg.target.accessPort?.id, remotePort);
+  assert.equal(remoteLeg.feed, 'A');
   record('Network to BDFB breaker AP to independent Device Equipment AP and power trace');
 
   const qOut = await port(quito.breaker, 'Quito A output', 'A', 'OUTPUT');

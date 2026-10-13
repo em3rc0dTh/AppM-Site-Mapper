@@ -68,7 +68,10 @@ export function EquipmentTelemetryInspector({
           : []
         : (current?.history ?? []);
   const visibleSamples = pointPrefix
-    ? samples.filter(sample => Object.keys(panelReportedPoints(sample.reported, pointPrefix, pointCapacity)).length > 0)
+    ? samples.filter(
+        (sample) =>
+          Object.keys(panelReportedPoints(sample.reported, pointPrefix, pointCapacity)).length > 0,
+      )
     : samples;
   const pointGroupConfigured = Boolean(pointPrefix);
   return (
@@ -101,7 +104,9 @@ export function EquipmentTelemetryInspector({
         {loading
           ? 'Loading…'
           : (error ??
-            (window === 'LIVE' ? current?.status : `${visibleSamples.length} historical packets for this panel`))}
+            (window === 'LIVE'
+              ? current?.status
+              : `${visibleSamples.length} historical packets for this panel`))}
       </p>
       {!loading && !error && !visibleSamples.length && (
         <p>

@@ -1,0 +1,88 @@
+name: MK1 HTTP & MongoDB operational acceptance
+
+on:
+  push:
+    branches:
+      - 'feat/full-power-trace-access-ports'
+    paths:
+      - 'scripts/ci/http-operational-journey.mjs'
+      - '.github/workflows/operational-http-e2e.yml'
+      - 'src/app/api/**'
+      - 'src/modules/topology/**'
+      - 'src/modules/power/**'
+      - 'src/modules/telemetry/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  http-mongo-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      APP_ENV: test
+      APP_PERSISTENCE: mongodb
+      MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+      MONGODB_DB_NAME: site_mapper_http_ci_${{ github.run_id }}
+      BOOTSTRAP_ADMIN_TOKEN: isolated-mk1-http-ci-token
+      CI_HTTP_ACCEPTANCE: 'true'
+      CI_HTTP_BASE_URL: http://127.0.0.1:3100
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Start a disposable MongoDB replica set
+        run: |
+          docker run -d --name mk1-e2e-mongo -p 127.0.0.1:27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for i in {1..45}; do
+            if docker exec mk1-e2e-mongo mongosh --quiet --eval 'db.adminCommand({ping:1})' 2>/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          docker exec mk1-e2e-mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
+          for i in {1..45}; do
+            if docker exec mk1-e2e-mongo mongosh --quiet --eval 'db.hello().isWritablePrimary' | grep -q true; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'Mongo replica set failed to become primary.'
+          exit 1
+
+      - name: Build actual Next.js application
+        run: npm run build
+
+      - name: Start application against disposable MongoDB
+        run: |
+          npm run start -- -H 127.0.0.1 -p 3100 > /tmp/mk1-http-e2e.log 2>&1 &
+          echo $! > /tmp/mk1-http-e2e.pid
+
+      - name: Create Sites, Equipment, PowerPaths and commissioning via HTTP
+        run: node scripts/ci/http-operational-journey.mjs
+
+      - name: Verify canonical MongoDB integrity
+        run: npm run audit:mongo -- --expect-db=${{ env.MONGODB_DB_NAME }}
+
+      - name: Print sanitized application diagnostics on failure
+        if: failure()
+        run: |
+          if [ -f /tmp/mk1-http-e2e.log ]; then
+            grep -E 'Error|error|Failed|POST /api/|PATCH /api/|GET /api/' /tmp/mk1-http-e2e.log | tail -100 || true
+          fi
+          docker logs --tail 35 mk1-e2e-mongo 2>&1 | grep -E 'ERROR|Error|FATAL' || true
+
+      - name: Remove disposable MongoDB
+        if: always()
+        run: docker rm -f mk1-e2e-mongo || true

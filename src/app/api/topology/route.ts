@@ -207,40 +207,44 @@ export async function POST(request: Request) {
   let result;
   try {
     result = await new TopologyService(repository).create({
-    kind,
-    parentId,
-    name: body.name,
-    ...(polygon ? { polygon } : {}),
-    ...(parsedRoomVariant ? { roomVariant: parsedRoomVariant } : {}),
-    ...(parsedClusterVariant ? { clusterVariant: parsedClusterVariant } : {}),
-    ...(parsedContainerVariant ? { containerVariant: parsedContainerVariant } : {}),
-    ...(coordinate ? { coordinate } : {}),
-    ...(typeof body.totalU === 'number' ? { totalU: body.totalU } : {}),
-    ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
-    ...(typeof body.category === 'string' ? { category: body.category } : {}),
-    ...(parseDeviceType(body.deviceType) ? { deviceType: parseDeviceType(body.deviceType)! } : {}),
-    ...(parseEquipmentType(body.equipmentType)
-      ? { equipmentType: parseEquipmentType(body.equipmentType)! }
-      : {}),
-    ...(parseEquipmentChildMode(body.childMode)
-      ? { childMode: parseEquipmentChildMode(body.childMode)! }
-      : {}),
-    ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
-    ...(typeof body.telemetryPointPrefix === 'string'
-      ? { telemetryPointPrefix: body.telemetryPointPrefix }
-      : {}),
-    ...(typeof body.parentSlotIndex === 'number' ? { parentSlotIndex: body.parentSlotIndex } : {}),
-    ...(body.presentation
-      ? {
-          presentation: body.presentation as {
-            direction: 'ROW' | 'COLUMN';
-            maxPerLine: number | null;
-            childrenVisibility: 'AUTO' | 'INLINE' | 'SUMMARY';
-          },
-        }
-      : {}),
-    ...(typeof body.manufacturer === 'string' ? { manufacturer: body.manufacturer } : {}),
-    ...(typeof body.model === 'string' ? { model: body.model } : {}),
+      kind,
+      parentId,
+      name: body.name,
+      ...(polygon ? { polygon } : {}),
+      ...(parsedRoomVariant ? { roomVariant: parsedRoomVariant } : {}),
+      ...(parsedClusterVariant ? { clusterVariant: parsedClusterVariant } : {}),
+      ...(parsedContainerVariant ? { containerVariant: parsedContainerVariant } : {}),
+      ...(coordinate ? { coordinate } : {}),
+      ...(typeof body.totalU === 'number' ? { totalU: body.totalU } : {}),
+      ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
+      ...(typeof body.category === 'string' ? { category: body.category } : {}),
+      ...(parseDeviceType(body.deviceType)
+        ? { deviceType: parseDeviceType(body.deviceType)! }
+        : {}),
+      ...(parseEquipmentType(body.equipmentType)
+        ? { equipmentType: parseEquipmentType(body.equipmentType)! }
+        : {}),
+      ...(parseEquipmentChildMode(body.childMode)
+        ? { childMode: parseEquipmentChildMode(body.childMode)! }
+        : {}),
+      ...(typeof body.childCapacity === 'number' ? { childCapacity: body.childCapacity } : {}),
+      ...(typeof body.telemetryPointPrefix === 'string'
+        ? { telemetryPointPrefix: body.telemetryPointPrefix }
+        : {}),
+      ...(typeof body.parentSlotIndex === 'number'
+        ? { parentSlotIndex: body.parentSlotIndex }
+        : {}),
+      ...(body.presentation
+        ? {
+            presentation: body.presentation as {
+              direction: 'ROW' | 'COLUMN';
+              maxPerLine: number | null;
+              childrenVisibility: 'AUTO' | 'INLINE' | 'SUMMARY';
+            },
+          }
+        : {}),
+      ...(typeof body.manufacturer === 'string' ? { manufacturer: body.manufacturer } : {}),
+      ...(typeof body.model === 'string' ? { model: body.model } : {}),
     });
   } catch (error) {
     if (
@@ -258,7 +262,12 @@ export async function POST(request: Request) {
   if (!result.ok) {
     return NextResponse.json(
       { error: result.error },
-      { status: result.error === 'LAYOUT_CONFLICT' || result.error === 'SERIAL_ALREADY_ASSIGNED' ? 409 : 422 },
+      {
+        status:
+          result.error === 'LAYOUT_CONFLICT' || result.error === 'SERIAL_ALREADY_ASSIGNED'
+            ? 409
+            : 422,
+      },
     );
   }
 

@@ -31,5 +31,21 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  modbus-tcp:
+    build:
+      context: .
+      dockerfile: infra/modbus-tcp/Dockerfile
+    environment:
+      MODBUS_SOURCE_UNITS_JSON: '${MODBUS_SOURCE_UNITS_JSON:?Set the approved serial-to-unit map}'
+      MODBUS_BRIDGE_TOKEN: '${MODBUS_BRIDGE_TOKEN:?Set a private Modbus bridge token}'
+      MODBUS_BIND_HOST: 0.0.0.0
+      MODBUS_BIND_PORT: '1502'
+      MODBUS_INGEST_HOST: 0.0.0.0
+      MODBUS_INGEST_PORT: '18082'
+    ports:
+      - '127.0.0.1:1502:1502'
+      - '127.0.0.1:18082:18082'
+    restart: unless-stopped
+
 volumes:
   site_mapper_timescale_data:

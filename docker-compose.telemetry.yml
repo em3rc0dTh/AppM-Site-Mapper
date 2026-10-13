@@ -1,4 +1,19 @@
 services:
+  mongodb:
+    image: mongo:7.0
+    command: ['mongod', '--bind_ip_all']
+    ports:
+      - '127.0.0.1:27017:27017'
+    volumes:
+      - site_mapper_mongo_data:/data/db
+    healthcheck:
+      test: ['CMD', 'mongosh', '--quiet', '--eval', 'db.adminCommand({ ping: 1 }).ok']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    restart: unless-stopped
+
   timescaledb:
     image: timescale/timescaledb:latest-pg16
     environment:
@@ -52,7 +67,7 @@ services:
       context: .
       dockerfile: infra/operational-console/Dockerfile
     environment:
-      MONGODB_URI: '${MONGODB_URI:?Configure Site Mapper MongoDB endpoint accessible from Docker}'
+      MONGODB_URI: mongodb://mongodb:27017/
       MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
       TIMESCALE_DSN: postgresql://site_mapper@timescaledb:5432/site_mapper_telemetry
       SITE_MAPPER_API_URL: '${SITE_MAPPER_API_URL:-http://host.docker.internal:3000}'
@@ -67,9 +82,12 @@ services:
     ports:
       - '127.0.0.1:3100:3100'
     depends_on:
+      mongodb:
+        condition: service_healthy
       timescaledb:
         condition: service_healthy
     restart: unless-stopped
 
 volumes:
+  site_mapper_mongo_data:
   site_mapper_timescale_data:

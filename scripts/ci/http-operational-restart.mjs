@@ -61,7 +61,9 @@ assert.equal(panel.telemetryPointPrefix, '0_1');
 const power = await get('/api/power-paths');
 assert.equal(power.paths.length, 4);
 const physicalRemote = power.paths.find(
-  (path) => path.sourceAccessPortId && path.targetAccessPortId &&
+  (path) =>
+    path.sourceAccessPortId &&
+    path.targetAccessPortId &&
     path.sourceAccessPortId !== path.targetAccessPortId,
 );
 assert.ok(physicalRemote, 'Missing persisted AccessPort-to-AccessPort path');

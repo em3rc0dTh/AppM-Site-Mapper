@@ -18,7 +18,7 @@ const fixtures={
 };
 function fakeDB() { return { collection(name) { return { find() { return { sort() { return this; }, limit() { return this; }, toArray: async () => fixtures[name] || [] }; } }; } }; }
 async function runServer() {
-  const server=await createServer({database:fakeDB(),login:async()=>new Response('{}',{status:200,headers:{'set-cookie':'appm_session=unit-test-cookie; HttpOnly'}})});
+  const server=await createServer({database:fakeDB(),login:async()=>new Response(JSON.stringify({user:{role:'ADMIN',mustChangePassword:false}}),{status:200,headers:{'set-cookie':'appm_session=unit-test-cookie; HttpOnly'}})});
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
   return {server,base:'http://127.0.0.1:'+server.address().port};
 }

@@ -2,11 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { IndependentLiveReader } from './live.mjs';
 
-const db={collection(name){return{find(query){let data=name==='topology_nodes'?[{id:'publisher',serialNumber:'EMU-BFDB-01',kind:'DEVICE',lifecycle:'ACTIVE'},
-{id:'breaker',kind:'EQUIPMENT',equipmentType:'CIRCUIT_BREAKER',lifecycle:'ACTIVE'}]:
-[{protocol:'MQTT',sourceIdentity:'EMU-BFDB-01',sourcePointId:'0_1_1',targetType:'EQUIPMENT',targetId:'breaker',metric:'VOLTAGE',lifecycle:'ACTIVE'},
-{protocol:'MQTT',sourceIdentity:'EMU-BFDB-01',sourcePointId:'0_1_1',targetType:'EQUIPMENT',targetId:'breaker',metric:'CURRENT',lifecycle:'ACTIVE'}];
-if(query?.id?.$in)data=data.filter(x=>query.id.$in.includes(x.id));return{limit(){return this},toArray:async()=>data}}}}}};
+const db = {
+  collection(name) {
+    return {
+      find(query) {
+        let data = name === 'topology_nodes'
+          ? [
+              { id: 'publisher', serialNumber: 'EMU-BFDB-01', kind: 'DEVICE', lifecycle: 'ACTIVE' },
+              { id: 'breaker', kind: 'EQUIPMENT', equipmentType: 'CIRCUIT_BREAKER', lifecycle: 'ACTIVE' },
+            ]
+          : [
+              { protocol: 'MQTT', sourceIdentity: 'EMU-BFDB-01', sourcePointId: '0_1_1', targetType: 'EQUIPMENT', targetId: 'breaker', metric: 'VOLTAGE', lifecycle: 'ACTIVE' },
+              { protocol: 'MQTT', sourceIdentity: 'EMU-BFDB-01', sourcePointId: '0_1_1', targetType: 'EQUIPMENT', targetId: 'breaker', metric: 'CURRENT', lifecycle: 'ACTIVE' },
+            ];
+        if (query?.id?.$in) data = data.filter(item => query.id.$in.includes(item.id));
+        return { limit() { return this; }, toArray: async () => data };
+      },
+    };
+  },
+};
 const reader=new IndependentLiveReader(db);
 function packet(serial,value,at=Date.now()){return Buffer.from(JSON.stringify({method:'update',sn:serial,timestamp:at/1000,reported:{'0_1_1':{U1:value,I1:'2.1'},'0_1_2':{U1:'99'}}}));}
 test('maps only commissioned breaker points to independent live state',async()=>{

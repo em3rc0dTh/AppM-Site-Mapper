@@ -139,13 +139,12 @@ describe('Operational journeys: isolated sites, physical connections and MQTT', 
     expect(await power.create({
       sourceAccessPortId: a.sourcePortB, targetAccessPortId: a.targetPortA, feed: 'B',
     })).toEqual({ ok: false, error: 'FEED_MISMATCH' });
-    expect(await power.create({
-      sourceAccessPortId: a.sourcePortA, targetAccessPortId: b.targetPortA, feed: 'A',
-    })).toEqual({ ok: false, error: 'TARGET_ALREADY_CONNECTED' });
-
     must(await power.create({
       sourceAccessPortId: b.sourcePortA, targetAccessPortId: b.targetPortA, feed: 'A',
     }));
+    expect(await power.create({
+      sourceAccessPortId: a.sourcePortA, targetAccessPortId: b.targetPortA, feed: 'A',
+    })).toEqual({ ok: false, error: 'TARGET_ALREADY_CONNECTED' });
     expect((await power.listActive()).length).toBe(3);
 
     // Two unique MQTT sources are commissioned to distinct panel/point/Equipment IDs.

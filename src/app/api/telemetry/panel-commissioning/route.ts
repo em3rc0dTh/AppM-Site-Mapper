@@ -182,8 +182,29 @@ export async function POST(request: Request) {
         position: row.position,
       },
     };
-    await repository.insert(binding);
-    saved.push(metric);
+    try {
+      await repository.insert(binding);
+      saved.push(metric);
+    } catch (error) {
+      // Another request may have committed this exact metric after our read.
+      // Accept only an identical active mapping; never mask other DB failures
+      // or collisions pointing to a different Equipment.
+      if (!error || typeof error !== 'object' || !('code' in error) || error.code !== 11000)
+        throw error;
+      const concurrent = await repository.listForSource('MQTT', preview.sourceIdentity);
+      const matches = concurrent.filter(
+        (candidate) =>
+          candidate.lifecycle === 'ACTIVE' &&
+          candidate.sourcePointId === row.point &&
+          candidate.metric === metric,
+      );
+      if (
+        matches.length !== 1 ||
+        matches[0]?.targetType !== 'EQUIPMENT' ||
+        matches[0].targetId !== row.breakerId
+      )
+        return Response.json({ error: 'CONCURRENT_BINDING_CONFLICT', saved }, { status: 409 });
+    }
   }
   return Response.json({ ok: true, breakerId: row.breakerId, point: row.point, created: saved });
 }

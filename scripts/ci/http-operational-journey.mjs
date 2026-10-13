@@ -326,6 +326,44 @@ async function main() {
   assert.equal(retry.body.created.length, 0, 'Repeated confirmation duplicated bindings');
   record('Adversarial idempotence: retry creates zero duplicate bindings');
 
+  // Race 16 authenticated writes against the same uncommissioned physical slot.
+  // Concurrent writes must not produce HTTP 500, partial bindings, or duplicates.
+  const racingBreaker = await create('EQUIPMENT', lima.panel.id, 'CI LIMA Concurrent Breaker 02', {
+    equipmentType: 'CIRCUIT_BREAKER',
+    parentSlotIndex: 1,
+  });
+  const racePayload = {
+    panelId: lima.panel.id,
+    breakerId: racingBreaker.id,
+    confirmPoint: true,
+    confirmSource: lima.source,
+    confirmRawPoint: '0_1_2',
+  };
+  const raceResults = await Promise.all(
+    Array.from({ length: 16 }, async () => {
+      const response = await fetch(base + '/api/telemetry/panel-commissioning', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie },
+        body: JSON.stringify(racePayload),
+        signal: AbortSignal.timeout(30000),
+      });
+      return { status: response.status, body: await response.json().catch(() => null) };
+    }),
+  );
+  assert.ok(
+    raceResults.every((result) => result.status === 200 || result.status === 409),
+    'Concurrent commissioning returned unexpected HTTP status: ' + JSON.stringify(raceResults),
+  );
+  const postRace = await request(
+    'GET',
+    '/api/telemetry/panel-commissioning?panelId=' + lima.panel.id,
+  );
+  const rowRace = postRace.body.rows.find((row) => row.breakerId === racingBreaker.id);
+  assert.equal(rowRace?.ready, true, 'Concurrent writes left breaker partially commissioned');
+  assert.equal(rowRace.existingMetrics.length, 4, 'Concurrent writes duplicated binding metrics');
+  assert.equal(new Set(rowRace.existingMetrics).size, 4, 'Duplicate metric binding detected');
+  record('Adversarial concurrency: 16 simultaneous commissioning requests remain atomic');
+
   if (process.env.CI_COMBINED_E2E === 'true') {
     const { execFileSync } = await import('node:child_process');
     const diag = await request('GET', '/api/telemetry/diagnostics');

@@ -206,7 +206,67 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
             if (bridgeUrl && bridgeToken && result.value.protocol === 'BFDB') {
               // The Modbus service is an optional downstream consumer of accepted,
               // explicitly commissioned breaker metrics. History remains independent.
-              for (const reading of result.value.breakerReadings ?? []) {
+              const mappedReadings = [...(result.value.breakerReadings ?? [])].map((reading) => ({
+                sourceIdentity: reading.sourceIdentity,
+                rawPointId: reading.rawPointId,
+                receivedAt: reading.receivedAt,
+                metrics: reading.metrics,
+              }));
+              // A physically configured breaker may have point-level Equipment
+              // bindings without a legacy BDFB shelf/frame projection.
+              // Read only accepted exact-target patches, never raw unbound points.
+              const directSamples = service.snapshot().filter(
+                (item) =>
+                  item.targetType === 'EQUIPMENT' &&
+                  Boolean(item.sourcePointId) &&
+                  item.sourceIdentity === result.value.sourceIdentity &&
+                  item.receivedAt === result.value.receivedAt &&
+                  Boolean(item.metricBindingIds?.length),
+              );
+              const rawPacket: unknown = JSON.parse(new TextDecoder().decode(payload));
+              const rawReported =
+                rawPacket && typeof rawPacket === 'object' && 'reported' in rawPacket
+                  ? rawPacket.reported
+                  : null;
+              const freshPoints =
+                rawReported && typeof rawReported === 'object' && !Array.isArray(rawReported)
+                  ? (rawReported as Record<string, unknown>)
+                  : {};
+              for (const item of directSamples) {
+                const point = item.sourcePointId!;
+                const raw = freshPoints[point];
+                if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+                const source = raw as Record<string, unknown>;
+                const fields = [
+                  ['U1', 'voltageV'],
+                  ['I1', 'currentA'],
+                  ['P1', 'powerW'],
+                  ['EP1', 'energyKwh'],
+                ] as const;
+                const metrics: Record<string, { value: number }> = {};
+                for (const [wire, normalized] of fields) {
+                  // Direct Equipment sample contains only commissioned metric
+                  // fields; require it before forwarding fresh raw values.
+                  if (!(normalized in item.reported)) continue;
+                  const rawValue = source[wire];
+                  const numeric =
+                    typeof rawValue === 'number'
+                      ? rawValue
+                      : typeof rawValue === 'string' && rawValue.trim()
+                        ? Number(rawValue)
+                        : Number.NaN;
+                  if (Number.isFinite(numeric)) metrics[normalized] = { value: numeric };
+                }
+                if (Object.keys(metrics).length) {
+                  mappedReadings.push({
+                    sourceIdentity: item.sourceIdentity,
+                    rawPointId: point,
+                    receivedAt: item.receivedAt,
+                    metrics,
+                  });
+                }
+              }
+              for (const reading of mappedReadings) {
                 if (!reading.rawPointId) continue;
                 try {
                   const response = await fetch(bridgeUrl + '/internal/accepted-breaker', {

@@ -206,7 +206,12 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
             if (bridgeUrl && bridgeToken && result.value.protocol === 'BFDB') {
               // The Modbus service is an optional downstream consumer of accepted,
               // explicitly commissioned breaker metrics. History remains independent.
-              const mappedReadings: Array<{ sourceIdentity: string; rawPointId: string; receivedAt: string; metrics: unknown }> = [...(result.value.breakerReadings ?? [])].map((reading) => ({
+              const mappedReadings: Array<{
+                sourceIdentity: string;
+                rawPointId: string;
+                receivedAt: string;
+                metrics: unknown;
+              }> = [...(result.value.breakerReadings ?? [])].map((reading) => ({
                 sourceIdentity: reading.sourceIdentity,
                 rawPointId: reading.rawPointId,
                 receivedAt: reading.receivedAt,
@@ -215,14 +220,16 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
               // A physically configured breaker may have point-level Equipment
               // bindings without a legacy BDFB shelf/frame projection.
               // Read only accepted exact-target patches, never raw unbound points.
-              const directSamples = service.snapshot().filter(
-                (item) =>
-                  item.targetType === 'EQUIPMENT' &&
-                  Boolean(item.sourcePointId) &&
-                  item.sourceIdentity === result.value.sourceIdentity &&
-                  item.receivedAt === result.value.receivedAt &&
-                  Boolean(item.metricBindingIds?.length),
-              );
+              const directSamples = service
+                .snapshot()
+                .filter(
+                  (item) =>
+                    item.targetType === 'EQUIPMENT' &&
+                    Boolean(item.sourcePointId) &&
+                    item.sourceIdentity === result.value.sourceIdentity &&
+                    item.receivedAt === result.value.receivedAt &&
+                    Boolean(item.metricBindingIds?.length),
+                );
               const rawPacket: unknown = JSON.parse(new TextDecoder().decode(payload));
               const rawReported =
                 rawPacket && typeof rawPacket === 'object' && 'reported' in rawPacket

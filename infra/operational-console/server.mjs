@@ -1,6 +1,7 @@
 import http from 'node:http';
 import { randomBytes } from 'node:crypto';
 import { MongoClient } from 'mongodb';
+import pg from 'pg';
 
 const allowKinds = new Set(['NETWORK','LEVEL','POSITION','CONTAINER_RACK','DEVICE','EQUIPMENT']);
 const views = new Set(['inventory','power','telemetry','bindings']);
@@ -11,6 +12,7 @@ const dbName = process.env.MONGODB_DB_NAME || 'appm_site_mapper';
 const appUrl = process.env.SITE_MAPPER_API_URL || 'http://127.0.0.1:3000';
 const host = process.env.CONSOLE_HOST || '127.0.0.1';
 const port = Number(process.env.CONSOLE_PORT || 3100);
+const timescale = process.env.TIMESCALE_DSN ? new pg.Pool({connectionString:process.env.TIMESCALE_DSN,max:3,connectionTimeoutMillis:3000}) : null;
 const client = mongoUri ? new MongoClient(mongoUri, { serverSelectionTimeoutMS: 3000 }) : null;
 const encode = (s) => String(s ?? '').replace(/[&<>"']/g, x => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 const csvValue = (x) => {
@@ -101,15 +103,26 @@ async function table(view,db){
   if(view==='bindings'){
     return db.collection('telemetry_bindings').find({lifecycle:'ACTIVE'}).limit(maxRows).toArray().then(rows=>rows.map(x=>({id:x.id,source:x.sourceIdentity,rawPoint:x.sourcePointId||'',metric:x.metric,target:x.targetId,targetType:x.targetType,state:x.lifecycle})));
   }
-  // Historical last sample is durable even when Next.js and its in-memory Latest State are down.
-  const history=await fetch(process.env.CONSOLE_HISTORY_URL||'http://127.0.0.1:18081/health').catch(()=>null);
-  return [{status:'HISTORY_SERVICE_'+(history?.ok?'AVAILABLE':'OFFLINE'),note:'Live stream depends on shared telemetry runtime; no invented LIVE readings',checkedAt:new Date().toISOString()}];
+  // Independent durable telemetry: latest received historian sample per physical breaker.
+  // Distinguish historical readings from LIVE status; never manufacture freshness.
+  if(!timescale)return [{status:'UNCONFIGURED',note:'TIMESCALE_DSN not configured'}];
+  const {rows}=await timescale.query(`
+    SELECT DISTINCT ON (source_identity,raw_point_id,breaker_id)
+      source_identity AS source,raw_point_id AS "rawPoint",device_id AS "deviceId",
+      breaker_id AS "breakerId",panel_id AS "panelId",voltage_v AS "voltageV",
+      current_a AS "currentA",power_w AS "powerW",energy_kwh AS "energyKwh",
+      received_at AS "receivedAt"
+    FROM telemetry_samples
+    WHERE received_at >= NOW() - INTERVAL '30 days'
+    ORDER BY source_identity,raw_point_id,breaker_id,received_at DESC LIMIT 5000
+  `);
+  return rows.map(row=>({...row,status:Date.now()-Date.parse(row.receivedAt)<30000?'RECENT_HISTORICAL':'STALE_HISTORICAL'}));
 }
 function columnsFor(view){return {
  inventory:['id','kind','name','parentId','parent','children','network','site','rack','deviceId','serial','type','level','path','state','ports'],
  power:['id','feed','sourcePortId','sourceEquipment','targetPortId','targetEquipment','state','createdAt'],
  bindings:['id','source','rawPoint','metric','target','targetType','state'],
- telemetry:['status','note','checkedAt'],
+ telemetry:['source','rawPoint','deviceId','breakerId','panelId','voltageV','currentA','powerW','energyKwh','receivedAt','status'],
 }[view];}
 async function upstream(session,path,payload,origin){
  const result=await fetch(new URL(path,appUrl),{method:'POST',headers:{'content-type':'application/json','cookie':session.cookie,'origin':origin},body:JSON.stringify(payload),signal:AbortSignal.timeout(10000)});

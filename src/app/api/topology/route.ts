@@ -137,7 +137,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
 
-  for (const optionalText of [body.serialNumber, body.category, body.manufacturer, body.model, body.telemetryPointPrefix]) {
+  for (const optionalText of [
+    body.serialNumber,
+    body.category,
+    body.manufacturer,
+    body.model,
+    body.telemetryPointPrefix,
+  ]) {
     if (optionalText !== undefined && !isBoundedString(optionalText, 120, { allowEmpty: true })) {
       return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
     }

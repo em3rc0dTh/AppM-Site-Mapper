@@ -201,6 +201,38 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           } else {
             acceptedMessages += 1;
             lastAcceptedAt = now;
+            const bridgeUrl = process.env.MODBUS_BRIDGE_URL?.trim();
+            const bridgeToken = process.env.MODBUS_BRIDGE_TOKEN?.trim();
+            if (bridgeUrl && bridgeToken && result.value.protocol === 'BFDB') {
+              // The Modbus service is an optional downstream consumer of accepted,
+              // explicitly commissioned breaker metrics. History remains independent.
+              for (const reading of result.value.breakerReadings ?? []) {
+                if (!reading.rawPointId) continue;
+                try {
+                  const response = await fetch(bridgeUrl + '/internal/accepted-breaker', {
+                    method: 'POST',
+                    headers: {
+                      authorization: 'Bearer ' + bridgeToken,
+                      'content-type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      sourceIdentity: reading.sourceIdentity,
+                      rawPointId: reading.rawPointId,
+                      receivedAt: reading.receivedAt,
+                      metrics: reading.metrics,
+                    }),
+                    signal: AbortSignal.timeout(1500),
+                  });
+                  if (!response.ok) {
+                    logger.warn('modbus.bridge.write_rejected', { status: response.status });
+                  }
+                } catch (error) {
+                  logger.warn('modbus.bridge.unavailable', {
+                    reason: error instanceof Error ? error.message : 'unknown',
+                  });
+                }
+              }
+            }
           }
         },
       );

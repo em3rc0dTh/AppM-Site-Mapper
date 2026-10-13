@@ -172,6 +172,19 @@ async function main() {
   assert.deepEqual(nodes.nodes.map((n) => n.id).sort(), [lima.site.id, quito.site.id].sort());
   record('Topology: independently persisted Sites are discoverable');
 
+  const duplicatedSerial = await request('POST', '/api/topology', {
+    kind: 'EQUIPMENT', parentId: lima.device.id, name: 'Forbidden duplicate BFDB source',
+    equipmentType: 'PANEL', childMode: 'POSITIONAL', childCapacity: 24,
+    serialNumber: lima.source, telemetryPointPrefix: '0_1',
+  }, 409);
+  assert.equal(duplicatedSerial.body.error, 'SERIAL_ALREADY_ASSIGNED');
+  const independentSerial = await request('POST', '/api/topology', {
+    kind: 'DEVICE', parentId: quito.rack.id, name: 'Forbidden duplicate publisher',
+    deviceType: 'CUSTOM', serialNumber: lima.source,
+  }, 409);
+  assert.equal(independentSerial.body.error, 'SERIAL_ALREADY_ASSIGNED');
+  record('Active MQTT serial unique across Device, Equipment and Sites');
+
   const patch = await request('PATCH', '/api/topology/' + lima.panel.id, {
     action: 'configure-equipment',
     telemetryPointPrefix: '0_3',
@@ -220,6 +233,31 @@ async function main() {
   assert.equal(paths.paths.length, 2);
   record('Electrical: create A/B feeds, idempotence, mismatch and persisted paths');
 
+  // Full chain: Network > Site > ... > BDFB breaker AP > another Device's Equipment AP.
+  const recipientDevice = await create('DEVICE', lima.rack.id, 'CI LIMA Second Device', {
+    deviceType: 'CUSTOM',
+  });
+  const recipient = await create('EQUIPMENT', recipientDevice.id, 'CI LIMA Remote Load', {
+    equipmentType: 'CHASSIS',
+  });
+  const remotePort = await port(recipient, 'Remote Equipment A input', 'A', 'INPUT');
+  const secondOutput = await port(lima.breaker, 'Remote feed output A', 'A', 'OUTPUT');
+  const remotePath = await connect(secondOutput, remotePort, 'A');
+  assert.equal(remotePath.sourceAccessPortId, secondOutput);
+  assert.equal(remotePath.targetAccessPortId, remotePort);
+  const { body: physicalSource } = await request('GET', '/api/topology/' + lima.breaker.id);
+  const { body: physicalTarget } = await request('GET', '/api/topology/' + recipient.id);
+  assert.equal(physicalSource.node.deviceId, lima.device.id);
+  assert.equal(physicalTarget.node.deviceId, recipientDevice.id);
+  assert.notEqual(physicalTarget.node.deviceId, physicalSource.node.deviceId);
+  const { body: physicalPaths } = await request('GET', '/api/power-paths');
+  assert.ok(physicalPaths.paths.some((path) =>
+    path.id === remotePath.id && path.sourceAccessPortId === secondOutput &&
+      path.targetAccessPortId === remotePort));
+  const { body: fullTrace } = await request('GET', '/api/power-trace/' + recipient.id);
+  assert.ok(fullTrace.trace, 'Power trace did not resolve remote Equipment');
+  record('Network to BDFB breaker AP to independent Device Equipment AP and power trace');
+
   const qOut = await port(quito.breaker, 'Quito A output', 'A', 'OUTPUT');
   const qIn = await port(quito.load, 'Quito A input', 'A', 'INPUT');
   await connect(qOut, qIn, 'A');
@@ -231,7 +269,7 @@ async function main() {
   );
   assert.equal(invalidTarget.body.error, 'TARGET_ALREADY_CONNECTED');
   const { body: three } = await request('GET', '/api/power-paths');
-  assert.equal(three.paths.length, 3);
+  assert.equal(three.paths.length, 4);
   record('Power: cross-site occupied target rejected');
 
   const { body: proposed } = await request(

@@ -51,6 +51,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
           deviceType: String(form.get('deviceType') ?? 'CUSTOM'),
           equipmentType: String(form.get('equipmentType') ?? '') || undefined,
           childMode,
+          telemetryPointPrefix: String(form.get('telemetryPointPrefix') ?? ''),
           childCapacity: String(form.get('childCapacity') ?? '').trim()
             ? Number(form.get('childCapacity'))
             : undefined,
@@ -163,6 +164,17 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                     max="256"
                     required
                     placeholder="Number of physical slots (1–256)"
+                  />
+                </label>
+              ) : null}
+              {childMode === 'POSITIONAL' ? (
+                <label>
+                  MQTT point prefix
+                  <input
+                    name="telemetryPointPrefix"
+                    maxLength={80}
+                    pattern="[A-Za-z0-9]+(_[A-Za-z0-9]+)*"
+                    placeholder="e.g. 0_2 (optional)"
                   />
                 </label>
               ) : null}

@@ -77,8 +77,19 @@ export function TopologyCreateForm({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const result = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(result.error ?? 'CREATE_FAILED');
+      // Handle empty/non-JSON responses (including proxy/server failures) without
+      // masking the actual HTTP status as a JSON parsing error.
+      const raw = await response.text();
+      let result: { error?: string } = {};
+      try {
+        result = raw ? (JSON.parse(raw) as { error?: string }) : {};
+      } catch {
+        // The server returned HTML or another unexpected response.
+      }
+      if (!response.ok) {
+        throw new Error(result.error || `CREATE_FAILED_HTTP_${response.status}`);
+      }
+      if (!raw) throw new Error('CREATE_FAILED_EMPTY_RESPONSE');
       window.location.reload();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'CREATE_FAILED');

@@ -59,11 +59,13 @@ describe('explicit BFDB breaker Equipment projection', () => {
 
   it('never assigns a panel raw point to an unbound or unverified breaker', () => {
     expect(buildBoundBfdbEquipmentPatches(message, [], new Set(['breaker-01']))).toEqual([]);
+    expect(buildBoundBfdbEquipmentPatches(message, [binding('VOLTAGE')], new Set())).toEqual([]);
     expect(
-      buildBoundBfdbEquipmentPatches(message, [binding('VOLTAGE')], new Set()),
-    ).toEqual([]);
-    expect(
-      buildBoundBfdbEquipmentPatches(message, [binding('VOLTAGE', 'breaker-01', '0_1_3')], new Set(['breaker-01'])),
+      buildBoundBfdbEquipmentPatches(
+        message,
+        [binding('VOLTAGE', 'breaker-01', '0_1_3')],
+        new Set(['breaker-01']),
+      ),
     ).toEqual([]);
   });
 

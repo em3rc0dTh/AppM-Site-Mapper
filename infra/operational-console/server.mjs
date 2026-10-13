@@ -148,7 +148,7 @@ function flatten(node, map) {
     ports: node.accessPorts?.length || 0,
   };
 }
-async function table(view, db) {
+async function table(view, db, live) {
   if (view === 'inventory') {
     const nodes = await db.collection('topology_nodes').find({}).limit(maxRows).toArray();
     const map = new Map(nodes.map((n) => [n.id, n]));
@@ -193,6 +193,8 @@ async function table(view, db) {
         })),
       );
   }
+  const liveRows = live?.rows() ?? [];
+  if (liveRows.length) return liveRows;
   // Independent durable telemetry: latest received historian sample per physical breaker.
   // Distinguish historical readings from LIVE status; never manufacture freshness.
   if (!timescale) return [{ status: 'UNCONFIGURED', note: 'TIMESCALE_DSN not configured' }];
@@ -316,6 +318,14 @@ function operation(input) {
 export async function createServer({ database, login = globalThis.fetch } = {}) {
   const db = database || (client ? await client.connect().then((c) => c.db(dbName)) : null);
   if (!db) throw Error('MONGODB_URI is required');
+  const live = new IndependentLiveReader(db);
+  if (!database && process.env.MQTT_BROKER_URL) {
+    live.start(process.env.MQTT_BROKER_URL, {
+      username: process.env.MQTT_USERNAME,
+      password: process.env.MQTT_PASSWORD,
+      topicFilter: process.env.MQTT_TOPIC_FILTER || 'data/dev/#',
+    });
+  }
   return http.createServer(async (req, res) => {
     try {
       const url = new URL(req.url, 'http://console.local');
@@ -404,7 +414,7 @@ export async function createServer({ database, login = globalThis.fetch } = {}) 
           respond(res, 400, { error: 'UNKNOWN_VIEW' });
           return;
         }
-        const rows = await table(view, db);
+        const rows = await table(view, db, live);
         const columns = columnsFor(view);
         if (url.pathname === '/api/export') {
           res.writeHead(200, {

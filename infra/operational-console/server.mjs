@@ -12,7 +12,7 @@ const allowKinds = new Set([
   'DEVICE',
   'EQUIPMENT',
 ]);
-const views = new Set(['inventory', 'access-ports', 'power', 'telemetry', 'bindings']);
+const views = new Set(['inventory', 'access-ports', 'power', 'telemetry', 'commissioning', 'bindings']);
 const sessions = new Map();
 const maxRows = 5000;
 const mongoUri = process.env.MONGODB_URI;
@@ -97,7 +97,7 @@ let current='inventory',columns=[],rows=[];
 const qs=x=>document.querySelector(x);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function call(url,opt){let r=await fetch(url,{credentials:'same-origin',...opt});let j=await r.json();if(!r.ok)throw Error(j.error||j.status||r.status);return j;}
-async function load(){qs('#status').textContent='Loading';qs('#details').hidden=true;qs('#portfilterlabel').hidden=current!=='access-ports';qs('#guide').textContent=current==='access-ports'?'Recorded Access Ports belong to Equipment. Connected means a recorded active Power Path; it does not prove electrical energization. Select a port for full physical context.':current==='power'?'Active, recorded electrical relationships. Source must be an OUTPUT port and target an INPUT port. A recorded path does not prove energization.':current==='telemetry'?'LIVE = accepted live MQTT reading (within 30 seconds). STALE = older MQTT reading. RECENT_HISTORICAL and STALE_HISTORICAL come from TimescaleDB and never prove a live MQTT connection. NO_DATA means no mapped historical sample was found.':' ';try{let data=await call('/api/table?view='+current);columns=data.columns;rows=data.rows;render();qs('#status').textContent=rows.length+' rows · '+new Date().toLocaleTimeString();}catch(e){qs('#status').textContent=e.message;}}
+async function load(){qs('#status').textContent='Loading';qs('#details').hidden=true;qs('#portfilterlabel').hidden=current!=='access-ports';qs('#guide').textContent=current==='access-ports'?'Recorded Access Ports belong to Equipment. Connected means a recorded active Power Path; it does not prove electrical energization. Select a port for full physical context.':current==='power'?'Active, recorded electrical relationships. Source must be an OUTPUT port and target an INPUT port. A recorded path does not prove energization.':current==='telemetry'?'LIVE = accepted live MQTT reading (within 30 seconds). STALE = older MQTT reading. RECENT_HISTORICAL and STALE_HISTORICAL come from TimescaleDB and never prove a live MQTT connection. NO_DATA means no mapped historical sample was found.':current==='commissioning'?'Read-only physical commissioning readiness. Verify the panel MQTT source identity and raw point prefix, then create breakers in confirmed positions before approving mappings. No equipment or bindings are generated automatically.':' ';try{let data=await call('/api/table?view='+current);columns=data.columns;rows=data.rows;render();qs('#status').textContent=rows.length+' rows · '+new Date().toLocaleTimeString();}catch(e){qs('#status').textContent=e.message;}}
 function render() {
   const query = qs('#search').value.toLowerCase();
   const filter = qs('#portfilter').value;
@@ -138,7 +138,7 @@ function render() {
   });
 }
 async function init(){try{await call('/api/me');qs('#login').hidden=true;qs('#workspace').hidden=false;load();}catch{qs('#login').hidden=false;qs('#workspace').hidden=true;}}
-qs('#tabs').innerHTML=['inventory','access-ports','power','telemetry','bindings'].map(t=>'<button data-view="'+t+'">'+t.toUpperCase()+'</button>').join('');
+qs('#tabs').innerHTML=['inventory','access-ports','power','telemetry','commissioning','bindings'].map(t=>'<button data-view="'+t+'">'+t.toUpperCase()+'</button>').join('');
 qs('#tabs').addEventListener('click',e=>{let v=e.target.dataset.view;if(v){current=v;load();}});
 qs('#search').addEventListener('input',render);qs('#portfilter').addEventListener('change',render);
 qs('#reload').onclick=load;qs('#export').onclick=()=>{location.href='/api/export?view='+current;};
@@ -239,6 +239,31 @@ async function table(view, db, live) {
       };
     });
   }
+  if (view === 'commissioning') {
+    const [panels, nodes, bindings] = await Promise.all([
+      db.collection('topology_nodes').find({kind:'EQUIPMENT',equipmentType:'PANEL',lifecycle:'ACTIVE'}).limit(maxRows).toArray(),
+      db.collection('topology_nodes').find({}).limit(maxRows).toArray(),
+      db.collection('telemetry_bindings').find({lifecycle:'ACTIVE',protocol:'MQTT'}).limit(maxRows).toArray(),
+    ]);
+    const map = new Map(nodes.map((n) => [n.id,n]));
+    return panels.map((panel) => {
+      const children = Array.isArray(panel.children) ? panel.children : [];
+      const breakers = children.map((id) => id && map.get(id)).filter((n) => n?.kind === 'EQUIPMENT' && n.equipmentType === 'CIRCUIT_BREAKER' && n.lifecycle === 'ACTIVE');
+      const serial = panel.serialNumber || '';
+      const prefix = panel.telemetryPointPrefix || '';
+      const readyConfig = panel.childMode === 'POSITIONAL' && Boolean(serial && prefix);
+      const count = bindings.filter((b) => b.sourceIdentity === serial && breakers.some((n) => n.id === b.targetId)).length;
+      return {
+        panel: panel.name, panelId: panel.id, site: flatten(panel,map).site,
+        sourceIdentity: serial || 'NOT_CONFIGURED', pointPrefix: prefix || 'NOT_CONFIGURED',
+        childMode: panel.childMode || '', capacity: children.length, breakers: breakers.length,
+        bindings: count, status: !readyConfig ? 'PANEL_CONFIGURATION_REQUIRED' :
+          breakers.length === 0 ? 'BREAKERS_REQUIRED' :
+          count < breakers.length * 4 ? 'COMMISSIONING_REQUIRED' : 'REVIEW_BINDINGS',
+        note: 'Physical point correspondence must be confirmed by the operator; no automatic writes.',
+      };
+    });
+  }
   if (view === 'bindings') {
     return db
       .collection('telemetry_bindings')
@@ -301,6 +326,7 @@ function columnsFor(view) {
     ],
     'access-ports': ['name', 'equipment', 'rack', 'site', 'portType', 'direction', 'exposure', 'feed', 'connection', 'lifecycle', 'id', 'equipmentId', 'path'],
     power: ['feed', 'sourceEquipment', 'sourcePort', 'sourceDirection', 'targetEquipment', 'targetPort', 'targetDirection', 'site', 'label', 'state', 'id', 'sourcePortId', 'targetPortId', 'sourcePath', 'targetPath', 'createdAt'],
+    commissioning: ['panel','site','sourceIdentity','pointPrefix','childMode','capacity','breakers','bindings','status','panelId','note'],
     bindings: ['id', 'source', 'rawPoint', 'metric', 'target', 'targetType', 'state'],
     telemetry: [
       'source',

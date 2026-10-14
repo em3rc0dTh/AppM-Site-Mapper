@@ -98,7 +98,45 @@ const qs=x=>document.querySelector(x);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function call(url,opt){let r=await fetch(url,{credentials:'same-origin',...opt});let j=await r.json();if(!r.ok)throw Error(j.error||j.status||r.status);return j;}
 async function load(){qs('#status').textContent='Loading';qs('#details').hidden=true;qs('#portfilterlabel').hidden=current!=='access-ports';qs('#guide').textContent=current==='access-ports'?'Recorded Access Ports belong to Equipment. Connected means a recorded active Power Path; it does not prove electrical energization. Select a port for full physical context.':'';try{let data=await call('/api/table?view='+current);columns=data.columns;rows=data.rows;render();qs('#status').textContent=rows.length+' rows · '+new Date().toLocaleTimeString();}catch(e){qs('#status').textContent=e.message;}}
-function render(){let query=qs('#search').value.toLowerCase();let filter=qs('#portfilter').value;let filtered=rows.filter(r=>(!query||Object.values(r).some(v=>String(v??'').toLowerCase().includes(query)))&&(current!=='access-ports'||filter==='all'||(filter==='connected'?r.connection==='CONNECTED':r.connection==='NO_RECORDED_PATH')));qs('#table').innerHTML='<table><thead><tr>'+columns.map(c=>'<th>'+esc(c)+'</th>').join('')+'</tr></thead><tbody>'+filtered.map((r,i)=>'<tr>'+columns.map(c=>'<td>'+(current==='access-ports'&&c==='name'?'<button type="button" data-row="'+i+'" class="row-link">'+esc(r[c])+'</button>':esc(typeof r[c]==='object'?JSON.stringify(r[c]):r[c]))+'</td>').join('')+'</tr>').join('')+'</tbody></table>';qs('#table').querySelectorAll('[data-row]').forEach((b)=>b.onclick=()=>{let r=filtered[Number(b.dataset.row)];qs('#details').hidden=false;qs('#details').textContent='ACCESS PORT · '+r.name+'\\nEquipment: '+r.equipment+'\\nLocation: '+r.path+'\\nPort ID: '+r.id+'\\nEquipment ID: '+r.equipmentId+'\\nType: '+r.portType+' / '+r.direction+' / '+r.exposure+'\\nPower path: '+r.connection+'\\nFeed: '+(r.feed||'Not recorded')+'\\nNote: connected means recorded Power Path, not electrically energized.';};}
+function render() {
+  const query = qs('#search').value.toLowerCase();
+  const filter = qs('#portfilter').value;
+  const filtered = rows.filter((r) =>
+    (!query || Object.values(r).some((v) => String(v ?? '').toLowerCase().includes(query))) &&
+    (current !== 'access-ports' || filter === 'all' ||
+      (filter === 'connected' ? r.connection === 'CONNECTED' : r.connection === 'NO_RECORDED_PATH'))
+  );
+  const header = '<thead><tr>' + columns.map((c) => '<th>' + esc(c) + '</th>').join('') + '</tr></thead>';
+  const tableRows = filtered.map((r, i) => {
+    const cells = columns.map((c) => {
+      const value = typeof r[c] === 'object' ? JSON.stringify(r[c]) : r[c];
+      const content = current === 'access-ports' && c === 'name'
+        ? '<button type="button" class="row-link" data-row="' + i + '">' + esc(value) + '</button>'
+        : esc(value);
+      return '<td>' + content + '</td>';
+    }).join('');
+    return '<tr>' + cells + '</tr>';
+  }).join('');
+  qs('#table').innerHTML = '<table>' + header + '<tbody>' + tableRows + '</tbody></table>';
+  qs('#table').querySelectorAll('[data-row]').forEach((button) => {
+    button.onclick = () => {
+      const r = filtered[Number(button.dataset.row)];
+      if (!r) return;
+      qs('#details').hidden = false;
+      qs('#details').textContent = [
+        'ACCESS PORT · ' + r.name,
+        'Equipment: ' + r.equipment,
+        'Location: ' + r.path,
+        'Port ID: ' + r.id,
+        'Equipment ID: ' + r.equipmentId,
+        'Type: ' + r.portType + ' / ' + r.direction + ' / ' + r.exposure,
+        'Power path: ' + r.connection,
+        'Feed: ' + (r.feed || 'Not recorded'),
+        'Note: a recorded Power Path does not prove electrical energization.'
+      ].join(String.fromCharCode(10));
+    };
+  });
+}
 async function init(){try{await call('/api/me');qs('#login').hidden=true;qs('#workspace').hidden=false;load();}catch{qs('#login').hidden=false;qs('#workspace').hidden=true;}}
 qs('#tabs').innerHTML=['inventory','access-ports','power','telemetry','bindings'].map(t=>'<button data-view="'+t+'">'+t.toUpperCase()+'</button>').join('');
 qs('#tabs').addEventListener('click',e=>{let v=e.target.dataset.view;if(v){current=v;load();}});

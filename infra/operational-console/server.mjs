@@ -97,7 +97,7 @@ let current='inventory',columns=[],rows=[];
 const qs=x=>document.querySelector(x);
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function call(url,opt){let r=await fetch(url,{credentials:'same-origin',...opt});let j=await r.json();if(!r.ok)throw Error(j.error||j.status||r.status);return j;}
-async function load(){qs('#status').textContent='Loading';qs('#details').hidden=true;qs('#portfilterlabel').hidden=current!=='access-ports';qs('#guide').textContent=current==='access-ports'?'Recorded Access Ports belong to Equipment. Connected means a recorded active Power Path; it does not prove electrical energization. Select a port for full physical context.':current==='power'?'Active, recorded electrical relationships. Source must be an OUTPUT port and target an INPUT port. A recorded path does not prove energization.':' ';try{let data=await call('/api/table?view='+current);columns=data.columns;rows=data.rows;render();qs('#status').textContent=rows.length+' rows · '+new Date().toLocaleTimeString();}catch(e){qs('#status').textContent=e.message;}}
+async function load(){qs('#status').textContent='Loading';qs('#details').hidden=true;qs('#portfilterlabel').hidden=current!=='access-ports';qs('#guide').textContent=current==='access-ports'?'Recorded Access Ports belong to Equipment. Connected means a recorded active Power Path; it does not prove electrical energization. Select a port for full physical context.':current==='power'?'Active, recorded electrical relationships. Source must be an OUTPUT port and target an INPUT port. A recorded path does not prove energization.':current==='telemetry'?'LIVE = accepted live MQTT reading (within 30 seconds). STALE = older MQTT reading. RECENT_HISTORICAL and STALE_HISTORICAL come from TimescaleDB and never prove a live MQTT connection. NO_DATA means no mapped historical sample was found.':' ';try{let data=await call('/api/table?view='+current);columns=data.columns;rows=data.rows;render();qs('#status').textContent=rows.length+' rows · '+new Date().toLocaleTimeString();}catch(e){qs('#status').textContent=e.message;}}
 function render() {
   const query = qs('#search').value.toLowerCase();
   const filter = qs('#portfilter').value;
@@ -272,10 +272,11 @@ async function table(view, db, live) {
     WHERE received_at >= NOW() - INTERVAL '30 days'
     ORDER BY source_identity,raw_point_id,breaker_id,received_at DESC LIMIT 5000
   `);
+  if (rows.length === 0) return [{ status: 'NO_DATA', note: 'No mapped telemetry samples in the last 30 days' }];
   return rows.map((row) => ({
     ...row,
-    status:
-      Date.now() - Date.parse(row.receivedAt) < 30000 ? 'RECENT_HISTORICAL' : 'STALE_HISTORICAL',
+    status: Date.now() - Date.parse(row.receivedAt) < 30000
+      ? 'RECENT_HISTORICAL' : 'STALE_HISTORICAL',
   }));
 }
 function columnsFor(view) {
@@ -313,6 +314,7 @@ function columnsFor(view) {
       'energyKwh',
       'receivedAt',
       'status',
+      'note',
     ],
   }[view];
 }

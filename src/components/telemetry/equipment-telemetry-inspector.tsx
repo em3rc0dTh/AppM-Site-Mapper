@@ -36,8 +36,14 @@ export function EquipmentTelemetryInspector({
           `/api/telemetry/entity?${new URLSearchParams({ targetId, window })}`,
           { signal: controller.signal, cache: 'no-store' },
         );
-        const body = await response.json();
-        if (!response.ok) throw new Error(body.error ?? 'TELEMETRY_UNAVAILABLE');
+        const text = await response.text();
+        let body: View & { error?: string };
+        try {
+          body = JSON.parse(text) as View & { error?: string };
+        } catch {
+          throw new Error('TELEMETRY_INVALID_RESPONSE (HTTP ' + response.status + ')');
+        }
+        if (!response.ok) throw new Error(body.error ?? 'TELEMETRY_UNAVAILABLE (HTTP ' + response.status + ')');
         if (!controller.signal.aborted) {
           setView(body);
           setError(null);

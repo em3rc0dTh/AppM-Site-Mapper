@@ -36,6 +36,14 @@ The repository has functional/system certification, not a production load benchm
 
 Limits such as concurrent users, topology scale and event throughput require environment-specific testing.
 
+## Modbus TCP quality and external BMS acceptance
+
+The optional Site Mapper Modbus sidecar has a locally verified one-breaker FC03 FLOAT32 output, matched against exact recent TimescaleDB measurements from a synthetic MQTT emitter. This does not certify a full 96-circuit BFDB, three sources, a customer field installation or Metasys.
+
+Modbus value freshness currently uses in-process Latest State. After a sidecar restart it starts empty until new accepted samples arrive. Missing, expired, or not-yet-commissioned metrics read as **zero**, which is indistinguishable from a legitimate zero. A quality/status register contract and external BMS handling are required before using these values for safety-related monitoring or controls. Do not expose the unauthenticated Modbus TCP service to a public network.
+
+The current lab Compose chooses an explicit four-24-point mapping while the stand-alone legacy server keeps its two-48-point default. The mapping must be confirmed for each provider and approved source-to-Unit-ID table. See `docs/operations/mqtt-modbus-lab.md`.
+
 ## Physical/field certification
 
 The software model represents physical infrastructure, but G14 does not claim certification against a live customer facility or physical telemetry hardware.

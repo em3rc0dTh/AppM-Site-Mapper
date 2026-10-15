@@ -23,6 +23,7 @@ Do not reuse the external `bfdb-telemetry-gateway` database or Modbus service as
 A single Site Mapper positional Equipment `PANEL-01` has 24 slots and declared raw-point prefix `0_1`. Position 01 contains canonical Equipment `BDFB-01-PANEL-01-CB-01`. The MQTT publisher `EMU-BFDB-01` belongs to **the PANEL Equipment**, not to the parent BDFB Device. Its four independently verified breaker bindings map `0_1_1` to `VOLTAGE`, `CURRENT`, `POWER`, `ENERGY`.
 
 Example lab identifiers, not production constants:
+
 - Panel Equipment: `5a31f9bd-220d-4f1b-b42a-f73a9aaf03f5`.
 - Breaker Equipment: `4d394db4-b263-4ca3-9fa2-fb10661d89ff`.
 - `EMU-BFDB-01` publisher Unit ID: 1, **as confirmed by the lab's private mapping**.
@@ -59,7 +60,7 @@ GET http://localhost:3000/api/telemetry/entity?targetId=4d394db4-b263-4ca3-9fa2-
 GET http://localhost:3000/api/telemetry/entity?targetId=4d394db4-b263-4ca3-9fa2-fb10661d89ff&window=24h
 ```
 
-Required state: subscribed connection, received/accepted messages, zero relevant rejections, four active metric bindings with `ready:true`, and a *recent* actual sample attributed to the breaker with `sourceIdentity=EMU-BFDB-01` and `sourcePointId=0_1_1`. A `ready:true` commissioning response alone does not certify LIVE.
+Required state: subscribed connection, received/accepted messages, zero relevant rejections, four active metric bindings with `ready:true`, and a _recent_ actual sample attributed to the breaker with `sourceIdentity=EMU-BFDB-01` and `sourcePointId=0_1_1`. A `ready:true` commissioning response alone does not certify LIVE.
 
 ## Read-only TimecaleDB check
 
@@ -103,14 +104,14 @@ Do not treat the preceding numbers as current readings, setpoints or fixtures. `
 
 ## Troubleshooting boundaries
 
-| Symptom | Inspect | Do not do |
-|---|---|---|
-| HTTP 500 during entity LIVE | `docker compose -f docker-compose.telemetry.yml logs --tail=100 site-mapper`, APP_ENV and MQTT URL | Reset MongoDB |
-| MQTT subscribed, rejected packets | `/api/telemetry/diagnostics`, unique serial, source/topic identity | Invent implicit breaker bindings |
-| 4/4 bindings but `NO DATA` | source raw point, active publisher, accepted telemetry | Recreate breaker |
-| LIVE works but no history | history writer diagnostics, telemetry-store, timescaledb | Report full history certification |
-| Modbus zero | sidecar logs, bridge token, freshness threshold, point layout and explicit source unit map | Interpret zero as certified healthy |
-| Modbus exception | FC03 offset/register count and configured Unit ID | Guess register offset or source serial |
+| Symptom                           | Inspect                                                                                            | Do not do                              |
+| --------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| HTTP 500 during entity LIVE       | `docker compose -f docker-compose.telemetry.yml logs --tail=100 site-mapper`, APP_ENV and MQTT URL | Reset MongoDB                          |
+| MQTT subscribed, rejected packets | `/api/telemetry/diagnostics`, unique serial, source/topic identity                                 | Invent implicit breaker bindings       |
+| 4/4 bindings but `NO DATA`        | source raw point, active publisher, accepted telemetry                                             | Recreate breaker                       |
+| LIVE works but no history         | history writer diagnostics, telemetry-store, timescaledb                                           | Report full history certification      |
+| Modbus zero                       | sidecar logs, bridge token, freshness threshold, point layout and explicit source unit map         | Interpret zero as certified healthy    |
+| Modbus exception                  | FC03 offset/register count and configured Unit ID                                                  | Guess register offset or source serial |
 
 Read-only log command:
 

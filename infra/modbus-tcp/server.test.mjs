@@ -132,7 +132,10 @@ test('four 24-position panels use distinct registers without affecting legacy bl
   assert.equal(rawPointIndex('0_2_24', 'blocks-2x48'), 71);
   const state = new ModbusLatestState(sourceMap, 30000, 'panels-4x24');
   const now = Date.now();
-  assert.equal(state.apply(sample('EMU-BFDB-01', '0_4_24', 14.75, new Date(now).toISOString()), now), true);
+  assert.equal(
+    state.apply(sample('EMU-BFDB-01', '0_4_24', 14.75, new Date(now).toISOString()), now),
+    true,
+  );
   assert.equal(handleFrame(command(1, 760, 2), state, now).readFloatBE(9), 14.75);
   assert.equal(handleFrame(command(1, 0, 2), state, now).readFloatBE(9), 0);
   assert.throws(() => new ModbusLatestState(sourceMap, 30000, 'bad-layout'), /MODBUS_POINT_LAYOUT/);

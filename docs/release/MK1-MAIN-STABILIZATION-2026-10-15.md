@@ -30,11 +30,11 @@ These observations validate one **synthetic laboratory** circuit end-to-end. The
 
 ## Independent open pull requests — deliberately not included
 
-| PR | State relative to the certified main branch | Merge gate |
-|---|---|---|
-| [#36 Room / Rack / BDFB views](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/36) | substantially behind main; touches same physical UI and BDFB surfaces | Rebase/cherry-pick selectively, visual diff and canonical Equipment regression |
-| [#30 G16 telemetry hardening](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/30) | substantially behind main; PR description explicitly states G16 is **not PASS** | Complete the declared security, idempotency, outbox, broker ACL and system gates before merge |
-| [#29 Spatial Operations Studio](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/29) | substantially behind main; the PR explicitly requires **local visual acceptance before merge** | Perform that acceptance and review overlapping routing/spatial behavior |
+| PR                                                                                     | State relative to the certified main branch                                                    | Merge gate                                                                                    |
+| -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| [#36 Room / Rack / BDFB views](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/36)  | substantially behind main; touches same physical UI and BDFB surfaces                          | Rebase/cherry-pick selectively, visual diff and canonical Equipment regression                |
+| [#30 G16 telemetry hardening](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/30)   | substantially behind main; PR description explicitly states G16 is **not PASS**                | Complete the declared security, idempotency, outbox, broker ACL and system gates before merge |
+| [#29 Spatial Operations Studio](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/29) | substantially behind main; the PR explicitly requires **local visual acceptance before merge** | Perform that acceptance and review overlapping routing/spatial behavior                       |
 
 Historical gate and feature branches are not automatically unmerged work. Do not bulk merge old branches because they exist. Review PRs on their own merits after this baseline is secured.
 

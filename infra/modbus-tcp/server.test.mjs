@@ -119,3 +119,21 @@ test('HTTP bridge authenticates and Modbus TCP emits a real MBAP response', asyn
     await app.close();
   }
 });
+
+test('four 24-position panels use distinct registers without affecting legacy block layout', () => {
+  assert.equal(rawPointIndex('0_1_1', 'panels-4x24'), 0);
+  assert.equal(rawPointIndex('0_1_24', 'panels-4x24'), 23);
+  assert.equal(rawPointIndex('0_2_1', 'panels-4x24'), 24);
+  assert.equal(rawPointIndex('0_2_24', 'panels-4x24'), 47);
+  assert.equal(rawPointIndex('0_3_1', 'panels-4x24'), 48);
+  assert.equal(rawPointIndex('0_4_24', 'panels-4x24'), 95);
+  assert.equal(rawPointIndex('0_1_25', 'panels-4x24'), null);
+  assert.equal(rawPointIndex('0_5_1', 'panels-4x24'), null);
+  assert.equal(rawPointIndex('0_2_24', 'blocks-2x48'), 71);
+  const state = new ModbusLatestState(sourceMap, 30000, 'panels-4x24');
+  const now = Date.now();
+  assert.equal(state.apply(sample('EMU-BFDB-01', '0_4_24', 14.75, new Date(now).toISOString()), now), true);
+  assert.equal(handleFrame(command(1, 760, 2), state, now).readFloatBE(9), 14.75);
+  assert.equal(handleFrame(command(1, 0, 2), state, now).readFloatBE(9), 0);
+  assert.throws(() => new ModbusLatestState(sourceMap, 30000, 'bad-layout'), /MODBUS_POINT_LAYOUT/);
+});

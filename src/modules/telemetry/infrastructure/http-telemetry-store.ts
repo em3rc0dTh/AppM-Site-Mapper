@@ -8,6 +8,7 @@ import type {
   TelemetryHistoryWindow,
 } from '@/modules/telemetry/domain/history';
 import { logger } from '@/shared/infrastructure/logger';
+import { isProductionDeployment } from '@/config/env';
 
 export interface SerializedTelemetryStoreReading {
   readonly shelfId: string;
@@ -200,7 +201,7 @@ export function createTelemetryStoreClient(): HttpTelemetryStore {
   const parsedTimeout = Number(process.env.TELEMETRY_STORE_TIMEOUT_MS);
   const timeoutMs = Number.isInteger(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 5_000;
   const token = process.env.TELEMETRY_STORE_TOKEN?.trim();
-  if ((process.env.APP_ENV === 'production' || process.env.NODE_ENV === 'production') && !token) {
+  if (isProductionDeployment() && !token) {
     throw new Error('Production telemetry history store requires TELEMETRY_STORE_TOKEN.');
   }
   return new HttpTelemetryStore(baseUrl, timeoutMs, token);

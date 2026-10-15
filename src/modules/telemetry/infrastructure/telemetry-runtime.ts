@@ -1,4 +1,4 @@
-import { requireRuntimeSecret } from '@/config/env';
+import { isProductionDeployment, requireRuntimeSecret } from '@/config/env';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
 import type { TelemetryHistoryWriterDiagnostics } from '@/modules/telemetry/application/telemetry-history-writer';
@@ -159,7 +159,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
         brokerUrl,
         process.env.MQTT_USERNAME,
         process.env.MQTT_PASSWORD,
-        process.env.APP_ENV === 'production' || process.env.NODE_ENV === 'production',
+        isProductionDeployment(),
       );
       source = new NativeMqttSource(
         {

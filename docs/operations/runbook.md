@@ -112,6 +112,14 @@ Logs must not contain:
 - private keys;
 - raw customer exports.
 
+## Site Mapper-owned MQTT → historical → Modbus local operation
+
+For the independent Compose sidecars, safe targeted restarts, verification of the unique source/point binding, exact TimescaleDB breaker queries and local Modbus FC03 polling, follow [`mqtt-modbus-lab.md`](./mqtt-modbus-lab.md). Do not run `docker compose down -v` during recovery, share secrets or confuse the external BFDB emulator/gateway database with Site Mapper's own TimescaleDB.
+
+In the *laboratory*, the Docker-optimized Next.js process may use `NODE_ENV=production` with explicit `APP_ENV=development`. Production deployment uses `APP_ENV=production` and requires TLS MQTT and provider credentials. See [`environment-reference.md`](./environment-reference.md).
+
+The Modbus sidecar has no durable Latest State rehydration or certified quality registers yet, and its TCP endpoint is restricted to host loopback in the lab.
+
 ## Shutdown
 
 Application shutdown must not delete canonical data.

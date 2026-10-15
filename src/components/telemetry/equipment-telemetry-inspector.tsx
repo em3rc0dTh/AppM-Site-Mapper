@@ -43,7 +43,8 @@ export function EquipmentTelemetryInspector({
         } catch {
           throw new Error('TELEMETRY_INVALID_RESPONSE (HTTP ' + response.status + ')');
         }
-        if (!response.ok) throw new Error(body.error ?? 'TELEMETRY_UNAVAILABLE (HTTP ' + response.status + ')');
+        if (!response.ok)
+          throw new Error(body.error ?? 'TELEMETRY_UNAVAILABLE (HTTP ' + response.status + ')');
         if (!controller.signal.aborted) {
           setView(body);
           setError(null);

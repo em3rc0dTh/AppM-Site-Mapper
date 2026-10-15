@@ -19,20 +19,31 @@ const host = arg('host', '127.0.0.1');
 const port = Number(arg('port', '1503'));
 const seconds = Number(arg('seconds', '45'));
 if (!source || !/^[a-zA-Z0-9_-]{1,120}$/.test(source)) throw new Error('Valid --source required');
-if (!point || !/^0_[1-4]_([1-9]|1[0-9]|2[0-4])$/.test(point)) throw new Error('4x24 --point required');
+if (!point || !/^0_[1-4]_([1-9]|1[0-9]|2[0-4])$/.test(point))
+  throw new Error('4x24 --point required');
 if (!breaker || !/^[0-9a-f-]{36}$/i.test(breaker)) throw new Error('Valid --breaker UUID required');
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid port');
-if (!Number.isInteger(seconds) || seconds < 5 || seconds > 120) throw new Error('Invalid --seconds');
+if (!Number.isInteger(seconds) || seconds < 5 || seconds > 120)
+  throw new Error('Invalid --seconds');
 
 function docker(...args) {
   return execFileSync('docker', ['compose', '-f', compose, ...args], {
-    encoding: 'utf8', timeout: 12000, stdio: ['ignore', 'pipe', 'pipe'],
+    encoding: 'utf8',
+    timeout: 12000,
+    stdio: ['ignore', 'pipe', 'pipe'],
   }).trim();
 }
-const config = JSON.parse(docker('exec', '-T', 'modbus-tcp', 'node', '-e',
-  'const m=JSON.parse(process.env.MODBUS_SOURCE_UNITS_JSON||"{}");process.stdout.write(JSON.stringify({unit:m[process.argv[1]]??null,layout:process.env.MODBUS_POINT_LAYOUT||"blocks-2x48"}))',
-  source,
-));
+const config = JSON.parse(
+  docker(
+    'exec',
+    '-T',
+    'modbus-tcp',
+    'node',
+    '-e',
+    'const m=JSON.parse(process.env.MODBUS_SOURCE_UNITS_JSON||"{}");process.stdout.write(JSON.stringify({unit:m[process.argv[1]]??null,layout:process.env.MODBUS_POINT_LAYOUT||"blocks-2x48"}))',
+    source,
+  ),
+);
 if (!Number.isInteger(config.unit) || config.unit < 1 || config.unit > 247) {
   throw new Error('Source not in MODBUS_SOURCE_UNITS_JSON');
 }
@@ -76,7 +87,10 @@ function readFC03() {
         assert.equal(buf[7], 3);
         assert.equal(buf[8], 16);
         assert.equal(total, 25);
-        finish(null, [9, 13, 17, 21].map((n) => buf.readFloatBE(n)));
+        finish(
+          null,
+          [9, 13, 17, 21].map((n) => buf.readFloatBE(n)),
+        );
       } catch (error) {
         finish(error);
       }
@@ -91,20 +105,47 @@ function recentHistory() {
     "AND received_at >= NOW() - INTERVAL '2 minutes'",
     'ORDER BY received_at DESC LIMIT 60;',
   ].join(' ');
-  return docker('exec', '-T', 'timescaledb', 'psql', '-U', 'site_mapper',
-    '-d', 'site_mapper_telemetry', '-At', '-F', '|', '-c', sql)
-    .split('\n').filter(Boolean)
-    .map((line) => line.split('|').map((value) => value === '' ? NaN : Number(value)))
+  return docker(
+    'exec',
+    '-T',
+    'timescaledb',
+    'psql',
+    '-U',
+    'site_mapper',
+    '-d',
+    'site_mapper_telemetry',
+    '-At',
+    '-F',
+    '|',
+    '-c',
+    sql,
+  )
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => line.split('|').map((value) => (value === '' ? NaN : Number(value))))
     .filter((v) => v.length === 4 && v.every(Number.isFinite));
 }
 function matches(values, candidate) {
-  return values.every((value, i) =>
-    Math.abs(value - candidate[i]) <= Math.max(0.0002, Math.abs(candidate[i]) * 0.00001));
+  return values.every(
+    (value, i) =>
+      Math.abs(value - candidate[i]) <= Math.max(0.0002, Math.abs(candidate[i]) * 0.00001),
+  );
 }
 const labels = ['voltageV', 'currentA', 'powerW', 'energyKwh'];
-console.log('MODBUS_CERT_START', JSON.stringify({
-  source, point, breaker, unit: config.unit, circuit, offset, host, port, layout: config.layout,
-}));
+console.log(
+  'MODBUS_CERT_START',
+  JSON.stringify({
+    source,
+    point,
+    breaker,
+    unit: config.unit,
+    circuit,
+    offset,
+    host,
+    port,
+    layout: config.layout,
+  }),
+);
 const until = Date.now() + seconds * 1000;
 let lastRead = null;
 while (Date.now() < until) {
@@ -113,21 +154,39 @@ while (Date.now() < until) {
     lastRead = values;
     const rows = recentHistory();
     if (values.some((value) => value !== 0) && rows.some((row) => matches(values, row))) {
-      console.log('MODBUS_CERT_PASS', JSON.stringify({
-        source, point, breaker, unit: config.unit, address: offset,
-        metrics: Object.fromEntries(labels.map((label, i) => [label, values[i]])),
-        matchedRecentBreakerHistory: true, candidatesChecked: rows.length,
-      }));
+      console.log(
+        'MODBUS_CERT_PASS',
+        JSON.stringify({
+          source,
+          point,
+          breaker,
+          unit: config.unit,
+          address: offset,
+          metrics: Object.fromEntries(labels.map((label, i) => [label, values[i]])),
+          matchedRecentBreakerHistory: true,
+          candidatesChecked: rows.length,
+        }),
+      );
       process.exit(0);
     }
-    console.log('WAITING_MODBUS_HISTORY_MATCH', JSON.stringify({ values, historyRows: rows.length }));
+    console.log(
+      'WAITING_MODBUS_HISTORY_MATCH',
+      JSON.stringify({ values, historyRows: rows.length }),
+    );
   } catch (error) {
     console.log('WAITING_MODBUS', error instanceof Error ? error.message : String(error));
   }
   await new Promise((resolve) => setTimeout(resolve, 1500));
 }
-console.error('MODBUS_CERT_FAILED', JSON.stringify({
-  source, point, breaker, unit: config.unit, lastRead,
-  hint: 'Check modbus-tcp logs, MODBUS_BRIDGE_TOKEN, MQTT freshness and exact TimescaleDB breaker rows.',
-}));
+console.error(
+  'MODBUS_CERT_FAILED',
+  JSON.stringify({
+    source,
+    point,
+    breaker,
+    unit: config.unit,
+    lastRead,
+    hint: 'Check modbus-tcp logs, MODBUS_BRIDGE_TOKEN, MQTT freshness and exact TimescaleDB breaker rows.',
+  }),
+);
 process.exitCode = 1;

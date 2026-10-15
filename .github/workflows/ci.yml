@@ -47,6 +47,12 @@ jobs:
       - name: Integration tests
         run: npm run test:integration
 
+      - name: Modbus TCP register contract and real MBAP regression
+        run: node --test infra/modbus-tcp/server.test.mjs
+
+      - name: Read-only Modbus certification script syntax
+        run: node --check scripts/operations/certify-modbus-cb01.mjs
+
       - name: Telemetry history SQL regression
         run: python3 -m unittest discover -s infra/telemetry-store -p 'test_*.py'
 

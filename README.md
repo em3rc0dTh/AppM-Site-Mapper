@@ -10,7 +10,7 @@ The legacy repository is evidence and reference, not the architectural foundatio
 
 **Software milestone:** MK1  
 **Certified gates:** G0 through G15  
-**Current state:** MK1 repository/software baseline complete  
+**Current state:** MK1 repository/software baseline with locally verified single-breaker MQTT → LIVE → TimescaleDB → Modbus TCP laboratory path (2026-10-15). Full source-panel coverage and field deployment are not yet certified.  
 **Repository contract:** `CONTRACT.md` and `docs/product/MK1-RECONSTRUCTION-CONTRACT.md`
 
 The integrated software golden path is certified in CI. This is **not** a claim that a production deployment, production-data migration, physical field integration or production-scale load test has already been executed.
@@ -34,7 +34,7 @@ Network
                             └── Equipment
 ```
 
-**Device and Equipment are siblings** beneath Container/Rack.
+**Device is rack inventory; canonical Equipment can be nested under a Device or other Equipment. Device and Equipment retain distinct identities.**
 
 ## Implemented capabilities
 
@@ -46,7 +46,8 @@ Network
 - Device/Equipment inventory and Rack Elevation;
 - BDFB internal structure;
 - explicit PowerPath aggregates;
-- MQTT telemetry normalization and authenticated SSE fan-out;
+- MQTT telemetry normalization, explicit per-breaker bindings and authenticated SSE fan-out;
+- independent Site Mapper TimescaleDB history service and Modbus TCP FC03 output (laboratory scope);
 - operational workspace;
 - Settings/Profile/Security/User administration;
 - deterministic legacy migration engine with staging-first apply;
@@ -55,7 +56,7 @@ Network
 ## Stack
 
 - Node.js 22
-- Next.js 16.3.5
+- Next.js 16.3.8
 - React 19.3.0
 - TypeScript 5.9.3
 - MongoDB Node driver 7.6.0
@@ -150,10 +151,16 @@ Production apply is staging-first and requires an externally retained stable ID 
 - Telemetry: `docs/telemetry/`
 - Testing: `docs/testing/`
 - Migration: `docs/migrations/`
-- Operations: `docs/operations/`
+- Operations: `docs/operations/` (see `docs/operations/mqtt-modbus-lab.md` for the certified local path)
 - Release: `docs/release/`
 - ADRs: `docs/adr/`
 - Gate receipts: `docs/release/gates/`
+
+## Certified telemetry laboratory boundary
+
+The GitHub `main` branch includes the independent `modbus-tcp` sidecar and explicitly bound Equipment telemetry. The 2026-10-15 local evidence confirmed source `EMU-BFDB-01` / raw point `0_1_1` / breaker `BDFB-01-PANEL-01-CB-01`: LIVE and `24h` API, both TimescaleDB tables, and read-only Modbus TCP FC03 FLOAT32 versus exact recent breaker historical rows. This is a **one-breaker emulation result**, not the certification of all 288 points, actual site wiring, OT networking, or Metasys. See `docs/operations/mqtt-modbus-lab.md` and `docs/telemetry/modbus-tcp-output.md`.
+
+Existing open PRs represent independent, unaccepted feature proposals. A branch merely existing does not indicate that it should be merged into the current domain and telemetry baseline.
 
 ## Public-repository rule
 

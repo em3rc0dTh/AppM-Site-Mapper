@@ -12,7 +12,14 @@ const allowKinds = new Set([
   'DEVICE',
   'EQUIPMENT',
 ]);
-const views = new Set(['inventory', 'access-ports', 'power', 'telemetry', 'commissioning', 'bindings']);
+const views = new Set([
+  'inventory',
+  'access-ports',
+  'power',
+  'telemetry',
+  'commissioning',
+  'bindings',
+]);
 const sessions = new Map();
 const maxRows = 5000;
 const mongoUri = process.env.MONGODB_URI;
@@ -200,16 +207,25 @@ async function table(view, db, live) {
     ]);
     const map = new Map(nodes.map((n) => [n.id, n]));
     const connected = new Set(paths.flatMap((p) => [p.sourceAccessPortId, p.targetAccessPortId]));
-    return nodes.filter((n) => n.kind === 'EQUIPMENT').flatMap((equipment) =>
-      (equipment.accessPorts || []).map((port) => ({
-        id: port.id, name: port.name, equipmentId: equipment.id,
-        equipment: equipment.name, path: flatten(equipment, map).path,
-        rack: flatten(equipment, map).rack, site: flatten(equipment, map).site,
-        portType: port.portType, direction: port.direction, exposure: port.exposure,
-        feed: port.feed || '', lifecycle: port.lifecycle,
-        connection: connected.has(port.id) ? 'CONNECTED' : 'NO_RECORDED_PATH',
-      })),
-    );
+    return nodes
+      .filter((n) => n.kind === 'EQUIPMENT')
+      .flatMap((equipment) =>
+        (equipment.accessPorts || []).map((port) => ({
+          id: port.id,
+          name: port.name,
+          equipmentId: equipment.id,
+          equipment: equipment.name,
+          path: flatten(equipment, map).path,
+          rack: flatten(equipment, map).rack,
+          site: flatten(equipment, map).site,
+          portType: port.portType,
+          direction: port.direction,
+          exposure: port.exposure,
+          feed: port.feed || '',
+          lifecycle: port.lifecycle,
+          connection: connected.has(port.id) ? 'CONNECTED' : 'NO_RECORDED_PATH',
+        })),
+      );
   }
   if (view === 'power') {
     const [paths, nodes] = await Promise.all([
@@ -217,14 +233,18 @@ async function table(view, db, live) {
       db.collection('topology_nodes').find({}).limit(maxRows).toArray(),
     ]);
     const map = new Map(nodes.map((n) => [n.id, n]));
-    const ports = new Map(nodes.filter((n) => n.kind === 'EQUIPMENT').flatMap((n) =>
-      (n.accessPorts || []).map((p) => [p.id, { equipment: n, port: p }])
-    ));
+    const ports = new Map(
+      nodes
+        .filter((n) => n.kind === 'EQUIPMENT')
+        .flatMap((n) => (n.accessPorts || []).map((p) => [p.id, { equipment: n, port: p }])),
+    );
     return paths.map((p) => {
       const source = ports.get(p.sourceAccessPortId);
       const target = ports.get(p.targetAccessPortId);
       return {
-        id: p.id, feed: p.feed || 'NOT_SPECIFIED', label: p.label || '',
+        id: p.id,
+        feed: p.feed || 'NOT_SPECIFIED',
+        label: p.label || '',
         sourceEquipment: source?.equipment.name || 'UNRESOLVED_EQUIPMENT',
         sourcePort: source?.port.name || 'UNRESOLVED_PORT',
         sourceDirection: source?.port.direction || 'UNKNOWN',
@@ -234,32 +254,61 @@ async function table(view, db, live) {
         site: source ? flatten(source.equipment, map).site : '',
         sourcePath: source ? flatten(source.equipment, map).path : '',
         targetPath: target ? flatten(target.equipment, map).path : '',
-        sourcePortId: p.sourceAccessPortId, targetPortId: p.targetAccessPortId,
-        state: p.lifecycle, createdAt: p.createdAt,
+        sourcePortId: p.sourceAccessPortId,
+        targetPortId: p.targetAccessPortId,
+        state: p.lifecycle,
+        createdAt: p.createdAt,
       };
     });
   }
   if (view === 'commissioning') {
     const [panels, nodes, bindings] = await Promise.all([
-      db.collection('topology_nodes').find({kind:'EQUIPMENT',equipmentType:'PANEL',lifecycle:'ACTIVE'}).limit(maxRows).toArray(),
+      db
+        .collection('topology_nodes')
+        .find({ kind: 'EQUIPMENT', equipmentType: 'PANEL', lifecycle: 'ACTIVE' })
+        .limit(maxRows)
+        .toArray(),
       db.collection('topology_nodes').find({}).limit(maxRows).toArray(),
-      db.collection('telemetry_bindings').find({lifecycle:'ACTIVE',protocol:'MQTT'}).limit(maxRows).toArray(),
+      db
+        .collection('telemetry_bindings')
+        .find({ lifecycle: 'ACTIVE', protocol: 'MQTT' })
+        .limit(maxRows)
+        .toArray(),
     ]);
-    const map = new Map(nodes.map((n) => [n.id,n]));
+    const map = new Map(nodes.map((n) => [n.id, n]));
     return panels.map((panel) => {
       const children = Array.isArray(panel.children) ? panel.children : [];
-      const breakers = children.map((id) => id && map.get(id)).filter((n) => n?.kind === 'EQUIPMENT' && n.equipmentType === 'CIRCUIT_BREAKER' && n.lifecycle === 'ACTIVE');
+      const breakers = children
+        .map((id) => id && map.get(id))
+        .filter(
+          (n) =>
+            n?.kind === 'EQUIPMENT' &&
+            n.equipmentType === 'CIRCUIT_BREAKER' &&
+            n.lifecycle === 'ACTIVE',
+        );
       const serial = panel.serialNumber || '';
       const prefix = panel.telemetryPointPrefix || '';
       const readyConfig = panel.childMode === 'POSITIONAL' && Boolean(serial && prefix);
-      const count = bindings.filter((b) => b.sourceIdentity === serial && breakers.some((n) => n.id === b.targetId)).length;
+      const count = bindings.filter(
+        (b) => b.sourceIdentity === serial && breakers.some((n) => n.id === b.targetId),
+      ).length;
       return {
-        panel: panel.name, panelId: panel.id, site: flatten(panel,map).site,
-        sourceIdentity: serial || 'NOT_CONFIGURED', pointPrefix: prefix || 'NOT_CONFIGURED',
-        childMode: panel.childMode || '', capacity: children.length, breakers: breakers.length,
-        bindings: count, status: !readyConfig ? 'PANEL_CONFIGURATION_REQUIRED' :
-          breakers.length === 0 ? 'BREAKERS_REQUIRED' :
-          count < breakers.length * 4 ? 'COMMISSIONING_REQUIRED' : 'REVIEW_BINDINGS',
+        panel: panel.name,
+        panelId: panel.id,
+        site: flatten(panel, map).site,
+        sourceIdentity: serial || 'NOT_CONFIGURED',
+        pointPrefix: prefix || 'NOT_CONFIGURED',
+        childMode: panel.childMode || '',
+        capacity: children.length,
+        breakers: breakers.length,
+        bindings: count,
+        status: !readyConfig
+          ? 'PANEL_CONFIGURATION_REQUIRED'
+          : breakers.length === 0
+            ? 'BREAKERS_REQUIRED'
+            : count < breakers.length * 4
+              ? 'COMMISSIONING_REQUIRED'
+              : 'REVIEW_BINDINGS',
         note: 'Physical point correspondence must be confirmed by the operator; no automatic writes.',
       };
     });
@@ -297,11 +346,12 @@ async function table(view, db, live) {
     WHERE received_at >= NOW() - INTERVAL '30 days'
     ORDER BY source_identity,raw_point_id,breaker_id,received_at DESC LIMIT 5000
   `);
-  if (rows.length === 0) return [{ status: 'NO_DATA', note: 'No mapped telemetry samples in the last 30 days' }];
+  if (rows.length === 0)
+    return [{ status: 'NO_DATA', note: 'No mapped telemetry samples in the last 30 days' }];
   return rows.map((row) => ({
     ...row,
-    status: Date.now() - Date.parse(row.receivedAt) < 30000
-      ? 'RECENT_HISTORICAL' : 'STALE_HISTORICAL',
+    status:
+      Date.now() - Date.parse(row.receivedAt) < 30000 ? 'RECENT_HISTORICAL' : 'STALE_HISTORICAL',
   }));
 }
 function columnsFor(view) {
@@ -324,9 +374,52 @@ function columnsFor(view) {
       'state',
       'ports',
     ],
-    'access-ports': ['name', 'equipment', 'rack', 'site', 'portType', 'direction', 'exposure', 'feed', 'connection', 'lifecycle', 'id', 'equipmentId', 'path'],
-    power: ['feed', 'sourceEquipment', 'sourcePort', 'sourceDirection', 'targetEquipment', 'targetPort', 'targetDirection', 'site', 'label', 'state', 'id', 'sourcePortId', 'targetPortId', 'sourcePath', 'targetPath', 'createdAt'],
-    commissioning: ['panel','site','sourceIdentity','pointPrefix','childMode','capacity','breakers','bindings','status','panelId','note'],
+    'access-ports': [
+      'name',
+      'equipment',
+      'rack',
+      'site',
+      'portType',
+      'direction',
+      'exposure',
+      'feed',
+      'connection',
+      'lifecycle',
+      'id',
+      'equipmentId',
+      'path',
+    ],
+    power: [
+      'feed',
+      'sourceEquipment',
+      'sourcePort',
+      'sourceDirection',
+      'targetEquipment',
+      'targetPort',
+      'targetDirection',
+      'site',
+      'label',
+      'state',
+      'id',
+      'sourcePortId',
+      'targetPortId',
+      'sourcePath',
+      'targetPath',
+      'createdAt',
+    ],
+    commissioning: [
+      'panel',
+      'site',
+      'sourceIdentity',
+      'pointPrefix',
+      'childMode',
+      'capacity',
+      'breakers',
+      'bindings',
+      'status',
+      'panelId',
+      'note',
+    ],
     bindings: ['id', 'source', 'rawPoint', 'metric', 'target', 'targetType', 'state'],
     telemetry: [
       'source',
@@ -397,7 +490,10 @@ function operation(input) {
   }
   if (input.operation === 'power') {
     // Preflight presentation validation only; authoritative validation remains in PowerService.
-    if (typeof extra.sourceAccessPortId !== 'string' || typeof extra.targetAccessPortId !== 'string')
+    if (
+      typeof extra.sourceAccessPortId !== 'string' ||
+      typeof extra.targetAccessPortId !== 'string'
+    )
       throw Error('SELECT_SOURCE_AND_TARGET');
     if (extra.sourceAccessPortId === extra.targetAccessPortId) throw Error('SAME_PORT_NOT_ALLOWED');
     if (extra.feed !== undefined && extra.feed !== 'A' && extra.feed !== 'B')

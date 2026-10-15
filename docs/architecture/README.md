@@ -44,7 +44,7 @@ Network
 → Device | Equipment
 ```
 
-Device and Equipment are siblings.
+Device is canonical rack inventory. Equipment has its own stable identity and may be nested under a Device or another Equipment. An Equipment does not automatically inherit the MQTT source identity of its parent.
 
 Device may own:
 
@@ -64,7 +64,7 @@ Canonical collections include:
 - `sessions`;
 - `auth_rate_limits`.
 
-CAS is owned by Container/Rack persistence. BDFB structure is owned by Device persistence. PowerPath is a separate aggregate.
+CAS is owned by Container/Rack persistence. BDFB structures consist of canonical nested Equipment nodes and explicit child/position relationships; PowerPath is a separate aggregate. MQTT `TelemetryBinding` records map verified source + point + metric to canonical Equipment IDs.
 
 Memory repositories exist only for development/testing and are prohibited in production mode.
 
@@ -98,6 +98,10 @@ MQTT
 ```
 
 MQTT credentials never reach the browser.
+
+## Independent telemetry runtimes
+
+The server-side MQTT consumer validates source/topic/payload and explicit breaker bindings. Accepted metrics fan out to the authenticated LIVE/SSE UI, the separately deployed Site Mapper TimescaleDB history service, and the Site Mapper-owned private Modbus TCP sidecar. The sidecar answers FC03 from ephemeral Latest State **without querying MongoDB or TimescaleDB** on reads. The external BFDB emitter/broker/gateway is a distinct project. The local laboratory path and limitations are documented in `docs/operations/mqtt-modbus-lab.md`.
 
 ## Migration boundary
 

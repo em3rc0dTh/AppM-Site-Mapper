@@ -5,10 +5,18 @@ export const CIRCUITS = 96;
 export const METRICS = ['voltageV', 'currentA', 'powerW', 'energyKwh'];
 export const REGISTERS_PER_UNIT = CIRCUITS * METRICS.length * 2;
 
-export function rawPointIndex(rawPointId) {
-  const match = /^0_([12])_([1-9]|[1-3][0-9]|4[0-8])$/.exec(rawPointId);
-  if (!match) return null;
-  return (Number(match[1]) - 1) * 48 + Number(match[2]) - 1;
+export const POINT_LAYOUTS = ['blocks-2x48', 'panels-4x24'];
+
+export function rawPointIndex(rawPointId, pointLayout = 'blocks-2x48') {
+  if (pointLayout === 'panels-4x24') {
+    const match = /^0_([1-4])_([1-9]|1[0-9]|2[0-4])$/.exec(rawPointId);
+    return match ? (Number(match[1]) - 1) * 24 + Number(match[2]) - 1 : null;
+  }
+  if (pointLayout === 'blocks-2x48') {
+    const match = /^0_([12])_([1-9]|[1-3][0-9]|4[0-8])$/.exec(rawPointId);
+    return match ? (Number(match[1]) - 1) * 48 + Number(match[2]) - 1 : null;
+  }
+  throw new Error('MODBUS_POINT_LAYOUT must be blocks-2x48 or panels-4x24');
 }
 
 export function floatRegisters(value) {
@@ -18,8 +26,10 @@ export function floatRegisters(value) {
 }
 
 export class ModbusLatestState {
-  constructor(sourceMap, staleMs = 30000) {
+  constructor(sourceMap, staleMs = 30000, pointLayout = 'blocks-2x48') {
     if (!Number.isInteger(staleMs) || staleMs < 1000) throw new Error('Invalid stale threshold');
+    if (!POINT_LAYOUTS.includes(pointLayout)) throw new Error('Invalid MODBUS_POINT_LAYOUT');
+    this.pointLayout = pointLayout;
     const identities = Object.entries(sourceMap);
     if (identities.length < 1 || identities.length > 247)
       throw new Error('Configure Modbus source identities');
@@ -38,7 +48,7 @@ export class ModbusLatestState {
     if (!sample || typeof sample !== 'object') return false;
     const unit = this.sourceUnits.get(sample.sourceIdentity);
     if (!unit) return false;
-    const circuit = rawPointIndex(sample.rawPointId);
+    const circuit = rawPointIndex(sample.rawPointId, this.pointLayout);
     if (circuit === null) return false;
     if (!sample.metrics || typeof sample.metrics !== 'object') return false;
     const timestamp = Date.parse(sample.receivedAt);
@@ -109,6 +119,7 @@ export function handleFrame(frame, state, now = Date.now()) {
 export function startBridge({
   sourceMap,
   staleMs = 30000,
+  pointLayout = 'blocks-2x48',
   modbusHost = '127.0.0.1',
   modbusPort = 1502,
   ingestHost = '127.0.0.1',
@@ -116,7 +127,7 @@ export function startBridge({
   token,
 }) {
   if (!token || token.length < 24) throw new Error('MODBUS_BRIDGE_TOKEN must be set (24+ chars)');
-  const state = new ModbusLatestState(sourceMap, staleMs);
+  const state = new ModbusLatestState(sourceMap, staleMs, pointLayout);
   const modbus = net.createServer((socket) => {
     let pending = Buffer.alloc(0);
     socket.on('data', (chunk) => {
@@ -196,6 +207,7 @@ if (process.argv[1] && import.meta.url === new URL('file://' + process.argv[1]).
   startBridge({
     sourceMap: sources,
     staleMs: Number(process.env.MODBUS_STALE_MS || 30000),
+    pointLayout: process.env.MODBUS_POINT_LAYOUT || 'blocks-2x48',
     modbusHost: process.env.MODBUS_BIND_HOST || '127.0.0.1',
     modbusPort: Number(process.env.MODBUS_BIND_PORT || 1502),
     ingestHost: process.env.MODBUS_INGEST_HOST || '127.0.0.1',

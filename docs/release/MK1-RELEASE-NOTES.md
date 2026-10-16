@@ -1,5 +1,22 @@
 # AppM Site Mapper — MK1 Release Notes
 
+## MVP presentation candidate — 2026-10-16
+
+The MK1 baseline is now documented for a reproducible **lab demonstration**.
+The README, documentation index, architecture maps, quickstart, Spanish
+presentation guide, history incident runbook and evidence-based MVP readiness
+matrix are maintained together. The scope is a *candidate*, not a production
+acceptance. See [MVP Readiness](MVP-READINESS.md).
+
+The 2026-10-15 local test accepted one breaker with four explicit bindings,
+LIVE and historical views, both Site Mapper historical tables, and a matching
+Modbus TCP FC03 reading. A later history-store connection fault caused failed
+writes and an unavailable 7D view; the UI was recovered, but **post-incident
+historical write continuity has not been certified**.
+
+Do not advertise all three sources, 96 circuits per source, Metasys field
+commissioning, customer data migration or production resilience as verified.
+
 ## Release scope
 
 MK1 reconstructs Site Mapper on a canonical domain, explicit trust boundaries and testable module contracts.

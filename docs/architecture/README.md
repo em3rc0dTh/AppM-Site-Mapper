@@ -103,6 +103,8 @@ MQTT credentials never reach the browser.
 
 The server-side MQTT consumer validates source/topic/payload and explicit breaker bindings. Accepted metrics fan out to the authenticated LIVE/SSE UI, the separately deployed Site Mapper TimescaleDB history service, and the Site Mapper-owned private Modbus TCP sidecar. The sidecar answers FC03 from ephemeral Latest State **without querying MongoDB or TimescaleDB** on reads. The external BFDB emitter/broker/gateway is a distinct project. The local laboratory path and limitations are documented in `docs/operations/mqtt-modbus-lab.md`.
 
+For a complete, presentation-friendly context/deployment/sequence diagram, see [System Map](system-map.md). The system map is a current-runtime overview and does not supersede the accepted G2 domain contract.
+
 ## Migration boundary
 
 Legacy aliases and compatibility logic are restricted to `scripts/migrations/legacy/`.

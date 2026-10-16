@@ -46,6 +46,14 @@ Identity/Auth
 
 See `docs/testing/system-certification.md`.
 
+## Documentation integrity
+
+The primary README and MVP documentation entrypoints are checked for missing
+relative links by `npm run docs:check` and the CI job. A passing link check
+proves navigation paths exist, **not** that textual claims represent a live
+production deployment. Verify demo evidence separately using the
+[MVP readiness matrix](../release/MVP-READINESS.md).
+
 ## Truth boundary
 
 Repository CI does not prove production MongoDB/MQTT connectivity, customer-data migration execution, physical hardware integration or production-scale load. Those require operational evidence.

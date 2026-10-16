@@ -38,6 +38,9 @@ jobs:
       - name: Format check
         run: npm run format:check
 
+      - name: MVP documentation links
+        run: npm run docs:check
+
       - name: Unit tests
         run: npm run test:unit
 

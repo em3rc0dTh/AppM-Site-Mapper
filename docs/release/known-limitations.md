@@ -18,6 +18,10 @@ API can persist/query history in a separately deployed Timescale-backed service.
 This capability does not prove that a particular deployment has the store enabled, available,
 backed up, or monitored. The in-process LIVE hub remains distinct from historical storage.
 
+## Internal history service connectivity and data gaps
+
+The 2026-10-15 lab experienced `HISTORY_STORE_UNAVAILABLE` because requests/writes from Site Mapper to its history adapter returned `fetch failed`. The operator later confirmed the 7D UI displayed history again. That recovery is **not evidence of uninterrupted historical writes**, nor replay of any samples missed while the path was unavailable. The connectivity, writer and TimescaleDB recency checks are documented in [history-connectivity](../operations/history-connectivity.md).
+
 ## MQTT QoS
 
 The native MQTT adapter subscribes at QoS 0.

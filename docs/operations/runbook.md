@@ -120,6 +120,10 @@ In the _laboratory_, the Docker-optimized Next.js process may use `NODE_ENV=prod
 
 The Modbus sidecar has no durable Latest State rehydration or certified quality registers yet, and its TCP endpoint is restricted to host loopback in the lab.
 
+## MVP onboarding and recurring readiness
+
+For a new operator, start at [Quickstart](quickstart.md) and [MVP demo](../product/MVP-DEMO-ES.md). To distinguish application readiness from presentation evidence see [MVP Readiness](../release/MVP-READINESS.md). For internal HTTP connection failure or `HISTORY_STORE_UNAVAILABLE`, follow the read-only diagnostic and targeted recovery in [History connectivity](history-connectivity.md), then confirm **new writes**, not only historical reads.
+
 ## Shutdown
 
 Application shutdown must not delete canonical data.

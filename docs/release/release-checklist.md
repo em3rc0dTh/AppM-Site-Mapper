@@ -32,6 +32,10 @@ Before sealing G15:
 - [x] production build green;
 - [x] production dependency audit green.
 
+## MVP presentation candidate — explicit evidence
+
+This is a **separate gate from G0–G15 software certification**. The current lab has validated one BFDB breaker, not 96 circuits per device or real facility wiring. Before presenting with LIVE/historical/Modbus claims, complete the session-specific checklist in [MVP Readiness](MVP-READINESS.md). On 2026-10-15 the operator confirmed a recovered 7D view after `HISTORY_STORE_UNAVAILABLE`, but **the return of new writes to TimescaleDB after that incident has not yet been reconfirmed by a new SQL measurement**.
+
 ## Production environment — external evidence required
 
 These are not automatically satisfied by repository CI:

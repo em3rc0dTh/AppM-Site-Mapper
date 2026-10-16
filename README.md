@@ -1,206 +1,114 @@
-# AppM Site Mapper — MK1
+# AppM Site Mapper MK1
 
-Site Mapper MK1 is a clean reconstruction of the legacy Site Mapper product as a documented, testable and security-conscious modular monolith for physical infrastructure management.
+**Candidato a MVP presentable · Octubre 2026.**
 
-The legacy repository is evidence and reference, not the architectural foundation.
+## ¿Qué es?
 
-> **Migrate knowledge and validated behavior. Do not migrate accidental architecture or technical debt.**
+Una plataforma para modelar infraestructura física (Network → Site → Room → Rack → Device → Equipment), administrar posiciones y conexiones eléctricas y consultar telemetría confirmada. El resultado del laboratorio **no equivale a certificación de producción**.
 
-## Release status
+### Arquitectura
 
-**Software milestone:** MK1  
-**Certified gates:** G0 through G15  
-**Current state:** MK1 repository/software baseline with locally verified single-breaker MQTT → LIVE → TimescaleDB → Modbus TCP laboratory path (2026-10-15). Full source-panel coverage and field deployment are not yet certified.  
-**Repository contract:** `CONTRACT.md` and `docs/product/MK1-RECONSTRUCTION-CONTRACT.md`
-
-The integrated software golden path is certified in CI. This is **not** a claim that a production deployment, production-data migration, physical field integration or production-scale load test has already been executed.
-
-## Canonical hierarchy
-
-```text
-Network
-└── Site
-    └── Structure
-        └── Level
-            └── Room / Substructure
-                └── ContainerCluster / Bay
-                    └── Position
-                        └── Container / Rack
-                            ├── Device
-                            │   └── Shelf
-                            │       └── Frame
-                            │           └── Panel
-                            │               └── Breaker / Holder
-                            └── Equipment
+```mermaid
+flowchart LR
+  User[Operador] --> App[Site Mapper · Next.js / RBAC]
+  App --> Mongo[(MongoDB · Topología, usuarios y bindings)]
+  Source[Emulador BFDB externo] --> Broker[Broker MQTT externo]
+  Broker --> App
+  App --> Live[Latest State / SSE / UI LIVE]
+  App --> Store[Telemetry Store · HTTP interno]
+  Store --> TS[(TimescaleDB · Histórico)]
+  App --> Sidecar[Modbus TCP · FC03]
+  Console[Operational Console · 3100] --> Mongo
+  Console --> TS
 ```
 
-**Device is rack inventory; canonical Equipment can be nested under a Device or other Equipment. Device and Equipment retain distinct identities.**
+El broker/emulador/gateway exterior es independiente del repositorio. Modbus lee su Latest State, no consulta TimescaleDB durante cada FC03.
 
-## Implemented capabilities
+### Jerarquía
 
-- server-authoritative authentication and RBAC;
-- MongoDB production persistence and in-memory test/development adapter;
-- canonical topology and verified deep links;
-- Blueprint spatial engine with 600 × 600 mm tiles;
-- CAS rack occupancy;
-- Device/Equipment inventory and Rack Elevation;
-- BDFB internal structure;
-- explicit PowerPath aggregates;
-- MQTT telemetry normalization, explicit per-breaker bindings and authenticated SSE fan-out;
-- independent Site Mapper TimescaleDB history service and Modbus TCP FC03 output (laboratory scope);
-- operational workspace;
-- Settings/Profile/Security/User administration;
-- deterministic legacy migration engine with staging-first apply;
-- integrated system certification in CI.
+```mermaid
+flowchart TD
+  Network --> Site --> Structure --> Level --> Room[Room / Substructure]
+  Room --> Bay[ContainerCluster / Bay]
+  Bay --> Position --> Rack[Container / Rack]
+  Rack --> Device --> Equipment[Equipment recursivo]
+  Equipment --> Chassis --> Shelf --> Frame --> Panel --> Breaker[CIRCUIT_BREAKER]
+```
 
-## Stack
+Los nombres con `/` representan alternativas del **mismo nivel**. No implican un nivel adicional. La correspondencia física nunca se infiere automáticamente de un número de slot. Consulta [topología](docs/domain/topology-hierarchy.md).
 
-- Node.js 22
-- Next.js 16.3.8
-- React 19.3.0
-- TypeScript 5.9.3
-- MongoDB Node driver 7.6.0
-- Vitest 5.0.1
-- ESLint 9
-- Prettier 3
-- GitHub Actions
+## Inicio rápido · Demo visual sin Docker
 
-## Local development
-
-Fastest visual run with demo data:
+Requisitos: Node.js 22.13+ (menor a 23), npm y navegador.
 
 ```bash
+git clone https://github.com/em3rc0dTh/AppM-Site-Mapper.git
+cd AppM-Site-Mapper
 npm ci
 npm run local:dev
 ```
 
-The local launcher starts Next.js with in-memory persistence, creates a temporary local Superadmin, seeds the development topology and opens the login page. It prints the temporary credentials in the terminal. Nothing from this launcher is a production credential and the data resets when the process stops.
+Abre **http://127.0.0.1:3000/login** y utiliza las credenciales temporales impresas en tu terminal. Este modo usa datos **en memoria**; al detenerse se pierden. No requiere broker, MongoDB ni dispositivos industriales. Para desactivar la apertura automática del navegador: `npm run local:dev -- --no-open`.
 
-To keep the browser closed:
+**¿Quieres persistencia?** Sigue el [quickstart de Docker](docs/operations/quickstart.md); requiere configuración privada de tokens, broker y mapa Modbus. No ejecutes `docker compose down -v` sobre datos existentes.
+
+## Recorrido de una presentación
+
+```mermaid
+flowchart LR
+  Login --> Workspace --> Topology[Network / Site / Room]
+  Topology --> Blueprint --> Rack[Rack Elevation / CAS]
+  Rack --> Device --> Equipment --> Panel
+  Panel --> CB01[CB-01 y 4 bindings]
+  CB01 --> Live[LIVE / 24h / 7d]
+  Live --> Modbus[FC03 · Solo laboratorio]
+```
+
+[Guion para presentar el MVP en español](docs/product/MVP-DEMO-ES.md).
+
+## Evidencia real y límites
+
+El 15 de octubre de 2026, el laboratorio comprobó **un** breaker: `BDFB-01-PANEL-01-CB-01`, `EMU-BFDB-01 / 0_1_1`, métricas V/A/W/kWh, cuatro bindings explícitos, LIVE, histórico consultable, persistencia en la TimescaleDB de Site Mapper y `MODBUS_CERT_PASS` (Unit ID 1, FC03, registros 0–7, coincidencia con una muestra histórica reciente).
+
+La consulta **7D** volvió a presentar datos tras recuperar la conectividad del servicio histórico; esto no demuestra recuperación de muestras perdidas durante la interrupción. No está certificado el resto de los 23 breakers, 96 circuitos por BFDB, tres BFDB completos, cableado físico ni conexión a Metasys. Un cero Modbus puede significar dato expirado o valor real: no usar en control de seguridad.
+
+[Estado, evidencia y puertas de salida del MVP](docs/release/MVP-READINESS.md).
+
+## Código organizado
+
+| Directorio                   | Propósito                                       |
+| ---------------------------- | ----------------------------------------------- |
+| `src/app` y `src/components` | Páginas, APIs y UI                              |
+| `src/modules`                | Dominio, aplicación, persistencia por módulo    |
+| `infra/telemetry-store`      | Histórico propio TimescaleDB                    |
+| `infra/modbus-tcp`           | Salida Modbus TCP privada                       |
+| `infra/operational-console`  | Consola de operación independiente              |
+| `scripts` y `tests`          | Herramientas locales, migración y certificación |
+| `docs`                       | Producto, arquitectura, operación y release     |
+
+## Validación del código
 
 ```bash
-npm run local:dev -- --no-open
-```
-
-Manual development remains available:
-
-```bash
-cp .env.example .env.local
-npm run dev
-```
-
-The default non-production persistence mode is memory unless configured otherwise.
-
-## Production configuration
-
-Production must use:
-
-```text
-APP_ENV=production
-APP_PERSISTENCE=mongodb
-MONGODB_URI=<runtime secret>
-MONGODB_DB_NAME=appm_site_mapper
-BOOTSTRAP_ADMIN_TOKEN=<runtime secret>
-```
-
-Telemetry additionally requires a valid broker configuration when enabled.
-
-See `docs/operations/environment-reference.md`.
-
-## Quality gates
-
-CI executes:
-
-```text
 npm ci
-→ typecheck
-→ lint
-→ format check
-→ unit tests
-→ integration tests
-→ system certification
-→ production build
-→ production dependency audit
-```
-
-Run locally:
-
-```bash
-npm run verify
+npm run typecheck
+npm run lint
+npm run format:check
+npm run test:unit
+npm run test:integration
 npm run test:certification
+npm run build
 ```
 
-## Legacy migration
+GitHub CI verifica también Modbus, SQL histórico y auditoría de dependencias. Un build exitoso no implica aceptación en el entorno del cliente.
 
-The migration engine lives only under `scripts/migrations/legacy/`.
+## Seguridad
 
-```bash
-npm run migration:legacy -- \
-  --input /secure/path/legacy.json \
-  --output /secure/path/report.json
-```
+Sesiones y RBAC server-side; credenciales MQTT privadas; MongoDB con seriales activos únicos; bindings **exactos** entre publisher, raw point, métrica y Equipment. `APP_ENV=production` requiere transporte MQTT seguro. Modbus TCP no tiene autenticación propia y solo debe exponerse dentro de una red OT autorizada. Nunca subir `.env`, secretos, dumps ni topologías sensibles.
 
-Production apply is staging-first and requires an externally retained stable ID map. See `docs/migrations/legacy-to-mk1.md`.
+## Documentación
 
-## Documentation map
+**[Índice de documentación](docs/README.md)** · [Arquitectura](docs/architecture/system-map.md) · [Guía de demostración](docs/product/MVP-DEMO-ES.md) · [Operación y diagnóstico](docs/operations/quickstart.md) · [Release](docs/release/MVP-READINESS.md) · [Limitaciones](docs/release/known-limitations.md).
 
-- Architecture: `docs/architecture/`
-- Domain: `docs/domain/`
-- Design / presentation contracts: `docs/design/`
-- Security: `docs/security/`
-- Telemetry: `docs/telemetry/`
-- Testing: `docs/testing/`
-- Migration: `docs/migrations/`
-- Operations: `docs/operations/` (see `docs/operations/mqtt-modbus-lab.md` for the certified local path)
-- Release: `docs/release/`
-- ADRs: `docs/adr/`
-- Gate receipts: `docs/release/gates/`
+[CONTRACT.md](CONTRACT.md) es el plan histórico de reconstrucción; las decisiones aceptadas en contratos de dominio, ADR y código implementado gobiernan el estado actual. Las PR divergentes no entran en este baseline sin aceptación independiente.
 
-## Certified telemetry laboratory boundary
-
-The GitHub `main` branch includes the independent `modbus-tcp` sidecar and explicitly bound Equipment telemetry. The 2026-10-15 local evidence confirmed source `EMU-BFDB-01` / raw point `0_1_1` / breaker `BDFB-01-PANEL-01-CB-01`: LIVE and `24h` API, both TimescaleDB tables, and read-only Modbus TCP FC03 FLOAT32 versus exact recent breaker historical rows. This is a **one-breaker emulation result**, not the certification of all 288 points, actual site wiring, OT networking, or Metasys. See `docs/operations/mqtt-modbus-lab.md` and `docs/telemetry/modbus-tcp-output.md`.
-
-Existing open PRs represent independent, unaccepted feature proposals. A branch merely existing does not indicate that it should be merged into the current domain and telemetry baseline.
-
-## Public-repository rule
-
-Never commit production secrets, customer topology, database dumps, MQTT credentials, private keys, tokens, real passwords, production migration ID maps or sensitive operational evidence.
-
-## Release truth boundary
-
-MK1 is repository/software certified through the documented gates.
-
-G0 through G15 certify the repository/software baseline. Before a specific production deployment is declared certified, the environment-specific items in `docs/release/release-checklist.md` must also be completed.
-
-## MQTT-only manual topology mode
-
-When the broker/emulator is already running and you want to create every Site Mapper entity
-manually without any demo or BFDB seed:
-
-```bash
-npm run local:mqtt
-```
-
-This mode enables MQTT, verifies broker subscription + RAW emulator traffic, and leaves the
-topology empty. Use `npm run local:emulator` only when you explicitly want the synthetic
-three-BFDB commissioning fixture.
-
-## BFDB emulator (live MQTT)
-
-The visual-only `npm run local:dev` deliberately disables real telemetry. To use the
-separate **synthetic three-device BFDB commissioning lab**, start the running
-`thradexIT/bfdb-telemetry-gateway` Compose broker and emulator, set the broker
-endpoint and optional credentials in your ignored `.env.local`, then run:
-
-```bash
-npm run local:emulator
-```
-
-This opt-in mode seeds three explicitly synthetic BFDB lab devices, binds all
-96 points on each device using the upstream four-panel × 24 contract, and
-**waits for actual subscribed MQTT data** before reporting success. The
-original ZIP visual demo is seeded separately and remains unchanged.
-
-See `docs/operations/bfdb-emulator-local.md` for the exact emulator Compose
-commands, local settings and diagnostic endpoint. Do not treat synthetic lab
-coordinates as real surveyed site data.
+_English summary:_ Site Mapper is a modular, security-conscious physical infrastructure application with canonical inventory, floorplans, rack/equipment modeling and explicitly commissioned MQTT telemetry. A single synthetic BFDB breaker passed local end-to-end LIVE/history/Modbus verification; production and full-panel certification remain open.

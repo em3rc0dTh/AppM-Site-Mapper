@@ -2,7 +2,7 @@
 
 ## Scope
 
-Backup/restore is an infrastructure operation around the canonical MongoDB database.
+Backup and restore cover **two independent persisted stores**: canonical MongoDB (inventory, users, bindings and PowerPaths) and the Site Mapper-owned TimescaleDB (telemetry history). The external BFDB emulator/gateway databases are separate and require their own policies.
 
 Site Mapper does not implement destructive automatic database reset in production.
 
@@ -46,7 +46,7 @@ A restore exercise should verify:
 - BDFB internal structures;
 - PowerPaths.
 
-Telemetry latest-value state is transient and is not a MongoDB recovery requirement unless a future telemetry-history feature explicitly persists it.
+LIVE/latest state and the Modbus sidecar are **ephemeral**. MongoDB backups do not include Site Mapper TimescaleDB tables. A restore plan must cover both persisted stores; any gaps during an MQTT/history outage are not reconstructed automatically from a UI refresh.
 
 ## Rollback after migration
 
@@ -57,3 +57,34 @@ If post-promotion verification fails, prefer restoring the verified pre-migratio
 ## Evidence
 
 Production backup/restore certification requires provider/environment evidence. Repository tests cannot truthfully prove that a specific production backup provider has restored a real database.
+
+## TimescaleDB recovery policy
+
+Historical telemetry is product data, not a transient UI cache. Before a
+persistent MVP pilot, identify the approved TimescaleDB backup mechanism,
+retention, encryption, RPO/RTO and a **separate isolated restore target**.
+
+The restore rehearsal must verify:
+
+- the `telemetry_samples` hypertable, indexes and breaker identity columns;
+- the `telemetry_entity_samples` hypertable and target/source provenance;
+- recent sample counts and latest `received_at` on a known breaker;
+- the history-store adapter `/health` and authorized history queries;
+- expected behavior when the historical service is unavailable.
+
+Do not restore a Timescale dump over the active lab/production database.
+Stop writers, isolate the destination and obtain explicit approval before
+any actual restore. A file backup alone is not proof of recoverability.
+
+## Data consistency and incident gaps
+
+MongoDB and TimescaleDB are **not one distributed transaction**. A valid
+TelemetryBinding in MongoDB does not guarantee that all MQTT samples were
+persisted during a storage outage. After recovery, compare new timestamps
+and the writer's failure diagnostics, rather than only verifying that a
+historical chart displays old rows.
+
+The Modbus service uses transient Latest State and needs newly accepted
+samples after restart; no historical replay to Modbus is certified.
+See [history incident runbook](history-connectivity.md) and
+[MVP readiness](../release/MVP-READINESS.md).

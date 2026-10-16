@@ -23,7 +23,10 @@ for (const document of entrypoints) {
     if (!decoded) continue;
     inspected++;
     const resolved = path.resolve(path.dirname(document), decoded);
-    if (!existsSync(resolved) || !statSync(resolved).isFile() && !statSync(resolved).isDirectory()) {
+    if (
+      !existsSync(resolved) ||
+      (!statSync(resolved).isFile() && !statSync(resolved).isDirectory())
+    ) {
       errors.push(`${document}: missing ${target}`);
     }
   }

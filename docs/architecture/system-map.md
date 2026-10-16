@@ -39,7 +39,7 @@ flowchart TD
   Panel --> Free[Slot libre]
 ```
 
-Los Equipment están persistidos con identidad propia; el Device organiza el inventario montado. El Rack/CAS pertenece a la estructura, no a una lectura MQTT. El Parent Equipment puede contener *slots*; un slot libre no equivale a un breaker instalado ni a una lectura válida. Modelo normativo: [topology hierarchy](../domain/topology-hierarchy.md).
+Los Equipment están persistidos con identidad propia; el Device organiza el inventario montado. El Rack/CAS pertenece a la estructura, no a una lectura MQTT. El Parent Equipment puede contener _slots_; un slot libre no equivale a un breaker instalado ni a una lectura válida. Modelo normativo: [topology hierarchy](../domain/topology-hierarchy.md).
 
 ## 3. MQTT a datos útiles: la frontera de confianza
 
@@ -69,29 +69,29 @@ sequenceDiagram
 
 ## 4. Persistencia y duración
 
-| Dato | Autoridad | Rehidratación / implicación |
-| --- | --- | --- |
-| Red física, Rack, Equipment, acceso y posiciones | MongoDB `topology_nodes` | Persistente; requiere backup |
-| Power Paths | MongoDB `power_paths` | Conexiones explícitas a AccessPorts |
-| Bindings MQTT | MongoDB `telemetry_bindings` | Identidad exacta por métrica |
-| Usuarios y sesiones | MongoDB | Control de acceso en servidor |
-| Latest State + SSE | Proceso de Site Mapper | Efímero; espera paquetes tras reinicio |
-| Historial genérico por Equipment | Site Mapper TimescaleDB `telemetry_entity_samples` | Filtrado por target y ventana |
-| Historial eléctrico por breaker | Site Mapper TimescaleDB `telemetry_samples` | Source+raw point+breaker, tiempos |
-| Registros Modbus FC03 | Memoria de sidecar | Efímero; sin rehidratación al reinicio |
+| Dato                                             | Autoridad                                          | Rehidratación / implicación            |
+| ------------------------------------------------ | -------------------------------------------------- | -------------------------------------- |
+| Red física, Rack, Equipment, acceso y posiciones | MongoDB `topology_nodes`                           | Persistente; requiere backup           |
+| Power Paths                                      | MongoDB `power_paths`                              | Conexiones explícitas a AccessPorts    |
+| Bindings MQTT                                    | MongoDB `telemetry_bindings`                       | Identidad exacta por métrica           |
+| Usuarios y sesiones                              | MongoDB                                            | Control de acceso en servidor          |
+| Latest State + SSE                               | Proceso de Site Mapper                             | Efímero; espera paquetes tras reinicio |
+| Historial genérico por Equipment                 | Site Mapper TimescaleDB `telemetry_entity_samples` | Filtrado por target y ventana          |
+| Historial eléctrico por breaker                  | Site Mapper TimescaleDB `telemetry_samples`        | Source+raw point+breaker, tiempos      |
+| Registros Modbus FC03                            | Memoria de sidecar                                 | Efímero; sin rehidratación al reinicio |
 
 La escritura histórica **no** exige que un cliente Modbus esté disponible. El sidecar no consulta TimescaleDB ni Mongo para responder FC03. Sus ceros por ausencia/stale no distinguen una medición genuina de un dato inválido.
 
 ## 5. Servicios del Compose local
 
-| Servicio | Función | Publicación host en el laboratorio |
-| --- | --- | --- |
-| `site-mapper` | UI + API Next.js | `127.0.0.1:3000` |
-| `mongodb` y `mongo-init` | DB + replica set rs0 | `127.0.0.1:27017` |
-| `timescaledb` | Persistencia histórica | `127.0.0.1:55432` |
-| `telemetry-store` | API interna del histórico | `127.0.0.1:18081` |
-| `modbus-tcp` | FC03 y bridge privado | `127.0.0.1:1503`, `127.0.0.1:18082` |
-| `operational-console` | Inventario/operación independiente | `127.0.0.1:3100` |
+| Servicio                 | Función                            | Publicación host en el laboratorio  |
+| ------------------------ | ---------------------------------- | ----------------------------------- |
+| `site-mapper`            | UI + API Next.js                   | `127.0.0.1:3000`                    |
+| `mongodb` y `mongo-init` | DB + replica set rs0               | `127.0.0.1:27017`                   |
+| `timescaledb`            | Persistencia histórica             | `127.0.0.1:55432`                   |
+| `telemetry-store`        | API interna del histórico          | `127.0.0.1:18081`                   |
+| `modbus-tcp`             | FC03 y bridge privado              | `127.0.0.1:1503`, `127.0.0.1:18082` |
+| `operational-console`    | Inventario/operación independiente | `127.0.0.1:3100`                    |
 
 Los puertos del host están fijados a loopback para este laboratorio. El acceso dentro de Docker usa nombres de servicio (`telemetry-store:8080`, `timescaledb:5432`, `modbus-tcp:18082`). No se deben transportar estos bindings tal cual a una red OT o a Internet.
 

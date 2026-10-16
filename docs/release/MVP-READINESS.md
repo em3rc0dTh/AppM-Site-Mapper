@@ -4,30 +4,30 @@
 
 ## Diferenciar cuatro estados
 
-| Etiqueta | Significado | Estado actual |
-| --- | --- | --- |
-| **Implementado** | Existe código y contratos para la capacidad | Amplia cobertura de MK1 |
-| **Validado por CI** | Las pruebas del repositorio pasan en un commit concreto | Última consolidación previa a este documento aprobada; comprobar CI del nuevo HEAD |
-| **Validado en laboratorio** | Operador observó la funcionalidad con emulador y base concreta | Un CB-01 y consultas LIVE/histórico/FC03 probadas |
-| **Validado en cliente/producción** | Hardware, redes, seguridad, restore, SLA y aceptación real | **No** |
+| Etiqueta                           | Significado                                                    | Estado actual                                                                      |
+| ---------------------------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Implementado**                   | Existe código y contratos para la capacidad                    | Amplia cobertura de MK1                                                            |
+| **Validado por CI**                | Las pruebas del repositorio pasan en un commit concreto        | Última consolidación previa a este documento aprobada; comprobar CI del nuevo HEAD |
+| **Validado en laboratorio**        | Operador observó la funcionalidad con emulador y base concreta | Un CB-01 y consultas LIVE/histórico/FC03 probadas                                  |
+| **Validado en cliente/producción** | Hardware, redes, seguridad, restore, SLA y aceptación real     | **No**                                                                             |
 
 G0–G15 son las fases históricas de reconstrucción documentadas. No significan que cada despliegue ni los 288 puntos del emulador estén certificados.
 
 ## Capacidades para la presentación
 
-| Capacidad | Evidencia / ubicación | Decisión |
-| --- | --- | --- |
-| Login, servidor y roles | Código `identity`, páginas y pruebas CI | Presentable como producto, probar sesión en escenario de demo |
-| Topología navegable | `topology_nodes`, jerarquía accepted G2, Device/Equipment recursivo | Presentable, inventario del cliente pendiente |
-| Blueprint / CAS / Rack Elevation | Módulos y Golden Path | Presentable como software, aceptación visual en resolución objetivo pendiente |
-| PowerPath y AccessPorts | API + entidades de dominio, solo conexiones explícitas | Presentable cuando existan rutas registradas; no inferir redundancia |
-| Warehouse / Workspace / Settings | Código y tests del baseline | Presentable con cuentas y permisos adecuados |
-| MQTT BFDB | `EMU-BFDB-01`, subscription confirmada; emulador externo | Verificado para el laboratorio especificado |
-| Commissioning | CB-01 4/4, `ready:true`, sin conflicto | Verificado en ese único circuito |
-| LIVE y API | JSON del mismo CB-01 con cuatro variables y fuente exacta | Verificado en fecha de observación |
-| Histórico SQL + 24h/7d | Registros en dos tablas, `window=24h` OK y UI 7D recuperada | **Consulta recuperada**; comprobar escrituras nuevas tras incidente |
-| Modbus FC03 | `MODBUS_CERT_PASS`, Unit ID 1, registros 0–7, histórico equivalente | Verificado **solo** en circuito emulado |
-| Operación | Operational Console y workflow CI previos aprobados | Validación local adicional aconsejada al demo |
+| Capacidad                        | Evidencia / ubicación                                               | Decisión                                                                      |
+| -------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Login, servidor y roles          | Código `identity`, páginas y pruebas CI                             | Presentable como producto, probar sesión en escenario de demo                 |
+| Topología navegable              | `topology_nodes`, jerarquía accepted G2, Device/Equipment recursivo | Presentable, inventario del cliente pendiente                                 |
+| Blueprint / CAS / Rack Elevation | Módulos y Golden Path                                               | Presentable como software, aceptación visual en resolución objetivo pendiente |
+| PowerPath y AccessPorts          | API + entidades de dominio, solo conexiones explícitas              | Presentable cuando existan rutas registradas; no inferir redundancia          |
+| Warehouse / Workspace / Settings | Código y tests del baseline                                         | Presentable con cuentas y permisos adecuados                                  |
+| MQTT BFDB                        | `EMU-BFDB-01`, subscription confirmada; emulador externo            | Verificado para el laboratorio especificado                                   |
+| Commissioning                    | CB-01 4/4, `ready:true`, sin conflicto                              | Verificado en ese único circuito                                              |
+| LIVE y API                       | JSON del mismo CB-01 con cuatro variables y fuente exacta           | Verificado en fecha de observación                                            |
+| Histórico SQL + 24h/7d           | Registros en dos tablas, `window=24h` OK y UI 7D recuperada         | **Consulta recuperada**; comprobar escrituras nuevas tras incidente           |
+| Modbus FC03                      | `MODBUS_CERT_PASS`, Unit ID 1, registros 0–7, histórico equivalente | Verificado **solo** en circuito emulado                                       |
+| Operación                        | Operational Console y workflow CI previos aprobados                 | Validación local adicional aconsejada al demo                                 |
 
 ## Evidencia del primer circuito (15 oct. 2026)
 

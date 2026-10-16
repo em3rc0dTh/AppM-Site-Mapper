@@ -76,15 +76,15 @@ La consulta **7D** volvió a presentar datos tras recuperar la conectividad del 
 
 ## Código organizado
 
-| Directorio | Propósito |
-| --- | --- |
-| `src/app` y `src/components` | Páginas, APIs y UI |
-| `src/modules` | Dominio, aplicación, persistencia por módulo |
-| `infra/telemetry-store` | Histórico propio TimescaleDB |
-| `infra/modbus-tcp` | Salida Modbus TCP privada |
-| `infra/operational-console` | Consola de operación independiente |
-| `scripts` y `tests` | Herramientas locales, migración y certificación |
-| `docs` | Producto, arquitectura, operación y release |
+| Directorio                   | Propósito                                       |
+| ---------------------------- | ----------------------------------------------- |
+| `src/app` y `src/components` | Páginas, APIs y UI                              |
+| `src/modules`                | Dominio, aplicación, persistencia por módulo    |
+| `infra/telemetry-store`      | Histórico propio TimescaleDB                    |
+| `infra/modbus-tcp`           | Salida Modbus TCP privada                       |
+| `infra/operational-console`  | Consola de operación independiente              |
+| `scripts` y `tests`          | Herramientas locales, migración y certificación |
+| `docs`                       | Producto, arquitectura, operación y release     |
 
 ## Validación del código
 
@@ -111,4 +111,4 @@ Sesiones y RBAC server-side; credenciales MQTT privadas; MongoDB con seriales ac
 
 [CONTRACT.md](CONTRACT.md) es el plan histórico de reconstrucción; las decisiones aceptadas en contratos de dominio, ADR y código implementado gobiernan el estado actual. Las PR divergentes no entran en este baseline sin aceptación independiente.
 
-*English summary:* Site Mapper is a modular, security-conscious physical infrastructure application with canonical inventory, floorplans, rack/equipment modeling and explicitly commissioned MQTT telemetry. A single synthetic BFDB breaker passed local end-to-end LIVE/history/Modbus verification; production and full-panel certification remain open.
+_English summary:_ Site Mapper is a modular, security-conscious physical infrastructure application with canonical inventory, floorplans, rack/equipment modeling and explicitly commissioned MQTT telemetry. A single synthetic BFDB breaker passed local end-to-end LIVE/history/Modbus verification; production and full-panel certification remain open.

@@ -4,14 +4,14 @@
 
 ## Ruta de lectura por perfil
 
-| Perfil / objetivo | Empieza aquí | Continúa con |
-| --- | --- | --- |
-| Persona que evalúa el producto | [Guion del MVP (español)](product/MVP-DEMO-ES.md) | [Alcance y evidencia](release/MVP-READINESS.md) |
-| Persona que necesita levantarlo | [Quickstart](operations/quickstart.md) | [Variables](operations/environment-reference.md) |
-| Ingeniería / onboarding | [Mapa del sistema](architecture/system-map.md) | [Dominio](domain/topology-hierarchy.md) y [módulos](../src/modules/README.md) |
-| Operación y diagnóstico | [Runbook](operations/runbook.md) | [Incidente de histórico](operations/history-connectivity.md), [laboratorio](operations/mqtt-modbus-lab.md) |
-| Release / seguridad | [MVP Readiness](release/MVP-READINESS.md) | [Checklist de release](release/release-checklist.md) y [limitaciones](release/known-limitations.md) |
-| Migración y datos | [Guía de migración](migrations/legacy-to-mk1.md) | [Backup/restore](operations/backup-restore.md) |
+| Perfil / objetivo               | Empieza aquí                                      | Continúa con                                                                                               |
+| ------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Persona que evalúa el producto  | [Guion del MVP (español)](product/MVP-DEMO-ES.md) | [Alcance y evidencia](release/MVP-READINESS.md)                                                            |
+| Persona que necesita levantarlo | [Quickstart](operations/quickstart.md)            | [Variables](operations/environment-reference.md)                                                           |
+| Ingeniería / onboarding         | [Mapa del sistema](architecture/system-map.md)    | [Dominio](domain/topology-hierarchy.md) y [módulos](../src/modules/README.md)                              |
+| Operación y diagnóstico         | [Runbook](operations/runbook.md)                  | [Incidente de histórico](operations/history-connectivity.md), [laboratorio](operations/mqtt-modbus-lab.md) |
+| Release / seguridad             | [MVP Readiness](release/MVP-READINESS.md)         | [Checklist de release](release/release-checklist.md) y [limitaciones](release/known-limitations.md)        |
+| Migración y datos               | [Guía de migración](migrations/legacy-to-mk1.md)  | [Backup/restore](operations/backup-restore.md)                                                             |
 
 ## ¿Qué documentación es normativa?
 
@@ -24,18 +24,18 @@ Las referencias `CONTRACT.md` en el directorio raíz del repositorio y en `docs/
 
 ## Mapa por área
 
-| Área | Documento de entrada |
-| --- | --- |
-| Visión de arquitectura | [Diagrama y fronteras de datos](architecture/system-map.md) |
-| Persistencia | [Persistence](architecture/persistence.md) |
-| Plano y rack | [Blueprint](domain/blueprint-engine.md), [CAS](domain/cas-specification.md), [Rack Elevation](domain/rack-elevation.md) |
-| BDFB y energía | [Power domain](domain/bdfb-power.md) |
-| MQTT, LIVE e histórico | [Contrato de telemetría](telemetry/contract.md) |
-| Modbus | [Modbus TCP output](telemetry/modbus-tcp-output.md) |
-| Operational Console | [Uso y límites](product/operational-console.md) |
-| Usuario, sesión y permisos | [Seguridad](security/authentication.md), [RBAC](security/rbac-matrix.md) |
-| CI y calidad | [Estrategia de pruebas](testing/strategy.md) |
-| Avance histórico | [Gates de reconstrucción](release/gates/) |
+| Área                       | Documento de entrada                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Visión de arquitectura     | [Diagrama y fronteras de datos](architecture/system-map.md)                                                             |
+| Persistencia               | [Persistence](architecture/persistence.md)                                                                              |
+| Plano y rack               | [Blueprint](domain/blueprint-engine.md), [CAS](domain/cas-specification.md), [Rack Elevation](domain/rack-elevation.md) |
+| BDFB y energía             | [Power domain](domain/bdfb-power.md)                                                                                    |
+| MQTT, LIVE e histórico     | [Contrato de telemetría](telemetry/contract.md)                                                                         |
+| Modbus                     | [Modbus TCP output](telemetry/modbus-tcp-output.md)                                                                     |
+| Operational Console        | [Uso y límites](product/operational-console.md)                                                                         |
+| Usuario, sesión y permisos | [Seguridad](security/authentication.md), [RBAC](security/rbac-matrix.md)                                                |
+| CI y calidad               | [Estrategia de pruebas](testing/strategy.md)                                                                            |
+| Avance histórico           | [Gates de reconstrucción](release/gates/)                                                                               |
 
 ## Reglas editoriales del repositorio
 

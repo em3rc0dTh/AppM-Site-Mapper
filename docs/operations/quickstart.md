@@ -41,16 +41,16 @@ test -e .env || cp .env.example .env
 
 El Compose necesita como mínimo:
 
-| Nombre | Qué configurar |
-| --- | --- |
-| `BOOTSTRAP_ADMIN_TOKEN` | Secreto aleatorio privado para el bootstrap de la primera cuenta (aunque ya exista una cuenta) |
-| `MODBUS_BRIDGE_TOKEN` | Otro token distinto y privado, **24+ caracteres**, compartido entre App y sidecar |
-| `MODBUS_SOURCE_UNITS_JSON` | JSON con Unit IDs **autorizados**; el laboratorio previo usó `EMU-BFDB-01 → 1`, `02 → 2`, `03 → 3` |
-| `MONGODB_DB_NAME` | **Nombre exacto de la base de datos que deseas abrir**, no el de otra prueba |
-| `TELEMETRY_ENABLED` | `true` solo si la conexión MQTT se ha aprobado y está disponible |
-| `MQTT_BROKER_URL` y credenciales | URL alcanzable **desde el contenedor**; si utilizas túnel, sus host/puertos son temporales |
-| `MQTT_TOPIC_FILTER` | Normalmente `data/dev/#` |
-| `MODBUS_POINT_LAYOUT` | `panels-4x24` para el emulador actual; validar antes de usar otra fuente |
+| Nombre                           | Qué configurar                                                                                     |
+| -------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `BOOTSTRAP_ADMIN_TOKEN`          | Secreto aleatorio privado para el bootstrap de la primera cuenta (aunque ya exista una cuenta)     |
+| `MODBUS_BRIDGE_TOKEN`            | Otro token distinto y privado, **24+ caracteres**, compartido entre App y sidecar                  |
+| `MODBUS_SOURCE_UNITS_JSON`       | JSON con Unit IDs **autorizados**; el laboratorio previo usó `EMU-BFDB-01 → 1`, `02 → 2`, `03 → 3` |
+| `MONGODB_DB_NAME`                | **Nombre exacto de la base de datos que deseas abrir**, no el de otra prueba                       |
+| `TELEMETRY_ENABLED`              | `true` solo si la conexión MQTT se ha aprobado y está disponible                                   |
+| `MQTT_BROKER_URL` y credenciales | URL alcanzable **desde el contenedor**; si utilizas túnel, sus host/puertos son temporales         |
+| `MQTT_TOPIC_FILTER`              | Normalmente `data/dev/#`                                                                           |
+| `MODBUS_POINT_LAYOUT`            | `panels-4x24` para el emulador actual; validar antes de usar otra fuente                           |
 
 La muestra del archivo `.env.example` contiene nombres y campos vacíos, **no secretos listos para usar**. Genera y conserva tus tokens localmente. El Compose del laboratorio establece `APP_ENV=development` y `APP_PERSISTENCE=mongodb`; no debes interpretarlo como plantilla segura de producción.
 
@@ -102,13 +102,13 @@ El éxito se marca con `MODBUS_CERT_PASS` y coincidencia de los cuatro FLOAT32 c
 
 ## Operación después del arranque
 
-| Necesitas… | Guía |
-| --- | --- |
-| Datos demo y guion de presentación | [MVP-DEMO-ES](../product/MVP-DEMO-ES.md) |
-| Ver cómo se enlazan las fuentes MQTT | [Laboratorio MQTT](mqtt-modbus-lab.md) |
-| Error `HISTORY_STORE_UNAVAILABLE` | [Conectividad del histórico](history-connectivity.md) |
-| Ver permisos y seguridad | [RBAC](../security/rbac-matrix.md) |
-| Preparar backup/restore | [Backup y restore](backup-restore.md) |
-| Desplegar fuera del laboratorio | [Gates de release](../release/MVP-READINESS.md) |
+| Necesitas…                           | Guía                                                  |
+| ------------------------------------ | ----------------------------------------------------- |
+| Datos demo y guion de presentación   | [MVP-DEMO-ES](../product/MVP-DEMO-ES.md)              |
+| Ver cómo se enlazan las fuentes MQTT | [Laboratorio MQTT](mqtt-modbus-lab.md)                |
+| Error `HISTORY_STORE_UNAVAILABLE`    | [Conectividad del histórico](history-connectivity.md) |
+| Ver permisos y seguridad             | [RBAC](../security/rbac-matrix.md)                    |
+| Preparar backup/restore              | [Backup y restore](backup-restore.md)                 |
+| Desplegar fuera del laboratorio      | [Gates de release](../release/MVP-READINESS.md)       |
 
 **Regla de cierre:** un demo presentable solo requiere el recorrido mostrado; un MVP piloto persistente requiere, además, salud de los tres caminos: fuente MQTT, escritura/histórico de Site Mapper y lectura Modbus cuando forme parte del caso de uso.

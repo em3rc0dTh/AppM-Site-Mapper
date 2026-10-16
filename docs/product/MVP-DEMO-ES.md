@@ -18,15 +18,15 @@ flowchart TD
   T --> M[7. Modbus TCP local, si MQTT activo]
 ```
 
-| Momento | Qué mostrar | Qué decir / qué no decir |
-| --- | --- | --- |
-| 1. Login (1 min) | Identidad y `Workspace` | Sesión controlada por servidor; no mostrar secretos |
-| 2. Localización (2 min) | Network → Site → Structure → Level → Room | La navegación conserva la ubicación de cada equipo |
-| 3. Espacio (2 min) | Blueprint, Rack y elevación CAS | Distinguir geometría registrada de levantamiento real del cliente |
-| 4. Composición (2 min) | Device con Equipment anidado, Panel de 24 posiciones y CB-01 | Un slot no genera un breaker ni una lectura automática |
-| 5. Comisión (2 min) | `MQTT POINT COMMISSIONING`, `4/4 · VERIFIED MAPPING` | El panel ofrece un prefijo; el operador confirmó el punto exacto |
-| 6. Evidencia (2 min) | `LIVE`, luego `24H`/`7D` (la API usa `24h`/`7d`) | LIVE exige frescura; histórico es TimescaleDB del producto |
-| 7. Integración (2 min) | Registro de `MODBUS_CERT_PASS` y tabla de Unit ID/offset | Certificación con emulador; **no** Metasys real |
+| Momento                 | Qué mostrar                                                  | Qué decir / qué no decir                                          |
+| ----------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| 1. Login (1 min)        | Identidad y `Workspace`                                      | Sesión controlada por servidor; no mostrar secretos               |
+| 2. Localización (2 min) | Network → Site → Structure → Level → Room                    | La navegación conserva la ubicación de cada equipo                |
+| 3. Espacio (2 min)      | Blueprint, Rack y elevación CAS                              | Distinguir geometría registrada de levantamiento real del cliente |
+| 4. Composición (2 min)  | Device con Equipment anidado, Panel de 24 posiciones y CB-01 | Un slot no genera un breaker ni una lectura automática            |
+| 5. Comisión (2 min)     | `MQTT POINT COMMISSIONING`, `4/4 · VERIFIED MAPPING`         | El panel ofrece un prefijo; el operador confirmó el punto exacto  |
+| 6. Evidencia (2 min)    | `LIVE`, luego `24H`/`7D` (la API usa `24h`/`7d`)             | LIVE exige frescura; histórico es TimescaleDB del producto        |
+| 7. Integración (2 min)  | Registro de `MODBUS_CERT_PASS` y tabla de Unit ID/offset     | Certificación con emulador; **no** Metasys real                   |
 
 ## Escenario probado para la demostración técnica
 

@@ -1,0 +1,31 @@
+name: Temporary MVP release notes formatting
+on:
+  push:
+    branches:
+      - docs/mvp-stable-candidate-20261016
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.repository == 'em3rc0dTh/AppM-Site-Mapper'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: docs/mvp-stable-candidate-20261016
+          persist-credentials: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Normalize MK1 release notes
+        run: ./node_modules/.bin/prettier --write docs/release/MK1-RELEASE-NOTES.md
+      - name: Commit formatting to the isolated branch
+        run: |
+          git add -- docs/release/MK1-RELEASE-NOTES.md
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'style: normalize MVP release notes'
+            git push origin HEAD:refs/heads/docs/mvp-stable-candidate-20261016
+          fi

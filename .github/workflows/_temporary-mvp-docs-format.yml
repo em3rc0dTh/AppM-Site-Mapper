@@ -1,0 +1,41 @@
+name: Temporary MVP documentation formatting
+on:
+  push:
+    branches:
+      - docs/mvp-stable-candidate-20261016
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.repository == 'em3rc0dTh/AppM-Site-Mapper'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: docs/mvp-stable-candidate-20261016
+          persist-credentials: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Apply project-pinned Prettier to seven files
+        run: |
+          ./node_modules/.bin/prettier --write \
+            README.md \
+            docs/README.md \
+            docs/architecture/system-map.md \
+            docs/operations/quickstart.md \
+            docs/product/MVP-DEMO-ES.md \
+            docs/release/MVP-READINESS.md \
+            scripts/ci/docs-links.mjs
+      - name: Commit formatting only to documentation branch
+        run: |
+          git add -- README.md docs/README.md docs/architecture/system-map.md docs/operations/quickstart.md docs/product/MVP-DEMO-ES.md docs/release/MVP-READINESS.md scripts/ci/docs-links.mjs
+          if git diff --cached --quiet; then
+            echo 'Already formatted'
+          else
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'style: format MVP documentation using pinned Prettier'
+            git push origin HEAD:refs/heads/docs/mvp-stable-candidate-20261016
+          fi

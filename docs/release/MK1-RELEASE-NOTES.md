@@ -5,7 +5,7 @@
 The MK1 baseline is now documented for a reproducible **lab demonstration**.
 The README, documentation index, architecture maps, quickstart, Spanish
 presentation guide, history incident runbook and evidence-based MVP readiness
-matrix are maintained together. The scope is a *candidate*, not a production
+matrix are maintained together. The scope is a _candidate_, not a production
 acceptance. See [MVP Readiness](MVP-READINESS.md).
 
 The 2026-10-15 local test accepted one breaker with four explicit bindings,

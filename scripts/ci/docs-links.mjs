@@ -11,6 +11,7 @@ const entrypoints = [
   'docs/operations/history-connectivity.md',
   'docs/release/MVP-READINESS.md',
   'docs/user-guide/README.md',
+  'docs/user-guide/primer-acceso-y-usuarios.md',
   'docs/user-guide/conceptos.md',
   'docs/user-guide/entidades.md',
   'docs/user-guide/espacios-y-racks.md',

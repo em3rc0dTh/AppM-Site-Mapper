@@ -1,0 +1,38 @@
+name: Temporary first login documentation formatting
+on:
+  push:
+    branches:
+      - docs/first-login-user-onboarding-20261019
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.repository == 'em3rc0dTh/AppM-Site-Mapper'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: docs/first-login-user-onboarding-20261019
+          persist-credentials: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Prettier on changed documentation files
+        run: |
+          ./node_modules/.bin/prettier --write \
+            docs/user-guide/primer-acceso-y-usuarios.md \
+            docs/user-guide/README.md \
+            docs/user-guide/conceptos.md \
+            docs/security/rbac-matrix.md \
+            docs/user-guide/capturas-y-capacitacion.md \
+            scripts/ci/docs-links.mjs
+      - name: Commit formatter output
+        run: |
+          git add -- docs/user-guide/primer-acceso-y-usuarios.md docs/user-guide/README.md docs/user-guide/conceptos.md docs/security/rbac-matrix.md docs/user-guide/capturas-y-capacitacion.md scripts/ci/docs-links.mjs
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'style: normalize first-login handbook with pinned Prettier'
+            git push origin HEAD:refs/heads/docs/first-login-user-onboarding-20261019
+          fi

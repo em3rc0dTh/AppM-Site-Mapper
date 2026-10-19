@@ -15,6 +15,7 @@ import { hasPermission } from '@/modules/identity/domain/roles';
 import { PowerContractService } from '@/modules/inventory/application/power-contract-service';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
+import type { PortConnectionView } from '@/modules/power/domain/port-connection-view';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
@@ -119,6 +120,31 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     (path) =>
       familyPortIds.has(path.sourceAccessPortId) || familyPortIds.has(path.targetAccessPortId),
   );
+  const ownPortIds = new Set(
+    node.kind === 'EQUIPMENT'
+      ? node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').map((port) => port.id)
+      : [],
+  );
+  const ownConnections = relatedPower.filter(
+    (path) => ownPortIds.has(path.sourceAccessPortId) || ownPortIds.has(path.targetAccessPortId),
+  );
+  const portConnections: PortConnectionView[] = await Promise.all(
+    ownConnections.map(async (path): Promise<PortConnectionView> => {
+      const outgoing = ownPortIds.has(path.sourceAccessPortId);
+      const peerId = outgoing ? path.targetAccessPortId : path.sourceAccessPortId;
+      const peerEquipment = await repo.getEquipmentByAccessPortId(peerId);
+      const peerPort = peerEquipment?.accessPorts.find((port) => port.id === peerId);
+      return {
+        portId: outgoing ? path.sourceAccessPortId : path.targetAccessPortId,
+        pathId: path.id,
+        flow: outgoing ? 'OUTGOING' : 'INCOMING',
+        peerEquipmentId: peerEquipment?.id ?? '',
+        peerEquipmentName: peerEquipment?.name ?? 'Unknown Equipment',
+        peerPortName: peerPort?.name ?? peerId,
+        ...(path.feed ? { feed: path.feed } : {}),
+      };
+    }),
+  );
   const hasFeedA = relatedPower.some((path) => path.feed === 'A');
   const hasFeedB = relatedPower.some((path) => path.feed === 'B');
   const contract = await new PowerContractService(repo).get(node.id);
@@ -165,6 +191,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               canWritePower={canWritePower}
               canReadTelemetry={canReadTelemetry}
               breakerTelemetryBindings={breakerTelemetryBindings}
+              portConnections={portConnections}
             />
           ) : view?.ok ? (
             <RackElevation
@@ -238,6 +265,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               equipmentId={node.id}
               accessPorts={node.accessPorts}
               canWritePower={canWritePower}
+              portConnections={portConnections}
             />
           )}
 

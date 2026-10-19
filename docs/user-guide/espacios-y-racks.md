@@ -44,13 +44,13 @@ Desde el Rack puedes consultar la elevación y la ocupación CAS. El editor pres
 
 ## Si algo no aparece
 
-| Problema | Qué mirar |
-| --- | --- |
-| No ves `EDIT ROOM` | Permisos o contexto: abre una Room, no el Site |
-| Dibujaste pero desapareció al volver | Probablemente no se guardó el borrador con `SAVE LAYOUT` |
-| No encuentras `+ CREATE RACK` | Rack se incorpora desde **Blueprint**, no desde el creador general |
-| CAS no permite montar | Revisa reserva, U disponibles y compatibilidad; no sobrescribas otra asignación |
-| Un Rack no se ve en otra página | Comprueba el Site/Room/Rack seleccionados antes de volver a crearlo |
+| Problema                             | Qué mirar                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------- |
+| No ves `EDIT ROOM`                   | Permisos o contexto: abre una Room, no el Site                                  |
+| Dibujaste pero desapareció al volver | Probablemente no se guardó el borrador con `SAVE LAYOUT`                        |
+| No encuentras `+ CREATE RACK`        | Rack se incorpora desde **Blueprint**, no desde el creador general              |
+| CAS no permite montar                | Revisa reserva, U disponibles y compatibilidad; no sobrescribas otra asignación |
+| Un Rack no se ve en otra página      | Comprueba el Site/Room/Rack seleccionados antes de volver a crearlo             |
 
 **Práctica aprobada:** poder señalar en el plano una Room, su Bay y su Rack, abrir el Rack y volver sin confundir ubicación con conexiones o telemetría.
 

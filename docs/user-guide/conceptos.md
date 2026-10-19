@@ -16,29 +16,29 @@ flowchart TD
 
 ### Diccionario para operadores
 
-| Palabra que verás | Explicación sencilla | Ejemplo |
-| --- | --- | --- |
-| Network | Contexto general que agrupa instalaciones | Network-Lima-1 |
-| Site | Instalación o localización física | TELXIUS-LURIN-1 |
-| Structure | Edificio o estructura del Site | EDIFICIO-01 |
-| Level | Piso o nivel del edificio | LEVEL-01 |
-| Room / Substructure | Sala con geometría | SALA DE TRANSMISIONES |
-| Bay / Cluster | Agrupación física dentro de una Room | Bay-01 |
-| Position | Lugar donde situar un rack | Una posición del plano |
-| Rack / Container | Estructura que alberga Devices | Rack-01-BDFB |
-| Device | Equipo inventariado y montable en rack | BDFB-01 |
-| Equipment | Componente interno con identidad propia | Chassis, Shelf, Frame, Panel |
-| PANEL | Equipment que puede tener posiciones físicas | Panel de 24 posiciones |
-| CIRCUIT_BREAKER | Interruptor instalado como Equipment | CB-01 |
-| DYNAMIC | Los hijos no ocupan una ranura numerada | Chassis con módulos sin slots |
-| POSITIONAL | Los hijos ocupan slots numerados | Panel 01–24 |
-| Access Port | Terminal físico identificable de una entidad | Power output, Power input |
-| PowerPath | Conexión persistida entre dos Access Ports | CB-01 OUTPUT → SWITCH INPUT |
-| MQTT Source | Identidad del publicador de datos | EMU-BFDB-01 |
-| Raw point | Etiqueta del dato que envía la fuente | 0_1_1 |
-| TelemetryBinding | Asociación aprobada entre fuente, punto, métrica y destino | `VOLTAGE` de `0_1_1` a CB-01 |
-| LIVE | Lectura reciente aceptada | 12.22 V en una muestra concreta |
-| Histórico | Muestras persistidas para consulta por periodo | 24h, 7d |
+| Palabra que verás   | Explicación sencilla                                       | Ejemplo                         |
+| ------------------- | ---------------------------------------------------------- | ------------------------------- |
+| Network             | Contexto general que agrupa instalaciones                  | Network-Lima-1                  |
+| Site                | Instalación o localización física                          | TELXIUS-LURIN-1                 |
+| Structure           | Edificio o estructura del Site                             | EDIFICIO-01                     |
+| Level               | Piso o nivel del edificio                                  | LEVEL-01                        |
+| Room / Substructure | Sala con geometría                                         | SALA DE TRANSMISIONES           |
+| Bay / Cluster       | Agrupación física dentro de una Room                       | Bay-01                          |
+| Position            | Lugar donde situar un rack                                 | Una posición del plano          |
+| Rack / Container    | Estructura que alberga Devices                             | Rack-01-BDFB                    |
+| Device              | Equipo inventariado y montable en rack                     | BDFB-01                         |
+| Equipment           | Componente interno con identidad propia                    | Chassis, Shelf, Frame, Panel    |
+| PANEL               | Equipment que puede tener posiciones físicas               | Panel de 24 posiciones          |
+| CIRCUIT_BREAKER     | Interruptor instalado como Equipment                       | CB-01                           |
+| DYNAMIC             | Los hijos no ocupan una ranura numerada                    | Chassis con módulos sin slots   |
+| POSITIONAL          | Los hijos ocupan slots numerados                           | Panel 01–24                     |
+| Access Port         | Terminal físico identificable de una entidad               | Power output, Power input       |
+| PowerPath           | Conexión persistida entre dos Access Ports                 | CB-01 OUTPUT → SWITCH INPUT     |
+| MQTT Source         | Identidad del publicador de datos                          | EMU-BFDB-01                     |
+| Raw point           | Etiqueta del dato que envía la fuente                      | 0_1_1                           |
+| TelemetryBinding    | Asociación aprobada entre fuente, punto, métrica y destino | `VOLTAGE` de `0_1_1` a CB-01    |
+| LIVE                | Lectura reciente aceptada                                  | 12.22 V en una muestra concreta |
+| Histórico           | Muestras persistidas para consulta por periodo             | 24h, 7d                         |
 
 **Importante:** `Room / Substructure` o `Rack / Container` son variantes de un mismo nivel del modelo; la barra no indica una capa adicional.
 
@@ -57,14 +57,14 @@ Puedes tener un breaker sin PowerPath, o un breaker correctamente mapeado sin LI
 
 ## Roles y permisos
 
-| Operación | STANDARD | ADMIN | SUPERADMIN |
-| --- | --- | --- | --- |
-| Consultar topología, energía y telemetría | Sí | Sí | Sí |
-| Crear/modificar topología | No | Sí | Sí |
-| Crear/modificar PowerPath | No | Sí | Sí |
-| Crear binding y confirmar commissioning | No | Sí, si dispone del permiso `telemetry:write` | Sí |
-| Administrar usuarios | No | Limitado a cuentas STANDARD según política | Sí |
-| Cambiar ajustes protegidos | No | Sí según permiso | Sí |
+| Operación                                 | STANDARD | ADMIN                                        | SUPERADMIN |
+| ----------------------------------------- | -------- | -------------------------------------------- | ---------- |
+| Consultar topología, energía y telemetría | Sí       | Sí                                           | Sí         |
+| Crear/modificar topología                 | No       | Sí                                           | Sí         |
+| Crear/modificar PowerPath                 | No       | Sí                                           | Sí         |
+| Crear binding y confirmar commissioning   | No       | Sí, si dispone del permiso `telemetry:write` | Sí         |
+| Administrar usuarios                      | No       | Limitado a cuentas STANDARD según política   | Sí         |
+| Cambiar ajustes protegidos                | No       | Sí según permiso                             | Sí         |
 
 Si un botón no aparece, **primero comprueba el rol, el estado del objeto y la ruta desde la que entraste**. No cambies manualmente un campo en MongoDB para eludir un permiso.
 

@@ -4,23 +4,23 @@ Los **diagramas** del manual están incorporados en Markdown con Mermaid y se mu
 
 ## Capturas necesarias para un manual ilustrado definitivo
 
-| ID | Vista real | Debe verse claramente | Texto descriptivo / regla |
-| --- | --- | --- | --- |
-| S01 | Login y Workspace | Dónde entrar, dónde volver al inicio | Acceso y contexto de sesión |
-| S02 | EXPLORE y árbol global | Network → Site → Structure → Level → Room | Ubicación lógica del activo |
-| S03 | Formulario `+ CREATE SITE` | Name, **Define boundary**, editor de polígono | Guardar la entidad y su límite |
-| S04 | Blueprint de Room | `EDIT ROOM`, `+ Draw Bay / Cluster`, `+ Place Rack`, `SAVE LAYOUT` | Diferencia entre borrador y guardado |
-| S05 | Vista de Rack / CAS | Rack físico y reserva/montaje | Reservar U no crea PowerPath |
-| S06 | Composición Equipment | Device → Chassis → Shelf → Frame → Panel | Los Equipment pueden anidarse |
-| S07 | Panel posicional | `POSITIONAL · 24 slots`, posición 01 instalada | Distinguir ocupado y libre |
-| S08 | CB-01 seleccionado | `Power output`, `CONNECTED`, `FEEDS → NETWORK BOARD / AP-01-01` | Destino visible y AP ocupado |
-| S09 | NETWORK BOARD seleccionado | `AP-01-01`, `CONNECTED`, `POWERED BY ← CB-01` | Conexión inversa visible |
-| S10 | Connect Equipment Power | 1. Source, 2. Destination, 3. Verify and confirm | No crear enlace sobre AP ocupado |
-| S11 | Error source ocupado | `SOURCE_ALREADY_CONNECTED` y `VIEW POWERPATH` | La aplicación bloquea un segundo destino |
-| S12 | FULL POWER TRACE | Feed A verificado, Feed B no configurado | No confundir camino registrado con redundancia |
-| S13 | Panel MQTT commissioning | Source, prefijo, posición, `4/4 · VERIFIED MAPPING` | Telemetría explícitamente asociada |
-| S14 | CB-01 LIVE / HISTORY | Valor, unidad, origen, fecha y ventana 7D | Diferenciar lectura actual e histórico |
-| S15 | Estado degradado (solo si ocurre) | `NO DATA`, `STALE` o `HISTORY_STORE_UNAVAILABLE` | No ocultar ni falsificar incidentes |
+| ID  | Vista real                        | Debe verse claramente                                              | Texto descriptivo / regla                      |
+| --- | --------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
+| S01 | Login y Workspace                 | Dónde entrar, dónde volver al inicio                               | Acceso y contexto de sesión                    |
+| S02 | EXPLORE y árbol global            | Network → Site → Structure → Level → Room                          | Ubicación lógica del activo                    |
+| S03 | Formulario `+ CREATE SITE`        | Name, **Define boundary**, editor de polígono                      | Guardar la entidad y su límite                 |
+| S04 | Blueprint de Room                 | `EDIT ROOM`, `+ Draw Bay / Cluster`, `+ Place Rack`, `SAVE LAYOUT` | Diferencia entre borrador y guardado           |
+| S05 | Vista de Rack / CAS               | Rack físico y reserva/montaje                                      | Reservar U no crea PowerPath                   |
+| S06 | Composición Equipment             | Device → Chassis → Shelf → Frame → Panel                           | Los Equipment pueden anidarse                  |
+| S07 | Panel posicional                  | `POSITIONAL · 24 slots`, posición 01 instalada                     | Distinguir ocupado y libre                     |
+| S08 | CB-01 seleccionado                | `Power output`, `CONNECTED`, `FEEDS → NETWORK BOARD / AP-01-01`    | Destino visible y AP ocupado                   |
+| S09 | NETWORK BOARD seleccionado        | `AP-01-01`, `CONNECTED`, `POWERED BY ← CB-01`                      | Conexión inversa visible                       |
+| S10 | Connect Equipment Power           | 1. Source, 2. Destination, 3. Verify and confirm                   | No crear enlace sobre AP ocupado               |
+| S11 | Error source ocupado              | `SOURCE_ALREADY_CONNECTED` y `VIEW POWERPATH`                      | La aplicación bloquea un segundo destino       |
+| S12 | FULL POWER TRACE                  | Feed A verificado, Feed B no configurado                           | No confundir camino registrado con redundancia |
+| S13 | Panel MQTT commissioning          | Source, prefijo, posición, `4/4 · VERIFIED MAPPING`                | Telemetría explícitamente asociada             |
+| S14 | CB-01 LIVE / HISTORY              | Valor, unidad, origen, fecha y ventana 7D                          | Diferenciar lectura actual e histórico         |
+| S15 | Estado degradado (solo si ocurre) | `NO DATA`, `STALE` o `HISTORY_STORE_UNAVAILABLE`                   | No ocultar ni falsificar incidentes            |
 
 ### Reglas al producir las capturas
 

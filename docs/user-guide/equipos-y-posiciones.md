@@ -46,14 +46,14 @@ Si el padre limita tipos mediante una plantilla, el selector solo ofrece tipos p
 
 En el Equipment que será el padre del Panel, selecciona `+ ADD EQUIPMENT` (o un slot correspondiente). En **ONE-OFF**, introduce:
 
-| Campo de la UI | Valor de ejemplo | Importancia |
-| --- | --- | --- |
-| Name | `PANEL-01` | Identidad humana |
-| Equipment type | `PANEL` | Activa la semántica del panel |
-| Children mode | `POSITIONAL` | Habilita slots numerados |
-| Child slots | `24` | 24 posiciones físicas |
-| MQTT point prefix | `0_1` **solo si está documentado** | Propuesta de grupo raw, no binding |
-| Serial number | `EMU-BFDB-01` **solo si es esta fuente** | Publisher único y aprobado |
+| Campo de la UI    | Valor de ejemplo                         | Importancia                        |
+| ----------------- | ---------------------------------------- | ---------------------------------- |
+| Name              | `PANEL-01`                               | Identidad humana                   |
+| Equipment type    | `PANEL`                                  | Activa la semántica del panel      |
+| Children mode     | `POSITIONAL`                             | Habilita slots numerados           |
+| Child slots       | `24`                                     | 24 posiciones físicas              |
+| MQTT point prefix | `0_1` **solo si está documentado**       | Propuesta de grupo raw, no binding |
+| Serial number     | `EMU-BFDB-01` **solo si es esta fuente** | Publisher único y aprobado         |
 
 Confirma **Create and install**. En la ficha del Panel debe decir `PANEL · ACTIVE · POSITIONAL · 24 slots`.
 

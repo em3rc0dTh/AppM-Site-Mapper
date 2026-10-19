@@ -6,16 +6,16 @@
 
 ## ¿Qué se aprende?
 
-| Lección | Objetivo observable | Enlace |
-| --- | --- | --- |
-| 0. Conceptos y permisos | Saber distinguir entidad, lugar, puerto, conexión y señal | [Conceptos esenciales](conceptos.md) |
-| 1. Crear infraestructura | Dar de alta Network, Site, Structure, Level y Room | [Crear y navegar entidades](entidades.md) |
-| 2. Trabajar con planos | Dibujar una sala, un Bay, posiciones y racks | [Blueprint y Rack](espacios-y-racks.md) |
-| 3. Componer Equipment | Crear un Device, anidar Equipment e instalar un breaker en un Panel | [Device, Equipment y posiciones](equipos-y-posiciones.md) |
-| 4. Conectar alimentación | Definir terminales POWER OUTPUT/INPUT y confirmar un PowerPath | [Conexiones físicas de potencia](conexiones.md) |
-| 5. Conectar datos | Confirmar publisher, prefijo, punto y cuatro bindings MQTT | [Commissioning MQTT](telemetria.md) |
-| 6. Interpretar resultados | Diferenciar LIVE, histórico, NO DATA, UNMAPPED y STALE | [Comprobaciones y errores](verificacion.md) |
-| 7. Ejercicio completo | Repetir un caso real desde inventario hasta verificación | [Práctica guiada](practica-guiada.md) |
+| Lección                   | Objetivo observable                                                 | Enlace                                                    |
+| ------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------- |
+| 0. Conceptos y permisos   | Saber distinguir entidad, lugar, puerto, conexión y señal           | [Conceptos esenciales](conceptos.md)                      |
+| 1. Crear infraestructura  | Dar de alta Network, Site, Structure, Level y Room                  | [Crear y navegar entidades](entidades.md)                 |
+| 2. Trabajar con planos    | Dibujar una sala, un Bay, posiciones y racks                        | [Blueprint y Rack](espacios-y-racks.md)                   |
+| 3. Componer Equipment     | Crear un Device, anidar Equipment e instalar un breaker en un Panel | [Device, Equipment y posiciones](equipos-y-posiciones.md) |
+| 4. Conectar alimentación  | Definir terminales POWER OUTPUT/INPUT y confirmar un PowerPath      | [Conexiones físicas de potencia](conexiones.md)           |
+| 5. Conectar datos         | Confirmar publisher, prefijo, punto y cuatro bindings MQTT          | [Commissioning MQTT](telemetria.md)                       |
+| 6. Interpretar resultados | Diferenciar LIVE, histórico, NO DATA, UNMAPPED y STALE              | [Comprobaciones y errores](verificacion.md)               |
+| 7. Ejercicio completo     | Repetir un caso real desde inventario hasta verificación            | [Práctica guiada](practica-guiada.md)                     |
 
 ## La lógica fundamental del producto
 

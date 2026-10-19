@@ -43,15 +43,15 @@ La comisión relaciona individualmente `VOLTAGE`, `CURRENT`, `POWER` y `ENERGY`.
 
 ## ¿Qué significa cada número?
 
-| Estado visible | Interpretación |
-| --- | --- |
-| `0/4 metric bindings` | Ninguna de las cuatro métricas está vinculada |
-| `1/4`…`3/4` | Asociación incompleta, revisar qué falta |
-| `4/4 · VERIFIED MAPPING` | Las cuatro asociaciones están registradas |
-| `CONFLICT` | La fuente/punto/breaker tiene conflicto de pertenencia: no continuar a ciegas |
-| `LIVE` | Hay una muestra reciente aceptada del Equipment |
-| `NO DATA` o `UNMAPPED` | No hay muestra utilizable o no existe vínculo aceptado |
-| `STALE` | Existe información, pero su antigüedad ya no permite llamarla LIVE |
+| Estado visible           | Interpretación                                                                |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| `0/4 metric bindings`    | Ninguna de las cuatro métricas está vinculada                                 |
+| `1/4`…`3/4`              | Asociación incompleta, revisar qué falta                                      |
+| `4/4 · VERIFIED MAPPING` | Las cuatro asociaciones están registradas                                     |
+| `CONFLICT`               | La fuente/punto/breaker tiene conflicto de pertenencia: no continuar a ciegas |
+| `LIVE`                   | Hay una muestra reciente aceptada del Equipment                               |
+| `NO DATA` o `UNMAPPED`   | No hay muestra utilizable o no existe vínculo aceptado                        |
+| `STALE`                  | Existe información, pero su antigüedad ya no permite llamarla LIVE            |
 
 **4/4 NO implica LIVE.** Es posible tener bindings correctos y un broker apagado, credenciales vencidas o un publisher sin datos.
 

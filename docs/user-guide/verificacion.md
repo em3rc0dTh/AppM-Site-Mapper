@@ -4,13 +4,13 @@
 
 ## Cinco evidencias independientes
 
-| Evidencia | Dónde la compruebas | Qué demuestra | Qué NO demuestra |
-| --- | --- | --- | --- |
-| **Inventory** | Árbol global, Rack, Equipment | Que el objeto existe y tiene ubicación lógica | Que esté montado o cableado físicamente |
-| **Placement** | Blueprint / Rack Elevation / CAS | Que una ubicación/asignación está registrada | Que la carga tenga energía |
-| **PowerPath** | Terminal **CONNECTED**, **VIEW POWERPATH**, Full Power Trace | Que dos Access Ports fueron enlazados en el inventario | Que el hardware esté energizado o haya redundancia |
-| **MQTT 4/4** | Panel → MQTT POINT COMMISSIONING | Que cuatro métricas se asignaron a un breaker específico | Que haya un paquete reciente |
-| **LIVE + histórico** | Equipment → LIVE TELEMETRY, HISTORY | Que llegaron lecturas aceptadas y/o persistidas | Que el sensor real sea preciso sin calibración/certificación |
+| Evidencia            | Dónde la compruebas                                          | Qué demuestra                                            | Qué NO demuestra                                             |
+| -------------------- | ------------------------------------------------------------ | -------------------------------------------------------- | ------------------------------------------------------------ |
+| **Inventory**        | Árbol global, Rack, Equipment                                | Que el objeto existe y tiene ubicación lógica            | Que esté montado o cableado físicamente                      |
+| **Placement**        | Blueprint / Rack Elevation / CAS                             | Que una ubicación/asignación está registrada             | Que la carga tenga energía                                   |
+| **PowerPath**        | Terminal **CONNECTED**, **VIEW POWERPATH**, Full Power Trace | Que dos Access Ports fueron enlazados en el inventario   | Que el hardware esté energizado o haya redundancia           |
+| **MQTT 4/4**         | Panel → MQTT POINT COMMISSIONING                             | Que cuatro métricas se asignaron a un breaker específico | Que haya un paquete reciente                                 |
+| **LIVE + histórico** | Equipment → LIVE TELEMETRY, HISTORY                          | Que llegaron lecturas aceptadas y/o persistidas          | Que el sensor real sea preciso sin calibración/certificación |
 
 ## Ejemplo visible de CB-01
 
@@ -39,19 +39,19 @@ La evidencia mostrada en octubre de 2026 cubrió **un breaker en el laboratorio*
 
 ## Mensajes comunes y acciones seguras
 
-| Pantalla o mensaje | Significado práctico | Qué hacer |
-| --- | --- | --- |
-| `SOURCE_ALREADY_CONNECTED` | El OUTPUT ya alimenta un destino registrado | Abrir **VIEW POWERPATH**, verificar destino; no crear una segunda ruta |
-| `TARGET_ALREADY_CONNECTED` | El INPUT ya está ocupado | Abrir la ruta existente y consultar al responsable del inventario |
-| `FEED_MISMATCH` | Extremos fijados a vías A/B incompatibles | Revisar contrato físico; no cambiar feed por ensayo |
-| `4/4 · VERIFIED MAPPING`, sin LIVE | Los bindings existen, no hay lectura reciente | Verificar emisor MQTT, broker y fuente con el administrador |
-| `UNMAPPED` | No hay una asociación aceptada para el Equipment | Revisar el commissioning del Panel si se conoce el circuito |
-| `NO DATA` | No hay una muestra utilizable | Esperar o comprobar diagnóstico de la fuente |
-| `STALE` | La última muestra está vencida | No tratar como energía instantánea; comprobar frescura |
-| `HISTORY_STORE_UNAVAILABLE` | No se pudo consultar el almacenamiento histórico | Notificar al administrador; no borrar base de datos ni bindings |
-| `Last matching packet: —` | La vista no pudo presentar una lectura que corresponda | No significa necesariamente que los datos se hayan eliminado |
-| `Power B · No recorded path` | No hay una segunda vía registrada | No declarar redundancia A+B |
-| `Placement: ... not mounted` | Existe contexto de Rack, pero falta registrar montaje físico | Revisar CAS/Rack; no falsear estado “montado” |
+| Pantalla o mensaje                 | Significado práctico                                         | Qué hacer                                                              |
+| ---------------------------------- | ------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `SOURCE_ALREADY_CONNECTED`         | El OUTPUT ya alimenta un destino registrado                  | Abrir **VIEW POWERPATH**, verificar destino; no crear una segunda ruta |
+| `TARGET_ALREADY_CONNECTED`         | El INPUT ya está ocupado                                     | Abrir la ruta existente y consultar al responsable del inventario      |
+| `FEED_MISMATCH`                    | Extremos fijados a vías A/B incompatibles                    | Revisar contrato físico; no cambiar feed por ensayo                    |
+| `4/4 · VERIFIED MAPPING`, sin LIVE | Los bindings existen, no hay lectura reciente                | Verificar emisor MQTT, broker y fuente con el administrador            |
+| `UNMAPPED`                         | No hay una asociación aceptada para el Equipment             | Revisar el commissioning del Panel si se conoce el circuito            |
+| `NO DATA`                          | No hay una muestra utilizable                                | Esperar o comprobar diagnóstico de la fuente                           |
+| `STALE`                            | La última muestra está vencida                               | No tratar como energía instantánea; comprobar frescura                 |
+| `HISTORY_STORE_UNAVAILABLE`        | No se pudo consultar el almacenamiento histórico             | Notificar al administrador; no borrar base de datos ni bindings        |
+| `Last matching packet: —`          | La vista no pudo presentar una lectura que corresponda       | No significa necesariamente que los datos se hayan eliminado           |
+| `Power B · No recorded path`       | No hay una segunda vía registrada                            | No declarar redundancia A+B                                            |
+| `Placement: ... not mounted`       | Existe contexto de Rack, pero falta registrar montaje físico | Revisar CAS/Rack; no falsear estado “montado”                          |
 
 ## Qué debe reportar el operador
 

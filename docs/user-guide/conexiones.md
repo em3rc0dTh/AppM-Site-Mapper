@@ -67,13 +67,13 @@ La interfaz marca **ALREADY CONNECTED** en el selector de origen y muestra la ad
 
 En el ejemplo de laboratorio:
 
-| Lugar | Qué debes ver | Qué significa |
-| --- | --- | --- |
-| CB-01 → **PHYSICAL TERMINALS** | `Power output · CONNECTED` | Puerto ya usado |
-| CB-01 → terminal seleccionado | `FEEDS → NETWORK BOARD / AP-01-01 · Feed A` | Destino identificable |
-| NETWORK BOARD → terminal | `CONNECTED` + `POWERED BY ← CB-01` | Alimentación registrada |
-| **VIEW POWERPATH / FULL POWER TRACE** | Camino A con los objetos del circuito | Recorrido auditable |
-| Inspector → Power A / B | A: `Path recorded`; B: `No recorded path` | Solo vía A registrada |
+| Lugar                                 | Qué debes ver                               | Qué significa           |
+| ------------------------------------- | ------------------------------------------- | ----------------------- |
+| CB-01 → **PHYSICAL TERMINALS**        | `Power output · CONNECTED`                  | Puerto ya usado         |
+| CB-01 → terminal seleccionado         | `FEEDS → NETWORK BOARD / AP-01-01 · Feed A` | Destino identificable   |
+| NETWORK BOARD → terminal              | `CONNECTED` + `POWERED BY ← CB-01`          | Alimentación registrada |
+| **VIEW POWERPATH / FULL POWER TRACE** | Camino A con los objetos del circuito       | Recorrido auditable     |
+| Inspector → Power A / B               | A: `Path recorded`; B: `No recorded path`   | Solo vía A registrada   |
 
 Que el trazado figure como VERIFIED es una validación de la representación/identidad del recorrido. **No acredita por sí mismo que haya tensión física real**, ni certifica redundancia A+B. La telemetría LIVE es otra comprobación distinta.
 

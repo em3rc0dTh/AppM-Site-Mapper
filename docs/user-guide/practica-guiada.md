@@ -6,11 +6,11 @@
 
 Elige primero el modo de clase:
 
-| Modalidad | Requisitos | Riesgo |
-| --- | --- | --- |
-| **A. Visita guiada / solo lectura** | Usuario STANDARD; topología y PowerPath A existentes | No modifica datos |
-| **B. Taller de creación** | ADMIN autorizado; base aislada de capacitación | Crea entidades de prueba |
-| **C. Telemetría en directo** | Lo anterior + broker externo, emulador y fuente verificados | Solo se muestran mediciones sintéticas reales del emulador |
+| Modalidad                           | Requisitos                                                  | Riesgo                                                     |
+| ----------------------------------- | ----------------------------------------------------------- | ---------------------------------------------------------- |
+| **A. Visita guiada / solo lectura** | Usuario STANDARD; topología y PowerPath A existentes        | No modifica datos                                          |
+| **B. Taller de creación**           | ADMIN autorizado; base aislada de capacitación              | Crea entidades de prueba                                   |
+| **C. Telemetría en directo**        | Lo anterior + broker externo, emulador y fuente verificados | Solo se muestran mediciones sintéticas reales del emulador |
 
 **Nunca practiques creando o retirando un PowerPath sobre un breaker que alimenta equipos reales.** Si el ambiente no tiene un cableado verificado o un fixture de simulación autorizado, registra únicamente inventario y revisa conexiones ya existentes.
 
@@ -68,17 +68,17 @@ Crear el Panel o el breaker no obliga a rellenar los otros 23 slots ni a usar un
 
 ## Lista de observación del instructor
 
-| Competencia | Cumplida cuando la persona… |
-| --- | --- |
-| Navegación | Encuentra un Equipment a partir de Network/Site/Room |
-| Identidad | Diferencia Device, Equipment, Panel y Circuit Breaker |
-| Posición | Identifica slots ocupados/disponibles sin crear inventario ficticio |
-| Puertos | Señala OUTPUT/INPUT/BIDIRECTIONAL y explica su diferencia |
-| Conexión | Identifica el peer de un puerto CONNECTED y abre PowerPath |
-| Seguridad | No intenta reutilizar un terminal ocupado |
-| Commissioning | Distingue fuente, prefijo, punto sugerido y 4/4 bindings |
-| Telemetría | Explica la diferencia LIVE / histórico / STALE / UNMAPPED |
-| Manejo de errores | Ante un error, captura contexto y **no** borra datos |
+| Competencia       | Cumplida cuando la persona…                                         |
+| ----------------- | ------------------------------------------------------------------- |
+| Navegación        | Encuentra un Equipment a partir de Network/Site/Room                |
+| Identidad         | Diferencia Device, Equipment, Panel y Circuit Breaker               |
+| Posición          | Identifica slots ocupados/disponibles sin crear inventario ficticio |
+| Puertos           | Señala OUTPUT/INPUT/BIDIRECTIONAL y explica su diferencia           |
+| Conexión          | Identifica el peer de un puerto CONNECTED y abre PowerPath          |
+| Seguridad         | No intenta reutilizar un terminal ocupado                           |
+| Commissioning     | Distingue fuente, prefijo, punto sugerido y 4/4 bindings            |
+| Telemetría        | Explica la diferencia LIVE / histórico / STALE / UNMAPPED           |
+| Manejo de errores | Ante un error, captura contexto y **no** borra datos                |
 
 **Resultado final:** el alumno completa el recorrido A de manera autónoma y explica verbalmente qué parte es topología, qué parte conexión física y qué parte telemetría. El recorrido B solo se evalúa cuando haya ambiente autorizado.
 

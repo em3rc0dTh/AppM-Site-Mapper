@@ -8,16 +8,16 @@ Necesitas rol ADMIN/SUPERADMIN, un entorno de prácticas autorizado y claridad s
 
 ### ¿Dónde creo cada cosa?
 
-| Nueva entidad | Dónde entrar | Control real |
-| --- | --- | --- |
-| Network | Vista de exploración / Network | `+ CREATE NETWORK` (si el contexto y el permiso ofrecen el control) |
-| Site | Network correspondiente | `+ CREATE SITE` → `Define boundary` |
-| Structure | Site correspondiente | `+ CREATE STRUCTURE` → `Define boundary` |
-| Level | Structure correspondiente | `+ CREATE LEVEL` |
-| Room | Level correspondiente | `+ CREATE ROOM` → `Define boundary` |
-| Bay, Position, Rack | Abrir **Blueprint** de la Room | No usar el formulario general: se crean/colocan en el plano |
-| Device | Rack/contexto válido | Crear desde la opción de inventario del contexto del Rack |
-| Equipment | Device u otro Equipment | `+ ADD EQUIPMENT`, `FROM WAREHOUSE` o `ONE-OFF` |
+| Nueva entidad       | Dónde entrar                   | Control real                                                        |
+| ------------------- | ------------------------------ | ------------------------------------------------------------------- |
+| Network             | Vista de exploración / Network | `+ CREATE NETWORK` (si el contexto y el permiso ofrecen el control) |
+| Site                | Network correspondiente        | `+ CREATE SITE` → `Define boundary`                                 |
+| Structure           | Site correspondiente           | `+ CREATE STRUCTURE` → `Define boundary`                            |
+| Level               | Structure correspondiente      | `+ CREATE LEVEL`                                                    |
+| Room                | Level correspondiente          | `+ CREATE ROOM` → `Define boundary`                                 |
+| Bay, Position, Rack | Abrir **Blueprint** de la Room | No usar el formulario general: se crean/colocan en el plano         |
+| Device              | Rack/contexto válido           | Crear desde la opción de inventario del contexto del Rack           |
+| Equipment           | Device u otro Equipment        | `+ ADD EQUIPMENT`, `FROM WAREHOUSE` o `ONE-OFF`                     |
 
 No todas las vistas muestran todos los botones. Si no ves una acción, vuelve al objeto padre o revisa el permiso.
 
@@ -62,13 +62,13 @@ flowchart TD
 
 ## ¿Qué hacer si aparece un error?
 
-| Situación | Qué comprobar |
-| --- | --- |
-| No hay `+ CREATE ...` | ¿Estás en el padre correcto? ¿Tu rol permite escritura? |
-| El formulario muestra `Define boundary` | Es normal en Site, Structure y Room: falta dibujar polígono |
-| La geometría no se acepta | Revisar contención, cruces y solapamiento de polígonos |
-| `CREATE_FAILED_HTTP_...` | Error HTTP: no duplicar rápidamente la solicitud; revisar si el objeto llegó a crearse |
-| Duplicidad de serial | No modificar otro Device para forzar un SN; verificar inventario y correspondencia |
+| Situación                               | Qué comprobar                                                                          |
+| --------------------------------------- | -------------------------------------------------------------------------------------- |
+| No hay `+ CREATE ...`                   | ¿Estás en el padre correcto? ¿Tu rol permite escritura?                                |
+| El formulario muestra `Define boundary` | Es normal en Site, Structure y Room: falta dibujar polígono                            |
+| La geometría no se acepta               | Revisar contención, cruces y solapamiento de polígonos                                 |
+| `CREATE_FAILED_HTTP_...`                | Error HTTP: no duplicar rápidamente la solicitud; revisar si el objeto llegó a crearse |
+| Duplicidad de serial                    | No modificar otro Device para forzar un SN; verificar inventario y correspondencia     |
 
 **No crees Rack, Bay o Position por API manual para saltarte Blueprint**. El siguiente tutorial enseña su ubicación visual.
 

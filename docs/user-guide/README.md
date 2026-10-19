@@ -8,6 +8,7 @@
 
 | Lección                   | Objetivo observable                                                 | Enlace                                                    |
 | ------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------- |
+| **Antes de empezar: Login y usuarios** | **Entrar, cambiar contraseña temporal y comprender cómo SUPERADMIN crea cuentas** | [Primer acceso y usuarios](primer-acceso-y-usuarios.md)                   |
 | 0. Conceptos y permisos   | Saber distinguir entidad, lugar, puerto, conexión y señal           | [Conceptos esenciales](conceptos.md)                      |
 | 1. Crear infraestructura  | Dar de alta Network, Site, Structure, Level y Room                  | [Crear y navegar entidades](entidades.md)                 |
 | 2. Trabajar con planos    | Dibujar una sala, un Bay, posiciones y racks                        | [Blueprint y Rack](espacios-y-racks.md)                   |

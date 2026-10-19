@@ -1,0 +1,38 @@
+name: Temporary Power Port Formatting
+on:
+  push:
+    branches:
+      - fix/power-ports-one-to-one-20261019
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.repository == 'em3rc0dTh/AppM-Site-Mapper'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/power-ports-one-to-one-20261019
+          persist-credentials: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Normalize power UI and domain with pinned Prettier
+        run: |
+          ./node_modules/.bin/prettier --write \
+            docs/operations/power-port-cardinality.md \
+            src/app/power/connect/equipment/page.tsx \
+            src/components/equipment/access-port-editor.tsx \
+            src/components/power/connect-equipment-power-form.tsx \
+            src/modules/power/application/power-service.ts \
+            tests/integration/power-service.test.ts
+      - name: Commit formatting on feature branch only
+        run: |
+          git add -- docs/operations/power-port-cardinality.md src/app/power/connect/equipment/page.tsx src/components/equipment/access-port-editor.tsx src/components/power/connect-equipment-power-form.tsx src/modules/power/application/power-service.ts tests/integration/power-service.test.ts
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'style: normalize one-to-one PowerPath implementation'
+            git push origin HEAD:refs/heads/fix/power-ports-one-to-one-20261019
+          fi

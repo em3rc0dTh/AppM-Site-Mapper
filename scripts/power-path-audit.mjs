@@ -13,6 +13,8 @@ function feed(value) {
 
 export function auditActivePowerPaths(paths, activePortById, issue) {
   const activeTargetKeys = new Set();
+  const activeSourceKeys = new Set();
+  const occupiedTerminalKeys = new Set();
   let canonicalPowerPaths = 0;
   let incompletePowerPaths = 0;
 
@@ -47,6 +49,16 @@ export function auditActivePowerPaths(paths, activePortById, issue) {
       issue('MULTIPLE_ACTIVE_POWER_PATHS_FOR_INPUT', path.id, path.targetAccessPortId);
     }
     activeTargetKeys.add(path.targetAccessPortId);
+    if (activeSourceKeys.has(path.sourceAccessPortId)) {
+      issue('MULTIPLE_ACTIVE_POWER_PATHS_FOR_OUTPUT', path.id, path.sourceAccessPortId);
+    }
+    activeSourceKeys.add(path.sourceAccessPortId);
+    for (const portId of new Set([path.sourceAccessPortId, path.targetAccessPortId])) {
+      if (occupiedTerminalKeys.has(portId)) {
+        issue('POWER_PORT_USED_IN_MULTIPLE_PATHS', path.id, portId);
+      }
+      occupiedTerminalKeys.add(portId);
+    }
 
     const sourceFeed = feed(source?.attributes?.feed);
     const targetFeed = feed(target?.attributes?.feed);

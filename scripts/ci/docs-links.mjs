@@ -10,6 +10,16 @@ const entrypoints = [
   'docs/operations/quickstart.md',
   'docs/operations/history-connectivity.md',
   'docs/release/MVP-READINESS.md',
+  'docs/user-guide/README.md',
+  'docs/user-guide/conceptos.md',
+  'docs/user-guide/entidades.md',
+  'docs/user-guide/espacios-y-racks.md',
+  'docs/user-guide/equipos-y-posiciones.md',
+  'docs/user-guide/conexiones.md',
+  'docs/user-guide/telemetria.md',
+  'docs/user-guide/verificacion.md',
+  'docs/user-guide/practica-guiada.md',
+  'docs/user-guide/capturas-y-capacitacion.md',
 ];
 const errors = [];
 let inspected = 0;

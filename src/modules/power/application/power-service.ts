@@ -100,28 +100,31 @@ export class PowerService {
     try {
       await this.repository.insert(path);
     } catch (error) {
-      // Mongo enforces one ACTIVE path per target through connectionKey.
-      // Two concurrent operators may both pass the pre-flight read; present
-      // the unique-index conflict as a domain error rather than HTTP 500.
       const conflict = error as {
         code?: number;
-        keyPattern?: { connectionKey?: unknown };
+        keyPattern?: Record<string, unknown>;
         message?: string;
       };
-      if (
-        conflict.code === 11000 &&
-        (conflict.keyPattern?.connectionKey !== undefined ||
-          conflict.message?.includes('uq_active_power_path_connection_key'))
-      ) {
-        const linked = await this.repository.listForAccessPort(target.port.id);
-        const same = linked.find(
-          (candidate) =>
-            candidate.lifecycle === 'ACTIVE' &&
-            candidate.sourceAccessPortId === source.port.id &&
-            candidate.targetAccessPortId === target.port.id,
+      if (conflict.code === 11000) {
+        const [sourceNow, targetNow] = await Promise.all([
+          this.repository.listForAccessPort(source.port.id),
+          this.repository.listForAccessPort(target.port.id),
+        ]);
+        const exactNow = targetNow.find((candidate) =>
+          candidate.sourceAccessPortId === source.port.id &&
+          candidate.targetAccessPortId === target.port.id,
         );
-        if (same) return success(same);
-        return failure('TARGET_ALREADY_CONNECTED');
+        if (exactNow) return success(exactNow);
+        if (targetNow.length || conflict.keyPattern?.targetAccessPortId !== undefined ||
+            conflict.keyPattern?.connectionKey !== undefined ||
+            conflict.message?.includes('uq_active_power_path_target') ||
+            conflict.message?.includes('uq_active_power_path_connection_key')) {
+          return failure('TARGET_ALREADY_CONNECTED');
+        }
+        if (sourceNow.length || conflict.keyPattern?.sourceAccessPortId !== undefined ||
+            conflict.message?.includes('uq_active_power_path_source')) {
+          return failure('SOURCE_ALREADY_CONNECTED');
+        }
       }
       throw error;
     }

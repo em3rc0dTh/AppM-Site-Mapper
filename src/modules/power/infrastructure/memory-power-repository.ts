@@ -31,6 +31,23 @@ export class MemoryPowerRepository implements PowerRepository {
 
   async insert(path: PowerPath): Promise<void> {
     if (this.paths.has(path.id)) throw new Error('PowerPath already exists: ' + path.id);
+    if (path.lifecycle === 'ACTIVE') {
+      for (const existing of this.paths.values()) {
+        if (existing.lifecycle !== 'ACTIVE') continue;
+        if (existing.targetAccessPortId === path.targetAccessPortId) {
+          throw Object.assign(new Error('TARGET_ALREADY_CONNECTED'), {
+            code: 11000,
+            keyPattern: { targetAccessPortId: 1 },
+          });
+        }
+        if (existing.sourceAccessPortId === path.sourceAccessPortId) {
+          throw Object.assign(new Error('SOURCE_ALREADY_CONNECTED'), {
+            code: 11000,
+            keyPattern: { sourceAccessPortId: 1 },
+          });
+        }
+      }
+    }
     this.paths.set(path.id, structuredClone(path));
   }
 

@@ -2,6 +2,8 @@
 
 **Objetivo:** que alguien que no desarrolló la aplicación entienda qué es, cómo funciona y qué evidencia produce. Duración sugerida: 10–15 minutos. No demuestra seguridad de producción ni sensores físicamente conectados.
 
+Para que otro usuario aprenda a crear entidades, editar Room Blueprint, conectar POWER y comisionar MQTT, utiliza el **[Manual del operador MK1](../user-guide/README.md)**. Este documento es el guion comercial/técnico de demostración; **no** reemplaza la formación operativa.
+
 ## Mensaje ejecutivo
 
 > Site Mapper concentra la vista física de una instalación, organiza su infraestructura por ubicación y componentes y permite relacionar una señal externa con el equipo correcto. Una lectura no se considera de un circuito hasta que el operador valida la correspondencia; luego puede verse en tiempo real, persistirse como histórico y exponerse a sistemas industriales por Modbus TCP.

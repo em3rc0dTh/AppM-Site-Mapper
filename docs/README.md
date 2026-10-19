@@ -2,6 +2,12 @@
 
 **Punto de partida para operadores, desarrolladores, evaluadores del MVP y responsables de despliegue.** El README raíz resume el producto y muestra los diagramas principales. Este índice distingue la arquitectura implementada de la documentación histórica de reconstrucción.
 
+## Primer día en Site Mapper: Manual del operador
+
+**[Manual del Operador MK1](user-guide/README.md)** — para personas que nunca usaron el sistema. Explica cómo crear la jerarquía física, usar Blueprint, colocar Rack, distinguir Device/Equipment, identificar puertos **CONNECTED**, registrar PowerPaths uno-a-uno, comisionar MQTT y verificar LIVE/histórico. Incluye ejercicios seguros, errores frecuentes y criterios de aprendizaje.
+
+El [guion de presentación](product/MVP-DEMO-ES.md) sirve para mostrar capacidades a un cliente; el **manual del operador** enseña a realizar tareas por cuenta propia. La secuencia de capturas reales pendientes está registrada en [material visual y capacitación](user-guide/capturas-y-capacitacion.md).
+
 ## Ruta de lectura por perfil
 
 | Perfil / objetivo               | Empieza aquí                                      | Continúa con                                                                                               |

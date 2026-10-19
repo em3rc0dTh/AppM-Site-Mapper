@@ -64,7 +64,9 @@ flowchart LR
   Live --> Modbus[FC03 · Solo laboratorio]
 ```
 
-[Guion para presentar el MVP en español](docs/product/MVP-DEMO-ES.md).
+**[Manual del operador: aprender a crear, ubicar, conectar y verificar](docs/user-guide/README.md)** · [Guion para presentar el MVP en español](docs/product/MVP-DEMO-ES.md).
+
+El manual está orientado a personas sin experiencia con Site Mapper. Incluye ocho lecciones, procedimientos paso a paso, diagramas de decisiones, ejercicios seguros y un guion para instructores; no requiere conocer comandos, UUID ni MongoDB.
 
 ## Evidencia real y límites
 

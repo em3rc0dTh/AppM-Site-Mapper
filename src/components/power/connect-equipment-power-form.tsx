@@ -13,6 +13,8 @@ export interface CommissioningPort {
   readonly direction: 'INPUT' | 'OUTPUT' | 'BIDIRECTIONAL';
   readonly feed?: 'A' | 'B';
   readonly connected?: boolean;
+  readonly connectionLabel?: string;
+  readonly pathId?: string;
 }
 
 export function ConnectEquipmentPowerForm({
@@ -45,7 +47,13 @@ export function ConnectEquipmentPowerForm({
     source && target && source.equipmentId === target.equipmentId,
   );
   const canConfirm = Boolean(
-    source && target && !target.connected && !mismatch && !sourceAndTargetSameEquipment && !saving,
+    source &&
+    target &&
+    !source.connected &&
+    !target.connected &&
+    !mismatch &&
+    !sourceAndTargetSameEquipment &&
+    !saving,
   );
 
   const filteredTargets = useMemo(() => {
@@ -116,9 +124,10 @@ export function ConnectEquipmentPowerForm({
             >
               <option value="">Select source port</option>
               {sources.map((port) => (
-                <option key={port.id} value={port.id}>
+                <option key={port.id} value={port.id} disabled={port.connected}>
                   {port.equipmentName} / {port.name}
                   {port.feed ? ` · Feed ${port.feed}` : ''}
+                  {port.connected ? ' · ALREADY CONNECTED' : ''}
                 </option>
               ))}
             </select>
@@ -130,6 +139,9 @@ export function ConnectEquipmentPowerForm({
               <span>
                 {source.name} · {source.direction}
               </span>
+              {source.connected && (
+                <strong role="status">CONNECTED → {source.connectionLabel}</strong>
+              )}
             </div>
           )}
         </section>
@@ -176,6 +188,9 @@ export function ConnectEquipmentPowerForm({
               <span>
                 {target.name} · {target.direction}
               </span>
+              {target.connected && (
+                <strong role="status">POWERED BY ← {target.connectionLabel}</strong>
+              )}
             </div>
           )}
         </section>
@@ -215,7 +230,23 @@ export function ConnectEquipmentPowerForm({
         {sourceAndTargetSameEquipment && (
           <p role="alert">Source and destination must be different Equipment.</p>
         )}
-        {target?.connected && <p role="alert">That POWER INPUT is already connected.</p>}
+        {source?.connected && (
+          <p role="alert">
+            SOURCE_ALREADY_CONNECTED: This POWER output already feeds {source.connectionLabel}.
+            Disconnect the recorded path before allocating this terminal elsewhere.
+            {source.pathId && (
+              <Link href={`/power?path=${encodeURIComponent(source.pathId)}`}> View PowerPath</Link>
+            )}
+          </p>
+        )}
+        {target?.connected && (
+          <p role="alert">
+            TARGET_ALREADY_CONNECTED: This POWER input already has a connection.
+            {target.pathId && (
+              <Link href={`/power?path=${encodeURIComponent(target.pathId)}`}> View PowerPath</Link>
+            )}
+          </p>
+        )}
         {mismatch && (
           <p role="alert">FEED_MISMATCH: Source and destination have different fixed feeds.</p>
         )}

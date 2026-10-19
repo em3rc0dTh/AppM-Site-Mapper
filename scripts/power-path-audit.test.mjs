@@ -73,7 +73,49 @@ describe('read-only audit of canonical and historical PowerPaths', () => {
     );
     assert.deepEqual(
       result.violations.map((item) => item.code),
-      ['MULTIPLE_ACTIVE_POWER_PATHS_FOR_INPUT', 'NON_CANONICAL_POWER_PATH_ENDPOINTS'],
+      [
+        'MULTIPLE_ACTIVE_POWER_PATHS_FOR_INPUT',
+        'POWER_PORT_USED_IN_MULTIPLE_PATHS',
+        'NON_CANONICAL_POWER_PATH_ENDPOINTS',
+      ],
+    );
+  });
+
+  it('rejects reuse of one source for another input and lists both reasons', () => {
+    const ports = new Map([
+      ['breaker-out', source],
+      ['load-a', target],
+      ['load-b', target],
+    ]);
+    const result = check(
+      [
+        { id: 'path-a', sourceAccessPortId: 'breaker-out', targetAccessPortId: 'load-a' },
+        { id: 'path-b', sourceAccessPortId: 'breaker-out', targetAccessPortId: 'load-b' },
+      ],
+      ports,
+    );
+    assert.deepEqual(
+      result.violations.map((item) => item.code),
+      ['MULTIPLE_ACTIVE_POWER_PATHS_FOR_OUTPUT', 'POWER_PORT_USED_IN_MULTIPLE_PATHS'],
+    );
+  });
+
+  it('detects a BIDIRECTIONAL port receiving and forwarding another feed', () => {
+    const ports = new Map([
+      ['breaker-out', source],
+      ['bidirectional', { ...source, direction: 'BIDIRECTIONAL' }],
+      ['load-b', target],
+    ]);
+    const result = check(
+      [
+        { id: 'path-a', sourceAccessPortId: 'breaker-out', targetAccessPortId: 'bidirectional' },
+        { id: 'path-b', sourceAccessPortId: 'bidirectional', targetAccessPortId: 'load-b' },
+      ],
+      ports,
+    );
+    assert.deepEqual(
+      result.violations.map((item) => item.code),
+      ['POWER_PORT_USED_IN_MULTIPLE_PATHS'],
     );
   });
 

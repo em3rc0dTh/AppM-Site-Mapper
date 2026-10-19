@@ -15,6 +15,7 @@ export type PowerError =
   | 'INVALID_TARGET_DIRECTION'
   | 'FEED_MISMATCH'
   | 'TARGET_ALREADY_CONNECTED'
+  | 'SOURCE_ALREADY_CONNECTED'
   | 'SAME_ENDPOINT'
   | 'PATH_NOT_FOUND';
 
@@ -70,16 +71,18 @@ export class PowerService {
     )
       return failure('FEED_MISMATCH');
 
-    const targetPaths = await this.repository.listForAccessPort(target.port.id);
+    const [sourcePaths, targetPaths] = await Promise.all([
+      this.repository.listForAccessPort(source.port.id),
+      this.repository.listForAccessPort(target.port.id),
+    ]);
     const exact = targetPaths.find(
       (path) =>
         path.sourceAccessPortId === source.port.id && path.targetAccessPortId === target.port.id,
     );
     if (exact) return success(exact);
 
-    if (targetPaths.some((path) => path.targetAccessPortId === target.port.id)) {
-      return failure('TARGET_ALREADY_CONNECTED');
-    }
+    if (targetPaths.length) return failure('TARGET_ALREADY_CONNECTED');
+    if (sourcePaths.length) return failure('SOURCE_ALREADY_CONNECTED');
 
     const timestamp = nowIso();
     const path: PowerPath = {
@@ -97,28 +100,38 @@ export class PowerService {
     try {
       await this.repository.insert(path);
     } catch (error) {
-      // Mongo enforces one ACTIVE path per target through connectionKey.
-      // Two concurrent operators may both pass the pre-flight read; present
-      // the unique-index conflict as a domain error rather than HTTP 500.
       const conflict = error as {
         code?: number;
-        keyPattern?: { connectionKey?: unknown };
+        keyPattern?: Record<string, unknown>;
         message?: string;
       };
-      if (
-        conflict.code === 11000 &&
-        (conflict.keyPattern?.connectionKey !== undefined ||
-          conflict.message?.includes('uq_active_power_path_connection_key'))
-      ) {
-        const linked = await this.repository.listForAccessPort(target.port.id);
-        const same = linked.find(
+      if (conflict.code === 11000) {
+        const [sourceNow, targetNow] = await Promise.all([
+          this.repository.listForAccessPort(source.port.id),
+          this.repository.listForAccessPort(target.port.id),
+        ]);
+        const exactNow = targetNow.find(
           (candidate) =>
-            candidate.lifecycle === 'ACTIVE' &&
             candidate.sourceAccessPortId === source.port.id &&
             candidate.targetAccessPortId === target.port.id,
         );
-        if (same) return success(same);
-        return failure('TARGET_ALREADY_CONNECTED');
+        if (exactNow) return success(exactNow);
+        if (
+          targetNow.length ||
+          conflict.keyPattern?.targetAccessPortId !== undefined ||
+          conflict.keyPattern?.connectionKey !== undefined ||
+          conflict.message?.includes('uq_active_power_path_target') ||
+          conflict.message?.includes('uq_active_power_path_connection_key')
+        ) {
+          return failure('TARGET_ALREADY_CONNECTED');
+        }
+        if (
+          sourceNow.length ||
+          conflict.keyPattern?.sourceAccessPortId !== undefined ||
+          conflict.message?.includes('uq_active_power_path_source')
+        ) {
+          return failure('SOURCE_ALREADY_CONNECTED');
+        }
       }
       throw error;
     }

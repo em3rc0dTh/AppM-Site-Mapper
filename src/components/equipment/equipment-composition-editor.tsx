@@ -15,6 +15,7 @@ import { EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
 import { allowedChildEquipmentTypes, canInstallChildType } from './allowed-child-equipment-types';
 import type { AssetTemplate } from '@/modules/warehouse/domain/template';
 import type { CompositionBreakerBinding } from '@/modules/telemetry/domain/composition-breaker-telemetry';
+import type { PortConnectionView } from '@/modules/power/domain/port-connection-view';
 
 function label(type: EquipmentType): string {
   return type.replaceAll('_', ' ');
@@ -28,6 +29,7 @@ export function EquipmentCompositionEditor({
   canWritePower,
   canReadTelemetry = false,
   breakerTelemetryBindings = [],
+  portConnections = [],
 }: Readonly<{
   equipment: EquipmentNode;
   childEquipment: readonly EquipmentNode[];
@@ -36,6 +38,7 @@ export function EquipmentCompositionEditor({
   canWritePower: boolean;
   canReadTelemetry?: boolean;
   breakerTelemetryBindings?: readonly CompositionBreakerBinding[];
+  portConnections?: readonly PortConnectionView[];
 }>) {
   const router = useRouter();
   const byId = useMemo(
@@ -556,6 +559,7 @@ export function EquipmentCompositionEditor({
         canWritePower={canWritePower}
         canReadTelemetry={canReadTelemetry}
         breakerTelemetryBindings={breakerTelemetryBindings}
+        portConnections={portConnections}
         onAdd={canWrite && isActive ? openComposer : undefined}
       />
       {canReadTelemetry &&

@@ -34,7 +34,20 @@ export default async function ConnectEquipmentPowerPage({
   const equipment = nodes.filter(
     (node): node is EquipmentNode => node.kind === 'EQUIPMENT' && node.lifecycle === 'ACTIVE',
   );
-  const connectedTargets = new Set(activePaths.map((path) => path.targetAccessPortId));
+  const pathByPort = new Map(
+    activePaths.flatMap(
+      (path) =>
+        [
+          [path.sourceAccessPortId, path],
+          [path.targetAccessPortId, path],
+        ] as const,
+    ),
+  );
+  const portNames = new Map(
+    equipment.flatMap((node) =>
+      node.accessPorts.map((port) => [port.id, `${node.name} / ${port.name}`] as const),
+    ),
+  );
   const sources: CommissioningPort[] = [];
   const targets: CommissioningPort[] = [];
 
@@ -42,6 +55,12 @@ export default async function ConnectEquipmentPowerPage({
     for (const port of node.accessPorts) {
       if (port.lifecycle !== 'ACTIVE' || port.portType !== 'POWER') continue;
       const fixedFeed = feedOf(port.attributes?.feed);
+      const existing = pathByPort.get(port.id);
+      const peerId = existing
+        ? existing.sourceAccessPortId === port.id
+          ? existing.targetAccessPortId
+          : existing.sourceAccessPortId
+        : null;
       const item: CommissioningPort = {
         id: port.id,
         name: port.name,
@@ -50,10 +69,17 @@ export default async function ConnectEquipmentPowerPage({
         deviceId: node.deviceId,
         direction: port.direction ?? 'BIDIRECTIONAL',
         ...(fixedFeed ? { feed: fixedFeed } : {}),
+        ...(existing
+          ? {
+              connected: true,
+              connectionLabel: (peerId && portNames.get(peerId)) || peerId || 'Unknown port',
+              pathId: existing.id,
+            }
+          : {}),
       };
       if (port.direction !== 'INPUT') sources.push(item);
       if (port.direction !== 'OUTPUT') {
-        targets.push({ ...item, ...(connectedTargets.has(port.id) ? { connected: true } : {}) });
+        targets.push(item);
       }
     }
   }

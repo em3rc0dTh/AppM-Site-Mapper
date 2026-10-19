@@ -1965,3 +1965,39 @@ body {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Active PowerPath visibility: a terminal is one physical connection, not a free CTA. */
+.equipment-terminal-occupied {
+  display: inline-block;
+  padding: 3px 6px;
+  border: 1px solid #7ddbb7;
+  border-radius: 4px;
+  background: #184f3d;
+  color: #e1fff2;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+}
+.equipment-terminal-connection {
+  display: grid;
+  gap: 5px;
+  margin: 6px 0;
+  padding: 9px;
+  border: 1px solid #84bda8;
+  border-radius: 5px;
+  background: #e1f5ed;
+  color: #125140;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.equipment-terminal-connection strong {
+  font-size: 11px;
+}
+.equipment-terminal-connection a {
+  font-weight: 750;
+  color: #07567d;
+  text-decoration: underline;
+}
+.equipment-port-editor-list .equipment-terminal-connection {
+  max-width: 100%;
+}

@@ -20,12 +20,12 @@ Este capítulo se lee **antes de cualquier tutorial de Network, Site, Room o Rac
 
 ### Guía visual obligatoria de este capítulo
 
-| ID | Imagen real requerida | Qué debe señalar la anotación |
-| --- | --- | --- |
-| UI-01 | **Sign in** (`/login`) | Email, Password, SIGN IN, error de acceso |
-| USR-07 | Primer login de cuenta recién creada | Inicio con contraseña temporal **sin mostrarla** |
-| USR-08 | **Change password** (`/change-password`) | Current password, New password, Change password |
-| USR-09 | Login nuevamente y Workspace | Acceso final con la nueva contraseña |
+| ID     | Imagen real requerida                    | Qué debe señalar la anotación                    |
+| ------ | ---------------------------------------- | ------------------------------------------------ |
+| UI-01  | **Sign in** (`/login`)                   | Email, Password, SIGN IN, error de acceso        |
+| USR-07 | Primer login de cuenta recién creada     | Inicio con contraseña temporal **sin mostrarla** |
+| USR-08 | **Change password** (`/change-password`) | Current password, New password, Change password  |
+| USR-09 | Login nuevamente y Workspace             | Acceso final con la nueva contraseña             |
 
 **Estado de capturas:** PENDIENTE de sesión autorizada. No sustituir por imágenes inventadas.
 
@@ -51,14 +51,14 @@ Solo las cuentas con rol **SUPERADMIN** tienen `users:manage` en el código actu
 
 ### Capturas obligatorias para el administrador
 
-| ID | Imagen real requerida | Qué debe verse |
-| --- | --- | --- |
-| USR-01 | Barra superior: acceso ADMIN | Entrada a Settings |
-| USR-02 | Settings → Users | Pestaña visible **solo** con SUPERADMIN |
-| USR-03 | USERS / **＋ ADD USER** | Acción de alta destacada |
-| USR-04 | Formulario de alta | Name, Email, Role, Temporary password oculto, Create user |
-| USR-05 | Lista tras crear cuenta | Cuenta visible, rol y estado ACTIVE |
-| USR-06 | Gestión de rol y estado | Selector de rol y acción de archivo/restauración; sin ejecutarla sobre usuario real |
+| ID     | Imagen real requerida        | Qué debe verse                                                                      |
+| ------ | ---------------------------- | ----------------------------------------------------------------------------------- |
+| USR-01 | Barra superior: acceso ADMIN | Entrada a Settings                                                                  |
+| USR-02 | Settings → Users             | Pestaña visible **solo** con SUPERADMIN                                             |
+| USR-03 | USERS / **＋ ADD USER**      | Acción de alta destacada                                                            |
+| USR-04 | Formulario de alta           | Name, Email, Role, Temporary password oculto, Create user                           |
+| USR-05 | Lista tras crear cuenta      | Cuenta visible, rol y estado ACTIVE                                                 |
+| USR-06 | Gestión de rol y estado      | Selector de rol y acción de archivo/restauración; sin ejecutarla sobre usuario real |
 
 **Estado de capturas:** PENDIENTE; solo producir con usuarios ficticios y datos autorizados.
 
@@ -70,13 +70,13 @@ No uses la opción de tres puntos (•••) sin identificar primero a quién p
 
 ## Qué puede hacer cada rol
 
-| Operación | STANDARD | ADMIN | SUPERADMIN |
-| --- | :---: | :---: | :---: |
-| Iniciar sesión, consultar topología, energía y telemetría | Sí | Sí | Sí |
-| Crear/modificar topología o PowerPaths | No | Sí | Sí |
-| Confirmar commissioning de Panel (requiere `topology:write`) | No | Sí | Sí |
-| Entrar a Settings → Users, crear y administrar cuentas | No | **No** | Sí |
-| Cambiar su propia contraseña | Sí | Sí | Sí |
+| Operación                                                    | STANDARD | ADMIN  | SUPERADMIN |
+| ------------------------------------------------------------ | :------: | :----: | :--------: |
+| Iniciar sesión, consultar topología, energía y telemetría    |    Sí    |   Sí   |     Sí     |
+| Crear/modificar topología o PowerPaths                       |    No    |   Sí   |     Sí     |
+| Confirmar commissioning de Panel (requiere `topology:write`) |    No    |   Sí   |     Sí     |
+| Entrar a Settings → Users, crear y administrar cuentas       |    No    | **No** |     Sí     |
+| Cambiar su propia contraseña                                 |    Sí    |   Sí   |     Sí     |
 
 Una advertencia del rol es **funcional**, no un error de la aplicación. Si no ves Users, **no solicites editar la base de datos**: el SUPERADMIN debe asignar la cuenta correcta.
 

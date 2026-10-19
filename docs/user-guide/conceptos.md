@@ -57,14 +57,14 @@ Puedes tener un breaker sin PowerPath, o un breaker correctamente mapeado sin LI
 
 ## Roles y permisos
 
-| Operación                                 | STANDARD | ADMIN                                        | SUPERADMIN |
-| ----------------------------------------- | -------- | -------------------------------------------- | ---------- |
-| Consultar topología, energía y telemetría | Sí       | Sí                                           | Sí         |
-| Crear/modificar topología                 | No       | Sí                                           | Sí         |
-| Crear/modificar PowerPath                 | No       | Sí                                           | Sí         |
-| Crear binding y confirmar commissioning   | No       | Sí, mediante `topology:write` | Sí         |
-| Administrar usuarios                      | No       | No | Sí, únicamente con `users:manage` |
-| Cambiar ajustes protegidos                | No       | Sí según permiso                             | Sí         |
+| Operación                                 | STANDARD | ADMIN                         | SUPERADMIN                        |
+| ----------------------------------------- | -------- | ----------------------------- | --------------------------------- |
+| Consultar topología, energía y telemetría | Sí       | Sí                            | Sí                                |
+| Crear/modificar topología                 | No       | Sí                            | Sí                                |
+| Crear/modificar PowerPath                 | No       | Sí                            | Sí                                |
+| Crear binding y confirmar commissioning   | No       | Sí, mediante `topology:write` | Sí                                |
+| Administrar usuarios                      | No       | No                            | Sí, únicamente con `users:manage` |
+| Cambiar ajustes protegidos                | No       | Sí según permiso              | Sí                                |
 
 Si un botón no aparece, **primero comprueba el rol, el estado del objeto y la ruta desde la que entraste**. No cambies manualmente un campo en MongoDB para eludir un permiso.
 

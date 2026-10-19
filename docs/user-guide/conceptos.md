@@ -62,7 +62,7 @@ Puedes tener un breaker sin PowerPath, o un breaker correctamente mapeado sin LI
 | Consultar topología, energía y telemetría | Sí       | Sí                                           | Sí         |
 | Crear/modificar topología                 | No       | Sí                                           | Sí         |
 | Crear/modificar PowerPath                 | No       | Sí                                           | Sí         |
-| Crear binding y confirmar commissioning   | No       | Sí, si dispone del permiso `telemetry:write` | Sí         |
+| Crear binding y confirmar commissioning   | No       | Sí, mediante `topology:write` | Sí         |
 | Administrar usuarios                      | No       | Limitado a cuentas STANDARD según política   | Sí         |
 | Cambiar ajustes protegidos                | No       | Sí según permiso                             | Sí         |
 

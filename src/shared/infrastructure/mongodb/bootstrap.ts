@@ -75,6 +75,22 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
       { name: 'ix_power_path_target_access_port' },
     ),
     powerPaths.createIndex(
+      { sourceAccessPortId: 1 },
+      {
+        unique: true,
+        name: 'uq_active_power_path_source',
+        partialFilterExpression: { lifecycle: 'ACTIVE' },
+      },
+    ),
+    powerPaths.createIndex(
+      { targetAccessPortId: 1 },
+      {
+        unique: true,
+        name: 'uq_active_power_path_target',
+        partialFilterExpression: { lifecycle: 'ACTIVE' },
+      },
+    ),
+    powerPaths.createIndex(
       { connectionKey: 1 },
       {
         unique: true,

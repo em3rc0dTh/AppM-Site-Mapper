@@ -12,4 +12,4 @@
 | users:manage   | no       | no    | yes        |
 | system:danger  | no       | no    | yes        |
 
-Additional policy: Admin may manage Standard users through constrained user-management use cases, but may not grant Admin or Superadmin authority.
+**Comportamiento implementado actual:** solo `SUPERADMIN` tiene `users:manage` y puede acceder a Settings → Users. La función interna `canManageRole` contempla una restricción teórica para `ADMIN`, pero sin ese permiso no puede gestionar usuarios por la UI ni por la API. No documentar alta de cuentas como disponible para ADMIN.

@@ -9,6 +9,7 @@ import {
   shouldSummarizeFocus,
 } from '@/modules/topology/application/equipment-composition-projection';
 import type { AccessPort, EquipmentNode } from '@/modules/topology/domain/entities';
+import type { PortConnectionView } from '@/modules/power/domain/port-connection-view';
 import { useTelemetryStream } from '@/components/telemetry/use-bdfb-telemetry';
 import {
   compositionBreakerTelemetry,
@@ -23,6 +24,7 @@ interface Props {
   readonly canWritePower?: boolean | undefined;
   readonly canReadTelemetry?: boolean | undefined;
   readonly breakerTelemetryBindings?: readonly CompositionBreakerBinding[] | undefined;
+  readonly portConnections?: readonly PortConnectionView[] | undefined;
 }
 
 function countLabel(occupied: number, count: number, positional: boolean) {
@@ -158,13 +160,19 @@ function EquipmentPreview({
 
 function PortFace({
   ports,
+  portConnections = [],
   canWritePower = false,
-}: Readonly<{ ports: readonly AccessPort[]; canWritePower?: boolean }>) {
+}: Readonly<{
+  ports: readonly AccessPort[];
+  portConnections?: readonly PortConnectionView[];
+  canWritePower?: boolean;
+}>) {
   const active = useMemo(() => ports.filter((port) => port.lifecycle === 'ACTIVE'), [ports]);
   const [selectedPortId, setSelectedPortId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   if (!active.length) return null;
   const selected = active.find((port) => port.id === selectedPortId);
+  const selectedLinks = portConnections.filter((link) => link.portId === selectedPortId);
   const visible = showAll ? active : active.slice(0, 48);
 
   return (
@@ -194,6 +202,9 @@ function PortFace({
               </span>
               <strong>{port.name}</strong>
               <small>{port.connectorType || port.portType}</small>
+              {portConnections.some((link) => link.portId === port.id) && (
+                <span className="equipment-terminal-occupied">CONNECTED</span>
+              )}
             </button>
           ))}
         </div>
@@ -228,8 +239,25 @@ function PortFace({
             <dt>Protocol</dt>
             <dd>{selected.protocol || 'Not recorded'}</dd>
           </dl>
+          {selectedLinks.length > 0 && (
+            <div className="equipment-terminal-connection" role="status">
+              <strong>CONNECTED · {selectedLinks.length} recorded path(s)</strong>
+              {selectedLinks.map((link) => (
+                <div key={link.pathId}>
+                  <span>
+                    {link.flow === 'OUTGOING' ? 'FEEDS → ' : 'POWERED BY ← '}
+                    {link.peerEquipmentName} / {link.peerPortName}
+                    {link.feed ? ` · Feed ${link.feed}` : ''}
+                  </span>{' '}
+                  <Link href={`/power?path=${encodeURIComponent(link.pathId)}`}>
+                    VIEW POWERPATH
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="equipment-faceplate-selection-actions">
-            {canWritePower && selected.portType === 'POWER' && (
+            {canWritePower && selected.portType === 'POWER' && !selectedLinks.length && (
               <Link
                 className="equipment-access-port-connect"
                 href={`/power/connect/equipment?${selected.direction === 'INPUT' ? 'target' : 'source'}=${encodeURIComponent(selected.id)}`}
@@ -258,6 +286,7 @@ export function PhysicalEquipmentDiagram({
   canWritePower = false,
   canReadTelemetry = false,
   breakerTelemetryBindings = [],
+  portConnections = [],
 }: Props) {
   const equipmentById = useMemo(
     () => new Map(equipment.map((item) => [item.id, item])),
@@ -448,7 +477,13 @@ export function PhysicalEquipmentDiagram({
           </section>
         )}
 
-        {hasPorts && <PortFace ports={root.accessPorts} canWritePower={canWritePower} />}
+        {hasPorts && (
+          <PortFace
+            ports={root.accessPorts}
+            portConnections={portConnections}
+            canWritePower={canWritePower}
+          />
+        )}
         {!hasPorts && projection.capacity === 0 && (
           <div className="equipment-physical-no-content">
             <strong>No internal Equipment or Access Ports installed</strong>

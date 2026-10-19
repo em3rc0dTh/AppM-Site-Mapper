@@ -15,6 +15,7 @@ export type PowerError =
   | 'INVALID_TARGET_DIRECTION'
   | 'FEED_MISMATCH'
   | 'TARGET_ALREADY_CONNECTED'
+  | 'SOURCE_ALREADY_CONNECTED'
   | 'SAME_ENDPOINT'
   | 'PATH_NOT_FOUND';
 
@@ -70,16 +71,18 @@ export class PowerService {
     )
       return failure('FEED_MISMATCH');
 
-    const targetPaths = await this.repository.listForAccessPort(target.port.id);
+    const [sourcePaths, targetPaths] = await Promise.all([
+      this.repository.listForAccessPort(source.port.id),
+      this.repository.listForAccessPort(target.port.id),
+    ]);
     const exact = targetPaths.find(
       (path) =>
         path.sourceAccessPortId === source.port.id && path.targetAccessPortId === target.port.id,
     );
     if (exact) return success(exact);
 
-    if (targetPaths.some((path) => path.targetAccessPortId === target.port.id)) {
-      return failure('TARGET_ALREADY_CONNECTED');
-    }
+    if (targetPaths.length) return failure('TARGET_ALREADY_CONNECTED');
+    if (sourcePaths.length) return failure('SOURCE_ALREADY_CONNECTED');
 
     const timestamp = nowIso();
     const path: PowerPath = {

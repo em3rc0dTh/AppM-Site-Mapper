@@ -165,9 +165,7 @@ describe('Power domain', () => {
       feed: 'A',
     });
     expect(repeated.ok).toBe(true);
-    expect(repeated.ok && first.ok && repeated.value.id).toBe(
-      first.ok ? first.value.id : null,
-    );
+    expect(repeated.ok && first.ok && repeated.value.id).toBe(first.ok ? first.value.id : null);
   });
 
   it('blocks BIDIRECTIONAL ports from acting as pass-through on a second path', async () => {

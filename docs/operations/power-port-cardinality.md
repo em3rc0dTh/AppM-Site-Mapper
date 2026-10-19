@@ -43,7 +43,7 @@ After passing the audit, rebuild **only Site Mapper** when you are ready to appl
 - The connect form must mark used sources and targets **ALREADY CONNECTED**, and disable its confirmation.
 - A free POWER output may still offer **CONNECT LOAD**.
 - The full power trace must show the same path and correct Feed A or B. Feed A recorded does not certify A+B redundancy.
-- If the source was physically moved to another destination, retire the existing recorded PowerPath through the approved administrative workflow *after field verification*, then create the newly confirmed path.
+- If the source was physically moved to another destination, retire the existing recorded PowerPath through the approved administrative workflow _after field verification_, then create the newly confirmed path.
 
 ### Physical modeling note
 

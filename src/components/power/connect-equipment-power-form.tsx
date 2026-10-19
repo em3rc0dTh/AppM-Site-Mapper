@@ -47,7 +47,13 @@ export function ConnectEquipmentPowerForm({
     source && target && source.equipmentId === target.equipmentId,
   );
   const canConfirm = Boolean(
-    source && target && !source.connected && !target.connected && !mismatch && !sourceAndTargetSameEquipment && !saving,
+    source &&
+    target &&
+    !source.connected &&
+    !target.connected &&
+    !mismatch &&
+    !sourceAndTargetSameEquipment &&
+    !saving,
   );
 
   const filteredTargets = useMemo(() => {

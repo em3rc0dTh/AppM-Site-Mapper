@@ -110,19 +110,26 @@ export class PowerService {
           this.repository.listForAccessPort(source.port.id),
           this.repository.listForAccessPort(target.port.id),
         ]);
-        const exactNow = targetNow.find((candidate) =>
-          candidate.sourceAccessPortId === source.port.id &&
-          candidate.targetAccessPortId === target.port.id,
+        const exactNow = targetNow.find(
+          (candidate) =>
+            candidate.sourceAccessPortId === source.port.id &&
+            candidate.targetAccessPortId === target.port.id,
         );
         if (exactNow) return success(exactNow);
-        if (targetNow.length || conflict.keyPattern?.targetAccessPortId !== undefined ||
-            conflict.keyPattern?.connectionKey !== undefined ||
-            conflict.message?.includes('uq_active_power_path_target') ||
-            conflict.message?.includes('uq_active_power_path_connection_key')) {
+        if (
+          targetNow.length ||
+          conflict.keyPattern?.targetAccessPortId !== undefined ||
+          conflict.keyPattern?.connectionKey !== undefined ||
+          conflict.message?.includes('uq_active_power_path_target') ||
+          conflict.message?.includes('uq_active_power_path_connection_key')
+        ) {
           return failure('TARGET_ALREADY_CONNECTED');
         }
-        if (sourceNow.length || conflict.keyPattern?.sourceAccessPortId !== undefined ||
-            conflict.message?.includes('uq_active_power_path_source')) {
+        if (
+          sourceNow.length ||
+          conflict.keyPattern?.sourceAccessPortId !== undefined ||
+          conflict.message?.includes('uq_active_power_path_source')
+        ) {
           return failure('SOURCE_ALREADY_CONNECTED');
         }
       }

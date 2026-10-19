@@ -177,8 +177,12 @@ export function AccessPortEditor({
                 .filter((connection) => connection.portId === port.id)
                 .map((connection) => (
                   <div className="equipment-terminal-connection" key={connection.pathId}>
-                    <strong>CONNECTED · {connection.flow === 'OUTGOING' ? 'FEEDS' : 'POWERED BY'}</strong>
-                    <span>{connection.peerEquipmentName} / {connection.peerPortName}</span>
+                    <strong>
+                      CONNECTED · {connection.flow === 'OUTGOING' ? 'FEEDS' : 'POWERED BY'}
+                    </strong>
+                    <span>
+                      {connection.peerEquipmentName} / {connection.peerPortName}
+                    </span>
                     <Link href={`/power?path=${encodeURIComponent(connection.pathId)}`}>
                       VIEW POWERPATH
                     </Link>
@@ -187,13 +191,13 @@ export function AccessPortEditor({
               {canWritePower &&
                 port.portType === 'POWER' &&
                 !portConnections.some((connection) => connection.portId === port.id) && (
-                <Link
-                  className="equipment-access-port-connect"
-                  href={`/power/connect/equipment?${port.direction === 'INPUT' ? 'target' : 'source'}=${encodeURIComponent(port.id)}`}
-                >
-                  {port.direction === 'INPUT' ? 'CONNECT SOURCE' : 'CONNECT LOAD'}
-                </Link>
-              )}
+                  <Link
+                    className="equipment-access-port-connect"
+                    href={`/power/connect/equipment?${port.direction === 'INPUT' ? 'target' : 'source'}=${encodeURIComponent(port.id)}`}
+                  >
+                    {port.direction === 'INPUT' ? 'CONNECT SOURCE' : 'CONNECT LOAD'}
+                  </Link>
+                )}
               <button
                 type="button"
                 disabled={busy}

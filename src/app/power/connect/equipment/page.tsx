@@ -35,10 +35,13 @@ export default async function ConnectEquipmentPowerPage({
     (node): node is EquipmentNode => node.kind === 'EQUIPMENT' && node.lifecycle === 'ACTIVE',
   );
   const pathByPort = new Map(
-    activePaths.flatMap((path) => [
-      [path.sourceAccessPortId, path],
-      [path.targetAccessPortId, path],
-    ] as const),
+    activePaths.flatMap(
+      (path) =>
+        [
+          [path.sourceAccessPortId, path],
+          [path.targetAccessPortId, path],
+        ] as const,
+    ),
   );
   const portNames = new Map(
     equipment.flatMap((node) =>

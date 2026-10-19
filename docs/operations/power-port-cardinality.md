@@ -50,3 +50,30 @@ After passing the audit, rebuild **only Site Mapper** when you are ready to appl
 A terminal labeled `POWER · BIDIRECTIONAL` on a Network Board can receive a feed in the current schema, but a dedicated `POWER · INPUT` should be used when it physically **only** receives. An `RS-485` communications interface should not be represented as a power terminal unless its engineering specification explicitly supports that meaning.
 
 This change adds no implicit port, breaker, telemetry binding or wiring assumption.
+
+## UI acceptance — responsive connection workflow
+
+The `/power/connect/equipment` form belongs to a separate scrollable page
+inside the fixed-height immersive shell. This is **not** the Blueprint/Rack canvas:
+the header remains available while all source, destination, review, alert and
+confirmation controls can be reached by vertical scrolling.
+
+Check manually after deploying the UI build:
+
+| Browser viewport (CSS pixels) | Expected layout |
+| --- | --- |
+| 1920 × 1080 | Two source/destination columns, review below, natural scrolling only when needed |
+| 1440 × 900 | Two columns, confirmation reachable; no clipping |
+| 1366 × 768 / 1280 × 720 | Two columns where space allows, visible vertical scrollbar when needed |
+| 768 × 1024 | Responsive columns based on the 760px breakpoint; no horizontal overflow |
+| 390 × 844 / 360 × 640 | Stacked inputs, accessible labels, buttons and alerts with vertical scroll |
+
+Also confirm at **125% and 150% browser zoom**, at reduced browser window
+height, and using **Tab / Shift+Tab** and a keyboard scroll. The used-source
+`SOURCE_ALREADY_CONNECTED` warning and its `View PowerPath` link must stay
+reachable without hiding or enabling the disabled confirmation action.
+
+The correction is intentionally scoped to the power-connection route and must
+not change scrolling in Blueprint, Rack Elevation, the Equipment inspector or
+the unrelated PowerPath trace. This is a visual acceptance checklist, not an
+automated screenshot certification.

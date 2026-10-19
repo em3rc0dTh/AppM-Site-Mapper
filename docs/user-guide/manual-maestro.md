@@ -66,12 +66,12 @@ flowchart TD
 
 **Permisos resumidos**
 
-| Capacidad | STANDARD | ADMIN | SUPERADMIN |
-| --- | :---: | :---: | :---: |
-| Consultar topología, energía, telemetría | Sí | Sí | Sí |
-| Crear/mover entidades, modificar Access Ports, PowerPaths | No | Sí | Sí |
-| Commissioning del Panel (`topology:write`) | No | Sí | Sí |
-| Entrar a Settings → Users | No | No | Sí |
+| Capacidad                                                 | STANDARD | ADMIN | SUPERADMIN |
+| --------------------------------------------------------- | :------: | :---: | :--------: |
+| Consultar topología, energía, telemetría                  |    Sí    |  Sí   |     Sí     |
+| Crear/mover entidades, modificar Access Ports, PowerPaths |    No    |  Sí   |     Sí     |
+| Commissioning del Panel (`topology:write`)                |    No    |  Sí   |     Sí     |
+| Entrar a Settings → Users                                 |    No    |  No   |     Sí     |
 
 ## Parte B · Conceptos y modelo físico
 
@@ -103,13 +103,13 @@ Consulta las [entidades y colecciones del modelo](modelo-de-datos.md) antes de m
 
 **Antes:** sesión ADMIN/SUPERADMIN y **base de capacitación**. Identifica el padre correcto y la geometría que vas a dibujar.
 
-| Qué vas a crear | Dónde estar | Acción que corresponde |
-| --- | --- | --- |
-| Network | Raíz de exploración habilitada | `+ CREATE NETWORK` cuando el contexto lo ofrezca |
-| Site | Dentro de Network | `+ CREATE SITE` → `Define boundary` → `Save Site` |
-| Structure | Dentro de Site | `+ CREATE STRUCTURE` → `Define boundary` |
-| Level | Dentro de Structure | `+ CREATE LEVEL` |
-| Room | Dentro de Level | `+ CREATE ROOM` → variante `Room` → `Define boundary` → `Save Room` |
+| Qué vas a crear | Dónde estar                    | Acción que corresponde                                              |
+| --------------- | ------------------------------ | ------------------------------------------------------------------- |
+| Network         | Raíz de exploración habilitada | `+ CREATE NETWORK` cuando el contexto lo ofrezca                    |
+| Site            | Dentro de Network              | `+ CREATE SITE` → `Define boundary` → `Save Site`                   |
+| Structure       | Dentro de Site                 | `+ CREATE STRUCTURE` → `Define boundary`                            |
+| Level           | Dentro de Structure            | `+ CREATE LEVEL`                                                    |
+| Room            | Dentro de Level                | `+ CREATE ROOM` → variante `Room` → `Define boundary` → `Save Room` |
 
 **Procedimiento completo para un Site:** abre la Network → pulsa **+ CREATE SITE** → escribe un nombre inequívoco → pulsa **Define boundary** → dibuja el polígono de su perímetro → pulsa **Save Site** → vuelve al árbol y comprueba que quedó debajo de su Network. **Para Room**, repite desde Level respetando el contorno de Structure.
 
@@ -265,14 +265,14 @@ Las cuatro métricas son `VOLTAGE`, `CURRENT`, `POWER`, `ENERGY`. Registrar bind
 
 El diseño actual **conserva una colección polimórfica `topology_nodes`**. Cada documento declara `kind` y contiene propiedades específicas del tipo. El Equipment incorpora sus `accessPorts[]`; el Rack incorpora sus rangos `cas[]`. Las rutas `power_paths`, las asociaciones `telemetry_bindings` y las cuentas se almacenan por separado. La telemetría histórica pertenece a TimescaleDB.
 
-| Concepto | Representación persistida | No significa |
-| --- | --- | --- |
+| Concepto                                     | Representación persistida              | No significa                      |
+| -------------------------------------------- | -------------------------------------- | --------------------------------- |
 | Network, Site, Room, Rack, Device, Equipment | Documentos `topology_nodes` por `kind` | Una colección Mongo por cada tipo |
-| Terminal de Equipment | `accessPorts[]` en ese Equipment | Un PowerPath existente |
-| Ocupación de Rack | `cas[]` en Rack | Un breaker instalado en Panel |
-| Conexión POWER | `power_paths` | Energización física certificada |
-| Atribución de señal | `telemetry_bindings` | Lectura LIVE automáticamente |
-| Histórico medido | TimescaleDB / servicio histórico | Estado instantáneo |
+| Terminal de Equipment                        | `accessPorts[]` en ese Equipment       | Un PowerPath existente            |
+| Ocupación de Rack                            | `cas[]` en Rack                        | Un breaker instalado en Panel     |
+| Conexión POWER                               | `power_paths`                          | Energización física certificada   |
+| Atribución de señal                          | `telemetry_bindings`                   | Lectura LIVE automáticamente      |
+| Histórico medido                             | TimescaleDB / servicio histórico       | Estado instantáneo                |
 
 Modelo y ejemplos concretos: [entidades, agregados y referencias](modelo-de-datos.md).
 

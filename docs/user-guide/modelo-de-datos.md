@@ -25,15 +25,15 @@ Si MongoDB Compass muestra **20 documentos en `topology_nodes`**, eso significa 
 
 ## 2. Campos básicos de un Topology Node
 
-| Campo | Significado práctico | Ejemplo orientativo |
-| --- | --- | --- |
-| `id` | Identificador estable de un objeto; no es su nombre | UUID |
-| `kind` | Qué clase de objeto representa | `EQUIPMENT`, `SITE`, `CONTAINER_RACK` |
-| `name` | Etiqueta legible para operador | `PANEL-01` |
-| `parentId` | Padre inmediato de navegación/composición | ID de Equipment o Device padre |
-| `lifecycle` | Estado administrativo | `ACTIVE`, `ARCHIVED` |
-| `createdAt` / `updatedAt` | Fechas de creación/cambio | Tiempo ISO |
-| Campos particulares | Datos propios de un tipo | `polygon`, `cas`, `deviceId`, `children` |
+| Campo                     | Significado práctico                                | Ejemplo orientativo                      |
+| ------------------------- | --------------------------------------------------- | ---------------------------------------- |
+| `id`                      | Identificador estable de un objeto; no es su nombre | UUID                                     |
+| `kind`                    | Qué clase de objeto representa                      | `EQUIPMENT`, `SITE`, `CONTAINER_RACK`    |
+| `name`                    | Etiqueta legible para operador                      | `PANEL-01`                               |
+| `parentId`                | Padre inmediato de navegación/composición           | ID de Equipment o Device padre           |
+| `lifecycle`               | Estado administrativo                               | `ACTIVE`, `ARCHIVED`                     |
+| `createdAt` / `updatedAt` | Fechas de creación/cambio                           | Tiempo ISO                               |
+| Campos particulares       | Datos propios de un tipo                            | `polygon`, `cas`, `deviceId`, `children` |
 
 **Ejemplo DIDÁCTICO; no es una muestra copiada de la base:**
 
@@ -65,18 +65,18 @@ flowchart TD
   EqB --> EqC["Equipment hijo …"]
 ```
 
-| `kind` en Mongo | Palabra de la interfaz | Padre admitido |
-| --- | --- | --- |
-| `NETWORK` | Network | Raíz |
-| `SITE` | Site | Network |
-| `STRUCTURE` | Structure | Site |
-| `LEVEL` | Level | Structure |
-| `ROOM_SUBSTRUCTURE` | Room / Substructure | Level |
-| `CONTAINER_CLUSTER_BAY` | Bay / Cluster | Room |
-| `POSITION` | Position | Bay / Cluster |
-| `CONTAINER_RACK` | Rack / Container | Position |
-| `DEVICE` | Device | Rack / Container |
-| `EQUIPMENT` | Equipment | Device **o** Equipment |
+| `kind` en Mongo         | Palabra de la interfaz | Padre admitido         |
+| ----------------------- | ---------------------- | ---------------------- |
+| `NETWORK`               | Network                | Raíz                   |
+| `SITE`                  | Site                   | Network                |
+| `STRUCTURE`             | Structure              | Site                   |
+| `LEVEL`                 | Level                  | Structure              |
+| `ROOM_SUBSTRUCTURE`     | Room / Substructure    | Level                  |
+| `CONTAINER_CLUSTER_BAY` | Bay / Cluster          | Room                   |
+| `POSITION`              | Position               | Bay / Cluster          |
+| `CONTAINER_RACK`        | Rack / Container       | Position               |
+| `DEVICE`                | Device                 | Rack / Container       |
+| `EQUIPMENT`             | Equipment              | Device **o** Equipment |
 
 La barra `/` no añade otro nivel: `ROOM` y `SUBSTRUCTURE` son variantes de `ROOM_SUBSTRUCTURE`; lo mismo ocurre con Bay/Cluster y Rack/Container.
 
@@ -92,14 +92,14 @@ La barra `/` no añade otro nivel: `ROOM` y `SUBSTRUCTURE` son variantes de `ROO
 
 `CONTAINER_RACK` incluye `cas[]` y `totalU`. Cada rango de CAS representa una reserva/ocupación:
 
-| Campo de CAS | Qué representa |
-| --- | --- |
-| `id` | ID de una asignación |
-| `startU`, `endU` | Intervalo U del rack |
-| `state` | `AVAILABLE`, `RESERVED`, `EQUIPPED` |
-| `occupantId` | Identidad del Equipment ocupante (cuando aplica) |
-| `mountStartU` / `physicalSizeU` | Montaje físico dentro de la reserva |
-| `clearanceTopU` / `clearanceBottomU` | Holguras registradas |
+| Campo de CAS                         | Qué representa                                   |
+| ------------------------------------ | ------------------------------------------------ |
+| `id`                                 | ID de una asignación                             |
+| `startU`, `endU`                     | Intervalo U del rack                             |
+| `state`                              | `AVAILABLE`, `RESERVED`, `EQUIPPED`              |
+| `occupantId`                         | Identidad del Equipment ocupante (cuando aplica) |
+| `mountStartU` / `physicalSizeU`      | Montaje físico dentro de la reserva              |
+| `clearanceTopU` / `clearanceBottomU` | Holguras registradas                             |
 
 La implementación de CAS actual gestiona reservas/ocupaciones desde Rack y sincroniza la colocación `Equipment.rackPlacement` en una transacción. La intención de dominio de versiones históricas puede describir Rack → Device; **ante esa diferencia documental, prevalece el contrato de los servicios implementados que hayas validado en esta versión**, no un texto antiguo. No cambies CAS directamente en MongoDB.
 
@@ -107,17 +107,17 @@ La implementación de CAS actual gestiona reservas/ocupaciones desde Rack y sinc
 
 Los Access Ports **no tienen colección propia** en el estado actual. Se guardan en `Equipment.accessPorts[]` y cada uno posee ID global, propietario y características.
 
-| Campo | Para qué sirve |
-| --- | --- |
-| `id` | Identidad estable del terminal |
-| `equipmentId` / `deviceId` | Equipo propietario y Device dueño |
-| `name` | Nombre visible: Power output / AP-01-01 |
-| `portType` | POWER / NETWORK / CONTROL / DATA / GROUND / CUSTOM |
-| `direction` | INPUT / OUTPUT / BIDIRECTIONAL |
-| `exposure` | INTERNAL / EXTERNAL |
-| `connectorType`, `protocol` | Características físicas/de interfaz opcionales |
-| `attributes.feed` | Identidad opcional de vía A / B |
-| `lifecycle` | ACTIVE / ARCHIVED |
+| Campo                       | Para qué sirve                                     |
+| --------------------------- | -------------------------------------------------- |
+| `id`                        | Identidad estable del terminal                     |
+| `equipmentId` / `deviceId`  | Equipo propietario y Device dueño                  |
+| `name`                      | Nombre visible: Power output / AP-01-01            |
+| `portType`                  | POWER / NETWORK / CONTROL / DATA / GROUND / CUSTOM |
+| `direction`                 | INPUT / OUTPUT / BIDIRECTIONAL                     |
+| `exposure`                  | INTERNAL / EXTERNAL                                |
+| `connectorType`, `protocol` | Características físicas/de interfaz opcionales     |
+| `attributes.feed`           | Identidad opcional de vía A / B                    |
+| `lifecycle`                 | ACTIVE / ARCHIVED                                  |
 
 Que exista el AP no significa que tenga cable. Su estado **CONNECTED** se obtiene de relaciones `power_paths` activas.
 
@@ -158,17 +158,17 @@ flowchart LR
 
 ## 10. Identidad, administración y otras colecciones
 
-| Colección | Responsabilidad |
-| --- | --- |
-| `users` | Cuenta, rol, estado, hash de contraseña |
-| `sessions` | Sesiones seguras, tokens hash y expiración |
-| `auth_rate_limits` | Limitación de intentos de autenticación |
-| `admin_audit` | Trazabilidad de acciones administrativas |
-| `warehouse_templates` | Plantillas reutilizables de inventario |
-| `workspace_context` | Último contexto de trabajo cuando está implementado |
-| `power_paths` | Cableado registrado entre Access Ports |
-| `telemetry_bindings` | Asociación validada de señales a Equipment |
-| `topology_nodes` | Todos los tipos físicos del inventario, distinguibles por `kind` |
+| Colección             | Responsabilidad                                                  |
+| --------------------- | ---------------------------------------------------------------- |
+| `users`               | Cuenta, rol, estado, hash de contraseña                          |
+| `sessions`            | Sesiones seguras, tokens hash y expiración                       |
+| `auth_rate_limits`    | Limitación de intentos de autenticación                          |
+| `admin_audit`         | Trazabilidad de acciones administrativas                         |
+| `warehouse_templates` | Plantillas reutilizables de inventario                           |
+| `workspace_context`   | Último contexto de trabajo cuando está implementado              |
+| `power_paths`         | Cableado registrado entre Access Ports                           |
+| `telemetry_bindings`  | Asociación validada de señales a Equipment                       |
+| `topology_nodes`      | Todos los tipos físicos del inventario, distinguibles por `kind` |
 
 La captura de MongoDB Compass de `site_mapper_mk1_acceptance_02` es **una base de aceptación**, no prueba de que tenga los mismos datos o volúmenes una instalación productiva.
 
@@ -178,9 +178,9 @@ La captura de MongoDB Compass de `site_mapper_mk1_acceptance_02` es **una base d
 
 ```javascript
 db.topology_nodes.aggregate([
-  { $group: { _id: "$kind", total: { $sum: 1 } } },
-  { $sort: { _id: 1 } }
-])
+  { $group: { _id: '$kind', total: { $sum: 1 } } },
+  { $sort: { _id: 1 } },
+]);
 ```
 
 Esta consulta no crea ni borra documentos. Para leer un Equipment específico, consulta por su `id` y revisa `accessPorts`, `children`, `parentEquipmentId`. Para comprender qué alimenta un AP, consulta la UI de **VIEW POWERPATH** en lugar de unir documentos manualmente.

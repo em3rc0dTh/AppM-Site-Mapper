@@ -130,6 +130,77 @@ describe('Power domain', () => {
     expect(await paths.listForAccessPort('equipment-1:power-in')).toHaveLength(1);
   });
 
+  it('permits one physical OUTPUT to feed exactly one INPUT', async () => {
+    const secondLoad: EquipmentNode = {
+      ...equipment,
+      id: 'equipment-2',
+      name: 'Second load',
+      accessPorts: [
+        {
+          ...equipment.accessPorts[0]!,
+          id: 'equipment-2:power-in',
+          equipmentId: 'equipment-2',
+        },
+      ],
+    };
+    const topology = new MemoryTopologyRepository([device, loadDevice, equipment, secondLoad]);
+    const breaker = await createBreaker(topology, device, 'Panel A');
+    const service = new PowerService(topology, new MemoryPowerRepository());
+    const first = await service.create({
+      sourceAccessPortId: breaker.id + ':power-out',
+      targetAccessPortId: 'equipment-1:power-in',
+      feed: 'A',
+    });
+    expect(first.ok).toBe(true);
+
+    const second = await service.create({
+      sourceAccessPortId: breaker.id + ':power-out',
+      targetAccessPortId: 'equipment-2:power-in',
+      feed: 'A',
+    });
+    expect(second).toEqual({ ok: false, error: 'SOURCE_ALREADY_CONNECTED' });
+    const repeated = await service.create({
+      sourceAccessPortId: breaker.id + ':power-out',
+      targetAccessPortId: 'equipment-1:power-in',
+      feed: 'A',
+    });
+    expect(repeated.ok).toBe(true);
+    expect(repeated.ok && first.ok && repeated.value.id).toBe(
+      first.ok ? first.value.id : null,
+    );
+  });
+
+  it('blocks BIDIRECTIONAL ports from acting as pass-through on a second path', async () => {
+    const bidirectional: EquipmentNode = {
+      ...equipment,
+      id: 'bidirectional',
+      name: 'Board power terminal',
+      accessPorts: [
+        {
+          ...equipment.accessPorts[0]!,
+          id: 'board:power',
+          equipmentId: 'bidirectional',
+          direction: 'BIDIRECTIONAL',
+        },
+      ],
+    };
+    const topology = new MemoryTopologyRepository([device, loadDevice, equipment, bidirectional]);
+    const breaker = await createBreaker(topology, device, 'Panel A');
+    const service = new PowerService(topology, new MemoryPowerRepository());
+    const initial = await service.create({
+      sourceAccessPortId: breaker.id + ':power-out',
+      targetAccessPortId: 'board:power',
+      feed: 'A',
+    });
+    expect(initial.ok).toBe(true);
+    const chained = await service.create({
+      sourceAccessPortId: 'board:power',
+      targetAccessPortId: 'equipment-1:power-in',
+      feed: 'A',
+    });
+    expect(chained).toEqual({ ok: false, error: 'SOURCE_ALREADY_CONNECTED' });
+  });
+
   it('rejects a feed that contradicts the destination POWER port contract', async () => {
     const feedLockedEquipment: EquipmentNode = {
       ...equipment,

@@ -6,6 +6,8 @@ Los **diagramas** del manual están incorporados en Markdown con Mermaid y se mu
 
 | ID  | Vista real                        | Debe verse claramente                                              | Texto descriptivo / regla                      |
 | --- | --------------------------------- | ------------------------------------------------------------------ | ---------------------------------------------- |
+| S00 | Primer acceso / Login y contraseña temporal | Sign in, Change password, retorno a Login y Workspace | Toda persona nueva comienza aquí; no mostrar claves |
+| S00A | Settings → Users / ＋ ADD USER | Alta de una cuenta de entrenamiento como SUPERADMIN | No inventar registro público ni conceder Users a ADMIN |
 | S01 | Login y Workspace                 | Dónde entrar, dónde volver al inicio                               | Acceso y contexto de sesión                    |
 | S02 | EXPLORE y árbol global            | Network → Site → Structure → Level → Room                          | Ubicación lógica del activo                    |
 | S03 | Formulario `+ CREATE SITE`        | Name, **Define boundary**, editor de polígono                      | Guardar la entidad y su límite                 |

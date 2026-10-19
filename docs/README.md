@@ -4,6 +4,8 @@
 
 ## Primer día en Site Mapper: Manual del operador
 
+Para formación integral, utiliza el **[Manual maestro de operación y modelo de datos](user-guide/manual-maestro.md)**. Sus capítulos enlazan a los tutoriales existentes y su [matriz de evidencia visual](user-guide/evidencia-visual.md) distingue capturas reales, errores observados y material aún pendiente. La [explicación del modelo persistido](user-guide/modelo-de-datos.md) refleja `topology_nodes` sin migrar colecciones.
+
 **[Manual del Operador MK1](user-guide/README.md)** — para personas que nunca usaron el sistema. Explica cómo crear la jerarquía física, usar Blueprint, colocar Rack, distinguir Device/Equipment, identificar puertos **CONNECTED**, registrar PowerPaths uno-a-uno, comisionar MQTT y verificar LIVE/histórico. Incluye ejercicios seguros, errores frecuentes y criterios de aprendizaje.
 
 El [guion de presentación](product/MVP-DEMO-ES.md) sirve para mostrar capacidades a un cliente; el **manual del operador** enseña a realizar tareas por cuenta propia. La secuencia de capturas reales pendientes está registrada en [material visual y capacitación](user-guide/capturas-y-capacitacion.md).

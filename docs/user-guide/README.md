@@ -1,5 +1,7 @@
 # Manual del operador · Site Mapper MK1
 
+> **[Manual maestro: procedimiento integral desde Login hasta PowerPath, MQTT y modelo de datos](manual-maestro.md)**. Es el punto de entrada consolidado para una persona sin experiencia. Consulta también [modelo de datos explicado](modelo-de-datos.md) y [estado de capturas reales](evidencia-visual.md). **No se modificó la estructura de MongoDB.**
+
 **Para personas que nunca han usado el sistema.** Este manual explica el trabajo cotidiano desde la interfaz web, sin solicitar comandos, JSON, consultas SQL ni cambios directos en MongoDB. La guía está basada en los formularios y botones implementados en MK1 (19 oct. 2026), no en pantallas propuestas de PR sin fusionar.
 
 > **Antes de empezar:** utiliza un entorno autorizado de entrenamiento. Si tienes permisos STANDARD, puedes consultar pero no crear/modificar topología o PowerPaths. Para las prácticas de edición necesitas ADMIN o SUPERADMIN según las reglas de cada pantalla. Nunca uses la base del cliente para experimentar.

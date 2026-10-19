@@ -60,13 +60,13 @@ confirmation controls can be reached by vertical scrolling.
 
 Check manually after deploying the UI build:
 
-| Browser viewport (CSS pixels) | Expected layout |
-| --- | --- |
-| 1920 × 1080 | Two source/destination columns, review below, natural scrolling only when needed |
-| 1440 × 900 | Two columns, confirmation reachable; no clipping |
-| 1366 × 768 / 1280 × 720 | Two columns where space allows, visible vertical scrollbar when needed |
-| 768 × 1024 | Responsive columns based on the 760px breakpoint; no horizontal overflow |
-| 390 × 844 / 360 × 640 | Stacked inputs, accessible labels, buttons and alerts with vertical scroll |
+| Browser viewport (CSS pixels) | Expected layout                                                                  |
+| ----------------------------- | -------------------------------------------------------------------------------- |
+| 1920 × 1080                   | Two source/destination columns, review below, natural scrolling only when needed |
+| 1440 × 900                    | Two columns, confirmation reachable; no clipping                                 |
+| 1366 × 768 / 1280 × 720       | Two columns where space allows, visible vertical scrollbar when needed           |
+| 768 × 1024                    | Responsive columns based on the 760px breakpoint; no horizontal overflow         |
+| 390 × 844 / 360 × 640         | Stacked inputs, accessible labels, buttons and alerts with vertical scroll       |
 
 Also confirm at **125% and 150% browser zoom**, at reduced browser window
 height, and using **Tab / Shift+Tab** and a keyboard scroll. The used-source

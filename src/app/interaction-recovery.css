@@ -1470,3 +1470,74 @@
   border-color: #e1b7ae;
   color: #8c382a;
 }
+
+/*
+ * Power / Physical Commissioning is a form, not a fixed-height spatial canvas.
+ * The shared immersive shell deliberately hides overflow for rack/blueprint
+ * workspaces. Allow only this route to scroll within the viewport below its
+ * persistent top bar; keep every field, message and action reachable at 125%+
+ * browser zoom and on laptop screens with short usable heights.
+ */
+.zip-app-shell.app-shell--power-connect .zip-app-content {
+  height: calc(100dvh - 67px);
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+}
+.zip-app-shell.app-shell--power-connect .power-port-connect-page {
+  min-width: 0;
+  min-height: 100%;
+  height: auto;
+  padding-bottom: max(32px, env(safe-area-inset-bottom));
+}
+.zip-app-shell.app-shell--power-connect .power-port-connect-columns > *,
+.zip-app-shell.app-shell--power-connect .power-port-connect-fields > *,
+.zip-app-shell.app-shell--power-connect .power-port-connect-path > * {
+  min-width: 0;
+}
+@media (max-height: 850px) {
+  .zip-app-shell.app-shell--power-connect .power-port-connect-page {
+    padding-top: 16px;
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
+  }
+  .zip-app-shell.app-shell--power-connect .power-port-connect-header {
+    gap: 10px;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
+  }
+  .zip-app-shell.app-shell--power-connect .power-port-connect-panel,
+  .zip-app-shell.app-shell--power-connect .power-port-connect-review {
+    gap: 10px;
+    padding: clamp(12px, 1.5vw, 18px);
+  }
+  .zip-app-shell.app-shell--power-connect .power-port-connect-review {
+    margin-top: 12px;
+  }
+}
+@media (max-width: 760px) {
+  .zip-app-shell.app-shell--power-connect .power-port-connect-page {
+    padding-inline: clamp(12px, 4vw, 22px);
+  }
+  .zip-app-shell.app-shell--power-connect .power-port-connect-header {
+    align-items: stretch;
+  }
+  .zip-app-shell.app-shell--power-connect .power-port-connect-path {
+    text-align: center;
+  }
+  .zip-app-shell.app-shell--power-connect .power-port-connect-actions > button {
+    max-width: 100%;
+  }
+}
+@media (max-width: 420px) {
+  .zip-app-shell.app-shell--power-connect .power-port-connect-actions {
+    align-items: stretch;
+    flex-direction: column-reverse;
+  }
+  .zip-app-shell.app-shell--power-connect .power-port-connect-actions > button,
+  .zip-app-shell.app-shell--power-connect .power-port-connect-actions > a {
+    width: 100%;
+    text-align: center;
+  }
+}

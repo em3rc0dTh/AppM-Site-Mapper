@@ -27,6 +27,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   const blueprint = pathname.startsWith('/blueprint');
   const power = pathname.startsWith('/power');
+  const powerConnect = pathname === '/power/connect/equipment';
   const immersive =
     pathname.startsWith('/topology') ||
     blueprint ||
@@ -64,6 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         immersive ? 'app-shell--immersive' : '',
         blueprint ? 'app-shell--blueprint' : '',
         power ? 'app-shell--power' : '',
+        powerConnect ? 'app-shell--power-connect' : '',
       ]
         .filter(Boolean)
         .join(' ')}

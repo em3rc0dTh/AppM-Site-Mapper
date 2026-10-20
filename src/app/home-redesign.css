@@ -75,3 +75,14 @@
 .sm-home .sm-home-sidebar .tree-node-line a[aria-current="page"] { background: #eaf2ff !important; color: #174d94 !important; }
 .sm-home .sm-home-sidebar .tree-node-line a:hover { background: #f2f6fb !important; }
 .sm-home .sm-home-sidebar .sm-home-sidebar-toggle { background: #fff !important; color: #334155 !important; }
+
+
+/* Progressive topology navigation: every depth gets the full available width. */
+.sm-home .sm-flat-tree .sm-flat-tree-list { padding: 0 !important; margin: 0 !important; list-style: none; }
+.sm-home .sm-flat-tree .sm-flat-tree-item { display: flex; align-items: center; gap: 4px; min-width: 0; padding: 3px 0; background: #fff !important; }
+.sm-home .sm-flat-tree .sm-flat-tree-item > a { display: flex; flex: 1; min-width: 0; align-items: center; gap: 8px; padding: 10px 5px; text-decoration: none; color: #283a52 !important; border-radius: 5px; }
+.sm-home .sm-flat-tree .sm-flat-tree-item > a > span { min-width: 0; display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; overflow-wrap: normal; }
+.sm-home .sm-flat-tree .sm-flat-tree-item > button { flex: 0 0 30px; width: 30px; min-height: 34px; border: 1px solid #d8e1e9; border-radius: 5px; background: #fff; color: #334155; }
+.sm-home .sm-flat-tree .sm-flat-tree-item > a:hover { background: #edf5ff !important; }
+.sm-home .sm-flat-tree .sm-tree-back { display: block; background: #fff; border: 0; padding: 10px 4px; color: #245c9f; font-weight: 700; text-align: left; }
+.sm-home .sm-flat-tree .sm-tree-current { padding: 10px 8px; background: #eef5fc; border-radius: 5px; font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

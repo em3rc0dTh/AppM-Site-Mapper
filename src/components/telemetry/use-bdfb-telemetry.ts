@@ -19,17 +19,27 @@ export function useTelemetryStream(enabled = true) {
           setHasSnapshot(true);
         }
       } catch {
-        setSamples([]);
+        // Do not erase the last valid snapshot on malformed SSE data.
       }
     };
     const incoming = (event: MessageEvent<string>) => {
       try {
         const sample = JSON.parse(event.data) as TelemetrySample;
-        if (typeof sample.targetId === 'string')
+        if (typeof sample.targetId === 'string') {
           setSamples((previous) => [
-            ...previous.filter((item) => item.targetId !== sample.targetId),
+            ...previous.filter(
+              (item) =>
+                !(
+                  item.targetType === sample.targetType &&
+                  item.targetId === sample.targetId &&
+                  item.sourceIdentity === sample.sourceIdentity &&
+                  item.sourcePointId === sample.sourcePointId &&
+                  item.bindingId === sample.bindingId
+                ),
+            ),
             sample,
           ]);
+        }
       } catch {
         // Preserve the most recent valid snapshot when one malformed event arrives.
       }

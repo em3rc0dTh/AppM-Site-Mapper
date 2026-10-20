@@ -1387,3 +1387,34 @@ The objective is:
 The legacy system proves what the product can do.
 
 **MK1 must prove that we can trust it.**
+
+---
+
+# Amendment · 2026-10-20 — Home and BDFB operational telemetry
+
+This amendment supersedes the **initial launcher-only Home / Operations interpretation**.
+It does not supersede the canonical domain, validated telemetry bindings, persistence,
+authorization or security rules above.
+
+- Authenticated `/workspace` is the operational Home with a collapsible topology tree,
+  primary Device counts, pinned Device/Equipment shortcuts, and system-wide BDFB telemetry.
+- Pinned BDFB chassis shortcuts resolve to the parent BDFB **Device Physical View**.
+  Physical Panels navigate to their canonical **Equipment Composition**, not a second
+  parallel breaker representation.
+- The authority for LIVE BDFB aggregation is **all ACTIVE descendant Equipment** from
+  the canonical topology. Only normalized, explicitly metric-bound, fresh telemetry
+  (30-second acceptance window) contributes. Arbitrary RAW MQTT points do not.
+- Home and the BDFB inspector use one domain-level aggregator for per-Equipment V/A/W
+  averages, average cumulative kWh counter, reporting coverage and total current power.
+- **Mean power and total power are different quantities.** The system power KPI sums
+  validated instantaneous Equipment powers; missing values are unknown, not zero.
+  Average cumulative kWh counters are **not** a period-consumption calculation.
+- `PERIOD ENERGY` stays unavailable until the TimescaleDB historical window logic
+  implements and validates actual consumption rather than inferring it from a counter average.
+- Telemetry freshness depends on sample timestamps, not the MQTT socket's subscription
+  state or a cached packet's `ONLINE` field.
+
+The revised presentation/interaction design is defined in
+[Screen 14 — Home / Operations](docs/ui/Wireframes%20documentation.md),
+with its product-level constraints in
+[Operational Workspace](docs/product/operational-workspace.md).

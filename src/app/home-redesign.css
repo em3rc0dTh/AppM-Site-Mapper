@@ -43,3 +43,35 @@
 .sm-home-table a{color:#275eac}
 @media(max-width:1100px){.sm-home-pin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sm-home-main{padding:20px}}
 @media(max-width:700px){.sm-home-stats,.sm-home-pin-grid{grid-template-columns:1fr}.sm-home-heading{align-items:flex-start;flex-direction:column}.sm-home-main{padding:14px}.sm-home:has(.sm-home-sidebar.is-open){grid-template-columns:minmax(0,1fr)}.sm-home-sidebar.is-open{position:absolute;z-index:50;height:100%;box-shadow:4px 0 18px #0002}}
+
+
+/* Home sidebar owns its theme; legacy workspace styles must not bleed into it. */
+.sm-home .sm-home-sidebar,
+.sm-home .sm-home-sidebar .workspace-tree,
+.sm-home .sm-home-sidebar .workspace-tree ul,
+.sm-home .sm-home-sidebar .workspace-tree li {
+  background: #fff !important;
+  color: #243244 !important;
+}
+.sm-home .sm-home-sidebar .workspace-tree {
+  border: 0 !important;
+  padding: 10px !important;
+}
+.sm-home .sm-home-sidebar .workspace-section-title,
+.sm-home .sm-home-sidebar .workspace-section-title span,
+.sm-home .sm-home-sidebar .tree-node-line a,
+.sm-home .sm-home-sidebar .tree-node-line a span,
+.sm-home .sm-home-sidebar .tree-node-line small,
+.sm-home .sm-home-sidebar .tree-toggle {
+  color: #334155 !important;
+}
+.sm-home .sm-home-sidebar .workspace-tree input {
+  background: #fff !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #162334 !important;
+  border-radius: 6px;
+}
+.sm-home .sm-home-sidebar .workspace-tree input::placeholder { color: #64748b !important; }
+.sm-home .sm-home-sidebar .tree-node-line a[aria-current="page"] { background: #eaf2ff !important; color: #174d94 !important; }
+.sm-home .sm-home-sidebar .tree-node-line a:hover { background: #f2f6fb !important; }
+.sm-home .sm-home-sidebar .sm-home-sidebar-toggle { background: #fff !important; color: #334155 !important; }

@@ -36,6 +36,8 @@ export interface WorkspaceBdfbSummary {
   readonly frames: number;
   readonly panels: number;
   readonly endpoints: number;
+  /** All active canonical Equipment descendants (including non-reporting structural parts). */
+  readonly descendantEquipmentIds: readonly string[];
   readonly href: string;
 }
 
@@ -126,7 +128,13 @@ export class WorkspaceService {
       devices
         .filter((device) => device.deviceType === 'BDFB')
         .map(async (device) => {
-          const presentation = await this.bdfbProjection.get(device.id);
+          const [presentation, descendantEquipment] = await Promise.all([
+            this.bdfbProjection.get(device.id),
+            this.topology.listEquipmentForDevice(device.id),
+          ]);
+          const descendantEquipmentIds = descendantEquipment
+            .filter((equipment) => equipment.lifecycle === 'ACTIVE')
+            .map((equipment) => equipment.id);
           if (!presentation) return {
             deviceId: device.id,
             deviceName: device.name,
@@ -134,6 +142,7 @@ export class WorkspaceService {
             frames: 0,
             panels: 0,
             endpoints: 0,
+            descendantEquipmentIds,
             href: await this.topologyService.buildDeepLink(device.id),
           };
 
@@ -148,6 +157,7 @@ export class WorkspaceService {
             frames: frames.length,
             panels: panels.length,
             endpoints: endpoints.length,
+            descendantEquipmentIds,
             href: await this.topologyService.buildDeepLink(device.id),
           };
         }),

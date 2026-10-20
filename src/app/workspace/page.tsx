@@ -37,32 +37,42 @@ export default async function WorkspacePage() {
     await Promise.all(context.pinned.map((id) => topologyRepo.getById(id)))
   ).filter((node) => node?.lifecycle === 'ACTIVE');
 
+  // A pinned BDFB chassis is a physical component of a Device. Direct Access
+  // opens the Device's physical view; Equipment Composition remains accessible
+  // through the topology navigation.
+  const physicalPin = async (node: NonNullable<(typeof pinnedNodes)[number]>) => {
+    const parent = node.kind === 'EQUIPMENT'
+      ? await topologyRepo.getById(node.deviceId)
+      : null;
+    const target = parent?.kind === 'DEVICE' && parent.deviceType === 'BDFB'
+      ? parent
+      : node;
+    return {
+      id: target.id,
+      name: target.name,
+      kind: target.kind,
+      href: target.kind === 'CONTAINER_RACK'
+        ? `/rack/${target.id}/focus`
+        : await topology.buildDeepLink(target.id),
+      context: (await topology.getTrail(target.id))
+        .slice(-3).map((item) => item.name).join(' › '),
+    };
+  };
+
   const pinLinks = await Promise.all(
-    pinnedNodes.map(async (node) => ({
-      id: node!.id,
-      name: node!.name,
-      kind: node!.kind,
-      href:
-        node!.kind === 'CONTAINER_RACK'
-          ? `/rack/${node!.id}/focus`
-          : await topology.buildDeepLink(node!.id),
-      context: (await topology.getTrail(node!.id))
-        .slice(-3)
-        .map((item) => item.name)
-        .join(' › '),
-    })),
+    pinnedNodes.map((node) => physicalPin(node!)),
   );
 
-  const inventoryPins = snapshot.pinned
-    .filter((item) => !pinLinks.some((pin) => pin.id === item.id))
-    .map((item) => ({
-      id: item.id,
-      name: item.name,
-      kind: item.kind,
-      href: item.href,
-      context: item.category ?? item.kind,
+  const inventoryPins = await Promise.all(snapshot.pinned
+    .filter((item) => !pinnedNodes.some((node) => node?.id === item.id))
+    .map(async (item) => {
+      const node = await topologyRepo.getById(item.id);
+      return node ? physicalPin(node) : {
+        id: item.id, name: item.name, kind: item.kind,
+        href: item.href, context: item.category ?? item.kind,
+      };
     }));
-  const cards = [...pinLinks, ...inventoryPins].slice(0, 3);
+  const cards = [...new Map([...pinLinks, ...inventoryPins].map((item) => [item.id, item])).values()].slice(0, 3);
 
   const equipmentNodes = allNodes.filter((node) => node.kind === 'DEVICE');
   const bdfbRows = snapshot.bdfb;

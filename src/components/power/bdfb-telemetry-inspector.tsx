@@ -5,7 +5,7 @@ import { useBdfbTelemetrySnapshot } from '@/components/telemetry/use-bdfb-teleme
 import { useEffect, useState } from 'react';
 
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
-import { aggregateBdfbTelemetry } from '@/modules/telemetry/application/bdfb-telemetry-aggregate';
+import { aggregateBdfbDescendantTelemetry } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
 import type {
   TelemetryHistoryPoint,
   TelemetryHistoryResponse,
@@ -162,46 +162,14 @@ export function BdfbTelemetryInspector({
   const selectedPanel = activePanelId
     ? (panels.find((panel) => panel.id === activePanelId) ?? null)
     : null;
-  const scopePositions = selectedPanel
-    ? selectedPanel.positions
-    : panels.flatMap((panel) => panel.positions);
-  const allowed = new Set(descendantEquipmentIds);
-  const readings = new Map<string, { voltageV?: number; currentA?: number; powerW?: number; energyKwh?: number }>();
-  for (const sample of samples) {
-    if (sample.targetType !== 'EQUIPMENT' || !allowed.has(sample.targetId)) continue;
-    const age = now - Date.parse(sample.sourceObservedAt ?? sample.receivedAt);
-    if (!Number.isFinite(age) || age < -30000 || age > 30000) continue;
-    // Independent, commissioned Equipment telemetry. Never promote arbitrary RAW packets.
-    if (!sample.metricBindingIds?.length) continue;
-    const fields = ['voltageV', 'currentA', 'powerW', 'energyKwh'] as const;
-    const previous = readings.get(sample.targetId) ?? {};
-    const next = { ...previous };
-    for (const field of fields) {
-      const raw = sample.reported[field];
-      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
-      const record = raw as { value?: unknown; observedAt?: unknown };
-      if (typeof record.value !== 'number' || !Number.isFinite(record.value)) continue;
-      if (typeof record.observedAt === 'string') {
-        const metricAge = now - Date.parse(record.observedAt);
-        if (!Number.isFinite(metricAge) || metricAge < -30000 || metricAge > 30000) continue;
-      }
-      next[field] = record.value;
-    }
-    readings.set(sample.targetId, next);
-  }
-  const ownValues = [...readings.values()];
-  const averageMetric = (key: 'voltageV' | 'currentA' | 'powerW' | 'energyKwh') => {
-    const values = ownValues.flatMap((entry) => entry[key] === undefined ? [] : [entry[key]!]);
-    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : undefined;
-  };
-  const aggregate = aggregateBdfbTelemetry(scopePositions, []);
-  const latestReceived = samples.filter((sample) => allowed.has(sample.targetId) && readings.has(sample.targetId))
-    .map((sample) => sample.receivedAt).sort().at(-1);
-  const reportingEquipment = ownValues.filter((item) => Object.keys(item).length > 0).length;
+  // Live scope is always the entire canonical BDFB, never only the focused panel.
+  const live = aggregateBdfbDescendantTelemetry(samples, descendantEquipmentIds, now);
+  const reportingEquipment = live.reportingEquipment;
+  const latestReceived = live.latestReceivedAt ?? undefined;
 
   const hasA = feeds?.includes('A') ?? false;
   const hasB = feeds?.includes('B') ?? false;
-  const scopeLabel = selectedPanel?.label ?? 'Entire BDFB';
+  const scopeLabel = window === 'LIVE' ? 'Entire BDFB' : (selectedPanel?.label ?? 'Entire BDFB');
   const positions = panels.flatMap((panel) => panel.positions);
   const breakers = positions.filter((item) => item !== null);
 
@@ -300,26 +268,30 @@ export function BdfbTelemetryInspector({
             <div className="zip-bdfb-live-average-grid">
               <div>
                 <span>AVG VOLTAGE</span>
-                <strong>{metric(averageMetric('voltageV'), 'V')}</strong>
+                <strong>{metric(live.averageVoltageV, 'V')}</strong>
               </div>
               <div>
                 <span>AVG CURRENT</span>
-                <strong>{metric(averageMetric('currentA'), 'A')}</strong>
+                <strong>{metric(live.averageCurrentA, 'A')}</strong>
               </div>
               <div>
                 <span>AVG POWER</span>
-                <strong>{metric(averageMetric('powerW'), 'W')}</strong>
+                <strong>{metric(live.averagePowerW, 'W')}</strong>
               </div>
               <div>
-                <span>AVG ENERGY</span>
-                <strong>{metric(averageMetric('energyKwh'), 'kWh', 4)}</strong>
+                <span>AVG ENERGY COUNTER</span>
+                <strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong>
               </div>
             </div>
 
+            <p className="zip-bdfb-aggregate-note">
+              Live total power: {metric(live.totalPowerW, 'W')}. Mean energy is a
+              cumulative-counter average, not consumption over a period.
+            </p>
             <dl className="zip-bdfb-live-average-counts">
               <dt>Equipment reporting</dt><dd>{reportingEquipment}</dd>
-              <dt>Descendant equipment</dt><dd>{descendantEquipmentIds.length}</dd>
-              <dt>Without current reading</dt><dd>{Math.max(0, descendantEquipmentIds.length - reportingEquipment)}</dd>
+              <dt>Descendant equipment</dt><dd>{live.descendantEquipment}</dd>
+              <dt>Without current reading</dt><dd>{live.withoutCurrentReading}</dd>
               <dt>Last packet</dt><dd>{compactUtc(latestReceived)}</dd>
             </dl>
           </>

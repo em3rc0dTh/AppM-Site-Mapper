@@ -1,0 +1,45 @@
+.zip-app-shell:has(.sm-home) .zip-context-slot {flex:1;min-width:0}
+.zip-app-shell:has(.sm-home) .zip-static-context {display:none}
+.sm-home{display:grid;grid-template-columns:60px minmax(0,1fr);min-height:calc(100vh - 67px);background:#f7f9fc;color:#162334}
+.sm-home-sidebar{background:#fff;border-right:1px solid #d9e0e8;position:relative;min-width:0}
+.sm-home-sidebar nav{display:none}
+.sm-home-sidebar.is-open{width:280px}
+.sm-home:has(.sm-home-sidebar.is-open){grid-template-columns:280px minmax(0,1fr)}
+.sm-home-sidebar button{background:#fff;border:1px solid #dde4ec;padding:10px;cursor:pointer}
+.sm-home-sidebar-toggle{width:100%;min-height:48px}
+.sm-home-sidebar.is-open nav{display:block;padding:10px;max-height:calc(100vh - 120px);overflow:auto}
+.sm-home-sidebar .workspace-tree li,.sm-home-sidebar .workspace-tree a{min-width:0}
+.sm-home-sidebar .tree-node-line{min-width:0;display:flex}
+.sm-home-sidebar .tree-node-line a{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.sm-home-sidebar .tree-node-line a span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sm-home-main{padding:28px 32px 60px;min-width:0;max-width:1600px;width:100%;margin:0 auto}
+.sm-home-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px}
+.sm-home-heading h1{font-size:22px;margin:6px 0 0}
+.sm-home-breadcrumb{font-weight:700;font-size:14px}
+.sm-home-scope{font-size:12px;color:#62738a}
+.sm-home-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.sm-home-stats article{border:1px solid #e0e6ed;border-radius:10px;background:#fff;padding:18px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.sm-home-stats small{font-size:11px;letter-spacing:.05em;font-weight:700;color:#58697d}
+.sm-home-stats strong{font-size:28px}
+.sm-home-stats span{font-size:12px;color:#77869a}
+.sm-home-section{margin-top:28px}
+.sm-home-section-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.sm-home-section-heading h2{font-size:13px;letter-spacing:.045em;margin:0}
+.sm-home-section-heading a,.sm-home-section-heading span{color:#496b98;text-decoration:none;font-size:12px}
+.sm-home-pin-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.sm-home-pin{min-width:0;border:1px solid #dce4ed;border-radius:10px;background:#fff;padding:18px;display:flex;flex-direction:column;gap:12px;color:inherit;text-decoration:none;min-height:175px}
+.sm-home-pin>div:first-child{display:flex;gap:10px;align-items:center}
+.sm-home-pin small{color:#6d7c8b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sm-home-pin-readings{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.sm-home-pin-readings span{font-size:11px;color:#58697d;display:flex;flex-direction:column;gap:6px}
+.sm-home-pin-readings b{font-size:16px;color:#192639}
+.sm-home-pin em{font-style:normal;font-size:12px;font-weight:700;margin-top:auto;align-self:flex-end}
+.sm-home-add-pin{align-items:center;justify-content:center;color:#647c99;border-style:dashed}
+.sm-home-warning{font-size:12px;color:#725425;background:#fff8eb;border:1px solid #efdfbc;padding:12px;border-radius:8px;margin:14px 0}
+.sm-home-table-wrap{overflow-x:auto;border:1px solid #dce4ed;border-radius:10px;background:#fff}
+.sm-home-table{border-collapse:collapse;width:100%;min-width:600px;text-align:left;font-size:13px}
+.sm-home-table th,.sm-home-table td{padding:14px 18px;border-bottom:1px solid #e8edf2}
+.sm-home-table th{font-size:11px;color:#617288}
+.sm-home-table a{color:#275eac}
+@media(max-width:1100px){.sm-home-pin-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sm-home-main{padding:20px}}
+@media(max-width:700px){.sm-home-stats,.sm-home-pin-grid{grid-template-columns:1fr}.sm-home-heading{align-items:flex-start;flex-direction:column}.sm-home-main{padding:14px}.sm-home:has(.sm-home-sidebar.is-open){grid-template-columns:minmax(0,1fr)}.sm-home-sidebar.is-open{position:absolute;z-index:50;height:100%;box-shadow:4px 0 18px #0002}}

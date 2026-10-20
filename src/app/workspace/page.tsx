@@ -3,8 +3,10 @@ import { redirect } from 'next/navigation';
 
 import { DemoSeedButton } from '@/components/dev/demo-seed-button';
 import { NavigationTree } from '@/components/workspace/navigation-tree';
+import { HomeSidebar } from '@/components/workspace/home-sidebar';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
+import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { getTelemetryRuntime } from '@/modules/telemetry/infrastructure/telemetry-runtime';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import {
@@ -26,6 +28,23 @@ function kindIcon(kind: string) {
   if (kind === 'DEVICE') return '▤';
   if (kind.includes('ROOM')) return '▭';
   return '▦';
+}
+
+function liveBdfb(sample: TelemetrySample | undefined, now: number) {
+  if (!sample || !Number.isFinite(Date.parse(sample.receivedAt)) || now - Date.parse(sample.receivedAt) > 30000) {
+    return { valid: false, watts: null as number | null, circuits: 0, updated: sample?.receivedAt };
+  }
+  const readings = sample.breakerReadings ?? [];
+  const valid = readings.filter((reading) =>
+    reading.metrics.powerW && Number.isFinite(reading.metrics.powerW.value) &&
+    Math.abs(Date.parse(reading.metrics.powerW.observedAt) - now) <= 30000
+  );
+  return {
+    valid: true,
+    watts: valid.length ? valid.reduce((sum, reading) => sum + reading.metrics.powerW!.value, 0) : null,
+    circuits: valid.length,
+    updated: sample.receivedAt,
+  };
 }
 
 export default async function WorkspacePage() {
@@ -70,24 +89,15 @@ export default async function WorkspacePage() {
     }));
   const cards = [...pinLinks, ...inventoryPins].slice(0, 3);
 
-  const attention = [...snapshot.notifications];
-  for (const node of allNodes.filter((item) => ['DEVICE', 'EQUIPMENT'].includes(item.kind))) {
-    if (!latest.some((sample) => sample.entityId === node.id)) {
-      attention.push({
-        id: `offline-${node.id}`,
-        severity: 'WARNING',
-        title: 'Device telemetry offline',
-        message: `${node.name} has no current measurement.`,
-        entityId: node.id,
-      });
-    }
-  }
-
-  const bdfbCards = (
-    snapshot.bdfb.filter((item) => context.pinned.includes(item.deviceId)).length
-      ? snapshot.bdfb.filter((item) => context.pinned.includes(item.deviceId))
-      : snapshot.bdfb
-  ).slice(0, 3);
+  const now = Date.now();
+  const equipmentNodes = allNodes.filter((item) => ['DEVICE', 'EQUIPMENT'].includes(item.kind));
+  const monitored = equipmentNodes.filter((node) => latest.some((sample) => sample.entityId === node.id && now - Date.parse(sample.receivedAt) <= 30000));
+  const bdfbRows = snapshot.bdfb.map((item) => ({
+    ...item,
+    live: liveBdfb(latest.find((sample) => sample.entityId === item.deviceId), now),
+  }));
+  const validBdfb = bdfbRows.filter((row) => row.live.watts !== null);
+  const totalWatts = validBdfb.reduce((sum, row) => sum + row.live.watts!, 0);
 
   const contextLabel = snapshot.navigation[0]?.name ?? 'Lima';
   const contextChild = snapshot.navigation[0]?.children[0]?.name ?? 'Building A';
@@ -97,184 +107,59 @@ export default async function WorkspacePage() {
     allNodes.length === 0;
 
   return (
-    <main className="zip-operations-page">
-      <div className="zip-operations-layout">
-        <aside className="zip-operations-tree">
-          <NavigationTree roots={snapshot.navigation} />
-        </aside>
-
-        <section className="zip-operations-stage">
-          <header className="zip-operations-header">
-            <div>
-              <h1>OPERATIONS</h1>
-              <p>Site overview, pinned BDFBs and live telemetry.</p>
-            </div>
-            <div className="zip-operations-context">
-              <span>▦</span>
-              <strong>{contextLabel}</strong>
-              <b>/</b>
-              <strong>{contextChild}</strong>
-              <b>⌄</b>
-              <time>
-                {new Date().toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: '2-digit',
-                  year: 'numeric',
-                })}
-                <br />
-                {new Date().toLocaleTimeString('en-US', { hour12: false })}
-              </time>
-            </div>
-          </header>
-
-          {canLoadDevelopmentDemo ? <DemoSeedButton /> : null}
-
-          <section className="zip-ops-section">
-            <header>
-              <h2>ATTENTION</h2>
-              <span>View all →</span>
-            </header>
-            <div className="zip-attention-grid">
-              {attention.slice(0, 2).map((item, index) => (
-                <article key={item.id}>
-                  <div className="zip-attention-title">
-                    <span>{index === 0 ? '●' : '▲'}</span>
-                    <strong>{item.title}</strong>
-                    <b>⋮</b>
-                  </div>
-                  <dl>
-                    <dt>Object</dt>
-                    <dd>{item.entityId ?? 'Infrastructure'}</dd>
-                    <dt>Location</dt>
-                    <dd>{item.message}</dd>
-                  </dl>
-                  <div>
-                    {item.entityId && <Link href={`/device/${item.entityId}`}>LOCATE →</Link>}
-                    {item.entityId && (
-                      <Link href={`/power?entity=${item.entityId}`}>TRACE POWER →</Link>
-                    )}
-                  </div>
-                </article>
-              ))}
-              {!attention.length && (
-                <article className="zip-ops-empty">
-                  <strong>No active attention items</strong>
-                  <p>Configuration and telemetry are clear.</p>
-                </article>
-              )}
-            </div>
-          </section>
-
-          <section className="zip-ops-section">
-            <header>
-              <h2>PINNED</h2>
-              <span>Manage pins →</span>
-            </header>
-            <div className="zip-pinned-grid">
-              {cards.map((item) => (
-                <article key={item.id}>
-                  <div className="zip-pin-icon">{kindIcon(item.kind)}</div>
-                  <div className="zip-pin-copy">
-                    <strong>{item.name}</strong>
-                    <small>{item.context}</small>
-                    <span>
-                      <i /> Pinned
-                    </span>
-                  </div>
-                  <span className="zip-pin-mark">⌁</span>
-                  <Link href={item.href}>OPEN</Link>
-                </article>
-              ))}
-              {!cards.length && (
-                <article className="zip-ops-empty">
-                  <strong>No pinned objects</strong>
-                  <p>Pin a rack, BDFB or device from its physical view.</p>
-                </article>
-              )}
-            </div>
-          </section>
-
-          <section className="zip-ops-section">
-            <header>
-              <h2>PINNED BDFB TELEMETRY</h2>
-              <span>View all →</span>
-            </header>
-            <div className="zip-bdfb-telemetry-grid">
-              {bdfbCards.map((item, index) => {
-                const sample = latest.find((entry) => entry.entityId === item.deviceId);
-                const reported = sample?.reported ?? {};
-                const values = Object.entries(reported)
-                  .filter(([, value]) => typeof value === 'number')
-                  .slice(0, 4);
-                const labels = ['Voltage A', 'Voltage B', 'Voltage C', 'Temp'];
-                return (
-                  <article key={item.deviceId}>
-                    <div className="zip-bdfb-card-head">
-                      <span>▦</span>
-                      <div>
-                        <strong>{item.deviceName}</strong>
-                        <small>
-                          {item.panels} panels · {item.endpoints} endpoints
-                        </small>
-                      </div>
-                      <b>{sample ? '● Live' : '○ No data'}</b>
-                    </div>
-                    <div className="zip-bdfb-card-metrics">
-                      {labels.map((label, metricIndex) => (
-                        <span key={label}>
-                          <small>{label}</small>
-                          <strong>
-                            {values[metricIndex] ? String(values[metricIndex]![1]) : '—'}
-                          </strong>
-                        </span>
-                      ))}
-                    </div>
-                  </article>
-                );
-              })}
-              {!bdfbCards.length && (
-                <article className="zip-ops-empty">
-                  <strong>No BDFB devices available</strong>
-                </article>
-              )}
-            </div>
-          </section>
-
-          <section className="zip-ops-section zip-recent-section">
-            <header>
-              <h2>RECENT</h2>
-              <span>View all →</span>
-            </header>
-            <div className="zip-recent-grid">
-              {context.recent
-                .filter((item) => item.href !== '/workspace')
-                .slice(0, 3)
-                .map((item, index) => (
-                  <Link key={item.href} href={item.href}>
-                    <span>{index === 0 ? '▭' : index === 1 ? '▥' : '▤'}</span>
-                    <div>
-                      <strong>{item.name}</strong>
-                      <small>
-                        {index === 0
-                          ? 'Viewed map'
-                          : index === 1
-                            ? 'Opened details'
-                            : 'Checked telemetry'}
-                      </small>
-                    </div>
-                    <em>{3 + index * 3} min ago</em>
-                    <b>›</b>
-                  </Link>
-                ))}
-              {!context.recent.filter((item) => item.href !== '/workspace').length && (
-                <div className="zip-ops-empty">
-                  <strong>No recent infrastructure context yet.</strong>
-                </div>
-              )}
-            </div>
-          </section>
+    <main className="sm-home">
+      <HomeSidebar tree={<NavigationTree roots={snapshot.navigation} />} />
+      <section className="sm-home-main">
+        <header className="sm-home-heading">
+          <div><span className="sm-home-breadcrumb">⌂ Home</span><h1>Infrastructure overview</h1></div>
+          <span className="sm-home-scope">{contextLabel} / {contextChild}</span>
+        </header>
+        {canLoadDevelopmentDemo ? <DemoSeedButton /> : null}
+        <div className="sm-home-stats">
+          <article><small>EQUIPMENTS</small><strong>{equipmentNodes.length}</strong></article>
+          <article><small>ONLINE</small><strong>{monitored.length}</strong><span>Recent telemetry</span></article>
+          <article><small>OFFLINE / NO DATA</small><strong>{equipmentNodes.length - monitored.length}</strong><span>No recent telemetry; not confirmed device failure</span></article>
+        </div>
+        <section className="sm-home-section">
+          <div className="sm-home-section-heading"><h2>DIRECT ACCESS</h2><Link href="/network">Manage pins →</Link></div>
+          <div className="sm-home-pin-grid">
+            {cards.map((item) => {
+              const bdfb = bdfbRows.find((row) => row.deviceId === item.id);
+              return <Link className="sm-home-pin" key={item.id} href={item.href}>
+                <div><span>{kindIcon(item.kind)}</span><strong>{item.name}</strong></div>
+                <small>{item.context}</small>
+                {bdfb ? <div className="sm-home-pin-readings">
+                  <span>Power <b>{bdfb.live.watts === null ? 'No data' : `${(bdfb.live.watts / 1000).toFixed(2)} kW`}</b></span>
+                  <span>Circuits reporting <b>{bdfb.live.circuits}</b></span>
+                </div> : <p>Open equipment details</p>}
+                <em>Open →</em>
+              </Link>;
+            })}
+            <Link className="sm-home-pin sm-home-add-pin" href="/network">+ Add pinned equipment</Link>
+          </div>
         </section>
-      </div>
+        <section className="sm-home-section" aria-label="System-wide BDFB power">
+          <div className="sm-home-section-heading"><h2>BDFB POWER OVERVIEW</h2><span>ALL BDFBs · SYSTEM WIDE</span></div>
+          <div className="sm-home-stats">
+            <article><small>TOTAL POWER (LIVE)</small><strong>{validBdfb.length ? `${(totalWatts / 1000).toFixed(2)} kW` : '—'}</strong><span>Reporting BDFBs only</span></article>
+            <article><small>PERIOD ENERGY</small><strong>—</strong><span>Requires complete historical counter interval</span></article>
+            <article><small>BDFB MONITORING</small><strong>{validBdfb.length} / {bdfbRows.length}</strong><span>Valid power telemetry</span></article>
+          </div>
+          {validBdfb.length !== bdfbRows.length && <p className="sm-home-warning">Power total is partial: {bdfbRows.length - validBdfb.length} BDFB(s) without valid current power. Unavailable readings are never counted as zero.</p>}
+          <div className="sm-home-section-heading"><h2>POWER BY BDFB</h2><Link href="/telemetry">Telemetry →</Link></div>
+          <div className="sm-home-table-wrap">
+            <table className="sm-home-table"><thead><tr><th>BDFB</th><th>Power</th><th>Circuits reporting</th><th>Telemetry</th><th></th></tr></thead>
+            <tbody>{bdfbRows.map((row) => <tr key={row.deviceId}>
+              <td><strong>{row.deviceName}</strong></td>
+              <td>{row.live.watts === null ? '—' : `${(row.live.watts / 1000).toFixed(2)} kW`}</td>
+              <td>{row.live.circuits}</td>
+              <td>{row.live.valid ? 'Recent' : 'No recent data'}</td>
+              <td><Link href={row.href}>Open →</Link></td>
+            </tr>)}</tbody></table>
+            {!bdfbRows.length && <p className="sm-home-warning">No configured BDFBs were found in the system.</p>}
+          </div>
+        </section>
+      </section>
     </main>
   );
 }

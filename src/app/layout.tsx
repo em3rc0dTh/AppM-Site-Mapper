@@ -10,6 +10,7 @@ import './visual-parity.css';
 import './room-light.css';
 import './interaction-recovery.css';
 import './spatial-editor.css';
+import './home-redesign.css';
 import { AppShell } from '@/shared/ui/app-shell';
 
 export const metadata: Metadata = {

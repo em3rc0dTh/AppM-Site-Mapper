@@ -49,10 +49,14 @@ describe('canonical BDFB descendant LIVE telemetry', () => {
   it('rejects RAW, unbound, stale and conflicting-source readings', () => {
     const mapped = sample('breaker', '0_1_1', 12, 5, 60, 1);
     const raw: TelemetrySample = {
-      ...mapped,
+      bindingId: 'auto:raw',
+      sourcePointId: '0_1_2',
       targetId: 'panel',
       entityId: 'panel',
-      metricBindingIds: undefined,
+      targetType: 'EQUIPMENT',
+      entityKind: 'EQUIPMENT',
+      sourceIdentity: 'EMU-BFDB-01',
+      receivedAt: at,
       reported: { '0_1_2': { U1: 12, P1: 10 } },
     };
     const old = { ...sample('old', '0_1_3', 12, 4, 48, 1), receivedAt: '2026-10-20T20:30:00.000Z' };

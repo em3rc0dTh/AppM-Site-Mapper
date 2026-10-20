@@ -1,6 +1,6 @@
 'use client';
 
-import { useBdfbTelemetry } from '@/components/telemetry/use-bdfb-telemetry';
+import { useBdfbTelemetrySnapshot } from '@/components/telemetry/use-bdfb-telemetry';
 
 import { useEffect, useState } from 'react';
 
@@ -139,6 +139,7 @@ export function BdfbTelemetryInspector({
   location,
   feeds,
   mappedBreakerCount = 0,
+  descendantEquipmentIds = [],
 }: Readonly<{
   node: DeviceNode;
   presentation: BdfbPresentation;
@@ -146,8 +147,9 @@ export function BdfbTelemetryInspector({
   location?: string;
   feeds?: readonly string[];
   mappedBreakerCount?: number;
+  descendantEquipmentIds?: readonly string[];
 }>) {
-  const telemetry = useBdfbTelemetry(node.id);
+  const { samples, now } = useBdfbTelemetrySnapshot(node.id);
   const [window, setWindow] = useState<InspectorWindow>('LIVE');
   const [history, setHistory] = useState<TelemetryHistoryResponse | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -163,7 +165,39 @@ export function BdfbTelemetryInspector({
   const scopePositions = selectedPanel
     ? selectedPanel.positions
     : panels.flatMap((panel) => panel.positions);
-  const aggregate = aggregateBdfbTelemetry(scopePositions, telemetry?.breakerReadings ?? []);
+  const allowed = new Set(descendantEquipmentIds);
+  const readings = new Map<string, { voltageV?: number; currentA?: number; powerW?: number; energyKwh?: number }>();
+  for (const sample of samples) {
+    if (sample.targetType !== 'EQUIPMENT' || !allowed.has(sample.targetId)) continue;
+    const age = now - Date.parse(sample.sourceObservedAt ?? sample.receivedAt);
+    if (!Number.isFinite(age) || age < -30000 || age > 30000) continue;
+    // Independent, commissioned Equipment telemetry. Never promote arbitrary RAW packets.
+    if (!sample.metricBindingIds?.length) continue;
+    const fields = ['voltageV', 'currentA', 'powerW', 'energyKwh'] as const;
+    const previous = readings.get(sample.targetId) ?? {};
+    const next = { ...previous };
+    for (const field of fields) {
+      const raw = sample.reported[field];
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+      const record = raw as { value?: unknown; observedAt?: unknown };
+      if (typeof record.value !== 'number' || !Number.isFinite(record.value)) continue;
+      if (typeof record.observedAt === 'string') {
+        const metricAge = now - Date.parse(record.observedAt);
+        if (!Number.isFinite(metricAge) || metricAge < -30000 || metricAge > 30000) continue;
+      }
+      next[field] = record.value;
+    }
+    readings.set(sample.targetId, next);
+  }
+  const ownValues = [...readings.values()];
+  const averageMetric = (key: 'voltageV' | 'currentA' | 'powerW' | 'energyKwh') => {
+    const values = ownValues.flatMap((entry) => entry[key] === undefined ? [] : [entry[key]!]);
+    return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : undefined;
+  };
+  const aggregate = aggregateBdfbTelemetry(scopePositions, []);
+  const latestReceived = samples.filter((sample) => allowed.has(sample.targetId) && readings.has(sample.targetId))
+    .map((sample) => sample.receivedAt).sort().at(-1);
+  const reportingEquipment = ownValues.filter((item) => Object.keys(item).length > 0).length;
 
   const hasA = feeds?.includes('A') ?? false;
   const hasB = feeds?.includes('B') ?? false;
@@ -223,8 +257,8 @@ export function BdfbTelemetryInspector({
       <section className="zip-bdfb-live-average" aria-label="BDFB telemetry">
         <header>
           <div>
-            <i aria-hidden="true" data-live={aggregate.activeBreakers > 0 ? 'true' : 'false'} />
-            <strong>{window === 'LIVE' ? 'LIVE AVERAGE' : 'HISTORICAL AVERAGE'}</strong>
+            <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
+            <strong>{window === 'LIVE' ? 'DESCENDANT EQUIPMENT AVERAGE' : 'HISTORICAL AVERAGE'}</strong>
           </div>
           <span>{scopeLabel}</span>
         </header>
@@ -266,31 +300,27 @@ export function BdfbTelemetryInspector({
             <div className="zip-bdfb-live-average-grid">
               <div>
                 <span>AVG VOLTAGE</span>
-                <strong>{metric(aggregate.averageVoltageV, 'V')}</strong>
+                <strong>{metric(averageMetric('voltageV'), 'V')}</strong>
               </div>
               <div>
                 <span>AVG CURRENT</span>
-                <strong>{metric(aggregate.averageCurrentA, 'A')}</strong>
+                <strong>{metric(averageMetric('currentA'), 'A')}</strong>
               </div>
               <div>
                 <span>AVG POWER</span>
-                <strong>{metric(aggregate.averagePowerW, 'W')}</strong>
+                <strong>{metric(averageMetric('powerW'), 'W')}</strong>
               </div>
               <div>
                 <span>AVG ENERGY</span>
-                <strong>{metric(aggregate.averageEnergyKwh, 'kWh', 4)}</strong>
+                <strong>{metric(averageMetric('energyKwh'), 'kWh', 4)}</strong>
               </div>
             </div>
 
             <dl className="zip-bdfb-live-average-counts">
-              <dt>Active breakers</dt>
-              <dd>{aggregate.activeBreakers}</dd>
-              <dt>Breakers without live reading</dt>
-              <dd>{aggregate.withoutLiveReading}</dd>
-              <dt>Empty positions</dt>
-              <dd>{aggregate.emptyPositions}</dd>
-              <dt>Last packet</dt>
-              <dd>{compactUtc(aggregate.latestReceivedAt)}</dd>
+              <dt>Equipment reporting</dt><dd>{reportingEquipment}</dd>
+              <dt>Descendant equipment</dt><dd>{descendantEquipmentIds.length}</dd>
+              <dt>Without current reading</dt><dd>{Math.max(0, descendantEquipmentIds.length - reportingEquipment)}</dd>
+              <dt>Last packet</dt><dd>{compactUtc(latestReceived)}</dd>
             </dl>
           </>
         ) : (
@@ -326,14 +356,14 @@ export function BdfbTelemetryInspector({
         <div>
           <span>●</span>
           <strong>
-            {aggregate.activeBreakers > 0
-              ? 'Live breaker telemetry received'
+            {reportingEquipment > 0
+              ? 'Live descendant equipment telemetry received'
               : 'Physical inventory recorded'}
           </strong>
           <small>
-            {aggregate.activeBreakers > 0
-              ? `${aggregate.activeBreakers} breaker readings contribute to the current average.`
-              : 'Live health requires an explicitly mapped MQTT reading.'}
+            {reportingEquipment > 0
+              ? `${reportingEquipment} descendant Equipment readings contribute to available averages.`
+              : 'Live readings require explicit Equipment MQTT bindings.'}
           </small>
         </div>
       </section>

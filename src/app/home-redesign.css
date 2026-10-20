@@ -110,3 +110,35 @@
 }
 
 .sm-bdfb-physical-body{overflow-x:auto;padding:14px}.sm-bdfb-physical-chassis{border:2px solid #8999a8;background:#f3f6f8;padding:16px;min-width:480px}.sm-bdfb-physical-shelf{border:1px solid #aebac6;padding:13px;margin-top:10px}.sm-bdfb-physical-frames{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.sm-bdfb-physical-frame{border:1px solid #a1adb9;background:#e7edf2;padding:10px;min-height:220px}.sm-bdfb-physical-panel{display:flex;flex-direction:column;gap:10px;background:#fff;padding:13px;border:1px solid #a6b5c4;text-decoration:none;color:#172a40}.sm-bdfb-physical-panel:hover{background:#eff6ff}.sm-bdfb-physical-panel span{font-size:11px}.sm-bdfb-physical-panel small{color:#245a99;font-weight:700}.sm-bdfb-physical-title{font-size:11px;font-weight:700;margin-bottom:10px}
+
+
+/* Revised Home v2: live descendant metrics and coverage, not breaker-only RAW totals. */
+.sm-home .sm-home-pin-readings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 12px;
+}
+.sm-home .sm-home-pin-readings > span { min-width: 0; overflow-wrap: anywhere; }
+.sm-home .sm-home-pin-readings > span b { font-variant-numeric: tabular-nums; }
+.sm-home .sm-home-telemetry-note {
+  display: block;
+  font-size: 11px;
+  color: #63768a;
+  line-height: 1.5;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  margin: 8px 0;
+}
+.sm-home .sm-home-table { min-width: 1060px; }
+.zip-bdfb-aggregate-note {
+  font-size: 11px;
+  line-height: 1.45;
+  margin: 10px 0;
+  color: #426254;
+}
+@media (max-width: 1100px) {
+  .sm-home .sm-home-pin-readings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .sm-home .sm-home-pin-readings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { DemoSeedButton } from '@/components/dev/demo-seed-button';
@@ -21,13 +20,6 @@ export const dynamic = 'force-dynamic';
 
 function flatten(nodes: readonly WorkspaceTreeNode[]): WorkspaceTreeNode[] {
   return nodes.flatMap((node) => [node, ...flatten(node.children)]);
-}
-
-function kindIcon(kind: string) {
-  if (kind.includes('RACK')) return '▥';
-  if (kind === 'DEVICE') return '▤';
-  if (kind.includes('ROOM')) return '▭';
-  return '▦';
 }
 
 export default async function WorkspacePage() {

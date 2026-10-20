@@ -127,7 +127,15 @@ export class WorkspaceService {
         .filter((device) => device.deviceType === 'BDFB')
         .map(async (device) => {
           const presentation = await this.bdfbProjection.get(device.id);
-          if (!presentation) return null;
+          if (!presentation) return {
+            deviceId: device.id,
+            deviceName: device.name,
+            shelves: 0,
+            frames: 0,
+            panels: 0,
+            endpoints: 0,
+            href: await this.topologyService.buildDeepLink(device.id),
+          };
 
           const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
           const panels = frames.flatMap((frame) => frame.panels);

@@ -1,0 +1,45 @@
+name: SNMP atomic TimescaleDB integration
+on:
+  pull_request:
+    paths:
+      - 'infra/telemetry-store/**'
+      - 'src/modules/telemetry/**'
+      - 'tests/unit/snmp-chaos-stress.test.ts'
+      - '.github/workflows/snmp-atomic-durability.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  atomic-durable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      APP_ENV: test
+      TIMESCALE_DB_PASSWORD: isolated-ci-sql-credential
+      TELEMETRY_STORE_TOKEN: isolated-ci-internal-store-credential
+      BOOTSTRAP_ADMIN_TOKEN: isolated-ci-bootstrap-token
+      MODBUS_BRIDGE_TOKEN: isolated-ci-modbus-token
+      MODBUS_SOURCE_UNITS_JSON: '{"CI-BFDB-01":1}'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start disposable TimescaleDB and telemetry store
+        run: |
+          docker compose -f docker-compose.telemetry.yml up -d --build timescaledb telemetry-store
+          for n in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:18081/health; then break; fi
+            sleep 2
+          done
+          curl -fsS http://127.0.0.1:18081/health
+      - name: Execute real PostgreSQL atomic rollback, idempotency and concurrency
+        run: |
+          container="$(docker compose -f docker-compose.telemetry.yml ps -q telemetry-store)"
+          docker cp infra/telemetry-store/test_snmp_atomic_integration.py "$container:/app/test_snmp_atomic_integration.py"
+          docker compose -f docker-compose.telemetry.yml exec -T telemetry-store python test_snmp_atomic_integration.py
+      - name: Sanitize failure diagnostics
+        if: failure()
+        run: docker compose -f docker-compose.telemetry.yml logs --tail=40 telemetry-store timescaledb
+      - name: Remove disposable data
+        if: always()
+        run: docker compose -f docker-compose.telemetry.yml down -v

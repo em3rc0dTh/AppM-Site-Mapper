@@ -105,7 +105,7 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     samples: readonly TelemetrySample[],
   ): Promise<'committed' | 'already_committed'> {
     if (!samples.length || samples.length > 64) throw new Error('INVALID_SNMP_BATCH');
-    const response = await fetch(`\${this.baseUrl.replace(/\/$/, '')}/snmp-batch`, {
+    const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/snmp-batch`, {
       method: 'POST',
       headers: {
         'content-type': 'application/json',

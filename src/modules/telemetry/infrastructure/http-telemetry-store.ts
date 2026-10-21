@@ -98,7 +98,7 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     private readonly accessToken?: string,
   ) {}
 
-  async write(sample: TelemetrySample): Promise<void> {
+  async writeDurable(sample: TelemetrySample): Promise<void> {
     const body = { ...serializeTelemetryStoreSample(sample), entitySample: sample };
 
     const controller = new AbortController();
@@ -128,9 +128,19 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     } catch (error) {
       this.failures += 1;
       this.lastError = error instanceof Error ? error.message : 'unknown';
-      logger.warn('telemetry.history.write_failed', { reason: this.lastError });
+      throw error;
     } finally {
       clearTimeout(timeout);
+    }
+  }
+
+  async write(sample: TelemetrySample): Promise<void> {
+    try {
+      await this.writeDurable(sample);
+    } catch (error) {
+      logger.warn('telemetry.history.write_failed', {
+        reason: error instanceof Error ? error.message : 'unknown',
+      });
     }
   }
 
@@ -143,6 +153,21 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
       lastWriteAt: this.lastWriteAt,
       lastError: this.lastError,
     };
+  }
+
+  async queryLatestEntities(targetIds: readonly string[], targetType: string): Promise<readonly TelemetrySample[]> {
+    if (!targetIds.length) return [];
+    const url = new URL(`${this.baseUrl.replace(/\/$/, '')}/entity-latest`);
+    url.searchParams.set('targetType', targetType);
+    for (const id of targetIds) url.searchParams.append('targetId', id);
+    const response = await fetch(url, {
+      headers: this.accessToken ? { authorization: `Bearer ${this.accessToken}` } : {},
+      cache: 'no-store',
+      signal: AbortSignal.timeout(this.timeoutMs),
+    });
+    if (!response.ok) throw new Error(`ENTITY_LATEST_HTTP_${response.status}`);
+    const body = (await response.json()) as { samples?: TelemetrySample[] };
+    return Array.isArray(body.samples) ? body.samples : [];
   }
 
   async queryEntity(

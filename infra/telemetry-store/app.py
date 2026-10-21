@@ -172,6 +172,22 @@ def insert_entity_sample(sample):
     return 1
 
 
+def query_latest_entity_samples(target_ids, target_type):
+    """Recover latest metric packets per target; no made-up readings."""
+    if not target_ids or len(target_ids) > 64:
+        raise ValueError("invalid target ids")
+    with psycopg.connect(DSN) as conn:
+        rows = conn.execute("""SELECT sample FROM (
+           SELECT sample, target_id, received_at,
+             ROW_NUMBER() OVER (PARTITION BY target_id ORDER BY received_at DESC) AS idx
+           FROM telemetry_entity_samples
+           WHERE target_type = %s AND target_id = ANY(%s)
+             AND received_at >= NOW() - INTERVAL '7 days'
+        ) recent WHERE idx <= 4 ORDER BY received_at ASC""",
+            (target_type, target_ids)).fetchall()
+    return [row[0] for row in rows]
+
+
 def query_entity_history(target_id, target_type, window):
     interval, bucket = WINDOWS[window]
     # One last packet per source/binding per bucket, not an invented average
@@ -282,8 +298,23 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "unavailable"})
             return
 
-        if parsed.path in ("/history", "/entity-history") and not self.authorized():
+        if parsed.path in ("/history", "/entity-history", "/entity-latest") and not self.authorized():
             self.send_json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
+            return
+
+        if parsed.path == "/entity-latest":
+            query = parse_qs(parsed.query)
+            ids = [text_value(value) for value in query.get("targetId", [])]
+            target_type = query.get("targetType", [None])[0]
+            if (not ids or len(ids) > 64 or not all(ids) or
+                    len(set(ids)) != len(ids) or
+                    target_type not in ("DEVICE", "EQUIPMENT", "ACCESS_PORT")):
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": "invalid latest query"})
+                return
+            try:
+                self.send_json(HTTPStatus.OK, {"samples": query_latest_entity_samples(ids, target_type)})
+            except Exception:
+                self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "entity latest query failed"})
             return
 
         if parsed.path == "/entity-history":

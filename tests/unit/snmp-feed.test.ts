@@ -51,7 +51,7 @@ function fixture(withB = true) {
       direction: 'INPUT' as const,
       exposure: 'EXTERNAL' as const,
       lifecycle: 'ACTIVE' as const,
-      attributes: { feed: side, ratedCurrentA: 800 },
+      attributes: { feed: side, ratedCurrentA: 800, snmpFeedInput: true, independentInputConfirmed: true },
     })),
   };
   const binding = (id: string, oid: string, portId: string): TelemetryBinding => ({

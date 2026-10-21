@@ -18,7 +18,8 @@ export function isBdfbFeedPort(port: AccessPort): boolean {
     port.lifecycle === 'ACTIVE' &&
     port.portType === 'POWER' &&
     port.direction === 'INPUT' &&
-    port.exposure === 'EXTERNAL'
+    port.exposure === 'EXTERNAL' &&
+    port.attributes?.snmpFeedInput === true
   );
 }
 

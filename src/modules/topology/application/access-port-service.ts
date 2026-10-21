@@ -1,3 +1,4 @@
+import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
@@ -19,6 +20,13 @@ export interface AccessPortInput {
   readonly protocol?: string;
   readonly customType?: string;
   readonly feed?: 'A' | 'B';
+  /** An explicitly inventoried, independently metered incoming BDFB feeder. */
+  readonly snmpFeedInput?: boolean;
+  readonly independentInputConfirmed?: boolean;
+  readonly ratedCurrentA?: number;
+  readonly shuntRatedCurrentA?: number;
+  readonly shuntRatedMillivolts?: number;
+  readonly servedPanelIds?: readonly string[];
 }
 
 export type AccessPortError =
@@ -27,6 +35,7 @@ export type AccessPortError =
   | 'EQUIPMENT_ARCHIVED'
   | 'PORT_NOT_FOUND'
   | 'PORT_IN_USE'
+  | 'INVALID_FEED_PANELS'
   | 'PORT_NAME_CONFLICT'
   | 'INVALID_PORT'
   | 'TOO_MANY_PORTS'
@@ -51,7 +60,21 @@ function valid(input: AccessPortInput): boolean {
     validText(input.connectorType) &&
     validText(input.protocol) &&
     validText(input.customType) &&
-    (input.feed === undefined || (input.portType === 'POWER' && ['A', 'B'].includes(input.feed)))
+    (input.feed === undefined || (input.portType === 'POWER' && ['A', 'B'].includes(input.feed))) &&
+    (input.snmpFeedInput === undefined || typeof input.snmpFeedInput === 'boolean') &&
+    (input.independentInputConfirmed === undefined || typeof input.independentInputConfirmed === 'boolean') &&
+    [input.ratedCurrentA, input.shuntRatedCurrentA, input.shuntRatedMillivolts].every(
+      (n) => n === undefined || (typeof n === 'number' && Number.isFinite(n) && n > 0 && n <= 100_000),
+    ) &&
+    (input.servedPanelIds === undefined ||
+      (Array.isArray(input.servedPanelIds) &&
+        input.servedPanelIds.length <= 24 &&
+        input.servedPanelIds.every((v) => typeof v === 'string' && v.length > 0 && v.length <= 160) &&
+        new Set(input.servedPanelIds).size === input.servedPanelIds.length)) &&
+    (!input.snmpFeedInput || (input.portType === 'POWER' && input.direction === 'INPUT' && input.exposure === 'EXTERNAL')) &&
+    (!input.independentInputConfirmed || input.snmpFeedInput === true) &&
+    (!input.servedPanelIds?.length || input.snmpFeedInput === true) &&
+    (![input.ratedCurrentA, input.shuntRatedCurrentA, input.shuntRatedMillivolts].some((v) => v !== undefined) || input.snmpFeedInput === true)
   );
 }
 
@@ -59,6 +82,7 @@ export class AccessPortService {
   constructor(
     private readonly topology: TopologyRepository,
     private readonly power: PowerRepository,
+    private readonly telemetryBindings?: TelemetryBindingRepository,
   ) {}
 
   async list(equipmentId: string): Promise<Result<readonly AccessPort[], AccessPortError>> {
@@ -78,7 +102,10 @@ export class AccessPortService {
 
   private async linked(id: string): Promise<boolean> {
     const paths = await this.power.listForAccessPort(id);
-    return paths.some((path) => path.lifecycle === 'ACTIVE');
+    if (paths.some((path) => path.lifecycle === 'ACTIVE')) return true;
+    if (!this.telemetryBindings) return false;
+    const bindings = await this.telemetryBindings.listForTarget('ACCESS_PORT', id);
+    return bindings.some((binding) => binding.lifecycle === 'ACTIVE' && binding.protocol === 'SNMP');
   }
 
   async upsert(
@@ -90,6 +117,16 @@ export class AccessPortService {
     const owner = await this.findEquipment(equipmentId);
     if (!owner.ok) return failure(owner.error);
     const node = owner.value;
+    if (input.snmpFeedInput) {
+      const device = await this.topology.getById(node.deviceId);
+      if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB') return failure('INVALID_PORT');
+      const panelIds = new Set(
+        (await this.topology.listEquipmentForDevice(node.deviceId))
+          .filter((item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'PANEL')
+          .map((item) => item.id),
+      );
+      if (input.servedPanelIds?.some((id) => !panelIds.has(id))) return failure('INVALID_FEED_PANELS');
+    }
     const existing = existingId
       ? node.accessPorts.find((port) => port.id === existingId && port.lifecycle === 'ACTIVE')
       : undefined;
@@ -113,7 +150,10 @@ export class AccessPortService {
         existing.portType !== input.portType ||
         existing.direction !== input.direction ||
         existing.exposure !== input.exposure ||
-        oldFeed !== input.feed
+        oldFeed !== input.feed ||
+        Boolean(existing.attributes?.snmpFeedInput) !== Boolean(input.snmpFeedInput) ||
+        Boolean(existing.attributes?.independentInputConfirmed) !== Boolean(input.independentInputConfirmed) ||
+        JSON.stringify(existing.attributes?.servedPanelIds ?? []) !== JSON.stringify(input.servedPanelIds ?? [])
       )
         return failure('PORT_IN_USE');
     }
@@ -121,6 +161,14 @@ export class AccessPortService {
     const attributes: Record<string, unknown> = { ...(existing?.attributes ?? {}) };
     if (input.feed) attributes.feed = input.feed;
     else delete attributes.feed;
+    for (const key of ['snmpFeedInput', 'independentInputConfirmed', 'ratedCurrentA', 'shuntRatedCurrentA', 'shuntRatedMillivolts', 'servedPanelIds']) {
+      const value = input[key as keyof AccessPortInput];
+      if (value === undefined || value === false || (Array.isArray(value) && value.length === 0)) {
+        delete attributes[key];
+      } else {
+        attributes[key] = value;
+      }
+    }
 
     const connectorType = clean(input.connectorType);
     const protocol = clean(input.protocol);

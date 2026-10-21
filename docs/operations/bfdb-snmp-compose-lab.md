@@ -42,13 +42,40 @@ secrets are never overwritten. If an existing BFDB `.env.snmp` selects
 Site Mapper `.env` must use `APP_ENV=development` and contain the
 mandatory Compose values. The `up` command validates Compose before
 starting services, creates an isolated external Docker network, and uses
-dedicated Compose project names `site_mapper_snmp_lab` and
-`bfdb_snmp_lab` (so previously named volumes are not modified).
+existing Compose project names `appm-site-mapper` and
+`bfdb-telemetry-gateway`, reusing their persisted volumes. If your local
+project names differ, set `SITE_MAPPER_COMPOSE_PROJECT` and
+`BFDB_COMPOSE_PROJECT` before invoking the launcher.
 
 The shared network connects only BFDB Mosquitto + SNMP agents to Site Mapper
 
 - collectors. Neither project's TimescaleDB/Modbus joins the shared network.
   Host ports are loopback-only in the underlying Compose files.
+
+## Recovery from port collisions after the earlier launcher
+
+The first launcher created duplicate projects `bfdb_snmp_lab` and
+`site_mapper_snmp_lab`. If those containers exist, do not stop them
+one by one or delete the original databases. After pulling the fix, run:
+
+```bash
+bash scripts/lab/bfdb-snmp-config4.sh cleanup-duplicate ../bfdb-telemetry-gateway
+bash scripts/lab/bfdb-snmp-config4.sh up ../bfdb-telemetry-gateway
+bash scripts/lab/bfdb-snmp-config4.sh status ../bfdb-telemetry-gateway
+```
+
+Cleanup targets only the two accidentally duplicated projects and does
+**not** delete volumes. The regular `up` reuses the original
+`appm-site-mapper` and `bfdb-telemetry-gateway` project names. It
+may recreate application containers as it applies the updated Compose
+configuration, but preserves their named database volumes.
+
+**Existing TimescaleDB warning:** An existing TimescaleDB data directory
+retains the role password set when it was first initialized. Adding a new
+`TIMESCALE_DB_PASSWORD` to a local `.env` does not rotate the stored
+Postgres password. If the Site Mapper historical store reports an
+authentication error after restart, investigate the existing role and
+original credentials; do not reset or recreate the database to mask it.
 
 ## First Superadmin and RBAC
 

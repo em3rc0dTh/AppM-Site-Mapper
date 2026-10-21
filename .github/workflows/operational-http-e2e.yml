@@ -52,6 +52,7 @@ jobs:
       MQTT_BROKER_URL: mqtt://127.0.0.1:1883
       MQTT_TOPIC_FILTER: data/dev/#
       TELEMETRY_HISTORY_ENABLED: 'true'
+      SNMP_INGEST_TOKEN: isolated-snmp-ci-collector-token-2026-not-production
       TELEMETRY_STORE_URL: http://127.0.0.1:18081
       TELEMETRY_STORE_TOKEN: mk1-ci-isolated-store-secret
       CI_HTTP_BASE_URL: http://127.0.0.1:3100

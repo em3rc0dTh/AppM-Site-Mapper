@@ -514,6 +514,77 @@ async function main() {
     assert.ok(diagAfter.history.writes >= 1);
     assert.equal(diagAfter.history.failures, 0);
     record('Telemetry diagnostics: accepted MQTT and successful time-series writes');
+    // SNMP is a distinct electrical input-feed measurement; no breaker averages.
+    const feederPorts = [];
+    for (const side of ['A', 'B']) {
+      const { body: result } = await request('POST',
+        '/api/equipment/' + lima.load.id + '/access-ports', {
+          port: {
+            name: 'CI DC input feed ' + side,
+            portType: 'POWER',
+            direction: 'INPUT',
+            exposure: 'EXTERNAL',
+            feed: side,
+            snmpFeedInput: true,
+            independentInputConfirmed: true,
+            ratedCurrentA: 800,
+            shuntRatedCurrentA: 1000,
+            shuntRatedMillivolts: 60,
+            servedPanelIds: [lima.panel.id],
+          },
+        }, 201);
+      feederPorts.push(result.port);
+    }
+    const source = 'CI-SNMP-LIMA';
+    const oids = [
+      '1.3.6.1.4.1.8072.9999.2026.48.1.1.0',
+      '1.3.6.1.4.1.8072.9999.2026.48.1.2.0',
+    ];
+    const mappings = await request('GET',
+      '/api/telemetry/snmp/commission?deviceId=' + lima.device.id);
+    assert.equal(mappings.body.ports.length, 2);
+    assert.ok(mappings.body.canCommission);
+
+    async function bindFeed(i) {
+      await request('POST', '/api/telemetry/snmp/commission', {
+        deviceId: lima.device.id,
+        feedAccessPortId: feederPorts[i].id,
+        sourceIdentity: source,
+        oid: oids[i],
+        metric: 'CURRENT',
+        confirmPhysicalMapping: true,
+      }, 201);
+    }
+    await bindFeed(0);
+    const sampleTime = () => new Date().toISOString();
+    async function sendFeed(rows) {
+      return request('POST', '/api/telemetry/snmp/ingest', {
+        schemaVersion: 1, sourceIdentity: source, observedAt: sampleTime(),
+        measurements: rows.map(([oid, value]) => ({ oid, metric: 'CURRENT', value, unit: 'A' })),
+      }, 202, { authorization: 'Bearer ' + process.env.SNMP_INGEST_TOKEN });
+    }
+    await sendFeed([[oids[0], 220]]);
+    let snmp = await request('GET', '/api/telemetry/snmp/feeds?deviceId=' + lima.device.id);
+    assert.equal(snmp.body.status, 'PARTIAL');
+    assert.equal(snmp.body.totalCurrentA, null, 'unmapped B must invalidate total');
+    await bindFeed(1);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    await sendFeed([[oids[0], 220], [oids[1], 210]]);
+    snmp = await request('GET', '/api/telemetry/snmp/feeds?deviceId=' + lima.device.id);
+    assert.equal(snmp.body.status, 'COMPLETE');
+    assert.equal(snmp.body.totalCurrentA, 430);
+    assert.equal(snmp.body.totalRatedCurrentA, 1600);
+    assert.equal(snmp.body.freshFeedCount, 2);
+    const snmpHistory = await request('GET',
+      '/api/telemetry/snmp/feeds/history?feedAccessPortId=' + feederPorts[0].id + '&window=24h');
+    assert.ok(snmpHistory.body.samples.some((sample) => sample.sourceIdentity === source),
+      'SNMP input-feed samples not durably stored in TimescaleDB');
+    const anotherSite = await request('GET',
+      '/api/telemetry/snmp/feeds?deviceId=' + quito.device.id);
+    assert.notEqual(anotherSite.body.totalCurrentA, 430, 'SNMP input current leaked to another Site');
+    record('SNMP commissioning: two independent BDFB inputs, partial and COMPLETE 430 A');
+    record('SNMP dedicated historical feed samples persisted to TimescaleDB');
+
   }
 
   const { body: networks } = await request('GET', '/api/topology');

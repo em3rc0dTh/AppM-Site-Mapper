@@ -40,6 +40,9 @@ export function parseSnmpFeedPacket(
     !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,3})?Z$/.test(observedAt) ||
     !Number.isFinite(Date.parse(observedAt)) ||
     Date.parse(observedAt) > nowMs + 60_000 ||
+    // A poll older than five minutes is not admissible as a new observation.
+    // Never transform an ancient replay into a new Timescale or LIVE value.
+    nowMs - Date.parse(observedAt) > 300_000 ||
     !Array.isArray(measurements) ||
     measurements.length < 1 ||
     measurements.length > 64

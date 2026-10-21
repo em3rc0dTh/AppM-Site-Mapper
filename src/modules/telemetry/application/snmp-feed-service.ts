@@ -49,6 +49,12 @@ export async function resolveSnmpFeedPort(
 }
 
 /**
+ * Serialize accepts from the same SNMP controller within this process.
+ * Cross-replica atomicity still requires a shared-store uniqueness guarantee.
+ */
+const sourceIngestLocks = new Map<string, Promise<void>>();
+
+/**
  * Site Mapper is the SNMP observation consumer. The field collector (real or emulated)
  * owns SNMP network access. Only commissioned OID + metric + agent tuples are accepted.
  */
@@ -63,6 +69,25 @@ export class SnmpFeedService {
   async ingest(
     packet: SnmpFeedPacket,
     receivedAt = new Date().toISOString(),
+  ): Promise<Result<readonly TelemetrySample[], SnmpFeedIngestError>> {
+    const key = packet.sourceIdentity;
+    const prior = sourceIngestLocks.get(key) ?? Promise.resolve();
+    let release!: () => void;
+    const current = new Promise<void>((resolve) => { release = resolve; });
+    const tail = prior.then(() => current);
+    sourceIngestLocks.set(key, tail);
+    await prior;
+    try {
+      return await this.ingestLocked(packet, receivedAt);
+    } finally {
+      release();
+      if (sourceIngestLocks.get(key) === tail) sourceIngestLocks.delete(key);
+    }
+  }
+
+  private async ingestLocked(
+    packet: SnmpFeedPacket,
+    receivedAt: string,
   ): Promise<Result<readonly TelemetrySample[], SnmpFeedIngestError>> {
     const existing = (await this.bindings.listForSource('SNMP', packet.sourceIdentity)).filter(
       (item) => item.lifecycle === 'ACTIVE' && item.targetType === 'ACCESS_PORT',
@@ -125,19 +150,35 @@ export class SnmpFeedService {
       };
       accepted.push(sample);
     }
-    // Pre-validate timestamps on all ports before touching the durable store.
+    // The shared Timescale store is authoritative after a process restart. The
+    // process-local hub is only a cache and must never be the sole replay check.
+    let persisted: readonly TelemetrySample[] = [];
+    if (this.history?.queryLatestEntities && accepted.length) {
+      try {
+        persisted = await this.history.queryLatestEntities(
+          accepted.map((sample) => sample.targetId),
+          'ACCESS_PORT',
+        );
+      } catch {
+        return failure('HISTORY_STORE_UNAVAILABLE');
+      }
+    }
     for (const sample of accepted) {
-      const previous = this.hub.latest(sample.targetId);
-      for (const [metric, reading] of Object.entries(sample.reported)) {
-        const old = previous?.reported[metric];
-        if (
-          old &&
-          typeof old === 'object' &&
-          'observedAt' in old &&
-          typeof old.observedAt === 'string' &&
-          Date.parse(old.observedAt) > Date.parse(packet.observedAt)
-        )
-          return failure('OUT_OF_ORDER_SNMP_SAMPLE');
+      const priorSamples = [this.hub.latest(sample.targetId),
+        ...persisted.filter((prior) => prior.targetId === sample.targetId)];
+      for (const prior of priorSamples) {
+        if (prior?.protocol !== 'SNMP' || prior.sourceIdentity !== packet.sourceIdentity) continue;
+        for (const [metric, reading] of Object.entries(sample.reported)) {
+          if (!reading || typeof reading !== 'object' || !('oid' in reading)) continue;
+          const old = prior.reported[metric];
+          if (
+            old && typeof old === 'object' && 'oid' in old &&
+            old.oid === reading.oid && 'observedAt' in old &&
+            typeof old.observedAt === 'string' &&
+            // Equality is a replay too: changing the value cannot replace it.
+            Date.parse(old.observedAt) >= Date.parse(packet.observedAt)
+          ) return failure('OUT_OF_ORDER_SNMP_SAMPLE');
+        }
       }
     }
     try {

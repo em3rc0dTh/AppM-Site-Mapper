@@ -1,23 +1,20 @@
 import net from 'node:net';
 import http from 'node:http';
+import {
+  METRICS,
+  REGISTERS_PER_UNIT,
+  POINT_LAYOUTS,
+  rawPointIndex,
+  circuitStartAddress,
+} from './register-map.mjs';
 
-export const CIRCUITS = 96;
-export const METRICS = ['voltageV', 'currentA', 'powerW', 'energyKwh'];
-export const REGISTERS_PER_UNIT = CIRCUITS * METRICS.length * 2;
-
-export const POINT_LAYOUTS = ['blocks-2x48', 'panels-4x24'];
-
-export function rawPointIndex(rawPointId, pointLayout = 'blocks-2x48') {
-  if (pointLayout === 'panels-4x24') {
-    const match = /^0_([1-4])_([1-9]|1[0-9]|2[0-4])$/.exec(rawPointId);
-    return match ? (Number(match[1]) - 1) * 24 + Number(match[2]) - 1 : null;
-  }
-  if (pointLayout === 'blocks-2x48') {
-    const match = /^0_([12])_([1-9]|[1-3][0-9]|4[0-8])$/.exec(rawPointId);
-    return match ? (Number(match[1]) - 1) * 48 + Number(match[2]) - 1 : null;
-  }
-  throw new Error('MODBUS_POINT_LAYOUT must be blocks-2x48 or panels-4x24');
-}
+export {
+  CIRCUITS,
+  METRICS,
+  REGISTERS_PER_UNIT,
+  POINT_LAYOUTS,
+  rawPointIndex,
+} from './register-map.mjs';
 
 export function floatRegisters(value) {
   const buffer = Buffer.alloc(4);
@@ -26,10 +23,13 @@ export function floatRegisters(value) {
 }
 
 export class ModbusLatestState {
-  constructor(sourceMap, staleMs = 30000, pointLayout = 'blocks-2x48') {
+  constructor(sourceMap, staleMs = 30000, pointLayout = 'blocks-2x48', missingPolicy = 'zero') {
     if (!Number.isInteger(staleMs) || staleMs < 1000) throw new Error('Invalid stale threshold');
     if (!POINT_LAYOUTS.includes(pointLayout)) throw new Error('Invalid MODBUS_POINT_LAYOUT');
+    if (!['zero', 'exception'].includes(missingPolicy))
+      throw new Error('Invalid MODBUS_MISSING_POLICY');
     this.pointLayout = pointLayout;
+    this.missingPolicy = missingPolicy;
     const identities = Object.entries(sourceMap);
     if (identities.length < 1 || identities.length > 247)
       throw new Error('Configure Modbus source identities');
@@ -58,7 +58,7 @@ export class ModbusLatestState {
     for (let i = 0; i < METRICS.length; i++) {
       const field = sample.metrics[METRICS[i]];
       if (!field || !Number.isFinite(field.value)) continue;
-      const offset = circuit * 8 + i * 2;
+      const offset = circuitStartAddress(circuit + 1) + i * 2;
       const existing = slots.get(offset);
       if (existing && existing.receivedAt > timestamp) continue;
       slots.set(offset, { value: field.value, receivedAt: timestamp });
@@ -79,6 +79,14 @@ export class ModbusLatestState {
     )
       return null;
     const slots = this.values.get(unit);
+    // FC03 is atomic: if one requested register is unavailable, reject the whole block
+    // in exception mode. The default 'zero' policy retains existing lab behavior.
+    if (this.missingPolicy === 'exception') {
+      for (let addr = offset; addr < offset + count; addr++) {
+        const item = slots.get(addr - (addr % 2));
+        if (!item || now - item.receivedAt > this.staleMs) return undefined;
+      }
+    }
     return Array.from({ length: count }, (_, index) => {
       const addr = offset + index;
       const item = slots.get(addr - (addr % 2));
@@ -109,7 +117,8 @@ export function handleFrame(frame, state, now = Date.now()) {
   const offset = frame.readUInt16BE(8),
     count = frame.readUInt16BE(10);
   const registers = state.read(unit, offset, count, now);
-  if (!registers) return response(transaction, unit, fn | 0x80, Buffer.from([2]));
+  if (registers === null) return response(transaction, unit, fn | 0x80, Buffer.from([2]));
+  if (registers === undefined) return response(transaction, unit, fn | 0x80, Buffer.from([4]));
   const body = Buffer.alloc(1 + registers.length * 2);
   body[0] = registers.length * 2;
   registers.forEach((value, index) => body.writeUInt16BE(value, 1 + index * 2));
@@ -120,6 +129,7 @@ export function startBridge({
   sourceMap,
   staleMs = 30000,
   pointLayout = 'blocks-2x48',
+  missingPolicy = 'zero',
   modbusHost = '127.0.0.1',
   modbusPort = 1502,
   ingestHost = '127.0.0.1',
@@ -127,7 +137,7 @@ export function startBridge({
   token,
 }) {
   if (!token || token.length < 24) throw new Error('MODBUS_BRIDGE_TOKEN must be set (24+ chars)');
-  const state = new ModbusLatestState(sourceMap, staleMs, pointLayout);
+  const state = new ModbusLatestState(sourceMap, staleMs, pointLayout, missingPolicy);
   const modbus = net.createServer((socket) => {
     let pending = Buffer.alloc(0);
     socket.on('data', (chunk) => {
@@ -208,6 +218,7 @@ if (process.argv[1] && import.meta.url === new URL('file://' + process.argv[1]).
     sourceMap: sources,
     staleMs: Number(process.env.MODBUS_STALE_MS || 30000),
     pointLayout: process.env.MODBUS_POINT_LAYOUT || 'blocks-2x48',
+    missingPolicy: process.env.MODBUS_MISSING_POLICY || 'zero',
     modbusHost: process.env.MODBUS_BIND_HOST || '127.0.0.1',
     modbusPort: Number(process.env.MODBUS_BIND_PORT || 1502),
     ingestHost: process.env.MODBUS_INGEST_HOST || '127.0.0.1',

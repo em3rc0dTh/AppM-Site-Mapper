@@ -20,7 +20,7 @@ The Modbus server does not query TimescaleDB or MongoDB when answering a Modbus 
 - Variable order at each circuit: Voltage (V), Current (A), Power (W), Energy (kWh).
 - Circuit number `n` from 1 to 96: zero-based start address `(n - 1) * 8`; Voltage at +0, Current at +2, Power at +4, Energy at +6. IEEE-754 FLOAT32, network big-endian word order, **high word first**. Register numbering in Metasys may need +40001 or +1 offset depending on its configured Modbus driver.
 - Only explicitly commissioned breaker metrics accepted by Site Mapper are exported. Missing values are not invented.
-- Missing, invalid or stale values (default age 30 seconds) currently read **0**. This may be indistinguishable from a genuine zero and **must not be used for safety controls** until a quality-register contract has been certified.
+- Missing or stale values (default age 30 seconds) use `MODBUS_MISSING_POLICY`. The backward-compatible default `zero` reads **0**, indistinguishable from a valid zero. The opt-in `exception` returns Modbus exception 04 for the entire FC03 request when any requested value is missing/stale. **Do not use this output for safety controls** until Metasys polling and missing-data behavior have been field-certified. No fifth metric or status register is exposed.
 - Function codes other than FC03 return illegal-function exception. Malformed/out-of-range FC03 requests return exception, not out-of-bounds data.
 
 ## Local deployment
@@ -69,3 +69,13 @@ node scripts/operations/certify-modbus-cb01.mjs \
 The script reads approved source→Unit ID from **the running Modbus container**. It then polls the loopback TCP/1503 FC03 response (8 holding registers, four network-order FLOAT32 values) and compares that tuple to **recent** rows for exactly the same source, point and breaker in the Site Mapper-owned `telemetry_samples` table. It never writes to MongoDB, TimescaleDB, MQTT, or Modbus. `MODBUS_CERT_PASS` certifies this local lab flow at the time of execution; `MODBUS_CERT_FAILED` or a timeout is **not** a pass. The sidecar's freshness policy may return zeros if no commissioned sample has arrived within 30 seconds.
 
 This local validation does **not** certify external Metasys connectivity, wiring, BMS register offsets, quality flags, or behavior after a process restart. Do not expose the port beyond the approved OT network.
+
+## Metasys deliverable and runtime synchronization
+
+The single source for the four-variable register allocation is [`infra/modbus-tcp/register-map.mjs`](../../infra/modbus-tcp/register-map.mjs), shared by the server, [generator](../../scripts/operations/generate-metasys-register-map.mjs), and tests. See [Metasys handoff guide](./metasys-register-map.md) and [CSV](./metasys-register-map.csv), whose first four headings reproduce the supplied table format. The committed CSV uses **emulator/lab identities**, not production serials.
+
+```sh
+node scripts/operations/generate-metasys-register-map.mjs --check
+```
+
+For production mappings, generate the CSV privately with the approved `MODBUS_SOURCE_UNITS_JSON` and `MODBUS_POINT_LAYOUT`. Metasys integration still requires explicit local configuration and read-only field acceptance. The optional `MODBUS_MISSING_POLICY=exception` is not enabled in the default Docker Compose profile because partially commissioned panel reads can otherwise fail as an entire FC03 block. Confirm the desired missing-data behavior with the Metasys integrator before enabling it.

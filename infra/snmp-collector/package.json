@@ -1,0 +1,16 @@
+{
+  "name": "@appm/snmp-collector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0 <23"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "net-snmp": "3.29.2"
+  }
+}

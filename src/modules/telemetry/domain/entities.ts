@@ -61,7 +61,7 @@ export interface TelemetrySample {
   readonly sourceIdentity: string;
   readonly reported: Readonly<Record<string, unknown>>;
   readonly receivedAt: string;
-  readonly protocol?: 'GENERIC' | 'BFDB';
+  readonly protocol?: 'GENERIC' | 'BFDB' | 'SNMP';
   readonly messageId?: string;
   readonly sourceObservedAt?: string;
   readonly sourceSentAt?: string;

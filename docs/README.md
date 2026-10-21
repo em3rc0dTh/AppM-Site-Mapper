@@ -57,3 +57,13 @@ Las referencias `CONTRACT.md` en el directorio raíz del repositorio y en `docs/
 ## Mantenimiento de la documentación
 
 Antes de cerrar una nueva iteración: actualizar README, el documento de área, `release/MVP-READINESS.md` si cambia evidencia y `release/known-limitations.md` si una limitación se resuelve. CI ejecuta Prettier, pruebas, build y auditoría; una página escrita no equivale a una certificación operativa.
+
+## Entregable Metasys — Mapa Modbus TCP
+
+El formato de tablas suministrado por Vertiv es una **referencia de presentación**, no un contrato de direcciones ni una solicitud de nuevos parámetros. La integración Site Mapper ofrece solo **voltaje, corriente, potencia y energía** en Modbus TCP FC03, IEEE-754 FLOAT32, sin comandos de escritura.
+
+- [Especificación de registros y checklist de entrega Metasys](telemetry/metasys-register-map.md).
+- [CSV del mapa de 3 BFDB del laboratorio (1,152 mediciones)](telemetry/metasys-register-map.csv).
+- [Contrato y límites operacionales del sidecar](telemetry/modbus-tcp-output.md).
+
+Las tablas del CSV son direccionamiento potencial con identidades del emulador; no suponen que los 288 circuitos estén comisionados. Los Unit IDs reales, offsets, orden de palabras, conectividad OT y semántica ante dato vencido requieren verificación de campo con Johnson Controls.

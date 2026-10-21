@@ -116,3 +116,12 @@ Sesiones y RBAC server-side; credenciales MQTT privadas; MongoDB con seriales ac
 [CONTRACT.md](CONTRACT.md) es el plan histórico de reconstrucción; las decisiones aceptadas en contratos de dominio, ADR y código implementado gobiernan el estado actual. Las PR divergentes no entran en este baseline sin aceptación independiente.
 
 _English summary:_ Site Mapper is a modular, security-conscious physical infrastructure application with canonical inventory, floorplans, rack/equipment modeling and explicitly commissioned MQTT telemetry. A single synthetic BFDB breaker passed local end-to-end LIVE/history/Modbus verification; production and full-panel certification remain open.
+
+## Integración industrial: Metasys (Modbus TCP)
+
+La salida industrial es **solo lectura** y expone exclusivamente **voltaje (V), corriente (A), potencia (W) y energía (kWh)** mediante FC03 (Holding Registers), IEEE-754 FLOAT32 y dos registros de 16 bits por variable. El contrato compartido por el servidor y el generador permite documentar **96 circuitos por BFDB**, con mapas independientes para cada Unit ID.
+
+- [Formato y tabla de registros para el integrador Metasys](docs/telemetry/metasys-register-map.md) · [CSV completo de laboratorio](docs/telemetry/metasys-register-map.csv).
+- [Comportamiento del servicio y puesta en marcha](docs/telemetry/modbus-tcp-output.md).
+
+El mapa CSV incluido usa identidades **sintéticas**, no topología ni seriales reales del cliente. Un registro asignado **no** certifica una medición comisionada. Por compatibilidad, la política predeterminada de dato ausente/vencido sigue devolviendo cero; existe `MODBUS_MISSING_POLICY=exception` para evaluación con el integrador. La conectividad y las reglas de lectura con el **Metasys físico** siguen pendientes de aceptación en la red OT autorizada.

@@ -21,9 +21,11 @@ function integerEnv(name, defaultValue, low, high) {
 const config = {
   host: required('SNMP_CONTROLLER_HOST'),
   sourceIdentity: required('SNMP_CONTROLLER_ID'),
-  username: required('SNMP_V3_USERNAME'),
-  authKey: required('SNMP_V3_AUTH_KEY'),
-  privKey: required('SNMP_V3_PRIV_KEY'),
+  version: process.env.SNMP_VERSION || '3',
+  community: process.env.SNMP_COMMUNITY || '',
+  username: process.env.SNMP_V3_USERNAME || '',
+  authKey: process.env.SNMP_V3_AUTH_KEY || '',
+  privKey: process.env.SNMP_V3_PRIV_KEY || '',
   ingestToken: required('SNMP_INGEST_TOKEN'),
   ingestUrl: new URL(required('SNMP_INGEST_URL')),
   port: integerEnv('SNMP_CONTROLLER_PORT', 161, 1, 65535),
@@ -32,8 +34,15 @@ const config = {
   points: pointsFromEnvironment(required('SNMP_FEED_POINTS_JSON')),
 };
 
-if (config.authKey.length < 8 || config.privKey.length < 8 || config.ingestToken.length < 32)
-  throw new Error('SNMPv3 passphrases must be >=8 chars and ingest token >=32 chars');
+if (!['2c', '3'].includes(config.version)) throw new Error('SNMP_VERSION must be 2c or 3');
+if (config.ingestToken.length < 32) throw new Error('SNMP ingest token must be >=32 chars');
+if (config.version === '3' && (!config.username || config.authKey.length < 8 || config.privKey.length < 8))
+  throw new Error('SNMPv3 authPriv credentials are incomplete');
+if (config.version === '2c' && (!config.community || /[\\r\\n]/.test(config.community)))
+  throw new Error('SNMPv2c read-only community must be configured');
+if (config.version === '2c' && process.env.APP_ENV === 'production' &&
+    process.env.SNMP_V2C_ACKNOWLEDGE_PLAINTEXT !== 'true')
+  throw new Error('Production SNMPv2c requires explicit plaintext risk acknowledgement');
 if (!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,119}$/.test(config.sourceIdentity))
   throw new Error('SNMP_CONTROLLER_ID must be a stable single-segment source identity');
 if (
@@ -52,13 +61,21 @@ const user = {
   privProtocol: snmp.PrivProtocols.aes,
   privKey: config.privKey,
 };
-const session = snmp.createV3Session(config.host, user, {
+const session = config.version === '3'
+  ? snmp.createV3Session(config.host, user, {
   version: snmp.Version3,
   port: config.port,
   retries: 1,
   timeout: config.timeoutMs,
   transport: 'udp4',
-});
+  })
+  : snmp.createSession(config.host, config.community, {
+    version: snmp.Version2c,
+    port: config.port,
+    retries: 1,
+    timeout: config.timeoutMs,
+    transport: 'udp4',
+  });
 
 function getOids(oids) {
   return new Promise((resolve, reject) => {
@@ -143,6 +160,7 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
 console.info(
   JSON.stringify({
     event: 'snmp.collector.started',
+    snmpVersion: config.version,
     sourceIdentity: config.sourceIdentity,
     pollIntervalMs: config.pollMs,
     pointCount: config.points.length,

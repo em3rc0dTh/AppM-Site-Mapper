@@ -17,6 +17,20 @@ on:
       - 'src/modules/telemetry/**'
       - 'infra/modbus-tcp/**'
       - 'scripts/ci/modbus-tcp-operational.mjs'
+  pull_request:
+    paths:
+      - '.github/workflows/operational-http-e2e.yml'
+      - 'docker-compose.telemetry.yml'
+      - 'infra/telemetry-store/**'
+      - 'infra/modbus-tcp/**'
+      - 'src/app/api/**'
+      - 'src/modules/topology/**'
+      - 'src/modules/power/**'
+      - 'src/modules/telemetry/**'
+      - 'scripts/ci/http-operational-journey.mjs'
+      - 'scripts/ci/http-operational-restart.mjs'
+      - 'scripts/ci/browser-operational-journey.mjs'
+      - 'scripts/ci/modbus-tcp-operational.mjs'
   workflow_dispatch:
 
 permissions:
@@ -90,7 +104,9 @@ jobs:
 
       - name: Start TimescaleDB and telemetry-store
         run: |
-          docker compose -f docker-compose.telemetry.yml up -d --build
+          # MongoDB already runs as the dedicated CI replica-set container on 127.0.0.1:27017.
+          # Limit Compose to the Timescale history store and Modbus sidecar to avoid a second Mongo bind.
+          docker compose -f docker-compose.telemetry.yml up -d --build timescaledb telemetry-store modbus-tcp
           for i in {1..90}; do
             if curl -fsS http://127.0.0.1:18081/health; then exit 0; fi
             sleep 2

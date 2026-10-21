@@ -15,6 +15,7 @@ export function SnmpFeedLoadPanel({
     null,
   );
   const [error, setError] = useState(false);
+  const [refreshVersion, setRefreshVersion] = useState(0);
   useEffect(() => {
     let active = true;
     const refresh = async () => {
@@ -39,7 +40,7 @@ export function SnmpFeedLoadPanel({
       active = false;
       clearInterval(interval);
     };
-  }, [deviceId]);
+  }, [deviceId, refreshVersion]);
 
   const percent =
     load?.totalRatedCurrentA && load.totalCurrentA !== null && load.totalCurrentA !== undefined
@@ -162,7 +163,11 @@ export function SnmpFeedLoadPanel({
           Average.
         </small>
       </section>
-      <SnmpFeedCommissioning deviceId={deviceId} chassisId={chassisId} />
+      <SnmpFeedCommissioning
+        deviceId={deviceId}
+        chassisId={chassisId}
+        onInventoryChanged={() => setRefreshVersion((version) => version + 1)}
+      />
     </>
   );
 }

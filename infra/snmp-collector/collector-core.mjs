@@ -40,7 +40,7 @@ export function normalizeVarbinds(points, varbinds, observedAt, sourceIdentity) 
     if (typeof raw === 'number' || typeof raw === 'bigint') {
       number = Number(raw);
     } else if (typeof raw === 'string' &&
-      /^[+-]?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:[eE][+-]?\\d+)?$/.test(raw.trim())) {
+      /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(raw.trim())) {
       number = Number(raw.trim());
     } else {
       throw new Error('Unsupported SNMP scalar value type');

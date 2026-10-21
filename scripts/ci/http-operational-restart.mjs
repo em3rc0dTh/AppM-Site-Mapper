@@ -96,10 +96,13 @@ assert.equal(snmpPorts.length, 2, 'SNMP input-feed inventory lost after restart'
 const recoveredFeeds = await get('/api/telemetry/snmp/feeds?deviceId=' + bdfb.id);
 assert.equal(recoveredFeeds.feedCount, 2);
 assert.equal(recoveredFeeds.feeds.filter((feed) => feed.currentOid).length, 2);
-const snmpAfterRestartHistory = await get('/api/telemetry/snmp/feeds/history?feedAccessPortId=' +
-  snmpPorts[0].id + '&window=24h');
-assert.ok(snmpAfterRestartHistory.samples.some((sample) => sample.sourceIdentity === 'CI-SNMP-LIMA'),
-  'SNMP TimescaleDB history missing after process restart');
+const snmpAfterRestartHistory = await get(
+  '/api/telemetry/snmp/feeds/history?feedAccessPortId=' + snmpPorts[0].id + '&window=24h',
+);
+assert.ok(
+  snmpAfterRestartHistory.samples.some((sample) => sample.sourceIdentity === 'CI-SNMP-LIMA'),
+  'SNMP TimescaleDB history missing after process restart',
+);
 console.log('[PASS] SNMP independent-feeder mappings and TimescaleDB history survive restart');
 console.log(
   '[PASS] Restart: both Sites, 4 power paths including cross-Device AP, commissioned breaker and TimescaleDB history restored',

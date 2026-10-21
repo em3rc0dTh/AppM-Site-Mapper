@@ -305,12 +305,12 @@ other cabinet configurations; it must not silently turn into Config 4.
 Inventory via existing Equipment AccessPort editor, with one real incoming
 port per position and its independently measured shunt:
 
-| Input | Side | Unique panel | Rated input | Shunt | Default warning |
-| --- | --- | --- | --- | --- | --- |
-| A1 | A | PANEL A1 | 800 A | 1000 A / 60 mV | 640 A |
-| A2 | A | PANEL A2 | 800 A | 1000 A / 60 mV | 640 A |
-| B1 | B | PANEL B1 | 800 A | 1000 A / 60 mV | 640 A |
-| B2 | B | PANEL B2 | 800 A | 1000 A / 60 mV | 640 A |
+| Input | Side | Unique panel | Rated input | Shunt          | Default warning |
+| ----- | ---- | ------------ | ----------- | -------------- | --------------- |
+| A1    | A    | PANEL A1     | 800 A       | 1000 A / 60 mV | 640 A           |
+| A2    | A    | PANEL A2     | 800 A       | 1000 A / 60 mV | 640 A           |
+| B1    | B    | PANEL B1     | 800 A       | 1000 A / 60 mV | 640 A           |
+| B2    | B    | PANEL B2     | 800 A       | 1000 A / 60 mV | 640 A           |
 
 These labels are commissioning identities, not automatic Equipment creation.
 `feedPosition` is unique across the entire BDFB Device (even when ports

@@ -69,7 +69,8 @@ function valid(input: AccessPortInput): boolean {
     (input.feedPosition === undefined ||
       (input.snmpFeedInput === true && input.feed === input.feedPosition[0])) &&
     (input.overloadThresholdA === undefined ||
-      (Number.isFinite(input.overloadThresholdA) && input.overloadThresholdA > 0 &&
+      (Number.isFinite(input.overloadThresholdA) &&
+        input.overloadThresholdA > 0 &&
         input.overloadThresholdA <= 100_000)) &&
     (input.snmpFeedInput === undefined || typeof input.snmpFeedInput === 'boolean') &&
     (input.independentInputConfirmed === undefined ||
@@ -142,10 +143,12 @@ export class AccessPortService {
     if (input.snmpFeedInput) {
       const device = await this.topology.getById(node.deviceId);
       if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB') return failure('INVALID_PORT');
-      const peers = (await this.topology.listEquipmentForDevice(node.deviceId))
-        .filter((item) => item.lifecycle === 'ACTIVE');
-      const panelIds = new Set(peers.filter((item) => item.equipmentType === 'PANEL')
-        .map((item) => item.id));
+      const peers = (await this.topology.listEquipmentForDevice(node.deviceId)).filter(
+        (item) => item.lifecycle === 'ACTIVE',
+      );
+      const panelIds = new Set(
+        peers.filter((item) => item.equipmentType === 'PANEL').map((item) => item.id),
+      );
       if (input.servedPanelIds?.some((id) => !panelIds.has(id)))
         return failure('INVALID_FEED_PANELS');
       if (bdfbHardwareProfile(device)) {
@@ -153,14 +156,25 @@ export class AccessPortService {
           return failure('INVALID_PORT');
         if (input.servedPanelIds && input.servedPanelIds.length > 1)
           return failure('INVALID_FEED_PANELS');
-        const otherPorts = peers.flatMap((item) => item.accessPorts)
-          .filter((port) => port.lifecycle === 'ACTIVE' && port.id !== existingId &&
-            port.attributes?.snmpFeedInput === true);
+        const otherPorts = peers
+          .flatMap((item) => item.accessPorts)
+          .filter(
+            (port) =>
+              port.lifecycle === 'ACTIVE' &&
+              port.id !== existingId &&
+              port.attributes?.snmpFeedInput === true,
+          );
         if (otherPorts.some((port) => port.attributes?.feedPosition === input.feedPosition))
           return failure('DUPLICATE_FEED_POSITION');
-        if (input.servedPanelIds?.some((id) => otherPorts.some((port) =>
-          Array.isArray(port.attributes?.servedPanelIds) &&
-          port.attributes.servedPanelIds.includes(id))))
+        if (
+          input.servedPanelIds?.some((id) =>
+            otherPorts.some(
+              (port) =>
+                Array.isArray(port.attributes?.servedPanelIds) &&
+                port.attributes.servedPanelIds.includes(id),
+            ),
+          )
+        )
           return failure('INVALID_FEED_PANELS');
       }
     }

@@ -16,11 +16,10 @@ export function isConfig4Slot(value: unknown): value is Config4Slot {
   return CONFIG_4_SLOTS.some((slot) => slot === value);
 }
 
-export function bdfbHardwareProfile(
-  device: DeviceNode,
-): typeof ELTEK_BDCBB_CONFIG_4 | null {
+export function bdfbHardwareProfile(device: DeviceNode): typeof ELTEK_BDCBB_CONFIG_4 | null {
   return device.attributes?.bdfbHardwareProfile === ELTEK_BDCBB_CONFIG_4
-    ? ELTEK_BDCBB_CONFIG_4 : null;
+    ? ELTEK_BDCBB_CONFIG_4
+    : null;
 }
 
 /** A/B is only a physical side. A1/A2/B1/B2 identify distinct inputs. */
@@ -39,18 +38,20 @@ export interface Config4Assessment {
 }
 
 function isIncoming(port: AccessPort): boolean {
-  return port.lifecycle === 'ACTIVE' && port.portType === 'POWER' &&
-    port.direction === 'INPUT' && port.exposure === 'EXTERNAL' &&
-    port.attributes?.snmpFeedInput === true;
+  return (
+    port.lifecycle === 'ACTIVE' &&
+    port.portType === 'POWER' &&
+    port.direction === 'INPUT' &&
+    port.exposure === 'EXTERNAL' &&
+    port.attributes?.snmpFeedInput === true
+  );
 }
 
 /**
  * This is a physical coverage validation, not telemetry and not an estimate
  * from the number of populated breakers. No parallel Equipment tree is created.
  */
-export function assessConfig4Inventory(
-  equipment: readonly EquipmentNode[],
-): Config4Assessment {
+export function assessConfig4Inventory(equipment: readonly EquipmentNode[]): Config4Assessment {
   const active = equipment.filter((item) => item.lifecycle === 'ACTIVE');
   const panels = new Map(active.filter((e) => e.equipmentType === 'PANEL').map((p) => [p.id, p]));
   const ports = active.flatMap((owner) => owner.accessPorts.filter(isIncoming));
@@ -74,12 +75,18 @@ export function assessConfig4Inventory(
       issues.push(`SHUNT_NOT_VERIFIED_${slot}`);
     if (port.attributes?.ratedCurrentA !== CONFIG_4_RATED_CURRENT_A)
       issues.push(`RATING_NOT_CONFIRMED_${slot}`);
-    if (port.attributes?.shuntRatedCurrentA !== CONFIG_4_SHUNT_CURRENT_A ||
-        port.attributes?.shuntRatedMillivolts !== CONFIG_4_SHUNT_MV)
+    if (
+      port.attributes?.shuntRatedCurrentA !== CONFIG_4_SHUNT_CURRENT_A ||
+      port.attributes?.shuntRatedMillivolts !== CONFIG_4_SHUNT_MV
+    )
       issues.push(`SHUNT_SPEC_NOT_CONFIRMED_${slot}`);
     const references = port.attributes?.servedPanelIds;
-    if (!Array.isArray(references) || references.length !== 1 ||
-        typeof references[0] !== 'string' || !panels.has(references[0])) {
+    if (
+      !Array.isArray(references) ||
+      references.length !== 1 ||
+      typeof references[0] !== 'string' ||
+      !panels.has(references[0])
+    ) {
       issues.push(`PANEL_MAPPING_INCOMPLETE_${slot}`);
     } else {
       const panelId = references[0];

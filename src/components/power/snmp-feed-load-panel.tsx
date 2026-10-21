@@ -82,12 +82,16 @@ export function SnmpFeedLoadPanel({
           <div className="zip-bdfb-live-average-counts">
             <strong>HARDWARE PROFILE · {load.hardwareProfile}</strong>
             <span>PHYSICAL INVENTORY: {load.inventoryStatus}</span>
-            <small>Installed input ports: {load.feedCount} / {load.expectedFeedCount}</small>
+            <small>
+              Installed input ports: {load.feedCount} / {load.expectedFeedCount}
+            </small>
             {!!load.missingFeedPositions.length && (
               <small>Missing inputs: {load.missingFeedPositions.join(', ')}</small>
             )}
             {!!load.configurationIssues.length && (
-              <small>Verify wiring and panel assignments: {load.configurationIssues.join(' · ')}</small>
+              <small>
+                Verify wiring and panel assignments: {load.configurationIssues.join(' · ')}
+              </small>
             )}
           </div>
         )}
@@ -109,10 +113,14 @@ export function SnmpFeedLoadPanel({
               {feed.label} {feed.side ? `· side ${feed.side}` : ''}
             </strong>
             <span>{feed.status}</span>
-            <small>Overload (calculated): {feed.overloadWarning === null
-              ? 'UNKNOWN' : feed.overloadWarning ? 'WARNING' : 'NORMAL'}
-              {feed.overloadThresholdA !== null
-                ? ` · threshold ${feed.overloadThresholdA} A` : ''}
+            <small>
+              Overload (calculated):{' '}
+              {feed.overloadWarning === null
+                ? 'UNKNOWN'
+                : feed.overloadWarning
+                  ? 'WARNING'
+                  : 'NORMAL'}
+              {feed.overloadThresholdA !== null ? ` · threshold ${feed.overloadThresholdA} A` : ''}
             </small>
             <span>
               {numeric(feed.currentA, 'A')} · {numeric(feed.voltageV, 'V')}

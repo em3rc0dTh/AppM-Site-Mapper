@@ -1,5 +1,7 @@
 import {
-  assessConfig4Inventory, bdfbHardwareProfile, CONFIG_4_DEFAULT_OVERLOAD_A,
+  assessConfig4Inventory,
+  bdfbHardwareProfile,
+  CONFIG_4_DEFAULT_OVERLOAD_A,
   config4FeedPosition,
 } from '@/modules/power/domain/bdfb-hardware-profile';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
@@ -320,11 +322,14 @@ export async function summarizeSnmpBdfbLoad(
               ? 'LIVE'
               : 'STALE';
     const slot = config4FeedPosition(port);
-    const threshold = typeof port.attributes?.overloadThresholdA === 'number' &&
+    const threshold =
+      typeof port.attributes?.overloadThresholdA === 'number' &&
       Number.isFinite(port.attributes.overloadThresholdA) &&
       port.attributes.overloadThresholdA > 0
-      ? port.attributes.overloadThresholdA
-      : selectedProfile ? CONFIG_4_DEFAULT_OVERLOAD_A : null;
+        ? port.attributes.overloadThresholdA
+        : selectedProfile
+          ? CONFIG_4_DEFAULT_OVERLOAD_A
+          : null;
     const nominal = port.attributes?.ratedCurrentA;
     const rating = typeof nominal === 'number' && nominal > 0 ? nominal : null;
     const displayedCurrent = status === 'LIVE' ? currentValue!.value : null;
@@ -339,8 +344,8 @@ export async function summarizeSnmpBdfbLoad(
       ratedCurrentA: rating,
       feedPosition: slot,
       overloadThresholdA: threshold,
-      overloadWarning: status === 'LIVE' && threshold !== null
-        ? currentValue!.value >= threshold : null,
+      overloadWarning:
+        status === 'LIVE' && threshold !== null ? currentValue!.value >= threshold : null,
       status,
       currentA: displayedCurrent,
       voltageV: displayedVoltage,
@@ -377,7 +382,9 @@ export async function summarizeSnmpBdfbLoad(
     deviceId,
     hardwareProfile: selectedProfile,
     inventoryStatus: assessed
-      ? assessed.inventoryComplete ? 'COMPLETE' : 'INCOMPLETE'
+      ? assessed.inventoryComplete
+        ? 'COMPLETE'
+        : 'INCOMPLETE'
       : 'NOT_APPLICABLE',
     expectedFeedCount: assessed?.expectedFeedCount ?? feedPorts.length,
     missingFeedPositions: assessed?.missingFeedPositions ?? [],

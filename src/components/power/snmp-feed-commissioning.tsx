@@ -64,15 +64,21 @@ export function SnmpFeedCommissioning({
     }
   }
   async function activateConfig4() {
-    if (!window.confirm(
-      'Confirm from the cabinet nameplate and physical wiring that this BDFB is Eltek/Delta Configuration 4 (four independent incoming feeds A1/A2/B1/B2)? This does NOT certify the OIDs.',
-    )) return;
+    if (
+      !window.confirm(
+        'Confirm from the cabinet nameplate and physical wiring that this BDFB is Eltek/Delta Configuration 4 (four independent incoming feeds A1/A2/B1/B2)? This does NOT certify the OIDs.',
+      )
+    )
+      return;
     setBusy(true);
     try {
       const result = await fetch('/api/telemetry/snmp/hardware-profile', {
-        method: 'POST', headers: { 'content-type': 'application/json' },
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          deviceId, hardwareProfile: 'ELTEK_BDCBB_CONFIG_4', confirmInstalledProfile: true,
+          deviceId,
+          hardwareProfile: 'ELTEK_BDCBB_CONFIG_4',
+          confirmInstalledProfile: true,
         }),
       });
       const data = await result.json();
@@ -80,7 +86,9 @@ export function SnmpFeedCommissioning({
       await refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'PROFILE_ASSIGNMENT_FAILED');
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function commission(event: FormEvent) {
@@ -165,13 +173,20 @@ export function SnmpFeedCommissioning({
             Assign the actual SNMP agent and OID to an inventoried BDFB POWER INPUT feeder.
             Credentials stay in the Collector environment, never in this browser.
           </p>
-          {configuration?.hardwareProfile
-            ? <p>Hardware template: {configuration.hardwareProfile}. Expect four verified inputs A1, A2, B1, B2; no automatic inference from A/B.</p>
-            : configuration?.canCommission && (
-              <p><button type="button" disabled={busy} onClick={() => void activateConfig4()}>
-                SELECT ELTEK BDCBB CONFIGURATION 4 (ONLY IF PHYSICALLY CONFIRMED)
-              </button></p>
-            )}
+          {configuration?.hardwareProfile ? (
+            <p>
+              Hardware template: {configuration.hardwareProfile}. Expect four verified inputs A1,
+              A2, B1, B2; no automatic inference from A/B.
+            </p>
+          ) : (
+            configuration?.canCommission && (
+              <p>
+                <button type="button" disabled={busy} onClick={() => void activateConfig4()}>
+                  SELECT ELTEK BDCBB CONFIGURATION 4 (ONLY IF PHYSICALLY CONFIRMED)
+                </button>
+              </p>
+            )
+          )}
           <p>
             <Link href={`/device/${encodeURIComponent(chassisId)}`}>
               Configure physical input ports on the chassis →

@@ -54,9 +54,12 @@ function formFor(port?: AccessPort): PortForm {
     customType: port?.customType ?? '',
     feed: feed === 'A' || feed === 'B' ? feed : '',
     feedPosition: ['A1', 'A2', 'B1', 'B2'].includes(String(port?.attributes?.feedPosition))
-      ? (port?.attributes?.feedPosition as PortForm['feedPosition']) : '',
-    overloadThresholdA: typeof port?.attributes?.overloadThresholdA === 'number'
-      ? String(port.attributes.overloadThresholdA) : '',
+      ? (port?.attributes?.feedPosition as PortForm['feedPosition'])
+      : '',
+    overloadThresholdA:
+      typeof port?.attributes?.overloadThresholdA === 'number'
+        ? String(port.attributes.overloadThresholdA)
+        : '',
     snmpFeedInput: port?.attributes?.snmpFeedInput === true,
     independentInputConfirmed: port?.attributes?.independentInputConfirmed === true,
     ratedCurrentA:
@@ -144,9 +147,12 @@ export function AccessPortEditor({
               form.exposure === 'EXTERNAL'
                 ? {
                     snmpFeedInput: form.snmpFeedInput,
-                    ...(form.snmpFeedInput && form.feedPosition ? { feedPosition: form.feedPosition } : {}),
+                    ...(form.snmpFeedInput && form.feedPosition
+                      ? { feedPosition: form.feedPosition }
+                      : {}),
                     ...(form.snmpFeedInput && form.overloadThresholdA
-                      ? { overloadThresholdA: Number(form.overloadThresholdA) } : {}),
+                      ? { overloadThresholdA: Number(form.overloadThresholdA) }
+                      : {}),
                     independentInputConfirmed: form.snmpFeedInput && form.independentInputConfirmed,
                     ...(form.snmpFeedInput && form.ratedCurrentA
                       ? { ratedCurrentA: Number(form.ratedCurrentA) }
@@ -435,11 +441,17 @@ export function AccessPortEditor({
                       <>
                         <label>
                           Independent incoming feeder position (Configuration 4)
-                          <select value={form.feedPosition}
-                            onChange={(event) => patch({
-                              feedPosition: event.target.value as PortForm['feedPosition'],
-                              feed: event.target.value ? event.target.value[0] as PortForm['feed'] : form.feed,
-                            })}>
+                          <select
+                            value={form.feedPosition}
+                            onChange={(event) =>
+                              patch({
+                                feedPosition: event.target.value as PortForm['feedPosition'],
+                                feed: event.target.value
+                                  ? (event.target.value[0] as PortForm['feed'])
+                                  : form.feed,
+                              })
+                            }
+                          >
                             <option value="">Generic / unverified</option>
                             <option value="A1">A1 · side A</option>
                             <option value="A2">A2 · side A</option>
@@ -449,9 +461,14 @@ export function AccessPortEditor({
                         </label>
                         <label>
                           Overload warning threshold (A) · manufacturer default 640 A
-                          <input type="number" min="0.01" max="100000" step="any"
+                          <input
+                            type="number"
+                            min="0.01"
+                            max="100000"
+                            step="any"
                             value={form.overloadThresholdA}
-                            onChange={(event) => patch({ overloadThresholdA: event.target.value })}/>
+                            onChange={(event) => patch({ overloadThresholdA: event.target.value })}
+                          />
                         </label>
                         <label>
                           Nominal feed rating (A)

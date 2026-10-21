@@ -1,6 +1,7 @@
 'use client';
 
 import { useBdfbTelemetry } from '@/components/telemetry/use-bdfb-telemetry';
+import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
 
 import { useEffect, useState } from 'react';
 
@@ -219,6 +220,8 @@ export function BdfbTelemetryInspector({
           <small>{location ?? 'Infrastructure'}</small>
         </div>
       </div>
+
+      <SnmpFeedLoadPanel deviceId={node.id} />
 
       <section className="zip-bdfb-live-average" aria-label="BDFB telemetry">
         <header>

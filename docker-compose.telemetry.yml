@@ -75,6 +75,7 @@ services:
       MQTT_TOPIC_FILTER: '${MQTT_TOPIC_FILTER:-data/dev/#}'
       MQTT_TOPIC_PREFIX: '${MQTT_TOPIC_PREFIX:-data/dev/}'
       TELEMETRY_HISTORY_ENABLED: '${TELEMETRY_HISTORY_ENABLED:-true}'
+      SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:-}'
       TELEMETRY_STORE_URL: http://telemetry-store:8080
       TELEMETRY_STORE_AUTOSTART: 'false'
       MODBUS_BRIDGE_URL: http://modbus-tcp:18082

@@ -185,3 +185,74 @@ describe('SNMP per-feed contract', () => {
     expect(view?.totalCurrentA).toBeNull();
   });
 });
+
+describe('SNMP operator readiness and durability', () => {
+  it('does not certify totals without independent-shunt confirmation', async () => {
+    const f = fixture();
+    const device = await f.topology.getById('bdfb');
+    const existing = await f.topology.getById('chassis');
+    if (device?.kind !== 'DEVICE' || existing?.kind !== 'EQUIPMENT')
+      throw new Error('invalid test fixture');
+    const chassis: EquipmentNode = {
+      ...existing,
+      accessPorts: existing.accessPorts.map((port) =>
+        port.id === 'feed-B'
+          ? { ...port, attributes: { ...port.attributes, independentInputConfirmed: false } }
+          : port),
+    };
+    const topology = new MemoryTopologyRepository([device, chassis]);
+    const hub = new TelemetryHub(5);
+    const service = new SnmpFeedService(topology, f.bindings, hub);
+    await service.ingest(f.packet([{ oid: oidA, value: 220 }, { oid: oidB, value: 210 }]), t);
+    const view = await summarizeSnmpBdfbLoad('bdfb', topology, f.bindings, hub, Date.parse(t));
+    expect(view?.status).toBe('PARTIAL');
+    expect(view?.totalCurrentA).toBeNull();
+    expect(view?.feeds.find((feed) => feed.accessPortId === 'feed-B')?.status).toBe('UNVERIFIED');
+  });
+
+  it('rejects persistence failure before publishing a false LIVE sample', async () => {
+    const f = fixture();
+    const service = new SnmpFeedService(f.topology, f.bindings, f.hub, {
+      async write() {},
+      async writeDurable() { throw new Error('Timescale is down'); },
+    });
+    const result = await service.ingest(f.packet([{ oid: oidA, value: 220 }]), t);
+    expect(result).toMatchObject({ ok: false, error: 'HISTORY_STORE_UNAVAILABLE' });
+    expect(f.hub.snapshot()).toHaveLength(0);
+  });
+
+  it('blocks out-of-order measurements while preserving latest value', async () => {
+    const f = fixture();
+    await f.service.ingest(f.packet([{ oid: oidA, value: 220 }]), t);
+    const older = { ...f.packet([{ oid: oidA, value: 500 }]),
+      observedAt: new Date(Date.parse(t) - 5000).toISOString() };
+    const result = await f.service.ingest(older, t);
+    expect(result).toMatchObject({ ok: false, error: 'OUT_OF_ORDER_SNMP_SAMPLE' });
+    const view = await summarizeSnmpBdfbLoad('bdfb', f.topology, f.bindings, f.hub, Date.parse(t));
+    expect(view?.feeds.find((feed) => feed.accessPortId === 'feed-A')?.currentA).toBe(220);
+  });
+
+  it('computes power only when an aligned voltage OID is explicitly bound', async () => {
+    const f = fixture();
+    const voltageOid = '1.3.6.1.4.1.8072.9999.2026.48.2.1.0';
+    await f.bindings.insert({
+      id: 'v-feed-A', protocol: 'SNMP', sourceIdentity: 'ELTEK-01',
+      sourcePointId: voltageOid, metric: 'VOLTAGE', unit: 'V',
+      targetType: 'ACCESS_PORT', targetId: 'feed-A',
+      lifecycle: 'ACTIVE', createdAt: t, updatedAt: t,
+    });
+    await f.service.ingest({
+      schemaVersion: 1, sourceIdentity: 'ELTEK-01', observedAt: t,
+      measurements: [
+        { oid: oidA, metric: 'CURRENT', unit: 'A', value: 220 },
+        { oid: voltageOid, metric: 'VOLTAGE', unit: 'V', value: -53.5 },
+        { oid: oidB, metric: 'CURRENT', unit: 'A', value: 210 },
+      ],
+    }, t);
+    const view = await summarizeSnmpBdfbLoad('bdfb', f.topology, f.bindings, f.hub, Date.parse(t));
+    expect(view?.totalCurrentA).toBe(430);
+    expect(view?.totalRatedCurrentA).toBe(1600);
+    expect(view?.totalEstimatedPowerW).toBeNull(); // Voltage B not mapped.
+    expect(view?.feeds.find((feed) => feed.accessPortId === 'feed-A')?.estimatedPowerW).toBe(11770);
+  });
+});

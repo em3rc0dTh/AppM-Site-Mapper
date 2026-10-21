@@ -69,3 +69,48 @@ Do not publish the ingest listener or Modbus TCP publicly. Modbus FC03 provides 
 ## Lab start
 
 See [MQTT → TimescaleDB → Modbus local operation](./mqtt-modbus-lab.md) for start, verification, isolation, rollback and exact CB-01 evidence. The laboratory's `APP_ENV=development` and host loopback ports are not a production deployment template.
+
+### Production SNMP collector identity gate (2026-10-21 security addendum)
+
+When `APP_ENV=production`, Site Mapper **rejects the old shared
+`SNMP_INGEST_TOKEN`**. Operators must configure `SNMP_INGEST_SOURCES_JSON`,
+a private JSON map from **commissioned collector source identity** to a unique
+random token (minimum 32 characters each), for example
+`{"ELTEK-01":"<private-random-token-01>","ELTEK-02":"<private-random-token-02>"}`.
+The JSON body sourceIdentity is checked against the _authenticated_ token
+identity before resolving telemetry bindings. Distinct identities cannot reuse
+the same token; malformed maps return 503, mismatched sources return 403.
+Each independent SNMP collector instance gets its own `SNMP_INGEST_TOKEN`
+secret matching its assigned entry in the Site Mapper map; do **not** send
+the whole JSON secret map to the Collector or browser.
+
+Production ingest additionally requires `TELEMETRY_HISTORY_ENABLED=true`
+and a `TELEMETRY_STORE_TOKEN` at least 32 characters long; otherwise the
+ingest endpoint fails closed (503). A 202 must not imply a durable write when
+history has been explicitly disabled. Local development/test retains the
+legacy shared-token compatibility path. Configure `APP_ENV` deliberately;
+`NODE_ENV=production` by itself does not override an explicit APP_ENV.
+
+This is logical controller identity authorization, **not** native mTLS,
+distributed per-source rate limiting, or protection against a stolen
+collector token. Restrict transport to authenticated private networks and
+rotate secrets after suspected disclosure. The Docker Compose telemetry
+lab is not a production security baseline. Persistent multi-feed batch
+atomicity remains open in issue #78.
+
+### TimescaleDB Compose local credential hardening
+
+The telemetry laboratory Compose stack no longer uses
+`POSTGRES_HOST_AUTH_METHOD=trust`. Its TimescaleDB container requires
+`TIMESCALE_DB_PASSWORD`, a private **URL-safe** password shared only by the
+store and operational-console connection strings. It also requires
+`TELEMETRY_STORE_TOKEN` for the HTTP store. On `APP_ENV=production`, the
+store refuses startup unless that token is at least 32 characters.
+
+The Site Mapper service now reads `APP_ENV` from the operator's environment,
+rather than forcibly pretending to be in development. All production
+connections must be explicitly hardened, including MongoDB authentication,
+network segmentation, broker TLS and application ingress protection.
+`docker-compose.telemetry.yml` remains a **local laboratory** definition,
+not a production deployment blueprint. Never deploy with public database
+bindings, default passwords or an unauthenticated database.

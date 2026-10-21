@@ -45,7 +45,7 @@ services:
     environment:
       POSTGRES_DB: site_mapper_telemetry
       POSTGRES_USER: site_mapper
-      POSTGRES_HOST_AUTH_METHOD: trust
+      POSTGRES_PASSWORD: '${TIMESCALE_DB_PASSWORD:?Set a private TimescaleDB password (URL-safe)}'
     ports:
       - '127.0.0.1:55432:5432'
     volumes:
@@ -63,7 +63,7 @@ services:
       context: .
       dockerfile: infra/site-mapper/Dockerfile
     environment:
-      APP_ENV: development
+      APP_ENV: '${APP_ENV:-development}'
       APP_PERSISTENCE: mongodb
       MONGODB_URI: mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
       MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
@@ -76,6 +76,8 @@ services:
       MQTT_TOPIC_PREFIX: '${MQTT_TOPIC_PREFIX:-data/dev/}'
       TELEMETRY_HISTORY_ENABLED: '${TELEMETRY_HISTORY_ENABLED:-true}'
       SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:-}'
+      SNMP_INGEST_SOURCES_JSON: '${SNMP_INGEST_SOURCES_JSON:-}'
+      TELEMETRY_STORE_TOKEN: '${TELEMETRY_STORE_TOKEN:?Set a private telemetry store bearer}'
       TELEMETRY_STORE_URL: http://telemetry-store:8080
       TELEMETRY_STORE_AUTOSTART: 'false'
       MODBUS_BRIDGE_URL: http://modbus-tcp:18082
@@ -94,7 +96,9 @@ services:
     build:
       context: ./infra/telemetry-store
     environment:
-      TIMESCALE_DSN: postgresql://site_mapper@timescaledb:5432/site_mapper_telemetry
+      TIMESCALE_DSN: 'postgresql://site_mapper:${TIMESCALE_DB_PASSWORD:?Set a private TimescaleDB password (URL-safe)}@timescaledb:5432/site_mapper_telemetry'
+      STORE_ENV: '${APP_ENV:-development}'
+      TELEMETRY_STORE_TOKEN: '${TELEMETRY_STORE_TOKEN:?Set a private telemetry store bearer}'
       STORE_HOST: 0.0.0.0
       STORE_PORT: '8080'
     ports:
@@ -151,7 +155,7 @@ services:
     environment:
       MONGODB_URI: mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
       MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
-      TIMESCALE_DSN: postgresql://site_mapper@timescaledb:5432/site_mapper_telemetry
+      TIMESCALE_DSN: 'postgresql://site_mapper:${TIMESCALE_DB_PASSWORD:?Set a private TimescaleDB password (URL-safe)}@timescaledb:5432/site_mapper_telemetry'
       SITE_MAPPER_API_URL: http://site-mapper:3000
       MQTT_BROKER_URL: '${MQTT_BROKER_URL:-}'
       MQTT_USERNAME: '${MQTT_USERNAME:-}'

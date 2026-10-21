@@ -1,0 +1,32 @@
+name: SNMP Configuration 4 bounded chaos certification
+on:
+  push:
+    branches: [main, security/snmp-chaos-stress-20261021]
+  pull_request:
+    paths:
+      - 'tests/unit/snmp-chaos-stress.test.ts'
+      - 'infra/snmp-collector/**'
+      - 'src/modules/telemetry/**'
+      - '.github/workflows/snmp-chaos-stress.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chaos:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Stress three isolated BDFBs and inject torn Timescale commits
+        run: npx vitest run tests/unit/snmp-chaos-stress.test.ts
+      - name: Fuzz malformed SNMP collector inputs
+        run: node --test infra/snmp-collector/chaos.test.mjs
+      - name: Re-run security replay and boundary certification
+        run: npx vitest run tests/unit/snmp-adversarial-security.test.ts tests/unit/bdfb-config4.test.ts
+      - name: Production dependencies high-severity audit
+        run: npm audit --omit=dev --audit-level=high

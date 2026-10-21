@@ -18,7 +18,12 @@ export function pointsFromEnvironment(value) {
       throw new Error('Invalid SNMP OID');
     if (metric !== 'CURRENT' && metric !== 'VOLTAGE')
       throw new Error('SNMP point metric must be CURRENT or VOLTAGE');
-    if (typeof scale !== 'number' || !Number.isFinite(scale) || scale === 0)
+    if (
+      typeof scale !== 'number' ||
+      !Number.isFinite(scale) ||
+      scale === 0 ||
+      Math.abs(scale) > 1_000_000
+    )
       throw new Error('SNMP engineering scale must be a non-zero number');
     const key = `${oid}:${metric}`;
     if (unique.has(key)) throw new Error('Duplicate SNMP OID and metric');
@@ -34,7 +39,19 @@ export function normalizeVarbinds(points, varbinds, observedAt, sourceIdentity) 
     const varbind = varbinds[i];
     if (!varbind || varbind.oid !== point.oid) throw new Error('SNMP GET OID mismatch');
     const raw = Buffer.isBuffer(varbind.value) ? varbind.value.toString('utf8') : varbind.value;
-    const number = typeof raw === 'bigint' ? Number(raw) : Number(raw);
+    // Never coerce null, empty strings, booleans or objects into a fictitious 0 A.
+    // Vendor ASCII numeric scalars are supported, but only in strict decimal form.
+    let number;
+    if (typeof raw === 'number' || typeof raw === 'bigint') {
+      number = Number(raw);
+    } else if (
+      typeof raw === 'string' &&
+      /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(raw.trim())
+    ) {
+      number = Number(raw.trim());
+    } else {
+      throw new Error('Unsupported SNMP scalar value type');
+    }
     const value = number * point.scale;
     if (!Number.isFinite(value) || Math.abs(value) > 100_000_000)
       throw new Error('Unsupported SNMP value or engineering scale');
@@ -48,4 +65,28 @@ export function normalizeVarbinds(points, varbinds, observedAt, sourceIdentity) 
     };
   });
   return { schemaVersion: 1, sourceIdentity, observedAt, measurements };
+}
+
+/**
+ * An explicitly absent SNMP scalar is not 0 A and must not invalidate
+ * other independent shunts in the same GET response. Other errors remain fatal.
+ */
+export function selectPresentVarbinds(points, varbinds) {
+  if (points.length !== varbinds.length) throw new Error('Unexpected SNMP GET varbind count');
+  const presentPoints = [];
+  const presentVarbinds = [];
+  const missingOids = [];
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
+    const varbind = varbinds[i];
+    if (!varbind || varbind.oid !== point.oid) throw new Error('SNMP GET OID mismatch');
+    if (varbind.type === 128 || varbind.type === 129) {
+      missingOids.push(point.oid);
+      continue;
+    }
+    if (varbind.type === 130) throw new Error('Invalid endOfMibView response for SNMP GET');
+    presentPoints.push(point);
+    presentVarbinds.push(varbind);
+  }
+  return { presentPoints, presentVarbinds, missingOids };
 }

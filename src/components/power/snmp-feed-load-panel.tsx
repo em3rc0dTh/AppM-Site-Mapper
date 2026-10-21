@@ -106,6 +106,9 @@ export function SnmpFeedLoadPanel({
             TimescaleDB unavailable: restored/latest SNMP readings could not be queried.
           </p>
         )}
+        {load?.hardwareProfile === 'ELTEK_BDCBB_CONFIG_2' && (
+          <small>PHYSICAL CONFIGURATION 2 · linked panels A1+A2 on shunt A; B1+B2 on shunt B</small>
+        )}
         {load?.hardwareProfile === 'ELTEK_BDCBB_CONFIG_4' && (
           <small>PHYSICAL CONFIGURATION 4 · top row A2 / B2, bottom row A1 / B1</small>
         )}

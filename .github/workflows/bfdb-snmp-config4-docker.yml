@@ -1,0 +1,82 @@
+name: BFDB SNMP Config4 Docker wiring
+on:
+  pull_request:
+    paths:
+      - 'infra/lab/bfdb-snmp/**'
+      - 'scripts/lab/bfdb-snmp-config4.sh'
+      - 'docs/operations/bfdb-snmp-compose-lab.md'
+      - '.github/workflows/bfdb-snmp-config4-docker.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'infra/lab/bfdb-snmp/**'
+      - 'scripts/lab/bfdb-snmp-config4.sh'
+      - 'docs/operations/bfdb-snmp-compose-lab.md'
+      - '.github/workflows/bfdb-snmp-config4-docker.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  docker-config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      APP_ENV: development
+      TIMESCALE_DB_PASSWORD: ci-timescale-lab-only
+      TELEMETRY_STORE_TOKEN: ci-telemetry-store-lab-only-32chars
+      BOOTSTRAP_ADMIN_TOKEN: ci-bootstrap-lab-only
+      MODBUS_BRIDGE_TOKEN: ci-modbus-bridge-lab-only-32chars
+      MODBUS_SOURCE_UNITS_JSON: '{"EMU-BFDB-01":1,"EMU-BFDB-02":2,"EMU-BFDB-03":3}'
+      SNMP_INGEST_TOKEN: ci-collector-lab-only-32characters
+      SNMP_V3_USERNAME: lab_readonly
+      SNMP_V3_AUTH_KEY: lab-only-ci-auth-passphrase
+      SNMP_V3_PRIV_KEY: lab-only-ci-privacy-passphrase
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check laboratory bootstrap script syntax
+        run: bash -n scripts/lab/bfdb-snmp-config4.sh
+      - name: Check Site Mapper overlay and generate normalized Compose
+        run: |
+          docker compose -f docker-compose.telemetry.yml \
+            -f infra/lab/bfdb-snmp/config4-site-mapper.override.yml \
+            --profile snmp config --quiet
+          docker compose -f docker-compose.telemetry.yml \
+            -f infra/lab/bfdb-snmp/config4-site-mapper.override.yml \
+            --profile snmp config --format json > /tmp/site-mapper-config4.json
+      - name: Validate independent BFDB repository overlay structure
+        run: |
+          cat > /tmp/bfdb-agent-services.yml <<'EOF'
+          services:
+            mosquitto:
+              image: eclipse-mosquitto:2.0
+            snmp-agent-bfdb-01:
+              image: node:22-alpine
+            snmp-agent-bfdb-02:
+              image: node:22-alpine
+            snmp-agent-bfdb-03:
+              image: node:22-alpine
+          EOF
+          docker compose -f /tmp/bfdb-agent-services.yml \
+            -f infra/lab/bfdb-snmp/config4-bfdb.override.yml config --quiet
+      - name: Certify three collectors, eight independent Config4 points and loopback ports
+        run: |
+          python3 - <<'PY'
+          import json
+          with open('/tmp/site-mapper-config4.json', encoding='utf-8') as handle:
+              data = json.load(handle)
+          for i, suffix in [(1, ''), (2, '-02'), (3, '-03')]:
+              svc = data['services']['snmp-collector' + suffix]
+              env = svc['environment']
+              assert env['SNMP_CONTROLLER_HOST'] == f'snmp-agent-bfdb-0{i}'
+              assert env['SNMP_CONTROLLER_ID'] == f'EMU-DELTA-BFDB-0{i}'
+              assert str(env['SNMP_CONTROLLER_PORT']) == '1161'
+              points = json.loads(env['SNMP_FEED_POINTS_JSON'])
+              assert len(points) == 8
+              assert len({(point['oid'], point['metric']) for point in points}) == 8
+              assert all(point['scale'] == 0.1 and '.2026.49.' in point['oid'] for point in points)
+          assert data['networks']['bfdb_snmp_lab']['name'] == 'site_mapper_bfdb_snmp_lab'
+          for name, service in data['services'].items():
+              for port in service.get('ports', []):
+                  assert port.get('host_ip') == '127.0.0.1', (name, port)
+          print('BFDB Config4: three isolated sources and eight independent OIDs each')
+          PY

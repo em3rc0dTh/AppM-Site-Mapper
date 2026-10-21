@@ -94,3 +94,22 @@ CAS owns Rack U occupancy.
 PowerPath owns electrical connectivity.
 TelemetryBinding owns source-to-domain observation mapping.
 BDFB UI is a projection of those truths and never an alternate source of truth.
+
+## DC input feeds and SNMP
+
+An incoming BDFB feed is represented by a distinct external
+`AccessPort(POWER, INPUT)` on real BDFB Equipment. Separate feeds are independent
+electrical connections; their measured current must not be inferred from the
+A/B placement of panels or the number of installed breaker positions.
+
+Commissioned `TelemetryBinding(protocol=SNMP, sourcePointId=OID,
+targetType=ACCESS_PORT)` connects controller readings to the exact input feed.
+Do not create a parallel BDFB tree. The shunt rating may be recorded as
+measurement metadata and does not require a physical SHUNT Equipment in MK1.
+
+Only complete, fresh, non-overlapping feeder measurements can be aggregated
+as whole-BDFB input current. This total **does not** become an individual
+panel/breaker measurement, and does not replace breaker MQTT history or the
+canonical Breaker OUTPUT → Load INPUT PowerPath.
+
+See [SNMP input feed integration](../telemetry/snmp-feed-ingestion.md).

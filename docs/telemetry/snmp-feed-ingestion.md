@@ -29,10 +29,12 @@ prove** each target installation exposes every expected OID.
   the existing Site Mapper TimescaleDB store.
 - BDFB inspector displays a **separate** SNMP DC INPUT FEEDS block. Existing
   MQTT breaker telemetry and existing POWER OUTPUT PowerPaths are unchanged.
-- No SNMP credentials, real agent, BFDB emulator or SNMP poller is deployed by
-  this change. **The next stage** is an independent SNMP Collector that queries
-  a real Delta controller OR an SNMP-speaking BFDB simulator and posts the
-  **same exact payload** to this endpoint.
+- An **opt-in** SNMPv3 authPriv poller runs as a separate Node container in
+  `infra/snmp-collector`, enabled with Compose profile `snmp`. It performs
+  read-only GET requests to the configured real or simulated agent and POSTs
+  the same normalized payload. It does **not** run by default.
+- No SNMP credentials, real agent or BFDB emulator are deployed by this change.
+  Field verification and agent emulation are subsequent stages.
 
 The SNMP collector owns UDP/161, SNMPv3 authentication/privacy credentials,
 OID polling, vendor MIB parsing, raw value scaling and any trap listening on UDP/162.
@@ -150,3 +152,37 @@ conversion. A shunt specified as 1000 A / 60 mV is measurement metadata,
 - Final commissioning remains dependent on actual Delta SNMPv3 credentials,
   management IPs, MIB version, OID table walk, feed wiring and controller-local
   readings. Never declare the real integration certified from emulator results.
+
+## Opt-in native SNMPv3 collector (already implemented, not commissioned)
+
+The container is built from `infra/snmp-collector` and uses `net-snmp` v3.
+It must reach the controller management network on UDP/161. It issues only
+read-only SNMP GET; no SET, no automatic OID tree walk and no trap listener
+are enabled in the first version. Polling is scheduled after each finished cycle,
+so overlapping polls do not accumulate. An error in any OID prevents publishing
+a partial batch. No passphrases are logged.
+
+1. Configure a private .env with the `SNMP_...` settings in
+   [environment reference](../operations/environment-reference.md).
+2. Commission each verified OID to an external input feed AccessPort.
+3. Start only when agent credentials/network are available:
+
+```bash
+docker compose --env-file .env -f docker-compose.telemetry.yml \
+  --profile snmp up -d --build snmp-collector
+```
+
+4. Check collector logs and the authenticated `/api/telemetry/snmp/feeds`
+   and history endpoints. Do not claim hardware integration from a successful
+   emulated collector. A successful GET and HTTP 202 still do not independently
+   prove electrical feeder-to-OID identity without site wiring verification.
+
+The collector initially supports SHA1/AES SNMPv3 credentials, as documented
+in the legacy Smartpack configuration guide. Firmware, permitted cryptographic
+profiles and reachability of the real controller must be verified. Its
+`SNMP_FEED_POINTS_JSON` values include engineering scale. Use `scale=1`
+if the response is already in amperes or volts; never apply shunt scaling twice.
+
+The HTTP receiver remains independent of the transport and works with
+future collectors implemented in another language or service. The physical
+agent emulator is still a separate task in the BFDB repository.

@@ -28,6 +28,20 @@ A unique active `Device.serialNumber` or `Equipment.serialNumber` can resolve a 
 
 Do not use the old `BFDB_TELEMETRY_BINDING_MODE=panel-order-24` proposal as an active runtime contract; the current runtime does not consume it. Likewise `BFDB_POSITIONS_PER_PANEL` does not commission a circuit.
 
+## Delta/Eltek SNMP input-feed ingestion
+
+- `SNMP_INGEST_TOKEN`: secret shared between Site Mapper's **normalized observation receiver** and an authorized collector. At least 32 characters. If absent or too short, the ingestion route returns 503 even in development.
+- `SNMP_CONTROLLER_HOST`, `SNMP_CONTROLLER_PORT` (161): management address/port of the **real or emulated** SNMP agent.
+- `SNMP_CONTROLLER_ID`: immutable logical agent identity used by SNMP commissioning, not an IP address.
+- `SNMP_V3_USERNAME`, `SNMP_V3_AUTH_KEY`, `SNMP_V3_PRIV_KEY`: SNMPv3 authPriv credentials managed only by the collector (not Site Mapper or the browser). This initial profile uses SHA/AES.
+- `SNMP_FEED_POINTS_JSON`: approved OID list with `oid`, `metric` and vendor conversion `scale`. No OID is inferred from a panel's position.
+- `SNMP_POLL_INTERVAL_MS`: initial 30000; the standalone collector does not start unless the Compose `snmp` profile is selected.
+- `SNMP_INGEST_URL`: collector-to-Site Mapper private receiver URL; HTTPS enforced by collector for `APP_ENV=production`.
+
+A collector instance connects to **one** controller. Scale via separately configured instances when more controllers are approved. The remote controller can later be replaced by the BFDB SNMP emulation service with no change to the Site Mapper ingest contract. The emulator is NOT part of this change.
+
+See [SNMP feed ingestion and commissioning](../telemetry/snmp-feed-ingestion.md).
+
 ## Historical telemetry — independent persistence
 
 - `TELEMETRY_HISTORY_ENABLED=true`: write accepted telemetry to the Site Mapper-owned history adapter.

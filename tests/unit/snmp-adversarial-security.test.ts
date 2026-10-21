@@ -178,9 +178,10 @@ describe('SNMP attack harness: adversarial collector and replay resistance', () 
     const writes: TelemetrySample[] = [];
     const writer = {
       async write() {},
-      async writeDurable(sample: TelemetrySample) {
+      async commitSnmpBatch(_source: string, _at: string, samples: readonly TelemetrySample[]) {
         await new Promise<void>((resolve) => setTimeout(resolve, 25));
-        writes.push(sample);
+        writes.push(...samples);
+        return 'committed' as const;
       },
     };
     const service = new SnmpFeedService(f.topology, f.bindings, f.hub, writer);

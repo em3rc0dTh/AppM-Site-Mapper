@@ -89,3 +89,23 @@ SNMPv3 credentials remain deployment requirements. Do not equate an isolated
 Actions PASS with resistance to every attack. The non-atomic Timescale batch
 issue #78 remains unresolved and blocks any claim of fully durable multi-replica
 operation.
+
+
+## Atomic feed persistence follow-up (2026-10-21)
+
+The durable SNMP path has been replaced with a single PostgreSQL transaction for
+all commissioned feed samples in a poll, plus `snmp_source_progress` (source row
+serialization across replicas) and `snmp_ingest_batches` (stable digest keyed
+by source + observed timestamp). Per-feed `writeDurable` is prohibited for SNMP.
+Retries of the **same** observation set return `already_committed`; attempts to
+mutate any confirmed feed return 409, with no additional SQL rows.
+
+A failing insert rolls back previously inserted feeds **and** the source cursor;
+a later identical retry can commit all feeders. A real disposable TimescaleDB
+Actions job tests the third-feed failure, two-writer races, replay and restart
+semantics. HTTP acknowledges `historyDisposition` rather than only a boolean.
+The MQTT breaker/history and Modbus register paths remain separate.
+
+**Scope:** isolated TimescaleDB certification; this does not assert a production
+firewall, controller firmware, credential custody, network TLS termination,
+backup/restore or deployed rate quota. See issue #80 for staging evidence.

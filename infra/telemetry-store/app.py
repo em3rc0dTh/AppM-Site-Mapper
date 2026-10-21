@@ -258,7 +258,7 @@ def insert_snmp_batch(payload):
         # rows. A crashed transaction releases its lock and rolls back all data.
         conn.execute("""
           INSERT INTO snmp_source_progress (source_identity, last_observed_at)
-          VALUES (%s, '-infinity'::timestamptz) ON CONFLICT DO NOTHING
+          VALUES (%s, 'epoch'::timestamptz) ON CONFLICT DO NOTHING
         """, (source,))
         cursor = conn.execute("""
           SELECT last_observed_at FROM snmp_source_progress

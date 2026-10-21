@@ -91,6 +91,7 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
   private failures = 0;
   private lastWriteAt: string | null = null;
   private lastError: string | null = null;
+  private lastSnmpDisposition: 'committed' | 'already_committed' | null = null;
 
   constructor(
     private readonly baseUrl: string,
@@ -98,6 +99,10 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     private readonly accessToken?: string,
   ) {}
 
+
+  snmpCommitDisposition(): 'committed' | 'already_committed' | null {
+    return this.lastSnmpDisposition;
+  }
 
   async commitSnmpBatch(
     sourceIdentity: string,
@@ -140,6 +145,7 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     if (result.status === 'committed') this.rowsAccepted += samples.length;
     this.lastWriteAt = new Date().toISOString();
     this.lastError = null;
+    this.lastSnmpDisposition = result.status;
     return result.status;
   }
 
@@ -274,8 +280,14 @@ export function createTelemetryStoreClient(): HttpTelemetryStore {
   const parsedTimeout = Number(process.env.TELEMETRY_STORE_TIMEOUT_MS);
   const timeoutMs = Number.isInteger(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 5_000;
   const token = process.env.TELEMETRY_STORE_TOKEN?.trim();
-  if (isProductionDeployment() && !token) {
-    throw new Error('Production telemetry history store requires TELEMETRY_STORE_TOKEN.');
+  if (isProductionDeployment()) {
+    if (!token || token.length < 32) {
+      throw new Error('Production telemetry history store requires strong TELEMETRY_STORE_TOKEN.');
+    }
+    const url = new URL(baseUrl);
+    if (url.protocol !== 'https:' || url.username || url.password) {
+      throw new Error('Production telemetry history store requires HTTPS with no URL credentials.');
+    }
   }
   return new HttpTelemetryStore(baseUrl, timeoutMs, token);
 }

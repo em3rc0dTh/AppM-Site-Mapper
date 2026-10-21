@@ -226,8 +226,9 @@ describe('SNMP operator readiness and durability', () => {
     const f = fixture();
     const service = new SnmpFeedService(f.topology, f.bindings, f.hub, {
       async write() {},
-      async writeDurable() {
+      async commitSnmpBatch() {
         throw new Error('Timescale is down');
+        return 'committed' as const;
       },
     });
     const result = await service.ingest(f.packet([{ oid: oidA, value: 220 }]), t);

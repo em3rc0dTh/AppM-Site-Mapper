@@ -80,6 +80,7 @@ export async function POST(request: Request) {
       acceptedFeeds: result.value.map((sample) => sample.targetId),
       observedAt: packet.value.observedAt,
       historyCommitted: Boolean(history),
+      historyDisposition: history?.snmpCommitDisposition() ?? 'not_required',
     },
     { status: 202, headers: { 'Cache-Control': 'no-store' } },
   );

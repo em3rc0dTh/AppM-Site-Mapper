@@ -28,6 +28,10 @@ jobs:
         run: npx vitest run tests/unit/snmp-adversarial-security.test.ts
       - name: Collector packet normalization attack checks
         run: node --test infra/snmp-collector/server.test.mjs
+      - name: Install real SNMPv3 transport dependency in isolated collector
+        run: npm ci --prefix infra/snmp-collector --omit=dev --no-audit --no-fund
+      - name: Probe local UDP SNMPv3 wrong credentials, OID access and SET denial
+        run: node --test infra/snmp-collector/adversarial-wire.test.mjs
       - name: Verify no TypeScript regression
         run: npm run typecheck
       - name: Production dependency vulnerability check

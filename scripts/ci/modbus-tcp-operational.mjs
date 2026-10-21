@@ -15,7 +15,7 @@ function command(unit, offset, count) {
 
 async function read(unit, offset, count) {
   return new Promise((resolve, reject) => {
-    const socket = net.connect({ host: '127.0.0.1', port: 1502 }, () =>
+    const socket = net.connect({ host: '127.0.0.1', port: Number(process.env.MODBUS_TEST_PORT || 1502) }, () =>
       socket.write(command(unit, offset, count)),
     );
     socket.setTimeout(2000, () => socket.destroy(new Error('Modbus read timed out')));

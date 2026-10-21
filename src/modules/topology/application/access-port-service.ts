@@ -1,4 +1,4 @@
-import { bdfbHardwareProfile, isConfig4Slot } from '@/modules/power/domain/bdfb-hardware-profile';
+import { bdfbHardwareProfile, ELTEK_BDCBB_CONFIG_2, ELTEK_BDCBB_CONFIG_4, isConfig4Slot } from '@/modules/power/domain/bdfb-hardware-profile';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
@@ -151,7 +151,8 @@ export class AccessPortService {
       );
       if (input.servedPanelIds?.some((id) => !panelIds.has(id)))
         return failure('INVALID_FEED_PANELS');
-      if (bdfbHardwareProfile(device)) {
+      const profile = bdfbHardwareProfile(device);
+      if (profile === ELTEK_BDCBB_CONFIG_4) {
         if (!input.feedPosition || !isConfig4Slot(input.feedPosition))
           return failure('INVALID_PORT');
         if (input.servedPanelIds && input.servedPanelIds.length > 1)
@@ -175,6 +176,17 @@ export class AccessPortService {
             ),
           )
         )
+          return failure('INVALID_FEED_PANELS');
+      }
+      if (profile === ELTEK_BDCBB_CONFIG_2) {
+        if (!input.feed || input.feedPosition || (input.servedPanelIds?.length ?? 0) > 2)
+          return failure('INVALID_PORT');
+        const otherPorts = peers.flatMap((item) => item.accessPorts)
+          .filter((port) => port.lifecycle === 'ACTIVE' && port.id !== existingId && port.attributes?.snmpFeedInput === true);
+        if (otherPorts.some((port) => port.attributes?.feed === input.feed))
+          return failure('DUPLICATE_FEED_POSITION');
+        if (input.servedPanelIds?.some((id) => otherPorts.some((port) =>
+          Array.isArray(port.attributes?.servedPanelIds) && port.attributes.servedPanelIds.includes(id))))
           return failure('INVALID_FEED_PANELS');
       }
     }

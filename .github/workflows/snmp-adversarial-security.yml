@@ -9,7 +9,7 @@ on:
       - '.github/workflows/snmp-adversarial-security.yml'
   push:
     branches:
-      - security/snmp-adversarial-certification-20261021
+      - main
   workflow_dispatch:
 permissions:
   contents: read

@@ -391,9 +391,11 @@ export async function summarizeSnmpBdfbLoad(
     configurationIssues: assessed?.issues ?? [],
     status: complete
       ? 'COMPLETE'
-      : feeds.every((item) => item.status === 'UNMAPPED')
-        ? 'UNMAPPED'
-        : 'PARTIAL',
+      : assessed && !assessed.inventoryComplete
+        ? 'PARTIAL'
+        : feeds.every((item) => item.status === 'UNMAPPED')
+          ? 'UNMAPPED'
+          : 'PARTIAL',
     totalCurrentA: complete ? measuredCurrentA : null,
     measuredCurrentA,
     totalRatedCurrentA: capacityComplete

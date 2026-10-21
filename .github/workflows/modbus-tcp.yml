@@ -6,12 +6,16 @@ on:
       - main
     paths:
       - 'infra/modbus-tcp/**'
+      - 'scripts/operations/generate-metasys-register-map.mjs'
+      - 'docs/telemetry/metasys-register-map.csv'
       - 'src/modules/telemetry/infrastructure/telemetry-runtime.ts'
       - '.github/workflows/modbus-tcp.yml'
       - 'docker-compose.telemetry.yml'
   pull_request:
     paths:
       - 'infra/modbus-tcp/**'
+      - 'scripts/operations/generate-metasys-register-map.mjs'
+      - 'docs/telemetry/metasys-register-map.csv'
       - 'src/modules/telemetry/infrastructure/telemetry-runtime.ts'
       - '.github/workflows/modbus-tcp.yml'
 
@@ -29,3 +33,5 @@ jobs:
           node-version: 22
       - name: Test 96 circuits, FLOAT32, 3 Unit IDs and real TCP reader
         run: node --test infra/modbus-tcp/server.test.mjs
+      - name: Check committed Metasys register table against runtime map
+        run: node scripts/operations/generate-metasys-register-map.mjs --check

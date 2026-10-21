@@ -111,6 +111,7 @@ services:
     environment:
       MODBUS_SOURCE_UNITS_JSON: '${MODBUS_SOURCE_UNITS_JSON:?Set the approved serial-to-unit map}'
       MODBUS_POINT_LAYOUT: '${MODBUS_POINT_LAYOUT:-panels-4x24}'
+      MODBUS_MISSING_POLICY: '${MODBUS_MISSING_POLICY:-zero}'
       MODBUS_BRIDGE_TOKEN: '${MODBUS_BRIDGE_TOKEN:?Set a private Modbus bridge token}'
       MODBUS_BIND_HOST: 0.0.0.0
       MODBUS_BIND_PORT: '1502'

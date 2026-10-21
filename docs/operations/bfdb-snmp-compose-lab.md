@@ -3,6 +3,7 @@
 **Scope: local WSL2/Linux laboratory, not production or Delta field certification.**
 
 Two independent repositories are orchestrated without merging databases:
+
 - [Site Mapper](https://github.com/em3rc0dTh/AppM-Site-Mapper): web/RBAC, MongoDB, historical TimescaleDB, Modbus, 3 SNMP collectors.
 - `thradexIT/bfdb-telemetry-gateway`: 3 BFDB MQTT publishers, separate gateway/TSDB/Modbus, 3 SNMPv3 `authPriv` agents.
 
@@ -45,8 +46,9 @@ dedicated Compose project names `site_mapper_snmp_lab` and
 `bfdb_snmp_lab` (so previously named volumes are not modified).
 
 The shared network connects only BFDB Mosquitto + SNMP agents to Site Mapper
-+ collectors. Neither project's TimescaleDB/Modbus joins the shared network.
-Host ports are loopback-only in the underlying Compose files.
+
+- collectors. Neither project's TimescaleDB/Modbus joins the shared network.
+  Host ports are loopback-only in the underlying Compose files.
 
 ## First Superadmin and RBAC
 
@@ -72,18 +74,18 @@ the **ELTEK_BDCBB_CONFIG_4** hardware profile explicitly; in **SNMP FEED
 COMMISSIONING** bind each OID to its actual synthetic AccessPort with
 explicit confirmation. Never auto-bind by panel index.
 
-| Agent | Source identity | Internal SNMP DNS |
-| --- | --- | --- |
+| Agent   | Source identity     | Internal SNMP DNS             |
+| ------- | ------------------- | ----------------------------- |
 | BFDB-01 | `EMU-DELTA-BFDB-01` | `snmp-agent-bfdb-01:1161/udp` |
 | BFDB-02 | `EMU-DELTA-BFDB-02` | `snmp-agent-bfdb-02:1161/udp` |
 | BFDB-03 | `EMU-DELTA-BFDB-03` | `snmp-agent-bfdb-03:1161/udp` |
 
-| Feed | CURRENT synthetic OID | VOLTAGE synthetic OID |
-| --- | --- | --- |
-| A1 | `1.3.6.1.4.1.8072.9999.2026.49.1.1.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.1.0` |
-| A2 | `1.3.6.1.4.1.8072.9999.2026.49.1.2.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.2.0` |
-| B1 | `1.3.6.1.4.1.8072.9999.2026.49.1.3.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.3.0` |
-| B2 | `1.3.6.1.4.1.8072.9999.2026.49.1.4.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.4.0` |
+| Feed | CURRENT synthetic OID                 | VOLTAGE synthetic OID                 |
+| ---- | ------------------------------------- | ------------------------------------- |
+| A1   | `1.3.6.1.4.1.8072.9999.2026.49.1.1.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.1.0` |
+| A2   | `1.3.6.1.4.1.8072.9999.2026.49.1.2.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.2.0` |
+| B1   | `1.3.6.1.4.1.8072.9999.2026.49.1.3.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.3.0` |
+| B2   | `1.3.6.1.4.1.8072.9999.2026.49.1.4.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.4.0` |
 
 All eight OIDs use engineering scale **0.1**, already set by the Docker
 collector overlay. Laboratory rating examples: 800 A per input and shunt

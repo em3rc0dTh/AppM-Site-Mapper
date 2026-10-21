@@ -1,0 +1,31 @@
+name: Format final branch audit once
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/format-final-housekeeping-once.yml'
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx prettier --write docs/audits/2026-10-21-main-only-closure.md
+      - name: Commit formatted audit
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/audits/2026-10-21-main-only-closure.md
+            git commit -m "style(audit): format main-only branch closure"
+            git push origin HEAD:main
+          fi

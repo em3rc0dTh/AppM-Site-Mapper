@@ -1,0 +1,29 @@
+name: One-time branch audit formatting
+on:
+  push:
+    branches:
+      - feat/home-bdfb-system-overview
+permissions:
+  contents: write
+jobs:
+  format-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/home-bdfb-system-overview
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npx prettier --write docs/audits/2026-10-21-branch-housekeeping.md
+      - name: Commit audit formatting
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/audits/2026-10-21-branch-housekeeping.md
+            git commit -m "style(audit): format branch inventory"
+            git push origin HEAD:feat/home-bdfb-system-overview
+          fi

@@ -40,7 +40,7 @@ Sí. Lo haría como **wireframe contractual**, no como mockup decorativo. Manten
      ▼
 12 PANEL / BREAKER
 
-14 OPERATIONS WORKSPACE
+14 HOME / OPERATIONS WORKSPACE
 15 GLOBAL SEARCH
 16 SETTINGS / ADMIN
 ```
@@ -51,7 +51,7 @@ El golden path contractual actual ya exige esa progresión desde Network hasta B
 
 # SCREEN 00 — LOGIN
 
-Nada de dashboard antes de tiempo.
+El Home operativo exige una sesión autenticada; no se muestra información antes del login.
 
 ```text
 ┌──────────────────────────────────────────────────────────────────────────────┐
@@ -84,12 +84,12 @@ Al autenticar:
 ```text
 LOGIN
   │
-  ├── si existe lastContext ──► reconstruir contexto
-  │
-  └── si no ─────────────────► NETWORK
+  └──► HOME / WORKSPACE
+          ├── restaurar contexto disponible
+          └── navegar a Network / vistas físicas cuando el usuario lo elija
 ```
 
-## FALTA LA VISTA HOME en donde se muestran los BDFB pineados y la información "telemétrica" de cada uno de ellos.
+**HOME ya forma parte del contrato revisado.** Véase SCREEN 14 — HOME / OPERATIONS WORKSPACE: tarjetas pineadas BDFB con promedio de descendientes y vista de potencia del sistema.
 
 ---
 
@@ -697,42 +697,88 @@ La arquitectura prevista precisamente normaliza MQTT antes de llegar al navegado
 
 ---
 
-# SCREEN 14 — OPERATIONS WORKSPACE
+# SCREEN 14 — HOME / OPERATIONS WORKSPACE (CONTRATO REVISADO · 2026-10-20)
 
-Ahora sí podemos tener algo parecido a dashboard.
+**Estado:** reemplaza al dashboard meramente ilustrativo del contrato inicial. Éste es el Home operativo que ya existe en `/workspace`, ahora con un único cálculo LIVE compartido con `BDFB Physical View`.
 
-Pero sólo como **launcher hacia el mapa físico**. los BDFB tienen su estructura ya diseñada en el zip.
+El Home **no es un segundo modelo de inventario**, ni hace cálculos eléctricos desde paquetes MQTT RAW. Consume la topología canónica de Device/Equipment y lecturas explícitamente comisionadas y normalizadas. El acceso directo a un BDFB pineado abre su **BDFB Physical View**; el panel interno abre su **Equipment Composition**. La navegación física sigue siendo autoridad.
+
+## Wireframe de escritorio
 
 ```text
-┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ SITE MAPPER          OPERATIONS                                                 [⌕ Search]         │
-├────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                    │
-│  ATTENTION                                                                                         │
-│  ┌──────────────────────────────────┐  ┌──────────────────────────────────┐                        │
-│  │ ● Device telemetry offline       │  │ ⚠ Feed B unavailable            │                        │
-│  │ SERVER-32                        │  │ SERVER-18                        │                        │
-│  │                                  │  │                                  │                        │
-│  │ Lima › L02 › R-024               │  │ Lima › L03 › R-032               │                        │
-│  │                  [ LOCATE → ]    │  │              [ TRACE POWER → ]   │                        │
-│  └──────────────────────────────────┘  └──────────────────────────────────┘                        │
-│                                                                                                    │
-│  PINNED                                                                                            │
-│  ┌────────────────────┐ ┌────────────────────┐ ┌────────────────────┐                             │
-│  │ Rack R-023         │ │ BDFB-A             │ │ SERVER-01          │                             │
-│  │ ● Healthy          │ │ ● Live             │ │ ● Live             │                             │
-│  │ [OPEN]             │ │ [OPEN]             │ │ [OPEN]             │                             │
-│  └────────────────────┘ └────────────────────┘ └────────────────────┘                             │
-│                                                                                                    │
-│  RECENT                                                                                            │
-│                                                                                                    │
-│   Room 202                  Rack R-023                  Panel A1                                    │
-│   3 min ago                 6 min ago                   8 min ago                                   │
-│                                                                                                    │
-└────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│ SITE MAPPER                              [ Search ... ]         [ EXPLORE ] [ WAREHOUSE ] [ ADMIN ]             │
+├──────────────┬────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ [≡] TOPOLOGY │ ⌂ Home                                                         Network / Site                    │
+│ (colapsable) │ INFRASTRUCTURE OVERVIEW                                                                           │
+│              │ ┌──────────────────────────┐ ┌──────────────────────────┐ ┌───────────────────────────┐         │
+│ Network      │ │ EQUIPMENTS (PRIMARY)     │ │ REPORTING                │ │ NO RECENT DATA            │         │
+│  └ Site      │ │ <Devices activos>        │ │ <Devices con lectura>    │ │ <Devices sin lectura>     │         │
+│    └ Room    │ └──────────────────────────┘ └──────────────────────────┘ └───────────────────────────┘         │
+│      └ Rack  │                                                                                                  │
+│         └... │ DIRECT ACCESS                                                              Manage pins →        │
+│              │ ┌───────────────────────────────────────────────┐  ┌──────────────────────────────────────────┐ │
+│              │ │ ▣ BDFB-01                                     │  │           + ADD PINNED EQUIPMENT         │ │
+│              │ │ Rack-01-BDFB  ›  BDFB-01                        │  │                                          │ │
+│              │ │ Avg V        Avg I         Avg P               │  │ Pins de Device o Equipment canónicos.    │ │
+│              │ │ 12.24 V      8.23 A        100.63 W            │  │                                          │ │
+│              │ │ Avg E counter     Total P       Reporting      │  │                                          │ │
+│              │ │ 0.3889 kWh        0.30 kW       3 / 8          │  │                                          │ │
+│              │ │ Entire BDFB · last packet UTC                 │  │                                          │ │
+│              │ │                                  Open →        │  │                                          │ │
+│              │ └───────────────────────────────────────────────┘  └──────────────────────────────────────────┘ │
+│              │                                                                                                  │
+│              │ BDFB POWER OVERVIEW                                            ALL BDFBs · SYSTEM WIDE            │
+│              │ ┌──────────────────────────┐ ┌──────────────────────────┐ ┌───────────────────────────┐         │
+│              │ │ TOTAL POWER (LIVE)       │ │ PERIOD ENERGY            │ │ BDFB MONITORING           │         │
+│              │ │ Σ potencias válidas kW   │ │ — / sin cálculo validado │ │ con lectura / total       │         │
+│              │ └──────────────────────────┘ └──────────────────────────┘ └───────────────────────────┘         │
+│              │                                                                                                  │
+│              │ TELEMETRY BY BDFB                                                       Telemetry →              │
+│              │ ┌───────────┬────────┬────────┬────────┬────────────┬───────────┬─────────────┬────────────┐    │
+│              │ │ BDFB      │ Avg V  │ Avg A  │ Avg W  │ Avg E ctr  │ Total kW  │ Reporting   │ Last pkt   │    │
+│              │ ├───────────┼────────┼────────┼────────┼────────────┼───────────┼─────────────┼────────────┤    │
+│              │ │ BDFB-01   │ ...    │ ...    │ ...    │ ...        │ ...       │ 3 / 8       │ UTC        │    │
+│              │ └───────────┴────────┴────────┴────────┴────────────┴───────────┴─────────────┴────────────┘    │
+└──────────────┴────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Esto coincide con las capacidades ya identificadas de workspace, pinned devices, BDFB summary, notifications, navigation tree, contextual panels y distintas vistas operativas. :chatgpt-content-reference{index="10"}
+_Los números del wireframe son ilustrativos, reproducidos de una captura de campo para explicar el diseño. Nunca se codifican en la aplicación ni representan telemetría LIVE permanente._
+
+## Contrato funcional del Home
+
+1. **Primary Equipment = Device activos** del inventario canónico, sin contar los Equipment anidados como dispositivos adicionales. «Reporting» representa Device con telemetría vinculada reciente (incluyendo descendientes BDFB).
+2. **Direct Access** permite hasta tres tarjetas pineadas en el diseño actual. Un pin al chasis físico de un BDFB se resuelve al Device BDFB, abriendo Physical View; no salta a una composición antigua duplicada.
+3. **BDFB LIVE** considera **todos los Equipment descendientes activos** del Device BDFB, no todos los puntos RAW ni únicamente la presentación gráfica de paneles. Se incorporan sólo muestras normalizadas, ligadas por bindings métricos explícitos, con observaciones y recepción recientes (ventana de 30 s). Cada Equipment contribuye a lo sumo una muestra reciente por métrica.
+4. **Averages**: tensión (V), corriente (A), potencia (W) y valor de contador acumulado de energía (kWh) se promedian por Equipment con valores válidos para esa métrica. Los denominadores pueden diferir si falta alguna métrica. La energía promedio **NO** es consumo energético en el período.
+5. **Total power (kW)** es la **suma** de las potencias instantáneas válidas de los Equipment; no es el promedio. Si una BDFB no tiene potencia disponible, aparece `—`, no `0`. El total global se marca como parcial si faltan BDFB.
+6. **Reporting x / y** es el número de Equipment descendientes con al menos una métrica válida, frente al total de descendientes activos. Los elementos estructurales sin binding también pertenecen al denominador; se explicita «without current reading».
+7. **LIVE, STALE, OFFLINE, NO DATA** dependen de la frescura real de los mensajes y no del estado de conexión TCP ni del campo RAW `state: ONLINE`. La ausencia de telemetría jamás prueba que un dispositivo esté apagado.
+8. **History / 24H / 7D / 15D / 1M** son vistas históricas propias del inspector cuando existen datos; el Home **no calcula consumo del período a partir del promedio de contadores**. El KPI PERIOD ENERGY permanece `—` hasta implementar una consulta validada a TimescaleDB.
+9. **Una sola autoridad matemática**: `aggregateBdfbDescendantTelemetry` alimenta Home y `BdfbTelemetryInspector`. Cada vista puede refrescarse en diferentes instantes por SSE, pero ya no implementa una fórmula alternativa.
+10. **Responsive y accesibilidad**: tarjetas apiladas en móvil; tabla de alta densidad con scroll horizontal dentro de su contenedor; panel de topología colapsable con jerarquía navegable. Los enlaces llevan a rutas reales con permisos de servidor.
+
+### Navegación y estados relevantes
+
+```text
+LOGIN → HOME (/workspace)
+  ├─ TOPOLOGY → NETWORK → SITE → ... → RACK → DEVICE → BDFB PHYSICAL VIEW
+  │                                                  └→ PANEL → EQUIPMENT COMPOSITION
+  ├─ DIRECT ACCESS [pinned BDFB] → BDFB PHYSICAL VIEW
+  ├─ MANAGE PINS → NETWORK / inventory configuration
+  └─ TELEMETRY → /telemetry
+
+LIVE DATA:
+MQTT → normalización + bindings → latest-state de Equipment
+                                    └→ aggregateBdfbDescendantTelemetry
+                                          ├→ Home: averages + total power
+                                          └→ Inspector: averages + coverage
+
+HISTORY:
+TimescaleDB → consultas validadas de período (sin extrapolación de counters)
+```
+
+**Restricción de implementación:** los datos RAW del emulador pueden exponer 96 puntos aunque sólo 3 breakers estén comisionados. Nunca se agregan los 93 puntos restantes a las medias; un punto RAW no equivale a un Equipment físico validado.
 
 ---
 

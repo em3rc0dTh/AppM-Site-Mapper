@@ -41,7 +41,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     : pathname.startsWith('/warehouse')
       ? 'VIRTUAL WAREHOUSE'
       : pathname === '/workspace'
-        ? 'OPERATIONS'
+        ? ''
         : 'NETWORK';
 
   async function logout() {

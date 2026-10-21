@@ -124,7 +124,9 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     const topicFilter = process.env.MQTT_TOPIC_FILTER?.trim() || `${topicPrefix}#`;
     const enabled = process.env.TELEMETRY_ENABLED === 'true';
     const expected = expectedSources(process.env.MQTT_EXPECTED_SOURCES);
-    const historyEnabled = enabled && process.env.TELEMETRY_HISTORY_ENABLED === 'true';
+    const historyEnabled =
+      process.env.TELEMETRY_HISTORY_ENABLED === 'true' &&
+      (enabled || Boolean(process.env.SNMP_INGEST_TOKEN));
     const historyStore = historyEnabled ? createTelemetryStoreClient() : null;
     const rejectionLogIntervalMs = positiveInt(
       process.env.TELEMETRY_REJECTION_LOG_INTERVAL_MS,

@@ -56,3 +56,27 @@ The center surface represents the selected physical concept rather than reducing
 The application shell uses a bounded operational viewport. Document-level scrolling is avoided for primary infrastructure surfaces; when large datasets require scrolling, it is confined to the relevant tree, inspector, inventory, or configuration panel.
 
 The technical Inspector remains a quick factual surface. It complements rather than replaces Blueprint, Rack Elevation, BDFB chassis, Panel/Breaker views, and PowerPath diagrams.
+
+## Revised Home / LIVE Telemetry contract — 2026-10-20
+
+The original G11 operational launcher layout has evolved into an authenticated Home
+(`/workspace`) with a collapsible physical topology tree, primary Device reporting
+counts, pinned Direct Access BDFBs, and a system-wide BDFB power overview.
+
+- Each BDFB uses **all ACTIVE canonical descendant Equipment** from the topology repository.
+- One canonical pure function (`aggregateBdfbDescendantTelemetry`) computes latest
+  metric averages (V, A, W, cumulative kWh counter) and a **separate power sum (W/kW)**.
+- Only explicitly bound, fresh normalized Equipment readings qualify. RAW MQTT point
+  groups, stale samples, duplicate samples and conflicting source claims must not create
+  extra apparent reporting Equipment.
+- Coverage reports contributing Equipment versus all ACTIVE descendants, including
+  non-reporting structural components; no reading is **unknown**, not zero or off.
+- Home and BDFB Physical View Inspector share LIVE math and per-metric inclusion rules.
+- `PERIOD ENERGY` is intentionally unavailable until validated historical consumption
+  is calculated from TimescaleDB; mean cumulative counters are not consumption.
+- Pin-to-BDFB navigates to Device Physical View; physical Panel navigation opens
+  canonical Equipment Composition.
+- This update supersedes the initial launcher-only reading of the G11 layout,
+  without changing the authoritative topology, power, auth or telemetry boundaries.
+
+See [revised Screen 14 Home wireframe](../ui/Wireframes%20documentation.md).

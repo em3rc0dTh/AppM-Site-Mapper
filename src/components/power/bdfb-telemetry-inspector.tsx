@@ -1,11 +1,12 @@
 'use client';
 
-import { useBdfbTelemetry } from '@/components/telemetry/use-bdfb-telemetry';
+import { useBdfbTelemetrySnapshot } from '@/components/telemetry/use-bdfb-telemetry';
+import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
 
 import { useEffect, useState } from 'react';
 
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
-import { aggregateBdfbTelemetry } from '@/modules/telemetry/application/bdfb-telemetry-aggregate';
+import { aggregateBdfbDescendantTelemetry } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
 import type {
   TelemetryHistoryPoint,
   TelemetryHistoryResponse,
@@ -139,6 +140,7 @@ export function BdfbTelemetryInspector({
   location,
   feeds,
   mappedBreakerCount = 0,
+  descendantEquipmentIds = [],
 }: Readonly<{
   node: DeviceNode;
   presentation: BdfbPresentation;
@@ -146,8 +148,9 @@ export function BdfbTelemetryInspector({
   location?: string;
   feeds?: readonly string[];
   mappedBreakerCount?: number;
+  descendantEquipmentIds?: readonly string[];
 }>) {
-  const telemetry = useBdfbTelemetry(node.id);
+  const { samples, now } = useBdfbTelemetrySnapshot(node.id);
   const [window, setWindow] = useState<InspectorWindow>('LIVE');
   const [history, setHistory] = useState<TelemetryHistoryResponse | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -160,14 +163,14 @@ export function BdfbTelemetryInspector({
   const selectedPanel = activePanelId
     ? (panels.find((panel) => panel.id === activePanelId) ?? null)
     : null;
-  const scopePositions = selectedPanel
-    ? selectedPanel.positions
-    : panels.flatMap((panel) => panel.positions);
-  const aggregate = aggregateBdfbTelemetry(scopePositions, telemetry?.breakerReadings ?? []);
+  // Live scope is always the entire canonical BDFB, never only the focused panel.
+  const live = aggregateBdfbDescendantTelemetry(samples, descendantEquipmentIds, now);
+  const reportingEquipment = live.reportingEquipment;
+  const latestReceived = live.latestReceivedAt ?? undefined;
 
   const hasA = feeds?.includes('A') ?? false;
   const hasB = feeds?.includes('B') ?? false;
-  const scopeLabel = selectedPanel?.label ?? 'Entire BDFB';
+  const scopeLabel = window === 'LIVE' ? 'Entire BDFB' : (selectedPanel?.label ?? 'Entire BDFB');
   const positions = panels.flatMap((panel) => panel.positions);
   const breakers = positions.filter((item) => item !== null);
 
@@ -220,11 +223,15 @@ export function BdfbTelemetryInspector({
         </div>
       </div>
 
+      <SnmpFeedLoadPanel deviceId={node.id} />
+
       <section className="zip-bdfb-live-average" aria-label="BDFB telemetry">
         <header>
           <div>
-            <i aria-hidden="true" data-live={aggregate.activeBreakers > 0 ? 'true' : 'false'} />
-            <strong>{window === 'LIVE' ? 'LIVE AVERAGE' : 'HISTORICAL AVERAGE'}</strong>
+            <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
+            <strong>
+              {window === 'LIVE' ? 'DESCENDANT EQUIPMENT AVERAGE' : 'HISTORICAL AVERAGE'}
+            </strong>
           </div>
           <span>{scopeLabel}</span>
         </header>
@@ -266,31 +273,35 @@ export function BdfbTelemetryInspector({
             <div className="zip-bdfb-live-average-grid">
               <div>
                 <span>AVG VOLTAGE</span>
-                <strong>{metric(aggregate.averageVoltageV, 'V')}</strong>
+                <strong>{metric(live.averageVoltageV, 'V')}</strong>
               </div>
               <div>
                 <span>AVG CURRENT</span>
-                <strong>{metric(aggregate.averageCurrentA, 'A')}</strong>
+                <strong>{metric(live.averageCurrentA, 'A')}</strong>
               </div>
               <div>
                 <span>AVG POWER</span>
-                <strong>{metric(aggregate.averagePowerW, 'W')}</strong>
+                <strong>{metric(live.averagePowerW, 'W')}</strong>
               </div>
               <div>
-                <span>AVG ENERGY</span>
-                <strong>{metric(aggregate.averageEnergyKwh, 'kWh', 4)}</strong>
+                <span>AVG ENERGY COUNTER</span>
+                <strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong>
               </div>
             </div>
 
+            <p className="zip-bdfb-aggregate-note">
+              Live total power: {metric(live.totalPowerW, 'W')}. Mean energy is a cumulative-counter
+              average, not consumption over a period.
+            </p>
             <dl className="zip-bdfb-live-average-counts">
-              <dt>Active breakers</dt>
-              <dd>{aggregate.activeBreakers}</dd>
-              <dt>Breakers without live reading</dt>
-              <dd>{aggregate.withoutLiveReading}</dd>
-              <dt>Empty positions</dt>
-              <dd>{aggregate.emptyPositions}</dd>
+              <dt>Equipment reporting</dt>
+              <dd>{reportingEquipment}</dd>
+              <dt>Descendant equipment</dt>
+              <dd>{live.descendantEquipment}</dd>
+              <dt>Without current reading</dt>
+              <dd>{live.withoutCurrentReading}</dd>
               <dt>Last packet</dt>
-              <dd>{compactUtc(aggregate.latestReceivedAt)}</dd>
+              <dd>{compactUtc(latestReceived)}</dd>
             </dl>
           </>
         ) : (
@@ -326,14 +337,14 @@ export function BdfbTelemetryInspector({
         <div>
           <span>●</span>
           <strong>
-            {aggregate.activeBreakers > 0
-              ? 'Live breaker telemetry received'
+            {reportingEquipment > 0
+              ? 'Live descendant equipment telemetry received'
               : 'Physical inventory recorded'}
           </strong>
           <small>
-            {aggregate.activeBreakers > 0
-              ? `${aggregate.activeBreakers} breaker readings contribute to the current average.`
-              : 'Live health requires an explicitly mapped MQTT reading.'}
+            {reportingEquipment > 0
+              ? `${reportingEquipment} descendant Equipment readings contribute to available averages.`
+              : 'Live readings require explicit Equipment MQTT bindings.'}
           </small>
         </div>
       </section>

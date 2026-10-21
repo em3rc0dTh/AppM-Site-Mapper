@@ -20,7 +20,7 @@ function Branch({
   query: string;
   pathname: string;
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const children = node.children.filter((child) => matches(child, query));
   return (
     <li>
@@ -40,7 +40,7 @@ function Branch({
         <Link
           href={node.href}
           aria-current={pathname === node.href ? 'page' : undefined}
-          title={node.kind.replaceAll('_', ' ')}
+          title={node.name}
         >
           <Icon
             name={node.kind === 'NETWORK' ? 'network' : node.kind.includes('ROOM') ? 'room' : 'box'}

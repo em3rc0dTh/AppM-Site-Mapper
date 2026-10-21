@@ -28,13 +28,12 @@ export function pointsFromEnvironment(value) {
 }
 
 export function normalizeVarbinds(points, varbinds, observedAt, sourceIdentity) {
-  if (points.length !== varbinds.length) throw new Error('SNMP GET returned unexpected point count');
+  if (points.length !== varbinds.length)
+    throw new Error('SNMP GET returned unexpected point count');
   const measurements = points.map((point, i) => {
     const varbind = varbinds[i];
     if (!varbind || varbind.oid !== point.oid) throw new Error('SNMP GET OID mismatch');
-    const raw = Buffer.isBuffer(varbind.value)
-      ? varbind.value.toString('utf8')
-      : varbind.value;
+    const raw = Buffer.isBuffer(varbind.value) ? varbind.value.toString('utf8') : varbind.value;
     const number = typeof raw === 'bigint' ? Number(raw) : Number(raw);
     const value = number * point.scale;
     if (!Number.isFinite(value) || Math.abs(value) > 100_000_000)

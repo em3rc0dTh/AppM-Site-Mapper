@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import net from 'node:net';
 
+const modbusPort = Number(process.env.MODBUS_TEST_PORT || 1502);
+
 function command(unit, offset, count) {
   const frame = Buffer.alloc(12);
   frame.writeUInt16BE(101, 0);
@@ -15,7 +17,7 @@ function command(unit, offset, count) {
 
 async function read(unit, offset, count) {
   return new Promise((resolve, reject) => {
-    const socket = net.connect({ host: '127.0.0.1', port: Number(process.env.MODBUS_TEST_PORT || 1502) }, () =>
+    const socket = net.connect({ host: '127.0.0.1', port: modbusPort }, () =>
       socket.write(command(unit, offset, count)),
     );
     socket.setTimeout(2000, () => socket.destroy(new Error('Modbus read timed out')));

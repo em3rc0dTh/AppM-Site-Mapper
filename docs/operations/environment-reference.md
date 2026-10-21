@@ -97,3 +97,20 @@ collector token. Restrict transport to authenticated private networks and
 rotate secrets after suspected disclosure. The Docker Compose telemetry
 lab is not a production security baseline. Persistent multi-feed batch
 atomicity remains open in issue #78.
+
+### TimescaleDB Compose local credential hardening
+
+The telemetry laboratory Compose stack no longer uses
+`POSTGRES_HOST_AUTH_METHOD=trust`. Its TimescaleDB container requires
+`TIMESCALE_DB_PASSWORD`, a private **URL-safe** password shared only by the
+store and operational-console connection strings. It also requires
+`TELEMETRY_STORE_TOKEN` for the HTTP store. On `APP_ENV=production`, the
+store refuses startup unless that token is at least 32 characters.
+
+The Site Mapper service now reads `APP_ENV` from the operator's environment,
+rather than forcibly pretending to be in development. All production
+connections must be explicitly hardened, including MongoDB authentication,
+network segmentation, broker TLS and application ingress protection.
+`docker-compose.telemetry.yml` remains a **local laboratory** definition,
+not a production deployment blueprint. Never deploy with public database
+bindings, default passwords or an unauthenticated database.

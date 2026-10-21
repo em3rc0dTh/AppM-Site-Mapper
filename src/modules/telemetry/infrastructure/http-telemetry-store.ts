@@ -155,7 +155,10 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     };
   }
 
-  async queryLatestEntities(targetIds: readonly string[], targetType: string): Promise<readonly TelemetrySample[]> {
+  async queryLatestEntities(
+    targetIds: readonly string[],
+    targetType: string,
+  ): Promise<readonly TelemetrySample[]> {
     if (!targetIds.length) return [];
     const url = new URL(`${this.baseUrl.replace(/\/$/, '')}/entity-latest`);
     url.searchParams.set('targetType', targetType);

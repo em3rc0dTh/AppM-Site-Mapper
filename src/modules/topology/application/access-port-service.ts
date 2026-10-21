@@ -62,19 +62,29 @@ function valid(input: AccessPortInput): boolean {
     validText(input.customType) &&
     (input.feed === undefined || (input.portType === 'POWER' && ['A', 'B'].includes(input.feed))) &&
     (input.snmpFeedInput === undefined || typeof input.snmpFeedInput === 'boolean') &&
-    (input.independentInputConfirmed === undefined || typeof input.independentInputConfirmed === 'boolean') &&
+    (input.independentInputConfirmed === undefined ||
+      typeof input.independentInputConfirmed === 'boolean') &&
     [input.ratedCurrentA, input.shuntRatedCurrentA, input.shuntRatedMillivolts].every(
-      (n) => n === undefined || (typeof n === 'number' && Number.isFinite(n) && n > 0 && n <= 100_000),
+      (n) =>
+        n === undefined || (typeof n === 'number' && Number.isFinite(n) && n > 0 && n <= 100_000),
     ) &&
     (input.servedPanelIds === undefined ||
       (Array.isArray(input.servedPanelIds) &&
         input.servedPanelIds.length <= 24 &&
-        input.servedPanelIds.every((v) => typeof v === 'string' && v.length > 0 && v.length <= 160) &&
+        input.servedPanelIds.every(
+          (v) => typeof v === 'string' && v.length > 0 && v.length <= 160,
+        ) &&
         new Set(input.servedPanelIds).size === input.servedPanelIds.length)) &&
-    (!input.snmpFeedInput || (input.portType === 'POWER' && input.direction === 'INPUT' && input.exposure === 'EXTERNAL')) &&
+    (!input.snmpFeedInput ||
+      (input.portType === 'POWER' &&
+        input.direction === 'INPUT' &&
+        input.exposure === 'EXTERNAL')) &&
     (!input.independentInputConfirmed || input.snmpFeedInput === true) &&
     (!input.servedPanelIds?.length || input.snmpFeedInput === true) &&
-    (![input.ratedCurrentA, input.shuntRatedCurrentA, input.shuntRatedMillivolts].some((v) => v !== undefined) || input.snmpFeedInput === true)
+    (![input.ratedCurrentA, input.shuntRatedCurrentA, input.shuntRatedMillivolts].some(
+      (v) => v !== undefined,
+    ) ||
+      input.snmpFeedInput === true)
   );
 }
 
@@ -105,7 +115,9 @@ export class AccessPortService {
     if (paths.some((path) => path.lifecycle === 'ACTIVE')) return true;
     if (!this.telemetryBindings) return false;
     const bindings = await this.telemetryBindings.listForTarget('ACCESS_PORT', id);
-    return bindings.some((binding) => binding.lifecycle === 'ACTIVE' && binding.protocol === 'SNMP');
+    return bindings.some(
+      (binding) => binding.lifecycle === 'ACTIVE' && binding.protocol === 'SNMP',
+    );
   }
 
   async upsert(
@@ -125,7 +137,8 @@ export class AccessPortService {
           .filter((item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'PANEL')
           .map((item) => item.id),
       );
-      if (input.servedPanelIds?.some((id) => !panelIds.has(id))) return failure('INVALID_FEED_PANELS');
+      if (input.servedPanelIds?.some((id) => !panelIds.has(id)))
+        return failure('INVALID_FEED_PANELS');
     }
     const existing = existingId
       ? node.accessPorts.find((port) => port.id === existingId && port.lifecycle === 'ACTIVE')
@@ -152,8 +165,10 @@ export class AccessPortService {
         existing.exposure !== input.exposure ||
         oldFeed !== input.feed ||
         Boolean(existing.attributes?.snmpFeedInput) !== Boolean(input.snmpFeedInput) ||
-        Boolean(existing.attributes?.independentInputConfirmed) !== Boolean(input.independentInputConfirmed) ||
-        JSON.stringify(existing.attributes?.servedPanelIds ?? []) !== JSON.stringify(input.servedPanelIds ?? [])
+        Boolean(existing.attributes?.independentInputConfirmed) !==
+          Boolean(input.independentInputConfirmed) ||
+        JSON.stringify(existing.attributes?.servedPanelIds ?? []) !==
+          JSON.stringify(input.servedPanelIds ?? [])
       )
         return failure('PORT_IN_USE');
     }
@@ -161,7 +176,14 @@ export class AccessPortService {
     const attributes: Record<string, unknown> = { ...(existing?.attributes ?? {}) };
     if (input.feed) attributes.feed = input.feed;
     else delete attributes.feed;
-    for (const key of ['snmpFeedInput', 'independentInputConfirmed', 'ratedCurrentA', 'shuntRatedCurrentA', 'shuntRatedMillivolts', 'servedPanelIds']) {
+    for (const key of [
+      'snmpFeedInput',
+      'independentInputConfirmed',
+      'ratedCurrentA',
+      'shuntRatedCurrentA',
+      'shuntRatedMillivolts',
+      'servedPanelIds',
+    ]) {
       const value = input[key as keyof AccessPortInput];
       if (value === undefined || value === false || (Array.isArray(value) && value.length === 0)) {
         delete attributes[key];

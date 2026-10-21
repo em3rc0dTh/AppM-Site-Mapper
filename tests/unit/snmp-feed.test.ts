@@ -51,7 +51,12 @@ function fixture(withB = true) {
       direction: 'INPUT' as const,
       exposure: 'EXTERNAL' as const,
       lifecycle: 'ACTIVE' as const,
-      attributes: { feed: side, ratedCurrentA: 800, snmpFeedInput: true, independentInputConfirmed: true },
+      attributes: {
+        feed: side,
+        ratedCurrentA: 800,
+        snmpFeedInput: true,
+        independentInputConfirmed: true,
+      },
     })),
   };
   const binding = (id: string, oid: string, portId: string): TelemetryBinding => ({
@@ -198,12 +203,19 @@ describe('SNMP operator readiness and durability', () => {
       accessPorts: existing.accessPorts.map((port) =>
         port.id === 'feed-B'
           ? { ...port, attributes: { ...port.attributes, independentInputConfirmed: false } }
-          : port),
+          : port,
+      ),
     };
     const topology = new MemoryTopologyRepository([device, chassis]);
     const hub = new TelemetryHub(5);
     const service = new SnmpFeedService(topology, f.bindings, hub);
-    await service.ingest(f.packet([{ oid: oidA, value: 220 }, { oid: oidB, value: 210 }]), t);
+    await service.ingest(
+      f.packet([
+        { oid: oidA, value: 220 },
+        { oid: oidB, value: 210 },
+      ]),
+      t,
+    );
     const view = await summarizeSnmpBdfbLoad('bdfb', topology, f.bindings, hub, Date.parse(t));
     expect(view?.status).toBe('PARTIAL');
     expect(view?.totalCurrentA).toBeNull();
@@ -214,7 +226,9 @@ describe('SNMP operator readiness and durability', () => {
     const f = fixture();
     const service = new SnmpFeedService(f.topology, f.bindings, f.hub, {
       async write() {},
-      async writeDurable() { throw new Error('Timescale is down'); },
+      async writeDurable() {
+        throw new Error('Timescale is down');
+      },
     });
     const result = await service.ingest(f.packet([{ oid: oidA, value: 220 }]), t);
     expect(result).toMatchObject({ ok: false, error: 'HISTORY_STORE_UNAVAILABLE' });
@@ -224,8 +238,10 @@ describe('SNMP operator readiness and durability', () => {
   it('blocks out-of-order measurements while preserving latest value', async () => {
     const f = fixture();
     await f.service.ingest(f.packet([{ oid: oidA, value: 220 }]), t);
-    const older = { ...f.packet([{ oid: oidA, value: 500 }]),
-      observedAt: new Date(Date.parse(t) - 5000).toISOString() };
+    const older = {
+      ...f.packet([{ oid: oidA, value: 500 }]),
+      observedAt: new Date(Date.parse(t) - 5000).toISOString(),
+    };
     const result = await f.service.ingest(older, t);
     expect(result).toMatchObject({ ok: false, error: 'OUT_OF_ORDER_SNMP_SAMPLE' });
     const view = await summarizeSnmpBdfbLoad('bdfb', f.topology, f.bindings, f.hub, Date.parse(t));
@@ -236,19 +252,31 @@ describe('SNMP operator readiness and durability', () => {
     const f = fixture();
     const voltageOid = '1.3.6.1.4.1.8072.9999.2026.48.2.1.0';
     await f.bindings.insert({
-      id: 'v-feed-A', protocol: 'SNMP', sourceIdentity: 'ELTEK-01',
-      sourcePointId: voltageOid, metric: 'VOLTAGE', unit: 'V',
-      targetType: 'ACCESS_PORT', targetId: 'feed-A',
-      lifecycle: 'ACTIVE', createdAt: t, updatedAt: t,
+      id: 'v-feed-A',
+      protocol: 'SNMP',
+      sourceIdentity: 'ELTEK-01',
+      sourcePointId: voltageOid,
+      metric: 'VOLTAGE',
+      unit: 'V',
+      targetType: 'ACCESS_PORT',
+      targetId: 'feed-A',
+      lifecycle: 'ACTIVE',
+      createdAt: t,
+      updatedAt: t,
     });
-    await f.service.ingest({
-      schemaVersion: 1, sourceIdentity: 'ELTEK-01', observedAt: t,
-      measurements: [
-        { oid: oidA, metric: 'CURRENT', unit: 'A', value: 220 },
-        { oid: voltageOid, metric: 'VOLTAGE', unit: 'V', value: -53.5 },
-        { oid: oidB, metric: 'CURRENT', unit: 'A', value: 210 },
-      ],
-    }, t);
+    await f.service.ingest(
+      {
+        schemaVersion: 1,
+        sourceIdentity: 'ELTEK-01',
+        observedAt: t,
+        measurements: [
+          { oid: oidA, metric: 'CURRENT', unit: 'A', value: 220 },
+          { oid: voltageOid, metric: 'VOLTAGE', unit: 'V', value: -53.5 },
+          { oid: oidB, metric: 'CURRENT', unit: 'A', value: 210 },
+        ],
+      },
+      t,
+    );
     const view = await summarizeSnmpBdfbLoad('bdfb', f.topology, f.bindings, f.hub, Date.parse(t));
     expect(view?.totalCurrentA).toBe(430);
     expect(view?.totalRatedCurrentA).toBe(1600);

@@ -193,6 +193,7 @@ agent emulator is still a separate task in the BFDB repository.
 
 On the canonical BDFB CHASSIS (or actual feeder owner Equipment), use the existing
 AccessPorts editor to create POWER / INPUT / EXTERNAL terminals with:
+
 - `snmpFeedInput=true` (only these ports count as SNMP inputs);
 - an optional `feed=A|B` **side label** (not a unique source identity);
 - rated current (A), shunt full-scale current (A), shunt full-scale voltage (mV);
@@ -270,7 +271,7 @@ breaker reading. The previous descendant Equipment average remains separate.
   UI without an invented successful LIVE reading.
 - Restart Site Mapper and confirm the latest sample is recovered as LIVE if
   still within the freshness window, otherwise STALE.
-- Test a real SNMPv3 GET against the BFDB *lab* agent, Collector normalization,
+- Test a real SNMPv3 GET against the BFDB _lab_ agent, Collector normalization,
   Site Mapper historical commit and separate BDFB UI; leave original MQTT
   breaker averages and Modbus certification unchanged.
 - Compare lab proof with physical Delta OID walk and wiring only when IP,

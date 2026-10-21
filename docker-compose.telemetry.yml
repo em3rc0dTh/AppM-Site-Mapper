@@ -122,7 +122,6 @@ services:
       - '127.0.0.1:18082:18082'
     restart: unless-stopped
 
-
   snmp-collector:
     profiles: ['snmp']
     build:

@@ -130,8 +130,13 @@ export class SnmpFeedService {
       const previous = this.hub.latest(sample.targetId);
       for (const [metric, reading] of Object.entries(sample.reported)) {
         const old = previous?.reported[metric];
-        if (old && typeof old === 'object' && 'observedAt' in old &&
-            typeof old.observedAt === 'string' && Date.parse(old.observedAt) > Date.parse(packet.observedAt))
+        if (
+          old &&
+          typeof old === 'object' &&
+          'observedAt' in old &&
+          typeof old.observedAt === 'string' &&
+          Date.parse(old.observedAt) > Date.parse(packet.observedAt)
+        )
           return failure('OUT_OF_ORDER_SNMP_SAMPLE');
       }
     }
@@ -148,7 +153,8 @@ export class SnmpFeedService {
   }
 }
 
-export type SnmpFeedReadingStatus = 'LIVE' | 'STALE' | 'UNMAPPED' | 'NO_DATA' | 'CONFLICT' | 'UNVERIFIED';
+export type SnmpFeedReadingStatus =
+  'LIVE' | 'STALE' | 'UNMAPPED' | 'NO_DATA' | 'CONFLICT' | 'UNVERIFIED';
 
 export interface SnmpBdfbFeedView {
   readonly accessPortId: string;
@@ -232,13 +238,16 @@ export async function summarizeSnmpBdfbLoad(
       voltageBindings.length === 1 &&
       sample?.sourceIdentity === voltageBindings[0]?.sourceIdentity &&
       voltageValue?.oid === voltageBindings[0]?.sourcePointId &&
-      voltageAge >= -60_000 && voltageAge <= freshnessMs &&
-      currentValue && voltageValue &&
-      Math.abs(Date.parse(currentValue.observedAt) - Date.parse(voltageValue.observedAt)) <= freshnessMs,
+      voltageAge >= -60_000 &&
+      voltageAge <= freshnessMs &&
+      currentValue &&
+      voltageValue &&
+      Math.abs(Date.parse(currentValue.observedAt) - Date.parse(voltageValue.observedAt)) <=
+        freshnessMs,
     );
-    const status: SnmpFeedReadingStatus =
-      !verified ? 'UNVERIFIED' :
-      bindings.length > 1
+    const status: SnmpFeedReadingStatus = !verified
+      ? 'UNVERIFIED'
+      : bindings.length > 1
         ? 'CONFLICT'
         : !binding
           ? 'UNMAPPED'
@@ -265,11 +274,15 @@ export async function summarizeSnmpBdfbLoad(
       observedAt: permitted && currentValue ? currentValue.observedAt : null,
       sourceIdentity: binding?.sourceIdentity ?? null,
       currentOid: binding?.sourcePointId ?? null,
-      utilizationPct: rating && displayedCurrent !== null ? (displayedCurrent / rating) * 100 : null,
-      estimatedPowerW: displayedCurrent !== null && displayedVoltage !== null ?
-        displayedCurrent * Math.abs(displayedVoltage) : null,
-      servedPanelIds: Array.isArray(port.attributes?.servedPanelIds) ?
-        port.attributes.servedPanelIds.filter((v): v is string => typeof v === 'string') : [],
+      utilizationPct:
+        rating && displayedCurrent !== null ? (displayedCurrent / rating) * 100 : null,
+      estimatedPowerW:
+        displayedCurrent !== null && displayedVoltage !== null
+          ? displayedCurrent * Math.abs(displayedVoltage)
+          : null,
+      servedPanelIds: Array.isArray(port.attributes?.servedPanelIds)
+        ? port.attributes.servedPanelIds.filter((v): v is string => typeof v === 'string')
+        : [],
     });
   }
   feeds.sort((a, b) => a.label.localeCompare(b.label));
@@ -288,9 +301,11 @@ export async function summarizeSnmpBdfbLoad(
     totalCurrentA: complete ? measuredCurrentA : null,
     measuredCurrentA,
     totalRatedCurrentA: capacityComplete
-      ? live.reduce((sum, feed) => sum + feed.ratedCurrentA!, 0) : null,
+      ? live.reduce((sum, feed) => sum + feed.ratedCurrentA!, 0)
+      : null,
     totalEstimatedPowerW: powerComplete
-      ? live.reduce((sum, feed) => sum + feed.estimatedPowerW!, 0) : null,
+      ? live.reduce((sum, feed) => sum + feed.estimatedPowerW!, 0)
+      : null,
     feedCount: feeds.length,
     freshFeedCount: live.length,
     feeds,

@@ -25,7 +25,10 @@ export async function GET(request: Request) {
       .flatMap((node) => node.accessPorts.filter(isBdfbFeedPort).map((port) => port.id));
     if (ports.length) {
       try {
-        const recovered = await createTelemetryStoreClient().queryLatestEntities(ports, 'ACCESS_PORT');
+        const recovered = await createTelemetryStoreClient().queryLatestEntities(
+          ports,
+          'ACCESS_PORT',
+        );
         for (const sample of recovered) {
           if (sample.protocol !== 'SNMP' || !ports.includes(sample.targetId)) continue;
           const current = telemetry.hub.latest(sample.targetId);
@@ -37,7 +40,10 @@ export async function GET(request: Request) {
     }
   }
   const result = await summarizeSnmpBdfbLoad(
-    deviceId, topology, await createTelemetryBindingRepository(), telemetry.hub,
+    deviceId,
+    topology,
+    await createTelemetryBindingRepository(),
+    telemetry.hub,
   );
   return result
     ? Response.json({ ...result, historyAvailable }, { headers: { 'Cache-Control': 'no-store' } })

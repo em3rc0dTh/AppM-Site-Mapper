@@ -1,5 +1,7 @@
 import {
   bdfbHardwareProfile,
+  ELTEK_BDCBB_CONFIG_2,
+  ELTEK_BDCBB_CONFIG_4,
   CONFIG_4_RATED_CURRENT_A,
   CONFIG_4_SHUNT_CURRENT_A,
   CONFIG_4_SHUNT_MV,
@@ -127,7 +129,7 @@ export async function POST(request: Request) {
   const target = await resolveSnmpFeedPort(topology, data.feedAccessPortId, data.deviceId);
   if (!target) return Response.json({ error: 'INVALID_BDFB_INPUT_FEED' }, { status: 422 });
   const targetDevice = await topology.getById(data.deviceId);
-  if (targetDevice?.kind === 'DEVICE' && bdfbHardwareProfile(targetDevice)) {
+  if (targetDevice?.kind === 'DEVICE' && bdfbHardwareProfile(targetDevice) === ELTEK_BDCBB_CONFIG_4) {
     const slot = config4FeedPosition(target.port);
     const panels = target.port.attributes?.servedPanelIds;
     if (
@@ -144,6 +146,18 @@ export async function POST(request: Request) {
     }
   }
 
+  if (targetDevice?.kind === 'DEVICE' && bdfbHardwareProfile(targetDevice) === ELTEK_BDCBB_CONFIG_2) {
+    const panels = target.port.attributes?.servedPanelIds;
+    const knownPanels = (await topology.listEquipmentForDevice(data.deviceId))
+      .filter((item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'PANEL')
+      .map((item) => item.id);
+    if (!['A','B'].includes(String(target.port.attributes?.feed)) ||
+      config4FeedPosition(target.port) !== null ||
+      target.port.attributes?.independentInputConfirmed !== true ||
+      !Array.isArray(panels) || panels.length !== 2 ||
+      panels.some((id) => !knownPanels.includes(id)))
+      return Response.json({ error: 'CONFIG2_PHYSICAL_MAPPING_INCOMPLETE' }, { status: 422 });
+  }
   const repository = await createTelemetryBindingRepository();
   const [sourceBindings, targetBindings] = await Promise.all([
     repository.listForSource('SNMP', mock.value.sourceIdentity),

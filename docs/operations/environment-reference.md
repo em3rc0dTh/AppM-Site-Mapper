@@ -37,6 +37,7 @@ Do not use the old `BFDB_TELEMETRY_BINDING_MODE=panel-order-24` proposal as an a
 - `SNMP_FEED_POINTS_JSON`: approved OID list with `oid`, `metric` and vendor conversion `scale`. No OID is inferred from a panel's position.
 - `SNMP_POLL_INTERVAL_MS`: initial 30000; the standalone collector does not start unless the Compose `snmp` profile is selected.
 - `SNMP_INGEST_URL`: collector-to-Site Mapper private receiver URL; HTTPS enforced by collector for `APP_ENV=production`.
+- `SNMP_INGEST_MAX_RPM`: production per-controller request ceiling, default 120/minute (valid 1–10000); enforced through a MongoDB shared atomic counter across Next.js replicas. Denied requests receive HTTP 429. An unavailable quota store fails closed with 503. This is defense in depth, **not** an edge/WAF or network-flood quota.
 
 A collector instance connects to **one** controller. Scale via separately configured instances when more controllers are approved. The remote controller can later be replaced by the BFDB SNMP emulation service with no change to the Site Mapper ingest contract. The emulator is NOT part of this change.
 

@@ -134,6 +134,15 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     sessions.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0, name: 'ttl_session_expiry' }),
   ]);
 
+  const snmpQuotas = database.collection('snmp_ingest_quota');
+  await Promise.all([
+    snmpQuotas.createIndex({ key: 1 }, { unique: true, name: 'uq_snmp_ingest_quota_key' }),
+    snmpQuotas.createIndex(
+      { expiresAt: 1 },
+      { expireAfterSeconds: 0, name: 'ttl_snmp_ingest_quota_expiry' },
+    ),
+  ]);
+
   const authRateLimits = database.collection('auth_rate_limits');
   await Promise.all([
     authRateLimits.createIndex({ key: 1 }, { unique: true, name: 'uq_auth_rate_key' }),

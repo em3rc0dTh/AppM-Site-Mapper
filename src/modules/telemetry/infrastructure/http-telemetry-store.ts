@@ -91,12 +91,62 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
   private failures = 0;
   private lastWriteAt: string | null = null;
   private lastError: string | null = null;
+  private lastSnmpDisposition: 'committed' | 'already_committed' | null = null;
 
   constructor(
     private readonly baseUrl: string,
     private readonly timeoutMs = 5_000,
     private readonly accessToken?: string,
   ) {}
+
+  snmpCommitDisposition(): 'committed' | 'already_committed' | null {
+    return this.lastSnmpDisposition;
+  }
+
+  async commitSnmpBatch(
+    sourceIdentity: string,
+    observedAt: string,
+    samples: readonly TelemetrySample[],
+  ): Promise<'committed' | 'already_committed'> {
+    if (!samples.length || samples.length > 64) throw new Error('INVALID_SNMP_BATCH');
+    const response = await fetch(`${this.baseUrl.replace(/\/$/, '')}/snmp-batch`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(this.accessToken ? { authorization: `Bearer ${this.accessToken}` } : {}),
+      },
+      body: JSON.stringify({ sourceIdentity, observedAt, samples }),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(this.timeoutMs),
+    });
+    const result = (await response.json()) as {
+      error?: string;
+      status?: string;
+      acceptedFeeds?: number;
+    };
+    if (!response.ok) {
+      this.failures += 1;
+      if (
+        response.status === 409 &&
+        (result.error === 'SNMP_BATCH_TAMPERED' || result.error === 'OUT_OF_ORDER_SNMP_SAMPLE')
+      )
+        throw new Error(result.error);
+      throw new Error(`SNMP_BATCH_HTTP_${response.status}`);
+    }
+    if (
+      result.acceptedFeeds !== samples.length ||
+      (result.status !== 'committed' && result.status !== 'already_committed')
+    ) {
+      this.failures += 1;
+      throw new Error('SNMP_BATCH_INVALID_ACK');
+    }
+    this.writes += 1;
+    if (result.status === 'committed') this.rowsAccepted += samples.length;
+    this.lastWriteAt = new Date().toISOString();
+    this.lastError = null;
+    this.lastSnmpDisposition = result.status;
+    return result.status;
+  }
 
   async writeDurable(sample: TelemetrySample): Promise<void> {
     const body = { ...serializeTelemetryStoreSample(sample), entitySample: sample };
@@ -229,8 +279,14 @@ export function createTelemetryStoreClient(): HttpTelemetryStore {
   const parsedTimeout = Number(process.env.TELEMETRY_STORE_TIMEOUT_MS);
   const timeoutMs = Number.isInteger(parsedTimeout) && parsedTimeout > 0 ? parsedTimeout : 5_000;
   const token = process.env.TELEMETRY_STORE_TOKEN?.trim();
-  if (isProductionDeployment() && !token) {
-    throw new Error('Production telemetry history store requires TELEMETRY_STORE_TOKEN.');
+  if (isProductionDeployment()) {
+    if (!token || token.length < 32) {
+      throw new Error('Production telemetry history store requires strong TELEMETRY_STORE_TOKEN.');
+    }
+    const url = new URL(baseUrl);
+    if (url.protocol !== 'https:' || url.username || url.password) {
+      throw new Error('Production telemetry history store requires HTTPS with no URL credentials.');
+    }
   }
   return new HttpTelemetryStore(baseUrl, timeoutMs, token);
 }

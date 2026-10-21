@@ -188,19 +188,32 @@ export class SnmpFeedService {
             old.oid === reading.oid &&
             'observedAt' in old &&
             typeof old.observedAt === 'string' &&
-            // Equality is a replay too: changing the value cannot replace it.
-            Date.parse(old.observedAt) >= Date.parse(packet.observedAt)
+            (Date.parse(old.observedAt) > Date.parse(packet.observedAt) ||
+              (Date.parse(old.observedAt) === Date.parse(packet.observedAt) &&
+                (!this.history ||
+                  !('value' in old) ||
+                  !('value' in reading) ||
+                  old.value !== reading.value ||
+                  !('unit' in old) ||
+                  !('unit' in reading) ||
+                  old.unit !== reading.unit)))
           )
             return failure('OUT_OF_ORDER_SNMP_SAMPLE');
         }
       }
     }
     try {
-      for (const sample of accepted) {
-        if (this.history?.writeDurable) await this.history.writeDurable(sample);
-        else await this.history?.write(sample);
+      // No per-feed durable fallback: every SNMP poll is one transaction.
+      if (this.history) {
+        if (!this.history.commitSnmpBatch) return failure('HISTORY_STORE_UNAVAILABLE');
+        await this.history.commitSnmpBatch(packet.sourceIdentity, packet.observedAt, accepted);
       }
-    } catch {
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        (error.message === 'SNMP_BATCH_TAMPERED' || error.message === 'OUT_OF_ORDER_SNMP_SAMPLE')
+      )
+        return failure('OUT_OF_ORDER_SNMP_SAMPLE');
       return failure('HISTORY_STORE_UNAVAILABLE');
     }
     for (const sample of accepted) this.hub.publish(sample);

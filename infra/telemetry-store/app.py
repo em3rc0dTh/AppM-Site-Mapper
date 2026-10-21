@@ -1,4 +1,6 @@
 import hmac
+import hashlib
+import math
 import json
 import os
 from pathlib import Path
@@ -170,6 +172,124 @@ def insert_entity_sample(sample):
           VALUES (%s,%s,%s,%s,%s,%s) ON CONFLICT DO NOTHING""",
           (target_id, target_type, source, binding, received, Jsonb(sample)))
     return 1
+
+
+
+class SnmpBatchConflict(Exception):
+    pass
+
+
+class SnmpBatchOutOfOrder(Exception):
+    pass
+
+
+def insert_snmp_batch(payload):
+    """Serialize one controller's whole poll in durable storage.
+
+    The source row lock works across workers/Next.js replicas; all samples and
+    the monotonic cursor commit or roll back in a single PostgreSQL transaction.
+    """
+    body = record(payload)
+    if body is None:
+        raise ValueError("invalid SNMP batch")
+    source = text_value(body.get("sourceIdentity"))
+    observed = timestamp(body.get("observedAt"))
+    samples = body.get("samples")
+    if (
+        not source or len(source) > 120 or observed is None or observed.tzinfo is None
+        or not isinstance(samples, list) or not 1 <= len(samples) <= 64
+    ):
+        raise ValueError("invalid SNMP batch envelope")
+
+    checked = []
+    seen = set()
+    for sample in samples:
+        s = record(sample)
+        if (
+            s is None or s.get("protocol") != "SNMP"
+            or s.get("targetType") != "ACCESS_PORT"
+            or s.get("entityKind") != "ACCESS_PORT"
+            or s.get("sourceIdentity") != source
+            or timestamp(s.get("sourceObservedAt")) != observed
+        ):
+            raise ValueError("invalid SNMP sample source")
+        target = text_value(s.get("targetId"))
+        binding = text_value(s.get("bindingId"))
+        received = timestamp(s.get("receivedAt"))
+        readings = record(s.get("reported"))
+        if (
+            not target or not binding or not received or received.tzinfo is None
+            or readings is None or not 1 <= len(readings) <= 2
+            or set(readings) - {"currentA", "voltageV"}
+            or target in seen
+        ):
+            raise ValueError("invalid SNMP sample identity")
+        seen.add(target)
+        normalized = {}
+        for metric, point in readings.items():
+            r = record(point)
+            if r is None or set(r) != {"oid", "value", "unit", "observedAt"}:
+                raise ValueError("invalid SNMP reading")
+            value = number_value(r.get("value"))
+            if (
+                value is None or not math.isfinite(value)
+                or not text_value(r.get("oid"))
+                or r.get("unit") != ("A" if metric == "currentA" else "V")
+                or timestamp(r.get("observedAt")) != observed
+                or (metric == "currentA" and value < 0)
+            ):
+                raise ValueError("invalid SNMP metric")
+            normalized[metric] = {
+                "oid": r["oid"], "value": value,
+                "unit": r["unit"], "observedAt": observed.isoformat(),
+            }
+        checked.append((target, binding, received, s, normalized))
+
+    checked.sort(key=lambda entry: entry[0])
+    canonical = [{
+        "targetId": target, "bindingId": binding, "reported": normalized
+    } for target, binding, _, _, normalized in checked]
+    digest = hashlib.sha256(
+        json.dumps(canonical, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
+    ).hexdigest()
+
+    with psycopg.connect(DSN) as conn:
+        # The unique source row serializes first-ever writes as well as existing
+        # rows. A crashed transaction releases its lock and rolls back all data.
+        conn.execute("""
+          INSERT INTO snmp_source_progress (source_identity, last_observed_at)
+          VALUES (%s, 'epoch'::timestamptz) ON CONFLICT DO NOTHING
+        """, (source,))
+        cursor = conn.execute("""
+          SELECT last_observed_at FROM snmp_source_progress
+          WHERE source_identity = %s FOR UPDATE
+        """, (source,)).fetchone()
+        previous = conn.execute("""
+          SELECT payload_hash FROM snmp_ingest_batches
+          WHERE source_identity = %s AND observed_at = %s
+        """, (source, observed)).fetchone()
+        if previous is not None:
+            if previous[0] != digest:
+                raise SnmpBatchConflict("SNMP_BATCH_TAMPERED")
+            return {"status": "already_committed", "acceptedFeeds": len(checked)}
+        if observed <= cursor[0]:
+            raise SnmpBatchOutOfOrder("OUT_OF_ORDER_SNMP_SAMPLE")
+        for target, binding, received, sample, _ in checked:
+            conn.execute("""
+              INSERT INTO telemetry_entity_samples
+                (target_id, target_type, source_identity, binding_id, received_at, sample)
+              VALUES (%s, 'ACCESS_PORT', %s, %s, %s, %s)
+            """, (target, source, binding, received, Jsonb(sample)))
+        conn.execute("""
+          INSERT INTO snmp_ingest_batches
+          (source_identity, observed_at, payload_hash, feed_count)
+          VALUES (%s, %s, %s, %s)
+        """, (source, observed, digest, len(checked)))
+        conn.execute("""
+          UPDATE snmp_source_progress SET last_observed_at = %s
+          WHERE source_identity = %s
+        """, (observed, source))
+    return {"status": "committed", "acceptedFeeds": len(checked)}
 
 
 def query_latest_entity_samples(target_ids, target_type):
@@ -360,7 +480,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "history query failed"})
 
     def do_POST(self):
-        if urlparse(self.path).path != "/samples":
+        if urlparse(self.path).path not in ("/samples", "/snmp-batch"):
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
             return
         if not self.authorized():
@@ -378,6 +498,10 @@ class Handler(BaseHTTPRequestHandler):
 
         try:
             payload = json.loads(self.rfile.read(length))
+            if urlparse(self.path).path == "/snmp-batch":
+                result = insert_snmp_batch(payload)
+                self.send_json(HTTPStatus.ACCEPTED, result)
+                return
             inserted = 0
             if isinstance(payload, dict) and "entitySample" in payload:
                 inserted += insert_entity_sample(payload["entitySample"])
@@ -386,6 +510,8 @@ class Handler(BaseHTTPRequestHandler):
             elif not isinstance(payload, dict) or "entitySample" not in payload:
                 raise ValueError("invalid sample envelope")
             self.send_json(HTTPStatus.ACCEPTED, {"accepted": inserted})
+        except (SnmpBatchConflict, SnmpBatchOutOfOrder) as error:
+            self.send_json(HTTPStatus.CONFLICT, {"error": str(error)})
         except ValueError as error:
             self.send_json(HTTPStatus.BAD_REQUEST, {"error": str(error)})
         except Exception:
@@ -398,6 +524,7 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     with psycopg.connect(DSN) as conn:
         conn.execute(Path(__file__).with_name("002-entity-telemetry.sql").read_text())
+        conn.execute(Path(__file__).with_name("003-snmp-atomic-batches.sql").read_text())
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"SITE_MAPPER_TELEMETRY_STORE_READY host={HOST} port={PORT}", flush=True)
     server.serve_forever()

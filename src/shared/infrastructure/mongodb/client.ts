@@ -1,13 +1,38 @@
 import { MongoClient, type Db } from 'mongodb';
 
-import { requireRuntimeSecret } from '@/config/env';
+import { isProductionDeployment, requireRuntimeSecret } from '@/config/env';
 import { ensurePersistenceIndexes } from '@/shared/infrastructure/mongodb/bootstrap';
 
 let clientPromise: Promise<MongoClient> | undefined;
 let databasePromise: Promise<Db> | undefined;
 
+/** Reject the unauthenticated, plaintext MongoDB lab URI in production. */
+export function assertMongoProductionSecurity(uri: string, production: boolean): void {
+  if (!production) return;
+  let url: URL;
+  try {
+    url = new URL(uri);
+  } catch {
+    throw new Error('Production MongoDB URI is invalid');
+  }
+  if (url.protocol !== 'mongodb:' && url.protocol !== 'mongodb+srv:') {
+    throw new Error('Production MongoDB URI must use mongodb:// or mongodb+srv://');
+  }
+  if (!url.username || !url.password) {
+    throw new Error('Production MongoDB requires authenticated connection credentials');
+  }
+  if (
+    url.protocol !== 'mongodb+srv:' &&
+    url.searchParams.get('tls') !== 'true' &&
+    url.searchParams.get('ssl') !== 'true'
+  ) {
+    throw new Error('Production MongoDB requires TLS');
+  }
+}
+
 export function getClient(): Promise<MongoClient> {
   const uri = requireRuntimeSecret('MONGODB_URI', process.env.MONGODB_URI);
+  assertMongoProductionSecurity(uri, isProductionDeployment());
 
   clientPromise ??= new MongoClient(uri, {
     maxPoolSize: 20,

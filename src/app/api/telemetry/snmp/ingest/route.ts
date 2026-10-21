@@ -39,9 +39,8 @@ export async function POST(request: Request) {
   if (!packet.ok) return Response.json({ error: packet.error }, { status: 400 });
 
   const runtime = await getTelemetryRuntime();
-  const history = process.env.TELEMETRY_HISTORY_ENABLED === 'true'
-    ? createTelemetryStoreClient()
-    : undefined;
+  const history =
+    process.env.TELEMETRY_HISTORY_ENABLED === 'true' ? createTelemetryStoreClient() : undefined;
   const service = new SnmpFeedService(
     await createTopologyRepository(),
     await createTelemetryBindingRepository(),
@@ -51,7 +50,10 @@ export async function POST(request: Request) {
   const result = await service.ingest(packet.value);
   if (!result.ok) return Response.json({ error: result.error }, { status: 422 });
   return Response.json(
-    { acceptedFeeds: result.value.map((sample) => sample.targetId), observedAt: packet.value.observedAt },
+    {
+      acceptedFeeds: result.value.map((sample) => sample.targetId),
+      observedAt: packet.value.observedAt,
+    },
     { status: 202, headers: { 'Cache-Control': 'no-store' } },
   );
 }

@@ -34,7 +34,12 @@ export async function POST(request: Request) {
   if (
     !record(data) ||
     !hasOnlyKeys(data, [
-      'deviceId', 'feedAccessPortId', 'sourceIdentity', 'oid', 'metric', 'confirmPhysicalMapping',
+      'deviceId',
+      'feedAccessPortId',
+      'sourceIdentity',
+      'oid',
+      'metric',
+      'confirmPhysicalMapping',
     ]) ||
     !isBoundedString(data.deviceId, 128) ||
     !isBoundedString(data.feedAccessPortId, 128) ||
@@ -48,16 +53,13 @@ export async function POST(request: Request) {
     schemaVersion: 1,
     sourceIdentity: data.sourceIdentity,
     observedAt: new Date().toISOString(),
-    measurements: [
-      { oid: data.oid, metric, value: 0, unit: metric === 'CURRENT' ? 'A' : 'V' },
-    ],
+    measurements: [{ oid: data.oid, metric, value: 0, unit: metric === 'CURRENT' ? 'A' : 'V' }],
   });
   if (!mock.ok) return Response.json({ error: 'INVALID_OID_OR_SOURCE' }, { status: 400 });
 
   const topology = await createTopologyRepository();
   const target = await resolveSnmpFeedPort(topology, data.feedAccessPortId, data.deviceId);
-  if (!target)
-    return Response.json({ error: 'INVALID_BDFB_INPUT_FEED' }, { status: 422 });
+  if (!target) return Response.json({ error: 'INVALID_BDFB_INPUT_FEED' }, { status: 422 });
 
   const repository = await createTelemetryBindingRepository();
   const [sourceBindings, targetBindings] = await Promise.all([
@@ -72,8 +74,11 @@ export async function POST(request: Request) {
   }
   if (
     same.length ||
-    targetBindings.some((b) => b.lifecycle === 'ACTIVE' && b.protocol === 'SNMP' && b.metric === metric)
-  ) return Response.json({ error: 'SNMP_BINDING_CONFLICT' }, { status: 409 });
+    targetBindings.some(
+      (b) => b.lifecycle === 'ACTIVE' && b.protocol === 'SNMP' && b.metric === metric,
+    )
+  )
+    return Response.json({ error: 'SNMP_BINDING_CONFLICT' }, { status: 409 });
 
   const now = new Date().toISOString();
   const binding: TelemetryBinding = {

@@ -81,9 +81,10 @@ export class SnmpFeedService {
       const binding = matches[0]!;
       const target = await resolveSnmpFeedPort(this.topology, binding.targetId);
       if (!target) return failure('INVALID_SNMP_FEED_TARGET');
-      const activeForPort = (await this.bindings.listForTarget('ACCESS_PORT', target.port.id)).filter(
-        (b) =>
-          b.lifecycle === 'ACTIVE' && b.protocol === 'SNMP' && b.metric === observation.metric,
+      const activeForPort = (
+        await this.bindings.listForTarget('ACCESS_PORT', target.port.id)
+      ).filter(
+        (b) => b.lifecycle === 'ACTIVE' && b.protocol === 'SNMP' && b.metric === observation.metric,
       );
       if (activeForPort.length !== 1 || activeForPort[0]!.id !== binding.id)
         return failure('CONFLICTING_SNMP_FEED');
@@ -162,7 +163,12 @@ export async function summarizeSnmpBdfbLoad(
   freshnessMs = 90_000,
 ): Promise<SnmpBdfbLoadView | null> {
   const device = await topology.getById(deviceId);
-  if (!device || device.kind !== 'DEVICE' || device.deviceType !== 'BDFB' || device.lifecycle !== 'ACTIVE')
+  if (
+    !device ||
+    device.kind !== 'DEVICE' ||
+    device.deviceType !== 'BDFB' ||
+    device.lifecycle !== 'ACTIVE'
+  )
     return null;
 
   const equipment = (await topology.listEquipmentForDevice(deviceId)).filter(
@@ -213,9 +219,10 @@ export async function summarizeSnmpBdfbLoad(
       ratedCurrentA: typeof nominal === 'number' && nominal > 0 ? nominal : null,
       status,
       currentA: fresh ? currentValue!.value : null,
-      voltageV: fresh && voltageValue && sample?.sourceIdentity === binding?.sourceIdentity
-        ? voltageValue.value
-        : null,
+      voltageV:
+        fresh && voltageValue && sample?.sourceIdentity === binding?.sourceIdentity
+          ? voltageValue.value
+          : null,
       observedAt: permitted && currentValue ? currentValue.observedAt : null,
       sourceIdentity: binding?.sourceIdentity ?? null,
       currentOid: binding?.sourcePointId ?? null,
@@ -223,13 +230,15 @@ export async function summarizeSnmpBdfbLoad(
   }
   feeds.sort((a, b) => a.label.localeCompare(b.label));
   const live = feeds.filter((item) => item.status === 'LIVE');
-  const measuredCurrentA = live.length
-    ? live.reduce((sum, item) => sum + item.currentA!, 0)
-    : null;
+  const measuredCurrentA = live.length ? live.reduce((sum, item) => sum + item.currentA!, 0) : null;
   const complete = feeds.length > 0 && live.length === feeds.length;
   return {
     deviceId,
-    status: complete ? 'COMPLETE' : feeds.every((item) => item.status === 'UNMAPPED') ? 'UNMAPPED' : 'PARTIAL',
+    status: complete
+      ? 'COMPLETE'
+      : feeds.every((item) => item.status === 'UNMAPPED')
+        ? 'UNMAPPED'
+        : 'PARTIAL',
     totalCurrentA: complete ? measuredCurrentA : null,
     measuredCurrentA,
     feedCount: feeds.length,
@@ -238,7 +247,9 @@ export async function summarizeSnmpBdfbLoad(
   };
 }
 
-function metricReading(candidate: unknown): { value: number; oid: string; observedAt: string } | null {
+function metricReading(
+  candidate: unknown,
+): { value: number; oid: string; observedAt: string } | null {
   if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) return null;
   const record = candidate as Record<string, unknown>;
   if (
@@ -247,6 +258,7 @@ function metricReading(candidate: unknown): { value: number; oid: string; observ
     typeof record.oid !== 'string' ||
     typeof record.observedAt !== 'string' ||
     !Number.isFinite(Date.parse(record.observedAt))
-  ) return null;
+  )
+    return null;
   return { value: record.value, oid: record.oid, observedAt: record.observedAt };
 }

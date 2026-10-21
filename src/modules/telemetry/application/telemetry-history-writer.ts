@@ -3,6 +3,12 @@ import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 export interface TelemetryHistoryWriter {
   write(sample: TelemetrySample): Promise<void>;
   writeDurable?(sample: TelemetrySample): Promise<void>;
+  /** Atomic, durable, cross-replica SNMP poll barrier. Must not fall back to per-feed writes. */
+  commitSnmpBatch?(
+    sourceIdentity: string,
+    observedAt: string,
+    samples: readonly TelemetrySample[],
+  ): Promise<'committed' | 'already_committed'>;
   /** Optional durability-backed anti-replay read; supported by HttpTelemetryStore. */
   queryLatestEntities?(
     targetIds: readonly string[],

@@ -98,6 +98,51 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     private readonly accessToken?: string,
   ) {}
 
+
+  async commitSnmpBatch(
+    sourceIdentity: string,
+    observedAt: string,
+    samples: readonly TelemetrySample[],
+  ): Promise<'committed' | 'already_committed'> {
+    if (!samples.length || samples.length > 64) throw new Error('INVALID_SNMP_BATCH');
+    const response = await fetch(`\${this.baseUrl.replace(/\/$/, '')}/snmp-batch`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...(this.accessToken ? { authorization: `Bearer ${this.accessToken}` } : {}),
+      },
+      body: JSON.stringify({ sourceIdentity, observedAt, samples }),
+      cache: 'no-store',
+      signal: AbortSignal.timeout(this.timeoutMs),
+    });
+    const result = (await response.json()) as {
+      error?: string;
+      status?: string;
+      acceptedFeeds?: number;
+    };
+    if (!response.ok) {
+      this.failures += 1;
+      if (
+        response.status === 409 &&
+        (result.error === 'SNMP_BATCH_TAMPERED' ||
+          result.error === 'OUT_OF_ORDER_SNMP_SAMPLE')
+      ) throw new Error(result.error);
+      throw new Error(`SNMP_BATCH_HTTP_${response.status}`);
+    }
+    if (
+      result.acceptedFeeds !== samples.length ||
+      (result.status !== 'committed' && result.status !== 'already_committed')
+    ) {
+      this.failures += 1;
+      throw new Error('SNMP_BATCH_INVALID_ACK');
+    }
+    this.writes += 1;
+    if (result.status === 'committed') this.rowsAccepted += samples.length;
+    this.lastWriteAt = new Date().toISOString();
+    this.lastError = null;
+    return result.status;
+  }
+
   async writeDurable(sample: TelemetrySample): Promise<void> {
     const body = { ...serializeTelemetryStoreSample(sample), entitySample: sample };
 

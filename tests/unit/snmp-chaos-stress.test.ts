@@ -128,9 +128,10 @@ describe('Bounded SNMP Config4 chaos stress (only isolated memory fixtures)', ()
     let writes = 0;
     const service = new SnmpFeedService(f.topology, f.bindings, new TelemetryHub(32), {
       async write() {},
-      async writeDurable(sample) {
-        writes++;
-        latest.set(sample.targetId, sample);
+      async commitSnmpBatch(_source, _observedAt, samples) {
+        writes += samples.length;
+        for (const sample of samples) latest.set(sample.targetId, sample);
+        return 'committed' as const;
       },
       async queryLatestEntities(targets) {
         return targets.flatMap((id) => {
@@ -169,17 +170,20 @@ describe('Bounded SNMP Config4 chaos stress (only isolated memory fixtures)', ()
     expect(stale).toMatchObject({ ok: false, error: 'OUT_OF_ORDER_SNMP_SAMPLE' });
   });
 
-  it('exposes torn durable multi-feed writes when the store fails during one poll', async () => {
+  it('rolls back all feeds after failure and allows a whole-poll retry', async () => {
     const f = lab();
     const latest = new Map<string, TelemetrySample>();
     const hub = new TelemetryHub(32);
-    let requests = 0;
+    let failOnce = true;
     const service = new SnmpFeedService(f.topology, f.bindings, hub, {
       async write() {},
-      async writeDurable(sample) {
-        requests++;
-        if (requests === 3) throw new Error('INJECTED_TIMESCALE_FAILURE');
-        latest.set(sample.targetId, sample);
+      async commitSnmpBatch(_source, _observedAt, samples) {
+        if (failOnce) {
+          failOnce = false;
+          throw new Error('INJECTED_TIMESCALE_ROLLBACK');
+        }
+        for (const sample of samples) latest.set(sample.targetId, sample);
+        return 'committed' as const;
       },
       async queryLatestEntities(targets) {
         return targets.flatMap((id) => {
@@ -190,10 +194,11 @@ describe('Bounded SNMP Config4 chaos stress (only isolated memory fixtures)', ()
     });
     const first = await service.ingest(packet(f.identities[0]!, 0), observed);
     expect(first).toMatchObject({ ok: false, error: 'HISTORY_STORE_UNAVAILABLE' });
-    expect(latest.size).toBe(2); // Found: partial durable writes (not atomic).
+    expect(latest.size).toBe(0); // No torn durable state.
     expect(hub.snapshot()).toHaveLength(0);
     const retry = await service.ingest(packet(f.identities[0]!, 0), observed);
-    expect(retry).toMatchObject({ ok: false, error: 'OUT_OF_ORDER_SNMP_SAMPLE' });
-    expect(hub.snapshot()).toHaveLength(0);
+    expect(retry.ok).toBe(true);
+    expect(latest.size).toBe(4);
+    expect(hub.snapshot()).toHaveLength(4);
   });
 });

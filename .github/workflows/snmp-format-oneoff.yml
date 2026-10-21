@@ -1,0 +1,30 @@
+name: SNMP format one-off
+on:
+  push:
+    branches:
+      - feat/snmp-feed-ingestion-foundation
+permissions:
+  contents: write
+jobs:
+  format-snmp:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/snmp-feed-ingestion-foundation
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: |
+          npx prettier --write             src/app/api/telemetry/snmp/commission/route.ts             src/app/api/telemetry/snmp/feeds/history/route.ts             src/app/api/telemetry/snmp/ingest/route.ts             src/components/power/snmp-feed-load-panel.tsx             src/modules/telemetry/application/snmp-feed-service.ts             tests/unit/snmp-feed.test.ts
+      - name: Commit formatting to feature branch
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add src/app/api/telemetry/snmp/commission/route.ts src/app/api/telemetry/snmp/feeds/history/route.ts src/app/api/telemetry/snmp/ingest/route.ts src/components/power/snmp-feed-load-panel.tsx src/modules/telemetry/application/snmp-feed-service.ts tests/unit/snmp-feed.test.ts
+            git commit -m "style(snmp): apply repository Prettier format"
+            git push origin HEAD:feat/snmp-feed-ingestion-foundation
+          fi

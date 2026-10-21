@@ -126,8 +126,17 @@ describe('ELTEK_BDCBB_CONFIG_4 manufacturer profile (non-breaking)', () => {
     ]);
     expect(assessment.inventoryComplete).toBe(false);
     expect(assessment.issues).toContain('DUPLICATE_INPUT_A1');
-    expect(assessment.issues).toContain('DUPLICATE_PANEL_MAPPING_A2');
     expect(assessment.missingFeedPositions).toContain('B1');
+    const separatePanelConflict = assessConfig4Inventory([
+      { ...f.chassis, accessPorts: [
+        original[0]!,
+        { ...original[1]!, attributes: {
+          ...original[1]!.attributes, servedPanelIds: ['panel-A1'],
+        } },
+        original[2]!, original[3]!,
+      ] }, ...f.panels,
+    ]);
+    expect(separatePanelConflict.issues).toContain('DUPLICATE_PANEL_MAPPING_A2');
   });
 
   it('rejects a missing panel even if the four shunts report CURRENT', () => {

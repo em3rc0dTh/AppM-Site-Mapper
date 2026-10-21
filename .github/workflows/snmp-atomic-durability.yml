@@ -35,8 +35,8 @@ jobs:
       - name: Execute real PostgreSQL atomic rollback, idempotency and concurrency
         run: |
           container="$(docker compose -f docker-compose.telemetry.yml ps -q telemetry-store)"
-          docker cp infra/telemetry-store/test_snmp_atomic_integration.py "$container:/app/test_snmp_atomic_integration.py"
-          docker compose -f docker-compose.telemetry.yml exec -T telemetry-store python test_snmp_atomic_integration.py
+          docker cp infra/telemetry-store/snmp_atomic_integration.py "$container:/app/snmp_atomic_integration.py"
+          docker compose -f docker-compose.telemetry.yml exec -T telemetry-store python snmp_atomic_integration.py
       - name: Sanitize failure diagnostics
         if: failure()
         run: docker compose -f docker-compose.telemetry.yml logs --tail=40 telemetry-store timescaledb

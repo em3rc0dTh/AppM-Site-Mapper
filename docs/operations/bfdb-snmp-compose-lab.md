@@ -153,10 +153,10 @@ shunts (side A feeding linked breaker panels A1 + A2, side B feeding B1 + B2).
 Do not map an independent current per panel unless the shunts actually exist.
 Site Mapper also supports Configuration 4 (A1/A2/B1/B2, four independent shunts).
 
-| Hardware | SNMP | Number of CURRENT OIDs | Lab OID root |
-| --- | --- | ---: | --- |
-| Config 2 | v2c or v3 | 2 | `1.3.6.1.4.1.8072.9999.2026.48` |
-| Config 4 | v2c or v3 | 4 | `1.3.6.1.4.1.8072.9999.2026.49` |
+| Hardware | SNMP      | Number of CURRENT OIDs | Lab OID root                    |
+| -------- | --------- | ---------------------: | ------------------------------- |
+| Config 2 | v2c or v3 |                      2 | `1.3.6.1.4.1.8072.9999.2026.48` |
+| Config 4 | v2c or v3 |                      4 | `1.3.6.1.4.1.8072.9999.2026.49` |
 
 The simulator publishes the same count of optional VOLTAGE OIDs in either
 profile. These OIDs are **synthetic**; real Delta indexing and measurement

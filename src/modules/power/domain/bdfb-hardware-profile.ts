@@ -20,8 +20,7 @@ export function isConfig4Slot(value: unknown): value is Config4Slot {
 export type BdfbHardwareProfile = typeof ELTEK_BDCBB_CONFIG_2 | typeof ELTEK_BDCBB_CONFIG_4;
 export function bdfbHardwareProfile(device: DeviceNode): BdfbHardwareProfile | null {
   const selected = device.attributes?.bdfbHardwareProfile;
-  return selected === ELTEK_BDCBB_CONFIG_2 || selected === ELTEK_BDCBB_CONFIG_4
-    ? selected : null;
+  return selected === ELTEK_BDCBB_CONFIG_2 || selected === ELTEK_BDCBB_CONFIG_4 ? selected : null;
 }
 
 /** A/B is only a physical side. A1/A2/B1/B2 identify distinct inputs. */
@@ -129,15 +128,24 @@ export function assessConfig2Inventory(equipment: readonly EquipmentNode[]): Con
   const seen = new Set<string>();
   for (const side of ['A', 'B'] as const) {
     const group = ports.filter((port) => port.attributes?.feed === side);
-    if (!group.length) { missingFeedPositions.push(side); continue; }
-    if (group.length !== 1) { issues.push(`DUPLICATE_INPUT_${side}`); continue; }
+    if (!group.length) {
+      missingFeedPositions.push(side);
+      continue;
+    }
+    if (group.length !== 1) {
+      issues.push(`DUPLICATE_INPUT_${side}`);
+      continue;
+    }
     const port = group[0]!;
     if (port.attributes?.independentInputConfirmed !== true)
       issues.push(`SHUNT_NOT_VERIFIED_${side}`);
     if (config4FeedPosition(port)) issues.push(`WRONG_FEED_POSITION_${side}`);
     const linked = port.attributes?.servedPanelIds;
-    if (!Array.isArray(linked) || linked.length !== 2 ||
-        linked.some((id) => typeof id !== 'string' || !panels.has(id))) {
+    if (
+      !Array.isArray(linked) ||
+      linked.length !== 2 ||
+      linked.some((id) => typeof id !== 'string' || !panels.has(id))
+    ) {
       issues.push(`PANEL_MAPPING_INCOMPLETE_${side}`);
     } else {
       for (const id of linked) {
@@ -160,7 +168,10 @@ export function assessConfig2Inventory(equipment: readonly EquipmentNode[]): Con
   };
 }
 export type BdfbInventoryAssessment = Config2Assessment | Config4Assessment;
-export function assessBdfbInventory(profile: BdfbHardwareProfile, equipment: readonly EquipmentNode[]): BdfbInventoryAssessment {
+export function assessBdfbInventory(
+  profile: BdfbHardwareProfile,
+  equipment: readonly EquipmentNode[],
+): BdfbInventoryAssessment {
   return profile === ELTEK_BDCBB_CONFIG_2
     ? assessConfig2Inventory(equipment)
     : assessConfig4Inventory(equipment);

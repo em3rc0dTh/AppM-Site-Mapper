@@ -36,12 +36,18 @@ const config = {
 
 if (!['2c', '3'].includes(config.version)) throw new Error('SNMP_VERSION must be 2c or 3');
 if (config.ingestToken.length < 32) throw new Error('SNMP ingest token must be >=32 chars');
-if (config.version === '3' && (!config.username || config.authKey.length < 8 || config.privKey.length < 8))
+if (
+  config.version === '3' &&
+  (!config.username || config.authKey.length < 8 || config.privKey.length < 8)
+)
   throw new Error('SNMPv3 authPriv credentials are incomplete');
 if (config.version === '2c' && (!config.community || /[\r\n]/.test(config.community)))
   throw new Error('SNMPv2c read-only community must be configured');
-if (config.version === '2c' && process.env.APP_ENV === 'production' &&
-    process.env.SNMP_V2C_ACKNOWLEDGE_PLAINTEXT !== 'true')
+if (
+  config.version === '2c' &&
+  process.env.APP_ENV === 'production' &&
+  process.env.SNMP_V2C_ACKNOWLEDGE_PLAINTEXT !== 'true'
+)
   throw new Error('Production SNMPv2c requires explicit plaintext risk acknowledgement');
 if (!/^[a-zA-Z0-9][a-zA-Z0-9_.:-]{0,119}$/.test(config.sourceIdentity))
   throw new Error('SNMP_CONTROLLER_ID must be a stable single-segment source identity');
@@ -61,21 +67,22 @@ const user = {
   privProtocol: snmp.PrivProtocols.aes,
   privKey: config.privKey,
 };
-const session = config.version === '3'
-  ? snmp.createV3Session(config.host, user, {
-  version: snmp.Version3,
-  port: config.port,
-  retries: 1,
-  timeout: config.timeoutMs,
-  transport: 'udp4',
-  })
-  : snmp.createSession(config.host, config.community, {
-    version: snmp.Version2c,
-    port: config.port,
-    retries: 1,
-    timeout: config.timeoutMs,
-    transport: 'udp4',
-  });
+const session =
+  config.version === '3'
+    ? snmp.createV3Session(config.host, user, {
+        version: snmp.Version3,
+        port: config.port,
+        retries: 1,
+        timeout: config.timeoutMs,
+        transport: 'udp4',
+      })
+    : snmp.createSession(config.host, config.community, {
+        version: snmp.Version2c,
+        port: config.port,
+        retries: 1,
+        timeout: config.timeoutMs,
+        transport: 'udp4',
+      });
 
 function getOids(oids) {
   return new Promise((resolve, reject) => {

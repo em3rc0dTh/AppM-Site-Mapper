@@ -63,12 +63,14 @@ export async function POST(request: Request) {
   const input = body as Record<string, unknown>;
   if (
     !isBoundedString(input.deviceId, 128) ||
-    (input.hardwareProfile !== ELTEK_BDCBB_CONFIG_2 && input.hardwareProfile !== ELTEK_BDCBB_CONFIG_4) ||
+    (input.hardwareProfile !== ELTEK_BDCBB_CONFIG_2 &&
+      input.hardwareProfile !== ELTEK_BDCBB_CONFIG_4) ||
     input.confirmInstalledProfile !== true
   ) {
     return Response.json({ error: 'INVALID_PROFILE_REQUEST' }, { status: 400 });
   }
-  const selectedProfile = input.hardwareProfile as typeof ELTEK_BDCBB_CONFIG_2 | typeof ELTEK_BDCBB_CONFIG_4;
+  const selectedProfile = input.hardwareProfile as
+    typeof ELTEK_BDCBB_CONFIG_2 | typeof ELTEK_BDCBB_CONFIG_4;
   const topology = await createTopologyRepository();
   const device = await topology.getById(input.deviceId);
   if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB' || device.lifecycle !== 'ACTIVE')
@@ -77,7 +79,9 @@ export async function POST(request: Request) {
     return Response.json({ hardwareProfile: selectedProfile, alreadySelected: true });
   // Never silently reinterpret existing OIDs when the physical layout changes.
   const equipment = await topology.listEquipmentForDevice(device.id);
-  const bindingsRepo = await (await import('@/modules/telemetry/infrastructure/telemetry-binding-repository-factory')).createTelemetryBindingRepository();
+  const bindingsRepo = await (
+    await import('@/modules/telemetry/infrastructure/telemetry-binding-repository-factory')
+  ).createTelemetryBindingRepository();
   for (const owner of equipment) {
     for (const port of owner.accessPorts.filter((p) => p.lifecycle === 'ACTIVE')) {
       const bindings = await bindingsRepo.listForTarget('ACCESS_PORT', port.id);

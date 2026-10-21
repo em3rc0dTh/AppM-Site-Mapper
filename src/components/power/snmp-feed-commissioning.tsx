@@ -176,10 +176,18 @@ export function SnmpFeedCommissioning({
           {configuration?.canCommission && (
             <p>
               Physical profile: {configuration.hardwareProfile ?? 'NOT SELECTED'}.
-              <button type="button" disabled={busy} onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_2')}>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_2')}
+              >
                 SELECT CONFIGURATION 2 · SHUNTS A / B
               </button>
-              <button type="button" disabled={busy} onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_4')}>
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_4')}
+              >
                 SELECT CONFIGURATION 4 · A1 / A2 / B1 / B2
               </button>
             </p>

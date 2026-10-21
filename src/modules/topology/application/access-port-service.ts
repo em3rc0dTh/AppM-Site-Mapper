@@ -151,7 +151,8 @@ export class AccessPortService {
       if (bdfbHardwareProfile(device)) {
         if (!input.feedPosition || !isConfig4Slot(input.feedPosition))
           return failure('INVALID_PORT');
-        if (input.servedPanelIds?.length > 1) return failure('INVALID_FEED_PANELS');
+        if (input.servedPanelIds && input.servedPanelIds.length > 1)
+          return failure('INVALID_FEED_PANELS');
         const otherPorts = peers.flatMap((item) => item.accessPorts)
           .filter((port) => port.lifecycle === 'ACTIVE' && port.id !== existingId &&
             port.attributes?.snmpFeedInput === true);

@@ -1,6 +1,6 @@
 # Site Mapper MK1 — consolidación y disposición de ramas (2026-10-21)
 
-**Base de referencia verificada:** `main` @ `4b91b1dec11c530aca6132ce19a9ea3b5df5fe46`.  
+**Base inicial de referencia:** `main` @ `4b91b1dec11c530aca6132ce19a9ea3b5df5fe46`. **Estado final:** `main` como única rama remota, sin pérdida de los nueve commits históricos, ahora fijados por etiquetas Git.  
 **Intención:** mantener `main` como única rama de desarrollo activa, sin introducir regresiones de implementaciones antiguas.
 
 ## Regla de seguridad
@@ -32,7 +32,7 @@ Cerrar una PR, borrar una rama o tener su código en el historial **no equivale*
 - `main` contiene Home BDFB v2 + colector SNMP opcional + ingestión por alimentador, así como las correcciones HTTP/MongoDB/Modbus ya fusionadas.
 - El pipeline general y el E2E operativos de `main` fueron verificados como satisfactorios en el ciclo de consolidación anterior.
 - La conexión física Delta, su firmware/OID y credenciales siguen siendo una dependencia externa. No se afirma certificación con hardware.
-- La eliminación de referencias remotas no se puede efectuar con el conjunto de acciones actualmente expuesto por el conector GitHub en este entorno. Debe realizarse desde GitHub Branches o mediante `git push origin --delete <rama>` después de verificar dependencias de CI y despliegues. Esta auditoría **no afirma que las ramas fueron borradas**.
+- **Limpieza ejecutada y verificada:** un workflow temporal con permiso `contents: write` creó y verificó nueve etiquetas Git `refs/tags/archive/site-mapper-2026-10-21/<rama>` (cada una apunta exactamente al SHA histórico de esta tabla) y posteriormente eliminó las nueve referencias `refs/heads/<rama>`. GitHub Actions run `39630794397`: **success**. La API de ramas devolvió exclusivamente `main`. Los respaldos etiquetados permanecen en el repositorio y se pueden recuperar mediante `git fetch --tags`.
 
 ## Política futura
 

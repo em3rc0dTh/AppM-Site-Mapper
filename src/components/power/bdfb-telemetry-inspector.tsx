@@ -223,7 +223,7 @@ export function BdfbTelemetryInspector({
         </div>
       </div>
 
-      <SnmpFeedLoadPanel deviceId={node.id} />
+      <SnmpFeedLoadPanel deviceId={node.id} chassisId={presentation.chassisId} />
 
       <section className="zip-bdfb-live-average" aria-label="BDFB telemetry">
         <header>

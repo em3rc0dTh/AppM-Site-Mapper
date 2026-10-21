@@ -122,6 +122,29 @@ services:
       - '127.0.0.1:18082:18082'
     restart: unless-stopped
 
+
+  snmp-collector:
+    profiles: ['snmp']
+    build:
+      context: .
+      dockerfile: infra/snmp-collector/Dockerfile
+    environment:
+      APP_ENV: '${APP_ENV:-development}'
+      SNMP_CONTROLLER_HOST: '${SNMP_CONTROLLER_HOST:-}'
+      SNMP_CONTROLLER_PORT: '${SNMP_CONTROLLER_PORT:-161}'
+      SNMP_CONTROLLER_ID: '${SNMP_CONTROLLER_ID:-}'
+      SNMP_V3_USERNAME: '${SNMP_V3_USERNAME:-}'
+      SNMP_V3_AUTH_KEY: '${SNMP_V3_AUTH_KEY:-}'
+      SNMP_V3_PRIV_KEY: '${SNMP_V3_PRIV_KEY:-}'
+      SNMP_FEED_POINTS_JSON: '${SNMP_FEED_POINTS_JSON:-[]}'
+      SNMP_POLL_INTERVAL_MS: '${SNMP_POLL_INTERVAL_MS:-30000}'
+      SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:-}'
+      SNMP_INGEST_URL: '${SNMP_INGEST_URL:-http://site-mapper:3000/api/telemetry/snmp/ingest}'
+    depends_on:
+      site-mapper:
+        condition: service_started
+    restart: unless-stopped
+
   operational-console:
     build:
       context: .

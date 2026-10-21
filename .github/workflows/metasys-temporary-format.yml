@@ -1,0 +1,24 @@
+name: Temporary Metasys source formatting
+on:
+  push:
+    branches:
+      - feat/modbus-tcp-metasys-integration
+permissions:
+  contents: read
+jobs:
+  formatted:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --no-audit --no-fund
+      - name: Print Prettier-formatted changed files
+        run: |
+          npx prettier --write infra/modbus-tcp/server.mjs infra/modbus-tcp/server.test.mjs infra/modbus-tcp/register-map.mjs scripts/operations/generate-metasys-register-map.mjs docs/telemetry/metasys-register-map.md docs/telemetry/modbus-tcp-output.md docker-compose.telemetry.yml .github/workflows/modbus-tcp.yml
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const files = ['infra/modbus-tcp/server.mjs','infra/modbus-tcp/server.test.mjs','infra/modbus-tcp/register-map.mjs','scripts/operations/generate-metasys-register-map.mjs','docs/telemetry/metasys-register-map.md','docs/telemetry/modbus-tcp-output.md','docker-compose.telemetry.yml','.github/workflows/modbus-tcp.yml'];
+          for (const path of files) console.log('FORMATTED_FILE_JSON=' + JSON.stringify({ path, content: fs.readFileSync(path, 'utf8') }));
+          NODE

@@ -1,0 +1,29 @@
+name: One-time SNMP chaos formatter
+on:
+  push:
+    branches: [security/snmp-chaos-stress-20261021]
+    paths: ['.github/workflows/snmp-chaos-format-once.yml']
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: security/snmp-chaos-stress-20261021
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx prettier --write infra/snmp-collector/collector-core.mjs infra/snmp-collector/server.mjs infra/snmp-collector/chaos.test.mjs tests/unit/snmp-chaos-stress.test.ts docs/security/snmp-adversarial-audit-2026-10-21.md .github/workflows/snmp-chaos-stress.yml
+      - name: Commit formatted security files
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -u
+            git commit -m "style(security): format bounded SNMP chaos certification and report"
+            git push origin HEAD:security/snmp-chaos-stress-20261021
+          fi

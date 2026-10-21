@@ -23,8 +23,8 @@ PORT = int(os.getenv("STORE_PORT", "8080"))
 MAX_BODY = 2_000_000
 MAX_READINGS = 256
 ACCESS_TOKEN = os.getenv("TELEMETRY_STORE_TOKEN", "").strip()
-if os.getenv("STORE_ENV") == "production" and not ACCESS_TOKEN:
-    raise RuntimeError("Production telemetry store requires TELEMETRY_STORE_TOKEN")
+if os.getenv("STORE_ENV") == "production" and len(ACCESS_TOKEN) < 32:
+    raise RuntimeError("Production telemetry store requires TELEMETRY_STORE_TOKEN (>=32 chars)")
 
 
 def record(value):

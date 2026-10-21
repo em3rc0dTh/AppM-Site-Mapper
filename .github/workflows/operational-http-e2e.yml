@@ -55,6 +55,7 @@ jobs:
       SNMP_INGEST_TOKEN: isolated-snmp-ci-collector-token-2026-not-production
       TELEMETRY_STORE_URL: http://127.0.0.1:18081
       TELEMETRY_STORE_TOKEN: mk1-ci-isolated-store-secret
+      TIMESCALE_DB_PASSWORD: isolated-ci-timescale-only-secret
       CI_HTTP_BASE_URL: http://127.0.0.1:3100
       MODBUS_BRIDGE_URL: http://127.0.0.1:18082
       MODBUS_TEST_PORT: '1503'

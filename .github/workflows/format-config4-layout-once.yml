@@ -1,0 +1,29 @@
+name: Format Configuration 4 physical layout
+on:
+  push:
+    branches: [feat/bdfb-config4-hardware-contract]
+    paths: ['.github/workflows/format-config4-layout-once.yml']
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/bdfb-config4-hardware-contract
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx prettier --write src/components/power/snmp-feed-load-panel.tsx src/app/interaction-recovery.css tests/integration/access-port-service.test.ts
+      - name: Save formatting and push
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -u
+            git commit -m "style(bdfb): format Config 4 physical view and service tests"
+            git push origin HEAD:feat/bdfb-config4-hardware-contract
+          fi

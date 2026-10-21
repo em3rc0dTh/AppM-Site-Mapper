@@ -1,7 +1,7 @@
 name: SNMP Configuration 4 bounded chaos certification
 on:
   push:
-    branches: [security/snmp-chaos-stress-20261021]
+    branches: [main, security/snmp-chaos-stress-20261021]
   pull_request:
     paths:
       - 'tests/unit/snmp-chaos-stress.test.ts'

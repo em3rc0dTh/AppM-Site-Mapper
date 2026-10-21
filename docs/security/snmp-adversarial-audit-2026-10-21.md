@@ -90,7 +90,6 @@ Actions PASS with resistance to every attack. The non-atomic Timescale batch
 issue #78 remains unresolved and blocks any claim of fully durable multi-replica
 operation.
 
-
 ## Atomic feed persistence follow-up (2026-10-21)
 
 The durable SNMP path has been replaced with a single PostgreSQL transaction for

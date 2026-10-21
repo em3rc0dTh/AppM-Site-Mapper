@@ -228,7 +228,6 @@ describe('SNMP operator readiness and durability', () => {
       async write() {},
       async commitSnmpBatch() {
         throw new Error('Timescale is down');
-        return 'committed' as const;
       },
     });
     const result = await service.ingest(f.packet([{ oid: oidA, value: 220 }]), t);

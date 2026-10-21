@@ -191,9 +191,11 @@ export class SnmpFeedService {
             (Date.parse(old.observedAt) > Date.parse(packet.observedAt) ||
               (Date.parse(old.observedAt) === Date.parse(packet.observedAt) &&
                 (!this.history ||
-                  !('value' in old) || !('value' in reading) ||
+                  !('value' in old) ||
+                  !('value' in reading) ||
                   old.value !== reading.value ||
-                  !('unit' in old) || !('unit' in reading) ||
+                  !('unit' in old) ||
+                  !('unit' in reading) ||
                   old.unit !== reading.unit)))
           )
             return failure('OUT_OF_ORDER_SNMP_SAMPLE');
@@ -211,7 +213,8 @@ export class SnmpFeedService {
         error instanceof Error &&
         (error.message === 'SNMP_BATCH_TAMPERED' ||
           error.message === 'OUT_OF_ORDER_SNMP_SAMPLE')
-      ) return failure('OUT_OF_ORDER_SNMP_SAMPLE');
+      )
+        return failure('OUT_OF_ORDER_SNMP_SAMPLE');
       return failure('HISTORY_STORE_UNAVAILABLE');
     }
     for (const sample of accepted) this.hub.publish(sample);

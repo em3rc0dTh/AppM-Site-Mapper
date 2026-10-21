@@ -99,7 +99,6 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     private readonly accessToken?: string,
   ) {}
 
-
   snmpCommitDisposition(): 'committed' | 'already_committed' | null {
     return this.lastSnmpDisposition;
   }

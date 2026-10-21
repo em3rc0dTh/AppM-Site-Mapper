@@ -1,0 +1,26 @@
+name: Temporary quota formatter output
+on:
+  push:
+    branches: [security/snmp-distributed-quota-20261021]
+permissions:
+  contents: read
+jobs:
+  quota-format-output:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Produce exact format output
+        run: |
+          npx prettier --write src/shared/infrastructure/mongodb/client.ts tests/unit/mongodb-production-security.test.ts
+          for path in src/shared/infrastructure/mongodb/client.ts tests/unit/mongodb-production-security.test.ts; do
+            echo "FORMAT_BEGIN:$path"
+            base64 -w0 "$path"
+            echo
+            echo "FORMAT_END:$path"
+          done

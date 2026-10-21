@@ -16,6 +16,9 @@ export function snmpIngressQuotaKey(sourceIdentity: string, nowMs: number): stri
   if (!/^[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}$/.test(sourceIdentity)) {
     throw new Error('Invalid SNMP source identity');
   }
+  if (['__proto__', 'constructor', 'prototype'].includes(sourceIdentity)) {
+    throw new Error('Invalid SNMP source identity');
+  }
   if (!Number.isFinite(nowMs) || nowMs < 0) throw new Error('Invalid SNMP quota clock');
   return sourceIdentity + ':' + Math.floor(nowMs / MINUTE_MS);
 }

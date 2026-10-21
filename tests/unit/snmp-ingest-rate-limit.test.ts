@@ -16,7 +16,7 @@ describe('distributed SNMP request quota configuration', () => {
     expect(snmpIngressQuotaKey('BFDB-01', 60_000)).toBe('BFDB-01:1');
     expect(snmpIngressQuotaKey('BFDB-01', 119_999)).toBe('BFDB-01:1');
     expect(snmpIngressQuotaKey('BFDB-02', 60_000)).toBe('BFDB-02:1');
-    expect(() => snmpIngressQuotaKey('__proto__', 60_000)).not.toThrow();
+    expect(() => snmpIngressQuotaKey('__proto__', 60_000)).toThrow();
     expect(() => snmpIngressQuotaKey('illegal/id', 60_000)).toThrow();
   });
 });

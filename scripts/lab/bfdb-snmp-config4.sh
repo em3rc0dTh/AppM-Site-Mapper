@@ -74,6 +74,32 @@ check_env() {
     ELTEK_BDCBB_CONFIG_2|GENERIC_2_FEED) SITE_PROFILE_OVERLAY=config2-site-mapper.override.yml ;;
     *) echo 'Select SNMP_EMULATOR_PROFILE=ELTEK_BDCBB_CONFIG_2 or ELTEK_BDCBB_CONFIG_4.' >&2; exit 2 ;;
   esac
+  # This lab bridges two independent Git repositories. Avoid restart loops caused
+  # by a newer Site Mapper configuration with an older BFDB emulator checkout.
+  if [[ "$profile" == ELTEK_BDCBB_CONFIG_2 ]] &&
+     ! grep -Fq "export const ELTEK_BDCBB_CONFIG_2" "$BFDB/apps/snmp-emulator/oid-profile.mjs"; then
+    echo 'BFDB checkout is outdated: ELTEK_BDCBB_CONFIG_2 is not supported.' >&2
+    echo 'Update the BFDB repo from origin/main (merged emulator PR #9), then rerun up.' >&2
+    echo "BFDB directory: $BFDB" >&2
+    exit 2
+  fi
+  local snmp_version
+  snmp_version="$(sed -n 's/^SNMP_VERSION=//p' "$BFDB/.env.snmp" | tail -1)"
+  snmp_version="${snmp_version:-3}"
+  case "$snmp_version" in
+    3) ;;
+    2c)
+      if ! grep -Fq "snmpVersion: process.env.SNMP_VERSION" "$BFDB/apps/snmp-emulator/server.mjs"; then
+        echo 'BFDB checkout is outdated: SNMPv2c needs emulator PR #9 (origin/main).' >&2
+        exit 2
+      fi
+      if ! grep -q '^SNMP_COMMUNITY=.' "$BFDB/.env.snmp"; then
+        echo 'SNMPv2c requires a private SNMP_COMMUNITY in BFDB .env.snmp.' >&2
+        exit 2
+      fi
+      ;;
+    *) echo 'SNMP_VERSION must be 3 or 2c in BFDB .env.snmp.' >&2; exit 2 ;;
+  esac
 }
 
 case "$ACTION" in

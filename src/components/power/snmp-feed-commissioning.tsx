@@ -31,9 +31,11 @@ interface Configuration {
 export function SnmpFeedCommissioning({
   deviceId,
   chassisId,
+  onInventoryChanged,
 }: {
   deviceId: string;
   chassisId: string;
+  onInventoryChanged?: () => void;
 }) {
   const [show, setShow] = useState(false);
   const [configuration, setConfiguration] = useState<Configuration | null>(null);
@@ -84,6 +86,7 @@ export function SnmpFeedCommissioning({
       const data = await result.json();
       if (!result.ok) throw new Error(data.error ?? 'PROFILE_ASSIGNMENT_FAILED');
       await refresh();
+      onInventoryChanged?.();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'PROFILE_ASSIGNMENT_FAILED');
     } finally {
@@ -119,6 +122,7 @@ export function SnmpFeedCommissioning({
       setVoltageOid('');
       setConfirmPhysicalMapping(false);
       await refresh();
+      onInventoryChanged?.();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'COMMISSIONING_FAILED');
       await refresh();
@@ -147,6 +151,7 @@ export function SnmpFeedCommissioning({
       const body = await response.json();
       if (!response.ok) throw new Error(body.error ?? 'RETIRE_FAILED');
       await refresh();
+      onInventoryChanged?.();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'RETIRE_FAILED');
     } finally {

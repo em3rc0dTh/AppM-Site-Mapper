@@ -43,6 +43,28 @@ jobs:
           docker compose -f docker-compose.telemetry.yml \
             -f infra/lab/bfdb-snmp/config4-site-mapper.override.yml \
             --profile snmp config --format json > /tmp/site-mapper-config4.json
+      - name: Validate Configuration 2 and v2c collector Compose wiring
+        run: |
+          SNMP_VERSION=2c SNMP_COMMUNITY=ci-private-readonly-lab-only \
+            docker compose -f docker-compose.telemetry.yml \
+            -f infra/lab/bfdb-snmp/config2-site-mapper.override.yml \
+            --profile snmp config --format json > /tmp/site-mapper-config2.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/site-mapper-config2.json', encoding='utf-8') as file:
+              data = json.load(file)
+          for i, suffix in [(1, ''), (2, '-02'), (3, '-03')]:
+              env = data['services']['snmp-collector' + suffix]['environment']
+              assert env['SNMP_VERSION'] == '2c'
+              assert env['SNMP_COMMUNITY'] == 'ci-private-readonly-lab-only'
+              assert env['SNMP_CONTROLLER_ID'] == f'EMU-DELTA-BFDB-0{i}'
+              points = json.loads(env['SNMP_FEED_POINTS_JSON'])
+              assert len(points) == 4
+              assert sum(p['metric'] == 'CURRENT' for p in points) == 2
+              assert sum(p['metric'] == 'VOLTAGE' for p in points) == 2
+              assert all('.2026.48.' in p['oid'] for p in points)
+          print('Config 2: two independent shunts and v2c collector wiring validated')
+          PY
       - name: Validate independent BFDB repository overlay structure
         run: |
           cat > /tmp/bfdb-agent-services.yml <<'EOF'

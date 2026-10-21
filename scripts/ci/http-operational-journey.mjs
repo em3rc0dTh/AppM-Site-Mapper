@@ -679,6 +679,22 @@ async function main() {
       'Authenticated SNMP replay manipulated BDFB load',
     );
     record('SNMP adversarial HTTP: denied cookies-only, bad token, wrong source/OID and replay');
+    const profile = await request('POST', '/api/telemetry/snmp/hardware-profile', {
+      deviceId: lima.device.id,
+      hardwareProfile: 'ELTEK_BDCBB_CONFIG_4',
+      confirmInstalledProfile: true,
+    }, 201);
+    assert.equal(profile.body.hardwareProfile, 'ELTEK_BDCBB_CONFIG_4');
+    const profileRead = await request('GET',
+      '/api/telemetry/snmp/hardware-profile?deviceId=' + lima.device.id);
+    assert.equal(profileRead.body.inventory.expectedFeedCount, 4);
+    assert.equal(profileRead.body.inventory.inventoryComplete, false);
+    const config4 = await request('GET', '/api/telemetry/snmp/feeds?deviceId=' + lima.device.id);
+    assert.equal(config4.body.expectedFeedCount, 4);
+    assert.equal(config4.body.inventoryStatus, 'INCOMPLETE');
+    assert.equal(config4.body.totalCurrentA, null,
+      'Generic two-input commissioning must never be certified as complete for Config 4');
+    record('Config 4 hardware profile: existing 2-feed telemetry is blocked from claiming whole-BDFB completeness');
   }
 
   const { body: networks } = await request('GET', '/api/topology');

@@ -178,7 +178,7 @@ export function startBridge({
       return;
     }
     // Never use this service as a public ingress; token and loopback binding both required.
-    if (request.headers.authorization !== `*** {
+    if (request.headers.authorization !== `Bearer ${token}`) {
       finish(401, 'unauthorized');
       return;
     }

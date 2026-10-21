@@ -278,3 +278,71 @@ breaker reading. The previous descendant Equipment average remains separate.
   credentials, firmware and engineering scales are made available.
 
 No laboratory test certifies field Delta SNMP capabilities (hypothesis H-01).
+
+## Appendix · Configuration 4 commissioning and acceptance (2026-10-21)
+
+This appendix **retains** H-01, the prior SNMP normalization/security contract,
+the two-input generic BDFB use case, and the earlier MQTT and Modbus contracts.
+It does not introduce a second SNMP API or new storage system.
+
+Select the verified hardware profile in **BDFB Inspector → SNMP FEED
+COMMISSIONING** using `POST /api/telemetry/snmp/hardware-profile`:
+
+```json
+{
+  "deviceId": "<actual-BDFB-device-id>",
+  "hardwareProfile": "ELTEK_BDCBB_CONFIG_4",
+  "confirmInstalledProfile": true
+}
+```
+
+The explicit acknowledgement is an operator assertion, not field certification.
+`GET /api/telemetry/snmp/hardware-profile?deviceId=...` returns the selected
+profile and inventory assessment. Before selecting, confirm the installed
+nameplate and physical wiring. The generic profile remains available for
+other cabinet configurations; it must not silently turn into Config 4.
+
+Inventory via existing Equipment AccessPort editor, with one real incoming
+port per position and its independently measured shunt:
+
+| Input | Side | Unique panel | Rated input | Shunt          | Default warning |
+| ----- | ---- | ------------ | ----------- | -------------- | --------------- |
+| A1    | A    | PANEL A1     | 800 A       | 1000 A / 60 mV | 640 A           |
+| A2    | A    | PANEL A2     | 800 A       | 1000 A / 60 mV | 640 A           |
+| B1    | B    | PANEL B1     | 800 A       | 1000 A / 60 mV | 640 A           |
+| B2    | B    | PANEL B2     | 800 A       | 1000 A / 60 mV | 640 A           |
+
+These labels are commissioning identities, not automatic Equipment creation.
+`feedPosition` is unique across the entire BDFB Device (even when ports
+are owned by different Equipment). For this selected profile each port has
+exactly one `servedPanelIds` entry, never a duplicate, and the mapping
+must be confirmed independently of visual orientation. Per-panel load is
+not inferred from an input unless that shunt is physically dedicated to it
+as Configuration 4 specifies.
+
+The pre-existing `GET /api/telemetry/snmp/feeds?deviceId=...` now includes
+`hardwareProfile`, `expectedFeedCount`, `inventoryStatus`,
+`missingFeedPositions`, and `configurationIssues`. A configuration with
+two LIVE currents and two omitted inputs shows **2 / 4**, inventory
+`INCOMPLETE`, status `PARTIAL`, `measuredCurrentA` as the measured
+subset and `totalCurrentA: null`. The whole-BDFB total is only reported
+for four valid independent LIVE currents. `ratedCurrentA` remains the
+certified capacity, shunt rating is measurement metadata and **640 A**
+(or an explicitly configured threshold) is a **calculated warning**,
+not a device-transmitted Delta alarm.
+
+The signed DC voltage, when separately measured and commissioned, can
+support approximate per-feed `abs(V) × A`. No breaker-level MQTT power
+or energy is added into the input-feed total; the existing MQTT/Modbus
+pipeline and antireplay protections are preserved.
+
+The existing BFDB SNMP **laboratory emulator currently has only A/B
+inputs** and must be changed to four independently polled test OIDs
+after this Site Mapper contract passes CI. Its OIDs remain synthetic,
+not Delta/Eltek MIB certification. No real controller OID-to-shunt index,
+firmware version, upstream source redundancy, or field wiring is
+asserted by these simulations.
+
+Certification adds cases for 2/4 incomplete, 4/4 complete, duplicate
+identity, duplicate panel, unverified shunt, stale OIDs, calculated
+640 A warning and the unchanged generic two-feed and security tests.

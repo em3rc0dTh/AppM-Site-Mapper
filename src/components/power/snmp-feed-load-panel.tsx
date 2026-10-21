@@ -62,8 +62,8 @@ export function SnmpFeedLoadPanel({
             </strong>
           </div>
           <div>
-            <span>FEEDS LIVE</span>
-            <strong>{load ? `${load.freshFeedCount} / ${load.feedCount}` : '—'}</strong>
+            <span>FEEDS LIVE / REQUIRED</span>
+            <strong>{load ? `${load.freshFeedCount} / ${load.expectedFeedCount}` : '—'}</strong>
           </div>
           <div>
             <span>RATED INPUT CAPACITY</span>
@@ -78,6 +78,23 @@ export function SnmpFeedLoadPanel({
             <strong>{numeric(load?.totalEstimatedPowerW ?? null, 'W')}</strong>
           </div>
         </div>
+        {load?.hardwareProfile && (
+          <div className="zip-bdfb-live-average-counts">
+            <strong>HARDWARE PROFILE · {load.hardwareProfile}</strong>
+            <span>PHYSICAL INVENTORY: {load.inventoryStatus}</span>
+            <small>
+              Installed input ports: {load.feedCount} / {load.expectedFeedCount}
+            </small>
+            {!!load.missingFeedPositions.length && (
+              <small>Missing inputs: {load.missingFeedPositions.join(', ')}</small>
+            )}
+            {!!load.configurationIssues.length && (
+              <small>
+                Verify wiring and panel assignments: {load.configurationIssues.join(' · ')}
+              </small>
+            )}
+          </div>
+        )}
         {load && load.status !== 'COMPLETE' && (
           <small>
             One or more expected independent inputs are unmapped, stale or unverified. No whole-BDFB
@@ -89,28 +106,51 @@ export function SnmpFeedLoadPanel({
             TimescaleDB unavailable: restored/latest SNMP readings could not be queried.
           </p>
         )}
-        {load?.feeds.map((feed) => (
-          <div key={feed.accessPortId} className="zip-bdfb-live-average-counts">
-            <strong>
-              {feed.label} {feed.side ? `· ${feed.side}` : ''}
-            </strong>
-            <span>{feed.status}</span>
-            <span>
-              {numeric(feed.currentA, 'A')} · {numeric(feed.voltageV, 'V')}
-            </span>
-            <small>
-              {numeric(feed.utilizationPct, '%')} of {numeric(feed.ratedCurrentA, 'A')} ·{' '}
-              {numeric(feed.estimatedPowerW, 'W')}
-            </small>
-            <small>
-              Controller {feed.sourceIdentity ?? 'UNMAPPED'} · OID {feed.currentOid ?? 'NO OID'}
-            </small>
-            <small>
-              Measured at {feed.observedAt ?? 'No data'} · Supplied panels:{' '}
-              {feed.servedPanelIds.join(', ') || 'unverified'}
-            </small>
-          </div>
-        ))}
+        {load?.hardwareProfile === 'ELTEK_BDCBB_CONFIG_4' && (
+          <small>PHYSICAL CONFIGURATION 4 · top row A2 / B2, bottom row A1 / B1</small>
+        )}
+        <div
+          className={
+            load?.hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
+              ? 'sm-config4-feed-layout'
+              : 'sm-generic-feed-layout'
+          }
+        >
+          {load?.feeds.map((feed) => (
+            <div key={feed.accessPortId} className="zip-bdfb-live-average-counts">
+              <strong>
+                {feed.feedPosition ? `INPUT ${feed.feedPosition} · ` : ''}
+                {feed.label} {feed.side ? `· side ${feed.side}` : ''}
+              </strong>
+              <span>{feed.status}</span>
+              <small>
+                Overload (calculated):{' '}
+                {feed.overloadWarning === null
+                  ? 'UNKNOWN'
+                  : feed.overloadWarning
+                    ? 'WARNING'
+                    : 'NORMAL'}
+                {feed.overloadThresholdA !== null
+                  ? ` · threshold ${feed.overloadThresholdA} A`
+                  : ''}
+              </small>
+              <span>
+                {numeric(feed.currentA, 'A')} · {numeric(feed.voltageV, 'V')}
+              </span>
+              <small>
+                {numeric(feed.utilizationPct, '%')} of {numeric(feed.ratedCurrentA, 'A')} ·{' '}
+                {numeric(feed.estimatedPowerW, 'W')}
+              </small>
+              <small>
+                Controller {feed.sourceIdentity ?? 'UNMAPPED'} · OID {feed.currentOid ?? 'NO OID'}
+              </small>
+              <small>
+                Measured at {feed.observedAt ?? 'No data'} · Supplied panels:{' '}
+                {feed.servedPanelIds.join(', ') || 'unverified'}
+              </small>
+            </div>
+          ))}
+        </div>
         {!load?.feedCount && !error && (
           <small>No SNMP input feeders inventoried on this BDFB.</small>
         )}

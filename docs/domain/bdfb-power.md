@@ -113,3 +113,33 @@ panel/breaker measurement, and does not replace breaker MQTT history or the
 canonical Breaker OUTPUT → Load INPUT PowerPath.
 
 See [SNMP input feed integration](../telemetry/snmp-feed-ingestion.md).
+
+## Hardware profile · ELTEK_BDCBB_CONFIG_4 (2026-10-21 addendum)
+
+The canonical Device/Equipment/AccessPort/PowerPath hierarchy **does not change**.
+A verified BDCBB Configuration 4 cabinet contains four independent DC incoming
+terminal/shunt paths: Side A → **A1, A2** and Side B → **B1, B2**, each connected
+to its own physically inventoried PANEL. Each panel's breakers are downstream
+of its own bar/shunt; panel current cannot be inferred from an aggregate input.
+The presentation may display A2/B2 above A1/B1 without changing Equipment parentage.
+
+Manufacturer profile facts (validate on each installed cabinet): **800 A rated
+input/panel**, **1000 A/60 mV shunt**, initial **640 A overload warning
+threshold** (configurable). The installation's full breaker-position count is
+not inferred merely from the simplified electrical schematic. No assumption of
+two physically separate plants, N+1 redundancy, four independent SNMP agent
+addresses, or real Delta OID accessibility is encoded.
+
+An authorized operator explicitly selects `ELTEK_BDCBB_CONFIG_4` for the BDFB
+Device; every active SNMP input AccessPort must then declare its unique
+`feedPosition=A1|A2|B1|B2`, the matching A/B `feed` side, rated/shunt
+measurements and exactly one distinct `servedPanelIds` reference.
+Site Mapper refuses duplicate feeder identities or a panel wired to two
+input profiles. Missing or unverified inputs keep the total null even if
+two reported values happen to sum correctly. The raw manufacturer diagram and
+field electrical schedule, not panel names or visual positions, determine
+how the real inputs map to AccessPorts.
+
+This section appends to the accepted G9 contract. See the full domain addendum
+in [Canonical v1.2](contracts/v1.2/domain-contract.md) and the runtime
+[SNMP contract](../telemetry/snmp-feed-ingestion.md).

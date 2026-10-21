@@ -1586,3 +1586,52 @@ The supplied review diagrams are preserved alongside this version:
 - [Validation & verification record](./validation.md)
 
 These images document the iteration path. Where they show `Holder` nodes or Device-level physical AccessPort containment, those shapes are superseded by the normative v1.2 rules in this contract.
+
+---
+
+## Addendum · 2026-10-21 · BDCBB/BDFB Configuration 4 hardware profile
+
+This addendum **extends**, rather than supersedes, Canonical Domain Contract v1.2
+and the accepted BDFB / SNMP / MQTT contracts. It introduces no parallel topology
+schema, SHUNT Equipment object, new breaker identity, or implicit electrical paths.
+
+When an authorized operator confirms the installed device's nameplate/configuration,
+`Device(BDFB).attributes.bdfbHardwareProfile = "ELTEK_BDCBB_CONFIG_4"`
+selects a manufacturer validation template. The property is optional. An unprofiled
+BDFB retains its existing generic inventory and telemetry behavior. The template
+does **not** certify vendor firmware, an IP address, an SNMP OID, or the independence
+of actual upstream power systems.
+
+Four distinct canonical `AccessPort(POWER, INPUT, EXTERNAL)` entries must belong
+to the real BDFB Equipment, one for each of `A1`, `A2`, `B1`, `B2`:
+`attributes.feedPosition` is the individual feeder identity, while `attributes.feed`
+remains the A/B side. Each input is required to have exactly one verified physical
+PANEL Equipment reference (`servedPanelIds`), no shared panel reference,
+`independentInputConfirmed=true`, rated capacity **800 A**, and the
+manufacturer shunt measurement contract **1000 A / 60 mV**. These are profile
+expectations that must be verified on the actual cabinet, not auto-populated
+measurements. The profile's default warning threshold is **640 A** per feed;
+a commissioned, physically justified `overloadThresholdA` may override it.
+A threshold crossing is a **calculated warning**, not a Delta alarm OID.
+
+The manufacturer's Configuration 4 schematic depicts four separate input/shunt
+paths and two physical sides. It **does not prove** that the upstream Feed A
+and Feed B are electrically redundant or that a specific Smartpack2 firmware
+reports each shunt through SNMP. Do not infer per-breaker currents from a feed
+reading. Breaker-specific MQTT observations and output PowerPaths remain distinct.
+
+The formal completeness rule becomes: `COMPLETE` iff physical inventory matches
+the selected profile **and** all four independent commissioned current OIDs
+have fresh readings. Fewer than four configured ports, duplicated or unverified
+shunts, missing panels, wrong sides, stale or unmapped OIDs → `PARTIAL`
+with whole-BDFB total **null**. The measured subset remains separately visible,
+but is not labelled a whole-cabinet current. Voltage and approximated power
+require their own commissioned OIDs; shunt full-scale values must not be applied
+as scaling factors to already normalized A readings.
+
+Source basis: user-provided BDCBB/BDFB electrical diagrams and Eltek
+Installation Guide 2105531, Configuration 4 (figure 14), plus the cabinet
+specifications in table 6. The physical configuration of the three customer
+cabinets and the count of wired breaker positions remain to be verified.
+Operational implementation and examples are appended to
+[SNMP input-feed telemetry](../../../telemetry/snmp-feed-ingestion.md).

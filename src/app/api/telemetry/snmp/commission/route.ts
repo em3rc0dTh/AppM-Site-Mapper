@@ -1,3 +1,10 @@
+import {
+  bdfbHardwareProfile,
+  CONFIG_4_RATED_CURRENT_A,
+  CONFIG_4_SHUNT_CURRENT_A,
+  CONFIG_4_SHUNT_MV,
+  config4FeedPosition,
+} from '@/modules/power/domain/bdfb-hardware-profile';
 import { randomUUID } from 'node:crypto';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -34,6 +41,7 @@ export async function GET(request: Request) {
   const device = await topology.getById(deviceId);
   if (device?.kind !== 'DEVICE' || device.lifecycle !== 'ACTIVE' || device.deviceType !== 'BDFB')
     return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
+  const selectedProfile = bdfbHardwareProfile(device);
   const repository = await createTelemetryBindingRepository();
   const equipment = (await topology.listEquipmentForDevice(deviceId)).filter(
     (node) => node.lifecycle === 'ACTIVE',
@@ -44,6 +52,7 @@ export async function GET(request: Request) {
       equipmentId: owner.id,
       name: port.name,
       side: port.attributes?.feed ?? null,
+      feedPosition: config4FeedPosition(port),
       independentInputConfirmed: port.attributes?.independentInputConfirmed === true,
       ratedCurrentA: port.attributes?.ratedCurrentA ?? null,
       servedPanelIds: port.attributes?.servedPanelIds ?? [],
@@ -66,7 +75,12 @@ export async function GET(request: Request) {
   const write = await requirePermission('topology:write');
   const power = await requirePermission('power:write');
   return Response.json(
-    { deviceId, canCommission: write.ok && power.ok, ports: commissioned },
+    {
+      deviceId,
+      hardwareProfile: selectedProfile,
+      canCommission: write.ok && power.ok,
+      ports: commissioned,
+    },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }
@@ -112,6 +126,23 @@ export async function POST(request: Request) {
   const topology = await createTopologyRepository();
   const target = await resolveSnmpFeedPort(topology, data.feedAccessPortId, data.deviceId);
   if (!target) return Response.json({ error: 'INVALID_BDFB_INPUT_FEED' }, { status: 422 });
+  const targetDevice = await topology.getById(data.deviceId);
+  if (targetDevice?.kind === 'DEVICE' && bdfbHardwareProfile(targetDevice)) {
+    const slot = config4FeedPosition(target.port);
+    const panels = target.port.attributes?.servedPanelIds;
+    if (
+      !slot ||
+      target.port.attributes?.feed !== slot[0] ||
+      target.port.attributes?.independentInputConfirmed !== true ||
+      target.port.attributes?.ratedCurrentA !== CONFIG_4_RATED_CURRENT_A ||
+      target.port.attributes?.shuntRatedCurrentA !== CONFIG_4_SHUNT_CURRENT_A ||
+      target.port.attributes?.shuntRatedMillivolts !== CONFIG_4_SHUNT_MV ||
+      !Array.isArray(panels) ||
+      panels.length !== 1
+    ) {
+      return Response.json({ error: 'CONFIG4_PHYSICAL_MAPPING_INCOMPLETE' }, { status: 422 });
+    }
+  }
 
   const repository = await createTelemetryBindingRepository();
   const [sourceBindings, targetBindings] = await Promise.all([

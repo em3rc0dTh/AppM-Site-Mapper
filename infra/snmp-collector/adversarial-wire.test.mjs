@@ -25,10 +25,18 @@ function get(session, oids) {
 
 test('real local UDP SNMPv3 denies wrong authentication, SET, and unregistered OIDs', async () => {
   const port = 26000 + Math.floor(Math.random() * 10000);
-  const agent = snmp.createAgent({
-    port, address: '127.0.0.1', transport: 'udp4', disableAuthorization: false,
-    accessControlModelType: snmp.AccessControlModelType.Simple,
-  }, (error) => { if (error) throw error; });
+  const agent = snmp.createAgent(
+    {
+      port,
+      address: '127.0.0.1',
+      transport: 'udp4',
+      disableAuthorization: false,
+      accessControlModelType: snmp.AccessControlModelType.Simple,
+    },
+    (error) => {
+      if (error) throw error;
+    },
+  );
   const authorization = agent.getAuthorizer();
   authorization.addUser(user);
   authorization.getAccessControlModel().setUserAccess(user.name, snmp.AccessLevel.ReadOnly);
@@ -43,11 +51,18 @@ test('real local UDP SNMPv3 denies wrong authentication, SET, and unregistered O
   mib.setScalarValue('isolatedFeedCurrent', 2200);
 
   const allowed = snmp.createV3Session('127.0.0.1', user, {
-    port, timeout: 1000, retries: 1,
+    port,
+    timeout: 1000,
+    retries: 1,
   });
-  const forged = snmp.createV3Session('127.0.0.1', {
-    ...user, authKey: 'wrong_lab_auth_key_2026',
-  }, { port, timeout: 650, retries: 0 });
+  const forged = snmp.createV3Session(
+    '127.0.0.1',
+    {
+      ...user,
+      authKey: 'wrong_lab_auth_key_2026',
+    },
+    { port, timeout: 650, retries: 0 },
+  );
 
   try {
     const valid = await get(allowed, [oid]);
@@ -55,8 +70,7 @@ test('real local UDP SNMPv3 denies wrong authentication, SET, and unregistered O
     await assert.rejects(() => get(forged, [oid]));
     await assert.rejects(() => get(allowed, [oid + '.999']));
     await new Promise((resolve) => {
-      allowed.set([{ oid, type: snmp.ObjectType.Integer, value: 99999 }],
-        () => resolve());
+      allowed.set([{ oid, type: snmp.ObjectType.Integer, value: 99999 }], () => resolve());
     });
     const after = await get(allowed, [oid]);
     assert.equal(after[0]?.value, 2200, 'SNMP SET must not change current');

@@ -33,8 +33,10 @@ test('real local UDP SNMPv3 denies wrong authentication, SET, and unregistered O
       disableAuthorization: false,
       accessControlModelType: snmp.AccessControlModelType.Simple,
     },
+    // An invalid SNMPv3 authentication intentionally produces an agent-side
+    // ProcessingError callback. This is expected denial, not a test crash.
     (error) => {
-      if (error) throw error;
+      if (error && error.name !== 'ProcessingError') throw error;
     },
   );
   const authorization = agent.getAuthorizer();

@@ -11,9 +11,11 @@ x-config4-points: &config4-points >-
 x-collector-environment: &collector-environment
   APP_ENV: development
   SNMP_CONTROLLER_PORT: '1161'
-  SNMP_V3_USERNAME: ${SNMP_V3_USERNAME:?Configure BFDB .env.snmp}
-  SNMP_V3_AUTH_KEY: ${SNMP_V3_AUTH_KEY:?Configure BFDB .env.snmp}
-  SNMP_V3_PRIV_KEY: ${SNMP_V3_PRIV_KEY:?Configure BFDB .env.snmp}
+  SNMP_VERSION: ${SNMP_VERSION:-3}
+  SNMP_COMMUNITY: ${SNMP_COMMUNITY:-}
+  SNMP_V3_USERNAME: ${SNMP_V3_USERNAME:-}
+  SNMP_V3_AUTH_KEY: ${SNMP_V3_AUTH_KEY:-}
+  SNMP_V3_PRIV_KEY: ${SNMP_V3_PRIV_KEY:-}
   SNMP_FEED_POINTS_JSON: *config4-points
   SNMP_POLL_INTERVAL_MS: '30000'
   SNMP_INGEST_TOKEN: ${SNMP_INGEST_TOKEN:?Configure Site Mapper .env}

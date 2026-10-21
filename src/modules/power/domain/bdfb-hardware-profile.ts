@@ -4,6 +4,7 @@ import type { AccessPort, DeviceNode, EquipmentNode } from '@/modules/topology/d
  * Manufacturer equipment template; not an assertion that a customer's installed
  * cabinet or Delta SNMP controller has been physically inspected.
  */
+export const ELTEK_BDCBB_CONFIG_2 = 'ELTEK_BDCBB_CONFIG_2' as const;
 export const ELTEK_BDCBB_CONFIG_4 = 'ELTEK_BDCBB_CONFIG_4' as const;
 export const CONFIG_4_SLOTS = ['A1', 'A2', 'B1', 'B2'] as const;
 export type Config4Slot = (typeof CONFIG_4_SLOTS)[number];
@@ -16,10 +17,10 @@ export function isConfig4Slot(value: unknown): value is Config4Slot {
   return CONFIG_4_SLOTS.some((slot) => slot === value);
 }
 
-export function bdfbHardwareProfile(device: DeviceNode): typeof ELTEK_BDCBB_CONFIG_4 | null {
-  return device.attributes?.bdfbHardwareProfile === ELTEK_BDCBB_CONFIG_4
-    ? ELTEK_BDCBB_CONFIG_4
-    : null;
+export type BdfbHardwareProfile = typeof ELTEK_BDCBB_CONFIG_2 | typeof ELTEK_BDCBB_CONFIG_4;
+export function bdfbHardwareProfile(device: DeviceNode): BdfbHardwareProfile | null {
+  const selected = device.attributes?.bdfbHardwareProfile;
+  return selected === ELTEK_BDCBB_CONFIG_2 || selected === ELTEK_BDCBB_CONFIG_4 ? selected : null;
 }
 
 /** A/B is only a physical side. A1/A2/B1/B2 identify distinct inputs. */
@@ -107,4 +108,71 @@ export function assessConfig4Inventory(equipment: readonly EquipmentNode[]): Con
     issues: [...new Set(issues)],
     inventoryComplete: missingFeedPositions.length === 0 && issues.length === 0,
   };
+}
+
+/** Linked-panel Configuration 2: four panels, only two independent shunts. */
+export interface Config2Assessment {
+  readonly hardwareProfile: typeof ELTEK_BDCBB_CONFIG_2;
+  readonly expectedFeedCount: 2;
+  readonly inventoriedFeedCount: number;
+  readonly missingFeedPositions: readonly ('A' | 'B')[];
+  readonly issues: readonly string[];
+  readonly inventoryComplete: boolean;
+}
+export function assessConfig2Inventory(equipment: readonly EquipmentNode[]): Config2Assessment {
+  const active = equipment.filter((item) => item.lifecycle === 'ACTIVE');
+  const panels = new Set(active.filter((e) => e.equipmentType === 'PANEL').map((e) => e.id));
+  const ports = active.flatMap((e) => e.accessPorts.filter(isIncoming));
+  const missingFeedPositions: ('A' | 'B')[] = [];
+  const issues: string[] = [];
+  const seen = new Set<string>();
+  for (const side of ['A', 'B'] as const) {
+    const group = ports.filter((port) => port.attributes?.feed === side);
+    if (!group.length) {
+      missingFeedPositions.push(side);
+      continue;
+    }
+    if (group.length !== 1) {
+      issues.push(`DUPLICATE_INPUT_${side}`);
+      continue;
+    }
+    const port = group[0]!;
+    if (port.attributes?.independentInputConfirmed !== true)
+      issues.push(`SHUNT_NOT_VERIFIED_${side}`);
+    if (config4FeedPosition(port)) issues.push(`WRONG_FEED_POSITION_${side}`);
+    const linked = port.attributes?.servedPanelIds;
+    if (
+      !Array.isArray(linked) ||
+      linked.length !== 2 ||
+      linked.some((id) => typeof id !== 'string' || !panels.has(id))
+    ) {
+      issues.push(`PANEL_MAPPING_INCOMPLETE_${side}`);
+    } else {
+      for (const id of linked) {
+        if (seen.has(id)) issues.push('DUPLICATE_PANEL_MAPPING');
+        seen.add(id);
+      }
+    }
+  }
+  if (ports.some((p) => p.attributes?.feed !== 'A' && p.attributes?.feed !== 'B'))
+    issues.push('UNIDENTIFIED_INPUT_FEEDS');
+  if (ports.length !== 2) issues.push('EXPECTED_TWO_INPUTS');
+  if (panels.size !== 4) issues.push('EXPECTED_FOUR_PANELS');
+  return {
+    hardwareProfile: ELTEK_BDCBB_CONFIG_2,
+    expectedFeedCount: 2,
+    inventoriedFeedCount: ports.length,
+    missingFeedPositions,
+    issues: [...new Set(issues)],
+    inventoryComplete: missingFeedPositions.length === 0 && issues.length === 0,
+  };
+}
+export type BdfbInventoryAssessment = Config2Assessment | Config4Assessment;
+export function assessBdfbInventory(
+  profile: BdfbHardwareProfile,
+  equipment: readonly EquipmentNode[],
+): BdfbInventoryAssessment {
+  return profile === ELTEK_BDCBB_CONFIG_2
+    ? assessConfig2Inventory(equipment)
+    : assessConfig4Inventory(equipment);
 }

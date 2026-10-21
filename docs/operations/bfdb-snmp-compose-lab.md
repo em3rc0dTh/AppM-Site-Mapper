@@ -145,3 +145,55 @@ bash scripts/lab/bfdb-snmp-config4.sh down ../bfdb-telemetry-gateway
 credentials, expose UDP agents publicly or reuse these credentials with
 physical Delta controllers. This lab is intentionally not a production
 authentication/TLS/OT firewall deployment.
+
+## Hardware layout vs. SNMP version: two independent choices
+
+The field installation described here has **Configuration 2**, meaning two
+shunts (side A feeding linked breaker panels A1 + A2, side B feeding B1 + B2).
+Do not map an independent current per panel unless the shunts actually exist.
+Site Mapper also supports Configuration 4 (A1/A2/B1/B2, four independent shunts).
+
+| Hardware | SNMP      | Number of CURRENT OIDs | Lab OID root                    |
+| -------- | --------- | ---------------------: | ------------------------------- |
+| Config 2 | v2c or v3 |                      2 | `1.3.6.1.4.1.8072.9999.2026.48` |
+| Config 4 | v2c or v3 |                      4 | `1.3.6.1.4.1.8072.9999.2026.49` |
+
+The simulator publishes the same count of optional VOLTAGE OIDs in either
+profile. These OIDs are **synthetic**; real Delta indexing and measurement
+semantics require a read-only site-specific walk and wiring verification.
+
+For Config 2, set in BFDB's ignored `.env.snmp`:
+
+```dotenv
+SNMP_EMULATOR_PROFILE=ELTEK_BDCBB_CONFIG_2
+SNMP_VERSION=2c
+SNMP_COMMUNITY=<choose-an-OT-lab-readonly-community>
+```
+
+For a v3 session set `SNMP_VERSION=3` and configure the private
+`SNMP_V3_USERNAME`, `SNMP_V3_AUTH_KEY` and `SNMP_V3_PRIV_KEY`. The
+launcher's `up` and `collectors` commands select the correct two- or
+four-shunt OID overlay based on `SNMP_EMULATOR_PROFILE`.
+
+The BDFB inspector has explicit **Configuration 2** and **Configuration 4**
+selectors, independent from the agent's SNMP version. The current inventory
+contract for Config 2 requires four distinct PANEL objects plus two
+external POWER INPUT AccessPorts: A, whose `servedPanelIds` are A1 and A2,
+and B, whose `servedPanelIds` are B1 and B2. For Config 4 there are four
+independent AccessPorts, each linked to one PANEL. An active SNMP OID binding
+blocks changing the physical profile until explicitly retired; historical
+samples remain intact.
+
+**Do not** switch the existing TELXIUS cabinet's profile, create duplicate
+shunts, or commission OIDs by guessing that their count matches hardware.
+The configuration of SNMPv2c is not an anonymous push feed: the controller
+accepts an authorized read-only community and responds to periodic SNMP GET.
+A passive resistive shunt senses current continuously, but that does not
+imply continuous unsolicited UDP transmission. SNMPv2c transmits in cleartext;
+use segregated management networks and ACLs. Production collector requires
+`SNMP_V2C_ACKNOWLEDGE_PLAINTEXT=true` to explicitly accept that risk.
+
+**Existing lab note:** a previously created BFDB `.env.snmp` is never
+overwritten by `init`, so switching protocol or profile requires a
+deliberate edit followed by a fresh `up`. Credentials must never be
+committed or printed in logs.

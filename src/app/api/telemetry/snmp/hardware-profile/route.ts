@@ -1,6 +1,7 @@
 import { requirePermission } from '@/modules/identity/application/current-session';
 import {
-  assessConfig4Inventory,
+  assessBdfbInventory,
+  ELTEK_BDCBB_CONFIG_2,
   bdfbHardwareProfile,
   ELTEK_BDCBB_CONFIG_4,
 } from '@/modules/power/domain/bdfb-hardware-profile';
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
     return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
   const selected = bdfbHardwareProfile(device);
   const inventory = selected
-    ? assessConfig4Inventory(await topology.listEquipmentForDevice(id))
+    ? assessBdfbInventory(selected, await topology.listEquipmentForDevice(id))
     : null;
   return Response.json(
     { deviceId: id, hardwareProfile: selected, inventory },
@@ -62,20 +63,35 @@ export async function POST(request: Request) {
   const input = body as Record<string, unknown>;
   if (
     !isBoundedString(input.deviceId, 128) ||
-    input.hardwareProfile !== ELTEK_BDCBB_CONFIG_4 ||
+    (input.hardwareProfile !== ELTEK_BDCBB_CONFIG_2 &&
+      input.hardwareProfile !== ELTEK_BDCBB_CONFIG_4) ||
     input.confirmInstalledProfile !== true
   ) {
     return Response.json({ error: 'INVALID_PROFILE_REQUEST' }, { status: 400 });
   }
+  const selectedProfile = input.hardwareProfile as
+    typeof ELTEK_BDCBB_CONFIG_2 | typeof ELTEK_BDCBB_CONFIG_4;
   const topology = await createTopologyRepository();
   const device = await topology.getById(input.deviceId);
   if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB' || device.lifecycle !== 'ACTIVE')
     return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
-  if (bdfbHardwareProfile(device) === ELTEK_BDCBB_CONFIG_4)
-    return Response.json({ hardwareProfile: ELTEK_BDCBB_CONFIG_4, alreadySelected: true });
+  if (bdfbHardwareProfile(device) === selectedProfile)
+    return Response.json({ hardwareProfile: selectedProfile, alreadySelected: true });
+  // Never silently reinterpret existing OIDs when the physical layout changes.
+  const equipment = await topology.listEquipmentForDevice(device.id);
+  const bindingsRepo = await (
+    await import('@/modules/telemetry/infrastructure/telemetry-binding-repository-factory')
+  ).createTelemetryBindingRepository();
+  for (const owner of equipment) {
+    for (const port of owner.accessPorts.filter((p) => p.lifecycle === 'ACTIVE')) {
+      const bindings = await bindingsRepo.listForTarget('ACCESS_PORT', port.id);
+      if (bindings.some((b) => b.lifecycle === 'ACTIVE' && b.protocol === 'SNMP'))
+        return Response.json({ error: 'ACTIVE_SNMP_BINDINGS_REQUIRE_RETIREMENT' }, { status: 409 });
+    }
+  }
   const changed = {
     ...device,
-    attributes: { ...device.attributes, bdfbHardwareProfile: ELTEK_BDCBB_CONFIG_4 },
+    attributes: { ...device.attributes, bdfbHardwareProfile: selectedProfile },
     updatedAt: nowIso(),
   };
   if (!topology.replaceIfVersion || !(await topology.replaceIfVersion(changed, device.updatedAt))) {
@@ -83,8 +99,8 @@ export async function POST(request: Request) {
   }
   return Response.json(
     {
-      hardwareProfile: ELTEK_BDCBB_CONFIG_4,
-      inventory: assessConfig4Inventory(await topology.listEquipmentForDevice(device.id)),
+      hardwareProfile: selectedProfile,
+      inventory: assessBdfbInventory(selectedProfile, equipment),
     },
     { status: 201 },
   );

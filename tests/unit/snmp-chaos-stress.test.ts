@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { SnmpFeedService, summarizeSnmpBdfbLoad } from '@/modules/telemetry/application/snmp-feed-service';
+import {
+  SnmpFeedService,
+  summarizeSnmpBdfbLoad,
+} from '@/modules/telemetry/application/snmp-feed-service';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { MemoryTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-binding-repository';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
@@ -15,46 +18,89 @@ function lab() {
   for (const [index, source] of identities.entries()) {
     const deviceId = 'bdfb-' + index;
     all.push({
-      id: deviceId, kind: 'DEVICE', parentId: 'rack', name: source,
-      deviceType: 'BDFB', rootEquipmentIds: ['chassis-' + index],
+      id: deviceId,
+      kind: 'DEVICE',
+      parentId: 'rack',
+      name: source,
+      deviceType: 'BDFB',
+      rootEquipmentIds: ['chassis-' + index],
       attributes: { bdfbHardwareProfile: 'ELTEK_BDCBB_CONFIG_4' },
-      lifecycle: 'ACTIVE', pinned: false, createdAt: observed, updatedAt: observed,
+      lifecycle: 'ACTIVE',
+      pinned: false,
+      createdAt: observed,
+      updatedAt: observed,
     });
     const panels: EquipmentNode[] = slots.map((slot) => ({
-      id: 'panel-' + index + '-' + slot, name: 'Panel ' + slot, kind: 'EQUIPMENT',
-      deviceId, parentId: 'chassis-' + index, parentEquipmentId: 'chassis-' + index,
-      equipmentType: 'PANEL', accessPorts: [], childMode: 'POSITIONAL', children: [],
-      lifecycle: 'ACTIVE', pinned: false, createdAt: observed, updatedAt: observed,
+      id: 'panel-' + index + '-' + slot,
+      name: 'Panel ' + slot,
+      kind: 'EQUIPMENT',
+      deviceId,
+      parentId: 'chassis-' + index,
+      parentEquipmentId: 'chassis-' + index,
+      equipmentType: 'PANEL',
+      accessPorts: [],
+      childMode: 'POSITIONAL',
+      children: [],
+      lifecycle: 'ACTIVE',
+      pinned: false,
+      createdAt: observed,
+      updatedAt: observed,
     }));
     all.push(...panels);
     all.push({
-      id: 'chassis-' + index, name: 'Chassis', kind: 'EQUIPMENT',
-      deviceId, parentId: deviceId, parentEquipmentId: null,
-      equipmentType: 'CHASSIS', childMode: 'DYNAMIC', children: panels.map((p) => p.id),
+      id: 'chassis-' + index,
+      name: 'Chassis',
+      kind: 'EQUIPMENT',
+      deviceId,
+      parentId: deviceId,
+      parentEquipmentId: null,
+      equipmentType: 'CHASSIS',
+      childMode: 'DYNAMIC',
+      children: panels.map((p) => p.id),
       accessPorts: slots.map((slot) => ({
-        id: 'port-' + index + '-' + slot, deviceId, equipmentId: 'chassis-' + index,
-        name: 'Input ' + slot, portType: 'POWER', direction: 'INPUT',
-        exposure: 'EXTERNAL', lifecycle: 'ACTIVE',
+        id: 'port-' + index + '-' + slot,
+        deviceId,
+        equipmentId: 'chassis-' + index,
+        name: 'Input ' + slot,
+        portType: 'POWER',
+        direction: 'INPUT',
+        exposure: 'EXTERNAL',
+        lifecycle: 'ACTIVE',
         attributes: {
-          feed: slot[0], feedPosition: slot, snmpFeedInput: true,
-          independentInputConfirmed: true, ratedCurrentA: 800,
-          shuntRatedCurrentA: 1000, shuntRatedMillivolts: 60,
+          feed: slot[0],
+          feedPosition: slot,
+          snmpFeedInput: true,
+          independentInputConfirmed: true,
+          ratedCurrentA: 800,
+          shuntRatedCurrentA: 1000,
+          shuntRatedMillivolts: 60,
           servedPanelIds: ['panel-' + index + '-' + slot],
         },
-      })), lifecycle: 'ACTIVE', pinned: false, createdAt: observed, updatedAt: observed,
+      })),
+      lifecycle: 'ACTIVE',
+      pinned: false,
+      createdAt: observed,
+      updatedAt: observed,
     });
     for (const [slotIndex, slot] of slots.entries()) {
       bindings.push({
-        id: 'binding-' + index + '-' + slot, protocol: 'SNMP',
-        sourceIdentity: source, sourcePointId: oid(slotIndex),
-        metric: 'CURRENT', unit: 'A', targetType: 'ACCESS_PORT',
+        id: 'binding-' + index + '-' + slot,
+        protocol: 'SNMP',
+        sourceIdentity: source,
+        sourcePointId: oid(slotIndex),
+        metric: 'CURRENT',
+        unit: 'A',
+        targetType: 'ACCESS_PORT',
         targetId: 'port-' + index + '-' + slot,
-        lifecycle: 'ACTIVE', createdAt: observed, updatedAt: observed,
+        lifecycle: 'ACTIVE',
+        createdAt: observed,
+        updatedAt: observed,
       });
     }
   }
   return {
-    identities, topology: new MemoryTopologyRepository(all),
+    identities,
+    topology: new MemoryTopologyRepository(all),
     bindings: new MemoryTelemetryBindingRepository(bindings),
   };
 }
@@ -63,11 +109,14 @@ function oid(i: number): string {
 }
 function packet(source: string, sequence: number) {
   return {
-    schemaVersion: 1 as const, sourceIdentity: source,
+    schemaVersion: 1 as const,
+    sourceIdentity: source,
     observedAt: new Date(Date.parse(observed) + sequence * 1000).toISOString(),
     measurements: slots.map((_slot, index) => ({
-      oid: oid(index), metric: 'CURRENT' as const,
-      unit: 'A' as const, value: 200 + sequence + index,
+      oid: oid(index),
+      metric: 'CURRENT' as const,
+      unit: 'A' as const,
+      value: 200 + sequence + index,
     })),
   };
 }
@@ -101,12 +150,18 @@ describe('Bounded SNMP Config4 chaos stress (only isolated memory fixtures)', ()
     expect(latest.size).toBe(12);
     for (const [index] of f.identities.entries()) {
       const view = await summarizeSnmpBdfbLoad(
-        'bdfb-' + index, f.topology, f.bindings, hub,
+        'bdfb-' + index,
+        f.topology,
+        f.bindings,
+        hub,
         Date.parse(observed) + 39_000,
       );
       expect(view).toMatchObject({
-        inventoryStatus: 'COMPLETE', expectedFeedCount: 4,
-        status: 'COMPLETE', feedCount: 4, freshFeedCount: 4,
+        inventoryStatus: 'COMPLETE',
+        expectedFeedCount: 4,
+        status: 'COMPLETE',
+        feedCount: 4,
+        freshFeedCount: 4,
         totalCurrentA: 4 * (200 + 39) + 6,
       });
     }

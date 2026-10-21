@@ -46,11 +46,11 @@ This is **bounded functional stress**, not a maximum throughput or DDoS test.
 
 ### Reproduced findings and mitigations
 
-| ID | Failure proof | Result / mitigation |
-| --- | --- | --- |
-| CHAOS-01 | `normalizeVarbinds` used `Number(null)`, `Number('')` and `Number(false)`, silently converting invalid controller responses into measured **zero** | **Fixed**: only finite numeric and strict decimal ASCII/Buffer scalars are allowed; null/empty/boolean/object values fail the poll without generating zero amperes |
-| CHAOS-02 | Commissioned SNMP `scale` accepted extreme, unrealistic factors | **Fixed**: reject non-finite, zero and factors outside magnitude 1,000,000; this is a configuration guard, not an asserted Delta engineering range |
-| CHAOS-03 | A missing shunt OID (`noSuchInstance`) inside a multi-OID GET previously caused **all** independent feeder readings in that polling cycle to be dropped | **Fixed** for per-varbind noSuchObject/noSuchInstance: forward available healthy shunts, omit missing shunts, never invent 0 A; network/session/unknown SNMP errors still abort that poll |
+| ID       | Failure proof                                                                                                                                            | Result / mitigation                                                                                                                                                                                |
+| -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| CHAOS-01 | `normalizeVarbinds` used `Number(null)`, `Number('')` and `Number(false)`, silently converting invalid controller responses into measured **zero**       | **Fixed**: only finite numeric and strict decimal ASCII/Buffer scalars are allowed; null/empty/boolean/object values fail the poll without generating zero amperes                                 |
+| CHAOS-02 | Commissioned SNMP `scale` accepted extreme, unrealistic factors                                                                                          | **Fixed**: reject non-finite, zero and factors outside magnitude 1,000,000; this is a configuration guard, not an asserted Delta engineering range                                                 |
+| CHAOS-03 | A missing shunt OID (`noSuchInstance`) inside a multi-OID GET previously caused **all** independent feeder readings in that polling cycle to be dropped  | **Fixed** for per-varbind noSuchObject/noSuchInstance: forward available healthy shunts, omit missing shunts, never invent 0 A; network/session/unknown SNMP errors still abort that poll          |
 | CHAOS-04 | Inject failure on 3rd of 4 per-feed Timescale writes; first two writes remain durable while hub publishes none; identical batch retry rejected as replay | **Open, priority P1**: [issue #78](https://github.com/em3rc0dTh/AppM-Site-Mapper/issues/78). Requires atomic durable batch + stable idempotency across replicas and recovery after partial failure |
 
 ### Passing controls and limitations

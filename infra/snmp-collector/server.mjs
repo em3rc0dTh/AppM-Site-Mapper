@@ -1,5 +1,9 @@
 import snmp from 'net-snmp';
-import { normalizeVarbinds, pointsFromEnvironment, selectPresentVarbinds } from './collector-core.mjs';
+import {
+  normalizeVarbinds,
+  pointsFromEnvironment,
+  selectPresentVarbinds,
+} from './collector-core.mjs';
 
 function required(name) {
   const value = process.env[name];
@@ -61,9 +65,11 @@ function getOids(oids) {
     session.get(oids, (error, varbinds) => {
       if (error) return reject(error);
       for (const varbind of varbinds ?? []) {
-        if (snmp.isVarbindError(varbind) &&
-            varbind.type !== snmp.ObjectType.NoSuchObject &&
-            varbind.type !== snmp.ObjectType.NoSuchInstance)
+        if (
+          snmp.isVarbindError(varbind) &&
+          varbind.type !== snmp.ObjectType.NoSuchObject &&
+          varbind.type !== snmp.ObjectType.NoSuchInstance
+        )
           return reject(new Error(`SNMP varbind rejected: ${snmp.varbindError(varbind)}`));
       }
       resolve(varbinds);

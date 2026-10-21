@@ -18,7 +18,12 @@ export function pointsFromEnvironment(value) {
       throw new Error('Invalid SNMP OID');
     if (metric !== 'CURRENT' && metric !== 'VOLTAGE')
       throw new Error('SNMP point metric must be CURRENT or VOLTAGE');
-    if (typeof scale !== 'number' || !Number.isFinite(scale) || scale === 0 || Math.abs(scale) > 1_000_000)
+    if (
+      typeof scale !== 'number' ||
+      !Number.isFinite(scale) ||
+      scale === 0 ||
+      Math.abs(scale) > 1_000_000
+    )
       throw new Error('SNMP engineering scale must be a non-zero number');
     const key = `${oid}:${metric}`;
     if (unique.has(key)) throw new Error('Duplicate SNMP OID and metric');
@@ -39,8 +44,10 @@ export function normalizeVarbinds(points, varbinds, observedAt, sourceIdentity) 
     let number;
     if (typeof raw === 'number' || typeof raw === 'bigint') {
       number = Number(raw);
-    } else if (typeof raw === 'string' &&
-      /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(raw.trim())) {
+    } else if (
+      typeof raw === 'string' &&
+      /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(raw.trim())
+    ) {
       number = Number(raw.trim());
     } else {
       throw new Error('Unsupported SNMP scalar value type');

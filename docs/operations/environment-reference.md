@@ -77,7 +77,7 @@ When `APP_ENV=production`, Site Mapper **rejects the old shared
 a private JSON map from **commissioned collector source identity** to a unique
 random token (minimum 32 characters each), for example
 `{"ELTEK-01":"<private-random-token-01>","ELTEK-02":"<private-random-token-02>"}`.
-The JSON body sourceIdentity is checked against the *authenticated* token
+The JSON body sourceIdentity is checked against the _authenticated_ token
 identity before resolving telemetry bindings. Distinct identities cannot reuse
 the same token; malformed maps return 503, mismatched sources return 403.
 Each independent SNMP collector instance gets its own `SNMP_INGEST_TOKEN`

@@ -29,18 +29,21 @@ export async function POST(request: Request) {
   const production = isProductionDeployment();
   let expectedSource: string | null = null;
   if (production) {
-    if (process.env.TELEMETRY_HISTORY_ENABLED !== 'true' ||
-        !process.env.TELEMETRY_STORE_TOKEN ||
-        process.env.TELEMETRY_STORE_TOKEN.length < 32)
+    if (
+      process.env.TELEMETRY_HISTORY_ENABLED !== 'true' ||
+      !process.env.TELEMETRY_STORE_TOKEN ||
+      process.env.TELEMETRY_STORE_TOKEN.length < 32
+    )
       return Response.json({ error: 'SNMP_PRODUCTION_STORE_NOT_SECURE' }, { status: 503 });
     try {
       expectedSource = authorizeController(
-        request.headers.get('authorization'), process.env.SNMP_INGEST_SOURCES_JSON);
+        request.headers.get('authorization'),
+        process.env.SNMP_INGEST_SOURCES_JSON,
+      );
     } catch {
       return Response.json({ error: 'SNMP_SOURCE_CREDENTIALS_INVALID' }, { status: 503 });
     }
-    if (!expectedSource)
-      return Response.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+    if (!expectedSource) return Response.json({ error: 'UNAUTHORIZED' }, { status: 401 });
   } else {
     const secret = process.env.SNMP_INGEST_TOKEN;
     if (!secret || secret.length < 32)

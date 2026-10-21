@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { authorizeController, sourceCredentialMap } from '@/modules/telemetry/application/snmp-ingest-credentials';
+import {
+  authorizeController,
+  sourceCredentialMap,
+} from '@/modules/telemetry/application/snmp-ingest-credentials';
 import { POST } from '@/app/api/telemetry/snmp/ingest/route';
 
 const a = 'A'.repeat(48);
@@ -10,18 +13,26 @@ function request(token: string, sourceIdentity = 'EMU-BFDB-01') {
     method: 'POST',
     headers: { 'content-type': 'application/json', authorization: 'Bearer ' + token },
     body: JSON.stringify({
-      schemaVersion: 1, sourceIdentity,
+      schemaVersion: 1,
+      sourceIdentity,
       observedAt: new Date().toISOString(),
-      measurements: [{ oid: '1.3.6.1.4.1.8072.9999.2026.49.1.1.0',
-        metric: 'CURRENT', unit: 'A', value: 220 }],
+      measurements: [
+        { oid: '1.3.6.1.4.1.8072.9999.2026.49.1.1.0', metric: 'CURRENT', unit: 'A', value: 220 },
+      ],
     }),
   });
 }
 afterEach(() => vi.unstubAllEnvs());
 describe('production SNMP collector identity authorization', () => {
   it('rejects invalid maps, short tokens and shared credentials', () => {
-    for (const entry of ['', '[]', '{}', '{"x":"short"}',
-      '{"x":"' + a + '","y":"' + a + '"}', '{"__proto__":"' + a + '"}'])
+    for (const entry of [
+      '',
+      '[]',
+      '{}',
+      '{"x":"short"}',
+      '{"x":"' + a + '","y":"' + a + '"}',
+      '{"__proto__":"' + a + '"}',
+    ])
       expect(() => sourceCredentialMap(entry)).toThrow();
   });
   it('authenticates a bearer for only its commissioned source, not others', () => {

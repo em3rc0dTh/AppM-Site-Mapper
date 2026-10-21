@@ -75,14 +75,14 @@ The post-chaos security review found the shared SNMP ingest bearer could claim
 any commissioned `sourceIdentity` (logical impersonation once a bearer was
 stolen). In production, ingest now requires a distinct approved secret per
 controller in `SNMP_INGEST_SOURCES_JSON` and confirms packet source identity
-against the matching bearer *before* accepting any electrical sample.
+against the matching bearer _before_ accepting any electrical sample.
 It also fails closed unless Timescale history is enabled and a strong store
 bearer is configured. The old shared token remains compatible **only in
 development/test**. Tests verify invalid maps, duplicated tokens, wrong source,
 wrong bearer and missing durability security.
 
 This reduces lateral impersonation between collectors, but stolen per-source
-credentials still allow forged measurements *for that one identity*.
+credentials still allow forged measurements _for that one identity_.
 A network ACL, TLS/mTLS where available, secret rotation, per-source ingress
 quotas, OT management VLAN restrictions, structured security logs and field
 SNMPv3 credentials remain deployment requirements. Do not equate an isolated

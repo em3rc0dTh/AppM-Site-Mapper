@@ -1,0 +1,29 @@
+name: One-time Configuration 4 formatting
+on:
+  push:
+    branches: [feat/bdfb-config4-hardware-contract]
+    paths: ['.github/workflows/format-config4-once.yml']
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/bdfb-config4-hardware-contract
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx prettier --write src/modules/power/domain/bdfb-hardware-profile.ts src/app/api/telemetry/snmp/hardware-profile/route.ts src/modules/topology/application/access-port-service.ts src/app/api/equipment/'[id]'/access-ports/route.ts src/components/equipment/access-port-editor.tsx src/modules/telemetry/application/snmp-feed-service.ts src/components/power/snmp-feed-load-panel.tsx src/app/api/telemetry/snmp/commission/route.ts src/components/power/snmp-feed-commissioning.tsx tests/unit/bdfb-config4.test.ts scripts/ci/http-operational-journey.mjs docs/domain/contracts/v1.2/domain-contract.md docs/domain/bdfb-power.md docs/telemetry/snmp-feed-ingestion.md docs/telemetry/contract.md
+      - name: Save only file formatting
+        run: |
+          if ! git diff --quiet; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add -u
+            git commit -m "style(bdfb): format Configuration 4 implementation and canonical contract appendices"
+            git push origin HEAD:feat/bdfb-config4-hardware-contract
+          fi

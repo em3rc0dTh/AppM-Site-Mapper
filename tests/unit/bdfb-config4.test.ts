@@ -245,11 +245,19 @@ describe('ELTEK_BDCBB_CONFIG_4 manufacturer profile (non-breaking)', () => {
 
   it('reports PARTIAL, not UNMAPPED, when Config 4 inventory has no inputs yet', async () => {
     const f = fixture(0);
-    const view = await summarizeSnmpBdfbLoad('bdfb-c4', f.topology, f.repository,
-      f.hub, Date.parse(time));
+    const view = await summarizeSnmpBdfbLoad(
+      'bdfb-c4',
+      f.topology,
+      f.repository,
+      f.hub,
+      Date.parse(time),
+    );
     expect(view).toMatchObject({
-      inventoryStatus: 'INCOMPLETE', status: 'PARTIAL',
-      expectedFeedCount: 4, feedCount: 0, totalCurrentA: null,
+      inventoryStatus: 'INCOMPLETE',
+      status: 'PARTIAL',
+      expectedFeedCount: 4,
+      feedCount: 0,
+      totalCurrentA: null,
       missingFeedPositions: ['A1', 'A2', 'B1', 'B2'],
     });
   });

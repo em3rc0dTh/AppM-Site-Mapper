@@ -33,3 +33,38 @@ Already working in the initial run: forged _uncommissioned_ source identities an
 4. **Physical Delta acceptance:** CI uses synthetic/normalized measurements. No real controller IP, firmware, MIB index, SNMPv3 firmware profile, wiring map or shunt accuracy has been verified.
 
 **Release decision:** allow integration to `main` only after adversarial Actions + CI + disposable HTTP operational acceptance finish successfully on the same PR tip. A passing run means these specified attack cases were blocked, **not** that the whole system is free of vulnerabilities.
+
+## Addendum — bounded Configuration 4 chaos run (2026-10-21)
+
+This round used only GitHub Actions disposable runners: **no field controller, external
+SNMP address, production database, customer data or public traffic**. The stress
+fixtures cover three modeled BDFBs, four A1/A2/B1/B2 shunts each, and 120
+simultaneously queued per-source SNMP polls (480 isolated simulated durable
+writes). BFDB's independent agent suite probes three local-only UDP SNMPv3
+agents with 60 GET requests covering eight synthetic OIDs per cabinet.
+This is **bounded functional stress**, not a maximum throughput or DDoS test.
+
+### Reproduced findings and mitigations
+
+| ID | Failure proof | Result / mitigation |
+| --- | --- | --- |
+| CHAOS-01 | `normalizeVarbinds` used `Number(null)`, `Number('')` and `Number(false)`, silently converting invalid controller responses into measured **zero** | **Fixed**: only finite numeric and strict decimal ASCII/Buffer scalars are allowed; null/empty/boolean/object values fail the poll without generating zero amperes |
+| CHAOS-02 | Commissioned SNMP `scale` accepted extreme, unrealistic factors | **Fixed**: reject non-finite, zero and factors outside magnitude 1,000,000; this is a configuration guard, not an asserted Delta engineering range |
+| CHAOS-03 | A missing shunt OID (`noSuchInstance`) inside a multi-OID GET previously caused **all** independent feeder readings in that polling cycle to be dropped | **Fixed** for per-varbind noSuchObject/noSuchInstance: forward available healthy shunts, omit missing shunts, never invent 0 A; network/session/unknown SNMP errors still abort that poll |
+| CHAOS-04 | Inject failure on 3rd of 4 per-feed Timescale writes; first two writes remain durable while hub publishes none; identical batch retry rejected as replay | **Open, priority P1**: [issue #78](https://github.com/em3rc0dTh/AppM-Site-Mapper/issues/78). Requires atomic durable batch + stable idempotency across replicas and recovery after partial failure |
+
+### Passing controls and limitations
+
+The BFDB agent and Site Mapper tests use synthetic OIDs and locally bound
+SNMPv3; the earlier origin/OID spoof, bearer, stale/replay and SET-denial
+tests remain in force. All 12 independent shunt identities must remain isolated
+from one another, and Config 4 must withhold whole-cabinet total when one
+required feed is absent. A success does **not** certify true Delta MIB maps,
+field wiring, multi-process races, sustained high-rate ingress, shared token
+identity, network saturation, distributed backpressure or physical safety.
+
+Until CHAOS-04 is resolved, operate **one authorized Site Mapper SNMP ingest
+replica** and limit ingress upstream. Current live-stream semantics prevent
+publishing a falsely successful batch after history fails, but the historical
+store may still retain a partial packet. Never claim end-to-end transactional
+durability until the issue acceptance criteria pass.

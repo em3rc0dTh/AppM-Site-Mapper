@@ -106,7 +106,12 @@ export function SnmpFeedLoadPanel({
             TimescaleDB unavailable: restored/latest SNMP readings could not be queried.
           </p>
         )}
-        {load?.feeds.map((feed) => (
+        {load?.hardwareProfile === 'ELTEK_BDCBB_CONFIG_4' && (
+          <small>PHYSICAL CONFIGURATION 4 · top row A2 / B2, bottom row A1 / B1</small>
+        )}
+        <div className={load?.hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
+          ? 'sm-config4-feed-layout' : 'sm-generic-feed-layout'}>
+          {load?.feeds.map((feed) => (
           <div key={feed.accessPortId} className="zip-bdfb-live-average-counts">
             <strong>
               {feed.feedPosition ? `INPUT ${feed.feedPosition} · ` : ''}
@@ -138,6 +143,7 @@ export function SnmpFeedLoadPanel({
             </small>
           </div>
         ))}
+        </div>
         {!load?.feedCount && !error && (
           <small>No SNMP input feeders inventoried on this BDFB.</small>
         )}

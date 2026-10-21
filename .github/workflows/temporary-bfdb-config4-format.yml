@@ -1,0 +1,24 @@
+name: Temporary Config4 Markdown formatter
+on:
+  push:
+    branches: [feat/docker-bfdb-config4-local-lab-20261021]
+permissions:
+  contents: read
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Render exact repository Prettier output
+        run: |
+          npx prettier --write docs/operations/bfdb-snmp-compose-lab.md
+          echo 'CONFIG4_FORMAT_START'
+          base64 -w0 docs/operations/bfdb-snmp-compose-lab.md
+          echo
+          echo 'CONFIG4_FORMAT_END'

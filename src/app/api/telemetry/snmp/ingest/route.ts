@@ -48,11 +48,16 @@ export async function POST(request: Request) {
     history,
   );
   const result = await service.ingest(packet.value);
-  if (!result.ok) return Response.json({ error: result.error }, { status: 422 });
+  if (!result.ok)
+    return Response.json(
+      { error: result.error },
+      { status: result.error === 'HISTORY_STORE_UNAVAILABLE' ? 503 : 422 },
+    );
   return Response.json(
     {
       acceptedFeeds: result.value.map((sample) => sample.targetId),
       observedAt: packet.value.observedAt,
+      historyCommitted: Boolean(history),
     },
     { status: 202, headers: { 'Cache-Control': 'no-store' } },
   );

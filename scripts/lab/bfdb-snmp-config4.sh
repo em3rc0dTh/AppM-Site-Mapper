@@ -10,6 +10,7 @@ bash scripts/lab/bfdb-snmp-config4.sh bootstrap  ../bfdb-telemetry-gateway
 bash scripts/lab/bfdb-snmp-config4.sh collectors ../bfdb-telemetry-gateway
 bash scripts/lab/bfdb-snmp-config4.sh status     ../bfdb-telemetry-gateway
 bash scripts/lab/bfdb-snmp-config4.sh down       ../bfdb-telemetry-gateway
+bash scripts/lab/bfdb-snmp-config4.sh cleanup-duplicate ../bfdb-telemetry-gateway
 HELP
 }
 [[ $# -eq 2 ]] || { usage; exit 2; }
@@ -25,18 +26,38 @@ BFDB="$(cd "$BFDB" && pwd)"
 command -v docker >/dev/null || { echo 'Docker CLI required.' >&2; exit 2; }
 NETWORK=site_mapper_bfdb_snmp_lab
 BRIDGE="$SITE/infra/lab/bfdb-snmp"
+# Reuse the original Compose projects and their existing named volumes.
+# Override only if the installation explicitly uses different project names.
+BFDB_PROJECT="${BFDB_COMPOSE_PROJECT:-bfdb-telemetry-gateway}"
+SITE_PROJECT="${SITE_MAPPER_COMPOSE_PROJECT:-appm-site-mapper}"
 
-bfdb_compose() {
-  docker compose --project-directory "$BFDB" -p bfdb_snmp_lab \
+bfdb_compose_for() {
+  local project="$1"
+  shift
+  docker compose --project-directory "$BFDB" -p "$project" \
     --env-file "$BFDB/.env" --env-file "$BFDB/.env.snmp" \
     -f "$BFDB/docker-compose.yml" -f "$BFDB/docker-compose.snmp.yml" \
     -f "$BRIDGE/config4-bfdb.override.yml" --profile snmp "$@"
 }
-site_compose() {
-  docker compose --project-directory "$SITE" -p site_mapper_snmp_lab \
+site_compose_for() {
+  local project="$1"
+  shift
+  docker compose --project-directory "$SITE" -p "$project" \
     --env-file "$SITE/.env" --env-file "$BFDB/.env.snmp" \
     -f "$SITE/docker-compose.telemetry.yml" \
     -f "$BRIDGE/config4-site-mapper.override.yml" --profile snmp "$@"
+}
+bfdb_compose() { bfdb_compose_for "$BFDB_PROJECT" "$@"; }
+site_compose() { site_compose_for "$SITE_PROJECT" "$@"; }
+
+check_duplicate_stacks() {
+  if docker ps -q --filter label=com.docker.compose.project=bfdb_snmp_lab | grep -q . ||
+     docker ps -q --filter label=com.docker.compose.project=site_mapper_snmp_lab | grep -q .; then
+    echo 'Obsolete duplicate lab containers are running on required host ports.' >&2
+    echo "First run: bash scripts/lab/bfdb-snmp-config4.sh cleanup-duplicate '$BFDB'" >&2
+    echo 'The cleanup removes containers and networks, never named volumes.' >&2
+    exit 2
+  fi
 }
 check_env() {
   for path in "$SITE/.env" "$BFDB/.env" "$BFDB/.env.snmp"; do
@@ -108,6 +129,7 @@ EOF
     ;;
   up)
     check_env
+    check_duplicate_stacks
     docker network inspect "$NETWORK" >/dev/null 2>&1 || docker network create "$NETWORK" >/dev/null
     bfdb_compose config --quiet
     site_compose config --quiet
@@ -172,6 +194,14 @@ EOF
     site_compose down
     bfdb_compose down
     echo 'Stopped both stacks without deleting volumes.'
+    ;;
+  cleanup-duplicate)
+    check_env
+    # Only the two distinct project IDs created by the earlier broken launcher.
+    # No -v: preserve all old and interim Mongo/Timescale volumes.
+    site_compose_for site_mapper_snmp_lab down
+    bfdb_compose_for bfdb_snmp_lab down
+    echo 'Removed only duplicate Compose containers and networks; volumes retained.'
     ;;
   *) usage; exit 2 ;;
 esac

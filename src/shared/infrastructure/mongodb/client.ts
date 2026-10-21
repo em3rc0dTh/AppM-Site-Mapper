@@ -24,9 +24,11 @@ export function assertMongoProductionSecurity(uri: string, production: boolean):
   const options = new Map(
     [...url.searchParams.entries()].map(([key, value]) => [key.toLowerCase(), value.toLowerCase()]),
   );
-  if (['tlsinsecure', 'tlsallowinvalidcertificates', 'tlsallowinvalidhostnames'].some(
-    (key) => options.get(key) === 'true',
-  )) {
+  if (
+    ['tlsinsecure', 'tlsallowinvalidcertificates', 'tlsallowinvalidhostnames'].some(
+      (key) => options.get(key) === 'true',
+    )
+  ) {
     throw new Error('Production MongoDB must validate TLS certificates and hostnames');
   }
   if (options.get('tls') === 'false' || options.get('ssl') === 'false') {

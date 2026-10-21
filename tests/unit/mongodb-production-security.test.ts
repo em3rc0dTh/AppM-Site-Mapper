@@ -22,7 +22,10 @@ describe('production MongoDB trust boundary', () => {
       assertMongoProductionSecurity('mongodb+srv://u:p@cluster.example/db?tls=false', true),
     ).toThrow();
     expect(() =>
-      assertMongoProductionSecurity('mongodb://u:p@mongo.internal:27017/db?tls=true&tlsAllowInvalidCertificates=true', true),
+      assertMongoProductionSecurity(
+        'mongodb://u:p@mongo.internal:27017/db?tls=true&tlsAllowInvalidCertificates=true',
+        true,
+      ),
     ).toThrow();
   });
 });

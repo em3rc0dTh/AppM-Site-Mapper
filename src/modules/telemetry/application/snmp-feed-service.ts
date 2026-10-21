@@ -1,5 +1,6 @@
 import {
-  assessConfig4Inventory,
+  assessBdfbInventory,
+  ELTEK_BDCBB_CONFIG_4,
   bdfbHardwareProfile,
   CONFIG_4_DEFAULT_OVERLOAD_A,
   config4FeedPosition,
@@ -282,7 +283,7 @@ export async function summarizeSnmpBdfbLoad(
     (node) => node.lifecycle === 'ACTIVE',
   );
   const selectedProfile = bdfbHardwareProfile(device);
-  const assessed = selectedProfile ? assessConfig4Inventory(equipment) : null;
+  const assessed = selectedProfile ? assessBdfbInventory(selectedProfile, equipment) : null;
   const feedPorts = equipment.flatMap((owner) =>
     owner.accessPorts.filter(isBdfbFeedPort).map((port) => ({ owner, port })),
   );
@@ -340,7 +341,7 @@ export async function summarizeSnmpBdfbLoad(
       Number.isFinite(port.attributes.overloadThresholdA) &&
       port.attributes.overloadThresholdA > 0
         ? port.attributes.overloadThresholdA
-        : selectedProfile
+        : selectedProfile === ELTEK_BDCBB_CONFIG_4
           ? CONFIG_4_DEFAULT_OVERLOAD_A
           : null;
     const nominal = port.attributes?.ratedCurrentA;
@@ -378,7 +379,7 @@ export async function summarizeSnmpBdfbLoad(
   }
   const positions = ['A2', 'B2', 'A1', 'B1'];
   feeds.sort((a, b) => {
-    if (selectedProfile) {
+    if (selectedProfile === ELTEK_BDCBB_CONFIG_4) {
       const left = positions.indexOf(a.feedPosition ?? '');
       const right = positions.indexOf(b.feedPosition ?? '');
       if (left !== right) return (left < 0 ? 99 : left) - (right < 0 ? 99 : right);

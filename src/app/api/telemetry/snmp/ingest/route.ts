@@ -1,3 +1,5 @@
+import { isProductionDeployment } from '@/config/env';
+import { authorizeController } from '@/modules/telemetry/application/snmp-ingest-credentials';
 import { createHash, timingSafeEqual } from 'node:crypto';
 
 import { SnmpFeedService } from '@/modules/telemetry/application/snmp-feed-service';
@@ -24,12 +26,27 @@ export function authorizedSnmpCollector(
 }
 
 export async function POST(request: Request) {
-  const secret = process.env.SNMP_INGEST_TOKEN;
-  if (!secret || secret.length < 32) {
-    return Response.json({ error: 'SNMP_INGEST_DISABLED' }, { status: 503 });
-  }
-  if (!authorizedSnmpCollector(request.headers.get('authorization'), secret)) {
-    return Response.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  const production = isProductionDeployment();
+  let expectedSource: string | null = null;
+  if (production) {
+    if (process.env.TELEMETRY_HISTORY_ENABLED !== 'true' ||
+        !process.env.TELEMETRY_STORE_TOKEN ||
+        process.env.TELEMETRY_STORE_TOKEN.length < 32)
+      return Response.json({ error: 'SNMP_PRODUCTION_STORE_NOT_SECURE' }, { status: 503 });
+    try {
+      expectedSource = authorizeController(
+        request.headers.get('authorization'), process.env.SNMP_INGEST_SOURCES_JSON);
+    } catch {
+      return Response.json({ error: 'SNMP_SOURCE_CREDENTIALS_INVALID' }, { status: 503 });
+    }
+    if (!expectedSource)
+      return Response.json({ error: 'UNAUTHORIZED' }, { status: 401 });
+  } else {
+    const secret = process.env.SNMP_INGEST_TOKEN;
+    if (!secret || secret.length < 32)
+      return Response.json({ error: 'SNMP_INGEST_DISABLED' }, { status: 503 });
+    if (!authorizedSnmpCollector(request.headers.get('authorization'), secret))
+      return Response.json({ error: 'UNAUTHORIZED' }, { status: 401 });
   }
   const parsed = await readBoundedJson(request, { maxBytes: 16_384, maxDepth: 4, maxNodes: 340 });
   if (!parsed.ok) {
@@ -37,6 +54,8 @@ export async function POST(request: Request) {
   }
   const packet = parseSnmpFeedPacket(parsed.value);
   if (!packet.ok) return Response.json({ error: packet.error }, { status: 400 });
+  if (production && packet.value.sourceIdentity !== expectedSource)
+    return Response.json({ error: 'COLLECTOR_SOURCE_MISMATCH' }, { status: 403 });
 
   const runtime = await getTelemetryRuntime();
   const history =

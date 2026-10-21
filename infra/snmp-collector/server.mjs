@@ -38,7 +38,7 @@ if (!['2c', '3'].includes(config.version)) throw new Error('SNMP_VERSION must be
 if (config.ingestToken.length < 32) throw new Error('SNMP ingest token must be >=32 chars');
 if (config.version === '3' && (!config.username || config.authKey.length < 8 || config.privKey.length < 8))
   throw new Error('SNMPv3 authPriv credentials are incomplete');
-if (config.version === '2c' && (!config.community || /[\\r\\n]/.test(config.community)))
+if (config.version === '2c' && (!config.community || /[\r\n]/.test(config.community)))
   throw new Error('SNMPv2c read-only community must be configured');
 if (config.version === '2c' && process.env.APP_ENV === 'production' &&
     process.env.SNMP_V2C_ACKNOWLEDGE_PLAINTEXT !== 'true')

@@ -211,8 +211,7 @@ export class SnmpFeedService {
     } catch (error) {
       if (
         error instanceof Error &&
-        (error.message === 'SNMP_BATCH_TAMPERED' ||
-          error.message === 'OUT_OF_ORDER_SNMP_SAMPLE')
+        (error.message === 'SNMP_BATCH_TAMPERED' || error.message === 'OUT_OF_ORDER_SNMP_SAMPLE')
       )
         return failure('OUT_OF_ORDER_SNMP_SAMPLE');
       return failure('HISTORY_STORE_UNAVAILABLE');

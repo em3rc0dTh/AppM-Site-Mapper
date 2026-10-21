@@ -128,9 +128,9 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
       this.failures += 1;
       if (
         response.status === 409 &&
-        (result.error === 'SNMP_BATCH_TAMPERED' ||
-          result.error === 'OUT_OF_ORDER_SNMP_SAMPLE')
-      ) throw new Error(result.error);
+        (result.error === 'SNMP_BATCH_TAMPERED' || result.error === 'OUT_OF_ORDER_SNMP_SAMPLE')
+      )
+        throw new Error(result.error);
       throw new Error(`SNMP_BATCH_HTTP_${response.status}`);
     }
     if (

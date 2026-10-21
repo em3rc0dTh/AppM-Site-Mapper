@@ -336,12 +336,17 @@ support approximate per-feed `abs(V) × A`. No breaker-level MQTT power
 or energy is added into the input-feed total; the existing MQTT/Modbus
 pipeline and antireplay protections are preserved.
 
-The existing BFDB SNMP **laboratory emulator currently has only A/B
-inputs** and must be changed to four independently polled test OIDs
-after this Site Mapper contract passes CI. Its OIDs remain synthetic,
-not Delta/Eltek MIB certification. No real controller OID-to-shunt index,
-firmware version, upstream source redundancy, or field wiring is
-asserted by these simulations.
+The separate BFDB SNMP laboratory emulator now supports **two explicit
+profiles**: the legacy `GENERIC_2_FEED` A/B mode and the opt-in
+`ELTEK_BDCBB_CONFIG_4` A1/A2/B1/B2 mode (four current and four voltage
+points per cabinet). This was merged in
+[BFDB PR #6](https://github.com/thradexIT/bfdb-telemetry-gateway/pull/6)
+and extends the previous lab contract in
+[BFDB SNMP documentation](https://github.com/thradexIT/bfdb-telemetry-gateway/blob/main/docs/04-emulator/delta-snmp-bdfb-lab.md).
+For Configuration 4 the synthetic OIDs occupy a distinct `...2026.49`
+subtree; they are NOT Delta/Eltek MIB certification. No real controller
+OID-to-shunt index, firmware version, upstream redundancy or field wiring
+is asserted by these simulations.
 
 Certification adds cases for 2/4 incomplete, 4/4 complete, duplicate
 identity, duplicate panel, unverified shunt, stale OIDs, calculated

@@ -1,0 +1,14 @@
+# BFDB external network bridge for local Config4 emulator (private repo).
+services:
+  mosquitto:
+    networks: [default, bfdb_snmp_lab]
+  snmp-agent-bfdb-01:
+    networks: [default, bfdb_snmp_lab]
+  snmp-agent-bfdb-02:
+    networks: [default, bfdb_snmp_lab]
+  snmp-agent-bfdb-03:
+    networks: [default, bfdb_snmp_lab]
+networks:
+  bfdb_snmp_lab:
+    external: true
+    name: site_mapper_bfdb_snmp_lab

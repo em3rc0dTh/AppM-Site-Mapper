@@ -1,0 +1,120 @@
+# Docker lab · Site Mapper + BFDB MQTT + SNMPv3 Configuration 4
+
+**Scope: local WSL2/Linux laboratory, not production or Delta field certification.**
+
+Two independent repositories are orchestrated without merging databases:
+
+- [Site Mapper](https://github.com/em3rc0dTh/AppM-Site-Mapper): web/RBAC, MongoDB, historical TimescaleDB, Modbus, 3 SNMP collectors.
+- `thradexIT/bfdb-telemetry-gateway`: 3 BFDB MQTT publishers, separate gateway/TSDB/Modbus, 3 SNMPv3 `authPriv` agents.
+
+The BFDB SNMP **Config4** profile uses four independent incoming DC shunts
+`A1/A2/B1/B2` and eight synthetic OIDs (4 CURRENT, 4 VOLTAGE) per device.
+Its `...2026.49` OID tree is not an authentic Delta/Eltek MIB.
+Incoming SNMP current is **not** the sum of 96 MQTT circuit currents.
+
+## Requirements and first start
+
+Docker Compose v2, Git, Bash (WSL2) and OpenSSL. Free localhost TCP
+ports 3000, 3100, 27017, 55432, 18081, 18082, 1503, 1883, 5432,
+1502 and localhost UDP 11611–11613. Access to the private BFDB GitHub
+repository is required. Put both checkouts in the same parent directory
+or adjust the BFDB path.
+
+```bash
+# If you do not have these clones yet:
+git clone https://github.com/em3rc0dTh/AppM-Site-Mapper.git
+git clone https://github.com/thradexIT/bfdb-telemetry-gateway.git
+
+cd AppM-Site-Mapper
+git pull --ff-only origin main
+git -C ../bfdb-telemetry-gateway pull --ff-only origin main
+
+bash scripts/lab/bfdb-snmp-config4.sh init ../bfdb-telemetry-gateway
+bash scripts/lab/bfdb-snmp-config4.sh up ../bfdb-telemetry-gateway
+bash scripts/lab/bfdb-snmp-config4.sh status ../bfdb-telemetry-gateway
+```
+
+`init` generates random **lab-only** tokens and passwords in ignored
+`.env` and BFDB `.env.snmp` **only when absent**. Existing files and
+secrets are never overwritten. If an existing BFDB `.env.snmp` selects
+`GENERIC_2_FEED`, manually change its
+`SNMP_EMULATOR_PROFILE=ELTEK_BDCBB_CONFIG_4` without changing secrets.
+Site Mapper `.env` must use `APP_ENV=development` and contain the
+mandatory Compose values. The `up` command validates Compose before
+starting services, creates an isolated external Docker network, and uses
+dedicated Compose project names `site_mapper_snmp_lab` and
+`bfdb_snmp_lab` (so previously named volumes are not modified).
+
+The shared network connects only BFDB Mosquitto + SNMP agents to Site Mapper
+
+- collectors. Neither project's TimescaleDB/Modbus joins the shared network.
+  Host ports are loopback-only in the underlying Compose files.
+
+## First Superadmin and RBAC
+
+For a **new, empty** Site Mapper MongoDB, create the first account using the
+protected endpoint through the interactive helper:
+
+```bash
+bash scripts/lab/bfdb-snmp-config4.sh bootstrap ../bfdb-telemetry-gateway
+```
+
+The helper prompts for email, display name and hidden password (12+ chars).
+If an account already exists, do not bootstrap again; log in normally at
+**http://127.0.0.1:3000/login**. Superadmin may create ADMIN and STANDARD
+accounts through Settings → Users.
+
+## Before starting the three collectors
+
+Each synthetic BFDB requires an independently inventoried Site Mapper Device
+of type BDFB with CHASSIS, PANEL A1/A2/B1/B2, and **four distinct external
+POWER INPUT AccessPorts**, properly labeled `feedPosition`, approved lab
+`servedPanelIds` and independent shunt attributes. In BDFB inspector choose
+the **ELTEK_BDCBB_CONFIG_4** hardware profile explicitly; in **SNMP FEED
+COMMISSIONING** bind each OID to its actual synthetic AccessPort with
+explicit confirmation. Never auto-bind by panel index.
+
+| Agent   | Source identity     | Internal SNMP DNS             |
+| ------- | ------------------- | ----------------------------- |
+| BFDB-01 | `EMU-DELTA-BFDB-01` | `snmp-agent-bfdb-01:1161/udp` |
+| BFDB-02 | `EMU-DELTA-BFDB-02` | `snmp-agent-bfdb-02:1161/udp` |
+| BFDB-03 | `EMU-DELTA-BFDB-03` | `snmp-agent-bfdb-03:1161/udp` |
+
+| Feed | CURRENT synthetic OID                 | VOLTAGE synthetic OID                 |
+| ---- | ------------------------------------- | ------------------------------------- |
+| A1   | `1.3.6.1.4.1.8072.9999.2026.49.1.1.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.1.0` |
+| A2   | `1.3.6.1.4.1.8072.9999.2026.49.1.2.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.2.0` |
+| B1   | `1.3.6.1.4.1.8072.9999.2026.49.1.3.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.3.0` |
+| B2   | `1.3.6.1.4.1.8072.9999.2026.49.1.4.0` | `1.3.6.1.4.1.8072.9999.2026.49.2.4.0` |
+
+All eight OIDs use engineering scale **0.1**, already set by the Docker
+collector overlay. Laboratory rating examples: 800 A per input and shunt
+1000 A / 60 mV. The rating is **not** an additional scaling factor.
+
+Start collectors after commissioning:
+
+```bash
+bash scripts/lab/bfdb-snmp-config4.sh collectors ../bfdb-telemetry-gateway
+bash scripts/lab/bfdb-snmp-config4.sh status ../bfdb-telemetry-gateway
+```
+
+There are three independent collectors, one per source, posting to the
+Site Mapper private HTTP endpoint with the local collector bearer. Before
+commissioning, HTTP 422 / `UNKNOWN_SNMP_POINT` is expected; SNMP agent
+startup alone **does not** create physical inventory or mark BDFB `LIVE`.
+
+On the inspector verify `A1/A2/B1/B2`, freshness and `4/4` only when
+all mappings and readings are valid. Verify the authenticated SNMP feed
+history in Site Mapper TimescaleDB separately from BFDB MQTT/TSDB/Modbus.
+The local HTTP health endpoint does not certify this end-to-end path.
+
+Stop without deleting volumes:
+
+```bash
+bash scripts/lab/bfdb-snmp-config4.sh down ../bfdb-telemetry-gateway
+```
+
+**Do not** execute `docker compose down -v`, commit ignored `.env`
+credentials, expose UDP agents publicly or reuse these credentials with
+physical Delta controllers. This lab is intentionally not a production
+authentication/TLS/OT firewall deployment.

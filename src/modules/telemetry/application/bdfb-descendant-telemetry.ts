@@ -17,7 +17,11 @@ export interface BdfbDescendantTelemetry {
   readonly latestReceivedAt: string | null;
 }
 
-type MeasuredValue = { readonly value: number; readonly observedAt: number; readonly receivedAt: number };
+type MeasuredValue = {
+  readonly value: number;
+  readonly observedAt: number;
+  readonly receivedAt: number;
+};
 type EquipmentReadings = Partial<Record<BdfbMetric, MeasuredValue>>;
 
 const METRICS: readonly BdfbMetric[] = ['voltageV', 'currentA', 'powerW', 'energyKwh'];
@@ -58,7 +62,8 @@ export function aggregateBdfbDescendantTelemetry(
       !sample.metricBindingIds?.length ||
       !isFresh(sample.sourceObservedAt ?? sample.receivedAt, now) ||
       !isFresh(sample.receivedAt, now)
-    ) continue;
+    )
+      continue;
 
     const values: [BdfbMetric, MeasuredValue][] = [];
     for (const key of METRICS) {
@@ -66,15 +71,19 @@ export function aggregateBdfbDescendantTelemetry(
       if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
       const metric = raw as { value?: unknown; observedAt?: unknown };
       if (typeof metric.value !== 'number' || !Number.isFinite(metric.value)) continue;
-      const observedAt = typeof metric.observedAt === 'string'
-        ? metric.observedAt
-        : (sample.sourceObservedAt ?? sample.receivedAt);
+      const observedAt =
+        typeof metric.observedAt === 'string'
+          ? metric.observedAt
+          : (sample.sourceObservedAt ?? sample.receivedAt);
       if (!isFresh(observedAt, now)) continue;
-      values.push([key, {
-        value: metric.value,
-        observedAt: Date.parse(observedAt),
-        receivedAt: Date.parse(sample.receivedAt),
-      }]);
+      values.push([
+        key,
+        {
+          value: metric.value,
+          observedAt: Date.parse(observedAt),
+          receivedAt: Date.parse(sample.receivedAt),
+        },
+      ]);
     }
     if (!values.length) continue;
 
@@ -90,7 +99,8 @@ export function aggregateBdfbDescendantTelemetry(
         !previous ||
         value.observedAt > previous.observedAt ||
         (value.observedAt === previous.observedAt && value.receivedAt > previous.receivedAt)
-      ) current[key] = value;
+      )
+        current[key] = value;
     }
     readings.set(sample.targetId, current);
   }
@@ -99,13 +109,12 @@ export function aggregateBdfbDescendantTelemetry(
   const valid = [...readings.entries()]
     .filter(([id]) => identities.get(id)?.size === 1)
     .map(([, metrics]) => metrics);
-  const values = (key: BdfbMetric) => valid.flatMap((entry) =>
-    entry[key] ? [entry[key]!.value] : [],
-  );
+  const values = (key: BdfbMetric) =>
+    valid.flatMap((entry) => (entry[key] ? [entry[key]!.value] : []));
   const powers = values('powerW');
-  const latest = valid.flatMap((entry) => METRICS.flatMap((key) =>
-    entry[key] ? [entry[key]!.receivedAt] : [],
-  ));
+  const latest = valid.flatMap((entry) =>
+    METRICS.flatMap((key) => (entry[key] ? [entry[key]!.receivedAt] : [])),
+  );
   const reportingEquipment = valid.length;
 
   return {

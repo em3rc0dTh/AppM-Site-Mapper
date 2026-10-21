@@ -743,7 +743,7 @@ El Home **no es un segundo modelo de inventario**, ni hace cálculos eléctricos
 └──────────────┴────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-*Los números del wireframe son ilustrativos, reproducidos de una captura de campo para explicar el diseño. Nunca se codifican en la aplicación ni representan telemetría LIVE permanente.*
+_Los números del wireframe son ilustrativos, reproducidos de una captura de campo para explicar el diseño. Nunca se codifican en la aplicación ni representan telemetría LIVE permanente._
 
 ## Contrato funcional del Home
 

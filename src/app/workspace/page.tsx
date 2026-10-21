@@ -41,38 +41,44 @@ export default async function WorkspacePage() {
   // opens the Device's physical view; Equipment Composition remains accessible
   // through the topology navigation.
   const physicalPin = async (node: NonNullable<(typeof pinnedNodes)[number]>) => {
-    const parent = node.kind === 'EQUIPMENT'
-      ? await topologyRepo.getById(node.deviceId)
-      : null;
-    const target = parent?.kind === 'DEVICE' && parent.deviceType === 'BDFB'
-      ? parent
-      : node;
+    const parent = node.kind === 'EQUIPMENT' ? await topologyRepo.getById(node.deviceId) : null;
+    const target = parent?.kind === 'DEVICE' && parent.deviceType === 'BDFB' ? parent : node;
     return {
       id: target.id,
       name: target.name,
       kind: target.kind,
-      href: target.kind === 'CONTAINER_RACK'
-        ? `/rack/${target.id}/focus`
-        : await topology.buildDeepLink(target.id),
+      href:
+        target.kind === 'CONTAINER_RACK'
+          ? `/rack/${target.id}/focus`
+          : await topology.buildDeepLink(target.id),
       context: (await topology.getTrail(target.id))
-        .slice(-3).map((item) => item.name).join(' › '),
+        .slice(-3)
+        .map((item) => item.name)
+        .join(' › '),
     };
   };
 
-  const pinLinks = await Promise.all(
-    pinnedNodes.map((node) => physicalPin(node!)),
-  );
+  const pinLinks = await Promise.all(pinnedNodes.map((node) => physicalPin(node!)));
 
-  const inventoryPins = await Promise.all(snapshot.pinned
-    .filter((item) => !pinnedNodes.some((node) => node?.id === item.id))
-    .map(async (item) => {
-      const node = await topologyRepo.getById(item.id);
-      return node ? physicalPin(node) : {
-        id: item.id, name: item.name, kind: item.kind,
-        href: item.href, context: item.category ?? item.kind,
-      };
-    }));
-  const cards = [...new Map([...pinLinks, ...inventoryPins].map((item) => [item.id, item])).values()].slice(0, 3);
+  const inventoryPins = await Promise.all(
+    snapshot.pinned
+      .filter((item) => !pinnedNodes.some((node) => node?.id === item.id))
+      .map(async (item) => {
+        const node = await topologyRepo.getById(item.id);
+        return node
+          ? physicalPin(node)
+          : {
+              id: item.id,
+              name: item.name,
+              kind: item.kind,
+              href: item.href,
+              context: item.category ?? item.kind,
+            };
+      }),
+  );
+  const cards = [
+    ...new Map([...pinLinks, ...inventoryPins].map((item) => [item.id, item])).values(),
+  ].slice(0, 3);
 
   const equipmentNodes = allNodes.filter((node) => node.kind === 'DEVICE');
   const bdfbRows = snapshot.bdfb;
@@ -88,11 +94,21 @@ export default async function WorkspacePage() {
       <HomeSidebar tree={<NavigationTree roots={snapshot.navigation} />} />
       <section className="sm-home-main">
         <header className="sm-home-heading">
-          <div><span className="sm-home-breadcrumb">⌂ Home</span><h1>Infrastructure overview</h1></div>
-          <span className="sm-home-scope">{contextLabel} / {contextChild}</span>
+          <div>
+            <span className="sm-home-breadcrumb">⌂ Home</span>
+            <h1>Infrastructure overview</h1>
+          </div>
+          <span className="sm-home-scope">
+            {contextLabel} / {contextChild}
+          </span>
         </header>
         {canLoadDevelopmentDemo ? <DemoSeedButton /> : null}
-        <HomeLiveOverview equipmentIds={equipmentNodes.map((node) => node.id)} bdfbs={bdfbRows} cards={cards} initialSamples={latest} />
+        <HomeLiveOverview
+          equipmentIds={equipmentNodes.map((node) => node.id)}
+          bdfbs={bdfbRows}
+          cards={cards}
+          initialSamples={latest}
+        />
       </section>
     </main>
   );

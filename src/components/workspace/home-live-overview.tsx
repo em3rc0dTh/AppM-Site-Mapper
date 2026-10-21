@@ -101,15 +101,34 @@ export function HomeLiveOverview({
                 {bdfb ? (
                   <>
                     <div className="sm-home-pin-readings">
-                      <span>Avg. voltage <b>{format(bdfb.averageVoltageV, 'V')}</b></span>
-                      <span>Avg. current <b>{format(bdfb.averageCurrentA, 'A')}</b></span>
-                      <span>Avg. power <b>{format(bdfb.averagePowerW, 'W')}</b></span>
-                      <span>Avg. energy counter <b>{format(bdfb.averageEnergyKwh, 'kWh', 4)}</b></span>
-                      <span>Total power <b>{format(bdfb.totalPowerW === null ? null : bdfb.totalPowerW / 1000, 'kW')}</b></span>
-                      <span>Equipment reporting <b>{bdfb.reportingEquipment} / {bdfb.descendantEquipment}</b></span>
+                      <span>
+                        Avg. voltage <b>{format(bdfb.averageVoltageV, 'V')}</b>
+                      </span>
+                      <span>
+                        Avg. current <b>{format(bdfb.averageCurrentA, 'A')}</b>
+                      </span>
+                      <span>
+                        Avg. power <b>{format(bdfb.averagePowerW, 'W')}</b>
+                      </span>
+                      <span>
+                        Avg. energy counter <b>{format(bdfb.averageEnergyKwh, 'kWh', 4)}</b>
+                      </span>
+                      <span>
+                        Total power{' '}
+                        <b>
+                          {format(bdfb.totalPowerW === null ? null : bdfb.totalPowerW / 1000, 'kW')}
+                        </b>
+                      </span>
+                      <span>
+                        Equipment reporting{' '}
+                        <b>
+                          {bdfb.reportingEquipment} / {bdfb.descendantEquipment}
+                        </b>
+                      </span>
                     </div>
                     <small className="sm-home-telemetry-note">
-                      Entire BDFB · commissioned descendant Equipment · last {bdfb.latestReceivedAt ?? '—'}
+                      Entire BDFB · commissioned descendant Equipment · last{' '}
+                      {bdfb.latestReceivedAt ?? '—'}
                     </small>
                   </>
                 ) : (
@@ -134,7 +153,11 @@ export function HomeLiveOverview({
           <article>
             <small>TOTAL POWER (LIVE)</small>
             <strong>{reporting.length ? format(totalPowerW / 1000, 'kW') : '—'}</strong>
-            <span>{partial ? 'Partial: BDFB(s) without current power omitted' : 'Sum of current descendant power'}</span>
+            <span>
+              {partial
+                ? 'Partial: BDFB(s) without current power omitted'
+                : 'Sum of current descendant power'}
+            </span>
           </article>
           <article>
             <small>PERIOD ENERGY</small>
@@ -143,14 +166,16 @@ export function HomeLiveOverview({
           </article>
           <article>
             <small>BDFB MONITORING</small>
-            <strong>{monitoring} / {rows.length}</strong>
+            <strong>
+              {monitoring} / {rows.length}
+            </strong>
             <span>BDFBs with recent descendant Equipment metrics</span>
           </article>
         </div>
         {partial && (
           <p className="sm-home-warning">
-            Total power is partial: {rows.length - reporting.length} BDFB(s) have no valid
-            current power. Missing measurements are not treated as zero.
+            Total power is partial: {rows.length - reporting.length} BDFB(s) have no valid current
+            power. Missing measurements are not treated as zero.
           </p>
         )}
         <div className="sm-home-section-heading">
@@ -175,15 +200,21 @@ export function HomeLiveOverview({
             <tbody>
               {rows.map((row) => (
                 <tr key={row.deviceId}>
-                  <td><strong>{row.deviceName}</strong></td>
+                  <td>
+                    <strong>{row.deviceName}</strong>
+                  </td>
                   <td>{format(row.averageVoltageV, 'V')}</td>
                   <td>{format(row.averageCurrentA, 'A')}</td>
                   <td>{format(row.averagePowerW, 'W')}</td>
                   <td>{format(row.averageEnergyKwh, 'kWh', 4)}</td>
                   <td>{format(row.totalPowerW === null ? null : row.totalPowerW / 1000, 'kW')}</td>
-                  <td>{row.reportingEquipment} / {row.descendantEquipment}</td>
+                  <td>
+                    {row.reportingEquipment} / {row.descendantEquipment}
+                  </td>
                   <td>{row.latestReceivedAt ?? '—'}</td>
-                  <td><Link href={row.href}>Open →</Link></td>
+                  <td>
+                    <Link href={row.href}>Open →</Link>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -191,8 +222,8 @@ export function HomeLiveOverview({
           {!rows.length && <p className="sm-home-warning">No BDFBs found.</p>}
         </div>
         <p className="sm-home-telemetry-note">
-          Live averages use latest valid bound Equipment readings (30 s window). The energy
-          counter average is not period consumption; LIVE power is a sum, not a mean.
+          Live averages use latest valid bound Equipment readings (30 s window). The energy counter
+          average is not period consumption; LIVE power is a sum, not a mean.
         </p>
       </section>
     </>

@@ -57,7 +57,6 @@ The application shell uses a bounded operational viewport. Document-level scroll
 
 The technical Inspector remains a quick factual surface. It complements rather than replaces Blueprint, Rack Elevation, BDFB chassis, Panel/Breaker views, and PowerPath diagrams.
 
-
 ## Revised Home / LIVE Telemetry contract — 2026-10-20
 
 The original G11 operational launcher layout has evolved into an authenticated Home

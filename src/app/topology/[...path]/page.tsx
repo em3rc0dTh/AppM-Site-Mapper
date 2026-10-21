@@ -243,11 +243,12 @@ export default async function TopologyNodePage({
       });
     }
   }
-  const descendantEquipmentIds = node.kind === 'DEVICE' && node.deviceType === 'BDFB'
-    ? (await repository.listEquipmentForDevice(node.id))
-        .filter((equipment) => equipment.lifecycle === 'ACTIVE')
-        .map((equipment) => equipment.id)
-    : [];
+  const descendantEquipmentIds =
+    node.kind === 'DEVICE' && node.deviceType === 'BDFB'
+      ? (await repository.listEquipmentForDevice(node.id))
+          .filter((equipment) => equipment.lifecycle === 'ACTIVE')
+          .map((equipment) => equipment.id)
+      : [];
 
   const mappedBdfbBreakerCount = new Set(bdfbTelemetryBindings.map((binding) => binding.breakerId))
     .size;

@@ -229,7 +229,9 @@ export function BdfbTelemetryInspector({
         <header>
           <div>
             <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
-            <strong>{window === 'LIVE' ? 'DESCENDANT EQUIPMENT AVERAGE' : 'HISTORICAL AVERAGE'}</strong>
+            <strong>
+              {window === 'LIVE' ? 'DESCENDANT EQUIPMENT AVERAGE' : 'HISTORICAL AVERAGE'}
+            </strong>
           </div>
           <span>{scopeLabel}</span>
         </header>
@@ -288,14 +290,18 @@ export function BdfbTelemetryInspector({
             </div>
 
             <p className="zip-bdfb-aggregate-note">
-              Live total power: {metric(live.totalPowerW, 'W')}. Mean energy is a
-              cumulative-counter average, not consumption over a period.
+              Live total power: {metric(live.totalPowerW, 'W')}. Mean energy is a cumulative-counter
+              average, not consumption over a period.
             </p>
             <dl className="zip-bdfb-live-average-counts">
-              <dt>Equipment reporting</dt><dd>{reportingEquipment}</dd>
-              <dt>Descendant equipment</dt><dd>{live.descendantEquipment}</dd>
-              <dt>Without current reading</dt><dd>{live.withoutCurrentReading}</dd>
-              <dt>Last packet</dt><dd>{compactUtc(latestReceived)}</dd>
+              <dt>Equipment reporting</dt>
+              <dd>{reportingEquipment}</dd>
+              <dt>Descendant equipment</dt>
+              <dd>{live.descendantEquipment}</dd>
+              <dt>Without current reading</dt>
+              <dd>{live.withoutCurrentReading}</dd>
+              <dt>Last packet</dt>
+              <dd>{compactUtc(latestReceived)}</dd>
             </dl>
           </>
         ) : (

@@ -49,7 +49,9 @@ export function BdfbChassis({
         </div>
         <div className="bdfb-chassis-status">
           <ContextPin entityId={device.id} />
-          <Link className="bdfb-open-chassis" href={`/device/${presentation.chassisId}`}>OPEN CHASSIS COMPOSITION →</Link>
+          <Link className="bdfb-open-chassis" href={`/device/${presentation.chassisId}`}>
+            OPEN CHASSIS COMPOSITION →
+          </Link>
           <span>{presentation.shelves.length} shelves</span>
           <span>{frames.length} frames</span>
           <span>{panels.length} panels</span>
@@ -60,18 +62,30 @@ export function BdfbChassis({
           <div className="sm-bdfb-physical-title">CHASSIS · {device.name}</div>
           {presentation.shelves.map((shelf) => (
             <section key={shelf.id} className="sm-bdfb-physical-shelf">
-              <div className="sm-bdfb-physical-title">{shelf.physical === false ? 'PANEL GROUP' : 'SHELF'} · {shelf.label}</div>
+              <div className="sm-bdfb-physical-title">
+                {shelf.physical === false ? 'PANEL GROUP' : 'SHELF'} · {shelf.label}
+              </div>
               <div className="sm-bdfb-physical-frames">
                 {shelf.frames.map((frame) => (
                   <section key={frame.id} className="sm-bdfb-physical-frame">
-                    <div className="sm-bdfb-physical-title">{frame.physical ? 'FRAME' : 'GROUP'} · {frame.label}</div>
+                    <div className="sm-bdfb-physical-title">
+                      {frame.physical ? 'FRAME' : 'GROUP'} · {frame.label}
+                    </div>
                     <div className="sm-bdfb-physical-panels">
                       {frame.panels.map((panel) => {
                         const installed = panel.positions.filter(Boolean).length;
                         return (
-                          <Link className="sm-bdfb-physical-panel" key={panel.id} href={`/device/${panel.id}`} title={`Open Equipment Composition: ${panel.label}`}>
+                          <Link
+                            className="sm-bdfb-physical-panel"
+                            key={panel.id}
+                            href={`/device/${panel.id}`}
+                            title={`Open Equipment Composition: ${panel.label}`}
+                          >
                             <strong>{panel.label}</strong>
-                            <span>{installed} installed · {panel.positions.length - installed} available positions</span>
+                            <span>
+                              {installed} installed · {panel.positions.length - installed} available
+                              positions
+                            </span>
                             <small>OPEN PANEL COMPOSITION →</small>
                           </Link>
                         );

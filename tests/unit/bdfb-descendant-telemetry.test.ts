@@ -6,7 +6,14 @@ import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 const at = '2026-10-20T20:48:42.299Z';
 const now = Date.parse(at) + 1000;
 
-function sample(id: string, point: string, volts: number, amps: number, power: number, energy: number): TelemetrySample {
+function sample(
+  id: string,
+  point: string,
+  volts: number,
+  amps: number,
+  power: number,
+  energy: number,
+): TelemetrySample {
   return {
     bindingId: `binding-${id}`,
     metricBindingIds: ['v', 'i', 'p', 'e'],
@@ -18,8 +25,9 @@ function sample(id: string, point: string, volts: number, amps: number, power: n
     entityKind: 'EQUIPMENT',
     receivedAt: at,
     reported: Object.fromEntries(
-      Object.entries({ voltageV: volts, currentA: amps, powerW: power, energyKwh: energy })
-        .map(([key, value]) => [key, { value, unit: '', observedAt: at }]),
+      Object.entries({ voltageV: volts, currentA: amps, powerW: power, energyKwh: energy }).map(
+        ([key, value]) => [key, { value, unit: '', observedAt: at }],
+      ),
     ),
   };
 }

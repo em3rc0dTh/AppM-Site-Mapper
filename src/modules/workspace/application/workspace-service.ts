@@ -135,16 +135,17 @@ export class WorkspaceService {
           const descendantEquipmentIds = descendantEquipment
             .filter((equipment) => equipment.lifecycle === 'ACTIVE')
             .map((equipment) => equipment.id);
-          if (!presentation) return {
-            deviceId: device.id,
-            deviceName: device.name,
-            shelves: 0,
-            frames: 0,
-            panels: 0,
-            endpoints: 0,
-            descendantEquipmentIds,
-            href: await this.topologyService.buildDeepLink(device.id),
-          };
+          if (!presentation)
+            return {
+              deviceId: device.id,
+              deviceName: device.name,
+              shelves: 0,
+              frames: 0,
+              panels: 0,
+              endpoints: 0,
+              descendantEquipmentIds,
+              href: await this.topologyService.buildDeepLink(device.id),
+            };
 
           const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
           const panels = frames.flatMap((frame) => frame.panels);

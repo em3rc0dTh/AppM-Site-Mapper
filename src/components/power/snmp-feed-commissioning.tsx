@@ -63,10 +63,10 @@ export function SnmpFeedCommissioning({
       setLoading(false);
     }
   }
-  async function activateConfig4() {
+  async function activateProfile(profile: 'ELTEK_BDCBB_CONFIG_2' | 'ELTEK_BDCBB_CONFIG_4') {
     if (
       !window.confirm(
-        'Confirm from the cabinet nameplate and physical wiring that this BDFB is Eltek/Delta Configuration 4 (four independent incoming feeds A1/A2/B1/B2)? This does NOT certify the OIDs.',
+        `Confirm the installed ${profile} wiring. Config 2 = two A/B shunts for linked panels; Config 4 = four A1/A2/B1/B2 shunts. Lab configuration is not field certification. Retire existing SNMP bindings before switching.`,
       )
     )
       return;
@@ -77,7 +77,7 @@ export function SnmpFeedCommissioning({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           deviceId,
-          hardwareProfile: 'ELTEK_BDCBB_CONFIG_4',
+          hardwareProfile: profile,
           confirmInstalledProfile: true,
         }),
       });
@@ -173,19 +173,16 @@ export function SnmpFeedCommissioning({
             Assign the actual SNMP agent and OID to an inventoried BDFB POWER INPUT feeder.
             Credentials stay in the Collector environment, never in this browser.
           </p>
-          {configuration?.hardwareProfile ? (
+          {configuration?.canCommission && (
             <p>
-              Hardware template: {configuration.hardwareProfile}. Expect four verified inputs A1,
-              A2, B1, B2; no automatic inference from A/B.
+              Physical profile: {configuration.hardwareProfile ?? 'NOT SELECTED'}.
+              <button type="button" disabled={busy} onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_2')}>
+                SELECT CONFIGURATION 2 · SHUNTS A / B
+              </button>
+              <button type="button" disabled={busy} onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_4')}>
+                SELECT CONFIGURATION 4 · A1 / A2 / B1 / B2
+              </button>
             </p>
-          ) : (
-            configuration?.canCommission && (
-              <p>
-                <button type="button" disabled={busy} onClick={() => void activateConfig4()}>
-                  SELECT ELTEK BDCBB CONFIGURATION 4 (ONLY IF PHYSICALLY CONFIRMED)
-                </button>
-              </p>
-            )
           )}
           <p>
             <Link href={`/device/${encodeURIComponent(chassisId)}`}>

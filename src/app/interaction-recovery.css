@@ -1560,5 +1560,7 @@
   margin-block: 10px;
 }
 @media (max-width: 720px) {
-  .sm-config4-feed-layout { grid-template-columns: minmax(0, 1fr); }
+  .sm-config4-feed-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

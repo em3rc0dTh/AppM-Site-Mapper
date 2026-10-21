@@ -124,46 +124,79 @@ describe('AccessPortService', () => {
 describe('Configuration 4 access-port invariants', () => {
   it('rejects reuse of an input identity or a panel reference across equipment owners', async () => {
     const device: DeviceNode = {
-      id: 'bdfb-c4', kind: 'DEVICE', parentId: 'rack', name: 'ELTEK',
-      deviceType: 'BDFB', rootEquipmentIds: ['chassis'],
+      id: 'bdfb-c4',
+      kind: 'DEVICE',
+      parentId: 'rack',
+      name: 'ELTEK',
+      deviceType: 'BDFB',
+      rootEquipmentIds: ['chassis'],
       attributes: { bdfbHardwareProfile: 'ELTEK_BDCBB_CONFIG_4' },
-      pinned: false, lifecycle: 'ACTIVE',
-      createdAt: '2026-10-21T12:00:00.000Z', updatedAt: '2026-10-21T12:00:00.000Z',
+      pinned: false,
+      lifecycle: 'ACTIVE',
+      createdAt: '2026-10-21T12:00:00.000Z',
+      updatedAt: '2026-10-21T12:00:00.000Z',
     };
     const cabinet: EquipmentNode = {
-      ...owner(), id: 'chassis', deviceId: device.id, parentId: device.id,
-      equipmentType: 'CHASSIS', accessPorts: [],
+      ...owner(),
+      id: 'chassis',
+      deviceId: device.id,
+      parentId: device.id,
+      equipmentType: 'CHASSIS',
+      accessPorts: [],
     };
     const panel: EquipmentNode = {
-      ...owner(), id: 'p-A1', name: 'Panel A1', deviceId: device.id,
-      parentId: cabinet.id, parentEquipmentId: cabinet.id,
+      ...owner(),
+      id: 'p-A1',
+      name: 'Panel A1',
+      deviceId: device.id,
+      parentId: cabinet.id,
+      parentEquipmentId: cabinet.id,
       equipmentType: 'PANEL',
     };
     const panel2: EquipmentNode = {
-      ...panel, id: 'p-A2', name: 'Panel A2',
+      ...panel,
+      id: 'p-A2',
+      name: 'Panel A2',
     };
     const repository = new MemoryTopologyRepository([device, cabinet, panel, panel2]);
     const service = new AccessPortService(repository, new MemoryPowerRepository());
     const base = {
-      portType: 'POWER' as const, direction: 'INPUT' as const,
-      exposure: 'EXTERNAL' as const, feed: 'A' as const,
-      snmpFeedInput: true, independentInputConfirmed: true,
-      ratedCurrentA: 800, shuntRatedCurrentA: 1000, shuntRatedMillivolts: 60,
+      portType: 'POWER' as const,
+      direction: 'INPUT' as const,
+      exposure: 'EXTERNAL' as const,
+      feed: 'A' as const,
+      snmpFeedInput: true,
+      independentInputConfirmed: true,
+      ratedCurrentA: 800,
+      shuntRatedCurrentA: 1000,
+      shuntRatedMillivolts: 60,
     };
     const first = await service.upsert('chassis', {
-      ...base, name: 'Input A1', feedPosition: 'A1', servedPanelIds: ['p-A1'],
+      ...base,
+      name: 'Input A1',
+      feedPosition: 'A1',
+      servedPanelIds: ['p-A1'],
     });
     expect(first.ok).toBe(true);
     const duplicateSlot = await service.upsert('chassis', {
-      ...base, name: 'Duplicate A1', feedPosition: 'A1', servedPanelIds: ['p-A2'],
+      ...base,
+      name: 'Duplicate A1',
+      feedPosition: 'A1',
+      servedPanelIds: ['p-A2'],
     });
     expect(duplicateSlot).toMatchObject({ ok: false, error: 'DUPLICATE_FEED_POSITION' });
     const duplicatePanel = await service.upsert('chassis', {
-      ...base, name: 'Input A2', feedPosition: 'A2', servedPanelIds: ['p-A1'],
+      ...base,
+      name: 'Input A2',
+      feedPosition: 'A2',
+      servedPanelIds: ['p-A1'],
     });
     expect(duplicatePanel).toMatchObject({ ok: false, error: 'INVALID_FEED_PANELS' });
     const independent = await service.upsert('chassis', {
-      ...base, name: 'Input A2', feedPosition: 'A2', servedPanelIds: ['p-A2'],
+      ...base,
+      name: 'Input A2',
+      feedPosition: 'A2',
+      servedPanelIds: ['p-A2'],
     });
     expect(independent.ok).toBe(true);
   });

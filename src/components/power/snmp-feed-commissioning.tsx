@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 
 interface BindingRow {
   id: string;
@@ -51,11 +51,6 @@ export function SnmpFeedCommissioning({ deviceId, chassisId }: { deviceId: strin
       setError(cause instanceof Error ? cause.message : 'SNMP_CONFIGURATION_UNAVAILABLE');
     } finally { setLoading(false); }
   }
-  useEffect(() => {
-    if (show) void refresh();
-    // Switching the section is the only automatic fetch trigger.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show, deviceId]);
   async function commission(event: FormEvent) {
     event.preventDefault();
     if (!confirmPhysicalMapping || !selectedPort) return;
@@ -100,7 +95,7 @@ export function SnmpFeedCommissioning({ deviceId, chassisId }: { deviceId: strin
   return (
     <section className="zip-bdfb-live-average" aria-label="SNMP feeder commissioning">
       <header><strong>SNMP FEED COMMISSIONING</strong>
-        <button type="button" onClick={() => setShow(!show)}>{show ? 'CLOSE' : 'CONFIGURE'}</button>
+        <button type="button" onClick={() => { if (!show) void refresh(); setShow(!show); }}>{show ? 'CLOSE' : 'CONFIGURE'}</button>
       </header>
       {show && (
         <>

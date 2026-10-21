@@ -1,5 +1,5 @@
 import snmp from 'net-snmp';
-import { normalizeVarbinds, pointsFromEnvironment } from './collector-core.mjs';
+import { normalizeVarbinds, pointsFromEnvironment, selectPresentVarbinds } from './collector-core.mjs';
 
 function required(name) {
   const value = process.env[name];
@@ -61,7 +61,9 @@ function getOids(oids) {
     session.get(oids, (error, varbinds) => {
       if (error) return reject(error);
       for (const varbind of varbinds ?? []) {
-        if (snmp.isVarbindError(varbind))
+        if (snmp.isVarbindError(varbind) &&
+            varbind.type !== snmp.ObjectType.NoSuchObject &&
+            varbind.type !== snmp.ObjectType.NoSuchInstance)
           return reject(new Error(`SNMP varbind rejected: ${snmp.varbindError(varbind)}`));
       }
       resolve(varbinds);
@@ -75,13 +77,19 @@ let timer;
 async function poll() {
   try {
     const varbinds = [];
-    // Bound response size; a failed chunk cancels publication of the cycle.
+    const presentPoints = [];
+    // Protocol/network errors abort the round, but absent individual OIDs
+    // only exclude their own shunts (no invented zero values).
     for (let i = 0; i < config.points.length; i += 12) {
       const group = config.points.slice(i, i + 12);
-      varbinds.push(...(await getOids(group.map((p) => p.oid))));
+      const received = await getOids(group.map((p) => p.oid));
+      const selected = selectPresentVarbinds(group, received);
+      presentPoints.push(...selected.presentPoints);
+      varbinds.push(...selected.presentVarbinds);
     }
+    if (!presentPoints.length) throw new Error('All commissioned SNMP OIDs are missing');
     const envelope = normalizeVarbinds(
-      config.points,
+      presentPoints,
       varbinds,
       new Date().toISOString(),
       config.sourceIdentity,

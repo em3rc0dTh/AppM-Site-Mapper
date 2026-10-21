@@ -59,3 +59,27 @@ export function normalizeVarbinds(points, varbinds, observedAt, sourceIdentity) 
   });
   return { schemaVersion: 1, sourceIdentity, observedAt, measurements };
 }
+
+/**
+ * An explicitly absent SNMP scalar is not 0 A and must not invalidate
+ * other independent shunts in the same GET response. Other errors remain fatal.
+ */
+export function selectPresentVarbinds(points, varbinds) {
+  if (points.length !== varbinds.length) throw new Error('Unexpected SNMP GET varbind count');
+  const presentPoints = [];
+  const presentVarbinds = [];
+  const missingOids = [];
+  for (let i = 0; i < points.length; i++) {
+    const point = points[i];
+    const varbind = varbinds[i];
+    if (!varbind || varbind.oid !== point.oid) throw new Error('SNMP GET OID mismatch');
+    if (varbind.type === 128 || varbind.type === 129) {
+      missingOids.push(point.oid);
+      continue;
+    }
+    if (varbind.type === 130) throw new Error('Invalid endOfMibView response for SNMP GET');
+    presentPoints.push(point);
+    presentVarbinds.push(varbind);
+  }
+  return { presentPoints, presentVarbinds, missingOids };
+}

@@ -1,0 +1,38 @@
+name: SNMP adversarial security certification
+on:
+  pull_request:
+    paths:
+      - 'src/app/api/telemetry/snmp/**'
+      - 'src/modules/telemetry/**'
+      - 'infra/snmp-collector/**'
+      - 'tests/unit/snmp-adversarial-security.test.ts'
+      - '.github/workflows/snmp-adversarial-security.yml'
+  push:
+    branches:
+      - security/snmp-adversarial-certification-20261021
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  snmp-attack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Attempt replay, identity spoofing and concurrent ingest attacks
+        run: npx vitest run tests/unit/snmp-adversarial-security.test.ts
+      - name: Collector packet normalization attack checks
+        run: node --test infra/snmp-collector/server.test.mjs
+      - name: Install real SNMPv3 transport dependency in isolated collector
+        run: npm ci --prefix infra/snmp-collector --omit=dev --no-audit --no-fund
+      - name: Probe local UDP SNMPv3 wrong credentials, OID access and SET denial
+        run: node --test infra/snmp-collector/adversarial-wire.test.mjs
+      - name: Verify no TypeScript regression
+        run: npm run typecheck
+      - name: Production dependency vulnerability check
+        run: npm audit --omit=dev --audit-level=high

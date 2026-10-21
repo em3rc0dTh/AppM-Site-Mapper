@@ -67,7 +67,7 @@ export function parseSnmpFeedPacket(
     const key = `${oid}:${metric}`;
     if (seen.has(key)) return failure('INVALID_SNMP_FEED_PACKET');
     seen.add(key);
-    normalized.push({ oid, metric, value, unit });
+    normalized.push({ oid, metric, value, unit: metric === 'CURRENT' ? 'A' : 'V' });
   }
   return success({ schemaVersion: 1, sourceIdentity, observedAt, measurements: normalized });
 }

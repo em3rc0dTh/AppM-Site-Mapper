@@ -2,7 +2,7 @@ import type { TelemetryBindingRepository } from '@/modules/telemetry/application
 import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/telemetry-history-writer';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import type { TelemetryBinding, TelemetrySample } from '@/modules/telemetry/domain/entities';
-import type { SnmpFeedPacket, SnmpFeedMetric } from '@/modules/telemetry/domain/snmp-feed';
+import type { SnmpFeedPacket } from '@/modules/telemetry/domain/snmp-feed';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { AccessPort, EquipmentNode } from '@/modules/topology/domain/entities';
 import { failure, success, type Result } from '@/shared/domain/result';
@@ -117,7 +117,7 @@ export class SnmpFeedService {
         reported: item.values,
         receivedAt,
         sourceObservedAt: packet.observedAt,
-        protocol: 'GENERIC',
+        protocol: 'SNMP',
       };
       this.hub.publish(sample);
       await this.history?.write(sample);

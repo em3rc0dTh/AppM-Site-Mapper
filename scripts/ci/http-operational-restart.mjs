@@ -103,6 +103,33 @@ assert.ok(
   snmpAfterRestartHistory.samples.some((sample) => sample.sourceIdentity === 'CI-SNMP-LIMA'),
   'SNMP TimescaleDB history missing after process restart',
 );
+const historicSnmp = snmpAfterRestartHistory.samples.find(
+  (sample) => sample.sourceIdentity === 'CI-SNMP-LIMA' &&
+    sample.reported?.currentA?.observedAt,
+);
+assert.ok(historicSnmp, 'Cannot locate persisted SNMP current observation');
+const replay = await fetch(base + '/api/telemetry/snmp/ingest', {
+  method: 'POST',
+  headers: {
+    'content-type': 'application/json',
+    authorization: 'Bearer ' + process.env.SNMP_INGEST_TOKEN,
+  },
+  body: JSON.stringify({
+    schemaVersion: 1,
+    sourceIdentity: 'CI-SNMP-LIMA',
+    observedAt: historicSnmp.reported.currentA.observedAt,
+    measurements: [{
+      oid: historicSnmp.reported.currentA.oid,
+      metric: 'CURRENT',
+      unit: 'A',
+      value: 79999,
+    }],
+  }),
+});
+assert.equal(replay.status, 422,
+  'Restart allowed an authenticated replay to replace persisted SNMP current');
+console.log('[PASS] SNMP old observation cannot be tampered with after Next.js restart');
+
 console.log('[PASS] SNMP independent-feeder mappings and TimescaleDB history survive restart');
 console.log(
   '[PASS] Restart: both Sites, 4 power paths including cross-Device AP, commissioned breaker and TimescaleDB history restored',

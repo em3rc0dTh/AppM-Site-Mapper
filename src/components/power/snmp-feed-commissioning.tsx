@@ -15,6 +15,7 @@ interface FeedRow {
   equipmentId: string;
   name: string;
   side: string | null;
+  feedPosition: string | null;
   ratedCurrentA: number | null;
   independentInputConfirmed: boolean;
   servedPanelIds: string[];
@@ -22,6 +23,7 @@ interface FeedRow {
 }
 interface Configuration {
   deviceId: string;
+  hardwareProfile: string | null;
   canCommission: boolean;
   ports: FeedRow[];
 }
@@ -61,6 +63,26 @@ export function SnmpFeedCommissioning({
       setLoading(false);
     }
   }
+  async function activateConfig4() {
+    if (!window.confirm(
+      'Confirm from the cabinet nameplate and physical wiring that this BDFB is Eltek/Delta Configuration 4 (four independent incoming feeds A1/A2/B1/B2)? This does NOT certify the OIDs.',
+    )) return;
+    setBusy(true);
+    try {
+      const result = await fetch('/api/telemetry/snmp/hardware-profile', {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          deviceId, hardwareProfile: 'ELTEK_BDCBB_CONFIG_4', confirmInstalledProfile: true,
+        }),
+      });
+      const data = await result.json();
+      if (!result.ok) throw new Error(data.error ?? 'PROFILE_ASSIGNMENT_FAILED');
+      await refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'PROFILE_ASSIGNMENT_FAILED');
+    } finally { setBusy(false); }
+  }
+
   async function commission(event: FormEvent) {
     event.preventDefault();
     if (!confirmPhysicalMapping || !selectedPort) return;
@@ -143,6 +165,13 @@ export function SnmpFeedCommissioning({
             Assign the actual SNMP agent and OID to an inventoried BDFB POWER INPUT feeder.
             Credentials stay in the Collector environment, never in this browser.
           </p>
+          {configuration?.hardwareProfile
+            ? <p>Hardware template: {configuration.hardwareProfile}. Expect four verified inputs A1, A2, B1, B2; no automatic inference from A/B.</p>
+            : configuration?.canCommission && (
+              <p><button type="button" disabled={busy} onClick={() => void activateConfig4()}>
+                SELECT ELTEK BDCBB CONFIGURATION 4 (ONLY IF PHYSICALLY CONFIRMED)
+              </button></p>
+            )}
           <p>
             <Link href={`/device/${encodeURIComponent(chassisId)}`}>
               Configure physical input ports on the chassis →
@@ -152,7 +181,7 @@ export function SnmpFeedCommissioning({
           {configuration?.ports.map((port) => (
             <article key={port.id} className="zip-bdfb-live-average-counts">
               <strong>
-                {port.name} · {port.side ?? 'Unassigned side'}
+                {port.name} · {port.feedPosition ?? port.side ?? 'Unassigned input'}
               </strong>
               <span>
                 {port.independentInputConfirmed

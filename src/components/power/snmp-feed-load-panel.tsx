@@ -62,8 +62,8 @@ export function SnmpFeedLoadPanel({
             </strong>
           </div>
           <div>
-            <span>FEEDS LIVE</span>
-            <strong>{load ? `${load.freshFeedCount} / ${load.feedCount}` : '—'}</strong>
+            <span>FEEDS LIVE / REQUIRED</span>
+            <strong>{load ? `${load.freshFeedCount} / ${load.expectedFeedCount}` : '—'}</strong>
           </div>
           <div>
             <span>RATED INPUT CAPACITY</span>
@@ -78,6 +78,19 @@ export function SnmpFeedLoadPanel({
             <strong>{numeric(load?.totalEstimatedPowerW ?? null, 'W')}</strong>
           </div>
         </div>
+        {load?.hardwareProfile && (
+          <div className="zip-bdfb-live-average-counts">
+            <strong>HARDWARE PROFILE · {load.hardwareProfile}</strong>
+            <span>PHYSICAL INVENTORY: {load.inventoryStatus}</span>
+            <small>Installed input ports: {load.feedCount} / {load.expectedFeedCount}</small>
+            {!!load.missingFeedPositions.length && (
+              <small>Missing inputs: {load.missingFeedPositions.join(', ')}</small>
+            )}
+            {!!load.configurationIssues.length && (
+              <small>Verify wiring and panel assignments: {load.configurationIssues.join(' · ')}</small>
+            )}
+          </div>
+        )}
         {load && load.status !== 'COMPLETE' && (
           <small>
             One or more expected independent inputs are unmapped, stale or unverified. No whole-BDFB
@@ -92,9 +105,15 @@ export function SnmpFeedLoadPanel({
         {load?.feeds.map((feed) => (
           <div key={feed.accessPortId} className="zip-bdfb-live-average-counts">
             <strong>
-              {feed.label} {feed.side ? `· ${feed.side}` : ''}
+              {feed.feedPosition ? `INPUT ${feed.feedPosition} · ` : ''}
+              {feed.label} {feed.side ? `· side ${feed.side}` : ''}
             </strong>
             <span>{feed.status}</span>
+            <small>Overload (calculated): {feed.overloadWarning === null
+              ? 'UNKNOWN' : feed.overloadWarning ? 'WARNING' : 'NORMAL'}
+              {feed.overloadThresholdA !== null
+                ? ` · threshold ${feed.overloadThresholdA} A` : ''}
+            </small>
             <span>
               {numeric(feed.currentA, 'A')} · {numeric(feed.voltageV, 'V')}
             </span>

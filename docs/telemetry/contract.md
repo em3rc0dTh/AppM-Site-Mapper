@@ -363,3 +363,14 @@ the Equipment's position among siblings and is never forced to `0_1`.
   exists in the source payload. Source/group range must be verified independently.
 
 No data migration is required to add this optional field to existing Equipment.
+
+## DC BDFB Configuration 4 amendment (2026-10-21)
+
+This MQTT/Modbus breaker contract is unchanged. An independently commissioned
+Eltek/Delta SNMP **input** shunt is a separate measurement target and must
+never be summed with or substituted for per-breaker MQTT points. For a BDCBB
+Configuration 4 BDFB, four physically confirmed input identities A1/A2/B1/B2
+are required for a certified whole-cabinet SNMP load. The canonical extension
+is appended to [Domain Contract v1.2](../domain/contracts/v1.2/domain-contract.md)
+and the executable commissioning rules are appended to
+[SNMP input-feed telemetry](snmp-feed-ingestion.md).

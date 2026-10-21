@@ -1,3 +1,4 @@
+import { bdfbHardwareProfile, isConfig4Slot } from '@/modules/power/domain/bdfb-hardware-profile';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
@@ -20,6 +21,8 @@ export interface AccessPortInput {
   readonly protocol?: string;
   readonly customType?: string;
   readonly feed?: 'A' | 'B';
+  readonly feedPosition?: 'A1' | 'A2' | 'B1' | 'B2';
+  readonly overloadThresholdA?: number;
   /** An explicitly inventoried, independently metered incoming BDFB feeder. */
   readonly snmpFeedInput?: boolean;
   readonly independentInputConfirmed?: boolean;
@@ -36,6 +39,7 @@ export type AccessPortError =
   | 'PORT_NOT_FOUND'
   | 'PORT_IN_USE'
   | 'INVALID_FEED_PANELS'
+  | 'DUPLICATE_FEED_POSITION'
   | 'PORT_NAME_CONFLICT'
   | 'INVALID_PORT'
   | 'TOO_MANY_PORTS'
@@ -61,6 +65,12 @@ function valid(input: AccessPortInput): boolean {
     validText(input.protocol) &&
     validText(input.customType) &&
     (input.feed === undefined || (input.portType === 'POWER' && ['A', 'B'].includes(input.feed))) &&
+    (input.feedPosition === undefined || isConfig4Slot(input.feedPosition)) &&
+    (input.feedPosition === undefined ||
+      (input.snmpFeedInput === true && input.feed === input.feedPosition[0])) &&
+    (input.overloadThresholdA === undefined ||
+      (Number.isFinite(input.overloadThresholdA) && input.overloadThresholdA > 0 &&
+        input.overloadThresholdA <= 100_000)) &&
     (input.snmpFeedInput === undefined || typeof input.snmpFeedInput === 'boolean') &&
     (input.independentInputConfirmed === undefined ||
       typeof input.independentInputConfirmed === 'boolean') &&
@@ -132,13 +142,26 @@ export class AccessPortService {
     if (input.snmpFeedInput) {
       const device = await this.topology.getById(node.deviceId);
       if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB') return failure('INVALID_PORT');
-      const panelIds = new Set(
-        (await this.topology.listEquipmentForDevice(node.deviceId))
-          .filter((item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'PANEL')
-          .map((item) => item.id),
-      );
+      const peers = (await this.topology.listEquipmentForDevice(node.deviceId))
+        .filter((item) => item.lifecycle === 'ACTIVE');
+      const panelIds = new Set(peers.filter((item) => item.equipmentType === 'PANEL')
+        .map((item) => item.id));
       if (input.servedPanelIds?.some((id) => !panelIds.has(id)))
         return failure('INVALID_FEED_PANELS');
+      if (bdfbHardwareProfile(device)) {
+        if (!input.feedPosition || !isConfig4Slot(input.feedPosition))
+          return failure('INVALID_PORT');
+        if (input.servedPanelIds?.length > 1) return failure('INVALID_FEED_PANELS');
+        const otherPorts = peers.flatMap((item) => item.accessPorts)
+          .filter((port) => port.lifecycle === 'ACTIVE' && port.id !== existingId &&
+            port.attributes?.snmpFeedInput === true);
+        if (otherPorts.some((port) => port.attributes?.feedPosition === input.feedPosition))
+          return failure('DUPLICATE_FEED_POSITION');
+        if (input.servedPanelIds?.some((id) => otherPorts.some((port) =>
+          Array.isArray(port.attributes?.servedPanelIds) &&
+          port.attributes.servedPanelIds.includes(id))))
+          return failure('INVALID_FEED_PANELS');
+      }
     }
     const existing = existingId
       ? node.accessPorts.find((port) => port.id === existingId && port.lifecycle === 'ACTIVE')
@@ -164,6 +187,7 @@ export class AccessPortService {
         existing.direction !== input.direction ||
         existing.exposure !== input.exposure ||
         oldFeed !== input.feed ||
+        existing.attributes?.feedPosition !== input.feedPosition ||
         Boolean(existing.attributes?.snmpFeedInput) !== Boolean(input.snmpFeedInput) ||
         Boolean(existing.attributes?.independentInputConfirmed) !==
           Boolean(input.independentInputConfirmed) ||
@@ -178,6 +202,8 @@ export class AccessPortService {
     else delete attributes.feed;
     for (const key of [
       'snmpFeedInput',
+      'feedPosition',
+      'overloadThresholdA',
       'independentInputConfirmed',
       'ratedCurrentA',
       'shuntRatedCurrentA',

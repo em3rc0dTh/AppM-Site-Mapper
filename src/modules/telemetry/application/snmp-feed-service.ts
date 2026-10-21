@@ -1,3 +1,7 @@
+import {
+  assessConfig4Inventory, bdfbHardwareProfile, CONFIG_4_DEFAULT_OVERLOAD_A,
+  config4FeedPosition,
+} from '@/modules/power/domain/bdfb-hardware-profile';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { TelemetryHistoryWriter } from '@/modules/telemetry/application/telemetry-history-writer';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
@@ -209,6 +213,9 @@ export interface SnmpBdfbFeedView {
   readonly accessPortId: string;
   readonly label: string;
   readonly side: string | null;
+  readonly feedPosition: string | null;
+  readonly overloadThresholdA: number | null;
+  readonly overloadWarning: boolean | null;
   readonly ratedCurrentA: number | null;
   readonly status: SnmpFeedReadingStatus;
   readonly currentA: number | null;
@@ -223,6 +230,11 @@ export interface SnmpBdfbFeedView {
 
 export interface SnmpBdfbLoadView {
   readonly deviceId: string;
+  readonly hardwareProfile: string | null;
+  readonly inventoryStatus: 'COMPLETE' | 'INCOMPLETE' | 'NOT_APPLICABLE';
+  readonly expectedFeedCount: number;
+  readonly missingFeedPositions: readonly string[];
+  readonly configurationIssues: readonly string[];
   readonly status: 'COMPLETE' | 'PARTIAL' | 'UNMAPPED';
   readonly totalCurrentA: number | null;
   readonly measuredCurrentA: number | null;
@@ -254,6 +266,8 @@ export async function summarizeSnmpBdfbLoad(
   const equipment = (await topology.listEquipmentForDevice(deviceId)).filter(
     (node) => node.lifecycle === 'ACTIVE',
   );
+  const selectedProfile = bdfbHardwareProfile(device);
+  const assessed = selectedProfile ? assessConfig4Inventory(equipment) : null;
   const feedPorts = equipment.flatMap((owner) =>
     owner.accessPorts.filter(isBdfbFeedPort).map((port) => ({ owner, port })),
   );
@@ -305,6 +319,12 @@ export async function summarizeSnmpBdfbLoad(
             : fresh
               ? 'LIVE'
               : 'STALE';
+    const slot = config4FeedPosition(port);
+    const threshold = typeof port.attributes?.overloadThresholdA === 'number' &&
+      Number.isFinite(port.attributes.overloadThresholdA) &&
+      port.attributes.overloadThresholdA > 0
+      ? port.attributes.overloadThresholdA
+      : selectedProfile ? CONFIG_4_DEFAULT_OVERLOAD_A : null;
     const nominal = port.attributes?.ratedCurrentA;
     const rating = typeof nominal === 'number' && nominal > 0 ? nominal : null;
     const displayedCurrent = status === 'LIVE' ? currentValue!.value : null;
@@ -317,6 +337,10 @@ export async function summarizeSnmpBdfbLoad(
           ? port.attributes.feed
           : null,
       ratedCurrentA: rating,
+      feedPosition: slot,
+      overloadThresholdA: threshold,
+      overloadWarning: status === 'LIVE' && threshold !== null
+        ? currentValue!.value >= threshold : null,
       status,
       currentA: displayedCurrent,
       voltageV: displayedVoltage,
@@ -334,14 +358,30 @@ export async function summarizeSnmpBdfbLoad(
         : [],
     });
   }
-  feeds.sort((a, b) => a.label.localeCompare(b.label));
+  const positions = ['A2', 'B2', 'A1', 'B1'];
+  feeds.sort((a, b) => {
+    if (selectedProfile) {
+      const left = positions.indexOf(a.feedPosition ?? '');
+      const right = positions.indexOf(b.feedPosition ?? '');
+      if (left !== right) return (left < 0 ? 99 : left) - (right < 0 ? 99 : right);
+    }
+    return a.label.localeCompare(b.label);
+  });
   const live = feeds.filter((item) => item.status === 'LIVE');
   const measuredCurrentA = live.length ? live.reduce((sum, item) => sum + item.currentA!, 0) : null;
-  const complete = feeds.length > 0 && live.length === feeds.length;
+  const inventoryComplete = assessed ? assessed.inventoryComplete : true;
+  const complete = inventoryComplete && feeds.length > 0 && live.length === feeds.length;
   const capacityComplete = complete && live.every((feed) => feed.ratedCurrentA !== null);
   const powerComplete = complete && live.every((feed) => feed.estimatedPowerW !== null);
   return {
     deviceId,
+    hardwareProfile: selectedProfile,
+    inventoryStatus: assessed
+      ? assessed.inventoryComplete ? 'COMPLETE' : 'INCOMPLETE'
+      : 'NOT_APPLICABLE',
+    expectedFeedCount: assessed?.expectedFeedCount ?? feedPorts.length,
+    missingFeedPositions: assessed?.missingFeedPositions ?? [],
+    configurationIssues: assessed?.issues ?? [],
     status: complete
       ? 'COMPLETE'
       : feeds.every((item) => item.status === 'UNMAPPED')

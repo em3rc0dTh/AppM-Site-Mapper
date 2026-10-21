@@ -31,6 +31,8 @@ const portKeys = [
   'protocol',
   'customType',
   'feed',
+  'feedPosition',
+  'overloadThresholdA',
   'snmpFeedInput',
   'independentInputConfirmed',
   'ratedCurrentA',
@@ -60,6 +62,13 @@ function validPort(value: unknown): value is AccessPortInput {
       isBoundedString(port.customType, 120, { allowEmpty: true })) &&
     (port.feed === undefined ||
       (port.portType === 'POWER' && (port.feed === 'A' || port.feed === 'B'))) &&
+    (port.feedPosition === undefined ||
+      (port.feedPosition === 'A1' || port.feedPosition === 'A2' ||
+        port.feedPosition === 'B1' || port.feedPosition === 'B2')) &&
+    (port.overloadThresholdA === undefined ||
+      (typeof port.overloadThresholdA === 'number' &&
+        Number.isFinite(port.overloadThresholdA) &&
+        port.overloadThresholdA > 0 && port.overloadThresholdA <= 100_000)) &&
     (port.snmpFeedInput === undefined || typeof port.snmpFeedInput === 'boolean') &&
     (port.independentInputConfirmed === undefined ||
       typeof port.independentInputConfirmed === 'boolean') &&
@@ -80,7 +89,7 @@ function validPort(value: unknown): value is AccessPortInput {
 
 function errorStatus(error: AccessPortError): number {
   if (error === 'NOT_FOUND' || error === 'PORT_NOT_FOUND' || error === 'NOT_EQUIPMENT') return 404;
-  if (['PORT_IN_USE', 'PORT_NAME_CONFLICT', 'LAYOUT_CONFLICT'].includes(error)) return 409;
+  if (['PORT_IN_USE', 'PORT_NAME_CONFLICT', 'LAYOUT_CONFLICT', 'DUPLICATE_FEED_POSITION'].includes(error)) return 409;
   return 422;
 }
 

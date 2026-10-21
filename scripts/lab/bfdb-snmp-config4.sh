@@ -45,7 +45,7 @@ site_compose_for() {
   docker compose --project-directory "$SITE" -p "$project" \
     --env-file "$SITE/.env" --env-file "$BFDB/.env.snmp" \
     -f "$SITE/docker-compose.telemetry.yml" \
-    -f "$BRIDGE/config4-site-mapper.override.yml" --profile snmp "$@"
+    -f "$BRIDGE/${SITE_PROFILE_OVERLAY:-config4-site-mapper.override.yml}" --profile snmp "$@"
 }
 bfdb_compose() { bfdb_compose_for "$BFDB_PROJECT" "$@"; }
 site_compose() { site_compose_for "$SITE_PROJECT" "$@"; }
@@ -67,10 +67,13 @@ check_env() {
     echo 'APP_ENV=development required for this local, insecure laboratory.' >&2
     exit 2
   }
-  grep -q '^SNMP_EMULATOR_PROFILE=ELTEK_BDCBB_CONFIG_4$' "$BFDB/.env.snmp" || {
-    echo 'Set SNMP_EMULATOR_PROFILE=ELTEK_BDCBB_CONFIG_4 in BFDB .env.snmp.' >&2
-    exit 2
-  }
+  local profile
+  profile="$(sed -n 's/^SNMP_EMULATOR_PROFILE=//p' "$BFDB/.env.snmp" | tail -1)"
+  case "$profile" in
+    ELTEK_BDCBB_CONFIG_4) SITE_PROFILE_OVERLAY=config4-site-mapper.override.yml ;;
+    ELTEK_BDCBB_CONFIG_2|GENERIC_2_FEED) SITE_PROFILE_OVERLAY=config2-site-mapper.override.yml ;;
+    *) echo 'Select SNMP_EMULATOR_PROFILE=ELTEK_BDCBB_CONFIG_2 or ELTEK_BDCBB_CONFIG_4.' >&2; exit 2 ;;
+  esac
 }
 
 case "$ACTION" in
@@ -119,6 +122,7 @@ SNMP_V3_USERNAME=lab_readonly
 SNMP_V3_AUTH_KEY=$(openssl rand -hex 24)
 SNMP_V3_PRIV_KEY=$(openssl rand -hex 24)
 SNMP_EMULATOR_PROFILE=ELTEK_BDCBB_CONFIG_4
+SNMP_VERSION=3
 SNMP_EMULATOR_SCENARIO=NORMAL
 SNMP_AGENT_UPDATE_MS=1000
 EOF
@@ -140,7 +144,7 @@ EOF
     echo 'Site Mapper: http://127.0.0.1:3000/login'
     echo 'Console: http://127.0.0.1:3100'
     echo 'SNMP UDP agents: 127.0.0.1:11611, :11612, :11613'
-    echo 'Bootstrap a new admin if required, then commission A1/A2/B1/B2 before collectors.'
+    echo 'Commission Config2 shunts A/B or Config4 A1/A2/B1/B2 before collectors.'
     ;;
   bootstrap)
     check_env

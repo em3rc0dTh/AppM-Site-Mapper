@@ -21,6 +21,12 @@ interface PortForm {
   protocol: string;
   customType: string;
   feed: '' | 'A' | 'B';
+  snmpFeedInput: boolean;
+  independentInputConfirmed: boolean;
+  ratedCurrentA: string;
+  shuntRatedCurrentA: string;
+  shuntRatedMillivolts: string;
+  servedPanelIds: string;
 }
 
 const types: readonly AccessPortType[] = [
@@ -45,6 +51,23 @@ function formFor(port?: AccessPort): PortForm {
     protocol: port?.protocol ?? '',
     customType: port?.customType ?? '',
     feed: feed === 'A' || feed === 'B' ? feed : '',
+    snmpFeedInput: port?.attributes?.snmpFeedInput === true,
+    independentInputConfirmed: port?.attributes?.independentInputConfirmed === true,
+    ratedCurrentA:
+      typeof port?.attributes?.ratedCurrentA === 'number'
+        ? String(port.attributes.ratedCurrentA)
+        : '',
+    shuntRatedCurrentA:
+      typeof port?.attributes?.shuntRatedCurrentA === 'number'
+        ? String(port.attributes.shuntRatedCurrentA)
+        : '',
+    shuntRatedMillivolts:
+      typeof port?.attributes?.shuntRatedMillivolts === 'number'
+        ? String(port.attributes.shuntRatedMillivolts)
+        : '',
+    servedPanelIds: Array.isArray(port?.attributes?.servedPanelIds)
+      ? port.attributes.servedPanelIds.join(', ')
+      : '',
   };
 }
 
@@ -110,6 +133,31 @@ export function AccessPortEditor({
               ...(form.protocol.trim() ? { protocol: form.protocol.trim() } : {}),
               ...(form.customType.trim() ? { customType: form.customType.trim() } : {}),
               ...(form.portType === 'POWER' && form.feed ? { feed: form.feed } : {}),
+              ...(form.portType === 'POWER' &&
+              form.direction === 'INPUT' &&
+              form.exposure === 'EXTERNAL'
+                ? {
+                    snmpFeedInput: form.snmpFeedInput,
+                    independentInputConfirmed: form.snmpFeedInput && form.independentInputConfirmed,
+                    ...(form.snmpFeedInput && form.ratedCurrentA
+                      ? { ratedCurrentA: Number(form.ratedCurrentA) }
+                      : {}),
+                    ...(form.snmpFeedInput && form.shuntRatedCurrentA
+                      ? { shuntRatedCurrentA: Number(form.shuntRatedCurrentA) }
+                      : {}),
+                    ...(form.snmpFeedInput && form.shuntRatedMillivolts
+                      ? { shuntRatedMillivolts: Number(form.shuntRatedMillivolts) }
+                      : {}),
+                    ...(form.snmpFeedInput
+                      ? {
+                          servedPanelIds: form.servedPanelIds
+                            .split(',')
+                            .map((x) => x.trim())
+                            .filter(Boolean),
+                        }
+                      : {}),
+                  }
+                : {}),
             },
           }),
         },
@@ -356,6 +404,88 @@ export function AccessPortEditor({
                   </select>
                 </label>
               )}
+              {form.portType === 'POWER' &&
+                form.direction === 'INPUT' &&
+                form.exposure === 'EXTERNAL' && (
+                  <fieldset>
+                    <legend>SNMP DC input feeder (BDFB only)</legend>
+                    <label>
+                      <input
+                        type="checkbox"
+                        checked={form.snmpFeedInput}
+                        onChange={(event) =>
+                          patch({
+                            snmpFeedInput: event.target.checked,
+                            independentInputConfirmed: false,
+                          })
+                        }
+                      />
+                      This port is a physically inventoried incoming BDFB feed
+                    </label>
+                    {form.snmpFeedInput && (
+                      <>
+                        <label>
+                          Nominal feed rating (A)
+                          <input
+                            type="number"
+                            min="0.01"
+                            max="100000"
+                            step="any"
+                            value={form.ratedCurrentA}
+                            onChange={(event) => patch({ ratedCurrentA: event.target.value })}
+                          />
+                        </label>
+                        <label>
+                          Shunt rated current (A)
+                          <input
+                            type="number"
+                            min="0.01"
+                            max="100000"
+                            step="any"
+                            value={form.shuntRatedCurrentA}
+                            onChange={(event) => patch({ shuntRatedCurrentA: event.target.value })}
+                          />
+                        </label>
+                        <label>
+                          Shunt rated millivolts (mV)
+                          <input
+                            type="number"
+                            min="0.01"
+                            max="100000"
+                            step="any"
+                            value={form.shuntRatedMillivolts}
+                            onChange={(event) =>
+                              patch({ shuntRatedMillivolts: event.target.value })
+                            }
+                          />
+                        </label>
+                        <label>
+                          Physically supplied PANEL equipment IDs (comma-separated)
+                          <input
+                            value={form.servedPanelIds}
+                            onChange={(event) => patch({ servedPanelIds: event.target.value })}
+                            placeholder="Actual panel equipment IDs, if verified"
+                          />
+                        </label>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={form.independentInputConfirmed}
+                            onChange={(event) =>
+                              patch({ independentInputConfirmed: event.target.checked })
+                            }
+                          />
+                          Wiring verified: this shunt is independent, not a duplicate upstream/bus
+                          measurement
+                        </label>
+                        <small>
+                          This controls whether currents can contribute to the certified BDFB total.
+                          A/B are sides, not unique feed identities. Do not infer panel loads.
+                        </small>
+                      </>
+                    )}
+                  </fieldset>
+                )}
               <p>
                 Archiving or changing the electrical identity of a connected terminal is blocked.
                 Power Paths remain authoritative.

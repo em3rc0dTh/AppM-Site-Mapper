@@ -7,6 +7,7 @@ import {
   type AccessPortError,
 } from '@/modules/topology/application/access-port-service';
 import type { AccessPort, EquipmentNode } from '@/modules/topology/domain/entities';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import {
@@ -30,6 +31,12 @@ const portKeys = [
   'protocol',
   'customType',
   'feed',
+  'snmpFeedInput',
+  'independentInputConfirmed',
+  'ratedCurrentA',
+  'shuntRatedCurrentA',
+  'shuntRatedMillivolts',
+  'servedPanelIds',
 ];
 
 function record(value: unknown): Record<string, unknown> | null {
@@ -52,7 +59,22 @@ function validPort(value: unknown): value is AccessPortInput {
     (port.customType === undefined ||
       isBoundedString(port.customType, 120, { allowEmpty: true })) &&
     (port.feed === undefined ||
-      (port.portType === 'POWER' && (port.feed === 'A' || port.feed === 'B')))
+      (port.portType === 'POWER' && (port.feed === 'A' || port.feed === 'B'))) &&
+    (port.snmpFeedInput === undefined || typeof port.snmpFeedInput === 'boolean') &&
+    (port.independentInputConfirmed === undefined ||
+      typeof port.independentInputConfirmed === 'boolean') &&
+    ['ratedCurrentA', 'shuntRatedCurrentA', 'shuntRatedMillivolts'].every(
+      (key) =>
+        port[key] === undefined ||
+        (typeof port[key] === 'number' &&
+          Number.isFinite(port[key]) &&
+          (port[key] as number) > 0 &&
+          (port[key] as number) <= 100_000),
+    ) &&
+    (port.servedPanelIds === undefined ||
+      (Array.isArray(port.servedPanelIds) &&
+        port.servedPanelIds.length <= 24 &&
+        port.servedPanelIds.every((x) => typeof x === 'string' && x.length <= 160)))
   );
 }
 
@@ -65,7 +87,10 @@ function errorStatus(error: AccessPortError): number {
 async function buildService() {
   const topology = await createTopologyRepository();
   const power = await createPowerRepository();
-  return { topology, service: new AccessPortService(topology, power) };
+  return {
+    topology,
+    service: new AccessPortService(topology, power, await createTelemetryBindingRepository()),
+  };
 }
 
 async function readMutation(request: Request) {

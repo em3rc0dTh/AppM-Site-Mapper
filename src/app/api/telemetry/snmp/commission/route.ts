@@ -1,7 +1,10 @@
 import { randomUUID } from 'node:crypto';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
-import { resolveSnmpFeedPort } from '@/modules/telemetry/application/snmp-feed-service';
+import {
+  isBdfbFeedPort,
+  resolveSnmpFeedPort,
+} from '@/modules/telemetry/application/snmp-feed-service';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import { parseSnmpFeedPacket, type SnmpFeedMetric } from '@/modules/telemetry/domain/snmp-feed';
 import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
@@ -21,9 +24,58 @@ function record(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
 }
 
+export async function GET(request: Request) {
+  const auth = await requirePermission('telemetry:read');
+  if (!auth.ok) return Response.json({ error: auth.error }, { status: 401 });
+  const deviceId = new URL(request.url).searchParams.get('deviceId');
+  if (!deviceId || deviceId.length > 128)
+    return Response.json({ error: 'INVALID_DEVICE_ID' }, { status: 400 });
+  const topology = await createTopologyRepository();
+  const device = await topology.getById(deviceId);
+  if (device?.kind !== 'DEVICE' || device.lifecycle !== 'ACTIVE' || device.deviceType !== 'BDFB')
+    return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
+  const repository = await createTelemetryBindingRepository();
+  const equipment = (await topology.listEquipmentForDevice(deviceId)).filter(
+    (node) => node.lifecycle === 'ACTIVE',
+  );
+  const ports = equipment.flatMap((owner) =>
+    owner.accessPorts.filter(isBdfbFeedPort).map((port) => ({
+      id: port.id,
+      equipmentId: owner.id,
+      name: port.name,
+      side: port.attributes?.feed ?? null,
+      independentInputConfirmed: port.attributes?.independentInputConfirmed === true,
+      ratedCurrentA: port.attributes?.ratedCurrentA ?? null,
+      servedPanelIds: port.attributes?.servedPanelIds ?? [],
+    })),
+  );
+  const commissioned = await Promise.all(
+    ports.map(async (port) => ({
+      ...port,
+      bindings: (await repository.listForTarget('ACCESS_PORT', port.id))
+        .filter((b) => b.lifecycle === 'ACTIVE' && b.protocol === 'SNMP')
+        .map((b) => ({
+          id: b.id,
+          sourceIdentity: b.sourceIdentity,
+          oid: b.sourcePointId,
+          metric: b.metric,
+          commissionedAt: b.createdAt,
+        })),
+    })),
+  );
+  const write = await requirePermission('topology:write');
+  const power = await requirePermission('power:write');
+  return Response.json(
+    { deviceId, canCommission: write.ok && power.ok, ports: commissioned },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
+}
+
 export async function POST(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 403 });
+  const powerAuth = await requirePermission('power:write');
+  if (!powerAuth.ok) return Response.json({ error: powerAuth.error }, { status: 403 });
   if (!isSafeMutationRequest(request))
     return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
   const parsed = await readBoundedJson(request, { maxBytes: 2048, maxDepth: 2, maxNodes: 16 });
@@ -108,4 +160,39 @@ export async function POST(request: Request) {
     return Response.json({ error: 'SNMP_BINDING_CONFLICT' }, { status: 409 });
   }
   return Response.json({ bindingId: binding.id, created: true }, { status: 201 });
+}
+
+/** Explicitly retire a binding, preserving its audit history. */
+export async function DELETE(request: Request) {
+  const auth = await requirePermission('topology:write');
+  if (!auth.ok) return Response.json({ error: auth.error }, { status: 403 });
+  const powerAuth = await requirePermission('power:write');
+  if (!powerAuth.ok) return Response.json({ error: powerAuth.error }, { status: 403 });
+  if (!isSafeMutationRequest(request))
+    return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  const parsed = await readBoundedJson(request, { maxBytes: 1024, maxDepth: 2, maxNodes: 10 });
+  if (!parsed.ok)
+    return Response.json({ error: parsed.error }, { status: jsonBodyErrorStatus(parsed.error) });
+  const data = parsed.value;
+  if (
+    !record(data) ||
+    !hasOnlyKeys(data, ['feedAccessPortId', 'bindingId', 'confirmRetirement']) ||
+    !isBoundedString(data.feedAccessPortId, 160) ||
+    !isBoundedString(data.bindingId, 160) ||
+    data.confirmRetirement !== true
+  )
+    return Response.json({ error: 'INVALID_RETIREMENT_REQUEST' }, { status: 400 });
+  const target = await resolveSnmpFeedPort(await createTopologyRepository(), data.feedAccessPortId);
+  if (!target) return Response.json({ error: 'INVALID_BDFB_INPUT_FEED' }, { status: 422 });
+  const repository = await createTelemetryBindingRepository();
+  const binding = (await repository.listForTarget('ACCESS_PORT', data.feedAccessPortId)).find(
+    (b) => b.id === data.bindingId && b.lifecycle === 'ACTIVE' && b.protocol === 'SNMP',
+  );
+  if (!binding) return Response.json({ error: 'BINDING_NOT_FOUND' }, { status: 404 });
+  await repository.replace({
+    ...binding,
+    lifecycle: 'ARCHIVED',
+    updatedAt: new Date().toISOString(),
+  });
+  return Response.json({ retired: true, bindingId: binding.id });
 }

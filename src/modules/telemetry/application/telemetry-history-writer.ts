@@ -2,6 +2,7 @@ import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 export interface TelemetryHistoryWriter {
   write(sample: TelemetrySample): Promise<void>;
+  writeDurable?(sample: TelemetrySample): Promise<void>;
 }
 
 export interface TelemetryHistoryWriterDiagnostics {

@@ -1,6 +1,6 @@
 # SNMP input-feed telemetry — Site Mapper MK1
 
-**Status:** Site Mapper ingestion foundation (collector/emulator commissioning pending)  
+**Status:** Site Mapper operational readiness implementation; field commissioning still pending  
 **Scope:** BDFB/QDF DC input feeds, NOT breaker readings.  
 **Decision:** Accept normalized SNMP observations independently of the agent implementation.
 
@@ -137,7 +137,7 @@ conversion. A shunt specified as 1000 A / 60 mV is measurement metadata,
 - Agent credentials and OIDs can change without changing the normalized payload
   schema, only the collector's configuration / authorized commission mapping.
 
-## Acceptance gate before the BFDB SNMP emulator
+## Site Mapper readiness acceptance (emulator lives in separate BFDB repository)
 
 - Create at least two external feed AccessPorts on a representative BDFB.
 - Commission separate CURRENT OIDs and send a synthetic **normalized** payload
@@ -146,9 +146,9 @@ conversion. A shunt specified as 1000 A / 60 mV is measurement metadata,
   conflict rejection, token rejection, stale timestamps and history query.
 - Confirm MQTT point/breaker presentation still works and does not count an SNMP
   feeder as a breaker.
-- Only then build the SNMP agent emulator in the BFDB repository. It must expose
-  SNMP OIDs over UDP and be queried by a real collector; simply emitting MQTT
-  is insufficient to certify the SNMP wire protocol.
+- The BFDB repository now provides a separate, optional synthetic SNMPv3 UDP agent lab.
+  Use it only **after** the Site Mapper normalized intake, inventory, commissioning,
+  history recovery and live UI have been verified. Do not treat lab OIDs as Delta OIDs.
 - Final commissioning remains dependent on actual Delta SNMPv3 credentials,
   management IPs, MIB version, OID table walk, feed wiring and controller-local
   readings. Never declare the real integration certified from emulator results.
@@ -186,3 +186,95 @@ if the response is already in amperes or volts; never apply shunt scaling twice.
 The HTTP receiver remains independent of the transport and works with
 future collectors implemented in another language or service. The physical
 agent emulator is still a separate task in the BFDB repository.
+
+## Operator integration — release SNMP-READY
+
+### BDFB incoming feeder inventory
+
+On the canonical BDFB CHASSIS (or actual feeder owner Equipment), use the existing
+AccessPorts editor to create POWER / INPUT / EXTERNAL terminals with:
+
+- `snmpFeedInput=true` (only these ports count as SNMP inputs);
+- an optional `feed=A|B` **side label** (not a unique source identity);
+- rated current (A), shunt full-scale current (A), shunt full-scale voltage (mV);
+- exact served PANEL Equipment IDs when verified, never inferred by panel order;
+- `independentInputConfirmed=true` only after verifying shunt wiring and ensuring
+  current measurements cannot overlap other incoming feeds.
+
+Two or four independent incoming feeds can be configured without adding false
+SHELF/FRAME objects or turning the shunt into fictitious inventory equipment.
+The load summary excludes unverified inputs and never distributes total feed
+current to panels or individual breakers.
+
+### Operational commissioning
+
+Open a BDFB inspector → **SNMP FEED COMMISSIONING → CONFIGURE**.
+The UI calls `GET /api/telemetry/snmp/commission?deviceId=...` and allows a
+privileged topology+power operator to bind a source identity and one or two
+explicit verified OIDs to each physical feed. A previous binding must first be
+retired explicitly via `DELETE /api/telemetry/snmp/commission`; retirement
+preserves audit history and does not destroy TimescaleDB samples.
+
+Credentials NEVER appear in this API or UI. Configure SNMPv3 username, keys,
+agent management address and OID engineering scale on the external collector.
+The target AccessPort and OID-to-feed identity stay in the persistent
+TelemetryBinding repository, not in per-page browser state.
+
+### Docker/Collector deployment
+
+An opt-in `snmp-collector` Compose service exists in
+`docker-compose.telemetry.yml`, profile `snmp`. It is stopped by default.
+One instance queries one configured controller and submits normalized HTTP
+observations over the private Site Mapper service network. Run additional
+instances with separate environment/Compose overrides for further controllers;
+do not assume two BDFBs require two controller IPs. Where the BFDB simulator
+is deployed in a different Compose project, attach the two services to the
+same dedicated private lab network and use its Docker service DNS address.
+A host's loopback-only published UDP port is not reachable from arbitrary
+containers as `127.0.0.1`.
+
+Start only when configured (lab example):
+
+```bash
+docker compose --env-file .env -f docker-compose.telemetry.yml --profile snmp \
+  up -d --build snmp-collector
+```
+
+For production ingress, use TLS/private networking, rate limits, and separate
+per-controller secrets. The current Collector is SHA/AES authPriv (legacy
+firmware compatibility); verify supported algorithms with Delta before field
+deployment.
+
+### Correctness and recovery
+
+The ingest path returns failure if configured TimescaleDB history storage is
+unavailable; it does not publish a new LIVE reading before acknowledged writes.
+`GET /api/telemetry/snmp/feeds` may recover latest SNMP entity samples from
+TimescaleDB following a Next.js process restart. Restored old observations
+retain their original timestamps and are STALE, never silently refreshed.
+The panel separately signals historical-store unavailability.
+
+Whole-BDFB current is reported only when all inventoried independent incoming
+feed currents are live. A feed without verified shunt independence is UNVERIFIED;
+a feed with no binding is UNMAPPED. Per-feed utilization requires its rated
+amperage. Approximate feed input power is `abs(voltage) * current`, only
+when source/OID bindings and timestamp alignment are valid. Neither is a
+breaker reading. The previous descendant Equipment average remains separate.
+
+### Remaining certification gates
+
+- Commission two independently metered inputs and supply distinct current OIDs.
+- Validate 220 A + 210 A = 430 A, rated capacity, partial current, missing
+  measurements and outdated data; validate that unverified/shunt-duplicate
+  readings never appear in the certified whole-BDFB total.
+- Stop the history store and confirm POST rejects the write and leaves the
+  UI without an invented successful LIVE reading.
+- Restart Site Mapper and confirm the latest sample is recovered as LIVE if
+  still within the freshness window, otherwise STALE.
+- Test a real SNMPv3 GET against the BFDB _lab_ agent, Collector normalization,
+  Site Mapper historical commit and separate BDFB UI; leave original MQTT
+  breaker averages and Modbus certification unchanged.
+- Compare lab proof with physical Delta OID walk and wiring only when IP,
+  credentials, firmware and engineering scales are made available.
+
+No laboratory test certifies field Delta SNMP capabilities (hypothesis H-01).

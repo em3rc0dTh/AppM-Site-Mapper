@@ -11,14 +11,17 @@ export type SnmpFeedIngestError =
   | 'UNKNOWN_SNMP_POINT'
   | 'AMBIGUOUS_SNMP_POINT'
   | 'INVALID_SNMP_FEED_TARGET'
-  | 'CONFLICTING_SNMP_FEED';
+  | 'CONFLICTING_SNMP_FEED'
+  | 'OUT_OF_ORDER_SNMP_SAMPLE'
+  | 'HISTORY_STORE_UNAVAILABLE';
 
 export function isBdfbFeedPort(port: AccessPort): boolean {
   return (
     port.lifecycle === 'ACTIVE' &&
     port.portType === 'POWER' &&
     port.direction === 'INPUT' &&
-    port.exposure === 'EXTERNAL'
+    port.exposure === 'EXTERNAL' &&
+    port.attributes?.snmpFeedInput === true
   );
 }
 
@@ -120,15 +123,38 @@ export class SnmpFeedService {
         sourceObservedAt: packet.observedAt,
         protocol: 'SNMP',
       };
-      this.hub.publish(sample);
-      await this.history?.write(sample);
       accepted.push(sample);
     }
+    // Pre-validate timestamps on all ports before touching the durable store.
+    for (const sample of accepted) {
+      const previous = this.hub.latest(sample.targetId);
+      for (const [metric, reading] of Object.entries(sample.reported)) {
+        const old = previous?.reported[metric];
+        if (
+          old &&
+          typeof old === 'object' &&
+          'observedAt' in old &&
+          typeof old.observedAt === 'string' &&
+          Date.parse(old.observedAt) > Date.parse(packet.observedAt)
+        )
+          return failure('OUT_OF_ORDER_SNMP_SAMPLE');
+      }
+    }
+    try {
+      for (const sample of accepted) {
+        if (this.history?.writeDurable) await this.history.writeDurable(sample);
+        else await this.history?.write(sample);
+      }
+    } catch {
+      return failure('HISTORY_STORE_UNAVAILABLE');
+    }
+    for (const sample of accepted) this.hub.publish(sample);
     return success(accepted);
   }
 }
 
-export type SnmpFeedReadingStatus = 'LIVE' | 'STALE' | 'UNMAPPED' | 'NO_DATA' | 'CONFLICT';
+export type SnmpFeedReadingStatus =
+  'LIVE' | 'STALE' | 'UNMAPPED' | 'NO_DATA' | 'CONFLICT' | 'UNVERIFIED';
 
 export interface SnmpBdfbFeedView {
   readonly accessPortId: string;
@@ -141,6 +167,9 @@ export interface SnmpBdfbFeedView {
   readonly observedAt: string | null;
   readonly sourceIdentity: string | null;
   readonly currentOid: string | null;
+  readonly utilizationPct: number | null;
+  readonly estimatedPowerW: number | null;
+  readonly servedPanelIds: readonly string[];
 }
 
 export interface SnmpBdfbLoadView {
@@ -148,6 +177,8 @@ export interface SnmpBdfbLoadView {
   readonly status: 'COMPLETE' | 'PARTIAL' | 'UNMAPPED';
   readonly totalCurrentA: number | null;
   readonly measuredCurrentA: number | null;
+  readonly totalRatedCurrentA: number | null;
+  readonly totalEstimatedPowerW: number | null;
   readonly feedCount: number;
   readonly freshFeedCount: number;
   readonly feeds: readonly SnmpBdfbFeedView[];
@@ -188,6 +219,9 @@ export async function summarizeSnmpBdfbLoad(
     );
     const binding = bindings.length === 1 ? bindings[0]! : undefined;
     const sample = hub.latest(port.id);
+    const voltageBindings = (await bindingRepo.listForTarget('ACCESS_PORT', port.id)).filter(
+      (b) => b.lifecycle === 'ACTIVE' && b.protocol === 'SNMP' && b.metric === 'VOLTAGE',
+    );
     const current = sample?.reported.currentA;
     const voltage = sample?.reported.voltageV;
     const currentValue = metricReading(current);
@@ -198,8 +232,22 @@ export async function summarizeSnmpBdfbLoad(
       currentValue?.oid === binding.sourcePointId;
     const age = currentValue ? nowMs - Date.parse(currentValue.observedAt) : Infinity;
     const fresh = permitted && age >= -60_000 && age <= freshnessMs;
-    const status: SnmpFeedReadingStatus =
-      bindings.length > 1
+    const verified = port.attributes?.independentInputConfirmed === true;
+    const voltageAge = voltageValue ? nowMs - Date.parse(voltageValue.observedAt) : Infinity;
+    const alignedVoltage = Boolean(
+      voltageBindings.length === 1 &&
+      sample?.sourceIdentity === voltageBindings[0]?.sourceIdentity &&
+      voltageValue?.oid === voltageBindings[0]?.sourcePointId &&
+      voltageAge >= -60_000 &&
+      voltageAge <= freshnessMs &&
+      currentValue &&
+      voltageValue &&
+      Math.abs(Date.parse(currentValue.observedAt) - Date.parse(voltageValue.observedAt)) <=
+        freshnessMs,
+    );
+    const status: SnmpFeedReadingStatus = !verified
+      ? 'UNVERIFIED'
+      : bindings.length > 1
         ? 'CONFLICT'
         : !binding
           ? 'UNMAPPED'
@@ -209,6 +257,9 @@ export async function summarizeSnmpBdfbLoad(
               ? 'LIVE'
               : 'STALE';
     const nominal = port.attributes?.ratedCurrentA;
+    const rating = typeof nominal === 'number' && nominal > 0 ? nominal : null;
+    const displayedCurrent = status === 'LIVE' ? currentValue!.value : null;
+    const displayedVoltage = status === 'LIVE' && alignedVoltage ? voltageValue!.value : null;
     feeds.push({
       accessPortId: port.id,
       label: port.name,
@@ -216,22 +267,30 @@ export async function summarizeSnmpBdfbLoad(
         port.attributes?.feed === 'A' || port.attributes?.feed === 'B'
           ? port.attributes.feed
           : null,
-      ratedCurrentA: typeof nominal === 'number' && nominal > 0 ? nominal : null,
+      ratedCurrentA: rating,
       status,
-      currentA: fresh ? currentValue!.value : null,
-      voltageV:
-        fresh && voltageValue && sample?.sourceIdentity === binding?.sourceIdentity
-          ? voltageValue.value
-          : null,
+      currentA: displayedCurrent,
+      voltageV: displayedVoltage,
       observedAt: permitted && currentValue ? currentValue.observedAt : null,
       sourceIdentity: binding?.sourceIdentity ?? null,
       currentOid: binding?.sourcePointId ?? null,
+      utilizationPct:
+        rating && displayedCurrent !== null ? (displayedCurrent / rating) * 100 : null,
+      estimatedPowerW:
+        displayedCurrent !== null && displayedVoltage !== null
+          ? displayedCurrent * Math.abs(displayedVoltage)
+          : null,
+      servedPanelIds: Array.isArray(port.attributes?.servedPanelIds)
+        ? port.attributes.servedPanelIds.filter((v): v is string => typeof v === 'string')
+        : [],
     });
   }
   feeds.sort((a, b) => a.label.localeCompare(b.label));
   const live = feeds.filter((item) => item.status === 'LIVE');
   const measuredCurrentA = live.length ? live.reduce((sum, item) => sum + item.currentA!, 0) : null;
   const complete = feeds.length > 0 && live.length === feeds.length;
+  const capacityComplete = complete && live.every((feed) => feed.ratedCurrentA !== null);
+  const powerComplete = complete && live.every((feed) => feed.estimatedPowerW !== null);
   return {
     deviceId,
     status: complete
@@ -241,6 +300,12 @@ export async function summarizeSnmpBdfbLoad(
         : 'PARTIAL',
     totalCurrentA: complete ? measuredCurrentA : null,
     measuredCurrentA,
+    totalRatedCurrentA: capacityComplete
+      ? live.reduce((sum, feed) => sum + feed.ratedCurrentA!, 0)
+      : null,
+    totalEstimatedPowerW: powerComplete
+      ? live.reduce((sum, feed) => sum + feed.estimatedPowerW!, 0)
+      : null,
     feedCount: feeds.length,
     freshFeedCount: live.length,
     feeds,

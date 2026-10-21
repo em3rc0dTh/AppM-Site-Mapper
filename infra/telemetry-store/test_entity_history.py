@@ -77,6 +77,15 @@ class EntityHistoryQueryTests(unittest.TestCase):
                 )
                 self.assertIn(") recent ORDER BY received_at ASC", sql)
 
+
+    def test_latest_entity_query_preserves_independent_points(self):
+        self.app.query_latest_entity_samples(["feed-A", "feed-B"], "ACCESS_PORT")
+        sql, params = self.connection.executed[-1]
+        self.assertEqual(params, ("ACCESS_PORT", ["feed-A", "feed-B"]))
+        self.assertIn("ROW_NUMBER() OVER (PARTITION BY target_id", sql)
+        self.assertIn("target_id = ANY(%s)", sql)
+        self.assertIn("idx <= 4", sql)
+
     def test_distinct_on_does_not_order_by_separately_bound_bucket_expression(self):
         self.app.query_entity_history("device-01", "DEVICE", "24h")
         sql, _ = self.connection.executed[-1]

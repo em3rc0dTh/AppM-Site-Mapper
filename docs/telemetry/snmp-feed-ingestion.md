@@ -351,3 +351,20 @@ is asserted by these simulations.
 Certification adds cases for 2/4 incomplete, 4/4 complete, duplicate
 identity, duplicate panel, unverified shunt, stale OIDs, calculated
 640 A warning and the unchanged generic two-feed and security tests.
+
+### Production security contract addendum (2026-10-21)
+
+The earlier single `SNMP_INGEST_TOKEN` example remains valid **only for
+development/test**. When `APP_ENV=production`, set
+`SNMP_INGEST_SOURCES_JSON` to distinct controller identity → bearer token
+entries, and give each collector its own matching token. Ingest authenticates
+the bearer before reading the packet and compares its sourceIdentity to the
+verified token identity before any binding/database processing. Missing or
+invalid credentials fail closed. Production also requires durable history
+enabled and a private `TELEMETRY_STORE_TOKEN` of at least 32 characters.
+Never place the map, SNMPv3 passphrases, or store secrets in Git or browser UI.
+
+**Operator caution:** use the explicitly separated APP_ENV deployment profile.
+This contract does not fix distributed atomicity (#78), central rate limits,
+network ACLs or stolen collector tokens. No claim of complete production
+certification is implied by passing CI.

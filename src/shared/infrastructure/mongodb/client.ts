@@ -21,10 +21,23 @@ export function assertMongoProductionSecurity(uri: string, production: boolean):
   if (!url.username || !url.password) {
     throw new Error('Production MongoDB requires authenticated connection credentials');
   }
+  const options = new Map(
+    [...url.searchParams.entries()].map(([key, value]) => [key.toLowerCase(), value.toLowerCase()]),
+  );
+  if (
+    ['tlsinsecure', 'tlsallowinvalidcertificates', 'tlsallowinvalidhostnames'].some(
+      (key) => options.get(key) === 'true',
+    )
+  ) {
+    throw new Error('Production MongoDB must validate TLS certificates and hostnames');
+  }
+  if (options.get('tls') === 'false' || options.get('ssl') === 'false') {
+    throw new Error('Production MongoDB cannot disable TLS');
+  }
   if (
     url.protocol !== 'mongodb+srv:' &&
-    url.searchParams.get('tls') !== 'true' &&
-    url.searchParams.get('ssl') !== 'true'
+    options.get('tls') !== 'true' &&
+    options.get('ssl') !== 'true'
   ) {
     throw new Error('Production MongoDB requires TLS');
   }

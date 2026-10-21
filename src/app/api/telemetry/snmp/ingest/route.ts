@@ -1,5 +1,6 @@
 import { isProductionDeployment } from '@/config/env';
 import { authorizeController } from '@/modules/telemetry/application/snmp-ingest-credentials';
+import { reserveSnmpIngressQuota } from '@/modules/telemetry/application/snmp-ingest-rate-limit';
 import { createHash, timingSafeEqual } from 'node:crypto';
 
 import { SnmpFeedService } from '@/modules/telemetry/application/snmp-feed-service';
@@ -59,6 +60,18 @@ export async function POST(request: Request) {
   if (!packet.ok) return Response.json({ error: packet.error }, { status: 400 });
   if (production && packet.value.sourceIdentity !== expectedSource)
     return Response.json({ error: 'COLLECTOR_SOURCE_MISMATCH' }, { status: 403 });
+  if (production && expectedSource) {
+    try {
+      if (!(await reserveSnmpIngressQuota(expectedSource))) {
+        return Response.json(
+          { error: 'SNMP_INGEST_QUOTA_EXCEEDED' },
+          { status: 429, headers: { 'Retry-After': '60', 'Cache-Control': 'no-store' } },
+        );
+      }
+    } catch {
+      return Response.json({ error: 'SNMP_INGEST_QUOTA_UNAVAILABLE' }, { status: 503 });
+    }
+  }
 
   const runtime = await getTelemetryRuntime();
   const history =

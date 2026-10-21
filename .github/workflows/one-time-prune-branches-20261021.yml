@@ -1,0 +1,54 @@
+name: One-time archived branch pruning
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/one-time-prune-branches-20261021.yml'
+permissions:
+  contents: write
+jobs:
+  archive-then-prune:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Preserve historical commits as immutable lightweight tags and prune old branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const branches = [["docs/operator-manual-mk1-20261019","12ce9fad1ac51f8d21375a71775340bb1ca442d7"],["feat/mk1-security-closure","cb2c5f51d487010f4568a8c5ff806bc2d80204de"],["fix/mk1-serial-identity-and-powerpath-e2e","bc81bfdcb9233e202aef32e373a6eaec1f14aa9d"],["test/adversarial-g10-cross-target-20261013","9759832344eb23275af0ec06bdcae2fb568f58ca"],["test/adversarial-main-20261013","5b727e30af5aa4a9be53e9e7b8e709986a4d0f05"],["feat/mk1-g8-inventory-rack-elevation","07f73c3fd3cc940c1d1fe818ec4b2184ba7b276a"],["feat/zip-faithful-room-bdfb","3fcd47a10ef0141d43803924d5d634dd9b8f05f0"],["docs/v1-telxius-product-telemetry-contract","fd3b5ac7d3f80e8842bf7273371196ce5eaa41bd"],["feat/spatial-authoring-engine-v0.1","7752a90f3444ea6a862d2842099107f9d520079e"]];
+            const tagPrefix = 'archive/site-mapper-2026-10-21/';
+            const open = await github.paginate(github.rest.pulls.list, { owner, repo, state: 'open', per_page: 100 });
+            if (open.length) throw new Error('Refusing branch deletion while pull requests are open: ' + open.map(p => p.number).join(', '));
+            const actualBranches = await github.paginate(github.rest.repos.listBranches, { owner, repo, per_page: 100 });
+            const expectedNames = new Set(['main', ...branches.map(row => row[0])]);
+            const unexpected = actualBranches.map(b => b.name).filter(name => !expectedNames.has(name));
+            if (unexpected.length) throw new Error('Unexpected branches: ' + unexpected.join(', '));
+            for (const [branch, expected] of branches) {
+              const { data: current } = await github.rest.git.getRef({ owner, repo, ref: 'heads/' + branch });
+              if (current.object.sha !== expected) throw new Error('Branch moved: ' + branch);
+            }
+            // Phase 1: create and verify all backup tags; do not delete anything until complete.
+            for (const [branch, sha] of branches) {
+              const tagName = tagPrefix + branch;
+              try {
+                await github.rest.git.createRef({ owner, repo, ref: 'refs/tags/' + tagName, sha });
+              } catch (error) {
+                if (error.status !== 422) throw error;
+              }
+              const { data: tag } = await github.rest.git.getRef({ owner, repo, ref: 'tags/' + tagName });
+              if (tag.object.sha !== sha) throw new Error('Backup tag mismatch: ' + branch);
+              core.info('[ARCHIVED] ' + branch + ' -> refs/tags/' + tagName + ' @ ' + sha);
+            }
+            // Phase 2: all commit snapshots preserved; remove only the nine explicit stale refs.
+            for (const [branch, sha] of branches) {
+              const { data: before } = await github.rest.git.getRef({ owner, repo, ref: 'heads/' + branch });
+              if (before.object.sha !== sha) throw new Error('Branch changed during archive: ' + branch);
+              await github.rest.git.deleteRef({ owner, repo, ref: 'heads/' + branch });
+              core.info('[DELETED] refs/heads/' + branch);
+            }
+            const remaining = await github.paginate(github.rest.repos.listBranches, { owner, repo, per_page: 100 });
+            if (remaining.length !== 1 || remaining[0].name !== 'main') throw new Error('Not fully pruned: ' + remaining.map(b => b.name).join(', '));
+            core.info('[PASS] One branch remains: main. All nine retired tips have archive tags.');

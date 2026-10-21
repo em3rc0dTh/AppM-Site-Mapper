@@ -620,31 +620,65 @@ async function main() {
       sourceIdentity: identity,
       observedAt,
       measurements: rows.map(([point, value]) => ({
-        oid: point, metric: 'CURRENT', unit: 'A', value,
+        oid: point,
+        metric: 'CURRENT',
+        unit: 'A',
+        value,
       })),
     });
     const attackTime = sampleTime();
-    await request('POST', '/api/telemetry/snmp/ingest',
-      attackPayload(attackTime, [[oids[0], 100]]), 401);
-    await request('POST', '/api/telemetry/snmp/ingest',
-      attackPayload(attackTime, [[oids[0], 100]]), 401,
-      { authorization: 'Bearer invalid-collector-token' });
+    await request(
+      'POST',
+      '/api/telemetry/snmp/ingest',
+      attackPayload(attackTime, [[oids[0], 100]]),
+      401,
+    );
+    await request(
+      'POST',
+      '/api/telemetry/snmp/ingest',
+      attackPayload(attackTime, [[oids[0], 100]]),
+      401,
+      { authorization: 'Bearer invalid-collector-token' },
+    );
     const collectorBearer = { authorization: 'Bearer ' + process.env.SNMP_INGEST_TOKEN };
-    await request('POST', '/api/telemetry/snmp/ingest',
-      attackPayload(attackTime, [[oids[0], 100]], 'FORGED-SNMP-SOURCE'), 422, collectorBearer);
-    await request('POST', '/api/telemetry/snmp/ingest',
-      attackPayload(attackTime, [[oids[0] + '.999', 100]]), 422, collectorBearer);
-    await request('POST', '/api/telemetry/snmp/ingest',
-      attackPayload('2001-01-01T00:00:00.000Z', [[oids[0], 9999]]), 400, collectorBearer);
-    await request('POST', '/api/telemetry/snmp/ingest',
+    await request(
+      'POST',
+      '/api/telemetry/snmp/ingest',
+      attackPayload(attackTime, [[oids[0], 100]], 'FORGED-SNMP-SOURCE'),
+      422,
+      collectorBearer,
+    );
+    await request(
+      'POST',
+      '/api/telemetry/snmp/ingest',
+      attackPayload(attackTime, [[oids[0] + '.999', 100]]),
+      422,
+      collectorBearer,
+    );
+    await request(
+      'POST',
+      '/api/telemetry/snmp/ingest',
+      attackPayload('2001-01-01T00:00:00.000Z', [[oids[0], 9999]]),
+      400,
+      collectorBearer,
+    );
+    await request(
+      'POST',
+      '/api/telemetry/snmp/ingest',
       attackPayload(acceptedSnmp.body.observedAt, [[oids[0], 79999]]),
-      422, collectorBearer);
-    const afterAttack = await request('GET',
-      '/api/telemetry/snmp/feeds?deviceId=' + lima.device.id);
-    assert.equal(afterAttack.body.totalCurrentA, 430,
-      'Authenticated SNMP replay manipulated BDFB load');
+      422,
+      collectorBearer,
+    );
+    const afterAttack = await request(
+      'GET',
+      '/api/telemetry/snmp/feeds?deviceId=' + lima.device.id,
+    );
+    assert.equal(
+      afterAttack.body.totalCurrentA,
+      430,
+      'Authenticated SNMP replay manipulated BDFB load',
+    );
     record('SNMP adversarial HTTP: denied cookies-only, bad token, wrong source/OID and replay');
-
   }
 
   const { body: networks } = await request('GET', '/api/topology');

@@ -1,8 +1,20 @@
 import net from 'node:net';
 import http from 'node:http';
-import { METRICS, REGISTERS_PER_UNIT, POINT_LAYOUTS, rawPointIndex, circuitStartAddress } from './register-map.mjs';
+import {
+  METRICS,
+  REGISTERS_PER_UNIT,
+  POINT_LAYOUTS,
+  rawPointIndex,
+  circuitStartAddress,
+} from './register-map.mjs';
 
-export { CIRCUITS, METRICS, REGISTERS_PER_UNIT, POINT_LAYOUTS, rawPointIndex } from './register-map.mjs';
+export {
+  CIRCUITS,
+  METRICS,
+  REGISTERS_PER_UNIT,
+  POINT_LAYOUTS,
+  rawPointIndex,
+} from './register-map.mjs';
 
 export function floatRegisters(value) {
   const buffer = Buffer.alloc(4);
@@ -14,7 +26,8 @@ export class ModbusLatestState {
   constructor(sourceMap, staleMs = 30000, pointLayout = 'blocks-2x48', missingPolicy = 'zero') {
     if (!Number.isInteger(staleMs) || staleMs < 1000) throw new Error('Invalid stale threshold');
     if (!POINT_LAYOUTS.includes(pointLayout)) throw new Error('Invalid MODBUS_POINT_LAYOUT');
-    if (!['zero', 'exception'].includes(missingPolicy)) throw new Error('Invalid MODBUS_MISSING_POLICY');
+    if (!['zero', 'exception'].includes(missingPolicy))
+      throw new Error('Invalid MODBUS_MISSING_POLICY');
     this.pointLayout = pointLayout;
     this.missingPolicy = missingPolicy;
     const identities = Object.entries(sourceMap);
@@ -165,7 +178,7 @@ export function startBridge({
       return;
     }
     // Never use this service as a public ingress; token and loopback binding both required.
-    if (request.headers.authorization !== `Bearer ${token}`) {
+    if (request.headers.authorization !== `*** {
       finish(401, 'unauthorized');
       return;
     }

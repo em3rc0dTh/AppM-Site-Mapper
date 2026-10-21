@@ -35,15 +35,19 @@ const columns = [
   ['WORD ORDER', 'wordOrder'],
 ];
 const quote = (v) => '"' + String(v).replaceAll('"', '""') + '"';
-const data = [
-  columns.map(([name]) => quote(name)).join(','),
-  ...registerMapRows(sourceMap, layout).map((row) =>
-    columns.map(([, key]) => quote(row[key])).join(',')),
-].join('\n') + '\n';
+const data =
+  [
+    columns.map(([name]) => quote(name)).join(','),
+    ...registerMapRows(sourceMap, layout).map((row) =>
+      columns.map(([, key]) => quote(row[key])).join(','),
+    ),
+  ].join('\n') + '\n';
 if (args.has('--stdout')) process.stdout.write(data);
 else if (args.has('--check')) {
   if (!fs.existsSync(target) || fs.readFileSync(target, 'utf8') !== data) {
-    console.error('Metasys register map has drifted: run node scripts/operations/generate-metasys-register-map.mjs');
+    console.error(
+      'Metasys register map has drifted: run node scripts/operations/generate-metasys-register-map.mjs',
+    );
     process.exitCode = 1;
   } else console.log('METASYS_REGISTER_MAP_MATCH: 1152 measurement points (lab profile)');
 } else {

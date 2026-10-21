@@ -2,7 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import net from 'node:net';
 import { ModbusLatestState, handleFrame, rawPointIndex, startBridge } from './server.mjs';
-import { registerMapRows, circuitStartAddress, metricStartAddress, pointIdForCircuit, REGISTERS_PER_UNIT } from './register-map.mjs';
+import {
+  registerMapRows,
+  circuitStartAddress,
+  metricStartAddress,
+  pointIdForCircuit,
+  REGISTERS_PER_UNIT,
+} from './register-map.mjs';
 
 const TOKEN = 'ci-modbus-only-secret-token-2026';
 const sourceMap = { 'EMU-BFDB-01': 1, 'EMU-BFDB-02': 2, 'EMU-BFDB-03': 3 };
@@ -155,8 +161,15 @@ test('Metasys table has precisely four FLOAT32 measurements per circuit and stab
     assert.equal(row.wordOrder, 'High word first');
     assert.equal(row.rawPoint, pointIdForCircuit(row.circuit, 'panels-4x24'));
     assert.equal(row.reference, `${40001 + row.startAddress}-${40002 + row.startAddress}`);
-    assert.equal(row.startAddress, metricStartAddress(row.circuit,
-      { Voltage: 'voltageV', Current: 'currentA', Power: 'powerW', Energy: 'energyKwh' }[row.description.split(' ').at(-1)]));
+    assert.equal(
+      row.startAddress,
+      metricStartAddress(
+        row.circuit,
+        { Voltage: 'voltageV', Current: 'currentA', Power: 'powerW', Energy: 'energyKwh' }[
+          row.description.split(' ').at(-1)
+        ],
+      ),
+    );
     const key = `${row.unitId}:${row.startAddress}`;
     assert.equal(starts.has(key), false);
     starts.add(key);
@@ -177,7 +190,10 @@ test('Metasys missing-data exception mode never fabricates a zero', () => {
   const state = new ModbusLatestState(sourceMap, 30000, 'panels-4x24', 'exception');
   assert.equal(handleFrame(command(1, 0, 8), state, now)[7], 0x83);
   assert.equal(handleFrame(command(1, 0, 8), state, now)[8], 4); // unavailable
-  assert.equal(state.apply(sample('EMU-BFDB-01', '0_1_1', 0, new Date(now).toISOString()), now), true);
+  assert.equal(
+    state.apply(sample('EMU-BFDB-01', '0_1_1', 0, new Date(now).toISOString()), now),
+    true,
+  );
   const valid = handleFrame(command(1, 0, 8), state, now);
   assert.equal(valid[7], 3);
   assert.equal(valid.readFloatBE(9), 0); // a legitimate measured zero is preserved
@@ -185,5 +201,8 @@ test('Metasys missing-data exception mode never fabricates a zero', () => {
   assert.equal(handleFrame(command(1, 0, 8), state, now + 30001)[8], 4); // stale
   assert.equal(handleFrame(command(1, 768, 1), state, now)[8], 2); // invalid address
   assert.equal(handleFrame(command(1, 0, 1, 4), state, now)[8], 1); // FC04 not offered
-  assert.throws(() => new ModbusLatestState(sourceMap, 30000, 'panels-4x24', 'bad'), /MODBUS_MISSING_POLICY/);
+  assert.throws(
+    () => new ModbusLatestState(sourceMap, 30000, 'panels-4x24', 'bad'),
+    /MODBUS_MISSING_POLICY/,
+  );
 });

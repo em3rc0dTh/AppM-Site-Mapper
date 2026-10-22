@@ -178,7 +178,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mk1-browser-evidence
-          path: /tmp/mk1-operational-browser.png
+          path: /tmp/mk1-operational-browser*.png
           if-no-files-found: ignore
 
       - name: Cleanup disposable services

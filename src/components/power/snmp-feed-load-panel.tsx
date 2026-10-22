@@ -24,7 +24,8 @@ function readablePanel(panel: PhysicalPanel): string {
 export function SnmpFeedLoadPanel({
   deviceId,
   chassisId,
-}: Readonly<{ deviceId: string; chassisId: string }>) {
+  view = 'all',
+}: Readonly<{ deviceId: string; chassisId: string; view?: 'all' | 'summary' | 'feeds' }>) {
   const [load, setLoad] = useState<SnmpBdfbLoadView | null>(null);
   const [panels, setPanels] = useState<ReadonlyMap<string, PhysicalPanel>>(new Map());
   const [error, setError] = useState(false);
@@ -156,6 +157,8 @@ export function SnmpFeedLoadPanel({
           </span>
         </header>
 
+        {view !== 'feeds' && (
+          <>
         <div className="zip-bdfb-live-average-grid">
           <div>
             <span>
@@ -214,7 +217,11 @@ export function SnmpFeedLoadPanel({
           </div>
         )}
 
-        {labEnabled && inventoryRecorded && (
+          </>
+        )}
+        {view !== 'summary' && (
+          <>
+        {labEnabled && inventoryRecorded && labCount === 0 && (
           <div className="sm-snmp-lab-activation">
             <strong>LOCAL SNMP LAB · SYNTHETIC DATA</strong>
             <small>
@@ -326,13 +333,19 @@ export function SnmpFeedLoadPanel({
         <small>
           Incoming SNMP shunt measurements are separate from the descendant Equipment MQTT average.
         </small>
+          </>
+        )}
       </section>
-      <SnmpFeedHistory deviceId={deviceId} />
-      <SnmpFeedCommissioning
-        deviceId={deviceId}
-        chassisId={chassisId}
-        onInventoryChanged={() => setRefreshVersion((version) => version + 1)}
-      />
+      {view === 'all' && (
+        <>
+          <SnmpFeedHistory deviceId={deviceId} />
+          <SnmpFeedCommissioning
+            deviceId={deviceId}
+            chassisId={chassisId}
+            onInventoryChanged={() => setRefreshVersion((version) => version + 1)}
+          />
+        </>
+      )}
     </>
   );
 }

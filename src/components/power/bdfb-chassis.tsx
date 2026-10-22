@@ -142,14 +142,21 @@ export function BdfbChassis({
               <h2>{selectedPanel.label}</h2>
               <small>Read-only position inventory from the installed Equipment tree</small>
             </div>
-            <Link href={`/device/${selectedPanel.id}`}>
-              OPEN PANEL COMPOSITION →
-            </Link>
+            <Link href={`/device/${selectedPanel.id}`}>OPEN PANEL COMPOSITION →</Link>
           </header>
           <div className="sm-bdfb-panel-focus-summary" aria-label="Panel occupancy">
-            <div><strong>{installed}</strong><span>INSTALLED</span></div>
-            <div><strong>{available}</strong><span>AVAILABLE</span></div>
-            <div><strong>{selectedPanel.positions.length}</strong><span>POSITIONS</span></div>
+            <div>
+              <strong>{installed}</strong>
+              <span>INSTALLED</span>
+            </div>
+            <div>
+              <strong>{available}</strong>
+              <span>AVAILABLE</span>
+            </div>
+            <div>
+              <strong>{selectedPanel.positions.length}</strong>
+              <span>POSITIONS</span>
+            </div>
           </div>
           <div className="sm-bdfb-panel-positions" role="list" aria-label="Panel breaker slots">
             {selectedPanel.positions.map((breaker, index) => (
@@ -160,15 +167,19 @@ export function BdfbChassis({
                 data-installed={breaker !== null}
               >
                 {breaker ? (
-                  <Link href={`/device/${breaker.id}`}
+                  <Link
+                    href={`/device/${breaker.id}`}
                     title={`Position ${index + 1}: ${breaker.label}`}
-                    aria-label={`Position ${index + 1}: ${breaker.label}; open breaker details`}>
+                    aria-label={`Position ${index + 1}: ${breaker.label}; open breaker details`}
+                  >
                     <span>P{String(index + 1).padStart(2, '0')}</span>
                     <strong>●</strong>
                   </Link>
                 ) : (
-                  <span title={`Position ${index + 1}: available`}
-                    aria-label={`Position ${index + 1}: available`}>
+                  <span
+                    title={`Position ${index + 1}: available`}
+                    aria-label={`Position ${index + 1}: available`}
+                  >
                     P{String(index + 1).padStart(2, '0')}
                   </span>
                 )}
@@ -184,7 +195,8 @@ export function BdfbChassis({
                     <span>Position {String(index + 1).padStart(2, '0')}</span>
                     <Link href={`/device/${breaker.id}`}>{breaker.label}</Link>
                     <small>
-                      {destinationByBreaker.get(breaker.id)?.counterpartName ?? 'No connected destination'}
+                      {destinationByBreaker.get(breaker.id)?.counterpartName ??
+                        'No connected destination'}
                       {' · '}
                       {monitoredBreakers.has(breaker.id) ? 'MQTT bound' : 'No MQTT binding'}
                     </small>

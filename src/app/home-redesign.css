@@ -668,7 +668,7 @@
 }
 .zip-bdfb-page .sm-bdfb-panel-focus-header span {
   font-size: 10px;
-  letter-spacing: .08em;
+  letter-spacing: 0.08em;
   color: #456985;
   font-weight: 800;
 }
@@ -770,7 +770,7 @@
 .zip-bdfb-page .sm-bdfb-breaker-summary > strong {
   padding: 9px 11px;
   font-size: 10px;
-  letter-spacing: .06em;
+  letter-spacing: 0.06em;
   background: #f0f5fa;
   color: #1e496c;
 }

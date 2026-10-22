@@ -126,9 +126,7 @@ export function EquipmentFocusInspector({
                   )}
                 </p>
                 {equipment.telemetryPointPrefix && (
-                  <p className="ec-inspector-note">
-                    Point group {equipment.telemetryPointPrefix}
-                  </p>
+                  <p className="ec-inspector-note">Point group {equipment.telemetryPointPrefix}</p>
                 )}
                 <div className="ec-inspector-metrics" aria-label="Live electrical measurements">
                   {METRICS.map((metric) => {

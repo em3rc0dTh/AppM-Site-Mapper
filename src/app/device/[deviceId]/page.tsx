@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 
 import { EquipmentCompositionEditor } from '@/components/equipment/equipment-composition-editor';
+import { EquipmentFocusInspector } from '@/components/equipment/equipment-focus-inspector';
 import { AccessPortEditor } from '@/components/equipment/access-port-editor';
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { PowerContractEditor } from '@/components/power/power-contract-editor';
@@ -95,7 +96,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const tree = nodeTrail[0] ? await service.buildNavigationTree(nodeTrail[0].id) : null;
   const view = rackNode ? await new RackElevationService(repo).getView(rackNode.id) : null;
 
-  const breakerIds = directEquipmentChildren
+  // The focused scope may contain breakers several Equipment levels below.
+  // Load explicit bindings for the whole focused subtree, never by slot number.
+  const breakerIds = familyEquipment
     .filter((item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'CIRCUIT_BREAKER')
     .map((item) => item.id);
   const breakerTelemetryBindings =
@@ -204,6 +207,92 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
         </section>
 
         <aside className="mk-inline-inspector zip-device-inspector">
+          {node.kind === 'EQUIPMENT' ? (
+            <EquipmentFocusInspector
+              equipment={node}
+              familyEquipment={familyEquipment}
+              bindings={breakerTelemetryBindings}
+              canReadTelemetry={canReadTelemetry}
+              overview={
+                <>
+                  <ContextPin entityId={node.id} />
+                  <dl>
+                    <dt>Identity</dt>
+                    <dd>{node.name}</dd>
+                    <dt>Type</dt>
+                    <dd>{node.equipmentType.replaceAll('_', ' ')}</dd>
+                    <dt>Model</dt>
+                    <dd>{node.model ?? node.category ?? 'Not specified'}</dd>
+                    <dt>Serial N.</dt>
+                    <dd>{node.serialNumber ?? 'Not assigned'}</dd>
+                    <dt>Parent Equipment</dt>
+                    <dd>{node.parentEquipmentId ?? 'Device root'}</dd>
+                    <dt>Child capacity</dt>
+                    <dd>{node.childMode === 'POSITIONAL' ? node.children.length : 'Dynamic'}</dd>
+                    <dt>Location</dt>
+                    <dd>{room?.name ?? 'Room'} / {rackNode?.name ?? 'Rack'} / {mountLabel}</dd>
+                    <dt>Power A</dt>
+                    <dd>{hasFeedA ? 'Path recorded' : 'No recorded path'}</dd>
+                    <dt>Power B</dt>
+                    <dd>{hasFeedB ? 'Path recorded' : 'No recorded path'}</dd>
+                  </dl>
+                  <FullPowerTraceModal entityId={node.id} />
+                  {room && rackNode ? (
+                    <Link className="zip-device-outline" href={`/blueprint/${room.id}?rack=${rackNode.id}`}>
+                      ▣ LOCATE IN ROOM
+                    </Link>
+                  ) : null}
+                </>
+              }
+              ports={
+                <>
+                  <p className="ec-inspector-note">
+                    {node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length} recorded
+                    terminals. No virtual connectors are generated.
+                  </p>
+                  {node.accessPorts
+                    .filter((port) => port.lifecycle === 'ACTIVE')
+                    .map((port) => (
+                      <div className="ec-inspector-port" key={port.id}>
+                        <strong>{port.name}</strong>
+                        <span>{port.portType} · {port.direction ?? 'Direction not recorded'}</span>
+                      </div>
+                    ))}
+                  {canWriteTopology ? (
+                    <AccessPortEditor
+                      equipmentId={node.id}
+                      accessPorts={node.accessPorts}
+                      canWritePower={canWritePower}
+                      portConnections={portConnections}
+                    />
+                  ) : null}
+                </>
+              }
+              settings={
+                <>
+                  <p className="ec-inspector-note">
+                    Physical configuration and power contracts are permission-controlled.
+                    Child Equipment and slots are managed from the composition workspace.
+                  </p>
+                  {canWritePower && contract.ok ? (
+                    <PowerContractEditor
+                      entityId={node.id}
+                      accessPorts={contract.value.accessPorts}
+                      redundancy={contract.value.redundancy}
+                    />
+                  ) : null}
+                  {!relatedPower.length ? (
+                    <p className="device-power-unconfigured">
+                      No direct PowerPath is recorded. The full trace checks nested Equipment.
+                    </p>
+                  ) : null}
+                  <FullPowerTraceModal entityId={node.id} />
+                </>
+              }
+            />
+          ) : (
+            <>
+
           <header>
             {node.kind} <span>⌄</span>
           </header>
@@ -306,6 +395,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               ▣ LOCATE IN ROOM
             </Link>
           ) : null}
+            </>
+          )}
         </aside>
       </div>
     </main>

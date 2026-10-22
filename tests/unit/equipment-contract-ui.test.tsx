@@ -1,0 +1,118 @@
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
+
+import { EquipmentContractViews } from '@/components/equipment/equipment-contract-views';
+import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
+import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/composition-breaker-telemetry';
+import type { EquipmentNode } from '@/modules/topology/domain/entities';
+
+const stamp = '2026-10-22T00:00:00.000Z';
+
+function makeNode(
+  id: string,
+  equipmentType: EquipmentNode['equipmentType'],
+  children: readonly (string | null)[] = [],
+): EquipmentNode {
+  return {
+    id,
+    kind: 'EQUIPMENT',
+    name: id,
+    deviceId: 'device-1',
+    parentId: 'device-1',
+    parentEquipmentId: null,
+    equipmentType,
+    childMode: 'POSITIONAL',
+    children,
+    accessPorts: [],
+    lifecycle: 'ACTIVE',
+    pinned: false,
+    createdAt: stamp,
+    updatedAt: stamp,
+  };
+}
+
+describe('Equipment Composition SCREEN 12', () => {
+  const breakerA = makeNode('Breaker A', 'CIRCUIT_BREAKER');
+  const breakerB = makeNode('Breaker B', 'CIRCUIT_BREAKER');
+  const breakerC = makeNode('Breaker C', 'CIRCUIT_BREAKER');
+  const panelA = makeNode('Panel A', 'PANEL', [
+    breakerA.id, breakerB.id, null, null, breakerC.id,
+  ]);
+  const panelB = makeNode('Panel B', 'PANEL', Array(24).fill(null));
+  const frame = makeNode('Frame 1', 'FRAME', [panelA.id, panelB.id]);
+  const shelf = makeNode('Shelf 1', 'SHELF', [frame.id]);
+  const chassis = makeNode('Chassis 1', 'CHASSIS', [shelf.id]);
+  const nodes = [breakerA, breakerB, breakerC, panelA, panelB, frame, shelf, chassis];
+  const byId = new Map(nodes.map((node) => [node.id, node]));
+  const readings: Readonly<Record<string, CompositionBreakerTelemetry>> = {
+    [breakerA.id]: { status: 'LIVE', voltageV: 12, currentA: 10, powerW: 120, energyKwh: 4 },
+    [breakerB.id]: { status: 'LIVE', voltageV: 14, powerW: 70, energyKwh: 6 },
+    [breakerC.id]: { status: 'STALE', voltageV: 13, currentA: 11, powerW: 143 },
+  };
+
+  it('never includes empty slots, stale breakers or missing metrics in a mean', () => {
+    const summary = projectCompositionTelemetry(chassis, byId, readings);
+    expect(summary.installed).toBe(3);
+    expect(summary.bound).toBe(3);
+    expect(summary.reporting).toBe(2);
+    expect(summary.stale).toBe(1);
+    expect(summary.metrics.voltageV).toBe(13);
+    expect(summary.metrics.currentA).toBe(10);
+    expect(summary.metrics.powerW).toBe(95);
+    expect(summary.metrics.energyKwh).toBe(5);
+    expect(summary.metricCounts.currentA).toBe(1);
+  });
+
+  it('has matching descendant metrics at chassis, shelf and frame with only one branch', () => {
+    const fromChassis = projectCompositionTelemetry(chassis, byId, readings);
+    const fromShelf = projectCompositionTelemetry(shelf, byId, readings);
+    const fromFrame = projectCompositionTelemetry(frame, byId, readings);
+    expect(fromChassis.metrics).toEqual(fromShelf.metrics);
+    expect(fromShelf.metrics).toEqual(fromFrame.metrics);
+  });
+
+  it('renders frames side-by-side and panel links in vertical frame stacks', () => {
+    const markup = renderToStaticMarkup(
+      <EquipmentContractViews root={shelf} equipmentById={byId} readings={readings} />,
+    );
+    expect(markup).toContain('ec-frames-grid');
+    expect(markup).toContain('ec-frame-panels');
+    expect(markup).toContain('Panel A');
+    expect(markup).toContain('Panel B');
+    expect(markup).not.toContain('Breaker A');
+  });
+
+  it('renders installed breaker rows and collapses 21 or more free slots by default', () => {
+    const panel = makeNode('Panel 24', 'PANEL', [
+      breakerA.id, breakerB.id, breakerC.id, ...Array(21).fill(null),
+    ]);
+    const markup = renderToStaticMarkup(
+      <EquipmentContractViews root={panel} equipmentById={byId} readings={readings} />,
+    );
+    expect(markup).toContain('Breaker A');
+    expect(markup).toContain('Breaker B');
+    expect(markup).toContain('21 free positions');
+    expect(markup).toContain('VIEW SLOTS');
+    expect(markup).not.toContain('ec-slot-grid');
+    expect(markup).toContain('STALE');
+    expect(markup).toContain('12.00');
+    expect(markup).not.toContain('POSITION 24');
+  });
+
+  it('provides the selected breaker own readings without combining descendants', () => {
+    const markup = renderToStaticMarkup(
+      <EquipmentContractViews root={breakerA} equipmentById={byId} readings={readings} />,
+    );
+    expect(markup).toContain('MQTT source');
+    expect(markup).toContain('120.00');
+    expect(markup).toContain('LIVE');
+    expect(markup).not.toContain('Breaker B');
+  });
+
+  it('does not use duplicate descendants when canonical references contain a cycle', () => {
+    const loop = { ...frame, children: [panelA.id, panelA.id, frame.id] };
+    expect(projectCompositionTelemetry(loop, new Map([
+      ...byId, [loop.id, loop],
+    ]), readings).installed).toBe(3);
+  });
+});

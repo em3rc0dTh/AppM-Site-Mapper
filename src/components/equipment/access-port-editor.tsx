@@ -129,7 +129,6 @@ export function AccessPortEditor({
   const [existingSnmpBindings, setExistingSnmpBindings] = useState<
     { metric: string; oid: string; sourceIdentity: string }[]
   >([]);
-  const [savedWithCommissionError, setSavedWithCommissionError] = useState(false);
 
   const maxPanelCount =
     hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
@@ -160,12 +159,12 @@ export function AccessPortEditor({
   const hasCurrentMapping = existingSnmpBindings.some((binding) => binding.metric === 'CURRENT');
   const hasVoltageMapping = existingSnmpBindings.some((binding) => binding.metric === 'VOLTAGE');
   const commissioningRequested = quickFeed && mapSnmpNow;
+  const config4NeedsRatings = hardwareProfile === 'ELTEK_BDCBB_CONFIG_4' && mapSnmpNow;
   const commissionerReady = !commissioningRequested || (
     form.independentInputConfirmed && Boolean(sourceIdentity.trim()) &&
     (!hasCurrentMapping || Boolean(currentOid.trim())) &&
-    (!hasVoltageMapping || Boolean(voltageOid.trim()) || hasCurrentMapping) &&
     confirmOidMapping &&
-    (hardwareProfile !== 'ELTEK_BDCBB_CONFIG_4' ||
+    (!config4NeedsRatings ||
       (Number(form.ratedCurrentA) === 800 && Number(form.shuntRatedCurrentA) === 1000 &&
        Number(form.shuntRatedMillivolts) === 60))
   );
@@ -262,7 +261,6 @@ export function AccessPortEditor({
     setVoltageOid('');
     setConfirmOidMapping(false);
     setExistingSnmpBindings([]);
-    setSavedWithCommissionError(false);
     setDeviceId('');
     setError('');
   }
@@ -334,7 +332,6 @@ export function AccessPortEditor({
         // On partial failure keep the same editor open and the persisted port ID,
         // allowing a safe retry without creating a duplicate DC terminal.
         setEditingId(result.port.id);
-        setSavedWithCommissionError(true);
         const mappings = [
           ...(!hasCurrentMapping ? [{ metric: 'CURRENT', oid: currentOid.trim() }] : []),
           ...(!hasVoltageMapping && voltageOid.trim()
@@ -361,7 +358,6 @@ export function AccessPortEditor({
             ...point, sourceIdentity: sourceIdentity.trim(),
           }]);
         }
-        setSavedWithCommissionError(false);
       }
       setOpen(false);
       reset();
@@ -884,12 +880,11 @@ export function AccessPortEditor({
                             )}
                           </div>
                         )}
-                        <details className="equipment-access-port-advanced">
-                          <summary>Optional equipment specifications · calibration & ratings</summary>
+                        <details className="equipment-access-port-advanced" open={config4NeedsRatings ? true : undefined}>
+                          <summary>{config4NeedsRatings ? 'Required Config 4 SNMP ratings · verify before saving' : 'Optional equipment specifications · calibration & ratings'}</summary>
                           <p>
                             Leave unknown values empty; do not infer ratings from another BDFB.
-                            Physical verification is required before commissioning SNMP OIDs or
-                            claiming certified totals.
+                            For Config 4 commissioning, verify the installed 800 A input rating and 1000 A / 60 mV shunt; never invent a value.
                           </p>
                           <div className="equipment-access-port-advanced-fields">
                             <label>
@@ -958,7 +953,7 @@ export function AccessPortEditor({
               )}
               {quickFeed && (
                 <p>
-                  The physical verification box is explicit; measurements remain unverified if it is not checked.
+                  Physical verification and OID commissioning are distinct from saving the equipment inventory.
                   {commissioningRequested && ' Saving also commissions the selected SNMP OIDs.'}
                 </p>
               )}

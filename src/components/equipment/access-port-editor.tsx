@@ -413,7 +413,7 @@ export function AccessPortEditor({
   }
 
   return (
-    <section className="equipment-port-editor">
+    <section id="bdfb-access-ports" className="equipment-port-editor">
       <header>
         <strong>ACCESS PORTS</strong>
         <span>{active.length} configured</span>

@@ -1868,7 +1868,7 @@
   font-size: 11px;
   font-weight: 800;
   line-height: 1.5;
-  letter-spacing: .04em;
+  letter-spacing: 0.04em;
   color: #154e77;
   overflow-wrap: anywhere;
 }
@@ -1906,7 +1906,7 @@
   outline-offset: 2px;
 }
 .zip-bdfb-page .sm-snmp-lab-activation > button:disabled {
-  opacity: .65;
+  opacity: 0.65;
   cursor: wait;
 }
 .zip-bdfb-page .sm-snmp-lab-activation code {

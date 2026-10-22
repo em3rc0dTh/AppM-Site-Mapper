@@ -795,15 +795,15 @@ Los paneles se ordenan verticalmente **dentro de cada frame**. Al pulsar el pane
 
 ## 12.1 — Leyenda mínima con iconos
 
-| Token ASCII | Icono UI recomendado | Significado |
-| --- | --- | --- |
-| `[V]` | `gauge` | Voltaje (V) |
-| `[I]` | `activity` | Corriente (A) |
-| `[P]` | `zap` | Potencia (W) |
-| `[E]` | `battery-charging` | Energía/contador (kWh; indicar origen) |
-| `●` | `circle-check` | Lectura LIVE válida y fresca |
-| `○` | `circle-minus` | Sin lectura; **no** indica equipo apagado |
-| `!` | `triangle-alert` | Pendiente, no verificado o incompleto |
+| Token ASCII | Icono UI recomendado | Significado                               |
+| ----------- | -------------------- | ----------------------------------------- |
+| `[V]`       | `gauge`              | Voltaje (V)                               |
+| `[I]`       | `activity`           | Corriente (A)                             |
+| `[P]`       | `zap`                | Potencia (W)                              |
+| `[E]`       | `battery-charging`   | Energía/contador (kWh; indicar origen)    |
+| `●`         | `circle-check`       | Lectura LIVE válida y fresca              |
+| `○`         | `circle-minus`       | Sin lectura; **no** indica equipo apagado |
+| `!`         | `triangle-alert`     | Pendiente, no verificado o incompleto     |
 
 Usar una **leyenda breve visible o en tooltip**, nombre accesible y unidades. Sustituir frases repetidas como `AVG VOLTAGE` por **icono + cifra + unidad**, sin esconder si es `LAB SIMULATED`, MQTT o SNMP. Valor desconocido `—`, no `0` artificial.
 
@@ -924,24 +924,24 @@ Breaker -> Trace Power -> Device
 
 ## 12.7 — Semántica de las métricas (no inventar promedios)
 
-| Nodo | Qué muestra Telemetría | Ejemplo de estado válido |
-| --- | --- | --- |
-| Breaker | Lectura MQTT **propia** | `LIVE` si está vinculada y fresca |
-| Panel | Promedio de los **breakers activos que reportan** | `3 instalados / 3 reportando` |
-| Frame | Promedio/agregado de sus **paneles hijos con datos** | `2 instalados / 1 con datos` |
-| Shelf | Promedio/agregado de **frames hijos con datos** | `2 instalados / 1 con datos` |
+| Nodo    | Qué muestra Telemetría                                                                              | Ejemplo de estado válido                              |
+| ------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Breaker | Lectura MQTT **propia**                                                                             | `LIVE` si está vinculada y fresca                     |
+| Panel   | Promedio de los **breakers activos que reportan**                                                   | `3 instalados / 3 reportando`                         |
+| Frame   | Promedio/agregado de sus **paneles hijos con datos**                                                | `2 instalados / 1 con datos`                          |
+| Shelf   | Promedio/agregado de **frames hijos con datos**                                                     | `2 instalados / 1 con datos`                          |
 | Chassis | Agregado de Shelf(s); con un solo Shelf coincide su conjunto descendiente, y SNMP se muestra aparte | `MQTT descendiente` separado de `SNMP incoming feeds` |
 
 **Diferenciar:** `instalado`, `activo`, `con binding` y `reportando` no son sinónimos. No mostrar `2/2 reporting` solo porque existen dos frames/paneles. No promediar ceros de posiciones vacías. La definición de ponderación de promedios entre ramas con distinto número de breakers se debe resolver con datos y pesos de la fuente canónica, **no con media de medias ingenua**. La corriente media no es corriente total. Un contador acumulativo de energía tampoco representa directamente consumo del periodo.
 
 ## 12.8 — Dónde queda cada información
 
-| Pestaña | Alcance en las cinco vistas |
-| --- | --- |
+| Pestaña                  | Alcance en las cinco vistas                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | **Telemetría** (default) | 4 indicadores V/I/P/E, calidad, origen, último paquete, 24H/7D/15D/1M cuando exista histórico; shunts únicamente donde apliquen |
-| **Resumen** | Nombre, modelo, tipo, parentesco, capacidad, ubicación, rack y rutas de energía |
-| **Puertos** | Puertos físicamente registrados, estado, conexiones y mantenimiento contextual |
-| **Config.** | Configure Equipment, manage children/slots, ajustes y Archive según RBAC |
+| **Resumen**              | Nombre, modelo, tipo, parentesco, capacidad, ubicación, rack y rutas de energía                                                 |
+| **Puertos**              | Puertos físicamente registrados, estado, conexiones y mantenimiento contextual                                                  |
+| **Config.**              | Configure Equipment, manage children/slots, ajustes y Archive según RBAC                                                        |
 
 **Aprobación visual pendiente:** estos bocetos representan el rediseño del documento, no un despliegue. Validar en navegador la orientación de paneles, densidad de filas, accesibilidad, estados vacíos y tab predeterminado antes de tratarlo como implementado.
 

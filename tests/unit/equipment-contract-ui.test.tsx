@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import { EquipmentContractViews } from '@/components/equipment/equipment-contract-views';
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
+import { projectCompositionHistory } from '@/modules/telemetry/application/composition-history';
+import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 
@@ -122,6 +124,82 @@ describe('Equipment Composition SCREEN 12', () => {
     expect(markup).toContain('No active readings');
     expect(markup).not.toContain('ec-breaker-metrics');
     expect(markup).not.toContain('breakers reporting');
+  });
+
+
+  it('averages panel means equally at frame level, never all leaves as a flat average', () => {
+    const first = makeNode('Panel X', 'PANEL', [breakerA.id, breakerB.id]);
+    const second = makeNode('Panel Y', 'PANEL', [breakerC.id]);
+    const parent = makeNode('Frame X', 'FRAME', [first.id, second.id]);
+    const group = new Map([first, second, parent, breakerA, breakerB, breakerC].map((n) => [n.id, n]));
+    const live = {
+      [breakerA.id]: { status: 'LIVE', voltageV: 10 },
+      [breakerB.id]: { status: 'LIVE', voltageV: 20 },
+      [breakerC.id]: { status: 'LIVE', voltageV: 90 },
+    } as const;
+    const result = projectCompositionTelemetry(parent, group, live);
+    expect(result.metrics.voltageV).toBe(52.5);
+    expect(result.reportingChildren).toBe(2);
+    expect(result.installedChildren).toBe(2);
+    expect(result.reporting).toBe(3);
+    expect(result.metricCounts.voltageV).toBe(3);
+    const partial = projectCompositionTelemetry(parent, group, {
+      [breakerA.id]: { status: 'LIVE', voltageV: 10 },
+      [breakerB.id]: { status: 'STALE', voltageV: 20 },
+      [breakerC.id]: { status: 'NO DATA' },
+    });
+    expect(partial.reportingChildren).toBe(1);
+    expect(partial.installedChildren).toBe(2);
+    expect(partial.metrics.voltageV).toBe(10);
+  });
+
+  it('does not count an online-only state as a measured breaker', () => {
+    const result = projectCompositionTelemetry(panelA, byId, {
+      [breakerA.id]: { status: 'LIVE', state: 'ONLINE' },
+    });
+    expect(result.reporting).toBe(0);
+    expect(result.reportingChildren).toBe(0);
+  });
+
+  it('plots only bound historical MQTT electrical samples, retaining zero values', () => {
+    const point = makeNode('Historical Panel', 'PANEL', [breakerA.id, null]);
+    const nodes = new Map([point, breakerA].map((node) => [node.id, node]));
+    const sample = (at: string, value: number): TelemetrySample => ({
+      bindingId: 'binding-v',
+      metricBindingIds: ['binding-v'],
+      sourcePointId: '0_1_1',
+      targetId: breakerA.id,
+      targetType: 'EQUIPMENT',
+      entityId: breakerA.id,
+      entityKind: 'EQUIPMENT',
+      sourceIdentity: 'EMU-BFDB-01',
+      protocol: 'BFDB',
+      receivedAt: at,
+      reported: { voltageV: { value, unit: 'V', observedAt: at } },
+    });
+    const result = projectCompositionHistory(
+      point,
+      nodes,
+      new Map([[breakerA.id, [
+        sample('2026-10-22T12:00:10.000Z', 0),
+        sample('2026-10-22T12:00:30.000Z', 12),
+        sample('2026-10-22T12:05:30.000Z', 15),
+      ]]]),
+      [{ id: 'binding-v', targetId: breakerA.id, sourceIdentity: 'EMU-BFDB-01', sourcePointId: '0_1_1', metric: 'VOLTAGE' }],
+      300_000,
+    );
+    expect(result).toHaveLength(2);
+    expect(result[0]?.metrics.voltageV).toBe(12);
+    expect(result[1]?.metrics.voltageV).toBe(15);
+    expect(result[0]?.reporting).toBe(1);
+    expect(result[0]?.positions).toBe(2);
+    const unmapped = projectCompositionHistory(
+      point, nodes,
+      new Map([[breakerA.id, [sample('2026-10-22T12:00:10.000Z', 0)]]]),
+      [],
+      300_000,
+    );
+    expect(unmapped).toHaveLength(0);
   });
 
   it('does not use duplicate descendants when canonical references contain a cycle', () => {

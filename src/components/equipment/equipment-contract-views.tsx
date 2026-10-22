@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/composition-breaker-telemetry';
@@ -63,18 +63,17 @@ function ChildLink({
 
 function PanelPreview({
   panel,
-  byId,
-}: Readonly<{ panel: EquipmentNode; byId: ReadonlyMap<string, EquipmentNode> }>) {
+}: Readonly<{ panel: EquipmentNode }>) {
   return (
     <ChildLink node={panel} className="ec-panel-line">
-      <span className="ec-panel-name">{panel.name}</span>
-      <span className="ec-count">
+      <strong className="ec-panel-name">{panel.name}</strong>
+      <span className="ec-panel-meta">
         {panel.childMode === 'POSITIONAL'
           ? `${panel.children.length} positions · ${panel.children.filter(Boolean).length} occupied`
           : `${panel.children.filter(Boolean).length} installed`}
-      </span>
-      <span className="ec-panel-presence">
-        {panel.children.some(Boolean) ? 'Installed' : 'Available'}
+        <span className="ec-panel-presence">
+          {panel.children.some(Boolean) ? 'Installed' : 'Available'}
+        </span>
       </span>
     </ChildLink>
   );
@@ -96,7 +95,7 @@ function FramePreview({
       </div>
       <div className="ec-frame-panels">
         {panels.length ? (
-          panels.map(({ child }) => <PanelPreview key={child.id} panel={child} byId={byId} />)
+          panels.map(({ child }) => <PanelPreview key={child.id} panel={child} />)
         ) : (
           <p className="ec-muted">No panels installed</p>
         )}
@@ -157,7 +156,6 @@ function PanelComposition({
   readings: Props['readings'];
   onAdd?: Props['onAdd'];
 }>) {
-  const [showSlots, setShowSlots] = useState(false);
   const slots = root.children.map((id, index) => ({
     id,
     index,
@@ -170,7 +168,7 @@ function PanelComposition({
       <header className="ec-section-heading">
         <div>
           <small>PHYSICAL PANEL</small>
-          <strong>Installed circuits</strong>
+          <strong>Physical positions</strong>
         </div>
         <div className="ec-heading-counts">
           <span>{installed.length} installed</span>
@@ -189,8 +187,8 @@ function PanelComposition({
             <span>E · kWh</span>
             <span>STATUS</span>
           </div>
-          {installed.length ? (
-            installed.map(({ id, index, child }) =>
+          {slots.length ? (
+            slots.map(({ id, index, child }) =>
               child?.lifecycle === 'ACTIVE' && child.equipmentType === 'CIRCUIT_BREAKER' ? (
                 <BreakerRow
                   key={id}
@@ -198,12 +196,32 @@ function PanelComposition({
                   position={index + 1}
                   reading={readings[child.id]}
                 />
-              ) : (
+              ) : id ? (
                 <div className="ec-missing-row" key={id}>
-                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <span className="ec-pos">{String(index + 1).padStart(2, '0')}</span>
                   <strong>{child?.name ?? 'Unresolved equipment reference'}</strong>
                   <span>{child?.equipmentType ?? 'Not available'}</span>
                   {child && <ChildLink node={child}>OPEN EQUIPMENT</ChildLink>}
+                </div>
+              ) : (
+                <div className="ec-empty-breaker-row" key={index}>
+                  <span className="ec-pos">{String(index + 1).padStart(2, '0')}</span>
+                  {onAdd ? (
+                    <button
+                      type="button"
+                      onClick={() => onAdd(index)}
+                      aria-label={`Install Equipment in position ${index + 1}`}
+                    >
+                      + Install Equipment
+                    </button>
+                  ) : (
+                    <span className="ec-empty-slot-label">Empty slot</span>
+                  )}
+                  <span aria-hidden="true">—</span>
+                  <span aria-hidden="true">—</span>
+                  <span aria-hidden="true">—</span>
+                  <span aria-hidden="true">—</span>
+                  <span className="ec-status-available">AVAILABLE</span>
                 </div>
               ),
             )
@@ -214,54 +232,7 @@ function PanelComposition({
           )}
         </div>
       </div>
-      {root.childMode === 'POSITIONAL' && (
-        <div className="ec-slot-management">
-          <div>
-            <strong>{available.length} free positions</strong>
-            <small>
-              {available.length
-                ? `P${String(available[0]!.index + 1).padStart(2, '0')}–P${String(available.at(-1)!.index + 1).padStart(2, '0')} · select a slot to install Equipment`
-                : 'Every recorded position is occupied'}
-            </small>
-          </div>
-          {available.length > 0 && (
-            <button
-              type="button"
-              aria-expanded={showSlots}
-              aria-controls="ec-available-slots"
-              onClick={() => setShowSlots((value) => !value)}
-            >
-              {showSlots ? 'HIDE SLOTS' : 'VIEW SLOTS'}
-            </button>
-          )}
-          {onAdd && available.length > 0 && (
-            <button
-              type="button"
-              className="ec-primary-action"
-              onClick={() => onAdd(available[0]!.index)}
-            >
-              + ADD
-            </button>
-          )}
-        </div>
-      )}
-      {showSlots && available.length > 0 && (
-        <div className="ec-slot-grid" id="ec-available-slots" aria-label="Available positions">
-          {available.map(({ index }) => (
-            <button
-              type="button"
-              key={index}
-              disabled={!onAdd}
-              onClick={() => onAdd?.(index)}
-              aria-label={`Install Equipment in position ${index + 1}`}
-            >
-              <b>{String(index + 1).padStart(2, '0')}</b>
-              <span>Available</span>
-              {onAdd && <span aria-hidden="true">+</span>}
-            </button>
-          ))}
-        </div>
-      )}
+
     </section>
   );
 }
@@ -276,10 +247,12 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
         <span className="ec-eyebrow">
           PHYSICAL COMPOSITION <span aria-hidden="true">/</span> {type.replaceAll('_', ' ')}
         </span>
-        <span className="ec-topline-status">
-          <span className="ec-status-dot" aria-hidden="true" /> {summary.reporting}/
-          {summary.installed} breakers reporting
-        </span>
+        {summary.reporting > 0 && (
+          <span className="ec-topline-status">
+            <span className="ec-status-dot" aria-hidden="true" /> {summary.reporting}/
+            {summary.installed} breakers reporting
+          </span>
+        )}
       </div>
       <div className="ec-focus">
         <div>
@@ -321,7 +294,7 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
                   <div className="ec-chassis-frame-strip">
                     {child.equipmentType === 'FRAME' ? (
                       activeChildren(child, equipmentById).map(({ child: panel }) => (
-                        <PanelPreview key={panel.id} panel={panel} byId={equipmentById} />
+                        <PanelPreview key={panel.id} panel={panel} />
                       ))
                     ) : activeChildren(child, equipmentById).length ? (
                       activeChildren(child, equipmentById).map(({ child: frame }) => (
@@ -401,16 +374,23 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
           <div className="ec-section-heading">
             <div>
               <small>CIRCUIT BREAKER</small>
-              <strong>Own telemetry</strong>
+              <strong>{readings[root.id]?.status === 'LIVE' ? 'Own telemetry' : 'Circuit details'}</strong>
             </div>
             <span className="ec-status" data-status={readings[root.id]?.status ?? 'UNMAPPED'}>
               <span className="ec-status-dot" aria-hidden="true" />
               {readings[root.id]?.status ?? 'UNMAPPED'}
             </span>
           </div>
-          <div className="ec-breaker-metrics">
-            <BreakerMetrics reading={readings[root.id]} />
-          </div>
+          {readings[root.id]?.status === 'LIVE' ? (
+            <div className="ec-breaker-metrics">
+              <BreakerMetrics reading={readings[root.id]} />
+            </div>
+          ) : (
+            <p className="ec-breaker-no-data">
+              No active readings. This equipment remains installed; its physical identity and
+              power connections can still be inspected.
+            </p>
+          )}
           <p className="ec-breaker-source">
             MQTT source: {readings[root.id]?.sourceIdentity ?? 'No verified binding'} · Last packet:{' '}
             {readings[root.id]?.receivedAt ?? '—'}
@@ -420,7 +400,8 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
           </Link>
         </section>
       )}
-      <div className="ec-legend" aria-label="Telemetry metric legend">
+      {summary.reporting > 0 && (
+        <div className="ec-legend" aria-label="Telemetry metric legend">
         <span>
           <b>V</b> Voltage · V
         </span>
@@ -433,7 +414,8 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
         <span>
           <b>E</b> Accumulated energy counter · kWh
         </span>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

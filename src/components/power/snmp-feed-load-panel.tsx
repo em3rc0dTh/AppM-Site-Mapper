@@ -17,9 +17,7 @@ function numeric(value: number | null | undefined, unit: string): string {
 function readablePanel(panel: PhysicalPanel): string {
   const frame = panel.frameName.match(/FRAME-(\d+)/i);
   const position = panel.name.match(/PANEL-(\d+)/i);
-  return frame && position
-    ? `Frame ${frame[1]} · Panel ${position[1]}`
-    : panel.name;
+  return frame && position ? `Frame ${frame[1]} · Panel ${position[1]}` : panel.name;
 }
 
 export function SnmpFeedLoadPanel({
@@ -84,7 +82,10 @@ export function SnmpFeedLoadPanel({
 
   return (
     <>
-      <section className="zip-bdfb-live-average sm-snmp-load" aria-label="BDFB SNMP input feed load">
+      <section
+        className="zip-bdfb-live-average sm-snmp-load"
+        aria-label="BDFB SNMP input feed load"
+      >
         <header>
           <div>
             <strong>SNMP · INCOMING DC FEEDS</strong>
@@ -128,10 +129,14 @@ export function SnmpFeedLoadPanel({
               {load.feedCount} / {load.expectedFeedCount} DC inputs recorded
             </span>
             {awaitingVerification && (
-              <small>Wiring verification pending. Both inputs remain excluded from total current.</small>
+              <small>
+                Wiring verification pending. Both inputs remain excluded from total current.
+              </small>
             )}
             {!awaitingVerification && load.inventoryStatus === 'INCOMPLETE' && (
-              <small>Physical commissioning incomplete. Check the shunt-to-panel assignments.</small>
+              <small>
+                Physical commissioning incomplete. Check the shunt-to-panel assignments.
+              </small>
             )}
             {!!load.missingFeedPositions.length && (
               <small>Missing inputs: {load.missingFeedPositions.join(', ')}</small>
@@ -175,9 +180,7 @@ export function SnmpFeedLoadPanel({
                   </div>
                 </div>
                 <div className="sm-snmp-feed-details">
-                  <small>
-                    Controller: {feed.sourceIdentity ?? 'Not mapped'}
-                  </small>
+                  <small>Controller: {feed.sourceIdentity ?? 'Not mapped'}</small>
                   {feed.currentOid && <small>Current OID: {feed.currentOid}</small>}
                   {feed.observedAt && <small>Last reading: {feed.observedAt}</small>}
                   <div className="sm-snmp-panel-list">
@@ -209,10 +212,9 @@ export function SnmpFeedLoadPanel({
             );
           })}
         </div>
-        {!load?.feedCount && !error && (
-          <p>No SNMP input feeders inventoried on this BDFB.</p>
-        )}
-        {(load as (SnmpBdfbLoadView & { historyAvailable?: boolean }) | null)?.historyAvailable === false && (
+        {!load?.feedCount && !error && <p>No SNMP input feeders inventoried on this BDFB.</p>}
+        {(load as (SnmpBdfbLoadView & { historyAvailable?: boolean }) | null)?.historyAvailable ===
+          false && (
           <p role="alert">TimescaleDB unavailable: restored SNMP history could not be queried.</p>
         )}
         {load?.status !== 'COMPLETE' && (

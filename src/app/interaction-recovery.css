@@ -1623,7 +1623,7 @@
 .zip-bdfb-page .sm-snmp-inventory-summary > strong {
   font-size: 11px;
   line-height: 1.45;
-  letter-spacing: .02em;
+  letter-spacing: 0.02em;
   overflow-wrap: anywhere;
 }
 .zip-bdfb-page .sm-snmp-inventory-summary > span {

@@ -69,7 +69,8 @@ export function SnmpFeedCommissioning({
       !window.confirm(
         `Confirm that the installed physical wiring uses ${profile}. This changes the expected shunt configuration. Previously commissioned SNMP bindings must be retired before switching.`,
       )
-    ) return;
+    )
+      return;
     setBusy(true);
     try {
       const response = await fetch('/api/telemetry/snmp/hardware-profile', {
@@ -89,7 +90,11 @@ export function SnmpFeedCommissioning({
   }
 
   async function retire(portId: string, binding: BindingRow) {
-    if (!window.confirm(`Retire the ${binding.metric} mapping? Existing historical samples remain stored.`))
+    if (
+      !window.confirm(
+        `Retire the ${binding.metric} mapping? Existing historical samples remain stored.`,
+      )
+    )
       return;
     setBusy(true);
     try {
@@ -118,10 +123,11 @@ export function SnmpFeedCommissioning({
       <header>
         <strong>CONFIGURE SNMP INPUTS</strong>
       </header>
-      <p>
-        Manage each shunt, verify its panel assignment and commission its OIDs in one editor.
-      </p>
-      <Link className="sm-snmp-setup-action" href={`/device/${encodeURIComponent(chassisId)}#bdfb-access-ports`}>
+      <p>Manage each shunt, verify its panel assignment and commission its OIDs in one editor.</p>
+      <Link
+        className="sm-snmp-setup-action"
+        href={`/device/${encodeURIComponent(chassisId)}#bdfb-access-ports`}
+      >
         OPEN DC INPUTS ON CHASSIS →
       </Link>
       <details
@@ -137,13 +143,27 @@ export function SnmpFeedCommissioning({
         {loading && <p role="status">Loading SNMP inventory…</p>}
         {configuration && (
           <>
-            <p>Hardware profile: <strong>{configuration.hardwareProfile ?? 'Not selected'}</strong></p>
+            <p>
+              Hardware profile: <strong>{configuration.hardwareProfile ?? 'Not selected'}</strong>
+            </p>
             {configuration.canCommission && (
               <div className="sm-snmp-maintenance-actions">
-                <button type="button" disabled={busy || loading || configuration.hardwareProfile === 'ELTEK_BDCBB_CONFIG_2'} onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_2')}>
+                <button
+                  type="button"
+                  disabled={
+                    busy || loading || configuration.hardwareProfile === 'ELTEK_BDCBB_CONFIG_2'
+                  }
+                  onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_2')}
+                >
                   USE CONFIG 2
                 </button>
-                <button type="button" disabled={busy || loading || configuration.hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'} onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_4')}>
+                <button
+                  type="button"
+                  disabled={
+                    busy || loading || configuration.hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
+                  }
+                  onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_4')}
+                >
                   USE CONFIG 4
                 </button>
               </div>
@@ -159,7 +179,11 @@ export function SnmpFeedCommissioning({
                       <span>{binding.oid}</span>
                     </small>
                     {configuration.canCommission && (
-                      <button type="button" disabled={busy} onClick={() => void retire(port.id, binding)}>
+                      <button
+                        type="button"
+                        disabled={busy}
+                        onClick={() => void retire(port.id, binding)}
+                      >
                         RETIRE
                       </button>
                     )}
@@ -169,7 +193,11 @@ export function SnmpFeedCommissioning({
             ))}
           </>
         )}
-        {error && <p role="alert" className="form-error">{error}</p>}
+        {error && (
+          <p role="alert" className="form-error">
+            {error}
+          </p>
+        )}
       </details>
     </section>
   );

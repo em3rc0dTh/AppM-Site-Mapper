@@ -137,6 +137,7 @@ export function AccessPortEditor({
     form.direction === 'INPUT' &&
     form.exposure === 'EXTERNAL' &&
     form.snmpFeedInput;
+  const quickFeed = Boolean(hardwareProfile && snmpNeedsPanels && canWritePower);
 
   const active = accessPorts.filter((port) => port.lifecycle === 'ACTIVE');
   const editing = active.find((port) => port.id === editingId);
@@ -148,13 +149,15 @@ export function AccessPortEditor({
         !panelsError &&
         !panelSelectionHasConflict &&
         form.servedPanelIds.length <= maxPanelCount)) &&
+    (!quickFeed || (form.servedPanelIds.length === maxPanelCount &&
+      (hardwareProfile === 'ELTEK_BDCBB_CONFIG_2' ? Boolean(form.feed) : Boolean(form.feedPosition)))) &&
     (canWritePower || (form.portType !== 'POWER' && editing?.portType !== 'POWER'));
 
   function patch(change: Partial<PortForm>) {
     setForm((previous) => ({ ...previous, ...change }));
   }
 
-  async function loadPanels() {
+  async function loadPanels(port?: AccessPort) {
     setPanelsLoading(true);
     setPanelsError('');
     try {
@@ -166,6 +169,19 @@ export function AccessPortEditor({
       if (!response.ok) throw new Error(data.error ?? 'PANEL_INVENTORY_UNAVAILABLE');
       setPanels(data.panels);
       setHardwareProfile(data.hardwareProfile);
+      if (!port && data.hardwareProfile && data.equipmentType === 'CHASSIS') {
+        setForm((previous) => ({
+          ...previous,
+          portType: 'POWER',
+          direction: 'INPUT',
+          exposure: 'EXTERNAL',
+          snmpFeedInput: true,
+          independentInputConfirmed: false,
+          feed: '',
+          feedPosition: '',
+          servedPanelIds: [],
+        }));
+      }
     } catch (cause) {
       setPanels([]);
       setPanelsError(cause instanceof Error ? cause.message : 'PANEL_INVENTORY_UNAVAILABLE');
@@ -195,7 +211,7 @@ export function AccessPortEditor({
   function openEditor(port?: AccessPort) {
     reset(port);
     setOpen(true);
-    void loadPanels();
+    void loadPanels(port);
   }
 
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -381,11 +397,12 @@ export function AccessPortEditor({
               <div>
                 <small>PHYSICAL EQUIPMENT / TERMINAL</small>
                 <h2 id="access-port-dialog-title">
-                  {editingId ? 'Edit Access Port' : 'Add Access Port'}
+                  {quickFeed ? (editingId ? 'Edit DC input' : 'Add DC input') : editingId ? 'Edit Access Port' : 'Add Access Port'}
                 </h2>
                 <p>
-                  Configure the physical terminal on this Equipment. Connections are managed
-                  separately.
+                  {quickFeed
+                    ? 'Select the shunt and its panels. Additional sensor specifications are optional.'
+                    : 'Configure the physical terminal on this Equipment. Connections are managed separately.'}
                 </p>
               </div>
               <button
@@ -398,6 +415,16 @@ export function AccessPortEditor({
               </button>
             </header>
             <form onSubmit={(event) => void save(event)} className="equipment-access-port-form">
+              {quickFeed && (
+                <div className="equipment-quick-feed-summary">
+                  <strong>{hardwareProfile === 'ELTEK_BDCBB_CONFIG_2'
+                    ? 'CONFIGURATION 2 · TWO SHUNTS (A / B)'
+                    : 'CONFIGURATION 4 · FOUR SHUNTS (A1 / A2 / B1 / B2)'}</strong>
+                  <small>POWER · INPUT · EXTERNAL · SNMP feeder are configured automatically.</small>
+                </div>
+              )}
+              {!quickFeed && (
+                <>
               <label>
                 Name
                 <input
@@ -480,12 +507,17 @@ export function AccessPortEditor({
                   />
                 </label>
               )}
-              {form.portType === 'POWER' && (
+                </>
+              )}
+              {form.portType === 'POWER' && (!quickFeed || hardwareProfile === 'ELTEK_BDCBB_CONFIG_2') && (
                 <label>
-                  Feed
+                  {quickFeed ? 'Incoming shunt' : 'Feed'}
                   <select
                     value={form.feed}
-                    onChange={(event) => patch({ feed: event.target.value as PortForm['feed'] })}
+                    onChange={(event) => {
+                      const feed = event.target.value as PortForm['feed'];
+                      patch({ feed, ...(!editingId && quickFeed ? { name: feed ? `INPUT-SHUNT-${feed}` : '' } : {}) });
+                    }}
                   >
                     <option value="">Not assigned</option>
                     <option value="A">Feed A</option>
@@ -497,8 +529,8 @@ export function AccessPortEditor({
                 form.direction === 'INPUT' &&
                 form.exposure === 'EXTERNAL' && (
                   <fieldset className="equipment-access-port-snmp">
-                    <legend>SNMP DC input feeder (BDFB only)</legend>
-                    <label className="equipment-access-port-check">
+                    <legend>{quickFeed ? 'Panels supplied by this shunt' : 'SNMP DC input feeder (BDFB only)'}</legend>
+                    {!quickFeed && <label className="equipment-access-port-check">
                       <input
                         type="checkbox"
                         checked={form.snmpFeedInput}
@@ -510,7 +542,7 @@ export function AccessPortEditor({
                         }
                       />
                       This port is a physically inventoried incoming BDFB feed
-                    </label>
+                    </label>}
                     {form.snmpFeedInput && (
                       <>
                         {hardwareProfile !== 'ELTEK_BDCBB_CONFIG_2' && (
@@ -524,6 +556,9 @@ export function AccessPortEditor({
                                   feed: event.target.value
                                     ? (event.target.value[0] as PortForm['feed'])
                                     : form.feed,
+                                  ...(!editingId && quickFeed
+                                    ? { name: event.target.value ? `INPUT-SHUNT-${event.target.value}` : '' }
+                                    : {}),
                                 })
                               }
                             >
@@ -535,52 +570,6 @@ export function AccessPortEditor({
                             </select>
                           </label>
                         )}
-                        <label>
-                          Overload warning threshold (A) · manufacturer default 640 A
-                          <input
-                            type="number"
-                            min="0.01"
-                            max="100000"
-                            step="any"
-                            value={form.overloadThresholdA}
-                            onChange={(event) => patch({ overloadThresholdA: event.target.value })}
-                          />
-                        </label>
-                        <label>
-                          Nominal feed rating (A)
-                          <input
-                            type="number"
-                            min="0.01"
-                            max="100000"
-                            step="any"
-                            value={form.ratedCurrentA}
-                            onChange={(event) => patch({ ratedCurrentA: event.target.value })}
-                          />
-                        </label>
-                        <label>
-                          Shunt rated current (A)
-                          <input
-                            type="number"
-                            min="0.01"
-                            max="100000"
-                            step="any"
-                            value={form.shuntRatedCurrentA}
-                            onChange={(event) => patch({ shuntRatedCurrentA: event.target.value })}
-                          />
-                        </label>
-                        <label>
-                          Shunt rated millivolts (mV)
-                          <input
-                            type="number"
-                            min="0.01"
-                            max="100000"
-                            step="any"
-                            value={form.shuntRatedMillivolts}
-                            onChange={(event) =>
-                              patch({ shuntRatedMillivolts: event.target.value })
-                            }
-                          />
-                        </label>
                         <div className="equipment-panel-picker">
                           <div className="equipment-panel-picker-title">
                             <strong>Supplied physical panels</strong>
@@ -665,6 +654,57 @@ export function AccessPortEditor({
                             </p>
                           )}
                         </div>
+                        <details className="equipment-access-port-advanced">
+                          <summary>Advanced · calibration, ratings & verification (optional)</summary>
+                          <p>Leave unknown values empty; do not infer ratings from another BDFB. Physical verification is required before commissioning SNMP OIDs or claiming certified totals.</p>
+                          <div className="equipment-access-port-advanced-fields">
+                        <label>
+                          Overload warning threshold (A) · optional
+                          <input
+                            type="number"
+                            min="0.01"
+                            max="100000"
+                            step="any"
+                            value={form.overloadThresholdA}
+                            onChange={(event) => patch({ overloadThresholdA: event.target.value })}
+                          />
+                        </label>
+                        <label>
+                          Nominal feed rating (A)
+                          <input
+                            type="number"
+                            min="0.01"
+                            max="100000"
+                            step="any"
+                            value={form.ratedCurrentA}
+                            onChange={(event) => patch({ ratedCurrentA: event.target.value })}
+                          />
+                        </label>
+                        <label>
+                          Shunt rated current (A)
+                          <input
+                            type="number"
+                            min="0.01"
+                            max="100000"
+                            step="any"
+                            value={form.shuntRatedCurrentA}
+                            onChange={(event) => patch({ shuntRatedCurrentA: event.target.value })}
+                          />
+                        </label>
+                        <label>
+                          Shunt rated millivolts (mV)
+                          <input
+                            type="number"
+                            min="0.01"
+                            max="100000"
+                            step="any"
+                            value={form.shuntRatedMillivolts}
+                            onChange={(event) =>
+                              patch({ shuntRatedMillivolts: event.target.value })
+                            }
+                          />
+                        </label>
+
                         <label className="equipment-access-port-check">
                           <input
                             type="checkbox"
@@ -680,6 +720,9 @@ export function AccessPortEditor({
                           This controls whether currents can contribute to the certified BDFB total.
                           A/B are sides, not unique feed identities. Do not infer panel loads.
                         </small>
+
+                          </div>
+                        </details>
                       </>
                     )}
                   </fieldset>
@@ -698,7 +741,7 @@ export function AccessPortEditor({
                   Cancel
                 </button>
                 <button type="submit" disabled={!canSave}>
-                  {busy ? 'Saving…' : 'SAVE ACCESS PORT'}
+                  {busy ? 'Saving…' : quickFeed ? 'SAVE DC INPUT' : 'SAVE ACCESS PORT'}
                 </button>
               </footer>
             </form>

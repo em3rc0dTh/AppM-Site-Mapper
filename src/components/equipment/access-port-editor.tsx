@@ -28,7 +28,20 @@ interface PortForm {
   ratedCurrentA: string;
   shuntRatedCurrentA: string;
   shuntRatedMillivolts: string;
-  servedPanelIds: string;
+  servedPanelIds: string[];
+}
+
+interface BdfbPanelOption {
+  id: string;
+  name: string;
+  frameName: string;
+  assignedPortId?: string;
+  assignedPortName?: string;
+}
+
+interface BdfbPanelInventory {
+  hardwareProfile: 'ELTEK_BDCBB_CONFIG_2' | 'ELTEK_BDCBB_CONFIG_4' | null;
+  panels: BdfbPanelOption[];
 }
 
 const types: readonly AccessPortType[] = [
@@ -75,8 +88,8 @@ function formFor(port?: AccessPort): PortForm {
         ? String(port.attributes.shuntRatedMillivolts)
         : '',
     servedPanelIds: Array.isArray(port?.attributes?.servedPanelIds)
-      ? port.attributes.servedPanelIds.join(', ')
-      : '',
+      ? port.attributes.servedPanelIds.filter((id): id is string => typeof id === 'string')
+      : [],
   };
 }
 
@@ -97,27 +110,92 @@ export function AccessPortEditor({
   const [form, setForm] = useState<PortForm>(() => formFor());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [panels, setPanels] = useState<BdfbPanelOption[]>([]);
+  const [hardwareProfile, setHardwareProfile] =
+    useState<BdfbPanelInventory['hardwareProfile']>(null);
+  const [panelsLoading, setPanelsLoading] = useState(false);
+  const [panelsError, setPanelsError] = useState('');
+  const [panelSearch, setPanelSearch] = useState('');
+
+  const maxPanelCount =
+    hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
+      ? 1
+      : hardwareProfile === 'ELTEK_BDCBB_CONFIG_2'
+        ? 2
+        : 24;
+  const visiblePanels = panels.filter((panel) =>
+    `${panel.name} ${panel.frameName}`
+      .toLocaleLowerCase()
+      .includes(panelSearch.trim().toLocaleLowerCase()),
+  );
+  const panelSelectionHasConflict = form.servedPanelIds.some((id) => {
+    const panel = panels.find((item) => item.id === id);
+    return !panel || Boolean(panel.assignedPortId && panel.assignedPortId !== editingId);
+  });
+  const snmpNeedsPanels =
+    form.portType === 'POWER' &&
+    form.direction === 'INPUT' &&
+    form.exposure === 'EXTERNAL' &&
+    form.snmpFeedInput;
 
   const active = accessPorts.filter((port) => port.lifecycle === 'ACTIVE');
   const editing = active.find((port) => port.id === editingId);
   const canSave =
     form.name.trim().length > 0 &&
     !busy &&
+    (!snmpNeedsPanels ||
+      (!panelsLoading &&
+        !panelsError &&
+        !panelSelectionHasConflict &&
+        form.servedPanelIds.length <= maxPanelCount)) &&
     (canWritePower || (form.portType !== 'POWER' && editing?.portType !== 'POWER'));
 
   function patch(change: Partial<PortForm>) {
     setForm((previous) => ({ ...previous, ...change }));
   }
 
+  async function loadPanels() {
+    setPanelsLoading(true);
+    setPanelsError('');
+    try {
+      const response = await fetch(
+        `/api/equipment/${encodeURIComponent(equipmentId)}/available-panels`,
+        { cache: 'no-store' },
+      );
+      const data = (await response.json()) as BdfbPanelInventory & { error?: string };
+      if (!response.ok) throw new Error(data.error ?? 'PANEL_INVENTORY_UNAVAILABLE');
+      setPanels(data.panels);
+      setHardwareProfile(data.hardwareProfile);
+    } catch (cause) {
+      setPanels([]);
+      setPanelsError(cause instanceof Error ? cause.message : 'PANEL_INVENTORY_UNAVAILABLE');
+    } finally {
+      setPanelsLoading(false);
+    }
+  }
+
+  function togglePanel(id: string) {
+    setForm((previous) => ({
+      ...previous,
+      servedPanelIds: previous.servedPanelIds.includes(id)
+        ? previous.servedPanelIds.filter((value) => value !== id)
+        : previous.servedPanelIds.length < maxPanelCount
+          ? [...previous.servedPanelIds, id]
+          : previous.servedPanelIds,
+    }));
+  }
+
   function reset(port?: AccessPort) {
     setEditingId(port?.id ?? null);
     setForm(formFor(port));
+    setPanelSearch('');
     setError('');
   }
 
-  function openEditor() {
-    reset();
+  function openEditor(port?: AccessPort) {
+    reset(port);
     setOpen(true);
+    void loadPanels();
   }
 
   async function save(event: FormEvent<HTMLFormElement>) {
@@ -165,10 +243,7 @@ export function AccessPortEditor({
                       : {}),
                     ...(form.snmpFeedInput
                       ? {
-                          servedPanelIds: form.servedPanelIds
-                            .split(',')
-                            .map((x) => x.trim())
-                            .filter(Boolean),
+                          servedPanelIds: form.servedPanelIds,
                         }
                       : {}),
                   }
@@ -265,8 +340,7 @@ export function AccessPortEditor({
                 type="button"
                 disabled={busy}
                 onClick={() => {
-                  reset(port);
-                  setOpen(true);
+                  openEditor(port);
                 }}
               >
                 EDIT
@@ -282,7 +356,7 @@ export function AccessPortEditor({
           </article>
         ))}
       </div>
-      <button type="button" onClick={openEditor}>
+      <button type="button" onClick={() => openEditor()}>
         + ADD ACCESS PORT
       </button>
       {error && !open && (
@@ -422,9 +496,9 @@ export function AccessPortEditor({
               {form.portType === 'POWER' &&
                 form.direction === 'INPUT' &&
                 form.exposure === 'EXTERNAL' && (
-                  <fieldset>
+                  <fieldset className="equipment-access-port-snmp">
                     <legend>SNMP DC input feeder (BDFB only)</legend>
-                    <label>
+                    <label className="equipment-access-port-check">
                       <input
                         type="checkbox"
                         checked={form.snmpFeedInput}
@@ -439,26 +513,28 @@ export function AccessPortEditor({
                     </label>
                     {form.snmpFeedInput && (
                       <>
-                        <label>
-                          Independent incoming feeder position (Configuration 4)
-                          <select
-                            value={form.feedPosition}
-                            onChange={(event) =>
-                              patch({
-                                feedPosition: event.target.value as PortForm['feedPosition'],
-                                feed: event.target.value
-                                  ? (event.target.value[0] as PortForm['feed'])
-                                  : form.feed,
-                              })
-                            }
-                          >
-                            <option value="">Generic / unverified</option>
-                            <option value="A1">A1 · side A</option>
-                            <option value="A2">A2 · side A</option>
-                            <option value="B1">B1 · side B</option>
-                            <option value="B2">B2 · side B</option>
-                          </select>
-                        </label>
+                        {hardwareProfile !== 'ELTEK_BDCBB_CONFIG_2' && (
+                          <label>
+                            Independent incoming feeder position (Configuration 4)
+                            <select
+                              value={form.feedPosition}
+                              onChange={(event) =>
+                                patch({
+                                  feedPosition: event.target.value as PortForm['feedPosition'],
+                                  feed: event.target.value
+                                    ? (event.target.value[0] as PortForm['feed'])
+                                    : form.feed,
+                                })
+                              }
+                            >
+                              <option value="">Generic / unverified</option>
+                              <option value="A1">A1 · side A</option>
+                              <option value="A2">A2 · side A</option>
+                              <option value="B1">B1 · side B</option>
+                              <option value="B2">B2 · side B</option>
+                            </select>
+                          </label>
+                        )}
                         <label>
                           Overload warning threshold (A) · manufacturer default 640 A
                           <input
@@ -505,15 +581,91 @@ export function AccessPortEditor({
                             }
                           />
                         </label>
-                        <label>
-                          Physically supplied PANEL equipment IDs (comma-separated)
+                        <div className="equipment-panel-picker">
+                          <div className="equipment-panel-picker-title">
+                            <strong>Supplied physical panels</strong>
+                            <span>
+                              {form.servedPanelIds.length} / {maxPanelCount} selected
+                            </span>
+                          </div>
+                          <p className="equipment-panel-picker-help">
+                            Choose installed PANEL equipment from this BDFB. IDs are assigned
+                            automatically.
+                          </p>
                           <input
-                            value={form.servedPanelIds}
-                            onChange={(event) => patch({ servedPanelIds: event.target.value })}
-                            placeholder="Actual panel equipment IDs, if verified"
+                            type="search"
+                            className="equipment-panel-picker-search"
+                            value={panelSearch}
+                            onChange={(event) => setPanelSearch(event.target.value)}
+                            placeholder="Search panels or frame…"
+                            aria-label="Search available BDFB panels"
+                            disabled={panelsLoading || Boolean(panelsError)}
                           />
-                        </label>
-                        <label>
+                          {panelsLoading && (
+                            <span role="status">Loading panels from inventory…</span>
+                          )}
+                          {panelsError && (
+                            <div role="alert" className="form-error">
+                              Could not load panel inventory: {panelsError}{' '}
+                              <button type="button" onClick={() => void loadPanels()}>
+                                Retry
+                              </button>
+                            </div>
+                          )}
+                          {!panelsLoading && !panelsError && (
+                            <div
+                              className="equipment-panel-picker-options"
+                              role="group"
+                              aria-label="Physical BDFB panels"
+                            >
+                              {visiblePanels.length === 0 && (
+                                <p className="equipment-panel-picker-empty">
+                                  {panels.length === 0
+                                    ? 'No PANEL equipment on this BDFB. Install panels in the FRAME first.'
+                                    : 'No matching panels.'}
+                                </p>
+                              )}
+                              {visiblePanels.map((panel) => {
+                                const selected = form.servedPanelIds.includes(panel.id);
+                                const claimed = Boolean(
+                                  panel.assignedPortId && panel.assignedPortId !== editingId,
+                                );
+                                return (
+                                  <label key={panel.id} className="equipment-panel-picker-option">
+                                    <input
+                                      type="checkbox"
+                                      aria-label={`Assign ${panel.name}`}
+                                      checked={selected}
+                                      disabled={
+                                        claimed ||
+                                        (!selected && form.servedPanelIds.length >= maxPanelCount)
+                                      }
+                                      onChange={() => togglePanel(panel.id)}
+                                    />
+                                    <span>
+                                      <strong>{panel.name}</strong>
+                                      <small>{panel.frameName}</small>
+                                      {claimed && (
+                                        <small>Assigned to {panel.assignedPortName}</small>
+                                      )}
+                                    </span>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {hardwareProfile === 'ELTEK_BDCBB_CONFIG_2' && (
+                            <p className="equipment-panel-picker-help">
+                              Config 2: each independent A/B shunt supplies two linked panels.
+                            </p>
+                          )}
+                          {hardwareProfile === 'ELTEK_BDCBB_CONFIG_4' && (
+                            <p className="equipment-panel-picker-help">
+                              Config 4: one independent shunt supplies one panel.
+                            </p>
+                          )}
+                        </div>
+                        <label className="equipment-access-port-check">
                           <input
                             type="checkbox"
                             checked={form.independentInputConfirmed}

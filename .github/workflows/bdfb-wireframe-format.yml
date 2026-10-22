@@ -1,0 +1,29 @@
+name: Temporary BDFB wireframe formatter
+on:
+  push:
+    branches: [docs/bdfb-wireframe-current-20261022]
+    paths: [.github/workflows/bdfb-wireframe-format.yml]
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs/bdfb-wireframe-current-20261022
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: |
+          npx prettier --write 'docs/ui/Wireframes documentation.md'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- 'docs/ui/Wireframes documentation.md'
+          if ! git diff --cached --quiet; then
+            git commit -m 'style(docs): format current BDFB ASCII wireframe'
+            git push origin HEAD:docs/bdfb-wireframe-current-20261022
+          fi

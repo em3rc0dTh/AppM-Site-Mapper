@@ -114,7 +114,7 @@ try {
   });
   await page.locator('.zip-explorer').waitFor({ timeout: 30000 });
   const explorerColumns = await page.locator('.zip-explorer').evaluate((element) =>
-    getComputedStyle(element).gridTemplateColumns.split(/\\s+/).map((part) => parseFloat(part)),
+    getComputedStyle(element).gridTemplateColumns.split(/\s+/).map((part) => parseFloat(part)),
   );
   assert.equal(explorerColumns.length, 2, 'Laptop topology Explorer must show canvas + Inspector');
   assert.ok(Math.abs(explorerColumns[1] - 292) < 2,
@@ -134,7 +134,7 @@ try {
     await layout.waitFor({ timeout: 30000 });
     const geometry = await layout.evaluate((element) => {
       const css = getComputedStyle(element);
-      const cols = css.gridTemplateColumns.split(/\\s+/).map((part) => parseFloat(part));
+      const cols = css.gridTemplateColumns.split(/\s+/).map((part) => parseFloat(part));
       const tree = element.querySelector(':scope > .operational-context')?.getBoundingClientRect();
       const stage = element.querySelector(':scope > .operational-stage--wide')?.getBoundingClientRect();
       const properties = element.querySelector(':scope > .zip-room-properties')?.getBoundingClientRect();

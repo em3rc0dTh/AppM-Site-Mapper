@@ -1850,3 +1850,86 @@
     overflow-y: visible;
   }
 }
+
+/* Synthetic BFDB lab onboarding: prevent run-on text, cramped actions, and
+   low-contrast inherited button styles in the narrow equipment inspector. */
+.zip-bdfb-page .sm-snmp-load .sm-snmp-lab-activation {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #a8cbdc;
+  border-radius: 9px;
+  background: #eaf5ff;
+}
+.zip-bdfb-page .sm-snmp-lab-activation > strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.5;
+  letter-spacing: .04em;
+  color: #154e77;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page .sm-snmp-lab-activation > small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #375977;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page .sm-snmp-lab-activation > button {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #125f98;
+  border-radius: 7px;
+  background: #176da7;
+  color: #fff !important;
+  font-size: 11px;
+  line-height: 1.45;
+  font-weight: 800;
+  text-align: center;
+  text-transform: none;
+  white-space: normal;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page .sm-snmp-lab-activation > button:hover:not(:disabled) {
+  background: #115b90;
+  color: #fff !important;
+}
+.zip-bdfb-page .sm-snmp-lab-activation > button:focus-visible {
+  outline: 3px solid #76b7e5;
+  outline-offset: 2px;
+}
+.zip-bdfb-page .sm-snmp-lab-activation > button:disabled {
+  opacity: .65;
+  cursor: wait;
+}
+.zip-bdfb-page .sm-snmp-lab-activation code {
+  display: block;
+  max-width: 100%;
+  margin-top: 7px;
+  padding: 8px;
+  border-radius: 6px;
+  background: #fff;
+  color: #24445d;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  font-size: 10px;
+}
+.zip-bdfb-page .sm-snmp-lab-disclaimer {
+  display: block;
+  padding: 10px;
+  border: 1px solid #bed9ea;
+  border-left: 3px solid #2e86be;
+  border-radius: 5px;
+  background: #f0f8fe;
+  color: #275a78 !important;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}

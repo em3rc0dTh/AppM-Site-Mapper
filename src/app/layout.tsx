@@ -11,6 +11,8 @@ import './room-light.css';
 import './interaction-recovery.css';
 import './spatial-editor.css';
 import './home-redesign.css';
+import './equipment-composition-contract.css';
+import './laptop-responsive.css';
 import { AppShell } from '@/shared/ui/app-shell';
 
 export const metadata: Metadata = {

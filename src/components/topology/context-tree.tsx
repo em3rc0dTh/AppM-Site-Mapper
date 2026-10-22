@@ -79,6 +79,7 @@ function TreeBranch({
         prefetch={false}
         aria-current={active ? 'page' : undefined}
         aria-label={`${item.node.name}. Click to inspect, double click to open.`}
+        title={item.node.name}
         style={{ '--tree-depth': depth } as CSSProperties}
         onClick={select}
         onDoubleClick={(event) => {

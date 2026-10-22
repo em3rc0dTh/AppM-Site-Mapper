@@ -1,0 +1,500 @@
+/*
+ * Site Mapper · Laptop width correction only.
+ *
+ * Keep the approved large-monitor appearance pixel-for-pixel unchanged:
+ * NO rules in this file apply at viewport widths >= 1600px.
+ * This is effective CSS viewport width, not the diagonal size of the display.
+ * The existing <= 999px mobile/tablet responsive rules are also untouched.
+ */
+
+/* Normal 16" laptop working widths (1366, 1440, 1536 CSS px). */
+@media (min-width: 1000px) and (max-width: 1599px) {
+  /* Header: reclaim width without truncating the product identity. */
+  .zip-app-shell .zip-brand {
+    width: 212px;
+    flex: 0 0 212px;
+    padding-inline: 14px;
+    gap: 9px;
+  }
+
+  .zip-app-shell .zip-brand strong {
+    font-size: 18px;
+  }
+
+  .zip-app-shell .zip-brand-mark {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+
+  .zip-app-shell .zip-topbar .mk-search-trigger {
+    width: 170px;
+    min-width: 170px;
+    flex-basis: 170px;
+    margin-right: 9px !important;
+    padding-inline: 10px;
+  }
+
+  .zip-app-shell .zip-explore,
+  .zip-app-shell .zip-warehouse,
+  .zip-app-shell .zip-account {
+    padding-inline: 11px;
+    min-width: 0;
+    margin-right: 8px;
+    font-size: 12px;
+    gap: 6px;
+  }
+
+  .zip-app-shell .zip-more {
+    margin-right: 8px;
+    width: 38px;
+    flex: 0 0 38px;
+  }
+
+  /* Breadcrumbs are bounded between the brand and the action cluster. */
+  .zip-app-shell.app-shell--immersive .breadcrumbs,
+  .zip-app-shell .mk-device-page .breadcrumbs,
+  .zip-app-shell .app-shell--power .breadcrumbs {
+    left: 212px;
+    right: 575px !important;
+    padding-inline: 12px;
+    gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 11px;
+  }
+
+  .zip-app-shell.app-shell--immersive .breadcrumbs a {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Topology tree: use vertical lines rather than cutting deep names into
+     unreadable 6-character labels. Keep the sidebar independently scrollable. */
+  .zip-app-shell .operational-context {
+    min-width: 0;
+    overflow-x: hidden !important;
+  }
+
+  .zip-app-shell .telxius-tree-node > a {
+    min-width: 0;
+    min-height: 38px;
+    grid-template-columns: 8px 12px minmax(0, 1fr) 9px;
+    column-gap: 4px;
+    padding-left: calc(5px + var(--tree-depth) * 5px);
+    padding-right: 5px;
+  }
+
+  .zip-app-shell .telxius-tree-copy {
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .zip-app-shell .telxius-tree-copy strong {
+    white-space: normal;
+    text-overflow: clip;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+    font-size: 11px;
+  }
+
+  .zip-app-shell .telxius-tree-root,
+  .zip-app-shell .telxius-topology-tree {
+    min-width: 0;
+  }
+
+  /* Blueprint / Room is a THREE-zone application. It cannot share the
+     two-column rack/editor rule; that sent ROOM PROPERTIES into the tree. */
+  .zip-app-shell .operational-page--blueprint .operational-layout--blueprint {
+    grid-template-columns: 212px minmax(0, 1fr) 270px !important;
+  }
+
+  .zip-app-shell .operational-page--blueprint .operational-stage--wide,
+  .zip-app-shell .operational-page--blueprint .zip-room-properties {
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .zip-app-shell .operational-page--blueprint .zip-room-properties {
+    grid-column: 3;
+    grid-row: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .zip-app-shell .operational-page--blueprint .room-general-info,
+  .zip-app-shell .operational-page--blueprint .room-rack-navigation {
+    min-width: 0;
+    max-width: calc(100% - 28px);
+  }
+
+  .zip-app-shell .operational-page--blueprint .room-general-info dl {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+
+  .zip-app-shell .operational-page--blueprint .room-general-info dd,
+  .zip-app-shell .operational-page--blueprint .room-rack-navigation a {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .zip-app-shell .mk-explorer-page .spatial-site-workspace > .zip-explorer {
+    height: auto !important;
+    min-height: 0 !important;
+    flex: 1 1 auto;
+  }
+
+  /* Site and Structure: move EDIT BOUNDARY into its own lightweight
+     toolbar. The old absolute 340px offset overlaps surveyed status. */
+  .zip-app-shell .mk-explorer-page .spatial-site-actions {
+    position: static;
+    align-self: flex-end;
+    flex: 0 0 auto;
+    top: auto;
+    right: auto;
+    margin: 6px 308px 6px 12px;
+    z-index: 1;
+  }
+
+  /* Explorer header must not overlap its boundary actions at laptop widths.
+     Let the schematic canvas take the available stage width. */
+  .zip-app-shell .mk-explorer-page .zip-canvas-title {
+    min-width: 0;
+    padding-inline: 16px !important;
+    gap: 8px;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-canvas-title strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 19px !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-canvas-title small {
+    font-size: 10px;
+    text-align: right;
+    max-width: 32%;
+    line-height: 1.4;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-map-canvas {
+    padding-inline: 12px;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-inspector,
+  .zip-app-shell .mk-explorer-page .zip-inspector-identity {
+    min-width: 0;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-inspector-identity h2,
+  .zip-app-shell .mk-explorer-page .zip-inspector dd {
+    overflow-wrap: anywhere;
+  }
+
+  /* BDFB Physical View and its dedicated inspector, including SNMP utilization. */
+  .zip-app-shell .zip-bdfb-page .operational-layout {
+    grid-template-columns: 212px minmax(0, 1fr) 292px !important;
+  }
+
+  .zip-bdfb-page .operational-stage-body {
+    min-width: 0;
+    padding-inline: 15px !important;
+  }
+
+  .zip-bdfb-page .bdfb-overview-frame-grid {
+    gap: 10px;
+  }
+
+  .zip-bdfb-page .zip-bdfb-inspector {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  .zip-bdfb-page .sm-snmp-load,
+  .zip-bdfb-page .sm-snmp-setup {
+    min-width: 0;
+  }
+
+  /* Equipment focus: preserve central physical composition and readable right inspector. */
+  .zip-app-shell .mk-device-layout {
+    grid-template-columns: 212px minmax(0, 1fr) 292px !important;
+    min-width: 0;
+  }
+
+  .mk-device-layout > .zip-device-stage,
+  .mk-device-layout > .zip-device-inspector {
+    min-width: 0;
+  }
+
+  .zip-device-stage {
+    padding-inline: 16px !important;
+  }
+
+  .zip-device-inspector .zip-device-identity {
+    gap: 8px;
+    margin-inline: 10px;
+  }
+
+  .zip-device-inspector .zip-device-identity h2 {
+    font-size: 16px;
+    overflow-wrap: anywhere;
+  }
+
+  .ec-inspector {
+    min-width: 0;
+    padding-inline: 8px;
+  }
+
+  .ec-inspector-tabs {
+    gap: 3px;
+  }
+
+  .ec-inspector-tabs button {
+    font-size: 10px;
+    padding-inline: 4px;
+  }
+
+  .ec-inspector-metrics {
+    gap: 6px;
+  }
+
+  .ec-inspector-metric {
+    min-width: 0;
+  }
+
+  /* Read the complete 24-position panel as a table; scroll only the table
+     when its intrinsic columns are wider than the physical stage. */
+  .equipment-contract-canvas,
+  .ec-contract,
+  .ec-panel-composition,
+  .ec-table-scroll {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .ec-table-scroll {
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+
+  .ec-breaker-table {
+    min-width: 745px;
+  }
+
+  .ec-focus {
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .ec-main-section,
+  .ec-panel-composition {
+    padding-inline: 14px;
+  }
+
+  .ec-focus h2,
+  .ec-frame-title,
+  .ec-panel-name,
+  .ec-chassis-frame strong {
+    overflow-wrap: anywhere;
+  }
+
+  /* Frames and cards respond to their actual stage width, not screen size. */
+  .ec-frames-grid,
+  .ec-chassis-frame-strip {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 9px;
+  }
+
+  .ec-snmp-capacity {
+    margin-inline: 12px;
+    padding: 12px;
+  }
+
+  /* Other three-zone operational workbenches use the same reduced shell. */
+  .zip-app-shell
+    .operational-layout:not(.operational-layout--rack):not(.operational-layout--blueprint) {
+    grid-template-columns: 212px minmax(0, 1fr) 292px !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .operational-layout {
+    grid-template-columns: 212px minmax(0, 1fr) !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-explorer,
+  .zip-app-shell .zip-explorer {
+    grid-template-columns: minmax(0, 1fr) 292px !important;
+  }
+
+  .zip-app-shell .zip-rack-focus-layout {
+    grid-template-columns: 212px minmax(0, 1fr) 292px !important;
+  }
+
+  .zip-app-shell .zip-rack-elevation-page .operational-layout--rack,
+  .zip-app-shell .operational-layout--rack,
+  .zip-app-shell .operational-layout--blueprint {
+    grid-template-columns: 212px minmax(0, 1fr) !important;
+  }
+
+  .zip-app-shell .zip-rack-elevation-view,
+  .zip-app-shell .operational-layout--rack .legacy-rack-view {
+    grid-template-columns: minmax(0, 1fr) 292px !important;
+  }
+
+  .zip-app-shell .zip-rack-elevation-main,
+  .zip-app-shell .zip-rack-elevation-stage,
+  .zip-app-shell .zip-explorer-main {
+    min-width: 0;
+  }
+}
+
+/* At 1000–1199 effective px, a three-column layout would leave less room than
+   a 24-slot BDFB table needs. Keep topology beside the workspace and move
+   Inspector AFTER the work surface, never over it or off-screen. */
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .zip-app-shell.app-shell--immersive .operational-page--blueprint {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .spatial-site-actions {
+    margin-right: 16px;
+  }
+
+  /* The 1000–1199px Room layout is two columns by design, but the
+     Inspector belongs BELOW the central drafting canvas, never in the tree. */
+  .zip-app-shell .operational-page--blueprint .operational-layout--blueprint {
+    grid-template-columns: 190px minmax(0, 1fr) !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .zip-app-shell .operational-page--blueprint .operational-context {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .zip-app-shell .operational-page--blueprint .operational-stage--wide {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    height: auto !important;
+  }
+
+  .zip-app-shell .operational-page--blueprint .zip-room-properties {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    height: auto !important;
+    min-height: 0;
+    overflow: visible !important;
+    border-top: 1px solid #d7dde4;
+  }
+
+  .zip-app-shell .zip-topbar .mk-search-trigger {
+    width: 124px;
+    min-width: 124px;
+    flex-basis: 124px;
+  }
+
+  .zip-app-shell.app-shell--immersive .breadcrumbs,
+  .zip-app-shell .mk-device-page .breadcrumbs {
+    right: 510px !important;
+  }
+
+  .zip-app-shell .mk-device-layout {
+    grid-template-columns: 190px minmax(0, 1fr) !important;
+    height: auto !important;
+    min-height: calc(100dvh - 67px) !important;
+    overflow: visible !important;
+  }
+
+  .mk-device-layout > aside:first-child {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    min-width: 0;
+    height: auto !important;
+  }
+
+  .mk-device-layout > .zip-device-stage,
+  .mk-device-layout > section {
+    grid-column: 2;
+    min-width: 0;
+    height: auto !important;
+    overflow-y: visible !important;
+  }
+
+  .mk-device-layout > .zip-device-inspector,
+  .mk-device-layout > .mk-inline-inspector {
+    grid-column: 2;
+    min-width: 0;
+    height: auto !important;
+    overflow-y: visible !important;
+    border-top: 1px solid #dce6f0;
+  }
+
+  .zip-app-shell .zip-bdfb-page .operational-layout {
+    grid-template-columns: 190px minmax(0, 1fr) !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .zip-bdfb-page .operational-context {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .zip-bdfb-page .telxius-operational-stage {
+    grid-column: 2;
+    min-height: 0;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .zip-bdfb-page .operational-stage-body {
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  .zip-bdfb-page .telxius-properties {
+    grid-column: 2;
+    min-width: 0;
+    height: auto !important;
+  }
+
+  .zip-bdfb-page .zip-bdfb-inspector {
+    height: auto !important;
+    overflow-y: visible !important;
+    border-top: 1px solid #dce6f0;
+  }
+
+  .zip-app-shell .mk-explorer-page .operational-layout {
+    grid-template-columns: 190px minmax(0, 1fr) !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-explorer,
+  .zip-app-shell .zip-explorer {
+    grid-template-columns: minmax(0, 1fr) !important;
+    height: auto !important;
+    min-height: calc(100dvh - 67px) !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .operational-stage-body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .zip-app-shell .zip-rack-focus-layout {
+    grid-template-columns: 190px minmax(0, 1fr) !important;
+  }
+
+  .zip-app-shell .zip-rack-elevation-view,
+  .zip-app-shell .operational-layout--rack .legacy-rack-view {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

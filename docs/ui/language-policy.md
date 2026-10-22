@@ -30,35 +30,38 @@ and literal terminal/port identities. UI descriptions of them **are** translatab
 - Technical error identifiers belong to APIs/logging, not the operator UI;
   callers should map them to descriptive English messages.
 
-## Next phase (internationalization)
+## i18n infrastructure (installed, English-active)
 
-Adopt **next-intl** with the Next.js App Router, using typed/namespaced JSON
-message catalogs and ICU-style placeholders for interpolation and pluralization.
+`next-intl@4.14.9` is integrated with the App Router. The plugin uses
+`src/i18n/request.ts` and the root `NextIntlClientProvider`; its request
+configuration intentionally forces `en` for now. The English and Spanish
+catalogs in `src/messages/en.json` and `es.json` have identical keys and
+are checked by `tests/unit/i18n-catalogs.test.ts`.
 
-Proposed layout:
+The shell, sign-in, password-change title, workspace heading, Equipment/BDFB
+tabs and SNMP historical metric tabs use `useTranslations()` or
+`getTranslations()`. Site Mapper identity and persisted inventory records
+remain literal, never interpolated into translation tables.
 
-```text
-src/
-  i18n/
-    request.ts
-    routing.ts          # Only if locale-dependent routing is needed
-  messages/
-    en.json             # Source-of-truth keys
-    es.json             # Future complete Spanish catalog
-```
+The Spanish catalog is currently **partial**: it covers the migrated
+namespaces, not every operator-facing sentence in the product. Do not expose
+a language selector while some screens still use hardcoded English copy.
+No middleware, locale redirects, cookies or translated URL paths are enabled.
 
-1. Extract remaining English presentation strings from all screens, components,
-   and operator-facing API errors into `en.json` with stable semantic keys
-   (e.g. `equipment.inspector.overview`).
-2. Add `es.json` with key parity, language-specific number/date formatting and
-   snapshot/regression tests.
-3. Use `getTranslations()` in Server Components and `useTranslations()` in
-   Client Components, and a localized provider where required.
-4. Keep current paths without a locale prefix unless product requirements change.
-   A no-routing setup or `localePrefix: 'never'` can avoid a disruptive URL
-   migration. Verify language preference handling against authenticated sessions.
-5. Let the operator choose the locale. Persist a preference only when explicitly
-   authorized. Never infer UI locale from the language used for inventory names.
+## Next phase (complete Spanish i18n)
+
+1. Extract the remaining English presentation strings from all pages, shared
+   components, chart and diagnostic views, dialogs and operator-facing errors
+   into semantic keys in `en.json`.
+2. Translate the **presentation messages only** into `es.json`, maintaining
+   key and placeholder parity; use ICU placeholders for numeric/plural cases.
+3. Verify every operator-facing view and permissions-based state in both
+   languages, including date/number formatting and responsive layouts.
+4. Resolve language preference from an explicitly selected supported locale,
+   while preserving the existing `/device/:id`, `/topology/...`, `/power`
+   and `/blueprint/:id` routes. Persist preference only when authorized.
+5. Enable a visible selector only after bilingual acceptance is green. Never
+   infer translation language from operator-entered room/site/equipment names.
 
 **Do not** build a custom `replace()` translator, use English sentences as
 keys, translate raw payloads, or interpolate HTML into translated values.

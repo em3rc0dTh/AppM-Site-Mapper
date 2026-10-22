@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { headers } from 'next/headers';
+import { NextIntlClientProvider } from 'next-intl';
 
 import './globals.css';
 import './legacy-fidelity.css';
@@ -27,7 +28,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en">
       <body>
-        <AppShell>{children}</AppShell>
+        <NextIntlClientProvider>
+          <AppShell>{children}</AppShell>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

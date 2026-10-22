@@ -72,7 +72,8 @@ export function EquipmentFocusInspector({
   const summary = projectCompositionTelemetry(equipment, equipmentById, readings);
   const breaker = equipment.equipmentType === 'CIRCUIT_BREAKER';
   const current = breaker ? readings[equipment.id] : undefined;
-  const hasLiveReadings = canReadTelemetry && (breaker ? current?.status === 'LIVE' : summary.reporting > 0);
+  const hasLiveReadings =
+    canReadTelemetry && (breaker ? current?.status === 'LIVE' : summary.reporting > 0);
   const visibleTabs = hasLiveReadings ? TABS : TABS.filter(({ key }) => key !== 'telemetry');
   const activeTab = tab === 'telemetry' && !hasLiveReadings ? 'overview' : tab;
 

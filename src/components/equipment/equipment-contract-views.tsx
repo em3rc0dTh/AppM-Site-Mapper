@@ -61,9 +61,7 @@ function ChildLink({
   );
 }
 
-function PanelPreview({
-  panel,
-}: Readonly<{ panel: EquipmentNode }>) {
+function PanelPreview({ panel }: Readonly<{ panel: EquipmentNode }>) {
   return (
     <ChildLink node={panel} className="ec-panel-line">
       <strong className="ec-panel-name">{panel.name}</strong>
@@ -232,7 +230,6 @@ function PanelComposition({
           )}
         </div>
       </div>
-
     </section>
   );
 }
@@ -374,7 +371,9 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
           <div className="ec-section-heading">
             <div>
               <small>CIRCUIT BREAKER</small>
-              <strong>{readings[root.id]?.status === 'LIVE' ? 'Own telemetry' : 'Circuit details'}</strong>
+              <strong>
+                {readings[root.id]?.status === 'LIVE' ? 'Own telemetry' : 'Circuit details'}
+              </strong>
             </div>
             <span className="ec-status" data-status={readings[root.id]?.status ?? 'UNMAPPED'}>
               <span className="ec-status-dot" aria-hidden="true" />
@@ -387,8 +386,8 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
             </div>
           ) : (
             <p className="ec-breaker-no-data">
-              No active readings. This equipment remains installed; its physical identity and
-              power connections can still be inspected.
+              No active readings. This equipment remains installed; its physical identity and power
+              connections can still be inspected.
             </p>
           )}
           <p className="ec-breaker-source">
@@ -402,18 +401,18 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
       )}
       {summary.reporting > 0 && (
         <div className="ec-legend" aria-label="Telemetry metric legend">
-        <span>
-          <b>V</b> Voltage · V
-        </span>
-        <span>
-          <b>I</b> Current · A
-        </span>
-        <span>
-          <b>P</b> Power · W
-        </span>
-        <span>
-          <b>E</b> Accumulated energy counter · kWh
-        </span>
+          <span>
+            <b>V</b> Voltage · V
+          </span>
+          <span>
+            <b>I</b> Current · A
+          </span>
+          <span>
+            <b>P</b> Power · W
+          </span>
+          <span>
+            <b>E</b> Accumulated energy counter · kWh
+          </span>
         </div>
       )}
     </div>

@@ -111,7 +111,6 @@ describe('Equipment Composition SCREEN 12', () => {
     expect(markup).not.toContain('Breaker B');
   });
 
-
   it('does not show empty telemetry cards or reporting badges without LIVE readings', () => {
     const unmapped: Readonly<Record<string, CompositionBreakerTelemetry>> = {
       [breakerA.id]: { status: 'NO DATA' },

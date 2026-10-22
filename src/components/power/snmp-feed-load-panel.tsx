@@ -212,6 +212,9 @@ export function SnmpFeedLoadPanel({
         {!load?.feedCount && !error && (
           <p>No SNMP input feeders inventoried on this BDFB.</p>
         )}
+        {(load as (SnmpBdfbLoadView & { historyAvailable?: boolean }) | null)?.historyAvailable === false && (
+          <p role="alert">TimescaleDB unavailable: restored SNMP history could not be queried.</p>
+        )}
         {load?.status !== 'COMPLETE' && (
           <p className="sm-snmp-no-total">
             A whole-BDFB current total is only available when every required independent shunt is

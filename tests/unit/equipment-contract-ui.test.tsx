@@ -80,7 +80,7 @@ describe('Equipment Composition SCREEN 12', () => {
     expect(markup).not.toContain('Breaker A');
   });
 
-  it('renders installed breaker rows and collapses 21 or more free slots by default', () => {
+  it('renders all 24 physical slots at once, occupied and empty, without a toggle', () => {
     const panel = makeNode('Panel 24', 'PANEL', [
       breakerA.id,
       breakerB.id,
@@ -92,12 +92,13 @@ describe('Equipment Composition SCREEN 12', () => {
     );
     expect(markup).toContain('Breaker A');
     expect(markup).toContain('Breaker B');
-    expect(markup).toContain('21 free positions');
-    expect(markup).toContain('VIEW SLOTS');
-    expect(markup).not.toContain('ec-slot-grid');
+    expect(markup).toContain('21 available');
+    expect(markup).toContain('24 total');
+    expect(markup).toContain('ec-empty-breaker-row');
+    expect(markup.match(/class="ec-empty-breaker-row"/g)).toHaveLength(21);
+    expect(markup).not.toContain('VIEW SLOTS');
     expect(markup).toContain('STALE');
     expect(markup).toContain('12.00');
-    expect(markup).not.toContain('POSITION 24');
   });
 
   it('provides the selected breaker own readings without combining descendants', () => {
@@ -108,6 +109,20 @@ describe('Equipment Composition SCREEN 12', () => {
     expect(markup).toContain('120.00');
     expect(markup).toContain('LIVE');
     expect(markup).not.toContain('Breaker B');
+  });
+
+
+  it('does not show empty telemetry cards or reporting badges without LIVE readings', () => {
+    const unmapped: Readonly<Record<string, CompositionBreakerTelemetry>> = {
+      [breakerA.id]: { status: 'NO DATA' },
+    };
+    const markup = renderToStaticMarkup(
+      <EquipmentContractViews root={breakerA} equipmentById={byId} readings={unmapped} />,
+    );
+    expect(markup).toContain('Circuit details');
+    expect(markup).toContain('No active readings');
+    expect(markup).not.toContain('ec-breaker-metrics');
+    expect(markup).not.toContain('breakers reporting');
   });
 
   it('does not use duplicate descendants when canonical references contain a cycle', () => {

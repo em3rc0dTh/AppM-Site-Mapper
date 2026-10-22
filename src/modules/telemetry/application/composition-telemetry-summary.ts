@@ -110,7 +110,7 @@ export function projectCompositionTelemetry(
       reporting: children.reduce((sum, child) => sum + child.reporting, 0),
       stale: children.reduce((sum, child) => sum + child.stale, 0),
       reportingChildren: children.filter((child) => child.reporting > 0).length,
-      installedChildren: children.filter((child) => child.installed > 0 || child.installedChildren > 0).length,
+      installedChildren: new Set(activeChildren.map((child) => child.id)).size,
       positions: node.childMode === 'POSITIONAL' ? node.children.length : activeChildren.length,
       metrics,
       metricCounts,

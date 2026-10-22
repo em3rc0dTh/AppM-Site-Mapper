@@ -1,5 +1,6 @@
 'use client';
 
+import en from '@/messages/en.json';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -266,12 +267,12 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
             onClick={() => setSelectedMetric(item.key)}
           >
             {item.key === 'currentA'
-              ? 'Corriente'
+              ? en.snmp.history.current
               : item.key === 'voltageV'
-                ? 'Voltaje'
+                ? en.snmp.history.voltage
                 : item.key === 'powerW'
-                  ? 'Potencia'
-                  : 'Energía'}
+                  ? en.snmp.history.power
+                  : en.snmp.history.energy}
           </button>
         ))}
       </div>

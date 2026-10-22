@@ -330,6 +330,77 @@ def query_entity_history(target_id, target_type, window):
     return [row[0] for row in rows]
 
 
+
+def query_snmp_feed_series(target_id, source_identity, window):
+    """Bucket raw SNMP shunt samples without inferring consumption during outages.
+
+    Two metrics belong to the same persisted AccessPort sample. Power is
+    estimated from simultaneously sampled I * abs(V). Energy uses trapezoids
+    between actual packets only when separated by <= 120 seconds. Missing
+    samples and periods without paired I/V are never interpolated.
+    """
+    interval, bucket = WINDOWS[window]
+    query = """
+      WITH observations AS (
+        SELECT received_at,
+          (sample->'reported'->'currentA'->>'value')::double precision AS current_a,
+          (sample->'reported'->'voltageV'->>'value')::double precision AS voltage_v
+        FROM telemetry_entity_samples
+        WHERE target_id = %s AND target_type = 'ACCESS_PORT'
+          AND source_identity = %s
+          AND received_at >= NOW() - %s::interval
+          AND sample->>'protocol' = 'SNMP'
+      ), measured AS (
+        SELECT received_at, current_a, voltage_v,
+          CASE WHEN current_a >= 0 AND voltage_v IS NOT NULL
+            THEN current_a * ABS(voltage_v) ELSE NULL END AS power_w
+        FROM observations
+      ), intervals AS (
+        SELECT received_at, current_a, voltage_v, power_w,
+          LAG(received_at) OVER (ORDER BY received_at) AS previous_at,
+          LAG(power_w) OVER (ORDER BY received_at) AS previous_power_w
+        FROM measured
+      ), buckets AS (
+        SELECT time_bucket(%s::interval, received_at) AS period,
+          MAX(received_at) AS latest_at,
+          AVG(current_a) AS current_a,
+          AVG(voltage_v) AS voltage_v,
+          AVG(power_w) AS power_w,
+          COUNT(*) AS sample_count,
+          COUNT(power_w) AS paired_count,
+          COALESCE(SUM(
+            CASE WHEN previous_at IS NOT NULL AND power_w IS NOT NULL
+              AND previous_power_w IS NOT NULL
+              AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
+              AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
+            THEN (power_w + previous_power_w) / 2 *
+              EXTRACT(EPOCH FROM (received_at - previous_at)) / 3600000.0
+            ELSE 0 END
+          ), 0) AS estimated_energy_kwh,
+          COALESCE(SUM(
+            CASE WHEN previous_at IS NOT NULL AND power_w IS NOT NULL
+              AND previous_power_w IS NOT NULL
+              AND EXTRACT(EPOCH FROM (received_at - previous_at)) > 0
+              AND EXTRACT(EPOCH FROM (received_at - previous_at)) <= 120
+            THEN EXTRACT(EPOCH FROM (received_at - previous_at))
+            ELSE 0 END
+          ), 0) AS covered_seconds
+        FROM intervals GROUP BY period
+      )
+      SELECT period, latest_at, current_a, voltage_v, power_w,
+        CASE WHEN paired_count = 0 THEN NULL ELSE estimated_energy_kwh END,
+        covered_seconds, sample_count
+      FROM buckets ORDER BY period ASC LIMIT 1000
+    """
+    with psycopg.connect(DSN) as conn:
+        rows = conn.execute(query, (target_id, source_identity, interval, bucket)).fetchall()
+    return [{
+        "bucketAt": row[0].isoformat(), "observedAt": row[1].isoformat(),
+        "currentA": row[2], "voltageV": row[3], "powerW": row[4],
+        "estimatedEnergyKwh": float(row[5]) if row[5] is not None else None,
+        "coveredSeconds": float(row[6]), "sampleCount": row[7]
+    } for row in rows]
+
 def query_history(serial, window, raw_point_ids):
     if window not in WINDOWS:
         raise ValueError("unsupported window")
@@ -418,7 +489,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "unavailable"})
             return
 
-        if parsed.path in ("/history", "/entity-history", "/entity-latest") and not self.authorized():
+        if parsed.path in ("/history", "/entity-history", "/entity-latest", "/snmp-feed-series") and not self.authorized():
             self.send_json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
             return
 
@@ -435,6 +506,21 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.OK, {"samples": query_latest_entity_samples(ids, target_type)})
             except Exception:
                 self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "entity latest query failed"})
+            return
+
+
+        if parsed.path == "/snmp-feed-series":
+            query = parse_qs(parsed.query)
+            target_id = text_value(query.get("targetId", [None])[0])
+            source = text_value(query.get("sourceIdentity", [None])[0])
+            window = query.get("window", [None])[0]
+            if not target_id or len(target_id) > 128 or not source or len(source) > 120 or window not in WINDOWS:
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": "invalid SNMP series query"})
+                return
+            try:
+                self.send_json(HTTPStatus.OK, {"points": query_snmp_feed_series(target_id, source, window)})
+            except Exception:
+                self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "SNMP series unavailable"})
             return
 
         if parsed.path == "/entity-history":

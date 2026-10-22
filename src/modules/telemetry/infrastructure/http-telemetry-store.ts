@@ -85,6 +85,19 @@ export function serializeTelemetryStoreSample(
   };
 }
 
+export interface SnmpHistoricalBucket {
+  readonly bucketAt: string;
+  readonly observedAt: string;
+  readonly currentA: number | null;
+  readonly voltageV: number | null;
+  /** Derived from paired shunt readings, not a native SNMP power counter. */
+  readonly powerW: number | null;
+  /** Trapezoidal estimate for intervals up to 120 seconds, not a meter counter. */
+  readonly estimatedEnergyKwh: number | null;
+  readonly coveredSeconds: number;
+  readonly sampleCount: number;
+}
+
 export class HttpTelemetryStore implements TelemetryHistoryWriter {
   private writes = 0;
   private rowsAccepted = 0;
@@ -221,6 +234,25 @@ export class HttpTelemetryStore implements TelemetryHistoryWriter {
     if (!response.ok) throw new Error(`ENTITY_LATEST_HTTP_${response.status}`);
     const body = (await response.json()) as { samples?: TelemetrySample[] };
     return Array.isArray(body.samples) ? body.samples : [];
+  }
+
+  async querySnmpFeedSeries(
+    targetId: string,
+    sourceIdentity: string,
+    window: TelemetryHistoryWindow,
+  ): Promise<readonly SnmpHistoricalBucket[]> {
+    const url = new URL(`${this.baseUrl.replace(/\/$/, '')}/snmp-feed-series`);
+    url.searchParams.set('targetId', targetId);
+    url.searchParams.set('sourceIdentity', sourceIdentity);
+    url.searchParams.set('window', window);
+    const response = await fetch(url, {
+      headers: this.accessToken ? { authorization: `Bearer ${this.accessToken}` } : {},
+      cache: 'no-store',
+      signal: AbortSignal.timeout(this.timeoutMs),
+    });
+    if (!response.ok) throw new Error(`SNMP_HISTORY_HTTP_${response.status}`);
+    const body = (await response.json()) as { points?: SnmpHistoricalBucket[] };
+    return Array.isArray(body.points) ? body.points : [];
   }
 
   async queryEntity(

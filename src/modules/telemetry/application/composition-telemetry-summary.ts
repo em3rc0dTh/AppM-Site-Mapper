@@ -63,7 +63,9 @@ export function projectCompositionTelemetry(
 
     if (node.equipmentType === 'CIRCUIT_BREAKER') {
       const reading = readings[node.id];
-      const live = reading?.status === 'LIVE';
+      const live =
+        reading?.status === 'LIVE' &&
+        COMPOSITION_METRICS.some((key) => typeof reading[key] === 'number' && Number.isFinite(reading[key]));
       const metrics: Partial<Record<CompositionMetricKey, number>> = {};
       const metricCounts = zeroCounts();
       if (live) {

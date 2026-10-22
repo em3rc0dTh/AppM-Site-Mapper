@@ -83,7 +83,11 @@ function FramePreview({
   frame,
   byId,
   readings,
-}: Readonly<{ frame: EquipmentNode; byId: ReadonlyMap<string, EquipmentNode>; readings: Props['readings'] }>) {
+}: Readonly<{
+  frame: EquipmentNode;
+  byId: ReadonlyMap<string, EquipmentNode>;
+  readings: Props['readings'];
+}>) {
   const panels = activeChildren(frame, byId).filter(({ child }) => child.equipmentType === 'PANEL');
   const signal = projectCompositionTelemetry(frame, byId, readings);
   return (
@@ -93,7 +97,9 @@ function FramePreview({
           <small>FRAME</small>
           <ChildLink node={frame} className="ec-frame-title" />
         </div>
-        <span className="ec-count">{signal.reportingChildren}/{panels.length} panels MQTT LIVE</span>
+        <span className="ec-count">
+          {signal.reportingChildren}/{panels.length} panels MQTT LIVE
+        </span>
       </div>
       <div className="ec-frame-panels">
         {panels.length ? (
@@ -238,7 +244,13 @@ function PanelComposition({
   );
 }
 
-export function EquipmentContractViews({ root, equipmentById, readings, onAdd, canReadTelemetry = false }: Props) {
+export function EquipmentContractViews({
+  root,
+  equipmentById,
+  readings,
+  onAdd,
+  canReadTelemetry = false,
+}: Props) {
   const children = activeChildren(root, equipmentById);
   const summary = projectCompositionTelemetry(root, equipmentById, readings);
   const type = root.equipmentType;
@@ -264,7 +276,9 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd, c
                 ? `${summary.reporting}/${summary.positions} positions MQTT LIVE`
                 : `${summary.reportingChildren}/${summary.installedChildren} installed child Equipment MQTT LIVE`}
           </span>
-          <small>{summary.reporting} verified descendant breakers reporting · averages of direct children</small>
+          <small>
+            {summary.reporting} verified descendant breakers reporting · averages of direct children
+          </small>
         </div>
       )}
       <div className="ec-focus">
@@ -368,8 +382,10 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd, c
                 </div>
                 <span className="ec-count">
                   {projectCompositionTelemetry(child, equipmentById, readings).reporting}/
-                  {child.childMode === 'POSITIONAL' ? child.children.length : child.children.filter(Boolean).length}
-                  {' '}positions LIVE
+                  {child.childMode === 'POSITIONAL'
+                    ? child.children.length
+                    : child.children.filter(Boolean).length}{' '}
+                  positions LIVE
                 </span>
               </div>
             ))}

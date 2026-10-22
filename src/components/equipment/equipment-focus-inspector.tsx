@@ -77,11 +77,11 @@ export function EquipmentFocusInspector({
   const hasLiveReadings = canReadTelemetry && summary.reporting > 0;
   const visibleTabs = hasLiveReadings ? TABS : TABS.filter(({ key }) => key !== 'telemetry');
   const activeTab = tab === 'telemetry' && !hasLiveReadings ? 'overview' : tab;
-  const coverage =
-    breaker ? `${summary.reporting}/1 breaker LIVE` :
-    equipment.equipmentType === 'PANEL' ?
-      `${summary.reporting}/${summary.positions} positions with MQTT LIVE · ${summary.installed} installed` :
-      `${summary.reportingChildren}/${summary.installedChildren} immediate children with MQTT LIVE · ${summary.reporting} live breakers below`;
+  const coverage = breaker
+    ? `${summary.reporting}/1 breaker LIVE`
+    : equipment.equipmentType === 'PANEL'
+      ? `${summary.reporting}/${summary.positions} positions with MQTT LIVE · ${summary.installed} installed`
+      : `${summary.reportingChildren}/${summary.installedChildren} immediate children with MQTT LIVE · ${summary.reporting} live breakers below`;
 
   return (
     <section className="ec-inspector" aria-label={equipment.name + ' Equipment inspector'}>

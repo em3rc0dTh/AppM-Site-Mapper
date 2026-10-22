@@ -65,7 +65,9 @@ export function projectCompositionTelemetry(
       const reading = readings[node.id];
       const live =
         reading?.status === 'LIVE' &&
-        COMPOSITION_METRICS.some((key) => typeof reading[key] === 'number' && Number.isFinite(reading[key]));
+        COMPOSITION_METRICS.some(
+          (key) => typeof reading[key] === 'number' && Number.isFinite(reading[key]),
+        );
       const metrics: Partial<Record<CompositionMetricKey, number>> = {};
       const metricCounts = zeroCounts();
       if (live) {

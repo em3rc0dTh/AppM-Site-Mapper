@@ -1,6 +1,9 @@
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { projectCompositionHistory } from '@/modules/telemetry/application/composition-history';
-import { TELEMETRY_HISTORY_WINDOWS, type TelemetryHistoryWindow } from '@/modules/telemetry/domain/history';
+import {
+  TELEMETRY_HISTORY_WINDOWS,
+  type TelemetryHistoryWindow,
+} from '@/modules/telemetry/domain/history';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
@@ -23,8 +26,12 @@ export async function GET(request: Request) {
   const query = new URL(request.url).searchParams;
   const equipmentId = query.get('equipmentId');
   const window = query.get('window');
-  if (!equipmentId || equipmentId.length > 128 ||
-    !window || !TELEMETRY_HISTORY_WINDOWS.includes(window as TelemetryHistoryWindow)) {
+  if (
+    !equipmentId ||
+    equipmentId.length > 128 ||
+    !window ||
+    !TELEMETRY_HISTORY_WINDOWS.includes(window as TelemetryHistoryWindow)
+  ) {
     return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   }
   if (process.env.TELEMETRY_HISTORY_ENABLED !== 'true') {
@@ -58,18 +65,31 @@ export async function GET(request: Request) {
   }
   visit(root);
   if (breakers.length > 128) {
-    return Response.json({ error: 'HISTORY_SCOPE_TOO_LARGE', breakerCount: breakers.length }, { status: 413 });
+    return Response.json(
+      { error: 'HISTORY_SCOPE_TOO_LARGE', breakerCount: breakers.length },
+      { status: 413 },
+    );
   }
   const ids = breakers.map((item) => item.id);
   if (!ids.length) {
-    return Response.json({
-      equipmentId, window, breakerCount: 0, boundBreakerCount: 0, points: [],
-    }, { headers: { 'Cache-Control': 'no-store' } });
+    return Response.json(
+      {
+        equipmentId,
+        window,
+        breakerCount: 0,
+        boundBreakerCount: 0,
+        points: [],
+      },
+      { headers: { 'Cache-Control': 'no-store' } },
+    );
   }
-  const active = (await (await createTelemetryBindingRepository()).listForTargets('EQUIPMENT', ids))
-    .filter((b) => b.lifecycle === 'ACTIVE' && b.protocol === 'MQTT');
+  const active = (
+    await (await createTelemetryBindingRepository()).listForTargets('EQUIPMENT', ids)
+  ).filter((b) => b.lifecycle === 'ACTIVE' && b.protocol === 'MQTT');
   const bindings = active.map((b) => ({
-    id: b.id, targetId: b.targetId, sourceIdentity: b.sourceIdentity,
+    id: b.id,
+    targetId: b.targetId,
+    sourceIdentity: b.sourceIdentity,
     ...(b.sourcePointId ? { sourcePointId: b.sourcePointId } : {}),
     metric: b.metric,
   }));
@@ -91,12 +111,22 @@ export async function GET(request: Request) {
   }
 
   const points = projectCompositionHistory(
-    root, byId, groups, bindings, BUCKET_MS[window as TelemetryHistoryWindow],
+    root,
+    byId,
+    groups,
+    bindings,
+    BUCKET_MS[window as TelemetryHistoryWindow],
   );
-  return Response.json({
-    equipmentId, window, breakerCount: breakers.length,
-    boundBreakerCount: boundIds.length, points,
-    aggregation: 'MEAN_OF_REPORTING_IMMEDIATE_CHILD_MEANS',
-    source: 'EXPLICIT_MQTT_EQUIPMENT_BINDINGS',
-  }, { headers: { 'Cache-Control': 'no-store' } });
+  return Response.json(
+    {
+      equipmentId,
+      window,
+      breakerCount: breakers.length,
+      boundBreakerCount: boundIds.length,
+      points,
+      aggregation: 'MEAN_OF_REPORTING_IMMEDIATE_CHILD_MEANS',
+      source: 'EXPLICIT_MQTT_EQUIPMENT_BINDINGS',
+    },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }

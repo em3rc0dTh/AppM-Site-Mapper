@@ -126,12 +126,13 @@ describe('Equipment Composition SCREEN 12', () => {
     expect(markup).not.toContain('breakers reporting');
   });
 
-
   it('averages panel means equally at frame level, never all leaves as a flat average', () => {
     const first = makeNode('Panel X', 'PANEL', [breakerA.id, breakerB.id]);
     const second = makeNode('Panel Y', 'PANEL', [breakerC.id]);
     const parent = makeNode('Frame X', 'FRAME', [first.id, second.id]);
-    const group = new Map([first, second, parent, breakerA, breakerB, breakerC].map((n) => [n.id, n]));
+    const group = new Map(
+      [first, second, parent, breakerA, breakerB, breakerC].map((n) => [n.id, n]),
+    );
     const live = {
       [breakerA.id]: { status: 'LIVE', voltageV: 10 },
       [breakerB.id]: { status: 'LIVE', voltageV: 20 },
@@ -180,12 +181,25 @@ describe('Equipment Composition SCREEN 12', () => {
     const result = projectCompositionHistory(
       point,
       nodes,
-      new Map([[breakerA.id, [
-        sample('2026-10-22T12:00:10.000Z', 0),
-        sample('2026-10-22T12:00:30.000Z', 12),
-        sample('2026-10-22T12:05:30.000Z', 15),
-      ]]]),
-      [{ id: 'binding-v', targetId: breakerA.id, sourceIdentity: 'EMU-BFDB-01', sourcePointId: '0_1_1', metric: 'VOLTAGE' }],
+      new Map([
+        [
+          breakerA.id,
+          [
+            sample('2026-10-22T12:00:10.000Z', 0),
+            sample('2026-10-22T12:00:30.000Z', 12),
+            sample('2026-10-22T12:05:30.000Z', 15),
+          ],
+        ],
+      ]),
+      [
+        {
+          id: 'binding-v',
+          targetId: breakerA.id,
+          sourceIdentity: 'EMU-BFDB-01',
+          sourcePointId: '0_1_1',
+          metric: 'VOLTAGE',
+        },
+      ],
       300_000,
     );
     expect(result).toHaveLength(2);
@@ -194,7 +208,8 @@ describe('Equipment Composition SCREEN 12', () => {
     expect(result[0]?.reporting).toBe(1);
     expect(result[0]?.positions).toBe(2);
     const unmapped = projectCompositionHistory(
-      point, nodes,
+      point,
+      nodes,
       new Map([[breakerA.id, [sample('2026-10-22T12:00:10.000Z', 0)]]]),
       [],
       300_000,

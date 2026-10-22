@@ -1,7 +1,14 @@
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
-import { compositionBreakerTelemetry, type CompositionBreakerBinding, type CompositionBreakerTelemetry } from '@/modules/telemetry/domain/composition-breaker-telemetry';
+import {
+  compositionBreakerTelemetry,
+  type CompositionBreakerBinding,
+  type CompositionBreakerTelemetry,
+} from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
-import { projectCompositionTelemetry, type CompositionTelemetrySummary } from './composition-telemetry-summary';
+import {
+  projectCompositionTelemetry,
+  type CompositionTelemetrySummary,
+} from './composition-telemetry-summary';
 
 export interface CompositionHistoryPoint {
   readonly at: string;
@@ -25,12 +32,21 @@ export function projectCompositionHistory(
   bindings: readonly CompositionBreakerBinding[],
   bucketMs: number,
 ): readonly CompositionHistoryPoint[] {
-  const buckets = new Map<number, Map<string, { timestamp: number; reading: CompositionBreakerTelemetry }>>();
+  const buckets = new Map<
+    number,
+    Map<string, { timestamp: number; reading: CompositionBreakerTelemetry }>
+  >();
   for (const [breakerId, samples] of sampleGroups) {
     const breaker = byId.get(breakerId);
-    if (!breaker || breaker.equipmentType !== 'CIRCUIT_BREAKER' || breaker.lifecycle !== 'ACTIVE') continue;
+    if (!breaker || breaker.equipmentType !== 'CIRCUIT_BREAKER' || breaker.lifecycle !== 'ACTIVE')
+      continue;
     for (const sample of samples) {
-      if (sample.targetId !== breakerId || sample.targetType !== 'EQUIPMENT' || sample.protocol === 'SNMP') continue;
+      if (
+        sample.targetId !== breakerId ||
+        sample.targetType !== 'EQUIPMENT' ||
+        sample.protocol === 'SNMP'
+      )
+        continue;
       const received = Date.parse(sample.receivedAt);
       if (!Number.isFinite(received)) continue;
       const at = Math.floor(received / bucketMs) * bucketMs;
@@ -41,26 +57,34 @@ export function projectCompositionHistory(
         bindings,
         Date.parse(sample.sourceObservedAt ?? sample.receivedAt),
       );
-      if (reading.status !== 'LIVE' || !['voltageV','currentA','powerW','energyKwh'].some(
-        (metric) => typeof reading[metric as 'voltageV' | 'currentA' | 'powerW' | 'energyKwh'] === 'number',
-      )) continue;
+      if (
+        reading.status !== 'LIVE' ||
+        !['voltageV', 'currentA', 'powerW', 'energyKwh'].some(
+          (metric) =>
+            typeof reading[metric as 'voltageV' | 'currentA' | 'powerW' | 'energyKwh'] === 'number',
+        )
+      )
+        continue;
       const bucket = buckets.get(at) ?? new Map();
       const previous = bucket.get(breakerId);
-      if (!previous || received > previous.timestamp) bucket.set(breakerId, { timestamp: received, reading });
+      if (!previous || received > previous.timestamp)
+        bucket.set(breakerId, { timestamp: received, reading });
       buckets.set(at, bucket);
     }
   }
-  return [...buckets.entries()].sort(([a],[b]) => a-b).map(([at, values]) => {
-    const readings = Object.fromEntries([...values].map(([id, result]) => [id, result.reading]));
-    const result = projectCompositionTelemetry(root, byId, readings);
-    return {
-      at: new Date(at).toISOString(),
-      metrics: result.metrics,
-      reporting: result.reporting,
-      reportingChildren: result.reportingChildren,
-      installed: result.installed,
-      installedChildren: result.installedChildren,
-      positions: result.positions,
-    };
-  });
+  return [...buckets.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([at, values]) => {
+      const readings = Object.fromEntries([...values].map(([id, result]) => [id, result.reading]));
+      const result = projectCompositionTelemetry(root, byId, readings);
+      return {
+        at: new Date(at).toISOString(),
+        metrics: result.metrics,
+        reporting: result.reporting,
+        reportingChildren: result.reportingChildren,
+        installed: result.installed,
+        installedChildren: result.installedChildren,
+        positions: result.positions,
+      };
+    });
 }

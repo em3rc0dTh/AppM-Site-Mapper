@@ -24,6 +24,10 @@ import {
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+function record(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
 function labEnabled(): boolean {
   // NODE_ENV is production even in local Next.js Docker builds; APP_ENV is
   // the explicit deployment security authority. Keep this endpoint disabled
@@ -76,7 +80,7 @@ export async function POST(request: Request) {
   if (!parsed.ok)
     return Response.json({ error: parsed.error }, { status: jsonBodyErrorStatus(parsed.error) });
   const body = parsed.value;
-  if (!body || typeof body !== 'object' || Array.isArray(body) ||
+  if (!record(body) ||
       !hasOnlyKeys(body, ['deviceId', 'confirmSyntheticOnly']) ||
       !isBoundedString(body.deviceId, 128) || body.confirmSyntheticOnly !== true)
     return Response.json({ error: 'INVALID_SYNTHETIC_CONFIRMATION' }, { status: 400 });

@@ -1,0 +1,36 @@
+name: Temporary BDFB inspector tab formatter
+on:
+  push:
+    branches:
+      - feat/bdfb-inspector-workspace-tabs-20261022
+    paths:
+      - .github/workflows/bdfb-tab-format.yml
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/bdfb-inspector-workspace-tabs-20261022
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Format inspector tab changes
+        run: |
+          npx prettier --write \
+            src/components/power/bdfb-telemetry-inspector.tsx \
+            src/components/power/snmp-feed-load-panel.tsx \
+            src/components/power/snmp-feed-history.tsx \
+            src/app/interaction-recovery.css
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- src/components/power/bdfb-telemetry-inspector.tsx src/components/power/snmp-feed-load-panel.tsx src/components/power/snmp-feed-history.tsx src/app/interaction-recovery.css
+          if ! git diff --cached --quiet; then
+            git commit -m 'style(bdfb): format tabbed inspector'
+            git push origin HEAD:feat/bdfb-inspector-workspace-tabs-20261022
+          fi

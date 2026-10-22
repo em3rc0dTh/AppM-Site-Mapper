@@ -604,7 +604,7 @@ El shell conserva tres columnas: **Topology** (navegación), **Physical View** (
 
 - El **gabinete** ocupa la región superior: `CHASSIS → SHELF → FRAME → PANEL`. En el ejemplo hay **2 frames × 2 paneles = 4 paneles**, sin imponer esa geometría a otros BDFB. Los paneles están **uno debajo de otro dentro de cada frame**, no en columnas paralelas.
 - El **panel seleccionado** ocupa la región inferior, antes vacía, con sus **24 posiciones reales**, ocupación, breakers instalados, destino de Power Path si existe y si hay enlace MQTT registrado. Los paneles vacíos muestran posiciones disponibles sin inventar breakers.
-- Pulsar la **superficie de un panel** cambia el detalle inferior *sin navegar a otra pantalla*; `OPEN PANEL COMPOSITION →` abre el editor canónico de Equipment. Cada posición instalada puede abrir su breaker.
+- Pulsar la **superficie de un panel** cambia el detalle inferior _sin navegar a otra pantalla_; `OPEN PANEL COMPOSITION →` abre el editor canónico de Equipment. Cada posición instalada puede abrir su breaker.
 - El árbol de navegación izquierdo y los enlaces del breadcrumb se mantienen. No se trasladan tendencias eléctricas al canvas físico ni se calcula carga individual por breaker a partir del shunt.
 
 ### Contrato del Inspector con pestañas

@@ -6,12 +6,14 @@ import type { ReactNode } from 'react';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
+import { SnmpCapacityStrip } from './snmp-capacity-strip';
 
 interface Props {
   readonly root: EquipmentNode;
   readonly equipmentById: ReadonlyMap<string, EquipmentNode>;
   readonly readings: Readonly<Record<string, CompositionBreakerTelemetry>>;
   readonly onAdd?: (slot: number | null) => void;
+  readonly canReadTelemetry?: boolean;
 }
 
 const METRICS = [
@@ -80,8 +82,10 @@ function PanelPreview({ panel }: Readonly<{ panel: EquipmentNode }>) {
 function FramePreview({
   frame,
   byId,
-}: Readonly<{ frame: EquipmentNode; byId: ReadonlyMap<string, EquipmentNode> }>) {
+  readings,
+}: Readonly<{ frame: EquipmentNode; byId: ReadonlyMap<string, EquipmentNode>; readings: Props['readings'] }>) {
   const panels = activeChildren(frame, byId).filter(({ child }) => child.equipmentType === 'PANEL');
+  const signal = projectCompositionTelemetry(frame, byId, readings);
   return (
     <article className="ec-frame-card">
       <div className="ec-frame-heading">
@@ -89,7 +93,7 @@ function FramePreview({
           <small>FRAME</small>
           <ChildLink node={frame} className="ec-frame-title" />
         </div>
-        <span className="ec-count">{panels.length} panels</span>
+        <span className="ec-count">{signal.reportingChildren}/{panels.length} panels MQTT LIVE</span>
       </div>
       <div className="ec-frame-panels">
         {panels.length ? (
@@ -234,7 +238,7 @@ function PanelComposition({
   );
 }
 
-export function EquipmentContractViews({ root, equipmentById, readings, onAdd }: Props) {
+export function EquipmentContractViews({ root, equipmentById, readings, onAdd, canReadTelemetry = false }: Props) {
   const children = activeChildren(root, equipmentById);
   const summary = projectCompositionTelemetry(root, equipmentById, readings);
   const type = root.equipmentType;
@@ -251,6 +255,18 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
           </span>
         )}
       </div>
+      {canReadTelemetry && (
+        <div className="ec-live-cover" aria-label="MQTT hierarchy coverage">
+          <span>
+            {type === 'CIRCUIT_BREAKER'
+              ? `${summary.reporting}/1 breaker LIVE`
+              : type === 'PANEL'
+                ? `${summary.reporting}/${summary.positions} positions MQTT LIVE`
+                : `${summary.reportingChildren}/${summary.installedChildren} installed child Equipment MQTT LIVE`}
+          </span>
+          <small>{summary.reporting} verified descendant breakers reporting · averages of direct children</small>
+        </div>
+      )}
       <div className="ec-focus">
         <div>
           <small>FOCUSED EQUIPMENT</small>
@@ -326,7 +342,7 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
           </header>
           <div className="ec-frames-grid">
             {children.map(({ child }) => (
-              <FramePreview key={child.id} frame={child} byId={equipmentById} />
+              <FramePreview key={child.id} frame={child} byId={equipmentById} readings={readings} />
             ))}
             {!children.length && <p className="ec-muted">No frames recorded</p>}
           </div>
@@ -351,9 +367,9 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
                   <Counts node={child} />
                 </div>
                 <span className="ec-count">
-                  {projectCompositionTelemetry(child, equipmentById, readings).reporting
-                    ? 'With readings'
-                    : 'No breaker readings'}
+                  {projectCompositionTelemetry(child, equipmentById, readings).reporting}/
+                  {child.childMode === 'POSITIONAL' ? child.children.length : child.children.filter(Boolean).length}
+                  {' '}positions LIVE
                 </span>
               </div>
             ))}
@@ -398,6 +414,9 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
             Explore Power Path ↗
           </Link>
         </section>
+      )}
+      {canReadTelemetry && ['CHASSIS', 'SHELF', 'SUB_SHELF', 'FRAME', 'PANEL'].includes(type) && (
+        <SnmpCapacityStrip root={root} byId={equipmentById} />
       )}
       {summary.reporting > 0 && (
         <div className="ec-legend" aria-label="Telemetry metric legend">

@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
+
 import { ContextPin } from '@/components/workspace/context-pin';
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
@@ -23,24 +25,40 @@ export interface BreakerTelemetryBindingSummary {
 }
 
 /**
- * Physical BDFB hierarchy is a read-only projection of the canonical Equipment
- * tree. Panel detail belongs to Equipment Composition, never to a second,
- * legacy breaker-position renderer.
+ * Read-only projection of canonical BDFB Equipment. The top stage displays
+ * the physical shelf/frame/panel hierarchy. Selecting a panel exposes its
+ * actual breaker-position inventory below without navigating away, while
+ * Equipment Composition remains the single editor of record.
  */
 export function BdfbChassis({
   device,
   presentation,
+  powerBindings = [],
+  telemetryBindings = [],
+  activePanelId,
 }: Readonly<{
   device: DeviceNode;
   presentation: BdfbPresentation;
   powerBindings?: readonly BreakerPowerBinding[];
   telemetryBindings?: readonly BreakerTelemetryBindingSummary[];
   canWritePower?: boolean;
+  activePanelId?: string;
 }>) {
   const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
+  const initialPanel =
+    panels.find((panel) => panel.id === activePanelId) ??
+    panels.find((panel) => panel.positions.some(Boolean)) ??
+    panels[0];
+  const [selectedId, setSelectedId] = useState(initialPanel?.id ?? '');
+  const selectedPanel = panels.find((panel) => panel.id === selectedId) ?? initialPanel;
+  const installed = selectedPanel?.positions.filter((position) => position !== null).length ?? 0;
+  const available = (selectedPanel?.positions.length ?? 0) - installed;
+  const destinationByBreaker = new Map(powerBindings.map((item) => [item.breakerId, item]));
+  const monitoredBreakers = new Set(telemetryBindings.map((item) => item.breakerId));
+
   return (
-    <section className="bdfb-chassis sm-bdfb-modern">
+    <section className="bdfb-chassis sm-bdfb-modern sm-bdfb-stage">
       <header className="bdfb-chassis-header">
         <div>
           <span>PHYSICAL COMPOSITION</span>
@@ -57,6 +75,7 @@ export function BdfbChassis({
           <span>{panels.length} panels</span>
         </div>
       </header>
+
       <div className="sm-bdfb-physical-body">
         <article className="sm-bdfb-physical-chassis">
           <div className="sm-bdfb-physical-title">CHASSIS · {device.name}</div>
@@ -73,21 +92,35 @@ export function BdfbChassis({
                     </div>
                     <div className="sm-bdfb-physical-panels">
                       {frame.panels.map((panel) => {
-                        const installed = panel.positions.filter(Boolean).length;
+                        const occupied = panel.positions.filter(Boolean).length;
+                        const selected = selectedPanel?.id === panel.id;
                         return (
-                          <Link
-                            className="sm-bdfb-physical-panel"
+                          <article
                             key={panel.id}
-                            href={`/device/${panel.id}`}
-                            title={`Open Equipment Composition: ${panel.label}`}
+                            className="sm-bdfb-physical-panel"
+                            data-selected={selected}
                           >
-                            <strong>{panel.label}</strong>
-                            <span>
-                              {installed} installed · {panel.positions.length - installed} available
-                              positions
-                            </span>
-                            <small>OPEN PANEL COMPOSITION →</small>
-                          </Link>
+                            <button
+                              className="sm-bdfb-panel-select"
+                              type="button"
+                              aria-pressed={selected}
+                              onClick={() => setSelectedId(panel.id)}
+                              aria-label={`Inspect panel ${panel.label}, ${occupied} breakers installed`}
+                            >
+                              <strong>{panel.label}</strong>
+                              <span>
+                                {occupied} installed · {panel.positions.length - occupied} available
+                                positions
+                              </span>
+                            </button>
+                            <Link
+                              className="sm-bdfb-panel-composition-link"
+                              href={`/device/${panel.id}`}
+                              title={`Open Equipment Composition: ${panel.label}`}
+                            >
+                              OPEN PANEL COMPOSITION →
+                            </Link>
+                          </article>
                         );
                       })}
                       {!frame.panels.length && <p>No installed panels</p>}
@@ -100,6 +133,74 @@ export function BdfbChassis({
           {!presentation.shelves.length && <p>No physical shelf or panel has been configured.</p>}
         </article>
       </div>
+
+      {selectedPanel && (
+        <section className="sm-bdfb-panel-focus" aria-label="Selected panel breaker positions">
+          <header className="sm-bdfb-panel-focus-header">
+            <div>
+              <span>SELECTED PANEL · CIRCUIT POSITIONS</span>
+              <h2>{selectedPanel.label}</h2>
+              <small>Read-only position inventory from the installed Equipment tree</small>
+            </div>
+            <Link href={`/device/${selectedPanel.id}`}>
+              OPEN PANEL COMPOSITION →
+            </Link>
+          </header>
+          <div className="sm-bdfb-panel-focus-summary" aria-label="Panel occupancy">
+            <div><strong>{installed}</strong><span>INSTALLED</span></div>
+            <div><strong>{available}</strong><span>AVAILABLE</span></div>
+            <div><strong>{selectedPanel.positions.length}</strong><span>POSITIONS</span></div>
+          </div>
+          <div className="sm-bdfb-panel-positions" role="list" aria-label="Panel breaker slots">
+            {selectedPanel.positions.map((breaker, index) => (
+              <div
+                key={index}
+                role="listitem"
+                className="sm-bdfb-panel-position"
+                data-installed={breaker !== null}
+              >
+                {breaker ? (
+                  <Link href={`/device/${breaker.id}`}
+                    title={`Position ${index + 1}: ${breaker.label}`}
+                    aria-label={`Position ${index + 1}: ${breaker.label}; open breaker details`}>
+                    <span>P{String(index + 1).padStart(2, '0')}</span>
+                    <strong>●</strong>
+                  </Link>
+                ) : (
+                  <span title={`Position ${index + 1}: available`}
+                    aria-label={`Position ${index + 1}: available`}>
+                    P{String(index + 1).padStart(2, '0')}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+          {installed > 0 ? (
+            <div className="sm-bdfb-breaker-summary">
+              <strong>INSTALLED CIRCUITS</strong>
+              {selectedPanel.positions.map((breaker, index) =>
+                breaker ? (
+                  <div className="sm-bdfb-breaker-summary-row" key={breaker.id}>
+                    <span>Position {String(index + 1).padStart(2, '0')}</span>
+                    <Link href={`/device/${breaker.id}`}>{breaker.label}</Link>
+                    <small>
+                      {destinationByBreaker.get(breaker.id)?.counterpartName ?? 'No connected destination'}
+                      {' · '}
+                      {monitoredBreakers.has(breaker.id) ? 'MQTT bound' : 'No MQTT binding'}
+                    </small>
+                  </div>
+                ) : null,
+              )}
+            </div>
+          ) : (
+            <p className="sm-bdfb-panel-empty">No circuit breakers are installed on this panel.</p>
+          )}
+          <p className="sm-bdfb-panel-focus-note">
+            Positions and connections are inventory records, not live current readings or a wiring
+            certificate. Select another panel above to inspect its positions.
+          </p>
+        </section>
+      )}
     </section>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { EquipmentContractViews } from './equipment-contract-views';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import {
@@ -337,6 +338,37 @@ export function PhysicalEquipmentDiagram({
     '--composition-columns': grid.columns,
     '--composition-rows': grid.rows,
   } as CSSProperties;
+
+  const contracted = root.equipmentType === 'SHELF' ||
+    root.equipmentType === 'SUB_SHELF' ||
+    root.equipmentType === 'FRAME' ||
+    root.equipmentType === 'PANEL' ||
+    root.equipmentType === 'CIRCUIT_BREAKER' ||
+    (root.equipmentType === 'CHASSIS' &&
+      projection.slots.some((slot) =>
+        slot.equipment &&
+        ['SHELF', 'SUB_SHELF', 'FRAME'].includes(slot.equipment.equipmentType),
+      ));
+
+  if (contracted) {
+    return (
+      <div className="equipment-physical-canvas equipment-contract-canvas" aria-label="Physical Equipment composition">
+        <EquipmentContractViews
+          root={root}
+          equipmentById={equipmentById}
+          readings={breakerReadings}
+          {...(onAdd ? { onAdd } : {})}
+        />
+        {hasPorts && (
+          <PortFace
+            ports={root.accessPorts}
+            portConnections={portConnections}
+            canWritePower={canWritePower}
+          />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="equipment-physical-canvas" aria-label="Physical Equipment composition">

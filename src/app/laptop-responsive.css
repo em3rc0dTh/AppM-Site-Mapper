@@ -141,6 +141,12 @@
     overflow-wrap: anywhere;
   }
 
+  .zip-app-shell .mk-explorer-page .spatial-site-workspace > .zip-explorer {
+    height: auto !important;
+    min-height: 0 !important;
+    flex: 1 1 auto;
+  }
+
   /* Site and Structure: move EDIT BOUNDARY into its own lightweight
      toolbar. The old absolute 340px offset overlaps surveyed status. */
   .zip-app-shell .mk-explorer-page .spatial-site-actions {

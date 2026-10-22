@@ -69,19 +69,19 @@ do not recur.
 
 ## UI glossary / naming conventions
 
-| Concept | English interface term |
-| --- | --- |
-| Vista general / resumen | Overview |
-| Telemetría | Telemetry |
-| Puertos | Ports |
-| Entradas DC | DC inputs / Inputs |
-| Gráficas | Charts |
-| Configuración | Settings |
-| Corriente | Current |
-| Voltaje | Voltage |
-| Potencia | Power |
-| Energía | Energy |
-| Historial y diagnósticos | History & diagnostics |
+| Concept                  | English interface term |
+| ------------------------ | ---------------------- |
+| Vista general / resumen  | Overview               |
+| Telemetría               | Telemetry              |
+| Puertos                  | Ports                  |
+| Entradas DC              | DC inputs / Inputs     |
+| Gráficas                 | Charts                 |
+| Configuración            | Settings               |
+| Corriente                | Current                |
+| Voltaje                  | Voltage                |
+| Potencia                 | Power                  |
+| Energía                  | Energy                 |
+| Historial y diagnósticos | History & diagnostics  |
 
 Protocol names and physical Equipment types, such as Chassis, Shelf, Frame,
 Panel and Circuit Breaker, retain the domain terminology already used in MK1.

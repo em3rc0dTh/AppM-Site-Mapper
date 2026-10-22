@@ -48,7 +48,7 @@ export function EquipmentFocusInspector({
   ports,
   settings,
 }: Props) {
-  const [tab, setTab] = useState<Tab>('telemetry');
+  const [tab, setTab] = useState<Tab>('overview');
   const [snmpExpanded, setSnmpExpanded] = useState(false);
   const { samples, now, hasSnapshot } = useTelemetryStream(canReadTelemetry);
   const equipmentById = useMemo(
@@ -72,6 +72,9 @@ export function EquipmentFocusInspector({
   const summary = projectCompositionTelemetry(equipment, equipmentById, readings);
   const breaker = equipment.equipmentType === 'CIRCUIT_BREAKER';
   const current = breaker ? readings[equipment.id] : undefined;
+  const hasLiveReadings = canReadTelemetry && (breaker ? current?.status === 'LIVE' : summary.reporting > 0);
+  const visibleTabs = hasLiveReadings ? TABS : TABS.filter(({ key }) => key !== 'telemetry');
+  const activeTab = tab === 'telemetry' && !hasLiveReadings ? 'overview' : tab;
 
   return (
     <section className="ec-inspector" aria-label={equipment.name + ' Equipment inspector'}>
@@ -84,13 +87,13 @@ export function EquipmentFocusInspector({
       </div>
 
       <div className="ec-inspector-tabs" role="tablist" aria-label="Equipment inspector tabs">
-        {TABS.map(({ key, label }) => (
+        {visibleTabs.map(({ key, label }) => (
           <button
             key={key}
             id={`ec-tab-${key}`}
             type="button"
             role="tab"
-            aria-selected={tab === key}
+            aria-selected={activeTab === key}
             aria-controls={`ec-tabpanel-${key}`}
             onClick={() => setTab(key)}
           >
@@ -101,11 +104,11 @@ export function EquipmentFocusInspector({
       <div
         className="ec-inspector-tab-body"
         role="tabpanel"
-        id={`ec-tabpanel-${tab}`}
-        aria-labelledby={`ec-tab-${tab}`}
+        id={`ec-tabpanel-${activeTab}`}
+        aria-labelledby={`ec-tab-${activeTab}`}
         tabIndex={0}
       >
-        {tab === 'telemetry' && (
+        {activeTab === 'telemetry' && (
           <>
             <div className="ec-inspector-section-title">
               {breaker ? 'MQTT · own breaker reading' : 'MQTT · reporting descendant breakers'}
@@ -147,28 +150,6 @@ export function EquipmentFocusInspector({
                     ? `Source: ${current?.sourceIdentity ?? 'No verified MQTT binding'} · Last packet: ${current?.receivedAt ?? '—'}`
                     : 'Arithmetic mean of each metric from fresh, explicitly bound breakers. Missing values are excluded per metric; these are not feed totals.'}
                 </p>
-                {equipment.equipmentType === 'CHASSIS' && (
-                  <div className="ec-snmp-source">
-                    <p className="ec-inspector-note">
-                      SNMP incoming DC shunts are a separate source. Simulated readings are never
-                      mixed with MQTT figures or treated as certified totals.
-                    </p>
-                    <button
-                      type="button"
-                      aria-expanded={snmpExpanded}
-                      onClick={() => setSnmpExpanded((value) => !value)}
-                    >
-                      {snmpExpanded ? 'HIDE SNMP FEEDS' : 'INSPECT SNMP FEEDS'}
-                    </button>
-                    {snmpExpanded && (
-                      <SnmpFeedLoadPanel
-                        deviceId={equipment.deviceId}
-                        chassisId={equipment.id}
-                        view="summary"
-                      />
-                    )}
-                  </div>
-                )}
                 {!hasSnapshot && (
                   <p className="ec-inspector-note" role="status">
                     Waiting for telemetry stream snapshot…
@@ -194,10 +175,58 @@ export function EquipmentFocusInspector({
             )}
           </>
         )}
-        {tab === 'overview' && overview}
-        {tab === 'ports' && ports}
-        {tab === 'settings' && settings}
+        {activeTab === 'overview' && (
+          <>
+            {overview}
+            {equipment.telemetryPointPrefix && (
+              <p className="ec-inspector-note ec-point-group">
+                Point group {equipment.telemetryPointPrefix} · configured, not a live reading
+              </p>
+            )}
+            {!hasLiveReadings && canReadTelemetry && (
+              <details className="ec-inspector-history">
+                <summary>MQTT diagnostics · no live readings</summary>
+                <EquipmentTelemetryInspector
+                  targetId={equipment.id}
+                  label={equipment.name}
+                  {...(equipment.telemetryPointPrefix
+                    ? {
+                        pointPrefix: equipment.telemetryPointPrefix,
+                        pointCapacity:
+                          equipment.childMode === 'POSITIONAL'
+                            ? equipment.children.length
+                            : undefined,
+                      }
+                    : {})}
+                />
+              </details>
+            )}
+          </>
+        )}
+        {activeTab === 'ports' && ports}
+        {activeTab === 'settings' && settings}
       </div>
+      {equipment.equipmentType === 'CHASSIS' && canReadTelemetry && (
+        <div className="ec-snmp-source">
+          <p className="ec-inspector-note">
+            SNMP incoming DC shunts are independent from MQTT breaker readings.
+          </p>
+          <button
+            type="button"
+            aria-expanded={snmpExpanded}
+            onClick={() => setSnmpExpanded((value) => !value)}
+          >
+            {snmpExpanded ? 'HIDE SNMP FEEDS' : 'INSPECT SNMP FEEDS'}
+          </button>
+          {snmpExpanded && (
+            <SnmpFeedLoadPanel
+              deviceId={equipment.deviceId}
+              chassisId={equipment.id}
+              view="summary"
+            />
+          )}
+        </div>
+      )}
     </section>
   );
 }

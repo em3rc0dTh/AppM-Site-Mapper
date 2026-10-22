@@ -16,13 +16,14 @@ import type {
 } from '@/modules/telemetry/domain/history';
 import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
+import en from '@/messages/en.json';
 
 type InspectorTab = 'overview' | 'feeds' | 'history' | 'settings';
 const INSPECTOR_TABS: readonly { key: InspectorTab; label: string }[] = [
-  { key: 'overview', label: 'Resumen' },
-  { key: 'feeds', label: 'Entradas' },
-  { key: 'history', label: 'Gráficas' },
-  { key: 'settings', label: 'Config.' },
+  { key: 'overview', label: en.bdfb.inspector.overview },
+  { key: 'feeds', label: en.bdfb.inspector.feeds },
+  { key: 'history', label: en.bdfb.inspector.history },
+  { key: 'settings', label: en.bdfb.inspector.settings },
 ];
 type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 

@@ -414,6 +414,7 @@ export default async function TopologyNodePage({
                 key={query.panel ?? 'bdfb-overview'}
                 device={node}
                 presentation={bdfbPresentation}
+                {...(query.panel ? { activePanelId: query.panel } : {})}
                 powerBindings={bdfbPowerBindings}
                 telemetryBindings={bdfbTelemetryBindings}
                 canWritePower={canWritePower}

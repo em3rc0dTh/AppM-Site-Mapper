@@ -964,3 +964,26 @@
     gap: 10px;
   }
 }
+
+/* Physical terminals retain their real connector geometry without a dark stage. */
+.equipment-contract-canvas .equipment-faceplate-surface {
+  min-height: 132px;
+  border: 1px solid #c8d8e8;
+  background: #edf5fc;
+  box-shadow: inset 0 0 0 2px #ffffff;
+}
+
+.equipment-contract-canvas .equipment-faceplate-port {
+  background: #ffffff;
+  border-color: #b7cada;
+  color: #1b3a56;
+  box-shadow: 0 2px 5px #162b4010;
+}
+
+.equipment-contract-canvas .equipment-faceplate-port[aria-pressed='true'] {
+  background: #deedfb;
+}
+
+.equipment-contract-canvas .equipment-faceplate-port small {
+  color: #526e8b;
+}

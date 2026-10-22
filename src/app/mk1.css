@@ -2001,3 +2001,228 @@ body {
 .equipment-port-editor-list .equipment-terminal-connection {
   max-width: 100%;
 }
+
+/* AccessPort editor — stable modal, no stretched Feed control or raw PANEL UUID entry. */
+.power-contract-dialog.equipment-access-port-dialog {
+  width: min(940px, calc(100vw - 32px));
+  max-width: none;
+  max-height: min(92dvh, 920px);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+}
+.equipment-access-port-dialog > header {
+  flex: 0 0 auto;
+  padding: 20px 24px;
+}
+.equipment-access-port-dialog .equipment-access-port-form {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  padding: 20px 24px 0;
+  align-content: start;
+}
+.equipment-access-port-dialog .equipment-access-port-form > label {
+  align-self: start;
+}
+.equipment-access-port-dialog .equipment-access-port-form input:not([type='checkbox']),
+.equipment-access-port-dialog .equipment-access-port-form select {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid #c9d4e3;
+  border-radius: 8px;
+  background: #fff;
+  color: #12263c;
+}
+.equipment-access-port-dialog .equipment-access-port-form input:focus-visible,
+.equipment-access-port-dialog .equipment-access-port-form select:focus-visible {
+  outline: 2px solid #2171bd;
+  outline-offset: 1px;
+}
+.equipment-access-port-dialog .equipment-access-port-form > fieldset {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 2px 0;
+  padding: 18px;
+  border: 1px solid #d5dfe9;
+  border-radius: 10px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 14px 18px;
+  background: #f8fafc;
+}
+.equipment-access-port-dialog .equipment-access-port-form fieldset > legend {
+  padding: 0 8px;
+  font-weight: 750;
+  font-size: 12px;
+  color: #223b56;
+}
+.equipment-access-port-dialog .equipment-access-port-form .equipment-access-port-check {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 4px 0;
+  line-height: 1.5;
+  font-size: 12px;
+  color: #263a51;
+  cursor: pointer;
+}
+.equipment-access-port-dialog .equipment-access-port-form input[type='checkbox'] {
+  box-sizing: border-box;
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  padding: 0;
+  margin: 0;
+  accent-color: #1467af;
+  cursor: pointer;
+}
+.equipment-access-port-dialog .equipment-access-port-form fieldset > small {
+  grid-column: 1 / -1;
+  color: #51657a;
+  line-height: 1.45;
+}
+.equipment-access-port-dialog .equipment-panel-picker {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #ccd9e6;
+  border-radius: 10px;
+  background: #fff;
+}
+.equipment-access-port-dialog .equipment-panel-picker-title {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  color: #1c314a;
+}
+.equipment-access-port-dialog .equipment-panel-picker-title > span {
+  font-size: 11px;
+  color: #526b85;
+}
+.equipment-access-port-dialog .equipment-panel-picker-help {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #52657b;
+}
+.equipment-access-port-dialog .equipment-panel-picker-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  max-height: 228px;
+  overflow: auto;
+}
+.equipment-access-port-dialog .equipment-access-port-form .equipment-panel-picker-option {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #d5e0ea;
+  border-radius: 8px;
+  background: #f8fbff;
+  cursor: pointer;
+}
+.equipment-access-port-dialog .equipment-panel-picker-option:has(input:checked) {
+  background: #e8f3ff;
+  border-color: #3588d5;
+}
+.equipment-access-port-dialog .equipment-panel-picker-option:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: .7;
+}
+.equipment-access-port-dialog .equipment-panel-picker-option > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.equipment-access-port-dialog .equipment-panel-picker-option strong {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  color: #172b40;
+}
+.equipment-access-port-dialog .equipment-panel-picker-option small {
+  color: #66798d;
+  overflow-wrap: anywhere;
+}
+.equipment-access-port-dialog .equipment-panel-picker-empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 16px;
+  border: 1px dashed #a9b8c9;
+  border-radius: 8px;
+  color: #61758a;
+  font-size: 12px;
+}
+.equipment-access-port-dialog .equipment-access-port-form > p {
+  margin: 0;
+  color: #53677b;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.equipment-access-port-dialog .equipment-access-port-form > footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+  padding: 16px 0 18px;
+  background: #fff;
+  border-top: 1px solid #e1e8ef;
+}
+.equipment-access-port-dialog .equipment-access-port-form > footer button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #c9d5e0;
+  font-weight: 700;
+  background: #f8fafc;
+  color: #243c54;
+}
+.equipment-access-port-dialog .equipment-access-port-form > footer button[type='submit'] {
+  border-color: #175fa3;
+  background: #175fa3;
+  color: #fff;
+}
+.equipment-access-port-dialog .equipment-access-port-form > footer button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+@media (max-width: 700px) {
+  .power-contract-backdrop:has(.equipment-access-port-dialog) { padding: 8px; }
+  .power-contract-dialog.equipment-access-port-dialog {
+    width: 100%;
+    max-height: calc(100dvh - 16px);
+  }
+  .equipment-access-port-dialog > header { padding: 16px; }
+  .equipment-access-port-dialog .equipment-access-port-form {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px 16px 0;
+  }
+  .equipment-access-port-dialog .equipment-access-port-form > fieldset,
+  .equipment-access-port-dialog .equipment-panel-picker-options {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .equipment-access-port-dialog .equipment-access-port-form > fieldset { padding: 12px; }
+}

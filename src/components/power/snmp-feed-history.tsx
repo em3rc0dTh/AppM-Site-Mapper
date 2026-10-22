@@ -1,6 +1,6 @@
 'use client';
 
-import en from '@/messages/en.json';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -191,6 +191,7 @@ function TrendChart({
 }
 
 export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
+  const t = useTranslations('snmp.history');
   const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
   const [selectedMetric, setSelectedMetric] = useState<ChartMetric>('currentA');
   const [data, setData] = useState<TrendResult | null>(null);
@@ -267,12 +268,12 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
             onClick={() => setSelectedMetric(item.key)}
           >
             {item.key === 'currentA'
-              ? en.snmp.history.current
+              ? t('current')
               : item.key === 'voltageV'
-                ? en.snmp.history.voltage
+                ? t('voltage')
                 : item.key === 'powerW'
-                  ? en.snmp.history.power
-                  : en.snmp.history.energy}
+                  ? t('power')
+                  : t('energy')}
           </button>
         ))}
       </div>

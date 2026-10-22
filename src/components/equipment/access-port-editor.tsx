@@ -41,6 +41,7 @@ interface BdfbPanelOption {
 
 interface BdfbPanelInventory {
   equipmentType: string;
+  deviceId: string;
   hardwareProfile: 'ELTEK_BDCBB_CONFIG_2' | 'ELTEK_BDCBB_CONFIG_4' | null;
   panels: BdfbPanelOption[];
 }
@@ -119,6 +120,15 @@ export function AccessPortEditor({
   const [panelSearch, setPanelSearch] = useState('');
   const [bdfbChassis, setBdfbChassis] = useState(false);
   const [genericPortMode, setGenericPortMode] = useState(false);
+  const [deviceId, setDeviceId] = useState('');
+  const [mapSnmpNow, setMapSnmpNow] = useState(false);
+  const [sourceIdentity, setSourceIdentity] = useState('');
+  const [currentOid, setCurrentOid] = useState('');
+  const [voltageOid, setVoltageOid] = useState('');
+  const [confirmOidMapping, setConfirmOidMapping] = useState(false);
+  const [existingSnmpBindings, setExistingSnmpBindings] = useState<
+    { metric: string; oid: string; sourceIdentity: string }[]
+  >([]);
 
   const maxPanelCount =
     hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
@@ -146,9 +156,24 @@ export function AccessPortEditor({
 
   const active = accessPorts.filter((port) => port.lifecycle === 'ACTIVE');
   const editing = active.find((port) => port.id === editingId);
+  const hasCurrentMapping = existingSnmpBindings.some((binding) => binding.metric === 'CURRENT');
+  const hasVoltageMapping = existingSnmpBindings.some((binding) => binding.metric === 'VOLTAGE');
+  const commissioningRequested = quickFeed && mapSnmpNow;
+  const config4NeedsRatings = hardwareProfile === 'ELTEK_BDCBB_CONFIG_4' && mapSnmpNow;
+  const commissionerReady =
+    !commissioningRequested ||
+    (form.independentInputConfirmed &&
+      Boolean(sourceIdentity.trim()) &&
+      (!hasCurrentMapping || Boolean(currentOid.trim())) &&
+      confirmOidMapping &&
+      (!config4NeedsRatings ||
+        (Number(form.ratedCurrentA) === 800 &&
+          Number(form.shuntRatedCurrentA) === 1000 &&
+          Number(form.shuntRatedMillivolts) === 60)));
   const canSave =
     form.name.trim().length > 0 &&
     !busy &&
+    commissionerReady &&
     (!snmpNeedsPanels ||
       (!panelsLoading &&
         !panelsError &&
@@ -177,7 +202,27 @@ export function AccessPortEditor({
       if (!response.ok) throw new Error(data.error ?? 'PANEL_INVENTORY_UNAVAILABLE');
       setPanels(data.panels);
       setHardwareProfile(data.hardwareProfile);
+      setDeviceId(data.deviceId);
       setBdfbChassis(Boolean(data.hardwareProfile && data.equipmentType === 'CHASSIS'));
+      if (port && data.hardwareProfile && data.equipmentType === 'CHASSIS') {
+        const result = await fetch(
+          '/api/telemetry/snmp/commission?' + new URLSearchParams({ deviceId: data.deviceId }),
+          { cache: 'no-store' },
+        );
+        if (result.ok) {
+          const commissioned = (await result.json()) as {
+            ports: {
+              id: string;
+              bindings: { metric: string; oid: string; sourceIdentity: string }[];
+            }[];
+          };
+          const matches = commissioned.ports.find((candidate) => candidate.id === port.id);
+          if (matches) {
+            setExistingSnmpBindings(matches.bindings);
+            if (matches.bindings.length) setSourceIdentity(matches.bindings[0]!.sourceIdentity);
+          }
+        }
+      }
       if (!port && data.hardwareProfile && data.equipmentType === 'CHASSIS') {
         setForm((previous) => ({
           ...previous,
@@ -217,6 +262,13 @@ export function AccessPortEditor({
     setHardwareProfile(null);
     setBdfbChassis(false);
     setGenericPortMode(false);
+    setMapSnmpNow(false);
+    setSourceIdentity('');
+    setCurrentOid('');
+    setVoltageOid('');
+    setConfirmOidMapping(false);
+    setExistingSnmpBindings([]);
+    setDeviceId('');
     setError('');
   }
 
@@ -280,13 +332,53 @@ export function AccessPortEditor({
           }),
         },
       );
-      const result = (await response.json()) as { error?: string };
+      const result = (await response.json()) as { error?: string; port?: AccessPort };
       if (!response.ok) throw new Error(result.error ?? `SAVE_FAILED_${response.status}`);
+      if (commissioningRequested && result.port) {
+        // Port persistence and OID commissioning are distinct guarded API writes.
+        // On partial failure keep the same editor open and the persisted port ID,
+        // allowing a safe retry without creating a duplicate DC terminal.
+        setEditingId(result.port.id);
+        const mappings = [
+          ...(!hasCurrentMapping ? [{ metric: 'CURRENT', oid: currentOid.trim() }] : []),
+          ...(!hasVoltageMapping && voltageOid.trim()
+            ? [{ metric: 'VOLTAGE', oid: voltageOid.trim() }]
+            : []),
+        ];
+        for (const point of mappings) {
+          const bindingResponse = await fetch('/api/telemetry/snmp/commission', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              deviceId,
+              feedAccessPortId: result.port.id,
+              sourceIdentity: sourceIdentity.trim(),
+              ...point,
+              confirmPhysicalMapping: true,
+            }),
+          });
+          const bindingResult = (await bindingResponse.json()) as { error?: string };
+          if (!bindingResponse.ok) {
+            throw new Error(
+              'INPUT_SAVED_SNMP_MAPPING_INCOMPLETE: ' +
+                (bindingResult.error ?? bindingResponse.status),
+            );
+          }
+          setExistingSnmpBindings((prior) => [
+            ...prior,
+            {
+              ...point,
+              sourceIdentity: sourceIdentity.trim(),
+            },
+          ]);
+        }
+      }
       setOpen(false);
       reset();
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'SAVE_FAILED');
+      router.refresh();
     } finally {
       setBusy(false);
     }
@@ -419,7 +511,7 @@ export function AccessPortEditor({
                 </h2>
                 <p>
                   {quickFeed
-                    ? 'Select the shunt and its panels. Additional sensor specifications are optional.'
+                    ? 'Select the shunt and its panels, verify the wiring, and optionally configure SNMP without leaving this window.'
                     : 'Configure the physical terminal on this Equipment. Connections are managed separately.'}
                 </p>
               </div>
@@ -708,12 +800,125 @@ export function AccessPortEditor({
                             </p>
                           )}
                         </div>
-                        <details className="equipment-access-port-advanced">
-                          <summary>Advanced · calibration & physical verification</summary>
+                        <div className="equipment-dc-verification">
+                          <strong>Physical verification</strong>
+                          <label className="equipment-access-port-check">
+                            <input
+                              type="checkbox"
+                              checked={form.independentInputConfirmed}
+                              onChange={(event) => {
+                                patch({ independentInputConfirmed: event.target.checked });
+                                if (!event.target.checked) setMapSnmpNow(false);
+                              }}
+                            />
+                            I confirmed from the cabinet wiring that this is a distinct incoming
+                            shunt, not a duplicated bus measurement.
+                          </label>
+                          <small>
+                            {form.independentInputConfirmed
+                              ? 'Physical mapping confirmed. You can configure SNMP below in this same window.'
+                              : 'Not yet verified: save the inventory without certifying electrical totals or binding SNMP.'}
+                          </small>
+                        </div>
+                        {quickFeed && (
+                          <div className="equipment-dc-snmp-setup">
+                            <strong>SNMP measurements</strong>
+                            <label className="equipment-access-port-check">
+                              <input
+                                type="checkbox"
+                                checked={mapSnmpNow}
+                                disabled={!form.independentInputConfirmed || !deviceId}
+                                onChange={(event) => setMapSnmpNow(event.target.checked)}
+                              />
+                              Configure OIDs for this input now
+                            </label>
+                            {!form.independentInputConfirmed && (
+                              <small>
+                                To activate a real controller mapping, physical shunt verification
+                                is required. Lab emulation alone does not certify wiring.
+                              </small>
+                            )}
+                            {existingSnmpBindings.length > 0 && (
+                              <div
+                                className="equipment-dc-existing-bindings"
+                                aria-label="Commissioned SNMP OIDs"
+                              >
+                                {existingSnmpBindings.map((item) => (
+                                  <small key={item.metric}>
+                                    {item.metric}: {item.oid} · {item.sourceIdentity}
+                                  </small>
+                                ))}
+                              </div>
+                            )}
+                            {mapSnmpNow && (
+                              <div className="equipment-dc-snmp-fields">
+                                <label>
+                                  Controller / source identity
+                                  <input
+                                    required
+                                    maxLength={120}
+                                    value={sourceIdentity}
+                                    onChange={(event) => setSourceIdentity(event.target.value)}
+                                    placeholder="Controller identity"
+                                  />
+                                </label>
+                                {!hasCurrentMapping && (
+                                  <label>
+                                    Current OID · required
+                                    <input
+                                      required
+                                      value={currentOid}
+                                      onChange={(event) => setCurrentOid(event.target.value)}
+                                      placeholder="1.3.6.1.…"
+                                    />
+                                  </label>
+                                )}
+                                {!hasVoltageMapping && (
+                                  <label>
+                                    Voltage OID · optional
+                                    <input
+                                      value={voltageOid}
+                                      onChange={(event) => setVoltageOid(event.target.value)}
+                                      placeholder="1.3.6.1.…"
+                                    />
+                                  </label>
+                                )}
+                                {hardwareProfile === 'ELTEK_BDCBB_CONFIG_4' &&
+                                  (Number(form.ratedCurrentA) !== 800 ||
+                                    Number(form.shuntRatedCurrentA) !== 1000 ||
+                                    Number(form.shuntRatedMillivolts) !== 60) && (
+                                    <p className="form-error">
+                                      Config 4 requires verified 800 A input rating and 1000 A / 60
+                                      mV shunt values. Enter them under Equipment specifications
+                                      below.
+                                    </p>
+                                  )}
+                                <label className="equipment-access-port-check">
+                                  <input
+                                    type="checkbox"
+                                    checked={confirmOidMapping}
+                                    onChange={(event) => setConfirmOidMapping(event.target.checked)}
+                                  />
+                                  I verified the controller identity, OIDs, and their physical
+                                  mapping. This is not inferred from the number of OIDs.
+                                </label>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <details
+                          className="equipment-access-port-advanced"
+                          open={config4NeedsRatings ? true : undefined}
+                        >
+                          <summary>
+                            {config4NeedsRatings
+                              ? 'Required Config 4 SNMP ratings · verify before saving'
+                              : 'Optional equipment specifications · calibration & ratings'}
+                          </summary>
                           <p>
-                            Leave unknown values empty; do not infer ratings from another BDFB.
-                            Physical verification is required before commissioning SNMP OIDs or
-                            claiming certified totals.
+                            Leave unknown values empty; do not infer ratings from another BDFB. For
+                            Config 4 commissioning, verify the installed 800 A input rating and 1000
+                            A / 60 mV shunt; never invent a value.
                           </p>
                           <div className="equipment-access-port-advanced-fields">
                             <label>
@@ -766,23 +971,6 @@ export function AccessPortEditor({
                                 }
                               />
                             </label>
-
-                            <label className="equipment-access-port-check">
-                              <input
-                                type="checkbox"
-                                checked={form.independentInputConfirmed}
-                                onChange={(event) =>
-                                  patch({ independentInputConfirmed: event.target.checked })
-                                }
-                              />
-                              Wiring verified: this shunt is independent, not a duplicate
-                              upstream/bus measurement
-                            </label>
-                            <small>
-                              This controls whether currents can contribute to the certified BDFB
-                              total. A/B are sides, not unique feed identities. Do not infer panel
-                              loads.
-                            </small>
                           </div>
                         </details>
                       </>
@@ -797,8 +985,9 @@ export function AccessPortEditor({
               )}
               {quickFeed && (
                 <p>
-                  Saving this input records the physical mapping; it does not verify wiring or
-                  certify SNMP readings. Verification can be added later.
+                  Physical verification and OID commissioning are distinct from saving the equipment
+                  inventory.
+                  {commissioningRequested && ' Saving also commissions the selected SNMP OIDs.'}
                 </p>
               )}
               {error && (
@@ -811,7 +1000,13 @@ export function AccessPortEditor({
                   Cancel
                 </button>
                 <button type="submit" disabled={!canSave}>
-                  {busy ? 'Saving…' : quickFeed ? 'SAVE DC INPUT' : 'SAVE ACCESS PORT'}
+                  {busy
+                    ? 'Saving…'
+                    : commissioningRequested
+                      ? 'SAVE INPUT + SNMP'
+                      : quickFeed
+                        ? 'SAVE DC INPUT'
+                        : 'SAVE ACCESS PORT'}
                 </button>
               </footer>
             </form>

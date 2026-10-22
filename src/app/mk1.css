@@ -2320,3 +2320,72 @@ body {
   outline: 2px solid #2171bd;
   outline-offset: 3px;
 }
+
+/* Guided BFDB commissioning: never hide required verification behind Advanced. */
+.equipment-access-port-dialog .equipment-dc-verification,
+.equipment-access-port-dialog .equipment-dc-snmp-setup {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 15px 16px;
+  border: 1px solid #ccdae7;
+  border-radius: 9px;
+  background: #fff;
+}
+.equipment-access-port-dialog .equipment-dc-verification {
+  border-color: #c8d5e2;
+}
+.equipment-access-port-dialog .equipment-dc-verification > strong,
+.equipment-access-port-dialog .equipment-dc-snmp-setup > strong {
+  font-size: 13px;
+  color: #193a5b;
+}
+.equipment-access-port-dialog .equipment-dc-verification small,
+.equipment-access-port-dialog .equipment-dc-snmp-setup small {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #50677e;
+}
+.equipment-access-port-dialog .equipment-dc-verification .equipment-access-port-check,
+.equipment-access-port-dialog .equipment-dc-snmp-setup .equipment-access-port-check {
+  display: flex;
+  grid-column: 1 / -1;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  color: #293f56;
+}
+.equipment-access-port-dialog .equipment-dc-snmp-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 13px;
+}
+.equipment-access-port-dialog .equipment-dc-snmp-fields > label,
+.equipment-access-port-dialog .equipment-dc-snmp-fields > p,
+.equipment-access-port-dialog .equipment-dc-snmp-fields > .equipment-access-port-check {
+  min-width: 0;
+}
+.equipment-access-port-dialog .equipment-dc-snmp-fields .equipment-access-port-check,
+.equipment-access-port-dialog .equipment-dc-snmp-fields .form-error {
+  grid-column: 1 / -1;
+}
+.equipment-access-port-dialog .equipment-dc-existing-bindings {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 7px;
+  background: #edf6ff;
+  overflow-wrap: anywhere;
+}
+.equipment-access-port-dialog .equipment-access-port-advanced[open] {
+  border-color: #b9cde0;
+}
+@media (max-width: 700px) {
+  .equipment-access-port-dialog .equipment-dc-snmp-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

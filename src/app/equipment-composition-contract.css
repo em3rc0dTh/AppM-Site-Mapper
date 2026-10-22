@@ -678,3 +678,23 @@
     transition: none;
   }
 }
+
+.ec-snmp-source {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(145, 174, 208, 0.19);
+}
+
+.ec-snmp-source > button {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid rgba(82, 214, 205, 0.35);
+  background: #1c3446;
+  color: #abede5;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.ec-snmp-source > .sm-snmp-load {
+  margin-top: 10px;
+}

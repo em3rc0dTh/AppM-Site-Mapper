@@ -74,8 +74,7 @@ export function EquipmentFocusInspector({
   const summary = projectCompositionTelemetry(equipment, equipmentById, readings);
   const breaker = equipment.equipmentType === 'CIRCUIT_BREAKER';
   const current = breaker ? readings[equipment.id] : undefined;
-  const hasLiveReadings =
-    canReadTelemetry && (breaker ? current?.status === 'LIVE' : summary.reporting > 0);
+  const hasLiveReadings = canReadTelemetry && summary.reporting > 0;
   const visibleTabs = hasLiveReadings ? TABS : TABS.filter(({ key }) => key !== 'telemetry');
   const activeTab = tab === 'telemetry' && !hasLiveReadings ? 'overview' : tab;
   const coverage =
@@ -155,7 +154,7 @@ export function EquipmentFocusInspector({
                 <p className="ec-inspector-note">
                   {breaker
                     ? `Source: ${current?.sourceIdentity ?? 'No verified MQTT binding'} · Last packet: ${current?.receivedAt ?? '—'}`
-                    : 'Arithmetic mean of each metric from fresh, explicitly bound breakers. Missing values are excluded per metric; these are not feed totals.'}
+                    : 'Hierarchical arithmetic mean of reporting immediate-child means. Missing metrics and empty slots are excluded. These are not SNMP input totals.'}
                 </p>
                 {!hasSnapshot && (
                   <p className="ec-inspector-note" role="status">

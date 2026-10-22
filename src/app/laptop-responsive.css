@@ -141,6 +141,18 @@
     overflow-wrap: anywhere;
   }
 
+  /* Site and Structure: move EDIT BOUNDARY into its own lightweight
+     toolbar. The old absolute 340px offset overlaps surveyed status. */
+  .zip-app-shell .mk-explorer-page .spatial-site-actions {
+    position: static;
+    align-self: flex-end;
+    flex: 0 0 auto;
+    top: auto;
+    right: auto;
+    margin: 6px 308px 6px 12px;
+    z-index: 1;
+  }
+
   /* Explorer header must not overlap its boundary actions at laptop widths.
      Let the schematic canvas take the available stage width. */
   .zip-app-shell .mk-explorer-page .zip-canvas-title {
@@ -339,6 +351,10 @@
   .zip-app-shell.app-shell--immersive .operational-page--blueprint {
     height: auto !important;
     overflow: visible !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .spatial-site-actions {
+    margin-right: 16px;
   }
 
   /* The 1000–1199px Room layout is two columns by design, but the

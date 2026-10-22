@@ -191,7 +191,8 @@
   }
 
   /* Other three-zone operational workbenches use the same reduced shell. */
-  .zip-app-shell .operational-layout:not(.operational-layout--rack):not(.operational-layout--blueprint) {
+  .zip-app-shell
+    .operational-layout:not(.operational-layout--rack):not(.operational-layout--blueprint) {
     grid-template-columns: 212px minmax(0, 1fr) 292px !important;
   }
 

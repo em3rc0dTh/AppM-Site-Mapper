@@ -59,8 +59,8 @@ try {
   ]) {
     await page.setViewportSize({ width, height });
     const geometry = await deviceLayout.evaluate((element) => {
-      const cols = getComputedStyle(element).gridTemplateColumns
-        .split(/\s+/)
+      const cols = getComputedStyle(element)
+        .gridTemplateColumns.split(/\s+/)
         .map((item) => parseFloat(item));
       const stage = element.querySelector('.zip-device-stage');
       const inspector = element.querySelector('.zip-device-inspector');
@@ -73,9 +73,15 @@ try {
     });
     const [left, right] = expectedColumns;
     assert.equal(geometry.cols.length, width === 1100 ? 2 : 3, `${width}px layout column count`);
-    assert.ok(Math.abs(geometry.cols[0] - left) < 2, `${width}px topology width: ${geometry.cols[0]}`);
+    assert.ok(
+      Math.abs(geometry.cols[0] - left) < 2,
+      `${width}px topology width: ${geometry.cols[0]}`,
+    );
     if (right !== null) {
-      assert.ok(Math.abs(geometry.cols[2] - right) < 2, `${width}px inspector width: ${geometry.cols[2]}`);
+      assert.ok(
+        Math.abs(geometry.cols[2] - right) < 2,
+        `${width}px inspector width: ${geometry.cols[2]}`,
+      );
     }
     assert.ok(geometry.stageWidth > 550, `${width}px must preserve legible center stage`);
     assert.ok(geometry.inspectorWidth > 250, `${width}px must preserve visible inspector`);

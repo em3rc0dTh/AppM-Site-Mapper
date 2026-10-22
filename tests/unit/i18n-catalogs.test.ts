@@ -38,8 +38,9 @@ describe('Site Mapper translation catalogs', () => {
       expect(value.trim(), key).not.toBe('');
       expect(spanish.get(key)?.trim(), key).toBeTruthy();
       const enVariables = [...value.matchAll(/\{([a-zA-Z][\w]*)\}/g)].map((match) => match[1]);
-      const esVariables = [...(spanish.get(key) ?? '').matchAll(/\{([a-zA-Z][\w]*)\}/g)]
-        .map((match) => match[1]);
+      const esVariables = [...(spanish.get(key) ?? '').matchAll(/\{([a-zA-Z][\w]*)\}/g)].map(
+        (match) => match[1],
+      );
       expect(esVariables.sort(), key).toEqual(enVariables.sort());
     }
   });

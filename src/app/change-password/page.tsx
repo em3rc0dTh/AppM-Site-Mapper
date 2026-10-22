@@ -20,11 +20,7 @@ export default async function ChangePasswordPage() {
     <AuthFrame
       eyebrow={t('eyebrow')}
       title={t('title')}
-      description={
-        user.mustChangePassword
-          ? t('forcedDescription')
-          : t('description')
-      }
+      description={user.mustChangePassword ? t('forcedDescription') : t('description')}
     >
       <div className="auth-account">
         <span>{t('signedInAs')}</span>

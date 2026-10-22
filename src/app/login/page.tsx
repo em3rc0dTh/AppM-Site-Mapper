@@ -63,11 +63,7 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthFrame
-      eyebrow={t('eyebrow')}
-      title={t('title')}
-      description={t('description')}
-    >
+    <AuthFrame eyebrow={t('eyebrow')} title={t('title')} description={t('description')}>
       <form className="auth-form" onSubmit={submit}>
         <label>
           <span>{t('email')}</span>

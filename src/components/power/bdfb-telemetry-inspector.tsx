@@ -2,8 +2,10 @@
 
 import { useBdfbTelemetrySnapshot } from '@/components/telemetry/use-bdfb-telemetry';
 import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
+import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
+import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import { aggregateBdfbDescendantTelemetry } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
@@ -15,7 +17,13 @@ import type {
 import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 
-type InspectorWindow = 'LIVE' | TelemetryHistoryWindow;
+type InspectorTab = 'overview' | 'feeds' | 'history' | 'settings';
+const INSPECTOR_TABS: readonly { key: InspectorTab; label: string }[] = [
+  { key: 'overview', label: 'Resumen' },
+  { key: 'feeds', label: 'Entradas' },
+  { key: 'history', label: 'Gráficas' },
+  { key: 'settings', label: 'Config.' },
+];
 type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
 function metric(value: number | null | undefined, unit: string, decimals = 2): string {
@@ -151,7 +159,9 @@ export function BdfbTelemetryInspector({
   descendantEquipmentIds?: readonly string[];
 }>) {
   const { samples, now } = useBdfbTelemetrySnapshot(node.id);
-  const [window, setWindow] = useState<InspectorWindow>('LIVE');
+  const inspectorRef = useRef<HTMLElement>(null);
+  const [tab, setTab] = useState<InspectorTab>('overview');
+  const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
   const [history, setHistory] = useState<TelemetryHistoryResponse | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
@@ -170,12 +180,12 @@ export function BdfbTelemetryInspector({
 
   const hasA = feeds?.includes('A') ?? false;
   const hasB = feeds?.includes('B') ?? false;
-  const scopeLabel = window === 'LIVE' ? 'Entire BDFB' : (selectedPanel?.label ?? 'Entire BDFB');
+  const scopeLabel = selectedPanel?.label ?? 'Entire BDFB';
   const positions = panels.flatMap((panel) => panel.positions);
   const breakers = positions.filter((item) => item !== null);
 
   useEffect(() => {
-    if (window === 'LIVE') return;
+    if (tab !== 'history') return;
 
     const controller = new AbortController();
     const params = new URLSearchParams({
@@ -207,10 +217,21 @@ export function BdfbTelemetryInspector({
       });
 
     return () => controller.abort();
-  }, [activePanelId, node.id, window]);
+  }, [activePanelId, node.id, tab, window]);
+
+  function changeTab(next: InspectorTab) {
+    if (next === tab) return;
+    if (next === 'history') {
+      setHistory(null);
+      setHistoryLoading(true);
+      setHistoryError(null);
+    }
+    setTab(next);
+    inspectorRef.current?.scrollTo({ top: 0, behavior: 'auto' });
+  }
 
   return (
-    <aside className="telxius-properties zip-bdfb-inspector">
+    <aside ref={inspectorRef} className="telxius-properties zip-bdfb-inspector">
       <header>
         INSPECTOR <span>⌄</span>
       </header>
@@ -223,53 +244,50 @@ export function BdfbTelemetryInspector({
         </div>
       </div>
 
-      <SnmpFeedLoadPanel deviceId={node.id} chassisId={presentation.chassisId} />
-
-      <section className="zip-bdfb-live-average" aria-label="BDFB telemetry">
-        <header>
-          <div>
-            <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
-            <strong>
-              {window === 'LIVE' ? 'DESCENDANT EQUIPMENT AVERAGE' : 'HISTORICAL AVERAGE'}
-            </strong>
-          </div>
-          <span>{scopeLabel}</span>
-        </header>
-
-        <div className="zip-bdfb-window-tabs" role="tablist" aria-label="Telemetry time window">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={window === 'LIVE'}
-            onClick={() => {
-              setHistory(null);
-              setHistoryLoading(false);
-              setHistoryError(null);
-              setWindow('LIVE');
-            }}
+      <nav className="sm-bdfb-inspector-tabs" role="tablist" aria-label="BDFB inspector sections"
+        onKeyDown={(event) => {
+          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+          event.preventDefault();
+          const current = INSPECTOR_TABS.findIndex((item) => item.key === tab);
+          const nextIndex = event.key === 'Home' ? 0
+            : event.key === 'End' ? INSPECTOR_TABS.length - 1
+            : (current + (event.key === 'ArrowRight' ? 1 : -1) + INSPECTOR_TABS.length)
+              % INSPECTOR_TABS.length;
+          const nextTab = INSPECTOR_TABS[nextIndex]!;
+          changeTab(nextTab.key);
+          const button = document.getElementById('sm-bdfb-tab-' + nextTab.key);
+          button?.focus();
+        }}
+      >
+        {INSPECTOR_TABS.map((item) => (
+          <button key={item.key} type="button" role="tab"
+            id={'sm-bdfb-tab-' + item.key}
+            aria-controls={'sm-bdfb-panel-' + item.key}
+            aria-selected={tab === item.key}
+            tabIndex={tab === item.key ? 0 : -1}
+            onClick={() => changeTab(item.key)}
           >
-            LIVE
+            {item.label}
           </button>
-          {TELEMETRY_HISTORY_WINDOWS.map((historyWindow) => (
-            <button
-              type="button"
-              role="tab"
-              aria-selected={window === historyWindow}
-              key={historyWindow}
-              onClick={() => {
-                setHistory(null);
-                setHistoryLoading(true);
-                setHistoryError(null);
-                setWindow(historyWindow);
-              }}
-            >
-              {historyWindow.toUpperCase()}
-            </button>
-          ))}
-        </div>
+        ))}
+      </nav>
 
-        {window === 'LIVE' ? (
+      <div className="sm-bdfb-inspector-content" role="tabpanel"
+        id={'sm-bdfb-panel-' + tab}
+        aria-labelledby={'sm-bdfb-tab-' + tab}
+        tabIndex={0}
+      >
+        {tab === 'overview' && (
           <>
+            <SnmpFeedLoadPanel key={node.id} deviceId={node.id} chassisId={presentation.chassisId} view="summary" />
+            <section className="zip-bdfb-live-average" aria-label="Live descendant MQTT equipment average">
+              <header>
+                <div>
+                  <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
+                  <strong>DESCENDANT EQUIPMENT · MQTT LIVE</strong>
+                </div>
+                <span>Entire BDFB</span>
+              </header>
             <div className="zip-bdfb-live-average-grid">
               <div>
                 <span>AVG VOLTAGE</span>
@@ -303,12 +321,66 @@ export function BdfbTelemetryInspector({
               <dt>Last packet</dt>
               <dd>{compactUtc(latestReceived)}</dd>
             </dl>
-          </>
-        ) : (
-          <HistoricalTelemetry history={history} loading={historyLoading} error={historyError} />
-        )}
-      </section>
 
+            </section>
+      <section className="zip-bdfb-status-card">
+        <h3>STATUS</h3>
+        <div>
+          <span>●</span>
+          <strong>
+            {reportingEquipment > 0
+              ? 'Live descendant equipment telemetry received'
+              : 'Physical inventory recorded'}
+          </strong>
+          <small>
+            {reportingEquipment > 0
+              ? `${reportingEquipment} descendant Equipment readings contribute to available averages.`
+              : 'Live readings require explicit Equipment MQTT bindings.'}
+          </small>
+        </div>
+      </section>
+          </>
+        )}
+
+        {tab === 'feeds' && (
+          <SnmpFeedLoadPanel key={node.id} deviceId={node.id} chassisId={presentation.chassisId} view="feeds" />
+        )}
+
+        {tab === 'history' && (
+          <>
+            <SnmpFeedHistory deviceId={node.id} />
+            <section className="zip-bdfb-live-average" aria-label="Historical descendant MQTT equipment averages">
+              <header>
+                <div>
+                  <strong>MQTT · DESCENDANT EQUIPMENT HISTORY</strong>
+                </div>
+                <span>{scopeLabel}</span>
+              </header>
+              <div className="zip-bdfb-window-tabs" role="tablist" aria-label="MQTT history time window">
+                {TELEMETRY_HISTORY_WINDOWS.map((historyWindow) => (
+                  <button type="button" role="tab"
+                    aria-selected={window === historyWindow}
+                    key={historyWindow}
+                    onClick={() => {
+                      setHistory(null);
+                      setHistoryLoading(true);
+                      setHistoryError(null);
+                      setWindow(historyWindow);
+                    }}>
+                    {historyWindow.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              <HistoricalTelemetry history={history} loading={historyLoading} error={historyError} />
+            </section>
+          </>
+        )}
+
+        {tab === 'settings' && (
+          <>
+            <SnmpFeedCommissioning deviceId={node.id} chassisId={presentation.chassisId} />
+            <section className="sm-bdfb-device-info" aria-label="BDFB physical and telemetry properties">
+              <h3>INVENTORY & DIAGNOSTICS</h3>
       <dl>
         <dt>Type</dt>
         <dd>BDFB</dd>
@@ -331,24 +403,7 @@ export function BdfbTelemetryInspector({
         <dt>Telemetry</dt>
         <dd>{mappedBreakerCount > 0 ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}</dd>
       </dl>
-
-      <section className="zip-bdfb-status-card">
-        <h3>STATUS</h3>
-        <div>
-          <span>●</span>
-          <strong>
-            {reportingEquipment > 0
-              ? 'Live descendant equipment telemetry received'
-              : 'Physical inventory recorded'}
-          </strong>
-          <small>
-            {reportingEquipment > 0
-              ? `${reportingEquipment} descendant Equipment readings contribute to available averages.`
-              : 'Live readings require explicit Equipment MQTT bindings.'}
-          </small>
-        </div>
-      </section>
-
+            </section>
       <div className="zip-bdfb-actions">
         <span>{mappedBreakerCount} mapped breakers</span>
         <span>
@@ -356,6 +411,9 @@ export function BdfbTelemetryInspector({
             ? `Average scope: ${selectedPanel.label}`
             : 'Average scope: all configured BDFB breakers'}
         </span>
+      </div>
+          </>
+        )}
       </div>
     </aside>
   );

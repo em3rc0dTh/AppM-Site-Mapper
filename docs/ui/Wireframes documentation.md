@@ -550,38 +550,85 @@ Eso representa el `source → feed → panel → breaker → destination` que el
 
 ---
 
-# SCREEN 11 — BDFB
+# SCREEN 11 — BDFB · Wireframe ASCII vigente (22/10/2026)
 
-Entramos en `BDFB-A`.
+Esta versión **sustituye el wireframe anterior de BDFB-A** y documenta el estado visible del recorrido `TELXIUS-LURIN-1 → EDIFICIO-01-TELXIUS → LEVEL-01 → SALA DE TRANSMISIONES → Rack-01-BDFB → BDFB-01`, después de los PR #95 (Inspector con pestañas) y #96 (detalle del panel seleccionado).
 
-Ahora vuelve a aparecer una representación **física**.
+El shell conserva tres columnas: **Topology** (navegación), **Physical View** (área de trabajo) e **Inspector** (lecturas/históricos/configuración). En la captura de referencia está activa la pestaña **Gráficas**, ventana **24H** y métrica **Corriente**. Esta representación usa nombres y cifras del laboratorio, no valores eléctricos certificados.
 
 ```text
-┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ ← POWER PATH        BDFB-A                                                            EXPLORE      │
-├────────────────────┬────────────────────────────────────────────────────────────┬──────────────────┤
-│ POWER TREE         │ BDFB PHYSICAL VIEW                                         │ BDFB-A           │
-│                    │                                                            │                  │
-│ ● BDFB-A           │  ┌──────────────────────────────────────────────────────┐  │ Identity         │
-│   ├─ Shelf 01      │  │                     BDFB-A                           │  │ ...              │
-│   │  ├─ Frame A    │  │                                                      │  │                  │
-│   │  │  ├─ A1      │  │  ┌─────────────────────┐ ┌─────────────────────┐     │  │ Feed       A     │
-│   │  │  ├─ A2      │  │  │ FRAME A             │ │ FRAME B             │     │  │                  │
-│   │  │  └─ A3      │  │  │                     │ │                     │     │  │ Panels      6    │
-│   │  └─ Frame B    │  │  │ ┌────┐ ┌────┐       │ │ ┌────┐ ┌────┐       │     │  │ Breakers   ...   │
-│   └─ Shelf 02      │  │  │ │ A1 │ │ A2 │  ...  │ │ │ B1 │ │ B2 │  ...  │     │  │                  │
-│                    │  │  │ └────┘ └────┘       │ │ └────┘ └────┘       │     │  │ Telemetry ● LIVE │
-│                    │  │  │                     │ │                     │     │  │                  │
-│                    │  │  └─────────────────────┘ └─────────────────────┘     │  │                  │
-│                    │  │                                                      │  │                  │
-│                    │  └──────────────────────────────────────────────────────┘  │                  │
-│                    │                                                            │                  │
-└────────────────────┴────────────────────────────────────────────────────────────┴──────────────────┘
++----------------------------+--------------------------------------------------------------------------------+------------------------------------------------+
+| SITE MAPPER                | TELXIUS > EDIFICIO-01 > LEVEL-01 > SALA > RACK-01 > BDFB-01                    | Search | EXPLORE | WAREHOUSE | ADMIN           |
++----------------------------+--------------------------------------------------------------------------------+------------------------------------------------+
+| TOPOLOGY                   | BDFB PHYSICAL VIEW                                                             | INSPECTOR                                      |
+|                            |                                                                                | BDFB-01 / TELXIUS-LURIN-1                      |
+| v SALA DE TRANSMISIONES    | +--------------------------------------------------------------------------+   | [Resumen][Entradas][GRAFICAS][Config.]         |
+|   v BAY-01                 | | CHASSIS: BDFB-01                                                       |     |                                                |
+|     v RACK-01-BDFB         | | +----------------------------------------------------------------------+ |   | SNMP / TIMESCALEDB HISTORY                     |
+|       * BDFB-01            | | | SHELF: BDFB SHELF                                                    | |   | [24H] [7D] [15D] [1M]                          |
+|         > CHASSIS          | | | +--------------------------------+ +---------------------------------+ | | | [Voltaje] [CORRIENTE] [Potencia]               |
+|     > RACK-SWITCH          | | | | FRAME-01                       | | FRAME-02                        | | | | [Energia]                                      |
+|                            | | | |                                | |                                 | | | | +--------------------------------------+       |
+|                            | | | | [* PANEL 01: 3/24]           | | [  PANEL 01: 0/24]             | | |    | | CURRENT - SHUNTS A/B                 |       |
+|                            | | | |  OPEN PANEL COMPOSITION ->   | |  OPEN PANEL COMPOSITION ->     | | |    | |                                      |       |
+|                            | | | |                                | |                                 | | | | |   ~~~ A / LAB          ~~~ B / LAB   |       |
+|                            | | | | [  PANEL 02: 0/24]           | | [  PANEL 02: 0/24]             | | |    | |   (recent samples at right edge)     |       |
+|                            | | | |  OPEN PANEL COMPOSITION ->   | |  OPEN PANEL COMPOSITION ->     | | |    | |                                      |       |
+|                            | | | +--------------------------------+ +---------------------------------+ | | | | A: 219.9 A        B: 212.4 A        |        |
+|                            | | +----------------------------------------------------------------------+ |   | +--------------------------------------+       |
+|                            | +--------------------------------------------------------------------------+   | Estimated energy (observed segments)           |
+|                            |                                                                                | 34.8614 kWh                                    |
+|                            | +--------------------------------------------------------------------------+   | Coverage: 182.1 feed-minutes                   |
+|                            | | SELECTED PANEL - CIRCUIT POSITIONS                                       |   | Gaps > 120s NOT integrated                     |
+|                            | | FRAME-01 / PANEL-01                    [OPEN PANEL COMPOSITION ->]        |  |                                                |
+|                            | |                                                                        |     | MQTT / DESCENDANT EQUIPMENT HISTORY            |
+|                            | | [3 INSTALLED] [21 AVAILABLE] [24 POSITIONS]                            |     | [24H] [7D] [15D] [1M]                          |
+|                            | |                                                                        |     |                                                |
+|                            | | [P01*][P02*][P03*][P04 ][P05 ][P06 ][P07 ][P08 ][P09 ][P10 ][P11 ][P12 ] |   | Voltage: 12.23 V                               |
+|                            | | [P13 ][P14 ][P15 ][P16 ][P17 ][P18 ][P19 ][P20 ][P21 ][P22 ][P23 ][P24 ] |   | Current: 2.81 A                                |
+|                            | |                                                                        |     | [MQTT historical mini-trends]                  |
+|                            | | INSTALLED CIRCUITS                                                     |     |                                                |
+|                            | | 01   BDFB-01-PANEL-01-CB-01           NETWORK BOARD / MQTT bound        |    |                                                |
+|                            | | 02   GRTLuren3 PSU A1                No destination / MQTT bound       |     |                                                |
+|                            | | 03   GRTLuren3 PSU A0                No destination / MQTT bound       |     |                                                |
+|                            | |                                                                        |     |                                                |
+|                            | | Select any panel above to refresh its real installed/available slots.  |     |                                                |
+|                            | +--------------------------------------------------------------------------+   |                                                |
+|                            | [+ CREATE EQUIPMENT]                                                           |                                                |
++----------------------------+--------------------------------------------------------------------------------+------------------------------------------------+
 ```
 
-La jerarquía contractual que estamos materializando aquí es `BDFB → Shelf → Frame → Panel → Holder/Breaker`. :chatgpt-content-reference{index="8"}
-Recuerda, puede o no puede tener frame, eso se setea cuando creas el device (si es un bdfb), entonces, muestras ello o no, todo depende de la configuración pero siempre lo usas como rferencia de posición.
-Por otro lado, los panels van uno bajo el otro dentro del mismo frame, nunca derecha.
+**Leyenda:** `*` indica panel o breaker instalado/seleccionado; las posiciones `P04…P24` están disponibles. Los minigráficos del Inspector son marcadores visuales: la curva real proviene de las muestras persistidas en TimescaleDB. Las cifras reproducen un instante de la captura de ejemplo, no son datos estáticos de implementación.
+
+### Contrato de la vista central
+
+- El **gabinete** ocupa la región superior: `CHASSIS → SHELF → FRAME → PANEL`. En el ejemplo hay **2 frames × 2 paneles = 4 paneles**, sin imponer esa geometría a otros BDFB. Los paneles están **uno debajo de otro dentro de cada frame**, no en columnas paralelas.
+- El **panel seleccionado** ocupa la región inferior, antes vacía, con sus **24 posiciones reales**, ocupación, breakers instalados, destino de Power Path si existe y si hay enlace MQTT registrado. Los paneles vacíos muestran posiciones disponibles sin inventar breakers.
+- Pulsar la **superficie de un panel** cambia el detalle inferior _sin navegar a otra pantalla_; `OPEN PANEL COMPOSITION →` abre el editor canónico de Equipment. Cada posición instalada puede abrir su breaker.
+- El árbol de navegación izquierdo y los enlaces del breadcrumb se mantienen. No se trasladan tendencias eléctricas al canvas físico ni se calcula carga individual por breaker a partir del shunt.
+
+### Contrato del Inspector con pestañas
+
+```text
++------------------------------------------------+
+| BDFB-01                                        |
+| TELXIUS-LURIN-1 / EDIFICIO-01-TELXIUS          |
++------------------------------------------------+
+| [RESUMEN] [ENTRADAS] [GRAFICAS] [CONFIG.]      |
++------------------------------------------------+
+| RESUMEN  : SNMP shunts A/B + MQTT descendientes|
+| ENTRADAS : corriente, voltaje, mapeo y paneles |
+| GRAFICAS : SNMP TimescaleDB + historia MQTT    |
+| CONFIG.  : OID, SNMP, verificaciones, inventario|
++------------------------------------------------+
+```
+
+En **Gráficas** hay filtros `24H / 7D / 15D / 1M` y selector exclusivo `Voltaje / Corriente / Potencia / Energía`, con **una gráfica SNMP de dos curvas (A/B) por vez**. El histórico descendiente MQTT está debajo, como fuente separada. No deben aparecer las cuatro gráficas SNMP apiladas.
+
+En **Resumen** se distingue explícitamente la corriente de los shunts SNMP de los promedios MQTT. En **Entradas**, la simulación `LAB LIVE` no significa instalación física verificada. En **Config.** permanecen el commissioning y las asociaciones con paneles, sin exponer credenciales SNMP en el navegador.
+
+**Certificación y energía:** `SIMULATED/LAB LIVE` no certifica hardware de Delta. La potencia SNMP es derivada (`|V| × I`); la energía es una estimación integrada sobre intervalos observados, excluyendo huecos mayores de 120 segundos; no es un contador físico de kWh. El promedio de energía descendiente MQTT es otra magnitud y no debe sumarse a esta.
+
 ---
 
 # SCREEN 12 — PANEL / BREAKER

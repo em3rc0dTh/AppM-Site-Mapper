@@ -3,7 +3,12 @@
     "overview": "Overview",
     "settings": "Settings",
     "telemetry": "Telemetry",
-    "ports": "Ports"
+    "ports": "Ports",
+    "loading": "Loading…",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close",
+    "confirm": "Confirm"
   },
   "equipment": {
     "inspector": {
@@ -28,5 +33,42 @@
       "power": "Power",
       "energy": "Energy"
     }
+  },
+  "shell": {
+    "skip": "Skip to workspace",
+    "tagline": "Physical Infrastructure",
+    "settings": "SETTINGS",
+    "warehouseContext": "VIRTUAL WAREHOUSE",
+    "networkContext": "NETWORK",
+    "explore": "EXPLORE",
+    "warehouse": "WAREHOUSE",
+    "admin": "ADMIN",
+    "signOut": "Sign out",
+    "signOutError": "Could not sign out. Try again."
+  },
+  "auth": {
+    "login": {
+      "eyebrow": "Identity / secure access",
+      "title": "Sign in",
+      "description": "Authenticate to enter the Site Mapper operational workspace.",
+      "email": "Email",
+      "password": "Password",
+      "submit": "SIGN IN",
+      "submitting": "Establishing secure session…",
+      "connectionError": "Connection unavailable. Please try again.",
+      "credentialsError": "Invalid email or password.",
+      "loginError": "Unable to sign in. Please try again."
+    },
+    "changePassword": {
+      "eyebrow": "Identity / credential policy",
+      "title": "Change password",
+      "forcedDescription": "Replace the temporary credential before operational access is enabled.",
+      "description": "Update your credential and revoke every existing session.",
+      "signedInAs": "Signed in as"
+    }
+  },
+  "workspace": {
+    "home": "Home",
+    "title": "Infrastructure overview"
   }
 }

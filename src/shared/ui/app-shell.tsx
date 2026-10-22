@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import { Suspense, useState, type ReactNode } from 'react';
 
@@ -18,6 +19,7 @@ function BrandMark() {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const t = useTranslations('shell');
   const pathname = usePathname();
   const router = useRouter();
   const [error, setError] = useState('');
@@ -37,12 +39,12 @@ export function AppShell({ children }: { children: ReactNode }) {
     pathname === '/network';
 
   const contextLabel = pathname.startsWith('/settings')
-    ? 'SETTINGS'
+    ? t('settings')
     : pathname.startsWith('/warehouse')
-      ? 'VIRTUAL WAREHOUSE'
+      ? t('warehouseContext')
       : pathname === '/workspace'
         ? ''
-        : 'NETWORK';
+        : t('networkContext');
 
   async function logout() {
     setBusy(true);
@@ -52,7 +54,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       router.replace('/login');
       router.refresh();
     } catch {
-      setError('Could not sign out. Try again.');
+      setError(t('signOutError'));
       setBusy(false);
     }
   }
@@ -71,7 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         .join(' ')}
     >
       <a className="skip-link" href="#main-content">
-        Skip to workspace
+        {t('skip')}
       </a>
 
       <header className="app-topbar zip-topbar">
@@ -79,7 +81,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <BrandMark />
           <span>
             <strong>SITE MAPPER</strong>
-            <small>Physical Infrastructure</small>
+            <small>{t('tagline')}</small>
           </span>
         </Link>
 
@@ -93,20 +95,20 @@ export function AppShell({ children }: { children: ReactNode }) {
         <CommandPalette />
 
         <Link className="zip-explore" href="/network">
-          EXPLORE <b>⌄</b>
+          {t('explore')} <b>⌄</b>
         </Link>
         <Link className="zip-warehouse" href="/warehouse">
-          WAREHOUSE
+          {t('warehouse')}
         </Link>
         <Link className="zip-account" href="/settings">
-          ADMIN <b>⌄</b>
+          {t('admin')} <b>⌄</b>
         </Link>
         <button
           className="zip-more"
           disabled={busy}
           onClick={logout}
-          aria-label="Sign out"
-          title="Sign out"
+          aria-label={t('signOut')}
+          title={t('signOut')}
         >
           {busy ? '…' : '⋮'}
         </button>

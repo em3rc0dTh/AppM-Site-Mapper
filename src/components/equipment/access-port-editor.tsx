@@ -117,6 +117,8 @@ export function AccessPortEditor({
   const [panelsLoading, setPanelsLoading] = useState(false);
   const [panelsError, setPanelsError] = useState('');
   const [panelSearch, setPanelSearch] = useState('');
+  const [bdfbChassis, setBdfbChassis] = useState(false);
+  const [genericPortMode, setGenericPortMode] = useState(false);
 
   const maxPanelCount =
     hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
@@ -138,7 +140,7 @@ export function AccessPortEditor({
     form.direction === 'INPUT' &&
     form.exposure === 'EXTERNAL' &&
     form.snmpFeedInput;
-  const quickFeed = Boolean(hardwareProfile && snmpNeedsPanels && canWritePower);
+  const quickFeed = Boolean(bdfbChassis && !genericPortMode && hardwareProfile && snmpNeedsPanels && canWritePower);
 
   const active = accessPorts.filter((port) => port.lifecycle === 'ACTIVE');
   const editing = active.find((port) => port.id === editingId);
@@ -170,6 +172,7 @@ export function AccessPortEditor({
       if (!response.ok) throw new Error(data.error ?? 'PANEL_INVENTORY_UNAVAILABLE');
       setPanels(data.panels);
       setHardwareProfile(data.hardwareProfile);
+      setBdfbChassis(Boolean(data.hardwareProfile && data.equipmentType === 'CHASSIS'));
       if (!port && data.hardwareProfile && data.equipmentType === 'CHASSIS') {
         setForm((previous) => ({
           ...previous,
@@ -206,6 +209,9 @@ export function AccessPortEditor({
     setEditingId(port?.id ?? null);
     setForm(formFor(port));
     setPanelSearch('');
+    setHardwareProfile(null);
+    setBdfbChassis(false);
+    setGenericPortMode(false);
     setError('');
   }
 
@@ -422,6 +428,12 @@ export function AccessPortEditor({
                     ? 'CONFIGURATION 2 · TWO SHUNTS (A / B)'
                     : 'CONFIGURATION 4 · FOUR SHUNTS (A1 / A2 / B1 / B2)'}</strong>
                   <small>POWER · INPUT · EXTERNAL · SNMP feeder are configured automatically.</small>
+                  {!editingId && (
+                    <button type="button" className="equipment-quick-feed-generic" onClick={() => {
+                      setGenericPortMode(true);
+                      setForm(formFor());
+                    }}>Create a different port type</button>
+                  )}
                 </div>
               )}
               {!quickFeed && (
@@ -656,7 +668,7 @@ export function AccessPortEditor({
                           )}
                         </div>
                         <details className="equipment-access-port-advanced">
-                          <summary>Advanced · calibration, ratings & verification (optional)</summary>
+                          <summary>Advanced · calibration & physical verification</summary>
                           <p>Leave unknown values empty; do not infer ratings from another BDFB. Physical verification is required before commissioning SNMP OIDs or claiming certified totals.</p>
                           <div className="equipment-access-port-advanced-fields">
                         <label>
@@ -728,10 +740,12 @@ export function AccessPortEditor({
                     )}
                   </fieldset>
                 )}
-              <p>
-                Archiving or changing the electrical identity of a connected terminal is blocked.
-                Power Paths remain authoritative.
-              </p>
+              {!quickFeed && (
+                <p>Archiving or changing the electrical identity of a connected terminal is blocked. Power Paths remain authoritative.</p>
+              )}
+              {quickFeed && (
+                <p>Saving this input records the physical mapping; it does not verify wiring or certify SNMP readings. Verification can be added later.</p>
+              )}
               {error && (
                 <p role="alert" className="form-error">
                   {error}

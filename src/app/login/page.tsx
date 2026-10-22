@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 
 import { isWorkspaceHref } from '@/modules/workspace/domain/context';
@@ -14,6 +15,7 @@ interface LoginResponse {
 }
 
 export default function LoginPage() {
+  const t = useTranslations('auth.login');
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -37,7 +39,7 @@ export default function LoginPage() {
       const result = (await response.json()) as LoginResponse;
 
       if (!response.ok) {
-        setError(result.error ?? 'LOGIN_FAILED');
+        setError(result.error === 'INVALID_CREDENTIALS' ? t('credentialsError') : t('loginError'));
         setBusy(false);
         return;
       }
@@ -55,20 +57,20 @@ export default function LoginPage() {
       router.replace(isWorkspaceHref(context.lastContext) ? context.lastContext : '/workspace');
       router.refresh();
     } catch {
-      setError('Connection unavailable. Please try again.');
+      setError(t('connectionError'));
       setBusy(false);
     }
   }
 
   return (
     <AuthFrame
-      eyebrow="Identity / secure access"
-      title="Sign in"
-      description="Authenticate to enter the Site Mapper operational workspace."
+      eyebrow={t('eyebrow')}
+      title={t('title')}
+      description={t('description')}
     >
       <form className="auth-form" onSubmit={submit}>
         <label>
-          <span>Email</span>
+          <span>{t('email')}</span>
           <input
             name="email"
             type="email"
@@ -78,7 +80,7 @@ export default function LoginPage() {
           />
         </label>
         <label>
-          <span>Password</span>
+          <span>{t('password')}</span>
           <input
             name="password"
             type="password"
@@ -88,7 +90,7 @@ export default function LoginPage() {
           />
         </label>
         <button className="auth-submit" type="submit" disabled={busy}>
-          {busy ? 'Establishing secure session…' : 'SIGN IN'}
+          {busy ? t('submitting') : t('submit')}
         </button>
         {error ? (
           <p className="form-error auth-error" role="alert">

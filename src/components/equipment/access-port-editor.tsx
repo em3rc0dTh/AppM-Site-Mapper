@@ -111,15 +111,21 @@ export function AccessPortEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [panels, setPanels] = useState<BdfbPanelOption[]>([]);
-  const [hardwareProfile, setHardwareProfile] = useState<BdfbPanelInventory['hardwareProfile']>(null);
+  const [hardwareProfile, setHardwareProfile] =
+    useState<BdfbPanelInventory['hardwareProfile']>(null);
   const [panelsLoading, setPanelsLoading] = useState(false);
   const [panelsError, setPanelsError] = useState('');
   const [panelSearch, setPanelSearch] = useState('');
 
-  const maxPanelCount = hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
-    ? 1 : hardwareProfile === 'ELTEK_BDCBB_CONFIG_2' ? 2 : 24;
+  const maxPanelCount =
+    hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
+      ? 1
+      : hardwareProfile === 'ELTEK_BDCBB_CONFIG_2'
+        ? 2
+        : 24;
   const visiblePanels = panels.filter((panel) =>
-    `${panel.name} ${panel.frameName}`.toLocaleLowerCase()
+    `${panel.name} ${panel.frameName}`
+      .toLocaleLowerCase()
       .includes(panelSearch.trim().toLocaleLowerCase()),
   );
   const panelSelectionHasConflict = form.servedPanelIds.some((id) => {
@@ -137,7 +143,11 @@ export function AccessPortEditor({
   const canSave =
     form.name.trim().length > 0 &&
     !busy &&
-    (!snmpNeedsPanels || (!panelsLoading && !panelsError && !panelSelectionHasConflict && form.servedPanelIds.length <= maxPanelCount)) &&
+    (!snmpNeedsPanels ||
+      (!panelsLoading &&
+        !panelsError &&
+        !panelSelectionHasConflict &&
+        form.servedPanelIds.length <= maxPanelCount)) &&
     (canWritePower || (form.portType !== 'POWER' && editing?.portType !== 'POWER'));
 
   function patch(change: Partial<PortForm>) {
@@ -503,26 +513,28 @@ export function AccessPortEditor({
                     </label>
                     {form.snmpFeedInput && (
                       <>
-                        {hardwareProfile !== 'ELTEK_BDCBB_CONFIG_2' && <label>
-                          Independent incoming feeder position (Configuration 4)
-                          <select
-                            value={form.feedPosition}
-                            onChange={(event) =>
-                              patch({
-                                feedPosition: event.target.value as PortForm['feedPosition'],
-                                feed: event.target.value
-                                  ? (event.target.value[0] as PortForm['feed'])
-                                  : form.feed,
-                              })
-                            }
-                          >
-                            <option value="">Generic / unverified</option>
-                            <option value="A1">A1 · side A</option>
-                            <option value="A2">A2 · side A</option>
-                            <option value="B1">B1 · side B</option>
-                            <option value="B2">B2 · side B</option>
-                          </select>
-                        </label>}
+                        {hardwareProfile !== 'ELTEK_BDCBB_CONFIG_2' && (
+                          <label>
+                            Independent incoming feeder position (Configuration 4)
+                            <select
+                              value={form.feedPosition}
+                              onChange={(event) =>
+                                patch({
+                                  feedPosition: event.target.value as PortForm['feedPosition'],
+                                  feed: event.target.value
+                                    ? (event.target.value[0] as PortForm['feed'])
+                                    : form.feed,
+                                })
+                              }
+                            >
+                              <option value="">Generic / unverified</option>
+                              <option value="A1">A1 · side A</option>
+                              <option value="A2">A2 · side A</option>
+                              <option value="B1">B1 · side B</option>
+                              <option value="B2">B2 · side B</option>
+                            </select>
+                          </label>
+                        )}
                         <label>
                           Overload warning threshold (A) · manufacturer default 640 A
                           <input
@@ -572,10 +584,13 @@ export function AccessPortEditor({
                         <div className="equipment-panel-picker">
                           <div className="equipment-panel-picker-title">
                             <strong>Supplied physical panels</strong>
-                            <span>{form.servedPanelIds.length} / {maxPanelCount} selected</span>
+                            <span>
+                              {form.servedPanelIds.length} / {maxPanelCount} selected
+                            </span>
                           </div>
                           <p className="equipment-panel-picker-help">
-                            Choose installed PANEL equipment from this BDFB. IDs are assigned automatically.
+                            Choose installed PANEL equipment from this BDFB. IDs are assigned
+                            automatically.
                           </p>
                           <input
                             type="search"
@@ -586,15 +601,23 @@ export function AccessPortEditor({
                             aria-label="Search available BDFB panels"
                             disabled={panelsLoading || Boolean(panelsError)}
                           />
-                          {panelsLoading && <span role="status">Loading panels from inventory…</span>}
+                          {panelsLoading && (
+                            <span role="status">Loading panels from inventory…</span>
+                          )}
                           {panelsError && (
                             <div role="alert" className="form-error">
                               Could not load panel inventory: {panelsError}{' '}
-                              <button type="button" onClick={() => void loadPanels()}>Retry</button>
+                              <button type="button" onClick={() => void loadPanels()}>
+                                Retry
+                              </button>
                             </div>
                           )}
                           {!panelsLoading && !panelsError && (
-                            <div className="equipment-panel-picker-options" role="group" aria-label="Physical BDFB panels">
+                            <div
+                              className="equipment-panel-picker-options"
+                              role="group"
+                              aria-label="Physical BDFB panels"
+                            >
                               {visiblePanels.length === 0 && (
                                 <p className="equipment-panel-picker-empty">
                                   {panels.length === 0
@@ -604,20 +627,27 @@ export function AccessPortEditor({
                               )}
                               {visiblePanels.map((panel) => {
                                 const selected = form.servedPanelIds.includes(panel.id);
-                                const claimed = Boolean(panel.assignedPortId && panel.assignedPortId !== editingId);
+                                const claimed = Boolean(
+                                  panel.assignedPortId && panel.assignedPortId !== editingId,
+                                );
                                 return (
                                   <label key={panel.id} className="equipment-panel-picker-option">
                                     <input
                                       type="checkbox"
                                       aria-label={`Assign ${panel.name}`}
                                       checked={selected}
-                                      disabled={claimed || (!selected && form.servedPanelIds.length >= maxPanelCount)}
+                                      disabled={
+                                        claimed ||
+                                        (!selected && form.servedPanelIds.length >= maxPanelCount)
+                                      }
                                       onChange={() => togglePanel(panel.id)}
                                     />
                                     <span>
                                       <strong>{panel.name}</strong>
                                       <small>{panel.frameName}</small>
-                                      {claimed && <small>Assigned to {panel.assignedPortName}</small>}
+                                      {claimed && (
+                                        <small>Assigned to {panel.assignedPortName}</small>
+                                      )}
                                     </span>
                                   </label>
                                 );

@@ -27,13 +27,13 @@ export async function GET(_request: Request, context: Context) {
     return NextResponse.json({ error: 'EQUIPMENT_NOT_FOUND' }, { status: 404 });
   }
   const device = await repository.getById(equipment.deviceId);
-  if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB' ||
-      device.lifecycle !== 'ACTIVE') {
+  if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB' || device.lifecycle !== 'ACTIVE') {
     return NextResponse.json({ error: 'NOT_A_BDFB_EQUIPMENT' }, { status: 422 });
   }
 
-  const inventory = (await repository.listEquipmentForDevice(equipment.deviceId))
-    .filter((node) => node.lifecycle === 'ACTIVE');
+  const inventory = (await repository.listEquipmentForDevice(equipment.deviceId)).filter(
+    (node) => node.lifecycle === 'ACTIVE',
+  );
   const byId = new Map(inventory.map((node) => [node.id, node]));
   const assigned = new Map<string, { id: string; name: string }>();
   for (const owner of inventory) {

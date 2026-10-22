@@ -598,7 +598,7 @@ La izquierda es navegación física; el centro ocupa el gabinete y la inspecció
 +-------------------------+------------------------------------------------------------------------------+---------------------------------------------------+
 ```
 
-**Leyenda:** `*` = panel seleccionado / breaker instalado. Los 24 slots son el inventario del panel, no una afirmación sobre qué está energizado. Las curvas son marcadores del historial persistido, no series inventadas. Las cifras del laboratorio son *un ejemplo de una captura* y deben cambiar con nuevas lecturas.
+**Leyenda:** `*` = panel seleccionado / breaker instalado. Los 24 slots son el inventario del panel, no una afirmación sobre qué está energizado. Las curvas son marcadores del historial persistido, no series inventadas. Las cifras del laboratorio son _un ejemplo de una captura_ y deben cambiar con nuevas lecturas.
 
 ## 11.2 — Inspector: cada pestaña por separado
 
@@ -765,15 +765,15 @@ Los paneles se ordenan verticalmente **dentro de cada frame**. Al pulsar el pane
 
 ## 11.4 — Matriz de procedencia y estados
 
-| Área | Fuente | Evidencia visual esperada | Precaución |
-| --- | --- | --- | --- |
-| Chassis, frames, paneles, breakers y posiciones | Topología / Equipment persistidos | Instalados, libres y nombre del breaker | No inventar geometría ni breakers |
-| Destino de breaker | Power Path explícito | Nombre de destino o `No connected destination` | Sin inferir cableado |
-| Promedios descendientes | Bindings MQTT de Equipment | `MQTT LIVE` + promedio V/A/W/contador | Son promedios de equipos, no carga de shunt |
-| Shunts SNMP de entrada | Lecturas del collector vía API | A/B o A1/A2/B1/B2 y sello temporal | `LAB SIMULATED` no certifica instalación |
-| Histórico SNMP | TimescaleDB, muestras persistidas por AccessPort | 24H / 7D / 15D / 1M y V/A/W/kWh | Potencia y energía derivadas, sin rellenar cortes |
-| Histórico de descendientes | Telemetría MQTT almacenada | Gráficas separadas de SNMP | No combinar fuentes o tipos de energía |
-| Commissioning | Perfil, AccessPorts, OID y confirmaciones | Editor del chassis / mantenimiento | Nunca exponer secrets del collector |
+| Área                                            | Fuente                                           | Evidencia visual esperada                      | Precaución                                        |
+| ----------------------------------------------- | ------------------------------------------------ | ---------------------------------------------- | ------------------------------------------------- |
+| Chassis, frames, paneles, breakers y posiciones | Topología / Equipment persistidos                | Instalados, libres y nombre del breaker        | No inventar geometría ni breakers                 |
+| Destino de breaker                              | Power Path explícito                             | Nombre de destino o `No connected destination` | Sin inferir cableado                              |
+| Promedios descendientes                         | Bindings MQTT de Equipment                       | `MQTT LIVE` + promedio V/A/W/contador          | Son promedios de equipos, no carga de shunt       |
+| Shunts SNMP de entrada                          | Lecturas del collector vía API                   | A/B o A1/A2/B1/B2 y sello temporal             | `LAB SIMULATED` no certifica instalación          |
+| Histórico SNMP                                  | TimescaleDB, muestras persistidas por AccessPort | 24H / 7D / 15D / 1M y V/A/W/kWh                | Potencia y energía derivadas, sin rellenar cortes |
+| Histórico de descendientes                      | Telemetría MQTT almacenada                       | Gráficas separadas de SNMP                     | No combinar fuentes o tipos de energía            |
+| Commissioning                                   | Perfil, AccessPorts, OID y confirmaciones        | Editor del chassis / mantenimiento             | Nunca exponer secrets del collector               |
 
 ## 11.5 — Contrato de densidad y usabilidad
 

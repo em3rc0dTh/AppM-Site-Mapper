@@ -35,9 +35,7 @@ describe('Equipment Composition SCREEN 12', () => {
   const breakerA = makeNode('Breaker A', 'CIRCUIT_BREAKER');
   const breakerB = makeNode('Breaker B', 'CIRCUIT_BREAKER');
   const breakerC = makeNode('Breaker C', 'CIRCUIT_BREAKER');
-  const panelA = makeNode('Panel A', 'PANEL', [
-    breakerA.id, breakerB.id, null, null, breakerC.id,
-  ]);
+  const panelA = makeNode('Panel A', 'PANEL', [breakerA.id, breakerB.id, null, null, breakerC.id]);
   const panelB = makeNode('Panel B', 'PANEL', Array(24).fill(null));
   const frame = makeNode('Frame 1', 'FRAME', [panelA.id, panelB.id]);
   const shelf = makeNode('Shelf 1', 'SHELF', [frame.id]);
@@ -84,7 +82,10 @@ describe('Equipment Composition SCREEN 12', () => {
 
   it('renders installed breaker rows and collapses 21 or more free slots by default', () => {
     const panel = makeNode('Panel 24', 'PANEL', [
-      breakerA.id, breakerB.id, breakerC.id, ...Array(21).fill(null),
+      breakerA.id,
+      breakerB.id,
+      breakerC.id,
+      ...Array(21).fill(null),
     ]);
     const markup = renderToStaticMarkup(
       <EquipmentContractViews root={panel} equipmentById={byId} readings={readings} />,
@@ -111,8 +112,8 @@ describe('Equipment Composition SCREEN 12', () => {
 
   it('does not use duplicate descendants when canonical references contain a cycle', () => {
     const loop = { ...frame, children: [panelA.id, panelA.id, frame.id] };
-    expect(projectCompositionTelemetry(loop, new Map([
-      ...byId, [loop.id, loop],
-    ]), readings).installed).toBe(3);
+    expect(
+      projectCompositionTelemetry(loop, new Map([...byId, [loop.id, loop]]), readings).installed,
+    ).toBe(3);
   });
 });

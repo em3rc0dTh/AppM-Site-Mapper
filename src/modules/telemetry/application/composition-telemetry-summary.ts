@@ -12,12 +12,7 @@ export interface CompositionTelemetrySummary {
   readonly metricCounts: Readonly<Record<CompositionMetricKey, number>>;
 }
 
-const METRICS: readonly CompositionMetricKey[] = [
-  'voltageV',
-  'currentA',
-  'powerW',
-  'energyKwh',
-];
+const METRICS: readonly CompositionMetricKey[] = ['voltageV', 'currentA', 'powerW', 'energyKwh'];
 
 /**
  * Read-only projection of installed physical descendants.

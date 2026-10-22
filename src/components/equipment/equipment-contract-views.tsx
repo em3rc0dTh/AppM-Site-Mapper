@@ -54,7 +54,9 @@ function ChildLink({
   return (
     <Link className={className} href={destination(node.id)}>
       {children ?? node.name}
-      <span className="ec-open" aria-hidden="true">↗</span>
+      <span className="ec-open" aria-hidden="true">
+        ↗
+      </span>
     </Link>
   );
 }
@@ -71,7 +73,9 @@ function PanelPreview({
           ? `${panel.children.length} positions · ${panel.children.filter(Boolean).length} occupied`
           : `${panel.children.filter(Boolean).length} installed`}
       </span>
-      <span className="ec-panel-presence">{panel.children.some(Boolean) ? 'Installed' : 'Available'}</span>
+      <span className="ec-panel-presence">
+        {panel.children.some(Boolean) ? 'Installed' : 'Available'}
+      </span>
     </ChildLink>
   );
 }
@@ -91,9 +95,11 @@ function FramePreview({
         <span className="ec-count">{panels.length} panels</span>
       </div>
       <div className="ec-frame-panels">
-        {panels.length ? panels.map(({ child }) => (
-          <PanelPreview key={child.id} panel={child} byId={byId} />
-        )) : <p className="ec-muted">No panels installed</p>}
+        {panels.length ? (
+          panels.map(({ child }) => <PanelPreview key={child.id} panel={child} byId={byId} />)
+        ) : (
+          <p className="ec-muted">No panels installed</p>
+        )}
       </div>
     </article>
   );
@@ -128,7 +134,9 @@ function BreakerRow({
   return (
     <ChildLink node={breaker} className="ec-breaker-row">
       <span className="ec-pos">{String(position).padStart(2, '0')}</span>
-      <span className="ec-breaker-name" title={breaker.name}>{breaker.name}</span>
+      <span className="ec-breaker-name" title={breaker.name}>
+        {breaker.name}
+      </span>
       <BreakerMetrics reading={reading} />
       <span className="ec-status" data-status={status}>
         <span className="ec-status-dot" aria-hidden="true" />
@@ -156,9 +164,7 @@ function PanelComposition({
     child: id ? byId.get(id) : undefined,
   }));
   const installed = slots.filter((slot) => Boolean(slot.id));
-  const available = root.childMode === 'POSITIONAL'
-    ? slots.filter((slot) => slot.id === null)
-    : [];
+  const available = root.childMode === 'POSITIONAL' ? slots.filter((slot) => slot.id === null) : [];
   return (
     <section className="ec-panel-composition" aria-label="Installed breakers and available slots">
       <header className="ec-section-heading">
@@ -175,22 +181,36 @@ function PanelComposition({
       <div className="ec-table-scroll" role="region" tabIndex={0} aria-label="Breaker measurements">
         <div className="ec-breaker-table">
           <div className="ec-breaker-columns" aria-hidden="true">
-            <span>POS</span><span>BREAKER</span>
-            <span>V · V</span><span>I · A</span><span>P · W</span><span>E · kWh</span><span>STATUS</span>
+            <span>POS</span>
+            <span>BREAKER</span>
+            <span>V · V</span>
+            <span>I · A</span>
+            <span>P · W</span>
+            <span>E · kWh</span>
+            <span>STATUS</span>
           </div>
-          {installed.length ? installed.map(({ id, index, child }) => (
-            child?.lifecycle === 'ACTIVE' && child.equipmentType === 'CIRCUIT_BREAKER' ? (
-              <BreakerRow key={id} breaker={child} position={index + 1} reading={readings[child.id]} />
-            ) : (
-              <div className="ec-missing-row" key={id}>
-                <span>{String(index + 1).padStart(2, '0')}</span>
-                <strong>{child?.name ?? 'Unresolved equipment reference'}</strong>
-                <span>{child?.equipmentType ?? 'Not available'}</span>
-                {child && <ChildLink node={child}>OPEN EQUIPMENT</ChildLink>}
-              </div>
+          {installed.length ? (
+            installed.map(({ id, index, child }) =>
+              child?.lifecycle === 'ACTIVE' && child.equipmentType === 'CIRCUIT_BREAKER' ? (
+                <BreakerRow
+                  key={id}
+                  breaker={child}
+                  position={index + 1}
+                  reading={readings[child.id]}
+                />
+              ) : (
+                <div className="ec-missing-row" key={id}>
+                  <span>{String(index + 1).padStart(2, '0')}</span>
+                  <strong>{child?.name ?? 'Unresolved equipment reference'}</strong>
+                  <span>{child?.equipmentType ?? 'Not available'}</span>
+                  {child && <ChildLink node={child}>OPEN EQUIPMENT</ChildLink>}
+                </div>
+              ),
             )
-          )) : (
-            <p className="ec-empty-panel">No breakers installed. Free slots are not offline devices.</p>
+          ) : (
+            <p className="ec-empty-panel">
+              No breakers installed. Free slots are not offline devices.
+            </p>
           )}
         </div>
       </div>
@@ -215,7 +235,11 @@ function PanelComposition({
             </button>
           )}
           {onAdd && available.length > 0 && (
-            <button type="button" className="ec-primary-action" onClick={() => onAdd(available[0]!.index)}>
+            <button
+              type="button"
+              className="ec-primary-action"
+              onClick={() => onAdd(available[0]!.index)}
+            >
               + ADD
             </button>
           )}
@@ -249,16 +273,24 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
   return (
     <div className="ec-contract" data-equipment-type={type}>
       <div className="ec-topline">
-        <span className="ec-eyebrow">PHYSICAL COMPOSITION <span aria-hidden="true">/</span> {type.replaceAll('_', ' ')}</span>
+        <span className="ec-eyebrow">
+          PHYSICAL COMPOSITION <span aria-hidden="true">/</span> {type.replaceAll('_', ' ')}
+        </span>
         <span className="ec-topline-status">
-          <span className="ec-status-dot" aria-hidden="true" /> {summary.reporting}/{summary.installed} breakers reporting
+          <span className="ec-status-dot" aria-hidden="true" /> {summary.reporting}/
+          {summary.installed} breakers reporting
         </span>
       </div>
       <div className="ec-focus">
         <div>
           <small>FOCUSED EQUIPMENT</small>
           <h2>{root.name}</h2>
-          <p>{root.model ?? root.equipmentType.replaceAll('_', ' ')} · {root.childMode === 'POSITIONAL' ? `${root.children.length} physical positions` : `${children.length} child Equipment`}</p>
+          <p>
+            {root.model ?? root.equipmentType.replaceAll('_', ' ')} ·{' '}
+            {root.childMode === 'POSITIONAL'
+              ? `${root.children.length} physical positions`
+              : `${children.length} child Equipment`}
+          </p>
         </div>
         <div className="ec-focus-badges">
           <span>{children.length} installed</span>
@@ -268,38 +300,64 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
 
       {type === 'CHASSIS' && (
         <section className="ec-main-section" aria-label="Chassis shelves">
-          <header className="ec-section-heading"><div><small>CHASSIS INTERIOR</small><strong>Shelves &amp; frames</strong></div><span>{children.length} child assemblies</span></header>
+          <header className="ec-section-heading">
+            <div>
+              <small>CHASSIS INTERIOR</small>
+              <strong>Shelves &amp; frames</strong>
+            </div>
+            <span>{children.length} child assemblies</span>
+          </header>
           <div className="ec-chassis-shelves">
-            {children.length ? children.map(({ child }) => (
-              <article className="ec-shelf-card" key={child.id}>
-                <div className="ec-shelf-card-heading">
-                  <div><small>{child.equipmentType.replaceAll('_', ' ')}</small><ChildLink node={child} className="ec-shelf-link" /></div>
-                  <Counts node={child} />
-                </div>
-                <div className="ec-chassis-frame-strip">
-                  {child.equipmentType === 'FRAME'
-                    ? activeChildren(child, equipmentById).map(({ child: panel }) => (
+            {children.length ? (
+              children.map(({ child }) => (
+                <article className="ec-shelf-card" key={child.id}>
+                  <div className="ec-shelf-card-heading">
+                    <div>
+                      <small>{child.equipmentType.replaceAll('_', ' ')}</small>
+                      <ChildLink node={child} className="ec-shelf-link" />
+                    </div>
+                    <Counts node={child} />
+                  </div>
+                  <div className="ec-chassis-frame-strip">
+                    {child.equipmentType === 'FRAME' ? (
+                      activeChildren(child, equipmentById).map(({ child: panel }) => (
                         <PanelPreview key={panel.id} panel={panel} byId={equipmentById} />
                       ))
-                    : activeChildren(child, equipmentById).length
-                      ? activeChildren(child, equipmentById).map(({ child: frame }) => (
-                          <ChildLink node={frame} key={frame.id} className="ec-chassis-frame">
-                            <strong>{frame.name}</strong><small><Counts node={frame} /></small>
-                          </ChildLink>
-                        ))
-                      : <span className="ec-muted">No installed child Equipment</span>}
-                </div>
-              </article>
-            )) : <p className="ec-muted">No shelves recorded in this chassis</p>}
+                    ) : activeChildren(child, equipmentById).length ? (
+                      activeChildren(child, equipmentById).map(({ child: frame }) => (
+                        <ChildLink node={frame} key={frame.id} className="ec-chassis-frame">
+                          <strong>{frame.name}</strong>
+                          <small>
+                            <Counts node={frame} />
+                          </small>
+                        </ChildLink>
+                      ))
+                    ) : (
+                      <span className="ec-muted">No installed child Equipment</span>
+                    )}
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="ec-muted">No shelves recorded in this chassis</p>
+            )}
           </div>
         </section>
       )}
 
       {(type === 'SHELF' || type === 'SUB_SHELF') && (
         <section className="ec-main-section" aria-label="Shelf frames">
-          <header className="ec-section-heading"><div><small>SHELF STRUCTURE</small><strong>Frames</strong></div><span>{children.length} frames recorded</span></header>
+          <header className="ec-section-heading">
+            <div>
+              <small>SHELF STRUCTURE</small>
+              <strong>Frames</strong>
+            </div>
+            <span>{children.length} frames recorded</span>
+          </header>
           <div className="ec-frames-grid">
-            {children.map(({ child }) => <FramePreview key={child.id} frame={child} byId={equipmentById} />)}
+            {children.map(({ child }) => (
+              <FramePreview key={child.id} frame={child} byId={equipmentById} />
+            ))}
             {!children.length && <p className="ec-muted">No frames recorded</p>}
           </div>
         </section>
@@ -307,13 +365,26 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
 
       {type === 'FRAME' && (
         <section className="ec-main-section" aria-label="Frame panels">
-          <header className="ec-section-heading"><div><small>FRAME INTERIOR</small><strong>Panels</strong></div><span>{children.length} panels recorded</span></header>
+          <header className="ec-section-heading">
+            <div>
+              <small>FRAME INTERIOR</small>
+              <strong>Panels</strong>
+            </div>
+            <span>{children.length} panels recorded</span>
+          </header>
           <div className="ec-frame-rows">
             {children.map(({ child, position }) => (
               <div className="ec-frame-row" key={child.id}>
                 <span className="ec-pos">{String(position).padStart(2, '0')}</span>
-                <div><ChildLink node={child} className="ec-frame-row-name" /><Counts node={child} /></div>
-                <span className="ec-count">{projectCompositionTelemetry(child, equipmentById, readings).reporting ? 'With readings' : 'No breaker readings'}</span>
+                <div>
+                  <ChildLink node={child} className="ec-frame-row-name" />
+                  <Counts node={child} />
+                </div>
+                <span className="ec-count">
+                  {projectCompositionTelemetry(child, equipmentById, readings).reporting
+                    ? 'With readings'
+                    : 'No breaker readings'}
+                </span>
               </div>
             ))}
             {!children.length && <p className="ec-muted">No panels recorded</p>}
@@ -328,19 +399,40 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
       {type === 'CIRCUIT_BREAKER' && (
         <section className="ec-breaker-detail" aria-label="Breaker own MQTT telemetry">
           <div className="ec-section-heading">
-            <div><small>CIRCUIT BREAKER</small><strong>Own telemetry</strong></div>
+            <div>
+              <small>CIRCUIT BREAKER</small>
+              <strong>Own telemetry</strong>
+            </div>
             <span className="ec-status" data-status={readings[root.id]?.status ?? 'UNMAPPED'}>
-              <span className="ec-status-dot" aria-hidden="true" />{readings[root.id]?.status ?? 'UNMAPPED'}
+              <span className="ec-status-dot" aria-hidden="true" />
+              {readings[root.id]?.status ?? 'UNMAPPED'}
             </span>
           </div>
-          <div className="ec-breaker-metrics"><BreakerMetrics reading={readings[root.id]} /></div>
-          <p className="ec-breaker-source">MQTT source: {readings[root.id]?.sourceIdentity ?? 'No verified binding'} · Last packet: {readings[root.id]?.receivedAt ?? '—'}</p>
-          <Link className="ec-trace-link" href={`/power?entityId=${encodeURIComponent(root.id)}`}>Explore Power Path ↗</Link>
+          <div className="ec-breaker-metrics">
+            <BreakerMetrics reading={readings[root.id]} />
+          </div>
+          <p className="ec-breaker-source">
+            MQTT source: {readings[root.id]?.sourceIdentity ?? 'No verified binding'} · Last packet:{' '}
+            {readings[root.id]?.receivedAt ?? '—'}
+          </p>
+          <Link className="ec-trace-link" href={`/power?entityId=${encodeURIComponent(root.id)}`}>
+            Explore Power Path ↗
+          </Link>
         </section>
       )}
       <div className="ec-legend" aria-label="Telemetry metric legend">
-        <span><b>V</b> Voltage · V</span><span><b>I</b> Current · A</span>
-        <span><b>P</b> Power · W</span><span><b>E</b> Accumulated energy counter · kWh</span>
+        <span>
+          <b>V</b> Voltage · V
+        </span>
+        <span>
+          <b>I</b> Current · A
+        </span>
+        <span>
+          <b>P</b> Power · W
+        </span>
+        <span>
+          <b>E</b> Accumulated energy counter · kWh
+        </span>
       </div>
     </div>
   );

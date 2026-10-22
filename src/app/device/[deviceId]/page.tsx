@@ -230,7 +230,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dt>Child capacity</dt>
                     <dd>{node.childMode === 'POSITIONAL' ? node.children.length : 'Dynamic'}</dd>
                     <dt>Location</dt>
-                    <dd>{room?.name ?? 'Room'} / {rackNode?.name ?? 'Rack'} / {mountLabel}</dd>
+                    <dd>
+                      {room?.name ?? 'Room'} / {rackNode?.name ?? 'Rack'} / {mountLabel}
+                    </dd>
                     <dt>Power A</dt>
                     <dd>{hasFeedA ? 'Path recorded' : 'No recorded path'}</dd>
                     <dt>Power B</dt>
@@ -238,7 +240,10 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                   </dl>
                   <FullPowerTraceModal entityId={node.id} />
                   {room && rackNode ? (
-                    <Link className="zip-device-outline" href={`/blueprint/${room.id}?rack=${rackNode.id}`}>
+                    <Link
+                      className="zip-device-outline"
+                      href={`/blueprint/${room.id}?rack=${rackNode.id}`}
+                    >
                       ▣ LOCATE IN ROOM
                     </Link>
                   ) : null}
@@ -255,7 +260,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     .map((port) => (
                       <div className="ec-inspector-port" key={port.id}>
                         <strong>{port.name}</strong>
-                        <span>{port.portType} · {port.direction ?? 'Direction not recorded'}</span>
+                        <span>
+                          {port.portType} · {port.direction ?? 'Direction not recorded'}
+                        </span>
                       </div>
                     ))}
                   {canWriteTopology ? (
@@ -271,8 +278,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               settings={
                 <>
                   <p className="ec-inspector-note">
-                    Physical configuration and power contracts are permission-controlled.
-                    Child Equipment and slots are managed from the composition workspace.
+                    Physical configuration and power contracts are permission-controlled. Child
+                    Equipment and slots are managed from the composition workspace.
                   </p>
                   {canWritePower && contract.ok ? (
                     <PowerContractEditor
@@ -292,80 +299,75 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             />
           ) : (
             <>
+              <header>
+                {node.kind} <span>⌄</span>
+              </header>
+              <div className="zip-device-identity">
+                <span>▥</span>
+                <div>
+                  <h2>{node.name}</h2>
+                  <small>
+                    {room?.name ?? 'Room'} / {rackNode?.name ?? 'Rack'} / {mountLabel}
+                  </small>
+                </div>
+              </div>
 
-          <header>
-            {node.kind} <span>⌄</span>
-          </header>
-          <div className="zip-device-identity">
-            <span>▥</span>
-            <div>
-              <h2>{node.name}</h2>
-              <small>
-                {room?.name ?? 'Room'} / {rackNode?.name ?? 'Rack'} / {mountLabel}
-              </small>
-            </div>
-          </div>
+              <ContextPin entityId={node.id} />
 
-          <ContextPin entityId={node.id} />
+              <dl>
+                <dt>Identity</dt>
+                <dd>{node.name}</dd>
+                <dt>Model</dt>
+                <dd>{node.category ?? 'Not specified'}</dd>
+                <dt>Serial N.</dt>
+                <dd>{node.serialNumber ?? 'Not assigned'}</dd>
+                <dt>Rack</dt>
+                <dd>{rackNode?.name ?? 'No rack context'}</dd>
+                <dt>Placement</dt>
+                <dd>
+                  {placement
+                    ? `${rackNode?.name ?? placement.rackId} · ${mountLabel}`
+                    : rackNode
+                      ? 'Rack context recorded · physical Equipment not mounted'
+                      : 'No physical placement recorded'}
+                </dd>
+                <dt>Power A</dt>
+                <dd>{hasFeedA ? 'Path recorded' : 'No recorded path'}</dd>
+                <dt>Power B</dt>
+                <dd>{hasFeedB ? 'Path recorded' : 'No recorded path'}</dd>
+                <dt>Telemetry</dt>
+                <dd>Open diagnostic to verify mapped LIVE readings</dd>
+              </dl>
 
-          <dl>
-            <dt>Identity</dt>
-            <dd>{node.name}</dd>
-            <dt>Model</dt>
-            <dd>
-              {node.category ?? 'Not specified'}
-            </dd>
-            <dt>Serial N.</dt>
-            <dd>{node.serialNumber ?? 'Not assigned'}</dd>
-            <dt>Rack</dt>
-            <dd>{rackNode?.name ?? 'No rack context'}</dd>
-            <dt>Placement</dt>
-            <dd>
-              {placement
-                ? `${rackNode?.name ?? placement.rackId} · ${mountLabel}`
-                : rackNode
-                  ? 'Rack context recorded · physical Equipment not mounted'
-                  : 'No physical placement recorded'}
-            </dd>
-            <dt>Power A</dt>
-            <dd>{hasFeedA ? 'Path recorded' : 'No recorded path'}</dd>
-            <dt>Power B</dt>
-            <dd>{hasFeedB ? 'Path recorded' : 'No recorded path'}</dd>
-            <dt>Telemetry</dt>
-            <dd>Open diagnostic to verify mapped LIVE readings</dd>
-          </dl>
+              <FullPowerTraceModal entityId={node.id} />
 
-          <FullPowerTraceModal entityId={node.id} />
+              {canWritePower && contract.ok ? (
+                <PowerContractEditor
+                  entityId={node.id}
+                  accessPorts={contract.value.accessPorts}
+                  redundancy={contract.value.redundancy}
+                />
+              ) : null}
 
-          {canWritePower && contract.ok ? (
-            <PowerContractEditor
-              entityId={node.id}
-              accessPorts={contract.value.accessPorts}
-              redundancy={contract.value.redundancy}
-            />
-          ) : null}
+              {!relatedPower.length ? (
+                <p className="device-power-unconfigured">
+                  No direct PowerPath is recorded for this inventory item. The full trace also
+                  checks recursively nested Equipment.
+                </p>
+              ) : null}
 
-          {!relatedPower.length ? (
-            <p className="device-power-unconfigured">
-              No direct PowerPath is recorded for this inventory item. The full trace also checks
-              recursively nested Equipment.
-            </p>
-          ) : null}
+              <div className="zip-device-live">
+                <EquipmentTelemetryInspector key={node.id} targetId={node.id} label={node.name} />
+              </div>
 
-          <div className="zip-device-live">
-            <EquipmentTelemetryInspector
-              key={node.id}
-              targetId={node.id}
-              label={node.name}
-
-            />
-          </div>
-
-          {room && rackNode ? (
-            <Link className="zip-device-outline" href={`/blueprint/${room.id}?rack=${rackNode.id}`}>
-              ▣ LOCATE IN ROOM
-            </Link>
-          ) : null}
+              {room && rackNode ? (
+                <Link
+                  className="zip-device-outline"
+                  href={`/blueprint/${room.id}?rack=${rackNode.id}`}
+                >
+                  ▣ LOCATE IN ROOM
+                </Link>
+              ) : null}
             </>
           )}
         </aside>

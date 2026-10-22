@@ -53,17 +53,20 @@ export function EquipmentFocusInspector({
     () => new Map(familyEquipment.map((item) => [item.id, item])),
     [familyEquipment],
   );
-  const readings = useMemo(() => Object.fromEntries(
-    familyEquipment
-      .filter((item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'CIRCUIT_BREAKER')
-      .map((item) => [
-        item.id,
-        canReadTelemetry
-          ? compositionBreakerTelemetry(item.id, item.deviceId, samples, bindings, now)
-          : ({ status: 'NO DATA' } as CompositionBreakerTelemetry),
-      ]),
-  ) as Readonly<Record<string, CompositionBreakerTelemetry>>,
-  [familyEquipment, samples, bindings, canReadTelemetry, now]);
+  const readings = useMemo(
+    () =>
+      Object.fromEntries(
+        familyEquipment
+          .filter((item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'CIRCUIT_BREAKER')
+          .map((item) => [
+            item.id,
+            canReadTelemetry
+              ? compositionBreakerTelemetry(item.id, item.deviceId, samples, bindings, now)
+              : ({ status: 'NO DATA' } as CompositionBreakerTelemetry),
+          ]),
+      ) as Readonly<Record<string, CompositionBreakerTelemetry>>,
+    [familyEquipment, samples, bindings, canReadTelemetry, now],
+  );
   const summary = projectCompositionTelemetry(equipment, equipmentById, readings);
   const breaker = equipment.equipmentType === 'CIRCUIT_BREAKER';
   const current = breaker ? readings[equipment.id] : undefined;
@@ -72,7 +75,10 @@ export function EquipmentFocusInspector({
     <section className="ec-inspector" aria-label={equipment.name + ' Equipment inspector'}>
       <div className="zip-device-identity">
         <span aria-hidden="true">▥</span>
-        <div><h2>{equipment.name}</h2><small>{equipment.equipmentType.replaceAll('_', ' ')}</small></div>
+        <div>
+          <h2>{equipment.name}</h2>
+          <small>{equipment.equipmentType.replaceAll('_', ' ')}</small>
+        </div>
       </div>
 
       <div className="ec-inspector-tabs" role="tablist" aria-label="Equipment inspector tabs">
@@ -110,8 +116,11 @@ export function EquipmentFocusInspector({
                   {breaker ? (
                     <>Binding status: {current?.status ?? 'UNMAPPED'}</>
                   ) : (
-                    <>{summary.installed} installed · {summary.bound} bound · {summary.reporting} reporting
-                      {summary.stale > 0 ? ` · ${summary.stale} stale` : ''}</>
+                    <>
+                      {summary.installed} installed · {summary.bound} bound · {summary.reporting}{' '}
+                      reporting
+                      {summary.stale > 0 ? ` · ${summary.stale} stale` : ''}
+                    </>
                   )}
                 </p>
                 <div className="ec-inspector-metrics" aria-label="Live electrical measurements">
@@ -119,7 +128,9 @@ export function EquipmentFocusInspector({
                     const value = breaker ? current?.[metric.key] : summary.metrics[metric.key];
                     return (
                       <div className="ec-inspector-metric" key={metric.key}>
-                        <small>{metric.symbol} · {metric.label}</small>
+                        <small>
+                          {metric.symbol} · {metric.label}
+                        </small>
                         <strong>{value === undefined ? '—' : value.toFixed(metric.digits)}</strong>
                         <span>{metric.unit}</span>
                       </div>
@@ -133,21 +144,29 @@ export function EquipmentFocusInspector({
                 </p>
                 {equipment.equipmentType === 'CHASSIS' && (
                   <p className="ec-inspector-note">
-                    SNMP incoming DC shunts are a separate source. Their simulated readings must never be summed into these MQTT figures or treated as certified totals.
+                    SNMP incoming DC shunts are a separate source. Their simulated readings must
+                    never be summed into these MQTT figures or treated as certified totals.
                   </p>
                 )}
-                {!hasSnapshot && <p className="ec-inspector-note" role="status">Waiting for telemetry stream snapshot…</p>}
+                {!hasSnapshot && (
+                  <p className="ec-inspector-note" role="status">
+                    Waiting for telemetry stream snapshot…
+                  </p>
+                )}
                 <details className="ec-inspector-history">
                   <summary>History &amp; diagnostics</summary>
                   <EquipmentTelemetryInspector
                     targetId={equipment.id}
                     label={equipment.name}
-                    {...(equipment.telemetryPointPrefix ? {
-                      pointPrefix: equipment.telemetryPointPrefix,
-                      pointCapacity: equipment.childMode === 'POSITIONAL'
-                        ? equipment.children.length
-                        : undefined,
-                    } : {})}
+                    {...(equipment.telemetryPointPrefix
+                      ? {
+                          pointPrefix: equipment.telemetryPointPrefix,
+                          pointCapacity:
+                            equipment.childMode === 'POSITIONAL'
+                              ? equipment.children.length
+                              : undefined,
+                        }
+                      : {})}
                   />
                 </details>
               </>

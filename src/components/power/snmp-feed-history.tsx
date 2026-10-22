@@ -79,9 +79,10 @@ function TrendChart({
   const series = useMemo(() => createSeries(feeds, metric.key), [feeds, metric.key]);
   const all = series.flatMap((item) => item.values);
   const last = all.length ? Math.max(...all.map((point) => point.time)) : null;
+  // Deterministic history time domain: no render-time wall clock is used.
+  const maxT = last ?? 0;
   const minT =
-    Date.now() - { '24h': 86400, '7d': 604800, '15d': 1296000, '1M': 2592000 }[window] * 1000;
-  const maxT = Math.max(Date.now(), last ?? 0);
+    maxT - { '24h': 86400, '7d': 604800, '15d': 1296000, '1M': 2592000 }[window] * 1000;
   const vMin = all.length ? Math.min(...all.map((point) => point.value)) : 0;
   const vMax = all.length ? Math.max(...all.map((point) => point.value)) : 0;
   const pad = Math.max(Math.abs(vMax - vMin) * 0.12, 0.001);

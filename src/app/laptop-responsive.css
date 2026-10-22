@@ -71,6 +71,111 @@
     text-overflow: ellipsis;
   }
 
+  /* Topology tree: use vertical lines rather than cutting deep names into
+     unreadable 6-character labels. Keep the sidebar independently scrollable. */
+  .zip-app-shell .operational-context {
+    min-width: 0;
+    overflow-x: hidden !important;
+  }
+
+  .zip-app-shell .telxius-tree-node > a {
+    min-width: 0;
+    min-height: 38px;
+    grid-template-columns: 8px 12px minmax(0, 1fr) 9px;
+    column-gap: 4px;
+    padding-left: calc(5px + var(--tree-depth) * 5px);
+    padding-right: 5px;
+  }
+
+  .zip-app-shell .telxius-tree-copy {
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .zip-app-shell .telxius-tree-copy strong {
+    white-space: normal;
+    text-overflow: clip;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+    font-size: 11px;
+  }
+
+  .zip-app-shell .telxius-tree-root,
+  .zip-app-shell .telxius-topology-tree {
+    min-width: 0;
+  }
+
+  /* Blueprint / Room is a THREE-zone application. It cannot share the
+     two-column rack/editor rule; that sent ROOM PROPERTIES into the tree. */
+  .zip-app-shell .operational-page--blueprint .operational-layout--blueprint {
+    grid-template-columns: 212px minmax(0, 1fr) 270px !important;
+  }
+
+  .zip-app-shell .operational-page--blueprint .operational-stage--wide,
+  .zip-app-shell .operational-page--blueprint .zip-room-properties {
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .zip-app-shell .operational-page--blueprint .zip-room-properties {
+    grid-column: 3;
+    grid-row: 1;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .zip-app-shell .operational-page--blueprint .room-general-info,
+  .zip-app-shell .operational-page--blueprint .room-rack-navigation {
+    min-width: 0;
+    max-width: calc(100% - 28px);
+  }
+
+  .zip-app-shell .operational-page--blueprint .room-general-info dl {
+    grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  }
+
+  .zip-app-shell .operational-page--blueprint .room-general-info dd,
+  .zip-app-shell .operational-page--blueprint .room-rack-navigation a {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  /* Explorer header must not overlap its boundary actions at laptop widths.
+     Let the schematic canvas take the available stage width. */
+  .zip-app-shell .mk-explorer-page .zip-canvas-title {
+    min-width: 0;
+    padding-inline: 16px !important;
+    gap: 8px;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-canvas-title strong {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    font-size: 19px !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-canvas-title small {
+    font-size: 10px;
+    text-align: right;
+    max-width: 32%;
+    line-height: 1.4;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-map-canvas {
+    padding-inline: 12px;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-inspector,
+  .zip-app-shell .mk-explorer-page .zip-inspector-identity {
+    min-width: 0;
+  }
+
+  .zip-app-shell .mk-explorer-page .zip-inspector-identity h2,
+  .zip-app-shell .mk-explorer-page .zip-inspector dd {
+    overflow-wrap: anywhere;
+  }
+
   /* BDFB Physical View and its dedicated inspector, including SNMP utilization. */
   .zip-app-shell .zip-bdfb-page .operational-layout {
     grid-template-columns: 212px minmax(0, 1fr) 292px !important;
@@ -231,6 +336,36 @@
    a 24-slot BDFB table needs. Keep topology beside the workspace and move
    Inspector AFTER the work surface, never over it or off-screen. */
 @media (min-width: 1000px) and (max-width: 1199px) {
+  /* The 1000–1199px Room layout is two columns by design, but the
+     Inspector belongs BELOW the central drafting canvas, never in the tree. */
+  .zip-app-shell .operational-page--blueprint .operational-layout--blueprint {
+    grid-template-columns: 190px minmax(0, 1fr) !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .zip-app-shell .operational-page--blueprint .operational-context {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .zip-app-shell .operational-page--blueprint .operational-stage--wide {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    height: auto !important;
+  }
+
+  .zip-app-shell .operational-page--blueprint .zip-room-properties {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    height: auto !important;
+    min-height: 0;
+    overflow: visible !important;
+    border-top: 1px solid #d7dde4;
+  }
+
   .zip-app-shell .zip-topbar .mk-search-trigger {
     width: 124px;
     min-width: 124px;

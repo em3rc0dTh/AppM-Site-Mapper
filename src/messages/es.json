@@ -1,0 +1,74 @@
+{
+  "common": {
+    "overview": "Resumen",
+    "settings": "Configuración",
+    "telemetry": "Telemetría",
+    "ports": "Puertos",
+    "loading": "Cargando…",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "close": "Cerrar",
+    "confirm": "Confirmar"
+  },
+  "equipment": {
+    "inspector": {
+      "telemetry": "Telemetría",
+      "overview": "Resumen",
+      "ports": "Puertos",
+      "settings": "Configuración"
+    }
+  },
+  "bdfb": {
+    "inspector": {
+      "overview": "Resumen",
+      "feeds": "Entradas",
+      "history": "Gráficas",
+      "settings": "Configuración"
+    }
+  },
+  "snmp": {
+    "history": {
+      "current": "Corriente",
+      "voltage": "Voltaje",
+      "power": "Potencia",
+      "energy": "Energía"
+    }
+  },
+  "shell": {
+    "skip": "Ir al espacio de trabajo",
+    "tagline": "Infraestructura física",
+    "settings": "CONFIGURACIÓN",
+    "warehouseContext": "ALMACÉN VIRTUAL",
+    "networkContext": "RED",
+    "explore": "EXPLORAR",
+    "warehouse": "ALMACÉN",
+    "admin": "ADMINISTRACIÓN",
+    "signOut": "Cerrar sesión",
+    "signOutError": "No se pudo cerrar la sesión. Inténtalo nuevamente."
+  },
+  "auth": {
+    "login": {
+      "eyebrow": "Identidad / acceso seguro",
+      "title": "Iniciar sesión",
+      "description": "Autentícate para entrar al espacio operativo de Site Mapper.",
+      "email": "Correo electrónico",
+      "password": "Contraseña",
+      "submit": "INICIAR SESIÓN",
+      "submitting": "Estableciendo sesión segura…",
+      "connectionError": "No hay conexión disponible. Inténtalo nuevamente.",
+      "credentialsError": "Correo electrónico o contraseña incorrectos.",
+      "loginError": "No se pudo iniciar sesión. Inténtalo nuevamente."
+    },
+    "changePassword": {
+      "eyebrow": "Identidad / política de credenciales",
+      "title": "Cambiar contraseña",
+      "forcedDescription": "Reemplaza la contraseña temporal antes de habilitar el acceso operativo.",
+      "description": "Actualiza tu contraseña y revoca las sesiones existentes.",
+      "signedInAs": "Sesión iniciada como"
+    }
+  },
+  "workspace": {
+    "home": "Inicio",
+    "title": "Vista general de la infraestructura"
+  }
+}

@@ -314,10 +314,8 @@ export async function summarizeSnmpBdfbLoad(
       currentValue?.oid === binding.sourcePointId;
     const age = currentValue ? nowMs - Date.parse(currentValue.observedAt) : Infinity;
     const fresh = permitted && age >= -60_000 && age <= freshnessMs;
-    const verified = port.attributes?.independentInputConfirmed === true;
-    const syntheticLabBinding = process.env.APP_ENV === 'development' &&
-      process.env.SNMP_LAB_ENABLED === 'true' &&
-      binding?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY';
+    const syntheticLabBinding = binding?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY';
+    const verified = port.attributes?.independentInputConfirmed === true && !syntheticLabBinding;
     const voltageAge = voltageValue ? nowMs - Date.parse(voltageValue.observedAt) : Infinity;
     const alignedVoltage = Boolean(
       voltageBindings.length === 1 &&

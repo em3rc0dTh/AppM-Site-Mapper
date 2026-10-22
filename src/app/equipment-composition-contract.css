@@ -987,3 +987,294 @@
 .equipment-contract-canvas .equipment-faceplate-port small {
   color: #526e8b;
 }
+
+
+/* Recursive coverage and chart workbench. Always differentiated from input shunt capacity. */
+.ec-live-cover {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 7px 16px;
+  padding: 11px 20px;
+  background: #eef6ff;
+  border-bottom: 1px solid #d8e5f3;
+  color: #174c7e;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.ec-live-cover small {
+  color: #536f89;
+  font-weight: 500;
+  font-size: 10px;
+}
+
+.ec-scope-readiness {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 13px;
+  padding: 10px;
+  background: #edf5fd;
+  border: 1px solid #dae7f5;
+  border-radius: 7px;
+  color: #204c70;
+  font-size: 11px;
+  line-height: 1.5;
+  font-weight: 700;
+}
+
+.ec-composition-history {
+  margin: 16px 0;
+}
+
+.ec-history-charts {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 12px 0;
+  color: #163b5b;
+}
+
+.ec-history-controls {
+  display: grid;
+  gap: 10px;
+}
+
+.ec-history-controls > div {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.ec-history-controls button {
+  min-height: 32px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  border: 1px solid #d2e2f0;
+  background: #ffffff;
+  color: #375979;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ec-history-controls button[aria-pressed='true'] {
+  color: #07569a;
+  border-color: #2376b8;
+  background: #e4f1ff;
+}
+
+.ec-history-coverage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ec-history-coverage span {
+  padding: 5px 7px;
+  border: 1px solid #cce0ef;
+  border-radius: 4px;
+  background: #e8f5ff;
+  color: #255275;
+  font-size: 10px;
+}
+
+.ec-history-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+
+.ec-series {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #dce6f0;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.ec-series header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 5px;
+}
+
+.ec-series header strong {
+  font-size: 12px;
+}
+
+.ec-series header span {
+  color: #0f5c95;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.ec-series svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 6px 0;
+  overflow: visible;
+}
+
+.ec-series small,
+.ec-series p {
+  color: #61768b;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.ec-chart-guide {
+  stroke: #dce7f1;
+  stroke-width: 1;
+}
+
+.ec-chart-label {
+  fill: #61768b;
+  font-size: 12px;
+}
+
+.ec-history-explainer {
+  margin: 4px 0 0;
+  color: #566f86;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.ec-history-raw {
+  border-top: 1px solid #d6e4f0;
+  padding-top: 10px;
+  font-size: 11px;
+}
+
+.ec-history-raw summary {
+  cursor: pointer;
+}
+
+.ec-snmp-capacity {
+  margin: 4px 20px 22px;
+  padding: 16px;
+  background: #f5faf8;
+  border: 1px solid #c6e0d8;
+  border-radius: 9px;
+  color: #1f4947;
+}
+
+.ec-snmp-capacity header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ec-snmp-capacity header > div {
+  display: grid;
+  gap: 4px;
+}
+
+.ec-snmp-capacity header strong {
+  font-size: 13px;
+}
+
+.ec-snmp-capacity header small {
+  font-size: 10px;
+  color: #647d76;
+}
+
+.ec-snmp-capacity header > span {
+  border: 1px solid #b9d8cb;
+  border-radius: 20px;
+  padding: 5px 8px;
+  background: #fff;
+  color: #396658;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ec-snmp-capacity-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ec-snmp-capacity-metrics > div {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #d4e5df;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.ec-snmp-capacity-metrics small {
+  font-size: 10px;
+  color: #58766d;
+}
+
+.ec-snmp-capacity-metrics strong {
+  color: #173f38;
+  font-size: clamp(13px, 1.5vw, 18px);
+}
+
+.ec-snmp-utilization {
+  position: relative;
+  height: 29px;
+  margin: 12px 0;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid #bddecf;
+  background: #e6f2ed;
+}
+
+.ec-snmp-utilization > div {
+  height: 100%;
+  background: #66c3a2;
+}
+
+.ec-snmp-utilization > span {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #143c35;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.ec-snmp-feed-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 12px;
+}
+
+.ec-snmp-feed-tags span {
+  border: 1px solid #d2e7dd;
+  background: #ffffff;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-size: 10px;
+}
+
+.ec-snmp-capacity > p {
+  margin: 12px 0 0;
+  font-size: 11px;
+  line-height: 1.55;
+  color: #68746a;
+}
+
+@media (max-width: 700px) {
+  .ec-snmp-capacity {
+    margin: 4px 12px 16px;
+    padding: 12px;
+  }
+  .ec-snmp-capacity-metrics {
+    grid-template-columns: 1fr;
+  }
+}

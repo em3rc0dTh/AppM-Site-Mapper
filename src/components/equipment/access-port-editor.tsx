@@ -40,6 +40,7 @@ interface BdfbPanelOption {
 }
 
 interface BdfbPanelInventory {
+  equipmentType: string;
   hardwareProfile: 'ELTEK_BDCBB_CONFIG_2' | 'ELTEK_BDCBB_CONFIG_4' | null;
   panels: BdfbPanelOption[];
 }

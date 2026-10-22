@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 
 import { EquipmentTelemetryInspector } from '@/components/telemetry/equipment-telemetry-inspector';
+import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
 import { useTelemetryStream } from '@/components/telemetry/use-bdfb-telemetry';
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
 import {
@@ -48,6 +49,7 @@ export function EquipmentFocusInspector({
   settings,
 }: Props) {
   const [tab, setTab] = useState<Tab>('telemetry');
+  const [snmpExpanded, setSnmpExpanded] = useState(false);
   const { samples, now, hasSnapshot } = useTelemetryStream(canReadTelemetry);
   const equipmentById = useMemo(
     () => new Map(familyEquipment.map((item) => [item.id, item])),
@@ -143,10 +145,26 @@ export function EquipmentFocusInspector({
                     : 'Arithmetic mean of each metric from fresh, explicitly bound breakers. Missing values are excluded per metric; these are not feed totals.'}
                 </p>
                 {equipment.equipmentType === 'CHASSIS' && (
-                  <p className="ec-inspector-note">
-                    SNMP incoming DC shunts are a separate source. Their simulated readings must
-                    never be summed into these MQTT figures or treated as certified totals.
-                  </p>
+                  <div className="ec-snmp-source">
+                    <p className="ec-inspector-note">
+                      SNMP incoming DC shunts are a separate source. Simulated readings are never
+                      mixed with MQTT figures or treated as certified totals.
+                    </p>
+                    <button
+                      type="button"
+                      aria-expanded={snmpExpanded}
+                      onClick={() => setSnmpExpanded((value) => !value)}
+                    >
+                      {snmpExpanded ? 'HIDE SNMP FEEDS' : 'INSPECT SNMP FEEDS'}
+                    </button>
+                    {snmpExpanded && (
+                      <SnmpFeedLoadPanel
+                        deviceId={equipment.deviceId}
+                        chassisId={equipment.id}
+                        view="summary"
+                      />
+                    )}
+                  </div>
                 )}
                 {!hasSnapshot && (
                   <p className="ec-inspector-note" role="status">

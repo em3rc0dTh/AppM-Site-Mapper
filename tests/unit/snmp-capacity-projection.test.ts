@@ -69,7 +69,10 @@ describe('SNMP lab simulated DC utilization', () => {
     expect(result.utilizationPct).toBeCloseTo(27.6);
     expect(result.availableA).toBeCloseTo(1158.4);
     expect(result.feedUtilization[0]).toMatchObject({
-      measuredA: 150, ratedA: 800, availableA: 650, utilizationPct: 18.75,
+      measuredA: 150,
+      ratedA: 800,
+      availableA: 650,
+      utilizationPct: 18.75,
     });
   });
 

@@ -63,7 +63,8 @@ export function projectSnmpCapacity(
   const reporting = projected.filter((f) => f.measuredA !== null);
   const lab = reporting.filter((f) => f.status === 'LAB_LIVE').length;
   const verified = reporting.filter((f) => f.status === 'LIVE').length;
-  const mode = lab && verified ? 'MIXED' : lab ? 'LAB_SIMULATED' : verified ? 'VERIFIED_LIVE' : 'NO_LIVE_DATA';
+  const mode =
+    lab && verified ? 'MIXED' : lab ? 'LAB_SIMULATED' : verified ? 'VERIFIED_LIVE' : 'NO_LIVE_DATA';
   const identities = selectedFeeds.map((f) => f.accessPortId);
   const positions = selectedFeeds.map((f) => f.feedPosition ?? f.side);
   const uniqueIdentities = new Set(identities).size === identities.length;

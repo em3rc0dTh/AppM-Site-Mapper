@@ -73,8 +73,7 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
 
   const chassis = root.equipmentType === 'CHASSIS';
   const shared =
-    !chassis && scopedFeeds.some((feed) =>
-      feed.servedPanelIds.some((id) => !panels.has(id)));
+    !chassis && scopedFeeds.some((feed) => feed.servedPanelIds.some((id) => !panels.has(id)));
   const scopeCapacity = projectSnmpCapacity(
     load,
     scopedFeeds,
@@ -100,7 +99,11 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
           </small>
         </div>
         <span>
-          {simulated ? 'LAB SIMULATED' : scopeCapacity.mode === 'VERIFIED_LIVE' && ratio !== null ? 'VERIFIED LIVE' : 'INCOMPLETE / SHARED'}
+          {simulated
+            ? 'LAB SIMULATED'
+            : scopeCapacity.mode === 'VERIFIED_LIVE' && ratio !== null
+              ? 'VERIFIED LIVE'
+              : 'INCOMPLETE / SHARED'}
         </span>
       </header>
       <div className="ec-snmp-capacity-metrics">
@@ -124,24 +127,30 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.min(100, Math.max(0, ratio))}
-          aria-label={simulated ? 'Simulated DC feeder capacity used' : 'Verified DC feeder capacity used'}
+          aria-label={
+            simulated ? 'Simulated DC feeder capacity used' : 'Verified DC feeder capacity used'
+          }
         >
           <div style={{ width: `${Math.min(100, Math.max(0, ratio))}%` }} />
           <span>
-            {ratio.toFixed(1)}% used · {quantity(available)} remaining · {simulated ? 'LAB SIMULATED' : 'VERIFIED'}
+            {ratio.toFixed(1)}% used · {quantity(available)} remaining ·{' '}
+            {simulated ? 'LAB SIMULATED' : 'VERIFIED'}
           </span>
         </div>
       )}
       <div className="ec-snmp-feed-tags">
         {scopeCapacity.feedUtilization.map((feed) => {
-          const original = scopedFeeds.find((candidate) => candidate.accessPortId === feed.accessPortId);
+          const original = scopedFeeds.find(
+            (candidate) => candidate.accessPortId === feed.accessPortId,
+          );
           return (
             <span key={feed.accessPortId}>
               <strong>{feed.label}</strong>: {quantity(feed.measuredA)} / {quantity(feed.ratedA)}
               {feed.utilizationPct !== null
                 ? ` · ${feed.utilizationPct.toFixed(1)}% used · ${quantity(feed.availableA)} free`
                 : ' · no rated capacity or fresh reading'}
-              {' · '}{feed.status === 'LAB_LIVE' ? 'LAB SIMULATED' : feed.status}
+              {' · '}
+              {feed.status === 'LAB_LIVE' ? 'LAB SIMULATED' : feed.status}
               {(original?.servedPanelIds.length ?? 0) > 1 ? ' · shared shunt' : ''}
             </span>
           );
@@ -149,7 +158,9 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
       </div>
       {(simulated || shared || !exclusive) && (
         <p>
-          {simulated ? 'LAB SIMULATED: computed capacity is an estimate from synthetic current and configured port ratings, never a certified physical limit. ' : ''}
+          {simulated
+            ? 'LAB SIMULATED: computed capacity is an estimate from synthetic current and configured port ratings, never a certified physical limit. '
+            : ''}
           {shared
             ? 'A shunt serves multiple panels: its current is not attributed separately to each. '
             : ''}

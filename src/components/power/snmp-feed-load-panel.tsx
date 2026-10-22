@@ -160,9 +160,7 @@ export function SnmpFeedLoadPanel({
           <>
             <div className="zip-bdfb-live-average-grid">
               <div>
-                <span>
-                  {isLab ? 'SIMULATED SHUNT CURRENT' : 'INDEPENDENT FEED CURRENT'}
-                </span>
+                <span>{isLab ? 'SIMULATED SHUNT CURRENT' : 'INDEPENDENT FEED CURRENT'}</span>
                 <strong>{numeric(error ? null : capacity?.measuredA, 'A')}</strong>
               </div>
               <div>
@@ -188,30 +186,49 @@ export function SnmpFeedLoadPanel({
             {capacity && (
               <div className="sm-snmp-capacity-lab" aria-label="SNMP input current capacity">
                 <div className="sm-snmp-capacity-line">
-                  <strong>{isLab ? 'LAB SIMULATED · DC SHUNT UTILIZATION' : 'DC SHUNT UTILIZATION'}</strong>
+                  <strong>
+                    {isLab ? 'LAB SIMULATED · DC SHUNT UTILIZATION' : 'DC SHUNT UTILIZATION'}
+                  </strong>
                   <span>
                     {capacity.reportingFeeds}/{capacity.expectedFeeds} fresh feeds
                   </span>
                 </div>
                 <div className="sm-snmp-capacity-numbers">
-                  <div><small>USED</small><strong>{numeric(capacity.measuredA, 'A')}</strong></div>
-                  <div><small>RATED</small><strong>{numeric(capacity.ratedA, 'A')}</strong></div>
-                  <div><small>AVAILABLE</small><strong>{numeric(capacity.availableA, 'A')}</strong></div>
+                  <div>
+                    <small>USED</small>
+                    <strong>{numeric(capacity.measuredA, 'A')}</strong>
+                  </div>
+                  <div>
+                    <small>RATED</small>
+                    <strong>{numeric(capacity.ratedA, 'A')}</strong>
+                  </div>
+                  <div>
+                    <small>AVAILABLE</small>
+                    <strong>{numeric(capacity.availableA, 'A')}</strong>
+                  </div>
                 </div>
                 {capacity.utilizationPct !== null && (
                   <div className="sm-snmp-capacity-meter">
                     <div
                       role="meter"
-                      aria-label={isLab ? 'Simulated shunt utilization' : 'Verified shunt utilization'}
+                      aria-label={
+                        isLab ? 'Simulated shunt utilization' : 'Verified shunt utilization'
+                      }
                       aria-valuemin={0}
                       aria-valuemax={100}
                       aria-valuenow={Math.max(0, Math.min(100, capacity.utilizationPct))}
                     >
-                      <span style={{ width: `${Math.max(0, Math.min(100, capacity.utilizationPct))}%` }} />
+                      <span
+                        style={{ width: `${Math.max(0, Math.min(100, capacity.utilizationPct))}%` }}
+                      />
                     </div>
-                    <strong>{capacity.utilizationPct.toFixed(1)}% of configured input capacity</strong>
+                    <strong>
+                      {capacity.utilizationPct.toFixed(1)}% of configured input capacity
+                    </strong>
                     {!!capacity.overloadedByA && capacity.overloadedByA > 0 && (
-                      <small role="status">Above configured rating by {numeric(capacity.overloadedByA, 'A')}</small>
+                      <small role="status">
+                        Above configured rating by {numeric(capacity.overloadedByA, 'A')}
+                      </small>
                     )}
                   </div>
                 )}
@@ -219,21 +236,37 @@ export function SnmpFeedLoadPanel({
                   {capacity.feedUtilization.map((feed) => (
                     <div className="sm-snmp-capacity-feed" key={feed.accessPortId}>
                       <div>
-                        <strong>Shunt {feed.label} {feed.status === 'LAB_LIVE' ? '· SIMULATED' : ''}</strong>
-                        <span>{feed.status === 'LIVE' || feed.status === 'LAB_LIVE' ?
-                          `${numeric(feed.measuredA, 'A')} / ${numeric(feed.ratedA, 'A')}` : feed.status}</span>
+                        <strong>
+                          Shunt {feed.label} {feed.status === 'LAB_LIVE' ? '· SIMULATED' : ''}
+                        </strong>
+                        <span>
+                          {feed.status === 'LIVE' || feed.status === 'LAB_LIVE'
+                            ? `${numeric(feed.measuredA, 'A')} / ${numeric(feed.ratedA, 'A')}`
+                            : feed.status}
+                        </span>
                       </div>
                       {feed.utilizationPct !== null ? (
                         <>
-                          <div className="sm-snmp-capacity-feed-meter"
-                            role="meter" aria-label={`Shunt ${feed.label} utilization`}
-                            aria-valuemin={0} aria-valuemax={100}
-                            aria-valuenow={Math.max(0, Math.min(100, feed.utilizationPct))}>
-                            <span style={{ width: `${Math.max(0, Math.min(100, feed.utilizationPct))}%` }} />
+                          <div
+                            className="sm-snmp-capacity-feed-meter"
+                            role="meter"
+                            aria-label={`Shunt ${feed.label} utilization`}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                            aria-valuenow={Math.max(0, Math.min(100, feed.utilizationPct))}
+                          >
+                            <span
+                              style={{
+                                width: `${Math.max(0, Math.min(100, feed.utilizationPct))}%`,
+                              }}
+                            />
                           </div>
                           <small>
-                            {feed.utilizationPct.toFixed(1)}% used · {numeric(feed.availableA, 'A')} available
-                            {feed.overloadedByA ? ` · Over rating by ${numeric(feed.overloadedByA, 'A')}` : ''}
+                            {feed.utilizationPct.toFixed(1)}% used · {numeric(feed.availableA, 'A')}{' '}
+                            available
+                            {feed.overloadedByA
+                              ? ` · Over rating by ${numeric(feed.overloadedByA, 'A')}`
+                              : ''}
                           </small>
                         </>
                       ) : (
@@ -251,18 +284,18 @@ export function SnmpFeedLoadPanel({
                 )}
                 {capacity.reportingFeeds === capacity.expectedFeeds && capacity.ratedA === null && (
                   <p>
-                    Rated current is missing on one or more shunts. Configure
-                    each physical input on the chassis before calculating the percentage.
-                    {' '}<Link href={`/device/${encodeURIComponent(chassisId)}#bdfb-access-ports`}>
+                    Rated current is missing on one or more shunts. Configure each physical input on
+                    the chassis before calculating the percentage.{' '}
+                    <Link href={`/device/${encodeURIComponent(chassisId)}#bdfb-access-ports`}>
                       Configure DC input ratings →
                     </Link>
                   </p>
                 )}
                 {isLab && (
                   <p>
-                    Simulation only: readings come from synthetic SNMP OIDs and nominal ratings
-                    from the recorded AccessPorts. Neither the computed headroom nor the
-                    lab utilization is a certified physical limit.
+                    Simulation only: readings come from synthetic SNMP OIDs and nominal ratings from
+                    the recorded AccessPorts. Neither the computed headroom nor the lab utilization
+                    is a certified physical limit.
                   </p>
                 )}
               </div>

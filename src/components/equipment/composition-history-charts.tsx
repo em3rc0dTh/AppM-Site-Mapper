@@ -88,9 +88,6 @@ export function CompositionHistoryCharts({
 
   useEffect(() => {
     const controller = new AbortController();
-    setLoading(true);
-    setError('');
-    setData(null);
     void fetch(`/api/telemetry/composition-history?equipmentId=${encodeURIComponent(equipmentId)}&window=${window}`, {
       cache: 'no-store', signal: controller.signal,
     }).then(async (response) => {
@@ -114,7 +111,14 @@ export function CompositionHistoryCharts({
         <strong>MQTT · historical trend</strong>
         <div role="group" aria-label="Historical range">
           {WINDOWS.map((range) => (
-            <button type="button" key={range} aria-pressed={window === range} onClick={() => setWindow(range)}>
+            <button type="button" key={range} aria-pressed={window === range} onClick={() => {
+                if (range !== window) {
+                  setLoading(true);
+                  setError('');
+                  setData(null);
+                  setWindow(range);
+                }
+              }}>
               {range.toUpperCase()}
             </button>
           ))}

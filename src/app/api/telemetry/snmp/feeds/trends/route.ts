@@ -52,7 +52,7 @@ export async function GET(request: Request) {
           source &&
           voltages.length <= 1 &&
           (voltages.length === 0 || voltages[0]!.sourceIdentity === source);
-        const points = compatible
+        const points = source && compatible
           ? await history.querySnmpFeedSeries(port.id, source, window as TelemetryHistoryWindow)
           : [];
         return {

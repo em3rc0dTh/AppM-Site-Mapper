@@ -199,20 +199,28 @@ describe('ELTEK_BDCBB_CONFIG_2 linked panels / independent A-B shunts', () => {
         attributes: { commissioning: 'SYNTHETIC_LAB_ONLY' },
       });
     }
-    const accepted = await new SnmpFeedService(f.topology, f.bindings, f.hub).ingest({
-      schemaVersion: 1,
-      sourceIdentity: 'EMU-CONFIG2',
-      observedAt: timestamp,
-      measurements: [
-        { oid: f.oid(0), metric: 'CURRENT', unit: 'A', value: 224.9 },
-        { oid: f.oid(1), metric: 'CURRENT', unit: 'A', value: 209.7 },
-        { oid: voltageOids[0]!, metric: 'VOLTAGE', unit: 'V', value: -53.3 },
-        { oid: voltageOids[1]!, metric: 'VOLTAGE', unit: 'V', value: -53.4 },
-      ],
-    }, timestamp);
+    const accepted = await new SnmpFeedService(f.topology, f.bindings, f.hub).ingest(
+      {
+        schemaVersion: 1,
+        sourceIdentity: 'EMU-CONFIG2',
+        observedAt: timestamp,
+        measurements: [
+          { oid: f.oid(0), metric: 'CURRENT', unit: 'A', value: 224.9 },
+          { oid: f.oid(1), metric: 'CURRENT', unit: 'A', value: 209.7 },
+          { oid: voltageOids[0]!, metric: 'VOLTAGE', unit: 'V', value: -53.3 },
+          { oid: voltageOids[1]!, metric: 'VOLTAGE', unit: 'V', value: -53.4 },
+        ],
+      },
+      timestamp,
+    );
     expect(accepted.ok).toBe(true);
-    const view = await summarizeSnmpBdfbLoad(f.device.id, f.topology, f.bindings,
-      f.hub, Date.parse(timestamp));
+    const view = await summarizeSnmpBdfbLoad(
+      f.device.id,
+      f.topology,
+      f.bindings,
+      f.hub,
+      Date.parse(timestamp),
+    );
     expect(view?.feeds.map((feed) => feed.status)).toEqual(['LAB_LIVE', 'LAB_LIVE']);
     expect(view?.feeds.map((feed) => feed.voltageV)).toEqual([-53.3, -53.4]);
     expect(view?.labMeasuredCurrentA).toBeCloseTo(434.6, 6);

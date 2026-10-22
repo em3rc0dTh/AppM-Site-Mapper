@@ -32,8 +32,11 @@ function labEnabled(): boolean {
   // NODE_ENV is production even in local Next.js Docker builds; APP_ENV is
   // the explicit deployment security authority. Keep this endpoint disabled
   // in staging, production and all non-opted-in environments.
-  return process.env.APP_ENV === 'development' &&
-    process.env.SNMP_LAB_ENABLED === 'true' && !isProductionDeployment();
+  return (
+    process.env.APP_ENV === 'development' &&
+    process.env.SNMP_LAB_ENABLED === 'true' &&
+    !isProductionDeployment()
+  );
 }
 
 function labSourceForDevice(name: string): string | null {
@@ -55,16 +58,22 @@ function labSlots(profile: string): readonly LabSlot[] {
 export async function GET(request: Request) {
   const auth = await requirePermission('telemetry:read');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 401 });
-  if (!labEnabled()) return Response.json({ enabled: false }, { headers: { 'Cache-Control': 'no-store' } });
+  if (!labEnabled())
+    return Response.json({ enabled: false }, { headers: { 'Cache-Control': 'no-store' } });
   const deviceId = new URL(request.url).searchParams.get('deviceId');
   if (!deviceId || deviceId.length > 128) return Response.json({ enabled: false });
   const topology = await createTopologyRepository();
   const device = await topology.getById(deviceId);
-  const enabled = device?.kind === 'DEVICE' && device.lifecycle === 'ACTIVE' &&
-    device.deviceType === 'BDFB' && labSourceForDevice(device.name) !== null &&
+  const enabled =
+    device?.kind === 'DEVICE' &&
+    device.lifecycle === 'ACTIVE' &&
+    device.deviceType === 'BDFB' &&
+    labSourceForDevice(device.name) !== null &&
     bdfbHardwareProfile(device) !== null;
-  return Response.json({ enabled, sourceIdentity: enabled ? labSourceForDevice(device.name) : null },
-    { headers: { 'Cache-Control': 'private, no-store' } });
+  return Response.json(
+    { enabled, sourceIdentity: enabled ? labSourceForDevice(device.name) : null },
+    { headers: { 'Cache-Control': 'private, no-store' } },
+  );
 }
 
 /** Explicit opt-in lab mapping. It never sets physical wiring verification. */
@@ -80,9 +89,12 @@ export async function POST(request: Request) {
   if (!parsed.ok)
     return Response.json({ error: parsed.error }, { status: jsonBodyErrorStatus(parsed.error) });
   const body = parsed.value;
-  if (!record(body) ||
-      !hasOnlyKeys(body, ['deviceId', 'confirmSyntheticOnly']) ||
-      !isBoundedString(body.deviceId, 128) || body.confirmSyntheticOnly !== true)
+  if (
+    !record(body) ||
+    !hasOnlyKeys(body, ['deviceId', 'confirmSyntheticOnly']) ||
+    !isBoundedString(body.deviceId, 128) ||
+    body.confirmSyntheticOnly !== true
+  )
     return Response.json({ error: 'INVALID_SYNTHETIC_CONFIRMATION' }, { status: 400 });
 
   const topology = await createTopologyRepository();
@@ -101,18 +113,29 @@ export async function POST(request: Request) {
   // Only the absence of field wiring verification is waived in an explicitly
   // synthetic lab. Every other physical topology, shunt and panel rule stays.
   const nonLabIssues = assessment.issues.filter(
-    (issue) => !issue.startsWith('SHUNT_NOT_VERIFIED_') &&
+    (issue) =>
+      !issue.startsWith('SHUNT_NOT_VERIFIED_') &&
       !(profile === ELTEK_BDCBB_CONFIG_4 && issue.startsWith('RATING_NOT_CONFIRMED_')) &&
       !(profile === ELTEK_BDCBB_CONFIG_4 && issue.startsWith('SHUNT_SPEC_NOT_CONFIRMED_')),
   );
   if (assessment.missingFeedPositions.length || nonLabIssues.length)
-    return Response.json({ error: 'LAB_INVENTORY_INCOMPLETE', issues: nonLabIssues,
-      missingInputs: assessment.missingFeedPositions }, { status: 422 });
+    return Response.json(
+      {
+        error: 'LAB_INVENTORY_INCOMPLETE',
+        issues: nonLabIssues,
+        missingInputs: assessment.missingFeedPositions,
+      },
+      { status: 422 },
+    );
 
   const ports = equipment.flatMap((owner) => owner.accessPorts.filter(isBdfbFeedPort));
   const plan = labSlots(profile).flatMap((slot) => {
-    const port = ports.find((candidate) => (profile === ELTEK_BDCBB_CONFIG_2
-      ? candidate.attributes?.feed : config4FeedPosition(candidate)) === slot.feed);
+    const port = ports.find(
+      (candidate) =>
+        (profile === ELTEK_BDCBB_CONFIG_2
+          ? candidate.attributes?.feed
+          : config4FeedPosition(candidate)) === slot.feed,
+    );
     if (!port) return [];
     return [
       { port, metric: 'CURRENT', oid: slot.currentOid, unit: 'A' },
@@ -125,42 +148,73 @@ export async function POST(request: Request) {
   const repository = await createTelemetryBindingRepository();
   const [sourceBindings, targetBindings] = await Promise.all([
     repository.listForSource('SNMP', sourceIdentity),
-    Promise.all(ports.map(async (port) => ({ portId: port.id,
-      bindings: await repository.listForTarget('ACCESS_PORT', port.id) }))),
+    Promise.all(
+      ports.map(async (port) => ({
+        portId: port.id,
+        bindings: await repository.listForTarget('ACCESS_PORT', port.id),
+      })),
+    ),
   ]);
   // Preflight the entire plan before any insert to avoid stealing genuine
   // instrument OIDs or overwriting physical commissioning.
   for (const target of plan) {
-    const forSource = sourceBindings.filter((binding) => binding.lifecycle === 'ACTIVE' &&
-      binding.sourcePointId === target.oid && binding.metric === target.metric);
-    const forPort = targetBindings.find((item) => item.portId === target.port.id)!.bindings
-      .filter((binding) => binding.lifecycle === 'ACTIVE' && binding.protocol === 'SNMP' &&
-        binding.metric === target.metric);
-    const same = forSource.length === 1 && forPort.length === 1 &&
+    const forSource = sourceBindings.filter(
+      (binding) =>
+        binding.lifecycle === 'ACTIVE' &&
+        binding.sourcePointId === target.oid &&
+        binding.metric === target.metric,
+    );
+    const forPort = targetBindings
+      .find((item) => item.portId === target.port.id)!
+      .bindings.filter(
+        (binding) =>
+          binding.lifecycle === 'ACTIVE' &&
+          binding.protocol === 'SNMP' &&
+          binding.metric === target.metric,
+      );
+    const same =
+      forSource.length === 1 &&
+      forPort.length === 1 &&
       forSource[0]!.id === forPort[0]!.id &&
       forSource[0]!.targetId === target.port.id &&
       forSource[0]!.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY';
     if (!same && (forSource.length || forPort.length))
-      return Response.json({ error: 'EXISTING_SNMP_BINDING_CONFLICT',
-        feed: target.port.name, metric: target.metric }, { status: 409 });
+      return Response.json(
+        { error: 'EXISTING_SNMP_BINDING_CONFLICT', feed: target.port.name, metric: target.metric },
+        { status: 409 },
+      );
   }
 
   let created = 0;
   for (const target of plan) {
-    const existing = sourceBindings.some((binding) =>
-      binding.lifecycle === 'ACTIVE' && binding.sourcePointId === target.oid &&
-      binding.metric === target.metric && binding.targetId === target.port.id &&
-      binding.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY');
+    const existing = sourceBindings.some(
+      (binding) =>
+        binding.lifecycle === 'ACTIVE' &&
+        binding.sourcePointId === target.oid &&
+        binding.metric === target.metric &&
+        binding.targetId === target.port.id &&
+        binding.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY',
+    );
     if (existing) continue;
     const now = new Date().toISOString();
     const binding: TelemetryBinding = {
-      id: randomUUID(), lifecycle: 'ACTIVE', createdAt: now, updatedAt: now,
-      protocol: 'SNMP', sourceIdentity, sourcePointId: target.oid,
-      metric: target.metric, unit: target.unit,
-      targetType: 'ACCESS_PORT', targetId: target.port.id,
-      attributes: { commissioning: 'SYNTHETIC_LAB_ONLY',
-        bdfbDeviceId: device.id, equipmentId: target.port.equipmentId,
-        feedName: target.port.name },
+      id: randomUUID(),
+      lifecycle: 'ACTIVE',
+      createdAt: now,
+      updatedAt: now,
+      protocol: 'SNMP',
+      sourceIdentity,
+      sourcePointId: target.oid,
+      metric: target.metric,
+      unit: target.unit,
+      targetType: 'ACCESS_PORT',
+      targetId: target.port.id,
+      attributes: {
+        commissioning: 'SYNTHETIC_LAB_ONLY',
+        bdfbDeviceId: device.id,
+        equipmentId: target.port.equipmentId,
+        feedName: target.port.name,
+      },
     };
     try {
       await repository.insert(binding);
@@ -172,9 +226,16 @@ export async function POST(request: Request) {
     }
   }
 
-  return Response.json({
-    mode: 'SYNTHETIC_LAB_ONLY', sourceIdentity, profile,
-    expectedPoints: plan.length, created,
-    physicalVerification: false, instruction: 'Start the matching SNMP collector; no field current is certified.',
-  }, { status: 200, headers: { 'Cache-Control': 'no-store' } });
+  return Response.json(
+    {
+      mode: 'SYNTHETIC_LAB_ONLY',
+      sourceIdentity,
+      profile,
+      expectedPoints: plan.length,
+      created,
+      physicalVerification: false,
+      instruction: 'Start the matching SNMP collector; no field current is certified.',
+    },
+    { status: 200, headers: { 'Cache-Control': 'no-store' } },
+  );
 }

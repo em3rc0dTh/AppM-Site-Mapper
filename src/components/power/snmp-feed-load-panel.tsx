@@ -35,22 +35,30 @@ export function SnmpFeedLoadPanel({
   const [labConfigured, setLabConfigured] = useState(false);
   useEffect(() => {
     let active = true;
-    void fetch(`/api/dev/snmp-lab/commission?deviceId=${encodeURIComponent(deviceId)}`,
-      { cache: 'no-store' }).then(async (response) => {
+    void fetch(`/api/dev/snmp-lab/commission?deviceId=${encodeURIComponent(deviceId)}`, {
+      cache: 'no-store',
+    })
+      .then(async (response) => {
         if (!response.ok) return;
         const data = (await response.json()) as { enabled: boolean; sourceIdentity?: string };
         if (active) {
           setLabEnabled(data.enabled);
           setLabSource(data.sourceIdentity ?? null);
         }
-      }).catch(() => {});
-    return () => { active = false; };
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, [deviceId]);
 
   async function commissionLab() {
-    if (!window.confirm(
-      'Activate synthetic emulator OIDs for this BDFB? This is LOCAL LAB ONLY, not proof of physical wiring or a certified total.',
-    )) return;
+    if (
+      !window.confirm(
+        'Activate synthetic emulator OIDs for this BDFB? This is LOCAL LAB ONLY, not proof of physical wiring or a certified total.',
+      )
+    )
+      return;
     setLabBusy(true);
     setLabError('');
     try {
@@ -60,8 +68,10 @@ export function SnmpFeedLoadPanel({
         body: JSON.stringify({ deviceId, confirmSyntheticOnly: true }),
       });
       const body = (await response.json()) as { error?: string; issues?: string[] };
-      if (!response.ok) throw new Error(
-        [body.error ?? `HTTP_${response.status}`, ...(body.issues ?? [])].join(' · '));
+      if (!response.ok)
+        throw new Error(
+          [body.error ?? `HTTP_${response.status}`, ...(body.issues ?? [])].join(' · '),
+        );
       setLabConfigured(true);
       setRefreshVersion((version) => version + 1);
     } catch (cause) {
@@ -135,21 +145,32 @@ export function SnmpFeedLoadPanel({
             <strong>SNMP · INCOMING DC FEEDS</strong>
           </div>
           <span>
-            {error ? 'UNAVAILABLE' : load?.status === 'COMPLETE'
-              ? 'LIVE' : labCount > 0 ? 'LAB SIMULATED' : 'PENDING'}
+            {error
+              ? 'UNAVAILABLE'
+              : load?.status === 'COMPLETE'
+                ? 'LIVE'
+                : labCount > 0
+                  ? 'LAB SIMULATED'
+                  : 'PENDING'}
           </span>
         </header>
 
         <div className="zip-bdfb-live-average-grid">
           <div>
-            <span>{labTotal !== null ? 'SIMULATED SHUNT CURRENT' : 'INDEPENDENT FEED CURRENT'}</span>
+            <span>
+              {labTotal !== null ? 'SIMULATED SHUNT CURRENT' : 'INDEPENDENT FEED CURRENT'}
+            </span>
             <strong>
-              {!error && load?.status === 'COMPLETE' ? numeric(load.totalCurrentA, 'A') : numeric(labTotal, 'A')}
+              {!error && load?.status === 'COMPLETE'
+                ? numeric(load.totalCurrentA, 'A')
+                : numeric(labTotal, 'A')}
             </strong>
           </div>
           <div>
             <span>SHUNTS REPORTING / REQUIRED</span>
-            <strong>{load ? `${load.freshFeedCount + labCount} / ${load.expectedFeedCount}` : '—'}</strong>
+            <strong>
+              {load ? `${load.freshFeedCount + labCount} / ${load.expectedFeedCount}` : '—'}
+            </strong>
           </div>
           <div>
             <span>RATED INPUT CAPACITY</span>
@@ -205,16 +226,22 @@ export function SnmpFeedLoadPanel({
             {labConfigured && (
               <small role="status">
                 Synthetic OIDs mapped. Start the collectors with:
-                <code>bash scripts/lab/bfdb-snmp-config4.sh collectors ../bfdb-telemetry-gateway</code>
+                <code>
+                  bash scripts/lab/bfdb-snmp-config4.sh collectors ../bfdb-telemetry-gateway
+                </code>
               </small>
             )}
-            {labError && <small role="alert" className="form-error">{labError}</small>}
+            {labError && (
+              <small role="alert" className="form-error">
+                {labError}
+              </small>
+            )}
           </div>
         )}
         {labCount > 0 && (
           <p className="sm-snmp-lab-disclaimer">
-            SIMULATED SNMP DATA · {labCount} shunts reporting. Currents are emulated and
-            do not certify the installed cabinet or its physical shunts.
+            SIMULATED SNMP DATA · {labCount} shunts reporting. Currents are emulated and do not
+            certify the installed cabinet or its physical shunts.
           </p>
         )}
         <div

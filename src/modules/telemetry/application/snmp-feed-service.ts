@@ -328,17 +328,20 @@ export async function summarizeSnmpBdfbLoad(
       Math.abs(Date.parse(currentValue.observedAt) - Date.parse(voltageValue.observedAt)) <=
         freshnessMs,
     );
-    const status: SnmpFeedReadingStatus = !verified && !(syntheticLabBinding && fresh)
-      ? 'UNVERIFIED'
-      : bindings.length > 1
-        ? 'CONFLICT'
-        : !binding
-          ? 'UNMAPPED'
-          : !permitted
-            ? 'NO_DATA'
-            : fresh
-              ? verified ? 'LIVE' : 'LAB_LIVE'
-              : 'STALE';
+    const status: SnmpFeedReadingStatus =
+      !verified && !(syntheticLabBinding && fresh)
+        ? 'UNVERIFIED'
+        : bindings.length > 1
+          ? 'CONFLICT'
+          : !binding
+            ? 'UNMAPPED'
+            : !permitted
+              ? 'NO_DATA'
+              : fresh
+                ? verified
+                  ? 'LIVE'
+                  : 'LAB_LIVE'
+                : 'STALE';
     const slot = config4FeedPosition(port);
     const threshold =
       typeof port.attributes?.overloadThresholdA === 'number' &&
@@ -350,8 +353,10 @@ export async function summarizeSnmpBdfbLoad(
           : null;
     const nominal = port.attributes?.ratedCurrentA;
     const rating = typeof nominal === 'number' && nominal > 0 ? nominal : null;
-    const displayedCurrent = (status === 'LIVE' || status === 'LAB_LIVE') ? currentValue!.value : null;
-    const displayedVoltage = (status === 'LIVE' || status === 'LAB_LIVE') && alignedVoltage ? voltageValue!.value : null;
+    const displayedCurrent =
+      status === 'LIVE' || status === 'LAB_LIVE' ? currentValue!.value : null;
+    const displayedVoltage =
+      (status === 'LIVE' || status === 'LAB_LIVE') && alignedVoltage ? voltageValue!.value : null;
     feeds.push({
       accessPortId: port.id,
       label: port.name,
@@ -427,8 +432,10 @@ export async function summarizeSnmpBdfbLoad(
     feedCount: feeds.length,
     freshFeedCount: live.length,
     labFreshFeedCount: labLive.length,
-    labMeasuredCurrentA: labLive.length === feeds.length && feeds.length === assessmentExpectedFeedCount
-      ? labLive.reduce((sum, feed) => sum + feed.currentA!, 0) : null,
+    labMeasuredCurrentA:
+      labLive.length === feeds.length && feeds.length === assessmentExpectedFeedCount
+        ? labLive.reduce((sum, feed) => sum + feed.currentA!, 0)
+        : null,
     feeds,
   };
 }

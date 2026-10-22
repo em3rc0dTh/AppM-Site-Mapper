@@ -4,72 +4,118 @@ import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/com
 export type CompositionMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
 export interface CompositionTelemetrySummary {
+  /** Unique active physical descendant breakers, including the focused breaker itself. */
   readonly installed: number;
   readonly bound: number;
   readonly reporting: number;
   readonly stale: number;
+  /** Immediate installed children contributing LIVE readings, not leaf counts. */
+  readonly reportingChildren: number;
+  readonly installedChildren: number;
+  /** Positional panel capacity or actual child count for other scopes. */
+  readonly positions: number;
+  /** Mean of each reporting immediate child's own mean, per metric. */
   readonly metrics: Readonly<Partial<Record<CompositionMetricKey, number>>>;
+  /** Unique reporting leaf breakers per metric (not a denominator for the hierarchical mean). */
   readonly metricCounts: Readonly<Record<CompositionMetricKey, number>>;
 }
 
-const METRICS: readonly CompositionMetricKey[] = ['voltageV', 'currentA', 'powerW', 'energyKwh'];
+export const COMPOSITION_METRICS: readonly CompositionMetricKey[] = [
+  'voltageV',
+  'currentA',
+  'powerW',
+  'energyKwh',
+];
+
+function zeroCounts(): Record<CompositionMetricKey, number> {
+  return { voltageV: 0, currentA: 0, powerW: 0, energyKwh: 0 };
+}
 
 /**
- * Read-only projection of installed physical descendants.
- * Each unique ACTIVE breaker contributes at most once, regardless of nesting.
- * No vacant position, disconnected source or synthetic shunt enters the means.
+ * Physical, level-by-level arithmetic means.
+ *
+ * A panel averages LIVE breakers; a frame averages reporting panel means;
+ * a shelf averages reporting frame means; a chassis averages reporting shelf means.
+ * Empty physical positions, stale devices, incomplete metrics and duplicate
+ * descendants do not contribute. No child mean is a sum or an input-feed load.
  */
 export function projectCompositionTelemetry(
   root: EquipmentNode,
   equipmentById: ReadonlyMap<string, EquipmentNode>,
   readings: Readonly<Record<string, CompositionBreakerTelemetry>>,
 ): CompositionTelemetrySummary {
-  const visited = new Set<string>();
-  const breakers: EquipmentNode[] = [];
+  const seen = new Set<string>();
 
-  function visit(node: EquipmentNode): void {
-    if (visited.has(node.id) || node.lifecycle !== 'ACTIVE') return;
-    visited.add(node.id);
+  function visit(node: EquipmentNode): CompositionTelemetrySummary {
+    const empty = {
+      installed: 0,
+      bound: 0,
+      reporting: 0,
+      stale: 0,
+      reportingChildren: 0,
+      installedChildren: 0,
+      positions: node.childMode === 'POSITIONAL' ? node.children.length : 0,
+      metrics: {},
+      metricCounts: zeroCounts(),
+    } satisfies CompositionTelemetrySummary;
+    if (node.lifecycle !== 'ACTIVE' || seen.has(node.id)) return empty;
+    seen.add(node.id);
+
     if (node.equipmentType === 'CIRCUIT_BREAKER') {
-      breakers.push(node);
-      return;
+      const reading = readings[node.id];
+      const live = reading?.status === 'LIVE';
+      const metrics: Partial<Record<CompositionMetricKey, number>> = {};
+      const metricCounts = zeroCounts();
+      if (live) {
+        for (const key of COMPOSITION_METRICS) {
+          const value = reading[key];
+          if (typeof value === 'number' && Number.isFinite(value)) {
+            metrics[key] = value;
+            metricCounts[key] = 1;
+          }
+        }
+      }
+      return {
+        ...empty,
+        installed: 1,
+        bound: reading && reading.status !== 'UNMAPPED' ? 1 : 0,
+        reporting: live ? 1 : 0,
+        stale: reading?.status === 'STALE' ? 1 : 0,
+        metrics,
+        metricCounts,
+      };
     }
-    for (const childId of node.children) {
-      const child = childId ? equipmentById.get(childId) : undefined;
-      if (child && child.deviceId === root.deviceId) visit(child);
+
+    const activeChildren = node.children.flatMap((id) => {
+      const child = id ? equipmentById.get(id) : undefined;
+      return child && child.lifecycle === 'ACTIVE' && child.deviceId === root.deviceId
+        ? [child]
+        : [];
+    });
+    const children = activeChildren.map(visit);
+    const metrics: Partial<Record<CompositionMetricKey, number>> = {};
+    const metricCounts = zeroCounts();
+    for (const key of COMPOSITION_METRICS) {
+      const directMeans = children
+        .map((child) => child.metrics[key])
+        .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
+      if (directMeans.length) {
+        metrics[key] = directMeans.reduce((sum, value) => sum + value, 0) / directMeans.length;
+      }
+      metricCounts[key] = children.reduce((sum, child) => sum + child.metricCounts[key], 0);
     }
+    return {
+      installed: children.reduce((sum, child) => sum + child.installed, 0),
+      bound: children.reduce((sum, child) => sum + child.bound, 0),
+      reporting: children.reduce((sum, child) => sum + child.reporting, 0),
+      stale: children.reduce((sum, child) => sum + child.stale, 0),
+      reportingChildren: children.filter((child) => child.reporting > 0).length,
+      installedChildren: children.filter((child) => child.installed > 0 || child.installedChildren > 0).length,
+      positions: node.childMode === 'POSITIONAL' ? node.children.length : activeChildren.length,
+      metrics,
+      metricCounts,
+    };
   }
 
-  visit(root);
-  const live = breakers
-    .map((breaker) => readings[breaker.id])
-    .filter((reading): reading is CompositionBreakerTelemetry => reading?.status === 'LIVE');
-  const values: Partial<Record<CompositionMetricKey, number>> = {};
-  const metricCounts = {
-    voltageV: 0,
-    currentA: 0,
-    powerW: 0,
-    energyKwh: 0,
-  };
-  for (const metric of METRICS) {
-    const samples = live
-      .map((reading) => reading[metric])
-      .filter((value): value is number => typeof value === 'number' && Number.isFinite(value));
-    metricCounts[metric] = samples.length;
-    if (samples.length) {
-      values[metric] = samples.reduce((sum, value) => sum + value, 0) / samples.length;
-    }
-  }
-
-  return {
-    installed: breakers.length,
-    bound: breakers.filter((breaker) => {
-      const status = readings[breaker.id]?.status;
-      return status !== undefined && status !== 'UNMAPPED';
-    }).length,
-    reporting: live.length,
-    stale: breakers.filter((breaker) => readings[breaker.id]?.status === 'STALE').length,
-    metrics: values,
-    metricCounts,
-  };
+  return visit(root);
 }

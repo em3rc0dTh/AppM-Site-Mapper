@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import type { SnmpBdfbLoadView } from '@/modules/telemetry/application/snmp-feed-service';
+import { projectSnmpCapacity } from '@/modules/telemetry/application/snmp-capacity-projection';
 
 interface Props {
   readonly root: EquipmentNode;
@@ -71,38 +72,22 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
   if (!scopedFeeds.length) return null;
 
   const chassis = root.equipmentType === 'CHASSIS';
-  const totalCertified =
-    chassis &&
-    load.status === 'COMPLETE' &&
-    load.totalRatedCurrentA !== null &&
-    load.totalCurrentA !== null;
-  const fullyCovered =
-    !chassis &&
-    scopedFeeds.every(
-      (feed) =>
-        feed.status === 'LIVE' &&
-        feed.ratedCurrentA !== null &&
-        feed.servedPanelIds.length > 0 &&
-        feed.servedPanelIds.every((id) => panels.has(id)),
-    );
-  const exclusive = chassis ? totalCertified : fullyCovered;
-  const rated = chassis
-    ? load.totalRatedCurrentA
-    : exclusive
-      ? scopedFeeds.reduce((sum, feed) => sum + feed.ratedCurrentA!, 0)
-      : null;
-  const used = chassis
-    ? load.totalCurrentA
-    : exclusive
-      ? scopedFeeds.reduce((sum, feed) => sum + feed.currentA!, 0)
-      : null;
-  const available = exclusive && rated !== null && used !== null ? rated - used : null;
-  const ratio = rated !== null && used !== null && rated > 0 ? (used / rated) * 100 : null;
-  const simulated = scopedFeeds.some((feed) => feed.status === 'LAB_LIVE');
   const shared =
-    scopedFeeds.some((feed) => feed.servedPanelIds.some((id) => !panels.has(id))) ||
-    (root.equipmentType === 'PANEL' && scopedFeeds.some((feed) => feed.servedPanelIds.length > 1));
-
+    !chassis && scopedFeeds.some((feed) =>
+      feed.servedPanelIds.some((id) => !panels.has(id)));
+  const scopeCapacity = projectSnmpCapacity(
+    load,
+    scopedFeeds,
+    chassis ? load.expectedFeedCount : scopedFeeds.length,
+  );
+  // A current measured by a shared feeder belongs to the whole feeder, not
+  // to an arbitrary subset of the panels it serves.
+  const exclusive = chassis || !shared;
+  const rated = exclusive ? scopeCapacity.ratedA : null;
+  const used = exclusive ? scopeCapacity.measuredA : null;
+  const available = exclusive ? scopeCapacity.availableA : null;
+  const ratio = exclusive ? scopeCapacity.utilizationPct : null;
+  const simulated = scopeCapacity.mode === 'LAB_SIMULATED';
   return (
     <section className="ec-snmp-capacity" aria-label="SNMP incoming DC feeder capacity">
       <header>
@@ -115,7 +100,7 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
           </small>
         </div>
         <span>
-          {simulated ? 'LAB SIMULATED' : exclusive ? 'VERIFIED LIVE' : 'INCOMPLETE / SHARED'}
+          {simulated ? 'LAB SIMULATED' : scopeCapacity.mode === 'VERIFIED_LIVE' && ratio !== null ? 'VERIFIED LIVE' : 'INCOMPLETE / SHARED'}
         </span>
       </header>
       <div className="ec-snmp-capacity-metrics">
@@ -132,40 +117,47 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
           <strong>{quantity(available)}</strong>
         </div>
       </div>
-      {exclusive && ratio !== null && (
+      {ratio !== null && (
         <div
           className="ec-snmp-utilization"
           role="meter"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.min(100, Math.max(0, ratio))}
-          aria-label="Verified incoming feeder capacity used"
+          aria-label={simulated ? 'Simulated DC feeder capacity used' : 'Verified DC feeder capacity used'}
         >
           <div style={{ width: `${Math.min(100, Math.max(0, ratio))}%` }} />
           <span>
-            {ratio.toFixed(1)}% used · {quantity(available)} remaining
+            {ratio.toFixed(1)}% used · {quantity(available)} remaining · {simulated ? 'LAB SIMULATED' : 'VERIFIED'}
           </span>
         </div>
       )}
       <div className="ec-snmp-feed-tags">
-        {scopedFeeds.map((feed) => (
-          <span key={feed.accessPortId}>
-            {feed.feedPosition ?? feed.label}: {quantity(feed.currentA)} /{' '}
-            {quantity(feed.ratedCurrentA)} ·
-            {feed.status === 'LAB_LIVE' ? ' SIMULATED' : feed.status}
-            {feed.servedPanelIds.length > 1 ? ' · shared shunt' : ''}
-          </span>
-        ))}
+        {scopeCapacity.feedUtilization.map((feed) => {
+          const original = scopedFeeds.find((candidate) => candidate.accessPortId === feed.accessPortId);
+          return (
+            <span key={feed.accessPortId}>
+              <strong>{feed.label}</strong>: {quantity(feed.measuredA)} / {quantity(feed.ratedA)}
+              {feed.utilizationPct !== null
+                ? ` · ${feed.utilizationPct.toFixed(1)}% used · ${quantity(feed.availableA)} free`
+                : ' · no rated capacity or fresh reading'}
+              {' · '}{feed.status === 'LAB_LIVE' ? 'LAB SIMULATED' : feed.status}
+              {(original?.servedPanelIds.length ?? 0) > 1 ? ' · shared shunt' : ''}
+            </span>
+          );
+        })}
       </div>
       {(simulated || shared || !exclusive) && (
         <p>
-          {simulated ? 'Synthetic SNMP readings cannot certify available physical capacity. ' : ''}
+          {simulated ? 'LAB SIMULATED: computed capacity is an estimate from synthetic current and configured port ratings, never a certified physical limit. ' : ''}
           {shared
             ? 'A shunt serves multiple panels: its current is not attributed separately to each. '
             : ''}
           {!exclusive
-            ? 'Remaining amperage is withheld until all relevant feeds, ratings and physical mappings are verified.'
-            : ''}
+            ? 'Current cannot be attributed to a partial group of panels served by the same shunt.'
+            : ratio === null
+              ? 'The full utilization is unavailable until all inputs report fresh current and have recorded nominal ampere ratings.'
+              : ''}
         </p>
       )}
     </section>

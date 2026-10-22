@@ -258,12 +258,20 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
       </div>
       <div className="sm-snmp-history-metric-tabs" role="tablist" aria-label="SNMP trend metric">
         {METRICS.map((item) => (
-          <button key={item.key} type="button" role="tab"
+          <button
+            key={item.key}
+            type="button"
+            role="tab"
             aria-selected={selectedMetric === item.key}
-            onClick={() => setSelectedMetric(item.key)}>
-            {item.key === 'currentA' ? 'Corriente'
-              : item.key === 'voltageV' ? 'Voltaje'
-                : item.key === 'powerW' ? 'Potencia' : 'Energía'}
+            onClick={() => setSelectedMetric(item.key)}
+          >
+            {item.key === 'currentA'
+              ? 'Corriente'
+              : item.key === 'voltageV'
+                ? 'Voltaje'
+                : item.key === 'powerW'
+                  ? 'Potencia'
+                  : 'Energía'}
           </button>
         ))}
       </div>

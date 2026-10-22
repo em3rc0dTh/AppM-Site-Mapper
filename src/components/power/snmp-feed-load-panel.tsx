@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
+import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import type { SnmpBdfbLoadView } from '@/modules/telemetry/application/snmp-feed-service';
 
 interface PhysicalPanel {
@@ -326,6 +327,7 @@ export function SnmpFeedLoadPanel({
           Incoming SNMP shunt measurements are separate from the descendant Equipment MQTT average.
         </small>
       </section>
+      <SnmpFeedHistory deviceId={deviceId} />
       <SnmpFeedCommissioning
         deviceId={deviceId}
         chassisId={chassisId}

@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { projectSnmpCapacity } from '@/modules/telemetry/application/snmp-capacity-projection';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
 import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import type { SnmpBdfbLoadView } from '@/modules/telemetry/application/snmp-feed-service';
@@ -125,16 +127,13 @@ export function SnmpFeedLoadPanel({
     };
   }, [deviceId, chassisId, refreshVersion]);
 
-  const percent =
-    load?.totalRatedCurrentA && load.totalCurrentA !== null && load.totalCurrentA !== undefined
-      ? (load.totalCurrentA / load.totalRatedCurrentA) * 100
-      : null;
+  const capacity = load ? projectSnmpCapacity(load) : null;
   const awaitingVerification =
     load?.configurationIssues.some((issue) => issue.includes('NOT_VERIFIED')) ?? false;
   const inventoryRecorded =
     load !== null && load.expectedFeedCount > 0 && load.feedCount === load.expectedFeedCount;
   const labCount = load?.labFreshFeedCount ?? 0;
-  const labTotal = load?.labMeasuredCurrentA ?? null;
+  const isLab = capacity?.mode === 'LAB_SIMULATED';
 
   return (
     <>
@@ -162,13 +161,9 @@ export function SnmpFeedLoadPanel({
             <div className="zip-bdfb-live-average-grid">
               <div>
                 <span>
-                  {labTotal !== null ? 'SIMULATED SHUNT CURRENT' : 'INDEPENDENT FEED CURRENT'}
+                  {isLab ? 'SIMULATED SHUNT CURRENT' : 'INDEPENDENT FEED CURRENT'}
                 </span>
-                <strong>
-                  {!error && load?.status === 'COMPLETE'
-                    ? numeric(load.totalCurrentA, 'A')
-                    : numeric(labTotal, 'A')}
-                </strong>
+                <strong>{numeric(error ? null : capacity?.measuredA, 'A')}</strong>
               </div>
               <div>
                 <span>SHUNTS REPORTING / REQUIRED</span>
@@ -178,11 +173,11 @@ export function SnmpFeedLoadPanel({
               </div>
               <div>
                 <span>RATED INPUT CAPACITY</span>
-                <strong>{numeric(load?.totalRatedCurrentA, 'A')}</strong>
+                <strong>{numeric(capacity?.ratedA, 'A')}</strong>
               </div>
               <div>
                 <span>INPUT UTILIZATION</span>
-                <strong>{numeric(percent, '%')}</strong>
+                <strong>{numeric(capacity?.utilizationPct, '%')}</strong>
               </div>
               <div>
                 <span>APPROX. INPUT POWER</span>
@@ -190,6 +185,88 @@ export function SnmpFeedLoadPanel({
               </div>
             </div>
 
+            {capacity && (
+              <div className="sm-snmp-capacity-lab" aria-label="SNMP input current capacity">
+                <div className="sm-snmp-capacity-line">
+                  <strong>{isLab ? 'LAB SIMULATED · DC SHUNT UTILIZATION' : 'DC SHUNT UTILIZATION'}</strong>
+                  <span>
+                    {capacity.reportingFeeds}/{capacity.expectedFeeds} fresh feeds
+                  </span>
+                </div>
+                <div className="sm-snmp-capacity-numbers">
+                  <div><small>USED</small><strong>{numeric(capacity.measuredA, 'A')}</strong></div>
+                  <div><small>RATED</small><strong>{numeric(capacity.ratedA, 'A')}</strong></div>
+                  <div><small>AVAILABLE</small><strong>{numeric(capacity.availableA, 'A')}</strong></div>
+                </div>
+                {capacity.utilizationPct !== null && (
+                  <div className="sm-snmp-capacity-meter">
+                    <div
+                      role="meter"
+                      aria-label={isLab ? 'Simulated shunt utilization' : 'Verified shunt utilization'}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.max(0, Math.min(100, capacity.utilizationPct))}
+                    >
+                      <span style={{ width: `${Math.max(0, Math.min(100, capacity.utilizationPct))}%` }} />
+                    </div>
+                    <strong>{capacity.utilizationPct.toFixed(1)}% of configured input capacity</strong>
+                    {!!capacity.overloadedByA && capacity.overloadedByA > 0 && (
+                      <small role="status">Above configured rating by {numeric(capacity.overloadedByA, 'A')}</small>
+                    )}
+                  </div>
+                )}
+                <div className="sm-snmp-capacity-feeds">
+                  {capacity.feedUtilization.map((feed) => (
+                    <div className="sm-snmp-capacity-feed" key={feed.accessPortId}>
+                      <div>
+                        <strong>Shunt {feed.label} {feed.status === 'LAB_LIVE' ? '· SIMULATED' : ''}</strong>
+                        <span>{feed.status === 'LIVE' || feed.status === 'LAB_LIVE' ?
+                          `${numeric(feed.measuredA, 'A')} / ${numeric(feed.ratedA, 'A')}` : feed.status}</span>
+                      </div>
+                      {feed.utilizationPct !== null ? (
+                        <>
+                          <div className="sm-snmp-capacity-feed-meter"
+                            role="meter" aria-label={`Shunt ${feed.label} utilization`}
+                            aria-valuemin={0} aria-valuemax={100}
+                            aria-valuenow={Math.max(0, Math.min(100, feed.utilizationPct))}>
+                            <span style={{ width: `${Math.max(0, Math.min(100, feed.utilizationPct))}%` }} />
+                          </div>
+                          <small>
+                            {feed.utilizationPct.toFixed(1)}% used · {numeric(feed.availableA, 'A')} available
+                            {feed.overloadedByA ? ` · Over rating by ${numeric(feed.overloadedByA, 'A')}` : ''}
+                          </small>
+                        </>
+                      ) : (
+                        <small>
+                          {feed.ratedA === null
+                            ? 'Rated current not configured for this input'
+                            : 'No fresh commissioned current reading'}
+                        </small>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                {capacity.reportingFeeds < capacity.expectedFeeds && (
+                  <p>Partial SNMP data: whole-BDFB current and remaining capacity are withheld.</p>
+                )}
+                {capacity.reportingFeeds === capacity.expectedFeeds && capacity.ratedA === null && (
+                  <p>
+                    Rated current is missing on one or more shunts. Configure
+                    each physical input on the chassis before calculating the percentage.
+                    {' '}<Link href={`/device/${encodeURIComponent(chassisId)}#bdfb-access-ports`}>
+                      Configure DC input ratings →
+                    </Link>
+                  </p>
+                )}
+                {isLab && (
+                  <p>
+                    Simulation only: readings come from synthetic SNMP OIDs and nominal ratings
+                    from the recorded AccessPorts. Neither the computed headroom nor the
+                    lab utilization is a certified physical limit.
+                  </p>
+                )}
+              </div>
+            )}
             {load?.hardwareProfile && (
               <div className="sm-snmp-inventory-summary">
                 <strong>

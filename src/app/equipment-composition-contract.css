@@ -1277,3 +1277,137 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* SNMP: standalone laboratory utilization, explicitly not electrical certification. */
+.sm-snmp-capacity-lab {
+  margin: 12px 0 16px;
+  padding: 14px;
+  border: 1px solid #beddd5;
+  border-radius: 9px;
+  background: #f3faf7;
+  color: #1b4d47;
+}
+
+.sm-snmp-capacity-line {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 11px;
+  font-size: 11px;
+}
+
+.sm-snmp-capacity-line > span {
+  color: #557f73;
+  font-size: 10px;
+}
+
+.sm-snmp-capacity-numbers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sm-snmp-capacity-numbers > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 10px 7px;
+  border: 1px solid #cee5df;
+  background: #fff;
+  border-radius: 6px;
+}
+
+.sm-snmp-capacity-numbers small {
+  color: #55746c;
+  font-size: 9px;
+}
+
+.sm-snmp-capacity-numbers strong {
+  font-size: clamp(12px, 1.1vw, 17px);
+  color: #153e37;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.sm-snmp-capacity-meter {
+  display: grid;
+  gap: 7px;
+  margin: 12px 0;
+}
+
+.sm-snmp-capacity-meter > div,
+.sm-snmp-capacity-feed-meter {
+  height: 13px;
+  border: 1px solid #bdd7cf;
+  border-radius: 12px;
+  background: #e1ece7;
+  overflow: hidden;
+}
+
+.sm-snmp-capacity-meter > div > span,
+.sm-snmp-capacity-feed-meter > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #54b399;
+  transition: width 220ms ease;
+}
+
+.sm-snmp-capacity-meter > strong {
+  font-size: 11px;
+}
+
+.sm-snmp-capacity-feed-meter {
+  height: 8px;
+}
+
+.sm-snmp-capacity-feeds {
+  display: grid;
+  gap: 8px;
+}
+
+.sm-snmp-capacity-feed {
+  display: grid;
+  gap: 7px;
+  border: 1px solid #d3e8df;
+  border-radius: 7px;
+  background: #fff;
+  padding: 10px;
+}
+
+.sm-snmp-capacity-feed > div:first-child {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 5px;
+  font-size: 11px;
+}
+
+.sm-snmp-capacity-feed > div:first-child span,
+.sm-snmp-capacity-feed small {
+  color: #456f66;
+  font-size: 10px;
+}
+
+.sm-snmp-capacity-lab p {
+  margin: 10px 0 0;
+  color: #516f65;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.sm-snmp-capacity-lab a {
+  color: #075fb1;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .sm-snmp-capacity-numbers {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

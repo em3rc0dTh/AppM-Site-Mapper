@@ -336,6 +336,11 @@
    a 24-slot BDFB table needs. Keep topology beside the workspace and move
    Inspector AFTER the work surface, never over it or off-screen. */
 @media (min-width: 1000px) and (max-width: 1199px) {
+  .zip-app-shell.app-shell--immersive .operational-page--blueprint {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
   /* The 1000–1199px Room layout is two columns by design, but the
      Inspector belongs BELOW the central drafting canvas, never in the tree. */
   .zip-app-shell .operational-page--blueprint .operational-layout--blueprint {

@@ -13,16 +13,11 @@ import {
   type CompositionBreakerTelemetry,
 } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
-import en from '@/messages/en.json';
+import { useTranslations } from 'next-intl';
 
 type Tab = 'telemetry' | 'overview' | 'ports' | 'settings';
 
-const TABS: readonly { key: Tab; label: string }[] = [
-  { key: 'telemetry', label: en.equipment.inspector.telemetry },
-  { key: 'overview', label: en.equipment.inspector.overview },
-  { key: 'ports', label: en.equipment.inspector.ports },
-  { key: 'settings', label: en.equipment.inspector.settings },
-];
+const TABS: readonly Tab[] = ['telemetry', 'overview', 'ports', 'settings'];
 
 const METRICS = [
   { key: 'voltageV', symbol: 'V', label: 'Voltage', unit: 'V', digits: 2 },
@@ -50,6 +45,7 @@ export function EquipmentFocusInspector({
   ports,
   settings,
 }: Props) {
+  const t = useTranslations('equipment.inspector');
   const [tab, setTab] = useState<Tab>('overview');
   const [snmpExpanded, setSnmpExpanded] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -76,7 +72,7 @@ export function EquipmentFocusInspector({
   const breaker = equipment.equipmentType === 'CIRCUIT_BREAKER';
   const current = breaker ? readings[equipment.id] : undefined;
   const hasLiveReadings = canReadTelemetry && summary.reporting > 0;
-  const visibleTabs = hasLiveReadings ? TABS : TABS.filter(({ key }) => key !== 'telemetry');
+  const visibleTabs = hasLiveReadings ? TABS : TABS.filter((key) => key !== 'telemetry');
   const activeTab = tab === 'telemetry' && !hasLiveReadings ? 'overview' : tab;
   const coverage = breaker
     ? `${summary.reporting}/1 breaker LIVE`
@@ -101,7 +97,7 @@ export function EquipmentFocusInspector({
         </p>
       )}
       <div className="ec-inspector-tabs" role="tablist" aria-label="Equipment inspector tabs">
-        {visibleTabs.map(({ key, label }) => (
+        {visibleTabs.map((key) => (
           <button
             key={key}
             id={`ec-tab-${key}`}
@@ -111,7 +107,7 @@ export function EquipmentFocusInspector({
             aria-controls={`ec-tabpanel-${key}`}
             onClick={() => setTab(key)}
           >
-            {label}
+            {t(key)}
           </button>
         ))}
       </div>

@@ -787,44 +787,163 @@ Los paneles se ordenan verticalmente **dentro de cada frame**. Al pulsar el pane
 
 ---
 
-# SCREEN 12 — PANEL / BREAKER
+# SCREEN 12 — EQUIPMENT COMPOSITION · Cinco vistas compactas (revisión UX 22/10/2026)
 
-Click `Panel A1`.
+**Estatus:** revisión de wireframes basada en las capturas anotadas por el equipo. Define el siguiente diseño deseado para **Chassis, Shelf, Frame, Panel y Breaker**. **No representa una modificación ya aplicada al frontend:** es la especificación de la siguiente iteración.
 
-```text
-┌────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ ← BDFB-A          PANEL A1                                                       EXPLORE           │
-├────────────────────┬────────────────────────────────────────────────────────────┬──────────────────┤
-│ BDFB TREE          │ PANEL A1                                                   │ BREAKER          │
-│                    │                                                            │                  │
-│ ▼ BDFB-A          │   01  ┌─────┐   13 ┌─────┐                                 │ BREAKER 08       │
-│   ▼ Frame A        │       │ 01  │      │ 13  │                                 │                  │
-│     ● Panel A1     │   02  ├─────┤   14 ├─────┤                                 │ Position    08   │
-│     ○ Panel A2     │       │ 02  │      │ 14  │                                 │ Feed        A    │
-│                    │   03  ├─────┤   15 ├─────┤                                 │                  │
-│                    │       │ 03  │      │ 15  │                                 │ Provisioned ✓    │
-│                    │       ├─────┤      ├─────┤                                 │                  │
-│                    │    ...│ ... │      │ ... │                                 │ Destination      │
-│                    │       ├─────┤      ├─────┤                                 │ SERVER-01        │
-│                    │   08  ┃ 08  ┃◄──────────── SELECTED                         │ Rack R-023       │
-│                    │       ┗━━━━━┛      ├─────┤                                 │ U37-U39          │
-│                    │   09  ├─────┤      │ ... │                                 │                  │
-│                    │       │ 09  │      └─────┘                                 │ ● LIVE           │
-│                    │       └─────┘                                              │                  │
-│                    │                                                            │ [TRACE PATH]     │
-└────────────────────┴────────────────────────────────────────────────────────────┴──────────────────┘
-```
+**Shell común:** `Topology` permanece a la izquierda. Solo se redibujan en el ASCII el **centro físico** y el **Inspector derecho**, manteniendo el patrón de Site Mapper. El encabezado del Inspector identifica al equipo. Pestañas comunes, con **Telemetría por defecto**: `[Telemetría*] [Resumen] [Puertos] [Config.]`. Una sola pestaña activa; no apilar datos, puertos y acciones indefinidamente.
 
-`TRACE PATH` regresa al Screen 10 con ese camino iluminado.
+## 12.1 — Leyenda mínima con iconos
 
-Ésa es la coherencia que quiero:
+| Token ASCII | Icono UI recomendado | Significado                               |
+| ----------- | -------------------- | ----------------------------------------- |
+| `[V]`       | `gauge`              | Voltaje (V)                               |
+| `[I]`       | `activity`           | Corriente (A)                             |
+| `[P]`       | `zap`                | Potencia (W)                              |
+| `[E]`       | `battery-charging`   | Energía/contador (kWh; indicar origen)    |
+| `●`         | `circle-check`       | Lectura LIVE válida y fresca              |
+| `○`         | `circle-minus`       | Sin lectura; **no** indica equipo apagado |
+| `!`         | `triangle-alert`     | Pendiente, no verificado o incompleto     |
+
+Usar una **leyenda breve visible o en tooltip**, nombre accesible y unidades. Sustituir frases repetidas como `AVG VOLTAGE` por **icono + cifra + unidad**, sin esconder si es `LAB SIMULATED`, MQTT o SNMP. Valor desconocido `—`, no `0` artificial.
+
+## 12.2 — Chassis · indicadores en lugar de párrafos
 
 ```text
-Device → Trace Power → Breaker
-Breaker → Trace Power → Device
++------------------------------------------------------------------------+-------------------------------------------------+
+| EQUIPMENT COMPOSITION / 1 / CHASSIS                                    | INSPECTOR / 1 / CHASSIS                         |
++------------------------------------------------------------------------+-------------------------------------------------+
+| CENTRO · PHYSICAL COMPOSITION                                          | [TELEMETRIA*][RESUMEN][PUERTOS][CONFIG.]        |
++------------------------------------------------------------------------+-------------------------------------------------+
+| FOCUSED · BDFB-01 / BDFB CHASSIS #1    1 shelf · 2 puertos             | TELEMETRIA (default)     [LAB SIMULATED]        |
+| INTERNAL COMPOSITION                                                   | [!] 2/2 shunts  ·  cableado sin verificar       |
+| +-- SHELF / BDFB SHELF ----------------------------------------------+ | [I] 422.3 A · SIMULADO    [V] --                |
+| | [ FRAME-01: 2 paneles ]      [ FRAME-02: 2 paneles ]              |  | [SHUNT A: 214.8 A] [SHUNT B: 207.5 A]           |
+| | P01: 3/24  · P02: 0/24       P01: 0/24  · P02: 0/24             |    | [VER DETALLE DE ENTRADAS v]                     |
+| +--------------------------------------------------------------------+ | MQTT / DESCENDIENTES                            |
+| PHYSICAL TERMINALS  [ INPUT-SHUNT-A ]  [ INPUT-SHUNT-B ]               | [V] 12.23 V       [I] 5.93 A                    |
+| [OPEN SHELF]  [MANAGE POSITIONS]                                       | [P] 72.61 W       [E] 0.2885 kWh                |
+|                                                                        | [24H] [7D] [15D] [1M]  [DIAGNOSTICO]            |
++------------------------------------------------------------------------+-------------------------------------------------+
 ```
 
-No dos features aislados.
+El Inspector reúne **SNMP de entrada** y **MQTT agregado de descendientes** como **fuentes separadas**. Una lectura sintética puede verse en la interfaz, pero no constituye certificación de shunt, potencia o corriente total del BDFB. OID, identidad completa, fecha técnica y estado de cableado solo se despliegan al consultar el detalle; no son párrafos permanentes junto a los indicadores.
+
+## 12.3 — Shelf · función estructural, paneles en orientación coherente
+
+```text
++--------------------------------------------------------------------+-------------------------------------------------+
+| EQUIPMENT COMPOSITION / 2 / SHELF                                  | INSPECTOR / 2 / SHELF                           |
++--------------------------------------------------------------------+-------------------------------------------------+
+| CENTRO · PHYSICAL COMPOSITION                                      | [TELEMETRIA*][RESUMEN][PUERTOS][CONFIG.]        |
++--------------------------------------------------------------------+-------------------------------------------------+
+| FOCUSED · BDFB SHELF    2 frames · 0 puertos                       | TELEMETRIA (default)                            |
+| INTERNAL COMPOSITION  (frames lado a lado, panels VERTICALES)      | AGREGADO DE FRAMES CON DATOS                    |
+| +------------------------------+ +------------------------------+  | [V] --  [I] --  [P] --  [E] --                  |
+| | FRAME-01                     | | FRAME-02                     |  | [●] FRAME-01 · lecturas disponibles             |
+| |  PANEL-01       3/24         | |  PANEL-01       0/24         |  | [○] FRAME-02 · sin datos de breakers            |
+| |  PANEL-02       0/24         | |  PANEL-02       0/24         |  | Ejemplo: 1/2 frames con lecturas                |
+| +------------------------------+ +------------------------------+  | 1 shelf: mismo conjunto descendiente            |
+| [+ ADD EQUIPMENT]  [MANAGE CHILD EQUIPMENT]                        | del chassis; NO duplica shunts SNMP             |
+|                                                                    | [24H] [7D] [15D] [1M]  [DIAGNOSTICO]            |
++--------------------------------------------------------------------+-------------------------------------------------+
+```
+
+La utilidad del Shelf es **agrupar los frames, navegar su composición y comparar cuáles tienen lecturas**, no crear un segundo dashboard redundante. Con un solo Shelf, su conjunto descendiente es el mismo que el del Chassis; la semántica del nodo sigue siendo distinta. **Invariante visual:** frames en columnas, **paneles apilados verticalmente dentro de cada frame**, tanto aquí como en Frame. Evitar que el preview del Shelf muestre paneles horizontalmente si Frame los muestra verticalmente.
+
+## 12.4 — Frame · filas de paneles, sin grandes cajas vacías
+
+```text
++-----------------------------------------------------------------------+-------------------------------------------------+
+| EQUIPMENT COMPOSITION / 3 / FRAME                                     | INSPECTOR / 3 / FRAME                           |
++-----------------------------------------------------------------------+-------------------------------------------------+
+| CENTRO · PHYSICAL COMPOSITION                                         | [TELEMETRIA*][RESUMEN][PUERTOS][CONFIG.]        |
++-----------------------------------------------------------------------+-------------------------------------------------+
+| FOCUSED · BDFB-01-SHELF-01-FRAME-01   2 paneles · 1 puerto            | TELEMETRIA (default)                            |
+| INTERNAL COMPOSITION · filas compactas, sin tarjetas vacias altas     | AGREGADO DE PANELS CON DATOS                    |
+| +-------------------------------------------------------------------+ | [V] --  [I] --  [P] --  [E] --                  |
+| | 01  PANEL-01      3/24 ocupados                [ABRIR ->]         | | [●] PANEL-01   · con lecturas                   |
+| +-------------------------------------------------------------------+ | [○] PANEL-02   · 0 breakers / sin datos         |
+| | 02  PANEL-02      0/24 ocupados                [ABRIR ->]         | | Ejemplo: 1/2 paneles con lecturas               |
+| +-------------------------------------------------------------------+ | No confundir 2/2 instalados con LIVE            |
+| PHYSICAL TERMINALS  [ A-PORT-TEST-2 · POWER ]                         | [24H] [7D] [15D] [1M]                           |
+|                                                                       | [DIAGNOSTICO]                                   |
++-----------------------------------------------------------------------+-------------------------------------------------+
+```
+
+Los paneles se muestran en **filas compactas**, cada una con posición, identidad, ocupación y enlace. Los grandes huecos del antiguo ASCII **no son requisitos de espaciado CSS**; el marco debe crecer según contenido y ancho disponible. Un panel vacío se conserva como inventario, pero no se cuenta como LIVE.
+
+## 12.5 — Panel · cada breaker en una sola fila
+
+```text
++------------------------------------------------------------------------------+-------------------------------------------------+
+| EQUIPMENT COMPOSITION / 4 / PANEL                                            | INSPECTOR / 4 / PANEL                           |
++------------------------------------------------------------------------------+-------------------------------------------------+
+| CENTRO · PHYSICAL COMPOSITION                                                | [TELEMETRIA*][RESUMEN][PUERTOS][CONFIG.]        |
++------------------------------------------------------------------------------+-------------------------------------------------+
+| FOCUSED · FRAME-01 / PANEL-01     [3 instalados] [21 libres] [24]            | TELEMETRIA (default)                            |
+| INTERNAL COMPOSITION · una sola linea por breaker instalado                  | PROMEDIO DE BREAKERS ACTIVOS REPORTANDO         |
+| +--------------------------------------------------------------------------+ | [V] --  [I] --  [P] --  [E] --                  |
+| | POS  BREAKER                     [V]      [I]      [P]       [E]  EST |    | [●] 3/3 breakers instalados con datos           |
+| | 01   BDFB-01-PANEL-01-CB-01     12.23V   11.33A  138.58W  .3068  ●   |     | [○] 21 slots disponibles (NO offline)           |
+| | 02   GRTLuren3 PSU0 A1         12.21V   13.78A  168.29W  .3380  ●   |      | Solo lecturas frescas / vinculadas;             |
+| | 03   GRTLuren3 PSU1 A0         12.22V    0.37A    4.55W  .3225  ●   |      | unidades y fuente siempre visibles              |
+| +--------------------------------------------------------------------------+ | [24H] [7D] [15D] [1M]                           |
+| LIBRES: P04-P24 (21)    [VER / ADMINISTRAR POSICIONES]    [+ ADD]            | [HISTORIAL] [DIAGNOSTICO]                       |
+| Seleccionar fila => Breaker.  No esconder la edicion de slots.               |                                                 |
++------------------------------------------------------------------------------+-------------------------------------------------+
+```
+
+El problema de altura se resuelve con una **fila horizontal por breaker instalado**: posición, nombre, V, I, P, E y estado. Los **21 slots disponibles** se resumen con acción para desplegar/administrar las posiciones individuales, conservando la capacidad de `+ ADD` en una posición concreta. En pantallas pequeñas se puede adaptar a dos líneas o desplazamiento horizontal accesible, nunca comprimir hasta perder legibilidad. Las cifras de breakers son ejemplos de la captura de laboratorio, no valores fijos del producto.
+
+## 12.6 — Circuit Breaker · lectura propia
+
+```text
++--------------------------------------------------------------------+-------------------------------------------------+
+| EQUIPMENT COMPOSITION / 5 / CIRCUIT BREAKER                        | INSPECTOR / 5 / CIRCUIT BREAKER                 |
++--------------------------------------------------------------------+-------------------------------------------------+
+| CENTRO · PHYSICAL COMPOSITION                                      | [TELEMETRIA*][RESUMEN][PUERTOS][CONFIG.]        |
++--------------------------------------------------------------------+-------------------------------------------------+
+| FOCUSED · BDFB-01-PANEL-01-CB-01  [CIRCUIT BREAKER]                | TELEMETRIA (default)     [● MQTT LIVE]          |
+| PHYSICAL TERMINALS                                                 | LECTURA PROPIA DEL BREAKER                      |
+| +-------------------------------------------------------+          | [V] 12.23 V     [I] 11.33 A                     |
+| | POWER OUTPUT      [CONNECTED]    [INSPECT PORT ->]    |          | [P] 138.58 W    [E] 0.3068 kWh                  |
+| +-------------------------------------------------------+          | Ultima lectura: [timestamp]                     |
+| NO CHILDREN   ·   [TRACE POWER PATH ->]                            | Origen: [source binding]                        |
+| Acciones de mantenimiento => pestana CONFIG.                       | [24H] [7D] [15D] [1M]                           |
+|                                                                    | [HISTORIAL] [DIAGNOSTICO]                       |
++--------------------------------------------------------------------+-------------------------------------------------+
+```
+
+La potencia, corriente, tensión y contador aquí pertenecen únicamente al **breaker seleccionado**. `TRACE POWER PATH` debe permanecer conectado en ambos sentidos:
+
+```text
+Device -> Trace Power -> Breaker
+Breaker -> Trace Power -> Device
+```
+
+## 12.7 — Semántica de las métricas (no inventar promedios)
+
+| Nodo    | Qué muestra Telemetría                                                                              | Ejemplo de estado válido                              |
+| ------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Breaker | Lectura MQTT **propia**                                                                             | `LIVE` si está vinculada y fresca                     |
+| Panel   | Promedio de los **breakers activos que reportan**                                                   | `3 instalados / 3 reportando`                         |
+| Frame   | Promedio/agregado de sus **paneles hijos con datos**                                                | `2 instalados / 1 con datos`                          |
+| Shelf   | Promedio/agregado de **frames hijos con datos**                                                     | `2 instalados / 1 con datos`                          |
+| Chassis | Agregado de Shelf(s); con un solo Shelf coincide su conjunto descendiente, y SNMP se muestra aparte | `MQTT descendiente` separado de `SNMP incoming feeds` |
+
+**Diferenciar:** `instalado`, `activo`, `con binding` y `reportando` no son sinónimos. No mostrar `2/2 reporting` solo porque existen dos frames/paneles. No promediar ceros de posiciones vacías. La definición de ponderación de promedios entre ramas con distinto número de breakers se debe resolver con datos y pesos de la fuente canónica, **no con media de medias ingenua**. La corriente media no es corriente total. Un contador acumulativo de energía tampoco representa directamente consumo del periodo.
+
+## 12.8 — Dónde queda cada información
+
+| Pestaña                  | Alcance en las cinco vistas                                                                                                     |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| **Telemetría** (default) | 4 indicadores V/I/P/E, calidad, origen, último paquete, 24H/7D/15D/1M cuando exista histórico; shunts únicamente donde apliquen |
+| **Resumen**              | Nombre, modelo, tipo, parentesco, capacidad, ubicación, rack y rutas de energía                                                 |
+| **Puertos**              | Puertos físicamente registrados, estado, conexiones y mantenimiento contextual                                                  |
+| **Config.**              | Configure Equipment, manage children/slots, ajustes y Archive según RBAC                                                        |
+
+**Aprobación visual pendiente:** estos bocetos representan el rediseño del documento, no un despliegue. Validar en navegador la orientación de paneles, densidad de filas, accesibilidad, estados vacíos y tab predeterminado antes de tratarlo como implementado.
 
 ---
 

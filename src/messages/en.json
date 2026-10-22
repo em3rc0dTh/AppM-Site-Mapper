@@ -1,0 +1,32 @@
+{
+  "common": {
+    "overview": "Overview",
+    "settings": "Settings",
+    "telemetry": "Telemetry",
+    "ports": "Ports"
+  },
+  "equipment": {
+    "inspector": {
+      "telemetry": "Telemetry",
+      "overview": "Overview",
+      "ports": "Ports",
+      "settings": "Settings"
+    }
+  },
+  "bdfb": {
+    "inspector": {
+      "overview": "Overview",
+      "feeds": "Inputs",
+      "history": "Charts",
+      "settings": "Settings"
+    }
+  },
+  "snmp": {
+    "history": {
+      "current": "Current",
+      "voltage": "Voltage",
+      "power": "Power",
+      "energy": "Energy"
+    }
+  }
+}

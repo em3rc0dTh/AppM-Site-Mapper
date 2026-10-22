@@ -1,0 +1,36 @@
+name: One-time BDFB quick-input format
+on:
+  push:
+    branches:
+      - fix/bdfb-quick-feed-minimal-20261022
+    paths:
+      - .github/workflows/bdfb-quick-format.yml
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/bdfb-quick-feed-minimal-20261022
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Prettier changed files
+        run: |
+          npx prettier --write \
+            src/components/equipment/access-port-editor.tsx \
+            src/app/api/equipment/'[id]'/available-panels/route.ts \
+            src/app/mk1.css \
+            tests/integration/access-port-service.test.ts
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- src/components/equipment/access-port-editor.tsx src/app/api/equipment/'[id]'/available-panels/route.ts src/app/mk1.css tests/integration/access-port-service.test.ts
+          if ! git diff --cached --quiet; then
+            git commit -m 'style(bdfb): apply repository Prettier rules'
+            git push origin HEAD:fix/bdfb-quick-feed-minimal-20261022
+          fi

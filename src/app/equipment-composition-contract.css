@@ -1,18 +1,18 @@
-/* Equipment Composition · SCREEN 12 · PR #99 */
+/* Equipment Composition · SCREEN 12 · light visual correction */
 .ec-contract {
-  --ec-bg: #101a2b;
-  --ec-surface: #162239;
-  --ec-surface-hover: #1b304a;
-  --ec-border: rgba(145, 174, 208, 0.19);
-  --ec-muted: #9eafc6;
-  --ec-ink: #edf5ff;
-  --ec-accent: #52d6cd;
+  --ec-bg: #f8fafc;
+  --ec-surface: #ffffff;
+  --ec-surface-hover: #eff7ff;
+  --ec-border: #dce6f0;
+  --ec-muted: #5c7087;
+  --ec-ink: #152b42;
+  --ec-accent: #075fb1;
   color: var(--ec-ink);
   border: 1px solid var(--ec-border);
   border-radius: 16px;
   overflow: hidden;
-  background: linear-gradient(145deg, #142137, #0c1727);
-  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.12);
+  background: #ffffff;
+  box-shadow: 0 3px 14px rgba(18, 52, 86, 0.05);
 }
 
 .ec-contract a {
@@ -34,8 +34,8 @@
 .ec-topline {
   padding: 12px 20px;
   border-bottom: 1px solid var(--ec-border);
-  color: #9fb6d0;
-  background: rgba(27, 43, 66, 0.65);
+  color: #526e8b;
+  background: #f4f8fc;
   font-size: 11px;
   font-weight: 750;
   letter-spacing: 0.075em;
@@ -99,8 +99,8 @@
   padding: 6px 9px;
   border: 1px solid var(--ec-border);
   border-radius: 7px;
-  color: #d3e2f1;
-  background: #1e2e45;
+  color: #23415e;
+  background: #edf4fb;
   font-size: 11px;
   white-space: nowrap;
 }
@@ -185,7 +185,7 @@
   padding: 16px;
   border: 1px solid rgba(82, 214, 205, 0.24);
   border-radius: 8px;
-  background: #1c304b;
+  background: #f5f9fe;
   transition:
     border-color 160ms ease,
     background 160ms ease;
@@ -204,7 +204,7 @@
 }
 
 .ec-chassis-frame small {
-  color: #aabbd0;
+  color: #526e8b;
 }
 
 .ec-frame-card {
@@ -241,7 +241,7 @@
 }
 
 .ec-panel-presence {
-  color: #8fd4cf;
+  color: #06746d;
   font-size: 10px;
   white-space: nowrap;
 }
@@ -272,7 +272,7 @@
 
 .ec-pos {
   font-size: 12px;
-  color: #83a1be;
+  color: #536f8c;
   font-variant-numeric: tabular-nums;
 }
 
@@ -285,7 +285,7 @@
 
 .ec-breaker-table {
   min-width: 710px;
-  background: #132138;
+  background: #ffffff;
 }
 
 .ec-breaker-columns,
@@ -298,8 +298,8 @@
 }
 
 .ec-breaker-columns {
-  color: #91a9c3;
-  background: #1c2c45;
+  color: #526e8b;
+  background: #edf4fb;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.055em;
@@ -312,7 +312,7 @@
 }
 
 .ec-breaker-row:hover {
-  background: #233a55;
+  background: #eff7ff;
 }
 
 .ec-breaker-row .ec-open {
@@ -348,7 +348,7 @@
 }
 
 .ec-reading small {
-  color: #7d98b6;
+  color: #617d98;
   font-size: 9px;
 }
 
@@ -360,7 +360,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: #9eb2ca;
+  color: #526e8b;
   font-size: 10px;
   font-weight: 750;
   white-space: nowrap;
@@ -400,7 +400,7 @@
   gap: 14px;
   padding: 16px;
   border-top: 1px solid var(--ec-border);
-  color: #d9b7a0;
+  color: #a05442;
   font-size: 12px;
 }
 
@@ -410,7 +410,7 @@
   border: 1px solid var(--ec-border);
   border-top: 0;
   border-radius: 0 0 10px 10px;
-  background: #17263d;
+  background: #f4f8fc;
 }
 
 .ec-slot-management > div {
@@ -433,13 +433,13 @@
   min-height: 34px;
   padding: 7px 12px;
   border: 1px solid #39526b;
-  background: #223752;
-  color: #dbeefe;
+  background: #eaf3fc;
+  color: #254766;
   font-size: 11px;
 }
 
 .ec-slot-management .ec-primary-action {
-  background: #43c9c0;
+  background: #0675cc;
   color: #081b26;
 }
 
@@ -461,8 +461,8 @@
   padding: 9px;
   border: 1px solid #375069;
   border-radius: 6px;
-  background: #17263b;
-  color: #b5c5d5;
+  background: #f8fbfe;
+  color: #64748b;
   font-size: 10px;
   transition:
     background 160ms ease,
@@ -490,7 +490,7 @@
   padding: 15px;
   border: 1px solid var(--ec-border);
   border-radius: 9px;
-  background: #0f1d2e;
+  background: #f6f9fd;
 }
 
 .ec-breaker-metrics .ec-metric-key {
@@ -516,7 +516,7 @@
   padding: 10px 14px;
   border: 1px solid #417d88;
   border-radius: 7px;
-  color: #9af4e7;
+  color: #075fb1;
   font-size: 12px;
   font-weight: 700;
 }
@@ -527,8 +527,8 @@
   gap: 10px 20px;
   padding: 13px 23px;
   border-top: 1px solid var(--ec-border);
-  background: #101e30;
-  color: #92a8c2;
+  background: #f3f8fd;
+  color: #617d98;
   font-size: 10px;
 }
 
@@ -550,7 +550,7 @@
   padding: 5px;
   border: 1px solid rgba(145, 174, 208, 0.19);
   border-radius: 10px;
-  background: #17273e;
+  background: #f0f5fa;
 }
 
 .ec-inspector-tabs button {
@@ -558,14 +558,14 @@
   padding: 7px 3px;
   border-radius: 6px;
   background: transparent;
-  color: #9fb5cc;
+  color: #48647e;
   font-size: 10px;
   font-weight: 750;
 }
 
 .ec-inspector-tabs button[aria-selected='true'] {
-  background: #2e4963;
-  color: #eaffff;
+  background: #dcebfc;
+  color: #075aa6;
   box-shadow: inset 0 -2px #51d6cb;
 }
 
@@ -584,13 +584,13 @@
   padding: 13px;
   border: 1px solid rgba(145, 174, 208, 0.19);
   border-radius: 9px;
-  background: #1a2a40;
+  background: #f4f9fe;
 }
 
 .ec-inspector-metric small {
   display: block;
   margin-bottom: 6px;
-  color: #8db5bc;
+  color: #536f8c;
   font-size: 10px;
 }
 
@@ -601,21 +601,21 @@
 
 .ec-inspector-metric span {
   margin-left: 5px;
-  color: #9bacc2;
+  color: #526e8b;
   font-size: 10px;
 }
 
 .ec-inspector-note,
 .ec-inspector-counts {
   padding: 9px 0;
-  color: #a8bad1;
+  color: #586e84;
   font-size: 11px;
   line-height: 1.5;
 }
 
 .ec-inspector-section-title {
   margin-top: 12px;
-  color: #c7d6e7;
+  color: #23415e;
   font-size: 11px;
   font-weight: 800;
 }
@@ -689,12 +689,278 @@
   width: 100%;
   min-height: 38px;
   border: 1px solid rgba(82, 214, 205, 0.35);
-  background: #1c3446;
-  color: #abede5;
+  background: #e9f3fc;
+  color: #075aa6;
   font-size: 11px;
   font-weight: 750;
 }
 
 .ec-snmp-source > .sm-snmp-load {
   margin-top: 10px;
+}
+
+/* Match the existing Site Mapper light workspace. The physical diagram is a
+   single, full-width central column; recorded terminals follow it below. */
+.equipment-contract-canvas {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  background: #ffffff;
+  border: 0;
+  padding: 0;
+}
+
+.equipment-contract-canvas > .ec-contract,
+.equipment-contract-canvas > .equipment-faceplate {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+}
+
+.equipment-contract-canvas > .equipment-faceplate {
+  padding: 18px;
+  border: 1px solid #dce6f0;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.ec-contract {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.ec-contract a {
+  color: #145c99;
+}
+
+.ec-topline {
+  color: #526e8b;
+  letter-spacing: 0.055em;
+}
+
+.ec-focus > div:first-child,
+.ec-frame-heading > div,
+.ec-shelf-card-heading > div {
+  min-width: 0;
+}
+
+.ec-focus h2 {
+  overflow-wrap: break-word;
+  word-break: normal;
+  font-size: clamp(18px, 2vw, 23px);
+}
+
+.ec-focus-badges span,
+.ec-heading-counts span {
+  color: #245077;
+}
+
+.ec-chassis-frame-strip,
+.ec-frames-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
+}
+
+.ec-panel-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 7px;
+}
+
+.ec-panel-name {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.ec-panel-meta {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  color: #586e84;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.ec-panel-line > .ec-open {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  margin: 0;
+  align-self: center;
+}
+
+.ec-frame-title,
+.ec-shelf-link,
+.ec-frame-row-name,
+.ec-chassis-frame strong {
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.ec-breaker-columns,
+.ec-breaker-row,
+.ec-empty-breaker-row {
+  grid-template-columns: 44px minmax(175px, 2.5fr) repeat(4, minmax(58px, 0.8fr)) minmax(88px, 1fr);
+}
+
+.ec-empty-breaker-row {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px;
+  min-height: 43px;
+  border-top: 1px solid #e4ebf3;
+  background: #ffffff;
+  color: #8191a2;
+  font-size: 11px;
+}
+
+.ec-empty-breaker-row:nth-child(even) {
+  background: #f9fbfd;
+}
+
+.ec-empty-breaker-row button {
+  justify-self: start;
+  background: none;
+  border: 1px dashed #c7d9eb;
+  border-radius: 5px;
+  padding: 5px 9px;
+  color: #1265ac;
+  font-size: 11px;
+  text-align: left;
+}
+
+.ec-empty-breaker-row button:hover {
+  background: #eaf4ff;
+  border-color: #1265ac;
+}
+
+.ec-status-available {
+  color: #697e91;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.ec-missing-row {
+  background: #fff5ee;
+}
+
+.ec-panel-composition .ec-table-scroll {
+  border-radius: 9px;
+}
+
+.ec-breaker-table {
+  min-width: 745px;
+}
+
+.ec-breaker-no-data {
+  padding: 16px;
+  border: 1px dashed #ccd9e6;
+  border-radius: 8px;
+  background: #f6f9fc;
+  color: #586e84;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.ec-inspector {
+  min-width: 0;
+  padding: 0 12px 20px;
+  color: #172f46;
+}
+
+.ec-inspector .zip-device-identity {
+  margin: 14px 0;
+}
+
+.ec-inspector .zip-device-identity h2 {
+  overflow-wrap: break-word;
+  word-break: normal;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.ec-inspector-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.ec-inspector-tabs button {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.ec-inspector-tabs button:hover {
+  background: #e4eef8;
+}
+
+.ec-inspector-tab-body {
+  padding: 12px 0 0;
+}
+
+.ec-inspector-note,
+.ec-inspector-counts {
+  color: #586e84;
+}
+
+.ec-point-group {
+  margin: 12px 0;
+  padding: 10px;
+  border-radius: 6px;
+  background: #f3f7fb;
+  overflow-wrap: anywhere;
+}
+
+.ec-inspector-history {
+  margin: 12px 0;
+  border: 1px solid #dce6f0;
+  border-radius: 7px;
+  padding: 12px;
+  background: #f8fbfe;
+  color: #254766;
+  font-size: 11px;
+}
+
+.ec-inspector-history summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.ec-inspector-metric {
+  color: #173c60;
+}
+
+.ec-inspector-metric strong {
+  color: #112c45;
+}
+
+.ec-snmp-source > button {
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+@media (max-width: 820px) {
+  .ec-frames-grid,
+  .ec-chassis-frame-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .ec-topline,
+  .ec-section-heading,
+  .ec-focus {
+    gap: 10px;
+  }
 }

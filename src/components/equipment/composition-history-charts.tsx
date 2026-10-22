@@ -65,7 +65,8 @@ function SeriesChart({
   const upper = max + padding;
   const x = (at: number) => 42 + ((at - xStart) / (xEnd - xStart || 1)) * 526;
   const y = (value: number) => 126 - ((value - lower) / (upper - lower || 1)) * 102;
-  const maxGapMs = { '24h': 300_000, '7d': 3_600_000, '15d': 10_800_000, '1M': 21_600_000 }[window] * 2.5;
+  const maxGapMs =
+    { '24h': 300_000, '7d': 3_600_000, '15d': 10_800_000, '1M': 21_600_000 }[window] * 2.5;
   const segments: (typeof observations)[] = [];
   for (const observation of observations) {
     const current = segments.at(-1);
@@ -102,7 +103,9 @@ function SeriesChart({
         {segments.map((segment, index) => (
           <path
             key={index}
-            d={segment.map((p, i) => `${i ? 'L' : 'M'}${x(p.at).toFixed(2)} ${y(p.value).toFixed(2)}`).join(' ')}
+            d={segment
+              .map((p, i) => `${i ? 'L' : 'M'}${x(p.at).toFixed(2)} ${y(p.value).toFixed(2)}`)
+              .join(' ')}
             fill="none"
             stroke={color}
             strokeWidth="2.7"
@@ -110,11 +113,12 @@ function SeriesChart({
             strokeLinejoin="round"
           />
         ))}
-        {observations.length <= 220 && observations.map((point) => (
-          <circle key={point.at} cx={x(point.at)} cy={y(point.value)} r="2.9" fill={color}>
-            <title>{`${new Date(point.at).toLocaleString()} · ${formatValue(point.value)} ${unit} · ${point.reporting} direct children reporting`}</title>
-          </circle>
-        ))}
+        {observations.length <= 220 &&
+          observations.map((point) => (
+            <circle key={point.at} cx={x(point.at)} cy={y(point.value)} r="2.9" fill={color}>
+              <title>{`${new Date(point.at).toLocaleString()} · ${formatValue(point.value)} ${unit} · ${point.reporting} direct children reporting`}</title>
+            </circle>
+          ))}
         <text x="42" y="151" className="ec-chart-label">
           {new Date(xStart).toLocaleDateString()}
         </text>

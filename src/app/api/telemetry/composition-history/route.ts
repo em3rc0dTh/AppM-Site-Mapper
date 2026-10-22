@@ -36,7 +36,8 @@ export async function GET(request: Request) {
   if (!root || root.kind !== 'EQUIPMENT' || root.lifecycle !== 'ACTIVE') {
     return Response.json({ error: 'EQUIPMENT_NOT_FOUND' }, { status: 404 });
   }
-  const family = (await repository.listEquipmentForDevice(root.deviceId)).filter(
+  const deviceId = root.deviceId;
+  const family = (await repository.listEquipmentForDevice(deviceId)).filter(
     (node) => node.lifecycle === 'ACTIVE',
   );
   const byId = new Map(family.map((item) => [item.id, item]));
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
     }
     for (const childId of node.children) {
       const child = childId ? byId.get(childId) : undefined;
-      if (child && child.deviceId === root!.deviceId) visit(child);
+      if (child && child.deviceId === deviceId) visit(child);
     }
   }
   visit(root);

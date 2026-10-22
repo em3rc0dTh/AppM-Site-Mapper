@@ -13,14 +13,15 @@ import {
   type CompositionBreakerTelemetry,
 } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
+import en from '@/messages/en.json';
 
 type Tab = 'telemetry' | 'overview' | 'ports' | 'settings';
 
 const TABS: readonly { key: Tab; label: string }[] = [
-  { key: 'telemetry', label: 'Telemetría' },
-  { key: 'overview', label: 'Resumen' },
-  { key: 'ports', label: 'Puertos' },
-  { key: 'settings', label: 'Config.' },
+  { key: 'telemetry', label: en.equipment.inspector.telemetry },
+  { key: 'overview', label: en.equipment.inspector.overview },
+  { key: 'ports', label: en.equipment.inspector.ports },
+  { key: 'settings', label: en.equipment.inspector.settings },
 ];
 
 const METRICS = [

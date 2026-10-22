@@ -267,7 +267,7 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
           </button>
         ))}
       </div>
-      {loading && <p role="status">Loading persisted SNMP samples…</p>
+      {loading && <p role="status">Loading persisted SNMP samples…</p>}
       {error && (
         <p role="alert" className="form-error">
           History unavailable: {error}

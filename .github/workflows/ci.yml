@@ -9,7 +9,7 @@ on:
       - 'feat/**'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   verify:
@@ -28,18 +28,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
-
-      - name: Autoformat Equipment Inspector
-        if: github.event_name == 'push' && github.ref_name == 'feat/equipment-composition-contract-ui-20261022' && github.actor != 'github-actions[bot]'
-        run: |
-          npx prettier --write 'src/components/equipment/equipment-focus-inspector.tsx'
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add 'src/components/equipment/equipment-focus-inspector.tsx'
-          if ! git diff --cached --quiet; then
-            git commit -m 'style(ui): format telemetry point group label'
-            git push origin "HEAD:${GITHUB_REF_NAME}"
-          fi
 
       - name: Typecheck
         run: npm run typecheck

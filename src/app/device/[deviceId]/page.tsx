@@ -313,22 +313,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             <dd>{node.name}</dd>
             <dt>Model</dt>
             <dd>
-              {node.kind === 'EQUIPMENT'
-                ? (node.model ?? node.category ?? 'Not specified')
-                : (node.category ?? 'Not specified')}
+              {node.category ?? 'Not specified'}
             </dd>
-            {node.kind === 'EQUIPMENT' ? (
-              <>
-                <dt>Equipment type</dt>
-                <dd>{node.equipmentType.replaceAll('_', ' ')}</dd>
-                <dt>Children mode</dt>
-                <dd>{node.childMode}</dd>
-                <dt>Child capacity</dt>
-                <dd>{node.childMode === 'POSITIONAL' ? node.children.length : 'Dynamic'}</dd>
-                <dt>Parent Equipment</dt>
-                <dd>{node.parentEquipmentId ?? 'Device root'}</dd>
-              </>
-            ) : null}
             <dt>Serial N.</dt>
             <dd>{node.serialNumber ?? 'Not assigned'}</dd>
             <dt>Rack</dt>
@@ -348,15 +334,6 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             <dt>Telemetry</dt>
             <dd>Open diagnostic to verify mapped LIVE readings</dd>
           </dl>
-
-          {node.kind === 'EQUIPMENT' && canWriteTopology && (
-            <AccessPortEditor
-              equipmentId={node.id}
-              accessPorts={node.accessPorts}
-              canWritePower={canWritePower}
-              portConnections={portConnections}
-            />
-          )}
 
           <FullPowerTraceModal entityId={node.id} />
 
@@ -380,13 +357,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               key={node.id}
               targetId={node.id}
               label={node.name}
-              {...(node.kind === 'EQUIPMENT' && node.telemetryPointPrefix
-                ? {
-                    pointPrefix: node.telemetryPointPrefix,
-                    pointCapacity:
-                      node.childMode === 'POSITIONAL' ? node.children.length : undefined,
-                  }
-                : {})}
+
             />
           </div>
 

@@ -28,6 +28,58 @@ export function SnmpFeedLoadPanel({
   const [panels, setPanels] = useState<ReadonlyMap<string, PhysicalPanel>>(new Map());
   const [error, setError] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
+  const [labEnabled, setLabEnabled] = useState(false);
+  const [labSource, setLabSource] = useState<string | null>(null);
+  const [labBusy, setLabBusy] = useState(false);
+  const [labError, setLabError] = useState('');
+  const [labConfigured, setLabConfigured] = useState(false);
+  useEffect(() => {
+    let active = true;
+    void fetch(`/api/dev/snmp-lab/commission?deviceId=${encodeURIComponent(deviceId)}`, {
+      cache: 'no-store',
+    })
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = (await response.json()) as { enabled: boolean; sourceIdentity?: string };
+        if (active) {
+          setLabEnabled(data.enabled);
+          setLabSource(data.sourceIdentity ?? null);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [deviceId]);
+
+  async function commissionLab() {
+    if (
+      !window.confirm(
+        'Activate synthetic emulator OIDs for this BDFB? This is LOCAL LAB ONLY, not proof of physical wiring or a certified total.',
+      )
+    )
+      return;
+    setLabBusy(true);
+    setLabError('');
+    try {
+      const response = await fetch('/api/dev/snmp-lab/commission', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ deviceId, confirmSyntheticOnly: true }),
+      });
+      const body = (await response.json()) as { error?: string; issues?: string[] };
+      if (!response.ok)
+        throw new Error(
+          [body.error ?? `HTTP_${response.status}`, ...(body.issues ?? [])].join(' · '),
+        );
+      setLabConfigured(true);
+      setRefreshVersion((version) => version + 1);
+    } catch (cause) {
+      setLabError(cause instanceof Error ? cause.message : 'LAB_MAPPING_FAILED');
+    } finally {
+      setLabBusy(false);
+    }
+  }
 
   useEffect(() => {
     let active = true;
@@ -79,6 +131,8 @@ export function SnmpFeedLoadPanel({
     load?.configurationIssues.some((issue) => issue.includes('NOT_VERIFIED')) ?? false;
   const inventoryRecorded =
     load !== null && load.expectedFeedCount > 0 && load.feedCount === load.expectedFeedCount;
+  const labCount = load?.labFreshFeedCount ?? 0;
+  const labTotal = load?.labMeasuredCurrentA ?? null;
 
   return (
     <>
@@ -90,19 +144,33 @@ export function SnmpFeedLoadPanel({
           <div>
             <strong>SNMP · INCOMING DC FEEDS</strong>
           </div>
-          <span>{error ? 'UNAVAILABLE' : load?.status === 'COMPLETE' ? 'LIVE' : 'PENDING'}</span>
+          <span>
+            {error
+              ? 'UNAVAILABLE'
+              : load?.status === 'COMPLETE'
+                ? 'LIVE'
+                : labCount > 0
+                  ? 'LAB SIMULATED'
+                  : 'PENDING'}
+          </span>
         </header>
 
         <div className="zip-bdfb-live-average-grid">
           <div>
-            <span>INDEPENDENT FEED CURRENT</span>
+            <span>
+              {labTotal !== null ? 'SIMULATED SHUNT CURRENT' : 'INDEPENDENT FEED CURRENT'}
+            </span>
             <strong>
-              {!error && load?.status === 'COMPLETE' ? numeric(load.totalCurrentA, 'A') : '—'}
+              {!error && load?.status === 'COMPLETE'
+                ? numeric(load.totalCurrentA, 'A')
+                : numeric(labTotal, 'A')}
             </strong>
           </div>
           <div>
-            <span>FEEDS LIVE / REQUIRED</span>
-            <strong>{load ? `${load.freshFeedCount} / ${load.expectedFeedCount}` : '—'}</strong>
+            <span>SHUNTS REPORTING / REQUIRED</span>
+            <strong>
+              {load ? `${load.freshFeedCount + labCount} / ${load.expectedFeedCount}` : '—'}
+            </strong>
           </div>
           <div>
             <span>RATED INPUT CAPACITY</span>
@@ -145,6 +213,37 @@ export function SnmpFeedLoadPanel({
           </div>
         )}
 
+        {labEnabled && inventoryRecorded && (
+          <div className="sm-snmp-lab-activation">
+            <strong>LOCAL SNMP LAB · SYNTHETIC DATA</strong>
+            <small>
+              Emulated controller: {labSource ?? 'not selected'}. Activating lab mappings never
+              verifies real Delta wiring, and synthetic readings are excluded from certified totals.
+            </small>
+            <button type="button" disabled={labBusy} onClick={() => void commissionLab()}>
+              {labBusy ? 'CONFIGURING…' : 'CONNECT SYNTHETIC SNMP SHUNTS'}
+            </button>
+            {labConfigured && (
+              <small role="status">
+                Synthetic OIDs mapped. Start the collectors with:
+                <code>
+                  bash scripts/lab/bfdb-snmp-config4.sh collectors ../bfdb-telemetry-gateway
+                </code>
+              </small>
+            )}
+            {labError && (
+              <small role="alert" className="form-error">
+                {labError}
+              </small>
+            )}
+          </div>
+        )}
+        {labCount > 0 && (
+          <p className="sm-snmp-lab-disclaimer">
+            SIMULATED SNMP DATA · {labCount} shunts reporting. Currents are emulated and do not
+            certify the installed cabinet or its physical shunts.
+          </p>
+        )}
         <div
           className={
             load?.hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
@@ -160,7 +259,7 @@ export function SnmpFeedLoadPanel({
               <article key={feed.accessPortId} className="sm-snmp-feed-card">
                 <div className="sm-snmp-feed-card-heading">
                   <strong>{feed.label}</strong>
-                  <span>{feed.status}</span>
+                  <span>{feed.status === 'LAB_LIVE' ? 'LAB LIVE · SIMULATED' : feed.status}</span>
                 </div>
                 <small>
                   {feed.feedPosition

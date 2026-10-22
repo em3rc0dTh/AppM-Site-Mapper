@@ -35,6 +35,7 @@ services:
       MQTT_TOPIC_PREFIX: data/dev/
       MQTT_TOPIC_FILTER: data/dev/#
       TELEMETRY_HISTORY_ENABLED: 'true'
+      SNMP_LAB_ENABLED: 'true'
   snmp-collector:
     <<: *collector-common
     environment:

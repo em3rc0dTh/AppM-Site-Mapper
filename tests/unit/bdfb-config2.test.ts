@@ -170,6 +170,66 @@ describe('ELTEK_BDCBB_CONFIG_2 linked panels / independent A-B shunts', () => {
     });
   });
 
+  it('shows measured synthetic shunts as LAB_LIVE without certifying field totals', async () => {
+    const f = fixture(2);
+    const original = await f.bindings.listForSource('SNMP', 'EMU-CONFIG2');
+    for (const binding of original) {
+      await f.bindings.replace({
+        ...binding,
+        attributes: { commissioning: 'SYNTHETIC_LAB_ONLY' },
+      });
+    }
+    const voltageOids = [
+      '1.3.6.1.4.1.8072.9999.2026.48.2.1.0',
+      '1.3.6.1.4.1.8072.9999.2026.48.2.2.0',
+    ];
+    for (const [index, oid] of voltageOids.entries()) {
+      await f.bindings.insert({
+        id: 'voltage-' + index,
+        protocol: 'SNMP',
+        sourceIdentity: 'EMU-CONFIG2',
+        sourcePointId: oid,
+        metric: 'VOLTAGE',
+        unit: 'V',
+        targetType: 'ACCESS_PORT',
+        targetId: 'feed-' + (index === 0 ? 'A' : 'B'),
+        lifecycle: 'ACTIVE',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        attributes: { commissioning: 'SYNTHETIC_LAB_ONLY' },
+      });
+    }
+    const accepted = await new SnmpFeedService(f.topology, f.bindings, f.hub).ingest(
+      {
+        schemaVersion: 1,
+        sourceIdentity: 'EMU-CONFIG2',
+        observedAt: timestamp,
+        measurements: [
+          { oid: f.oid(0), metric: 'CURRENT', unit: 'A', value: 224.9 },
+          { oid: f.oid(1), metric: 'CURRENT', unit: 'A', value: 209.7 },
+          { oid: voltageOids[0]!, metric: 'VOLTAGE', unit: 'V', value: -53.3 },
+          { oid: voltageOids[1]!, metric: 'VOLTAGE', unit: 'V', value: -53.4 },
+        ],
+      },
+      timestamp,
+    );
+    expect(accepted.ok).toBe(true);
+    const view = await summarizeSnmpBdfbLoad(
+      f.device.id,
+      f.topology,
+      f.bindings,
+      f.hub,
+      Date.parse(timestamp),
+    );
+    expect(view?.feeds.map((feed) => feed.status)).toEqual(['LAB_LIVE', 'LAB_LIVE']);
+    expect(view?.feeds.map((feed) => feed.voltageV)).toEqual([-53.3, -53.4]);
+    expect(view?.labMeasuredCurrentA).toBeCloseTo(434.6, 6);
+    expect(view?.labFreshFeedCount).toBe(2);
+    expect(view?.freshFeedCount).toBe(0);
+    expect(view?.totalCurrentA).toBeNull();
+    expect(view?.status).toBe('PARTIAL');
+  });
+
   it('rejects shunt reuse of the same physical panels', () => {
     const f = fixture(2);
     const left = f.chassis.accessPorts[0]!;

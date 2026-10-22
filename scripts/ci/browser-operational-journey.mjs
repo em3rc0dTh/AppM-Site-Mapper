@@ -97,6 +97,80 @@ try {
     }
     console.log(`[PASS] Real Chromium: ${width}px laptop/desktop columns and horizontal overflow`);
   }
+
+  // Region-level laptop regression: Explorer (Network→Site→Structure→Level)
+  // and the Room Blueprint must keep canvas/property panes in their columns.
+  const network = await db.collection('topology_nodes').findOne({
+    kind: 'NETWORK', name: 'CI Two-Site Network',
+  });
+  const room = await db.collection('topology_nodes').findOne({
+    kind: 'ROOM_SUBSTRUCTURE', name: 'CI LIMA Room',
+  });
+  assert.ok(network?.id && room?.id, 'Explorer and Room fixtures missing');
+
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto(base + '/topology/network/' + network.id, {
+    waitUntil: 'domcontentloaded',
+  });
+  await page.locator('.zip-explorer').waitFor({ timeout: 30000 });
+  const explorerColumns = await page.locator('.zip-explorer').evaluate((element) =>
+    getComputedStyle(element).gridTemplateColumns.split(/\\s+/).map((part) => parseFloat(part)),
+  );
+  assert.equal(explorerColumns.length, 2, 'Laptop topology Explorer must show canvas + Inspector');
+  assert.ok(Math.abs(explorerColumns[1] - 292) < 2,
+    `1366px Explorer Inspector width: ${explorerColumns[1]}`);
+  console.log('[PASS] Real Chromium: laptop Network Explorer retains canvas and Inspector');
+
+  for (const [width, expected, row] of [
+    [1920, [310, 270], 1],
+    [1366, [212, 270], 1],
+    [1100, [190, null], 2],
+  ]) {
+    await page.setViewportSize({ width, height: 820 });
+    await page.goto(base + '/blueprint/' + room.id, {
+      waitUntil: 'domcontentloaded',
+    });
+    const layout = page.locator('.operational-page--blueprint .operational-layout--blueprint');
+    await layout.waitFor({ timeout: 30000 });
+    const geometry = await layout.evaluate((element) => {
+      const css = getComputedStyle(element);
+      const cols = css.gridTemplateColumns.split(/\\s+/).map((part) => parseFloat(part));
+      const tree = element.querySelector(':scope > .operational-context')?.getBoundingClientRect();
+      const stage = element.querySelector(':scope > .operational-stage--wide')?.getBoundingClientRect();
+      const properties = element.querySelector(':scope > .zip-room-properties')?.getBoundingClientRect();
+      return {
+        cols,
+        tree: { x: tree?.x ?? 0, width: tree?.width ?? 0 },
+        stage: { x: stage?.x ?? 0, width: stage?.width ?? 0, bottom: stage?.bottom ?? 0 },
+        properties: { x: properties?.x ?? 0, y: properties?.y ?? 0, width: properties?.width ?? 0 },
+        documentOverflow: document.documentElement.scrollWidth - window.innerWidth,
+      };
+    });
+    assert.equal(geometry.cols.length, width === 1100 ? 2 : 3,
+      `${width}px Room Blueprint layout columns`);
+    assert.ok(Math.abs(geometry.cols[0] - expected[0]) < 2,
+      `${width}px Room topology width: ${geometry.cols[0]}`);
+    assert.ok(geometry.stage.x >= geometry.tree.x + geometry.tree.width - 2,
+      `${width}px Room stage must be right of topology`);
+    assert.ok(geometry.stage.width > 550, `${width}px Room stage must be usable`);
+    if (width === 1100) {
+      assert.ok(geometry.properties.x >= geometry.stage.x - 2,
+        'Compact laptop Room properties must not occupy the topology column');
+      assert.ok(geometry.properties.y >= geometry.stage.bottom - 3,
+        'Compact laptop Room properties must follow the canvas');
+    } else {
+      assert.ok(Math.abs(geometry.cols[2] - expected[1]) < 2,
+        `${width}px Room properties width: ${geometry.cols[2]}`);
+      assert.ok(geometry.properties.x >= geometry.stage.x + geometry.stage.width - 2,
+        `${width}px Room properties must be to the right of the canvas`);
+    }
+    assert.ok(geometry.documentOverflow <= 3,
+      `${width}px unexpected Blueprint horizontal overflow: ${geometry.documentOverflow}`);
+    if (width === 1366) {
+      await page.screenshot({ path: '/tmp/mk1-operational-room-1366.png', fullPage: true });
+    }
+    console.log(`[PASS] Real Chromium: ${width}px Room Blueprint layout and properties alignment`);
+  }
 } catch (error) {
   console.error('[FAIL] Browser operational check:', error);
   process.exitCode = 1;

@@ -2300,3 +2300,20 @@ body {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.equipment-access-port-dialog .equipment-quick-feed-generic {
+  width: fit-content;
+  padding: 0;
+  margin-top: 2px;
+  border: 0;
+  background: transparent;
+  color: #1b639e;
+  text-decoration: underline;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.equipment-access-port-dialog .equipment-quick-feed-generic:focus-visible {
+  outline: 2px solid #2171bd;
+  outline-offset: 3px;
+}

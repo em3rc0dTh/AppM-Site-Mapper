@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/composition-breaker-telemetry';
@@ -50,7 +50,7 @@ function ChildLink({
   node,
   children,
   className = '',
-}: Readonly<{ node: EquipmentNode; children?: React.ReactNode; className?: string }>) {
+}: Readonly<{ node: EquipmentNode; children?: ReactNode; className?: string }>) {
   return (
     <Link className={className} href={destination(node.id)}>
       {children ?? node.name}
@@ -63,14 +63,15 @@ function PanelPreview({
   panel,
   byId,
 }: Readonly<{ panel: EquipmentNode; byId: ReadonlyMap<string, EquipmentNode> }>) {
-  const summary = projectCompositionTelemetry(panel, byId, {});
   return (
     <ChildLink node={panel} className="ec-panel-line">
       <span className="ec-panel-name">{panel.name}</span>
-      <Counts node={panel} />
-      <span className="ec-panel-presence">
-        {summary.installed ? `${summary.installed} installed` : 'Available'}
+      <span className="ec-count">
+        {panel.childMode === 'POSITIONAL'
+          ? `${panel.children.length} positions · ${panel.children.filter(Boolean).length} occupied`
+          : `${panel.children.filter(Boolean).length} installed`}
       </span>
+      <span className="ec-panel-presence">{panel.children.some(Boolean) ? 'Installed' : 'Available'}</span>
     </ChildLink>
   );
 }
@@ -276,16 +277,16 @@ export function EquipmentContractViews({ root, equipmentById, readings, onAdd }:
                   <Counts node={child} />
                 </div>
                 <div className="ec-chassis-frame-strip">
-                  {activeChildren(child, equipmentById).length
-                    ? activeChildren(child, equipmentById).map(({ child: frame }) => (
-                      <ChildLink node={frame} key={frame.id} className="ec-chassis-frame">
-                        <strong>{frame.name}</strong><small><Counts node={frame} /></small>
-                      </ChildLink>
-                    ))
-                    : child.equipmentType === 'FRAME'
-                      ? activeChildren(child, equipmentById).map(({ child: panel }) => (
+                  {child.equipmentType === 'FRAME'
+                    ? activeChildren(child, equipmentById).map(({ child: panel }) => (
                         <PanelPreview key={panel.id} panel={panel} byId={equipmentById} />
                       ))
+                    : activeChildren(child, equipmentById).length
+                      ? activeChildren(child, equipmentById).map(({ child: frame }) => (
+                          <ChildLink node={frame} key={frame.id} className="ec-chassis-frame">
+                            <strong>{frame.name}</strong><small><Counts node={frame} /></small>
+                          </ChildLink>
+                        ))
                       : <span className="ec-muted">No installed child Equipment</span>}
                 </div>
               </article>

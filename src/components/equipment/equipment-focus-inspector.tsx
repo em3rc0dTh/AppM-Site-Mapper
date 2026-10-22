@@ -3,6 +3,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 
 import { EquipmentTelemetryInspector } from '@/components/telemetry/equipment-telemetry-inspector';
+import { CompositionHistoryCharts } from './composition-history-charts';
 import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
 import { useTelemetryStream } from '@/components/telemetry/use-bdfb-telemetry';
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
@@ -50,6 +51,7 @@ export function EquipmentFocusInspector({
 }: Props) {
   const [tab, setTab] = useState<Tab>('overview');
   const [snmpExpanded, setSnmpExpanded] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const { samples, now, hasSnapshot } = useTelemetryStream(canReadTelemetry);
   const equipmentById = useMemo(
     () => new Map(familyEquipment.map((item) => [item.id, item])),
@@ -76,6 +78,11 @@ export function EquipmentFocusInspector({
     canReadTelemetry && (breaker ? current?.status === 'LIVE' : summary.reporting > 0);
   const visibleTabs = hasLiveReadings ? TABS : TABS.filter(({ key }) => key !== 'telemetry');
   const activeTab = tab === 'telemetry' && !hasLiveReadings ? 'overview' : tab;
+  const coverage =
+    breaker ? `${summary.reporting}/1 breaker LIVE` :
+    equipment.equipmentType === 'PANEL' ?
+      `${summary.reporting}/${summary.positions} positions with MQTT LIVE · ${summary.installed} installed` :
+      `${summary.reportingChildren}/${summary.installedChildren} immediate children with MQTT LIVE · ${summary.reporting} live breakers below`;
 
   return (
     <section className="ec-inspector" aria-label={equipment.name + ' Equipment inspector'}>
@@ -87,6 +94,12 @@ export function EquipmentFocusInspector({
         </div>
       </div>
 
+      {canReadTelemetry && (
+        <p className="ec-scope-readiness">
+          <span className="ec-status-dot" aria-hidden="true" />
+          {coverage}
+        </p>
+      )}
       <div className="ec-inspector-tabs" role="tablist" aria-label="Equipment inspector tabs">
         {visibleTabs.map(({ key, label }) => (
           <button
@@ -119,15 +132,8 @@ export function EquipmentFocusInspector({
             ) : (
               <>
                 <p className="ec-inspector-counts">
-                  {breaker ? (
-                    <>Binding status: {current?.status ?? 'UNMAPPED'}</>
-                  ) : (
-                    <>
-                      {summary.installed} installed · {summary.bound} bound · {summary.reporting}{' '}
-                      reporting
-                      {summary.stale > 0 ? ` · ${summary.stale} stale` : ''}
-                    </>
-                  )}
+                  {coverage}
+                  {summary.stale > 0 ? ` · ${summary.stale} stale` : ''}
                 </p>
                 {equipment.telemetryPointPrefix && (
                   <p className="ec-inspector-note">Point group {equipment.telemetryPointPrefix}</p>
@@ -156,22 +162,6 @@ export function EquipmentFocusInspector({
                     Waiting for telemetry stream snapshot…
                   </p>
                 )}
-                <details className="ec-inspector-history">
-                  <summary>History &amp; diagnostics</summary>
-                  <EquipmentTelemetryInspector
-                    targetId={equipment.id}
-                    label={equipment.name}
-                    {...(equipment.telemetryPointPrefix
-                      ? {
-                          pointPrefix: equipment.telemetryPointPrefix,
-                          pointCapacity:
-                            equipment.childMode === 'POSITIONAL'
-                              ? equipment.children.length
-                              : undefined,
-                        }
-                      : {})}
-                  />
-                </details>
               </>
             )}
           </>
@@ -184,29 +174,33 @@ export function EquipmentFocusInspector({
                 Point group {equipment.telemetryPointPrefix} · configured, not a live reading
               </p>
             )}
-            {!hasLiveReadings && canReadTelemetry && (
-              <details className="ec-inspector-history">
-                <summary>MQTT diagnostics · no live readings</summary>
-                <EquipmentTelemetryInspector
-                  targetId={equipment.id}
-                  label={equipment.name}
-                  {...(equipment.telemetryPointPrefix
-                    ? {
-                        pointPrefix: equipment.telemetryPointPrefix,
-                        pointCapacity:
-                          equipment.childMode === 'POSITIONAL'
-                            ? equipment.children.length
-                            : undefined,
-                      }
-                    : {})}
-                />
-              </details>
-            )}
           </>
         )}
         {activeTab === 'ports' && ports}
         {activeTab === 'settings' && settings}
       </div>
+      {canReadTelemetry && (
+        <details
+          className="ec-inspector-history ec-composition-history"
+          onToggle={(event) => setHistoryOpen(event.currentTarget.open)}
+        >
+          <summary>History &amp; diagnostics · charts</summary>
+          {historyOpen && (
+            <>
+              <CompositionHistoryCharts
+                equipmentId={equipment.id}
+                equipmentType={equipment.equipmentType}
+              />
+              {breaker && (
+                <details className="ec-history-raw">
+                  <summary>Inspect original breaker packets</summary>
+                  <EquipmentTelemetryInspector targetId={equipment.id} label={equipment.name} />
+                </details>
+              )}
+            </>
+          )}
+        </details>
+      )}
       {equipment.equipmentType === 'CHASSIS' && canReadTelemetry && (
         <div className="ec-snmp-source">
           <p className="ec-inspector-note">

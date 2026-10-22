@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { PasswordForm } from '@/components/settings/password-form';
 import { getCurrentSessionUser } from '@/modules/identity/application/current-session';
@@ -13,18 +14,20 @@ export default async function ChangePasswordPage() {
     redirect('/login');
   }
 
+  const t = await getTranslations('auth.changePassword');
+
   return (
     <AuthFrame
-      eyebrow="Identity / credential policy"
-      title="Change password"
+      eyebrow={t('eyebrow')}
+      title={t('title')}
       description={
         user.mustChangePassword
-          ? 'Replace the temporary credential before operational access is enabled.'
-          : 'Update your credential and revoke every existing session.'
+          ? t('forcedDescription')
+          : t('description')
       }
     >
       <div className="auth-account">
-        <span>Signed in as</span>
+        <span>{t('signedInAs')}</span>
         <strong>{user.displayName}</strong>
         <small>{user.email}</small>
       </div>

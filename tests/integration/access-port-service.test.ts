@@ -201,3 +201,51 @@ describe('Configuration 4 access-port invariants', () => {
     expect(independent.ok).toBe(true);
   });
 });
+
+describe('Configuration 2 quick DC-input registration', () => {
+  it('saves a side shunt with only A/B and two panels, without invented ratings or a verification claim', async () => {
+    const stamp = '2026-10-22T00:00:00.000Z';
+    const device: DeviceNode = {
+      id: 'bdfb-quick', kind: 'DEVICE', parentId: 'rack', name: 'Config 2',
+      deviceType: 'BDFB', rootEquipmentIds: ['chassis-quick'],
+      attributes: { bdfbHardwareProfile: 'ELTEK_BDCBB_CONFIG_2' },
+      pinned: false, lifecycle: 'ACTIVE', createdAt: stamp, updatedAt: stamp,
+    };
+    const chassis: EquipmentNode = {
+      ...owner(), id: 'chassis-quick', deviceId: device.id,
+      parentId: device.id, equipmentType: 'CHASSIS', accessPorts: [],
+    };
+    const panels: EquipmentNode[] = ['A1', 'A2', 'B1', 'B2'].map((name) => ({
+      ...owner(), id: 'panel-' + name, name: 'Panel ' + name,
+      deviceId: device.id, parentId: chassis.id, parentEquipmentId: chassis.id,
+      equipmentType: 'PANEL',
+    }));
+    const repository = new MemoryTopologyRepository([device, chassis, ...panels]);
+    const service = new AccessPortService(repository, new MemoryPowerRepository());
+    const created = await service.upsert(chassis.id, {
+      name: 'INPUT-SHUNT-A',
+      portType: 'POWER',
+      direction: 'INPUT',
+      exposure: 'EXTERNAL',
+      feed: 'A',
+      snmpFeedInput: true,
+      independentInputConfirmed: false,
+      servedPanelIds: ['panel-A1', 'panel-A2'],
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+    expect(created.value.attributes).toMatchObject({
+      feed: 'A', snmpFeedInput: true, servedPanelIds: ['panel-A1', 'panel-A2'],
+    });
+    expect(created.value.attributes?.independentInputConfirmed).not.toBe(true);
+    expect(created.value.attributes?.ratedCurrentA).toBeUndefined();
+    expect(created.value.attributes?.shuntRatedCurrentA).toBeUndefined();
+    expect(created.value.attributes?.shuntRatedMillivolts).toBeUndefined();
+    const overlapping = await service.upsert(chassis.id, {
+      name: 'INPUT-SHUNT-B', portType: 'POWER', direction: 'INPUT',
+      exposure: 'EXTERNAL', feed: 'B', snmpFeedInput: true,
+      servedPanelIds: ['panel-A2', 'panel-B2'],
+    });
+    expect(overlapping).toMatchObject({ ok: false, error: 'INVALID_FEED_PANELS' });
+  });
+});

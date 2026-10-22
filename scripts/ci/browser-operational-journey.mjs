@@ -60,7 +60,7 @@ try {
     await page.setViewportSize({ width, height });
     const geometry = await deviceLayout.evaluate((element) => {
       const cols = getComputedStyle(element).gridTemplateColumns
-        .split(/\\s+/)
+        .split(/\s+/)
         .map((item) => parseFloat(item));
       const stage = element.querySelector('.zip-device-stage');
       const inspector = element.querySelector('.zip-device-inspector');

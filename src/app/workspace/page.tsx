@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { DemoSeedButton } from '@/components/dev/demo-seed-button';
 import { NavigationTree } from '@/components/workspace/navigation-tree';
@@ -25,6 +26,7 @@ function flatten(nodes: readonly WorkspaceTreeNode[]): WorkspaceTreeNode[] {
 export default async function WorkspacePage() {
   const auth = await requirePermission('topology:read');
   if (!auth.ok) redirect('/login');
+  const t = await getTranslations('workspace');
 
   const topologyRepo = await createTopologyRepository();
   const topology = new TopologyService(topologyRepo);
@@ -95,8 +97,8 @@ export default async function WorkspacePage() {
       <section className="sm-home-main">
         <header className="sm-home-heading">
           <div>
-            <span className="sm-home-breadcrumb">⌂ Home</span>
-            <h1>Infrastructure overview</h1>
+            <span className="sm-home-breadcrumb">⌂ {t('home')}</span>
+            <h1>{t('title')}</h1>
           </div>
           <span className="sm-home-scope">
             {contextLabel} / {contextChild}

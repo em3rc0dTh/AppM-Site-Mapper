@@ -361,6 +361,7 @@ export function PhysicalEquipmentDiagram({
           root={root}
           equipmentById={equipmentById}
           readings={breakerReadings}
+          canReadTelemetry={canReadTelemetry}
           {...(onAdd ? { onAdd } : {})}
         />
         {hasPorts && (

@@ -64,7 +64,12 @@ export async function GET(_request: Request, context: Context) {
     .sort((a, b) => a.frameName.localeCompare(b.frameName) || a.name.localeCompare(b.name));
 
   return NextResponse.json(
-    { deviceId: equipment.deviceId, hardwareProfile: bdfbHardwareProfile(device), panels },
+    {
+      deviceId: equipment.deviceId,
+      equipmentType: equipment.equipmentType,
+      hardwareProfile: bdfbHardwareProfile(device),
+      panels,
+    },
     { headers: { 'Cache-Control': 'private, no-store' } },
   );
 }

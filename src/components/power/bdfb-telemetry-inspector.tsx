@@ -16,15 +16,10 @@ import type {
 } from '@/modules/telemetry/domain/history';
 import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
-import en from '@/messages/en.json';
+import { useTranslations } from 'next-intl';
 
 type InspectorTab = 'overview' | 'feeds' | 'history' | 'settings';
-const INSPECTOR_TABS: readonly { key: InspectorTab; label: string }[] = [
-  { key: 'overview', label: en.bdfb.inspector.overview },
-  { key: 'feeds', label: en.bdfb.inspector.feeds },
-  { key: 'history', label: en.bdfb.inspector.history },
-  { key: 'settings', label: en.bdfb.inspector.settings },
-];
+const INSPECTOR_TABS: readonly InspectorTab[] = ['overview', 'feeds', 'history', 'settings'];
 type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
 function metric(value: number | null | undefined, unit: string, decimals = 2): string {
@@ -159,6 +154,7 @@ export function BdfbTelemetryInspector({
   mappedBreakerCount?: number;
   descendantEquipmentIds?: readonly string[];
 }>) {
+  const t = useTranslations('bdfb.inspector');
   const { samples, now } = useBdfbTelemetrySnapshot(node.id);
   const inspectorRef = useRef<HTMLElement>(null);
   const [tab, setTab] = useState<InspectorTab>('overview');
@@ -252,7 +248,7 @@ export function BdfbTelemetryInspector({
         onKeyDown={(event) => {
           if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
           event.preventDefault();
-          const current = INSPECTOR_TABS.findIndex((item) => item.key === tab);
+          const current = INSPECTOR_TABS.findIndex((item) => item === tab);
           const nextIndex =
             event.key === 'Home'
               ? 0
@@ -261,23 +257,23 @@ export function BdfbTelemetryInspector({
                 : (current + (event.key === 'ArrowRight' ? 1 : -1) + INSPECTOR_TABS.length) %
                   INSPECTOR_TABS.length;
           const nextTab = INSPECTOR_TABS[nextIndex]!;
-          changeTab(nextTab.key);
-          const button = document.getElementById('sm-bdfb-tab-' + nextTab.key);
+          changeTab(nextTab);
+          const button = document.getElementById('sm-bdfb-tab-' + nextTab);
           button?.focus();
         }}
       >
         {INSPECTOR_TABS.map((item) => (
           <button
-            key={item.key}
+            key={item}
             type="button"
             role="tab"
-            id={'sm-bdfb-tab-' + item.key}
-            aria-controls={'sm-bdfb-panel-' + item.key}
-            aria-selected={tab === item.key}
-            tabIndex={tab === item.key ? 0 : -1}
-            onClick={() => changeTab(item.key)}
+            id={'sm-bdfb-tab-' + item}
+            aria-controls={'sm-bdfb-panel-' + item}
+            aria-selected={tab === item}
+            tabIndex={tab === item ? 0 : -1}
+            onClick={() => changeTab(item)}
           >
-            {item.label}
+            {t(item)}
           </button>
         ))}
       </nav>

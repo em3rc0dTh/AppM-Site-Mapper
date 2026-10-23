@@ -36,7 +36,7 @@ def compose_environment():
     for filename in (ROOT / ".env", RUNTIME / "existing.env"):
         for line in filename.read_text(encoding="utf-8").splitlines():
             line = line.strip().removeprefix("export ").strip()
-            match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\\s*=", line)
+            match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=", line)
             if match:
                 keys.add(match.group(1))
     return {key: value for key, value in os.environ.items() if key not in keys}

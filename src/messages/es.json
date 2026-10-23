@@ -343,6 +343,12 @@
       "siteBoundary": "Límite del sitio",
       "structureBoundary": "Límite de estructura (referencia de nivel)",
       "noStructure": "Sin límite de estructura levantado"
+    },
+    "connectEquipment": {
+      "unknownPort": "Puerto desconocido",
+      "requireTerminals": "Un PowerPath confirmado requiere una salida POWER OUTPUT activa y una entrada POWER INPUT activa en Equipment distintos.",
+      "return": "Volver a Equipment",
+      "configureFirst": "y configura primero los terminales faltantes."
     }
   },
   "forms": {

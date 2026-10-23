@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 
 import {
   ConnectEquipmentPowerForm,
@@ -24,6 +25,7 @@ export default async function ConnectEquipmentPowerPage({
   const auth = await requirePermission('power:write');
   if (!auth.ok) redirect('/workspace');
 
+  const t = await getTranslations('pages.connectEquipment');
   const params = await searchParams;
   const topology = await createTopologyRepository();
   const power = await createPowerRepository();
@@ -72,7 +74,7 @@ export default async function ConnectEquipmentPowerPage({
         ...(existing
           ? {
               connected: true,
-              connectionLabel: (peerId && portNames.get(peerId)) || peerId || 'Unknown port',
+              connectionLabel: (peerId && portNames.get(peerId)) || peerId || t('unknownPort'),
               pathId: existing.id,
             }
           : {}),
@@ -103,9 +105,8 @@ export default async function ConnectEquipmentPowerPage({
       />
       {!sources.length || !targets.length ? (
         <div className="power-port-connect-empty">
-          A confirmed PowerPath requires an active POWER OUTPUT and an active POWER INPUT on
-          distinct Equipment. <Link href={returnHref}>Return to Equipment</Link> and configure
-          missing terminals first.
+          {t('requireTerminals')} <Link href={returnHref}>{t('return')}</Link>{' '}
+          {t('configureFirst')}
         </div>
       ) : null}
     </>

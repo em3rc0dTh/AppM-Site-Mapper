@@ -343,6 +343,12 @@
       "siteBoundary": "Site boundary",
       "structureBoundary": "Structure boundary (Level reference)",
       "noStructure": "No surveyed Structure boundary"
+    },
+    "connectEquipment": {
+      "unknownPort": "Unknown port",
+      "requireTerminals": "A confirmed PowerPath requires an active POWER OUTPUT and an active POWER INPUT on distinct Equipment.",
+      "return": "Return to Equipment",
+      "configureFirst": "and configure missing terminals first."
     }
   },
   "forms": {

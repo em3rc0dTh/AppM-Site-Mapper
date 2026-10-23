@@ -251,7 +251,9 @@ try {
           break;
         } catch (error) {
           if (!String(error).includes('net::ERR_ABORTED') || attempt === 3) throw error;
-          console.warn(`[RETRY] ${expectedLocale} navigation ${route} aborted; attempt ${attempt + 1}`);
+          console.warn(
+            `[RETRY] ${expectedLocale} navigation ${route} aborted; attempt ${attempt + 1}`,
+          );
           await page.waitForLoadState('domcontentloaded').catch(() => undefined);
         }
       }

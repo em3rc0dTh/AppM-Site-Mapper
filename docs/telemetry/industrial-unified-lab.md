@@ -447,3 +447,30 @@ require the original database/credential/volume/backup preflight, a
 stopped publisher and a historical outbox depth **at most 100**. The
 private emulation interval defaults to 10 seconds; avoid applying the
 full-stack `up` action solely to restart the publisher.
+
+
+### Low-rate MQTT acceptance evidence; SNMP coexistence pending
+
+The operator confirmed the private `lab-mqtt` configuration in the
+running container: `publish.intervalSeconds: 10.0` and
+`publish.batchSize: 24`. Two observations separated by 60 seconds
+reported:
+
+| Observation | Industrial events in Mongo | MQTT spool files | Mongo-to-Timescale pending lots | Failed lots |
+| --- | ---: | ---: | ---: | ---: |
+| First | 3,258 | 0 | 0 | 0 |
+| Second | 3,276 | 0 | 0 | 0 |
+
+The 18 new events over one minute are consistent with three BFDB
+simulators publishing every 10 seconds; an event count alone does not
+establish exact source attribution. The reduced-rate MQTT recovery
+condition is **observed passing for the measured interval**, not yet
+a sustained-load or FIELD acceptance result.
+
+After these two observations, the operator started
+`appm-site-mapper-lab-snmp-01-1`,
+`appm-site-mapper-lab-snmp-02-1`, and
+`appm-site-mapper-lab-snmp-03-1`. Docker reported successful starts.
+SNMP+MQTT simultaneous freshness, backlog stability, inventory LIVE
+state and Modbus word/quality readings **remain to be confirmed**;
+do not mark the corresponding client-acceptance gates as passed yet.

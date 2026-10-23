@@ -31,6 +31,17 @@ try {
   const base = process.env.CI_HTTP_BASE_URL || 'http://127.0.0.1:3100';
 
   await page.goto(base + '/login', { waitUntil: 'domcontentloaded' });
+  // Verify the actual user-facing language selector, not just catalog parity.
+  const loginLocale = page.locator('.sm-locale-control select');
+  await loginLocale.waitFor({ timeout: 30000 });
+  await loginLocale.selectOption('es');
+  await page.waitForFunction(() => document.documentElement.lang === 'es', { timeout: 30000 });
+  await page.getByText('Iniciar sesión').first().waitFor({ timeout: 30000 });
+  await loginLocale.selectOption('en');
+  await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
+  await page.getByText('Sign in').first().waitFor({ timeout: 30000 });
+  console.log('[PASS] Chromium: login selector en→es→en updates document language and labels');
+
   await page.locator('input[name="email"]').fill('mk1-e2e-operator@local.test');
   await page.locator('input[name="password"]').fill('CI-Only-E2E-Strong-2026!');
   await page.getByRole('button', { name: 'SIGN IN' }).click();
@@ -198,6 +209,32 @@ try {
     }
     console.log(`[PASS] Real Chromium: ${width}px Room Blueprint layout and properties alignment`);
   }
+  // Bilingual authenticated journey must preserve links, inventory data and
+  // approved 1920px layout. Technical identities must stay byte-for-byte.
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
+  const settingsLocale = page.locator('.sm-locale-control select');
+  await settingsLocale.waitFor({ timeout: 30000 });
+  await settingsLocale.selectOption('es');
+  await page.waitForFunction(() => document.documentElement.lang === 'es', { timeout: 30000 });
+  await page.goto(base + '/network', { waitUntil: 'domcontentloaded' });
+  await page.getByText('Raíces de topología').waitFor({ timeout: 30000 });
+  await page.getByText('CI Two-Site Network').first().waitFor({ timeout: 30000 });
+  await page.goto(base + '/blueprint/' + room.id, { waitUntil: 'domcontentloaded' });
+  await page.getByText('PROPIEDADES DE LA SALA').waitFor({ timeout: 30000 });
+  assert.ok(
+    (await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)) <= 3,
+    'Spanish labels must not introduce horizontal overflow at approved 1920px',
+  );
+  await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
+  await page.getByText('CI LIMA Panel 24P').first().waitFor({ timeout: 30000 });
+  await page.getByText('0_1_1').first().waitFor({ timeout: 30000 });
+  await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
+  await page.locator('.sm-locale-control select').selectOption('en');
+  await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
+  await page.goto(base + '/network', { waitUntil: 'domcontentloaded' });
+  await page.getByText('Topology roots').waitFor({ timeout: 30000 });
+  console.log('[PASS] Chromium: bilingual authenticated navigation, immutable inventory/MQTT identifiers and desktop geometry');
 } catch (error) {
   console.error('[FAIL] Browser operational check:', error);
   process.exitCode = 1;

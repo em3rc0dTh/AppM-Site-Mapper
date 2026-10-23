@@ -275,6 +275,16 @@ try {
         (locale) => document.documentElement.lang === locale,
         expectedLocale,
       );
+      const persistedTheme = await page.evaluate(() => ({
+        theme: document.documentElement.dataset.theme,
+        colorScheme: getComputedStyle(document.documentElement).colorScheme,
+      }));
+      assert.equal(persistedTheme.theme, 'light', `Theme changed on ${expectedLocale} ${route}`);
+      assert.equal(
+        persistedTheme.colorScheme,
+        'light',
+        `Native color scheme changed on ${expectedLocale} ${route}`,
+      );
       assert.ok(!new URL(page.url()).pathname.includes('/login'), `Session lost on ${route}`);
     }
     console.log(
@@ -283,6 +293,23 @@ try {
   }
 
   await verifyLocaleRoutes('es');
+
+  // The add-user flyout is a white surface: its native fields cannot inherit
+  // the legacy dark tokens when switching to Spanish.
+  await page.goto(base + '/settings?tab=users', { waitUntil: 'domcontentloaded' });
+  await page.getByText('CONFIGURACIÓN').first().waitFor({ timeout: 30000 });
+  const addUser = page.locator('.zip-users-heading details');
+  await addUser.locator('summary').click();
+  const displayNameInput = page.locator('.settings-user-create input[name="displayName"]');
+  await displayNameInput.waitFor({ timeout: 30000 });
+  const addUserTheme = await page.evaluate(() => ({
+    name: getComputedStyle(document.querySelector('.settings-user-create input')).backgroundColor,
+    role: getComputedStyle(document.querySelector('.settings-user-create select')).backgroundColor,
+  }));
+  assert.equal(addUserTheme.name, 'rgb(255, 255, 255)');
+  assert.equal(addUserTheme.role, 'rgb(255, 255, 255)');
+  console.log('[PASS] Chromium: Spanish user creation and native dropdowns retain white backgrounds');
+
   await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
   await page.locator('.sm-locale-control select').selectOption('en');
   await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });

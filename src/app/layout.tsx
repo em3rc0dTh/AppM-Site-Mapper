@@ -16,6 +16,7 @@ import './home-redesign.css';
 import './equipment-composition-contract.css';
 import './laptop-responsive.css';
 import './language-switcher.css';
+import './operational-light-theme.css';
 import { AppShell } from '@/shared/ui/app-shell';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -32,7 +33,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   await headers();
   const locale = await getLocale();
   return (
-    <html lang={locale}>
+    <html lang={locale} data-theme="light">
       <body>
         <NextIntlClientProvider>
           <AppShell>{children}</AppShell>

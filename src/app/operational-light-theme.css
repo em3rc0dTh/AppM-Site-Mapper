@@ -1,0 +1,57 @@
+/*
+ * Operational theme contract: light is the single supported app theme.
+ * Applied after legacy/MK1 styles so OS dark-mode and inherited dark form
+ * tokens cannot turn controls dark inside white operational surfaces.
+ * Dark blueprint/telemetry canvas graphics remain governed by their own
+ * drawing styles; this file addresses user-facing native form controls.
+ */
+:root[data-theme='light'] {
+  color-scheme: light;
+  background: #fff;
+  color: #121923;
+}
+
+:root[data-theme='light'] body {
+  color-scheme: light;
+  background: #fff;
+  color: #121923;
+}
+
+:root[data-theme='light'] .zip-app-shell :is(input, select, textarea),
+:root[data-theme='light'] .mk-login :is(input, select, textarea) {
+  color-scheme: light;
+  background-color: #fff;
+  color: #17202a;
+  border-color: #cbd5df;
+}
+
+:root[data-theme='light'] .zip-app-shell :is(input, textarea)::placeholder,
+:root[data-theme='light'] .mk-login :is(input, textarea)::placeholder {
+  color: #66778a;
+  opacity: 1;
+}
+
+:root[data-theme='light'] :is(.zip-app-shell, .mk-login) select option {
+  color: #17202a;
+  background: #fff;
+}
+
+:root[data-theme='light'] .settings-shell .settings-form label {
+  color: #536172;
+}
+
+:root[data-theme='light'] .settings-shell .settings-user-create > button[type='submit'] {
+  background: #2d7ff9;
+  border-color: #2d7ff9;
+  color: #fff;
+}
+
+:root[data-theme='light'] .settings-shell .settings-user-create > button[type='submit']:hover:not(:disabled) {
+  background: #1765d4;
+  border-color: #1765d4;
+}
+
+:root[data-theme='light'] :is(.zip-app-shell, .mk-login) :is(input, select, textarea):focus-visible {
+  outline: 2px solid #2d7ff9;
+  outline-offset: 2px;
+}

@@ -84,6 +84,7 @@ export default async function SettingsPage({
       </div>
       <div className="mk-settings-layout">
         <nav className="mk-settings-nav" aria-label={t('areas')}>
+          <span className="mk-settings-nav-title">{t('title')}</span>
           {visible.map((tab) => (
             <Link
               key={tab}

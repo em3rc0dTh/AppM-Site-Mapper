@@ -31,6 +31,19 @@ try {
   const base = process.env.CI_HTTP_BASE_URL || 'http://127.0.0.1:3100';
 
   await page.goto(base + '/login', { waitUntil: 'domcontentloaded' });
+  // The approved operational theme must be light even when the OS prefers dark.
+  const initialTheme = await page.evaluate(() => ({
+    theme: document.documentElement.dataset.theme,
+    scheme: getComputedStyle(document.documentElement).colorScheme,
+    input: getComputedStyle(document.querySelector('.auth-form input')).backgroundColor,
+    locale: getComputedStyle(document.querySelector('.sm-locale-control select')).backgroundColor,
+  }));
+  assert.equal(initialTheme.theme, 'light');
+  assert.equal(initialTheme.scheme, 'light');
+  assert.equal(initialTheme.input, 'rgb(255, 255, 255)');
+  assert.equal(initialTheme.locale, 'rgb(255, 255, 255)');
+  console.log('[PASS] Chromium: light login theme and locale selector on initial render');
+
   // Verify the actual user-facing language selector, not just catalog parity.
   const loginLocale = page.locator('.sm-locale-control select');
   await loginLocale.waitFor({ timeout: 30000 });

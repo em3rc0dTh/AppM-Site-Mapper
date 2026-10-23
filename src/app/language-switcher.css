@@ -17,9 +17,10 @@
   max-width: 102px;
 }
 .mk-login .sm-locale-control select {
-  color: #dbeafe;
-  background: #10253d;
-  border-color: #46627e;
+  color: #17202a;
+  background: #ffffff;
+  border-color: #aeb8c2;
+  color-scheme: light;
 }
 @media (min-width: 1000px) and (max-width: 1199px) {
   .zip-topbar .sm-locale-control {

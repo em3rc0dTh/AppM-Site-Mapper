@@ -5,11 +5,20 @@
  *   docker exec -i appm-site-mapper-mongodb-1 mongosh --quiet \
  *     --file /dev/stdin < scripts/telemetry/provision-bdfb-pair.mongosh.js
  *
- * Atomic apply only after confirmed backup and preflight with zero conflicts:
+ * Atomic TOPOLOGY-ONLY apply, after confirming original backup and plan:
+ * * Does NOT touch the existing EMU-BFDB-02/03 SOURCE bindings.
+ * * Does NOT create new MQTT bindings; new breakers display UNMAPPED.
+ * * Activating telemetry requires a separate, explicit commissioning step.
+ *
+ * Original live-telemetry bindings are the authoritative mappings.
+ * Atomic apply only after verified original backup and operator decision:
  *   docker exec -i -e SITEMAPPER_PROVISION_MODE=apply \
+ *     -e SITEMAPPER_PROVISION_ACK=TOPOLOGY_ONLY \
  *     appm-site-mapper-mongodb-1 mongosh --quiet \
  *     --file /dev/stdin < scripts/telemetry/provision-bdfb-pair.mongosh.js
  *
+ * The 96 installed breakers per new BDFB are saturation-lab fixtures, not field
+ * occupancy evidence. Their proposed MQTT identity is metadata ONLY.
  * This does NOT copy BDFB-01, alter original bindings, touch SNMP shunts,
  * change geometry, modify original users or rewrite Modbus configuration.
  * The source/position bindings are SIMULATED. Never use for field equipment.
@@ -23,12 +32,12 @@ const ORIGINAL = {
 };
 const PLAN = [
   {
-    name: "BDFB-02", serial: "EMU-BFDB-02",
+    name: "BDFB-02", serial: "LAB-BDFB-02", publisher:"EMU-BFDB-02",
     rack: "5b53762f-cc60-4118-8dbc-94ef841882a4",
     rackName: "Rack-01-Bay-02", bay: "19dc1a19-cc45-4cd7-94a0-1223ff3794f9",
   },
   {
-    name: "BDFB-03", serial: "EMU-BFDB-03",
+    name: "BDFB-03", serial: "LAB-BDFB-03", publisher:"EMU-BFDB-03",
     rack: "164fe884-28b0-4d80-b504-af92d0b80f15",
     rackName: "Rack-01-Bay-03", bay: "1d7033f4-d202-4952-8858-e200280a8c47",
   },
@@ -52,12 +61,13 @@ const base = (name, kind, parentId) => ({
   lifecycle:"ACTIVE",createdAt:now,updatedAt:now,
 });
 function createFixture(spec, placement) {
-  const nodes = [], bindings = [];
+  const nodes = [];
   const device = {
     ...base(spec.name,"DEVICE",spec.rack), pinned:false, deviceType:"BDFB",
     serialNumber:spec.serial, category:"SYNTHETIC MQTT commissioning",
     rootEquipmentIds:[],
-    attributes:{synthetic:true,sourceIdentity:spec.serial},
+    attributes:{synthetic:true,proposedPublisher:spec.publisher,
+      mqttCommissioning:"UNMAPPED_PENDING_SOURCE_CONFLICT"},
   };
   nodes.push(device);
   function part(parent, equipmentType, name, size, slot, pointPrefix) {
@@ -102,15 +112,6 @@ function createFixture(spec, placement) {
         const n=String(position).padStart(2,"0");
         const breaker=part(panel,"CIRCUIT_BREAKER",
           spec.name+"-PANEL-"+String(group).padStart(2,"0")+"-CB-"+n,0,position-1);
-        const point="0_"+group+"_"+position;
-        for(const metric of ["VOLTAGE","CURRENT","POWER","ENERGY"]){
-          bindings.push({
-            ...base("mqtt:"+spec.serial+":"+point+":"+metric,"BINDING",null),
-            protocol:"MQTT",sourceIdentity:spec.serial,sourcePointId:point,
-            metric,targetType:"EQUIPMENT",targetId:breaker.id,
-            attributes:{synthetic:true,commissioning:"SITE_MAPPER_LAB"},
-          });
-        }
         count++;
       }
     }
@@ -122,13 +123,7 @@ function createFixture(spec, placement) {
     ...(allocation.clearanceTopU?{clearanceTopU:allocation.clearanceTopU}:{}),
     ...(allocation.clearanceBottomU?{clearanceBottomU:allocation.clearanceBottomU}:{}),
   };
-  bindings.push({
-    ...base("mqtt:"+spec.serial+":SOURCE","BINDING",null),
-    protocol:"MQTT",sourceIdentity:spec.serial,
-    metric:"SOURCE",targetType:"DEVICE",targetId:device.id,
-    attributes:{synthetic:true,commissioning:"SITE_MAPPER_LAB"},
-  });
-  return {nodes,bindings,chassis,device,count};
+  return {nodes,chassis,device,count};
 }
 
 const original=topo.findOne({id:ORIGINAL.device});
@@ -177,15 +172,19 @@ for(const spec of PLAN){
   // or Equipment. This is an expected commissioning conflict to report in
   // plan mode, not an excuse to abort diagnosis before we see its owner.
   const serialOwners=topo.find({
-    serialNumber:spec.serial,
+    serialNumber:spec.publisher,
     lifecycle:"ACTIVE",
     kind:{$in:["DEVICE","EQUIPMENT"]},
   },{
     _id:0,id:1,name:1,kind:1,equipmentType:1,deviceType:1,
     deviceId:1,parentId:1,serialNumber:1
   }).toArray();
+  const fixtureSerialOwners=topo.find({
+    serialNumber:spec.serial,lifecycle:"ACTIVE",
+    kind:{$in:["DEVICE","EQUIPMENT"]},
+  },{_id:0,id:1,name:1,kind:1,parentId:1}).toArray();
   const preexisting=links.find({
-    protocol:"MQTT",sourceIdentity:spec.serial,lifecycle:"ACTIVE",
+    protocol:"MQTT",sourceIdentity:spec.publisher,lifecycle:"ACTIVE",
   }).toArray();
   const collision=preexisting.map(b=>{
     const target=topo.findOne({id:b.targetId});
@@ -195,17 +194,22 @@ for(const spec of PLAN){
       targetKind:target?.kind||"NOT FOUND",
     };
   });
-  workloads.push({spec,rack,collision,serialOwners});
+  workloads.push({spec,rack,collision,serialOwners,fixtureSerialOwners});
 }
 print("\nSITE MAPPER SIMULATED COMMISSIONING");
 print("mode="+mode+" | DB="+DB_NAME+
       " | source chassis geometry="+JSON.stringify(input));
 for(const x of workloads){
   print("\n"+x.spec.name+" -> "+x.spec.rackName+
-    " ("+x.spec.rack+") -> "+x.spec.serial);
+    " ("+x.spec.rack+") | dedicated device serial="+x.spec.serial+
+    " | original MQTT publisher="+x.spec.publisher);
   print("Model: 1 chassis, 1 shelf, 2 frames, 4 panels, "+
-        "96 INSTALLLED synthetic breaker positions, 385 MQTT bindings");
-  print("Existing serial owners for "+x.spec.serial+": "+x.serialOwners.length);
+        "96 INSTALLED synthetic breaker positions; 0 new MQTT bindings.");
+  print("Telemetría: UNMAPPED. Old SOURCE owner preserved.");
+  print("Dedicated fixture serial collisions: "+x.fixtureSerialOwners.length);
+  for(const owner of x.fixtureSerialOwners) print("  FIXTURE SERIAL COLLISION: "+
+    JSON.stringify(owner));
+  print("Existing serial owners for "+x.spec.publisher+": "+x.serialOwners.length);
   for(const owner of x.serialOwners) {
     const device=owner.deviceId?topo.findOne({id:owner.deviceId},{
       _id:0,id:1,name:1,deviceType:1,parentId:1,
@@ -219,30 +223,24 @@ for(const x of workloads){
 }
 if(mode==="plan"){
   print("\nPLAN ONLY. No writes performed.");
-  const serialConflicts=workloads.some(x=>x.serialOwners.length);
-  const bindingConflicts=workloads.some(x=>x.collision.length);
-  if(serialConflicts||bindingConflicts) {
-    print("BLOCKED FOR APPLY: pre-existing serial and/or MQTT binding owners "+
-          "must be inspected before selecting new synthetic Device serials "+
-          "and commissioning source-point ownership.");
-    print("The existing owners are preserved. Never delete or reassign "+
-          "them to make a fixture pass.");
+  if(workloads.some(x=>x.fixtureSerialOwners.length)) {
+    print("BLOCKED FOR APPLY: proposed dedicated LAB serial already exists.");
   } else {
-    print("No detected serial or source binding collisions. Atomic apply "+
-          "remains opt-in and requires freshly verified backups.");
+    print("TOPOLOGY-ONLY apply is eligible after verifying original backups.");
+    print("IMPORTANT: existing MQTT source bindings remain assigned to BDFB-01");
+    print("and new BDFB-02/03 breakers will be UNMAPPED until an approved");
+    print("separate simulator alias/source-commissioning workflow is applied.");
   }
 } else {
-  guard(workloads.every(x=>x.serialOwners.length===0),
-    "Source identity already owned by active topology nodes; "+
-    "do not duplicate a serial or silently change its owner.");
-  guard(workloads.every(x=>x.collision.length===0),
-    "Existing MQTT bindings found. Refusing automatic reassignment; "+
-    "inspect listed targets and explicitly commission the source mapping first.");
-  const documents=[],bindings=[],casWrites=[];
+  guard(process.env.SITEMAPPER_PROVISION_ACK==="TOPOLOGY_ONLY",
+    "Explicit SITEMAPPER_PROVISION_ACK=TOPOLOGY_ONLY required");
+  guard(workloads.every(x=>x.fixtureSerialOwners.length===0),
+    "Proposed dedicated LAB serial already exists; cannot duplicate.");
+  // Conflicting SOURCE bindings intentionally remain unchanged.
+  const documents=[],casWrites=[];
   for(const x of workloads){
     const fx=createFixture(x.spec,{allocation:input});
     documents.push(...fx.nodes);
-    bindings.push(...fx.bindings);
     const prefix=[];
     if(start>1)prefix.push({
       id:x.rack.cas[0].id,startU:1,endU:start-1,state:"AVAILABLE",
@@ -271,11 +269,13 @@ if(mode==="plan"){
         "Concurrent rack mutation detected ("+p.rack.name+")");
     }
     td.topology_nodes.insertMany(documents,{ordered:true});
-    td.telemetry_bindings.insertMany(bindings,{ordered:true});
     session.commitTransaction();
     print("APPLY COMMITTED: "+documents.length+" topology documents, "+
-       bindings.length+" synthetic MQTT bindings, 2 rack CAS allocations.");
-    print("Original BDFB-01, historical telemetry and SNMP shunts unchanged.");
+       "0 MQTT bindings, 2 rack CAS allocations.");
+    print("Existing telemetry bindings, original BDFB-01, historical telemetry "+
+          "and SNMP shunts unchanged.");
+    print("New 192 synthetic breakers intentionally UNMAPPED until "+
+          "a separately approved signal-commissioning step.");
   } catch(error){
     try{session.abortTransaction();}catch(_ignored){}
     throw error;

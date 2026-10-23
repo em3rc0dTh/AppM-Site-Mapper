@@ -495,7 +495,11 @@
     "readView": "VISTA DE LECTURA",
     "editHelp": "Abre una entidad para utilizar los controles de edición permitidos.",
     "readonly": "Tu rol solo permite lectura.",
-    "manageTopology": "Administrar topología →"
+    "manageTopology": "Administrar topología →",
+    "noMatchingEntities": "No hay entidades coincidentes",
+    "noTopology": "Aún no hay topología",
+    "tryAnother": "Pruebe con otro nombre.",
+    "createNetwork": "Cree una red para mapear su infraestructura."
   },
   "topologyTree": {
     "global": "Topología global",
@@ -997,7 +1001,21 @@
     "rackFootprint": "Superficie física del rack",
     "unsurveyedFootprint": "Sin levantamiento; no se inventa una superficie",
     "openRackFocus": "Abrir detalle del rack",
-    "grid": "cuadrícula"
+    "grid": "cuadrícula",
+    "physical": "Físico",
+    "footprintLabel": "Huella física",
+    "coordinatesLabel": "Coordenadas",
+    "inspectBay": "Inspeccionar bahía {name}",
+    "availablePosition": "{name} disponible",
+    "positionReference": "REFERENCIA DE POSICIÓN",
+    "gridOrigin": "Origen de cuadrícula",
+    "coordinate": "Coordenada",
+    "state": "Estado",
+    "availableHelp": "Disponible; elija la huella física de un rack al colocarlo",
+    "add": "+ AÑADIR",
+    "inspectRack": "Inspeccionar {name}",
+    "panHelp": "Arrastre para desplazar · desplace la rueda para acercar",
+    "selectHelp": "Seleccione un rack para inspeccionar · desplace la rueda para acercar"
   },
   "equipmentTelemetry": {
     "live": "TELEMETRÍA EN VIVO",
@@ -1549,7 +1567,13 @@
     "undo": "Deshacer",
     "clear": "Limpiar",
     "removeVertex": "Eliminar vértice",
-    "finishBoundary": "Finalizar límite"
+    "finishBoundary": "Finalizar límite",
+    "surveyedBoundary": "Límite relevado",
+    "addVertexEdge": "Añadir vértice a la arista {edge}",
+    "outsideGrid": "FUERA DE CUADRÍCULA: X e Y deben ser mayores o iguales a 0.",
+    "vertexLabel": "Vértice {index}",
+    "hintClosed": "Arrastre un vértice. Haga clic en una arista para añadir otro. Seleccione un vértice para eliminarlo.",
+    "hintOpen": "Dibuje solo en X ≥ 0 e Y ≥ 0 (origen A-1). El sombreado rojo indica un plano negativo inválido. Desplazar la vista no modifica las coordenadas físicas."
   },
   "historyCharts": {
     "empty": "No hay mediciones históricas para esta métrica.",

@@ -132,7 +132,7 @@ export function PolygonEditor({
     if (draft.closed || draft.points.length >= 256) return;
     const next = point(event);
     if (!next) {
-      setCoordinateError('OUTSIDE DRAWING GRID: X and Y must be 0 or greater.');
+      setCoordinateError(t('outsideGrid'));
       return;
     }
     setCoordinateError('');
@@ -394,7 +394,7 @@ export function PolygonEditor({
             fontWeight="700"
             pointerEvents="none"
           >
-            {contextLabel ?? 'Surveyed boundary'}
+            {contextLabel ?? t('surveyedBoundary')}
           </text>
         )}
         {draft.closed ? (
@@ -441,7 +441,7 @@ export function PolygonEditor({
                 stroke="transparent"
                 strokeWidth="14"
                 vectorEffect="non-scaling-stroke"
-                aria-label={`Add vertex on edge ${i + 1}`}
+                aria-label={t('addVertexEdge', {edge: i + 1})}
                 onPointerDown={(e) => {
                   if (tool === 'pan') return;
                   e.stopPropagation();
@@ -485,7 +485,7 @@ export function PolygonEditor({
             vectorEffect="non-scaling-stroke"
             tabIndex={0}
             role="button"
-            aria-label={`Vertex ${i + 1}`}
+            aria-label={t('vertexLabel', {index: i + 1})}
             onFocus={() => setSelected(i)}
             onKeyDown={(e) => {
               if (busy) return;
@@ -514,8 +514,8 @@ export function PolygonEditor({
       </svg>
       <p className="spatial-editor-hint">
         {draft.closed
-          ? 'Drag a vertex. Click an edge to add one. Select a vertex to remove it.'
-          : 'Draw only at X ≥ 0 and Y ≥ 0 (A-1 origin). Red shading marks an invalid negative plane. Pan does not change physical coordinates.'}
+          ? t('hintClosed')
+          : t('hintOpen')}
       </p>
       <footer>
         <span role="status">

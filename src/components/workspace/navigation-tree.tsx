@@ -80,8 +80,8 @@ export function NavigationTree({ roots }: { roots: readonly WorkspaceTreeNode[] 
       />
       {!filtered.length ? (
         <StatePanel
-          title={query ? 'No matching entities' : 'No topology yet'}
-          description={query ? 'Try another name.' : 'Create a network to map your infrastructure.'}
+          title={query ? t('noMatchingEntities') : t('noTopology')}
+          description={query ? t('tryAnother') : t('createNetwork')}
         />
       ) : (
         <ul>

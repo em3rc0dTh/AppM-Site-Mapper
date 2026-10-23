@@ -495,7 +495,11 @@
     "readView": "READ VIEW",
     "editHelp": "Open an entity to use its permitted editing controls.",
     "readonly": "Your role has read-only access.",
-    "manageTopology": "Manage topology →"
+    "manageTopology": "Manage topology →",
+    "noMatchingEntities": "No matching entities",
+    "noTopology": "No topology yet",
+    "tryAnother": "Try another name.",
+    "createNetwork": "Create a network to map your infrastructure."
   },
   "topologyTree": {
     "global": "Global topology",
@@ -997,7 +1001,21 @@
     "rackFootprint": "Rack physical footprint",
     "unsurveyedFootprint": "Not surveyed; no footprint invented",
     "openRackFocus": "Open rack focus",
-    "grid": "grid"
+    "grid": "grid",
+    "physical": "Physical",
+    "footprintLabel": "Footprint",
+    "coordinatesLabel": "Coordinates",
+    "inspectBay": "Inspect bay {name}",
+    "availablePosition": "Available {name}",
+    "positionReference": "POSITION REFERENCE",
+    "gridOrigin": "Grid origin",
+    "coordinate": "Coordinate",
+    "state": "State",
+    "availableHelp": "Available; choose a rack footprint when placing",
+    "add": "+ ADD",
+    "inspectRack": "Inspect {name}",
+    "panHelp": "Drag to pan · scroll to zoom",
+    "selectHelp": "Select a rack to inspect · scroll to zoom"
   },
   "equipmentTelemetry": {
     "live": "LIVE TELEMETRY",
@@ -1549,7 +1567,13 @@
     "undo": "Undo",
     "clear": "Clear",
     "removeVertex": "Remove vertex",
-    "finishBoundary": "Finish boundary"
+    "finishBoundary": "Finish boundary",
+    "surveyedBoundary": "Surveyed boundary",
+    "addVertexEdge": "Add vertex on edge {edge}",
+    "outsideGrid": "OUTSIDE DRAWING GRID: X and Y must be 0 or greater.",
+    "vertexLabel": "Vertex {index}",
+    "hintClosed": "Drag a vertex. Click an edge to add one. Select a vertex to remove it.",
+    "hintOpen": "Draw only at X ≥ 0 and Y ≥ 0 (A-1 origin). Red shading marks an invalid negative plane. Pan does not change physical coordinates."
   },
   "historyCharts": {
     "empty": "No historical measurements for this metric.",

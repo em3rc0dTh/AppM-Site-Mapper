@@ -138,13 +138,13 @@ export function BlueprintCanvas({
     return position
       ? {
           name: position.name,
-          kind: 'POSITION REFERENCE',
+          kind: t('positionReference'),
           sections: [
             {
               title: 'Grid anchor',
               fields: [
-                { label: 'Coordinate', value: `${position.row}-${position.column}` },
-                { label: 'State', value: position.occupied ? 'Occupied' : 'Available' },
+                { label: t('coordinate'), value: `${position.row}-${position.column}` },
+                { label: t('state'), value: position.occupied ? 'Occupied' : 'Available' },
               ],
             },
           ],
@@ -173,7 +173,7 @@ export function BlueprintCanvas({
             ? [
                 { label: 'Area', value: `${(polygonArea(polygon) / 1_000_000).toFixed(2)} m²` },
                 { label: 'Vertices', value: polygon.length },
-                { label: 'Coordinates', value: 'Preserved from the room layout' },
+                { label: t('coordinatesLabel'), value: 'Preserved from the room layout' },
               ]
             : [{ label: 'Geometry', value: t('unsurveyedFootprint') }],
         },
@@ -193,9 +193,9 @@ export function BlueprintCanvas({
       kind: 'CONTAINER / RACK',
       sections: [
         {
-          title: 'Physical',
+          title: t('physical'),
           fields: [
-            { label: 'Footprint', value: `${rack.rect.width} × ${rack.rect.depth} mm` },
+            { label: t('footprintLabel'), value: `${rack.rect.width} × ${rack.rect.depth} mm` },
             { label: 'Coordinates', value: `X ${rack.rect.x} / Y ${rack.rect.y} mm` },
           ],
         },
@@ -393,7 +393,7 @@ export function BlueprintCanvas({
                 className={`blueprint-cluster-node${selectedBayId === cluster.id ? ' is-selected' : ''}`}
                 tabIndex={0}
                 role="button"
-                aria-label={`Inspect bay ${cluster.name}`}
+                aria-label={t('inspectBay', {name: cluster.name})}
                 onClick={() => {
                   if (tool === 'select' && !onPlace) inspectBay(cluster);
                 }}
@@ -431,7 +431,7 @@ export function BlueprintCanvas({
                   key={position.id}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Available ${position.name}`}
+                  aria-label={t('availablePosition', {name: position.name})}
                   onClick={() => {
                     if (onPlace) return;
                     if (onSelectPosition) onSelectPosition(position.id);
@@ -442,12 +442,12 @@ export function BlueprintCanvas({
                         kind: 'POSITION REFERENCE',
                         sections: [
                           {
-                            title: 'Grid origin',
+                            title: t('gridOrigin'),
                             fields: [
                               { label: 'Coordinate', value: `${position.row}-${position.column}` },
                               {
                                 label: 'State',
-                                value: 'Available; choose a rack footprint when placing',
+                                value: t('availableHelp'),
                               },
                             ],
                           },
@@ -472,7 +472,7 @@ export function BlueprintCanvas({
                     textAnchor="middle"
                     className="blueprint-cluster-label"
                   >
-                    {onSelectPosition ? '+ ADD' : position.name}
+                    {onSelectPosition ? t('add') : position.name}
                   </text>
                 </g>
               );
@@ -494,7 +494,7 @@ export function BlueprintCanvas({
               className={`blueprint-rack-node${selectedRackId === rack.id ? ' is-selected' : ''}`}
               role="button"
               tabIndex={0}
-              aria-label={`Inspect ${rack.name}`}
+              aria-label={t('inspectRack', { name: rack.name })}
               onClick={() => {
                 if (tool === 'select' && !onPlace) inspectRack(rack);
               }}
@@ -551,8 +551,8 @@ export function BlueprintCanvas({
         <StatusBadge>{t('tiles', { count: slots.length })}</StatusBadge>
         <span>
           {tool === 'pan'
-            ? 'Drag to pan · scroll to zoom'
-            : 'Select a rack to inspect · scroll to zoom'}
+            ? t('panHelp')
+            : t('selectHelp')}
         </span>
       </footer>
       {focusedRackId && (

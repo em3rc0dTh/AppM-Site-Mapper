@@ -674,3 +674,57 @@ No Docker rebuild, app restart, database migration, or binding mutation is
 required. The correction is **not yet re-validated against the operator's
 local Docker installation**. The observer remains read-only and does not
 enable raw payload dumps in production logs.
+
+
+### BDFB-02 / BDFB-03 original-stack placement plan
+
+The operator's *original*, preserved `site_mapper_crud_acceptance_02` database
+was inspected in read-only mode. `SALA DE TRANSMISIONES` contains **three
+bays and four racks**:
+
+| Bay | Rack name | Rack ID | Observed occupancy |
+| --- | --- | --- | --- |
+| Bay-01 | Rack-01-BDFB | `63b7c24c-6a36-4e28-92e6-db1268c43d15` | Original BDFB-01, 1 CAS EQUIPPED; **untouched** |
+| Bay-01 | Rack-Switch | `0ca2fad5-d897-46bb-9803-45ed1a8849ed` | Original Cisco switch, 1 CAS EQUIPPED; **untouched** |
+| Bay-02 | Rack-01-Bay-02 | `5b53762f-cc60-4118-8dbc-94ef841882a4` | No devices / 0 CAS occupied or reserved |
+| Bay-03 | Rack-01-Bay-03 | `164fe884-28b0-4d80-b504-af92d0b80f15` | No devices / 0 CAS occupied or reserved |
+
+The original BDFB-01 has Device ID
+`157fcac1-cb34-44ad-b0e4-c127ad94999a` and serial **`EMU-BFDB-10`**.
+Do **not** silently change its serial to the synthetic MQTT source
+`EMU-BFDB-01`; the physical and telemetry identities are distinct.
+
+The same read-only inspection reported **13** active MQTT `EQUIPMENT`
+bindings for `EMU-BFDB-01` and **one** each for `EMU-BFDB-02` and
+`EMU-BFDB-03`. The latter **must be audited by targetId** before
+automatically adding a SOURCE or point-level MQTT binding.
+
+An **atomic dry-run-by-default** commissioning script for the precise two
+empty racks is available:
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+docker exec -i appm-site-mapper-mongodb-1 mongosh --quiet \
+  --file /dev/stdin < scripts/telemetry/provision-bdfb-pair.mongosh.js
+```
+
+The planned laboratory fixture for each new BDFB is 1 device + 1 chassis +
+1 shelf + 2 frames + 4 panels with 24 occupied synthetic breaker positions
+per panel (96 total), 4 MQTT metrics per position, and 1 source-level
+binding. Unlike the original BDFB's three installed breakers, this full
+occupancy is **an explicit saturation-lab choice**, not an observation
+about field-installed breakers. Planned physical CAS placement copies the
+original BDFB's measured rack U-range only when both target racks have
+sufficient canonical available capacity.
+
+**DO NOT APPLY THE PLAN YET** while the original `EMU-BFDB-02` and
+`EMU-BFDB-03` MQTT bindings have unresolved destinations. The script
+prints their IDs and targets and fails closed in `apply` mode rather than
+reassigning original links. The user's manual output is required to review
+these conflicts; no database writes or local run have been performed by
+the assistant. Only after the operator verifies current backups and
+approves safe source mapping should an atomic apply be considered.
+
+Do not run the unrelated `/api/dev/seed-bfdb-emulator` endpoint against
+the preserved original Mongo stack: that seed targets an isolated
+memory-mode synthetic network, not the operator's surveyed physical racks.

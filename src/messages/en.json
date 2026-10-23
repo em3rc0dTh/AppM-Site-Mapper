@@ -618,7 +618,11 @@
     "chassis": "Chassis shelves",
     "shelfFrames": "Shelf frames",
     "framePanels": "Frame panels",
-    "breakerTelemetry": "Breaker own MQTT telemetry"
+    "breakerTelemetry": "Breaker own MQTT telemetry",
+    "ports": "{count} ports",
+    "assemblies": "{count} child assemblies",
+    "framesRecorded": "{count} frames recorded",
+    "panelsRecorded": "{count} panels recorded"
   },
   "warehouseForms": {
     "creation": "Template creation mode",

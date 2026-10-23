@@ -618,7 +618,11 @@
     "chassis": "Shelves del Chassis",
     "shelfFrames": "Frames del Shelf",
     "framePanels": "Paneles del Frame",
-    "breakerTelemetry": "Telemetría MQTT propia del breaker"
+    "breakerTelemetry": "Telemetría MQTT propia del breaker",
+    "ports": "{count} puertos",
+    "assemblies": "{count} conjuntos secundarios",
+    "framesRecorded": "{count} frames registrados",
+    "panelsRecorded": "{count} paneles registrados"
   },
   "warehouseForms": {
     "creation": "Modo de creación de plantilla",

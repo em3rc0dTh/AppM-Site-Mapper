@@ -229,11 +229,36 @@ try {
   await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
   await page.getByText('CI LIMA Panel 24P').first().waitFor({ timeout: 30000 });
   await page.getByText('0_1_1').first().waitFor({ timeout: 30000 });
+
+  // Verify server-rendered locale and navigation on every major operational route.
+  const localeRoutes = [
+    '/workspace',
+    '/network',
+    '/power',
+    '/telemetry',
+    '/warehouse',
+    '/settings?tab=profile',
+    '/topology/network/' + network.id,
+    '/blueprint/' + room.id,
+    '/device/' + panel.id,
+  ];
+  async function verifyLocaleRoutes(expectedLocale) {
+    for (const route of localeRoutes) {
+      const response = await page.goto(base + route, { waitUntil: 'domcontentloaded' });
+      assert.ok(response?.ok(), `${expectedLocale} route ${route} must return HTTP 200`);
+      await page.waitForFunction((locale) => document.documentElement.lang === locale, expectedLocale);
+      assert.ok(!new URL(page.url()).pathname.includes('/login'), `Session lost on ${route}`);
+    }
+    console.log(`[PASS] Chromium: ${expectedLocale} locale preserved across all 9 operational routes`);
+  }
+
+  await verifyLocaleRoutes('es');
   await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
   await page.locator('.sm-locale-control select').selectOption('en');
   await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
   await page.goto(base + '/network', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.documentElement.lang === 'en');
+  await verifyLocaleRoutes('en');
   console.log(
     '[PASS] Chromium: bilingual authenticated navigation, immutable inventory/MQTT identifiers and desktop geometry',
   );

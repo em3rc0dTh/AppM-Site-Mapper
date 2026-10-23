@@ -728,3 +728,67 @@ approves safe source mapping should an atomic apply be considered.
 Do not run the unrelated `/api/dev/seed-bfdb-emulator` endpoint against
 the preserved original Mongo stack: that seed targets an isolated
 memory-mode synthetic network, not the operator's surveyed physical racks.
+
+
+### Serial collision resolved without editing the original BDFB-01
+
+Original-stack dry-run evidence from 2026-10-23 confirms:
+
+| Publisher serial | Existing active physical owner | Existing binding | Interpretation |
+| --- | --- | --- | --- |
+| `EMU-BFDB-02` | `BDFB SHELF` Equipment `540efb3c-d6a8-4633-b6d3-3dc719f511c5` under **BDFB-01** | `auto:mqtt:bb137f93188ec2f23b90b1c40f940d1cc4ce8adb6526e1934c2e9f4936e0dbe8`, SOURCE to shelf | ORIGINAL, DO NOT MOVE |
+| `EMU-BFDB-03` | `BDFB-01-SHELF-01-FRAME-01` Equipment `4e9b6c5a-ffc8-4d06-84b2-34845b6cdfaa` under **BDFB-01** | `auto:mqtt:88cffc3d56c7eea4e6dc31b457d72eb20bc77d5a040cbe9190c2abba7579a9b0`, SOURCE to frame | ORIGINAL, DO NOT MOVE |
+
+Both MQTT publisher identifiers had been legitimately assigned **inside the
+first BDFB**, so using them as newly created BDFB-02/03 Device serials would
+cause active-serial uniqueness conflicts and break the user's original
+inventory contract.
+
+The standalone targeted provisioning script was therefore revised to
+**topology-only, opt-in** with dedicated unique Device serials
+`LAB-BDFB-02` and `LAB-BDFB-03`. Each new Device carries
+`proposedPublisher: EMU-BFDB-0x` and
+`mqttCommissioning: UNMAPPED_PENDING_SOURCE_CONFLICT` as explicit
+LAB metadata. It creates 96 installed *synthetic* breaker fixtures per
+BDFB to support capacity demonstration and establishes matching physical
+CAS allocations only in the two verified empty racks, using the existing
+BDFB's 40-U mount and clearance geometry. It creates **zero MQTT
+bindings** and does not alter original SOURCE bindings, historical data,
+shunt mappings, registers, emulators or environment variables.
+
+Operator workflow:
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+# Read-only preflight, repeat before any write:
+docker exec -i appm-site-mapper-mongodb-1 mongosh --quiet \
+  --file /dev/stdin < scripts/telemetry/provision-bdfb-pair.mongosh.js
+```
+
+If the preflight reports no dedicated LAB serial conflicts, the target
+racks remain empty, and the original data backup has been reverified,
+the operator can choose an explicitly scoped topology-only write:
+
+```bash
+docker exec -i \
+  -e SITEMAPPER_PROVISION_MODE=apply \
+  -e SITEMAPPER_PROVISION_ACK=TOPOLOGY_ONLY \
+  appm-site-mapper-mongodb-1 mongosh --quiet \
+  --file /dev/stdin < scripts/telemetry/provision-bdfb-pair.mongosh.js
+```
+
+The script atomically adds 210 topology nodes and allocates the two
+existing rack CAS ranges; it does **not** connect new breakers to live
+MQTT. This is intentionally different from a finished 3-BDFB LIVE
+demonstration. A later, explicitly authorized synthetic source-alias
+or remapping design must allow independent LIVE simulation on BDFB-02
+and BDFB-03 without moving or duplicating their publishers' existing
+SOURCE bindings. New publisher aliases require matching topic **and**
+`sn` payload fields and should not increase queue load without an
+admission-capacity check. The existing `EMU-BFDB-02/03` physical owner
+and SOURCE bindings must be preserved.
+
+The modified script's read-only `plan` branch was exercised with a
+minimal in-memory representation of the user's supplied rack, serial and
+binding inventory, and its JavaScript syntax was checked; an actual
+MongoDB `apply` transaction has **not** been executed by the assistant.

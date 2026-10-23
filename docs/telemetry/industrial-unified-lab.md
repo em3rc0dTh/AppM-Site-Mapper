@@ -309,3 +309,61 @@ inventory commissioning to show breaker-specific LIVE readings.
 local preflight and acceptance. The author has not run Docker or test suites
 against the user's workstation; a successful restoration of the old version
 does not certify this new deployment.
+
+
+### Initial backpressure and lab-only rate control (2026-10-23)
+
+Operator evidence on the **existing** installation: the synthetic MQTT generator
+produced approximately three messages per second, whereas the durable MQTT
+capture worker completed about one message per second. Over approximately
+36 seconds, the MQTT spool rose from 447 to 510 records and the MongoDB-to-
+TimescaleDB outbox from 355 to 396 lots. There were zero recorded delivery
+failures, zero rejected frames, and the original Mongo inventory remained
+unchanged. The oldest historical delivery lot reached 63 seconds, so
+`TIMESCALE_DELIVERY_LAG` should be treated as a degraded condition even
+while transfers succeed. The initial sequential MQTT and historical outbox
+workers explain the capacity mismatch; this observation does not prove
+physical telemetry or a hardware fault.
+
+**Containment without losing already-captured data:**
+
+```bash
+docker stop appm-site-mapper-lab-mqtt-1
+```
+
+This stops only the synthetic publisher; its durable MQTT spool, Mongo
+industrial outbox, existing login, Modbus bridge, SNMP sources and both
+original databases remain online. Do **not** run `stop-lab`, `up`, or
+rebuild the original app as a response to this particular backpressure.
+
+The existing-stack launcher now generates a private copy of the BFDB
+`config/emulator.yaml` and mounts it **read-only** in `lab-mqtt`. The
+default `publish.intervalSeconds` is **10.0**, versus the BFDB emulator's
+original 1.0 s rate. Other emulator configuration stays unchanged. This is
+a LAB-only capacity control, not a production throughput guarantee. A
+specific `--mqtt-interval-seconds 3..120` updates only the private
+copy; the BFDB checkout and physical inventory are never edited.
+
+Once the source is stopped and both spool depths have fallen to **100 or
+less**, resume only the synthetic MQTT service using the guarded launcher:
+
+```bash
+cd /mnt/c/Users/eduar/Desktop/Thradex/AppM-Site-Mapper
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 scripts/telemetry/industrial-existing.py \
+  --bfdb-dir ../bfdb-telemetry-gateway \
+  --existing-db site_mapper_crud_acceptance_02 \
+  --subnet 10.253.55.0/24 \
+  --backup-dir "$HOME/site-mapper-backups/20261023-161213" \
+  --mqtt-interval-seconds 10 \
+  --action resume-mqtt
+```
+
+The `resume-mqtt` command checks original project labels, volume
+identity, credentials, backed-up file hashes, queue depths and that
+the synthetic publisher is stopped, **before recreating lab-mqtt only**.
+If either queue exceeds 100 it refuses automatically; an operator should
+continue to let the existing workers drain and investigate any failure.
+It never modifies Mongo/Timescale or restarts Site Mapper. Before
+acceptance verify backpressure remains bounded across multiple
+observations while MQTT, SNMP and legacy UI operations coexist.

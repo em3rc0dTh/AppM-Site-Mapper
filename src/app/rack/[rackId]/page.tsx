@@ -5,6 +5,7 @@ import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { RackElevation } from '@/components/rack/rack-elevation';
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -48,6 +49,7 @@ export default async function RackPage({
     })),
   );
 
+  const t = await getTranslations('pages.rack');
   return (
     <main className="operational-page operational-page--rack telxius-operational-page zip-rack-elevation-page">
       <nav
@@ -60,16 +62,16 @@ export default async function RackPage({
           <Link href={trailEntries[0].href}>← {trailEntries[0].name}</Link>
         ) : null}
         <span className="zip-breadcrumb-divider" />
-        <strong>{result.value.rack.name} &nbsp;/&nbsp; ELEVATION</strong>
+        <strong>{result.value.rack.name} &nbsp;/&nbsp; {t('elevation')}</strong>
       </nav>
       <div className="operational-layout telxius-operational-layout operational-layout--rack">
         <aside className="zip-rack-menu zip-rack-tree-menu">
           {navigationTree && <TopologyContextTree tree={navigationTree} activeId={rackId} />}
           <details className="rack-tools-disclosure">
-            <summary>Rack actions</summary>
-            {room && <Link href={`/blueprint/${room.id}?rack=${rackId}`}>LOCATE IN ROOM</Link>}
-            <Link href={`/rack/${rackId}/focus`}>RACK FOCUS</Link>
-            <Link href={`/power?entity=${rackId}`}>POWER PATH</Link>
+            <summary>{t('actions')}</summary>
+            {room && <Link href={`/blueprint/${room.id}?rack=${rackId}`}>{t('locate')}</Link>}
+            <Link href={`/rack/${rackId}/focus`}>{t('focus')}</Link>
+            <Link href={`/power?entity=${rackId}`}>{t('power')}</Link>
           </details>
         </aside>
         <section className="operational-stage operational-stage--wide zip-rack-elevation-stage">
@@ -87,14 +89,14 @@ export default async function RackPage({
           />
           <div className="zip-rack-elevation-footer">
             <span className="is-available">
-              □ AVAILABLE{' '}
+              □ {t('available')}{' '}
               <b>{result.value.rows.filter((row) => row.role === 'AVAILABLE').length}U</b>
             </span>
             <span className="is-reserved">
-              □ RESERVED <b>{result.value.rows.filter((row) => row.role === 'RESERVED').length}U</b>
+              □ {t('reserved')} <b>{result.value.rows.filter((row) => row.role === 'RESERVED').length}U</b>
             </span>
             <span className="is-equipped">
-              □ EQUIPPED <b>{result.value.rows.filter((row) => row.role === 'PHYSICAL').length}U</b>
+              □ {t('equipped')} <b>{result.value.rows.filter((row) => row.role === 'PHYSICAL').length}U</b>
             </span>
             <div />
             {hasPermission(auth.value.role, 'topology:write') && (

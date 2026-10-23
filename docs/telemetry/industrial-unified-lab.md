@@ -233,3 +233,79 @@ QDF02/PANELA3/VOLTAGE does not establish electrical connectivity by itself.
 
 No gate is marked passed by this document. Record exact commit IDs, environment, raw event references,
 SQL/Modbus evidence, outcome and approver when those checks are later performed locally.
+
+
+## Existing inventory recovery and additive industrial deployment (2026-10-23)
+
+**Do not use the standalone industrial lab's `--action up` on an existing inventory.**
+That mode intentionally owns new Mongo/Timescale volumes and its own bootstrap token,
+so existing credentials and topology are not visible. The original operational
+installation is the **`appm-site-mapper` Compose project**, with Mongo database
+`site_mapper_crud_acceptance_02`, not `appm_site_mapper`.
+
+A real operator recovery rehearsal on 2026-10-23 confirmed that the original
+Mongo archive can restore 67 documents with zero failures, including 2 users,
+25 topology nodes and 19 telemetry bindings. A separate TimescaleDB
+`pg_restore` with `timescaledb_pre_restore()` and
+`timescaledb_post_restore()` finished successfully; restored counts matched
+the original: 39,734 `telemetry_samples` and 240,432
+`telemetry_entity_samples` rows. Backup originals stay private in WSL,
+and the laboratory's independent volumes must not be deleted. These facts
+describe the recovery rehearsal only, **not** acceptance of the new integration.
+
+Use the additive **existing-stack** launcher on this feature branch. It refuses
+deployment when original container Compose labels, Mongo database name,
+volume names, original authentication/store/Modbus credentials, Timescale DSN
+or locally recorded backup SHA-256 checksums differ. It does not alter
+the original `.env`; new industrial secrets, profiles, aliases and
+point maps remain private under `.runtime/industrial-lab/`.
+
+```bash
+cd /mnt/c/Users/eduar/Desktop/Thradex/AppM-Site-Mapper
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+
+python3 scripts/telemetry/industrial-existing.py \
+  --bfdb-dir ../bfdb-telemetry-gateway \
+  --existing-db site_mapper_crud_acceptance_02 \
+  --subnet 10.253.55.0/24 \
+  --action prepare
+
+python3 scripts/telemetry/industrial-existing.py \
+  --bfdb-dir ../bfdb-telemetry-gateway \
+  --existing-db site_mapper_crud_acceptance_02 \
+  --subnet 10.253.55.0/24 \
+  --backup-dir "$HOME/site-mapper-backups/20261023-161213" \
+  --action preflight
+```
+
+Use the **different** subnet `10.253.55.0/24` because the stopped,
+independent lab may still own `10.253.54.0/24`. The preflight checks every
+Docker network for overlapping IPAM ranges. `prepare` and `preflight`
+do not recreate containers or mutate databases. They never print secret values.
+
+Only **after** `PREFLIGHT PASS` and operator review, use the same arguments
+with `--action up`. That command explicitly executes the idempotent,
+additive `004-industrial-observations.sql` against the **original**
+TimescaleDB, then rebuilds/recreates only the existing Site Mapper,
+telemetry-store and Modbus services and creates the trap receiver/broker/
+emulator services. Docker Compose uses project `appm-site-mapper` and
+`--no-deps`: it **does not recreate** MongoDB, TimescaleDB or mongo-init.
+It adds an independent *internal* network for emulator traffic, keeping
+existing application/Modbus HTTP ports and the original Compose network.
+Only new lab secrets are used for SNMP sources and industrial projection;
+the original bootstrap/admin credentials, telemetry-store token, Modbus
+bridge token, source/unit mapping and backed-up data remain authoritative.
+
+The `stop-lab` action stops only the new lab source/broker/trap services;
+the original Site Mapper application and database remain up.
+`status` and `logs` inspect the unified deployment. The old independent
+project's Mongo/Timescale volumes remain untouched for future historical
+provenance review; no automatic cross-database historical merge is attempted.
+Industrial `LAB` sources are synthetic, do not certify physical QDF wiring
+or promote any association to `FIELD` authority, and require explicit
+inventory commissioning to show breaker-specific LIVE readings.
+
+**Execution status:** This feature-branch code is prepared for the operator's
+local preflight and acceptance. The author has not run Docker or test suites
+against the user's workstation; a successful restoration of the old version
+does not certify this new deployment.

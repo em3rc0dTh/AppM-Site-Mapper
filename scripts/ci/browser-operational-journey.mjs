@@ -313,10 +313,15 @@ try {
     '[PASS] Chromium: Spanish user creation and native dropdowns retain white backgrounds',
   );
 
-  await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
+  // Wait for app hydration: DOMContentLoaded alone can expose an SSR select
+  // before React attaches the onChange handler.
+  await page.goto(base + '/settings?tab=profile', { waitUntil: 'networkidle' });
   await page.locator('.sm-locale-control select').selectOption('en');
-  // After a same-route Settings tab change the locale reload can race with
-  // the browser's navigation lifecycle. A fresh GET proves cookie persistence.
+  await page.waitForFunction(
+    () => document.cookie.split(';').some((value) => value.trim() === 'site_mapper_locale=en'),
+    { timeout: 30000 },
+  );
+  // A new server request must honor the stored preference across modules.
   await page.goto(base + '/network', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.documentElement.lang === 'en');
   await verifyLocaleRoutes('en');

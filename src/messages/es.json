@@ -1449,7 +1449,12 @@
     "simulationWarning": "LABORATORIO SIMULADO: la capacidad calculada es una estimación a partir de corriente sintética y valores nominales configurados, nunca un límite físico certificado. ",
     "sharedWarning": "Un shunt alimenta varios paneles: su corriente no se atribuye individualmente a cada uno. ",
     "partialWarning": "La corriente no puede atribuirse a un grupo parcial de paneles alimentados por el mismo shunt.",
-    "incompleteWarning": "La utilización total no está disponible hasta que todas las entradas reporten corriente reciente y tengan corriente nominal registrada."
+    "incompleteWarning": "La utilización total no está disponible hasta que todas las entradas reporten corriente reciente y tengan corriente nominal registrada.",
+    "stale": "DESACTUALIZADO",
+    "unmapped": "SIN MAPEO",
+    "noData": "SIN DATOS",
+    "conflict": "CONFLICTO",
+    "unverified": "NO VERIFICADO"
   },
   "casEditor": {
     "edit": "✎ EDITAR CAS",

@@ -149,7 +149,7 @@ export function EquipmentTelemetryInspector({
               !Object.keys(panelReportedPoints(sample.reported, pointPrefix, pointCapacity))
                 .length && (
                 <p>
-                  {t('noPoints', { prefix: pointPrefix })}
+                  {t('noPoints', { prefix: pointPrefix ?? '' })}
                 </p>
               )}
           </article>

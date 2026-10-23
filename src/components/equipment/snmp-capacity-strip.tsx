@@ -152,7 +152,7 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
                 ? t('feedUtilization', { percent: feed.utilizationPct.toFixed(1), available: quantity(feed.availableA) })
                 : t('noRatedReading')}
               {' · '}
-              {feed.status === 'LAB_LIVE' ? t('labSimulated') : feed.status === 'VERIFIED_LIVE' ? t('verifiedLive') : feed.status}
+              {feed.status === 'LAB_LIVE' ? t('labSimulated') : feed.status === 'LIVE' ? t('verifiedLive') : feed.status === 'STALE' ? t('stale') : feed.status === 'UNMAPPED' ? t('unmapped') : feed.status === 'NO_DATA' ? t('noData') : feed.status === 'CONFLICT' ? t('conflict') : t('unverified')}
               {(original?.servedPanelIds.length ?? 0) > 1 ? t('sharedShunt') : ''}
             </span>
           );

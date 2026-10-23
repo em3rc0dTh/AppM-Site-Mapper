@@ -1449,7 +1449,12 @@
     "simulationWarning": "LAB SIMULATED: computed capacity is an estimate from synthetic current and configured port ratings, never a certified physical limit. ",
     "sharedWarning": "A shunt serves multiple panels: its current is not attributed separately to each. ",
     "partialWarning": "Current cannot be attributed to a partial group of panels served by the same shunt.",
-    "incompleteWarning": "The full utilization is unavailable until all inputs report fresh current and have recorded nominal ampere ratings."
+    "incompleteWarning": "The full utilization is unavailable until all inputs report fresh current and have recorded nominal ampere ratings.",
+    "stale": "STALE",
+    "unmapped": "UNMAPPED",
+    "noData": "NO DATA",
+    "conflict": "CONFLICT",
+    "unverified": "UNVERIFIED"
   },
   "casEditor": {
     "edit": "✎ EDIT CAS",

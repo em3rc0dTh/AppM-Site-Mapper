@@ -54,7 +54,7 @@ export function PolygonEditor({
   validate,
   busy = false,
   error,
-  confirmLabel = 'Save boundary',
+  confirmLabel,
 }: {
   title: string;
   initial?: readonly PointMm[];
@@ -194,7 +194,7 @@ export function PolygonEditor({
         </div>
         <div className="spatial-editor-header-actions">
           <button type="button" disabled={busy} onClick={onCancel}>
-            Cancel
+            {t('cancel')}
           </button>
           {draft.closed && (
             <button
@@ -203,7 +203,7 @@ export function PolygonEditor({
               disabled={busy || !!invalid}
               onClick={() => onConfirm(draft.points.map((point) => ({ ...point })))}
             >
-              {busy ? t('applying') : confirmLabel}
+              {busy ? t('applying') : (confirmLabel ?? t('saveBoundary'))}
             </button>
           )}
         </div>
@@ -215,7 +215,7 @@ export function PolygonEditor({
           aria-pressed={tool === 'draw'}
           onClick={() => setTool('draw')}
         >
-          Draw / select
+          {t('draw')}
         </button>
         <button
           type="button"
@@ -223,7 +223,7 @@ export function PolygonEditor({
           aria-pressed={tool === 'pan'}
           onClick={() => setTool('pan')}
         >
-          Pan
+          {t('pan')}
         </button>
         <button type="button" disabled={busy} onClick={() => zoom(0.8)} aria-label={t('zoomIn')}>
           +
@@ -236,7 +236,7 @@ export function PolygonEditor({
           disabled={busy}
           onClick={() => setView(fit([...draft.points, ...context, ...contextualPoints]))}
         >
-          Fit
+          {t('fit')}
         </button>
         <label>
           <input
@@ -538,7 +538,7 @@ export function PolygonEditor({
             disabled={busy || !!invalid}
             onClick={() => onConfirm(draft.points.map((p) => ({ ...p })))}
           >
-            {busy ? 'Saving…' : confirmLabel}
+            {busy ? t('saving') : (confirmLabel ?? t('saveBoundary'))}
           </button>
         )}
       </footer>

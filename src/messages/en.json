@@ -96,7 +96,9 @@
         "telemetry": "Telemetry",
         "mapped": "EXPLICIT BINDINGS",
         "unmapped": "UNMAPPED",
-        "mappedBreakers": "{count} mapped breakers"
+        "mappedBreakers": "{count} mapped breakers",
+        "inspectorHeading": "INSPECTOR",
+        "liveTotalPowerNote": "Live total power: {power}. Mean energy is an average of cumulative counters, not consumption over a period."
       }
     }
   },
@@ -758,7 +760,9 @@
     "noScalar": "No scalar measurements",
     "noScalarHelp": "This packet contains structured data. Expand the raw payload to inspect it.",
     "rawPayload": "Raw MQTT payload state",
-    "streamConnected": "MQTT STREAM CONNECTED"
+    "streamConnected": "MQTT STREAM CONNECTED",
+    "lastPacket": "Last packet",
+    "state": "State"
   },
   "rackElevation": {
     "front": "FRONT ELEVATION",
@@ -973,7 +977,8 @@
     "rackFocus": "Rack focus",
     "rackFootprint": "Rack physical footprint",
     "unsurveyedFootprint": "Not surveyed; no footprint invented",
-    "openRackFocus": "Open rack focus"
+    "openRackFocus": "Open rack focus",
+    "grid": "grid"
   },
   "equipmentTelemetry": {
     "live": "LIVE TELEMETRY",

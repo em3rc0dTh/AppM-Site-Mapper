@@ -97,7 +97,7 @@ export function LiveTelemetry() {
                     </p>
                     <h2>{sample.sourceIdentity}</h2>
                     <time dateTime={sample.receivedAt}>
-                      Last packet · {sample.receivedAt.replace('T', ' ').replace('Z', ' UTC')}
+                      {t('lastPacket')} · {sample.receivedAt.replace('T', ' ').replace('Z', ' UTC')}
                     </time>
                   </div>
                   <InspectButton
@@ -145,7 +145,7 @@ export function LiveTelemetry() {
                           <span>
                             {reading.panelLabel} · {reading.rawPointId}
                           </span>
-                          {reading.state && <span>State · {reading.state.value}</span>}
+                          {reading.state && <span>{t('state')} · {reading.state.value}</span>}
                           {breakerTelemetryMetrics(reading).map((metric) => (
                             <span key={metric.label}>
                               {metric.label} · {metric.value}

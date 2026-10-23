@@ -272,7 +272,7 @@ export function BlueprintCanvas({
         <div>
           <small>{t('view')}</small>
           <strong>{t('title')}</strong>
-          <span>600 × 600 mm grid · {Math.round(zoom * 100)}%</span>
+          <span>600 × 600 mm {t('grid')} · {Math.round(zoom * 100)}%</span>
         </div>
         <div className="zip-blueprint-mode">
           <span className="zip-blueprint-mode-dot" />

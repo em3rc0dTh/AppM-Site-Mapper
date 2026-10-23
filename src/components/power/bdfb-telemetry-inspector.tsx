@@ -243,7 +243,7 @@ export function BdfbTelemetryInspector({
   return (
     <aside ref={inspectorRef} className="telxius-properties zip-bdfb-inspector">
       <header>
-        INSPECTOR <span>⌄</span>
+        {ti('inspectorHeading')} <span>⌄</span>
       </header>
 
       <div className="zip-bdfb-inspector-id">
@@ -334,8 +334,7 @@ export function BdfbTelemetryInspector({
               </div>
 
               <p className="zip-bdfb-aggregate-note">
-                Live total power: {metric(live.totalPowerW, 'W')}. Mean energy is a
-                cumulative-counter average, not consumption over a period.
+                {ti('liveTotalPowerNote', { power: metric(live.totalPowerW, 'W') })}
               </p>
               <dl className="zip-bdfb-live-average-counts">
                 <dt>{ti('reporting')}</dt>

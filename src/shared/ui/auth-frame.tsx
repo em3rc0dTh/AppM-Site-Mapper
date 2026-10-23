@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { LanguageSwitcher } from '@/shared/ui/language-switcher';
 
@@ -17,6 +18,7 @@ export function AuthFrame({
   description,
   children,
 }: Readonly<{ eyebrow: string; title: string; description: string; children: ReactNode }>) {
+  const t = useTranslations('shell');
   return (
     <main className="mk-login zip-login-page">
       <section className="mk-login-content zip-login-content">
@@ -24,7 +26,7 @@ export function AuthFrame({
           <LoginMark />
           <div>
             <strong>SITE MAPPER</strong>
-            <small>Physical Infrastructure</small>
+            <small>{t('tagline')}</small>
           </div>
         </header>
         <div className="mk-login-card zip-login-card" aria-label={title}>

@@ -96,7 +96,9 @@
         "telemetry": "Telemetría",
         "mapped": "VINCULACIONES EXPLÍCITAS",
         "unmapped": "SIN VINCULAR",
-        "mappedBreakers": "{count} breakers vinculados"
+        "mappedBreakers": "{count} breakers vinculados",
+        "inspectorHeading": "INSPECTOR",
+        "liveTotalPowerNote": "Potencia total en vivo: {power}. La energía media es un promedio de contadores acumulativos, no el consumo durante un período."
       }
     }
   },
@@ -758,7 +760,9 @@
     "noScalar": "Sin mediciones escalares",
     "noScalarHelp": "Este paquete contiene datos estructurados. Expande el contenido original para inspeccionarlo.",
     "rawPayload": "Estado de la carga MQTT original",
-    "streamConnected": "FLUJO MQTT CONECTADO"
+    "streamConnected": "FLUJO MQTT CONECTADO",
+    "lastPacket": "Último paquete",
+    "state": "Estado"
   },
   "rackElevation": {
     "front": "ELEVACIÓN FRONTAL",
@@ -973,7 +977,8 @@
     "rackFocus": "Detalle del rack",
     "rackFootprint": "Superficie física del rack",
     "unsurveyedFootprint": "Sin levantamiento; no se inventa una superficie",
-    "openRackFocus": "Abrir detalle del rack"
+    "openRackFocus": "Abrir detalle del rack",
+    "grid": "cuadrícula"
   },
   "equipmentTelemetry": {
     "live": "TELEMETRÍA EN VIVO",

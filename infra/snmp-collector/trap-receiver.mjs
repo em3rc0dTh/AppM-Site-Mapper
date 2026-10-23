@@ -155,7 +155,6 @@ export async function startTrapReceiver({
     throw new Error('Invalid trap queue bound');
   await mkdir(spoolDirectory, { recursive: true, mode: 0o700 });
   const files = (await readdir(spoolDirectory)).filter((f) => /^[a-f0-9-]+\.json$/.test(f));
-  if (files.length > maxPending) throw new Error('Trap spool exceeds configured capacity');
   const savedCounters = {};
   try {
     const path = join(spoolDirectory, 'diagnostics.json');
@@ -229,6 +228,11 @@ export async function startTrapReceiver({
     stopping = false,
     timer,
     working = false;
+  if (files.length > maxPending) {
+    persistDiagnostics();
+    await diagnosticWrites;
+    throw new Error('Trap spool exceeds configured capacity');
+  }
   async function drain() {
     if (working || stopping) return;
     working = true;

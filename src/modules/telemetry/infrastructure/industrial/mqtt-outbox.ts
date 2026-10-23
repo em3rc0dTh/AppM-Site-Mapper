@@ -110,8 +110,12 @@ export class MqttObservationOutbox {
     const files = (await readdir(this.directory)).filter((name) =>
       /^[a-f0-9-]{36}\.json$/.test(name),
     );
-    if (files.length > this.maxPending) throw new Error('MQTT outbox exceeds configured capacity');
     for (const name of files) this.files.add(name);
+    if (files.length > this.maxPending) {
+      this.persistDiagnostics();
+      await this.diagnosticWrites;
+      throw new Error('MQTT outbox exceeds configured capacity');
+    }
     void this.flush();
   }
   async enqueue(envelope: Envelope) {

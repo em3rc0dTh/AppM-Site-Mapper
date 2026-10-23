@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useEffect, useId, useRef, useState } from 'react';
 import { StatusBadge } from './primitives';
 
@@ -58,6 +59,7 @@ export function EntityInspector({
   entity: InspectorEntity | null;
   onClose: () => void;
 }) {
+  const t = useTranslations('inspect');
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
   const [tab, setTab] = useState(0);
@@ -108,7 +110,7 @@ export function EntityInspector({
         <button
           type="button"
           className="button-quiet inspector-close"
-          aria-label="Close inspector"
+          aria-label={t('close')}
           onClick={onClose}
         >
           ✕
@@ -135,7 +137,7 @@ export function EntityInspector({
             ))}
           </div>
           <footer>
-            <span>Last packet</span>
+            <span>{t('packet')}</span>
             <time dateTime={entity.liveSummary.updatedAt}>
               {compactInspectorTimestamp(entity.liveSummary.updatedAt)}
             </time>
@@ -144,7 +146,7 @@ export function EntityInspector({
       )}
 
       {entity.sections.length > 1 && (
-        <div className="inspector-tabs" role="tablist" aria-label="Entity details">
+        <div className="inspector-tabs" role="tablist" aria-label={t('details')}>
           {entity.sections.map((item, index) => (
             <button
               type="button"

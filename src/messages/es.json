@@ -1333,5 +1333,37 @@
     "sources": "ORÍGENES MQTT",
     "noSimulation": "Este rastreo no utiliza conectividad simulada.",
     "legacyPaths": "Rutas antiguas sin clasificar"
+  },
+  "pins": {
+    "pinned": "★ FIJADO",
+    "pin": "☆ FIJAR",
+    "error": "No se pudo fijar el elemento.",
+    "unpin": "Desfijar",
+    "saveError": "No se pudo actualizar el favorito. Inténtalo de nuevo."
+  },
+  "summary": {
+    "title": "Resumen BDFB",
+    "paths": "Rutas de potencia",
+    "empty": "Sin estructura de distribución",
+    "emptyHelp": "Los Devices BDFB aparecerán cuando se configure su estructura interna.",
+    "shelves": "{count} Shelves",
+    "frames": "{count} Frames",
+    "panels": "{count} paneles",
+    "endpoints": "{count} puntos de breaker/holder"
+  },
+  "inspect": {
+    "close": "Cerrar inspector",
+    "packet": "Último paquete",
+    "details": "Detalles de entidad",
+    "selected": "Inspector del objeto seleccionado",
+    "clear": "Borrar selección"
+  },
+  "lensExtra": {
+    "physical": "FÍSICO",
+    "telemetry": "TELEMETRÍA",
+    "live": "EN VIVO",
+    "stale": "DESACTUALIZADO",
+    "offline": "SIN CONEXIÓN",
+    "footer": "Mediciones normalizadas · vigencia: en vivo ≤30s / desactualizado ≤5m · sin conectividad simulada"
   }
 }

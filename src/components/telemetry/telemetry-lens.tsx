@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
@@ -30,6 +31,7 @@ export function TelemetryLens({
   label: string;
   breakerId?: string | undefined;
 }) {
+  const t = useTranslations('lensExtra');
   const t = useTranslations('telemetryLens');
   const [open, setOpen] = useState(false);
   const [samples, setSamples] = useState<TelemetrySample[]>([]);
@@ -89,10 +91,10 @@ export function TelemetryLens({
     <section className={`mk-lens zip-telemetry-lens ${open ? 'is-open' : ''}`}>
       <div className="mk-lens-switch">
         <button aria-pressed={!open} onClick={() => setOpen(false)}>
-          PHYSICAL
+          {tu('physical')}
         </button>
         <button aria-pressed={open} onClick={() => setOpen(true)}>
-          TELEMETRY
+          {tu('telemetry')}
         </button>
       </div>
 
@@ -137,7 +139,7 @@ export function TelemetryLens({
                   <article key={sample.entityId}>
                     <header>
                       <strong>{sample.sourceIdentity}</strong>
-                      <span data-state={state}>{state}</span>
+                      <span data-state={state}>{state==='LIVE'?tu('live'):state==='STALE'?tu('stale'):tu('offline')}</span>
                     </header>
                     <time>{sample.receivedAt}</time>
                     <div className="mk-live-grid">
@@ -157,7 +159,7 @@ export function TelemetryLens({
             )}
 
             <footer>
-              Normalized measurements · freshness: live ≤30s / stale ≤5m · no simulated connectivity
+              {tu('footer')}
             </footer>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type { InspectorEntity } from './entity-inspector';
 export function InlineInspector({
   entity,
@@ -7,14 +8,15 @@ export function InlineInspector({
   entity: InspectorEntity;
   onClose: () => void;
 }) {
+  const t = useTranslations('inspect');
   return (
     <aside
       className="mk-inline-inspector mk-selection-inspector"
-      aria-label="Selected object inspector"
+      aria-label={t('selected')}
     >
       <header>
         <small>{entity.kind}</small>
-        <button onClick={onClose} aria-label="Clear selection">
+        <button onClick={onClose} aria-label={t('clear')}>
           ×
         </button>
       </header>

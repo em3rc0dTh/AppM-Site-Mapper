@@ -1333,5 +1333,37 @@
     "sources": "MQTT SOURCES",
     "noSimulation": "No simulated connectivity is used in this trace.",
     "legacyPaths": "Unclassified legacy paths"
+  },
+  "pins": {
+    "pinned": "★ PINNED",
+    "pin": "☆ PIN",
+    "error": "Pin could not be saved.",
+    "unpin": "Unpin",
+    "saveError": "Could not update pin. Try again."
+  },
+  "summary": {
+    "title": "BDFB summary",
+    "paths": "Power paths",
+    "empty": "No distribution structure",
+    "emptyHelp": "BDFB devices will appear after their internal structure is configured.",
+    "shelves": "{count} shelves",
+    "frames": "{count} frames",
+    "panels": "{count} panels",
+    "endpoints": "{count} breaker/holder endpoints"
+  },
+  "inspect": {
+    "close": "Close inspector",
+    "packet": "Last packet",
+    "details": "Entity details",
+    "selected": "Selected object inspector",
+    "clear": "Clear selection"
+  },
+  "lensExtra": {
+    "physical": "PHYSICAL",
+    "telemetry": "TELEMETRY",
+    "live": "LIVE",
+    "stale": "STALE",
+    "offline": "OFFLINE",
+    "footer": "Normalized measurements · freshness: live ≤30s / stale ≤5m · no simulated connectivity"
   }
 }

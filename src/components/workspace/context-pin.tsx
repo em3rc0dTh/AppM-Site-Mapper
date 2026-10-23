@@ -1,6 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 export function ContextPin({ entityId }: { entityId: string }) {
+  const t = useTranslations('pins');
   const [pinned, setPinned] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -27,13 +29,13 @@ export function ContextPin({ entityId }: { entityId: string }) {
             if (!response.ok) throw new Error();
             setPinned((v) => !v);
           } catch {
-            setError('Pin could not be saved.');
+            setError(t('error'));
           } finally {
             setBusy(false);
           }
         }}
       >
-        {pinned ? '★ PINNED' : '☆ PIN'}
+        {pinned ? t('pinned') : t('pin')}
       </button>
       {error && <span role="alert">{error}</span>}
     </>

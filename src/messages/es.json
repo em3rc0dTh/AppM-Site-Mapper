@@ -653,7 +653,7 @@
     "invalidJson": "JSON inválido.",
     "jsonImport": "Importación de plantillas JSON",
     "paste": "Pega una plantilla o una lista de plantillas.",
-    "jsonGuide": "Solo se admiten plantillas de Equipment. Usa equipmentType y allowedChildTypes como valores recursivos predeterminados. Configura elementos secundarios, posiciones y distribución al crear Equipment en un Rack o Equipment principal.",
+    "jsonGuide": "Solo se admiten plantillas de Equipment. Los valores recursivos usan equipmentType y allowedChildTypes. Configura hijos, posiciones y diseño al instalar Equipment en un Rack o Equipment principal.",
     "example": "Ejemplo de Equipment",
     "importing": "Importando…",
     "importJson": "Importar JSON",
@@ -1065,7 +1065,8 @@
     "panels": "Paneles alimentados",
     "noFeeds": "No hay entradas SNMP inventariadas en este BDFB.",
     "noFresh": "Sin lectura de corriente comisionada reciente",
-    "noPanelsAssigned": "Sin paneles asignados"
+    "noPanelsAssigned": "Sin paneles asignados",
+    "ratedMissing": "Corriente nominal sin configurar para esta entrada"
   },
   "snmpHistoryUi": {
     "title": "SNMP · HISTORIAL TIMESCALEDB",
@@ -1225,7 +1226,8 @@
     "selectEquipment": "Seleccionar Equipment",
     "mount": "Montar Equipment",
     "selectAllocation": "Seleccionar asignación",
-    "free": "Liberar asignación"
+    "free": "Liberar asignación",
+    "saveFailed": "No se pudo guardar la ubicación del Rack."
   },
   "powerCanvas": {
     "source": "Jerarquía del Equipment de origen",

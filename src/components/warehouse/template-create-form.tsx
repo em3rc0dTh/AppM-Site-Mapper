@@ -200,9 +200,7 @@ export function TemplateCreateForm() {
           <div className="warehouse-json-copy">
             <strong>{t('paste')}</strong>
             <span>
-              Equipment templates only. Recursive defaults use <code>equipmentType</code>,{' '}
-              <code>equipmentType</code> and <code>allowedChildTypes</code>. Configure children,
-              slots and layout when instantiating Equipment in a Rack or a parent Equipment.
+              {t('jsonGuide')}
             </span>
           </div>
           <textarea

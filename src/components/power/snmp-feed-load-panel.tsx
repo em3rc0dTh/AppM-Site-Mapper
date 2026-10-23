@@ -271,7 +271,7 @@ export function SnmpFeedLoadPanel({
                       ) : (
                         <small>
                           {feed.ratedA === null
-                            ? 'Rated current not configured for this input'
+                            ? t('ratedMissing')
                             : t('noFresh')}
                         </small>
                       )}

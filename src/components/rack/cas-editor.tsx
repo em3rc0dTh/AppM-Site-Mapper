@@ -35,10 +35,10 @@ export function CasEditor({ view }: { view: RackElevationView }) {
         body: JSON.stringify(payload),
       });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error ?? 'Save failed');
+      if (!response.ok) throw new Error(t('saveFailed'));
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Save failed');
+      setError(e instanceof Error ? t('saveFailed'));
     } finally {
       setBusy(false);
     }

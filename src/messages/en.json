@@ -98,7 +98,14 @@
         "unmapped": "UNMAPPED",
         "mappedBreakers": "{count} mapped breakers",
         "inspectorHeading": "INSPECTOR",
-        "liveTotalPowerNote": "Live total power: {power}. Mean energy is an average of cumulative counters, not consumption over a period."
+        "liveTotalPowerNote": "Live total power: {power}. Mean energy is an average of cumulative counters, not consumption over a period.",
+        "historicalTrend": "{label} historical trend",
+        "telemetryReceived": "Live descendant equipment telemetry received",
+        "inventoryRecorded": "Physical inventory recorded",
+        "descendantsAveraged": "{count} descendant Equipment readings contribute to available averages.",
+        "requiresBinding": "Live readings require explicit Equipment MQTT bindings.",
+        "panelScope": "Average scope: {panel}",
+        "entireScope": "Average scope: all configured BDFB breakers"
       }
     }
   },
@@ -1151,7 +1158,11 @@
     "inventoryDisclaimer": "Positions and connections are inventory records, not live current readings or a wiring certificate. Select another panel above to inspect its positions.",
     "hierarchyPath": "Device → Chassis → Shelf → Frame → Panel → Equipment",
     "inspectPanel": "Inspect panel {panel}, {installed} breakers installed",
-    "panelPositions": "{installed} installed · {available} available positions"
+    "panelPositions": "{installed} installed · {available} available positions",
+    "openPanelComposition": "Open Equipment Composition: {panel}",
+    "positionBreaker": "Position {position}: {breaker}",
+    "positionBreakerDetails": "Position {position}: {breaker}; open breaker details",
+    "positionAvailable": "Position {position}: available"
   },
   "bdfbTree": {
     "tree": "BDFB power tree",
@@ -1172,7 +1183,9 @@
     "openInputs": "OPEN DC INPUTS ON CHASSIS →",
     "useConfig2": "USE CONFIG 2",
     "useConfig4": "USE CONFIG 4",
-    "retire": "RETIRE"
+    "retire": "RETIRE",
+    "confirmProfile": "Confirm that the installed physical wiring uses {profile}. This changes the expected shunt configuration. Previously commissioned SNMP bindings must be retired before switching.",
+    "confirmRetire": "Retire the {metric} mapping? Existing historical samples remain stored."
   },
   "snmpLoad": {
     "section": "BDFB SNMP input feed load",

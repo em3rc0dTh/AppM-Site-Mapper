@@ -69,7 +69,7 @@ export function SnmpFeedCommissioning({
     if (configuration?.hardwareProfile === profile) return;
     if (
       !window.confirm(
-        `Confirm that the installed physical wiring uses ${profile}. This changes the expected shunt configuration. Previously commissioned SNMP bindings must be retired before switching.`,
+        t('confirmProfile', { profile }),
       )
     )
       return;
@@ -94,7 +94,7 @@ export function SnmpFeedCommissioning({
   async function retire(portId: string, binding: BindingRow) {
     if (
       !window.confirm(
-        `Retire the ${binding.metric} mapping? Existing historical samples remain stored.`,
+        t('confirmRetire', { metric: binding.metric }),
       )
     )
       return;

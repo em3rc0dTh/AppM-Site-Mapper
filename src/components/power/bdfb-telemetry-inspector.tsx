@@ -79,7 +79,7 @@ function HistoryMetric({
     <div className="zip-bdfb-history-metric">
       <span>{label}</span>
       <strong>{metric(latest, unit, decimals)}</strong>
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${label} historical trend`}>
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ti('historicalTrend', { label })}>
         <path d={path} />
       </svg>
       <small>
@@ -353,13 +353,13 @@ export function BdfbTelemetryInspector({
                 <span>●</span>
                 <strong>
                   {reportingEquipment > 0
-                    ? 'Live descendant equipment telemetry received'
-                    : 'Physical inventory recorded'}
+                    ? ti('telemetryReceived')
+                    : ti('inventoryRecorded')}
                 </strong>
                 <small>
                   {reportingEquipment > 0
-                    ? `${reportingEquipment} descendant Equipment readings contribute to available averages.`
-                    : 'Live readings require explicit Equipment MQTT bindings.'}
+                    ? ti('descendantsAveraged', { count: reportingEquipment })
+                    : ti('requiresBinding')}
                 </small>
               </div>
             </section>
@@ -444,8 +444,8 @@ export function BdfbTelemetryInspector({
               <span>{ti('mappedBreakers', { count: mappedBreakerCount })}</span>
               <span>
                 {selectedPanel
-                  ? `Average scope: ${selectedPanel.label}`
-                  : 'Average scope: all configured BDFB breakers'}
+                  ? ti('panelScope', { panel: selectedPanel.label })
+                  : ti('entireScope')}
               </span>
             </div>
           </>

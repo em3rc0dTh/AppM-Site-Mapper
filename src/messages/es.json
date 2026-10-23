@@ -98,7 +98,14 @@
         "unmapped": "SIN VINCULAR",
         "mappedBreakers": "{count} breakers vinculados",
         "inspectorHeading": "INSPECTOR",
-        "liveTotalPowerNote": "Potencia total en vivo: {power}. La energía media es un promedio de contadores acumulativos, no el consumo durante un período."
+        "liveTotalPowerNote": "Potencia total en vivo: {power}. La energía media es un promedio de contadores acumulativos, no el consumo durante un período.",
+        "historicalTrend": "Tendencia histórica de {label}",
+        "telemetryReceived": "Telemetría en vivo recibida de equipos descendientes",
+        "inventoryRecorded": "Inventario físico registrado",
+        "descendantsAveraged": "{count} lecturas de equipos descendientes contribuyen a los promedios disponibles.",
+        "requiresBinding": "Las lecturas en vivo requieren enlaces MQTT explícitos de los equipos.",
+        "panelScope": "Alcance del promedio: {panel}",
+        "entireScope": "Alcance del promedio: todos los interruptores BDFB configurados"
       }
     }
   },
@@ -1151,7 +1158,11 @@
     "inventoryDisclaimer": "Las posiciones y conexiones son registros de inventario, no lecturas de corriente en vivo ni certificación de cableado. Selecciona otro panel arriba para consultar sus posiciones.",
     "hierarchyPath": "Dispositivo → Chassis → Shelf → Frame → Panel → Equipo",
     "inspectPanel": "Inspeccionar panel {panel}, {installed} interruptores instalados",
-    "panelPositions": "{installed} instalados · {available} posiciones disponibles"
+    "panelPositions": "{installed} instalados · {available} posiciones disponibles",
+    "openPanelComposition": "Abrir composición del equipo: {panel}",
+    "positionBreaker": "Posición {position}: {breaker}",
+    "positionBreakerDetails": "Posición {position}: {breaker}; abrir detalles del interruptor",
+    "positionAvailable": "Posición {position}: disponible"
   },
   "bdfbTree": {
     "tree": "Árbol de potencia BDFB",
@@ -1172,7 +1183,9 @@
     "openInputs": "ABRIR ENTRADAS DC EN CHASSIS →",
     "useConfig2": "USAR CONFIG 2",
     "useConfig4": "USAR CONFIG 4",
-    "retire": "RETIRAR"
+    "retire": "RETIRAR",
+    "confirmProfile": "Confirme que el cableado físico instalado utiliza {profile}. Esto cambia la configuración de shunts esperada. Deben retirarse los enlaces SNMP previamente comisionados antes del cambio.",
+    "confirmRetire": "¿Retirar el mapeo de {metric}? Las muestras históricas existentes permanecerán almacenadas."
   },
   "snmpLoad": {
     "section": "Carga de las entradas SNMP BDFB",

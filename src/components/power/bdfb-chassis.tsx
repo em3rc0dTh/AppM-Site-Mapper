@@ -117,7 +117,7 @@ export function BdfbChassis({
                             <Link
                               className="sm-bdfb-panel-composition-link"
                               href={`/device/${panel.id}`}
-                              title={`Open Equipment Composition: ${panel.label}`}
+                              title={t('openPanelComposition', { panel: panel.label })}
                             >
                               {t('openPanel')}
                             </Link>
@@ -170,16 +170,16 @@ export function BdfbChassis({
                 {breaker ? (
                   <Link
                     href={`/device/${breaker.id}`}
-                    title={`Position ${index + 1}: ${breaker.label}`}
-                    aria-label={`Position ${index + 1}: ${breaker.label}; open breaker details`}
+                    title={t('positionBreaker', { position: index + 1, breaker: breaker.label })}
+                    aria-label={t('positionBreakerDetails', { position: index + 1, breaker: breaker.label })}
                   >
                     <span>P{String(index + 1).padStart(2, '0')}</span>
                     <strong>●</strong>
                   </Link>
                 ) : (
                   <span
-                    title={`Position ${index + 1}: available`}
-                    aria-label={`Position ${index + 1}: available`}
+                    title={t('positionAvailable', { position: index + 1 })}
+                    aria-label={t('positionAvailable', { position: index + 1 })}
                   >
                     P{String(index + 1).padStart(2, '0')}
                   </span>

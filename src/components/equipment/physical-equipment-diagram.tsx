@@ -29,10 +29,6 @@ interface Props {
   readonly portConnections?: readonly PortConnectionView[] | undefined;
 }
 
-function countLabel(occupied: number, count: number, positional: boolean) {
-  return positional ? `${occupied} / ${count} occupied` : `${occupied} installed`;
-}
-
 function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBreakerTelemetry }>) {
   const t = useTranslations('physicalDiagram');
   const metrics = [
@@ -109,7 +105,7 @@ function EquipmentPreview({
       )}
       <div className="equipment-physical-preview-meta">
         <span>
-          {countLabel(composition.occupied, composition.capacity, composition.positional)}
+          {composition.positional ? t('occupancy', { occupied: composition.occupied, total: composition.capacity }) : t('installed', { count: composition.occupied })}
         </span>
         {ports.length > 0 && (
           <span>
@@ -123,7 +119,7 @@ function EquipmentPreview({
       {preview.length > 0 && (
         <div
           className="equipment-physical-preview-children"
-          aria-label={equipment.name + ' child preview'}
+          aria-label={t('childPreview', { name: equipment.name })}
         >
           {preview.map((item) => {
             const child = item.equipment!;
@@ -137,11 +133,7 @@ function EquipmentPreview({
                 <span>{child.equipmentType.replaceAll('_', ' ')}</span>
                 <strong>{child.name}</strong>
                 <small>
-                  {countLabel(
-                    childComposition.occupied,
-                    childComposition.capacity,
-                    childComposition.positional,
-                  )}
+                  {childComposition.positional ? t('occupancy', { occupied: childComposition.occupied, total: childComposition.capacity }) : t('installed', { count: childComposition.occupied })}
                 </small>
               </Link>
             );
@@ -156,8 +148,7 @@ function EquipmentPreview({
       {composition.capacity > 4 && (
         <div className="equipment-physical-mini-capacity">
           <span>
-            {composition.capacity} {composition.positional ? 'positions' : 'children'} · Open for
-            detail
+            {t('capacity', { count: composition.capacity, kind: composition.positional ? t('positions') : t('children') })}
           </span>
         </div>
       )}
@@ -403,8 +394,7 @@ export function PhysicalEquipmentDiagram({
             )}
             <span>
               <b>{root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length}</b>{' '}
-              {t('accessCaption')}
-              ports
+              {t('accessPortsCaption')}
             </span>
           </div>
         </header>
@@ -418,14 +408,13 @@ export function PhysicalEquipmentDiagram({
             <header className="equipment-physical-subheading">
               <strong>{t('internal')}</strong>
               <small>
-                {countLabel(projection.occupied, projection.capacity, projection.positional)}
+                {projection.positional ? t('occupancy', { occupied: projection.occupied, total: projection.capacity }) : t('installed', { count: projection.occupied })}
               </small>
             </header>
             {summarized ? (
               <div className="equipment-physical-summary">
                 <p>
-                  {projection.capacity} immediate {projection.positional ? 'positions' : 'children'}{' '}
-                  · {projection.occupied} occupied.
+                  {t('immediateOccupancy', { total: projection.capacity, kind: projection.positional ? t('positions') : t('children'), occupied: projection.occupied })}
                 </p>
                 <button type="button" onClick={() => setExpanded(true)}>
                   {t('exploreComposition')}

@@ -84,11 +84,11 @@ export function EquipmentTelemetryInspector({
     : samples;
   const pointGroupConfigured = Boolean(pointPrefix);
   return (
-    <section className="zip-bdfb-live-average" aria-label={`Telemetry ${label}`}>
+    <section className="zip-bdfb-live-average" aria-label={t('label', { name: label })}>
       <header>
         <strong>{window === 'LIVE' ? t('live') : t('history')}</strong>
         <span>
-          {label} · {pointGroupConfigured ? `Point group ${pointPrefix}` : 'Own readings'}
+          {label} · {pointGroupConfigured ? t('pointGroup', { prefix: pointPrefix ?? '' }) : t('ownReadings')}
         </span>
       </header>
       <div className="zip-bdfb-window-tabs" role="tablist" aria-label={t('timeWindow')}>
@@ -111,17 +111,17 @@ export function EquipmentTelemetryInspector({
       </div>
       <p role="status">
         {loading
-          ? 'Loading…'
-          : (error ??
+          ? t('loading')
+          : (error ? t('unavailable') :
             (window === 'LIVE'
               ? current?.status
-              : `${visibleSamples.length} historical packets for this panel`))}
+              : t('historicalPackets', { count: visibleSamples.length })))}
       </p>
       {!loading && !error && !visibleSamples.length && (
         <p>
           {window === 'LIVE'
-            ? 'No own measurements received.'
-            : 'No stored measurements in this period.'}
+            ? t('noOwnMeasurements')
+            : t('noStoredMeasurements')}
         </p>
       )}
       <div style={{ maxHeight: 420, overflowY: 'auto' }}>

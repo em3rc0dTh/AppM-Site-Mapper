@@ -957,7 +957,8 @@
     "saving": "Guardando…",
     "saveWithSnmp": "GUARDAR ENTRADA + SNMP",
     "saveInput": "GUARDAR ENTRADA DC",
-    "savePort": "GUARDAR PUERTO DE ACCESO"
+    "savePort": "GUARDAR PUERTO DE ACCESO",
+    "archiveWarning": "¿Archivar el puerto «{port}»? No se pueden archivar puertos conectados."
   },
   "blueprintCanvas": {
     "view": "VISTA DE PLANO 2D",
@@ -995,7 +996,15 @@
     "last": "Último paquete coincidente: {time}",
     "note": "Último paquete por intervalo. Se conservan las etiquetas y unidades de origen. Hasta 1000 paquetes.",
     "timeWindow": "Ventana temporal de telemetría",
-    "noPoints": "No se recibieron puntos de {prefix} en este paquete. Se conservan los datos RAW de los demás grupos."
+    "noPoints": "No se recibieron puntos de {prefix} en este paquete. Se conservan los datos RAW de los demás grupos.",
+    "label": "Telemetría de {name}",
+    "pointGroup": "Grupo de puntos {prefix}",
+    "ownReadings": "Lecturas propias",
+    "loading": "Cargando…",
+    "unavailable": "Telemetría temporalmente no disponible.",
+    "historicalPackets": "{count} paquetes históricos de este panel",
+    "noOwnMeasurements": "No se recibieron mediciones propias.",
+    "noStoredMeasurements": "No hay mediciones almacenadas en este período."
   },
   "telemetryLens": {
     "context": "DIAGNÓSTICO CONTEXTUAL",
@@ -1414,7 +1423,10 @@
     "showNext": "MOSTRAR LAS SIGUIENTES {count} POSICIONES",
     "backSummary": "VOLVER AL RESUMEN",
     "noVirtual": "La vista física refleja el inventario registrado; no crea puertos ni módulos virtuales.",
-    "addEquipment": "+ AGREGAR EQUIPMENT"
+    "addEquipment": "+ AGREGAR EQUIPMENT",
+    "childPreview": "Vista previa de hijos de {name}",
+    "accessPortsCaption": "Puertos de acceso",
+    "immediateOccupancy": "{total} {kind} inmediatos · {occupied} ocupados."
   },
   "snmpStrip": {
     "label": "Capacidad de la entrada DC SNMP",

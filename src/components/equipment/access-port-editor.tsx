@@ -389,7 +389,7 @@ export function AccessPortEditor({
   async function archive(port: AccessPort) {
     if (
       typeof window !== 'undefined' &&
-      !window.confirm(`Archive port "${port.name}"? Connected ports cannot be archived.`)
+      !window.confirm(t('archiveWarning', { port: port.name }))
     )
       return;
     setBusy(true);

@@ -957,7 +957,8 @@
     "saving": "Saving…",
     "saveWithSnmp": "SAVE INPUT + SNMP",
     "saveInput": "SAVE DC INPUT",
-    "savePort": "SAVE ACCESS PORT"
+    "savePort": "SAVE ACCESS PORT",
+    "archiveWarning": "Archive port \"{port}\"? Connected ports cannot be archived."
   },
   "blueprintCanvas": {
     "view": "2D DRAFTING VIEW",
@@ -995,7 +996,15 @@
     "last": "Last matching packet: {time}",
     "note": "Last packet per time bucket; source labels and units preserved. Up to 1000 packets.",
     "timeWindow": "Telemetry time window",
-    "noPoints": "No received points for {prefix} in this packet. RAW data from other groups is preserved."
+    "noPoints": "No received points for {prefix} in this packet. RAW data from other groups is preserved.",
+    "label": "Telemetry {name}",
+    "pointGroup": "Point group {prefix}",
+    "ownReadings": "Own readings",
+    "loading": "Loading…",
+    "unavailable": "Telemetry temporarily unavailable.",
+    "historicalPackets": "{count} historical packets for this panel",
+    "noOwnMeasurements": "No own measurements received.",
+    "noStoredMeasurements": "No stored measurements in this period."
   },
   "telemetryLens": {
     "context": "CONTEXTUAL DIAGNOSTIC",
@@ -1414,7 +1423,10 @@
     "showNext": "SHOW NEXT {count} POSITIONS",
     "backSummary": "BACK TO SUMMARY",
     "noVirtual": "The physical view reflects recorded inventory; it does not create virtual ports or modules.",
-    "addEquipment": "+ ADD EQUIPMENT"
+    "addEquipment": "+ ADD EQUIPMENT",
+    "childPreview": "{name} child preview",
+    "accessPortsCaption": "Access ports",
+    "immediateOccupancy": "{total} immediate {kind} · {occupied} occupied."
   },
   "snmpStrip": {
     "label": "SNMP incoming DC feeder capacity",

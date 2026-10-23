@@ -16,14 +16,10 @@ import type {
 } from '@/modules/telemetry/domain/history';
 import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
+import { useTranslations } from 'next-intl';
 
 type InspectorTab = 'overview' | 'feeds' | 'history' | 'settings';
-const INSPECTOR_TABS: readonly { key: InspectorTab; label: string }[] = [
-  { key: 'overview', label: 'Resumen' },
-  { key: 'feeds', label: 'Entradas' },
-  { key: 'history', label: 'Gráficas' },
-  { key: 'settings', label: 'Config.' },
-];
+const INSPECTOR_TABS: readonly InspectorTab[] = ['overview', 'feeds', 'history', 'settings'];
 type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
 function metric(value: number | null | undefined, unit: string, decimals = 2): string {
@@ -49,6 +45,7 @@ function HistoryMetric({
   metricKey: HistoryMetricKey;
   points: readonly TelemetryHistoryPoint[];
 }>) {
+  const ti = useTranslations('bdfb.inspector.info');
   const values = points.flatMap((point, index) => {
     const value = point[metricKey];
     return value === null ? [] : [{ index, value }];
@@ -60,7 +57,7 @@ function HistoryMetric({
       <div className="zip-bdfb-history-metric">
         <span>{label}</span>
         <strong>{metric(latest, unit, decimals)}</strong>
-        <small>Not enough samples for trend</small>
+        <small>{ti('smallTrend')}</small>
       </div>
     );
   }
@@ -82,7 +79,11 @@ function HistoryMetric({
     <div className="zip-bdfb-history-metric">
       <span>{label}</span>
       <strong>{metric(latest, unit, decimals)}</strong>
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={`${label} historical trend`}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={ti('historicalTrend', { label })}
+      >
         <path d={path} />
       </svg>
       <small>
@@ -101,10 +102,11 @@ function HistoricalTelemetry({
   loading: boolean;
   error: string | null;
 }>) {
-  if (loading) return <div className="zip-bdfb-history-state">Loading TimescaleDB history…</div>;
+  const ti = useTranslations('bdfb.inspector.info');
+  if (loading) return <div className="zip-bdfb-history-state">{ti('loading')}</div>;
   if (error) return <div className="zip-bdfb-history-state is-error">{error}</div>;
   if (!history?.points.length) {
-    return <div className="zip-bdfb-history-state">No historical samples in this window.</div>;
+    return <div className="zip-bdfb-history-state">{ti('noSamples')}</div>;
   }
 
   const latest = history.points.at(-1);
@@ -112,11 +114,21 @@ function HistoricalTelemetry({
   return (
     <>
       <div className="zip-bdfb-history-grid">
-        <HistoryMetric label="VOLTAGE" unit="V" metricKey="voltageV" points={history.points} />
-        <HistoryMetric label="CURRENT" unit="A" metricKey="currentA" points={history.points} />
-        <HistoryMetric label="POWER" unit="W" metricKey="powerW" points={history.points} />
         <HistoryMetric
-          label="ENERGY"
+          label={ti('voltage')}
+          unit="V"
+          metricKey="voltageV"
+          points={history.points}
+        />
+        <HistoryMetric
+          label={ti('current')}
+          unit="A"
+          metricKey="currentA"
+          points={history.points}
+        />
+        <HistoryMetric label={ti('power')} unit="W" metricKey="powerW" points={history.points} />
+        <HistoryMetric
+          label={ti('energy')}
           unit="kWh"
           decimals={4}
           metricKey="energyKwh"
@@ -124,17 +136,17 @@ function HistoricalTelemetry({
         />
       </div>
       <dl className="zip-bdfb-live-average-counts">
-        <dt>History scope</dt>
+        <dt>{ti('historyScope')}</dt>
         <dd>{history.scope.label}</dd>
-        <dt>Breakers in scope</dt>
+        <dt>{ti('breakersScope')}</dt>
         <dd>{history.scope.breakerCount}</dd>
-        <dt>Empty positions</dt>
+        <dt>{ti('emptyPositions')}</dt>
         <dd>{history.scope.emptyPositionCount}</dd>
-        <dt>Buckets</dt>
+        <dt>{ti('buckets')}</dt>
         <dd>{history.points.length}</dd>
-        <dt>Latest bucket active</dt>
+        <dt>{ti('activeBucket')}</dt>
         <dd>{latest?.activeBreakers ?? 0}</dd>
-        <dt>Latest bucket</dt>
+        <dt>{ti('latestBucket')}</dt>
         <dd>{compactUtc(latest?.observedAt)}</dd>
       </dl>
     </>
@@ -158,6 +170,8 @@ export function BdfbTelemetryInspector({
   mappedBreakerCount?: number;
   descendantEquipmentIds?: readonly string[];
 }>) {
+  const ti = useTranslations('bdfb.inspector.info');
+  const t = useTranslations('bdfb.inspector');
   const { samples, now } = useBdfbTelemetrySnapshot(node.id);
   const inspectorRef = useRef<HTMLElement>(null);
   const [tab, setTab] = useState<InspectorTab>('overview');
@@ -233,7 +247,7 @@ export function BdfbTelemetryInspector({
   return (
     <aside ref={inspectorRef} className="telxius-properties zip-bdfb-inspector">
       <header>
-        INSPECTOR <span>⌄</span>
+        {ti('inspectorHeading')} <span>⌄</span>
       </header>
 
       <div className="zip-bdfb-inspector-id">
@@ -247,11 +261,11 @@ export function BdfbTelemetryInspector({
       <nav
         className="sm-bdfb-inspector-tabs"
         role="tablist"
-        aria-label="BDFB inspector sections"
+        aria-label={ti('inspectorSections')}
         onKeyDown={(event) => {
           if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
           event.preventDefault();
-          const current = INSPECTOR_TABS.findIndex((item) => item.key === tab);
+          const current = INSPECTOR_TABS.findIndex((item) => item === tab);
           const nextIndex =
             event.key === 'Home'
               ? 0
@@ -260,23 +274,23 @@ export function BdfbTelemetryInspector({
                 : (current + (event.key === 'ArrowRight' ? 1 : -1) + INSPECTOR_TABS.length) %
                   INSPECTOR_TABS.length;
           const nextTab = INSPECTOR_TABS[nextIndex]!;
-          changeTab(nextTab.key);
-          const button = document.getElementById('sm-bdfb-tab-' + nextTab.key);
+          changeTab(nextTab);
+          const button = document.getElementById('sm-bdfb-tab-' + nextTab);
           button?.focus();
         }}
       >
         {INSPECTOR_TABS.map((item) => (
           <button
-            key={item.key}
+            key={item}
             type="button"
             role="tab"
-            id={'sm-bdfb-tab-' + item.key}
-            aria-controls={'sm-bdfb-panel-' + item.key}
-            aria-selected={tab === item.key}
-            tabIndex={tab === item.key ? 0 : -1}
-            onClick={() => changeTab(item.key)}
+            id={'sm-bdfb-tab-' + item}
+            aria-controls={'sm-bdfb-panel-' + item}
+            aria-selected={tab === item}
+            tabIndex={tab === item ? 0 : -1}
+            onClick={() => changeTab(item)}
           >
-            {item.label}
+            {t(item)}
           </button>
         ))}
       </nav>
@@ -296,64 +310,58 @@ export function BdfbTelemetryInspector({
               chassisId={presentation.chassisId}
               view="summary"
             />
-            <section
-              className="zip-bdfb-live-average"
-              aria-label="Live descendant MQTT equipment average"
-            >
+            <section className="zip-bdfb-live-average" aria-label={ti('averageLabel')}>
               <header>
                 <div>
                   <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
-                  <strong>DESCENDANT EQUIPMENT · MQTT LIVE</strong>
+                  <strong>{ti('live')}</strong>
                 </div>
-                <span>Entire BDFB</span>
+                <span>{ti('entire')}</span>
               </header>
               <div className="zip-bdfb-live-average-grid">
                 <div>
-                  <span>AVG VOLTAGE</span>
+                  <span>{ti('avgVoltage')}</span>
                   <strong>{metric(live.averageVoltageV, 'V')}</strong>
                 </div>
                 <div>
-                  <span>AVG CURRENT</span>
+                  <span>{ti('avgCurrent')}</span>
                   <strong>{metric(live.averageCurrentA, 'A')}</strong>
                 </div>
                 <div>
-                  <span>AVG POWER</span>
+                  <span>{ti('avgPower')}</span>
                   <strong>{metric(live.averagePowerW, 'W')}</strong>
                 </div>
                 <div>
-                  <span>AVG ENERGY COUNTER</span>
+                  <span>{ti('avgEnergy')}</span>
                   <strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong>
                 </div>
               </div>
 
               <p className="zip-bdfb-aggregate-note">
-                Live total power: {metric(live.totalPowerW, 'W')}. Mean energy is a
-                cumulative-counter average, not consumption over a period.
+                {ti('liveTotalPowerNote', { power: metric(live.totalPowerW, 'W') })}
               </p>
               <dl className="zip-bdfb-live-average-counts">
-                <dt>Equipment reporting</dt>
+                <dt>{ti('reporting')}</dt>
                 <dd>{reportingEquipment}</dd>
-                <dt>Descendant equipment</dt>
+                <dt>{ti('descendant')}</dt>
                 <dd>{live.descendantEquipment}</dd>
-                <dt>Without current reading</dt>
+                <dt>{ti('notCurrent')}</dt>
                 <dd>{live.withoutCurrentReading}</dd>
-                <dt>Last packet</dt>
+                <dt>{ti('last')}</dt>
                 <dd>{compactUtc(latestReceived)}</dd>
               </dl>
             </section>
             <section className="zip-bdfb-status-card">
-              <h3>STATUS</h3>
+              <h3>{ti('status')}</h3>
               <div>
                 <span>●</span>
                 <strong>
-                  {reportingEquipment > 0
-                    ? 'Live descendant equipment telemetry received'
-                    : 'Physical inventory recorded'}
+                  {reportingEquipment > 0 ? ti('telemetryReceived') : ti('inventoryRecorded')}
                 </strong>
                 <small>
                   {reportingEquipment > 0
-                    ? `${reportingEquipment} descendant Equipment readings contribute to available averages.`
-                    : 'Live readings require explicit Equipment MQTT bindings.'}
+                    ? ti('descendantsAveraged', { count: reportingEquipment })
+                    : ti('requiresBinding')}
                 </small>
               </div>
             </section>
@@ -372,21 +380,14 @@ export function BdfbTelemetryInspector({
         {tab === 'history' && (
           <>
             <SnmpFeedHistory deviceId={node.id} />
-            <section
-              className="zip-bdfb-live-average"
-              aria-label="Historical descendant MQTT equipment averages"
-            >
+            <section className="zip-bdfb-live-average" aria-label={ti('historyChart')}>
               <header>
                 <div>
-                  <strong>MQTT · DESCENDANT EQUIPMENT HISTORY</strong>
+                  <strong>{ti('mqttHistory')}</strong>
                 </div>
                 <span>{scopeLabel}</span>
               </header>
-              <div
-                className="zip-bdfb-window-tabs"
-                role="tablist"
-                aria-label="MQTT history time window"
-              >
+              <div className="zip-bdfb-window-tabs" role="tablist" aria-label={ti('historyWindow')}>
                 {TELEMETRY_HISTORY_WINDOWS.map((historyWindow) => (
                   <button
                     type="button"
@@ -416,40 +417,37 @@ export function BdfbTelemetryInspector({
         {tab === 'settings' && (
           <>
             <SnmpFeedCommissioning deviceId={node.id} chassisId={presentation.chassisId} />
-            <section
-              className="sm-bdfb-device-info"
-              aria-label="BDFB physical and telemetry properties"
-            >
-              <h3>INVENTORY & DIAGNOSTICS</h3>
+            <section className="sm-bdfb-device-info" aria-label={ti('properties')}>
+              <h3>{ti('diagnostics')}</h3>
               <dl>
-                <dt>Type</dt>
+                <dt>{ti('type')}</dt>
                 <dd>BDFB</dd>
-                <dt>Location</dt>
+                <dt>{ti('location')}</dt>
                 <dd>{location ?? '—'}</dd>
-                <dt>Physical shelves</dt>
+                <dt>{ti('shelves')}</dt>
                 <dd>{physicalShelves}</dd>
-                <dt>Physical frames</dt>
+                <dt>{ti('frames')}</dt>
                 <dd>{physicalFrames}</dd>
-                <dt>Panel groups</dt>
+                <dt>{ti('groups')}</dt>
                 <dd>{panelGroups}</dd>
-                <dt>Panels</dt>
+                <dt>{ti('panels')}</dt>
                 <dd>{panels.length}</dd>
-                <dt>Breakers</dt>
+                <dt>{ti('breakers')}</dt>
                 <dd>{breakers.length}</dd>
-                <dt>Feed A</dt>
-                <dd>{hasA ? 'Configured' : '—'}</dd>
-                <dt>Feed B</dt>
-                <dd>{hasB ? 'Configured' : '—'}</dd>
-                <dt>Telemetry</dt>
-                <dd>{mappedBreakerCount > 0 ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}</dd>
+                <dt>{ti('feedA')}</dt>
+                <dd>{hasA ? ti('configured') : '—'}</dd>
+                <dt>{ti('feedB')}</dt>
+                <dd>{hasB ? ti('configured') : '—'}</dd>
+                <dt>{ti('telemetry')}</dt>
+                <dd>{mappedBreakerCount > 0 ? ti('mapped') : ti('unmapped')}</dd>
               </dl>
             </section>
             <div className="zip-bdfb-actions">
-              <span>{mappedBreakerCount} mapped breakers</span>
+              <span>{ti('mappedBreakers', { count: mappedBreakerCount })}</span>
               <span>
                 {selectedPanel
-                  ? `Average scope: ${selectedPanel.label}`
-                  : 'Average scope: all configured BDFB breakers'}
+                  ? ti('panelScope', { panel: selectedPanel.label })
+                  : ti('entireScope')}
               </span>
             </div>
           </>

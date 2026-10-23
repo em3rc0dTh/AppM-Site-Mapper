@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { PolygonEditor } from '@/components/spatial/polygon-editor';
 import { polygonInsidePolygon, type PointMm } from '@/modules/spatial/domain/geometry';
@@ -19,10 +20,11 @@ export function SiteBoundaryWorkspace({
   context?: readonly PointMm[];
   children: ReactNode;
 }) {
+  const t = useTranslations('boundaryWorkspace');
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const label = node.kind === 'SITE' ? 'SITE' : 'STRUCTURE';
+  const label = node.kind === 'SITE' ? t('site') : t('structure');
   const resource = node.kind === 'SITE' ? 'sites' : 'structures';
 
   async function save(polygon: PointMm[]) {
@@ -38,16 +40,16 @@ export function SiteBoundaryWorkspace({
       const result = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        const conflict =
+        const message =
           result.error === 'BOUNDARY_CONFLICT'
-            ? `This ${label.toLowerCase()} changed. Cancel and reload before editing again.`
-            : result.error;
-        throw new Error(conflict ?? 'SAVE_FAILED');
+            ? t('conflict', { type: label.toLowerCase() })
+            : t('saveFailed');
+        throw new Error(message);
       }
 
       window.location.reload();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'SAVE_FAILED');
+      setError(cause instanceof Error ? cause.message : t('saveFailed'));
       setBusy(false);
     }
   }
@@ -56,15 +58,17 @@ export function SiteBoundaryWorkspace({
     <div className="spatial-site-workspace">
       {editing ? (
         <PolygonEditor
-          title={`${node.polygon?.length ? 'EDIT' : 'DRAW'} ${label} BOUNDARY · ${node.name}`}
+          title={t('title', {
+            mode: node.polygon?.length ? t('edit') : t('draw'),
+            type: label,
+            name: node.name,
+          })}
           initial={node.polygon ?? []}
           context={context}
           {...(node.kind === 'STRUCTURE' && context.length >= 3
             ? {
                 validate: (polygon: readonly PointMm[]) =>
-                  polygonInsidePolygon(polygon, context)
-                    ? null
-                    : 'Structure boundary must remain inside the Site boundary.',
+                  polygonInsidePolygon(polygon, context) ? null : t('outsideSite'),
               }
             : {})}
           onConfirm={(polygon) => void save(polygon)}
@@ -80,7 +84,7 @@ export function SiteBoundaryWorkspace({
           {canWrite && node.lifecycle === 'ACTIVE' && (
             <div className="spatial-site-actions">
               <button type="button" onClick={() => setEditing(true)}>
-                {node.polygon?.length ? 'EDIT BOUNDARY' : 'DRAW BOUNDARY'}
+                {node.polygon?.length ? t('editBoundary') : t('drawBoundary')}
               </button>
             </div>
           )}

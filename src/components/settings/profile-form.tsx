@@ -1,9 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
 export function ProfileForm({ displayName }: Readonly<{ displayName: string }>) {
+  const t = useTranslations('forms.profile');
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -24,7 +26,7 @@ export function ProfileForm({ displayName }: Readonly<{ displayName: string }>) 
     const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
     if (!response.ok) {
-      setError(body?.error ?? 'PROFILE_UPDATE_FAILED');
+      setError(t('failed'));
       setBusy(false);
       return;
     }
@@ -37,13 +39,13 @@ export function ProfileForm({ displayName }: Readonly<{ displayName: string }>) 
   return (
     <form className="settings-form" onSubmit={submit}>
       <label>
-        Display name
+        {t('displayName')}
         <input defaultValue={displayName} maxLength={120} name="displayName" required />
       </label>
       <button disabled={busy} type="submit">
-        {busy ? 'Saving…' : 'Save profile'}
+        {busy ? t('saving') : t('save')}
       </button>
-      {saved ? <small className="settings-success">Saved.</small> : null}
+      {saved ? <small className="settings-success">{t('saved')}</small> : null}
       {error ? <small className="form-error">{error}</small> : null}
     </form>
   );

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export interface PowerCanvasStage {
   readonly id: string;
@@ -63,31 +64,32 @@ export function PowerCanvasRoute({
   targetPortName,
   feed,
 }: PowerCanvasRouteProps) {
+  const t = useTranslations('powerCanvas');
   return (
     <div
       className="zip-power-connection"
-      aria-label={`Feed ${feed ?? 'unspecified'} complete physical path`}
+      aria-label={t('feedPhysicalPath', { feed: feed ?? t('unspecified') })}
     >
       <div className="zip-power-route-segment">
-        <h3>Source equipment hierarchy</h3>
+        <h3>{t('source')}</h3>
         <Hierarchy stages={sourceStages.filter((stage) => stage.kind !== 'ACCESS_PORT')} />
       </div>
       <div className="zip-power-physical-link">
         <div className="zip-power-terminal">
-          <small>POWER OUTPUT · {sourceEquipmentName}</small>
+          <small>{t('output', { name: sourceEquipmentName })}</small>
           <strong>{sourcePortName}</strong>
         </div>
         <div className="zip-power-wire-arrow">
-          <span>POWER PATH · FEED {feed ?? 'UNSPECIFIED'} · CONFIGURED</span>
+          <span>{t('path', { side: feed ?? '—' })}</span>
           <b aria-hidden="true">⟶</b>
         </div>
         <div className="zip-power-terminal">
-          <small>POWER INPUT · {targetEquipmentName}</small>
+          <small>{t('input', { name: targetEquipmentName })}</small>
           <strong>{targetPortName}</strong>
         </div>
       </div>
       <div className="zip-power-route-segment">
-        <h3>Destination equipment hierarchy</h3>
+        <h3>{t('target')}</h3>
         <Hierarchy stages={targetStages.filter((stage) => stage.kind !== 'ACCESS_PORT')} />
       </div>
     </div>

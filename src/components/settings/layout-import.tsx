@@ -1,7 +1,9 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { validateLayoutDraft } from '@/modules/spatial/domain/layout-draft';
 export function LayoutImport() {
+  const t = useTranslations('forms.import');
   const [roomId, setRoomId] = useState('');
   const [text, setText] = useState('');
   const [message, setMessage] = useState('');
@@ -9,13 +11,10 @@ export function LayoutImport() {
   const [confirmed, setConfirmed] = useState(false);
   return (
     <section>
-      <h2>Data Import</h2>
-      <p>
-        Import a complete canonical Room layout. Existing inventory remains attached to its rack.
-        IDs and the saved room version must match.
-      </p>
+      <h2>{t('title')}</h2>
+      <p>{t('help')}</p>
       <label>
-        Room ID
+        {t('roomId')}
         <input
           value={roomId}
           onChange={(e) => {
@@ -33,19 +32,19 @@ export function LayoutImport() {
             const d = await r.json();
             if (!r.ok) throw new Error(d.error);
             setText(JSON.stringify(d.draft, null, 2));
-            setMessage('Current layout loaded. Edit or replace with your canonical JSON.');
+            setMessage(t('loaded'));
             setConfirmed(false);
           } catch (e) {
-            setMessage(e instanceof Error ? e.message : 'Load failed');
+            setMessage(t('loadFailed'));
           } finally {
             setBusy(false);
           }
         }}
       >
-        Load current layout
+        {t('load')}
       </button>
       <textarea
-        aria-label="Canonical layout JSON"
+        aria-label={t('json')}
         rows={18}
         value={text}
         onChange={(e) => {
@@ -58,28 +57,20 @@ export function LayoutImport() {
         onClick={() => {
           try {
             const error = validateLayoutDraft(JSON.parse(text));
-            setMessage(
-              error ??
-                'Layout structure and physical rules are valid. Server checks will run when importing.',
-            );
+            setMessage(error ?? t('valid'));
             setConfirmed(!error);
           } catch {
-            setMessage('Invalid JSON');
+            setMessage(t('invalid'));
             setConfirmed(false);
           }
         }}
       >
-        Validate layout
+        {t('validate')}
       </button>
       <button
         disabled={!confirmed || busy || !roomId}
         onClick={async () => {
-          if (
-            !window.confirm(
-              'Replace this room layout with the validated JSON? Empty removed objects will be archived.',
-            )
-          )
-            return;
+          if (!window.confirm(t('confirm'))) return;
           setBusy(true);
           try {
             const r = await fetch(`/api/spatial/rooms/${encodeURIComponent(roomId)}/layout`, {
@@ -90,16 +81,16 @@ export function LayoutImport() {
             const d = await r.json();
             if (!r.ok) throw new Error(d.error);
             setText(JSON.stringify(d.draft, null, 2));
-            setMessage('Layout imported and saved.');
+            setMessage(t('saved'));
             setConfirmed(false);
           } catch (e) {
-            setMessage(e instanceof Error ? e.message : 'Import failed');
+            setMessage(t('importFailed'));
           } finally {
             setBusy(false);
           }
         }}
       >
-        Import and save
+        {t('submit')}
       </button>
       <p role="status">{message}</p>
     </section>

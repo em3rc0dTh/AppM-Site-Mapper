@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import type { CompositionHistoryPoint } from '@/modules/telemetry/application/composition-history';
 import type { CompositionMetricKey } from '@/modules/telemetry/application/composition-telemetry-summary';
 import type { TelemetryHistoryWindow } from '@/modules/telemetry/domain/history';
@@ -22,8 +23,8 @@ const METRICS: readonly { key: CompositionMetricKey; name: string; unit: string;
   ];
 const WINDOWS: readonly TelemetryHistoryWindow[] = ['24h', '7d', '15d', '1M'];
 
-function formatValue(value: number): string {
-  return Number.isFinite(value) ? value.toLocaleString('en-US', { maximumFractionDigits: 3 }) : '—';
+function formatValue(value: number, locale: string): string {
+  return Number.isFinite(value) ? value.toLocaleString(locale, { maximumFractionDigits: 3 }) : '—';
 }
 
 function SeriesChart({
@@ -41,6 +42,8 @@ function SeriesChart({
   metric: CompositionMetricKey;
   window: TelemetryHistoryWindow;
 }>) {
+  const t = useTranslations('historyCharts');
+  const locale = useLocale();
   const observations = points.flatMap((point) => {
     const value = point.metrics[metric];
     const at = Date.parse(point.at);
@@ -52,7 +55,7 @@ function SeriesChart({
     return (
       <section className="ec-series">
         <strong>{name}</strong>
-        <p>No historical measurements for this metric.</p>
+        <p>{t('empty')}</p>
       </section>
     );
   }
@@ -76,29 +79,29 @@ function SeriesChart({
       current.push(observation);
     }
   }
-  const first = new Date(xStart).toLocaleString();
-  const last = new Date(xEnd).toLocaleString();
+  const first = new Date(xStart).toLocaleString(locale, { timeZone: 'America/Lima' });
+  const last = new Date(xEnd).toLocaleString(locale, { timeZone: 'America/Lima' });
   return (
-    <section className="ec-series" aria-label={name + ' historical trend'}>
+    <section className="ec-series" aria-label={t('historicalTrend', { name })}>
       <header>
         <strong>{name}</strong>
         <span>
-          {formatValue(observations.at(-1)!.value)} {unit}
+          {formatValue(observations.at(-1)!.value, locale)} {unit}
         </span>
       </header>
       <svg
         viewBox="0 0 590 162"
         role="img"
-        aria-label={`${name} time series with ${observations.length} recorded points from ${first} to ${last}`}
+        aria-label={t('timeSeries', { name, count: observations.length, first, last })}
       >
         <line x1="42" y1="24" x2="568" y2="24" className="ec-chart-guide" />
         <line x1="42" y1="75" x2="568" y2="75" className="ec-chart-guide" />
         <line x1="42" y1="126" x2="568" y2="126" className="ec-chart-guide" />
         <text x="2" y="28" className="ec-chart-label">
-          {formatValue(upper)}
+          {formatValue(upper, locale)}
         </text>
         <text x="2" y="129" className="ec-chart-label">
-          {formatValue(lower)}
+          {formatValue(lower, locale)}
         </text>
         {segments.map((segment, index) => (
           <path
@@ -116,7 +119,14 @@ function SeriesChart({
         {observations.length <= 220 &&
           observations.map((point) => (
             <circle key={point.at} cx={x(point.at)} cy={y(point.value)} r="2.9" fill={color}>
-              <title>{`${new Date(point.at).toLocaleString()} · ${formatValue(point.value)} ${unit} · ${point.reporting} direct children reporting`}</title>
+              <title>
+                {t('tooltip', {
+                  date: new Date(point.at).toLocaleString(locale, { timeZone: 'America/Lima' }),
+                  value: formatValue(point.value, locale),
+                  unit,
+                  count: point.reporting,
+                })}
+              </title>
             </circle>
           ))}
         <text x="42" y="151" className="ec-chart-label">
@@ -126,7 +136,7 @@ function SeriesChart({
           {new Date(xEnd).toLocaleDateString()}
         </text>
       </svg>
-      <small>{observations.length} recorded time buckets · missing observations are not zero</small>
+      <small>{t('buckets', { count: observations.length })}</small>
     </section>
   );
 }
@@ -135,6 +145,8 @@ export function CompositionHistoryCharts({
   equipmentId,
   equipmentType,
 }: Readonly<{ equipmentId: string; equipmentType: string }>) {
+  const t = useTranslations('historyCharts');
+  const locale = useLocale();
   const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [error, setError] = useState('');
@@ -180,8 +192,8 @@ export function CompositionHistoryCharts({
   return (
     <div className="ec-history-charts">
       <div className="ec-history-controls">
-        <strong>MQTT · historical trend</strong>
-        <div role="group" aria-label="Historical range">
+        <strong>{t('title')}</strong>
+        <div role="group" aria-label={t('range')}>
           {WINDOWS.map((range) => (
             <button
               type="button"
@@ -201,30 +213,44 @@ export function CompositionHistoryCharts({
           ))}
         </div>
       </div>
-      {loading && <p role="status">Loading verified historical readings…</p>}
-      {error && <p role="alert">History unavailable: {error}</p>}
+      {loading && <p role="status">{t('loading')}</p>}
+      {error && <p role="alert">{t('error', { error })}</p>}
       {!loading && data && (
         <>
           <div className="ec-history-coverage">
-            <span>{data.points.length} time buckets</span>
+            <span>{t('timeBuckets', { count: data.points.length })}</span>
             <span>
-              {data.boundBreakerCount}/{data.breakerCount} breakers with MQTT bindings
+              {t('bindings', { bound: data.boundBreakerCount, total: data.breakerCount })}
             </span>
             <span>
               {last
-                ? `${coverage ?? 0}/${denominator ?? 0} reporting in last historical bucket`
-                : 'No recorded readings'}
+                ? t('reporting', { count: coverage ?? 0, total: denominator ?? 0 })
+                : t('noRecord')}
             </span>
           </div>
-          {last && <small>Last historical bucket: {new Date(last.at).toLocaleString()}</small>}
+          {last && (
+            <small>
+              {t('last', {
+                date: new Date(last.at).toLocaleString(locale, { timeZone: 'America/Lima' }),
+              })}
+            </small>
+          )}
           {!data.points.length ? (
-            <p>No commissioned MQTT breaker readings were stored for this scope and period.</p>
+            <p>{t('noReadings')}</p>
           ) : (
             <div className="ec-history-grid">
               {METRICS.map((metric) => (
                 <SeriesChart
                   key={metric.key}
-                  name={metric.name}
+                  name={
+                    metric.key === 'voltageV'
+                      ? t('metricVoltage')
+                      : metric.key === 'currentA'
+                        ? t('metricCurrent')
+                        : metric.key === 'powerW'
+                          ? t('metricPower')
+                          : t('metricEnergy')
+                  }
                   unit={metric.unit}
                   color={metric.color}
                   points={data.points}
@@ -234,11 +260,7 @@ export function CompositionHistoryCharts({
               ))}
             </div>
           )}
-          <p className="ec-history-explainer">
-            Each bucket is an arithmetic mean of the reporting immediate-child means. Values are not
-            feed totals; cumulative energy counters are not interval consumption. SNMP incoming
-            shunts remain a separate electrical source.
-          </p>
+          <p className="ec-history-explainer">{t('bucketDisclaimer')}</p>
         </>
       )}
     </div>

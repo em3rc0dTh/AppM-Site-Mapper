@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export interface CommissioningPort {
   readonly id: string;
@@ -30,6 +31,7 @@ export function ConnectEquipmentPowerForm({
   selectedTargetId?: string;
   returnHref: string;
 }>) {
+  const t = useTranslations('connectEquipmentPower');
   const router = useRouter();
   const [sourceId, setSourceId] = useState(selectedSourceId ?? '');
   const [targetId, setTargetId] = useState(selectedTargetId ?? '');
@@ -92,7 +94,7 @@ export function ConnectEquipmentPowerForm({
       router.push(`/power?path=${encodeURIComponent(result.path.id)}&feed=${chosenFeed}`);
       router.refresh();
     } catch {
-      setError('NETWORK_ERROR: Connection could not be confirmed. Nothing was recorded.');
+      setError(t('networkError'));
     } finally {
       setSaving(false);
     }
@@ -102,19 +104,19 @@ export function ConnectEquipmentPowerForm({
     <main className="power-port-connect-page">
       <header className="power-port-connect-header">
         <div>
-          <small>POWER / PHYSICAL COMMISSIONING</small>
-          <h1>Connect Equipment Power</h1>
-          <p>Link a real POWER OUTPUT terminal to a real POWER INPUT terminal.</p>
+          <small>{t('physicalCommissioning')}</small>
+          <h1>{t('title')}</h1>
+          <p>{t('intro')}</p>
         </div>
-        <Link href={returnHref}>← BACK TO EQUIPMENT</Link>
+        <Link href={returnHref}>{t('back')}</Link>
       </header>
 
       <div className="power-port-connect-columns">
         <section className="power-port-connect-panel">
-          <h2>1 · Electrical source</h2>
-          <p>Choose the Circuit Breaker output or other authorized POWER source.</p>
+          <h2>{t('source')}</h2>
+          <p>{t('chooseSource')}</p>
           <label>
-            Source Equipment / POWER OUTPUT
+            {t('sourceOutput')}
             <select
               value={sourceId}
               onChange={(event) => {
@@ -122,43 +124,45 @@ export function ConnectEquipmentPowerForm({
                 setError('');
               }}
             >
-              <option value="">Select source port</option>
+              <option value="">{t('sourcePort')}</option>
               {sources.map((port) => (
                 <option key={port.id} value={port.id} disabled={port.connected}>
                   {port.equipmentName} / {port.name}
-                  {port.feed ? ` · Feed ${port.feed}` : ''}
-                  {port.connected ? ' · ALREADY CONNECTED' : ''}
+                  {port.feed ? t('feedLabel', { feed: port.feed }) : ''}
+                  {port.connected ? t('alreadyConnected') : ''}
                 </option>
               ))}
             </select>
           </label>
           {source && (
             <div className="power-port-connect-preview">
-              <small>SELECTED SOURCE</small>
+              <small>{t('selectedSource')}</small>
               <strong>{source.equipmentName}</strong>
               <span>
                 {source.name} · {source.direction}
               </span>
               {source.connected && (
-                <strong role="status">CONNECTED → {source.connectionLabel}</strong>
+                <strong role="status">
+                  {t('sourceConnected')} {source.connectionLabel}
+                </strong>
               )}
             </div>
           )}
         </section>
 
         <section className="power-port-connect-panel">
-          <h2>2 · Destination load</h2>
-          <p>Select the Switch POWER input that is physically fed by this source.</p>
+          <h2>{t('destination')}</h2>
+          <p>{t('chooseTarget')}</p>
           <label>
-            Search destination Equipment
+            {t('searchDestination')}
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="SWITCH-01, Power input, rack..."
+              placeholder={t('destinationPlaceholder')}
             />
           </label>
           <label>
-            Destination Equipment / POWER INPUT
+            {t('destinationInput')}
             <select
               value={targetId}
               onChange={(event) => {
@@ -166,12 +170,12 @@ export function ConnectEquipmentPowerForm({
                 setError('');
               }}
             >
-              <option value="">Select destination port</option>
+              <option value="">{t('destinationPort')}</option>
               {filteredTargets.map((port) => (
                 <option key={port.id} value={port.id} disabled={port.connected}>
                   {port.equipmentName} / {port.name}
-                  {port.feed ? ` · Feed ${port.feed}` : ''}
-                  {port.connected ? ' · ALREADY CONNECTED' : ''}
+                  {port.feed ? t('feedLabel', { feed: port.feed }) : ''}
+                  {port.connected ? t('alreadyConnected') : ''}
                 </option>
               ))}
               {target && !filteredTargets.some((port) => port.id === target.id) && (
@@ -183,13 +187,15 @@ export function ConnectEquipmentPowerForm({
           </label>
           {target && (
             <div className="power-port-connect-preview">
-              <small>SELECTED DESTINATION</small>
+              <small>{t('selectedDestination')}</small>
               <strong>{target.equipmentName}</strong>
               <span>
                 {target.name} · {target.direction}
               </span>
               {target.connected && (
-                <strong role="status">POWERED BY ← {target.connectionLabel}</strong>
+                <strong role="status">
+                  {t('poweredBy')} {target.connectionLabel}
+                </strong>
               )}
             </div>
           )}
@@ -197,68 +203,66 @@ export function ConnectEquipmentPowerForm({
       </div>
 
       <section className="power-port-connect-review">
-        <h2>3 · Verify and confirm the physical connection</h2>
+        <h2>{t('verify')}</h2>
         <div className="power-port-connect-path">
-          <strong>{source ? `${source.equipmentName} / ${source.name}` : 'Select source'}</strong>
+          <strong>{source ? `${source.equipmentName} / ${source.name}` : t('selectSource')}</strong>
           <span aria-hidden="true">→</span>
           <strong>
-            {target ? `${target.equipmentName} / ${target.name}` : 'Select destination'}
+            {target ? `${target.equipmentName} / ${target.name}` : t('selectDestination')}
           </strong>
         </div>
         <div className="power-port-connect-fields">
           <label>
-            Electrical feed
+            {t('electricalFeed')}
             <select
               value={chosenFeed}
               disabled={Boolean(source?.feed || target?.feed)}
               onChange={(event) => setFeed(event.target.value as 'A' | 'B')}
             >
-              <option value="A">Feed A</option>
-              <option value="B">Feed B</option>
+              <option value="A">{t('feedA')}</option>
+              <option value="B">{t('feedB')}</option>
             </select>
           </label>
           <label>
-            Connection label (optional)
+            {t('connectionLabelOptional')}
             <input
               value={label}
               maxLength={120}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder="BDFB Panel A1 → Switch input"
+              placeholder={t('connectionPlaceholder')}
             />
           </label>
         </div>
-        {sourceAndTargetSameEquipment && (
-          <p role="alert">Source and destination must be different Equipment.</p>
-        )}
+        {sourceAndTargetSameEquipment && <p role="alert">{t('notSame')}</p>}
         {source?.connected && (
           <p role="alert">
-            SOURCE_ALREADY_CONNECTED: This POWER output already feeds {source.connectionLabel}.
-            Disconnect the recorded path before allocating this terminal elsewhere.
+            {t('sourceAlreadyConnected', { label: source.connectionLabel ?? '' })}
             {source.pathId && (
-              <Link href={`/power?path=${encodeURIComponent(source.pathId)}`}> View PowerPath</Link>
+              <Link href={`/power?path=${encodeURIComponent(source.pathId)}`}>
+                {' '}
+                {t('viewPath')}
+              </Link>
             )}
           </p>
         )}
         {target?.connected && (
           <p role="alert">
-            TARGET_ALREADY_CONNECTED: This POWER input already has a connection.
+            {t('targetAlreadyConnected')}
             {target.pathId && (
-              <Link href={`/power?path=${encodeURIComponent(target.pathId)}`}> View PowerPath</Link>
+              <Link href={`/power?path=${encodeURIComponent(target.pathId)}`}>
+                {' '}
+                {t('viewPath')}
+              </Link>
             )}
           </p>
         )}
-        {mismatch && (
-          <p role="alert">FEED_MISMATCH: Source and destination have different fixed feeds.</p>
-        )}
+        {mismatch && <p role="alert">{t('mismatch')}</p>}
         {error && <p role="alert">{error}</p>}
-        <p className="power-port-connect-caution">
-          Confirmation records a real PowerPath. Verify the electrical connection on site first;
-          this action does not energize hardware or simulate telemetry.
-        </p>
+        <p className="power-port-connect-caution">{t('caution')}</p>
         <div className="power-port-connect-actions">
-          <Link href={returnHref}>Cancel</Link>
+          <Link href={returnHref}>{t('cancel')}</Link>
           <button type="button" disabled={!canConfirm} onClick={() => void confirm()}>
-            {saving ? 'CONFIRMING…' : 'CONFIRM PHYSICAL CONNECTION'}
+            {saving ? t('confirming') : t('confirm')}
           </button>
         </div>
       </section>

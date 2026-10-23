@@ -1,13 +1,17 @@
+'use client';
+
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { StatePanel } from '@/shared/ui/primitives';
 export default function NotFound() {
+  const t = useTranslations('systemStates');
   return (
     <StatePanel
-      title="Entity not found"
-      description="This address does not resolve to an available entity."
+      title={t('notFoundTitle')}
+      description={t('notFoundHelp')}
       action={
         <Link className="action-link" href="/network">
-          Open Network
+          {t('network')}
         </Link>
       }
     />

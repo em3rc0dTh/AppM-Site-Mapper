@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useRef, useState, type PointerEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   isCanonicalPolygon,
   isInPositiveDrawingPlane,
@@ -53,7 +54,7 @@ export function PolygonEditor({
   validate,
   busy = false,
   error,
-  confirmLabel = 'Save boundary',
+  confirmLabel,
 }: {
   title: string;
   initial?: readonly PointMm[];
@@ -67,6 +68,7 @@ export function PolygonEditor({
   error?: string | null;
   confirmLabel?: string;
 }) {
+  const t = useTranslations('polygonTools');
   const [draft, setDraft] = useState<Snapshot>(() => ({
     points: [...initial],
     closed: initial.length >= 3,
@@ -90,9 +92,9 @@ export function PolygonEditor({
   } | null>(null);
   const gridId = useId().replaceAll(':', '');
   const invalid = draft.points.some((p) => !isInPositiveDrawingPlane(p))
-    ? 'The boundary contains negative coordinates. Move its vertices to X >= 0 and Y >= 0 before saving.'
+    ? t('negative')
     : !isCanonicalPolygon(draft.points)
-      ? 'Draw a simple, non-zero-area boundary with 3–256 vertices.'
+      ? t('invalidBoundary')
       : (validate?.(draft.points) ?? null);
   function change(next: Snapshot) {
     setPast((history) => [...history, draft].slice(-100));
@@ -130,7 +132,7 @@ export function PolygonEditor({
     if (draft.closed || draft.points.length >= 256) return;
     const next = point(event);
     if (!next) {
-      setCoordinateError('OUTSIDE DRAWING GRID: X and Y must be 0 or greater.');
+      setCoordinateError(t('outsideGrid'));
       return;
     }
     setCoordinateError('');
@@ -184,15 +186,15 @@ export function PolygonEditor({
         <div className="spatial-editor-heading">
           <strong>{title}</strong>
           <span>
-            {draft.points.length} vertices ·{' '}
+            {t('vertices', { count: draft.points.length })} ·{' '}
             {draft.closed && !invalid
               ? `${(polygonArea(draft.points) / 1_000_000).toFixed(2)} m²`
-              : 'Draft boundary'}
+              : t('draft')}
           </span>
         </div>
         <div className="spatial-editor-header-actions">
           <button type="button" disabled={busy} onClick={onCancel}>
-            Cancel
+            {t('cancel')}
           </button>
           {draft.closed && (
             <button
@@ -201,7 +203,7 @@ export function PolygonEditor({
               disabled={busy || !!invalid}
               onClick={() => onConfirm(draft.points.map((point) => ({ ...point })))}
             >
-              {busy ? 'Applying…' : confirmLabel}
+              {busy ? t('applying') : (confirmLabel ?? t('saveBoundary'))}
             </button>
           )}
         </div>
@@ -213,7 +215,7 @@ export function PolygonEditor({
           aria-pressed={tool === 'draw'}
           onClick={() => setTool('draw')}
         >
-          Draw / select
+          {t('draw')}
         </button>
         <button
           type="button"
@@ -221,12 +223,12 @@ export function PolygonEditor({
           aria-pressed={tool === 'pan'}
           onClick={() => setTool('pan')}
         >
-          Pan
+          {t('pan')}
         </button>
-        <button type="button" disabled={busy} onClick={() => zoom(0.8)} aria-label="Zoom in">
+        <button type="button" disabled={busy} onClick={() => zoom(0.8)} aria-label={t('zoomIn')}>
           +
         </button>
-        <button type="button" disabled={busy} onClick={() => zoom(1.25)} aria-label="Zoom out">
+        <button type="button" disabled={busy} onClick={() => zoom(1.25)} aria-label={t('zoomOut')}>
           −
         </button>
         <button
@@ -234,7 +236,7 @@ export function PolygonEditor({
           disabled={busy}
           onClick={() => setView(fit([...draft.points, ...context, ...contextualPoints]))}
         >
-          Fit
+          {t('fit')}
         </button>
         <label>
           <input
@@ -243,7 +245,7 @@ export function PolygonEditor({
             disabled={busy}
             onChange={(e) => setSnap(e.target.checked)}
           />
-          Snap · 600 mm
+          {t('snap')}
         </label>
         <button
           type="button"
@@ -257,14 +259,14 @@ export function PolygonEditor({
             }
           }}
         >
-          Undo
+          {t('undo')}
         </button>
         <button
           type="button"
           disabled={busy || !draft.points.length}
           onClick={() => change({ points: [], closed: false })}
         >
-          Clear
+          {t('clear')}
         </button>
         <button
           type="button"
@@ -273,24 +275,24 @@ export function PolygonEditor({
             change({ ...draft, points: draft.points.filter((_, i) => i !== selected) })
           }
         >
-          Remove vertex
+          {t('removeVertex')}
         </button>
       </div>
       {(context.length >= 3 || contextOverlays.length > 0) && (
-        <div className="spatial-editor-context-legend" aria-label="Existing surveyed geometry">
+        <div className="spatial-editor-context-legend" aria-label={t('surveyed')}>
           {context.length >= 3 && (
             <span>
               <i className="spatial-editor-context-boundary" aria-hidden="true" />
-              {contextLabel ?? 'Existing boundary'} · drawing limit
+              {contextLabel ?? t('boundary')} · {t('limit')}
             </span>
           )}
           {contextOverlays.length > 0 && (
             <span>
               <i className="spatial-editor-context-rooms" aria-hidden="true" />
-              {contextOverlays.length} existing space(s) · read-only
+              {t('existingSpaces', { count: contextOverlays.length })}
             </span>
           )}
-          <span>New Room · blue drawing</span>
+          <span>{t('newRoom')}</span>
         </div>
       )}
       <svg
@@ -298,7 +300,7 @@ export function PolygonEditor({
         viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
         className="spatial-drawing-surface"
         role="group"
-        aria-label={`${title} drawing canvas`}
+        aria-label={t('canvas', { title })}
         onPointerDown={down}
         onPointerMove={move}
         onPointerUp={(e) => end(e)}
@@ -392,7 +394,7 @@ export function PolygonEditor({
             fontWeight="700"
             pointerEvents="none"
           >
-            {contextLabel ?? 'Surveyed boundary'}
+            {contextLabel ?? t('surveyedBoundary')}
           </text>
         )}
         {draft.closed ? (
@@ -439,7 +441,7 @@ export function PolygonEditor({
                 stroke="transparent"
                 strokeWidth="14"
                 vectorEffect="non-scaling-stroke"
-                aria-label={`Add vertex on edge ${i + 1}`}
+                aria-label={t('addVertexEdge', { edge: i + 1 })}
                 onPointerDown={(e) => {
                   if (tool === 'pan') return;
                   e.stopPropagation();
@@ -483,7 +485,7 @@ export function PolygonEditor({
             vectorEffect="non-scaling-stroke"
             tabIndex={0}
             role="button"
-            aria-label={`Vertex ${i + 1}`}
+            aria-label={t('vertexLabel', { index: i + 1 })}
             onFocus={() => setSelected(i)}
             onKeyDown={(e) => {
               if (busy) return;
@@ -510,17 +512,13 @@ export function PolygonEditor({
           />
         ))}
       </svg>
-      <p className="spatial-editor-hint">
-        {draft.closed
-          ? 'Drag a vertex. Click an edge to add one. Select a vertex to remove it.'
-          : 'Draw only at X ≥ 0 and Y ≥ 0 (A-1 origin). Red shading marks an invalid negative plane. Pan does not change physical coordinates.'}
-      </p>
+      <p className="spatial-editor-hint">{draft.closed ? t('hintClosed') : t('hintOpen')}</p>
       <footer>
         <span role="status">
           {error || coordinateError || (draft.points.length >= 3 ? invalid : null)}
         </span>
         <button type="button" disabled={busy} onClick={onCancel}>
-          Cancel
+          {t('cancel')}
         </button>
         {!draft.closed ? (
           <button
@@ -528,7 +526,7 @@ export function PolygonEditor({
             disabled={busy || !!invalid}
             onClick={() => change({ ...draft, closed: true })}
           >
-            Finish boundary
+            {t('finishBoundary')}
           </button>
         ) : (
           <button
@@ -536,7 +534,7 @@ export function PolygonEditor({
             disabled={busy || !!invalid}
             onClick={() => onConfirm(draft.points.map((p) => ({ ...p })))}
           >
-            {busy ? 'Saving…' : confirmLabel}
+            {busy ? t('saving') : (confirmLabel ?? t('saveBoundary'))}
           </button>
         )}
       </footer>

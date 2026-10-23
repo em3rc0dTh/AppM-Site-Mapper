@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState, type CSSProperties } from 'react';
 
 import { TopologyCreateControl } from '@/components/topology/topology-create-form';
@@ -65,6 +66,7 @@ export function RackElevation({
   focusDeviceId?: string;
   canWrite?: boolean;
 }>) {
+  const t = useTranslations('rackElevation');
   const router = useRouter();
 
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
@@ -79,11 +81,8 @@ export function RackElevation({
     <section className="legacy-rack-view zip-rack-elevation-view">
       <div className="legacy-rack-main zip-rack-elevation-main">
         <header className="zip-elevation-heading">
-          <h1>FRONT ELEVATION</h1>
-          <small>
-            Only the documented front-face projection is available. Rear geometry has not been
-            recorded.
-          </small>
+          <h1>{t('front')}</h1>
+          <small>{t('rearWarning')}</small>
         </header>
 
         <div className="legacy-rack-canvas zip-elevation-canvas">
@@ -122,10 +121,10 @@ export function RackElevation({
                         ...topologyInspector(item),
                         actions: [
                           {
-                            label: item.kind === 'DEVICE' ? 'OPEN DEVICE' : 'OPEN EQUIPMENT',
+                            label: item.kind === 'DEVICE' ? t('openDevice') : t('openEquipment'),
                             href: `/device/${item.id}`,
                           },
-                          { label: 'TRACE POWER', href: `/power?entity=${item.id}` },
+                          { label: t('trace'), href: `/power?entity=${item.id}` },
                         ],
                       })
                     }
@@ -154,38 +153,38 @@ export function RackElevation({
 
       <aside className="legacy-rack-properties zip-elevation-inspector">
         <header>
-          INSPECTOR <span>⌄</span>
+          {t('inspectorLabel')} <span>⌄</span>
         </header>
         <div className="zip-elevation-identity">
           <span>▥</span>
           <div>
             <h2>{view.rack.name}</h2>
             <small>
-              {context?.positionName ?? 'Rack position'}{' '}
+              {context?.positionName ?? t('rackPosition')}{' '}
               {context?.coordinate ? `/ ${context.coordinate}` : ''}
             </small>
           </div>
         </div>
         <dl className="zip-elevation-stats">
-          <dt>Capacity</dt>
+          <dt>{t('capacity')}</dt>
           <dd>{totalU}U</dd>
-          <dt>Used</dt>
+          <dt>{t('used')}</dt>
           <dd>{physical}U</dd>
-          <dt>Free</dt>
+          <dt>{t('free')}</dt>
           <dd>{available}U</dd>
-          <dt>Reserved</dt>
+          <dt>{t('reserved')}</dt>
           <dd>{reserved}U</dd>
         </dl>
         <section className="zip-rack-inventory">
           <header>
-            <h3>RACK INVENTORY</h3>
-            <span>{view.inventory.length} objects</span>
+            <h3>{t('inventory')}</h3>
+            <span>{t('objectsCount', { count: view.inventory.length })}</span>
           </header>
           {canWrite && (
             <div className="zip-rack-inventory-actions">
               <RackTemplateInstantiator rackId={view.rack.id} />
               <details className="rack-one-off-create">
-                <summary>+ CREATE ONE-OFF</summary>
+                <summary>{t('create')}</summary>
                 <div>
                   <TopologyCreateControl kind="DEVICE" parentId={view.rack.id} />
                 </div>
@@ -206,8 +205,8 @@ export function RackElevation({
                       setSelected({
                         ...topologyInspector(item),
                         actions: [
-                          { label: 'OPEN EQUIPMENT', href: `/device/${item.id}` },
-                          { label: 'TRACE POWER', href: `/power?entity=${item.id}` },
+                          { label: t('open'), href: `/device/${item.id}` },
+                          { label: t('trace'), href: `/power?entity=${item.id}` },
                         ],
                       })
                     }
@@ -228,26 +227,26 @@ export function RackElevation({
                 );
               })
             ) : (
-              <p>No Equipment instances have been created for this rack yet.</p>
+              <p>{t('noEquipment')}</p>
             )}
           </div>
         </section>
 
         <section className="zip-equipment-summary">
-          <h3>EQUIPMENT SUMMARY</h3>
+          <h3>{t('summary')}</h3>
           <div>
             <span className="is-available" />
-            <b>Available</b>
+            <b>{t('available')}</b>
             <strong>{available}U</strong>
           </div>
           <div>
             <span className="is-reserved" />
-            <b>Reserved</b>
+            <b>{t('reserved')}</b>
             <strong>{reserved}U</strong>
           </div>
           <div>
             <span className="is-equipped" />
-            <b>Equipped</b>
+            <b>{t('equipped')}</b>
             <strong>{physical}U</strong>
           </div>
         </section>

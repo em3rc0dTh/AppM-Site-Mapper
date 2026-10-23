@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { LayoutImport } from '@/components/settings/layout-import';
+import { LanguageSwitcher } from '@/shared/ui/language-switcher';
 import type { Permission, Role } from '@/modules/identity/domain/roles';
 import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { PasswordForm } from '@/components/settings/password-form';
 import { ProfileForm } from '@/components/settings/profile-form';
@@ -23,6 +25,7 @@ export default async function SettingsPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const query = await searchParams;
+  const t = await getTranslations('pages.settings');
   const auth = await requirePermission('settings:read');
 
   if (!auth.ok) {
@@ -64,13 +67,24 @@ export default async function SettingsPage({
     'system:danger',
   ];
   const roles: Role[] = ['STANDARD', 'ADMIN', 'SUPERADMIN'];
+  const tabLabels: Record<string, string> = {
+    Profile: t('tabs.profile'),
+    Security: t('tabs.security'),
+    Users: t('tabs.users'),
+    Roles: t('tabs.roles'),
+    'Data Import': t('tabs.dataImport'),
+    Drafting: t('tabs.drafting'),
+    System: t('tabs.system'),
+    'Danger Zone': t('tabs.danger'),
+  };
   return (
     <main className="settings-shell">
       <div className="zip-settings-page-title" aria-hidden="true">
-        SETTINGS
+        {t('title')}
       </div>
       <div className="mk-settings-layout">
-        <nav className="mk-settings-nav" aria-label="Settings areas">
+        <nav className="mk-settings-nav" aria-label={t('areas')}>
+          <span className="mk-settings-nav-title">{t('title')}</span>
           {visible.map((tab) => (
             <Link
               key={tab}
@@ -92,35 +106,34 @@ export default async function SettingsPage({
                             ? '⚙'
                             : '△'}
               </span>
-              <span>{tab}</span>
+              <span>{tabLabels[tab]}</span>
             </Link>
           ))}
         </nav>
         <section className="mk-settings-body">
           {active === 'Profile' && (
             <>
-              <h2>Profile</h2>
+              <h2>{t('tabs.profile')}</h2>
               <p>
                 {auth.value.email} · {auth.value.role}
               </p>
               {canWrite && <ProfileForm displayName={auth.value.displayName} />}
+              <LanguageSwitcher />
             </>
           )}
           {active === 'Security' && (
             <>
-              <h2>Security</h2>
-              <p>
-                Passwords require at least 12 characters. Password changes revoke existing sessions.
-              </p>
+              <h2>{t('tabs.security')}</h2>
+              <p>{t('passwordPolicy')}</p>
               <PasswordForm />
             </>
           )}
           {active === 'Users' && canManageUsers && (
             <>
               <div className="zip-users-heading">
-                <h2>USERS</h2>
+                <h2>{t('tabs.users')}</h2>
                 <details>
-                  <summary>＋ ADD USER</summary>
+                  <summary>{t('addUser')}</summary>
                   <UserCreateForm />
                 </details>
               </div>
@@ -129,11 +142,11 @@ export default async function SettingsPage({
           )}
           {active === 'Roles' && (
             <>
-              <h2>Roles</h2>
+              <h2>{t('tabs.roles')}</h2>
               <table className="mk-role-table">
                 <thead>
                   <tr>
-                    <th>Permission</th>
+                    <th>{t('permission')}</th>
                     {roles.map((role) => (
                       <th key={role}>{role}</th>
                     ))}
@@ -144,58 +157,50 @@ export default async function SettingsPage({
                     <tr key={permission}>
                       <td>{permission}</td>
                       {roles.map((role) => (
-                        <td key={role}>{hasPermission(role, permission) ? 'Allowed' : '—'}</td>
+                        <td key={role}>{hasPermission(role, permission) ? t('allowed') : '—'}</td>
                       ))}
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <p>Permissions are enforced on the server.</p>
+              <p>{t('serverEnforcement')}</p>
             </>
           )}
           {active === 'Data Import' &&
             (hasPermission(auth.value.role, 'topology:write') ? (
               <LayoutImport />
             ) : (
-              <p>Import requires topology write permission.</p>
+              <p>{t('importDenied')}</p>
             ))}
           {active === 'Drafting' && (
             <>
-              <h2>Drafting</h2>
-              <p>
-                Physical grid: 600 × 600 mm. Position coordinates snap to this grid. Rack dimensions
-                remain physical millimeters. Collisions and out-of-bound placement block Save.
-              </p>
-              <p>Open a Room to edit its surveyed polygon, clusters and positions.</p>
+              <h2>{t('tabs.drafting')}</h2>
+              <p>{t('gridPolicy')}</p>
+              <p>{t('drawingHelp')}</p>
               <Link className="mk-primary" href="/network">
-                OPEN NETWORK
+                {t('openNetwork')}
               </Link>
             </>
           )}
           {active === 'System' && (
             <>
-              <h2>System</h2>
+              <h2>{t('tabs.system')}</h2>
               <dl>
-                <dt>Environment</dt>
+                <dt>{t('environment')}</dt>
                 <dd>{appEnvironment}</dd>
-                <dt>Persistence</dt>
+                <dt>{t('persistence')}</dt>
                 <dd>{getPersistenceMode()}</dd>
-                <dt>Telemetry</dt>
+                <dt>{t('telemetry')}</dt>
                 <dd>
-                  {process.env.TELEMETRY_ENABLED === 'true'
-                    ? 'Configured — inspect contextual telemetry for current freshness'
-                    : 'Not configured'}
+                  {process.env.TELEMETRY_ENABLED === 'true' ? t('configured') : t('notConfigured')}
                 </dd>
               </dl>
             </>
           )}
           {active === 'Danger Zone' && (
             <>
-              <h2>Danger Zone</h2>
-              <p>
-                Database reset is unavailable. Use controlled administration outside the operational
-                UI.
-              </p>
+              <h2>{t('tabs.danger')}</h2>
+              <p>{t('dangerHelp')}</p>
             </>
           )}
         </section>

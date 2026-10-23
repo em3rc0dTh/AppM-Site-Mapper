@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import { panelReportedPoints, telemetryMetrics } from './telemetry-presentation';
@@ -23,6 +24,7 @@ export function EquipmentTelemetryInspector({
   pointPrefix?: string;
   pointCapacity?: number | undefined;
 }) {
+  const t = useTranslations('equipmentTelemetry');
   const [window, setWindow] = useState('LIVE');
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -82,14 +84,15 @@ export function EquipmentTelemetryInspector({
     : samples;
   const pointGroupConfigured = Boolean(pointPrefix);
   return (
-    <section className="zip-bdfb-live-average" aria-label={`Telemetry ${label}`}>
+    <section className="zip-bdfb-live-average" aria-label={t('label', { name: label })}>
       <header>
-        <strong>{window === 'LIVE' ? 'LIVE TELEMETRY' : 'HISTORY'}</strong>
+        <strong>{window === 'LIVE' ? t('live') : t('history')}</strong>
         <span>
-          {label} · {pointGroupConfigured ? `Point group ${pointPrefix}` : 'Own readings'}
+          {label} ·{' '}
+          {pointGroupConfigured ? t('pointGroup', { prefix: pointPrefix ?? '' }) : t('ownReadings')}
         </span>
       </header>
-      <div className="zip-bdfb-window-tabs" role="tablist" aria-label="Telemetry time window">
+      <div className="zip-bdfb-window-tabs" role="tablist" aria-label={t('timeWindow')}>
         {['LIVE', ...TELEMETRY_HISTORY_WINDOWS].map((value) => (
           <button
             key={value}
@@ -109,18 +112,15 @@ export function EquipmentTelemetryInspector({
       </div>
       <p role="status">
         {loading
-          ? 'Loading…'
-          : (error ??
-            (window === 'LIVE'
+          ? t('loading')
+          : error
+            ? t('unavailable')
+            : window === 'LIVE'
               ? current?.status
-              : `${visibleSamples.length} historical packets for this panel`))}
+              : t('historicalPackets', { count: visibleSamples.length })}
       </p>
       {!loading && !error && !visibleSamples.length && (
-        <p>
-          {window === 'LIVE'
-            ? 'No own measurements received.'
-            : 'No stored measurements in this period.'}
-        </p>
+        <p>{window === 'LIVE' ? t('noOwnMeasurements') : t('noStoredMeasurements')}</p>
       )}
       <div style={{ maxHeight: 420, overflowY: 'auto' }}>
         {visibleSamples.map((sample) => (
@@ -145,19 +145,12 @@ export function EquipmentTelemetryInspector({
             </div>
             {pointGroupConfigured &&
               !Object.keys(panelReportedPoints(sample.reported, pointPrefix, pointCapacity))
-                .length && (
-                <p>
-                  No received points for {pointPrefix} in this packet. RAW data from other groups is
-                  preserved.
-                </p>
-              )}
+                .length && <p>{t('noPoints', { prefix: pointPrefix ?? '' })}</p>}
           </article>
         ))}
       </div>
-      <small>Last matching packet: {visibleSamples.at(-1)?.receivedAt ?? '—'}</small>
-      {window !== 'LIVE' && (
-        <p>Last packet per time bucket; source labels and units preserved. Up to 1000 packets.</p>
-      )}
+      <small>{t('last', { time: visibleSamples.at(-1)?.receivedAt ?? '—' })}</small>
+      {window !== 'LIVE' && <p>{t('note')}</p>}
     </section>
   );
 }

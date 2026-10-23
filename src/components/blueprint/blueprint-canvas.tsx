@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 import { InlineInspector } from '@/shared/ui/inline-inspector';
 import { type InspectorEntity } from '@/shared/ui/entity-inspector';
@@ -107,6 +108,7 @@ export function BlueprintCanvas({
   focusBayId?: string | undefined;
   focusPositionId?: string | undefined;
 }>) {
+  const t = useTranslations('blueprintCanvas');
   const base = useMemo(() => boundsFor(polygon), [polygon]);
   const labels = useMemo(() => gridLabels(polygon), [polygon]);
   const focusedRack = racks.find((rack) => rack.id === focusRackId);
@@ -127,7 +129,7 @@ export function BlueprintCanvas({
                   },
                   { label: 'Vertices', value: bay.polygon.length },
                 ]
-              : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
+              : [{ label: 'Geometry', value: t('unsurveyedFootprint') }],
           },
         ],
       };
@@ -136,13 +138,13 @@ export function BlueprintCanvas({
     return position
       ? {
           name: position.name,
-          kind: 'POSITION REFERENCE',
+          kind: t('positionReference'),
           sections: [
             {
               title: 'Grid anchor',
               fields: [
-                { label: 'Coordinate', value: `${position.row}-${position.column}` },
-                { label: 'State', value: position.occupied ? 'Occupied' : 'Available' },
+                { label: t('coordinate'), value: `${position.row}-${position.column}` },
+                { label: t('state'), value: position.occupied ? 'Occupied' : 'Available' },
               ],
             },
           ],
@@ -171,9 +173,9 @@ export function BlueprintCanvas({
             ? [
                 { label: 'Area', value: `${(polygonArea(polygon) / 1_000_000).toFixed(2)} m²` },
                 { label: 'Vertices', value: polygon.length },
-                { label: 'Coordinates', value: 'Preserved from the room layout' },
+                { label: t('coordinatesLabel'), value: 'Preserved from the room layout' },
               ]
-            : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
+            : [{ label: 'Geometry', value: t('unsurveyedFootprint') }],
         },
       ],
     });
@@ -191,14 +193,14 @@ export function BlueprintCanvas({
       kind: 'CONTAINER / RACK',
       sections: [
         {
-          title: 'Physical',
+          title: t('physical'),
           fields: [
-            { label: 'Footprint', value: `${rack.rect.width} × ${rack.rect.depth} mm` },
+            { label: t('footprintLabel'), value: `${rack.rect.width} × ${rack.rect.depth} mm` },
             { label: 'Coordinates', value: `X ${rack.rect.x} / Y ${rack.rect.y} mm` },
           ],
         },
       ],
-      actions: [{ label: 'Open rack focus', href: `/rack/${rack.id}/focus` }],
+      actions: [{ label: t('openRackFocus'), href: `/rack/${rack.id}/focus` }],
     });
   }
   const [zoom, setZoom] = useState(focusedRack ? 2 : 1);
@@ -268,23 +270,25 @@ export function BlueprintCanvas({
     <section className="blueprint-panel">
       <header className="blueprint-toolbar zip-blueprint-toolbar">
         <div>
-          <small>2D DRAFTING VIEW</small>
-          <strong>Room blueprint</strong>
-          <span>600 × 600 mm grid · {Math.round(zoom * 100)}%</span>
+          <small>{t('view')}</small>
+          <strong>{t('title')}</strong>
+          <span>
+            600 × 600 mm {t('grid')} · {Math.round(zoom * 100)}%
+          </span>
         </div>
         <div className="zip-blueprint-mode">
           <span className="zip-blueprint-mode-dot" />
-          <b>{onPlace ? 'CLICK TO PLACE' : 'VIEW MODE'}</b>
+          <b>{onPlace ? t('place') : t('mode')}</b>
         </div>
       </header>
 
       <div className="blueprint-canvas-shell zip-blueprint-shell">
-        <div className="zip-drafting-tools" aria-label="Drafting tools">
+        <div className="zip-drafting-tools" aria-label={t('draftingTools')}>
           <button
             type="button"
             aria-pressed={tool === 'select'}
             onClick={() => setTool('select')}
-            title="Select"
+            title={t('select')}
           >
             ↖
           </button>
@@ -292,21 +296,21 @@ export function BlueprintCanvas({
             type="button"
             aria-pressed={tool === 'pan'}
             onClick={() => setTool('pan')}
-            title="Pan"
+            title={t('pan')}
           >
             ✥
           </button>
           <button
             type="button"
             onClick={() => setZoom((value) => Math.min(5, value * 1.2))}
-            title="Zoom in"
+            title={t('zoomIn')}
           >
             +
           </button>
           <button
             type="button"
             onClick={() => setZoom((value) => Math.max(0.5, value / 1.2))}
-            title="Zoom out"
+            title={t('zoomOut')}
           >
             −
           </button>
@@ -316,7 +320,7 @@ export function BlueprintCanvas({
               setZoom(1);
               setPan({ x: 0, y: 0 });
             }}
-            title="Fit"
+            title={t('fit')}
           >
             ⌂
           </button>
@@ -339,7 +343,7 @@ export function BlueprintCanvas({
             pointer.current = null;
           }}
           role="group"
-          aria-label="Room blueprint"
+          aria-label={t('roomBlueprint')}
         >
           <defs>
             <pattern id="grid600" width="600" height="600" patternUnits="userSpaceOnUse">
@@ -391,7 +395,7 @@ export function BlueprintCanvas({
                 className={`blueprint-cluster-node${selectedBayId === cluster.id ? ' is-selected' : ''}`}
                 tabIndex={0}
                 role="button"
-                aria-label={`Inspect bay ${cluster.name}`}
+                aria-label={t('inspectBay', { name: cluster.name })}
                 onClick={() => {
                   if (tool === 'select' && !onPlace) inspectBay(cluster);
                 }}
@@ -429,7 +433,7 @@ export function BlueprintCanvas({
                   key={position.id}
                   role="button"
                   tabIndex={0}
-                  aria-label={`Available ${position.name}`}
+                  aria-label={t('availablePosition', { name: position.name })}
                   onClick={() => {
                     if (onPlace) return;
                     if (onSelectPosition) onSelectPosition(position.id);
@@ -440,12 +444,12 @@ export function BlueprintCanvas({
                         kind: 'POSITION REFERENCE',
                         sections: [
                           {
-                            title: 'Grid origin',
+                            title: t('gridOrigin'),
                             fields: [
                               { label: 'Coordinate', value: `${position.row}-${position.column}` },
                               {
                                 label: 'State',
-                                value: 'Available; choose a rack footprint when placing',
+                                value: t('availableHelp'),
                               },
                             ],
                           },
@@ -470,7 +474,7 @@ export function BlueprintCanvas({
                     textAnchor="middle"
                     className="blueprint-cluster-label"
                   >
-                    {onSelectPosition ? '+ ADD' : position.name}
+                    {onSelectPosition ? t('add') : position.name}
                   </text>
                 </g>
               );
@@ -492,7 +496,7 @@ export function BlueprintCanvas({
               className={`blueprint-rack-node${selectedRackId === rack.id ? ' is-selected' : ''}`}
               role="button"
               tabIndex={0}
-              aria-label={`Inspect ${rack.name}`}
+              aria-label={t('inspectRack', { name: rack.name })}
               onClick={() => {
                 if (tool === 'select' && !onPlace) inspectRack(rack);
               }}
@@ -544,14 +548,10 @@ export function BlueprintCanvas({
         </div>
       </div>
       <footer className="blueprint-legend">
-        <StatusBadge tone="accent">{clusters.length} CLUSTERS</StatusBadge>
-        <StatusBadge tone="accent">{racks.length} RACK FOOTPRINTS</StatusBadge>
-        <StatusBadge>{slots.length} ASSIGNABLE TILES</StatusBadge>
-        <span>
-          {tool === 'pan'
-            ? 'Drag to pan · scroll to zoom'
-            : 'Select a rack to inspect · scroll to zoom'}
-        </span>
+        <StatusBadge tone="accent">{t('clusters', { count: clusters.length })}</StatusBadge>
+        <StatusBadge tone="accent">{t('racks', { count: racks.length })}</StatusBadge>
+        <StatusBadge>{t('tiles', { count: slots.length })}</StatusBadge>
+        <span>{tool === 'pan' ? t('panHelp') : t('selectHelp')}</span>
       </footer>
       {focusedRackId && (
         <div
@@ -563,19 +563,15 @@ export function BlueprintCanvas({
             className="blueprint-rack-dialog"
             role="dialog"
             aria-modal="true"
-            aria-label="Rack focus"
+            aria-label={t('rackFocus')}
             onClick={(event) => event.stopPropagation()}
           >
             <header>
               <div>
-                <small>RACK FOCUS · ROOM CONTEXT</small>
+                <small>{t('focus')}</small>
                 <h2>{racks.find((rack) => rack.id === focusedRackId)?.name}</h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setFocusedRackId(null)}
-                aria-label="Close rack focus"
-              >
+              <button type="button" onClick={() => setFocusedRackId(null)} aria-label={t('close')}>
                 ×
               </button>
             </header>
@@ -583,27 +579,27 @@ export function BlueprintCanvas({
               .filter((rack) => rack.id === focusedRackId)
               .map((rack) => (
                 <div key={rack.id} className="blueprint-rack-dialog-body">
-                  <div className="blueprint-rack-footprint" aria-label="Rack physical footprint">
+                  <div className="blueprint-rack-footprint" aria-label={t('rackFootprint')}>
                     <div style={{ aspectRatio: `${rack.rect.width} / ${rack.rect.depth}` }}>
                       <strong>{rack.name}</strong>
-                      <small>Top view</small>
+                      <small>{t('topView')}</small>
                     </div>
                   </div>
                   <dl>
-                    <dt>Footprint</dt>
+                    <dt>{t('footprint')}</dt>
                     <dd>
                       {rack.rect.width} × {rack.rect.depth} mm
                     </dd>
-                    <dt>Position (mm)</dt>
+                    <dt>{t('position')}</dt>
                     <dd>
                       X {rack.rect.x} · Y {rack.rect.y}
                     </dd>
-                    <dt>Data origin</dt>
-                    <dd>Saved MongoDB room geometry</dd>
+                    <dt>{t('origin')}</dt>
+                    <dd>{t('saved')}</dd>
                   </dl>
                   <div className="blueprint-rack-dialog-actions">
-                    <Link href={`/rack/${rack.id}`}>OPEN RACK ELEVATION</Link>
-                    <Link href={`/power?entity=${rack.id}`}>TRACE POWER</Link>
+                    <Link href={`/rack/${rack.id}`}>{t('open')}</Link>
+                    <Link href={`/power?entity=${rack.id}`}>{t('trace')}</Link>
                   </div>
                 </div>
               ))}

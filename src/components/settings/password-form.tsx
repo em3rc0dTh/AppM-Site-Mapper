@@ -1,9 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
 export function PasswordForm() {
+  const t = useTranslations('forms.password');
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -18,7 +20,7 @@ export function PasswordForm() {
     const newPassword = String(form.get('newPassword') ?? '');
 
     if (newPassword.length < 12) {
-      setError('PASSWORD_MINIMUM_12_CHARACTERS');
+      setError(t('minLength'));
       setBusy(false);
       return;
     }
@@ -31,7 +33,7 @@ export function PasswordForm() {
     const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
     if (!response.ok) {
-      setError(body?.error ?? 'PASSWORD_CHANGE_FAILED');
+      setError(t('failed'));
       setBusy(false);
       return;
     }
@@ -43,11 +45,11 @@ export function PasswordForm() {
   return (
     <form className="settings-form" onSubmit={submit}>
       <label>
-        Current password
+        {t('current')}
         <input autoComplete="current-password" name="currentPassword" required type="password" />
       </label>
       <label>
-        New password
+        {t('next')}
         <input
           autoComplete="new-password"
           minLength={12}
@@ -57,9 +59,9 @@ export function PasswordForm() {
         />
       </label>
       <button disabled={busy} type="submit">
-        {busy ? 'Changing…' : 'Change password'}
+        {busy ? t('changing') : t('submit')}
       </button>
-      <small>Changing your password revokes every active session, including this one.</small>
+      <small>{t('help')}</small>
       {error ? <small className="form-error">{error}</small> : null}
     </form>
   );

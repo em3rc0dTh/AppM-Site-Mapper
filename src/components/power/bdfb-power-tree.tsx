@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
@@ -16,16 +17,17 @@ export function BdfbPowerTree({
   activePanelId?: string | undefined;
   presentation: BdfbPresentation;
 }>) {
+  const t = useTranslations('bdfbTree');
   const site = trail.find((node) => node.kind === 'SITE');
   const structure = trail.find((node) => node.kind === 'STRUCTURE');
 
   return (
-    <nav className="zip-bdfb-tree" aria-label="BDFB power tree">
+    <nav className="zip-bdfb-tree" aria-label={t('tree')}>
       <Link className="zip-bdfb-back" href="/power" prefetch={false}>
-        ← POWER PATH
+        ← {t('power')}
       </Link>
       <header>
-        POWER TREE <span>⌄</span>
+        {t('title')} <span>⌄</span>
       </header>
       <div className="zip-bdfb-tree-body">
         {site && (
@@ -52,14 +54,16 @@ export function BdfbPowerTree({
             <div className="zip-bdfb-tree-row level-3">
               <span>⌄</span>
               <b>▤</b>
-              <strong>{shelf.physical === false ? 'DIRECT CHASSIS' : shelf.label}</strong>
+              <strong>{shelf.physical === false ? t('direct') : shelf.label}</strong>
             </div>
             {shelf.frames.map((frame) => (
               <div key={frame.id}>
                 <div className="zip-bdfb-tree-row level-4">
                   <span>⌄</span>
                   <b>▥</b>
-                  <strong>{frame.physical ? frame.label : `GROUP ${frame.label}`}</strong>
+                  <strong>
+                    {frame.physical ? frame.label : t('group', { label: frame.label })}
+                  </strong>
                 </div>
                 {frame.panels.map((panel) => (
                   <Link

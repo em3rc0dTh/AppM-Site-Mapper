@@ -1,10 +1,8 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
 import { StatePanel } from '@/shared/ui/primitives';
 export default function Loading() {
-  return (
-    <StatePanel
-      kind="loading"
-      title="Loading workspace"
-      description="Retrieving the latest operational view."
-    />
-  );
+  const t = useTranslations('systemStates');
+  return <StatePanel kind="loading" title={t('loadingTitle')} description={t('loadingHelp')} />;
 }

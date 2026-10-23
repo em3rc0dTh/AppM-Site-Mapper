@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type {
   FullPowerTrace,
@@ -30,17 +31,18 @@ function SourceCard({
   feed,
   leg,
 }: Readonly<{ feed: 'A' | 'B'; leg: FullPowerTraceLeg | undefined }>) {
+  const t = useTranslations('fullTrace');
   return (
     <article className="trace-source-card" data-feed={feed} data-empty={leg ? 'false' : 'true'}>
       <header>
-        <span>SOURCE {feed}</span>
+        <span>{t('source', { feed })}</span>
         <FeedBadge feed={feed} />
       </header>
-      <strong>{leg?.source.entityName ?? `Feed ${feed} not configured`}</strong>
-      <small>{leg?.source.panel ? `Panel ${leg.source.panel}` : 'No source panel'}</small>
-      <small>{leg?.source.breaker ? `CB ${leg.source.breaker}` : 'No breaker'}</small>
+      <strong>{leg?.source.entityName ?? t('feedUnconfigured', { feed })}</strong>
+      <small>{leg?.source.panel ? t('panel', { name: leg.source.panel }) : t('noPanel')}</small>
+      <small>{leg?.source.breaker ? t('cb', { name: leg.source.breaker }) : t('noBreaker')}</small>
       {leg?.source.breakerSerialNumber ? (
-        <small>Breaker SN: {leg.source.breakerSerialNumber}</small>
+        <small>{t('breakerSerial', { serial: leg.source.breakerSerialNumber })}</small>
       ) : null}
     </article>
   );
@@ -50,6 +52,7 @@ function TelemetryCard({
   feed,
   leg,
 }: Readonly<{ feed: 'A' | 'B'; leg: FullPowerTraceLeg | undefined }>) {
+  const t = useTranslations('fullTrace');
   return (
     <article
       className="trace-telemetry-card"
@@ -58,16 +61,14 @@ function TelemetryCard({
     >
       <header>
         <span>ϟ</span>
-        <small>LIVE TELEMETRY ({feed})</small>
+        <small>{t('live', { feed })}</small>
       </header>
       <div>
         <strong>{metric(leg?.telemetry.voltageV, 'V')}</strong>
         <strong>{metric(leg?.telemetry.currentA, 'A')}</strong>
         <strong>{metric(leg?.telemetry.energyKwh, 'kWh', 4)}</strong>
       </div>
-      <small>
-        {leg?.telemetry.sourceIdentity ?? leg?.telemetry.rawPointId ?? 'No MQTT reading'}
-      </small>
+      <small>{leg?.telemetry.sourceIdentity ?? leg?.telemetry.rawPointId ?? t('noMqtt')}</small>
     </article>
   );
 }
@@ -133,17 +134,18 @@ function FeedTrace({
   feed,
   leg,
 }: Readonly<{ feed: 'A' | 'B'; leg: FullPowerTraceLeg | undefined }>) {
+  const t = useTranslations('fullTrace');
   if (!leg) {
     return (
       <section className="trace-detail-column" data-feed={feed}>
         <header>
           <div>
             <FeedBadge feed={feed} />
-            <strong>TRACE PATH — FEED {feed}</strong>
+            <strong>{t('trace', { feed })}</strong>
           </div>
-          <span className="trace-status-badge is-missing">NOT CONFIGURED</span>
+          <span className="trace-status-badge is-missing">{t('notConfigured')}</span>
         </header>
-        <div className="trace-empty-column">No configured Feed {feed} path.</div>
+        <div className="trace-empty-column">{t('emptyPath', { feed })}</div>
       </section>
     );
   }
@@ -160,83 +162,86 @@ function FeedTrace({
       <header>
         <div>
           <FeedBadge feed={feed} />
-          <strong>TRACE PATH — FEED {feed}</strong>
+          <strong>{t('trace', { feed })}</strong>
         </div>
         <span
           className="trace-status-badge"
           data-ok={leg.topologyStatus === 'VALID' ? 'true' : 'false'}
         >
-          {leg.topologyStatus === 'VALID' ? 'VERIFIED' : leg.topologyStatus.replaceAll('_', ' ')}
+          {leg.topologyStatus === 'VALID' ? t('verified') : leg.topologyStatus.replaceAll('_', ' ')}
         </span>
       </header>
 
       <TraceStep
         index={1}
-        label="Source Device (BDFB)"
+        label={t('sourceDevice')}
         value={leg.source.entityName}
         detail={
           leg.source.deviceSerialNumber
-            ? `Device SN: ${leg.source.deviceSerialNumber}`
-            : 'Device SN not assigned'
+            ? t('deviceSerial', { serial: leg.source.deviceSerialNumber })
+            : t('deviceNoSerial')
         }
-        status="Recorded"
+        status={t('recorded')}
       />
       <TraceStep
         index={2}
-        label="BDFB Side"
+        label={t('side')}
         value={leg.source.shelf ?? '—'}
         detail={leg.source.frame}
-        status="Active"
+        status={t('active')}
       />
       <TraceStep
         index={3}
-        label="Panel"
+        label={t('panelLabel')}
         value={leg.source.panel ?? '—'}
         detail={leg.telemetry.rawPointId}
-        status="Active"
+        status={t('active')}
       />
       <TraceStep
         index={4}
-        label="Circuit Breaker"
+        label={t('circuitBreaker')}
         value={leg.source.breaker ?? '—'}
         detail={
           leg.source.breakerSerialNumber
-            ? `Breaker SN: ${leg.source.breakerSerialNumber} · ID: ${leg.source.breakerId ?? '—'}`
-            : `Breaker ID: ${leg.source.breakerId ?? '—'} · SN not assigned`
+            ? t('breakerSerialDetail', {
+                serial: leg.source.breakerSerialNumber,
+                id: leg.source.breakerId ?? '—',
+              })
+            : t('breakerNoSerial', { id: leg.source.breakerId ?? '—' })
         }
         status={leg.telemetry.status}
       />
       <TraceStep
         index={5}
-        label="Electrical Path"
+        label={t('electrical')}
         value={leg.label ?? leg.pathId}
-        detail={`Feed ${feed}`}
-        status={leg.topologyStatus === 'VALID' ? 'Valid' : 'Invalid'}
+        detail={t('feedDetail', { feed })}
+        status={leg.topologyStatus === 'VALID' ? t('valid') : t('invalid')}
       />
       <TraceStep
         index={6}
-        label="Telemetry"
+        label={t('telemetry')}
         value={telemetry}
         detail={
           leg.telemetry.sourceIdentity
-            ? `MQTT sn: ${leg.telemetry.sourceIdentity}${leg.telemetry.rawPointId ? ` · Raw point: ${leg.telemetry.rawPointId}` : ''}${leg.telemetry.receivedAt ? ` · Received: ${leg.telemetry.receivedAt}` : ''}`
-            : 'No breaker-specific MQTT binding'
+            ? `${t('mqttSerial', { identity: leg.telemetry.sourceIdentity })}${leg.telemetry.rawPointId ? t('rawPoint', { point: leg.telemetry.rawPointId }) : ''}${leg.telemetry.receivedAt ? t('receivedAt', { time: leg.telemetry.receivedAt }) : ''}`
+            : t('noBreakerBinding')
         }
         status={leg.telemetry.status}
       />
       <TraceStep
         index={7}
-        label="Access Port"
-        value={targetPort?.label ?? 'Legacy / unresolved port'}
+        label={t('port')}
+        value={targetPort?.label ?? t('legacy')}
         detail={targetPort?.id}
-        status={targetPort ? 'Connected' : 'Missing'}
+        status={targetPort ? t('connected') : t('missing')}
       />
       <TraceStep
         index={8}
-        label="Destination Device"
+        label={t('destination')}
         value={leg.target.entityName}
         detail={leg.target.hierarchy.join(' › ')}
-        status="Present"
+        status={t('present')}
       />
     </section>
   );
@@ -254,6 +259,7 @@ export function FullPowerTraceModal({
   selectedPathId,
   label = 'ϟ FULL POWER TRACE',
 }: Readonly<{ entityId: string; selectedPathId?: string; label?: string }>) {
+  const t = useTranslations('fullTrace');
   const [open, setOpen] = useState(false);
   const [trace, setTrace] = useState<FullPowerTrace | null>(null);
   const [loading, setLoading] = useState(false);
@@ -333,35 +339,27 @@ export function FullPowerTraceModal({
               <div className="trace-reference-title">
                 <span className="trace-pulse">ϟ</span>
                 <div>
-                  <h2 id="full-power-trace-title">TRACE PATH</h2>
-                  <small>FULL POWER TRACE · MQTT LIVE EVIDENCE</small>
+                  <h2 id="full-power-trace-title">{t('pathTitle')}</h2>
+                  <small>{t('subtitle')}</small>
                 </div>
               </div>
               <div className="trace-reference-summary">
                 <b className={view?.verified ? 'is-ok' : ''}>
-                  {view?.verified ? '✓ VERIFIED' : 'INCOMPLETE'}
+                  {view?.verified ? t('verifiedBadge') : t('incomplete')}
                 </b>
                 <span>
-                  REDUNDANCY: <strong>A + B</strong>
+                  {t('redundancy')} <strong>A + B</strong>
                 </span>
                 <span>
-                  AUDIT STATE: <strong>{view?.verified ? 'NOMINAL' : 'REVIEW'}</strong>
+                  {t('audit')} <strong>{view?.verified ? t('nominal') : t('review')}</strong>
                 </span>
               </div>
-              <button
-                type="button"
-                aria-label="Close full power trace"
-                onClick={() => setOpen(false)}
-              >
+              <button type="button" aria-label={t('close')} onClick={() => setOpen(false)}>
                 ×
               </button>
             </header>
 
-            {loading ? (
-              <div className="full-power-trace-state">
-                Resolving physical power paths and MQTT telemetry…
-              </div>
-            ) : null}
+            {loading ? <div className="full-power-trace-state">{t('loading')}</div> : null}
             {error ? <div className="full-power-trace-state is-error">{error}</div> : null}
 
             {trace && view ? (
@@ -397,41 +395,32 @@ export function FullPowerTraceModal({
 
                 <footer className="trace-reference-footer">
                   <article>
-                    <small>REDUNDANCY STATUS</small>
-                    <strong>
-                      {view.redundancyVerified ? 'DOUBLE PATH A + B' : 'NOT VERIFIED'}
-                    </strong>
+                    <small>{t('redundancyStatus')}</small>
+                    <strong>{view.redundancyVerified ? t('double') : t('notVerified')}</strong>
                     <span>
-                      {view.policy?.policy === 'A_B_REQUIRED'
-                        ? 'Independent feeds required by policy.'
-                        : 'A+B policy is not declared.'}
+                      {view.policy?.policy === 'A_B_REQUIRED' ? t('independent') : t('undeclared')}
                     </span>
                   </article>
                   <article>
-                    <small>VALIDATION</small>
+                    <small>{t('validation')}</small>
                     <strong>
-                      {view.topologyVerified && view.telemetryVerified
-                        ? 'ALL CHECKS PASSED'
-                        : 'CHECKS PENDING'}
+                      {view.topologyVerified && view.telemetryVerified ? t('passed') : t('pending')}
                     </strong>
-                    <span>
-                      Topology, exact breaker mapping and live telemetry are evaluated
-                      independently.
-                    </span>
+                    <span>{t('evaluation')}</span>
                   </article>
                   <article>
-                    <small>MQTT SOURCES</small>
+                    <small>{t('sources')}</small>
                     <strong>
                       {view.feedA?.telemetry.sourceIdentity ?? '—'} +{' '}
                       {view.feedB?.telemetry.sourceIdentity ?? '—'}
                     </strong>
-                    <span>No simulated connectivity is used in this trace.</span>
+                    <span>{t('noSimulation')}</span>
                   </article>
                 </footer>
 
                 {trace.unspecified.length ? (
                   <section className="full-power-trace-unspecified">
-                    <h3>Unclassified legacy paths</h3>
+                    <h3>{t('legacyPaths')}</h3>
                     {trace.unspecified.map((leg) => (
                       <div key={leg.pathId} className="trace-legacy-row">
                         <strong>{leg.target.entityName}</strong>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 interface PowerSource {
   readonly entityId: string;
@@ -52,6 +53,7 @@ export function ConnectPowerForm({
   destinations: readonly DestinationOption[];
   returnHref: string;
 }>) {
+  const t = useTranslations('connectPower');
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [destinationId, setDestinationId] = useState('');
@@ -111,14 +113,12 @@ export function ConnectPowerForm({
 
   function addCandidate() {
     if (!selectedDestination || !selectedPort) {
-      setError('Select a destination POWER port before adding a candidate.');
+      setError(t('selectPower'));
       return;
     }
     const candidateFeed = selectedPort.feed ?? source.feed ?? feed;
     if (source.feed && candidateFeed !== source.feed) {
-      setError(
-        `This breaker belongs to Feed ${source.feed}; choose a compatible destination port.`,
-      );
+      setError(t('wrongFeed', { feed: source.feed }));
       return;
     }
 
@@ -171,11 +171,11 @@ export function ConnectPowerForm({
       if (!response.ok || !payload?.path?.id) {
         const message =
           payload?.error === 'TARGET_ALREADY_CONNECTED'
-            ? 'That physical POWER input is already connected. Choose another candidate.'
+            ? t('connectedInput')
             : payload?.error === 'FEED_MISMATCH'
-              ? 'The selected target port belongs to the other electrical feed.'
+              ? t('feedMismatch')
               : payload?.error;
-        setError(message ?? `Unable to create power path (HTTP ${response.status}).`);
+        setError(message ?? t('connectionFailed', { status: response.status }));
         return;
       }
 
@@ -192,11 +192,11 @@ export function ConnectPowerForm({
     <main className="power-connect-page">
       <header className="power-connect-header">
         <div>
-          <p>POWER / COMMISSIONING</p>
-          <h1>Connect power</h1>
-          <span>Add candidate endpoints, then confirm the one that is physically connected.</span>
+          <p>{t('header')}</p>
+          <h1>{t('title')}</h1>
+          <span>{t('intro')}</span>
         </div>
-        <Link href={returnHref}>← Back to breaker</Link>
+        <Link href={returnHref}>{t('back')}</Link>
       </header>
 
       <div className="power-connect-layout">
@@ -204,8 +204,8 @@ export function ConnectPowerForm({
           <div className="power-connect-step">
             <span>1</span>
             <div>
-              <strong>Source circuit</strong>
-              <small>Fixed from the breaker you selected</small>
+              <strong>{t('source')}</strong>
+              <small>{t('sourceFixed')}</small>
             </div>
           </div>
 
@@ -220,16 +220,18 @@ export function ConnectPowerForm({
             </div>
             <dl>
               <div>
-                <dt>Breaker</dt>
+                <dt>{t('breaker')}</dt>
                 <dd>{source.breakerLabel}</dd>
               </div>
               <div>
-                <dt>Capacity</dt>
-                <dd>{source.capacity === undefined ? 'Not specified' : `${source.capacity} A`}</dd>
+                <dt>{t('capacity')}</dt>
+                <dd>
+                  {source.capacity === undefined ? t('notSpecified') : `${source.capacity} A`}
+                </dd>
               </div>
               <div>
-                <dt>Physical feed</dt>
-                <dd>{source.feed ?? 'Not declared'}</dd>
+                <dt>{t('physicalFeed')}</dt>
+                <dd>{source.feed ?? t('notDeclared')}</dd>
               </div>
             </dl>
           </article>
@@ -237,25 +239,21 @@ export function ConnectPowerForm({
           <div className="power-connect-step">
             <span>2</span>
             <div>
-              <strong>Candidate POWER ports</strong>
-              <small>Evaluate several endpoints without declaring them physically connected</small>
+              <strong>{t('candidatePorts')}</strong>
+              <small>{t('evaluate')}</small>
             </div>
           </div>
 
           <label className="power-destination-search">
-            <span>Search inventory or port</span>
+            <span>{t('search')}</span>
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by name, serial, location or power port..."
+              placeholder={t('searchPlaceholder')}
             />
           </label>
 
-          <div
-            className="power-destination-list"
-            role="radiogroup"
-            aria-label="Candidate power port"
-          >
+          <div className="power-destination-list" role="radiogroup" aria-label={t('candidate')}>
             {visibleDestinations.flatMap((item) =>
               item.ports.map((port) => {
                 const selected = destinationId === item.id && accessPortId === port.id;
@@ -282,9 +280,9 @@ export function ConnectPowerForm({
                       <strong>{item.name}</strong>
                       <small>
                         {item.kind} · {port.label}
-                        {port.feed ? ` · FEED ${port.feed}` : ''}
+                        {port.feed ? ` · ${t('feedLabel', { feed: port.feed })}` : ''}
                       </small>
-                      <em>{item.context || 'No physical context available'}</em>
+                      <em>{item.context || t('noContext')}</em>
                     </span>
                     <code>{port.id}</code>
                   </label>
@@ -292,9 +290,7 @@ export function ConnectPowerForm({
               }),
             )}
             {!visibleDestinations.some((item) => item.ports.length) ? (
-              <div className="power-connect-empty">
-                No matching POWER access ports. Configure the destination power contract first.
-              </div>
+              <div className="power-connect-empty">{t('noMatchingPorts')}</div>
             ) : null}
           </div>
 
@@ -304,7 +300,7 @@ export function ConnectPowerForm({
             disabled={!destinationId || !accessPortId}
             onClick={addCandidate}
           >
-            + ADD CANDIDATE
+            {t('addCandidate')}
           </button>
         </section>
 
@@ -312,11 +308,9 @@ export function ConnectPowerForm({
           <div className="power-connect-step">
             <span>3</span>
             <div>
-              <strong>Feed</strong>
+              <strong>{t('feed')}</strong>
               <small>
-                {source.feed
-                  ? `Locked by physical source: Feed ${source.feed}`
-                  : 'Assign the electrical feed identity'}
+                {source.feed ? t('lockedFeed', { feed: source.feed }) : t('assignFeed')}
               </small>
             </div>
           </div>
@@ -330,18 +324,15 @@ export function ConnectPowerForm({
                 data-selected={feed === value ? 'true' : 'false'}
                 onClick={() => selectFeed(value)}
               >
-                <span>FEED {value}</span>
-                <strong>{feed === value ? '● Selected' : '○ Select'}</strong>
+                <span>{t('feedLabel', { feed: value })}</span>
+                <strong>{feed === value ? t('selected') : t('select')}</strong>
               </button>
             ))}
           </div>
 
           <section className="power-connect-review">
-            <h2>Commissioning candidates</h2>
-            <p>
-              Candidates are drafts only. They do not appear in Full Power Trace until one is
-              confirmed.
-            </p>
+            <h2>{t('candidates')}</h2>
+            <p>{t('draftCandidates')}</p>
             {candidates.length ? (
               <div className="power-candidate-list">
                 {candidates.map((candidate) => {
@@ -361,34 +352,35 @@ export function ConnectPowerForm({
                       <span>
                         <strong>{details.destination?.name ?? candidate.destinationId}</strong>
                         <small>
-                          {details.port?.label ?? candidate.accessPortId} · FEED {candidate.feed}
+                          {details.port?.label ?? candidate.accessPortId} ·{' '}
+                          {t('feedLabel', { feed: candidate.feed })}
                         </small>
                       </span>
                       <button type="button" onClick={() => removeCandidate(candidate.key)}>
-                        REMOVE
+                        {t('remove')}
                       </button>
                     </label>
                   );
                 })}
               </div>
             ) : (
-              <div className="power-connect-empty">No candidates added yet.</div>
+              <div className="power-connect-empty">{t('noCandidates')}</div>
             )}
           </section>
 
           <label className="power-path-label">
             <span>
-              Connection label <small>Optional</small>
+              {t('connectionLabel')} <small>{t('optional')}</small>
             </span>
             <input
               value={label}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder={selectedCandidate?.feed === 'B' ? 'Secondary feed' : 'Primary feed'}
+              placeholder={selectedCandidate?.feed === 'B' ? t('secondaryFeed') : t('primaryFeed')}
             />
           </label>
 
           <section className="power-connect-review">
-            <h2>Physical connection to confirm</h2>
+            <h2>{t('confirm')}</h2>
             {selectedCandidate ? (
               (() => {
                 const details = candidateDetails(selectedCandidate);
@@ -406,25 +398,25 @@ export function ConnectPowerForm({
                       <span>{details.port?.label ?? selectedCandidate.accessPortId}</span>
                     </div>
                     <dl>
-                      <dt>Feed</dt>
+                      <dt>{t('feed')}</dt>
                       <dd>{selectedCandidate.feed}</dd>
-                      <dt>Status after save</dt>
-                      <dd>CONNECTED / PowerPath ACTIVE</dd>
+                      <dt>{t('status')}</dt>
+                      <dd>{t('connected')}</dd>
                     </dl>
                   </>
                 );
               })()
             ) : (
-              <div className="power-connect-empty">Select one candidate to confirm.</div>
+              <div className="power-connect-empty">{t('choose')}</div>
             )}
           </section>
 
           {error ? <p className="power-connect-error">{error}</p> : null}
 
           <div className="power-connect-actions">
-            <Link href={returnHref}>Cancel</Link>
+            <Link href={returnHref}>{t('cancel')}</Link>
             <button type="button" disabled={!selectedCandidate || saving} onClick={connect}>
-              {saving ? 'Connecting…' : 'CONFIRM PHYSICAL CONNECTION'}
+              {saving ? t('connecting') : t('submit')}
             </button>
           </div>
         </aside>

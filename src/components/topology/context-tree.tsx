@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState, type CSSProperties, type MouseEvent } from 'react';
 
@@ -14,28 +15,40 @@ function iconFor(kind: TopologyKind): string {
   return 'box';
 }
 
-function labelFor(kind: TopologyKind): string {
+type TopologyKindLabel =
+  | 'network'
+  | 'site'
+  | 'structure'
+  | 'level'
+  | 'room'
+  | 'bay'
+  | 'position'
+  | 'rack'
+  | 'device'
+  | 'equipment';
+
+function labelFor(kind: TopologyKind): TopologyKindLabel {
   switch (kind) {
     case 'NETWORK':
-      return 'NETWORK';
+      return 'network';
     case 'SITE':
-      return 'SITE';
+      return 'site';
     case 'STRUCTURE':
-      return 'STRUCTURE';
+      return 'structure';
     case 'LEVEL':
-      return 'LEVEL';
+      return 'level';
     case 'ROOM_SUBSTRUCTURE':
-      return 'ROOM';
+      return 'room';
     case 'CONTAINER_CLUSTER_BAY':
-      return 'BAY';
+      return 'bay';
     case 'POSITION':
-      return 'POSITION REFERENCE';
+      return 'position';
     case 'CONTAINER_RACK':
-      return 'RACK';
+      return 'rack';
     case 'DEVICE':
-      return 'DEVICE';
+      return 'device';
     case 'EQUIPMENT':
-      return 'EQUIPMENT';
+      return 'equipment';
   }
 }
 
@@ -58,6 +71,7 @@ function TreeBranch({
   onSelect: (item: TopologyNavigationNode) => void;
   onOpen: (item: TopologyNavigationNode) => void;
 }>) {
+  const t = useTranslations('topologyTree');
   const active = item.node.id === activeId;
   const chosen = item.node.id === selectedId;
   const expanded =
@@ -78,7 +92,7 @@ function TreeBranch({
         href={item.href}
         prefetch={false}
         aria-current={active ? 'page' : undefined}
-        aria-label={`${item.node.name}. Click to inspect, double click to open.`}
+        aria-label={t('inspectHelp', { name: item.node.name })}
         title={item.node.name}
         style={{ '--tree-depth': depth } as CSSProperties}
         onClick={select}
@@ -90,7 +104,7 @@ function TreeBranch({
         <span className="telxius-tree-guide" aria-hidden="true" />
         <Icon name={iconFor(item.node.kind)} />
         <span className="telxius-tree-copy">
-          <small>{labelFor(item.node.kind)}</small>
+          <small>{t(`kinds.${labelFor(item.node.kind)}`)}</small>
           <strong>{item.node.name}</strong>
         </span>
         {item.children.length > 0 && (
@@ -122,21 +136,22 @@ export function TopologyContextTree({
   tree,
   activeId,
 }: Readonly<{ tree: TopologyNavigationNode; activeId: string }>) {
+  const t = useTranslations('topologyTree');
   const router = useRouter();
   const [selected, setSelected] = useState<TopologyNavigationNode | null>(null);
 
   return (
-    <nav className="telxius-topology-tree" aria-label="Global topology">
+    <nav className="telxius-topology-tree" aria-label={t('global')}>
       <header className="telxius-tree-brand">
         <span className="telxius-tree-brand-icon">
           <Icon name="network" />
         </span>
         <strong>APPMANAGER</strong>
-        <Link href="/workspace">Home</Link>
+        <Link href="/workspace">{t('home')}</Link>
       </header>
       <div className="telxius-tree-heading">
-        <span>GLOBAL TOPOLOGY</span>
-        <b>ALL</b>
+        <span>{t('topology')}</span>
+        <b>{t('all')}</b>
       </div>
       <ul className="telxius-tree-root">
         <TreeBranch
@@ -150,11 +165,11 @@ export function TopologyContextTree({
       </ul>
       {selected && (
         <div className="topology-tree-selection" role="status">
-          <span>{labelFor(selected.node.kind)}</span>
+          <span>{t(`kinds.${labelFor(selected.node.kind)}`)}</span>
           <strong title={selected.node.name}>{selected.node.name}</strong>
-          <small>{selected.children.length} direct child objects</small>
+          <small>{t('directChildren', { count: selected.children.length })}</small>
           <Link href={selected.href} prefetch={false}>
-            OPEN SELECTED ↗
+            {t('open')}
           </Link>
         </div>
       )}

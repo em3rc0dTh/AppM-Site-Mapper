@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -76,6 +77,7 @@ function TrendChart({
   feeds: readonly FeedHistory[];
   window: TelemetryHistoryWindow;
 }>) {
+  const tu = useTranslations('snmpHistoryUi');
   const series = useMemo(() => createSeries(feeds, metric.key), [feeds, metric.key]);
   const all = series.flatMap((item) => item.values);
   const last = all.length ? Math.max(...all.map((point) => point.time)) : null;
@@ -110,17 +112,35 @@ function TrendChart({
   return (
     <div className="sm-snmp-history-chart">
       <div className="sm-snmp-history-heading">
-        <strong>{metric.title}</strong>
+        <strong>
+          {metric.key === 'voltageV'
+            ? tu('metricVoltage')
+            : metric.key === 'currentA'
+              ? tu('metricCurrent')
+              : metric.key === 'powerW'
+                ? tu('metricPower')
+                : tu('metricEnergy')}
+        </strong>
         <small>{metric.unit}</small>
       </div>
       {all.length === 0 ? (
-        <p>No paired samples in this period.</p>
+        <p>{tu('noPairs')}</p>
       ) : (
         <>
           <svg
             viewBox={`0 0 ${width} ${height}`}
             role="img"
-            aria-label={`${metric.title} historical trends over ${window}`}
+            aria-label={tu('metricHistoryLabel', {
+              metric:
+                metric.key === 'voltageV'
+                  ? tu('metricVoltage')
+                  : metric.key === 'currentA'
+                    ? tu('metricCurrent')
+                    : metric.key === 'powerW'
+                      ? tu('metricPower')
+                      : tu('metricEnergy'),
+              window,
+            })}
           >
             <line
               x1={plotX}
@@ -190,6 +210,8 @@ function TrendChart({
 }
 
 export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
+  const tu = useTranslations('snmpHistoryUi');
+  const t = useTranslations('snmp.history');
   const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
   const [selectedMetric, setSelectedMetric] = useState<ChartMetric>('currentA');
   const [data, setData] = useState<TrendResult | null>(null);
@@ -235,15 +257,12 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
     ) ?? 0;
 
   return (
-    <section
-      className="zip-bdfb-live-average sm-snmp-history"
-      aria-label="SNMP TimescaleDB historical charts"
-    >
+    <section className="zip-bdfb-live-average sm-snmp-history" aria-label={tu('charts')}>
       <header>
-        <strong>SNMP · TIMESCALEDB HISTORY</strong>
-        <span>SHUNTS A/B</span>
+        <strong>{tu('title')}</strong>
+        <span>{tu('shunts')}</span>
       </header>
-      <div className="zip-bdfb-window-tabs" role="tablist" aria-label="SNMP history time window">
+      <div className="zip-bdfb-window-tabs" role="tablist" aria-label={tu('window')}>
         {TELEMETRY_HISTORY_WINDOWS.map((option) => (
           <button
             key={option}
@@ -256,7 +275,7 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
           </button>
         ))}
       </div>
-      <div className="sm-snmp-history-metric-tabs" role="tablist" aria-label="SNMP trend metric">
+      <div className="sm-snmp-history-metric-tabs" role="tablist" aria-label={tu('metric')}>
         {METRICS.map((item) => (
           <button
             key={item.key}
@@ -266,27 +285,25 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
             onClick={() => setSelectedMetric(item.key)}
           >
             {item.key === 'currentA'
-              ? 'Corriente'
+              ? t('current')
               : item.key === 'voltageV'
-                ? 'Voltaje'
+                ? t('voltage')
                 : item.key === 'powerW'
-                  ? 'Potencia'
-                  : 'Energía'}
+                  ? t('power')
+                  : t('energy')}
           </button>
         ))}
       </div>
-      {loading && <p role="status">Loading persisted SNMP samples…</p>}
+      {loading && <p role="status">{tu('loading')}</p>}
       {error && (
         <p role="alert" className="form-error">
-          History unavailable: {error}
+          {tu('error', { error })}
         </p>
       )}
       {!loading && !error && data && (
         <>
           {data.feeds.every((feed) => feed.points.length === 0) ? (
-            <p>
-              No samples stored for the selected range. TimescaleDB does not invent missing history.
-            </p>
+            <p>{tu('empty')}</p>
           ) : (
             <div className="sm-snmp-history-metrics">
               {METRICS.filter((item) => item.key === selectedMetric).map((item) => (
@@ -295,16 +312,9 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
             </div>
           )}
           <div className="sm-snmp-history-footnote">
-            <strong>Estimated energy: {latest.toFixed(4)} kWh · observed segments</strong>
-            <small>
-              {(coverage / 60).toFixed(1)} feed-minutes covered, counted across inputs. No
-              extrapolation over gaps greater than 120 seconds.
-            </small>
-            <small>
-              Power = |V| × I from paired DC readings. Energy is trapezoidally integrated only
-              across fresh observations. Neither is a measured SNMP energy counter; simulated data
-              is not field certification.
-            </small>
+            <strong>{tu('energy', { value: latest.toFixed(4) })}</strong>
+            <small>{tu('coverage', { minutes: (coverage / 60).toFixed(1) })}</small>
+            <small>{tu('note')}</small>
           </div>
         </>
       )}

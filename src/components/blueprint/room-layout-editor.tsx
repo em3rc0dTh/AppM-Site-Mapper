@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { BlueprintCanvas } from './blueprint-canvas';
 import { PolygonEditor } from '@/components/spatial/polygon-editor';
 import {
@@ -45,6 +46,7 @@ export function RoomLayoutEditor({
   focusBayId?: string | undefined;
   focusPositionId?: string | undefined;
 }) {
+  const t = useTranslations('roomEditor');
   const router = useRouter();
   const [draft, setDraft] = useState(initial);
   const [saved, setSaved] = useState(initial);
@@ -122,25 +124,29 @@ export function RoomLayoutEditor({
       if (!placementResult) {
         const reason = explainRackPlacementFailure(draft, clusterId, width, depth);
         const messages = {
-          INVALID_CLUSTER: 'Select an existing Bay with a valid boundary.',
-          INVALID_DIMENSIONS: 'Rack width and depth must be positive finite dimensions.',
-          NEGATIVE_POSITION_REFERENCE:
-            'Bay frontal edge is outside the representable Position grid (Y < 0 or entirely X <= 0). Edit the Bay boundary; moving/zooming the canvas does not change physical coordinates.',
-          BAY_FRONTAGE_TOO_NARROW:
-            'Bay frontage is too narrow or has no continuous space for this rack width.',
-          RACK_OUTSIDE_ROOM: 'Rack depth would extend outside the Room boundary.',
-          RACK_DEPTH_BLOCKED_BY_BAY: 'Another Bay blocks the proposed rack footprint.',
-          RACK_COLLISION: 'The proposed rack would overlap an existing rack.',
-          NO_VALID_GRID_ANCHOR:
-            'No valid grid anchor is available. Check the Bay top edge and existing positions.',
+          INVALID_CLUSTER: t('invalidCluster'),
+          INVALID_DIMENSIONS: t('invalidDimensions'),
+          NEGATIVE_POSITION_REFERENCE: t('negativeGrid'),
+          BAY_FRONTAGE_TOO_NARROW: t('bayNarrow'),
+          RACK_OUTSIDE_ROOM: t('rackOutside'),
+          RACK_DEPTH_BLOCKED_BY_BAY: t('rackBlocked'),
+          RACK_COLLISION: t('rackCollision'),
+          NO_VALID_GRID_ANCHOR: t('noGrid'),
         } satisfies Record<ReturnType<typeof explainRackPlacementFailure>, string>;
         const cluster = draft.clusters.find((candidate) => candidate.id === clusterId);
         const bounds = cluster ? polygonBounds(cluster.polygon) : null;
         const measured = bounds
-          ? ` Bay "${cluster?.name}": X ${Math.round(bounds.minX)}–${Math.round(bounds.maxX)} mm, frontal Y ${Math.round(bounds.minY)} mm. Rack ${width} × ${depth} mm.`
+          ? t('measured', {
+              name: cluster?.name ?? '',
+              minX: Math.round(bounds.minX),
+              maxX: Math.round(bounds.maxX),
+              y: Math.round(bounds.minY),
+              width,
+              depth,
+            })
           : '';
         setSelected(clusterId);
-        setError(`RACK AUTO-PLACEMENT BLOCKED [${reason}]: ${messages[reason]}${measured}`);
+        setError(`${t('blocked', { reason, detail: messages[reason] })}${measured}`);
         return;
       }
 
@@ -184,7 +190,7 @@ export function RoomLayoutEditor({
     if (!placement || busy) return;
     const coordinate = pointToGridCoordinate(point);
     if (!coordinate) {
-      setError('Choose a supported grid cell inside the room and bay.');
+      setError(t('chooseCellError'));
       return;
     }
     if (placement.kind === 'move') {
@@ -203,7 +209,7 @@ export function RoomLayoutEditor({
       (position) => position.row === coordinate.row && position.column === coordinate.column,
     );
     if (existing) {
-      setError('This cell already belongs to a position or rack.');
+      setError(t('occupiedCell'));
       return;
     }
     const position = existing ?? {
@@ -224,13 +230,13 @@ export function RoomLayoutEditor({
   function remove() {
     if (draft.clusters.some((c) => c.id === selected)) {
       if (draft.positions.some((p) => p.clusterId === selected)) {
-        setError('Remove positions before archiving the bay.');
+        setError(t('removePositions'));
         return;
       }
       change({ ...draft, clusters: draft.clusters.filter((c) => c.id !== selected) });
     } else if (draft.positions.some((p) => p.id === selected)) {
       if (draft.racks.some((r) => r.positionId === selected)) {
-        setError('Remove the rack placement before its position.');
+        setError(t('removeRack'));
         return;
       }
       change({ ...draft, positions: draft.positions.filter((p) => p.id !== selected) });
@@ -239,7 +245,7 @@ export function RoomLayoutEditor({
   }
   async function save() {
     if (validation || boundary || placement) {
-      setError(validation ?? 'Finish the canvas operation first.');
+      setError(validation ?? t('finishOperation'));
       return;
     }
     setBusy(true);
@@ -251,7 +257,7 @@ export function RoomLayoutEditor({
         body: JSON.stringify(draft),
       });
       const result = (await response.json()) as { error?: string; draft: LayoutDraft };
-      if (!response.ok) throw new Error(result.error ?? 'Save failed');
+      if (!response.ok) throw new Error(t('saveFailed'));
       setDraft(result.draft);
       setSaved(result.draft);
       setPast([]);
@@ -259,7 +265,7 @@ export function RoomLayoutEditor({
       setEditing(false);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Save failed');
+      setError(e instanceof Error ? e.message : t('saveFailed'));
     } finally {
       setBusy(false);
     }
@@ -285,9 +291,9 @@ export function RoomLayoutEditor({
   const position = draft.positions.find((p) => p.id === (rack?.positionId ?? selected));
   const selectBay = (
     <label>
-      Bay / Cluster
+      {t('bayCluster')}
       <select name="clusterId" required defaultValue="">
-        <option value="">Select a bay</option>
+        <option value="">{t('selectBay')}</option>
         {draft.clusters.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -299,8 +305,8 @@ export function RoomLayoutEditor({
   return (
     <section className="mk-room-editor">
       <header className="mk-draft-toolbar">
-        <strong>{editing ? 'EDIT · UNSAVED DRAFT' : 'EXPLORE'}</strong>
-        {canWrite && !editing && <button onClick={() => setEditing(true)}>EDIT ROOM</button>}
+        <strong>{editing ? t('editDraft') : t('explore')}</strong>
+        {canWrite && !editing && <button onClick={() => setEditing(true)}>{t('editRoom')}</button>}
         {editing && (
           <>
             <button
@@ -314,7 +320,7 @@ export function RoomLayoutEditor({
                 }
               }}
             >
-              Undo
+              {t('undo')}
             </button>
             <button
               disabled={busy || !!boundary || !!placement || !future.length}
@@ -327,7 +333,7 @@ export function RoomLayoutEditor({
                 }
               }}
             >
-              Redo
+              {t('redo')}
             </button>
             <button
               disabled={busy}
@@ -341,13 +347,13 @@ export function RoomLayoutEditor({
                 setError('');
               }}
             >
-              Cancel
+              {t('cancel')}
             </button>
             <button
               disabled={busy || !!validation || !!boundary || !!placement}
               onClick={() => void save()}
             >
-              {busy ? 'Saving…' : 'SAVE LAYOUT'}
+              {busy ? t('saving') : t('saveLayout')}
             </button>
           </>
         )}
@@ -359,8 +365,8 @@ export function RoomLayoutEditor({
               key={boundary.kind === 'room' ? 'room' : boundary.id}
               title={
                 boundary.kind === 'room'
-                  ? 'EDIT ROOM BOUNDARY'
-                  : `DRAW / EDIT BAY · ${boundary.name}`
+                  ? t('editRoomBoundary')
+                  : t('editBayTitle', { name: boundary.name })
               }
               initial={boundary.kind === 'room' ? draft.polygon : boundary.polygon}
               context={boundary.kind === 'bay' ? draft.polygon : []}
@@ -373,20 +379,19 @@ export function RoomLayoutEditor({
                 }))}
               validate={(polygon) => {
                 if (boundary.kind !== 'bay') return null;
-                if (!polygonInsidePolygon(polygon, draft.polygon))
-                  return 'The complete bay boundary must stay inside the room.';
+                if (!polygonInsidePolygon(polygon, draft.polygon)) return t('bayOutside');
                 if (
                   draft.clusters.some(
                     (cluster) =>
                       cluster.id !== boundary.id && polygonsOverlapArea(polygon, cluster.polygon),
                   )
                 )
-                  return 'Bay / Cluster boundary must not overlap an existing Bay / Cluster.';
+                  return t('bayOverlap');
                 return null;
               }}
               onConfirm={applyBoundary}
               onCancel={() => setBoundary(null)}
-              confirmLabel="Apply to draft"
+              confirmLabel={t('applyDraft')}
             />
           ) : draft.polygon.length >= 3 ? (
             <BlueprintCanvas
@@ -408,13 +413,13 @@ export function RoomLayoutEditor({
               focusPositionId={focusPositionId}
             />
           ) : (
-            <div className="mk-empty-boundary">Draw the room boundary to begin.</div>
+            <div className="mk-empty-boundary">{t('drawRoom')}</div>
           )}
         </div>
         {editing && (
           <aside className="mk-draft-inspector">
             <fieldset disabled={busy || !!boundary}>
-              <h3>ROOM GEOMETRY</h3>
+              <h3>{t('geometry')}</h3>
               <button
                 type="button"
                 onClick={() => {
@@ -422,19 +427,16 @@ export function RoomLayoutEditor({
                   setBoundary({ kind: 'room' });
                 }}
               >
-                {draft.polygon.length ? 'EDIT ROOM BOUNDARY' : 'DRAW ROOM BOUNDARY'}
+                {draft.polygon.length ? t('editRoomBoundary') : t('drawRoomBoundary')}
               </button>
-              <p>
-                Draw and edit on the canvas. Apply updates the draft; SAVE LAYOUT persists all
-                changes.
-              </p>
+              <p>{t('geometryHelp')}</p>
               {placement && (
                 <div className="spatial-placement-prompt" role="status">
                   <strong>
-                    Click the canvas to{' '}
+                    {t('clickTo')}{' '}
                     {placement.kind === 'move'
-                      ? 'move the selected anchor'
-                      : `place ${placement.name}`}
+                      ? t('moveAnchor')
+                      : t('placeObject', { name: placement.name })}
                     .
                   </strong>
                   <button
@@ -444,39 +446,39 @@ export function RoomLayoutEditor({
                       setError('');
                     }}
                   >
-                    Cancel placement
+                    {t('cancelPlacement')}
                   </button>
                 </div>
               )}
               <details>
-                <summary>+ Draw Bay / Cluster</summary>
+                <summary>{t('drawBay')}</summary>
                 <form onSubmit={add}>
                   <input type="hidden" name="kind" value="bay" />
                   <label>
-                    Name
+                    {t('name')}
                     <input name="name" required maxLength={120} />
                   </label>
                   <label>
-                    Type
+                    {t('type')}
                     <select name="variant">
-                      <option value="BAY">Bay</option>
-                      <option value="CONTAINER_CLUSTER">Cluster</option>
+                      <option value="BAY">{t('bay')}</option>
+                      <option value="CONTAINER_CLUSTER">{t('cluster')}</option>
                     </select>
                   </label>
-                  <button disabled={draft.polygon.length < 3}>Draw boundary</button>
+                  <button disabled={draft.polygon.length < 3}>{t('drawBoundary')}</button>
                 </form>
               </details>
               <details>
-                <summary>+ Place Rack</summary>
+                <summary>{t('placeRack')}</summary>
                 <form onSubmit={add}>
                   <input type="hidden" name="kind" value="rack" />
                   <label>
-                    Name
+                    {t('name')}
                     <input name="name" required maxLength={120} />
                   </label>
                   {selectBay}
                   <label>
-                    Footprint width (mm)
+                    {t('widthFootprint')}
                     <input
                       name="width"
                       type="number"
@@ -488,7 +490,7 @@ export function RoomLayoutEditor({
                     />
                   </label>
                   <label>
-                    Footprint depth (mm)
+                    {t('depthFootprint')}
                     <input
                       name="depth"
                       type="number"
@@ -500,7 +502,7 @@ export function RoomLayoutEditor({
                     />
                   </label>
                   <label>
-                    Capacity (U)
+                    {t('capacityU')}
                     <input
                       name="totalU"
                       type="number"
@@ -511,28 +513,28 @@ export function RoomLayoutEditor({
                       required
                     />
                   </label>
-                  <button>Add rack left-to-right</button>
+                  <button>{t('rackLeft')}</button>
                 </form>
               </details>
               <details>
-                <summary>+ Place Empty Position</summary>
+                <summary>{t('emptyPosition')}</summary>
                 <form onSubmit={add}>
                   <input type="hidden" name="kind" value="position" />
                   <label>
-                    Name
+                    {t('name')}
                     <input name="name" required maxLength={120} />
                   </label>
                   {selectBay}
-                  <button>Choose cell on canvas</button>
+                  <button>{t('chooseCell')}</button>
                 </form>
               </details>
-              <h3>SELECT / EDIT</h3>
+              <h3>{t('selection')}</h3>
               <select
-                aria-label="Selected layout object"
+                aria-label={t('selectedObject')}
                 value={selected}
                 onChange={(e) => setSelected(e.target.value)}
               >
-                <option value="">Select an object</option>
+                <option value="">{t('selectObject')}</option>
                 {[...draft.clusters, ...draft.positions, ...draft.racks].map((n) => (
                   <option key={n.id} value={n.id}>
                     {n.name}
@@ -547,26 +549,29 @@ export function RoomLayoutEditor({
                     setBoundary({ kind: 'bay', ...bay, variant: bay.variant ?? 'BAY' });
                   }}
                 >
-                  EDIT BAY BOUNDARY
+                  {t('editBayBoundary')}
                 </button>
               )}
               {position && !rack && (
                 <>
-                  <p>
-                    Anchor: {position.row}-{position.column}
-                  </p>
+                  <p>{t('anchor', { row: position.row, column: position.column })}</p>
                   <button
                     type="button"
                     onClick={() => setPlacement({ kind: 'move', id: position.id })}
                   >
-                    Move anchor on canvas
+                    {t('moveOnCanvas')}
                   </button>
                 </>
               )}
               {rack && position && (
                 <p>
-                  Placement: automatic left-to-right · X {rack.x}–{rack.x + rack.width} mm · Y{' '}
-                  {rack.y} mm · grid ref {position.row}-{position.column}
+                  {t('placementDescription', {
+                    minX: rack.x,
+                    maxX: rack.x + rack.width,
+                    y: rack.y,
+                    row: position.row,
+                    column: position.column,
+                  })}
                 </p>
               )}
               {rack && (
@@ -591,11 +596,11 @@ export function RoomLayoutEditor({
                   }}
                 >
                   <label>
-                    Name
+                    {t('name')}
                     <input name="name" defaultValue={rack.name} required maxLength={120} />
                   </label>
                   <label>
-                    Width (mm)
+                    {t('width')}
                     <input
                       name="width"
                       type="number"
@@ -606,7 +611,7 @@ export function RoomLayoutEditor({
                     />
                   </label>
                   <label>
-                    Depth (mm)
+                    {t('depth')}
                     <input
                       name="depth"
                       type="number"
@@ -616,24 +621,21 @@ export function RoomLayoutEditor({
                       required
                     />
                   </label>
-                  <p>{rack.totalU} U · capacity changes require a separate CAS migration.</p>
-                  <button>Apply rack properties</button>
+                  <p>{t('rackCapacityHelp', { totalU: rack.totalU })}</p>
+                  <button>{t('applyRack')}</button>
                 </form>
               )}
               <button type="button" disabled={!selected || !!placement} onClick={remove}>
-                Remove selected from layout
+                {t('removeSelected')}
               </button>
-              <p>
-                On Save, persisted empty objects are archived. Racks containing inventory or
-                reserved capacity cannot be removed.
-              </p>
+              <p>{t('archiveHelp')}</p>
             </fieldset>
           </aside>
         )}
       </div>
       {editing && validation && (
         <p className="mk-draft-feedback" role="status">
-          Layout requires correction: {validation}
+          {t('correction', { error: validation })}
         </p>
       )}
       {error && (

@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
@@ -63,23 +64,24 @@ export function NavigationTree({ roots }: { roots: readonly WorkspaceTreeNode[] 
   const [query, setQuery] = useState('');
   const pathname = usePathname();
   const filtered = roots.filter((node) => matches(node, query.toLowerCase()));
+  const t = useTranslations('workspaceUi');
   return (
-    <nav className="workspace-tree" aria-label="Infrastructure topology">
+    <nav className="workspace-tree" aria-label={t('topology')}>
       <div className="workspace-section-title">
-        <span>TOPOLOGY</span>
+        <span>{t('topology')}</span>
         <b>⌄</b>
       </div>
       <input
         type="search"
-        aria-label="Search topology"
-        placeholder="Search infrastructure…"
+        aria-label={t('searchTop')}
+        placeholder={t('searchInfra')}
         value={query}
         onChange={(event) => setQuery(event.target.value)}
       />
       {!filtered.length ? (
         <StatePanel
-          title={query ? 'No matching entities' : 'No topology yet'}
-          description={query ? 'Try another name.' : 'Create a network to map your infrastructure.'}
+          title={query ? t('noMatchingEntities') : t('noTopology')}
+          description={query ? t('tryAnother') : t('createNetwork')}
         />
       ) : (
         <ul>

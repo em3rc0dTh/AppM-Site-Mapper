@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState, type FormEvent } from 'react';
 import type { EquipmentChildMode } from '@/modules/topology/domain/entities';
 
@@ -9,6 +10,7 @@ import type { AssetTemplate } from '@/modules/warehouse/domain/template';
 
 export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
   const router = useRouter();
+  const t = useTranslations('warehouseForms');
   const [open, setOpen] = useState(false);
   const [templates, setTemplates] = useState<readonly AssetTemplate[]>([]);
   const [templateId, setTemplateId] = useState('');
@@ -79,20 +81,20 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
   return (
     <div className="rack-warehouse-mount">
       <button type="button" onClick={() => setOpen((value) => !value)}>
-        + MOUNT FROM WAREHOUSE
+        {t('mount')}
       </button>
       {open && (
         <form onSubmit={submit} className="rack-warehouse-form">
           <header>
-            <strong>Instantiate from template</strong>
-            <button type="button" onClick={() => setOpen(false)} aria-label="Close warehouse mount">
+            <strong>{t('instantiate')}</strong>
+            <button type="button" onClick={() => setOpen(false)} aria-label={t('closeMount')}>
               ×
             </button>
           </header>
           {templates.length ? (
             <>
               <label>
-                Template
+                {t('template')}
                 <select value={templateId} onChange={(event) => setTemplateId(event.target.value)}>
                   {templates.map((template) => (
                     <option key={template.id} value={template.id}>
@@ -106,24 +108,23 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                   <strong>{selected.name}</strong>
                   <span>
                     {[selected.manufacturer, selected.model].filter(Boolean).join(' · ') ||
-                      'No manufacturer/model'}
+                      t('noManufacturer')}
                   </span>
                   <span>
-                    {selected.sizeU ? `${selected.sizeU}U` : 'U not defined'}
+                    {selected.sizeU ? `${selected.sizeU}U` : t('noU')}
                     {selected.category ? ` · ${selected.category}` : ''}
                   </span>
                   <span>
-                    {selected.equipmentType ?? 'CUSTOM'} · Configure child slots and layout for this
-                    instance below
+                    {selected.equipmentType ?? 'CUSTOM'} · {t('instanceHelp')}
                   </span>
                 </div>
               )}
               <label>
-                Device identity
+                {t('deviceIdentity')}
                 <input name="name" required maxLength={120} placeholder="BDFB-01" />
               </label>
               <label>
-                Operational type
+                {t('operationalType')}
                 <select name="deviceType" defaultValue="CUSTOM">
                   {DEVICE_TYPES.map((type) => (
                     <option key={type} value={type}>
@@ -133,9 +134,11 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                 </select>
               </label>
               <label>
-                Physical Equipment type
+                {t('physicalType')}
                 <select name="equipmentType" defaultValue="">
-                  <option value="">Use template ({selected?.equipmentType ?? 'CUSTOM'})</option>
+                  <option value="">
+                    {t('useTemplate', { type: selected?.equipmentType ?? 'CUSTOM' })}
+                  </option>
                   {EQUIPMENT_TYPES.map((type) => (
                     <option key={type} value={type}>
                       {type.replaceAll('_', ' ')}
@@ -144,53 +147,53 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                 </select>
               </label>
               <label>
-                Children mode · This instance
+                {t('childModeInstance')}
                 <select
                   name="childMode"
                   value={childMode}
                   onChange={(event) => setChildMode(event.target.value as EquipmentChildMode)}
                 >
-                  <option value="DYNAMIC">Dynamic</option>
-                  <option value="POSITIONAL">Positional slots</option>
+                  <option value="DYNAMIC">{t('dynamic')}</option>
+                  <option value="POSITIONAL">{t('positional')}</option>
                 </select>
               </label>
               {childMode === 'POSITIONAL' ? (
                 <label>
-                  Child slots · This instance
+                  {t('childSlotsInstance')}
                   <input
                     name="childCapacity"
                     type="number"
                     min="1"
                     max="256"
                     required
-                    placeholder="Number of physical slots (1–256)"
+                    placeholder={t('slotsPlaceholder')}
                   />
                 </label>
               ) : null}
               {childMode === 'POSITIONAL' ? (
                 <label>
-                  MQTT point prefix
+                  {t('mqttPrefix')}
                   <input
                     name="telemetryPointPrefix"
                     maxLength={80}
                     pattern="[A-Za-z0-9]+(_[A-Za-z0-9]+)*"
-                    placeholder="e.g. 0_2 (optional)"
+                    placeholder={t('prefixPlaceholder')}
                   />
                 </label>
               ) : null}
               <fieldset className="warehouse-presentation-controls">
-                <legend>Physical child layout · Equipment presentation</legend>
+                <legend>{t('childLayout')}</legend>
                 <label>
-                  Direction
+                  {t('direction')}
                   <select name="presentationDirection" defaultValue="ROW">
-                    <option value="ROW">ROW · Left to right</option>
-                    <option value="COLUMN">COLUMN · Top to bottom</option>
+                    <option value="ROW">{t('row')}</option>
+                    <option value="COLUMN">{t('column')}</option>
                   </select>
                 </label>
                 <label>
-                  Max per line
+                  {t('perLine')}
                   <select name="presentationMaxPerLine" defaultValue="auto">
-                    <option value="auto">Auto · Responsive</option>
+                    <option value="auto">{t('auto')}</option>
                     {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
                       <option key={n} value={n}>
                         {n}
@@ -199,31 +202,29 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                   </select>
                 </label>
                 <label>
-                  Child visibility
+                  {t('visibility')}
                   <select name="presentationVisibility" defaultValue="AUTO">
-                    <option value="AUTO">AUTO</option>
-                    <option value="INLINE">INLINE</option>
-                    <option value="SUMMARY">SUMMARY</option>
+                    <option value="AUTO">{t('autoVisibility')}</option>
+                    <option value="INLINE">{t('inline')}</option>
+                    <option value="SUMMARY">{t('summary')}</option>
                   </select>
                 </label>
-                <small>
-                  These settings belong only to the new Equipment, not the Warehouse template.
-                </small>
+                <small>{t('perInstance')}</small>
               </fieldset>
               <label>
-                Serial number
+                {t('serial')}
                 <input name="serialNumber" maxLength={120} />
               </label>
               <label>
-                Category override
+                {t('categoryOverride')}
                 <input name="category" maxLength={120} placeholder={selected?.category ?? ''} />
               </label>
               <button type="submit" disabled={busy || !templateId}>
-                {busy ? 'Creating…' : 'Create Device + unmounted Equipment'}
+                {busy ? t('creating') : t('createDevice')}
               </button>
             </>
           ) : (
-            <p>No active templates. Create one in Virtual Warehouse first.</p>
+            <p>{t('noActive')}</p>
           )}
           {error && (
             <p role="alert" className="form-error">

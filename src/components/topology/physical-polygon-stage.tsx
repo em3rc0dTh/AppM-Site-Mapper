@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import type { PhysicalPoint, TopologyNode } from '@/modules/topology/domain/entities';
 
 export interface PhysicalPolygonItem {
@@ -56,6 +57,7 @@ export function PhysicalPolygonStage({
   items: readonly PhysicalPolygonItem[];
   mode: 'site' | 'structure';
 }>) {
+  const t = useTranslations('physicalStage');
   const itemPolygons = items
     .map(({ node }) => pointsFor(node))
     .filter((polygon) => polygon.length >= 3);
@@ -65,10 +67,8 @@ export function PhysicalPolygonStage({
   if (!bounds || itemPolygons.length === 0) {
     return (
       <div className="telxius-geometry-missing">
-        <strong>Physical geometry unavailable</strong>
-        <span>
-          This view only renders surveyed legacy geometry that was preserved in the canonical model.
-        </span>
+        <strong>{t('missing')}</strong>
+        <span>{t('description')}</span>
       </div>
     );
   }
@@ -84,11 +84,7 @@ export function PhysicalPolygonStage({
 
   return (
     <div className={`telxius-physical-map telxius-physical-map--${mode}`}>
-      <svg
-        viewBox={viewBox}
-        role="img"
-        aria-label={mode === 'site' ? 'Site physical layout' : 'Structure floor layout'}
-      >
+      <svg viewBox={viewBox} role="img" aria-label={mode === 'site' ? t('site') : t('structure')}>
         <defs>
           <pattern
             id={`telxius-grid-${mode}`}

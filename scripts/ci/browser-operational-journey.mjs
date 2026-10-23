@@ -29,8 +29,33 @@ try {
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const base = process.env.CI_HTTP_BASE_URL || 'http://127.0.0.1:3100';
+  await page.emulateMedia({ colorScheme: 'dark' });
 
   await page.goto(base + '/login', { waitUntil: 'domcontentloaded' });
+  // The approved operational theme must be light even when the OS prefers dark.
+  const initialTheme = await page.evaluate(() => ({
+    theme: document.documentElement.dataset.theme,
+    scheme: getComputedStyle(document.documentElement).colorScheme,
+    input: getComputedStyle(document.querySelector('.auth-form input')).backgroundColor,
+    locale: getComputedStyle(document.querySelector('.sm-locale-control select')).backgroundColor,
+  }));
+  assert.equal(initialTheme.theme, 'light');
+  assert.equal(initialTheme.scheme, 'light');
+  assert.equal(initialTheme.input, 'rgb(255, 255, 255)');
+  assert.equal(initialTheme.locale, 'rgb(255, 255, 255)');
+  console.log('[PASS] Chromium: light login theme and locale selector on initial render');
+
+  // Verify the actual user-facing language selector, not just catalog parity.
+  const loginLocale = page.locator('.sm-locale-control select');
+  await loginLocale.waitFor({ timeout: 30000 });
+  await loginLocale.selectOption('es');
+  await page.waitForFunction(() => document.documentElement.lang === 'es', { timeout: 30000 });
+  await page.getByText('Iniciar sesión').first().waitFor({ timeout: 30000 });
+  await loginLocale.selectOption('en');
+  await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
+  await page.getByText('Sign in').first().waitFor({ timeout: 30000 });
+  console.log('[PASS] Chromium: login selector en→es→en updates document language and labels');
+
   await page.locator('input[name="email"]').fill('mk1-e2e-operator@local.test');
   await page.locator('input[name="password"]').fill('CI-Only-E2E-Strong-2026!');
   await page.getByRole('button', { name: 'SIGN IN' }).click();
@@ -198,6 +223,112 @@ try {
     }
     console.log(`[PASS] Real Chromium: ${width}px Room Blueprint layout and properties alignment`);
   }
+  // Bilingual authenticated journey must preserve links, inventory data and
+  // approved 1920px layout. Technical identities must stay byte-for-byte.
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
+  const settingsLocale = page.locator('.sm-locale-control select');
+  await settingsLocale.waitFor({ timeout: 30000 });
+  await settingsLocale.selectOption('es');
+  await page.waitForFunction(() => document.documentElement.lang === 'es', { timeout: 30000 });
+  await page.goto(base + '/network', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.documentElement.lang === 'es');
+  await page.getByText('CI Two-Site Network').first().waitFor({ timeout: 30000 });
+  await page.goto(base + '/blueprint/' + room.id, { waitUntil: 'domcontentloaded' });
+  await page.getByText('PROPIEDADES DE LA SALA').waitFor({ timeout: 30000 });
+  assert.ok(
+    (await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth)) <= 3,
+    'Spanish labels must not introduce horizontal overflow at approved 1920px',
+  );
+  await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
+  await page.getByText('CI LIMA Panel 24P').first().waitFor({ timeout: 30000 });
+  await page.getByText('0_1_1').first().waitFor({ timeout: 30000 });
+
+  // Verify server-rendered locale and navigation on every major operational route.
+  const localeRoutes = [
+    '/workspace',
+    '/network',
+    '/power',
+    '/telemetry',
+    '/warehouse',
+    '/settings?tab=profile',
+    '/topology/network/' + network.id,
+    '/blueprint/' + room.id,
+    '/device/' + panel.id,
+  ];
+  async function verifyLocaleRoutes(expectedLocale) {
+    for (const route of localeRoutes) {
+      let response;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          response = await page.goto(base + route, { waitUntil: 'domcontentloaded' });
+          break;
+        } catch (error) {
+          if (!String(error).includes('net::ERR_ABORTED') || attempt === 3) throw error;
+          console.warn(
+            `[RETRY] ${expectedLocale} navigation ${route} aborted; attempt ${attempt + 1}`,
+          );
+          await page.waitForLoadState('domcontentloaded').catch(() => undefined);
+        }
+      }
+      assert.ok(response?.ok(), `${expectedLocale} route ${route} must return HTTP 200`);
+      await page.waitForFunction(
+        (locale) => document.documentElement.lang === locale,
+        expectedLocale,
+      );
+      const persistedTheme = await page.evaluate(() => ({
+        theme: document.documentElement.dataset.theme,
+        colorScheme: getComputedStyle(document.documentElement).colorScheme,
+      }));
+      assert.equal(persistedTheme.theme, 'light', `Theme changed on ${expectedLocale} ${route}`);
+      assert.equal(
+        persistedTheme.colorScheme,
+        'light',
+        `Native color scheme changed on ${expectedLocale} ${route}`,
+      );
+      assert.ok(!new URL(page.url()).pathname.includes('/login'), `Session lost on ${route}`);
+    }
+    console.log(
+      `[PASS] Chromium: ${expectedLocale} locale preserved across all 9 operational routes`,
+    );
+  }
+
+  await verifyLocaleRoutes('es');
+
+  // The add-user flyout is a white surface: its native fields cannot inherit
+  // the legacy dark tokens when switching to Spanish.
+  await page.goto(base + '/settings?tab=users', { waitUntil: 'domcontentloaded' });
+  await page.getByText('CONFIGURACIÓN').first().waitFor({ timeout: 30000 });
+  const addUser = page.locator('.zip-users-heading details');
+  await addUser.locator('summary').click();
+  const displayNameInput = page.locator('.settings-user-create input[name="displayName"]');
+  await displayNameInput.waitFor({ timeout: 30000 });
+  const addUserTheme = await page.evaluate(() => ({
+    name: getComputedStyle(document.querySelector('.settings-user-create input')).backgroundColor,
+    role: getComputedStyle(document.querySelector('.settings-user-create select')).backgroundColor,
+  }));
+  assert.equal(addUserTheme.name, 'rgb(255, 255, 255)');
+  assert.equal(addUserTheme.role, 'rgb(255, 255, 255)');
+  console.log(
+    '[PASS] Chromium: Spanish user creation and native dropdowns retain white backgrounds',
+  );
+
+  // Wait for app hydration: DOMContentLoaded alone can expose an SSR select
+  // before React attaches the onChange handler.
+  await page.goto(base + '/settings?tab=profile', { waitUntil: 'networkidle' });
+  await page.locator('.sm-locale-control select').selectOption('en');
+  await page.waitForFunction(
+    () => document.cookie.split('; ').includes('site_mapper_locale=en'),
+    null,
+    { timeout: 30000 },
+  );
+  // A new server request must honor the stored preference across modules.
+  await page.goto(base + '/network', { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => document.documentElement.lang === 'en');
+  await verifyLocaleRoutes('en');
+  console.log(
+    '[PASS] Chromium: bilingual authenticated navigation, immutable inventory/MQTT identifiers and desktop geometry',
+  );
 } catch (error) {
   console.error('[FAIL] Browser operational check:', error);
   process.exitCode = 1;

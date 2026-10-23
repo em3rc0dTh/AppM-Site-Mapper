@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
@@ -39,6 +40,7 @@ function destination(id: string) {
 }
 
 function Counts({ node }: Readonly<{ node: EquipmentNode }>) {
+  const t = useTranslations('equipmentView');
   const occupied = node.children.filter(Boolean).length;
   return (
     <span className="ec-count">
@@ -64,15 +66,16 @@ function ChildLink({
 }
 
 function PanelPreview({ panel }: Readonly<{ panel: EquipmentNode }>) {
+  const t = useTranslations('equipmentView');
   return (
     <ChildLink node={panel} className="ec-panel-line">
       <strong className="ec-panel-name">{panel.name}</strong>
       <span className="ec-panel-meta">
         {panel.childMode === 'POSITIONAL'
           ? `${panel.children.length} positions · ${panel.children.filter(Boolean).length} occupied`
-          : `${panel.children.filter(Boolean).length} installed`}
+          : t('installedCount', { count: panel.children.filter(Boolean).length })}
         <span className="ec-panel-presence">
-          {panel.children.some(Boolean) ? 'Installed' : 'Available'}
+          {panel.children.some(Boolean) ? t('installedStatus') : t('availableStatus')}
         </span>
       </span>
     </ChildLink>
@@ -88,24 +91,25 @@ function FramePreview({
   byId: ReadonlyMap<string, EquipmentNode>;
   readings: Props['readings'];
 }>) {
+  const t = useTranslations('equipmentView');
   const panels = activeChildren(frame, byId).filter(({ child }) => child.equipmentType === 'PANEL');
   const signal = projectCompositionTelemetry(frame, byId, readings);
   return (
     <article className="ec-frame-card">
       <div className="ec-frame-heading">
         <div>
-          <small>FRAME</small>
+          <small>{t('frame')}</small>
           <ChildLink node={frame} className="ec-frame-title" />
         </div>
         <span className="ec-count">
-          {signal.reportingChildren}/{panels.length} panels MQTT LIVE
+          {t('frameMqttLive', { reporting: signal.reportingChildren, total: panels.length })}
         </span>
       </div>
       <div className="ec-frame-panels">
         {panels.length ? (
           panels.map(({ child }) => <PanelPreview key={child.id} panel={child} />)
         ) : (
-          <p className="ec-muted">No panels installed</p>
+          <p className="ec-muted">{t('noPanelsInstalled')}</p>
         )}
       </div>
     </article>
@@ -164,6 +168,7 @@ function PanelComposition({
   readings: Props['readings'];
   onAdd?: Props['onAdd'];
 }>) {
+  const t = useTranslations('equipmentView');
   const slots = root.children.map((id, index) => ({
     id,
     index,
@@ -172,28 +177,35 @@ function PanelComposition({
   const installed = slots.filter((slot) => Boolean(slot.id));
   const available = root.childMode === 'POSITIONAL' ? slots.filter((slot) => slot.id === null) : [];
   return (
-    <section className="ec-panel-composition" aria-label="Installed breakers and available slots">
+    <section className="ec-panel-composition" aria-label={t('physicalPositions')}>
       <header className="ec-section-heading">
         <div>
-          <small>PHYSICAL PANEL</small>
-          <strong>Physical positions</strong>
+          <small>{t('physicalPanel')}</small>
+          <strong>{t('physicalPositions')}</strong>
         </div>
         <div className="ec-heading-counts">
-          <span>{installed.length} installed</span>
-          {root.childMode === 'POSITIONAL' && <span>{available.length} available</span>}
-          <span>{slots.length} total</span>
+          <span>{t('countInstalled', { count: installed.length })}</span>
+          {root.childMode === 'POSITIONAL' && (
+            <span>{t('countAvailable', { count: available.length })}</span>
+          )}
+          <span>{t('countTotal', { count: slots.length })}</span>
         </div>
       </header>
-      <div className="ec-table-scroll" role="region" tabIndex={0} aria-label="Breaker measurements">
+      <div
+        className="ec-table-scroll"
+        role="region"
+        tabIndex={0}
+        aria-label={t('breakerMeasurements')}
+      >
         <div className="ec-breaker-table">
           <div className="ec-breaker-columns" aria-hidden="true">
-            <span>POS</span>
-            <span>BREAKER</span>
+            <span>{t('position')}</span>
+            <span>{t('breaker')}</span>
             <span>V · V</span>
             <span>I · A</span>
             <span>P · W</span>
             <span>E · kWh</span>
-            <span>STATUS</span>
+            <span>{t('status')}</span>
           </div>
           {slots.length ? (
             slots.map(({ id, index, child }) =>
@@ -207,9 +219,9 @@ function PanelComposition({
               ) : id ? (
                 <div className="ec-missing-row" key={id}>
                   <span className="ec-pos">{String(index + 1).padStart(2, '0')}</span>
-                  <strong>{child?.name ?? 'Unresolved equipment reference'}</strong>
-                  <span>{child?.equipmentType ?? 'Not available'}</span>
-                  {child && <ChildLink node={child}>OPEN EQUIPMENT</ChildLink>}
+                  <strong>{child?.name ?? t('reference')}</strong>
+                  <span>{child?.equipmentType ?? t('notAvailable')}</span>
+                  {child && <ChildLink node={child}>{t('openEquipment')}</ChildLink>}
                 </div>
               ) : (
                 <div className="ec-empty-breaker-row" key={index}>
@@ -218,25 +230,23 @@ function PanelComposition({
                     <button
                       type="button"
                       onClick={() => onAdd(index)}
-                      aria-label={`Install Equipment in position ${index + 1}`}
+                      aria-label={t('installPosition', { count: index + 1 })}
                     >
-                      + Install Equipment
+                      {t('install')}
                     </button>
                   ) : (
-                    <span className="ec-empty-slot-label">Empty slot</span>
+                    <span className="ec-empty-slot-label">{t('emptySlot')}</span>
                   )}
                   <span aria-hidden="true">—</span>
                   <span aria-hidden="true">—</span>
                   <span aria-hidden="true">—</span>
                   <span aria-hidden="true">—</span>
-                  <span className="ec-status-available">AVAILABLE</span>
+                  <span className="ec-status-available">{t('available')}</span>
                 </div>
               ),
             )
           ) : (
-            <p className="ec-empty-panel">
-              No breakers installed. Free slots are not offline devices.
-            </p>
+            <p className="ec-empty-panel">{t('noBreakers')}</p>
           )}
         </div>
       </div>
@@ -251,6 +261,7 @@ export function EquipmentContractViews({
   onAdd,
   canReadTelemetry = false,
 }: Props) {
+  const t = useTranslations('equipmentView');
   const children = activeChildren(root, equipmentById);
   const summary = projectCompositionTelemetry(root, equipmentById, readings);
   const type = root.equipmentType;
@@ -258,54 +269,59 @@ export function EquipmentContractViews({
     <div className="ec-contract" data-equipment-type={type}>
       <div className="ec-topline">
         <span className="ec-eyebrow">
-          PHYSICAL COMPOSITION <span aria-hidden="true">/</span> {type.replaceAll('_', ' ')}
+          {t('physicalComposition')} <span aria-hidden="true">/</span> {type.replaceAll('_', ' ')}
         </span>
         {summary.reporting > 0 && (
           <span className="ec-topline-status">
             <span className="ec-status-dot" aria-hidden="true" /> {summary.reporting}/
-            {summary.installed} breakers reporting
+            {t('reportingBreakers', { count: summary.installed })}
           </span>
         )}
       </div>
       {canReadTelemetry && (
-        <div className="ec-live-cover" aria-label="MQTT hierarchy coverage">
+        <div className="ec-live-cover" aria-label={t('coverage')}>
           <span>
             {type === 'CIRCUIT_BREAKER'
-              ? `${summary.reporting}/1 breaker LIVE`
+              ? t('breakerLive', { count: summary.reporting })
               : type === 'PANEL'
-                ? `${summary.reporting}/${summary.positions} positions MQTT LIVE`
-                : `${summary.reportingChildren}/${summary.installedChildren} installed child Equipment MQTT LIVE`}
+                ? t('positionsLive', { reporting: summary.reporting, total: summary.positions })
+                : t('childEquipmentLive', {
+                    reporting: summary.reportingChildren,
+                    total: summary.installedChildren,
+                  })}
           </span>
-          <small>
-            {summary.reporting} verified descendant breakers reporting · averages of direct children
-          </small>
+          <small>{t('verifiedBreakers', { count: summary.reporting })}</small>
         </div>
       )}
       <div className="ec-focus">
         <div>
-          <small>FOCUSED EQUIPMENT</small>
+          <small>{t('focused')}</small>
           <h2>{root.name}</h2>
           <p>
             {root.model ?? root.equipmentType.replaceAll('_', ' ')} ·{' '}
             {root.childMode === 'POSITIONAL'
-              ? `${root.children.length} physical positions`
-              : `${children.length} child Equipment`}
+              ? t('physicalPositionsCount', { count: root.children.length })
+              : t('childEquipmentCount', { count: children.length })}
           </p>
         </div>
         <div className="ec-focus-badges">
-          <span>{children.length} installed</span>
-          <span>{root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length} ports</span>
+          <span>{t('countInstalled', { count: children.length })}</span>
+          <span>
+            {t('ports', {
+              count: root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length,
+            })}
+          </span>
         </div>
       </div>
 
       {type === 'CHASSIS' && (
-        <section className="ec-main-section" aria-label="Chassis shelves">
+        <section className="ec-main-section" aria-label={t('chassis')}>
           <header className="ec-section-heading">
             <div>
-              <small>CHASSIS INTERIOR</small>
-              <strong>Shelves &amp; frames</strong>
+              <small>{t('chassisInterior')}</small>
+              <strong>{t('shelvesFrames')}</strong>
             </div>
-            <span>{children.length} child assemblies</span>
+            <span>{t('assemblies', { count: children.length })}</span>
           </header>
           <div className="ec-chassis-shelves">
             {children.length ? (
@@ -333,44 +349,44 @@ export function EquipmentContractViews({
                         </ChildLink>
                       ))
                     ) : (
-                      <span className="ec-muted">No installed child Equipment</span>
+                      <span className="ec-muted">{t('noChildren')}</span>
                     )}
                   </div>
                 </article>
               ))
             ) : (
-              <p className="ec-muted">No shelves recorded in this chassis</p>
+              <p className="ec-muted">{t('noShelves')}</p>
             )}
           </div>
         </section>
       )}
 
       {(type === 'SHELF' || type === 'SUB_SHELF') && (
-        <section className="ec-main-section" aria-label="Shelf frames">
+        <section className="ec-main-section" aria-label={t('shelfFrames')}>
           <header className="ec-section-heading">
             <div>
-              <small>SHELF STRUCTURE</small>
-              <strong>Frames</strong>
+              <small>{t('shelfStructure')}</small>
+              <strong>{t('frames')}</strong>
             </div>
-            <span>{children.length} frames recorded</span>
+            <span>{t('framesRecorded', { count: children.length })}</span>
           </header>
           <div className="ec-frames-grid">
             {children.map(({ child }) => (
               <FramePreview key={child.id} frame={child} byId={equipmentById} readings={readings} />
             ))}
-            {!children.length && <p className="ec-muted">No frames recorded</p>}
+            {!children.length && <p className="ec-muted">{t('noFrames')}</p>}
           </div>
         </section>
       )}
 
       {type === 'FRAME' && (
-        <section className="ec-main-section" aria-label="Frame panels">
+        <section className="ec-main-section" aria-label={t('framePanels')}>
           <header className="ec-section-heading">
             <div>
-              <small>FRAME INTERIOR</small>
-              <strong>Panels</strong>
+              <small>{t('frameInterior')}</small>
+              <strong>{t('panels')}</strong>
             </div>
-            <span>{children.length} panels recorded</span>
+            <span>{t('panelsRecorded', { count: children.length })}</span>
           </header>
           <div className="ec-frame-rows">
             {children.map(({ child, position }) => (
@@ -385,11 +401,11 @@ export function EquipmentContractViews({
                   {child.childMode === 'POSITIONAL'
                     ? child.children.length
                     : child.children.filter(Boolean).length}{' '}
-                  positions LIVE
+                  {t('livePositions')}
                 </span>
               </div>
             ))}
-            {!children.length && <p className="ec-muted">No panels recorded</p>}
+            {!children.length && <p className="ec-muted">{t('noPanels')}</p>}
           </div>
         </section>
       )}
@@ -399,12 +415,12 @@ export function EquipmentContractViews({
       )}
 
       {type === 'CIRCUIT_BREAKER' && (
-        <section className="ec-breaker-detail" aria-label="Breaker own MQTT telemetry">
+        <section className="ec-breaker-detail" aria-label={t('breakerTelemetry')}>
           <div className="ec-section-heading">
             <div>
-              <small>CIRCUIT BREAKER</small>
+              <small>{t('circuitBreaker')}</small>
               <strong>
-                {readings[root.id]?.status === 'LIVE' ? 'Own telemetry' : 'Circuit details'}
+                {readings[root.id]?.status === 'LIVE' ? t('ownTelemetry') : t('circuitDetails')}
               </strong>
             </div>
             <span className="ec-status" data-status={readings[root.id]?.status ?? 'UNMAPPED'}>
@@ -417,17 +433,14 @@ export function EquipmentContractViews({
               <BreakerMetrics reading={readings[root.id]} />
             </div>
           ) : (
-            <p className="ec-breaker-no-data">
-              No active readings. This equipment remains installed; its physical identity and power
-              connections can still be inspected.
-            </p>
+            <p className="ec-breaker-no-data">{t('noReadings')}</p>
           )}
           <p className="ec-breaker-source">
-            MQTT source: {readings[root.id]?.sourceIdentity ?? 'No verified binding'} · Last packet:{' '}
-            {readings[root.id]?.receivedAt ?? '—'}
+            {t('mqttSourceCaption')} {readings[root.id]?.sourceIdentity ?? t('noVerifiedBinding')} ·{' '}
+            {t('packetCaption')} {readings[root.id]?.receivedAt ?? '—'}
           </p>
           <Link className="ec-trace-link" href={`/power?entityId=${encodeURIComponent(root.id)}`}>
-            Explore Power Path ↗
+            {t('explorePower')}
           </Link>
         </section>
       )}
@@ -435,18 +448,18 @@ export function EquipmentContractViews({
         <SnmpCapacityStrip root={root} byId={equipmentById} />
       )}
       {summary.reporting > 0 && (
-        <div className="ec-legend" aria-label="Telemetry metric legend">
+        <div className="ec-legend" aria-label={t('metrics')}>
           <span>
-            <b>V</b> Voltage · V
+            <b>V</b> {t('voltage')}
           </span>
           <span>
-            <b>I</b> Current · A
+            <b>I</b> {t('current')}
           </span>
           <span>
-            <b>P</b> Power · W
+            <b>P</b> {t('power')}
           </span>
           <span>
-            <b>E</b> Accumulated energy counter · kWh
+            <b>E</b> {t('energy')}
           </span>
         </div>
       )}

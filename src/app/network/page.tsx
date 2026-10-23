@@ -8,6 +8,7 @@ import {
 import { InspectButton } from '@/shared/ui/entity-inspector';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { TopologyCreateForm } from '@/components/topology/topology-create-form';
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -32,24 +33,25 @@ export default async function NetworkPage() {
     redirect(await service.buildDeepLink(network.id));
   }
 
+  const t = await getTranslations('pages.network');
   return (
     <main className="workspace-shell telxius-network-index">
       <SectionHeader
-        eyebrow="Infrastructure / topology"
-        title="Network"
-        description="Explore your sites and the physical hierarchy beneath them."
-        actions={<StatusBadge>{canWrite ? 'EDIT PERMITTED' : 'READ ONLY'}</StatusBadge>}
+        eyebrow={t('eyebrow')}
+        title={t('title')}
+        description={t('description')}
+        actions={<StatusBadge>{canWrite ? t('write') : t('read')}</StatusBadge>}
       />
 
       <section className="panel">
-        <h2>Topology roots</h2>
+        <h2>{t('roots')}</h2>
         {networks.length === 0 ? (
           <StatePanel
-            title="No networks yet"
-            description="Create the first network to start organizing sites, rooms and racks."
+            title={t('emptyTitle')}
+            description={t('emptyDescription')}
           />
         ) : (
-          <DataView label="Networks">
+          <DataView label={t('networks')}>
             {await Promise.all(
               networks.map(async (network) => (
                 <EntityRow

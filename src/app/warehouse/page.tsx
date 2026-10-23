@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { TemplateCreateForm } from '@/components/warehouse/template-create-form';
 import { WarehouseTemplateCatalog } from '@/components/warehouse/warehouse-template-catalog';
@@ -16,24 +17,21 @@ export default async function WarehousePage() {
   const templates = await new WarehouseService(await createWarehouseRepository()).listActive();
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
+  const t = await getTranslations('pages.warehouse');
   return (
     <main className="warehouse-page">
       <header className="warehouse-heading">
         <div>
-          <span>VIRTUAL WAREHOUSE</span>
-          <h1>Equipment Templates</h1>
-          <p>
-            Define reusable physical equipment once. Device identities belong to Topology; each
-            Equipment instance keeps its own identity and a versioned snapshot of the template used
-            to create it.
-          </p>
+          <span>{t('tag')}</span>
+          <h1>{t('title')}</h1>
+          <p>{t('description')}</p>
         </div>
-        <strong>{templates.length} active templates</strong>
+        <strong>{t('count', { count: templates.length })}</strong>
       </header>
 
       {canWrite && (
         <details className="warehouse-create-card">
-          <summary>Create Equipment template</summary>
+          <summary>{t('create')}</summary>
           <div className="warehouse-create-body">
             <TemplateCreateForm />
           </div>
@@ -43,10 +41,10 @@ export default async function WarehousePage() {
       {templates.length ? (
         <WarehouseTemplateCatalog templates={templates} />
       ) : (
-        <section className="warehouse-template-grid" aria-label="Equipment templates">
+        <section className="warehouse-template-grid" aria-label={t('templates')}>
           <div className="warehouse-empty">
-            <strong>No templates yet</strong>
-            <p>Create the first reusable Equipment template above.</p>
+            <strong>{t('empty')}</strong>
+            <p>{t('emptyDescription')}</p>
           </div>
         </section>
       )}

@@ -75,5 +75,28 @@
     "selection": "Language",
     "english": "English",
     "spanish": "Spanish"
+  },
+  "pages": {
+    "network": {
+      "eyebrow": "Infrastructure / topology",
+      "title": "Network",
+      "description": "Explore your sites and the physical hierarchy beneath them.",
+      "write": "EDIT PERMITTED",
+      "read": "READ ONLY",
+      "roots": "Topology roots",
+      "emptyTitle": "No networks yet",
+      "emptyDescription": "Create the first network to start organizing sites, rooms and racks.",
+      "networks": "Networks"
+    },
+    "warehouse": {
+      "tag": "VIRTUAL WAREHOUSE",
+      "title": "Equipment Templates",
+      "description": "Define reusable physical equipment once. Device identities belong to Topology; each Equipment instance keeps its own identity and a versioned snapshot of the template used to create it.",
+      "count": "{count} active templates",
+      "create": "Create Equipment template",
+      "templates": "Equipment templates",
+      "empty": "No templates yet",
+      "emptyDescription": "Create the first reusable Equipment template above."
+    }
   }
 }

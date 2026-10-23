@@ -75,5 +75,28 @@
     "selection": "Idioma",
     "english": "Inglés",
     "spanish": "Español"
+  },
+  "pages": {
+    "network": {
+      "eyebrow": "Infraestructura / topología",
+      "title": "Red",
+      "description": "Explora tus sitios y la jerarquía física de su infraestructura.",
+      "write": "EDICIÓN PERMITIDA",
+      "read": "SOLO LECTURA",
+      "roots": "Raíces de topología",
+      "emptyTitle": "Aún no hay redes",
+      "emptyDescription": "Crea la primera red para organizar sitios, salas y racks.",
+      "networks": "Redes"
+    },
+    "warehouse": {
+      "tag": "ALMACÉN VIRTUAL",
+      "title": "Plantillas de Equipment",
+      "description": "Define una sola vez los equipos físicos reutilizables. Las identidades de dispositivos pertenecen a Topología; cada instancia de Equipment conserva su propia identidad y una versión de la plantilla con la que se creó.",
+      "count": "{count} plantillas activas",
+      "create": "Crear plantilla de Equipment",
+      "templates": "Plantillas de Equipment",
+      "empty": "Aún no hay plantillas",
+      "emptyDescription": "Crea arriba la primera plantilla reutilizable de Equipment."
+    }
   }
 }

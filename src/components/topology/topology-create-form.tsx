@@ -239,7 +239,7 @@ export function TopologyCreateForm({
                   maxLength={80}
                   pattern="[A-Za-z0-9]+(_[A-Za-z0-9]+)*"
                   placeholder="0_2 (optional)"
-                  aria-label="{t('prefix')}"
+                  aria-label={t('prefix')}
                 />
               </label>
             )}
@@ -254,7 +254,7 @@ export function TopologyCreateForm({
         <div className="spatial-form-actions">
           {onCancel && (
             <button type="button" disabled={busy} onClick={onCancel}>
-              Cancel
+              {t('cancel')}
             </button>
           )}
           <button type="submit" disabled={busy || !!pending}>

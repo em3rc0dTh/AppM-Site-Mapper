@@ -521,3 +521,59 @@ physical QDF mapping, true Eltek FIELD scalings, Metasys acceptance or
 field-production authorization. Legacy SNMP bindings for
 `EMU-DELTA-BFDB-01` must not be silently reassigned to any
 `EMU-SNMP-QDF-xx` synthetic identity.
+
+
+### Operator UI evidence: physical hierarchy and live breakers
+
+The operator supplied multiple screenshots of their logged-in, original Site
+Mapper workspace and the existing BDFB-01 physical/composition views. This
+visual evidence is separate from the earlier Timescale/Modbus checks:
+
+- **Inventory preserved:** original TELXIUS-LURIN-1 / EDIFICIO-01-TELXIUS /
+  LEVEL-01 / SALA DE TRANSMISIONES / Rack-01-BDFB / BDFB-01 path appears in
+  the navigation tree. BDFB physical view shows one shelf, two frames and
+  four 24-position panels; FRAME-01/PANEL-01 has **3 installed, 21 available**
+  positions, and the other shown panels have 0 installed.
+- **Panel inspection:** FRAME-01/PANEL-01 shows **3/24 positions MQTT LIVE**
+  and all three installed breakers with voltage, current, power and energy
+  counter columns marked LIVE.
+- **Breaker-specific evidence:** BDFB-01-PANEL-01-CB-01 shows **12.20 V,
+  1.09 A, 13.30 W, 0.2633 kWh**, marked LIVE with MQTT source
+  `EMU-BFDB-01` and source timestamp visible. The two neighboring breakers
+  also have LIVE readings.
+- **Hierarchical inspector:** screenshots of the chassis and shelf show
+  **three descendant breakers reporting** and grouped V/I/P/E, distinguished
+  from any incoming SNMP/DC feed totals. The home overview shows **1/1 BDFB
+  monitored**, one of two primary devices reporting, and **3/11**
+  associated equipment reporting.
+- **SNMP physical boundary remains fail-closed:** the two original incoming
+  shunts (A/B) display PENDING/UNVERIFIED and no certified current,
+  rated capacity, available capacity or total input load. The original
+  controller identity in the feed inspector is `EMU-DELTA-BFDB-01`, distinct
+  from the `EMU-SNMP-QDF-01..03` synthetic lab sources.
+- **SNMP and MQTT history:** charts exist for separate streams. Historical
+  simulated SNMP shunt A/B power/current and derived energy (e.g. **163.1281
+  kWh** at capture) are explicitly described as estimates from observed
+  segments, **not** a measured SNMP energy counter nor a physical input
+  certification. MQTT descendant metrics (e.g. **12.22 V, 3.16 A,
+  38.65 W, 0.2722 kWh** at one capture) remain a different calculation.
+
+**UI observation requiring a reproducibility check:** the FRAME-01 detail
+screenshot shows `0/2 immediate children with MQTT LIVE` and `0 live
+breakers below`, although the separately captured shelf, panel and breaker
+views show LIVE descendants. Code inspection found both
+`EquipmentFocusInspector` and `PhysicalEquipmentDiagram` initialize an
+independent SSE `useTelemetryStream` subscription with an empty sample
+array and `hasSnapshot=false` before the first snapshot. They compute
+coverage from that empty array, which can render **zero prematurely**.
+Screenshots from separate page visits cannot establish whether the frame's
+zero persisted after subscription hydration. Recheck the frame after its
+first SSE snapshot and verify consistent values across descendants; show a
+loading/unknown state rather than a false zero if this proves transient.
+Do not rewrite logical associations or promote SNMP physical authority
+based on this screenshot alone.
+
+**UI gate:** LAB breaker-level LIVE propagation is visually demonstrated
+for the active panel and three breakers. Consistent settled frame coverage,
+source identity display for all levels, layout/responsive behavior, and
+production FIELD mapping remain pending. No real-device approval is implied.

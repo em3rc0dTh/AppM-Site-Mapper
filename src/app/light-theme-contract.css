@@ -1,0 +1,74 @@
+/*
+ * Site Mapper MK1 · canonical light controls.
+ *
+ * Keep this AFTER all screen-specific CSS. Legacy styles may continue to use
+ * dark backgrounds for physical stages and telemetry visualizations, but browser
+ * form controls must not inherit a dark UA palette or the old dark input rules.
+ * No preference script is needed: light is the product default on every load.
+ */
+:root,
+html,
+body {
+  color-scheme: light;
+}
+
+/* Only editable text-like controls: never repaint checkboxes, radio buttons,
+ * range sliders, file inputs or buttons as text fields. */
+:is(
+  input:not([type]),
+  input[type='text'],
+  input[type='search'],
+  input[type='password'],
+  input[type='email'],
+  input[type='number'],
+  input[type='tel'],
+  input[type='url'],
+  input[type='date'],
+  input[type='time'],
+  input[type='datetime-local'],
+  input[type='month'],
+  input[type='week'],
+  select,
+  textarea
+) {
+  color-scheme: light;
+  background-color: #ffffff !important;
+  color: #172536 !important;
+  border-color: #cbd5e1 !important;
+  -webkit-text-fill-color: #172536;
+}
+
+/* Native option menus and picker popovers must also be light when the OS is dark. */
+select,
+select option,
+select optgroup {
+  color-scheme: light;
+}
+select option,
+select optgroup {
+  background-color: #ffffff;
+  color: #172536;
+}
+
+:is(input, textarea)::placeholder {
+  color: #718096;
+  opacity: 1;
+}
+
+:is(input, select, textarea):focus-visible {
+  outline-color: #277cf5;
+}
+
+/* Keep autofilled login, search and administration fields legible in Chromium. */
+input:-webkit-autofill {
+  -webkit-text-fill-color: #172536 !important;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset;
+  box-shadow: 0 0 0 1000px #ffffff inset;
+}
+
+/* The old create-form base was a dark card even on a white workspace. */
+.create-form {
+  background-color: #ffffff;
+  border-color: #d7dde4;
+  color: #172536;
+}

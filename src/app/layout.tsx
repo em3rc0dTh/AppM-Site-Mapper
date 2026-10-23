@@ -17,6 +17,7 @@ import './equipment-composition-contract.css';
 import './laptop-responsive.css';
 import './language-switcher.css';
 import './operational-light-theme.css';
+import './light-theme-contract.css';
 import { AppShell } from '@/shared/ui/app-shell';
 
 export async function generateMetadata(): Promise<Metadata> {

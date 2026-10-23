@@ -58,12 +58,12 @@ export function TemplateCreateForm() {
         }),
       });
       const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? 'CREATE_FAILED');
+      if (!response.ok) throw new Error(t('createFailed'));
       event.currentTarget.reset();
       setResult(t('created'));
       router.refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'CREATE_FAILED');
+      setError(cause instanceof Error ? cause.message : t('createFailed'));
     } finally {
       setBusy(false);
     }
@@ -94,17 +94,17 @@ export function TemplateCreateForm() {
         imported?: number;
       };
       if (!response.ok) {
-        const index = typeof data.index === 'number' ? ` · item ${data.index + 1}` : '';
+        const index = typeof data.index === 'number' ? t('importErrorItem', { index: data.index + 1 }) : '';
         const imported =
           typeof data.imported === 'number' && data.imported > 0
-            ? ` · ${data.imported} imported before failure`
+            ? t('importErrorPartial', { count: data.imported })
             : '';
-        throw new Error(`${data.error ?? 'IMPORT_FAILED'}${index}${imported}`);
+        throw new Error(`${t('importFailed')}${index}${imported}`);
       }
       setResult(t('imported', { count: data.imported ?? 0 }));
       router.refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'IMPORT_FAILED');
+      setError(cause instanceof Error ? cause.message : t('importFailed'));
     } finally {
       setBusy(false);
     }
@@ -160,7 +160,7 @@ export function TemplateCreateForm() {
             </label>
             <label>
               {t('category')}
-              <input name="category" maxLength={120} placeholder="Network switch" />
+              <input name="category" maxLength={120} placeholder={t('categoryExample')} />
             </label>
             <label>
               {t('size')}

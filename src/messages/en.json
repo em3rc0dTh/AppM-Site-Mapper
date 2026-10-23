@@ -764,7 +764,10 @@
     "instanceFailed": "Could not create the Equipment instance.",
     "instanceHelp": "Configure child slots and layout for this instance below",
     "childModeInstance": "Children mode · This instance",
-    "childSlotsInstance": "Child slots · This instance"
+    "childSlotsInstance": "Child slots · This instance",
+    "categoryExample": "Network switch",
+    "importErrorItem": " · item {index}",
+    "importErrorPartial": " · {count} imported before failure"
   },
   "liveTelemetry": {
     "title": "Telemetry",

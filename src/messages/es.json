@@ -764,7 +764,10 @@
     "instanceFailed": "No se pudo crear la instancia de Equipment.",
     "instanceHelp": "Configura las posiciones hijas y la distribución de esta instancia abajo",
     "childModeInstance": "Modo de hijos · esta instancia",
-    "childSlotsInstance": "Posiciones hijas · esta instancia"
+    "childSlotsInstance": "Posiciones hijas · esta instancia",
+    "categoryExample": "Conmutador de red",
+    "importErrorItem": " · elemento {index}",
+    "importErrorPartial": " · {count} importados antes del error"
   },
   "liveTelemetry": {
     "title": "Telemetría",

@@ -598,7 +598,10 @@ export function EquipmentCompositionEditor({
             <div className="equipment-slot-grid">
               <article className="equipment-slot">
                 <strong>
-                  {t('occupied', { occupied: equipment.children.filter(Boolean).length, total: visibleCount })}
+                  {t('occupied', {
+                    occupied: equipment.children.filter(Boolean).length,
+                    total: visibleCount,
+                  })}
                 </strong>
                 <p>{t('large')}</p>
                 <button type="button" onClick={() => setShowFullComposition(true)}>
@@ -641,7 +644,9 @@ export function EquipmentCompositionEditor({
                                 <option value="">{t('moveTo')}</option>
                                 {availableSlots.map((slot) => (
                                   <option key={slot} value={slot}>
-                                    {t('positionOption', { position: String(slot + 1).padStart(2, '0') })}
+                                    {t('positionOption', {
+                                      position: String(slot + 1).padStart(2, '0'),
+                                    })}
                                   </option>
                                 ))}
                               </select>
@@ -763,9 +768,7 @@ export function EquipmentCompositionEditor({
                   required
                 >
                   {!templates.length ? (
-                    <option value="">
-                      {loadingTemplates ? t('loading') : t('noTemplates')}
-                    </option>
+                    <option value="">{loadingTemplates ? t('loading') : t('noTemplates')}</option>
                   ) : null}
                   {templates.map((template) => (
                     <option key={template.id} value={template.id}>

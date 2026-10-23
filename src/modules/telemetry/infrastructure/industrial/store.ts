@@ -7,6 +7,11 @@ export interface CatalogSignal extends Signal {
   lastSeenAt: string;
   activatedAt: string | null;
   resolvedAt: string | null;
+  alarmObservedAt?: string | null;
+  lastObservation?: Pick<
+    Signal,
+    'eventId' | 'receivedAt' | 'observedAt' | 'quality' | 'rawType' | 'rawValue' | 'profileVersion'
+  >;
 }
 export interface ObservationStore {
   commit(batch: ObservationBatch): Promise<'committed' | 'duplicate'>;
@@ -24,13 +29,35 @@ export function advanceSignal(previous: CatalogSignal | undefined, next: Signal)
   const firstSeenAt = previous?.firstSeenAt ?? next.receivedAt;
   const lastSeenAt =
     previous && previous.lastSeenAt > next.receivedAt ? previous.lastSeenAt : next.receivedAt;
-  if (previous && previous.observedAt > next.observedAt) return { ...previous, lastSeenAt };
+  const cursor = previous?.lastObservation?.observedAt ?? previous?.observedAt;
+  if (cursor && cursor > next.observedAt) return { ...previous!, lastSeenAt };
+  const lastObservation = {
+    eventId: next.eventId,
+    receivedAt: next.receivedAt,
+    observedAt: next.observedAt,
+    quality: next.quality,
+    rawType: next.rawType,
+    rawValue: next.rawValue,
+    profileVersion: next.profileVersion,
+  };
+  // An unrecognized field/profile downgrade cannot erase previously interpreted evidence.
+  if (
+    previous &&
+    previous.kind !== 'unknown' &&
+    (next.kind === 'unknown' || next.quality === 'UNKNOWN')
+  )
+    return { ...previous, quality: 'UNKNOWN', lastSeenAt, lastObservation };
   const alarmState =
     next.kind === 'alarm' && (next.alarmState === 'UNKNOWN' || next.alarmState === null)
       ? (previous?.alarmState ?? 'UNKNOWN')
       : next.alarmState;
   return {
     ...next,
+    lastObservation,
+    alarmObservedAt:
+      next.kind === 'alarm' && ['ACTIVE', 'RESOLVED'].includes(next.alarmState ?? '')
+        ? next.observedAt
+        : (previous?.alarmObservedAt ?? null),
     alarmState,
     firstSeenAt,
     lastSeenAt,
@@ -203,7 +230,10 @@ export class MongoObservationStore implements ObservationStore {
               eventId: batch.id,
               observedAt: signal.observedAt,
               disposition:
-                previous && previous.observedAt > signal.observedAt ? 'out_of_order' : 'applied',
+                previous &&
+                (previous.lastObservation?.observedAt ?? previous.observedAt) > signal.observedAt
+                  ? 'out_of_order'
+                  : 'applied',
               signal,
             },
             { session },

@@ -124,7 +124,11 @@ export class ExtensionState {
       if (signal && signal.unit !== point.unit && signal.kind === 'measurement')
         quality = 'INVALID';
       if (quality === 'VALID' && !Number.isFinite(value)) quality = 'INVALID';
-      if (quality !== 'VALID') value = NaN;
+      // Alarm state is latched evidence, independent of transport freshness.
+      // The unchanged quality register still reports STALE/INVALID/UNKNOWN.
+      const knownAlarm =
+        signal?.kind === 'alarm' && ['ACTIVE', 'RESOLVED'].includes(signal.alarmState);
+      if (quality !== 'VALID' && !knownAlarm) value = NaN;
       if (Number.isFinite(value) && !Number.isFinite(Math.fround(value))) {
         quality = 'INVALID';
         value = NaN;
@@ -158,6 +162,8 @@ export function registryCsv(registry) {
       'qualityAddress0',
       'unit',
       'description',
+      'qualityCodes',
+      'alarmStatePolicy',
     ],
     ...registry.points.map((p) => [
       registry.version,
@@ -171,6 +177,8 @@ export function registryCsv(registry) {
       p.address + 2,
       p.unit,
       p.description,
+      '0=UNOBSERVED;1=VALID;2=STALE;3=INVALID;4=UNKNOWN;5=OFFLINE',
+      'Known alarm state retained as ACTIVE=1 or RESOLVED=0 independently of quality; unknown state=NaN',
     ]),
   ]
     .map((row) => row.map(quote).join(','))

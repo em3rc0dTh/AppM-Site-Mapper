@@ -56,3 +56,30 @@ export function eltekAlarm(
       ).find(([, value]) => value === condition)?.[0] ?? 'UNKNOWN',
   };
 }
+
+/** Trap measured-object references are explicit vendor evidence, not panel-name inference.
+ * Reuse the actual measured OID identity across GET and notification paths. Scaling
+ * still requires an exact commissioned profile. Original generic varbinds remain raw.
+ */
+export function eltekMeasuredValue(
+  varbinds: readonly { oid: string; value: unknown }[],
+  notificationOid?: string,
+) {
+  const candidate = notificationOid?.replace(/\.0\.(\d+)$/, '.$1');
+  if (
+    !eltekNotifications.some(
+      (d) => (d.oid === notificationOid || d.oid === candidate) && d.name !== 'infoHeartBeatTrap',
+    )
+  )
+    return null;
+  const reference = varbinds.find((v) => eltekDefinition(v.oid)?.name === 'alarmMeasuredVarOid');
+  const reading = varbinds.find((v) => eltekDefinition(v.oid)?.name === 'alarmMeasuredVarValue');
+  if (
+    !reference ||
+    !reading ||
+    typeof reference.value !== 'string' ||
+    !/^[0-2](?:\.[0-9]+){2,127}$/.test(reference.value)
+  )
+    return null;
+  return { oid: reference.value, value: reading.value, derivedFrom: [reference.oid, reading.oid] };
+}

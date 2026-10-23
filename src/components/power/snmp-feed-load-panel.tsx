@@ -61,7 +61,7 @@ export function SnmpFeedLoadPanel({
   async function commissionLab() {
     if (
       !window.confirm(
-        'Activate synthetic emulator OIDs for this BDFB? This is LOCAL LAB ONLY, not proof of physical wiring or a certified total.',
+        t('confirmLab'),
       )
     )
       return;
@@ -146,12 +146,12 @@ export function SnmpFeedLoadPanel({
           </div>
           <span>
             {error
-              ? 'UNAVAILABLE'
+              ? t('statusUnavailable')
               : load?.status === 'COMPLETE'
-                ? 'LIVE'
+                ? t('statusLive')
                 : labCount > 0
-                  ? 'LAB SIMULATED'
-                  : 'PENDING'}
+                  ? t('statusLab')
+                  : t('statusPending')}
           </span>
         </header>
 
@@ -186,7 +186,7 @@ export function SnmpFeedLoadPanel({
               <div className="sm-snmp-capacity-lab" aria-label={t('capacity')}>
                 <div className="sm-snmp-capacity-line">
                   <strong>
-                    {isLab ? 'LAB SIMULATED · DC SHUNT UTILIZATION' : 'DC SHUNT UTILIZATION'}
+                    {isLab ? t('capacityLab') : t('capacityTitle')}
                   </strong>
                   <span>
                     {capacity.reportingFeeds}/{capacity.expectedFeeds} fresh feeds
@@ -211,7 +211,7 @@ export function SnmpFeedLoadPanel({
                     <div
                       role="meter"
                       aria-label={
-                        isLab ? 'Simulated shunt utilization' : 'Verified shunt utilization'
+                        isLab ? t('simulatedUtilization') : t('verifiedUtilization')
                       }
                       aria-valuemin={0}
                       aria-valuemax={100}
@@ -222,11 +222,11 @@ export function SnmpFeedLoadPanel({
                       />
                     </div>
                     <strong>
-                      {capacity.utilizationPct.toFixed(1)}% of configured input capacity
+                      {t('percentOfCapacity', { percent: capacity.utilizationPct.toFixed(1) })}
                     </strong>
                     {!!capacity.overloadedByA && capacity.overloadedByA > 0 && (
                       <small role="status">
-                        Above configured rating by {numeric(capacity.overloadedByA, 'A')}
+                        {t('aboveRating', { current: numeric(capacity.overloadedByA, 'A') })}
                       </small>
                     )}
                   </div>
@@ -249,7 +249,7 @@ export function SnmpFeedLoadPanel({
                           <div
                             className="sm-snmp-capacity-feed-meter"
                             role="meter"
-                            aria-label={`Shunt ${feed.label} utilization`}
+                            aria-label={t('shuntUtilization', { label: feed.label })}
                             aria-valuemin={0}
                             aria-valuemax={100}
                             aria-valuenow={Math.max(0, Math.min(100, feed.utilizationPct))}
@@ -264,7 +264,7 @@ export function SnmpFeedLoadPanel({
                             {feed.utilizationPct.toFixed(1)}% used · {numeric(feed.availableA, 'A')}{' '}
                             available
                             {feed.overloadedByA
-                              ? ` · Over rating by ${numeric(feed.overloadedByA, 'A')}`
+                              ? t('overRating', { current: numeric(feed.overloadedByA, 'A') })
                               : ''}
                           </small>
                         </>
@@ -280,7 +280,7 @@ export function SnmpFeedLoadPanel({
                     Rated current is missing on one or more shunts. Configure each physical input on
                     the chassis before calculating the percentage.{' '}
                     <Link href={`/device/${encodeURIComponent(chassisId)}#bdfb-access-ports`}>
-                      Configure DC input ratings →
+                      {t('configureRatings')}
                     </Link>
                   </p>
                 )}
@@ -297,20 +297,20 @@ export function SnmpFeedLoadPanel({
               <div className="sm-snmp-inventory-summary">
                 <strong>
                   {load.hardwareProfile === 'ELTEK_BDCBB_CONFIG_2'
-                    ? 'PHYSICAL CONFIGURATION 2 · SHUNTS A / B'
-                    : 'PHYSICAL CONFIGURATION 4 · SHUNTS A1 / A2 / B1 / B2'}
+                    ? t('config2')
+                    : t('config4')}
                 </strong>
                 <span>
-                  {load.feedCount} / {load.expectedFeedCount} DC inputs recorded
+                  {t('inputsRecorded', { count: load.feedCount, total: load.expectedFeedCount })}
                 </span>
                 {awaitingVerification && (
                   <small>
-                    Wiring verification pending. Both inputs remain excluded from total current.
+                    {t('verifyPending')}
                   </small>
                 )}
                 {!awaitingVerification && load.inventoryStatus === 'INCOMPLETE' && (
                   <small>
-                    Physical commissioning incomplete. Check the shunt-to-panel assignments.
+                    {t('commissionIncomplete')}
                   </small>
                 )}
                 {!!load.missingFeedPositions.length && (
@@ -332,11 +332,11 @@ export function SnmpFeedLoadPanel({
                   totals.
                 </small>
                 <button type="button" disabled={labBusy} onClick={() => void commissionLab()}>
-                  {labBusy ? 'CONFIGURING…' : 'CONNECT SYNTHETIC SNMP SHUNTS'}
+                  {labBusy ? t('configuring') : t('connectSynthetic')}
                 </button>
                 {labConfigured && (
                   <small role="status">
-                    Synthetic OIDs mapped. Start the collectors with:
+                    {t('labMapped')}
                     <code>
                       bash scripts/lab/bfdb-snmp-config4.sh collectors ../bfdb-telemetry-gateway
                     </code>
@@ -371,15 +371,15 @@ export function SnmpFeedLoadPanel({
                     <div className="sm-snmp-feed-card-heading">
                       <strong>{feed.label}</strong>
                       <span>
-                        {feed.status === 'LAB_LIVE' ? 'LAB LIVE · SIMULATED' : feed.status}
+                        {feed.status === 'LAB_LIVE' ? t('labLive') : feed.status}
                       </span>
                     </div>
                     <small>
                       {feed.feedPosition
-                        ? `Independent input ${feed.feedPosition}`
+                        ? t('inputSide', { position: feed.feedPosition })
                         : feed.side
-                          ? `Side ${feed.side}`
-                          : 'Unassigned side'}
+                          ? t('side', { side: feed.side })
+                          : t('unassignedSide')}
                     </small>
                     <div className="sm-snmp-feed-readings">
                       <div>
@@ -395,7 +395,7 @@ export function SnmpFeedLoadPanel({
                       <small>
                         {t('controller')} {feed.sourceIdentity ?? t('notMapped')}
                       </small>
-                      {feed.currentOid && <small>Current OID: {feed.currentOid}</small>}
+                      {feed.currentOid && <small>{t('currentOid')} {feed.currentOid}</small>}
                       {feed.observedAt && (
                         <small>
                           {t('last')} {feed.observedAt}
@@ -412,16 +412,16 @@ export function SnmpFeedLoadPanel({
                         ) : (
                           <small>
                             {feed.servedPanelIds.length
-                              ? `${feed.servedPanelIds.length} panels assigned`
+                              ? t('assignedPanels', { count: feed.servedPanelIds.length })
                               : t('noPanelsAssigned')}
                           </small>
                         )}
                       </div>
                       {feed.status === 'LIVE' && feed.overloadWarning !== null && (
                         <small>
-                          Overload: {feed.overloadWarning ? 'WARNING' : 'NORMAL'}
+                          {t('overload')} {feed.overloadWarning ? t('warning') : t('normal')}
                           {feed.overloadThresholdA !== null
-                            ? ` · threshold ${feed.overloadThresholdA} A`
+                            ? t('threshold', { current: feed.overloadThresholdA })
                             : ''}
                         </small>
                       )}
@@ -434,7 +434,7 @@ export function SnmpFeedLoadPanel({
             {(load as (SnmpBdfbLoadView & { historyAvailable?: boolean }) | null)
               ?.historyAvailable === false && (
               <p role="alert">
-                TimescaleDB unavailable: restored SNMP history could not be queried.
+                {t('timescaleUnavailable')}
               </p>
             )}
             {load?.status !== 'COMPLETE' && (

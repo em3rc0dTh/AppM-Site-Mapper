@@ -142,7 +142,9 @@ export function ConnectEquipmentPowerForm({
                 {source.name} · {source.direction}
               </span>
               {source.connected && (
-                <strong role="status">{t('sourceConnected')} {source.connectionLabel}</strong>
+                <strong role="status">
+                  {t('sourceConnected')} {source.connectionLabel}
+                </strong>
               )}
             </div>
           )}
@@ -191,7 +193,9 @@ export function ConnectEquipmentPowerForm({
                 {target.name} · {target.direction}
               </span>
               {target.connected && (
-                <strong role="status">{t('poweredBy')} {target.connectionLabel}</strong>
+                <strong role="status">
+                  {t('poweredBy')} {target.connectionLabel}
+                </strong>
               )}
             </div>
           )}
@@ -229,15 +233,16 @@ export function ConnectEquipmentPowerForm({
             />
           </label>
         </div>
-        {sourceAndTargetSameEquipment && (
-          <p role="alert">{t('notSame')}</p>
-        )}
+        {sourceAndTargetSameEquipment && <p role="alert">{t('notSame')}</p>}
         {source?.connected && (
           <p role="alert">
             SOURCE_ALREADY_CONNECTED: This POWER output already feeds {source.connectionLabel}.
             Disconnect the recorded path before allocating this terminal elsewhere.
             {source.pathId && (
-              <Link href={`/power?path=${encodeURIComponent(source.pathId)}`}> {t('viewPath')}</Link>
+              <Link href={`/power?path=${encodeURIComponent(source.pathId)}`}>
+                {' '}
+                {t('viewPath')}
+              </Link>
             )}
           </p>
         )}
@@ -245,17 +250,16 @@ export function ConnectEquipmentPowerForm({
           <p role="alert">
             TARGET_ALREADY_CONNECTED: This POWER input already has a connection.
             {target.pathId && (
-              <Link href={`/power?path=${encodeURIComponent(target.pathId)}`}> {t('viewPath')}</Link>
+              <Link href={`/power?path=${encodeURIComponent(target.pathId)}`}>
+                {' '}
+                {t('viewPath')}
+              </Link>
             )}
           </p>
         )}
-        {mismatch && (
-          <p role="alert">{t('mismatch')}</p>
-        )}
+        {mismatch && <p role="alert">{t('mismatch')}</p>}
         {error && <p role="alert">{error}</p>}
-        <p className="power-port-connect-caution">
-          {t('caution')}
-        </p>
+        <p className="power-port-connect-caution">{t('caution')}</p>
         <div className="power-port-connect-actions">
           <Link href={returnHref}>{t('cancel')}</Link>
           <button type="button" disabled={!canConfirm} onClick={() => void confirm()}>

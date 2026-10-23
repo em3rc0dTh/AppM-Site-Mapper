@@ -238,10 +238,7 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
     ) ?? 0;
 
   return (
-    <section
-      className="zip-bdfb-live-average sm-snmp-history"
-      aria-label={tu('charts')}
-    >
+    <section className="zip-bdfb-live-average sm-snmp-history" aria-label={tu('charts')}>
       <header>
         <strong>{tu('title')}</strong>
         <span>{tu('shunts')}</span>
@@ -298,7 +295,7 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
             </div>
           )}
           <div className="sm-snmp-history-footnote">
-            <strong>{tu('energy',{value:latest.toFixed(4)})}</strong>
+            <strong>{tu('energy', { value: latest.toFixed(4) })}</strong>
             <small>
               {(coverage / 60).toFixed(1)} feed-minutes covered, counted across inputs. No
               extrapolation over gaps greater than 120 seconds.

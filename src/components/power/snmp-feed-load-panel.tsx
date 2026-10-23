@@ -139,10 +139,7 @@ export function SnmpFeedLoadPanel({
 
   return (
     <>
-      <section
-        className="zip-bdfb-live-average sm-snmp-load"
-        aria-label={t('section')}
-      >
+      <section className="zip-bdfb-live-average sm-snmp-load" aria-label={t('section')}>
         <header>
           <div>
             <strong>{t('incoming')}</strong>
@@ -281,9 +278,7 @@ export function SnmpFeedLoadPanel({
                     </div>
                   ))}
                 </div>
-                {capacity.reportingFeeds < capacity.expectedFeeds && (
-                  <p>{t('partial')}</p>
-                )}
+                {capacity.reportingFeeds < capacity.expectedFeeds && <p>{t('partial')}</p>}
                 {capacity.reportingFeeds === capacity.expectedFeeds && capacity.ratedA === null && (
                   <p>
                     Rated current is missing on one or more shunts. Configure each physical input on
@@ -323,7 +318,7 @@ export function SnmpFeedLoadPanel({
                   </small>
                 )}
                 {!!load.missingFeedPositions.length && (
-                  <small>{t('missing',{positions:load.missingFeedPositions.join(', ')})}</small>
+                  <small>{t('missing', { positions: load.missingFeedPositions.join(', ') })}</small>
                 )}
                 {!inventoryRecorded && <small>{t('addInputs')}</small>}
               </div>
@@ -401,9 +396,15 @@ export function SnmpFeedLoadPanel({
                       </div>
                     </div>
                     <div className="sm-snmp-feed-details">
-                      <small>{t('controller')} {feed.sourceIdentity ?? t('notMapped')}</small>
+                      <small>
+                        {t('controller')} {feed.sourceIdentity ?? t('notMapped')}
+                      </small>
                       {feed.currentOid && <small>Current OID: {feed.currentOid}</small>}
-                      {feed.observedAt && <small>{t('last')} {feed.observedAt}</small>}
+                      {feed.observedAt && (
+                        <small>
+                          {t('last')} {feed.observedAt}
+                        </small>
+                      )}
                       <div className="sm-snmp-panel-list">
                         <span>{t('panels')}</span>
                         {mappedPanels.length > 0 ? (

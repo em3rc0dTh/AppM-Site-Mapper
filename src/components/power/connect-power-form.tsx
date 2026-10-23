@@ -227,7 +227,9 @@ export function ConnectPowerForm({
               </div>
               <div>
                 <dt>{t('capacity')}</dt>
-                <dd>{source.capacity === undefined ? t('notSpecified') : `${source.capacity} A`}</dd>
+                <dd>
+                  {source.capacity === undefined ? t('notSpecified') : `${source.capacity} A`}
+                </dd>
               </div>
               <div>
                 <dt>{t('physicalFeed')}</dt>
@@ -253,11 +255,7 @@ export function ConnectPowerForm({
             />
           </label>
 
-          <div
-            className="power-destination-list"
-            role="radiogroup"
-            aria-label={t('candidate')}
-          >
+          <div className="power-destination-list" role="radiogroup" aria-label={t('candidate')}>
             {visibleDestinations.flatMap((item) =>
               item.ports.map((port) => {
                 const selected = destinationId === item.id && accessPortId === port.id;

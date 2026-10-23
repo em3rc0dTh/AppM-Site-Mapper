@@ -91,7 +91,9 @@ function EquipmentPreview({
   return (
     <article className="equipment-physical-preview">
       <div className="equipment-physical-preview-heading">
-        <span className="equipment-physical-position">{t('position',{value:String(slotIndex+1).padStart(2,'0')})}</span>
+        <span className="equipment-physical-position">
+          {t('position', { value: String(slotIndex + 1).padStart(2, '0') })}
+        </span>
         <span className="equipment-physical-type">
           {equipment.equipmentType.replaceAll('_', ' ')}
         </span>
@@ -111,7 +113,10 @@ function EquipmentPreview({
         </span>
         {ports.length > 0 && (
           <span>
-            {t('accessPorts',{count:ports.length,kind:ports.length===1?t('port'):t('ports')})}
+            {t('accessPorts', {
+              count: ports.length,
+              kind: ports.length === 1 ? t('port') : t('ports'),
+            })}
           </span>
         )}
       </div>
@@ -183,7 +188,7 @@ function PortFace({
       <header className="equipment-faceplate-header">
         <div>
           <strong>{t('terminals')}</strong>
-          <span>{t('recorded',{count:active.length})}</span>
+          <span>{t('recorded', { count: active.length })}</span>
         </div>
         <span className="equipment-faceplate-status">{t('front')}</span>
       </header>
@@ -244,7 +249,7 @@ function PortFace({
           </dl>
           {selectedLinks.length > 0 && (
             <div className="equipment-terminal-connection" role="status">
-              <strong>{t('paths',{count:selectedLinks.length})}</strong>
+              <strong>{t('paths', { count: selectedLinks.length })}</strong>
               {selectedLinks.map((link) => (
                 <div key={link.pathId}>
                   <span>
@@ -274,9 +279,7 @@ function PortFace({
           </div>
         </div>
       ) : (
-        <p className="equipment-faceplate-hint">
-          {t('help')}
-        </p>
+        <p className="equipment-faceplate-hint">{t('help')}</p>
       )}
     </section>
   );
@@ -399,7 +402,8 @@ export function PhysicalEquipmentDiagram({
               </span>
             )}
             <span>
-              <b>{root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length}</b> {t('accessCaption')}
+              <b>{root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length}</b>{' '}
+              {t('accessCaption')}
               ports
             </span>
           </div>
@@ -471,7 +475,9 @@ export function PhysicalEquipmentDiagram({
                         <div
                           className={`equipment-physical-empty ${projection.positional && projection.capacity > 4 ? 'is-dense' : ''}`}
                         >
-                          <small>{t('position',{value:String(slot.index+1).padStart(2,'0')})}</small>
+                          <small>
+                            {t('position', { value: String(slot.index + 1).padStart(2, '0') })}
+                          </small>
                           <span>
                             {slot.equipmentId ? 'Missing equipment reference' : 'Available'}
                           </span>

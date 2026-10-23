@@ -72,15 +72,15 @@ export function BdfbChassis({
           <Link className="bdfb-open-chassis" href={`/device/${presentation.chassisId}`}>
             OPEN CHASSIS COMPOSITION →
           </Link>
-          <span>{t('shelves',{count:presentation.shelves.length})}</span>
-          <span>{t('frames',{count:frames.length})}</span>
-          <span>{t('panels',{count:panels.length})}</span>
+          <span>{t('shelves', { count: presentation.shelves.length })}</span>
+          <span>{t('frames', { count: frames.length })}</span>
+          <span>{t('panels', { count: panels.length })}</span>
         </div>
       </header>
 
       <div className="sm-bdfb-physical-body">
         <article className="sm-bdfb-physical-chassis">
-          <div className="sm-bdfb-physical-title">{t('chassis',{name:device.name})}</div>
+          <div className="sm-bdfb-physical-title">{t('chassis', { name: device.name })}</div>
           {presentation.shelves.map((shelf) => (
             <section key={shelf.id} className="sm-bdfb-physical-shelf">
               <div className="sm-bdfb-physical-title">
@@ -194,7 +194,7 @@ export function BdfbChassis({
               {selectedPanel.positions.map((breaker, index) =>
                 breaker ? (
                   <div className="sm-bdfb-breaker-summary-row" key={breaker.id}>
-                    <span>{t('position',{position:String(index+1).padStart(2,'0')})}</span>
+                    <span>{t('position', { position: String(index + 1).padStart(2, '0') })}</span>
                     <Link href={`/device/${breaker.id}`}>{breaker.label}</Link>
                     <small>
                       {destinationByBreaker.get(breaker.id)?.counterpartName ??

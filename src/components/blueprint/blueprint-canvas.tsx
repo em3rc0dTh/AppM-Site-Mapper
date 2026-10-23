@@ -546,9 +546,9 @@ export function BlueprintCanvas({
         </div>
       </div>
       <footer className="blueprint-legend">
-        <StatusBadge tone="accent">{t('clusters',{count:clusters.length})}</StatusBadge>
-        <StatusBadge tone="accent">{t('racks',{count:racks.length})}</StatusBadge>
-        <StatusBadge>{t('tiles',{count:slots.length})}</StatusBadge>
+        <StatusBadge tone="accent">{t('clusters', { count: clusters.length })}</StatusBadge>
+        <StatusBadge tone="accent">{t('racks', { count: racks.length })}</StatusBadge>
+        <StatusBadge>{t('tiles', { count: slots.length })}</StatusBadge>
         <span>
           {tool === 'pan'
             ? 'Drag to pan · scroll to zoom'
@@ -573,11 +573,7 @@ export function BlueprintCanvas({
                 <small>{t('focus')}</small>
                 <h2>{racks.find((rack) => rack.id === focusedRackId)?.name}</h2>
               </div>
-              <button
-                type="button"
-                onClick={() => setFocusedRackId(null)}
-                aria-label={t('close')}
-              >
+              <button type="button" onClick={() => setFocusedRackId(null)} aria-label={t('close')}>
                 ×
               </button>
             </header>

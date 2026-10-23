@@ -156,10 +156,8 @@ export function EquipmentTelemetryInspector({
           </article>
         ))}
       </div>
-      <small>{t('last',{time:visibleSamples.at(-1)?.receivedAt??'—'})}</small>
-      {window !== 'LIVE' && (
-        <p>{t('note')}</p>
-      )}
+      <small>{t('last', { time: visibleSamples.at(-1)?.receivedAt ?? '—' })}</small>
+      {window !== 'LIVE' && <p>{t('note')}</p>}
     </section>
   );
 }

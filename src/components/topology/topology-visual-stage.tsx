@@ -228,7 +228,10 @@ function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
                 </span>
                 <span className="zip-bay-cell-copy">
                   <small>
-                    {t('position',{coordinate:item.node.coordinate.row.toUpperCase()+'-'+item.node.coordinate.column})}
+                    {t('position', {
+                      coordinate:
+                        item.node.coordinate.row.toUpperCase() + '-' + item.node.coordinate.column,
+                    })}
                   </small>
                   <strong>{item.node.name}</strong>
                 </span>
@@ -370,7 +373,7 @@ export function TopologyVisualStage({
                   : t('context')}
           </span>
         </div>
-        <StatusBadge>{t('contained',{count:items.length})}</StatusBadge>
+        <StatusBadge>{t('contained', { count: items.length })}</StatusBadge>
       </header>
 
       <div className="legacy-stage-canvas">

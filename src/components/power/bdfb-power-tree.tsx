@@ -61,7 +61,9 @@ export function BdfbPowerTree({
                 <div className="zip-bdfb-tree-row level-4">
                   <span>⌄</span>
                   <b>▥</b>
-                  <strong>{frame.physical ? frame.label : t('group',{label:frame.label})}</strong>
+                  <strong>
+                    {frame.physical ? frame.label : t('group', { label: frame.label })}
+                  </strong>
                 </div>
                 {frame.panels.map((panel) => (
                   <Link

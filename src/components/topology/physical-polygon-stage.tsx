@@ -68,9 +68,7 @@ export function PhysicalPolygonStage({
     return (
       <div className="telxius-geometry-missing">
         <strong>{t('missing')}</strong>
-        <span>
-          {t('description')}
-        </span>
+        <span>{t('description')}</span>
       </div>
     );
   }
@@ -86,11 +84,7 @@ export function PhysicalPolygonStage({
 
   return (
     <div className={`telxius-physical-map telxius-physical-map--${mode}`}>
-      <svg
-        viewBox={viewBox}
-        role="img"
-        aria-label={mode === 'site' ? t('site') : t('structure')}
-      >
+      <svg viewBox={viewBox} role="img" aria-label={mode === 'site' ? t('site') : t('structure')}>
         <defs>
           <pattern
             id={`telxius-grid-${mode}`}

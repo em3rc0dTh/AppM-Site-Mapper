@@ -131,11 +131,7 @@ export function PowerContractEditor({
                   declared requirement, not an inferred state.
                 </p>
               </div>
-              <button
-                type="button"
-                aria-label={t('close')}
-                onClick={() => setOpen(false)}
-              >
+              <button type="button" aria-label={t('close')} onClick={() => setOpen(false)}>
                 ×
               </button>
             </header>
@@ -184,16 +180,14 @@ export function PowerContractEditor({
                   </label>
                   <button
                     type="button"
-                    aria-label={t('removePort',{name:port.label})}
+                    aria-label={t('removePort', { name: port.label })}
                     onClick={() => removePort(port.key)}
                   >
                     {t('remove')}
                   </button>
                 </article>
               ))}
-              {!ports.length ? (
-                <div className="power-contract-empty">{t('empty')}</div>
-              ) : null}
+              {!ports.length ? <div className="power-contract-empty">{t('empty')}</div> : null}
             </div>
 
             <button type="button" className="power-contract-add" onClick={addPort}>

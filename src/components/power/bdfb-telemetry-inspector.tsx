@@ -110,8 +110,18 @@ function HistoricalTelemetry({
   return (
     <>
       <div className="zip-bdfb-history-grid">
-        <HistoryMetric label={ti('voltage')} unit="V" metricKey="voltageV" points={history.points} />
-        <HistoryMetric label={ti('current')} unit="A" metricKey="currentA" points={history.points} />
+        <HistoryMetric
+          label={ti('voltage')}
+          unit="V"
+          metricKey="voltageV"
+          points={history.points}
+        />
+        <HistoryMetric
+          label={ti('current')}
+          unit="A"
+          metricKey="currentA"
+          points={history.points}
+        />
         <HistoryMetric label={ti('power')} unit="W" metricKey="powerW" points={history.points} />
         <HistoryMetric
           label={ti('energy')}
@@ -296,10 +306,7 @@ export function BdfbTelemetryInspector({
               chassisId={presentation.chassisId}
               view="summary"
             />
-            <section
-              className="zip-bdfb-live-average"
-              aria-label={ti('averageLabel')}
-            >
+            <section className="zip-bdfb-live-average" aria-label={ti('averageLabel')}>
               <header>
                 <div>
                   <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
@@ -372,21 +379,14 @@ export function BdfbTelemetryInspector({
         {tab === 'history' && (
           <>
             <SnmpFeedHistory deviceId={node.id} />
-            <section
-              className="zip-bdfb-live-average"
-              aria-label={ti('historyChart')}
-            >
+            <section className="zip-bdfb-live-average" aria-label={ti('historyChart')}>
               <header>
                 <div>
                   <strong>{ti('mqttHistory')}</strong>
                 </div>
                 <span>{scopeLabel}</span>
               </header>
-              <div
-                className="zip-bdfb-window-tabs"
-                role="tablist"
-                aria-label={ti('historyWindow')}
-              >
+              <div className="zip-bdfb-window-tabs" role="tablist" aria-label={ti('historyWindow')}>
                 {TELEMETRY_HISTORY_WINDOWS.map((historyWindow) => (
                   <button
                     type="button"
@@ -416,10 +416,7 @@ export function BdfbTelemetryInspector({
         {tab === 'settings' && (
           <>
             <SnmpFeedCommissioning deviceId={node.id} chassisId={presentation.chassisId} />
-            <section
-              className="sm-bdfb-device-info"
-              aria-label={ti('properties')}
-            >
+            <section className="sm-bdfb-device-info" aria-label={ti('properties')}>
               <h3>{ti('diagnostics')}</h3>
               <dl>
                 <dt>{ti('type')}</dt>
@@ -445,7 +442,7 @@ export function BdfbTelemetryInspector({
               </dl>
             </section>
             <div className="zip-bdfb-actions">
-              <span>{ti('mappedBreakers',{count:mappedBreakerCount})}</span>
+              <span>{ti('mappedBreakers', { count: mappedBreakerCount })}</span>
               <span>
                 {selectedPanel
                   ? `Average scope: ${selectedPanel.label}`

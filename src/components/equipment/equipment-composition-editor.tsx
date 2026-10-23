@@ -756,7 +756,7 @@ export function EquipmentCompositionEditor({
           {mode === 'warehouse' ? (
             <form onSubmit={createFromWarehouse}>
               <label>
-                Equipment template
+                {t('template')}
                 <select
                   value={templateId}
                   onChange={(event) => {
@@ -787,7 +787,7 @@ export function EquipmentCompositionEditor({
                 </div>
               ) : null}
               <label>
-                Instance name
+                {t('name')}
                 <input
                   name="name"
                   maxLength={120}
@@ -803,14 +803,14 @@ export function EquipmentCompositionEditor({
                 </p>
               ) : null}
               <label>
-                Equipment type override
+                {t('typeOverride')}
                 <select
                   key={templateId + ':' + defaultWarehouseType}
                   name="equipmentType"
                   defaultValue={defaultWarehouseType}
                 >
                   <option value="">
-                    Use template ({selectedTemplate?.equipmentType ?? 'CUSTOM'})
+                    {t('useTemplate',{type:selectedTemplate?.equipmentType??'CUSTOM'})}
                   </option>
                   {permissibleChildTypes.map((type) => (
                     <option key={type} value={type}>
@@ -820,7 +820,7 @@ export function EquipmentCompositionEditor({
                 </select>
               </label>
               <label>
-                Children mode · This instance
+                {t('modeInstance')}
                 <select
                   name="childMode"
                   value={warehouseChildMode}
@@ -850,11 +850,11 @@ export function EquipmentCompositionEditor({
               ) : null}
               {warehouseChildMode === 'POSITIONAL' ? telemetryPrefixField() : null}
               <label>
-                Serial number
+                {t('serial')}
                 <input name="serialNumber" maxLength={120} />
               </label>
               <label>
-                Category override
+                {t('categoryOverride')}
                 <input name="category" maxLength={120} />
               </label>
               {presentationFields()}
@@ -865,7 +865,7 @@ export function EquipmentCompositionEditor({
           ) : (
             <form onSubmit={createOneOff}>
               <label>
-                Name
+                {t('nameLabel')}
                 <input name="name" required maxLength={120} />
               </label>
               <label>
@@ -904,11 +904,11 @@ export function EquipmentCompositionEditor({
               ) : null}
               {oneOffChildMode === 'POSITIONAL' ? telemetryPrefixField() : null}
               <label>
-                Serial number
+                {t('serial')}
                 <input name="serialNumber" maxLength={120} />
               </label>
               <label>
-                Category
+                {t('category')}
                 <input name="category" maxLength={120} />
               </label>
               {presentationFields()}

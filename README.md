@@ -125,3 +125,10 @@ La salida industrial es **solo lectura** y expone exclusivamente **voltaje (V), 
 - [Comportamiento del servicio y puesta en marcha](docs/telemetry/modbus-tcp-output.md).
 
 El mapa CSV incluido usa identidades **sintéticas**, no topología ni seriales reales del cliente. Un registro asignado **no** certifica una medición comisionada. Por compatibilidad, la política predeterminada de dato ausente/vencido sigue devolviendo cero; existe `MODBUS_MISSING_POLICY=exception` para evaluación con el integrador. La conectividad y las reglas de lectura con el **Metasys físico** siguen pendientes de aceptación en la red OT autorizada.
+
+### Extensión industrial MQTT/SNMP
+
+Captura original, catálogo de señales desconocidas, alarmas Eltek rev54 y registros Modbus
+adicionales con calidad explícita: [configuración, contratos y laboratorio](docs/telemetry/industrial-integration.md).
+La extensión conserva las vistas y direcciones actuales; requiere comisionamiento de fuentes,
+asociaciones y puntos antes de conectarse al hardware y a Metasys.

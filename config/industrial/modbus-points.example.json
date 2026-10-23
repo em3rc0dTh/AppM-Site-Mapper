@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "points": [
+    {
+      "signalId": "9207a21b7891ef6f039fa27a011353e02bafae7814c937552d47803d74f3376f",
+      "unitId": 1,
+      "address": 1024,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 1 extra voltage"
+    },
+    {
+      "signalId": "b19111b60befaaa8ae65226c74256456b1192e25bfde1a83586a0dae9c74701d",
+      "unitId": 1,
+      "address": 1027,
+      "unit": "",
+      "description": "SYNTHETIC QDF 1 alarm condition"
+    },
+    {
+      "signalId": "dc31248e29cc7bad6dd4aa6b09d2d27c796b78debef485e17aeebcf1262fef5b",
+      "unitId": 2,
+      "address": 1024,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 2 extra voltage"
+    },
+    {
+      "signalId": "b92769d2a0d6998141970db4b5c75a4707b66a8a56def6c93c343412b08bba74",
+      "unitId": 2,
+      "address": 1027,
+      "unit": "",
+      "description": "SYNTHETIC QDF 2 alarm condition"
+    },
+    {
+      "signalId": "c906313cffafac9c87c76ba8846a99a6c6369098df49c67eb0bb99ca9b152500",
+      "unitId": 3,
+      "address": 1024,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 3 extra voltage"
+    },
+    {
+      "signalId": "ca9c5b00033b8216426c5b78c601e1eb920a90b7df856540c220a3f057b968fa",
+      "unitId": 3,
+      "address": 1027,
+      "unit": "",
+      "description": "SYNTHETIC QDF 3 alarm condition"
+    }
+  ]
+}

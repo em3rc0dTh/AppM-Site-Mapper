@@ -1,0 +1,48 @@
+# Additive overlay: docker compose -f docker-compose.telemetry.yml -f docker-compose.industrial.yml ...
+services:
+  site-mapper:
+    environment:
+      INDUSTRIAL_MQTT_SPOOL: /data/industrial-mqtt
+      INDUSTRIAL_PROFILES_JSON: '${INDUSTRIAL_PROFILES_JSON:?Set approved industrial source profiles}'
+      INDUSTRIAL_INGEST_SOURCES_JSON: '${INDUSTRIAL_INGEST_SOURCES_JSON:?Set distinct per-source collector tokens}'
+      INDUSTRIAL_PROJECTION_TOKEN: '${INDUSTRIAL_PROJECTION_TOKEN:?Set a private projection token (32+ chars)}'
+
+    volumes:
+      - industrial_mqtt_spool:/data/industrial-mqtt
+
+  snmp-traps:
+    build:
+      context: .
+      dockerfile: infra/snmp-collector/Dockerfile
+    command: ['node', 'trap-receiver.mjs']
+    environment:
+      APP_ENV: '${APP_ENV:-development}'
+      SNMP_TRAP_SOURCES_JSON: '${SNMP_TRAP_SOURCES_JSON:?Set approved IPs and SNMP credentials}'
+      SNMP_TRAP_BIND_HOST: 0.0.0.0
+      SNMP_TRAP_PORT: '1162'
+      SNMP_TRAP_ENGINE_ID: '${SNMP_TRAP_ENGINE_ID:?Set a persistent SNMP engine ID in hex}'
+      SNMP_TRAP_SPOOL: /data/traps
+      INDUSTRIAL_INGEST_URL: http://site-mapper:3000/api/telemetry/industrial/ingest
+    volumes:
+      - industrial_trap_spool:/data
+    ports:
+      - '127.0.0.1:1162:1162/udp'
+    depends_on:
+      site-mapper:
+        condition: service_started
+    restart: unless-stopped
+
+  modbus-tcp:
+    environment:
+      MODBUS_POINTS_FILE: /config/points.json
+      MODBUS_REGISTRY_PATH: /data/registry.json
+      INDUSTRIAL_PROJECTION_URL: http://site-mapper:3000/api/telemetry/industrial/projection
+      INDUSTRIAL_PROJECTION_TOKEN: '${INDUSTRIAL_PROJECTION_TOKEN:?Set a private projection token (32+ chars)}'
+    volumes:
+      - '${MODBUS_POINTS_LOCAL_PATH:?Set path to operator-approved points JSON}:/config/points.json:ro'
+      - industrial_modbus_registry:/data
+
+volumes:
+  industrial_mqtt_spool:
+  industrial_trap_spool:
+  industrial_modbus_registry:

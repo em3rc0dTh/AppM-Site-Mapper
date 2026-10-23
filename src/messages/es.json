@@ -1053,7 +1053,11 @@
     "unavailable": "Telemetría temporalmente no disponible.",
     "historicalPackets": "{count} paquetes históricos de este panel",
     "noOwnMeasurements": "No se recibieron mediciones propias.",
-    "noStoredMeasurements": "No hay mediciones almacenadas en este período."
+    "noStoredMeasurements": "No hay mediciones almacenadas en este período.",
+    "industrialSignals": "Señales industriales ({count})",
+    "signal": "Señal",
+    "value": "Valor",
+    "quality": "Calidad"
   },
   "telemetryLens": {
     "context": "DIAGNÓSTICO CONTEXTUAL",

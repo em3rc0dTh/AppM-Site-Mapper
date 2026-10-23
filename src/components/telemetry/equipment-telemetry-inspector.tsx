@@ -6,6 +6,17 @@ import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import { panelReportedPoints, telemetryMetrics } from './telemetry-presentation';
 
+type IndustrialSignal = {
+  id: string;
+  key: string;
+  value: number | string | boolean | null;
+  unit: string | null;
+  quality: string;
+  alarmState: string | null;
+  mibName: string | null;
+  receivedAt: string;
+};
+
 type View = {
   targetId: string;
   status: string;
@@ -25,6 +36,34 @@ export function EquipmentTelemetryInspector({
   pointCapacity?: number | undefined;
 }) {
   const t = useTranslations('equipmentTelemetry');
+  const [industrial, setIndustrial] = useState<{
+    targetId: string;
+    signals: IndustrialSignal[];
+  } | null>(null);
+  useEffect(() => {
+    const controller = new AbortController();
+    let timer: ReturnType<typeof setTimeout>;
+    async function load() {
+      try {
+        const response = await fetch(
+          `/api/telemetry/industrial/signals?${new URLSearchParams({ target: targetId })}`,
+          { signal: controller.signal, cache: 'no-store' },
+        );
+        if (!response.ok) return;
+        const body = (await response.json()) as { signals: IndustrialSignal[] };
+        if (!controller.signal.aborted) setIndustrial({ targetId, signals: body.signals });
+      } catch {
+        /* Existing telemetry remains independent of optional industrial capture. */
+      } finally {
+        if (!controller.signal.aborted) timer = setTimeout(load, 5000);
+      }
+    }
+    void load();
+    return () => {
+      controller.abort();
+      clearTimeout(timer);
+    };
+  }, [targetId]);
   const [window, setWindow] = useState('LIVE');
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -151,6 +190,39 @@ export function EquipmentTelemetryInspector({
       </div>
       <small>{t('last', { time: visibleSamples.at(-1)?.receivedAt ?? '—' })}</small>
       {window !== 'LIVE' && <p>{t('note')}</p>}
+      {industrial?.targetId === targetId && industrial.signals.length > 0 && (
+        <details>
+          <summary>{t('industrialSignals', { count: industrial.signals.length })}</summary>
+          <div style={{ maxHeight: 320, overflow: 'auto' }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>{t('signal')}</th>
+                  <th>{t('value')}</th>
+                  <th>{t('quality')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {industrial.signals.map((signal) => (
+                  <tr key={signal.id}>
+                    <td title={signal.key}>{signal.mibName ?? signal.key}</td>
+                    <td>
+                      {signal.alarmState ??
+                        (signal.quality === 'VALID' && signal.value !== null
+                          ? String(signal.value)
+                          : '—')}{' '}
+                      {signal.unit ?? ''}
+                    </td>
+                    <td>
+                      {signal.quality} · <time>{signal.receivedAt}</time>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      )}
     </section>
   );
 }

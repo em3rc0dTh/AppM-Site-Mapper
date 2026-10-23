@@ -1,0 +1,68 @@
+[
+  {
+    "sourceIdentity": "EMU-MQTT-QDF-01",
+    "protocol": "MQTT",
+    "version": "synthetic-1",
+    "staleMs": 30000,
+    "rules": [
+      {
+        "key": "/reported/0_1_1/U1",
+        "kind": "measurement",
+        "unit": "V",
+        "scale": 1
+      }
+    ]
+  },
+  {
+    "sourceIdentity": "EMU-SNMP-QDF-01",
+    "protocol": "SNMP",
+    "version": "synthetic-eltek-54-1",
+    "mib": "eltek-rev54",
+    "staleMs": 120000,
+    "rules": []
+  },
+  {
+    "sourceIdentity": "EMU-MQTT-QDF-02",
+    "protocol": "MQTT",
+    "version": "synthetic-1",
+    "staleMs": 30000,
+    "rules": [
+      {
+        "key": "/reported/0_1_1/U1",
+        "kind": "measurement",
+        "unit": "V",
+        "scale": 1
+      }
+    ]
+  },
+  {
+    "sourceIdentity": "EMU-SNMP-QDF-02",
+    "protocol": "SNMP",
+    "version": "synthetic-eltek-54-1",
+    "mib": "eltek-rev54",
+    "staleMs": 120000,
+    "rules": []
+  },
+  {
+    "sourceIdentity": "EMU-MQTT-QDF-03",
+    "protocol": "MQTT",
+    "version": "synthetic-1",
+    "staleMs": 30000,
+    "rules": [
+      {
+        "key": "/reported/0_1_1/U1",
+        "kind": "measurement",
+        "unit": "V",
+        "scale": 1
+      }
+    ]
+  },
+  {
+    "sourceIdentity": "EMU-SNMP-QDF-03",
+    "protocol": "SNMP",
+    "version": "synthetic-eltek-54-1",
+    "mib": "eltek-rev54",
+    "staleMs": 120000,
+    "rules": []
+  }
+]

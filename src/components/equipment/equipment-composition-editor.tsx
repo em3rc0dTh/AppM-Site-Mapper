@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { PhysicalEquipmentDiagram } from './physical-equipment-diagram';
 import { PanelCommissioning } from '@/components/telemetry/panel-commissioning';
 import { useMemo, useState, type FormEvent } from 'react';
@@ -40,6 +41,7 @@ export function EquipmentCompositionEditor({
   breakerTelemetryBindings?: readonly CompositionBreakerBinding[];
   portConnections?: readonly PortConnectionView[];
 }>) {
+  const t = useTranslations('equipmentEditor');
   const router = useRouter();
   const byId = useMemo(
     () => new Map(childEquipment.map((child) => [child.id, child])),
@@ -123,18 +125,18 @@ export function EquipmentCompositionEditor({
   function presentationFields() {
     return (
       <fieldset>
-        <legend>Child composition layout</legend>
+        <legend>{t('layout')}</legend>
         <label>
           Layout direction
           <select key="instance-direction" name="presentationDirection" defaultValue="ROW">
-            <option value="ROW">Row</option>
-            <option value="COLUMN">Column</option>
+            <option value="ROW">{t('row')}</option>
+            <option value="COLUMN">{t('column')}</option>
           </select>
         </label>
         <label>
           Max items per line
           <select key="instance-max" name="presentationMaxPerLine" defaultValue="auto">
-            <option value="auto">Auto</option>
+            <option value="auto">{t('auto')}</option>
             {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
               <option key={n} value={n}>
                 {n}
@@ -145,9 +147,9 @@ export function EquipmentCompositionEditor({
         <label>
           Child display
           <select key="instance-visibility" name="presentationVisibility" defaultValue="AUTO">
-            <option value="AUTO">Auto</option>
-            <option value="INLINE">Inline</option>
-            <option value="SUMMARY">Summary</option>
+            <option value="AUTO">{t('auto')}</option>
+            <option value="INLINE">{t('inline')}</option>
+            <option value="SUMMARY">{t('summary')}</option>
           </select>
         </label>
       </fieldset>
@@ -164,7 +166,7 @@ export function EquipmentCompositionEditor({
           maxLength={80}
           pattern="[A-Za-z0-9]+(_[A-Za-z0-9]+)*"
           placeholder="e.g. 0_2"
-          title="Raw MQTT group such as 0_2. Leave empty if not commissioned."
+          title={t('rawMqtt')}
         />
         <small>
           Point 1 becomes prefix_1. This records the address only; it does not reassign existing
@@ -405,21 +407,21 @@ export function EquipmentCompositionEditor({
     <section className="equipment-composition">
       <header className="equipment-composition-header">
         <div>
-          <span>PHYSICAL COMPOSITION</span>
+          <span>{t('physical')}</span>
           <h2>{equipment.name}</h2>
           <small>
             {label(equipment.equipmentType)} · {equipment.lifecycle} · {equipment.childMode}
             {equipment.childMode === 'POSITIONAL'
-              ? ' · ' + equipment.children.length + ' slots'
-              : ' · ' + equipment.children.length + ' children'}
+              ? ' · ' + t('slotsCount', { count: equipment.children.length })
+              : ' · ' + t('childrenCount', { count: equipment.children.length })}
             {equipment.telemetryPointPrefix ? ' · MQTT ' + equipment.telemetryPointPrefix : ''}
           </small>
         </div>
         <div className="equipment-composition-policy">
           {allowed.length ? (
-            <p>Allowed children: {allowed.map(label).join(', ')}</p>
+            <p>{t('allowed', { types: allowed.map(label).join(', ') })}</p>
           ) : (
-            <p>Allowed children: any Equipment type</p>
+            <p>{t('anyType')}</p>
           )}
           {canWrite ? (
             <div className="equipment-lifecycle-actions">
@@ -435,7 +437,7 @@ export function EquipmentCompositionEditor({
                       setConfigurationOpen((value) => !value);
                     }}
                   >
-                    CONFIGURE EQUIPMENT
+                    {t('configure')}
                   </button>
                   <button
                     type="button"
@@ -443,16 +445,16 @@ export function EquipmentCompositionEditor({
                     disabled={busy || !canArchive}
                     title={
                       canArchive
-                        ? 'Archive Equipment'
+                        ? t('archiveTitle')
                         : equipment.parentEquipmentId !== null
-                          ? 'Detach this Equipment to the Device before archiving'
+                          ? t('detachFirst')
                           : equipment.rackPlacement
-                            ? 'Release CAS placement before archiving'
-                            : 'Archive requires no installed child Equipment'
+                            ? t('releaseFirst')
+                            : t('removeChildren')
                     }
                     onClick={() => void changeLifecycle('archive')}
                   >
-                    ARCHIVE
+                    {t('archive')}
                   </button>
                 </>
               ) : (
@@ -462,7 +464,7 @@ export function EquipmentCompositionEditor({
                   disabled={busy}
                   onClick={() => void changeLifecycle('restore')}
                 >
-                  RESTORE
+                  {t('restore')}
                 </button>
               )}
             </div>
@@ -489,8 +491,8 @@ export function EquipmentCompositionEditor({
               value={configurationMode}
               onChange={(event) => setConfigurationMode(event.target.value as EquipmentChildMode)}
             >
-              <option value="DYNAMIC">Dynamic</option>
-              <option value="POSITIONAL">Positional slots</option>
+              <option value="DYNAMIC">{t('dynamic')}</option>
+              <option value="POSITIONAL">{t('positional')}</option>
             </select>
           </label>
           {configurationMode === 'POSITIONAL' ? (
@@ -519,14 +521,14 @@ export function EquipmentCompositionEditor({
               value={layoutDirection}
               onChange={(event) => setLayoutDirection(event.target.value as 'ROW' | 'COLUMN')}
             >
-              <option value="ROW">Row</option>
-              <option value="COLUMN">Column</option>
+              <option value="ROW">{t('row')}</option>
+              <option value="COLUMN">{t('column')}</option>
             </select>
           </label>
           <label>
             Max items per {layoutDirection === 'ROW' ? 'row' : 'column'}
             <select value={maxPerLine} onChange={(event) => setMaxPerLine(event.target.value)}>
-              <option value="auto">Auto</option>
+              <option value="auto">{t('auto')}</option>
               {Array.from({ length: 256 }, (_, index) => index + 1).map((amount) => (
                 <option key={amount} value={amount}>
                   {amount}
@@ -542,13 +544,13 @@ export function EquipmentCompositionEditor({
                 setChildrenVisibility(event.target.value as 'AUTO' | 'INLINE' | 'SUMMARY')
               }
             >
-              <option value="AUTO">Auto</option>
-              <option value="INLINE">Inline</option>
-              <option value="SUMMARY">Summary</option>
+              <option value="AUTO">{t('auto')}</option>
+              <option value="INLINE">{t('inline')}</option>
+              <option value="SUMMARY">{t('summary')}</option>
             </select>
           </label>
           <button type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save composition'}
+            {busy ? t('saving') : t('save')}
           </button>
         </form>
       ) : null}
@@ -572,35 +574,35 @@ export function EquipmentCompositionEditor({
       <div className="equipment-composition-workbench-actions">
         {canWrite && isActive && equipment.childMode === 'DYNAMIC' && (
           <button type="button" onClick={() => openComposer(null)}>
-            + ADD EQUIPMENT
+            {t('add')}
           </button>
         )}
         <button type="button" onClick={() => setShowPositionEditor((value) => !value)}>
           {equipment.childMode === 'POSITIONAL'
             ? showPositionEditor
-              ? 'HIDE POSITION EDITOR'
-              : 'MANAGE POSITIONS'
+              ? t('hidePosition')
+              : t('managePosition')
             : showPositionEditor
-              ? 'HIDE CHILD MANAGER'
-              : 'MANAGE CHILD EQUIPMENT'}
+              ? t('hideChildren')
+              : t('manageChildren')}
         </button>
       </div>
       {showPositionEditor ? (
         <>
           {showFullComposition && visibleCount > 4 ? (
             <button type="button" onClick={() => setShowFullComposition(false)}>
-              BACK TO SUMMARY
+              {t('back')}
             </button>
           ) : null}
           {summary ? (
             <div className="equipment-slot-grid">
               <article className="equipment-slot">
                 <strong>
-                  {equipment.children.filter(Boolean).length} occupied / {visibleCount} positions
+                  {t('occupied', { occupied: equipment.children.filter(Boolean).length, total: visibleCount })}
                 </strong>
-                <p>Large compositions open in summary mode to keep the workspace usable.</p>
+                <p>{t('large')}</p>
                 <button type="button" onClick={() => setShowFullComposition(true)}>
-                  EXPLORE POSITIONS
+                  {t('explore')}
                 </button>
               </article>
             </div>
@@ -614,8 +616,8 @@ export function EquipmentCompositionEditor({
                     key={String(index)}
                   >
                     <header>
-                      <span>POSITION {String(index + 1).padStart(2, '0')}</span>
-                      <b>{childId ? 'OCCUPIED' : 'AVAILABLE'}</b>
+                      <span>{t('position', { position: String(index + 1).padStart(2, '0') })}</span>
+                      <b>{childId ? t('occupiedStatus') : t('available')}</b>
                     </header>
                     {child ? (
                       <>
@@ -627,7 +629,7 @@ export function EquipmentCompositionEditor({
                           <div className="equipment-slot-actions">
                             {availableSlots.length ? (
                               <select
-                                aria-label={'Move ' + child.name + ' to slot'}
+                                aria-label={t('moveToSlot', { name: child.name })}
                                 defaultValue=""
                                 disabled={busy}
                                 onChange={(event) => {
@@ -636,10 +638,10 @@ export function EquipmentCompositionEditor({
                                   event.currentTarget.value = '';
                                 }}
                               >
-                                <option value="">Move to…</option>
+                                <option value="">{t('moveTo')}</option>
                                 {availableSlots.map((slot) => (
                                   <option key={slot} value={slot}>
-                                    Position {String(slot + 1).padStart(2, '0')}
+                                    {t('positionOption', { position: String(slot + 1).padStart(2, '0') })}
                                   </option>
                                 ))}
                               </select>
@@ -649,22 +651,22 @@ export function EquipmentCompositionEditor({
                               disabled={busy}
                               onClick={() => void detachChild(child.id)}
                             >
-                              Detach to Device
+                              {t('detach')}
                             </button>
                           </div>
                         ) : null}
                       </>
                     ) : childId ? (
                       <div className="equipment-slot-missing">
-                        <strong>Referenced Equipment unavailable</strong>
+                        <strong>{t('reference')}</strong>
                         <small>{childId}</small>
                       </div>
                     ) : canWrite && isActive ? (
                       <button type="button" onClick={() => openComposer(index)}>
-                        + ADD EQUIPMENT
+                        {t('add')}
                       </button>
                     ) : (
-                      <span>Empty slot</span>
+                      <span>{t('empty')}</span>
                     )}
                   </article>
                 );
@@ -688,23 +690,23 @@ export function EquipmentCompositionEditor({
                           disabled={busy}
                           onClick={() => void detachChild(child.id)}
                         >
-                          Detach to Device
+                          {t('detach')}
                         </button>
                       ) : null}
                     </article>
                   ) : (
                     <article key={childId} className="equipment-slot-missing">
-                      <strong>Referenced Equipment unavailable</strong>
+                      <strong>{t('reference')}</strong>
                       <small>{childId}</small>
                     </article>
                   );
                 })
               ) : (
-                <p>No child Equipment installed.</p>
+                <p>{t('none')}</p>
               )}
               {canWrite && isActive ? (
                 <button type="button" onClick={() => openComposer(null)}>
-                  + ADD EQUIPMENT
+                  {t('add')}
                 </button>
               ) : null}
             </div>
@@ -717,14 +719,14 @@ export function EquipmentCompositionEditor({
           <header>
             <div>
               <strong>
-                Add Equipment
+                {t('addChild')}
                 {targetSlot === null
                   ? ''
-                  : ' · Position ' + String(targetSlot + 1).padStart(2, '0')}
+                  : t('positionSuffix', { position: String(targetSlot + 1).padStart(2, '0') })}
               </strong>
-              <small>Parent: {equipment.name}</small>
+              <small>{t('parent', { name: equipment.name })}</small>
             </div>
-            <button type="button" onClick={() => setComposerOpen(false)} aria-label="Close">
+            <button type="button" onClick={() => setComposerOpen(false)} aria-label={t('close')}>
               ×
             </button>
           </header>
@@ -735,14 +737,14 @@ export function EquipmentCompositionEditor({
               className={mode === 'warehouse' ? 'is-active' : undefined}
               onClick={() => setMode('warehouse')}
             >
-              FROM WAREHOUSE
+              {t('warehouse')}
             </button>
             <button
               type="button"
               className={mode === 'one-off' ? 'is-active' : undefined}
               onClick={() => setMode('one-off')}
             >
-              ONE-OFF
+              {t('oneOff')}
             </button>
           </div>
 
@@ -762,7 +764,7 @@ export function EquipmentCompositionEditor({
                 >
                   {!templates.length ? (
                     <option value="">
-                      {loadingTemplates ? 'Loading templates…' : 'No compatible templates'}
+                      {loadingTemplates ? t('loading') : t('noTemplates')}
                     </option>
                   ) : null}
                   {templates.map((template) => (
@@ -786,7 +788,7 @@ export function EquipmentCompositionEditor({
                 <input
                   name="name"
                   maxLength={120}
-                  placeholder={selectedTemplate?.name ?? 'Equipment name'}
+                  placeholder={selectedTemplate?.name ?? t('equipmentName')}
                 />
               </label>
               {allowed.length > 0 ? (
@@ -823,13 +825,13 @@ export function EquipmentCompositionEditor({
                     setWarehouseChildCapacity('');
                   }}
                 >
-                  <option value="DYNAMIC">Dynamic</option>
-                  <option value="POSITIONAL">Positional</option>
+                  <option value="DYNAMIC">{t('dynamic')}</option>
+                  <option value="POSITIONAL">{t('positionalShort')}</option>
                 </select>
               </label>
               {warehouseChildMode === 'POSITIONAL' ? (
                 <label>
-                  Child slots · This instance
+                  {t('slotsInstance')}
                   <input
                     name="childCapacity"
                     type="number"
@@ -837,7 +839,7 @@ export function EquipmentCompositionEditor({
                     max="256"
                     required
                     value={warehouseChildCapacity}
-                    placeholder="Physical slots (1–256)"
+                    placeholder={t('slotsPlaceholder')}
                     onChange={(event) => setWarehouseChildCapacity(event.target.value)}
                   />
                 </label>
@@ -853,7 +855,7 @@ export function EquipmentCompositionEditor({
               </label>
               {presentationFields()}
               <button type="submit" disabled={busy || !templateId}>
-                {busy ? 'Creating…' : 'Install Equipment'}
+                {busy ? t('creating') : t('install')}
               </button>
             </form>
           ) : (
@@ -879,8 +881,8 @@ export function EquipmentCompositionEditor({
                   value={oneOffChildMode}
                   onChange={(event) => setOneOffChildMode(event.target.value as EquipmentChildMode)}
                 >
-                  <option value="DYNAMIC">Dynamic</option>
-                  <option value="POSITIONAL">Positional</option>
+                  <option value="DYNAMIC">{t('dynamic')}</option>
+                  <option value="POSITIONAL">{t('positionalShort')}</option>
                 </select>
               </label>
               {oneOffChildMode === 'POSITIONAL' ? (
@@ -892,7 +894,7 @@ export function EquipmentCompositionEditor({
                     min="1"
                     max="256"
                     required
-                    placeholder="Number of physical positions"
+                    placeholder={t('positionsPlaceholder')}
                   />
                 </label>
               ) : null}
@@ -907,7 +909,7 @@ export function EquipmentCompositionEditor({
               </label>
               {presentationFields()}
               <button type="submit" disabled={busy}>
-                {busy ? 'Creating…' : 'Create and install'}
+                {busy ? t('creating') : t('create')}
               </button>
             </form>
           )}

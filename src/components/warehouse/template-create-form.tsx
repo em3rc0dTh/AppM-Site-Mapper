@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 
 import { EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
@@ -20,6 +21,7 @@ const JSON_EXAMPLE = JSON.stringify(
 
 export function TemplateCreateForm() {
   const router = useRouter();
+  const t = useTranslations('warehouseForms');
   const [mode, setMode] = useState<'form' | 'json'>('form');
   const [jsonValue, setJsonValue] = useState(JSON_EXAMPLE);
   const [busy, setBusy] = useState(false);
@@ -58,7 +60,7 @@ export function TemplateCreateForm() {
       const data = (await response.json()) as { error?: string };
       if (!response.ok) throw new Error(data.error ?? 'CREATE_FAILED');
       event.currentTarget.reset();
-      setResult('Template created.');
+      setResult(t('created'));
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'CREATE_FAILED');
@@ -75,7 +77,7 @@ export function TemplateCreateForm() {
     try {
       JSON.parse(jsonValue);
     } catch {
-      setError('INVALID_JSON');
+      setError(t('invalidJson'));
       setBusy(false);
       return;
     }
@@ -99,7 +101,7 @@ export function TemplateCreateForm() {
             : '';
         throw new Error(`${data.error ?? 'IMPORT_FAILED'}${index}${imported}`);
       }
-      setResult(`${data.imported ?? 0} template(s) imported.`);
+      setResult(t('imported', { count: data.imported ?? 0 }));
       router.refresh();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'IMPORT_FAILED');
@@ -110,7 +112,7 @@ export function TemplateCreateForm() {
 
   return (
     <div className="warehouse-template-create">
-      <div className="warehouse-create-mode" role="tablist" aria-label="Template creation mode">
+      <div className="warehouse-create-mode" role="tablist" aria-label={t('creation')}>
         <button
           type="button"
           role="tab"
@@ -135,11 +137,11 @@ export function TemplateCreateForm() {
         <form className="warehouse-template-form" onSubmit={submit}>
           <div className="warehouse-form-grid">
             <label>
-              Template name
+              {t('templateName')}
               <input name="name" required maxLength={120} placeholder="BDFB Panel 24P" />
             </label>
             <label>
-              Equipment type
+              {t('equipmentType')}
               <select name="equipmentType" defaultValue="CUSTOM">
                 {EQUIPMENT_TYPES.map((type) => (
                   <option key={type} value={type}>
@@ -149,32 +151,32 @@ export function TemplateCreateForm() {
               </select>
             </label>
             <label>
-              Manufacturer
+              {t('manufacturer')}
               <input name="manufacturer" maxLength={120} placeholder="Cisco" />
             </label>
             <label>
-              Model
+              {t('model')}
               <input name="model" maxLength={120} placeholder="C9300-48P" />
             </label>
             <label>
-              Category
+              {t('category')}
               <input name="category" maxLength={120} placeholder="Network switch" />
             </label>
             <label>
-              Size (U)
+              {t('size')}
               <input name="sizeU" type="number" min="1" max="100" placeholder="1" />
             </label>
             <label>
-              Width (mm)
+              {t('width')}
               <input name="widthMm" type="number" min="1" max="10000" placeholder="482" />
             </label>
             <label>
-              Depth (mm)
+              {t('depth')}
               <input name="depthMm" type="number" min="1" max="10000" placeholder="445" />
             </label>
           </div>
           <label>
-            Allowed child Equipment types
+            {t('childTypes')}
             <select name="allowedChildTypes" multiple size={5}>
               {EQUIPMENT_TYPES.map((type) => (
                 <option key={type} value={type}>
@@ -184,24 +186,24 @@ export function TemplateCreateForm() {
             </select>
           </label>
           <label>
-            Notes
+            {t('notes')}
             <textarea
               name="notes"
               rows={2}
               maxLength={500}
-              placeholder="Reusable defaults and mounting notes"
+              placeholder={t('notesPlaceholder')}
             />
           </label>
           <div className="warehouse-form-actions">
             <button type="submit" disabled={busy}>
-              {busy ? 'Creating…' : 'Create template'}
+              {busy ? t('creating') : t('create')}
             </button>
           </div>
         </form>
       ) : (
-        <section className="warehouse-json-import" aria-label="JSON template import">
+        <section className="warehouse-json-import" aria-label={t('jsonImport')}>
           <div className="warehouse-json-copy">
-            <strong>Paste one template or an array of templates.</strong>
+            <strong>{t('paste')}</strong>
             <span>
               Equipment templates only. Recursive defaults use <code>equipmentType</code>,{' '}
               <code>equipmentType</code> and <code>allowedChildTypes</code>. Configure children,
@@ -209,17 +211,17 @@ export function TemplateCreateForm() {
             </span>
           </div>
           <textarea
-            aria-label="Template JSON"
+            aria-label={t('templateJson')}
             value={jsonValue}
             onChange={(event) => setJsonValue(event.target.value)}
             spellCheck={false}
           />
           <div className="warehouse-json-actions">
             <button type="button" onClick={() => setJsonValue(JSON_EXAMPLE)} disabled={busy}>
-              Equipment example
+              {t('example')}
             </button>
             <button type="button" onClick={() => void importJson()} disabled={busy}>
-              {busy ? 'Importing…' : 'Import JSON'}
+              {busy ? t('importing') : t('importJson')}
             </button>
           </div>
         </section>

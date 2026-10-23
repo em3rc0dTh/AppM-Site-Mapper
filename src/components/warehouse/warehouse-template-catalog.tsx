@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { AssetTemplate } from '@/modules/warehouse/domain/template';
 
@@ -19,6 +20,7 @@ function matches(template: AssetTemplate, query: string): boolean {
 export function WarehouseTemplateCatalog({
   templates,
 }: Readonly<{ templates: readonly AssetTemplate[] }>) {
+  const t = useTranslations('warehouseForms');
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
 
@@ -40,26 +42,26 @@ export function WarehouseTemplateCatalog({
   const hasFilters = Boolean(query.trim() || category);
 
   return (
-    <section className="warehouse-catalog" aria-label="Equipment template catalog">
+    <section className="warehouse-catalog" aria-label={t('catalog')}>
       <header className="warehouse-catalog-toolbar">
         <div>
-          <label htmlFor="warehouse-template-search">Search equipment</label>
+          <label htmlFor="warehouse-template-search">{t('search')}</label>
           <input
             id="warehouse-template-search"
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Name, category, manufacturer or model…"
+            placeholder={t('searchPlaceholder')}
           />
         </div>
         <div>
-          <label htmlFor="warehouse-category-filter">Category</label>
+          <label htmlFor="warehouse-category-filter">{t('category')}</label>
           <select
             id="warehouse-category-filter"
             value={category}
             onChange={(event) => setCategory(event.target.value)}
           >
-            <option value="">All categories</option>
+            <option value="">{t('allCategories')}</option>
             {categories.map((value) => (
               <option value={value} key={value}>
                 {value}
@@ -68,7 +70,7 @@ export function WarehouseTemplateCatalog({
           </select>
         </div>
         <strong>
-          {filtered.length} of {templates.length}
+          {t('count', { count: filtered.length, total: templates.length })}
         </strong>
         {hasFilters ? (
           <button
@@ -78,7 +80,7 @@ export function WarehouseTemplateCatalog({
               setCategory('');
             }}
           >
-            Clear filters
+            {t('clear')}
           </button>
         ) : null}
       </header>
@@ -88,30 +90,30 @@ export function WarehouseTemplateCatalog({
           filtered.map((template) => (
             <article key={template.id} className="warehouse-template-card">
               <header>
-                <span>EQUIPMENT</span>
+                <span>{t('equipment')}</span>
                 <b>v{template.version}</b>
               </header>
               <h2>{template.name}</h2>
               <p>
                 {[template.manufacturer, template.model].filter(Boolean).join(' · ') ||
-                  'Manufacturer/model not defined'}
+                  t('manufacturerUndefined')}
               </p>
               <dl>
-                <dt>Category</dt>
+                <dt>{t('category')}</dt>
                 <dd>{template.category ?? '—'}</dd>
-                <dt>Equipment type</dt>
+                <dt>{t('equipmentType')}</dt>
                 <dd>{template.equipmentType?.replaceAll('_', ' ') ?? 'CUSTOM'}</dd>
-                <dt>Instance composition</dt>
-                <dd>Set child mode, slots and layout during placement</dd>
-                <dt>Allowed child types</dt>
+                <dt>{t('composition')}</dt>
+                <dd>{t('compositionHelp')}</dd>
+                <dt>{t('allowedTypes')}</dt>
                 <dd>
                   {template.allowedChildTypes?.length
                     ? template.allowedChildTypes.map((type) => type.replaceAll('_', ' ')).join(', ')
-                    : 'Any Equipment type'}
+                    : t('anyType')}
                 </dd>
-                <dt>Rack size</dt>
+                <dt>{t('rackSize')}</dt>
                 <dd>{template.sizeU ? `${template.sizeU}U` : '—'}</dd>
-                <dt>Dimensions</dt>
+                <dt>{t('dimensions')}</dt>
                 <dd>
                   {template.dimensionsMm
                     ? `${template.dimensionsMm.width} × ${template.dimensionsMm.depth} mm`
@@ -123,8 +125,8 @@ export function WarehouseTemplateCatalog({
           ))
         ) : (
           <div className="warehouse-empty">
-            <strong>No matching Equipment templates</strong>
-            <p>Change the search text or category filter.</p>
+            <strong>{t('noMatch')}</strong>
+            <p>{t('changeFilters')}</p>
             {hasFilters ? (
               <button
                 type="button"
@@ -133,7 +135,7 @@ export function WarehouseTemplateCatalog({
                   setCategory('');
                 }}
               >
-                Clear filters
+                {t('clear')}
               </button>
             ) : null}
           </div>

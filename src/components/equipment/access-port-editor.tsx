@@ -546,7 +546,7 @@ export function AccessPortEditor({
               {!quickFeed && (
                 <>
                   <label>
-                    Name
+                    {t('name')}
                     <input
                       required
                       maxLength={120}
@@ -555,7 +555,7 @@ export function AccessPortEditor({
                     />
                   </label>
                   <label>
-                    Port type
+                    {t('type')}
                     <select
                       value={form.portType}
                       onChange={(event) =>
@@ -574,7 +574,7 @@ export function AccessPortEditor({
                     </select>
                   </label>
                   <label>
-                    Direction
+                    {t('direction')}
                     <select
                       value={form.direction}
                       onChange={(event) =>
@@ -589,7 +589,7 @@ export function AccessPortEditor({
                     </select>
                   </label>
                   <label>
-                    Exposure
+                    {t('exposure')}
                     <select
                       value={form.exposure}
                       onChange={(event) =>
@@ -604,7 +604,7 @@ export function AccessPortEditor({
                     </select>
                   </label>
                   <label>
-                    Connector
+                    {t('connector')}
                     <input
                       maxLength={120}
                       value={form.connectorType}
@@ -613,7 +613,7 @@ export function AccessPortEditor({
                     />
                   </label>
                   <label>
-                    Protocol
+                    {t('protocol')}
                     <input
                       maxLength={120}
                       value={form.protocol}

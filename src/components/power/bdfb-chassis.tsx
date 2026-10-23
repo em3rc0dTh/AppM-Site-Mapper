@@ -70,7 +70,7 @@ export function BdfbChassis({
         <div className="bdfb-chassis-status">
           <ContextPin entityId={device.id} />
           <Link className="bdfb-open-chassis" href={`/device/${presentation.chassisId}`}>
-            OPEN CHASSIS COMPOSITION →
+            {t('openChassis')}
           </Link>
           <span>{t('shelves', { count: presentation.shelves.length })}</span>
           <span>{t('frames', { count: frames.length })}</span>
@@ -120,7 +120,7 @@ export function BdfbChassis({
                               href={`/device/${panel.id}`}
                               title={`Open Equipment Composition: ${panel.label}`}
                             >
-                              OPEN PANEL COMPOSITION →
+                              {t('openPanel')}
                             </Link>
                           </article>
                         );
@@ -209,8 +209,7 @@ export function BdfbChassis({
             <p className="sm-bdfb-panel-empty">{t('noCircuits')}</p>
           )}
           <p className="sm-bdfb-panel-focus-note">
-            Positions and connections are inventory records, not live current readings or a wiring
-            certificate. Select another panel above to inspect its positions.
+            {t('inventoryDisclaimer')}
           </p>
         </section>
       )}

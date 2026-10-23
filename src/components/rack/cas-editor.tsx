@@ -77,7 +77,7 @@ export function CasEditor({ view }: { view: RackElevationView }) {
         <form onSubmit={submit}>
           <input type="hidden" name="action" value="equip" />
           <label>
-            Reservation
+            {t('reservationLabel')}
             <select required name="allocationId">
               <option value="">{t('selectReservation')}</option>
               {view.rack.cas
@@ -107,7 +107,7 @@ export function CasEditor({ view }: { view: RackElevationView }) {
         <form onSubmit={submit}>
           <input type="hidden" name="action" value="free" />
           <label>
-            Allocation
+            {t('allocationLabel')}
             <select required name="allocationId">
               <option value="">{t('selectAllocation')}</option>
               {view.rack.cas

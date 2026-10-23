@@ -116,7 +116,7 @@ export function ConnectEquipmentPowerForm({
           <h2>{t('source')}</h2>
           <p>{t('chooseSource')}</p>
           <label>
-            Source Equipment / POWER OUTPUT
+            {t('sourceOutput')}
             <select
               value={sourceId}
               onChange={(event) => {
@@ -154,7 +154,7 @@ export function ConnectEquipmentPowerForm({
           <h2>{t('destination')}</h2>
           <p>{t('chooseTarget')}</p>
           <label>
-            Search destination Equipment
+            {t('searchDestination')}
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
@@ -162,7 +162,7 @@ export function ConnectEquipmentPowerForm({
             />
           </label>
           <label>
-            Destination Equipment / POWER INPUT
+            {t('destinationInput')}
             <select
               value={targetId}
               onChange={(event) => {
@@ -213,7 +213,7 @@ export function ConnectEquipmentPowerForm({
         </div>
         <div className="power-port-connect-fields">
           <label>
-            Electrical feed
+            {t('electricalFeed')}
             <select
               value={chosenFeed}
               disabled={Boolean(source?.feed || target?.feed)}
@@ -224,7 +224,7 @@ export function ConnectEquipmentPowerForm({
             </select>
           </label>
           <label>
-            Connection label (optional)
+            {t('connectionLabelOptional')}
             <input
               value={label}
               maxLength={120}
@@ -236,8 +236,7 @@ export function ConnectEquipmentPowerForm({
         {sourceAndTargetSameEquipment && <p role="alert">{t('notSame')}</p>}
         {source?.connected && (
           <p role="alert">
-            SOURCE_ALREADY_CONNECTED: This POWER output already feeds {source.connectionLabel}.
-            Disconnect the recorded path before allocating this terminal elsewhere.
+            {t('sourceAlreadyConnected', { label: source.connectionLabel ?? '' })}
             {source.pathId && (
               <Link href={`/power?path=${encodeURIComponent(source.pathId)}`}>
                 {' '}
@@ -248,7 +247,7 @@ export function ConnectEquipmentPowerForm({
         )}
         {target?.connected && (
           <p role="alert">
-            TARGET_ALREADY_CONNECTED: This POWER input already has a connection.
+            {t('targetAlreadyConnected')}
             {target.pathId && (
               <Link href={`/power?path=${encodeURIComponent(target.pathId)}`}>
                 {' '}

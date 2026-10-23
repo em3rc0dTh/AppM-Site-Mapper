@@ -1094,7 +1094,10 @@
     "shelfLabel": "SHELF",
     "mqttBound": "Vinculado por MQTT",
     "noMqtt": "Sin vinculación MQTT",
-    "noDestination": "Sin destino conectado"
+    "noDestination": "Sin destino conectado",
+    "openChassis": "ABRIR COMPOSICIÓN DEL CHASSIS →",
+    "openPanel": "ABRIR COMPOSICIÓN DEL PANEL →",
+    "inventoryDisclaimer": "Las posiciones y conexiones son registros de inventario, no lecturas de corriente en vivo ni certificación de cableado. Selecciona otro panel arriba para consultar sus posiciones."
   },
   "bdfbTree": {
     "tree": "Árbol de potencia BDFB",
@@ -1230,7 +1233,14 @@
     "physicalCommissioning": "POTENCIA / COMISIONAMIENTO FÍSICO",
     "destinationPlaceholder": "SWITCH-01, entrada de potencia, rack...",
     "connectionPlaceholder": "BDFB Panel A1 → entrada del switch",
-    "networkError": "No se pudo confirmar la conexión. No se registró ningún cambio."
+    "networkError": "No se pudo confirmar la conexión. No se registró ningún cambio.",
+    "sourceOutput": "Equipment de origen / POWER OUTPUT",
+    "searchDestination": "Buscar Equipment de destino",
+    "destinationInput": "Equipment de destino / POWER INPUT",
+    "electricalFeed": "Entrada eléctrica",
+    "connectionLabelOptional": "Etiqueta de conexión (opcional)",
+    "sourceAlreadyConnected": "Esta salida POWER ya alimenta {label}. Desconecta la ruta registrada antes de asignar este terminal a otro destino.",
+    "targetAlreadyConnected": "Esta entrada POWER ya tiene una conexión."
   },
   "connectPower": {
     "header": "POWER / COMISIONAMIENTO",

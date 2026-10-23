@@ -169,8 +169,7 @@ export function EquipmentCompositionEditor({
           title={t('rawMqtt')}
         />
         <small>
-          Point 1 becomes prefix_1. This records the address only; it does not reassign existing
-          circuit bindings or prove their physical wiring.
+          {t('pointPrefixHelp')}
         </small>
       </label>
     );
@@ -781,8 +780,7 @@ export function EquipmentCompositionEditor({
                 <div className="equipment-template-preview">
                   <strong>{selectedTemplate.name}</strong>
                   <span>
-                    {selectedTemplate.equipmentType ?? 'CUSTOM'} · Choose child slots and
-                    presentation for this instance
+                    {selectedTemplate.equipmentType ?? 'CUSTOM'} · {t('instanceHelp')}
                   </span>
                 </div>
               ) : null}

@@ -1094,7 +1094,10 @@
     "shelfLabel": "SHELF",
     "mqttBound": "MQTT bound",
     "noMqtt": "No MQTT binding",
-    "noDestination": "No connected destination"
+    "noDestination": "No connected destination",
+    "openChassis": "OPEN CHASSIS COMPOSITION →",
+    "openPanel": "OPEN PANEL COMPOSITION →",
+    "inventoryDisclaimer": "Positions and connections are inventory records, not live current readings or a wiring certificate. Select another panel above to inspect its positions."
   },
   "bdfbTree": {
     "tree": "BDFB power tree",
@@ -1230,7 +1233,14 @@
     "physicalCommissioning": "POWER / PHYSICAL COMMISSIONING",
     "destinationPlaceholder": "SWITCH-01, Power input, rack...",
     "connectionPlaceholder": "BDFB Panel A1 → Switch input",
-    "networkError": "Connection could not be confirmed. Nothing was recorded."
+    "networkError": "Connection could not be confirmed. Nothing was recorded.",
+    "sourceOutput": "Source Equipment / POWER OUTPUT",
+    "searchDestination": "Search destination Equipment",
+    "destinationInput": "Destination Equipment / POWER INPUT",
+    "electricalFeed": "Electrical feed",
+    "connectionLabelOptional": "Connection label (optional)",
+    "sourceAlreadyConnected": "This POWER output already feeds {label}. Disconnect the recorded path before allocating this terminal elsewhere.",
+    "targetAlreadyConnected": "This POWER input already has a connection."
   },
   "connectPower": {
     "header": "POWER / COMMISSIONING",

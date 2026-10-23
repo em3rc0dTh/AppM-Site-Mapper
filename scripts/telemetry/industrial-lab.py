@@ -82,7 +82,22 @@ def main():
                             SNMP_V3_PRIV_KEY=s['priv'], SNMP_TRAP_TARGET_HOST='snmp-traps', SNMP_TRAP_TARGET_PORT='1162',
                             SNMP_TRAP_INFORM='true', SNMP_SEQUENCE_FILE='/config/sequence.json', SNMP_AGENT_PORT='1161'))
     services['snmp-traps'] = {'environment': {'SNMP_TRAP_SOURCES_JSON': json.dumps(sources, separators=(',', ':'))}}
-    save(lab / 'compose.json', dict(services=services, networks={'default': {'internal': True, 'ipam': {'config': [{'subnet': str(subnet)}]}}}))
+    # Preserve the isolated MQTT/SNMP lab while restoring host-loopback published ports.
+    # Internal-only Docker networks cannot expose their published ports to the host.
+    # Emulators and the anonymous lab broker stay on the private default network.
+    for service in ('mongodb', 'timescaledb', 'telemetry-store', 'site-mapper',
+                    'modbus-tcp', 'snmp-traps'):
+        services.setdefault(service, {})['networks'] = {
+            'default': {},
+            'host-access': {},
+        }
+    save(lab / 'compose.json', dict(
+        services=services,
+        networks={
+            'default': {'internal': True, 'ipam': {'config': [{'subnet': str(subnet)}]}},
+            'host-access': {'driver': 'bridge'},
+        },
+    ))
     env = dict(APP_ENV='development', TIMESCALE_DB_PASSWORD=secret['db'], BOOTSTRAP_ADMIN_TOKEN=secret['bootstrap'],
                TELEMETRY_STORE_TOKEN=secret['store'], MODBUS_BRIDGE_TOKEN=secret['bridge'], INDUSTRIAL_PROJECTION_TOKEN=secret['projection'],
                TELEMETRY_ENABLED='true', TELEMETRY_HISTORY_ENABLED='true', INDUSTRIAL_TIMESCALE_ENABLED='true',

@@ -23,13 +23,25 @@ const nodes = d.topology_nodes.find(
   {lifecycle:"ACTIVE"},
   {_id:0,id:1,parentId:1,name:1,kind:1,variant:1,serialNumber:1,
    deviceType:1,rootEquipmentIds:1,cas:1,coordinate:1}
-).toArray().map(n => ({
-  id:n.id,parentId:n.parentId,name:n.name,kind:n.kind,variant:n.variant,
-  serialNumber:n.serialNumber,deviceType:n.deviceType,coordinate:n.coordinate,
-  rootEquipmentCount:n.rootEquipmentIds?.length || 0,
-  casEquipped:n.cas?.filter(c => c.state === "EQUIPPED").length || 0,
-  casReserved:n.cas?.filter(c => c.state === "RESERVED").length || 0
-}));
+).toArray().map(n => {
+  // The CAS array is canonical for RACK nodes, but historical records may
+  // contain an object-shaped CAS and non-rack records may also carry one.
+  // Do not silently assume malformed/legacy CAS means a rack is available.
+  const rack = n.kind === "CONTAINER_RACK" && n.variant === "RACK";
+  const ranges = rack && Array.isArray(n.cas) ? n.cas : null;
+  const casShape = !rack ? "not_applicable" :
+    Array.isArray(n.cas) ? "array" :
+    n.cas == null ? "missing" :
+    typeof n.cas === "object" ? "object" : typeof n.cas;
+  return {
+    id:n.id,parentId:n.parentId,name:n.name,kind:n.kind,variant:n.variant,
+    serialNumber:n.serialNumber,deviceType:n.deviceType,coordinate:n.coordinate,
+    rootEquipmentCount:Array.isArray(n.rootEquipmentIds) ? n.rootEquipmentIds.length : 0,
+    casShape,
+    casEquipped:ranges ? ranges.filter(c => c?.state === "EQUIPPED").length : null,
+    casReserved:ranges ? ranges.filter(c => c?.state === "RESERVED").length : null
+  };
+});
 const bindingCounts = d.telemetry_bindings.aggregate([
   {$match:{lifecycle:"ACTIVE",protocol:"MQTT"}},
   {$group:{_id:{source:"$sourceIdentity",targetType:"$targetType"},
@@ -96,11 +108,18 @@ def report(data, room_name, as_json):
                   if x["kind"]=="CONTAINER_CLUSTER_BAY"),None),
               "position":next((x for x in ancestry
                   if x["kind"]=="POSITION"),None),
+              "casShape":rack.get("casShape"),
               "casEquipped":rack["casEquipped"],
               "casReserved":rack["casReserved"],
               "devices":rack_devices,
               "bdfbs":bdfbs,
-              "candidate":not bdfbs and rack["casEquipped"]==0,
+              "candidate":(
+                  rack.get("casShape") == "array"
+                  and not bdfbs
+                  and rack["casEquipped"] == 0
+                  and rack["casReserved"] == 0
+                  and not rack_devices
+              ),
             })
         overview.append({
             "room":{"id":room["id"],"name":room["name"]},
@@ -130,8 +149,12 @@ def report(data, room_name, as_json):
             print("\n  RACK:",r["name"],"| id:",r["id"])
             print("   BAY:",r["bay"]["name"] if r["bay"] else "SIN BAY",
                   "| posición:",r["position"]["name"] if r["position"] else "SIN POSICIÓN")
-            print("   Ocupación CAS:",r["casEquipped"],"equipados;",
-                  r["casReserved"],"reservados")
+            if r.get("casShape") != "array":
+                print("   CAS NO CANÓNICO:",r.get("casShape"),
+                      "· no se considerará rack disponible sin revisión")
+            else:
+                print("   Ocupación CAS:",r["casEquipped"],"equipados;",
+                      r["casReserved"],"reservados")
             for d in r["devices"]:
                 print("   DEVICE:",d["name"],"| id:",d["id"],
                       "| tipo:",d.get("deviceType"),

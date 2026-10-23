@@ -59,12 +59,7 @@ export function SnmpFeedLoadPanel({
   }, [deviceId]);
 
   async function commissionLab() {
-    if (
-      !window.confirm(
-        t('confirmLab'),
-      )
-    )
-      return;
+    if (!window.confirm(t('confirmLab'))) return;
     setLabBusy(true);
     setLabError('');
     try {
@@ -185,11 +180,12 @@ export function SnmpFeedLoadPanel({
             {capacity && (
               <div className="sm-snmp-capacity-lab" aria-label={t('capacity')}>
                 <div className="sm-snmp-capacity-line">
-                  <strong>
-                    {isLab ? t('capacityLab') : t('capacityTitle')}
-                  </strong>
+                  <strong>{isLab ? t('capacityLab') : t('capacityTitle')}</strong>
                   <span>
-                    {t('freshFeeds', { reporting: capacity.reportingFeeds, expected: capacity.expectedFeeds })}
+                    {t('freshFeeds', {
+                      reporting: capacity.reportingFeeds,
+                      expected: capacity.expectedFeeds,
+                    })}
                   </span>
                 </div>
                 <div className="sm-snmp-capacity-numbers">
@@ -210,9 +206,7 @@ export function SnmpFeedLoadPanel({
                   <div className="sm-snmp-capacity-meter">
                     <div
                       role="meter"
-                      aria-label={
-                        isLab ? t('simulatedUtilization') : t('verifiedUtilization')
-                      }
+                      aria-label={isLab ? t('simulatedUtilization') : t('verifiedUtilization')}
                       aria-valuemin={0}
                       aria-valuemax={100}
                       aria-valuenow={Math.max(0, Math.min(100, capacity.utilizationPct))}
@@ -261,7 +255,10 @@ export function SnmpFeedLoadPanel({
                             />
                           </div>
                           <small>
-                            {t('utilizationAvailable', { percent: feed.utilizationPct.toFixed(1), available: numeric(feed.availableA, 'A') })}
+                            {t('utilizationAvailable', {
+                              percent: feed.utilizationPct.toFixed(1),
+                              available: numeric(feed.availableA, 'A'),
+                            })}
                             {feed.overloadedByA
                               ? t('overRating', { current: numeric(feed.overloadedByA, 'A') })
                               : ''}
@@ -282,32 +279,20 @@ export function SnmpFeedLoadPanel({
                     </Link>
                   </p>
                 )}
-                {isLab && (
-                  <p>
-                    {t('simulationNote')}
-                  </p>
-                )}
+                {isLab && <p>{t('simulationNote')}</p>}
               </div>
             )}
             {load?.hardwareProfile && (
               <div className="sm-snmp-inventory-summary">
                 <strong>
-                  {load.hardwareProfile === 'ELTEK_BDCBB_CONFIG_2'
-                    ? t('config2')
-                    : t('config4')}
+                  {load.hardwareProfile === 'ELTEK_BDCBB_CONFIG_2' ? t('config2') : t('config4')}
                 </strong>
                 <span>
                   {t('inputsRecorded', { count: load.feedCount, total: load.expectedFeedCount })}
                 </span>
-                {awaitingVerification && (
-                  <small>
-                    {t('verifyPending')}
-                  </small>
-                )}
+                {awaitingVerification && <small>{t('verifyPending')}</small>}
                 {!awaitingVerification && load.inventoryStatus === 'INCOMPLETE' && (
-                  <small>
-                    {t('commissionIncomplete')}
-                  </small>
+                  <small>{t('commissionIncomplete')}</small>
                 )}
                 {!!load.missingFeedPositions.length && (
                   <small>{t('missing', { positions: load.missingFeedPositions.join(', ') })}</small>
@@ -322,9 +307,7 @@ export function SnmpFeedLoadPanel({
             {labEnabled && inventoryRecorded && labCount === 0 && (
               <div className="sm-snmp-lab-activation">
                 <strong>{t('lab')}</strong>
-                <small>
-                  {t('labController', { controller: labSource ?? t('notSelected') })}
-                </small>
+                <small>{t('labController', { controller: labSource ?? t('notSelected') })}</small>
                 <button type="button" disabled={labBusy} onClick={() => void commissionLab()}>
                   {labBusy ? t('configuring') : t('connectSynthetic')}
                 </button>
@@ -344,9 +327,7 @@ export function SnmpFeedLoadPanel({
               </div>
             )}
             {labCount > 0 && (
-              <p className="sm-snmp-lab-disclaimer">
-                {t('simulatedNotice', { count: labCount })}
-              </p>
+              <p className="sm-snmp-lab-disclaimer">{t('simulatedNotice', { count: labCount })}</p>
             )}
             <div
               className={
@@ -363,9 +344,7 @@ export function SnmpFeedLoadPanel({
                   <article key={feed.accessPortId} className="sm-snmp-feed-card">
                     <div className="sm-snmp-feed-card-heading">
                       <strong>{feed.label}</strong>
-                      <span>
-                        {feed.status === 'LAB_LIVE' ? t('labLive') : feed.status}
-                      </span>
+                      <span>{feed.status === 'LAB_LIVE' ? t('labLive') : feed.status}</span>
                     </div>
                     <small>
                       {feed.feedPosition
@@ -388,7 +367,11 @@ export function SnmpFeedLoadPanel({
                       <small>
                         {t('controller')} {feed.sourceIdentity ?? t('notMapped')}
                       </small>
-                      {feed.currentOid && <small>{t('currentOid')} {feed.currentOid}</small>}
+                      {feed.currentOid && (
+                        <small>
+                          {t('currentOid')} {feed.currentOid}
+                        </small>
+                      )}
                       {feed.observedAt && (
                         <small>
                           {t('last')} {feed.observedAt}
@@ -425,19 +408,9 @@ export function SnmpFeedLoadPanel({
             </div>
             {!load?.feedCount && !error && <p>{t('noFeeds')}</p>}
             {(load as (SnmpBdfbLoadView & { historyAvailable?: boolean }) | null)
-              ?.historyAvailable === false && (
-              <p role="alert">
-                {t('timescaleUnavailable')}
-              </p>
-            )}
-            {load?.status !== 'COMPLETE' && (
-              <p className="sm-snmp-no-total">
-                {t('noTotal')}
-              </p>
-            )}
-            <small>
-              {t('snmpSeparate')}
-            </small>
+              ?.historyAvailable === false && <p role="alert">{t('timescaleUnavailable')}</p>}
+            {load?.status !== 'COMPLETE' && <p className="sm-snmp-no-total">{t('noTotal')}</p>}
+            <small>{t('snmpSeparate')}</small>
           </>
         )}
       </section>

@@ -40,9 +40,10 @@ export function SiteBoundaryWorkspace({
       const result = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        const message = result.error === 'BOUNDARY_CONFLICT'
-          ? t('conflict', { type: label.toLowerCase() })
-          : t('saveFailed');
+        const message =
+          result.error === 'BOUNDARY_CONFLICT'
+            ? t('conflict', { type: label.toLowerCase() })
+            : t('saveFailed');
         throw new Error(message);
       }
 
@@ -57,15 +58,17 @@ export function SiteBoundaryWorkspace({
     <div className="spatial-site-workspace">
       {editing ? (
         <PolygonEditor
-          title={t('title', { mode: node.polygon?.length ? t('edit') : t('draw'), type: label, name: node.name })}
+          title={t('title', {
+            mode: node.polygon?.length ? t('edit') : t('draw'),
+            type: label,
+            name: node.name,
+          })}
           initial={node.polygon ?? []}
           context={context}
           {...(node.kind === 'STRUCTURE' && context.length >= 3
             ? {
                 validate: (polygon: readonly PointMm[]) =>
-                  polygonInsidePolygon(polygon, context)
-                    ? null
-                    : t('outsideSite'),
+                  polygonInsidePolygon(polygon, context) ? null : t('outsideSite'),
               }
             : {})}
           onConfirm={(polygon) => void save(polygon)}

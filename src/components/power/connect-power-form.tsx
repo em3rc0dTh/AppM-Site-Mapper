@@ -118,9 +118,7 @@ export function ConnectPowerForm({
     }
     const candidateFeed = selectedPort.feed ?? source.feed ?? feed;
     if (source.feed && candidateFeed !== source.feed) {
-      setError(
-        t('wrongFeed', { feed: source.feed }),
-      );
+      setError(t('wrongFeed', { feed: source.feed }));
       return;
     }
 
@@ -292,9 +290,7 @@ export function ConnectPowerForm({
               }),
             )}
             {!visibleDestinations.some((item) => item.ports.length) ? (
-              <div className="power-connect-empty">
-                {t('noMatchingPorts')}
-              </div>
+              <div className="power-connect-empty">{t('noMatchingPorts')}</div>
             ) : null}
           </div>
 
@@ -314,9 +310,7 @@ export function ConnectPowerForm({
             <div>
               <strong>{t('feed')}</strong>
               <small>
-                {source.feed
-                  ? t('lockedFeed', { feed: source.feed })
-                  : t('assignFeed')}
+                {source.feed ? t('lockedFeed', { feed: source.feed }) : t('assignFeed')}
               </small>
             </div>
           </div>
@@ -338,9 +332,7 @@ export function ConnectPowerForm({
 
           <section className="power-connect-review">
             <h2>{t('candidates')}</h2>
-            <p>
-              {t('draftCandidates')}
-            </p>
+            <p>{t('draftCandidates')}</p>
             {candidates.length ? (
               <div className="power-candidate-list">
                 {candidates.map((candidate) => {
@@ -360,7 +352,8 @@ export function ConnectPowerForm({
                       <span>
                         <strong>{details.destination?.name ?? candidate.destinationId}</strong>
                         <small>
-                          {details.port?.label ?? candidate.accessPortId} · {t('feedLabel', { feed: candidate.feed })}
+                          {details.port?.label ?? candidate.accessPortId} ·{' '}
+                          {t('feedLabel', { feed: candidate.feed })}
                         </small>
                       </span>
                       <button type="button" onClick={() => removeCandidate(candidate.key)}>

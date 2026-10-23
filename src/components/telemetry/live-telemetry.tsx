@@ -58,7 +58,11 @@ export function LiveTelemetry() {
         actions={
           <span aria-live="polite">
             <StatusBadge tone={state === 'live' ? 'good' : 'warning'}>
-              {state === 'live' ? t('streamConnected') : state === 'reconnecting' ? t('reconnecting') : t('connecting')}
+              {state === 'live'
+                ? t('streamConnected')
+                : state === 'reconnecting'
+                  ? t('reconnecting')
+                  : t('connecting')}
             </StatusBadge>
           </span>
         }

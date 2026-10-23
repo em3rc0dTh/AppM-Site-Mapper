@@ -221,9 +221,7 @@ export function TopologyPropertiesPanel({
           <div>
             <span>○</span>
             <strong>{t('hierarchyIncomplete')}</strong>
-            <small>
-              {t('devicePreserved')}
-            </small>
+            <small>{t('devicePreserved')}</small>
           </div>
         </section>
       </aside>

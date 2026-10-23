@@ -55,7 +55,11 @@ export function PowerPathView({
               }
             >
               <small>
-                {index === 0 ? `${t('source')} / ` : index === stages.length - 1 ? `${t('target')} / ` : ''}
+                {index === 0
+                  ? `${t('source')} / `
+                  : index === stages.length - 1
+                    ? `${t('target')} / `
+                    : ''}
                 {stage.kind.replaceAll('_', ' ')}
               </small>
               <strong>{stage.name}</strong>
@@ -68,9 +72,7 @@ export function PowerPathView({
           </div>
         ))}
       </div>
-      <p className="telemetry-unit-note">
-        {t('telemetryRequired')}
-      </p>
+      <p className="telemetry-unit-note">{t('telemetryRequired')}</p>
       {selected && <EntityInspector entity={selected} onClose={() => setSelected(null)} />}
     </Surface>
   );

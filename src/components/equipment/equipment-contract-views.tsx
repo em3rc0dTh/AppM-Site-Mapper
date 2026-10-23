@@ -435,8 +435,8 @@ export function EquipmentContractViews({
             <p className="ec-breaker-no-data">{t('noReadings')}</p>
           )}
           <p className="ec-breaker-source">
-            {t('mqttSourceCaption')} {readings[root.id]?.sourceIdentity ?? t('noVerifiedBinding')} · {t('packetCaption')}{' '}
-            {readings[root.id]?.receivedAt ?? '—'}
+            {t('mqttSourceCaption')} {readings[root.id]?.sourceIdentity ?? t('noVerifiedBinding')} ·{' '}
+            {t('packetCaption')} {readings[root.id]?.receivedAt ?? '—'}
           </p>
           <Link className="ec-trace-link" href={`/power?entityId=${encodeURIComponent(root.id)}`}>
             {t('explorePower')}

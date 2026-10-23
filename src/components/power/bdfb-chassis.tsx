@@ -197,8 +197,7 @@ export function BdfbChassis({
                     <span>{t('position', { position: String(index + 1).padStart(2, '0') })}</span>
                     <Link href={`/device/${breaker.id}`}>{breaker.label}</Link>
                     <small>
-                      {destinationByBreaker.get(breaker.id)?.counterpartName ??
-                        t('noDestination')}
+                      {destinationByBreaker.get(breaker.id)?.counterpartName ?? t('noDestination')}
                       {' · '}
                       {monitoredBreakers.has(breaker.id) ? t('mqttBound') : t('noMqtt')}
                     </small>

@@ -478,9 +478,7 @@ export function PhysicalEquipmentDiagram({
                           <small>
                             {t('position', { value: String(slot.index + 1).padStart(2, '0') })}
                           </small>
-                          <span>
-                            {slot.equipmentId ? t('missingEquipment') : 'Available'}
-                          </span>
+                          <span>{slot.equipmentId ? t('missingEquipment') : 'Available'}</span>
                           {!slot.equipmentId && onAdd && (
                             <button
                               type="button"

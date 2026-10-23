@@ -126,20 +126,24 @@ export function RoomLayoutEditor({
         const messages = {
           INVALID_CLUSTER: t('invalidCluster'),
           INVALID_DIMENSIONS: t('invalidDimensions'),
-          NEGATIVE_POSITION_REFERENCE:
-            t('negativeGrid'),
-          BAY_FRONTAGE_TOO_NARROW:
-            t('bayNarrow'),
+          NEGATIVE_POSITION_REFERENCE: t('negativeGrid'),
+          BAY_FRONTAGE_TOO_NARROW: t('bayNarrow'),
           RACK_OUTSIDE_ROOM: t('rackOutside'),
           RACK_DEPTH_BLOCKED_BY_BAY: t('rackBlocked'),
           RACK_COLLISION: t('rackCollision'),
-          NO_VALID_GRID_ANCHOR:
-            t('noGrid'),
+          NO_VALID_GRID_ANCHOR: t('noGrid'),
         } satisfies Record<ReturnType<typeof explainRackPlacementFailure>, string>;
         const cluster = draft.clusters.find((candidate) => candidate.id === clusterId);
         const bounds = cluster ? polygonBounds(cluster.polygon) : null;
         const measured = bounds
-          ? t('measured', { name: cluster?.name ?? '', minX: Math.round(bounds.minX), maxX: Math.round(bounds.maxX), y: Math.round(bounds.minY), width, depth })
+          ? t('measured', {
+              name: cluster?.name ?? '',
+              minX: Math.round(bounds.minX),
+              maxX: Math.round(bounds.maxX),
+              y: Math.round(bounds.minY),
+              width,
+              depth,
+            })
           : '';
         setSelected(clusterId);
         setError(`${t('blocked', { reason, detail: messages[reason] })}${measured}`);
@@ -375,8 +379,7 @@ export function RoomLayoutEditor({
                 }))}
               validate={(polygon) => {
                 if (boundary.kind !== 'bay') return null;
-                if (!polygonInsidePolygon(polygon, draft.polygon))
-                  return t('bayOutside');
+                if (!polygonInsidePolygon(polygon, draft.polygon)) return t('bayOutside');
                 if (
                   draft.clusters.some(
                     (cluster) =>
@@ -426,9 +429,7 @@ export function RoomLayoutEditor({
               >
                 {draft.polygon.length ? t('editRoomBoundary') : t('drawRoomBoundary')}
               </button>
-              <p>
-                {t('geometryHelp')}
-              </p>
+              <p>{t('geometryHelp')}</p>
               {placement && (
                 <div className="spatial-placement-prompt" role="status">
                   <strong>
@@ -458,7 +459,7 @@ export function RoomLayoutEditor({
                     <input name="name" required maxLength={120} />
                   </label>
                   <label>
-{t('type')}
+                    {t('type')}
                     <select name="variant">
                       <option value="BAY">{t('bay')}</option>
                       <option value="CONTAINER_CLUSTER">{t('cluster')}</option>
@@ -553,9 +554,7 @@ export function RoomLayoutEditor({
               )}
               {position && !rack && (
                 <>
-                  <p>
-                    {t('anchor', { row: position.row, column: position.column })}
-                  </p>
+                  <p>{t('anchor', { row: position.row, column: position.column })}</p>
                   <button
                     type="button"
                     onClick={() => setPlacement({ kind: 'move', id: position.id })}
@@ -566,7 +565,13 @@ export function RoomLayoutEditor({
               )}
               {rack && position && (
                 <p>
-                  {t('placementDescription', { minX: rack.x, maxX: rack.x + rack.width, y: rack.y, row: position.row, column: position.column })}
+                  {t('placementDescription', {
+                    minX: rack.x,
+                    maxX: rack.x + rack.width,
+                    y: rack.y,
+                    row: position.row,
+                    column: position.column,
+                  })}
                 </p>
               )}
               {rack && (
@@ -623,9 +628,7 @@ export function RoomLayoutEditor({
               <button type="button" disabled={!selected || !!placement} onClick={remove}>
                 {t('removeSelected')}
               </button>
-              <p>
-                {t('archiveHelp')}
-              </p>
+              <p>{t('archiveHelp')}</p>
             </fieldset>
           </aside>
         )}

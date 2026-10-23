@@ -420,3 +420,30 @@ stopped. Both queues must trend down and there must be no new
 acceptance pass. Only then use guarded `resume-mqtt` with 10s cadence.
 SNMP legacy `EMU-DELTA-BFDB-01` bindings and synthetic
 `EMU-SNMP-QDF-xx` identifiers are not automatically interchangeable.
+
+
+### Verified recovery after the app-only repair
+
+With all four synthetic generators stopped and the repaired application
+started, an operator inspected the **actual persistent MQTT spool files**
+rather than its potentially stale `diagnostics.json` checkpoint:
+
+- Two observations 30 seconds apart: **zero** UUID-shaped MQTT capture
+  files remained under `/data/industrial-mqtt`.
+- MongoDB `industrial_events`: **3,234** preserved industrial events in
+  each observation.
+- Historical `industrial_timescale_outbox`: **504 → 344** pending lots.
+- Historical pending lots with a `lastFailureAt` field: **zero**.
+
+This is evidence that the captured MQTT backlog fully drained and
+historical delivery continued. It does not yet certify live subscription,
+real field equipment, Modbus acceptance or successful convergence of
+the historical outbox to zero.
+
+**Launcher correction:** `resume-mqtt` now checks the actual persisted
+UUID-named capture files inside the current Site Mapper container, not
+the stale `diagnostics.json` `pending` checkpoint. It continues to
+require the original database/credential/volume/backup preflight, a
+stopped publisher and a historical outbox depth **at most 100**. The
+private emulation interval defaults to 10 seconds; avoid applying the
+full-stack `up` action solely to restart the publisher.

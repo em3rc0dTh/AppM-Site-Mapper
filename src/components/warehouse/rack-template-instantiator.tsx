@@ -137,7 +137,9 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
               <label>
                 Physical Equipment type
                 <select name="equipmentType" defaultValue="">
-                  <option value="">{t('useTemplate',{type:selected?.equipmentType??'CUSTOM'})}</option>
+                  <option value="">
+                    {t('useTemplate', { type: selected?.equipmentType ?? 'CUSTOM' })}
+                  </option>
                   {EQUIPMENT_TYPES.map((type) => (
                     <option key={type} value={type}>
                       {type.replaceAll('_', ' ')}

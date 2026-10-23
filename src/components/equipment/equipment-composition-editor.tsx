@@ -796,7 +796,10 @@ export function EquipmentCompositionEditor({
               </label>
               {allowed.length > 0 ? (
                 <p className="equipment-child-type-notice">
-                  {t('onlyTypes',{parent:label(equipment.equipmentType),types:allowed.map(label).join(', ')})}
+                  {t('onlyTypes', {
+                    parent: label(equipment.equipmentType),
+                    types: allowed.map(label).join(', '),
+                  })}
                 </p>
               ) : null}
               <label>

@@ -304,8 +304,12 @@ export function EquipmentContractViews({
           </p>
         </div>
         <div className="ec-focus-badges">
-          <span>{t('countInstalled',{count:children.length})}</span>
-          <span>{t('ports',{count:root.accessPorts.filter((port)=>port.lifecycle==='ACTIVE').length})}</span>
+          <span>{t('countInstalled', { count: children.length })}</span>
+          <span>
+            {t('ports', {
+              count: root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length,
+            })}
+          </span>
         </div>
       </div>
 
@@ -316,7 +320,7 @@ export function EquipmentContractViews({
               <small>{t('chassisInterior')}</small>
               <strong>{t('shelvesFrames')}</strong>
             </div>
-            <span>{t('assemblies',{count:children.length})}</span>
+            <span>{t('assemblies', { count: children.length })}</span>
           </header>
           <div className="ec-chassis-shelves">
             {children.length ? (
@@ -363,7 +367,7 @@ export function EquipmentContractViews({
               <small>{t('shelfStructure')}</small>
               <strong>{t('frames')}</strong>
             </div>
-            <span>{t('framesRecorded',{count:children.length})}</span>
+            <span>{t('framesRecorded', { count: children.length })}</span>
           </header>
           <div className="ec-frames-grid">
             {children.map(({ child }) => (
@@ -381,7 +385,7 @@ export function EquipmentContractViews({
               <small>{t('frameInterior')}</small>
               <strong>{t('panels')}</strong>
             </div>
-            <span>{t('panelsRecorded',{count:children.length})}</span>
+            <span>{t('panelsRecorded', { count: children.length })}</span>
           </header>
           <div className="ec-frame-rows">
             {children.map(({ child, position }) => (

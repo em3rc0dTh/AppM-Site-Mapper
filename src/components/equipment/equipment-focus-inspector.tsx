@@ -77,8 +77,16 @@ export function EquipmentFocusInspector({
   const coverage = breaker
     ? t('coverageBreaker', { reporting: summary.reporting })
     : equipment.equipmentType === 'PANEL'
-      ? t('coveragePanel', { reporting: summary.reporting, positions: summary.positions, installed: summary.installed })
-      : t('coverageChildren', { reporting: summary.reportingChildren, installed: summary.installedChildren, breakers: summary.reporting });
+      ? t('coveragePanel', {
+          reporting: summary.reporting,
+          positions: summary.positions,
+          installed: summary.installed,
+        })
+      : t('coverageChildren', {
+          reporting: summary.reportingChildren,
+          installed: summary.installedChildren,
+          breakers: summary.reporting,
+        });
 
   return (
     <section className="ec-inspector" aria-label={equipment.name + ' ' + t('inspectorLabel')}>
@@ -132,7 +140,9 @@ export function EquipmentFocusInspector({
                   {summary.stale > 0 ? t('stale', { count: summary.stale }) : ''}
                 </p>
                 {equipment.telemetryPointPrefix && (
-                  <p className="ec-inspector-note">{t('pointGroup', { name: equipment.telemetryPointPrefix })}</p>
+                  <p className="ec-inspector-note">
+                    {t('pointGroup', { name: equipment.telemetryPointPrefix })}
+                  </p>
                 )}
                 <div className="ec-inspector-metrics" aria-label={t('metricsLabel')}>
                   {METRICS.map((metric) => {
@@ -150,7 +160,10 @@ export function EquipmentFocusInspector({
                 </div>
                 <p className="ec-inspector-note">
                   {breaker
-                    ? t('sourcePacket', { identity: current?.sourceIdentity ?? t('noBinding'), timestamp: current?.receivedAt ?? '—' })
+                    ? t('sourcePacket', {
+                        identity: current?.sourceIdentity ?? t('noBinding'),
+                        timestamp: current?.receivedAt ?? '—',
+                      })
                     : t('hierarchy')}
                 </p>
                 {!hasSnapshot && (
@@ -199,9 +212,7 @@ export function EquipmentFocusInspector({
       )}
       {equipment.equipmentType === 'CHASSIS' && canReadTelemetry && (
         <div className="ec-snmp-source">
-          <p className="ec-inspector-note">
-            {t('snmpSeparation')}
-          </p>
+          <p className="ec-inspector-note">{t('snmpSeparation')}</p>
           <button
             type="button"
             aria-expanded={snmpExpanded}

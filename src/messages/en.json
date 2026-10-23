@@ -759,7 +759,10 @@
     "available": "Available",
     "equipped": "Equipped",
     "trace": "TRACE POWER",
-    "open": "OPEN EQUIPMENT"
+    "open": "OPEN EQUIPMENT",
+    "rearWarning": "Only the documented front-face projection is available. Rear geometry has not been recorded.",
+    "inspectorLabel": "INSPECTOR",
+    "objectsCount": "{count} objects"
   },
   "equipmentEditor": {
     "physical": "PHYSICAL COMPOSITION",
@@ -836,7 +839,9 @@
     "create": "Create and install",
     "slotsCount": "{count} slots",
     "childrenCount": "{count} children",
-    "rawMqtt": "Raw MQTT group such as 0_2. Leave empty if not commissioned."
+    "rawMqtt": "Raw MQTT group such as 0_2. Leave empty if not commissioned.",
+    "pointPrefixHelp": "Point 1 becomes prefix_1. This records the address only; it does not reassign existing circuit bindings or prove their physical wiring.",
+    "instanceHelp": "Choose child slots and presentation for this instance"
   },
   "accessPorts": {
     "title": "ACCESS PORTS",
@@ -1361,7 +1366,12 @@
     "mount": "Mount Equipment",
     "selectAllocation": "Select allocation",
     "free": "Free allocation",
-    "saveFailed": "Unable to save Rack placement."
+    "saveFailed": "Unable to save Rack placement.",
+    "startU": "Start U",
+    "physicalSizeU": "Physical size U",
+    "reservationLabel": "Reservation",
+    "inventoryLabel": "Inventory",
+    "allocationLabel": "Allocation"
   },
   "powerCanvas": {
     "source": "Source equipment hierarchy",
@@ -1419,7 +1429,11 @@
     "canvas": "{title} drawing canvas",
     "saving": "Saving…",
     "negative": "The boundary contains negative coordinates. Move its vertices to X >= 0 and Y >= 0 before saving.",
-    "invalidBoundary": "Draw a simple, non-zero-area boundary with 3–256 vertices."
+    "invalidBoundary": "Draw a simple, non-zero-area boundary with 3–256 vertices.",
+    "undo": "Undo",
+    "clear": "Clear",
+    "removeVertex": "Remove vertex",
+    "finishBoundary": "Finish boundary"
   },
   "historyCharts": {
     "empty": "No historical measurements for this metric.",

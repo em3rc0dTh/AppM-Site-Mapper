@@ -127,14 +127,14 @@ export function EquipmentCompositionEditor({
       <fieldset>
         <legend>{t('layout')}</legend>
         <label>
-          Layout direction
+          {t('direction')}
           <select key="instance-direction" name="presentationDirection" defaultValue="ROW">
             <option value="ROW">{t('row')}</option>
             <option value="COLUMN">{t('column')}</option>
           </select>
         </label>
         <label>
-          Max items per line
+          {t('maxPerLine')}
           <select key="instance-max" name="presentationMaxPerLine" defaultValue="auto">
             <option value="auto">{t('auto')}</option>
             {Array.from({ length: 256 }, (_, index) => index + 1).map((n) => (
@@ -145,7 +145,7 @@ export function EquipmentCompositionEditor({
           </select>
         </label>
         <label>
-          Child display
+          {t('childDisplay')}
           <select key="instance-visibility" name="presentationVisibility" defaultValue="AUTO">
             <option value="AUTO">{t('auto')}</option>
             <option value="INLINE">{t('inline')}</option>
@@ -159,7 +159,7 @@ export function EquipmentCompositionEditor({
   function telemetryPrefixField(defaultValue = '') {
     return (
       <label>
-        MQTT point prefix · Panel/group
+        {t('rawMqtt')}
         <input
           name="telemetryPointPrefix"
           defaultValue={defaultValue}
@@ -475,7 +475,7 @@ export function EquipmentCompositionEditor({
       {isActive && configurationOpen ? (
         <form className="equipment-configuration-form" onSubmit={configureEquipment}>
           <label>
-            Equipment type
+            {t('equipmentType')}
             <select name="equipmentType" defaultValue={equipment.equipmentType}>
               {EQUIPMENT_TYPES.map((type) => (
                 <option key={type} value={type}>
@@ -485,7 +485,7 @@ export function EquipmentCompositionEditor({
             </select>
           </label>
           <label>
-            Children mode
+            {t('childMode')}
             <select
               name="childMode"
               value={configurationMode}
@@ -497,7 +497,7 @@ export function EquipmentCompositionEditor({
           </label>
           {configurationMode === 'POSITIONAL' ? (
             <label>
-              Child slots
+              {t('childSlots')}
               <input
                 name="childCapacity"
                 type="number"
@@ -516,7 +516,7 @@ export function EquipmentCompositionEditor({
             ? telemetryPrefixField(equipment.telemetryPointPrefix ?? '')
             : null}
           <label>
-            Layout direction
+            {t('direction')}
             <select
               value={layoutDirection}
               onChange={(event) => setLayoutDirection(event.target.value as 'ROW' | 'COLUMN')}
@@ -526,7 +526,7 @@ export function EquipmentCompositionEditor({
             </select>
           </label>
           <label>
-            Max items per {layoutDirection === 'ROW' ? 'row' : 'column'}
+            {t('maxPerLine')}
             <select value={maxPerLine} onChange={(event) => setMaxPerLine(event.target.value)}>
               <option value="auto">{t('auto')}</option>
               {Array.from({ length: 256 }, (_, index) => index + 1).map((amount) => (
@@ -537,7 +537,7 @@ export function EquipmentCompositionEditor({
             </select>
           </label>
           <label>
-            Child display
+            {t('childDisplay')}
             <select
               value={childrenVisibility}
               onChange={(event) =>
@@ -869,7 +869,7 @@ export function EquipmentCompositionEditor({
                 <input name="name" required maxLength={120} />
               </label>
               <label>
-                Equipment type
+                {t('equipmentType')}
                 <select name="equipmentType" defaultValue={defaultOneOffType}>
                   {permissibleChildTypes.map((type) => (
                     <option key={type} value={type}>
@@ -879,7 +879,7 @@ export function EquipmentCompositionEditor({
                 </select>
               </label>
               <label>
-                Children mode
+                {t('childMode')}
                 <select
                   name="childMode"
                   value={oneOffChildMode}
@@ -891,7 +891,7 @@ export function EquipmentCompositionEditor({
               </label>
               {oneOffChildMode === 'POSITIONAL' ? (
                 <label>
-                  Child slots
+                  {t('childSlots')}
                   <input
                     name="childCapacity"
                     type="number"

@@ -51,7 +51,7 @@ export function CasEditor({ view }: { view: RackElevationView }) {
         <form onSubmit={submit}>
           <input type="hidden" name="action" value="reserve" />
           <label>
-            Start U
+            {t('startU')}
             <input
               required
               name="mountStartU"
@@ -62,7 +62,7 @@ export function CasEditor({ view }: { view: RackElevationView }) {
             />
           </label>
           <label>
-            Physical size U
+            {t('physicalSizeU')}
             <input
               required
               name="physicalSizeU"
@@ -90,7 +90,7 @@ export function CasEditor({ view }: { view: RackElevationView }) {
             </select>
           </label>
           <label>
-            Inventory
+            {t('inventoryLabel')}
             <select required name="occupantId">
               <option value="">{t('selectEquipment')}</option>
               {view.inventory

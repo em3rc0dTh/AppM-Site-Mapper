@@ -83,8 +83,7 @@ export function RackElevation({
         <header className="zip-elevation-heading">
           <h1>{t('front')}</h1>
           <small>
-            Only the documented front-face projection is available. Rear geometry has not been
-            recorded.
+            {t('rearWarning')}
           </small>
         </header>
 
@@ -156,7 +155,7 @@ export function RackElevation({
 
       <aside className="legacy-rack-properties zip-elevation-inspector">
         <header>
-          INSPECTOR <span>⌄</span>
+          {t('inspectorLabel')} <span>⌄</span>
         </header>
         <div className="zip-elevation-identity">
           <span>▥</span>
@@ -181,7 +180,7 @@ export function RackElevation({
         <section className="zip-rack-inventory">
           <header>
             <h3>{t('inventory')}</h3>
-            <span>{view.inventory.length} objects</span>
+            <span>{t('objectsCount', { count: view.inventory.length })}</span>
           </header>
           {canWrite && (
             <div className="zip-rack-inventory-actions">

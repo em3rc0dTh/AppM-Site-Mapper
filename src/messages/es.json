@@ -759,7 +759,10 @@
     "available": "Disponible",
     "equipped": "Equipado",
     "trace": "RASTREAR POTENCIA",
-    "open": "ABRIR EQUIPMENT"
+    "open": "ABRIR EQUIPMENT",
+    "rearWarning": "Solo se dispone de la proyección documentada de la cara frontal. No se ha registrado la geometría posterior.",
+    "inspectorLabel": "INSPECTOR",
+    "objectsCount": "{count} objetos"
   },
   "equipmentEditor": {
     "physical": "COMPOSICIÓN FÍSICA",
@@ -836,7 +839,9 @@
     "create": "Crear e instalar",
     "slotsCount": "{count} posiciones",
     "childrenCount": "{count} elementos secundarios",
-    "rawMqtt": "Grupo MQTT sin procesar, como 0_2. Déjalo vacío si no se ha comisionado."
+    "rawMqtt": "Grupo MQTT sin procesar, como 0_2. Déjalo vacío si no se ha comisionado.",
+    "pointPrefixHelp": "El punto 1 se convierte en prefix_1. Solo registra la dirección; no reasigna las vinculaciones de circuitos existentes ni verifica su cableado físico.",
+    "instanceHelp": "Selecciona las posiciones hijas y la presentación de esta instancia"
   },
   "accessPorts": {
     "title": "PUERTOS DE ACCESO",
@@ -1361,7 +1366,12 @@
     "mount": "Montar Equipment",
     "selectAllocation": "Seleccionar asignación",
     "free": "Liberar asignación",
-    "saveFailed": "No se pudo guardar la ubicación del Rack."
+    "saveFailed": "No se pudo guardar la ubicación del Rack.",
+    "startU": "U inicial",
+    "physicalSizeU": "Tamaño físico (U)",
+    "reservationLabel": "Reserva",
+    "inventoryLabel": "Inventario",
+    "allocationLabel": "Asignación"
   },
   "powerCanvas": {
     "source": "Jerarquía del Equipment de origen",
@@ -1419,7 +1429,11 @@
     "canvas": "Plano de dibujo de {title}",
     "saving": "Guardando…",
     "negative": "El límite contiene coordenadas negativas. Mueve sus vértices a X >= 0 e Y >= 0 antes de guardar.",
-    "invalidBoundary": "Dibuja un límite simple con área mayor que cero y entre 3 y 256 vértices."
+    "invalidBoundary": "Dibuja un límite simple con área mayor que cero y entre 3 y 256 vértices.",
+    "undo": "Deshacer",
+    "clear": "Limpiar",
+    "removeVertex": "Eliminar vértice",
+    "finishBoundary": "Finalizar límite"
   },
   "historyCharts": {
     "empty": "No hay mediciones históricas para esta métrica.",

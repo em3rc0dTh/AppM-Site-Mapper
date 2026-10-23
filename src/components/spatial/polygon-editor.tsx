@@ -259,14 +259,14 @@ export function PolygonEditor({
             }
           }}
         >
-          Undo
+          {t('undo')}
         </button>
         <button
           type="button"
           disabled={busy || !draft.points.length}
           onClick={() => change({ points: [], closed: false })}
         >
-          Clear
+          {t('clear')}
         </button>
         <button
           type="button"
@@ -275,7 +275,7 @@ export function PolygonEditor({
             change({ ...draft, points: draft.points.filter((_, i) => i !== selected) })
           }
         >
-          Remove vertex
+          {t('removeVertex')}
         </button>
       </div>
       {(context.length >= 3 || contextOverlays.length > 0) && (
@@ -522,7 +522,7 @@ export function PolygonEditor({
           {error || coordinateError || (draft.points.length >= 3 ? invalid : null)}
         </span>
         <button type="button" disabled={busy} onClick={onCancel}>
-          Cancel
+          {t('cancel')}
         </button>
         {!draft.closed ? (
           <button
@@ -530,7 +530,7 @@ export function PolygonEditor({
             disabled={busy || !!invalid}
             onClick={() => change({ ...draft, closed: true })}
           >
-            Finish boundary
+            {t('finishBoundary')}
           </button>
         ) : (
           <button

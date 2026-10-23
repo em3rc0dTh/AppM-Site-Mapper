@@ -438,7 +438,7 @@ export function AccessPortEditor({
                 .map((connection) => (
                   <div className="equipment-terminal-connection" key={connection.pathId}>
                     <strong>
-                      CONNECTED · {connection.flow === 'OUTGOING' ? 'FEEDS' : 'POWERED BY'}
+                      {t('connected')} · {connection.flow === 'OUTGOING' ? t('feeds') : t('poweredBy')}
                     </strong>
                     <span>
                       {connection.peerEquipmentName} / {connection.peerPortName}
@@ -465,7 +465,7 @@ export function AccessPortEditor({
                   openEditor(port);
                 }}
               >
-                EDIT
+                {t('edit')}
               </button>
               <button
                 type="button"
@@ -623,7 +623,7 @@ export function AccessPortEditor({
                   </label>
                   {form.portType === 'CUSTOM' && (
                     <label>
-                      Custom type
+                      {t('customType')}
                       <input
                         maxLength={120}
                         value={form.customType}
@@ -699,10 +699,10 @@ export function AccessPortEditor({
                               }
                             >
                               <option value="">{t('generic')}</option>
-                              <option value="A1">A1 · side A</option>
-                              <option value="A2">A2 · side A</option>
-                              <option value="B1">B1 · side B</option>
-                              <option value="B2">B2 · side B</option>
+                              <option value="A1">A1 · {t('sideA')}</option>
+                              <option value="A2">A2 · {t('sideA')}</option>
+                              <option value="B1">B1 · {t('sideB')}</option>
+                              <option value="B2">B2 · {t('sideB')}</option>
                             </select>
                           </label>
                         )}

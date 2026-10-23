@@ -796,9 +796,7 @@ export function EquipmentCompositionEditor({
               </label>
               {allowed.length > 0 ? (
                 <p className="equipment-child-type-notice">
-                  This {label(equipment.equipmentType)} accepts only{' '}
-                  <strong>{allowed.map(label).join(', ')}</strong> children. Install the allowed
-                  Equipment first; add its own children inside that Equipment.
+                  {t('onlyTypes',{parent:label(equipment.equipmentType),types:allowed.map(label).join(', ')})}
                 </p>
               ) : null}
               <label>

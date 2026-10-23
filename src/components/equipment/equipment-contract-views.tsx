@@ -177,7 +177,7 @@ function PanelComposition({
   const installed = slots.filter((slot) => Boolean(slot.id));
   const available = root.childMode === 'POSITIONAL' ? slots.filter((slot) => slot.id === null) : [];
   return (
-    <section className="ec-panel-composition" aria-label="Installed breakers and available slots">
+    <section className="ec-panel-composition" aria-label={t('physicalPositions')}>
       <header className="ec-section-heading">
         <div>
           <small>{t('physicalPanel')}</small>
@@ -304,8 +304,8 @@ export function EquipmentContractViews({
           </p>
         </div>
         <div className="ec-focus-badges">
-          <span>{children.length} installed</span>
-          <span>{root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length} ports</span>
+          <span>{t('countInstalled',{count:children.length})}</span>
+          <span>{t('ports',{count:root.accessPorts.filter((port)=>port.lifecycle==='ACTIVE').length})}</span>
         </div>
       </div>
 
@@ -316,7 +316,7 @@ export function EquipmentContractViews({
               <small>{t('chassisInterior')}</small>
               <strong>{t('shelvesFrames')}</strong>
             </div>
-            <span>{children.length} child assemblies</span>
+            <span>{t('assemblies',{count:children.length})}</span>
           </header>
           <div className="ec-chassis-shelves">
             {children.length ? (
@@ -363,7 +363,7 @@ export function EquipmentContractViews({
               <small>{t('shelfStructure')}</small>
               <strong>{t('frames')}</strong>
             </div>
-            <span>{children.length} frames recorded</span>
+            <span>{t('framesRecorded',{count:children.length})}</span>
           </header>
           <div className="ec-frames-grid">
             {children.map(({ child }) => (
@@ -381,7 +381,7 @@ export function EquipmentContractViews({
               <small>{t('frameInterior')}</small>
               <strong>{t('panels')}</strong>
             </div>
-            <span>{children.length} panels recorded</span>
+            <span>{t('panelsRecorded',{count:children.length})}</span>
           </header>
           <div className="ec-frame-rows">
             {children.map(({ child, position }) => (

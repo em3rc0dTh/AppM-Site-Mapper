@@ -876,5 +876,23 @@
     "clusters": "{count} CLUSTERS",
     "racks": "{count} RACK FOOTPRINTS",
     "tiles": "{count} ASSIGNABLE TILES"
+  },
+  "equipmentTelemetry": {
+    "live": "LIVE TELEMETRY",
+    "history": "HISTORY",
+    "last": "Last matching packet: {time}",
+    "note": "Last packet per time bucket; source labels and units preserved. Up to 1000 packets."
+  },
+  "telemetryLens": {
+    "context": "CONTEXTUAL DIAGNOSTIC",
+    "connected": "Stream connected",
+    "reconnecting": "Reconnecting",
+    "close": "Close telemetry",
+    "offline": "OFFLINE · No measurements received for this context.",
+    "empty": "No mapped metrics for this object."
+  },
+  "panelCommissioning": {
+    "title": "MQTT POINT COMMISSIONING",
+    "loading": "Loading physical point proposal…"
   }
 }

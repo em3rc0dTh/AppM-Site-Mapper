@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
@@ -29,6 +30,7 @@ export function TelemetryLens({
   label: string;
   breakerId?: string | undefined;
 }) {
+  const t = useTranslations('telemetryLens');
   const [open, setOpen] = useState(false);
   const [samples, setSamples] = useState<TelemetrySample[]>([]);
   const [connected, setConnected] = useState(false);
@@ -99,16 +101,16 @@ export function TelemetryLens({
           <div className="mk-diagnostic zip-telemetry-diagnostic">
             <header>
               <div>
-                <small>CONTEXTUAL DIAGNOSTIC</small>
+                <small>{t('context')}</small>
                 <h2>{label}</h2>
               </div>
               <div className="zip-telemetry-status">
-                <span>{connected ? 'Stream connected' : 'Reconnecting'}</span>
+                <span>{connected ? t('connected') : t('reconnecting')}</span>
                 <button
                   type="button"
                   className="zip-telemetry-close"
                   onClick={() => setOpen(false)}
-                  aria-label="Close telemetry"
+                  aria-label={t('close')}
                 >
                   ×
                 </button>
@@ -116,7 +118,7 @@ export function TelemetryLens({
             </header>
 
             {!samples.length ? (
-              <p>OFFLINE · No measurements received for this context.</p>
+              <p>{t('offline')}</p>
             ) : (
               samples.map((sample) => {
                 const age = now === 0 ? 0 : now - Date.parse(sample.receivedAt);
@@ -148,7 +150,7 @@ export function TelemetryLens({
                         </div>
                       ))}
                     </div>
-                    {!metrics.length && <p>No mapped metrics for this object.</p>}
+                    {!metrics.length && <p>{t('empty')}</p>}
                   </article>
                 );
               })

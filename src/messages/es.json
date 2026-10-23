@@ -876,5 +876,23 @@
     "clusters": "{count} CLÚSTERES",
     "racks": "{count} SUPERFICIES DE RACK",
     "tiles": "{count} CELDAS ASIGNABLES"
+  },
+  "equipmentTelemetry": {
+    "live": "TELEMETRÍA EN VIVO",
+    "history": "HISTORIAL",
+    "last": "Último paquete coincidente: {time}",
+    "note": "Último paquete por intervalo. Se conservan las etiquetas y unidades de origen. Hasta 1000 paquetes."
+  },
+  "telemetryLens": {
+    "context": "DIAGNÓSTICO CONTEXTUAL",
+    "connected": "Flujo conectado",
+    "reconnecting": "Reconectando",
+    "close": "Cerrar telemetría",
+    "offline": "SIN CONEXIÓN · No se recibieron mediciones para este contexto.",
+    "empty": "No hay métricas vinculadas para este objeto."
+  },
+  "panelCommissioning": {
+    "title": "COMISIONAMIENTO DE PUNTOS MQTT",
+    "loading": "Cargando la propuesta de puntos físicos…"
   }
 }

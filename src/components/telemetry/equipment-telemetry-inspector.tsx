@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import { panelReportedPoints, telemetryMetrics } from './telemetry-presentation';
@@ -23,6 +24,7 @@ export function EquipmentTelemetryInspector({
   pointPrefix?: string;
   pointCapacity?: number | undefined;
 }) {
+  const t = useTranslations('equipmentTelemetry');
   const [window, setWindow] = useState('LIVE');
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -84,7 +86,7 @@ export function EquipmentTelemetryInspector({
   return (
     <section className="zip-bdfb-live-average" aria-label={`Telemetry ${label}`}>
       <header>
-        <strong>{window === 'LIVE' ? 'LIVE TELEMETRY' : 'HISTORY'}</strong>
+        <strong>{window === 'LIVE' ? t('live') : t('history')}</strong>
         <span>
           {label} · {pointGroupConfigured ? `Point group ${pointPrefix}` : 'Own readings'}
         </span>
@@ -154,9 +156,9 @@ export function EquipmentTelemetryInspector({
           </article>
         ))}
       </div>
-      <small>Last matching packet: {visibleSamples.at(-1)?.receivedAt ?? '—'}</small>
+      <small>{t('last',{time:visibleSamples.at(-1)?.receivedAt??'—'})}</small>
       {window !== 'LIVE' && (
-        <p>Last packet per time bucket; source labels and units preserved. Up to 1000 packets.</p>
+        <p>{t('note')}</p>
       )}
     </section>
   );

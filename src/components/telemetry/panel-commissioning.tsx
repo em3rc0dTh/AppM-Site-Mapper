@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
 interface Row {
@@ -23,6 +24,7 @@ interface Preview {
 
 export function PanelCommissioning({ panelId, canWrite }: { panelId: string; canWrite: boolean }) {
   const [preview, setPreview] = useState<Preview | null>(null);
+  const t = useTranslations('panelCommissioning');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<string | null>(null);
@@ -120,7 +122,7 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
   }
   return (
     <section className="equipment-panel-commissioning" aria-label="Panel MQTT commissioning">
-      <h3>MQTT POINT COMMISSIONING</h3>
+      <h3>{t('title')}</h3>
       {preview ? (
         <>
           <p>
@@ -194,7 +196,7 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
           ))}
         </>
       ) : (
-        <p>Loading physical point proposal…</p>
+        <p>{t('loading')}</p>
       )}
       {error && <p role="alert">{error}</p>}
       <button type="button" disabled={busy !== null} onClick={() => void refresh()}>

@@ -399,5 +399,26 @@
     "editHelp": "Open an entity to use its permitted editing controls.",
     "readonly": "Your role has read-only access.",
     "manageTopology": "Manage topology →"
+  },
+  "topologyTree": {
+    "global": "Global topology",
+    "home": "Home",
+    "topology": "GLOBAL TOPOLOGY",
+    "all": "ALL",
+    "inspectHelp": "{name}. Click to inspect, double click to open.",
+    "directChildren": "{count} direct child objects",
+    "open": "OPEN SELECTED ↗",
+    "kinds": {
+      "network": "NETWORK",
+      "site": "SITE",
+      "structure": "STRUCTURE",
+      "level": "LEVEL",
+      "room": "ROOM",
+      "bay": "BAY",
+      "position": "POSITION REFERENCE",
+      "rack": "RACK",
+      "device": "DEVICE",
+      "equipment": "EQUIPMENT"
+    }
   }
 }

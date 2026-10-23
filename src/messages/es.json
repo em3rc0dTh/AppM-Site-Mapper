@@ -399,5 +399,26 @@
     "editHelp": "Abre una entidad para utilizar los controles de edición permitidos.",
     "readonly": "Tu rol solo permite lectura.",
     "manageTopology": "Administrar topología →"
+  },
+  "topologyTree": {
+    "global": "Topología global",
+    "home": "Inicio",
+    "topology": "TOPOLOGÍA GLOBAL",
+    "all": "TODOS",
+    "inspectHelp": "{name}. Haz clic para inspeccionar y doble clic para abrir.",
+    "directChildren": "{count} objetos secundarios directos",
+    "open": "ABRIR SELECCIONADO ↗",
+    "kinds": {
+      "network": "RED",
+      "site": "SITIO",
+      "structure": "ESTRUCTURA",
+      "level": "NIVEL",
+      "room": "SALA",
+      "bay": "BAHÍA",
+      "position": "REFERENCIA DE POSICIÓN",
+      "rack": "RACK",
+      "device": "DEVICE",
+      "equipment": "EQUIPMENT"
+    }
   }
 }

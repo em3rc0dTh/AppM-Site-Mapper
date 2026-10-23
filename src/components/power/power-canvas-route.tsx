@@ -76,15 +76,15 @@ export function PowerCanvasRoute({
       </div>
       <div className="zip-power-physical-link">
         <div className="zip-power-terminal">
-          <small>{t('output',{name:sourceEquipmentName})}</small>
+          <small>{t('output', { name: sourceEquipmentName })}</small>
           <strong>{sourcePortName}</strong>
         </div>
         <div className="zip-power-wire-arrow">
-          <span>{t('path',{side:feed??'—'})}</span>
+          <span>{t('path', { side: feed ?? '—' })}</span>
           <b aria-hidden="true">⟶</b>
         </div>
         <div className="zip-power-terminal">
-          <small>{t('input',{name:targetEquipmentName})}</small>
+          <small>{t('input', { name: targetEquipmentName })}</small>
           <strong>{targetPortName}</strong>
         </div>
       </div>

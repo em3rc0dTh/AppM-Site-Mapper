@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -106,6 +107,7 @@ export function AccessPortEditor({
   canWritePower: boolean;
   portConnections?: readonly PortConnectionView[];
 }>) {
+  const t = useTranslations('accessPorts');
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -415,8 +417,8 @@ export function AccessPortEditor({
   return (
     <section id="bdfb-access-ports" className="equipment-port-editor">
       <header>
-        <strong>ACCESS PORTS</strong>
-        <span>{active.length} configured</span>
+        <strong>{t('title')}</strong>
+        <span>{t('configured', { count: active.length })}</span>
       </header>
       <div className="equipment-port-editor-list">
         {active.map((port) => (
@@ -424,7 +426,7 @@ export function AccessPortEditor({
             <div>
               <strong>{port.name}</strong>
               <small>
-                {port.portType} · {port.direction ?? 'UNSPECIFIED'} · {port.exposure}
+                {port.portType} · {port.direction ?? t('unspecified')} · {port.exposure}
               </small>
               {(port.connectorType || port.protocol) && (
                 <small>{[port.connectorType, port.protocol].filter(Boolean).join(' · ')}</small>
@@ -442,7 +444,7 @@ export function AccessPortEditor({
                       {connection.peerEquipmentName} / {connection.peerPortName}
                     </span>
                     <Link href={`/power?path=${encodeURIComponent(connection.pathId)}`}>
-                      VIEW POWERPATH
+                      {t('viewPath')}
                     </Link>
                   </div>
                 ))}
@@ -453,7 +455,7 @@ export function AccessPortEditor({
                     className="equipment-access-port-connect"
                     href={`/power/connect/equipment?${port.direction === 'INPUT' ? 'target' : 'source'}=${encodeURIComponent(port.id)}`}
                   >
-                    {port.direction === 'INPUT' ? 'CONNECT SOURCE' : 'CONNECT LOAD'}
+                    {port.direction === 'INPUT' ? '{t('connectSource')}' : '{t('connectLoad')}'}
                   </Link>
                 )}
               <button
@@ -470,14 +472,14 @@ export function AccessPortEditor({
                 disabled={busy || (!canWritePower && port.portType === 'POWER')}
                 onClick={() => void archive(port)}
               >
-                ARCHIVE
+                {t('archive')}
               </button>
             </div>
           </article>
         ))}
       </div>
       <button type="button" onClick={() => openEditor()}>
-        + ADD ACCESS PORT
+        {t('add')}
       </button>
       {error && !open && (
         <p role="alert" className="form-error">
@@ -499,26 +501,26 @@ export function AccessPortEditor({
           >
             <header>
               <div>
-                <small>PHYSICAL EQUIPMENT / TERMINAL</small>
+                <small>{t('physicalTerminal')}</small>
                 <h2 id="access-port-dialog-title">
                   {quickFeed
                     ? editingId
-                      ? 'Edit DC input'
-                      : 'Add DC input'
+                      ? t('editInput')
+                      : t('addInput')
                     : editingId
-                      ? 'Edit Access Port'
-                      : 'Add Access Port'}
+                      ? t('editPort')
+                      : t('addPort')}
                 </h2>
                 <p>
                   {quickFeed
-                    ? 'Select the shunt and its panels, verify the wiring, and optionally configure SNMP without leaving this window.'
-                    : 'Configure the physical terminal on this Equipment. Connections are managed separately.'}
+                    ? t('quickHelp')
+                    : t('portHelp')}
                 </p>
               </div>
               <button
                 type="button"
                 disabled={busy}
-                aria-label="Close Access Port editor"
+                aria-label={t('close')}
                 onClick={() => setOpen(false)}
               >
                 ×
@@ -529,11 +531,11 @@ export function AccessPortEditor({
                 <div className="equipment-quick-feed-summary">
                   <strong>
                     {hardwareProfile === 'ELTEK_BDCBB_CONFIG_2'
-                      ? 'CONFIGURATION 2 · TWO SHUNTS (A / B)'
-                      : 'CONFIGURATION 4 · FOUR SHUNTS (A1 / A2 / B1 / B2)'}
+                      ? t('config2')
+                      : t('config4')}
                   </strong>
                   <small>
-                    POWER · INPUT · EXTERNAL · SNMP feeder are configured automatically.
+                    {t('autoSettings')}
                   </small>
                   {!editingId && (
                     <button
@@ -544,7 +546,7 @@ export function AccessPortEditor({
                         setForm(formFor());
                       }}
                     >
-                      Create a different port type
+                      {t('different')}
                     </button>
                   )}
                 </div>
@@ -642,7 +644,7 @@ export function AccessPortEditor({
               {form.portType === 'POWER' &&
                 (!quickFeed || hardwareProfile === 'ELTEK_BDCBB_CONFIG_2') && (
                   <label>
-                    {quickFeed ? 'Incoming shunt' : 'Feed'}
+                    {quickFeed ? t('incomingShunt') : t('feed')}
                     <select
                       value={form.feed}
                       onChange={(event) => {
@@ -655,9 +657,9 @@ export function AccessPortEditor({
                         });
                       }}
                     >
-                      <option value="">Not assigned</option>
-                      <option value="A">Feed A</option>
-                      <option value="B">Feed B</option>
+                      <option value="">{t('notAssigned')}</option>
+                      <option value="A">{t('feedA')}</option>
+                      <option value="B">{t('feedB')}</option>
                     </select>
                   </label>
                 )}
@@ -667,8 +669,8 @@ export function AccessPortEditor({
                   <fieldset className="equipment-access-port-snmp">
                     <legend>
                       {quickFeed
-                        ? 'Panels supplied by this shunt'
-                        : 'SNMP DC input feeder (BDFB only)'}
+                        ? t('suppliedByShunt')
+                        : t('snmpInput')}
                     </legend>
                     {!quickFeed && (
                       <label className="equipment-access-port-check">
@@ -682,14 +684,14 @@ export function AccessPortEditor({
                             })
                           }
                         />
-                        This port is a physically inventoried incoming BDFB feed
+                        {t('physicalInventory')}
                       </label>
                     )}
                     {form.snmpFeedInput && (
                       <>
                         {hardwareProfile !== 'ELTEK_BDCBB_CONFIG_2' && (
                           <label>
-                            Independent incoming feeder position (Configuration 4)
+                            {t('position4')}
                             <select
                               value={form.feedPosition}
                               onChange={(event) =>
@@ -708,7 +710,7 @@ export function AccessPortEditor({
                                 })
                               }
                             >
-                              <option value="">Generic / unverified</option>
+                              <option value="">{t('generic')}</option>
                               <option value="A1">A1 · side A</option>
                               <option value="A2">A2 · side A</option>
                               <option value="B1">B1 · side B</option>
@@ -718,32 +720,31 @@ export function AccessPortEditor({
                         )}
                         <div className="equipment-panel-picker">
                           <div className="equipment-panel-picker-title">
-                            <strong>Supplied physical panels</strong>
+                            <strong>{t('panels')}</strong>
                             <span>
-                              {form.servedPanelIds.length} / {maxPanelCount} selected
+                              {t('selected', { selected: form.servedPanelIds.length, total: maxPanelCount })}
                             </span>
                           </div>
                           <p className="equipment-panel-picker-help">
-                            Choose installed PANEL equipment from this BDFB. IDs are assigned
-                            automatically.
+                            {t('panelsHelp')}
                           </p>
                           <input
                             type="search"
                             className="equipment-panel-picker-search"
                             value={panelSearch}
                             onChange={(event) => setPanelSearch(event.target.value)}
-                            placeholder="Search panels or frame…"
-                            aria-label="Search available BDFB panels"
+                            placeholder={t('panelSearch')}
+                            aria-label={t('panelSearchLabel')}
                             disabled={panelsLoading || Boolean(panelsError)}
                           />
                           {panelsLoading && (
-                            <span role="status">Loading panels from inventory…</span>
+                            <span role="status">{t('loading')}</span>
                           )}
                           {panelsError && (
                             <div role="alert" className="form-error">
-                              Could not load panel inventory: {panelsError}{' '}
+                              {t('panelError', { error: panelsError })}{' '}
                               <button type="button" onClick={() => void loadPanels()}>
-                                Retry
+                                {t('retry')}
                               </button>
                             </div>
                           )}
@@ -751,13 +752,13 @@ export function AccessPortEditor({
                             <div
                               className="equipment-panel-picker-options"
                               role="group"
-                              aria-label="Physical BDFB panels"
+                              aria-label={t('physicalPanels')}
                             >
                               {visiblePanels.length === 0 && (
                                 <p className="equipment-panel-picker-empty">
                                   {panels.length === 0
-                                    ? 'No PANEL equipment on this BDFB. Install panels in the FRAME first.'
-                                    : 'No matching panels.'}
+                                    ? t('noPanel')
+                                    : t('noMatches')}
                                 </p>
                               )}
                               {visiblePanels.map((panel) => {
@@ -769,7 +770,7 @@ export function AccessPortEditor({
                                   <label key={panel.id} className="equipment-panel-picker-option">
                                     <input
                                       type="checkbox"
-                                      aria-label={`Assign ${panel.name}`}
+                                      aria-label={t('assign', { name: panel.name })}
                                       checked={selected}
                                       disabled={
                                         claimed ||
@@ -781,7 +782,7 @@ export function AccessPortEditor({
                                       <strong>{panel.name}</strong>
                                       <small>{panel.frameName}</small>
                                       {claimed && (
-                                        <small>Assigned to {panel.assignedPortName}</small>
+                                        <small>{t('assigned', { name: panel.assignedPortName ?? '' })}</small>
                                       )}
                                     </span>
                                   </label>
@@ -791,17 +792,17 @@ export function AccessPortEditor({
                           )}
                           {hardwareProfile === 'ELTEK_BDCBB_CONFIG_2' && (
                             <p className="equipment-panel-picker-help">
-                              Config 2: each independent A/B shunt supplies two linked panels.
+                              {t('config2Info')}
                             </p>
                           )}
                           {hardwareProfile === 'ELTEK_BDCBB_CONFIG_4' && (
                             <p className="equipment-panel-picker-help">
-                              Config 4: one independent shunt supplies one panel.
+                              {t('config4Info')}
                             </p>
                           )}
                         </div>
                         <div className="equipment-dc-verification">
-                          <strong>Physical verification</strong>
+                          <strong>{t('verification')}</strong>
                           <label className="equipment-access-port-check">
                             <input
                               type="checkbox"
@@ -811,18 +812,17 @@ export function AccessPortEditor({
                                 if (!event.target.checked) setMapSnmpNow(false);
                               }}
                             />
-                            I confirmed from the cabinet wiring that this is a distinct incoming
-                            shunt, not a duplicated bus measurement.
+                            {t('wiringVerified')}
                           </label>
                           <small>
                             {form.independentInputConfirmed
-                              ? 'Physical mapping confirmed. You can configure SNMP below in this same window.'
-                              : 'Not yet verified: save the inventory without certifying electrical totals or binding SNMP.'}
+                              ? t('verifiedInfo')
+                              : t('unverifiedInfo')}
                           </small>
                         </div>
                         {quickFeed && (
                           <div className="equipment-dc-snmp-setup">
-                            <strong>SNMP measurements</strong>
+                            <strong>{t('measurements')}</strong>
                             <label className="equipment-access-port-check">
                               <input
                                 type="checkbox"
@@ -830,18 +830,17 @@ export function AccessPortEditor({
                                 disabled={!form.independentInputConfirmed || !deviceId}
                                 onChange={(event) => setMapSnmpNow(event.target.checked)}
                               />
-                              Configure OIDs for this input now
+                              {t('configureOid')}
                             </label>
                             {!form.independentInputConfirmed && (
                               <small>
-                                To activate a real controller mapping, physical shunt verification
-                                is required. Lab emulation alone does not certify wiring.
+                                {t('oidRequiresWiring')}
                               </small>
                             )}
                             {existingSnmpBindings.length > 0 && (
                               <div
                                 className="equipment-dc-existing-bindings"
-                                aria-label="Commissioned SNMP OIDs"
+                                aria-label={t('commissioned')}
                               >
                                 {existingSnmpBindings.map((item) => (
                                   <small key={item.metric}>
@@ -853,18 +852,18 @@ export function AccessPortEditor({
                             {mapSnmpNow && (
                               <div className="equipment-dc-snmp-fields">
                                 <label>
-                                  Controller / source identity
+                                  {t('controller')}
                                   <input
                                     required
                                     maxLength={120}
                                     value={sourceIdentity}
                                     onChange={(event) => setSourceIdentity(event.target.value)}
-                                    placeholder="Controller identity"
+                                    placeholder={t('controllerPlaceholder')}
                                   />
                                 </label>
                                 {!hasCurrentMapping && (
                                   <label>
-                                    Current OID · required
+                                    {t('currentOid')}
                                     <input
                                       required
                                       value={currentOid}
@@ -875,7 +874,7 @@ export function AccessPortEditor({
                                 )}
                                 {!hasVoltageMapping && (
                                   <label>
-                                    Voltage OID · optional
+                                    {t('voltageOid')}
                                     <input
                                       value={voltageOid}
                                       onChange={(event) => setVoltageOid(event.target.value)}
@@ -888,9 +887,7 @@ export function AccessPortEditor({
                                     Number(form.shuntRatedCurrentA) !== 1000 ||
                                     Number(form.shuntRatedMillivolts) !== 60) && (
                                     <p className="form-error">
-                                      Config 4 requires verified 800 A input rating and 1000 A / 60
-                                      mV shunt values. Enter them under Equipment specifications
-                                      below.
+                                      {t('config4Rating')}
                                     </p>
                                   )}
                                 <label className="equipment-access-port-check">
@@ -899,8 +896,7 @@ export function AccessPortEditor({
                                     checked={confirmOidMapping}
                                     onChange={(event) => setConfirmOidMapping(event.target.checked)}
                                   />
-                                  I verified the controller identity, OIDs, and their physical
-                                  mapping. This is not inferred from the number of OIDs.
+                                  {t('oidVerified')}
                                 </label>
                               </div>
                             )}
@@ -912,17 +908,15 @@ export function AccessPortEditor({
                         >
                           <summary>
                             {config4NeedsRatings
-                              ? 'Required Config 4 SNMP ratings · verify before saving'
-                              : 'Optional equipment specifications · calibration & ratings'}
+                              ? t('requiredRating')
+                              : t('optionalRating')}
                           </summary>
                           <p>
-                            Leave unknown values empty; do not infer ratings from another BDFB. For
-                            Config 4 commissioning, verify the installed 800 A input rating and 1000
-                            A / 60 mV shunt; never invent a value.
+                            {t('ratingHelp')}
                           </p>
                           <div className="equipment-access-port-advanced-fields">
                             <label>
-                              Overload warning threshold (A) · optional
+                              {t('overload')}
                               <input
                                 type="number"
                                 min="0.01"
@@ -935,7 +929,7 @@ export function AccessPortEditor({
                               />
                             </label>
                             <label>
-                              Nominal feed rating (A)
+                              {t('nominal')}
                               <input
                                 type="number"
                                 min="0.01"
@@ -946,7 +940,7 @@ export function AccessPortEditor({
                               />
                             </label>
                             <label>
-                              Shunt rated current (A)
+                              {t('shuntCurrent')}
                               <input
                                 type="number"
                                 min="0.01"
@@ -959,7 +953,7 @@ export function AccessPortEditor({
                               />
                             </label>
                             <label>
-                              Shunt rated millivolts (mV)
+                              {t('shuntMv')}
                               <input
                                 type="number"
                                 min="0.01"
@@ -979,15 +973,13 @@ export function AccessPortEditor({
                 )}
               {!quickFeed && (
                 <p>
-                  Archiving or changing the electrical identity of a connected terminal is blocked.
-                  Power Paths remain authoritative.
+                  {t('blocked')}
                 </p>
               )}
               {quickFeed && (
                 <p>
-                  Physical verification and OID commissioning are distinct from saving the equipment
-                  inventory.
-                  {commissioningRequested && ' Saving also commissions the selected SNMP OIDs.'}
+                  {t('separate')}
+                  {commissioningRequested && t('saveCommissions')}
                 </p>
               )}
               {error && (
@@ -997,16 +989,16 @@ export function AccessPortEditor({
               )}
               <footer>
                 <button type="button" disabled={busy} onClick={() => setOpen(false)}>
-                  Cancel
+                  {t('cancel')}
                 </button>
                 <button type="submit" disabled={!canSave}>
                   {busy
-                    ? 'Saving…'
+                    ? t('saving')
                     : commissioningRequested
-                      ? 'SAVE INPUT + SNMP'
+                      ? t('saveWithSnmp')
                       : quickFeed
-                        ? 'SAVE DC INPUT'
-                        : 'SAVE ACCESS PORT'}
+                        ? t('saveInput')
+                        : t('savePort')}
                 </button>
               </footer>
             </form>

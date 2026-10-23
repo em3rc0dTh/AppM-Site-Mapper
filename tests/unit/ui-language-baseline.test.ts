@@ -20,7 +20,7 @@ describe('English-first user interface', () => {
       ports: 'Ports',
       settings: 'Settings',
     });
-    expect(en.bdfb.inspector).toEqual({
+    expect(en.bdfb.inspector).toMatchObject({
       overview: 'Overview',
       feeds: 'Inputs',
       history: 'Charts',

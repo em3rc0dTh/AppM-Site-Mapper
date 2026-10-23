@@ -367,3 +367,56 @@ continue to let the existing workers drain and investigate any failure.
 It never modifies Mongo/Timescale or restarts Site Mapper. Before
 acceptance verify backpressure remains bounded across multiple
 observations while MQTT, SNMP and legacy UI operations coexist.
+
+
+### Capture worker repair with both synthetic publishers stopped
+
+An additional operator observation showed MQTT disk spool stalled at **725**
+records (diagnostic timestamp remained at 21:51:08 UTC), while the Mongo
+historical outbox grew beyond **1,072** entries, reporting **zero**
+historical failures and a newly advancing `lastDeliveryAt`. The
+`site-mapper` container remained `running` without restart. MQTT/SNMP
+generators have now been stopped; do not interpret a fresh Timescale delivery
+timestamp as proof that the MQTT spool is draining.
+
+Review of `MongoObservationStore.commit()` revealed sequential
+`findOne + updateOne + insertOne` operations for each signal, all in one
+transaction. An individual MQTT batch can contain many circuit signals,
+so this causes hundreds of sequential Mongo commands for one packet.
+The feature branch now fetches existing signals together and executes
+ordered `bulkWrite` catalog changes plus an `insertMany` history
+write **inside the original Mongo transaction**. It keeps the existing
+event fingerprint/idempotence, source cursor, transaction session, signal
+evolution, alarm precedence, out-of-order history and the 10,000-signal
+catalog limit. This optimization is **not yet locally verified**.
+
+When the 3 SNMP synthetic emitters and the MQTT emulator are stopped,
+the guarded app-only operation can deploy the repaired worker **without
+restarting any publishers or databases**:
+
+```bash
+cd /mnt/c/Users/eduar/Desktop/Thradex/AppM-Site-Mapper
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 scripts/telemetry/industrial-existing.py \
+  --bfdb-dir ../bfdb-telemetry-gateway \
+  --existing-db site_mapper_crud_acceptance_02 \
+  --subnet 10.253.55.0/24 \
+  --backup-dir "$HOME/site-mapper-backups/20261023-161213" \
+  --action repair-app
+```
+
+The action refuses to run unless all four synthetic publishers report
+not running, the original database identity and fixed volumes still
+match, prior credentials match, and original backup checksums match.
+It runs `docker compose up -d --build --no-deps site-mapper` only.
+Existing Mongo/Timescale historical samples and two durable capture
+spools are never removed. The app UI may momentarily disconnect.
+
+Afterwards, compare at least two timestamped readings of
+`/data/industrial-mqtt/diagnostics.json` and Mongo
+`industrial_timescale_outbox.countDocuments({})` with the publishers
+stopped. Both queues must trend down and there must be no new
+`deliveryFailures` or `lastFailureAt`. Never clear a spool to make
+acceptance pass. Only then use guarded `resume-mqtt` with 10s cadence.
+SNMP legacy `EMU-DELTA-BFDB-01` bindings and synthetic
+`EMU-SNMP-QDF-xx` identifiers are not automatically interchangeable.

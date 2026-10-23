@@ -173,8 +173,17 @@ for(const spec of PLAN){
     spec.name+" requires completely free, canonical rack CAS");
   guard(topo.countDocuments({parentId:rack.id,lifecycle:"ACTIVE"})===0,
     spec.name+" target rack has installed device or inventory records");
-  guard(topo.countDocuments({serialNumber:spec.serial,lifecycle:"ACTIVE"})===0,
-    spec.name+" source serial already assigned: "+spec.serial);
+  // A publisher identity may already occur as a serial on another Device
+  // or Equipment. This is an expected commissioning conflict to report in
+  // plan mode, not an excuse to abort diagnosis before we see its owner.
+  const serialOwners=topo.find({
+    serialNumber:spec.serial,
+    lifecycle:"ACTIVE",
+    kind:{$in:["DEVICE","EQUIPMENT"]},
+  },{
+    projection:{_id:0,id:1,name:1,kind:1,equipmentType:1,deviceType:1,
+      deviceId:1,parentId:1,serialNumber:1}
+  }).toArray();
   const preexisting=links.find({
     protocol:"MQTT",sourceIdentity:spec.serial,lifecycle:"ACTIVE",
   }).toArray();
@@ -186,7 +195,7 @@ for(const spec of PLAN){
       targetKind:target?.kind||"NOT FOUND",
     };
   });
-  workloads.push({spec,rack,collision});
+  workloads.push({spec,rack,collision,serialOwners});
 }
 print("\nSITE MAPPER SIMULATED COMMISSIONING");
 print("mode="+mode+" | DB="+DB_NAME+
@@ -196,17 +205,36 @@ for(const x of workloads){
     " ("+x.spec.rack+") -> "+x.spec.serial);
   print("Model: 1 chassis, 1 shelf, 2 frames, 4 panels, "+
         "96 INSTALLLED synthetic breaker positions, 385 MQTT bindings");
+  print("Existing serial owners for "+x.spec.serial+": "+x.serialOwners.length);
+  for(const owner of x.serialOwners) {
+    const device=owner.deviceId?topo.findOne({id:owner.deviceId},{projection:{
+      _id:0,id:1,name:1,deviceType:1,parentId:1,
+    }}):null;
+    print("  SERIAL OWNER: "+JSON.stringify({ ...owner,
+      ...(device?{owningDevice:device}:{}),
+    }));
+  }
   print("Existing MQTT bindings for this source: "+x.collision.length);
-  for(const link of x.collision) print("  CONFLICT/CHECK: "+JSON.stringify(link));
+  for(const link of x.collision) print("  BINDING OWNER: "+JSON.stringify(link));
 }
 if(mode==="plan"){
   print("\nPLAN ONLY. No writes performed.");
-  if(workloads.some(x=>x.collision.length))
-    print("BLOCKED FOR APPLY: existing MQTT bindings must be reviewed"+
-          " before any new source routing is commissioned.");
-  else print("No source-binding conflicts found. Atomic apply would be permitted "+
-             "after verifying backups.");
+  const serialConflicts=workloads.some(x=>x.serialOwners.length);
+  const bindingConflicts=workloads.some(x=>x.collision.length);
+  if(serialConflicts||bindingConflicts) {
+    print("BLOCKED FOR APPLY: pre-existing serial and/or MQTT binding owners "+
+          "must be inspected before selecting new synthetic Device serials "+
+          "and commissioning source-point ownership.");
+    print("The existing owners are preserved. Never delete or reassign "+
+          "them to make a fixture pass.");
+  } else {
+    print("No detected serial or source binding collisions. Atomic apply "+
+          "remains opt-in and requires freshly verified backups.");
+  }
 } else {
+  guard(workloads.every(x=>x.serialOwners.length===0),
+    "Source identity already owned by active topology nodes; "+
+    "do not duplicate a serial or silently change its owner.");
   guard(workloads.every(x=>x.collision.length===0),
     "Existing MQTT bindings found. Refusing automatic reassignment; "+
     "inspect listed targets and explicitly commission the source mapping first.");

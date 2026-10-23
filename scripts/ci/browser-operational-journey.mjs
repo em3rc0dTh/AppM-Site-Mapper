@@ -314,7 +314,8 @@ try {
 
   await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
   await page.locator('.sm-locale-control select').selectOption('en');
-  await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
+  // After a same-route Settings tab change the locale reload can race with
+  // the browser's navigation lifecycle. A fresh GET proves cookie persistence.
   await page.goto(base + '/network', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.documentElement.lang === 'en');
   await verifyLocaleRoutes('en');

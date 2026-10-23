@@ -5,11 +5,12 @@ on:
   push:
     branches:
       - main
+      - 'chore/english-ui-baseline-20261022'
       - 'feat/modbus-tcp-site-mapper-sidecar'
       - 'feat/**'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify:
@@ -28,6 +29,20 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      - name: Format bilingual UI files (one-time)
+        if: github.event_name == 'push' && github.ref_name == 'chore/english-ui-baseline-20261022' && github.actor != 'github-actions[bot]'
+        run: |
+          npx prettier --write src/components/telemetry/live-telemetry.tsx src/components/warehouse/rack-template-instantiator.tsx src/components/warehouse/template-create-form.tsx src/components/warehouse/warehouse-template-catalog.tsx
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/components/telemetry/live-telemetry.tsx src/components/warehouse/rack-template-instantiator.tsx src/components/warehouse/template-create-form.tsx src/components/warehouse/warehouse-template-catalog.tsx
+          if ! git diff --cached --quiet; then
+            git commit -m 'style(i18n): normalize localized Telemetry and Warehouse components'
+            git fetch origin "${GITHUB_REF_NAME}"
+            git rebase "origin/${GITHUB_REF_NAME}"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
 
       - name: Typecheck
         run: npm run typecheck

@@ -1,3 +1,4 @@
+import { industrialHistoryDiagnostics } from './timescale-outbox';
 import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -87,10 +88,14 @@ export async function captureDiagnostics() {
   if (profiles.some((p) => p.protocol === 'SNMP'))
     jobs.push(snapshot(process.env.INDUSTRIAL_SNMP_DIAGNOSTICS_FILE, 'SNMP'));
   const sources = await Promise.all(jobs);
-  const alerts = [...new Set([...sources.flatMap((s) => s.alerts), ...runtimeFaults()])];
+  const history = await industrialHistoryDiagnostics();
+  const alerts = [
+    ...new Set([...sources.flatMap((s) => s.alerts), ...history.alerts, ...runtimeFaults()]),
+  ];
   return {
     status: alerts.length ? 'DEGRADED' : sources.length ? 'OK' : 'DISABLED',
     alerts,
     sources,
+    history,
   };
 }

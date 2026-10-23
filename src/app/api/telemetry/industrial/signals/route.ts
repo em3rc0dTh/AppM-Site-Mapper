@@ -1,3 +1,7 @@
+import {
+  associateLogicalSignals,
+  logicalRegistry,
+} from '@/modules/telemetry/infrastructure/industrial/logical-points';
 import { captureDiagnostics } from '@/modules/telemetry/infrastructure/industrial/diagnostics';
 import {
   publicationManifest,
@@ -30,7 +34,9 @@ export async function GET(request: Request) {
       publicationUnavailable = true;
     }
     const all = await (await getObservationStore()).list(source, 1000, target ?? undefined);
-    const signals = all
+    const registry = await logicalRegistry();
+    const associated = associateLogicalSignals(all, registry);
+    const signals = associated
       .filter((s) => !target || s.targetId === target)
       .map((s) => {
         const current = { ...s, quality: signalQuality(s) };
@@ -43,8 +49,19 @@ export async function GET(request: Request) {
     const unobservedPublishedPoints = [];
     if (manifest && !source && !target) {
       const observed = new Set(
-        (await (await getObservationStore()).byIds(manifest.points.map((p) => p.signalId))).map(
-          (s) => s.id,
+        (
+          await (
+            await getObservationStore()
+          ).byIds(
+            manifest.points.map(
+              (p) =>
+                registry?.points.find((r) => r.publicationSignalId === p.signalId)
+                  ?.activeSignalId ?? p.signalId,
+            ),
+          )
+        ).map(
+          (s) =>
+            registry?.points.find((r) => r.activeSignalId === s.id)?.publicationSignalId ?? s.id,
         ),
       );
       for (const point of manifest.points)

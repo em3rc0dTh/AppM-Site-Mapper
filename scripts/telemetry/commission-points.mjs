@@ -25,9 +25,12 @@ const registry = validateRegistry(
       )
         throw new Error('Invalid commissioned signal identity');
       return {
-        signalId: createHash('sha256')
-          .update(JSON.stringify([p.protocol, p.sourceIdentity, p.topic ?? '', p.key]))
-          .digest('hex'),
+        ...(p.logicalPointId ? { logicalPointId: p.logicalPointId } : {}),
+        signalId:
+          p.publicationSignalId ??
+          createHash('sha256')
+            .update(JSON.stringify([p.protocol, p.sourceIdentity, p.topic ?? '', p.key]))
+            .digest('hex'),
         unitId: p.unitId,
         address: p.address,
         unit: p.unit,

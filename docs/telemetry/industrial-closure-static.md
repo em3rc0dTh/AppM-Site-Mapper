@@ -1,5 +1,7 @@
 # Industrial closure — implementation only, 2026-10-23
 
+Current additive historical/identity/unified-lab revision: [implementation and local acceptance](industrial-unified-lab.md).
+
 Scope: existing Site Mapper PR #103 and BFDB PR #10, branch
 `feat/site-mapper-work-2026-10-23`. This change follows the supplied closure plan.
 

@@ -2,6 +2,7 @@ import { readFile, stat } from 'node:fs/promises';
 import type { Signal } from '@/modules/telemetry/domain/industrial/observations';
 export interface PublishedPoint {
   signalId: string;
+  logicalPointId?: string;
   unitId: number;
   address: number;
   unit: string;
@@ -44,7 +45,10 @@ export async function publicationManifest(): Promise<PublicationManifest | null>
       p.address < 1024 ||
       p.address > 65533 ||
       typeof p.unit !== 'string' ||
-      typeof p.description !== 'string'
+      typeof p.description !== 'string' ||
+      (p.logicalPointId !== undefined &&
+        (typeof p.logicalPointId !== 'string' ||
+          !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(p.logicalPointId)))
     )
       throw new Error('Invalid publication point');
     ids.add(p.signalId);
@@ -57,7 +61,11 @@ export async function publicationManifest(): Promise<PublicationManifest | null>
   return input as PublicationManifest;
 }
 export function publicationStatus(signal: Signal, manifest: PublicationManifest | null) {
-  const point = manifest?.points.find((p) => p.signalId === signal.id);
+  const point = manifest?.points.find(
+    (p) =>
+      p.signalId === (signal.publicationSignalId ?? signal.id) ||
+      (p.logicalPointId !== undefined && p.logicalPointId === signal.logicalPointId),
+  );
   const interpreted = signal.kind !== 'unknown' && signal.interpretation !== 'UNINTERPRETED';
   const knownAlarm =
     signal.kind === 'alarm' && ['ACTIVE', 'RESOLVED'].includes(signal.alarmState ?? '');

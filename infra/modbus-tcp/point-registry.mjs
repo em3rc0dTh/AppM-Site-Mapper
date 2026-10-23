@@ -31,7 +31,10 @@ export function validateRegistry(registry, previous) {
       p.address < 1024 ||
       p.address + 3 > 65536 ||
       typeof p.description !== 'string' ||
-      typeof p.unit !== 'string'
+      typeof p.unit !== 'string' ||
+      (p.logicalPointId !== undefined &&
+        (typeof p.logicalPointId !== 'string' ||
+          !/^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,199}$/.test(p.logicalPointId)))
     )
       throw new Error('Invalid Modbus point');
     signals.add(p.signalId);
@@ -82,8 +85,32 @@ export class ExtensionState {
     )
       return false;
     const old = this.signals.get(signal.id);
-    if (old && Date.parse(old.observedAt) > Date.parse(signal.observedAt)) return false;
-    this.signals.set(signal.id, { ...signal });
+    if (old && (old.authorityRegistryVersion ?? 0) > (signal.authorityRegistryVersion ?? 0))
+      return false;
+    if (
+      old &&
+      (old.authorityRegistryVersion ?? 0) === (signal.authorityRegistryVersion ?? 0) &&
+      Date.parse(old.observedAt) > Date.parse(signal.observedAt)
+    )
+      return false;
+    // Changing authority does not resolve an already observed alarm. Keep its last
+    // explicit state until the authorized replacement supplies ACTIVE or RESOLVED.
+    const retainAlarm =
+      old?.kind === 'alarm' &&
+      ['ACTIVE', 'RESOLVED'].includes(old.alarmState) &&
+      (signal.quality === 'UNOBSERVED' ||
+        (signal.kind === 'alarm' && !['ACTIVE', 'RESOLVED'].includes(signal.alarmState)));
+    this.signals.set(
+      signal.id,
+      retainAlarm
+        ? {
+            ...signal,
+            kind: 'alarm',
+            alarmState: old.alarmState,
+            alarmObservedAt: old.alarmObservedAt ?? old.observedAt,
+          }
+        : { ...signal },
+    );
     return true;
   }
   read(unit, offset, count, now = Date.now()) {
@@ -153,6 +180,7 @@ export function registryCsv(registry) {
     [
       'version',
       'signalId',
+      'logicalPointId',
       'unitId',
       'functionCode',
       'address0',
@@ -168,6 +196,7 @@ export function registryCsv(registry) {
     ...registry.points.map((p) => [
       registry.version,
       p.signalId,
+      p.logicalPointId ?? 'See approved logical alias registry',
       p.unitId,
       3,
       p.address,

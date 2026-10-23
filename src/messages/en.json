@@ -1061,7 +1061,13 @@
     "captureAlerts": "Capture alerts ({count})",
     "interpretationPending": "Interpretation pending",
     "publishedPoint": "Modbus unit {unit}, offset {address}",
-    "publicationPending": "Modbus commissioning pending"
+    "publicationPending": "Modbus commissioning pending",
+    "industrialHistory": "Industrial history",
+    "activeSource": "Active source",
+    "historicalSource": "Historical source",
+    "industrialHistoryUnavailable": "Industrial history unavailable",
+    "industrialHistoryEmpty": "No samples in the last 24 hours",
+    "industrialHistoryLimited": "Showing the latest 1,000 samples."
   },
   "telemetryLens": {
     "context": "CONTEXTUAL DIAGNOSTIC",

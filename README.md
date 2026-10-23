@@ -135,3 +135,5 @@ asociaciones y puntos antes de conectarse al hardware y a Metasys.
 
 Estado del cierre industrial: [cambios y validaciones pendientes](docs/telemetry/industrial-closure-static.md).
 La revisión posterior a PR #103/#10 se realizó sin ejecutar ni agregar pruebas.
+
+Unified MQTT/SNMP industrial laboratory and deferred local acceptance: [runbook](docs/telemetry/industrial-unified-lab.md).

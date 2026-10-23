@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "points": [
     {
       "signalId": "9207a21b7891ef6f039fa27a011353e02bafae7814c937552d47803d74f3376f",
@@ -126,6 +126,69 @@
       "address": 1039,
       "unit": "",
       "description": "SYNTHETIC QDF 3 SNMP status enum"
+    },
+    {
+      "signalId": "340f5e220247c0f18aba679a11292d17f8f7328bc8f78b24e357c4c824e2f603",
+      "unitId": 1,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 1 I1; physical association pending"
+    },
+    {
+      "signalId": "ec98eb435ea0f15a17f476c41d9cd0903cbba0e9c7484c15db964400369dcbb0",
+      "unitId": 1,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 1 P1; physical association pending"
+    },
+    {
+      "signalId": "810951ac7a005c7f1d2c645c8e8ba38aca52809e417dce31ff3587d5e17c73a1",
+      "unitId": 1,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 1 EP1; physical association pending"
+    },
+    {
+      "signalId": "ac5a0af12dfd0ba21582667e6862d369250beff29ce7bc5f4582320a0d8e4ecf",
+      "unitId": 2,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 2 I1; physical association pending"
+    },
+    {
+      "signalId": "f5496e50eb63cca381eda02c0cdad46ba47bb8a2d06175717f779ba0687061dd",
+      "unitId": 2,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 2 P1; physical association pending"
+    },
+    {
+      "signalId": "17b806b50e9a46a6b8bef7ad158dbaea07e8d6f04e0392ac4c1441e745bdd67b",
+      "unitId": 2,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 2 EP1; physical association pending"
+    },
+    {
+      "signalId": "e9e8ae3c9eff89b8f21d6c36191209a3237694aced3709213d8acb4a8d8431ba",
+      "unitId": 3,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 3 I1; physical association pending"
+    },
+    {
+      "signalId": "af408afa57fcc5ed5db7aa56b374231d469923788e7efc0976c339692d66a0b8",
+      "unitId": 3,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 3 P1; physical association pending"
+    },
+    {
+      "signalId": "09da37cbdaabc7f3cb64fd35bcd83a297ca4ac8956fa4adaa72350e1ff44b97a",
+      "unitId": 3,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 3 EP1; physical association pending"
     }
   ]
 }

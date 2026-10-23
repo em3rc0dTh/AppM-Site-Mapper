@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "points": [
     {
       "protocol": "MQTT",
@@ -165,6 +165,96 @@
       "address": 1039,
       "unit": "",
       "description": "SYNTHETIC QDF 3 SNMP status enum"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-01",
+      "topic": "data/dev/EMU-BFDB-01",
+      "key": "/reported/0_1_1/I1",
+      "unitId": 1,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 1 I1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-01",
+      "topic": "data/dev/EMU-BFDB-01",
+      "key": "/reported/0_1_1/P1",
+      "unitId": 1,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 1 P1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-01",
+      "topic": "data/dev/EMU-BFDB-01",
+      "key": "/reported/0_1_1/EP1",
+      "unitId": 1,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 1 EP1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-02",
+      "topic": "data/dev/EMU-BFDB-02",
+      "key": "/reported/0_1_1/I1",
+      "unitId": 2,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 2 I1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-02",
+      "topic": "data/dev/EMU-BFDB-02",
+      "key": "/reported/0_1_1/P1",
+      "unitId": 2,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 2 P1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-02",
+      "topic": "data/dev/EMU-BFDB-02",
+      "key": "/reported/0_1_1/EP1",
+      "unitId": 2,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 2 EP1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-03",
+      "topic": "data/dev/EMU-BFDB-03",
+      "key": "/reported/0_1_1/I1",
+      "unitId": 3,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 3 I1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-03",
+      "topic": "data/dev/EMU-BFDB-03",
+      "key": "/reported/0_1_1/P1",
+      "unitId": 3,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 3 P1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-03",
+      "topic": "data/dev/EMU-BFDB-03",
+      "key": "/reported/0_1_1/EP1",
+      "unitId": 3,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 3 EP1; physical association pending"
     }
   ]
 }

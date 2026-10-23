@@ -8,6 +8,9 @@ import { panelReportedPoints, telemetryMetrics } from './telemetry-presentation'
 
 type IndustrialSignal = {
   id: string;
+  logicalPointId?: string;
+  authoritative?: boolean;
+  observedAt: string;
   key: string;
   sourceIdentity: string;
   protocol: string;
@@ -78,6 +81,56 @@ export function EquipmentTelemetryInspector({
       clearTimeout(timer);
     };
   }, [targetId]);
+  const [historySignal, setHistorySignal] = useState<IndustrialSignal | null>(null);
+  const [industrialHistory, setIndustrialHistory] = useState<{
+    targetId: string;
+    signalId: string;
+    observations: IndustrialSignal[];
+    failed: boolean;
+    hasMore: boolean;
+  } | null>(null);
+  useEffect(() => {
+    if (!historySignal) return;
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      from: new Date(Date.now() - 86400000).toISOString(),
+      to: new Date().toISOString(),
+      ...(historySignal.logicalPointId
+        ? { logicalPointId: historySignal.logicalPointId }
+        : { signalId: historySignal.id }),
+    });
+    void (async () => {
+      try {
+        const response = await fetch(`/api/telemetry/industrial/series?${params}`, {
+          signal: controller.signal,
+          cache: 'no-store',
+        });
+        if (!response.ok) throw new Error('History unavailable');
+        const body = (await response.json()) as {
+          observations: IndustrialSignal[];
+          nextCursor: string | null;
+        };
+        if (!controller.signal.aborted)
+          setIndustrialHistory({
+            targetId,
+            signalId: historySignal.id,
+            observations: body.observations,
+            failed: false,
+            hasMore: Boolean(body.nextCursor),
+          });
+      } catch {
+        if (!controller.signal.aborted)
+          setIndustrialHistory({
+            targetId,
+            signalId: historySignal.id,
+            observations: [],
+            failed: true,
+            hasMore: false,
+          });
+      }
+    })();
+    return () => controller.abort();
+  }, [historySignal, targetId]);
   const [window, setWindow] = useState('LIVE');
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -231,6 +284,17 @@ export function EquipmentTelemetryInspector({
                         <br />
                         <small>
                           {signal.sourceIdentity} · {signal.protocol}
+                          {signal.logicalPointId && (
+                            <>
+                              <br />
+                              {signal.logicalPointId} ·{' '}
+                              {signal.authoritative ? t('activeSource') : t('historicalSource')}
+                            </>
+                          )}
+                          <br />
+                          <button type="button" onClick={() => setHistorySignal(signal)}>
+                            {t('industrialHistory')}
+                          </button>
                         </small>
                       </td>
                       <td>
@@ -264,6 +328,53 @@ export function EquipmentTelemetryInspector({
                 </tbody>
               </table>
             </div>
+            {historySignal && industrial.signals.some((s) => s.id === historySignal.id) && (
+              <div role="region" aria-label={t('industrialHistory')}>
+                <p>
+                  {t('industrialHistory')} · {historySignal.logicalPointId ?? historySignal.key} ·
+                  24 h
+                </p>
+                {industrialHistory?.targetId !== targetId ||
+                industrialHistory?.signalId !== historySignal.id ? (
+                  <p>{t('loading')}</p>
+                ) : industrialHistory.failed ? (
+                  <p role="status">{t('industrialHistoryUnavailable')}</p>
+                ) : (
+                  <div style={{ maxHeight: 240, overflow: 'auto' }}>
+                    {industrialHistory.hasMore && <p>{t('industrialHistoryLimited')}</p>}
+                    {industrialHistory.observations.length === 0 && (
+                      <p>{t('industrialHistoryEmpty')}</p>
+                    )}
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>{t('signal')}</th>
+                          <th>{t('value')}</th>
+                          <th>{t('quality')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {industrialHistory.observations.map((s) => (
+                          <tr key={`${s.id}:${s.observedAt}:${s.receivedAt}`}>
+                            <td>
+                              <time>{s.observedAt}</time>
+                              <br />
+                              <small>
+                                {s.sourceIdentity} · {s.protocol}
+                              </small>
+                            </td>
+                            <td>
+                              {s.alarmState ?? (s.value === null ? '—' : String(s.value))} {s.unit}
+                            </td>
+                            <td>{s.quality}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
           </details>
         )}
     </section>

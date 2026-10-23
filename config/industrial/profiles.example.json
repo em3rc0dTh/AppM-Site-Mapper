@@ -2,14 +2,40 @@
   {
     "sourceIdentity": "EMU-MQTT-QDF-01",
     "protocol": "MQTT",
-    "version": "synthetic-1",
+    "version": "synthetic-decimal-2",
     "staleMs": 30000,
     "rules": [
       {
         "key": "/reported/0_1_1/U1",
         "kind": "measurement",
         "unit": "V",
-        "scale": 1
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/I1",
+        "kind": "measurement",
+        "unit": "A",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/P1",
+        "kind": "measurement",
+        "unit": "W",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/EP1",
+        "kind": "measurement",
+        "unit": "kWh",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
       }
     ]
   },
@@ -46,14 +72,40 @@
   {
     "sourceIdentity": "EMU-MQTT-QDF-02",
     "protocol": "MQTT",
-    "version": "synthetic-1",
+    "version": "synthetic-decimal-2",
     "staleMs": 30000,
     "rules": [
       {
         "key": "/reported/0_1_1/U1",
         "kind": "measurement",
         "unit": "V",
-        "scale": 1
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/I1",
+        "kind": "measurement",
+        "unit": "A",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/P1",
+        "kind": "measurement",
+        "unit": "W",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/EP1",
+        "kind": "measurement",
+        "unit": "kWh",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
       }
     ]
   },
@@ -90,14 +142,40 @@
   {
     "sourceIdentity": "EMU-MQTT-QDF-03",
     "protocol": "MQTT",
-    "version": "synthetic-1",
+    "version": "synthetic-decimal-2",
     "staleMs": 30000,
     "rules": [
       {
         "key": "/reported/0_1_1/U1",
         "kind": "measurement",
         "unit": "V",
-        "scale": 1
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/I1",
+        "kind": "measurement",
+        "unit": "A",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/P1",
+        "kind": "measurement",
+        "unit": "W",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/EP1",
+        "kind": "measurement",
+        "unit": "kWh",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
       }
     ]
   },
@@ -128,6 +206,126 @@
         "unit": "degC",
         "scale": 0.1,
         "evidence": "BFDB SYNTHETIC_MEASUREMENTS.temperature; laboratory encoding only; verify controller settings before field use"
+      }
+    ]
+  },
+  {
+    "sourceIdentity": "EMU-BFDB-01",
+    "protocol": "MQTT",
+    "version": "synthetic-decimal-2",
+    "staleMs": 30000,
+    "rules": [
+      {
+        "key": "/reported/0_1_1/U1",
+        "kind": "measurement",
+        "unit": "V",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/I1",
+        "kind": "measurement",
+        "unit": "A",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/P1",
+        "kind": "measurement",
+        "unit": "W",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/EP1",
+        "kind": "measurement",
+        "unit": "kWh",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      }
+    ]
+  },
+  {
+    "sourceIdentity": "EMU-BFDB-02",
+    "protocol": "MQTT",
+    "version": "synthetic-decimal-2",
+    "staleMs": 30000,
+    "rules": [
+      {
+        "key": "/reported/0_1_1/U1",
+        "kind": "measurement",
+        "unit": "V",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/I1",
+        "kind": "measurement",
+        "unit": "A",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/P1",
+        "kind": "measurement",
+        "unit": "W",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/EP1",
+        "kind": "measurement",
+        "unit": "kWh",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      }
+    ]
+  },
+  {
+    "sourceIdentity": "EMU-BFDB-03",
+    "protocol": "MQTT",
+    "version": "synthetic-decimal-2",
+    "staleMs": 30000,
+    "rules": [
+      {
+        "key": "/reported/0_1_1/U1",
+        "kind": "measurement",
+        "unit": "V",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/I1",
+        "kind": "measurement",
+        "unit": "A",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/P1",
+        "kind": "measurement",
+        "unit": "W",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
+      },
+      {
+        "key": "/reported/0_1_1/EP1",
+        "kind": "measurement",
+        "unit": "kWh",
+        "scale": 1,
+        "numericEncoding": "decimal-string",
+        "evidence": "BFDB synthetic wire contract; no physical panel association"
       }
     ]
   }

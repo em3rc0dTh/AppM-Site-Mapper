@@ -1,3 +1,5 @@
+import { associateLogicalSignals, logicalRegistry } from './logical-points';
+import { startIndustrialHistoryDelivery } from './timescale-outbox';
 import { isProductionDeployment } from '@/config/env';
 import {
   IndustrialInputError,
@@ -31,6 +33,7 @@ export async function getObservationStore(): Promise<ObservationStore> {
         Number(process.env.INDUSTRIAL_RETENTION_DAYS ?? 90),
       );
       await store.initialize();
+      startIndustrialHistoryDelivery();
       return store;
     })();
     holder.promise.catch(() => {
@@ -46,6 +49,7 @@ export async function captureIndustrial(envelope: Envelope) {
   );
   if (!profile) throw new IndustrialInputError('Industrial source is not commissioned');
   const batch = normalizeObservations(envelope, profile);
+  batch.signals = associateLogicalSignals(batch.signals, await logicalRegistry());
   const disposition = await (await getObservationStore()).commit(batch);
   return { batch, disposition };
 }

@@ -147,6 +147,15 @@ export class MongoObservationStore implements ObservationStore {
     await this.db
       .collection('industrial_signal_history')
       .createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+    await this.db
+      .collection('industrial_delivery_status')
+      .createIndex({ key: 1 }, { unique: true });
+    await this.db
+      .collection('industrial_timescale_outbox')
+      .createIndex({ deliveryId: 1 }, { unique: true });
+    await this.db
+      .collection('industrial_timescale_outbox')
+      .createIndex({ availableAt: 1, createdAt: 1 });
     await this.db.collection('industrial_sources').createIndex({ key: 1 }, { unique: true });
     await this.db.collection('industrial_events').createIndex({ eventId: 1 }, { unique: true });
     await this.db.collection('industrial_signals').createIndex({ signalId: 1 }, { unique: true });
@@ -200,6 +209,21 @@ export class MongoObservationStore implements ObservationStore {
           },
           { session },
         );
+        if (process.env.INDUSTRIAL_TIMESCALE_ENABLED === 'true') {
+          const outbox = this.db.collection('industrial_timescale_outbox');
+          for (let i = 0; i < batch.signals.length; i += 100) {
+            await outbox.insertOne(
+              {
+                deliveryId: `${batch.id}:${i}`,
+                createdAt: new Date(),
+                availableAt: new Date(),
+                attempts: 0,
+                payloadJson: JSON.stringify({ signals: batch.signals.slice(i, i + 100) }),
+              },
+              { session },
+            );
+          }
+        }
         const catalog = this.db.collection('industrial_signals');
         const size = await catalog.countDocuments(
           { sourceIdentity: batch.envelope.sourceIdentity, protocol: batch.envelope.protocol },

@@ -17,6 +17,7 @@ export interface SignalRule {
   severity?: string;
   evidence?: string;
   match?: 'oid-instance';
+  numericEncoding?: 'decimal-string';
   valueMap?: readonly { raw: string | number | boolean; code: number; label?: string }[];
 }
 export interface SourceProfile {
@@ -44,6 +45,9 @@ export interface Envelope {
 }
 export interface Signal {
   id: string;
+  logicalPointId?: string;
+  publicationSignalId?: string;
+  authoritative?: boolean;
   key: string;
   sourceIdentity: string;
   protocol: Envelope['protocol'];
@@ -135,6 +139,13 @@ export function parseProfiles(raw: string | undefined): SourceProfile[] {
         (r.match !== 'oid-instance' || p.protocol !== 'SNMP' || !oid.test(r.key))
       )
         throw new Error('Invalid OID instance rule');
+      if (
+        r.numericEncoding !== undefined &&
+        (r.numericEncoding !== 'decimal-string' ||
+          p.protocol !== 'MQTT' ||
+          r.kind !== 'measurement')
+      )
+        throw new Error('Decimal string encoding requires an authorized MQTT measurement');
       if (r.valueMap !== undefined) {
         if (
           !['state', 'event'].includes(String(r.kind)) ||
@@ -312,16 +323,24 @@ export function normalizeObservations(
       let value: Signal['value'] = null;
       let alarmState: Signal['alarmState'] = null;
       if (rule?.kind === 'measurement') {
-        // No guessed units, string coercion or scale from object names.
+        // Strict opt-in decimal syntax; preserve n.value and n.type as original evidence.
+        const numeric =
+          envelope.protocol === 'MQTT' &&
+          rule.numericEncoding === 'decimal-string' &&
+          typeof n.value === 'string' &&
+          n.value.length <= 128 &&
+          /^[+-]?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?$/.test(n.value)
+            ? Number(n.value)
+            : n.value;
         if (
-          typeof n.value !== 'number' ||
-          !Number.isFinite(n.value) ||
+          typeof numeric !== 'number' ||
+          !Number.isFinite(numeric) ||
           !rule.unit ||
           rule.scale === undefined
         )
           quality = !rule.unit || rule.scale === undefined ? 'UNKNOWN' : 'INVALID';
         else {
-          value = n.value * rule.scale + (rule.offset ?? 0);
+          value = numeric * rule.scale + (rule.offset ?? 0);
           if (!Number.isFinite(value)) {
             value = null;
             quality = 'INVALID';

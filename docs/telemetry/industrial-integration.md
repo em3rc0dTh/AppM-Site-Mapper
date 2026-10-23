@@ -1,5 +1,7 @@
 # Industrial integration — MQTT, SNMP and stable Modbus extensions
 
+Current additive historical/identity/unified-lab revision: [implementation and local acceptance](industrial-unified-lab.md).
+
 **Current closure status:** implementation and static review only; see [closure changes and deferred validation](industrial-closure-static.md). Historical laboratory results below precede this closure revision.
 
 This extension keeps the current application, MQTT parser, electrical bindings, historical service,

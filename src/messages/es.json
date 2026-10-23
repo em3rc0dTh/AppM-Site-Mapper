@@ -894,5 +894,25 @@
   "panelCommissioning": {
     "title": "COMISIONAMIENTO DE PUNTOS MQTT",
     "loading": "Cargando la propuesta de puntos físicos…"
+  },
+  "roomEditor": {
+    "selectBay": "Seleccionar bahía",
+    "editDraft": "EDITAR · BORRADOR SIN GUARDAR",
+    "explore": "EXPLORAR",
+    "editRoom": "EDITAR SALA",
+    "drawRoom": "Dibuja el límite de la sala para comenzar.",
+    "geometry": "GEOMETRÍA DE SALA",
+    "drawBay": "+ Dibujar bahía / clúster",
+    "bay": "Bahía",
+    "cluster": "Clúster",
+    "drawBoundary": "Dibujar límite",
+    "placeRack": "+ Ubicar rack",
+    "rackLeft": "Agregar rack de izquierda a derecha",
+    "emptyPosition": "+ Ubicar posición vacía",
+    "chooseCell": "Elegir celda en el plano",
+    "selection": "SELECCIONAR / EDITAR",
+    "selectedObject": "Objeto seleccionado del plano",
+    "selectObject": "Seleccionar objeto",
+    "applyRack": "Aplicar propiedades del rack"
   }
 }

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { BlueprintCanvas } from './blueprint-canvas';
 import { PolygonEditor } from '@/components/spatial/polygon-editor';
 import {
@@ -45,6 +46,7 @@ export function RoomLayoutEditor({
   focusBayId?: string | undefined;
   focusPositionId?: string | undefined;
 }) {
+  const t = useTranslations('roomEditor');
   const router = useRouter();
   const [draft, setDraft] = useState(initial);
   const [saved, setSaved] = useState(initial);
@@ -287,7 +289,7 @@ export function RoomLayoutEditor({
     <label>
       Bay / Cluster
       <select name="clusterId" required defaultValue="">
-        <option value="">Select a bay</option>
+        <option value="">{t('selectBay')}</option>
         {draft.clusters.map((c) => (
           <option key={c.id} value={c.id}>
             {c.name}
@@ -299,8 +301,8 @@ export function RoomLayoutEditor({
   return (
     <section className="mk-room-editor">
       <header className="mk-draft-toolbar">
-        <strong>{editing ? 'EDIT · UNSAVED DRAFT' : 'EXPLORE'}</strong>
-        {canWrite && !editing && <button onClick={() => setEditing(true)}>EDIT ROOM</button>}
+        <strong>{editing ? t('editDraft') : t('explore')}</strong>
+        {canWrite && !editing && <button onClick={() => setEditing(true)}>{t('editRoom')}</button>}
         {editing && (
           <>
             <button
@@ -408,13 +410,13 @@ export function RoomLayoutEditor({
               focusPositionId={focusPositionId}
             />
           ) : (
-            <div className="mk-empty-boundary">Draw the room boundary to begin.</div>
+            <div className="mk-empty-boundary">{t('drawRoom')}</div>
           )}
         </div>
         {editing && (
           <aside className="mk-draft-inspector">
             <fieldset disabled={busy || !!boundary}>
-              <h3>ROOM GEOMETRY</h3>
+              <h3>{t('geometry')}</h3>
               <button
                 type="button"
                 onClick={() => {
@@ -449,7 +451,7 @@ export function RoomLayoutEditor({
                 </div>
               )}
               <details>
-                <summary>+ Draw Bay / Cluster</summary>
+                <summary>{t('drawBay')}</summary>
                 <form onSubmit={add}>
                   <input type="hidden" name="kind" value="bay" />
                   <label>
@@ -459,15 +461,15 @@ export function RoomLayoutEditor({
                   <label>
                     Type
                     <select name="variant">
-                      <option value="BAY">Bay</option>
-                      <option value="CONTAINER_CLUSTER">Cluster</option>
+                      <option value="BAY">{t('bay')}</option>
+                      <option value="CONTAINER_CLUSTER">{t('cluster')}</option>
                     </select>
                   </label>
-                  <button disabled={draft.polygon.length < 3}>Draw boundary</button>
+                  <button disabled={draft.polygon.length < 3}>{t('drawBoundary')}</button>
                 </form>
               </details>
               <details>
-                <summary>+ Place Rack</summary>
+                <summary>{t('placeRack')}</summary>
                 <form onSubmit={add}>
                   <input type="hidden" name="kind" value="rack" />
                   <label>
@@ -511,11 +513,11 @@ export function RoomLayoutEditor({
                       required
                     />
                   </label>
-                  <button>Add rack left-to-right</button>
+                  <button>{t('rackLeft')}</button>
                 </form>
               </details>
               <details>
-                <summary>+ Place Empty Position</summary>
+                <summary>{t('emptyPosition')}</summary>
                 <form onSubmit={add}>
                   <input type="hidden" name="kind" value="position" />
                   <label>
@@ -523,16 +525,16 @@ export function RoomLayoutEditor({
                     <input name="name" required maxLength={120} />
                   </label>
                   {selectBay}
-                  <button>Choose cell on canvas</button>
+                  <button>{t('chooseCell')}</button>
                 </form>
               </details>
-              <h3>SELECT / EDIT</h3>
+              <h3>{t('selection')}</h3>
               <select
-                aria-label="Selected layout object"
+                aria-label={t('selectedObject')}
                 value={selected}
                 onChange={(e) => setSelected(e.target.value)}
               >
-                <option value="">Select an object</option>
+                <option value="">{t('selectObject')}</option>
                 {[...draft.clusters, ...draft.positions, ...draft.racks].map((n) => (
                   <option key={n.id} value={n.id}>
                     {n.name}
@@ -617,7 +619,7 @@ export function RoomLayoutEditor({
                     />
                   </label>
                   <p>{rack.totalU} U · capacity changes require a separate CAS migration.</p>
-                  <button>Apply rack properties</button>
+                  <button>{t('applyRack')}</button>
                 </form>
               )}
               <button type="button" disabled={!selected || !!placement} onClick={remove}>

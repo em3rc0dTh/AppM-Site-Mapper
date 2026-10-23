@@ -894,5 +894,25 @@
   "panelCommissioning": {
     "title": "MQTT POINT COMMISSIONING",
     "loading": "Loading physical point proposal…"
+  },
+  "roomEditor": {
+    "selectBay": "Select a bay",
+    "editDraft": "EDIT · UNSAVED DRAFT",
+    "explore": "EXPLORE",
+    "editRoom": "EDIT ROOM",
+    "drawRoom": "Draw the room boundary to begin.",
+    "geometry": "ROOM GEOMETRY",
+    "drawBay": "+ Draw Bay / Cluster",
+    "bay": "Bay",
+    "cluster": "Cluster",
+    "drawBoundary": "Draw boundary",
+    "placeRack": "+ Place Rack",
+    "rackLeft": "Add rack left-to-right",
+    "emptyPosition": "+ Place Empty Position",
+    "chooseCell": "Choose cell on canvas",
+    "selection": "SELECT / EDIT",
+    "selectedObject": "Selected layout object",
+    "selectObject": "Select an object",
+    "applyRack": "Apply rack properties"
   }
 }

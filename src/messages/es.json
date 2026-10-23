@@ -323,7 +323,9 @@
       "showRoom": "VER SALA",
       "breadcrumbs": "Ruta de navegación",
       "feedAUpper": "ALIMENTACIÓN A",
-      "feedBUpper": "ALIMENTACIÓN B"
+      "feedBUpper": "ALIMENTACIÓN B",
+      "powerOutput": "SALIDA DE POTENCIA",
+      "powerInput": "ENTRADA DE POTENCIA"
     },
     "rack": {
       "elevation": "ELEVACIÓN",
@@ -606,7 +608,8 @@
     "noMapWarning": "Las superficies de las salas no están levantadas. Esta es una lista topológica, no un plano físico.",
     "openAction": "ABRIR",
     "roomType": "SALA",
-    "liveStatusScope": "El estado en vivo aparece en un dispositivo o interruptor mapeado. La topología por sí sola no demuestra conectividad."
+    "liveStatusScope": "El estado en vivo aparece en un dispositivo o interruptor mapeado. La topología por sí sola no demuestra conectividad.",
+    "globalNetwork": "RED GLOBAL"
   },
   "equipmentView": {
     "occupied": "ocupadas",
@@ -1598,7 +1601,13 @@
     "noRecord": "Sin lecturas registradas",
     "last": "Último intervalo histórico: {date}",
     "noReadings": "No se almacenaron lecturas MQTT de breakers comisionados en este ámbito y período.",
-    "bucketDisclaimer": "Cada intervalo representa el promedio aritmético de las medias reportadas por los elementos hijos inmediatos. No son totales de alimentación; los contadores acumulativos de energía no representan consumo del intervalo. Los shunts SNMP entrantes siguen siendo una fuente eléctrica independiente."
+    "bucketDisclaimer": "Cada intervalo representa el promedio aritmético de las medias reportadas por los elementos hijos inmediatos. No son totales de alimentación; los contadores acumulativos de energía no representan consumo del intervalo. Los shunts SNMP entrantes siguen siendo una fuente eléctrica independiente.",
+    "historicalTrend": "Tendencia histórica de {name}",
+    "timeSeries": "Serie temporal de {name} con {count} puntos registrados desde {first} hasta {last}",
+    "metricVoltage": "Voltaje",
+    "metricCurrent": "Corriente",
+    "metricPower": "Potencia",
+    "metricEnergy": "Contador de energía"
   },
   "fullTrace": {
     "source": "ORIGEN {feed}",

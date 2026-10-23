@@ -183,12 +183,12 @@ export default async function PowerPage({
       </strong>
       <span>
         {view.source?.equipment.name ?? view.path.sourceAccessPortId} /{' '}
-        {view.source?.port.name ?? 'POWER OUTPUT'}
+        {view.source?.port.name ?? t('powerOutput')}
       </span>
       <b aria-hidden="true">→</b>
       <span>
         {view.target?.equipment.name ?? view.path.targetAccessPortId} /{' '}
-        {view.target?.port.name ?? 'POWER INPUT'}
+        {view.target?.port.name ?? t('powerInput')}
       </span>
     </div>
   );

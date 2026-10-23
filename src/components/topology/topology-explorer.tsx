@@ -208,7 +208,7 @@ export function TopologyExplorer({
             ) : (
               <div className={`zip-network-graph zip-network-graph--${node.kind.toLowerCase()}`}>
                 <div className="zip-graph-title">
-                  {node.kind === 'NETWORK' ? 'GLOBAL NETWORK' : node.name.toUpperCase()}
+                  {node.kind === 'NETWORK' ? t('globalNetwork') : node.name.toUpperCase()}
                 </div>
                 <div className="zip-graph-links" aria-hidden="true" />
                 {visualItems.map((entry, index) => (

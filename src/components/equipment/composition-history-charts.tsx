@@ -23,8 +23,8 @@ const METRICS: readonly { key: CompositionMetricKey; name: string; unit: string;
   ];
 const WINDOWS: readonly TelemetryHistoryWindow[] = ['24h', '7d', '15d', '1M'];
 
-function formatValue(value: number): string {
-  return Number.isFinite(value) ? value.toLocaleString('en-US', { maximumFractionDigits: 3 }) : '—';
+function formatValue(value: number, locale: string): string {
+  return Number.isFinite(value) ? value.toLocaleString(locale, { maximumFractionDigits: 3 }) : '—';
 }
 
 function SeriesChart({
@@ -79,29 +79,29 @@ function SeriesChart({
       current.push(observation);
     }
   }
-  const first = new Date(xStart).toLocaleString();
-  const last = new Date(xEnd).toLocaleString();
+  const first = new Date(xStart).toLocaleString(locale, { timeZone: 'America/Lima' });
+  const last = new Date(xEnd).toLocaleString(locale, { timeZone: 'America/Lima' });
   return (
-    <section className="ec-series" aria-label={name + ' historical trend'}>
+    <section className="ec-series" aria-label={t('historicalTrend', { name })}>
       <header>
         <strong>{name}</strong>
         <span>
-          {formatValue(observations.at(-1)!.value)} {unit}
+          {formatValue(observations.at(-1)!.value, locale)} {unit}
         </span>
       </header>
       <svg
         viewBox="0 0 590 162"
         role="img"
-        aria-label={`${name} time series with ${observations.length} recorded points from ${first} to ${last}`}
+        aria-label={t('timeSeries', { name, count: observations.length, first, last })}
       >
         <line x1="42" y1="24" x2="568" y2="24" className="ec-chart-guide" />
         <line x1="42" y1="75" x2="568" y2="75" className="ec-chart-guide" />
         <line x1="42" y1="126" x2="568" y2="126" className="ec-chart-guide" />
         <text x="2" y="28" className="ec-chart-label">
-          {formatValue(upper)}
+          {formatValue(upper, locale)}
         </text>
         <text x="2" y="129" className="ec-chart-label">
-          {formatValue(lower)}
+          {formatValue(lower, locale)}
         </text>
         {segments.map((segment, index) => (
           <path
@@ -122,7 +122,7 @@ function SeriesChart({
               <title>
                 {t('tooltip', {
                   date: new Date(point.at).toLocaleString(locale, { timeZone: 'America/Lima' }),
-                  value: formatValue(point.value),
+                  value: formatValue(point.value, locale),
                   unit,
                   count: point.reporting,
                 })}
@@ -242,7 +242,7 @@ export function CompositionHistoryCharts({
               {METRICS.map((metric) => (
                 <SeriesChart
                   key={metric.key}
-                  name={metric.name}
+                  name={metric.key === 'voltageV' ? t('metricVoltage') : metric.key === 'currentA' ? t('metricCurrent') : metric.key === 'powerW' ? t('metricPower') : t('metricEnergy')}
                   unit={metric.unit}
                   color={metric.color}
                   points={data.points}

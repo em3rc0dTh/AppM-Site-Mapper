@@ -323,7 +323,9 @@
       "showRoom": "SHOW ROOM",
       "breadcrumbs": "Breadcrumb",
       "feedAUpper": "FEED A",
-      "feedBUpper": "FEED B"
+      "feedBUpper": "FEED B",
+      "powerOutput": "POWER OUTPUT",
+      "powerInput": "POWER INPUT"
     },
     "rack": {
       "elevation": "ELEVATION",
@@ -606,7 +608,8 @@
     "noMapWarning": "Room footprints are not surveyed. This is a topology list, not a physical map.",
     "openAction": "OPEN",
     "roomType": "ROOM",
-    "liveStatusScope": "Live status appears on a mapped device or breaker. Topology alone does not prove connectivity."
+    "liveStatusScope": "Live status appears on a mapped device or breaker. Topology alone does not prove connectivity.",
+    "globalNetwork": "GLOBAL NETWORK"
   },
   "equipmentView": {
     "occupied": "occupied",
@@ -1598,7 +1601,13 @@
     "noRecord": "No recorded readings",
     "last": "Last historical bucket: {date}",
     "noReadings": "No commissioned MQTT breaker readings were stored for this scope and period.",
-    "bucketDisclaimer": "Each bucket is an arithmetic mean of the reporting immediate-child means. Values are not feed totals; cumulative energy counters are not interval consumption. SNMP incoming shunts remain a separate electrical source."
+    "bucketDisclaimer": "Each bucket is an arithmetic mean of the reporting immediate-child means. Values are not feed totals; cumulative energy counters are not interval consumption. SNMP incoming shunts remain a separate electrical source.",
+    "historicalTrend": "{name} historical trend",
+    "timeSeries": "{name} time series with {count} recorded points from {first} to {last}",
+    "metricVoltage": "Voltage",
+    "metricCurrent": "Current",
+    "metricPower": "Power",
+    "metricEnergy": "Energy counter"
   },
   "fullTrace": {
     "source": "SOURCE {feed}",

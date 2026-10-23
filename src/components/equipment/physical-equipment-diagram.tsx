@@ -55,7 +55,7 @@ function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBre
       </div>
       <small>
         {reading.sourceIdentity
-          ? `${reading.sourceIdentity}${reading.sourcePointId ? ` / ${reading.sourcePointId}` : ' / OWN SOURCE'} · ${reading.receivedAt ?? '—'}`
+          ? `${reading.sourceIdentity}${reading.sourcePointId ? ` / ${reading.sourcePointId}` : ` / ${t('ownSource')}`} · ${reading.receivedAt ?? '—'}`
           : reading.status === 'UNMAPPED'
             ? t('noBinding')
             : reading.status === 'NO DATA'

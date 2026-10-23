@@ -1242,6 +1242,7 @@
     "limit": "límite de dibujo",
     "existingSpaces": "{count} espacios existentes · solo lectura",
     "newRoom": "Nueva sala · dibujo azul",
-    "canvas": "Plano de dibujo de {title}"
+    "canvas": "Plano de dibujo de {title}",
+    "saving": "Guardando…"
   }
 }

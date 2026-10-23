@@ -1242,6 +1242,7 @@
     "limit": "drawing limit",
     "existingSpaces": "{count} existing space(s) · read-only",
     "newRoom": "New Room · blue drawing",
-    "canvas": "{title} drawing canvas"
+    "canvas": "{title} drawing canvas",
+    "saving": "Saving…"
   }
 }

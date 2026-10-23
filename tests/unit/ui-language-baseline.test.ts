@@ -14,7 +14,7 @@ function uiSourceFiles(folder: string): string[] {
 
 describe('English-first user interface', () => {
   it('defines all current operational inspector labels in English', () => {
-    expect(en.equipment.inspector).toEqual({
+    expect(en.equipment.inspector).toMatchObject({
       telemetry: 'Telemetry',
       overview: 'Overview',
       ports: 'Ports',

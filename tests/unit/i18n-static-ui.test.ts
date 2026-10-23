@@ -58,10 +58,10 @@ describe('Bilingual presentation static-source coverage', () => {
       }
       function visit(node: ts.Node) {
         if (ts.isJsxText(node)) record(node, node.text);
-        if (ts.isJsxAttribute(node) && ts.isStringLiteral(node.initializer)) {
+        if (ts.isJsxAttribute(node) && node.initializer && ts.isStringLiteral(node.initializer)) {
           if (
             ['placeholder', 'title', 'alt', 'aria-label', 'aria-description'].includes(
-              node.name.text,
+              node.name.getText(ast),
             )
           ) {
             record(node, node.initializer.text, true);

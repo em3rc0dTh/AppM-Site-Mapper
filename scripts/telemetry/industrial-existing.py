@@ -141,6 +141,64 @@ def check_subnet(subnet):
                     raise Refused(f"Lab subnet overlaps Docker network {obj.get('Name')} ({cidr})")
 
 
+def configure_emulator(bfdb, interval_seconds):
+    """Mount a private slow-rate copy; never edit the BFDB checkout."""
+    source = bfdb / "config" / "emulator.yaml"
+    destination = RUNTIME / "emulator-throttled.yaml"
+    if destination.is_file() and interval_seconds is None:
+        return destination
+    if not source.is_file():
+        raise Refused("Missing BFDB config/emulator.yaml")
+    original = destination.read_text(encoding="utf-8") if destination.is_file() else source.read_text(encoding="utf-8")
+    desired = 10.0 if interval_seconds is None else interval_seconds
+    if not 3.0 <= desired <= 120.0:
+        raise Refused("--mqtt-interval-seconds must be from 3 to 120 seconds")
+    updated, found = re.subn(
+        r"(?m)^(\\s*intervalSeconds:\\s*)(?:[0-9]+(?:\\.[0-9]+)?)(\\s*)$",
+        lambda match: match.group(1) + str(desired) + match.group(2),
+        original,
+    )
+    if found != 1:
+        raise Refused("Could not identify a unique BFDB publish interval; refusing change")
+    save_private(destination, updated)
+    return destination
+
+
+def safe_resume_mqtt(args):
+    """Explicitly resume only the stopped synthetic sender after queues drain."""
+    pending_file = command(
+        ["docker", "exec", APP, "cat", "/data/industrial-mqtt/diagnostics.json"],
+        capture=True,
+    )
+    try:
+        pending = json.loads(pending_file.stdout)["pending"]
+        if not isinstance(pending, int) or pending < 0:
+            raise ValueError("invalid MQTT queue depth")
+    except (ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
+        raise Refused("MQTT spool diagnostics are unavailable; do not restart source") from error
+    total = command(
+        [
+            "docker", "exec", MONGO, "mongosh", "--quiet", "--eval",
+            "print(db.getSiblingDB('" + args.existing_db + "').industrial_timescale_outbox.countDocuments({}))",
+        ],
+        capture=True,
+    )
+    try:
+        history_pending = int(total.stdout.strip())
+    except ValueError as error:
+        raise Refused("Historical outbox depth unavailable; do not restart source") from error
+    if pending > 100 or history_pending > 100:
+        raise Refused(
+            f"Queues still draining (MQTT={pending}, Timescale={history_pending}); "
+            "leave the synthetic publisher stopped"
+        )
+    emitter = inspect(PROJECT + "-lab-mqtt-1")
+    if emitter.get("State", {}).get("Running"):
+        raise Refused("Lab MQTT emitter is already running; stop it before rate adjustment")
+    print(f"Queues drained (MQTT={pending}, Timescale={history_pending}); resuming lab-mqtt only.")
+    command(compose_args() + ["up", "-d", "--no-deps", "--force-recreate", "lab-mqtt"])
+
+
 def prepare(args):
     if not (ROOT / ".env").is_file():
         raise Refused("Missing local .env for the EXISTING stack. Do not substitute industrial lab secrets.")
@@ -151,6 +209,7 @@ def prepare(args):
         "--bfdb-dir", str(args.bfdb_dir), "--subnet", str(args.subnet),
         "--action", "prepare",
     ])
+    emulator_yaml = configure_emulator(args.bfdb_dir, args.mqtt_interval_seconds)
     secret = json.loads((RUNTIME / "secrets.json").read_text(encoding="utf-8"))
     profiles = json.loads((RUNTIME / "profiles.json").read_text(encoding="utf-8"))
     sources = []
@@ -176,6 +235,7 @@ def prepare(args):
             "networks": ["industrial-lab"],
             "command": ["python", "apps/field-emulator/main.py"],
             "environment": {"MQTT_HOST": "lab-mosquitto", "MQTT_PORT": "1883"},
+            "volumes": [str(emulator_yaml) + ":/app/config/emulator.yaml:ro"],
             "depends_on": ["lab-mosquitto"],
             "restart": "unless-stopped",
         },
@@ -331,8 +391,10 @@ def main():
     parser.add_argument("--existing-db", required=True)
     parser.add_argument("--subnet", default="10.253.55.0/24")
     parser.add_argument("--backup-dir", type=Path)
+    parser.add_argument("--mqtt-interval-seconds", type=float, default=None,
+                        help="Private lab publication cadence (default 10s; 3-120s)")
     parser.add_argument(
-        "--action", choices=["prepare", "preflight", "up", "status", "logs", "stop-lab"],
+        "--action", choices=["prepare", "preflight", "up", "status", "logs", "stop-lab", "resume-mqtt"],
         default="prepare",
     )
     args = parser.parse_args()
@@ -347,12 +409,14 @@ def main():
         prepare(args)
         if args.action == "prepare":
             return
-        if args.action in ("preflight", "up"):
+        if args.action in ("preflight", "up", "resume-mqtt"):
             preflight(args)
         if args.action == "up":
             migrate_industrial_table()
             # Explicit --no-deps NEVER recreates/reinitializes Mongo, Timescale or mongo-init.
             command(compose_args() + ["up", "-d", "--build", "--no-deps"] + UP_SERVICES)
+        elif args.action == "resume-mqtt":
+            safe_resume_mqtt(args)
         elif args.action == "preflight":
             return
         elif args.action == "status":

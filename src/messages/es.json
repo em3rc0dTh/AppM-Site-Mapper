@@ -914,5 +914,26 @@
     "selectedObject": "Objeto seleccionado del plano",
     "selectObject": "Seleccionar objeto",
     "applyRack": "Aplicar propiedades del rack"
+  },
+  "visualStage": {
+    "schematic": "VISTA ESQUEMÁTICA DEL SITIO",
+    "online": "● EN LÍNEA",
+    "elevator": "ASCENSOR",
+    "position": "POSICIÓN {coordinate}",
+    "grid": "CUADRÍCULA DE POSICIONES DE 600 × 600 mm",
+    "open": "ABRIR RACK ↗",
+    "selected": "POSICIÓN SELECCIONADA",
+    "contained": "{count} CONTENIDOS",
+    "empty": "No hay infraestructura contenida",
+    "physical": "Plano físico · geometría levantada canónica",
+    "cluster": "Contexto de clúster · coordenadas canónicas de posición",
+    "positionContext": "Posición seleccionada · rack o gabinete contenido",
+    "context": "Contexto de infraestructura canónica"
+  },
+  "physicalStage": {
+    "missing": "Geometría física no disponible",
+    "description": "Esta vista muestra únicamente la geometría levantada y preservada en el modelo canónico.",
+    "site": "Plano físico del sitio",
+    "structure": "Plano de planta de la estructura"
   }
 }

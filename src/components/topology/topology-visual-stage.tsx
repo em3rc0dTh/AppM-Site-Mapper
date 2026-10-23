@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import { TopologyExplorer } from './topology-explorer';
 import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
@@ -92,14 +93,15 @@ function ChildLink({
   );
 }
 
+  const t = useTranslations('visualStage');
 function NetworkSiteCanvas({ items }: { items: readonly VisualStageChild[] }) {
   return (
     <div className="legacy-site-canvas">
       <div className="legacy-site-map-grid" aria-hidden="true" />
       <div className="legacy-site-hud">
         <span className="legacy-site-hud-target">◎</span>
-        <span>SCHEMATIC SITE VIEW</span>
-        <b>● ONLINE</b>
+        <span>{t('schematic')}</span>
+        <b>{t('online')}</b>
       </div>
       <div className="legacy-site-boundary">
         <span className="legacy-corner legacy-corner--tl" />
@@ -139,6 +141,7 @@ function StructureCanvas({
   previewItems: readonly VisualStageChild[];
   activeItemId?: string | undefined;
 }) {
+  const t = useTranslations('visualStage');
   return (
     <div className="telxius-structure-stage">
       <PhysicalPolygonStage
@@ -147,7 +150,7 @@ function StructureCanvas({
         mode="structure"
       />
       <div className="telxius-elevator">
-        <span>ELEVATOR</span>
+        <span>{t('elevator')}</span>
         <div>
           {items.map(({ node: level, href }, index) => (
             <Link
@@ -182,6 +185,7 @@ function columnRange(items: readonly VisualStageChild[]): readonly number[] {
   return Array.from({ length: max - min + 1 }, (_, index) => min + index);
 }
 
+  const t = useTranslations('visualStage');
 function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
   const positions = items.filter(({ node }) => node.kind === 'POSITION');
   const columns = columnRange(items);
@@ -224,7 +228,7 @@ function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
                 </span>
                 <span className="zip-bay-cell-copy">
                   <small>
-                    POSITION {item.node.coordinate.row.toUpperCase()}-{item.node.coordinate.column}
+                    {t('position',{coordinate:item.node.coordinate.row.toUpperCase()+'-'+item.node.coordinate.column})}
                   </small>
                   <strong>{item.node.name}</strong>
                 </span>
@@ -235,7 +239,7 @@ function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
         </div>
       </div>
       <footer className="zip-bay-footer">
-        <span>600 × 600 mm POSITION GRID</span>
+        <span>{t('grid')}</span>
         <b>
           {rowLabel}-{minColumn} → {rowLabel}-{columns.at(-1) ?? minColumn}
         </b>
@@ -251,6 +255,7 @@ function PositionCanvas({
   node: TopologyNode;
   items: readonly VisualStageChild[];
 }) {
+  const t = useTranslations('visualStage');
   const coordinate =
     node.kind === 'POSITION'
       ? `${node.coordinate.row.toUpperCase()}-${node.coordinate.column}`
@@ -279,13 +284,13 @@ function PositionCanvas({
                 <strong>{child.name}</strong>
                 <em>{coordinate}</em>
               </span>
-              <span className="legacy-stage-enter">OPEN RACK ↗</span>
+              <span className="legacy-stage-enter">{t('open')}</span>
             </ChildLink>
           ))}
         </div>
       </div>
       <footer className="zip-position-footer">
-        <span>SELECTED POSITION</span>
+        <span>{t('selected')}</span>
         <strong>{coordinate}</strong>
       </footer>
     </div>
@@ -303,6 +308,7 @@ export function TopologyVisualStage({
   previewItems?: readonly VisualStageChild[];
   activeItemId?: string | undefined;
 }>) {
+  const t = useTranslations('visualStage');
   if (['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind))
     return (
       <TopologyExplorer
@@ -356,22 +362,22 @@ export function TopologyVisualStage({
           <strong>{titleFor(node)}</strong>
           <span>
             {node.kind === 'SITE' || node.kind === 'STRUCTURE' || node.kind === 'LEVEL'
-              ? 'Physical layout · canonical surveyed geometry'
+              ? t('physical')
               : node.kind === 'CONTAINER_CLUSTER_BAY'
-                ? 'Focused cluster context · canonical position coordinates'
+                ? t('cluster')
                 : node.kind === 'POSITION'
-                  ? 'Selected position · contained rack or cabinet'
-                  : 'Canonical infrastructure context'}
+                  ? t('positionContext')
+                  : t('context')}
           </span>
         </div>
-        <StatusBadge>{items.length} CONTAINED</StatusBadge>
+        <StatusBadge>{t('contained',{count:items.length})}</StatusBadge>
       </header>
 
       <div className="legacy-stage-canvas">
         {items.length === 0 ? (
           <div className="legacy-stage-empty">
             <Icon name="box" />
-            <strong>No contained infrastructure</strong>
+            <strong>{t('empty')}</strong>
           </div>
         ) : (
           canvas

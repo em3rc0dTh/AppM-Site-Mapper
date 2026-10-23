@@ -914,5 +914,26 @@
     "selectedObject": "Selected layout object",
     "selectObject": "Select an object",
     "applyRack": "Apply rack properties"
+  },
+  "visualStage": {
+    "schematic": "SCHEMATIC SITE VIEW",
+    "online": "● ONLINE",
+    "elevator": "ELEVATOR",
+    "position": "POSITION {coordinate}",
+    "grid": "600 × 600 mm POSITION GRID",
+    "open": "OPEN RACK ↗",
+    "selected": "SELECTED POSITION",
+    "contained": "{count} CONTAINED",
+    "empty": "No contained infrastructure",
+    "physical": "Physical layout · canonical surveyed geometry",
+    "cluster": "Focused cluster context · canonical position coordinates",
+    "positionContext": "Selected position · contained rack or cabinet",
+    "context": "Canonical infrastructure context"
+  },
+  "physicalStage": {
+    "missing": "Physical geometry unavailable",
+    "description": "This view only renders surveyed legacy geometry that was preserved in the canonical model.",
+    "site": "Site physical layout",
+    "structure": "Structure floor layout"
   }
 }

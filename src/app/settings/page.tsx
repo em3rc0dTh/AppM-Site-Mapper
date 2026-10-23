@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { LayoutImport } from '@/components/settings/layout-import';
+import { LanguageSwitcher } from '@/shared/ui/language-switcher';
 import type { Permission, Role } from '@/modules/identity/domain/roles';
 import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
 import { redirect } from 'next/navigation';
@@ -116,6 +117,7 @@ export default async function SettingsPage({
                 {auth.value.email} · {auth.value.role}
               </p>
               {canWrite && <ProfileForm displayName={auth.value.displayName} />}
+              <LanguageSwitcher />
             </>
           )}
           {active === 'Security' && (

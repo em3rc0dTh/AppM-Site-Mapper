@@ -6,7 +6,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Suspense, useState, type ReactNode } from 'react';
 
 import { CommandPalette } from './command-palette';
-import { LanguageSwitcher } from './language-switcher';
 import { ContextTracker } from './context-tracker';
 
 function BrandMark() {
@@ -101,7 +100,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Link className="zip-warehouse" href="/warehouse">
           {t('warehouse')}
         </Link>
-        <LanguageSwitcher />
         <Link className="zip-account" href="/settings">
           {t('admin')} <b>⌄</b>
         </Link>

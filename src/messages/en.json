@@ -1111,5 +1111,26 @@
     "cancel": "Cancel",
     "connecting": "Connecting…",
     "submit": "CONFIRM PHYSICAL CONNECTION"
+  },
+  "powerContract": {
+    "header": "POWER / CONTRACT",
+    "title": "Access ports",
+    "close": "Close power port editor",
+    "redundancy": "Redundancy policy",
+    "none": "No declared A/B requirement",
+    "required": "A + B required",
+    "portId": "Port ID",
+    "label": "Label",
+    "feed": "Feed identity",
+    "unspecified": "Unspecified",
+    "feedA": "Feed A",
+    "feedB": "Feed B",
+    "remove": "Remove",
+    "removePort": "Remove {name}",
+    "empty": "No POWER access ports are configured.",
+    "add": "+ ADD POWER PORT",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "save": "SAVE CONTRACT"
   }
 }

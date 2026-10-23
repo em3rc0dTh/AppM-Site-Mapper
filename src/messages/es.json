@@ -1111,5 +1111,26 @@
     "cancel": "Cancelar",
     "connecting": "Conectando…",
     "submit": "CONFIRMAR CONEXIÓN FÍSICA"
+  },
+  "powerContract": {
+    "header": "POWER / CONTRATO",
+    "title": "Puertos de acceso",
+    "close": "Cerrar editor de puertos eléctricos",
+    "redundancy": "Política de redundancia",
+    "none": "Sin requisito A/B declarado",
+    "required": "A + B requeridos",
+    "portId": "ID de puerto",
+    "label": "Etiqueta",
+    "feed": "Identidad de entrada",
+    "unspecified": "Sin especificar",
+    "feedA": "Entrada A",
+    "feedB": "Entrada B",
+    "remove": "Eliminar",
+    "removePort": "Eliminar {name}",
+    "empty": "No hay puertos POWER configurados.",
+    "add": "+ AGREGAR PUERTO POWER",
+    "cancel": "Cancelar",
+    "saving": "Guardando…",
+    "save": "GUARDAR CONTRATO"
   }
 }

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import type {
   PowerContractPortInput,
@@ -33,6 +34,7 @@ export function PowerContractEditor({
   accessPorts: readonly PowerContractPortInput[];
   redundancy: PowerRedundancyPolicy;
 }>) {
+  const t = useTranslations('powerContract');
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [ports, setPorts] = useState<readonly EditablePort[]>(accessPorts.map(toEditable));
@@ -122,8 +124,8 @@ export function PowerContractEditor({
           >
             <header>
               <div>
-                <small>POWER / CONTRACT</small>
-                <h2 id="power-contract-title">Access ports</h2>
+                <small>{t('header')}</small>
+                <h2 id="power-contract-title">{t('title')}</h2>
                 <p>
                   Define physical POWER inputs on this Device or Equipment. A/B redundancy is a
                   declared requirement, not an inferred state.
@@ -131,7 +133,7 @@ export function PowerContractEditor({
               </div>
               <button
                 type="button"
-                aria-label="Close power port editor"
+                aria-label={t('close')}
                 onClick={() => setOpen(false)}
               >
                 ×
@@ -139,13 +141,13 @@ export function PowerContractEditor({
             </header>
 
             <label className="power-contract-policy">
-              <span>Redundancy policy</span>
+              <span>{t('redundancy')}</span>
               <select
                 value={policy}
                 onChange={(event) => setPolicy(event.target.value as PowerRedundancyPolicy)}
               >
-                <option value="NONE">No declared A/B requirement</option>
-                <option value="A_B_REQUIRED">A + B required</option>
+                <option value="NONE">{t('none')}</option>
+                <option value="A_B_REQUIRED">{t('required')}</option>
               </select>
             </label>
 
@@ -154,58 +156,58 @@ export function PowerContractEditor({
                 <article key={port.key} className="power-contract-port-row">
                   <span>{String(index + 1).padStart(2, '0')}</span>
                   <label>
-                    <small>Port ID</small>
+                    <small>{t('portId')}</small>
                     <input
                       value={port.id}
                       onChange={(event) => patchPort(port.key, { id: event.target.value })}
                     />
                   </label>
                   <label>
-                    <small>Label</small>
+                    <small>{t('label')}</small>
                     <input
                       value={port.label}
                       onChange={(event) => patchPort(port.key, { label: event.target.value })}
                     />
                   </label>
                   <label>
-                    <small>Feed identity</small>
+                    <small>{t('feed')}</small>
                     <select
                       value={port.feed}
                       onChange={(event) =>
                         patchPort(port.key, { feed: event.target.value as '' | 'A' | 'B' })
                       }
                     >
-                      <option value="">Unspecified</option>
-                      <option value="A">Feed A</option>
-                      <option value="B">Feed B</option>
+                      <option value="">{t('unspecified')}</option>
+                      <option value="A">{t('feedA')}</option>
+                      <option value="B">{t('feedB')}</option>
                     </select>
                   </label>
                   <button
                     type="button"
-                    aria-label={`Remove ${port.label}`}
+                    aria-label={t('removePort',{name:port.label})}
                     onClick={() => removePort(port.key)}
                   >
-                    Remove
+                    {t('remove')}
                   </button>
                 </article>
               ))}
               {!ports.length ? (
-                <div className="power-contract-empty">No POWER access ports are configured.</div>
+                <div className="power-contract-empty">{t('empty')}</div>
               ) : null}
             </div>
 
             <button type="button" className="power-contract-add" onClick={addPort}>
-              + ADD POWER PORT
+              {t('add')}
             </button>
 
             {error ? <p className="power-contract-error">{error}</p> : null}
 
             <footer>
               <button type="button" onClick={() => setOpen(false)}>
-                Cancel
+                {t('cancel')}
               </button>
               <button type="button" disabled={!canSave} onClick={save}>
-                {saving ? 'Saving…' : 'SAVE CONTRACT'}
+                {saving ? t('saving') : t('save')}
               </button>
             </footer>
           </section>

@@ -1,0 +1,28 @@
+name: i18n formatting probe (temporary read-only)
+on:
+  push:
+    paths:
+      - .github/workflows/i18n-format-probe.yml
+permissions:
+  contents: read
+jobs:
+  collect:
+    if: github.ref == 'refs/heads/chore/english-ui-baseline-20261022'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Format without publishing
+        shell: bash
+        run: |
+          npx prettier --write .
+          while IFS= read -r -d '' file; do
+            echo "I18N_FORMAT_BEGIN|$file"
+            base64 -w0 "$file"
+            echo ""
+            echo "I18N_FORMAT_END"
+          done < <(git diff --name-only -z)

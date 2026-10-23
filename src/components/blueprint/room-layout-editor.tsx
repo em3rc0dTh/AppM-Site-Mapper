@@ -458,7 +458,7 @@ export function RoomLayoutEditor({
                     <input name="name" required maxLength={120} />
                   </label>
                   <label>
-                    Type
+{t('type')}
                     <select name="variant">
                       <option value="BAY">{t('bay')}</option>
                       <option value="CONTAINER_CLUSTER">{t('cluster')}</option>
@@ -566,8 +566,7 @@ export function RoomLayoutEditor({
               )}
               {rack && position && (
                 <p>
-                  Placement: automatic left-to-right · X {rack.x}–{rack.x + rack.width} mm · Y{' '}
-                  {rack.y} mm · grid ref {position.row}-{position.column}
+                  {t('placementDescription', { minX: rack.x, maxX: rack.x + rack.width, y: rack.y, row: position.row, column: position.column })}
                 </p>
               )}
               {rack && (
@@ -625,8 +624,7 @@ export function RoomLayoutEditor({
                 {t('removeSelected')}
               </button>
               <p>
-                On Save, persisted empty objects are archived. Racks containing inventory or
-                reserved capacity cannot be removed.
+                {t('archiveHelp')}
               </p>
             </fieldset>
           </aside>

@@ -189,7 +189,7 @@ export function SnmpFeedLoadPanel({
                     {isLab ? t('capacityLab') : t('capacityTitle')}
                   </strong>
                   <span>
-                    {capacity.reportingFeeds}/{capacity.expectedFeeds} fresh feeds
+                    {t('freshFeeds', { reporting: capacity.reportingFeeds, expected: capacity.expectedFeeds })}
                   </span>
                 </div>
                 <div className="sm-snmp-capacity-numbers">
@@ -261,8 +261,7 @@ export function SnmpFeedLoadPanel({
                             />
                           </div>
                           <small>
-                            {feed.utilizationPct.toFixed(1)}% used · {numeric(feed.availableA, 'A')}{' '}
-                            available
+                            {t('utilizationAvailable', { percent: feed.utilizationPct.toFixed(1), available: numeric(feed.availableA, 'A') })}
                             {feed.overloadedByA
                               ? t('overRating', { current: numeric(feed.overloadedByA, 'A') })
                               : ''}
@@ -277,8 +276,7 @@ export function SnmpFeedLoadPanel({
                 {capacity.reportingFeeds < capacity.expectedFeeds && <p>{t('partial')}</p>}
                 {capacity.reportingFeeds === capacity.expectedFeeds && capacity.ratedA === null && (
                   <p>
-                    Rated current is missing on one or more shunts. Configure each physical input on
-                    the chassis before calculating the percentage.{' '}
+                    {t('ratedMissingHelp')}{' '}
                     <Link href={`/device/${encodeURIComponent(chassisId)}#bdfb-access-ports`}>
                       {t('configureRatings')}
                     </Link>
@@ -286,9 +284,7 @@ export function SnmpFeedLoadPanel({
                 )}
                 {isLab && (
                   <p>
-                    Simulation only: readings come from synthetic SNMP OIDs and nominal ratings from
-                    the recorded AccessPorts. Neither the computed headroom nor the lab utilization
-                    is a certified physical limit.
+                    {t('simulationNote')}
                   </p>
                 )}
               </div>
@@ -327,9 +323,7 @@ export function SnmpFeedLoadPanel({
               <div className="sm-snmp-lab-activation">
                 <strong>{t('lab')}</strong>
                 <small>
-                  Emulated controller: {labSource ?? 'not selected'}. Activating lab mappings never
-                  verifies real Delta wiring, and synthetic readings are excluded from certified
-                  totals.
+                  {t('labController', { controller: labSource ?? t('notSelected') })}
                 </small>
                 <button type="button" disabled={labBusy} onClick={() => void commissionLab()}>
                   {labBusy ? t('configuring') : t('connectSynthetic')}
@@ -351,8 +345,7 @@ export function SnmpFeedLoadPanel({
             )}
             {labCount > 0 && (
               <p className="sm-snmp-lab-disclaimer">
-                SIMULATED SNMP DATA · {labCount} shunts reporting. Currents are emulated and do not
-                certify the installed cabinet or its physical shunts.
+                {t('simulatedNotice', { count: labCount })}
               </p>
             )}
             <div
@@ -439,13 +432,11 @@ export function SnmpFeedLoadPanel({
             )}
             {load?.status !== 'COMPLETE' && (
               <p className="sm-snmp-no-total">
-                A whole-BDFB current total is only available when every required independent shunt
-                is verified, mapped and reporting fresh SNMP readings.
+                {t('noTotal')}
               </p>
             )}
             <small>
-              Incoming SNMP shunt measurements are separate from the descendant Equipment MQTT
-              average.
+              {t('snmpSeparate')}
             </small>
           </>
         )}

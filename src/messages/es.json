@@ -1031,7 +1031,8 @@
     "loading": "Cargando inventario SNMP…",
     "notSelected": "Sin seleccionar",
     "noOids": "Sin OID comisionados",
-    "profile": "Perfil de hardware:"
+    "profile": "Perfil de hardware:",
+    "feederConfiguration": "Configuración de entrada SNMP"
   },
   "snmpLoad": {
     "section": "Carga de las entradas SNMP BDFB",
@@ -1382,8 +1383,5 @@
     "stale": "DESACTUALIZADO",
     "offline": "SIN CONEXIÓN",
     "footer": "Mediciones normalizadas · vigencia: en vivo ≤30s / desactualizado ≤5m · sin conectividad simulada"
-  },
-  "snmpCommissioning": {
-    "feederConfiguration": "Configuración de entrada SNMP"
   }
 }

@@ -962,5 +962,48 @@
     "title": "POWER TREE",
     "direct": "DIRECT CHASSIS",
     "group": "GROUP {label}"
+  },
+  "snmpSetup": {
+    "title": "CONFIGURE SNMP INPUTS",
+    "help": "Manage each shunt, verify its panel assignment and commission its OIDs in one editor.",
+    "advanced": "Advanced maintenance · hardware profile and retired OIDs",
+    "loading": "Loading SNMP inventory…",
+    "notSelected": "Not selected",
+    "noOids": "No commissioned OIDs",
+    "profile": "Hardware profile:"
+  },
+  "snmpLoad": {
+    "section": "BDFB SNMP input feed load",
+    "incoming": "SNMP · INCOMING DC FEEDS",
+    "simulated": "SIMULATED SHUNT CURRENT",
+    "independent": "INDEPENDENT FEED CURRENT",
+    "reporting": "SHUNTS REPORTING / REQUIRED",
+    "rated": "RATED INPUT CAPACITY",
+    "utilization": "INPUT UTILIZATION",
+    "power": "APPROX. INPUT POWER",
+    "capacity": "SNMP input current capacity",
+    "used": "USED",
+    "ratedSmall": "RATED",
+    "available": "AVAILABLE",
+    "partial": "Partial SNMP data: whole-BDFB current and remaining capacity are withheld.",
+    "missing": "Missing inputs: {positions}",
+    "addInputs": "Add the remaining DC inputs on the chassis.",
+    "lab": "LOCAL SNMP LAB · SYNTHETIC DATA",
+    "current": "CURRENT",
+    "voltage": "VOLTAGE",
+    "controller": "Controller:",
+    "notMapped": "Not mapped",
+    "last": "Last reading:",
+    "panels": "Supplied panels",
+    "noFeeds": "No SNMP input feeders inventoried on this BDFB."
+  },
+  "snmpHistoryUi": {
+    "title": "SNMP · TIMESCALEDB HISTORY",
+    "shunts": "SHUNTS A/B",
+    "charts": "SNMP TimescaleDB historical charts",
+    "window": "SNMP history time window",
+    "metric": "SNMP trend metric",
+    "loading": "Loading persisted SNMP samples…",
+    "energy": "Estimated energy: {value} kWh · observed segments"
   }
 }

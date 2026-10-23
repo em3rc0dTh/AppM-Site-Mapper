@@ -191,6 +191,7 @@ function TrendChart({
 }
 
 export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
+  const tu = useTranslations('snmpHistoryUi');
   const t = useTranslations('snmp.history');
   const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
   const [selectedMetric, setSelectedMetric] = useState<ChartMetric>('currentA');
@@ -239,13 +240,13 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
   return (
     <section
       className="zip-bdfb-live-average sm-snmp-history"
-      aria-label="SNMP TimescaleDB historical charts"
+      aria-label={tu('charts')}
     >
       <header>
-        <strong>SNMP · TIMESCALEDB HISTORY</strong>
-        <span>SHUNTS A/B</span>
+        <strong>{tu('title')}</strong>
+        <span>{tu('shunts')}</span>
       </header>
-      <div className="zip-bdfb-window-tabs" role="tablist" aria-label="SNMP history time window">
+      <div className="zip-bdfb-window-tabs" role="tablist" aria-label={tu('window')}>
         {TELEMETRY_HISTORY_WINDOWS.map((option) => (
           <button
             key={option}
@@ -258,7 +259,7 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
           </button>
         ))}
       </div>
-      <div className="sm-snmp-history-metric-tabs" role="tablist" aria-label="SNMP trend metric">
+      <div className="sm-snmp-history-metric-tabs" role="tablist" aria-label={tu('metric')}>
         {METRICS.map((item) => (
           <button
             key={item.key}
@@ -277,7 +278,7 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
           </button>
         ))}
       </div>
-      {loading && <p role="status">Loading persisted SNMP samples…</p>}
+      {loading && <p role="status">{tu('loading')}</p>}
       {error && (
         <p role="alert" className="form-error">
           History unavailable: {error}
@@ -297,7 +298,7 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
             </div>
           )}
           <div className="sm-snmp-history-footnote">
-            <strong>Estimated energy: {latest.toFixed(4)} kWh · observed segments</strong>
+            <strong>{tu('energy',{value:latest.toFixed(4)})}</strong>
             <small>
               {(coverage / 60).toFixed(1)} feed-minutes covered, counted across inputs. No
               extrapolation over gaps greater than 120 seconds.

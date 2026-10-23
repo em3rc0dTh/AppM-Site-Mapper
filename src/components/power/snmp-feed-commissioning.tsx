@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -39,6 +40,7 @@ export function SnmpFeedCommissioning({
   chassisId: string;
   onInventoryChanged?: () => void;
 }) {
+  const t = useTranslations('snmpSetup');
   const [expanded, setExpanded] = useState(false);
   const [configuration, setConfiguration] = useState<Configuration | null>(null);
   const [loading, setLoading] = useState(false);
@@ -121,9 +123,9 @@ export function SnmpFeedCommissioning({
   return (
     <section className="zip-bdfb-live-average sm-snmp-setup" aria-label="SNMP feeder configuration">
       <header>
-        <strong>CONFIGURE SNMP INPUTS</strong>
+        <strong>{t('title')}</strong>
       </header>
-      <p>Manage each shunt, verify its panel assignment and commission its OIDs in one editor.</p>
+      <p>{t('help')}</p>
       <Link
         className="sm-snmp-setup-action"
         href={`/device/${encodeURIComponent(chassisId)}#bdfb-access-ports`}
@@ -139,12 +141,12 @@ export function SnmpFeedCommissioning({
           if (isOpen) void refresh();
         }}
       >
-        <summary>Advanced maintenance · hardware profile and retired OIDs</summary>
-        {loading && <p role="status">Loading SNMP inventory…</p>}
+        <summary>{t('advanced')}</summary>
+        {loading && <p role="status">{t('loading')}</p>}
         {configuration && (
           <>
             <p>
-              Hardware profile: <strong>{configuration.hardwareProfile ?? 'Not selected'}</strong>
+              {t('profile')} <strong>{configuration.hardwareProfile ?? t('notSelected')}</strong>
             </p>
             {configuration.canCommission && (
               <div className="sm-snmp-maintenance-actions">
@@ -171,7 +173,7 @@ export function SnmpFeedCommissioning({
             {configuration.ports.map((port) => (
               <div key={port.id} className="sm-snmp-maintenance-port">
                 <strong>{port.name}</strong>
-                {port.bindings.length === 0 && <small>No commissioned OIDs</small>}
+                {port.bindings.length === 0 && <small>{t('noOids')}</small>}
                 {port.bindings.map((binding) => (
                   <div key={binding.id} className="sm-snmp-maintenance-binding">
                     <small>

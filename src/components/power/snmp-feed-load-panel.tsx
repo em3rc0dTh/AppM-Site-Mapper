@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { projectSnmpCapacity } from '@/modules/telemetry/application/snmp-capacity-projection';
@@ -28,6 +29,7 @@ export function SnmpFeedLoadPanel({
   chassisId,
   view = 'all',
 }: Readonly<{ deviceId: string; chassisId: string; view?: 'all' | 'summary' | 'feeds' }>) {
+  const t = useTranslations('snmpLoad');
   const [load, setLoad] = useState<SnmpBdfbLoadView | null>(null);
   const [panels, setPanels] = useState<ReadonlyMap<string, PhysicalPanel>>(new Map());
   const [error, setError] = useState(false);
@@ -139,11 +141,11 @@ export function SnmpFeedLoadPanel({
     <>
       <section
         className="zip-bdfb-live-average sm-snmp-load"
-        aria-label="BDFB SNMP input feed load"
+        aria-label={t('section')}
       >
         <header>
           <div>
-            <strong>SNMP · INCOMING DC FEEDS</strong>
+            <strong>{t('incoming')}</strong>
           </div>
           <span>
             {error
@@ -160,31 +162,31 @@ export function SnmpFeedLoadPanel({
           <>
             <div className="zip-bdfb-live-average-grid">
               <div>
-                <span>{isLab ? 'SIMULATED SHUNT CURRENT' : 'INDEPENDENT FEED CURRENT'}</span>
+                <span>{isLab ? t('simulated') : t('independent')}</span>
                 <strong>{numeric(error ? null : capacity?.measuredA, 'A')}</strong>
               </div>
               <div>
-                <span>SHUNTS REPORTING / REQUIRED</span>
+                <span>{t('reporting')}</span>
                 <strong>
                   {load ? `${load.freshFeedCount + labCount} / ${load.expectedFeedCount}` : '—'}
                 </strong>
               </div>
               <div>
-                <span>RATED INPUT CAPACITY</span>
+                <span>{t('rated')}</span>
                 <strong>{numeric(capacity?.ratedA, 'A')}</strong>
               </div>
               <div>
-                <span>INPUT UTILIZATION</span>
+                <span>{t('utilization')}</span>
                 <strong>{numeric(capacity?.utilizationPct, '%')}</strong>
               </div>
               <div>
-                <span>APPROX. INPUT POWER</span>
+                <span>{t('power')}</span>
                 <strong>{numeric(load?.totalEstimatedPowerW, 'W')}</strong>
               </div>
             </div>
 
             {capacity && (
-              <div className="sm-snmp-capacity-lab" aria-label="SNMP input current capacity">
+              <div className="sm-snmp-capacity-lab" aria-label={t('capacity')}>
                 <div className="sm-snmp-capacity-line">
                   <strong>
                     {isLab ? 'LAB SIMULATED · DC SHUNT UTILIZATION' : 'DC SHUNT UTILIZATION'}
@@ -195,15 +197,15 @@ export function SnmpFeedLoadPanel({
                 </div>
                 <div className="sm-snmp-capacity-numbers">
                   <div>
-                    <small>USED</small>
+                    <small>{t('used')}</small>
                     <strong>{numeric(capacity.measuredA, 'A')}</strong>
                   </div>
                   <div>
-                    <small>RATED</small>
+                    <small>{t('ratedSmall')}</small>
                     <strong>{numeric(capacity.ratedA, 'A')}</strong>
                   </div>
                   <div>
-                    <small>AVAILABLE</small>
+                    <small>{t('available')}</small>
                     <strong>{numeric(capacity.availableA, 'A')}</strong>
                   </div>
                 </div>
@@ -280,7 +282,7 @@ export function SnmpFeedLoadPanel({
                   ))}
                 </div>
                 {capacity.reportingFeeds < capacity.expectedFeeds && (
-                  <p>Partial SNMP data: whole-BDFB current and remaining capacity are withheld.</p>
+                  <p>{t('partial')}</p>
                 )}
                 {capacity.reportingFeeds === capacity.expectedFeeds && capacity.ratedA === null && (
                   <p>
@@ -321,9 +323,9 @@ export function SnmpFeedLoadPanel({
                   </small>
                 )}
                 {!!load.missingFeedPositions.length && (
-                  <small>Missing inputs: {load.missingFeedPositions.join(', ')}</small>
+                  <small>{t('missing',{positions:load.missingFeedPositions.join(', ')})}</small>
                 )}
-                {!inventoryRecorded && <small>Add the remaining DC inputs on the chassis.</small>}
+                {!inventoryRecorded && <small>{t('addInputs')}</small>}
               </div>
             )}
           </>
@@ -332,7 +334,7 @@ export function SnmpFeedLoadPanel({
           <>
             {labEnabled && inventoryRecorded && labCount === 0 && (
               <div className="sm-snmp-lab-activation">
-                <strong>LOCAL SNMP LAB · SYNTHETIC DATA</strong>
+                <strong>{t('lab')}</strong>
                 <small>
                   Emulated controller: {labSource ?? 'not selected'}. Activating lab mappings never
                   verifies real Delta wiring, and synthetic readings are excluded from certified
@@ -390,20 +392,20 @@ export function SnmpFeedLoadPanel({
                     </small>
                     <div className="sm-snmp-feed-readings">
                       <div>
-                        <span>CURRENT</span>
+                        <span>{t('current')}</span>
                         <strong>{numeric(feed.currentA, 'A')}</strong>
                       </div>
                       <div>
-                        <span>VOLTAGE</span>
+                        <span>{t('voltage')}</span>
                         <strong>{numeric(feed.voltageV, 'V')}</strong>
                       </div>
                     </div>
                     <div className="sm-snmp-feed-details">
-                      <small>Controller: {feed.sourceIdentity ?? 'Not mapped'}</small>
+                      <small>{t('controller')} {feed.sourceIdentity ?? t('notMapped')}</small>
                       {feed.currentOid && <small>Current OID: {feed.currentOid}</small>}
-                      {feed.observedAt && <small>Last reading: {feed.observedAt}</small>}
+                      {feed.observedAt && <small>{t('last')} {feed.observedAt}</small>}
                       <div className="sm-snmp-panel-list">
-                        <span>Supplied panels</span>
+                        <span>{t('panels')}</span>
                         {mappedPanels.length > 0 ? (
                           mappedPanels.map((panel) => (
                             <span className="sm-snmp-panel-label" key={panel.id}>
@@ -431,7 +433,7 @@ export function SnmpFeedLoadPanel({
                 );
               })}
             </div>
-            {!load?.feedCount && !error && <p>No SNMP input feeders inventoried on this BDFB.</p>}
+            {!load?.feedCount && !error && <p>{t('noFeeds')}</p>}
             {(load as (SnmpBdfbLoadView & { historyAvailable?: boolean }) | null)
               ?.historyAvailable === false && (
               <p role="alert">

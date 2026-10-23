@@ -962,5 +962,48 @@
     "title": "ÁRBOL DE POTENCIA",
     "direct": "CHASSIS DIRECTO",
     "group": "GRUPO {label}"
+  },
+  "snmpSetup": {
+    "title": "CONFIGURAR ENTRADAS SNMP",
+    "help": "Administra cada shunt, verifica la asignación de paneles y comisiona sus OID en un solo editor.",
+    "advanced": "Mantenimiento avanzado · perfil de hardware y OID retirados",
+    "loading": "Cargando inventario SNMP…",
+    "notSelected": "Sin seleccionar",
+    "noOids": "Sin OID comisionados",
+    "profile": "Perfil de hardware:"
+  },
+  "snmpLoad": {
+    "section": "Carga de las entradas SNMP BDFB",
+    "incoming": "SNMP · ENTRADAS DC",
+    "simulated": "CORRIENTE SIMULADA DE SHUNT",
+    "independent": "CORRIENTE DE ALIMENTACIÓN INDEPENDIENTE",
+    "reporting": "SHUNTS REPORTANDO / REQUERIDOS",
+    "rated": "CAPACIDAD NOMINAL DE ENTRADA",
+    "utilization": "UTILIZACIÓN DE ENTRADA",
+    "power": "POTENCIA APROXIMADA DE ENTRADA",
+    "capacity": "Capacidad de corriente de entrada SNMP",
+    "used": "UTILIZADO",
+    "ratedSmall": "NOMINAL",
+    "available": "DISPONIBLE",
+    "partial": "Datos SNMP parciales: se ocultan la corriente total del BDFB y la capacidad restante.",
+    "missing": "Entradas faltantes: {positions}",
+    "addInputs": "Agrega las entradas DC faltantes en el Chassis.",
+    "lab": "LABORATORIO SNMP LOCAL · DATOS SINTÉTICOS",
+    "current": "CORRIENTE",
+    "voltage": "VOLTAJE",
+    "controller": "Controlador:",
+    "notMapped": "Sin vincular",
+    "last": "Última lectura:",
+    "panels": "Paneles alimentados",
+    "noFeeds": "No hay entradas SNMP inventariadas en este BDFB."
+  },
+  "snmpHistoryUi": {
+    "title": "SNMP · HISTORIAL TIMESCALEDB",
+    "shunts": "SHUNTS A/B",
+    "charts": "Gráficas históricas SNMP de TimescaleDB",
+    "window": "Intervalo del historial SNMP",
+    "metric": "Métrica de tendencia SNMP",
+    "loading": "Cargando muestras SNMP persistidas…",
+    "energy": "Energía estimada: {value} kWh · intervalos observados"
   }
 }

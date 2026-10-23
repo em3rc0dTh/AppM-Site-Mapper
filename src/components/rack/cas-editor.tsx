@@ -38,7 +38,7 @@ export function CasEditor({ view }: { view: RackElevationView }) {
       if (!response.ok) throw new Error(t('saveFailed'));
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? t('saveFailed'));
+      setError(t('saveFailed'));
     } finally {
       setBusy(false);
     }

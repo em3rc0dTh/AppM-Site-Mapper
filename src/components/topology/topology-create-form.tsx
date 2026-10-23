@@ -30,7 +30,9 @@ export function TopologyCreateControl({
   return (
     <div className="spatial-create-control">
       <button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-        {t('create',{kind:kind==='ROOM_SUBSTRUCTURE'?t('room'):kind.replaceAll('_',' ')})}
+        {t('create', {
+          kind: kind === 'ROOM_SUBSTRUCTURE' ? t('room') : kind.replaceAll('_', ' '),
+        })}
       </button>
       {open && (
         <div className="spatial-create-popover">
@@ -141,8 +143,7 @@ export function TopologyCreateForm({
         contextOverlays={contextOverlays}
         validate={(polygon: readonly PointMm[]) => {
           if (kind === 'STRUCTURE' && boundaryContext.length >= 3) {
-            if (!polygonInsidePolygon(polygon, boundaryContext))
-              return t('structureBound');
+            if (!polygonInsidePolygon(polygon, boundaryContext)) return t('structureBound');
           }
           if (kind === 'ROOM_SUBSTRUCTURE') {
             if (boundaryContext.length >= 3 && !polygonInsidePolygon(polygon, boundaryContext))
@@ -150,8 +151,7 @@ export function TopologyCreateForm({
             const overlapping = contextOverlays.find((existing) =>
               polygonsOverlapArea(polygon, existing.polygon),
             );
-            if (overlapping)
-              return t('overlap',{label:overlapping.label});
+            if (overlapping) return t('overlap', { label: overlapping.label });
           }
           return null;
         }}
@@ -163,7 +163,11 @@ export function TopologyCreateForm({
         busy={busy}
         error={error}
         confirmLabel={
-          kind === 'SITE' ? t('saveSite') : kind === 'STRUCTURE' ? t('saveStructure') : t('saveRoom')
+          kind === 'SITE'
+            ? t('saveSite')
+            : kind === 'STRUCTURE'
+              ? t('saveStructure')
+              : t('saveRoom')
         }
       />
     </div>
@@ -171,7 +175,9 @@ export function TopologyCreateForm({
   return (
     <>
       <form ref={formRef} className="create-form spatial-metadata-form" onSubmit={submit}>
-        <strong>{t('new',{kind:kind==='ROOM_SUBSTRUCTURE'?t('room'):kind.toLowerCase()})}</strong>
+        <strong>
+          {t('new', { kind: kind === 'ROOM_SUBSTRUCTURE' ? t('room') : kind.toLowerCase() })}
+        </strong>
         <input
           autoFocus
           aria-label={t('name')}
@@ -182,12 +188,7 @@ export function TopologyCreateForm({
           disabled={busy || !!pending}
         />
         {kind === 'ROOM_SUBSTRUCTURE' && (
-          <select
-            aria-label={t('variant')}
-            name="variant"
-            defaultValue="ROOM"
-            disabled={!!pending}
-          >
+          <select aria-label={t('variant')} name="variant" defaultValue="ROOM" disabled={!!pending}>
             <option value="ROOM">{t('room')}</option>
             <option value="SUBSTRUCTURE">{t('substructure')}</option>
           </select>

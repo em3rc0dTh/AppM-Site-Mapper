@@ -186,7 +186,7 @@ export function PolygonEditor({
         <div className="spatial-editor-heading">
           <strong>{title}</strong>
           <span>
-            {t('vertices',{count:draft.points.length})} ·{' '}
+            {t('vertices', { count: draft.points.length })} ·{' '}
             {draft.closed && !invalid
               ? `${(polygonArea(draft.points) / 1_000_000).toFixed(2)} m²`
               : t('draft')}
@@ -289,7 +289,7 @@ export function PolygonEditor({
           {contextOverlays.length > 0 && (
             <span>
               <i className="spatial-editor-context-rooms" aria-hidden="true" />
-              {t('existingSpaces',{count:contextOverlays.length})}
+              {t('existingSpaces', { count: contextOverlays.length })}
             </span>
           )}
           <span>{t('newRoom')}</span>
@@ -300,7 +300,7 @@ export function PolygonEditor({
         viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
         className="spatial-drawing-surface"
         role="group"
-        aria-label={t('canvas',{title})}
+        aria-label={t('canvas', { title })}
         onPointerDown={down}
         onPointerMove={move}
         onPointerUp={(e) => end(e)}

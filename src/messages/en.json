@@ -571,7 +571,15 @@
     "totalClusters": "TOTAL CLUSTERS",
     "currentSelection": "CURRENT SELECTION",
     "canonicalType": "CANONICAL TYPE",
-    "containedUpper": "CONTAINED"
+    "containedUpper": "CONTAINED",
+    "clickRoom": "CLICK A ROOM",
+    "inspectProperties": "TO INSPECT PROPERTIES",
+    "doubleClick": "DOUBLE CLICK",
+    "toOpen": "TO OPEN",
+    "inspectorTitle": "INSPECTOR",
+    "bdfbStatus": "BDFB STATUS",
+    "devicePreserved": "The Device is preserved. Site Mapper will not invent shelves, frames, panels or breakers.",
+    "clickCluster": "CLICK A CLUSTER OR CABINET"
   },
   "equipmentView": {
     "occupied": "occupied",
@@ -1408,5 +1416,38 @@
   },
   "roomBoundary": {
     "openBlueprint": "Open Blueprint to draw or edit the room boundary"
+  },
+  "boundaryWorkspace": {
+    "site": "SITE",
+    "structure": "STRUCTURE",
+    "edit": "EDIT",
+    "draw": "DRAW",
+    "title": "{mode} {type} BOUNDARY · {name}",
+    "conflict": "This {type} changed. Cancel and reload before editing again.",
+    "saveFailed": "Could not save the boundary. Try again.",
+    "outsideSite": "Structure boundary must remain inside the Site boundary.",
+    "editBoundary": "EDIT BOUNDARY",
+    "drawBoundary": "DRAW BOUNDARY"
+  },
+  "powerPathView": {
+    "feed": "FEED {feed}",
+    "unspecifiedFeed": "FEED UNSPECIFIED",
+    "pathAria": "Power path {label}",
+    "inspect": "Inspect {name}",
+    "openPhysical": "OPEN PHYSICAL OBJECT",
+    "overview": "Overview",
+    "path": "Path",
+    "feedLabel": "Feed",
+    "notSpecified": "Not specified",
+    "reference": "Reference",
+    "source": "Source",
+    "target": "Target",
+    "telemetryRequired": "Configured connection · electrical health requires telemetry."
+  },
+  "demoSeed": {
+    "failed": "Could not load the development demo topology.",
+    "loading": "Loading demo topology…",
+    "load": "Load demo topology",
+    "developmentOnly": "Development only · memory persistence"
   }
 }

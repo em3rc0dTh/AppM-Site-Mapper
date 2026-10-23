@@ -2,9 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 export function DemoSeedButton() {
   const router = useRouter();
+  const t = useTranslations('demoSeed');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -22,7 +24,7 @@ export function DemoSeedButton() {
 
       router.refresh();
     } catch {
-      setError('Could not load the development demo topology.');
+      setError(t('failed'));
       setBusy(false);
     }
   }
@@ -30,9 +32,9 @@ export function DemoSeedButton() {
   return (
     <div className="demo-seed-action">
       <button type="button" className="button-quiet" disabled={busy} onClick={seed}>
-        {busy ? 'Loading demo topology…' : 'Load demo topology'}
+        {busy ? t('loading') : t('load')}
       </button>
-      <span>Development only · memory persistence</span>
+      <span>{t('developmentOnly')}</span>
       {error ? (
         <span className="form-error" role="alert">
           {error}

@@ -118,14 +118,14 @@ export function TopologyPropertiesPanel({
         <div className="telxius-inspect-hint">
           <span>⌗</span>
           <p>
-            CLICK A ROOM
+            {t('clickRoom')}
             <br />
-            TO INSPECT PROPERTIES
+            {t('inspectProperties')}
           </p>
           <p>
-            DOUBLE CLICK
+            {t('doubleClick')}
             <br />
-            TO OPEN
+            {t('toOpen')}
           </p>
         </div>
       </aside>
@@ -146,7 +146,7 @@ export function TopologyPropertiesPanel({
     return (
       <aside className="telxius-properties zip-bdfb-inspector">
         <header>
-          INSPECTOR <span>⌄</span>
+          {t('inspectorTitle')} <span>⌄</span>
         </header>
         <div className="zip-bdfb-inspector-id">
           <span>▥</span>
@@ -197,7 +197,7 @@ export function TopologyPropertiesPanel({
     return (
       <aside className="telxius-properties zip-bdfb-inspector zip-bdfb-inspector--unavailable">
         <header>
-          BDFB STATUS <span>⌄</span>
+          {t('bdfbStatus')} <span>⌄</span>
         </header>
         <div className="zip-bdfb-inspector-id">
           <span>▥</span>
@@ -222,8 +222,7 @@ export function TopologyPropertiesPanel({
             <span>○</span>
             <strong>{t('hierarchyIncomplete')}</strong>
             <small>
-              The Device is preserved. Site Mapper will not invent shelves, frames, panels or
-              breakers.
+              {t('devicePreserved')}
             </small>
           </div>
         </section>
@@ -244,9 +243,9 @@ export function TopologyPropertiesPanel({
         <div className="telxius-inspect-hint">
           <span>⌗</span>
           <p>
-            CLICK A CLUSTER OR CABINET
+            {t('clickCluster')}
             <br />
-            TO INSPECT PROPERTIES
+            {t('inspectProperties')}
           </p>
         </div>
       </aside>

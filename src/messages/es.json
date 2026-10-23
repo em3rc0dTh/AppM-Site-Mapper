@@ -571,7 +571,15 @@
     "totalClusters": "CLÚSTERES TOTALES",
     "currentSelection": "SELECCIÓN ACTUAL",
     "canonicalType": "TIPO CANÓNICO",
-    "containedUpper": "CONTENIDOS"
+    "containedUpper": "CONTENIDOS",
+    "clickRoom": "HAZ CLIC EN UNA SALA",
+    "inspectProperties": "PARA INSPECCIONAR PROPIEDADES",
+    "doubleClick": "HAZ DOBLE CLIC",
+    "toOpen": "PARA ABRIR",
+    "inspectorTitle": "INSPECTOR",
+    "bdfbStatus": "ESTADO DE BDFB",
+    "devicePreserved": "El Device se conserva. Site Mapper no inventará shelves, frames, panels ni breakers.",
+    "clickCluster": "HAZ CLIC EN UN CLÚSTER O GABINETE"
   },
   "equipmentView": {
     "occupied": "ocupadas",
@@ -1408,5 +1416,38 @@
   },
   "roomBoundary": {
     "openBlueprint": "Abrir Blueprint para dibujar o editar el límite de la sala"
+  },
+  "boundaryWorkspace": {
+    "site": "SITIO",
+    "structure": "ESTRUCTURA",
+    "edit": "EDITAR",
+    "draw": "DIBUJAR",
+    "title": "{mode} LÍMITE DE {type} · {name}",
+    "conflict": "El límite de {type} cambió. Cancela y vuelve a cargar antes de editar.",
+    "saveFailed": "No se pudo guardar el límite. Inténtalo de nuevo.",
+    "outsideSite": "El límite de la estructura debe permanecer dentro del límite del sitio.",
+    "editBoundary": "EDITAR LÍMITE",
+    "drawBoundary": "DIBUJAR LÍMITE"
+  },
+  "powerPathView": {
+    "feed": "ENTRADA {feed}",
+    "unspecifiedFeed": "ENTRADA SIN ESPECIFICAR",
+    "pathAria": "Ruta de potencia {label}",
+    "inspect": "Inspeccionar {name}",
+    "openPhysical": "ABRIR OBJETO FÍSICO",
+    "overview": "Resumen",
+    "path": "Ruta",
+    "feedLabel": "Entrada",
+    "notSpecified": "Sin especificar",
+    "reference": "Referencia",
+    "source": "Origen",
+    "target": "Destino",
+    "telemetryRequired": "Conexión configurada · el estado eléctrico requiere telemetría."
+  },
+  "demoSeed": {
+    "failed": "No se pudo cargar la topología de demostración de desarrollo.",
+    "loading": "Cargando topología de demostración…",
+    "load": "Cargar topología de demostración",
+    "developmentOnly": "Solo desarrollo · persistencia en memoria"
   }
 }

@@ -166,16 +166,29 @@ def configure_emulator(bfdb, interval_seconds):
 
 def safe_resume_mqtt(args):
     """Explicitly resume only the stopped synthetic sender after queues drain."""
-    pending_file = command(
-        ["docker", "exec", APP, "cat", "/data/industrial-mqtt/diagnostics.json"],
+    # diagnostics.json is a checkpoint, not an authoritative queue depth:
+    # when a long drain is in progress, its pending counter may remain stale
+    # even after every durable spool record has been acknowledged and deleted.
+    # Count exactly the UUID-shaped *.json records consumed by MqttObservationOutbox.start().
+    spool_count = command(
+        [
+            "docker", "exec", APP, "node", "-e",
+            (
+                "const fs=require('node:fs');"
+                "const rows=fs.readdirSync('/data/industrial-mqtt',{withFileTypes:true});"
+                "const pending=rows.filter((entry)=>entry.isFile() "
+                "&& /^[a-f0-9-]{36}\\.json$/.test(entry.name)).length;"
+                "console.log(pending);"
+            ),
+        ],
         capture=True,
     )
     try:
-        pending = json.loads(pending_file.stdout)["pending"]
-        if not isinstance(pending, int) or pending < 0:
-            raise ValueError("invalid MQTT queue depth")
-    except (ValueError, KeyError, TypeError, json.JSONDecodeError) as error:
-        raise Refused("MQTT spool diagnostics are unavailable; do not restart source") from error
+        pending = int(spool_count.stdout.strip())
+        if pending < 0:
+            raise ValueError("Invalid pending spool count")
+    except ValueError as error:
+        raise Refused("Durable MQTT spool depth unavailable; do not restart source") from error
     total = command(
         [
             "docker", "exec", MONGO, "mongosh", "--quiet", "--eval",

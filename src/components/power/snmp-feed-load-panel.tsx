@@ -269,11 +269,7 @@ export function SnmpFeedLoadPanel({
                           </small>
                         </>
                       ) : (
-                        <small>
-                          {feed.ratedA === null
-                            ? t('ratedMissing')
-                            : t('noFresh')}
-                        </small>
+                        <small>{feed.ratedA === null ? t('ratedMissing') : t('noFresh')}</small>
                       )}
                     </div>
                   ))}

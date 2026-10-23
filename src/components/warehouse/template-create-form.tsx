@@ -199,9 +199,7 @@ export function TemplateCreateForm() {
         <section className="warehouse-json-import" aria-label={t('jsonImport')}>
           <div className="warehouse-json-copy">
             <strong>{t('paste')}</strong>
-            <span>
-              {t('jsonGuide')}
-            </span>
+            <span>{t('jsonGuide')}</span>
           </div>
           <textarea
             aria-label={t('templateJson')}

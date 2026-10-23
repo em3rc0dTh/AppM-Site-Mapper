@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { EquipmentCompositionEditor } from '@/components/equipment/equipment-composition-editor';
 import { EquipmentFocusInspector } from '@/components/equipment/equipment-focus-inspector';
@@ -168,6 +169,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     })),
   );
 
+  const t = await getTranslations('pages.device');
   return (
     <main className="operational-page mk-device-page">
       <nav className="breadcrumbs zip-device-breadcrumbs">
@@ -184,7 +186,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
         <aside>{tree && <TopologyContextTree tree={tree} activeId={node.id} />}</aside>
 
         <section className="zip-device-stage">
-          <h1>{node.kind === 'EQUIPMENT' ? 'EQUIPMENT COMPOSITION' : 'ELEVATION'}</h1>
+          <h1>{node.kind === 'EQUIPMENT' ? t('composition') : t('elevation')}</h1>
           {node.kind === 'EQUIPMENT' ? (
             <EquipmentCompositionEditor
               equipment={node}
@@ -202,7 +204,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               {...(physical?.id ? { focusDeviceId: physical.id } : {})}
             />
           ) : (
-            <p>No rack context is recorded for this inventory.</p>
+            <p>{t('noRack')}</p>
           )}
         </section>
 
@@ -217,26 +219,26 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                 <>
                   <ContextPin entityId={node.id} />
                   <dl>
-                    <dt>Identity</dt>
+                    <dt>{t('identity')}</dt>
                     <dd>{node.name}</dd>
-                    <dt>Type</dt>
+                    <dt>{t('type')}</dt>
                     <dd>{node.equipmentType.replaceAll('_', ' ')}</dd>
-                    <dt>Model</dt>
-                    <dd>{node.model ?? node.category ?? 'Not specified'}</dd>
-                    <dt>Serial N.</dt>
-                    <dd>{node.serialNumber ?? 'Not assigned'}</dd>
-                    <dt>Parent Equipment</dt>
-                    <dd>{node.parentEquipmentId ?? 'Device root'}</dd>
-                    <dt>Child capacity</dt>
-                    <dd>{node.childMode === 'POSITIONAL' ? node.children.length : 'Dynamic'}</dd>
-                    <dt>Location</dt>
+                    <dt>{t('model')}</dt>
+                    <dd>{node.model ?? node.category ?? t('notSpecified')}</dd>
+                    <dt>{t('serial')}</dt>
+                    <dd>{node.serialNumber ?? t('notAssigned')}</dd>
+                    <dt>{t('parent')}</dt>
+                    <dd>{node.parentEquipmentId ?? t('deviceRoot')}</dd>
+                    <dt>{t('childCapacity')}</dt>
+                    <dd>{node.childMode === 'POSITIONAL' ? node.children.length : t('dynamic')}</dd>
+                    <dt>{t('location')}</dt>
                     <dd>
-                      {room?.name ?? 'Room'} / {rackNode?.name ?? 'Rack'} / {mountLabel}
+                      {room?.name ?? t('room')} / {rackNode?.name ?? t('rack')} / {mountLabel}
                     </dd>
-                    <dt>Power A</dt>
-                    <dd>{hasFeedA ? 'Path recorded' : 'No recorded path'}</dd>
-                    <dt>Power B</dt>
-                    <dd>{hasFeedB ? 'Path recorded' : 'No recorded path'}</dd>
+                    <dt>{t('powerA')}</dt>
+                    <dd>{hasFeedA ? t('pathRecorded') : t('noPath')}</dd>
+                    <dt>{t('powerB')}</dt>
+                    <dd>{hasFeedB ? t('pathRecorded') : t('noPath')}</dd>
                   </dl>
                   <FullPowerTraceModal entityId={node.id} />
                   {room && rackNode ? (
@@ -244,7 +246,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                       className="zip-device-outline"
                       href={`/blueprint/${room.id}?rack=${rackNode.id}`}
                     >
-                      ▣ LOCATE IN ROOM
+                      {t('locate')}
                     </Link>
                   ) : null}
                 </>
@@ -252,8 +254,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               ports={
                 <>
                   <p className="ec-inspector-note">
-                    {node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length} recorded
-                    terminals. No virtual connectors are generated.
+                    {t('terminals', { count: node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length })}
                   </p>
                   {node.accessPorts
                     .filter((port) => port.lifecycle === 'ACTIVE')
@@ -261,7 +262,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                       <div className="ec-inspector-port" key={port.id}>
                         <strong>{port.name}</strong>
                         <span>
-                          {port.portType} · {port.direction ?? 'Direction not recorded'}
+                          {port.portType} · {port.direction ?? t('directionUnknown')}
                         </span>
                       </div>
                     ))}
@@ -278,8 +279,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               settings={
                 <>
                   <p className="ec-inspector-note">
-                    Physical configuration and power contracts are permission-controlled. Child
-                    Equipment and slots are managed from the composition workspace.
+                    {t('settingsHelp')}
                   </p>
                   {canWritePower && contract.ok ? (
                     <PowerContractEditor
@@ -290,7 +290,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                   ) : null}
                   {!relatedPower.length ? (
                     <p className="device-power-unconfigured">
-                      No direct PowerPath is recorded. The full trace checks nested Equipment.
+                      {t('noDirect')}
                     </p>
                   ) : null}
                   <FullPowerTraceModal entityId={node.id} />
@@ -307,7 +307,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                 <div>
                   <h2>{node.name}</h2>
                   <small>
-                    {room?.name ?? 'Room'} / {rackNode?.name ?? 'Rack'} / {mountLabel}
+                    {room?.name ?? t('room')} / {rackNode?.name ?? t('rack')} / {mountLabel}
                   </small>
                 </div>
               </div>
@@ -315,28 +315,28 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               <ContextPin entityId={node.id} />
 
               <dl>
-                <dt>Identity</dt>
+                <dt>{t('identity')}</dt>
                 <dd>{node.name}</dd>
-                <dt>Model</dt>
-                <dd>{node.category ?? 'Not specified'}</dd>
-                <dt>Serial N.</dt>
-                <dd>{node.serialNumber ?? 'Not assigned'}</dd>
+                <dt>{t('model')}</dt>
+                <dd>{node.category ?? t('notSpecified')}</dd>
+                <dt>{t('serial')}</dt>
+                <dd>{node.serialNumber ?? t('notAssigned')}</dd>
                 <dt>Rack</dt>
-                <dd>{rackNode?.name ?? 'No rack context'}</dd>
-                <dt>Placement</dt>
+                <dd>{rackNode?.name ?? t('noContext')}</dd>
+                <dt>{t('placement')}</dt>
                 <dd>
                   {placement
                     ? `${rackNode?.name ?? placement.rackId} · ${mountLabel}`
                     : rackNode
-                      ? 'Rack context recorded · physical Equipment not mounted'
-                      : 'No physical placement recorded'}
+                      ? t('rackContext')
+                      : t('noPlacement')}
                 </dd>
-                <dt>Power A</dt>
-                <dd>{hasFeedA ? 'Path recorded' : 'No recorded path'}</dd>
-                <dt>Power B</dt>
-                <dd>{hasFeedB ? 'Path recorded' : 'No recorded path'}</dd>
-                <dt>Telemetry</dt>
-                <dd>Open diagnostic to verify mapped LIVE readings</dd>
+                <dt>{t('powerA')}</dt>
+                <dd>{hasFeedA ? t('pathRecorded') : t('noPath')}</dd>
+                <dt>{t('powerB')}</dt>
+                <dd>{hasFeedB ? t('pathRecorded') : t('noPath')}</dd>
+                <dt>{t('telemetry')}</dt>
+                <dd>{t('diagnostic')}</dd>
               </dl>
 
               <FullPowerTraceModal entityId={node.id} />
@@ -351,8 +351,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
 
               {!relatedPower.length ? (
                 <p className="device-power-unconfigured">
-                  No direct PowerPath is recorded for this inventory item. The full trace also
-                  checks recursively nested Equipment.
+                  {t('noDirectDevice')}
                 </p>
               ) : null}
 
@@ -365,7 +364,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                   className="zip-device-outline"
                   href={`/blueprint/${room.id}?rack=${rackNode.id}`}
                 >
-                  ▣ LOCATE IN ROOM
+                  {t('locate')}
                 </Link>
               ) : null}
             </>

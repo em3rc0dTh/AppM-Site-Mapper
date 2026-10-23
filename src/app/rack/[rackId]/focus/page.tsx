@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { TopologyContextTree } from '@/components/topology/context-tree';
@@ -50,12 +51,13 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
   const reservedU = view.value.rows.filter((row) => row.role === 'RESERVED').length;
   const equippedU = view.value.rows.filter((row) => row.role === 'PHYSICAL').length;
 
+  const t = await getTranslations('pages.rackFocus');
   return (
     <main className="operational-page">
       <nav className="breadcrumbs zip-rack-focus-breadcrumbs" aria-label="Breadcrumb">
         {room ? <Link href={await topology.buildDeepLink(room.id)}>← {room.name}</Link> : null}
         <span className="zip-breadcrumb-divider" />
-        <strong>RACK FOCUS &nbsp;/&nbsp; {view.value.rack.name}</strong>
+        <strong>{t('title')} &nbsp;/&nbsp; {view.value.rack.name}</strong>
       </nav>
 
       <div className="zip-rack-focus-layout">
@@ -64,11 +66,10 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
         </aside>
 
         <section className="zip-rack-focus-stage">
-          <h1>RACK FOCUS</h1>
+          <h1>{t('title')}</h1>
           <div className="zip-rack-room">
             <div className="rack-unsurveyed-hint">
-              No surveyed room footprint is available. This is the saved rack occupancy view, not an
-              invented room layout.
+              {t('noSurvey')}
             </div>
             <div className="zip-focus-rack">
               <strong className="zip-focus-rack-name">{view.value.rack.name}</strong>
@@ -92,48 +93,48 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
             </div>
           </div>
           <footer className="zip-rack-focus-footer">
-            <span>{room?.name ?? 'ROOM'}</span>
-            <span>{bay?.name ?? 'BAY NOT RECORDED'}</span>
-            <span>{position?.name ?? 'POSITION'}</span>
+            <span>{room?.name ?? t('room')}</span>
+            <span>{bay?.name ?? t('bayMissing')}</span>
+            <span>{position?.name ?? t('position')}</span>
             <div>
               <button type="button">−</button>
               <b>100%</b>
               <button type="button">+</button>
             </div>
-            <strong>● SYNCED</strong>
+            <strong>{t('synced')}</strong>
           </footer>
         </section>
 
         <aside className="zip-rack-inspector">
           <header>
-            INSPECTOR <span>⌄</span>
+            {t('inspector')} <span>⌄</span>
           </header>
           <div className="zip-rack-identity">
             <span>▥</span>
             <div>
               <h2>{view.value.rack.name}</h2>
               <small>
-                {room?.name ?? 'Room'} / {bay?.name ?? 'Bay'} / {position?.name ?? 'Position'}
+                {room?.name ?? t('roomType')} / {bay?.name ?? t('bay')} / {position?.name ?? t('positionName')}
               </small>
             </div>
           </div>
           <dl>
-            <dt>Capacity</dt>
+            <dt>{t('capacity')}</dt>
             <dd>{view.value.rack.totalU ?? view.value.rows.length}U</dd>
-            <dt>Equipped</dt>
+            <dt>{t('equipped')}</dt>
             <dd>{equippedU}U</dd>
-            <dt>Reserved</dt>
+            <dt>{t('reserved')}</dt>
             <dd>{reservedU}U</dd>
-            <dt>Available</dt>
+            <dt>{t('available')}</dt>
             <dd>{availableU}U</dd>
-            <dt>Power A</dt>
-            <dd>{hasFeedA ? 'Configured ✓' : 'Not configured'}</dd>
-            <dt>Power B</dt>
-            <dd>{hasFeedB ? 'Configured ✓' : 'Not configured'}</dd>
-            <dt>Telemetry</dt>
-            <dd>Contextual lens</dd>
+            <dt>{t('powerA')}</dt>
+            <dd>{hasFeedA ? t('configured') : t('notConfigured')}</dd>
+            <dt>{t('powerB')}</dt>
+            <dd>{hasFeedB ? t('configured') : t('notConfigured')}</dd>
+            <dt>{t('telemetry')}</dt>
+            <dd>{t('contextual')}</dd>
           </dl>
-          <h3>OCCUPANCY</h3>
+          <h3>{t('occupancy')}</h3>
           <div className="zip-occupancy-list">
             {view.value.inventory.slice(0, 8).map((item) => (
               <div key={item.id}>
@@ -144,9 +145,9 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
             ))}
           </div>
           <div className="zip-rack-inspector-actions">
-            <Link href={`/rack/${rackId}`}>ELEVATION</Link>
-            <Link href={`/power?entity=${rackId}`}>POWER</Link>
-            {room ? <Link href={`/blueprint/${room.id}?rack=${rackId}`}>LOCATE</Link> : null}
+            <Link href={`/rack/${rackId}`}>{t('elevation')}</Link>
+            <Link href={`/power?entity=${rackId}`}>{t('power')}</Link>
+            {room ? <Link href={`/blueprint/${room.id}?rack=${rackId}`}>{t('locate')}</Link> : null}
           </div>
           <ContextPin entityId={rackId} />
           <TelemetryLens

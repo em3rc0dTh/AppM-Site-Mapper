@@ -622,7 +622,8 @@
     "ports": "{count} puertos",
     "assemblies": "{count} conjuntos secundarios",
     "framesRecorded": "{count} frames registrados",
-    "panelsRecorded": "{count} paneles registrados"
+    "panelsRecorded": "{count} paneles registrados",
+    "coverage": "Cobertura jerárquica MQTT"
   },
   "warehouseForms": {
     "creation": "Modo de creación de plantilla",
@@ -938,7 +939,8 @@
     "live": "TELEMETRÍA EN VIVO",
     "history": "HISTORIAL",
     "last": "Último paquete coincidente: {time}",
-    "note": "Último paquete por intervalo. Se conservan las etiquetas y unidades de origen. Hasta 1000 paquetes."
+    "note": "Último paquete por intervalo. Se conservan las etiquetas y unidades de origen. Hasta 1000 paquetes.",
+    "timeWindow": "Ventana temporal de telemetría"
   },
   "telemetryLens": {
     "context": "DIAGNÓSTICO CONTEXTUAL",
@@ -950,7 +952,8 @@
   },
   "panelCommissioning": {
     "title": "COMISIONAMIENTO DE PUNTOS MQTT",
-    "loading": "Cargando la propuesta de puntos físicos…"
+    "loading": "Cargando la propuesta de puntos físicos…",
+    "panelCommissioning": "Comisionamiento MQTT del panel"
   },
   "roomEditor": {
     "selectBay": "Seleccionar bahía",
@@ -1011,7 +1014,8 @@
     "slots": "Posiciones de breakers del panel",
     "circuits": "CIRCUITOS INSTALADOS",
     "position": "Posición {position}",
-    "noCircuits": "No hay Circuit Breakers instalados en este panel."
+    "noCircuits": "No hay Circuit Breakers instalados en este panel.",
+    "selectedPanel": "Posiciones de breakers del panel seleccionado"
   },
   "bdfbTree": {
     "tree": "Árbol de potencia BDFB",
@@ -1378,5 +1382,8 @@
     "stale": "DESACTUALIZADO",
     "offline": "SIN CONEXIÓN",
     "footer": "Mediciones normalizadas · vigencia: en vivo ≤30s / desactualizado ≤5m · sin conectividad simulada"
+  },
+  "snmpCommissioning": {
+    "feederConfiguration": "Configuración de entrada SNMP"
   }
 }

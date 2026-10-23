@@ -121,7 +121,7 @@ export function SnmpFeedCommissioning({
   }
 
   return (
-    <section className="zip-bdfb-live-average sm-snmp-setup" aria-label="SNMP feeder configuration">
+    <section className="zip-bdfb-live-average sm-snmp-setup" aria-label={t('feederConfiguration')}>
       <header>
         <strong>{t('title')}</strong>
       </header>

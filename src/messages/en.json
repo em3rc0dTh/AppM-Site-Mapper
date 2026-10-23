@@ -622,7 +622,8 @@
     "ports": "{count} ports",
     "assemblies": "{count} child assemblies",
     "framesRecorded": "{count} frames recorded",
-    "panelsRecorded": "{count} panels recorded"
+    "panelsRecorded": "{count} panels recorded",
+    "coverage": "MQTT hierarchy coverage"
   },
   "warehouseForms": {
     "creation": "Template creation mode",
@@ -938,7 +939,8 @@
     "live": "LIVE TELEMETRY",
     "history": "HISTORY",
     "last": "Last matching packet: {time}",
-    "note": "Last packet per time bucket; source labels and units preserved. Up to 1000 packets."
+    "note": "Last packet per time bucket; source labels and units preserved. Up to 1000 packets.",
+    "timeWindow": "Telemetry time window"
   },
   "telemetryLens": {
     "context": "CONTEXTUAL DIAGNOSTIC",
@@ -950,7 +952,8 @@
   },
   "panelCommissioning": {
     "title": "MQTT POINT COMMISSIONING",
-    "loading": "Loading physical point proposal…"
+    "loading": "Loading physical point proposal…",
+    "panelCommissioning": "Panel MQTT commissioning"
   },
   "roomEditor": {
     "selectBay": "Select a bay",
@@ -1011,7 +1014,8 @@
     "slots": "Panel breaker slots",
     "circuits": "INSTALLED CIRCUITS",
     "position": "Position {position}",
-    "noCircuits": "No circuit breakers are installed on this panel."
+    "noCircuits": "No circuit breakers are installed on this panel.",
+    "selectedPanel": "Selected panel breaker positions"
   },
   "bdfbTree": {
     "tree": "BDFB power tree",
@@ -1378,5 +1382,8 @@
     "stale": "STALE",
     "offline": "OFFLINE",
     "footer": "Normalized measurements · freshness: live ≤30s / stale ≤5m · no simulated connectivity"
+  },
+  "snmpCommissioning": {
+    "feederConfiguration": "SNMP feeder configuration"
   }
 }

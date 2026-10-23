@@ -137,7 +137,7 @@ export function BdfbChassis({
       </div>
 
       {selectedPanel && (
-        <section className="sm-bdfb-panel-focus" aria-label="Selected panel breaker positions">
+        <section className="sm-bdfb-panel-focus" aria-label={t('selectedPanel')}>
           <header className="sm-bdfb-panel-focus-header">
             <div>
               <span>{t('focus')}</span>

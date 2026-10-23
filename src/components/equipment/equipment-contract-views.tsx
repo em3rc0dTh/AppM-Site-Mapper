@@ -279,7 +279,7 @@ export function EquipmentContractViews({
         )}
       </div>
       {canReadTelemetry && (
-        <div className="ec-live-cover" aria-label="MQTT hierarchy coverage">
+        <div className="ec-live-cover" aria-label={t('coverage')}>
           <span>
             {type === 'CIRCUIT_BREAKER'
               ? `${summary.reporting}/1 breaker LIVE`

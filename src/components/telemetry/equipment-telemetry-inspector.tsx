@@ -91,7 +91,7 @@ export function EquipmentTelemetryInspector({
           {label} · {pointGroupConfigured ? `Point group ${pointPrefix}` : 'Own readings'}
         </span>
       </header>
-      <div className="zip-bdfb-window-tabs" role="tablist" aria-label="Telemetry time window">
+      <div className="zip-bdfb-window-tabs" role="tablist" aria-label={t('timeWindow')}>
         {['LIVE', ...TELEMETRY_HISTORY_WINDOWS].map((value) => (
           <button
             key={value}

@@ -121,7 +121,7 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
     }
   }
   return (
-    <section className="equipment-panel-commissioning" aria-label="Panel MQTT commissioning">
+    <section className="equipment-panel-commissioning" aria-label={t('panelCommissioning')}>
       <h3>{t('title')}</h3>
       {preview ? (
         <>

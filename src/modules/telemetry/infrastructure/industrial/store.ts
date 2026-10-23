@@ -225,43 +225,63 @@ export class MongoObservationStore implements ObservationStore {
           }
         }
         const catalog = this.db.collection('industrial_signals');
+        // One catalog read, one catalog write and one history write per capture.
+        // The former per-signal find/update/insert loop generated hundreds of
+        // sequential Mongo round trips inside a single MQTT transaction.
+        const existing = await catalog
+          .find(
+            { signalId: { $in: batch.signals.map((signal) => signal.id) } },
+            { session },
+          )
+          .toArray();
+        const previousById = new Map(
+          existing.map((doc) => [doc.signalId as string, doc.signal as CatalogSignal]),
+        );
         const size = await catalog.countDocuments(
           { sourceIdentity: batch.envelope.sourceIdentity, protocol: batch.envelope.protocol },
           { session },
         );
         let added = 0;
+        const catalogUpdates = [];
+        const historyRows = [];
         for (const signal of batch.signals) {
-          const doc = await catalog.findOne({ signalId: signal.id }, { session });
-          if (!doc && size + ++added > 10000)
+          const previous = previousById.get(signal.id);
+          if (!previous && size + ++added > 10000)
             throw new Error('Industrial source catalog limit exceeded');
-          const previous = doc?.signal as CatalogSignal | undefined;
           const next = advanceSignal(previous, signal);
-          await catalog.updateOne(
-            { signalId: signal.id },
-            {
-              $set: {
-                sourceIdentity: signal.sourceIdentity,
-                protocol: signal.protocol,
-                signal: next,
+          catalogUpdates.push({
+            updateOne: {
+              filter: { signalId: signal.id },
+              update: {
+                $set: {
+                  sourceIdentity: signal.sourceIdentity,
+                  protocol: signal.protocol,
+                  signal: next,
+                },
               },
+              upsert: true,
             },
-            { upsert: true, session },
-          );
-          await this.db.collection('industrial_signal_history').insertOne(
-            {
-              signalId: signal.id,
-              expiresAt,
-              eventId: batch.id,
-              observedAt: signal.observedAt,
-              disposition:
-                previous &&
-                (previous.lastObservation?.observedAt ?? previous.observedAt) > signal.observedAt
-                  ? 'out_of_order'
-                  : 'applied',
-              signal,
-            },
-            { session },
-          );
+          });
+          historyRows.push({
+            signalId: signal.id,
+            expiresAt,
+            eventId: batch.id,
+            observedAt: signal.observedAt,
+            disposition:
+              previous &&
+              (previous.lastObservation?.observedAt ?? previous.observedAt) > signal.observedAt
+                ? 'out_of_order'
+                : 'applied',
+            signal,
+          });
+          // Preserve sequential in-batch semantics if a profile repeats a signal ID.
+          previousById.set(signal.id, next);
+        }
+        if (catalogUpdates.length) {
+          await catalog.bulkWrite(catalogUpdates, { session, ordered: true });
+          await this.db
+            .collection('industrial_signal_history')
+            .insertMany(historyRows, { session, ordered: true });
         }
         return 'committed' as const;
       });

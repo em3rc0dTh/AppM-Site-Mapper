@@ -10,6 +10,7 @@ import hashlib
 import ipaddress
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import sys
@@ -28,9 +29,24 @@ class Refused(RuntimeError):
     pass
 
 
+def compose_environment():
+    # CLI --env-file alone cannot defeat higher-precedence inherited shell values.
+    # Remove those values so the original on-disk .env remains authoritative.
+    keys = set()
+    for filename in (ROOT / ".env", RUNTIME / "existing.env"):
+        for line in filename.read_text(encoding="utf-8").splitlines():
+            line = line.strip().removeprefix("export ").strip()
+            match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)\\s*=", line)
+            if match:
+                keys.add(match.group(1))
+    return {key: value for key, value in os.environ.items() if key not in keys}
+
+
 def command(args, *, stdin=None, capture=False, check=True):
+    safe_env = compose_environment() if args[:2] == ["docker", "compose"] else None
     result = subprocess.run(
-        args, input=stdin, text=True, capture_output=capture, check=False
+        args, input=stdin, text=True, capture_output=capture,
+        check=False, env=safe_env,
     )
     if check and result.returncode:
         # Do not expose the resolved Compose configuration: it includes secrets.
@@ -115,7 +131,14 @@ def check_subnet(subnet):
             except ValueError:
                 continue
             if subnet.overlaps(other):
-                raise Refused(f"Lab subnet overlaps Docker network {obj.get('Name')} ({cidr})")
+                labels = obj.get("Labels") or {}
+                owned = (
+                    labels.get("com.docker.compose.project") == PROJECT
+                    and labels.get("com.docker.compose.network") == "industrial-lab"
+                    and other == subnet
+                )
+                if not owned:
+                    raise Refused(f"Lab subnet overlaps Docker network {obj.get('Name')} ({cidr})")
 
 
 def prepare(args):

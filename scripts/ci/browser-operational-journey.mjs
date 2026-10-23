@@ -234,7 +234,9 @@ try {
   await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
   await page.goto(base + '/network', { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => document.documentElement.lang === 'en');
-  console.log('[PASS] Chromium: bilingual authenticated navigation, immutable inventory/MQTT identifiers and desktop geometry');
+  console.log(
+    '[PASS] Chromium: bilingual authenticated navigation, immutable inventory/MQTT identifiers and desktop geometry',
+  );
 } catch (error) {
   console.error('[FAIL] Browser operational check:', error);
   process.exitCode = 1;

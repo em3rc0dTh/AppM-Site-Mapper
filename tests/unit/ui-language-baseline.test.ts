@@ -56,7 +56,7 @@ describe('English-first user interface', () => {
 
   it('renders the explicit selected locale as the HTML document language', () => {
     const rootLayout = readFileSync(resolve(process.cwd(), 'src/app/layout.tsx'), 'utf8');
-    expect(rootLayout).toContain('<html lang={locale}>');
+    expect(rootLayout).toContain('<html lang={locale} data-theme="light">');
     expect(rootLayout).toContain('await getLocale()');
   });
 });

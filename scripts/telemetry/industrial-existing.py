@@ -370,6 +370,19 @@ def preflight(args):
     print("Industrial source mapping remains SYNTHETIC; no FIELD wiring is certified.")
 
 
+def repair_capture_worker():
+    # Keep all publishers OFF so the backed-up live databases can catch up.
+    for name in ["lab-mqtt", "lab-snmp-01", "lab-snmp-02", "lab-snmp-03"]:
+        service = inspect(f"{PROJECT}-{name}-1")
+        if service.get("State", {}).get("Running"):
+            raise Refused(
+                f"Synthetic publisher {name} must be stopped before an in-place worker repair"
+            )
+    print("Sources stopped; rebuilding/recreating existing Site Mapper app ONLY.")
+    print("MongoDB, TimescaleDB, outbox volumes and Modbus will remain attached.")
+    command(compose_args() + ["up", "-d", "--build", "--no-deps", "site-mapper"])
+
+
 def migrate_industrial_table():
     migration = ROOT / "infra/telemetry-store/init/004-industrial-observations.sql"
     result = subprocess.run(
@@ -394,7 +407,7 @@ def main():
     parser.add_argument("--mqtt-interval-seconds", type=float, default=None,
                         help="Private lab publication cadence (default 10s; 3-120s)")
     parser.add_argument(
-        "--action", choices=["prepare", "preflight", "up", "status", "logs", "stop-lab", "resume-mqtt"],
+        "--action", choices=["prepare", "preflight", "up", "status", "logs", "stop-lab", "resume-mqtt", "repair-app"],
         default="prepare",
     )
     args = parser.parse_args()
@@ -409,12 +422,14 @@ def main():
         prepare(args)
         if args.action == "prepare":
             return
-        if args.action in ("preflight", "up", "resume-mqtt"):
+        if args.action in ("preflight", "up", "resume-mqtt", "repair-app"):
             preflight(args)
         if args.action == "up":
             migrate_industrial_table()
             # Explicit --no-deps NEVER recreates/reinitializes Mongo, Timescale or mongo-init.
             command(compose_args() + ["up", "-d", "--build", "--no-deps"] + UP_SERVICES)
+        elif args.action == "repair-app":
+            repair_capture_worker()
         elif args.action == "resume-mqtt":
             safe_resume_mqtt(args)
         elif args.action == "preflight":

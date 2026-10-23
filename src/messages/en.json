@@ -1391,5 +1391,22 @@
     "stale": "STALE",
     "offline": "OFFLINE",
     "footer": "Normalized measurements · freshness: live ≤30s / stale ≤5m · no simulated connectivity"
+  },
+  "systemStates": {
+    "errorTitle": "This view could not be loaded",
+    "errorHelp": "Try again. If the issue continues, contact your administrator.",
+    "retry": "Try again",
+    "notFoundTitle": "Entity not found",
+    "notFoundHelp": "This address does not resolve to an available entity.",
+    "network": "Open Network",
+    "loadingTitle": "Loading workspace",
+    "loadingHelp": "Retrieving the latest operational view."
+  },
+  "homeSidebar": {
+    "collapse": "Collapse topology",
+    "expand": "Expand topology"
+  },
+  "roomBoundary": {
+    "openBlueprint": "Open Blueprint to draw or edit the room boundary"
   }
 }

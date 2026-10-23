@@ -1391,5 +1391,22 @@
     "stale": "DESACTUALIZADO",
     "offline": "SIN CONEXIÓN",
     "footer": "Mediciones normalizadas · vigencia: en vivo ≤30s / desactualizado ≤5m · sin conectividad simulada"
+  },
+  "systemStates": {
+    "errorTitle": "No se pudo cargar esta vista",
+    "errorHelp": "Inténtalo de nuevo. Si el problema continúa, contacta al administrador.",
+    "retry": "Reintentar",
+    "notFoundTitle": "Entidad no encontrada",
+    "notFoundHelp": "Esta dirección no corresponde a una entidad disponible.",
+    "network": "Abrir Red",
+    "loadingTitle": "Cargando espacio de trabajo",
+    "loadingHelp": "Obteniendo la vista operativa más reciente."
+  },
+  "homeSidebar": {
+    "collapse": "Contraer topología",
+    "expand": "Expandir topología"
+  },
+  "roomBoundary": {
+    "openBlueprint": "Abrir Blueprint para dibujar o editar el límite de la sala"
   }
 }

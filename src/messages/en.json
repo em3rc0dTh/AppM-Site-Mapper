@@ -853,5 +853,28 @@
     "saveWithSnmp": "SAVE INPUT + SNMP",
     "saveInput": "SAVE DC INPUT",
     "savePort": "SAVE ACCESS PORT"
+  },
+  "blueprintCanvas": {
+    "view": "2D DRAFTING VIEW",
+    "title": "Room blueprint",
+    "select": "Select",
+    "pan": "Pan",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "fit": "Fit",
+    "place": "CLICK TO PLACE",
+    "mode": "VIEW MODE",
+    "focus": "RACK FOCUS · ROOM CONTEXT",
+    "close": "Close rack focus",
+    "topView": "Top view",
+    "footprint": "Footprint",
+    "position": "Position (mm)",
+    "origin": "Data origin",
+    "saved": "Saved MongoDB room geometry",
+    "open": "OPEN RACK ELEVATION",
+    "trace": "TRACE POWER",
+    "clusters": "{count} CLUSTERS",
+    "racks": "{count} RACK FOOTPRINTS",
+    "tiles": "{count} ASSIGNABLE TILES"
   }
 }

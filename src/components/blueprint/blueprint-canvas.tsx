@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 import { InlineInspector } from '@/shared/ui/inline-inspector';
 import { type InspectorEntity } from '@/shared/ui/entity-inspector';
@@ -107,6 +108,7 @@ export function BlueprintCanvas({
   focusBayId?: string | undefined;
   focusPositionId?: string | undefined;
 }>) {
+  const t = useTranslations('blueprintCanvas');
   const base = useMemo(() => boundsFor(polygon), [polygon]);
   const labels = useMemo(() => gridLabels(polygon), [polygon]);
   const focusedRack = racks.find((rack) => rack.id === focusRackId);
@@ -268,13 +270,13 @@ export function BlueprintCanvas({
     <section className="blueprint-panel">
       <header className="blueprint-toolbar zip-blueprint-toolbar">
         <div>
-          <small>2D DRAFTING VIEW</small>
-          <strong>Room blueprint</strong>
+          <small>{t('view')}</small>
+          <strong>{t('title')}</strong>
           <span>600 × 600 mm grid · {Math.round(zoom * 100)}%</span>
         </div>
         <div className="zip-blueprint-mode">
           <span className="zip-blueprint-mode-dot" />
-          <b>{onPlace ? 'CLICK TO PLACE' : 'VIEW MODE'}</b>
+          <b>{onPlace ? t('place') : t('mode')}</b>
         </div>
       </header>
 
@@ -284,7 +286,7 @@ export function BlueprintCanvas({
             type="button"
             aria-pressed={tool === 'select'}
             onClick={() => setTool('select')}
-            title="Select"
+            title={t('select')}
           >
             ↖
           </button>
@@ -292,21 +294,21 @@ export function BlueprintCanvas({
             type="button"
             aria-pressed={tool === 'pan'}
             onClick={() => setTool('pan')}
-            title="Pan"
+            title={t('pan')}
           >
             ✥
           </button>
           <button
             type="button"
             onClick={() => setZoom((value) => Math.min(5, value * 1.2))}
-            title="Zoom in"
+            title={t('zoomIn')}
           >
             +
           </button>
           <button
             type="button"
             onClick={() => setZoom((value) => Math.max(0.5, value / 1.2))}
-            title="Zoom out"
+            title={t('zoomOut')}
           >
             −
           </button>
@@ -316,7 +318,7 @@ export function BlueprintCanvas({
               setZoom(1);
               setPan({ x: 0, y: 0 });
             }}
-            title="Fit"
+            title={t('fit')}
           >
             ⌂
           </button>
@@ -544,9 +546,9 @@ export function BlueprintCanvas({
         </div>
       </div>
       <footer className="blueprint-legend">
-        <StatusBadge tone="accent">{clusters.length} CLUSTERS</StatusBadge>
-        <StatusBadge tone="accent">{racks.length} RACK FOOTPRINTS</StatusBadge>
-        <StatusBadge>{slots.length} ASSIGNABLE TILES</StatusBadge>
+        <StatusBadge tone="accent">{t('clusters',{count:clusters.length})}</StatusBadge>
+        <StatusBadge tone="accent">{t('racks',{count:racks.length})}</StatusBadge>
+        <StatusBadge>{t('tiles',{count:slots.length})}</StatusBadge>
         <span>
           {tool === 'pan'
             ? 'Drag to pan · scroll to zoom'
@@ -568,13 +570,13 @@ export function BlueprintCanvas({
           >
             <header>
               <div>
-                <small>RACK FOCUS · ROOM CONTEXT</small>
+                <small>{t('focus')}</small>
                 <h2>{racks.find((rack) => rack.id === focusedRackId)?.name}</h2>
               </div>
               <button
                 type="button"
                 onClick={() => setFocusedRackId(null)}
-                aria-label="Close rack focus"
+                aria-label={t('close')}
               >
                 ×
               </button>
@@ -586,24 +588,24 @@ export function BlueprintCanvas({
                   <div className="blueprint-rack-footprint" aria-label="Rack physical footprint">
                     <div style={{ aspectRatio: `${rack.rect.width} / ${rack.rect.depth}` }}>
                       <strong>{rack.name}</strong>
-                      <small>Top view</small>
+                      <small>{t('topView')}</small>
                     </div>
                   </div>
                   <dl>
-                    <dt>Footprint</dt>
+                    <dt>{t('footprint')}</dt>
                     <dd>
                       {rack.rect.width} × {rack.rect.depth} mm
                     </dd>
-                    <dt>Position (mm)</dt>
+                    <dt>{t('position')}</dt>
                     <dd>
                       X {rack.rect.x} · Y {rack.rect.y}
                     </dd>
-                    <dt>Data origin</dt>
-                    <dd>Saved MongoDB room geometry</dd>
+                    <dt>{t('origin')}</dt>
+                    <dd>{t('saved')}</dd>
                   </dl>
                   <div className="blueprint-rack-dialog-actions">
-                    <Link href={`/rack/${rack.id}`}>OPEN RACK ELEVATION</Link>
-                    <Link href={`/power?entity=${rack.id}`}>TRACE POWER</Link>
+                    <Link href={`/rack/${rack.id}`}>{t('open')}</Link>
+                    <Link href={`/power?entity=${rack.id}`}>{t('trace')}</Link>
                   </div>
                 </div>
               ))}

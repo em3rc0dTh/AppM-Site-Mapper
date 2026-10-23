@@ -853,5 +853,28 @@
     "saveWithSnmp": "GUARDAR ENTRADA + SNMP",
     "saveInput": "GUARDAR ENTRADA DC",
     "savePort": "GUARDAR PUERTO DE ACCESO"
+  },
+  "blueprintCanvas": {
+    "view": "VISTA DE PLANO 2D",
+    "title": "Plano de sala",
+    "select": "Seleccionar",
+    "pan": "Desplazar",
+    "zoomIn": "Acercar",
+    "zoomOut": "Alejar",
+    "fit": "Ajustar",
+    "place": "HAZ CLIC PARA UBICAR",
+    "mode": "MODO VISTA",
+    "focus": "DETALLE DEL RACK · CONTEXTO DE SALA",
+    "close": "Cerrar detalle del rack",
+    "topView": "Vista superior",
+    "footprint": "Superficie",
+    "position": "Posición (mm)",
+    "origin": "Origen de datos",
+    "saved": "Geometría de sala guardada en MongoDB",
+    "open": "ABRIR ELEVACIÓN DEL RACK",
+    "trace": "RASTREAR POTENCIA",
+    "clusters": "{count} CLÚSTERES",
+    "racks": "{count} SUPERFICIES DE RACK",
+    "tiles": "{count} CELDAS ASIGNABLES"
   }
 }

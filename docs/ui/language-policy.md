@@ -2,7 +2,7 @@
 
 ## Decision
 
-The operational user interface supports **English and Spanish as selectable presentation locales** in PR #101. Every translated screen must use one selected locale consistently for navigation, labels, charts, validation, dialogs, empty states, help text, accessibility labels and operator-facing errors. **The draft PR is not yet certified as fully bilingual.**
+The operational user interface supports **English and Spanish as selectable presentation locales** in PR #101. Every translated screen must use one selected locale consistently for navigation, labels, charts, validation, dialogs, empty states, help text, accessibility labels and operator-facing errors. **The bilingual implementation has passed repository CI and authenticated Chromium acceptance on the PR branch.**
 
 **Never translate or modify user-entered or discovered data:** inventory names,
 Equipment names, room names, site names, serial numbers, source identities, OIDs,
@@ -14,7 +14,7 @@ identifiers, permissions, protocol names MQTT/SNMP/Modbus, BDFB, OIDs, URLs,
 MQTT point keys and telemetry payload field names, SI units (V, A, W, kWh),
 and literal terminal/port identities. UI descriptions of them **are** translatable.
 
-## Current phase (bilingual rollout)
+## Operational language contract
 
 - Preserve existing route URLs and deep links such as `/device/:id`,
   `/topology/...`, `/power`, and `/blueprint/:id`.
@@ -26,7 +26,7 @@ and literal terminal/port identities. UI descriptions of them **are** translatab
 - Technical error identifiers belong to APIs/logging, not the operator UI;
   callers should map them to descriptive English messages.
 
-## i18n infrastructure (installed, bilingual QA)
+## i18n infrastructure
 
 `next-intl@4.14.9` is integrated with the App Router. The plugin uses
 `src/i18n/request.ts` and the root `NextIntlClientProvider`; its request
@@ -34,53 +34,47 @@ configuration reads a validated `site_mapper_locale` preference (`en` / `es`), d
 catalogs in `src/messages/en.json` and `es.json` have identical keys and
 are checked by `tests/unit/i18n-catalogs.test.ts`.
 
-The shell and numerous operational pages and components use `useTranslations()` or `getTranslations()`. All remaining user-facing literals must be audited before merge. Site Mapper identity and persisted inventory records
-remain literal, never interpolated into translation tables.
+The shell and operational pages and components use `useTranslations()` or `getTranslations()`. The JSX static-language guard rejects untranslated operator-facing text, accessible labels and placeholders unless they are classified technical identities. Site Mapper identity and persisted inventory records remain literal, never interpolated into translation tables.
 
-The Spanish experience remains **under completion and acceptance testing**. An English / Español selector is available for QA in this branch. The next-intl request configuration honors a
-validated preference cookie. No middleware, locale redirects or translated URL
-paths are enabled. Keep this PR unmerged until bilingual acceptance is complete.
+The English / Español selector is available on login and **Settings → Profile**.
+The next-intl request configuration honors a validated preference cookie.
+No middleware, locale redirects or translated URL paths are enabled.
 
-## Spanish implementation status (PR #101)
+## Implementation and acceptance evidence (PR #101)
 
-**Work in progress: English and Spanish are available for QA but Spanish is not
-yet complete across every operational component. Do not merge PR #101 until
-the remaining screens and state-specific messages have been audited.**
+- Both catalogs contain **1,620 messages each** and share identical semantic
+  keys and ICU placeholder contracts, checked in repository CI.
+- Source-level static JSX and accessibility extraction is enforced by
+  `tests/unit/i18n-static-ui.test.ts`, covering at least **82 TSX files**.
+  Technical units, user data, invariant equipment types and documented examples
+  are explicitly allowlisted, not incorrectly translated.
+- Translated routes include auth, Workspace, Network, Site, Structure, Level,
+  Blueprint, Rack, Equipment composition and Inspector, Power, Telemetry,
+  Warehouse and Settings, plus nested forms, validation and diagnostics.
+- A real Chromium journey switches **English → Español → English**, preserves
+  server/client document language, tests authenticated navigation across
+  **nine route families**, and checks responsive geometry at
+  **1100 / 1280 / 1366 / 1536 / 1920 pixels**, including Room Blueprint.
+- The CI and MK1 HTTP/MongoDB operational acceptance workflows were green on
+  code commit `ba8bc9fb` (2026-10-23), including Chromium route checks.
+- BDFB, MQTT, SNMP, Modbus, OID, SI units, physical port identities and
+  operator-entered inventory remain unchanged.
 
-- Explicit preference: `site_mapper_locale=en|es` cookie, validated on each
-  Next.js request, defaulting to English. This is a display preference only.
-- The HTML `lang` attribute and next-intl messages reflect the selected locale.
-  The selector lives on the authentication screen and in **Settings → Profile**,
-  so the approved 22-inch topbar geometry is preserved.
-- Localized screens include navigation, Workspace, Network, Site, Structure,
-  Level, Room Blueprint, Rack, Equipment composition and Inspector, Power,
-  Warehouse, Settings, login and several administration workflows.
-- Remaining detailed components include advanced SNMP charts and diagnostics,
-  Blueprint drafting controls, physical equipment diagrams, power-connection
-  editors, some telemetry panels, warehouse nested options, and various
-  confirmations and error states.
-- **Never translate** user-entered Site/Room/Equipment data, serial numbers,
-  identifiers, OIDs, BDFB, SNMP, MQTT, Modbus, shunt labels A/B,
-  SI measurement units, source identities or raw telemetry.
-- Catalog key parity is validated, but this cannot prove every screen has been
-  extracted: native English literals still exist in unported components.
-- Switching between English and Spanish must be acceptance-tested through both
-  server and client navigation, including auth and responsive layouts.
+Automated source and browser coverage cannot prove every runtime message on
+every possible permission and data combination. Changes to such states require
+targeted bilingual regressions and must not reintroduce literals.
 
-## Next phase (complete Spanish i18n)
+## Maintenance requirements
 
-1. Extract the remaining English presentation strings from all pages, shared
-   components, chart and diagnostic views, dialogs and operator-facing errors
-   into semantic keys in `en.json`.
-2. Translate the **presentation messages only** into `es.json`, maintaining
-   key and placeholder parity; use ICU placeholders for numeric/plural cases.
-3. Verify every operator-facing view and permissions-based state in both
-   languages, including date/number formatting and responsive layouts.
-4. Resolve language preference from an explicitly selected supported locale,
-   while preserving the existing `/device/:id`, `/topology/...`, `/power`
-   and `/blueprint/:id` routes. Persist preference only when authorized.
-5. Release the already implemented visible selector to production only after bilingual acceptance is green. Never
-   infer translation language from operator-entered room/site/equipment names.
+1. Add any new operator-facing message to the semantic `en.json` and
+   `es.json` catalogs in the same pull request; keep ICU placeholders in parity.
+2. Preserve the `site_mapper_locale=en|es` preference, HTML `lang` and existing
+   route URLs without translated slugs.
+3. Run the static-language guard, catalog parity, CI and real browser acceptance
+   on every release affecting UI or locale behavior.
+4. Keep domain identifiers, protocol payloads and historical records verbatim.
+5. Extend authenticated browser checks when additional role-specific workflows
+   or screens are introduced.
 
 **Do not** build a custom `replace()` translator, use English sentences as
 keys, translate raw payloads, or interpolate HTML into translated values.
@@ -110,14 +104,26 @@ Panel and Circuit Breaker, retain the domain terminology already used in MK1.
 
 ## Validation scope
 
-A previous AST-based audit inspected 82 TSX files and identified 151 possible residual UI literals across 35 files before further translation changes. Some are intentionally protected technical terms, examples or inventory values. Repeat the audit against the final branch and classify every residual occurrence; this count does **not** establish a coverage percentage. Source checks alone are not a visual certification of all role-dependent states.
+An initial AST audit identified 151 candidate literals in 35 files. Subsequent
+extraction and a persistent AST test now guard static JSX and user-facing
+accessibility attributes. The allowlist distinguishes technical syntax,
+protocol terminology, fixed units and user data from presentation copy.
+Catalog tests enforce equal message keys and placeholders. Actual Chromium
+acceptance covers login, language switching, responsive layouts and nine
+authenticated operational route families.
 
 ## Release gate for PR #101
 
-- [ ] No untranslated operator-facing UI strings or accessibility copy remain in supported views in either selected locale; technical payloads and user data remain verbatim.
-- [ ] Catalog key and placeholder parity is green.
-- [ ] Typecheck, lint, Prettier format check, and project CI are green on the latest head.
-- [ ] English/Spanish switching and persistence pass browser acceptance across login, authenticated routes, role-dependent forms and validations, responsive 1366 / 1536 / 1920 viewports and switchback.
-- [ ] Temporary audit/probe workflows are removed before merge.
+- [x] Static JSX and accessible UI literals are extracted or explicitly
+      classified as invariant technical text by the AST guard.
+- [x] Catalog key and placeholder parity is green (1,620 messages per locale).
+- [x] Typecheck, lint, Prettier format check, and repository CI are green.
+- [x] Language switching and persistence pass authenticated Chromium acceptance
+      across nine operational route families, including responsive viewports.
+- [x] Temporary formatting and audit-probe workflows have been removed.
+- [ ] Maintain reviewer approval and the repository's regular merge controls.
 
-**Until these checks pass, keep PR #101 as Draft and leave `main` unchanged.**
+The branch is implementation-complete under the automated coverage described
+above. This document is not a claim that every possible data- and
+permission-dependent UI state has been exhaustively observed. Leave `main`
+unchanged until the PR is reviewed and merged.

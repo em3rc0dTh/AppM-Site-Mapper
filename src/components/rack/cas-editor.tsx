@@ -1,8 +1,10 @@
 'use client';
+import { useTranslations } from 'next-intl';
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
 export function CasEditor({ view }: { view: RackElevationView }) {
+  const t = useTranslations('casEditor');
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -43,9 +45,9 @@ export function CasEditor({ view }: { view: RackElevationView }) {
   }
   return (
     <details className="mk-cas-editor">
-      <summary>✎ EDIT CAS</summary>
+      <summary>{t('edit')}</summary>
       <div className="mk-cas-editor-panel">
-        <p>Reservations include 1U clearance above and below the physical Equipment.</p>
+        <p>{t('help')}</p>
         <form onSubmit={submit}>
           <input type="hidden" name="action" value="reserve" />
           <label>
@@ -70,14 +72,14 @@ export function CasEditor({ view }: { view: RackElevationView }) {
               defaultValue="1"
             />
           </label>
-          <button disabled={busy}>Reserve / split available span</button>
+          <button disabled={busy}>{t('reserve')}</button>
         </form>
         <form onSubmit={submit}>
           <input type="hidden" name="action" value="equip" />
           <label>
             Reservation
             <select required name="allocationId">
-              <option value="">Select reservation</option>
+              <option value="">{t('selectReservation')}</option>
               {view.rack.cas
                 .filter((r) => r.state === 'RESERVED')
                 .map((r) => (
@@ -90,7 +92,7 @@ export function CasEditor({ view }: { view: RackElevationView }) {
           <label>
             Inventory
             <select required name="occupantId">
-              <option value="">Select Equipment</option>
+              <option value="">{t('selectEquipment')}</option>
               {view.inventory
                 .filter((i) => !view.rack.cas.some((r) => r.occupantId === i.id))
                 .map((i) => (
@@ -100,14 +102,14 @@ export function CasEditor({ view }: { view: RackElevationView }) {
                 ))}
             </select>
           </label>
-          <button disabled={busy}>Mount Equipment</button>
+          <button disabled={busy}>{t('mount')}</button>
         </form>
         <form onSubmit={submit}>
           <input type="hidden" name="action" value="free" />
           <label>
             Allocation
             <select required name="allocationId">
-              <option value="">Select allocation</option>
+              <option value="">{t('selectAllocation')}</option>
               {view.rack.cas
                 .filter((r) => r.state !== 'AVAILABLE')
                 .map((r) => (
@@ -117,7 +119,7 @@ export function CasEditor({ view }: { view: RackElevationView }) {
                 ))}
             </select>
           </label>
-          <button disabled={busy}>Free allocation</button>
+          <button disabled={busy}>{t('free')}</button>
         </form>
         {error && <p role="alert">{error}</p>}
       </div>

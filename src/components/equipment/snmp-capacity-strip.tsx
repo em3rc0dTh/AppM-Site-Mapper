@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import type { SnmpBdfbLoadView } from '@/modules/telemetry/application/snmp-feed-service';
@@ -17,6 +18,7 @@ function quantity(value: number | null | undefined): string {
 }
 
 export function SnmpCapacityStrip({ root, byId }: Props) {
+  const t = useTranslations('snmpStrip');
   const [load, setLoad] = useState<SnmpBdfbLoadView | null>(null);
   const [error, setError] = useState(false);
   const panels = useMemo(() => {
@@ -88,10 +90,10 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
   const ratio = exclusive ? scopeCapacity.utilizationPct : null;
   const simulated = scopeCapacity.mode === 'LAB_SIMULATED';
   return (
-    <section className="ec-snmp-capacity" aria-label="SNMP incoming DC feeder capacity">
+    <section className="ec-snmp-capacity" aria-label={t('label')}>
       <header>
         <div>
-          <strong>SNMP · DC input capacity</strong>
+          <strong>{t('title')}</strong>
           <small>
             {chassis
               ? 'BDFB incoming independent shunts'
@@ -108,15 +110,15 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
       </header>
       <div className="ec-snmp-capacity-metrics">
         <div>
-          <small>Measured current</small>
+          <small>{t('measured')}</small>
           <strong>{quantity(used)}</strong>
         </div>
         <div>
-          <small>Rated current</small>
+          <small>{t('rated')}</small>
           <strong>{quantity(rated)}</strong>
         </div>
         <div>
-          <small>Available capacity</small>
+          <small>{t('available')}</small>
           <strong>{quantity(available)}</strong>
         </div>
       </div>

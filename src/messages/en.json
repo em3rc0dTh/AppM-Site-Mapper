@@ -1171,5 +1171,29 @@
     "immediate": "Immediate child composition",
     "internal": "INTERNAL COMPOSITION",
     "empty": "No internal Equipment or Access Ports installed"
+  },
+  "snmpStrip": {
+    "label": "SNMP incoming DC feeder capacity",
+    "title": "SNMP · DC input capacity",
+    "measured": "Measured current",
+    "rated": "Rated current",
+    "available": "Available capacity"
+  },
+  "casEditor": {
+    "edit": "✎ EDIT CAS",
+    "help": "Reservations include 1U clearance above and below the physical Equipment.",
+    "reserve": "Reserve / split available span",
+    "selectReservation": "Select reservation",
+    "selectEquipment": "Select Equipment",
+    "mount": "Mount Equipment",
+    "selectAllocation": "Select allocation",
+    "free": "Free allocation"
+  },
+  "powerCanvas": {
+    "source": "Source equipment hierarchy",
+    "output": "POWER OUTPUT · {name}",
+    "path": "POWER PATH · FEED {side} · CONFIGURED",
+    "input": "POWER INPUT · {name}",
+    "target": "Destination equipment hierarchy"
   }
 }

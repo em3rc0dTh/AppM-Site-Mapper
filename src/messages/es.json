@@ -1171,5 +1171,29 @@
     "immediate": "Composición de elementos secundarios inmediatos",
     "internal": "COMPOSICIÓN INTERNA",
     "empty": "No hay Equipment interno ni puertos de acceso instalados"
+  },
+  "snmpStrip": {
+    "label": "Capacidad de la entrada DC SNMP",
+    "title": "SNMP · Capacidad de entrada DC",
+    "measured": "Corriente medida",
+    "rated": "Corriente nominal",
+    "available": "Capacidad disponible"
+  },
+  "casEditor": {
+    "edit": "✎ EDITAR CAS",
+    "help": "Las reservas incluyen 1U de holgura encima y debajo del Equipment físico.",
+    "reserve": "Reservar / dividir espacio disponible",
+    "selectReservation": "Seleccionar reserva",
+    "selectEquipment": "Seleccionar Equipment",
+    "mount": "Montar Equipment",
+    "selectAllocation": "Seleccionar asignación",
+    "free": "Liberar asignación"
+  },
+  "powerCanvas": {
+    "source": "Jerarquía del Equipment de origen",
+    "output": "SALIDA POWER · {name}",
+    "path": "RUTA DE POTENCIA · ENTRADA {side} · CONFIGURADA",
+    "input": "ENTRADA POWER · {name}",
+    "target": "Jerarquía del Equipment de destino"
   }
 }

@@ -141,6 +141,17 @@ from the same container. Three distinct source tokens authenticate receiver-to-a
 persistent receiver engine ID is explicit. MQTT serials/topics are `EMU-BFDB-01..03` and
 `data/dev/EMU-BFDB-01..03`; legacy source-unit map and active logical aliases use the same serials.
 The private broker is anonymous inside this development-only internal network and has no host port.
+Docker does not publish usable host ports for a container connected **only** to an internal network.
+For local UI/Modbus/database inspection, the launcher also attaches the existing host-facing
+Site Mapper, Modbus, MongoDB, TimescaleDB, telemetry-store and trap receiver services to an
+independent `host-access` bridge. Their existing Docker Compose port bindings remain
+`127.0.0.1`-only. MQTT/SNMP emulator containers and the anonymous broker remain **only** on
+the private internal network; no emulator, broker, or secret receives a public host port.
+Docker assigns an available network to the access bridge independently of the operator's
+`--subnet` selection. If host access is refused, first inspect `docker port
+site-mapper-industrial-lab-site-mapper-1` and `docker port
+site-mapper-industrial-lab-modbus-tcp-1`, then check host port conflicts; do not delete
+volumes or prune unrelated networks.
 FIELD security requires separately approved credentials/TLS, not the laboratory Compose.
 
 App/Mongo/Timescale/Modbus host ports keep the existing loopback bindings. Site Mapper opens at

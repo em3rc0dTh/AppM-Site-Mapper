@@ -1,3 +1,4 @@
+import { useTranslations } from 'next-intl';
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import { isValidPolygon, polygonArea } from '@/modules/spatial/domain/geometry';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
@@ -28,6 +29,7 @@ export function TopologyPropertiesPanel({
   bdfb?: BdfbPresentation | null;
   mappedBreakers?: number;
 }>) {
+  const t = useTranslations('topologyViews');
   if (node.kind === 'SITE') {
     const load = node.details?.currentLoad;
     const capacity = node.details?.totalPowerCapacity;
@@ -39,10 +41,10 @@ export function TopologyPropertiesPanel({
 
     return (
       <aside className="telxius-properties">
-        <header>SITE PROPERTIES</header>
+        <header>{t('siteProperties')}</header>
 
         <section>
-          <h3>⚡ POWER LOAD</h3>
+          <h3>{t('powerLoad')}</h3>
           <div className="telxius-property-card telxius-power-card">
             <strong>
               {value(load)} <small>kW</small>
@@ -55,18 +57,18 @@ export function TopologyPropertiesPanel({
         </section>
 
         <section>
-          <h3 className="is-warning">⌁ ACTIVE ALARMS</h3>
+          <h3 className="is-warning">{t('activeAlarms')}</h3>
           <div className="telxius-property-card telxius-health-card">
-            <span>SYSTEM STATUS</span>
-            <b>{alarms === 0 ? 'CONFIGURED' : `${value(alarms)} ACTIVE`}</b>
+            <span>{t('systemStatus')}</span>
+            <b>{alarms === 0 ? t('configured') : t('activeCount', { count: alarms ?? 0 })}</b>
           </div>
         </section>
 
         <section>
-          <h3>METADATA</h3>
+          <h3>{t('metadata')}</h3>
           <dl className="telxius-property-list">
             <div>
-              <dt>TOTAL AREA</dt>
+              <dt>{t('totalArea')}</dt>
               <dd>
                 {isValidPolygon(node.polygon)
                   ? `${(polygonArea(node.polygon) / 1_000_000).toFixed(2)} m²`
@@ -74,19 +76,19 @@ export function TopologyPropertiesPanel({
               </dd>
             </div>
             <div>
-              <dt>BOUNDARY</dt>
-              <dd>{node.polygon?.length ? `${node.polygon.length} vertices` : 'Not drawn'}</dd>
+              <dt>{t('boundary')}</dt>
+              <dd>{node.polygon?.length ? t('vertices', { count: node.polygon.length }) : t('notDrawn')}</dd>
             </div>
             <div>
-              <dt>CATEGORY</dt>
+              <dt>{t('category')}</dt>
               <dd>{value(node.category)}</dd>
             </div>
             <div>
-              <dt>DISTRICT</dt>
+              <dt>{t('district')}</dt>
               <dd>{value(node.district)}</dd>
             </div>
             <div>
-              <dt>COORDINATES</dt>
+              <dt>{t('coordinates')}</dt>
               <dd className="is-accent">{coordinates(node.geoCoords)}</dd>
             </div>
           </dl>
@@ -98,14 +100,14 @@ export function TopologyPropertiesPanel({
   if (node.kind === 'STRUCTURE') {
     return (
       <aside className="telxius-properties">
-        <header>STRUCTURE STATS</header>
+        <header>{t('structureStats')}</header>
         <section className="telxius-stat-stack">
           <div className="telxius-property-card">
-            <span>TOTAL LEVELS</span>
+            <span>{t('totalLevels')}</span>
             <strong>{contained}</strong>
           </div>
           <div className="telxius-property-card">
-            <span>TOTAL ROOMS</span>
+            <span>{t('totalRooms')}</span>
             <strong>{previewContained ?? 0}</strong>
           </div>
         </section>
@@ -146,42 +148,42 @@ export function TopologyPropertiesPanel({
           <span>▥</span>
           <div>
             <h2>{node.name}</h2>
-            <small>{location ?? 'Infrastructure'}</small>
+            <small>{location ?? t('infrastructure')}</small>
           </div>
         </div>
         <dl>
-          <dt>Type</dt>
+          <dt>{t('type')}</dt>
           <dd>BDFB</dd>
-          <dt>Location</dt>
+          <dt>{t('location')}</dt>
           <dd>{location ?? '—'}</dd>
-          <dt>Physical shelves</dt>
+          <dt>{t('shelves')}</dt>
           <dd>{physicalShelves}</dd>
-          <dt>Physical frames</dt>
+          <dt>{t('frames')}</dt>
           <dd>{physicalFrames}</dd>
-          <dt>Panel groups</dt>
+          <dt>{t('panelGroups')}</dt>
           <dd>{panelGroups}</dd>
-          <dt>Panels</dt>
+          <dt>{t('panels')}</dt>
           <dd>{panels.length}</dd>
-          <dt>Breakers</dt>
+          <dt>{t('breakers')}</dt>
           <dd>{breakers.length}</dd>
-          <dt>Feed A</dt>
-          <dd>{hasA ? 'Configured' : '—'}</dd>
-          <dt>Feed B</dt>
-          <dd>{hasB ? 'Configured' : '—'}</dd>
-          <dt>Telemetry</dt>
-          <dd>{mappedBreakers > 0 ? 'EXPLICIT BINDINGS' : 'UNMAPPED'}</dd>
+          <dt>{t('feedA')}</dt>
+          <dd>{hasA ? t('configured') : '—'}</dd>
+          <dt>{t('feedB')}</dt>
+          <dd>{hasB ? t('configured') : '—'}</dd>
+          <dt>{t('telemetryLabel')}</dt>
+          <dd>{mappedBreakers > 0 ? t('explicit') : t('unmapped')}</dd>
         </dl>
         <section className="zip-bdfb-status-card">
-          <h3>STATUS</h3>
+          <h3>{t('status')}</h3>
           <div>
             <span>●</span>
-            <strong>Physical inventory recorded</strong>
-            <small>Live health requires an explicitly mapped MQTT reading.</small>
+            <strong>{t('physicalRecorded')}</strong>
+            <small>{t('liveRequirement')}</small>
           </div>
         </section>
         <div className="zip-bdfb-actions">
-          <span>{mappedBreakers} mapped breakers</span>
-          <span>Select a panel to inspect its breakers.</span>
+          <span>{t('mappedBreakers', { count: mappedBreakers })}</span>
+          <span>{t('selectPanel')}</span>
         </div>
       </aside>
     );
@@ -197,24 +199,24 @@ export function TopologyPropertiesPanel({
           <span>▥</span>
           <div>
             <h2>{node.name}</h2>
-            <small>{location ?? 'Infrastructure'}</small>
+            <small>{location ?? t('infrastructure')}</small>
           </div>
         </div>
         <dl>
-          <dt>Type</dt>
+          <dt>{t('type')}</dt>
           <dd>BDFB</dd>
-          <dt>Location</dt>
+          <dt>{t('location')}</dt>
           <dd>{location ?? '—'}</dd>
-          <dt>Physical model</dt>
-          <dd>Unavailable</dd>
-          <dt>Telemetry</dt>
-          <dd>Waiting for canonical physical mapping</dd>
+          <dt>{t('physicalModel')}</dt>
+          <dd>{t('unavailable')}</dd>
+          <dt>{t('telemetryLabel')}</dt>
+          <dd>{t('waiting')}</dd>
         </dl>
         <section className="zip-bdfb-status-card">
-          <h3>RECOVERY REQUIRED</h3>
+          <h3>{t('recovery')}</h3>
           <div>
             <span>○</span>
-            <strong>Canonical Equipment hierarchy is incomplete</strong>
+            <strong>{t('hierarchyIncomplete')}</strong>
             <small>
               The Device is preserved. Site Mapper will not invent shelves, frames, panels or
               breakers.
@@ -228,10 +230,10 @@ export function TopologyPropertiesPanel({
   if (node.kind === 'ROOM_SUBSTRUCTURE') {
     return (
       <aside className="telxius-properties">
-        <header>ROOM PROPERTIES</header>
+        <header>{t('roomProperties')}</header>
         <section className="telxius-stat-stack">
           <div className="telxius-property-card">
-            <span>TOTAL CLUSTERS</span>
+            <span>{t('totalClusters')}</span>
             <strong>{contained}</strong>
           </div>
         </section>
@@ -249,14 +251,14 @@ export function TopologyPropertiesPanel({
 
   return (
     <aside className="telxius-properties">
-      <header>CURRENT SELECTION</header>
+      <header>{t('currentSelection')}</header>
       <section className="telxius-stat-stack">
         <div className="telxius-property-card">
-          <span>CANONICAL TYPE</span>
+          <span>{t('canonicalType')}</span>
           <strong>{node.kind.replaceAll('_', ' ')}</strong>
         </div>
         <div className="telxius-property-card">
-          <span>CONTAINED</span>
+          <span>{t('containedUpper')}</span>
           <strong>{contained}</strong>
         </div>
       </section>

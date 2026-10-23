@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import {
   isValidPolygon,
   polygonArea,
@@ -41,6 +42,7 @@ export function TopologyExplorer({
   items: readonly VisualStageChild[];
   boundary?: readonly PhysicalPoint[] | undefined;
 }) {
+  const t = useTranslations('topologyViews');
   const [selected, setSelected] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const item = items.find((entry) => entry.node.id === selected);
@@ -98,12 +100,12 @@ export function TopologyExplorer({
                   ? node.name.toUpperCase()
                   : node.name.toUpperCase()}
           </strong>
-          <small>{hasGeometry ? 'SURVEYED GEOMETRY' : 'SCHEMATIC · NO SURVEYED COORDINATES'}</small>
+          <small>{hasGeometry ? t('surveyed') : t('schematicNoCoordinates')}</small>
         </header>
 
         {roomPairs.length > 0 && (
           <div className="level-room-overlap-warning" role="alert">
-            <strong>ROOM GEOMETRY CONFLICT · {roomPairs.length} overlapping pair(s)</strong>
+            <strong>{t('conflicts', { count: roomPairs.length })}</strong>
             <span>
               Existing surveyed Rooms share floor area. Inspect and correct their boundaries; new
               rooms cannot overlap. {roomPairs.slice(0, 3).join(' · ')}
@@ -134,7 +136,7 @@ export function TopologyExplorer({
               <div className="zip-level-stage">
                 <svg
                   viewBox={`${minX - pad} ${minY - pad} ${width + pad * 2} ${height + pad * 2}`}
-                  aria-label="Physical level layout"
+                  aria-label={t('physicalLevel')}
                 >
                   {boundary && <polygon points={points(boundary)} className="mk-map-boundary" />}
                   {items.map((entry) => {
@@ -149,7 +151,7 @@ export function TopologyExplorer({
                         key={entry.node.id}
                         tabIndex={0}
                         role="button"
-                        aria-label={`Select ${entry.node.name}`}
+                        aria-label={t('select', { name: entry.node.name })}
                         onClick={() => setSelected(entry.node.id)}
                         onDoubleClick={() => window.location.assign(entry.href)}
                         onKeyDown={(event) => {
@@ -168,8 +170,8 @@ export function TopologyExplorer({
                   })}
                 </svg>
                 {unlocated.length > 0 && (
-                  <div className="topology-unlocated-inline" aria-label="Unsurveyed inventory">
-                    <strong>{unlocated.length} objects without surveyed coordinates</strong>
+                  <div className="topology-unlocated-inline" aria-label={t('unsurveyedInventory')}>
+                    <strong>{t('unlocated', { count: unlocated.length })}</strong>
                     {unlocated.map((entry) => (
                       <button
                         key={entry.node.id}
@@ -185,7 +187,7 @@ export function TopologyExplorer({
                 )}
               </div>
             ) : node.kind === 'LEVEL' ? (
-              <div className="topology-unlocated-list" aria-label="Rooms without surveyed geometry">
+              <div className="topology-unlocated-list" aria-label={t('roomsUnsurveyed')}>
                 <p>
                   Room footprints are not surveyed. This is a topology list, not a physical map.
                 </p>
@@ -199,7 +201,7 @@ export function TopologyExplorer({
                       onDoubleClick={() => window.location.assign(entry.href)}
                     >
                       <strong>{entry.node.name}</strong>
-                      <small>Click to inspect · double click to open</small>
+                      <small>{t('clickHelp')}</small>
                     </button>
                   ))}
                 </div>
@@ -232,7 +234,7 @@ export function TopologyExplorer({
                         : entry.node.name.toUpperCase()}
                     </strong>
                     <span className="zip-graph-metrics">
-                      <small>SCHEMATIC · UNSURVEYED</small>
+                      <small>{t('unsurveyed')}</small>
                     </span>
                   </button>
                 ))}
@@ -242,15 +244,15 @@ export function TopologyExplorer({
         </div>
 
         <footer className="zip-canvas-footer">
-          <span>{node.kind === 'NETWORK' ? 'Network' : node.name}</span>
-          <span className="zip-grid-indicator">{hasGeometry ? '▦ SURVEYED' : 'SCHEMATIC'}</span>
+          <span>{node.kind === 'NETWORK' ? t('network') : node.name}</span>
+          <span className="zip-grid-indicator">{hasGeometry ? t('surveyedTag') : t('schematic')}</span>
           <div className="zip-zoom-controls">
             <button onClick={() => setZoom((value) => Math.max(0.5, value - 0.1))}>−</button>
             <b>{Math.round(zoom * 100)}%</b>
             <button onClick={() => setZoom((value) => Math.min(2, value + 0.1))}>+</button>
           </div>
-          <button onClick={() => setZoom(1)}>⌗ FIT VIEW</button>
-          <strong className="zip-synced">● INVENTORY VIEW</strong>
+          <button onClick={() => setZoom(1)}>{t('fit')}</button>
+          <strong className="zip-synced">{t('inventory')}</strong>
         </footer>
       </div>
 
@@ -259,23 +261,23 @@ export function TopologyExplorer({
           <div className="spatial-site-facts">
             <strong>{node.name}</strong>
             <dl>
-              <dt>Boundary</dt>
-              <dd>{boundary?.length ? `${boundary.length} vertices` : 'Not drawn'}</dd>
-              <dt>Area</dt>
+              <dt>{t('boundary')}</dt>
+              <dd>{boundary?.length ? t('vertices', { count: boundary.length }) : t('notDrawn')}</dd>
+              <dt>{t('area')}</dt>
               <dd>
                 {isValidPolygon(boundary)
                   ? `${(polygonArea(boundary) / 1_000_000).toFixed(2)} m²`
                   : '—'}
               </dd>
-              <dt>Status</dt>
-              <dd>{node.lifecycle}</dd>
-              <dt>Contained objects</dt>
+              <dt>{t('status')}</dt>
+              <dd>{node.lifecycle === 'ACTIVE' ? t('active') : t('archived')}</dd>
+              <dt>{t('containedObjects')}</dt>
               <dd>{items.length}</dd>
             </dl>
           </div>
         )}
         <header className="zip-inspector-heading">
-          <strong>INSPECTOR</strong>
+          <strong>{t('inspector')}</strong>
           <span>⌄</span>
         </header>
         <div className="zip-inspector-identity">
@@ -288,20 +290,20 @@ export function TopologyExplorer({
           </div>
         </div>
         <section>
-          <h3>GENERAL INFORMATION</h3>
+          <h3>{t('info')}</h3>
           <dl>
-            <dt>Name</dt>
+            <dt>{t('name')}</dt>
             <dd>{item?.node.name ?? node.name}</dd>
-            <dt>Type</dt>
+            <dt>{t('type')}</dt>
             <dd>{displayKind(item?.node.kind ?? node.kind)}</dd>
-            <dt>Contained</dt>
+            <dt>{t('contained')}</dt>
             <dd>{item ? (item.directChildCount ?? '—') : items.length}</dd>
-            <dt>Status</dt>
-            <dd>{(item?.node ?? node).lifecycle}</dd>
+            <dt>{t('status')}</dt>
+            <dd>{(item?.node ?? node).lifecycle === 'ACTIVE' ? t('active') : t('archived')}</dd>
           </dl>
         </section>
         <section className="topology-telemetry-note">
-          <h3>TELEMETRY</h3>
+          <h3>{t('telemetry')}</h3>
           <p>
             Live status appears on a mapped device or breaker. Topology alone does not prove
             connectivity.
@@ -312,7 +314,7 @@ export function TopologyExplorer({
             ↗ OPEN {item.node.kind === 'ROOM_SUBSTRUCTURE' ? 'ROOM' : displayKind(item.node.kind)}
           </Link>
         ) : (
-          <p>Select an object to inspect its properties.</p>
+          <p>{t('selectHelp')}</p>
         )}
       </aside>
     </section>

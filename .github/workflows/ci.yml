@@ -5,11 +5,12 @@ on:
   push:
     branches:
       - main
+      - 'chore/english-ui-baseline-20261022'
       - 'feat/modbus-tcp-site-mapper-sidecar'
       - 'feat/**'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify:
@@ -28,6 +29,24 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      - name: Normalize locale implementation files (one-time)
+        if: github.event_name == 'push' && github.ref_name == 'chore/english-ui-baseline-20261022' && github.actor != 'github-actions[bot]'
+        run: |
+          git fetch origin main
+          mapfile -t files < <(git diff --name-only origin/main HEAD -- src tests docs next.config.ts)
+          if [ ${#files[@]} -gt 0 ]; then
+            npx prettier --write "${files[@]}"
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src tests docs next.config.ts
+          if ! git diff --cached --quiet; then
+            git commit -m 'style(i18n): format localized English and Spanish interfaces'
+            git fetch origin "${GITHUB_REF_NAME}"
+            git rebase "origin/${GITHUB_REF_NAME}"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
 
       - name: Typecheck
         run: npm run typecheck

@@ -42,15 +42,21 @@ describe('English-first user interface', () => {
     const spanishLabel =
       /[áéíóúñüÁÉÍÓÚÑÜ¿¡]|\b(?:Resumen|Entradas|Gráficas|Telemetría|Puertos|Corriente|Voltaje|Potencia|Guardar|Cancelar|Contraseña|Configuración|Historial)\b/u;
     for (const file of uiFiles) {
-      if (spanishLabel.test(readFileSync(file, 'utf8'))) {
+      const source = readFileSync(file, 'utf8');
+      // A locale option must use its proper, user-recognizable language name.
+      const text = file.endsWith('language-switcher.tsx')
+        ? source.replace('<option value="es">Español</option>', '')
+        : source;
+      if (spanishLabel.test(text)) {
         untranslated.push(file.replace(process.cwd(), ''));
       }
     }
     expect(untranslated).toEqual([]);
   });
 
-  it('advertises English as the current HTML document language', () => {
+  it('renders the explicit selected locale as the HTML document language', () => {
     const rootLayout = readFileSync(resolve(process.cwd(), 'src/app/layout.tsx'), 'utf8');
-    expect(rootLayout).toContain('<html lang="en">');
+    expect(rootLayout).toContain('<html lang={locale}>');
+    expect(rootLayout).toContain('await getLocale()');
   });
 });

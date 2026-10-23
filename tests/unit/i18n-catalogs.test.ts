@@ -22,7 +22,7 @@ function leaves(value: Record<string, unknown>, parent = ''): Map<string, string
 }
 
 describe('Site Mapper translation catalogs', () => {
-  it('keeps English as the active MK1 locale, without automatic browser switching', () => {
+  it('uses English by default and accepts only explicit en/es preferences', () => {
     expect(defaultLocale).toBe('en');
     expect(isSupportedLocale('pt')).toBe(false);
     expect(locales).toEqual(['en', 'es']);

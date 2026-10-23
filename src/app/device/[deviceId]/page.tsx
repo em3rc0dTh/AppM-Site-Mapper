@@ -319,7 +319,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                 <dd>{node.category ?? t('notSpecified')}</dd>
                 <dt>{t('serial')}</dt>
                 <dd>{node.serialNumber ?? t('notAssigned')}</dd>
-                <dt>Rack</dt>
+                <dt>{t('rack')}</dt>
                 <dd>{rackNode?.name ?? t('noContext')}</dd>
                 <dt>{t('placement')}</dt>
                 <dd>

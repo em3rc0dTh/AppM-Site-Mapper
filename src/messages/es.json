@@ -279,7 +279,8 @@
       "occupancy": "OCUPACIÓN",
       "elevation": "ELEVACIÓN",
       "power": "POTENCIA",
-      "locate": "UBICAR"
+      "locate": "UBICAR",
+      "breadcrumbs": "Ruta de navegación"
     },
     "power": {
       "network": "RED",
@@ -321,7 +322,8 @@
       "power": "RUTA DE POTENCIA",
       "available": "DISPONIBLE",
       "reserved": "RESERVADO",
-      "equipped": "EQUIPADO"
+      "equipped": "EQUIPADO",
+      "breadcrumbs": "Ruta de navegación"
     },
     "topology": {
       "site": "SITIO",
@@ -343,7 +345,10 @@
       "noGeometryHelp": "Esta sala no tiene un polígono guardado, por lo que MK1 no inventará un plano.",
       "siteBoundary": "Límite del sitio",
       "structureBoundary": "Límite de estructura (referencia de nivel)",
-      "noStructure": "Sin límite de estructura levantado"
+      "noStructure": "Sin límite de estructura levantado",
+      "breadcrumbs": "Ruta de navegación",
+      "rackLink": "Rack",
+      "blueprintLink": "Plano"
     },
     "connectEquipment": {
       "unknownPort": "Puerto desconocido",

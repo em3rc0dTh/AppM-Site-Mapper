@@ -279,7 +279,8 @@
       "occupancy": "OCCUPANCY",
       "elevation": "ELEVATION",
       "power": "POWER",
-      "locate": "LOCATE"
+      "locate": "LOCATE",
+      "breadcrumbs": "Breadcrumbs"
     },
     "power": {
       "network": "NETWORK",
@@ -321,7 +322,8 @@
       "power": "POWER PATH",
       "available": "AVAILABLE",
       "reserved": "RESERVED",
-      "equipped": "EQUIPPED"
+      "equipped": "EQUIPPED",
+      "breadcrumbs": "Breadcrumbs"
     },
     "topology": {
       "site": "SITE",
@@ -343,7 +345,10 @@
       "noGeometryHelp": "This room has no preserved polygon, so MK1 will not invent a blueprint.",
       "siteBoundary": "Site boundary",
       "structureBoundary": "Structure boundary (Level reference)",
-      "noStructure": "No surveyed Structure boundary"
+      "noStructure": "No surveyed Structure boundary",
+      "breadcrumbs": "Breadcrumbs",
+      "rackLink": "Rack",
+      "blueprintLink": "Blueprint"
     },
     "connectEquipment": {
       "unknownPort": "Unknown port",

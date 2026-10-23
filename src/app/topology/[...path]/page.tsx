@@ -337,7 +337,7 @@ export default async function TopologyNodePage({
     >
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
-        aria-label="Breadcrumb"
+        aria-label={t('breadcrumbs')}
       >
         {trailEntries
           .filter((item, index) => {
@@ -556,12 +556,12 @@ export default async function TopologyNodePage({
         <div className="telxius-hidden-actions" aria-hidden="true">
           {rackLink && (
             <Link href={rackLink} prefetch={false}>
-              Rack
+              {t('rackLink')}
             </Link>
           )}
           {blueprintLink && (
             <Link href={blueprintLink} prefetch={false}>
-              Blueprint
+              {t('blueprintLink')}
             </Link>
           )}
         </div>

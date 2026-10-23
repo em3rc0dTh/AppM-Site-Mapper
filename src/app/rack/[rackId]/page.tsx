@@ -54,7 +54,7 @@ export default async function RackPage({
     <main className="operational-page operational-page--rack telxius-operational-page zip-rack-elevation-page">
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs zip-rack-elevation-breadcrumbs"
-        aria-label="Breadcrumb"
+        aria-label={t('breadcrumbs')}
       >
         {room ? (
           <Link href={await topology.buildDeepLink(room.id)}>← {room.name}</Link>

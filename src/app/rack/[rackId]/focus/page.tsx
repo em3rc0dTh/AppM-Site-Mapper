@@ -54,7 +54,7 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
   const t = await getTranslations('pages.rackFocus');
   return (
     <main className="operational-page">
-      <nav className="breadcrumbs zip-rack-focus-breadcrumbs" aria-label="Breadcrumb">
+      <nav className="breadcrumbs zip-rack-focus-breadcrumbs" aria-label={t('breadcrumbs')}>
         {room ? <Link href={await topology.buildDeepLink(room.id)}>← {room.name}</Link> : null}
         <span className="zip-breadcrumb-divider" />
         <strong>

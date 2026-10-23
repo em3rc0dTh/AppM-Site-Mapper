@@ -165,7 +165,7 @@ export function EquipmentCompositionEditor({
           defaultValue={defaultValue}
           maxLength={80}
           pattern="[A-Za-z0-9]+(_[A-Za-z0-9]+)*"
-          placeholder="e.g. 0_2"
+          placeholder={t('prefixExample')}
           title={t('rawMqtt')}
         />
         <small>{t('pointPrefixHelp')}</small>

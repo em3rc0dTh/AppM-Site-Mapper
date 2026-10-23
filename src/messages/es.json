@@ -893,7 +893,8 @@
     "childrenCount": "{count} elementos secundarios",
     "rawMqtt": "Grupo MQTT sin procesar, como 0_2. Déjalo vacío si no se ha comisionado.",
     "pointPrefixHelp": "El punto 1 se convierte en prefix_1. Solo registra la dirección; no reasigna las vinculaciones de circuitos existentes ni verifica su cableado físico.",
-    "instanceHelp": "Selecciona las posiciones hijas y la presentación de esta instancia"
+    "instanceHelp": "Selecciona las posiciones hijas y la presentación de esta instancia",
+    "prefixExample": "p. ej. 0_2"
   },
   "accessPorts": {
     "title": "PUERTOS DE ACCESO",

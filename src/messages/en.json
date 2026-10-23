@@ -893,7 +893,8 @@
     "childrenCount": "{count} children",
     "rawMqtt": "Raw MQTT group such as 0_2. Leave empty if not commissioned.",
     "pointPrefixHelp": "Point 1 becomes prefix_1. This records the address only; it does not reassign existing circuit bindings or prove their physical wiring.",
-    "instanceHelp": "Choose child slots and presentation for this instance"
+    "instanceHelp": "Choose child slots and presentation for this instance",
+    "prefixExample": "e.g. 0_2"
   },
   "accessPorts": {
     "title": "ACCESS PORTS",

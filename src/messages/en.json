@@ -1055,7 +1055,17 @@
     "window": "SNMP history time window",
     "metric": "SNMP trend metric",
     "loading": "Loading persisted SNMP samples…",
-    "energy": "Estimated energy: {value} kWh · observed segments"
+    "energy": "Estimated energy: {value} kWh · observed segments",
+    "noPairs": "No paired samples in this period.",
+    "metricVoltage": "VOLTAGE · SHUNTS A/B",
+    "metricCurrent": "CURRENT · SHUNTS A/B",
+    "metricPower": "ESTIMATED POWER · |V| × I",
+    "metricEnergy": "ESTIMATED ENERGY · OBSERVED INTERVALS",
+    "trends": "{title} historical trends over {window}",
+    "error": "History unavailable: {error}",
+    "empty": "No samples stored for the selected range. TimescaleDB does not invent missing history.",
+    "coverage": "{minutes} feed-minutes covered, counted across inputs. No extrapolation over gaps greater than 120 seconds.",
+    "note": "Power = |V| × I from paired DC readings. Energy is trapezoidally integrated only across fresh observations. Neither is a measured SNMP energy counter; simulated data is not field certification."
   },
   "connectEquipmentPower": {
     "title": "Connect Equipment Power",

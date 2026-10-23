@@ -77,6 +77,7 @@ function TrendChart({
   feeds: readonly FeedHistory[];
   window: TelemetryHistoryWindow;
 }>) {
+  const tu = useTranslations('snmpHistoryUi');
   const series = useMemo(() => createSeries(feeds, metric.key), [feeds, metric.key]);
   const all = series.flatMap((item) => item.values);
   const last = all.length ? Math.max(...all.map((point) => point.time)) : null;
@@ -111,17 +112,17 @@ function TrendChart({
   return (
     <div className="sm-snmp-history-chart">
       <div className="sm-snmp-history-heading">
-        <strong>{metric.title}</strong>
+        <strong>{metric.key === 'voltageV' ? tu('metricVoltage') : metric.key === 'currentA' ? tu('metricCurrent') : metric.key === 'powerW' ? tu('metricPower') : tu('metricEnergy')}</strong>
         <small>{metric.unit}</small>
       </div>
       {all.length === 0 ? (
-        <p>No paired samples in this period.</p>
+        <p>{tu('noPairs')}</p>
       ) : (
         <>
           <svg
             viewBox={`0 0 ${width} ${height}`}
             role="img"
-            aria-label={`${metric.title} historical trends over ${window}`}
+            aria-label={`${metric.key === 'voltageV' ? tu('metricVoltage') : metric.key === 'currentA' ? tu('metricCurrent') : metric.key === 'powerW' ? tu('metricPower') : tu('metricEnergy')} historical trends over ${window}`}
           >
             <line
               x1={plotX}
@@ -278,14 +279,14 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
       {loading && <p role="status">{tu('loading')}</p>}
       {error && (
         <p role="alert" className="form-error">
-          History unavailable: {error}
+          {tu('error',{error})}
         </p>
       )}
       {!loading && !error && data && (
         <>
           {data.feeds.every((feed) => feed.points.length === 0) ? (
             <p>
-              No samples stored for the selected range. TimescaleDB does not invent missing history.
+              {tu('empty')}
             </p>
           ) : (
             <div className="sm-snmp-history-metrics">
@@ -297,13 +298,10 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
           <div className="sm-snmp-history-footnote">
             <strong>{tu('energy', { value: latest.toFixed(4) })}</strong>
             <small>
-              {(coverage / 60).toFixed(1)} feed-minutes covered, counted across inputs. No
-              extrapolation over gaps greater than 120 seconds.
+              {tu('coverage',{minutes:(coverage/60).toFixed(1)})}
             </small>
             <small>
-              Power = |V| × I from paired DC readings. Energy is trapezoidally integrated only
-              across fresh observations. Neither is a measured SNMP energy counter; simulated data
-              is not field certification.
+              {tu('note')}
             </small>
           </div>
         </>

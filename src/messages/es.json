@@ -1055,7 +1055,17 @@
     "window": "Intervalo del historial SNMP",
     "metric": "Métrica de tendencia SNMP",
     "loading": "Cargando muestras SNMP persistidas…",
-    "energy": "Energía estimada: {value} kWh · intervalos observados"
+    "energy": "Energía estimada: {value} kWh · intervalos observados",
+    "noPairs": "No hay pares de muestras en este período.",
+    "metricVoltage": "VOLTAJE · SHUNTS A/B",
+    "metricCurrent": "CORRIENTE · SHUNTS A/B",
+    "metricPower": "POTENCIA ESTIMADA · |V| × I",
+    "metricEnergy": "ENERGÍA ESTIMADA · INTERVALOS OBSERVADOS",
+    "trends": "Tendencias históricas de {title} durante {window}",
+    "error": "Historial no disponible: {error}",
+    "empty": "No hay muestras almacenadas para el intervalo seleccionado. TimescaleDB no inventa historial faltante.",
+    "coverage": "{minutes} minutos de alimentación cubiertos, sumados entre entradas. No hay extrapolación de intervalos mayores de 120 segundos.",
+    "note": "Potencia = |V| × I a partir de lecturas DC emparejadas. La energía se integra mediante trapecios únicamente entre observaciones recientes. Ninguna es un contador de energía medido por SNMP; los datos simulados no certifican condiciones de campo."
   },
   "connectEquipmentPower": {
     "title": "Conectar alimentación de Equipment",

@@ -96,16 +96,16 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
           <strong>{t('title')}</strong>
           <small>
             {chassis
-              ? 'BDFB incoming independent shunts'
-              : 'Recorded feeds serving this physical scope'}
+              ? t('chassisShunts')
+              : t('scopedFeeds')}
           </small>
         </div>
         <span>
           {simulated
-            ? 'LAB SIMULATED'
+            ? t('labSimulated')
             : scopeCapacity.mode === 'VERIFIED_LIVE' && ratio !== null
-              ? 'VERIFIED LIVE'
-              : 'INCOMPLETE / SHARED'}
+              ? t('verifiedLive')
+              : t('incompleteShared')}
         </span>
       </header>
       <div className="ec-snmp-capacity-metrics">
@@ -130,13 +130,13 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
           aria-valuemax={100}
           aria-valuenow={Math.min(100, Math.max(0, ratio))}
           aria-label={
-            simulated ? 'Simulated DC feeder capacity used' : 'Verified DC feeder capacity used'
+            simulated ? t('simulatedCapacityUsed') : t('verifiedCapacityUsed')
           }
         >
           <div style={{ width: `${Math.min(100, Math.max(0, ratio))}%` }} />
           <span>
-            {ratio.toFixed(1)}% used · {quantity(available)} remaining ·{' '}
-            {simulated ? 'LAB SIMULATED' : 'VERIFIED'}
+            {t('utilization', { percent: ratio.toFixed(1), available: quantity(available) })}{' '}
+            {simulated ? t('labSimulated') : t('verified')}
           </span>
         </div>
       )}
@@ -149,11 +149,11 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
             <span key={feed.accessPortId}>
               <strong>{feed.label}</strong>: {quantity(feed.measuredA)} / {quantity(feed.ratedA)}
               {feed.utilizationPct !== null
-                ? ` · ${feed.utilizationPct.toFixed(1)}% used · ${quantity(feed.availableA)} free`
-                : ' · no rated capacity or fresh reading'}
+                ? t('feedUtilization', { percent: feed.utilizationPct.toFixed(1), available: quantity(feed.availableA) })
+                : t('noRatedReading')}
               {' · '}
-              {feed.status === 'LAB_LIVE' ? 'LAB SIMULATED' : feed.status}
-              {(original?.servedPanelIds.length ?? 0) > 1 ? ' · shared shunt' : ''}
+              {feed.status === 'LAB_LIVE' ? t('labSimulated') : feed.status === 'VERIFIED_LIVE' ? t('verifiedLive') : feed.status}
+              {(original?.servedPanelIds.length ?? 0) > 1 ? t('sharedShunt') : ''}
             </span>
           );
         })}
@@ -161,15 +161,15 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
       {(simulated || shared || !exclusive) && (
         <p>
           {simulated
-            ? 'LAB SIMULATED: computed capacity is an estimate from synthetic current and configured port ratings, never a certified physical limit. '
+            ? t('simulationWarning')
             : ''}
           {shared
-            ? 'A shunt serves multiple panels: its current is not attributed separately to each. '
+            ? t('sharedWarning')
             : ''}
           {!exclusive
-            ? 'Current cannot be attributed to a partial group of panels served by the same shunt.'
+            ? t('partialWarning')
             : ratio === null
-              ? 'The full utilization is unavailable until all inputs report fresh current and have recorded nominal ampere ratings.'
+              ? t('incompleteWarning')
               : ''}
         </p>
       )}

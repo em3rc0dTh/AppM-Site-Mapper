@@ -247,6 +247,28 @@
       "available": "DISPONIBLE",
       "reserved": "RESERVADO",
       "equipped": "EQUIPADO"
+    },
+    "topology": {
+      "site": "SITIO",
+      "siteCanvas": "INFRAESTRUCTURA / PLANO DEL SITIO",
+      "structure": "EDIFICIO / PLANO DE ESTRUCTURA",
+      "level": "NIVEL / PLANO DE PISO",
+      "room": "SUBESTRUCTURA / PLANO DE SALA",
+      "bdfb": "POTENCIA / INTERIOR BDFB",
+      "roomDescription": "Límite físico de sala · bahías de clústeres · cuadrícula de posiciones de 600 × 600 mm",
+      "bdfbDescription": "Jerarquía de distribución física · telemetría MQTT LIVE",
+      "electricalHierarchy": "Jerarquía eléctrica · paneles",
+      "bdfbView": "VISTA FÍSICA BDFB",
+      "addCluster": "+ AGREGAR CLÚSTER",
+      "incomplete": "La composición física BDFB está incompleta",
+      "incompleteHelp": "Construye recursivamente la jerarquía real de Equipment. Shelf, Frame, Panel y Circuit Breaker son Equipment solo cuando existen físicamente.",
+      "incompleteDetail": "Abre el Equipment raíz y completa las posiciones disponibles de sus elementos secundarios. Las posiciones vacías siguen siendo nulas; Site Mapper no crea entidades Holder.",
+      "configure": "CONFIGURAR",
+      "noGeometry": "Geometría física no disponible",
+      "noGeometryHelp": "Esta sala no tiene un polígono guardado, por lo que MK1 no inventará un plano.",
+      "siteBoundary": "Límite del sitio",
+      "structureBoundary": "Límite de estructura (referencia de nivel)",
+      "noStructure": "Sin límite de estructura levantado"
     }
   },
   "forms": {

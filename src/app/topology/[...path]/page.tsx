@@ -1,6 +1,7 @@
 import { SiteBoundaryWorkspace } from '@/components/topology/site-boundary-workspace';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import {
@@ -320,7 +321,8 @@ export default async function TopologyNodePage({
 
   const rackLink: string | null = null;
   const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
-  const sectionDescription = descriptionFor(node);
+  const t = await getTranslations('pages.topology');
+  const sectionDescription = node.kind === 'ROOM_SUBSTRUCTURE' ? t('roomDescription') : node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? t('bdfbDescription') : node.kind === 'SITE' ? t('site') : descriptionFor(node);
 
   return (
     <main
@@ -360,7 +362,7 @@ export default async function TopologyNodePage({
           {navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />}
           {node.kind === 'DEVICE' && bdfbPresentation && (
             <details className="context-power-disclosure">
-              <summary>Electrical hierarchy · panels</summary>
+              <summary>{t('electricalHierarchy')}</summary>
               <BdfbPowerTree
                 device={node}
                 trail={trail}
@@ -374,7 +376,7 @@ export default async function TopologyNodePage({
 
         <section className="operational-stage telxius-operational-stage">
           <SectionHeader
-            eyebrow={eyebrowFor(node)}
+            eyebrow={node.kind === 'SITE' ? t('siteCanvas') : node.kind === 'STRUCTURE' ? t('structure') : node.kind === 'LEVEL' ? t('level') : node.kind === 'ROOM_SUBSTRUCTURE' ? t('room') : node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? t('bdfb') : eyebrowFor(node)}
             title={
               node.kind === 'DEVICE' && bdfbPresentation
                 ? query.panel
@@ -382,7 +384,7 @@ export default async function TopologyNodePage({
                       .flatMap((shelf) => shelf.frames)
                       .flatMap((frame) => frame.panels)
                       .find((panel) => panel.id === query.panel)?.label ?? 'PANEL')
-                  : 'BDFB PHYSICAL VIEW'
+                  : t('bdfbView')
                 : node.kind === 'ROOM_SUBSTRUCTURE'
                   ? node.name.toUpperCase()
                   : node.name
@@ -395,7 +397,7 @@ export default async function TopologyNodePage({
                 )}
                 {node.kind === 'ROOM_SUBSTRUCTURE' && canWrite && (
                   <Link className="telxius-primary-action" href={blueprintLink ?? selfHref}>
-                    + ADD CLUSTER
+                    {t('addCluster')}
                   </Link>
                 )}
                 {node.kind === 'DEVICE' && canWrite && (
@@ -423,14 +425,12 @@ export default async function TopologyNodePage({
               <section className="zip-bdfb-recovery-state" role="status">
                 <div>
                   <span aria-hidden="true">▥</span>
-                  <h2>BDFB physical composition is incomplete</h2>
+                  <h2>{t('incomplete')}</h2>
                   <p>
-                    Build the real Equipment hierarchy recursively. Shelf, Frame, Panel and Circuit
-                    Breaker are Equipment only when they physically exist.
+                    {t('incompleteHelp')}
                   </p>
                   <small>
-                    Open the root Equipment and fill its available child slots. Empty positions
-                    remain null; Site Mapper does not create Holder entities.
+                    {t('incompleteDetail')}
                   </small>
                   <div className="zip-bdfb-recovery-links">
                     {childEntries
@@ -441,7 +441,7 @@ export default async function TopologyNodePage({
                           href={`/device/${entry.node.id}`}
                           prefetch={false}
                         >
-                          CONFIGURE {entry.node.name}
+                          {t('configure')} {entry.node.name}
                         </Link>
                       ))}
                   </div>
@@ -458,8 +458,8 @@ export default async function TopologyNodePage({
               />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' && roomLayout?.ok ? (
               <StatePanel
-                title="Physical geometry unavailable"
-                description="This room has no preserved polygon, so MK1 will not invent a blueprint."
+                title={t('noGeometry')}
+                description={t('noGeometryHelp')}
               />
             ) : node.kind === 'SITE' || node.kind === 'STRUCTURE' ? (
               <SiteBoundaryWorkspace
@@ -492,15 +492,15 @@ export default async function TopologyNodePage({
                   kind={kind}
                   parentId={node.id}
                   {...(node.kind === 'SITE' && kind === 'STRUCTURE' && node.polygon
-                    ? { boundaryContext: node.polygon, boundaryLabel: 'Site boundary' }
+                    ? { boundaryContext: node.polygon, boundaryLabel: t('siteBoundary') }
                     : {})}
                   {...(node.kind === 'LEVEL' && kind === 'ROOM_SUBSTRUCTURE'
                     ? {
                         boundaryContext: roomBoundaryContext,
                         boundaryLabel:
                           roomStructure?.kind === 'STRUCTURE'
-                            ? 'Structure boundary (Level reference)'
-                            : 'No surveyed Structure boundary',
+                            ? t('structureBoundary')
+                            : t('noStructure'),
                         contextOverlays: siblingRoomOverlays,
                       }
                     : {})}

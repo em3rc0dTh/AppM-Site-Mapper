@@ -247,6 +247,28 @@
       "available": "AVAILABLE",
       "reserved": "RESERVED",
       "equipped": "EQUIPPED"
+    },
+    "topology": {
+      "site": "SITE",
+      "siteCanvas": "INFRASTRUCTURE / SITE CANVAS",
+      "structure": "BUILDING / STRUCTURE LAYOUT",
+      "level": "LEVEL / FLOOR LAYOUT",
+      "room": "SUBSTRUCTURE / ROOM BLUEPRINT",
+      "bdfb": "POWER / BDFB INTERNALS",
+      "roomDescription": "Physical room boundary · cluster bays · 600 × 600 mm position grid",
+      "bdfbDescription": "Physical distribution hierarchy · live MQTT overlay",
+      "electricalHierarchy": "Electrical hierarchy · panels",
+      "bdfbView": "BDFB PHYSICAL VIEW",
+      "addCluster": "+ ADD CLUSTER",
+      "incomplete": "BDFB physical composition is incomplete",
+      "incompleteHelp": "Build the real Equipment hierarchy recursively. Shelf, Frame, Panel and Circuit Breaker are Equipment only when they physically exist.",
+      "incompleteDetail": "Open the root Equipment and fill its available child slots. Empty positions remain null; Site Mapper does not create Holder entities.",
+      "configure": "CONFIGURE",
+      "noGeometry": "Physical geometry unavailable",
+      "noGeometryHelp": "This room has no preserved polygon, so MK1 will not invent a blueprint.",
+      "siteBoundary": "Site boundary",
+      "structureBoundary": "Structure boundary (Level reference)",
+      "noStructure": "No surveyed Structure boundary"
     }
   },
   "forms": {

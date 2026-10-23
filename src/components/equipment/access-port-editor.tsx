@@ -511,11 +511,7 @@ export function AccessPortEditor({
                       ? t('editPort')
                       : t('addPort')}
                 </h2>
-                <p>
-                  {quickFeed
-                    ? t('quickHelp')
-                    : t('portHelp')}
-                </p>
+                <p>{quickFeed ? t('quickHelp') : t('portHelp')}</p>
               </div>
               <button
                 type="button"
@@ -530,13 +526,9 @@ export function AccessPortEditor({
               {quickFeed && (
                 <div className="equipment-quick-feed-summary">
                   <strong>
-                    {hardwareProfile === 'ELTEK_BDCBB_CONFIG_2'
-                      ? t('config2')
-                      : t('config4')}
+                    {hardwareProfile === 'ELTEK_BDCBB_CONFIG_2' ? t('config2') : t('config4')}
                   </strong>
-                  <small>
-                    {t('autoSettings')}
-                  </small>
+                  <small>{t('autoSettings')}</small>
                   {!editingId && (
                     <button
                       type="button"
@@ -667,11 +659,7 @@ export function AccessPortEditor({
                 form.direction === 'INPUT' &&
                 form.exposure === 'EXTERNAL' && (
                   <fieldset className="equipment-access-port-snmp">
-                    <legend>
-                      {quickFeed
-                        ? t('suppliedByShunt')
-                        : t('snmpInput')}
-                    </legend>
+                    <legend>{quickFeed ? t('suppliedByShunt') : t('snmpInput')}</legend>
                     {!quickFeed && (
                       <label className="equipment-access-port-check">
                         <input
@@ -722,12 +710,13 @@ export function AccessPortEditor({
                           <div className="equipment-panel-picker-title">
                             <strong>{t('panels')}</strong>
                             <span>
-                              {t('selected', { selected: form.servedPanelIds.length, total: maxPanelCount })}
+                              {t('selected', {
+                                selected: form.servedPanelIds.length,
+                                total: maxPanelCount,
+                              })}
                             </span>
                           </div>
-                          <p className="equipment-panel-picker-help">
-                            {t('panelsHelp')}
-                          </p>
+                          <p className="equipment-panel-picker-help">{t('panelsHelp')}</p>
                           <input
                             type="search"
                             className="equipment-panel-picker-search"
@@ -737,9 +726,7 @@ export function AccessPortEditor({
                             aria-label={t('panelSearchLabel')}
                             disabled={panelsLoading || Boolean(panelsError)}
                           />
-                          {panelsLoading && (
-                            <span role="status">{t('loading')}</span>
-                          )}
+                          {panelsLoading && <span role="status">{t('loading')}</span>}
                           {panelsError && (
                             <div role="alert" className="form-error">
                               {t('panelError', { error: panelsError })}{' '}
@@ -756,9 +743,7 @@ export function AccessPortEditor({
                             >
                               {visiblePanels.length === 0 && (
                                 <p className="equipment-panel-picker-empty">
-                                  {panels.length === 0
-                                    ? t('noPanel')
-                                    : t('noMatches')}
+                                  {panels.length === 0 ? t('noPanel') : t('noMatches')}
                                 </p>
                               )}
                               {visiblePanels.map((panel) => {
@@ -782,7 +767,9 @@ export function AccessPortEditor({
                                       <strong>{panel.name}</strong>
                                       <small>{panel.frameName}</small>
                                       {claimed && (
-                                        <small>{t('assigned', { name: panel.assignedPortName ?? '' })}</small>
+                                        <small>
+                                          {t('assigned', { name: panel.assignedPortName ?? '' })}
+                                        </small>
                                       )}
                                     </span>
                                   </label>
@@ -791,14 +778,10 @@ export function AccessPortEditor({
                             </div>
                           )}
                           {hardwareProfile === 'ELTEK_BDCBB_CONFIG_2' && (
-                            <p className="equipment-panel-picker-help">
-                              {t('config2Info')}
-                            </p>
+                            <p className="equipment-panel-picker-help">{t('config2Info')}</p>
                           )}
                           {hardwareProfile === 'ELTEK_BDCBB_CONFIG_4' && (
-                            <p className="equipment-panel-picker-help">
-                              {t('config4Info')}
-                            </p>
+                            <p className="equipment-panel-picker-help">{t('config4Info')}</p>
                           )}
                         </div>
                         <div className="equipment-dc-verification">
@@ -833,9 +816,7 @@ export function AccessPortEditor({
                               {t('configureOid')}
                             </label>
                             {!form.independentInputConfirmed && (
-                              <small>
-                                {t('oidRequiresWiring')}
-                              </small>
+                              <small>{t('oidRequiresWiring')}</small>
                             )}
                             {existingSnmpBindings.length > 0 && (
                               <div
@@ -886,9 +867,7 @@ export function AccessPortEditor({
                                   (Number(form.ratedCurrentA) !== 800 ||
                                     Number(form.shuntRatedCurrentA) !== 1000 ||
                                     Number(form.shuntRatedMillivolts) !== 60) && (
-                                    <p className="form-error">
-                                      {t('config4Rating')}
-                                    </p>
+                                    <p className="form-error">{t('config4Rating')}</p>
                                   )}
                                 <label className="equipment-access-port-check">
                                   <input
@@ -907,13 +886,9 @@ export function AccessPortEditor({
                           open={config4NeedsRatings ? true : undefined}
                         >
                           <summary>
-                            {config4NeedsRatings
-                              ? t('requiredRating')
-                              : t('optionalRating')}
+                            {config4NeedsRatings ? t('requiredRating') : t('optionalRating')}
                           </summary>
-                          <p>
-                            {t('ratingHelp')}
-                          </p>
+                          <p>{t('ratingHelp')}</p>
                           <div className="equipment-access-port-advanced-fields">
                             <label>
                               {t('overload')}
@@ -971,11 +946,7 @@ export function AccessPortEditor({
                     )}
                   </fieldset>
                 )}
-              {!quickFeed && (
-                <p>
-                  {t('blocked')}
-                </p>
-              )}
+              {!quickFeed && <p>{t('blocked')}</p>}
               {quickFeed && (
                 <p>
                   {t('separate')}

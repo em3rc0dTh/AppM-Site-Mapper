@@ -29,6 +29,7 @@ try {
   browser = await chromium.launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const base = process.env.CI_HTTP_BASE_URL || 'http://127.0.0.1:3100';
+  await page.emulateMedia({ colorScheme: 'dark' });
 
   await page.goto(base + '/login', { waitUntil: 'domcontentloaded' });
   // The approved operational theme must be light even when the OS prefers dark.

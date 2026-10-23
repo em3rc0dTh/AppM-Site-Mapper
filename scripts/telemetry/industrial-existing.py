@@ -154,7 +154,7 @@ def configure_emulator(bfdb, interval_seconds):
     if not 3.0 <= desired <= 120.0:
         raise Refused("--mqtt-interval-seconds must be from 3 to 120 seconds")
     updated, found = re.subn(
-        r"(?m)^(\\s*intervalSeconds:\\s*)(?:[0-9]+(?:\\.[0-9]+)?)(\\s*)$",
+        r"(?m)^([ \t]*intervalSeconds:[ \t]*)(?:[0-9]+(?:\.[0-9]+)?)([ \t]*)$",
         lambda match: match.group(1) + str(desired) + match.group(2),
         original,
     )

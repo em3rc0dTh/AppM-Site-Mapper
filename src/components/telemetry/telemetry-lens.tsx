@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { useTranslations } from 'next-intl';
 
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 
@@ -31,7 +30,7 @@ export function TelemetryLens({
   label: string;
   breakerId?: string | undefined;
 }) {
-  const t = useTranslations('lensExtra');
+  const tu = useTranslations('lensExtra');
   const t = useTranslations('telemetryLens');
   const [open, setOpen] = useState(false);
   const [samples, setSamples] = useState<TelemetrySample[]>([]);

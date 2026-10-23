@@ -652,5 +652,40 @@
     "noActive": "No active templates. Create one in Virtual Warehouse first.",
     "loadFailed": "Could not load templates.",
     "instanceFailed": "Could not create the Equipment instance."
+  },
+  "liveTelemetry": {
+    "title": "Telemetry",
+    "description": "Ordered measurements received from the configured MQTT data provider.",
+    "reconnecting": "Reconnecting to the stream",
+    "reconnectingHelp": "Displayed measurements are the last values received through MQTT. Automatic reconnection is in progress.",
+    "connecting": "Connecting to telemetry",
+    "noMeasurements": "No measurements yet",
+    "awaiting": "Mapped MQTT identities will appear after a measurement is received.",
+    "sourceIdentity": "Source identity",
+    "entityId": "Entity ID",
+    "lastReceived": "Last received",
+    "messageId": "MQTT message ID",
+    "sourceObserved": "Source observed",
+    "overview": "Overview",
+    "mapped": "Mapped breakers",
+    "unmapped": "Unmapped points",
+    "noScalar": "No scalar measurements",
+    "noScalarHelp": "This packet contains structured data. Expand the raw payload to inspect it.",
+    "rawPayload": "Raw MQTT payload state"
+  },
+  "rackElevation": {
+    "front": "FRONT ELEVATION",
+    "capacity": "Capacity",
+    "used": "Used",
+    "free": "Free",
+    "reserved": "Reserved",
+    "inventory": "RACK INVENTORY",
+    "create": "+ CREATE ONE-OFF",
+    "noEquipment": "No Equipment instances have been created for this rack yet.",
+    "summary": "EQUIPMENT SUMMARY",
+    "available": "Available",
+    "equipped": "Equipped",
+    "trace": "TRACE POWER",
+    "open": "OPEN EQUIPMENT"
   }
 }

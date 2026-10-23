@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import {
   MetricTile,
@@ -23,6 +24,7 @@ function upsert(samples: readonly TelemetrySample[], sample: TelemetrySample): T
 }
 
 export function LiveTelemetry() {
+  const t = useTranslations('liveTelemetry');
   const [samples, setSamples] = useState<readonly TelemetrySample[]>([]);
   const [state, setState] = useState<'connecting' | 'live' | 'reconnecting'>('connecting');
 
@@ -51,8 +53,8 @@ export function LiveTelemetry() {
     <main>
       <SectionHeader
         eyebrow="MQTT / measurements"
-        title="Telemetry"
-        description="Ordered measurements received from the configured MQTT data provider."
+        title={t('title')}
+        description={t('description')}
         actions={
           <span aria-live="polite">
             <StatusBadge tone={state === 'live' ? 'good' : 'warning'}>
@@ -65,16 +67,16 @@ export function LiveTelemetry() {
       {state === 'reconnecting' && (
         <StatePanel
           kind="reconnecting"
-          title="Reconnecting to the stream"
-          description="Displayed measurements are the last values received through MQTT. Automatic reconnection is in progress."
+          title={t('reconnecting')}
+          description={t('reconnectingHelp')}
         />
       )}
 
       {samples.length === 0 ? (
         <StatePanel
           kind={state === 'connecting' ? 'loading' : 'empty'}
-          title={state === 'connecting' ? 'Connecting to telemetry' : 'No measurements yet'}
-          description="Mapped MQTT identities will appear after a measurement is received."
+          title={state === 'connecting' ? t('connecting') : t('noMeasurements')}
+          description={t('awaiting')}
         />
       ) : (
         <div className="telemetry-grid">
@@ -100,16 +102,16 @@ export function LiveTelemetry() {
                       kind: sample.protocol === 'BFDB' ? 'BFDB MQTT SOURCE' : sample.entityKind,
                       sections: [
                         {
-                          title: 'Overview',
+                          title: t('overview'),
                           fields: [
-                            { label: 'Source identity', value: sample.sourceIdentity },
-                            { label: 'Entity ID', value: sample.entityId },
-                            { label: 'Last received', value: sample.receivedAt },
+                            { label: t('sourceIdentity'), value: sample.sourceIdentity },
+                            { label: t('entityId'), value: sample.entityId },
+                            { label: t('lastReceived'), value: sample.receivedAt },
                             ...(sample.messageId
-                              ? [{ label: 'MQTT message ID', value: sample.messageId }]
+                              ? [{ label: t('messageId'), value: sample.messageId }]
                               : []),
                             ...(sample.sourceObservedAt
-                              ? [{ label: 'Source observed', value: sample.sourceObservedAt }]
+                              ? [{ label: t('sourceObserved'), value: sample.sourceObservedAt }]
                               : []),
                           ],
                         },
@@ -122,12 +124,12 @@ export function LiveTelemetry() {
                   <>
                     <div className="metric-grid">
                       <MetricTile
-                        label="Mapped breakers"
+                        label={t('mapped')}
                         value={breakerReadings.length}
                         detail="Resolved from MQTT points"
                       />
                       <MetricTile
-                        label="Unmapped points"
+                        label={t('unmapped')}
                         value={sample.unmappedPointIds?.length ?? 0}
                         detail="No breaker binding"
                       />
@@ -163,13 +165,13 @@ export function LiveTelemetry() {
                   </div>
                 ) : (
                   <StatePanel
-                    title="No scalar measurements"
-                    description="This packet contains structured data. Expand the raw payload to inspect it."
+                    title={t('noScalar')}
+                    description={t('noScalarHelp')}
                   />
                 )}
 
                 <details className="raw-payload">
-                  <summary>Raw MQTT payload state</summary>
+                  <summary>{t('rawPayload')}</summary>
                   <pre>{JSON.stringify(sample.reported, null, 2)}</pre>
                 </details>
               </Surface>

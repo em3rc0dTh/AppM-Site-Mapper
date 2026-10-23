@@ -652,5 +652,40 @@
     "noActive": "No hay plantillas activas. Crea una en el Almacén virtual primero.",
     "loadFailed": "No se pudieron cargar las plantillas.",
     "instanceFailed": "No se pudo crear la instancia de Equipment."
+  },
+  "liveTelemetry": {
+    "title": "Telemetría",
+    "description": "Mediciones ordenadas recibidas del proveedor de datos MQTT configurado.",
+    "reconnecting": "Reconectando con el flujo",
+    "reconnectingHelp": "Se muestran los últimos valores recibidos por MQTT. La reconexión automática está en curso.",
+    "connecting": "Conectando con la telemetría",
+    "noMeasurements": "Aún no hay mediciones",
+    "awaiting": "Las identidades MQTT vinculadas aparecerán cuando se reciba una medición.",
+    "sourceIdentity": "Identidad de origen",
+    "entityId": "ID de entidad",
+    "lastReceived": "Última recepción",
+    "messageId": "ID del mensaje MQTT",
+    "sourceObserved": "Observado en origen",
+    "overview": "Resumen",
+    "mapped": "Breakers vinculados",
+    "unmapped": "Puntos sin vincular",
+    "noScalar": "Sin mediciones escalares",
+    "noScalarHelp": "Este paquete contiene datos estructurados. Expande el contenido original para inspeccionarlo.",
+    "rawPayload": "Estado de la carga MQTT original"
+  },
+  "rackElevation": {
+    "front": "ELEVACIÓN FRONTAL",
+    "capacity": "Capacidad",
+    "used": "Utilizado",
+    "free": "Libre",
+    "reserved": "Reservado",
+    "inventory": "INVENTARIO DEL RACK",
+    "create": "+ CREAR ELEMENTO INDIVIDUAL",
+    "noEquipment": "Aún no se han creado instancias de Equipment para este rack.",
+    "summary": "RESUMEN DE EQUIPMENT",
+    "available": "Disponible",
+    "equipped": "Equipado",
+    "trace": "RASTREAR POTENCIA",
+    "open": "ABRIR EQUIPMENT"
   }
 }

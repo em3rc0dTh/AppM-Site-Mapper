@@ -1,5 +1,7 @@
 # Industrial integration — laboratory evidence, 2026-10-23
 
+> Historical evidence for baseline `ccd801d74ea8e3fe6f9280affe740454415b7058`. The subsequent closure revision has static review only; no tests were run for it. See [closure status](industrial-closure-static.md).
+
 Scope: branch `feat/site-mapper-work-2026-10-23`, based on Site Mapper main `da7609a`.
 Companion: BFDB `apps/snmp-emulator/eltek-traps.mjs`, using net-snmp 3.29.2.
 No real electrical device, customer secret or Metasys installation was used.

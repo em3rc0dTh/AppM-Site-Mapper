@@ -1057,7 +1057,11 @@
     "industrialSignals": "Industrial signals ({count})",
     "signal": "Signal",
     "value": "Value",
-    "quality": "Quality"
+    "quality": "Quality",
+    "captureAlerts": "Capture alerts ({count})",
+    "interpretationPending": "Interpretation pending",
+    "publishedPoint": "Modbus unit {unit}, offset {address}",
+    "publicationPending": "Modbus commissioning pending"
   },
   "telemetryLens": {
     "context": "CONTEXTUAL DIAGNOSTIC",

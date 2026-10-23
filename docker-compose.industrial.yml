@@ -2,6 +2,9 @@
 services:
   site-mapper:
     environment:
+      INDUSTRIAL_MODBUS_POINTS_FILE: /config/points.json
+      INDUSTRIAL_SNMP_DIAGNOSTICS_FILE: /var/industrial/snmp/diagnostics.json
+      INDUSTRIAL_MQTT_MAX_PENDING: '${INDUSTRIAL_MQTT_MAX_PENDING:-1000}'
       INDUSTRIAL_MQTT_SPOOL: /data/industrial-mqtt
       INDUSTRIAL_PROFILES_JSON: '${INDUSTRIAL_PROFILES_JSON:?Set approved industrial source profiles}'
       INDUSTRIAL_INGEST_SOURCES_JSON: '${INDUSTRIAL_INGEST_SOURCES_JSON:?Set distinct per-source collector tokens}'
@@ -9,6 +12,8 @@ services:
 
     volumes:
       - industrial_mqtt_spool:/data/industrial-mqtt
+      - industrial_trap_spool:/var/industrial/snmp:ro
+      - '${MODBUS_POINTS_LOCAL_PATH:?Set path to operator-approved points JSON}:/config/points.json:ro'
 
   snmp-traps:
     build:
@@ -20,6 +25,7 @@ services:
       SNMP_TRAP_SOURCES_JSON: '${SNMP_TRAP_SOURCES_JSON:?Set approved IPs and SNMP credentials}'
       SNMP_TRAP_BIND_HOST: 0.0.0.0
       SNMP_TRAP_PORT: '1162'
+      SNMP_TRAP_MAX_PENDING: '${SNMP_TRAP_MAX_PENDING:-1000}'
       SNMP_TRAP_ENGINE_ID: '${SNMP_TRAP_ENGINE_ID:?Set a persistent SNMP engine ID in hex}'
       SNMP_TRAP_SPOOL: /data/traps
       INDUSTRIAL_INGEST_URL: http://site-mapper:3000/api/telemetry/industrial/ingest

@@ -1,5 +1,7 @@
 # Industrial integration — MQTT, SNMP and stable Modbus extensions
 
+**Current closure status:** implementation and static review only; see [closure changes and deferred validation](industrial-closure-static.md). Historical laboratory results below precede this closure revision.
+
 This extension keeps the current application, MQTT parser, electrical bindings, historical service,
 GET collector, FC03 addresses 0–767, word order and missing-data policy in place.
 It adds infrastructure inside Site Mapper; BFDB remains the simulation laboratory.
@@ -77,7 +79,7 @@ Poll failures are diagnostic logs, not native power-loss alarms.
 ## Interpretation and alarm lifecycle
 
 Rules match an **exact key**, carry a profile version and declare kind, unit, scale and optional
-offset. Numeric strings do not silently become confirmed engineering measurements. Measurement
+offset. Known MIB enumerations are decoded to numeric states and labels without inventing engineering units. Exact measurement profiles remain required. Numeric strings do not silently become confirmed engineering measurements. Measurement
 rules require explicit unit and scale. New numeric fields with no rule stay `UNKNOWN`.
 
 The supplied Eltek rev54 MIBs were extracted reproducibly by
@@ -94,7 +96,7 @@ never overwrite each other's alarm. Missing or unrecognized flags do not clear a
 SNMPv1 enterprise-specific notification aliases are matched only against this known catalog.
 No breaker-level relationship is inferred from a controller-level trap.
 
-The catalog preserves last value, raw value/type, profile version, source, target, provenance,
+Trap measured-object references are resolved into the actual measurement OID with derivation links; direct GET and trap paths share that signal identity. No engineering scale is inferred. The catalog preserves last value, raw value/type, profile version, source, target, provenance,
 first/last observation and alarm activation/resolution times. Partial messages leave absent
 signals untouched. Older observations are retained in history and cannot replace newer state.
 MQTT uses the existing BFDB `msgid`/epoch timestamp contract where validated. Otherwise a missing
@@ -157,19 +159,19 @@ recovery testing. Disk/queue bounds and the filesystem must be monitored.
 
 No observed point is auto-published. The legacy register block remains 0–767. Each extension point
 occupies three explicit registers at offset >=1024: FLOAT32 ABCD/high-word-first value (two words),
-then UINT16 quality. FC03, Unit IDs 1–247 and address limits are validated. Overlaps are rejected.
+then UINT16 quality. Known latched alarm states retain 1/0 independently of freshness; the quality word still reports uncertainty. FC03, Unit IDs 1–247 and address limits are validated. Overlaps are rejected.
 The maximum is 10,000 published points per manifest; each FC03 request remains limited to 125 words.
 
 | Quality    | Code | Extension value                                                |
 | ---------- | ---: | -------------------------------------------------------------- |
 | UNOBSERVED |    0 | IEEE NaN                                                       |
 | VALID      |    1 | Engineering value, boolean 0/1, or alarm ACTIVE=1 / RESOLVED=0 |
-| STALE      |    2 | IEEE NaN                                                       |
-| INVALID    |    3 | IEEE NaN                                                       |
-| UNKNOWN    |    4 | IEEE NaN                                                       |
-| OFFLINE    |    5 | IEEE NaN                                                       |
+| STALE      |    2 | IEEE NaN for periodic values; known alarm remains 1/0          |
+| INVALID    |    3 | IEEE NaN for periodic values; known alarm remains 1/0          |
+| UNKNOWN    |    4 | IEEE NaN for periodic values; known alarm remains 1/0          |
+| OFFLINE    |    5 | IEEE NaN for periodic values; known alarm remains 1/0          |
 
-A real zero with VALID differs from absence. Strings, incompatible units and FLOAT32 overflow do
+Unknown alarm state is NaN; freshness never resolves an alarm. A real zero with VALID differs from absence. Strings, incompatible units and FLOAT32 overflow do
 not become plausible numbers. The old block's `zero`/`exception` policy is unchanged.
 The bridge pulls commissioned signals every two seconds using a distinct machine credential;
 restart replay preserves original acquisition times, so recovery cannot make old data fresh.
@@ -214,7 +216,7 @@ explicitly associated signals exist; navigation, styling, topology and existing 
 
 ## Verification and remaining commissioning
 
-Run `npm ci`, `npm ci --prefix infra/snmp-collector`, `npm run test:industrial`, `npm test`,
+The following commands are for **later validation**, not instructions to run tests during the current closure. Run `npm ci`, `npm ci --prefix infra/snmp-collector`, `npm run test:industrial`, `npm test`,
 `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run docs:check`, `npm run build`.
 The default test suite skips external Mongo/BFDB laboratories unless explicitly configured.
 For real Mongo transactions and the cross-repository wire chain:

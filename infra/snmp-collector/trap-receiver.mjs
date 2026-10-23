@@ -156,6 +156,74 @@ export async function startTrapReceiver({
   await mkdir(spoolDirectory, { recursive: true, mode: 0o700 });
   const files = (await readdir(spoolDirectory)).filter((f) => /^[a-f0-9-]+\.json$/.test(f));
   if (files.length > maxPending) throw new Error('Trap spool exceeds configured capacity');
+  const savedCounters = {};
+  try {
+    const path = join(spoolDirectory, 'diagnostics.json');
+    if ((await stat(path)).size > 65536) throw new Error('Oversized diagnostics');
+    const old = JSON.parse(await readFile(path, 'utf8'));
+    if (old.counters && typeof old.counters === 'object')
+      for (const [key, value] of Object.entries(old.counters)) {
+        if (/^(trap|snmp)\.[a-z_.]{1,60}$/.test(key) && Number.isSafeInteger(value) && value >= 0)
+          savedCounters[key] = value;
+      }
+  } catch {
+    /* First start has no persisted counters. */
+  }
+  const counters = savedCounters;
+  let diagnosticWrites = Promise.resolve(),
+    diagnosticWriteFailed = false;
+  let diagnosticDirty = false,
+    diagnosticWriting = false;
+  const observer = onStatus;
+  function snapshot() {
+    const depth = pending.size + accepting,
+      alerts = [];
+    if (depth >= maxPending) alerts.push('SNMP_QUEUE_FULL');
+    else if (depth >= Math.ceil(maxPending * 0.8)) alerts.push('SNMP_QUEUE_HIGH_WATER');
+    if (
+      counters['trap.queue.full'] ||
+      counters['trap.spool.failed'] ||
+      counters['trap.payload.too_large']
+    )
+      alerts.push('SNMP_CAPTURE_FAILURE_RECORDED');
+    if (depth && counters['trap.delivery.retry']) alerts.push('SNMP_DELIVERY_RETRY');
+    if (diagnosticWriteFailed) alerts.push('SNMP_DIAGNOSTIC_STORAGE_FAILED');
+    return {
+      version: 1,
+      protocol: 'SNMP',
+      updatedAt: new Date().toISOString(),
+      pending: depth,
+      capacity: maxPending,
+      counters: { ...counters },
+      alerts,
+    };
+  }
+  function persistDiagnostics() {
+    diagnosticDirty = true;
+    if (diagnosticWriting) return;
+    diagnosticWriting = true;
+    diagnosticWrites = (async () => {
+      while (diagnosticDirty) {
+        diagnosticDirty = false;
+        try {
+          const path = join(spoolDirectory, 'diagnostics.json');
+          await writeFile(path + '.tmp', JSON.stringify(snapshot()), { mode: 0o600 });
+          await rename(path + '.tmp', path);
+          diagnosticWriteFailed = false;
+        } catch {
+          diagnosticWriteFailed = true;
+          break;
+        }
+      }
+    })().finally(() => {
+      diagnosticWriting = false;
+    });
+  }
+  onStatus = (event) => {
+    counters[event] = (counters[event] ?? 0) + 1;
+    persistDiagnostics();
+    observer(event);
+  };
   const pending = new Set(files);
   let accepting = 0,
     stopping = false,
@@ -197,6 +265,7 @@ export async function startTrapReceiver({
       }
     } finally {
       working = false;
+      persistDiagnostics();
       if (!stopping) timer = setTimeout(drain, retryMs);
     }
   }
@@ -319,14 +388,18 @@ export async function startTrapReceiver({
   return {
     receiver,
     pending,
+    diagnostics: snapshot,
     close() {
+      if (stopping) return diagnosticWrites;
       stopping = true;
       clearTimeout(timer);
       receiver.close();
+      persistDiagnostics();
       for (const poller of pollers) {
         clearTimeout(poller.timer);
         poller.session.close();
       }
+      return diagnosticWrites;
     },
   };
 }
@@ -336,6 +409,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     url: process.env.INDUSTRIAL_INGEST_URL,
     spoolDirectory: process.env.SNMP_TRAP_SPOOL || '/data/traps',
     port: Number(process.env.SNMP_TRAP_PORT || 1162),
+    maxPending: Number(process.env.SNMP_TRAP_MAX_PENDING ?? 1000),
     address: process.env.SNMP_TRAP_BIND_HOST || '127.0.0.1',
     ...(process.env.SNMP_TRAP_ENGINE_ID ? { engineID: process.env.SNMP_TRAP_ENGINE_ID } : {}),
     onStatus: (event) => console.info(JSON.stringify({ event })),

@@ -1057,7 +1057,11 @@
     "industrialSignals": "Señales industriales ({count})",
     "signal": "Señal",
     "value": "Valor",
-    "quality": "Calidad"
+    "quality": "Calidad",
+    "captureAlerts": "Alertas de captura ({count})",
+    "interpretationPending": "Interpretación pendiente",
+    "publishedPoint": "Modbus unidad {unit}, offset {address}",
+    "publicationPending": "Comisionamiento Modbus pendiente"
   },
   "telemetryLens": {
     "context": "DIAGNÓSTICO CONTEXTUAL",

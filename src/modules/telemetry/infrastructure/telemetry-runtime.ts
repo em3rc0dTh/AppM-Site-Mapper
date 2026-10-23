@@ -1,4 +1,6 @@
 import { join } from 'node:path';
+import { recordIndustrialFault } from '@/modules/telemetry/infrastructure/industrial/diagnostics';
+import type { SourceProfile } from '@/modules/telemetry/domain/industrial/observations';
 import { MqttObservationOutbox } from '@/modules/telemetry/infrastructure/industrial/mqtt-outbox';
 import { normalizeObservations } from '@/modules/telemetry/domain/industrial/observations';
 import { isProductionDeployment, requireRuntimeSecret } from '@/config/env';
@@ -143,17 +145,31 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     );
     const rejectionLogThrottle = new TelemetryRejectionLogThrottle(rejectionLogIntervalMs);
 
-    const captureProfiles = industrialProfiles();
+    let captureProfiles: SourceProfile[] = [];
+    try {
+      captureProfiles = industrialProfiles();
+    } catch {
+      recordIndustrialFault('INDUSTRIAL_PROFILES_INVALID');
+      logger.warn('industrial.profiles.invalid', {});
+    }
     let industrialOutbox: MqttObservationOutbox | null = null;
     if (captureProfiles.some((p) => p.protocol === 'MQTT')) {
-      if (isProductionDeployment() && !process.env.INDUSTRIAL_MQTT_SPOOL)
-        throw new Error('Production MQTT capture requires a persistent outbox directory');
-      industrialOutbox = new MqttObservationOutbox(
-        process.env.INDUSTRIAL_MQTT_SPOOL ?? join(process.cwd(), '.runtime', 'industrial-mqtt'),
-        captureIndustrial,
-        () => logger.warn('industrial.mqtt.delivery_retry', {}),
-      );
-      await industrialOutbox.start();
+      try {
+        if (isProductionDeployment() && !process.env.INDUSTRIAL_MQTT_SPOOL)
+          throw new Error('Production MQTT capture requires a persistent outbox directory');
+        industrialOutbox = new MqttObservationOutbox(
+          process.env.INDUSTRIAL_MQTT_SPOOL ?? join(process.cwd(), '.runtime', 'industrial-mqtt'),
+          captureIndustrial,
+          () => logger.warn('industrial.mqtt.delivery_retry', {}),
+          Number(process.env.INDUSTRIAL_MQTT_MAX_PENDING ?? 1000),
+        );
+        await industrialOutbox.start();
+      } catch {
+        await industrialOutbox?.close();
+        industrialOutbox = null;
+        recordIndustrialFault('MQTT_CAPTURE_UNAVAILABLE');
+        logger.warn('industrial.mqtt.initialization_failed', {});
+      }
     }
     const hub = new TelemetryHub(maxStreams);
     const topologyRepository = await createTopologyRepository();
@@ -213,6 +229,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
             payload.byteLength <= maxPayloadBytes &&
             captureProfiles.some((p) => p.protocol === 'MQTT' && p.sourceIdentity === serial)
           ) {
+            let preparedForCapture = false;
             try {
               const raw: unknown = JSON.parse(
                 new TextDecoder('utf-8', { fatal: true }).decode(payload),
@@ -249,8 +266,10 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
                 (p) => p.protocol === 'MQTT' && p.sourceIdentity === serial,
               )!;
               normalizeObservations(envelope, profile);
+              preparedForCapture = true;
               await industrialOutbox!.enqueue(envelope);
             } catch {
+              if (!preparedForCapture) industrialOutbox?.recordCaptureRejection();
               logger.warn('industrial.mqtt.capture_failed', { sourceIdentity: serial });
             }
           }

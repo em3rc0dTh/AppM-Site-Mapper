@@ -132,3 +132,6 @@ Captura original, catálogo de señales desconocidas, alarmas Eltek rev54 y regi
 adicionales con calidad explícita: [configuración, contratos y laboratorio](docs/telemetry/industrial-integration.md).
 La extensión conserva las vistas y direcciones actuales; requiere comisionamiento de fuentes,
 asociaciones y puntos antes de conectarse al hardware y a Metasys.
+
+Estado del cierre industrial: [cambios y validaciones pendientes](docs/telemetry/industrial-closure-static.md).
+La revisión posterior a PR #103/#10 se realizó sin ejecutar ni agregar pruebas.

@@ -1,7 +1,9 @@
-name: i18n residual audit (temporary read-only)
+name: i18n residual audit
 on:
+  workflow_dispatch:
   push:
     paths:
+      - 'src/**'
       - .github/workflows/i18n-residual-audit.yml
 permissions:
   contents: read

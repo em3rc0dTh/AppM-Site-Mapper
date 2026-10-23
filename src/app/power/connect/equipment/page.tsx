@@ -105,8 +105,7 @@ export default async function ConnectEquipmentPowerPage({
       />
       {!sources.length || !targets.length ? (
         <div className="power-port-connect-empty">
-          {t('requireTerminals')} <Link href={returnHref}>{t('return')}</Link>{' '}
-          {t('configureFirst')}
+          {t('requireTerminals')} <Link href={returnHref}>{t('return')}</Link> {t('configureFirst')}
         </div>
       ) : null}
     </>

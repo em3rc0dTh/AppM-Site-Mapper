@@ -104,7 +104,7 @@ export function ConnectEquipmentPowerForm({
     <main className="power-port-connect-page">
       <header className="power-port-connect-header">
         <div>
-          <small>POWER / PHYSICAL COMMISSIONING</small>
+          <small>{t('physicalCommissioning')}</small>
           <h1>{t('title')}</h1>
           <p>{t('intro')}</p>
         </div>
@@ -158,7 +158,7 @@ export function ConnectEquipmentPowerForm({
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="SWITCH-01, Power input, rack..."
+              placeholder={t('destinationPlaceholder')}
             />
           </label>
           <label>
@@ -229,7 +229,7 @@ export function ConnectEquipmentPowerForm({
               value={label}
               maxLength={120}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder="BDFB Panel A1 → Switch input"
+              placeholder={t('connectionPlaceholder')}
             />
           </label>
         </div>

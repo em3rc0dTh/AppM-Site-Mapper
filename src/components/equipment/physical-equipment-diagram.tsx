@@ -230,7 +230,7 @@ function PortFace({
         <div
           className="equipment-faceplate-selection"
           role="region"
-          aria-label={`Selected port ${selected.name}`}
+          aria-label={t('selectedPort', { name: selected.name })}
         >
           <div>
             <small>{t('selected')}</small>
@@ -485,7 +485,7 @@ export function PhysicalEquipmentDiagram({
                             <button
                               type="button"
                               onClick={() => onAdd(projection.positional ? slot.index : null)}
-                              aria-label={`Add Equipment in position ${slot.index + 1}`}
+                              aria-label={t('addPosition', { position: slot.index + 1 })}
                             >
                               + ADD
                             </button>

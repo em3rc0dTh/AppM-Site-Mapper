@@ -272,7 +272,7 @@ export function SnmpFeedLoadPanel({
                         <small>
                           {feed.ratedA === null
                             ? 'Rated current not configured for this input'
-                            : 'No fresh commissioned current reading'}
+                            : t('noFresh')}
                         </small>
                       )}
                     </div>
@@ -417,7 +417,7 @@ export function SnmpFeedLoadPanel({
                           <small>
                             {feed.servedPanelIds.length
                               ? `${feed.servedPanelIds.length} panels assigned`
-                              : 'No panels assigned'}
+                              : t('noPanelsAssigned')}
                           </small>
                         )}
                       </div>

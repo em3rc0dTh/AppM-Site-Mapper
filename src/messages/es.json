@@ -926,7 +926,13 @@
     "trace": "RASTREAR POTENCIA",
     "clusters": "{count} CLÚSTERES",
     "racks": "{count} SUPERFICIES DE RACK",
-    "tiles": "{count} CELDAS ASIGNABLES"
+    "tiles": "{count} CELDAS ASIGNABLES",
+    "draftingTools": "Herramientas de diseño",
+    "roomBlueprint": "Plano de sala",
+    "rackFocus": "Detalle del rack",
+    "rackFootprint": "Superficie física del rack",
+    "unsurveyedFootprint": "Sin levantamiento; no se inventa una superficie",
+    "openRackFocus": "Abrir detalle del rack"
   },
   "equipmentTelemetry": {
     "live": "TELEMETRÍA EN VIVO",
@@ -1046,7 +1052,9 @@
     "notMapped": "Sin vincular",
     "last": "Última lectura:",
     "panels": "Paneles alimentados",
-    "noFeeds": "No hay entradas SNMP inventariadas en este BDFB."
+    "noFeeds": "No hay entradas SNMP inventariadas en este BDFB.",
+    "noFresh": "Sin lectura de corriente comisionada reciente",
+    "noPanelsAssigned": "Sin paneles asignados"
   },
   "snmpHistoryUi": {
     "title": "SNMP · HISTORIAL TIMESCALEDB",
@@ -1091,7 +1099,10 @@
     "confirming": "CONFIRMANDO…",
     "confirm": "CONFIRMAR CONEXIÓN FÍSICA",
     "sourceConnected": "CONECTADO →",
-    "poweredBy": "ALIMENTADO POR ←"
+    "poweredBy": "ALIMENTADO POR ←",
+    "physicalCommissioning": "POTENCIA / COMISIONAMIENTO FÍSICO",
+    "destinationPlaceholder": "SWITCH-01, entrada de potencia, rack...",
+    "connectionPlaceholder": "BDFB Panel A1 → entrada del switch"
   },
   "connectPower": {
     "header": "POWER / COMISIONAMIENTO",
@@ -1184,7 +1195,9 @@
     "accessCaption": "Accesos",
     "immediate": "Composición de elementos secundarios inmediatos",
     "internal": "COMPOSICIÓN INTERNA",
-    "empty": "No hay Equipment interno ni puertos de acceso instalados"
+    "empty": "No hay Equipment interno ni puertos de acceso instalados",
+    "selectedPort": "Puerto seleccionado {name}",
+    "addPosition": "Agregar Equipment en la posición {position}"
   },
   "snmpStrip": {
     "label": "Capacidad de la entrada DC SNMP",

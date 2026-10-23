@@ -926,7 +926,13 @@
     "trace": "TRACE POWER",
     "clusters": "{count} CLUSTERS",
     "racks": "{count} RACK FOOTPRINTS",
-    "tiles": "{count} ASSIGNABLE TILES"
+    "tiles": "{count} ASSIGNABLE TILES",
+    "draftingTools": "Drafting tools",
+    "roomBlueprint": "Room blueprint",
+    "rackFocus": "Rack focus",
+    "rackFootprint": "Rack physical footprint",
+    "unsurveyedFootprint": "Not surveyed; no footprint invented",
+    "openRackFocus": "Open rack focus"
   },
   "equipmentTelemetry": {
     "live": "LIVE TELEMETRY",
@@ -1046,7 +1052,9 @@
     "notMapped": "Not mapped",
     "last": "Last reading:",
     "panels": "Supplied panels",
-    "noFeeds": "No SNMP input feeders inventoried on this BDFB."
+    "noFeeds": "No SNMP input feeders inventoried on this BDFB.",
+    "noFresh": "No fresh commissioned current reading",
+    "noPanelsAssigned": "No panels assigned"
   },
   "snmpHistoryUi": {
     "title": "SNMP · TIMESCALEDB HISTORY",
@@ -1091,7 +1099,10 @@
     "confirming": "CONFIRMING…",
     "confirm": "CONFIRM PHYSICAL CONNECTION",
     "sourceConnected": "CONNECTED →",
-    "poweredBy": "POWERED BY ←"
+    "poweredBy": "POWERED BY ←",
+    "physicalCommissioning": "POWER / PHYSICAL COMMISSIONING",
+    "destinationPlaceholder": "SWITCH-01, Power input, rack...",
+    "connectionPlaceholder": "BDFB Panel A1 → Switch input"
   },
   "connectPower": {
     "header": "POWER / COMMISSIONING",
@@ -1184,7 +1195,9 @@
     "accessCaption": "Access",
     "immediate": "Immediate child composition",
     "internal": "INTERNAL COMPOSITION",
-    "empty": "No internal Equipment or Access Ports installed"
+    "empty": "No internal Equipment or Access Ports installed",
+    "selectedPort": "Selected port {name}",
+    "addPosition": "Add Equipment in position {position}"
   },
   "snmpStrip": {
     "label": "SNMP incoming DC feeder capacity",

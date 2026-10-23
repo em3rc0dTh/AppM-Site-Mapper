@@ -129,7 +129,7 @@ export function BlueprintCanvas({
                   },
                   { label: 'Vertices', value: bay.polygon.length },
                 ]
-              : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
+              : [{ label: 'Geometry', value: t('unsurveyedFootprint') }],
           },
         ],
       };
@@ -175,7 +175,7 @@ export function BlueprintCanvas({
                 { label: 'Vertices', value: polygon.length },
                 { label: 'Coordinates', value: 'Preserved from the room layout' },
               ]
-            : [{ label: 'Geometry', value: 'Not surveyed; no footprint invented' }],
+            : [{ label: 'Geometry', value: t('unsurveyedFootprint') }],
         },
       ],
     });
@@ -200,7 +200,7 @@ export function BlueprintCanvas({
           ],
         },
       ],
-      actions: [{ label: 'Open rack focus', href: `/rack/${rack.id}/focus` }],
+      actions: [{ label: t('openRackFocus'), href: `/rack/${rack.id}/focus` }],
     });
   }
   const [zoom, setZoom] = useState(focusedRack ? 2 : 1);
@@ -281,7 +281,7 @@ export function BlueprintCanvas({
       </header>
 
       <div className="blueprint-canvas-shell zip-blueprint-shell">
-        <div className="zip-drafting-tools" aria-label="Drafting tools">
+        <div className="zip-drafting-tools" aria-label={t('draftingTools')}>
           <button
             type="button"
             aria-pressed={tool === 'select'}
@@ -341,7 +341,7 @@ export function BlueprintCanvas({
             pointer.current = null;
           }}
           role="group"
-          aria-label="Room blueprint"
+          aria-label={t('roomBlueprint')}
         >
           <defs>
             <pattern id="grid600" width="600" height="600" patternUnits="userSpaceOnUse">
@@ -565,7 +565,7 @@ export function BlueprintCanvas({
             className="blueprint-rack-dialog"
             role="dialog"
             aria-modal="true"
-            aria-label="Rack focus"
+            aria-label={t('rackFocus')}
             onClick={(event) => event.stopPropagation()}
           >
             <header>
@@ -581,7 +581,7 @@ export function BlueprintCanvas({
               .filter((rack) => rack.id === focusedRackId)
               .map((rack) => (
                 <div key={rack.id} className="blueprint-rack-dialog-body">
-                  <div className="blueprint-rack-footprint" aria-label="Rack physical footprint">
+                  <div className="blueprint-rack-footprint" aria-label={t('rackFootprint')}>
                     <div style={{ aspectRatio: `${rack.rect.width} / ${rack.rect.depth}` }}>
                       <strong>{rack.name}</strong>
                       <small>{t('topView')}</small>

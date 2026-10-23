@@ -45,28 +45,44 @@ def run_docker(*args, timeout=20):
                            (p.stderr.strip() or "unknown error")[:240])
     return p.stdout.strip()
 
-def event_snapshots(db_name):
-    # A raw capture and its interpreted values are correlated by exactly one eventId.
-    # No credentials or Docker environment values are requested.
+def event_snapshots(db_name, mode="all"):
+    # industrial_events persists protocol as an indexed document field,
+    # but transport lives inside the original envelopeJson, not at top level.
+    # Select SNMP GET vs INFORM after decoding the saved envelope.
     js = """
 const d = db.getSiblingDB(%s);
-const specs = [
-  {name:"MQTT", query:{protocol:"MQTT"}},
-  {name:"SNMP GET", query:{protocol:"SNMP", transport:"get"}},
-  {name:"SNMP INFORM", query:{protocol:"SNMP", transport:{$in:["inform","trap"]}}}
-];
-const results = specs.map(({name,query}) => {
-  const row = d.industrial_events.find(query).sort({receivedAt:-1}).limit(1).next();
-  if (!row) return {name, missing:true};
-  const envelope = JSON.parse(row.envelopeJson);
-  const history = d.industrial_signal_history
-    .find({eventId:row.eventId},{projection:{_id:0,signal:1}})
-    .limit(4096).toArray().map(item => item.signal);
-  return {name,eventId:row.eventId,envelope,history};
+const mode = %s;
+const candidates = [];
+if (mode !== "snmp") {
+  const mqtt = d.industrial_events.find({protocol:"MQTT"})
+    .sort({receivedAt:-1}).limit(1).next();
+  candidates.push({name:"MQTT", row:mqtt});
+}
+if (mode !== "mqtt") {
+  const recent = d.industrial_events.find({protocol:"SNMP"})
+    .sort({receivedAt:-1}).limit(250).toArray();
+  const parsed = recent.flatMap(row => {
+    try { return [{row, envelope:JSON.parse(row.envelopeJson)}]; }
+    catch { return []; }
+  });
+  const get = parsed.find(item => item.envelope.transport === "get");
+  const inform = parsed.find(item =>
+    ["inform","trap"].includes(item.envelope.transport));
+  candidates.push({name:"SNMP GET", row:get?.row, envelope:get?.envelope});
+  candidates.push({name:"SNMP INFORM", row:inform?.row, envelope:inform?.envelope});
+}
+const results = candidates.map(({name,row,envelope}) => {
+  if (!row) return {name,missing:true};
+  const capture = envelope || JSON.parse(row.envelopeJson);
+  // mongosh find(filter, projection) does NOT accept a {projection:{...}}
+  // wrapper here. Read the complete history rows to avoid mixed projections.
+  const history = d.industrial_signal_history.find({eventId:row.eventId})
+    .limit(4096).toArray().map(item => item.signal).filter(Boolean);
+  return {name,eventId:row.eventId,envelope:capture,history};
 });
 print(JSON.stringify({results}));
-""" % json.dumps(db_name)
-    raw = run_docker("exec", MONGO, "mongosh", "--quiet", "--eval", js, timeout=30)
+""" % (json.dumps(db_name), json.dumps(mode))
+    raw = run_docker("exec", MONGO, "mongosh", "--quiet", "--eval", js, timeout=45)
     return json.loads(raw.splitlines()[-1])["results"]
 
 def display_snapshot(row, max_signals):
@@ -225,7 +241,7 @@ def main():
                   flush=True)
             if args.mode in ("all","mqtt","snmp"):
                 try:
-                    for row in event_snapshots(args.db):
+                    for row in event_snapshots(args.db, args.mode):
                         if args.mode=="mqtt" and row["name"]!="MQTT": continue
                         if args.mode=="snmp" and row["name"]=="MQTT": continue
                         key=row["name"]

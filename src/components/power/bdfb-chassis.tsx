@@ -84,7 +84,7 @@ export function BdfbChassis({
           {presentation.shelves.map((shelf) => (
             <section key={shelf.id} className="sm-bdfb-physical-shelf">
               <div className="sm-bdfb-physical-title">
-                {shelf.physical === false ? 'PANEL GROUP' : 'SHELF'} · {shelf.label}
+                {shelf.physical === false ? t('panelGroup') : t('shelfLabel')} · {shelf.label}
               </div>
               <div className="sm-bdfb-physical-frames">
                 {shelf.frames.map((frame) => (
@@ -198,9 +198,9 @@ export function BdfbChassis({
                     <Link href={`/device/${breaker.id}`}>{breaker.label}</Link>
                     <small>
                       {destinationByBreaker.get(breaker.id)?.counterpartName ??
-                        'No connected destination'}
+                        t('noDestination')}
                       {' · '}
-                      {monitoredBreakers.has(breaker.id) ? 'MQTT bound' : 'No MQTT binding'}
+                      {monitoredBreakers.has(breaker.id) ? t('mqttBound') : t('noMqtt')}
                     </small>
                   </div>
                 ) : null,

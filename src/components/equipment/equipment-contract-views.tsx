@@ -73,9 +73,9 @@ function PanelPreview({ panel }: Readonly<{ panel: EquipmentNode }>) {
       <span className="ec-panel-meta">
         {panel.childMode === 'POSITIONAL'
           ? `${panel.children.length} positions · ${panel.children.filter(Boolean).length} occupied`
-          : `${panel.children.filter(Boolean).length} installed`}
+          : t('installedCount', { count: panel.children.filter(Boolean).length })}
         <span className="ec-panel-presence">
-          {panel.children.some(Boolean) ? 'Installed' : 'Available'}
+          {panel.children.some(Boolean) ? t('installedStatus') : t('availableStatus')}
         </span>
       </span>
     </ChildLink>
@@ -435,7 +435,7 @@ export function EquipmentContractViews({
             <p className="ec-breaker-no-data">{t('noReadings')}</p>
           )}
           <p className="ec-breaker-source">
-            MQTT source: {readings[root.id]?.sourceIdentity ?? 'No verified binding'} · Last packet:{' '}
+            {t('mqttSourceCaption')} {readings[root.id]?.sourceIdentity ?? t('noVerifiedBinding')} · {t('packetCaption')}{' '}
             {readings[root.id]?.receivedAt ?? '—'}
           </p>
           <Link className="ec-trace-link" href={`/power?entityId=${encodeURIComponent(root.id)}`}>

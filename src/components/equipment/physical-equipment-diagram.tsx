@@ -65,8 +65,8 @@ function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBre
             : reading.status === 'NO DATA'
               ? (reading.diagnostic ?? t('waiting'))
               : reading.status === 'CONFLICT'
-                ? 'Conflicting circuit sources'
-                : 'Telemetry unavailable'}
+                ? t('conflict')
+                : t('telemetryUnavailable')}
       </small>
     </div>
   );
@@ -222,7 +222,7 @@ function PortFace({
             type="button"
             onClick={() => setShowAll((v) => !v)}
           >
-            {showAll ? 'SHOW FIRST 48' : `SHOW ALL ${active.length} RECORDED PORTS`}
+            {showAll ? t('showFirst') : t('showAll', { count: active.length })}
           </button>
         )}
       </div>
@@ -236,7 +236,7 @@ function PortFace({
             <small>{t('selected')}</small>
             <strong>{selected.name}</strong>
             <span>
-              {selected.portType} · {selected.direction ?? 'Unspecified direction'}
+              {selected.portType} · {selected.direction ?? t('unknownDirection')}
             </span>
           </div>
           <dl>
@@ -253,9 +253,9 @@ function PortFace({
               {selectedLinks.map((link) => (
                 <div key={link.pathId}>
                   <span>
-                    {link.flow === 'OUTGOING' ? 'FEEDS → ' : 'POWERED BY ← '}
+                    {link.flow === 'OUTGOING' ? t('feeds') : t('poweredBy')}
                     {link.peerEquipmentName} / {link.peerPortName}
-                    {link.feed ? ` · Feed ${link.feed}` : ''}
+                    {link.feed ? t('feedLetter', { feed: link.feed }) : ''}
                   </span>{' '}
                   <Link href={`/power?path=${encodeURIComponent(link.pathId)}`}>
                     VIEW POWERPATH
@@ -479,7 +479,7 @@ export function PhysicalEquipmentDiagram({
                             {t('position', { value: String(slot.index + 1).padStart(2, '0') })}
                           </small>
                           <span>
-                            {slot.equipmentId ? 'Missing equipment reference' : 'Available'}
+                            {slot.equipmentId ? t('missingEquipment') : 'Available'}
                           </span>
                           {!slot.equipmentId && onAdd && (
                             <button

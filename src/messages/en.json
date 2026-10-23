@@ -637,7 +637,13 @@
     "assemblies": "{count} child assemblies",
     "framesRecorded": "{count} frames recorded",
     "panelsRecorded": "{count} panels recorded",
-    "coverage": "MQTT hierarchy coverage"
+    "coverage": "MQTT hierarchy coverage",
+    "installedStatus": "Installed",
+    "availableStatus": "Available",
+    "installedCount": "{count} installed",
+    "mqttSourceCaption": "MQTT source:",
+    "noVerifiedBinding": "No verified binding",
+    "packetCaption": "Last packet:"
   },
   "warehouseForms": {
     "creation": "Template creation mode",
@@ -737,7 +743,8 @@
     "unmapped": "Unmapped points",
     "noScalar": "No scalar measurements",
     "noScalarHelp": "This packet contains structured data. Expand the raw payload to inspect it.",
-    "rawPayload": "Raw MQTT payload state"
+    "rawPayload": "Raw MQTT payload state",
+    "streamConnected": "MQTT STREAM CONNECTED"
   },
   "rackElevation": {
     "front": "FRONT ELEVATION",
@@ -1077,7 +1084,12 @@
     "circuits": "INSTALLED CIRCUITS",
     "position": "Position {position}",
     "noCircuits": "No circuit breakers are installed on this panel.",
-    "selectedPanel": "Selected panel breaker positions"
+    "selectedPanel": "Selected panel breaker positions",
+    "panelGroup": "PANEL GROUP",
+    "shelfLabel": "SHELF",
+    "mqttBound": "MQTT bound",
+    "noMqtt": "No MQTT binding",
+    "noDestination": "No connected destination"
   },
   "bdfbTree": {
     "tree": "BDFB power tree",
@@ -1212,7 +1224,8 @@
     "poweredBy": "POWERED BY ←",
     "physicalCommissioning": "POWER / PHYSICAL COMMISSIONING",
     "destinationPlaceholder": "SWITCH-01, Power input, rack...",
-    "connectionPlaceholder": "BDFB Panel A1 → Switch input"
+    "connectionPlaceholder": "BDFB Panel A1 → Switch input",
+    "networkError": "Connection could not be confirmed. Nothing was recorded."
   },
   "connectPower": {
     "header": "POWER / COMMISSIONING",
@@ -1321,7 +1334,16 @@
     "internal": "INTERNAL COMPOSITION",
     "empty": "No internal Equipment or Access Ports installed",
     "selectedPort": "Selected port {name}",
-    "addPosition": "Add Equipment in position {position}"
+    "addPosition": "Add Equipment in position {position}",
+    "conflict": "Conflicting circuit sources",
+    "telemetryUnavailable": "Telemetry unavailable",
+    "showFirst": "SHOW FIRST 48",
+    "showAll": "SHOW ALL {count} RECORDED PORTS",
+    "unknownDirection": "Unspecified direction",
+    "feeds": "FEEDS → ",
+    "poweredBy": "POWERED BY ← ",
+    "missingEquipment": "Missing equipment reference",
+    "feedLetter": " · Feed {feed}"
   },
   "snmpStrip": {
     "label": "SNMP incoming DC feeder capacity",

@@ -94,7 +94,7 @@ export function ConnectEquipmentPowerForm({
       router.push(`/power?path=${encodeURIComponent(result.path.id)}&feed=${chosenFeed}`);
       router.refresh();
     } catch {
-      setError('NETWORK_ERROR: Connection could not be confirmed. Nothing was recorded.');
+      setError(t('networkError'));
     } finally {
       setSaving(false);
     }

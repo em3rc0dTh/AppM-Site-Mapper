@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 import { useTelemetryStream } from '@/components/telemetry/use-bdfb-telemetry';
 import {
@@ -44,6 +45,7 @@ export function HomeLiveOverview({
   cards: readonly Pin[];
   initialSamples: readonly TelemetrySample[];
 }) {
+  const t = useTranslations('workspaceUi');
   const { samples: streamed, now, hasSnapshot } = useTelemetryStream();
   const samples = hasSnapshot ? streamed : initialSamples;
   const rows = bdfbs.map((item) => projectBdfb(samples, item, now));
@@ -67,26 +69,26 @@ export function HomeLiveOverview({
     <>
       <div className="sm-home-stats">
         <article>
-          <small>EQUIPMENTS (PRIMARY)</small>
+          <small>{t('primary')}</small>
           <strong>{equipmentIds.length}</strong>
-          <span>Managed Devices; nested Equipment excluded</span>
+          <span>{t('managed')}</span>
         </article>
         <article>
-          <small>REPORTING</small>
+          <small>{t('reporting')}</small>
           <strong>{online}</strong>
-          <span>Primary Devices with recent bound telemetry</span>
+          <span>{t('reportingHelp')}</span>
         </article>
         <article>
-          <small>NO RECENT DATA</small>
+          <small>{t('noRecent')}</small>
           <strong>{unknown}</strong>
-          <span>Unknown telemetry, not evidence of power off</span>
+          <span>{t('unknown')}</span>
         </article>
       </div>
 
       <section className="sm-home-section">
         <div className="sm-home-section-heading">
-          <h2>DIRECT ACCESS</h2>
-          <Link href="/network">Manage pins →</Link>
+          <h2>{t('direct')}</h2>
+          <Link href="/network">{t('managePins')}</Link>
         </div>
         <div className="sm-home-pin-grid">
           {cards.map((pin) => {
@@ -102,98 +104,97 @@ export function HomeLiveOverview({
                   <>
                     <div className="sm-home-pin-readings">
                       <span>
-                        Avg. voltage <b>{format(bdfb.averageVoltageV, 'V')}</b>
+                        {t('voltage')} <b>{format(bdfb.averageVoltageV, 'V')}</b>
                       </span>
                       <span>
-                        Avg. current <b>{format(bdfb.averageCurrentA, 'A')}</b>
+                        {t('current')} <b>{format(bdfb.averageCurrentA, 'A')}</b>
                       </span>
                       <span>
-                        Avg. power <b>{format(bdfb.averagePowerW, 'W')}</b>
+                        {t('power')} <b>{format(bdfb.averagePowerW, 'W')}</b>
                       </span>
                       <span>
-                        Avg. energy counter <b>{format(bdfb.averageEnergyKwh, 'kWh', 4)}</b>
+                        {t('energyCounter')} <b>{format(bdfb.averageEnergyKwh, 'kWh', 4)}</b>
                       </span>
                       <span>
-                        Total power{' '}
+                        {t('totalPower')}{' '}
                         <b>
                           {format(bdfb.totalPowerW === null ? null : bdfb.totalPowerW / 1000, 'kW')}
                         </b>
                       </span>
                       <span>
-                        Equipment reporting{' '}
+                        {t('equipmentReporting')}{' '}
                         <b>
                           {bdfb.reportingEquipment} / {bdfb.descendantEquipment}
                         </b>
                       </span>
                     </div>
                     <small className="sm-home-telemetry-note">
-                      Entire BDFB · commissioned descendant Equipment · last{' '}
+                      {t('entireBdfb')}{' '}
                       {bdfb.latestReceivedAt ?? '—'}
                     </small>
                   </>
                 ) : (
-                  <p>Equipment details</p>
+                  <p>{t('details')}</p>
                 )}
-                <em>Open →</em>
+                <em>{t('open')}</em>
               </Link>
             );
           })}
           <Link className="sm-home-pin sm-home-add-pin" href="/network">
-            + Add pinned equipment
+            {t('addPinned')}
           </Link>
         </div>
       </section>
 
-      <section className="sm-home-section" aria-label="System-wide BDFB power">
+      <section className="sm-home-section" aria-label={t('systemBdfb')}>
         <div className="sm-home-section-heading">
-          <h2>BDFB POWER OVERVIEW</h2>
-          <span>ALL BDFBs · SYSTEM WIDE</span>
+          <h2>{t('overview')}</h2>
+          <span>{t('systemWide')}</span>
         </div>
         <div className="sm-home-stats">
           <article>
-            <small>TOTAL POWER (LIVE)</small>
+            <small>{t('livePower')}</small>
             <strong>{reporting.length ? format(totalPowerW / 1000, 'kW') : '—'}</strong>
             <span>
               {partial
-                ? 'Partial: BDFB(s) without current power omitted'
-                : 'Sum of current descendant power'}
+                ? t('partial')
+                : t('powerSum')}
             </span>
           </article>
           <article>
-            <small>PERIOD ENERGY</small>
+            <small>{t('periodEnergy')}</small>
             <strong>—</strong>
-            <span>Not available until a validated TimescaleDB period calculation exists</span>
+            <span>{t('periodUnavailable')}</span>
           </article>
           <article>
-            <small>BDFB MONITORING</small>
+            <small>{t('monitoring')}</small>
             <strong>
               {monitoring} / {rows.length}
             </strong>
-            <span>BDFBs with recent descendant Equipment metrics</span>
+            <span>{t('monitoringHelp')}</span>
           </article>
         </div>
         {partial && (
           <p className="sm-home-warning">
-            Total power is partial: {rows.length - reporting.length} BDFB(s) have no valid current
-            power. Missing measurements are not treated as zero.
+            {t('partialWarning', { count: rows.length - reporting.length })}
           </p>
         )}
         <div className="sm-home-section-heading">
-          <h2>TELEMETRY BY BDFB</h2>
-          <Link href="/telemetry">Telemetry →</Link>
+          <h2>{t('telemetryByBdfb')}</h2>
+          <Link href="/telemetry">{t('telemetryLink')}</Link>
         </div>
         <div className="sm-home-table-wrap">
           <table className="sm-home-table">
             <thead>
               <tr>
                 <th>BDFB</th>
-                <th>Avg. V</th>
-                <th>Avg. A</th>
-                <th>Avg. W</th>
-                <th>Avg. counter</th>
-                <th>Total kW</th>
-                <th>Reporting Equipment</th>
-                <th>Last sample</th>
+                <th>{t('avgV')}</th>
+                <th>{t('avgA')}</th>
+                <th>{t('avgW')}</th>
+                <th>{t('avgCounter')}</th>
+                <th>{t('totalKw')}</th>
+                <th>{t('reportingEquipment')}</th>
+                <th>{t('lastSample')}</th>
                 <th />
               </tr>
             </thead>
@@ -219,11 +220,10 @@ export function HomeLiveOverview({
               ))}
             </tbody>
           </table>
-          {!rows.length && <p className="sm-home-warning">No BDFBs found.</p>}
+          {!rows.length && <p className="sm-home-warning">{t('noBdfbs')}</p>}
         </div>
         <p className="sm-home-telemetry-note">
-          Live averages use latest valid bound Equipment readings (30 s window). The energy counter
-          average is not period consumption; LIVE power is a sum, not a mean.
+          {t('methodNote')}
         </p>
       </section>
     </>

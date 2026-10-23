@@ -2,10 +2,10 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 import type { SearchResult } from '@/modules/workspace/application/search-service';
 
-const EMPTY_STATUS = 'Type a name or ID to search.';
 
 function glyph(kind: string) {
   if (kind.includes('RACK')) return '▥';
@@ -16,6 +16,7 @@ function glyph(kind: string) {
 }
 
 export function CommandPalette() {
+  const t = useTranslations('workspaceUi');
   const router = useRouter();
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -23,13 +24,13 @@ export function CommandPalette() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
   const [index, setIndex] = useState(0);
-  const [status, setStatus] = useState(EMPTY_STATUS);
+  const [status, setStatus] = useState('');
   const hasQuery = Boolean(query.trim());
   const visibleResults = useMemo(
     () => (open && hasQuery ? results : []),
     [open, hasQuery, results],
   );
-  const visibleStatus = hasQuery ? status : EMPTY_STATUS;
+  const visibleStatus = hasQuery ? status : t('emptySearch');
   const groups = useMemo(() => {
     const map = new Map<string, SearchResult[]>();
     for (const result of visibleResults) {
@@ -59,7 +60,7 @@ export function CommandPalette() {
     if (!open || !hasQuery) return;
     const controller = new AbortController();
     const timer = setTimeout(async () => {
-      setStatus('Searching…');
+      setStatus(t('searching'));
       try {
         const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
           signal: controller.signal,
@@ -67,11 +68,11 @@ export function CommandPalette() {
         if (!response.ok) throw new Error();
         const data = (await response.json()) as { results: SearchResult[] };
         setResults(data.results);
-        setStatus(data.results.length ? `${data.results.length} results` : 'No matching objects.');
+        setStatus(data.results.length ? t('results', { count: data.results.length }) : t('noResults'));
       } catch {
         if (!controller.signal.aborted) {
           setResults([]);
-          setStatus('Search unavailable. Try again.');
+          setStatus(t('searchFailed'));
         }
       }
     }, 180);
@@ -79,7 +80,7 @@ export function CommandPalette() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [query, open, hasQuery]);
+  }, [query, open, hasQuery, t]);
 
   function close() {
     setOpen(false);
@@ -94,7 +95,7 @@ export function CommandPalette() {
   return (
     <>
       <button ref={trigger} className="mk-search-trigger" onClick={() => setOpen(true)}>
-        ⌕ <span>Search...</span>
+        ⌕ <span>{t('searchButton')}</span>
         <kbd>⌘ K</kbd>
       </button>
 
@@ -105,7 +106,7 @@ export function CommandPalette() {
         onClick={(event) => {
           if (event.target === event.currentTarget) close();
         }}
-        aria-label="Global infrastructure search"
+        aria-label={t('searchGlobal')}
       >
         <div className="mk-command-input zip-command-input">
           <span aria-hidden="true">⌕</span>
@@ -117,8 +118,8 @@ export function CommandPalette() {
               setQuery(event.target.value);
               setIndex(0);
             }}
-            placeholder="Search infrastructure..."
-            aria-label="Search infrastructure"
+            placeholder={t('searchInfra')}
+            aria-label={t('searchInfra')}
             role="combobox"
             aria-expanded={open}
             aria-controls="search-results"
@@ -135,7 +136,7 @@ export function CommandPalette() {
               if (event.key === 'Enter' && visibleResults[index]) navigate(visibleResults[index]);
             }}
           />
-          <button onClick={close} aria-label="Close search">
+          <button onClick={close} aria-label={t('closeSearch')}>
             ×
           </button>
         </div>

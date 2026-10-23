@@ -46,10 +46,7 @@ export default async function NetworkPage() {
       <section className="panel">
         <h2>{t('roots')}</h2>
         {networks.length === 0 ? (
-          <StatePanel
-            title={t('emptyTitle')}
-            description={t('emptyDescription')}
-          />
+          <StatePanel title={t('emptyTitle')} description={t('emptyDescription')} />
         ) : (
           <DataView label={t('networks')}>
             {await Promise.all(

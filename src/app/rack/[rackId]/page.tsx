@@ -62,7 +62,9 @@ export default async function RackPage({
           <Link href={trailEntries[0].href}>← {trailEntries[0].name}</Link>
         ) : null}
         <span className="zip-breadcrumb-divider" />
-        <strong>{result.value.rack.name} &nbsp;/&nbsp; {t('elevation')}</strong>
+        <strong>
+          {result.value.rack.name} &nbsp;/&nbsp; {t('elevation')}
+        </strong>
       </nav>
       <div className="operational-layout telxius-operational-layout operational-layout--rack">
         <aside className="zip-rack-menu zip-rack-tree-menu">
@@ -93,10 +95,12 @@ export default async function RackPage({
               <b>{result.value.rows.filter((row) => row.role === 'AVAILABLE').length}U</b>
             </span>
             <span className="is-reserved">
-              □ {t('reserved')} <b>{result.value.rows.filter((row) => row.role === 'RESERVED').length}U</b>
+              □ {t('reserved')}{' '}
+              <b>{result.value.rows.filter((row) => row.role === 'RESERVED').length}U</b>
             </span>
             <span className="is-equipped">
-              □ {t('equipped')} <b>{result.value.rows.filter((row) => row.role === 'PHYSICAL').length}U</b>
+              □ {t('equipped')}{' '}
+              <b>{result.value.rows.filter((row) => row.role === 'PHYSICAL').length}U</b>
             </span>
             <div />
             {hasPermission(auth.value.role, 'topology:write') && (

@@ -254,7 +254,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               ports={
                 <>
                   <p className="ec-inspector-note">
-                    {t('terminals', { count: node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length })}
+                    {t('terminals', {
+                      count: node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length,
+                    })}
                   </p>
                   {node.accessPorts
                     .filter((port) => port.lifecycle === 'ACTIVE')
@@ -278,9 +280,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               }
               settings={
                 <>
-                  <p className="ec-inspector-note">
-                    {t('settingsHelp')}
-                  </p>
+                  <p className="ec-inspector-note">{t('settingsHelp')}</p>
                   {canWritePower && contract.ok ? (
                     <PowerContractEditor
                       entityId={node.id}
@@ -289,9 +289,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     />
                   ) : null}
                   {!relatedPower.length ? (
-                    <p className="device-power-unconfigured">
-                      {t('noDirect')}
-                    </p>
+                    <p className="device-power-unconfigured">{t('noDirect')}</p>
                   ) : null}
                   <FullPowerTraceModal entityId={node.id} />
                 </>
@@ -350,9 +348,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               ) : null}
 
               {!relatedPower.length ? (
-                <p className="device-power-unconfigured">
-                  {t('noDirectDevice')}
-                </p>
+                <p className="device-power-unconfigured">{t('noDirectDevice')}</p>
               ) : null}
 
               <div className="zip-device-live">

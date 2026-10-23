@@ -14,10 +14,7 @@ export function NotificationPanel({
         <strong>{notifications.length}</strong>
       </div>
       {notifications.length === 0 ? (
-        <StatePanel
-          title={t('noWarnings')}
-          description={t('noWarningsDescription')}
-        />
+        <StatePanel title={t('noWarnings')} description={t('noWarningsDescription')} />
       ) : (
         <ul className="workspace-notifications">
           {notifications.map((notification) => (

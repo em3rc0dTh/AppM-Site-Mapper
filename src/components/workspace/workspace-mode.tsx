@@ -7,11 +7,7 @@ export function WorkspaceMode({ canEdit }: { canEdit: boolean }) {
   return (
     <div className="workspace-mode" aria-label={t('mode')}>
       <StatusBadge>{t('readView')}</StatusBadge>
-      <span>
-        {canEdit
-          ? t('editHelp')
-          : t('readonly')}
-      </span>
+      <span>{canEdit ? t('editHelp') : t('readonly')}</span>
       {canEdit && <Link href="/network">{t('manageTopology')}</Link>}
     </div>
   );

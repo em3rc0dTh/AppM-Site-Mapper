@@ -322,7 +322,14 @@ export default async function TopologyNodePage({
   const rackLink: string | null = null;
   const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
   const t = await getTranslations('pages.topology');
-  const sectionDescription = node.kind === 'ROOM_SUBSTRUCTURE' ? t('roomDescription') : node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? t('bdfbDescription') : node.kind === 'SITE' ? t('site') : descriptionFor(node);
+  const sectionDescription =
+    node.kind === 'ROOM_SUBSTRUCTURE'
+      ? t('roomDescription')
+      : node.kind === 'DEVICE' && node.deviceType === 'BDFB'
+        ? t('bdfbDescription')
+        : node.kind === 'SITE'
+          ? t('site')
+          : descriptionFor(node);
 
   return (
     <main
@@ -376,7 +383,19 @@ export default async function TopologyNodePage({
 
         <section className="operational-stage telxius-operational-stage">
           <SectionHeader
-            eyebrow={node.kind === 'SITE' ? t('siteCanvas') : node.kind === 'STRUCTURE' ? t('structure') : node.kind === 'LEVEL' ? t('level') : node.kind === 'ROOM_SUBSTRUCTURE' ? t('room') : node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? t('bdfb') : eyebrowFor(node)}
+            eyebrow={
+              node.kind === 'SITE'
+                ? t('siteCanvas')
+                : node.kind === 'STRUCTURE'
+                  ? t('structure')
+                  : node.kind === 'LEVEL'
+                    ? t('level')
+                    : node.kind === 'ROOM_SUBSTRUCTURE'
+                      ? t('room')
+                      : node.kind === 'DEVICE' && node.deviceType === 'BDFB'
+                        ? t('bdfb')
+                        : eyebrowFor(node)
+            }
             title={
               node.kind === 'DEVICE' && bdfbPresentation
                 ? query.panel
@@ -426,12 +445,8 @@ export default async function TopologyNodePage({
                 <div>
                   <span aria-hidden="true">▥</span>
                   <h2>{t('incomplete')}</h2>
-                  <p>
-                    {t('incompleteHelp')}
-                  </p>
-                  <small>
-                    {t('incompleteDetail')}
-                  </small>
+                  <p>{t('incompleteHelp')}</p>
+                  <small>{t('incompleteDetail')}</small>
                   <div className="zip-bdfb-recovery-links">
                     {childEntries
                       .filter((entry) => entry.node.kind === 'EQUIPMENT')
@@ -457,10 +472,7 @@ export default async function TopologyNodePage({
                 slots={roomLayout.value.assignableSlots}
               />
             ) : node.kind === 'ROOM_SUBSTRUCTURE' && roomLayout?.ok ? (
-              <StatePanel
-                title={t('noGeometry')}
-                description={t('noGeometryHelp')}
-              />
+              <StatePanel title={t('noGeometry')} description={t('noGeometryHelp')} />
             ) : node.kind === 'SITE' || node.kind === 'STRUCTURE' ? (
               <SiteBoundaryWorkspace
                 node={node}

@@ -57,7 +57,9 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
       <nav className="breadcrumbs zip-rack-focus-breadcrumbs" aria-label="Breadcrumb">
         {room ? <Link href={await topology.buildDeepLink(room.id)}>← {room.name}</Link> : null}
         <span className="zip-breadcrumb-divider" />
-        <strong>{t('title')} &nbsp;/&nbsp; {view.value.rack.name}</strong>
+        <strong>
+          {t('title')} &nbsp;/&nbsp; {view.value.rack.name}
+        </strong>
       </nav>
 
       <div className="zip-rack-focus-layout">
@@ -68,9 +70,7 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
         <section className="zip-rack-focus-stage">
           <h1>{t('title')}</h1>
           <div className="zip-rack-room">
-            <div className="rack-unsurveyed-hint">
-              {t('noSurvey')}
-            </div>
+            <div className="rack-unsurveyed-hint">{t('noSurvey')}</div>
             <div className="zip-focus-rack">
               <strong className="zip-focus-rack-name">{view.value.rack.name}</strong>
               <div className="zip-focus-rack-frame">
@@ -114,7 +114,8 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
             <div>
               <h2>{view.value.rack.name}</h2>
               <small>
-                {room?.name ?? t('roomType')} / {bay?.name ?? t('bay')} / {position?.name ?? t('positionName')}
+                {room?.name ?? t('roomType')} / {bay?.name ?? t('bay')} /{' '}
+                {position?.name ?? t('positionName')}
               </small>
             </div>
           </div>

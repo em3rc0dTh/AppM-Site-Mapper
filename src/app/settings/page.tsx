@@ -68,13 +68,13 @@ export default async function SettingsPage({
   ];
   const roles: Role[] = ['STANDARD', 'ADMIN', 'SUPERADMIN'];
   const tabLabels: Record<string, string> = {
-    'Profile': t('tabs.profile'),
-    'Security': t('tabs.security'),
-    'Users': t('tabs.users'),
-    'Roles': t('tabs.roles'),
+    Profile: t('tabs.profile'),
+    Security: t('tabs.security'),
+    Users: t('tabs.users'),
+    Roles: t('tabs.roles'),
     'Data Import': t('tabs.dataImport'),
-    'Drafting': t('tabs.drafting'),
-    'System': t('tabs.system'),
+    Drafting: t('tabs.drafting'),
+    System: t('tabs.system'),
     'Danger Zone': t('tabs.danger'),
   };
   return (
@@ -123,9 +123,7 @@ export default async function SettingsPage({
           {active === 'Security' && (
             <>
               <h2>{t('tabs.security')}</h2>
-              <p>
-                {t('passwordPolicy')}
-              </p>
+              <p>{t('passwordPolicy')}</p>
               <PasswordForm />
             </>
           )}
@@ -176,9 +174,7 @@ export default async function SettingsPage({
           {active === 'Drafting' && (
             <>
               <h2>{t('tabs.drafting')}</h2>
-              <p>
-                {t('gridPolicy')}
-              </p>
+              <p>{t('gridPolicy')}</p>
               <p>{t('drawingHelp')}</p>
               <Link className="mk-primary" href="/network">
                 {t('openNetwork')}
@@ -195,9 +191,7 @@ export default async function SettingsPage({
                 <dd>{getPersistenceMode()}</dd>
                 <dt>{t('telemetry')}</dt>
                 <dd>
-                  {process.env.TELEMETRY_ENABLED === 'true'
-                    ? t('configured')
-                    : t('notConfigured')}
+                  {process.env.TELEMETRY_ENABLED === 'true' ? t('configured') : t('notConfigured')}
                 </dd>
               </dl>
             </>
@@ -205,9 +199,7 @@ export default async function SettingsPage({
           {active === 'Danger Zone' && (
             <>
               <h2>{t('tabs.danger')}</h2>
-              <p>
-                {t('dangerHelp')}
-              </p>
+              <p>{t('dangerHelp')}</p>
             </>
           )}
         </section>

@@ -6,7 +6,6 @@ import { useTranslations } from 'next-intl';
 
 import type { SearchResult } from '@/modules/workspace/application/search-service';
 
-
 function glyph(kind: string) {
   if (kind.includes('RACK')) return '▥';
   if (kind.includes('DEVICE') || kind.includes('EQUIPMENT')) return '▤';
@@ -68,7 +67,9 @@ export function CommandPalette() {
         if (!response.ok) throw new Error();
         const data = (await response.json()) as { results: SearchResult[] };
         setResults(data.results);
-        setStatus(data.results.length ? t('results', { count: data.results.length }) : t('noResults'));
+        setStatus(
+          data.results.length ? t('results', { count: data.results.length }) : t('noResults'),
+        );
       } catch {
         if (!controller.signal.aborted) {
           setResults([]);

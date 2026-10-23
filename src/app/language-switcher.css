@@ -1,5 +1,32 @@
 /* Compact locale control; shares the operational navigation without altering page grids. */
-.sm-locale-control { display: inline-flex; flex: 0 0 auto; align-items: center; padding: 0 6px; }
-.sm-locale-control select { color: inherit; background: transparent; font: inherit; font-size: 12px; font-weight: 600; border: 1px solid #c8d3e0; border-radius: 6px; padding: 5px 7px; max-width: 102px; }
-.mk-login .sm-locale-control select { color: #dbeafe; background: #10253d; border-color: #46627e; }
-@media (min-width: 1000px) and (max-width: 1199px) { .zip-topbar .sm-locale-control { padding-inline: 2px; } .zip-topbar .sm-locale-control select { max-width: 75px; font-size: 11px; } }
+.sm-locale-control {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  padding: 0 6px;
+}
+.sm-locale-control select {
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid #c8d3e0;
+  border-radius: 6px;
+  padding: 5px 7px;
+  max-width: 102px;
+}
+.mk-login .sm-locale-control select {
+  color: #dbeafe;
+  background: #10253d;
+  border-color: #46627e;
+}
+@media (min-width: 1000px) and (max-width: 1199px) {
+  .zip-topbar .sm-locale-control {
+    padding-inline: 2px;
+  }
+  .zip-topbar .sm-locale-control select {
+    max-width: 75px;
+    font-size: 11px;
+  }
+}

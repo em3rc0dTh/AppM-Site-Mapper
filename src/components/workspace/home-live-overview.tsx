@@ -129,8 +129,7 @@ export function HomeLiveOverview({
                       </span>
                     </div>
                     <small className="sm-home-telemetry-note">
-                      {t('entireBdfb')}{' '}
-                      {bdfb.latestReceivedAt ?? '—'}
+                      {t('entireBdfb')} {bdfb.latestReceivedAt ?? '—'}
                     </small>
                   </>
                 ) : (
@@ -155,11 +154,7 @@ export function HomeLiveOverview({
           <article>
             <small>{t('livePower')}</small>
             <strong>{reporting.length ? format(totalPowerW / 1000, 'kW') : '—'}</strong>
-            <span>
-              {partial
-                ? t('partial')
-                : t('powerSum')}
-            </span>
+            <span>{partial ? t('partial') : t('powerSum')}</span>
           </article>
           <article>
             <small>{t('periodEnergy')}</small>
@@ -222,9 +217,7 @@ export function HomeLiveOverview({
           </table>
           {!rows.length && <p className="sm-home-warning">{t('noBdfbs')}</p>}
         </div>
-        <p className="sm-home-telemetry-note">
-          {t('methodNote')}
-        </p>
+        <p className="sm-home-telemetry-note">{t('methodNote')}</p>
       </section>
     </>
   );

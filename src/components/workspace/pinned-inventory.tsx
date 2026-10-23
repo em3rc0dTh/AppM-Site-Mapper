@@ -12,10 +12,7 @@ export function PinnedInventory({ items }: Readonly<{ items: readonly WorkspaceP
         <span>{t('pinned')}</span>
       </div>
       {items.length === 0 ? (
-        <StatePanel
-          title={t('pinnedTitle')}
-          description={t('pinnedHelp')}
-        />
+        <StatePanel title={t('pinnedTitle')} description={t('pinnedHelp')} />
       ) : (
         <ul className="workspace-compact-list">
           {items.map((item) => (

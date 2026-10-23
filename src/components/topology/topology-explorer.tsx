@@ -245,7 +245,9 @@ export function TopologyExplorer({
 
         <footer className="zip-canvas-footer">
           <span>{node.kind === 'NETWORK' ? t('network') : node.name}</span>
-          <span className="zip-grid-indicator">{hasGeometry ? t('surveyedTag') : t('schematic')}</span>
+          <span className="zip-grid-indicator">
+            {hasGeometry ? t('surveyedTag') : t('schematic')}
+          </span>
           <div className="zip-zoom-controls">
             <button onClick={() => setZoom((value) => Math.max(0.5, value - 0.1))}>−</button>
             <b>{Math.round(zoom * 100)}%</b>
@@ -262,7 +264,9 @@ export function TopologyExplorer({
             <strong>{node.name}</strong>
             <dl>
               <dt>{t('boundary')}</dt>
-              <dd>{boundary?.length ? t('vertices', { count: boundary.length }) : t('notDrawn')}</dd>
+              <dd>
+                {boundary?.length ? t('vertices', { count: boundary.length }) : t('notDrawn')}
+              </dd>
               <dt>{t('area')}</dt>
               <dd>
                 {isValidPolygon(boundary)

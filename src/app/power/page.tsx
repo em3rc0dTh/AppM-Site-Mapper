@@ -178,7 +178,9 @@ export default async function PowerPage({
   const t = await getTranslations('pages.power');
   const renderFeedSummary = (view: (typeof views)[number]) => (
     <div className="zip-power-feed-summary">
-      <strong>{t('feed', { side: view.feed ?? '—' })} · {t('configured')}</strong>
+      <strong>
+        {t('feed', { side: view.feed ?? '—' })} · {t('configured')}
+      </strong>
       <span>
         {view.source?.equipment.name ?? view.path.sourceAccessPortId} /{' '}
         {view.source?.port.name ?? 'POWER OUTPUT'}
@@ -330,11 +332,15 @@ export default async function PowerPage({
       <footer className="zip-power-footer">
         <span>
           FEED A{' '}
-          <b className={feedA ? 'is-good' : ''}>{feedA ? '● ' + t('configured') : '○ ' + t('notConfiguredFull')}</b>
+          <b className={feedA ? 'is-good' : ''}>
+            {feedA ? '● ' + t('configured') : '○ ' + t('notConfiguredFull')}
+          </b>
         </span>
         <span>
           FEED B{' '}
-          <b className={feedB ? 'is-good' : ''}>{feedB ? '● ' + t('configured') : '○ ' + t('notConfiguredFull')}</b>
+          <b className={feedB ? 'is-good' : ''}>
+            {feedB ? '● ' + t('configured') : '○ ' + t('notConfiguredFull')}
+          </b>
         </span>
         <span>
           {t('redundancy')} <b>{feedA && feedB ? '✓' : '—'}</b>

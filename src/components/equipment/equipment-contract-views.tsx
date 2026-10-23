@@ -185,11 +185,18 @@ function PanelComposition({
         </div>
         <div className="ec-heading-counts">
           <span>{t('countInstalled', { count: installed.length })}</span>
-          {root.childMode === 'POSITIONAL' && <span>{t('countAvailable', { count: available.length })}</span>}
+          {root.childMode === 'POSITIONAL' && (
+            <span>{t('countAvailable', { count: available.length })}</span>
+          )}
           <span>{t('countTotal', { count: slots.length })}</span>
         </div>
       </header>
-      <div className="ec-table-scroll" role="region" tabIndex={0} aria-label={t('breakerMeasurements')}>
+      <div
+        className="ec-table-scroll"
+        role="region"
+        tabIndex={0}
+        aria-label={t('breakerMeasurements')}
+      >
         <div className="ec-breaker-table">
           <div className="ec-breaker-columns" aria-hidden="true">
             <span>{t('position')}</span>
@@ -239,9 +246,7 @@ function PanelComposition({
               ),
             )
           ) : (
-            <p className="ec-empty-panel">
-              {t('noBreakers')}
-            </p>
+            <p className="ec-empty-panel">{t('noBreakers')}</p>
           )}
         </div>
       </div>
@@ -423,9 +428,7 @@ export function EquipmentContractViews({
               <BreakerMetrics reading={readings[root.id]} />
             </div>
           ) : (
-            <p className="ec-breaker-no-data">
-              {t('noReadings')}
-            </p>
+            <p className="ec-breaker-no-data">{t('noReadings')}</p>
           )}
           <p className="ec-breaker-source">
             MQTT source: {readings[root.id]?.sourceIdentity ?? 'No verified binding'} · Last packet:{' '}

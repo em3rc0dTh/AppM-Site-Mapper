@@ -83,11 +83,7 @@ export default async function BlueprintPage({
           <SectionHeader
             eyebrow={t('eyebrow')}
             title={result.value.room.name.toUpperCase()}
-            description={
-              result.value.room.polygon?.length
-                ? t('surveyed')
-                : t('unsurveyed')
-            }
+            description={result.value.room.polygon?.length ? t('surveyed') : t('unsurveyed')}
             actions={<StatusBadge>{canWrite ? t('write') : t('read')}</StatusBadge>}
           />
 

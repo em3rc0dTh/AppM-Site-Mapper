@@ -77,7 +77,11 @@ export function TopologyPropertiesPanel({
             </div>
             <div>
               <dt>{t('boundary')}</dt>
-              <dd>{node.polygon?.length ? t('vertices', { count: node.polygon.length }) : t('notDrawn')}</dd>
+              <dd>
+                {node.polygon?.length
+                  ? t('vertices', { count: node.polygon.length })
+                  : t('notDrawn')}
+              </dd>
             </div>
             <div>
               <dt>{t('category')}</dt>

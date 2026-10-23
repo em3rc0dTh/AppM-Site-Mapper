@@ -12,9 +12,7 @@ export function LayoutImport() {
   return (
     <section>
       <h2>{t('title')}</h2>
-      <p>
-        {t('help')}
-      </p>
+      <p>{t('help')}</p>
       <label>
         {t('roomId')}
         <input
@@ -59,10 +57,7 @@ export function LayoutImport() {
         onClick={() => {
           try {
             const error = validateLayoutDraft(JSON.parse(text));
-            setMessage(
-              error ??
-                t('valid'),
-            );
+            setMessage(error ?? t('valid'));
             setConfirmed(!error);
           } catch {
             setMessage(t('invalid'));
@@ -75,12 +70,7 @@ export function LayoutImport() {
       <button
         disabled={!confirmed || busy || !roomId}
         onClick={async () => {
-          if (
-            !window.confirm(
-              t('confirm'),
-            )
-          )
-            return;
+          if (!window.confirm(t('confirm'))) return;
           setBusy(true);
           try {
             const r = await fetch(`/api/spatial/rooms/${encodeURIComponent(roomId)}/layout`, {

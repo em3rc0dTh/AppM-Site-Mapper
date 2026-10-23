@@ -67,12 +67,7 @@ export function SnmpFeedCommissioning({
 
   async function activateProfile(profile: 'ELTEK_BDCBB_CONFIG_2' | 'ELTEK_BDCBB_CONFIG_4') {
     if (configuration?.hardwareProfile === profile) return;
-    if (
-      !window.confirm(
-        t('confirmProfile', { profile }),
-      )
-    )
-      return;
+    if (!window.confirm(t('confirmProfile', { profile }))) return;
     setBusy(true);
     try {
       const response = await fetch('/api/telemetry/snmp/hardware-profile', {
@@ -92,12 +87,7 @@ export function SnmpFeedCommissioning({
   }
 
   async function retire(portId: string, binding: BindingRow) {
-    if (
-      !window.confirm(
-        t('confirmRetire', { metric: binding.metric }),
-      )
-    )
-      return;
+    if (!window.confirm(t('confirmRetire', { metric: binding.metric }))) return;
     setBusy(true);
     try {
       const response = await fetch('/api/telemetry/snmp/commission', {

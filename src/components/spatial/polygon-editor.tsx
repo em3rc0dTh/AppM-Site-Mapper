@@ -441,7 +441,7 @@ export function PolygonEditor({
                 stroke="transparent"
                 strokeWidth="14"
                 vectorEffect="non-scaling-stroke"
-                aria-label={t('addVertexEdge', {edge: i + 1})}
+                aria-label={t('addVertexEdge', { edge: i + 1 })}
                 onPointerDown={(e) => {
                   if (tool === 'pan') return;
                   e.stopPropagation();
@@ -485,7 +485,7 @@ export function PolygonEditor({
             vectorEffect="non-scaling-stroke"
             tabIndex={0}
             role="button"
-            aria-label={t('vertexLabel', {index: i + 1})}
+            aria-label={t('vertexLabel', { index: i + 1 })}
             onFocus={() => setSelected(i)}
             onKeyDown={(e) => {
               if (busy) return;
@@ -512,11 +512,7 @@ export function PolygonEditor({
           />
         ))}
       </svg>
-      <p className="spatial-editor-hint">
-        {draft.closed
-          ? t('hintClosed')
-          : t('hintOpen')}
-      </p>
+      <p className="spatial-editor-hint">{draft.closed ? t('hintClosed') : t('hintOpen')}</p>
       <footer>
         <span role="status">
           {error || coordinateError || (draft.points.length >= 3 ? invalid : null)}

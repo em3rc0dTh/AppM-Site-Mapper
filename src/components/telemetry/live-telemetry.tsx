@@ -145,7 +145,11 @@ export function LiveTelemetry() {
                           <span>
                             {reading.panelLabel} · {reading.rawPointId}
                           </span>
-                          {reading.state && <span>{t('state')} · {reading.state.value}</span>}
+                          {reading.state && (
+                            <span>
+                              {t('state')} · {reading.state.value}
+                            </span>
+                          )}
                           {breakerTelemetryMetrics(reading).map((metric) => (
                             <span key={metric.label}>
                               {metric.label} · {metric.value}

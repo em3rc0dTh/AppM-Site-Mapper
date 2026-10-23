@@ -126,11 +126,13 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
       {preview ? (
         <>
           <p>
-            {t('sourceSummary', { source: preview.sourceIdentity, prefix: preview.pointPrefix, capacity: preview.capacity })}
+            {t('sourceSummary', {
+              source: preview.sourceIdentity,
+              prefix: preview.pointPrefix,
+              capacity: preview.capacity,
+            })}
           </p>
-          <small>
-            {t('safetyNote')}
-          </small>
+          <small>{t('safetyNote')}</small>
           {preview.rows.map((row) => (
             <div key={row.breakerId} style={{ borderTop: '1px solid #c6c9bd', padding: '10px 0' }}>
               <strong>

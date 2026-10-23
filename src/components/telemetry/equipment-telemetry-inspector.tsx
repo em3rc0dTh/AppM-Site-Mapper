@@ -88,7 +88,8 @@ export function EquipmentTelemetryInspector({
       <header>
         <strong>{window === 'LIVE' ? t('live') : t('history')}</strong>
         <span>
-          {label} · {pointGroupConfigured ? t('pointGroup', { prefix: pointPrefix ?? '' }) : t('ownReadings')}
+          {label} ·{' '}
+          {pointGroupConfigured ? t('pointGroup', { prefix: pointPrefix ?? '' }) : t('ownReadings')}
         </span>
       </header>
       <div className="zip-bdfb-window-tabs" role="tablist" aria-label={t('timeWindow')}>
@@ -112,17 +113,14 @@ export function EquipmentTelemetryInspector({
       <p role="status">
         {loading
           ? t('loading')
-          : (error ? t('unavailable') :
-            (window === 'LIVE'
+          : error
+            ? t('unavailable')
+            : window === 'LIVE'
               ? current?.status
-              : t('historicalPackets', { count: visibleSamples.length })))}
+              : t('historicalPackets', { count: visibleSamples.length })}
       </p>
       {!loading && !error && !visibleSamples.length && (
-        <p>
-          {window === 'LIVE'
-            ? t('noOwnMeasurements')
-            : t('noStoredMeasurements')}
-        </p>
+        <p>{window === 'LIVE' ? t('noOwnMeasurements') : t('noStoredMeasurements')}</p>
       )}
       <div style={{ maxHeight: 420, overflowY: 'auto' }}>
         {visibleSamples.map((sample) => (
@@ -147,11 +145,7 @@ export function EquipmentTelemetryInspector({
             </div>
             {pointGroupConfigured &&
               !Object.keys(panelReportedPoints(sample.reported, pointPrefix, pointCapacity))
-                .length && (
-                <p>
-                  {t('noPoints', { prefix: pointPrefix ?? '' })}
-                </p>
-              )}
+                .length && <p>{t('noPoints', { prefix: pointPrefix ?? '' })}</p>}
           </article>
         ))}
       </div>

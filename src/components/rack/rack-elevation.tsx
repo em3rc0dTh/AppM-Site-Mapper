@@ -82,9 +82,7 @@ export function RackElevation({
       <div className="legacy-rack-main zip-rack-elevation-main">
         <header className="zip-elevation-heading">
           <h1>{t('front')}</h1>
-          <small>
-            {t('rearWarning')}
-          </small>
+          <small>{t('rearWarning')}</small>
         </header>
 
         <div className="legacy-rack-canvas zip-elevation-canvas">

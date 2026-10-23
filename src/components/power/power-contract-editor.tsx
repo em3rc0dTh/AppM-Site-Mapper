@@ -126,9 +126,7 @@ export function PowerContractEditor({
               <div>
                 <small>{t('header')}</small>
                 <h2 id="power-contract-title">{t('title')}</h2>
-                <p>
-                  {t('declaredRedundancy')}
-                </p>
+                <p>{t('declaredRedundancy')}</p>
               </div>
               <button type="button" aria-label={t('close')} onClick={() => setOpen(false)}>
                 ×

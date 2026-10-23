@@ -187,9 +187,7 @@ export function TopologyExplorer({
               </div>
             ) : node.kind === 'LEVEL' ? (
               <div className="topology-unlocated-list" aria-label={t('roomsUnsurveyed')}>
-                <p>
-                  {t('noMapWarning')}
-                </p>
+                <p>{t('noMapWarning')}</p>
                 <div>
                   {visualItems.map((entry) => (
                     <button
@@ -307,13 +305,12 @@ export function TopologyExplorer({
         </section>
         <section className="topology-telemetry-note">
           <h3>{t('telemetry')}</h3>
-          <p>
-            {t('liveStatusScope')}
-          </p>
+          <p>{t('liveStatusScope')}</p>
         </section>
         {item ? (
           <Link className="mk-primary zip-open-action" href={item.href}>
-            ↗ {t('openAction')} {item.node.kind === 'ROOM_SUBSTRUCTURE' ? t('roomType') : displayKind(item.node.kind)}
+            ↗ {t('openAction')}{' '}
+            {item.node.kind === 'ROOM_SUBSTRUCTURE' ? t('roomType') : displayKind(item.node.kind)}
           </Link>
         ) : (
           <p>{t('selectHelp')}</p>

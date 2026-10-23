@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { ContextPin } from '@/components/workspace/context-pin';
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
@@ -44,6 +45,7 @@ export function BdfbChassis({
   canWritePower?: boolean;
   activePanelId?: string;
 }>) {
+  const t = useTranslations('bdfbChassis');
   const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
   const panels = frames.flatMap((frame) => frame.panels);
   const initialPanel =
@@ -61,7 +63,7 @@ export function BdfbChassis({
     <section className="bdfb-chassis sm-bdfb-modern sm-bdfb-stage">
       <header className="bdfb-chassis-header">
         <div>
-          <span>PHYSICAL COMPOSITION</span>
+          <span>{t('composition')}</span>
           <strong>{device.name}</strong>
           <small>Device → Chassis → Shelf → Frame → Panel → Equipment</small>
         </div>
@@ -70,15 +72,15 @@ export function BdfbChassis({
           <Link className="bdfb-open-chassis" href={`/device/${presentation.chassisId}`}>
             OPEN CHASSIS COMPOSITION →
           </Link>
-          <span>{presentation.shelves.length} shelves</span>
-          <span>{frames.length} frames</span>
-          <span>{panels.length} panels</span>
+          <span>{t('shelves',{count:presentation.shelves.length})}</span>
+          <span>{t('frames',{count:frames.length})}</span>
+          <span>{t('panels',{count:panels.length})}</span>
         </div>
       </header>
 
       <div className="sm-bdfb-physical-body">
         <article className="sm-bdfb-physical-chassis">
-          <div className="sm-bdfb-physical-title">CHASSIS · {device.name}</div>
+          <div className="sm-bdfb-physical-title">{t('chassis',{name:device.name})}</div>
           {presentation.shelves.map((shelf) => (
             <section key={shelf.id} className="sm-bdfb-physical-shelf">
               <div className="sm-bdfb-physical-title">
@@ -123,14 +125,14 @@ export function BdfbChassis({
                           </article>
                         );
                       })}
-                      {!frame.panels.length && <p>No installed panels</p>}
+                      {!frame.panels.length && <p>{t('noPanels')}</p>}
                     </div>
                   </section>
                 ))}
               </div>
             </section>
           ))}
-          {!presentation.shelves.length && <p>No physical shelf or panel has been configured.</p>}
+          {!presentation.shelves.length && <p>{t('empty')}</p>}
         </article>
       </div>
 
@@ -138,27 +140,27 @@ export function BdfbChassis({
         <section className="sm-bdfb-panel-focus" aria-label="Selected panel breaker positions">
           <header className="sm-bdfb-panel-focus-header">
             <div>
-              <span>SELECTED PANEL · CIRCUIT POSITIONS</span>
+              <span>{t('focus')}</span>
               <h2>{selectedPanel.label}</h2>
-              <small>Read-only position inventory from the installed Equipment tree</small>
+              <small>{t('readOnly')}</small>
             </div>
-            <Link href={`/device/${selectedPanel.id}`}>OPEN PANEL COMPOSITION →</Link>
+            <Link href={`/device/${selectedPanel.id}`}>{t('open')}</Link>
           </header>
-          <div className="sm-bdfb-panel-focus-summary" aria-label="Panel occupancy">
+          <div className="sm-bdfb-panel-focus-summary" aria-label={t('panelOccupancy')}>
             <div>
               <strong>{installed}</strong>
-              <span>INSTALLED</span>
+              <span>{t('installed')}</span>
             </div>
             <div>
               <strong>{available}</strong>
-              <span>AVAILABLE</span>
+              <span>{t('available')}</span>
             </div>
             <div>
               <strong>{selectedPanel.positions.length}</strong>
-              <span>POSITIONS</span>
+              <span>{t('positions')}</span>
             </div>
           </div>
-          <div className="sm-bdfb-panel-positions" role="list" aria-label="Panel breaker slots">
+          <div className="sm-bdfb-panel-positions" role="list" aria-label={t('slots')}>
             {selectedPanel.positions.map((breaker, index) => (
               <div
                 key={index}
@@ -188,11 +190,11 @@ export function BdfbChassis({
           </div>
           {installed > 0 ? (
             <div className="sm-bdfb-breaker-summary">
-              <strong>INSTALLED CIRCUITS</strong>
+              <strong>{t('circuits')}</strong>
               {selectedPanel.positions.map((breaker, index) =>
                 breaker ? (
                   <div className="sm-bdfb-breaker-summary-row" key={breaker.id}>
-                    <span>Position {String(index + 1).padStart(2, '0')}</span>
+                    <span>{t('position',{position:String(index+1).padStart(2,'0')})}</span>
                     <Link href={`/device/${breaker.id}`}>{breaker.label}</Link>
                     <small>
                       {destinationByBreaker.get(breaker.id)?.counterpartName ??
@@ -205,7 +207,7 @@ export function BdfbChassis({
               )}
             </div>
           ) : (
-            <p className="sm-bdfb-panel-empty">No circuit breakers are installed on this panel.</p>
+            <p className="sm-bdfb-panel-empty">{t('noCircuits')}</p>
           )}
           <p className="sm-bdfb-panel-focus-note">
             Positions and connections are inventory records, not live current readings or a wiring

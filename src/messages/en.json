@@ -935,5 +935,32 @@
     "description": "This view only renders surveyed legacy geometry that was preserved in the canonical model.",
     "site": "Site physical layout",
     "structure": "Structure floor layout"
+  },
+  "bdfbChassis": {
+    "composition": "PHYSICAL COMPOSITION",
+    "shelves": "{count} shelves",
+    "frames": "{count} frames",
+    "panels": "{count} panels",
+    "chassis": "CHASSIS · {name}",
+    "noPanels": "No installed panels",
+    "empty": "No physical shelf or panel has been configured.",
+    "focus": "SELECTED PANEL · CIRCUIT POSITIONS",
+    "readOnly": "Read-only position inventory from the installed Equipment tree",
+    "open": "OPEN PANEL COMPOSITION →",
+    "panelOccupancy": "Panel occupancy",
+    "installed": "INSTALLED",
+    "available": "AVAILABLE",
+    "positions": "POSITIONS",
+    "slots": "Panel breaker slots",
+    "circuits": "INSTALLED CIRCUITS",
+    "position": "Position {position}",
+    "noCircuits": "No circuit breakers are installed on this panel."
+  },
+  "bdfbTree": {
+    "tree": "BDFB power tree",
+    "power": "POWER PATH",
+    "title": "POWER TREE",
+    "direct": "DIRECT CHASSIS",
+    "group": "GROUP {label}"
   }
 }

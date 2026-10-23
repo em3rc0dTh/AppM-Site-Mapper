@@ -94,11 +94,7 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
       <header>
         <div>
           <strong>{t('title')}</strong>
-          <small>
-            {chassis
-              ? t('chassisShunts')
-              : t('scopedFeeds')}
-          </small>
+          <small>{chassis ? t('chassisShunts') : t('scopedFeeds')}</small>
         </div>
         <span>
           {simulated
@@ -129,9 +125,7 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.min(100, Math.max(0, ratio))}
-          aria-label={
-            simulated ? t('simulatedCapacityUsed') : t('verifiedCapacityUsed')
-          }
+          aria-label={simulated ? t('simulatedCapacityUsed') : t('verifiedCapacityUsed')}
         >
           <div style={{ width: `${Math.min(100, Math.max(0, ratio))}%` }} />
           <span>
@@ -149,10 +143,25 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
             <span key={feed.accessPortId}>
               <strong>{feed.label}</strong>: {quantity(feed.measuredA)} / {quantity(feed.ratedA)}
               {feed.utilizationPct !== null
-                ? t('feedUtilization', { percent: feed.utilizationPct.toFixed(1), available: quantity(feed.availableA) })
+                ? t('feedUtilization', {
+                    percent: feed.utilizationPct.toFixed(1),
+                    available: quantity(feed.availableA),
+                  })
                 : t('noRatedReading')}
               {' · '}
-              {feed.status === 'LAB_LIVE' ? t('labSimulated') : feed.status === 'LIVE' ? t('verifiedLive') : feed.status === 'STALE' ? t('stale') : feed.status === 'UNMAPPED' ? t('unmapped') : feed.status === 'NO_DATA' ? t('noData') : feed.status === 'CONFLICT' ? t('conflict') : t('unverified')}
+              {feed.status === 'LAB_LIVE'
+                ? t('labSimulated')
+                : feed.status === 'LIVE'
+                  ? t('verifiedLive')
+                  : feed.status === 'STALE'
+                    ? t('stale')
+                    : feed.status === 'UNMAPPED'
+                      ? t('unmapped')
+                      : feed.status === 'NO_DATA'
+                        ? t('noData')
+                        : feed.status === 'CONFLICT'
+                          ? t('conflict')
+                          : t('unverified')}
               {(original?.servedPanelIds.length ?? 0) > 1 ? t('sharedShunt') : ''}
             </span>
           );
@@ -160,17 +169,9 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
       </div>
       {(simulated || shared || !exclusive) && (
         <p>
-          {simulated
-            ? t('simulationWarning')
-            : ''}
-          {shared
-            ? t('sharedWarning')
-            : ''}
-          {!exclusive
-            ? t('partialWarning')
-            : ratio === null
-              ? t('incompleteWarning')
-              : ''}
+          {simulated ? t('simulationWarning') : ''}
+          {shared ? t('sharedWarning') : ''}
+          {!exclusive ? t('partialWarning') : ratio === null ? t('incompleteWarning') : ''}
         </p>
       )}
     </section>

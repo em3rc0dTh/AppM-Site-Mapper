@@ -79,7 +79,11 @@ function HistoryMetric({
     <div className="zip-bdfb-history-metric">
       <span>{label}</span>
       <strong>{metric(latest, unit, decimals)}</strong>
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={ti('historicalTrend', { label })}>
+      <svg
+        viewBox={`0 0 ${width} ${height}`}
+        role="img"
+        aria-label={ti('historicalTrend', { label })}
+      >
         <path d={path} />
       </svg>
       <small>
@@ -352,9 +356,7 @@ export function BdfbTelemetryInspector({
               <div>
                 <span>●</span>
                 <strong>
-                  {reportingEquipment > 0
-                    ? ti('telemetryReceived')
-                    : ti('inventoryRecorded')}
+                  {reportingEquipment > 0 ? ti('telemetryReceived') : ti('inventoryRecorded')}
                 </strong>
                 <small>
                   {reportingEquipment > 0

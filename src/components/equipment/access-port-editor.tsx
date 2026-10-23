@@ -387,10 +387,7 @@ export function AccessPortEditor({
   }
 
   async function archive(port: AccessPort) {
-    if (
-      typeof window !== 'undefined' &&
-      !window.confirm(t('archiveWarning', { port: port.name }))
-    )
+    if (typeof window !== 'undefined' && !window.confirm(t('archiveWarning', { port: port.name })))
       return;
     setBusy(true);
     setError('');
@@ -438,7 +435,8 @@ export function AccessPortEditor({
                 .map((connection) => (
                   <div className="equipment-terminal-connection" key={connection.pathId}>
                     <strong>
-                      {t('connected')} · {connection.flow === 'OUTGOING' ? t('feeds') : t('poweredBy')}
+                      {t('connected')} ·{' '}
+                      {connection.flow === 'OUTGOING' ? t('feeds') : t('poweredBy')}
                     </strong>
                     <span>
                       {connection.peerEquipmentName} / {connection.peerPortName}

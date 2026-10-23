@@ -242,7 +242,15 @@ export function CompositionHistoryCharts({
               {METRICS.map((metric) => (
                 <SeriesChart
                   key={metric.key}
-                  name={metric.key === 'voltageV' ? t('metricVoltage') : metric.key === 'currentA' ? t('metricCurrent') : metric.key === 'powerW' ? t('metricPower') : t('metricEnergy')}
+                  name={
+                    metric.key === 'voltageV'
+                      ? t('metricVoltage')
+                      : metric.key === 'currentA'
+                        ? t('metricCurrent')
+                        : metric.key === 'powerW'
+                          ? t('metricPower')
+                          : t('metricEnergy')
+                  }
                   unit={metric.unit}
                   color={metric.color}
                   points={data.points}
@@ -252,9 +260,7 @@ export function CompositionHistoryCharts({
               ))}
             </div>
           )}
-          <p className="ec-history-explainer">
-            {t('bucketDisclaimer')}
-          </p>
+          <p className="ec-history-explainer">{t('bucketDisclaimer')}</p>
         </>
       )}
     </div>

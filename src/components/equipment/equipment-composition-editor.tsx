@@ -168,9 +168,7 @@ export function EquipmentCompositionEditor({
           placeholder="e.g. 0_2"
           title={t('rawMqtt')}
         />
-        <small>
-          {t('pointPrefixHelp')}
-        </small>
+        <small>{t('pointPrefixHelp')}</small>
       </label>
     );
   }

@@ -272,7 +272,9 @@ export function BlueprintCanvas({
         <div>
           <small>{t('view')}</small>
           <strong>{t('title')}</strong>
-          <span>600 × 600 mm {t('grid')} · {Math.round(zoom * 100)}%</span>
+          <span>
+            600 × 600 mm {t('grid')} · {Math.round(zoom * 100)}%
+          </span>
         </div>
         <div className="zip-blueprint-mode">
           <span className="zip-blueprint-mode-dot" />
@@ -393,7 +395,7 @@ export function BlueprintCanvas({
                 className={`blueprint-cluster-node${selectedBayId === cluster.id ? ' is-selected' : ''}`}
                 tabIndex={0}
                 role="button"
-                aria-label={t('inspectBay', {name: cluster.name})}
+                aria-label={t('inspectBay', { name: cluster.name })}
                 onClick={() => {
                   if (tool === 'select' && !onPlace) inspectBay(cluster);
                 }}
@@ -431,7 +433,7 @@ export function BlueprintCanvas({
                   key={position.id}
                   role="button"
                   tabIndex={0}
-                  aria-label={t('availablePosition', {name: position.name})}
+                  aria-label={t('availablePosition', { name: position.name })}
                   onClick={() => {
                     if (onPlace) return;
                     if (onSelectPosition) onSelectPosition(position.id);
@@ -549,11 +551,7 @@ export function BlueprintCanvas({
         <StatusBadge tone="accent">{t('clusters', { count: clusters.length })}</StatusBadge>
         <StatusBadge tone="accent">{t('racks', { count: racks.length })}</StatusBadge>
         <StatusBadge>{t('tiles', { count: slots.length })}</StatusBadge>
-        <span>
-          {tool === 'pan'
-            ? t('panHelp')
-            : t('selectHelp')}
-        </span>
+        <span>{tool === 'pan' ? t('panHelp') : t('selectHelp')}</span>
       </footer>
       {focusedRackId && (
         <div

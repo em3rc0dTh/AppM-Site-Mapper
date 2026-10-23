@@ -107,11 +107,17 @@ export function BdfbChassis({
                               type="button"
                               aria-pressed={selected}
                               onClick={() => setSelectedId(panel.id)}
-                              aria-label={t('inspectPanel', { panel: panel.label, installed: occupied })}
+                              aria-label={t('inspectPanel', {
+                                panel: panel.label,
+                                installed: occupied,
+                              })}
                             >
                               <strong>{panel.label}</strong>
                               <span>
-                                {t('panelPositions', { installed: occupied, available: panel.positions.length - occupied })}
+                                {t('panelPositions', {
+                                  installed: occupied,
+                                  available: panel.positions.length - occupied,
+                                })}
                               </span>
                             </button>
                             <Link
@@ -171,7 +177,10 @@ export function BdfbChassis({
                   <Link
                     href={`/device/${breaker.id}`}
                     title={t('positionBreaker', { position: index + 1, breaker: breaker.label })}
-                    aria-label={t('positionBreakerDetails', { position: index + 1, breaker: breaker.label })}
+                    aria-label={t('positionBreakerDetails', {
+                      position: index + 1,
+                      breaker: breaker.label,
+                    })}
                   >
                     <span>P{String(index + 1).padStart(2, '0')}</span>
                     <strong>●</strong>
@@ -207,9 +216,7 @@ export function BdfbChassis({
           ) : (
             <p className="sm-bdfb-panel-empty">{t('noCircuits')}</p>
           )}
-          <p className="sm-bdfb-panel-focus-note">
-            {t('inventoryDisclaimer')}
-          </p>
+          <p className="sm-bdfb-panel-focus-note">{t('inventoryDisclaimer')}</p>
         </section>
       )}
     </section>

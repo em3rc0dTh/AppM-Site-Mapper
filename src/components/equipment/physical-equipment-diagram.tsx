@@ -105,7 +105,9 @@ function EquipmentPreview({
       )}
       <div className="equipment-physical-preview-meta">
         <span>
-          {composition.positional ? t('occupancy', { occupied: composition.occupied, total: composition.capacity }) : t('installed', { count: composition.occupied })}
+          {composition.positional
+            ? t('occupancy', { occupied: composition.occupied, total: composition.capacity })
+            : t('installed', { count: composition.occupied })}
         </span>
         {ports.length > 0 && (
           <span>
@@ -133,7 +135,12 @@ function EquipmentPreview({
                 <span>{child.equipmentType.replaceAll('_', ' ')}</span>
                 <strong>{child.name}</strong>
                 <small>
-                  {childComposition.positional ? t('occupancy', { occupied: childComposition.occupied, total: childComposition.capacity }) : t('installed', { count: childComposition.occupied })}
+                  {childComposition.positional
+                    ? t('occupancy', {
+                        occupied: childComposition.occupied,
+                        total: childComposition.capacity,
+                      })
+                    : t('installed', { count: childComposition.occupied })}
                 </small>
               </Link>
             );
@@ -148,7 +155,10 @@ function EquipmentPreview({
       {composition.capacity > 4 && (
         <div className="equipment-physical-mini-capacity">
           <span>
-            {t('capacity', { count: composition.capacity, kind: composition.positional ? t('positions') : t('children') })}
+            {t('capacity', {
+              count: composition.capacity,
+              kind: composition.positional ? t('positions') : t('children'),
+            })}
           </span>
         </div>
       )}
@@ -408,13 +418,19 @@ export function PhysicalEquipmentDiagram({
             <header className="equipment-physical-subheading">
               <strong>{t('internal')}</strong>
               <small>
-                {projection.positional ? t('occupancy', { occupied: projection.occupied, total: projection.capacity }) : t('installed', { count: projection.occupied })}
+                {projection.positional
+                  ? t('occupancy', { occupied: projection.occupied, total: projection.capacity })
+                  : t('installed', { count: projection.occupied })}
               </small>
             </header>
             {summarized ? (
               <div className="equipment-physical-summary">
                 <p>
-                  {t('immediateOccupancy', { total: projection.capacity, kind: projection.positional ? t('positions') : t('children'), occupied: projection.occupied })}
+                  {t('immediateOccupancy', {
+                    total: projection.capacity,
+                    kind: projection.positional ? t('positions') : t('children'),
+                    occupied: projection.occupied,
+                  })}
                 </p>
                 <button type="button" onClick={() => setExpanded(true)}>
                   {t('exploreComposition')}
@@ -520,9 +536,7 @@ export function PhysicalEquipmentDiagram({
         {!hasPorts && projection.capacity === 0 && (
           <div className="equipment-physical-no-content">
             <strong>{t('empty')}</strong>
-            <span>
-              {t('noVirtual')}
-            </span>
+            <span>{t('noVirtual')}</span>
             {onAdd && root.childMode === 'DYNAMIC' && (
               <button type="button" onClick={() => onAdd(null)}>
                 {t('addEquipment')}

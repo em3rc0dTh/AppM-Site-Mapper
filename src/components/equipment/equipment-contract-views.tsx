@@ -285,11 +285,12 @@ export function EquipmentContractViews({
               ? t('breakerLive', { count: summary.reporting })
               : type === 'PANEL'
                 ? t('positionsLive', { reporting: summary.reporting, total: summary.positions })
-                : t('childEquipmentLive', { reporting: summary.reportingChildren, total: summary.installedChildren })}
+                : t('childEquipmentLive', {
+                    reporting: summary.reportingChildren,
+                    total: summary.installedChildren,
+                  })}
           </span>
-          <small>
-            {t('verifiedBreakers', { count: summary.reporting })}
-          </small>
+          <small>{t('verifiedBreakers', { count: summary.reporting })}</small>
         </div>
       )}
       <div className="ec-focus">

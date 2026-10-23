@@ -203,7 +203,10 @@ function FeedTrace({
         value={leg.source.breaker ?? '—'}
         detail={
           leg.source.breakerSerialNumber
-            ? t('breakerSerialDetail', { serial: leg.source.breakerSerialNumber, id: leg.source.breakerId ?? '—' })
+            ? t('breakerSerialDetail', {
+                serial: leg.source.breakerSerialNumber,
+                id: leg.source.breakerId ?? '—',
+              })
             : t('breakerNoSerial', { id: leg.source.breakerId ?? '—' })
         }
         status={leg.telemetry.status}

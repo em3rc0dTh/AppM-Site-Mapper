@@ -577,3 +577,71 @@ based on this screenshot alone.
 for the active panel and three breakers. Consistent settled frame coverage,
 source identity display for all levels, layout/responsive behavior, and
 production FIELD mapping remain pending. No real-device approval is implied.
+
+
+### Operator RAW / NORMALIZED Docker I/O observer (read-only)
+
+The existing containers intentionally emit operational counters and failure
+events, rather than dumping sensitive or high-volume raw traffic into every
+Docker log. Use the repository's **read-only** observer to see one persisted
+MQTT frame, one SNMP GET and one SNMP INFORM capture, together with normalized
+industrial signals correlated via `industrial_signal_history.eventId`. It
+queries the original `site_mapper_crud_acceptance_02` database from the
+existing Mongo container and performs **only Modbus FC03 reads** over the
+existing host-loopback port 1503:
+
+```bash
+cd /mnt/c/Users/eduar/Desktop/Thradex/AppM-Site-Mapper
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 scripts/telemetry/inspect-industrial-io.py --mode all --units 1 --legacy
+# Continuously display new MQTT capture events; CTRL+C stops the observer:
+python3 scripts/telemetry/inspect-industrial-io.py --mode mqtt --follow --interval 15
+# View full signals from both forms of SNMP capture:
+python3 scripts/telemetry/inspect-industrial-io.py --mode snmp --max-signals 256
+# Query all three emulated BFDB/Eltek Unit IDs for extended Modbus points:
+python3 scripts/telemetry/inspect-industrial-io.py --mode modbus --units 1,2,3
+```
+
+**RAW MQTT/SNMP** is the exact parsed capture envelope retained in the
+`industrial_events.envelopeJson` field, **not** the original MQTT wire
+byte sequence or SNMPv3 encrypted UDP datagram. SNMP values are the
+decrypted, decoded varbinds before interpretation/scaling. To see an
+unchanged live MQTT payload direct from the private broker, use:
+
+```bash
+docker exec appm-site-mapper-lab-mosquitto-1 \
+  mosquitto_sub -h 127.0.0.1 -p 1883 -t 'data/dev/#' -C 1 -W 20 -v
+```
+
+**NORMALIZED** shows each signal's original rawValue, interpreted value,
+unit, quality, MIB name and alarm state from the **same eventId**; there
+is no positional association inferred from circuit numbers. Default is
+12 normalized signals per event, configurable with `--max-signals`.
+
+**Modbus** prints actual transmitted request and received response bytes
+in hex alongside FLOAT32 ABCD and UINT16 quality decoded from each
+3-register extension point. The point addresses are read from the live
+bridge's **published registry** under `/data/registry.json`, not guessed
+from a stale document; if unavailable, the script warns and falls back
+explicitly to the example lab offsets. A `--legacy` flag also requests
+the legacy circuit 1 offsets 0..7. Quality 1 means VALID; invalid or
+unseen values can decode to NaN, not fabricated zero.
+
+The read-only observer **is itself a temporary Modbus TCP client**;
+its replies are what a compatible Metasys FC03 client would receive at
+that moment. This does **not** establish that a Johnson Controls Metasys
+controller is actually connected or reading. Transport data may contain
+customer equipment metadata: keep raw captures local, do not publicly
+paste authentication strings or private device identifiers.
+
+For native Docker operational logs (not full wire frames):
+
+```bash
+docker logs --since 2m -f --tail 30 appm-site-mapper-snmp-traps-1
+docker logs --since 2m -f --tail 30 appm-site-mapper-site-mapper-1
+docker logs --since 2m -f --tail 30 appm-site-mapper-modbus-tcp-1
+```
+
+No Compose services, credentials, databases, emulators or Modbus registry
+are modified by the observer. Avoid enabling unbounded raw wire logging
+on a production network; SNMPv3 raw datagrams are encrypted by design.

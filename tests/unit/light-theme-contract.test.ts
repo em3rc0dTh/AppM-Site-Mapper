@@ -3,8 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const source = (name: string) =>
-  readFileSync(join(process.cwd(), 'src', 'app', name), 'utf8');
+const source = (name: string) => readFileSync(join(process.cwd(), 'src', 'app', name), 'utf8');
 
 describe('MK1 light appearance regression', () => {
   it('keeps the root and native controls light', () => {

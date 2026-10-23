@@ -308,8 +308,7 @@ export function TopologyExplorer({
         <section className="topology-telemetry-note">
           <h3>{t('telemetry')}</h3>
           <p>
-            Live status appears on a mapped device or breaker. Topology alone does not prove
-            connectivity.
+            {t('liveStatusScope')}
           </p>
         </section>
         {item ? (

@@ -238,7 +238,7 @@ export function TopologyCreateForm({
                   name="telemetryPointPrefix"
                   maxLength={80}
                   pattern="[A-Za-z0-9]+(_[A-Za-z0-9]+)*"
-                  placeholder="0_2 (optional)"
+                  placeholder={t('prefixPlaceholder')}
                   aria-label={t('prefix')}
                 />
               </label>

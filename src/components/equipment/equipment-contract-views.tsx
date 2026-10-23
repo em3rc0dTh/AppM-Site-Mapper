@@ -102,7 +102,7 @@ function FramePreview({
           <ChildLink node={frame} className="ec-frame-title" />
         </div>
         <span className="ec-count">
-          {signal.reportingChildren}/{panels.length} panels MQTT LIVE
+          {t('frameMqttLive', { reporting: signal.reportingChildren, total: panels.length })}
         </span>
       </div>
       <div className="ec-frame-panels">
@@ -274,7 +274,7 @@ export function EquipmentContractViews({
         {summary.reporting > 0 && (
           <span className="ec-topline-status">
             <span className="ec-status-dot" aria-hidden="true" /> {summary.reporting}/
-            {summary.installed} breakers reporting
+            {t('reportingBreakers', { count: summary.installed })}
           </span>
         )}
       </div>
@@ -282,13 +282,13 @@ export function EquipmentContractViews({
         <div className="ec-live-cover" aria-label={t('coverage')}>
           <span>
             {type === 'CIRCUIT_BREAKER'
-              ? `${summary.reporting}/1 breaker LIVE`
+              ? t('breakerLive', { count: summary.reporting })
               : type === 'PANEL'
-                ? `${summary.reporting}/${summary.positions} positions MQTT LIVE`
-                : `${summary.reportingChildren}/${summary.installedChildren} installed child Equipment MQTT LIVE`}
+                ? t('positionsLive', { reporting: summary.reporting, total: summary.positions })
+                : t('childEquipmentLive', { reporting: summary.reportingChildren, total: summary.installedChildren })}
           </span>
           <small>
-            {summary.reporting} verified descendant breakers reporting · averages of direct children
+            {t('verifiedBreakers', { count: summary.reporting })}
           </small>
         </div>
       )}
@@ -299,8 +299,8 @@ export function EquipmentContractViews({
           <p>
             {root.model ?? root.equipmentType.replaceAll('_', ' ')} ·{' '}
             {root.childMode === 'POSITIONAL'
-              ? `${root.children.length} physical positions`
-              : `${children.length} child Equipment`}
+              ? t('physicalPositionsCount', { count: root.children.length })
+              : t('childEquipmentCount', { count: children.length })}
           </p>
         </div>
         <div className="ec-focus-badges">

@@ -592,7 +592,8 @@
     "inspectAction": "inspeccionar",
     "noMapWarning": "Las superficies de las salas no están levantadas. Esta es una lista topológica, no un plano físico.",
     "openAction": "ABRIR",
-    "roomType": "SALA"
+    "roomType": "SALA",
+    "liveStatusScope": "El estado en vivo aparece en un dispositivo o interruptor mapeado. La topología por sí sola no demuestra conectividad."
   },
   "equipmentView": {
     "occupied": "ocupadas",
@@ -656,7 +657,15 @@
     "installedCount": "{count} instalados",
     "mqttSourceCaption": "Origen MQTT:",
     "noVerifiedBinding": "Sin vinculación verificada",
-    "packetCaption": "Último paquete:"
+    "packetCaption": "Último paquete:",
+    "frameMqttLive": "{reporting}/{total} paneles con MQTT EN VIVO",
+    "reportingBreakers": "{count} interruptores con lecturas",
+    "verifiedBreakers": "{count} interruptores descendientes verificados con lecturas · promedios de hijos directos",
+    "breakerLive": "{count}/1 interruptor EN VIVO",
+    "positionsLive": "{reporting}/{total} posiciones MQTT EN VIVO",
+    "childEquipmentLive": "{reporting}/{total} equipos hijos instalados con MQTT EN VIVO",
+    "physicalPositionsCount": "{count} posiciones físicas",
+    "childEquipmentCount": "{count} equipos hijos"
   },
   "warehouseForms": {
     "creation": "Modo de creación de plantilla",
@@ -1128,7 +1137,10 @@
     "noDestination": "Sin destino conectado",
     "openChassis": "ABRIR COMPOSICIÓN DEL CHASSIS →",
     "openPanel": "ABRIR COMPOSICIÓN DEL PANEL →",
-    "inventoryDisclaimer": "Las posiciones y conexiones son registros de inventario, no lecturas de corriente en vivo ni certificación de cableado. Selecciona otro panel arriba para consultar sus posiciones."
+    "inventoryDisclaimer": "Las posiciones y conexiones son registros de inventario, no lecturas de corriente en vivo ni certificación de cableado. Selecciona otro panel arriba para consultar sus posiciones.",
+    "hierarchyPath": "Dispositivo → Chassis → Shelf → Frame → Panel → Equipo",
+    "inspectPanel": "Inspeccionar panel {panel}, {installed} interruptores instalados",
+    "panelPositions": "{installed} instalados · {available} posiciones disponibles"
   },
   "bdfbTree": {
     "tree": "Árbol de potencia BDFB",
@@ -1461,7 +1473,8 @@
     "saveRoom": "Guardar sala",
     "structureBound": "La estructura debe permanecer dentro del límite levantado del sitio.",
     "roomBound": "La sala debe permanecer dentro del límite de la estructura (referencia del nivel).",
-    "overlap": "La sala se superpone al espacio existente: {label}. Se permiten paredes compartidas, pero no superficies superpuestas."
+    "overlap": "La sala se superpone al espacio existente: {label}. Se permiten paredes compartidas, pero no superficies superpuestas.",
+    "prefixPlaceholder": "0_2 (opcional)"
   },
   "polygonTools": {
     "cancel": "Cancelar",

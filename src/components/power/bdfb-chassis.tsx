@@ -65,7 +65,7 @@ export function BdfbChassis({
         <div>
           <span>{t('composition')}</span>
           <strong>{device.name}</strong>
-          <small>Device → Chassis → Shelf → Frame → Panel → Equipment</small>
+          <small>{t('hierarchyPath')}</small>
         </div>
         <div className="bdfb-chassis-status">
           <ContextPin entityId={device.id} />
@@ -107,12 +107,11 @@ export function BdfbChassis({
                               type="button"
                               aria-pressed={selected}
                               onClick={() => setSelectedId(panel.id)}
-                              aria-label={`Inspect panel ${panel.label}, ${occupied} breakers installed`}
+                              aria-label={t('inspectPanel', { panel: panel.label, installed: occupied })}
                             >
                               <strong>{panel.label}</strong>
                               <span>
-                                {occupied} installed · {panel.positions.length - occupied} available
-                                positions
+                                {t('panelPositions', { installed: occupied, available: panel.positions.length - occupied })}
                               </span>
                             </button>
                             <Link

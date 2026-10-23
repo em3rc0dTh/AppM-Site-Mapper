@@ -592,7 +592,8 @@
     "inspectAction": "inspect",
     "noMapWarning": "Room footprints are not surveyed. This is a topology list, not a physical map.",
     "openAction": "OPEN",
-    "roomType": "ROOM"
+    "roomType": "ROOM",
+    "liveStatusScope": "Live status appears on a mapped device or breaker. Topology alone does not prove connectivity."
   },
   "equipmentView": {
     "occupied": "occupied",
@@ -656,7 +657,15 @@
     "installedCount": "{count} installed",
     "mqttSourceCaption": "MQTT source:",
     "noVerifiedBinding": "No verified binding",
-    "packetCaption": "Last packet:"
+    "packetCaption": "Last packet:",
+    "frameMqttLive": "{reporting}/{total} panels MQTT LIVE",
+    "reportingBreakers": "{count} breakers reporting",
+    "verifiedBreakers": "{count} verified descendant breakers reporting · averages of direct children",
+    "breakerLive": "{count}/1 breaker LIVE",
+    "positionsLive": "{reporting}/{total} positions MQTT LIVE",
+    "childEquipmentLive": "{reporting}/{total} installed child Equipment MQTT LIVE",
+    "physicalPositionsCount": "{count} physical positions",
+    "childEquipmentCount": "{count} child Equipment"
   },
   "warehouseForms": {
     "creation": "Template creation mode",
@@ -1128,7 +1137,10 @@
     "noDestination": "No connected destination",
     "openChassis": "OPEN CHASSIS COMPOSITION →",
     "openPanel": "OPEN PANEL COMPOSITION →",
-    "inventoryDisclaimer": "Positions and connections are inventory records, not live current readings or a wiring certificate. Select another panel above to inspect its positions."
+    "inventoryDisclaimer": "Positions and connections are inventory records, not live current readings or a wiring certificate. Select another panel above to inspect its positions.",
+    "hierarchyPath": "Device → Chassis → Shelf → Frame → Panel → Equipment",
+    "inspectPanel": "Inspect panel {panel}, {installed} breakers installed",
+    "panelPositions": "{installed} installed · {available} available positions"
   },
   "bdfbTree": {
     "tree": "BDFB power tree",
@@ -1461,7 +1473,8 @@
     "saveRoom": "Save Room",
     "structureBound": "Structure must stay inside its surveyed Site boundary.",
     "roomBound": "Room must stay within the Structure boundary (Level reference).",
-    "overlap": "Room overlaps existing space: {label}. Shared walls are allowed, shared area is not."
+    "overlap": "Room overlaps existing space: {label}. Shared walls are allowed, shared area is not.",
+    "prefixPlaceholder": "0_2 (optional)"
   },
   "polygonTools": {
     "cancel": "Cancel",

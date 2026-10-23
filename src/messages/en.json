@@ -97,6 +97,26 @@
       "templates": "Equipment templates",
       "empty": "No templates yet",
       "emptyDescription": "Create the first reusable Equipment template above."
+    },
+    "blueprint": {
+      "eyebrow": "SUBSTRUCTURE / ROOM BLUEPRINT",
+      "surveyed": "Surveyed room boundary · bay footprints · 600 × 600 mm position grid",
+      "unsurveyed": "Unsurveyed room · inventory topology only; no layout invented",
+      "write": "EDIT PERMITTED",
+      "read": "READ ONLY",
+      "properties": "ROOM PROPERTIES",
+      "information": "GENERAL INFORMATION",
+      "name": "Name",
+      "type": "Type",
+      "geometry": "Geometry",
+      "vertices": "{count} surveyed vertices",
+      "notSurveyed": "Not surveyed",
+      "area": "Area",
+      "footprints": "Rack footprints",
+      "clusters": "TOTAL CLUSTERS",
+      "racks": "RACKS IN THIS ROOM · {count}",
+      "inspect": "INSPECT ↗",
+      "instruction": "CLICK A CLUSTER OR CABINET TO INSPECT PROPERTIES"
     }
   }
 }

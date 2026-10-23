@@ -3,6 +3,7 @@ import { RoomLayoutEditor } from '@/components/blueprint/room-layout-editor';
 import { readLayoutDraft } from '@/modules/spatial/application/layout-editor-service';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { notFound, redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -59,6 +60,7 @@ export default async function BlueprintPage({
   const tree = root ? await topology.buildNavigationTree(root.id) : null;
   const canWrite = hasPermission(auth.value.role, 'topology:write');
 
+  const t = await getTranslations('pages.blueprint');
   return (
     <main className="operational-page operational-page--blueprint">
       <nav className="breadcrumbs">
@@ -79,14 +81,14 @@ export default async function BlueprintPage({
 
         <section className="operational-stage operational-stage--wide">
           <SectionHeader
-            eyebrow="SUBSTRUCTURE / ROOM BLUEPRINT"
+            eyebrow={t('eyebrow')}
             title={result.value.room.name.toUpperCase()}
             description={
               result.value.room.polygon?.length
-                ? 'Surveyed room boundary · bay footprints · 600 × 600 mm position grid'
-                : 'Unsurveyed room · inventory topology only; no layout invented'
+                ? t('surveyed')
+                : t('unsurveyed')
             }
-            actions={<StatusBadge>{canWrite ? 'EDIT PERMITTED' : 'READ ONLY'}</StatusBadge>}
+            actions={<StatusBadge>{canWrite ? t('write') : t('read')}</StatusBadge>}
           />
 
           <TelemetryLens label={result.value.room.name} entityIds={inventory.map((n) => n.id)} />
@@ -103,36 +105,36 @@ export default async function BlueprintPage({
           )}
         </section>
         <aside className="zip-room-properties">
-          <header>ROOM PROPERTIES</header>
+          <header>{t('properties')}</header>
           <section className="room-general-info">
-            <h3>GENERAL INFORMATION</h3>
+            <h3>{t('information')}</h3>
             <dl>
-              <dt>Name</dt>
+              <dt>{t('name')}</dt>
               <dd>{result.value.room.name}</dd>
-              <dt>Type</dt>
+              <dt>{t('type')}</dt>
               <dd>{result.value.room.variant}</dd>
-              <dt>Geometry</dt>
+              <dt>{t('geometry')}</dt>
               <dd>
                 {result.value.room.polygon?.length
-                  ? `${result.value.room.polygon.length} surveyed vertices`
-                  : 'Not surveyed'}
+                  ? t('vertices', { count: result.value.room.polygon.length })
+                  : t('notSurveyed')}
               </dd>
               {result.value.room.polygon?.length ? (
                 <>
-                  <dt>Area</dt>
+                  <dt>{t('area')}</dt>
                   <dd>{(polygonArea(result.value.room.polygon) / 1_000_000).toFixed(2)} m²</dd>
                 </>
               ) : null}
-              <dt>Rack footprints</dt>
+              <dt>{t('footprints')}</dt>
               <dd>{result.value.racks.length}</dd>
             </dl>
           </section>
           <section>
-            <small>TOTAL CLUSTERS</small>
+            <small>{t('clusters')}</small>
             <strong>{result.value.clusters.length}</strong>
           </section>
           <section className="room-rack-navigation">
-            <small>RACKS IN THIS ROOM · {result.value.racks.length}</small>
+            <small>{t('racks', { count: result.value.racks.length })}</small>
             {result.value.racks.map((rack) => (
               <Link
                 key={rack.id}
@@ -142,17 +144,13 @@ export default async function BlueprintPage({
                     : `/rack/${rack.id}`
                 }
               >
-                {rack.name} <span>INSPECT ↗</span>
+                {rack.name} <span>{t('inspect')}</span>
               </Link>
             ))}
           </section>
           <div>
             <span>⌗</span>
-            <p>
-              CLICK A CLUSTER OR CABINET
-              <br />
-              TO INSPECT PROPERTIES
-            </p>
+            <p>{t('instruction')}</p>
           </div>
         </aside>
       </div>

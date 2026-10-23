@@ -97,6 +97,26 @@
       "templates": "Plantillas de Equipment",
       "empty": "Aún no hay plantillas",
       "emptyDescription": "Crea arriba la primera plantilla reutilizable de Equipment."
+    },
+    "blueprint": {
+      "eyebrow": "SUBESTRUCTURA / PLANO DE SALA",
+      "surveyed": "Límite de sala levantado · áreas de bahías · cuadrícula de posiciones de 600 × 600 mm",
+      "unsurveyed": "Sala sin levantamiento · solo topología de inventario; sin inventar un plano",
+      "write": "EDICIÓN PERMITIDA",
+      "read": "SOLO LECTURA",
+      "properties": "PROPIEDADES DE LA SALA",
+      "information": "INFORMACIÓN GENERAL",
+      "name": "Nombre",
+      "type": "Tipo",
+      "geometry": "Geometría",
+      "vertices": "{count} vértices levantados",
+      "notSurveyed": "Sin levantamiento",
+      "area": "Área",
+      "footprints": "Superficies ocupadas por racks",
+      "clusters": "CLÚSTERES TOTALES",
+      "racks": "RACKS EN ESTA SALA · {count}",
+      "inspect": "INSPECCIONAR ↗",
+      "instruction": "SELECCIONA UN CLÚSTER O GABINETE PARA INSPECCIONAR SUS PROPIEDADES"
     }
   }
 }

@@ -43,10 +43,36 @@ tabs and SNMP historical metric tabs use `useTranslations()` or
 `getTranslations()`. Site Mapper identity and persisted inventory records
 remain literal, never interpolated into translation tables.
 
-The Spanish catalog is currently **partial**: it covers the migrated
-namespaces, not every operator-facing sentence in the product. Do not expose
-a language selector while some screens still use hardcoded English copy.
-No middleware, locale redirects, cookies or translated URL paths are enabled.
+The Spanish catalog is currently **partial** and a language selector is
+available for QA in this branch. The next-intl request configuration honors a
+validated preference cookie. No middleware, locale redirects or translated URL
+paths are enabled. Keep this PR unmerged until bilingual acceptance is complete.
+
+## Spanish implementation status (PR #101)
+
+**Work in progress: English and Spanish are available for QA but Spanish is not
+yet complete across every operational component. Do not merge PR #101 until
+the remaining screens and state-specific messages have been audited.**
+
+- Explicit preference: `site_mapper_locale=en|es` cookie, validated on each
+  Next.js request, defaulting to English. This is a display preference only.
+- The HTML `lang` attribute and next-intl messages reflect the selected locale.
+  The selector lives on the authentication screen and in **Settings → Profile**,
+  so the approved 22-inch topbar geometry is preserved.
+- Localized screens include navigation, Workspace, Network, Site, Structure,
+  Level, Room Blueprint, Rack, Equipment composition and Inspector, Power,
+  Warehouse, Settings, login and several administration workflows.
+- Remaining detailed components include advanced SNMP charts and diagnostics,
+  Blueprint drafting controls, physical equipment diagrams, power-connection
+  editors, some telemetry panels, warehouse nested options, and various
+  confirmations and error states.
+- **Never translate** user-entered Site/Room/Equipment data, serial numbers,
+  identifiers, OIDs, BDFB, SNMP, MQTT, Modbus, shunt labels A/B,
+  SI measurement units, source identities or raw telemetry.
+- Catalog key parity is validated, but this cannot prove every screen has been
+  extracted: native English literals still exist in unported components.
+- Switching between English and Spanish must be acceptance-tested through both
+  server and client navigation, including auth and responsive layouts.
 
 ## Next phase (complete Spanish i18n)
 

@@ -318,7 +318,7 @@ try {
   await page.goto(base + '/settings?tab=profile', { waitUntil: 'networkidle' });
   await page.locator('.sm-locale-control select').selectOption('en');
   await page.waitForFunction(
-    () => document.cookie.split(';').some((value) => value.trim() === 'site_mapper_locale=en'),
+    () => document.cookie.split('; ').includes('site_mapper_locale=en'),
     null,
     { timeout: 30000 },
   );

@@ -319,6 +319,7 @@ try {
   await page.locator('.sm-locale-control select').selectOption('en');
   await page.waitForFunction(
     () => document.cookie.split(';').some((value) => value.trim() === 'site_mapper_locale=en'),
+    null,
     { timeout: 30000 },
   );
   // A new server request must honor the stored preference across modules.

@@ -15,7 +15,17 @@ function iconFor(kind: TopologyKind): string {
   return 'box';
 }
 
-type TopologyKindLabel = 'network' | 'site' | 'structure' | 'level' | 'room' | 'bay' | 'position' | 'rack' | 'device' | 'equipment';
+type TopologyKindLabel =
+  | 'network'
+  | 'site'
+  | 'structure'
+  | 'level'
+  | 'room'
+  | 'bay'
+  | 'position'
+  | 'rack'
+  | 'device'
+  | 'equipment';
 
 function labelFor(kind: TopologyKind): TopologyKindLabel {
   switch (kind) {

@@ -181,8 +181,8 @@ for(const spec of PLAN){
     lifecycle:"ACTIVE",
     kind:{$in:["DEVICE","EQUIPMENT"]},
   },{
-    projection:{_id:0,id:1,name:1,kind:1,equipmentType:1,deviceType:1,
-      deviceId:1,parentId:1,serialNumber:1}
+    _id:0,id:1,name:1,kind:1,equipmentType:1,deviceType:1,
+    deviceId:1,parentId:1,serialNumber:1
   }).toArray();
   const preexisting=links.find({
     protocol:"MQTT",sourceIdentity:spec.serial,lifecycle:"ACTIVE",
@@ -207,9 +207,9 @@ for(const x of workloads){
         "96 INSTALLLED synthetic breaker positions, 385 MQTT bindings");
   print("Existing serial owners for "+x.spec.serial+": "+x.serialOwners.length);
   for(const owner of x.serialOwners) {
-    const device=owner.deviceId?topo.findOne({id:owner.deviceId},{projection:{
+    const device=owner.deviceId?topo.findOne({id:owner.deviceId},{
       _id:0,id:1,name:1,deviceType:1,parentId:1,
-    }}):null;
+    }):null;
     print("  SERIAL OWNER: "+JSON.stringify({ ...owner,
       ...(device?{owningDevice:device}:{}),
     }));

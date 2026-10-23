@@ -35,14 +35,14 @@ function SourceCard({
   return (
     <article className="trace-source-card" data-feed={feed} data-empty={leg ? 'false' : 'true'}>
       <header>
-        <span>{t('source',{feed})}</span>
+        <span>{t('source', { feed })}</span>
         <FeedBadge feed={feed} />
       </header>
-      <strong>{leg?.source.entityName ?? t('feedUnconfigured',{feed})}</strong>
-      <small>{leg?.source.panel ? t('panel',{name:leg.source.panel}) : t('noPanel')}</small>
-      <small>{leg?.source.breaker ? t('cb',{name:leg.source.breaker}) : t('noBreaker')}</small>
+      <strong>{leg?.source.entityName ?? t('feedUnconfigured', { feed })}</strong>
+      <small>{leg?.source.panel ? t('panel', { name: leg.source.panel }) : t('noPanel')}</small>
+      <small>{leg?.source.breaker ? t('cb', { name: leg.source.breaker }) : t('noBreaker')}</small>
       {leg?.source.breakerSerialNumber ? (
-        <small>{t('breakerSerial',{serial:leg.source.breakerSerialNumber})}</small>
+        <small>{t('breakerSerial', { serial: leg.source.breakerSerialNumber })}</small>
       ) : null}
     </article>
   );
@@ -61,16 +61,14 @@ function TelemetryCard({
     >
       <header>
         <span>ϟ</span>
-        <small>{t('live',{feed})}</small>
+        <small>{t('live', { feed })}</small>
       </header>
       <div>
         <strong>{metric(leg?.telemetry.voltageV, 'V')}</strong>
         <strong>{metric(leg?.telemetry.currentA, 'A')}</strong>
         <strong>{metric(leg?.telemetry.energyKwh, 'kWh', 4)}</strong>
       </div>
-      <small>
-        {leg?.telemetry.sourceIdentity ?? leg?.telemetry.rawPointId ?? t('noMqtt')}
-      </small>
+      <small>{leg?.telemetry.sourceIdentity ?? leg?.telemetry.rawPointId ?? t('noMqtt')}</small>
     </article>
   );
 }
@@ -143,11 +141,11 @@ function FeedTrace({
         <header>
           <div>
             <FeedBadge feed={feed} />
-            <strong>{t('trace',{feed})}</strong>
+            <strong>{t('trace', { feed })}</strong>
           </div>
           <span className="trace-status-badge is-missing">{t('notConfigured')}</span>
         </header>
-        <div className="trace-empty-column">{t('emptyPath',{feed})}</div>
+        <div className="trace-empty-column">{t('emptyPath', { feed })}</div>
       </section>
     );
   }
@@ -164,7 +162,7 @@ function FeedTrace({
       <header>
         <div>
           <FeedBadge feed={feed} />
-          <strong>{t('trace',{feed})}</strong>
+          <strong>{t('trace', { feed })}</strong>
         </div>
         <span
           className="trace-status-badge"
@@ -180,7 +178,7 @@ function FeedTrace({
         value={leg.source.entityName}
         detail={
           leg.source.deviceSerialNumber
-            ? t('deviceSerial',{serial:leg.source.deviceSerialNumber})
+            ? t('deviceSerial', { serial: leg.source.deviceSerialNumber })
             : t('deviceNoSerial')
         }
         status={t('recorded')}
@@ -353,20 +351,12 @@ export function FullPowerTraceModal({
                   {t('audit')} <strong>{view?.verified ? t('nominal') : t('review')}</strong>
                 </span>
               </div>
-              <button
-                type="button"
-                aria-label={t('close')}
-                onClick={() => setOpen(false)}
-              >
+              <button type="button" aria-label={t('close')} onClick={() => setOpen(false)}>
                 ×
               </button>
             </header>
 
-            {loading ? (
-              <div className="full-power-trace-state">
-                {t('loading')}
-              </div>
-            ) : null}
+            {loading ? <div className="full-power-trace-state">{t('loading')}</div> : null}
             {error ? <div className="full-power-trace-state is-error">{error}</div> : null}
 
             {trace && view ? (
@@ -403,25 +393,17 @@ export function FullPowerTraceModal({
                 <footer className="trace-reference-footer">
                   <article>
                     <small>{t('redundancyStatus')}</small>
-                    <strong>
-                      {view.redundancyVerified ? t('double') : t('notVerified')}
-                    </strong>
+                    <strong>{view.redundancyVerified ? t('double') : t('notVerified')}</strong>
                     <span>
-                      {view.policy?.policy === 'A_B_REQUIRED'
-                        ? t('independent')
-                        : t('undeclared')}
+                      {view.policy?.policy === 'A_B_REQUIRED' ? t('independent') : t('undeclared')}
                     </span>
                   </article>
                   <article>
                     <small>{t('validation')}</small>
                     <strong>
-                      {view.topologyVerified && view.telemetryVerified
-                        ? t('passed')
-                        : t('pending')}
+                      {view.topologyVerified && view.telemetryVerified ? t('passed') : t('pending')}
                     </strong>
-                    <span>
-                      {t('evaluation')}
-                    </span>
+                    <span>{t('evaluation')}</span>
                   </article>
                   <article>
                     <small>{t('sources')}</small>

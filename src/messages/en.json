@@ -1244,5 +1244,20 @@
     "newRoom": "New Room · blue drawing",
     "canvas": "{title} drawing canvas",
     "saving": "Saving…"
+  },
+  "historyCharts": {
+    "empty": "No historical measurements for this metric.",
+    "buckets": "{count} recorded time buckets · missing observations are not zero",
+    "tooltip": "{date} · {value} {unit} · {count} direct children reporting",
+    "title": "MQTT · historical trend",
+    "range": "Historical range",
+    "loading": "Loading verified historical readings…",
+    "error": "History unavailable: {error}",
+    "timeBuckets": "{count} time buckets",
+    "bindings": "{bound}/{total} breakers with MQTT bindings",
+    "reporting": "{count}/{total} reporting in last historical bucket",
+    "noRecord": "No recorded readings",
+    "last": "Last historical bucket: {date}",
+    "noReadings": "No commissioned MQTT breaker readings were stored for this scope and period."
   }
 }

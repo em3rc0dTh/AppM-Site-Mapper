@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import type { CompositionHistoryPoint } from '@/modules/telemetry/application/composition-history';
 import type { CompositionMetricKey } from '@/modules/telemetry/application/composition-telemetry-summary';
 import type { TelemetryHistoryWindow } from '@/modules/telemetry/domain/history';
@@ -41,6 +42,8 @@ function SeriesChart({
   metric: CompositionMetricKey;
   window: TelemetryHistoryWindow;
 }>) {
+  const t = useTranslations('historyCharts');
+  const locale = useLocale();
   const observations = points.flatMap((point) => {
     const value = point.metrics[metric];
     const at = Date.parse(point.at);
@@ -52,7 +55,7 @@ function SeriesChart({
     return (
       <section className="ec-series">
         <strong>{name}</strong>
-        <p>No historical measurements for this metric.</p>
+        <p>{t('empty')}</p>
       </section>
     );
   }
@@ -116,7 +119,7 @@ function SeriesChart({
         {observations.length <= 220 &&
           observations.map((point) => (
             <circle key={point.at} cx={x(point.at)} cy={y(point.value)} r="2.9" fill={color}>
-              <title>{`${new Date(point.at).toLocaleString()} · ${formatValue(point.value)} ${unit} · ${point.reporting} direct children reporting`}</title>
+              <title>{t('tooltip',{date:new Date(point.at).toLocaleString(locale,{timeZone:'America/Lima'}),value:formatValue(point.value),unit,count:point.reporting})}</title>
             </circle>
           ))}
         <text x="42" y="151" className="ec-chart-label">
@@ -126,7 +129,7 @@ function SeriesChart({
           {new Date(xEnd).toLocaleDateString()}
         </text>
       </svg>
-      <small>{observations.length} recorded time buckets · missing observations are not zero</small>
+      <small>{t('buckets',{count:observations.length})}</small>
     </section>
   );
 }
@@ -135,6 +138,8 @@ export function CompositionHistoryCharts({
   equipmentId,
   equipmentType,
 }: Readonly<{ equipmentId: string; equipmentType: string }>) {
+  const t = useTranslations('historyCharts');
+  const locale = useLocale();
   const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [error, setError] = useState('');
@@ -180,8 +185,8 @@ export function CompositionHistoryCharts({
   return (
     <div className="ec-history-charts">
       <div className="ec-history-controls">
-        <strong>MQTT · historical trend</strong>
-        <div role="group" aria-label="Historical range">
+        <strong>{t('title')}</strong>
+        <div role="group" aria-label={t('range')}>
           {WINDOWS.map((range) => (
             <button
               type="button"
@@ -201,24 +206,24 @@ export function CompositionHistoryCharts({
           ))}
         </div>
       </div>
-      {loading && <p role="status">Loading verified historical readings…</p>}
-      {error && <p role="alert">History unavailable: {error}</p>}
+      {loading && <p role="status">{t('loading')}</p>}
+      {error && <p role="alert">{t('error',{error})}</p>}
       {!loading && data && (
         <>
           <div className="ec-history-coverage">
-            <span>{data.points.length} time buckets</span>
+            <span>{t('timeBuckets',{count:data.points.length})}</span>
             <span>
-              {data.boundBreakerCount}/{data.breakerCount} breakers with MQTT bindings
+              {t('bindings',{bound:data.boundBreakerCount,total:data.breakerCount})}
             </span>
             <span>
               {last
-                ? `${coverage ?? 0}/${denominator ?? 0} reporting in last historical bucket`
-                : 'No recorded readings'}
+                ? t('reporting',{count:coverage??0,total:denominator??0})
+                : t('noRecord')}
             </span>
           </div>
-          {last && <small>Last historical bucket: {new Date(last.at).toLocaleString()}</small>}
+          {last && <small>{t('last',{date:new Date(last.at).toLocaleString(locale,{timeZone:'America/Lima'})})}</small>}
           {!data.points.length ? (
-            <p>No commissioned MQTT breaker readings were stored for this scope and period.</p>
+            <p>{t('noReadings')}</p>
           ) : (
             <div className="ec-history-grid">
               {METRICS.map((metric) => (

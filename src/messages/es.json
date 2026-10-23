@@ -1244,5 +1244,20 @@
     "newRoom": "Nueva sala · dibujo azul",
     "canvas": "Plano de dibujo de {title}",
     "saving": "Guardando…"
+  },
+  "historyCharts": {
+    "empty": "No hay mediciones históricas para esta métrica.",
+    "buckets": "{count} intervalos registrados · las observaciones faltantes no equivalen a cero",
+    "tooltip": "{date} · {value} {unit} · {count} elementos secundarios directos reportando",
+    "title": "MQTT · tendencia histórica",
+    "range": "Intervalo histórico",
+    "loading": "Cargando lecturas históricas verificadas…",
+    "error": "Historial no disponible: {error}",
+    "timeBuckets": "{count} intervalos",
+    "bindings": "{bound}/{total} breakers con vinculaciones MQTT",
+    "reporting": "{count}/{total} reportando en el último intervalo histórico",
+    "noRecord": "Sin lecturas registradas",
+    "last": "Último intervalo histórico: {date}",
+    "noReadings": "No se almacenaron lecturas MQTT de breakers comisionados en este ámbito y período."
   }
 }

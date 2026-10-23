@@ -467,14 +467,14 @@ export function PhysicalEquipmentDiagram({
                           <small>
                             {t('position', { value: String(slot.index + 1).padStart(2, '0') })}
                           </small>
-                          <span>{slot.equipmentId ? t('missingEquipment') : 'Available'}</span>
+                          <span>{slot.equipmentId ? t('missingEquipment') : t('available')}</span>
                           {!slot.equipmentId && onAdd && (
                             <button
                               type="button"
                               onClick={() => onAdd(projection.positional ? slot.index : null)}
                               aria-label={t('addPosition', { position: slot.index + 1 })}
                             >
-                              + ADD
+                              {t('addEquipment')}
                             </button>
                           )}
                         </div>

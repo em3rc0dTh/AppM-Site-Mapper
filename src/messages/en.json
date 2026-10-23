@@ -314,7 +314,9 @@
       "diagnostic": "Power path diagnostic",
       "notConfiguredFull": "NOT CONFIGURED",
       "showRoom": "SHOW ROOM",
-      "breadcrumbs": "Breadcrumb"
+      "breadcrumbs": "Breadcrumb",
+      "feedAUpper": "FEED A",
+      "feedBUpper": "FEED B"
     },
     "rack": {
       "elevation": "ELEVATION",
@@ -1426,7 +1428,8 @@
     "addEquipment": "+ ADD EQUIPMENT",
     "childPreview": "{name} child preview",
     "accessPortsCaption": "Access ports",
-    "immediateOccupancy": "{total} immediate {kind} · {occupied} occupied."
+    "immediateOccupancy": "{total} immediate {kind} · {occupied} occupied.",
+    "available": "Available"
   },
   "snmpStrip": {
     "label": "SNMP incoming DC feeder capacity",

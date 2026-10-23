@@ -314,7 +314,9 @@
       "diagnostic": "Diagnóstico de la ruta de potencia",
       "notConfiguredFull": "SIN CONFIGURAR",
       "showRoom": "VER SALA",
-      "breadcrumbs": "Ruta de navegación"
+      "breadcrumbs": "Ruta de navegación",
+      "feedAUpper": "ALIMENTACIÓN A",
+      "feedBUpper": "ALIMENTACIÓN B"
     },
     "rack": {
       "elevation": "ELEVACIÓN",
@@ -1426,7 +1428,8 @@
     "addEquipment": "+ AGREGAR EQUIPMENT",
     "childPreview": "Vista previa de hijos de {name}",
     "accessPortsCaption": "Puertos de acceso",
-    "immediateOccupancy": "{total} {kind} inmediatos · {occupied} ocupados."
+    "immediateOccupancy": "{total} {kind} inmediatos · {occupied} ocupados.",
+    "available": "Disponible"
   },
   "snmpStrip": {
     "label": "Capacidad de la entrada DC SNMP",

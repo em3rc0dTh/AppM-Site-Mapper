@@ -331,13 +331,13 @@ export default async function PowerPage({
 
       <footer className="zip-power-footer">
         <span>
-          FEED A{' '}
+          {t('feedAUpper')}{' '}
           <b className={feedA ? 'is-good' : ''}>
             {feedA ? '● ' + t('configured') : '○ ' + t('notConfiguredFull')}
           </b>
         </span>
         <span>
-          FEED B{' '}
+          {t('feedBUpper')}{' '}
           <b className={feedB ? 'is-good' : ''}>
             {feedB ? '● ' + t('configured') : '○ ' + t('notConfiguredFull')}
           </b>

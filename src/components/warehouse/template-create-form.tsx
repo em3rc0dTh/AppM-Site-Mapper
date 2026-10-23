@@ -120,7 +120,7 @@ export function TemplateCreateForm() {
           className={mode === 'form' ? 'is-active' : undefined}
           onClick={() => setMode('form')}
         >
-          FORM
+          {t('form')}
         </button>
         <button
           type="button"

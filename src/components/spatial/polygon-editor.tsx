@@ -1,6 +1,7 @@
 'use client';
 
 import { useId, useRef, useState, type PointerEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   isCanonicalPolygon,
   isInPositiveDrawingPlane,
@@ -67,6 +68,7 @@ export function PolygonEditor({
   error?: string | null;
   confirmLabel?: string;
 }) {
+  const t = useTranslations('polygonTools');
   const [draft, setDraft] = useState<Snapshot>(() => ({
     points: [...initial],
     closed: initial.length >= 3,
@@ -184,10 +186,10 @@ export function PolygonEditor({
         <div className="spatial-editor-heading">
           <strong>{title}</strong>
           <span>
-            {draft.points.length} vertices ·{' '}
+            {t('vertices',{count:draft.points.length})} ·{' '}
             {draft.closed && !invalid
               ? `${(polygonArea(draft.points) / 1_000_000).toFixed(2)} m²`
-              : 'Draft boundary'}
+              : t('draft')}
           </span>
         </div>
         <div className="spatial-editor-header-actions">
@@ -201,7 +203,7 @@ export function PolygonEditor({
               disabled={busy || !!invalid}
               onClick={() => onConfirm(draft.points.map((point) => ({ ...point })))}
             >
-              {busy ? 'Applying…' : confirmLabel}
+              {busy ? t('applying') : confirmLabel}
             </button>
           )}
         </div>
@@ -223,10 +225,10 @@ export function PolygonEditor({
         >
           Pan
         </button>
-        <button type="button" disabled={busy} onClick={() => zoom(0.8)} aria-label="Zoom in">
+        <button type="button" disabled={busy} onClick={() => zoom(0.8)} aria-label={t('zoomIn')}>
           +
         </button>
-        <button type="button" disabled={busy} onClick={() => zoom(1.25)} aria-label="Zoom out">
+        <button type="button" disabled={busy} onClick={() => zoom(1.25)} aria-label={t('zoomOut')}>
           −
         </button>
         <button
@@ -243,7 +245,7 @@ export function PolygonEditor({
             disabled={busy}
             onChange={(e) => setSnap(e.target.checked)}
           />
-          Snap · 600 mm
+          {t('snap')}
         </label>
         <button
           type="button"
@@ -277,20 +279,20 @@ export function PolygonEditor({
         </button>
       </div>
       {(context.length >= 3 || contextOverlays.length > 0) && (
-        <div className="spatial-editor-context-legend" aria-label="Existing surveyed geometry">
+        <div className="spatial-editor-context-legend" aria-label={t('surveyed')}>
           {context.length >= 3 && (
             <span>
               <i className="spatial-editor-context-boundary" aria-hidden="true" />
-              {contextLabel ?? 'Existing boundary'} · drawing limit
+              {contextLabel ?? t('boundary')} · {t('limit')}
             </span>
           )}
           {contextOverlays.length > 0 && (
             <span>
               <i className="spatial-editor-context-rooms" aria-hidden="true" />
-              {contextOverlays.length} existing space(s) · read-only
+              {t('existingSpaces',{count:contextOverlays.length})}
             </span>
           )}
-          <span>New Room · blue drawing</span>
+          <span>{t('newRoom')}</span>
         </div>
       )}
       <svg
@@ -298,7 +300,7 @@ export function PolygonEditor({
         viewBox={`${view.x} ${view.y} ${view.width} ${view.height}`}
         className="spatial-drawing-surface"
         role="group"
-        aria-label={`${title} drawing canvas`}
+        aria-label={t('canvas',{title})}
         onPointerDown={down}
         onPointerMove={move}
         onPointerUp={(e) => end(e)}

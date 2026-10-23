@@ -2,6 +2,7 @@
 
 import { useRef, useState, type FormEvent } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslations } from 'next-intl';
 import type { EquipmentChildMode, TopologyKind } from '@/modules/topology/domain/entities';
 import { DEVICE_TYPES, EQUIPMENT_TYPES } from '@/modules/topology/domain/type-parsers';
 import {
@@ -24,11 +25,12 @@ export function TopologyCreateControl({
   boundaryLabel?: string;
   contextOverlays?: readonly PolygonContextOverlay[];
 }) {
+  const t = useTranslations('topologyCreation');
   const [open, setOpen] = useState(false);
   return (
     <div className="spatial-create-control">
       <button type="button" aria-expanded={open} onClick={() => setOpen((value) => !value)}>
-        + CREATE {kind === 'ROOM_SUBSTRUCTURE' ? 'ROOM' : kind.replaceAll('_', ' ')}
+        {t('create',{kind:kind==='ROOM_SUBSTRUCTURE'?t('room'):kind.replaceAll('_',' ')})}
       </button>
       {open && (
         <div className="spatial-create-popover">
@@ -61,6 +63,7 @@ export function TopologyCreateForm({
   contextOverlays?: readonly PolygonContextOverlay[];
   onCancel?: () => void;
 }>) {
+  const t = useTranslations('topologyCreation');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [pending, setPending] = useState<Record<string, unknown> | null>(null);
@@ -127,7 +130,7 @@ export function TopologyCreateForm({
     } else void create(payload);
   }
   if (['CONTAINER_CLUSTER_BAY', 'POSITION', 'CONTAINER_RACK'].includes(kind)) {
-    return <p>Create and place this object in the Room Blueprint.</p>;
+    return <p>{t('place')}</p>;
   }
   const editor = pending && (
     <div className="spatial-create-overlay">
@@ -139,16 +142,16 @@ export function TopologyCreateForm({
         validate={(polygon: readonly PointMm[]) => {
           if (kind === 'STRUCTURE' && boundaryContext.length >= 3) {
             if (!polygonInsidePolygon(polygon, boundaryContext))
-              return 'Structure must stay inside its surveyed Site boundary.';
+              return t('structureBound');
           }
           if (kind === 'ROOM_SUBSTRUCTURE') {
             if (boundaryContext.length >= 3 && !polygonInsidePolygon(polygon, boundaryContext))
-              return 'Room must stay within the Structure boundary (Level reference).';
+              return t('roomBound');
             const overlapping = contextOverlays.find((existing) =>
               polygonsOverlapArea(polygon, existing.polygon),
             );
             if (overlapping)
-              return `Room overlaps existing space: ${overlapping.label}. Shared walls are allowed, shared area is not.`;
+              return t('overlap',{label:overlapping.label});
           }
           return null;
         }}
@@ -160,7 +163,7 @@ export function TopologyCreateForm({
         busy={busy}
         error={error}
         confirmLabel={
-          kind === 'SITE' ? 'Save Site' : kind === 'STRUCTURE' ? 'Save Structure' : 'Save Room'
+          kind === 'SITE' ? t('saveSite') : kind === 'STRUCTURE' ? t('saveStructure') : t('saveRoom')
         }
       />
     </div>
@@ -168,29 +171,29 @@ export function TopologyCreateForm({
   return (
     <>
       <form ref={formRef} className="create-form spatial-metadata-form" onSubmit={submit}>
-        <strong>Create {kind === 'ROOM_SUBSTRUCTURE' ? 'Room' : kind.toLowerCase()}</strong>
+        <strong>{t('new',{kind:kind==='ROOM_SUBSTRUCTURE'?t('room'):kind.toLowerCase()})}</strong>
         <input
           autoFocus
-          aria-label="Name"
+          aria-label={t('name')}
           name="name"
-          placeholder="Name"
+          placeholder={t('name')}
           required
           maxLength={120}
           disabled={busy || !!pending}
         />
         {kind === 'ROOM_SUBSTRUCTURE' && (
           <select
-            aria-label="Entity variant"
+            aria-label={t('variant')}
             name="variant"
             defaultValue="ROOM"
             disabled={!!pending}
           >
-            <option value="ROOM">Room</option>
-            <option value="SUBSTRUCTURE">Substructure</option>
+            <option value="ROOM">{t('room')}</option>
+            <option value="SUBSTRUCTURE">{t('substructure')}</option>
           </select>
         )}
         {kind === 'DEVICE' && (
-          <select aria-label="Device type" name="deviceType" defaultValue="CUSTOM">
+          <select aria-label={t('deviceType')} name="deviceType" defaultValue="CUSTOM">
             {DEVICE_TYPES.map((type) => (
               <option key={type} value={type}>
                 {type.replaceAll('_', ' ')}
@@ -200,7 +203,7 @@ export function TopologyCreateForm({
         )}
         {kind === 'EQUIPMENT' && (
           <>
-            <select aria-label="Equipment type" name="equipmentType" defaultValue="CUSTOM">
+            <select aria-label={t('equipmentType')} name="equipmentType" defaultValue="CUSTOM">
               {EQUIPMENT_TYPES.map((type) => (
                 <option key={type} value={type}>
                   {type.replaceAll('_', ' ')}
@@ -208,34 +211,34 @@ export function TopologyCreateForm({
               ))}
             </select>
             <select
-              aria-label="Children mode"
+              aria-label={t('mode')}
               name="childMode"
               value={equipmentChildMode}
               onChange={(event) => setEquipmentChildMode(event.target.value as EquipmentChildMode)}
             >
-              <option value="DYNAMIC">Dynamic children</option>
-              <option value="POSITIONAL">Positional slots</option>
+              <option value="DYNAMIC">{t('dynamic')}</option>
+              <option value="POSITIONAL">{t('positional')}</option>
             </select>
             {equipmentChildMode === 'POSITIONAL' ? (
               <input
-                aria-label="Child capacity"
+                aria-label={t('capacity')}
                 name="childCapacity"
                 type="number"
                 min="1"
                 max="256"
                 required
-                placeholder="Number of child slots"
+                placeholder={t('slots')}
               />
             ) : null}
             {equipmentChildMode === 'POSITIONAL' && (
               <label>
-                MQTT point prefix
+                {t('prefix')}
                 <input
                   name="telemetryPointPrefix"
                   maxLength={80}
                   pattern="[A-Za-z0-9]+(_[A-Za-z0-9]+)*"
                   placeholder="0_2 (optional)"
-                  aria-label="MQTT point prefix"
+                  aria-label="{t('prefix')}"
                 />
               </label>
             )}
@@ -243,8 +246,8 @@ export function TopologyCreateForm({
         )}
         {(kind === 'DEVICE' || kind === 'EQUIPMENT') && (
           <>
-            <input aria-label="Serial number" name="serialNumber" placeholder="Serial number" />
-            <input aria-label="Category" name="category" placeholder="Category" />
+            <input aria-label={t('serial')} name="serialNumber" placeholder={t('serial')} />
+            <input aria-label={t('category')} name="category" placeholder={t('category')} />
           </>
         )}
         <div className="spatial-form-actions">
@@ -254,7 +257,7 @@ export function TopologyCreateForm({
             </button>
           )}
           <button type="submit" disabled={busy || !!pending}>
-            {busy ? 'Creating…' : spatial ? 'Define boundary' : 'Create'}
+            {busy ? t('creating') : spatial ? t('define') : t('createButton')}
           </button>
         </div>
         {error && !pending && (

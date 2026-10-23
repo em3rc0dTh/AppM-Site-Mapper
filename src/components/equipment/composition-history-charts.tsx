@@ -253,9 +253,7 @@ export function CompositionHistoryCharts({
             </div>
           )}
           <p className="ec-history-explainer">
-            Each bucket is an arithmetic mean of the reporting immediate-child means. Values are not
-            feed totals; cumulative energy counters are not interval consumption. SNMP incoming
-            shunts remain a separate electrical source.
+            {t('bucketDisclaimer')}
           </p>
         </>
       )}

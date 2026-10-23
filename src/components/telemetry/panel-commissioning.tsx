@@ -126,26 +126,24 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
       {preview ? (
         <>
           <p>
-            Source <strong>{preview.sourceIdentity}</strong> · prefix{' '}
-            <strong>{preview.pointPrefix}</strong> · capacity {preview.capacity}
+            {t('sourceSummary', { source: preview.sourceIdentity, prefix: preview.pointPrefix, capacity: preview.capacity })}
           </p>
           <small>
-            Physical positions are proposed, not automatically validated. Confirm only after
-            verifying field wiring.
+            {t('safetyNote')}
           </small>
           {preview.rows.map((row) => (
             <div key={row.breakerId} style={{ borderTop: '1px solid #c6c9bd', padding: '10px 0' }}>
               <strong>
-                Position {row.position} · {row.breakerName}
+                {t('positionLabel', { position: row.position, name: row.breakerName })}
               </strong>
               <p>
-                {row.point} · {row.existingMetrics.length}/4 metric bindings{' '}
-                {row.ready ? '· VERIFIED MAPPING' : ''}
+                {row.point} · {t('bindings', { count: row.existingMetrics.length })}{' '}
+                {row.ready ? t('verifiedMapping') : ''}
               </p>
               {row.conflicts.length ? (
                 <div>
                   <p role="alert">
-                    CONFLICT: {row.conflicts.join('; ')}. Inventory SN will not be overwritten.
+                    {t('conflictWarning', { conflicts: row.conflicts.join('; ') })}
                   </p>
                   {canWrite && row.conflictingOwnSources.length > 0 && (
                     <>
@@ -157,7 +155,7 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
                             setConfirm(event.target.checked ? row.breakerId : null)
                           }
                         />
-                        I confirm the previous independent SOURCE must be retired for this breaker.
+                        {t('retireConfirm')}
                       </label>
                       {row.conflictingOwnSources.map((binding) => (
                         <button
@@ -166,7 +164,7 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
                           disabled={confirm !== row.breakerId || busy !== null}
                           onClick={() => void retireSource(row, binding)}
                         >
-                          Retire SOURCE {binding.source}
+                          {t('retireSource', { source: binding.source })}
                         </button>
                       ))}
                     </>
@@ -180,15 +178,14 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
                       checked={confirm === row.breakerId}
                       onChange={(event) => setConfirm(event.target.checked ? row.breakerId : null)}
                     />
-                    I verified that {preview.sourceIdentity} / {row.point} physically measures this
-                    breaker.
+                    {t('physicalVerify', { source: preview.sourceIdentity, point: row.point })}
                   </label>
                   <button
                     type="button"
                     disabled={confirm !== row.breakerId || busy !== null}
                     onClick={() => void commission(row)}
                   >
-                    Confirm and commission point
+                    {t('confirmPoint')}
                   </button>
                 </>
               ) : null}
@@ -200,7 +197,7 @@ export function PanelCommissioning({ panelId, canWrite }: { panelId: string; can
       )}
       {error && <p role="alert">{error}</p>}
       <button type="button" disabled={busy !== null} onClick={() => void refresh()}>
-        Refresh commissioning
+        {t('refreshCommission')}
       </button>
     </section>
   );

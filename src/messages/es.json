@@ -966,7 +966,8 @@
     "history": "HISTORIAL",
     "last": "Último paquete coincidente: {time}",
     "note": "Último paquete por intervalo. Se conservan las etiquetas y unidades de origen. Hasta 1000 paquetes.",
-    "timeWindow": "Ventana temporal de telemetría"
+    "timeWindow": "Ventana temporal de telemetría",
+    "noPoints": "No se recibieron puntos de {prefix} en este paquete. Se conservan los datos RAW de los demás grupos."
   },
   "telemetryLens": {
     "context": "DIAGNÓSTICO CONTEXTUAL",
@@ -979,7 +980,18 @@
   "panelCommissioning": {
     "title": "COMISIONAMIENTO DE PUNTOS MQTT",
     "loading": "Cargando la propuesta de puntos físicos…",
-    "panelCommissioning": "Comisionamiento MQTT del panel"
+    "panelCommissioning": "Comisionamiento MQTT del panel",
+    "sourceSummary": "Origen {source} · prefijo {prefix} · capacidad {capacity}",
+    "safetyNote": "Las posiciones físicas son propuestas, no validadas automáticamente. Confirma solo después de comprobar el cableado en campo.",
+    "positionLabel": "Posición {position} · {name}",
+    "bindings": "{count}/4 vinculaciones de métricas",
+    "verifiedMapping": "· VINCULACIÓN VERIFICADA",
+    "conflictWarning": "CONFLICTO: {conflicts}. No se sobrescribirá el número de serie del inventario.",
+    "retireConfirm": "Confirmo que la fuente independiente anterior debe retirarse para este breaker.",
+    "retireSource": "Retirar origen {source}",
+    "physicalVerify": "Verifiqué que {source} / {point} mide físicamente este breaker.",
+    "confirmPoint": "Confirmar y comisionar punto",
+    "refreshCommission": "Actualizar comisionamiento"
   },
   "roomEditor": {
     "selectBay": "Seleccionar bahía",
@@ -1114,7 +1126,11 @@
     "notSelected": "Sin seleccionar",
     "noOids": "Sin OID comisionados",
     "profile": "Perfil de hardware:",
-    "feederConfiguration": "Configuración de entrada SNMP"
+    "feederConfiguration": "Configuración de entrada SNMP",
+    "openInputs": "ABRIR ENTRADAS DC EN CHASSIS →",
+    "useConfig2": "USAR CONFIG 2",
+    "useConfig4": "USAR CONFIG 4",
+    "retire": "RETIRAR"
   },
   "snmpLoad": {
     "section": "Carga de las entradas SNMP BDFB",
@@ -1308,7 +1324,9 @@
     "add": "+ AGREGAR PUERTO POWER",
     "cancel": "Cancelar",
     "saving": "Guardando…",
-    "save": "GUARDAR CONTRATO"
+    "save": "GUARDAR CONTRATO",
+    "powerPortsButton": "⚙ PUERTOS POWER",
+    "declaredRedundancy": "Define entradas POWER físicas de este Device o Equipment. La redundancia A/B es un requisito declarado, no un estado inferido."
   },
   "physicalDiagram": {
     "telemetry": "Telemetría del Circuit Breaker",
@@ -1458,7 +1476,8 @@
     "reporting": "{count}/{total} reportando en el último intervalo histórico",
     "noRecord": "Sin lecturas registradas",
     "last": "Último intervalo histórico: {date}",
-    "noReadings": "No se almacenaron lecturas MQTT de breakers comisionados en este ámbito y período."
+    "noReadings": "No se almacenaron lecturas MQTT de breakers comisionados en este ámbito y período.",
+    "bucketDisclaimer": "Cada intervalo representa el promedio aritmético de las medias reportadas por los elementos hijos inmediatos. No son totales de alimentación; los contadores acumulativos de energía no representan consumo del intervalo. Los shunts SNMP entrantes siguen siendo una fuente eléctrica independiente."
   },
   "fullTrace": {
     "source": "ORIGEN {feed}",

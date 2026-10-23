@@ -966,7 +966,8 @@
     "history": "HISTORY",
     "last": "Last matching packet: {time}",
     "note": "Last packet per time bucket; source labels and units preserved. Up to 1000 packets.",
-    "timeWindow": "Telemetry time window"
+    "timeWindow": "Telemetry time window",
+    "noPoints": "No received points for {prefix} in this packet. RAW data from other groups is preserved."
   },
   "telemetryLens": {
     "context": "CONTEXTUAL DIAGNOSTIC",
@@ -979,7 +980,18 @@
   "panelCommissioning": {
     "title": "MQTT POINT COMMISSIONING",
     "loading": "Loading physical point proposal…",
-    "panelCommissioning": "Panel MQTT commissioning"
+    "panelCommissioning": "Panel MQTT commissioning",
+    "sourceSummary": "Source {source} · prefix {prefix} · capacity {capacity}",
+    "safetyNote": "Physical positions are proposed, not automatically validated. Confirm only after verifying field wiring.",
+    "positionLabel": "Position {position} · {name}",
+    "bindings": "{count}/4 metric bindings",
+    "verifiedMapping": "· VERIFIED MAPPING",
+    "conflictWarning": "CONFLICT: {conflicts}. Inventory SN will not be overwritten.",
+    "retireConfirm": "I confirm the previous independent SOURCE must be retired for this breaker.",
+    "retireSource": "Retire SOURCE {source}",
+    "physicalVerify": "I verified that {source} / {point} physically measures this breaker.",
+    "confirmPoint": "Confirm and commission point",
+    "refreshCommission": "Refresh commissioning"
   },
   "roomEditor": {
     "selectBay": "Select a bay",
@@ -1114,7 +1126,11 @@
     "notSelected": "Not selected",
     "noOids": "No commissioned OIDs",
     "profile": "Hardware profile:",
-    "feederConfiguration": "SNMP feeder configuration"
+    "feederConfiguration": "SNMP feeder configuration",
+    "openInputs": "OPEN DC INPUTS ON CHASSIS →",
+    "useConfig2": "USE CONFIG 2",
+    "useConfig4": "USE CONFIG 4",
+    "retire": "RETIRE"
   },
   "snmpLoad": {
     "section": "BDFB SNMP input feed load",
@@ -1308,7 +1324,9 @@
     "add": "+ ADD POWER PORT",
     "cancel": "Cancel",
     "saving": "Saving…",
-    "save": "SAVE CONTRACT"
+    "save": "SAVE CONTRACT",
+    "powerPortsButton": "⚙ POWER PORTS",
+    "declaredRedundancy": "Define physical POWER inputs on this Device or Equipment. A/B redundancy is a declared requirement, not an inferred state."
   },
   "physicalDiagram": {
     "telemetry": "Circuit breaker telemetry",
@@ -1458,7 +1476,8 @@
     "reporting": "{count}/{total} reporting in last historical bucket",
     "noRecord": "No recorded readings",
     "last": "Last historical bucket: {date}",
-    "noReadings": "No commissioned MQTT breaker readings were stored for this scope and period."
+    "noReadings": "No commissioned MQTT breaker readings were stored for this scope and period.",
+    "bucketDisclaimer": "Each bucket is an arithmetic mean of the reporting immediate-child means. Values are not feed totals; cumulative energy counters are not interval consumption. SNMP incoming shunts remain a separate electrical source."
   },
   "fullTrace": {
     "source": "SOURCE {feed}",

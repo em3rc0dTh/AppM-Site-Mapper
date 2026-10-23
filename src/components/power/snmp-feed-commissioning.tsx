@@ -130,7 +130,7 @@ export function SnmpFeedCommissioning({
         className="sm-snmp-setup-action"
         href={`/device/${encodeURIComponent(chassisId)}#bdfb-access-ports`}
       >
-        OPEN DC INPUTS ON CHASSIS →
+        {t('openInputs')}
       </Link>
       <details
         className="sm-snmp-maintenance"
@@ -157,7 +157,7 @@ export function SnmpFeedCommissioning({
                   }
                   onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_2')}
                 >
-                  USE CONFIG 2
+                  {t('useConfig2')}
                 </button>
                 <button
                   type="button"
@@ -166,7 +166,7 @@ export function SnmpFeedCommissioning({
                   }
                   onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_4')}
                 >
-                  USE CONFIG 4
+                  {t('useConfig4')}
                 </button>
               </div>
             )}

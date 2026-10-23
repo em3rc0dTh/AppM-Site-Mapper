@@ -106,7 +106,7 @@ export function PowerContractEditor({
   return (
     <>
       <button type="button" className="zip-device-outline" onClick={() => setOpen(true)}>
-        ⚙ POWER PORTS
+        {t('powerPortsButton')}
       </button>
 
       {open ? (
@@ -127,8 +127,7 @@ export function PowerContractEditor({
                 <small>{t('header')}</small>
                 <h2 id="power-contract-title">{t('title')}</h2>
                 <p>
-                  Define physical POWER inputs on this Device or Equipment. A/B redundancy is a
-                  declared requirement, not an inferred state.
+                  {t('declaredRedundancy')}
                 </p>
               </div>
               <button type="button" aria-label={t('close')} onClick={() => setOpen(false)}>

@@ -810,7 +810,7 @@ export function EquipmentCompositionEditor({
                   defaultValue={defaultWarehouseType}
                 >
                   <option value="">
-                    {t('useTemplate',{type:selectedTemplate?.equipmentType??'CUSTOM'})}
+                    {t('useTemplate', { type: selectedTemplate?.equipmentType ?? 'CUSTOM' })}
                   </option>
                   {permissibleChildTypes.map((type) => (
                     <option key={type} value={type}>

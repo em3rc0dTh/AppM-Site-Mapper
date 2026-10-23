@@ -244,7 +244,17 @@ try {
   ];
   async function verifyLocaleRoutes(expectedLocale) {
     for (const route of localeRoutes) {
-      const response = await page.goto(base + route, { waitUntil: 'domcontentloaded' });
+      let response;
+      for (let attempt = 1; attempt <= 3; attempt += 1) {
+        try {
+          response = await page.goto(base + route, { waitUntil: 'domcontentloaded' });
+          break;
+        } catch (error) {
+          if (!String(error).includes('net::ERR_ABORTED') || attempt === 3) throw error;
+          console.warn(`[RETRY] ${expectedLocale} navigation ${route} aborted; attempt ${attempt + 1}`);
+          await page.waitForLoadState('domcontentloaded').catch(() => undefined);
+        }
+      }
       assert.ok(response?.ok(), `${expectedLocale} route ${route} must return HTTP 200`);
       await page.waitForFunction(
         (locale) => document.documentElement.lang === locale,

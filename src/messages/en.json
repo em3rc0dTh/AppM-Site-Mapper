@@ -15,7 +15,34 @@
       "telemetry": "Telemetry",
       "overview": "Overview",
       "ports": "Ports",
-      "settings": "Settings"
+      "settings": "Settings",
+      "metric": {
+        "voltageV": "Voltage",
+        "currentA": "Current",
+        "powerW": "Power",
+        "energyKwh": "Energy counter"
+      },
+      "coverageBreaker": "{reporting}/1 breaker LIVE",
+      "coveragePanel": "{reporting}/{positions} positions with MQTT LIVE · {installed} installed",
+      "coverageChildren": "{reporting}/{installed} immediate children with MQTT LIVE · {breakers} live breakers below",
+      "inspectorLabel": "Equipment inspector",
+      "tabsLabel": "Equipment inspector tabs",
+      "ownReading": "MQTT · own breaker reading",
+      "descendantReading": "MQTT · reporting descendant breakers",
+      "roleDenied": "Your role does not allow telemetry access.",
+      "stale": " · {count} stale",
+      "pointGroup": "Point group {name}",
+      "metricsLabel": "Live electrical measurements",
+      "sourcePacket": "Source: {identity} · Last packet: {timestamp}",
+      "noBinding": "No verified MQTT binding",
+      "hierarchy": "Hierarchical arithmetic mean of reporting immediate-child means. Missing metrics and empty slots are excluded. These are not SNMP input totals.",
+      "waiting": "Waiting for telemetry stream snapshot…",
+      "configuredGroup": "Point group {name} · configured, not a live reading",
+      "history": "History & diagnostics · charts",
+      "packets": "Inspect original breaker packets",
+      "snmpSeparation": "SNMP incoming DC shunts are independent from MQTT breaker readings.",
+      "hideSnmp": "HIDE SNMP FEEDS",
+      "showSnmp": "INSPECT SNMP FEEDS"
     }
   },
   "bdfb": {

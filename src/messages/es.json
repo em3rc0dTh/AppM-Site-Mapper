@@ -15,7 +15,34 @@
       "telemetry": "Telemetría",
       "overview": "Resumen",
       "ports": "Puertos",
-      "settings": "Configuración"
+      "settings": "Configuración",
+      "metric": {
+        "voltageV": "Voltaje",
+        "currentA": "Corriente",
+        "powerW": "Potencia",
+        "energyKwh": "Contador de energía"
+      },
+      "coverageBreaker": "{reporting}/1 breaker LIVE",
+      "coveragePanel": "{reporting}/{positions} posiciones con MQTT LIVE · {installed} instaladas",
+      "coverageChildren": "{reporting}/{installed} elementos secundarios inmediatos con MQTT LIVE · {breakers} breakers LIVE inferiores",
+      "inspectorLabel": "Inspector de Equipment",
+      "tabsLabel": "Pestañas del inspector de Equipment",
+      "ownReading": "MQTT · lectura propia del breaker",
+      "descendantReading": "MQTT · breakers descendientes reportando",
+      "roleDenied": "Tu rol no permite acceder a la telemetría.",
+      "stale": " · {count} desactualizadas",
+      "pointGroup": "Grupo de puntos {name}",
+      "metricsLabel": "Mediciones eléctricas en vivo",
+      "sourcePacket": "Origen: {identity} · Último paquete: {timestamp}",
+      "noBinding": "Sin vinculación MQTT verificada",
+      "hierarchy": "Media aritmética jerárquica de los promedios de elementos secundarios inmediatos. Se excluyen métricas faltantes y posiciones vacías. Estos valores no son totales de entradas SNMP.",
+      "waiting": "Esperando la instantánea del flujo de telemetría…",
+      "configuredGroup": "Grupo de puntos {name} · configurado, no es una lectura en vivo",
+      "history": "Historial y diagnósticos · gráficas",
+      "packets": "Inspeccionar paquetes originales del breaker",
+      "snmpSeparation": "Los shunts de entrada DC por SNMP son independientes de las lecturas MQTT de los breakers.",
+      "hideSnmp": "OCULTAR ENTRADAS SNMP",
+      "showSnmp": "INSPECCIONAR ENTRADAS SNMP"
     }
   },
   "bdfb": {

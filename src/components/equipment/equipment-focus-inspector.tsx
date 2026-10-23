@@ -75,13 +75,13 @@ export function EquipmentFocusInspector({
   const visibleTabs = hasLiveReadings ? TABS : TABS.filter((key) => key !== 'telemetry');
   const activeTab = tab === 'telemetry' && !hasLiveReadings ? 'overview' : tab;
   const coverage = breaker
-    ? `${summary.reporting}/1 breaker LIVE`
+    ? t('coverageBreaker', { reporting: summary.reporting })
     : equipment.equipmentType === 'PANEL'
-      ? `${summary.reporting}/${summary.positions} positions with MQTT LIVE · ${summary.installed} installed`
-      : `${summary.reportingChildren}/${summary.installedChildren} immediate children with MQTT LIVE · ${summary.reporting} live breakers below`;
+      ? t('coveragePanel', { reporting: summary.reporting, positions: summary.positions, installed: summary.installed })
+      : t('coverageChildren', { reporting: summary.reportingChildren, installed: summary.installedChildren, breakers: summary.reporting });
 
   return (
-    <section className="ec-inspector" aria-label={equipment.name + ' Equipment inspector'}>
+    <section className="ec-inspector" aria-label={equipment.name + ' ' + t('inspectorLabel')}>
       <div className="zip-device-identity">
         <span aria-hidden="true">▥</span>
         <div>
@@ -96,7 +96,7 @@ export function EquipmentFocusInspector({
           {coverage}
         </p>
       )}
-      <div className="ec-inspector-tabs" role="tablist" aria-label="Equipment inspector tabs">
+      <div className="ec-inspector-tabs" role="tablist" aria-label={t('tabsLabel')}>
         {visibleTabs.map((key) => (
           <button
             key={key}
@@ -121,26 +121,26 @@ export function EquipmentFocusInspector({
         {activeTab === 'telemetry' && (
           <>
             <div className="ec-inspector-section-title">
-              {breaker ? 'MQTT · own breaker reading' : 'MQTT · reporting descendant breakers'}
+              {breaker ? t('ownReading') : t('descendantReading')}
             </div>
             {!canReadTelemetry ? (
-              <p className="ec-inspector-note">Your role does not allow telemetry access.</p>
+              <p className="ec-inspector-note">{t('roleDenied')}</p>
             ) : (
               <>
                 <p className="ec-inspector-counts">
                   {coverage}
-                  {summary.stale > 0 ? ` · ${summary.stale} stale` : ''}
+                  {summary.stale > 0 ? t('stale', { count: summary.stale }) : ''}
                 </p>
                 {equipment.telemetryPointPrefix && (
-                  <p className="ec-inspector-note">Point group {equipment.telemetryPointPrefix}</p>
+                  <p className="ec-inspector-note">{t('pointGroup', { name: equipment.telemetryPointPrefix })}</p>
                 )}
-                <div className="ec-inspector-metrics" aria-label="Live electrical measurements">
+                <div className="ec-inspector-metrics" aria-label={t('metricsLabel')}>
                   {METRICS.map((metric) => {
                     const value = breaker ? current?.[metric.key] : summary.metrics[metric.key];
                     return (
                       <div className="ec-inspector-metric" key={metric.key}>
                         <small>
-                          {metric.symbol} · {metric.label}
+                          {metric.symbol} · {t(`metric.${metric.key}`)}
                         </small>
                         <strong>{value === undefined ? '—' : value.toFixed(metric.digits)}</strong>
                         <span>{metric.unit}</span>
@@ -150,12 +150,12 @@ export function EquipmentFocusInspector({
                 </div>
                 <p className="ec-inspector-note">
                   {breaker
-                    ? `Source: ${current?.sourceIdentity ?? 'No verified MQTT binding'} · Last packet: ${current?.receivedAt ?? '—'}`
-                    : 'Hierarchical arithmetic mean of reporting immediate-child means. Missing metrics and empty slots are excluded. These are not SNMP input totals.'}
+                    ? t('sourcePacket', { identity: current?.sourceIdentity ?? t('noBinding'), timestamp: current?.receivedAt ?? '—' })
+                    : t('hierarchy')}
                 </p>
                 {!hasSnapshot && (
                   <p className="ec-inspector-note" role="status">
-                    Waiting for telemetry stream snapshot…
+                    {t('waiting')}
                   </p>
                 )}
               </>
@@ -167,7 +167,7 @@ export function EquipmentFocusInspector({
             {overview}
             {equipment.telemetryPointPrefix && (
               <p className="ec-inspector-note ec-point-group">
-                Point group {equipment.telemetryPointPrefix} · configured, not a live reading
+                {t('configuredGroup', { name: equipment.telemetryPointPrefix })}
               </p>
             )}
           </>
@@ -180,7 +180,7 @@ export function EquipmentFocusInspector({
           className="ec-inspector-history ec-composition-history"
           onToggle={(event) => setHistoryOpen(event.currentTarget.open)}
         >
-          <summary>History &amp; diagnostics · charts</summary>
+          <summary>{t('history')}</summary>
           {historyOpen && (
             <>
               <CompositionHistoryCharts
@@ -189,7 +189,7 @@ export function EquipmentFocusInspector({
               />
               {breaker && (
                 <details className="ec-history-raw">
-                  <summary>Inspect original breaker packets</summary>
+                  <summary>{t('packets')}</summary>
                   <EquipmentTelemetryInspector targetId={equipment.id} label={equipment.name} />
                 </details>
               )}
@@ -200,14 +200,14 @@ export function EquipmentFocusInspector({
       {equipment.equipmentType === 'CHASSIS' && canReadTelemetry && (
         <div className="ec-snmp-source">
           <p className="ec-inspector-note">
-            SNMP incoming DC shunts are independent from MQTT breaker readings.
+            {t('snmpSeparation')}
           </p>
           <button
             type="button"
             aria-expanded={snmpExpanded}
             onClick={() => setSnmpExpanded((value) => !value)}
           >
-            {snmpExpanded ? 'HIDE SNMP FEEDS' : 'INSPECT SNMP FEEDS'}
+            {snmpExpanded ? t('hideSnmp') : t('showSnmp')}
           </button>
           {snmpExpanded && (
             <SnmpFeedLoadPanel

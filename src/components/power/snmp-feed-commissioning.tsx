@@ -186,7 +186,7 @@ export function SnmpFeedCommissioning({
                         disabled={busy}
                         onClick={() => void retire(port.id, binding)}
                       >
-                        RETIRE
+                        {t('retire')}
                       </button>
                     )}
                   </div>

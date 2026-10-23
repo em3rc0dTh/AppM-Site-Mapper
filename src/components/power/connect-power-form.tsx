@@ -357,7 +357,7 @@ export function ConnectPowerForm({
                         </small>
                       </span>
                       <button type="button" onClick={() => removeCandidate(candidate.key)}>
-                        REMOVE
+                        {t('remove')}
                       </button>
                     </label>
                   );

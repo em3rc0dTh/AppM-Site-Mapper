@@ -149,8 +149,7 @@ export function EquipmentTelemetryInspector({
               !Object.keys(panelReportedPoints(sample.reported, pointPrefix, pointCapacity))
                 .length && (
                 <p>
-                  No received points for {pointPrefix} in this packet. RAW data from other groups is
-                  preserved.
+                  {t('noPoints', { prefix: pointPrefix })}
                 </p>
               )}
           </article>

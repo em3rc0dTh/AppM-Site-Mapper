@@ -209,7 +209,7 @@ export function HomeLiveOverview({
                   </td>
                   <td>{row.latestReceivedAt ?? '—'}</td>
                   <td>
-                    <Link href={row.href}>Open →</Link>
+                    <Link href={row.href}>{t('open')}</Link>
                   </td>
                 </tr>
               ))}

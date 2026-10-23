@@ -455,7 +455,7 @@ export function AccessPortEditor({
                     className="equipment-access-port-connect"
                     href={`/power/connect/equipment?${port.direction === 'INPUT' ? 'target' : 'source'}=${encodeURIComponent(port.id)}`}
                   >
-                    {port.direction === 'INPUT' ? '{t('connectSource')}' : '{t('connectLoad')}'}
+                    {port.direction === 'INPUT' ? t('connectSource') : t('connectLoad')}
                   </Link>
                 )}
               <button

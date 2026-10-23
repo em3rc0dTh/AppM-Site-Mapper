@@ -1031,7 +1031,8 @@
     "loading": "Loading SNMP inventory…",
     "notSelected": "Not selected",
     "noOids": "No commissioned OIDs",
-    "profile": "Hardware profile:"
+    "profile": "Hardware profile:",
+    "feederConfiguration": "SNMP feeder configuration"
   },
   "snmpLoad": {
     "section": "BDFB SNMP input feed load",
@@ -1382,8 +1383,5 @@
     "stale": "STALE",
     "offline": "OFFLINE",
     "footer": "Normalized measurements · freshness: live ≤30s / stale ≤5m · no simulated connectivity"
-  },
-  "snmpCommissioning": {
-    "feederConfiguration": "SNMP feeder configuration"
   }
 }

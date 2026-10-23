@@ -70,5 +70,10 @@
   "workspace": {
     "home": "Home",
     "title": "Infrastructure overview"
+  },
+  "language": {
+    "selection": "Language",
+    "english": "English",
+    "spanish": "Spanish"
   }
 }

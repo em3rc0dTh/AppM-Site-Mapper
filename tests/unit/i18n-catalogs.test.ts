@@ -24,6 +24,7 @@ function leaves(value: Record<string, unknown>, parent = ''): Map<string, string
 describe('Site Mapper translation catalogs', () => {
   it('keeps English as the active MK1 locale, without automatic browser switching', () => {
     expect(defaultLocale).toBe('en');
+    expect(isSupportedLocale('pt')).toBe(false);
     expect(locales).toEqual(['en', 'es']);
     expect(isSupportedLocale('en')).toBe(true);
     expect(isSupportedLocale('es')).toBe(true);

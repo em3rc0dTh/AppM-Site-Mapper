@@ -70,5 +70,10 @@
   "workspace": {
     "home": "Inicio",
     "title": "Vista general de la infraestructura"
+  },
+  "language": {
+    "selection": "Idioma",
+    "english": "Inglés",
+    "spanish": "Español"
   }
 }

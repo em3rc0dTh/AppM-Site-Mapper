@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { LanguageSwitcher } from '@/shared/ui/language-switcher';
+
 function LoginMark() {
   return (
     <svg className="zip-login-mark" viewBox="0 0 64 64" aria-hidden="true">
@@ -31,7 +33,7 @@ export function AuthFrame({
           {children}
         </div>
         <footer>
-          System <span>●</span> Available
+          <LanguageSwitcher />
         </footer>
       </section>
     </main>

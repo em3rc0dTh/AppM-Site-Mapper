@@ -10,10 +10,7 @@ export function InlineInspector({
 }) {
   const t = useTranslations('inspect');
   return (
-    <aside
-      className="mk-inline-inspector mk-selection-inspector"
-      aria-label={t('selected')}
-    >
+    <aside className="mk-inline-inspector mk-selection-inspector" aria-label={t('selected')}>
       <header>
         <small>{entity.kind}</small>
         <button onClick={onClose} aria-label={t('clear')}>

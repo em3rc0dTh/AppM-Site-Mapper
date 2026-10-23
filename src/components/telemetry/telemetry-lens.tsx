@@ -138,7 +138,13 @@ export function TelemetryLens({
                   <article key={sample.entityId}>
                     <header>
                       <strong>{sample.sourceIdentity}</strong>
-                      <span data-state={state}>{state==='LIVE'?tu('live'):state==='STALE'?tu('stale'):tu('offline')}</span>
+                      <span data-state={state}>
+                        {state === 'LIVE'
+                          ? tu('live')
+                          : state === 'STALE'
+                            ? tu('stale')
+                            : tu('offline')}
+                      </span>
                     </header>
                     <time>{sample.receivedAt}</time>
                     <div className="mk-live-grid">
@@ -157,9 +163,7 @@ export function TelemetryLens({
               })
             )}
 
-            <footer>
-              {tu('footer')}
-            </footer>
+            <footer>{tu('footer')}</footer>
           </div>
         </div>
       )}

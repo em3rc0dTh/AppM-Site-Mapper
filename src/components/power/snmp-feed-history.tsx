@@ -112,7 +112,15 @@ function TrendChart({
   return (
     <div className="sm-snmp-history-chart">
       <div className="sm-snmp-history-heading">
-        <strong>{metric.key === 'voltageV' ? tu('metricVoltage') : metric.key === 'currentA' ? tu('metricCurrent') : metric.key === 'powerW' ? tu('metricPower') : tu('metricEnergy')}</strong>
+        <strong>
+          {metric.key === 'voltageV'
+            ? tu('metricVoltage')
+            : metric.key === 'currentA'
+              ? tu('metricCurrent')
+              : metric.key === 'powerW'
+                ? tu('metricPower')
+                : tu('metricEnergy')}
+        </strong>
         <small>{metric.unit}</small>
       </div>
       {all.length === 0 ? (
@@ -279,15 +287,13 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
       {loading && <p role="status">{tu('loading')}</p>}
       {error && (
         <p role="alert" className="form-error">
-          {tu('error',{error})}
+          {tu('error', { error })}
         </p>
       )}
       {!loading && !error && data && (
         <>
           {data.feeds.every((feed) => feed.points.length === 0) ? (
-            <p>
-              {tu('empty')}
-            </p>
+            <p>{tu('empty')}</p>
           ) : (
             <div className="sm-snmp-history-metrics">
               {METRICS.filter((item) => item.key === selectedMetric).map((item) => (
@@ -297,12 +303,8 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
           )}
           <div className="sm-snmp-history-footnote">
             <strong>{tu('energy', { value: latest.toFixed(4) })}</strong>
-            <small>
-              {tu('coverage',{minutes:(coverage/60).toFixed(1)})}
-            </small>
-            <small>
-              {tu('note')}
-            </small>
+            <small>{tu('coverage', { minutes: (coverage / 60).toFixed(1) })}</small>
+            <small>{tu('note')}</small>
           </div>
         </>
       )}

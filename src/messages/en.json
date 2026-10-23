@@ -1155,7 +1155,21 @@
     "choose": "Select one candidate to confirm.",
     "cancel": "Cancel",
     "connecting": "Connecting…",
-    "submit": "CONFIRM PHYSICAL CONNECTION"
+    "submit": "CONFIRM PHYSICAL CONNECTION",
+    "selectPower": "Select a destination POWER port before adding a candidate.",
+    "wrongFeed": "This breaker belongs to Feed {feed}; choose a compatible destination port.",
+    "connectedInput": "That physical POWER input is already connected. Choose another candidate.",
+    "feedMismatch": "The selected target port belongs to the other electrical feed.",
+    "connectionFailed": "Unable to create power path (HTTP {status}).",
+    "primaryFeed": "Primary feed",
+    "secondaryFeed": "Secondary feed",
+    "feedLabel": "FEED {feed}",
+    "noMatchingPorts": "No matching POWER access ports. Configure the destination power contract first.",
+    "addCandidate": "+ ADD CANDIDATE",
+    "lockedFeed": "Locked by physical source: Feed {feed}",
+    "assignFeed": "Assign the electrical feed identity",
+    "draftCandidates": "Candidates are drafts only. They do not appear in Full Power Trace until one is confirmed.",
+    "remove": "REMOVE"
   },
   "powerContract": {
     "header": "POWER / CONTRACT",
@@ -1291,7 +1305,9 @@
     "existingSpaces": "{count} existing space(s) · read-only",
     "newRoom": "New Room · blue drawing",
     "canvas": "{title} drawing canvas",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "negative": "The boundary contains negative coordinates. Move its vertices to X >= 0 and Y >= 0 before saving.",
+    "invalidBoundary": "Draw a simple, non-zero-area boundary with 3–256 vertices."
   },
   "historyCharts": {
     "empty": "No historical measurements for this metric.",

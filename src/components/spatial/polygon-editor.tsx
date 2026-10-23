@@ -92,9 +92,9 @@ export function PolygonEditor({
   } | null>(null);
   const gridId = useId().replaceAll(':', '');
   const invalid = draft.points.some((p) => !isInPositiveDrawingPlane(p))
-    ? 'The boundary contains negative coordinates. Move its vertices to X >= 0 and Y >= 0 before saving.'
+    ? t('negative')
     : !isCanonicalPolygon(draft.points)
-      ? 'Draw a simple, non-zero-area boundary with 3–256 vertices.'
+      ? t('invalidBoundary')
       : (validate?.(draft.points) ?? null);
   function change(next: Snapshot) {
     setPast((history) => [...history, draft].slice(-100));

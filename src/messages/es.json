@@ -1155,7 +1155,21 @@
     "choose": "Selecciona un candidato para confirmar.",
     "cancel": "Cancelar",
     "connecting": "Conectando…",
-    "submit": "CONFIRMAR CONEXIÓN FÍSICA"
+    "submit": "CONFIRMAR CONEXIÓN FÍSICA",
+    "selectPower": "Selecciona un puerto POWER de destino antes de agregar un candidato.",
+    "wrongFeed": "Este breaker pertenece a la entrada {feed}; elige un puerto compatible.",
+    "connectedInput": "Esa entrada física POWER ya está conectada. Elige otro candidato.",
+    "feedMismatch": "El puerto de destino pertenece a la otra entrada eléctrica.",
+    "connectionFailed": "No se pudo crear la ruta de potencia (HTTP {status}).",
+    "primaryFeed": "Entrada principal",
+    "secondaryFeed": "Entrada secundaria",
+    "feedLabel": "ENTRADA {feed}",
+    "noMatchingPorts": "No hay puertos POWER compatibles. Configura primero el contrato eléctrico del destino.",
+    "addCandidate": "+ AGREGAR CANDIDATO",
+    "lockedFeed": "Fijado por origen físico: entrada {feed}",
+    "assignFeed": "Asigna la identidad de entrada eléctrica",
+    "draftCandidates": "Los candidatos son borradores. No aparecen en el rastreo completo de potencia hasta confirmar uno.",
+    "remove": "ELIMINAR"
   },
   "powerContract": {
     "header": "POWER / CONTRATO",
@@ -1291,7 +1305,9 @@
     "existingSpaces": "{count} espacios existentes · solo lectura",
     "newRoom": "Nueva sala · dibujo azul",
     "canvas": "Plano de dibujo de {title}",
-    "saving": "Guardando…"
+    "saving": "Guardando…",
+    "negative": "El límite contiene coordenadas negativas. Mueve sus vértices a X >= 0 e Y >= 0 antes de guardar.",
+    "invalidBoundary": "Dibuja un límite simple con área mayor que cero y entre 3 y 256 vértices."
   },
   "historyCharts": {
     "empty": "No hay mediciones históricas para esta métrica.",

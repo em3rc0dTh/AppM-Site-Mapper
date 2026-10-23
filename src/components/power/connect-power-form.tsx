@@ -113,13 +113,13 @@ export function ConnectPowerForm({
 
   function addCandidate() {
     if (!selectedDestination || !selectedPort) {
-      setError('Select a destination POWER port before adding a candidate.');
+      setError(t('selectPower'));
       return;
     }
     const candidateFeed = selectedPort.feed ?? source.feed ?? feed;
     if (source.feed && candidateFeed !== source.feed) {
       setError(
-        `This breaker belongs to Feed ${source.feed}; choose a compatible destination port.`,
+        t('wrongFeed', { feed: source.feed }),
       );
       return;
     }
@@ -173,11 +173,11 @@ export function ConnectPowerForm({
       if (!response.ok || !payload?.path?.id) {
         const message =
           payload?.error === 'TARGET_ALREADY_CONNECTED'
-            ? 'That physical POWER input is already connected. Choose another candidate.'
+            ? t('connectedInput')
             : payload?.error === 'FEED_MISMATCH'
-              ? 'The selected target port belongs to the other electrical feed.'
+              ? t('feedMismatch')
               : payload?.error;
-        setError(message ?? `Unable to create power path (HTTP ${response.status}).`);
+        setError(message ?? t('connectionFailed', { status: response.status }));
         return;
       }
 
@@ -282,7 +282,7 @@ export function ConnectPowerForm({
                       <strong>{item.name}</strong>
                       <small>
                         {item.kind} · {port.label}
-                        {port.feed ? ` · FEED ${port.feed}` : ''}
+                        {port.feed ? ` · ${t('feedLabel', { feed: port.feed })}` : ''}
                       </small>
                       <em>{item.context || t('noContext')}</em>
                     </span>
@@ -293,7 +293,7 @@ export function ConnectPowerForm({
             )}
             {!visibleDestinations.some((item) => item.ports.length) ? (
               <div className="power-connect-empty">
-                No matching POWER access ports. Configure the destination power contract first.
+                {t('noMatchingPorts')}
               </div>
             ) : null}
           </div>
@@ -304,7 +304,7 @@ export function ConnectPowerForm({
             disabled={!destinationId || !accessPortId}
             onClick={addCandidate}
           >
-            + ADD CANDIDATE
+            {t('addCandidate')}
           </button>
         </section>
 
@@ -315,8 +315,8 @@ export function ConnectPowerForm({
               <strong>{t('feed')}</strong>
               <small>
                 {source.feed
-                  ? `Locked by physical source: Feed ${source.feed}`
-                  : 'Assign the electrical feed identity'}
+                  ? t('lockedFeed', { feed: source.feed })
+                  : t('assignFeed')}
               </small>
             </div>
           </div>
@@ -330,7 +330,7 @@ export function ConnectPowerForm({
                 data-selected={feed === value ? 'true' : 'false'}
                 onClick={() => selectFeed(value)}
               >
-                <span>FEED {value}</span>
+                <span>{t('feedLabel', { feed: value })}</span>
                 <strong>{feed === value ? t('selected') : t('select')}</strong>
               </button>
             ))}
@@ -339,8 +339,7 @@ export function ConnectPowerForm({
           <section className="power-connect-review">
             <h2>{t('candidates')}</h2>
             <p>
-              Candidates are drafts only. They do not appear in Full Power Trace until one is
-              confirmed.
+              {t('draftCandidates')}
             </p>
             {candidates.length ? (
               <div className="power-candidate-list">
@@ -361,7 +360,7 @@ export function ConnectPowerForm({
                       <span>
                         <strong>{details.destination?.name ?? candidate.destinationId}</strong>
                         <small>
-                          {details.port?.label ?? candidate.accessPortId} · FEED {candidate.feed}
+                          {details.port?.label ?? candidate.accessPortId} · {t('feedLabel', { feed: candidate.feed })}
                         </small>
                       </span>
                       <button type="button" onClick={() => removeCandidate(candidate.key)}>
@@ -383,7 +382,7 @@ export function ConnectPowerForm({
             <input
               value={label}
               onChange={(event) => setLabel(event.target.value)}
-              placeholder={selectedCandidate?.feed === 'B' ? 'Secondary feed' : 'Primary feed'}
+              placeholder={selectedCandidate?.feed === 'B' ? t('secondaryFeed') : t('primaryFeed')}
             />
           </label>
 

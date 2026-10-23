@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { EquipmentContractViews } from './equipment-contract-views';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
@@ -33,6 +34,7 @@ function countLabel(occupied: number, count: number, positional: boolean) {
 }
 
 function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBreakerTelemetry }>) {
+  const t = useTranslations('physicalDiagram');
   const metrics = [
     { label: 'V', value: reading.voltageV, unit: 'V' },
     { label: 'I', value: reading.currentA, unit: 'A' },
@@ -45,7 +47,7 @@ function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBre
         <strong>MQTT · {reading.status}</strong>
         {reading.state && <span>{reading.state}</span>}
       </div>
-      <div className="equipment-breaker-telemetry-values" aria-label="Circuit breaker telemetry">
+      <div className="equipment-breaker-telemetry-values" aria-label={t('telemetry')}>
         {metrics.map((metric) => (
           <span key={metric.label}>
             <b>{metric.label}</b>{' '}
@@ -59,9 +61,9 @@ function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBre
         {reading.sourceIdentity
           ? `${reading.sourceIdentity}${reading.sourcePointId ? ` / ${reading.sourcePointId}` : ' / OWN SOURCE'} · ${reading.receivedAt ?? '—'}`
           : reading.status === 'UNMAPPED'
-            ? 'No verified circuit binding'
+            ? t('noBinding')
             : reading.status === 'NO DATA'
-              ? (reading.diagnostic ?? 'Mapped · waiting for a reading')
+              ? (reading.diagnostic ?? t('waiting'))
               : reading.status === 'CONFLICT'
                 ? 'Conflicting circuit sources'
                 : 'Telemetry unavailable'}
@@ -81,6 +83,7 @@ function EquipmentPreview({
   slotIndex: number;
   breakerTelemetry?: CompositionBreakerTelemetry;
 }>) {
+  const t = useTranslations('physicalDiagram');
   const composition = projectEquipmentComposition(equipment, equipmentById);
   const ports = equipment.accessPorts.filter((port) => port.lifecycle === 'ACTIVE');
   const preview =
@@ -88,9 +91,7 @@ function EquipmentPreview({
   return (
     <article className="equipment-physical-preview">
       <div className="equipment-physical-preview-heading">
-        <span className="equipment-physical-position">
-          POSITION {String(slotIndex + 1).padStart(2, '0')}
-        </span>
+        <span className="equipment-physical-position">{t('position',{value:String(slotIndex+1).padStart(2,'0')})}</span>
         <span className="equipment-physical-type">
           {equipment.equipmentType.replaceAll('_', ' ')}
         </span>
@@ -110,7 +111,7 @@ function EquipmentPreview({
         </span>
         {ports.length > 0 && (
           <span>
-            {ports.length} access {ports.length === 1 ? 'port' : 'ports'}
+            {t('accessPorts',{count:ports.length,kind:ports.length===1?t('port'):t('ports')})}
           </span>
         )}
       </div>
@@ -168,6 +169,7 @@ function PortFace({
   portConnections?: readonly PortConnectionView[];
   canWritePower?: boolean;
 }>) {
+  const t = useTranslations('physicalDiagram');
   const active = useMemo(() => ports.filter((port) => port.lifecycle === 'ACTIVE'), [ports]);
   const [selectedPortId, setSelectedPortId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -177,13 +179,13 @@ function PortFace({
   const visible = showAll ? active : active.slice(0, 48);
 
   return (
-    <section className="equipment-faceplate" aria-label="Actual physical access ports">
+    <section className="equipment-faceplate" aria-label={t('access')}>
       <header className="equipment-faceplate-header">
         <div>
-          <strong>PHYSICAL TERMINALS</strong>
-          <span>{active.length} recorded · No unprovisioned ports shown</span>
+          <strong>{t('terminals')}</strong>
+          <span>{t('recorded',{count:active.length})}</span>
         </div>
-        <span className="equipment-faceplate-status">FRONT / INTERFACE</span>
+        <span className="equipment-faceplate-status">{t('front')}</span>
       </header>
       <div className="equipment-faceplate-surface">
         <div className="equipment-faceplate-ports">
@@ -204,7 +206,7 @@ function PortFace({
               <strong>{port.name}</strong>
               <small>{port.connectorType || port.portType}</small>
               {portConnections.some((link) => link.portId === port.id) && (
-                <span className="equipment-terminal-occupied">CONNECTED</span>
+                <span className="equipment-terminal-occupied">{t('connected')}</span>
               )}
             </button>
           ))}
@@ -226,23 +228,23 @@ function PortFace({
           aria-label={`Selected port ${selected.name}`}
         >
           <div>
-            <small>SELECTED ACCESS PORT</small>
+            <small>{t('selected')}</small>
             <strong>{selected.name}</strong>
             <span>
               {selected.portType} · {selected.direction ?? 'Unspecified direction'}
             </span>
           </div>
           <dl>
-            <dt>Exposure</dt>
+            <dt>{t('exposure')}</dt>
             <dd>{selected.exposure}</dd>
-            <dt>Connector</dt>
-            <dd>{selected.connectorType || 'Not recorded'}</dd>
-            <dt>Protocol</dt>
-            <dd>{selected.protocol || 'Not recorded'}</dd>
+            <dt>{t('connector')}</dt>
+            <dd>{selected.connectorType || t('notRecorded')}</dd>
+            <dt>{t('protocol')}</dt>
+            <dd>{selected.protocol || t('notRecorded')}</dd>
           </dl>
           {selectedLinks.length > 0 && (
             <div className="equipment-terminal-connection" role="status">
-              <strong>CONNECTED · {selectedLinks.length} recorded path(s)</strong>
+              <strong>{t('paths',{count:selectedLinks.length})}</strong>
               {selectedLinks.map((link) => (
                 <div key={link.pathId}>
                   <span>
@@ -263,17 +265,17 @@ function PortFace({
                 className="equipment-access-port-connect"
                 href={`/power/connect/equipment?${selected.direction === 'INPUT' ? 'target' : 'source'}=${encodeURIComponent(selected.id)}`}
               >
-                {selected.direction === 'INPUT' ? 'CONNECT SOURCE' : 'CONNECT LOAD'}
+                {selected.direction === 'INPUT' ? t('connectSource') : t('connectLoad')}
               </Link>
             )}
             <button type="button" onClick={() => setSelectedPortId(null)}>
-              CLOSE
+              {t('close')}
             </button>
           </div>
         </div>
       ) : (
         <p className="equipment-faceplate-hint">
-          Select a terminal to inspect its recorded identity. Connections are managed separately.
+          {t('help')}
         </p>
       )}
     </section>
@@ -289,6 +291,7 @@ export function PhysicalEquipmentDiagram({
   breakerTelemetryBindings = [],
   portConnections = [],
 }: Props) {
+  const t = useTranslations('physicalDiagram');
   const equipmentById = useMemo(
     () => new Map(equipment.map((item) => [item.id, item])),
     [equipment],
@@ -355,7 +358,7 @@ export function PhysicalEquipmentDiagram({
     return (
       <div
         className="equipment-physical-canvas equipment-contract-canvas"
-        aria-label="Physical Equipment composition"
+        aria-label={t('composition')}
       >
         <EquipmentContractViews
           root={root}
@@ -376,11 +379,11 @@ export function PhysicalEquipmentDiagram({
   }
 
   return (
-    <div className="equipment-physical-canvas" aria-label="Physical Equipment composition">
+    <div className="equipment-physical-canvas" aria-label={t('composition')}>
       <div className="equipment-physical-shell">
         <header className="equipment-physical-shell-header">
           <div>
-            <span>FOCUSED EQUIPMENT</span>
+            <span>{t('focused')}</span>
             <strong>{root.name}</strong>
             <small>
               {root.equipmentType.replaceAll('_', ' ')} · {root.childMode}
@@ -388,15 +391,15 @@ export function PhysicalEquipmentDiagram({
           </div>
           <div className="equipment-physical-shell-stats">
             <span>
-              <b>{projection.occupied}</b> Installed
+              <b>{projection.occupied}</b> {t('installedCaption')}
             </span>
             {projection.positional && (
               <span>
-                <b>{projection.available}</b> Free positions
+                <b>{projection.available}</b> {t('free')}
               </span>
             )}
             <span>
-              <b>{root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length}</b> Access
+              <b>{root.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length}</b> {t('accessCaption')}
               ports
             </span>
           </div>
@@ -406,10 +409,10 @@ export function PhysicalEquipmentDiagram({
           <section
             ref={compositionRef}
             className="equipment-physical-bays"
-            aria-label="Immediate child composition"
+            aria-label={t('immediate')}
           >
             <header className="equipment-physical-subheading">
-              <strong>INTERNAL COMPOSITION</strong>
+              <strong>{t('internal')}</strong>
               <small>
                 {countLabel(projection.occupied, projection.capacity, projection.positional)}
               </small>
@@ -468,7 +471,7 @@ export function PhysicalEquipmentDiagram({
                         <div
                           className={`equipment-physical-empty ${projection.positional && projection.capacity > 4 ? 'is-dense' : ''}`}
                         >
-                          <small>POSITION {String(slot.index + 1).padStart(2, '0')}</small>
+                          <small>{t('position',{value:String(slot.index+1).padStart(2,'0')})}</small>
                           <span>
                             {slot.equipmentId ? 'Missing equipment reference' : 'Available'}
                           </span>
@@ -523,7 +526,7 @@ export function PhysicalEquipmentDiagram({
         )}
         {!hasPorts && projection.capacity === 0 && (
           <div className="equipment-physical-no-content">
-            <strong>No internal Equipment or Access Ports installed</strong>
+            <strong>{t('empty')}</strong>
             <span>
               The physical view reflects recorded inventory; it does not create virtual ports or
               modules.

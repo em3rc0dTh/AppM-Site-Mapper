@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { DataView, StatusBadge } from '@/shared/ui/primitives';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -11,6 +12,7 @@ export function UserAdminTable({
   currentUserId,
   users,
 }: Readonly<{ currentUserId: string; users: readonly SafeUser[] }>) {
+  const t = useTranslations('forms.users');
   const router = useRouter();
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function UserAdminTable({
     const result = (await response.json().catch(() => null)) as { error?: string } | null;
 
     if (!response.ok) {
-      setError(result?.error ?? 'USER_UPDATE_FAILED');
+      setError(t('failed'));
       setPendingId(null);
       return;
     }
@@ -37,15 +39,15 @@ export function UserAdminTable({
   }
 
   return (
-    <DataView mode="table" label="User administration">
+    <DataView mode="table" label={t('administration')}>
       <table className="settings-user-table">
         <thead>
           <tr>
-            <th>NAME⌃</th>
-            <th>ROLE⌁</th>
-            <th>STATUS⌁</th>
-            <th>Password</th>
-            <th>Actions</th>
+            <th>{t('name')}</th>
+            <th>{t('role')}</th>
+            <th>{t('status')}</th>
+            <th>{t('password')}</th>
+            <th>{t('actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -59,22 +61,22 @@ export function UserAdminTable({
                 </td>
                 <td>
                   <select
-                    aria-label={`Role for ${user.displayName}`}
+                    aria-label={t('roleFor', { name: user.displayName })}
                     defaultValue={user.role}
                     disabled={isSelf || pendingId === user.id}
                     onChange={(event) => patch(user.id, { role: event.target.value as Role })}
                   >
-                    <option value="STANDARD">Standard</option>
-                    <option value="ADMIN">Admin</option>
-                    <option value="SUPERADMIN">Superadmin</option>
+                    <option value="STANDARD">{t('standard')}</option>
+                    <option value="ADMIN">{t('admin')}</option>
+                    <option value="SUPERADMIN">{t('superadmin')}</option>
                   </select>
                 </td>
                 <td>
                   <StatusBadge tone={user.lifecycle === 'ACTIVE' ? 'good' : 'neutral'}>
-                    {user.lifecycle}
+                    {user.lifecycle === 'ACTIVE' ? t('active') : t('archived')}
                   </StatusBadge>
                 </td>
-                <td>{user.mustChangePassword ? 'Change required' : 'Configured'}</td>
+                <td>{user.mustChangePassword ? t('changeRequired') : t('configured')}</td>
                 <td>
                   <button
                     disabled={isSelf || pendingId === user.id}

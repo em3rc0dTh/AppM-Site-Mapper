@@ -147,5 +147,68 @@
       "notConfigured": "Not configured",
       "dangerHelp": "Database reset is unavailable. Use controlled administration outside the operational UI."
     }
+  },
+  "forms": {
+    "password": {
+      "current": "Current password",
+      "next": "New password",
+      "changing": "Changing…",
+      "submit": "Change password",
+      "help": "Changing your password revokes every active session, including this one.",
+      "minLength": "Password must contain at least 12 characters.",
+      "failed": "Unable to change password. Check your current password and try again."
+    },
+    "profile": {
+      "displayName": "Display name",
+      "saving": "Saving…",
+      "save": "Save profile",
+      "saved": "Saved.",
+      "failed": "Unable to save profile."
+    },
+    "userCreate": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "temporaryPassword": "Temporary password",
+      "creating": "Creating…",
+      "create": "Create user",
+      "failed": "Unable to create the user.",
+      "standard": "Standard",
+      "admin": "Admin",
+      "superadmin": "Superadmin"
+    },
+    "users": {
+      "administration": "User administration",
+      "name": "NAME⌃",
+      "role": "ROLE⌁",
+      "status": "STATUS⌁",
+      "password": "Password",
+      "actions": "Actions",
+      "roleFor": "Role for {name}",
+      "changeRequired": "Change required",
+      "configured": "Configured",
+      "active": "Active",
+      "archived": "Archived",
+      "failed": "Unable to update this user.",
+      "standard": "Standard",
+      "admin": "Admin",
+      "superadmin": "Superadmin"
+    },
+    "import": {
+      "title": "Data Import",
+      "help": "Import a complete canonical Room layout. Existing inventory remains attached to its rack. IDs and the saved room version must match.",
+      "roomId": "Room ID",
+      "loaded": "Current layout loaded. Edit or replace with your canonical JSON.",
+      "loadFailed": "Unable to load the room layout.",
+      "load": "Load current layout",
+      "json": "Canonical layout JSON",
+      "valid": "Layout structure and physical rules are valid. Server checks will run when importing.",
+      "invalid": "Invalid JSON",
+      "validate": "Validate layout",
+      "confirm": "Replace this room layout with the validated JSON? Empty removed objects will be archived.",
+      "saved": "Layout imported and saved.",
+      "importFailed": "Unable to import the layout.",
+      "submit": "Import and save"
+    }
   }
 }

@@ -147,5 +147,68 @@
       "notConfigured": "Sin configurar",
       "dangerHelp": "El restablecimiento de la base de datos no está disponible. Utiliza la administración controlada fuera de la interfaz operativa."
     }
+  },
+  "forms": {
+    "password": {
+      "current": "Contraseña actual",
+      "next": "Contraseña nueva",
+      "changing": "Cambiando…",
+      "submit": "Cambiar contraseña",
+      "help": "Cambiar la contraseña revoca todas las sesiones activas, incluida esta.",
+      "minLength": "La contraseña debe tener al menos 12 caracteres.",
+      "failed": "No se pudo cambiar la contraseña. Revisa la contraseña actual e inténtalo nuevamente."
+    },
+    "profile": {
+      "displayName": "Nombre visible",
+      "saving": "Guardando…",
+      "save": "Guardar perfil",
+      "saved": "Guardado.",
+      "failed": "No se pudo guardar el perfil."
+    },
+    "userCreate": {
+      "name": "Nombre",
+      "email": "Correo electrónico",
+      "role": "Rol",
+      "temporaryPassword": "Contraseña temporal",
+      "creating": "Creando…",
+      "create": "Crear usuario",
+      "failed": "No se pudo crear el usuario.",
+      "standard": "Estándar",
+      "admin": "Administrador",
+      "superadmin": "Superadministrador"
+    },
+    "users": {
+      "administration": "Administración de usuarios",
+      "name": "NOMBRE⌃",
+      "role": "ROL⌁",
+      "status": "ESTADO⌁",
+      "password": "Contraseña",
+      "actions": "Acciones",
+      "roleFor": "Rol de {name}",
+      "changeRequired": "Requiere cambio",
+      "configured": "Configurada",
+      "active": "Activo",
+      "archived": "Archivado",
+      "failed": "No se pudo actualizar este usuario.",
+      "standard": "Estándar",
+      "admin": "Administrador",
+      "superadmin": "Superadministrador"
+    },
+    "import": {
+      "title": "Importación de datos",
+      "help": "Importa el diseño canónico completo de una sala. El inventario existente permanece vinculado a su rack. Los ID y la versión guardada de la sala deben coincidir.",
+      "roomId": "ID de sala",
+      "loaded": "Diseño actual cargado. Edita o reemplaza el JSON canónico.",
+      "loadFailed": "No se pudo cargar el diseño de la sala.",
+      "load": "Cargar diseño actual",
+      "json": "JSON de diseño canónico",
+      "valid": "La estructura y las reglas físicas del diseño son válidas. El servidor realizará otras comprobaciones al importar.",
+      "invalid": "JSON inválido",
+      "validate": "Validar diseño",
+      "confirm": "¿Reemplazar el diseño de esta sala con el JSON validado? Los objetos vacíos eliminados se archivarán.",
+      "saved": "Diseño importado y guardado.",
+      "importFailed": "No se pudo importar el diseño.",
+      "submit": "Importar y guardar"
+    }
   }
 }

@@ -1,9 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
 export function UserCreateForm() {
+  const t = useTranslations('forms.userCreate');
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -27,7 +29,7 @@ export function UserCreateForm() {
     const body = (await response.json().catch(() => null)) as { error?: string } | null;
 
     if (!response.ok) {
-      setError(body?.error ?? 'USER_CREATE_FAILED');
+      setError(t('failed'));
       setBusy(false);
       return;
     }
@@ -40,27 +42,27 @@ export function UserCreateForm() {
   return (
     <form className="settings-form settings-user-create" onSubmit={submit}>
       <label>
-        Name
+        {t('name')}
         <input name="displayName" required />
       </label>
       <label>
-        Email
+        {t('email')}
         <input autoComplete="off" name="email" required type="email" />
       </label>
       <label>
-        Role
+        {t('role')}
         <select defaultValue="STANDARD" name="role">
-          <option value="STANDARD">Standard</option>
-          <option value="ADMIN">Admin</option>
-          <option value="SUPERADMIN">Superadmin</option>
+          <option value="STANDARD">{t('standard')}</option>
+          <option value="ADMIN">{t('admin')}</option>
+          <option value="SUPERADMIN">{t('superadmin')}</option>
         </select>
       </label>
       <label>
-        Temporary password
+        {t('temporaryPassword')}
         <input minLength={12} name="temporaryPassword" required type="password" />
       </label>
       <button disabled={busy} type="submit">
-        {busy ? 'Creating…' : 'Create user'}
+        {busy ? t('creating') : t('create')}
       </button>
       {error ? <small className="form-error">{error}</small> : null}
     </form>

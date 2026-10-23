@@ -645,3 +645,32 @@ docker logs --since 2m -f --tail 30 appm-site-mapper-modbus-tcp-1
 No Compose services, credentials, databases, emulators or Modbus registry
 are modified by the observer. Avoid enabling unbounded raw wire logging
 on a production network; SNMPv3 raw datagrams are encrypted by design.
+
+
+### Observer fix: MongoDB projection and SNMP event transport
+
+The first operator run of `inspect-industrial-io.py` produced
+`MongoServerError: Cannot do inclusion on field signal in exclusion projection`
+during event history lookup. **This was a read-only observer query error,
+not a failure of capture or normalization.** The raw FC03 requests and
+responses nevertheless confirmed Modbus read-only values and quality 1
+(VALID) on Unit ID 1 for the legacy circuit-1 block and extension
+addresses 1024–1050, including synthetic SNMP 48.1 V, 12.5 A, and 25.3°C.
+
+The corrected observer now reads industrial history rows directly without
+the invalid `{projection:{_id:0,signal:1}}` wrapper. It also selects
+SNMP GET versus INFORM/TRAP from the **stored `envelopeJson.transport`**;
+the event document stores top-level `protocol` but not a top-level
+`transport` field. An operator should obtain the fix with:
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 scripts/telemetry/inspect-industrial-io.py --mode all --units 1 --legacy
+python3 scripts/telemetry/inspect-industrial-io.py --mode mqtt --follow --interval 15 --max-signals 96
+python3 scripts/telemetry/inspect-industrial-io.py --mode snmp --max-signals 32
+```
+
+No Docker rebuild, app restart, database migration, or binding mutation is
+required. The correction is **not yet re-validated against the operator's
+local Docker installation**. The observer remains read-only and does not
+enable raw payload dumps in production logs.

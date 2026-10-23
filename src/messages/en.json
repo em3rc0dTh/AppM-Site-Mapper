@@ -117,6 +117,35 @@
       "racks": "RACKS IN THIS ROOM · {count}",
       "inspect": "INSPECT ↗",
       "instruction": "CLICK A CLUSTER OR CABINET TO INSPECT PROPERTIES"
+    },
+    "settings": {
+      "title": "SETTINGS",
+      "areas": "Settings areas",
+      "tabs": {
+        "profile": "Profile",
+        "security": "Security",
+        "users": "Users",
+        "roles": "Roles",
+        "dataImport": "Data Import",
+        "drafting": "Drafting",
+        "system": "System",
+        "danger": "Danger Zone"
+      },
+      "passwordPolicy": "Passwords require at least 12 characters. Password changes revoke existing sessions.",
+      "addUser": "＋ ADD USER",
+      "permission": "Permission",
+      "allowed": "Allowed",
+      "serverEnforcement": "Permissions are enforced on the server.",
+      "importDenied": "Import requires topology write permission.",
+      "gridPolicy": "Physical grid: 600 × 600 mm. Position coordinates snap to this grid. Rack dimensions remain physical millimeters. Collisions and out-of-bound placement block Save.",
+      "drawingHelp": "Open a Room to edit its surveyed polygon, clusters and positions.",
+      "openNetwork": "OPEN NETWORK",
+      "environment": "Environment",
+      "persistence": "Persistence",
+      "telemetry": "Telemetry",
+      "configured": "Configured — inspect contextual telemetry for current freshness",
+      "notConfigured": "Not configured",
+      "dangerHelp": "Database reset is unavailable. Use controlled administration outside the operational UI."
     }
   }
 }

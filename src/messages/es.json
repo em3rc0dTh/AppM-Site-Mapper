@@ -117,6 +117,35 @@
       "racks": "RACKS EN ESTA SALA · {count}",
       "inspect": "INSPECCIONAR ↗",
       "instruction": "SELECCIONA UN CLÚSTER O GABINETE PARA INSPECCIONAR SUS PROPIEDADES"
+    },
+    "settings": {
+      "title": "CONFIGURACIÓN",
+      "areas": "Áreas de configuración",
+      "tabs": {
+        "profile": "Perfil",
+        "security": "Seguridad",
+        "users": "Usuarios",
+        "roles": "Roles",
+        "dataImport": "Importación de datos",
+        "drafting": "Diseño de planos",
+        "system": "Sistema",
+        "danger": "Zona de riesgo"
+      },
+      "passwordPolicy": "Las contraseñas deben tener al menos 12 caracteres. Cambiarla revoca las sesiones existentes.",
+      "addUser": "＋ AGREGAR USUARIO",
+      "permission": "Permiso",
+      "allowed": "Permitido",
+      "serverEnforcement": "Los permisos se aplican desde el servidor.",
+      "importDenied": "La importación requiere permiso de escritura de topología.",
+      "gridPolicy": "Cuadrícula física: 600 × 600 mm. Las coordenadas se ajustan a esta cuadrícula. Las dimensiones de los racks se mantienen en milímetros físicos. Las colisiones y posiciones fuera del límite impiden guardar.",
+      "drawingHelp": "Abre una sala para editar su polígono levantado, clústeres y posiciones.",
+      "openNetwork": "ABRIR RED",
+      "environment": "Entorno",
+      "persistence": "Persistencia",
+      "telemetry": "Telemetría",
+      "configured": "Configurado — revisa la vigencia de la telemetría contextual",
+      "notConfigured": "Sin configurar",
+      "dangerHelp": "El restablecimiento de la base de datos no está disponible. Utiliza la administración controlada fuera de la interfaz operativa."
     }
   }
 }

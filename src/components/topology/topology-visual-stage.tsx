@@ -93,8 +93,8 @@ function ChildLink({
   );
 }
 
-  const t = useTranslations('visualStage');
 function NetworkSiteCanvas({ items }: { items: readonly VisualStageChild[] }) {
+  const t = useTranslations('visualStage');
   return (
     <div className="legacy-site-canvas">
       <div className="legacy-site-map-grid" aria-hidden="true" />
@@ -185,8 +185,8 @@ function columnRange(items: readonly VisualStageChild[]): readonly number[] {
   return Array.from({ length: max - min + 1 }, (_, index) => min + index);
 }
 
-  const t = useTranslations('visualStage');
 function BayCanvas({ items }: { items: readonly VisualStageChild[] }) {
+  const t = useTranslations('visualStage');
   const positions = items.filter(({ node }) => node.kind === 'POSITION');
   const columns = columnRange(items);
   const row = positions.find(({ node }) => node.kind === 'POSITION')?.node;

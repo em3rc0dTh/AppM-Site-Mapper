@@ -802,7 +802,10 @@
     "open": "ABRIR EQUIPMENT",
     "rearWarning": "Solo se dispone de la proyección documentada de la cara frontal. No se ha registrado la geometría posterior.",
     "inspectorLabel": "INSPECTOR",
-    "objectsCount": "{count} objetos"
+    "objectsCount": "{count} objetos",
+    "openDevice": "ABRIR DISPOSITIVO",
+    "openEquipment": "ABRIR EQUIPO",
+    "rackPosition": "Posición del rack"
   },
   "equipmentEditor": {
     "physical": "COMPOSICIÓN FÍSICA",
@@ -1292,7 +1295,8 @@
     "error": "Historial no disponible: {error}",
     "empty": "No hay muestras almacenadas para el intervalo seleccionado. TimescaleDB no inventa historial faltante.",
     "coverage": "{minutes} minutos de alimentación cubiertos, sumados entre entradas. No hay extrapolación de intervalos mayores de 120 segundos.",
-    "note": "Potencia = |V| × I a partir de lecturas DC emparejadas. La energía se integra mediante trapecios únicamente entre observaciones recientes. Ninguna es un contador de energía medido por SNMP; los datos simulados no certifican condiciones de campo."
+    "note": "Potencia = |V| × I a partir de lecturas DC emparejadas. La energía se integra mediante trapecios únicamente entre observaciones recientes. Ninguna es un contador de energía medido por SNMP; los datos simulados no certifican condiciones de campo.",
+    "metricHistoryLabel": "Tendencias históricas de {metric} durante {window}"
   },
   "connectEquipmentPower": {
     "title": "Conectar alimentación de Equipment",
@@ -1329,7 +1333,10 @@
     "electricalFeed": "Entrada eléctrica",
     "connectionLabelOptional": "Etiqueta de conexión (opcional)",
     "sourceAlreadyConnected": "Esta salida POWER ya alimenta {label}. Desconecta la ruta registrada antes de asignar este terminal a otro destino.",
-    "targetAlreadyConnected": "Esta entrada POWER ya tiene una conexión."
+    "targetAlreadyConnected": "Esta entrada POWER ya tiene una conexión.",
+    "feedLabel": " · Alimentación {feed}",
+    "alreadyConnected": " · YA CONECTADO",
+    "selectDestination": "Seleccione destino"
   },
   "connectPower": {
     "header": "POWER / COMISIONAMIENTO",
@@ -1511,7 +1518,9 @@
     "output": "SALIDA POWER · {name}",
     "path": "RUTA DE POTENCIA · ENTRADA {side} · CONFIGURADA",
     "input": "ENTRADA POWER · {name}",
-    "target": "Jerarquía del Equipment de destino"
+    "target": "Jerarquía del Equipment de destino",
+    "feedPhysicalPath": "Ruta física completa de la alimentación {feed}",
+    "unspecified": "sin especificar"
   },
   "topologyCreation": {
     "create": "+ CREAR {kind}",
@@ -1649,7 +1658,13 @@
     "evaluation": "La topología, el mapeo exacto de breakers y la telemetría en vivo se evalúan por separado.",
     "sources": "ORÍGENES MQTT",
     "noSimulation": "Este rastreo no utiliza conectividad simulada.",
-    "legacyPaths": "Rutas antiguas sin clasificar"
+    "legacyPaths": "Rutas antiguas sin clasificar",
+    "breakerSerialDetail": "SN del interruptor: {serial} · ID: {id}",
+    "breakerNoSerial": "ID del interruptor: {id} · SN sin asignar",
+    "feedDetail": "Alimentación {feed}",
+    "mqttSerial": "SN MQTT: {identity}",
+    "rawPoint": " · Punto RAW: {point}",
+    "receivedAt": " · Recibido: {time}"
   },
   "pins": {
     "pinned": "★ FIJADO",

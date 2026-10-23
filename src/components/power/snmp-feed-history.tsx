@@ -130,7 +130,7 @@ function TrendChart({
           <svg
             viewBox={`0 0 ${width} ${height}`}
             role="img"
-            aria-label={`${metric.key === 'voltageV' ? tu('metricVoltage') : metric.key === 'currentA' ? tu('metricCurrent') : metric.key === 'powerW' ? tu('metricPower') : tu('metricEnergy')} historical trends over ${window}`}
+            aria-label={tu('metricHistoryLabel', { metric: metric.key === 'voltageV' ? tu('metricVoltage') : metric.key === 'currentA' ? tu('metricCurrent') : metric.key === 'powerW' ? tu('metricPower') : tu('metricEnergy'), window })}
           >
             <line
               x1={plotX}

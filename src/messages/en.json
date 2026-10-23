@@ -802,7 +802,10 @@
     "open": "OPEN EQUIPMENT",
     "rearWarning": "Only the documented front-face projection is available. Rear geometry has not been recorded.",
     "inspectorLabel": "INSPECTOR",
-    "objectsCount": "{count} objects"
+    "objectsCount": "{count} objects",
+    "openDevice": "OPEN DEVICE",
+    "openEquipment": "OPEN EQUIPMENT",
+    "rackPosition": "Rack position"
   },
   "equipmentEditor": {
     "physical": "PHYSICAL COMPOSITION",
@@ -1292,7 +1295,8 @@
     "error": "History unavailable: {error}",
     "empty": "No samples stored for the selected range. TimescaleDB does not invent missing history.",
     "coverage": "{minutes} feed-minutes covered, counted across inputs. No extrapolation over gaps greater than 120 seconds.",
-    "note": "Power = |V| × I from paired DC readings. Energy is trapezoidally integrated only across fresh observations. Neither is a measured SNMP energy counter; simulated data is not field certification."
+    "note": "Power = |V| × I from paired DC readings. Energy is trapezoidally integrated only across fresh observations. Neither is a measured SNMP energy counter; simulated data is not field certification.",
+    "metricHistoryLabel": "{metric} historical trends over {window}"
   },
   "connectEquipmentPower": {
     "title": "Connect Equipment Power",
@@ -1329,7 +1333,10 @@
     "electricalFeed": "Electrical feed",
     "connectionLabelOptional": "Connection label (optional)",
     "sourceAlreadyConnected": "This POWER output already feeds {label}. Disconnect the recorded path before allocating this terminal elsewhere.",
-    "targetAlreadyConnected": "This POWER input already has a connection."
+    "targetAlreadyConnected": "This POWER input already has a connection.",
+    "feedLabel": " · Feed {feed}",
+    "alreadyConnected": " · ALREADY CONNECTED",
+    "selectDestination": "Select destination"
   },
   "connectPower": {
     "header": "POWER / COMMISSIONING",
@@ -1511,7 +1518,9 @@
     "output": "POWER OUTPUT · {name}",
     "path": "POWER PATH · FEED {side} · CONFIGURED",
     "input": "POWER INPUT · {name}",
-    "target": "Destination equipment hierarchy"
+    "target": "Destination equipment hierarchy",
+    "feedPhysicalPath": "Feed {feed} complete physical path",
+    "unspecified": "unspecified"
   },
   "topologyCreation": {
     "create": "+ CREATE {kind}",
@@ -1649,7 +1658,13 @@
     "evaluation": "Topology, exact breaker mapping and live telemetry are evaluated independently.",
     "sources": "MQTT SOURCES",
     "noSimulation": "No simulated connectivity is used in this trace.",
-    "legacyPaths": "Unclassified legacy paths"
+    "legacyPaths": "Unclassified legacy paths",
+    "breakerSerialDetail": "Breaker SN: {serial} · ID: {id}",
+    "breakerNoSerial": "Breaker ID: {id} · SN not assigned",
+    "feedDetail": "Feed {feed}",
+    "mqttSerial": "MQTT sn: {identity}",
+    "rawPoint": " · Raw point: {point}",
+    "receivedAt": " · Received: {time}"
   },
   "pins": {
     "pinned": "★ PINNED",

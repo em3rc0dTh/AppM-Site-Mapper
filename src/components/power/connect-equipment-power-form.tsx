@@ -128,8 +128,8 @@ export function ConnectEquipmentPowerForm({
               {sources.map((port) => (
                 <option key={port.id} value={port.id} disabled={port.connected}>
                   {port.equipmentName} / {port.name}
-                  {port.feed ? ` · Feed ${port.feed}` : ''}
-                  {port.connected ? ' · ALREADY CONNECTED' : ''}
+                  {port.feed ? t('feedLabel', { feed: port.feed }) : ''}
+                  {port.connected ? t('alreadyConnected') : ''}
                 </option>
               ))}
             </select>
@@ -174,8 +174,8 @@ export function ConnectEquipmentPowerForm({
               {filteredTargets.map((port) => (
                 <option key={port.id} value={port.id} disabled={port.connected}>
                   {port.equipmentName} / {port.name}
-                  {port.feed ? ` · Feed ${port.feed}` : ''}
-                  {port.connected ? ' · ALREADY CONNECTED' : ''}
+                  {port.feed ? t('feedLabel', { feed: port.feed }) : ''}
+                  {port.connected ? t('alreadyConnected') : ''}
                 </option>
               ))}
               {target && !filteredTargets.some((port) => port.id === target.id) && (
@@ -208,7 +208,7 @@ export function ConnectEquipmentPowerForm({
           <strong>{source ? `${source.equipmentName} / ${source.name}` : t('selectSource')}</strong>
           <span aria-hidden="true">→</span>
           <strong>
-            {target ? `${target.equipmentName} / ${target.name}` : 'Select destination'}
+            {target ? `${target.equipmentName} / ${target.name}` : t('selectDestination')}
           </strong>
         </div>
         <div className="power-port-connect-fields">

@@ -203,8 +203,8 @@ function FeedTrace({
         value={leg.source.breaker ?? '—'}
         detail={
           leg.source.breakerSerialNumber
-            ? `Breaker SN: ${leg.source.breakerSerialNumber} · ID: ${leg.source.breakerId ?? '—'}`
-            : `Breaker ID: ${leg.source.breakerId ?? '—'} · SN not assigned`
+            ? t('breakerSerialDetail', { serial: leg.source.breakerSerialNumber, id: leg.source.breakerId ?? '—' })
+            : t('breakerNoSerial', { id: leg.source.breakerId ?? '—' })
         }
         status={leg.telemetry.status}
       />
@@ -212,7 +212,7 @@ function FeedTrace({
         index={5}
         label={t('electrical')}
         value={leg.label ?? leg.pathId}
-        detail={`Feed ${feed}`}
+        detail={t('feedDetail', { feed })}
         status={leg.topologyStatus === 'VALID' ? t('valid') : t('invalid')}
       />
       <TraceStep
@@ -221,7 +221,7 @@ function FeedTrace({
         value={telemetry}
         detail={
           leg.telemetry.sourceIdentity
-            ? `MQTT sn: ${leg.telemetry.sourceIdentity}${leg.telemetry.rawPointId ? ` · Raw point: ${leg.telemetry.rawPointId}` : ''}${leg.telemetry.receivedAt ? ` · Received: ${leg.telemetry.receivedAt}` : ''}`
+            ? `${t('mqttSerial', { identity: leg.telemetry.sourceIdentity })}${leg.telemetry.rawPointId ? t('rawPoint', { point: leg.telemetry.rawPointId }) : ''}${leg.telemetry.receivedAt ? t('receivedAt', { time: leg.telemetry.receivedAt }) : ''}`
             : t('noBreakerBinding')
         }
         status={leg.telemetry.status}

@@ -123,7 +123,7 @@ export function RackElevation({
                         ...topologyInspector(item),
                         actions: [
                           {
-                            label: item.kind === 'DEVICE' ? 'OPEN DEVICE' : 'OPEN EQUIPMENT',
+                            label: item.kind === 'DEVICE' ? t('openDevice') : t('openEquipment'),
                             href: `/device/${item.id}`,
                           },
                           { label: t('trace'), href: `/power?entity=${item.id}` },
@@ -162,7 +162,7 @@ export function RackElevation({
           <div>
             <h2>{view.rack.name}</h2>
             <small>
-              {context?.positionName ?? 'Rack position'}{' '}
+              {context?.positionName ?? t('rackPosition')}{' '}
               {context?.coordinate ? `/ ${context.coordinate}` : ''}
             </small>
           </div>

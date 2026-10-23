@@ -68,7 +68,7 @@ export function PowerCanvasRoute({
   return (
     <div
       className="zip-power-connection"
-      aria-label={`Feed ${feed ?? 'unspecified'} complete physical path`}
+      aria-label={t('feedPhysicalPath', { feed: feed ?? t('unspecified') })}
     >
       <div className="zip-power-route-segment">
         <h3>{t('source')}</h3>

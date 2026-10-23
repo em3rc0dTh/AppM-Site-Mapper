@@ -246,10 +246,15 @@ try {
     for (const route of localeRoutes) {
       const response = await page.goto(base + route, { waitUntil: 'domcontentloaded' });
       assert.ok(response?.ok(), `${expectedLocale} route ${route} must return HTTP 200`);
-      await page.waitForFunction((locale) => document.documentElement.lang === locale, expectedLocale);
+      await page.waitForFunction(
+        (locale) => document.documentElement.lang === locale,
+        expectedLocale,
+      );
       assert.ok(!new URL(page.url()).pathname.includes('/login'), `Session lost on ${route}`);
     }
-    console.log(`[PASS] Chromium: ${expectedLocale} locale preserved across all 9 operational routes`);
+    console.log(
+      `[PASS] Chromium: ${expectedLocale} locale preserved across all 9 operational routes`,
+    );
   }
 
   await verifyLocaleRoutes('es');

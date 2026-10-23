@@ -308,7 +308,9 @@ try {
   }));
   assert.equal(addUserTheme.name, 'rgb(255, 255, 255)');
   assert.equal(addUserTheme.role, 'rgb(255, 255, 255)');
-  console.log('[PASS] Chromium: Spanish user creation and native dropdowns retain white backgrounds');
+  console.log(
+    '[PASS] Chromium: Spanish user creation and native dropdowns retain white backgrounds',
+  );
 
   await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
   await page.locator('.sm-locale-control select').selectOption('en');

@@ -46,12 +46,17 @@
   color: #fff;
 }
 
-:root[data-theme='light'] .settings-shell .settings-user-create > button[type='submit']:hover:not(:disabled) {
+:root[data-theme='light']
+  .settings-shell
+  .settings-user-create
+  > button[type='submit']:hover:not(:disabled) {
   background: #1765d4;
   border-color: #1765d4;
 }
 
-:root[data-theme='light'] :is(.zip-app-shell, .mk-login) :is(input, select, textarea):focus-visible {
+:root[data-theme='light']
+  :is(.zip-app-shell, .mk-login)
+  :is(input, select, textarea):focus-visible {
   outline: 2px solid #2d7ff9;
   outline-offset: 2px;
 }

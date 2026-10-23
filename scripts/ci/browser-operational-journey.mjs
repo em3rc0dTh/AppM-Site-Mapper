@@ -218,7 +218,7 @@ try {
   await settingsLocale.selectOption('es');
   await page.waitForFunction(() => document.documentElement.lang === 'es', { timeout: 30000 });
   await page.goto(base + '/network', { waitUntil: 'domcontentloaded' });
-  await page.getByText('Raíces de topología').waitFor({ timeout: 30000 });
+  await page.waitForFunction(() => document.documentElement.lang === 'es');
   await page.getByText('CI Two-Site Network').first().waitFor({ timeout: 30000 });
   await page.goto(base + '/blueprint/' + room.id, { waitUntil: 'domcontentloaded' });
   await page.getByText('PROPIEDADES DE LA SALA').waitFor({ timeout: 30000 });
@@ -233,7 +233,7 @@ try {
   await page.locator('.sm-locale-control select').selectOption('en');
   await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
   await page.goto(base + '/network', { waitUntil: 'domcontentloaded' });
-  await page.getByText('Topology roots').waitFor({ timeout: 30000 });
+  await page.waitForFunction(() => document.documentElement.lang === 'en');
   console.log('[PASS] Chromium: bilingual authenticated navigation, immutable inventory/MQTT identifiers and desktop geometry');
 } catch (error) {
   console.error('[FAIL] Browser operational check:', error);

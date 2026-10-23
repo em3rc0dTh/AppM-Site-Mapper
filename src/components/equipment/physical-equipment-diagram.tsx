@@ -148,7 +148,7 @@ function EquipmentPreview({
           })}
           {composition.occupied > preview.length && (
             <span className="equipment-physical-preview-more">
-              +{composition.occupied - preview.length} more — open to inspect
+              +{composition.occupied - preview.length} {t('moreInspect')}
             </span>
           )}
         </div>
@@ -258,7 +258,7 @@ function PortFace({
                     {link.feed ? t('feedLetter', { feed: link.feed }) : ''}
                   </span>{' '}
                   <Link href={`/power?path=${encodeURIComponent(link.pathId)}`}>
-                    VIEW POWERPATH
+                    {t('viewPowerPath')}
                   </Link>
                 </div>
               ))}
@@ -428,7 +428,7 @@ export function PhysicalEquipmentDiagram({
                   · {projection.occupied} occupied.
                 </p>
                 <button type="button" onClick={() => setExpanded(true)}>
-                  EXPLORE COMPOSITION
+                  {t('exploreComposition')}
                 </button>
               </div>
             ) : (
@@ -501,7 +501,7 @@ export function PhysicalEquipmentDiagram({
                       setVisibleCount((current) => Math.min(current + 48, projection.capacity))
                     }
                   >
-                    SHOW NEXT {Math.min(48, projection.capacity - visibleCount)} POSITIONS
+                    {t('showNext', { count: Math.min(48, projection.capacity - visibleCount) })}
                   </button>
                 )}
                 {expanded && shouldSummarizeFocus(projection) && (
@@ -513,7 +513,7 @@ export function PhysicalEquipmentDiagram({
                       setVisibleCount(48);
                     }}
                   >
-                    BACK TO SUMMARY
+                    {t('backSummary')}
                   </button>
                 )}
               </>
@@ -532,12 +532,11 @@ export function PhysicalEquipmentDiagram({
           <div className="equipment-physical-no-content">
             <strong>{t('empty')}</strong>
             <span>
-              The physical view reflects recorded inventory; it does not create virtual ports or
-              modules.
+              {t('noVirtual')}
             </span>
             {onAdd && root.childMode === 'DYNAMIC' && (
               <button type="button" onClick={() => onAdd(null)}>
-                + ADD EQUIPMENT
+                {t('addEquipment')}
               </button>
             )}
           </div>

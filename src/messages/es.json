@@ -310,7 +310,8 @@
       "fullTrace": "ϟ RASTREO COMPLETO DE POTENCIA",
       "diagnostic": "Diagnóstico de la ruta de potencia",
       "notConfiguredFull": "SIN CONFIGURAR",
-      "showRoom": "VER SALA"
+      "showRoom": "VER SALA",
+      "breadcrumbs": "Ruta de navegación"
     },
     "rack": {
       "elevation": "ELEVACIÓN",
@@ -579,7 +580,12 @@
     "inspectorTitle": "INSPECTOR",
     "bdfbStatus": "ESTADO DE BDFB",
     "devicePreserved": "El Device se conserva. Site Mapper no inventará shelves, frames, panels ni breakers.",
-    "clickCluster": "HAZ CLIC EN UN CLÚSTER O GABINETE"
+    "clickCluster": "HAZ CLIC EN UN CLÚSTER O GABINETE",
+    "overlapWarning": "Las salas levantadas comparten superficie. Revisa y corrige sus límites; las nuevas salas no pueden superponerse.",
+    "inspectAction": "inspeccionar",
+    "noMapWarning": "Las superficies de las salas no están levantadas. Esta es una lista topológica, no un plano físico.",
+    "openAction": "ABRIR",
+    "roomType": "SALA"
   },
   "equipmentView": {
     "occupied": "ocupadas",
@@ -723,7 +729,10 @@
     "createDevice": "Crear Device y Equipment sin montar",
     "noActive": "No hay plantillas activas. Crea una en el Almacén virtual primero.",
     "loadFailed": "No se pudieron cargar las plantillas.",
-    "instanceFailed": "No se pudo crear la instancia de Equipment."
+    "instanceFailed": "No se pudo crear la instancia de Equipment.",
+    "instanceHelp": "Configura las posiciones hijas y la distribución de esta instancia abajo",
+    "childModeInstance": "Modo de hijos · esta instancia",
+    "childSlotsInstance": "Posiciones hijas · esta instancia"
   },
   "liveTelemetry": {
     "title": "Telemetría",
@@ -1376,7 +1385,14 @@
     "feeds": "ALIMENTA → ",
     "poweredBy": "ALIMENTADO POR ← ",
     "missingEquipment": "Referencia de Equipment faltante",
-    "feedLetter": " · entrada {feed}"
+    "feedLetter": " · entrada {feed}",
+    "moreInspect": "más — abrir para inspeccionar",
+    "viewPowerPath": "VER POWERPATH",
+    "exploreComposition": "EXPLORAR COMPOSICIÓN",
+    "showNext": "MOSTRAR LAS SIGUIENTES {count} POSICIONES",
+    "backSummary": "VOLVER AL RESUMEN",
+    "noVirtual": "La vista física refleja el inventario registrado; no crea puertos ni módulos virtuales.",
+    "addEquipment": "+ AGREGAR EQUIPMENT"
   },
   "snmpStrip": {
     "label": "Capacidad de la entrada DC SNMP",

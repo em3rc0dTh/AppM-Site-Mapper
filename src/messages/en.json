@@ -310,7 +310,8 @@
       "fullTrace": "ϟ FULL POWER TRACE",
       "diagnostic": "Power path diagnostic",
       "notConfiguredFull": "NOT CONFIGURED",
-      "showRoom": "SHOW ROOM"
+      "showRoom": "SHOW ROOM",
+      "breadcrumbs": "Breadcrumb"
     },
     "rack": {
       "elevation": "ELEVATION",
@@ -579,7 +580,12 @@
     "inspectorTitle": "INSPECTOR",
     "bdfbStatus": "BDFB STATUS",
     "devicePreserved": "The Device is preserved. Site Mapper will not invent shelves, frames, panels or breakers.",
-    "clickCluster": "CLICK A CLUSTER OR CABINET"
+    "clickCluster": "CLICK A CLUSTER OR CABINET",
+    "overlapWarning": "Existing surveyed Rooms share floor area. Inspect and correct their boundaries; new rooms cannot overlap.",
+    "inspectAction": "inspect",
+    "noMapWarning": "Room footprints are not surveyed. This is a topology list, not a physical map.",
+    "openAction": "OPEN",
+    "roomType": "ROOM"
   },
   "equipmentView": {
     "occupied": "occupied",
@@ -723,7 +729,10 @@
     "createDevice": "Create Device + unmounted Equipment",
     "noActive": "No active templates. Create one in Virtual Warehouse first.",
     "loadFailed": "Could not load templates.",
-    "instanceFailed": "Could not create the Equipment instance."
+    "instanceFailed": "Could not create the Equipment instance.",
+    "instanceHelp": "Configure child slots and layout for this instance below",
+    "childModeInstance": "Children mode · This instance",
+    "childSlotsInstance": "Child slots · This instance"
   },
   "liveTelemetry": {
     "title": "Telemetry",
@@ -1376,7 +1385,14 @@
     "feeds": "FEEDS → ",
     "poweredBy": "POWERED BY ← ",
     "missingEquipment": "Missing equipment reference",
-    "feedLetter": " · Feed {feed}"
+    "feedLetter": " · Feed {feed}",
+    "moreInspect": "more — open to inspect",
+    "viewPowerPath": "VIEW POWERPATH",
+    "exploreComposition": "EXPLORE COMPOSITION",
+    "showNext": "SHOW NEXT {count} POSITIONS",
+    "backSummary": "BACK TO SUMMARY",
+    "noVirtual": "The physical view reflects recorded inventory; it does not create virtual ports or modules.",
+    "addEquipment": "+ ADD EQUIPMENT"
   },
   "snmpStrip": {
     "label": "SNMP incoming DC feeder capacity",

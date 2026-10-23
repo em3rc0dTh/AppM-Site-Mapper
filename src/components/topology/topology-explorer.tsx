@@ -107,8 +107,7 @@ export function TopologyExplorer({
           <div className="level-room-overlap-warning" role="alert">
             <strong>{t('conflicts', { count: roomPairs.length })}</strong>
             <span>
-              Existing surveyed Rooms share floor area. Inspect and correct their boundaries; new
-              rooms cannot overlap. {roomPairs.slice(0, 3).join(' · ')}
+              {t('overlapWarning')} {roomPairs.slice(0, 3).join(' · ')}
             </span>
           </div>
         )}
@@ -180,7 +179,7 @@ export function TopologyExplorer({
                         onClick={() => setSelected(entry.node.id)}
                         onDoubleClick={() => window.location.assign(entry.href)}
                       >
-                        {entry.node.name} · inspect
+                        {entry.node.name} · {t('inspectAction')}
                       </button>
                     ))}
                   </div>
@@ -189,7 +188,7 @@ export function TopologyExplorer({
             ) : node.kind === 'LEVEL' ? (
               <div className="topology-unlocated-list" aria-label={t('roomsUnsurveyed')}>
                 <p>
-                  Room footprints are not surveyed. This is a topology list, not a physical map.
+                  {t('noMapWarning')}
                 </p>
                 <div>
                   {visualItems.map((entry) => (
@@ -315,7 +314,7 @@ export function TopologyExplorer({
         </section>
         {item ? (
           <Link className="mk-primary zip-open-action" href={item.href}>
-            ↗ OPEN {item.node.kind === 'ROOM_SUBSTRUCTURE' ? 'ROOM' : displayKind(item.node.kind)}
+            ↗ {t('openAction')} {item.node.kind === 'ROOM_SUBSTRUCTURE' ? t('roomType') : displayKind(item.node.kind)}
           </Link>
         ) : (
           <p>{t('selectHelp')}</p>

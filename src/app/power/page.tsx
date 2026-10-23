@@ -195,7 +195,7 @@ export default async function PowerPage({
 
   return (
     <main className="zip-power-page">
-      <nav className="breadcrumbs zip-power-breadcrumbs" aria-label="Breadcrumb">
+      <nav className="breadcrumbs zip-power-breadcrumbs" aria-label={t('breadcrumbs')}>
         <Link href="/network">← {t('network')}</Link>
         <span className="zip-breadcrumb-divider" />
         <strong>{t('powerPath')}</strong>
@@ -228,12 +228,12 @@ export default async function PowerPage({
           {!breadcrumbs.length ? (
             <>
               <div className="zip-power-tree-feed">
-                <b>Feed A</b>
+                <b>{t('feed', { side: 'A' })}</b>
                 <span>{t('primary')}</span>
                 <small>{feedA ? t('configuredLower') : t('notConfigured')}</small>
               </div>
               <div className="zip-power-tree-feed">
-                <b>Feed B</b>
+                <b>{t('feed', { side: 'B' })}</b>
                 <span>{t('secondary')}</span>
                 <small>{feedB ? t('configuredLower') : t('notConfigured')}</small>
               </div>
@@ -292,16 +292,16 @@ export default async function PowerPage({
           </div>
           <dl>
             <dt>{t('status')}</dt>
-            <dd className="is-good">● CONFIGURED</dd>
+            <dd className="is-good">● {t('configuredLower')}</dd>
             <dt>{t('feedLabel')}</dt>
             <dd>{primary?.feed ?? '—'}</dd>
             <dt>{t('source')}</dt>
             <dd>{primary?.source?.equipment.name ?? primary?.sourceStages.at(-2)?.name ?? '—'}</dd>
             <dt>{t('destination')}</dt>
             <dd>{targetName}</dd>
-            <dt>Feed A</dt>
+            <dt>{t('feed', { side: 'A' })}</dt>
             <dd>{feedA ? t('configuredLower') : t('notConfigured')}</dd>
-            <dt>Feed B</dt>
+            <dt>{t('feed', { side: 'B' })}</dt>
             <dd>{feedB ? t('configuredLower') : t('notConfigured')}</dd>
             <dt>{t('redundancy')}</dt>
             <dd>{feedA && feedB ? 'A + B' : t('single')}</dd>

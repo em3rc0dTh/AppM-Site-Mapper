@@ -115,17 +115,16 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                     {selected.category ? ` · ${selected.category}` : ''}
                   </span>
                   <span>
-                    {selected.equipmentType ?? 'CUSTOM'} · Configure child slots and layout for this
-                    instance below
+                    {selected.equipmentType ?? 'CUSTOM'} · {t('instanceHelp')}
                   </span>
                 </div>
               )}
               <label>
-                Device identity
+                {t('deviceIdentity')}
                 <input name="name" required maxLength={120} placeholder="BDFB-01" />
               </label>
               <label>
-                Operational type
+                {t('operationalType')}
                 <select name="deviceType" defaultValue="CUSTOM">
                   {DEVICE_TYPES.map((type) => (
                     <option key={type} value={type}>
@@ -135,7 +134,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                 </select>
               </label>
               <label>
-                Physical Equipment type
+                {t('physicalType')}
                 <select name="equipmentType" defaultValue="">
                   <option value="">
                     {t('useTemplate', { type: selected?.equipmentType ?? 'CUSTOM' })}
@@ -148,7 +147,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                 </select>
               </label>
               <label>
-                Children mode · This instance
+                {t('childModeInstance')}
                 <select
                   name="childMode"
                   value={childMode}
@@ -160,7 +159,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
               </label>
               {childMode === 'POSITIONAL' ? (
                 <label>
-                  Child slots · This instance
+                  {t('childSlotsInstance')}
                   <input
                     name="childCapacity"
                     type="number"
@@ -173,7 +172,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
               ) : null}
               {childMode === 'POSITIONAL' ? (
                 <label>
-                  MQTT point prefix
+                  {t('mqttPrefix')}
                   <input
                     name="telemetryPointPrefix"
                     maxLength={80}

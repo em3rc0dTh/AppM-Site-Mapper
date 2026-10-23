@@ -159,9 +159,14 @@ export class MqttObservationOutbox {
           this.files.delete(file);
           this.counters.committed++;
           this.lastDeliveryAt = new Date().toISOString();
+          // Keep operator telemetry fresh during long drains: previously this
+          // snapshot was written only after every queued file had completed.
+          // Periodic checkpoints are coalesced and never delete spool data.
+          if (this.counters.committed % 10 === 0) this.persistDiagnostics();
         } catch {
           this.counters.deliveryFailures++;
           this.lastFailureAt = new Date().toISOString();
+          this.persistDiagnostics();
           this.onError();
         }
       }

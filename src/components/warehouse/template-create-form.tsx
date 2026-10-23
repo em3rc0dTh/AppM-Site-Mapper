@@ -187,12 +187,7 @@ export function TemplateCreateForm() {
           </label>
           <label>
             {t('notes')}
-            <textarea
-              name="notes"
-              rows={2}
-              maxLength={500}
-              placeholder={t('notesPlaceholder')}
-            />
+            <textarea name="notes" rows={2} maxLength={500} placeholder={t('notesPlaceholder')} />
           </label>
           <div className="warehouse-form-actions">
             <button type="submit" disabled={busy}>

@@ -208,9 +208,7 @@ export function RackTemplateInstantiator({ rackId }: { rackId: string }) {
                     <option value="SUMMARY">{t('summary')}</option>
                   </select>
                 </label>
-                <small>
-                  {t('perInstance')}
-                </small>
+                <small>{t('perInstance')}</small>
               </fieldset>
               <label>
                 {t('serial')}

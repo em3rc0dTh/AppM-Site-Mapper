@@ -164,10 +164,7 @@ export function LiveTelemetry() {
                     ))}
                   </div>
                 ) : (
-                  <StatePanel
-                    title={t('noScalar')}
-                    description={t('noScalarHelp')}
-                  />
+                  <StatePanel title={t('noScalar')} description={t('noScalarHelp')} />
                 )}
 
                 <details className="raw-payload">

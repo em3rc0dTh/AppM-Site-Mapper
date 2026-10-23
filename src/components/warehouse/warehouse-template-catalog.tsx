@@ -69,9 +69,7 @@ export function WarehouseTemplateCatalog({
             ))}
           </select>
         </div>
-        <strong>
-          {t('count', { count: filtered.length, total: templates.length })}
-        </strong>
+        <strong>{t('count', { count: filtered.length, total: templates.length })}</strong>
         {hasFilters ? (
           <button
             type="button"

@@ -474,3 +474,50 @@ After these two observations, the operator started
 SNMP+MQTT simultaneous freshness, backlog stability, inventory LIVE
 state and Modbus word/quality readings **remain to be confirmed**;
 do not mark the corresponding client-acceptance gates as passed yet.
+
+
+### Operator evidence: concurrent MQTT+SNMP and Modbus (2026-10-23)
+
+The operator locally measured the following on the **original** `appm-site-mapper` project
+and the preserved `site_mapper_crud_acceptance_02` Mongo database after restarting
+three synthetic SNMP emitters alongside the throttled MQTT generator:
+
+| Protocol | Source identity | Rows in `industrial_observations` | Age of latest record |
+| --- | --- | ---: | ---: |
+| MQTT | EMU-BFDB-01 | 98,882 | 3.1 s |
+| MQTT | EMU-BFDB-02 | 98,882 | 3.1 s |
+| MQTT | EMU-BFDB-03 | 98,882 | 3.1 s |
+| SNMP | EMU-SNMP-QDF-01 | 7,938 | 1.6 s |
+| SNMP | EMU-SNMP-QDF-02 | 7,938 | 1.6 s |
+| SNMP | EMU-SNMP-QDF-03 | 7,925 | 2.6 s |
+
+Total at snapshot: **320,447 industrial observations**. The Mongo-to-Timescale
+industrial outbox held **7** batches, with **zero** batches marked as failed.
+An earlier MQTT-only, one-minute observation established 3,258 to 3,276
+industrial events, with MQTT spool depth 0, industrial historical outbox
+depth 0 and no historical failures in both measurements.
+
+The operator performed a read-only FC03 Modbus TCP request against
+`127.0.0.1:1503`, register offset **1024** (FLOAT32 ABCD) and quality
+offset **1026** (UINT16) for each Unit ID:
+
+| Unit ID | Voltage, FLOAT32 | Quality word | Meaning |
+| --- | ---: | ---: | --- |
+| 1 | 12.229999542236328 | 1 | VALID |
+| 2 | 14.920000076293945 | 1 | VALID |
+| 3 | 13.779999732971191 | 1 | VALID |
+
+**Observed pass:** six synthetic source identities have recent history;
+the industrial historical outbox was nearly empty and had no recorded
+delivery failures at that instant; the three commissioned synthetic
+Modbus extension voltage points returned quality VALID. This is
+operator-supplied runtime evidence, not an assistant-executed test.
+
+**Not yet proven:** breaker-level LIVE indicators and data provenance in
+the UI, verification of all original topology references after the final
+restart, continuous full-load stability, all extension registers and
+alarms, original 0–767 register regression, source substitution,
+physical QDF mapping, true Eltek FIELD scalings, Metasys acceptance or
+field-production authorization. Legacy SNMP bindings for
+`EMU-DELTA-BFDB-01` must not be silently reassigned to any
+`EMU-SNMP-QDF-xx` synthetic identity.

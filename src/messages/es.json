@@ -1,4 +1,7 @@
 {
+  "metadata": {
+    "description": "Plataforma de mapeo y operación de infraestructura física."
+  },
   "common": {
     "overview": "Resumen",
     "settings": "Configuración",

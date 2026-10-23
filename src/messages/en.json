@@ -1,4 +1,7 @@
 {
+  "metadata": {
+    "description": "Physical infrastructure mapping and operations platform."
+  },
   "common": {
     "overview": "Overview",
     "settings": "Settings",

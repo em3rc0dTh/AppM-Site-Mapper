@@ -119,7 +119,14 @@ function SeriesChart({
         {observations.length <= 220 &&
           observations.map((point) => (
             <circle key={point.at} cx={x(point.at)} cy={y(point.value)} r="2.9" fill={color}>
-              <title>{t('tooltip',{date:new Date(point.at).toLocaleString(locale,{timeZone:'America/Lima'}),value:formatValue(point.value),unit,count:point.reporting})}</title>
+              <title>
+                {t('tooltip', {
+                  date: new Date(point.at).toLocaleString(locale, { timeZone: 'America/Lima' }),
+                  value: formatValue(point.value),
+                  unit,
+                  count: point.reporting,
+                })}
+              </title>
             </circle>
           ))}
         <text x="42" y="151" className="ec-chart-label">
@@ -129,7 +136,7 @@ function SeriesChart({
           {new Date(xEnd).toLocaleDateString()}
         </text>
       </svg>
-      <small>{t('buckets',{count:observations.length})}</small>
+      <small>{t('buckets', { count: observations.length })}</small>
     </section>
   );
 }
@@ -207,21 +214,27 @@ export function CompositionHistoryCharts({
         </div>
       </div>
       {loading && <p role="status">{t('loading')}</p>}
-      {error && <p role="alert">{t('error',{error})}</p>}
+      {error && <p role="alert">{t('error', { error })}</p>}
       {!loading && data && (
         <>
           <div className="ec-history-coverage">
-            <span>{t('timeBuckets',{count:data.points.length})}</span>
+            <span>{t('timeBuckets', { count: data.points.length })}</span>
             <span>
-              {t('bindings',{bound:data.boundBreakerCount,total:data.breakerCount})}
+              {t('bindings', { bound: data.boundBreakerCount, total: data.breakerCount })}
             </span>
             <span>
               {last
-                ? t('reporting',{count:coverage??0,total:denominator??0})
+                ? t('reporting', { count: coverage ?? 0, total: denominator ?? 0 })
                 : t('noRecord')}
             </span>
           </div>
-          {last && <small>{t('last',{date:new Date(last.at).toLocaleString(locale,{timeZone:'America/Lima'})})}</small>}
+          {last && (
+            <small>
+              {t('last', {
+                date: new Date(last.at).toLocaleString(locale, { timeZone: 'America/Lima' }),
+              })}
+            </small>
+          )}
           {!data.points.length ? (
             <p>{t('noReadings')}</p>
           ) : (

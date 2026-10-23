@@ -1,7 +1,6 @@
 'use client';
 
 import { useLocale, useTranslations } from 'next-intl';
-import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { isSupportedLocale, localeCookieName } from '@/i18n/locales';
@@ -10,7 +9,6 @@ import { isSupportedLocale, localeCookieName } from '@/i18n/locales';
 export function LanguageSwitcher() {
   const locale = useLocale();
   const t = useTranslations('language');
-  const router = useRouter();
   const [pending, setPending] = useState(false);
 
   return (
@@ -26,8 +24,9 @@ export function LanguageSwitcher() {
           setPending(true);
           const secure = window.location.protocol === 'https:' ? '; Secure' : '';
           document.cookie = `${localeCookieName}=${selected}; Path=/; Max-Age=31536000; SameSite=Lax${secure}`;
-          router.refresh();
-          setPending(false);
+          // Reload the current URL so the server renders the root HTML language
+          // consistently with the newly validated locale cookie.
+          window.location.reload();
         }}
       >
         <option value="en">English</option>

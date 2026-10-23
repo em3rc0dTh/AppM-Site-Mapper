@@ -836,7 +836,7 @@
     "direction": "Layout direction",
     "row": "Row",
     "column": "Column",
-    "maxPerLine": "Max items per {direction}",
+    "maxPerLine": "Max items per line",
     "auto": "Auto",
     "childDisplay": "Child display",
     "inline": "Inline",
@@ -894,7 +894,16 @@
     "rawMqtt": "Raw MQTT group such as 0_2. Leave empty if not commissioned.",
     "pointPrefixHelp": "Point 1 becomes prefix_1. This records the address only; it does not reassign existing circuit bindings or prove their physical wiring.",
     "instanceHelp": "Choose child slots and presentation for this instance",
-    "prefixExample": "e.g. 0_2"
+    "prefixExample": "e.g. 0_2",
+    "warehouseLoadFailed": "Could not load Equipment templates.",
+    "lifecycleFailed": "Could not change the Equipment lifecycle.",
+    "configureFailed": "Could not save the Equipment configuration.",
+    "incompatibleTypeSelection": "This parent accepts only {types}. Selected type: {selected}.",
+    "positionalSlotsRequired": "Choose 1–256 positions or use Dynamic for Equipment without child slots.",
+    "incompatibleChildType": "This parent accepts only {types}.",
+    "createFailed": "Could not create the Equipment.",
+    "moveFailed": "Could not move the child Equipment.",
+    "detachFailed": "Could not detach the child Equipment."
   },
   "accessPorts": {
     "title": "ACCESS PORTS",

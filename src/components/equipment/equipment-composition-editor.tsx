@@ -96,15 +96,15 @@ export function EquipmentCompositionEditor({
     try {
       const response = await fetch('/api/warehouse/templates');
       const data = (await response.json()) as { templates?: AssetTemplate[]; error?: string };
-      if (!response.ok) throw new Error(data.error ?? 'WAREHOUSE_LOAD_FAILED');
+      if (!response.ok) throw new Error(t('warehouseLoadFailed'));
       const next = (data.templates ?? []).filter(
         (template) =>
           !allowed.length || !template.equipmentType || allowed.includes(template.equipmentType),
       );
       setTemplates(next);
       setTemplateId(next[0]?.id ?? '');
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'WAREHOUSE_LOAD_FAILED');
+    } catch {
+      setError(t('warehouseLoadFailed'));
     } finally {
       setLoadingTemplates(false);
     }
@@ -189,11 +189,11 @@ export function EquipmentCompositionEditor({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ action }),
       });
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? action.toUpperCase() + '_FAILED');
+      await response.json();
+      if (!response.ok) throw new Error(t('lifecycleFailed'));
       router.refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : action.toUpperCase() + '_FAILED');
+    } catch {
+      setError(t('lifecycleFailed'));
     } finally {
       setBusy(false);
     }
@@ -222,12 +222,12 @@ export function EquipmentCompositionEditor({
           telemetryPointPrefix: String(form.get('telemetryPointPrefix') ?? ''),
         }),
       });
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? 'CONFIGURE_FAILED');
+      await response.json();
+      if (!response.ok) throw new Error(t('configureFailed'));
       setConfigurationOpen(false);
       router.refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'CONFIGURE_FAILED');
+    } catch {
+      setError(t('configureFailed'));
     } finally {
       setBusy(false);
     }
@@ -240,8 +240,10 @@ export function EquipmentCompositionEditor({
     const effectiveType = typeOverride || selectedTemplate?.equipmentType || 'CUSTOM';
     if (!canInstallChildType(allowed, effectiveType as EquipmentType)) {
       setError(
-        `INCOMPATIBLE_CHILD_TYPE: The parent accepts only ${allowed.map(label).join(', ')}. ` +
-          `You selected ${effectiveType.replaceAll('_', ' ')}.`,
+        t('incompatibleTypeSelection', {
+          types: allowed.map(label).join(', '),
+          selected: effectiveType.replaceAll('_', ' '),
+        }),
       );
       return;
     }
@@ -253,7 +255,7 @@ export function EquipmentCompositionEditor({
       resolvedMode === 'POSITIONAL' &&
       (!Number.isInteger(resolvedCapacity) || (resolvedCapacity ?? 0) < 1)
     ) {
-      setError('POSITIONAL_REQUIRES_CHILD_SLOTS: choose 1–256 or use Dynamic for leaf Equipment.');
+      setError(t('positionalSlotsRequired'));
       return;
     }
     setBusy(true);
@@ -276,12 +278,12 @@ export function EquipmentCompositionEditor({
           telemetryPointPrefix: String(form.get('telemetryPointPrefix') ?? ''),
         }),
       });
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? 'CREATE_FAILED');
+      await response.json();
+      if (!response.ok) throw new Error(t('createFailed'));
       setComposerOpen(false);
       router.refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'CREATE_FAILED');
+    } catch {
+      setError(t('createFailed'));
     } finally {
       setBusy(false);
     }
@@ -292,7 +294,7 @@ export function EquipmentCompositionEditor({
     const form = new FormData(event.currentTarget);
     const type = String(form.get('equipmentType') ?? 'CUSTOM') as EquipmentType;
     if (!canInstallChildType(allowed, type)) {
-      setError(`INCOMPATIBLE_CHILD_TYPE: This parent accepts ${allowed.map(label).join(', ')}.`);
+      setError(t('incompatibleChildType', { types: allowed.map(label).join(', ') }));
       return;
     }
     const childMode = oneOffChildMode;
@@ -316,12 +318,12 @@ export function EquipmentCompositionEditor({
           telemetryPointPrefix: String(form.get('telemetryPointPrefix') ?? ''),
         }),
       });
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? 'CREATE_FAILED');
+      await response.json();
+      if (!response.ok) throw new Error(t('createFailed'));
       setComposerOpen(false);
       router.refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'CREATE_FAILED');
+    } catch {
+      setError(t('createFailed'));
     } finally {
       setBusy(false);
     }
@@ -340,11 +342,11 @@ export function EquipmentCompositionEditor({
           slotIndex,
         }),
       });
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? 'MOVE_FAILED');
+      await response.json();
+      if (!response.ok) throw new Error(t('moveFailed'));
       router.refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'MOVE_FAILED');
+    } catch {
+      setError(t('moveFailed'));
     } finally {
       setBusy(false);
     }
@@ -362,11 +364,11 @@ export function EquipmentCompositionEditor({
           parentId: equipment.deviceId,
         }),
       });
-      const data = (await response.json()) as { error?: string };
-      if (!response.ok) throw new Error(data.error ?? 'DETACH_FAILED');
+      await response.json();
+      if (!response.ok) throw new Error(t('detachFailed'));
       router.refresh();
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'DETACH_FAILED');
+    } catch {
+      setError(t('detachFailed'));
     } finally {
       setBusy(false);
     }

@@ -836,7 +836,7 @@
     "direction": "Dirección de distribución",
     "row": "Fila",
     "column": "Columna",
-    "maxPerLine": "Máximo de elementos por {direction}",
+    "maxPerLine": "Máximo de elementos por línea",
     "auto": "Automático",
     "childDisplay": "Presentación de elementos secundarios",
     "inline": "En línea",
@@ -894,7 +894,16 @@
     "rawMqtt": "Grupo MQTT sin procesar, como 0_2. Déjalo vacío si no se ha comisionado.",
     "pointPrefixHelp": "El punto 1 se convierte en prefix_1. Solo registra la dirección; no reasigna las vinculaciones de circuitos existentes ni verifica su cableado físico.",
     "instanceHelp": "Selecciona las posiciones hijas y la presentación de esta instancia",
-    "prefixExample": "p. ej. 0_2"
+    "prefixExample": "p. ej. 0_2",
+    "warehouseLoadFailed": "No se pudieron cargar las plantillas de Equipment.",
+    "lifecycleFailed": "No se pudo cambiar el estado del Equipment.",
+    "configureFailed": "No se pudo guardar la configuración del Equipment.",
+    "incompatibleTypeSelection": "Este elemento principal solo acepta {types}. Tipo seleccionado: {selected}.",
+    "positionalSlotsRequired": "Selecciona entre 1 y 256 posiciones o usa el modo dinámico para Equipment sin posiciones secundarias.",
+    "incompatibleChildType": "Este elemento principal solo acepta {types}.",
+    "createFailed": "No se pudo crear el Equipment.",
+    "moveFailed": "No se pudo mover el Equipment secundario.",
+    "detachFailed": "No se pudo desvincular el Equipment secundario."
   },
   "accessPorts": {
     "title": "PUERTOS DE ACCESO",

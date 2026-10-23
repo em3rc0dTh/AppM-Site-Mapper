@@ -1,0 +1,26 @@
+name: I18N formatting probe temporary
+on:
+  push:
+    branches: [chore/english-ui-baseline-20261022]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Emit Prettier-formatted artifacts
+        shell: bash
+        run: |
+          for f in src/components/equipment/access-port-editor.tsx src/components/equipment/composition-history-charts.tsx src/components/equipment/equipment-composition-editor.tsx src/components/equipment/physical-equipment-diagram.tsx src/components/power/bdfb-chassis.tsx src/components/power/power-contract-editor.tsx src/components/rack/rack-elevation.tsx src/components/telemetry/panel-commissioning.tsx src/components/topology/topology-explorer.tsx; do
+            echo "I18N_FMT_START:$f"
+            ./node_modules/.bin/prettier "$f" | base64 -w0
+            echo
+            echo "I18N_FMT_END:$f"
+          done

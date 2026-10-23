@@ -94,7 +94,8 @@ export function TemplateCreateForm() {
         imported?: number;
       };
       if (!response.ok) {
-        const index = typeof data.index === 'number' ? t('importErrorItem', { index: data.index + 1 }) : '';
+        const index =
+          typeof data.index === 'number' ? t('importErrorItem', { index: data.index + 1 }) : '';
         const imported =
           typeof data.imported === 'number' && data.imported > 0
             ? t('importErrorPartial', { count: data.imported })

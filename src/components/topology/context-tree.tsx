@@ -15,7 +15,9 @@ function iconFor(kind: TopologyKind): string {
   return 'box';
 }
 
-function labelFor(kind: TopologyKind): string {
+type TopologyKindLabel = 'network' | 'site' | 'structure' | 'level' | 'room' | 'bay' | 'position' | 'rack' | 'device' | 'equipment';
+
+function labelFor(kind: TopologyKind): TopologyKindLabel {
   switch (kind) {
     case 'NETWORK':
       return 'network';

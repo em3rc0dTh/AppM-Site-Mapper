@@ -40,11 +40,10 @@ class ComposeProvenanceTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "Site Mapper must"):
                 self.get("site-mapper", count)
 
-    def test_bridge_accepts_its_earlier_two_file_deployment(self):
-        self.assertIsNotNone(self.get("modbus-tcp", 2))
-        self.assertIsNotNone(self.get("modbus-tcp", 3))
-        with self.assertRaisesRegex(RuntimeError, "Modbus bridge"):
-            self.get("modbus-tcp", 1)
+    def test_bridge_accepts_approved_historical_prefixes(self):
+        # Bridge can predate overlays; full volumes/env are checked at deploy.
+        for count in (1, 2, 3):
+            self.assertIsNotNone(self.get("modbus-tcp", count))
 
     def test_database_services_accept_safe_prefixes(self):
         for service in ("mongodb", "timescaledb"):

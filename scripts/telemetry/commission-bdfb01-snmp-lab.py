@@ -94,8 +94,7 @@ def repo_path(path:Path)->Path:
          "BFDB emulator checkout does not contain the approved SNMP implementation")
     # Do not accidentally consume a malicious injected SNMP build context.
     remote=run(["git","-C",str(real),"remote","get-url","origin"])
-    need("thradexIT/bfdb-telemetry-gateway" in remote.lower().replace(
-         "thradexit","thradexIT").lower(),
+    need("thradexit/bfdb-telemetry-gateway" in remote.lower(),
          "BFDB checkout origin is not thradexIT/bfdb-telemetry-gateway")
     return real
 
@@ -253,7 +252,6 @@ def main():
     values=read_env(bfdb/".env.snmp")
     env=vetted_environment(values,bfdb,environs(app))
     mongo_preflight()
-    require_oid=values.get("SNMP_EMULATOR_PROFILE","")
     print("EMULATOR: "+str(bfdb)+" | SNMPv3 authPriv Config2 | source "+SOURCE)
     out=run(compose_command()+["config","--format","json"],env=env)
     config=json.loads(out)

@@ -57,8 +57,30 @@ def inspect(name):
     labels=node.get("Config",{}).get("Labels",{})
     require(labels.get("com.docker.compose.project")==PROJECT,
             "container belongs to another Compose project")
-    require(labels.get("com.docker.compose.project.config_files","").split(",")==
-            [str(p) for p in FILES],"active Compose file set changed")
+    service=name.removeprefix(PROJECT+"-").removesuffix("-1")
+    require(labels.get("com.docker.compose.service")==service,
+            "service identity label changed for "+name)
+    require(labels.get("com.docker.compose.project.working_dir")==str(ROOT),
+            "Compose working directory changed for "+name)
+    actual=labels.get("com.docker.compose.project.config_files","").split(",")
+    expected=[str(p) for p in FILES]
+    # Containers within the SAME existing project may have been recreated at
+    # different times: mongodb/Timescale/bridge can still carry the base or
+    # base+industrial Compose labels, while the app carries all three files.
+    # Accept ONLY an ordered prefix of these exact approved paths (no extra
+    # compose file, alternate checkout, changed project or arbitrary suffix).
+    approved=[expected[:i] for i in (1,2,3)]
+    require(actual in approved,
+            "unapproved Compose provenance for "+name+
+            " (file count="+str(len(actual))+"); expected an approved base-to-overlay prefix")
+    if name==APP:
+        require(actual==expected,
+                "Site Mapper must have been recreated from the active existing-stack overlay")
+    if name==BRIDGE:
+        require(len(actual)>=2,
+                "Modbus bridge did not originate from industrial Compose overlay")
+    print("COMPOSE PROVENANCE OK "+service+" | approved files="+
+          str(len(actual))+" | project="+PROJECT)
     return node
 
 

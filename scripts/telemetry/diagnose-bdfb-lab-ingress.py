@@ -73,12 +73,22 @@ try {
 }
 catch(e) {parseError=String(e);}
 const allowed=Array.isArray(profiles)?profiles.filter(p=>p?.protocol==="MQTT"):[];
+let spool = null;
+try {
+  const fs = require("node:fs");
+  const path = require("node:path");
+  const spoolRoot=process.env.INDUSTRIAL_MQTT_SPOOL||path.join(process.cwd(),".runtime","industrial-mqtt");
+  const report=JSON.parse(fs.readFileSync(path.join(spoolRoot,"diagnostics.json"),"utf8"));
+  spool={pending:report.pending,capacity:report.capacity,alerts:report.alerts,
+    updatedAt:report.updatedAt,counters:report.counters};
+} catch(e) { spool={status:"NOT_READABLE"}; }
 console.log(JSON.stringify({
   telemetryEnabled:process.env.TELEMETRY_ENABLED==="true",
   topicFilter:process.env.MQTT_TOPIC_FILTER||null,
   industrialMqttProfiles:allowed.length,
   profileDelivery:profileFile?"mounted-file":"environment-json",
   industrialProfileParseError:parseError,
+  captureOutbox:spool,
   sources:keys.map(serial=>({
     serial,profileLoaded:allowed.some(p=>p.sourceIdentity===serial),
     rules:allowed.find(p=>p.sourceIdentity===serial)?.rules?.length??null,

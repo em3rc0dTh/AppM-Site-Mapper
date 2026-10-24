@@ -1275,3 +1275,56 @@ remain independent gates. The Modbus bridge still uses its existing
 silently repoint Units 2/3 from the original `EMU-BFDB-02/03`.
 A future explicitly approved additive Unit ID mapping (or a controlled
 migration) must preserve the original operator's field contract.
+
+
+### 2026-10-24: Repeat LAB publishing, 17 persisted events per source
+
+The operator ran `publish-bdfb-lab-pair.py --publish`, demonstrating repeated
+4-panel publication loops, then stopped the foreground publisher with
+`Ctrl+C`. The subsequent source-indexed historical audit returned:
+
+```text
+BDFB-02 | raw events=17 | catalog=870 | VALID electrical=384/384
+        | ONLINE/VALID=96/96 | circuits=96/96
+        | P1=24/24 P2=24/24 P3=24/24 P4=24/24
+        | latest MQTT event age=14s | recent<=90s=YES
+BDFB-03 | raw events=17 | catalog=870 | VALID electrical=384/384
+        | ONLINE/VALID=96/96 | circuits=96/96
+        | P1=24/24 P2=24/24 P3=24/24 P4=24/24
+        | latest MQTT event age=14s | recent<=90s=YES
+RESULT: PASS — historical full 2x96 circuit catalog capture coverage
+```
+
+This closes the **recent historical industrial capture** gate, but not
+continuous frontend LIVE, independent Timescale delivery, or Modbus Unit
+ID assignment. The user ran the auditor after stopping the sender.
+The runtime LIVE threshold for source-level telemetry is 15s and depends
+on an active subscribed transport. The BDFB UI descendant telemetry
+aggregator uses a separate 30s freshness bound for explicit breaker
+metric bindings.
+
+The additional read-only diagnostic
+`scripts/telemetry/audit-bdfb-lab-downstream.py` queries Timescale
+`industrial_observations` directly, prints Mongo's durable Timescale
+outbox count, and reads the Modbus bridge's **actual** environment
+source-to-Unit-ID mapping. It does not perform a Modbus FC03 read,
+restart services or mutate any registry.
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 scripts/telemetry/audit-bdfb-lab-downstream.py
+```
+
+For a current frontend LIVE check, run the foreground LAB publishers in
+a separate terminal and inspect `/api/telemetry/diagnostics` in the
+already authenticated Site Mapper browser session. Expected when
+publisher is running and current readings are accepted:
+`LAB-BDFB-02` and `LAB-BDFB-03` source rows report
+`freshness=LIVE`; inspect the BDFB device inspector as an independent
+visual gate. Never infer that status from the older industrial catalog's
+`VALID` quality alone.
+
+The original Unit ID 2 and 3 registrations for
+`EMU-BFDB-02/03` must **not** be silently reassigned to the new LAB
+publishers; an additive assignment to unused IDs is an explicit later
+change requiring a separate backup and register-level acceptance.

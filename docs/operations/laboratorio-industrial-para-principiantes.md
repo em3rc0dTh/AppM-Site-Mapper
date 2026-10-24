@@ -80,12 +80,12 @@ Mantén esa terminal abierta durante la verificación. Solo produce datos sinté
 
 ### 5. Revisa la integración de los tres protocolos
 
-| Protocolo | Qué alimenta | Dónde se observa | Comprobación |
-|---|---|---|---|
-| MQTT | Breakers de salida | Panel → Open Panel Composition → Telemetry | `24/24 MQTT LIVE` y V/A/W/kWh |
-| SNMPv3 | Shunts independientes de entrada A/B | Device BDFB → Inputs | `LAB LIVE · SIMULATED` |
-| TimescaleDB | Histórico independiente de MQTT y SNMP | Device BDFB → Charts | Curvas o puntos en la ventana elegida |
-| Modbus TCP | Registros de circuitos para lectura industrial | Herramienta técnica FC03 | `FC03 PASS` en comparaciones reales |
+| Protocolo   | Qué alimenta                                   | Dónde se observa                           | Comprobación                          |
+| ----------- | ---------------------------------------------- | ------------------------------------------ | ------------------------------------- |
+| MQTT        | Breakers de salida                             | Panel → Open Panel Composition → Telemetry | `24/24 MQTT LIVE` y V/A/W/kWh         |
+| SNMPv3      | Shunts independientes de entrada A/B           | Device BDFB → Inputs                       | `LAB LIVE · SIMULATED`                |
+| TimescaleDB | Histórico independiente de MQTT y SNMP         | Device BDFB → Charts                       | Curvas o puntos en la ventana elegida |
+| Modbus TCP  | Registros de circuitos para lectura industrial | Herramienta técnica FC03                   | `FC03 PASS` en comparaciones reales   |
 
 La ruta de transporte:
 

@@ -10,14 +10,16 @@ const makeProfile = (serial: string) => ({
   sourceIdentity: serial,
   version: 'fixture-1',
   staleMs: 90000,
-  rules: [{
-    key: '/reported/0_1_1/U1',
-    kind: 'measurement',
-    unit: 'V',
-    scale: 1,
-    numericEncoding: 'decimal-string',
-    evidence: 'Explicit synthetic profile test',
-  }],
+  rules: [
+    {
+      key: '/reported/0_1_1/U1',
+      kind: 'measurement',
+      unit: 'V',
+      scale: 1,
+      numericEncoding: 'decimal-string',
+      evidence: 'Explicit synthetic profile test',
+    },
+  ],
 });
 
 const dirs: string[] = [];
@@ -36,12 +38,14 @@ describe('industrial profile configuration', () => {
     writeFileSync(file, JSON.stringify([makeProfile('LAB-BDFB-02')]), 'utf8');
     vi.stubEnv('INDUSTRIAL_PROFILES_FILE', file);
     vi.stubEnv('INDUSTRIAL_PROFILES_JSON', JSON.stringify([makeProfile('ORIGINAL')]));
-    expect(configuredIndustrialProfiles().map((profile) => profile.sourceIdentity))
-      .toEqual(['LAB-BDFB-02']);
+    expect(configuredIndustrialProfiles().map((profile) => profile.sourceIdentity)).toEqual([
+      'LAB-BDFB-02',
+    ]);
     // Changed on-disk evidence must be read, never assumed immutable across calls.
     writeFileSync(file, JSON.stringify([makeProfile('LAB-BDFB-03')]), 'utf8');
-    expect(configuredIndustrialProfiles().map((profile) => profile.sourceIdentity))
-      .toEqual(['LAB-BDFB-03']);
+    expect(configuredIndustrialProfiles().map((profile) => profile.sourceIdentity)).toEqual([
+      'LAB-BDFB-03',
+    ]);
   });
 
   it('still supports original JSON-only installations', () => {

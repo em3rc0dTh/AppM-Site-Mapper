@@ -6,11 +6,11 @@
 
 Antes de esta implementación, una auditoría de **solo lectura** sobre `site_mapper_crud_acceptance_02` demostró:
 
-| Device | Profile | POWER INPUT SNMP | OIDs SNMP | Breakers MQTT | Resultado |
-|---|---|---:|---:|---:|---|
-| BDFB-01 | `ELTEK_BDCBB_CONFIG_2` | 2/2 | 4 | 3 | SNMP A/B LIVE e histórico visual comprobados |
-| BDFB-02 | No seleccionado | 0 | 0 | 96 | Pendiente SNMP |
-| BDFB-03 | No seleccionado | 0 | 0 | 96 | Pendiente SNMP |
+| Device  | Profile                | POWER INPUT SNMP | OIDs SNMP | Breakers MQTT | Resultado                                    |
+| ------- | ---------------------- | ---------------: | --------: | ------------: | -------------------------------------------- |
+| BDFB-01 | `ELTEK_BDCBB_CONFIG_2` |              2/2 |         4 |             3 | SNMP A/B LIVE e histórico visual comprobados |
+| BDFB-02 | No seleccionado        |                0 |         0 |            96 | Pendiente SNMP                               |
+| BDFB-03 | No seleccionado        |                0 |         0 |            96 | Pendiente SNMP                               |
 
 El operador ya confirmó MQTT 24/24 en paneles de laboratorio, histórico Timescale y un FC03 **8/8 representativo** para Modbus Units 4/5, preservando Units 1/2/3. **SNMP es una entrada de corriente/voltaje independiente y no se deriva de esos 96 breakers.**
 
@@ -38,12 +38,12 @@ Dos **Devices** conservan su identidad actual, rack, 4 PANEL/96 CIRCUIT_BREAKER 
 
 Los OIDs **de laboratorio** (no MIB física Delta) son los mismos cuatro identificadores relativos por controlador:
 
-| Feed | Métrica | OID sintético |
-|---|---|---|
-| A | CURRENT | `1.3.6.1.4.1.8072.9999.2026.48.1.1.0` |
-| B | CURRENT | `1.3.6.1.4.1.8072.9999.2026.48.1.2.0` |
-| A | VOLTAGE | `1.3.6.1.4.1.8072.9999.2026.48.2.1.0` |
-| B | VOLTAGE | `1.3.6.1.4.1.8072.9999.2026.48.2.2.0` |
+| Feed | Métrica | OID sintético                         |
+| ---- | ------- | ------------------------------------- |
+| A    | CURRENT | `1.3.6.1.4.1.8072.9999.2026.48.1.1.0` |
+| B    | CURRENT | `1.3.6.1.4.1.8072.9999.2026.48.1.2.0` |
+| A    | VOLTAGE | `1.3.6.1.4.1.8072.9999.2026.48.2.1.0` |
+| B    | VOLTAGE | `1.3.6.1.4.1.8072.9999.2026.48.2.2.0` |
 
 Los controladores son independientes: `EMU-DELTA-BFDB-02` y `EMU-DELTA-BFDB-03`. **La identidad del controlador forma parte del binding.** Nunca reusar `EMU-DELTA-BFDB-01` para comisionar BDFB-02/03.
 
@@ -78,18 +78,18 @@ La variable `SNMP_LAB_ENABLED` del proceso Site Mapper ya existente puede contin
 
 ### ¿Qué hacer si se interrumpe?
 
-| Situación | Recuperación segura |
-|---|---|
-| Falta checkout o archivo privado `.env.snmp` | Obtenerlos del administrador, no crear claves públicas ni habilitar v2c |
-| No existe la base/Device LAB esperado | No arrancar servicios ni crear DB alternativa |
-| Error `BLOCKED` en preflight | Conservar salida sin secretos; revisar identidad/volumen y ejecutar nuevamente la consulta |
-| Falla el backup | No hay mutación; revisar almacenamiento disponible y permiso de Docker |
-| Transacción falla | No reiniciar ni borrar; validar estado de Mongo, conservar copia de seguridad |
-| Inventario ya comisionado | El plan dirá `ALREADY_READY`; no volver a insertar ni resetear |
-| Colector `snmp.poll.failed` | Consultar logs y conectividad/auth SNMPv3; **no** cambiar bindings MQTT |
-| Contenedor nuevo detenido tras primera creación | Usar el procedimiento de **reanudar contenedores existentes**, sin forzar recreación |
-| Inputs muestra PENDING | Comprobar el plan, los cuatro OIDs, agent/collector logs y API de ingesta |
-| Charts SNMP vacío | Comprobar polls aceptados, existencia de muestras y ventana 24H; no asumir fallo MQTT |
+| Situación                                       | Recuperación segura                                                                        |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Falta checkout o archivo privado `.env.snmp`    | Obtenerlos del administrador, no crear claves públicas ni habilitar v2c                    |
+| No existe la base/Device LAB esperado           | No arrancar servicios ni crear DB alternativa                                              |
+| Error `BLOCKED` en preflight                    | Conservar salida sin secretos; revisar identidad/volumen y ejecutar nuevamente la consulta |
+| Falla el backup                                 | No hay mutación; revisar almacenamiento disponible y permiso de Docker                     |
+| Transacción falla                               | No reiniciar ni borrar; validar estado de Mongo, conservar copia de seguridad              |
+| Inventario ya comisionado                       | El plan dirá `ALREADY_READY`; no volver a insertar ni resetear                             |
+| Colector `snmp.poll.failed`                     | Consultar logs y conectividad/auth SNMPv3; **no** cambiar bindings MQTT                    |
+| Contenedor nuevo detenido tras primera creación | Usar el procedimiento de **reanudar contenedores existentes**, sin forzar recreación       |
+| Inputs muestra PENDING                          | Comprobar el plan, los cuatro OIDs, agent/collector logs y API de ingesta                  |
+| Charts SNMP vacío                               | Comprobar polls aceptados, existencia de muestras y ventana 24H; no asumir fallo MQTT      |
 
 ## Pruebas y lo que todavía NO prueban
 

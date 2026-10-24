@@ -36,7 +36,7 @@ No hay registro público desde Login. [Primer acceso y usuarios](primer-acceso-y
 - **Reporting** muestra dispositivos con telemetría vinculada reciente.
 - **No recent data** indica falta de muestra reciente; no significa que el equipo esté eléctricamente apagado.
 - **Direct access** permite abrir un BDFB fijado.
-- **BDFB Power Overview** agrega potencia de equipos descendientes *MQTT*, no entrada SNMP independiente.
+- **BDFB Power Overview** agrega potencia de equipos descendientes _MQTT_, no entrada SNMP independiente.
 
 ## Paso 3. Encuentra un BDFB
 
@@ -113,15 +113,15 @@ Modbus es una **salida de lectura para integradores**; no se configura desde Inp
 
 ## Paso 9. ¿Qué hacer si ves un error?
 
-| Mensaje o señal | Causa probable | Primera acción |
-|---|---|---|
-| Login rechazado | Credenciales, permisos o sesión | Consultar al administrador |
-| MQTT LIVE pero SNMP PENDING | Breakers activos; shunts sin preparar | Revisar Inputs, no alterar MQTT |
-| MQTT STALE | No hay muestra reciente | Consultar publicador y broker |
-| SNMP LAB LIVE | Agente simulado enviando datos | Validar que exista historia SNMP A/B |
-| SNMP 0/0 | Sin puertos de entrada inventariados | Solicitar comisionamiento de laboratorio |
-| Charts vacíos | No hay muestras en ese protocolo/ventana | Cambiar señal o rango; comprobar colector |
-| Modbus devuelve cero | Puede ser cero real **o dato ausente** | Validar estado y política de dato vencido |
+| Mensaje o señal             | Causa probable                           | Primera acción                            |
+| --------------------------- | ---------------------------------------- | ----------------------------------------- |
+| Login rechazado             | Credenciales, permisos o sesión          | Consultar al administrador                |
+| MQTT LIVE pero SNMP PENDING | Breakers activos; shunts sin preparar    | Revisar Inputs, no alterar MQTT           |
+| MQTT STALE                  | No hay muestra reciente                  | Consultar publicador y broker             |
+| SNMP LAB LIVE               | Agente simulado enviando datos           | Validar que exista historia SNMP A/B      |
+| SNMP 0/0                    | Sin puertos de entrada inventariados     | Solicitar comisionamiento de laboratorio  |
+| Charts vacíos               | No hay muestras en ese protocolo/ventana | Cambiar señal o rango; comprobar colector |
+| Modbus devuelve cero        | Puede ser cero real **o dato ausente**   | Validar estado y política de dato vencido |
 
 ## ¿Cuándo has aprendido lo necesario?
 

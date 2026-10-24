@@ -234,7 +234,6 @@ QDF02/PANELA3/VOLTAGE does not establish electrical connectivity by itself.
 No gate is marked passed by this document. Record exact commit IDs, environment, raw event references,
 SQL/Modbus evidence, outcome and approver when those checks are later performed locally.
 
-
 ## Existing inventory recovery and additive industrial deployment (2026-10-23)
 
 **Do not use the standalone industrial lab's `--action up` on an existing inventory.**
@@ -290,7 +289,7 @@ TimescaleDB, then rebuilds/recreates only the existing Site Mapper,
 telemetry-store and Modbus services and creates the trap receiver/broker/
 emulator services. Docker Compose uses project `appm-site-mapper` and
 `--no-deps`: it **does not recreate** MongoDB, TimescaleDB or mongo-init.
-It adds an independent *internal* network for emulator traffic, keeping
+It adds an independent _internal_ network for emulator traffic, keeping
 existing application/Modbus HTTP ports and the original Compose network.
 Only new lab secrets are used for SNMP sources and industrial projection;
 the original bootstrap/admin credentials, telemetry-store token, Modbus
@@ -309,7 +308,6 @@ inventory commissioning to show breaker-specific LIVE readings.
 local preflight and acceptance. The author has not run Docker or test suites
 against the user's workstation; a successful restoration of the old version
 does not certify this new deployment.
-
 
 ### Initial backpressure and lab-only rate control (2026-10-23)
 
@@ -368,7 +366,6 @@ It never modifies Mongo/Timescale or restarts Site Mapper. Before
 acceptance verify backpressure remains bounded across multiple
 observations while MQTT, SNMP and legacy UI operations coexist.
 
-
 ### Capture worker repair with both synthetic publishers stopped
 
 An additional operator observation showed MQTT disk spool stalled at **725**
@@ -421,7 +418,6 @@ acceptance pass. Only then use guarded `resume-mqtt` with 10s cadence.
 SNMP legacy `EMU-DELTA-BFDB-01` bindings and synthetic
 `EMU-SNMP-QDF-xx` identifiers are not automatically interchangeable.
 
-
 ### Verified recovery after the app-only repair
 
 With all four synthetic generators stopped and the repaired application
@@ -448,7 +444,6 @@ stopped publisher and a historical outbox depth **at most 100**. The
 private emulation interval defaults to 10 seconds; avoid applying the
 full-stack `up` action solely to restart the publisher.
 
-
 ### Low-rate MQTT acceptance evidence; SNMP coexistence pending
 
 The operator confirmed the private `lab-mqtt` configuration in the
@@ -457,9 +452,9 @@ running container: `publish.intervalSeconds: 10.0` and
 reported:
 
 | Observation | Industrial events in Mongo | MQTT spool files | Mongo-to-Timescale pending lots | Failed lots |
-| --- | ---: | ---: | ---: | ---: |
-| First | 3,258 | 0 | 0 | 0 |
-| Second | 3,276 | 0 | 0 | 0 |
+| ----------- | -------------------------: | ---------------: | ------------------------------: | ----------: |
+| First       |                      3,258 |                0 |                               0 |           0 |
+| Second      |                      3,276 |                0 |                               0 |           0 |
 
 The 18 new events over one minute are consistent with three BFDB
 simulators publishing every 10 seconds; an event count alone does not
@@ -475,7 +470,6 @@ SNMP+MQTT simultaneous freshness, backlog stability, inventory LIVE
 state and Modbus word/quality readings **remain to be confirmed**;
 do not mark the corresponding client-acceptance gates as passed yet.
 
-
 ### Operator evidence: concurrent MQTT+SNMP and Modbus (2026-10-23)
 
 The operator locally measured the following on the **original** `appm-site-mapper` project
@@ -483,13 +477,13 @@ and the preserved `site_mapper_crud_acceptance_02` Mongo database after restarti
 three synthetic SNMP emitters alongside the throttled MQTT generator:
 
 | Protocol | Source identity | Rows in `industrial_observations` | Age of latest record |
-| --- | --- | ---: | ---: |
-| MQTT | EMU-BFDB-01 | 98,882 | 3.1 s |
-| MQTT | EMU-BFDB-02 | 98,882 | 3.1 s |
-| MQTT | EMU-BFDB-03 | 98,882 | 3.1 s |
-| SNMP | EMU-SNMP-QDF-01 | 7,938 | 1.6 s |
-| SNMP | EMU-SNMP-QDF-02 | 7,938 | 1.6 s |
-| SNMP | EMU-SNMP-QDF-03 | 7,925 | 2.6 s |
+| -------- | --------------- | --------------------------------: | -------------------: |
+| MQTT     | EMU-BFDB-01     |                            98,882 |                3.1 s |
+| MQTT     | EMU-BFDB-02     |                            98,882 |                3.1 s |
+| MQTT     | EMU-BFDB-03     |                            98,882 |                3.1 s |
+| SNMP     | EMU-SNMP-QDF-01 |                             7,938 |                1.6 s |
+| SNMP     | EMU-SNMP-QDF-02 |                             7,938 |                1.6 s |
+| SNMP     | EMU-SNMP-QDF-03 |                             7,925 |                2.6 s |
 
 Total at snapshot: **320,447 industrial observations**. The Mongo-to-Timescale
 industrial outbox held **7** batches, with **zero** batches marked as failed.
@@ -501,11 +495,11 @@ The operator performed a read-only FC03 Modbus TCP request against
 `127.0.0.1:1503`, register offset **1024** (FLOAT32 ABCD) and quality
 offset **1026** (UINT16) for each Unit ID:
 
-| Unit ID | Voltage, FLOAT32 | Quality word | Meaning |
-| --- | ---: | ---: | --- |
-| 1 | 12.229999542236328 | 1 | VALID |
-| 2 | 14.920000076293945 | 1 | VALID |
-| 3 | 13.779999732971191 | 1 | VALID |
+| Unit ID |   Voltage, FLOAT32 | Quality word | Meaning |
+| ------- | -----------------: | -----------: | ------- |
+| 1       | 12.229999542236328 |            1 | VALID   |
+| 2       | 14.920000076293945 |            1 | VALID   |
+| 3       | 13.779999732971191 |            1 | VALID   |
 
 **Observed pass:** six synthetic source identities have recent history;
 the industrial historical outbox was nearly empty and had no recorded
@@ -521,7 +515,6 @@ physical QDF mapping, true Eltek FIELD scalings, Metasys acceptance or
 field-production authorization. Legacy SNMP bindings for
 `EMU-DELTA-BFDB-01` must not be silently reassigned to any
 `EMU-SNMP-QDF-xx` synthetic identity.
-
 
 ### Operator UI evidence: physical hierarchy and live breakers
 
@@ -577,7 +570,6 @@ based on this screenshot alone.
 for the active panel and three breakers. Consistent settled frame coverage,
 source identity display for all levels, layout/responsive behavior, and
 production FIELD mapping remain pending. No real-device approval is implied.
-
 
 ### Operator RAW / NORMALIZED Docker I/O observer (read-only)
 
@@ -646,7 +638,6 @@ No Compose services, credentials, databases, emulators or Modbus registry
 are modified by the observer. Avoid enabling unbounded raw wire logging
 on a production network; SNMPv3 raw datagrams are encrypted by design.
 
-
 ### Observer fix: MongoDB projection and SNMP event transport
 
 The first operator run of `inspect-industrial-io.py` produced
@@ -675,19 +666,18 @@ required. The correction is **not yet re-validated against the operator's
 local Docker installation**. The observer remains read-only and does not
 enable raw payload dumps in production logs.
 
-
 ### BDFB-02 / BDFB-03 original-stack placement plan
 
-The operator's *original*, preserved `site_mapper_crud_acceptance_02` database
+The operator's _original_, preserved `site_mapper_crud_acceptance_02` database
 was inspected in read-only mode. `SALA DE TRANSMISIONES` contains **three
 bays and four racks**:
 
-| Bay | Rack name | Rack ID | Observed occupancy |
-| --- | --- | --- | --- |
-| Bay-01 | Rack-01-BDFB | `63b7c24c-6a36-4e28-92e6-db1268c43d15` | Original BDFB-01, 1 CAS EQUIPPED; **untouched** |
-| Bay-01 | Rack-Switch | `0ca2fad5-d897-46bb-9803-45ed1a8849ed` | Original Cisco switch, 1 CAS EQUIPPED; **untouched** |
-| Bay-02 | Rack-01-Bay-02 | `5b53762f-cc60-4118-8dbc-94ef841882a4` | No devices / 0 CAS occupied or reserved |
-| Bay-03 | Rack-01-Bay-03 | `164fe884-28b0-4d80-b504-af92d0b80f15` | No devices / 0 CAS occupied or reserved |
+| Bay    | Rack name      | Rack ID                                | Observed occupancy                                   |
+| ------ | -------------- | -------------------------------------- | ---------------------------------------------------- |
+| Bay-01 | Rack-01-BDFB   | `63b7c24c-6a36-4e28-92e6-db1268c43d15` | Original BDFB-01, 1 CAS EQUIPPED; **untouched**      |
+| Bay-01 | Rack-Switch    | `0ca2fad5-d897-46bb-9803-45ed1a8849ed` | Original Cisco switch, 1 CAS EQUIPPED; **untouched** |
+| Bay-02 | Rack-01-Bay-02 | `5b53762f-cc60-4118-8dbc-94ef841882a4` | No devices / 0 CAS occupied or reserved              |
+| Bay-03 | Rack-01-Bay-03 | `164fe884-28b0-4d80-b504-af92d0b80f15` | No devices / 0 CAS occupied or reserved              |
 
 The original BDFB-01 has Device ID
 `157fcac1-cb34-44ad-b0e4-c127ad94999a` and serial **`EMU-BFDB-10`**.
@@ -729,15 +719,14 @@ Do not run the unrelated `/api/dev/seed-bfdb-emulator` endpoint against
 the preserved original Mongo stack: that seed targets an isolated
 memory-mode synthetic network, not the operator's surveyed physical racks.
 
-
 ### Serial collision resolved without editing the original BDFB-01
 
 Original-stack dry-run evidence from 2026-10-23 confirms:
 
-| Publisher serial | Existing active physical owner | Existing binding | Interpretation |
-| --- | --- | --- | --- |
-| `EMU-BFDB-02` | `BDFB SHELF` Equipment `540efb3c-d6a8-4633-b6d3-3dc719f511c5` under **BDFB-01** | `auto:mqtt:bb137f93188ec2f23b90b1c40f940d1cc4ce8adb6526e1934c2e9f4936e0dbe8`, SOURCE to shelf | ORIGINAL, DO NOT MOVE |
-| `EMU-BFDB-03` | `BDFB-01-SHELF-01-FRAME-01` Equipment `4e9b6c5a-ffc8-4d06-84b2-34845b6cdfaa` under **BDFB-01** | `auto:mqtt:88cffc3d56c7eea4e6dc31b457d72eb20bc77d5a040cbe9190c2abba7579a9b0`, SOURCE to frame | ORIGINAL, DO NOT MOVE |
+| Publisher serial | Existing active physical owner                                                                 | Existing binding                                                                              | Interpretation        |
+| ---------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------- |
+| `EMU-BFDB-02`    | `BDFB SHELF` Equipment `540efb3c-d6a8-4633-b6d3-3dc719f511c5` under **BDFB-01**                | `auto:mqtt:bb137f93188ec2f23b90b1c40f940d1cc4ce8adb6526e1934c2e9f4936e0dbe8`, SOURCE to shelf | ORIGINAL, DO NOT MOVE |
+| `EMU-BFDB-03`    | `BDFB-01-SHELF-01-FRAME-01` Equipment `4e9b6c5a-ffc8-4d06-84b2-34845b6cdfaa` under **BDFB-01** | `auto:mqtt:88cffc3d56c7eea4e6dc31b457d72eb20bc77d5a040cbe9190c2abba7579a9b0`, SOURCE to frame | ORIGINAL, DO NOT MOVE |
 
 Both MQTT publisher identifiers had been legitimately assigned **inside the
 first BDFB**, so using them as newly created BDFB-02/03 Device serials would
@@ -749,7 +738,7 @@ The standalone targeted provisioning script was therefore revised to
 `LAB-BDFB-02` and `LAB-BDFB-03`. Each new Device carries
 `proposedPublisher: EMU-BFDB-0x` and
 `mqttCommissioning: UNMAPPED_PENDING_SOURCE_CONFLICT` as explicit
-LAB metadata. It creates 96 installed *synthetic* breaker fixtures per
+LAB metadata. It creates 96 installed _synthetic_ breaker fixtures per
 BDFB to support capacity demonstration and establishes matching physical
 CAS allocations only in the two verified empty racks, using the existing
 BDFB's 40-U mount and clearance geometry. It creates **zero MQTT
@@ -792,7 +781,6 @@ The modified script's read-only `plan` branch was exercised with a
 minimal in-memory representation of the user's supplied rack, serial and
 binding inventory, and its JavaScript syntax was checked; an actual
 MongoDB `apply` transaction has **not** been executed by the assistant.
-
 
 ### Original-stack topology-only apply: UUID serialization failure
 
@@ -839,7 +827,6 @@ docker exec -i -e SITEMAPPER_PROVISION_MODE=apply \
 No app rebuild, Docker restart, data migration or volume deletion is
 needed. The repository update alone does not provision the operator's
 local database.
-
 
 ### Three BDFB lab: physical provisioning confirmed, MQTT commissioning staged
 
@@ -923,7 +910,6 @@ second idempotent apply (0 additional records). The operator has **not
 yet executed** the 770-binding apply or the two LAB publishers on the
 local original stack.
 
-
 ### MQTT lab commissioning mongosh `.some` guard
 
 Operator executed the 210-document topology commit, then confirmed the
@@ -954,7 +940,6 @@ Rerun the dry-run after pulling, and run `apply` only if both BDFBs
 report `READY`. **No original Mongo volume or original MQTT mapping
 was modified by the failed commissioning run.**
 
-
 ### Missing LAB industrial events after 770-binding MQTT commissioning
 
 Operator evidence (2026-10-24, after successful 770-binding transaction):
@@ -975,6 +960,7 @@ Whether these sources are currently loaded in the operator's actual
 app container is checked by the new diagnostic script, not assumed.
 
 Added:
+
 - `scripts/telemetry/diagnose-bdfb-lab-ingress.py`: read-only
   comparison of the active container's profile source names, broker
   subscription filter, capture outbox counters, Compose project/config
@@ -1052,7 +1038,6 @@ measurements can correctly remain UNKNOWN. Check old sources and
 original SOURCE targets remain intact before declaring success.
 **Nothing in this change remaps Modbus unit IDs or certifies
 Metasys reads.** Local deployment and acceptance remain pending.
-
 
 ### 2026-10-24: original stack uses existing-compose.json, not compose.json
 
@@ -1149,7 +1134,6 @@ capture. Success requires a source-indexed industrial event and
 reinterpret original `UNKNOWN` values without evidence, nor claim
 Modbus Unit ID 2/3 was changed or certified.
 
-
 ### 2026-10-24: LAB-BDFB-02/03 persisted industrial capture and normalization CONFIRMED
 
 Operator command-log acceptance evidence confirms the preserved
@@ -1187,12 +1171,12 @@ The following P4/C1 values were normalized with
 `quality=VALID, interpretation=PROFILE`:
 
 | Signal | LAB-BDFB-02 | LAB-BDFB-03 |
-|---|---:|---:|
-| state | ONLINE (1) | ONLINE (1) |
-| U1 | 12.41 V | 12.64 V |
-| I1 | 2.93 A | 2.13 A |
-| P1 | 36.31 W | 26.87 W |
-| EP1 | 0.17315 kWh | 0.17311 kWh |
+| ------ | ----------: | ----------: |
+| state  |  ONLINE (1) |  ONLINE (1) |
+| U1     |     12.41 V |     12.64 V |
+| I1     |      2.93 A |      2.13 A |
+| P1     |     36.31 W |     26.87 W |
+| EP1    | 0.17315 kWh | 0.17311 kWh |
 
 `msgid`, `sn` and uncommissioned `U2/I2/P2/EP2`
 remain faithfully stored RAW with `UNKNOWN/UNINTERPRETED`. This
@@ -1205,7 +1189,7 @@ capture, correct per-point normalization for representative P4 signals
 and preservation of the original MQTT source owners.
 
 **Not proved solely by this log:** 96x5 latest catalog coverage for
-*every* breaker, sustained real-time LIVE in the UI, Timescale delivery
+_every_ breaker, sustained real-time LIVE in the UI, Timescale delivery
 end-to-end, Modbus Unit IDs 2/3 mapped to these two LAB publishers, or
 any Metasys field reading. Existing Modbus mapping was set to
 `EMU-BFDB-01/02/03` and was deliberately not changed, so avoid
@@ -1231,7 +1215,6 @@ docker exec -i appm-site-mapper-mongodb-1 mongosh --quiet \
 The checker passed a full in-memory 2x96 sample mock with 480 signals
 per source and original owner fingerprints preserved; it has **not**
 been run against the operator's real MongoDB by the assistant.
-
 
 ### 2026-10-24: FULL 192-circuit industrial catalog audit PASSED
 
@@ -1275,7 +1258,6 @@ remain independent gates. The Modbus bridge still uses its existing
 silently repoint Units 2/3 from the original `EMU-BFDB-02/03`.
 A future explicitly approved additive Unit ID mapping (or a controlled
 migration) must preserve the original operator's field contract.
-
 
 ### 2026-10-24: Repeat LAB publishing, 17 persisted events per source
 
@@ -1329,7 +1311,6 @@ The original Unit ID 2 and 3 registrations for
 publishers; an additive assignment to unused IDs is an explicit later
 change requiring a separate backup and register-level acceptance.
 
-
 ### 2026-10-24: Browser telemetry diagnostics confirms LIVE 96/96 for both LAB BDFBs
 
 The operator opened the authenticated Site Mapper browser's
@@ -1371,7 +1352,6 @@ For independent downstream evidence, the read-only
 Timescale industrial-observation rows, Mongo's durable Timescale
 outbox, and Modbus bridge source ownership without changing a mapping.
 
-
 ### 2026-10-24: Timescale durable history confirmed, additive Modbus eligibility next
 
 The original operator's read-only downstream audit reported:
@@ -1406,7 +1386,7 @@ holding registers) per source Unit ID. The proposed additive mapping
 is LAB-BDFB-02 → **Unit ID 4** and LAB-BDFB-03 → **Unit ID 5**,
 leaving all original associations and register layouts untouched.
 
-Before any configuration change, run the new **read-only**, 
+Before any configuration change, run the new **read-only**,
 fail-closed checker:
 
 ```bash
@@ -1414,7 +1394,7 @@ git pull --ff-only origin feat/site-mapper-work-2026-10-23
 python3 scripts/telemetry/plan-bdfb-lab-modbus.py
 ```
 
-It reads the *running* app and bridge mapping from Docker rather than
+It reads the _running_ app and bridge mapping from Docker rather than
 assuming local .env values, checks bridge port/auth/layout consistency,
 verifies original Unit IDs 1–3 and no collision at 4–5, checks the
 actual active Compose project/file overlay, confirms both new
@@ -1428,7 +1408,6 @@ by this change.** Assignment requires an operator-approved,
 separate app+bridge-only configuration deployment and read-only
 FC03 acceptance against the new Units. Publishing with the
 old map cannot validate new LAB Modbus registers.
-
 
 ### 2026-10-24: additive LAB Modbus 4/5 deployment prepared with explicit gates
 
@@ -1478,7 +1457,7 @@ It has three operating modes:
   the actual post-commissioning Mongo archive and recreate **only**
   `modbus-tcp` and `site-mapper` with
   `docker compose ... up -d --no-deps --no-build --force-recreate
-  modbus-tcp site-mapper`. Afterward, compare the two active source maps
+modbus-tcp site-mapper`. Afterward, compare the two active source maps
   and refuse completion if they differ from the five-source contract.
 
 Because `--no-build` is used, the previously accepted Site Mapper app
@@ -1536,7 +1515,6 @@ check, not field commissioning.
 has occurred.** This stage does not alter any historical industrial
 telemetry, topology, bindings, original MQTT owners or Modbus registry.
 
-
 ### 2026-10-24: Unit 4/5 staged; deployment blocked by heterogeneous Compose labels
 
 The operator ran the dry-run and explicit `--stage` command for the
@@ -1546,12 +1524,12 @@ a private original-overlay backup at
 `.runtime/industrial-lab/existing-compose.json.before-lab-modbus-20261024T020028Z`.
 Neither Modbus nor Site Mapper was recreated.
 
-Both `--deploy` and `--deploy --backup-dir ...` stopped *before any
-write or container recreation* with:
+Both `--deploy` and `--deploy --backup-dir ...` stopped _before any
+write or container recreation_ with:
 `COMMISSION BLOCKED: active Compose file set changed`.
 
 Root cause in the source: the `inspect()` helper enforced the same
-*three-file* Compose provenance for **every** container, despite
+_three-file_ Compose provenance for **every** container, despite
 non-coincident service recreation history. The app had previously been
 recreated with all three Compose files; the running bridge and base
 database containers may correctly retain a shorter Compose file set.
@@ -1559,6 +1537,7 @@ Recreating the bridge and original data stores solely to align labels
 would be an unnecessary risk.
 
 The check now validates **per-service** provenance:
+
 - exact original Compose project name, working directory and service
   identity label;
 - one, two or three **ordered exact prefixes** of the approved
@@ -1579,7 +1558,7 @@ against resolved Compose, exact mount topology, outbox and durable
 capture-spool zero, no active LAB publisher, SHA256-verified
 post-commission archive, and `--no-deps --no-build` reconstruction
 of only app + bridge. The script now logs each service's approved
-Compose *file count* without revealing secrets.
+Compose _file count_ without revealing secrets.
 
 Operator follow-up **after pulling the fixed commit**:
 
@@ -1597,7 +1576,6 @@ operator can execute `--deploy --backup-dir ...` as documented above.
 
 As of this incident report: the new Unit IDs remain **STAGED, NOT
 DEPLOYED**; Timescale and MQTT captures remain undisturbed.
-
 
 ### 2026-10-24: Timescale historic Compose label guard corrected for unmodified DB
 
@@ -1623,16 +1601,16 @@ the two services being changed.
 `site-mapper`/`modbus-tcp` services from preserved MongoDB/TimescaleDB
 dependencies:
 
-* For **targets**, it requires exact current project, service label,
+- For **targets**, it requires exact current project, service label,
   working-directory and strictly approved ordered Compose-file provenance;
   the app must be an exact three-file deployment.
-* For **untouched databases**, it still requires the correct live
+- For **untouched databases**, it still requires the correct live
   project, service label, working-directory and a non-empty historical
   Compose-file label, but does **not** require the database to have
   been created with the current app's Compose files. Its Mongo and
   Timescale persistent-volume identities are checked against exact
   original names before any restart.
-* A new test extends the existing provenance unit test to ensure
+- A new test extends the existing provenance unit test to ensure
   different historical database overlay lists are allowed only for
   untouched database containers; project and working-directory
   mismatches still fail closed; unapproved overlays remain forbidden
@@ -1653,7 +1631,6 @@ do not force a restart; examine the new specific refusal. After a clean
 queue, stopped LAB publisher and verified post-commissioning backup,
 the scoped two-service deployment can be explicitly requested.
 No Unit ID 4/5 deploy or FC03 acceptance was performed by this fix.
-
 
 ### 2026-10-24: Timescale queue race during two-service Modbus deployment — bridge-only alternative
 
@@ -1723,7 +1700,7 @@ of the Modbus server.
 
 After the gateway bridge-only deploy, the active Site Mapper process
 intentionally still has the **old** three-source Modbus mapping in
-its environment. This is an explicitly supported *transitional*
+its environment. This is an explicitly supported _transitional_
 state; the staged original Compose config has the complete five-source
 mapping for both services. No original Unit is reassigned.
 The bridge's source map is five-source. MQTT ingestion and its
@@ -1744,7 +1721,6 @@ site-mapper**, not the gateway again, thus bringing runtime app config
 into agreement. Until then, do not claim the complete two-service
 environment reload has occurred. Original database/publisher sources
 remain unchanged and no data is re-seeded.
-
 
 ### 2026-10-24: FC03 three direct matches; 25-second static snapshot race corrected
 
@@ -1773,6 +1749,7 @@ Mongo once and rejected panel4 at 25.2 seconds.
 
 The revised `verify-bdfb-lab-modbus-fc03.py` keeps the bridge
 30-second missing/stale contract unchanged and:
+
 - accepts individual persisted panel packets only while their age
   remains <=27 seconds, leaving a small safety margin before the
   gateway's actual 30-second stale register policy;
@@ -1810,7 +1787,6 @@ Evidence at the time of this previous 25-second failure: 3 actual
 matching P1..P3 Unit 4 blocks, before the later 8/8 acceptance below.
 A representative 8-block local integration check is not a 192-breaker
 exhaustive Modbus certification nor Metasys field acceptance.
-
 
 ### 2026-10-24: Operator FC03 PASS, LAB Unit IDs 4/5 (8/8)
 
@@ -1887,7 +1863,6 @@ No additional global `docker compose up/down`,
 `--bridge-only`, `--stage`, inventory migrations or volume
 changes are required to retain this verified gateway behavior.
 
-
 ### 2026-10-24: visual SNMP acceptance gap (BDFB-01/02/03)
 
 The operator confirmed that the original Site Mapper application is
@@ -1904,7 +1879,7 @@ running and displayed:
   `0/0 fresh feeds`, explicitly "No SNMP input feeders
   inventoried on this BDFB."
 - `BDFB-02` and `BDFB-03` **SNMP Charts**: "No samples stored for the
-  selected range." These charts query *SNMP shunt/feed* TimeScaleDB
+  selected range." These charts query _SNMP shunt/feed_ TimeScaleDB
   series, not the already persisted MQTT circuit historical signals.
 - `BDFB-01` original three breaker inventory and existing rack
   topology are still present.
@@ -1947,7 +1922,7 @@ automatically remap A/B to A1/A2/B1/B2, replace active OIDs,
 mark a shunt verified or start new services until the audit is read.
 
 **IMPORTANT TOPOLOGY PRESERVATION:** The generic
-`scripts/lab/bfdb-snmp-config4.sh up` path launches a *different*
+`scripts/lab/bfdb-snmp-config4.sh up` path launches a _different_
 two-repository Compose lab and has a broad list of up/build targets
 including `site-mapper`, `modbus-tcp`, databases and publisher
 services. Do **not** run it over the currently certified
@@ -1969,7 +1944,6 @@ agent + collector; verify `LAB_LIVE`, SNMP 24h trend evidence
 and no regressions to MQTT/Modbus. Physical field SNMP
 commissioning still requires verified MIB/OID, management network,
 SNMPv3 credentials and independent wiring sign-off.
-
 
 ### 2026-10-24: SNMP read-only audit confirmed, additive Config2 BDFB-01 lab ready
 
@@ -2093,7 +2067,6 @@ and OID mappings to the matching SNMP emulator profile; never copy
 BDFB-01's existing source identity or mark such a synthetic
 port as field-verified.
 
-
 ### 2026-10-24: Operator started additive BDFB-01 SNMPv3 synthetic agent and collector
 
 The operator's live original-stack WSL commands confirmed:
@@ -2151,7 +2124,6 @@ BDFB-01 bindings were present before service start. Do not
 recreate the app to change this flag just to test incoming
 synthetic SNMP metrics. Do not claim field SNMP certification
 from laboratory readings.
-
 
 ### 2026-10-24: Real SNMPv3 collector HTTP acceptance confirmed for Config2 BDFB-01
 

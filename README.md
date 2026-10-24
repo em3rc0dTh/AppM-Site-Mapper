@@ -16,8 +16,6 @@ python3 scripts/telemetry/estado-laboratorio.py
 
 No reinstales ni reconstruyas el proyecto para volver a entrar. Las cuentas, bases de datos y configuraciones de laboratorio no se regeneran al hacer `git pull`; el entorno persistente necesita sus propios archivos privados y volúmenes originales.
 
-
-
 ## ¿Qué es?
 
 Una plataforma para modelar infraestructura física (Network → Site → Room → Rack → Device → Equipment), administrar posiciones y conexiones eléctricas y consultar telemetría confirmada. El resultado del laboratorio **no equivale a certificación de producción**.

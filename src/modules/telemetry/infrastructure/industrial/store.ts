@@ -229,10 +229,7 @@ export class MongoObservationStore implements ObservationStore {
         // The former per-signal find/update/insert loop generated hundreds of
         // sequential Mongo round trips inside a single MQTT transaction.
         const existing = await catalog
-          .find(
-            { signalId: { $in: batch.signals.map((signal) => signal.id) } },
-            { session },
-          )
+          .find({ signalId: { $in: batch.signals.map((signal) => signal.id) } }, { session })
           .toArray();
         const previousById = new Map(
           existing.map((doc) => [doc.signalId as string, doc.signal as CatalogSignal]),

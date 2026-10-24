@@ -203,7 +203,12 @@ def inspect_core():
             "original register layout differs")
     am,bm=source_map(app_env.get("MODBUS_SOURCE_UNITS_JSON")),source_map(
         bridge_env.get("MODBUS_SOURCE_UNITS_JSON"))
-    require(am==bm and am in (ORIGINAL,PROPOSED),"running source map changed")
+    # Bridge-only transition is explicitly allowed: the application keeps
+    # ingesting MQTT with its original mapping while the gateway activates
+    # the new two LAB Unit IDs. No other app/bridge drift is accepted.
+    require((am,bm) in (
+        (ORIGINAL,ORIGINAL),(ORIGINAL,PROPOSED),(PROPOSED,PROPOSED)),
+        "unexpected application/bridge source-map drift")
     overlay=json.loads(OVERLAY.read_text(encoding="utf8"))
     services=overlay.get("services",{}) if isinstance(overlay,dict) else {}
     require(isinstance(services,dict),"invalid existing Compose overlay")
@@ -256,8 +261,12 @@ def stage(overlay,map_before,apply):
     print("No services restarted; no original .env or existing.env edited")
 
 
-def deploy(original_app,original_bridge,live_map,backup):
-    require(live_map==ORIGINAL or live_map==PROPOSED,"unexpected active mapping")
+def safe_deploy_config(original_app, original_bridge):
+    """Resolve the exact active project and ensure the only env delta is Unit IDs.
+
+    Both services are validated even when deploying only the bridge, so a
+    future app recreation can safely adopt the already staged configuration.
+    """
     final=json.loads(run(compose()+["config","--format","json"],
                          env=sanitized_environment()))
     require(final.get("name")==PROJECT,"Compose project differs")
@@ -265,29 +274,89 @@ def deploy(original_app,original_bridge,live_map,backup):
     for name,node in (("site-mapper",original_app),("modbus-tcp",original_bridge)):
         conf=services.get(name)
         require(isinstance(conf,dict),"service missing: "+name)
-        env={k:str(v) for k,v in conf.get("environment",{}).items()}
-        require(source_map(env.get("MODBUS_SOURCE_UNITS_JSON"))==PROPOSED,
+        en={k:str(v) for k,v in conf.get("environment",{}).items()}
+        require(source_map(en.get("MODBUS_SOURCE_UNITS_JSON"))==PROPOSED,
                 "staged source map not additive: "+name)
-        before=env_of(node)
-        unexpected=[k for k,v in env.items()
-                    if k!="MODBUS_SOURCE_UNITS_JSON" and before.get(k)!=v]
-        require(not unexpected,"unexpected changes in "+name+": "+", ".join(unexpected))
+        previous=env_of(node)
+        unexpected=[k for k,v in en.items()
+                    if k!="MODBUS_SOURCE_UNITS_JSON" and previous.get(k)!=v]
+        require(not unexpected,
+                "unexpected changes in "+name+": "+", ".join(unexpected))
         compare_mounts(node,conf,name)
-    # Existing persistence must never be replaced by an implicitly fresh DB.
+    return services
+
+
+def original_data_volumes():
     mongo,timescale=inspect(MONGO,targeted=False),inspect(
         PROJECT+"-timescaledb-1",targeted=False)
     require(any(m.get("Destination")=="/data/db" and
                 m.get("Name")==PROJECT+"_site_mapper_mongo_data"
-                for m in mongo.get("Mounts",[])),"original Mongo volume differs")
+                for m in mongo.get("Mounts",[])),
+            "original Mongo volume differs")
     require(any(m.get("Destination")=="/var/lib/postgresql/data" and
                 m.get("Name")==PROJECT+"_site_mapper_timescale_data"
-                for m in timescale.get("Mounts",[])),"original Timescale volume differs")
+                for m in timescale.get("Mounts",[])),
+            "original Timescale volume differs")
+
+
+def bridge_only(original_app, original_bridge, live_app_map, backup):
+    """No Site Mapper downtime: its durable historian continues to run.
+
+    Bridge TCP state is transient and will repopulate from the next
+    explicitly bound, accepted breaker readings. Never touches Mongo outbox.
+    """
+    safe_deploy_config(original_app,original_bridge)
+    original_data_volumes()
+    require(live_app_map in (ORIGINAL,PROPOSED),"application Unit map changed")
+    active=source_map(env_of(original_bridge).get("MODBUS_SOURCE_UNITS_JSON"))
+    if active==PROPOSED:
+        print("BRIDGE ALREADY DEPLOYED: Units 1/2/3 preserved, LAB 4/5 active")
+        print("Application Unit env may still be original; MQTT forwarding continues.")
+        return
+    require(active==ORIGINAL and live_app_map==ORIGINAL,
+            "bridge-only applies only to the original 3-source baseline")
+    if backup is None:
+        print("BRIDGE-ONLY PRECHECK PASSED: staged map changes only gateway Unit IDs.")
+        print("No Site Mapper restart; Mongo/Timescale outbox may remain active.")
+        print("READ-ONLY: add --backup-dir to deploy only modbus-tcp")
+        return
+    verify_backup(backup)
+    # Directly before restart, recheck active bridge/auth/paths and that app
+    # still has original map. No Timescale/MQTT drain requirement because
+    # Site Mapper is NOT restarted and continues processing durable queues.
+    current_app,current_bridge,app_map,_ = inspect_core()
+    require(app_map==ORIGINAL and source_map(
+        env_of(current_bridge).get("MODBUS_SOURCE_UNITS_JSON"))==ORIGINAL,
+        "live source mapping changed during bridge preflight")
+    safe_deploy_config(current_app,current_bridge)
+    print("DEPLOY: recreating ONLY modbus-tcp (--no-deps --no-build)",flush=True)
+    run(compose()+["up","-d","--no-deps","--no-build",
+                   "--force-recreate","modbus-tcp"],
+        env=sanitized_environment(),timeout=1200)
+    final_bridge=inspect(BRIDGE)
+    require(source_map(env_of(final_bridge).get("MODBUS_SOURCE_UNITS_JSON"))==PROPOSED,
+            "gateway source map not commissioned; inspect before sending FC03")
+    latest_app=inspect(APP)
+    require(source_map(env_of(latest_app).get("MODBUS_SOURCE_UNITS_JSON"))==ORIGINAL,
+            "original app environment unexpectedly changed")
+    print("BRIDGE DEPLOY CONFIRMED: Units 1/2/3 preserved; LAB Units 4/5 added.")
+    print("Site Mapper NOT recreated: MQTT ingest and Timescale historian stayed running.")
+    print("App Unit map remains original until its later separate controlled reload.")
+    print("FC03 LAB 4/5 comparison still required; no Metasys certification implied.")
+
+
+def deploy(original_app,original_bridge,live_map,backup):
+    require(live_map==ORIGINAL or live_map==PROPOSED,
+            "unexpected active application mapping")
+    safe_deploy_config(original_app,original_bridge)
+    original_data_volumes()
     depth,capture=queues()
     print("DELIVERY QUEUES:",json.dumps(depth),"captureSpool="+str(capture))
     require(depth["pending"]==0 and depth["retrying"]==0 and capture==0,
             "pending history/capture items: let publisher stop and queues drain")
     publisher_stopped()
-    if live_map==PROPOSED:
+    active_bridge=source_map(env_of(original_bridge).get("MODBUS_SOURCE_UNITS_JSON"))
+    if live_map==PROPOSED and active_bridge==PROPOSED:
         print("ALREADY DEPLOYED: no restart needed")
         return
     if backup is None:
@@ -301,8 +370,9 @@ def deploy(original_app,original_bridge,live_map,backup):
             "delivery queue changed; refuse restart")
     publisher_stopped()
     print("DEPLOY: recreating ONLY modbus-tcp and site-mapper (--no-deps --no-build)")
+    targets=["site-mapper"] if active_bridge==PROPOSED else ["modbus-tcp","site-mapper"]
     run(compose()+["up","-d","--no-deps","--no-build",
-                   "--force-recreate","modbus-tcp","site-mapper"],
+                   "--force-recreate",*targets],
         env=sanitized_environment(),timeout=1200)
     after_a,after_b=inspect(APP),inspect(BRIDGE)
     require(source_map(env_of(after_a).get("MODBUS_SOURCE_UNITS_JSON"))==PROPOSED and
@@ -316,12 +386,17 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     mode=parser.add_mutually_exclusive_group()
     mode.add_argument("--stage",action="store_true",help="Back up and stage original Compose overlay ONLY")
-    mode.add_argument("--deploy",action="store_true",help="Recreate ONLY app and bridge, after strict preflight")
+    mode.add_argument("--deploy",action="store_true",
+                      help="Recreate app/bridge only after all historian queues are zero")
+    mode.add_argument("--bridge-only",action="store_true",
+                      help="Recreate ONLY gateway, preserving live Site Mapper ingestion")
     parser.add_argument("--backup-dir",type=Path,
                         help="Verified post-commissioning Mongo backup, required for --deploy")
     args=parser.parse_args()
     app,bridge,live,overlay=inspect_core()
-    if args.deploy:
+    if args.bridge_only:
+        bridge_only(app,bridge,live,args.backup_dir)
+    elif args.deploy:
         deploy(app,bridge,live,args.backup_dir)
     else:
         stage(overlay,live,args.stage)

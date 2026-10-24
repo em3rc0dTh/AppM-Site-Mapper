@@ -1597,3 +1597,59 @@ operator can execute `--deploy --backup-dir ...` as documented above.
 
 As of this incident report: the new Unit IDs remain **STAGED, NOT
 DEPLOYED**; Timescale and MQTT captures remain undisturbed.
+
+
+### 2026-10-24: Timescale historic Compose label guard corrected for unmodified DB
+
+The operator confirmed all five Compose provenance tests passed
+(`Ran 5 tests ... OK`), and the updated real preflight reached:
+
+```text
+COMPOSE PROVENANCE OK site-mapper | approved files=3
+COMPOSE PROVENANCE OK modbus-tcp | approved files=3
+COMPOSE PROVENANCE OK mongodb | approved files=1
+COMMISSION BLOCKED: unapproved Compose provenance for
+  appm-site-mapper-timescaledb-1 (file count=2)
+```
+
+No service or Mongo/Timescale state was modified because the error
+occurred during preflight. This showed that TimescaleDB's historical
+Compose file labels are not an ordered prefix of the current
+app/Modbus deployment's three Compose files. The correct fix is **not**
+to recreate TimescaleDB or blindly accept the differing file list for
+the two services being changed.
+
+`commission-bdfb-lab-modbus.py` now distinguishes targeted
+`site-mapper`/`modbus-tcp` services from preserved MongoDB/TimescaleDB
+dependencies:
+
+* For **targets**, it requires exact current project, service label,
+  working-directory and strictly approved ordered Compose-file provenance;
+  the app must be an exact three-file deployment.
+* For **untouched databases**, it still requires the correct live
+  project, service label, working-directory and a non-empty historical
+  Compose-file label, but does **not** require the database to have
+  been created with the current app's Compose files. Its Mongo and
+  Timescale persistent-volume identities are checked against exact
+  original names before any restart.
+* A new test extends the existing provenance unit test to ensure
+  different historical database overlay lists are allowed only for
+  untouched database containers; project and working-directory
+  mismatches still fail closed; unapproved overlays remain forbidden
+  on app and bridge targets.
+
+After pulling, rerun these **read-only** commands:
+
+```bash
+python3 -m unittest discover -s tests/python -p \
+  'test_lab_modbus_compose_provenance.py' -v
+python3 scripts/telemetry/commission-bdfb-lab-modbus.py --deploy
+```
+
+The earlier Unit ID 4/5 original-stack configuration was successfully
+staged with its private backup and **does not require staging again**.
+If the preflight still stops due to actual environment/mount drift,
+do not force a restart; examine the new specific refusal. After a clean
+queue, stopped LAB publisher and verified post-commissioning backup,
+the scoped two-service deployment can be explicitly requested.
+No Unit ID 4/5 deploy or FC03 acceptance was performed by this fix.

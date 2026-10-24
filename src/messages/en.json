@@ -1053,7 +1053,21 @@
     "unavailable": "Telemetry temporarily unavailable.",
     "historicalPackets": "{count} historical packets for this panel",
     "noOwnMeasurements": "No own measurements received.",
-    "noStoredMeasurements": "No stored measurements in this period."
+    "noStoredMeasurements": "No stored measurements in this period.",
+    "industrialSignals": "Industrial signals ({count})",
+    "signal": "Signal",
+    "value": "Value",
+    "quality": "Quality",
+    "captureAlerts": "Capture alerts ({count})",
+    "interpretationPending": "Interpretation pending",
+    "publishedPoint": "Modbus unit {unit}, offset {address}",
+    "publicationPending": "Modbus commissioning pending",
+    "industrialHistory": "Industrial history",
+    "activeSource": "Active source",
+    "historicalSource": "Historical source",
+    "industrialHistoryUnavailable": "Industrial history unavailable",
+    "industrialHistoryEmpty": "No samples in the last 24 hours",
+    "industrialHistoryLimited": "Showing the latest 1,000 samples."
   },
   "telemetryLens": {
     "context": "CONTEXTUAL DIAGNOSTIC",

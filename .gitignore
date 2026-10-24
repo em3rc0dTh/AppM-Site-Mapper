@@ -55,3 +55,8 @@ Thumbs.db
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Dependency trees for isolated infrastructure services
+**/node_modules/
+
+.runtime/

@@ -9,6 +9,8 @@
 - Navegador compatible. Para MQTT real, **broker y emulador externos** ya disponibles; el repo no los inicia.
 - Credenciales y configuración privada en un archivo `.env` ignorado por Git. **Nunca pegarlas en issues, capturas, logs o chats.**
 
+> **¿Ya tienes un laboratorio Site Mapper funcionando?** No ejecutes de nuevo el Compose base ni su seed. Empieza con [Reanudar la instalación sin perder datos](laboratorio-industrial-para-principiantes.md): `python3 scripts/telemetry/estado-laboratorio.py`. La guía también muestra desde Login hasta la captura MQTT, la entrada SNMP Config2 A/B y las lecturas Modbus. Las instrucciones de esta página sirven para instalaciones nuevas y tareas de ingeniería; no regeneran automáticamente el inventario ni las credenciales.
+
 ## A. Demo visual rápida — sin DB ni hardware
 
 ```bash

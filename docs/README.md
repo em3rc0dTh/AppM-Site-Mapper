@@ -2,6 +2,16 @@
 
 **Punto de partida para operadores, desarrolladores, evaluadores del MVP y responsables de despliegue.** El README raíz resume el producto y muestra los diagramas principales. Este índice distingue la arquitectura implementada de la documentación histórica de reconstrucción.
 
+## Camino recomendado para una persona nueva (octubre 2026)
+
+**[1. Recorrido ilustrado desde Login hasta MQTT, SNMP, TimescaleDB y Modbus](user-guide/recorrido-completo-login-mqtt-snmp-modbus.md)**: usar la interfaz sin conocer código, IDs ni base de datos.
+
+**[2. Encender y reanudar el laboratorio existente en WSL/Docker](operations/laboratorio-industrial-para-principiantes.md)**: estado seguro, acceso inicial, cuándo iniciar el publicador MQTT, validación visual y procedimiento SNMP Config2 BDFB-02/03 con respaldo automático.
+
+**[3. Evidencia real de SNMP BDFB-01 A/B](telemetry/bdfb01-snmp-ui-acceptance-2026-10-24.md)**: laboratorio probado (no lecturas físicas).
+
+La nueva guía reemplaza como **punto de entrada** a los procedimientos técnicos largos; estos últimos continúan vigentes como referencia. **No** utilices un Compose nuevo para sustituir la base original de la computadora de laboratorio.
+
 ## Primer día en Site Mapper: Manual del operador
 
 Para formación integral, utiliza el **[Manual maestro de operación y modelo de datos](user-guide/manual-maestro.md)**. Sus capítulos enlazan a los tutoriales existentes y su [matriz de evidencia visual](user-guide/evidencia-visual.md) distingue capturas reales, errores observados y material aún pendiente. La [explicación del modelo persistido](user-guide/modelo-de-datos.md) refleja `topology_nodes` sin migrar colecciones.

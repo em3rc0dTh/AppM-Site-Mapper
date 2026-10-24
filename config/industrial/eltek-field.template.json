@@ -1,0 +1,29 @@
+[
+  {
+    "sourceIdentity": "FIELD-CONTROLLER-REPLACE",
+    "protocol": "SNMP",
+    "version": "eltek-rev54-uncommissioned",
+    "mib": "eltek-rev54",
+    "staleMs": 120000,
+    "rules": [
+      {
+        "key": "1.3.6.1.4.1.12148.10.10.5.5.0",
+        "kind": "measurement",
+        "unit": "V",
+        "evidence": "Scale intentionally absent. Confirm firmware, current decimal settings and Celsius/Fahrenheit before commissioning."
+      },
+      {
+        "key": "1.3.6.1.4.1.12148.10.9.2.5.0",
+        "kind": "measurement",
+        "unit": "A",
+        "evidence": "Scale intentionally absent. Confirm firmware, current decimal settings and Celsius/Fahrenheit before commissioning."
+      },
+      {
+        "key": "1.3.6.1.4.1.12148.10.10.7.5.0",
+        "kind": "measurement",
+        "unit": "degC",
+        "evidence": "Scale intentionally absent. Confirm firmware, current decimal settings and Celsius/Fahrenheit before commissioning."
+      }
+    ]
+  }
+]

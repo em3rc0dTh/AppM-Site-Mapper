@@ -6,6 +6,10 @@
 
 > **Antes de empezar:** utiliza un entorno autorizado de entrenamiento. Si tienes permisos STANDARD, puedes consultar pero no crear/modificar topología o PowerPaths. Para las prácticas de edición necesitas ADMIN o SUPERADMIN según las reglas de cada pantalla. Nunca uses la base del cliente para experimentar.
 
+## Empezar sin acompañamiento técnico
+
+Si tu objetivo es aprender a navegar y comprobar las tres conexiones, comienza por **[De Login a MQTT, SNMP, Timescale y Modbus](recorrido-completo-login-mqtt-snmp-modbus.md)**. Contiene diagramas, botones exactos, comprobaciones y errores comunes. Para encender servicios de una instalación WSL ya preparada, utiliza la [guía de laboratorio para principiantes](../operations/laboratorio-industrial-para-principiantes.md).
+
 ## ¿Qué se aprende?
 
 | Lección                                | Objetivo observable                                                               | Enlace                                                    |

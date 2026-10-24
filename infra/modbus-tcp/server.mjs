@@ -1,5 +1,7 @@
 import net from 'node:net';
 import http from 'node:http';
+import { readFileSync } from 'node:fs';
+import { ExtensionState, pinRegistry, registryCsv } from './point-registry.mjs';
 import {
   METRICS,
   REGISTERS_PER_UNIT,
@@ -68,6 +70,7 @@ export class ModbusLatestState {
   }
 
   read(unit, offset, count, now = Date.now()) {
+    if (offset >= 1024 && this.extensions) return this.extensions.read(unit, offset, count, now);
     if (!this.values.has(unit)) return null;
     if (
       !Number.isInteger(offset) ||
@@ -135,9 +138,38 @@ export function startBridge({
   ingestHost = '127.0.0.1',
   ingestPort = 18082,
   token,
+  registry,
+  projectionUrl,
+  projectionToken,
 }) {
   if (!token || token.length < 24) throw new Error('MODBUS_BRIDGE_TOKEN must be set (24+ chars)');
   const state = new ModbusLatestState(sourceMap, staleMs, pointLayout, missingPolicy);
+  if (registry) state.extensions = new ExtensionState(registry);
+  let stopped = false,
+    projectionTimer;
+  const projectionAbort = new AbortController();
+  async function refreshProjection() {
+    try {
+      const response = await fetch(projectionUrl, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${projectionToken}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ signalIds: registry.points.map((p) => p.signalId) }),
+        signal: AbortSignal.any([projectionAbort.signal, AbortSignal.timeout(5000)]),
+      });
+      if (!response.ok) throw new Error('Projection unavailable');
+      const body = await response.json();
+      if (!Array.isArray(body.signals)) throw new Error('Invalid projection');
+      for (const signal of body.signals) state.extensions.apply(signal);
+    } catch {
+      if (!stopped) console.warn(JSON.stringify({ event: 'modbus.projection.unavailable' }));
+    } finally {
+      if (!stopped) projectionTimer = setTimeout(refreshProjection, 2000);
+    }
+  }
+  if (registry && projectionUrl && projectionToken) void refreshProjection();
   const modbus = net.createServer((socket) => {
     let pending = Buffer.alloc(0);
     socket.on('data', (chunk) => {
@@ -171,6 +203,16 @@ export function startBridge({
     };
     if (request.method === 'GET' && request.url === '/health') {
       finish(200, 'ok');
+      return;
+    }
+    if (
+      request.method === 'GET' &&
+      request.url === '/registry.csv' &&
+      registry &&
+      request.headers.authorization === `Bearer ${token}`
+    ) {
+      reply.writeHead(200, { 'content-type': 'text/csv', 'cache-control': 'no-store' });
+      reply.end(registryCsv(registry));
       return;
     }
     if (request.method !== 'POST' || request.url !== '/internal/accepted-breaker') {
@@ -207,6 +249,9 @@ export function startBridge({
     modbus,
     ingest,
     close: async () => {
+      stopped = true;
+      clearTimeout(projectionTimer);
+      projectionAbort.abort();
       await Promise.all([new Promise((r) => modbus.close(r)), new Promise((r) => ingest.close(r))]);
     },
   };
@@ -214,7 +259,16 @@ export function startBridge({
 
 if (process.argv[1] && import.meta.url === new URL('file://' + process.argv[1]).href) {
   const sources = JSON.parse(process.env.MODBUS_SOURCE_UNITS_JSON || '{}');
+  const registry = process.env.MODBUS_POINTS_FILE
+    ? pinRegistry(
+        JSON.parse(readFileSync(process.env.MODBUS_POINTS_FILE, 'utf8')),
+        process.env.MODBUS_REGISTRY_PATH || '/data/modbus-registry.json',
+      )
+    : undefined;
   startBridge({
+    registry,
+    projectionUrl: process.env.INDUSTRIAL_PROJECTION_URL,
+    projectionToken: process.env.INDUSTRIAL_PROJECTION_TOKEN,
     sourceMap: sources,
     staleMs: Number(process.env.MODBUS_STALE_MS || 30000),
     pointLayout: process.env.MODBUS_POINT_LAYOUT || 'blocks-2x48',

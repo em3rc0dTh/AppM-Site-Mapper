@@ -1,3 +1,4 @@
+from industrial import insert_industrial, query_industrial
 import hmac
 import hashlib
 import math
@@ -489,8 +490,17 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"status": "unavailable"})
             return
 
-        if parsed.path in ("/history", "/entity-history", "/entity-latest", "/snmp-feed-series") and not self.authorized():
+        if parsed.path in ("/history", "/entity-history", "/entity-latest", "/snmp-feed-series", "/industrial-history") and not self.authorized():
             self.send_json(HTTPStatus.UNAUTHORIZED, {"error": "unauthorized"})
+            return
+
+        if parsed.path == "/industrial-history":
+            try:
+                self.send_json(HTTPStatus.OK, query_industrial(DSN, parse_qs(parsed.query)))
+            except ValueError:
+                self.send_json(HTTPStatus.BAD_REQUEST, {"error": "invalid industrial query"})
+            except Exception:
+                self.send_json(HTTPStatus.SERVICE_UNAVAILABLE, {"error": "industrial history unavailable"})
             return
 
         if parsed.path == "/entity-latest":
@@ -566,7 +576,7 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(HTTPStatus.INTERNAL_SERVER_ERROR, {"error": "history query failed"})
 
     def do_POST(self):
-        if urlparse(self.path).path not in ("/samples", "/snmp-batch"):
+        if urlparse(self.path).path not in ("/samples", "/snmp-batch", "/industrial-batch"):
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "not found"})
             return
         if not self.authorized():
@@ -584,6 +594,9 @@ class Handler(BaseHTTPRequestHandler):
 
         try:
             payload = json.loads(self.rfile.read(length))
+            if urlparse(self.path).path == "/industrial-batch":
+                self.send_json(HTTPStatus.ACCEPTED, {"accepted": insert_industrial(DSN, payload)})
+                return
             if urlparse(self.path).path == "/snmp-batch":
                 result = insert_snmp_batch(payload)
                 self.send_json(HTTPStatus.ACCEPTED, result)
@@ -611,6 +624,7 @@ if __name__ == "__main__":
     with psycopg.connect(DSN) as conn:
         conn.execute(Path(__file__).with_name("002-entity-telemetry.sql").read_text())
         conn.execute(Path(__file__).with_name("003-snmp-atomic-batches.sql").read_text())
+        conn.execute(Path(__file__).with_name("004-industrial-observations.sql").read_text())
     server = ThreadingHTTPServer((HOST, PORT), Handler)
     print(f"SITE_MAPPER_TELEMETRY_STORE_READY host={HOST} port={PORT}", flush=True)
     server.serve_forever()

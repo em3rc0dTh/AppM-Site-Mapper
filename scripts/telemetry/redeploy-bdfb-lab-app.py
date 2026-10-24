@@ -101,8 +101,10 @@ def check_app_mounts(original,configured):
         candidate=proposed.get(target)
         check(candidate is not None,"Original Site Mapper mount missing: "+str(target))
         if current.get("Type")=="volume":
+            source=candidate.get("source")
+            expected_names={source, PROJECT+"_"+source} if isinstance(source,str) else set()
             check(candidate.get("type")=="volume" and
-                  candidate.get("source")==current.get("Name"),
+                  current.get("Name") in expected_names,
                   "Site Mapper named volume changed at "+str(target))
         elif current.get("Type")=="bind":
             check(candidate.get("type")=="bind" and

@@ -1328,3 +1328,45 @@ The original Unit ID 2 and 3 registrations for
 `EMU-BFDB-02/03` must **not** be silently reassigned to the new LAB
 publishers; an additive assignment to unused IDs is an explicit later
 change requiring a separate backup and register-level acceptance.
+
+
+### 2026-10-24: Browser telemetry diagnostics confirms LIVE 96/96 for both LAB BDFBs
+
+The operator opened the authenticated Site Mapper browser's
+`/api/telemetry/diagnostics` endpoint via its own JavaScript console
+while publishing LAB-BDFB-02 and LAB-BDFB-03 continuously.
+
+Observed runtime evidence:
+
+```text
+MQTT connection: subscribed
+rejectionReasons: {}
+LAB-BDFB-02: rawMessages=21, pointCount=96, mappedBreakerCount=96,
+             unmappedPointCount=0, freshness=LIVE
+LAB-BDFB-03: rawMessages=21, pointCount=96, mappedBreakerCount=96,
+             unmappedPointCount=0, freshness=LIVE
+```
+
+Source targets were Device IDs
+`13dcec28-70ed-4cc0-b29a-0f6ae57afaee` (BDFB-02) and
+`1563f240-7a92-4da5-9955-2e18fd36417c` (BDFB-03).
+These correspond to the two new independently commissioned LAB
+sources, not the original BDFB-01 shelf/frame serial owners.
+
+**Accepted:** runtime MQTT subscribed; ongoing LAB messages accepted
+without recorded rejection; all 96 breaker addresses per new BDFB
+mapped, no unmapped points; runtime source freshness LIVE.
+This is stronger than a purely historical industrial catalog audit.
+
+**Still separate:** device inspector actually rendering measured values
+(the browser diagnostics response is a runtime inspection, not an
+inspector screenshot); durable Timescale delivery; and a tested
+Modbus FC03 contract for the new LAB identities. The existing
+`EMU-BFDB-02/03` Unit IDs remain untouched. If stopped,
+publisher freshness naturally degrades to STALE/OFFLINE; LIVE
+describes the observed state at the screenshot time, not permanence.
+
+For independent downstream evidence, the read-only
+`scripts/telemetry/audit-bdfb-lab-downstream.py` will inspect
+Timescale industrial-observation rows, Mongo's durable Timescale
+outbox, and Modbus bridge source ownership without changing a mapping.

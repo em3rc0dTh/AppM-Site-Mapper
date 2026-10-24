@@ -85,7 +85,7 @@ class SafetyTest(unittest.TestCase):
         code=setup.JS.read_text(encoding="utf8")
         self.assertIn("session.startTransaction",code)
         self.assertIn("LAB_SYNTHETIC_ONLY",code)
-        self.assertIn("independentInputConfirmed:false",code)
+        self.assertRegex(code,r"independentInputConfirmed\s*:\s*false")
         self.assertIn("lab:snmp:",code)
         self.assertIn("LAB-BDFB-02",code)
         self.assertIn("LAB-BDFB-03",code)

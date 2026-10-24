@@ -1428,3 +1428,110 @@ by this change.** Assignment requires an operator-approved,
 separate app+bridge-only configuration deployment and read-only
 FC03 acceptance against the new Units. Publishing with the
 old map cannot validate new LAB Modbus registers.
+
+
+### 2026-10-24: additive LAB Modbus 4/5 deployment prepared with explicit gates
+
+The operator's original-stack read-only Modbus preflight returned
+`READ-ONLY PLAN PASS` and confirmed:
+
+```text
+EMU-BFDB-01 -> Unit 1
+EMU-BFDB-02 -> Unit 2
+EMU-BFDB-03 -> Unit 3
+LAB-BDFB-02 -> proposed Unit 4
+LAB-BDFB-03 -> proposed Unit 5
+MODBUS_POINT_LAYOUT=panels-4x24
+96 circuits × 4 x FLOAT32 = 768 registers per new Unit
+Timescale outbox pending=0 retrying=0 during preflight
+```
+
+A subsequent independent downstream audit showed
+`LAB-BDFB-02=9324` and `LAB-BDFB-03=9324`
+Timescale historical rows, 870 distinct industrial signals for
+each source and 4032 valid electrical readings per source.
+The durable Mongo outbox then had `pending=1, retrying=0`,
+which is compatible with a moving asynchronous queue, not data
+loss. **Restarting must be blocked while any backlog remains.**
+
+A separately audited add-only migration has now been staged
+**in source code only**:
+`scripts/telemetry/commission-bdfb-lab-modbus.py`.
+
+It has three operating modes:
+
+- Default: read-only; inspect actual app + bridge source identities and
+  active Compose file list, compare source maps and report proposed Unit
+  4/5 configuration.
+- `--stage`: create a private backup of the active
+  `.runtime/industrial-lab/existing-compose.json`, then add identical
+  `MODBUS_SOURCE_UNITS_JSON` overrides to the **existing**
+  `site-mapper` and `modbus-tcp` service sections. The original
+  `.env` and `existing.env` are never edited and no container
+  is restarted.
+- `--deploy` without `--backup-dir`: run strict read-only preflight
+  comparing the resolved Compose configs to original in-use environments,
+  service token, original DB volume IDs and app/bridge mounts.
+  The check rejects pending Mongo Timescale outbox batches, durable MQTT
+  spool records and active LAB Python host publishers.
+- `--deploy --backup-dir ...`: additionally validate the integrity of
+  the actual post-commissioning Mongo archive and recreate **only**
+  `modbus-tcp` and `site-mapper` with
+  `docker compose ... up -d --no-deps --no-build --force-recreate
+  modbus-tcp site-mapper`. Afterward, compare the two active source maps
+  and refuse completion if they differ from the five-source contract.
+
+Because `--no-build` is used, the previously accepted Site Mapper app
+and gateway images are reused. Every existing volume and Compose mount
+is compared against its active container before recreation. This is
+**not an instruction to run a global docker-compose up/down**.
+
+`industrial-existing.py prepare` has also been updated to recognize
+the exact approved five-source mapping if present in both services of
+the original overlay and retain it rather than silently losing the
+Modbus commissioning configuration on a future prepare.
+
+**Operator sequence (new branch):**
+
+```bash
+cd /mnt/c/Users/eduar/Desktop/Thradex/AppM-Site-Mapper
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 scripts/telemetry/commission-bdfb-lab-modbus.py
+python3 scripts/telemetry/commission-bdfb-lab-modbus.py --stage
+python3 scripts/telemetry/commission-bdfb-lab-modbus.py --deploy
+```
+
+The `--stage` command modifies one private Compose overlay file; the
+other commands above are read-only. **STOP HERE** if the queues are not
+zero, if a LAB publisher remains active, or if any deployed secret/mount
+comparison fails.
+
+After the queue is drained, the original source publishers are stopped
+and the post-commission Mongo backup archive's SHA256 matches:
+
+```bash
+python3 scripts/telemetry/commission-bdfb-lab-modbus.py \
+  --deploy --backup-dir "$HOME/site-mapper-backups/bdfb-lab-20261024"
+```
+
+No Unit ID 4/5 commissioning is claimed complete until actual
+operator deploy output confirms both services. Then run the publisher
+continuously in a separate terminal and read Unit IDs 4 and 5 with:
+
+```bash
+python3 scripts/telemetry/publish-bdfb-lab-pair.py --publish
+python3 scripts/telemetry/verify-bdfb-lab-modbus-fc03.py
+```
+
+The new **FC03-only** checker reads panel-1..4 Circuit-1's four
+FLOAT32 ABCD metrics in both new Units and compares them to
+recent source-indexed RAW MQTT evidence from Mongo. It verifies
+that Unit IDs 1/2/3 preserve their original serial assignments.
+For full field acceptance, record the actual gateway FC03 packets,
+stale/offline quality policy, all 96 circuits and Metasys reads
+separately. The FC03 checker is a local laboratory integration
+check, not field commissioning.
+
+**At publication time no operator deployment of Unit IDs 4 and 5
+has occurred.** This stage does not alter any historical industrial
+telemetry, topology, bindings, original MQTT owners or Modbus registry.

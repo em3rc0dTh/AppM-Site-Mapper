@@ -4,16 +4,16 @@ import { isProductionDeployment } from '@/config/env';
 import {
   IndustrialInputError,
   normalizeObservations,
-  parseProfiles,
   type Envelope,
 } from '@/modules/telemetry/domain/industrial/observations';
+import { configuredIndustrialProfiles } from './profile-config';
 import { MemoryObservationStore, MongoObservationStore, type ObservationStore } from './store';
 import { getPersistenceMode } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { getClient, getMongoDatabase } from '@/shared/infrastructure/mongodb/client';
 import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
 
 export function industrialProfiles() {
-  return parseProfiles(process.env.INDUSTRIAL_PROFILES_JSON);
+  return configuredIndustrialProfiles();
 }
 export async function getObservationStore(): Promise<ObservationStore> {
   const holder = getProcessSingleton<{ promise?: Promise<ObservationStore> }>(

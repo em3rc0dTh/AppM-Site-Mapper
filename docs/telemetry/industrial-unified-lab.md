@@ -1370,3 +1370,61 @@ For independent downstream evidence, the read-only
 `scripts/telemetry/audit-bdfb-lab-downstream.py` will inspect
 Timescale industrial-observation rows, Mongo's durable Timescale
 outbox, and Modbus bridge source ownership without changing a mapping.
+
+
+### 2026-10-24: Timescale durable history confirmed, additive Modbus eligibility next
+
+The original operator's read-only downstream audit reported:
+
+```text
+LAB-BDFB-02 Timescale rows=8658; unique signals=870; VALID measurement rows=3744
+LAB-BDFB-03 Timescale rows=8658; unique signals=870; VALID measurement rows=3744
+Timescale durable Mongo outbox pending=109, retrying=0, last delivery 01:49:39 UTC, failure count=0
+Bridge pointLayout=panels-4x24
+EMU-BFDB-01 -> Unit 1 PRESERVED
+EMU-BFDB-02 -> Unit 2 PRESERVED
+EMU-BFDB-03 -> Unit 3 PRESERVED
+LAB-BDFB-02 -> NOT MAPPED
+LAB-BDFB-03 -> NOT MAPPED
+```
+
+**Accepted:** independently persisted Timescale industrial history
+for both LAB sources (17,316 combined rows, 7,488 VALID
+measurement samples), while original Modbus Unit IDs 1–3 retain
+their source identities.
+
+**Outstanding:** 109 durable Mongo Timescale delivery batches
+were still pending at the sampling instant. Zero retries/failures
+does not mean the queue was empty, and no data loss is implied.
+With publishers stopped, repeat the downstream audit to observe
+whether the queue is draining. Do not restart services while
+the delivery backlog is high.
+
+The installed Modbus bridge already supports a `panels-4x24`
+address layout, 96 circuits × four FLOAT32 measurements (768
+holding registers) per source Unit ID. The proposed additive mapping
+is LAB-BDFB-02 → **Unit ID 4** and LAB-BDFB-03 → **Unit ID 5**,
+leaving all original associations and register layouts untouched.
+
+Before any configuration change, run the new **read-only**, 
+fail-closed checker:
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 scripts/telemetry/plan-bdfb-lab-modbus.py
+```
+
+It reads the *running* app and bridge mapping from Docker rather than
+assuming local .env values, checks bridge port/auth/layout consistency,
+verifies original Unit IDs 1–3 and no collision at 4–5, checks the
+actual active Compose project/file overlay, confirms both new
+LAB Device identities and all 770 active point/source bindings, and
+reads the Mongo Timescale outbox. It never modifies the
+original `.env`, Compose, MongoDB, TimescaleDB or Modbus
+register state.
+
+**No Unit ID 4–5 assignment has been written, staged or deployed
+by this change.** Assignment requires an operator-approved,
+separate app+bridge-only configuration deployment and read-only
+FC03 acceptance against the new Units. Publishing with the
+old map cannot validate new LAB Modbus registers.

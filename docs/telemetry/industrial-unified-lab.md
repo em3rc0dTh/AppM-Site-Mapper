@@ -2092,3 +2092,62 @@ external POWER INPUT AccessPorts with non-verified physical flags,
 and OID mappings to the matching SNMP emulator profile; never copy
 BDFB-01's existing source identity or mark such a synthetic
 port as field-verified.
+
+
+### 2026-10-24: Operator started additive BDFB-01 SNMPv3 synthetic agent and collector
+
+The operator's live original-stack WSL commands confirmed:
+
+```text
+python3 -m unittest discover -s tests/python -p 'test_bdfb01_snmp_additive.py' -v
+Ran 7 tests ... OK
+ORIGINAL BDFB-01 OK: 4 panels, 3 breakers, Config2 A/B,
+  4 lab-only SNMP OIDs; physical shunts NOT certified
+EMULATOR: .../bfdb-telemetry-gateway |
+  SNMPv3 authPriv Config2 | source EMU-DELTA-BFDB-01
+SNMP BDFB-01 PREFLIGHT PASS:
+  two new isolated lab services only
+python3 scripts/telemetry/commission-bdfb01-snmp-lab.py \
+  --apply --ack-synthetic-only
+START: snmp-lab-agent-01 + snmp-lab-collector-01 (no dependencies)
+SNMP LAB BDFB-01 STARTED:
+  collector polls synthetic A/B only.
+```
+
+This output confirms **two synthetic SNMP services were launched**
+and the strict source/inventory/original Modbus mapping preflight
+succeeded. The command does **not** prove that a UDP SNMP GET
+returned valid values, that the collector POST received HTTP 202,
+that all four normalized SNMP points were accepted into the
+original Site Mapper TimescaleDB, or that the browser shows
+`LAB_LIVE` A/B inputs and actual SNMP chart samples.
+
+Next acceptance actions, with no Compose or database mutation:
+
+```bash
+docker logs --tail 50 appm-site-mapper-snmp-lab-agent-01
+docker logs --tail 80 appm-site-mapper-snmp-lab-collector-01
+```
+
+Expected collector records, **not yet observed in supplied evidence**:
+`snmp.collector.started`, then `snmp.poll.accepted` for
+`EMU-DELTA-BFDB-01` with `pointCount=4`. Any
+`snmp.poll.failed` or non-202 response should be diagnosed
+before changing the original application.
+
+Next, navigate to BDFB-01 → Inputs and BDFB-01 → Charts;
+verify that only Config2 feed A/B are labeled synthetic
+`LAB_LIVE`, have fresh current/voltage and persist a
+distinct SNMP Timescale history. BDFB-02/03 still have zero
+SNMP input ports, zero SNMP OID bindings and no authorized
+physical shunt profile; their SNMP status remains pending.
+MQTT 192 LAB breakers and Modbus Unit IDs 1–5 are not
+affected and are independently evidenced.
+
+Important: `SNMP_LAB_ENABLED=UNSET` in the app disables its
+interactive synthetic-commissioning helper, but does **not**
+disable the already configured normalized SNMP ingest endpoint.
+BDFB-01 bindings were present before service start. Do not
+recreate the app to change this flag just to test incoming
+synthetic SNMP metrics. Do not claim field SNMP certification
+from laboratory readings.

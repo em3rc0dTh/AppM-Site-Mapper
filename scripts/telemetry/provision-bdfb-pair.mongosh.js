@@ -17,6 +17,9 @@
  *     appm-site-mapper-mongodb-1 mongosh --quiet \
  *     --file /dev/stdin < scripts/telemetry/provision-bdfb-pair.mongosh.js
  *
+ * UUID strings are generated through mongosh's built-in Node crypto module.
+ * The plan mode checks the UUID generator before any writes.
+ *
  * The 96 installed breakers per new BDFB are saturation-lab fixtures, not field
  * occupancy evidence. Their proposed MQTT identity is metadata ONLY.
  * This does NOT copy BDFB-01, alter original bindings, touch SNMP shunts,
@@ -51,10 +54,21 @@ const topo = d.topology_nodes, links = d.telemetry_bindings;
 function guard(condition, message) {
   if (!condition) throw new Error("PREFLIGHT BLOCKED: " + message);
 }
+// Persisted topology.id values are ordinary UUID *strings*, not BSON UUID
+// objects. In mongosh, UUID() returns BSON; String(UUID()) is not guaranteed
+// to render the same way across mongosh versions. Use Node crypto instead.
+const randomUUID = require("node:crypto").randomUUID;
+const uuidV4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+guard(typeof randomUUID === "function", "Node crypto.randomUUID unavailable");
+const uuidProbe = randomUUID();
+guard(uuidV4.test(uuidProbe), "Node crypto.randomUUID returned invalid UUID");
+const generatedIds = new Set([uuidProbe]);
 function entityId() {
-  const match = String(UUID()).match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
-  guard(Boolean(match), "UUID generator is unavailable");
-  return match[0];
+  const id = randomUUID();
+  guard(uuidV4.test(id) && !generatedIds.has(id),
+    "Duplicate or invalid generated UUID");
+  generatedIds.add(id);
+  return id;
 }
 const base = (name, kind, parentId) => ({
   id:entityId(),name,kind,parentId,

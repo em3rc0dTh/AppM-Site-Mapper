@@ -1231,3 +1231,47 @@ docker exec -i appm-site-mapper-mongodb-1 mongosh --quiet \
 The checker passed a full in-memory 2x96 sample mock with 480 signals
 per source and original owner fingerprints preserved; it has **not**
 been run against the operator's real MongoDB by the assistant.
+
+
+### 2026-10-24: FULL 192-circuit industrial catalog audit PASSED
+
+The operator ran `scripts/telemetry/audit-bdfb-lab-capture.mongosh.js`
+on the preserved original database. Actual results:
+
+```text
+BDFB-02 | raw events=4 | industrial catalog=870 | 4-metric VALID=384/384
+        | ONLINE/VALID=96/96 | fully verified circuits=96/96
+        | P1=24/24 P2=24/24 P3=24/24 P4=24/24
+BDFB-03 | raw events=4 | industrial catalog=870 | 4-metric VALID=384/384
+        | ONLINE/VALID=96/96 | fully verified circuits=96/96
+        | P1=24/24 P2=24/24 P3=24/24 P4=24/24
+RESULT: PASS — full historical 2x96 circuit capture coverage
+```
+
+Original BDFB-01 serial, three breaker records and
+`EMU-BFDB-02/03` SOURCE owners passed the read-only checks.
+
+The last events were 330 seconds old because the deliberate
+`--publish --cycles 4` publisher had stopped. Thus this is a
+**historical acceptance PASS, not continuous LIVE**. Mongo catalog
+`quality=VALID` is the last interpreted sample; it is not a
+real-time freshness guarantee. Site Mapper's MQTT runtime computes
+`LIVE` only for a subscribed source with a source-level sample age
+up to 15 seconds; 15–300 seconds is `STALE` and above 300 seconds
+is `OFFLINE` (subject to a source-level sample being present).
+The industrial lab profile `staleMs` is configured independently.
+
+To inspect uninterrupted synthetic acquisition, launch
+`python3 scripts/telemetry/publish-bdfb-lab-pair.py --publish`
+in one terminal (5-second source cadence) and run the read-only
+audit in another. The audit reports `recent<=90s`, which is **a
+weaker criterion** than MQTT runtime's 15-second LIVE threshold.
+Stop the synthetic sources with Ctrl+C after the observation;
+the catalog remains historically valid while freshness decays.
+
+Industrial Timescale delivery, read-only UI values and Modbus mapping
+remain independent gates. The Modbus bridge still uses its existing
+`MODBUS_SOURCE_UNITS_JSON` publisher-to-Unit-ID mapping: do not
+silently repoint Units 2/3 from the original `EMU-BFDB-02/03`.
+A future explicitly approved additive Unit ID mapping (or a controlled
+migration) must preserve the original operator's field contract.

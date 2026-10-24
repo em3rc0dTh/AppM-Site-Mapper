@@ -15,7 +15,7 @@ MONGO="appm-site-mapper-mongodb-1"
 APP="appm-site-mapper-site-mapper-1"
 DB_NAME="site_mapper_crud_acceptance_02"
 
-JS=String = r"""
+JS = r"""
 const d=db.getSiblingDB('site_mapper_crud_acceptance_02');
 const names=['BDFB-01','BDFB-02','BDFB-03'];
 const records=[];

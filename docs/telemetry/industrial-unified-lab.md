@@ -792,3 +792,50 @@ The modified script's read-only `plan` branch was exercised with a
 minimal in-memory representation of the user's supplied rack, serial and
 binding inventory, and its JavaScript syntax was checked; an actual
 MongoDB `apply` transaction has **not** been executed by the assistant.
+
+
+### Original-stack topology-only apply: UUID serialization failure
+
+On 2026-10-23 the operator reconfirmed the dry-run source owners and verified
+both original backup checksums: `mongodb-original.archive.gz: OK` and
+`timescale-original.dump: OK`. The approved topology-only `apply` then
+stopped with `PREFLIGHT BLOCKED: UUID generator is unavailable` while
+constructing the first fixture. **The exception occurred before the
+Mongo transaction was opened and before any write operations.** No new
+BDFB topology, CAS occupancy or telemetry bindings were committed by
+that failed run.
+
+Root cause: the provisioning helper tried to extract a UUID string using
+a regular expression over `String(UUID())`. The shell `UUID()` API
+returns a BSON UUID object; its string representation is not guaranteed
+to match this approach across mongosh versions. Topology `id` fields
+need plain RFC-4122 UUID strings. The helper now uses mongosh's
+`require("node:crypto").randomUUID()` to produce strings, validates
+their v4 form, checks for intra-batch ID duplication, and probes the
+generator **during plan mode**. MongoDB documents Node built-in
+`require()` support in mongosh scripts.
+
+The fixed script's full read-only `plan` and topology-only `apply`
+control flows were exercised against a purpose-built in-memory
+representation of the operator's 2 free racks and 2 reserved original
+publisher owners: plan performed no mock writes; apply constructed
+210 new topology nodes, including 192 breaker Equipment nodes, 2
+42U CAS allocations, and **zero** MQTT bindings. This mock is not a
+live Mongo execution.
+
+Operator action after pull:
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+docker exec -i appm-site-mapper-mongodb-1 mongosh --quiet \
+  --file /dev/stdin < scripts/telemetry/provision-bdfb-pair.mongosh.js
+# only after reviewing no new LAB serial collisions and verifying backups:
+docker exec -i -e SITEMAPPER_PROVISION_MODE=apply \
+  -e SITEMAPPER_PROVISION_ACK=TOPOLOGY_ONLY \
+  appm-site-mapper-mongodb-1 mongosh --quiet \
+  --file /dev/stdin < scripts/telemetry/provision-bdfb-pair.mongosh.js
+```
+
+No app rebuild, Docker restart, data migration or volume deletion is
+needed. The repository update alone does not provision the operator's
+local database.

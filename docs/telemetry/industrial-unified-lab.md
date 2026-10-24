@@ -922,3 +922,34 @@ read-only MQTT commission plan, 770 additive bindings, followed by a
 second idempotent apply (0 additional records). The operator has **not
 yet executed** the 770-binding apply or the two LAB publishers on the
 local original stack.
+
+
+### MQTT lab commissioning mongosh `.some` guard
+
+Operator executed the 210-document topology commit, then confirmed the
+original BDFB-01 still had 3 installed breakers and each of LAB-BDFB-02
+and LAB-BDFB-03 had 96. The synthetic publisher preview passed
+without publishing messages. However both the first MQTT plan and the
+`LAB_ONLY` apply failed before a transaction with:
+
+```text
+TypeError: Array.prototype.some called on null or undefined
+```
+
+The script used `rack.cas?.some(...)` and
+`breaker.accessPorts?.some(...)` on Mongo-backed records. Both
+accessors were replaced with explicit `Array.isArray` guards and
+`for...of` checks. Errors now identify malformed CAS or accessPorts
+instead of assuming empty values. The script also logs which BDFB it
+is validating. Original publisher SOURCE binding IDs, target IDs and
+owner serials are now pinned exactly to the operator-provided evidence.
+
+A mocked in-memory run exercised the current full commissioning source
+with the actual supplied existing SOURCE identities, confirming a
+zero-write plan, 770 LAB-only new bindings, a second apply making zero
+additional inserts and no original binding target changes. This is
+not yet validation inside the original mongosh runtime.
+
+Rerun the dry-run after pulling, and run `apply` only if both BDFBs
+report `READY`. **No original Mongo volume or original MQTT mapping
+was modified by the failed commissioning run.**

@@ -1052,3 +1052,99 @@ measurements can correctly remain UNKNOWN. Check old sources and
 original SOURCE targets remain intact before declaring success.
 **Nothing in this change remaps Modbus unit IDs or certifies
 Metasys reads.** Local deployment and acceptance remain pending.
+
+
+### 2026-10-24: original stack uses existing-compose.json, not compose.json
+
+The operator's new read-only diagnostic definitively identified the
+**active** deployment as:
+
+```text
+com.docker.compose.project = appm-site-mapper
+config_files = docker-compose.telemetry.yml,
+               docker-compose.industrial.yml,
+               .runtime/industrial-lab/existing-compose.json
+```
+
+`site-mapper` is subscribed to `data/dev/#`, and the MQTT industrial
+outbox shows `pending=0`, but the running application has only six MQTT
+profiles from `INDUSTRIAL_PROFILES_JSON`. Specifically both
+`LAB-BDFB-02` and `LAB-BDFB-03` are **not** loaded; active LAB
+bindings are 385 each while industrial events/catalog entries are 0
+for both. Original `EMU-BFDB-02` and `EMU-BFDB-03` industrial sources
+each have 875 events and remain independent.
+
+The first approved
+`python3 scripts/telemetry/prepare-bdfb-lab-profiles.py --apply`
+successfully staged the 480+480 new rules under
+`.runtime/industrial-lab/profiles.json`, but incorrectly modified the
+**inactive isolated-stack files** `compose.json`/`lab.env`, so the
+running original stack did not change. No MongoDB or service was
+modified. The script has now been **corrected** to apply its read-only
+`profiles.json` mount and lightweight environment fallback to the
+actual `existing-compose.json` and `existing.env` files; these
+changes are additive and backed up. It validates that `existing.env`
+selects `site_mapper_crud_acceptance_02`, that the isolated lab
+broker and original logical-points mount remain in place, and that
+original MQTT/SNMP profiles are retained. Both LAB serials are appended
+to the app's expected-source diagnostics, without removing old sources.
+
+`industrial-existing.py` was updated too. Its `prepare()` function
+recreates the original-stack overlay on any action; it now preserves
+the same file-backed profile mount instead of overwriting the changes
+on later preflight or status operations. The original `.env` is left
+untouched.
+
+Do not use the secondary isolated-stack project
+`site-mapper-industrial-lab` to restart the operator's
+`appm-site-mapper` application. Do not run a global Compose
+`up`, `down`, volume cleanup or original database re-seeding.
+
+**Operator runbook after the corrected branch pull:**
+
+```bash
+# Actual original project is appm-site-mapper.
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+
+# Read-only; verifies active original-stack env and LAB rules:
+python3 scripts/telemetry/prepare-bdfb-lab-profiles.py
+
+# Explicitly stage profiles onto existing-compose.json + existing.env.
+# Already-staged full profile file remains preserved.
+python3 scripts/telemetry/prepare-bdfb-lab-profiles.py --apply
+
+# Read-only, strict check that the ACTIVE Compose stack matches original
+# DB, secrets, mounts, project labels, LAB profile file and old services:
+python3 scripts/telemetry/redeploy-bdfb-lab-app.py
+
+# After fresh post-commission DB backup and successful strict preflight,
+# explicitly rebuild and recreate only the Site Mapper application.
+python3 scripts/telemetry/redeploy-bdfb-lab-app.py --apply
+
+# Verify actual container now reads 2 LAB profiles with 480 rules each.
+python3 scripts/telemetry/diagnose-bdfb-lab-ingress.py
+
+# Publish complete 4-panel snapshot for the two synthetic sources,
+# then inspect the exact source-indexed capture.
+python3 scripts/telemetry/publish-bdfb-lab-pair.py --publish --cycles 4
+python3 scripts/telemetry/inspect-industrial-io.py --mode mqtt \
+  --source LAB-BDFB-02 --max-signals 32
+python3 scripts/telemetry/inspect-industrial-io.py --mode mqtt \
+  --source LAB-BDFB-03 --max-signals 32
+```
+
+The redeploy command is restricted to
+`docker compose --project-name appm-site-mapper ... up -d --build
+--no-deps --force-recreate site-mapper`. Its dry-run preflight compares
+the existing container's exact Compose file labels and DB, preserved
+secret-sensitive environment keys, existing mounts including persistent
+volumes, and dependent-service identities, **without printing
+credential values**. If any critical field drifts, it fails closed
+instead of recreating the application. It does not restart, migrate or
+recreate original data stores, MQTT broker, Modbus gateway or SNMP labs.
+
+Published synthetic measurements are not proof of persisted industrial
+capture. Success requires a source-indexed industrial event and
+`PROFILE / VALID` readings for LAB V/A/W/kWh. Do not retroactively
+reinterpret original `UNKNOWN` values without evidence, nor claim
+Modbus Unit ID 2/3 was changed or certified.

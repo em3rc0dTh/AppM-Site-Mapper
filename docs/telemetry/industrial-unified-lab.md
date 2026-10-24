@@ -1744,3 +1744,70 @@ site-mapper**, not the gateway again, thus bringing runtime app config
 into agreement. Until then, do not claim the complete two-service
 environment reload has occurred. Original database/publisher sources
 remain unchanged and no data is re-seeded.
+
+
+### 2026-10-24: FC03 three direct matches; 25-second static snapshot race corrected
+
+After successful **bridge-only** activation of LAB Modbus Units 4/5
+(with EMU 1/2/3 preserved and Site Mapper/Timestale retained), the
+operator ran the read-only FC03 verifier while LAB MQTT published in
+four rotating panels per source, 24 circuits per panel, at 5-second
+panel-batch intervals. The first three direct register block checks
+matched the source MQTT values to FLOAT32 precision:
+
+```text
+LAB-BDFB-02 Unit 4 P1/C1 regs 0..7
+  MQTT=(12.43,2.62,32.57,0.10353), age=20.1s        MATCH
+LAB-BDFB-02 Unit 4 P2/C1 regs 192..199
+  MQTT=(12.41,2.95,36.65,0.12758), age=16.2s        MATCH
+LAB-BDFB-02 Unit 4 P3/C1 regs 384..391
+  MQTT=(12.43,2.85,35.45,0.15163), age=11.1s        MATCH
+FC03 FAILED: LAB-BDFB-02 panel 4 sample stale: 25.2s
+```
+
+The failure is a **static Mongo-snapshot age guard** (25s)
+interacting with a 4 × 5s cyclic publisher and sequential FC03 reads.
+There was no reported FC03 numeric mismatch, exception or Modbus
+write failure in those three accepted blocks. The old verifier read
+Mongo once and rejected panel4 at 25.2 seconds.
+
+The revised `verify-bdfb-lab-modbus-fc03.py` keeps the bridge
+30-second missing/stale contract unchanged and:
+- accepts individual persisted panel packets only while their age
+  remains <=27 seconds, leaving a small safety margin before the
+  gateway's actual 30-second stale register policy;
+- separately requires recent industrial capture at the **source**
+  level (latest persisted packet <=15 seconds old per source);
+- compares U1/I1/P1/EP1 numerical values against actual FC03
+  FLOAT32 high-word-first registers, never accepting stale zero as
+  a valid measurement;
+- polls fresh Mongo evidence for still-unverified panels only for
+  a bounded 55-second deadline and retains already-matched panel
+  proofs; noisy intermediate age/mismatch snapshots cannot fail
+  an otherwise healthy cycling emitter;
+- after all 8 blocks match, checks **both** source identities still
+  have recent persisted MQTT activity before returning `FC03 PASS`;
+- prints missing panel, stale source, Modbus exception, or numeric
+  mismatch causes when the bounded check fails.
+
+Regression tests in
+`tests/python/test_lab_modbus_fc03_rotating_panels.py` cover the
+actual 25.2-second boundary, new panel arrival, stale/stopped
+publisher rejection, zero-register mismatch, and end-of-audit
+source-freshness rejection.
+
+No new container, publisher, DB or Modbus change is required:
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 -m unittest discover -s tests/python -p \
+  'test_lab_modbus_fc03_rotating_panels.py' -v
+# Keep existing LAB 02/03 publisher running in a separate terminal:
+python3 scripts/telemetry/verify-bdfb-lab-modbus-fc03.py
+```
+
+Current evidence: 3 actual matching P1..P3 Unit 4 blocks, not yet
+an 8/8 PASS. Do not claim a complete Unit 4+5 FC03 certificate
+until the real gateway outputs `FC03 PASS`; even that is a
+representative 8-block local integration check, not all 192
+breakers nor Metasys field acceptance.

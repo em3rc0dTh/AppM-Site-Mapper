@@ -26,11 +26,15 @@ const TARGETS=[
   {name:"BDFB-02",serial:"LAB-BDFB-02",
    rack:"5b53762f-cc60-4118-8dbc-94ef841882a4",
    bay:"19dc1a19-cc45-4cd7-94a0-1223ff3794f9",
-   older:"EMU-BFDB-02"},
+   older:"EMU-BFDB-02",
+   originalBinding:"auto:mqtt:bb137f93188ec2f23b90b1c40f940d1cc4ce8adb6526e1934c2e9f4936e0dbe8",
+   originalTarget:"540efb3c-d6a8-4633-b6d3-3dc719f511c5"},
   {name:"BDFB-03",serial:"LAB-BDFB-03",
    rack:"164fe884-28b0-4d80-b504-af92d0b80f15",
    bay:"1d7033f4-d202-4952-8858-e200280a8c47",
-   older:"EMU-BFDB-03"},
+   older:"EMU-BFDB-03",
+   originalBinding:"auto:mqtt:88cffc3d56c7eea4e6dc31b457d72eb20bc77d5a040cbe9190c2abba7579a9b0",
+   originalTarget:"4e9b6c5a-ffc8-4d06-84b2-34845b6cdfaa"},
 ];
 const METRICS=["VOLTAGE","CURRENT","POWER","ENERGY"];
 const MODE=process.env.SITEMAPPER_MQTT_COMMISSION_MODE||"plan";
@@ -60,9 +64,20 @@ const fingerprints=TARGETS.map(x=>({
   bindings:b.find({protocol:"MQTT",sourceIdentity:x.older,
     lifecycle:"ACTIVE"}, {_id:0,id:1,metric:1,targetId:1,targetType:1}).toArray()
 }));
-assert(fingerprints.every(x=>x.bindings.length===1&&
-  x.bindings[0].metric==="SOURCE" &&
-  x.bindings[0].targetType==="EQUIPMENT"),"Original source bindings changed");
+assert(fingerprints.every((x,i)=>{
+  const expected=TARGETS[i];
+  return x.bindings.length===1 &&
+    x.bindings[0].id===expected.originalBinding &&
+    x.bindings[0].metric==="SOURCE" &&
+    x.bindings[0].targetType==="EQUIPMENT" &&
+    x.bindings[0].targetId===expected.originalTarget;
+}),"Original BDFB-01 SOURCE binding identities or targets changed");
+for(const item of TARGETS){
+  const owner=get(item.originalTarget);
+  assert(owner.kind==="EQUIPMENT"&&owner.deviceId===PRIMARY.id &&
+    owner.serialNumber===item.older,
+    item.older+" original Equipment serial ownership changed");
+}
 const staged=[];
 for(const x of TARGETS){
  print("COMMISSION PREFLIGHT: inspect "+x.name+" rack and equipment");

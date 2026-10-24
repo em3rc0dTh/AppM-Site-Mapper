@@ -1806,8 +1806,83 @@ python3 -m unittest discover -s tests/python -p \
 python3 scripts/telemetry/verify-bdfb-lab-modbus-fc03.py
 ```
 
-Current evidence: 3 actual matching P1..P3 Unit 4 blocks, not yet
-an 8/8 PASS. Do not claim a complete Unit 4+5 FC03 certificate
-until the real gateway outputs `FC03 PASS`; even that is a
-representative 8-block local integration check, not all 192
-breakers nor Metasys field acceptance.
+Evidence at the time of this previous 25-second failure: 3 actual
+matching P1..P3 Unit 4 blocks, before the later 8/8 acceptance below.
+A representative 8-block local integration check is not a 192-breaker
+exhaustive Modbus certification nor Metasys field acceptance.
+
+
+### 2026-10-24: Operator FC03 PASS, LAB Unit IDs 4/5 (8/8)
+
+The operator's **actual WSL / original-stack / local gateway** run
+of `python3 scripts/telemetry/verify-bdfb-lab-modbus-fc03.py`
+returned the following, with a continuously rotating 24-point
+per-panel publisher in a separate terminal:
+
+```text
+LAB-BDFB-02 Unit 4 P1/C1 regs 0..7     age=11.1s  MATCH
+LAB-BDFB-02 Unit 4 P2/C1 regs 192..199 age= 6.2s  MATCH
+LAB-BDFB-02 Unit 4 P3/C1 regs 384..391 age= 1.1s  MATCH
+LAB-BDFB-02 Unit 4 P4/C1 regs 576..583 age=14.7s  MATCH
+LAB-BDFB-03 Unit 5 P1/C1 regs 0..7     age=10.9s  MATCH
+LAB-BDFB-03 Unit 5 P2/C1 regs 192..199 age= 5.9s  MATCH
+LAB-BDFB-03 Unit 5 P3/C1 regs 384..391 age= 1.0s  MATCH
+LAB-BDFB-03 Unit 5 P4/C1 regs 576..583 age=14.5s  MATCH
+FC03 PASS: 8/8 independent panel samples matched;
+both sources remain LIVE; original Unit IDs preserved.
+```
+
+Each tested FC03 request read 8 holding registers (four
+high-word-first FLOAT32 values, U1/I1/P1/EP1) from Circuit 1
+of the designated panel. Address starts 0, 192, 384, 576,
+corresponding to four 24-circuit panels per Unit ID.
+
+**IMPORTANT: A MATCH is defined by the verifier's documented
+numeric tolerances, not bytewise identity with an identical
+source timestamp.** In this acceptance run, seven checks had
+negligible differences except that **both P3/C1 blocks** differed
+slightly in the concurrently rotating snapshots:
+
+```text
+LAB-BDFB-02 Unit 4 P3/C1:
+  MQTT = (12.42, 2.97, 36.90, 0.15727)
+  FC03 = (12.43, 2.92, 36.23, 0.15708)
+  deltas ~ (0.01 V, 0.05 A, 0.67 W, 0.00019 kWh)
+LAB-BDFB-03 Unit 5 P3/C1:
+  MQTT = (12.65, 2.17, 27.46, 0.15503)
+  FC03 = (12.66, 2.12, 26.78, 0.15489)
+  deltas ~ (0.01 V, 0.05 A, 0.68 W, 0.00014 kWh)
+```
+
+All P3 deltas were within the verifier's fixed engineering
+tolerances (voltage <=0.1 V; current <=0.4 A; power <=5 W;
+energy <=0.001 kWh), likely reflecting different observation
+instants while the emulator continues to publish. This does
+**not** prove an identical packet was observed on both sides;
+packet-level temporal correlation remains a separate evidence
+goal if exact equivalence is required.
+
+The repository's 6 focused rotation/regression unit tests also
+returned `OK`, but **only the separate actual FC03 process run**
+establishes the eight real lab observations above.
+
+**Acceptance for this gate:** local gateway Unit ID 4/5
+FC03 representative reading validated; both sources live at
+completion; Units 1/2/3 serial assignments unchanged; gateway
+commissioned using the bridge-only method, without recreating
+Site Mapper, MongoDB or TimescaleDB.
+
+**Not yet certified:** FC03 for every one of the 192 LAB
+breakers and every metric, external Metasys interoperability,
+on-wire stable-sample exact equality, UI inspector presentation
+and BDFB-descendant equipment summaries. The Site Mapper
+application still runs the original three-source
+`MODBUS_SOURCE_UNITS_JSON`, whereas the deployed bridge
+has five mappings; the original Compose overlay is staged
+with the complete five-source map for both services. Only
+reconcile that app-side environment during an approved quiet
+window with empty durable queues and a verified fresh backup.
+
+No additional global `docker compose up/down`,
+`--bridge-only`, `--stage`, inventory migrations or volume
+changes are required to retain this verified gateway behavior.

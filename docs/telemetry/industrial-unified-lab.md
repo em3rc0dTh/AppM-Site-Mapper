@@ -1653,3 +1653,94 @@ do not force a restart; examine the new specific refusal. After a clean
 queue, stopped LAB publisher and verified post-commissioning backup,
 the scoped two-service deployment can be explicitly requested.
 No Unit ID 4/5 deploy or FC03 acceptance was performed by this fix.
+
+
+### 2026-10-24: Timescale queue race during two-service Modbus deployment — bridge-only alternative
+
+The operator's next proof conclusively verified that the original
+application/bridge/database Compose guards and mount checks passed, but
+the writer kept creating Mongo Timescale outbox records during the
+pre-deployment gap:
+
+```text
+--deploy (read-only)   pending=0 retrying=0 captureSpool=0   PRECHECK PASSED
+--deploy --backup-dir  pending=3 retrying=0 captureSpool=0   COMMISSION BLOCKED
+```
+
+Those Mongo outbox batches represent durable industrial history;
+they are not failed/rejected deliveries and **must not be deleted
+or manually marked completed** to obtain a momentary empty queue.
+They will be delivered and acknowledged by the existing historian.
+
+The engineering resolution is a new explicit **bridge-only**
+commissioning mode `--bridge-only`. The source publisher to
+Modbus bridge path in
+`src/modules/telemetry/infrastructure/telemetry-runtime.ts`
+forwards accepted, point-bound breaker readings to the bridge's
+`/internal/accepted-breaker` endpoint by source identity and raw
+panel point. The Modbus bridge independently owns the serial-to-Unit-ID
+mapping and converts it to local holding registers. Thus the gateway
+can be updated first without restarting Site Mapper or blocking its
+Mongo → Timescale history delivery.
+
+`--bridge-only` performs the existing exact current project, app/
+bridge token, source owner map, Compose config and mount comparisons,
+along with preserving the Mongo/Timescale persistent volume identities.
+It requires the already created post-commission Mongo backup SHA-256
+for **actual deployment**. It recreates exactly the existing
+`modbus-tcp` service with Compose `--no-deps --no-build`; Site Mapper
+and its industrial capture/outbox worker remain online throughout.
+An active Mongo Timescale delivery outbox is permitted **only in
+this bridge-only mode**, precisely because no historian is stopped
+or recreated.
+
+**Operator sequence:**
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 -m unittest discover -s tests/python -p 'test_lab_modbus_bridge_only.py' -v
+# No changes or service restarts:
+python3 scripts/telemetry/commission-bdfb-lab-modbus.py --bridge-only
+# Only after successful preflight and verified prior post-commission backup:
+python3 scripts/telemetry/commission-bdfb-lab-modbus.py --bridge-only \
+  --backup-dir "$HOME/site-mapper-backups/bdfb-lab-20261024"
+```
+
+The original override was already **staged** in
+`.runtime/industrial-lab/existing-compose.json` and backed up:
+do not rerun `--stage`. No Mongo/Timescale queue draining, SQL
+deletions, SNMP disablement or publisher manipulation is part of
+bridge-only commissioning.
+
+A gateway-only restart **will briefly interrupt existing Modbus
+clients** and reset its volatile latest-state register cache.
+Original Unit IDs 1/2/3 remain assigned to
+`EMU-BFDB-01/02/03`, but recent values must be repopulated from
+subsequent accepted source observations. Register values may
+temporarily read zero or unavailable, depending on missing-data
+policy. Time that maintenance appropriately; it is not a hot reload
+of the Modbus server.
+
+After the gateway bridge-only deploy, the active Site Mapper process
+intentionally still has the **old** three-source Modbus mapping in
+its environment. This is an explicitly supported *transitional*
+state; the staged original Compose config has the complete five-source
+mapping for both services. No original Unit is reassigned.
+The bridge's source map is five-source. MQTT ingestion and its
+historian are independent of the local Modbus source-to-Unit map and
+continue working.
+
+Verify the gateway's actual config through
+`python3 scripts/telemetry/audit-bdfb-lab-downstream.py`, then publish
+LAB MQTT packets continuously and verify FC03 on Units 4 and 5 via
+`scripts/telemetry/verify-bdfb-lab-modbus-fc03.py`. The FC03 verifier
+checks eight representative panel/circuit blocks, not all 192 circuits
+and not an external Metasys installation.
+
+Later, during an explicitly approved quiet interval with captured
+backlogs drained, `--deploy --backup-dir ...` will detect the
+transitional old-app/new-bridge mapping and **recreate only
+site-mapper**, not the gateway again, thus bringing runtime app config
+into agreement. Until then, do not claim the complete two-service
+environment reload has occurred. Original database/publisher sources
+remain unchanged and no data is re-seeded.

@@ -1886,3 +1886,86 @@ window with empty durable queues and a verified fresh backup.
 No additional global `docker compose up/down`,
 `--bridge-only`, `--stage`, inventory migrations or volume
 changes are required to retain this verified gateway behavior.
+
+
+### 2026-10-24: visual SNMP acceptance gap (BDFB-01/02/03)
+
+The operator confirmed that the original Site Mapper application is
+running and displayed:
+
+- `BDFB-03` panel composition: 24/24 MQTT LIVE circuit readings
+  with individual voltage/current/power/energy; previous device-level
+  Modbus Unit 4/5 8/8 FC03 acceptance remains valid.
+- `BDFB-01` **SNMP Inputs**: independently inventoried shunts A and B,
+  both `UNVERIFIED` with no fresh displayed current/voltage. The
+  screenshot shows `SHUNTS REPORTING 0/2` and old SNMP timestamps
+  from 2026-10-23; historical presence is not current acceptance.
+- `BDFB-02` and `BDFB-03` **SNMP Inputs**: `PENDING`,
+  `0/0 fresh feeds`, explicitly "No SNMP input feeders
+  inventoried on this BDFB."
+- `BDFB-02` and `BDFB-03` **SNMP Charts**: "No samples stored for the
+  selected range." These charts query *SNMP shunt/feed* TimeScaleDB
+  series, not the already persisted MQTT circuit historical signals.
+- `BDFB-01` original three breaker inventory and existing rack
+  topology are still present.
+
+The missing input measurements are **not** a regression of
+MQTT, Modbus or historical industrial batch delivery. The distinct
+SNMP path requires physical external POWER INPUT AccessPort inventory,
+hardware profile CONFIG_2 or CONFIG_4, explicitly commissioned OID+
+controller source identity per feed/metric, valid independent-input
+verification (or clearly labeled, deliberate synthetic-only
+lab commissioning), and a reachable read-only SNMP collector. The
+Site Mapper collector is opt-in, not started by MQTT/Modbus
+commissioning. No actual Delta OID mapping or independent field
+wiring has been verified from screenshots.
+
+The upstream source identities for the synthetic SNMP emulator are
+`EMU-DELTA-BFDB-01/02/03`, **not** `LAB-BDFB-02/03`; never infer
+SNMP inputs from MQTT breaker source names or 96 outgoing circuits.
+
+#### Zero-write local gap audit
+
+A dedicated auditor was committed to
+`scripts/telemetry/audit-bdfb-snmp-readiness.py`. It reads only the
+original `appm-site-mapper` Mongo topology and telemetry bindings,
+lists the available local `snmp-collector` containers and checks only
+the presence of relevant app configuration (it never prints tokens):
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 -m py_compile scripts/telemetry/audit-bdfb-snmp-readiness.py
+python3 scripts/telemetry/audit-bdfb-snmp-readiness.py
+```
+
+The auditor reports each active BDFB's hardware profile, PANEL and
+CIRCUIT_BREAKER inventory counts, external POWER INPUT ports, shunt
+physical verification flags, linked panels and active CURRENT/VOLTAGE
+OID bindings, plus collector presence. It does **not** claim live
+SNMP telemetry or field wiring certification. Do not add ports,
+automatically remap A/B to A1/A2/B1/B2, replace active OIDs,
+mark a shunt verified or start new services until the audit is read.
+
+**IMPORTANT TOPOLOGY PRESERVATION:** The generic
+`scripts/lab/bfdb-snmp-config4.sh up` path launches a *different*
+two-repository Compose lab and has a broad list of up/build targets
+including `site-mapper`, `modbus-tcp`, databases and publisher
+services. Do **not** run it over the currently certified
+`docker-compose.telemetry.yml + docker-compose.industrial.yml +
+.runtime/industrial-lab/existing-compose.json` stack: this could
+overwrite runtime configuration, cause unintended service recreation
+or generate entirely new datasets. Treat
+`bfdb-telemetry-gateway` as separate if a dedicated SNMP agent
+is needed; integrate only through a subsequent approved strictly
+additive Compose overlay without replacing the MQTT/Modbus topology.
+
+Next engineering gate after the audit: agree on a synthetic lab
+hardware profile per BDFB (Config2 = two independent shunts
+A/B; Config4 = four A1/A2/B1/B2), create only confirmed missing
+POWER INPUT ports with distinct identity and links to the four
+existing panels, and commission simulation-only OIDs with
+`SYNTHETIC_LAB_ONLY` labels. Start the matching isolated SNMP
+agent + collector; verify `LAB_LIVE`, SNMP 24h trend evidence
+and no regressions to MQTT/Modbus. Physical field SNMP
+commissioning still requires verified MIB/OID, management network,
+SNMPv3 credentials and independent wiring sign-off.

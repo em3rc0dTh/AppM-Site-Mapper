@@ -1535,3 +1535,63 @@ check, not field commissioning.
 **At publication time no operator deployment of Unit IDs 4 and 5
 has occurred.** This stage does not alter any historical industrial
 telemetry, topology, bindings, original MQTT owners or Modbus registry.
+
+
+### 2026-10-24: Unit 4/5 staged; deployment blocked by heterogeneous Compose labels
+
+The operator ran the dry-run and explicit `--stage` command for the
+additive Unit ID 4/5 mapping. The baseline source-to-unit map was
+`EMU-BFDB-01:1, EMU-BFDB-02:2, EMU-BFDB-03:3`, and staging produced
+a private original-overlay backup at
+`.runtime/industrial-lab/existing-compose.json.before-lab-modbus-20261024T020028Z`.
+Neither Modbus nor Site Mapper was recreated.
+
+Both `--deploy` and `--deploy --backup-dir ...` stopped *before any
+write or container recreation* with:
+`COMMISSION BLOCKED: active Compose file set changed`.
+
+Root cause in the source: the `inspect()` helper enforced the same
+*three-file* Compose provenance for **every** container, despite
+non-coincident service recreation history. The app had previously been
+recreated with all three Compose files; the running bridge and base
+database containers may correctly retain a shorter Compose file set.
+Recreating the bridge and original data stores solely to align labels
+would be an unnecessary risk.
+
+The check now validates **per-service** provenance:
+- exact original Compose project name, working directory and service
+  identity label;
+- one, two or three **ordered exact prefixes** of the approved
+  `docker-compose.telemetry.yml`,
+  `docker-compose.industrial.yml`, `existing-compose.json` list;
+- Site Mapper specifically must have all three, as confirmed by
+  earlier operator diagnostic;
+- Modbus bridge specifically must have the base plus industrial files
+  (and may also include the third overlay);
+- MongoDB and TimescaleDB can have any approved prefix, but retain
+  their immutable original persistent volume names.
+
+Every other deployment guard remains in place: matching app/bridge
+tokens and precise source map, credential and environment comparison
+against resolved Compose, exact mount topology, outbox and durable
+capture-spool zero, no active LAB publisher, SHA256-verified
+post-commission archive, and `--no-deps --no-build` reconstruction
+of only app + bridge. The script now logs each service's approved
+Compose *file count* without revealing secrets.
+
+Operator follow-up **after pulling the fixed commit**:
+
+```bash
+python3 -m unittest discover -s tests/python -p test_lab_modbus_compose_provenance.py -v
+python3 scripts/telemetry/commission-bdfb-lab-modbus.py
+python3 scripts/telemetry/commission-bdfb-lab-modbus.py --deploy
+```
+
+The first command is a standard-library provenance unit test; the
+second and third do not modify the deployment. The staged original
+overlay persists, so do **not** rerun `--stage`. If strict preflight
+succeeds and publisher is stopped with all outboxes empty, the approved
+operator can execute `--deploy --backup-dir ...` as documented above.
+
+As of this incident report: the new Unit IDs remain **STAGED, NOT
+DEPLOYED**; Timescale and MQTT captures remain undisturbed.

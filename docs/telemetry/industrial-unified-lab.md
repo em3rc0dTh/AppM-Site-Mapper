@@ -1148,3 +1148,86 @@ capture. Success requires a source-indexed industrial event and
 `PROFILE / VALID` readings for LAB V/A/W/kWh. Do not retroactively
 reinterpret original `UNKNOWN` values without evidence, nor claim
 Modbus Unit ID 2/3 was changed or certified.
+
+
+### 2026-10-24: LAB-BDFB-02/03 persisted industrial capture and normalization CONFIRMED
+
+Operator command-log acceptance evidence confirms the preserved
+`appm-site-mapper` Compose project passed strict app-only redeploy
+preflight. The fresh post-commission Mongo backup at
+`$HOME/site-mapper-backups/bdfb-lab-20261024/mongodb-bdfb-lab.archive.gz`
+passed SHA-256 verification. The app was rebuilt/recreated with
+`--no-deps` **without targeting Mongo, Timescale, MQTT, SNMP or Modbus**.
+
+After app recreation, runtime diagnostics reported:
+
+```text
+telemetryEnabled=true
+topicFilter=data/dev/#
+industrialMqttProfiles=8
+profileDelivery=mounted-file
+LAB-BDFB-02 profileLoaded=true rules=480
+LAB-BDFB-03 profileLoaded=true rules=480
+EMU-BFDB-02 profileLoaded=true rules=4
+EMU-BFDB-03 profileLoaded=true rules=4
+captureOutbox pending=0, rejected=0, deliveryFailures=0, spoolFailures=0
+```
+
+The zero persisted LAB event counts in that particular diagnostic were
+measured **before** the user published the new complete LAB cycle and
+must not be treated as the final result.
+
+The user then ran exactly four LAB batches per source, showing raw
+MQTT circuit ranges `0_1_1..0_1_24`,
+`0_2_1..0_2_24`, `0_3_1..0_3_24`, and
+`0_4_1..0_4_24`. Source-filtered historical inspection subsequently
+returned separate persisted MQTT industrial events and linked normalized
+histories for **each source**, 222 signals in each shown P4 event.
+The following P4/C1 values were normalized with
+`quality=VALID, interpretation=PROFILE`:
+
+| Signal | LAB-BDFB-02 | LAB-BDFB-03 |
+|---|---:|---:|
+| state | ONLINE (1) | ONLINE (1) |
+| U1 | 12.41 V | 12.64 V |
+| I1 | 2.93 A | 2.13 A |
+| P1 | 36.31 W | 26.87 W |
+| EP1 | 0.17315 kWh | 0.17311 kWh |
+
+`msgid`, `sn` and uncommissioned `U2/I2/P2/EP2`
+remain faithfully stored RAW with `UNKNOWN/UNINTERPRETED`. This
+is not a normalization failure; assigning them engineering meaning
+requires an explicit additional field contract.
+
+**Proved:** 2 LAB sources, 96 synthetic breaker positions each, four
+24-point publisher batches per source, persisted MQTT industrial RAW
+capture, correct per-point normalization for representative P4 signals
+and preservation of the original MQTT source owners.
+
+**Not proved solely by this log:** 96x5 latest catalog coverage for
+*every* breaker, sustained real-time LIVE in the UI, Timescale delivery
+end-to-end, Modbus Unit IDs 2/3 mapped to these two LAB publishers, or
+any Metasys field reading. Existing Modbus mapping was set to
+`EMU-BFDB-01/02/03` and was deliberately not changed, so avoid
+claiming the new LAB feeds are exposed as Units 2/3.
+
+A new **read-only** checker
+`scripts/telemetry/audit-bdfb-lab-capture.mongosh.js` reports
+full 2x96 historical industrial catalog coverage, per-breaker
+`PROFILE/VALID` electrical metrics and ONLINE state, equipment
+target/point binding equality, four-panel coverage, source event counts
+and the last-event age. It hard-checks that original BDFB-01 still has
+three installed breakers and original `EMU-BFDB-02/03` serial+SOURCE
+owners remain intact. Its PASS is a historical-capture acceptance gate;
+a 90s recent event indicator is displayed separately, and passing
+does not by itself certify LIVE/Modbus/Timescale.
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+docker exec -i appm-site-mapper-mongodb-1 mongosh --quiet \
+  --file /dev/stdin < scripts/telemetry/audit-bdfb-lab-capture.mongosh.js
+```
+
+The checker passed a full in-memory 2x96 sample mock with 480 signals
+per source and original owner fingerprints preserved; it has **not**
+been run against the operator's real MongoDB by the assistant.

@@ -231,10 +231,19 @@ def prepare(args):
             "networks": {"default": {}, "industrial-lab": {}},
             "environment": {
                 "MQTT_BROKER_URL": "mqtt://lab-mosquitto:1883",
-                "MQTT_EXPECTED_SOURCES": "EMU-BFDB-01,EMU-BFDB-02,EMU-BFDB-03",
+                "MQTT_EXPECTED_SOURCES": (
+                    "EMU-BFDB-01,EMU-BFDB-02,EMU-BFDB-03"
+                    + (",LAB-BDFB-02,LAB-BDFB-03"
+                       if {p.get("sourceIdentity") for p in profiles}.issuperset(
+                           {"LAB-BDFB-02", "LAB-BDFB-03"}) else "")
+                ),
                 "INDUSTRIAL_LOGICAL_POINTS_FILE": "/config/logical.json",
+                "INDUSTRIAL_PROFILES_FILE": "/config/industrial-profiles.json",
             },
-            "volumes": [str(RUNTIME / "logical.json") + ":/config/logical.json:ro"],
+            "volumes": [
+                str(RUNTIME / "logical.json") + ":/config/logical.json:ro",
+                str(RUNTIME / "profiles.json") + ":/config/industrial-profiles.json:ro",
+            ],
         },
         "snmp-traps": {"networks": {"default": {}, "industrial-lab": {}}},
         "lab-mosquitto": {
@@ -314,7 +323,10 @@ def prepare(args):
         "TELEMETRY_HISTORY_ENABLED": "true",
         "MQTT_BROKER_URL": "mqtt://lab-mosquitto:1883",
         "INDUSTRIAL_TIMESCALE_ENABLED": "true",
-        "INDUSTRIAL_PROFILES_JSON": json.dumps(profiles, separators=(",", ":")),
+        # Profile rules are file-mounted on the ACTIVE existing-stack service.
+        # Preserve validated full profile JSON in .runtime/profiles.json; keep the
+        # required env key below Linux's per-variable size limit.
+        "INDUSTRIAL_PROFILES_JSON": "[]",
         "INDUSTRIAL_INGEST_SOURCES_JSON": json.dumps({
             source["sourceIdentity"]: source["token"] for source in sources
         }, separators=(",", ":")),

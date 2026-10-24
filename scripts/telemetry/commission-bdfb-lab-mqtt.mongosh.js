@@ -51,6 +51,7 @@ function descend(p,k,expectedCount) {
    return n;
  });
 }
+print("COMMISSION PREFLIGHT: validating original BDFB and MQTT source ownership");
 const original=get(PRIMARY.id);
 assert(original.kind==="DEVICE"&&original.serialNumber===PRIMARY.serial &&
   original.parentId===PRIMARY.rack,"BDFB-01 identity/rack drift");
@@ -64,6 +65,7 @@ assert(fingerprints.every(x=>x.bindings.length===1&&
   x.bindings[0].targetType==="EQUIPMENT"),"Original source bindings changed");
 const staged=[];
 for(const x of TARGETS){
+ print("COMMISSION PREFLIGHT: inspect "+x.name+" rack and equipment");
  const rack=get(x.rack);
  const pos=get(rack.parentId);
  const bay=get(x.bay);
@@ -90,8 +92,15 @@ for(const x of TARGETS){
    chassis.parentId===device.id && chassis.parentEquipmentId===null,
    x.name+" invalid chassis");
  assert(chassis.rackPlacement?.rackId===rack.id, x.name+" rack placement missing");
- assert(rack.cas?.some(c=>c.state==="EQUIPPED"&&c.occupantId===chassisId),
-   x.name+" missing CAS allocation");
+ // Legacy Mongo records may carry non-array cas. Refuse to treat an
+ // unknown shape as available, rather than calling Array.prototype.some.
+ assert(Array.isArray(rack.cas),x.name+" non-array rack CAS");
+ let equipped=false;
+ for(const allocation of rack.cas){
+   if(allocation && allocation.state==="EQUIPPED" &&
+      allocation.occupantId===chassisId) equipped=true;
+ }
+ assert(equipped,x.name+" missing CAS allocation");
  const shelf=descend(chassis,"SHELF",1)[0];
  const frames=descend(shelf,"FRAME",2);
  const expected=[];
@@ -104,8 +113,16 @@ for(const x of TARGETS){
        x.name+" panel "+group+" has unexpected raw point prefix");
      const breakers=descend(panel,"CIRCUIT_BREAKER",24);
      for(const [i,breaker] of breakers.entries()){
-       assert(breaker.accessPorts?.some(p=>p.id===breaker.id+":power-out" &&
-         p.direction==="OUTPUT"&&p.lifecycle==="ACTIVE"), 
+       assert(Array.isArray(breaker.accessPorts),
+         x.name+" malformed breaker accessPorts at position "+(i+1));
+       let outputPort=false;
+       for(const port of breaker.accessPorts){
+         if(port && port.id===breaker.id+":power-out" &&
+            port.direction==="OUTPUT" && port.lifecycle==="ACTIVE"){
+           outputPort=true;
+         }
+       }
+       assert(outputPort,
          x.name+" missing breaker output port "+(i+1));
        const point=prefix+"_"+(i+1);
        for(const metric of METRICS){
@@ -124,6 +141,7 @@ for(const x of TARGETS){
    targetId:device.id,
  });
  assert(expected.length===385,x.name+" expected 385 lab bindings");
+ print("COMMISSION PREFLIGHT: "+x.name+" breaker map complete (96 positions)");
  const prior=b.find({protocol:"MQTT",sourceIdentity:x.serial,
    lifecycle:"ACTIVE"}).toArray();
  const desired=new Map(expected.map(item=>[item.id,item]));

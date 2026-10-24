@@ -2,8 +2,10 @@
 """Stage/commission INDUSTRIAL_PROFILES_JSON for two new synthetic LAB BDFBs.
 
 Default: read-only, prints counts and current profile coverage.
---apply: additive, backed-up edits ONLY to .runtime/industrial-lab/profiles.json
-         and the corresponding INDUSTRIAL_PROFILES_JSON line in lab.env.
+--apply: additive, backed-up edits ONLY to .runtime/industrial-lab/profiles.json,
+         its site-mapper read-only mount in compose.json, and a small fallback
+         INDUSTRIAL_PROFILES_JSON='[]' line in lab.env.
+No giant environment variables; full profiles are loaded from a mounted file.
 This does not touch Mongo, original profiles, timeseries, service processes,
 Docker containers or Modbus mapping. Existing Site Mapper app must load the
 changed environment on a separately controlled service-only restart.
@@ -172,14 +174,16 @@ def write_atomic(path, text):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--apply", action="store_true",
-                        help="Back up and update only the lab profile+env files")
+                        help="Back up and update the existing three lab profile/overlay/env files")
     args = parser.parse_args()
     profiles_path = LAB / "profiles.json"
     env_path = LAB / "lab.env"
-    if not profiles_path.is_file() or not env_path.is_file():
-        parser.error("Expected existing .runtime/industrial-lab/profiles.json and lab.env; never recreate them blindly")
-    if profiles_path.is_symlink() or env_path.is_symlink():
-        parser.error("Refusing to follow symlinked lab configuration files")
+    compose_path = LAB / "compose.json"
+    for path in (profiles_path, env_path, compose_path):
+        if not path.is_file():
+            parser.error("Existing industrial-lab config missing: " + str(path))
+        if path.is_symlink():
+            parser.error("Refusing to follow symlinked config: " + str(path))
     current = json.loads(profiles_path.read_text(encoding="utf-8"))
     assert isinstance(current, list), "Expected existing array of approved profiles"
     assert any(p.get("sourceIdentity") == "EMU-BFDB-02" for p in current)
@@ -197,15 +201,30 @@ def main():
         else:
             changes.append(p)
     combined = current + changes
-    compact = json.dumps(combined, separators=(",", ":"), ensure_ascii=True)
+    compose = json.loads(compose_path.read_text(encoding="utf-8"))
+    assert isinstance(compose, dict) and isinstance(compose.get("services"), dict)
+    service = compose["services"].get("site-mapper")
+    assert isinstance(service, dict), "Missing site-mapper overlay service"
+    assert isinstance(service.get("environment"), dict), "Missing Site Mapper environment"
+    assert isinstance(service.get("volumes"), list), "Missing Site Mapper volume list"
+    target_mount = str(profiles_path) + ":/config/industrial-profiles.json:ro"
+    existing_mounts = [v for v in service["volumes"]
+                       if isinstance(v, str) and "/config/industrial-profiles.json" in v]
+    assert not existing_mounts or existing_mounts == [target_mount], (
+        "Unexpected pre-existing industrial profiles volume mount"
+    )
+    service["environment"]["INDUSTRIAL_PROFILES_FILE"] = "/config/industrial-profiles.json"
+    if not existing_mounts:
+        service["volumes"].append(target_mount)
+    next_compose = json.dumps(compose, ensure_ascii=True, indent=2) + "\n"
     lines = env_path.read_text(encoding="utf-8").splitlines(keepends=True)
     indexes = [i for i, line in enumerate(lines)
                if line.startswith("INDUSTRIAL_PROFILES_JSON=")]
     assert len(indexes) == 1, "Expected exactly one INDUSTRIAL_PROFILES_JSON in lab.env"
-    # Use the lab launcher's existing single-quoted env-file serialization.
-    value = "INDUSTRIAL_PROFILES_JSON='" + compact.replace("'", "\\'") + "'\n"
+    # Keep the required legacy env key small; file-backed rules take precedence.
     next_lines = list(lines)
-    next_lines[indexes[0]] = value
+    next_lines[indexes[0]] = "INDUSTRIAL_PROFILES_JSON='[]'\n"
+    next_env = "".join(next_lines)
     print("SITE MAPPER / INDUSTRIAL LAB PROFILES")
     print("Original profiles preserved:", len(current))
     print("New LAB sources:", ", ".join(x["sourceIdentity"] for x in changes) or "none")
@@ -214,21 +233,25 @@ def main():
               " profile rules = 96 breakers x (U1,I1,P1,EP1,state)")
     print("Secondary U2/I2/P2/EP2 fields intentionally remain raw/UNINTERPRETED.")
     if not args.apply:
-        print("PLAN ONLY: 0 filesystem/DB writes. --apply edits 2 config files, no restart.")
+        print("PLAN ONLY: 0 filesystem/DB writes. --apply edits 3 config files, no restart.")
         return
-    if not changes and "".join(lines) == "".join(next_lines):
+    current_compose = compose_path.read_text(encoding="utf-8")
+    current_env = env_path.read_text(encoding="utf-8")
+    if (not changes and current_compose == next_compose
+            and current_env == next_env):
         print("ALREADY PREPARED: no configuration changes.")
         return
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    for path in (profiles_path, env_path):
+    for path in (profiles_path, compose_path, env_path):
         backup = path.with_name(path.name + ".before-lab-" + timestamp)
         if backup.exists():
             raise RuntimeError("Backup already exists, retry later: " + str(backup))
         shutil.copy2(path, backup)
         backup.chmod(0o600)
     write_atomic(profiles_path, json.dumps(combined, indent=2, ensure_ascii=True) + "\n")
-    write_atomic(env_path, "".join(next_lines))
-    print("CONFIG WRITTEN (2 files; private backups saved alongside).")
+    write_atomic(compose_path, next_compose)
+    write_atomic(env_path, next_env)
+    print("CONFIG WRITTEN (3 files; private backups saved alongside).")
     print("The current Site Mapper container still has OLD startup profiles.")
     print("Recreate ONLY the Site Mapper application service using its current Compose project after checking project config.")
     print("No source mappings, Mongo documents, Modbus points, SNMP settings or original profiles changed.")

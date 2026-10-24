@@ -34,11 +34,14 @@ flowchart LR
   App --> Store[Telemetry Store · HTTP interno]
   Store --> TS[(TimescaleDB · Histórico)]
   App --> Sidecar[Modbus TCP · FC03]
+  SnmpAgent[Agente SNMPv3 sintético · entradas A/B] --> SnmpCollector[Colector de lecturas SNMP]
+  SnmpCollector -->|Ingesta autenticada| App
+  App --> InputView[Inputs / Charts SNMP]
   Console[Operational Console · 3100] --> Mongo
   Console --> TS
 ```
 
-El broker/emulador/gateway exterior es independiente del repositorio. Modbus lee su Latest State, no consulta TimescaleDB durante cada FC03.
+El emulador externo MQTT/SNMP vive en otro repositorio; Site Mapper, el colector y el gateway se conectan mediante contratos explícitos. Modbus lee su Latest State, no consulta TimescaleDB durante cada FC03. La historia SNMP de shunts A/B y la historia MQTT de breakers son series diferentes.
 
 ### Jerarquía
 

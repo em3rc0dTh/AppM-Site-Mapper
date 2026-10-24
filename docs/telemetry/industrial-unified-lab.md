@@ -1969,3 +1969,126 @@ agent + collector; verify `LAB_LIVE`, SNMP 24h trend evidence
 and no regressions to MQTT/Modbus. Physical field SNMP
 commissioning still requires verified MIB/OID, management network,
 SNMPv3 credentials and independent wiring sign-off.
+
+
+### 2026-10-24: SNMP read-only audit confirmed, additive Config2 BDFB-01 lab ready
+
+The operator ran `scripts/telemetry/audit-bdfb-snmp-readiness.py` on
+the actual WSL2 original-stack Compose project
+(`appm-site-mapper`, database `site_mapper_crud_acceptance_02`).
+The **observed** facts were:
+
+```text
+APP_ENV=development
+SNMP_INGEST_TOKEN_configured=true
+SNMP_LAB_ENABLED=UNSET
+TELEMETRY_HISTORY_ENABLED=true
+RUNNING SNMP COLLECTORS=none
+
+BDFB-01:
+  hardwareProfile ELTEK_BDCBB_CONFIG_2
+  4 PANELS, 3 existing breakers
+  INPUT-SHUNT-A/B: 2/2 external POWER INPUT ports
+  physical verification=False on both
+  each port serves 2 panels
+  4/4 SNMP bindings source EMU-DELTA-BFDB-01
+  CURRENT and VOLTAGE OIDs on both inputs
+  commissioning SYNTHETIC_LAB_ONLY
+
+BDFB-02:
+  4 PANELS, 96 breakers
+  hardwareProfile NOT SELECTED
+  0 SNMP POWER INPUT ports / 0 SNMP bindings
+
+BDFB-03:
+  4 PANELS, 96 breakers
+  hardwareProfile NOT SELECTED
+  0 SNMP POWER INPUT ports / 0 SNMP bindings
+```
+
+**Operational implication:** The 192 LAB MQTT breakers and newly
+commissioned Modbus Units 4/5 do not provide SNMP incoming shunt
+readings, and existing BDFB-01 synthetic OID inventory does not mean
+an SNMP agent or collector is running. Site Mapper's
+`SNMP_LAB_ENABLED` switch enables only explicit synthetic mapping
+assistant endpoints; the normalized ingest endpoint already has a
+separate token configured, without requiring that opt-in assistant
+flag. No SNMP hardware/controller/physical wiring is certified.
+
+#### Additive first gate — BDFB-01 only
+
+The exact **Config2 A/B** profile has both inventory and approved
+synthetic bindings present on BDFB-01. It is the only current device
+eligible for a no-topology-change SNMP laboratory activation. We
+created an intentionally narrow, opt-in extra Compose file at
+`infra/lab/bfdb-snmp/original-stack-config2-bdfb01.yml`,
+containing exactly two new services:
+
+1. `snmp-lab-agent-01`: SNMPv3 authPriv, private container network
+   UDP/1161 only, synthetic Config2 A/B telemetry and the existing
+   controller identity `EMU-DELTA-BFDB-01` from the separately
+   checked-out `thradexIT/bfdb-telemetry-gateway` emulator.
+2. `snmp-lab-collector-01`: polls only four Config2 `2026.48.*`
+   OIDs, 30s interval, and POSTs normalized observations to the
+   **unchanged** private original Site Mapper `/api/telemetry/snmp/ingest`
+   with the running app's existing SNMP bearer token.
+
+An explicit preflight/launch helper at
+`scripts/telemetry/commission-bdfb01-snmp-lab.py` validates:
+
+- active original Mongo, Site Mapper and five-unit Modbus gateway;
+- exact original BDFB-01 three breaker / four panel / two input layout,
+  A/B synthetic-only source ownership, and four distinct CURRENT/
+  VOLTAGE OIDs; no verified physical feeder claims;
+- approved external emulator Git checkout, SNMPv3 authPriv credentials
+  (secrets neither logged nor placed into Git) and an original
+  Site Mapper `SNMP_INGEST_TOKEN` already present;
+- Compose project identity, app token consistency, profile/source/URL
+  ownership, **zero exposed host ports**, default private Docker
+  network only, no service overrides in the additive overlay;
+- Docker container names are unused to prevent unnoticed replacement
+  of an earlier lab.
+
+**Default is read-only; no action was performed on the operator's
+running Docker by committing this code.** The opt-in `--apply`
+requires `--ack-synthetic-only` and invokes Compose
+`up -d --no-deps --build` **only** for the two named new services.
+It does not recreate the old app, bridge, Mongo, TimescaleDB,
+existing MQTT publisher or existing BFDB inventory.
+
+Operator commands (only after separately confirming the external
+BFDB emulator checkout and private `.env.snmp` credentials exist):
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 -m unittest discover -s tests/python -p 'test_bdfb01_snmp_additive.py' -v
+python3 scripts/telemetry/commission-bdfb01-snmp-lab.py
+# Optional synthetic-only start AFTER the above preflight is clean:
+python3 scripts/telemetry/commission-bdfb01-snmp-lab.py \
+  --apply --ack-synthetic-only
+# If BFDB checkout is at a different path:
+#   --bfdb-repo /absolute/approved/bfdb-telemetry-gateway
+```
+
+If the BFDB checkout or the ignored `.env.snmp` is absent, the
+preflight must fail closed; **do not run the broad**
+`scripts/lab/bfdb-snmp-config4.sh up` command in this original
+industrial stack. Do not enable SNMPv2c to work around missing
+SNMPv3 credentials.
+
+Once the additive services are genuinely running, verify only
+BDFB-01's independent SNMP feed A/B statuses `LAB_LIVE` and SNMP
+TimescaleDB 24h history separately from MQTT breaker history.
+The two sources are different synthetic measurements and cannot
+be used to mathematically certify physical current conservation.
+
+**BDFB-02 and BDFB-03 are not silently modified.** Their
+independent shunt hardware configuration is unknown: Config2
+(A/B) and Config4 (A1/A2/B1/B2) cannot be inferred from
+four output panels or from MQTT/Modbus success. The next scoped
+operation for each of those two requires explicit simulated lab
+profile choice (clearly synthetic), creation of matching distinct
+external POWER INPUT AccessPorts with non-verified physical flags,
+and OID mappings to the matching SNMP emulator profile; never copy
+BDFB-01's existing source identity or mark such a synthetic
+port as field-verified.

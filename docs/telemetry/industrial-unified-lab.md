@@ -839,3 +839,86 @@ docker exec -i -e SITEMAPPER_PROVISION_MODE=apply \
 No app rebuild, Docker restart, data migration or volume deletion is
 needed. The repository update alone does not provision the operator's
 local database.
+
+
+### Three BDFB lab: physical provisioning confirmed, MQTT commissioning staged
+
+The operator's original MongoDB stack reported:
+
+```text
+APPLY COMMITTED: 210 topology documents, 0 MQTT bindings, 2 rack CAS allocations.
+BDFB-01 serial=EMU-BFDB-10 rack=63b7... breakers=3
+BDFB-02 serial=LAB-BDFB-02 rack=5b537... breakers=96
+BDFB-03 serial=LAB-BDFB-03 rack=164fe... breakers=96
+```
+
+Therefore **195 currently installed breakers** across the three BDFBs,
+of which 192 are explicitly synthetic saturation-fixture records.
+Do not report 288 installed breakers; that would conflate available
+addressing capacity with actual inventory.
+
+The next phase is entirely separate. The original MQTT publisher identities
+`EMU-BFDB-02` (BDFB-01 shelf) and `EMU-BFDB-03`
+(BDFB-01 frame) are retained without any alias reassignment.
+The new LAB Devices **already have** serials `LAB-BDFB-02` and
+`LAB-BDFB-03`; they will publish under their own names and wire
+`sn` values.
+
+Two new scripts stage this transition:
+
+1. `scripts/telemetry/commission-bdfb-lab-mqtt.mongosh.js` maps
+   **96×4 electrical points plus one SOURCE per new device**,
+   totaling **385×2 = 770 additive bindings**. It validates every
+   parent/child ownership edge, raw point prefix, rack CAS allocation,
+   LAB serial uniqueness, device provenance and the two original SOURCE
+   owners. Its default mode is read-only plan; atomic `apply` inserts only
+   the new LAB bindings. A second apply is idempotent (0 writes) when all
+   770 active bindings exactly match.
+2. `scripts/telemetry/publish-bdfb-lab-pair.py` publishes directly to
+   the existing `appm-site-mapper-lab-mosquitto-1` broker via
+   `docker exec mosquitto_pub`; no compose restart or new dependencies.
+   Topics and payload `sn` are `data/dev/LAB-BDFB-02` /
+   `LAB-BDFB-02` and `data/dev/LAB-BDFB-03` /
+   `LAB-BDFB-03`. It publishes 24 panelized points per source every
+   5 seconds (96 per 20 seconds), with V/A/W/monotonic synthetic
+   kWh values. Broker QoS 1, retain false. This cadence avoids the
+   obvious 40s scan vs 30s stale mismatch in the old synthetic feed
+   under normal processing; it does not guarantee freshness if ingestion
+   stalls. The publisher defaults to preview, and foreground `--publish`
+   is explicit. Stopping it allows quality to decay normally.
+
+Operator steps **after a fresh post-topology database backup**:
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+
+# Diagnostic, no writes:
+docker exec -i appm-site-mapper-mongodb-1 mongosh --quiet \
+  --file /dev/stdin < scripts/telemetry/commission-bdfb-lab-mqtt.mongosh.js
+python3 scripts/telemetry/publish-bdfb-lab-pair.py
+
+# LAB-only bindings, after confirming dry-run and backup:
+docker exec -i -e SITEMAPPER_MQTT_COMMISSION_MODE=apply \
+  -e SITEMAPPER_MQTT_COMMISSION_ACK=LAB_ONLY \
+  appm-site-mapper-mongodb-1 mongosh --quiet \
+  --file /dev/stdin < scripts/telemetry/commission-bdfb-lab-mqtt.mongosh.js
+
+# Four batches per source (partial demonstration, then stale):
+python3 scripts/telemetry/publish-bdfb-lab-pair.py --publish --cycles 4
+
+# For sustained LIVE demonstration (foreground; Ctrl+C stops):
+python3 scripts/telemetry/publish-bdfb-lab-pair.py --publish
+```
+
+The new bindings do **not** alter industrial Modbus unit register
+commissioning, nor connect Metasys. Existing Unit ID 2/3 output may
+continue to reflect the old `EMU-BFDB-02/03` synthetic publishers;
+the new LAB source wiring to Modbus is a distinct approval/review step.
+
+The two-phase synthetic topology + binding sequence was run through a
+side-effect-free JavaScript in-memory integration mock: 210 synthetic
+topology nodes, 192 simulated breakers, no original SOURCE binding edits,
+read-only MQTT commission plan, 770 additive bindings, followed by a
+second idempotent apply (0 additional records). The operator has **not
+yet executed** the 770-binding apply or the two LAB publishers on the
+local original stack.

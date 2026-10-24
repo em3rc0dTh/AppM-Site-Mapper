@@ -3,8 +3,8 @@
 
 Default: read-only, prints counts and current profile coverage.
 --apply: additive, backed-up edits ONLY to .runtime/industrial-lab/profiles.json,
-         its site-mapper read-only mount in compose.json, and a small fallback
-         INDUSTRIAL_PROFILES_JSON='[]' line in lab.env.
+         the ACTIVE existing-compose.json read-only app mount, and the fallback
+         INDUSTRIAL_PROFILES_JSON='[]' in existing.env.
 No giant environment variables; full profiles are loaded from a mounted file.
 This does not touch Mongo, original profiles, timeseries, service processes,
 Docker containers or Modbus mapping. Existing Site Mapper app must load the
@@ -177,8 +177,11 @@ def main():
                         help="Back up and update the existing three lab profile/overlay/env files")
     args = parser.parse_args()
     profiles_path = LAB / "profiles.json"
-    env_path = LAB / "lab.env"
-    compose_path = LAB / "compose.json"
+    # The operator's actual application belongs to Compose project
+    # appm-site-mapper and was started with existing-compose.json.
+    # The isolated compose.json/lab.env pair belongs to a DIFFERENT project.
+    env_path = LAB / "existing.env"
+    compose_path = LAB / "existing-compose.json"
     for path in (profiles_path, env_path, compose_path):
         if not path.is_file():
             parser.error("Existing industrial-lab config missing: " + str(path))
@@ -207,6 +210,15 @@ def main():
     assert isinstance(service, dict), "Missing site-mapper overlay service"
     assert isinstance(service.get("environment"), dict), "Missing Site Mapper environment"
     assert isinstance(service.get("volumes"), list), "Missing Site Mapper volume list"
+    assert service["environment"].get("MQTT_BROKER_URL") == "mqtt://lab-mosquitto:1883", (
+        "Active existing-stack overlay does not use the expected isolated LAB MQTT broker"
+    )
+    assert any(v.endswith(":/config/logical.json:ro") for v in service["volumes"]
+               if isinstance(v, str)), "Existing overlay is missing its canonical logical-points mount"
+    assert any(re.fullmatch(r"MONGODB_DB_NAME=['\"]?" + re.escape(DB) + r"['\"]?",
+                            line.strip()) for line in env_path.read_text(encoding="utf-8").splitlines()), (
+        "existing.env does not select the exact preserved acceptance database"
+    )
     target_mount = str(profiles_path) + ":/config/industrial-profiles.json:ro"
     existing_mounts = [v for v in service["volumes"]
                        if isinstance(v, str) and "/config/industrial-profiles.json" in v]
@@ -214,6 +226,12 @@ def main():
         "Unexpected pre-existing industrial profiles volume mount"
     )
     service["environment"]["INDUSTRIAL_PROFILES_FILE"] = "/config/industrial-profiles.json"
+    expected = [x.strip() for x in service["environment"].get("MQTT_EXPECTED_SOURCES", "").split(",")
+                if x.strip()]
+    for serial in SERIALS:
+        if serial not in expected:
+            expected.append(serial)
+    service["environment"]["MQTT_EXPECTED_SOURCES"] = ",".join(expected)
     if not existing_mounts:
         service["volumes"].append(target_mount)
     next_compose = json.dumps(compose, ensure_ascii=True, indent=2) + "\n"
@@ -253,7 +271,8 @@ def main():
     write_atomic(env_path, next_env)
     print("CONFIG WRITTEN (3 files; private backups saved alongside).")
     print("The current Site Mapper container still has OLD startup profiles.")
-    print("Recreate ONLY the Site Mapper application service using its current Compose project after checking project config.")
+    print("This stages appm-site-mapper's actual existing-compose.json + existing.env.")
+    print("Recreate ONLY Site Mapper after a verified Compose config/secret comparison; no auto-restart.")
     print("No source mappings, Mongo documents, Modbus points, SNMP settings or original profiles changed.")
 
 

@@ -2125,8 +2125,8 @@ original Site Mapper TimescaleDB, or that the browser shows
 Next acceptance actions, with no Compose or database mutation:
 
 ```bash
-docker logs --tail 50 appm-site-mapper-snmp-lab-agent-01
-docker logs --tail 80 appm-site-mapper-snmp-lab-collector-01
+docker logs --tail 50 appm-site-mapper-snmp-lab-agent-01-1
+docker logs --tail 80 appm-site-mapper-snmp-lab-collector-01-1
 ```
 
 Expected collector records, **not yet observed in supplied evidence**:
@@ -2151,3 +2151,76 @@ BDFB-01 bindings were present before service start. Do not
 recreate the app to change this flag just to test incoming
 synthetic SNMP metrics. Do not claim field SNMP certification
 from laboratory readings.
+
+
+### 2026-10-24: Real SNMPv3 collector HTTP acceptance confirmed for Config2 BDFB-01
+
+The operator validated the exact generated Compose instance names
+`appm-site-mapper-snmp-lab-agent-01-1` and
+`appm-site-mapper-snmp-lab-collector-01-1`, each **Up** in the
+original `appm-site-mapper` project.
+
+Real agent log:
+
+```text
+snmp.emulator.ready
+kind=LAB_SYNTHETIC_NOT_DELTA
+bfdbId=BFDB-01
+sourceIdentity=EMU-DELTA-BFDB-01
+udpPort=1161
+scenario=NORMAL
+hardwareProfile=ELTEK_BDCBB_CONFIG_2
+snmpVersion=3
+points:
+  CURRENT A 1.3.6.1.4.1.8072.9999.2026.48.1.1.0
+  VOLTAGE A 1.3.6.1.4.1.8072.9999.2026.48.2.1.0
+  CURRENT B 1.3.6.1.4.1.8072.9999.2026.48.1.2.0
+  VOLTAGE B 1.3.6.1.4.1.8072.9999.2026.48.2.2.0
+```
+
+Collector log confirmed `snmp.collector.started` with
+SNMPv3, `pointCount=4`, `pollIntervalMs=30000`, and
+**nine consecutive** `snmp.poll.accepted` records for the
+unchanged source `EMU-DELTA-BFDB-01`, at these UTC times
+on 2026-10-24:
+
+```text
+15:49:43.362  accepted
+15:50:12.205  accepted
+15:50:40.781  accepted
+15:51:09.563  accepted
+15:51:38.117  accepted
+15:52:06.698  accepted
+15:52:35.149  accepted
+15:53:03.879  accepted
+15:53:32.477  accepted
+```
+
+No `snmp.poll.failed` records were shown. From the actual
+`infra/snmp-collector/server.mjs`, `snmp.poll.accepted`
+is logged only after a completed SNMP GET, normalization,
+and a successful 2xx POST response from the Site Mapper
+ingest endpoint. The code in
+`src/app/api/telemetry/snmp/ingest/route.ts` returns HTTP
+202 only after the feed service accepts the input, whose
+configured historical path calls `commitSnmpBatch`.
+This is therefore real collector-to-Site Mapper protocol
+ingress evidence, **not merely a simulated unit test**.
+
+**Still requires separate explicit acceptance:** BDFB-01
+Inputs must show A/B as `LAB_LIVE` with nonempty current and
+voltage; BDFB-01 Charts / 24H must show actual stored
+TimeScaleDB SNMP series. The browser queries
+`GET /api/telemetry/snmp/feeds?deviceId=<deviceId>` for
+live status and
+`GET /api/telemetry/snmp/feeds/trends?deviceId=<deviceId>&window=24h`
+for historical buckets. The latter explicitly tags both
+feed source modes as `SYNTHETIC_LAB_ONLY`. These endpoints
+require an authenticated `telemetry:read` session and
+should be checked in the running UI rather than declaring
+success based solely on the collector log.
+
+The field-physical status remains **not verified**. There
+are no active SNMP input profiles or OIDs for BDFB-02/03,
+and no need to restart/redeploy Site Mapper, Modbus or
+the databases for this verification.

@@ -49,7 +49,13 @@ def run(argv, *, env=None, timeout=75):
     return result.stdout.strip()
 
 
-def inspect(name):
+def inspect(name, *, targeted=True):
+    """Verify running service identity. Pin Compose provenance only for targets.
+
+    Mongo and Timescale are never recreated: their historical Compose
+    labels may contain legitimate overlays not in the app/bridge stack.
+    Their exact named volumes are verified separately in deploy().
+    """
     rows=json.loads(run(["docker","inspect",name]))
     require(len(rows)==1,"ambiguous/missing "+name)
     node=rows[0]
@@ -63,25 +69,32 @@ def inspect(name):
     require(labels.get("com.docker.compose.project.working_dir")==str(ROOT),
             "Compose working directory changed for "+name)
     actual=labels.get("com.docker.compose.project.config_files","").split(",")
-    expected=[str(p) for p in FILES]
-    # Containers within the SAME existing project may have been recreated at
-    # different times: mongodb/Timescale/bridge can still carry the base or
-    # base+industrial Compose labels, while the app carries all three files.
-    # Accept ONLY an ordered prefix of these exact approved paths (no extra
-    # compose file, alternate checkout, changed project or arbitrary suffix).
-    approved=[expected[:i] for i in (1,2,3)]
-    require(actual in approved,
-            "unapproved Compose provenance for "+name+
-            " (file count="+str(len(actual))+"); expected an approved base-to-overlay prefix")
-    if name==APP:
-        require(actual==expected,
-                "Site Mapper must have been recreated from the active existing-stack overlay")
-    # The existing Modbus bridge may still bear only the base Compose
-    # provenance. Its *effective* environment and persistent mounts are
-    # checked later against the fully resolved proposed three-file Compose
-    # config, so we must not reject a safe historical deployment here.
-    print("COMPOSE PROVENANCE OK "+service+" | approved files="+
-          str(len(actual))+" | project="+PROJECT)
+    require(bool(actual) and all(actual),
+            "missing Compose config provenance for "+name)
+    if targeted:
+        require(name in (APP,BRIDGE),
+                "only app/bridge may be treated as redeployment targets")
+        expected=[str(p) for p in FILES]
+        # Only a target to be recreated must originate from an exact,
+        # approved ordered prefix of the expected current Compose files.
+        approved=[expected[:i] for i in (1,2,3)]
+        require(actual in approved,
+                "unapproved Compose provenance for "+name+
+                " (file count="+str(len(actual))+")")
+        if name==APP:
+            require(actual==expected,
+                    "Site Mapper must have been recreated from the active existing-stack overlay")
+        print("COMPOSE PROVENANCE OK "+service+" | approved files="+
+              str(len(actual))+" | project="+PROJECT)
+    else:
+        require(name in (MONGO,PROJECT+"-timescaledb-1"),
+                "non-target provenance exception limited to original databases")
+        # Historical Compose file labels on preserved DB containers are
+        # informational, not a request to redeploy those containers.
+        # Keep identity + project + working directory checks above, and
+        # enforce exact original persistent volume names in deploy().
+        print("PRESERVED DATABASE "+service+" | historical Compose files="+
+              str(len(actual))+" | persistent mount check required")
     return node
 
 
@@ -261,7 +274,8 @@ def deploy(original_app,original_bridge,live_map,backup):
         require(not unexpected,"unexpected changes in "+name+": "+", ".join(unexpected))
         compare_mounts(node,conf,name)
     # Existing persistence must never be replaced by an implicitly fresh DB.
-    mongo,timescale=inspect(MONGO),inspect(PROJECT+"-timescaledb-1")
+    mongo,timescale=inspect(MONGO,targeted=False),inspect(
+        PROJECT+"-timescaledb-1",targeted=False)
     require(any(m.get("Destination")=="/data/db" and
                 m.get("Name")==PROJECT+"_site_mapper_mongo_data"
                 for m in mongo.get("Mounts",[])),"original Mongo volume differs")

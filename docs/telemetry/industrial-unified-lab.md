@@ -1566,8 +1566,10 @@ The check now validates **per-service** provenance:
   `docker-compose.industrial.yml`, `existing-compose.json` list;
 - Site Mapper specifically must have all three, as confirmed by
   earlier operator diagnostic;
-- Modbus bridge specifically must have the base plus industrial files
-  (and may also include the third overlay);
+- Modbus bridge may carry any approved exact historical prefix
+  (base-only, base+industrial, or all three); its actual mount paths,
+  effective environment and token configuration must still match the
+  fully resolved three-file deployment before recreation;
 - MongoDB and TimescaleDB can have any approved prefix, but retain
   their immutable original persistent volume names.
 

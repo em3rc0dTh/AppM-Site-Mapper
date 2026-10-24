@@ -54,9 +54,15 @@ def main():
     profiles = json.loads(profiles_path.read_text())
     sources = []
     services = {
-        'site-mapper': {'environment': {'INDUSTRIAL_LOGICAL_POINTS_FILE': '/config/logical.json',
-                                      'MQTT_EXPECTED_SOURCES': 'EMU-BFDB-01,EMU-BFDB-02,EMU-BFDB-03'},
-                        'volumes': [str(lab / 'logical.json') + ':/config/logical.json:ro']},
+        'site-mapper': {'environment': {
+                            'INDUSTRIAL_LOGICAL_POINTS_FILE': '/config/logical.json',
+                            'INDUSTRIAL_PROFILES_FILE': '/config/industrial-profiles.json',
+                            'MQTT_EXPECTED_SOURCES': 'EMU-BFDB-01,EMU-BFDB-02,EMU-BFDB-03',
+                        },
+                        'volumes': [
+                            str(lab / 'logical.json') + ':/config/logical.json:ro',
+                            str(profiles_path) + ':/config/industrial-profiles.json:ro',
+                        ]},
         'lab-mosquitto': {'image': 'eclipse-mosquitto:2.0',
                          'volumes': [str(broker) + ':/mosquitto/config/mosquitto.conf:ro'],
                          'restart': 'unless-stopped'},
@@ -103,7 +109,9 @@ def main():
                TELEMETRY_ENABLED='true', TELEMETRY_HISTORY_ENABLED='true', INDUSTRIAL_TIMESCALE_ENABLED='true',
                MQTT_BROKER_URL='mqtt://lab-mosquitto:1883', MQTT_TOPIC_FILTER='data/dev/#', MQTT_TOPIC_PREFIX='data/dev/',
                MODBUS_SOURCE_UNITS_JSON=json.dumps({f'EMU-BFDB-{i:02}': i for i in range(1, 4)}),
-               MODBUS_POINTS_LOCAL_PATH=str(lab / 'points.json'), INDUSTRIAL_PROFILES_JSON=json.dumps(profiles, separators=(',', ':')),
+               # The bounded mounted profile file carries full breaker mappings without
+               # exceeding the operating system's per-environment-value limit.
+               MODBUS_POINTS_LOCAL_PATH=str(lab / 'points.json'), INDUSTRIAL_PROFILES_JSON='[]',
                INDUSTRIAL_INGEST_SOURCES_JSON=json.dumps({s['sourceIdentity']: s['token'] for s in sources}),
                SNMP_TRAP_SOURCES_JSON=json.dumps(sources, separators=(',', ':')), SNMP_TRAP_ENGINE_ID='8000b983800001202610230001')
     envfile = lab / 'lab.env'

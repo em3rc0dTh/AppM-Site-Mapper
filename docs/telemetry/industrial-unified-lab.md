@@ -1749,7 +1749,7 @@ remain unchanged and no data is re-seeded.
 ### 2026-10-24: FC03 three direct matches; 25-second static snapshot race corrected
 
 After successful **bridge-only** activation of LAB Modbus Units 4/5
-(with EMU 1/2/3 preserved and Site Mapper/Timestale retained), the
+(with EMU 1/2/3 preserved and Site Mapper/Timescale retained), the
 operator ran the read-only FC03 verifier while LAB MQTT published in
 four rotating panels per source, 24 circuits per panel, at 5-second
 panel-batch intervals. The first three direct register block checks

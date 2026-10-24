@@ -3,6 +3,8 @@ import importlib.util
 import json
 import unittest
 from pathlib import Path
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 ROOT=Path(__file__).resolve().parents[2]
 SPEC=importlib.util.spec_from_file_location(
@@ -68,12 +70,16 @@ class SafetyTest(unittest.TestCase):
         e={"SNMP_VERSION":"3","SNMP_EMULATOR_PROFILE":"ELTEK_BDCBB_CONFIG_2",
            "SNMP_V3_USERNAME":"labadmin",
            "SNMP_V3_AUTH_KEY":"abcdefghijkl","SNMP_V3_PRIV_KEY":"qrstuvwxyz98"}
-        got=setup.safe_env(e,Path("/safe"),
-              setup.env_from(self.app))
-        self.assertEqual(got["SNMP_INGEST_TOKEN"],"p"*40)
-        e["SNMP_VERSION"]="2c"
-        with self.assertRaisesRegex(RuntimeError,"SNMPv3"):
-            setup.safe_env(e,Path("/safe"),setup.env_from(self.app))
+        with TemporaryDirectory() as scratch:
+            files=(Path(scratch)/"original.env",Path(scratch)/"existing.env")
+            for file in files:
+                file.write_text("APP_ENV=development\n",encoding="utf8")
+            with patch.object(setup,"ENV",files):
+                got=setup.safe_env(e,Path("/safe"),setup.env_from(self.app))
+                self.assertEqual(got["SNMP_INGEST_TOKEN"],"p"*40)
+                e["SNMP_VERSION"]="2c"
+                with self.assertRaisesRegex(RuntimeError,"SNMPv3"):
+                    setup.safe_env(e,Path("/safe"),setup.env_from(self.app))
 
     def test_mongo_commission_has_no_orig_mqtt_or_timescale_mutations(self):
         code=setup.JS.read_text(encoding="utf8")

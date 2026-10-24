@@ -953,3 +953,102 @@ not yet validation inside the original mongosh runtime.
 Rerun the dry-run after pulling, and run `apply` only if both BDFBs
 report `READY`. **No original Mongo volume or original MQTT mapping
 was modified by the failed commissioning run.**
+
+
+### Missing LAB industrial events after 770-binding MQTT commissioning
+
+Operator evidence (2026-10-24, after successful 770-binding transaction):
+`LAB-BDFB-02` and `LAB-BDFB-03` each have 385 active MQTT bindings.
+A query against only the last 300 global MQTT `industrial_events` returned
+zero for both; **this is not equivalent to a source-indexed historical
+count**. The raw industrial inspector selected a recent `EMU-BFDB-03`
+event from its globally latest query, not a LAB source. Its `0_2_1`
+measurements were `UNKNOWN / UNINTERPRETED`, consistent with the
+current original profiles' narrow `/reported/0_1_1` rules.
+
+The industrial capture engine reads **`INDUSTRIAL_PROFILES_JSON`** on
+application startup, separate from MongoDB's `telemetry_bindings`.
+A LAB binding alone does not commission industrial source capture.
+`getTelemetryRuntime` explicitly filters sources against the loaded
+MQTT industrial profiles before enqueueing their original RAW packet.
+Whether these sources are currently loaded in the operator's actual
+app container is checked by the new diagnostic script, not assumed.
+
+Added:
+- `scripts/telemetry/diagnose-bdfb-lab-ingress.py`: read-only
+  comparison of the active container's profile source names, broker
+  subscription filter, capture outbox counters, Compose project/config
+  labels, exact source-indexed industrial event counts and catalog sizes.
+- `scripts/telemetry/prepare-bdfb-lab-profiles.py`: read-only by
+  default; derives profiles from exactly 385 persisted MQTT bindings per
+  new BDFB. Each new LAB profile has 480 rules: 96 breakers x
+  `U1` V, `I1` A, `P1` W, `EP1` kWh, `state` enumeration.
+  The destination `targetId` is the exact breaker Equipment record,
+  not an inferred circuit index. `U2/I2/P2/EP2` remain uncommissioned
+  RAW evidence with UNKNOWN quality. Profiles use numeric decimal-string
+  opt-in and laboratory-only evidence. It rejects any conflict with
+  original `EMU-BFDB-02/03` SOURCE bindings.
+- `INDUSTRIAL_PROFILES_FILE` (bounded, read-only and absolute): source
+  profile file loaded by the Site Mapper runtime and diagnostics.
+  Backwards-compatible with original `INDUSTRIAL_PROFILES_JSON` for
+  installations without the file. File backing avoids Linux single-env
+  value limits when serializing 960 detailed LAB rules plus existing
+  profiles. The launcher now mounts the file read-only and passes
+  a small `INDUSTRIAL_PROFILES_JSON='[]'` fallback.
+- MQTT RAW observer `--source LAB-BDFB-02` and `--source LAB-BDFB-03`
+  to avoid reporting an unrelated global latest MQTT event.
+
+On the operator's WSL checkout:
+
+```bash
+git pull --ff-only origin feat/site-mapper-work-2026-10-23
+python3 scripts/telemetry/diagnose-bdfb-lab-ingress.py
+python3 scripts/telemetry/prepare-bdfb-lab-profiles.py
+```
+
+The diagnostic is read-only and will explicitly say whether the current
+container already has LAB industrial profiles. `prepare` is plan-only;
+it does not write to MongoDB or configuration.
+
+**Only after confirming profiles are absent, a fresh backup exists,
+and the plan passes:**
+
+```bash
+python3 scripts/telemetry/prepare-bdfb-lab-profiles.py --apply
+```
+
+This updates **only three private lab config files** with separate backup
+copies: `.runtime/industrial-lab/profiles.json`, `compose.json` and
+`lab.env`. In particular, it does not overwrite original MQTT/SNMP
+profiles, alter `telemetry_bindings`, change Modbus registers, touch
+MongoDB data, or restart containers.
+
+The **running Site Mapper container still has its old startup capture
+source list**. Restart/rebuild ONLY the existing Site Mapper app service
+through its **verified current Compose project and config files**;
+inspect the output of `diagnose-bdfb-lab-ingress.py` first. Do not
+guess the Compose project, run a generic `docker compose up` across
+all services, drop volumes or restart databases. If the container
+does not belong to a Compose project with the generated industrial-lab
+overlay, reconcile the deployment definition separately before a restart.
+
+After an explicitly controlled app-only rebuild/recreation, re-run
+`diagnose-bdfb-lab-ingress.py`. It should report both LAB MQTT profiles
+loaded, 480 rules each. Then publish a four-batch snapshot (two LAB
+sources, 24 points each per five seconds):
+
+```bash
+python3 scripts/telemetry/publish-bdfb-lab-pair.py --publish --cycles 4
+python3 scripts/telemetry/inspect-industrial-io.py --mode mqtt \
+  --source LAB-BDFB-02 --max-signals 32
+python3 scripts/telemetry/inspect-industrial-io.py --mode mqtt \
+  --source LAB-BDFB-03 --max-signals 32
+```
+
+Expect nonzero industrial source-indexed captures plus
+`PROFILE / VALID` values for the explicitly mapped U1/I1/P1/EP1 and
+state signals. Raw `msgid`, `sn` and uncommissioned secondary
+measurements can correctly remain UNKNOWN. Check old sources and
+original SOURCE targets remain intact before declaring success.
+**Nothing in this change remaps Modbus unit IDs or certifies
+Metasys reads.** Local deployment and acceptance remain pending.

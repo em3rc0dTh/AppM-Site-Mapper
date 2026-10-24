@@ -2,7 +2,7 @@ import { industrialHistoryDiagnostics } from './timescale-outbox';
 import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
 import { readFile, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import { parseProfiles } from '@/modules/telemetry/domain/industrial/observations';
+import { configuredIndustrialProfiles } from './profile-config';
 function runtimeFaults() {
   return getProcessSingleton<Set<string>>('industrial-runtime-faults', () => new Set());
 }
@@ -70,7 +70,7 @@ async function snapshot(path: string | undefined, protocol: string) {
 export async function captureDiagnostics() {
   let profiles;
   try {
-    profiles = parseProfiles(process.env.INDUSTRIAL_PROFILES_JSON);
+    profiles = configuredIndustrialProfiles();
   } catch {
     return { status: 'DEGRADED', alerts: ['INDUSTRIAL_PROFILES_INVALID'], sources: [] };
   }

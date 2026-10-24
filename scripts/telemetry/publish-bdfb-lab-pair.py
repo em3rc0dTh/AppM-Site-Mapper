@@ -41,8 +41,13 @@ def payload(serial: str, nominal: float, base_a: float, cycle: int, interval: fl
         current = max(0.0, base_a + 0.12 * (circuit % 12) +
                       0.2 * math.sin((cycle + circuit) * 0.09))
         power = voltage * current
-        # Monotonically increasing synthetic kWh, not a field meter reading.
-        energy = 0.1 + circuit / 1000 + (power / 1000) * elapsed_hours
+        # Monotonic synthetic kWh based on nominal load (not field data).
+        # Avoid integrating an instantaneous sine sample across all history,
+        # which could make the accumulated counter fall when current dips.
+        nominal_current = base_a + 0.12 * (circuit % 12)
+        energy = 0.1 + circuit / 1000 + (
+            (nominal * nominal_current / 1000) * elapsed_hours
+        )
         reported[f"0_{panel}_{position}"] = {
             "state": "ONLINE",
             "U1": f"{voltage:.2f}", "U2": "0.00",

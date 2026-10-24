@@ -308,6 +308,37 @@ def prepare(args):
     services["snmp-traps"]["environment"] = {
         "SNMP_TRAP_SOURCES_JSON": json.dumps(sources, separators=(",", ":"))
     }
+    # If the active original overlay already has the explicitly staged LAB
+    # Modbus Unit 4/5 override, a later lab preflight/prepare must not erase it.
+    # Fail closed on any unrecognized source map or one-sided override.
+    prior_overlay = RUNTIME / "existing-compose.json"
+    if prior_overlay.is_file():
+        prior = json.loads(prior_overlay.read_text(encoding="utf-8"))
+        prior_services = prior.get("services", {}) if isinstance(prior, dict) else {}
+        overrides = [
+            (prior_services.get(name) or {}).get("environment", {}).get(
+                "MODBUS_SOURCE_UNITS_JSON"
+            )
+            for name in ("site-mapper", "modbus-tcp")
+        ]
+        if any(item is not None for item in overrides):
+            if any(item is None for item in overrides):
+                raise Refused("Only one service has a staged Modbus source map")
+            try:
+                maps = [json.loads(item) for item in overrides]
+            except (ValueError, TypeError) as error:
+                raise Refused("Malformed staged Modbus Unit map") from error
+            expected = {
+                "EMU-BFDB-01": 1, "EMU-BFDB-02": 2, "EMU-BFDB-03": 3,
+                "LAB-BDFB-02": 4, "LAB-BDFB-03": 5,
+            }
+            if maps[0] != expected or maps[1] != expected:
+                raise Refused("Unexpected Modbus source map; cannot regenerate overlay")
+            committed = json.dumps(expected, separators=(",", ":"))
+            services["site-mapper"]["environment"]["MODBUS_SOURCE_UNITS_JSON"] = committed
+            services["modbus-tcp"] = {
+                "environment": {"MODBUS_SOURCE_UNITS_JSON": committed}
+            }
     compose = {
         "services": services,
         "networks": {

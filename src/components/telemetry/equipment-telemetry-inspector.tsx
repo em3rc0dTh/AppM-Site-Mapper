@@ -332,7 +332,7 @@ export function EquipmentTelemetryInspector({
               <div role="region" aria-label={t('industrialHistory')}>
                 <p>
                   {t('industrialHistory')} · {historySignal.logicalPointId ?? historySignal.key} ·
-                  24 h
+                  {'24 h'}
                 </p>
                 {industrialHistory?.targetId !== targetId ||
                 industrialHistory?.signalId !== historySignal.id ? (

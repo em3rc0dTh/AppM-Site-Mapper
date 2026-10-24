@@ -45,17 +45,20 @@ def run_docker(*args, timeout=20):
                            (p.stderr.strip() or "unknown error")[:240])
     return p.stdout.strip()
 
-def event_snapshots(db_name, mode="all"):
+def event_snapshots(db_name, mode="all", mqtt_source=None):
     # industrial_events persists protocol as an indexed document field,
     # but transport lives inside the original envelopeJson, not at top level.
     # Select SNMP GET vs INFORM after decoding the saved envelope.
     js = """
 const d = db.getSiblingDB(%s);
 const mode = %s;
+const mqttSource = %s;
 const candidates = [];
 if (mode !== "snmp") {
-  const mqtt = d.industrial_events.find({protocol:"MQTT"})
-    .sort({receivedAt:-1}).limit(1).next();
+  const mqttFilter = {protocol:"MQTT",
+    ...(mqttSource ? {sourceIdentity:mqttSource} : {})};
+  const mqtt = d.industrial_events.find(mqttFilter)
+    .sort({receivedAt:-1}).limit(1).toArray()[0];
   candidates.push({name:"MQTT", row:mqtt});
 }
 if (mode !== "mqtt") {
@@ -81,7 +84,7 @@ const results = candidates.map(({name,row,envelope}) => {
   return {name,eventId:row.eventId,envelope:capture,history};
 });
 print(JSON.stringify({results}));
-""" % (json.dumps(db_name), json.dumps(mode))
+""" % (json.dumps(db_name), json.dumps(mode), json.dumps(mqtt_source))
     raw = run_docker("exec", MONGO, "mongosh", "--quiet", "--eval", js, timeout=45)
     return json.loads(raw.splitlines()[-1])["results"]
 
@@ -216,6 +219,8 @@ def main():
     parser=argparse.ArgumentParser(description="Inspección RAW/NORMALIZED, sin escrituras")
     parser.add_argument("--mode",choices=["all","mqtt","snmp","modbus"],default="all")
     parser.add_argument("--db",default=DEFAULT_DB)
+    parser.add_argument("--source",default=None,
+                        help="Filtrar eventos MQTT por serial exacto, e.g. LAB-BDFB-02")
     parser.add_argument("--host",default="127.0.0.1")
     parser.add_argument("--port",type=int,default=1503)
     parser.add_argument("--units",default="1",help="Ej. 1 o 1,2,3")
@@ -226,6 +231,10 @@ def main():
     args=parser.parse_args()
     if not re.fullmatch(r"[A-Za-z0-9_]{1,100}",args.db):
         parser.error("Nombre de base inválido")
+    if args.source and not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.:-]{0,119}",args.source):
+        parser.error("Serial de fuente MQTT inválido")
+    if args.source and args.mode in ("snmp", "modbus"):
+        parser.error("--source es para modo mqtt o all")
     try:
         units=[int(v) for v in args.units.split(",")]
     except ValueError:
@@ -241,7 +250,7 @@ def main():
                   flush=True)
             if args.mode in ("all","mqtt","snmp"):
                 try:
-                    for row in event_snapshots(args.db, args.mode):
+                    for row in event_snapshots(args.db, args.mode, args.source):
                         if args.mode=="mqtt" and row["name"]!="MQTT": continue
                         if args.mode=="snmp" and row["name"]=="MQTT": continue
                         key=row["name"]

@@ -1,0 +1,48 @@
+name: Industrial lab operator safety
+
+on:
+  push:
+    branches:
+      - feat/site-mapper-work-2026-10-23
+  pull_request:
+    paths:
+      - 'scripts/telemetry/**'
+      - 'infra/lab/bfdb-snmp/**'
+      - 'tests/python/**'
+      - 'docs/user-guide/**'
+      - 'docs/operations/**'
+      - '.github/workflows/industrial-lab-operator-safety.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-safety:
+    name: Offline commissioning regression gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Python syntax only
+        run: |
+          python3 -m py_compile \
+            scripts/telemetry/setup-bdfb23-snmp-lab.py \
+            scripts/telemetry/reanudar-laboratorio-existente.py \
+            scripts/telemetry/estado-laboratorio.py \
+            scripts/telemetry/commission-bdfb01-snmp-lab.py
+      - name: Check mongosh script syntax (no database connection)
+        run: node --check scripts/telemetry/commission-bdfb23-snmp-config2.mongosh.js
+      - name: BDFB-02/03 SNMP Config2 safety (no Docker needed)
+        run: python3 -m unittest discover -s tests/python -p 'test_bdfb23_snmp_setup.py' -v
+      - name: BDFB-01 original SNMP regression (no Docker needed)
+        run: python3 -m unittest discover -s tests/python -p 'test_bdfb01_snmp_additive.py' -v
+      - name: Modbus source-map and FC03 simulator regressions
+        run: |
+          python3 -m unittest discover -s tests/python -p 'test_lab_modbus_bridge_only.py' -v
+          python3 -m unittest discover -s tests/python -p 'test_lab_modbus_fc03_rotating_panels.py' -v
+          python3 -m unittest discover -s tests/python -p 'test_lab_modbus_compose_provenance.py' -v

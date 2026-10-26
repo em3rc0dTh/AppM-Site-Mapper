@@ -12,6 +12,8 @@ Si es tu primera vez, no necesitas memorizar todos los nombres del sistema. Empi
 
 En la parte superior encontrarás **Search**, **?**, **EXPLORE**, **WAREHOUSE** y las opciones de tu cuenta.
 
+![Pantalla principal de Site Mapper con resumen de infraestructura y accesos directos](/help/screenshots/workspace-overview.png)
+
 ## Tu recorrido más habitual
 
 ![Recorrido por las principales funciones](/help/diagrams/es/overview.svg)

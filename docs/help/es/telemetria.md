@@ -4,7 +4,7 @@ Algunos equipos envían mediciones que Site Mapper puede mostrar como **LIVE**. 
 
 ## Abrir las lecturas de un breaker
 
-![Ejemplo real de un breaker con lecturas LIVE](/help/screenshots/breaker-live.webp)
+![Ejemplo real de un breaker con lecturas LIVE](/help/screenshots/breaker-live.png)
 
 1. Abre la Room y el Rack donde está el equipo.
 2. Navega hasta el Panel y selecciona el breaker.
@@ -33,6 +33,8 @@ Por eso conviene revisar también **Source** y **Last packet** antes de interpre
 En un Panel puedes encontrar textos como **3/24 positions MQTT LIVE**, **3 installed** y **21 available**. Significa que el Panel tiene 24 posiciones y que tres están ocupadas/reportando en ese ejemplo; no significa que existan 24 breakers.
 
 ## Ver lecturas anteriores
+
+![Historial de Panel por magnitud y periodo](/help/screenshots/panel-history.png)
 
 Abre **History & diagnostics · charts**. Según la pantalla podrás seleccionar periodos como **24H**, **7D**, **15D** o **1M**.
 

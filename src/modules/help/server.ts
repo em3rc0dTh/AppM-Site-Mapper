@@ -1,11 +1,11 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { helpCatalog, type HelpEntry } from './catalog';
+import { helpCatalog, type HelpEntry, type HelpLocale } from './catalog';
 
 /** Trusted, fixed filenames: route params must NEVER reach fs APIs. */
-export async function readHelpArticle(item: HelpEntry): Promise<string> {
-  return readFile(path.join(process.cwd(), 'docs', 'user-guide', item.file), 'utf8');
+export async function readHelpArticle(item: HelpEntry, locale: HelpLocale): Promise<string> {
+  return readFile(path.join(process.cwd(), 'docs', 'user-guide', ...(locale === 'en' ? ['en'] : []), item.file), 'utf8');
 }
 
 function fold(input: string): string {
@@ -17,10 +17,10 @@ function fold(input: string): string {
 
 export type IndexedHelpEntry = HelpEntry & { searchText: string };
 
-export async function getHelpSearchIndex(): Promise<IndexedHelpEntry[]> {
+export async function getHelpSearchIndex(locale: HelpLocale): Promise<IndexedHelpEntry[]> {
   const items = await Promise.all(
     helpCatalog.map(async (entry) => {
-      const text = await readHelpArticle(entry);
+      const text = await readHelpArticle(entry, locale);
       const plain = text
         .replace(/~~~[\s\S]*?~~~/g, ' ')
         .replace(/\x60{3}[\s\S]*?\x60{3}/g, ' ')

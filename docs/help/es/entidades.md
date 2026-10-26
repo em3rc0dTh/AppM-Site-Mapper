@@ -11,9 +11,14 @@ Abre **EXPLORE** y comprueba que estás en la instalación correcta. Si no apare
 1. Entra a la **Network** correspondiente.
 2. Selecciona **+ CREATE SITE**.
 3. Escribe el nombre del sitio.
-4. Selecciona **Define boundary** para dibujar sus límites.
-5. Revisa el dibujo y guarda usando **Save Site**.
-6. Comprueba que el sitio aparece dentro de la Network correcta.
+4. Selecciona **Define boundary** para abrir el dibujo del sitio.
+5. En el canvas, marca los puntos del contorno en orden. Necesitas **al menos 3 puntos**. Por ejemplo, puedes usar cuatro para dibujar un rectángulo.
+6. Cierra el contorno seleccionando el primer punto o la opción para finalizar el dibujo. Revisa que las líneas no se crucen.
+7. Si necesitas corregirlo, selecciona un punto y muévelo antes de confirmar.
+8. Confirma el dibujo y guarda usando **Save Site**.
+9. Comprueba que el sitio aparece dentro de la Network correcta.
+
+**Recuerda:** para crear el sitio no se utiliza **SAVE LAYOUT**; ese botón corresponde al plano de una sala.
 
 ## Agregar un edificio, nivel y sala
 

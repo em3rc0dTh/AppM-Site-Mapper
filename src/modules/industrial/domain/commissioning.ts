@@ -46,9 +46,6 @@ export interface Rs485Configuration {
 export interface CommunicationProfileInput {
   readonly equipmentId: string;
   readonly role: IndustrialRole;
-  /** Search-friendly operational name/TID; canonical Equipment.name remains authoritative. */
-  readonly alias?: string;
-  readonly partNumber?: string;
   readonly recordStatus: CommissioningRecordStatus;
   readonly gatewayEquipmentId?: string;
   readonly sourceIdentity?: string;
@@ -154,7 +151,7 @@ export function parseEvidence(raw: unknown): CommissioningEvidence | null {
 
 export function parseProfileInput(raw: unknown): CommunicationProfileInput | null {
   if (!object(raw) || !only(raw, [
-    'equipmentId', 'role', 'alias', 'partNumber', 'recordStatus',
+    'equipmentId', 'role', 'recordStatus',
     'gatewayEquipmentId', 'sourceIdentity', 'network', 'macAddress', 'loginUsername',
     'credentialState', 'credentialRef', 'gatewayNumber', 'downlinkMode', 'declaredSlaveCount', 'meterNumber',
     'channelCount', 'channelDescription', 'hallSensorDescription', 'termination120Ohm',
@@ -166,7 +163,7 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
     (raw.recordStatus !== 'DECLARED' && raw.recordStatus !== 'FIELD_VERIFIED')
   ) return null;
   for (const [key, max] of [
-    ['alias', 120], ['partNumber', 120], ['loginUsername', 120], ['credentialRef', 240],
+    ['loginUsername', 120], ['credentialRef', 240],
     ['gatewayNumber', 80], ['downlinkMode', 120], ['meterNumber', 80],
     ['channelDescription', 180], ['hallSensorDescription', 180],
     ['documentedRs485Status', 120],
@@ -257,8 +254,6 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
       equipmentId: raw.equipmentId.trim(),
       role: 'GATEWAY',
       recordStatus: raw.recordStatus,
-      ...(typeof raw.alias === 'string' ? { alias: raw.alias.trim() } : {}),
-      ...(typeof raw.partNumber === 'string' ? { partNumber: raw.partNumber.trim() } : {}),
       ...(typeof raw.sourceIdentity === 'string'
         ? { sourceIdentity: raw.sourceIdentity.trim() }
         : {}),
@@ -311,8 +306,6 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
     equipmentId: raw.equipmentId.trim(),
     role: 'METER',
     recordStatus: raw.recordStatus,
-    ...(typeof raw.alias === 'string' ? { alias: raw.alias.trim() } : {}),
-    ...(typeof raw.partNumber === 'string' ? { partNumber: raw.partNumber.trim() } : {}),
     gatewayEquipmentId: raw.gatewayEquipmentId.trim(),
     ...(typeof raw.meterNumber === 'string' ? { meterNumber: raw.meterNumber.trim() } : {}),
     ...(typeof raw.channelCount === 'number' ? { channelCount: raw.channelCount } : {}),

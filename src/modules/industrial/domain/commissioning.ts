@@ -89,7 +89,7 @@ function ipv4(value: unknown): value is string {
 function netmask(value: unknown): value is string {
   if (!ipv4(value)) return false;
   const bits = value.split('.').map(Number).map((octet) => octet.toString(2).padStart(8, '0')).join('');
-  return /^1+0+$/.test(bits);
+  return !bits.includes('01');
 }
 
 export function parseEvidence(raw: unknown): CommissioningEvidence | null {

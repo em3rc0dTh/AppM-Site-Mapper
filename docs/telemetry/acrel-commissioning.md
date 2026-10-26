@@ -70,15 +70,15 @@ separate credential capability.
 
 The authorized operator selects:
 
-1. An already-commissioned meter and its channel (1–24).
+1. An already-commissioned meter and a channel within its declared `channelCount`.
 2. The **exact raw MQTT point** published for that physical channel.
 3. An existing active `CIRCUIT_BREAKER` Equipment in the same BDFB.
 4. A non-empty metric subset of VOLTAGE, CURRENT, POWER, ENERGY.
 5. Project ID, source-document name, revision and optional evidence reference.
 6. Explicit physical verification acknowledgement.
 
-The console renders all 24 channels for every commissioned meter and marks each channel as
-confirmed or pending. Selecting a channel only pre-fills the manual form; it never infers a
+The console renders the declared channel range for every commissioned meter (24 for the
+AMC16Z-FDK24 C&P supplied for this project) and marks each channel as confirmed or pending. Selecting a channel only pre-fills the manual form; it never infers a
 breaker or raw point from channel number, panel order or equipment naming.
 
 The source identity is taken from the server-side saved gateway profile, not the browser.

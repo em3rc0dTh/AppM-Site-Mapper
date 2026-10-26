@@ -5,8 +5,10 @@ import { describe, expect, it } from 'vitest';
 import {
   getHelpEntry,
   getHelpJourneyForArticle,
+  helpBeginnerPath,
   helpCatalog,
   helpJourneys,
+  helpScreenshotBySlug,
   helpWorkflowCoverage,
   recommendHelp,
 } from '@/modules/help/catalog';
@@ -92,6 +94,20 @@ describe('Customer-facing Site Mapper Help Center', () => {
     expect(renderer).toContain('<Image');
     expect(renderer).not.toContain('dangerouslySetInnerHTML');
     expect(renderer).not.toContain('eval(');
+  });
+
+  it('provides a beginner path with real screenshots where they add context', () => {
+    const all = new Set(helpCatalog.map((item) => item.slug));
+    expect(helpBeginnerPath).toHaveLength(10);
+    expect(new Set(helpBeginnerPath).size).toBe(helpBeginnerPath.length);
+    expect(helpBeginnerPath[0]).toBe('manual-maestro');
+    expect(helpBeginnerPath.at(-1)).toBe('verificacion');
+    for (const slug of helpBeginnerPath) expect(all.has(slug), `Missing beginner guide ${slug}`).toBe(true);
+    for (const [slug, uri] of Object.entries(helpScreenshotBySlug)) {
+      expect(all.has(slug), `Screenshot mapped to unknown guide ${slug}`).toBe(true);
+      expect(uri).toMatch(/^\/help\/screenshots\/[a-z0-9-]+\.webp$/);
+      expect(existsSync(join(root, 'public', uri.slice(1))), uri).toBe(true);
+    }
   });
 
   it('connects task journeys to published articles and approved workflow ids', () => {

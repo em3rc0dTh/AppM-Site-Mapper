@@ -18,13 +18,17 @@ describe('Site Mapper in-app help manual', () => {
       expect(entry.summary).toBeTruthy();
       expect(entry.enSummary).toBeTruthy();
       expect(existsSync(join(process.cwd(), 'docs/user-guide', entry.file))).toBe(true);
+      expect(existsSync(join(process.cwd(), 'docs/user-guide/en', entry.file))).toBe(true);
     }
     expect(getHelpEntry('../../.env')).toBeUndefined();
   });
 
   it('indexes real article text, not just summaries', async () => {
-    const indexed = await getHelpSearchIndex();
+    const indexed = await getHelpSearchIndex('es');
     expect(indexed).toHaveLength(helpCatalog.length);
+    const english = await getHelpSearchIndex('en');
+    expect(english).toHaveLength(helpCatalog.length);
+    expect(english.find((item) => item.slug === 'conexiones')?.searchText).toContain('source_already_connected');
     const connections = indexed.find((item) => item.slug === 'conexiones');
     expect(connections?.searchText).toContain('source_already_connected');
     expect(connections?.searchText).toContain('powerpath');

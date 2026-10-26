@@ -33,6 +33,7 @@ interface Profile {
   network?: { ip: string; mask: string; gateway: string; services: { protocol: 'MQTT' | 'MODBUS_TCP'; port?: number }[] };
   macAddress?: string;
   loginUsername?: string;
+  credentialState?: 'NOT_DECLARED' | 'PRESENT_IN_SOURCE' | 'SECRET_REFERENCED';
   credentialRef?: string;
   gatewayNumber?: string;
   downlinkMode?: string;
@@ -105,6 +106,7 @@ export function CommissioningConsole({
   const [sourceIdentity, setSourceIdentity] = useState('');
   const [macAddress, setMacAddress] = useState('');
   const [loginUsername, setLoginUsername] = useState('');
+  const [credentialState, setCredentialState] = useState<'NOT_DECLARED' | 'PRESENT_IN_SOURCE' | 'SECRET_REFERENCED'>('NOT_DECLARED');
   const [credentialRef, setCredentialRef] = useState('');
   const [gatewayNumber, setGatewayNumber] = useState('');
   const [downlinkMode, setDownlinkMode] = useState('');
@@ -258,6 +260,7 @@ export function CommissioningConsole({
       setSourceIdentity('');
       setMacAddress('');
       setLoginUsername('');
+      setCredentialState('NOT_DECLARED');
       setCredentialRef('');
       setGatewayNumber('');
       setDownlinkMode('');
@@ -285,6 +288,7 @@ export function CommissioningConsole({
     setSourceIdentity(current.sourceIdentity ?? '');
     setMacAddress(current.macAddress ?? '');
     setLoginUsername(current.loginUsername ?? '');
+    setCredentialState(current.credentialState ?? 'NOT_DECLARED');
     setCredentialRef(current.credentialRef ?? '');
     setGatewayNumber(current.gatewayNumber ?? '');
     setDownlinkMode(current.downlinkMode ?? '');
@@ -376,6 +380,7 @@ export function CommissioningConsole({
         ...(sourceIdentity.trim() ? { sourceIdentity: sourceIdentity.trim() } : {}),
         ...(macAddress.trim() ? { macAddress: macAddress.trim() } : {}),
         ...(loginUsername.trim() ? { loginUsername: loginUsername.trim() } : {}),
+        credentialState,
         ...(credentialRef.trim() ? { credentialRef: credentialRef.trim() } : {}),
         ...(gatewayNumber.trim() ? { gatewayNumber: gatewayNumber.trim() } : {}),
         ...(downlinkMode.trim() ? { downlinkMode: downlinkMode.trim() } : {}),
@@ -526,10 +531,32 @@ export function CommissioningConsole({
                       onChange={(event) => setLoginUsername(event.target.value)}
                       autoComplete="off" />
                   </label>
+                  <label style={fieldStyle}>Estado de credencial
+                    <select
+                      style={inputStyle}
+                      value={credentialState}
+                      onChange={(event) => {
+                        const value = event.target.value as
+                          | 'NOT_DECLARED'
+                          | 'PRESENT_IN_SOURCE'
+                          | 'SECRET_REFERENCED';
+                        setCredentialState(value);
+                        if (value !== 'SECRET_REFERENCED') setCredentialRef('');
+                      }}
+                    >
+                      <option value="NOT_DECLARED">No declarada</option>
+                      <option value="PRESENT_IN_SOURCE">Existe en documento; no almacenar secreto</option>
+                      <option value="SECRET_REFERENCED">Guardada en secret manager</option>
+                    </select>
+                  </label>
                   <label style={fieldStyle}>Referencia de credencial
-                    <input style={inputStyle} value={credentialRef}
+                    <input
+                      style={inputStyle}
+                      value={credentialRef}
+                      disabled={credentialState !== 'SECRET_REFERENCED'}
                       onChange={(event) => setCredentialRef(event.target.value)}
-                      placeholder="Referencia a vault/secret; nunca la contraseña" />
+                      placeholder="vault://..., secret://..., env://..."
+                    />
                   </label>
                   <label style={fieldStyle}>Modo downlink
                     <input style={inputStyle} value={downlinkMode}

@@ -3,6 +3,11 @@ export type HelpCategory =
   'start' | 'infrastructure' | 'equipment' | 'energy' | 'observability' | 'practice';
 export type HelpLocale = 'es' | 'en';
 
+export const helpScreenshotZoomTitle: Readonly<Record<HelpLocale, string>> = {
+  es: 'Abrir captura a tamaño completo',
+  en: 'Open full-size screenshot',
+};
+
 export type HelpEntry = Readonly<{
   slug: string;
   file: string;

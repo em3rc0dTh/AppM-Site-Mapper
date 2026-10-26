@@ -129,7 +129,7 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
   };
   if (raw.role === 'GATEWAY') {
     if (
-      raw.gatewayEquipmentId !== undefined || raw.rs485.slaveId !== undefined ||
+      raw.gatewayEquipmentId !== undefined || serial.slaveId !== undefined ||
       !text(raw.sourceIdentity, 120) || !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(raw.sourceIdentity) ||
       !object(raw.network) ||
       !only(raw.network, ['ip', 'mask', 'gateway', 'port', 'protocol']) ||

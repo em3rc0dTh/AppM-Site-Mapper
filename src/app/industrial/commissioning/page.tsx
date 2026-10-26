@@ -21,9 +21,14 @@ export default async function IndustrialCommissioningPage({
     typeof query.deviceId === 'string' && query.deviceId.length <= 160 ? query.deviceId : undefined;
 
   return (
-    <CommissioningConsole initialDeviceId={initialDeviceId} canWrite={
-      hasPermission(auth.value.role, 'settings:write') &&
-      hasPermission(auth.value.role, 'topology:write')
-    } />
+    <CommissioningConsole
+      initialDeviceId={initialDeviceId}
+      canWrite={
+        hasPermission(auth.value.role, 'settings:write') &&
+        hasPermission(auth.value.role, 'topology:write')
+      }
+      canReadCredentials={hasPermission(auth.value.role, 'credentials:read')}
+      canWriteCredentials={hasPermission(auth.value.role, 'credentials:write')}
+    />
   );
 }

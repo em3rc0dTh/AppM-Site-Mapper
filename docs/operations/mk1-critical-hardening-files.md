@@ -77,3 +77,7 @@ Base: `3613de7f075a80c5070b1ec033ae8c90a773ea9f`. Inventario de código y docume
 - `src/shared/infrastructure/mongodb/integrity-transaction.ts`
 - `src/shared/infrastructure/mongodb/reference-guards.ts`
 - `src/shared/infrastructure/mongodb/topology-schema.ts`
+
+## Integración final
+
+La reconciliación con el `main` consolidado se valida en PR #108 antes del merge.

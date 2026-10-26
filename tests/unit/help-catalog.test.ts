@@ -71,7 +71,7 @@ describe('Customer-facing Site Mapper Help Center', () => {
       'utf8',
     );
     expect(renderer).toContain('help-illustration');
-    expect(renderer).toContain('<Image ');
+    expect(renderer).toContain('<Image');
     expect(renderer).not.toContain('dangerouslySetInnerHTML');
     expect(renderer).not.toContain('eval(');
   });

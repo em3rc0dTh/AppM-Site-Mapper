@@ -139,6 +139,14 @@ export function CommissioningConsole({
     [overview]);
   const gateways = useMemo(() => overview?.profiles.filter((profile) => profile.role === 'GATEWAY') ?? [], [overview]);
   const meters = useMemo(() => overview?.profiles.filter((profile) => profile.role === 'METER') ?? [], [overview]);
+  const mappableMeters = useMemo(
+    () => meters.filter((meter) =>
+      gateways.some((gateway) =>
+        gateway.equipmentId === meter.gatewayEquipmentId && Boolean(gateway.sourceIdentity),
+      ),
+    ),
+    [gateways, meters],
+  );
   const breakers = useMemo(() => overview?.equipment.filter((item) => item.equipmentType === 'CIRCUIT_BREAKER') ?? [], [overview]);
   const existingProfile = overview?.profiles.find((profile) => profile.equipmentId === equipmentId);
   const equipmentName = (id: string) => overview?.equipment.find((item) => item.id === id)?.name ?? id;
@@ -379,9 +387,14 @@ export function CommissioningConsole({
                 <label style={fieldStyle}>Medidor comisionado
                   <select required style={inputStyle} value={meterId} onChange={(event) => setMeterId(event.target.value)}>
                     <option value="">Seleccionar</option>
-                    {meters.map((item) => <option key={item.equipmentId} value={item.equipmentId}>{equipmentName(item.equipmentId)} · Slave {item.rs485.slaveId}</option>)}
+                    {mappableMeters.map((item) => <option key={item.equipmentId} value={item.equipmentId}>{equipmentName(item.equipmentId)} · Slave {item.rs485.slaveId}</option>)}
                   </select>
                 </label>
+                {meters.length > mappableMeters.length ? (
+                  <small>
+                    Los medidores cuyo gateway aún no tiene identidad MQTT confirmada no pueden mapearse.
+                  </small>
+                ) : null}
                 <label style={fieldStyle}>Canal (1–24)
                   <input required type="number" min="1" max="24" style={inputStyle} value={channel} onChange={(event) => setChannel(event.target.value)} />
                 </label>

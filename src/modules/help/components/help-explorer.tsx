@@ -1,14 +1,17 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import {
+  helpBeginnerPath,
   helpCatalog,
   helpCategories,
   helpEditorGuides,
   helpJourneys,
+  helpScreenshotBySlug,
   helpSummary,
   helpTitle,
   type HelpCategory,
@@ -44,6 +47,46 @@ export function HelpExplorer({
 
   return (
     <div className="help-explorer">
+      <section className="help-beginner" aria-labelledby="help-beginner-title">
+        <div className="help-section-heading">
+          <h2 id="help-beginner-title">{t('beginnerTitle')}</h2>
+          <p>{t('beginnerDescription')}</p>
+        </div>
+        <ol className="help-beginner-path">
+          {helpBeginnerPath.map((slug, index) => {
+            const item = helpCatalog.find((entry) => entry.slug === slug);
+            if (!item) return null;
+            const screenshot = helpScreenshotBySlug[slug];
+            return (
+              <li key={slug}>
+                <Link href={'/help/' + slug} className="help-beginner-step">
+                  {screenshot ? (
+                    <span className="help-beginner-shot" aria-hidden="true">
+                      <Image
+                        src={screenshot}
+                        alt=""
+                        width={420}
+                        height={250}
+                        unoptimized
+                      />
+                    </span>
+                  ) : null}
+                  <span className="help-beginner-copy">
+                    <small>{t('beginnerStep', { index: index + 1 })}</small>
+                    <strong>{helpTitle(item, locale)}</strong>
+                    <span>{helpSummary(item, locale)}</span>
+                  </span>
+                  <b aria-hidden="true">→</b>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+        <Link className="help-beginner-start" href={'/help/' + helpBeginnerPath[0]}>
+          {t('beginnerStart')} <span aria-hidden="true">→</span>
+        </Link>
+      </section>
+
       <section className="help-journeys" aria-labelledby="help-journeys-title">
         <div className="help-section-heading">
           <h2 id="help-journeys-title">{t('journeysTitle')}</h2>
@@ -88,6 +131,7 @@ export function HelpExplorer({
           })}
         </div>
       </section>
+
       <section className="help-library" aria-labelledby="help-library-title">
         <div className="help-section-heading">
           <h2 id="help-library-title">{t('browseTasks')}</h2>
@@ -114,6 +158,7 @@ export function HelpExplorer({
             {t('resultCount', { count: results.length })}
           </p>
         </div>
+
         <div className="help-filters" role="group" aria-label={t('categories')}>
           <button
             type="button"
@@ -135,6 +180,7 @@ export function HelpExplorer({
             </button>
           ))}
         </div>
+
         {results.length ? (
           <div className="help-card-grid">
             {results.map((item) => {

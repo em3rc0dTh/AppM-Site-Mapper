@@ -1,0 +1,58 @@
+# One-shot formatter for the Help Manual PR. Removed after the source format commit.
+name: Help manual one-shot formatting
+
+on:
+  push:
+    branches:
+      - feat/mk1-in-app-help-manual-2026-10-26
+    paths:
+      - '.github/workflows/mk1-help-format-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install repository-pinned formatter
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Format help manual changes
+        run: |
+          npx prettier --write \
+            src/modules/help/catalog.ts \
+            src/modules/help/server.ts \
+            src/modules/help/components/markdown-article.tsx \
+            src/modules/help/components/help-explorer.tsx \
+            src/modules/help/components/contextual-help.tsx \
+            src/app/help/page.tsx \
+            'src/app/help/[slug]/page.tsx' \
+            src/app/help.css \
+            src/shared/ui/app-shell.tsx \
+            src/app/layout.tsx \
+            next.config.ts \
+            src/messages/en.json src/messages/es.json \
+            docs/user-guide/README.md \
+            docs/user-guide/help-center-integrado.md \
+            tests/unit/help-catalog.test.ts
+      - name: Commit format-only source edits
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- src/modules/help src/app/help src/app/help.css \
+            src/shared/ui/app-shell.tsx src/app/layout.tsx \
+            next.config.ts src/messages/en.json src/messages/es.json \
+            docs/user-guide/README.md docs/user-guide/help-center-integrado.md \
+            tests/unit/help-catalog.test.ts
+          if git diff --cached --quiet; then
+            echo 'Already formatted'
+          else
+            git commit -m 'style(help): format documentation and UI sources'
+            git push origin HEAD:refs/heads/feat/mk1-in-app-help-manual-2026-10-26
+          fi

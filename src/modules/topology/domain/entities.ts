@@ -209,6 +209,8 @@ export interface EquipmentNode extends TopologyBase {
   readonly manufacturerTypeName?: string;
   readonly model?: string;
   readonly serialNumber?: string;
+  /** Manufacturer part number / P/N. Kept distinct from model and serial number. */
+  readonly partNumber?: string;
   readonly aliases?: readonly string[];
   readonly rackPlacement?: RackPlacement;
   readonly category?: string;

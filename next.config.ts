@@ -15,8 +15,8 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Keep Markdown guide bodies available when platform output tracing is used.
   outputFileTracingIncludes: {
-    '/help': ['./docs/user-guide/**/*.md'],
-    '/help/*': ['./docs/user-guide/**/*.md'],
+    '/help': ['./docs/help/**/*.md'],
+    '/help/*': ['./docs/help/**/*.md'],
   },
   async headers() {
     return [{ source: '/(.*)', headers: securityHeaders }];

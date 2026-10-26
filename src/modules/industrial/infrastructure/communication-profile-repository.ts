@@ -8,6 +8,7 @@ import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
 export interface CommunicationProfileRepository {
   get(equipmentId: string): Promise<CommunicationProfile | null>;
   listByBdfb(bdfbDeviceId: string): Promise<readonly CommunicationProfile[]>;
+  listAll(): Promise<readonly CommunicationProfile[]>;
   /** Compare-and-swap. The caller must not silently overwrite a concurrent revision. */
   save(next: CommunicationProfile, expectedRevision: number | null): Promise<boolean>;
 }
@@ -24,6 +25,10 @@ class MemoryCommunicationProfiles implements CommunicationProfileRepository {
     return [...this.profiles.values()]
       .filter((profile) => profile.bdfbDeviceId === id)
       .map((profile) => structuredClone(profile));
+  }
+
+  async listAll() {
+    return [...this.profiles.values()].map((profile) => structuredClone(profile));
   }
 
   async save(next: CommunicationProfile, expected: number | null) {
@@ -63,6 +68,11 @@ class MongoCommunicationProfiles implements CommunicationProfileRepository {
 
   async listByBdfb(bdfbDeviceId: string): Promise<readonly CommunicationProfile[]> {
     const documents = await this.records.find({ bdfbDeviceId }).sort({ equipmentId: 1 }).toArray();
+    return documents.map((document) => this.toDomain(document)!);
+  }
+
+  async listAll(): Promise<readonly CommunicationProfile[]> {
+    const documents = await this.records.find({}).sort({ equipmentId: 1 }).toArray();
     return documents.map((document) => this.toDomain(document)!);
   }
 

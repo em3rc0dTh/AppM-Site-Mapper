@@ -2,14 +2,16 @@ import {
   createCipheriv,
   createDecipheriv,
   randomBytes,
+  randomUUID,
 } from 'node:crypto';
 
-import type { IndustrialCredentialRepository } from
-  '@/modules/industrial/infrastructure/credential-repository';
 import type {
+  IndustrialCredentialEvent,
   IndustrialCredentialMetadata,
   IndustrialCredentialRecord,
 } from '@/modules/industrial/domain/credential';
+import type { IndustrialCredentialRepository } from
+  '@/modules/industrial/infrastructure/credential-repository';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 
 type CredentialError =
@@ -72,17 +74,46 @@ function decrypt(record: IndustrialCredentialRecord, key: Buffer): string | null
   }
 }
 
-function metadata(record: IndustrialCredentialRecord | null, equipmentId: string):
-  IndustrialCredentialMetadata {
-  if (!record) return { equipmentId, hasCredential: false };
+function auditEvent(
+  equipmentId: string,
+  type: IndustrialCredentialEvent['type'],
+  actorId: string,
+  occurredAt: string,
+  credentialRevision?: number,
+): IndustrialCredentialEvent {
+  return {
+    id: randomUUID(),
+    equipmentId,
+    type,
+    actorId,
+    occurredAt,
+    ...(credentialRevision !== undefined ? { credentialRevision } : {}),
+  };
+}
+
+function metadata(
+  record: IndustrialCredentialRecord | null,
+  equipmentId: string,
+  recentEvents: readonly IndustrialCredentialEvent[],
+): IndustrialCredentialMetadata {
+  const lastReveal = recentEvents.find((event) => event.type === 'REVEALED');
   return {
     equipmentId,
-    hasCredential: true,
-    revisionNumber: record.revisionNumber,
-    updatedAt: record.updatedAt,
-    updatedBy: record.updatedBy,
-    ...(record.lastRevealedAt ? { lastRevealedAt: record.lastRevealedAt } : {}),
-    ...(record.lastRevealedBy ? { lastRevealedBy: record.lastRevealedBy } : {}),
+    hasCredential: Boolean(record),
+    ...(record
+      ? {
+          revisionNumber: record.revisionNumber,
+          updatedAt: record.updatedAt,
+          updatedBy: record.updatedBy,
+        }
+      : {}),
+    ...(lastReveal
+      ? {
+          lastRevealedAt: lastReveal.occurredAt,
+          lastRevealedBy: lastReveal.actorId,
+        }
+      : {}),
+    recentEvents,
   };
 }
 
@@ -104,7 +135,11 @@ export class IndustrialCredentialService {
   async getMetadata(equipmentId: string):
     Promise<Result<IndustrialCredentialMetadata>> {
     if (!(await this.activeEquipment(equipmentId))) return bad('EQUIPMENT_NOT_FOUND');
-    return good(metadata(await this.repository.get(equipmentId), equipmentId));
+    const [record, events] = await Promise.all([
+      this.repository.get(equipmentId),
+      this.repository.listEvents(equipmentId),
+    ]);
+    return good(metadata(record, equipmentId, events));
   }
 
   async setPassword(equipmentId: string, password: string, actorId: string):
@@ -127,12 +162,17 @@ export class IndustrialCredentialService {
       createdBy: previous?.createdBy ?? actorId,
       updatedAt: now,
       updatedBy: actorId,
-      ...(previous?.lastRevealedAt ? { lastRevealedAt: previous.lastRevealedAt } : {}),
-      ...(previous?.lastRevealedBy ? { lastRevealedBy: previous.lastRevealedBy } : {}),
     };
-    if (!(await this.repository.save(next, previous?.revisionNumber ?? null)))
+    const event = auditEvent(
+      equipmentId,
+      previous ? 'ROTATED' : 'CREATED',
+      actorId,
+      now,
+      next.revisionNumber,
+    );
+    if (!(await this.repository.saveWithEvent(next, previous?.revisionNumber ?? null, event)))
       return bad('CREDENTIAL_CONFLICT');
-    return good(metadata(next, equipmentId));
+    return good(metadata(next, equipmentId, await this.repository.listEvents(equipmentId)));
   }
 
   async revealPassword(equipmentId: string, actorId: string):
@@ -141,32 +181,36 @@ export class IndustrialCredentialService {
     const key = keyFromEnvironment();
     if (!key) return bad('CREDENTIAL_KEY_NOT_CONFIGURED');
 
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const current = await this.repository.get(equipmentId);
-      if (!current) return bad('CREDENTIAL_NOT_FOUND');
-      const password = decrypt(current, key);
-      if (password === null) return bad('CREDENTIAL_DECRYPT_FAILED');
-      const now = new Date().toISOString();
-      const next: IndustrialCredentialRecord = {
-        ...current,
-        revisionNumber: current.revisionNumber + 1,
-        lastRevealedAt: now,
-        lastRevealedBy: actorId,
-      };
-      if (await this.repository.save(next, current.revisionNumber)) {
-        return good({ password, metadata: metadata(next, equipmentId) });
-      }
-    }
-    return bad('CREDENTIAL_CONFLICT');
+    const current = await this.repository.get(equipmentId);
+    if (!current) return bad('CREDENTIAL_NOT_FOUND');
+    const password = decrypt(current, key);
+    if (password === null) return bad('CREDENTIAL_DECRYPT_FAILED');
+
+    const now = new Date().toISOString();
+    await this.repository.appendEvent(
+      auditEvent(equipmentId, 'REVEALED', actorId, now, current.revisionNumber),
+    );
+    const events = await this.repository.listEvents(equipmentId);
+    return good({ password, metadata: metadata(current, equipmentId, events) });
   }
 
-  async removePassword(equipmentId: string):
+  async removePassword(equipmentId: string, actorId: string):
     Promise<Result<IndustrialCredentialMetadata>> {
     if (!(await this.activeEquipment(equipmentId))) return bad('EQUIPMENT_NOT_FOUND');
     const current = await this.repository.get(equipmentId);
-    if (!current) return good({ equipmentId, hasCredential: false });
-    if (!(await this.repository.remove(equipmentId, current.revisionNumber)))
+    if (!current) {
+      return good(metadata(null, equipmentId, await this.repository.listEvents(equipmentId)));
+    }
+    const now = new Date().toISOString();
+    const event = auditEvent(
+      equipmentId,
+      'DELETED',
+      actorId,
+      now,
+      current.revisionNumber,
+    );
+    if (!(await this.repository.removeWithEvent(equipmentId, current.revisionNumber, event)))
       return bad('CREDENTIAL_CONFLICT');
-    return good({ equipmentId, hasCredential: false });
+    return good(metadata(null, equipmentId, await this.repository.listEvents(equipmentId)));
   }
 }

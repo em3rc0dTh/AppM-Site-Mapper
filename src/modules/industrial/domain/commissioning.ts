@@ -13,12 +13,17 @@ export interface CommissioningEvidence {
   readonly reference?: string;
 }
 
+export interface NetworkServiceConfiguration {
+  readonly protocol: UplinkProtocol;
+  /** Omitted when the source document does not specify the service port. */
+  readonly port?: number;
+}
+
 export interface NetworkConfiguration {
   readonly ip: string;
   readonly mask: string;
   readonly gateway: string;
-  readonly port: number;
-  readonly protocol: UplinkProtocol;
+  readonly services: readonly NetworkServiceConfiguration[];
 }
 
 export interface Rs485Configuration {
@@ -133,12 +138,30 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
       (raw.sourceIdentity !== undefined &&
         (!text(raw.sourceIdentity, 120) || !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(raw.sourceIdentity))) ||
       !object(raw.network) ||
-      !only(raw.network, ['ip', 'mask', 'gateway', 'port', 'protocol']) ||
+      !only(raw.network, ['ip', 'mask', 'gateway', 'services']) ||
       !ipv4(raw.network.ip) || !netmask(raw.network.mask) || !ipv4(raw.network.gateway) ||
-      !Number.isInteger(raw.network.port) || Number(raw.network.port) < 1 ||
-      Number(raw.network.port) > 65535 ||
-      !['MQTT', 'MODBUS_TCP'].includes(String(raw.network.protocol))
+      !Array.isArray(raw.network.services) ||
+      raw.network.services.length < 1 || raw.network.services.length > 2
     ) return null;
+    const services = [];
+    const protocols = new Set<string>();
+    for (const rawService of raw.network.services) {
+      if (
+        !object(rawService) ||
+        !only(rawService, ['protocol', 'port']) ||
+        !['MQTT', 'MODBUS_TCP'].includes(String(rawService.protocol)) ||
+        protocols.has(String(rawService.protocol)) ||
+        (rawService.port !== undefined &&
+          (!Number.isInteger(rawService.port) ||
+            Number(rawService.port) < 1 ||
+            Number(rawService.port) > 65535))
+      ) return null;
+      protocols.add(String(rawService.protocol));
+      services.push({
+        protocol: rawService.protocol as UplinkProtocol,
+        ...(rawService.port !== undefined ? { port: Number(rawService.port) } : {}),
+      });
+    }
     return {
       equipmentId: raw.equipmentId.trim(),
       role: 'GATEWAY',
@@ -149,8 +172,7 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
         ip: raw.network.ip,
         mask: raw.network.mask,
         gateway: raw.network.gateway,
-        port: Number(raw.network.port),
-        protocol: raw.network.protocol as UplinkProtocol,
+        services,
       },
       rs485,
       evidence,

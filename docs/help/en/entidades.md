@@ -8,7 +8,7 @@ Open **EXPLORE** and check that you are in the correct installation. If creation
 
 ## Create a Site
 
-![Real example of the Create Site action](/help/screenshots/create-site.webp)
+![Real example of the Create Site action](/help/screenshots/create-site.png)
 
 _Inside a Network, use **+ CREATE SITE**. Enter a name first, then define its boundary._
 
@@ -17,7 +17,7 @@ _Inside a Network, use **+ CREATE SITE**. Enter a name first, then define its bo
 3. Enter a clear name.
 4. Select **Define boundary**.
 
-![Real Site boundary editor](/help/screenshots/draw-site-boundary.webp)
+![Real Site boundary editor](/help/screenshots/draw-site-boundary.png)
 
 5. In **Draw / select**, choose the boundary points in order. You need **at least 3 points**.
 6. Close the outline and check that the edges do not cross.
@@ -30,16 +30,21 @@ _Inside a Network, use **+ CREATE SITE**. Enter a name first, then define its bo
 
 ## Create a Structure and Level
 
+![Real form for creating a Structure inside a Site](/help/screenshots/create-structure.png)
+
 1. Open the correct Site.
 2. Select **+ CREATE STRUCTURE**, enter its name and define its boundary.
 3. Open the new Structure.
+
+![Real form for creating a Level inside a Structure](/help/screenshots/create-level.png)
+
 4. Select **+ CREATE LEVEL**, enter its name and confirm.
 
 A Level organizes rooms; you do not draw another Level boundary during this step.
 
 ## Create a Room
 
-![Real Create Room form](/help/screenshots/create-room.webp)
+![Real Create Room form](/help/screenshots/create-room.png)
 
 1. Open the correct **Level**.
 2. Select **+ CREATE ROOM**.

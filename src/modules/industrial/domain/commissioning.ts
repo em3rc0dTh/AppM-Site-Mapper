@@ -186,13 +186,8 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
   ) return null;
   if (
     raw.credentialRef !== undefined &&
-    !/^[A-Za-z][A-Za-z0-9+.-]*:\/\/[A-Za-z0-9._~:/?#\[\]@!  if (
-    raw.macAddress !== undefined &&
-    (typeof raw.macAddress !== 'string' ||
-      !/^(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(raw.macAddress.trim()))
-  ) return null;'()*+,;=%-]+$/.test(
-      String(raw.credentialRef).trim(),
-    )
+    (typeof raw.credentialRef !== 'string' ||
+      !/^[A-Za-z][A-Za-z0-9+.-]*:\/\/\S+$/.test(raw.credentialRef.trim()))
   ) return null;
   if (
     raw.credentialState === 'SECRET_REFERENCED' &&

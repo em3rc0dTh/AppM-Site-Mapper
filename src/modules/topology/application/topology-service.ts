@@ -528,7 +528,7 @@ export class TopologyService {
         ? node.aliases
         : [...new Set(input.aliases.map((alias) => alias.trim()).filter(Boolean))];
 
-        const childMode = input.childMode ?? node.childMode;
+    const childMode = input.childMode ?? node.childMode;
     const configuredPrefix =
       input.telemetryPointPrefix === undefined
         ? node.telemetryPointPrefix

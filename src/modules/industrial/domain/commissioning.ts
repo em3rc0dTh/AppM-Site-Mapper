@@ -22,6 +22,41 @@ export interface CommissioningEvidence {
 export type CommissioningRecordStatus = 'DECLARED' | 'FIELD_VERIFIED';
 export type CredentialState = 'NOT_DECLARED' | 'PRESENT_IN_SOURCE' | 'SECRET_REFERENCED';
 
+export type CommissioningWarningCode =
+  | 'DUPLICATE_DECLARED_IP'
+  | 'DUPLICATE_DECLARED_MAC'
+  | 'DEFAULT_GATEWAY_OUTSIDE_SUBNET';
+
+export interface CommissioningWarning {
+  readonly code: CommissioningWarningCode;
+  readonly severity: 'FIELD_CONFIRMATION_REQUIRED';
+  readonly field: 'network.ip' | 'macAddress' | 'network.gateway';
+  readonly equipmentIds: readonly string[];
+  readonly value?: string;
+}
+
+export type CommissioningReadinessStage =
+  | 'DOCUMENTED'
+  | 'NETWORK_PENDING'
+  | 'MQTT_IDENTITY_PENDING'
+  | 'METER_PENDING'
+  | 'METER_READY'
+  | 'CHANNELS_PARTIAL'
+  | 'CHANNELS_CONFIRMED'
+  | 'FIELD_VERIFIED';
+
+export interface CommissioningReadiness {
+  readonly equipmentId: string;
+  readonly role: IndustrialRole;
+  readonly stage: CommissioningReadinessStage;
+  readonly networkDeclared: boolean;
+  readonly mqttIdentityConfirmed: boolean;
+  readonly meterReady: boolean;
+  readonly confirmedChannels: number;
+  readonly channelCount?: number;
+  readonly fieldVerified: boolean;
+}
+
 export interface NetworkServiceConfiguration {
   readonly protocol: UplinkProtocol;
   /** Omitted when the source document does not specify the service port. */

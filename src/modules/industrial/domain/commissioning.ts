@@ -322,7 +322,7 @@ export function parseConfirmChannel(raw: unknown): ConfirmChannelInput | null {
   const allowed = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'];
   if (
     !evidence || !text(raw.meterEquipmentId, 160) || !text(raw.breakerId, 160) ||
-    !Number.isInteger(raw.channel) || Number(raw.channel) < 1 || Number(raw.channel) > 24 ||
+    !Number.isInteger(raw.channel) || Number(raw.channel) < 1 || Number(raw.channel) > 256 ||
     !text(raw.rawPointId, 80) || !/^[A-Za-z0-9][A-Za-z0-9_.:-]*$/.test(raw.rawPointId) ||
     !Array.isArray(raw.metrics) || raw.metrics.length === 0 || raw.metrics.length > 4 ||
     raw.metrics.some((metric) => !allowed.includes(String(metric))) ||

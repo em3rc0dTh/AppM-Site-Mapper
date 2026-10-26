@@ -270,7 +270,9 @@ export class WarehouseInstantiationService {
         : {}),
       ...(input.serialNumber?.trim() ? { serialNumber: input.serialNumber.trim() } : {}),
       ...(input.partNumber?.trim() ? { partNumber: input.partNumber.trim() } : {}),
-      ...(input.aliases?.length ? { aliases: input.aliases } : {}),
+      ...(input.aliases?.length
+        ? { aliases: [...new Set(input.aliases.map((alias) => alias.trim()).filter(Boolean))] }
+        : {}),
       ...(category ? { category } : {}),
       ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
       ...(template.model ? { model: template.model } : {}),

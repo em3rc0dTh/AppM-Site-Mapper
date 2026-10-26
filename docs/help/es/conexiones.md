@@ -4,7 +4,7 @@ Site Mapper puede mostrar el camino de alimentación que **está registrado en e
 
 ## Abrir un Power Path
 
-![Ejemplo real de la pantalla POWER PATH](/help/screenshots/power-path.webp)
+![Ejemplo real de la pantalla POWER PATH](/help/screenshots/power-path.png)
 
 1. Abre el Equipment que quieres revisar.
 2. En su Inspector busca **Power A**, **Power B**, **VIEW POWERPATH**, **Explore Power Path** o **FULL POWER TRACE**, según la pantalla.

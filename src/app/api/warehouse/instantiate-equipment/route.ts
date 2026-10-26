@@ -51,6 +51,8 @@ export async function POST(request: Request) {
       'slotIndex',
       'name',
       'serialNumber',
+      'partNumber',
+      'aliases',
       'category',
       'equipmentType',
       'childMode',
@@ -64,6 +66,12 @@ export async function POST(request: Request) {
     (body.name !== undefined && !isBoundedString(body.name, 120, { allowEmpty: true })) ||
     (body.serialNumber !== undefined &&
       !isBoundedString(body.serialNumber, 120, { allowEmpty: true })) ||
+    (body.partNumber !== undefined &&
+      !isBoundedString(body.partNumber, 120, { allowEmpty: true })) ||
+    (body.aliases !== undefined &&
+      (!Array.isArray(body.aliases) ||
+        body.aliases.length > 20 ||
+        body.aliases.some((alias) => !isBoundedString(alias, 120)))) ||
     (body.category !== undefined && !isBoundedString(body.category, 120, { allowEmpty: true })) ||
     (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
     (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
@@ -100,6 +108,8 @@ export async function POST(request: Request) {
     ...(typeof body.slotIndex === 'number' ? { slotIndex: body.slotIndex } : {}),
     ...(typeof body.name === 'string' ? { name: body.name } : {}),
     ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
+    ...(typeof body.partNumber === 'string' ? { partNumber: body.partNumber } : {}),
+    ...(Array.isArray(body.aliases) ? { aliases: body.aliases as string[] } : {}),
     ...(typeof body.category === 'string' ? { category: body.category } : {}),
     ...(parseEquipmentType(body.equipmentType)
       ? { equipmentType: parseEquipmentType(body.equipmentType)! }

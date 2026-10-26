@@ -6,7 +6,7 @@ import { helpCatalog, type HelpLocale } from '../catalog';
 function safeTarget(target: string): string | null {
   if (/^https:\/\/[^ ]+$/i.test(target)) return target;
   if (target.startsWith('#') && /^#[\w.-]+$/.test(target)) return target;
-  // All relative links originate in the allowlisted docs/user-guide directory.
+  // All relative links originate in the allowlisted docs/help directory.
   if (target.startsWith('mailto:')) return null;
   const [raw, fragment] = target.split('#', 2);
   if (!raw || raw.startsWith('/') || raw.includes(':') || raw.includes('?')) return null;
@@ -90,9 +90,8 @@ function cellContent(row: string) {
 }
 
 /**
- * Safe Markdown subset for the existing operator guides. No raw HTML injection,
- * browser scripts, external parser or untrusted user content. Mermaid diagrams
- * are shown as accessible text until real, reviewed illustrations are available.
+ * Safe Markdown subset for reviewed, end-user workflow guides. Images come only
+ * from our own localized allowlist; neither HTML nor executable Mermaid is rendered.
  */
 export function MarkdownHelpArticle({ text, locale }: { text: string; locale: HelpLocale }) {
   const lines = text.replace(/\r\n/g, '\n').split('\n');
@@ -109,7 +108,7 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
     const key = 'block-' + serial++;
 
     const illustration =
-      /^!\[([^\]]{1,140})\]\((\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings)\.svg)\)$/.exec(
+      /^!\[([^\]]{1,140})\]\((\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings|mqtt|snmp|data-flow)\.svg)\)$/.exec(
         current,
       );
     if (illustration) {

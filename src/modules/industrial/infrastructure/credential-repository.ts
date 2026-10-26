@@ -1,4 +1,3 @@
-import { getClient } from '@/shared/infrastructure/mongodb/client';
 import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
 
 import type {
@@ -6,7 +5,7 @@ import type {
   IndustrialCredentialRecord,
 } from '@/modules/industrial/domain/credential';
 import { getPersistenceMode } from '@/modules/topology/infrastructure/topology-repository-factory';
-import { getMongoDatabase } from '@/shared/infrastructure/mongodb/client';
+import { getClient, getMongoDatabase } from '@/shared/infrastructure/mongodb/client';
 import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
 
 export interface IndustrialCredentialRepository {

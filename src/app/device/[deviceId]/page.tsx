@@ -143,15 +143,30 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           (binding) => binding.targetId === node.id && Boolean(binding.sourcePointId),
         )
       : undefined;
-  const panelBindingConfirmed = Boolean(
-    parentPanel?.serialNumber &&
-      expectedPanelPoint &&
-      breakerTelemetryBindings.some(
-        (binding) =>
-          binding.targetId === node.id &&
-          binding.sourceIdentity === parentPanel.serialNumber &&
-          binding.sourcePointId === expectedPanelPoint,
-      ),
+  const focusedDirectSource =
+    node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER'
+      ? breakerTelemetryBindings.find(
+          (binding) =>
+            binding.targetId === node.id &&
+            !binding.sourcePointId &&
+            binding.metric.toUpperCase() === 'SOURCE',
+        )
+      : undefined;
+  const panelBindingMetrics =
+    parentPanel?.serialNumber && expectedPanelPoint && node.kind === 'EQUIPMENT'
+      ? new Set(
+          breakerTelemetryBindings
+            .filter(
+              (binding) =>
+                binding.targetId === node.id &&
+                binding.sourceIdentity === parentPanel.serialNumber &&
+                binding.sourcePointId === expectedPanelPoint,
+            )
+            .map((binding) => binding.metric.toUpperCase()),
+        )
+      : new Set<string>();
+  const panelBindingConfirmed = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].every(
+    (metric) => panelBindingMetrics.has(metric),
   );
 
   let acrelMapping: {
@@ -407,18 +422,26 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     {node.equipmentType === 'CIRCUIT_BREAKER' && canReadTelemetry ? (
                       <>
                         <dt>Measurement model</dt>
-                        <dd>Externally measured Equipment</dd>
+                        <dd>
+                          {focusedDirectSource && !focusedPointBinding && !acrelMapping
+                            ? 'SELF-MEASURED'
+                            : acrelMapping || focusedPointBinding || parentPanel
+                              ? 'EXTERNALLY-MEASURED'
+                              : 'UNCOMMISSIONED'}
+                        </dd>
                         <dt>Measured via</dt>
                         <dd>
                           {acrelMapping
                             ? `${acrelMapping.gatewayAlias ?? acrelMapping.gatewayName} → ${acrelMapping.meterAlias ?? acrelMapping.meterName} → CH ${acrelMapping.channel}`
-                            : panelBindingConfirmed && parentPanel
-                              ? `${parentPanel.name} → position ${String(breakerPosition).padStart(2, '0')}`
-                              : focusedPointBinding
-                                ? `Explicit MQTT binding · ${focusedPointBinding.sourceIdentity}`
-                                : parentPanel
-                                  ? `${parentPanel.name} → telemetry not commissioned`
-                                  : 'No measurement source commissioned'}
+                            : focusedDirectSource && !focusedPointBinding
+                              ? `Self source · ${focusedDirectSource.sourceIdentity}`
+                              : panelBindingConfirmed && parentPanel
+                                ? `${parentPanel.name} → position ${String(breakerPosition).padStart(2, '0')}`
+                                : focusedPointBinding
+                                  ? `Explicit MQTT binding · ${focusedPointBinding.sourceIdentity}`
+                                  : parentPanel
+                                    ? `${parentPanel.name} → telemetry not commissioned`
+                                    : 'No measurement source commissioned'}
                         </dd>
                         {parentPanel && !acrelMapping ? (
                           <>

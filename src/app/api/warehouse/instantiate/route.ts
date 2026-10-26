@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -23,7 +24,7 @@ function object(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 });
 
@@ -136,4 +137,8 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json(result.value, { status: 201 });
+}
+
+export async function POST(request: Request) {
+  try { return await handlePOST(request); } catch (error) { return integrityErrorResponse(error); }
 }

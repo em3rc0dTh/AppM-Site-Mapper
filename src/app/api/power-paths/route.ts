@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -28,7 +29,7 @@ export async function GET() {
   return NextResponse.json({ paths: await service.listActive() });
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const auth = await requirePermission('power:write');
 
   if (!auth.ok) {
@@ -76,4 +77,8 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ path: result.value }, { status: 201 });
+}
+
+export async function POST(request: Request) {
+  try { return await handlePOST(request); } catch (error) { return integrityErrorResponse(error); }
 }

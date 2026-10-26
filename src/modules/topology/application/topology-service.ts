@@ -52,6 +52,7 @@ export type TopologyError =
   | 'INVALID_RACK_CAPACITY'
   | 'MOVE_NOT_ALLOWED'
   | 'HAS_ACTIVE_CHILDREN'
+  | 'ACTIVE_ACCESS_PORTS'
   | 'DETACH_REQUIRED'
   | 'CAS_RELEASE_REQUIRED'
   | 'PARENT_ARCHIVED_ON_RESTORE'
@@ -117,6 +118,12 @@ function canonicalChildren(mode: EquipmentChildMode, childCapacity?: number): re
 
 export class TopologyService {
   constructor(private readonly repository: TopologyRepository) {}
+
+  private async committed<T extends TopologyNode>(node: T): Promise<T> {
+    const stored = await this.repository.getById(node.id);
+    if (!stored) throw new Error('COMMITTED_TOPOLOGY_MISSING');
+    return stored as T;
+  }
 
   async getById(id: string): Promise<TopologyNode | null> {
     return this.repository.getById(id);
@@ -431,7 +438,7 @@ export class TopologyService {
         if (!(await this.repository.commitLayout([parent], [updatedParent, equipment]))) {
           return failure('LAYOUT_CONFLICT');
         }
-        return success(equipment);
+        return success(await this.committed(equipment));
       }
     }
 
@@ -445,7 +452,7 @@ export class TopologyService {
       if (!(await this.repository.commitLayout([parent], [{ ...parent, updatedAt }, node]))) {
         return failure('LAYOUT_CONFLICT');
       }
-    } else if (node.kind === 'CONTAINER_CLUSTER_BAY' && parent) {
+    } else if (parent) {
       if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
       const updatedAt = new Date(
         Math.max(Date.now(), Date.parse(parent.updatedAt) + 1),
@@ -456,7 +463,7 @@ export class TopologyService {
     } else {
       await this.repository.insert(node);
     }
-    return success(node);
+    return success(await this.committed(node));
   }
 
   async configureEquipment(
@@ -574,7 +581,7 @@ export class TopologyService {
     if (!(await this.repository.commitLayout([node], [updated]))) {
       return failure('LAYOUT_CONFLICT');
     }
-    return success(updated);
+    return success(await this.committed(updated));
   }
 
   async move(
@@ -586,11 +593,13 @@ export class TopologyService {
     const parent = await this.repository.getById(newParentId);
 
     if (!node || !parent) return failure('NOT_FOUND');
+    if (node.lifecycle !== 'ACTIVE') return failure('PARENT_ARCHIVED');
     if (!['CONTAINER_RACK', 'DEVICE', 'EQUIPMENT'].includes(node.kind)) {
       return failure('MOVE_NOT_ALLOWED');
     }
     if (!isAllowedParent(node.kind, parent)) return failure('INVALID_PARENT');
     if (parent.lifecycle === 'ARCHIVED') return failure('PARENT_ARCHIVED');
+    if (node.parentId === parent.id && node.kind !== 'EQUIPMENT') return success(await this.committed(node));
 
     if (node.kind === 'CONTAINER_RACK' && (await this.hasActiveRack(parent.id, node.id))) {
       return failure('POSITION_OCCUPIED');
@@ -603,8 +612,9 @@ export class TopologyService {
       }
 
       const moved = { ...node, parentId: parent.id, updatedAt: nowIso() } as TopologyNode;
-      await this.repository.replace(moved);
-      return success(moved);
+      if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+    if (!(await this.repository.commitLayout([node, parent], [moved, parent]))) return failure('LAYOUT_CONFLICT');
+      return success(await this.committed(moved));
     }
 
     if (node.kind === 'EQUIPMENT') {
@@ -643,14 +653,14 @@ export class TopologyService {
 
       if (oldParent.id === parent.id) {
         if (parent.kind === 'DEVICE' || parent.childMode === 'DYNAMIC') {
-          return success(node);
+          return success(await this.committed(node));
         }
         if (!Number.isInteger(targetSlotIndex)) return failure('POSITION_SLOT_REQUIRED');
         const slot = targetSlotIndex as number;
         if (slot < 0 || slot >= parent.children.length) return failure('SLOT_OUT_OF_RANGE');
         const currentSlot = parent.children.findIndex((candidate) => candidate === node.id);
         if (currentSlot < 0) return failure('INVALID_PARENT');
-        if (slot === currentSlot) return success(node);
+        if (slot === currentSlot) return success(await this.committed(node));
         if (parent.children[slot] !== null) return failure('SLOT_OCCUPIED');
 
         const nextChildren = [...parent.children];
@@ -664,7 +674,7 @@ export class TopologyService {
         if (!(await this.repository.commitLayout([parent, node], [updatedParent, moved]))) {
           return failure('LAYOUT_CONFLICT');
         }
-        return success(moved);
+        return success(await this.committed(moved));
       }
 
       let updatedOldParent: DeviceNode | EquipmentNode;
@@ -719,12 +729,13 @@ export class TopologyService {
       ) {
         return failure('LAYOUT_CONFLICT');
       }
-      return success(moved);
+      return success(await this.committed(moved));
     }
 
     const moved = { ...node, parentId: parent.id, updatedAt: nowIso() } as TopologyNode;
-    await this.repository.replace(moved);
-    return success(moved);
+    if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+    if (!(await this.repository.commitLayout([node, parent], [moved, parent]))) return failure('LAYOUT_CONFLICT');
+    return success(await this.committed(moved));
   }
 
   async archive(id: string): Promise<Result<TopologyNode, TopologyError>> {
@@ -740,6 +751,7 @@ export class TopologyService {
     }
 
     if (node.kind === 'EQUIPMENT') {
+      if (node.accessPorts.some((port) => port.lifecycle === 'ACTIVE')) return failure('ACTIVE_ACCESS_PORTS');
       if (node.children.some((childId) => childId !== null)) {
         return failure('HAS_ACTIVE_CHILDREN');
       }
@@ -753,8 +765,9 @@ export class TopologyService {
       updatedAt: nowIso(),
     };
 
-    await this.repository.replace(archived);
-    return success(archived);
+    if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+    if (!(await this.repository.commitLayout([node], [archived]))) return failure('LAYOUT_CONFLICT');
+    return success(await this.committed(archived));
   }
 
   async restore(id: string): Promise<Result<TopologyNode, TopologyError>> {
@@ -778,14 +791,16 @@ export class TopologyService {
       }
     }
 
+    if (node.kind === 'CONTAINER_RACK' && await this.hasActiveRack(node.parentId, node.id)) return failure('POSITION_OCCUPIED');
     const restored = {
       ...node,
       lifecycle: 'ACTIVE' as const,
       updatedAt: nowIso(),
     };
 
-    await this.repository.replace(restored);
-    return success(restored);
+    if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+    if (!(await this.repository.commitLayout([node], [restored]))) return failure('LAYOUT_CONFLICT');
+    return success(await this.committed(restored));
   }
 
   async getTrail(id: string): Promise<readonly TopologyNode[]> {

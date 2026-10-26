@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -32,7 +33,7 @@ function isPort(value: unknown): value is PowerContractPortInput {
   );
 }
 
-export async function PUT(request: Request, context: Context) {
+async function handlePUT(request: Request, context: Context) {
   const auth = await requirePermission('power:write');
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: 403 });
@@ -113,4 +114,8 @@ export async function PUT(request: Request, context: Context) {
   }
 
   return NextResponse.json({ item: result.value });
+}
+
+export async function PUT(request: Request, context: Context) {
+  try { return await handlePUT(request, context); } catch (error) { return integrityErrorResponse(error); }
 }

@@ -108,6 +108,8 @@ export interface AccessPort {
 }
 
 interface TopologyBase extends DomainEntity {
+  /** Missing only on pre-hardening records; first CAS write promotes to 1. */
+  readonly revision?: number;
   /**
    * Navigation/context pointer. For Equipment this mirrors the canonical immediate
    * physical parent: root Equipment points to Device; nested Equipment points to

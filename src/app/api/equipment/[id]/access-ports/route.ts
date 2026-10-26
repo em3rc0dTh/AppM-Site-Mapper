@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -152,7 +153,7 @@ export async function GET(_request: Request, context: Context) {
   return NextResponse.json({ accessPorts: result.value });
 }
 
-export async function POST(request: Request, context: Context) {
+async function handlePOST(request: Request, context: Context) {
   const payload = await readMutation(request);
   if ('response' in payload) return payload.response;
   if (!payload.body || !hasOnlyKeys(payload.body, ['port']) || !validPort(payload.body.port))
@@ -168,7 +169,7 @@ export async function POST(request: Request, context: Context) {
   return NextResponse.json({ port: result.value }, { status: 201 });
 }
 
-export async function PATCH(request: Request, context: Context) {
+async function handlePATCH(request: Request, context: Context) {
   const payload = await readMutation(request);
   if ('response' in payload) return payload.response;
   if (
@@ -196,7 +197,7 @@ export async function PATCH(request: Request, context: Context) {
   return NextResponse.json({ port: result.value });
 }
 
-export async function DELETE(request: Request, context: Context) {
+async function handleDELETE(request: Request, context: Context) {
   const payload = await readMutation(request);
   if ('response' in payload) return payload.response;
   if (
@@ -221,4 +222,16 @@ export async function DELETE(request: Request, context: Context) {
   if (!result.ok)
     return NextResponse.json({ error: result.error }, { status: errorStatus(result.error) });
   return NextResponse.json({ port: result.value });
+}
+
+export async function POST(request: Request, context: Context) {
+  try { return await handlePOST(request, context); } catch (error) { return integrityErrorResponse(error); }
+}
+
+export async function PATCH(request: Request, context: Context) {
+  try { return await handlePATCH(request, context); } catch (error) { return integrityErrorResponse(error); }
+}
+
+export async function DELETE(request: Request, context: Context) {
+  try { return await handleDELETE(request, context); } catch (error) { return integrityErrorResponse(error); }
 }

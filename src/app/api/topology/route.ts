@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { parsePolygon } from '@/modules/spatial/domain/geometry';
 import { NextResponse } from 'next/server';
 
@@ -102,7 +103,7 @@ export async function GET(request: Request) {
   return NextResponse.json({ nodes: await service.listChildren(parentId) });
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const auth = await requirePermission('topology:write');
 
   if (!auth.ok) {
@@ -264,7 +265,7 @@ export async function POST(request: Request) {
       { error: result.error },
       {
         status:
-          result.error === 'LAYOUT_CONFLICT' || result.error === 'SERIAL_ALREADY_ASSIGNED'
+          result.error === 'LAYOUT_CONFLICT' || result.error === 'SERIAL_ALREADY_ASSIGNED' || result.error === 'POSITION_OCCUPIED'
             ? 409
             : 422,
       },
@@ -272,4 +273,8 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ node: result.value }, { status: 201 });
+}
+
+export async function POST(request: Request) {
+  try { return await handlePOST(request); } catch (error) { return integrityErrorResponse(error); }
 }

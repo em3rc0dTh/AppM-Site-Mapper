@@ -1,0 +1,62 @@
+name: Format main consolidation once
+on:
+  push:
+    branches:
+      - feat/site-mapper-work-2026-10-23
+    paths:
+      - '.github/workflows/format-main-consolidation-once.yml'
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Format consolidation scope
+        run: |
+          npx prettier --write \
+            src/app/api/industrial/commissioning/route.ts \
+            src/app/api/industrial/credentials/route.ts \
+            src/app/api/topology/'[id]'/route.ts \
+            src/app/device/'[deviceId]'/page.tsx \
+            src/components/equipment/equipment-composition-editor.tsx \
+            src/components/industrial/commissioning-console.tsx \
+            src/modules/industrial/application/commissioning-service.ts \
+            src/modules/industrial/application/credential-service.ts \
+            src/modules/industrial/domain/commissioning.ts \
+            src/modules/industrial/infrastructure/communication-profile-repository.ts \
+            src/modules/industrial/infrastructure/credential-repository.ts \
+            src/modules/telemetry/infrastructure/memory-telemetry-binding-repository.ts \
+            src/modules/topology/application/topology-service.ts \
+            src/shared/infrastructure/mongodb/bootstrap.ts
+      - name: Commit formatting
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            src/app/api/industrial/commissioning/route.ts \
+            src/app/api/industrial/credentials/route.ts \
+            src/app/api/topology/'[id]'/route.ts \
+            src/app/device/'[deviceId]'/page.tsx \
+            src/components/equipment/equipment-composition-editor.tsx \
+            src/components/industrial/commissioning-console.tsx \
+            src/modules/industrial/application/commissioning-service.ts \
+            src/modules/industrial/application/credential-service.ts \
+            src/modules/industrial/domain/commissioning.ts \
+            src/modules/industrial/infrastructure/communication-profile-repository.ts \
+            src/modules/industrial/infrastructure/credential-repository.ts \
+            src/modules/telemetry/infrastructure/memory-telemetry-binding-repository.ts \
+            src/modules/topology/application/topology-service.ts \
+            src/shared/infrastructure/mongodb/bootstrap.ts
+          if git diff --cached --quiet; then
+            echo "No formatting changes"
+          else
+            git commit -m "style: format MK1 consolidation scope"
+            git push origin HEAD:refs/heads/feat/site-mapper-work-2026-10-23
+          fi

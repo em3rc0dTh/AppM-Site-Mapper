@@ -93,7 +93,7 @@ export async function POST(request: Request) {
   if (action === 'remove') {
     if (body.password !== undefined)
       return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
-    const result = await app.removePassword(body.equipmentId);
+    const result = await app.removePassword(body.equipmentId, auth.value.id);
     return result.ok
       ? Response.json(result.value)
       : Response.json({ error: result.error }, { status: status(result.error) });

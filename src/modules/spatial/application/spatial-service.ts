@@ -53,7 +53,7 @@ export class SpatialService {
     if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
     if (!(await this.repository.commitLayout(prepared.before, prepared.after)))
       return failure('LAYOUT_CONFLICT');
-    return success(prepared.after[0] as RoomSubstructureNode);
+    return success((await this.repository.getById(roomId)) as RoomSubstructureNode);
   }
 
   async getRoomLayout(roomId: string): Promise<Result<RoomLayout, SpatialError>> {

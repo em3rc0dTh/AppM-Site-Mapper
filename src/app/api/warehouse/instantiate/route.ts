@@ -128,7 +128,7 @@ async function handlePOST(request: Request) {
     const status =
       result.error === 'TEMPLATE_NOT_FOUND' || result.error === 'RACK_NOT_FOUND'
         ? 404
-        : result.error === 'SERIAL_ALREADY_ASSIGNED'
+        : result.error === 'SERIAL_ALREADY_ASSIGNED' || result.error === 'LAYOUT_CONFLICT'
           ? 409
           : result.error === 'INVALID_NAME'
             ? 400

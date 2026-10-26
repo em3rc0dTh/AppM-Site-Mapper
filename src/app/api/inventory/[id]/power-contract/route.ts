@@ -110,7 +110,7 @@ async function handlePUT(request: Request, context: Context) {
   });
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 422 });
+    return NextResponse.json({ error: result.error }, { status: result.error === 'LAYOUT_CONFLICT' ? 409 : 422 });
   }
 
   return NextResponse.json({ item: result.value });

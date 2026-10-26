@@ -29,5 +29,5 @@ export async function updateSiteBoundary(repo: TopologyRepository, id: string, i
   const { totalAreaSqm: _previousArea, ...canonical } = updated;
   void _previousArea;
   if (!(await repo.replaceIfVersion(canonical, input.version))) return failure('BOUNDARY_CONFLICT');
-  return success(canonical);
+  return success((await repo.getById(id)) as typeof canonical);
 }

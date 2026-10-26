@@ -212,16 +212,12 @@ export class WarehouseInstantiationService {
       template: snapshotTemplate(template),
     };
 
-    try {
-      const committed = await this.topologyRepository.commitLayout([], [device, equipment]);
-      if (!committed) return failure('CREATE_FAILED');
-    } catch {
-      return failure('CREATE_FAILED');
-    }
+    const committed = await this.topologyRepository.commitLayout([rack], [rack, device, equipment]);
+    if (!committed) return failure('LAYOUT_CONFLICT');
 
     return success({
-      device,
-      equipment,
+      device: (await this.topologyRepository.getById(device.id)) as DeviceNode,
+      equipment: (await this.topologyRepository.getById(equipment.id)) as EquipmentNode,
       recommendedMountSizeU: template.sizeU ?? null,
       state: 'UNMOUNTED',
     });

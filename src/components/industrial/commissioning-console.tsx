@@ -55,9 +55,15 @@ const fieldStyle = { display: 'grid', gap: 5, fontSize: 13 } as const;
 const inputStyle = { padding: 9, border: '1px solid #a5acb6', borderRadius: 6, width: '100%', minWidth: 0 } as const;
 const gridStyle = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' } as const;
 
-export function CommissioningConsole({ canWrite }: { canWrite: boolean }) {
+export function CommissioningConsole({
+  canWrite,
+  initialDeviceId,
+}: {
+  canWrite: boolean;
+  initialDeviceId?: string;
+}) {
   const [bdfbs, setBdfbs] = useState<Bdfb[]>([]);
-  const [deviceId, setDeviceId] = useState('');
+  const [deviceId, setDeviceId] = useState(initialDeviceId ?? '');
   const [overview, setOverview] = useState<Overview | null>(null);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -99,7 +105,7 @@ export function CommissioningConsole({ canWrite }: { canWrite: boolean }) {
     if (!id) return;
     const data = await jsonRequest('/api/industrial/commissioning?' + new URLSearchParams({ deviceId: id }));
     setOverview(data as unknown as Overview);
-  }, []);
+  }, [initialDeviceId]);
 
   useEffect(() => {
     let active = true;
@@ -108,7 +114,11 @@ export function CommissioningConsole({ canWrite }: { canWrite: boolean }) {
         if (!active) return;
         const devices = data.bdfbs as Bdfb[];
         setBdfbs(devices);
-        if (devices[0]) setDeviceId(devices[0].id);
+        if (initialDeviceId && devices.some((item) => item.id === initialDeviceId)) {
+          setDeviceId(initialDeviceId);
+        } else if (devices[0]) {
+          setDeviceId(devices[0].id);
+        }
       })
       .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : 'LOAD_FAILED'); });
     return () => { active = false; };

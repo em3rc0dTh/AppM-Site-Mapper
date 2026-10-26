@@ -42,7 +42,7 @@ export class CasService {
     if (!(await this.repository.commitLayout([rack.value], [updated]))) {
       return failure('CAS_WRITE_CONFLICT');
     }
-    return success(updated);
+    return this.getRack(updated.id);
   }
 
   async equip(
@@ -98,7 +98,7 @@ export class CasService {
     ) {
       return failure('CAS_WRITE_CONFLICT');
     }
-    return success(updatedRack);
+    return this.getRack(updatedRack.id);
   }
 
   async free(
@@ -120,7 +120,7 @@ export class CasService {
       if (!(await this.repository.commitLayout([rack.value], [updated]))) {
         return failure('CAS_WRITE_CONFLICT');
       }
-      return success(updated);
+      return this.getRack(updated.id);
     }
 
     const occupant = await this.repository.getById(occupantId);
@@ -129,7 +129,7 @@ export class CasService {
       if (!(await this.repository.commitLayout([rack.value], [updated]))) {
         return failure('CAS_WRITE_CONFLICT');
       }
-      return success(updated);
+      return this.getRack(updated.id);
     }
 
     if (!this.repository.commitLayout) return failure('ATOMIC_CAS_STORAGE_REQUIRED');
@@ -139,13 +139,13 @@ export class CasService {
       return failure('CAS_WRITE_CONFLICT');
     }
 
-    return success(updated);
+    return this.getRack(updated.id);
   }
 
   private async getRack(rackId: string): Promise<Result<ContainerRackNode, CasServiceError>> {
     const node = await this.repository.getById(rackId);
     if (!node) return failure('RACK_NOT_FOUND');
-    if (node.kind !== 'CONTAINER_RACK' || node.variant !== 'RACK' || !node.totalU) {
+    if (node.lifecycle !== 'ACTIVE' || node.kind !== 'CONTAINER_RACK' || node.variant !== 'RACK' || !node.totalU) {
       return failure('NOT_A_RACK');
     }
     return success(node);

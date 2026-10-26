@@ -1,6 +1,8 @@
+import type { TopologyNode } from '@/modules/topology/domain/entities';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 
 export interface TelemetryBindingRepository {
+  commitBindings?(bindings: readonly TelemetryBinding[], expectedTopology: readonly TopologyNode[]): Promise<readonly string[]>;
   listForSource(
     protocol: TelemetryBinding['protocol'],
     sourceIdentity: string,

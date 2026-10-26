@@ -14,6 +14,7 @@ import { logger } from '@/shared/infrastructure/logger';
 
 export interface NativeMqttOptions {
   readonly brokerUrl: string;
+  readonly clientId?: string;
   readonly username?: string;
   readonly password?: string;
   readonly topicFilter: string;
@@ -35,6 +36,7 @@ export interface MqttSourceDiagnostics {
  * not enough: only a confirmed SUBACK is reported as subscribed.
  */
 export class NativeMqttSource {
+  private readonly transientClientId = `appm-site-mapper-${randomUUID()}`;
   private socket: Socket | tls.TLSSocket | null = null;
   private receiveBuffer = new Uint8Array();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -108,7 +110,8 @@ export class NativeMqttSource {
       if (this.stopping || this.socket !== socket) return;
       socket.write(
         encodeConnect({
-          clientId: `appm-site-mapper-${randomUUID()}`,
+          clientId: this.options.clientId ?? this.transientClientId,
+          cleanSession: !this.options.clientId,
           ...(this.options.username === undefined ? {} : { username: this.options.username }),
           ...(this.options.password === undefined ? {} : { password: this.options.password }),
           keepAliveSeconds: this.options.keepAliveSeconds ?? 30,
@@ -116,8 +119,15 @@ export class NativeMqttSource {
       );
     });
 
+    let processing: Promise<void> = Promise.resolve();
+    let pendingMessages = 0;
     socket.on('data', (chunk: Buffer) => {
       if (this.socket !== socket || this.stopping) return;
+      if (this.receiveBuffer.length + chunk.length > 2_097_152) {
+        this.lastError = 'MQTT_RECEIVE_BUFFER_FULL';
+        socket.destroy();
+        return;
+      }
       const combined = new Uint8Array(this.receiveBuffer.length + chunk.length);
       combined.set(this.receiveBuffer);
       combined.set(chunk, this.receiveBuffer.length);
@@ -155,7 +165,7 @@ export class NativeMqttSource {
             subscriptionId !== this.pendingSubscription ||
             grantedQos === undefined ||
             grantedQos === 0x80 ||
-            grantedQos > 2
+            grantedQos !== 1
           ) {
             this.lastError = 'SUBACK_REJECTED';
             logger.warn('mqtt.subscription.rejected', { topicFilter: this.options.topicFilter });
@@ -173,18 +183,31 @@ export class NativeMqttSource {
           continue;
         }
 
-        if (packet.type === 3 && this.state === 'subscribed') {
+        if (packet.type === 3 && (this.state === 'subscribed' || this.state === 'subscribing')) {
           try {
             const publish = parsePublish(packet);
-            void Promise.resolve(this.onMessage(publish.topic, publish.payload)).catch((error) => {
+            if (++pendingMessages > 128) {
+              this.lastError = 'MQTT_CAPTURE_BACKPRESSURE';
+              socket.destroy();
+              return;
+            }
+            processing = processing.then(async () => {
+              if (socket.destroyed || this.socket !== socket || this.stopping) return;
+              // Await durable capture. A failed capture deliberately withholds PUBACK.
+              await this.onMessage(publish.topic, publish.payload);
+              if (publish.qos === 1 && publish.packetId !== undefined && !socket.destroyed) {
+                socket.write(encodePubAck(publish.packetId));
+              }
+              if (publish.qos === 0) logger.warn('mqtt.qos0.potential_loss', {});
+            }).catch((error) => {
+              this.lastError = 'MQTT_CAPTURE_FAILED';
               logger.warn('mqtt.message.handler_failed', {
                 reason: error instanceof Error ? error.message : 'unknown',
               });
-            });
-            if (publish.qos === 1 && publish.packetId !== undefined) {
-              socket.write(encodePubAck(publish.packetId));
-            }
+              socket.destroy();
+            }).finally(() => { pendingMessages--; });
           } catch (error) {
+            socket.destroy();
             logger.warn('mqtt.publish.rejected', {
               reason: error instanceof Error ? error.message : 'unknown',
             });

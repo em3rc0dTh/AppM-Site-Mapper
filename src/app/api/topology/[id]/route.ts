@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -38,7 +39,7 @@ export async function GET(_request: Request, context: Context) {
   });
 }
 
-export async function PATCH(request: Request, context: Context) {
+async function handlePATCH(request: Request, context: Context) {
   const auth = await requirePermission('topology:write');
 
   if (!auth.ok) {
@@ -208,4 +209,8 @@ export async function PATCH(request: Request, context: Context) {
   }
 
   return NextResponse.json({ node: result.value });
+}
+
+export async function PATCH(request: Request, context: Context) {
+  try { return await handlePATCH(request, context); } catch (error) { return integrityErrorResponse(error); }
 }

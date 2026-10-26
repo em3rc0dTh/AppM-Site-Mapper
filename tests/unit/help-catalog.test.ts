@@ -3,66 +3,80 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { getHelpEntry, helpCatalog, recommendHelp } from '@/modules/help/catalog';
-import { getHelpSearchIndex } from '@/modules/help/server';
+import { getHelpSearchIndex, readHelpArticle } from '@/modules/help/server';
 
-describe('Site Mapper in-app help manual', () => {
-  it('declares unique safe slugs and fixed Markdown files', () => {
-    expect(helpCatalog.length).toBeGreaterThanOrEqual(10);
+const root = process.cwd();
+
+describe('Customer-facing Site Mapper Help Center', () => {
+  it('has 14 unique, safe, bilingual user guides', async () => {
+    expect(helpCatalog).toHaveLength(14);
     expect(new Set(helpCatalog.map((entry) => entry.slug)).size).toBe(helpCatalog.length);
     expect(new Set(helpCatalog.map((entry) => entry.file)).size).toBe(helpCatalog.length);
-    for (const entry of helpCatalog) {
-      expect(entry.slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
-      expect(entry.file).toMatch(/^[a-z0-9-]+\.md$/);
-      expect(entry.title).toBeTruthy();
-      expect(entry.enTitle).toBeTruthy();
-      expect(entry.summary).toBeTruthy();
-      expect(entry.enSummary).toBeTruthy();
-      expect(existsSync(join(process.cwd(), 'docs/user-guide', entry.file))).toBe(true);
-      expect(existsSync(join(process.cwd(), 'docs/user-guide/en', entry.file))).toBe(true);
+
+    for (const item of helpCatalog) {
+      expect(item.slug).toMatch(/^[a-z0-9]+(?:-[a-z0-9]+)*$/);
+      expect(item.file).toMatch(/^[a-z0-9-]+\.md$/);
+      expect(item.title).toBeTruthy();
+      expect(item.enTitle).toBeTruthy();
+      expect(item.summary).toBeTruthy();
+      expect(item.enSummary).toBeTruthy();
+      for (const locale of ['es', 'en'] as const) {
+        const file = join(root, 'docs', 'help', locale, item.file);
+        expect(existsSync(file), file).toBe(true);
+        const body = await readHelpArticle(item, locale);
+        expect(body.length).toBeGreaterThan(450);
+        expect(body).not.toMatch(/(?:\x60{3}|~{3})mermaid|flowchart\s+(?:TD|LR)/i);
+        expect(body).not.toMatch(/without developer assistance|autoridad técnica|no editar mongo|docker compose|write permission|topology:write|TelemetryBinding/i);
+      }
     }
+
     expect(getHelpEntry('../../.env')).toBeUndefined();
   });
 
-  it('indexes real article text, not just summaries', async () => {
-    const indexed = await getHelpSearchIndex('es');
-    expect(indexed).toHaveLength(helpCatalog.length);
-    const english = await getHelpSearchIndex('en');
-    expect(english).toHaveLength(helpCatalog.length);
-    expect(english.find((item) => item.slug === 'conexiones')?.searchText).toContain(
-      'source_already_connected',
-    );
-    const connections = indexed.find((item) => item.slug === 'conexiones');
-    expect(connections?.searchText).toContain('source_already_connected');
-    expect(connections?.searchText).toContain('powerpath');
+  it('uses friendly localized content for full-text search', async () => {
+    const es = await getHelpSearchIndex('es');
+    const en = await getHelpSearchIndex('en');
+    expect(es).toHaveLength(helpCatalog.length);
+    expect(en).toHaveLength(helpCatalog.length);
+    expect(es.find((item) => item.slug === 'espacios-y-racks')?.searchText).toContain('dibujar');
+    expect(en.find((item) => item.slug === 'espacios-y-racks')?.searchText).toContain('draw');
+    expect(es.find((item) => item.slug === 'conexiones')?.searchText).toContain('energia');
+    expect(en.find((item) => item.slug === 'conexiones')?.searchText).toContain('power');
+    expect(es.find((item) => item.slug === 'manual-maestro')?.searchText).not.toContain('without developer assistance');
   });
 
-  it('links all contextual destinations to real articles', () => {
-    for (const route of [
-      '/workspace',
-      '/blueprint/test',
-      '/rack/test',
-      '/device/test',
-      '/power/connect/equipment',
-      '/power',
-      '/telemetry',
-      '/settings',
-      '/topology/test',
-      '/network',
-      '/warehouse',
-    ]) {
-      const recommendations = recommendHelp(route);
-      expect(recommendations.length).toBeGreaterThan(0);
-      expect(new Set(recommendations).size).toBe(recommendations.length);
-      for (const slug of recommendations) expect(getHelpEntry(slug)).toBeDefined();
+  it('renders existing localized illustrations, never Mermaid source', async () => {
+    for (const locale of ['es', 'en'] as const) {
+      for (const article of helpCatalog) {
+        const markdown = await readHelpArticle(article, locale);
+        for (const [, uri] of markdown.matchAll(/!\[[^\]]+\]\((\/help\/diagrams\/[^)]+)\)/g)) {
+          expect(uri).toMatch(/^\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings)\.svg$/);
+          const file = join(root, 'public', uri!.slice(1));
+          expect(existsSync(file), file).toBe(true);
+          const svg = readFileSync(file, 'utf8');
+          expect(svg).toMatch(/<svg\b/);
+          expect(svg).toMatch(/<title>/);
+          expect(svg).not.toMatch(/<script\b|onload\s*=/i);
+        }
+      }
     }
-  });
-
-  it('does not render untrusted Markdown as raw HTML', () => {
-    const renderer = readFileSync(
-      join(process.cwd(), 'src/modules/help/components/markdown-article.tsx'),
-      'utf8',
-    );
+    const renderer = readFileSync(join(root, 'src/modules/help/components/markdown-article.tsx'), 'utf8');
+    expect(renderer).toContain('help-illustration');
+    expect(renderer).toContain('<Image ');
     expect(renderer).not.toContain('dangerouslySetInnerHTML');
     expect(renderer).not.toContain('eval(');
+  });
+
+  it('maps contextual routes only to published guides', () => {
+    for (const route of [
+      '/workspace', '/blueprint/test', '/rack/test', '/device/test',
+      '/power/connect/equipment', '/power', '/telemetry',
+      '/settings', '/topology/test', '/network', '/warehouse',
+    ]) {
+      const slugs = recommendHelp(route);
+      expect(slugs.length).toBeGreaterThan(0);
+      expect(new Set(slugs).size).toBe(slugs.length);
+      for (const slug of slugs) expect(getHelpEntry(slug)).toBeDefined();
+    }
   });
 });

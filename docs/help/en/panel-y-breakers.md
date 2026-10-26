@@ -2,7 +2,7 @@
 
 A **Panel** has numbered positions where you can install circuit breakers. First make sure you have the main equipment and the component where the Panel belongs.
 
-![Rack, panel and positions](/help/diagrams/en/rack.svg)
+![Empty Panel with 24 available positions and no installed breakers](/help/screenshots/panel-empty.png)
 
 ## Before you start
 
@@ -29,9 +29,17 @@ A **Panel** has numbered positions where you can install circuit breakers. First
 5. Choose **CIRCUIT_BREAKER**, fill in its details and save.
 6. Confirm that the slot now shows **OCCUPIED**.
 
+![The same type of Panel after breakers are installed in specific positions](/help/screenshots/panel-breakers.png)
+
 ## What do 24 positions mean?
 
 That is the Panel's capacity, not the number of installed breakers. A 24-position Panel can have only one occupied slot.
+
+## Check the breaker
+
+![Individual breaker with recent V, A, W and kWh readings](/help/screenshots/breaker-live.png)
+
+After installation, open the breaker to verify its identity, position and, when linked to a source, its readings.
 
 ## If a position is unavailable
 

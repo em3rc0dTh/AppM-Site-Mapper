@@ -97,6 +97,7 @@ export function CommissioningConsole({
 
   const [role, setRole] = useState<ProfileRole>('GATEWAY');
   const [equipmentId, setEquipmentId] = useState('');
+  const [equipmentSearch, setEquipmentSearch] = useState('');
   const [gatewayEquipmentId, setGatewayEquipmentId] = useState('');
   const [alias, setAlias] = useState('');
   const [partNumber, setPartNumber] = useState('');
@@ -198,6 +199,30 @@ export function CommissioningConsole({
     (overview?.equipment ?? []).filter((item) =>
       item.equipmentType !== 'PANEL' && item.equipmentType !== 'CIRCUIT_BREAKER'),
     [overview]);
+  const profileByEquipmentId = useMemo(
+    () => new Map((overview?.profiles ?? []).map((profile) => [profile.equipmentId, profile])),
+    [overview],
+  );
+  const filteredEquipment = useMemo(() => {
+    const query = equipmentSearch.trim().toLowerCase();
+    if (!query) return allowedEquipment;
+    return allowedEquipment.filter((item) => {
+      const profile = profileByEquipmentId.get(item.id);
+      return [
+        item.name,
+        item.model,
+        item.serialNumber,
+        profile?.alias,
+        profile?.partNumber,
+        profile?.macAddress,
+        profile?.gatewayNumber,
+        profile?.meterNumber,
+        profile?.loginUsername,
+      ]
+        .filter(Boolean)
+        .some((value) => String(value).toLowerCase().includes(query));
+    });
+  }, [allowedEquipment, equipmentSearch, profileByEquipmentId]);
   const gateways = useMemo(() => overview?.profiles.filter((profile) => profile.role === 'GATEWAY') ?? [], [overview]);
   const meters = useMemo(() => overview?.profiles.filter((profile) => profile.role === 'METER') ?? [], [overview]);
   const mappableMeters = useMemo(
@@ -416,10 +441,25 @@ export function CommissioningConsole({
             <p>Selecciona un Equipment existente. Un gateway conserva la IP y la identidad del publicador; un medidor declara su Slave ID en el bus de ese gateway.</p>
             <form onSubmit={submitProfile} style={{ display: 'grid', gap: 14 }}>
               <div style={gridStyle}>
+                <label style={fieldStyle}>Buscar Equipment / alias / serial / MAC / login
+                  <input
+                    style={inputStyle}
+                    value={equipmentSearch}
+                    onChange={(event) => setEquipmentSearch(event.target.value)}
+                    placeholder="Buscar..."
+                  />
+                </label>
                 <label style={fieldStyle}>Equipment
                   <select required style={inputStyle} value={equipmentId} onChange={(event) => selectProfile(event.target.value)}>
                     <option value="">Seleccionar equipo</option>
-                    {allowedEquipment.map((item) => <option key={item.id} value={item.id}>{item.name} · {item.equipmentType}</option>)}
+                    {filteredEquipment.map((item) => {
+                      const profile = profileByEquipmentId.get(item.id);
+                      return (
+                        <option key={item.id} value={item.id}>
+                          {profile?.alias ? profile.alias + ' · ' : ''}{item.name} · {item.equipmentType}
+                        </option>
+                      );
+                    })}
                   </select>
                 </label>
                 <label style={fieldStyle}>Función
@@ -672,7 +712,7 @@ export function CommissioningConsole({
             {overview.profiles.length > 0 &&
               <div style={gridStyle}>{overview.profiles.map((item) =>
                 <article key={item.equipmentId} style={{ border: '1px solid #c8ced6', borderRadius: 8, padding: 12 }}>
-                  <strong>{equipmentName(item.equipmentId)}</strong>
+                  <strong>{item.alias ? item.alias + ' · ' : ''}{equipmentName(item.equipmentId)}</strong>
                   <div>
                     {item.role} · {item.role === 'GATEWAY'
                       ? (item.network?.services
@@ -702,7 +742,7 @@ export function CommissioningConsole({
                     <details key={meter.equipmentId}>
                       <summary>
                         {equipmentName(meter.equipmentId)} · Slave {meter.rs485.slaveId} ·{' '}
-                        {channelMap.size}/24 canales confirmados
+                        {channelMap.size}/{meter.channelCount ?? 24} canales confirmados
                         {!gateway?.sourceIdentity ? ' · MQTT identity pendiente' : ''}
                       </summary>
                       <div
@@ -713,7 +753,10 @@ export function CommissioningConsole({
                           paddingTop: 8,
                         }}
                       >
-                        {Array.from({ length: 24 }, (_, index) => index + 1).map((number) => {
+                        {Array.from(
+                          { length: meter.channelCount ?? 24 },
+                          (_, index) => index + 1,
+                        ).map((number) => {
                           const mapping = channelMap.get(number);
                           return (
                             <button
@@ -770,8 +813,16 @@ export function CommissioningConsole({
                     Los medidores cuyo gateway aún no tiene identidad MQTT confirmada no pueden mapearse.
                   </small>
                 ) : null}
-                <label style={fieldStyle}>Canal (1–24)
-                  <input required type="number" min="1" max="24" style={inputStyle} value={channel} onChange={(event) => setChannel(event.target.value)} />
+                <label style={fieldStyle}>Canal
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    max={meters.find((item) => item.equipmentId === meterId)?.channelCount ?? 24}
+                    style={inputStyle}
+                    value={channel}
+                    onChange={(event) => setChannel(event.target.value)}
+                  />
                 </label>
                 <label style={fieldStyle}>Punto MQTT exacto
                   <input required style={inputStyle} value={rawPointId} onChange={(event) => setRawPointId(event.target.value)} placeholder="Ej. 0_1_1" />

@@ -10,13 +10,39 @@ interface Equipment {
   model?: string;
   serialNumber?: string;
 }
-interface Evidence { projectId: string; documentName: string; revision: string; reference?: string }
+interface Evidence {
+  projectId: string;
+  documentName: string;
+  revision: string;
+  reference?: string;
+  projectName?: string;
+  site?: string;
+  client?: string;
+  responsible?: string;
+  documentDate?: string;
+  documentStatus?: string;
+}
 interface Profile {
   equipmentId: string;
   role: 'GATEWAY' | 'METER';
+  alias?: string;
+  partNumber?: string;
+  recordStatus: 'DECLARED' | 'FIELD_VERIFIED';
   gatewayEquipmentId?: string;
   sourceIdentity?: string;
   network?: { ip: string; mask: string; gateway: string; services: { protocol: 'MQTT' | 'MODBUS_TCP'; port?: number }[] };
+  macAddress?: string;
+  loginUsername?: string;
+  credentialRef?: string;
+  gatewayNumber?: string;
+  downlinkMode?: string;
+  declaredSlaveCount?: number;
+  meterNumber?: string;
+  channelCount?: number;
+  channelDescription?: string;
+  hallSensorDescription?: string;
+  termination120Ohm?: boolean;
+  documentedRs485Status?: string;
   rs485: { baudRate: number; dataBits: 7 | 8; parity: 'NONE' | 'EVEN' | 'ODD'; stopBits: 1 | 2; slaveId?: number };
   evidence: Evidence;
   revisionNumber: number;
@@ -72,7 +98,22 @@ export function CommissioningConsole({
   const [role, setRole] = useState<ProfileRole>('GATEWAY');
   const [equipmentId, setEquipmentId] = useState('');
   const [gatewayEquipmentId, setGatewayEquipmentId] = useState('');
+  const [alias, setAlias] = useState('');
+  const [partNumber, setPartNumber] = useState('');
+  const [recordStatus, setRecordStatus] = useState<'DECLARED' | 'FIELD_VERIFIED'>('DECLARED');
   const [sourceIdentity, setSourceIdentity] = useState('');
+  const [macAddress, setMacAddress] = useState('');
+  const [loginUsername, setLoginUsername] = useState('');
+  const [credentialRef, setCredentialRef] = useState('');
+  const [gatewayNumber, setGatewayNumber] = useState('');
+  const [downlinkMode, setDownlinkMode] = useState('');
+  const [declaredSlaveCount, setDeclaredSlaveCount] = useState('');
+  const [meterNumber, setMeterNumber] = useState('');
+  const [channelCount, setChannelCount] = useState('24');
+  const [channelDescription, setChannelDescription] = useState('');
+  const [hallSensorDescription, setHallSensorDescription] = useState('');
+  const [termination120Ohm, setTermination120Ohm] = useState(false);
+  const [documentedRs485Status, setDocumentedRs485Status] = useState('');
   const [ip, setIp] = useState('');
   const [mask, setMask] = useState('255.255.255.0');
   const [networkGateway, setNetworkGateway] = useState('');
@@ -90,6 +131,12 @@ export function CommissioningConsole({
   const [documentName, setDocumentName] = useState('');
   const [revision, setRevision] = useState('');
   const [reference, setReference] = useState('');
+  const [projectName, setProjectName] = useState('');
+  const [site, setSite] = useState('');
+  const [client, setClient] = useState('');
+  const [responsible, setResponsible] = useState('');
+  const [documentDate, setDocumentDate] = useState('');
+  const [documentStatus, setDocumentStatus] = useState('');
 
   const [meterId, setMeterId] = useState('');
   const [breakerId, setBreakerId] = useState('');
@@ -100,8 +147,20 @@ export function CommissioningConsole({
   const [retireKey, setRetireKey] = useState<string | null>(null);
 
   const evidence = useMemo<Evidence>(() => ({
-    projectId, documentName, revision, ...(reference ? { reference } : {}),
-  }), [projectId, documentName, revision, reference]);
+    projectId,
+    documentName,
+    revision,
+    ...(reference ? { reference } : {}),
+    ...(projectName ? { projectName } : {}),
+    ...(site ? { site } : {}),
+    ...(client ? { client } : {}),
+    ...(responsible ? { responsible } : {}),
+    ...(documentDate ? { documentDate } : {}),
+    ...(documentStatus ? { documentStatus } : {}),
+  }), [
+    projectId, documentName, revision, reference, projectName, site, client,
+    responsible, documentDate, documentStatus,
+  ]);
 
   const refresh = useCallback(async (id: string) => {
     if (!id) return;
@@ -168,7 +227,22 @@ export function CommissioningConsole({
     if (!current) {
       setRole('GATEWAY');
       setGatewayEquipmentId('');
+      setAlias('');
+      setPartNumber('');
+      setRecordStatus('DECLARED');
       setSourceIdentity('');
+      setMacAddress('');
+      setLoginUsername('');
+      setCredentialRef('');
+      setGatewayNumber('');
+      setDownlinkMode('');
+      setDeclaredSlaveCount('');
+      setMeterNumber('');
+      setChannelCount('24');
+      setChannelDescription('');
+      setHallSensorDescription('');
+      setTermination120Ohm(false);
+      setDocumentedRs485Status('');
       setIp('');
       setNetworkGateway('');
       setSlaveId('');
@@ -180,7 +254,24 @@ export function CommissioningConsole({
     }
     setRole(current.role);
     setGatewayEquipmentId(current.gatewayEquipmentId ?? '');
+    setAlias(current.alias ?? '');
+    setPartNumber(current.partNumber ?? '');
+    setRecordStatus(current.recordStatus);
     setSourceIdentity(current.sourceIdentity ?? '');
+    setMacAddress(current.macAddress ?? '');
+    setLoginUsername(current.loginUsername ?? '');
+    setCredentialRef(current.credentialRef ?? '');
+    setGatewayNumber(current.gatewayNumber ?? '');
+    setDownlinkMode(current.downlinkMode ?? '');
+    setDeclaredSlaveCount(
+      current.declaredSlaveCount === undefined ? '' : String(current.declaredSlaveCount),
+    );
+    setMeterNumber(current.meterNumber ?? '');
+    setChannelCount(String(current.channelCount ?? 24));
+    setChannelDescription(current.channelDescription ?? '');
+    setHallSensorDescription(current.hallSensorDescription ?? '');
+    setTermination120Ohm(current.termination120Ohm ?? false);
+    setDocumentedRs485Status(current.documentedRs485Status ?? '');
     setIp(current.network?.ip ?? '');
     setMask(current.network?.mask ?? '255.255.255.0');
     setNetworkGateway(current.network?.gateway ?? '');
@@ -199,6 +290,12 @@ export function CommissioningConsole({
     setDocumentName(current.evidence.documentName);
     setRevision(current.evidence.revision);
     setReference(current.evidence.reference ?? '');
+    setProjectName(current.evidence.projectName ?? '');
+    setSite(current.evidence.site ?? '');
+    setClient(current.evidence.client ?? '');
+    setResponsible(current.evidence.responsible ?? '');
+    setDocumentDate(current.evidence.documentDate ?? '');
+    setDocumentStatus(current.evidence.documentStatus ?? '');
   }
 
   async function mutate(action: string, input: Record<string, unknown>, expectedRevision?: number | null) {
@@ -243,11 +340,39 @@ export function CommissioningConsole({
         : []),
     ];
     const input = {
-      equipmentId, role, rs485, evidence,
+      equipmentId,
+      role,
+      recordStatus,
+      rs485,
+      evidence,
+      ...(alias.trim() ? { alias: alias.trim() } : {}),
+      ...(partNumber.trim() ? { partNumber: partNumber.trim() } : {}),
       ...(role === 'GATEWAY' ? {
         ...(sourceIdentity.trim() ? { sourceIdentity: sourceIdentity.trim() } : {}),
+        ...(macAddress.trim() ? { macAddress: macAddress.trim() } : {}),
+        ...(loginUsername.trim() ? { loginUsername: loginUsername.trim() } : {}),
+        ...(credentialRef.trim() ? { credentialRef: credentialRef.trim() } : {}),
+        ...(gatewayNumber.trim() ? { gatewayNumber: gatewayNumber.trim() } : {}),
+        ...(downlinkMode.trim() ? { downlinkMode: downlinkMode.trim() } : {}),
+        ...(declaredSlaveCount.trim()
+          ? { declaredSlaveCount: Number(declaredSlaveCount) }
+          : {}),
         network: { ip, mask, gateway: networkGateway, services },
-      } : { gatewayEquipmentId }),
+      } : {
+        gatewayEquipmentId,
+        ...(meterNumber.trim() ? { meterNumber: meterNumber.trim() } : {}),
+        ...(channelCount.trim() ? { channelCount: Number(channelCount) } : {}),
+        ...(channelDescription.trim()
+          ? { channelDescription: channelDescription.trim() }
+          : {}),
+        ...(hallSensorDescription.trim()
+          ? { hallSensorDescription: hallSensorDescription.trim() }
+          : {}),
+        termination120Ohm,
+        ...(documentedRs485Status.trim()
+          ? { documentedRs485Status: documentedRs485Status.trim() }
+          : {}),
+      }),
     };
     void mutate('save-profile', input, existingProfile?.revisionNumber ?? null);
   }

@@ -37,7 +37,6 @@ La aplicación busca y muestra **solo** archivos aprobados de docs/help. Los man
 
 La CI revisa catálogo, idioma, existencia de SVG, typecheck, lint, formato y build. Aún debe verificarse manualmente en un navegador autenticado: lectura en ambos idiomas, diagramas visibles, búsqueda, enlaces y desplazamiento móvil. Las ilustraciones SVG son conceptuales, no capturas de pantalla real.
 
-
 ## Enfoque por workflows (v3)
 
 El Help Center ofrece **23 guías en español y 23 en inglés**, conectadas en cinco recorridos: espacios, equipos, conexiones, lecturas y tareas habituales. Las imágenes son **ocho diagramas conceptuales SVG por idioma**, no capturas fotográficas ni esquemas Mermaid sin procesar.

@@ -63,8 +63,11 @@ export default async function HelpArticlePage({ params }: { params: Promise<{ sl
                 <summary>{locale === 'es' ? group.es : group.en}</summary>
                 <div className="help-sidebar-chapters">
                   {items.map((item) => (
-                    <Link key={item.slug} href={'/help/' + item.slug}
-                      aria-current={item.slug === slug ? 'page' : undefined}>
+                    <Link
+                      key={item.slug}
+                      href={'/help/' + item.slug}
+                      aria-current={item.slug === slug ? 'page' : undefined}
+                    >
                       {helpTitle(item, locale)}
                     </Link>
                   ))}
@@ -94,7 +97,12 @@ export default async function HelpArticlePage({ params }: { params: Promise<{ sl
           <nav className="help-task-steps" aria-label={t('journeyLabel')}>
             <div className="help-task-steps-heading">
               <strong>{locale === 'es' ? sequence.journey.title : sequence.journey.enTitle}</strong>
-              <span>{t('journeyProgress', { index: sequence.index + 1, count: sequence.journey.slugs.length })}</span>
+              <span>
+                {t('journeyProgress', {
+                  index: sequence.index + 1,
+                  count: sequence.journey.slugs.length,
+                })}
+              </span>
             </div>
             <ol>
               {sequence.journey.slugs.map((stepSlug, stepIndex) => {

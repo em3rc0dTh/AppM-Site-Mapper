@@ -180,7 +180,9 @@ export const helpCatalog: readonly HelpEntry[] = [
     minutes: 5,
   },
   {
-    slug: 'editar-limites', file: 'editar-limites.md', category: 'infrastructure',
+    slug: 'editar-limites',
+    file: 'editar-limites.md',
+    category: 'infrastructure',
     title: 'Modificar los límites de un sitio o edificio',
     summary: 'Mueve los puntos del contorno, revisa el plano y guarda con seguridad.',
     enTitle: 'Edit a site or building boundary',
@@ -189,7 +191,9 @@ export const helpCatalog: readonly HelpEntry[] = [
     minutes: 5,
   },
   {
-    slug: 'retirar-elementos', file: 'retirar-elementos.md', category: 'practice',
+    slug: 'retirar-elementos',
+    file: 'retirar-elementos.md',
+    category: 'practice',
     title: 'Retirar o archivar un elemento',
     summary: 'Conoce qué puedes retirar, qué lo impide y cómo evitar borrar información por error.',
     enTitle: 'Remove or archive an item',
@@ -198,7 +202,9 @@ export const helpCatalog: readonly HelpEntry[] = [
     minutes: 6,
   },
   {
-    slug: 'plantillas-warehouse', file: 'plantillas-warehouse.md', category: 'equipment',
+    slug: 'plantillas-warehouse',
+    file: 'plantillas-warehouse.md',
+    category: 'equipment',
     title: 'Utilizar equipos del catálogo Warehouse',
     summary: 'Busca una plantilla, úsala y comprueba dónde quedó instalada.',
     enTitle: 'Use equipment from Warehouse',
@@ -207,7 +213,9 @@ export const helpCatalog: readonly HelpEntry[] = [
     minutes: 5,
   },
   {
-    slug: 'panel-y-breakers', file: 'panel-y-breakers.md', category: 'equipment',
+    slug: 'panel-y-breakers',
+    file: 'panel-y-breakers.md',
+    category: 'equipment',
     title: 'Crear un panel y colocar interruptores',
     summary: 'Prepara las posiciones del panel e instala cada breaker en su lugar.',
     enTitle: 'Create a panel and add breakers',
@@ -216,7 +224,9 @@ export const helpCatalog: readonly HelpEntry[] = [
     minutes: 7,
   },
   {
-    slug: 'terminales-y-entradas', file: 'terminales-y-entradas.md', category: 'energy',
+    slug: 'terminales-y-entradas',
+    file: 'terminales-y-entradas.md',
+    category: 'energy',
     title: 'Agregar terminales y entradas de energía',
     summary: 'Identifica entradas, salidas y conexiones antes de guardar.',
     enTitle: 'Add terminals and power inputs',
@@ -225,7 +235,9 @@ export const helpCatalog: readonly HelpEntry[] = [
     minutes: 7,
   },
   {
-    slug: 'vincular-mqtt', file: 'vincular-mqtt.md', category: 'observability',
+    slug: 'vincular-mqtt',
+    file: 'vincular-mqtt.md',
+    category: 'observability',
     title: 'Vincular las lecturas MQTT de un breaker',
     summary: 'Asocia una señal verificada con su interruptor y revisa sus cuatro datos.',
     enTitle: 'Link MQTT readings to a breaker',
@@ -234,7 +246,9 @@ export const helpCatalog: readonly HelpEntry[] = [
     minutes: 7,
   },
   {
-    slug: 'configurar-snmp', file: 'configurar-snmp.md', category: 'observability',
+    slug: 'configurar-snmp',
+    file: 'configurar-snmp.md',
+    category: 'observability',
     title: 'Vincular lecturas SNMP a una entrada DC',
     summary: 'Revisa el perfil físico, identifica los OIDs y comprueba las lecturas por entrada.',
     enTitle: 'Link SNMP readings to a DC input',
@@ -243,7 +257,9 @@ export const helpCatalog: readonly HelpEntry[] = [
     minutes: 9,
   },
   {
-    slug: 'historial-y-graficos', file: 'historial-y-graficos.md', category: 'observability',
+    slug: 'historial-y-graficos',
+    file: 'historial-y-graficos.md',
+    category: 'observability',
     title: 'Revisar el historial y los gráficos',
     summary: 'Compara lecturas anteriores sin confundirlas con datos en vivo.',
     enTitle: 'Explore reading history and charts',
@@ -252,7 +268,9 @@ export const helpCatalog: readonly HelpEntry[] = [
     minutes: 6,
   },
   {
-    slug: 'datos-industriales', file: 'datos-industriales.md', category: 'observability',
+    slug: 'datos-industriales',
+    file: 'datos-industriales.md',
+    category: 'observability',
     title: 'Entender de dónde vienen las lecturas',
     summary: 'Diferencia MQTT, SNMP y Modbus de forma sencilla.',
     enTitle: 'Understand where readings come from',
@@ -275,10 +293,13 @@ export function helpSummary(item: HelpEntry, locale: HelpLocale) {
 /** Recommendations only; actual permissions remain enforced by each page. */
 export function recommendHelp(pathname: string): readonly string[] {
   if (pathname.startsWith('/blueprint/')) return ['espacios-y-racks', 'evidencia-visual'];
-  if (pathname.startsWith('/rack/')) return ['equipos-y-posiciones', 'plantillas-warehouse', 'espacios-y-racks'];
-  if (pathname.startsWith('/device/')) return ['panel-y-breakers', 'vincular-mqtt', 'configurar-snmp', 'telemetria'];
+  if (pathname.startsWith('/rack/'))
+    return ['equipos-y-posiciones', 'plantillas-warehouse', 'espacios-y-racks'];
+  if (pathname.startsWith('/device/'))
+    return ['panel-y-breakers', 'vincular-mqtt', 'configurar-snmp', 'telemetria'];
   if (pathname.startsWith('/power')) return ['terminales-y-entradas', 'conexiones'];
-  if (pathname.startsWith('/telemetry')) return ['telemetria', 'historial-y-graficos', 'verificacion'];
+  if (pathname.startsWith('/telemetry'))
+    return ['telemetria', 'historial-y-graficos', 'verificacion'];
   if (pathname.startsWith('/settings'))
     return ['primer-acceso-y-usuarios', 'capturas-y-capacitacion'];
   if (pathname.startsWith('/topology/') || pathname === '/network')
@@ -294,14 +315,14 @@ export function recommendHelp(pathname: string): readonly string[] {
 export const helpWorkflowCoverage: Readonly<Record<string, readonly string[]>> = {
   'manual-maestro': ['WF-NAV-01', 'WF-NAV-02', 'WF-NAV-08'],
   'primer-acceso-y-usuarios': ['WF-ACC-01', 'WF-ACC-02', 'WF-ACC-08'],
-  'conceptos': ['WF-NAV-02', 'WF-TOP-09'],
-  'entidades': ['WF-TOP-02', 'WF-TOP-03', 'WF-TOP-04', 'WF-TOP-05'],
+  conceptos: ['WF-NAV-02', 'WF-TOP-09'],
+  entidades: ['WF-TOP-02', 'WF-TOP-03', 'WF-TOP-04', 'WF-TOP-05'],
   'espacios-y-racks': ['WF-MAP-09', 'WF-MAP-10', 'WF-MAP-11', 'WF-MAP-12', 'WF-MAP-15'],
   'equipos-y-posiciones': ['WF-EQ-01', 'WF-EQ-02', 'WF-EQ-07'],
-  'conexiones': ['WF-PWR-01', 'WF-PWR-02', 'WF-PWR-03', 'WF-PWR-04'],
-  'telemetria': ['WF-HIST-01', 'WF-HIST-02', 'WF-HIST-07'],
+  conexiones: ['WF-PWR-01', 'WF-PWR-02', 'WF-PWR-03', 'WF-PWR-04'],
+  telemetria: ['WF-HIST-01', 'WF-HIST-02', 'WF-HIST-07'],
   'recorrido-completo-login-mqtt-snmp-modbus': ['WF-SNMP-15', 'WF-HIST-01'],
-  'verificacion': ['WF-HIST-07', 'WF-HIST-08'],
+  verificacion: ['WF-HIST-07', 'WF-HIST-08'],
   'modelo-de-datos': ['WF-TOP-09', 'WF-HIST-11'],
   'practica-guiada': ['WF-NAV-01', 'WF-NAV-02', 'WF-EQ-02'],
   'capturas-y-capacitacion': ['WF-NAV-03', 'WF-HIST-07'],
@@ -319,8 +340,14 @@ export const helpWorkflowCoverage: Readonly<Record<string, readonly string[]>> =
 
 /** A reading guide is available to everyone; edit guides explain when authorization is needed. */
 export const helpEditorGuides: readonly string[] = [
-  'entidades', 'editar-limites', 'espacios-y-racks', 'plantillas-warehouse',
-  'panel-y-breakers', 'terminales-y-entradas', 'vincular-mqtt', 'configurar-snmp',
+  'entidades',
+  'editar-limites',
+  'espacios-y-racks',
+  'plantillas-warehouse',
+  'panel-y-breakers',
+  'terminales-y-entradas',
+  'vincular-mqtt',
+  'configurar-snmp',
   'retirar-elementos',
 ];
 
@@ -349,7 +376,12 @@ export const helpJourneys: readonly HelpJourney[] = [
     enTitle: 'Set up equipment',
     description: 'Catálogo, rack, paneles, breakers y terminales.',
     enDescription: 'Warehouse, rack, panels, breakers and terminals.',
-    slugs: ['plantillas-warehouse', 'equipos-y-posiciones', 'panel-y-breakers', 'terminales-y-entradas'],
+    slugs: [
+      'plantillas-warehouse',
+      'equipos-y-posiciones',
+      'panel-y-breakers',
+      'terminales-y-entradas',
+    ],
   },
   {
     id: 'power',
@@ -365,7 +397,14 @@ export const helpJourneys: readonly HelpJourney[] = [
     enTitle: 'Understand and check readings',
     description: 'MQTT, SNMP, lecturas recientes y gráficos.',
     enDescription: 'MQTT, SNMP, live readings and charts.',
-    slugs: ['datos-industriales', 'vincular-mqtt', 'configurar-snmp', 'telemetria', 'historial-y-graficos', 'verificacion'],
+    slugs: [
+      'datos-industriales',
+      'vincular-mqtt',
+      'configurar-snmp',
+      'telemetria',
+      'historial-y-graficos',
+      'verificacion',
+    ],
   },
   {
     id: 'everyday',
@@ -373,7 +412,12 @@ export const helpJourneys: readonly HelpJourney[] = [
     enTitle: 'Everyday tasks',
     description: 'Acceso, búsqueda, retirada segura y dudas frecuentes.',
     enDescription: 'Sign-in, search, safe removal and common questions.',
-    slugs: ['primer-acceso-y-usuarios', 'practica-guiada', 'retirar-elementos', 'capturas-y-capacitacion'],
+    slugs: [
+      'primer-acceso-y-usuarios',
+      'practica-guiada',
+      'retirar-elementos',
+      'capturas-y-capacitacion',
+    ],
   },
 ];
 

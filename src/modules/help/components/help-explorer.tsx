@@ -55,13 +55,17 @@ export function HelpExplorer({
             return (
               <details className="help-journey-card" key={journey.id}>
                 <summary>
-                  <span className="help-journey-number" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="help-journey-number" aria-hidden="true">
+                    {String(i + 1).padStart(2, '0')}
+                  </span>
                   <span className="help-journey-text">
                     <strong>{locale === 'es' ? journey.title : journey.enTitle}</strong>
                     <span>{locale === 'es' ? journey.description : journey.enDescription}</span>
                     <small>{t('journeySteps', { count: journey.slugs.length })}</small>
                   </span>
-                  <span className="help-journey-chevron" aria-hidden="true">⌄</span>
+                  <span className="help-journey-chevron" aria-hidden="true">
+                    ⌄
+                  </span>
                 </summary>
                 <ol>
                   {journey.slugs.map((slug) => {
@@ -111,15 +115,22 @@ export function HelpExplorer({
           </p>
         </div>
         <div className="help-filters" role="group" aria-label={t('categories')}>
-          <button type="button" className={category === 'all' ? 'is-active' : ''}
-            aria-pressed={category === 'all'} onClick={() => setCategory('all')}>
+          <button
+            type="button"
+            className={category === 'all' ? 'is-active' : ''}
+            aria-pressed={category === 'all'}
+            onClick={() => setCategory('all')}
+          >
             {t('all')}
           </button>
           {helpCategories.map((group) => (
-            <button type="button" key={group.id}
+            <button
+              type="button"
+              key={group.id}
               className={category === group.id ? 'is-active' : ''}
               aria-pressed={category === group.id}
-              onClick={() => setCategory(group.id)}>
+              onClick={() => setCategory(group.id)}
+            >
               {locale === 'es' ? group.es : group.en}
             </button>
           ))}
@@ -130,7 +141,9 @@ export function HelpExplorer({
               const group = helpCategories.find((entry) => entry.id === item.category)!;
               return (
                 <Link key={item.slug} className="help-article-card" href={'/help/' + item.slug}>
-                  <span className="help-card-category">{locale === 'es' ? group.es : group.en}</span>
+                  <span className="help-card-category">
+                    {locale === 'es' ? group.es : group.en}
+                  </span>
                   <h2>{helpTitle(item, locale)}</h2>
                   <p>{helpSummary(item, locale)}</p>
                   <span className="help-card-footer">
@@ -146,7 +159,13 @@ export function HelpExplorer({
           <div className="help-no-results" role="status">
             <h2>{t('emptyTitle')}</h2>
             <p>{t('emptyDescription')}</p>
-            <button type="button" onClick={() => { setQuery(''); setCategory('all'); }}>
+            <button
+              type="button"
+              onClick={() => {
+                setQuery('');
+                setCategory('all');
+              }}
+            >
               {t('reset')}
             </button>
           </div>

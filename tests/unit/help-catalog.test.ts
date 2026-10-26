@@ -2,7 +2,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { getHelpEntry, getHelpJourneyForArticle, helpCatalog, helpJourneys, helpWorkflowCoverage, recommendHelp } from '@/modules/help/catalog';
+import {
+  getHelpEntry,
+  getHelpJourneyForArticle,
+  helpCatalog,
+  helpJourneys,
+  helpWorkflowCoverage,
+  recommendHelp,
+} from '@/modules/help/catalog';
 import { getHelpSearchIndex, readHelpArticle } from '@/modules/help/server';
 
 const root = process.cwd();

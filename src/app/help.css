@@ -711,7 +711,9 @@
 }
 
 /* The Help Center begins with real task journeys rather than a technical chapter index. */
-.help-section-heading { margin: 0 0 16px; }
+.help-section-heading {
+  margin: 0 0 16px;
+}
 .help-section-heading h2 {
   margin: 0 0 7px;
   color: #173654;
@@ -724,7 +726,9 @@
   color: #60748a;
   line-height: 1.6;
 }
-.help-journeys { margin-bottom: 43px; }
+.help-journeys {
+  margin-bottom: 43px;
+}
 .help-journey-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -739,7 +743,10 @@
   overflow: hidden;
   box-shadow: 0 4px 18px #152d440a;
 }
-.help-journey-card[open] { border-color: #9ac5e7; box-shadow: 0 8px 22px #1b5b8914; }
+.help-journey-card[open] {
+  border-color: #9ac5e7;
+  box-shadow: 0 8px 22px #1b5b8914;
+}
 .help-journey-card summary {
   display: flex;
   align-items: flex-start;
@@ -748,7 +755,9 @@
   cursor: pointer;
   list-style: none;
 }
-.help-journey-card summary::-webkit-details-marker { display: none; }
+.help-journey-card summary::-webkit-details-marker {
+  display: none;
+}
 .help-journey-card summary:focus-visible {
   outline: 3px solid #258ce2;
   outline-offset: -3px;
@@ -767,16 +776,54 @@
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 }
-.help-journey-text { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
-.help-journey-text strong { font-size: 15px; line-height: 1.34; color: #153650; }
-.help-journey-text > span { font-size: 12px; line-height: 1.5; color: #5c7388; }
-.help-journey-text small { font-size: 11px; color: #2474ae; font-weight: 800; }
-.help-journey-chevron { font-size: 24px; color: #6f869a; transition: transform .15s; }
-.help-journey-card[open] .help-journey-chevron { transform: rotate(180deg); }
-.help-journey-card ol { padding: 0 19px 0 42px; margin: 0 0 15px; }
-.help-journey-card li { margin: 0 0 10px; color: #1270ac; font-size: 12px; }
-.help-journey-card li a { color: #234a67; text-decoration: underline; text-decoration-color: #c2d6e5; text-underline-offset: 3px; }
-.help-journey-card li a:hover { color: #0c6fab; }
+.help-journey-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+.help-journey-text strong {
+  font-size: 15px;
+  line-height: 1.34;
+  color: #153650;
+}
+.help-journey-text > span {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #5c7388;
+}
+.help-journey-text small {
+  font-size: 11px;
+  color: #2474ae;
+  font-weight: 800;
+}
+.help-journey-chevron {
+  font-size: 24px;
+  color: #6f869a;
+  transition: transform 0.15s;
+}
+.help-journey-card[open] .help-journey-chevron {
+  transform: rotate(180deg);
+}
+.help-journey-card ol {
+  padding: 0 19px 0 42px;
+  margin: 0 0 15px;
+}
+.help-journey-card li {
+  margin: 0 0 10px;
+  color: #1270ac;
+  font-size: 12px;
+}
+.help-journey-card li a {
+  color: #234a67;
+  text-decoration: underline;
+  text-decoration-color: #c2d6e5;
+  text-underline-offset: 3px;
+}
+.help-journey-card li a:hover {
+  color: #0c6fab;
+}
 .help-journey-start {
   display: block;
   padding: 12px 18px;
@@ -786,12 +833,27 @@
   font-size: 12px;
   font-weight: 800;
 }
-.help-journey-start span { margin-left: 5px; }
-.help-library { margin-top: 22px; }
-.help-card-footer { gap: 10px; align-items: center; flex-wrap: wrap; }
-.help-card-footer b { margin-left: auto; }
-.help-article-sidebar nav details { margin: 0 0 7px; border-radius: 8px; }
-.help-article-sidebar nav details[open] { background: #f7fafd; }
+.help-journey-start span {
+  margin-left: 5px;
+}
+.help-library {
+  margin-top: 22px;
+}
+.help-card-footer {
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.help-card-footer b {
+  margin-left: auto;
+}
+.help-article-sidebar nav details {
+  margin: 0 0 7px;
+  border-radius: 8px;
+}
+.help-article-sidebar nav details[open] {
+  background: #f7fafd;
+}
 .help-article-sidebar nav details > summary {
   cursor: pointer;
   color: #345777;
@@ -801,8 +863,14 @@
   padding: 11px 10px;
   border-radius: 8px;
 }
-.help-article-sidebar nav details > summary:focus-visible { outline: 2px solid #258ce2; }
-.help-sidebar-chapters { padding: 0 3px 7px 9px; display: grid; gap: 2px; }
+.help-article-sidebar nav details > summary:focus-visible {
+  outline: 2px solid #258ce2;
+}
+.help-sidebar-chapters {
+  padding: 0 3px 7px 9px;
+  display: grid;
+  gap: 2px;
+}
 .help-article-header .help-editor-note {
   display: inline-block;
   margin-top: 9px;
@@ -825,7 +893,11 @@
   color: #244c6c;
   font-size: 13px;
 }
-.help-task-steps-heading span { color: #647f93; font-size: 12px; white-space: nowrap; }
+.help-task-steps-heading span {
+  color: #647f93;
+  font-size: 12px;
+  white-space: nowrap;
+}
 .help-task-steps ol {
   list-style: none;
   margin: 0;
@@ -835,7 +907,10 @@
   overflow-x: auto;
   padding-bottom: 5px;
 }
-.help-task-steps li { flex: 1 0 145px; min-width: 0; }
+.help-task-steps li {
+  flex: 1 0 145px;
+  min-width: 0;
+}
 .help-task-steps li a {
   display: flex;
   align-items: center;
@@ -868,15 +943,31 @@
   font-weight: 800;
 }
 @media (max-width: 1120px) {
-  .help-journey-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .help-journey-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 @media (max-width: 780px) {
-  .help-article-sidebar nav { display: block; overflow-x: visible; }
-  .help-article-sidebar nav details { display: block; }
-  .help-article-sidebar nav a { min-width: 0; }
-  .help-article-sidebar { max-height: 270px; overflow-y: auto; }
+  .help-article-sidebar nav {
+    display: block;
+    overflow-x: visible;
+  }
+  .help-article-sidebar nav details {
+    display: block;
+  }
+  .help-article-sidebar nav a {
+    min-width: 0;
+  }
+  .help-article-sidebar {
+    max-height: 270px;
+    overflow-y: auto;
+  }
 }
 @media (max-width: 560px) {
-  .help-journey-grid { grid-template-columns: 1fr; }
-  .help-task-steps-heading { flex-wrap: wrap; }
+  .help-journey-grid {
+    grid-template-columns: 1fr;
+  }
+  .help-task-steps-heading {
+    flex-wrap: wrap;
+  }
 }

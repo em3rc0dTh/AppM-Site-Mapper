@@ -170,9 +170,22 @@ export class IndustrialCommissioningService {
     // A bound channel must be retired before moving its meter to a different
     // gateway/slave or changing the publisher identity. Network IP changes do not
     // erase existing bindings and are recorded as a revision.
-    if (existing?.role === 'GATEWAY' && existing.sourceIdentity !== input.sourceIdentity) {
-      const mapped = await this.bindings.listForSource('MQTT', existing.sourceIdentity!);
-      if (mapped.some(previouslyConfirmed)) return bad('PROFILE_IN_USE');
+    if (existing?.role === 'GATEWAY') {
+      if (existing.sourceIdentity !== input.sourceIdentity) {
+        const mapped = await this.bindings.listForSource('MQTT', existing.sourceIdentity!);
+        if (mapped.some(previouslyConfirmed)) return bad('PROFILE_IN_USE');
+      }
+      const busChanged =
+        existing.rs485.baudRate !== input.rs485.baudRate ||
+        existing.rs485.dataBits !== input.rs485.dataBits ||
+        existing.rs485.parity !== input.rs485.parity ||
+        existing.rs485.stopBits !== input.rs485.stopBits;
+      if (busChanged) {
+        const profiles = await this.profiles.listByBdfb(equipment.deviceId);
+        if (profiles.some((profile) =>
+          profile.role === 'METER' && profile.gatewayEquipmentId === existing.equipmentId))
+          return bad('PROFILE_IN_USE');
+      }
     }
     if (existing?.role === 'METER' &&
         (existing.gatewayEquipmentId !== input.gatewayEquipmentId ||

@@ -22,9 +22,6 @@ export function ContextualHelp() {
     if (open) dialog.current?.showModal();
     else dialog.current?.close();
   }, [open]);
-  useEffect(() => {
-    /* Changing the screen must also remove the previous context. */ setOpen(false);
-  }, [pathname]);
 
   function close() {
     setOpen(false);

@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import ts from 'typescript';
 
+// Final consolidation pass: keep human-facing TSX copy behind next-intl.
+
 const targets = [
   {
     path: 'src/app/device/[deviceId]/page.tsx',

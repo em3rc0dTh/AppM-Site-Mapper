@@ -11,7 +11,15 @@ export interface CommissioningEvidence {
   readonly documentName: string;
   readonly revision: string;
   readonly reference?: string;
+  readonly projectName?: string;
+  readonly site?: string;
+  readonly client?: string;
+  readonly responsible?: string;
+  readonly documentDate?: string;
+  readonly documentStatus?: string;
 }
+
+export type CommissioningRecordStatus = 'DECLARED' | 'FIELD_VERIFIED';
 
 export interface NetworkServiceConfiguration {
   readonly protocol: UplinkProtocol;
@@ -37,9 +45,27 @@ export interface Rs485Configuration {
 export interface CommunicationProfileInput {
   readonly equipmentId: string;
   readonly role: IndustrialRole;
+  /** Search-friendly operational name/TID; canonical Equipment.name remains authoritative. */
+  readonly alias?: string;
+  readonly partNumber?: string;
+  readonly recordStatus: CommissioningRecordStatus;
   readonly gatewayEquipmentId?: string;
   readonly sourceIdentity?: string;
   readonly network?: NetworkConfiguration;
+  readonly macAddress?: string;
+  readonly loginUsername?: string;
+  /** Reference to an approved secret store. Never a plaintext password. */
+  readonly credentialRef?: string;
+  readonly gatewayNumber?: string;
+  readonly downlinkMode?: string;
+  readonly declaredSlaveCount?: number;
+  readonly meterNumber?: string;
+  readonly channelCount?: number;
+  readonly channelDescription?: string;
+  readonly hallSensorDescription?: string;
+  readonly termination120Ohm?: boolean;
+  /** Documentary C&P state, never treated as live connectivity. */
+  readonly documentedRs485Status?: string;
   readonly rs485: Rs485Configuration;
   readonly evidence: CommissioningEvidence;
 }
@@ -98,22 +124,58 @@ function netmask(value: unknown): value is string {
 }
 
 export function parseEvidence(raw: unknown): CommissioningEvidence | null {
-  if (!object(raw) || !only(raw, ['projectId', 'documentName', 'revision', 'reference'])) return null;
+  if (!object(raw) || !only(raw, [
+    'projectId', 'documentName', 'revision', 'reference', 'projectName', 'site', 'client',
+    'responsible', 'documentDate', 'documentStatus',
+  ])) return null;
   if (!text(raw.projectId, 100) || !text(raw.documentName, 160) || !text(raw.revision, 60)) return null;
-  if (raw.reference !== undefined && !text(raw.reference, 240)) return null;
+  for (const key of [
+    'reference', 'projectName', 'site', 'client', 'responsible', 'documentDate', 'documentStatus',
+  ] as const) {
+    if (raw[key] !== undefined && !text(raw[key], key === 'reference' ? 240 : 160)) return null;
+  }
   return {
     projectId: raw.projectId.trim(),
     documentName: raw.documentName.trim(),
     revision: raw.revision.trim(),
     ...(typeof raw.reference === 'string' ? { reference: raw.reference.trim() } : {}),
+    ...(typeof raw.projectName === 'string' ? { projectName: raw.projectName.trim() } : {}),
+    ...(typeof raw.site === 'string' ? { site: raw.site.trim() } : {}),
+    ...(typeof raw.client === 'string' ? { client: raw.client.trim() } : {}),
+    ...(typeof raw.responsible === 'string' ? { responsible: raw.responsible.trim() } : {}),
+    ...(typeof raw.documentDate === 'string' ? { documentDate: raw.documentDate.trim() } : {}),
+    ...(typeof raw.documentStatus === 'string'
+      ? { documentStatus: raw.documentStatus.trim() }
+      : {}),
   };
 }
 
 export function parseProfileInput(raw: unknown): CommunicationProfileInput | null {
   if (!object(raw) || !only(raw, [
-    'equipmentId', 'role', 'gatewayEquipmentId', 'sourceIdentity', 'network', 'rs485', 'evidence',
+    'equipmentId', 'role', 'alias', 'partNumber', 'recordStatus',
+    'gatewayEquipmentId', 'sourceIdentity', 'network', 'macAddress', 'loginUsername',
+    'credentialRef', 'gatewayNumber', 'downlinkMode', 'declaredSlaveCount', 'meterNumber',
+    'channelCount', 'channelDescription', 'hallSensorDescription', 'termination120Ohm',
+    'documentedRs485Status', 'rs485', 'evidence',
   ])) return null;
-  if (!text(raw.equipmentId, 160) || (raw.role !== 'GATEWAY' && raw.role !== 'METER')) return null;
+  if (
+    !text(raw.equipmentId, 160) ||
+    (raw.role !== 'GATEWAY' && raw.role !== 'METER') ||
+    (raw.recordStatus !== 'DECLARED' && raw.recordStatus !== 'FIELD_VERIFIED')
+  ) return null;
+  for (const [key, max] of [
+    ['alias', 120], ['partNumber', 120], ['loginUsername', 120], ['credentialRef', 240],
+    ['gatewayNumber', 80], ['downlinkMode', 120], ['meterNumber', 80],
+    ['channelDescription', 180], ['hallSensorDescription', 180],
+    ['documentedRs485Status', 120],
+  ] as const) {
+    if (raw[key] !== undefined && !text(raw[key], max)) return null;
+  }
+  if (
+    raw.macAddress !== undefined &&
+    (typeof raw.macAddress !== 'string' ||
+      !/^(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(raw.macAddress.trim()))
+  ) return null;
   const evidence = parseEvidence(raw.evidence);
   if (!evidence || !object(raw.rs485) || !only(raw.rs485, [
     'baudRate', 'dataBits', 'parity', 'stopBits', 'slaveId',
@@ -162,11 +224,44 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
         ...(rawService.port !== undefined ? { port: Number(rawService.port) } : {}),
       });
     }
+    if (
+      raw.meterNumber !== undefined ||
+      raw.channelCount !== undefined ||
+      raw.channelDescription !== undefined ||
+      raw.hallSensorDescription !== undefined ||
+      raw.termination120Ohm !== undefined ||
+      raw.documentedRs485Status !== undefined ||
+      (raw.declaredSlaveCount !== undefined &&
+        (!Number.isInteger(raw.declaredSlaveCount) ||
+          Number(raw.declaredSlaveCount) < 0 ||
+          Number(raw.declaredSlaveCount) > 247))
+    ) return null;
     return {
       equipmentId: raw.equipmentId.trim(),
       role: 'GATEWAY',
+      recordStatus: raw.recordStatus,
+      ...(typeof raw.alias === 'string' ? { alias: raw.alias.trim() } : {}),
+      ...(typeof raw.partNumber === 'string' ? { partNumber: raw.partNumber.trim() } : {}),
       ...(typeof raw.sourceIdentity === 'string'
         ? { sourceIdentity: raw.sourceIdentity.trim() }
+        : {}),
+      ...(typeof raw.macAddress === 'string'
+        ? { macAddress: raw.macAddress.trim().toUpperCase() }
+        : {}),
+      ...(typeof raw.loginUsername === 'string'
+        ? { loginUsername: raw.loginUsername.trim() }
+        : {}),
+      ...(typeof raw.credentialRef === 'string'
+        ? { credentialRef: raw.credentialRef.trim() }
+        : {}),
+      ...(typeof raw.gatewayNumber === 'string'
+        ? { gatewayNumber: raw.gatewayNumber.trim() }
+        : {}),
+      ...(typeof raw.downlinkMode === 'string'
+        ? { downlinkMode: raw.downlinkMode.trim() }
+        : {}),
+      ...(typeof raw.declaredSlaveCount === 'number'
+        ? { declaredSlaveCount: raw.declaredSlaveCount }
         : {}),
       network: {
         ip: raw.network.ip,
@@ -181,13 +276,38 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
   if (
     !text(raw.gatewayEquipmentId, 160) || raw.gatewayEquipmentId === raw.equipmentId ||
     raw.sourceIdentity !== undefined || raw.network !== undefined ||
+    raw.macAddress !== undefined || raw.loginUsername !== undefined ||
+    raw.credentialRef !== undefined || raw.gatewayNumber !== undefined ||
+    raw.downlinkMode !== undefined || raw.declaredSlaveCount !== undefined ||
     !Number.isInteger(serial.slaveId) || Number(serial.slaveId) < 1 ||
-    Number(serial.slaveId) > 247
+    Number(serial.slaveId) > 247 ||
+    (raw.channelCount !== undefined &&
+      (!Number.isInteger(raw.channelCount) ||
+        Number(raw.channelCount) < 1 ||
+        Number(raw.channelCount) > 256)) ||
+    (raw.termination120Ohm !== undefined && typeof raw.termination120Ohm !== 'boolean')
   ) return null;
   return {
     equipmentId: raw.equipmentId.trim(),
     role: 'METER',
+    recordStatus: raw.recordStatus,
+    ...(typeof raw.alias === 'string' ? { alias: raw.alias.trim() } : {}),
+    ...(typeof raw.partNumber === 'string' ? { partNumber: raw.partNumber.trim() } : {}),
     gatewayEquipmentId: raw.gatewayEquipmentId.trim(),
+    ...(typeof raw.meterNumber === 'string' ? { meterNumber: raw.meterNumber.trim() } : {}),
+    ...(typeof raw.channelCount === 'number' ? { channelCount: raw.channelCount } : {}),
+    ...(typeof raw.channelDescription === 'string'
+      ? { channelDescription: raw.channelDescription.trim() }
+      : {}),
+    ...(typeof raw.hallSensorDescription === 'string'
+      ? { hallSensorDescription: raw.hallSensorDescription.trim() }
+      : {}),
+    ...(typeof raw.termination120Ohm === 'boolean'
+      ? { termination120Ohm: raw.termination120Ohm }
+      : {}),
+    ...(typeof raw.documentedRs485Status === 'string'
+      ? { documentedRs485Status: raw.documentedRs485Status.trim() }
+      : {}),
     rs485: { ...rs485, slaveId: Number(serial.slaveId) },
     evidence,
   };

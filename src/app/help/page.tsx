@@ -13,7 +13,7 @@ export default async function HelpCenterPage() {
   const [localeValue, t, entries] = await Promise.all([
     getLocale(),
     getTranslations('help'),
-    getHelpSearchIndex(),
+    getHelpSearchIndex(localeValue === 'es' ? 'es' : 'en'),
   ]);
   const locale = localeValue === 'es' ? ('es' as const) : ('en' as const);
 
@@ -26,7 +26,6 @@ export default async function HelpCenterPage() {
         <span className="help-eyebrow">{t('documentation')}</span>
         <h1>{t('heroTitle')}</h1>
         <p>{t('heroDescription')}</p>
-        {locale === 'en' && <p className="help-language-note">{t('spanishNote')}</p>}
       </header>
       <HelpExplorer entries={entries} locale={locale} />
       <footer className="help-footer-note">{t('safetyReminder')}</footer>

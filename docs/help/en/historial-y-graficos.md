@@ -2,9 +2,11 @@
 
 History answers a simple question: **how did this measurement change over the last hours or days?** A historical value does not always describe what is happening right now.
 
-![Readings and circuits](/help/diagrams/en/readings.svg)
+![Real SNMP input and MQTT reading history on a BDFB](/help/screenshots/history-charts.png)
 
 ## View earlier readings from equipment
+
+![Panel history with separate charts for each metric](/help/screenshots/panel-history.png)
 
 1. From **EXPLORE**, open the correct room, rack and equipment.
 2. Find **LIVE TELEMETRY** or its history section.

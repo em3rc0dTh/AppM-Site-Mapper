@@ -39,7 +39,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     power ||
     pathname === '/network';
 
-  const contextLabel = pathname.startsWith('/settings')
+  const contextLabel = pathname.startsWith('/help')
+    ? t('helpCenter')
+    : pathname.startsWith('/settings')
     ? t('settings')
     : pathname.startsWith('/warehouse')
       ? t('warehouseContext')

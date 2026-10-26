@@ -163,6 +163,10 @@ export function CommissioningConsole({
       setIp('');
       setNetworkGateway('');
       setSlaveId('');
+      setMqttEnabled(true);
+      setMqttPort('');
+      setModbusTcpEnabled(false);
+      setModbusTcpPort('502');
       return;
     }
     setRole(current.role);
@@ -390,7 +394,16 @@ export function CommissioningConsole({
               </div>
               <p style={{ fontSize: 12 }}>El usuario y la fecha se obtienen de la sesión del servidor. Nunca ingreses contraseñas aquí.</p>
               <div>
-                <button type="submit" disabled={!canWrite || busy || !equipmentId} style={{ padding: '10px 18px' }}>
+                <button
+                  type="submit"
+                  disabled={
+                    !canWrite ||
+                    busy ||
+                    !equipmentId ||
+                    (role === 'GATEWAY' && !mqttEnabled && !modbusTcpEnabled)
+                  }
+                  style={{ padding: '10px 18px' }}
+                >
                   {existingProfile ? 'Guardar nueva revisión' : 'Registrar configuración'}
                 </button>
                 {existingProfile && <span style={{ marginLeft: 12 }}>Revisión {existingProfile.revisionNumber} · {existingProfile.updatedAt}</span>}

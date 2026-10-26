@@ -156,7 +156,7 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
   ]);
 
-    const users = database.collection('users');
+  const users = database.collection('users');
   await Promise.all([
     users.createIndex({ id: 1 }, { unique: true, name: 'uq_user_id' }),
     users.createIndex({ email: 1 }, { unique: true, name: 'uq_user_email' }),

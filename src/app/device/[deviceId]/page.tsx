@@ -21,6 +21,7 @@ import { RackElevationService } from '@/modules/rack/application/rack-elevation-
 import type { PortConnectionView } from '@/modules/power/domain/port-connection-view';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
+import { rawPointForPosition } from '@/modules/topology/domain/telemetry-point-prefix';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 export default async function DevicePage({ params }: { params: Promise<{ deviceId: string }> }) {
@@ -117,6 +118,42 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           }))
       : [];
 
+  const parentPanel =
+    node.kind === 'EQUIPMENT' &&
+    node.equipmentType === 'CIRCUIT_BREAKER' &&
+    node.parentEquipmentId
+      ? deviceEquipment.find(
+          (item) =>
+            item.id === node.parentEquipmentId &&
+            item.lifecycle === 'ACTIVE' &&
+            item.equipmentType === 'PANEL',
+        ) ?? null
+      : null;
+  const breakerPosition =
+    parentPanel && node.kind === 'EQUIPMENT'
+      ? parentPanel.children.findIndex((childId) => childId === node.id) + 1
+      : 0;
+  const expectedPanelPoint =
+    parentPanel?.telemetryPointPrefix && breakerPosition > 0
+      ? rawPointForPosition(parentPanel.telemetryPointPrefix, breakerPosition)
+      : null;
+  const focusedPointBinding =
+    node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER'
+      ? breakerTelemetryBindings.find(
+          (binding) => binding.targetId === node.id && Boolean(binding.sourcePointId),
+        )
+      : undefined;
+  const panelBindingConfirmed = Boolean(
+    parentPanel?.serialNumber &&
+      expectedPanelPoint &&
+      breakerTelemetryBindings.some(
+        (binding) =>
+          binding.targetId === node.id &&
+          binding.sourceIdentity === parentPanel.serialNumber &&
+          binding.sourcePointId === expectedPanelPoint,
+      ),
+  );
+
   let acrelMapping: {
     sourceIdentity: string;
     rawPointId: string;
@@ -191,8 +228,12 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             gatewayName:
               gatewayNode?.kind === 'EQUIPMENT' ? gatewayNode.name : gatewayProfile.equipmentId,
             meterName: meterNode?.kind === 'EQUIPMENT' ? meterNode.name : meterProfile.equipmentId,
-            ...(gatewayProfile.alias ? { gatewayAlias: gatewayProfile.alias } : {}),
-            ...(meterProfile.alias ? { meterAlias: meterProfile.alias } : {}),
+            ...(gatewayNode?.kind === 'EQUIPMENT' && gatewayNode.aliases?.[0]
+              ? { gatewayAlias: gatewayNode.aliases[0] }
+              : {}),
+            ...(meterNode?.kind === 'EQUIPMENT' && meterNode.aliases?.[0]
+              ? { meterAlias: meterNode.aliases[0] }
+              : {}),
             ...(gatewayProfile.macAddress ? { macAddress: gatewayProfile.macAddress } : {}),
             ...(gatewayProfile.loginUsername
               ? { loginUsername: gatewayProfile.loginUsername }
@@ -329,6 +370,10 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dd>{node.model ?? node.category ?? t('notSpecified')}</dd>
                     <dt>{t('serial')}</dt>
                     <dd>{node.serialNumber ?? t('notAssigned')}</dd>
+                    <dt>Part Number (P/N)</dt>
+                    <dd>{node.partNumber ?? t('notSpecified')}</dd>
+                    <dt>Aliases</dt>
+                    <dd>{node.aliases?.length ? node.aliases.join(', ') : t('notSpecified')}</dd>
                     <dt>{t('parent')}</dt>
                     <dd>{node.parentEquipmentId ?? t('deviceRoot')}</dd>
                     <dt>{t('childCapacity')}</dt>
@@ -341,10 +386,42 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dd>{hasFeedA ? t('pathRecorded') : t('noPath')}</dd>
                     <dt>{t('powerB')}</dt>
                     <dd>{hasFeedB ? t('pathRecorded') : t('noPath')}</dd>
+                    {node.equipmentType === 'CIRCUIT_BREAKER' && canReadTelemetry ? (
+                      <>
+                        <dt>Measurement model</dt>
+                        <dd>Externally measured Equipment</dd>
+                        <dt>Measured via</dt>
+                        <dd>
+                          {acrelMapping
+                            ? `${acrelMapping.gatewayAlias ?? acrelMapping.gatewayName} → ${acrelMapping.meterAlias ?? acrelMapping.meterName} → CH ${acrelMapping.channel}`
+                            : panelBindingConfirmed && parentPanel
+                              ? `${parentPanel.name} → position ${String(breakerPosition).padStart(2, '0')}`
+                              : focusedPointBinding
+                                ? `Explicit MQTT binding · ${focusedPointBinding.sourceIdentity}`
+                                : parentPanel
+                                  ? `${parentPanel.name} → telemetry not commissioned`
+                                  : 'No measurement source commissioned'}
+                        </dd>
+                        {parentPanel && !acrelMapping ? (
+                          <>
+                            <dt>Panel source S/N</dt>
+                            <dd>{parentPanel.serialNumber ?? '—'}</dd>
+                            <dt>Panel point prefix</dt>
+                            <dd>{parentPanel.telemetryPointPrefix ?? '—'}</dd>
+                            <dt>Physical position</dt>
+                            <dd>{breakerPosition > 0 ? String(breakerPosition).padStart(2, '0') : '—'}</dd>
+                            <dt>Resolved raw point</dt>
+                            <dd>{expectedPanelPoint ?? '—'}</dd>
+                            <dt>Binding</dt>
+                            <dd>{panelBindingConfirmed ? 'CONFIRMED' : 'NOT COMMISSIONED'}</dd>
+                          </>
+                        ) : null}
+                      </>
+                    ) : null}
                     {node.equipmentType === 'CIRCUIT_BREAKER' && canReadIndustrialSettings ? (
                       acrelMapping ? (
                         <>
-                          <dt>Acrel</dt>
+                          <dt>Acrel measurement path</dt>
                           <dd>
                             {acrelMapping.gatewayAlias ?? acrelMapping.gatewayName}
                             {acrelMapping.gatewayNumber ? ' #' + acrelMapping.gatewayNumber : ''} →{' '}
@@ -352,7 +429,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                             {acrelMapping.meterNumber ? ' ' + acrelMapping.meterNumber : ''} → CH
                             {acrelMapping.channel} → {acrelMapping.rawPointId}
                           </dd>
-                          <dt>Fuente MQTT</dt>
+                          <dt>Transport source</dt>
                           <dd>{acrelMapping.sourceIdentity}</dd>
                           <dt>Estado de comisionamiento</dt>
                           <dd>{acrelMapping.recordStatus ?? 'DECLARED'}</dd>

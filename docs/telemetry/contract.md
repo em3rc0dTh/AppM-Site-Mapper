@@ -103,6 +103,29 @@ This is useful when local MongoDB contains a stable customer/device identity whi
 
 MQTT raw point identity is a binding, not the breaker primary identity.
 
+A breaker `TelemetryBinding.targetId` means **the measurement is attributed to that breaker**.
+It does not mean that the breaker itself produced the MQTT packet. Measurement origin and
+observed asset are deliberately separate:
+
+```text
+measurement source → raw point → TelemetryBinding → observed Equipment
+```
+
+Current supported provenance patterns include:
+
+- `PANEL_POSITION`: the parent Panel is the measurement source; its canonical
+  `serialNumber` is the source identity, its `telemetryPointPrefix` defines the point group,
+  and the breaker's physical slot resolves the candidate raw point.
+- `ACREL_METER_CHANNEL`: an existing Acrel meter Equipment measures a channel, an existing
+  gateway Equipment transports/publishes it, and an explicit binding attributes the point to
+  the existing breaker.
+- independent Equipment SOURCE: the observed Equipment is also the authenticated source.
+
+No `MeteringDevice`, channel, or sensor entity is introduced merely to represent provenance.
+Create a physical Equipment only when Site Mapper needs to inventory/manage that hardware
+independently.
+
+
 Only explicit, active `TelemetryBinding` records are authoritative: source identity, raw point ID, target Equipment ID and metric. Physical panel order, a free-form `rawPointId` attribute or `BFDB_TELEMETRY_BINDING_MODE=panel-order-24` do not certify a mapping. Unmapped points remain visible as unmapped; they never become invented breaker readings.
 
 ## Latest State and partial MQTT updates

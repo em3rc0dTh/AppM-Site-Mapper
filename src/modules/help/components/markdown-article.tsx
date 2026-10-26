@@ -140,15 +140,30 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
       );
     if (illustration) {
       const [width, height] = illustrationSize(illustration[2]!);
+      const image = (
+        <Image
+          src={illustration[2]!}
+          alt={illustration[1]!}
+          width={width}
+          height={height}
+          unoptimized
+        />
+      );
       blocks.push(
         <figure className="help-illustration" key={key}>
-          <Image
-            src={illustration[2]!}
-            alt={illustration[1]!}
-            width={width}
-            height={height}
-            unoptimized
-          />
+          {illustration[2]!.startsWith('/help/screenshots/') ? (
+            <a
+              className="help-illustration-zoom"
+              href={illustration[2]!}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={locale === 'es' ? 'Abrir captura a tamaño completo' : 'Open full-size screenshot'}
+            >
+              {image}
+            </a>
+          ) : (
+            image
+          )}
           <figcaption>{illustration[1]!}</figcaption>
         </figure>,
       );

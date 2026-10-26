@@ -20,6 +20,7 @@ export interface CommissioningEvidence {
 }
 
 export type CommissioningRecordStatus = 'DECLARED' | 'FIELD_VERIFIED';
+export type CredentialState = 'NOT_DECLARED' | 'PRESENT_IN_SOURCE' | 'SECRET_REFERENCED';
 
 export interface NetworkServiceConfiguration {
   readonly protocol: UplinkProtocol;
@@ -55,6 +56,7 @@ export interface CommunicationProfileInput {
   readonly macAddress?: string;
   readonly loginUsername?: string;
   /** Reference to an approved secret store. Never a plaintext password. */
+  readonly credentialState?: CredentialState;
   readonly credentialRef?: string;
   readonly gatewayNumber?: string;
   readonly downlinkMode?: string;
@@ -154,7 +156,7 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
   if (!object(raw) || !only(raw, [
     'equipmentId', 'role', 'alias', 'partNumber', 'recordStatus',
     'gatewayEquipmentId', 'sourceIdentity', 'network', 'macAddress', 'loginUsername',
-    'credentialRef', 'gatewayNumber', 'downlinkMode', 'declaredSlaveCount', 'meterNumber',
+    'credentialState', 'credentialRef', 'gatewayNumber', 'downlinkMode', 'declaredSlaveCount', 'meterNumber',
     'channelCount', 'channelDescription', 'hallSensorDescription', 'termination120Ohm',
     'documentedRs485Status', 'rs485', 'evidence',
   ])) return null;
@@ -175,6 +177,26 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
     raw.macAddress !== undefined &&
     (typeof raw.macAddress !== 'string' ||
       !/^(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(raw.macAddress.trim()))
+  ) return null;
+  if (
+    raw.credentialState !== undefined &&
+    !['NOT_DECLARED', 'PRESENT_IN_SOURCE', 'SECRET_REFERENCED'].includes(
+      String(raw.credentialState),
+    )
+  ) return null;
+  if (
+    raw.credentialRef !== undefined &&
+    !/^[A-Za-z][A-Za-z0-9+.-]*:\/\/[A-Za-z0-9._~:/?#\[\]@!  if (
+    raw.macAddress !== undefined &&
+    (typeof raw.macAddress !== 'string' ||
+      !/^(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(raw.macAddress.trim()))
+  ) return null;'()*+,;=%-]+$/.test(
+      String(raw.credentialRef).trim(),
+    )
+  ) return null;
+  if (
+    raw.credentialState === 'SECRET_REFERENCED' &&
+    typeof raw.credentialRef !== 'string'
   ) return null;
   const evidence = parseEvidence(raw.evidence);
   if (!evidence || !object(raw.rs485) || !only(raw.rs485, [
@@ -251,6 +273,9 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
       ...(typeof raw.loginUsername === 'string'
         ? { loginUsername: raw.loginUsername.trim() }
         : {}),
+      ...(typeof raw.credentialState === 'string'
+        ? { credentialState: raw.credentialState as CredentialState }
+        : {}),
       ...(typeof raw.credentialRef === 'string'
         ? { credentialRef: raw.credentialRef.trim() }
         : {}),
@@ -277,7 +302,7 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
     !text(raw.gatewayEquipmentId, 160) || raw.gatewayEquipmentId === raw.equipmentId ||
     raw.sourceIdentity !== undefined || raw.network !== undefined ||
     raw.macAddress !== undefined || raw.loginUsername !== undefined ||
-    raw.credentialRef !== undefined || raw.gatewayNumber !== undefined ||
+    raw.credentialState !== undefined || raw.credentialRef !== undefined || raw.gatewayNumber !== undefined ||
     raw.downlinkMode !== undefined || raw.declaredSlaveCount !== undefined ||
     !Number.isInteger(serial.slaveId) || Number(serial.slaveId) < 1 ||
     Number(serial.slaveId) > 247 ||

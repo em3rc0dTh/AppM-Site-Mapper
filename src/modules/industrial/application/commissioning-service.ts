@@ -114,7 +114,7 @@ function documentaryWarnings(
       severity: 'FIELD_CONFIRMATION_REQUIRED',
       field: 'network.gateway',
       equipmentIds: [profile.equipmentId],
-      value: profile.network?.gateway,
+      ...(profile.network?.gateway ? { value: profile.network.gateway } : {}),
     });
   }
 

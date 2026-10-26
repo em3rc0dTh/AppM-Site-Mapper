@@ -95,7 +95,7 @@ export function MarkdownHelpArticle({ text }: { text: string }) {
   let serial = 0;
 
   while (i < lines.length) {
-    const current = lines[i].trim();
+    const current = (lines[i] ?? '').trim();
     if (!current) { i++; continue; }
     const key = 'block-' + serial++;
 
@@ -104,8 +104,8 @@ export function MarkdownHelpArticle({ text }: { text: string }) {
       const fence = current.slice(0, 3);
       const code: string[] = [];
       i++;
-      while (i < lines.length && !lines[i].trim().startsWith(fence)) {
-        code.push(lines[i]); i++;
+      while (i < lines.length && !(lines[i] ?? '').trim().startsWith(fence)) {
+        code.push((lines[i] ?? '')); i++;
       }
       i++;
       blocks.push(<figure className="help-code" key={key}>
@@ -118,8 +118,8 @@ export function MarkdownHelpArticle({ text }: { text: string }) {
 
     const heading = /^(#{1,6})\s+(.+)$/.exec(current);
     if (heading) {
-      const level = Math.min(5, heading[1].length + 1);
-      const title = heading[2].trim();
+      const level = Math.min(5, heading[1]!.length + 1);
+      const title = heading[2]!.trim();
       const children = inlineText(title);
       const id = headingId(title);
       blocks.push(level <= 2
@@ -131,18 +131,18 @@ export function MarkdownHelpArticle({ text }: { text: string }) {
     }
     if (/^>\s?/.test(current)) {
       const quote: string[] = [];
-      while (i < lines.length && /^\s*>\s?/.test(lines[i])) {
-        quote.push(lines[i].trim().replace(/^>\s?/, '')); i++;
+      while (i < lines.length && /^\s*>\s?/.test((lines[i] ?? ''))) {
+        quote.push((lines[i] ?? '').trim().replace(/^>\s?/, '')); i++;
       }
       blocks.push(<blockquote key={key}>{quote.map((line, j) =>
         <p key={j}>{inlineText(line)}</p>)}</blockquote>);
       continue;
     }
     if (isTable(current) && i + 1 < lines.length && /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1])) {
-      const headers = cellContent(lines[i]);
+      const headers = cellContent((lines[i] ?? ''));
       i += 2;
       const rows: string[][] = [];
-      while (i < lines.length && isTable(lines[i])) { rows.push(cellContent(lines[i])); i++; }
+      while (i < lines.length && isTable((lines[i] ?? ''))) { rows.push(cellContent((lines[i] ?? ''))); i++; }
       blocks.push(<div className="help-table-scroll" key={key}><table>
         <thead><tr>{headers.map((value, j) => <th key={j} scope="col">{inlineText(value)}</th>)}</tr></thead>
         <tbody>{rows.map((row, j) => <tr key={j}>{headers.map((_, c) =>
@@ -150,12 +150,12 @@ export function MarkdownHelpArticle({ text }: { text: string }) {
       </table></div>);
       continue;
     }
-    if (isListItem(lines[i])) {
-      const ordered = /^\s*\d+\./.test(lines[i]);
+    if (isListItem((lines[i] ?? ''))) {
+      const ordered = /^\s*\d+\./.test((lines[i] ?? ''));
       const items: string[] = [];
-      while (i < lines.length && (isListItem(lines[i]) || (lines[i].trim() && /^\s{2,}/.test(lines[i])))) {
-        if (isListItem(lines[i])) items.push(lines[i].replace(/^\s*(?:[-*+] |\d+\. )/, ''));
-        else if (items.length) items[items.length - 1] += ' ' + lines[i].trim();
+      while (i < lines.length && (isListItem((lines[i] ?? '')) || ((lines[i] ?? '').trim() && /^\s{2,}/.test((lines[i] ?? ''))))) {
+        if (isListItem((lines[i] ?? ''))) items.push((lines[i] ?? '').replace(/^\s*(?:[-*+] |\d+\. )/, ''));
+        else if (items.length) items[items.length - 1] += ' ' + (lines[i] ?? '').trim();
         i++;
       }
       const li = items.map((value, j) => <li key={j}>{inlineText(value)}</li>);
@@ -164,11 +164,11 @@ export function MarkdownHelpArticle({ text }: { text: string }) {
     }
 
     const para: string[] = [];
-    while (i < lines.length && lines[i].trim() &&
-      !/^(?:#{1,6}\s|>\s?)/.test(lines[i].trim()) &&
-      !isFence(lines[i]) && !isTable(lines[i]) &&
-      !isListItem(lines[i]) && !isRule(lines[i])) {
-      para.push(lines[i].trim()); i++;
+    while (i < lines.length && (lines[i] ?? '').trim() &&
+      !/^(?:#{1,6}\s|>\s?)/.test((lines[i] ?? '').trim()) &&
+      !isFence((lines[i] ?? '')) && !isTable((lines[i] ?? '')) &&
+      !isListItem((lines[i] ?? '')) && !isRule((lines[i] ?? ''))) {
+      para.push((lines[i] ?? '').trim()); i++;
     }
     if (!para.length) { i++; continue; }
     blocks.push(<p key={key}>{inlineText(para.join(' '))}</p>);

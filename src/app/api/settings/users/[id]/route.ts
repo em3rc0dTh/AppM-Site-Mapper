@@ -1,4 +1,5 @@
-import { recordAdminAudit } from '@/modules/settings/infrastructure/admin-audit';
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
+import { readBoundedJson as readHardenedJson, jsonBodyErrorStatus as hardenedJsonStatus, isSafeMutationRequest as hardenedSafeMutation } from '@/shared/http/request-security';
 import { NextResponse } from 'next/server';
 
 import { AuthService } from '@/modules/identity/application/auth-service';
@@ -12,14 +13,17 @@ type Context = Readonly<{ params: Promise<{ id: string }> }>;
 const roles = new Set<Role>(['SUPERADMIN', 'ADMIN', 'STANDARD']);
 const lifecycleStates = new Set<LifecycleState>(['ACTIVE', 'ARCHIVED']);
 
-export async function PATCH(request: Request, context: Context) {
+async function handlePATCH(request: Request, context: Context) {
   const auth = await requirePermission('users:manage');
 
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: 403 });
   }
 
-  const body: unknown = await request.json().catch(() => null);
+  if (!hardenedSafeMutation(request)) return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  const parsedBody = await readHardenedJson(request);
+  if (!parsedBody.ok) return Response.json({ error: parsedBody.error }, { status: hardenedJsonStatus(parsedBody.error) });
+  const body: unknown = parsedBody.value;
 
   if (!body || typeof body !== 'object') {
     return NextResponse.json({ error: 'INVALID_REQUEST' }, { status: 400 });
@@ -73,6 +77,9 @@ export async function PATCH(request: Request, context: Context) {
     return NextResponse.json({ error: result.error }, { status });
   }
 
-  await recordAdminAudit(auth.value.id, 'USER_UPDATE', id);
   return NextResponse.json({ user: result.value });
+}
+
+export async function PATCH(request: Request, context: Context) {
+  try { return await handlePATCH(request, context); } catch (error) { return integrityErrorResponse(error); }
 }

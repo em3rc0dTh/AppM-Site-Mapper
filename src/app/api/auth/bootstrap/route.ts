@@ -1,3 +1,5 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
+import { readBoundedJson as readHardenedJson, jsonBodyErrorStatus as hardenedJsonStatus, isSafeMutationRequest as hardenedSafeMutation } from '@/shared/http/request-security';
 import { timingSafeEqual } from 'node:crypto';
 
 import { NextResponse } from 'next/server';
@@ -13,7 +15,7 @@ function secureEqual(left: string, right: string): boolean {
   return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const configuredToken = requireRuntimeSecret(
     'BOOTSTRAP_ADMIN_TOKEN',
     process.env.BOOTSTRAP_ADMIN_TOKEN,
@@ -27,7 +29,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'FORBIDDEN' }, { status: 403 });
   }
 
-  const body: unknown = await request.json().catch(() => null);
+  if (!hardenedSafeMutation(request)) return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  const parsedBody = await readHardenedJson(request);
+  if (!parsedBody.ok) return Response.json({ error: parsedBody.error }, { status: hardenedJsonStatus(parsedBody.error) });
+  const body: unknown = parsedBody.value;
 
   if (
     !body ||
@@ -54,4 +59,8 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ user: result.value }, { status: 201 });
+}
+
+export async function POST(request: Request) {
+  try { return await handlePOST(request); } catch (error) { return integrityErrorResponse(error); }
 }

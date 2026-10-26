@@ -1,4 +1,7 @@
-import { recordAdminAudit } from '@/modules/settings/infrastructure/admin-audit';
+import { IntegrityConflict } from '@/shared/infrastructure/mongodb/integrity-transaction';
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
+import { readBoundedJson, jsonBodyErrorStatus, isSafeMutationRequest } from '@/shared/http/request-security';
+import { withAdminAudit } from '@/modules/settings/infrastructure/admin-audit';
 import { NextResponse } from 'next/server';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
@@ -19,15 +22,10 @@ export async function GET(_request: Request, context: Context) {
 export async function PUT(request: Request, context: Context) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 });
-  const text = await request.text();
-  if (text.length > 1000000)
-    return NextResponse.json({ error: 'LAYOUT_TOO_LARGE' }, { status: 413 });
-  let body: unknown;
-  try {
-    body = JSON.parse(text);
-  } catch {
-    return NextResponse.json({ error: 'INVALID_JSON' }, { status: 400 });
-  }
+  if (!isSafeMutationRequest(request)) return NextResponse.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  const parsed = await readBoundedJson(request, { maxBytes: 1_000_000, maxNodes: 50_000, maxDepth: 16 });
+  if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: jsonBodyErrorStatus(parsed.error) });
+  const body = parsed.value;
   const { id } = await context.params;
   const repo = await createTopologyRepository();
   const result = await prepareLayoutSave(repo, id, body);
@@ -36,11 +34,12 @@ export async function PUT(request: Request, context: Context) {
   if (!repo.commitLayout)
     return NextResponse.json({ error: 'ATOMIC_LAYOUT_STORAGE_REQUIRED' }, { status: 503 });
   try {
-    const saved = await repo.commitLayout(result.before, result.after);
-    if (!saved) return NextResponse.json({ error: 'LAYOUT_CONFLICT' }, { status: 409 });
-    await recordAdminAudit(auth.value.id, 'ROOM_LAYOUT_SAVE', id);
+    await withAdminAudit(auth.value.id, 'ROOM_LAYOUT_SAVE', id, async () => {
+      if (!(await repo.commitLayout!(result.before, result.after))) throw new IntegrityConflict('LAYOUT_CONFLICT');
+    });
     return NextResponse.json({ draft: (await readLayoutDraft(repo, id))!.draft });
-  } catch {
+  } catch (error) {
+    if (error instanceof IntegrityConflict) return integrityErrorResponse(error);
     return NextResponse.json({ error: 'LAYOUT_SAVE_FAILED_TRANSACTION_REQUIRED' }, { status: 503 });
   }
 }

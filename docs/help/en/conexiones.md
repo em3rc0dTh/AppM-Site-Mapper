@@ -1,34 +1,46 @@
 # Check a power connection
 
-Site Mapper lets you see **where a recorded power connection starts and which unit it reaches**.
+Site Mapper can show the power route **recorded in the system**, from source equipment to a destination input.
 
-![Example power connection](/help/diagrams/en/power.svg)
+## Open a Power Path
 
-## View an existing connection
+![Real POWER PATH screen](/help/screenshots/power-path.webp)
 
-1. Open the equipment you want to inspect.
-2. Find **PHYSICAL TERMINALS** or **ACCESS PORTS**.
-3. Select the power terminal.
-4. If it shows **CONNECTED**, a connection has been recorded.
-5. Select **VIEW POWERPATH** to see its route.
-6. Check the source, destination and the input/output names.
+1. Open the Equipment you want to inspect.
+2. In its Inspector, find **Power A**, **Power B**, **VIEW POWERPATH**, **Explore Power Path** or **FULL POWER TRACE**, depending on the screen.
+3. Open the route.
+4. Read the screen from left to right:
+   - **Source equipment hierarchy**: where the route starts.
+   - **POWER OUTPUT**: source terminal.
+   - **POWER PATH / FEED**: recorded connection.
+   - **POWER INPUT**: destination terminal.
+   - **Destination equipment hierarchy**: where the route ends.
+5. Check the Inspector on the right for Source, Destination, Feed and Redundancy.
 
-## What are Feed A and Feed B?
+## Feed A and Feed B
 
-They are two possible power routes. One, both or neither may be recorded. Seeing **Feed A** does not mean **Feed B** is present.
+You may find **Feed A**, **Feed B**, both, or neither. The **A+B** view can display both routes together.
+
+If the screen says **Feed A · Configured** and **Feed B · Not configured**, only one route is recorded in Site Mapper in that example.
+
+![Simple explanation of a recorded power connection](/help/diagrams/en/power.svg)
+
+## What Configured means
+
+**Configured means the route is recorded.** It does not by itself prove that current is flowing, that physical wiring is correct, or that redundancy has been certified.
 
 ## Record a connection (authorized users only)
 
-1. Confirm with the responsible person that the equipment is physically connected.
-2. Select a free **POWER OUTPUT**, then **CONNECT LOAD**.
-3. Choose the target equipment and its **POWER INPUT**.
+1. Confirm the two physical endpoints with the responsible person.
+2. Select a free **POWER OUTPUT** and the action to connect a load.
+3. Choose the destination Equipment and its **POWER INPUT**.
 4. Review both ends and choose **Feed A** or **Feed B** as appropriate.
-5. Only when the details are correct, select **CONFIRM PHYSICAL CONNECTION**.
+5. Confirm the physical connection only after the information has been verified.
 
-## If the terminal is already connected
+## If the terminal is already CONNECTED
 
-There is no need to record another connection. Use **VIEW POWERPATH** to review the existing route.
+Do not create another connection for the same endpoint. Open the existing Power Path and review what is recorded.
 
-**Remember:** this shows the connection registered in Site Mapper. It does not, by itself, confirm that power is flowing right now.
+**Expected result:** you can identify source, destination and Feed, and distinguish a recorded route from an actual electrical measurement.
 
-[View equipment readings](telemetria.md).
+[View live equipment readings](telemetria.md).

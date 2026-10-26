@@ -446,7 +446,7 @@ export function CommissioningConsole({
                   const gateway = gateways.find(
                     (item) => item.equipmentId === meter.gatewayEquipmentId,
                   );
-                  const channelMap = mappingsByMeter.get(meter.equipmentId) ?? new Map();
+                  const channelMap = mappingsByMeter.get(meter.equipmentId) ?? new Map<number, Mapping>();
                   return (
                     <details key={meter.equipmentId}>
                       <summary>

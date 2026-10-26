@@ -696,8 +696,22 @@
   display: block;
   width: 100%;
   height: auto;
-  max-height: 440px;
+  max-height: 560px;
   object-fit: contain;
+}
+.help-prose .help-illustration-zoom {
+  display: block;
+  background: #fff;
+  cursor: zoom-in;
+}
+.help-prose .help-illustration-zoom:focus-visible {
+  outline: 3px solid #258ce2;
+  outline-offset: -3px;
+}
+.help-prose .help-illustration figcaption {
+  padding: 10px 14px 12px;
+  border-top: 1px solid #e1e9f0;
+  background: #fbfdff;
 }
 @media (max-width: 650px) {
   .help-prose .help-illustration {

@@ -13,6 +13,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=build /app/package.json /app/package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY --from=build /app/.next ./.next
+# /help renders allowlisted Markdown source files at runtime.
+COPY --from=build /app/docs/user-guide ./docs/user-guide
 COPY --from=build /app/next.config.ts ./next.config.ts
 EXPOSE 3000
 CMD ["npm", "run", "start", "--", "-H", "0.0.0.0", "-p", "3000"]

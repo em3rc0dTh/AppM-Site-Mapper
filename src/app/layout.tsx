@@ -18,6 +18,7 @@ import './laptop-responsive.css';
 import './language-switcher.css';
 import './operational-light-theme.css';
 import './light-theme-contract.css';
+import './help.css';
 import { AppShell } from '@/shared/ui/app-shell';
 
 export async function generateMetadata(): Promise<Metadata> {

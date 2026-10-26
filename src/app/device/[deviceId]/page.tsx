@@ -394,9 +394,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dd>{node.model ?? node.category ?? t('notSpecified')}</dd>
                     <dt>{t('serial')}</dt>
                     <dd>{node.serialNumber ?? t('notAssigned')}</dd>
-                    <dt>Part Number (P/N)</dt>
+                    <dt>{t('mk1_part_number_p_n')}</dt>
                     <dd>{node.partNumber ?? t('notSpecified')}</dd>
-                    <dt>Aliases</dt>
+                    <dt>{t('mk1_aliases')}</dt>
                     <dd>{node.aliases?.length ? node.aliases.join(', ') : t('notSpecified')}</dd>
                     <dt>{t('parent')}</dt>
                     <dd>{node.parentEquipmentId ?? t('deviceRoot')}</dd>
@@ -404,13 +404,13 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dd>{node.childMode === 'POSITIONAL' ? node.children.length : t('dynamic')}</dd>
                     {node.equipmentType === 'PANEL' ? (
                       <>
-                        <dt>Telemetry role</dt>
-                        <dd>Logical measurement source for child breakers</dd>
-                        <dt>Telemetry source S/N</dt>
+                        <dt>{t('mk1_telemetry_role')}</dt>
+                        <dd>{t('mk1_logical_measurement_source_for_child_breakers')}</dd>
+                        <dt>{t('mk1_telemetry_source_s_n')}</dt>
                         <dd>{node.serialNumber ?? '—'}</dd>
-                        <dt>Telemetry point prefix</dt>
+                        <dt>{t('mk1_telemetry_point_prefix')}</dt>
                         <dd>{node.telemetryPointPrefix ?? '—'}</dd>
-                        <dt>Telemetry readiness</dt>
+                        <dt>{t('mk1_telemetry_readiness')}</dt>
                         <dd>
                           {node.childMode === 'POSITIONAL' &&
                           node.serialNumber &&
@@ -430,7 +430,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dd>{hasFeedB ? t('pathRecorded') : t('noPath')}</dd>
                     {node.equipmentType === 'CIRCUIT_BREAKER' && canReadTelemetry ? (
                       <>
-                        <dt>Measurement model</dt>
+                        <dt>{t('mk1_measurement_model')}</dt>
                         <dd>
                           {focusedDirectSource && !focusedPointBinding && !acrelMapping
                             ? 'SELF-MEASURED'
@@ -438,7 +438,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                               ? 'EXTERNALLY-MEASURED'
                               : 'UNCOMMISSIONED'}
                         </dd>
-                        <dt>Measured via</dt>
+                        <dt>{t('mk1_measured_via')}</dt>
                         <dd>
                           {acrelMapping
                             ? `${acrelMapping.gatewayAlias ?? acrelMapping.gatewayName} → ${acrelMapping.meterAlias ?? acrelMapping.meterName} → CH ${acrelMapping.channel}`
@@ -454,17 +454,17 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                         </dd>
                         {parentPanel && !acrelMapping ? (
                           <>
-                            <dt>Panel source S/N</dt>
+                            <dt>{t('mk1_panel_source_s_n')}</dt>
                             <dd>{parentPanel.serialNumber ?? '—'}</dd>
-                            <dt>Panel point prefix</dt>
+                            <dt>{t('mk1_panel_point_prefix')}</dt>
                             <dd>{parentPanel.telemetryPointPrefix ?? '—'}</dd>
-                            <dt>Physical position</dt>
+                            <dt>{t('mk1_physical_position')}</dt>
                             <dd>
                               {breakerPosition > 0 ? String(breakerPosition).padStart(2, '0') : '—'}
                             </dd>
-                            <dt>Resolved raw point</dt>
+                            <dt>{t('mk1_resolved_raw_point')}</dt>
                             <dd>{expectedPanelPoint ?? '—'}</dd>
-                            <dt>Binding</dt>
+                            <dt>{t('mk1_binding')}</dt>
                             <dd>{panelBindingConfirmed ? 'CONFIRMED' : 'NOT COMMISSIONED'}</dd>
                           </>
                         ) : null}
@@ -473,30 +473,31 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     {node.equipmentType === 'CIRCUIT_BREAKER' && canReadIndustrialSettings ? (
                       acrelMapping ? (
                         <>
-                          <dt>Acrel measurement path</dt>
+                          <dt>{t('mk1_acrel_measurement_path')}</dt>
                           <dd>
                             {acrelMapping.gatewayAlias ?? acrelMapping.gatewayName}
                             {acrelMapping.gatewayNumber
                               ? ' #' + acrelMapping.gatewayNumber
                               : ''} → {acrelMapping.meterAlias ?? acrelMapping.meterName}
-                            {acrelMapping.meterNumber ? ' ' + acrelMapping.meterNumber : ''} → CH
-                            {acrelMapping.channel} → {acrelMapping.rawPointId}
+                            {acrelMapping.meterNumber ? ' ' + acrelMapping.meterNumber : ''}{' '}
+                            {t('mk1_ch')} {acrelMapping.channel} → {acrelMapping.rawPointId}
                           </dd>
-                          <dt>Transport source</dt>
+                          <dt>{t('mk1_transport_source')}</dt>
                           <dd>{acrelMapping.sourceIdentity}</dd>
-                          <dt>Estado de comisionamiento</dt>
+                          <dt>{t('mk1_commissioning_status')}</dt>
                           <dd>{acrelMapping.recordStatus ?? 'DECLARED'}</dd>
-                          <dt>MAC gateway</dt>
+                          <dt>{t('mk1_mac_gateway')}</dt>
                           <dd>{acrelMapping.macAddress ?? '—'}</dd>
-                          <dt>Login gateway</dt>
+                          <dt>{t('mk1_login_gateway')}</dt>
                           <dd>{acrelMapping.loginUsername ?? '—'}</dd>
-                          <dt>Credential note</dt>
+                          <dt>{t('mk1_credential_note')}</dt>
                           <dd>{acrelMapping.credentialState ?? 'NOT_DECLARED'}</dd>
                           {acrelMapping.network ? (
                             <>
-                              <dt>Gateway network</dt>
+                              <dt>{t('mk1_gateway_network')}</dt>
                               <dd>
-                                {acrelMapping.network.ip} · máscara {acrelMapping.network.mask} · GW{' '}
+                                {acrelMapping.network.ip} {t('mk1_mask')}{' '}
+                                {acrelMapping.network.mask} {t('mk1_gw')}{' '}
                                 {acrelMapping.network.gateway} ·{' '}
                                 {acrelMapping.network.services
                                   .map(
@@ -509,9 +510,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                           ) : null}
                           {acrelMapping.rs485 ? (
                             <>
-                              <dt>RS485 / Modbus RTU</dt>
+                              <dt>{t('mk1_rs485_modbus_rtu')}</dt>
                               <dd>
-                                Slave {acrelMapping.rs485.slaveId ?? '—'} ·{' '}
+                                {t('mk1_slave')} {acrelMapping.rs485.slaveId ?? '—'} ·{' '}
                                 {acrelMapping.rs485.baudRate} · {acrelMapping.rs485.dataBits}
                                 {acrelMapping.rs485.parity === 'NONE'
                                   ? 'N'
@@ -522,21 +523,21 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                               </dd>
                             </>
                           ) : null}
-                          <dt>Evidencia</dt>
+                          <dt>{t('mk1_evidence')}</dt>
                           <dd>
                             {acrelMapping.evidence?.projectId ?? '—'} ·{' '}
-                            {acrelMapping.evidence?.documentName ?? '—'} · rev.{' '}
+                            {acrelMapping.evidence?.documentName ?? '—'} {t('mk1_rev')}{' '}
                             {acrelMapping.evidence?.revision ?? '—'}
                           </dd>
-                          <dt>Confirmación</dt>
+                          <dt>{t('mk1_confirmation')}</dt>
                           <dd>
-                            {acrelMapping.confirmedAt} · usuario {acrelMapping.confirmedBy}
+                            {acrelMapping.confirmedAt} {t('mk1_user')} {acrelMapping.confirmedBy}
                           </dd>
                         </>
                       ) : (
                         <>
-                          <dt>Acrel measurement path</dt>
-                          <dd>Sin mapeo físico Acrel confirmado</dd>
+                          <dt>{t('mk1_acrel_measurement_path')}</dt>
+                          <dd>{t('mk1_no_confirmed_acrel_physical_mapping')}</dd>
                         </>
                       )
                     ) : null}

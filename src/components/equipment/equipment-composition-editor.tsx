@@ -506,7 +506,7 @@ export function EquipmentCompositionEditor({
             </select>
           </label>
           <label>
-            Serial Number (S/N)
+            {t('mk1_serial_number_s_n')}{' '}
             <input
               name="serialNumber"
               maxLength={120}
@@ -514,20 +514,20 @@ export function EquipmentCompositionEditor({
             />
           </label>
           <label>
-            Part Number (P/N)
+            {t('mk1_part_number_p_n')}{' '}
             <input name="partNumber" maxLength={120} defaultValue={equipment.partNumber ?? ''} />
           </label>
           <label>
-            Aliases
+            {t('mk1_aliases')}{' '}
             <textarea
               name="aliases"
               maxLength={1200}
               defaultValue={(equipment.aliases ?? []).join('\n')}
-              placeholder="Uno por línea o separados por coma"
+              placeholder={t('mk1_one_per_line_or_comma_separated')}
             />
           </label>
           <label>
-            Manufacturer
+            {t('mk1_manufacturer')}{' '}
             <input
               name="manufacturer"
               maxLength={120}
@@ -535,7 +535,7 @@ export function EquipmentCompositionEditor({
             />
           </label>
           <label>
-            Model
+            {t('mk1_model')}{' '}
             <input name="model" maxLength={120} defaultValue={equipment.model ?? ''} />
           </label>
           <label>
@@ -907,15 +907,14 @@ export function EquipmentCompositionEditor({
                 <input name="serialNumber" maxLength={120} />
               </label>
               <label>
-                Part Number (P/N)
-                <input name="partNumber" maxLength={120} />
+                {t('mk1_part_number_p_n')} <input name="partNumber" maxLength={120} />
               </label>
               <label>
-                Aliases
+                {t('mk1_aliases')}{' '}
                 <textarea
                   name="aliases"
                   maxLength={1200}
-                  placeholder="Uno por línea o separados por coma"
+                  placeholder={t('mk1_one_per_line_or_comma_separated')}
                 />
               </label>
               <label>
@@ -973,24 +972,21 @@ export function EquipmentCompositionEditor({
                 <input name="serialNumber" maxLength={120} />
               </label>
               <label>
-                Part Number (P/N)
-                <input name="partNumber" maxLength={120} />
+                {t('mk1_part_number_p_n')} <input name="partNumber" maxLength={120} />
               </label>
               <label>
-                Aliases
+                {t('mk1_aliases')}{' '}
                 <textarea
                   name="aliases"
                   maxLength={1200}
-                  placeholder="Uno por línea o separados por coma"
+                  placeholder={t('mk1_one_per_line_or_comma_separated')}
                 />
               </label>
               <label>
-                Manufacturer
-                <input name="manufacturer" maxLength={120} />
+                {t('mk1_manufacturer')} <input name="manufacturer" maxLength={120} />
               </label>
               <label>
-                Model
-                <input name="model" maxLength={120} />
+                {t('mk1_model')} <input name="model" maxLength={120} />
               </label>
               <label>
                 {t('category')}

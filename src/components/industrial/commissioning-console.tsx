@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Bdfb {
   id: string;
@@ -151,20 +152,20 @@ const gridStyle = {
 } as const;
 
 const readinessLabel: Record<CommissioningReadiness['stage'], string> = {
-  DOCUMENTED: 'Documentado',
-  NETWORK_PENDING: 'Red pendiente',
-  MQTT_IDENTITY_PENDING: 'Identidad MQTT pendiente',
-  METER_PENDING: 'Medidor pendiente',
-  METER_READY: 'Medidor listo',
-  CHANNELS_PARTIAL: 'Canales parciales',
-  CHANNELS_CONFIRMED: 'Canales confirmados',
-  FIELD_VERIFIED: 'Verificado en campo',
+  DOCUMENTED: 'Documented',
+  NETWORK_PENDING: 'Network pending',
+  MQTT_IDENTITY_PENDING: 'MQTT identity pending',
+  METER_PENDING: 'Meter pending',
+  METER_READY: 'Meter ready',
+  CHANNELS_PARTIAL: 'Channels partial',
+  CHANNELS_CONFIRMED: 'Channels confirmed',
+  FIELD_VERIFIED: 'Field verified',
 };
 
 const warningLabel: Record<CommissioningWarning['code'], string> = {
-  DUPLICATE_DECLARED_IP: 'IP declarada repetida',
-  DUPLICATE_DECLARED_MAC: 'MAC declarada repetida',
-  DEFAULT_GATEWAY_OUTSIDE_SUBNET: 'Default gateway fuera de la subred declarada',
+  DUPLICATE_DECLARED_IP: 'Duplicate declared IP',
+  DUPLICATE_DECLARED_MAC: 'Duplicate declared MAC',
+  DEFAULT_GATEWAY_OUTSIDE_SUBNET: 'Default gateway outside declared subnet',
 };
 
 export function CommissioningConsole({
@@ -178,6 +179,7 @@ export function CommissioningConsole({
   canWriteCredentials: boolean;
   initialDeviceId?: string;
 }) {
+  const t = useTranslations('industrialCommissioning');
   const [bdfbs, setBdfbs] = useState<Bdfb[]>([]);
   const [deviceId, setDeviceId] = useState(initialDeviceId ?? '');
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -424,10 +426,10 @@ export function CommissioningConsole({
       }
       setNotice(
         action === 'set'
-          ? 'Contraseña cifrada guardada/rotada.'
+          ? t('mk1_encrypted_password_saved_rotated')
           : action === 'remove'
-            ? 'Contraseña eliminada del almacén cifrado.'
-            : 'Contraseña revelada; la acción quedó registrada.',
+            ? t('mk1_password_removed_from_encrypted_storage')
+            : t('mk1_password_revealed_the_action_was_logged'),
       );
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'CREDENTIAL_ACTION_FAILED');
@@ -535,7 +537,7 @@ export function CommissioningConsole({
       await refresh(deviceId);
       setPhysicallyVerified(false);
       setRetireKey(null);
-      setNotice('Cambio registrado. No implica verificación de conectividad en campo.');
+      setNotice(t('mk1_change_recorded_this_does_not_imply_field_connectivity_verification'));
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'SAVE_FAILED');
     } finally {
@@ -620,17 +622,14 @@ export function CommissioningConsole({
   return (
     <main style={{ padding: '24px', maxWidth: 1160, margin: '0 auto', display: 'grid', gap: 24 }}>
       <header>
-        <a href="/telemetry">← Telemetría</a>
-        <h1 style={{ marginTop: 12 }}>Comisionamiento industrial · Acrel</h1>
-        <p>
-          Configura comunicaciones y asocia canales a breakers existentes. No crea equipos, breakers
-          ni lecturas.
-        </p>
+        <a href="/telemetry">{t('mk1_telemetry')}</a>
+        <h1 style={{ marginTop: 12 }}>{t('mk1_industrial_commissioning_acrel')}</h1>
+        <p>{t('mk1_configure_communications_and_associate_channels_with_existing_breakers_t')} </p>
       </header>
 
       <section style={{ display: 'grid', gap: 8 }}>
         <label style={fieldStyle}>
-          BDFB existente
+          {t('mk1_existing_bdfb')}{' '}
           <select
             style={inputStyle}
             value={deviceId}
@@ -641,7 +640,7 @@ export function CommissioningConsole({
               setNotice('');
             }}
           >
-            <option value="">Seleccionar BDFB</option>
+            <option value="">{t('mk1_select_bdfb')}</option>
             {bdfbs.map((item) => (
               <option value={item.id} key={item.id}>
                 {item.name}
@@ -650,7 +649,7 @@ export function CommissioningConsole({
           </select>
         </label>
         {!bdfbs.length && (
-          <p>No hay BDFB activos registrados. Primero créalos en la topología existente.</p>
+          <p>{t('mk1_no_active_bdfbs_are_registered_create_them_in_the_existing_topology_firs')}</p>
         )}
       </section>
 
@@ -672,17 +671,19 @@ export function CommissioningConsole({
               gap: 16,
             }}
           >
-            <h2>1 · Configuración de comunicaciones</h2>
+            <h2>{t('mk1_1_communications_configuration')}</h2>
             <p>
-              Selecciona un Equipment existente. Un gateway conserva la IP y la identidad del
-              publicador; un medidor declara su Slave ID en el bus de ese gateway.
+              {t(
+                'mk1_select_existing_equipment_a_gateway_keeps_the_ip_and_publisher_identity_',
+              )}{' '}
             </p>
             {overview.warnings.length > 0 ? (
               <aside style={{ border: '1px solid #c8ced6', borderRadius: 8, padding: 12 }}>
-                <strong>Preflight documental · requiere confirmación de campo</strong>
+                <strong>{t('mk1_documentary_preflight_field_confirmation_required')}</strong>
                 <p style={{ margin: '6px 0', fontSize: 12 }}>
-                  Estas advertencias no bloquean guardar el C&P y no afirman que el documento sea
-                  incorrecto.
+                  {t(
+                    'mk1_these_warnings_do_not_block_saving_the_c_p_and_do_not_claim_the_document',
+                  )}{' '}
                 </p>
                 <ul style={{ margin: 0, paddingLeft: 20 }}>
                   {overview.warnings.map((warning, index) => (
@@ -698,23 +699,23 @@ export function CommissioningConsole({
             <form onSubmit={submitProfile} style={{ display: 'grid', gap: 14 }}>
               <div style={gridStyle}>
                 <label style={fieldStyle}>
-                  Buscar Equipment / alias / serial / MAC / login
+                  {t('mk1_search_equipment_alias_serial_mac_login')}{' '}
                   <input
                     style={inputStyle}
                     value={equipmentSearch}
                     onChange={(event) => setEquipmentSearch(event.target.value)}
-                    placeholder="Buscar..."
+                    placeholder={t('mk1_search')}
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Equipment
+                  {t('mk1_equipment')}{' '}
                   <select
                     required
                     style={inputStyle}
                     value={equipmentId}
                     onChange={(event) => selectProfile(event.target.value)}
                   >
-                    <option value="">Seleccionar equipo</option>
+                    <option value="">{t('mk1_select_equipment')}</option>
                     {filteredEquipment.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.aliases?.[0] ? item.aliases[0] + ' · ' : ''}
@@ -724,21 +725,21 @@ export function CommissioningConsole({
                   </select>
                 </label>
                 <label style={fieldStyle}>
-                  Función
+                  {t('mk1_role')}{' '}
                   <select
                     style={inputStyle}
                     value={role}
                     disabled={!!existingProfile}
                     onChange={(event) => setRole(event.target.value as ProfileRole)}
                   >
-                    <option value="GATEWAY">Gateway Acrel</option>
-                    <option value="METER">Medidor AMC16Z</option>
+                    <option value="GATEWAY">{t('mk1_gateway_acrel')}</option>
+                    <option value="METER">{t('mk1_amc16z_meter')}</option>
                   </select>
                 </label>
               </div>
               <div style={gridStyle}>
                 <label style={fieldStyle}>
-                  Aliases / NE Name / TID (Equipment)
+                  {t('mk1_aliases_ne_name_tid_equipment')}{' '}
                   <input
                     style={inputStyle}
                     readOnly
@@ -747,22 +748,22 @@ export function CommissioningConsole({
                         .find((item) => item.id === equipmentId)
                         ?.aliases?.join(', ') ?? ''
                     }
-                    placeholder="Se administra en Equipment"
+                    placeholder={t('mk1_managed_in_equipment')}
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Part Number (P/N) (Equipment)
+                  {t('mk1_part_number_p_n_equipment')}{' '}
                   <input
                     style={inputStyle}
                     readOnly
                     value={
                       allowedEquipment.find((item) => item.id === equipmentId)?.partNumber ?? ''
                     }
-                    placeholder="Se administra en Equipment"
+                    placeholder={t('mk1_managed_in_equipment')}
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Estado del registro
+                  {t('mk1_record_status')}{' '}
                   <select
                     style={inputStyle}
                     value={recordStatus}
@@ -770,26 +771,26 @@ export function CommissioningConsole({
                       setRecordStatus(event.target.value as 'DECLARED' | 'FIELD_VERIFIED')
                     }
                   >
-                    <option value="DECLARED">Declarado / documental</option>
-                    <option value="FIELD_VERIFIED">Verificado en campo</option>
+                    <option value="DECLARED">{t('mk1_declared_documentary')}</option>
+                    <option value="FIELD_VERIFIED">{t('mk1_field_verified')}</option>
                   </select>
                 </label>
                 <label style={fieldStyle}>
-                  Serial canónico
+                  {t('mk1_canonical_serial')}{' '}
                   <input
                     style={inputStyle}
                     readOnly
                     value={
                       allowedEquipment.find((item) => item.id === equipmentId)?.serialNumber ?? ''
                     }
-                    placeholder="Se administra en Equipment"
+                    placeholder={t('mk1_managed_in_equipment')}
                   />
                 </label>
               </div>
               {role === 'GATEWAY' ? (
                 <div style={gridStyle}>
                   <label style={fieldStyle}>
-                    Gateway Number
+                    {t('mk1_gateway_number')}{' '}
                     <input
                       style={inputStyle}
                       value={gatewayNumber}
@@ -797,7 +798,7 @@ export function CommissioningConsole({
                     />
                   </label>
                   <label style={fieldStyle}>
-                    MAC Ethernet
+                    {t('mk1_mac_ethernet')}{' '}
                     <input
                       style={inputStyle}
                       value={macAddress}
@@ -806,7 +807,7 @@ export function CommissioningConsole({
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Login / usuario
+                    {t('mk1_login_username')}{' '}
                     <input
                       style={inputStyle}
                       value={loginUsername}
@@ -815,11 +816,11 @@ export function CommissioningConsole({
                     />
                   </label>
                   <fieldset style={{ border: '1px solid #c8ced6', borderRadius: 8, padding: 10 }}>
-                    <legend>Password del Equipment</legend>
+                    <legend>{t('mk1_equipment_password')}</legend>
                     <small>
                       {credentialMetadata?.hasCredential
                         ? `Guardada cifrada · rev. ${credentialMetadata.revisionNumber ?? '—'}`
-                        : 'Sin contraseña cifrada guardada'}
+                        : t('mk1_no_encrypted_password_stored')}
                     </small>
                     {canWriteCredentials ? (
                       <>
@@ -830,7 +831,7 @@ export function CommissioningConsole({
                           value={passwordInput}
                           autoComplete="new-password"
                           onChange={(event) => setPasswordInput(event.target.value)}
-                          placeholder="Nueva contraseña / rotación"
+                          placeholder={t('mk1_new_password_rotation')}
                         />
                         <button
                           type="button"
@@ -838,8 +839,8 @@ export function CommissioningConsole({
                           onClick={() => void credentialAction('set')}
                         >
                           {credentialMetadata?.hasCredential
-                            ? 'Rotar contraseña'
-                            : 'Guardar contraseña'}
+                            ? t('mk1_rotate_password')
+                            : t('mk1_save_password')}
                         </button>
                       </>
                     ) : null}
@@ -853,7 +854,7 @@ export function CommissioningConsole({
                             : void credentialAction('reveal')
                         }
                       >
-                        {revealedPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        {revealedPassword ? t('mk1_hide_password') : t('mk1_show_password')}
                       </button>
                     ) : null}
                     {revealedPassword ? (
@@ -861,7 +862,7 @@ export function CommissioningConsole({
                         style={inputStyle}
                         readOnly
                         value={revealedPassword}
-                        aria-label="Contraseña revelada"
+                        aria-label={t('mk1_revealed_password')}
                       />
                     ) : null}
                     {canWriteCredentials && credentialMetadata?.hasCredential ? (
@@ -870,24 +871,25 @@ export function CommissioningConsole({
                         disabled={credentialBusy}
                         onClick={() => void credentialAction('remove')}
                       >
-                        Eliminar contraseña guardada
+                        {t('mk1_delete_stored_password')}{' '}
                       </button>
                     ) : null}
                     {credentialMetadata?.lastRevealedAt ? (
                       <small>
-                        Última revelación: {credentialMetadata.lastRevealedAt} · usuario{' '}
+                        {t('mk1_last_reveal')} {credentialMetadata.lastRevealedAt} {t('mk1_user')}{' '}
                         {credentialMetadata.lastRevealedBy ?? '—'}
                       </small>
                     ) : null}
                     {credentialMetadata?.recentEvents?.length ? (
                       <details>
                         <summary>
-                          Auditoría de credencial ({credentialMetadata.recentEvents.length})
+                          {t('mk1_credential_audit')}
+                          {credentialMetadata.recentEvents.length})
                         </summary>
                         <ul style={{ margin: '6px 0 0', paddingLeft: 20, fontSize: 12 }}>
                           {credentialMetadata.recentEvents.map((event) => (
                             <li key={event.id}>
-                              {event.type} · {event.occurredAt} · usuario {event.actorId}
+                              {event.type} · {event.occurredAt} {t('mk1_user')} {event.actorId}
                               {event.credentialRevision !== undefined
                                 ? ' · rev. ' + event.credentialRevision
                                 : ''}
@@ -898,7 +900,7 @@ export function CommissioningConsole({
                     ) : null}
                   </fieldset>
                   <label style={fieldStyle}>
-                    Estado de credencial documental / externa
+                    {t('mk1_documentary_external_credential_status')}{' '}
                     <select
                       style={inputStyle}
                       value={credentialState}
@@ -909,34 +911,36 @@ export function CommissioningConsole({
                         if (value !== 'SECRET_REFERENCED') setCredentialRef('');
                       }}
                     >
-                      <option value="NOT_DECLARED">No declarada</option>
-                      <option value="PRESENT_IN_SOURCE">Existe en documento de origen</option>
+                      <option value="NOT_DECLARED">{t('mk1_not_declared')}</option>
+                      <option value="PRESENT_IN_SOURCE">
+                        {t('mk1_present_in_source_document')}
+                      </option>
                       <option value="SECRET_REFERENCED">
-                        Referencia externa (vault/secret manager)
+                        {t('mk1_external_reference_vault_secret_manager')}{' '}
                       </option>
                     </select>
                   </label>
                   <label style={fieldStyle}>
-                    Referencia externa de credencial
+                    {t('mk1_external_credential_reference')}{' '}
                     <input
                       style={inputStyle}
                       value={credentialRef}
                       disabled={credentialState !== 'SECRET_REFERENCED'}
                       onChange={(event) => setCredentialRef(event.target.value)}
-                      placeholder="vault://..., secret://..., env://..."
+                      placeholder={t('mk1_vault_secret_env')}
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Modo downlink
+                    {t('mk1_downlink_mode')}{' '}
                     <input
                       style={inputStyle}
                       value={downlinkMode}
                       onChange={(event) => setDownlinkMode(event.target.value)}
-                      placeholder="Ej. Modbus-RTU Master"
+                      placeholder={t('mk1_e_g_modbus_rtu_master')}
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Esclavos declarados
+                    {t('mk1_declared_slaves')}{' '}
                     <input
                       type="number"
                       min="0"
@@ -947,26 +951,26 @@ export function CommissioningConsole({
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Identidad MQTT del publicador (cuando esté confirmada)
+                    {t('mk1_mqtt_publisher_identity_when_confirmed')}{' '}
                     <input
                       style={inputStyle}
                       value={sourceIdentity}
                       onChange={(event) => setSourceIdentity(event.target.value)}
-                      placeholder="No inventar: dejar vacío si aún no está confirmada"
+                      placeholder={t('mk1_do_not_invent_leave_blank_until_confirmed')}
                     />
                   </label>
                   <label style={fieldStyle}>
-                    IPv4
+                    {t('mk1_ipv4')}{' '}
                     <input
                       required
                       style={inputStyle}
                       value={ip}
                       onChange={(event) => setIp(event.target.value)}
-                      placeholder="192.168.x.x"
+                      placeholder={t('mk1_192_168_x_x')}
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Máscara
+                    {t('mk1_mask')}{' '}
                     <input
                       required
                       style={inputStyle}
@@ -975,7 +979,7 @@ export function CommissioningConsole({
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Puerta de enlace
+                    {t('mk1_default_gateway')}{' '}
                     <input
                       required
                       style={inputStyle}
@@ -984,14 +988,14 @@ export function CommissioningConsole({
                     />
                   </label>
                   <fieldset style={{ border: '1px solid #c8ced6', borderRadius: 8, padding: 10 }}>
-                    <legend>Servicios uplink</legend>
+                    <legend>{t('mk1_uplink_services')}</legend>
                     <label>
                       <input
                         type="checkbox"
                         checked={mqttEnabled}
                         onChange={(event) => setMqttEnabled(event.target.checked)}
                       />{' '}
-                      MQTT
+                      {t('mk1_mqtt')}{' '}
                     </label>
                     <input
                       type="number"
@@ -1001,7 +1005,7 @@ export function CommissioningConsole({
                       value={mqttPort}
                       disabled={!mqttEnabled}
                       onChange={(event) => setMqttPort(event.target.value)}
-                      placeholder="Puerto no documentado: dejar vacío"
+                      placeholder={t('mk1_undocumented_port_leave_blank')}
                     />
                     <label>
                       <input
@@ -1009,7 +1013,7 @@ export function CommissioningConsole({
                         checked={modbusTcpEnabled}
                         onChange={(event) => setModbusTcpEnabled(event.target.checked)}
                       />{' '}
-                      Modbus TCP
+                      {t('mk1_modbus_tcp')}{' '}
                     </label>
                     <input
                       type="number"
@@ -1019,26 +1023,26 @@ export function CommissioningConsole({
                       value={modbusTcpPort}
                       disabled={!modbusTcpEnabled}
                       onChange={(event) => setModbusTcpPort(event.target.value)}
-                      placeholder="Ej. 502"
+                      placeholder={t('mk1_e_g_502')}
                     />
                     {!mqttEnabled && !modbusTcpEnabled ? (
-                      <small role="alert">Selecciona al menos un servicio uplink.</small>
+                      <small role="alert">{t('mk1_select_at_least_one_uplink_service')}</small>
                     ) : null}
                   </fieldset>
                 </div>
               ) : (
                 <div style={gridStyle}>
                   <label style={fieldStyle}>
-                    Meter Number
+                    {t('mk1_meter_number')}{' '}
                     <input
                       style={inputStyle}
                       value={meterNumber}
                       onChange={(event) => setMeterNumber(event.target.value)}
-                      placeholder="Ej. A1"
+                      placeholder={t('mk1_e_g_a1')}
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Canales activos
+                    {t('mk1_active_channels')}{' '}
                     <input
                       type="number"
                       min="1"
@@ -1049,45 +1053,45 @@ export function CommissioningConsole({
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Descripción de canales
+                    {t('mk1_channel_description')}{' '}
                     <input
                       style={inputStyle}
                       value={channelDescription}
                       onChange={(event) => setChannelDescription(event.target.value)}
-                      placeholder="Ej. 24 Circuitos DC (12 Bus A + 12 Bus B)"
+                      placeholder={t('mk1_e_g_24_dc_circuits_12_bus_a_12_bus_b')}
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Sensor Hall
+                    {t('mk1_sensor_hall')}{' '}
                     <input
                       style={inputStyle}
                       value={hallSensorDescription}
                       onChange={(event) => setHallSensorDescription(event.target.value)}
-                      placeholder="Modelo / rango / salida"
+                      placeholder={t('mk1_model_range_output')}
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Terminación 120 Ω
+                    {t('mk1_120_termination')}{' '}
                     <select
                       style={inputStyle}
                       value={termination120Ohm ? 'YES' : 'NO'}
                       onChange={(event) => setTermination120Ohm(event.target.value === 'YES')}
                     >
-                      <option value="NO">No</option>
-                      <option value="YES">Sí</option>
+                      <option value="NO">{t('mk1_no')}</option>
+                      <option value="YES">{t('mk1_yes')}</option>
                     </select>
                   </label>
                   <label style={fieldStyle}>
-                    Estado RS485 documentado
+                    {t('mk1_documented_rs485_status')}{' '}
                     <input
                       style={inputStyle}
                       value={documentedRs485Status}
                       onChange={(event) => setDocumentedRs485Status(event.target.value)}
-                      placeholder="Ej. ONLINE / OK (documental)"
+                      placeholder={t('mk1_e_g_online_ok_documentary')}
                     />
                   </label>
                   <label style={fieldStyle}>
-                    Gateway en este BDFB
+                    {t('mk1_gateway_in_this_bdfb')}{' '}
                     <select
                       required
                       style={inputStyle}
@@ -1104,7 +1108,7 @@ export function CommissioningConsole({
                         }
                       }}
                     >
-                      <option value="">Seleccionar</option>
+                      <option value="">{t('mk1_select')}</option>
                       {gateways.map((item) => (
                         <option value={item.equipmentId} key={item.equipmentId}>
                           {equipmentName(item.equipmentId)}
@@ -1113,7 +1117,7 @@ export function CommissioningConsole({
                     </select>
                   </label>
                   <label style={fieldStyle}>
-                    Slave ID (1–247)
+                    {t('mk1_slave_id_1_247')}{' '}
                     <input
                       required
                       type="number"
@@ -1128,7 +1132,7 @@ export function CommissioningConsole({
               )}
               <div style={gridStyle}>
                 <label style={fieldStyle}>
-                  Baud rate
+                  {t('mk1_baud_rate')}{' '}
                   <input
                     required
                     type="number"
@@ -1141,7 +1145,7 @@ export function CommissioningConsole({
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Bits de datos
+                  {t('mk1_data_bits')}{' '}
                   <select
                     style={inputStyle}
                     value={dataBits}
@@ -1153,20 +1157,20 @@ export function CommissioningConsole({
                   </select>
                 </label>
                 <label style={fieldStyle}>
-                  Paridad
+                  {t('mk1_parity')}{' '}
                   <select
                     style={inputStyle}
                     value={parity}
                     disabled={role === 'METER'}
                     onChange={(event) => setParity(event.target.value as 'NONE' | 'EVEN' | 'ODD')}
                   >
-                    <option value="NONE">Ninguna</option>
-                    <option value="EVEN">Par</option>
-                    <option value="ODD">Impar</option>
+                    <option value="NONE">{t('mk1_none')}</option>
+                    <option value="EVEN">{t('mk1_even')}</option>
+                    <option value="ODD">{t('mk1_odd')}</option>
                   </select>
                 </label>
                 <label style={fieldStyle}>
-                  Bits de parada
+                  {t('mk1_stop_bits')}{' '}
                   <select
                     style={inputStyle}
                     value={stopBits}
@@ -1179,10 +1183,10 @@ export function CommissioningConsole({
                 </label>
               </div>
 
-              <h3>3 · Procedencia del dato</h3>
+              <h3>{t('mk1_3_data_provenance')}</h3>
               <div style={gridStyle}>
                 <label style={fieldStyle}>
-                  Project ID
+                  {t('mk1_project_id')}{' '}
                   <input
                     required
                     style={inputStyle}
@@ -1191,7 +1195,7 @@ export function CommissioningConsole({
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Nombre del proyecto
+                  {t('mk1_project_name')}{' '}
                   <input
                     style={inputStyle}
                     value={projectName}
@@ -1199,7 +1203,7 @@ export function CommissioningConsole({
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Site / ubicación
+                  {t('mk1_site_location')}{' '}
                   <input
                     style={inputStyle}
                     value={site}
@@ -1207,7 +1211,7 @@ export function CommissioningConsole({
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Cliente / operador
+                  {t('mk1_client_operator')}{' '}
                   <input
                     style={inputStyle}
                     value={client}
@@ -1215,7 +1219,7 @@ export function CommissioningConsole({
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Responsable
+                  {t('mk1_responsible_person')}{' '}
                   <input
                     style={inputStyle}
                     value={responsible}
@@ -1223,16 +1227,16 @@ export function CommissioningConsole({
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Fecha del documento
+                  {t('mk1_document_date')}{' '}
                   <input
                     style={inputStyle}
                     value={documentDate}
                     onChange={(event) => setDocumentDate(event.target.value)}
-                    placeholder="YYYY-MM-DD"
+                    placeholder={t('mk1_yyyy_mm_dd')}
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Estado del documento
+                  {t('mk1_document_status')}{' '}
                   <input
                     style={inputStyle}
                     value={documentStatus}
@@ -1240,7 +1244,7 @@ export function CommissioningConsole({
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Documento de origen
+                  {t('mk1_source_document')}{' '}
                   <input
                     required
                     style={inputStyle}
@@ -1249,7 +1253,7 @@ export function CommissioningConsole({
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Revisión
+                  {t('mk1_revision')}{' '}
                   <input
                     required
                     style={inputStyle}
@@ -1258,7 +1262,7 @@ export function CommissioningConsole({
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Referencia / evidencia (sin credenciales)
+                  {t('mk1_reference_evidence_no_credentials')}{' '}
                   <input
                     style={inputStyle}
                     value={reference}
@@ -1267,10 +1271,9 @@ export function CommissioningConsole({
                 </label>
               </div>
               <p style={{ fontSize: 12 }}>
-                El usuario y la fecha de edición se obtienen de la sesión del servidor. El login del
-                equipo puede registrarse. La contraseña local se guarda únicamente mediante
-                “Password del Equipment”, cifrada fuera del perfil de comunicación. Los campos de
-                credencial documental/externa describen lo declarado por el C&P o un vault externo.
+                {t(
+                  'mk1_the_user_and_edit_date_come_from_the_server_session_the_equipment_login_',
+                )}{' '}
               </p>
               <div>
                 <button
@@ -1283,11 +1286,12 @@ export function CommissioningConsole({
                   }
                   style={{ padding: '10px 18px' }}
                 >
-                  {existingProfile ? 'Guardar nueva revisión' : 'Registrar configuración'}
+                  {existingProfile ? t('mk1_save_new_revision') : t('mk1_register_configuration')}
                 </button>
                 {existingProfile && (
                   <span style={{ marginLeft: 12 }}>
-                    Revisión {existingProfile.revisionNumber} · {existingProfile.updatedAt}
+                    {t('mk1_revision')} {existingProfile.revisionNumber} ·{' '}
+                    {existingProfile.updatedAt}
                   </span>
                 )}
               </div>
@@ -1352,12 +1356,12 @@ export function CommissioningConsole({
                     </small>
                     <br />
                     <small>
-                      Revisión {item.revisionNumber} · {item.evidence.documentName} /{' '}
+                      {t('mk1_revision')} {item.revisionNumber} · {item.evidence.documentName} /{' '}
                       {item.evidence.revision}
                     </small>
                     <div>
                       <button type="button" onClick={() => selectProfile(item.equipmentId)}>
-                        Editar configuración
+                        {t('mk1_edit_configuration')}{' '}
                       </button>
                     </div>
                   </article>
@@ -1375,10 +1379,11 @@ export function CommissioningConsole({
               gap: 14,
             }}
           >
-            <h2>2 · Mapeo físico del canal</h2>
+            <h2>{t('mk1_2_physical_channel_mapping')}</h2>
             <p>
-              El canal y el punto MQTT no se calculan según la posición del breaker. Debes confirmar
-              el vínculo con evidencia de campo.
+              {t(
+                'mk1_the_channel_and_mqtt_point_are_not_calculated_from_the_breaker_position_',
+              )}{' '}
             </p>
             {meters.length ? (
               <div style={{ display: 'grid', gap: 8 }}>
@@ -1391,8 +1396,8 @@ export function CommissioningConsole({
                   return (
                     <details key={meter.equipmentId}>
                       <summary>
-                        {equipmentName(meter.equipmentId)} · Slave {meter.rs485.slaveId} ·{' '}
-                        {channelMap.size}/{meter.channelCount ?? 24} canales confirmados
+                        {equipmentName(meter.equipmentId)} {t('mk1_slave')} {meter.rs485.slaveId} ·{' '}
+                        {channelMap.size}/{meter.channelCount ?? 24} {t('mk1_confirmed_channels')}{' '}
                         {!gateway?.sourceIdentity ? ' · MQTT identity pendiente' : ''}
                       </summary>
                       <div
@@ -1434,12 +1439,14 @@ export function CommissioningConsole({
                                 borderRadius: 6,
                               }}
                             >
-                              <strong>CH {String(number).padStart(2, '0')}</strong>
+                              <strong>
+                                {t('mk1_ch')} {String(number).padStart(2, '0')}
+                              </strong>
                               <br />
                               <small>
                                 {mapping
                                   ? equipmentName(mapping.breakerId) + ' · ' + mapping.rawPointId
-                                  : 'Pendiente de verificación'}
+                                  : t('mk1_pending_verification')}
                               </small>
                             </button>
                           );
@@ -1453,29 +1460,30 @@ export function CommissioningConsole({
             <form onSubmit={submitMapping} style={{ display: 'grid', gap: 12 }}>
               <div style={gridStyle}>
                 <label style={fieldStyle}>
-                  Medidor comisionado
+                  {t('mk1_commissioned_meter')}{' '}
                   <select
                     required
                     style={inputStyle}
                     value={meterId}
                     onChange={(event) => setMeterId(event.target.value)}
                   >
-                    <option value="">Seleccionar</option>
+                    <option value="">{t('mk1_select')}</option>
                     {mappableMeters.map((item) => (
                       <option key={item.equipmentId} value={item.equipmentId}>
-                        {equipmentName(item.equipmentId)} · Slave {item.rs485.slaveId}
+                        {equipmentName(item.equipmentId)} {t('mk1_slave')} {item.rs485.slaveId}
                       </option>
                     ))}
                   </select>
                 </label>
                 {meters.length > mappableMeters.length ? (
                   <small>
-                    Los medidores cuyo gateway aún no tiene identidad MQTT confirmada no pueden
-                    mapearse.
+                    {t(
+                      'mk1_meters_whose_gateway_does_not_yet_have_a_confirmed_mqtt_identity_cannot_',
+                    )}{' '}
                   </small>
                 ) : null}
                 <label style={fieldStyle}>
-                  Canal
+                  {t('mk1_channel')}{' '}
                   <input
                     required
                     type="number"
@@ -1487,24 +1495,24 @@ export function CommissioningConsole({
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Punto MQTT exacto
+                  {t('mk1_exact_mqtt_point')}{' '}
                   <input
                     required
                     style={inputStyle}
                     value={rawPointId}
                     onChange={(event) => setRawPointId(event.target.value)}
-                    placeholder="Ej. 0_1_1"
+                    placeholder={t('mk1_e_g_0_1_1')}
                   />
                 </label>
                 <label style={fieldStyle}>
-                  Breaker existente
+                  {t('mk1_existing_breaker')}{' '}
                   <select
                     required
                     style={inputStyle}
                     value={breakerId}
                     onChange={(event) => setBreakerId(event.target.value)}
                   >
-                    <option value="">Seleccionar</option>
+                    <option value="">{t('mk1_select')}</option>
                     {breakers.map((item) => (
                       <option key={item.id} value={item.id}>
                         {item.name} · {item.id}
@@ -1514,7 +1522,7 @@ export function CommissioningConsole({
                 </label>
               </div>
               <fieldset>
-                <legend>Métricas habilitadas</legend>
+                <legend>{t('mk1_enabled_metrics')}</legend>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
                   {metrics.map((metric) => (
                     <label key={metric}>
@@ -1540,12 +1548,14 @@ export function CommissioningConsole({
                   checked={physicallyVerified}
                   onChange={(event) => setPhysicallyVerified(event.target.checked)}
                 />{' '}
-                Confirmo haber verificado físicamente medidor, canal, punto publicado y breaker
-                seleccionado.
+                {t(
+                  'mk1_i_confirm_that_i_physically_verified_the_meter_channel_published_point_a',
+                )}{' '}
               </label>
               <p style={{ fontSize: 12 }}>
-                Usará el proyecto, documento y revisión del formulario superior. Se guardará quién
-                confirmó y cuándo.
+                {t(
+                  'mk1_this_will_use_the_project_document_and_revision_from_the_form_above_the_',
+                )}{' '}
               </p>
               <div>
                 <button
@@ -1559,7 +1569,7 @@ export function CommissioningConsole({
                     !breakerId
                   }
                 >
-                  Confirmar y vincular telemetría
+                  {t('mk1_confirm_and_link_telemetry')}{' '}
                 </button>
               </div>
             </form>
@@ -1574,8 +1584,10 @@ export function CommissioningConsole({
               gap: 12,
             }}
           >
-            <h2>Asociaciones confirmadas</h2>
-            {!overview.mappings.length && <p>No hay canales Acrel confirmados en este BDFB.</p>}
+            <h2>{t('mk1_confirmed_associations')}</h2>
+            {!overview.mappings.length && (
+              <p>{t('mk1_no_acrel_channels_are_confirmed_for_this_bdfb')}</p>
+            )}
             {overview.mappings.map((item) => {
               const key = item.breakerId + '|' + item.sourceIdentity + '|' + item.rawPointId;
               return (
@@ -1583,12 +1595,13 @@ export function CommissioningConsole({
                   <strong>{equipmentName(item.breakerId)}</strong>
                   <p style={{ margin: '5px 0' }}>
                     {equipmentName(item.gatewayEquipmentId)} →{' '}
-                    {equipmentName(item.meterEquipmentId)} → canal {item.channel} →{' '}
+                    {equipmentName(item.meterEquipmentId)} {t('mk1_channel_2')} {item.channel} →{' '}
                     {item.rawPointId}
                   </p>
                   <small>
                     {item.metrics.join(', ')} · {item.evidence?.documentName} /{' '}
-                    {item.evidence?.revision} · {item.confirmedAt} · usuario {item.confirmedBy}
+                    {item.evidence?.revision} · {item.confirmedAt} {t('mk1_user')}{' '}
+                    {item.confirmedBy}
                   </small>
                   {canWrite && (
                     <div style={{ marginTop: 10 }}>
@@ -1598,7 +1611,9 @@ export function CommissioningConsole({
                           checked={retireKey === key}
                           onChange={(event) => setRetireKey(event.target.checked ? key : null)}
                         />{' '}
-                        Confirmo retirar esta asociación sin borrar su historial.
+                        {t(
+                          'mk1_i_confirm_removing_this_association_without_deleting_its_history',
+                        )}{' '}
                       </label>
                       <button
                         type="button"
@@ -1614,7 +1629,7 @@ export function CommissioningConsole({
                           })
                         }
                       >
-                        Retirar mapeo
+                        {t('mk1_remove_mapping')}{' '}
                       </button>
                     </div>
                   )}

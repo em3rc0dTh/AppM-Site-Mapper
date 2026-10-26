@@ -11,7 +11,7 @@ El Help Center acompaña a Site Mapper: no es un producto externo, CMS ni servic
 - **`/help/<slug>`**: lectura íntegra con índice lateral y navegación entre capítulos.
 - **`? Ayuda`**: panel contextual en cabecera, que recomienda artículos según la ruta donde estás.
 - **Búsqueda:** por título, resumen, palabras clave y texto de los capítulos, sin tildes y sin servidor de búsqueda.
-- **Idioma:** la navegación, tarjetas y controles siguen el idioma seleccionado; **el cuerpo íntegro del manual está en español**, incluso si la interfaz está en inglés, hasta completar una traducción editorial.
+- **Idioma:** la navegación, tarjetas y controles siguen el idioma seleccionado; **el cuerpo de cada capítulo se carga desde la edición inglesa o española según el idioma activo**, con archivos Markdown diferenciados y nombres de dominio preservados.
 
 **No hace:** alterar hardware, guardar datos, cambiar permisos, reparar MQTT automáticamente, crear PowerPaths ni certificar la instalación física.
 
@@ -45,7 +45,7 @@ El material de laboratorio usa nombres sintéticos; **no** reutilices seriales, 
 ## 3. Arquitectura de H1
 
 ```text
-docs/user-guide/*.md                              ← Fuente única
+docs/user-guide/*.md + docs/user-guide/en/*.md                              ← Fuente única
 src/modules/help/catalog.ts                        ← Allowlist, categorías, rutas
 src/modules/help/server.ts                         ← Lectura de archivo y búsqueda
 src/modules/help/components/markdown-article.tsx   ← Render seguro de Markdown

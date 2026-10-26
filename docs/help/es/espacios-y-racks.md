@@ -2,13 +2,15 @@
 
 Dentro de una **Room**, Site Mapper muestra un plano llamado **Blueprint**. En modo normal puedes inspeccionarlo; con permisos de edición puedes cambiar su distribución.
 
+![Room en modo normal antes de editar su distribución](/help/screenshots/room-blueprint.png)
+
 ## Antes de editar
 
 Abre la Room correcta y revisa su nombre. El botón **EDIT ROOM** debe estar disponible para tu cuenta.
 
 ## Entrar al modo de edición
 
-![Vista real de EDIT ROOM y sus herramientas](/help/screenshots/edit-room.webp)
+![Vista real de EDIT ROOM y sus herramientas](/help/screenshots/edit-room.png)
 
 1. Selecciona **EDIT ROOM**.
 2. La parte superior mostrará **EDIT · UNSAVED DRAFT**. Eso significa que todavía estás trabajando en un borrador.
@@ -20,6 +22,8 @@ Abre la Room correcta y revisa su nombre. El botón **EDIT ROOM** debe estar dis
    - **SELECT / EDIT** para seleccionar un elemento ya existente.
 
 ## Colocar un rack
+
+![Formulario real Place Rack dentro del editor de Room](/help/screenshots/place-rack.png)
 
 1. Abre **+ Place Rack**.
 2. Escribe un nombre reconocible.
@@ -33,7 +37,7 @@ Abre la Room correcta y revisa su nombre. El botón **EDIT ROOM** debe estar dis
 
 ## Abrir el rack después de guardarlo
 
-![Vista real de Rack Focus dentro de una Room](/help/screenshots/rack-focus.webp)
+![Vista real de Rack Focus dentro de una Room](/help/screenshots/rack-focus.png)
 
 Al seleccionar un rack puedes encontrar acciones diferentes:
 

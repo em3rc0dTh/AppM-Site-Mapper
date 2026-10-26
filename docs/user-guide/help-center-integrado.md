@@ -49,3 +49,41 @@ El Help Center ofrece **23 guías en español y 23 en inglés**, conectadas en c
 - **Soporte:** explicaciones de estados, conexión y medición separan registro lógico de verdad física. El usuario necesita ayuda clara; el integrador recibe los runbooks técnicos.
 
 **Aceptación pendiente:** revisar en navegador auténtico ambos idiomas, la secuencia de recorridos, pantallas con permisos, dispositivos móviles, y las acciones de guardar/archivar. CI certifica código y vínculos, no topología física ni resultados de usuario.
+
+
+## Contrato editorial para usuarios nuevos
+
+La ayuda pública debe partir de **la tarea del usuario**, no del nombre interno del subsistema. El orden recomendado para una persona sin experiencia es:
+
+1. orientarse en Site Mapper;
+2. entender Network → Site → Structure → Level → Room → Rack → Equipment;
+3. crear espacios;
+4. organizar una Room y colocar racks;
+5. abrir un rack y reconocer su ocupación;
+6. preparar Panel/Breakers;
+7. revisar PowerPath;
+8. leer V/A/W/kWh;
+9. comprender la relación MQTT;
+10. consultar históricos y resolver estados sin datos.
+
+Los términos **CAS**, **commissioning**, **OID**, **TimescaleDB**, **binding** y similares se presentan únicamente después de explicar la acción que resuelven.
+
+### Evidencia visual
+
+Las capturas reales se usan cuando responden a una acción concreta: **Create Site**, dibujo del boundary, **Create Room**, **EDIT ROOM**, Rack Focus, breaker LIVE y Power Path. Los SVG conceptuales se conservan solo cuando explican una relación que no cabe en una única captura.
+
+Reglas:
+
+- cada imagen debe responder "dónde estoy", "qué debo pulsar" o "qué resultado debo ver";
+- no repetir capturas solo para decorar;
+- los artículos muestran una leyenda debajo de cada imagen;
+- las capturas de laboratorio no demuestran cableado real, exactitud de sensor ni disponibilidad de producción;
+- una pantalla que muestre `LIVE` ilustra una lectura reciente; no certifica el circuito físico;
+- los artículos de edición deben explicar en lenguaje normal que el usuario necesita permisos para hacer cambios;
+- Help Center no expone runbooks de infraestructura al usuario Standard.
+
+### Dos capas de navegación
+
+`/help` presenta primero una **ruta recomendada de diez pasos para nuevos usuarios**. Debajo se mantienen los recorridos por objetivo y, finalmente, el buscador completo de artículos.
+
+Esto evita que una persona nueva tenga que decidir entre conceptos como MQTT, SNMP o PowerPath antes de entender la jerarquía física y la navegación.

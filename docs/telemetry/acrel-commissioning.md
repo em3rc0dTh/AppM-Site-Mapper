@@ -45,6 +45,10 @@ The authorized operator selects:
 5. Project ID, source-document name, revision and optional evidence reference.
 6. Explicit physical verification acknowledgement.
 
+The console renders all 24 channels for every commissioned meter and marks each channel as
+confirmed or pending. Selecting a channel only pre-fills the manual form; it never infers a
+breaker or raw point from channel number, panel order or equipment naming.
+
 The source identity is taken from the server-side saved gateway profile, not the browser.
 An all-or-none batch inserts existing `TelemetryBinding` records (one per metric), with
 `commissioning=ACREL_VERIFIED_CHANNEL`, source and meter references, channel, operator

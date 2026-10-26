@@ -4,7 +4,7 @@ Site Mapper can show the power route **recorded in the system**, from source equ
 
 ## Open a Power Path
 
-![Real POWER PATH screen](/help/screenshots/power-path.webp)
+![Real POWER PATH screen](/help/screenshots/power-path.png)
 
 1. Open the Equipment you want to inspect.
 2. In its Inspector, find **Power A**, **Power B**, **VIEW POWERPATH**, **Explore Power Path** or **FULL POWER TRACE**, depending on the screen.

@@ -1,6 +1,6 @@
-# Explore reading history and charts
+# See how readings changed
 
-A chart helps you understand **how a reading changed over time**. It doesn't always describe what is happening right now.
+History answers a simple question: **how did this measurement change over the last hours or days?** A historical value does not always describe what is happening right now.
 
 ![Readings and circuits](/help/diagrams/en/readings.svg)
 

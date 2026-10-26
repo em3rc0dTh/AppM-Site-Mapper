@@ -659,7 +659,7 @@ export function CommissioningConsole({
                       </small>
                     ) : null}
                   </fieldset>
-                  <label style={fieldStyle}>Estado de credencial
+                  <label style={fieldStyle}>Estado de credencial documental / externa
                     <select
                       style={inputStyle}
                       value={credentialState}
@@ -673,11 +673,11 @@ export function CommissioningConsole({
                       }}
                     >
                       <option value="NOT_DECLARED">No declarada</option>
-                      <option value="PRESENT_IN_SOURCE">Existe en documento; no almacenar secreto</option>
-                      <option value="SECRET_REFERENCED">Guardada en secret manager</option>
+                      <option value="PRESENT_IN_SOURCE">Existe en documento de origen</option>
+                      <option value="SECRET_REFERENCED">Referencia externa (vault/secret manager)</option>
                     </select>
                   </label>
-                  <label style={fieldStyle}>Referencia de credencial
+                  <label style={fieldStyle}>Referencia externa de credencial
                     <input
                       style={inputStyle}
                       value={credentialRef}
@@ -845,8 +845,9 @@ export function CommissioningConsole({
               </div>
               <p style={{ fontSize: 12 }}>
                 El usuario y la fecha de edición se obtienen de la sesión del servidor. El login
-                del equipo puede registrarse; la contraseña no. Usa únicamente una referencia a
-                un vault/secret manager en “Referencia de credencial”.
+                del equipo puede registrarse. La contraseña local se guarda únicamente mediante
+                “Password del Equipment”, cifrada fuera del perfil de comunicación. Los campos de
+                credencial documental/externa describen lo declarado por el C&P o un vault externo.
               </p>
               <div>
                 <button

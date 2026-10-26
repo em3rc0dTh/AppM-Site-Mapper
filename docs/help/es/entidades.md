@@ -8,7 +8,7 @@ Abre **EXPLORE** y comprueba que estás en la instalación correcta. Si no apare
 
 ## Crear un Site
 
-![Ejemplo real del botón para crear un Site](/help/screenshots/create-site.webp)
+![Ejemplo real del botón para crear un Site](/help/screenshots/create-site.png)
 
 _En una Network encontrarás **+ CREATE SITE**. Escribe primero un nombre y después define su contorno._
 
@@ -17,7 +17,7 @@ _En una Network encontrarás **+ CREATE SITE**. Escribe primero un nombre y desp
 3. Escribe un nombre que permita reconocerlo.
 4. Selecciona **Define boundary**.
 
-![Editor real para dibujar el límite de un Site](/help/screenshots/draw-site-boundary.webp)
+![Editor real para dibujar el límite de un Site](/help/screenshots/draw-site-boundary.png)
 
 5. En **Draw / select**, marca los puntos del contorno en orden. Necesitas **al menos 3 puntos**.
 6. Cierra el contorno y revisa que las líneas no se crucen.
@@ -30,16 +30,21 @@ _En una Network encontrarás **+ CREATE SITE**. Escribe primero un nombre y desp
 
 ## Crear un Structure y un Level
 
+![Formulario real para crear una Structure dentro del Site](/help/screenshots/create-structure.png)
+
 1. Abre el Site correspondiente.
 2. Selecciona **+ CREATE STRUCTURE**, escribe el nombre y define su límite.
 3. Cuando el Structure esté creado, ábrelo.
+
+![Formulario real para crear un Level dentro de una Structure](/help/screenshots/create-level.png)
+
 4. Selecciona **+ CREATE LEVEL**, escribe el nombre y confirma.
 
 Un Level organiza salas; no necesitas dibujar un nuevo contorno para cada Level en este paso.
 
 ## Crear una Room
 
-![Ejemplo real del formulario Create Room](/help/screenshots/create-room.webp)
+![Ejemplo real del formulario Create Room](/help/screenshots/create-room.png)
 
 1. Abre el **Level** correcto.
 2. Selecciona **+ CREATE ROOM**.

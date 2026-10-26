@@ -117,18 +117,16 @@ export async function guardTopologyWrite(
       .map((port: { id: string }) => port.id);
     if (removedPorts.length) {
       if (
-        await db
-          .collection('power_paths')
-          .findOne(
-            {
-              lifecycle: 'ACTIVE',
-              $or: [
-                { sourceAccessPortId: { $in: removedPorts } },
-                { targetAccessPortId: { $in: removedPorts } },
-              ],
-            },
-            { session },
-          )
+        await db.collection('power_paths').findOne(
+          {
+            lifecycle: 'ACTIVE',
+            $or: [
+              { sourceAccessPortId: { $in: removedPorts } },
+              { targetAccessPortId: { $in: removedPorts } },
+            ],
+          },
+          { session },
+        )
       )
         throw new IntegrityConflict('ACTIVE_POWER_PATHS');
       if (

@@ -163,18 +163,16 @@ async function main(): Promise<void> {
     const backup = liveExists ? backupName() : null;
 
     const journalId = randomUUID();
-    await database
-      .collection('promotion_journal')
-      .insertOne({
-        id: journalId,
-        candidate: CANDIDATE,
-        backup,
-        owner,
-        fingerprint: options.fingerprint,
-        phase: 'PREPARED',
-        at: new Date(),
-        backupId: options.backupId,
-      });
+    await database.collection('promotion_journal').insertOne({
+      id: journalId,
+      candidate: CANDIDATE,
+      backup,
+      owner,
+      fingerprint: options.fingerprint,
+      phase: 'PREPARED',
+      at: new Date(),
+      backupId: options.backupId,
+    });
     if (liveExists && backup) {
       await database.collection(LIVE).rename(backup);
       await database

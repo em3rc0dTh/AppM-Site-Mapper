@@ -140,7 +140,6 @@ No cambiaron dependencias ni SQL de Timescale. No se ejecutó instalación de pa
 
 La lista completa de archivos se encuentra en [mk1-critical-hardening-files.md](mk1-critical-hardening-files.md). Recuperación: [backup-restore.md](backup-restore.md).
 
-
 ## Nota de integración a main
 
 La reconciliación hacia `main` no copia el árbol antiguo de la rama sobre el producto actual. Se reaplica únicamente el diff propio de los 7 commits de hardening desde su ancestro común y se resuelven explícitamente los conflictos con cambios posteriores. Los dos conflictos reales estuvieron en `panel-commissioning` y `mongo-telemetry-binding-repository`; la resolución conserva provenance/batch commissioning de Acrel y añade request hardening, integrity fence, reference guards y atomicidad de bindings.

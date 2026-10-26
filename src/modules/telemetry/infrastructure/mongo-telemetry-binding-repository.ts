@@ -291,20 +291,18 @@ export class MongoTelemetryBindingRepository implements TelemetryBindingReposito
       if (previous.targetId !== binding.targetId || previous.targetType !== binding.targetType) {
         // Preserve the existing unique-SN Device -> root Chassis identity upgrade,
         // but prove it again inside the same fenced transaction.
-        const chassis = await this.database
-          .collection('topology_nodes')
-          .findOne(
-            {
-              id: binding.targetId,
-              kind: 'EQUIPMENT',
-              equipmentType: 'CHASSIS',
-              lifecycle: 'ACTIVE',
-              parentEquipmentId: null,
-              deviceId: previous.targetId,
-              serialNumber: binding.sourceIdentity,
-            },
-            { session },
-          );
+        const chassis = await this.database.collection('topology_nodes').findOne(
+          {
+            id: binding.targetId,
+            kind: 'EQUIPMENT',
+            equipmentType: 'CHASSIS',
+            lifecycle: 'ACTIVE',
+            parentEquipmentId: null,
+            deviceId: previous.targetId,
+            serialNumber: binding.sourceIdentity,
+          },
+          { session },
+        );
         if (
           previous.targetType !== 'DEVICE' ||
           binding.targetType !== 'EQUIPMENT' ||

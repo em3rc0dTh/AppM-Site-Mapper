@@ -51,18 +51,16 @@ export class MongoPowerRepository implements PowerRepository {
     await withIntegrityTransaction(this.database, async (session) => {
       const endpoints = [];
       for (const id of [path.sourceAccessPortId, path.targetAccessPortId]) {
-        const owner = await this.database
-          .collection('topology_nodes')
-          .findOne(
-            {
-              kind: 'EQUIPMENT',
-              lifecycle: 'ACTIVE',
-              accessPorts: {
-                $elemMatch: { id, lifecycle: 'ACTIVE', portType: 'POWER', exposure: 'EXTERNAL' },
-              },
+        const owner = await this.database.collection('topology_nodes').findOne(
+          {
+            kind: 'EQUIPMENT',
+            lifecycle: 'ACTIVE',
+            accessPorts: {
+              $elemMatch: { id, lifecycle: 'ACTIVE', portType: 'POWER', exposure: 'EXTERNAL' },
             },
-            { session },
-          );
+          },
+          { session },
+        );
         if (!owner) throw new IntegrityConflict('REFERENCE_NOT_ACTIVE');
         await requireActiveAncestry(this.database, owner.id, session);
         endpoints.push(owner.accessPorts.find((port: { id: string }) => port.id === id));

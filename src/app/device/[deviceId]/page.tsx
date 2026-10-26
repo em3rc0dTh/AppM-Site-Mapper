@@ -369,6 +369,14 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                       )
                     ) : null}
                   </dl>
+                  {node.equipmentType === 'CIRCUIT_BREAKER' && canReadIndustrialSettings ? (
+                    <Link
+                      className="zip-device-outline"
+                      href={'/industrial/commissioning?' + new URLSearchParams({ deviceId: node.deviceId }).toString()}
+                    >
+                      {acrelMapping ? 'Abrir comisionamiento Acrel' : 'Configurar monitoreo Acrel'}
+                    </Link>
+                  ) : null}
                   <FullPowerTraceModal entityId={node.id} />
                   {room && rackNode ? (
                     <Link

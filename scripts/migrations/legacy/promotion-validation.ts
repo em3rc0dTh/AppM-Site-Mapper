@@ -10,7 +10,7 @@ const expectedParentKind: Readonly<Record<CanonicalKind, CanonicalKind | null>> 
   POSITION: 'CONTAINER_CLUSTER_BAY',
   CONTAINER_RACK: 'POSITION',
   DEVICE: 'CONTAINER_RACK',
-  EQUIPMENT: 'CONTAINER_RACK',
+  EQUIPMENT: 'DEVICE',
 };
 
 export interface PromotionValidation {
@@ -66,7 +66,7 @@ export function validatePromotionCandidate(nodes: readonly CanonicalNode[]): Pro
       continue;
     }
 
-    if (parent.kind !== expected) {
+    if (node.kind === 'EQUIPMENT' ? !['DEVICE', 'EQUIPMENT'].includes(parent.kind) : parent.kind !== expected) {
       errors.push(`INVALID_PARENT_KIND:${node.id}:${parent.kind}:${expected}`);
     }
   }

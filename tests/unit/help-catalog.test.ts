@@ -71,6 +71,16 @@ describe('Customer-facing Site Mapper Help Center', () => {
           expect(svg).toMatch(/<title>/);
           expect(svg).not.toMatch(/<script\b|onload\s*=/i);
         }
+        for (const [, uri] of markdown.matchAll(/!\[[^\]]+\]\((\/help\/screenshots\/[^)]+)\)/g)) {
+          expect(uri).toMatch(
+            /^\/help\/screenshots\/(?:create-site|draw-site-boundary|create-room|edit-room|rack-focus|breaker-live|power-path)\.webp$/,
+          );
+          const file = join(root, 'public', uri!.slice(1));
+          expect(existsSync(file), file).toBe(true);
+          const webp = readFileSync(file);
+          expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF');
+          expect(webp.subarray(8, 12).toString('ascii')).toBe('WEBP');
+        }
       }
     }
     const renderer = readFileSync(
@@ -78,6 +88,7 @@ describe('Customer-facing Site Mapper Help Center', () => {
       'utf8',
     );
     expect(renderer).toContain('help-illustration');
+    expect(renderer).toContain('screenshotDimensions');
     expect(renderer).toContain('<Image');
     expect(renderer).not.toContain('dangerouslySetInnerHTML');
     expect(renderer).not.toContain('eval(');
@@ -85,6 +96,7 @@ describe('Customer-facing Site Mapper Help Center', () => {
 
   it('connects task journeys to published articles and approved workflow ids', () => {
     const all = new Set(helpCatalog.map((item) => item.slug));
+    expect(helpJourneys).toHaveLength(6);
     for (const journey of helpJourneys) {
       expect(journey.slugs.length).toBeGreaterThanOrEqual(3);
       expect(new Set(journey.slugs).size).toBe(journey.slugs.length);

@@ -39,15 +39,16 @@ function previouslyConfirmed(binding: TelemetryBinding): boolean {
 }
 
 function profileSnapshot(profile: CommunicationProfile): CommunicationProfileInput {
-  return {
-    equipmentId: profile.equipmentId,
-    role: profile.role,
-    ...(profile.gatewayEquipmentId ? { gatewayEquipmentId: profile.gatewayEquipmentId } : {}),
-    ...(profile.sourceIdentity ? { sourceIdentity: profile.sourceIdentity } : {}),
-    ...(profile.network ? { network: profile.network } : {}),
-    rs485: profile.rs485,
-    evidence: profile.evidence,
-  };
+  const {
+    bdfbDeviceId: _bdfbDeviceId,
+    revisionNumber: _revisionNumber,
+    createdAt: _createdAt,
+    updatedAt: _updatedAt,
+    updatedBy: _updatedBy,
+    history: _history,
+    ...snapshot
+  } = profile;
+  return snapshot;
 }
 
 export class IndustrialCommissioningService {
@@ -221,6 +222,7 @@ export class IndustrialCommissioningService {
     const meter = await this.profiles.get(input.meterEquipmentId);
     if (!meter || meter.role !== 'METER' || !meter.gatewayEquipmentId)
       return bad('EQUIPMENT_NOT_FOUND');
+    if (input.channel > (meter.channelCount ?? 24)) return bad('CHANNEL_CONFLICT');
     const gateway = await this.profiles.get(meter.gatewayEquipmentId);
     if (!gateway || gateway.role !== 'GATEWAY' || !gateway.sourceIdentity)
       return bad('GATEWAY_NOT_COMMISSIONED');

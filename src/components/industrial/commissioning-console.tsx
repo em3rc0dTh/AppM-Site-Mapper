@@ -750,6 +750,17 @@ export function CommissioningConsole({
                       ? ' · ' + (item.sourceIdentity ?? 'MQTT identity pendiente')
                       : ''}
                   </div>
+                  <small>
+                    {item.recordStatus} · {item.partNumber ?? 'P/N —'}
+                    {item.role === 'GATEWAY' && item.macAddress ? ' · ' + item.macAddress : ''}
+                    {item.role === 'GATEWAY' && item.loginUsername
+                      ? ' · login ' + item.loginUsername
+                      : ''}
+                    {item.role === 'METER' && item.hallSensorDescription
+                      ? ' · ' + item.hallSensorDescription
+                      : ''}
+                  </small>
+                  <br />
                   <small>Revisión {item.revisionNumber} · {item.evidence.documentName} / {item.evidence.revision}</small>
                   <div><button type="button" onClick={() => selectProfile(item.equipmentId)}>Editar configuración</button></div>
                 </article>)}</div>}

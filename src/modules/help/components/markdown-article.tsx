@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
+import Image from 'next/image';
 
 import { helpCatalog, type HelpLocale } from '../catalog';
-
-const docsBase = 'https://github.com/em3rc0dTh/AppM-Site-Mapper/blob/main/docs/';
 
 function safeTarget(target: string): string | null {
   if (/^https:\/\/[^ ]+$/i.test(target)) return target;
@@ -12,22 +11,7 @@ function safeTarget(target: string): string | null {
   const [raw, fragment] = target.split('#', 2);
   if (!raw || raw.startsWith('/') || raw.includes(':') || raw.includes('?')) return null;
   const clean = raw.replace(/^\.\//, '');
-  if (clean.startsWith('../')) {
-    const normal = clean.split('/').reduce<string[]>(
-      (parts, part) => {
-        if (part === '..') parts.pop();
-        else if (part !== '.') parts.push(part);
-        return parts;
-      },
-      ['user-guide'],
-    );
-    if (!normal.length || normal.some((part) => part === '..')) return null;
-    return (
-      docsBase +
-      normal.map(encodeURIComponent).join('/') +
-      (fragment ? '#' + encodeURIComponent(fragment) : '')
-    );
-  }
+  if (clean.startsWith('../')) return null;
   const filename = clean.split('/').pop();
   const found = helpCatalog.find((entry) => entry.file === filename);
   if (found) return '/help/' + found.slug + (fragment ? '#' + encodeURIComponent(fragment) : '');
@@ -124,6 +108,17 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
     }
     const key = 'block-' + serial++;
 
+    const illustration = /^!\[([^\]]{1,140})\]\((\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings)\.svg)\)$/.exec(current);
+    if (illustration) {
+      blocks.push(
+        <figure className="help-illustration" key={key}>
+          <Image src={illustration[2]!} alt={illustration[1]!} width={1100} height={410} unoptimized />
+        </figure>,
+      );
+      i++;
+      continue;
+    }
+
     if (isFence(current)) {
       const language = current.replace(/^[\x60~]+/, '').trim();
       const fence = current.slice(0, 3);
@@ -134,15 +129,15 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
         i++;
       }
       i++;
+      if (language === 'mermaid') {
+        blocks.push(<p key={key}>{locale === 'es' ? 'Diagrama no disponible.' : 'Diagram unavailable.'}</p>);
+        continue;
+      }
       blocks.push(
         <figure className="help-code" key={key}>
           {language ? (
             <figcaption>
-              {language === 'mermaid'
-                ? locale === 'es'
-                  ? 'Diagrama conceptual · texto accesible'
-                  : 'Conceptual diagram · accessible text'
-                : language}
+              {language}
             </figcaption>
           ) : null}
           <pre>

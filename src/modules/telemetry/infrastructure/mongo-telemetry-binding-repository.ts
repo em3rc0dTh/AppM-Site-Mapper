@@ -64,7 +64,7 @@ export class MongoTelemetryBindingRepository implements TelemetryBindingReposito
     try {
       await session.withTransaction(async () => {
         await this.collection.insertMany(
-          bindings as OptionalUnlessRequiredId<BindingDocument>[],
+          [...bindings] as OptionalUnlessRequiredId<BindingDocument>[],
           { session, ordered: true },
         );
       });

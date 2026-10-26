@@ -41,7 +41,31 @@ describe('request security', () => {
     expect(isSafeMutationRequest(request)).toBe(true);
   });
 
-  it('uses the browser-visible forwarded authority when sec-fetch metadata is unavailable', () => {
+  it('uses browser-visible forwarded authority only from an authenticated proxy', () => {
+    const previous = process.env.AUTH_TRUSTED_PROXY_TOKEN;
+    const token = 'request-security-test-proxy-token-123456';
+    process.env.AUTH_TRUSTED_PROXY_TOKEN = token;
+    try {
+      const request = new Request('http://internal-next:3000/api/warehouse/templates/import', {
+        method: 'POST',
+        headers: {
+          origin: 'https://mapper.example',
+          host: 'internal-next:3000',
+          'x-forwarded-host': 'mapper.example',
+          'x-forwarded-proto': 'https',
+          'x-appm-proxy-token': token,
+        },
+        body: '{}',
+      });
+
+      expect(isSafeMutationRequest(request)).toBe(true);
+    } finally {
+      if (previous === undefined) delete process.env.AUTH_TRUSTED_PROXY_TOKEN;
+      else process.env.AUTH_TRUSTED_PROXY_TOKEN = previous;
+    }
+  });
+
+  it('rejects untrusted forwarded authority when sec-fetch metadata is unavailable', () => {
     const request = new Request('http://internal-next:3000/api/warehouse/templates/import', {
       method: 'POST',
       headers: {
@@ -53,7 +77,7 @@ describe('request security', () => {
       body: '{}',
     });
 
-    expect(isSafeMutationRequest(request)).toBe(true);
+    expect(isSafeMutationRequest(request)).toBe(false);
   });
 
   it('still rejects mismatched origins without same-origin browser evidence', () => {

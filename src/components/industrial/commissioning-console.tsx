@@ -59,6 +59,32 @@ interface CredentialMetadata {
   lastRevealedAt?: string;
   lastRevealedBy?: string;
 }
+interface CommissioningWarning {
+  code: 'DUPLICATE_DECLARED_IP' | 'DUPLICATE_DECLARED_MAC' | 'DEFAULT_GATEWAY_OUTSIDE_SUBNET';
+  severity: 'FIELD_CONFIRMATION_REQUIRED';
+  field: 'network.ip' | 'macAddress' | 'network.gateway';
+  equipmentIds: string[];
+  value?: string;
+}
+interface CommissioningReadiness {
+  equipmentId: string;
+  role: 'GATEWAY' | 'METER';
+  stage:
+    | 'DOCUMENTED'
+    | 'NETWORK_PENDING'
+    | 'MQTT_IDENTITY_PENDING'
+    | 'METER_PENDING'
+    | 'METER_READY'
+    | 'CHANNELS_PARTIAL'
+    | 'CHANNELS_CONFIRMED'
+    | 'FIELD_VERIFIED';
+  networkDeclared: boolean;
+  mqttIdentityConfirmed: boolean;
+  meterReady: boolean;
+  confirmedChannels: number;
+  channelCount?: number;
+  fieldVerified: boolean;
+}
 interface Mapping {
   breakerId: string;
   sourceIdentity: string;
@@ -75,6 +101,8 @@ interface Overview {
   device: Bdfb;
   equipment: Equipment[];
   profiles: Profile[];
+  warnings: CommissioningWarning[];
+  readiness: CommissioningReadiness[];
   mappings: Mapping[];
 }
 type ProfileRole = 'GATEWAY' | 'METER';
@@ -90,6 +118,23 @@ async function jsonRequest(url: string, init?: RequestInit): Promise<Record<stri
 const fieldStyle = { display: 'grid', gap: 5, fontSize: 13 } as const;
 const inputStyle = { padding: 9, border: '1px solid #a5acb6', borderRadius: 6, width: '100%', minWidth: 0 } as const;
 const gridStyle = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))' } as const;
+
+const readinessLabel: Record<CommissioningReadiness['stage'], string> = {
+  DOCUMENTED: 'Documentado',
+  NETWORK_PENDING: 'Red pendiente',
+  MQTT_IDENTITY_PENDING: 'Identidad MQTT pendiente',
+  METER_PENDING: 'Medidor pendiente',
+  METER_READY: 'Medidor listo',
+  CHANNELS_PARTIAL: 'Canales parciales',
+  CHANNELS_CONFIRMED: 'Canales confirmados',
+  FIELD_VERIFIED: 'Verificado en campo',
+};
+
+const warningLabel: Record<CommissioningWarning['code'], string> = {
+  DUPLICATE_DECLARED_IP: 'IP declarada repetida',
+  DUPLICATE_DECLARED_MAC: 'MAC declarada repetida',
+  DEFAULT_GATEWAY_OUTSIDE_SUBNET: 'Default gateway fuera de la subred declarada',
+};
 
 export function CommissioningConsole({
   canWrite,
@@ -252,6 +297,10 @@ export function CommissioningConsole({
   );
   const breakers = useMemo(() => overview?.equipment.filter((item) => item.equipmentType === 'CIRCUIT_BREAKER') ?? [], [overview]);
   const existingProfile = overview?.profiles.find((profile) => profile.equipmentId === equipmentId);
+  const readinessByEquipmentId = useMemo(
+    () => new Map((overview?.readiness ?? []).map((item) => [item.equipmentId, item])),
+    [overview],
+  );
   const mappingsByMeter = useMemo(() => {
     const map = new Map<string, Map<number, Mapping>>();
     for (const mapping of overview?.mappings ?? []) {
@@ -506,6 +555,23 @@ export function CommissioningConsole({
           <section style={{ border: '1px solid #c8ced6', borderRadius: 12, padding: 18, display: 'grid', gap: 16 }}>
             <h2>1 · Configuración de comunicaciones</h2>
             <p>Selecciona un Equipment existente. Un gateway conserva la IP y la identidad del publicador; un medidor declara su Slave ID en el bus de ese gateway.</p>
+            {overview.warnings.length > 0 ? (
+              <aside style={{ border: '1px solid #c8ced6', borderRadius: 8, padding: 12 }}>
+                <strong>Preflight documental · requiere confirmación de campo</strong>
+                <p style={{ margin: '6px 0', fontSize: 12 }}>
+                  Estas advertencias no bloquean guardar el C&P y no afirman que el documento sea incorrecto.
+                </p>
+                <ul style={{ margin: 0, paddingLeft: 20 }}>
+                  {overview.warnings.map((warning, index) => (
+                    <li key={warning.code + '|' + warning.equipmentIds.join('|') + '|' + index}>
+                      {warningLabel[warning.code]}
+                      {warning.value ? ' · ' + warning.value : ''} ·{' '}
+                      {warning.equipmentIds.map((id) => equipmentName(id)).join(', ')}
+                    </li>
+                  ))}
+                </ul>
+              </aside>
+            ) : null}
             <form onSubmit={submitProfile} style={{ display: 'grid', gap: 14 }}>
               <div style={gridStyle}>
                 <label style={fieldStyle}>Buscar Equipment / alias / serial / MAC / login
@@ -886,6 +952,20 @@ export function CommissioningConsole({
                       ? ' · ' + (item.sourceIdentity ?? 'MQTT identity pendiente')
                       : ''}
                   </div>
+                  {(() => {
+                    const readiness = readinessByEquipmentId.get(item.equipmentId);
+                    return readiness ? (
+                      <div style={{ margin: '6px 0', fontSize: 12 }}>
+                        <strong>{readinessLabel[readiness.stage]}</strong>
+                        {' · red '}{readiness.networkDeclared ? '✓' : '—'}
+                        {' · MQTT '}{readiness.mqttIdentityConfirmed ? '✓' : '—'}
+                        {' · meter '}{readiness.meterReady ? '✓' : '—'}
+                        {readiness.channelCount !== undefined
+                          ? ` · canales ${readiness.confirmedChannels}/${readiness.channelCount}`
+                          : ''}
+                      </div>
+                    ) : null;
+                  })()}
                   <small>
                     {item.recordStatus} · {
                       overview.equipment.find((equipment) => equipment.id === item.equipmentId)

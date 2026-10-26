@@ -1,0 +1,47 @@
+name: Format screenshot-led Help Center once
+on:
+  push:
+    branches:
+      - feat/mk1-in-app-help-manual-2026-10-26
+    paths:
+      - '.github/workflows/mk1-help-screenshots-format-once.yml'
+permissions:
+  contents: write
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Format Help Center files
+        run: |
+          npx prettier --write \
+            src/modules/help/catalog.ts \
+            src/modules/help/components/markdown-article.tsx \
+            tests/unit/help-catalog.test.ts \
+            docs/help/es/manual-maestro.md docs/help/en/manual-maestro.md \
+            docs/help/es/entidades.md docs/help/en/entidades.md \
+            docs/help/es/espacios-y-racks.md docs/help/en/espacios-y-racks.md \
+            docs/help/es/telemetria.md docs/help/en/telemetria.md \
+            docs/help/es/conexiones.md docs/help/en/conexiones.md \
+            docs/product/help-real-screenshot-map-v1.md
+      - name: Commit formatting
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- src/modules/help/catalog.ts \
+            src/modules/help/components/markdown-article.tsx \
+            tests/unit/help-catalog.test.ts \
+            docs/help/es docs/help/en \
+            docs/product/help-real-screenshot-map-v1.md
+          if git diff --cached --quiet; then
+            echo 'Already formatted'
+          else
+            git commit -m 'style(help): format screenshot-led beginner guides'
+            git push origin HEAD:refs/heads/feat/mk1-in-app-help-manual-2026-10-26
+          fi

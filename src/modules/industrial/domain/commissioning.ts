@@ -130,7 +130,8 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
   if (raw.role === 'GATEWAY') {
     if (
       raw.gatewayEquipmentId !== undefined || serial.slaveId !== undefined ||
-      !text(raw.sourceIdentity, 120) || !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(raw.sourceIdentity) ||
+      (raw.sourceIdentity !== undefined &&
+        (!text(raw.sourceIdentity, 120) || !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(raw.sourceIdentity))) ||
       !object(raw.network) ||
       !only(raw.network, ['ip', 'mask', 'gateway', 'port', 'protocol']) ||
       !ipv4(raw.network.ip) || !netmask(raw.network.mask) || !ipv4(raw.network.gateway) ||
@@ -141,7 +142,9 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
     return {
       equipmentId: raw.equipmentId.trim(),
       role: 'GATEWAY',
-      sourceIdentity: raw.sourceIdentity.trim(),
+      ...(typeof raw.sourceIdentity === 'string'
+        ? { sourceIdentity: raw.sourceIdentity.trim() }
+        : {}),
       network: {
         ip: raw.network.ip,
         mask: raw.network.mask,

@@ -10,17 +10,32 @@ Las capturas pueden contener nombres y valores de ejemplo. El Help Center debe e
 
 ## Capturas seleccionadas para publicación
 
-| Asset publicado           | Captura fuente | Uso en Help Center                                        |
-| ------------------------- | -------------- | --------------------------------------------------------- |
-| `create-site.webp`        | 12:32:11       | Reconocer **+ CREATE SITE**, nombre y **Define boundary** |
-| `draw-site-boundary.webp` | 12:32:18       | Reconocer Draw/select, vértices y **Finish boundary**     |
-| `create-room.webp`        | 12:32:55       | Reconocer **+ CREATE ROOM** y el formulario               |
-| `edit-room.webp`          | 12:33:23       | Reconocer EDIT ROOM, borrador, herramientas y SAVE LAYOUT |
-| `rack-focus.webp`         | 12:33:43       | Distinguir Rack Focus, OPEN RACK ELEVATION y TRACE POWER  |
-| `breaker-live.webp`       | 12:35:23       | Reconocer breaker, LIVE, V/I/P/E, Source y Last packet    |
-| `power-path.webp`         | 12:35:28       | Leer Source → Output → Feed → Input → Destination         |
+Se publican **20 capturas reales en PNG de resolución original**, almacenadas dentro del propio build en `public/help/screenshots/`. No dependen de CDN ni de URLs temporales y pueden abrirse a tamaño completo desde el artículo.
 
-Todos los assets se guardan bajo `public/help/screenshots/`, son copias recortadas y comprimidas de las capturas entregadas y se sirven dentro del mismo build de Site Mapper.
+| Asset publicado | Captura fuente | Uso principal |
+| --- | --- | --- |
+| `workspace-overview.png` | 12:32:01 | Primera orientación y Direct Access |
+| `create-site.png` | 12:32:11 | + CREATE SITE y nombre |
+| `draw-site-boundary.png` | 12:32:18 | Draw/select y Finish boundary |
+| `create-structure.png` | 12:32:31 | Crear Structure dentro de Site |
+| `create-level.png` | 12:32:43 | Crear Level dentro de Structure |
+| `create-room.png` | 12:32:55 | Crear Room dentro de Level |
+| `room-blueprint.png` | 12:33:01 | Room en modo normal |
+| `place-rack.png` | 12:33:17 | Place Rack y parámetros |
+| `edit-room.png` | 12:33:23 | EDIT ROOM, borrador y SAVE LAYOUT |
+| `rack-focus.png` | 12:33:43 | Rack Focus / Elevation / Trace Power |
+| `rack-elevation.png` | 12:33:49 | U disponibles, reservadas y equipadas |
+| `rack-cas.png` | 12:33:56 | Reserva, montaje y allocation |
+| `bdfb-physical.png` | 12:34:35 | Chassis, Frames, Panels y posiciones |
+| `snmp-inputs.png` | 12:34:40 | Entradas A/B y lecturas SNMP |
+| `history-charts.png` | 12:34:43 | Historial SNMP y MQTT |
+| `panel-empty.png` | 12:34:57 | 0/24: capacidad sin breakers instalados |
+| `panel-breakers.png` | 12:35:04 | 3/24: breakers instalados |
+| `panel-history.png` | 12:35:14 | Historial de Panel por magnitud |
+| `breaker-live.png` | 12:35:23 | LIVE, V/I/P/E, Source y Last packet |
+| `power-path.png` | 12:35:28 | Source → Output → Feed → Input → Destination |
+
+Las imágenes se muestran contenidas dentro del artículo para conservar la composición y son enlaces a su **PNG completo** cuando el usuario necesita leer texto pequeño.
 
 ## Evidencia de referencia revisada
 
@@ -61,7 +76,7 @@ Todos los assets se guardan bajo `public/help/screenshots/`, son copias recortad
 
 ## Capturas que no se publican todavía
 
-Las pantallas de SNMP Settings, OIDs, CAS y mantenimiento quedan como evidencia interna hasta que sus workflows estén aprobados para el rol destinatario. Son útiles para capacitación técnica, pero añadirlas al recorrido inicial aumentaría la carga cognitiva de un usuario nuevo.
+Las vistas más sensibles de mantenimiento —por ejemplo configuración avanzada de hardware, retired OIDs o acciones técnicas que todavía no tienen un workflow aprobado para el rol destinatario— permanecen como evidencia interna. La decisión depende del **workflow**, no de que exista una captura.
 
 ## Regla para nuevas capturas
 

@@ -29,7 +29,7 @@ describe('legacy migration promotion validation', () => {
       node('position', 'POSITION', 'cluster'),
       node('rack', 'CONTAINER_RACK', 'position'),
       node('device', 'DEVICE', 'rack'),
-      node('equipment', 'EQUIPMENT', 'rack'),
+      node('equipment', 'EQUIPMENT', 'device'),
     ];
 
     expect(validatePromotionCandidate(nodes)).toMatchObject({

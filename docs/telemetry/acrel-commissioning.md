@@ -1,0 +1,86 @@
+# Acrel commissioning: communications, channel mapping and provenance
+
+**Status:** Implemented in feature branch; not field certified. No tests, builds or deployment were run for this delivery.
+
+## Scope
+
+The Acrel commissioning console at `/industrial/commissioning` adds **configuration and metadata** to
+the existing Site Mapper Device/Equipment/PowerPath/TelemetryBinding hierarchy. It does
+not create BDFBs, gateways, meters, breakers, circuits, new telemetry transports, or fake measurements.
+
+Before using the console, physically inventory the gateway and AMC16Z meter as existing
+Equipment under the correct BDFB Device. Their model/serial belongs to canonical Equipment.
+The console stores a typed operational communication profile keyed by that Equipment ID.
+
+### Gateway profile
+
+- `sourceIdentity`: exact identity of the authorized MQTT publisher, **not** an assertion
+  that the printed hardware serial is the MQTT publisher identity.
+- IPv4, subnet mask, default router, uplink port and `MQTT` or `MODBUS_TCP` transport.
+- RS485 bus configuration: baud rate, data bits, parity and stop bits.
+- A configured `MODBUS_TCP` uplink is documentary metadata only; this feature does not
+  commission a new Modbus TCP polling client.
+
+### Meter profile
+
+- Existing Equipment ID and existing gateway Equipment ID in the same BDFB.
+- RS485 bus parameters matching the gateway, plus slave address (1–247).
+- The same gateway cannot have two active meter profiles with the same slave address.
+
+The application rejects credentials, SNMP communities, usernames, passwords and arbitrary
+extra fields in these profiles. Handle device and broker secrets exclusively through
+an approved secure runtime secret system; do not put them in Excel, GitHub or metadata.
+
+### Channel-to-breaker commissioning
+
+The authorized operator selects:
+
+1. An already-commissioned meter and its channel (1–24).
+2. The **exact raw MQTT point** published for that physical channel.
+3. An existing active `CIRCUIT_BREAKER` Equipment in the same BDFB.
+4. A non-empty metric subset of VOLTAGE, CURRENT, POWER, ENERGY.
+5. Project ID, source-document name, revision and optional evidence reference.
+6. Explicit physical verification acknowledgement.
+
+The source identity is taken from the server-side saved gateway profile, not the browser.
+An all-or-none batch inserts existing `TelemetryBinding` records (one per metric), with
+`commissioning=ACREL_VERIFIED_CHANNEL`, source and meter references, channel, operator
+user ID, timestamp and evidence. A separate business inventory is **not** materialized.
+
+If any point is already bound to another breaker, a meter channel points elsewhere, a breaker
+already has conflicting telemetry, or an inherited SOURCE binding would override a reading,
+commissioning is rejected instead of guessing. To change an established mapping, explicitly
+retire it (all-or-none) first. Archived bindings remain in the existing binding collection with
+retirement actor/date/evidence. Ingestion uses only ACTIVE bindings.
+
+**Important:** saving a profile does not establish network connectivity. Confirming a binding
+records an operator assertion of physical mapping, not observed field accuracy. Real MQTT
+publisher identity, broker ACL/TLS, the gateway's acquisition path, Modbus register maps,
+Acrel-to-breaker wiring and measurements still require field certification. The source
+document alone does not prove the channel-to-breaker correspondence.
+
+## Data and persistence
+
+- `industrial_communication_profiles` (MongoDB), one profile per Equipment, versioned
+  by `revisionNumber`, storing bounded previous revisions. Memory mode uses a process singleton.
+- Existing `telemetry_bindings`, with provenance in `attributes`.
+- Unique indexes for equipment, gateway publisher identity, and gateway+slave address.
+- API: `GET/POST /api/industrial/commissioning`; permissions:
+  `settings:read + telemetry:read` and `settings:write + topology:write`.
+- Browser mutation requests must be same-origin and use strictly validated bounded JSON.
+- MongoDB batch mapping and retirement use transactions and therefore require a
+  transaction-capable MongoDB deployment (replica set or sharded cluster).
+- No production IPs, MAC addresses, customer identities, hardware serials, source spreadsheets
+  or secrets are committed with this implementation.
+
+## Field adoption checklist (not yet executed)
+
+1. Confirm installed gateway and meter inventory and their parent BDFB identities.
+2. Enter profiles from approved C&P; resolve inconsistent addresses before network use.
+3. Verify and record each physical channel-to-breaker correspondence.
+4. Check live MQTT source identity, physical meter channel, metric scaling/units and reading.
+5. Confirm expected A/B power routes using the existing Power Path trace.
+6. Check the audit revision and archival behavior after operator approval.
+
+The QDF before/after breaker movement workflow and XLSX importer are explicitly
+out of scope; existing PowerPath and breaker topology are left untouched.

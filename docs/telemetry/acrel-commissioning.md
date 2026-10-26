@@ -12,6 +12,24 @@ Before using the console, physically inventory the gateway and AMC16Z meter as e
 Equipment under the correct BDFB Device. Their model/serial belongs to canonical Equipment.
 The console stores a typed operational communication profile keyed by that Equipment ID.
 
+### C&P operational metadata
+
+The commissioning profile can preserve **declared** values without treating them as verified:
+alias / NE Name / TID, part number, gateway or meter number, MAC address, login username,
+gateway network parameters, uplink services, RS485 settings, downlink mode, declared slave count,
+meter channel count/description, Hall sensor description, 120-ohm termination and documentary
+RS485 status. Profiles are explicitly marked `DECLARED` or `FIELD_VERIFIED`.
+
+Project provenance can also retain project name/ID, site, client/operator, responsible person,
+document date/status, revision and an evidence reference.
+
+Passwords are never persisted in plaintext. The profile records only credential state:
+`NOT_DECLARED`, `PRESENT_IN_SOURCE` or `SECRET_REFERENCED`. When a secret is placed in an
+approved vault, only a URI-like reference (for example `vault://...`) may be stored.
+
+The console search indexes Equipment name/model/serial plus commissioning alias, part number,
+MAC, gateway/meter number and login username so operational aliases are useful for lookup.
+
 ### Gateway profile
 
 - `sourceIdentity` is optional while only documentary/network configuration is known. When set,

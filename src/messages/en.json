@@ -1794,7 +1794,6 @@
     "documentation": "Documentation",
     "heroTitle": "Learn Site Mapper, step by step",
     "heroDescription": "A practical guide to the real screens, safe workflows and common questions. Search a topic or choose a chapter to begin.",
-    "spanishNote": "",
     "searchLabel": "Search the manual",
     "searchPlaceholder": "e.g. blueprint, rack, PowerPath, MQTT, STALE",
     "clear": "Clear",

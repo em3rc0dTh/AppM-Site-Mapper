@@ -14,8 +14,9 @@ The console stores a typed operational communication profile keyed by that Equip
 
 ### Gateway profile
 
-- `sourceIdentity`: exact identity of the authorized MQTT publisher, **not** an assertion
-  that the printed hardware serial is the MQTT publisher identity.
+- `sourceIdentity` is optional while only documentary/network configuration is known. When set,
+  it is the exact identity of the authorized MQTT publisher, **not** an assertion that the printed
+  hardware serial is the MQTT publisher identity. Channel commissioning remains blocked until it is confirmed.
 - IPv4, subnet mask, default router, uplink port and `MQTT` or `MODBUS_TCP` transport.
 - RS485 bus configuration: baud rate, data bits, parity and stop bits.
 - A configured `MODBUS_TCP` uplink is documentary metadata only; this feature does not

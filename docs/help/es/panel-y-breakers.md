@@ -2,7 +2,7 @@
 
 Un **Panel** contiene posiciones numeradas donde puedes instalar interruptores (**Circuit Breakers**). Primero debes tener el equipo principal y el lugar donde se ubicará el panel.
 
-![Panel y posiciones de un rack](/help/diagrams/es/rack.svg)
+![Panel vacío con 24 posiciones disponibles y ningún breaker instalado](/help/screenshots/panel-empty.png)
 
 ## Antes de comenzar
 
@@ -29,9 +29,17 @@ Un **Panel** contiene posiciones numeradas donde puedes instalar interruptores (
 5. Elige **CIRCUIT_BREAKER**, completa sus datos y guarda.
 6. Comprueba que ahora aparece como **OCCUPIED**.
 
+![El mismo tipo de Panel después de instalar breakers en posiciones concretas](/help/screenshots/panel-breakers.png)
+
 ## ¿Qué significa 24 posiciones?
 
 Es la capacidad del panel, no la cantidad de interruptores instalados. Puedes tener un panel de 24 posiciones con solo una ocupada.
+
+## Comprobar el breaker
+
+![Breaker individual con lecturas recientes V, A, W y kWh](/help/screenshots/breaker-live.png)
+
+Después de instalarlo, abre el breaker para comprobar su identidad, posición y, si ya está vinculado a una fuente, sus lecturas.
 
 ## Si una posición no está disponible
 

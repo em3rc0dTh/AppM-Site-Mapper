@@ -1987,7 +1987,7 @@
     "mk1_meters_whose_gateway_does_not_yet_have_a_confirmed_mqtt_identity_cannot_": "Los medidores cuyo gateway aún no tiene identidad MQTT confirmada no pueden mapearse.",
     "mk1_channel": "Canal",
     "mk1_exact_mqtt_point": "Punto MQTT exacto",
-    "mk1_e_g_0_1_1": "Ej. 0_1_1",
+    "mk1_e_g_0_1_1": "Ejemplo: punto MQTT RAW",
     "mk1_existing_breaker": "Breaker existente",
     "mk1_enabled_metrics": "Métricas habilitadas",
     "mk1_i_confirm_that_i_physically_verified_the_meter_channel_published_point_a": "Confirmo haber verificado físicamente medidor, canal, punto publicado y breaker seleccionado.",

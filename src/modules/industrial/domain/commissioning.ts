@@ -143,7 +143,7 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
       !Array.isArray(raw.network.services) ||
       raw.network.services.length < 1 || raw.network.services.length > 2
     ) return null;
-    const services = [];
+    const services: NetworkServiceConfiguration[] = [];
     const protocols = new Set<string>();
     for (const rawService of raw.network.services) {
       if (

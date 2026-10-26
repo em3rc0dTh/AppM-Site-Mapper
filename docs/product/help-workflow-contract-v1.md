@@ -1,3 +1,5 @@
+> **ACTUALIZACIÓN 26/10/2026:** este v1 reúne solo los 16 primeros casos de topología y archivado. El **catálogo de cobertura integral v2** se encuentra en [help-workflow-master-map-v2.md](help-workflow-master-map-v2.md) (177 flujos candidatos, 15 áreas). Los pasos críticos industriales y sus dependencias están en [help-workflows-industrial-detail-v2.md](help-workflows-industrial-detail-v2.md). Estos documentos preceden a cualquier ampliación pública del Help Center.
+
 # Site Mapper MK1 — Contrato de flujos de trabajo para el Help Center
 
 **Diseño previo al Help Center — 26/10/2026**  

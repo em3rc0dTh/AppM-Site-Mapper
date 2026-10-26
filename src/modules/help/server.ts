@@ -21,7 +21,7 @@ export async function getHelpSearchIndex(): Promise<IndexedHelpEntry[]> {
       const plain = text
         .replace(/~~~[\s\S]*?~~~/g, ' ')
         .replace(/\x60{3}[\s\S]*?\x60{3}/g, ' ')
-        .replace(/[|#*_>\[\]()]/g, ' ')
+        .replace(/[|#*>\[\]()]/g, ' ')
         .replace(/\s+/g, ' ');
       return {
         ...entry,

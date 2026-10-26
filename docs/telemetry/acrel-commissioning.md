@@ -27,9 +27,18 @@ RS485 status. Profiles are explicitly marked `DECLARED` or `FIELD_VERIFIED`.
 Project provenance can also retain project name/ID, site, client/operator, responsible person,
 document date/status, revision and an evidence reference.
 
-Passwords are never persisted in plaintext. The profile records only credential state:
-`NOT_DECLARED`, `PRESENT_IN_SOURCE` or `SECRET_REFERENCED`. When a secret is placed in an
-approved vault, only a URI-like reference (for example `vault://...`) may be stored.
+Passwords are never persisted in plaintext inside Equipment or communication profiles. Two
+separate concepts are represented:
+
+- the communication profile may record documentary/external credential state:
+  `NOT_DECLARED`, `PRESENT_IN_SOURCE` or `SECRET_REFERENCED`;
+- Site Mapper may custody the actual Equipment password in the separate
+  `industrial_credentials` store, encrypted application-side with AES-256-GCM.
+
+The encryption key is supplied only at runtime through `SITE_MAPPER_CREDENTIAL_KEY` and is not
+stored in MongoDB. The credential API returns metadata by default; plaintext is returned only by
+an explicit authorized reveal action. Reveal timestamp/user are recorded separately from password
+modification timestamp/user.
 
 The console search indexes canonical Equipment name/model/serial/P/N/aliases plus commissioning
 MAC, gateway/meter number and login username.
@@ -94,12 +103,17 @@ document alone does not prove the channel-to-breaker correspondence.
 
 - `industrial_communication_profiles` (MongoDB), one profile per Equipment, versioned
   by `revisionNumber`, storing bounded previous revisions. Memory mode uses a process singleton.
+- `industrial_credentials`, one encrypted password record per Equipment. Ciphertext, 12-byte IV
+  and GCM authentication tag are persisted; the 32-byte encryption key remains a runtime secret.
 - Existing `telemetry_bindings`, with provenance in `attributes`.
 - Unique indexes for equipment, gateway publisher identity, and gateway+slave address.
 - Breaker Equipment inspectors show the confirmed gateway → meter → channel → raw-point path and
   communication details only to users with `settings:read`, with a contextual link back to the BDFB console.
 - API: `GET/POST /api/industrial/commissioning`; permissions:
   `settings:read + telemetry:read` and `settings:write + topology:write`.
+- Credential API: `GET/POST /api/industrial/credentials`; explicit
+  `credentials:read` / `credentials:write` permissions. ADMIN and SUPERADMIN currently receive
+  those permissions; STANDARD does not.
 - Browser mutation requests must be same-origin and use strictly validated bounded JSON.
 - MongoDB batch mapping and retirement use transactions and therefore require a
   transaction-capable MongoDB deployment (replica set or sharded cluster). The project's

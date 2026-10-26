@@ -1,6 +1,6 @@
-# Link MQTT readings to a breaker
+# Connect readings to a breaker
 
-A breaker may be visible in Site Mapper before **its measurements** have been linked. This guide shows how to associate a verified signal with the right breaker.
+A breaker can already be visible in its Panel while **its measurements are not linked yet**. Site Mapper uses MQTT for these circuit readings; you do not configure the broker from this screen.
 
 ![Signal to breaker](/help/diagrams/en/mqtt.svg)
 
@@ -8,7 +8,7 @@ A breaker may be visible in Site Mapper before **its measurements** have been li
 
 You need a **Panel** with the breaker installed in its actual position. The person responsible must have confirmed which data source and signal point measure that breaker.
 
-## Link the measurements
+## Connect the breaker to its readings
 
 1. Open the **Panel** containing the breaker.
 2. Find **MQTT POINT COMMISSIONING**.
@@ -18,6 +18,12 @@ You need a **Panel** with the breaker installed in its actual position. The pers
 6. Once the physical mapping has been checked, select the verification checkbox.
 7. Select **Confirm and commission point**.
 8. Use **Refresh commissioning** to update the result if needed.
+
+## Check the result
+
+After the mapping is confirmed, open the breaker and check **Telemetry**. This is where you verify whether data is actually arriving.
+
+![Real example of a breaker with recent readings](/help/screenshots/breaker-live.webp)
 
 ## What do 0/4 and 4/4 mean?
 

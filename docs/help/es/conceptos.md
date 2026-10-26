@@ -30,6 +30,8 @@ Supongamos que necesitas revisar el interruptor de un panel. Puedes seguir este 
 
 No necesitas conocer todos los nombres de memoria: el árbol de navegación te ayuda a avanzar.
 
+![Ejemplo real de una Room con racks ubicados en su Blueprint](/help/screenshots/room-blueprint.png)
+
 ## ¿Qué diferencia hay entre un rack y un panel?
 
 Un **rack** contiene equipos. Un **panel** es parte de uno de esos equipos y puede tener varias posiciones para interruptores.

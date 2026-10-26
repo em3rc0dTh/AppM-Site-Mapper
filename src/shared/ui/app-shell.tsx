@@ -7,6 +7,7 @@ import { Suspense, useState, type ReactNode } from 'react';
 
 import { CommandPalette } from './command-palette';
 import { ContextTracker } from './context-tracker';
+import { ContextualHelp } from '@/modules/help/components/contextual-help';
 
 function BrandMark() {
   return (
@@ -38,13 +39,15 @@ export function AppShell({ children }: { children: ReactNode }) {
     power ||
     pathname === '/network';
 
-  const contextLabel = pathname.startsWith('/settings')
-    ? t('settings')
-    : pathname.startsWith('/warehouse')
-      ? t('warehouseContext')
-      : pathname === '/workspace'
-        ? ''
-        : t('networkContext');
+  const contextLabel = pathname.startsWith('/help')
+    ? t('helpCenter')
+    : pathname.startsWith('/settings')
+      ? t('settings')
+      : pathname.startsWith('/warehouse')
+        ? t('warehouseContext')
+        : pathname === '/workspace'
+          ? ''
+          : t('networkContext');
 
   async function logout() {
     setBusy(true);
@@ -93,6 +96,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <ContextTracker />
         </Suspense>
         <CommandPalette />
+        <ContextualHelp key={pathname} />
 
         <Link className="zip-explore" href="/network">
           {t('explore')} <b>⌄</b>

@@ -66,11 +66,15 @@ document alone does not prove the channel-to-breaker correspondence.
   by `revisionNumber`, storing bounded previous revisions. Memory mode uses a process singleton.
 - Existing `telemetry_bindings`, with provenance in `attributes`.
 - Unique indexes for equipment, gateway publisher identity, and gateway+slave address.
+- Breaker Equipment inspectors show the confirmed gateway → meter → channel → raw-point path and
+  communication details only to users with `settings:read`, with a contextual link back to the BDFB console.
 - API: `GET/POST /api/industrial/commissioning`; permissions:
   `settings:read + telemetry:read` and `settings:write + topology:write`.
 - Browser mutation requests must be same-origin and use strictly validated bounded JSON.
 - MongoDB batch mapping and retirement use transactions and therefore require a
-  transaction-capable MongoDB deployment (replica set or sharded cluster).
+  transaction-capable MongoDB deployment (replica set or sharded cluster). The project's
+  `docker-compose.telemetry.yml` already runs MongoDB as single-node `rs0`; an older standalone
+  Mongo URI is not sufficient for these mutation operations.
 - No production IPs, MAC addresses, customer identities, hardware serials, source spreadsheets
   or secrets are committed with this implementation.
 

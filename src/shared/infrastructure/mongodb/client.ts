@@ -58,7 +58,7 @@ export function getClient(): Promise<MongoClient> {
 
 export function getMongoDatabase(): Promise<Db> {
   databasePromise ??= getClient().then(async (client) => {
-    const databaseName = process.env.MONGODB_DB_NAME?.trim() || 'appm_site_mapper';
+    const databaseName = requireRuntimeSecret('MONGODB_DB_NAME', process.env.MONGODB_DB_NAME);
     const database = client.db(databaseName);
     await ensurePersistenceIndexes(database);
     return database;

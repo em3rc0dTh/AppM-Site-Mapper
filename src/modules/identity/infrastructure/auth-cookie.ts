@@ -1,3 +1,4 @@
+import { isProductionDeployment } from '@/config/env';
 import type { NextResponse } from 'next/server';
 
 export const AUTH_COOKIE_NAME = 'appm_session';
@@ -7,7 +8,7 @@ export function setAuthCookie(response: NextResponse, token: string): void {
     name: AUTH_COOKIE_NAME,
     value: token,
     httpOnly: true,
-    secure: process.env.APP_ENV === 'production',
+    secure: isProductionDeployment(),
     sameSite: 'lax',
     path: '/',
     maxAge: 8 * 60 * 60,
@@ -19,7 +20,7 @@ export function clearAuthCookie(response: NextResponse): void {
     name: AUTH_COOKIE_NAME,
     value: '',
     httpOnly: true,
-    secure: process.env.APP_ENV === 'production',
+    secure: isProductionDeployment(),
     sameSite: 'lax',
     path: '/',
     maxAge: 0,

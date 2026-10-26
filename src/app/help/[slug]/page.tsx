@@ -33,10 +33,7 @@ export default async function HelpArticlePage({ params }: { params: Promise<{ sl
   const { slug } = await params;
   const entry = getHelpEntry(slug);
   if (!entry) notFound();
-  const [localeValue, t] = await Promise.all([
-    getLocale(),
-    getTranslations('help'),
-  ]);
+  const [localeValue, t] = await Promise.all([getLocale(), getTranslations('help')]);
   const locale: HelpLocale = localeValue === 'es' ? 'es' : 'en';
   const content = await readHelpArticle(entry, locale);
   const index = helpCatalog.findIndex((article) => article.slug === slug);

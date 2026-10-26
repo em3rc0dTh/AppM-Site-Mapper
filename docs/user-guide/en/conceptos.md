@@ -4,7 +4,7 @@
 
 Site Mapper is an inventory with **physical location context**. Each object has a type, identity and parent; the hierarchy lets you find a component from its physical location.
 
-~~~mermaid
+```mermaid
 flowchart TD
   N["Network"] --> S["Site"]
   S --> B["Structure"]
@@ -17,35 +17,35 @@ flowchart TD
   D --> E["Equipment"]
   E --> PA["PANEL"]
   PA --> CB["CIRCUIT_BREAKER"]
-~~~
+```
 
 The diagram is illustrative, not a universal requirement that every installation contains each intermediate item.
 
 ## Operator glossary
 
-| Term | Meaning |
-| --- | --- |
-| Network | Overall context grouping facilities |
-| Site | Physical facility |
-| Structure | Building or structure in a Site |
-| Level | Building floor/level |
-| Room / Substructure | Spatial room within the structure |
-| Bay / Cluster | Grouping inside a Room |
-| Position | Physical place for a Rack |
-| Rack / Container | Structure housing Devices |
-| Device | Inventory unit placed in a Rack, such as BDFB-01 |
-| Equipment | Identifiable component within a Device or another Equipment |
-| PANEL | Equipment with internal slots, e.g. 24 positions |
-| CIRCUIT_BREAKER | Installed breaker modeled as Equipment |
-| DYNAMIC | Children are not numbered |
-| POSITIONAL | Children occupy numbered slots |
-| Access Port | Physical terminal owned by a specific Equipment |
-| PowerPath | Recorded connection between two Access Ports |
-| MQTT Source | Identity of a publisher, e.g. EMU-BFDB-01 |
-| Raw point | Publisher measurement identifier, e.g. 0_1_1 |
-| TelemetryBinding | Verified source/point/metric-to-Equipment assignment |
-| LIVE | A recent accepted observation |
-| History | Persisted samples selected by interval |
+| Term                | Meaning                                                     |
+| ------------------- | ----------------------------------------------------------- |
+| Network             | Overall context grouping facilities                         |
+| Site                | Physical facility                                           |
+| Structure           | Building or structure in a Site                             |
+| Level               | Building floor/level                                        |
+| Room / Substructure | Spatial room within the structure                           |
+| Bay / Cluster       | Grouping inside a Room                                      |
+| Position            | Physical place for a Rack                                   |
+| Rack / Container    | Structure housing Devices                                   |
+| Device              | Inventory unit placed in a Rack, such as BDFB-01            |
+| Equipment           | Identifiable component within a Device or another Equipment |
+| PANEL               | Equipment with internal slots, e.g. 24 positions            |
+| CIRCUIT_BREAKER     | Installed breaker modeled as Equipment                      |
+| DYNAMIC             | Children are not numbered                                   |
+| POSITIONAL          | Children occupy numbered slots                              |
+| Access Port         | Physical terminal owned by a specific Equipment             |
+| PowerPath           | Recorded connection between two Access Ports                |
+| MQTT Source         | Identity of a publisher, e.g. EMU-BFDB-01                   |
+| Raw point           | Publisher measurement identifier, e.g. 0_1_1                |
+| TelemetryBinding    | Verified source/point/metric-to-Equipment assignment        |
+| LIVE                | A recent accepted observation                               |
+| History             | Persisted samples selected by interval                      |
 
 Room / Substructure and Rack / Container are alternatives at the same conceptual layer, not extra nested layers.
 

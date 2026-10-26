@@ -7,7 +7,7 @@
 - **Device:** main inventory unit under a Rack (for example BDFB-01).
 - **Equipment:** individually identified component beneath a Device **or another Equipment**: Chassis, Shelf, Frame, PANEL and CIRCUIT_BREAKER.
 
-~~~mermaid
+```mermaid
 flowchart TD
   R["Rack"] --> D["Device BDFB-01"]
   D --> C["Equipment CHASSIS"]
@@ -16,7 +16,7 @@ flowchart TD
   F --> P["Equipment PANEL · POSITIONAL 24"]
   P --> B["Position 01: CIRCUIT_BREAKER"]
   P --> E["Positions 02-24: available"]
-~~~
+```
 
 This is an example composition, not a mandatory template for all equipment.
 
@@ -46,14 +46,14 @@ Templates may restrict permissible child types. Do not bypass those rules by cha
 
 In the intended parent Equipment select **+ ADD EQUIPMENT**, then ONE-OFF:
 
-| UI field | Training example | Meaning |
-| --- | --- | --- |
-| Name | PANEL-01 | Human-readable identity |
-| Equipment type | PANEL | Enables panel semantics |
-| Children mode | POSITIONAL | Numbered child slots |
-| Child slots | 24 | Physical position count |
-| MQTT point prefix | 0_1, only if documented | Suggested raw point group, not a binding |
-| Serial number | EMU-BFDB-01, only if truly its publisher | Verified unique source ownership |
+| UI field          | Training example                         | Meaning                                  |
+| ----------------- | ---------------------------------------- | ---------------------------------------- |
+| Name              | PANEL-01                                 | Human-readable identity                  |
+| Equipment type    | PANEL                                    | Enables panel semantics                  |
+| Children mode     | POSITIONAL                               | Numbered child slots                     |
+| Child slots       | 24                                       | Physical position count                  |
+| MQTT point prefix | 0_1, only if documented                  | Suggested raw point group, not a binding |
+| Serial number     | EMU-BFDB-01, only if truly its publisher | Verified unique source ownership         |
 
 Select **Create and install**. The Panel should show PANEL, ACTIVE, POSITIONAL and 24 slots. Never copy a publisher serial merely because a tutorial uses it.
 
@@ -61,7 +61,7 @@ Select **Create and install**. The Panel should show PANEL, ACTIVE, POSITIONAL a
 
 1. Open the Panel's **INTERNAL COMPOSITION**.
 2. Select **MANAGE POSITIONS** or **EXPLORE POSITIONS** when appropriate.
-3. Find **POSITION 01 · AVAILABLE**, then **+ ADD EQUIPMENT** for that *specific slot*.
+3. Find **POSITION 01 · AVAILABLE**, then **+ ADD EQUIPMENT** for that _specific slot_.
 4. Choose ONE-OFF, name PANEL-01-CB-01, choose **CIRCUIT_BREAKER** and DYNAMIC children.
 5. Complete **Create and install**.
 6. Confirm Position 01 is OCCUPIED, with one installed and 23 available, and that the new breaker opens as Equipment.

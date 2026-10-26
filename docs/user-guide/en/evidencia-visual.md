@@ -15,7 +15,7 @@
 
 1. Stable image ID and screen name.
 2. Where the user is: functional route and parent entity.
-3. What to select: numbered arrow on the *actual* control.
+3. What to select: numbered arrow on the _actual_ control.
 4. Input entered: fictional, authorized identifiers; passwords hidden.
 5. Result: following screen/state and its meaning.
 6. Warning: what not to do when control or permission is unavailable.
@@ -23,24 +23,24 @@
 
 ## Required images by learning stage
 
-| Stage | IDs | States required | Evidence standing |
-| --- | --- | --- | --- |
-| Login | UI-01–UI-04 | Sign in, Email, Password, safe error | PENDING |
-| First sign-in | UI-05–UI-08 | Password change and return to Workspace | PENDING |
-| Users | USR-01–USR-08 | Settings Users, Add user, ACTIVE, roles, archive/restore | PENDING |
-| Navigation | NAV-01–NAV-04 | Explore tree, parent breadcrumb and back navigation | PARTIAL |
-| Spatial creation | ESP-01–ESP-08 | Create Site/Structure/Level/Room, boundary, saved result | PARTIAL (historical errors cannot prove save) |
-| Room Blueprint | BP-01–BP-08 | EDIT ROOM, Bay, Position, Place Rack, SAVE LAYOUT and reopen | PENDING |
-| Rack/CAS | RACK-01–RACK-06 | Rack Elevation, available/reserved U, mount, result | PENDING |
-| Device | DEV-01–DEV-04 | Create Device and verify Rack ownership | PENDING |
-| Equipment | EQ-01–EQ-08 | Add Equipment, Warehouse/One-off, Panel slots, breaker | PARTIAL |
-| Access Port | AP-01–AP-06 | Free/CONNECTED, port ownership, peer and direction | REAL (limited inspected example) |
-| PowerPath | PWR-01–PWR-08 | Source/destination, feed, confirmation, occupied errors, VIEW POWERPATH | REAL (selected limited paths) |
-| Power Trace | TRACE-01–TRACE-04 | Path A/B, intermediate Equipment, status | PARTIAL |
-| MQTT | MQTT-01–MQTT-06 | Panel commissioning, conflict and 4/4 | PENDING complete set |
-| LIVE and history | TEL-01–TEL-06 | LIVE, STALE, 24H/7D and missing history | PARTIAL |
-| Data model | DB-01–DB-05 | Sanitized MongoDB Compass model and relationships | REAL acceptance-lab examples |
-| End-to-end | FIN-01–FIN-05 | Consecutive steps and autonomous-operator acceptance | PENDING |
+| Stage            | IDs               | States required                                                         | Evidence standing                             |
+| ---------------- | ----------------- | ----------------------------------------------------------------------- | --------------------------------------------- |
+| Login            | UI-01–UI-04       | Sign in, Email, Password, safe error                                    | PENDING                                       |
+| First sign-in    | UI-05–UI-08       | Password change and return to Workspace                                 | PENDING                                       |
+| Users            | USR-01–USR-08     | Settings Users, Add user, ACTIVE, roles, archive/restore                | PENDING                                       |
+| Navigation       | NAV-01–NAV-04     | Explore tree, parent breadcrumb and back navigation                     | PARTIAL                                       |
+| Spatial creation | ESP-01–ESP-08     | Create Site/Structure/Level/Room, boundary, saved result                | PARTIAL (historical errors cannot prove save) |
+| Room Blueprint   | BP-01–BP-08       | EDIT ROOM, Bay, Position, Place Rack, SAVE LAYOUT and reopen            | PENDING                                       |
+| Rack/CAS         | RACK-01–RACK-06   | Rack Elevation, available/reserved U, mount, result                     | PENDING                                       |
+| Device           | DEV-01–DEV-04     | Create Device and verify Rack ownership                                 | PENDING                                       |
+| Equipment        | EQ-01–EQ-08       | Add Equipment, Warehouse/One-off, Panel slots, breaker                  | PARTIAL                                       |
+| Access Port      | AP-01–AP-06       | Free/CONNECTED, port ownership, peer and direction                      | REAL (limited inspected example)              |
+| PowerPath        | PWR-01–PWR-08     | Source/destination, feed, confirmation, occupied errors, VIEW POWERPATH | REAL (selected limited paths)                 |
+| Power Trace      | TRACE-01–TRACE-04 | Path A/B, intermediate Equipment, status                                | PARTIAL                                       |
+| MQTT             | MQTT-01–MQTT-06   | Panel commissioning, conflict and 4/4                                   | PENDING complete set                          |
+| LIVE and history | TEL-01–TEL-06     | LIVE, STALE, 24H/7D and missing history                                 | PARTIAL                                       |
+| Data model       | DB-01–DB-05       | Sanitized MongoDB Compass model and relationships                       | REAL acceptance-lab examples                  |
+| End-to-end       | FIN-01–FIN-05     | Consecutive steps and autonomous-operator acceptance                    | PENDING                                       |
 
 These statuses describe evidence known in the October 2026 operator-documentation work; they must be rechecked for each release.
 
@@ -56,17 +56,17 @@ The existing record includes selected physical editor, Equipment/Access Port, Po
 
 ## Evidence card template for one operation
 
-| Field | What to document |
-| --- | --- |
-| ID | BP-05 or other stable stage number |
-| Screen/context | Blueprint of an authorized training Room |
-| Role/version | ADMIN and exact commit |
-| Before | Empty Position and unsaved draft |
-| Action | Highlight **+ Place Rack** and entered training values |
-| After | Rack placed, then **SAVE LAYOUT** and reloaded |
-| Expected state | Rack still present under the intended Room |
+| Field                  | What to document                                          |
+| ---------------------- | --------------------------------------------------------- |
+| ID                     | BP-05 or other stable stage number                        |
+| Screen/context         | Blueprint of an authorized training Room                  |
+| Role/version           | ADMIN and exact commit                                    |
+| Before                 | Empty Position and unsaved draft                          |
+| Action                 | Highlight **+ Place Rack** and entered training values    |
+| After                  | Rack placed, then **SAVE LAYOUT** and reloaded            |
+| Expected state         | Rack still present under the intended Room                |
 | What it does not prove | PowerPath, mounted Device, field wiring or LIVE telemetry |
-| Validator/date | Authorized reviewer and date |
+| Validator/date         | Authorized reviewer and date                              |
 
 ## Publication criteria
 

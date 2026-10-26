@@ -81,12 +81,12 @@ No hay APIs nuevas, base de datos nueva, CMS, servicios terceros ni paquetes par
 
 ## 6. Hitos con evidencia separada
 
-| Hito                                                                              | Estado                                              |
-| --------------------------------------------------------------------------------- | --------------------------------------------------- |
-| H1: centro, buscador, lectura de Markdown, panel contextual, accesibilidad básica | Código implementado; pendiente validación CI/visual |
-| H2: fotografías reales exhaustivas anotadas y ensayo con operador autónomo        | Pendiente                                           |
-| H3: recorridos interactivos con controles, roles y estados validados              | Pendiente                                           |
-| H4: edición inglesa de los 14 capítulos                                            | Implementada; revisión editorial por operadores pendiente |
+| Hito                                                                              | Estado                                                    |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| H1: centro, buscador, lectura de Markdown, panel contextual, accesibilidad básica | Código implementado; pendiente validación CI/visual       |
+| H2: fotografías reales exhaustivas anotadas y ensayo con operador autónomo        | Pendiente                                                 |
+| H3: recorridos interactivos con controles, roles y estados validados              | Pendiente                                                 |
+| H4: edición inglesa de los 14 capítulos                                           | Implementada; revisión editorial por operadores pendiente |
 
 **H1 no debe calificarse como manual final ilustrado ni onboarding E2E certificado** hasta completar la matriz visual y el ensayo de usuario real.
 

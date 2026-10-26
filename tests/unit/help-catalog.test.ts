@@ -28,7 +28,9 @@ describe('Site Mapper in-app help manual', () => {
     expect(indexed).toHaveLength(helpCatalog.length);
     const english = await getHelpSearchIndex('en');
     expect(english).toHaveLength(helpCatalog.length);
-    expect(english.find((item) => item.slug === 'conexiones')?.searchText).toContain('source_already_connected');
+    expect(english.find((item) => item.slug === 'conexiones')?.searchText).toContain(
+      'source_already_connected',
+    );
     const connections = indexed.find((item) => item.slug === 'conexiones');
     expect(connections?.searchText).toContain('source_already_connected');
     expect(connections?.searchText).toContain('powerpath');

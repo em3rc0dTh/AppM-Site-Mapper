@@ -10,10 +10,7 @@ export const dynamic = 'force-dynamic';
 export default async function HelpCenterPage() {
   const auth = await requirePermission('topology:read');
   if (!auth.ok) redirect('/login');
-  const [localeValue, t] = await Promise.all([
-    getLocale(),
-    getTranslations('help'),
-  ]);
+  const [localeValue, t] = await Promise.all([getLocale(), getTranslations('help')]);
   const locale = localeValue === 'es' ? ('es' as const) : ('en' as const);
   const entries = await getHelpSearchIndex(locale);
 

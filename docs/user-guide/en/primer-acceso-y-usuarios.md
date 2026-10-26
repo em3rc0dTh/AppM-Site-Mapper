@@ -31,13 +31,13 @@ In **Settings → Users**, SUPERADMIN may change roles or switch users between *
 
 ## Roles at a glance
 
-| Action | STANDARD | ADMIN | SUPERADMIN |
-| --- | :---: | :---: | :---: |
-| Read topology, power and telemetry | Yes | Yes | Yes |
-| Edit topology and PowerPaths | No | Yes | Yes |
-| Confirm verified Panel commissioning | No | Yes | Yes |
-| Create and manage users | No | No | Yes |
-| Change own password | Yes | Yes | Yes |
+| Action                               | STANDARD | ADMIN | SUPERADMIN |
+| ------------------------------------ | :------: | :---: | :--------: |
+| Read topology, power and telemetry   |   Yes    |  Yes  |    Yes     |
+| Edit topology and PowerPaths         |    No    |  Yes  |    Yes     |
+| Confirm verified Panel commissioning |    No    |  Yes  |    Yes     |
+| Create and manage users              |    No    |  No   |    Yes     |
+| Change own password                  |   Yes    |  Yes  |    Yes     |
 
 A missing edit button often means an intentional **permission restriction**, not a broken page.
 

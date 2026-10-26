@@ -4,11 +4,11 @@
 
 ## Instructor preparation
 
-| Mode | Requirements | Risk |
-| --- | --- | --- |
-| A. Read-only walk | STANDARD account, existing topology and sample PowerPath A | No database changes |
-| B. Creation workshop | Authorized ADMIN and isolated training database | Writes test objects |
-| C. Live telemetry review | Above, plus verified lab publisher/broker | Displays real *synthetic* lab observations |
+| Mode                     | Requirements                                               | Risk                                       |
+| ------------------------ | ---------------------------------------------------------- | ------------------------------------------ |
+| A. Read-only walk        | STANDARD account, existing topology and sample PowerPath A | No database changes                        |
+| B. Creation workshop     | Authorized ADMIN and isolated training database            | Writes test objects                        |
+| C. Live telemetry review | Above, plus verified lab publisher/broker                  | Displays real _synthetic_ lab observations |
 
 **Never create or remove a PowerPath on a breaker feeding real equipment for practice.** If there is no approved cabling fixture or mock environment, practice observation only.
 
@@ -66,17 +66,17 @@ Do not fill the other 23 breaker positions with invented hardware or copy a publ
 
 ## Instructor evaluation checklist
 
-| Skill | Pass condition |
-| --- | --- |
-| Navigation | Finds Equipment starting from Network/Site/Room |
-| Identity | Distinguishes Device, Equipment, Panel and breaker |
-| Position | Identifies free/occupied slots accurately |
-| Ports | Explains OUTPUT, INPUT and BIDIRECTIONAL |
-| Connection | Finds peer of a CONNECTED port; opens PowerPath |
-| Safety | Never creates another path on a busy terminal |
-| Commissioning | Explains source, prefix, proposed point and 4/4 |
-| Telemetry | Differentiates LIVE, STALE, UNMAPPED and history |
-| Errors | Records context without deleting data |
+| Skill         | Pass condition                                     |
+| ------------- | -------------------------------------------------- |
+| Navigation    | Finds Equipment starting from Network/Site/Room    |
+| Identity      | Distinguishes Device, Equipment, Panel and breaker |
+| Position      | Identifies free/occupied slots accurately          |
+| Ports         | Explains OUTPUT, INPUT and BIDIRECTIONAL           |
+| Connection    | Finds peer of a CONNECTED port; opens PowerPath    |
+| Safety        | Never creates another path on a busy terminal      |
+| Commissioning | Explains source, prefix, proposed point and 4/4    |
+| Telemetry     | Differentiates LIVE, STALE, UNMAPPED and history   |
+| Errors        | Records context without deleting data              |
 
 **Completion:** Mode A is finished unaided. Mode B is only assessed where authorized facilities and a separate training inventory exist.
 

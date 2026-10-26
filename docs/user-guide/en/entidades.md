@@ -6,16 +6,16 @@
 
 You need ADMIN/SUPERADMIN, an authorized training environment, and knowledge of the intended **parent object**. Not every type can be created under every parent.
 
-| New object | Open first | UI action |
-| --- | --- | --- |
-| Network | Network/exploration context | **+ CREATE NETWORK** when offered |
-| Site | Its Network | **+ CREATE SITE → Define boundary** |
-| Structure | Its Site | **+ CREATE STRUCTURE → Define boundary** |
-| Level | Its Structure | **+ CREATE LEVEL** |
-| Room | Its Level | **+ CREATE ROOM → Define boundary** |
-| Bay, Position, Rack | Room Blueprint | Draw or place on the plan |
-| Device | Correct Rack | Rack inventory action |
-| Equipment | Device or another Equipment | **+ ADD EQUIPMENT → FROM WAREHOUSE / ONE-OFF** |
+| New object          | Open first                  | UI action                                      |
+| ------------------- | --------------------------- | ---------------------------------------------- |
+| Network             | Network/exploration context | **+ CREATE NETWORK** when offered              |
+| Site                | Its Network                 | **+ CREATE SITE → Define boundary**            |
+| Structure           | Its Site                    | **+ CREATE STRUCTURE → Define boundary**       |
+| Level               | Its Structure               | **+ CREATE LEVEL**                             |
+| Room                | Its Level                   | **+ CREATE ROOM → Define boundary**            |
+| Bay, Position, Rack | Room Blueprint              | Draw or place on the plan                      |
+| Device              | Correct Rack                | Rack inventory action                          |
+| Equipment           | Device or another Equipment | **+ ADD EQUIPMENT → FROM WAREHOUSE / ONE-OFF** |
 
 ### Exercise A: Create a Site
 
@@ -35,13 +35,13 @@ You need ADMIN/SUPERADMIN, an authorized training environment, and knowledge of 
 4. Use **Define boundary**; the Room must stay within its Structure and must not overlap another Room by area.
 5. Select **Save Room**, then navigate away and back to confirm persistence.
 
-~~~mermaid
+```mermaid
 flowchart TD
   N["Network"] --> S["SITE-TRAIN-01"]
   S --> ST["BUILDING-TRAIN-01"]
   ST --> L["LEVEL-01"]
   L --> R["ROOM-01"]
-~~~
+```
 
 ## Meaning of important form fields
 
@@ -54,13 +54,13 @@ flowchart TD
 
 ## Troubleshooting
 
-| Symptom | Safe action |
-| --- | --- |
-| No + CREATE control | Check the parent and topology write permission |
-| Define boundary required | Draw the polygon before saving |
-| Polygon rejected | Inspect containment, self-intersection or overlap |
-| CREATE_FAILED_HTTP | Determine whether object was created before retrying |
-| Duplicate serial | Check ownership; never alter another device's serial to force a save |
+| Symptom                  | Safe action                                                          |
+| ------------------------ | -------------------------------------------------------------------- |
+| No + CREATE control      | Check the parent and topology write permission                       |
+| Define boundary required | Draw the polygon before saving                                       |
+| Polygon rejected         | Inspect containment, self-intersection or overlap                    |
+| CREATE_FAILED_HTTP       | Determine whether object was created before retrying                 |
+| Duplicate serial         | Check ownership; never alter another device's serial to force a save |
 
 **Do not bypass Room Blueprint by creating racks through manual API calls.**
 

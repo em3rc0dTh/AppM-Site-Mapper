@@ -6,7 +6,7 @@
 
 ## Walkthrough map
 
-~~~mermaid
+```mermaid
 flowchart TD
   A["1. Login"] --> B["2. Workspace"]
   B --> C["3. Explore / Topology"]
@@ -19,7 +19,7 @@ flowchart TD
   G --> J["10. MQTT history"]
   I --> K["11. Modbus explanation"]
   J --> K
-~~~
+```
 
 ## Step 1. Sign in
 
@@ -36,7 +36,7 @@ Site Mapper provides no public registration. Your administrator creates accounts
 - **Reporting** indicates equipment with recent mapped telemetry.
 - **No recent data** means a fresh measurement is unavailable, not that the circuit is electrically off.
 - **Direct access** opens a pinned BDFB or other object.
-- **BDFB Power Overview** summarizes *descendant MQTT Equipment* power; it is not the same as SNMP source-side current.
+- **BDFB Power Overview** summarizes _descendant MQTT Equipment_ power; it is not the same as SNMP source-side current.
 
 ## Step 3. Find the BDFB
 
@@ -56,7 +56,7 @@ A label such as **24 INSTALLED / 0 AVAILABLE** describes inventory slots. It is 
 ## Step 5. Inspect Panel MQTT
 
 1. Select **OPEN PANEL COMPOSITION** on an installed Panel.
-2. Locate **24/24 positions MQTT LIVE** *only if the source currently publishes accepted data*.
+2. Locate **24/24 positions MQTT LIVE** _only if the source currently publishes accepted data_.
 3. Read columns **POS, BREAKER, V · V, I · A, P · W, E · kWh, STATUS**.
 4. Open **Telemetry** in the Equipment inspector. Aggregated descendant readings exclude empty or unmapped slots; they must not be interpreted as an SNMP shunt total.
 
@@ -84,7 +84,7 @@ If the relevant SNMP bindings are not commissioned, the view can correctly show 
 
 ## Step 8. Understand Modbus TCP
 
-~~~mermaid
+```mermaid
 flowchart LR
   A["Synthetic breaker MQTT"] --> B["Broker"]
   B --> C["Site Mapper: accepted bindings and LIVE"]
@@ -92,7 +92,7 @@ flowchart LR
   C --> M["Modbus TCP FC03"]
   S["Synthetic SNMP input"] --> P["SNMP Collector"]
   P --> C
-~~~
+```
 
 Modbus supplies read-only industrial registers to an authorized integration such as Metasys. It is an **output**, not a sensor configuration feature in Inputs.
 
@@ -100,15 +100,15 @@ Earlier lab evidence covered Modbus Units **1–3** for original publishers and 
 
 ## Step 9. Investigate unexpected states
 
-| Observation | Likely interpretation | First action |
-| --- | --- | --- |
-| Login rejected | Credentials or session | Contact admin without exposing password |
-| MQTT LIVE but SNMP PENDING | Breaker signal live, shunt not commissioned | Inspect Inputs; do not alter MQTT |
-| MQTT STALE | Old/no recent packet | Check publisher, broker and source |
-| SNMP LAB LIVE | Synthetic source is publishing | Check SNMP historical samples separately |
-| SNMP 0/0 | No eligible input ports/mappings | Request authorized lab commissioning |
-| Charts empty | No data in protocol/time window | Try correct metric/window; review collector |
-| Modbus reads zero | Actual zero or missing/stale policy | Check quality and last observation |
+| Observation                | Likely interpretation                       | First action                                |
+| -------------------------- | ------------------------------------------- | ------------------------------------------- |
+| Login rejected             | Credentials or session                      | Contact admin without exposing password     |
+| MQTT LIVE but SNMP PENDING | Breaker signal live, shunt not commissioned | Inspect Inputs; do not alter MQTT           |
+| MQTT STALE                 | Old/no recent packet                        | Check publisher, broker and source          |
+| SNMP LAB LIVE              | Synthetic source is publishing              | Check SNMP historical samples separately    |
+| SNMP 0/0                   | No eligible input ports/mappings            | Request authorized lab commissioning        |
+| Charts empty               | No data in protocol/time window             | Try correct metric/window; review collector |
+| Modbus reads zero          | Actual zero or missing/stale policy         | Check quality and last observation          |
 
 ## Completion criteria
 

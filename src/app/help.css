@@ -657,7 +657,9 @@
   color: inherit;
   font-size: 17px;
 }
-.zip-app-shell .zip-topbar .help-trigger-label { display: none; }
+.zip-app-shell .zip-topbar .help-trigger-label {
+  display: none;
+}
 @media (min-width: 1000px) and (max-width: 1250px) {
   .zip-app-shell .zip-topbar .mk-search-trigger {
     flex-basis: 154px;
@@ -677,5 +679,7 @@
     width: 132px;
     margin-right: 6px !important;
   }
-  .zip-app-shell .zip-topbar .help-trigger { margin-right: 6px; }
+  .zip-app-shell .zip-topbar .help-trigger {
+    margin-right: 6px;
+  }
 }

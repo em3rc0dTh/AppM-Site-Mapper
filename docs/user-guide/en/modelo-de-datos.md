@@ -16,14 +16,14 @@ A UUID or database identifier is not interchangeable with a label or serial numb
 
 ## 3. Hierarchy: location → asset → component
 
-~~~mermaid
+```mermaid
 flowchart TD
   N["Network"] --> S["Site"]
   S --> B["Structure"] --> L["Level"]
   L --> R["Room"] --> K["Rack"]
   K --> D["Device"] --> E["Equipment"]
   E --> P["Panel"] --> C["Circuit breaker"]
-~~~
+```
 
 A Room contains spatially placed objects; a Rack contains Devices; a Device contains Equipment, and Equipment may contain other Equipment. This example collapses Bay/Position for readability; Blueprint models them explicitly.
 

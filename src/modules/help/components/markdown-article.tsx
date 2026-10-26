@@ -139,7 +139,9 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
           {language ? (
             <figcaption>
               {language === 'mermaid'
-                ? locale === 'es' ? 'Diagrama conceptual · texto accesible' : 'Conceptual diagram · accessible text'
+                ? locale === 'es'
+                  ? 'Diagrama conceptual · texto accesible'
+                  : 'Conceptual diagram · accessible text'
                 : language}
             </figcaption>
           ) : null}

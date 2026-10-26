@@ -15,7 +15,7 @@
 
 ## Required learning path
 
-~~~mermaid
+```mermaid
 flowchart TD
   A["Login and role"] --> N["Network → Site → Structure → Level → Room"]
   N --> B["Blueprint → Bay → Position → Rack"]
@@ -24,7 +24,7 @@ flowchart TD
   P --> X["Access Ports → PowerPath → Power Trace"]
   X --> T["MQTT commissioning → LIVE → history"]
   T --> V["Independent verification and troubleshooting"]
-~~~
+```
 
 ## Part A · Access and permissions
 

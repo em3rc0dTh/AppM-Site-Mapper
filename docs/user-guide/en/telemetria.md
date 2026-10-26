@@ -12,12 +12,12 @@ An authorized technician must have:
 - A confirmed source/publisher serial, such as EMU-BFDB-01 **in a laboratory only**.
 - A documented **MQTT point prefix**, such as 0_1.
 - A CIRCUIT_BREAKER Equipment actually installed in its correct slot, e.g. Position 01.
-- Evidence that the publisher's **raw point** physically measures *that breaker*, not another.
+- Evidence that the publisher's **raw point** physically measures _that breaker_, not another.
 - Permission to write commissioning mappings.
 
 A point like 0_1_1 is **suggested from position**; it is **not** evidence of wiring or source ownership.
 
-~~~mermaid
+```mermaid
 flowchart LR
   P["PANEL: EMU-BFDB-01"] --> F["Prefix 0_1"]
   F --> S["Installed Position 01"]
@@ -25,7 +25,7 @@ flowchart LR
   Q --> C{"Verified in field?"}
   C -->|"Yes"| B["Four metric bindings to CB-01"]
   C -->|"No"| H["Stop; no commissioning"]
-~~~
+```
 
 ## Step-by-step UI procedure
 
@@ -42,21 +42,21 @@ The four independent metrics are **VOLTAGE (V)**, **CURRENT (A)**, **POWER (W)**
 
 ## Interpreting states
 
-| Status | Interpretation |
-| --- | --- |
-| 0/4 | No metric mappings |
-| 1/4–3/4 | Partial mapping requiring investigation |
+| Status               | Interpretation                                        |
+| -------------------- | ----------------------------------------------------- |
+| 0/4                  | No metric mappings                                    |
+| 1/4–3/4              | Partial mapping requiring investigation               |
 | 4/4 VERIFIED MAPPING | Four mappings persisted; not proof of a recent packet |
-| CONFLICT | Source/point/breaker ownership collision; stop |
-| LIVE | Recent accepted observation for this Equipment |
-| NO DATA / UNMAPPED | No usable recent observation or accepted mapping |
-| STALE | Previous observation is too old to be considered live |
+| CONFLICT             | Source/point/breaker ownership collision; stop        |
+| LIVE                 | Recent accepted observation for this Equipment        |
+| NO DATA / UNMAPPED   | No usable recent observation or accepted mapping      |
+| STALE                | Previous observation is too old to be considered live |
 
 **4/4 does not imply LIVE.** A valid mapping may coexist with a stopped broker, publisher or expired credentials.
 
 ## Where the values come from
 
-~~~mermaid
+```mermaid
 sequenceDiagram
   participant S as BFDB source
   participant M as MQTT broker
@@ -66,7 +66,7 @@ sequenceDiagram
   M->>A: Published packet
   A->>A: Validate publisher, point and bindings
   A->>H: Persist accepted sample
-~~~
+```
 
 Site Mapper maps accepted source data to the breaker, latest state, and (when available) TimescaleDB history. Modbus is a separate output; successful Modbus reads do not certify the MQTT source identity.
 

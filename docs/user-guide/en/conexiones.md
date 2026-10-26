@@ -6,12 +6,12 @@
 
 ## 1. A port is not a connection
 
-~~~mermaid
+```mermaid
 flowchart LR
   CB["CB-01 · CIRCUIT_BREAKER"] --> O["POWER OUTPUT"]
   O -->|"PowerPath · Feed A"| I["AP-01-01 · BIDIRECTIONAL"]
   I --> N["NETWORK BOARD"]
-~~~
+```
 
 - **Access Port:** a terminal belonging to a specific Equipment; it may be available or occupied.
 - **PowerPath:** persistent recorded relationship between two named terminals.
@@ -44,7 +44,7 @@ The dialog is scrollable on laptops. Scroll to the bottom to review warnings and
 
 ## 4. Busy ports and safe handling
 
-~~~mermaid
+```mermaid
 flowchart TD
   P["Select source port"] --> C{"CONNECTED?"}
   C -->|"Yes"| V["Read peer and VIEW POWERPATH"]
@@ -52,7 +52,7 @@ flowchart TD
   C -->|"No"| D["Confirm free destination INPUT"]
   D --> W["Verify wiring + Feed"]
   W --> A["CONFIRM PHYSICAL CONNECTION"]
-~~~
+```
 
 A source already in use produces **SOURCE_ALREADY_CONNECTED**; an occupied target produces **TARGET_ALREADY_CONNECTED**. Same-Equipment routes or incompatible fixed feeds are also blocked. Never reuse a BIDIRECTIONAL terminal in multiple competing source/destination paths.
 
@@ -60,13 +60,13 @@ To distribute to several loads, use a **distribution Equipment** with separate p
 
 ## 5. Confirm the result at both ends
 
-| Where | Recorded evidence | Meaning |
-| --- | --- | --- |
-| CB-01 → PHYSICAL TERMINALS | Power output · CONNECTED | Source port is occupied |
-| Selected source terminal | FEEDS → NETWORK BOARD / AP-01-01 · Feed A | Exact destination |
-| NETWORK BOARD terminal | CONNECTED + POWERED BY ← CB-01 | Reverse link recorded |
-| VIEW POWERPATH / FULL POWER TRACE | Feed A path | Auditable recorded route |
-| Inspector Power A / B | A Path recorded; B No recorded path | Only A has a recorded path |
+| Where                             | Recorded evidence                         | Meaning                    |
+| --------------------------------- | ----------------------------------------- | -------------------------- |
+| CB-01 → PHYSICAL TERMINALS        | Power output · CONNECTED                  | Source port is occupied    |
+| Selected source terminal          | FEEDS → NETWORK BOARD / AP-01-01 · Feed A | Exact destination          |
+| NETWORK BOARD terminal            | CONNECTED + POWERED BY ← CB-01            | Reverse link recorded      |
+| VIEW POWERPATH / FULL POWER TRACE | Feed A path                               | Auditable recorded route   |
+| Inspector Power A / B             | A Path recorded; B No recorded path       | Only A has a recorded path |
 
 A VERIFIED path validates the represented link; it is **not proof of voltage, redundant feeds or accurate live sensor readings**.
 

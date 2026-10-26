@@ -19,7 +19,7 @@ Open an existing Room with its boundary saved. Your account needs topology write
 9. Select **SAVE LAYOUT**. Do not claim that any edit was saved before the operation finishes successfully.
 10. Reopen the Rack, return to Room and verify its saved location.
 
-~~~mermaid
+```mermaid
 flowchart TD
   R["Room"] --> E["EDIT ROOM"]
   E --> B["Draw Bay / Cluster"]
@@ -27,7 +27,7 @@ flowchart TD
   P --> K["Place Rack"]
   K --> S["SAVE LAYOUT"]
   S --> C["Reopen and confirm"]
-~~~
+```
 
 ## What saving does and does not do
 
@@ -44,12 +44,12 @@ From the Rack view inspect elevation and U allocations. Depending on role/state 
 
 ## If something disappears or refuses an edit
 
-| Problem | Check |
-| --- | --- |
-| No EDIT ROOM | Correct Room context and edit permission |
-| Draft disappeared | Was SAVE LAYOUT successful? |
-| No general CREATE RACK | Rack is placed within Blueprint |
-| CAS mount rejected | Available U, reservation and compatibility |
+| Problem                    | Check                                        |
+| -------------------------- | -------------------------------------------- |
+| No EDIT ROOM               | Correct Room context and edit permission     |
+| Draft disappeared          | Was SAVE LAYOUT successful?                  |
+| No general CREATE RACK     | Rack is placed within Blueprint              |
+| CAS mount rejected         | Available U, reservation and compatibility   |
 | Rack not visible elsewhere | Verify Network, Site, Room and selected Rack |
 
 **Pass:** identify Room, Bay and Rack on the drawing, open the Rack and return, explaining why placement is separate from power and telemetry.

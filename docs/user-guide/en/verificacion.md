@@ -4,17 +4,17 @@
 
 ## Five independent kinds of evidence
 
-| Evidence | Where to inspect | Proves | Does not prove |
-| --- | --- | --- | --- |
-| Inventory | Topology tree, Rack, Equipment | Object exists with identity | Physical mounting or wiring |
-| Placement | Blueprint, Rack Elevation, CAS | Registered location/allocation | That a circuit has voltage |
-| PowerPath | CONNECTED, VIEW POWERPATH, Full Power Trace | Ports are linked in the system | Energization, redundant live feeds |
-| MQTT 4/4 | PANEL → MQTT POINT COMMISSIONING | Four metrics mapped to a breaker | Fresh publisher data |
-| LIVE and history | Equipment → LIVE TELEMETRY / HISTORY | Recent and/or persisted accepted observations | Calibrated field sensor accuracy |
+| Evidence         | Where to inspect                            | Proves                                        | Does not prove                     |
+| ---------------- | ------------------------------------------- | --------------------------------------------- | ---------------------------------- |
+| Inventory        | Topology tree, Rack, Equipment              | Object exists with identity                   | Physical mounting or wiring        |
+| Placement        | Blueprint, Rack Elevation, CAS              | Registered location/allocation                | That a circuit has voltage         |
+| PowerPath        | CONNECTED, VIEW POWERPATH, Full Power Trace | Ports are linked in the system                | Energization, redundant live feeds |
+| MQTT 4/4         | PANEL → MQTT POINT COMMISSIONING            | Four metrics mapped to a breaker              | Fresh publisher data               |
+| LIVE and history | Equipment → LIVE TELEMETRY / HISTORY        | Recent and/or persisted accepted observations | Calibrated field sensor accuracy   |
 
 ## Breaker CB-01: example
 
-~~~mermaid
+```mermaid
 flowchart TD
   P["PANEL-01 · 24 slots"] --> B["Position 01 · CB-01"]
   B --> A["POWER OUTPUT"]
@@ -24,7 +24,7 @@ flowchart TD
   L -->|"Yes"| V["LIVE V / A / W / kWh"]
   L -->|"No"| X["STALE or NO DATA"]
   V --> H["History if store available"]
-~~~
+```
 
 This is a limited training scenario, not evidence for every breaker in a facility.
 
@@ -39,19 +39,19 @@ This is a limited training scenario, not evidence for every breaker in a facilit
 
 ## Frequent messages and what to do
 
-| Message | Meaning | Safe next step |
-| --- | --- | --- |
-| SOURCE_ALREADY_CONNECTED | Output terminal already linked | Open VIEW POWERPATH; do not add another |
-| TARGET_ALREADY_CONNECTED | Destination input already occupied | Inspect existing connection |
-| FEED_MISMATCH | Fixed A/B feed constraints conflict | Verify actual circuit; do not relabel randomly |
-| 4/4 but not LIVE | Mapping exists, fresh observation missing | Check publisher/broker with administrator |
-| UNMAPPED | No accepted mapping for Equipment | Verify approved Panel commissioning |
-| NO DATA | No usable observation available | Check source diagnostics |
-| STALE | Last sample too old | Do not represent as instantaneous live power |
-| HISTORY_STORE_UNAVAILABLE | Historical store could not be queried | Report to admin; preserve the database |
-| Last matching packet: — | Matching observation not displayed | Do not assume data were deleted |
-| Power B · No recorded path | No B-side connection recorded | Do not claim A+B redundancy |
-| Placement: not mounted | Rack context exists, mounting not recorded | Review CAS; do not invent a mount |
+| Message                    | Meaning                                    | Safe next step                                 |
+| -------------------------- | ------------------------------------------ | ---------------------------------------------- |
+| SOURCE_ALREADY_CONNECTED   | Output terminal already linked             | Open VIEW POWERPATH; do not add another        |
+| TARGET_ALREADY_CONNECTED   | Destination input already occupied         | Inspect existing connection                    |
+| FEED_MISMATCH              | Fixed A/B feed constraints conflict        | Verify actual circuit; do not relabel randomly |
+| 4/4 but not LIVE           | Mapping exists, fresh observation missing  | Check publisher/broker with administrator      |
+| UNMAPPED                   | No accepted mapping for Equipment          | Verify approved Panel commissioning            |
+| NO DATA                    | No usable observation available            | Check source diagnostics                       |
+| STALE                      | Last sample too old                        | Do not represent as instantaneous live power   |
+| HISTORY_STORE_UNAVAILABLE  | Historical store could not be queried      | Report to admin; preserve the database         |
+| Last matching packet: —    | Matching observation not displayed         | Do not assume data were deleted                |
+| Power B · No recorded path | No B-side connection recorded              | Do not claim A+B redundancy                    |
+| Placement: not mounted     | Rack context exists, mounting not recorded | Review CAS; do not invent a mount              |
 
 ## Write a useful incident report
 

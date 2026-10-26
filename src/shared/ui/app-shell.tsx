@@ -42,12 +42,12 @@ export function AppShell({ children }: { children: ReactNode }) {
   const contextLabel = pathname.startsWith('/help')
     ? t('helpCenter')
     : pathname.startsWith('/settings')
-    ? t('settings')
-    : pathname.startsWith('/warehouse')
-      ? t('warehouseContext')
-      : pathname === '/workspace'
-        ? ''
-        : t('networkContext');
+      ? t('settings')
+      : pathname.startsWith('/warehouse')
+        ? t('warehouseContext')
+        : pathname === '/workspace'
+          ? ''
+          : t('networkContext');
 
   async function logout() {
     setBusy(true);

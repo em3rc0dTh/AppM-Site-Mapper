@@ -31,6 +31,10 @@ Check with the responsible person which hardware is installed. Site Mapper can u
 
 ## Check the result
 
+![BDFB Physical View helps locate the Panel and input you are reviewing](/help/screenshots/bdfb-physical.png)
+
+![Inputs shows each DC input with its status and received readings](/help/screenshots/snmp-inputs.png)
+
 Open **INSPECTOR → Inputs** on the BDFB. When readings arrive, you'll see values and status. For earlier values, use **Charts**.
 
 **You're done when:** you know which input you're viewing, which controller supplies its data and whether readings are available.

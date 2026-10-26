@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import { helpCatalog } from '../catalog';
+import { helpCatalog, type HelpLocale } from '../catalog';
 
 const docsBase = 'https://github.com/em3rc0dTh/AppM-Site-Mapper/blob/main/docs/';
 
@@ -110,7 +110,7 @@ function cellContent(row: string) {
  * browser scripts, external parser or untrusted user content. Mermaid diagrams
  * are shown as accessible text until real, reviewed illustrations are available.
  */
-export function MarkdownHelpArticle({ text }: { text: string }) {
+export function MarkdownHelpArticle({ text, locale }: { text: string; locale: HelpLocale }) {
   const lines = text.replace(/\r\n/g, '\n').split('\n');
   const blocks: ReactNode[] = [];
   let i = 0;
@@ -138,7 +138,9 @@ export function MarkdownHelpArticle({ text }: { text: string }) {
         <figure className="help-code" key={key}>
           {language ? (
             <figcaption>
-              {language === 'mermaid' ? 'Diagrama conceptual · texto accesible' : language}
+              {language === 'mermaid'
+                ? locale === 'es' ? 'Diagrama conceptual · texto accesible' : 'Conceptual diagram · accessible text'
+                : language}
             </figcaption>
           ) : null}
           <pre>
@@ -268,7 +270,7 @@ export function MarkdownHelpArticle({ text }: { text: string }) {
     blocks.push(<p key={key}>{inlineText(para.join(' '))}</p>);
   }
   return (
-    <div className="help-prose" lang="es">
+    <div className="help-prose" lang={locale}>
       {blocks}
     </div>
   );

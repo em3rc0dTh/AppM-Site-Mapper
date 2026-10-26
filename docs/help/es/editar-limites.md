@@ -10,6 +10,8 @@ Cuando cambia la forma de un espacio, puedes ajustar su contorno moviendo los pu
 - Necesitas acceso de edición. Si no aparece la opción, consulta con quien administra Site Mapper.
 - Revisa los espacios que contiene. Si hay edificios o salas dentro, el nuevo límite no debe dejarlos fuera de su ubicación.
 
+![Editor real de límites con puntos, grilla y herramientas de dibujo](/help/screenshots/draw-site-boundary.png)
+
 ## Modificar el contorno
 
 1. Abre el espacio correcto desde **EXPLORE**.

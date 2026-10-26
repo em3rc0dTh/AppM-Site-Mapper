@@ -1,36 +1,49 @@
 # Conoce Site Mapper
 
-Site Mapper te permite encontrar espacios, equipos y conexiones desde un mismo lugar. También puedes consultar las lecturas de los equipos que envían información.
+Si es tu primera vez, no necesitas memorizar todos los nombres del sistema. Empieza aprendiendo **dónde estás**, **qué objeto tienes abierto** y **qué quieres hacer**.
 
-## ¿Por dónde empiezo?
+> Las capturas de esta ayuda usan una instalación de ejemplo. Los nombres, valores y estados que veas en tu sistema pueden ser diferentes.
+
+## La pantalla tiene tres zonas principales
+
+1. **Árbol de la izquierda:** muestra dónde estás dentro de la infraestructura. Puedes bajar desde Network hasta salas, racks y equipos.
+2. **Zona central:** es el área de trabajo. Aquí aparecen planos, composición de equipos, lecturas o conexiones.
+3. **Inspector de la derecha:** muestra detalles y acciones del objeto seleccionado.
+
+En la parte superior encontrarás **Search**, **?**, **EXPLORE**, **WAREHOUSE** y las opciones de tu cuenta.
+
+## Tu recorrido más habitual
 
 ![Recorrido por las principales funciones](/help/diagrams/es/overview.svg)
 
-1. **Entra al sistema** con tu usuario y contraseña.
-2. Abre **EXPLORE** para recorrer los sitios y las salas.
-3. Selecciona una **Room** para ver su plano y los racks que contiene.
-4. Abre un **Rack** y encuentra el equipo que necesitas.
-5. En la ficha del equipo puedes revisar sus componentes, conexiones y lecturas disponibles.
+1. Abre **EXPLORE**.
+2. Sigue la ubicación: **Network → Site → Structure → Level → Room**.
+3. Dentro de la Room, localiza el **Rack**.
+4. Abre el Rack y luego el equipo que necesitas.
+5. Desde su ficha puedes revisar su composición, sus conexiones y, cuando existan, sus lecturas.
 
-## Busca lo que necesitas
+No pasa nada si al principio no recuerdas la jerarquía. El árbol de la izquierda y las rutas de navegación de la parte superior te indican siempre dónde estás.
 
-En el **Centro de ayuda** escribe una palabra como “rack”, “energía” o “datos”. También puedes elegir una categoría. El botón **?** de la barra superior te mostrará guías relacionadas con la pantalla abierta.
+## Qué botón usar
 
-## ¿Qué puedes encontrar?
+| Opción | Úsala para |
+| --- | --- |
+| **EXPLORE** | Recorrer instalaciones, salas, racks y equipos |
+| **EDIT / EDIT ROOM** | Entrar en un modo de edición autorizado |
+| **SAVE LAYOUT** | Guardar la distribución que editaste dentro de una Room |
+| **WAREHOUSE** | Buscar modelos de equipos disponibles |
+| **FULL POWER TRACE / POWER PATH** | Seguir una conexión de alimentación registrada |
+| **Telemetry / LIVE** | Consultar lecturas recibidas del equipo |
+| **?** | Abrir ayuda relacionada con la pantalla actual |
 
-| Sección            | Para qué sirve                                |
-| ------------------ | --------------------------------------------- |
-| **EXPLORE**        | Recorrer sitios, edificios, salas y racks     |
-| **Blueprint**      | Ver el plano de una sala                      |
-| **WAREHOUSE**      | Consultar modelos de equipos disponibles      |
-| **POWER**          | Revisar cómo están conectados los equipos     |
-| **LIVE TELEMETRY** | Consultar las últimas lecturas recibidas      |
-| **ADMIN**          | Abrir las opciones disponibles para tu cuenta |
+Algunas opciones aparecen solo si tu cuenta puede realizar cambios.
 
-Algunas opciones, como crear una sala o editar una conexión, aparecen solo si tu cuenta tiene acceso para hacerlo.
+## Antes de modificar algo
 
-## ¿Cómo sé que encontré el equipo correcto?
+Comprueba tres datos: **nombre del objeto**, **ubicación** y **estado**. Si no estás seguro de estar en el Site, Room, Rack o Equipment correcto, vuelve atrás antes de guardar.
 
-Comprueba siempre su **nombre**, la **sala** donde está y el **rack** que lo contiene. Si tienes dudas, vuelve a la ubicación anterior antes de realizar cambios.
+## Qué aprender después
 
-**Siguiente paso:** [Aprende a recorrer tu infraestructura](conceptos.md) o empieza con [tu primer recorrido](practica-guiada.md).
+Si solo necesitas consultar información, continúa con [Entiende cómo se organiza la infraestructura](conceptos.md). Si vas a practicar, usa [Tu primer recorrido por Site Mapper](practica-guiada.md).
+
+**Resultado:** puedes orientarte en la pantalla y sabes dónde buscar ayuda antes de realizar una tarea.

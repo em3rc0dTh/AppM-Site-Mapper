@@ -21,9 +21,6 @@ export interface IndustrialCredentialRecord {
   readonly createdBy: string;
   readonly updatedAt: string;
   readonly updatedBy: string;
-  readonly lastRevealedAt?: string;
-  readonly lastRevealedBy?: string;
-  readonly recentEvents?: readonly IndustrialCredentialEvent[];
 }
 
 export interface IndustrialCredentialMetadata {
@@ -34,4 +31,5 @@ export interface IndustrialCredentialMetadata {
   readonly updatedBy?: string;
   readonly lastRevealedAt?: string;
   readonly lastRevealedBy?: string;
+  readonly recentEvents?: readonly IndustrialCredentialEvent[];
 }

@@ -4,6 +4,8 @@ Cuando un breaker ya aparece en su Panel, el siguiente paso puede ser **relacion
 
 ![De la señal al interruptor](/help/diagrams/es/mqtt.svg)
 
+![Panel con breakers instalados en posiciones concretas](/help/screenshots/panel-breakers.png)
+
 ## Antes de comenzar
 
 Necesitas tener un **Panel** con el breaker instalado en su posición real. La persona responsable debe haber confirmado cuál es la fuente de datos y qué punto corresponde a ese interruptor.
@@ -23,7 +25,7 @@ Necesitas tener un **Panel** con el breaker instalado en su posición real. La p
 
 Cuando la asociación ya fue confirmada, abre el breaker y revisa **Telemetry**. Esta es la pantalla que te permite comprobar si realmente están llegando datos.
 
-![Ejemplo real de un breaker con lecturas recientes](/help/screenshots/breaker-live.webp)
+![Ejemplo real de un breaker con lecturas recientes](/help/screenshots/breaker-live.png)
 
 ## ¿Qué significan 0/4 y 4/4?
 

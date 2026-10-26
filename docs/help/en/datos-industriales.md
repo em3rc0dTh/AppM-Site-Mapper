@@ -6,13 +6,19 @@ Site Mapper can display measurements from different systems. You don't need to k
 
 ## MQTT: breaker measurements
 
+![Real breaker receiving MQTT readings](/help/screenshots/breaker-live.png)
+
 A Panel may receive MQTT values for each breaker. Each signal must be linked to the correct circuit.
 
 ## SNMP: input and controller information
 
+![Real DC inputs receiving SNMP readings](/help/screenshots/snmp-inputs.png)
+
 An SNMP controller can provide readings for the main power inputs on a BDFB, such as current or voltage. These measurements are different from readings on individual breakers.
 
 ## History: previous readings
+
+![Real history views separated by source and metric](/help/screenshots/history-charts.png)
 
 When earlier observations are stored, you can review them in **Charts** or a history view. An old reading does not mean new data is currently arriving.
 

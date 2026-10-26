@@ -59,7 +59,7 @@ export default async function HelpArticlePage({ params }: { params: Promise<{ sl
           {helpCategories.map((group) => {
             const items = helpCatalog.filter((item) => item.category === group.id);
             return (
-              <details key={group.id} defaultOpen={entry.category === group.id}>
+              <details key={group.id} open={entry.category === group.id}>
                 <summary>{locale === 'es' ? group.es : group.en}</summary>
                 <div className="help-sidebar-chapters">
                   {items.map((item) => (

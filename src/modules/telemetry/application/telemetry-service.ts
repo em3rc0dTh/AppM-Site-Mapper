@@ -239,8 +239,16 @@ export class TelemetryService {
 
   private async withHistoryStatus(sample: TelemetrySample): Promise<TelemetrySample> {
     if (!this.historyWriter) return { ...sample, historyCapture: 'DISABLED' };
-    // Only a durable writer acknowledgement can claim persisted history.
-    if (!this.historyWriter.writeDurable) return { ...sample, historyCapture: 'FAILED' };
+    // Only a durable writer acknowledgement can claim persisted history. Legacy
+    // best-effort writers still receive the sample, but never report PERSISTED.
+    if (!this.historyWriter.writeDurable) {
+      try {
+        await this.historyWriter.write(sample);
+      } catch {
+        // The sample remains usable for LIVE presentation; history is explicitly failed.
+      }
+      return { ...sample, historyCapture: 'FAILED' };
+    }
     try {
       await this.historyWriter.writeDurable(sample);
       return { ...sample, historyCapture: 'PERSISTED' };

@@ -4,7 +4,7 @@ Some equipment sends measurements that Site Mapper can display as **LIVE**. This
 
 ## Open breaker readings
 
-![Real breaker view with LIVE readings](/help/screenshots/breaker-live.webp)
+![Real breaker view with LIVE readings](/help/screenshots/breaker-live.png)
 
 1. Open the Room and Rack containing the equipment.
 2. Navigate to the Panel and select the breaker.
@@ -33,6 +33,8 @@ Check **Source** and **Last packet** before interpreting a value.
 A Panel may show **3/24 positions MQTT LIVE**, **3 installed** and **21 available**. In that example the Panel has 24 positions and three are occupied/reporting; it does not mean 24 breakers are installed.
 
 ## View earlier readings
+
+![Panel history by metric and time range](/help/screenshots/panel-history.png)
 
 Open **History & diagnostics · charts**. Depending on the screen, periods can include **24H**, **7D**, **15D** or **1M**.
 

@@ -2,14 +2,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { getHelpEntry, helpCatalog, recommendHelp } from '@/modules/help/catalog';
+import { getHelpEntry, getHelpJourneyForArticle, helpCatalog, helpJourneys, helpWorkflowCoverage, recommendHelp } from '@/modules/help/catalog';
 import { getHelpSearchIndex, readHelpArticle } from '@/modules/help/server';
 
 const root = process.cwd();
 
 describe('Customer-facing Site Mapper Help Center', () => {
-  it('has 14 unique, safe, bilingual user guides', async () => {
-    expect(helpCatalog).toHaveLength(14);
+  it('has 23 unique, safe, bilingual workflow guides', async () => {
+    expect(helpCatalog).toHaveLength(23);
     expect(new Set(helpCatalog.map((entry) => entry.slug)).size).toBe(helpCatalog.length);
     expect(new Set(helpCatalog.map((entry) => entry.file)).size).toBe(helpCatalog.length);
 
@@ -55,7 +55,7 @@ describe('Customer-facing Site Mapper Help Center', () => {
         const markdown = await readHelpArticle(article, locale);
         for (const [, uri] of markdown.matchAll(/!\[[^\]]+\]\((\/help\/diagrams\/[^)]+)\)/g)) {
           expect(uri).toMatch(
-            /^\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings)\.svg$/,
+            /^\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings|mqtt|snmp|data-flow)\.svg$/,
           );
           const file = join(root, 'public', uri!.slice(1));
           expect(existsSync(file), file).toBe(true);
@@ -76,6 +76,26 @@ describe('Customer-facing Site Mapper Help Center', () => {
     expect(renderer).not.toContain('eval(');
   });
 
+  it('connects task journeys to published articles and approved workflow ids', () => {
+    const all = new Set(helpCatalog.map((item) => item.slug));
+    for (const journey of helpJourneys) {
+      expect(journey.slugs.length).toBeGreaterThanOrEqual(3);
+      expect(new Set(journey.slugs).size).toBe(journey.slugs.length);
+      for (const slug of journey.slugs) {
+        expect(all.has(slug), `Missing journey guide ${slug}`).toBe(true);
+        expect(getHelpJourneyForArticle(slug)?.journey).toBeDefined();
+      }
+    }
+    const master = readFileSync(join(root, 'docs/product/help-workflow-master-map-v2.md'), 'utf8');
+    for (const entry of helpCatalog) {
+      const ids = helpWorkflowCoverage[entry.slug];
+      expect(ids?.length, `No workflow references for ${entry.slug}`).toBeGreaterThan(0);
+      for (const id of ids ?? []) {
+        expect(master.includes(id), `Workflow ${id} not present in master map`).toBe(true);
+      }
+    }
+  });
+
   it('maps contextual routes only to published guides', () => {
     for (const route of [
       '/workspace',
@@ -89,6 +109,7 @@ describe('Customer-facing Site Mapper Help Center', () => {
       '/topology/test',
       '/network',
       '/warehouse',
+      '/telemetry/diagnostics',
     ]) {
       const slugs = recommendHelp(route);
       expect(slugs.length).toBeGreaterThan(0);

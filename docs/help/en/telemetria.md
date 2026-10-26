@@ -1,35 +1,45 @@
 # View live equipment readings
 
-Some units send readings to Site Mapper. You can see the latest available values or review readings from earlier.
+Some equipment sends measurements that Site Mapper can display as **LIVE**. This view helps you identify **which value was received, for which item, and when**.
 
-![How readings reach the screen](/help/diagrams/en/readings.svg)
+## Open breaker readings
 
-## View the readings
+![Real breaker view with LIVE readings](/help/screenshots/breaker-live.webp)
 
-1. Open the room and rack containing the equipment.
-2. Select the equipment or breaker you want to inspect.
-3. Find **LIVE TELEMETRY**.
-4. Look at the available values and the time of the latest reading.
+1. Open the Room and Rack containing the equipment.
+2. Navigate to the Panel and select the breaker.
+3. Open **Telemetry** or find **Own telemetry**.
+4. Check the **LIVE** status, the values, and the **Source / Last packet** line.
 
-## What do these values mean?
+## What each value means
 
-| Value            | Meaning            |
-| ---------------- | ------------------ |
-| **V / Voltage**  | Voltage            |
-| **A / Current**  | Current            |
-| **W / Power**    | Power              |
-| **kWh / Energy** | Accumulated energy |
+| Value | Meaning |
+| --- | --- |
+| **V / Voltage** | Voltage |
+| **I / Current** | Current |
+| **P / Power** | Power |
+| **E / Energy counter** | Accumulated energy |
 
-Not every unit will always display all four values. That depends on the information available for the unit.
+![How input readings differ from circuit readings](/help/diagrams/en/readings.svg)
+
+## What LIVE means
+
+**LIVE means Site Mapper received a sample recently enough according to its configured freshness rules.** It is not a certification of wiring, physical power or sensor accuracy.
+
+Check **Source** and **Last packet** before interpreting a value.
+
+## Installed does not mean the same as reporting
+
+A Panel may show **3/24 positions MQTT LIVE**, **3 installed** and **21 available**. In that example the Panel has 24 positions and three are occupied/reporting; it does not mean 24 breakers are installed.
 
 ## View earlier readings
 
-In the history section, choose **24H** for the last day or **7D** for the last week, when data is available.
+Open **History & diagnostics · charts**. Depending on the screen, periods can include **24H**, **7D**, **15D** or **1M**.
 
-## If you see STALE or NO DATA
+## If you see STALE, NO DATA or another status
 
-There is no recent reading to show. That does not necessarily mean the equipment is switched off. Read [When readings are missing](verificacion.md).
+Do not assume the unit is switched off. The issue may be the source, signal mapping, freshness of the latest sample or stored history. Use [When equipment readings are missing](verificacion.md).
 
-**You're done when:** you can find a value, its unit, its timestamp and its history.
+**Expected result:** you can identify the equipment, unit, latest sample time and whether the reading is recent.
 
 [View circuits and power inputs](recorrido-completo-login-mqtt-snmp-modbus.md).

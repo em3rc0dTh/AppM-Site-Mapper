@@ -430,8 +430,77 @@ export function CommissioningConsole({
                   </select>
                 </label>
               </div>
+              <div style={gridStyle}>
+                <label style={fieldStyle}>Alias / NE Name / TID
+                  <input
+                    style={inputStyle}
+                    value={alias}
+                    onChange={(event) => setAlias(event.target.value)}
+                    placeholder="Nombre operativo para búsqueda"
+                  />
+                </label>
+                <label style={fieldStyle}>Part Number (P/N)
+                  <input
+                    style={inputStyle}
+                    value={partNumber}
+                    onChange={(event) => setPartNumber(event.target.value)}
+                    placeholder="Ej. AWT100-CEHW"
+                  />
+                </label>
+                <label style={fieldStyle}>Estado del registro
+                  <select
+                    style={inputStyle}
+                    value={recordStatus}
+                    onChange={(event) =>
+                      setRecordStatus(event.target.value as 'DECLARED' | 'FIELD_VERIFIED')
+                    }
+                  >
+                    <option value="DECLARED">Declarado / documental</option>
+                    <option value="FIELD_VERIFIED">Verificado en campo</option>
+                  </select>
+                </label>
+                <label style={fieldStyle}>Serial canónico
+                  <input
+                    style={inputStyle}
+                    readOnly
+                    value={
+                      allowedEquipment.find((item) => item.id === equipmentId)?.serialNumber ?? ''
+                    }
+                    placeholder="Se administra en Equipment"
+                  />
+                </label>
+              </div>
               {role === 'GATEWAY' ? (
                 <div style={gridStyle}>
+                  <label style={fieldStyle}>Gateway Number
+                    <input style={inputStyle} value={gatewayNumber}
+                      onChange={(event) => setGatewayNumber(event.target.value)} />
+                  </label>
+                  <label style={fieldStyle}>MAC Ethernet
+                    <input style={inputStyle} value={macAddress}
+                      onChange={(event) => setMacAddress(event.target.value)}
+                      placeholder="00:00:00:00:00:00" />
+                  </label>
+                  <label style={fieldStyle}>Login / usuario
+                    <input style={inputStyle} value={loginUsername}
+                      onChange={(event) => setLoginUsername(event.target.value)}
+                      autoComplete="off" />
+                  </label>
+                  <label style={fieldStyle}>Referencia de credencial
+                    <input style={inputStyle} value={credentialRef}
+                      onChange={(event) => setCredentialRef(event.target.value)}
+                      placeholder="Referencia a vault/secret; nunca la contraseña" />
+                  </label>
+                  <label style={fieldStyle}>Modo downlink
+                    <input style={inputStyle} value={downlinkMode}
+                      onChange={(event) => setDownlinkMode(event.target.value)}
+                      placeholder="Ej. Modbus-RTU Master" />
+                  </label>
+                  <label style={fieldStyle}>Esclavos declarados
+                    <input type="number" min="0" max="247" style={inputStyle}
+                      value={declaredSlaveCount}
+                      onChange={(event) => setDeclaredSlaveCount(event.target.value)} />
+                  </label>
                   <label style={fieldStyle}>Identidad MQTT del publicador (cuando esté confirmada)
                     <input style={inputStyle} value={sourceIdentity} onChange={(event) => setSourceIdentity(event.target.value)} placeholder="No inventar: dejar vacío si aún no está confirmada" />
                   </label>
@@ -469,6 +538,41 @@ export function CommissioningConsole({
                 </div>
               ) : (
                 <div style={gridStyle}>
+                  <label style={fieldStyle}>Meter Number
+                    <input style={inputStyle} value={meterNumber}
+                      onChange={(event) => setMeterNumber(event.target.value)}
+                      placeholder="Ej. A1" />
+                  </label>
+                  <label style={fieldStyle}>Canales activos
+                    <input type="number" min="1" max="256" style={inputStyle}
+                      value={channelCount}
+                      onChange={(event) => setChannelCount(event.target.value)} />
+                  </label>
+                  <label style={fieldStyle}>Descripción de canales
+                    <input style={inputStyle} value={channelDescription}
+                      onChange={(event) => setChannelDescription(event.target.value)}
+                      placeholder="Ej. 24 Circuitos DC (12 Bus A + 12 Bus B)" />
+                  </label>
+                  <label style={fieldStyle}>Sensor Hall
+                    <input style={inputStyle} value={hallSensorDescription}
+                      onChange={(event) => setHallSensorDescription(event.target.value)}
+                      placeholder="Modelo / rango / salida" />
+                  </label>
+                  <label style={fieldStyle}>Terminación 120 Ω
+                    <select
+                      style={inputStyle}
+                      value={termination120Ohm ? 'YES' : 'NO'}
+                      onChange={(event) => setTermination120Ohm(event.target.value === 'YES')}
+                    >
+                      <option value="NO">No</option>
+                      <option value="YES">Sí</option>
+                    </select>
+                  </label>
+                  <label style={fieldStyle}>Estado RS485 documentado
+                    <input style={inputStyle} value={documentedRs485Status}
+                      onChange={(event) => setDocumentedRs485Status(event.target.value)}
+                      placeholder="Ej. ONLINE / OK (documental)" />
+                  </label>
                   <label style={fieldStyle}>Gateway en este BDFB
                     <select required style={inputStyle} value={gatewayEquipmentId} onChange={(event) => {
                       const id = event.target.value;
@@ -513,8 +617,26 @@ export function CommissioningConsole({
 
               <h3>3 · Procedencia del dato</h3>
               <div style={gridStyle}>
-                <label style={fieldStyle}>Proyecto
+                <label style={fieldStyle}>Project ID
                   <input required style={inputStyle} value={projectId} onChange={(event) => setProjectId(event.target.value)} />
+                </label>
+                <label style={fieldStyle}>Nombre del proyecto
+                  <input style={inputStyle} value={projectName} onChange={(event) => setProjectName(event.target.value)} />
+                </label>
+                <label style={fieldStyle}>Site / ubicación
+                  <input style={inputStyle} value={site} onChange={(event) => setSite(event.target.value)} />
+                </label>
+                <label style={fieldStyle}>Cliente / operador
+                  <input style={inputStyle} value={client} onChange={(event) => setClient(event.target.value)} />
+                </label>
+                <label style={fieldStyle}>Responsable
+                  <input style={inputStyle} value={responsible} onChange={(event) => setResponsible(event.target.value)} />
+                </label>
+                <label style={fieldStyle}>Fecha del documento
+                  <input style={inputStyle} value={documentDate} onChange={(event) => setDocumentDate(event.target.value)} placeholder="YYYY-MM-DD" />
+                </label>
+                <label style={fieldStyle}>Estado del documento
+                  <input style={inputStyle} value={documentStatus} onChange={(event) => setDocumentStatus(event.target.value)} />
                 </label>
                 <label style={fieldStyle}>Documento de origen
                   <input required style={inputStyle} value={documentName} onChange={(event) => setDocumentName(event.target.value)} />
@@ -526,7 +648,11 @@ export function CommissioningConsole({
                   <input style={inputStyle} value={reference} onChange={(event) => setReference(event.target.value)} />
                 </label>
               </div>
-              <p style={{ fontSize: 12 }}>El usuario y la fecha se obtienen de la sesión del servidor. Nunca ingreses contraseñas aquí.</p>
+              <p style={{ fontSize: 12 }}>
+                El usuario y la fecha de edición se obtienen de la sesión del servidor. El login
+                del equipo puede registrarse; la contraseña no. Usa únicamente una referencia a
+                un vault/secret manager en “Referencia de credencial”.
+              </p>
               <div>
                 <button
                   type="submit"

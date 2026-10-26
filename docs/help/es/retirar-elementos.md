@@ -4,7 +4,7 @@ En Site Mapper, **retirar del plano** y **archivar un equipo** son acciones dist
 
 ## 1. Quitar algo del plano de una sala
 
-![Plano y rack](/help/diagrams/es/rack.svg)
+![EDIT ROOM muestra Remove selected dentro de un borrador no guardado](/help/screenshots/edit-room.png)
 
 1. Abre la **Room** y entra a **Blueprint**.
 2. Selecciona **EDIT ROOM**.
@@ -15,6 +15,8 @@ En Site Mapper, **retirar del plano** y **archivar un equipo** son acciones dist
 **Si no te deja quitarlo:** una zona puede tener posiciones, una posición puede contener un rack y un rack puede tener equipos o espacios ocupados. Revisa primero qué contiene. No retires otros elementos solo para conseguir que el botón funcione.
 
 **Recuerda:** hasta guardar el layout, el cambio puede seguir siendo un borrador.
+
+![EDIT CAS muestra reservas y asignaciones que pueden impedir retirar un rack](/help/screenshots/rack-cas.png)
 
 ## 2. Archivar un Equipment
 

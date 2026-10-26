@@ -75,13 +75,13 @@ describe('Customer-facing Site Mapper Help Center', () => {
         }
         for (const [, uri] of markdown.matchAll(/!\[[^\]]+\]\((\/help\/screenshots\/[^)]+)\)/g)) {
           expect(uri).toMatch(
-            /^\/help\/screenshots\/(?:create-site|draw-site-boundary|create-room|edit-room|rack-focus|breaker-live|power-path)\.webp$/,
+            /^\/help\/screenshots\/(?:workspace-overview|create-site|draw-site-boundary|create-structure|create-level|create-room|room-blueprint|place-rack|edit-room|rack-focus|rack-elevation|rack-cas|bdfb-physical|snmp-inputs|history-charts|panel-empty|panel-breakers|panel-history|breaker-live|power-path)\.png$/,
           );
           const file = join(root, 'public', uri!.slice(1));
           expect(existsSync(file), file).toBe(true);
-          const webp = readFileSync(file);
-          expect(webp.subarray(0, 4).toString('ascii')).toBe('RIFF');
-          expect(webp.subarray(8, 12).toString('ascii')).toBe('WEBP');
+          const png = readFileSync(file);
+          expect([...png.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
+          expect(png.length, `Screenshot too small: ${uri}`).toBeGreaterThan(45_000);
         }
       }
     }
@@ -92,6 +92,7 @@ describe('Customer-facing Site Mapper Help Center', () => {
     expect(renderer).toContain('help-illustration');
     expect(renderer).toContain('screenshotDimensions');
     expect(renderer).toContain('<Image');
+    expect(renderer).toContain('help-illustration-zoom');
     expect(renderer).not.toContain('dangerouslySetInnerHTML');
     expect(renderer).not.toContain('eval(');
   });
@@ -106,7 +107,7 @@ describe('Customer-facing Site Mapper Help Center', () => {
       expect(all.has(slug), `Missing beginner guide ${slug}`).toBe(true);
     for (const [slug, uri] of Object.entries(helpScreenshotBySlug)) {
       expect(all.has(slug), `Screenshot mapped to unknown guide ${slug}`).toBe(true);
-      expect(uri).toMatch(/^\/help\/screenshots\/[a-z0-9-]+\.webp$/);
+      expect(uri).toMatch(/^\/help\/screenshots\/[a-z0-9-]+\.png$/);
       expect(existsSync(join(root, 'public', uri.slice(1))), uri).toBe(true);
     }
   });

@@ -71,7 +71,6 @@ export default async function HelpArticlePage({ params }: { params: Promise<{ sl
           </span>
           <h1>{helpTitle(entry, locale)}</h1>
           <p>{helpSummary(entry, locale)}</p>
-          <small>{t('sourceNote')}</small>
         </header>
         <MarkdownHelpArticle text={content} locale={locale} />
         <nav className="help-next" aria-label={t('adjacent')}>

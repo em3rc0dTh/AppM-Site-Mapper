@@ -151,6 +151,15 @@ export function CommissioningConsole({
   );
   const breakers = useMemo(() => overview?.equipment.filter((item) => item.equipmentType === 'CIRCUIT_BREAKER') ?? [], [overview]);
   const existingProfile = overview?.profiles.find((profile) => profile.equipmentId === equipmentId);
+  const mappingsByMeter = useMemo(() => {
+    const map = new Map<string, Map<number, Mapping>>();
+    for (const mapping of overview?.mappings ?? []) {
+      const channels = map.get(mapping.meterEquipmentId) ?? new Map<number, Mapping>();
+      channels.set(mapping.channel, mapping);
+      map.set(mapping.meterEquipmentId, channels);
+    }
+    return map;
+  }, [overview]);
   const equipmentName = (id: string) => overview?.equipment.find((item) => item.id === id)?.name ?? id;
 
   function selectProfile(id: string) {
@@ -431,6 +440,72 @@ export function CommissioningConsole({
           <section style={{ border: '1px solid #c8ced6', borderRadius: 12, padding: 18, display: 'grid', gap: 14 }}>
             <h2>2 · Mapeo físico del canal</h2>
             <p>El canal y el punto MQTT no se calculan según la posición del breaker. Debes confirmar el vínculo con evidencia de campo.</p>
+            {meters.length ? (
+              <div style={{ display: 'grid', gap: 8 }}>
+                {meters.map((meter) => {
+                  const gateway = gateways.find(
+                    (item) => item.equipmentId === meter.gatewayEquipmentId,
+                  );
+                  const channelMap = mappingsByMeter.get(meter.equipmentId) ?? new Map();
+                  return (
+                    <details key={meter.equipmentId}>
+                      <summary>
+                        {equipmentName(meter.equipmentId)} · Slave {meter.rs485.slaveId} ·{' '}
+                        {channelMap.size}/24 canales confirmados
+                        {!gateway?.sourceIdentity ? ' · MQTT identity pendiente' : ''}
+                      </summary>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                          gap: 6,
+                          paddingTop: 8,
+                        }}
+                      >
+                        {Array.from({ length: 24 }, (_, index) => index + 1).map((number) => {
+                          const mapping = channelMap.get(number);
+                          return (
+                            <button
+                              type="button"
+                              key={number}
+                              disabled={!gateway?.sourceIdentity}
+                              onClick={() => {
+                                setMeterId(meter.equipmentId);
+                                setChannel(String(number));
+                                if (mapping) {
+                                  setBreakerId(mapping.breakerId);
+                                  setRawPointId(mapping.rawPointId);
+                                  setSelectedMetrics([...mapping.metrics]);
+                                } else {
+                                  setBreakerId('');
+                                  setRawPointId('');
+                                  setSelectedMetrics([...metrics]);
+                                }
+                                setPhysicallyVerified(false);
+                              }}
+                              style={{
+                                textAlign: 'left',
+                                padding: 8,
+                                border: '1px solid #c8ced6',
+                                borderRadius: 6,
+                              }}
+                            >
+                              <strong>CH {String(number).padStart(2, '0')}</strong>
+                              <br />
+                              <small>
+                                {mapping
+                                  ? equipmentName(mapping.breakerId) + ' · ' + mapping.rawPointId
+                                  : 'Pendiente de verificación'}
+                              </small>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </details>
+                  );
+                })}
+              </div>
+            ) : null}
             <form onSubmit={submitMapping} style={{ display: 'grid', gap: 12 }}>
               <div style={gridStyle}>
                 <label style={fieldStyle}>Medidor comisionado

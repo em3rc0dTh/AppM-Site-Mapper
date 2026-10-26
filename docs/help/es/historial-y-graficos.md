@@ -2,9 +2,11 @@
 
 El historial responde una pregunta sencilla: **¿cómo cambió esta medición durante las últimas horas o días?** Un valor histórico no siempre describe lo que ocurre ahora mismo.
 
-![Mediciones y circuitos](/help/diagrams/es/readings.svg)
+![Historial real de entradas SNMP y lecturas MQTT del BDFB](/help/screenshots/history-charts.png)
 
 ## Ver datos anteriores de un equipo
+
+![Historial de un Panel con curvas separadas por magnitud](/help/screenshots/panel-history.png)
 
 1. En **EXPLORE**, abre la sala, el rack y el equipo correcto.
 2. Busca **LIVE TELEMETRY** o su sección de historial.

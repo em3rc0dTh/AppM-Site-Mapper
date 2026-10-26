@@ -94,13 +94,26 @@ function cellContent(row: string) {
  * from our own localized allowlist; neither HTML nor executable Mermaid is rendered.
  */
 const screenshotDimensions: Readonly<Record<string, readonly [number, number]>> = {
-  '/help/screenshots/create-site.webp': [780, 510],
-  '/help/screenshots/draw-site-boundary.webp': [780, 497],
-  '/help/screenshots/create-room.webp': [780, 527],
-  '/help/screenshots/edit-room.webp': [780, 470],
-  '/help/screenshots/rack-focus.webp': [760, 487],
-  '/help/screenshots/breaker-live.webp': [600, 342],
-  '/help/screenshots/power-path.webp': [600, 315],
+  '/help/screenshots/workspace-overview.png': [1897, 937],
+  '/help/screenshots/create-site.png': [1902, 931],
+  '/help/screenshots/draw-site-boundary.png': [1907, 942],
+  '/help/screenshots/create-structure.png': [1903, 931],
+  '/help/screenshots/create-level.png': [1907, 935],
+  '/help/screenshots/create-room.png': [1907, 937],
+  '/help/screenshots/room-blueprint.png': [1913, 938],
+  '/help/screenshots/place-rack.png': [1900, 927],
+  '/help/screenshots/edit-room.png': [1911, 931],
+  '/help/screenshots/rack-focus.png': [1908, 932],
+  '/help/screenshots/rack-elevation.png': [1907, 932],
+  '/help/screenshots/rack-cas.png': [1907, 935],
+  '/help/screenshots/bdfb-physical.png': [1902, 946],
+  '/help/screenshots/snmp-inputs.png': [1888, 927],
+  '/help/screenshots/history-charts.png': [1888, 935],
+  '/help/screenshots/panel-empty.png': [1900, 933],
+  '/help/screenshots/panel-breakers.png': [1891, 932],
+  '/help/screenshots/panel-history.png': [1883, 928],
+  '/help/screenshots/breaker-live.png': [1893, 930],
+  '/help/screenshots/power-path.png': [1907, 937],
 };
 
 function illustrationSize(src: string): readonly [number, number] {
@@ -122,7 +135,7 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
     const key = 'block-' + serial++;
 
     const illustration =
-      /^!\[([^\]]{1,140})\]\((\/help\/(?:diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings|mqtt|snmp|data-flow)\.svg|screenshots\/(?:create-site|draw-site-boundary|create-room|edit-room|rack-focus|breaker-live|power-path)\.webp))\)$/.exec(
+      /^!\[([^\]]{1,140})\]\((\/help\/(?:diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings|mqtt|snmp|data-flow)\.svg|screenshots\/(?:workspace-overview|create-site|draw-site-boundary|create-structure|create-level|create-room|room-blueprint|place-rack|edit-room|rack-focus|rack-elevation|rack-cas|bdfb-physical|snmp-inputs|history-charts|panel-empty|panel-breakers|panel-history|breaker-live|power-path)\.png))\)$/.exec(
         current,
       );
     if (illustration) {

@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 
 import type { CommunicationProfileRepository } from '@/modules/industrial/infrastructure/communication-profile-repository';
 import type {
-  CommunicationProfile, CommunicationProfileInput, ConfirmChannelInput,
-  RetireChannelInput,
+  CommunicationProfile, CommunicationProfileInput, CommissioningReadiness,
+  CommissioningWarning, ConfirmChannelInput, RetireChannelInput,
 } from '@/modules/industrial/domain/commissioning';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
@@ -49,6 +49,185 @@ function profileSnapshot(profile: CommunicationProfile): CommunicationProfileInp
   return snapshot as unknown as CommunicationProfileInput;
 }
 
+
+function ipv4Integer(value: string): number | null {
+  const parts = value.split('.').map(Number);
+  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255))
+    return null;
+  return (((parts[0]! << 24) >>> 0) + (parts[1]! << 16) + (parts[2]! << 8) + parts[3]!) >>> 0;
+}
+
+function defaultGatewayInSubnet(profile: CommunicationProfile): boolean {
+  if (profile.role !== 'GATEWAY' || !profile.network) return true;
+  const ip = ipv4Integer(profile.network.ip);
+  const mask = ipv4Integer(profile.network.mask);
+  const gateway = ipv4Integer(profile.network.gateway);
+  if (ip === null || mask === null || gateway === null) return true;
+  return (ip & mask) === (gateway & mask);
+}
+
+function documentaryWarnings(
+  currentProfiles: readonly CommunicationProfile[],
+  allProfiles: readonly CommunicationProfile[],
+): CommissioningWarning[] {
+  const currentIds = new Set(currentProfiles.map((profile) => profile.equipmentId));
+  const gateways = allProfiles.filter(
+    (profile): profile is CommunicationProfile & { role: 'GATEWAY' } => profile.role === 'GATEWAY',
+  );
+  const warnings: CommissioningWarning[] = [];
+
+  const grouped = <T extends string>(
+    field: 'network.ip' | 'macAddress',
+    valueOf: (profile: (typeof gateways)[number]) => T | undefined,
+    code: CommissioningWarning['code'],
+  ) => {
+    const groups = new Map<string, string[]>();
+    for (const profile of gateways) {
+      const value = valueOf(profile)?.trim();
+      if (!value) continue;
+      const key = field === 'macAddress' ? value.toUpperCase() : value;
+      const ids = groups.get(key) ?? [];
+      ids.push(profile.equipmentId);
+      groups.set(key, ids);
+    }
+    for (const [value, equipmentIds] of groups) {
+      if (equipmentIds.length < 2 || !equipmentIds.some((id) => currentIds.has(id))) continue;
+      warnings.push({
+        code,
+        severity: 'FIELD_CONFIRMATION_REQUIRED',
+        field,
+        equipmentIds,
+        value,
+      });
+    }
+  };
+
+  grouped('network.ip', (profile) => profile.network?.ip, 'DUPLICATE_DECLARED_IP');
+  grouped('macAddress', (profile) => profile.macAddress, 'DUPLICATE_DECLARED_MAC');
+
+  for (const profile of currentProfiles) {
+    if (profile.role !== 'GATEWAY' || defaultGatewayInSubnet(profile)) continue;
+    warnings.push({
+      code: 'DEFAULT_GATEWAY_OUTSIDE_SUBNET',
+      severity: 'FIELD_CONFIRMATION_REQUIRED',
+      field: 'network.gateway',
+      equipmentIds: [profile.equipmentId],
+      value: profile.network?.gateway,
+    });
+  }
+
+  return warnings;
+}
+
+function readinessFor(
+  profiles: readonly CommunicationProfile[],
+  mappings: readonly {
+    meterEquipmentId: string;
+    channel: number;
+  }[],
+): CommissioningReadiness[] {
+  const gateways = new Map(
+    profiles.filter((profile) => profile.role === 'GATEWAY').map((profile) => [profile.equipmentId, profile]),
+  );
+  const meters = profiles.filter((profile) => profile.role === 'METER');
+  const confirmedByMeter = new Map<string, Set<number>>();
+  for (const mapping of mappings) {
+    const set = confirmedByMeter.get(mapping.meterEquipmentId) ?? new Set<number>();
+    set.add(mapping.channel);
+    confirmedByMeter.set(mapping.meterEquipmentId, set);
+  }
+
+  return profiles.map((profile): CommissioningReadiness => {
+    const gateway =
+      profile.role === 'GATEWAY'
+        ? profile
+        : profile.gatewayEquipmentId
+          ? gateways.get(profile.gatewayEquipmentId)
+          : undefined;
+    const networkDeclared = Boolean(gateway?.network?.services.length);
+    const mqttIdentityConfirmed = Boolean(
+      gateway?.network?.services.some((service) => service.protocol === 'MQTT') &&
+      gateway.sourceIdentity,
+    );
+
+    if (profile.role === 'METER') {
+      const channelCount = profile.channelCount ?? 24;
+      const confirmedChannels = confirmedByMeter.get(profile.equipmentId)?.size ?? 0;
+      const meterReady = Boolean(gateway);
+      const fieldVerified =
+        profile.recordStatus === 'FIELD_VERIFIED' &&
+        gateway?.recordStatus === 'FIELD_VERIFIED' &&
+        confirmedChannels === channelCount;
+      const stage: CommissioningReadiness['stage'] =
+        fieldVerified
+          ? 'FIELD_VERIFIED'
+          : !networkDeclared
+            ? 'NETWORK_PENDING'
+            : !mqttIdentityConfirmed
+              ? 'MQTT_IDENTITY_PENDING'
+              : !meterReady
+                ? 'METER_PENDING'
+                : confirmedChannels === 0
+                  ? 'METER_READY'
+                  : confirmedChannels < channelCount
+                    ? 'CHANNELS_PARTIAL'
+                    : 'CHANNELS_CONFIRMED';
+      return {
+        equipmentId: profile.equipmentId,
+        role: profile.role,
+        stage,
+        networkDeclared,
+        mqttIdentityConfirmed,
+        meterReady,
+        confirmedChannels,
+        channelCount,
+        fieldVerified,
+      };
+    }
+
+    const childMeters = meters.filter((meter) => meter.gatewayEquipmentId === profile.equipmentId);
+    const channelCount = childMeters.reduce((sum, meter) => sum + (meter.channelCount ?? 24), 0);
+    const confirmedChannels = childMeters.reduce(
+      (sum, meter) => sum + (confirmedByMeter.get(meter.equipmentId)?.size ?? 0),
+      0,
+    );
+    const meterReady = childMeters.length > 0;
+    const allMetersVerified =
+      childMeters.length > 0 &&
+      childMeters.every((meter) => meter.recordStatus === 'FIELD_VERIFIED');
+    const fieldVerified =
+      profile.recordStatus === 'FIELD_VERIFIED' &&
+      allMetersVerified &&
+      channelCount > 0 &&
+      confirmedChannels === channelCount;
+    const stage: CommissioningReadiness['stage'] =
+      fieldVerified
+        ? 'FIELD_VERIFIED'
+        : !networkDeclared
+          ? 'NETWORK_PENDING'
+          : !mqttIdentityConfirmed
+            ? 'MQTT_IDENTITY_PENDING'
+            : !meterReady
+              ? 'METER_PENDING'
+              : confirmedChannels === 0
+                ? 'METER_READY'
+                : confirmedChannels < channelCount
+                  ? 'CHANNELS_PARTIAL'
+                  : 'CHANNELS_CONFIRMED';
+    return {
+      equipmentId: profile.equipmentId,
+      role: profile.role,
+      stage,
+      networkDeclared,
+      mqttIdentityConfirmed,
+      meterReady,
+      confirmedChannels,
+      ...(channelCount ? { channelCount } : {}),
+      fieldVerified,
+    };
+  });
+}
+
 export class IndustrialCommissioningService {
   constructor(
     private readonly topology: TopologyRepository,
@@ -76,6 +255,8 @@ export class IndustrialCommissioningService {
     device: DeviceNode;
     equipment: readonly EquipmentNode[];
     profiles: readonly CommunicationProfile[];
+    warnings: readonly CommissioningWarning[];
+    readiness: readonly CommissioningReadiness[];
     mappings: readonly {
       breakerId: string;
       sourceIdentity: string;
@@ -125,10 +306,16 @@ export class IndustrialCommissioningService {
       }
       group.metrics.push(binding.metric);
     }
+    const profiles = await this.profiles.listByBdfb(deviceId);
+    const mappings = [...grouped.values()];
+    const allProfiles = await this.profiles.listAll();
     return good({
-      device: inventory.device, equipment,
-      profiles: await this.profiles.listByBdfb(deviceId),
-      mappings: [...grouped.values()],
+      device: inventory.device,
+      equipment,
+      profiles,
+      warnings: documentaryWarnings(profiles, allProfiles),
+      readiness: readinessFor(profiles, mappings),
+      mappings,
     });
   }
 

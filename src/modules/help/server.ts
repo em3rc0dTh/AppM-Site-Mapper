@@ -30,10 +30,8 @@ export async function getHelpSearchIndex(locale: HelpLocale): Promise<IndexedHel
         ...entry,
         searchText: fold(
           [
-            entry.title,
-            entry.enTitle,
-            entry.summary,
-            entry.enSummary,
+            locale === 'es' ? entry.title : entry.enTitle,
+            locale === 'es' ? entry.summary : entry.enSummary,
             entry.keywords.join(' '),
             plain,
           ].join(' '),

@@ -171,8 +171,8 @@ export class IndustrialCommissioningService {
     // gateway/slave or changing the publisher identity. Network IP changes do not
     // erase existing bindings and are recorded as a revision.
     if (existing?.role === 'GATEWAY') {
-      if (existing.sourceIdentity !== input.sourceIdentity) {
-        const mapped = await this.bindings.listForSource('MQTT', existing.sourceIdentity!);
+      if (existing.sourceIdentity && existing.sourceIdentity !== input.sourceIdentity) {
+        const mapped = await this.bindings.listForSource('MQTT', existing.sourceIdentity);
         if (mapped.some(previouslyConfirmed)) return bad('PROFILE_IN_USE');
       }
       const busChanged =

@@ -33,7 +33,10 @@ class ConcurrentChangeRepository extends MemoryTopologyRepository {
       this.injected = true;
       const current = await this.getById('rack-1');
       if (current?.kind === 'CONTAINER_RACK') {
-        await super.replace({ ...current, updatedAt: '2026-10-12T09:00:01.000Z' });
+        await super.commitLayout(
+          [current],
+          [{ ...current, updatedAt: '2026-10-12T09:00:01.000Z' }],
+        );
       }
     }
     return super.commitLayout(before, after);

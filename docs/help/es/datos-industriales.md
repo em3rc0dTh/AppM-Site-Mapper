@@ -6,13 +6,19 @@ Site Mapper puede mostrar datos procedentes de diferentes sistemas de medición.
 
 ## MQTT: lecturas de circuitos
 
+![Ejemplo real de un breaker recibiendo lecturas MQTT](/help/screenshots/breaker-live.png)
+
 En los paneles, una fuente MQTT puede enviar valores correspondientes a cada breaker. Es importante que cada señal esté vinculada al interruptor correcto.
 
 ## SNMP: información de entradas y controladores
 
+![Ejemplo real de entradas DC recibidas mediante SNMP](/help/screenshots/snmp-inputs.png)
+
 Un controlador SNMP puede proporcionar valores de las entradas principales de un BDFB, como la corriente o el voltaje. Estas lecturas no son necesariamente iguales a las de los circuitos individuales.
 
 ## Historial: valores de antes
+
+![Ejemplo real de históricos separados por fuente y magnitud](/help/screenshots/history-charts.png)
 
 Cuando existen lecturas guardadas, puedes consultarlas en **Charts** o en el historial del equipo. Una curva anterior no significa que el equipo esté enviando información en este momento.
 

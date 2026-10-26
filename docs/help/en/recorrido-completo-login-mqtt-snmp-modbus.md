@@ -4,6 +4,8 @@ Some power distribution units let you inspect **individual circuits** and the **
 
 ![Circuit readings and power input readings](/help/diagrams/en/readings.svg)
 
+![BDFB Physical View shows Chassis, Frames, Panels and circuit positions](/help/screenshots/bdfb-physical.png)
+
 ## View individual circuits
 
 1. Open the **Device** you're interested in.
@@ -12,12 +14,16 @@ Some power distribution units let you inspect **individual circuits** and the **
 4. Browse the positions and choose the breaker you want.
 5. Review its available voltage, current, power or energy readings.
 
+![Individual breaker with its circuit readings](/help/screenshots/breaker-live.png)
+
 ## View the main inputs
 
 1. Return to the **Device**.
 2. Open **INSPECTOR → Inputs**, if available.
 3. Look at inputs labelled **A**, **B** or other names.
 4. To view previous readings, open **Charts** and choose a period such as **24H**.
+
+![Main A/B inputs shown independently](/help/screenshots/snmp-inputs.png)
 
 ## Why might the values differ?
 

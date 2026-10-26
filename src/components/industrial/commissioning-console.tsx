@@ -16,7 +16,7 @@ interface Profile {
   role: 'GATEWAY' | 'METER';
   gatewayEquipmentId?: string;
   sourceIdentity?: string;
-  network?: { ip: string; mask: string; gateway: string; port: number; protocol: 'MQTT' | 'MODBUS_TCP' };
+  network?: { ip: string; mask: string; gateway: string; services: { protocol: 'MQTT' | 'MODBUS_TCP'; port?: number }[] };
   rs485: { baudRate: number; dataBits: 7 | 8; parity: 'NONE' | 'EVEN' | 'ODD'; stopBits: 1 | 2; slaveId?: number };
   evidence: Evidence;
   revisionNumber: number;
@@ -76,8 +76,10 @@ export function CommissioningConsole({
   const [ip, setIp] = useState('');
   const [mask, setMask] = useState('255.255.255.0');
   const [networkGateway, setNetworkGateway] = useState('');
-  const [port, setPort] = useState('1883');
-  const [protocol, setProtocol] = useState<'MQTT' | 'MODBUS_TCP'>('MQTT');
+  const [mqttEnabled, setMqttEnabled] = useState(true);
+  const [mqttPort, setMqttPort] = useState('');
+  const [modbusTcpEnabled, setModbusTcpEnabled] = useState(false);
+  const [modbusTcpPort, setModbusTcpPort] = useState('502');
   const [baudRate, setBaudRate] = useState('9600');
   const [dataBits, setDataBits] = useState<'7' | '8'>('8');
   const [parity, setParity] = useState<'NONE' | 'EVEN' | 'ODD'>('NONE');
@@ -169,8 +171,12 @@ export function CommissioningConsole({
     setIp(current.network?.ip ?? '');
     setMask(current.network?.mask ?? '255.255.255.0');
     setNetworkGateway(current.network?.gateway ?? '');
-    setPort(String(current.network?.port ?? 1883));
-    setProtocol(current.network?.protocol ?? 'MQTT');
+    const mqtt = current.network?.services.find((service) => service.protocol === 'MQTT');
+    const modbus = current.network?.services.find((service) => service.protocol === 'MODBUS_TCP');
+    setMqttEnabled(Boolean(mqtt));
+    setMqttPort(mqtt?.port ? String(mqtt.port) : '');
+    setModbusTcpEnabled(Boolean(modbus));
+    setModbusTcpPort(modbus?.port ? String(modbus.port) : '502');
     setBaudRate(String(current.rs485.baudRate));
     setDataBits(String(current.rs485.dataBits) as '7' | '8');
     setParity(current.rs485.parity);
@@ -212,11 +218,22 @@ export function CommissioningConsole({
       parity, stopBits: Number(stopBits),
       ...(role === 'METER' ? { slaveId: Number(slaveId) } : {}),
     };
+    const services = [
+      ...(mqttEnabled
+        ? [{ protocol: 'MQTT' as const, ...(mqttPort.trim() ? { port: Number(mqttPort) } : {}) }]
+        : []),
+      ...(modbusTcpEnabled
+        ? [{
+            protocol: 'MODBUS_TCP' as const,
+            ...(modbusTcpPort.trim() ? { port: Number(modbusTcpPort) } : {}),
+          }]
+        : []),
+    ];
     const input = {
       equipmentId, role, rs485, evidence,
       ...(role === 'GATEWAY' ? {
-        sourceIdentity,
-        network: { ip, mask, gateway: networkGateway, port: Number(port), protocol },
+        ...(sourceIdentity.trim() ? { sourceIdentity: sourceIdentity.trim() } : {}),
+        network: { ip, mask, gateway: networkGateway, services },
       } : { gatewayEquipmentId }),
     };
     void mutate('save-profile', input, existingProfile?.revisionNumber ?? null);
@@ -289,14 +306,28 @@ export function CommissioningConsole({
                   <label style={fieldStyle}>Puerta de enlace
                     <input required style={inputStyle} value={networkGateway} onChange={(event) => setNetworkGateway(event.target.value)} />
                   </label>
-                  <label style={fieldStyle}>Puerto
-                    <input required type="number" min="1" max="65535" style={inputStyle} value={port} onChange={(event) => setPort(event.target.value)} />
-                  </label>
-                  <label style={fieldStyle}>Uplink
-                    <select style={inputStyle} value={protocol} onChange={(event) => setProtocol(event.target.value as 'MQTT' | 'MODBUS_TCP')}>
-                      <option value="MQTT">MQTT</option><option value="MODBUS_TCP">Modbus TCP</option>
-                    </select>
-                  </label>
+                  <fieldset style={{ border: '1px solid #c8ced6', borderRadius: 8, padding: 10 }}>
+                    <legend>Servicios uplink</legend>
+                    <label>
+                      <input type="checkbox" checked={mqttEnabled}
+                        onChange={(event) => setMqttEnabled(event.target.checked)} /> MQTT
+                    </label>
+                    <input type="number" min="1" max="65535" style={inputStyle}
+                      value={mqttPort} disabled={!mqttEnabled}
+                      onChange={(event) => setMqttPort(event.target.value)}
+                      placeholder="Puerto no documentado: dejar vacío" />
+                    <label>
+                      <input type="checkbox" checked={modbusTcpEnabled}
+                        onChange={(event) => setModbusTcpEnabled(event.target.checked)} /> Modbus TCP
+                    </label>
+                    <input type="number" min="1" max="65535" style={inputStyle}
+                      value={modbusTcpPort} disabled={!modbusTcpEnabled}
+                      onChange={(event) => setModbusTcpPort(event.target.value)}
+                      placeholder="Ej. 502" />
+                    {!mqttEnabled && !modbusTcpEnabled ? (
+                      <small role="alert">Selecciona al menos un servicio uplink.</small>
+                    ) : null}
+                  </fieldset>
                 </div>
               ) : (
                 <div style={gridStyle}>
@@ -371,8 +402,13 @@ export function CommissioningConsole({
                   <strong>{equipmentName(item.equipmentId)}</strong>
                   <div>
                     {item.role} · {item.role === 'GATEWAY'
-                      ? (item.sourceIdentity ?? 'MQTT identity pendiente')
+                      ? (item.network?.services
+                          .map((service) => service.protocol + (service.port ? ':' + service.port : ''))
+                          .join(' + ') || 'Sin uplink')
                       : 'Slave ' + item.rs485.slaveId}
+                    {item.role === 'GATEWAY'
+                      ? ' · ' + (item.sourceIdentity ?? 'MQTT identity pendiente')
+                      : ''}
                   </div>
                   <small>Revisión {item.revisionNumber} · {item.evidence.documentName} / {item.evidence.revision}</small>
                   <div><button type="button" onClick={() => selectProfile(item.equipmentId)}>Editar configuración</button></div>

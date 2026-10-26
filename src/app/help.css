@@ -601,3 +601,81 @@
     transition: none;
   }
 }
+
+/* Header integration: compact ? action, stable search space at laptop widths.
+   Overrides fixed desktop widths from visual-parity and laptop-responsive. */
+.zip-app-shell .zip-topbar > .zip-context-slot {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.zip-app-shell .zip-topbar .mk-search-trigger {
+  flex: 0 1 clamp(164px, 16vw, 254px);
+  width: clamp(164px, 16vw, 254px);
+  min-width: 0;
+  max-width: 254px;
+  height: 40px;
+  align-self: center;
+  margin: 0 10px 0 0 !important;
+  padding: 0 12px;
+  gap: 8px;
+  white-space: nowrap;
+}
+.zip-app-shell .zip-topbar .mk-search-trigger > span {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  white-space: nowrap;
+}
+.zip-app-shell .zip-topbar .help-trigger {
+  flex: 0 0 40px;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
+  align-self: center;
+  margin: 0 10px 0 0;
+  padding: 0;
+  border: 1px solid #cfd6dd;
+  border-radius: 4px;
+  box-shadow: none;
+  background: #fff;
+  color: #174a76;
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+}
+.zip-app-shell .zip-topbar .help-trigger:hover {
+  border-color: #8fb5d7;
+  background: #f0f7fd;
+}
+.zip-app-shell .zip-topbar .help-trigger > span:first-child {
+  background: transparent;
+  border-radius: 0;
+  width: auto;
+  height: auto;
+  color: inherit;
+  font-size: 17px;
+}
+.zip-app-shell .zip-topbar .help-trigger-label { display: none; }
+@media (min-width: 1000px) and (max-width: 1250px) {
+  .zip-app-shell .zip-topbar .mk-search-trigger {
+    flex-basis: 154px;
+    width: 154px;
+    min-width: 154px;
+  }
+  .zip-app-shell .zip-topbar .help-trigger {
+    flex-basis: 38px;
+    width: 38px;
+    min-width: 38px;
+  }
+}
+@media (max-width: 999px) {
+  .zip-app-shell .zip-topbar .mk-search-trigger {
+    flex: 0 1 132px;
+    min-width: 0;
+    width: 132px;
+    margin-right: 6px !important;
+  }
+  .zip-app-shell .zip-topbar .help-trigger { margin-right: 6px; }
+}

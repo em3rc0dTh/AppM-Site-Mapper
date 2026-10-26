@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 
-import { helpCatalog, type HelpLocale } from '../catalog';
+import { helpCatalog, helpScreenshotZoomTitle, type HelpLocale } from '../catalog';
 
 function safeTarget(target: string): string | null {
   if (/^https:\/\/[^ ]+$/i.test(target)) return target;

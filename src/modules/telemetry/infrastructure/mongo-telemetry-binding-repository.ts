@@ -176,7 +176,7 @@ export class MongoTelemetryBindingRepository implements TelemetryBindingReposito
             $set: {
               lifecycle: 'ARCHIVED',
               updatedAt: binding.updatedAt,
-              attributes: binding.attributes,
+              ...(binding.attributes ? { attributes: binding.attributes } : {}),
               revision: (previous.revision ?? 0) + 1,
             },
           },

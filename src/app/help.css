@@ -683,3 +683,29 @@
     margin-right: 6px;
   }
 }
+
+/* Rendered user-facing diagrams: no Mermaid source shown. */
+.help-prose .help-illustration {
+  margin: 22px 0 30px;
+  overflow: hidden;
+  background: #f5f9fe;
+  border: 1px solid #d8e6f2;
+  border-radius: 18px;
+}
+.help-prose .help-illustration img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 440px;
+  object-fit: contain;
+}
+@media (max-width: 650px) {
+  .help-prose .help-illustration {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .help-prose .help-illustration img {
+    width: max(750px, 100%);
+    max-width: none;
+  }
+}

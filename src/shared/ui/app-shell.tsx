@@ -94,7 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <ContextTracker />
         </Suspense>
         <CommandPalette />
-        <ContextualHelp />
+        <ContextualHelp key={pathname} />
 
         <Link className="zip-explore" href="/network">
           {t('explore')} <b>⌄</b>

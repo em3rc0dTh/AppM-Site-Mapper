@@ -130,7 +130,8 @@
     "warehouse": "WAREHOUSE",
     "admin": "ADMIN",
     "signOut": "Sign out",
-    "signOutError": "Could not sign out. Try again."
+    "signOutError": "Could not sign out. Try again.",
+    "helpCenter": "HELP CENTER"
   },
   "auth": {
     "login": {
@@ -1793,7 +1794,7 @@
     "documentation": "Documentation",
     "heroTitle": "Learn Site Mapper, step by step",
     "heroDescription": "A practical guide to the real screens, safe workflows and common questions. Search a topic or choose a chapter to begin.",
-    "spanishNote": "The full operator chapters are currently available in Spanish. Navigation and chapter summaries follow your selected language.",
+    "spanishNote": "",
     "searchLabel": "Search the manual",
     "searchPlaceholder": "e.g. blueprint, rack, PowerPath, MQTT, STALE",
     "clear": "Clear",
@@ -1809,7 +1810,7 @@
     "contents": "Chapters",
     "manualNavigation": "Manual chapter navigation",
     "articleTag": "Operator manual",
-    "sourceNote": "Source: versioned Site Mapper operator documentation · Spanish edition",
+    "sourceNote": "Source: versioned Site Mapper operator documentation · English edition",
     "adjacent": "Previous and next chapter",
     "previous": "Previous chapter",
     "next": "Next chapter",

@@ -378,6 +378,24 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dd>{node.parentEquipmentId ?? t('deviceRoot')}</dd>
                     <dt>{t('childCapacity')}</dt>
                     <dd>{node.childMode === 'POSITIONAL' ? node.children.length : t('dynamic')}</dd>
+                    {node.equipmentType === 'PANEL' ? (
+                      <>
+                        <dt>Telemetry role</dt>
+                        <dd>Logical measurement source for child breakers</dd>
+                        <dt>Telemetry source S/N</dt>
+                        <dd>{node.serialNumber ?? '—'}</dd>
+                        <dt>Telemetry point prefix</dt>
+                        <dd>{node.telemetryPointPrefix ?? '—'}</dd>
+                        <dt>Telemetry readiness</dt>
+                        <dd>
+                          {node.childMode === 'POSITIONAL' &&
+                          node.serialNumber &&
+                          node.telemetryPointPrefix
+                            ? 'READY FOR EXPLICIT COMMISSIONING'
+                            : 'NOT READY'}
+                        </dd>
+                      </>
+                    ) : null}
                     <dt>{t('location')}</dt>
                     <dd>
                       {room?.name ?? t('room')} / {rackNode?.name ?? t('rack')} / {mountLabel}
@@ -481,7 +499,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                         </>
                       ) : (
                         <>
-                          <dt>Acrel</dt>
+                          <dt>Acrel measurement path</dt>
                           <dd>Sin mapeo físico Acrel confirmado</dd>
                         </>
                       )

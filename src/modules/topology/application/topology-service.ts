@@ -333,10 +333,6 @@ export class TopologyService {
           deviceType: input.deviceType ?? 'CUSTOM',
           rootEquipmentIds: [],
           ...(input.serialNumber?.trim() ? { serialNumber: input.serialNumber.trim() } : {}),
-          ...(input.partNumber?.trim() ? { partNumber: input.partNumber.trim() } : {}),
-          ...(input.aliases?.length
-            ? { aliases: [...new Set(input.aliases.map((alias) => alias.trim()).filter(Boolean))] }
-            : {}),
           ...(input.category?.trim() ? { category: input.category.trim() } : {}),
           ...(input.template ? { template: structuredClone(input.template) } : {}),
         };
@@ -418,6 +414,10 @@ export class TopologyService {
           ...(input.manufacturer?.trim() ? { manufacturer: input.manufacturer.trim() } : {}),
           ...(input.model?.trim() ? { model: input.model.trim() } : {}),
           ...(input.serialNumber?.trim() ? { serialNumber: input.serialNumber.trim() } : {}),
+          ...(input.partNumber?.trim() ? { partNumber: input.partNumber.trim() } : {}),
+          ...(input.aliases?.length
+            ? { aliases: [...new Set(input.aliases.map((alias) => alias.trim()).filter(Boolean))] }
+            : {}),
           ...(input.category?.trim() ? { category: input.category.trim() } : {}),
           ...(input.template ? { template: structuredClone(input.template) } : {}),
         };

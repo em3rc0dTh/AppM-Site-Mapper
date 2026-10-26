@@ -10,7 +10,7 @@ Abre **EXPLORE** y comprueba que estás en la instalación correcta. Si no apare
 
 ![Ejemplo real del botón para crear un Site](/help/screenshots/create-site.webp)
 
-*En una Network encontrarás **+ CREATE SITE**. Escribe primero un nombre y después define su contorno.*
+_En una Network encontrarás **+ CREATE SITE**. Escribe primero un nombre y después define su contorno._
 
 1. Abre la **Network** donde estará el Site.
 2. Selecciona **+ CREATE SITE**.

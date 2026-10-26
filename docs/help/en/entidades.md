@@ -10,7 +10,7 @@ Open **EXPLORE** and check that you are in the correct installation. If creation
 
 ![Real example of the Create Site action](/help/screenshots/create-site.webp)
 
-*Inside a Network, use **+ CREATE SITE**. Enter a name first, then define its boundary.*
+_Inside a Network, use **+ CREATE SITE**. Enter a name first, then define its boundary._
 
 1. Open the **Network** that will contain the Site.
 2. Select **+ CREATE SITE**.

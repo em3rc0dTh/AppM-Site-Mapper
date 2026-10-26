@@ -13,11 +13,11 @@ Some equipment sends measurements that Site Mapper can display as **LIVE**. This
 
 ## What each value means
 
-| Value | Meaning |
-| --- | --- |
-| **V / Voltage** | Voltage |
-| **I / Current** | Current |
-| **P / Power** | Power |
+| Value                  | Meaning            |
+| ---------------------- | ------------------ |
+| **V / Voltage**        | Voltage            |
+| **I / Current**        | Current            |
+| **P / Power**          | Power              |
 | **E / Energy counter** | Accumulated energy |
 
 ![How input readings differ from circuit readings](/help/diagrams/en/readings.svg)

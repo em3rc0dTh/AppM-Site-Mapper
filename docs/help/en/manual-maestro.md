@@ -26,15 +26,15 @@ You do not need to remember the hierarchy immediately. The left tree and the bre
 
 ## Which action should I use?
 
-| Action | Use it to |
-| --- | --- |
-| **EXPLORE** | Browse locations, rooms, racks and equipment |
-| **EDIT / EDIT ROOM** | Enter an authorized editing mode |
-| **SAVE LAYOUT** | Save the arrangement you edited inside a Room |
-| **WAREHOUSE** | Find equipment models |
-| **FULL POWER TRACE / POWER PATH** | Follow a recorded power connection |
-| **Telemetry / LIVE** | View readings received from equipment |
-| **?** | Open help related to the current screen |
+| Action                            | Use it to                                     |
+| --------------------------------- | --------------------------------------------- |
+| **EXPLORE**                       | Browse locations, rooms, racks and equipment  |
+| **EDIT / EDIT ROOM**              | Enter an authorized editing mode              |
+| **SAVE LAYOUT**                   | Save the arrangement you edited inside a Room |
+| **WAREHOUSE**                     | Find equipment models                         |
+| **FULL POWER TRACE / POWER PATH** | Follow a recorded power connection            |
+| **Telemetry / LIVE**              | View readings received from equipment         |
+| **?**                             | Open help related to the current screen       |
 
 Some actions are shown only when your account can make changes.
 

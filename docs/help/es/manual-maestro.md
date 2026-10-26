@@ -26,15 +26,15 @@ No pasa nada si al principio no recuerdas la jerarquía. El árbol de la izquier
 
 ## Qué botón usar
 
-| Opción | Úsala para |
-| --- | --- |
-| **EXPLORE** | Recorrer instalaciones, salas, racks y equipos |
-| **EDIT / EDIT ROOM** | Entrar en un modo de edición autorizado |
-| **SAVE LAYOUT** | Guardar la distribución que editaste dentro de una Room |
-| **WAREHOUSE** | Buscar modelos de equipos disponibles |
-| **FULL POWER TRACE / POWER PATH** | Seguir una conexión de alimentación registrada |
-| **Telemetry / LIVE** | Consultar lecturas recibidas del equipo |
-| **?** | Abrir ayuda relacionada con la pantalla actual |
+| Opción                            | Úsala para                                              |
+| --------------------------------- | ------------------------------------------------------- |
+| **EXPLORE**                       | Recorrer instalaciones, salas, racks y equipos          |
+| **EDIT / EDIT ROOM**              | Entrar en un modo de edición autorizado                 |
+| **SAVE LAYOUT**                   | Guardar la distribución que editaste dentro de una Room |
+| **WAREHOUSE**                     | Buscar modelos de equipos disponibles                   |
+| **FULL POWER TRACE / POWER PATH** | Seguir una conexión de alimentación registrada          |
+| **Telemetry / LIVE**              | Consultar lecturas recibidas del equipo                 |
+| **?**                             | Abrir ayuda relacionada con la pantalla actual          |
 
 Algunas opciones aparecen solo si tu cuenta puede realizar cambios.
 

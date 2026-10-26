@@ -421,7 +421,12 @@ export const helpJourneys: readonly HelpJourney[] = [
     enTitle: 'Account and safe operations',
     description: 'Acceso, retirada de elementos y dudas habituales.',
     enDescription: 'Account access, safe removal and common questions.',
-    slugs: ['primer-acceso-y-usuarios', 'retirar-elementos', 'capturas-y-capacitacion', 'modelo-de-datos'],
+    slugs: [
+      'primer-acceso-y-usuarios',
+      'retirar-elementos',
+      'capturas-y-capacitacion',
+      'modelo-de-datos',
+    ],
   },
 ];
 

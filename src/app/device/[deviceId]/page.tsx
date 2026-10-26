@@ -126,7 +126,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     evidence?: { projectId?: string; documentName?: string; revision?: string; reference?: string };
     gatewayName: string;
     meterName: string;
-    network?: { ip: string; mask: string; gateway: string; port: number; protocol: string };
+    network?: { ip: string; mask: string; gateway: string; services: readonly { protocol: string; port?: number }[] };
     rs485?: { baudRate: number; dataBits: number; parity: string; stopBits: number; slaveId?: number };
   } | null = null;
 
@@ -329,9 +329,13 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                             <>
                               <dt>Gateway network</dt>
                               <dd>
-                                {acrelMapping.network.ip}/{acrelMapping.network.mask} · GW{' '}
-                                {acrelMapping.network.gateway} · {acrelMapping.network.protocol}:
-                                {acrelMapping.network.port}
+                                {acrelMapping.network.ip} · máscara {acrelMapping.network.mask} · GW{' '}
+                                {acrelMapping.network.gateway} ·{' '}
+                                {acrelMapping.network.services
+                                  .map((service) =>
+                                    service.protocol + (service.port ? ':' + service.port : ''),
+                                  )
+                                  .join(' + ')}
                               </dd>
                             </>
                           ) : null}

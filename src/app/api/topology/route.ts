@@ -53,6 +53,8 @@ const topologyCreateKeys = [
   'coordinate',
   'totalU',
   'serialNumber',
+  'partNumber',
+  'aliases',
   'category',
   'deviceType',
   'equipmentType',
@@ -139,6 +141,7 @@ export async function POST(request: Request) {
 
   for (const optionalText of [
     body.serialNumber,
+    body.partNumber,
     body.category,
     body.manufacturer,
     body.model,
@@ -151,6 +154,12 @@ export async function POST(request: Request) {
 
   if (
     (body.parentId !== undefined && body.parentId !== null && typeof body.parentId !== 'string') ||
+    (body.partNumber !== undefined && kind !== 'EQUIPMENT') ||
+    (body.aliases !== undefined &&
+      (kind !== 'EQUIPMENT' ||
+        !Array.isArray(body.aliases) ||
+        body.aliases.length > 20 ||
+        body.aliases.some((alias) => !isBoundedString(alias, 120)))) ||
     (body.deviceType !== undefined && !parseDeviceType(body.deviceType)) ||
     (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
     (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
@@ -217,6 +226,8 @@ export async function POST(request: Request) {
       ...(coordinate ? { coordinate } : {}),
       ...(typeof body.totalU === 'number' ? { totalU: body.totalU } : {}),
       ...(typeof body.serialNumber === 'string' ? { serialNumber: body.serialNumber } : {}),
+      ...(typeof body.partNumber === 'string' ? { partNumber: body.partNumber } : {}),
+      ...(Array.isArray(body.aliases) ? { aliases: body.aliases as string[] } : {}),
       ...(typeof body.category === 'string' ? { category: body.category } : {}),
       ...(parseDeviceType(body.deviceType)
         ? { deviceType: parseDeviceType(body.deviceType)! }

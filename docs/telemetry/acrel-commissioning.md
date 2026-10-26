@@ -49,8 +49,10 @@ MAC, gateway/meter number and login username.
 Saved C&P values remain declarative and are not silently corrected. The overview performs
 non-blocking preflight checks and marks them `FIELD_CONFIRMATION_REQUIRED` when it detects:
 
-- the same declared gateway IPv4 address on more than one commissioned gateway;
-- the same declared gateway MAC address on more than one commissioned gateway;
+- the same declared gateway IPv4 address on more than one commissioned gateway in the same
+  commissioning Project ID;
+- the same declared gateway MAC address on more than one commissioned gateway in the same
+  commissioning Project ID;
 - a declared default gateway that is outside the IPv4 subnet described by the gateway IP/mask.
 
 These findings never reject profile persistence. They are evidence prompts for field confirmation,
@@ -137,8 +139,9 @@ document alone does not prove the channel-to-breaker correspondence.
   `credentials:read` / `credentials:write` permissions. ADMIN and SUPERADMIN currently receive
   those permissions; STANDARD does not.
 - Browser mutation requests must be same-origin and use strictly validated bounded JSON.
-- MongoDB batch mapping and retirement use transactions and therefore require a
-  transaction-capable MongoDB deployment (replica set or sharded cluster). The project's
+- MongoDB batch mapping/retirement and credential create/rotate/delete + audit-event writes use
+  transactions and therefore require a transaction-capable MongoDB deployment (replica set or
+  sharded cluster). The project's
   `docker-compose.telemetry.yml` already runs MongoDB as single-node `rs0`; an older standalone
   Mongo URI is not sufficient for these mutation operations.
 - No production IPs, MAC addresses, customer identities, hardware serials, source spreadsheets

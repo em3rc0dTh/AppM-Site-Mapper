@@ -10,6 +10,8 @@ When the shape of a space changes, you can adjust its outline by moving points o
 - You need editing access. If the option is missing, ask your Site Mapper administrator.
 - Check what the space contains. Moving a boundary should not leave existing buildings or rooms outside their intended location.
 
+![Real boundary editor with points, grid and drawing tools](/help/screenshots/draw-site-boundary.png)
+
 ## Change the outline
 
 1. Find and open the right space from **EXPLORE**.

@@ -39,16 +39,14 @@ function previouslyConfirmed(binding: TelemetryBinding): boolean {
 }
 
 function profileSnapshot(profile: CommunicationProfile): CommunicationProfileInput {
-  const {
-    bdfbDeviceId: _bdfbDeviceId,
-    revisionNumber: _revisionNumber,
-    createdAt: _createdAt,
-    updatedAt: _updatedAt,
-    updatedBy: _updatedBy,
-    history: _history,
-    ...snapshot
-  } = profile;
-  return snapshot;
+  const snapshot = structuredClone(profile) as unknown as Record<string, unknown>;
+  delete snapshot.bdfbDeviceId;
+  delete snapshot.revisionNumber;
+  delete snapshot.createdAt;
+  delete snapshot.updatedAt;
+  delete snapshot.updatedBy;
+  delete snapshot.history;
+  return snapshot as unknown as CommunicationProfileInput;
 }
 
 export class IndustrialCommissioningService {

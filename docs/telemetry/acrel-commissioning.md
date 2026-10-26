@@ -14,9 +14,13 @@ The console stores a typed operational communication profile keyed by that Equip
 
 ### C&P operational metadata
 
-The commissioning profile can preserve **declared** values without treating them as verified:
-alias / NE Name / TID, part number, gateway or meter number, MAC address, login username,
-gateway network parameters, uplink services, RS485 settings, downlink mode, declared slave count,
+Canonical Equipment owns physical identity: name, serial number, part number (P/N), aliases /
+NE Name / TID, optional manufacturer and optional model. The commissioning profile does not
+duplicate those fields.
+
+The commissioning profile can preserve **declared** operational values without treating them as verified:
+gateway or meter number, MAC address, login username, gateway network parameters,
+uplink services, RS485 settings, downlink mode, declared slave count,
 meter channel count/description, Hall sensor description, 120-ohm termination and documentary
 RS485 status. Profiles are explicitly marked `DECLARED` or `FIELD_VERIFIED`.
 
@@ -27,8 +31,8 @@ Passwords are never persisted in plaintext. The profile records only credential 
 `NOT_DECLARED`, `PRESENT_IN_SOURCE` or `SECRET_REFERENCED`. When a secret is placed in an
 approved vault, only a URI-like reference (for example `vault://...`) may be stored.
 
-The console search indexes Equipment name/model/serial plus commissioning alias, part number,
-MAC, gateway/meter number and login username so operational aliases are useful for lookup.
+The console search indexes canonical Equipment name/model/serial/P/N/aliases plus commissioning
+MAC, gateway/meter number and login username.
 
 ### Gateway profile
 
@@ -48,9 +52,10 @@ MAC, gateway/meter number and login username so operational aliases are useful f
 - RS485 bus parameters matching the gateway, plus slave address (1–247).
 - The same gateway cannot have two active meter profiles with the same slave address.
 
-The application rejects credentials, SNMP communities, usernames, passwords and arbitrary
-extra fields in these profiles. Handle device and broker secrets exclusively through
-an approved secure runtime secret system; do not put them in Excel, GitHub or metadata.
+Login usernames are permitted as operational metadata. Plaintext passwords, SNMP communities
+and arbitrary secret values are not persisted in the communication profile. A profile may record
+that a credential exists or reference an approved secret location; secret retrieval remains a
+separate credential capability.
 
 ### Channel-to-breaker commissioning
 
@@ -69,7 +74,8 @@ breaker or raw point from channel number, panel order or equipment naming.
 
 The source identity is taken from the server-side saved gateway profile, not the browser.
 An all-or-none batch inserts existing `TelemetryBinding` records (one per metric), with
-`commissioning=ACREL_VERIFIED_CHANNEL`, source and meter references, channel, operator
+`commissioning=ACREL_VERIFIED_CHANNEL`, `measurementSource=ACREL_METER_CHANNEL`,
+source Equipment (meter), transport Equipment (gateway), channel, operator
 user ID, timestamp and evidence. A separate business inventory is **not** materialized.
 
 If any point is already bound to another breaker, a meter channel points elsewhere, a breaker

@@ -11,9 +11,14 @@ Open **EXPLORE** and make sure you're in the correct location. If creation butto
 1. Open the appropriate **Network**.
 2. Select **+ CREATE SITE**.
 3. Enter the site's name.
-4. Select **Define boundary** to draw its outline.
-5. Check the shape and select **Save Site**.
-6. Confirm the new Site appears under the correct Network.
+4. Select **Define boundary** to open the site drawing.
+5. On the canvas, choose the boundary points in order. You need **at least 3 points**. Four points are useful for drawing a rectangle.
+6. Close the outline by selecting its first point or the finish-drawing option. Check that the lines do not cross.
+7. If you need to correct the shape, select and move a point before confirming.
+8. Confirm the drawing and select **Save Site**.
+9. Check that the new Site appears under the correct Network.
+
+**Remember:** creating a Site does not use **SAVE LAYOUT**. That button saves a room's arrangement.
 
 ## Add a building, floor and room
 

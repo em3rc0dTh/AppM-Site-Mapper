@@ -26,8 +26,6 @@ export interface IndustrialCredentialRecord {
   readonly recentEvents?: readonly IndustrialCredentialEvent[];
 }
 
-
-
 export interface IndustrialCredentialMetadata {
   readonly equipmentId: string;
   readonly hasCredential: boolean;

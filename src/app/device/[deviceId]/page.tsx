@@ -455,7 +455,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                           <dd>{acrelMapping.macAddress ?? '—'}</dd>
                           <dt>Login gateway</dt>
                           <dd>{acrelMapping.loginUsername ?? '—'}</dd>
-                          <dt>Credencial</dt>
+                          <dt>Credential note</dt>
                           <dd>{acrelMapping.credentialState ?? 'NOT_DECLARED'}</dd>
                           {acrelMapping.network ? (
                             <>

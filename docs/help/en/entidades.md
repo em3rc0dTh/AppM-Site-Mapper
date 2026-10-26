@@ -1,43 +1,59 @@
 # Create a site, building or room
 
-To add a new space, start from the place that will contain it.
+Spaces are created **from the item that contains them**. For example, a Site belongs to a Network and a Room belongs to a Level.
 
-## Before you begin
+## Before you start
 
-Open **EXPLORE** and make sure you're in the correct location. If creation buttons are missing, your account may have viewing access only.
+Open **EXPLORE** and check that you are in the correct installation. If creation buttons are missing, your account may have viewing access only.
 
-## Create a site
+## Create a Site
 
-1. Open the appropriate **Network**.
+![Real example of the Create Site action](/help/screenshots/create-site.webp)
+
+*Inside a Network, use **+ CREATE SITE**. Enter a name first, then define its boundary.*
+
+1. Open the **Network** that will contain the Site.
 2. Select **+ CREATE SITE**.
-3. Enter the site's name.
-4. Select **Define boundary** to open the site drawing.
-5. On the canvas, choose the boundary points in order. You need **at least 3 points**. Four points are useful for drawing a rectangle.
-6. Close the outline by selecting its first point or the finish-drawing option. Check that the lines do not cross.
-7. If you need to correct the shape, select and move a point before confirming.
-8. Confirm the drawing and select **Save Site**.
-9. Check that the new Site appears under the correct Network.
+3. Enter a clear name.
+4. Select **Define boundary**.
 
-**Remember:** creating a Site does not use **SAVE LAYOUT**. That button saves a room's arrangement.
+![Real Site boundary editor](/help/screenshots/draw-site-boundary.webp)
 
-## Add a building, floor and room
+5. In **Draw / select**, choose the boundary points in order. You need **at least 3 points**.
+6. Close the outline and check that the edges do not cross.
+7. If a point is wrong, select and move it. Use **Undo**, **Clear** or **Remove vertex** when appropriate.
+8. Select **Finish boundary** and return to the creation form.
+9. Confirm the Site creation.
+10. Check the tree on the left: the new Site should appear inside the intended Network.
 
-1. Open the Site and select **+ CREATE STRUCTURE**.
-2. Name the building, draw its outline and save.
-3. Open the Structure and select **+ CREATE LEVEL**.
-4. On that level, select **+ CREATE ROOM**.
-5. Name the room, draw its boundary and select **Save Room**.
+**Important:** this flow does not use **SAVE LAYOUT**. That action saves the arrangement inside a Room.
+
+## Create a Structure and Level
+
+1. Open the correct Site.
+2. Select **+ CREATE STRUCTURE**, enter its name and define its boundary.
+3. Open the new Structure.
+4. Select **+ CREATE LEVEL**, enter its name and confirm.
+
+A Level organizes rooms; you do not draw another Level boundary during this step.
+
+## Create a Room
+
+![Real Create Room form](/help/screenshots/create-room.webp)
+
+1. Open the correct **Level**.
+2. Select **+ CREATE ROOM**.
+3. Enter the Room name.
+4. Select **Define boundary**.
+5. Draw a valid outline within the available space and confirm the creation.
+6. Open the Room from the tree to verify it.
 
 ![How locations are organized](/help/diagrams/en/places.svg)
 
-## How can I tell it was saved?
-
-Return to the navigation tree. You should be able to open the site, building, level or room you just created.
-
 ## If you cannot save
 
-Check that you have drawn a valid area and that the room is inside its building. If a button is missing, check the location you've opened or ask your administrator.
+Check that the outline is closed, that its edges do not cross, and that the new space belongs to the parent you opened. If an action is missing, check your permissions.
 
-**You're done when:** the new Room appears in the right place and is ready for its contents.
+**Expected result:** the new Site, Structure, Level or Room appears under the correct parent and remains there after a reload.
 
-[Next: draw a room](espacios-y-racks.md).
+[Next: arrange a Room and place a rack](espacios-y-racks.md).

@@ -71,8 +71,10 @@ function documentaryWarnings(
   allProfiles: readonly CommunicationProfile[],
 ): CommissioningWarning[] {
   const currentIds = new Set(currentProfiles.map((profile) => profile.equipmentId));
+  const currentProjectIds = new Set(currentProfiles.map((profile) => profile.evidence.projectId));
   const gateways = allProfiles.filter(
-    (profile): profile is CommunicationProfile & { role: 'GATEWAY' } => profile.role === 'GATEWAY',
+    (profile): profile is CommunicationProfile & { role: 'GATEWAY' } =>
+      profile.role === 'GATEWAY' && currentProjectIds.has(profile.evidence.projectId),
   );
   const warnings: CommissioningWarning[] = [];
 
@@ -146,7 +148,8 @@ function readinessFor(
           : undefined;
     const networkDeclared = Boolean(gateway?.network?.services.length);
     const mqttIdentityConfirmed = Boolean(
-      gateway?.network?.services.some((service) => service.protocol === 'MQTT') &&
+      gateway &&
+      gateway.network?.services.some((service) => service.protocol === 'MQTT') &&
       gateway.sourceIdentity,
     );
 

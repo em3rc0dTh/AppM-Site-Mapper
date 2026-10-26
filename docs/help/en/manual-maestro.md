@@ -1,36 +1,49 @@
 # Get to know Site Mapper
 
-Site Mapper helps you find spaces, equipment and connections in one place. You can also view readings from equipment that sends data to the system.
+If this is your first time, you do not need to memorize every object name. Start by learning **where you are**, **what item is open**, and **what you want to do**.
 
-## Where do I start?
+> Screenshots in this Help Center use a sample installation. Names, values and status messages in your system may be different.
+
+## The screen has three main areas
+
+1. **Tree on the left:** shows your location in the infrastructure. You can move from the Network down to rooms, racks and equipment.
+2. **Main workspace:** displays plans, equipment composition, readings or connections.
+3. **Inspector on the right:** shows details and actions for the selected item.
+
+The top bar contains **Search**, **?**, **EXPLORE**, **WAREHOUSE** and your account options.
+
+## Your most common journey
 
 ![Overview of the main tasks](/help/diagrams/en/overview.svg)
 
-1. **Sign in** with your account.
-2. Open **EXPLORE** to browse locations and rooms.
-3. Select a **Room** to view its plan and racks.
-4. Open a **Rack** and choose the equipment you need.
-5. Review its components, connections and readings, when available.
+1. Open **EXPLORE**.
+2. Follow the location: **Network → Site → Structure → Level → Room**.
+3. Find the **Rack** inside the Room.
+4. Open the Rack and then the equipment you need.
+5. From its page, inspect its composition, recorded connections and available readings.
 
-## Find the right guide
+You do not need to remember the hierarchy immediately. The left tree and the breadcrumb at the top always show where you are.
 
-In the **Help Center**, search for a word such as “rack”, “power” or “readings”. You can also browse by category. Use the **?** button in the top bar to see help related to the current screen.
+## Which action should I use?
 
-## Main sections
+| Action | Use it to |
+| --- | --- |
+| **EXPLORE** | Browse locations, rooms, racks and equipment |
+| **EDIT / EDIT ROOM** | Enter an authorized editing mode |
+| **SAVE LAYOUT** | Save the arrangement you edited inside a Room |
+| **WAREHOUSE** | Find equipment models |
+| **FULL POWER TRACE / POWER PATH** | Follow a recorded power connection |
+| **Telemetry / LIVE** | View readings received from equipment |
+| **?** | Open help related to the current screen |
 
-| Section            | What you can do                          |
-| ------------------ | ---------------------------------------- |
-| **EXPLORE**        | Browse sites, buildings, rooms and racks |
-| **Blueprint**      | View a room plan                         |
-| **WAREHOUSE**      | Find available equipment templates       |
-| **POWER**          | Review equipment connections             |
-| **LIVE TELEMETRY** | View the latest available readings       |
-| **ADMIN**          | Open your account's available settings   |
+Some actions are shown only when your account can make changes.
 
-Some options, such as adding rooms or changing connections, only appear if your account can make those changes.
+## Before changing anything
 
-## How do I know I found the right equipment?
+Check the **item name**, **location** and **status**. If you are not sure you have the correct Site, Room, Rack or Equipment, go back before saving.
 
-Always check its **name**, **room** and **rack**. If anything is unclear, go back to its location before making changes.
+## What should I learn next?
 
-**Next:** [Understand your infrastructure](conceptos.md) or try [your first walkthrough](practica-guiada.md).
+For read-only work, continue with [Understand how your infrastructure is organized](conceptos.md). To practice, use [Your first Site Mapper walkthrough](practica-guiada.md).
+
+**You're done when:** you can find your way around the screen and know where to get help before starting a task.

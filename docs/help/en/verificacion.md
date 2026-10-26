@@ -2,6 +2,8 @@
 
 Sometimes a unit appears in the inventory but has no recent readings. These checks help you understand what you're seeing.
 
+![Example breaker with LIVE reading, source and latest sample](/help/screenshots/breaker-live.png)
+
 ## Check these first
 
 1. Make sure you've opened the **right equipment**.
@@ -20,6 +22,12 @@ Sometimes a unit appears in the inventory but has no recent readings. These chec
 | **AVAILABLE** | A position is free                                |
 | **OCCUPIED**  | A position is in use                              |
 | **CONNECTED** | A connection has been recorded                    |
+
+## Compare inputs and history
+
+![Inputs helps you check whether main inputs have readings](/help/screenshots/snmp-inputs.png)
+
+![Charts helps you check whether data existed earlier](/help/screenshots/history-charts.png)
 
 ## What should I do?
 

@@ -179,9 +179,7 @@ export async function PATCH(request: Request, context: Context) {
       ...(body.manufacturer === null || typeof body.manufacturer === 'string'
         ? { manufacturer: body.manufacturer }
         : {}),
-      ...(body.model === null || typeof body.model === 'string'
-        ? { model: body.model }
-        : {}),
+      ...(body.model === null || typeof body.model === 'string' ? { model: body.model } : {}),
       ...(body.presentation
         ? {
             presentation: body.presentation as {

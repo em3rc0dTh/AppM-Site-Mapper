@@ -119,15 +119,13 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
       : [];
 
   const parentPanel =
-    node.kind === 'EQUIPMENT' &&
-    node.equipmentType === 'CIRCUIT_BREAKER' &&
-    node.parentEquipmentId
-      ? deviceEquipment.find(
+    node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER' && node.parentEquipmentId
+      ? (deviceEquipment.find(
           (item) =>
             item.id === node.parentEquipmentId &&
             item.lifecycle === 'ACTIVE' &&
             item.equipmentType === 'PANEL',
-        ) ?? null
+        ) ?? null)
       : null;
   const breakerPosition =
     parentPanel && node.kind === 'EQUIPMENT'
@@ -165,8 +163,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             .map((binding) => binding.metric.toUpperCase()),
         )
       : new Set<string>();
-  const panelBindingConfirmed = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].every(
-    (metric) => panelBindingMetrics.has(metric),
+  const panelBindingConfirmed = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].every((metric) =>
+    panelBindingMetrics.has(metric),
   );
 
   let acrelMapping: {
@@ -186,8 +184,19 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     recordStatus?: string;
     gatewayNumber?: string;
     meterNumber?: string;
-    network?: { ip: string; mask: string; gateway: string; services: readonly { protocol: string; port?: number }[] };
-    rs485?: { baudRate: number; dataBits: number; parity: string; stopBits: number; slaveId?: number };
+    network?: {
+      ip: string;
+      mask: string;
+      gateway: string;
+      services: readonly { protocol: string; port?: number }[];
+    };
+    rs485?: {
+      baudRate: number;
+      dataBits: number;
+      parity: string;
+      stopBits: number;
+      slaveId?: number;
+    };
   } | null = null;
 
   if (
@@ -450,7 +459,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                             <dt>Panel point prefix</dt>
                             <dd>{parentPanel.telemetryPointPrefix ?? '—'}</dd>
                             <dt>Physical position</dt>
-                            <dd>{breakerPosition > 0 ? String(breakerPosition).padStart(2, '0') : '—'}</dd>
+                            <dd>
+                              {breakerPosition > 0 ? String(breakerPosition).padStart(2, '0') : '—'}
+                            </dd>
                             <dt>Resolved raw point</dt>
                             <dd>{expectedPanelPoint ?? '—'}</dd>
                             <dt>Binding</dt>
@@ -465,8 +476,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                           <dt>Acrel measurement path</dt>
                           <dd>
                             {acrelMapping.gatewayAlias ?? acrelMapping.gatewayName}
-                            {acrelMapping.gatewayNumber ? ' #' + acrelMapping.gatewayNumber : ''} →{' '}
-                            {acrelMapping.meterAlias ?? acrelMapping.meterName}
+                            {acrelMapping.gatewayNumber
+                              ? ' #' + acrelMapping.gatewayNumber
+                              : ''} → {acrelMapping.meterAlias ?? acrelMapping.meterName}
                             {acrelMapping.meterNumber ? ' ' + acrelMapping.meterNumber : ''} → CH
                             {acrelMapping.channel} → {acrelMapping.rawPointId}
                           </dd>
@@ -487,8 +499,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                                 {acrelMapping.network.ip} · máscara {acrelMapping.network.mask} · GW{' '}
                                 {acrelMapping.network.gateway} ·{' '}
                                 {acrelMapping.network.services
-                                  .map((service) =>
-                                    service.protocol + (service.port ? ':' + service.port : ''),
+                                  .map(
+                                    (service) =>
+                                      service.protocol + (service.port ? ':' + service.port : ''),
                                   )
                                   .join(' + ')}
                               </dd>
@@ -531,7 +544,10 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                   {node.equipmentType === 'CIRCUIT_BREAKER' && canReadIndustrialSettings ? (
                     <Link
                       className="zip-device-outline"
-                      href={'/industrial/commissioning?' + new URLSearchParams({ deviceId: node.deviceId }).toString()}
+                      href={
+                        '/industrial/commissioning?' +
+                        new URLSearchParams({ deviceId: node.deviceId }).toString()
+                      }
                     >
                       {acrelMapping ? 'Abrir comisionamiento Acrel' : 'Configurar monitoreo Acrel'}
                     </Link>

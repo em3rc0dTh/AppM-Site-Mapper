@@ -1,9 +1,7 @@
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { IndustrialCredentialService } from '@/modules/industrial/application/credential-service';
-import { createIndustrialCredentialRepository } from
-  '@/modules/industrial/infrastructure/credential-repository';
-import { createTopologyRepository } from
-  '@/modules/topology/infrastructure/topology-repository-factory';
+import { createIndustrialCredentialRepository } from '@/modules/industrial/infrastructure/credential-repository';
+import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import {
   hasOnlyKeys,
   isBoundedString,
@@ -62,7 +60,8 @@ export async function POST(request: Request) {
     !hasOnlyKeys(body, ['action', 'equipmentId', 'password']) ||
     !isBoundedString(body.action, 32) ||
     !isBoundedString(body.equipmentId, 160)
-  ) return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
+  )
+    return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
 
   const action = body.action;
   const app = await credentialService();

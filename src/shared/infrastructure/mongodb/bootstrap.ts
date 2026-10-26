@@ -126,10 +126,7 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
       { equipmentId: 1 },
       { unique: true, name: 'uq_industrial_profile_equipment' },
     ),
-    industrialProfiles.createIndex(
-      { bdfbDeviceId: 1 },
-      { name: 'ix_industrial_profile_bdfb' },
-    ),
+    industrialProfiles.createIndex({ bdfbDeviceId: 1 }, { name: 'ix_industrial_profile_bdfb' }),
     industrialProfiles.createIndex(
       { sourceIdentity: 1 },
       {

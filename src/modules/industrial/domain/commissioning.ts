@@ -23,9 +23,7 @@ export type CommissioningRecordStatus = 'DECLARED' | 'FIELD_VERIFIED';
 export type CredentialState = 'NOT_DECLARED' | 'PRESENT_IN_SOURCE' | 'SECRET_REFERENCED';
 
 export type CommissioningWarningCode =
-  | 'DUPLICATE_DECLARED_IP'
-  | 'DUPLICATE_DECLARED_MAC'
-  | 'DEFAULT_GATEWAY_OUTSIDE_SUBNET';
+  'DUPLICATE_DECLARED_IP' | 'DUPLICATE_DECLARED_MAC' | 'DEFAULT_GATEWAY_OUTSIDE_SUBNET';
 
 export interface CommissioningWarning {
   readonly code: CommissioningWarningCode;
@@ -153,18 +151,41 @@ function ipv4(value: unknown): value is string {
 
 function netmask(value: unknown): value is string {
   if (!ipv4(value)) return false;
-  const bits = value.split('.').map(Number).map((octet) => octet.toString(2).padStart(8, '0')).join('');
+  const bits = value
+    .split('.')
+    .map(Number)
+    .map((octet) => octet.toString(2).padStart(8, '0'))
+    .join('');
   return !bits.includes('01');
 }
 
 export function parseEvidence(raw: unknown): CommissioningEvidence | null {
-  if (!object(raw) || !only(raw, [
-    'projectId', 'documentName', 'revision', 'reference', 'projectName', 'site', 'client',
-    'responsible', 'documentDate', 'documentStatus',
-  ])) return null;
-  if (!text(raw.projectId, 100) || !text(raw.documentName, 160) || !text(raw.revision, 60)) return null;
+  if (
+    !object(raw) ||
+    !only(raw, [
+      'projectId',
+      'documentName',
+      'revision',
+      'reference',
+      'projectName',
+      'site',
+      'client',
+      'responsible',
+      'documentDate',
+      'documentStatus',
+    ])
+  )
+    return null;
+  if (!text(raw.projectId, 100) || !text(raw.documentName, 160) || !text(raw.revision, 60))
+    return null;
   for (const key of [
-    'reference', 'projectName', 'site', 'client', 'responsible', 'documentDate', 'documentStatus',
+    'reference',
+    'projectName',
+    'site',
+    'client',
+    'responsible',
+    'documentDate',
+    'documentStatus',
   ] as const) {
     if (raw[key] !== undefined && !text(raw[key], key === 'reference' ? 240 : 160)) return null;
   }
@@ -185,22 +206,47 @@ export function parseEvidence(raw: unknown): CommissioningEvidence | null {
 }
 
 export function parseProfileInput(raw: unknown): CommunicationProfileInput | null {
-  if (!object(raw) || !only(raw, [
-    'equipmentId', 'role', 'recordStatus',
-    'gatewayEquipmentId', 'sourceIdentity', 'network', 'macAddress', 'loginUsername',
-    'credentialState', 'credentialRef', 'gatewayNumber', 'downlinkMode', 'declaredSlaveCount', 'meterNumber',
-    'channelCount', 'channelDescription', 'hallSensorDescription', 'termination120Ohm',
-    'documentedRs485Status', 'rs485', 'evidence',
-  ])) return null;
+  if (
+    !object(raw) ||
+    !only(raw, [
+      'equipmentId',
+      'role',
+      'recordStatus',
+      'gatewayEquipmentId',
+      'sourceIdentity',
+      'network',
+      'macAddress',
+      'loginUsername',
+      'credentialState',
+      'credentialRef',
+      'gatewayNumber',
+      'downlinkMode',
+      'declaredSlaveCount',
+      'meterNumber',
+      'channelCount',
+      'channelDescription',
+      'hallSensorDescription',
+      'termination120Ohm',
+      'documentedRs485Status',
+      'rs485',
+      'evidence',
+    ])
+  )
+    return null;
   if (
     !text(raw.equipmentId, 160) ||
     (raw.role !== 'GATEWAY' && raw.role !== 'METER') ||
     (raw.recordStatus !== 'DECLARED' && raw.recordStatus !== 'FIELD_VERIFIED')
-  ) return null;
+  )
+    return null;
   for (const [key, max] of [
-    ['loginUsername', 120], ['credentialRef', 240],
-    ['gatewayNumber', 80], ['downlinkMode', 120], ['meterNumber', 80],
-    ['channelDescription', 180], ['hallSensorDescription', 180],
+    ['loginUsername', 120],
+    ['credentialRef', 240],
+    ['gatewayNumber', 80],
+    ['downlinkMode', 120],
+    ['meterNumber', 80],
+    ['channelDescription', 180],
+    ['hallSensorDescription', 180],
     ['documentedRs485Status', 120],
   ] as const) {
     if (raw[key] !== undefined && !text(raw[key], max)) return null;
@@ -209,34 +255,40 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
     raw.macAddress !== undefined &&
     (typeof raw.macAddress !== 'string' ||
       !/^(?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$/.test(raw.macAddress.trim()))
-  ) return null;
+  )
+    return null;
   if (
     raw.credentialState !== undefined &&
     !['NOT_DECLARED', 'PRESENT_IN_SOURCE', 'SECRET_REFERENCED'].includes(
       String(raw.credentialState),
     )
-  ) return null;
+  )
+    return null;
   if (
     raw.credentialRef !== undefined &&
     (typeof raw.credentialRef !== 'string' ||
       !/^[A-Za-z][A-Za-z0-9+.-]*:\/\/\S+$/.test(raw.credentialRef.trim()))
-  ) return null;
-  if (
-    raw.credentialState === 'SECRET_REFERENCED' &&
-    typeof raw.credentialRef !== 'string'
-  ) return null;
+  )
+    return null;
+  if (raw.credentialState === 'SECRET_REFERENCED' && typeof raw.credentialRef !== 'string')
+    return null;
   const evidence = parseEvidence(raw.evidence);
-  if (!evidence || !object(raw.rs485) || !only(raw.rs485, [
-    'baudRate', 'dataBits', 'parity', 'stopBits', 'slaveId',
-  ])) return null;
+  if (
+    !evidence ||
+    !object(raw.rs485) ||
+    !only(raw.rs485, ['baudRate', 'dataBits', 'parity', 'stopBits', 'slaveId'])
+  )
+    return null;
   const serial = raw.rs485;
   if (
-    !Number.isInteger(serial.baudRate) || Number(serial.baudRate) < 300 ||
+    !Number.isInteger(serial.baudRate) ||
+    Number(serial.baudRate) < 300 ||
     Number(serial.baudRate) > 115200 ||
     (serial.dataBits !== 7 && serial.dataBits !== 8) ||
     !['NONE', 'EVEN', 'ODD'].includes(String(serial.parity)) ||
     (serial.stopBits !== 1 && serial.stopBits !== 2)
-  ) return null;
+  )
+    return null;
   const rs485: Rs485Configuration = {
     baudRate: Number(serial.baudRate),
     dataBits: serial.dataBits,
@@ -245,15 +297,21 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
   };
   if (raw.role === 'GATEWAY') {
     if (
-      raw.gatewayEquipmentId !== undefined || serial.slaveId !== undefined ||
+      raw.gatewayEquipmentId !== undefined ||
+      serial.slaveId !== undefined ||
       (raw.sourceIdentity !== undefined &&
-        (!text(raw.sourceIdentity, 120) || !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(raw.sourceIdentity))) ||
+        (!text(raw.sourceIdentity, 120) ||
+          !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(raw.sourceIdentity))) ||
       !object(raw.network) ||
       !only(raw.network, ['ip', 'mask', 'gateway', 'services']) ||
-      !ipv4(raw.network.ip) || !netmask(raw.network.mask) || !ipv4(raw.network.gateway) ||
+      !ipv4(raw.network.ip) ||
+      !netmask(raw.network.mask) ||
+      !ipv4(raw.network.gateway) ||
       !Array.isArray(raw.network.services) ||
-      raw.network.services.length < 1 || raw.network.services.length > 2
-    ) return null;
+      raw.network.services.length < 1 ||
+      raw.network.services.length > 2
+    )
+      return null;
     const services: NetworkServiceConfiguration[] = [];
     const protocols = new Set<string>();
     for (const rawService of raw.network.services) {
@@ -266,7 +324,8 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
           (!Number.isInteger(rawService.port) ||
             Number(rawService.port) < 1 ||
             Number(rawService.port) > 65535))
-      ) return null;
+      )
+        return null;
       protocols.add(String(rawService.protocol));
       services.push({
         protocol: rawService.protocol as UplinkProtocol,
@@ -284,7 +343,8 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
         (!Number.isInteger(raw.declaredSlaveCount) ||
           Number(raw.declaredSlaveCount) < 0 ||
           Number(raw.declaredSlaveCount) > 247))
-    ) return null;
+    )
+      return null;
     return {
       equipmentId: raw.equipmentId.trim(),
       role: 'GATEWAY',
@@ -295,21 +355,13 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
       ...(typeof raw.macAddress === 'string'
         ? { macAddress: raw.macAddress.trim().toUpperCase() }
         : {}),
-      ...(typeof raw.loginUsername === 'string'
-        ? { loginUsername: raw.loginUsername.trim() }
-        : {}),
+      ...(typeof raw.loginUsername === 'string' ? { loginUsername: raw.loginUsername.trim() } : {}),
       ...(typeof raw.credentialState === 'string'
         ? { credentialState: raw.credentialState as CredentialState }
         : {}),
-      ...(typeof raw.credentialRef === 'string'
-        ? { credentialRef: raw.credentialRef.trim() }
-        : {}),
-      ...(typeof raw.gatewayNumber === 'string'
-        ? { gatewayNumber: raw.gatewayNumber.trim() }
-        : {}),
-      ...(typeof raw.downlinkMode === 'string'
-        ? { downlinkMode: raw.downlinkMode.trim() }
-        : {}),
+      ...(typeof raw.credentialRef === 'string' ? { credentialRef: raw.credentialRef.trim() } : {}),
+      ...(typeof raw.gatewayNumber === 'string' ? { gatewayNumber: raw.gatewayNumber.trim() } : {}),
+      ...(typeof raw.downlinkMode === 'string' ? { downlinkMode: raw.downlinkMode.trim() } : {}),
       ...(typeof raw.declaredSlaveCount === 'number'
         ? { declaredSlaveCount: raw.declaredSlaveCount }
         : {}),
@@ -324,19 +376,27 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
     };
   }
   if (
-    !text(raw.gatewayEquipmentId, 160) || raw.gatewayEquipmentId === raw.equipmentId ||
-    raw.sourceIdentity !== undefined || raw.network !== undefined ||
-    raw.macAddress !== undefined || raw.loginUsername !== undefined ||
-    raw.credentialState !== undefined || raw.credentialRef !== undefined || raw.gatewayNumber !== undefined ||
-    raw.downlinkMode !== undefined || raw.declaredSlaveCount !== undefined ||
-    !Number.isInteger(serial.slaveId) || Number(serial.slaveId) < 1 ||
+    !text(raw.gatewayEquipmentId, 160) ||
+    raw.gatewayEquipmentId === raw.equipmentId ||
+    raw.sourceIdentity !== undefined ||
+    raw.network !== undefined ||
+    raw.macAddress !== undefined ||
+    raw.loginUsername !== undefined ||
+    raw.credentialState !== undefined ||
+    raw.credentialRef !== undefined ||
+    raw.gatewayNumber !== undefined ||
+    raw.downlinkMode !== undefined ||
+    raw.declaredSlaveCount !== undefined ||
+    !Number.isInteger(serial.slaveId) ||
+    Number(serial.slaveId) < 1 ||
     Number(serial.slaveId) > 247 ||
     (raw.channelCount !== undefined &&
       (!Number.isInteger(raw.channelCount) ||
         Number(raw.channelCount) < 1 ||
         Number(raw.channelCount) > 256)) ||
     (raw.termination120Ohm !== undefined && typeof raw.termination120Ohm !== 'boolean')
-  ) return null;
+  )
+    return null;
   return {
     equipmentId: raw.equipmentId.trim(),
     role: 'METER',
@@ -362,21 +422,38 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
 }
 
 export function parseConfirmChannel(raw: unknown): ConfirmChannelInput | null {
-  if (!object(raw) || !only(raw, [
-    'meterEquipmentId', 'breakerId', 'channel', 'rawPointId',
-    'metrics', 'evidence', 'physicallyVerified',
-  ])) return null;
+  if (
+    !object(raw) ||
+    !only(raw, [
+      'meterEquipmentId',
+      'breakerId',
+      'channel',
+      'rawPointId',
+      'metrics',
+      'evidence',
+      'physicallyVerified',
+    ])
+  )
+    return null;
   const evidence = parseEvidence(raw.evidence);
   const allowed = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'];
   if (
-    !evidence || !text(raw.meterEquipmentId, 160) || !text(raw.breakerId, 160) ||
-    !Number.isInteger(raw.channel) || Number(raw.channel) < 1 || Number(raw.channel) > 256 ||
-    !text(raw.rawPointId, 80) || !/^[A-Za-z0-9][A-Za-z0-9_.:-]*$/.test(raw.rawPointId) ||
-    !Array.isArray(raw.metrics) || raw.metrics.length === 0 || raw.metrics.length > 4 ||
+    !evidence ||
+    !text(raw.meterEquipmentId, 160) ||
+    !text(raw.breakerId, 160) ||
+    !Number.isInteger(raw.channel) ||
+    Number(raw.channel) < 1 ||
+    Number(raw.channel) > 256 ||
+    !text(raw.rawPointId, 80) ||
+    !/^[A-Za-z0-9][A-Za-z0-9_.:-]*$/.test(raw.rawPointId) ||
+    !Array.isArray(raw.metrics) ||
+    raw.metrics.length === 0 ||
+    raw.metrics.length > 4 ||
     raw.metrics.some((metric) => !allowed.includes(String(metric))) ||
     new Set(raw.metrics).size !== raw.metrics.length ||
     raw.physicallyVerified !== true
-  ) return null;
+  )
+    return null;
   return {
     meterEquipmentId: raw.meterEquipmentId.trim(),
     breakerId: raw.breakerId.trim(),
@@ -389,14 +466,20 @@ export function parseConfirmChannel(raw: unknown): ConfirmChannelInput | null {
 }
 
 export function parseRetireChannel(raw: unknown): RetireChannelInput | null {
-  if (!object(raw) || !only(raw, [
-    'breakerId', 'sourceIdentity', 'rawPointId', 'evidence', 'confirmRetirement',
-  ])) return null;
+  if (
+    !object(raw) ||
+    !only(raw, ['breakerId', 'sourceIdentity', 'rawPointId', 'evidence', 'confirmRetirement'])
+  )
+    return null;
   const evidence = parseEvidence(raw.evidence);
   if (
-    !evidence || !text(raw.breakerId, 160) || !text(raw.sourceIdentity, 120) ||
-    !text(raw.rawPointId, 80) || raw.confirmRetirement !== true
-  ) return null;
+    !evidence ||
+    !text(raw.breakerId, 160) ||
+    !text(raw.sourceIdentity, 120) ||
+    !text(raw.rawPointId, 80) ||
+    raw.confirmRetirement !== true
+  )
+    return null;
   return {
     breakerId: raw.breakerId.trim(),
     sourceIdentity: raw.sourceIdentity.trim(),

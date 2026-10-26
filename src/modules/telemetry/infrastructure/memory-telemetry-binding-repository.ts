@@ -67,12 +67,17 @@ export class MemoryTelemetryBindingRepository implements TelemetryBindingReposit
   async insertBatch(bindings: readonly TelemetryBinding[]): Promise<void> {
     const seen = new Set<string>();
     for (const binding of bindings) {
-      if (seen.has(binding.id) || this.bindings.has(binding.id)) throw new Error('DUPLICATE_BINDING_ID');
+      if (seen.has(binding.id) || this.bindings.has(binding.id))
+        throw new Error('DUPLICATE_BINDING_ID');
       seen.add(binding.id);
-      const collision = [...this.bindings.values()].some((item) =>
-        item.lifecycle === 'ACTIVE' && item.protocol === binding.protocol &&
-        item.sourceIdentity === binding.sourceIdentity &&
-        item.sourcePointId === binding.sourcePointId && item.metric === binding.metric);
+      const collision = [...this.bindings.values()].some(
+        (item) =>
+          item.lifecycle === 'ACTIVE' &&
+          item.protocol === binding.protocol &&
+          item.sourceIdentity === binding.sourceIdentity &&
+          item.sourcePointId === binding.sourcePointId &&
+          item.metric === binding.metric,
+      );
       if (collision) throw new Error('SOURCE_POINT_ALREADY_BOUND');
     }
     for (const binding of bindings) this.bindings.set(binding.id, structuredClone(binding));

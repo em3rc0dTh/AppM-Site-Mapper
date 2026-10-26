@@ -2,8 +2,12 @@ import { randomUUID } from 'node:crypto';
 
 import type { CommunicationProfileRepository } from '@/modules/industrial/infrastructure/communication-profile-repository';
 import type {
-  CommunicationProfile, CommunicationProfileInput, CommissioningReadiness,
-  CommissioningWarning, ConfirmChannelInput, RetireChannelInput,
+  CommunicationProfile,
+  CommunicationProfileInput,
+  CommissioningReadiness,
+  CommissioningWarning,
+  ConfirmChannelInput,
+  RetireChannelInput,
 } from '@/modules/industrial/domain/commissioning';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
@@ -14,12 +18,22 @@ const mark = 'ACREL_VERIFIED_CHANNEL' as const;
 const allMetrics = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const;
 
 export type CommissioningError =
-  | 'BDFB_NOT_FOUND' | 'EQUIPMENT_NOT_FOUND' | 'INVALID_ROLE' |
-    'GATEWAY_NOT_COMMISSIONED' | 'COMMUNICATION_MISMATCH' |
-    'PROFILE_IN_USE' | 'REVISION_CONFLICT' | 'REVISION_LIMIT' |
-    'BREAKER_NOT_FOUND' | 'CROSS_BDFB_MAPPING' | 'CHANNEL_CONFLICT' |
-    'SOURCE_POINT_CONFLICT' | 'BREAKER_BINDING_CONFLICT' |
-    'BINDING_CONFLICT' | 'ATOMIC_BINDINGS_REQUIRED' | 'MAPPING_NOT_FOUND';
+  | 'BDFB_NOT_FOUND'
+  | 'EQUIPMENT_NOT_FOUND'
+  | 'INVALID_ROLE'
+  | 'GATEWAY_NOT_COMMISSIONED'
+  | 'COMMUNICATION_MISMATCH'
+  | 'PROFILE_IN_USE'
+  | 'REVISION_CONFLICT'
+  | 'REVISION_LIMIT'
+  | 'BREAKER_NOT_FOUND'
+  | 'CROSS_BDFB_MAPPING'
+  | 'CHANNEL_CONFLICT'
+  | 'SOURCE_POINT_CONFLICT'
+  | 'BREAKER_BINDING_CONFLICT'
+  | 'BINDING_CONFLICT'
+  | 'ATOMIC_BINDINGS_REQUIRED'
+  | 'MAPPING_NOT_FOUND';
 
 type Result<T> =
   | { readonly ok: true; readonly value: T }
@@ -29,9 +43,12 @@ const good = <T>(value: T): Result<T> => ({ ok: true, value });
 const bad = <T>(error: CommissioningError): Result<T> => ({ ok: false, error });
 
 function relevantBindings(list: readonly TelemetryBinding[]): TelemetryBinding[] {
-  return list.filter((binding) =>
-    binding.lifecycle === 'ACTIVE' && binding.protocol === 'MQTT' &&
-    allMetrics.includes(binding.metric as (typeof allMetrics)[number]));
+  return list.filter(
+    (binding) =>
+      binding.lifecycle === 'ACTIVE' &&
+      binding.protocol === 'MQTT' &&
+      allMetrics.includes(binding.metric as (typeof allMetrics)[number]),
+  );
 }
 
 function previouslyConfirmed(binding: TelemetryBinding): boolean {
@@ -48,7 +65,6 @@ function profileSnapshot(profile: CommunicationProfile): CommunicationProfileInp
   delete snapshot.history;
   return snapshot as unknown as CommunicationProfileInput;
 }
-
 
 function ipv4Integer(value: string): number | null {
   const parts = value.split('.').map(Number);
@@ -129,7 +145,9 @@ function readinessFor(
   }[],
 ): CommissioningReadiness[] {
   const gateways = new Map(
-    profiles.filter((profile) => profile.role === 'GATEWAY').map((profile) => [profile.equipmentId, profile]),
+    profiles
+      .filter((profile) => profile.role === 'GATEWAY')
+      .map((profile) => [profile.equipmentId, profile]),
   );
   const meters = profiles.filter((profile) => profile.role === 'METER');
   const confirmedByMeter = new Map<string, Set<number>>();
@@ -161,20 +179,19 @@ function readinessFor(
         profile.recordStatus === 'FIELD_VERIFIED' &&
         gateway?.recordStatus === 'FIELD_VERIFIED' &&
         confirmedChannels === channelCount;
-      const stage: CommissioningReadiness['stage'] =
-        fieldVerified
-          ? 'FIELD_VERIFIED'
-          : !networkDeclared
-            ? 'NETWORK_PENDING'
-            : !mqttIdentityConfirmed
-              ? 'MQTT_IDENTITY_PENDING'
-              : !meterReady
-                ? 'METER_PENDING'
-                : confirmedChannels === 0
-                  ? 'METER_READY'
-                  : confirmedChannels < channelCount
-                    ? 'CHANNELS_PARTIAL'
-                    : 'CHANNELS_CONFIRMED';
+      const stage: CommissioningReadiness['stage'] = fieldVerified
+        ? 'FIELD_VERIFIED'
+        : !networkDeclared
+          ? 'NETWORK_PENDING'
+          : !mqttIdentityConfirmed
+            ? 'MQTT_IDENTITY_PENDING'
+            : !meterReady
+              ? 'METER_PENDING'
+              : confirmedChannels === 0
+                ? 'METER_READY'
+                : confirmedChannels < channelCount
+                  ? 'CHANNELS_PARTIAL'
+                  : 'CHANNELS_CONFIRMED';
       return {
         equipmentId: profile.equipmentId,
         role: profile.role,
@@ -203,20 +220,19 @@ function readinessFor(
       allMetersVerified &&
       channelCount > 0 &&
       confirmedChannels === channelCount;
-    const stage: CommissioningReadiness['stage'] =
-      fieldVerified
-        ? 'FIELD_VERIFIED'
-        : !networkDeclared
-          ? 'NETWORK_PENDING'
-          : !mqttIdentityConfirmed
-            ? 'MQTT_IDENTITY_PENDING'
-            : !meterReady
-              ? 'METER_PENDING'
-              : confirmedChannels === 0
-                ? 'METER_READY'
-                : confirmedChannels < channelCount
-                  ? 'CHANNELS_PARTIAL'
-                  : 'CHANNELS_CONFIRMED';
+    const stage: CommissioningReadiness['stage'] = fieldVerified
+      ? 'FIELD_VERIFIED'
+      : !networkDeclared
+        ? 'NETWORK_PENDING'
+        : !mqttIdentityConfirmed
+          ? 'MQTT_IDENTITY_PENDING'
+          : !meterReady
+            ? 'METER_PENDING'
+            : confirmedChannels === 0
+              ? 'METER_READY'
+              : confirmedChannels < channelCount
+                ? 'CHANNELS_PARTIAL'
+                : 'CHANNELS_CONFIRMED';
     return {
       equipmentId: profile.equipmentId,
       role: profile.role,
@@ -240,10 +256,11 @@ export class IndustrialCommissioningService {
 
   async bdfbInventory(deviceId: string) {
     const device = await this.topology.getById(deviceId);
-    if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB' ||
-        device.lifecycle !== 'ACTIVE') return null;
-    const equipment = (await this.topology.listEquipmentForDevice(deviceId))
-      .filter((item) => item.lifecycle === 'ACTIVE');
+    if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB' || device.lifecycle !== 'ACTIVE')
+      return null;
+    const equipment = (await this.topology.listEquipmentForDevice(deviceId)).filter(
+      (item) => item.lifecycle === 'ACTIVE',
+    );
     return { device, equipment };
   }
 
@@ -254,37 +271,50 @@ export class IndustrialCommissioningService {
     );
   }
 
-  async overview(deviceId: string): Promise<Result<{
-    device: DeviceNode;
-    equipment: readonly EquipmentNode[];
-    profiles: readonly CommunicationProfile[];
-    warnings: readonly CommissioningWarning[];
-    readiness: readonly CommissioningReadiness[];
-    mappings: readonly {
-      breakerId: string;
-      sourceIdentity: string;
-      rawPointId: string;
-      meterEquipmentId: string;
-      gatewayEquipmentId: string;
-      channel: number;
-      metrics: readonly string[];
-      confirmedBy: string;
-      confirmedAt: string;
-      evidence: unknown;
-    }[];
-  }>> {
+  async overview(deviceId: string): Promise<
+    Result<{
+      device: DeviceNode;
+      equipment: readonly EquipmentNode[];
+      profiles: readonly CommunicationProfile[];
+      warnings: readonly CommissioningWarning[];
+      readiness: readonly CommissioningReadiness[];
+      mappings: readonly {
+        breakerId: string;
+        sourceIdentity: string;
+        rawPointId: string;
+        meterEquipmentId: string;
+        gatewayEquipmentId: string;
+        channel: number;
+        metrics: readonly string[];
+        confirmedBy: string;
+        confirmedAt: string;
+        evidence: unknown;
+      }[];
+    }>
+  > {
     const inventory = await this.bdfbInventory(deviceId);
     if (!inventory) return bad('BDFB_NOT_FOUND');
     const equipment = inventory.equipment;
     const breakers = equipment.filter((item) => item.equipmentType === 'CIRCUIT_BREAKER');
     const bindingList = await this.bindings.listForTargets(
-      'EQUIPMENT', breakers.map((breaker) => breaker.id),
+      'EQUIPMENT',
+      breakers.map((breaker) => breaker.id),
     );
-    const grouped = new Map<string, {
-      breakerId: string; sourceIdentity: string; rawPointId: string;
-      meterEquipmentId: string; gatewayEquipmentId: string; channel: number;
-      metrics: string[]; confirmedBy: string; confirmedAt: string; evidence: unknown;
-    }>();
+    const grouped = new Map<
+      string,
+      {
+        breakerId: string;
+        sourceIdentity: string;
+        rawPointId: string;
+        meterEquipmentId: string;
+        gatewayEquipmentId: string;
+        channel: number;
+        metrics: string[];
+        confirmedBy: string;
+        confirmedAt: string;
+        evidence: unknown;
+      }
+    >();
     for (const binding of bindingList) {
       if (!previouslyConfirmed(binding) || !binding.sourcePointId) continue;
       const attrs = binding.attributes!;
@@ -294,15 +324,21 @@ export class IndustrialCommissioningService {
         typeof attrs.channel !== 'number' ||
         typeof attrs.confirmedBy !== 'string' ||
         typeof attrs.confirmedAt !== 'string'
-      ) continue;
+      )
+        continue;
       const key = [binding.targetId, binding.sourceIdentity, binding.sourcePointId].join('\u0000');
       let group = grouped.get(key);
       if (!group) {
         group = {
-          breakerId: binding.targetId, sourceIdentity: binding.sourceIdentity,
-          rawPointId: binding.sourcePointId, meterEquipmentId: attrs.meterEquipmentId,
-          gatewayEquipmentId: attrs.gatewayEquipmentId, channel: attrs.channel,
-          metrics: [], confirmedBy: attrs.confirmedBy, confirmedAt: attrs.confirmedAt,
+          breakerId: binding.targetId,
+          sourceIdentity: binding.sourceIdentity,
+          rawPointId: binding.sourcePointId,
+          meterEquipmentId: attrs.meterEquipmentId,
+          gatewayEquipmentId: attrs.gatewayEquipmentId,
+          channel: attrs.channel,
+          metrics: [],
+          confirmedBy: attrs.confirmedBy,
+          confirmedAt: attrs.confirmedAt,
           evidence: attrs.evidence,
         };
         grouped.set(key, group);
@@ -337,22 +373,28 @@ export class IndustrialCommissioningService {
 
     if (input.role === 'METER') {
       const gateway = await this.topology.getById(input.gatewayEquipmentId!);
-      if (gateway?.kind !== 'EQUIPMENT' || gateway.lifecycle !== 'ACTIVE' ||
-          gateway.deviceId !== equipment.deviceId) return bad('CROSS_BDFB_MAPPING');
+      if (
+        gateway?.kind !== 'EQUIPMENT' ||
+        gateway.lifecycle !== 'ACTIVE' ||
+        gateway.deviceId !== equipment.deviceId
+      )
+        return bad('CROSS_BDFB_MAPPING');
       const gatewayProfile = await this.profiles.get(gateway.id);
       if (!gatewayProfile || gatewayProfile.role !== 'GATEWAY')
         return bad('GATEWAY_NOT_COMMISSIONED');
       const bus = gatewayProfile.rs485;
-      if (bus.baudRate !== input.rs485.baudRate ||
-          bus.dataBits !== input.rs485.dataBits ||
-          bus.parity !== input.rs485.parity || bus.stopBits !== input.rs485.stopBits)
+      if (
+        bus.baudRate !== input.rs485.baudRate ||
+        bus.dataBits !== input.rs485.dataBits ||
+        bus.parity !== input.rs485.parity ||
+        bus.stopBits !== input.rs485.stopBits
+      )
         return bad('COMMUNICATION_MISMATCH');
     }
 
     const existing = await this.profiles.get(input.equipmentId);
     if ((existing?.revisionNumber ?? null) !== expectedRevision) return bad('REVISION_CONFLICT');
-    if (existing?.history.length && existing.history.length >= 100)
-      return bad('REVISION_LIMIT');
+    if (existing?.history.length && existing.history.length >= 100) return bad('REVISION_LIMIT');
     if (existing && (existing.bdfbDeviceId !== equipment.deviceId || existing.role !== input.role))
       return bad('INVALID_ROLE');
 
@@ -371,19 +413,33 @@ export class IndustrialCommissioningService {
         existing.rs485.stopBits !== input.rs485.stopBits;
       if (busChanged) {
         const profiles = await this.profiles.listByBdfb(equipment.deviceId);
-        if (profiles.some((profile) =>
-          profile.role === 'METER' && profile.gatewayEquipmentId === existing.equipmentId))
+        if (
+          profiles.some(
+            (profile) =>
+              profile.role === 'METER' && profile.gatewayEquipmentId === existing.equipmentId,
+          )
+        )
           return bad('PROFILE_IN_USE');
       }
     }
-    if (existing?.role === 'METER' &&
-        (existing.gatewayEquipmentId !== input.gatewayEquipmentId ||
-         existing.rs485.slaveId !== input.rs485.slaveId)) {
+    if (
+      existing?.role === 'METER' &&
+      (existing.gatewayEquipmentId !== input.gatewayEquipmentId ||
+        existing.rs485.slaveId !== input.rs485.slaveId)
+    ) {
       const siblings = await this.topology.listEquipmentForDevice(equipment.deviceId);
       const breakers = siblings.filter((node) => node.equipmentType === 'CIRCUIT_BREAKER');
-      const mapped = await this.bindings.listForTargets('EQUIPMENT', breakers.map((node) => node.id));
-      if (mapped.some((binding) =>
-        previouslyConfirmed(binding) && binding.attributes?.meterEquipmentId === input.equipmentId))
+      const mapped = await this.bindings.listForTargets(
+        'EQUIPMENT',
+        breakers.map((node) => node.id),
+      );
+      if (
+        mapped.some(
+          (binding) =>
+            previouslyConfirmed(binding) &&
+            binding.attributes?.meterEquipmentId === input.equipmentId,
+        )
+      )
         return bad('PROFILE_IN_USE');
     }
     const timestamp = new Date().toISOString();
@@ -395,18 +451,26 @@ export class IndustrialCommissioningService {
       updatedAt: timestamp,
       updatedBy: actorId,
       history: existing
-        ? [...existing.history, {
-            revisionNumber: existing.revisionNumber, updatedAt: existing.updatedAt,
-            updatedBy: existing.updatedBy, snapshot: profileSnapshot(existing),
-          }]
+        ? [
+            ...existing.history,
+            {
+              revisionNumber: existing.revisionNumber,
+              updatedAt: existing.updatedAt,
+              updatedBy: existing.updatedBy,
+              snapshot: profileSnapshot(existing),
+            },
+          ]
         : [],
     };
     return (await this.profiles.save(next, expectedRevision))
-      ? good(next) : bad('REVISION_CONFLICT');
+      ? good(next)
+      : bad('REVISION_CONFLICT');
   }
 
-  async confirmChannel(input: ConfirmChannelInput, actorId: string):
-    Promise<Result<{ readonly breakerId: string; readonly created: readonly string[] }>> {
+  async confirmChannel(
+    input: ConfirmChannelInput,
+    actorId: string,
+  ): Promise<Result<{ readonly breakerId: string; readonly created: readonly string[] }>> {
     const meter = await this.profiles.get(input.meterEquipmentId);
     if (!meter || meter.role !== 'METER' || !meter.gatewayEquipmentId)
       return bad('EQUIPMENT_NOT_FOUND');
@@ -421,43 +485,72 @@ export class IndustrialCommissioningService {
       this.topology.getById(input.breakerId),
     ]);
     if (
-      meterNode?.kind !== 'EQUIPMENT' || meterNode.lifecycle !== 'ACTIVE' ||
-      gatewayNode?.kind !== 'EQUIPMENT' || gatewayNode.lifecycle !== 'ACTIVE' ||
-      breaker?.kind !== 'EQUIPMENT' || breaker.lifecycle !== 'ACTIVE' ||
+      meterNode?.kind !== 'EQUIPMENT' ||
+      meterNode.lifecycle !== 'ACTIVE' ||
+      gatewayNode?.kind !== 'EQUIPMENT' ||
+      gatewayNode.lifecycle !== 'ACTIVE' ||
+      breaker?.kind !== 'EQUIPMENT' ||
+      breaker.lifecycle !== 'ACTIVE' ||
       breaker.equipmentType !== 'CIRCUIT_BREAKER'
-    ) return bad('BREAKER_NOT_FOUND');
+    )
+      return bad('BREAKER_NOT_FOUND');
     if (
-      meterNode.deviceId !== breaker.deviceId || gatewayNode.deviceId !== breaker.deviceId ||
-      gateway.bdfbDeviceId !== breaker.deviceId || meter.bdfbDeviceId !== breaker.deviceId ||
+      meterNode.deviceId !== breaker.deviceId ||
+      gatewayNode.deviceId !== breaker.deviceId ||
+      gateway.bdfbDeviceId !== breaker.deviceId ||
+      meter.bdfbDeviceId !== breaker.deviceId ||
       !(await this.bdfbInventory(breaker.deviceId))
-    ) return bad('CROSS_BDFB_MAPPING');
+    )
+      return bad('CROSS_BDFB_MAPPING');
 
     if (!this.bindings.insertBatch) return bad('ATOMIC_BINDINGS_REQUIRED');
     const [allSource, allBreaker] = await Promise.all([
       this.bindings.listForSource('MQTT', gateway.sourceIdentity),
       this.bindings.listForTarget('EQUIPMENT', input.breakerId),
     ]);
-    const point = allSource.filter((binding) =>
-      binding.lifecycle === 'ACTIVE' && binding.sourcePointId === input.rawPointId);
-    if (point.some((binding) => binding.targetType !== 'EQUIPMENT' ||
-      binding.targetId !== input.breakerId)) return bad('SOURCE_POINT_CONFLICT');
-    if (allSource.some((binding) => previouslyConfirmed(binding) &&
-      binding.attributes?.meterEquipmentId === input.meterEquipmentId &&
-      binding.attributes?.channel === input.channel &&
-      binding.sourcePointId !== input.rawPointId)) return bad('CHANNEL_CONFLICT');
-    if (relevantBindings(allBreaker).some((binding) =>
-      binding.sourceIdentity !== gateway.sourceIdentity ||
-      binding.sourcePointId !== input.rawPointId)) return bad('BREAKER_BINDING_CONFLICT');
-    if (allBreaker.some((binding) => binding.lifecycle === 'ACTIVE' &&
-      binding.metric.toUpperCase() === 'SOURCE')) return bad('BREAKER_BINDING_CONFLICT');
+    const point = allSource.filter(
+      (binding) => binding.lifecycle === 'ACTIVE' && binding.sourcePointId === input.rawPointId,
+    );
+    if (
+      point.some(
+        (binding) => binding.targetType !== 'EQUIPMENT' || binding.targetId !== input.breakerId,
+      )
+    )
+      return bad('SOURCE_POINT_CONFLICT');
+    if (
+      allSource.some(
+        (binding) =>
+          previouslyConfirmed(binding) &&
+          binding.attributes?.meterEquipmentId === input.meterEquipmentId &&
+          binding.attributes?.channel === input.channel &&
+          binding.sourcePointId !== input.rawPointId,
+      )
+    )
+      return bad('CHANNEL_CONFLICT');
+    if (
+      relevantBindings(allBreaker).some(
+        (binding) =>
+          binding.sourceIdentity !== gateway.sourceIdentity ||
+          binding.sourcePointId !== input.rawPointId,
+      )
+    )
+      return bad('BREAKER_BINDING_CONFLICT');
+    if (
+      allBreaker.some(
+        (binding) => binding.lifecycle === 'ACTIVE' && binding.metric.toUpperCase() === 'SOURCE',
+      )
+    )
+      return bad('BREAKER_BINDING_CONFLICT');
 
     if (point.length) {
-      const same = point.every((binding) =>
-        previouslyConfirmed(binding) &&
-        binding.attributes?.meterEquipmentId === input.meterEquipmentId &&
-        binding.attributes?.gatewayEquipmentId === gateway.equipmentId &&
-        binding.attributes?.channel === input.channel &&
-        input.metrics.includes(binding.metric as (typeof input.metrics)[number]));
+      const same = point.every(
+        (binding) =>
+          previouslyConfirmed(binding) &&
+          binding.attributes?.meterEquipmentId === input.meterEquipmentId &&
+          binding.attributes?.gatewayEquipmentId === gateway.equipmentId &&
+          binding.attributes?.channel === input.channel &&
+          input.metrics.includes(binding.metric as (typeof input.metrics)[number]),
+      );
       if (!same || point.length !== input.metrics.length) return bad('BINDING_CONFLICT');
       return good({ breakerId: input.breakerId, created: [] });
     }
@@ -498,17 +591,26 @@ export class IndustrialCommissioningService {
     return good({ breakerId: breaker.id, created: bindings.map((binding) => binding.id) });
   }
 
-  async retireChannel(input: RetireChannelInput, actorId: string):
-    Promise<Result<{ readonly retired: readonly string[] }>> {
+  async retireChannel(
+    input: RetireChannelInput,
+    actorId: string,
+  ): Promise<Result<{ readonly retired: readonly string[] }>> {
     if (!this.bindings.archiveBatch) return bad('ATOMIC_BINDINGS_REQUIRED');
     const breaker = await this.topology.getById(input.breakerId);
-    if (breaker?.kind !== 'EQUIPMENT' || breaker.equipmentType !== 'CIRCUIT_BREAKER' ||
-        breaker.lifecycle !== 'ACTIVE') return bad('BREAKER_NOT_FOUND');
+    if (
+      breaker?.kind !== 'EQUIPMENT' ||
+      breaker.equipmentType !== 'CIRCUIT_BREAKER' ||
+      breaker.lifecycle !== 'ACTIVE'
+    )
+      return bad('BREAKER_NOT_FOUND');
     const active = await this.bindings.listForTarget('EQUIPMENT', breaker.id);
-    const matching = active.filter((binding) =>
-      previouslyConfirmed(binding) && binding.protocol === 'MQTT' &&
-      binding.sourceIdentity === input.sourceIdentity &&
-      binding.sourcePointId === input.rawPointId);
+    const matching = active.filter(
+      (binding) =>
+        previouslyConfirmed(binding) &&
+        binding.protocol === 'MQTT' &&
+        binding.sourceIdentity === input.sourceIdentity &&
+        binding.sourcePointId === input.rawPointId,
+    );
     if (!matching.length) return bad('MAPPING_NOT_FOUND');
     const now = new Date().toISOString();
     const archived: TelemetryBinding[] = matching.map((binding) => ({
@@ -525,7 +627,8 @@ export class IndustrialCommissioningService {
     try {
       await this.bindings.archiveBatch(archived);
     } catch (error) {
-      if (error instanceof Error && error.message === 'STALE_BINDING') return bad('BINDING_CONFLICT');
+      if (error instanceof Error && error.message === 'STALE_BINDING')
+        return bad('BINDING_CONFLICT');
       throw error;
     }
     return good({ retired: archived.map((binding) => binding.id) });

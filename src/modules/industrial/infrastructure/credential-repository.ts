@@ -77,7 +77,9 @@ class MongoIndustrialCredentials implements IndustrialCredentialRepository {
 
   constructor(db: Db) {
     this.records = db.collection<IndustrialCredentialRecord & Document>('industrial_credentials');
-    this.events = db.collection<IndustrialCredentialEvent & Document>('industrial_credential_events');
+    this.events = db.collection<IndustrialCredentialEvent & Document>(
+      'industrial_credential_events',
+    );
   }
 
   private toDomain(
@@ -124,7 +126,8 @@ class MongoIndustrialCredentials implements IndustrialCredentialRepository {
       if (
         (error instanceof Error && error.message === 'CREDENTIAL_CONFLICT') ||
         (error && typeof error === 'object' && 'code' in error && error.code === 11000)
-      ) return false;
+      )
+        return false;
       throw error;
     } finally {
       await session.endSession();
@@ -160,7 +163,8 @@ class MongoIndustrialCredentials implements IndustrialCredentialRepository {
       if (
         (error instanceof Error && error.message === 'CREDENTIAL_CONFLICT') ||
         (error && typeof error === 'object' && 'code' in error && error.code === 11000)
-      ) return false;
+      )
+        return false;
       throw error;
     } finally {
       await session.endSession();
@@ -181,8 +185,7 @@ class MongoIndustrialCredentials implements IndustrialCredentialRepository {
   }
 }
 
-export async function createIndustrialCredentialRepository():
-  Promise<IndustrialCredentialRepository> {
+export async function createIndustrialCredentialRepository(): Promise<IndustrialCredentialRepository> {
   if (getPersistenceMode() === 'memory') {
     return getProcessSingleton<IndustrialCredentialRepository>(
       'industrial-credentials',

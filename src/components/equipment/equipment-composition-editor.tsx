@@ -23,12 +23,14 @@ function label(type: EquipmentType): string {
 }
 
 function aliasesFromForm(value: FormDataEntryValue | null): string[] {
-  return [...new Set(
-    String(value ?? '')
-      .split(/[\n,]/)
-      .map((alias) => alias.trim())
-      .filter(Boolean),
-  )];
+  return [
+    ...new Set(
+      String(value ?? '')
+        .split(/[\n,]/)
+        .map((alias) => alias.trim())
+        .filter(Boolean),
+    ),
+  ];
 }
 
 export function EquipmentCompositionEditor({
@@ -505,7 +507,11 @@ export function EquipmentCompositionEditor({
           </label>
           <label>
             Serial Number (S/N)
-            <input name="serialNumber" maxLength={120} defaultValue={equipment.serialNumber ?? ''} />
+            <input
+              name="serialNumber"
+              maxLength={120}
+              defaultValue={equipment.serialNumber ?? ''}
+            />
           </label>
           <label>
             Part Number (P/N)
@@ -522,7 +528,11 @@ export function EquipmentCompositionEditor({
           </label>
           <label>
             Manufacturer
-            <input name="manufacturer" maxLength={120} defaultValue={equipment.manufacturer ?? ''} />
+            <input
+              name="manufacturer"
+              maxLength={120}
+              defaultValue={equipment.manufacturer ?? ''}
+            />
           </label>
           <label>
             Model

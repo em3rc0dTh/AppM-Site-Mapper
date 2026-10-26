@@ -160,7 +160,8 @@ export class TopologyService {
     if (
       (input.aliases?.length ?? 0) > 20 ||
       input.aliases?.some((alias) => !alias.trim() || alias.length > 120)
-    ) return failure('INVALID_TEXT_FIELD');
+    )
+      return failure('INVALID_TEXT_FIELD');
 
     if (
       (input.kind === 'DEVICE' || input.kind === 'EQUIPMENT') &&
@@ -510,10 +511,13 @@ export class TopologyService {
     if (
       (input.aliases?.length ?? 0) > 20 ||
       input.aliases?.some((alias) => !alias.trim() || alias.length > 120)
-    ) return failure('INVALID_TEXT_FIELD');
+    )
+      return failure('INVALID_TEXT_FIELD');
 
     const serialNumber =
-      input.serialNumber === undefined ? node.serialNumber : input.serialNumber?.trim() || undefined;
+      input.serialNumber === undefined
+        ? node.serialNumber
+        : input.serialNumber?.trim() || undefined;
     if (serialNumber && serialNumber !== node.serialNumber) {
       const matches = await this.repository.findActiveBySerialNumber(serialNumber);
       if (matches.some((match) => match.id !== node.id)) return failure('SERIAL_ALREADY_ASSIGNED');
@@ -521,7 +525,9 @@ export class TopologyService {
     const partNumber =
       input.partNumber === undefined ? node.partNumber : input.partNumber?.trim() || undefined;
     const manufacturer =
-      input.manufacturer === undefined ? node.manufacturer : input.manufacturer?.trim() || undefined;
+      input.manufacturer === undefined
+        ? node.manufacturer
+        : input.manufacturer?.trim() || undefined;
     const model = input.model === undefined ? node.model : input.model?.trim() || undefined;
     const aliases =
       input.aliases === undefined
@@ -630,8 +636,7 @@ export class TopologyService {
       delete (updated as { aliases?: readonly string[] }).aliases;
     if (!manufacturer && 'manufacturer' in updated)
       delete (updated as { manufacturer?: string }).manufacturer;
-    if (!model && 'model' in updated)
-      delete (updated as { model?: string }).model;
+    if (!model && 'model' in updated) delete (updated as { model?: string }).model;
     if (!(await this.repository.commitLayout([node], [updated]))) {
       return failure('LAYOUT_CONFLICT');
     }

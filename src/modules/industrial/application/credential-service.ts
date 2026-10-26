@@ -1,17 +1,11 @@
-import {
-  createCipheriv,
-  createDecipheriv,
-  randomBytes,
-  randomUUID,
-} from 'node:crypto';
+import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from 'node:crypto';
 
 import type {
   IndustrialCredentialEvent,
   IndustrialCredentialMetadata,
   IndustrialCredentialRecord,
 } from '@/modules/industrial/domain/credential';
-import type { IndustrialCredentialRepository } from
-  '@/modules/industrial/infrastructure/credential-repository';
+import type { IndustrialCredentialRepository } from '@/modules/industrial/infrastructure/credential-repository';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 
 type CredentialError =
@@ -45,10 +39,7 @@ function encrypt(equipmentId: string, password: string, key: Buffer) {
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', key, iv);
   cipher.setAAD(Buffer.from(equipmentId, 'utf8'));
-  const ciphertext = Buffer.concat([
-    cipher.update(password, 'utf8'),
-    cipher.final(),
-  ]);
+  const ciphertext = Buffer.concat([cipher.update(password, 'utf8'), cipher.final()]);
   return {
     ciphertext: ciphertext.toString('base64'),
     iv: iv.toString('base64'),
@@ -58,11 +49,7 @@ function encrypt(equipmentId: string, password: string, key: Buffer) {
 
 function decrypt(record: IndustrialCredentialRecord, key: Buffer): string | null {
   try {
-    const decipher = createDecipheriv(
-      'aes-256-gcm',
-      key,
-      Buffer.from(record.iv, 'base64'),
-    );
+    const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(record.iv, 'base64'));
     decipher.setAAD(Buffer.from(record.equipmentId, 'utf8'));
     decipher.setAuthTag(Buffer.from(record.authTag, 'base64'));
     return Buffer.concat([
@@ -125,15 +112,10 @@ export class IndustrialCredentialService {
 
   private async activeEquipment(equipmentId: string): Promise<boolean> {
     const equipment = await this.topology.getById(equipmentId);
-    return Boolean(
-      equipment &&
-      equipment.kind === 'EQUIPMENT' &&
-      equipment.lifecycle === 'ACTIVE',
-    );
+    return Boolean(equipment && equipment.kind === 'EQUIPMENT' && equipment.lifecycle === 'ACTIVE');
   }
 
-  async getMetadata(equipmentId: string):
-    Promise<Result<IndustrialCredentialMetadata>> {
+  async getMetadata(equipmentId: string): Promise<Result<IndustrialCredentialMetadata>> {
     if (!(await this.activeEquipment(equipmentId))) return bad('EQUIPMENT_NOT_FOUND');
     const [record, events] = await Promise.all([
       this.repository.get(equipmentId),
@@ -142,8 +124,11 @@ export class IndustrialCredentialService {
     return good(metadata(record, equipmentId, events));
   }
 
-  async setPassword(equipmentId: string, password: string, actorId: string):
-    Promise<Result<IndustrialCredentialMetadata>> {
+  async setPassword(
+    equipmentId: string,
+    password: string,
+    actorId: string,
+  ): Promise<Result<IndustrialCredentialMetadata>> {
     if (!(await this.activeEquipment(equipmentId))) return bad('EQUIPMENT_NOT_FOUND');
     if (!password || password.length > 512) return bad('INVALID_PASSWORD');
     const key = keyFromEnvironment();
@@ -175,8 +160,12 @@ export class IndustrialCredentialService {
     return good(metadata(next, equipmentId, await this.repository.listEvents(equipmentId)));
   }
 
-  async revealPassword(equipmentId: string, actorId: string):
-    Promise<Result<{ readonly password: string; readonly metadata: IndustrialCredentialMetadata }>> {
+  async revealPassword(
+    equipmentId: string,
+    actorId: string,
+  ): Promise<
+    Result<{ readonly password: string; readonly metadata: IndustrialCredentialMetadata }>
+  > {
     if (!(await this.activeEquipment(equipmentId))) return bad('EQUIPMENT_NOT_FOUND');
     const key = keyFromEnvironment();
     if (!key) return bad('CREDENTIAL_KEY_NOT_CONFIGURED');
@@ -194,21 +183,17 @@ export class IndustrialCredentialService {
     return good({ password, metadata: metadata(current, equipmentId, events) });
   }
 
-  async removePassword(equipmentId: string, actorId: string):
-    Promise<Result<IndustrialCredentialMetadata>> {
+  async removePassword(
+    equipmentId: string,
+    actorId: string,
+  ): Promise<Result<IndustrialCredentialMetadata>> {
     if (!(await this.activeEquipment(equipmentId))) return bad('EQUIPMENT_NOT_FOUND');
     const current = await this.repository.get(equipmentId);
     if (!current) {
       return good(metadata(null, equipmentId, await this.repository.listEvents(equipmentId)));
     }
     const now = new Date().toISOString();
-    const event = auditEvent(
-      equipmentId,
-      'DELETED',
-      actorId,
-      now,
-      current.revisionNumber,
-    );
+    const event = auditEvent(equipmentId, 'DELETED', actorId, now, current.revisionNumber);
     if (!(await this.repository.removeWithEvent(equipmentId, current.revisionNumber, event)))
       return bad('CREDENTIAL_CONFLICT');
     return good(metadata(null, equipmentId, await this.repository.listEvents(equipmentId)));

@@ -34,15 +34,28 @@ class MemoryCommunicationProfiles implements CommunicationProfileRepository {
   async save(next: CommunicationProfile, expected: number | null) {
     const previous = this.profiles.get(next.equipmentId);
     if ((previous?.revisionNumber ?? null) !== expected) return false;
-    if (next.role === 'GATEWAY' && next.sourceIdentity &&
-        [...this.profiles.values()].some((item) =>
+    if (
+      next.role === 'GATEWAY' &&
+      next.sourceIdentity &&
+      [...this.profiles.values()].some(
+        (item) =>
           item.equipmentId !== next.equipmentId &&
-          item.role === 'GATEWAY' && item.sourceIdentity === next.sourceIdentity)) return false;
-    if (next.role === 'METER' &&
-        [...this.profiles.values()].some((item) =>
-          item.equipmentId !== next.equipmentId && item.role === 'METER' &&
+          item.role === 'GATEWAY' &&
+          item.sourceIdentity === next.sourceIdentity,
+      )
+    )
+      return false;
+    if (
+      next.role === 'METER' &&
+      [...this.profiles.values()].some(
+        (item) =>
+          item.equipmentId !== next.equipmentId &&
+          item.role === 'METER' &&
           item.gatewayEquipmentId === next.gatewayEquipmentId &&
-          item.rs485.slaveId === next.rs485.slaveId)) return false;
+          item.rs485.slaveId === next.rs485.slaveId,
+      )
+    )
+      return false;
     this.profiles.set(next.equipmentId, structuredClone(next));
     return true;
   }
@@ -52,10 +65,12 @@ class MongoCommunicationProfiles implements CommunicationProfileRepository {
   private readonly records: Collection<CommunicationProfile & Document>;
 
   constructor(db: Db) {
-    this.records = db.collection<CommunicationProfile & Document>('industrial_communication_profiles');
+    this.records = db.collection<CommunicationProfile & Document>(
+      'industrial_communication_profiles',
+    );
   }
 
-  private toDomain(doc: CommunicationProfile & Document | null): CommunicationProfile | null {
+  private toDomain(doc: (CommunicationProfile & Document) | null): CommunicationProfile | null {
     if (!doc) return null;
     const value = { ...doc } as Record<string, unknown>;
     delete value._id;
@@ -79,10 +94,13 @@ class MongoCommunicationProfiles implements CommunicationProfileRepository {
   async save(next: CommunicationProfile, expected: number | null): Promise<boolean> {
     if (expected === null) {
       try {
-        await this.records.insertOne(next as OptionalUnlessRequiredId<CommunicationProfile & Document>);
+        await this.records.insertOne(
+          next as OptionalUnlessRequiredId<CommunicationProfile & Document>,
+        );
         return true;
       } catch (error) {
-        if (error && typeof error === 'object' && 'code' in error && error.code === 11000) return false;
+        if (error && typeof error === 'object' && 'code' in error && error.code === 11000)
+          return false;
         throw error;
       }
     }
@@ -93,7 +111,8 @@ class MongoCommunicationProfiles implements CommunicationProfileRepository {
       );
       return result.matchedCount === 1;
     } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 11000) return false;
+      if (error && typeof error === 'object' && 'code' in error && error.code === 11000)
+        return false;
       throw error;
     }
   }

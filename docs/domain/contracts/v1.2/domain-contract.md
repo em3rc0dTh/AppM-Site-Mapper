@@ -247,6 +247,7 @@ interface Equipment {
   manufacturerTypeName?: string;
   model?: string;
   serialNumber?: string;
+  partNumber?: string;
 
   aliases?: string[];
 
@@ -259,6 +260,17 @@ interface Equipment {
 ```
 
 ---
+
+Identity semantics:
+
+- `serialNumber` (S/N) is optional at the base Equipment level. A capability may require it
+  before that Equipment can be commissioned as a telemetry source.
+- `partNumber` (P/N) is an optional manufacturer part identifier and is distinct from
+  `model` and `serialNumber`.
+- `aliases[]` contains optional operational names such as NE Name/TID and does not replace
+  the canonical `name`.
+- The presence of a serial number alone does **not** imply that the Equipment publishes
+  telemetry.
 
 # 8. Equipment recursion
 

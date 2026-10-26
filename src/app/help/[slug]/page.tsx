@@ -23,7 +23,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const entry = getHelpEntry(slug);
-  return { title: entry ? entry.title + ' · Site Mapper Help' : 'Site Mapper Help' };
+  const locale: HelpLocale = (await getLocale()) === 'es' ? 'es' : 'en';
+  return { title: entry ? helpTitle(entry, locale) + ' · Site Mapper Help' : 'Site Mapper Help' };
 }
 
 export default async function HelpArticlePage({ params }: { params: Promise<{ slug: string }> }) {
@@ -32,12 +33,12 @@ export default async function HelpArticlePage({ params }: { params: Promise<{ sl
   const { slug } = await params;
   const entry = getHelpEntry(slug);
   if (!entry) notFound();
-  const [content, localeValue, t] = await Promise.all([
-    readHelpArticle(entry),
+  const [localeValue, t] = await Promise.all([
     getLocale(),
     getTranslations('help'),
   ]);
   const locale: HelpLocale = localeValue === 'es' ? 'es' : 'en';
+  const content = await readHelpArticle(entry, locale);
   const index = helpCatalog.findIndex((article) => article.slug === slug);
   const before = helpCatalog[index - 1];
   const after = helpCatalog[index + 1];
@@ -75,7 +76,7 @@ export default async function HelpArticlePage({ params }: { params: Promise<{ sl
           <p>{helpSummary(entry, locale)}</p>
           <small>{t('sourceNote')}</small>
         </header>
-        <MarkdownHelpArticle text={content} />
+        <MarkdownHelpArticle text={content} locale={locale} />
         <nav className="help-next" aria-label={t('adjacent')}>
           {before ? (
             <Link href={'/help/' + before.slug}>

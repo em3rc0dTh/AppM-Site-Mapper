@@ -18,14 +18,14 @@ En el **Centro de ayuda** escribe una palabra como “rack”, “energía” o 
 
 ## ¿Qué puedes encontrar?
 
-| Sección | Para qué sirve |
-| --- | --- |
-| **EXPLORE** | Recorrer sitios, edificios, salas y racks |
-| **Blueprint** | Ver el plano de una sala |
-| **WAREHOUSE** | Consultar modelos de equipos disponibles |
-| **POWER** | Revisar cómo están conectados los equipos |
-| **LIVE TELEMETRY** | Consultar las últimas lecturas recibidas |
-| **ADMIN** | Abrir las opciones disponibles para tu cuenta |
+| Sección            | Para qué sirve                                |
+| ------------------ | --------------------------------------------- |
+| **EXPLORE**        | Recorrer sitios, edificios, salas y racks     |
+| **Blueprint**      | Ver el plano de una sala                      |
+| **WAREHOUSE**      | Consultar modelos de equipos disponibles      |
+| **POWER**          | Revisar cómo están conectados los equipos     |
+| **LIVE TELEMETRY** | Consultar las últimas lecturas recibidas      |
+| **ADMIN**          | Abrir las opciones disponibles para tu cuenta |
 
 Algunas opciones, como crear una sala o editar una conexión, aparecen solo si tu cuenta tiene acceso para hacerlo.
 

@@ -24,12 +24,12 @@ Cuando un equipo envía información, puedes ver sus valores recientes y, cuando
 
 Porque responden a preguntas diferentes:
 
-| Pregunta | Dónde buscar |
-| --- | --- |
-| ¿Dónde está? | EXPLORE / Blueprint |
-| ¿Qué piezas tiene? | Rack / Device / Equipment |
+| Pregunta               | Dónde buscar                        |
+| ---------------------- | ----------------------------------- |
+| ¿Dónde está?           | EXPLORE / Blueprint                 |
+| ¿Qué piezas tiene?     | Rack / Device / Equipment           |
 | ¿A qué está conectado? | PHYSICAL TERMINALS / VIEW POWERPATH |
-| ¿Qué está midiendo? | LIVE TELEMETRY / Charts |
+| ¿Qué está midiendo?    | LIVE TELEMETRY / Charts             |
 
 **Al terminar:** sabrás qué sección abrir para encontrar la información que necesitas.
 

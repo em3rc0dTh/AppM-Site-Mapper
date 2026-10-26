@@ -19,11 +19,11 @@ Revisa que hayas escrito el correo y la contraseña correctamente. Si el mensaje
 
 Site Mapper muestra las funciones de acuerdo con tu tipo de cuenta:
 
-| Tipo de cuenta | Qué puedes hacer |
-| --- | --- |
-| **Standard** | Consultar espacios, equipos, conexiones y lecturas |
-| **Admin** | Además, organizar espacios y equipos cuando corresponda |
-| **Superadmin** | Además, administrar las cuentas de usuario |
+| Tipo de cuenta | Qué puedes hacer                                        |
+| -------------- | ------------------------------------------------------- |
+| **Standard**   | Consultar espacios, equipos, conexiones y lecturas      |
+| **Admin**      | Además, organizar espacios y equipos cuando corresponda |
+| **Superadmin** | Además, administrar las cuentas de usuario              |
 
 ## Agregar un usuario (solo Superadmin)
 

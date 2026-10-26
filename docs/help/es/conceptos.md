@@ -6,17 +6,17 @@ Imagina que buscas un equipo en un edificio. Primero eliges el lugar, después l
 
 ## Las partes más importantes
 
-| Nombre en pantalla | Qué significa |
-| --- | --- |
-| **Network** | Un grupo de instalaciones |
-| **Site** | Una instalación o sede |
-| **Structure** | Un edificio o estructura |
-| **Level** | Un piso o nivel |
-| **Room** | Una sala |
-| **Bay / Position** | Un área y una ubicación dentro de la sala |
-| **Rack** | El gabinete donde se ubican los equipos |
-| **Device** | Un equipo principal del rack |
-| **Equipment** | Una pieza o componente dentro de ese equipo |
+| Nombre en pantalla | Qué significa                               |
+| ------------------ | ------------------------------------------- |
+| **Network**        | Un grupo de instalaciones                   |
+| **Site**           | Una instalación o sede                      |
+| **Structure**      | Un edificio o estructura                    |
+| **Level**          | Un piso o nivel                             |
+| **Room**           | Una sala                                    |
+| **Bay / Position** | Un área y una ubicación dentro de la sala   |
+| **Rack**           | El gabinete donde se ubican los equipos     |
+| **Device**         | Un equipo principal del rack                |
+| **Equipment**      | Una pieza o componente dentro de ese equipo |
 
 ## Un ejemplo sencillo
 

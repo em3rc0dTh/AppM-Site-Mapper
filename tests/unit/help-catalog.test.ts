@@ -26,7 +26,9 @@ describe('Customer-facing Site Mapper Help Center', () => {
         const body = await readHelpArticle(item, locale);
         expect(body.length).toBeGreaterThan(450);
         expect(body).not.toMatch(/(?:\x60{3}|~{3})mermaid|flowchart\s+(?:TD|LR)/i);
-        expect(body).not.toMatch(/without developer assistance|autoridad técnica|no editar mongo|docker compose|write permission|topology:write|TelemetryBinding/i);
+        expect(body).not.toMatch(
+          /without developer assistance|autoridad técnica|no editar mongo|docker compose|write permission|topology:write|TelemetryBinding/i,
+        );
       }
     }
 
@@ -42,7 +44,9 @@ describe('Customer-facing Site Mapper Help Center', () => {
     expect(en.find((item) => item.slug === 'espacios-y-racks')?.searchText).toContain('draw');
     expect(es.find((item) => item.slug === 'conexiones')?.searchText).toContain('energia');
     expect(en.find((item) => item.slug === 'conexiones')?.searchText).toContain('power');
-    expect(es.find((item) => item.slug === 'manual-maestro')?.searchText).not.toContain('without developer assistance');
+    expect(es.find((item) => item.slug === 'manual-maestro')?.searchText).not.toContain(
+      'without developer assistance',
+    );
   });
 
   it('renders existing localized illustrations, never Mermaid source', async () => {
@@ -50,7 +54,9 @@ describe('Customer-facing Site Mapper Help Center', () => {
       for (const article of helpCatalog) {
         const markdown = await readHelpArticle(article, locale);
         for (const [, uri] of markdown.matchAll(/!\[[^\]]+\]\((\/help\/diagrams\/[^)]+)\)/g)) {
-          expect(uri).toMatch(/^\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings)\.svg$/);
+          expect(uri).toMatch(
+            /^\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings)\.svg$/,
+          );
           const file = join(root, 'public', uri!.slice(1));
           expect(existsSync(file), file).toBe(true);
           const svg = readFileSync(file, 'utf8');
@@ -60,7 +66,10 @@ describe('Customer-facing Site Mapper Help Center', () => {
         }
       }
     }
-    const renderer = readFileSync(join(root, 'src/modules/help/components/markdown-article.tsx'), 'utf8');
+    const renderer = readFileSync(
+      join(root, 'src/modules/help/components/markdown-article.tsx'),
+      'utf8',
+    );
     expect(renderer).toContain('help-illustration');
     expect(renderer).toContain('<Image ');
     expect(renderer).not.toContain('dangerouslySetInnerHTML');
@@ -69,9 +78,17 @@ describe('Customer-facing Site Mapper Help Center', () => {
 
   it('maps contextual routes only to published guides', () => {
     for (const route of [
-      '/workspace', '/blueprint/test', '/rack/test', '/device/test',
-      '/power/connect/equipment', '/power', '/telemetry',
-      '/settings', '/topology/test', '/network', '/warehouse',
+      '/workspace',
+      '/blueprint/test',
+      '/rack/test',
+      '/device/test',
+      '/power/connect/equipment',
+      '/power',
+      '/telemetry',
+      '/settings',
+      '/topology/test',
+      '/network',
+      '/warehouse',
     ]) {
       const slugs = recommendHelp(route);
       expect(slugs.length).toBeGreaterThan(0);

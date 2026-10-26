@@ -11,15 +11,15 @@ A veces un equipo aparece en el inventario, pero no muestra lecturas recientes. 
 
 ## ¿Qué significa cada mensaje?
 
-| Mensaje | Qué quiere decir |
-| --- | --- |
-| **LIVE** | Hay una lectura reciente |
-| **STALE** | La última lectura es antigua |
-| **NO DATA** | No hay un dato disponible para mostrar |
-| **UNMAPPED** | Todavía no se ha asociado una señal a ese equipo |
-| **AVAILABLE** | Una posición está libre |
-| **OCCUPIED** | Una posición ya está ocupada |
-| **CONNECTED** | Hay una conexión registrada |
+| Mensaje       | Qué quiere decir                                 |
+| ------------- | ------------------------------------------------ |
+| **LIVE**      | Hay una lectura reciente                         |
+| **STALE**     | La última lectura es antigua                     |
+| **NO DATA**   | No hay un dato disponible para mostrar           |
+| **UNMAPPED**  | Todavía no se ha asociado una señal a ese equipo |
+| **AVAILABLE** | Una posición está libre                          |
+| **OCCUPIED**  | Una posición ya está ocupada                     |
+| **CONNECTED** | Hay una conexión registrada                      |
 
 ## ¿Qué puedo hacer?
 

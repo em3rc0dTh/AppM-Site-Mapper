@@ -11,15 +11,15 @@ Sometimes a unit appears in the inventory but has no recent readings. These chec
 
 ## What do the messages mean?
 
-| Status | Meaning |
-| --- | --- |
-| **LIVE** | A recent reading is available |
-| **STALE** | The latest reading is old |
-| **NO DATA** | No value is available to show |
-| **UNMAPPED** | A signal has not yet been linked to the equipment |
-| **AVAILABLE** | A position is free |
-| **OCCUPIED** | A position is in use |
-| **CONNECTED** | A connection has been recorded |
+| Status        | Meaning                                           |
+| ------------- | ------------------------------------------------- |
+| **LIVE**      | A recent reading is available                     |
+| **STALE**     | The latest reading is old                         |
+| **NO DATA**   | No value is available to show                     |
+| **UNMAPPED**  | A signal has not yet been linked to the equipment |
+| **AVAILABLE** | A position is free                                |
+| **OCCUPIED**  | A position is in use                              |
+| **CONNECTED** | A connection has been recorded                    |
 
 ## What should I do?
 

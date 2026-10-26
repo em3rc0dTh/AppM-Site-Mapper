@@ -6,17 +6,17 @@ Think about finding equipment inside a building. First choose the location, then
 
 ## Main parts of your infrastructure
 
-| On-screen name | What it means |
-| --- | --- |
-| **Network** | A group of sites |
-| **Site** | A facility or location |
-| **Structure** | A building or structure |
-| **Level** | A floor or level |
-| **Room** | A room |
+| On-screen name     | What it means                       |
+| ------------------ | ----------------------------------- |
+| **Network**        | A group of sites                    |
+| **Site**           | A facility or location              |
+| **Structure**      | A building or structure             |
+| **Level**          | A floor or level                    |
+| **Room**           | A room                              |
 | **Bay / Position** | An area and a place inside the room |
-| **Rack** | The cabinet that holds equipment |
-| **Device** | A main unit inside a rack |
-| **Equipment** | A component inside that unit |
+| **Rack**           | The cabinet that holds equipment    |
+| **Device**         | A main unit inside a rack           |
+| **Equipment**      | A component inside that unit        |
 
 ## A simple example
 

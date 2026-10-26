@@ -24,12 +24,12 @@ When a unit sends data, you can view recent values and, when available, their hi
 
 They answer different questions:
 
-| Question | Where to look |
-| --- | --- |
-| Where is it? | EXPLORE / Blueprint |
-| What parts does it have? | Rack / Device / Equipment |
+| Question                 | Where to look                       |
+| ------------------------ | ----------------------------------- |
+| Where is it?             | EXPLORE / Blueprint                 |
+| What parts does it have? | Rack / Device / Equipment           |
 | What is it connected to? | PHYSICAL TERMINALS / VIEW POWERPATH |
-| What is it measuring? | LIVE TELEMETRY / Charts |
+| What is it measuring?    | LIVE TELEMETRY / Charts             |
 
 **You're done when:** you know which screen to open to find the information you need.
 

@@ -5,10 +5,7 @@ import { helpCatalog, type HelpEntry, type HelpLocale } from './catalog';
 
 /** Trusted, fixed filenames: route params must NEVER reach fs APIs. */
 export async function readHelpArticle(item: HelpEntry, locale: HelpLocale): Promise<string> {
-  return readFile(
-    path.join(process.cwd(), 'docs', 'help', locale, item.file),
-    'utf8',
-  );
+  return readFile(path.join(process.cwd(), 'docs', 'help', locale, item.file), 'utf8');
 }
 
 function fold(input: string): string {

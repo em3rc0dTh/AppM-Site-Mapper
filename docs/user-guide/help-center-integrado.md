@@ -4,11 +4,11 @@ El Help Center de la aplicación está dirigido a **usuarios finales**, no a des
 
 ## Contenido separado por público
 
-| Ubicación | Uso |
-| --- | --- |
-| docs/help/es/*.md | Guías sencillas en español |
-| docs/help/en/*.md | Guías equivalentes en inglés |
-| public/help/diagrams/es y /en | Diagramas SVG ya renderizados, con etiquetas por idioma |
+| Ubicación                         | Uso                                                              |
+| --------------------------------- | ---------------------------------------------------------------- |
+| docs/help/es/*.md                 | Guías sencillas en español                                       |
+| docs/help/en/*.md                 | Guías equivalentes en inglés                                     |
+| public/help/diagrams/es y /en     | Diagramas SVG ya renderizados, con etiquetas por idioma          |
 | docs/user-guide y docs/operations | Referencia detallada de técnicos, responsables y desarrolladores |
 
 La aplicación busca y muestra **solo** archivos aprobados de docs/help. Los manuales técnicos anteriores se conservan en el repositorio, pero no se consultan desde la vista de ayuda.

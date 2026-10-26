@@ -13,11 +13,11 @@ Algunos equipos envían lecturas que puedes consultar directamente en Site Mappe
 
 ## ¿Qué significa cada valor?
 
-| Dato | Qué muestra |
-| --- | --- |
-| **V / Voltage** | Voltaje |
-| **A / Current** | Corriente |
-| **W / Power** | Potencia |
+| Dato             | Qué muestra       |
+| ---------------- | ----------------- |
+| **V / Voltage**  | Voltaje           |
+| **A / Current**  | Corriente         |
+| **W / Power**    | Potencia          |
 | **kWh / Energy** | Energía acumulada |
 
 No todos los equipos muestran siempre las cuatro lecturas: depende de cómo esté configurada su información.

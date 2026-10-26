@@ -19,11 +19,11 @@ Check your email and password. If the problem continues, ask the person who mana
 
 The features you can see depend on your account type.
 
-| Account | What you can do |
-| --- | --- |
-| **Standard** | View spaces, equipment, connections and readings |
-| **Admin** | Also organize spaces and equipment where allowed |
-| **Superadmin** | Also manage user accounts |
+| Account        | What you can do                                  |
+| -------------- | ------------------------------------------------ |
+| **Standard**   | View spaces, equipment, connections and readings |
+| **Admin**      | Also organize spaces and equipment where allowed |
+| **Superadmin** | Also manage user accounts                        |
 
 ## Add a user (Superadmin only)
 

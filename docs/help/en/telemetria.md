@@ -13,11 +13,11 @@ Some units send readings to Site Mapper. You can see the latest available values
 
 ## What do these values mean?
 
-| Value | Meaning |
-| --- | --- |
-| **V / Voltage** | Voltage |
-| **A / Current** | Current |
-| **W / Power** | Power |
+| Value            | Meaning            |
+| ---------------- | ------------------ |
+| **V / Voltage**  | Voltage            |
+| **A / Current**  | Current            |
+| **W / Power**    | Power              |
 | **kWh / Energy** | Accumulated energy |
 
 Not every unit will always display all four values. That depends on the information available for the unit.

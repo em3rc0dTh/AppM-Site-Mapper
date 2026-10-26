@@ -108,11 +108,20 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
     }
     const key = 'block-' + serial++;
 
-    const illustration = /^!\[([^\]]{1,140})\]\((\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings)\.svg)\)$/.exec(current);
+    const illustration =
+      /^!\[([^\]]{1,140})\]\((\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings)\.svg)\)$/.exec(
+        current,
+      );
     if (illustration) {
       blocks.push(
         <figure className="help-illustration" key={key}>
-          <Image src={illustration[2]!} alt={illustration[1]!} width={1100} height={410} unoptimized />
+          <Image
+            src={illustration[2]!}
+            alt={illustration[1]!}
+            width={1100}
+            height={410}
+            unoptimized
+          />
         </figure>,
       );
       i++;
@@ -130,16 +139,14 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
       }
       i++;
       if (language === 'mermaid') {
-        blocks.push(<p key={key}>{locale === 'es' ? 'Diagrama no disponible.' : 'Diagram unavailable.'}</p>);
+        blocks.push(
+          <p key={key}>{locale === 'es' ? 'Diagrama no disponible.' : 'Diagram unavailable.'}</p>,
+        );
         continue;
       }
       blocks.push(
         <figure className="help-code" key={key}>
-          {language ? (
-            <figcaption>
-              {language}
-            </figcaption>
-          ) : null}
+          {language ? <figcaption>{language}</figcaption> : null}
           <pre>
             <code>{code.join('\n')}</code>
           </pre>

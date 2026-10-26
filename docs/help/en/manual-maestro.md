@@ -18,14 +18,14 @@ In the **Help Center**, search for a word such as “rack”, “power” or “
 
 ## Main sections
 
-| Section | What you can do |
-| --- | --- |
-| **EXPLORE** | Browse sites, buildings, rooms and racks |
-| **Blueprint** | View a room plan |
-| **WAREHOUSE** | Find available equipment templates |
-| **POWER** | Review equipment connections |
-| **LIVE TELEMETRY** | View the latest available readings |
-| **ADMIN** | Open your account's available settings |
+| Section            | What you can do                          |
+| ------------------ | ---------------------------------------- |
+| **EXPLORE**        | Browse sites, buildings, rooms and racks |
+| **Blueprint**      | View a room plan                         |
+| **WAREHOUSE**      | Find available equipment templates       |
+| **POWER**          | Review equipment connections             |
+| **LIVE TELEMETRY** | View the latest available readings       |
+| **ADMIN**          | Open your account's available settings   |
 
 Some options, such as adding rooms or changing connections, only appear if your account can make those changes.
 

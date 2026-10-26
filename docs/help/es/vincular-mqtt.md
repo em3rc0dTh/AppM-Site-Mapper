@@ -1,6 +1,6 @@
-# Vincular las lecturas MQTT de un breaker
+# Conectar las lecturas de un breaker
 
-Cuando un interruptor aparece en Site Mapper, aún puede faltar conectar **sus lecturas**. Esta guía explica cómo asociar una señal de medición al breaker correcto.
+Cuando un breaker ya aparece en su Panel, el siguiente paso puede ser **relacionarlo con sus mediciones**. Site Mapper utiliza MQTT para estas lecturas de circuito; no necesitas configurar el broker desde esta pantalla.
 
 ![De la señal al interruptor](/help/diagrams/es/mqtt.svg)
 
@@ -8,7 +8,7 @@ Cuando un interruptor aparece en Site Mapper, aún puede faltar conectar **sus l
 
 Necesitas tener un **Panel** con el breaker instalado en su posición real. La persona responsable debe haber confirmado cuál es la fuente de datos y qué punto corresponde a ese interruptor.
 
-## Asociar las lecturas
+## Relacionar el breaker con sus lecturas
 
 1. Abre el **Panel** que contiene el breaker.
 2. Busca **MQTT POINT COMMISSIONING**.
@@ -18,6 +18,12 @@ Necesitas tener un **Panel** con el breaker instalado en su posición real. La p
 6. Cuando se haya comprobado qué interruptor mide realmente esa señal, marca la casilla de verificación.
 7. Selecciona **Confirm and commission point**.
 8. Usa **Refresh commissioning** si necesitas actualizar el resultado.
+
+## Comprobar el resultado
+
+Cuando la asociación ya fue confirmada, abre el breaker y revisa **Telemetry**. Esta es la pantalla que te permite comprobar si realmente están llegando datos.
+
+![Ejemplo real de un breaker con lecturas recientes](/help/screenshots/breaker-live.webp)
 
 ## ¿Qué significan 0/4 y 4/4?
 

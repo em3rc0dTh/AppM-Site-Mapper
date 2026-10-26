@@ -256,7 +256,7 @@ export function CommissioningConsole({
   }, [initialDeviceId]);
 
   useEffect(() => {
-    if (!deviceId) { setOverview(null); return; }
+    if (!deviceId) return;
     let active = true;
     jsonRequest('/api/industrial/commissioning?' + new URLSearchParams({ deviceId }))
       .then((data) => { if (active) { setOverview(data as unknown as Overview); setError(''); } })
@@ -545,7 +545,7 @@ export function CommissioningConsole({
       <section style={{ display: 'grid', gap: 8 }}>
         <label style={fieldStyle}>BDFB existente
           <select style={inputStyle} value={deviceId} onChange={(event) => {
-            setDeviceId(event.target.value); setEquipmentId(''); setNotice('');
+            setDeviceId(event.target.value); setOverview(null); setEquipmentId(''); setNotice('');
           }}>
             <option value="">Seleccionar BDFB</option>
             {bdfbs.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}

@@ -58,6 +58,13 @@ interface CredentialMetadata {
   updatedBy?: string;
   lastRevealedAt?: string;
   lastRevealedBy?: string;
+  recentEvents?: {
+    id: string;
+    type: 'CREATED' | 'ROTATED' | 'REVEALED' | 'DELETED';
+    actorId: string;
+    occurredAt: string;
+    credentialRevision?: number;
+  }[];
 }
 interface CommissioningWarning {
   code: 'DUPLICATE_DECLARED_IP' | 'DUPLICATE_DECLARED_MAC' | 'DEFAULT_GATEWAY_OUTSIDE_SUBNET';
@@ -723,6 +730,21 @@ export function CommissioningConsole({
                         Última revelación: {credentialMetadata.lastRevealedAt} · usuario{' '}
                         {credentialMetadata.lastRevealedBy ?? '—'}
                       </small>
+                    ) : null}
+                    {credentialMetadata?.recentEvents?.length ? (
+                      <details>
+                        <summary>Auditoría de credencial ({credentialMetadata.recentEvents.length})</summary>
+                        <ul style={{ margin: '6px 0 0', paddingLeft: 20, fontSize: 12 }}>
+                          {credentialMetadata.recentEvents.map((event) => (
+                            <li key={event.id}>
+                              {event.type} · {event.occurredAt} · usuario {event.actorId}
+                              {event.credentialRevision !== undefined
+                                ? ' · rev. ' + event.credentialRevision
+                                : ''}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
                     ) : null}
                   </fieldset>
                   <label style={fieldStyle}>Estado de credencial documental / externa

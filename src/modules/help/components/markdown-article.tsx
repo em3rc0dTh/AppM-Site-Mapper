@@ -138,7 +138,7 @@ export function MarkdownHelpArticle({ text }: { text: string }) {
         <p key={j}>{inlineText(line)}</p>)}</blockquote>);
       continue;
     }
-    if (isTable(current) && i + 1 < lines.length && /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1])) {
+    if (isTable(current) && i + 1 < lines.length && /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1] ?? '')) {
       const headers = cellContent((lines[i] ?? ''));
       i += 2;
       const rows: string[][] = [];

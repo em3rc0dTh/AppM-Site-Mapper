@@ -2,13 +2,15 @@
 
 Inside a **Room**, Site Mapper displays a plan called the **Blueprint**. In normal mode you can inspect it; with editing access you can change its arrangement.
 
+![Room in normal view before editing its layout](/help/screenshots/room-blueprint.png)
+
 ## Before editing
 
 Open the correct Room and check its name. **EDIT ROOM** must be available for your account.
 
 ## Enter edit mode
 
-![Real EDIT ROOM view and tools](/help/screenshots/edit-room.webp)
+![Real EDIT ROOM view and tools](/help/screenshots/edit-room.png)
 
 1. Select **EDIT ROOM**.
 2. The top of the editor shows **EDIT · UNSAVED DRAFT**. Your changes have not been saved yet.
@@ -20,6 +22,8 @@ Open the correct Room and check its name. **EDIT ROOM** must be available for yo
    - **SELECT / EDIT** to select an existing item.
 
 ## Place a rack
+
+![Real Place Rack form inside the Room editor](/help/screenshots/place-rack.png)
 
 1. Open **+ Place Rack**.
 2. Enter a clear name.
@@ -33,7 +37,7 @@ Open the correct Room and check its name. **EDIT ROOM** must be available for yo
 
 ## Open the rack after saving
 
-![Real Rack Focus view inside a Room](/help/screenshots/rack-focus.webp)
+![Real Rack Focus view inside a Room](/help/screenshots/rack-focus.png)
 
 When you select a rack you may see different actions:
 

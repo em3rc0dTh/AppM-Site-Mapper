@@ -102,7 +102,8 @@ describe('Customer-facing Site Mapper Help Center', () => {
     expect(new Set(helpBeginnerPath).size).toBe(helpBeginnerPath.length);
     expect(helpBeginnerPath[0]).toBe('manual-maestro');
     expect(helpBeginnerPath.at(-1)).toBe('verificacion');
-    for (const slug of helpBeginnerPath) expect(all.has(slug), `Missing beginner guide ${slug}`).toBe(true);
+    for (const slug of helpBeginnerPath)
+      expect(all.has(slug), `Missing beginner guide ${slug}`).toBe(true);
     for (const [slug, uri] of Object.entries(helpScreenshotBySlug)) {
       expect(all.has(slug), `Screenshot mapped to unknown guide ${slug}`).toBe(true);
       expect(uri).toMatch(/^\/help\/screenshots\/[a-z0-9-]+\.webp$/);

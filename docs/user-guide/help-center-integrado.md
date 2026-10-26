@@ -50,7 +50,6 @@ El Help Center ofrece **23 guías en español y 23 en inglés**, conectadas en c
 
 **Aceptación pendiente:** revisar en navegador auténtico ambos idiomas, la secuencia de recorridos, pantallas con permisos, dispositivos móviles, y las acciones de guardar/archivar. CI certifica código y vínculos, no topología física ni resultados de usuario.
 
-
 ## Contrato editorial para usuarios nuevos
 
 La ayuda pública debe partir de **la tarea del usuario**, no del nombre interno del subsistema. El orden recomendado para una persona sin experiencia es:

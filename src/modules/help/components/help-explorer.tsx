@@ -62,13 +62,7 @@ export function HelpExplorer({
                 <Link href={'/help/' + slug} className="help-beginner-step">
                   {screenshot ? (
                     <span className="help-beginner-shot" aria-hidden="true">
-                      <Image
-                        src={screenshot}
-                        alt=""
-                        width={420}
-                        height={250}
-                        unoptimized
-                      />
+                      <Image src={screenshot} alt="" width={420} height={250} unoptimized />
                     </span>
                   ) : null}
                   <span className="help-beginner-copy">

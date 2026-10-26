@@ -14,10 +14,17 @@ export function ContextualHelp() {
   const [open, setOpen] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const suggestions = recommendHelp(pathname).map(getHelpEntry).filter((item) => item != null);
+  const suggestions = recommendHelp(pathname)
+    .map(getHelpEntry)
+    .filter((item) => item != null);
 
-  useEffect(() => { if (open) dialog.current?.showModal(); else dialog.current?.close(); }, [open]);
-  useEffect(() => { /* Changing the screen must also remove the previous context. */ setOpen(false); }, [pathname]);
+  useEffect(() => {
+    if (open) dialog.current?.showModal();
+    else dialog.current?.close();
+  }, [open]);
+  useEffect(() => {
+    /* Changing the screen must also remove the previous context. */ setOpen(false);
+  }, [pathname]);
 
   function close() {
     setOpen(false);
@@ -26,17 +33,38 @@ export function ContextualHelp() {
 
   return (
     <>
-      <button type="button" className="help-trigger" ref={trigger}
-        aria-haspopup="dialog" aria-label={t('openContext')} title={t('openContext')}
-        onClick={() => setOpen(true)}>
-        <span aria-hidden="true">?</span><span className="help-trigger-label">{t('help')}</span>
+      <button
+        type="button"
+        className="help-trigger"
+        ref={trigger}
+        aria-haspopup="dialog"
+        aria-label={t('openContext')}
+        title={t('openContext')}
+        onClick={() => setOpen(true)}
+      >
+        <span aria-hidden="true">?</span>
+        <span className="help-trigger-label">{t('help')}</span>
       </button>
-      <dialog ref={dialog} className="help-context-dialog" aria-label={t('contextHeading')}
-        onCancel={(event) => { event.preventDefault(); close(); }}
-        onClick={(event) => { if (event.target === event.currentTarget) close(); }}>
+      <dialog
+        ref={dialog}
+        className="help-context-dialog"
+        aria-label={t('contextHeading')}
+        onCancel={(event) => {
+          event.preventDefault();
+          close();
+        }}
+        onClick={(event) => {
+          if (event.target === event.currentTarget) close();
+        }}
+      >
         <header className="help-context-header">
-          <div><span className="help-eyebrow">{t('contextTag')}</span><h2>{t('contextHeading')}</h2></div>
-          <button type="button" className="help-close" onClick={close} aria-label={t('close')}>×</button>
+          <div>
+            <span className="help-eyebrow">{t('contextTag')}</span>
+            <h2>{t('contextHeading')}</h2>
+          </div>
+          <button type="button" className="help-close" onClick={close} aria-label={t('close')}>
+            ×
+          </button>
         </header>
         <p>{t('contextDescription')}</p>
         <div className="help-context-links">

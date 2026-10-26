@@ -1,7 +1,7 @@
 # Help Center de Site Mapper MK1 · Manual de uso y mantenimiento
 
 **Edición H1 · 26/10/2026.** Público: operadores, capacitadores y desarrolladores.  
-**Estado real:** centro de ayuda y documentación contextual implementados. Los tours automáticos, capturas faltantes y diagramas Mermaid renderizados *en la app* no están incluidos en H1.
+**Estado real:** centro de ayuda y documentación contextual implementados. Los tours automáticos, capturas faltantes y diagramas Mermaid renderizados _en la app_ no están incluidos en H1.
 
 ## 1. Qué es
 
@@ -27,24 +27,24 @@ El Help Center acompaña a Site Mapper: no es un producto externo, CMS ni servic
 
 ### Qué capítulo abrir según la necesidad
 
-| Quiero… | Capítulo |
-| --- | --- |
-| Entrar y gestionar mi cuenta | Primer acceso y usuarios |
-| Comprender Network, Room, Rack y Equipment | Conceptos esenciales |
-| Crear un Site/Structure/Level/Room | Crear y navegar entidades |
-| Dibujar una Room y colocar Rack | Dibujar la sala y colocar un Rack |
-| Componer Equipment y Panels | Device, Equipment y posiciones |
-| Entender puertos ocupados y Feed A/B | Conexiones físicas de potencia |
-| Comisionar MQTT y cuatro métricas | Commissioning MQTT |
+| Quiero…                                              | Capítulo                                            |
+| ---------------------------------------------------- | --------------------------------------------------- |
+| Entrar y gestionar mi cuenta                         | Primer acceso y usuarios                            |
+| Comprender Network, Room, Rack y Equipment           | Conceptos esenciales                                |
+| Crear un Site/Structure/Level/Room                   | Crear y navegar entidades                           |
+| Dibujar una Room y colocar Rack                      | Dibujar la sala y colocar un Rack                   |
+| Componer Equipment y Panels                          | Device, Equipment y posiciones                      |
+| Entender puertos ocupados y Feed A/B                 | Conexiones físicas de potencia                      |
+| Comisionar MQTT y cuatro métricas                    | Commissioning MQTT                                  |
 | Leer MQTT y SNMP separados, historia y salida Modbus | Recorrido de Login a MQTT, SNMP, Timescale y Modbus |
-| Diagnosticar LIVE, STALE, UNMAPPED o NO DATA | Comprobaciones y errores |
-| Aprender sin cambiar datos | Práctica guiada de solo lectura |
+| Diagnosticar LIVE, STALE, UNMAPPED o NO DATA         | Comprobaciones y errores                            |
+| Aprender sin cambiar datos                           | Práctica guiada de solo lectura                     |
 
 El material de laboratorio usa nombres sintéticos; **no** reutilices seriales, OIDs o puntos de esos ejemplos en equipos reales.
 
 ## 3. Arquitectura de H1
 
-~~~text
+```text
 docs/user-guide/*.md                              ← Fuente única
 src/modules/help/catalog.ts                        ← Allowlist, categorías, rutas
 src/modules/help/server.ts                         ← Lectura de archivo y búsqueda
@@ -54,7 +54,7 @@ src/modules/help/components/contextual-help.tsx    ← Sugerencias en la pantall
 src/app/help/page.tsx                              ← Centro de ayuda protegido
 src/app/help/[slug]/page.tsx                       ← Artículo protegido
 src/app/help.css                                   ← Estilo responsive
-~~~
+```
 
 No hay APIs nuevas, base de datos nueva, CMS, servicios terceros ni paquetes para la visualización.
 
@@ -81,12 +81,12 @@ No hay APIs nuevas, base de datos nueva, CMS, servicios terceros ni paquetes par
 
 ## 6. Hitos con evidencia separada
 
-| Hito | Estado |
-| --- | --- |
+| Hito                                                                              | Estado                                              |
+| --------------------------------------------------------------------------------- | --------------------------------------------------- |
 | H1: centro, buscador, lectura de Markdown, panel contextual, accesibilidad básica | Código implementado; pendiente validación CI/visual |
-| H2: fotografías reales exhaustivas anotadas y ensayo con operador autónomo | Pendiente |
-| H3: recorridos interactivos con controles, roles y estados validados | Pendiente |
-| H4: cuerpos completos de guías traducidos y validados en inglés | Pendiente |
+| H2: fotografías reales exhaustivas anotadas y ensayo con operador autónomo        | Pendiente                                           |
+| H3: recorridos interactivos con controles, roles y estados validados              | Pendiente                                           |
+| H4: cuerpos completos de guías traducidos y validados en inglés                   | Pendiente                                           |
 
 **H1 no debe calificarse como manual final ilustrado ni onboarding E2E certificado** hasta completar la matriz visual y el ensayo de usuario real.
 

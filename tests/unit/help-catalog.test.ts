@@ -31,9 +31,19 @@ describe('Site Mapper in-app help manual', () => {
   });
 
   it('links all contextual destinations to real articles', () => {
-    for (const route of ['/workspace', '/blueprint/test', '/rack/test', '/device/test',
-      '/power/connect/equipment', '/power', '/telemetry', '/settings',
-      '/topology/test', '/network', '/warehouse']) {
+    for (const route of [
+      '/workspace',
+      '/blueprint/test',
+      '/rack/test',
+      '/device/test',
+      '/power/connect/equipment',
+      '/power',
+      '/telemetry',
+      '/settings',
+      '/topology/test',
+      '/network',
+      '/warehouse',
+    ]) {
       const recommendations = recommendHelp(route);
       expect(recommendations.length).toBeGreaterThan(0);
       expect(new Set(recommendations).size).toBe(recommendations.length);
@@ -42,7 +52,10 @@ describe('Site Mapper in-app help manual', () => {
   });
 
   it('does not render untrusted Markdown as raw HTML', () => {
-    const renderer = readFileSync(join(process.cwd(), 'src/modules/help/components/markdown-article.tsx'), 'utf8');
+    const renderer = readFileSync(
+      join(process.cwd(), 'src/modules/help/components/markdown-article.tsx'),
+      'utf8',
+    );
     expect(renderer).not.toContain('dangerouslySetInnerHTML');
     expect(renderer).not.toContain('eval(');
   });

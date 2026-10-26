@@ -11,13 +11,17 @@ export default async function HelpCenterPage() {
   const auth = await requirePermission('topology:read');
   if (!auth.ok) redirect('/login');
   const [localeValue, t, entries] = await Promise.all([
-    getLocale(), getTranslations('help'), getHelpSearchIndex(),
+    getLocale(),
+    getTranslations('help'),
+    getHelpSearchIndex(),
   ]);
-  const locale = localeValue === 'es' ? 'es' as const : 'en' as const;
+  const locale = localeValue === 'es' ? ('es' as const) : ('en' as const);
 
   return (
     <main className="help-page">
-      <nav className="help-breadcrumb" aria-label={t('breadcrumb')}><span>{t('home')}</span></nav>
+      <nav className="help-breadcrumb" aria-label={t('breadcrumb')}>
+        <span>{t('home')}</span>
+      </nav>
       <header className="help-hero">
         <span className="help-eyebrow">{t('documentation')}</span>
         <h1>{t('heroTitle')}</h1>

@@ -9,7 +9,10 @@ export async function readHelpArticle(item: HelpEntry): Promise<string> {
 }
 
 function fold(input: string): string {
-  return input.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  return input
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
 }
 
 export type IndexedHelpEntry = HelpEntry & { searchText: string };
@@ -25,10 +28,16 @@ export async function getHelpSearchIndex(): Promise<IndexedHelpEntry[]> {
         .replace(/\s+/g, ' ');
       return {
         ...entry,
-        searchText: fold([
-          entry.title, entry.enTitle, entry.summary, entry.enSummary,
-          entry.keywords.join(' '), plain,
-        ].join(' ')),
+        searchText: fold(
+          [
+            entry.title,
+            entry.enTitle,
+            entry.summary,
+            entry.enSummary,
+            entry.keywords.join(' '),
+            plain,
+          ].join(' '),
+        ),
       };
     }),
   );

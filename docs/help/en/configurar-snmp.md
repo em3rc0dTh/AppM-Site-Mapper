@@ -1,6 +1,6 @@
-# Link SNMP readings to a DC input
+# Connect readings to a DC input
 
-On BDFB units, **main power inputs** may have readings separate from the individual breakers. This guide explains how to prepare an input and link its readings.
+On a BDFB, **main power inputs** are reviewed separately from individual breakers. Site Mapper can receive those measurements through SNMP. First identify the physical input, then connect its readings.
 
 ![From DC input to readings](/help/diagrams/en/snmp.svg)
 

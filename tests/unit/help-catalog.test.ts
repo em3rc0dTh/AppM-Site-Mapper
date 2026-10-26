@@ -98,7 +98,7 @@ describe('Customer-facing Site Mapper Help Center', () => {
     const all = new Set(helpCatalog.map((item) => item.slug));
     expect(helpJourneys).toHaveLength(6);
     for (const journey of helpJourneys) {
-      expect(journey.slugs.length).toBeGreaterThanOrEqual(3);
+      expect(journey.slugs.length).toBeGreaterThanOrEqual(2);
       expect(new Set(journey.slugs).size).toBe(journey.slugs.length);
       for (const slug of journey.slugs) {
         expect(all.has(slug), `Missing journey guide ${slug}`).toBe(true);

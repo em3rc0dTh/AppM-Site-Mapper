@@ -22,7 +22,7 @@ export default async function IndustrialCommissioningPage({
 
   return (
     <CommissioningConsole
-      initialDeviceId={initialDeviceId}
+      {...(initialDeviceId ? { initialDeviceId } : {})}
       canWrite={
         hasPermission(auth.value.role, 'settings:write') &&
         hasPermission(auth.value.role, 'topology:write')

@@ -1,4 +1,4 @@
-# Understand where readings come from
+# Understand where the data comes from
 
 Site Mapper can display measurements from different systems. You don't need to know how they are connected to inspect equipment.
 

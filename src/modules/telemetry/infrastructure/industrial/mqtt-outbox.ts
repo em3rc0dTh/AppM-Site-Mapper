@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readdir, readFile, writeFile, rename, unlink, stat } from 'node:fs/promises';
+import { mkdir, readdir, readFile, writeFile, rename, unlink, stat, open } from 'node:fs/promises';
 import { join } from 'node:path';
 import type { Envelope } from '@/modules/telemetry/domain/industrial/observations';
 /** Private persistent volume; one outbox directory per application replica. */
@@ -129,8 +129,11 @@ export class MqttObservationOutbox {
       const body = JSON.stringify({ ...envelope, captureId });
       if (Buffer.byteLength(body) > 300000) throw new Error('MQTT outbox capture too large');
       const file = captureId + '.json';
-      await writeFile(join(this.directory, file + '.tmp'), body, { mode: 0o600 });
+      const handle = await open(join(this.directory, file + '.tmp'), 'wx', 0o600);
+      try { await handle.writeFile(body); await handle.sync(); } finally { await handle.close(); }
       await rename(join(this.directory, file + '.tmp'), join(this.directory, file));
+      const directory = await open(this.directory, 'r');
+      try { await directory.sync(); } finally { await directory.close(); }
       this.files.add(file);
       this.counters.queued++;
       void this.flush();

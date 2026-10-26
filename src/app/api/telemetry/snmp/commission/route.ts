@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import {
   bdfbHardwareProfile,
   ELTEK_BDCBB_CONFIG_2,
@@ -87,7 +88,7 @@ export async function GET(request: Request) {
   );
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 403 });
   const powerAuth = await requirePermission('power:write');
@@ -217,7 +218,7 @@ export async function POST(request: Request) {
 }
 
 /** Explicitly retire a binding, preserving its audit history. */
-export async function DELETE(request: Request) {
+async function handleDELETE(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 403 });
   const powerAuth = await requirePermission('power:write');
@@ -249,4 +250,12 @@ export async function DELETE(request: Request) {
     updatedAt: new Date().toISOString(),
   });
   return Response.json({ retired: true, bindingId: binding.id });
+}
+
+export async function POST(request: Request) {
+  try { return await handlePOST(request); } catch (error) { return integrityErrorResponse(error); }
+}
+
+export async function DELETE(request: Request) {
+  try { return await handleDELETE(request); } catch (error) { return integrityErrorResponse(error); }
 }

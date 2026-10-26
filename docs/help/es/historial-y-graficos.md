@@ -1,6 +1,6 @@
-# Revisar el historial y los gráficos
+# Ver cómo cambiaron las lecturas
 
-Un gráfico sirve para comprobar **cómo cambió una lectura con el tiempo**. No siempre describe lo que ocurre en este instante.
+El historial responde una pregunta sencilla: **¿cómo cambió esta medición durante las últimas horas o días?** Un valor histórico no siempre describe lo que ocurre ahora mismo.
 
 ![Mediciones y circuitos](/help/diagrams/es/readings.svg)
 

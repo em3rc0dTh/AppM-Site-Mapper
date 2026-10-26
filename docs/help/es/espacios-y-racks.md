@@ -1,33 +1,53 @@
-# Dibujar una sala y colocar un rack
+# Organizar una sala y colocar un rack
 
-El plano de una sala se llama **Blueprint**. Desde allí puedes ver dónde están los racks y organizar sus posiciones.
+Dentro de una **Room**, Site Mapper muestra un plano llamado **Blueprint**. En modo normal puedes inspeccionarlo; con permisos de edición puedes cambiar su distribución.
 
-![Ejemplo de un plano con un rack](/help/diagrams/es/rack.svg)
+## Antes de editar
 
-## Antes de empezar
+Abre la Room correcta y revisa su nombre. El botón **EDIT ROOM** debe estar disponible para tu cuenta.
 
-Abre la **Room** en la que quieres trabajar. Si vas a realizar cambios, necesitas que tu cuenta tenga permiso de edición.
+## Entrar al modo de edición
 
-## Colocar un rack en el plano
+![Vista real de EDIT ROOM y sus herramientas](/help/screenshots/edit-room.webp)
 
-1. Abre el **Blueprint** de la sala.
-2. Selecciona **EDIT ROOM**.
-3. Si necesitas dibujar un área, usa **+ Draw Bay / Cluster**.
-4. Puedes agregar un espacio libre con **+ Place Empty Position**.
-5. Selecciona **+ Place Rack**.
-6. Indica la información del rack que se solicita y elige su ubicación en el plano.
-7. Comprueba que el rack está en el lugar correcto.
-8. Selecciona **SAVE LAYOUT** para guardar.
-9. Abre otra pantalla y regresa al plano para comprobar que el rack sigue allí.
+1. Selecciona **EDIT ROOM**.
+2. La parte superior mostrará **EDIT · UNSAVED DRAFT**. Eso significa que todavía estás trabajando en un borrador.
+3. En el panel lateral puedes encontrar:
+   - **EDIT ROOM BOUNDARY** para modificar el contorno de la sala.
+   - **+ Draw Bay / Cluster** para dibujar una zona.
+   - **+ Place Rack** para colocar un rack.
+   - **+ Place Empty Position** para reservar una posición vacía.
+   - **SELECT / EDIT** para seleccionar un elemento ya existente.
 
-## ¿Por qué debo guardar el plano?
+## Colocar un rack
 
-Mientras editas, los cambios pueden ser solo un borrador. **SAVE LAYOUT** es el paso que confirma la distribución.
+1. Abre **+ Place Rack**.
+2. Escribe un nombre reconocible.
+3. Elige el **Bay / Cluster** correspondiente.
+4. Revisa ancho, profundidad y capacidad U si la pantalla los solicita.
+5. Colócalo en la posición indicada por el canvas.
+6. Comprueba visualmente que el rack quedó dentro de la zona correcta.
+7. Selecciona **SAVE LAYOUT**.
 
-## Si algo no aparece
+**SAVE LAYOUT es el paso que hace persistente la distribución.** Si seleccionas **Cancel** antes de guardar, los cambios del borrador no deben considerarse confirmados.
 
-Si no ves **EDIT ROOM**, revisa que hayas abierto una sala y no el edificio completo. También es posible que tu cuenta sea de consulta.
+## Abrir el rack después de guardarlo
 
-**Al terminar:** verás el rack en la sala elegida y podrás abrir su ficha para conocer los equipos que contiene.
+![Vista real de Rack Focus dentro de una Room](/help/screenshots/rack-focus.webp)
 
-[Siguiente: revisar los equipos](equipos-y-posiciones.md).
+Al seleccionar un rack puedes encontrar acciones diferentes:
+
+- **Open rack focus**: abre una vista rápida del rack.
+- **OPEN RACK ELEVATION**: muestra su ocupación en unidades U.
+- **TRACE POWER**: sigue sus conexiones de alimentación registradas.
+- **INSPECT**: muestra información del objeto sin moverlo.
+
+No confundas **abrir o inspeccionar** con **editar la distribución**.
+
+## Si Remove selected está bloqueado
+
+El objeto puede contener otros elementos. Por ejemplo, una Position puede contener un Rack y un Rack puede contener Equipment. Revisa primero sus dependencias; no retires objetos en cascada solo para conseguir guardar.
+
+**Resultado esperado:** al salir y volver a la Room, el rack aparece en la posición guardada y puedes abrirlo desde el plano.
+
+[Siguiente: ver y organizar los equipos de un rack](equipos-y-posiciones.md).

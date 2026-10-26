@@ -444,12 +444,16 @@ export const helpBeginnerPath: readonly string[] = [
 ];
 
 export const helpScreenshotBySlug: Readonly<Record<string, string>> = {
-  entidades: '/help/screenshots/create-site.webp',
-  'espacios-y-racks': '/help/screenshots/edit-room.webp',
-  'equipos-y-posiciones': '/help/screenshots/rack-focus.webp',
-  'panel-y-breakers': '/help/screenshots/breaker-live.webp',
-  conexiones: '/help/screenshots/power-path.webp',
-  telemetria: '/help/screenshots/breaker-live.webp',
+  'manual-maestro': '/help/screenshots/workspace-overview.png',
+  conceptos: '/help/screenshots/room-blueprint.png',
+  entidades: '/help/screenshots/create-site.png',
+  'espacios-y-racks': '/help/screenshots/edit-room.png',
+  'equipos-y-posiciones': '/help/screenshots/rack-elevation.png',
+  'panel-y-breakers': '/help/screenshots/panel-breakers.png',
+  conexiones: '/help/screenshots/power-path.png',
+  telemetria: '/help/screenshots/breaker-live.png',
+  'historial-y-graficos': '/help/screenshots/history-charts.png',
+  verificacion: '/help/screenshots/breaker-live.png',
 };
 
 export function getHelpJourneyForArticle(slug: string) {

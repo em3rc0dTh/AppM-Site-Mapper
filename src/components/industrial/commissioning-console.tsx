@@ -9,6 +9,8 @@ interface Equipment {
   equipmentType: string;
   model?: string;
   serialNumber?: string;
+  partNumber?: string;
+  aliases?: string[];
 }
 interface Evidence {
   projectId: string;
@@ -25,8 +27,6 @@ interface Evidence {
 interface Profile {
   equipmentId: string;
   role: 'GATEWAY' | 'METER';
-  alias?: string;
-  partNumber?: string;
   recordStatus: 'DECLARED' | 'FIELD_VERIFIED';
   gatewayEquipmentId?: string;
   sourceIdentity?: string;
@@ -100,8 +100,6 @@ export function CommissioningConsole({
   const [equipmentId, setEquipmentId] = useState('');
   const [equipmentSearch, setEquipmentSearch] = useState('');
   const [gatewayEquipmentId, setGatewayEquipmentId] = useState('');
-  const [alias, setAlias] = useState('');
-  const [partNumber, setPartNumber] = useState('');
   const [recordStatus, setRecordStatus] = useState<'DECLARED' | 'FIELD_VERIFIED'>('DECLARED');
   const [sourceIdentity, setSourceIdentity] = useState('');
   const [macAddress, setMacAddress] = useState('');
@@ -214,8 +212,8 @@ export function CommissioningConsole({
         item.name,
         item.model,
         item.serialNumber,
-        profile?.alias,
-        profile?.partNumber,
+        ...(item.aliases ?? []),
+        item.partNumber,
         profile?.macAddress,
         profile?.gatewayNumber,
         profile?.meterNumber,
@@ -254,8 +252,6 @@ export function CommissioningConsole({
     if (!current) {
       setRole('GATEWAY');
       setGatewayEquipmentId('');
-      setAlias('');
-      setPartNumber('');
       setRecordStatus('DECLARED');
       setSourceIdentity('');
       setMacAddress('');
@@ -282,8 +278,6 @@ export function CommissioningConsole({
     }
     setRole(current.role);
     setGatewayEquipmentId(current.gatewayEquipmentId ?? '');
-    setAlias(current.alias ?? '');
-    setPartNumber(current.partNumber ?? '');
     setRecordStatus(current.recordStatus);
     setSourceIdentity(current.sourceIdentity ?? '');
     setMacAddress(current.macAddress ?? '');
@@ -374,8 +368,6 @@ export function CommissioningConsole({
       recordStatus,
       rs485,
       evidence,
-      ...(alias.trim() ? { alias: alias.trim() } : {}),
-      ...(partNumber.trim() ? { partNumber: partNumber.trim() } : {}),
       ...(role === 'GATEWAY' ? {
         ...(sourceIdentity.trim() ? { sourceIdentity: sourceIdentity.trim() } : {}),
         ...(macAddress.trim() ? { macAddress: macAddress.trim() } : {}),
@@ -457,14 +449,11 @@ export function CommissioningConsole({
                 <label style={fieldStyle}>Equipment
                   <select required style={inputStyle} value={equipmentId} onChange={(event) => selectProfile(event.target.value)}>
                     <option value="">Seleccionar equipo</option>
-                    {filteredEquipment.map((item) => {
-                      const profile = profileByEquipmentId.get(item.id);
-                      return (
-                        <option key={item.id} value={item.id}>
-                          {profile?.alias ? profile.alias + ' · ' : ''}{item.name} · {item.equipmentType}
-                        </option>
-                      );
-                    })}
+                    {filteredEquipment.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.aliases?.[0] ? item.aliases[0] + ' · ' : ''}{item.name} · {item.equipmentType}
+                      </option>
+                    ))}
                   </select>
                 </label>
                 <label style={fieldStyle}>Función
@@ -476,20 +465,25 @@ export function CommissioningConsole({
                 </label>
               </div>
               <div style={gridStyle}>
-                <label style={fieldStyle}>Alias / NE Name / TID
+                <label style={fieldStyle}>Aliases / NE Name / TID (Equipment)
                   <input
                     style={inputStyle}
-                    value={alias}
-                    onChange={(event) => setAlias(event.target.value)}
-                    placeholder="Nombre operativo para búsqueda"
+                    readOnly
+                    value={
+                      allowedEquipment.find((item) => item.id === equipmentId)?.aliases?.join(', ') ??
+                      ''
+                    }
+                    placeholder="Se administra en Equipment"
                   />
                 </label>
-                <label style={fieldStyle}>Part Number (P/N)
+                <label style={fieldStyle}>Part Number (P/N) (Equipment)
                   <input
                     style={inputStyle}
-                    value={partNumber}
-                    onChange={(event) => setPartNumber(event.target.value)}
-                    placeholder="Ej. AWT100-CEHW"
+                    readOnly
+                    value={
+                      allowedEquipment.find((item) => item.id === equipmentId)?.partNumber ?? ''
+                    }
+                    placeholder="Se administra en Equipment"
                   />
                 </label>
                 <label style={fieldStyle}>Estado del registro
@@ -739,7 +733,14 @@ export function CommissioningConsole({
             {overview.profiles.length > 0 &&
               <div style={gridStyle}>{overview.profiles.map((item) =>
                 <article key={item.equipmentId} style={{ border: '1px solid #c8ced6', borderRadius: 8, padding: 12 }}>
-                  <strong>{item.alias ? item.alias + ' · ' : ''}{equipmentName(item.equipmentId)}</strong>
+                  <strong>
+                    {overview.equipment.find((equipment) => equipment.id === item.equipmentId)
+                      ?.aliases?.[0]
+                      ? overview.equipment.find((equipment) => equipment.id === item.equipmentId)!
+                          .aliases![0] + ' · '
+                      : ''}
+                    {equipmentName(item.equipmentId)}
+                  </strong>
                   <div>
                     {item.role} · {item.role === 'GATEWAY'
                       ? (item.network?.services
@@ -751,7 +752,10 @@ export function CommissioningConsole({
                       : ''}
                   </div>
                   <small>
-                    {item.recordStatus} · {item.partNumber ?? 'P/N —'}
+                    {item.recordStatus} · {
+                      overview.equipment.find((equipment) => equipment.id === item.equipmentId)
+                        ?.partNumber ?? 'P/N —'
+                    }
                     {item.role === 'GATEWAY' && item.macAddress ? ' · ' + item.macAddress : ''}
                     {item.role === 'GATEWAY' && item.loginUsername
                       ? ' · login ' + item.loginUsername

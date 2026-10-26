@@ -31,6 +31,10 @@ Comprueba con la persona responsable cuál es el tipo de equipo instalado. Site 
 
 ## Ver el resultado
 
+![BDFB Physical View ayuda a ubicar el Panel y la entrada que estás revisando](/help/screenshots/bdfb-physical.png)
+
+![Inputs muestra cada entrada DC con su estado y lecturas recibidas](/help/screenshots/snmp-inputs.png)
+
 Abre **INSPECTOR → Inputs** en el BDFB. Si ya se reciben mediciones, verás valores y estados. Para consultar periodos anteriores, utiliza **Charts**.
 
 **Resultado:** sabes qué entrada estás revisando, de qué controlador vienen sus datos y si las lecturas están disponibles.

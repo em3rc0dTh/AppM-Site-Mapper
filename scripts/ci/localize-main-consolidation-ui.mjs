@@ -103,6 +103,7 @@ const spanishToEnglish = new Map(Object.entries({
   'Password del Equipment': 'Equipment password',
   'Nueva contraseña / rotación': 'New password / rotation',
   'Contraseña revelada': 'Revealed password',
+  'Sin contraseña cifrada guardada': 'No encrypted password stored',
   'Eliminar contraseña guardada': 'Delete stored password',
   'Última revelación:': 'Last reveal:',
   'Auditoría de credencial (': 'Credential audit (',

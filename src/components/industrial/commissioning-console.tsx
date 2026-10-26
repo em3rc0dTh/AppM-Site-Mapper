@@ -269,8 +269,8 @@ export function CommissioningConsole({
               </div>
               {role === 'GATEWAY' ? (
                 <div style={gridStyle}>
-                  <label style={fieldStyle}>Identidad MQTT del publicador
-                    <input required style={inputStyle} value={sourceIdentity} onChange={(event) => setSourceIdentity(event.target.value)} placeholder="Fuente declarada por el gateway" />
+                  <label style={fieldStyle}>Identidad MQTT del publicador (cuando esté confirmada)
+                    <input style={inputStyle} value={sourceIdentity} onChange={(event) => setSourceIdentity(event.target.value)} placeholder="No inventar: dejar vacío si aún no está confirmada" />
                   </label>
                   <label style={fieldStyle}>IPv4
                     <input required style={inputStyle} value={ip} onChange={(event) => setIp(event.target.value)} placeholder="192.168.x.x" />
@@ -361,7 +361,11 @@ export function CommissioningConsole({
               <div style={gridStyle}>{overview.profiles.map((item) =>
                 <article key={item.equipmentId} style={{ border: '1px solid #c8ced6', borderRadius: 8, padding: 12 }}>
                   <strong>{equipmentName(item.equipmentId)}</strong>
-                  <div>{item.role} · {item.role === 'GATEWAY' ? item.sourceIdentity : 'Slave ' + item.rs485.slaveId}</div>
+                  <div>
+                    {item.role} · {item.role === 'GATEWAY'
+                      ? (item.sourceIdentity ?? 'MQTT identity pendiente')
+                      : 'Slave ' + item.rs485.slaveId}
+                  </div>
                   <small>Revisión {item.revisionNumber} · {item.evidence.documentName} / {item.evidence.revision}</small>
                   <div><button type="button" onClick={() => selectProfile(item.equipmentId)}>Editar configuración</button></div>
                 </article>)}</div>}

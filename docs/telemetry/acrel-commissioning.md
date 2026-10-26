@@ -37,11 +37,30 @@ separate concepts are represented:
 
 The encryption key is supplied only at runtime through `SITE_MAPPER_CREDENTIAL_KEY` and is not
 stored in MongoDB. The credential API returns metadata by default; plaintext is returned only by
-an explicit authorized reveal action. Reveal timestamp/user are recorded separately from password
-modification timestamp/user.
+an explicit authorized reveal action. Credential lifecycle auditing is append-only:
+`CREATED / ROTATED / REVEALED / DELETED`. Reveal events do not rotate the credential revision
+and never contain the secret.
 
 The console search indexes canonical Equipment name/model/serial/P/N/aliases plus commissioning
 MAC, gateway/meter number and login username.
+
+### Documentary preflight and readiness
+
+Saved C&P values remain declarative and are not silently corrected. The overview performs
+non-blocking preflight checks and marks them `FIELD_CONFIRMATION_REQUIRED` when it detects:
+
+- the same declared gateway IPv4 address on more than one commissioned gateway;
+- the same declared gateway MAC address on more than one commissioned gateway;
+- a declared default gateway that is outside the IPv4 subnet described by the gateway IP/mask.
+
+These findings never reject profile persistence. They are evidence prompts for field confirmation,
+not proof that a customer document is wrong.
+
+The overview also derives readiness without creating new domain state. Gateway/meter progress is
+projected from persisted profiles and bindings through stages such as network pending, MQTT
+identity pending, meter ready, partial/complete channel mapping and field verified. A final
+`FIELD_VERIFIED` readiness requires the relevant profiles to be marked field-verified and all
+declared meter channels to have confirmed mappings.
 
 ### Gateway profile
 
@@ -105,6 +124,9 @@ document alone does not prove the channel-to-breaker correspondence.
   by `revisionNumber`, storing bounded previous revisions. Memory mode uses a process singleton.
 - `industrial_credentials`, one encrypted password record per Equipment. Ciphertext, 12-byte IV
   and GCM authentication tag are persisted; the 32-byte encryption key remains a runtime secret.
+- `industrial_credential_events`, append-only audit events for `CREATED`, `ROTATED`,
+  `REVEALED` and `DELETED`. Events store Equipment ID, actor, timestamp and credential revision
+  only; they never contain plaintext, ciphertext or password-derived material.
 - Existing `telemetry_bindings`, with provenance in `attributes`.
 - Unique indexes for equipment, gateway publisher identity, and gateway+slave address.
 - Breaker Equipment inspectors show the confirmed gateway → meter → channel → raw-point path and

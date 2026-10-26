@@ -39,6 +39,8 @@ export interface InstantiateTemplateInput {
   /** Operational Device identity created in Topology. */
   readonly name: string;
   readonly serialNumber?: string;
+  readonly partNumber?: string;
+  readonly aliases?: readonly string[];
   readonly category?: string;
   readonly deviceType?: DeviceType;
   /** Optional instance override for legacy/simple Warehouse templates. */
@@ -56,6 +58,8 @@ export interface InstantiateChildEquipmentInput {
   readonly slotIndex?: number;
   readonly name?: string;
   readonly serialNumber?: string;
+  readonly partNumber?: string;
+  readonly aliases?: readonly string[];
   readonly category?: string;
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
@@ -261,6 +265,8 @@ export class WarehouseInstantiationService {
         ? { telemetryPointPrefix: input.telemetryPointPrefix }
         : {}),
       ...(input.serialNumber?.trim() ? { serialNumber: input.serialNumber.trim() } : {}),
+      ...(input.partNumber?.trim() ? { partNumber: input.partNumber.trim() } : {}),
+      ...(input.aliases?.length ? { aliases: input.aliases } : {}),
       ...(category ? { category } : {}),
       ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
       ...(template.model ? { model: template.model } : {}),

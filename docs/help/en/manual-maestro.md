@@ -12,6 +12,8 @@ If this is your first time, you do not need to memorize every object name. Start
 
 The top bar contains **Search**, **?**, **EXPLORE**, **WAREHOUSE** and your account options.
 
+![Site Mapper home screen with infrastructure summary and direct access](/help/screenshots/workspace-overview.png)
+
 ## Your most common journey
 
 ![Overview of the main tasks](/help/diagrams/en/overview.svg)

@@ -7,6 +7,7 @@ import { Suspense, useState, type ReactNode } from 'react';
 
 import { CommandPalette } from './command-palette';
 import { ContextTracker } from './context-tracker';
+import { ContextualHelp } from '@/modules/help/components/contextual-help';
 
 function BrandMark() {
   return (
@@ -93,6 +94,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <ContextTracker />
         </Suspense>
         <CommandPalette />
+        <ContextualHelp />
 
         <Link className="zip-explore" href="/network">
           {t('explore')} <b>⌄</b>

@@ -130,7 +130,8 @@
     "warehouse": "ALMACÉN",
     "admin": "ADMINISTRACIÓN",
     "signOut": "Cerrar sesión",
-    "signOutError": "No se pudo cerrar la sesión. Inténtalo nuevamente."
+    "signOutError": "No se pudo cerrar la sesión. Inténtalo nuevamente.",
+    "helpCenter": "CENTRO DE AYUDA"
   },
   "auth": {
     "login": {

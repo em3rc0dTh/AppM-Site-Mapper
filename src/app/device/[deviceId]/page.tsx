@@ -15,6 +15,7 @@ import { ContextPin } from '@/components/workspace/context-pin';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { PowerContractService } from '@/modules/inventory/application/power-contract-service';
+import { createCommunicationProfileRepository } from '@/modules/industrial/infrastructure/communication-profile-repository';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
 import type { PortConnectionView } from '@/modules/power/domain/port-connection-view';
@@ -29,6 +30,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const canWritePower = hasPermission(auth.value.role, 'power:write');
   const canWriteTopology = hasPermission(auth.value.role, 'topology:write');
   const canReadTelemetry = hasPermission(auth.value.role, 'telemetry:read');
+  const canReadIndustrialSettings = hasPermission(auth.value.role, 'settings:read');
   const { deviceId } = await params;
   const repo = await createTopologyRepository();
   const service = new TopologyService(repo);
@@ -114,6 +116,80 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             metric: binding.metric,
           }))
       : [];
+
+  let acrelMapping: {
+    sourceIdentity: string;
+    rawPointId: string;
+    channel: number;
+    confirmedBy: string;
+    confirmedAt: string;
+    evidence?: { projectId?: string; documentName?: string; revision?: string; reference?: string };
+    gatewayName: string;
+    meterName: string;
+    network?: { ip: string; mask: string; gateway: string; port: number; protocol: string };
+    rs485?: { baudRate: number; dataBits: number; parity: string; stopBits: number; slaveId?: number };
+  } | null = null;
+
+  if (
+    canReadIndustrialSettings &&
+    node.kind === 'EQUIPMENT' &&
+    node.equipmentType === 'CIRCUIT_BREAKER'
+  ) {
+    const bindingRepository = await createTelemetryBindingRepository();
+    const confirmed = (await bindingRepository.listForTarget('EQUIPMENT', node.id)).find(
+      (binding) =>
+        binding.lifecycle === 'ACTIVE' &&
+        binding.protocol === 'MQTT' &&
+        binding.sourcePointId &&
+        binding.attributes?.commissioning === 'ACREL_VERIFIED_CHANNEL',
+    );
+    if (confirmed?.sourcePointId) {
+      const attrs = confirmed.attributes ?? {};
+      const meterId = typeof attrs.meterEquipmentId === 'string' ? attrs.meterEquipmentId : '';
+      const gatewayId =
+        typeof attrs.gatewayEquipmentId === 'string' ? attrs.gatewayEquipmentId : '';
+      const channel = typeof attrs.channel === 'number' ? attrs.channel : Number.NaN;
+      const confirmedBy = typeof attrs.confirmedBy === 'string' ? attrs.confirmedBy : '';
+      const confirmedAt = typeof attrs.confirmedAt === 'string' ? attrs.confirmedAt : '';
+      const evidence =
+        attrs.evidence && typeof attrs.evidence === 'object' && !Array.isArray(attrs.evidence)
+          ? (attrs.evidence as {
+              projectId?: string;
+              documentName?: string;
+              revision?: string;
+              reference?: string;
+            })
+          : undefined;
+      if (meterId && gatewayId && Number.isInteger(channel) && confirmedBy && confirmedAt) {
+        const profileRepository = await createCommunicationProfileRepository();
+        const [meterProfile, gatewayProfile, meterNode, gatewayNode] = await Promise.all([
+          profileRepository.get(meterId),
+          profileRepository.get(gatewayId),
+          repo.getById(meterId),
+          repo.getById(gatewayId),
+        ]);
+        if (
+          meterProfile?.role === 'METER' &&
+          gatewayProfile?.role === 'GATEWAY' &&
+          meterProfile.gatewayEquipmentId === gatewayId
+        ) {
+          acrelMapping = {
+            sourceIdentity: confirmed.sourceIdentity,
+            rawPointId: confirmed.sourcePointId,
+            channel,
+            confirmedBy,
+            confirmedAt,
+            ...(evidence ? { evidence } : {}),
+            gatewayName:
+              gatewayNode?.kind === 'EQUIPMENT' ? gatewayNode.name : gatewayProfile.equipmentId,
+            meterName: meterNode?.kind === 'EQUIPMENT' ? meterNode.name : meterProfile.equipmentId,
+            ...(gatewayProfile.network ? { network: gatewayProfile.network } : {}),
+            rs485: meterProfile.rs485,
+          };
+        }
+      }
+    }
+  }
 
   const familyPortIds = new Set(
     familyEquipment.flatMap((item) =>
@@ -239,6 +315,59 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dd>{hasFeedA ? t('pathRecorded') : t('noPath')}</dd>
                     <dt>{t('powerB')}</dt>
                     <dd>{hasFeedB ? t('pathRecorded') : t('noPath')}</dd>
+                    {node.equipmentType === 'CIRCUIT_BREAKER' && canReadIndustrialSettings ? (
+                      acrelMapping ? (
+                        <>
+                          <dt>Acrel</dt>
+                          <dd>
+                            {acrelMapping.gatewayName} → {acrelMapping.meterName} → CH
+                            {acrelMapping.channel} → {acrelMapping.rawPointId}
+                          </dd>
+                          <dt>Fuente MQTT</dt>
+                          <dd>{acrelMapping.sourceIdentity}</dd>
+                          {acrelMapping.network ? (
+                            <>
+                              <dt>Gateway network</dt>
+                              <dd>
+                                {acrelMapping.network.ip}/{acrelMapping.network.mask} · GW{' '}
+                                {acrelMapping.network.gateway} · {acrelMapping.network.protocol}:
+                                {acrelMapping.network.port}
+                              </dd>
+                            </>
+                          ) : null}
+                          {acrelMapping.rs485 ? (
+                            <>
+                              <dt>RS485 / Modbus RTU</dt>
+                              <dd>
+                                Slave {acrelMapping.rs485.slaveId ?? '—'} ·{' '}
+                                {acrelMapping.rs485.baudRate} · {acrelMapping.rs485.dataBits}
+                                {acrelMapping.rs485.parity === 'NONE'
+                                  ? 'N'
+                                  : acrelMapping.rs485.parity === 'EVEN'
+                                    ? 'E'
+                                    : 'O'}
+                                {acrelMapping.rs485.stopBits}
+                              </dd>
+                            </>
+                          ) : null}
+                          <dt>Evidencia</dt>
+                          <dd>
+                            {acrelMapping.evidence?.projectId ?? '—'} ·{' '}
+                            {acrelMapping.evidence?.documentName ?? '—'} · rev.{' '}
+                            {acrelMapping.evidence?.revision ?? '—'}
+                          </dd>
+                          <dt>Confirmación</dt>
+                          <dd>
+                            {acrelMapping.confirmedAt} · usuario {acrelMapping.confirmedBy}
+                          </dd>
+                        </>
+                      ) : (
+                        <>
+                          <dt>Acrel</dt>
+                          <dd>Sin mapeo físico Acrel confirmado</dd>
+                        </>
+                      )
+                    ) : null}
                   </dl>
                   <FullPowerTraceModal entityId={node.id} />
                   {room && rackNode ? (

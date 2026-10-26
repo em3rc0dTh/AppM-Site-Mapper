@@ -12,28 +12,28 @@ Las capturas pueden contener nombres y valores de ejemplo. El Help Center debe e
 
 Se publican **20 capturas reales en PNG de resolución original**, almacenadas dentro del propio build en `public/help/screenshots/`. No dependen de CDN ni de URLs temporales y pueden abrirse a tamaño completo desde el artículo.
 
-| Asset publicado | Captura fuente | Uso principal |
-| --- | --- | --- |
-| `workspace-overview.png` | 12:32:01 | Primera orientación y Direct Access |
-| `create-site.png` | 12:32:11 | + CREATE SITE y nombre |
-| `draw-site-boundary.png` | 12:32:18 | Draw/select y Finish boundary |
-| `create-structure.png` | 12:32:31 | Crear Structure dentro de Site |
-| `create-level.png` | 12:32:43 | Crear Level dentro de Structure |
-| `create-room.png` | 12:32:55 | Crear Room dentro de Level |
-| `room-blueprint.png` | 12:33:01 | Room en modo normal |
-| `place-rack.png` | 12:33:17 | Place Rack y parámetros |
-| `edit-room.png` | 12:33:23 | EDIT ROOM, borrador y SAVE LAYOUT |
-| `rack-focus.png` | 12:33:43 | Rack Focus / Elevation / Trace Power |
-| `rack-elevation.png` | 12:33:49 | U disponibles, reservadas y equipadas |
-| `rack-cas.png` | 12:33:56 | Reserva, montaje y allocation |
-| `bdfb-physical.png` | 12:34:35 | Chassis, Frames, Panels y posiciones |
-| `snmp-inputs.png` | 12:34:40 | Entradas A/B y lecturas SNMP |
-| `history-charts.png` | 12:34:43 | Historial SNMP y MQTT |
-| `panel-empty.png` | 12:34:57 | 0/24: capacidad sin breakers instalados |
-| `panel-breakers.png` | 12:35:04 | 3/24: breakers instalados |
-| `panel-history.png` | 12:35:14 | Historial de Panel por magnitud |
-| `breaker-live.png` | 12:35:23 | LIVE, V/I/P/E, Source y Last packet |
-| `power-path.png` | 12:35:28 | Source → Output → Feed → Input → Destination |
+| Asset publicado          | Captura fuente | Uso principal                                |
+| ------------------------ | -------------- | -------------------------------------------- |
+| `workspace-overview.png` | 12:32:01       | Primera orientación y Direct Access          |
+| `create-site.png`        | 12:32:11       | + CREATE SITE y nombre                       |
+| `draw-site-boundary.png` | 12:32:18       | Draw/select y Finish boundary                |
+| `create-structure.png`   | 12:32:31       | Crear Structure dentro de Site               |
+| `create-level.png`       | 12:32:43       | Crear Level dentro de Structure              |
+| `create-room.png`        | 12:32:55       | Crear Room dentro de Level                   |
+| `room-blueprint.png`     | 12:33:01       | Room en modo normal                          |
+| `place-rack.png`         | 12:33:17       | Place Rack y parámetros                      |
+| `edit-room.png`          | 12:33:23       | EDIT ROOM, borrador y SAVE LAYOUT            |
+| `rack-focus.png`         | 12:33:43       | Rack Focus / Elevation / Trace Power         |
+| `rack-elevation.png`     | 12:33:49       | U disponibles, reservadas y equipadas        |
+| `rack-cas.png`           | 12:33:56       | Reserva, montaje y allocation                |
+| `bdfb-physical.png`      | 12:34:35       | Chassis, Frames, Panels y posiciones         |
+| `snmp-inputs.png`        | 12:34:40       | Entradas A/B y lecturas SNMP                 |
+| `history-charts.png`     | 12:34:43       | Historial SNMP y MQTT                        |
+| `panel-empty.png`        | 12:34:57       | 0/24: capacidad sin breakers instalados      |
+| `panel-breakers.png`     | 12:35:04       | 3/24: breakers instalados                    |
+| `panel-history.png`      | 12:35:14       | Historial de Panel por magnitud              |
+| `breaker-live.png`       | 12:35:23       | LIVE, V/I/P/E, Source y Last packet          |
+| `power-path.png`         | 12:35:28       | Source → Output → Feed → Input → Destination |
 
 Las imágenes se muestran contenidas dentro del artículo para conservar la composición y son enlaces a su **PNG completo** cuando el usuario necesita leer texto pequeño.
 

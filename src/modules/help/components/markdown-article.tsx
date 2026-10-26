@@ -157,7 +157,9 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
               href={illustration[2]!}
               target="_blank"
               rel="noopener noreferrer"
-              title={locale === 'es' ? 'Abrir captura a tamaño completo' : 'Open full-size screenshot'}
+              title={
+                locale === 'es' ? 'Abrir captura a tamaño completo' : 'Open full-size screenshot'
+              }
             >
               {image}
             </a>

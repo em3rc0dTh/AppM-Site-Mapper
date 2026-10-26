@@ -2,7 +2,7 @@
 
 Estado de entrega: código preparado para revisión, **sin validación de ejecución**. No apto para producción hasta la aceptación del operador.
 
-Base: `feat/site-mapper-work-2026-10-23` en `3613de7f075a80c5070b1ec033ae8c90a773ea9f` (trabajo industrial del PR #103). Rama: `fix/mk1-critical-hardening`. El PR debe permanecer Draft y apuntar a esa base, sin merge a `main`.
+Base histórica del hardening: `feat/site-mapper-work-2026-10-23` en `3613de7f075a80c5070b1ec033ae8c90a773ea9f`. Rama original: `fix/mk1-critical-hardening` (`624fe463ddb89824c26f1980aba176d1a94f0bbf`). El 26/10/2026 este trabajo fue reconciliado sobre el `main` consolidado mediante PR #108, preservando además Help Center (#104), Acrel commissioning (#105) y la consolidación MK1 (#103).
 
 No se ejecutaron tests, pruebas manuales de la aplicación, lint, typecheck, builds, servicios, contenedores, brokers, migraciones ni consultas a bases de datos. La revisión realizada fue lectura de código y diff. No se añadieron suites de pruebas. Los commits llevan `[skip ci]` para no solicitar CI automático al publicar.
 
@@ -139,3 +139,10 @@ No cambiaron dependencias ni SQL de Timescale. No se ejecutó instalación de pa
 9. Sin lint, typecheck, build ni ejecución, siguen pendientes compatibilidad de compilación, errores de integración y comportamiento efectivo. El PR Draft no constituye autorización de producción.
 
 La lista completa de archivos se encuentra en [mk1-critical-hardening-files.md](mk1-critical-hardening-files.md). Recuperación: [backup-restore.md](backup-restore.md).
+
+
+## Nota de integración a main
+
+La reconciliación hacia `main` no copia el árbol antiguo de la rama sobre el producto actual. Se reaplica únicamente el diff propio de los 7 commits de hardening desde su ancestro común y se resuelven explícitamente los conflictos con cambios posteriores. Los dos conflictos reales estuvieron en `panel-commissioning` y `mongo-telemetry-binding-repository`; la resolución conserva provenance/batch commissioning de Acrel y añade request hardening, integrity fence, reference guards y atomicidad de bindings.
+
+La integración final se valida mediante los workflows vigentes del repositorio antes del merge de PR #108.

@@ -30,6 +30,8 @@ Suppose you need to check a breaker in a panel:
 
 You don't need to memorize every term. The navigation tree helps you move through the locations.
 
+![Real Room example with racks placed on its Blueprint](/help/screenshots/room-blueprint.png)
+
 ## Rack or panel?
 
 A **rack** holds equipment. A **panel** is part of a piece of equipment and may contain several breaker positions.

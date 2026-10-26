@@ -1,4 +1,4 @@
-# Entender de dónde vienen las lecturas
+# Entender de dónde vienen los datos
 
 Site Mapper puede mostrar datos procedentes de diferentes sistemas de medición. No necesitas conocer su configuración técnica para consultar los equipos.
 

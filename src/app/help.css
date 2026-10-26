@@ -971,3 +971,116 @@
     flex-wrap: wrap;
   }
 }
+
+
+/* Beginner-first learning path */
+.help-beginner {
+  margin: 0 0 42px;
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid #cfe1ef;
+  border-radius: 20px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f5faff 100%);
+}
+.help-beginner-path {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  list-style: none;
+  padding: 0;
+  margin: 18px 0 16px;
+  counter-reset: help-beginner;
+}
+.help-beginner-path > li { min-width: 0; }
+.help-beginner-step {
+  display: grid;
+  grid-template-columns: minmax(0, 112px) 1fr auto;
+  align-items: stretch;
+  gap: 13px;
+  min-height: 112px;
+  padding: 10px;
+  border: 1px solid #dce7f0;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 3px 14px #173b5a08;
+}
+.help-beginner-step:hover {
+  border-color: #90bfe3;
+  box-shadow: 0 7px 20px #173b5a12;
+}
+.help-beginner-shot {
+  display: block;
+  min-height: 90px;
+  overflow: hidden;
+  border: 1px solid #e0e8ef;
+  border-radius: 9px;
+  background: #f2f6fa;
+}
+.help-beginner-shot img {
+  width: 100%;
+  height: 100%;
+  min-height: 90px;
+  object-fit: cover;
+  object-position: center top;
+}
+.help-beginner-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+.help-beginner-copy small {
+  margin-bottom: 4px;
+  color: #1476c8;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.help-beginner-copy strong {
+  color: #173651;
+  font-size: 14px;
+  line-height: 1.35;
+}
+.help-beginner-copy > span {
+  margin-top: 5px;
+  color: #60768b;
+  font-size: 11px;
+  line-height: 1.45;
+}
+.help-beginner-step > b {
+  align-self: center;
+  color: #1476c8;
+  font-size: 18px;
+}
+.help-beginner-start {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #0e5b9b;
+  color: #fff !important;
+  font-size: 12px;
+  font-weight: 800;
+}
+.help-beginner-start:hover { background: #0a4c83; }
+.help-illustration figcaption {
+  margin-top: 8px;
+  color: #61768a;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+@media (max-width: 900px) {
+  .help-beginner-path { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .help-beginner { padding: 16px; }
+  .help-beginner-step {
+    grid-template-columns: 88px 1fr auto;
+    min-height: 98px;
+  }
+  .help-beginner-shot { min-height: 76px; }
+  .help-beginner-shot img { min-height: 76px; }
+}

@@ -4,7 +4,7 @@ In Site Mapper, **removing something from a room plan** and **archiving a compon
 
 ## 1. Remove an item from the room plan
 
-![Room and rack](/help/diagrams/en/rack.svg)
+![EDIT ROOM shows Remove selected inside an unsaved draft](/help/screenshots/edit-room.png)
 
 1. Open the **Room** and its **Blueprint**.
 2. Select **EDIT ROOM**.
@@ -15,6 +15,8 @@ In Site Mapper, **removing something from a room plan** and **archiving a compon
 **If removal is blocked:** a zone may still contain positions; a position may hold a rack; a rack may hold equipment or occupied space. Inspect what is inside first. Don't remove other objects simply to make the button available.
 
 **Remember:** the change may still be a draft until you save the layout.
+
+![EDIT CAS shows reservations and allocations that may block rack removal](/help/screenshots/rack-cas.png)
 
 ## 2. Archive an Equipment component
 

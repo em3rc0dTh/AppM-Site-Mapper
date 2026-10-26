@@ -286,6 +286,10 @@ export class IndustrialCommissioningService {
       targetId: breaker.id,
       attributes: {
         commissioning: mark,
+        measurementSource: 'ACREL_METER_CHANNEL',
+        sourceEquipmentId: meter.equipmentId,
+        transportEquipmentId: gateway.equipmentId,
+        observedEquipmentId: breaker.id,
         gatewayEquipmentId: gateway.equipmentId,
         meterEquipmentId: meter.equipmentId,
         channel: input.channel,

@@ -2,6 +2,8 @@
 
 A veces un equipo aparece en el inventario, pero no muestra lecturas recientes. Esta guía te ayudará a entender qué ocurre.
 
+![Ejemplo de un breaker con lectura LIVE, fuente y última muestra](/help/screenshots/breaker-live.png)
+
 ## Comprueba primero
 
 1. Asegúrate de que abriste el **equipo correcto**.
@@ -20,6 +22,12 @@ A veces un equipo aparece en el inventario, pero no muestra lecturas recientes. 
 | **AVAILABLE** | Una posición está libre                          |
 | **OCCUPIED**  | Una posición ya está ocupada                     |
 | **CONNECTED** | Hay una conexión registrada                      |
+
+## Comparar con entradas e historial
+
+![Inputs permite comprobar si las entradas principales tienen lecturas](/help/screenshots/snmp-inputs.png)
+
+![Charts permite revisar si hubo datos anteriormente](/help/screenshots/history-charts.png)
 
 ## ¿Qué puedo hacer?
 

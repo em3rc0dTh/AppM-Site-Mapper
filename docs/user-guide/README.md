@@ -1,6 +1,6 @@
 # Manual del operador · Site Mapper MK1
 
-**Centro de ayuda integrado:** tras iniciar sesión, abre `/help` para buscar por texto en los capítulos o pulsa **? Ayuda** en la barra superior para consultar artículos relacionados con la pantalla actual. El centro utiliza estos mismos archivos Markdown; no hay una segunda copia del manual. La documentación en pantalla conserva su edición en español. Más detalles de mantenimiento: [Help Center integrado](help-center-integrado.md).
+**Centro de ayuda integrado:** tras iniciar sesión, abre `/help` para buscar por texto en los capítulos o pulsa **? Ayuda** en la barra superior para consultar artículos relacionados con la pantalla actual. El centro utiliza estos mismos archivos Markdown; no hay una segunda copia del manual. El texto de cada capítulo se presenta en el idioma seleccionado (español o inglés), manteniendo separadas las versiones revisadas. Más detalles de mantenimiento: [Help Center integrado](help-center-integrado.md).
 
 > **[Manual maestro: procedimiento integral desde Login hasta PowerPath, MQTT y modelo de datos](manual-maestro.md)**. Es el punto de entrada consolidado para una persona sin experiencia. Consulta también [modelo de datos explicado](modelo-de-datos.md) y [estado de capturas reales](evidencia-visual.md). **No se modificó la estructura de MongoDB.**
 

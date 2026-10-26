@@ -156,6 +156,18 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
   ]);
 
+  const industrialCredentialEvents = database.collection('industrial_credential_events');
+  await Promise.all([
+    industrialCredentialEvents.createIndex(
+      { id: 1 },
+      { unique: true, name: 'uq_industrial_credential_event_id' },
+    ),
+    industrialCredentialEvents.createIndex(
+      { equipmentId: 1, occurredAt: -1 },
+      { name: 'ix_industrial_credential_event_equipment_time' },
+    ),
+  ]);
+
   const users = database.collection('users');
   await Promise.all([
     users.createIndex({ id: 1 }, { unique: true, name: 'uq_user_id' }),

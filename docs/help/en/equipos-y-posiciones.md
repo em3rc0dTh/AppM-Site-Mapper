@@ -2,7 +2,9 @@
 
 A rack can hold several units. A unit can contain panels, breakers and other components.
 
-![Example rack, panel and its positions](/help/diagrams/en/rack.svg)
+![Rack Focus lets you open the elevation and follow recorded power](/help/screenshots/rack-focus.png)
+
+![Front elevation shows available, reserved and equipped rack space](/help/screenshots/rack-elevation.png)
 
 ## Find a piece of equipment
 
@@ -24,6 +26,18 @@ For example, a panel with **24 positions** may have just one occupied and 23 ava
 3. Choose a template from **WAREHOUSE** or use **ONE-OFF**.
 4. Fill in the details and save with **Install Equipment** or **Create and install**.
 5. Reopen the unit and check that the part is in the correct position.
+
+## Reserve or allocate rack space
+
+![EDIT CAS lets you reserve space, mount Equipment or free an allocation](/help/screenshots/rack-cas.png)
+
+Before mounting Equipment, review the rack occupancy. **Available**, **Reserved** and **Equipped** describe the registered state of its rack units.
+
+## View a BDFB composition
+
+![BDFB Physical View organizes Chassis, Shelf, Frames, Panels and positions](/help/screenshots/bdfb-physical.png)
+
+This view helps you understand where each Panel is installed before opening its breakers or readings.
 
 ## If a position is unavailable
 

@@ -150,8 +150,6 @@ export class IndustrialCredentialService {
       const next: IndustrialCredentialRecord = {
         ...current,
         revisionNumber: current.revisionNumber + 1,
-        updatedAt: now,
-        updatedBy: current.updatedBy,
         lastRevealedAt: now,
         lastRevealedBy: actorId,
       };

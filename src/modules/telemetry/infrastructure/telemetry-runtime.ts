@@ -41,7 +41,12 @@ export interface TelemetryDiagnostics {
   readonly topicFilter: string;
   readonly lastSubscribedAt: string | null;
   readonly lastConnectionError: string | null;
-  readonly capture: { readonly state: 'DURABLE_SPOOL' | 'DEGRADED' | 'NOT_CONFIGURED'; readonly failures: number; readonly lastFailureAt: string | null; readonly guarantee: string };
+  readonly capture: {
+    readonly state: 'DURABLE_SPOOL' | 'DEGRADED' | 'NOT_CONFIGURED';
+    readonly failures: number;
+    readonly lastFailureAt: string | null;
+    readonly guarantee: string;
+  };
   readonly rawMessages: number;
   readonly acceptedMessages: number;
   readonly rejectedMessages: number;
@@ -172,7 +177,8 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
         logger.warn('industrial.mqtt.initialization_failed', {});
       }
     }
-    if (enabled && isProductionDeployment() && !industrialOutbox) throw new Error('PRODUCTION_MQTT_DURABLE_CAPTURE_REQUIRED');
+    if (enabled && isProductionDeployment() && !industrialOutbox)
+      throw new Error('PRODUCTION_MQTT_DURABLE_CAPTURE_REQUIRED');
     const hub = new TelemetryHub(maxStreams);
     const topologyRepository = await createTopologyRepository();
     const bindingRepository = await createTelemetryBindingRepository();
@@ -204,12 +210,15 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
         process.env.MQTT_PASSWORD,
         isProductionDeployment(),
       );
-      if (isProductionDeployment()) requireRuntimeSecret('MQTT_CLIENT_ID', process.env.MQTT_CLIENT_ID);
+      if (isProductionDeployment())
+        requireRuntimeSecret('MQTT_CLIENT_ID', process.env.MQTT_CLIENT_ID);
       source = new NativeMqttSource(
         {
           brokerUrl,
           topicFilter,
-          ...(process.env.MQTT_CLIENT_ID?.trim() ? { clientId: process.env.MQTT_CLIENT_ID.trim() } : {}),
+          ...(process.env.MQTT_CLIENT_ID?.trim()
+            ? { clientId: process.env.MQTT_CLIENT_ID.trim() }
+            : {}),
           ...(process.env.MQTT_USERNAME?.trim()
             ? { username: process.env.MQTT_USERNAME.trim() }
             : {}),
@@ -229,8 +238,12 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
             }
           }
 
-          if (isProductionDeployment() && !captureProfiles.some((p) => p.protocol === 'MQTT' && p.sourceIdentity === serial)) {
-            captureFailures++; captureLastFailureAt = now;
+          if (
+            isProductionDeployment() &&
+            !captureProfiles.some((p) => p.protocol === 'MQTT' && p.sourceIdentity === serial)
+          ) {
+            captureFailures++;
+            captureLastFailureAt = now;
             recordIndustrialFault('MQTT_UNPROFILED_SOURCE_BLOCKED');
             throw new Error('MQTT_SOURCE_DURABLE_PROFILE_REQUIRED');
           }
@@ -435,9 +448,15 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           lastSubscribedAt: state?.lastSubscribedAt ?? null,
           lastConnectionError: state?.lastError ?? null,
           capture: {
-            state: !captureProfiles.some((p) => p.protocol === 'MQTT') ? 'NOT_CONFIGURED' : !industrialOutbox || captureFailures > 0 ? 'DEGRADED' : 'DURABLE_SPOOL',
-            failures: captureFailures, lastFailureAt: captureLastFailureAt,
-            guarantee: 'Profiled sources: fsynced spool before PUBACK. LIVE denotes freshness only. Publisher QoS 0, broker persistence, spool volume survival and sources without profiles are not end-to-end durable guarantees. Stable deduplication requires publisher messageId; spool retries preserve captureId.',
+            state: !captureProfiles.some((p) => p.protocol === 'MQTT')
+              ? 'NOT_CONFIGURED'
+              : !industrialOutbox || captureFailures > 0
+                ? 'DEGRADED'
+                : 'DURABLE_SPOOL',
+            failures: captureFailures,
+            lastFailureAt: captureLastFailureAt,
+            guarantee:
+              'Profiled sources: fsynced spool before PUBACK. LIVE denotes freshness only. Publisher QoS 0, broker persistence, spool volume survival and sources without profiles are not end-to-end durable guarantees. Stable deduplication requires publisher messageId; spool retries preserve captureId.',
           },
           rawMessages,
           acceptedMessages,

@@ -16,7 +16,8 @@ export async function GET() {
   if (!token) return Response.json({ error: 'SESSION_INVALID' }, { status: 401 });
   const identity = await getIdentityRuntime();
   const auth = new AuthService(identity.repository, identity.throttle);
-  if (!(await auth.authorize(token, 'telemetry:read')).ok) return Response.json({ error: 'FORBIDDEN' }, { status: 403 });
+  if (!(await auth.authorize(token, 'telemetry:read')).ok)
+    return Response.json({ error: 'FORBIDDEN' }, { status: 403 });
   const telemetry = await getTelemetryRuntime();
   let unsubscribe: (() => void) | null = null;
   let heartbeat: ReturnType<typeof setInterval> | null = null;
@@ -28,7 +29,11 @@ export async function GET() {
     closed = true;
     unsubscribe?.();
     if (heartbeat) clearInterval(heartbeat);
-    try { controllerRef?.close(); } catch { /* Consumer already cancelled. */ }
+    try {
+      controllerRef?.close();
+    } catch {
+      /* Consumer already cancelled. */
+    }
   };
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -38,11 +43,20 @@ export async function GET() {
         sending = true;
         try {
           // Re-read session and user for every delivery; no cached role authority.
-          if (!(await auth.authorize(token, 'telemetry:read')).ok) { close(); return; }
+          if (!(await auth.authorize(token, 'telemetry:read')).ok) {
+            close();
+            return;
+          }
           if (!closed) controller.enqueue(event(name, data));
-        } catch { close(); } finally { sending = false; }
+        } catch {
+          close();
+        } finally {
+          sending = false;
+        }
       };
-      unsubscribe = telemetry.hub.subscribe((sample) => { void send('telemetry', sample); });
+      unsubscribe = telemetry.hub.subscribe((sample) => {
+        void send('telemetry', sample);
+      });
       if (!unsubscribe) {
         controller.enqueue(event('error', { code: 'STREAM_LIMIT_REACHED' }));
         close();
@@ -50,13 +64,20 @@ export async function GET() {
       }
       void send('snapshot', telemetry.service.snapshot());
       // A bounded snapshot refresh recovers updates coalesced during auth lookup.
-      heartbeat = setInterval(() => { void send('snapshot', telemetry.service.snapshot()); }, 15_000);
+      heartbeat = setInterval(() => {
+        void send('snapshot', telemetry.service.snapshot());
+      }, 15_000);
     },
-    cancel() { close(); },
+    cancel() {
+      close();
+    },
   });
-  return new Response(stream, { headers: {
-    'Content-Type': 'text/event-stream; charset=utf-8',
-    'Cache-Control': 'no-cache, no-store, must-revalidate',
-    Connection: 'keep-alive', 'X-Accel-Buffering': 'no',
-  } });
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Connection: 'keep-alive',
+      'X-Accel-Buffering': 'no',
+    },
+  });
 }

@@ -2,8 +2,12 @@ import { prepareRuntimeTopology } from './topology-schema';
 import type { Db } from 'mongodb';
 
 export async function ensurePersistenceIndexes(database: Db): Promise<void> {
-  await database.collection('integrity_fences').createIndex({ key: 1 }, { unique: true, name: 'uq_integrity_fence_key' });
-  await database.collection('identity_initialization').createIndex({ key: 1 }, { unique: true, name: 'uq_identity_initialization_key' });
+  await database
+    .collection('integrity_fences')
+    .createIndex({ key: 1 }, { unique: true, name: 'uq_integrity_fence_key' });
+  await database
+    .collection('identity_initialization')
+    .createIndex({ key: 1 }, { unique: true, name: 'uq_identity_initialization_key' });
   await prepareRuntimeTopology(database);
 
   const warehouseTemplates = database.collection('warehouse_templates');

@@ -145,7 +145,12 @@ export class CasService {
   private async getRack(rackId: string): Promise<Result<ContainerRackNode, CasServiceError>> {
     const node = await this.repository.getById(rackId);
     if (!node) return failure('RACK_NOT_FOUND');
-    if (node.lifecycle !== 'ACTIVE' || node.kind !== 'CONTAINER_RACK' || node.variant !== 'RACK' || !node.totalU) {
+    if (
+      node.lifecycle !== 'ACTIVE' ||
+      node.kind !== 'CONTAINER_RACK' ||
+      node.variant !== 'RACK' ||
+      !node.totalU
+    ) {
       return failure('NOT_A_RACK');
     }
     return success(node);

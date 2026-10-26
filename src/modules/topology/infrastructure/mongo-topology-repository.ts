@@ -1,5 +1,10 @@
 import { versionFilter, nextTopologyVersion } from './topology-version';
-import { withIntegrityTransaction, integritySession, integrityOptions, IntegrityConflict } from '@/shared/infrastructure/mongodb/integrity-transaction';
+import {
+  withIntegrityTransaction,
+  integritySession,
+  integrityOptions,
+  IntegrityConflict,
+} from '@/shared/infrastructure/mongodb/integrity-transaction';
 import { guardTopologyWrite } from '@/shared/infrastructure/mongodb/reference-guards';
 import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
 
@@ -29,7 +34,8 @@ export class MongoTopologyRepository implements TopologyRepository {
     try {
       await withIntegrityTransaction(this.database, async (session) => {
         for (const expected of before) {
-          if (!await this.collection.findOne(versionFilter(expected), { session })) throw new Error('LAYOUT_CONFLICT');
+          if (!(await this.collection.findOne(versionFilter(expected), { session })))
+            throw new Error('LAYOUT_CONFLICT');
         }
         const old = new Map(before.map((node) => [node.id, node]));
         for (const node of after) {
@@ -42,13 +48,17 @@ export class MongoTopologyRepository implements TopologyRepository {
             );
             if (result.matchedCount !== 1) throw new Error('LAYOUT_CONFLICT');
           } else {
-            await this.collection.insertOne(nextTopologyVersion(node) as OptionalUnlessRequiredId<TopologyDocument>, {
-              session,
-            });
+            await this.collection.insertOne(
+              nextTopologyVersion(node) as OptionalUnlessRequiredId<TopologyDocument>,
+              {
+                session,
+              },
+            );
           }
         }
         // Validate the final transactional layout, including newly inserted parents.
-        for (const node of after) await guardTopologyWrite(this.database, node, session, old.get(node.id));
+        for (const node of after)
+          await guardTopologyWrite(this.database, node, session, old.get(node.id));
       });
       return true;
     } catch (error) {
@@ -107,7 +117,10 @@ export class MongoTopologyRepository implements TopologyRepository {
 
   async insert(node: TopologyNode): Promise<void> {
     await withIntegrityTransaction(this.database, async (session) => {
-      await this.collection.insertOne(nextTopologyVersion(node) as OptionalUnlessRequiredId<TopologyDocument>, { session });
+      await this.collection.insertOne(
+        nextTopologyVersion(node) as OptionalUnlessRequiredId<TopologyDocument>,
+        { session },
+      );
       await guardTopologyWrite(this.database, node, session);
     });
   }
@@ -119,10 +132,16 @@ export class MongoTopologyRepository implements TopologyRepository {
   async replaceIfVersion(node: TopologyNode, expectedVersion: string): Promise<boolean> {
     // Preserve the timestamp API used by spatial clients as an additional precondition.
     return withIntegrityTransaction(this.database, async (session) => {
-      const current = await this.collection.findOne({ id: node.id, updatedAt: expectedVersion, lifecycle: 'ACTIVE' }, { session });
+      const current = await this.collection.findOne(
+        { id: node.id, updatedAt: expectedVersion, lifecycle: 'ACTIVE' },
+        { session },
+      );
       if (!current || current.revision !== node.revision) return false;
-      const result = await this.collection.replaceOne(versionFilter(toDomain(current)),
-        nextTopologyVersion(node, toDomain(current)) as OptionalUnlessRequiredId<TopologyDocument>, { session });
+      const result = await this.collection.replaceOne(
+        versionFilter(toDomain(current)),
+        nextTopologyVersion(node, toDomain(current)) as OptionalUnlessRequiredId<TopologyDocument>,
+        { session },
+      );
       if (result.matchedCount !== 1) return false;
       await guardTopologyWrite(this.database, node, session, toDomain(current));
       return true;

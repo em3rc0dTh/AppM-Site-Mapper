@@ -10,17 +10,17 @@ No se ejecutaron tests, pruebas manuales de la aplicación, lint, typecheck, bui
 
 “IMPLEMENTADO” describe código o documentación incorporados; no significa probado, certificado ni desplegado.
 
-| FIX | Estado | Cambio y límite |
-| --- | --- | --- |
-| FIX-01 | IMPLEMENTADO | Persistencia explícita; memoria solo con entorno development/test explícito. Staging/production comparten política de cookies Secure y TLS. Mongo requiere URI y nombre de base. |
-| FIX-02 | IMPLEMENTADO | Revisión monotónica y CAS en escrituras de topología, layout, movimiento, archivado, restauración, pin y CAS físico. Conflictos HTTP 409. Respuestas de los principales escritores se vuelven a leer con la revisión persistida. |
-| FIX-03 | IMPLEMENTADO | Preflight de ocupación, revalidación transaccional y `uq_active_rack_position`. Migración versionada bloquea duplicados sin repararlos. Pendiente ejecutarla. |
-| FIX-04 | IMPLEMENTADO | Guardas Mongo transaccionales de jerarquía, CAS, puertos, PowerPaths y bindings. Archivado rechaza puertos activos y referencias activas; restauración comprueba ascendencia, ocupación y referencias. No elimina conexiones. |
-| FIX-05 | PARCIAL | QoS 1, sesión persistente configurable, PUBACK después del manejador, spool con fsync de archivo/directorio, límites de cola y diagnóstico de captura. Fallo de spool impide publicar esa lectura. Continúan límites de deduplicación y de replay del historial eléctrico descritos abajo. |
-| FIX-06 | IMPLEMENTADO | Cuatro métricas MQTT en una transacción; lote SNMP de laboratorio completo en una transacción. Idempotencia por mapping semántico, conflictos de propietario y versiones de inventario. En memoria la operación devuelve 503: exige almacenamiento atómico Mongo. |
-| FIX-07 | IMPLEMENTADO | Bootstrap único, mutaciones de usuarios con CAS, barrera para último superadmin, revocación y auditoría transaccionales. Rate limit por cuenta y por edge autenticado, JSON acotado, SSE con autorización por entrega. |
-| FIX-08 | IMPLEMENTADO | Promoción reutiliza índices/validador canónicos, preflight de referencias, mantenimiento, candidato único, journal y respaldo. Los renames no son una transacción multi-colección; recuperación requiere procedimiento operacional. |
-| FIX-09 | IMPLEMENTADO | Runbook ampliado para Mongo, Timescale, spool y broker; dependencias de restore, retenciones y RPO/RTO pendientes. Se retiró el drop automático de índices al arrancar. |
+| FIX    | Estado       | Cambio y límite                                                                                                                                                                                                                                                                            |
+| ------ | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| FIX-01 | IMPLEMENTADO | Persistencia explícita; memoria solo con entorno development/test explícito. Staging/production comparten política de cookies Secure y TLS. Mongo requiere URI y nombre de base.                                                                                                           |
+| FIX-02 | IMPLEMENTADO | Revisión monotónica y CAS en escrituras de topología, layout, movimiento, archivado, restauración, pin y CAS físico. Conflictos HTTP 409. Respuestas de los principales escritores se vuelven a leer con la revisión persistida.                                                           |
+| FIX-03 | IMPLEMENTADO | Preflight de ocupación, revalidación transaccional y `uq_active_rack_position`. Migración versionada bloquea duplicados sin repararlos. Pendiente ejecutarla.                                                                                                                              |
+| FIX-04 | IMPLEMENTADO | Guardas Mongo transaccionales de jerarquía, CAS, puertos, PowerPaths y bindings. Archivado rechaza puertos activos y referencias activas; restauración comprueba ascendencia, ocupación y referencias. No elimina conexiones.                                                              |
+| FIX-05 | PARCIAL      | QoS 1, sesión persistente configurable, PUBACK después del manejador, spool con fsync de archivo/directorio, límites de cola y diagnóstico de captura. Fallo de spool impide publicar esa lectura. Continúan límites de deduplicación y de replay del historial eléctrico descritos abajo. |
+| FIX-06 | IMPLEMENTADO | Cuatro métricas MQTT en una transacción; lote SNMP de laboratorio completo en una transacción. Idempotencia por mapping semántico, conflictos de propietario y versiones de inventario. En memoria la operación devuelve 503: exige almacenamiento atómico Mongo.                          |
+| FIX-07 | IMPLEMENTADO | Bootstrap único, mutaciones de usuarios con CAS, barrera para último superadmin, revocación y auditoría transaccionales. Rate limit por cuenta y por edge autenticado, JSON acotado, SSE con autorización por entrega.                                                                     |
+| FIX-08 | IMPLEMENTADO | Promoción reutiliza índices/validador canónicos, preflight de referencias, mantenimiento, candidato único, journal y respaldo. Los renames no son una transacción multi-colección; recuperación requiere procedimiento operacional.                                                        |
+| FIX-09 | IMPLEMENTADO | Runbook ampliado para Mongo, Timescale, spool y broker; dependencias de restore, retenciones y RPO/RTO pendientes. Se retiró el drop automático de índices al arrancar.                                                                                                                    |
 
 ## Diseño de concurrencia y referencias
 
@@ -48,17 +48,17 @@ Una base existente sin índices/validador compatibles devuelve `MIGRATION_REQUIR
 
 ## Variables de entorno
 
-| Variable | Política |
-| --- | --- |
-| `APP_ENV` | Valores development/test/staging/production. Staging y production activan seguridad de producción. Si falta y NODE_ENV=production, se exige la política segura. Un APP_ENV explícito conserva la posibilidad de laboratorio con Next optimizado. |
-| `APP_PERSISTENCE` | Ahora obligatoria: mongodb o memory. No hay fallback implícito. memory requiere development/test explícito. |
-| `MONGODB_URI`, `MONGODB_DB_NAME` | Ambas obligatorias con Mongo. TLS y autenticación obligatorios en staging/production según la política existente unificada. |
-| `MQTT_CLIENT_ID` | Nueva. Identificador estable y exclusivo por suscriptor/réplica. Obligatoria con MQTT en staging/production. Activa Clean Session=false. No compartir ID entre procesos activos. |
-| `AUTH_TRUSTED_PROXY_TOKEN` | Nueva, opcional, secreto de al menos 32 caracteres. El edge elimina cabeceras aportadas por clientes e inyecta `x-appm-proxy-token` y una sola IP canónica en `x-appm-client-ip`. Sin prueba válida no se confía en forwarded headers. |
-| `INDUSTRIAL_MQTT_SPOOL` | Volumen persistente privado por suscriptor, obligatorio en staging/production con MQTT. Debe soportar fsync de archivos y directorios. |
-| `INDUSTRIAL_PROFILES_JSON` y configuración de perfiles existente | Cada fuente MQTT admitida en producción necesita perfil de captura durable. Fuente sin perfil bloquea su captura/ACK; no se publica silenciosamente. |
-| `INDUSTRIAL_MQTT_MAX_PENDING` | Existente: límite de spool. No se aumentó automáticamente. |
-| `INDUSTRIAL_TIMESCALE_ENABLED` | Existente: habilita outbox Mongo hacia serie industrial Timescale. No habilitarlo no equivale a tener historial industrial en Timescale. |
+| Variable                                                         | Política                                                                                                                                                                                                                                         |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `APP_ENV`                                                        | Valores development/test/staging/production. Staging y production activan seguridad de producción. Si falta y NODE_ENV=production, se exige la política segura. Un APP_ENV explícito conserva la posibilidad de laboratorio con Next optimizado. |
+| `APP_PERSISTENCE`                                                | Ahora obligatoria: mongodb o memory. No hay fallback implícito. memory requiere development/test explícito.                                                                                                                                      |
+| `MONGODB_URI`, `MONGODB_DB_NAME`                                 | Ambas obligatorias con Mongo. TLS y autenticación obligatorios en staging/production según la política existente unificada.                                                                                                                      |
+| `MQTT_CLIENT_ID`                                                 | Nueva. Identificador estable y exclusivo por suscriptor/réplica. Obligatoria con MQTT en staging/production. Activa Clean Session=false. No compartir ID entre procesos activos.                                                                 |
+| `AUTH_TRUSTED_PROXY_TOKEN`                                       | Nueva, opcional, secreto de al menos 32 caracteres. El edge elimina cabeceras aportadas por clientes e inyecta `x-appm-proxy-token` y una sola IP canónica en `x-appm-client-ip`. Sin prueba válida no se confía en forwarded headers.           |
+| `INDUSTRIAL_MQTT_SPOOL`                                          | Volumen persistente privado por suscriptor, obligatorio en staging/production con MQTT. Debe soportar fsync de archivos y directorios.                                                                                                           |
+| `INDUSTRIAL_PROFILES_JSON` y configuración de perfiles existente | Cada fuente MQTT admitida en producción necesita perfil de captura durable. Fuente sin perfil bloquea su captura/ACK; no se publica silenciosamente.                                                                                             |
+| `INDUSTRIAL_MQTT_MAX_PENDING`                                    | Existente: límite de spool. No se aumentó automáticamente.                                                                                                                                                                                       |
+| `INDUSTRIAL_TIMESCALE_ENABLED`                                   | Existente: habilita outbox Mongo hacia serie industrial Timescale. No habilitarlo no equivale a tener historial industrial en Timescale.                                                                                                         |
 
 Sin edge autenticado, las peticiones comparten el presupuesto de edge desconocido (60/minuto) y cada cuenta conserva 5 intentos/15 minutos. Puede limitar usuarios detrás de un mismo ingreso; configurar el edge antes de la aceptación de carga. El rate limit Mongo usa ventanas fijas atómicas y el login exitoso no borra ese presupuesto compartido.
 
@@ -97,34 +97,34 @@ No cambiaron dependencias ni SQL de Timescale. No se ejecutó instalación de pa
 
 ## Verificaciones manuales pendientes del operador
 
-| Caso | Resultado que debe comprobarse |
-| --- | --- |
-| Entorno incompleto | Sin APP_PERSISTENCE o sin URI/DB Mongo no arranca usando memoria por defecto. Producción/staging rechazan memory, Mongo sin TLS y MQTT sin TLS/credenciales. |
-| Cookies | En HTTPS de staging/production, login y logout usan Secure, HttpOnly y SameSite; el laboratorio development explícito conserva su política local. |
-| Escritura concurrente | Dos peticiones basadas en el mismo documento para move/archive/restore/pin/layout/CAS: una confirma y la otra recibe 409; ninguna borra cambios ajenos. |
-| Documento antiguo | Sin revision: primera escritura crea revision 1; una segunda petición con la versión antigua se rechaza; updatedAt no retrocede. |
-| Racks | Crear/mover/restaurar dos racks a una Position simultáneamente: como máximo uno activo, error de dominio/409 para el otro. |
-| Migración conflictiva | Duplicados de rack, publisher o AccessPort y referencias inválidas bloquean la aplicación; no cambian documentos automáticamente. |
-| Equipment conectado | Archivado con AccessPorts activos, PowerPaths o TelemetryBindings activos se rechaza, conservando conexiones y datos. |
-| Carrera referencia/archivado | Crear PowerPath o binding mientras se archiva/remueve su equipo o puerto: no queda referencia activa huérfana. |
-| Restauración y CAS | Padres archivados, Position ocupada, CAS incompatible o referencias físicas faltantes bloquean; restaurar ancestros no reactiva automáticamente descendientes. |
-| Cambios de conexiones | Cambiar dirección/feed de puerto conectado o posición/serial/prefijo de breaker/panel comisionado no deja conexiones incoherentes. |
-| Movimiento de Device | Concurrente con montaje CAS de su Equipment: no cambia contexto de rack dejando equipo montado en una ubicación incompatible. |
-| Commissioning MQTT | Interrumpir antes de la cuarta métrica: se conservan cero nuevas métricas; al confirmar se guardan las cuatro. Repetir misma solicitud no duplica mappings. |
-| Commissioning SNMP | Igual para el plan completo de inputs V/I; fuente competidora o versión de inventario obsoleta causa rollback completo. |
-| MQTT durable | Publicador QoS 1, clientId estable, broker persistente: observar PUBACK después de fsync/captura. Reiniciar proceso antes/después del ACK y contrastar pendientes, Mongo y Timescale. |
-| Spool fallido/lleno | No aparece la lectura nueva como aceptada/LIVE; no se envía PUBACK QoS 1; hay fallo/estado DEGRADED y reconexión. Recuperar sin borrar pendientes. |
-| Deduplicación | Reenviar mismo messageId/payload: una captura industrial lógica. Reusar messageId con payload diferente: conflicto visible, nunca sobrescritura. Ver límite sin messageId abajo. |
-| Historial fallido | Si falla `/samples`, `historyCapture=FAILED`; no informar PERSISTED por el mero estado LIVE. Contrastar el outbox industrial independiente. |
-| Bootstrap | Dos inicializaciones simultáneas: un solo primer superadmin y un cierre durable. No reabre al archivar usuarios. |
-| Último administrador | Dos desactivaciones/demotions simultáneas de superadmins: queda al menos uno activo; cambios rechazados no tienen auditoría de éxito. |
-| Auditoría | Una falla en la inserción de admin_audit revierte la modificación. Cambio de rol/password y revocación son atómicos en Mongo. |
-| Login concurrente | Login con contraseña anterior mientras se cambia la contraseña: no crea sesión válida después de la revocación. |
-| Rate limit | Rotar X-Forwarded-For sin prueba de edge no evade límite por cuenta; rollover concurrente no reinicia el contador varias veces. |
-| SSE | Revocar sesión/cambiar rol/desactivar usuario: la siguiente entrega se rechaza y se cierra el stream; sin actividad, revisión periódica cada 15 s. Fallo de lectura de identidad también cierra. |
-| Cuerpo HTTP | JSON demasiado grande, profundo o con claves inseguras se rechaza antes de procesar las rutas sensibles, incluidos layout y boundaries. |
-| Promoción/rollback | Sobre una copia aislada: interrumpir entre renames, revisar journal y recuperar backup sin escribir en una colección incorrecta ni liberar mantenimiento prematuramente. |
-| Reinicio/restore completo | Reconstruir jerarquía, CAS, PowerPaths, bindings, usuarios, industrial raw/history/outbox y Timescale; reconciliar spool, IDs y huecos antes de reabrir escritores. |
+| Caso                         | Resultado que debe comprobarse                                                                                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Entorno incompleto           | Sin APP_PERSISTENCE o sin URI/DB Mongo no arranca usando memoria por defecto. Producción/staging rechazan memory, Mongo sin TLS y MQTT sin TLS/credenciales.                                     |
+| Cookies                      | En HTTPS de staging/production, login y logout usan Secure, HttpOnly y SameSite; el laboratorio development explícito conserva su política local.                                                |
+| Escritura concurrente        | Dos peticiones basadas en el mismo documento para move/archive/restore/pin/layout/CAS: una confirma y la otra recibe 409; ninguna borra cambios ajenos.                                          |
+| Documento antiguo            | Sin revision: primera escritura crea revision 1; una segunda petición con la versión antigua se rechaza; updatedAt no retrocede.                                                                 |
+| Racks                        | Crear/mover/restaurar dos racks a una Position simultáneamente: como máximo uno activo, error de dominio/409 para el otro.                                                                       |
+| Migración conflictiva        | Duplicados de rack, publisher o AccessPort y referencias inválidas bloquean la aplicación; no cambian documentos automáticamente.                                                                |
+| Equipment conectado          | Archivado con AccessPorts activos, PowerPaths o TelemetryBindings activos se rechaza, conservando conexiones y datos.                                                                            |
+| Carrera referencia/archivado | Crear PowerPath o binding mientras se archiva/remueve su equipo o puerto: no queda referencia activa huérfana.                                                                                   |
+| Restauración y CAS           | Padres archivados, Position ocupada, CAS incompatible o referencias físicas faltantes bloquean; restaurar ancestros no reactiva automáticamente descendientes.                                   |
+| Cambios de conexiones        | Cambiar dirección/feed de puerto conectado o posición/serial/prefijo de breaker/panel comisionado no deja conexiones incoherentes.                                                               |
+| Movimiento de Device         | Concurrente con montaje CAS de su Equipment: no cambia contexto de rack dejando equipo montado en una ubicación incompatible.                                                                    |
+| Commissioning MQTT           | Interrumpir antes de la cuarta métrica: se conservan cero nuevas métricas; al confirmar se guardan las cuatro. Repetir misma solicitud no duplica mappings.                                      |
+| Commissioning SNMP           | Igual para el plan completo de inputs V/I; fuente competidora o versión de inventario obsoleta causa rollback completo.                                                                          |
+| MQTT durable                 | Publicador QoS 1, clientId estable, broker persistente: observar PUBACK después de fsync/captura. Reiniciar proceso antes/después del ACK y contrastar pendientes, Mongo y Timescale.            |
+| Spool fallido/lleno          | No aparece la lectura nueva como aceptada/LIVE; no se envía PUBACK QoS 1; hay fallo/estado DEGRADED y reconexión. Recuperar sin borrar pendientes.                                               |
+| Deduplicación                | Reenviar mismo messageId/payload: una captura industrial lógica. Reusar messageId con payload diferente: conflicto visible, nunca sobrescritura. Ver límite sin messageId abajo.                 |
+| Historial fallido            | Si falla `/samples`, `historyCapture=FAILED`; no informar PERSISTED por el mero estado LIVE. Contrastar el outbox industrial independiente.                                                      |
+| Bootstrap                    | Dos inicializaciones simultáneas: un solo primer superadmin y un cierre durable. No reabre al archivar usuarios.                                                                                 |
+| Último administrador         | Dos desactivaciones/demotions simultáneas de superadmins: queda al menos uno activo; cambios rechazados no tienen auditoría de éxito.                                                            |
+| Auditoría                    | Una falla en la inserción de admin_audit revierte la modificación. Cambio de rol/password y revocación son atómicos en Mongo.                                                                    |
+| Login concurrente            | Login con contraseña anterior mientras se cambia la contraseña: no crea sesión válida después de la revocación.                                                                                  |
+| Rate limit                   | Rotar X-Forwarded-For sin prueba de edge no evade límite por cuenta; rollover concurrente no reinicia el contador varias veces.                                                                  |
+| SSE                          | Revocar sesión/cambiar rol/desactivar usuario: la siguiente entrega se rechaza y se cierra el stream; sin actividad, revisión periódica cada 15 s. Fallo de lectura de identidad también cierra. |
+| Cuerpo HTTP                  | JSON demasiado grande, profundo o con claves inseguras se rechaza antes de procesar las rutas sensibles, incluidos layout y boundaries.                                                          |
+| Promoción/rollback           | Sobre una copia aislada: interrumpir entre renames, revisar journal y recuperar backup sin escribir en una colección incorrecta ni liberar mantenimiento prematuramente.                         |
+| Reinicio/restore completo    | Reconstruir jerarquía, CAS, PowerPaths, bindings, usuarios, industrial raw/history/outbox y Timescale; reconciliar spool, IDs y huecos antes de reabrir escritores.                              |
 
 ## Riesgos residuales y límites conocidos
 

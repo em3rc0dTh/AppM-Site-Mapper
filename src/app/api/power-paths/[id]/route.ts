@@ -32,5 +32,9 @@ async function handleDELETE(request: Request, context: Context) {
 }
 
 export async function DELETE(request: Request, context: Context) {
-  try { return await handleDELETE(request, context); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handleDELETE(request, context);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

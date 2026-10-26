@@ -186,7 +186,8 @@ async function handlePOST(request: Request) {
       );
   }
 
-  if (!repository.commitBindings) return Response.json({ error: 'ATOMIC_COMMISSIONING_STORAGE_REQUIRED' }, { status: 503 });
+  if (!repository.commitBindings)
+    return Response.json({ error: 'ATOMIC_COMMISSIONING_STORAGE_REQUIRED' }, { status: 503 });
   const plannedBindings: TelemetryBinding[] = [];
   for (const target of plan) {
     const now = new Date().toISOString();
@@ -228,5 +229,9 @@ async function handlePOST(request: Request) {
 }
 
 export async function POST(request: Request) {
-  try { return await handlePOST(request); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePOST(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

@@ -110,12 +110,19 @@ async function handlePUT(request: Request, context: Context) {
   });
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.error === 'LAYOUT_CONFLICT' ? 409 : 422 });
+    return NextResponse.json(
+      { error: result.error },
+      { status: result.error === 'LAYOUT_CONFLICT' ? 409 : 422 },
+    );
   }
 
   return NextResponse.json({ item: result.value });
 }
 
 export async function PUT(request: Request, context: Context) {
-  try { return await handlePUT(request, context); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePUT(request, context);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

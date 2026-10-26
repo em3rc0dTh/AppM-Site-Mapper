@@ -1,4 +1,7 @@
-import { integrityOptions, withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
+import {
+  integrityOptions,
+  withIntegrityTransaction,
+} from '@/shared/infrastructure/mongodb/integrity-transaction';
 import { getMongoDatabase } from '@/shared/infrastructure/mongodb/client';
 import { getPersistenceMode } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
@@ -19,7 +22,11 @@ export async function recordAdminAudit(actorId: string, action: string, targetId
     at: new Date().toISOString(),
   };
   if (getPersistenceMode() === 'mongodb')
-    await (await getMongoDatabase()).collection<AdminAudit>('admin_audit').insertOne(event, integrityOptions());
+    await (
+      await getMongoDatabase()
+    )
+      .collection<AdminAudit>('admin_audit')
+      .insertOne(event, integrityOptions());
   else {
     const events = getProcessSingleton<AdminAudit[]>('admin-audit', () => []);
     events.push(event);
@@ -28,12 +35,18 @@ export async function recordAdminAudit(actorId: string, action: string, targetId
 }
 
 /** A successful mutation and its audit event commit together in MongoDB. */
-export async function withAdminAudit<T>(actorId: string, action: string, targetId: string, work: () => Promise<T>): Promise<T> {
+export async function withAdminAudit<T>(
+  actorId: string,
+  action: string,
+  targetId: string,
+  work: () => Promise<T>,
+): Promise<T> {
   const apply = async () => {
     const result = await work();
     await recordAdminAudit(actorId, action, targetId);
     return result;
   };
-  if (getPersistenceMode() === 'mongodb') return withIntegrityTransaction(await getMongoDatabase(), apply);
+  if (getPersistenceMode() === 'mongodb')
+    return withIntegrityTransaction(await getMongoDatabase(), apply);
   return apply();
 }

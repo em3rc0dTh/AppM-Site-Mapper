@@ -1,5 +1,9 @@
 import { integrityErrorResponse } from '@/shared/http/integrity-error';
-import { readBoundedJson as readHardenedJson, jsonBodyErrorStatus as hardenedJsonStatus, isSafeMutationRequest as hardenedSafeMutation } from '@/shared/http/request-security';
+import {
+  readBoundedJson as readHardenedJson,
+  jsonBodyErrorStatus as hardenedJsonStatus,
+  isSafeMutationRequest as hardenedSafeMutation,
+} from '@/shared/http/request-security';
 import { NextResponse } from 'next/server';
 
 import { AuthService } from '@/modules/identity/application/auth-service';
@@ -20,9 +24,14 @@ async function handlePATCH(request: Request, context: Context) {
     return NextResponse.json({ error: auth.error }, { status: 403 });
   }
 
-  if (!hardenedSafeMutation(request)) return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  if (!hardenedSafeMutation(request))
+    return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
   const parsedBody = await readHardenedJson(request);
-  if (!parsedBody.ok) return Response.json({ error: parsedBody.error }, { status: hardenedJsonStatus(parsedBody.error) });
+  if (!parsedBody.ok)
+    return Response.json(
+      { error: parsedBody.error },
+      { status: hardenedJsonStatus(parsedBody.error) },
+    );
   const body: unknown = parsedBody.value;
 
   if (!body || typeof body !== 'object') {
@@ -81,5 +90,9 @@ async function handlePATCH(request: Request, context: Context) {
 }
 
 export async function PATCH(request: Request, context: Context) {
-  try { return await handlePATCH(request, context); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePATCH(request, context);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

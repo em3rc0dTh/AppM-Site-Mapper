@@ -66,7 +66,11 @@ export function validatePromotionCandidate(nodes: readonly CanonicalNode[]): Pro
       continue;
     }
 
-    if (node.kind === 'EQUIPMENT' ? !['DEVICE', 'EQUIPMENT'].includes(parent.kind) : parent.kind !== expected) {
+    if (
+      node.kind === 'EQUIPMENT'
+        ? !['DEVICE', 'EQUIPMENT'].includes(parent.kind)
+        : parent.kind !== expected
+    ) {
       errors.push(`INVALID_PARENT_KIND:${node.id}:${parent.kind}:${expected}`);
     }
   }

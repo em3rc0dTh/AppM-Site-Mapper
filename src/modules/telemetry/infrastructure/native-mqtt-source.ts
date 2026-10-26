@@ -191,21 +191,26 @@ export class NativeMqttSource {
               socket.destroy();
               return;
             }
-            processing = processing.then(async () => {
-              if (socket.destroyed || this.socket !== socket || this.stopping) return;
-              // Await durable capture. A failed capture deliberately withholds PUBACK.
-              await this.onMessage(publish.topic, publish.payload);
-              if (publish.qos === 1 && publish.packetId !== undefined && !socket.destroyed) {
-                socket.write(encodePubAck(publish.packetId));
-              }
-              if (publish.qos === 0) logger.warn('mqtt.qos0.potential_loss', {});
-            }).catch((error) => {
-              this.lastError = 'MQTT_CAPTURE_FAILED';
-              logger.warn('mqtt.message.handler_failed', {
-                reason: error instanceof Error ? error.message : 'unknown',
+            processing = processing
+              .then(async () => {
+                if (socket.destroyed || this.socket !== socket || this.stopping) return;
+                // Await durable capture. A failed capture deliberately withholds PUBACK.
+                await this.onMessage(publish.topic, publish.payload);
+                if (publish.qos === 1 && publish.packetId !== undefined && !socket.destroyed) {
+                  socket.write(encodePubAck(publish.packetId));
+                }
+                if (publish.qos === 0) logger.warn('mqtt.qos0.potential_loss', {});
+              })
+              .catch((error) => {
+                this.lastError = 'MQTT_CAPTURE_FAILED';
+                logger.warn('mqtt.message.handler_failed', {
+                  reason: error instanceof Error ? error.message : 'unknown',
+                });
+                socket.destroy();
+              })
+              .finally(() => {
+                pendingMessages--;
               });
-              socket.destroy();
-            }).finally(() => { pendingMessages--; });
           } catch (error) {
             socket.destroy();
             logger.warn('mqtt.publish.rejected', {

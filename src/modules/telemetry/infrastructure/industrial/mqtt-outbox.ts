@@ -130,10 +130,19 @@ export class MqttObservationOutbox {
       if (Buffer.byteLength(body) > 300000) throw new Error('MQTT outbox capture too large');
       const file = captureId + '.json';
       const handle = await open(join(this.directory, file + '.tmp'), 'wx', 0o600);
-      try { await handle.writeFile(body); await handle.sync(); } finally { await handle.close(); }
+      try {
+        await handle.writeFile(body);
+        await handle.sync();
+      } finally {
+        await handle.close();
+      }
       await rename(join(this.directory, file + '.tmp'), join(this.directory, file));
       const directory = await open(this.directory, 'r');
-      try { await directory.sync(); } finally { await directory.close(); }
+      try {
+        await directory.sync();
+      } finally {
+        await directory.close();
+      }
       this.files.add(file);
       this.counters.queued++;
       void this.flush();

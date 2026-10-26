@@ -1,4 +1,8 @@
-import { readBoundedJson as readHardenedJson, jsonBodyErrorStatus as hardenedJsonStatus, isSafeMutationRequest as hardenedSafeMutation } from '@/shared/http/request-security';
+import {
+  readBoundedJson as readHardenedJson,
+  jsonBodyErrorStatus as hardenedJsonStatus,
+  isSafeMutationRequest as hardenedSafeMutation,
+} from '@/shared/http/request-security';
 import { NextResponse } from 'next/server';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { isWorkspaceHref } from '@/modules/workspace/domain/context';
@@ -13,10 +17,15 @@ export async function GET() {
 export async function PUT(request: Request) {
   const auth = await requirePermission('topology:read');
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 401 });
-  if (!hardenedSafeMutation(request)) return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  if (!hardenedSafeMutation(request))
+    return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
   const parsedBody = await readHardenedJson(request);
-  if (!parsedBody.ok) return Response.json({ error: parsedBody.error }, { status: hardenedJsonStatus(parsedBody.error) });
-  const body = (parsedBody.value) as Record<string, unknown> | null;
+  if (!parsedBody.ok)
+    return Response.json(
+      { error: parsedBody.error },
+      { status: hardenedJsonStatus(parsedBody.error) },
+    );
+  const body = parsedBody.value as Record<string, unknown> | null;
   if (
     !body ||
     !isWorkspaceHref(body.href) ||
@@ -40,10 +49,15 @@ export async function PUT(request: Request) {
 export async function PATCH(request: Request) {
   const auth = await requirePermission('topology:read');
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 401 });
-  if (!hardenedSafeMutation(request)) return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  if (!hardenedSafeMutation(request))
+    return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
   const parsedBody = await readHardenedJson(request);
-  if (!parsedBody.ok) return Response.json({ error: parsedBody.error }, { status: hardenedJsonStatus(parsedBody.error) });
-  const body = (parsedBody.value) as {
+  if (!parsedBody.ok)
+    return Response.json(
+      { error: parsedBody.error },
+      { status: hardenedJsonStatus(parsedBody.error) },
+    );
+  const body = parsedBody.value as {
     entityId?: unknown;
     pinned?: unknown;
   } | null;

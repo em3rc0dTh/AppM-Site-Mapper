@@ -1,5 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { ensureTopologyIndexes, topologyValidator } from '../../../src/shared/infrastructure/mongodb/topology-schema.ts';
+import {
+  ensureTopologyIndexes,
+  topologyValidator,
+} from '../../../src/shared/infrastructure/mongodb/topology-schema.ts';
 import { canonicalIntegrityErrors } from '../../../src/shared/infrastructure/mongodb/data-integrity-preflight.ts';
 import { acquireMaintenance, releaseMaintenance } from '../maintenance.ts';
 import process from 'node:process';
@@ -31,12 +34,21 @@ function parseArgs(argv: readonly string[]): CliOptions {
   const expectedRaw = value('--expected');
   const expected = Number(expectedRaw);
 
-  if (!fingerprint || !/^[a-fA-F0-9]{64}$/.test(fingerprint) || !Number.isInteger(expected) || expected < 1) {
+  if (
+    !fingerprint ||
+    !/^[a-fA-F0-9]{64}$/.test(fingerprint) ||
+    !Number.isInteger(expected) ||
+    expected < 1
+  ) {
     throw new Error('Usage: --fingerprint <sha256> --expected <count> [--apply]');
   }
 
-  if (value('--expect-db') !== process.env.MONGODB_DB_NAME || !process.env.MONGODB_DB_NAME?.trim()) throw new Error('Matching --expect-db and explicit MONGODB_DB_NAME are required.');
-  if (argv.includes('--apply') && (!argv.includes('--writers-stopped') || !value('--backup-id'))) throw new Error('--apply requires --writers-stopped and --backup-id. Stop all old application, industrial and external writers first.');
+  if (value('--expect-db') !== process.env.MONGODB_DB_NAME || !process.env.MONGODB_DB_NAME?.trim())
+    throw new Error('Matching --expect-db and explicit MONGODB_DB_NAME are required.');
+  if (argv.includes('--apply') && (!argv.includes('--writers-stopped') || !value('--backup-id')))
+    throw new Error(
+      '--apply requires --writers-stopped and --backup-id. Stop all old application, industrial and external writers first.',
+    );
   return {
     ...(value('--backup-id') ? { backupId: value('--backup-id')! } : {}),
     fingerprint,
@@ -79,7 +91,9 @@ async function main(): Promise<void> {
   try {
     await client.connect();
     const database = client.db(databaseName);
-    const owner = options.apply ? await acquireMaintenance(database, 'legacy-promotion', options.backupId!) : null;
+    const owner = options.apply
+      ? await acquireMaintenance(database, 'legacy-promotion', options.backupId!)
+      : null;
     const staging = database.collection(STAGING);
 
     const stagedDocuments = await staging
@@ -90,7 +104,8 @@ async function main(): Promise<void> {
     const paths = await database.collection('power_paths').find({}).toArray();
     const bindings = await database.collection('telemetry_bindings').find({}).toArray();
     const references = canonicalIntegrityErrors(nodes, paths, bindings);
-    if (references.length) throw new Error(`PROMOTION_REFERENCES_BLOCKED: ${references.join(', ')}`);
+    if (references.length)
+      throw new Error(`PROMOTION_REFERENCES_BLOCKED: ${references.join(', ')}`);
 
     if (nodes.length !== options.expected) {
       throw new Error(
@@ -122,7 +137,11 @@ async function main(): Promise<void> {
     }
 
     // Unique candidate names preserve failed attempts for inspection; never drop data automatically.
-    const candidate = await database.createCollection(CANDIDATE, { validator: topologyValidator, validationLevel: 'strict', validationAction: 'error' });
+    const candidate = await database.createCollection(CANDIDATE, {
+      validator: topologyValidator,
+      validationLevel: 'strict',
+      validationAction: 'error',
+    });
     await candidate.insertMany(nodes as Document[]);
     await ensureTopologyIndexes(candidate);
 
@@ -133,23 +152,41 @@ async function main(): Promise<void> {
       throw new Error('Candidate verification failed before live swap.');
     }
 
-    const finalReferences = canonicalIntegrityErrors(candidateNodes,
+    const finalReferences = canonicalIntegrityErrors(
+      candidateNodes,
       await database.collection('power_paths').find({}).toArray(),
-      await database.collection('telemetry_bindings').find({}).toArray());
-    if (finalReferences.length) throw new Error('FINAL_PREFLIGHT_BLOCKED: ' + finalReferences.join(', '));
+      await database.collection('telemetry_bindings').find({}).toArray(),
+    );
+    if (finalReferences.length)
+      throw new Error('FINAL_PREFLIGHT_BLOCKED: ' + finalReferences.join(', '));
     const liveExists = await collectionExists(client, databaseName, LIVE);
     const backup = liveExists ? backupName() : null;
 
     const journalId = randomUUID();
-    await database.collection('promotion_journal').insertOne({ id: journalId, candidate: CANDIDATE, backup, owner, fingerprint: options.fingerprint, phase: 'PREPARED', at: new Date(), backupId: options.backupId });
+    await database
+      .collection('promotion_journal')
+      .insertOne({
+        id: journalId,
+        candidate: CANDIDATE,
+        backup,
+        owner,
+        fingerprint: options.fingerprint,
+        phase: 'PREPARED',
+        at: new Date(),
+        backupId: options.backupId,
+      });
     if (liveExists && backup) {
       await database.collection(LIVE).rename(backup);
-      await database.collection('promotion_journal').updateOne({ id: journalId }, { $set: { phase: 'LIVE_RENAMED' } });
+      await database
+        .collection('promotion_journal')
+        .updateOne({ id: journalId }, { $set: { phase: 'LIVE_RENAMED' } });
     }
 
     try {
       await candidate.rename(LIVE);
-      await database.collection('promotion_journal').updateOne({ id: journalId }, { $set: { phase: 'CANDIDATE_PROMOTED' } });
+      await database
+        .collection('promotion_journal')
+        .updateOne({ id: journalId }, { $set: { phase: 'CANDIDATE_PROMOTED' } });
     } catch (error) {
       if (
         backup &&
@@ -171,7 +208,9 @@ async function main(): Promise<void> {
       );
     }
 
-    await database.collection('promotion_journal').updateOne({ id: journalId }, { $set: { phase: 'COMPLETE' } });
+    await database
+      .collection('promotion_journal')
+      .updateOne({ id: journalId }, { $set: { phase: 'COMPLETE' } });
     await releaseMaintenance(database, owner!);
     process.stdout.write(
       JSON.stringify(

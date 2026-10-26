@@ -276,7 +276,9 @@ async function handlePOST(request: Request) {
       { error: result.error },
       {
         status:
-          result.error === 'LAYOUT_CONFLICT' || result.error === 'SERIAL_ALREADY_ASSIGNED' || result.error === 'POSITION_OCCUPIED'
+          result.error === 'LAYOUT_CONFLICT' ||
+          result.error === 'SERIAL_ALREADY_ASSIGNED' ||
+          result.error === 'POSITION_OCCUPIED'
             ? 409
             : 422,
       },
@@ -287,5 +289,9 @@ async function handlePOST(request: Request) {
 }
 
 export async function POST(request: Request) {
-  try { return await handlePOST(request); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePOST(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

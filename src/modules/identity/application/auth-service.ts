@@ -213,7 +213,8 @@ export class AuthService {
       updatedAt: timestamp,
     };
 
-    if (!this.repository.bootstrapUser || !(await this.repository.bootstrapUser(user))) return failure('BOOTSTRAP_CLOSED');
+    if (!this.repository.bootstrapUser || !(await this.repository.bootstrapUser(user)))
+      return failure('BOOTSTRAP_CLOSED');
     return success(toSafeUser(user));
   }
 

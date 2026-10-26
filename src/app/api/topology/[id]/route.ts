@@ -212,5 +212,9 @@ async function handlePATCH(request: Request, context: Context) {
 }
 
 export async function PATCH(request: Request, context: Context) {
-  try { return await handlePATCH(request, context); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePATCH(request, context);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

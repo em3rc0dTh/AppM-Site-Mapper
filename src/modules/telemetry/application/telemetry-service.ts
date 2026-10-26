@@ -244,7 +244,9 @@ export class TelemetryService {
     try {
       await this.historyWriter.writeDurable(sample);
       return { ...sample, historyCapture: 'PERSISTED' };
-    } catch { return { ...sample, historyCapture: 'FAILED' }; }
+    } catch {
+      return { ...sample, historyCapture: 'FAILED' };
+    }
   }
 
   latest(targetId: string): TelemetrySample | null {

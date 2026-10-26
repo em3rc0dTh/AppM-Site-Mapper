@@ -225,13 +225,25 @@ async function handleDELETE(request: Request, context: Context) {
 }
 
 export async function POST(request: Request, context: Context) {
-  try { return await handlePOST(request, context); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePOST(request, context);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }
 
 export async function PATCH(request: Request, context: Context) {
-  try { return await handlePATCH(request, context); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePATCH(request, context);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }
 
 export async function DELETE(request: Request, context: Context) {
-  try { return await handleDELETE(request, context); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handleDELETE(request, context);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

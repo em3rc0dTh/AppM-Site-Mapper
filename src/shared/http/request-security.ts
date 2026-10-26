@@ -146,13 +146,15 @@ export function isSafeMutationRequest(request: Request): boolean {
     // Validate against that effective HTTP authority rather than special-casing
     // localhost/127.0.0.1 aliases.
     const host =
-      (hasTrustedProxy(request) ? firstForwardedValue(request.headers.get('x-forwarded-host')) : null) ??
-      firstForwardedValue(request.headers.get('host'));
+      (hasTrustedProxy(request)
+        ? firstForwardedValue(request.headers.get('x-forwarded-host'))
+        : null) ?? firstForwardedValue(request.headers.get('host'));
     if (!host) return false;
 
     const proto =
-      (hasTrustedProxy(request) ? firstForwardedValue(request.headers.get('x-forwarded-proto')) : null) ??
-      internal.protocol.replace(':', '');
+      (hasTrustedProxy(request)
+        ? firstForwardedValue(request.headers.get('x-forwarded-proto'))
+        : null) ?? internal.protocol.replace(':', '');
     const effective = new URL(`${proto}://${host}`);
     return supplied.origin === effective.origin;
   } catch {

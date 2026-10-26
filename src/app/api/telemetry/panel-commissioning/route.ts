@@ -1,4 +1,8 @@
-import { readBoundedJson as readHardenedJson, jsonBodyErrorStatus as hardenedJsonStatus, isSafeMutationRequest as hardenedSafeMutation } from '@/shared/http/request-security';
+import {
+  readBoundedJson as readHardenedJson,
+  jsonBodyErrorStatus as hardenedJsonStatus,
+  isSafeMutationRequest as hardenedSafeMutation,
+} from '@/shared/http/request-security';
 import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { randomUUID } from 'node:crypto';
 
@@ -103,9 +107,14 @@ export async function GET(request: Request) {
 async function handlePOST(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 403 });
-  if (!hardenedSafeMutation(request)) return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  if (!hardenedSafeMutation(request))
+    return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
   const parsedBody = await readHardenedJson(request);
-  if (!parsedBody.ok) return Response.json({ error: parsedBody.error }, { status: hardenedJsonStatus(parsedBody.error) });
+  if (!parsedBody.ok)
+    return Response.json(
+      { error: parsedBody.error },
+      { status: hardenedJsonStatus(parsedBody.error) },
+    );
   const body: unknown = parsedBody.value;
   if (!body || typeof body !== 'object' || Array.isArray(body))
     return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
@@ -163,15 +172,24 @@ async function handlePOST(request: Request) {
     );
   const repository = await createTelemetryBindingRepository();
   const now = new Date().toISOString();
-  if (!repository.commitBindings) return Response.json({ error: 'ATOMIC_COMMISSIONING_STORAGE_REQUIRED' }, { status: 503 });
+  if (!repository.commitBindings)
+    return Response.json({ error: 'ATOMIC_COMMISSIONING_STORAGE_REQUIRED' }, { status: 503 });
   const topology = await createTopologyRepository();
   const panel = await topology.getById(preview.panelId);
   const breaker = await topology.getById(row.breakerId);
-  if (!panel || !breaker) return Response.json({ error: 'COMMISSIONING_TOPOLOGY_CONFLICT' }, { status: 409 });
+  if (!panel || !breaker)
+    return Response.json({ error: 'COMMISSIONING_TOPOLOGY_CONFLICT' }, { status: 409 });
   const bindings: TelemetryBinding[] = METRICS.map((metric) => ({
-    id: randomUUID(), lifecycle: 'ACTIVE', createdAt: now, updatedAt: now,
-    protocol: 'MQTT', sourceIdentity: preview.sourceIdentity, sourcePointId: row.point,
-    metric, targetType: 'EQUIPMENT', targetId: row.breakerId,
+    id: randomUUID(),
+    lifecycle: 'ACTIVE',
+    createdAt: now,
+    updatedAt: now,
+    protocol: 'MQTT',
+    sourceIdentity: preview.sourceIdentity,
+    sourcePointId: row.point,
+    metric,
+    targetType: 'EQUIPMENT',
+    targetId: row.breakerId,
     attributes: {
       commissioning: 'EXPLICIT_OPERATOR_CONFIRMATION',
       measurementSource: 'PANEL_POSITION',
@@ -182,10 +200,20 @@ async function handlePOST(request: Request) {
     },
   }));
   const ids = await repository.commitBindings(bindings, [panel, breaker]);
-  return Response.json({ ok: true, breakerId: row.breakerId, point: row.point,
-    created: bindings.filter((binding) => ids.includes(binding.id)).map((binding) => binding.metric) });
+  return Response.json({
+    ok: true,
+    breakerId: row.breakerId,
+    point: row.point,
+    created: bindings
+      .filter((binding) => ids.includes(binding.id))
+      .map((binding) => binding.metric),
+  });
 }
 
 export async function POST(request: Request) {
-  try { return await handlePOST(request); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePOST(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

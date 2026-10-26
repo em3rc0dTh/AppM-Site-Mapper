@@ -19,17 +19,32 @@ export class MemoryTopologyRepository implements TopologyRepository {
     before: readonly TopologyNode[],
     after: readonly TopologyNode[],
   ): Promise<boolean> {
-    if (before.some((node) => !this.nodes.has(node.id) || !sameTopologyVersion(this.nodes.get(node.id)!, node))) return false;
+    if (
+      before.some(
+        (node) => !this.nodes.has(node.id) || !sameTopologyVersion(this.nodes.get(node.id)!, node),
+      )
+    )
+      return false;
     const existing = new Set(before.map((node) => node.id));
     if (after.some((node) => !existing.has(node.id) && this.nodes.has(node.id))) return false;
     const finalNodes = new Map(this.nodes);
     for (const node of after) finalNodes.set(node.id, node);
     const occupied = new Set<string>();
-    for (const node of finalNodes.values()) if (node.kind === 'CONTAINER_RACK' && node.lifecycle === 'ACTIVE') {
-      if (occupied.has(node.parentId)) throw new IntegrityConflict('POSITION_OCCUPIED');
-      occupied.add(node.parentId);
-    }
-    for (const node of after) this.nodes.set(node.id, structuredClone(nextTopologyVersion(node, before.find((old) => old.id === node.id))));
+    for (const node of finalNodes.values())
+      if (node.kind === 'CONTAINER_RACK' && node.lifecycle === 'ACTIVE') {
+        if (occupied.has(node.parentId)) throw new IntegrityConflict('POSITION_OCCUPIED');
+        occupied.add(node.parentId);
+      }
+    for (const node of after)
+      this.nodes.set(
+        node.id,
+        structuredClone(
+          nextTopologyVersion(
+            node,
+            before.find((old) => old.id === node.id),
+          ),
+        ),
+      );
     return true;
   }
 
@@ -96,7 +111,12 @@ export class MemoryTopologyRepository implements TopologyRepository {
 
   async replaceIfVersion(node: TopologyNode, expectedVersion: string): Promise<boolean> {
     const current = this.nodes.get(node.id);
-    if (!current || current.updatedAt !== expectedVersion || current.revision !== node.revision || current.lifecycle !== 'ACTIVE') {
+    if (
+      !current ||
+      current.updatedAt !== expectedVersion ||
+      current.revision !== node.revision ||
+      current.lifecycle !== 'ACTIVE'
+    ) {
       return false;
     }
     this.nodes.set(node.id, structuredClone(nextTopologyVersion(node, node)));

@@ -46,8 +46,10 @@ export function persistenceMode(): 'memory' | 'mongodb' {
   if (configured !== 'memory' && configured !== 'mongodb') {
     throw new Error('APP_PERSISTENCE must explicitly be memory or mongodb.');
   }
-  if (configured === 'memory' &&
-      (isProductionDeployment() || !['development', 'test'].includes(environment ?? ''))) {
+  if (
+    configured === 'memory' &&
+    (isProductionDeployment() || !['development', 'test'].includes(environment ?? ''))
+  ) {
     throw new Error('Memory persistence requires explicit APP_ENV=development or test.');
   }
   if (configured === 'mongodb') {

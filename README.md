@@ -160,7 +160,6 @@ La revisión posterior a PR #103/#10 se realizó sin ejecutar ni agregar pruebas
 
 Laboratorio MQTT/SNMP unificado: [procedimiento para principiantes](docs/operations/laboratorio-industrial-para-principiantes.md) · [runbook industrial y evidencias](docs/telemetry/industrial-unified-lab.md).
 
-
 ## Hardening review — 2026-10-26
 
 [Critical hardening delivery, migration prerequisites and pending operator acceptance](docs/operations/mk1-critical-hardening-2026-10-26.md).

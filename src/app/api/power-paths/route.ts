@@ -80,5 +80,9 @@ async function handlePOST(request: Request) {
 }
 
 export async function POST(request: Request) {
-  try { return await handlePOST(request); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePOST(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

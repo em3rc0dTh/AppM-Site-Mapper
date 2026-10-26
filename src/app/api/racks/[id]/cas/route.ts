@@ -90,12 +90,19 @@ async function handlePOST(request: Request, context: Context) {
   }
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: String(result.error).includes('CONFLICT') ? 409 : 422 });
+    return NextResponse.json(
+      { error: result.error },
+      { status: String(result.error).includes('CONFLICT') ? 409 : 422 },
+    );
   }
 
   return NextResponse.json({ rack: result.value });
 }
 
 export async function POST(request: Request, context: Context) {
-  try { return await handlePOST(request, context); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePOST(request, context);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

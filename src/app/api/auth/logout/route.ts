@@ -20,5 +20,9 @@ async function handlePOST() {
 }
 
 export async function POST() {
-  try { return await handlePOST(); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePOST();
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

@@ -665,7 +665,8 @@ export class TopologyService {
     }
     if (!isAllowedParent(node.kind, parent)) return failure('INVALID_PARENT');
     if (parent.lifecycle === 'ARCHIVED') return failure('PARENT_ARCHIVED');
-    if (node.parentId === parent.id && node.kind !== 'EQUIPMENT') return success(await this.committed(node));
+    if (node.parentId === parent.id && node.kind !== 'EQUIPMENT')
+      return success(await this.committed(node));
 
     if (node.kind === 'CONTAINER_RACK' && (await this.hasActiveRack(parent.id, node.id))) {
       return failure('POSITION_OCCUPIED');
@@ -679,7 +680,8 @@ export class TopologyService {
 
       const moved = { ...node, parentId: parent.id, updatedAt: nowIso() } as TopologyNode;
       if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
-    if (!(await this.repository.commitLayout([node, parent], [moved, parent]))) return failure('LAYOUT_CONFLICT');
+      if (!(await this.repository.commitLayout([node, parent], [moved, parent])))
+        return failure('LAYOUT_CONFLICT');
       return success(await this.committed(moved));
     }
 
@@ -800,7 +802,8 @@ export class TopologyService {
 
     const moved = { ...node, parentId: parent.id, updatedAt: nowIso() } as TopologyNode;
     if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
-    if (!(await this.repository.commitLayout([node, parent], [moved, parent]))) return failure('LAYOUT_CONFLICT');
+    if (!(await this.repository.commitLayout([node, parent], [moved, parent])))
+      return failure('LAYOUT_CONFLICT');
     return success(await this.committed(moved));
   }
 
@@ -817,7 +820,8 @@ export class TopologyService {
     }
 
     if (node.kind === 'EQUIPMENT') {
-      if (node.accessPorts.some((port) => port.lifecycle === 'ACTIVE')) return failure('ACTIVE_ACCESS_PORTS');
+      if (node.accessPorts.some((port) => port.lifecycle === 'ACTIVE'))
+        return failure('ACTIVE_ACCESS_PORTS');
       if (node.children.some((childId) => childId !== null)) {
         return failure('HAS_ACTIVE_CHILDREN');
       }
@@ -832,7 +836,8 @@ export class TopologyService {
     };
 
     if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
-    if (!(await this.repository.commitLayout([node], [archived]))) return failure('LAYOUT_CONFLICT');
+    if (!(await this.repository.commitLayout([node], [archived])))
+      return failure('LAYOUT_CONFLICT');
     return success(await this.committed(archived));
   }
 
@@ -857,7 +862,8 @@ export class TopologyService {
       }
     }
 
-    if (node.kind === 'CONTAINER_RACK' && await this.hasActiveRack(node.parentId, node.id)) return failure('POSITION_OCCUPIED');
+    if (node.kind === 'CONTAINER_RACK' && (await this.hasActiveRack(node.parentId, node.id)))
+      return failure('POSITION_OCCUPIED');
     const restored = {
       ...node,
       lifecycle: 'ACTIVE' as const,
@@ -865,7 +871,8 @@ export class TopologyService {
     };
 
     if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
-    if (!(await this.repository.commitLayout([node], [restored]))) return failure('LAYOUT_CONFLICT');
+    if (!(await this.repository.commitLayout([node], [restored])))
+      return failure('LAYOUT_CONFLICT');
     return success(await this.committed(restored));
   }
 

@@ -1,5 +1,9 @@
 import { integrityErrorResponse } from '@/shared/http/integrity-error';
-import { readBoundedJson as readHardenedJson, jsonBodyErrorStatus as hardenedJsonStatus, isSafeMutationRequest as hardenedSafeMutation } from '@/shared/http/request-security';
+import {
+  readBoundedJson as readHardenedJson,
+  jsonBodyErrorStatus as hardenedJsonStatus,
+  isSafeMutationRequest as hardenedSafeMutation,
+} from '@/shared/http/request-security';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -14,9 +18,14 @@ async function handlePATCH(request: Request) {
     return NextResponse.json({ error: 'SESSION_INVALID' }, { status: 401 });
   }
 
-  if (!hardenedSafeMutation(request)) return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  if (!hardenedSafeMutation(request))
+    return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
   const parsedBody = await readHardenedJson(request);
-  if (!parsedBody.ok) return Response.json({ error: parsedBody.error }, { status: hardenedJsonStatus(parsedBody.error) });
+  if (!parsedBody.ok)
+    return Response.json(
+      { error: parsedBody.error },
+      { status: hardenedJsonStatus(parsedBody.error) },
+    );
   const body: unknown = parsedBody.value;
 
   if (
@@ -43,5 +52,9 @@ async function handlePATCH(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  try { return await handlePATCH(request); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePATCH(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

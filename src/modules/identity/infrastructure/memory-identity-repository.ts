@@ -43,7 +43,10 @@ export class MemoryIdentityRepository implements IdentityRepository {
   }
 
   async insertUser(user: User): Promise<void> {
-    if (this.users.has(user.id) || [...this.users.values()].some((current) => current.email === user.email)) {
+    if (
+      this.users.has(user.id) ||
+      [...this.users.values()].some((current) => current.email === user.email)
+    ) {
       throw new Error('User already exists.');
     }
 
@@ -52,8 +55,22 @@ export class MemoryIdentityRepository implements IdentityRepository {
 
   async replaceUser(user: User, expected?: User): Promise<void> {
     const current = this.users.get(user.id);
-    if (!current || !expected || current.revision !== expected.revision || current.updatedAt !== expected.updatedAt) throw new IntegrityConflict('USER_CONFLICT');
-    if (current.role === 'SUPERADMIN' && current.lifecycle === 'ACTIVE' && (user.role !== 'SUPERADMIN' || user.lifecycle !== 'ACTIVE') && [...this.users.values()].filter((item) => item.role === 'SUPERADMIN' && item.lifecycle === 'ACTIVE').length <= 1) throw new IntegrityConflict('LAST_SUPERADMIN');
+    if (
+      !current ||
+      !expected ||
+      current.revision !== expected.revision ||
+      current.updatedAt !== expected.updatedAt
+    )
+      throw new IntegrityConflict('USER_CONFLICT');
+    if (
+      current.role === 'SUPERADMIN' &&
+      current.lifecycle === 'ACTIVE' &&
+      (user.role !== 'SUPERADMIN' || user.lifecycle !== 'ACTIVE') &&
+      [...this.users.values()].filter(
+        (item) => item.role === 'SUPERADMIN' && item.lifecycle === 'ACTIVE',
+      ).length <= 1
+    )
+      throw new IntegrityConflict('LAST_SUPERADMIN');
     if (!this.users.has(user.id)) {
       throw new Error('User does not exist.');
     }

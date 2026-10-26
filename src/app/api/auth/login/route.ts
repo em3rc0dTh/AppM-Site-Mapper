@@ -1,5 +1,9 @@
 import { integrityErrorResponse } from '@/shared/http/integrity-error';
-import { readBoundedJson as readHardenedJson, jsonBodyErrorStatus as hardenedJsonStatus, isSafeMutationRequest as hardenedSafeMutation } from '@/shared/http/request-security';
+import {
+  readBoundedJson as readHardenedJson,
+  jsonBodyErrorStatus as hardenedJsonStatus,
+  isSafeMutationRequest as hardenedSafeMutation,
+} from '@/shared/http/request-security';
 import { trustedClientAddress } from '@/shared/http/trusted-proxy';
 import { createHash } from 'node:crypto';
 
@@ -12,15 +16,18 @@ import { getIdentityRuntime } from '@/modules/identity/infrastructure/identity-r
 function throttleKey(request: Request, email: string): string {
   void request;
 
-  return createHash('sha256')
-    .update(`account:${email.trim().toLowerCase()}`)
-    .digest('base64url');
+  return createHash('sha256').update(`account:${email.trim().toLowerCase()}`).digest('base64url');
 }
 
 async function handlePOST(request: Request) {
-  if (!hardenedSafeMutation(request)) return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  if (!hardenedSafeMutation(request))
+    return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
   const parsedBody = await readHardenedJson(request);
-  if (!parsedBody.ok) return Response.json({ error: parsedBody.error }, { status: hardenedJsonStatus(parsedBody.error) });
+  if (!parsedBody.ok)
+    return Response.json(
+      { error: parsedBody.error },
+      { status: hardenedJsonStatus(parsedBody.error) },
+    );
   const body: unknown = parsedBody.value;
 
   if (
@@ -35,8 +42,11 @@ async function handlePOST(request: Request) {
   }
 
   const runtime = await getIdentityRuntime();
-  const addressKey = createHash('sha256').update('edge:' + trustedClientAddress(request)).digest('base64url');
-  if (!(await runtime.throttle.consume(addressKey, new Date(), 60, 60_000))) return NextResponse.json({ error: 'RATE_LIMITED' }, { status: 429 });
+  const addressKey = createHash('sha256')
+    .update('edge:' + trustedClientAddress(request))
+    .digest('base64url');
+  if (!(await runtime.throttle.consume(addressKey, new Date(), 60, 60_000)))
+    return NextResponse.json({ error: 'RATE_LIMITED' }, { status: 429 });
   const result = await new AuthService(runtime.repository, runtime.throttle).authenticate(
     body.email,
     body.password,
@@ -54,5 +64,9 @@ async function handlePOST(request: Request) {
 }
 
 export async function POST(request: Request) {
-  try { return await handlePOST(request); } catch (error) { return integrityErrorResponse(error); }
+  try {
+    return await handlePOST(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

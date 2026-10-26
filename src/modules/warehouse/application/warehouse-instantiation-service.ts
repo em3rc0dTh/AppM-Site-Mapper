@@ -211,6 +211,10 @@ export class WarehouseInstantiationService {
       accessPorts: rootAccessPorts,
       pinned: false,
       ...(category ? { category } : {}),
+      ...(input.partNumber?.trim() ? { partNumber: input.partNumber.trim() } : {}),
+      ...(input.aliases?.length
+        ? { aliases: [...new Set(input.aliases.map((alias) => alias.trim()).filter(Boolean))] }
+        : {}),
       ...(template.manufacturer ? { manufacturer: template.manufacturer } : {}),
       ...(template.model ? { model: template.model } : {}),
       template: snapshotTemplate(template),

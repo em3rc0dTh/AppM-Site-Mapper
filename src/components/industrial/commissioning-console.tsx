@@ -44,9 +44,9 @@ interface Overview {
 type ProfileRole = 'GATEWAY' | 'METER';
 const metrics = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const;
 
-async function jsonRequest(url: string, init?: RequestInit): Promise<Record<string, any>> {
+async function jsonRequest(url: string, init?: RequestInit): Promise<Record<string, unknown>> {
   const response = await fetch(url, { ...init, cache: 'no-store' });
-  const body = (await response.json()) as Record<string, any>;
+  const body = (await response.json()) as Record<string, unknown>;
   if (!response.ok) throw new Error(String(body.error ?? 'REQUEST_FAILED'));
   return body;
 }
@@ -136,7 +136,15 @@ export function CommissioningConsole({ canWrite }: { canWrite: boolean }) {
   function selectProfile(id: string) {
     setEquipmentId(id);
     const current = overview?.profiles.find((item) => item.equipmentId === id);
-    if (!current) return;
+    if (!current) {
+      setRole('GATEWAY');
+      setGatewayEquipmentId('');
+      setSourceIdentity('');
+      setIp('');
+      setNetworkGateway('');
+      setSlaveId('');
+      return;
+    }
     setRole(current.role);
     setGatewayEquipmentId(current.gatewayEquipmentId ?? '');
     setSourceIdentity(current.sourceIdentity ?? '');

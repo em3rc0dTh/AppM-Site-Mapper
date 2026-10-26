@@ -1,0 +1,49 @@
+name: Localize main consolidation once
+on:
+  push:
+    branches:
+      - feat/site-mapper-work-2026-10-23
+    paths:
+      - '.github/workflows/localize-main-consolidation-once.yml'
+      - 'scripts/ci/localize-main-consolidation-ui.mjs'
+permissions:
+  contents: write
+jobs:
+  localize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Extract consolidation UI copy to next-intl
+        run: node scripts/ci/localize-main-consolidation-ui.mjs
+      - name: Format localized scope
+        run: |
+          npx prettier --write \
+            src/app/device/'[deviceId]'/page.tsx \
+            src/app/telemetry/page.tsx \
+            src/components/equipment/equipment-composition-editor.tsx \
+            src/components/industrial/commissioning-console.tsx \
+            src/messages/en.json src/messages/es.json
+      - name: Validate i18n contracts
+        run: npx vitest run tests/unit/i18n-static-ui.test.ts tests/unit/ui-language-baseline.test.ts
+      - name: Commit localization extraction
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- \
+            src/app/device/'[deviceId]'/page.tsx \
+            src/app/telemetry/page.tsx \
+            src/components/equipment/equipment-composition-editor.tsx \
+            src/components/industrial/commissioning-console.tsx \
+            src/messages/en.json src/messages/es.json
+          if git diff --cached --quiet; then
+            echo "No localization changes"
+          else
+            git commit -m "fix(i18n): extract MK1 consolidation UI copy"
+            git push origin HEAD:refs/heads/feat/site-mapper-work-2026-10-23
+          fi

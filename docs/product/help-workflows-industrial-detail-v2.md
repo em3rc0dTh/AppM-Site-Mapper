@@ -6,17 +6,17 @@
 
 ## 1. El orden importa: primero inventario físico, luego conectividad y datos
 
-| Capa | Qué se configura | Qué habilita | Qué NO hace |
-| --- | --- | --- | --- |
-| 1 · Ubicación | Network, Site, Structure, Level, Room, Bay, Position, Rack | Localizar el Device | No crea circuitos ni lecturas |
-| 2 · Equipo | Device BDFB → Chassis → Shelf → Frame → Panel → Breaker | Identidad del componente y slot ocupado | No verifica cableado |
-| 3 · Energía | Access Ports POWER y PowerPaths | Rutas Feed A/B registradas | No certifica corriente real |
-| 4 · MQTT | Serial/fuente del Panel, prefijo y posición de breaker | Candidato a raw point y 4 bindings V/A/W/kWh | Mapping no implica LIVE |
-| 5 · SNMP | Perfil BDFB, inputs externos, shunt, paneles, fuente/OIDs | Bindings CURRENT/VOLTAGE por input físico | No conecta automáticamente SNMPv3 |
-| 6 · Ingesta | Broker MQTT / colector SNMP / traps-informs, credenciales | Paquetes autorizados y normalizados | No inventa Equipment ni binding |
-| 7 · Presentación | Latest state, quality, charts, Timescale | LIVE, STALE, historial y diagnóstico | Histórico no significa LIVE |
-| 8 · Publicación | Identidad lógica, manifest, Unit ID/offset/quality Modbus | Registros de salida para tercero | No certifica conexión Metasys |
-| 9 · Mantenimiento | Archive/restore, retire binding, ports y paths | Estado gestionable con trazabilidad | No cascada ni hard delete |
+| Capa              | Qué se configura                                           | Qué habilita                                 | Qué NO hace                       |
+| ----------------- | ---------------------------------------------------------- | -------------------------------------------- | --------------------------------- |
+| 1 · Ubicación     | Network, Site, Structure, Level, Room, Bay, Position, Rack | Localizar el Device                          | No crea circuitos ni lecturas     |
+| 2 · Equipo        | Device BDFB → Chassis → Shelf → Frame → Panel → Breaker    | Identidad del componente y slot ocupado      | No verifica cableado              |
+| 3 · Energía       | Access Ports POWER y PowerPaths                            | Rutas Feed A/B registradas                   | No certifica corriente real       |
+| 4 · MQTT          | Serial/fuente del Panel, prefijo y posición de breaker     | Candidato a raw point y 4 bindings V/A/W/kWh | Mapping no implica LIVE           |
+| 5 · SNMP          | Perfil BDFB, inputs externos, shunt, paneles, fuente/OIDs  | Bindings CURRENT/VOLTAGE por input físico    | No conecta automáticamente SNMPv3 |
+| 6 · Ingesta       | Broker MQTT / colector SNMP / traps-informs, credenciales  | Paquetes autorizados y normalizados          | No inventa Equipment ni binding   |
+| 7 · Presentación  | Latest state, quality, charts, Timescale                   | LIVE, STALE, historial y diagnóstico         | Histórico no significa LIVE       |
+| 8 · Publicación   | Identidad lógica, manifest, Unit ID/offset/quality Modbus  | Registros de salida para tercero             | No certifica conexión Metasys     |
+| 9 · Mantenimiento | Archive/restore, retire binding, ports y paths             | Estado gestionable con trazabilidad          | No cascada ni hard delete         |
 
 **Regla transversal:** que un equipo exista, un punto esté comisionado y un valor llegue en vivo son **tres resultados independientes**.
 
@@ -29,6 +29,7 @@
 **Precondiciones:** Rack y Device correctos; Equipment padre activo y apto; capacidad compatible; serial propio no duplicado si se proporciona.
 
 **Secuencia de trabajo:**
+
 1. EXPLORE → Network → Site → Structure → Level → Room → Rack → Device.
 2. Abrir PHYSICAL COMPOSITION de Device/Equipment.
 3. Elegir **+ ADD EQUIPMENT**, con FROM WAREHOUSE o ONE-OFF, según compatibilidad.
@@ -63,7 +64,7 @@
 1. Abrir el Equipment del Panel, no el Device general ni otro breaker.
 2. Entrar en **MQTT POINT COMMISSIONING**.
 3. Leer Source, Prefix, capacidad y la fila de la posición instalada.
-4. Verificar que la fila representa el breaker correcto y el raw point que le corresponde; por ejemplo \`0_1_1\` es solo un *ejemplo* y no prueba ninguna instalación.
+4. Verificar que la fila representa el breaker correcto y el raw point que le corresponde; por ejemplo \`0_1_1\` es solo un _ejemplo_ y no prueba ninguna instalación.
 5. Comprobar las cuatro métricas: VOLTAGE, CURRENT, POWER, ENERGY.
 6. Verificar físicamente la correspondencia; usar la casilla de confirmación explícita.
 7. Seleccionar **Confirm and commission point**.
@@ -146,16 +147,16 @@ La función de prueba \`/api/dev/snmp-lab/commission\` solo corresponde al labor
 
 **Distinción para el término “seteo de data”:**
 
-| Petición habitual | Subsistema | Operación real |
-| --- | --- | --- |
-| "Quiero ver un nuevo breaker" | Inventario/Equipment | Crear e instalar Equipment en slot |
-| "Quiero decir a qué breaker pertenece este dato" | MQTT Panel commissioning | Vincular source+raw point+V/A/W/kWh a breaker |
-| "Quiero leer el consumo de un input" | SNMP DC Access Port | Comisionar OID CURRENT/VOLTAGE al input correcto |
-| "Quiero recibir valores nuevos" | Broker/collector/ingest | Configurar origen, credenciales, topics/OIDs y transporte en operación |
-| "Quiero pasar de raw a voltios/amperios" | Perfil industrial | Regla explícita de interpretación, unidad y escala |
-| "Quiero conservar y consultar históricos" | History Store/TimescaleDB | Persistencia de observaciones aceptadas y consulta de ventanas |
-| "Quiero que se vea en Modbus" | Registry + publicación | Manifest aprobado, identidad lógica, Unit ID, offset y calidad |
-| "Quiero registrar una lectura a mano" | No consta un flujo general de UI | **No inventarlo.** No confundir datos introducidos a mano con medición real |
+| Petición habitual                                | Subsistema                       | Operación real                                                              |
+| ------------------------------------------------ | -------------------------------- | --------------------------------------------------------------------------- |
+| "Quiero ver un nuevo breaker"                    | Inventario/Equipment             | Crear e instalar Equipment en slot                                          |
+| "Quiero decir a qué breaker pertenece este dato" | MQTT Panel commissioning         | Vincular source+raw point+V/A/W/kWh a breaker                               |
+| "Quiero leer el consumo de un input"             | SNMP DC Access Port              | Comisionar OID CURRENT/VOLTAGE al input correcto                            |
+| "Quiero recibir valores nuevos"                  | Broker/collector/ingest          | Configurar origen, credenciales, topics/OIDs y transporte en operación      |
+| "Quiero pasar de raw a voltios/amperios"         | Perfil industrial                | Regla explícita de interpretación, unidad y escala                          |
+| "Quiero conservar y consultar históricos"        | History Store/TimescaleDB        | Persistencia de observaciones aceptadas y consulta de ventanas              |
+| "Quiero que se vea en Modbus"                    | Registry + publicación           | Manifest aprobado, identidad lógica, Unit ID, offset y calidad              |
+| "Quiero registrar una lectura a mano"            | No consta un flujo general de UI | **No inventarlo.** No confundir datos introducidos a mano con medición real |
 
 ### Lecturas en Site Mapper
 
@@ -171,7 +172,7 @@ La función de prueba \`/api/dev/snmp-lab/commission\` solo corresponde al labor
 
 ## 7. WF-IND — Señales, perfiles, eventos y alarmas
 
-**Evidencia:** \`src/app/api/telemetry/industrial/*\`, \`src/modules/telemetry/infrastructure/industrial/*\`, \`docs/telemetry/industrial-integration.md\`.
+**Evidencia:** \`src/app/api/telemetry/industrial/_\`, \`src/modules/telemetry/infrastructure/industrial/_\`, \`docs/telemetry/industrial-integration.md\`.
 
 1. Registrar una **fuente autorizada** con identidad, token y perfil privado aprobados.
 2. Definir reglas exactas por clave/OID, tipo, unidad, escala, offset y destino (cuando verificado). No inferir valores desde nombres de Panel o OID no mapeado.
@@ -209,38 +210,39 @@ La función de prueba \`/api/dev/snmp-lab/commission\` solo corresponde al labor
 
 ## 10. Regla de eliminación: dependencias por objeto
 
-| Retirar | Condiciones mínimas propuestas |
-| --- | --- |
-| Site/Structure/Level/Room | Sin descendientes activos, sin geometría dependiente, sin vínculos operativos; actor con permiso específico |
-| Bay/Position | Sin posiciones/racks correspondientes; Blueprint debe confirmar archivo lógico |
-| Rack | Sin Device activo, ni CAS reservado/equipado, ni referencias protegidas |
-| Device BDFB | Sin Equipment activo y sin conexiones, bindings, inputs, fuentes o dependencias que requieran resolución |
-| Panel | Sin breaker activo ni mapping MQTT; no desmontar en cascada |
-| Breaker | Sin conexión eléctrica activa, sin mapping que deba retirarse y sin obligaciones de historial/identidad sin atender |
-| Access Port | Sin PowerPath ni binding SNMP activo; validar que se preserve su rastro histórico |
-| PowerPath | Autorizar archive y conservar información de trazabilidad |
-| MQTT binding | Retirar/reasignar identidad con autorización, preservando histórico y evitando duplicidad |
-| SNMP binding/OID | Retiro explícito; cambiar Config2/4 requiere ausencia de bindings SNMP activos |
-| Historial | **No se borra por archivar un equipo**, salvo política separada de retención, privacidad o mantenimiento autorizada |
+| Retirar                   | Condiciones mínimas propuestas                                                                                      |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Site/Structure/Level/Room | Sin descendientes activos, sin geometría dependiente, sin vínculos operativos; actor con permiso específico         |
+| Bay/Position              | Sin posiciones/racks correspondientes; Blueprint debe confirmar archivo lógico                                      |
+| Rack                      | Sin Device activo, ni CAS reservado/equipado, ni referencias protegidas                                             |
+| Device BDFB               | Sin Equipment activo y sin conexiones, bindings, inputs, fuentes o dependencias que requieran resolución            |
+| Panel                     | Sin breaker activo ni mapping MQTT; no desmontar en cascada                                                         |
+| Breaker                   | Sin conexión eléctrica activa, sin mapping que deba retirarse y sin obligaciones de historial/identidad sin atender |
+| Access Port               | Sin PowerPath ni binding SNMP activo; validar que se preserve su rastro histórico                                   |
+| PowerPath                 | Autorizar archive y conservar información de trazabilidad                                                           |
+| MQTT binding              | Retirar/reasignar identidad con autorización, preservando histórico y evitando duplicidad                           |
+| SNMP binding/OID          | Retiro explícito; cambiar Config2/4 requiere ausencia de bindings SNMP activos                                      |
+| Historial                 | **No se borra por archivar un equipo**, salvo política separada de retención, privacidad o mantenimiento autorizada |
 
 Todas las condiciones no demostradas en código son **reglas propuestas**, no protección actual garantizada. Deben aplicarse en backend con validación concurrente, permisos y auditoría, no solo deshabilitando botones en React.
 
 ## 11. Qué se publica en Help Center y qué no
 
-| Para usuario final | Para administrador funcional | Para integrador técnico |
-| --- | --- | --- |
-| Encontrar equipo, sala y rack | Crear/editar espacios | Instalar broker/collector SNMP |
-| Ver Panel y breaker | Crear Panel e instalar breaker | Configurar serial/topics/IP/credenciales |
-| Consultar conexión A/B | Comprobar y registrar PowerPath | Validar OIDs/MIB/escala de campo |
+| Para usuario final             | Para administrador funcional                 | Para integrador técnico                   |
+| ------------------------------ | -------------------------------------------- | ----------------------------------------- |
+| Encontrar equipo, sala y rack  | Crear/editar espacios                        | Instalar broker/collector SNMP            |
+| Ver Panel y breaker            | Crear Panel e instalar breaker               | Configurar serial/topics/IP/credenciales  |
+| Consultar conexión A/B         | Comprobar y registrar PowerPath              | Validar OIDs/MIB/escala de campo          |
 | Ver lecturas y últimos estados | Verificar y confirmar commissioning aprobado | Ingest, perfil industrial, reconciliación |
-| Consultar historial de equipo | Retirar bindings autorizados | Timescale, outbox, Modbus map |
-| Saber por qué falta un dato | Administrar usuarios y perfiles | Diagnóstico, backup/restore, certificados |
+| Consultar historial de equipo  | Retirar bindings autorizados                 | Timescale, outbox, Modbus map             |
+| Saber por qué falta un dato    | Administrar usuarios y perfiles              | Diagnóstico, backup/restore, certificados |
 
 **No publicar los dos últimos niveles íntegros a Standard.** La ayuda contextual debe ofrecer guías acordes al rol y al contexto, sin revelar secretos técnicos.
 
 ## 12. Plan de aceptación por workflow
 
 Cada workflow candidato requiere:
+
 - **Escenario normal** con acción, parámetros e identidad reales, botones y resultado.
 - **Escenario con permisos insuficientes**: ni botón peligroso ni API permiten saltarse autorización.
 - **Escenario bloqueado por hijos/dependencias**, con mensaje comprensible.

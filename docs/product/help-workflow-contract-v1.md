@@ -23,43 +23,43 @@ Esta especificación distingue **HECHO** (comportamiento en código), **PARCIAL*
 
 Cada flujo debe describirse con los mismos campos:
 
-| Campo | Qué captura |
-| --- | --- |
-| ID y nombre | Identificador estable; título comprensible para el usuario |
-| Actor y autorización | STANDARD, ADMIN o SUPERADMIN; comprobación también en servidor |
-| Punto de entrada | Pantalla correcta, entidad padre, control visible |
-| Prerrequisitos | Estado activo, geometría, dependencias, información obligatoria |
-| Secuencia feliz | Clics y acciones en orden, literal si existen en UI |
-| Validación | Restricciones del dominio, versiones y permisos |
-| Confirmación | Qué ve el usuario antes de ejecutar el cambio |
-| Resultado | Qué queda guardado, a dónde se navega y qué mensaje aparece |
-| Errores recuperables | Qué se explica y cómo continuar sin perder datos |
-| Recuperación | Cancelar borrador, reintentar seguro, restaurar si procede |
-| Estado y evidencia | Código que lo respalda, pruebas requeridas y capturas pendientes |
-| Artículo del Help Center | Sólo si el flujo está implementado y revisado |
+| Campo                    | Qué captura                                                      |
+| ------------------------ | ---------------------------------------------------------------- |
+| ID y nombre              | Identificador estable; título comprensible para el usuario       |
+| Actor y autorización     | STANDARD, ADMIN o SUPERADMIN; comprobación también en servidor   |
+| Punto de entrada         | Pantalla correcta, entidad padre, control visible                |
+| Prerrequisitos           | Estado activo, geometría, dependencias, información obligatoria  |
+| Secuencia feliz          | Clics y acciones en orden, literal si existen en UI              |
+| Validación               | Restricciones del dominio, versiones y permisos                  |
+| Confirmación             | Qué ve el usuario antes de ejecutar el cambio                    |
+| Resultado                | Qué queda guardado, a dónde se navega y qué mensaje aparece      |
+| Errores recuperables     | Qué se explica y cómo continuar sin perder datos                 |
+| Recuperación             | Cancelar borrador, reintentar seguro, restaurar si procede       |
+| Estado y evidencia       | Código que lo respalda, pruebas requeridas y capturas pendientes |
+| Artículo del Help Center | Sólo si el flujo está implementado y revisado                    |
 
 El Helper no debe fabricar pasos o asumir que tener una API garantiza un botón disponible.
 
 ## 3. Matriz inicial de flujos
 
-| ID | Tarea | Estado 26/10 | Quién puede | Cuándo documentar al usuario |
-| --- | --- | --- | --- | --- |
-| WF-01 | Navegar Network → Site → Room → Rack | HECHO | Todos con \`topology:read\` | Ya |
-| WF-02 | Crear Network | HECHO (servicio/formulario contextual) | ADMIN / SUPERADMIN | Tras validar ubicación real del control |
-| WF-03 | Crear Site y dibujar sus límites | HECHO | ADMIN / SUPERADMIN | Ya, con pasos exactos |
-| WF-04 | Editar límites de un Site | HECHO (con reservas) | ADMIN / SUPERADMIN | Tras comprobar containment de Structures |
-| WF-05 | Crear / editar Structure | HECHO (con reservas) | ADMIN / SUPERADMIN | Tras comprobar límites de Rooms/descendientes |
-| WF-06 | Crear Level, crear Room y dibujar perímetro | HECHO | ADMIN / SUPERADMIN | Ya |
-| WF-07 | Editar sala, Bay, Position y Rack en Blueprint | HECHO | ADMIN / SUPERADMIN | Ya, distinguir borrador/guardado |
-| WF-08 | Quitar Bay, Position o Rack desde Blueprint | PARCIAL (guardas presentes, revisar dependencias) | ADMIN / SUPERADMIN hoy | Tras revisar referencias y confirmar modal |
-| WF-09 | Archivar Site / Structure / Room | PARCIAL (API sin workflow general UI) | ADMIN / SUPERADMIN hoy por \`topology:write\` | NO: diseñar y completar antes |
-| WF-10 | Restaurar entidad archivada | PARCIAL (API sin recorrido visible completo) | ADMIN / SUPERADMIN hoy | NO: inventario de archivadas y navegación |
-| WF-11 | Eliminar topología definitivamente | NO IMPLEMENTADO para uso normal | Nadie en UI | NO: no prometer función |
-| WF-12 | Crear Device/Equipment; administrar posiciones | HECHO (con reglas propias) | ADMIN / SUPERADMIN | Documentar por tarea/rol |
-| WF-13 | Mover o desmontar Device/Equipment | PARCIAL según acción y dependencias | ADMIN / SUPERADMIN | Sólo pasos validados |
-| WF-14 | Crear, revisar y archivar PowerPath | HECHO en API, UI a verificar por caso | ADMIN / SUPERADMIN con \`power:write\` | Por operación concreta |
-| WF-15 | Mapear señales y consultar lecturas | HECHO parcialmente según fuente configurada | Escritura: actor autorizado; lectura: roles con permiso | No mezclar configuración y consulta |
-| WF-16 | Revisar cambios, cancelar y recuperar borradores | HECHO por editor; cobertura variable | Según pantalla | Documentar por editor |
+| ID    | Tarea                                            | Estado 26/10                                      | Quién puede                                             | Cuándo documentar al usuario                  |
+| ----- | ------------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------- | --------------------------------------------- |
+| WF-01 | Navegar Network → Site → Room → Rack             | HECHO                                             | Todos con \`topology:read\`                             | Ya                                            |
+| WF-02 | Crear Network                                    | HECHO (servicio/formulario contextual)            | ADMIN / SUPERADMIN                                      | Tras validar ubicación real del control       |
+| WF-03 | Crear Site y dibujar sus límites                 | HECHO                                             | ADMIN / SUPERADMIN                                      | Ya, con pasos exactos                         |
+| WF-04 | Editar límites de un Site                        | HECHO (con reservas)                              | ADMIN / SUPERADMIN                                      | Tras comprobar containment de Structures      |
+| WF-05 | Crear / editar Structure                         | HECHO (con reservas)                              | ADMIN / SUPERADMIN                                      | Tras comprobar límites de Rooms/descendientes |
+| WF-06 | Crear Level, crear Room y dibujar perímetro      | HECHO                                             | ADMIN / SUPERADMIN                                      | Ya                                            |
+| WF-07 | Editar sala, Bay, Position y Rack en Blueprint   | HECHO                                             | ADMIN / SUPERADMIN                                      | Ya, distinguir borrador/guardado              |
+| WF-08 | Quitar Bay, Position o Rack desde Blueprint      | PARCIAL (guardas presentes, revisar dependencias) | ADMIN / SUPERADMIN hoy                                  | Tras revisar referencias y confirmar modal    |
+| WF-09 | Archivar Site / Structure / Room                 | PARCIAL (API sin workflow general UI)             | ADMIN / SUPERADMIN hoy por \`topology:write\`           | NO: diseñar y completar antes                 |
+| WF-10 | Restaurar entidad archivada                      | PARCIAL (API sin recorrido visible completo)      | ADMIN / SUPERADMIN hoy                                  | NO: inventario de archivadas y navegación     |
+| WF-11 | Eliminar topología definitivamente               | NO IMPLEMENTADO para uso normal                   | Nadie en UI                                             | NO: no prometer función                       |
+| WF-12 | Crear Device/Equipment; administrar posiciones   | HECHO (con reglas propias)                        | ADMIN / SUPERADMIN                                      | Documentar por tarea/rol                      |
+| WF-13 | Mover o desmontar Device/Equipment               | PARCIAL según acción y dependencias               | ADMIN / SUPERADMIN                                      | Sólo pasos validados                          |
+| WF-14 | Crear, revisar y archivar PowerPath              | HECHO en API, UI a verificar por caso             | ADMIN / SUPERADMIN con \`power:write\`                  | Por operación concreta                        |
+| WF-15 | Mapear señales y consultar lecturas              | HECHO parcialmente según fuente configurada       | Escritura: actor autorizado; lectura: roles con permiso | No mezclar configuración y consulta           |
+| WF-16 | Revisar cambios, cancelar y recuperar borradores | HECHO por editor; cobertura variable              | Según pantalla                                          | Documentar por editor                         |
 
 Los campos **HECHO** no significan que todas las variantes y la UX estén certificadas mediante pruebas E2E.
 
@@ -109,6 +109,7 @@ Análogo al Site, pero la nueva geometría **sí debe permanecer dentro del Site
 **Secuencia:** cambiar límite de Room o agregar/editar Bay, Position y Rack → revisar borrador → **SAVE LAYOUT** → abrir otra vez.
 
 **Remove selected ya existe** para elementos del borrador:
+
 - Si se selecciona un **Bay/Cluster** con Positions aún presentes en el borrador, UI **bloquea** y pide retirar primero esas Positions.
 - Si se selecciona una **Position** con Rack, UI **bloquea** y pide retirar primero el Rack.
 - Si se selecciona un **Rack**, el editor puede quitarlo del borrador. Al guardar, el servicio valida que no tenga hijos activos y que su CAS no tenga asignaciones \`RESERVED/EQUIPPED\`; si los tiene, devuelve \`RACK_NOT_EMPTY\`.
@@ -138,7 +139,7 @@ Análogo al Site, pero la nueva geometría **sí debe permanecer dentro del Site
 
 ### Estados del proceso propuesto
 
-~~~text
+```text
 Seleccionar entidad
   -> Consultar dependencias y permiso
   -> ¿Tiene hijos activos o relaciones que requieren atención?
@@ -150,7 +151,7 @@ Seleccionar entidad
        Sí: operación cancelada; explicar conflicto y actualizar vista
        No: ARCHIVED + auditoría + salida del árbol de activos
   -> Opción de restaurar desde Archivadas
-~~~
+```
 
 ### Mensajes públicos sugeridos
 
@@ -170,18 +171,18 @@ Flujo propuesto: **Archivadas → filtrar → seleccionar → revisar padre disp
 
 ## 10. Riesgos de integridad detectados para la fase de diseño
 
-| Hallazgo | Situación en código | Acción propuesta |
-| --- | --- | --- |
-| Permiso de archivar | API comparte \`topology:write\` con edición | Separar permiso peligroso por operación |
-| Niños directos | \`archive\` bloquea hijos **activos** directos | Expandir y definir dependencias por tipo |
-| Referencias externas | No hay comprobación demostrada de PowerPath/telemetría en \`archive\` | Hacer preflight de dependencias |
-| Concurrencia | Leer hijos y luego \`replace\` no es operación atómica conjunta | Proteger con transacción/versión y creación de hijos coordinada |
-| Experiencia | No se halló control general de Archive/Restore en la ficha de topología | Crear UI autorizada y estados vacíos/bloqueados |
-| Cambiar límite de Site | El servicio revisado valida polígonos/versiones, no contención de Structures existentes | No permitir sacar construcciones fuera del Site |
-| Cambiar límite de Structure | Validación contra Site, no comprobación visible de Rooms descendientes | Comprobar hijos tras cambiar contorno |
-| Blueprint remove | Pasa de borrar borrador a archivar al guardar | Mostrar confirmación de retiros y dependencias |
-| Recuperación | API de restore parcial | Diseñar lista Archivadas y revalidación de conflictos |
-| Ayuda | Help Center anterior redactado antes de cerrar flujos | Solo publicar guías de estados ejecutables validados |
+| Hallazgo                    | Situación en código                                                                     | Acción propuesta                                                |
+| --------------------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Permiso de archivar         | API comparte \`topology:write\` con edición                                             | Separar permiso peligroso por operación                         |
+| Niños directos              | \`archive\` bloquea hijos **activos** directos                                          | Expandir y definir dependencias por tipo                        |
+| Referencias externas        | No hay comprobación demostrada de PowerPath/telemetría en \`archive\`                   | Hacer preflight de dependencias                                 |
+| Concurrencia                | Leer hijos y luego \`replace\` no es operación atómica conjunta                         | Proteger con transacción/versión y creación de hijos coordinada |
+| Experiencia                 | No se halló control general de Archive/Restore en la ficha de topología                 | Crear UI autorizada y estados vacíos/bloqueados                 |
+| Cambiar límite de Site      | El servicio revisado valida polígonos/versiones, no contención de Structures existentes | No permitir sacar construcciones fuera del Site                 |
+| Cambiar límite de Structure | Validación contra Site, no comprobación visible de Rooms descendientes                  | Comprobar hijos tras cambiar contorno                           |
+| Blueprint remove            | Pasa de borrar borrador a archivar al guardar                                           | Mostrar confirmación de retiros y dependencias                  |
+| Recuperación                | API de restore parcial                                                                  | Diseñar lista Archivadas y revalidación de conflictos           |
+| Ayuda                       | Help Center anterior redactado antes de cerrar flujos                                   | Solo publicar guías de estados ejecutables validados            |
 
 **Importante:** el hecho de que algunas verificaciones no estén visibles en el servicio revisado no sustituye una auditoría técnica de todas las integraciones. Este documento es un catálogo de flujos y brechas confirmadas en lectura, no ejecución ni prueba en una base real.
 

@@ -1,6 +1,6 @@
 # Site Mapper MK1 — Catálogo maestro de flujos v2
 
-**Fecha:** 26/10/2026 · **Rama revisada:** `feat/mk1-in-app-help-manual-2026-10-26` · **Estado:** diseño y trazabilidad, no certificación en el navegador ni habilitación de funciones. 
+**Fecha:** 26/10/2026 · **Rama revisada:** `feat/mk1-in-app-help-manual-2026-10-26` · **Estado:** diseño y trazabilidad, no certificación en el navegador ni habilitación de funciones.
 
 **Respuesta de alcance:** reemplaza la visión parcial de los 16 flujos de `help-workflow-contract-v1.md`. Cubre topología, planos, Rack/CAS, Warehouse, Device/Equipment, breakers, puertos, PowerPath, commissioning MQTT y SNMP, ingesta de datos, series, señales, alarmas, Modbus, consola, usuarios y operación. Es un **inventario de candidatos**, no 100% de procesos aprobados. La revisión de cada botón y variante aún es necesaria.
 
@@ -16,23 +16,23 @@
 
 **Matriz de cobertura:**
 
-| Grupo | Área | Ubicación de fuente | Flujos |
-| --- | --- | --- | ---: |
-| ACC | Acceso y cuentas | `src/app/api/auth, src/app/settings, src/components/settings` | 11 |
-| NAV | Workspace y búsqueda | `src/app/workspace, src/components/workspace, src/shared/ui/command-palette` | 9 |
-| TOP | Jerarquía y ciclo de vida | `src/app/api/topology, src/modules/topology, src/components/topology` | 16 |
-| MAP | Editor de límites y Blueprint | `src/components/spatial, src/components/blueprint, src/modules/spatial` | 16 |
-| RACK | Rack y CAS | `src/app/rack, src/components/rack, src/modules/rack` | 8 |
-| WH | Warehouse y plantillas | `src/app/warehouse, src/components/warehouse, src/modules/warehouse` | 9 |
-| EQ | BDFB, Device, Equipment y breakers | `src/app/device, src/components/equipment, src/modules/topology` | 14 |
-| PORT | Access Ports e input físico | `src/components/equipment/access-port-editor.tsx, src/app/api/equipment` | 8 |
-| PWR | PowerPath y alimentación | `src/app/power, src/components/power, src/modules/power` | 10 |
-| MQTT | Broker, mapping y breaker MQTT | `src/components/telemetry/panel-commissioning.tsx, src/app/api/telemetry/panel-commissioning, src/modules/telemetry` | 13 |
-| SNMP | SNMP BDFB y OIDs DC | `src/components/equipment/access-port-editor.tsx, src/components/power/snmp-feed-commissioning.tsx, src/app/api/telemetry/snmp, infra/snmp-collector` | 17 |
-| HIST | Lecturas, tendencias e históricos | `src/components/telemetry, src/app/api/telemetry, infra/telemetry-store` | 11 |
-| IND | Integración industrial, alarmas y señales | `src/app/api/telemetry/industrial, src/modules/telemetry/infrastructure/industrial, docs/telemetry/industrial-integration.md` | 14 |
-| MOD | Modbus, registros y BMS | `infra/modbus-tcp, docs/telemetry/modbus-tcp-output.md, docs/telemetry/industrial-integration.md` | 9 |
-| OPS | Consola y mantenimiento | `infra/operational-console, docker-compose.telemetry.yml, docs/operations` | 12 |
+| Grupo | Área                                      | Ubicación de fuente                                                                                                                                   | Flujos |
+| ----- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | -----: |
+| ACC   | Acceso y cuentas                          | `src/app/api/auth, src/app/settings, src/components/settings`                                                                                         |     11 |
+| NAV   | Workspace y búsqueda                      | `src/app/workspace, src/components/workspace, src/shared/ui/command-palette`                                                                          |      9 |
+| TOP   | Jerarquía y ciclo de vida                 | `src/app/api/topology, src/modules/topology, src/components/topology`                                                                                 |     16 |
+| MAP   | Editor de límites y Blueprint             | `src/components/spatial, src/components/blueprint, src/modules/spatial`                                                                               |     16 |
+| RACK  | Rack y CAS                                | `src/app/rack, src/components/rack, src/modules/rack`                                                                                                 |      8 |
+| WH    | Warehouse y plantillas                    | `src/app/warehouse, src/components/warehouse, src/modules/warehouse`                                                                                  |      9 |
+| EQ    | BDFB, Device, Equipment y breakers        | `src/app/device, src/components/equipment, src/modules/topology`                                                                                      |     14 |
+| PORT  | Access Ports e input físico               | `src/components/equipment/access-port-editor.tsx, src/app/api/equipment`                                                                              |      8 |
+| PWR   | PowerPath y alimentación                  | `src/app/power, src/components/power, src/modules/power`                                                                                              |     10 |
+| MQTT  | Broker, mapping y breaker MQTT            | `src/components/telemetry/panel-commissioning.tsx, src/app/api/telemetry/panel-commissioning, src/modules/telemetry`                                  |     13 |
+| SNMP  | SNMP BDFB y OIDs DC                       | `src/components/equipment/access-port-editor.tsx, src/components/power/snmp-feed-commissioning.tsx, src/app/api/telemetry/snmp, infra/snmp-collector` |     17 |
+| HIST  | Lecturas, tendencias e históricos         | `src/components/telemetry, src/app/api/telemetry, infra/telemetry-store`                                                                              |     11 |
+| IND   | Integración industrial, alarmas y señales | `src/app/api/telemetry/industrial, src/modules/telemetry/infrastructure/industrial, docs/telemetry/industrial-integration.md`                         |     14 |
+| MOD   | Modbus, registros y BMS                   | `infra/modbus-tcp, docs/telemetry/modbus-tcp-output.md, docs/telemetry/industrial-integration.md`                                                     |      9 |
+| OPS   | Consola y mantenimiento                   | `infra/operational-console, docker-compose.telemetry.yml, docs/operations`                                                                            |     12 |
 
 **Total:** 177 flujos candidatos en 15 áreas. Los candidatos OPS, API o diseño no son botones operativos.
 

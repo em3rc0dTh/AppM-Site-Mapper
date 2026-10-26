@@ -50,6 +50,15 @@ interface Profile {
   updatedBy: string;
   updatedAt: string;
 }
+interface CredentialMetadata {
+  equipmentId: string;
+  hasCredential: boolean;
+  revisionNumber?: number;
+  updatedAt?: string;
+  updatedBy?: string;
+  lastRevealedAt?: string;
+  lastRevealedBy?: string;
+}
 interface Mapping {
   breakerId: string;
   sourceIdentity: string;
@@ -84,9 +93,13 @@ const gridStyle = { display: 'grid', gap: 12, gridTemplateColumns: 'repeat(auto-
 
 export function CommissioningConsole({
   canWrite,
+  canReadCredentials,
+  canWriteCredentials,
   initialDeviceId,
 }: {
   canWrite: boolean;
+  canReadCredentials: boolean;
+  canWriteCredentials: boolean;
   initialDeviceId?: string;
 }) {
   const [bdfbs, setBdfbs] = useState<Bdfb[]>([]);
@@ -95,6 +108,10 @@ export function CommissioningConsole({
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [credentialBusy, setCredentialBusy] = useState(false);
+  const [credentialMetadata, setCredentialMetadata] = useState<CredentialMetadata | null>(null);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [revealedPassword, setRevealedPassword] = useState('');
 
   const [role, setRole] = useState<ProfileRole>('GATEWAY');
   const [equipmentId, setEquipmentId] = useState('');
@@ -246,8 +263,61 @@ export function CommissioningConsole({
   }, [overview]);
   const equipmentName = (id: string) => overview?.equipment.find((item) => item.id === id)?.name ?? id;
 
-  function selectProfile(id: string) {
+  async function loadCredential(id: string) {
+    setCredentialMetadata(null);
+    setRevealedPassword('');
+    if (!id || !canReadCredentials) return;
+    try {
+      const data = await jsonRequest(
+        '/api/industrial/credentials?' + new URLSearchParams({ equipmentId: id }),
+      );
+      setCredentialMetadata(data as unknown as CredentialMetadata);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'CREDENTIAL_LOAD_FAILED');
+    }
+  }
+
+  async function credentialAction(action: 'set' | 'reveal' | 'remove') {
+    if (!equipmentId || credentialBusy) return;
+    setCredentialBusy(true);
+    setError('');
+    try {
+      const data = await jsonRequest('/api/industrial/credentials', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          equipmentId,
+          ...(action === 'set' ? { password: passwordInput } : {}),
+        }),
+      });
+      if (action === 'reveal') {
+        setRevealedPassword(String(data.password ?? ''));
+        setCredentialMetadata(data.metadata as unknown as CredentialMetadata);
+      } else {
+        setCredentialMetadata(data as unknown as CredentialMetadata);
+        setRevealedPassword('');
+        setPasswordInput('');
+      }
+      setNotice(
+        action === 'set'
+          ? 'Contraseña cifrada guardada/rotada.'
+          : action === 'remove'
+            ? 'Contraseña eliminada del almacén cifrado.'
+            : 'Contraseña revelada; la acción quedó registrada.',
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'CREDENTIAL_ACTION_FAILED');
+    } finally {
+      setCredentialBusy(false);
+    }
+  }
+
+    function selectProfile(id: string) {
     setEquipmentId(id);
+    setPasswordInput('');
+    setRevealedPassword('');
+    void loadCredential(id);
     const current = overview?.profiles.find((item) => item.equipmentId === id);
     if (!current) {
       setRole('GATEWAY');
@@ -525,6 +595,70 @@ export function CommissioningConsole({
                       onChange={(event) => setLoginUsername(event.target.value)}
                       autoComplete="off" />
                   </label>
+                  <fieldset style={{ border: '1px solid #c8ced6', borderRadius: 8, padding: 10 }}>
+                    <legend>Password del Equipment</legend>
+                    <small>
+                      {credentialMetadata?.hasCredential
+                        ? `Guardada cifrada · rev. ${credentialMetadata.revisionNumber ?? '—'}`
+                        : 'Sin contraseña cifrada guardada'}
+                    </small>
+                    {canWriteCredentials ? (
+                      <>
+                        <input
+                          type="password"
+                          maxLength={512}
+                          style={inputStyle}
+                          value={passwordInput}
+                          autoComplete="new-password"
+                          onChange={(event) => setPasswordInput(event.target.value)}
+                          placeholder="Nueva contraseña / rotación"
+                        />
+                        <button
+                          type="button"
+                          disabled={credentialBusy || !passwordInput}
+                          onClick={() => void credentialAction('set')}
+                        >
+                          {credentialMetadata?.hasCredential ? 'Rotar contraseña' : 'Guardar contraseña'}
+                        </button>
+                      </>
+                    ) : null}
+                    {canReadCredentials && credentialMetadata?.hasCredential ? (
+                      <button
+                        type="button"
+                        disabled={credentialBusy}
+                        onClick={() =>
+                          revealedPassword
+                            ? setRevealedPassword('')
+                            : void credentialAction('reveal')
+                        }
+                      >
+                        {revealedPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      </button>
+                    ) : null}
+                    {revealedPassword ? (
+                      <input
+                        style={inputStyle}
+                        readOnly
+                        value={revealedPassword}
+                        aria-label="Contraseña revelada"
+                      />
+                    ) : null}
+                    {canWriteCredentials && credentialMetadata?.hasCredential ? (
+                      <button
+                        type="button"
+                        disabled={credentialBusy}
+                        onClick={() => void credentialAction('remove')}
+                      >
+                        Eliminar contraseña guardada
+                      </button>
+                    ) : null}
+                    {credentialMetadata?.lastRevealedAt ? (
+                      <small>
+                        Última revelación: {credentialMetadata.lastRevealedAt} · usuario{' '}
+                        {credentialMetadata.lastRevealedBy ?? '—'}
+                      </small>
+                    ) : null}
+                  </fieldset>
                   <label style={fieldStyle}>Estado de credencial
                     <select
                       style={inputStyle}

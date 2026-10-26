@@ -1,3 +1,14 @@
+export type IndustrialCredentialEventType = 'CREATED' | 'ROTATED' | 'REVEALED' | 'DELETED';
+
+export interface IndustrialCredentialEvent {
+  readonly id: string;
+  readonly equipmentId: string;
+  readonly type: IndustrialCredentialEventType;
+  readonly actorId: string;
+  readonly occurredAt: string;
+  readonly credentialRevision?: number;
+}
+
 export interface IndustrialCredentialRecord {
   readonly equipmentId: string;
   readonly algorithm: 'AES-256-GCM';
@@ -12,7 +23,10 @@ export interface IndustrialCredentialRecord {
   readonly updatedBy: string;
   readonly lastRevealedAt?: string;
   readonly lastRevealedBy?: string;
+  readonly recentEvents?: readonly IndustrialCredentialEvent[];
 }
+
+
 
 export interface IndustrialCredentialMetadata {
   readonly equipmentId: string;

@@ -93,6 +93,20 @@ function cellContent(row: string) {
  * Safe Markdown subset for reviewed, end-user workflow guides. Images come only
  * from our own localized allowlist; neither HTML nor executable Mermaid is rendered.
  */
+const screenshotDimensions: Readonly<Record<string, readonly [number, number]>> = {
+  '/help/screenshots/create-site.webp': [780, 510],
+  '/help/screenshots/draw-site-boundary.webp': [780, 497],
+  '/help/screenshots/create-room.webp': [780, 527],
+  '/help/screenshots/edit-room.webp': [780, 470],
+  '/help/screenshots/rack-focus.webp': [760, 487],
+  '/help/screenshots/breaker-live.webp': [600, 342],
+  '/help/screenshots/power-path.webp': [600, 315],
+};
+
+function illustrationSize(src: string): readonly [number, number] {
+  return screenshotDimensions[src] ?? [1100, 410];
+}
+
 export function MarkdownHelpArticle({ text, locale }: { text: string; locale: HelpLocale }) {
   const lines = text.replace(/\r\n/g, '\n').split('\n');
   const blocks: ReactNode[] = [];
@@ -108,17 +122,18 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
     const key = 'block-' + serial++;
 
     const illustration =
-      /^!\[([^\]]{1,140})\]\((\/help\/diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings|mqtt|snmp|data-flow)\.svg)\)$/.exec(
+      /^!\[([^\]]{1,140})\]\((\/help\/(?:diagrams\/(?:es|en)\/(?:overview|places|rack|power|readings|mqtt|snmp|data-flow)\.svg|screenshots\/(?:create-site|draw-site-boundary|create-room|edit-room|rack-focus|breaker-live|power-path)\.webp))\)$/.exec(
         current,
       );
     if (illustration) {
+      const [width, height] = illustrationSize(illustration[2]!);
       blocks.push(
         <figure className="help-illustration" key={key}>
           <Image
             src={illustration[2]!}
             alt={illustration[1]!}
-            width={1100}
-            height={410}
+            width={width}
+            height={height}
             unoptimized
           />
         </figure>,

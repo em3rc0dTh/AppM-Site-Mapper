@@ -4,6 +4,8 @@ A breaker can already be visible in its Panel while **its measurements are not l
 
 ![Signal to breaker](/help/diagrams/en/mqtt.svg)
 
+![Panel with breakers installed in specific positions](/help/screenshots/panel-breakers.png)
+
 ## Before you start
 
 You need a **Panel** with the breaker installed in its actual position. The person responsible must have confirmed which data source and signal point measure that breaker.
@@ -23,7 +25,7 @@ You need a **Panel** with the breaker installed in its actual position. The pers
 
 After the mapping is confirmed, open the breaker and check **Telemetry**. This is where you verify whether data is actually arriving.
 
-![Real example of a breaker with recent readings](/help/screenshots/breaker-live.webp)
+![Real example of a breaker with recent readings](/help/screenshots/breaker-live.png)
 
 ## What do 0/4 and 4/4 mean?
 

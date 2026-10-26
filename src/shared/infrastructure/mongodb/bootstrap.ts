@@ -120,6 +120,51 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
   ]);
 
+  const industrialProfiles = database.collection('industrial_communication_profiles');
+  await Promise.all([
+    industrialProfiles.createIndex(
+      { equipmentId: 1 },
+      { unique: true, name: 'uq_industrial_profile_equipment' },
+    ),
+    industrialProfiles.createIndex({ bdfbDeviceId: 1 }, { name: 'ix_industrial_profile_bdfb' }),
+    industrialProfiles.createIndex(
+      { sourceIdentity: 1 },
+      {
+        unique: true,
+        name: 'uq_industrial_gateway_source',
+        partialFilterExpression: { role: 'GATEWAY', sourceIdentity: { $type: 'string' } },
+      },
+    ),
+    industrialProfiles.createIndex(
+      { gatewayEquipmentId: 1, 'rs485.slaveId': 1 },
+      {
+        unique: true,
+        name: 'uq_industrial_rs485_gateway_slave',
+        partialFilterExpression: { role: 'METER' },
+      },
+    ),
+  ]);
+
+  const industrialCredentials = database.collection('industrial_credentials');
+  await Promise.all([
+    industrialCredentials.createIndex(
+      { equipmentId: 1 },
+      { unique: true, name: 'uq_industrial_credential_equipment' },
+    ),
+  ]);
+
+  const industrialCredentialEvents = database.collection('industrial_credential_events');
+  await Promise.all([
+    industrialCredentialEvents.createIndex(
+      { id: 1 },
+      { unique: true, name: 'uq_industrial_credential_event_id' },
+    ),
+    industrialCredentialEvents.createIndex(
+      { equipmentId: 1, occurredAt: -1 },
+      { name: 'ix_industrial_credential_event_equipment_time' },
+    ),
+  ]);
+
   const users = database.collection('users');
   await Promise.all([
     users.createIndex({ id: 1 }, { unique: true, name: 'uq_user_id' }),

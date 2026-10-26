@@ -1,0 +1,260 @@
+{
+  "version": 3,
+  "points": [
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-MQTT-QDF-01",
+      "topic": "data/dev/EMU-MQTT-QDF-01",
+      "key": "/reported/0_1_1/U1",
+      "unitId": 1,
+      "address": 1024,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 1 extra voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-01",
+      "key": "alarm:1.3.6.1.4.1.12148.10.2.1.0:3",
+      "unitId": 1,
+      "address": 1027,
+      "unit": "",
+      "description": "SYNTHETIC QDF 1 alarm condition"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-MQTT-QDF-02",
+      "topic": "data/dev/EMU-MQTT-QDF-02",
+      "key": "/reported/0_1_1/U1",
+      "unitId": 2,
+      "address": 1024,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 2 extra voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-02",
+      "key": "alarm:1.3.6.1.4.1.12148.10.2.1.0:3",
+      "unitId": 2,
+      "address": 1027,
+      "unit": "",
+      "description": "SYNTHETIC QDF 2 alarm condition"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-MQTT-QDF-03",
+      "topic": "data/dev/EMU-MQTT-QDF-03",
+      "key": "/reported/0_1_1/U1",
+      "unitId": 3,
+      "address": 1024,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 3 extra voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-03",
+      "key": "alarm:1.3.6.1.4.1.12148.10.2.1.0:3",
+      "unitId": 3,
+      "address": 1027,
+      "unit": "",
+      "description": "SYNTHETIC QDF 3 alarm condition"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-01",
+      "key": "1.3.6.1.4.1.12148.10.10.5.5.0",
+      "unitId": 1,
+      "address": 1030,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 1 SNMP voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-01",
+      "key": "1.3.6.1.4.1.12148.10.9.2.5.0",
+      "unitId": 1,
+      "address": 1033,
+      "unit": "A",
+      "description": "SYNTHETIC QDF 1 SNMP current"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-01",
+      "key": "1.3.6.1.4.1.12148.10.10.7.5.0",
+      "unitId": 1,
+      "address": 1036,
+      "unit": "degC",
+      "description": "SYNTHETIC QDF 1 SNMP temperature"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-01",
+      "key": "1.3.6.1.4.1.12148.10.2.1.0",
+      "unitId": 1,
+      "address": 1039,
+      "unit": "",
+      "description": "SYNTHETIC QDF 1 SNMP status enum"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-02",
+      "key": "1.3.6.1.4.1.12148.10.10.5.5.0",
+      "unitId": 2,
+      "address": 1030,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 2 SNMP voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-02",
+      "key": "1.3.6.1.4.1.12148.10.9.2.5.0",
+      "unitId": 2,
+      "address": 1033,
+      "unit": "A",
+      "description": "SYNTHETIC QDF 2 SNMP current"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-02",
+      "key": "1.3.6.1.4.1.12148.10.10.7.5.0",
+      "unitId": 2,
+      "address": 1036,
+      "unit": "degC",
+      "description": "SYNTHETIC QDF 2 SNMP temperature"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-02",
+      "key": "1.3.6.1.4.1.12148.10.2.1.0",
+      "unitId": 2,
+      "address": 1039,
+      "unit": "",
+      "description": "SYNTHETIC QDF 2 SNMP status enum"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-03",
+      "key": "1.3.6.1.4.1.12148.10.10.5.5.0",
+      "unitId": 3,
+      "address": 1030,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 3 SNMP voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-03",
+      "key": "1.3.6.1.4.1.12148.10.9.2.5.0",
+      "unitId": 3,
+      "address": 1033,
+      "unit": "A",
+      "description": "SYNTHETIC QDF 3 SNMP current"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-03",
+      "key": "1.3.6.1.4.1.12148.10.10.7.5.0",
+      "unitId": 3,
+      "address": 1036,
+      "unit": "degC",
+      "description": "SYNTHETIC QDF 3 SNMP temperature"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "EMU-SNMP-QDF-03",
+      "key": "1.3.6.1.4.1.12148.10.2.1.0",
+      "unitId": 3,
+      "address": 1039,
+      "unit": "",
+      "description": "SYNTHETIC QDF 3 SNMP status enum"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-01",
+      "topic": "data/dev/EMU-BFDB-01",
+      "key": "/reported/0_1_1/I1",
+      "unitId": 1,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 1 I1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-01",
+      "topic": "data/dev/EMU-BFDB-01",
+      "key": "/reported/0_1_1/P1",
+      "unitId": 1,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 1 P1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-01",
+      "topic": "data/dev/EMU-BFDB-01",
+      "key": "/reported/0_1_1/EP1",
+      "unitId": 1,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 1 EP1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-02",
+      "topic": "data/dev/EMU-BFDB-02",
+      "key": "/reported/0_1_1/I1",
+      "unitId": 2,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 2 I1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-02",
+      "topic": "data/dev/EMU-BFDB-02",
+      "key": "/reported/0_1_1/P1",
+      "unitId": 2,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 2 P1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-02",
+      "topic": "data/dev/EMU-BFDB-02",
+      "key": "/reported/0_1_1/EP1",
+      "unitId": 2,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 2 EP1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-03",
+      "topic": "data/dev/EMU-BFDB-03",
+      "key": "/reported/0_1_1/I1",
+      "unitId": 3,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 3 I1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-03",
+      "topic": "data/dev/EMU-BFDB-03",
+      "key": "/reported/0_1_1/P1",
+      "unitId": 3,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 3 P1; physical association pending"
+    },
+    {
+      "protocol": "MQTT",
+      "sourceIdentity": "EMU-BFDB-03",
+      "topic": "data/dev/EMU-BFDB-03",
+      "key": "/reported/0_1_1/EP1",
+      "unitId": 3,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 3 EP1; physical association pending"
+    }
+  ]
+}

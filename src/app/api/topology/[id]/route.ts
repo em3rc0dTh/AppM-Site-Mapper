@@ -103,10 +103,33 @@ export async function PATCH(request: Request, context: Context) {
         'childCapacity',
         'telemetryPointPrefix',
         'presentation',
+        'serialNumber',
+        'partNumber',
+        'aliases',
+        'manufacturer',
+        'model',
       ]) ||
       (body.equipmentType !== undefined && !parseEquipmentType(body.equipmentType)) ||
       (body.childMode !== undefined && !parseEquipmentChildMode(body.childMode)) ||
       (body.childCapacity !== undefined && !Number.isInteger(body.childCapacity)) ||
+      (body.serialNumber !== undefined &&
+        body.serialNumber !== null &&
+        (typeof body.serialNumber !== 'string' || body.serialNumber.length > 120)) ||
+      (body.partNumber !== undefined &&
+        body.partNumber !== null &&
+        (typeof body.partNumber !== 'string' || body.partNumber.length > 120)) ||
+      (body.manufacturer !== undefined &&
+        body.manufacturer !== null &&
+        (typeof body.manufacturer !== 'string' || body.manufacturer.length > 120)) ||
+      (body.model !== undefined &&
+        body.model !== null &&
+        (typeof body.model !== 'string' || body.model.length > 120)) ||
+      (body.aliases !== undefined &&
+        (!Array.isArray(body.aliases) ||
+          body.aliases.length > 20 ||
+          body.aliases.some(
+            (alias) => typeof alias !== 'string' || !alias.trim() || alias.length > 120,
+          ))) ||
       (body.telemetryPointPrefix !== undefined &&
         body.telemetryPointPrefix !== null &&
         (typeof body.telemetryPointPrefix !== 'string' ||
@@ -146,6 +169,17 @@ export async function PATCH(request: Request, context: Context) {
       ...(body.telemetryPointPrefix === null || typeof body.telemetryPointPrefix === 'string'
         ? { telemetryPointPrefix: body.telemetryPointPrefix }
         : {}),
+      ...(body.serialNumber === null || typeof body.serialNumber === 'string'
+        ? { serialNumber: body.serialNumber }
+        : {}),
+      ...(body.partNumber === null || typeof body.partNumber === 'string'
+        ? { partNumber: body.partNumber }
+        : {}),
+      ...(Array.isArray(body.aliases) ? { aliases: body.aliases as string[] } : {}),
+      ...(body.manufacturer === null || typeof body.manufacturer === 'string'
+        ? { manufacturer: body.manufacturer }
+        : {}),
+      ...(body.model === null || typeof body.model === 'string' ? { model: body.model } : {}),
       ...(body.presentation
         ? {
             presentation: body.presentation as {
@@ -165,6 +199,7 @@ export async function PATCH(request: Request, context: Context) {
       result.error === 'NOT_FOUND'
         ? 404
         : result.error === 'LAYOUT_CONFLICT' ||
+            result.error === 'SERIAL_ALREADY_ASSIGNED' ||
             result.error === 'SLOT_OCCUPIED' ||
             result.error === 'POSITION_OCCUPIED'
           ? 409

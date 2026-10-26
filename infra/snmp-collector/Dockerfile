@@ -3,5 +3,6 @@ WORKDIR /app
 COPY infra/snmp-collector/package*.json ./
 RUN npm ci --omit=dev --no-audit --no-fund
 COPY infra/snmp-collector/*.mjs ./
+RUN mkdir -p /data && chown node:node /data
 USER node
 CMD ["node", "server.mjs"]

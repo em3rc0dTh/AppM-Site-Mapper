@@ -14,5 +14,9 @@ export interface TelemetryBindingRepository {
     targetIds: readonly string[],
   ): Promise<readonly TelemetryBinding[]>;
   insert(binding: TelemetryBinding): Promise<void>;
+  /** All-or-none commissioned metric bindings. */
+  insertBatch?(bindings: readonly TelemetryBinding[]): Promise<void>;
+  /** All-or-none retirement; retains original identity and audit evidence. */
+  archiveBatch?(bindings: readonly TelemetryBinding[]): Promise<void>;
   replace(binding: TelemetryBinding): Promise<void>;
 }

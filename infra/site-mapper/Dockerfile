@@ -13,6 +13,10 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=build /app/package.json /app/package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY --from=build /app/.next ./.next
+# Rendered Help diagrams are served as static public assets.
+COPY --from=build /app/public ./public
+# /help renders allowlisted customer-facing Markdown guides.
+COPY --from=build /app/docs/help ./docs/help
 COPY --from=build /app/next.config.ts ./next.config.ts
 EXPOSE 3000
 CMD ["npm", "run", "start", "--", "-H", "0.0.0.0", "-p", "3000"]

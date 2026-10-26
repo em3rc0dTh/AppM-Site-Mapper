@@ -1,0 +1,105 @@
+# Additive, synthetic-only Config2 A/B SNMPv3 agents/collectors for BDFB-02/03.
+# No override to existing Site Mapper/MQTT/Modbus/Timescale/BDFB-01 services.
+# Private default Docker network only; no published host UDP ports.
+x-points: &config2_points >-
+  [{"oid":"1.3.6.1.4.1.8072.9999.2026.48.1.1.0","metric":"CURRENT","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.48.1.2.0","metric":"CURRENT","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.48.2.1.0","metric":"VOLTAGE","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.48.2.2.0","metric":"VOLTAGE","scale":0.1}]
+services:
+  snmp-lab-agent-02:
+    profiles: [snmp-lab-additive]
+    build:
+      context: ${{BFDB_SNMP_LAB_CONTEXT:?Approved BFDB emulator checkout required}
+      dockerfile: apps/snmp-emulator/Dockerfile
+    networks: [default]
+    restart: unless-stopped
+    labels:
+      site-mapper.scope: snmp-synthetic-lab-only
+      site-mapper.certified-field: 'false'
+    environment:
+      SNMP_AGENT_HOST: 0.0.0.0
+      SNMP_AGENT_PORT: '1161'
+      SNMP_AGENT_UPDATE_MS: '1000'
+      SNMP_EMULATOR_SCENARIO: NORMAL
+      SNMP_EMULATOR_PROFILE: ELTEK_BDCBB_CONFIG_2
+      SNMP_EMULATOR_BFDB_ID: BFDB-02
+      SNMP_EMULATOR_SOURCE_ID: EMU-DELTA-BFDB-02
+      SNMP_VERSION: '3'
+      SNMP_V3_USERNAME: ${{SNMP_V3_USERNAME:?SNMPv3 username required}
+      SNMP_V3_AUTH_KEY: ${{SNMP_V3_AUTH_KEY:?SNMPv3 auth key required}
+      SNMP_V3_PRIV_KEY: ${{SNMP_V3_PRIV_KEY:?SNMPv3 privacy key required}
+  snmp-lab-collector-02:
+    profiles: [snmp-lab-additive]
+    build:
+      context: .
+      dockerfile: infra/snmp-collector/Dockerfile
+    depends_on:
+      snmp-lab-agent-02:
+        condition: service_started
+    networks: [default]
+    restart: unless-stopped
+    labels:
+      site-mapper.scope: snmp-synthetic-lab-only
+      site-mapper.certified-field: 'false'
+    environment:
+      APP_ENV: development
+      SNMP_CONTROLLER_HOST: snmp-lab-agent-02
+      SNMP_CONTROLLER_PORT: '1161'
+      SNMP_CONTROLLER_ID: EMU-DELTA-BFDB-02
+      SNMP_VERSION: '3'
+      SNMP_V3_USERNAME: ${{SNMP_V3_USERNAME:?SNMPv3 username required}
+      SNMP_V3_AUTH_KEY: ${{SNMP_V3_AUTH_KEY:?SNMPv3 auth key required}
+      SNMP_V3_PRIV_KEY: ${{SNMP_V3_PRIV_KEY:?SNMPv3 privacy key required}
+      SNMP_FEED_POINTS_JSON: *config2_points
+      SNMP_POLL_INTERVAL_MS: '30000'
+      SNMP_INGEST_TOKEN: ${{SNMP_INGEST_TOKEN:?Running Site Mapper token required}
+      SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
+  snmp-lab-agent-03:
+    profiles: [snmp-lab-additive]
+    build:
+      context: ${{BFDB_SNMP_LAB_CONTEXT:?Approved BFDB emulator checkout required}
+      dockerfile: apps/snmp-emulator/Dockerfile
+    networks: [default]
+    restart: unless-stopped
+    labels:
+      site-mapper.scope: snmp-synthetic-lab-only
+      site-mapper.certified-field: 'false'
+    environment:
+      SNMP_AGENT_HOST: 0.0.0.0
+      SNMP_AGENT_PORT: '1161'
+      SNMP_AGENT_UPDATE_MS: '1000'
+      SNMP_EMULATOR_SCENARIO: NORMAL
+      SNMP_EMULATOR_PROFILE: ELTEK_BDCBB_CONFIG_2
+      SNMP_EMULATOR_BFDB_ID: BFDB-03
+      SNMP_EMULATOR_SOURCE_ID: EMU-DELTA-BFDB-03
+      SNMP_VERSION: '3'
+      SNMP_V3_USERNAME: ${{SNMP_V3_USERNAME:?SNMPv3 username required}
+      SNMP_V3_AUTH_KEY: ${{SNMP_V3_AUTH_KEY:?SNMPv3 auth key required}
+      SNMP_V3_PRIV_KEY: ${{SNMP_V3_PRIV_KEY:?SNMPv3 privacy key required}
+  snmp-lab-collector-03:
+    profiles: [snmp-lab-additive]
+    build:
+      context: .
+      dockerfile: infra/snmp-collector/Dockerfile
+    depends_on:
+      snmp-lab-agent-03:
+        condition: service_started
+    networks: [default]
+    restart: unless-stopped
+    labels:
+      site-mapper.scope: snmp-synthetic-lab-only
+      site-mapper.certified-field: 'false'
+    environment:
+      APP_ENV: development
+      SNMP_CONTROLLER_HOST: snmp-lab-agent-03
+      SNMP_CONTROLLER_PORT: '1161'
+      SNMP_CONTROLLER_ID: EMU-DELTA-BFDB-03
+      SNMP_VERSION: '3'
+      SNMP_V3_USERNAME: ${{SNMP_V3_USERNAME:?SNMPv3 username required}
+      SNMP_V3_AUTH_KEY: ${{SNMP_V3_AUTH_KEY:?SNMPv3 auth key required}
+      SNMP_V3_PRIV_KEY: ${{SNMP_V3_PRIV_KEY:?SNMPv3 privacy key required}
+      SNMP_FEED_POINTS_JSON: *config2_points
+      SNMP_POLL_INTERVAL_MS: '30000'
+      SNMP_INGEST_TOKEN: ${{SNMP_INGEST_TOKEN:?Running Site Mapper token required}
+      SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest

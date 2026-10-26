@@ -1,0 +1,71 @@
+# One-time, branch-scoped formatting only. Does not deploy or run Docker.
+# Triggered by creating/changing THIS file; resulting source formatting commit
+# does not touch this file, so it cannot trigger itself repeatedly.
+name: Format operator documentation once
+
+on:
+  push:
+    branches:
+      - feat/site-mapper-work-2026-10-23
+    paths:
+      - '.github/workflows/format-operator-branch-once.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.ref == 'refs/heads/feat/site-mapper-work-2026-10-23'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/site-mapper-work-2026-10-23
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install pinned Prettier from package-lock
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Format only already-identified operator and legacy lint files
+        run: |
+          npx prettier --write \
+            README.md \
+            docs/README.md \
+            docs/user-guide/README.md \
+            docs/user-guide/recorrido-completo-login-mqtt-snmp-modbus.md \
+            docs/operations/quickstart.md \
+            docs/operations/laboratorio-industrial-para-principiantes.md \
+            docs/telemetry/industrial-unified-lab.md \
+            docs/telemetry/bdfb23-snmp-config2-plan-2026-10-24.md \
+            scripts/telemetry/audit-bdfb-lab-capture.mongosh.js \
+            scripts/telemetry/commission-bdfb-lab-mqtt.mongosh.js \
+            scripts/telemetry/commission-bdfb23-snmp-config2.mongosh.js \
+            scripts/telemetry/provision-bdfb-pair.mongosh.js \
+            src/modules/telemetry/infrastructure/industrial/store.ts \
+            tests/unit/industrial-profile-config.test.ts
+      - name: Commit formatting only (no force push)
+        run: |
+          git add -- README.md docs/README.md docs/user-guide/README.md \
+            docs/user-guide/recorrido-completo-login-mqtt-snmp-modbus.md \
+            docs/operations/quickstart.md \
+            docs/operations/laboratorio-industrial-para-principiantes.md \
+            docs/telemetry/industrial-unified-lab.md \
+            docs/telemetry/bdfb23-snmp-config2-plan-2026-10-24.md \
+            scripts/telemetry/audit-bdfb-lab-capture.mongosh.js \
+            scripts/telemetry/commission-bdfb-lab-mqtt.mongosh.js \
+            scripts/telemetry/commission-bdfb23-snmp-config2.mongosh.js \
+            scripts/telemetry/provision-bdfb-pair.mongosh.js \
+            src/modules/telemetry/infrastructure/industrial/store.ts \
+            tests/unit/industrial-profile-config.test.ts
+          if git diff --cached --quiet; then
+            echo 'Already formatted.'
+            exit 0
+          fi
+          git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              commit -m 'style: normalize operator documentation and previously unformatted industrial files'
+          git push origin HEAD:refs/heads/feat/site-mapper-work-2026-10-23

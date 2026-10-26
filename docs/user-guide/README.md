@@ -1,10 +1,16 @@
 # Manual del operador · Site Mapper MK1
 
+> **Referencia interna para el equipo:** las guías visibles para usuarios están en docs/help/es y docs/help/en, con lenguaje sencillo y gráficos renderizados. Los capítulos aquí incluidos mantienen el detalle técnico. [Guía de mantenimiento del Help Center](help-center-integrado.md).
+
 > **[Manual maestro: procedimiento integral desde Login hasta PowerPath, MQTT y modelo de datos](manual-maestro.md)**. Es el punto de entrada consolidado para una persona sin experiencia. Consulta también [modelo de datos explicado](modelo-de-datos.md) y [estado de capturas reales](evidencia-visual.md). **No se modificó la estructura de MongoDB.**
 
 **Para personas que nunca han usado el sistema.** Este manual explica el trabajo cotidiano desde la interfaz web, sin solicitar comandos, JSON, consultas SQL ni cambios directos en MongoDB. La guía está basada en los formularios y botones implementados en MK1 (19 oct. 2026), no en pantallas propuestas de PR sin fusionar.
 
 > **Antes de empezar:** utiliza un entorno autorizado de entrenamiento. Si tienes permisos STANDARD, puedes consultar pero no crear/modificar topología o PowerPaths. Para las prácticas de edición necesitas ADMIN o SUPERADMIN según las reglas de cada pantalla. Nunca uses la base del cliente para experimentar.
+
+## Empezar sin acompañamiento técnico
+
+Si tu objetivo es aprender a navegar y comprobar las tres conexiones, comienza por **[De Login a MQTT, SNMP, Timescale y Modbus](recorrido-completo-login-mqtt-snmp-modbus.md)**. Contiene diagramas, botones exactos, comprobaciones y errores comunes. Para encender servicios de una instalación WSL ya preparada, utiliza la [guía de laboratorio para principiantes](../operations/laboratorio-industrial-para-principiantes.md).
 
 ## ¿Qué se aprende?
 

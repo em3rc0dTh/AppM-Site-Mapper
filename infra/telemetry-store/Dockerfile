@@ -5,9 +5,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app.py .
+COPY app.py industrial.py .
 COPY init/002-entity-telemetry.sql .
 COPY init/003-snmp-atomic-batches.sql .
+COPY init/004-industrial-observations.sql .
 
 EXPOSE 8080
 

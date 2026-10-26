@@ -15,11 +15,13 @@ import { ContextPin } from '@/components/workspace/context-pin';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { PowerContractService } from '@/modules/inventory/application/power-contract-service';
+import { createCommunicationProfileRepository } from '@/modules/industrial/infrastructure/communication-profile-repository';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
 import type { PortConnectionView } from '@/modules/power/domain/port-connection-view';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
+import { rawPointForPosition } from '@/modules/topology/domain/telemetry-point-prefix';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 export default async function DevicePage({ params }: { params: Promise<{ deviceId: string }> }) {
@@ -29,6 +31,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const canWritePower = hasPermission(auth.value.role, 'power:write');
   const canWriteTopology = hasPermission(auth.value.role, 'topology:write');
   const canReadTelemetry = hasPermission(auth.value.role, 'telemetry:read');
+  const canReadIndustrialSettings = hasPermission(auth.value.role, 'settings:read');
   const { deviceId } = await params;
   const repo = await createTopologyRepository();
   const service = new TopologyService(repo);
@@ -114,6 +117,170 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             metric: binding.metric,
           }))
       : [];
+
+  const parentPanel =
+    node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER' && node.parentEquipmentId
+      ? (deviceEquipment.find(
+          (item) =>
+            item.id === node.parentEquipmentId &&
+            item.lifecycle === 'ACTIVE' &&
+            item.equipmentType === 'PANEL',
+        ) ?? null)
+      : null;
+  const breakerPosition =
+    parentPanel && node.kind === 'EQUIPMENT'
+      ? parentPanel.children.findIndex((childId) => childId === node.id) + 1
+      : 0;
+  const expectedPanelPoint =
+    parentPanel?.telemetryPointPrefix && breakerPosition > 0
+      ? rawPointForPosition(parentPanel.telemetryPointPrefix, breakerPosition)
+      : null;
+  const focusedPointBinding =
+    node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER'
+      ? breakerTelemetryBindings.find(
+          (binding) => binding.targetId === node.id && Boolean(binding.sourcePointId),
+        )
+      : undefined;
+  const focusedDirectSource =
+    node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER'
+      ? breakerTelemetryBindings.find(
+          (binding) =>
+            binding.targetId === node.id &&
+            !binding.sourcePointId &&
+            binding.metric.toUpperCase() === 'SOURCE',
+        )
+      : undefined;
+  const panelBindingMetrics =
+    parentPanel?.serialNumber && expectedPanelPoint && node.kind === 'EQUIPMENT'
+      ? new Set(
+          breakerTelemetryBindings
+            .filter(
+              (binding) =>
+                binding.targetId === node.id &&
+                binding.sourceIdentity === parentPanel.serialNumber &&
+                binding.sourcePointId === expectedPanelPoint,
+            )
+            .map((binding) => binding.metric.toUpperCase()),
+        )
+      : new Set<string>();
+  const panelBindingConfirmed = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].every((metric) =>
+    panelBindingMetrics.has(metric),
+  );
+
+  let acrelMapping: {
+    sourceIdentity: string;
+    rawPointId: string;
+    channel: number;
+    confirmedBy: string;
+    confirmedAt: string;
+    evidence?: { projectId?: string; documentName?: string; revision?: string; reference?: string };
+    gatewayName: string;
+    meterName: string;
+    gatewayAlias?: string;
+    meterAlias?: string;
+    macAddress?: string;
+    loginUsername?: string;
+    credentialState?: string;
+    recordStatus?: string;
+    gatewayNumber?: string;
+    meterNumber?: string;
+    network?: {
+      ip: string;
+      mask: string;
+      gateway: string;
+      services: readonly { protocol: string; port?: number }[];
+    };
+    rs485?: {
+      baudRate: number;
+      dataBits: number;
+      parity: string;
+      stopBits: number;
+      slaveId?: number;
+    };
+  } | null = null;
+
+  if (
+    canReadIndustrialSettings &&
+    node.kind === 'EQUIPMENT' &&
+    node.equipmentType === 'CIRCUIT_BREAKER'
+  ) {
+    const bindingRepository = await createTelemetryBindingRepository();
+    const confirmed = (await bindingRepository.listForTarget('EQUIPMENT', node.id)).find(
+      (binding) =>
+        binding.lifecycle === 'ACTIVE' &&
+        binding.protocol === 'MQTT' &&
+        binding.sourcePointId &&
+        binding.attributes?.commissioning === 'ACREL_VERIFIED_CHANNEL',
+    );
+    if (confirmed?.sourcePointId) {
+      const attrs = confirmed.attributes ?? {};
+      const meterId = typeof attrs.meterEquipmentId === 'string' ? attrs.meterEquipmentId : '';
+      const gatewayId =
+        typeof attrs.gatewayEquipmentId === 'string' ? attrs.gatewayEquipmentId : '';
+      const channel = typeof attrs.channel === 'number' ? attrs.channel : Number.NaN;
+      const confirmedBy = typeof attrs.confirmedBy === 'string' ? attrs.confirmedBy : '';
+      const confirmedAt = typeof attrs.confirmedAt === 'string' ? attrs.confirmedAt : '';
+      const evidence =
+        attrs.evidence && typeof attrs.evidence === 'object' && !Array.isArray(attrs.evidence)
+          ? (attrs.evidence as {
+              projectId?: string;
+              documentName?: string;
+              revision?: string;
+              reference?: string;
+            })
+          : undefined;
+      if (meterId && gatewayId && Number.isInteger(channel) && confirmedBy && confirmedAt) {
+        const profileRepository = await createCommunicationProfileRepository();
+        const [meterProfile, gatewayProfile, meterNode, gatewayNode] = await Promise.all([
+          profileRepository.get(meterId),
+          profileRepository.get(gatewayId),
+          repo.getById(meterId),
+          repo.getById(gatewayId),
+        ]);
+        if (
+          meterProfile?.role === 'METER' &&
+          gatewayProfile?.role === 'GATEWAY' &&
+          meterProfile.gatewayEquipmentId === gatewayId
+        ) {
+          acrelMapping = {
+            sourceIdentity: confirmed.sourceIdentity,
+            rawPointId: confirmed.sourcePointId,
+            channel,
+            confirmedBy,
+            confirmedAt,
+            ...(evidence ? { evidence } : {}),
+            gatewayName:
+              gatewayNode?.kind === 'EQUIPMENT' ? gatewayNode.name : gatewayProfile.equipmentId,
+            meterName: meterNode?.kind === 'EQUIPMENT' ? meterNode.name : meterProfile.equipmentId,
+            ...(gatewayNode?.kind === 'EQUIPMENT' && gatewayNode.aliases?.[0]
+              ? { gatewayAlias: gatewayNode.aliases[0] }
+              : {}),
+            ...(meterNode?.kind === 'EQUIPMENT' && meterNode.aliases?.[0]
+              ? { meterAlias: meterNode.aliases[0] }
+              : {}),
+            ...(gatewayProfile.macAddress ? { macAddress: gatewayProfile.macAddress } : {}),
+            ...(gatewayProfile.loginUsername
+              ? { loginUsername: gatewayProfile.loginUsername }
+              : {}),
+            ...(gatewayProfile.credentialState
+              ? { credentialState: gatewayProfile.credentialState }
+              : {}),
+            recordStatus:
+              gatewayProfile.recordStatus === 'FIELD_VERIFIED' &&
+              meterProfile.recordStatus === 'FIELD_VERIFIED'
+                ? 'FIELD_VERIFIED'
+                : 'DECLARED',
+            ...(gatewayProfile.gatewayNumber
+              ? { gatewayNumber: gatewayProfile.gatewayNumber }
+              : {}),
+            ...(meterProfile.meterNumber ? { meterNumber: meterProfile.meterNumber } : {}),
+            ...(gatewayProfile.network ? { network: gatewayProfile.network } : {}),
+            rs485: meterProfile.rs485,
+          };
+        }
+      }
+    }
+  }
 
   const familyPortIds = new Set(
     familyEquipment.flatMap((item) =>
@@ -227,10 +394,32 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dd>{node.model ?? node.category ?? t('notSpecified')}</dd>
                     <dt>{t('serial')}</dt>
                     <dd>{node.serialNumber ?? t('notAssigned')}</dd>
+                    <dt>{t('mk1_part_number_p_n')}</dt>
+                    <dd>{node.partNumber ?? t('notSpecified')}</dd>
+                    <dt>{t('mk1_aliases')}</dt>
+                    <dd>{node.aliases?.length ? node.aliases.join(', ') : t('notSpecified')}</dd>
                     <dt>{t('parent')}</dt>
                     <dd>{node.parentEquipmentId ?? t('deviceRoot')}</dd>
                     <dt>{t('childCapacity')}</dt>
                     <dd>{node.childMode === 'POSITIONAL' ? node.children.length : t('dynamic')}</dd>
+                    {node.equipmentType === 'PANEL' ? (
+                      <>
+                        <dt>{t('mk1_telemetry_role')}</dt>
+                        <dd>{t('mk1_logical_measurement_source_for_child_breakers')}</dd>
+                        <dt>{t('mk1_telemetry_source_s_n')}</dt>
+                        <dd>{node.serialNumber ?? '—'}</dd>
+                        <dt>{t('mk1_telemetry_point_prefix')}</dt>
+                        <dd>{node.telemetryPointPrefix ?? '—'}</dd>
+                        <dt>{t('mk1_telemetry_readiness')}</dt>
+                        <dd>
+                          {node.childMode === 'POSITIONAL' &&
+                          node.serialNumber &&
+                          node.telemetryPointPrefix
+                            ? 'READY FOR EXPLICIT COMMISSIONING'
+                            : 'NOT READY'}
+                        </dd>
+                      </>
+                    ) : null}
                     <dt>{t('location')}</dt>
                     <dd>
                       {room?.name ?? t('room')} / {rackNode?.name ?? t('rack')} / {mountLabel}
@@ -239,7 +428,131 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dd>{hasFeedA ? t('pathRecorded') : t('noPath')}</dd>
                     <dt>{t('powerB')}</dt>
                     <dd>{hasFeedB ? t('pathRecorded') : t('noPath')}</dd>
+                    {node.equipmentType === 'CIRCUIT_BREAKER' && canReadTelemetry ? (
+                      <>
+                        <dt>{t('mk1_measurement_model')}</dt>
+                        <dd>
+                          {focusedDirectSource && !focusedPointBinding && !acrelMapping
+                            ? 'SELF-MEASURED'
+                            : acrelMapping || focusedPointBinding || parentPanel
+                              ? 'EXTERNALLY-MEASURED'
+                              : 'UNCOMMISSIONED'}
+                        </dd>
+                        <dt>{t('mk1_measured_via')}</dt>
+                        <dd>
+                          {acrelMapping
+                            ? `${acrelMapping.gatewayAlias ?? acrelMapping.gatewayName} → ${acrelMapping.meterAlias ?? acrelMapping.meterName} → CH ${acrelMapping.channel}`
+                            : focusedDirectSource && !focusedPointBinding
+                              ? `Self source · ${focusedDirectSource.sourceIdentity}`
+                              : panelBindingConfirmed && parentPanel
+                                ? `${parentPanel.name} → position ${String(breakerPosition).padStart(2, '0')}`
+                                : focusedPointBinding
+                                  ? `Explicit MQTT binding · ${focusedPointBinding.sourceIdentity}`
+                                  : parentPanel
+                                    ? `${parentPanel.name} → telemetry not commissioned`
+                                    : 'No measurement source commissioned'}
+                        </dd>
+                        {parentPanel && !acrelMapping ? (
+                          <>
+                            <dt>{t('mk1_panel_source_s_n')}</dt>
+                            <dd>{parentPanel.serialNumber ?? '—'}</dd>
+                            <dt>{t('mk1_panel_point_prefix')}</dt>
+                            <dd>{parentPanel.telemetryPointPrefix ?? '—'}</dd>
+                            <dt>{t('mk1_physical_position')}</dt>
+                            <dd>
+                              {breakerPosition > 0 ? String(breakerPosition).padStart(2, '0') : '—'}
+                            </dd>
+                            <dt>{t('mk1_resolved_raw_point')}</dt>
+                            <dd>{expectedPanelPoint ?? '—'}</dd>
+                            <dt>{t('mk1_binding')}</dt>
+                            <dd>{panelBindingConfirmed ? 'CONFIRMED' : 'NOT COMMISSIONED'}</dd>
+                          </>
+                        ) : null}
+                      </>
+                    ) : null}
+                    {node.equipmentType === 'CIRCUIT_BREAKER' && canReadIndustrialSettings ? (
+                      acrelMapping ? (
+                        <>
+                          <dt>{t('mk1_acrel_measurement_path')}</dt>
+                          <dd>
+                            {acrelMapping.gatewayAlias ?? acrelMapping.gatewayName}
+                            {acrelMapping.gatewayNumber
+                              ? ' #' + acrelMapping.gatewayNumber
+                              : ''} → {acrelMapping.meterAlias ?? acrelMapping.meterName}
+                            {acrelMapping.meterNumber ? ' ' + acrelMapping.meterNumber : ''}{' '}
+                            {t('mk1_ch')} {acrelMapping.channel} → {acrelMapping.rawPointId}
+                          </dd>
+                          <dt>{t('mk1_transport_source')}</dt>
+                          <dd>{acrelMapping.sourceIdentity}</dd>
+                          <dt>{t('mk1_commissioning_status')}</dt>
+                          <dd>{acrelMapping.recordStatus ?? 'DECLARED'}</dd>
+                          <dt>{t('mk1_mac_gateway')}</dt>
+                          <dd>{acrelMapping.macAddress ?? '—'}</dd>
+                          <dt>{t('mk1_login_gateway')}</dt>
+                          <dd>{acrelMapping.loginUsername ?? '—'}</dd>
+                          <dt>{t('mk1_credential_note')}</dt>
+                          <dd>{acrelMapping.credentialState ?? 'NOT_DECLARED'}</dd>
+                          {acrelMapping.network ? (
+                            <>
+                              <dt>{t('mk1_gateway_network')}</dt>
+                              <dd>
+                                {acrelMapping.network.ip} {t('mk1_mask')}{' '}
+                                {acrelMapping.network.mask} {t('mk1_gw')}{' '}
+                                {acrelMapping.network.gateway} ·{' '}
+                                {acrelMapping.network.services
+                                  .map(
+                                    (service) =>
+                                      service.protocol + (service.port ? ':' + service.port : ''),
+                                  )
+                                  .join(' + ')}
+                              </dd>
+                            </>
+                          ) : null}
+                          {acrelMapping.rs485 ? (
+                            <>
+                              <dt>{t('mk1_rs485_modbus_rtu')}</dt>
+                              <dd>
+                                {t('mk1_slave')} {acrelMapping.rs485.slaveId ?? '—'} ·{' '}
+                                {acrelMapping.rs485.baudRate} · {acrelMapping.rs485.dataBits}
+                                {acrelMapping.rs485.parity === 'NONE'
+                                  ? 'N'
+                                  : acrelMapping.rs485.parity === 'EVEN'
+                                    ? 'E'
+                                    : 'O'}
+                                {acrelMapping.rs485.stopBits}
+                              </dd>
+                            </>
+                          ) : null}
+                          <dt>{t('mk1_evidence')}</dt>
+                          <dd>
+                            {acrelMapping.evidence?.projectId ?? '—'} ·{' '}
+                            {acrelMapping.evidence?.documentName ?? '—'} {t('mk1_rev')}{' '}
+                            {acrelMapping.evidence?.revision ?? '—'}
+                          </dd>
+                          <dt>{t('mk1_confirmation')}</dt>
+                          <dd>
+                            {acrelMapping.confirmedAt} {t('mk1_user')} {acrelMapping.confirmedBy}
+                          </dd>
+                        </>
+                      ) : (
+                        <>
+                          <dt>{t('mk1_acrel_measurement_path')}</dt>
+                          <dd>{t('mk1_no_confirmed_acrel_physical_mapping')}</dd>
+                        </>
+                      )
+                    ) : null}
                   </dl>
+                  {node.equipmentType === 'CIRCUIT_BREAKER' && canReadIndustrialSettings ? (
+                    <Link
+                      className="zip-device-outline"
+                      href={
+                        '/industrial/commissioning?' +
+                        new URLSearchParams({ deviceId: node.deviceId }).toString()
+                      }
+                    >
+                      {acrelMapping ? 'Abrir comisionamiento Acrel' : 'Configurar monitoreo Acrel'}
+                    </Link>
+                  ) : null}
                   <FullPowerTraceModal entityId={node.id} />
                   {room && rackNode ? (
                     <Link

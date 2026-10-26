@@ -29,6 +29,12 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
+      - name: Install industrial SNMP wire-test dependency
+        run: npm ci --prefix infra/snmp-collector --no-audit --no-fund
+
+      - name: Industrial wire contracts and stable Modbus extensions
+        run: npm run test:industrial
+
       - name: Typecheck
         run: npm run typecheck
 

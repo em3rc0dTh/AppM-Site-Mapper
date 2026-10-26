@@ -247,8 +247,10 @@ interface Equipment {
   manufacturerTypeName?: string;
   model?: string;
   serialNumber?: string;
+  partNumber?: string;
 
   aliases?: string[];
+  telemetryPointPrefix?: string;
 
   rackPlacement?: RackPlacement;
 
@@ -259,6 +261,24 @@ interface Equipment {
 ```
 
 ---
+
+Identity semantics:
+
+- `serialNumber` (S/N) is optional at the base Equipment level. A capability may require it
+  before that Equipment can be commissioned as a telemetry source.
+- `partNumber` (P/N) is an optional manufacturer part identifier and is distinct from
+  `model` and `serialNumber`.
+- `aliases[]` contains optional operational names such as NE Name/TID and does not replace
+  the canonical `name`.
+- `telemetryPointPrefix` is an optional point-address declaration for positional Equipment;
+  it is not a certified child binding by itself.
+- For a Panel to be ready for explicit child-breaker telemetry commissioning, the current
+  capability requires `POSITIONAL` composition, `serialNumber` and `telemetryPointPrefix`.
+- A Circuit Breaker does not duplicate its parent's serial or prefix. Its candidate point is
+  resolved from parent Panel + physical position, while `TelemetryBinding` remains the
+  authoritative attribution.
+- The presence of a serial number alone does **not** imply that the Equipment publishes
+  telemetry.
 
 # 8. Equipment recursion
 

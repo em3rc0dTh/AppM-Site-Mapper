@@ -41,6 +41,20 @@
 | 15. Modelo de datos   | DB-01 a DB-05       | MongoDB Compass: base de aceptación, `topology_nodes`, `kind`, Equipment.accessPorts, `power_paths` | **REAL:** capturas de Compass de base `site_mapper_mk1_acceptance_02`          |
 | 16. Práctica completa | FIN-01 a FIN-05     | Pantallas consecutivas y checklist de evaluación autónoma                                           | **PENDIENTE**                                                                  |
 
+## Nuevas capturas operativas del 24 de octubre de 2026
+
+La sesión real del laboratorio aporta evidencias que complementan la matriz histórica:
+
+- **BDFB-02 / BDFB-03 — Physical View:** cuatro paneles de 24 posiciones, 96 breakers instalados por equipo. Verificado como representación de inventario, no como cableado físico.
+- **BDFB-03 — Panel 0_1:** Equipment Composition muestra `24/24 MQTT LIVE`, con voltaje, corriente, potencia y energía por breaker. Evidencia de presentación de señales MQTT simuladas.
+- **BDFB-01 — Inputs:** `LAB SIMULATED`, dos entradas A/B, al menos INPUT-SHUNT-A `LAB LIVE · SIMULATED`, con lectura visible de 228.90 A y -53.10 V.
+- **BDFB-01 — Charts / 24H / Current:** dos series independientes `A (LAB)` y `B (LAB)` del historial SNMP TimescaleDB, con energía etiquetada como estimación.
+- **BDFB-01 — MQTT descendant Equipment history:** histórico separado de 3 breakers originales, no de shunts de entrada.
+
+Estas imágenes fueron entregadas en la conversación de validación y sus observaciones figuran en [aceptación BDFB-01 SNMP](../telemetry/bdfb01-snmp-ui-acceptance-2026-10-24.md). **Los archivos de imagen no están adjuntos como binarios en GitHub** y no deben presentarse como recursos descargables del repositorio. La reproducción para capacitación todavía requiere capturas aprobadas, desidentificadas, con instrucciones gráficas y control de versión.
+
+**Aún pendientes:** capturas de Login sin secretos, cambio de contraseña, todos los clics de comisionamiento de BDFB-02/03 SNMP y aceptación del futuro SNMP LAB en dichos equipos.
+
 ### Material auténtico ya suministrado en el proyecto
 
 - `image(20261019-165537).png`: CB-01 y Power output **CONNECTED**, vínculo a NETWORK BOARD.

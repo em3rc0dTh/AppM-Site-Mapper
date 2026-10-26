@@ -2,6 +2,20 @@
 
 **Candidato a MVP presentable · Octubre 2026.**
 
+## Empieza aquí · Sin conocimientos de sistemas
+
+**[Manual paso a paso: Login → Workspace → BDFB → MQTT → SNMP → Timescale → Modbus](docs/user-guide/recorrido-completo-login-mqtt-snmp-modbus.md)**
+
+**[Guía para encender el laboratorio existente en WSL/Docker, comprobarlo y ampliar SNMP](docs/operations/laboratorio-industrial-para-principiantes.md)**
+
+Si recibiste una computadora con la instalación ya preparada, el primer comando de diagnóstico es **solo lectura**:
+
+```bash
+python3 scripts/telemetry/estado-laboratorio.py
+```
+
+No reinstales ni reconstruyas el proyecto para volver a entrar. Las cuentas, bases de datos y configuraciones de laboratorio no se regeneran al hacer `git pull`; el entorno persistente necesita sus propios archivos privados y volúmenes originales.
+
 ## ¿Qué es?
 
 Una plataforma para modelar infraestructura física (Network → Site → Room → Rack → Device → Equipment), administrar posiciones y conexiones eléctricas y consultar telemetría confirmada. El resultado del laboratorio **no equivale a certificación de producción**.
@@ -18,11 +32,14 @@ flowchart LR
   App --> Store[Telemetry Store · HTTP interno]
   Store --> TS[(TimescaleDB · Histórico)]
   App --> Sidecar[Modbus TCP · FC03]
+  SnmpAgent[Agente SNMPv3 sintético · entradas A/B] --> SnmpCollector[Colector de lecturas SNMP]
+  SnmpCollector -->|Ingesta autenticada| App
+  App --> InputView[Inputs / Charts SNMP]
   Console[Operational Console · 3100] --> Mongo
   Console --> TS
 ```
 
-El broker/emulador/gateway exterior es independiente del repositorio. Modbus lee su Latest State, no consulta TimescaleDB durante cada FC03.
+El emulador externo MQTT/SNMP vive en otro repositorio; Site Mapper, el colector y el gateway se conectan mediante contratos explícitos. Modbus lee su Latest State, no consulta TimescaleDB durante cada FC03. La historia SNMP de shunts A/B y la historia MQTT de breakers son series diferentes.
 
 ### Jerarquía
 
@@ -68,13 +85,18 @@ flowchart LR
 
 El manual está orientado a personas sin experiencia con Site Mapper. Incluye ocho lecciones, procedimientos paso a paso, diagramas de decisiones, ejercicios seguros y un guion para instructores; no requiere conocer comandos, UUID ni MongoDB.
 
-## Evidencia real y límites
+## Evidencia real y límites (actualizada el 24 de octubre de 2026)
 
-El 15 de octubre de 2026, el laboratorio comprobó **un** breaker: `BDFB-01-PANEL-01-CB-01`, `EMU-BFDB-01 / 0_1_1`, métricas V/A/W/kWh, cuatro bindings explícitos, LIVE, histórico consultable, persistencia en la TimescaleDB de Site Mapper y `MODBUS_CERT_PASS` (Unit ID 1, FC03, registros 0–7, coincidencia con una muestra histórica reciente).
+El cierre histórico del **15 de octubre** certificó un solo breaker MQTT original y Modbus Unit 1; sigue disponible en los receipts originales. **Los trabajos posteriores del laboratorio no deben confundirse con ese estado anterior.**
 
-La consulta **7D** volvió a presentar datos tras recuperar la conectividad del servicio histórico; esto no demuestra recuperación de muestras perdidas durante la interrupción. No está certificado el resto de los 23 breakers, 96 circuitos por BFDB, tres BFDB completos, cableado físico ni conexión a Metasys. Un cero Modbus puede significar dato expirado o valor real: no usar en control de seguridad.
+En la rama de trabajo del **24 de octubre** se observó:
 
-[Estado, evidencia y puertas de salida del MVP](docs/release/MVP-READINESS.md).
+- Dos BDFB LAB, **96 breakers MQTT por equipo** (cuatro paneles de 24), con inventario, bindings, LIVE, histórico persistido en TimescaleDB y un panel con 24/24 MQTT LIVE mostrado por el operador.
+- Gateway Modbus con **Units 1–3 originales preservadas** y Units **4–5** añadidas para los LAB, **FC03 8/8** en ocho bloques representativos (no en los 192 breakers completos ni en un Metasys físico).
+- **BDFB-01 SNMPv3 sintético Config2 A/B**: dos shunts simulados, cuatro OIDs, nueve publicaciones aceptadas por el colector y gráficas independientes A/B en TimescaleDB visibles en la aplicación.
+- **BDFB-02/03 SNMPv3 Config2 A/B**: código y proceso aditivo preparados, **aún sin ejecución ni aceptación local**. Su activación exige revisión del plan, copia de seguridad y confirmación de que los shunts son exclusivamente sintéticos.
+
+Estas evidencias son de **laboratorio**, no de autenticación SNMP de campo, shunts instalados, redes OT, integridad eléctrica o interoperabilidad física Metasys. [Registro técnico detallado](docs/telemetry/industrial-unified-lab.md) y [evidencia visual BDFB-01 SNMP](docs/telemetry/bdfb01-snmp-ui-acceptance-2026-10-24.md).
 
 ## Código organizado
 
@@ -115,7 +137,7 @@ Sesiones y RBAC server-side; credenciales MQTT privadas; MongoDB con seriales ac
 
 [CONTRACT.md](CONTRACT.md) es el plan histórico de reconstrucción; las decisiones aceptadas en contratos de dominio, ADR y código implementado gobiernan el estado actual. Las PR divergentes no entran en este baseline sin aceptación independiente.
 
-_English summary:_ Site Mapper is a modular, security-conscious physical infrastructure application with canonical inventory, floorplans, rack/equipment modeling and explicitly commissioned MQTT telemetry. A single synthetic BFDB breaker passed local end-to-end LIVE/history/Modbus verification; production and full-panel certification remain open.
+_English summary:_ Site Mapper is a modular, security-conscious physical infrastructure application with canonical inventory, floorplans, rack/equipment modeling and explicitly commissioned MQTT telemetry. The Oct 2026 synthetic lab includes two 96-breaker MQTT BDFBs, representative Modbus FC03 Units 4/5 verification, and SNMPv3 Config2 A/B end-to-end visual evidence for BDFB-01. BDFB-02/03 SNMP is prepared but not yet deployed; physical field certification remains open.
 
 ## Integración industrial: Metasys (Modbus TCP)
 
@@ -125,3 +147,15 @@ La salida industrial es **solo lectura** y expone exclusivamente **voltaje (V), 
 - [Comportamiento del servicio y puesta en marcha](docs/telemetry/modbus-tcp-output.md).
 
 El mapa CSV incluido usa identidades **sintéticas**, no topología ni seriales reales del cliente. Un registro asignado **no** certifica una medición comisionada. Por compatibilidad, la política predeterminada de dato ausente/vencido sigue devolviendo cero; existe `MODBUS_MISSING_POLICY=exception` para evaluación con el integrador. La conectividad y las reglas de lectura con el **Metasys físico** siguen pendientes de aceptación en la red OT autorizada.
+
+### Extensión industrial MQTT/SNMP
+
+Captura original, catálogo de señales desconocidas, alarmas Eltek rev54 y registros Modbus
+adicionales con calidad explícita: [configuración, contratos y laboratorio](docs/telemetry/industrial-integration.md).
+La extensión conserva las vistas y direcciones actuales; requiere comisionamiento de fuentes,
+asociaciones y puntos antes de conectarse al hardware y a Metasys.
+
+Estado del cierre industrial: [cambios y validaciones pendientes](docs/telemetry/industrial-closure-static.md).
+La revisión posterior a PR #103/#10 se realizó sin ejecutar ni agregar pruebas.
+
+Laboratorio MQTT/SNMP unificado: [procedimiento para principiantes](docs/operations/laboratorio-industrial-para-principiantes.md) · [runbook industrial y evidencias](docs/telemetry/industrial-unified-lab.md).

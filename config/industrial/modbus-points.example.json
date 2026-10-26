@@ -1,0 +1,194 @@
+{
+  "version": 3,
+  "points": [
+    {
+      "signalId": "9207a21b7891ef6f039fa27a011353e02bafae7814c937552d47803d74f3376f",
+      "unitId": 1,
+      "address": 1024,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 1 extra voltage"
+    },
+    {
+      "signalId": "b19111b60befaaa8ae65226c74256456b1192e25bfde1a83586a0dae9c74701d",
+      "unitId": 1,
+      "address": 1027,
+      "unit": "",
+      "description": "SYNTHETIC QDF 1 alarm condition"
+    },
+    {
+      "signalId": "dc31248e29cc7bad6dd4aa6b09d2d27c796b78debef485e17aeebcf1262fef5b",
+      "unitId": 2,
+      "address": 1024,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 2 extra voltage"
+    },
+    {
+      "signalId": "b92769d2a0d6998141970db4b5c75a4707b66a8a56def6c93c343412b08bba74",
+      "unitId": 2,
+      "address": 1027,
+      "unit": "",
+      "description": "SYNTHETIC QDF 2 alarm condition"
+    },
+    {
+      "signalId": "c906313cffafac9c87c76ba8846a99a6c6369098df49c67eb0bb99ca9b152500",
+      "unitId": 3,
+      "address": 1024,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 3 extra voltage"
+    },
+    {
+      "signalId": "ca9c5b00033b8216426c5b78c601e1eb920a90b7df856540c220a3f057b968fa",
+      "unitId": 3,
+      "address": 1027,
+      "unit": "",
+      "description": "SYNTHETIC QDF 3 alarm condition"
+    },
+    {
+      "signalId": "f8396aea211fa99bed50991ae4654d7a73a596e068ee17c4ce0408f31c4f74a2",
+      "unitId": 1,
+      "address": 1030,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 1 SNMP voltage"
+    },
+    {
+      "signalId": "e1f7956892afcac3f338f23f26673a697e94011402285fcb6848ae41839e4c3b",
+      "unitId": 1,
+      "address": 1033,
+      "unit": "A",
+      "description": "SYNTHETIC QDF 1 SNMP current"
+    },
+    {
+      "signalId": "b8d5165f58f190fb2534abecb23be490ee3d29a0e1c6c585747c98739c74000d",
+      "unitId": 1,
+      "address": 1036,
+      "unit": "degC",
+      "description": "SYNTHETIC QDF 1 SNMP temperature"
+    },
+    {
+      "signalId": "2308eae534a23805ca1008ac05e5e658f1da4f13b60259b8e7547a1aa2c5212e",
+      "unitId": 1,
+      "address": 1039,
+      "unit": "",
+      "description": "SYNTHETIC QDF 1 SNMP status enum"
+    },
+    {
+      "signalId": "97b11e38785abc6b471d8c18f1e24f4fbafc6921438fdd6537c806a8a4ddf5ac",
+      "unitId": 2,
+      "address": 1030,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 2 SNMP voltage"
+    },
+    {
+      "signalId": "d89d4c9008d03058b4514cc556910f1faf8863980ad87b1aa07eac6512ab6fb2",
+      "unitId": 2,
+      "address": 1033,
+      "unit": "A",
+      "description": "SYNTHETIC QDF 2 SNMP current"
+    },
+    {
+      "signalId": "5e90f6792d53fd9fcdc4efbfcda6538fa4df181ea646b223587f66cf0c7a8d20",
+      "unitId": 2,
+      "address": 1036,
+      "unit": "degC",
+      "description": "SYNTHETIC QDF 2 SNMP temperature"
+    },
+    {
+      "signalId": "04f329ddf3aa67ede3e7a907dc250f1b3ac7ed4ed01722f7734b66ca5c421715",
+      "unitId": 2,
+      "address": 1039,
+      "unit": "",
+      "description": "SYNTHETIC QDF 2 SNMP status enum"
+    },
+    {
+      "signalId": "1684b06fafd014ec1c204af47a6f8664f3f5aa543008071ead562558f63333c1",
+      "unitId": 3,
+      "address": 1030,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 3 SNMP voltage"
+    },
+    {
+      "signalId": "e9b291c4bd600f469e0ebf3070f4590a227013c62299866d861dde9cff642ae0",
+      "unitId": 3,
+      "address": 1033,
+      "unit": "A",
+      "description": "SYNTHETIC QDF 3 SNMP current"
+    },
+    {
+      "signalId": "38f0fc2003a671879e2ae7660f3265ece4b3fe48146885263f973b3731afde9a",
+      "unitId": 3,
+      "address": 1036,
+      "unit": "degC",
+      "description": "SYNTHETIC QDF 3 SNMP temperature"
+    },
+    {
+      "signalId": "895c3162065d8f6d55bd4271f1e68396cdbf2259706b03afe11e4efca17491e7",
+      "unitId": 3,
+      "address": 1039,
+      "unit": "",
+      "description": "SYNTHETIC QDF 3 SNMP status enum"
+    },
+    {
+      "signalId": "340f5e220247c0f18aba679a11292d17f8f7328bc8f78b24e357c4c824e2f603",
+      "unitId": 1,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 1 I1; physical association pending"
+    },
+    {
+      "signalId": "ec98eb435ea0f15a17f476c41d9cd0903cbba0e9c7484c15db964400369dcbb0",
+      "unitId": 1,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 1 P1; physical association pending"
+    },
+    {
+      "signalId": "810951ac7a005c7f1d2c645c8e8ba38aca52809e417dce31ff3587d5e17c73a1",
+      "unitId": 1,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 1 EP1; physical association pending"
+    },
+    {
+      "signalId": "ac5a0af12dfd0ba21582667e6862d369250beff29ce7bc5f4582320a0d8e4ecf",
+      "unitId": 2,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 2 I1; physical association pending"
+    },
+    {
+      "signalId": "f5496e50eb63cca381eda02c0cdad46ba47bb8a2d06175717f779ba0687061dd",
+      "unitId": 2,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 2 P1; physical association pending"
+    },
+    {
+      "signalId": "17b806b50e9a46a6b8bef7ad158dbaea07e8d6f04e0392ac4c1441e745bdd67b",
+      "unitId": 2,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 2 EP1; physical association pending"
+    },
+    {
+      "signalId": "e9e8ae3c9eff89b8f21d6c36191209a3237694aced3709213d8acb4a8d8431ba",
+      "unitId": 3,
+      "address": 1042,
+      "unit": "A",
+      "description": "SYNTHETIC BFDB 3 I1; physical association pending"
+    },
+    {
+      "signalId": "af408afa57fcc5ed5db7aa56b374231d469923788e7efc0976c339692d66a0b8",
+      "unitId": 3,
+      "address": 1045,
+      "unit": "W",
+      "description": "SYNTHETIC BFDB 3 P1; physical association pending"
+    },
+    {
+      "signalId": "09da37cbdaabc7f3cb64fd35bcd83a297ca4ac8956fa4adaa72350e1ff44b97a",
+      "unitId": 3,
+      "address": 1048,
+      "unit": "kWh",
+      "description": "SYNTHETIC BFDB 3 EP1; physical association pending"
+    }
+  ]
+}

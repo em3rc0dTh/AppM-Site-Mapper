@@ -22,6 +22,17 @@ function label(type: EquipmentType): string {
   return type.replaceAll('_', ' ');
 }
 
+function aliasesFromForm(value: FormDataEntryValue | null): string[] {
+  return [
+    ...new Set(
+      String(value ?? '')
+        .split(/[\n,]/)
+        .map((alias) => alias.trim())
+        .filter(Boolean),
+    ),
+  ];
+}
+
 export function EquipmentCompositionEditor({
   equipment,
   childEquipment,
@@ -220,6 +231,11 @@ export function EquipmentCompositionEditor({
           childCapacity:
             configurationMode === 'POSITIONAL' ? Number(form.get('childCapacity')) : undefined,
           telemetryPointPrefix: String(form.get('telemetryPointPrefix') ?? ''),
+          serialNumber: String(form.get('serialNumber') ?? '') || null,
+          partNumber: String(form.get('partNumber') ?? '') || null,
+          aliases: aliasesFromForm(form.get('aliases')),
+          manufacturer: String(form.get('manufacturer') ?? '') || null,
+          model: String(form.get('model') ?? '') || null,
         }),
       });
       await response.json();
@@ -271,6 +287,8 @@ export function EquipmentCompositionEditor({
           ...(targetSlot === null ? {} : { slotIndex: targetSlot }),
           name: String(form.get('name') ?? ''),
           serialNumber: String(form.get('serialNumber') ?? ''),
+          partNumber: String(form.get('partNumber') ?? ''),
+          aliases: aliasesFromForm(form.get('aliases')),
           category: String(form.get('category') ?? ''),
           equipmentType: String(form.get('equipmentType') ?? '') || undefined,
           childMode: warehouseChildMode,
@@ -311,6 +329,10 @@ export function EquipmentCompositionEditor({
           ...(targetSlot === null ? {} : { parentSlotIndex: targetSlot }),
           name: String(form.get('name') ?? ''),
           serialNumber: String(form.get('serialNumber') ?? ''),
+          partNumber: String(form.get('partNumber') ?? ''),
+          aliases: aliasesFromForm(form.get('aliases')),
+          manufacturer: String(form.get('manufacturer') ?? ''),
+          model: String(form.get('model') ?? ''),
           category: String(form.get('category') ?? ''),
           equipmentType: String(form.get('equipmentType') ?? 'CUSTOM'),
           childMode,
@@ -482,6 +504,39 @@ export function EquipmentCompositionEditor({
                 </option>
               ))}
             </select>
+          </label>
+          <label>
+            {t('mk1_serial_number_s_n')}{' '}
+            <input
+              name="serialNumber"
+              maxLength={120}
+              defaultValue={equipment.serialNumber ?? ''}
+            />
+          </label>
+          <label>
+            {t('mk1_part_number_p_n')}{' '}
+            <input name="partNumber" maxLength={120} defaultValue={equipment.partNumber ?? ''} />
+          </label>
+          <label>
+            {t('mk1_aliases')}{' '}
+            <textarea
+              name="aliases"
+              maxLength={1200}
+              defaultValue={(equipment.aliases ?? []).join('\n')}
+              placeholder={t('mk1_one_per_line_or_comma_separated')}
+            />
+          </label>
+          <label>
+            {t('mk1_manufacturer')}{' '}
+            <input
+              name="manufacturer"
+              maxLength={120}
+              defaultValue={equipment.manufacturer ?? ''}
+            />
+          </label>
+          <label>
+            {t('mk1_model')}{' '}
+            <input name="model" maxLength={120} defaultValue={equipment.model ?? ''} />
           </label>
           <label>
             {t('childMode')}
@@ -852,6 +907,17 @@ export function EquipmentCompositionEditor({
                 <input name="serialNumber" maxLength={120} />
               </label>
               <label>
+                {t('mk1_part_number_p_n')} <input name="partNumber" maxLength={120} />
+              </label>
+              <label>
+                {t('mk1_aliases')}{' '}
+                <textarea
+                  name="aliases"
+                  maxLength={1200}
+                  placeholder={t('mk1_one_per_line_or_comma_separated')}
+                />
+              </label>
+              <label>
                 {t('categoryOverride')}
                 <input name="category" maxLength={120} />
               </label>
@@ -904,6 +970,23 @@ export function EquipmentCompositionEditor({
               <label>
                 {t('serial')}
                 <input name="serialNumber" maxLength={120} />
+              </label>
+              <label>
+                {t('mk1_part_number_p_n')} <input name="partNumber" maxLength={120} />
+              </label>
+              <label>
+                {t('mk1_aliases')}{' '}
+                <textarea
+                  name="aliases"
+                  maxLength={1200}
+                  placeholder={t('mk1_one_per_line_or_comma_separated')}
+                />
+              </label>
+              <label>
+                {t('mk1_manufacturer')} <input name="manufacturer" maxLength={120} />
+              </label>
+              <label>
+                {t('mk1_model')} <input name="model" maxLength={120} />
               </label>
               <label>
                 {t('category')}

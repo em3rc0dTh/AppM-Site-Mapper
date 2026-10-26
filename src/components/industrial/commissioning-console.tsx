@@ -105,7 +105,7 @@ export function CommissioningConsole({
     if (!id) return;
     const data = await jsonRequest('/api/industrial/commissioning?' + new URLSearchParams({ deviceId: id }));
     setOverview(data as unknown as Overview);
-  }, [initialDeviceId]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -122,7 +122,7 @@ export function CommissioningConsole({
       })
       .catch((cause) => { if (active) setError(cause instanceof Error ? cause.message : 'LOAD_FAILED'); });
     return () => { active = false; };
-  }, []);
+  }, [initialDeviceId]);
 
   useEffect(() => {
     if (!deviceId) { setOverview(null); return; }

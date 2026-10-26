@@ -1,6 +1,6 @@
-# Vincular lecturas SNMP a una entrada DC
+# Conectar las lecturas de una entrada DC
 
-En los equipos BDFB, las **entradas principales de energía** pueden mostrar mediciones distintas a las de los breakers. Esta guía explica cómo preparar una entrada y asociar sus lecturas.
+En un BDFB, las **entradas principales de energía** se revisan por separado de los breakers. Site Mapper puede recibir esas mediciones mediante SNMP. Primero identifica la entrada física; después relaciona sus lecturas.
 
 ![De la entrada de energía a las lecturas](/help/diagrams/es/snmp.svg)
 

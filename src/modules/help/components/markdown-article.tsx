@@ -136,6 +136,7 @@ export function MarkdownHelpArticle({ text, locale }: { text: string; locale: He
             height={height}
             unoptimized
           />
+          <figcaption>{illustration[1]!}</figcaption>
         </figure>,
       );
       i++;

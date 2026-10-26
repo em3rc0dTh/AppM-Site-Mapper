@@ -126,6 +126,14 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     evidence?: { projectId?: string; documentName?: string; revision?: string; reference?: string };
     gatewayName: string;
     meterName: string;
+    gatewayAlias?: string;
+    meterAlias?: string;
+    macAddress?: string;
+    loginUsername?: string;
+    credentialState?: string;
+    recordStatus?: string;
+    gatewayNumber?: string;
+    meterNumber?: string;
     network?: { ip: string; mask: string; gateway: string; services: readonly { protocol: string; port?: number }[] };
     rs485?: { baudRate: number; dataBits: number; parity: string; stopBits: number; slaveId?: number };
   } | null = null;
@@ -183,6 +191,24 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             gatewayName:
               gatewayNode?.kind === 'EQUIPMENT' ? gatewayNode.name : gatewayProfile.equipmentId,
             meterName: meterNode?.kind === 'EQUIPMENT' ? meterNode.name : meterProfile.equipmentId,
+            ...(gatewayProfile.alias ? { gatewayAlias: gatewayProfile.alias } : {}),
+            ...(meterProfile.alias ? { meterAlias: meterProfile.alias } : {}),
+            ...(gatewayProfile.macAddress ? { macAddress: gatewayProfile.macAddress } : {}),
+            ...(gatewayProfile.loginUsername
+              ? { loginUsername: gatewayProfile.loginUsername }
+              : {}),
+            ...(gatewayProfile.credentialState
+              ? { credentialState: gatewayProfile.credentialState }
+              : {}),
+            recordStatus:
+              gatewayProfile.recordStatus === 'FIELD_VERIFIED' &&
+              meterProfile.recordStatus === 'FIELD_VERIFIED'
+                ? 'FIELD_VERIFIED'
+                : 'DECLARED',
+            ...(gatewayProfile.gatewayNumber
+              ? { gatewayNumber: gatewayProfile.gatewayNumber }
+              : {}),
+            ...(meterProfile.meterNumber ? { meterNumber: meterProfile.meterNumber } : {}),
             ...(gatewayProfile.network ? { network: gatewayProfile.network } : {}),
             rs485: meterProfile.rs485,
           };
@@ -320,11 +346,22 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                         <>
                           <dt>Acrel</dt>
                           <dd>
-                            {acrelMapping.gatewayName} → {acrelMapping.meterName} → CH
+                            {acrelMapping.gatewayAlias ?? acrelMapping.gatewayName}
+                            {acrelMapping.gatewayNumber ? ' #' + acrelMapping.gatewayNumber : ''} →{' '}
+                            {acrelMapping.meterAlias ?? acrelMapping.meterName}
+                            {acrelMapping.meterNumber ? ' ' + acrelMapping.meterNumber : ''} → CH
                             {acrelMapping.channel} → {acrelMapping.rawPointId}
                           </dd>
                           <dt>Fuente MQTT</dt>
                           <dd>{acrelMapping.sourceIdentity}</dd>
+                          <dt>Estado de comisionamiento</dt>
+                          <dd>{acrelMapping.recordStatus ?? 'DECLARED'}</dd>
+                          <dt>MAC gateway</dt>
+                          <dd>{acrelMapping.macAddress ?? '—'}</dd>
+                          <dt>Login gateway</dt>
+                          <dd>{acrelMapping.loginUsername ?? '—'}</dd>
+                          <dt>Credencial</dt>
+                          <dd>{acrelMapping.credentialState ?? 'NOT_DECLARED'}</dd>
                           {acrelMapping.network ? (
                             <>
                               <dt>Gateway network</dt>

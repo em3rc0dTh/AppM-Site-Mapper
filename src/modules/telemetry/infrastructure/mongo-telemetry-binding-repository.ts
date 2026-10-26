@@ -1,4 +1,5 @@
 import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
+import { getClient } from '@/shared/infrastructure/mongodb/client';
 
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
@@ -55,6 +56,40 @@ export class MongoTelemetryBindingRepository implements TelemetryBindingReposito
 
   async insert(binding: TelemetryBinding): Promise<void> {
     await this.collection.insertOne(binding as OptionalUnlessRequiredId<BindingDocument>);
+  }
+
+  async insertBatch(bindings: readonly TelemetryBinding[]): Promise<void> {
+    if (!bindings.length) return;
+    const session = (await getClient()).startSession();
+    try {
+      await session.withTransaction(async () => {
+        await this.collection.insertMany(
+          [...bindings] as OptionalUnlessRequiredId<BindingDocument>[],
+          { session, ordered: true },
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  async archiveBatch(bindings: readonly TelemetryBinding[]): Promise<void> {
+    if (!bindings.length) return;
+    const session = (await getClient()).startSession();
+    try {
+      await session.withTransaction(async () => {
+        for (const binding of bindings) {
+          const result = await this.collection.replaceOne(
+            { id: binding.id, lifecycle: 'ACTIVE' },
+            binding as OptionalUnlessRequiredId<BindingDocument>,
+            { session },
+          );
+          if (result.matchedCount !== 1) throw new Error('STALE_BINDING');
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
   }
 
   async replace(binding: TelemetryBinding): Promise<void> {

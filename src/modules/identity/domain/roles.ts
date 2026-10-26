@@ -8,6 +8,8 @@ export type Permission =
   | 'telemetry:read'
   | 'settings:read'
   | 'settings:write'
+  | 'credentials:read'
+  | 'credentials:write'
   | 'users:manage'
   | 'system:danger';
 
@@ -21,6 +23,8 @@ const permissions: Readonly<Record<Role, ReadonlySet<Permission>>> = {
     'telemetry:read',
     'settings:read',
     'settings:write',
+    'credentials:read',
+    'credentials:write',
   ]),
   SUPERADMIN: new Set<Permission>([
     'topology:read',
@@ -30,6 +34,8 @@ const permissions: Readonly<Record<Role, ReadonlySet<Permission>>> = {
     'telemetry:read',
     'settings:read',
     'settings:write',
+    'credentials:read',
+    'credentials:write',
     'users:manage',
     'system:danger',
   ]),

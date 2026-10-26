@@ -72,6 +72,11 @@ export interface ConfigureEquipmentInput {
   readonly equipmentType?: EquipmentType;
   readonly childMode?: EquipmentChildMode;
   readonly childCapacity?: number;
+  readonly serialNumber?: string | null;
+  readonly partNumber?: string | null;
+  readonly aliases?: readonly string[];
+  readonly manufacturer?: string | null;
+  readonly model?: string | null;
 }
 
 export interface TopologyNavigationNode {
@@ -90,6 +95,8 @@ export interface CreateTopologyNodeInput {
   readonly coordinate?: GridCoordinate;
   readonly totalU?: number;
   readonly serialNumber?: string;
+  readonly partNumber?: string;
+  readonly aliases?: readonly string[];
   readonly category?: string;
   readonly deviceType?: DeviceType;
   readonly equipmentType?: EquipmentType;
@@ -139,11 +146,21 @@ export class TopologyService {
       return failure('INVALID_NAME');
     }
 
-    for (const value of [input.serialNumber, input.category, input.manufacturer, input.model]) {
+    for (const value of [
+      input.serialNumber,
+      input.partNumber,
+      input.category,
+      input.manufacturer,
+      input.model,
+    ]) {
       if (value !== undefined && value.length > 120) {
         return failure('INVALID_TEXT_FIELD');
       }
     }
+    if (
+      (input.aliases?.length ?? 0) > 20 ||
+      input.aliases?.some((alias) => !alias.trim() || alias.length > 120)
+    ) return failure('INVALID_TEXT_FIELD');
 
     if (
       (input.kind === 'DEVICE' || input.kind === 'EQUIPMENT') &&
@@ -397,6 +414,10 @@ export class TopologyService {
           ...(input.manufacturer?.trim() ? { manufacturer: input.manufacturer.trim() } : {}),
           ...(input.model?.trim() ? { model: input.model.trim() } : {}),
           ...(input.serialNumber?.trim() ? { serialNumber: input.serialNumber.trim() } : {}),
+          ...(input.partNumber?.trim() ? { partNumber: input.partNumber.trim() } : {}),
+          ...(input.aliases?.length
+            ? { aliases: [...new Set(input.aliases.map((alias) => alias.trim()).filter(Boolean))] }
+            : {}),
           ...(input.category?.trim() ? { category: input.category.trim() } : {}),
           ...(input.template ? { template: structuredClone(input.template) } : {}),
         };
@@ -482,6 +503,31 @@ export class TopologyService {
       return failure('CHILD_TYPE_NOT_ALLOWED');
     }
 
+    for (const value of [input.serialNumber, input.partNumber, input.manufacturer, input.model]) {
+      if (value !== undefined && value !== null && value.length > 120)
+        return failure('INVALID_TEXT_FIELD');
+    }
+    if (
+      (input.aliases?.length ?? 0) > 20 ||
+      input.aliases?.some((alias) => !alias.trim() || alias.length > 120)
+    ) return failure('INVALID_TEXT_FIELD');
+
+    const serialNumber =
+      input.serialNumber === undefined ? node.serialNumber : input.serialNumber?.trim() || undefined;
+    if (serialNumber && serialNumber !== node.serialNumber) {
+      const matches = await this.repository.findActiveBySerialNumber(serialNumber);
+      if (matches.some((match) => match.id !== node.id)) return failure('SERIAL_ALREADY_ASSIGNED');
+    }
+    const partNumber =
+      input.partNumber === undefined ? node.partNumber : input.partNumber?.trim() || undefined;
+    const manufacturer =
+      input.manufacturer === undefined ? node.manufacturer : input.manufacturer?.trim() || undefined;
+    const model = input.model === undefined ? node.model : input.model?.trim() || undefined;
+    const aliases =
+      input.aliases === undefined
+        ? node.aliases
+        : [...new Set(input.aliases.map((alias) => alias.trim()).filter(Boolean))];
+
     const childMode = input.childMode ?? node.childMode;
     const configuredPrefix =
       input.telemetryPointPrefix === undefined
@@ -566,11 +612,26 @@ export class TopologyService {
       ...(presentation ? { presentation: { ...presentation } } : {}),
       accessPorts,
       ...(telemetryPointPrefix ? { telemetryPointPrefix } : {}),
+      ...(serialNumber ? { serialNumber } : {}),
+      ...(partNumber ? { partNumber } : {}),
+      ...(aliases?.length ? { aliases } : {}),
+      ...(manufacturer ? { manufacturer } : {}),
+      ...(model ? { model } : {}),
       updatedAt: nowIso(),
     };
     if (!telemetryPointPrefix && 'telemetryPointPrefix' in updated) {
       delete (updated as { telemetryPointPrefix?: string }).telemetryPointPrefix;
     }
+    if (!serialNumber && 'serialNumber' in updated)
+      delete (updated as { serialNumber?: string }).serialNumber;
+    if (!partNumber && 'partNumber' in updated)
+      delete (updated as { partNumber?: string }).partNumber;
+    if (!aliases?.length && 'aliases' in updated)
+      delete (updated as { aliases?: readonly string[] }).aliases;
+    if (!manufacturer && 'manufacturer' in updated)
+      delete (updated as { manufacturer?: string }).manufacturer;
+    if (!model && 'model' in updated)
+      delete (updated as { model?: string }).model;
     if (!(await this.repository.commitLayout([node], [updated]))) {
       return failure('LAYOUT_CONFLICT');
     }

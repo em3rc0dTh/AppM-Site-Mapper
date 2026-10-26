@@ -178,6 +178,9 @@ export async function POST(request: Request) {
       targetId: row.breakerId,
       attributes: {
         commissioning: 'EXPLICIT_OPERATOR_CONFIRMATION',
+        measurementSource: 'PANEL_POSITION',
+        sourceEquipmentId: preview.panelId,
+        observedEquipmentId: row.breakerId,
         panelId: preview.panelId,
         position: row.position,
       },

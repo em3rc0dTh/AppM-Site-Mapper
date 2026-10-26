@@ -24,7 +24,7 @@ jobs:
         run: |
           git diff -z --name-only origin/main...HEAD -- '*.ts' '*.md' '*.json' |
             xargs -0 -r npx prettier --write
-          npx prettier --write README.md .env.example
+          npx prettier --write README.md
       - name: Remove this one-time workflow and commit
         run: |
           git config user.name 'github-actions[bot]'

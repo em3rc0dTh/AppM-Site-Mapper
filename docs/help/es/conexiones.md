@@ -1,34 +1,46 @@
 # Revisar una conexión de energía
 
-Site Mapper permite ver **de dónde sale una conexión de energía y a qué equipo llega**.
+Site Mapper puede mostrar el camino de alimentación que **está registrado en el sistema**: desde un equipo de origen hasta una entrada de destino.
 
-![Ejemplo de una conexión de energía](/help/diagrams/es/power.svg)
+## Abrir un Power Path
 
-## Ver una conexión existente
+![Ejemplo real de la pantalla POWER PATH](/help/screenshots/power-path.webp)
 
-1. Abre el equipo que quieres revisar.
-2. Busca **PHYSICAL TERMINALS** o **ACCESS PORTS**.
-3. Selecciona el terminal de energía.
-4. Si aparece **CONNECTED**, significa que hay una conexión registrada.
-5. Selecciona **VIEW POWERPATH** para ver el recorrido.
-6. Comprueba el nombre del equipo de origen, el de destino y la entrada o salida correspondiente.
+1. Abre el Equipment que quieres revisar.
+2. En su Inspector busca **Power A**, **Power B**, **VIEW POWERPATH**, **Explore Power Path** o **FULL POWER TRACE**, según la pantalla.
+3. Abre el recorrido.
+4. Lee la pantalla de izquierda a derecha:
+   - **Source equipment hierarchy**: de dónde parte.
+   - **POWER OUTPUT**: terminal de salida.
+   - **POWER PATH / FEED**: conexión registrada.
+   - **POWER INPUT**: terminal de entrada.
+   - **Destination equipment hierarchy**: a qué equipo llega.
+5. Revisa el Inspector de la derecha para confirmar Source, Destination, Feed y Redundancy.
 
-## ¿Qué significan Feed A y Feed B?
+## Feed A y Feed B
 
-Son dos posibles caminos de alimentación. Puedes encontrar uno, ambos o ninguno registrado. Que aparezca **Feed A** no significa que también exista **Feed B**.
+Puedes encontrar **Feed A**, **Feed B**, ambos o ninguno. En la vista **A+B**, Site Mapper puede mostrar los dos caminos juntos.
+
+Si dice **Feed A · Configured** y **Feed B · Not configured**, solo existe un camino registrado en Site Mapper para ese ejemplo.
+
+![Explicación sencilla de una conexión registrada](/help/diagrams/es/power.svg)
+
+## Qué significa Configured
+
+**Configured significa que la ruta está registrada.** No demuestra por sí sola que haya corriente circulando, que el cableado físico sea correcto ni que la redundancia haya sido certificada.
 
 ## Registrar una conexión (solo si estás autorizado)
 
-1. Comprueba con la persona responsable que los dos equipos están conectados físicamente.
-2. Selecciona un terminal libre **POWER OUTPUT** y elige **CONNECT LOAD**.
-3. Busca el equipo de destino y su **POWER INPUT**.
-4. Revisa ambos extremos y elige **Feed A** o **Feed B** según corresponda.
-5. Solo si los datos son correctos, selecciona **CONFIRM PHYSICAL CONNECTION**.
+1. Confirma con la persona responsable cuáles son los dos extremos físicos.
+2. Selecciona un **POWER OUTPUT** libre y la acción para conectar una carga.
+3. Elige el Equipment de destino y su **POWER INPUT**.
+4. Revisa ambos extremos y selecciona **Feed A** o **Feed B** según corresponda.
+5. Confirma la conexión física únicamente cuando la información haya sido verificada.
 
-## Si el terminal ya está conectado
+## Si el terminal ya está CONNECTED
 
-No necesitas crear otra conexión. Abre **VIEW POWERPATH** para revisar la existente.
+No crees otra conexión para el mismo extremo. Abre el Power Path existente y comprueba qué está registrado.
 
-**Importante:** una conexión mostrada aquí indica lo que se registró en Site Mapper. No confirma por sí sola que haya energía en ese momento.
+**Resultado esperado:** puedes nombrar el origen, el destino, el Feed y distinguir una ruta registrada de una medición eléctrica real.
 
-[Ver datos de los equipos](telemetria.md).
+[Consultar datos en tiempo real](telemetria.md).

@@ -62,6 +62,40 @@ try {
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 30000 });
   console.log('[PASS] Real Chromium: interactive login redirects to authenticated workspace');
 
+  // Reproduce the user's exact bug: a STANDARD user clicks the top-bar ADMIN
+  // link and must remain logged in on personal Settings.
+  const standardPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  try {
+    await standardPage.goto(base + '/login', { waitUntil: 'domcontentloaded' });
+    await standardPage.locator('input[name="email"]').fill('mk1-standard-operator@local.test');
+    await standardPage.locator('input[name="password"]').fill('Active-MK1-Standard-2026!');
+    await standardPage.getByRole('button', { name: 'SIGN IN' }).click();
+    await standardPage.waitForURL((url) => !url.pathname.includes('/login'), {
+      timeout: 30000,
+    });
+    await standardPage.locator('a.zip-account').click();
+    await standardPage.waitForURL((url) => url.pathname === '/settings', {
+      timeout: 30000,
+    });
+    await standardPage.locator('a[href="/settings?tab=profile"]').waitFor({
+      timeout: 30000,
+    });
+    assert.equal(await standardPage.locator('a[href="/settings?tab=security"]').count(), 1);
+    assert.equal(await standardPage.locator('a[href="/settings?tab=users"]').count(), 0);
+    assert.equal(await standardPage.locator('a[href="/settings?tab=danger-zone"]').count(), 0);
+    const sessionResponse = await standardPage.request.get(base + '/api/auth/session');
+    assert.equal(sessionResponse.status(), 200);
+    assert.equal((await sessionResponse.json()).user.role, 'STANDARD');
+    await standardPage.goto(base + '/settings?tab=users', { waitUntil: 'domcontentloaded' });
+    await standardPage.locator('a[href="/settings?tab=profile"][aria-current="page"]')
+      .waitFor({ timeout: 30000 });
+    assert.equal((await standardPage.request.get(base + '/api/auth/session')).status(), 200);
+    console.log('[PASS] Chromium: STANDARD clicking ADMIN stays authenticated on personal settings');
+  } finally {
+    await standardPage.close();
+  }
+
+
   await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
   await page.getByText('CI LIMA Panel 24P').first().waitFor({ timeout: 30000 });
   await page.getByText('MQTT POINT COMMISSIONING').waitFor({ timeout: 30000 });

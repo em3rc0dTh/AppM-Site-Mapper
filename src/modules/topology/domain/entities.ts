@@ -119,7 +119,12 @@ interface TopologyBase extends DomainEntity {
   readonly name: string;
   readonly kind: TopologyKind;
   /** Operational deletion tombstone; original graph/history remain for audit. */
-  readonly retirement?: Readonly<{\n    operationId: string;\n    actorId: string;\n    at: string;\n    mode: 'SINGLE' | 'TREE';\n  }>;
+  readonly retirement?: Readonly<{
+    operationId: string;
+    actorId: string;
+    at: string;
+    mode: 'SINGLE' | 'TREE';
+  }>;
 }
 
 export interface NetworkNode extends TopologyBase {

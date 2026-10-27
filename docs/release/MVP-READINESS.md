@@ -76,7 +76,7 @@ flowchart LR
 
 No afirmamos tres BFDB × 96 circuitos con señales certificadas, mantenimiento de datos durante desconexión, seguridad industrial de Modbus, alarmas reales, failover multiinstancia, control remoto BMS ni migración productiva de datos del cliente. Una implementación de API o un G14 PASS histórico no constituye esas evidencias.
 
-Los PR abiertos [#29](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/29), [#30](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/30), [#36](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/36) divergen de la base certificada y **no** forman parte del baseline estable hasta revisión, integración y aceptación separadas.
+Las PR históricas [#29](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/29), [#30](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/30) y [#36](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/36) fueron **cerradas sin fusión**. Sus propuestas no forman parte del baseline estable por el mero hecho de haber existido. Una reintroducción necesita revisión y aceptación independientes.
 
 ## Decisión de producto
 

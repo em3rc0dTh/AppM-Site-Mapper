@@ -20,6 +20,10 @@ Para formación integral, utiliza el **[Manual maestro de operación y modelo de
 
 El [guion de presentación](product/MVP-DEMO-ES.md) sirve para mostrar capacidades a un cliente; el **manual del operador** enseña a realizar tareas por cuenta propia. La secuencia de capturas reales pendientes está registrada en [material visual y capacitación](user-guide/capturas-y-capacitacion.md).
 
+## Distribución Docker para VPS del cliente
+
+**[Contrato de imágenes Docker y bundle offline](release/docker-vps-distribution.md)**: arquitectura por servicio, inventario de imágenes propias y de infraestructura, `docker save/load`, Compose cliente sin compilación, redes/volúmenes, seguridad, actualización, backup/restore y puertas de aceptación. El documento describe **la entrega objetivo**, no un instalador ya certificado; el Compose vigente sigue orientado al laboratorio.
+
 ## Ruta de lectura por perfil
 
 | Perfil / objetivo               | Empieza aquí                                      | Continúa con                                                                                               |

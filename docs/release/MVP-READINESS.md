@@ -1,6 +1,8 @@
 # MK1 · MVP Readiness y criterios de salida
 
-**Evaluación a 16 oct. 2026:** **candidato a MVP presentable**. El repositorio cubre el recorrido físico y dispone de un primer circuito MQTT → Equipment → LIVE → TimescaleDB → Modbus TCP verificado en laboratorio. **No declarar `production ready`** hasta cerrar los puntos pendientes aquí.
+**Evaluación histórica del 16 oct. 2026:** **candidato a MVP presentable**. El repositorio cubría el recorrido físico y disponía de un primer circuito MQTT → Equipment → LIVE → TimescaleDB → Modbus TCP verificado en laboratorio. **No declarar `production ready`** hasta cerrar los puntos pendientes aquí.
+
+**Actualización de CI (26 oct. 2026):** `main` ya incorporó el hardening (#108), las pruebas adversariales y de recuperación (#109), y **la documentación —sin implementación—** de distribución Docker para VPS (#110). Los workflows de CI y SNMP quedaron verdes tras #110. Esta evidencia certifica un entorno automatizado, **no** una migración sobre datos existentes, un bundle Docker instalable, ni los dispositivos y redes OT del cliente. Los resultados del laboratorio histórico de octubre se mantienen fechados y no deben reinterpretarse como una aceptación de campo.
 
 ## Diferenciar cuatro estados
 

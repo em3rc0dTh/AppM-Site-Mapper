@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { Document } from 'mongodb';
-import type { TopologyNode, EquipmentNode, ContainerRackNode } from '@/modules/topology/domain/entities';
+import type { TopologyNode, EquipmentNode } from '@/modules/topology/domain/entities';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import type { PowerPath } from '@/modules/power/domain/entities';
@@ -117,6 +117,8 @@ export class TopologyDeletionService {
         ],
       }, integrityOptions()).toArray(),
     ]);
+
+    if (powerPaths.length + bindings.length > 5000) conflict('DELETE_TOO_MANY_REFERENCES');
 
     for (const item of targetNodes) {
       if (item.kind !== 'CONTAINER_RACK') continue;

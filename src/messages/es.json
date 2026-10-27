@@ -129,6 +129,7 @@
     "explore": "EXPLORAR",
     "warehouse": "ALMACÉN",
     "admin": "ADMINISTRACIÓN",
+    "myAccount": "MI CUENTA",
     "signOut": "Cerrar sesión",
     "signOutError": "No se pudo cerrar la sesión. Inténtalo nuevamente.",
     "helpCenter": "CENTRO DE AYUDA"

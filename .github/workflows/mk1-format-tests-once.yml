@@ -1,0 +1,34 @@
+name: MK1 temporary test-script formatter
+on:
+  push:
+    branches:
+      - feat/mk1-audited-recursive-deletion-2026-10-27
+    paths:
+      - .github/workflows/mk1-format-tests-once.yml
+permissions:
+  contents: write
+jobs:
+  fix-format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/mk1-audited-recursive-deletion-2026-10-27
+          persist-credentials: true
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Format the two new acceptance scripts
+        run: npx prettier --write scripts/ci/deletion-http-journey.mjs scripts/ci/browser-operational-journey.mjs
+      - name: Commit formatting on feature branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- scripts/ci/deletion-http-journey.mjs scripts/ci/browser-operational-journey.mjs
+          if ! git diff --cached --quiet; then
+            git commit -m "style(mk1): format browser and deletion acceptance scripts"
+            git push origin HEAD:feat/mk1-audited-recursive-deletion-2026-10-27
+          fi

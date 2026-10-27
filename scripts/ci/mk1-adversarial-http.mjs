@@ -122,12 +122,16 @@ assert.equal(
 log('Concurrent rack position is exclusive', { attempted: racks.length, succeeded: rackWins });
 
 // Attack 2: parallel creation of Circuit Breakers in the SAME free Panel slot.
+const inspected = await call('GET', '/api/topology/' + panel.id);
+assert.equal(inspected.status, 200);
+const freeSlotIndex = inspected.body.node.children.findIndex((id) => id === null);
+assert.ok(freeSlotIndex >= 0);
 const breakers = await Promise.all(
   Array.from({ length: 16 }, (_, i) =>
     call('POST', '/api/topology', {
       kind: 'EQUIPMENT',
       parentId: panel.id,
-      parentSlotIndex: 1,
+      parentSlotIndex: freeSlotIndex,
       name: 'REDTEAM breaker contender ' + i,
       equipmentType: 'CIRCUIT_BREAKER',
     }),
@@ -147,7 +151,7 @@ assert.equal(
 );
 const panelRead = await call('GET', '/api/topology/' + panel.id);
 assert.equal(panelRead.status, 200);
-const slotId = panelRead.body.node.children[1];
+const slotId = panelRead.body.node.children[freeSlotIndex];
 assert.ok(slotId);
 assert.equal(
   (await nodes(panel.id)).filter((n) => n.id === slotId && n.lifecycle === 'ACTIVE').length,

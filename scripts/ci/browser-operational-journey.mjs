@@ -111,9 +111,7 @@ try {
     await standardPage.waitForFunction(() => document.documentElement.lang === 'en', {
       timeout: 30000,
     });
-    console.log(
-      '[PASS] Chromium: STANDARD sees MY ACCOUNT / MI CUENTA and stays authenticated',
-    );
+    console.log('[PASS] Chromium: STANDARD sees MY ACCOUNT / MI CUENTA and stays authenticated');
   } finally {
     await standardPage.close();
   }

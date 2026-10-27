@@ -46,8 +46,11 @@ async function req(method, path, data, expected = 200, authenticated = true) {
     signal: AbortSignal.timeout(25000),
   });
   const body = await response.json().catch(() => ({}));
-  assert.equal(response.status, expected,
-    method + ' ' + path + ' => ' + response.status + ': ' + JSON.stringify(body));
+  assert.equal(
+    response.status,
+    expected,
+    method + ' ' + path + ' => ' + response.status + ': ' + JSON.stringify(body),
+  );
   return body;
 }
 
@@ -58,9 +61,14 @@ async function create(kind, parentId, name, extra = {}) {
 }
 
 async function port(equipment, name, direction) {
-  const body = await req('POST', '/api/equipment/' + equipment.id + '/access-ports', {
-    port: { name, portType: 'POWER', direction, exposure: 'EXTERNAL', feed: 'A' },
-  }, 201);
+  const body = await req(
+    'POST',
+    '/api/equipment/' + equipment.id + '/access-ports',
+    {
+      port: { name, portType: 'POWER', direction, exposure: 'EXTERNAL', feed: 'A' },
+    },
+    201,
+  );
   return body.port.id;
 }
 
@@ -89,11 +97,16 @@ try {
   });
   const from = await port(source, 'CI DELETE output', 'OUTPUT');
   const to = await port(target, 'CI DELETE input', 'INPUT');
-  const { path: powerPath } = await req('POST', '/api/power-paths', {
-    sourceAccessPortId: from,
-    targetAccessPortId: to,
-    feed: 'A',
-  }, 201);
+  const { path: powerPath } = await req(
+    'POST',
+    '/api/power-paths',
+    {
+      sourceAccessPortId: from,
+      targetAccessPortId: to,
+      feed: 'A',
+    },
+    201,
+  );
 
   const reserve = await req('POST', '/api/racks/' + rack.id + '/cas', {
     action: 'reserve',
@@ -102,13 +115,16 @@ try {
     clearanceTopU: 1,
     clearanceBottomU: 1,
   });
-  const allocation = reserve.rack.cas.find((row) => row.state === 'RESERVED' &&
-    row.mountStartU === 32 && row.physicalSizeU === 4);
+  const allocation = reserve.rack.cas.find(
+    (row) => row.state === 'RESERVED' && row.mountStartU === 32 && row.physicalSizeU === 4,
+  );
   assert.ok(allocation, 'Expected a 4U Equipment plus 1U mounting margin per side');
   assert.equal(allocation.startU, 31);
   assert.equal(allocation.endU, 36);
   await req('POST', '/api/racks/' + rack.id + '/cas', {
-    action: 'equip', allocationId: allocation.id, occupantId: root.id,
+    action: 'equip',
+    allocationId: allocation.id,
+    occupantId: root.id,
   });
 
   const path = '/api/topology/' + d.id + '/delete';
@@ -125,26 +141,50 @@ try {
   assert.equal(single.totalNodes, 1);
   assert.equal(single.hasChildren, true);
 
-  const blocked = await req('POST', path, {
-    mode: 'SINGLE', name: d.name, token: single.token,
-  }, 409);
+  const blocked = await req(
+    'POST',
+    path,
+    {
+      mode: 'SINGLE',
+      name: d.name,
+      token: single.token,
+    },
+    409,
+  );
   assert.equal(blocked.error, 'HAS_ACTIVE_CHILDREN');
-  const wrongName = await req('POST', path, {
-    mode: 'TREE', name: 'WRONG NAME', token: preview.token,
-  }, 409);
+  const wrongName = await req(
+    'POST',
+    path,
+    {
+      mode: 'TREE',
+      name: 'WRONG NAME',
+      token: preview.token,
+    },
+    409,
+  );
   assert.equal(wrongName.error, 'DELETE_NAME_MISMATCH');
-  const stale = await req('POST', path, {
-    mode: 'TREE', name: d.name, token: '0'.repeat(64),
-  }, 409);
+  const stale = await req(
+    'POST',
+    path,
+    {
+      mode: 'TREE',
+      name: d.name,
+      token: '0'.repeat(64),
+    },
+    409,
+  );
   assert.equal(stale.error, 'DELETE_PREVIEW_STALE');
 
   const before = await db.collection('topology_nodes').countDocuments({
-    id: { $in: [d.id, root.id, source.id, target.id] }, lifecycle: 'ACTIVE',
+    id: { $in: [d.id, root.id, source.id, target.id] },
+    lifecycle: 'ACTIVE',
   });
   assert.equal(before, 4, 'Rejected confirmations must not mutate the inventory');
 
   const deleted = await req('POST', path, {
-    mode: 'TREE', name: d.name, token: preview.token,
+    mode: 'TREE',
+    name: d.name,
+    token: preview.token,
   });
   assert.equal(deleted.deleted, true);
   assert.ok(deleted.operationId);
@@ -164,11 +204,17 @@ try {
   assert.equal(archivedPower?.lifecycle, 'ARCHIVED');
   const currentRack = await db.collection('topology_nodes').findOne({ id: rack.id });
   assert.equal(currentRack.lifecycle, 'ACTIVE');
-  assert.equal(currentRack.cas.some((r) => r.occupantId === root.id), false);
-  assert.equal(currentRack.cas.some((r) => r.state !== 'AVAILABLE' &&
-    r.startU <= 36 && r.endU >= 31), false);
+  assert.equal(
+    currentRack.cas.some((r) => r.occupantId === root.id),
+    false,
+  );
+  assert.equal(
+    currentRack.cas.some((r) => r.state !== 'AVAILABLE' && r.startU <= 36 && r.endU >= 31),
+    false,
+  );
   const audit = await db.collection('admin_audit').findOne({
-    action: 'TOPOLOGY_DELETE', targetId: d.id,
+    action: 'TOPOLOGY_DELETE',
+    targetId: d.id,
     'details.operationId': deleted.operationId,
   });
   assert.equal(audit?.actorId, actorId);
@@ -176,14 +222,25 @@ try {
   assert.equal(audit?.details?.powerPathIds?.[0], powerPath.id);
   assert.equal(audit?.details?.historicalTelemetryPreserved, true);
 
-  const replay = await req('POST', path, {
-    mode: 'TREE', name: d.name, token: preview.token,
-  }, 409);
+  const replay = await req(
+    'POST',
+    path,
+    {
+      mode: 'TREE',
+      name: d.name,
+      token: preview.token,
+    },
+    409,
+  );
   assert.equal(replay.error, 'ENTITY_NOT_ACTIVE');
 
   console.log('[PASS] MK1 DELETE: rejected SINGLE with children, bad name and stale preview');
-  console.log('[PASS] MK1 DELETE: 4 archived nodes, retired PowerPath, freed 6U CAS, audit actor & IDs');
-  console.log('[PASS] MK1 DELETE: no operational direct reads and original historical documents retained');
+  console.log(
+    '[PASS] MK1 DELETE: 4 archived nodes, retired PowerPath, freed 6U CAS, audit actor & IDs',
+  );
+  console.log(
+    '[PASS] MK1 DELETE: no operational direct reads and original historical documents retained',
+  );
 
   // Independent leaf removal keeps its Device and its root Equipment operational.
   const d2 = await create('DEVICE', rack.id, 'CI DELETE Leaf Device', { deviceType: 'CUSTOM' });
@@ -197,21 +254,33 @@ try {
   assert.equal(only.totalNodes, 1);
   assert.equal(only.hasChildren, false);
   await req('POST', '/api/topology/' + leaf.id + '/delete', {
-    mode: 'SINGLE', name: leaf.name, token: only.token,
+    mode: 'SINGLE',
+    name: leaf.name,
+    token: only.token,
   });
-  assert.equal((await db.collection('topology_nodes').findOne({ id: root2.id })).lifecycle,
-    'ACTIVE');
-  assert.equal((await db.collection('topology_nodes').findOne({ id: d2.id })).lifecycle,
-    'ACTIVE');
+  assert.equal(
+    (await db.collection('topology_nodes').findOne({ id: root2.id })).lifecycle,
+    'ACTIVE',
+  );
+  assert.equal((await db.collection('topology_nodes').findOne({ id: d2.id })).lifecycle, 'ACTIVE');
   const survivingRoot = await db.collection('topology_nodes').findOne({ id: root2.id });
   assert.equal(survivingRoot.children.includes(leaf.id), false);
-  const rejectedRoot = (await req('GET',
-    '/api/topology/' + root2.id + '/delete?mode=SINGLE')).preview;
-  const rootResponse = await req('POST', '/api/topology/' + root2.id + '/delete', {
-    mode: 'SINGLE', name: root2.name, token: rejectedRoot.token,
-  }, 409);
+  const rejectedRoot = (await req('GET', '/api/topology/' + root2.id + '/delete?mode=SINGLE'))
+    .preview;
+  const rootResponse = await req(
+    'POST',
+    '/api/topology/' + root2.id + '/delete',
+    {
+      mode: 'SINGLE',
+      name: root2.name,
+      token: rejectedRoot.token,
+    },
+    409,
+  );
   assert.equal(rootResponse.error, 'DELETE_OWNING_DEVICE_INSTEAD');
-  console.log('[PASS] MK1 DELETE: individual leaf deletion and mandatory owning Device root protection');
+  console.log(
+    '[PASS] MK1 DELETE: individual leaf deletion and mandatory owning Device root protection',
+  );
 } finally {
   await mongo.close();
 }

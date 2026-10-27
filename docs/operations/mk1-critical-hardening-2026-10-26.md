@@ -138,7 +138,7 @@ No cambiaron dependencias ni SQL de Timescale. No se ejecutó instalación de pa
 6. Cambios de esquema y guardas más estrictas pueden descubrir inconsistencias antiguas. No se ha inspeccionado ninguna base real, por lo que no se conoce su cantidad ni su corrección requerida.
 7. Las restricciones transaccionales completas son del camino Mongo. Memoria no es entorno de aceptación ni sustituto de persistencia durable.
 8. La UI existente conserva contratos y presentación. Los nuevos campos de diagnóstico son observables por API; no se rediseñaron todos los indicadores UI para mostrar historia por cada campo de un snapshot combinado.
-9. Sin lint, typecheck, build ni ejecución, siguen pendientes compatibilidad de compilación, errores de integración y comportamiento efectivo. El PR Draft no constituye autorización de producción.
+9. La **entrega inicial de la rama** no ejecutó lint, typecheck ni build. Posteriormente, tras PR #108 y #109, CI, pruebas adversariales e integración HTTP/MongoDB aprobaron sobre el código integrado. Esto **no** sustituye certificación real de hardware ni autorización de producción.
 
 La lista completa de archivos se encuentra en [mk1-critical-hardening-files.md](mk1-critical-hardening-files.md). Recuperación: [backup-restore.md](backup-restore.md).
 

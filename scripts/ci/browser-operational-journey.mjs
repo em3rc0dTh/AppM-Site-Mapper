@@ -61,6 +61,7 @@ try {
   await page.getByRole('button', { name: 'SIGN IN' }).click();
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 30000 });
   console.log('[PASS] Real Chromium: interactive login redirects to authenticated workspace');
+  await page.locator('a.zip-account').getByText('ADMIN').waitFor({ timeout: 30000 });
 
   // Reproduce the user's exact bug: a STANDARD user clicks the top-bar ADMIN
   // link and must remain logged in on personal Settings.
@@ -71,6 +72,9 @@ try {
     await standardPage.locator('input[name="password"]').fill('Active-MK1-Standard-2026!');
     await standardPage.getByRole('button', { name: 'SIGN IN' }).click();
     await standardPage.waitForURL((url) => !url.pathname.includes('/login'), {
+      timeout: 30000,
+    });
+    await standardPage.locator('a.zip-account').getByText('MY ACCOUNT').waitFor({
       timeout: 30000,
     });
     await standardPage.locator('a.zip-account').click();
@@ -91,8 +95,24 @@ try {
       .locator('a[href="/settings?tab=profile"][aria-current="page"]')
       .waitFor({ timeout: 30000 });
     assert.equal((await standardPage.request.get(base + '/api/auth/session')).status(), 200);
+    // Translation is user-local; changing the STANDARD user's language must
+    // change the account label without granting administrative privileges.
+    await standardPage.goto(base + '/settings?tab=profile', {
+      waitUntil: 'domcontentloaded',
+    });
+    await standardPage.locator('.sm-locale-control select').selectOption('es');
+    await standardPage.waitForFunction(() => document.documentElement.lang === 'es', {
+      timeout: 30000,
+    });
+    await standardPage.locator('a.zip-account').getByText('MI CUENTA').waitFor({
+      timeout: 30000,
+    });
+    await standardPage.locator('.sm-locale-control select').selectOption('en');
+    await standardPage.waitForFunction(() => document.documentElement.lang === 'en', {
+      timeout: 30000,
+    });
     console.log(
-      '[PASS] Chromium: STANDARD clicking ADMIN stays authenticated on personal settings',
+      '[PASS] Chromium: STANDARD sees MY ACCOUNT / MI CUENTA and stays authenticated',
     );
   } finally {
     await standardPage.close();

@@ -124,7 +124,7 @@ export default async function SettingsPage({
                   <UserCreateForm />
                 </details>
               </div>
-              <UserAdminTable currentUserId={auth.value.id} users={users} />
+              <UserAdminTable currentUserId={user.id} users={users} />
             </>
           )}
           {active === 'Roles' && (

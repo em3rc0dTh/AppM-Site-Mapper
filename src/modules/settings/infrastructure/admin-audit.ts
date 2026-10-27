@@ -14,7 +14,12 @@ export interface AdminAudit {
   at: string;
   details?: Readonly<Record<string, unknown>>;
 }
-export async function recordAdminAudit(\n  actorId: string,\n  action: string,\n  targetId: string,\n  details?: Readonly<Record<string, unknown>>,\n) {
+export async function recordAdminAudit(
+  actorId: string,
+  action: string,
+  targetId: string,
+  details?: Readonly<Record<string, unknown>>,
+) {
   const event: AdminAudit = {
     id: randomUUID(),
     actorId,

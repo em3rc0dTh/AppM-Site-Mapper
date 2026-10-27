@@ -219,12 +219,9 @@ async function main() {
       200,
       'STANDARD settings ' + tab + ' must not redirect to login',
     );
-    const html = await settingsPage.text();
-    assert.match(html, /CI Standard Operator|mk1-standard-operator@local\.test/);
-    assert.ok(html.includes('/settings?tab=profile'));
-    assert.ok(html.includes('/settings?tab=security'));
-    assert.equal(html.includes('href="/settings?tab=users"'), false);
-    assert.equal(html.includes('href="/settings?tab=danger-zone"'), false);
+    // Next.js may stream server components and redirects through RSC in HTML.
+    // Chromium checks the actual menu labels and visibility below.
+    await settingsPage.arrayBuffer();
   }
   const standardSession = await request('GET', '/api/auth/session', undefined, 200, {
     cookie: standardCookie,

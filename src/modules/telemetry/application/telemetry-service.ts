@@ -178,8 +178,7 @@ export class TelemetryService {
         : {}),
     };
 
-    this.hub.publish(sample);
-    await this.historyWriter?.write(sample);
+    this.hub.publish(await this.withHistoryStatus(sample));
     // Point-level telemetry belongs to its canonical Equipment even when the
     // BDFB electrical path is not yet commissioned (no POWER OUTPUT AccessPort).
     // Source identity and raw point mapping must both be explicit and active.
@@ -231,12 +230,31 @@ export class TelemetryService {
           verified.add(id);
         }
         for (const own of buildBoundBfdbEquipmentPatches(normalized.value, bindings, verified)) {
-          this.hub.publish(own);
-          await this.historyWriter?.write(own);
+          this.hub.publish(await this.withHistoryStatus(own));
         }
       }
     }
     return success(this.hub.latest(target.id) ?? sample);
+  }
+
+  private async withHistoryStatus(sample: TelemetrySample): Promise<TelemetrySample> {
+    if (!this.historyWriter) return { ...sample, historyCapture: 'DISABLED' };
+    // Only a durable writer acknowledgement can claim persisted history. Legacy
+    // best-effort writers still receive the sample, but never report PERSISTED.
+    if (!this.historyWriter.writeDurable) {
+      try {
+        await this.historyWriter.write(sample);
+      } catch {
+        // The sample remains usable for LIVE presentation; history is explicitly failed.
+      }
+      return { ...sample, historyCapture: 'FAILED' };
+    }
+    try {
+      await this.historyWriter.writeDurable(sample);
+      return { ...sample, historyCapture: 'PERSISTED' };
+    } catch {
+      return { ...sample, historyCapture: 'FAILED' };
+    }
   }
 
   latest(targetId: string): TelemetrySample | null {

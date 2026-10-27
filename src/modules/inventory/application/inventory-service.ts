@@ -5,7 +5,12 @@ import { failure, success, type Result } from '@/shared/domain/result';
 
 export type InventoryItem = DeviceNode | EquipmentNode;
 export type InventoryError =
-  'RACK_NOT_FOUND' | 'NOT_A_CONTAINER_RACK' | 'ITEM_NOT_FOUND' | 'NOT_INVENTORY_ITEM';
+  | 'LAYOUT_CONFLICT'
+  | 'ATOMIC_LAYOUT_STORAGE_REQUIRED'
+  | 'RACK_NOT_FOUND'
+  | 'NOT_A_CONTAINER_RACK'
+  | 'ITEM_NOT_FOUND'
+  | 'NOT_INVENTORY_ITEM';
 
 export class InventoryService {
   constructor(private readonly repository: TopologyRepository) {}
@@ -57,7 +62,8 @@ export class InventoryService {
     }
 
     const updated: InventoryItem = { ...node, pinned, updatedAt: nowIso() };
-    await this.repository.replace(updated);
-    return success(updated);
+    if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+    if (!(await this.repository.commitLayout([node], [updated]))) return failure('LAYOUT_CONFLICT');
+    return success((await this.repository.getById(updated.id)) as InventoryItem);
   }
 }

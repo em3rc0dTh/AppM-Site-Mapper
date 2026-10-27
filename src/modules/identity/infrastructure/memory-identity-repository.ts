@@ -1,3 +1,4 @@
+import { IntegrityConflict } from '@/shared/infrastructure/mongodb/integrity-transaction';
 import type {
   AuthThrottle,
   IdentityRepository,
@@ -35,20 +36,46 @@ export class MemoryIdentityRepository implements IdentityRepository {
     return user ? structuredClone(user) : null;
   }
 
+  async bootstrapUser(user: User): Promise<boolean> {
+    if (this.users.size) return false;
+    this.users.set(user.id, structuredClone(user));
+    return true;
+  }
+
   async insertUser(user: User): Promise<void> {
-    if (this.users.has(user.id) || (await this.getUserByEmail(user.email))) {
+    if (
+      this.users.has(user.id) ||
+      [...this.users.values()].some((current) => current.email === user.email)
+    ) {
       throw new Error('User already exists.');
     }
 
     this.users.set(user.id, structuredClone(user));
   }
 
-  async replaceUser(user: User): Promise<void> {
+  async replaceUser(user: User, expected?: User): Promise<void> {
+    const current = this.users.get(user.id);
+    if (
+      !current ||
+      !expected ||
+      current.revision !== expected.revision ||
+      current.updatedAt !== expected.updatedAt
+    )
+      throw new IntegrityConflict('USER_CONFLICT');
+    if (
+      current.role === 'SUPERADMIN' &&
+      current.lifecycle === 'ACTIVE' &&
+      (user.role !== 'SUPERADMIN' || user.lifecycle !== 'ACTIVE') &&
+      [...this.users.values()].filter(
+        (item) => item.role === 'SUPERADMIN' && item.lifecycle === 'ACTIVE',
+      ).length <= 1
+    )
+      throw new IntegrityConflict('LAST_SUPERADMIN');
     if (!this.users.has(user.id)) {
       throw new Error('User does not exist.');
     }
 
-    this.users.set(user.id, structuredClone(user));
+    this.users.set(user.id, structuredClone({ ...user, revision: (current.revision ?? 0) + 1 }));
   }
 
   async insertSession(session: SessionRecord): Promise<void> {

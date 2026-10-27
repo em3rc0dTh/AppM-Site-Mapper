@@ -3,6 +3,7 @@ import type { DomainEntity } from '@/shared/domain/entity';
 import type { Role } from './roles';
 
 export interface User extends DomainEntity {
+  readonly revision?: number;
   readonly email: string;
   readonly displayName: string;
   readonly role: Role;

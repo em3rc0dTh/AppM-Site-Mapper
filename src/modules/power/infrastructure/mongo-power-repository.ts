@@ -1,3 +1,8 @@
+import {
+  withIntegrityTransaction,
+  IntegrityConflict,
+} from '@/shared/infrastructure/mongodb/integrity-transaction';
+import { requireActiveAncestry } from '@/shared/infrastructure/mongodb/reference-guards';
 import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
 
 import type { PowerRepository } from '@/modules/power/application/power-repository';
@@ -14,7 +19,7 @@ function toDomain(document: PowerPathDocument): PowerPath {
 export class MongoPowerRepository implements PowerRepository {
   private readonly collection: Collection<PowerPathDocument>;
 
-  constructor(database: Db) {
+  constructor(private readonly database: Db) {
     this.collection = database.collection<PowerPathDocument>('power_paths');
   }
 
@@ -43,14 +48,53 @@ export class MongoPowerRepository implements PowerRepository {
   }
 
   async insert(path: PowerPath): Promise<void> {
-    await this.collection.insertOne(path as OptionalUnlessRequiredId<PowerPathDocument>);
+    await withIntegrityTransaction(this.database, async (session) => {
+      const endpoints = [];
+      for (const id of [path.sourceAccessPortId, path.targetAccessPortId]) {
+        const owner = await this.database.collection('topology_nodes').findOne(
+          {
+            kind: 'EQUIPMENT',
+            lifecycle: 'ACTIVE',
+            accessPorts: {
+              $elemMatch: { id, lifecycle: 'ACTIVE', portType: 'POWER', exposure: 'EXTERNAL' },
+            },
+          },
+          { session },
+        );
+        if (!owner) throw new IntegrityConflict('REFERENCE_NOT_ACTIVE');
+        await requireActiveAncestry(this.database, owner.id, session);
+        endpoints.push(owner.accessPorts.find((port: { id: string }) => port.id === id));
+      }
+      if (endpoints[0].direction === 'INPUT' || endpoints[1].direction === 'OUTPUT')
+        throw new IntegrityConflict('INVALID_POWER_DIRECTION');
+      const sourceFeed = endpoints[0].attributes?.feed;
+      const targetFeed = endpoints[1].attributes?.feed;
+      if (
+        (sourceFeed && targetFeed && sourceFeed !== targetFeed) ||
+        (path.feed &&
+          ((sourceFeed && sourceFeed !== path.feed) || (targetFeed && targetFeed !== path.feed)))
+      )
+        throw new IntegrityConflict('FEED_MISMATCH');
+      await this.collection.insertOne(path as OptionalUnlessRequiredId<PowerPathDocument>, {
+        session,
+      });
+    });
   }
 
   async replace(path: PowerPath): Promise<void> {
-    const result = await this.collection.replaceOne(
-      { id: path.id },
-      path as OptionalUnlessRequiredId<PowerPathDocument>,
-    );
-    if (result.matchedCount !== 1) throw new Error('PowerPath does not exist: ' + path.id);
+    if (path.lifecycle !== 'ARCHIVED')
+      throw new IntegrityConflict('POWER_PATH_REPLACEMENT_FORBIDDEN');
+    await withIntegrityTransaction(this.database, async (session) => {
+      const result = await this.collection.updateOne(
+        {
+          id: path.id,
+          sourceAccessPortId: path.sourceAccessPortId,
+          targetAccessPortId: path.targetAccessPortId,
+        },
+        { $set: { lifecycle: 'ARCHIVED', updatedAt: path.updatedAt } },
+        { session },
+      );
+      if (result.matchedCount !== 1) throw new IntegrityConflict('POWER_PATH_CONFLICT');
+    });
   }
 }

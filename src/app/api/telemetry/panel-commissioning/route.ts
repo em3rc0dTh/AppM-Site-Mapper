@@ -1,3 +1,9 @@
+import {
+  readBoundedJson as readHardenedJson,
+  jsonBodyErrorStatus as hardenedJsonStatus,
+  isSafeMutationRequest as hardenedSafeMutation,
+} from '@/shared/http/request-security';
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { randomUUID } from 'node:crypto';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -98,10 +104,18 @@ export async function GET(request: Request) {
     : Response.json({ error: 'PANEL_NOT_COMMISSIONABLE' }, { status: 404 });
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 403 });
-  const body: unknown = await request.json().catch(() => null);
+  if (!hardenedSafeMutation(request))
+    return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  const parsedBody = await readHardenedJson(request);
+  if (!parsedBody.ok)
+    return Response.json(
+      { error: parsedBody.error },
+      { status: hardenedJsonStatus(parsedBody.error) },
+    );
+  const body: unknown = parsedBody.value;
   if (!body || typeof body !== 'object' || Array.isArray(body))
     return Response.json({ error: 'INVALID_REQUEST' }, { status: 400 });
   const payload = body as Record<string, unknown>;
@@ -158,56 +172,48 @@ export async function POST(request: Request) {
     );
   const repository = await createTelemetryBindingRepository();
   const now = new Date().toISOString();
-  const saved: string[] = [];
-  for (const metric of METRICS) {
-    const latest = await inspect(payload.panelId);
-    const entry = latest?.rows.find((r) => r.breakerId === payload.breakerId);
-    if (!entry || entry.conflicts.length)
-      return Response.json({ error: 'CONCURRENT_BINDING_CONFLICT', saved }, { status: 409 });
-    if (entry.existingMetrics.includes(metric)) continue;
-    const binding: TelemetryBinding = {
-      id: randomUUID(),
-      lifecycle: 'ACTIVE',
-      createdAt: now,
-      updatedAt: now,
-      protocol: 'MQTT',
-      sourceIdentity: preview.sourceIdentity,
-      sourcePointId: row.point,
-      metric,
-      targetType: 'EQUIPMENT',
-      targetId: row.breakerId,
-      attributes: {
-        commissioning: 'EXPLICIT_OPERATOR_CONFIRMATION',
-        measurementSource: 'PANEL_POSITION',
-        sourceEquipmentId: preview.panelId,
-        observedEquipmentId: row.breakerId,
-        panelId: preview.panelId,
-        position: row.position,
-      },
-    };
-    try {
-      await repository.insert(binding);
-      saved.push(metric);
-    } catch (error) {
-      // Another request may have committed this exact metric after our read.
-      // Accept only an identical active mapping; never mask other DB failures
-      // or collisions pointing to a different Equipment.
-      if (!error || typeof error !== 'object' || !('code' in error) || error.code !== 11000)
-        throw error;
-      const concurrent = await repository.listForSource('MQTT', preview.sourceIdentity);
-      const matches = concurrent.filter(
-        (candidate) =>
-          candidate.lifecycle === 'ACTIVE' &&
-          candidate.sourcePointId === row.point &&
-          candidate.metric === metric,
-      );
-      if (
-        matches.length !== 1 ||
-        matches[0]?.targetType !== 'EQUIPMENT' ||
-        matches[0].targetId !== row.breakerId
-      )
-        return Response.json({ error: 'CONCURRENT_BINDING_CONFLICT', saved }, { status: 409 });
-    }
+  if (!repository.commitBindings)
+    return Response.json({ error: 'ATOMIC_COMMISSIONING_STORAGE_REQUIRED' }, { status: 503 });
+  const topology = await createTopologyRepository();
+  const panel = await topology.getById(preview.panelId);
+  const breaker = await topology.getById(row.breakerId);
+  if (!panel || !breaker)
+    return Response.json({ error: 'COMMISSIONING_TOPOLOGY_CONFLICT' }, { status: 409 });
+  const bindings: TelemetryBinding[] = METRICS.map((metric) => ({
+    id: randomUUID(),
+    lifecycle: 'ACTIVE',
+    createdAt: now,
+    updatedAt: now,
+    protocol: 'MQTT',
+    sourceIdentity: preview.sourceIdentity,
+    sourcePointId: row.point,
+    metric,
+    targetType: 'EQUIPMENT',
+    targetId: row.breakerId,
+    attributes: {
+      commissioning: 'EXPLICIT_OPERATOR_CONFIRMATION',
+      measurementSource: 'PANEL_POSITION',
+      sourceEquipmentId: preview.panelId,
+      observedEquipmentId: row.breakerId,
+      panelId: preview.panelId,
+      position: row.position,
+    },
+  }));
+  const ids = await repository.commitBindings(bindings, [panel, breaker]);
+  return Response.json({
+    ok: true,
+    breakerId: row.breakerId,
+    point: row.point,
+    created: bindings
+      .filter((binding) => ids.includes(binding.id))
+      .map((binding) => binding.metric),
+  });
+}
+
+export async function POST(request: Request) {
+  try {
+    return await handlePOST(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
   }
-  return Response.json({ ok: true, breakerId: row.breakerId, point: row.point, created: saved });
 }

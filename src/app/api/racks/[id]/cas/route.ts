@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -12,7 +13,7 @@ import {
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
 
-export async function POST(request: Request, context: Context) {
+async function handlePOST(request: Request, context: Context) {
   const auth = await requirePermission('topology:write');
 
   if (!auth.ok) {
@@ -89,8 +90,19 @@ export async function POST(request: Request, context: Context) {
   }
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 422 });
+    return NextResponse.json(
+      { error: result.error },
+      { status: String(result.error).includes('CONFLICT') ? 409 : 422 },
+    );
   }
 
   return NextResponse.json({ rack: result.value });
+}
+
+export async function POST(request: Request, context: Context) {
+  try {
+    return await handlePOST(request, context);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

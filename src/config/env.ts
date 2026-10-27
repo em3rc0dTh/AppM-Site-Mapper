@@ -34,6 +34,27 @@ export function isProductionDeployment(
   appEnv = process.env.APP_ENV,
   nodeEnv = process.env.NODE_ENV,
 ): boolean {
-  if (appEnv !== undefined) return parseAppEnvironment(appEnv) === 'production';
+  if (appEnv !== undefined) return ['staging', 'production'].includes(parseAppEnvironment(appEnv));
   return nodeEnv === 'production';
+}
+
+/** Memory is opt-in and is never inferred from a missing deployment setting. */
+export function persistenceMode(): 'memory' | 'mongodb' {
+  const configured = process.env.APP_PERSISTENCE?.trim();
+  const environment = process.env.APP_ENV;
+  if (environment !== undefined) parseAppEnvironment(environment);
+  if (configured !== 'memory' && configured !== 'mongodb') {
+    throw new Error('APP_PERSISTENCE must explicitly be memory or mongodb.');
+  }
+  if (
+    configured === 'memory' &&
+    (isProductionDeployment() || !['development', 'test'].includes(environment ?? ''))
+  ) {
+    throw new Error('Memory persistence requires explicit APP_ENV=development or test.');
+  }
+  if (configured === 'mongodb') {
+    requireRuntimeSecret('MONGODB_URI', process.env.MONGODB_URI);
+    requireRuntimeSecret('MONGODB_DB_NAME', process.env.MONGODB_DB_NAME);
+  }
+  return configured;
 }

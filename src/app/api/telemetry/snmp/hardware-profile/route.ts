@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import {
   assessBdfbInventory,
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
   );
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 403 });
   const powerAuth = await requirePermission('power:write');
@@ -104,4 +105,12 @@ export async function POST(request: Request) {
     },
     { status: 201 },
   );
+}
+
+export async function POST(request: Request) {
+  try {
+    return await handlePOST(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

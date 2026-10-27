@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { randomUUID } from 'node:crypto';
 
 import { isProductionDeployment } from '@/config/env';
@@ -77,7 +78,7 @@ export async function GET(request: Request) {
 }
 
 /** Explicit opt-in lab mapping. It never sets physical wiring verification. */
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const auth = await requirePermission('topology:write');
   if (!auth.ok) return Response.json({ error: auth.error }, { status: 403 });
   const power = await requirePermission('power:write');
@@ -185,17 +186,10 @@ export async function POST(request: Request) {
       );
   }
 
-  let created = 0;
+  if (!repository.commitBindings)
+    return Response.json({ error: 'ATOMIC_COMMISSIONING_STORAGE_REQUIRED' }, { status: 503 });
+  const plannedBindings: TelemetryBinding[] = [];
   for (const target of plan) {
-    const existing = sourceBindings.some(
-      (binding) =>
-        binding.lifecycle === 'ACTIVE' &&
-        binding.sourcePointId === target.oid &&
-        binding.metric === target.metric &&
-        binding.targetId === target.port.id &&
-        binding.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY',
-    );
-    if (existing) continue;
     const now = new Date().toISOString();
     const binding: TelemetryBinding = {
       id: randomUUID(),
@@ -216,15 +210,9 @@ export async function POST(request: Request) {
         feedName: target.port.name,
       },
     };
-    try {
-      await repository.insert(binding);
-      created += 1;
-    } catch (error) {
-      if (error && typeof error === 'object' && 'code' in error && error.code === 11000)
-        return Response.json({ error: 'SNMP_BINDING_CONFLICT' }, { status: 409 });
-      throw error;
-    }
+    plannedBindings.push(binding);
   }
+  const created = (await repository.commitBindings(plannedBindings, [device, ...equipment])).length;
 
   return Response.json(
     {
@@ -238,4 +226,12 @@ export async function POST(request: Request) {
     },
     { status: 200, headers: { 'Cache-Control': 'no-store' } },
   );
+}
+
+export async function POST(request: Request) {
+  try {
+    return await handlePOST(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

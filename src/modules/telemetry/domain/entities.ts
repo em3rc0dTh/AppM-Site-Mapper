@@ -3,6 +3,7 @@ import type { DomainEntity } from '@/shared/domain/entity';
 export type TelemetryTargetType = 'DEVICE' | 'EQUIPMENT' | 'ACCESS_PORT';
 
 export interface TelemetryBinding extends DomainEntity {
+  readonly revision?: number;
   /** Protocol names are integration data, not a closed runtime enum. */
   readonly protocol: string;
   readonly sourceIdentity: string;
@@ -49,6 +50,7 @@ export interface BreakerTelemetryReading {
 }
 
 export interface TelemetrySample {
+  readonly historyCapture?: 'PERSISTED' | 'FAILED' | 'DISABLED';
   /** Exact point and metric bindings for measurements relayed by a gateway. */
   readonly sourcePointId?: string;
   readonly metricBindingIds?: readonly string[];

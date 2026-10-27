@@ -1,53 +1,14 @@
-import type { Collection, Db, Document } from 'mongodb';
-
-async function dropIndexIfPresent(collection: Collection<Document>, name: string): Promise<void> {
-  let indexes: readonly { name?: string }[];
-  try {
-    indexes = await collection.indexes();
-  } catch (error) {
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 26) {
-      return;
-    }
-    throw error;
-  }
-
-  if (indexes.some((index) => index.name === name)) {
-    await collection.dropIndex(name);
-  }
-}
+import { prepareRuntimeTopology } from './topology-schema';
+import type { Db } from 'mongodb';
 
 export async function ensurePersistenceIndexes(database: Db): Promise<void> {
-  const topology = database.collection('topology_nodes');
-
-  await Promise.all([
-    topology.createIndex({ id: 1 }, { unique: true, name: 'uq_topology_id' }),
-    topology.createIndex(
-      { parentId: 1, lifecycle: 1, name: 1 },
-      { name: 'ix_topology_parent_lifecycle_name' },
-    ),
-    topology.createIndex({ kind: 1, lifecycle: 1 }, { name: 'ix_topology_kind_lifecycle' }),
-    topology.createIndex({ serialNumber: 1 }, { name: 'ix_topology_serial', sparse: true }),
-    topology.createIndex(
-      { serialNumber: 1 },
-      {
-        name: 'uq_active_publisher_serial',
-        unique: true,
-        partialFilterExpression: {
-          lifecycle: 'ACTIVE',
-          kind: { $in: ['DEVICE', 'EQUIPMENT'] },
-          serialNumber: { $type: 'string' },
-        },
-      },
-    ),
-    topology.createIndex(
-      { deviceId: 1, kind: 1, lifecycle: 1 },
-      { name: 'ix_topology_device_equipment' },
-    ),
-    topology.createIndex(
-      { 'accessPorts.id': 1 },
-      { unique: true, sparse: true, name: 'uq_topology_access_port_id' },
-    ),
-  ]);
+  await database
+    .collection('integrity_fences')
+    .createIndex({ key: 1 }, { unique: true, name: 'uq_integrity_fence_key' });
+  await database
+    .collection('identity_initialization')
+    .createIndex({ key: 1 }, { unique: true, name: 'uq_identity_initialization_key' });
+  await prepareRuntimeTopology(database);
 
   const warehouseTemplates = database.collection('warehouse_templates');
   await Promise.all([
@@ -59,11 +20,6 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
   ]);
 
   const powerPaths = database.collection('power_paths');
-  await Promise.all([
-    dropIndexIfPresent(powerPaths, 'ix_power_path_source'),
-    dropIndexIfPresent(powerPaths, 'ix_power_path_target'),
-    dropIndexIfPresent(powerPaths, 'uq_active_power_path_endpoints_feed'),
-  ]);
   await Promise.all([
     powerPaths.createIndex({ id: 1 }, { unique: true, name: 'uq_power_path_id' }),
     powerPaths.createIndex(

@@ -3,6 +3,7 @@ export interface MqttConnectInput {
   readonly username?: string;
   readonly password?: string;
   readonly keepAliveSeconds: number;
+  readonly cleanSession?: boolean;
 }
 
 export interface MqttPublishPacket {
@@ -63,7 +64,7 @@ export function encodeConnect(input: MqttConnectInput): Uint8Array {
     throw new Error('MQTT clientId is required.');
   }
 
-  let flags = 0x02;
+  let flags = input.cleanSession === false ? 0 : 0x02;
   if (input.username !== undefined) flags |= 0x80;
   if (input.password !== undefined) flags |= 0x40;
 
@@ -89,7 +90,7 @@ export function encodeSubscribe(packetId: number, topicFilter: string): Uint8Arr
   const body = concat([
     Uint8Array.of((packetId >> 8) & 0xff, packetId & 0xff),
     encodeString(topicFilter),
-    Uint8Array.of(0x00),
+    Uint8Array.of(0x01),
   ]);
 
   return frame(0x82, body);
@@ -149,6 +150,7 @@ export function extractPackets(buffer: Uint8Array): Readonly<{
       }
     }
 
+    if (remainingLength > 1_048_576) throw new Error('MQTT_PACKET_TOO_LARGE');
     const end = cursor + remainingLength;
     if (end > buffer.length) {
       break;
@@ -179,6 +181,7 @@ export function parsePublish(packet: ParsedMqttPacket): MqttPublishPacket {
 
   const topic = new TextDecoder().decode(packet.body.slice(2, topicEnd));
   const qos = ((packet.flags >> 1) & 0x03) as 0 | 1 | 2;
+  if (qos > 1) throw new Error('UNSUPPORTED_MQTT_QOS');
   let payloadOffset = topicEnd;
   let packetId: number | undefined;
 
@@ -187,6 +190,7 @@ export function parsePublish(packet: ParsedMqttPacket): MqttPublishPacket {
       throw new Error('Malformed MQTT PUBLISH packet id.');
     }
     packetId = ((packet.body[payloadOffset] ?? 0) << 8) | (packet.body[payloadOffset + 1] ?? 0);
+    if (packetId === 0) throw new Error('INVALID_MQTT_PACKET_ID');
     payloadOffset += 2;
   }
 

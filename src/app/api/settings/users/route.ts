@@ -1,4 +1,9 @@
-import { recordAdminAudit } from '@/modules/settings/infrastructure/admin-audit';
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
+import {
+  readBoundedJson as readHardenedJson,
+  jsonBodyErrorStatus as hardenedJsonStatus,
+  isSafeMutationRequest as hardenedSafeMutation,
+} from '@/shared/http/request-security';
 import { NextResponse } from 'next/server';
 
 import { AuthService } from '@/modules/identity/application/auth-service';
@@ -25,14 +30,22 @@ export async function GET() {
   return NextResponse.json({ users: result.value });
 }
 
-export async function POST(request: Request) {
+async function handlePOST(request: Request) {
   const auth = await requirePermission('users:manage');
 
   if (!auth.ok) {
     return NextResponse.json({ error: auth.error }, { status: 403 });
   }
 
-  const body: unknown = await request.json().catch(() => null);
+  if (!hardenedSafeMutation(request))
+    return Response.json({ error: 'INVALID_ORIGIN' }, { status: 403 });
+  const parsedBody = await readHardenedJson(request);
+  if (!parsedBody.ok)
+    return Response.json(
+      { error: parsedBody.error },
+      { status: hardenedJsonStatus(parsedBody.error) },
+    );
+  const body: unknown = parsedBody.value;
 
   if (
     !body ||
@@ -66,6 +79,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: result.error }, { status });
   }
 
-  await recordAdminAudit(auth.value.id, 'USER_CREATE', result.value.id);
   return NextResponse.json({ user: result.value }, { status: 201 });
+}
+
+export async function POST(request: Request) {
+  try {
+    return await handlePOST(request);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

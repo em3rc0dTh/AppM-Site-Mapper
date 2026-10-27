@@ -1,4 +1,11 @@
-import { getClient } from '@/shared/infrastructure/mongodb/client';
+import { versionFilter, nextTopologyVersion } from './topology-version';
+import {
+  withIntegrityTransaction,
+  integritySession,
+  integrityOptions,
+  IntegrityConflict,
+} from '@/shared/infrastructure/mongodb/integrity-transaction';
+import { guardTopologyWrite } from '@/shared/infrastructure/mongodb/reference-guards';
 import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
 
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
@@ -16,7 +23,7 @@ function toDomain(document: TopologyDocument): TopologyNode {
 export class MongoTopologyRepository implements TopologyRepository {
   private readonly collection: Collection<TopologyDocument>;
 
-  constructor(database: Db) {
+  constructor(private readonly database: Db) {
     this.collection = database.collection<TopologyDocument>('topology_nodes');
   }
 
@@ -24,37 +31,47 @@ export class MongoTopologyRepository implements TopologyRepository {
     before: readonly TopologyNode[],
     after: readonly TopologyNode[],
   ): Promise<boolean> {
-    const session = (await getClient()).startSession();
     try {
-      await session.withTransaction(async () => {
+      await withIntegrityTransaction(this.database, async (session) => {
+        for (const expected of before) {
+          if (!(await this.collection.findOne(versionFilter(expected), { session })))
+            throw new Error('LAYOUT_CONFLICT');
+        }
         const old = new Map(before.map((node) => [node.id, node]));
         for (const node of after) {
           const previous = old.get(node.id);
           if (previous) {
             const result = await this.collection.replaceOne(
-              { id: node.id, updatedAt: previous.updatedAt },
-              node as OptionalUnlessRequiredId<TopologyDocument>,
+              versionFilter(previous),
+              nextTopologyVersion(node, previous) as OptionalUnlessRequiredId<TopologyDocument>,
               { session },
             );
             if (result.matchedCount !== 1) throw new Error('LAYOUT_CONFLICT');
           } else {
-            await this.collection.insertOne(node as OptionalUnlessRequiredId<TopologyDocument>, {
-              session,
-            });
+            await this.collection.insertOne(
+              nextTopologyVersion(node) as OptionalUnlessRequiredId<TopologyDocument>,
+              {
+                session,
+              },
+            );
           }
         }
+        // Validate the final transactional layout, including newly inserted parents.
+        for (const node of after)
+          await guardTopologyWrite(this.database, node, session, old.get(node.id));
       });
       return true;
     } catch (error) {
-      if (error instanceof Error && error.message === 'LAYOUT_CONFLICT') return false;
+      if (error instanceof Error && error.message === 'LAYOUT_CONFLICT') {
+        if (integritySession()) throw new IntegrityConflict('LAYOUT_CONFLICT');
+        return false;
+      }
       throw error;
-    } finally {
-      await session.endSession();
     }
   }
 
   async getById(id: string): Promise<TopologyNode | null> {
-    const document = await this.collection.findOne({ id });
+    const document = await this.collection.findOne({ id }, integrityOptions());
     return document ? toDomain(document) : null;
   }
 
@@ -99,25 +116,35 @@ export class MongoTopologyRepository implements TopologyRepository {
   }
 
   async insert(node: TopologyNode): Promise<void> {
-    await this.collection.insertOne(node as OptionalUnlessRequiredId<TopologyDocument>);
+    await withIntegrityTransaction(this.database, async (session) => {
+      await this.collection.insertOne(
+        nextTopologyVersion(node) as OptionalUnlessRequiredId<TopologyDocument>,
+        { session },
+      );
+      await guardTopologyWrite(this.database, node, session);
+    });
   }
 
   async replace(node: TopologyNode): Promise<void> {
-    const result = await this.collection.replaceOne(
-      { id: node.id },
-      node as OptionalUnlessRequiredId<TopologyDocument>,
-    );
-
-    if (result.matchedCount !== 1) {
-      throw new Error(`Topology node does not exist: ${node.id}`);
-    }
+    if (!(await this.commitLayout([node], [node]))) throw new IntegrityConflict('LAYOUT_CONFLICT');
   }
 
   async replaceIfVersion(node: TopologyNode, expectedVersion: string): Promise<boolean> {
-    const result = await this.collection.replaceOne(
-      { id: node.id, updatedAt: expectedVersion, lifecycle: 'ACTIVE' },
-      node as OptionalUnlessRequiredId<TopologyDocument>,
-    );
-    return result.matchedCount === 1;
+    // Preserve the timestamp API used by spatial clients as an additional precondition.
+    return withIntegrityTransaction(this.database, async (session) => {
+      const current = await this.collection.findOne(
+        { id: node.id, updatedAt: expectedVersion, lifecycle: 'ACTIVE' },
+        { session },
+      );
+      if (!current || current.revision !== node.revision) return false;
+      const result = await this.collection.replaceOne(
+        versionFilter(toDomain(current)),
+        nextTopologyVersion(node, toDomain(current)) as OptionalUnlessRequiredId<TopologyDocument>,
+        { session },
+      );
+      if (result.matchedCount !== 1) return false;
+      await guardTopologyWrite(this.database, node, session, toDomain(current));
+      return true;
+    });
   }
 }

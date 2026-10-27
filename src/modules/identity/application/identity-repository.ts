@@ -5,9 +5,10 @@ export interface IdentityRepository {
   listUsers(): Promise<readonly User[]>;
   getUserById(id: string): Promise<User | null>;
   getUserByEmail(email: string): Promise<User | null>;
-  insertUser(user: User): Promise<void>;
-  replaceUser(user: User): Promise<void>;
-  insertSession(session: SessionRecord): Promise<void>;
+  bootstrapUser?(user: User): Promise<boolean>;
+  insertUser(user: User, actorId?: string): Promise<void>;
+  replaceUser(user: User, expected?: User, actorId?: string): Promise<void>;
+  insertSession(session: SessionRecord, expectedUser?: User): Promise<void>;
   getSessionByTokenHash(tokenHash: string): Promise<SessionRecord | null>;
   revokeSession(sessionId: string, revokedAt: Date): Promise<void>;
   revokeUserSessions(userId: string, revokedAt: Date): Promise<void>;

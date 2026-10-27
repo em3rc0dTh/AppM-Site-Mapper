@@ -78,7 +78,7 @@ export class AuthService {
       revokedAt: null,
     };
 
-    await this.repository.insertSession(session);
+    await this.repository.insertSession(session, user);
 
     return success({ token, user: toSafeUser(user) });
   }
@@ -153,7 +153,7 @@ export class AuthService {
       updatedAt: nowIso(),
     };
 
-    await this.repository.replaceUser(updated);
+    await this.repository.replaceUser(updated, user, user.id);
     await this.repository.revokeUserSessions(user.id, this.clock());
 
     return success(toSafeUser(updated));
@@ -183,7 +183,7 @@ export class AuthService {
       updatedAt: nowIso(),
     };
 
-    await this.repository.replaceUser(updated);
+    await this.repository.replaceUser(updated, user, user.id);
     return success(toSafeUser(updated));
   }
 
@@ -213,7 +213,8 @@ export class AuthService {
       updatedAt: timestamp,
     };
 
-    await this.repository.insertUser(user);
+    if (!this.repository.bootstrapUser || !(await this.repository.bootstrapUser(user)))
+      return failure('BOOTSTRAP_CLOSED');
     return success(toSafeUser(user));
   }
 
@@ -254,7 +255,7 @@ export class AuthService {
       updatedAt: timestamp,
     };
 
-    await this.repository.insertUser(user);
+    await this.repository.insertUser(user, actor.id);
     return success(toSafeUser(user));
   }
 
@@ -333,7 +334,7 @@ export class AuthService {
       updatedAt: nowIso(),
     };
 
-    await this.repository.replaceUser(updated);
+    await this.repository.replaceUser(updated, target, actor.id);
 
     if (nextLifecycle === 'ARCHIVED' || nextRole !== target.role) {
       await this.repository.revokeUserSessions(target.id, this.clock());

@@ -7,7 +7,11 @@ function runtimeFaults() {
   return getProcessSingleton<Set<string>>('industrial-runtime-faults', () => new Set());
 }
 export function recordIndustrialFault(
-  code: 'INDUSTRIAL_PROFILES_INVALID' | 'MQTT_CAPTURE_UNAVAILABLE',
+  code:
+    | 'INDUSTRIAL_PROFILES_INVALID'
+    | 'MQTT_CAPTURE_UNAVAILABLE'
+    | 'MQTT_UNPROFILED_SOURCE_BLOCKED'
+    | 'MQTT_CAPTURE_FAILED_POTENTIAL_LOSS',
 ) {
   runtimeFaults().add(code);
 }

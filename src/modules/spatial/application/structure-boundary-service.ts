@@ -40,5 +40,5 @@ export async function updateStructureBoundary(
   };
 
   if (!(await repo.replaceIfVersion(updated, input.version))) return failure('BOUNDARY_CONFLICT');
-  return success(updated);
+  return success((await repo.getById(id)) as typeof updated);
 }

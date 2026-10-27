@@ -1,3 +1,4 @@
+import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { NextResponse } from 'next/server';
 
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -8,7 +9,7 @@ import { isSafeMutationRequest } from '@/shared/http/request-security';
 
 type Context = Readonly<{ params: Promise<{ id: string }> }>;
 
-export async function DELETE(request: Request, context: Context) {
+async function handleDELETE(request: Request, context: Context) {
   const auth = await requirePermission('power:write');
 
   if (!auth.ok) {
@@ -28,4 +29,12 @@ export async function DELETE(request: Request, context: Context) {
   }
 
   return NextResponse.json({ path: result.value });
+}
+
+export async function DELETE(request: Request, context: Context) {
+  try {
+    return await handleDELETE(request, context);
+  } catch (error) {
+    return integrityErrorResponse(error);
+  }
 }

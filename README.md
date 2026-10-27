@@ -54,6 +54,12 @@ flowchart TD
 
 Los nombres con `/` representan alternativas del **mismo nivel**. No implican un nivel adicional. La correspondencia física nunca se infiere automáticamente de un número de slot. Consulta [topología](docs/domain/topology-hierarchy.md).
 
+## Entrega a clientes: imágenes Docker en su VPS
+
+**[Contrato de distribución Docker para VPS](docs/release/docker-vps-distribution.md)** — Site Mapper se compila en CI y se entrega como **imágenes preconstruidas**, no como repositorio ni código fuente. Cada componente opera en su propio contenedor; un bundle offline multiimagen (`docker save`) y un Compose **sin `build:`** permitirán instalarlo con `docker load` y `docker compose up --no-build --pull never`.
+
+**Estado:** especificación documentada, **no paquete de cliente generado**. `docker-compose.telemetry.yml` sigue siendo un laboratorio de ingeniería que construye desde el código, no un despliegue productivo. Los datos y secretos del cliente deben residir en volúmenes y configuración privada, con backups/migraciones aprobadas antes de actualizar.
+
 ## Inicio rápido · Demo visual sin Docker
 
 Requisitos: Node.js 22.13+ (menor a 23), npm y navegador.

@@ -129,6 +129,7 @@
     "explore": "EXPLORE",
     "warehouse": "WAREHOUSE",
     "admin": "ADMIN",
+    "myAccount": "MY ACCOUNT",
     "signOut": "Sign out",
     "signOutError": "Could not sign out. Try again.",
     "helpCenter": "HELP CENTER"

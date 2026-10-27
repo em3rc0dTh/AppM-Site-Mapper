@@ -127,12 +127,41 @@ const replay = await fetch(base + '/api/telemetry/snmp/ingest', {
     ],
   }),
 });
-assert.equal(
-  replay.status,
-  422,
-  'Restart allowed an authenticated replay to replace persisted SNMP current',
+// Validation rejects observations older than five minutes (HTTP 400), while
+// a still-fresh replay with the same OID/timestamp and altered value must be
+// rejected by the durable Timescale collision check (HTTP 422).
+// Browser setup can push the historic observation beyond the freshness bound.
+const ageMs = Date.now() - Date.parse(historicSnmp.reported.currentA.observedAt);
+const permittedRejections = {
+  400: 'INVALID_SNMP_FEED_PACKET',
+  422: 'OUT_OF_ORDER_SNMP_SAMPLE',
+};
+assert.ok(
+  Object.hasOwn(permittedRejections, replay.status),
+  'SNMP replay must be rejected, got HTTP ' + replay.status,
 );
-console.log('[PASS] SNMP old observation cannot be tampered with after Next.js restart');
+const replayError = (await replay.json()).error;
+assert.equal(
+  replayError,
+  permittedRejections[replay.status],
+  'SNMP replay was rejected for an unexpected reason',
+);
+if (ageMs > 300_000) {
+  assert.equal(replay.status, 400, 'Stale SNMP replay must fail at ingress');
+}
+const afterReplayHistory = await get(
+  '/api/telemetry/snmp/feeds/history?feedAccessPortId=' + snmpPorts[0].id + '&window=24h',
+);
+assert.deepEqual(
+  afterReplayHistory.samples,
+  snmpAfterRestartHistory.samples,
+  'Rejected SNMP replay mutated durable TimescaleDB history',
+);
+console.log(
+  '[PASS] SNMP replay rejected without altering durable history after restart (HTTP ' +
+    replay.status +
+    ')',
+);
 
 console.log('[PASS] SNMP independent-feeder mappings and TimescaleDB history survive restart');
 console.log(

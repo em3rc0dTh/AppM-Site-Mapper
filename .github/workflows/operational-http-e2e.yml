@@ -8,6 +8,7 @@ on:
       - 'feat/full-power-trace-access-ports'
     paths:
       - 'scripts/ci/http-operational-journey.mjs'
+      - 'scripts/ci/mk1-adversarial-http.mjs'
       - 'scripts/ci/http-operational-restart.mjs'
       - 'scripts/ci/browser-operational-journey.mjs'
       - '.github/workflows/operational-http-e2e.yml'
@@ -28,6 +29,7 @@ on:
       - 'src/modules/power/**'
       - 'src/modules/telemetry/**'
       - 'scripts/ci/http-operational-journey.mjs'
+      - 'scripts/ci/mk1-adversarial-http.mjs'
       - 'scripts/ci/http-operational-restart.mjs'
       - 'scripts/ci/browser-operational-journey.mjs'
       - 'scripts/ci/modbus-tcp-operational.mjs'
@@ -137,6 +139,9 @@ jobs:
 
       - name: Create Sites, Equipment, PowerPaths and commissioning via HTTP
         run: node scripts/ci/http-operational-journey.mjs
+
+      - name: Bounded adversarial HTTP wheel (concurrent racks, breakers, CSRF, malformed bodies)
+        run: node scripts/ci/mk1-adversarial-http.mjs
 
       - name: Certify Modbus TCP register values from accepted MQTT readings
         run: node scripts/ci/modbus-tcp-operational.mjs

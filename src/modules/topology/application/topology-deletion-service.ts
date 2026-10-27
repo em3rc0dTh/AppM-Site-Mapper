@@ -275,6 +275,7 @@ export class TopologyDeletionService {
         entityKind: plan.root.kind,
         affected: plan.nodes.map((node) => ({
           id: node.id, name: node.name, kind: node.kind,
+          ...(node.kind === 'CONTAINER_RACK' ? { originalCas: node.cas } : {}),
           ...(node.kind === 'EQUIPMENT' && node.rackPlacement
             ? { rackPlacement: node.rackPlacement } : {}),
         })),

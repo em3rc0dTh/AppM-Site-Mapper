@@ -68,6 +68,40 @@ try {
   await page.getByText('0_1_1').first().waitFor({ timeout: 30000 });
   console.log('[PASS] Real Chromium: created panel, commissioning and MQTT point rendered');
 
+  // Verify the new destructive workflow visually without submitting a deletion.
+  await page.locator('.mk1-delete-entity > button').first().click();
+  const englishDelete = page.getByRole('dialog');
+  await englishDelete.getByText('Deletion scope').waitFor({ timeout: 30000 });
+  await englishDelete.getByText('This entity has active descendants.', { exact: false })
+    .waitFor({ timeout: 30000 });
+  assert.equal(
+    await englishDelete.getByRole('button', { name: 'Confirm deletion' }).isDisabled(),
+    true,
+    'Single deletion must remain blocked for a populated Equipment',
+  );
+  await englishDelete.getByRole('button', { name: 'Cancel' }).click();
+  console.log('[PASS] Chromium: English deletion modal, descendant warning, disabled confirmation');
+
+  const deviceLocale = page.locator('.sm-locale-control select');
+  await deviceLocale.selectOption('es');
+  await page.waitForFunction(() => document.documentElement.lang === 'es', { timeout: 30000 });
+  await page.locator('.mk1-delete-entity > button').first().waitFor({ timeout: 30000 });
+  await page.locator('.mk1-delete-entity > button').first().click();
+  const spanishDelete = page.getByRole('dialog');
+  await spanishDelete.getByText('Alcance de la eliminación').waitFor({ timeout: 30000 });
+  await spanishDelete.getByText('Esta entidad contiene descendientes activos.', { exact: false })
+    .waitFor({ timeout: 30000 });
+  assert.equal(
+    await spanishDelete.getByRole('button', { name: 'Confirmar eliminación' }).isDisabled(),
+    true,
+  );
+  await spanishDelete.getByRole('button', { name: 'Cancelar' }).click();
+  await page.locator('.sm-locale-control select').selectOption('en');
+  await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
+  console.log('[PASS] Chromium: Spanish deletion modal, translated confirmation, en/es round-trip');
+
+
+
   await page.getByText('Point group 0_1').first().waitFor({ timeout: 30000 });
   await page.screenshot({ path: '/tmp/mk1-operational-browser.png', fullPage: true });
   console.log('[PASS] Real Chromium: configured telemetry prefix visible on actual Equipment page');

@@ -12,6 +12,7 @@ import {
 import { BdfbTelemetryInspector } from '@/components/power/bdfb-telemetry-inspector';
 import { BdfbPowerTree } from '@/components/power/bdfb-power-tree';
 import { TopologyContextTree } from '@/components/topology/context-tree';
+import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
 import { TopologyCreateControl } from '@/components/topology/topology-create-form';
 import { TopologyPropertiesPanel } from '@/components/topology/topology-properties-panel';
 import {
@@ -123,6 +124,7 @@ export default async function TopologyNodePage({
   }
 
   const node = resolved.value;
+  if (node.lifecycle !== 'ACTIVE') notFound();
   if (node.kind === 'CONTAINER_CLUSTER_BAY' || node.kind === 'POSITION') {
     const ancestry = await service.getTrail(node.id);
     const room = [...ancestry].reverse().find((entry) => entry.kind === 'ROOM_SUBSTRUCTURE');
@@ -159,6 +161,7 @@ export default async function TopologyNodePage({
   );
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
+  const canDelete = hasPermission(auth.value.role, 'system:danger');
   const canWritePower = hasPermission(auth.value.role, 'power:write');
   const siteContext =
     node.kind === 'STRUCTURE' ? [...trail].reverse().find((entry) => entry.kind === 'SITE') : null;
@@ -411,6 +414,7 @@ export default async function TopologyNodePage({
             {...(sectionDescription === undefined ? {} : { description: sectionDescription })}
             actions={
               <>
+                {canDelete && <DeleteEntityControl id={node.id} name={node.name} />}
                 {node.kind === 'STRUCTURE' && selectedLevel && (
                   <StatusBadge tone="accent">{selectedLevel.name}</StatusBadge>
                 )}

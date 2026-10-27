@@ -443,7 +443,9 @@ export function EquipmentCompositionEditor({
               ) : null}
             </div>
           ) : null}
-          {canDelete && isActive ? <DeleteEntityControl id={equipment.id} name={equipment.name} /> : null}
+          {canDelete && isActive ? (
+            <DeleteEntityControl id={equipment.id} name={equipment.name} />
+          ) : null}
         </div>
       </header>
 

@@ -217,8 +217,7 @@ export function DeleteEntityControl({ id, name }: Readonly<{ id: string; name: s
               className="is-danger"
               onClick={() => void remove()}
               disabled={
-                busy || !preview || typedName !== name ||
-                (mode === 'SINGLE' && preview.hasChildren)
+                busy || !preview || typedName !== name || (mode === 'SINGLE' && preview.hasChildren)
               }
             >
               {busy ? t('processing') : t('confirmDelete')}

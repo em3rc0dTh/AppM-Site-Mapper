@@ -231,7 +231,9 @@ export function RoomLayoutEditor({
     }
   }
   function remove() {
-    if ([...saved.clusters, ...saved.positions, ...saved.racks].some((item) => item.id === selected)) {
+    if (
+      [...saved.clusters, ...saved.positions, ...saved.racks].some((item) => item.id === selected)
+    ) {
       setError(t('persistedDeleteRequired'));
       return;
     }
@@ -293,7 +295,9 @@ export function RoomLayoutEditor({
     }
     setBoundary(null);
   }
-  const savedSelection = [...saved.clusters, ...saved.positions, ...saved.racks].find((n) => n.id === selected);
+  const savedSelection = [...saved.clusters, ...saved.positions, ...saved.racks].find(
+    (n) => n.id === selected,
+  );
   const bay = draft.clusters.find((c) => c.id === selected);
   const rack = draft.racks.find((r) => r.id === selected);
   const position = draft.positions.find((p) => p.id === (rack?.positionId ?? selected));
@@ -636,7 +640,11 @@ export function RoomLayoutEditor({
               {savedSelection && canDelete ? (
                 <DeleteEntityControl id={savedSelection.id} name={savedSelection.name} />
               ) : null}
-              <button type="button" disabled={!selected || !!placement || !!savedSelection} onClick={remove}>
+              <button
+                type="button"
+                disabled={!selected || !!placement || !!savedSelection}
+                onClick={remove}
+              >
                 {t('removeSelected')}
               </button>
               <p>{t('archiveHelp')}</p>

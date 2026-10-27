@@ -86,7 +86,12 @@ export default async function BlueprintPage({
             eyebrow={t('eyebrow')}
             title={result.value.room.name.toUpperCase()}
             description={result.value.room.polygon?.length ? t('surveyed') : t('unsurveyed')}
-            actions={<><StatusBadge>{canWrite ? t('write') : t('read')}</StatusBadge>{canDelete && <DeleteEntityControl id={roomId} name={result.value.room.name} />}</>}
+            actions={
+              <>
+                <StatusBadge>{canWrite ? t('write') : t('read')}</StatusBadge>
+                {canDelete && <DeleteEntityControl id={roomId} name={result.value.room.name} />}
+              </>
+            }
           />
 
           <TelemetryLens label={result.value.room.name} entityIds={inventory.map((n) => n.id)} />

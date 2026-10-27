@@ -356,7 +356,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
 
         <section className="zip-device-stage">
           <h1>{node.kind === 'EQUIPMENT' ? t('composition') : t('elevation')}</h1>
-          {node.kind === 'DEVICE' && canDelete ? <DeleteEntityControl id={node.id} name={node.name} /> : null}
+          {node.kind === 'DEVICE' && canDelete ? (
+            <DeleteEntityControl id={node.id} name={node.name} />
+          ) : null}
           {node.kind === 'EQUIPMENT' ? (
             <EquipmentCompositionEditor
               equipment={node}

@@ -9,7 +9,11 @@ import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import { freeCas, initializeCas } from '@/modules/rack/domain/cas';
 import { recordAdminAudit } from '@/modules/settings/infrastructure/admin-audit';
 import { getMongoDatabase } from '@/shared/infrastructure/mongodb/client';
-import { integrityOptions, IntegrityConflict, withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
+import {
+  integrityOptions,
+  IntegrityConflict,
+  withIntegrityTransaction,
+} from '@/shared/infrastructure/mongodb/integrity-transaction';
 
 export type DeletionMode = 'SINGLE' | 'TREE';
 
@@ -76,15 +80,20 @@ export class TopologyDeletionService {
     const hasChildren = nodes.length > 1;
     const targetNodes = mode === 'TREE' ? nodes : [root];
     const targetIds = new Set(targetNodes.map((node) => node.id));
-    const equipment = targetNodes.filter((node): node is EquipmentNode => node.kind === 'EQUIPMENT');
+    const equipment = targetNodes.filter(
+      (node): node is EquipmentNode => node.kind === 'EQUIPMENT',
+    );
     const portIds = new Set(equipment.flatMap((node) => node.accessPorts.map((port) => port.id)));
 
     const neighborIds = new Set<string>();
     if (root.kind === 'EQUIPMENT' && root.parentId && !targetIds.has(root.parentId))
       neighborIds.add(root.parentId);
     for (const item of targetNodes) {
-      if (item.kind === 'EQUIPMENT' && item.rackPlacement &&
-          !targetIds.has(item.rackPlacement.rackId))
+      if (
+        item.kind === 'EQUIPMENT' &&
+        item.rackPlacement &&
+        !targetIds.has(item.rackPlacement.rackId)
+      )
         neighborIds.add(item.rackPlacement.rackId);
     }
     const neighbors: TopologyNode[] = [];
@@ -99,23 +108,35 @@ export class TopologyDeletionService {
     const ids = [...targetIds];
     const [powerPaths, bindings] = await Promise.all([
       portList.length
-        ? db.collection<PowerPath & Document>('power_paths').find({
+        ? db
+            .collection<PowerPath & Document>('power_paths')
+            .find(
+              {
+                lifecycle: 'ACTIVE',
+                $or: [
+                  { sourceAccessPortId: { $in: portList } },
+                  { targetAccessPortId: { $in: portList } },
+                ],
+              },
+              integrityOptions(),
+            )
+            .toArray()
+        : Promise.resolve([] as PowerPath[]),
+      db
+        .collection<TelemetryBinding & Document>('telemetry_bindings')
+        .find(
+          {
             lifecycle: 'ACTIVE',
             $or: [
-              { sourceAccessPortId: { $in: portList } },
-              { targetAccessPortId: { $in: portList } },
+              { targetId: { $in: ids } },
+              { targetType: 'ACCESS_PORT', targetId: { $in: portList } },
+              { 'attributes.panelId': { $in: ids } },
+              { 'attributes.matchedNodeId': { $in: ids } },
             ],
-          }, integrityOptions()).toArray()
-        : Promise.resolve([] as PowerPath[]),
-      db.collection<TelemetryBinding & Document>('telemetry_bindings').find({
-        lifecycle: 'ACTIVE',
-        $or: [
-          { targetId: { $in: ids } },
-          { targetType: 'ACCESS_PORT', targetId: { $in: portList } },
-          { 'attributes.panelId': { $in: ids } },
-          { 'attributes.matchedNodeId': { $in: ids } },
-        ],
-      }, integrityOptions()).toArray(),
+          },
+          integrityOptions(),
+        )
+        .toArray(),
     ]);
 
     if (powerPaths.length + bindings.length > 5000) conflict('DELETE_TOO_MANY_REFERENCES');
@@ -123,8 +144,10 @@ export class TopologyDeletionService {
     for (const item of targetNodes) {
       if (item.kind !== 'CONTAINER_RACK') continue;
       for (const allocation of item.cas) {
-        if (allocation.state === 'EQUIPPED' &&
-            (!allocation.occupantId || !targetIds.has(allocation.occupantId)))
+        if (
+          allocation.state === 'EQUIPPED' &&
+          (!allocation.occupantId || !targetIds.has(allocation.occupantId))
+        )
           conflict('RACK_CONTAINS_EXTERNAL_OCCUPANT');
       }
     }
@@ -182,16 +205,16 @@ export class TopologyDeletionService {
     return withIntegrityTransaction(db, async () => {
       // Recalculate while holding the canonical write fence. Browser previews are never trusted.
       const plan = await this.prepare(id, input.mode);
-      if (plan.root.name !== input.name || !input.name)
-        conflict('DELETE_NAME_MISMATCH');
+      if (plan.root.name !== input.name || !input.name) conflict('DELETE_NAME_MISMATCH');
       if (plan.preview.token !== input.token) conflict('DELETE_PREVIEW_STALE');
-      if (input.mode === 'SINGLE' && plan.preview.hasChildren)
-        conflict('HAS_ACTIVE_CHILDREN');
+      if (input.mode === 'SINGLE' && plan.preview.hasChildren) conflict('HAS_ACTIVE_CHILDREN');
       // A Device must not be left without its sole physical root Equipment.
       if (plan.root.kind === 'EQUIPMENT' && plan.root.parentEquipmentId === null) {
         const parent = plan.neighbors.find((node) => node.id === plan.root.parentId);
-        if (parent?.kind === 'DEVICE' &&
-            parent.rootEquipmentIds.filter((rootId) => rootId !== plan.root.id).length === 0)
+        if (
+          parent?.kind === 'DEVICE' &&
+          parent.rootEquipmentIds.filter((rootId) => rootId !== plan.root.id).length === 0
+        )
           conflict('DELETE_OWNING_DEVICE_INSTEAD');
       }
       if (!this.topology.commitLayout || !this.bindings.archiveBatch)
@@ -208,10 +231,12 @@ export class TopologyDeletionService {
           updatedAt: timestamp,
           retirement: { operationId, actorId, at: timestamp, mode: input.mode },
           ...(node.kind === 'EQUIPMENT'
-            ? { accessPorts: node.accessPorts.map((port) => ({
-                ...port,
-                lifecycle: 'ARCHIVED' as const,
-              })) }
+            ? {
+                accessPorts: node.accessPorts.map((port) => ({
+                  ...port,
+                  lifecycle: 'ARCHIVED' as const,
+                })),
+              }
             : {}),
           ...(node.kind === 'CONTAINER_RACK' && node.totalU
             ? { cas: initializeCas(node.totalU) }
@@ -230,11 +255,13 @@ export class TopologyDeletionService {
             updatedAt: timestamp,
           });
         } else if (outerParent.kind === 'EQUIPMENT') {
-          const children = outerParent.children.map((child) => child === id ? null : child);
+          const children = outerParent.children.map((child) => (child === id ? null : child));
           updates.set(outerParent.id, {
             ...outerParent,
-            children: outerParent.childMode === 'POSITIONAL'
-              ? children : children.filter((child) => child !== null),
+            children:
+              outerParent.childMode === 'POSITIONAL'
+                ? children
+                : children.filter((child) => child !== null),
             updatedAt: timestamp,
           });
         } else conflict('INVALID_PHYSICAL_REFERENCE');
@@ -250,8 +277,9 @@ export class TopologyDeletionService {
           conflict('CAS_REFERENCE_CONFLICT');
         const rack = updates.get(rackId) ?? original;
         if (rack.kind !== 'CONTAINER_RACK') conflict('CAS_REFERENCE_CONFLICT');
-        const allocation = rack.cas.find((range) =>
-          range.state === 'EQUIPPED' && range.occupantId === node.id);
+        const allocation = rack.cas.find(
+          (range) => range.state === 'EQUIPPED' && range.occupantId === node.id,
+        );
         if (!allocation) conflict('CAS_REFERENCE_CONFLICT');
         const freed = freeCas(rack.cas, rack.totalU!, allocation.id);
         if (!freed.ok) conflict('CAS_REFERENCE_CONFLICT');
@@ -261,8 +289,13 @@ export class TopologyDeletionService {
       // Retire live links first, so topology reference guards see a consistent final graph.
       for (const path of plan.powerPaths)
         await this.power.replace({ ...path, lifecycle: 'ARCHIVED', updatedAt: timestamp });
-      await this.bindings.archiveBatch(plan.bindings.map((binding) =>
-        ({ ...binding, lifecycle: 'ARCHIVED' as const, updatedAt: timestamp })));
+      await this.bindings.archiveBatch(
+        plan.bindings.map((binding) => ({
+          ...binding,
+          lifecycle: 'ARCHIVED' as const,
+          updatedAt: timestamp,
+        })),
+      );
 
       const original = [...plan.nodes, ...plan.neighbors].filter((node) => updates.has(node.id));
       if (!(await this.topology.commitLayout(original, [...updates.values()])))
@@ -274,10 +307,13 @@ export class TopologyDeletionService {
         entityName: plan.root.name,
         entityKind: plan.root.kind,
         affected: plan.nodes.map((node) => ({
-          id: node.id, name: node.name, kind: node.kind,
+          id: node.id,
+          name: node.name,
+          kind: node.kind,
           ...(node.kind === 'CONTAINER_RACK' ? { originalCas: node.cas } : {}),
           ...(node.kind === 'EQUIPMENT' && node.rackPlacement
-            ? { rackPlacement: node.rackPlacement } : {}),
+            ? { rackPlacement: node.rackPlacement }
+            : {}),
         })),
         powerPathIds: plan.powerPaths.map((path) => path.id),
         telemetryBindingIds: plan.bindings.map((binding) => binding.id),

@@ -26,7 +26,9 @@ describe.skipIf(!enabled)('MK1 MQTT spool recovery under delivery outage', () =>
     const sent = new Map<string, Envelope>();
     const first = new MqttObservationOutbox(
       directory,
-      async () => { throw new Error('injected downstream outage'); },
+      async () => {
+        throw new Error('injected downstream outage');
+      },
       () => undefined,
       30,
       60000,
@@ -42,9 +44,7 @@ describe.skipIf(!enabled)('MK1 MQTT spool recovery under delivery outage', () =>
       expect(first.diagnostics().counters.deliveryFailures).toBeGreaterThan(0);
       await first.close();
 
-      const files = (await readdir(directory)).filter((name) =>
-        /^[a-f0-9-]{36}\.json$/.test(name),
-      );
+      const files = (await readdir(directory)).filter((name) => /^[a-f0-9-]{36}\.json$/.test(name));
       expect(files).toHaveLength(captures);
       const second = new MqttObservationOutbox(
         directory,
@@ -53,7 +53,9 @@ describe.skipIf(!enabled)('MK1 MQTT spool recovery under delivery outage', () =>
           if (sent.has(value.captureId)) throw new Error('Unexpected duplicate replay');
           sent.set(value.captureId, value);
         },
-        () => { throw new Error('Unexpected replay delivery failure'); },
+        () => {
+          throw new Error('Unexpected replay delivery failure');
+        },
         30,
         60000,
       );
@@ -66,11 +68,15 @@ describe.skipIf(!enabled)('MK1 MQTT spool recovery under delivery outage', () =>
       }
       expect(sent.size).toBe(captures);
       const sourceTimes = [...sent.values()].map((e) => e.receivedAt).sort();
-      expect(sourceTimes).toEqual(Array.from({ length: captures }, (_, i) => record(i).receivedAt).sort());
+      expect(sourceTimes).toEqual(
+        Array.from({ length: captures }, (_, i) => record(i).receivedAt).sort(),
+      );
 
       const third = new MqttObservationOutbox(
         directory,
-        async () => { throw new Error('Already delivered records replayed'); },
+        async () => {
+          throw new Error('Already delivered records replayed');
+        },
         () => undefined,
         30,
         60000,

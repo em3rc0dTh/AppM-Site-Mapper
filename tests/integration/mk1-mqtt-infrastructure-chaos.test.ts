@@ -16,16 +16,25 @@ async function eventually(check: () => boolean | Promise<boolean>, ms = 16000) {
 }
 
 function publish(message: string) {
-  execFileSync('mosquitto_pub', ['-h', '127.0.0.1', '-p', '1883', '-q', '1', '-t', topic, '-m', message], {
-    timeout: 12000,
-  });
+  execFileSync(
+    'mosquitto_pub',
+    ['-h', '127.0.0.1', '-p', '1883', '-q', '1', '-t', topic, '-m', message],
+    {
+      timeout: 12000,
+    },
+  );
 }
 
 describe.skipIf(!enabled)('MK1 MQTT real-broker infrastructure chaos', () => {
   it('recovers queued QoS1 messages across receiver restart and reconnects after broker outage', async () => {
     const received: string[] = [];
     const clientId = 'mk1-chaos-' + process.env.GITHUB_RUN_ID;
-    const options = { brokerUrl: broker, topicFilter: 'data/dev/chaos/#', clientId, keepAliveSeconds: 10 };
+    const options = {
+      brokerUrl: broker,
+      topicFilter: 'data/dev/chaos/#',
+      clientId,
+      keepAliveSeconds: 10,
+    };
     const receive = async (_topic: string, payload: Uint8Array) => {
       received.push(new TextDecoder().decode(payload));
     };
@@ -51,7 +60,8 @@ describe.skipIf(!enabled)('MK1 MQTT real-broker infrastructure chaos', () => {
       await eventually(() => receiver.diagnostics().state === 'reconnecting');
       execFileSync('sudo', ['systemctl', 'start', 'mosquitto'], { timeout: 12000 });
       await eventually(
-        () => receiver.diagnostics().state === 'subscribed' &&
+        () =>
+          receiver.diagnostics().state === 'subscribed' &&
           receiver.diagnostics().lastSubscribedAt !== subscribedBeforeOutage,
         25000,
       );

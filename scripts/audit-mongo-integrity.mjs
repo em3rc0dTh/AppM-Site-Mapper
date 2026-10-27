@@ -54,7 +54,8 @@ try {
       if (!Array.isArray(node.rootEquipmentIds)) {
         issue('MISSING_OR_INVALID_ROOT_EQUIPMENT_IDS', node.id);
       }
-      for (const rootId of array(node.rootEquipmentIds)) {
+      // Archived Device documents retain their historical root IDs as immutable evidence.
+      for (const rootId of node.lifecycle === 'ACTIVE' ? array(node.rootEquipmentIds) : []) {
         const root = byId.get(rootId);
         if (
           !root ||
@@ -71,7 +72,9 @@ try {
     if (!Array.isArray(node.children)) issue('MISSING_OR_INVALID_CHILDREN', node.id);
     const owner = byId.get(node.deviceId);
     if (!owner || owner.kind !== 'DEVICE') issue('MISSING_OWNER_DEVICE', node.id);
-    if (node.parentEquipmentId) {
+    // A retired child keeps its original parent pointer even after the surviving
+    // active parent has removed that child from its operational children[].
+    if (node.lifecycle === 'ACTIVE' && node.parentEquipmentId) {
       const parent = byId.get(node.parentEquipmentId);
       if (!parent || parent.kind !== 'EQUIPMENT' || !array(parent.children).includes(node.id)) {
         issue('BROKEN_PARENT_COMPOSITION', node.id);
@@ -82,12 +85,17 @@ try {
       issue('NULL_DYNAMIC_CHILD', node.id);
     }
     const seenChildren = new Set();
-    for (const id of children) {
+    for (const id of node.lifecycle === 'ACTIVE' ? children : []) {
       if (id === null) continue;
       if (seenChildren.has(id)) issue('DUPLICATE_CHILD', node.id, String(id));
       seenChildren.add(id);
       const child = byId.get(id);
-      if (!child || child.kind !== 'EQUIPMENT' || child.parentEquipmentId !== node.id) {
+      if (
+        !child ||
+        child.kind !== 'EQUIPMENT' ||
+        child.lifecycle !== 'ACTIVE' ||
+        child.parentEquipmentId !== node.id
+      ) {
         issue('DANGLING_OR_MISMATCHED_CHILD', node.id, String(id));
       }
     }
@@ -101,7 +109,8 @@ try {
       if (port.equipmentId !== node.id || port.deviceId !== node.deviceId) {
         issue('ACCESS_PORT_OWNERSHIP_MISMATCH', node.id, port.id);
       }
-      if (port.lifecycle === 'ACTIVE') activePortById.set(port.id, port);
+      if (node.lifecycle === 'ACTIVE' && port.lifecycle === 'ACTIVE')
+        activePortById.set(port.id, port);
     }
   }
 

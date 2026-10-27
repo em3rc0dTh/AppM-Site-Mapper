@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { RoomLayoutEditor } from '@/components/blueprint/room-layout-editor';
+import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
 import { readLayoutDraft } from '@/modules/spatial/application/layout-editor-service';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { notFound, redirect } from 'next/navigation';
@@ -59,6 +60,7 @@ export default async function BlueprintPage({
   const root = trail[0];
   const tree = root ? await topology.buildNavigationTree(root.id) : null;
   const canWrite = hasPermission(auth.value.role, 'topology:write');
+  const canDelete = hasPermission(auth.value.role, 'system:danger');
 
   const t = await getTranslations('pages.blueprint');
   return (
@@ -84,7 +86,7 @@ export default async function BlueprintPage({
             eyebrow={t('eyebrow')}
             title={result.value.room.name.toUpperCase()}
             description={result.value.room.polygon?.length ? t('surveyed') : t('unsurveyed')}
-            actions={<StatusBadge>{canWrite ? t('write') : t('read')}</StatusBadge>}
+            actions={<><StatusBadge>{canWrite ? t('write') : t('read')}</StatusBadge>{canDelete && <DeleteEntityControl id={roomId} name={result.value.room.name} />}</>}
           />
 
           <TelemetryLens label={result.value.room.name} entityIds={inventory.map((n) => n.id)} />
@@ -94,6 +96,7 @@ export default async function BlueprintPage({
               roomId={roomId}
               initial={draft.draft}
               canWrite={canWrite}
+              canDelete={canDelete}
               focusRackId={query.rack}
               focusBayId={query.bay}
               focusPositionId={query.position}

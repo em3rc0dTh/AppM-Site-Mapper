@@ -13,7 +13,11 @@ import { UserCreateForm } from '@/components/settings/user-create-form';
 import { parseAppEnvironment } from '@/config/env';
 import { AuthService } from '@/modules/identity/application/auth-service';
 import { getCurrentSessionUser } from '@/modules/identity/application/current-session';
-import { resolveSettingsTab, settingsTabSlug, visibleSettingsTabs } from '@/modules/settings/domain/settings-access';
+import {
+  resolveSettingsTab,
+  settingsTabSlug,
+  visibleSettingsTabs,
+} from '@/modules/settings/domain/settings-access';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { getIdentityRuntime } from '@/modules/identity/infrastructure/identity-runtime';
 import { getPersistenceMode } from '@/modules/topology/infrastructure/topology-repository-factory';

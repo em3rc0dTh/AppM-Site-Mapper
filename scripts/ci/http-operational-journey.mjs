@@ -171,12 +171,17 @@ async function main() {
   const standardEmail = 'mk1-standard-operator@local.test';
   const temporaryPassword = 'Temporary-MK1-Standard-2026!';
   const standardPassword = 'Active-MK1-Standard-2026!';
-  await request('POST', '/api/settings/users', {
-    email: standardEmail,
-    displayName: 'CI Standard Operator',
-    role: 'STANDARD',
-    temporaryPassword,
-  }, 201);
+  await request(
+    'POST',
+    '/api/settings/users',
+    {
+      email: standardEmail,
+      displayName: 'CI Standard Operator',
+      role: 'STANDARD',
+      temporaryPassword,
+    },
+    201,
+  );
   const tempLogin = await request('POST', '/api/auth/login', {
     email: standardEmail,
     password: temporaryPassword,
@@ -189,10 +194,16 @@ async function main() {
   });
   assert.ok([307, 308].includes(mustChange.status));
   assert.ok(mustChange.headers.get('location')?.endsWith('/change-password'));
-  const changed = await request('POST', '/api/auth/change-password', {
-    currentPassword: temporaryPassword,
-    newPassword: standardPassword,
-  }, 200, { cookie: temporaryCookie });
+  const changed = await request(
+    'POST',
+    '/api/auth/change-password',
+    {
+      currentPassword: temporaryPassword,
+      newPassword: standardPassword,
+    },
+    200,
+    { cookie: temporaryCookie },
+  );
   assert.equal(changed.body.reauthenticationRequired, true);
   const standardLogin = await request('POST', '/api/auth/login', {
     email: standardEmail,
@@ -206,7 +217,11 @@ async function main() {
       redirect: 'manual',
       signal: AbortSignal.timeout(30000),
     });
-    assert.equal(settingsPage.status, 200, 'STANDARD settings ' + tab + ' must not redirect to login');
+    assert.equal(
+      settingsPage.status,
+      200,
+      'STANDARD settings ' + tab + ' must not redirect to login',
+    );
     const html = await settingsPage.text();
     assert.match(html, /CI Standard Operator|mk1-standard-operator@local\.test/);
     assert.ok(html.includes('/settings?tab=profile'));
@@ -222,12 +237,19 @@ async function main() {
     cookie: standardCookie,
   });
   assert.equal(unauthorizedUsers.body.error, 'FORBIDDEN');
-  const ownProfile = await request('PATCH', '/api/settings/profile', {
-    displayName: 'CI Standard Operator Updated',
-  }, 200, { cookie: standardCookie });
+  const ownProfile = await request(
+    'PATCH',
+    '/api/settings/profile',
+    {
+      displayName: 'CI Standard Operator Updated',
+    },
+    200,
+    { cookie: standardCookie },
+  );
   assert.equal(ownProfile.body.user.displayName, 'CI Standard Operator Updated');
-  record('STANDARD: ADMIN navigation shows personal settings without logout or privilege escalation');
-
+  record(
+    'STANDARD: ADMIN navigation shows personal settings without logout or privilege escalation',
+  );
 
   const network = await create('NETWORK', null, 'CI Two-Site Network');
   const lima = await makeSite(network, 'CI LIMA', '0_1', 'CI-BFDB-LIMA');

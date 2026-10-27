@@ -87,14 +87,16 @@ try {
     assert.equal(sessionResponse.status(), 200);
     assert.equal((await sessionResponse.json()).user.role, 'STANDARD');
     await standardPage.goto(base + '/settings?tab=users', { waitUntil: 'domcontentloaded' });
-    await standardPage.locator('a[href="/settings?tab=profile"][aria-current="page"]')
+    await standardPage
+      .locator('a[href="/settings?tab=profile"][aria-current="page"]')
       .waitFor({ timeout: 30000 });
     assert.equal((await standardPage.request.get(base + '/api/auth/session')).status(), 200);
-    console.log('[PASS] Chromium: STANDARD clicking ADMIN stays authenticated on personal settings');
+    console.log(
+      '[PASS] Chromium: STANDARD clicking ADMIN stays authenticated on personal settings',
+    );
   } finally {
     await standardPage.close();
   }
-
 
   await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
   await page.getByText('CI LIMA Panel 24P').first().waitFor({ timeout: 30000 });

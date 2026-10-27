@@ -84,7 +84,7 @@ try {
   console.log('[PASS] Chromium: English deletion modal, descendant warning, disabled confirmation');
 
   // The language preference is managed from Settings, not the Device toolbar.
-  await page.goto(base + '/settings', { waitUntil: 'domcontentloaded' });
+  await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
   await page.locator('.sm-locale-control select').selectOption('es');
   await page.waitForFunction(() => document.documentElement.lang === 'es', { timeout: 30000 });
   await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
@@ -100,7 +100,7 @@ try {
     true,
   );
   await spanishDelete.getByRole('button', { name: 'Cancelar' }).click();
-  await page.goto(base + '/settings', { waitUntil: 'domcontentloaded' });
+  await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
   await page.locator('.sm-locale-control select').selectOption('en');
   await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
   await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });

@@ -83,9 +83,11 @@ try {
   await englishDelete.getByRole('button', { name: 'Cancel' }).click();
   console.log('[PASS] Chromium: English deletion modal, descendant warning, disabled confirmation');
 
-  const deviceLocale = page.locator('.sm-locale-control select');
-  await deviceLocale.selectOption('es');
+  // The language preference is managed from Settings, not the Device toolbar.
+  await page.goto(base + '/settings', { waitUntil: 'domcontentloaded' });
+  await page.locator('.sm-locale-control select').selectOption('es');
   await page.waitForFunction(() => document.documentElement.lang === 'es', { timeout: 30000 });
+  await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
   await page.locator('.mk1-delete-entity > button').first().waitFor({ timeout: 30000 });
   await page.locator('.mk1-delete-entity > button').first().click();
   const spanishDelete = page.getByRole('dialog');
@@ -98,8 +100,10 @@ try {
     true,
   );
   await spanishDelete.getByRole('button', { name: 'Cancelar' }).click();
+  await page.goto(base + '/settings', { waitUntil: 'domcontentloaded' });
   await page.locator('.sm-locale-control select').selectOption('en');
   await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
+  await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
   console.log('[PASS] Chromium: Spanish deletion modal, translated confirmation, en/es round-trip');
 
   await page.getByText('Point group 0_1').first().waitFor({ timeout: 30000 });

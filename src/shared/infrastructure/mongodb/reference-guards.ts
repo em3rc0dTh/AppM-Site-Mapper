@@ -30,6 +30,8 @@ export async function guardTopologyWrite(
   previous?: TopologyNode,
 ): Promise<void> {
   const topology = db.collection('topology_nodes');
+  if (previous?.retirement && node.lifecycle === 'ACTIVE')
+    throw new IntegrityConflict('RETIRED_NODE_CANNOT_RESTORE');
   const physicalParent = node.parentId
     ? await topology.findOne({ id: node.parentId }, { session })
     : null;

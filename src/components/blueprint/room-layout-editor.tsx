@@ -232,7 +232,7 @@ export function RoomLayoutEditor({
   }
   function remove() {
     if ([...saved.clusters, ...saved.positions, ...saved.racks].some((item) => item.id === selected)) {
-      setError('Este elemento ya está guardado. Usa Delete auditado con confirmación por nombre.');
+      setError(t('persistedDeleteRequired'));
       return;
     }
     if (draft.clusters.some((c) => c.id === selected)) {

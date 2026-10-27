@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
+import { AccessPortService } from '@/modules/topology/application/access-port-service';
+import { MemoryPowerRepository } from '@/modules/power/infrastructure/memory-power-repository';
 
 async function buildHierarchy(service: TopologyService) {
   const network = await service.create({ kind: 'NETWORK', parentId: null, name: 'Network' });
@@ -219,8 +221,10 @@ describe('TopologyService', () => {
     );
   });
 
-  it('requires explicit detach before Equipment archive and restores without hidden slot metadata', async () => {
-    const service = new TopologyService(new MemoryTopologyRepository());
+  it('requires explicit detach and AccessPort retirement before Equipment archive', async () => {
+    const repository = new MemoryTopologyRepository();
+    const service = new TopologyService(repository);
+    const ports = new AccessPortService(repository, new MemoryPowerRepository());
     const { rack } = await buildHierarchy(service);
     const device = await service.create({
       kind: 'DEVICE',
@@ -273,6 +277,19 @@ describe('TopologyService', () => {
       null,
       null,
     ]);
+
+    // Breakers have a default active POWER OUTPUT port. Hardening must not
+    // silently remove it when archiving an Equipment.
+    await expect(service.archive(breaker.value.id)).resolves.toEqual({
+      ok: false,
+      error: 'ACTIVE_ACCESS_PORTS',
+    });
+    const port = breaker.value.accessPorts.find((item) => item.lifecycle === 'ACTIVE');
+    if (!port) throw new Error('Expected default breaker port');
+    await expect(ports.archive(breaker.value.id, port.id)).resolves.toMatchObject({
+      ok: true,
+      value: { id: port.id, lifecycle: 'ARCHIVED' },
+    });
 
     const archived = await service.archive(breaker.value.id);
     expect(archived.ok).toBe(true);

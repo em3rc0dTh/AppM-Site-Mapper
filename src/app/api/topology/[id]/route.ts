@@ -28,7 +28,8 @@ export async function GET(_request: Request, context: Context) {
   const service = new TopologyService(await createTopologyRepository());
   const node = await service.getById(id);
 
-  if (!node) {
+  // Deleted historical entities must not reappear through operational reads.
+  if (!node || node.retirement) {
     return NextResponse.json({ error: 'NOT_FOUND' }, { status: 404 });
   }
 

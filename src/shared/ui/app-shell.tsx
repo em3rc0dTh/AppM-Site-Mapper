@@ -31,10 +31,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   // The root layout persists across client-side login/navigation. Resolve the
   // current role in the shell so a STANDARD user never sees the ADMIN label.
   useEffect(() => {
-    if (pathname === '/login' || pathname === '/change-password') {
-      setRole(null);
-      return;
-    }
+    if (pathname === '/login' || pathname === '/change-password') return;
     const controller = new AbortController();
     void fetch('/api/auth/session', {
       cache: 'no-store',
@@ -88,6 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST' });
       if (!response.ok) throw new Error();
+      setRole(null);
       router.replace('/login');
       router.refresh();
     } catch {

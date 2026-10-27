@@ -187,6 +187,13 @@ export class TopologyDeletionService {
       if (plan.preview.token !== input.token) conflict('DELETE_PREVIEW_STALE');
       if (input.mode === 'SINGLE' && plan.preview.hasChildren)
         conflict('HAS_ACTIVE_CHILDREN');
+      // A Device must not be left without its sole physical root Equipment.
+      if (plan.root.kind === 'EQUIPMENT' && plan.root.parentEquipmentId === null) {
+        const parent = plan.neighbors.find((node) => node.id === plan.root.parentId);
+        if (parent?.kind === 'DEVICE' &&
+            parent.rootEquipmentIds.filter((rootId) => rootId !== plan.root.id).length === 0)
+          conflict('DELETE_OWNING_DEVICE_INSTEAD');
+      }
       if (!this.topology.commitLayout || !this.bindings.archiveBatch)
         conflict('ATOMIC_DELETION_REQUIRED');
 

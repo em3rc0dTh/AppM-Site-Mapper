@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import type { Document } from 'mongodb';
 import type { TopologyNode, EquipmentNode, ContainerRackNode } from '@/modules/topology/domain/entities';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
@@ -98,7 +99,7 @@ export class TopologyDeletionService {
     const ids = [...targetIds];
     const [powerPaths, bindings] = await Promise.all([
       portList.length
-        ? db.collection<PowerPath>('power_paths').find({
+        ? db.collection<PowerPath & Document>('power_paths').find({
             lifecycle: 'ACTIVE',
             $or: [
               { sourceAccessPortId: { $in: portList } },
@@ -106,7 +107,7 @@ export class TopologyDeletionService {
             ],
           }, integrityOptions()).toArray()
         : Promise.resolve([] as PowerPath[]),
-      db.collection<TelemetryBinding>('telemetry_bindings').find({
+      db.collection<TelemetryBinding & Document>('telemetry_bindings').find({
         lifecycle: 'ACTIVE',
         $or: [
           { targetId: { $in: ids } },
@@ -116,6 +117,15 @@ export class TopologyDeletionService {
         ],
       }, integrityOptions()).toArray(),
     ]);
+
+    for (const item of targetNodes) {
+      if (item.kind !== 'CONTAINER_RACK') continue;
+      for (const allocation of item.cas) {
+        if (allocation.state === 'EQUIPPED' &&
+            (!allocation.occupantId || !targetIds.has(allocation.occupantId)))
+          conflict('RACK_CONTAINS_EXTERNAL_OCCUPANT');
+      }
+    }
 
     let occupiedCasCount = 0;
     for (const item of equipment) {

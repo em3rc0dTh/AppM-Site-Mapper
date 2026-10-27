@@ -1,0 +1,83 @@
+name: MK1 infrastructure fault-injection certification
+on:
+  pull_request:
+    paths:
+      - 'tests/integration/mk1-mqtt-infrastructure-chaos.test.ts'
+      - 'tests/integration/mk1-mongo-infrastructure-chaos.test.ts'
+      - 'tests/integration/mk1-spool-infrastructure-chaos.test.ts'
+      - '.github/workflows/mk1-infrastructure-chaos.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mqtt-gateway-outage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CI_CHAOS_LOCAL_ONLY: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Bring up disposable local Mosquitto
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mosquitto mosquitto-clients
+          sudo systemctl restart mosquitto
+          timeout 15 bash -c 'until mosquitto_pub -h 127.0.0.1 -p 1883 -q 1 -t data/dev/chaos/bootstrap -m ready; do sleep 1; done'
+      - name: Disconnect receiver, replay pending QoS1 and restart broker
+        run: npx vitest run tests/integration/mk1-mqtt-infrastructure-chaos.test.ts
+      - name: Sanitize local broker diagnostics on failure
+        if: failure()
+        run: sudo journalctl -u mosquitto -n 40 --no-pager || true
+
+  mongo-primary-crash:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CI_CHAOS_LOCAL_ONLY: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Start isolated MongoDB replica set (no external volumes)
+        run: |
+          docker run -d --name mk1-chaos-mongo -p 127.0.0.1:27017:27017 mongo:7 --replSet rschaos --bind_ip_all
+          for i in $(seq 1 50); do
+            if docker exec mk1-chaos-mongo mongosh --quiet --eval 'db.adminCommand({ping:1})' >/dev/null 2>&1; then break; fi
+            sleep 1
+          done
+          docker exec mk1-chaos-mongo mongosh --quiet --eval 'rs.initiate({_id:"rschaos",members:[{_id:0,host:"127.0.0.1:27017"}]})'
+          for i in $(seq 1 50); do
+            if docker exec mk1-chaos-mongo mongosh --quiet --eval 'db.hello().isWritablePrimary' 2>/dev/null | grep -q true; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+      - name: SIGKILL primary during uncommitted transaction and verify recovery
+        run: npx vitest run tests/integration/mk1-mongo-infrastructure-chaos.test.ts
+      - name: Dispose of crash-test MongoDB container
+        if: always()
+        run: docker rm -f -v mk1-chaos-mongo || true
+
+  spool-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      CI_CHAOS_LOCAL_ONLY: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Fail downstream delivery, restart consumer and replay durable queue
+        run: npx vitest run tests/integration/mk1-spool-infrastructure-chaos.test.ts

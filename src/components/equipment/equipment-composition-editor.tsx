@@ -6,6 +6,7 @@ import { PhysicalEquipmentDiagram } from './physical-equipment-diagram';
 import { PanelCommissioning } from '@/components/telemetry/panel-commissioning';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
 
 import type {
   EquipmentChildMode,
@@ -38,6 +39,7 @@ export function EquipmentCompositionEditor({
   childEquipment,
   familyEquipment,
   canWrite,
+  canDelete,
   canWritePower,
   canReadTelemetry = false,
   breakerTelemetryBindings = [],
@@ -47,6 +49,7 @@ export function EquipmentCompositionEditor({
   childEquipment: readonly EquipmentNode[];
   familyEquipment: readonly EquipmentNode[];
   canWrite: boolean;
+  canDelete: boolean;
   canWritePower: boolean;
   canReadTelemetry?: boolean;
   breakerTelemetryBindings?: readonly CompositionBreakerBinding[];
@@ -94,11 +97,6 @@ export function EquipmentCompositionEditor({
 
   const selectedTemplate = templates.find((template) => template.id === templateId);
   const isActive = equipment.lifecycle === 'ACTIVE';
-  const canArchive =
-    isActive &&
-    equipment.parentEquipmentId === null &&
-    !equipment.rackPlacement &&
-    equipment.children.every((childId) => childId === null);
 
   async function loadTemplates() {
     if (templates.length || loadingTemplates) return;
@@ -189,25 +187,6 @@ export function EquipmentCompositionEditor({
     setComposerOpen(true);
     setError('');
     void loadTemplates();
-  }
-
-  async function changeLifecycle(action: 'archive' | 'restore') {
-    setBusy(true);
-    setError('');
-    try {
-      const response = await fetch('/api/topology/' + encodeURIComponent(equipment.id), {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ action }),
-      });
-      await response.json();
-      if (!response.ok) throw new Error(t('lifecycleFailed'));
-      router.refresh();
-    } catch {
-      setError(t('lifecycleFailed'));
-    } finally {
-      setBusy(false);
-    }
   }
 
   async function configureEquipment(event: FormEvent<HTMLFormElement>) {
@@ -460,36 +439,11 @@ export function EquipmentCompositionEditor({
                   >
                     {t('configure')}
                   </button>
-                  <button
-                    type="button"
-                    className="is-danger"
-                    disabled={busy || !canArchive}
-                    title={
-                      canArchive
-                        ? t('archiveTitle')
-                        : equipment.parentEquipmentId !== null
-                          ? t('detachFirst')
-                          : equipment.rackPlacement
-                            ? t('releaseFirst')
-                            : t('removeChildren')
-                    }
-                    onClick={() => void changeLifecycle('archive')}
-                  >
-                    {t('archive')}
-                  </button>
                 </>
-              ) : (
-                <button
-                  type="button"
-                  className="is-restore"
-                  disabled={busy}
-                  onClick={() => void changeLifecycle('restore')}
-                >
-                  {t('restore')}
-                </button>
-              )}
+              ) : null}
             </div>
           ) : null}
+          {canDelete && isActive ? <DeleteEntityControl id={equipment.id} name={equipment.name} /> : null}
         </div>
       </header>
 

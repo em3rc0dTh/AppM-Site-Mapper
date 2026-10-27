@@ -77,7 +77,7 @@ export class RackElevationService {
       return failure('RACK_NOT_FOUND');
     }
 
-    if (node.kind !== 'CONTAINER_RACK' || node.variant !== 'RACK' || !node.totalU) {
+    if (node.lifecycle !== 'ACTIVE' || node.kind !== 'CONTAINER_RACK' || node.variant !== 'RACK' || !node.totalU) {
       return failure('NOT_A_RACK');
     }
 

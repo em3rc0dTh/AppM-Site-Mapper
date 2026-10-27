@@ -22,11 +22,13 @@ backed up, or monitored. The in-process LIVE hub remains distinct from historica
 
 The 2026-10-15 lab experienced `HISTORY_STORE_UNAVAILABLE` because requests/writes from Site Mapper to its history adapter returned `fetch failed`. The operator later confirmed the 7D UI displayed history again. That recovery is **not evidence of uninterrupted historical writes**, nor replay of any samples missed while the path was unavailable. The connectivity, writer and TimescaleDB recency checks are documented in [history-connectivity](../operations/history-connectivity.md).
 
-## MQTT QoS
+## MQTT QoS and delivery durability
 
-The native MQTT adapter subscribes at QoS 0.
+The current native MQTT 3.1.1 subscriber requests **QoS 1**, rejects a SUBACK that does not grant QoS 1, and sends PUBACK only after its message handler finishes. Production uses a stable, unique `MQTT_CLIENT_ID` (persistent session) and requires a durable private `INDUSTRIAL_MQTT_SPOOL` for acknowledged industrial captures.
 
-QoS 1 publish acknowledgement is handled where applicable; a complete QoS 2 state machine is not claimed.
+This does **not** guarantee end-to-end exactly-once processing. A publisher that sends QoS 0 cannot acquire durability from the consumer's subscription alone. Broker persistence and retention require configuration and testing at the customer site. Duplicate broker deliveries without a stable publisher `messageId` can produce additional captures; retrying one spool file remains idempotent only within its capture identity. QoS 2 is not supported.
+
+See [hardening residual risks](../operations/mk1-critical-hardening-2026-10-26.md) and [Docker VPS distribution plan](docker-vps-distribution.md).
 
 ## Content Security Policy
 

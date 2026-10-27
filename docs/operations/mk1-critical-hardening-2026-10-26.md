@@ -1,6 +1,8 @@
 # MK1 · Hardening crítico · 26/10/2026
 
-Estado de entrega: código preparado para revisión, **sin validación de ejecución**. No apto para producción hasta la aceptación del operador.
+**Estado de la entrega inicial en la rama original (histórico):** código preparado para revisión, **sin validación de ejecución en ese momento**. No apto para producción hasta la aceptación del operador.
+
+**Actualización posterior de integración (26/10/2026):** el hardening se fusionó a `main` mediante [PR #108](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/108). Las dos ruedas de certificación adversarial fueron añadidas mediante [PR #109](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/109); la regresión de replay SNMP tras reinicio fue corregida y se verificó que el historial persistente no cambia tras el rechazo. La [PR #110](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/110) documentó **solamente** cómo se distribuirán las futuras imágenes Docker al VPS del cliente. CI pasó sobre esos merges, **sin** migración de una base existente, pruebas de equipos Acrel físicos ni despliegue de cliente. Esta actualización no transforma las verificaciones históricas no ejecutadas en una certificación de producción.
 
 Base histórica del hardening: `feat/site-mapper-work-2026-10-23` en `3613de7f075a80c5070b1ec033ae8c90a773ea9f`. Rama original: `fix/mk1-critical-hardening` (`624fe463ddb89824c26f1980aba176d1a94f0bbf`). El 26/10/2026 este trabajo fue reconciliado sobre el `main` consolidado mediante PR #108, preservando además Help Center (#104), Acrel commissioning (#105) y la consolidación MK1 (#103).
 
@@ -136,7 +138,7 @@ No cambiaron dependencias ni SQL de Timescale. No se ejecutó instalación de pa
 6. Cambios de esquema y guardas más estrictas pueden descubrir inconsistencias antiguas. No se ha inspeccionado ninguna base real, por lo que no se conoce su cantidad ni su corrección requerida.
 7. Las restricciones transaccionales completas son del camino Mongo. Memoria no es entorno de aceptación ni sustituto de persistencia durable.
 8. La UI existente conserva contratos y presentación. Los nuevos campos de diagnóstico son observables por API; no se rediseñaron todos los indicadores UI para mostrar historia por cada campo de un snapshot combinado.
-9. Sin lint, typecheck, build ni ejecución, siguen pendientes compatibilidad de compilación, errores de integración y comportamiento efectivo. El PR Draft no constituye autorización de producción.
+9. La **entrega inicial de la rama** no ejecutó lint, typecheck ni build. Posteriormente, tras PR #108 y #109, CI, pruebas adversariales e integración HTTP/MongoDB aprobaron sobre el código integrado. Esto **no** sustituye certificación real de hardware ni autorización de producción.
 
 La lista completa de archivos se encuentra en [mk1-critical-hardening-files.md](mk1-critical-hardening-files.md). Recuperación: [backup-restore.md](backup-restore.md).
 

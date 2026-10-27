@@ -1,6 +1,8 @@
 # MK1 · MVP Readiness y criterios de salida
 
-**Evaluación a 16 oct. 2026:** **candidato a MVP presentable**. El repositorio cubre el recorrido físico y dispone de un primer circuito MQTT → Equipment → LIVE → TimescaleDB → Modbus TCP verificado en laboratorio. **No declarar `production ready`** hasta cerrar los puntos pendientes aquí.
+**Evaluación histórica del 16 oct. 2026:** **candidato a MVP presentable**. El repositorio cubría el recorrido físico y disponía de un primer circuito MQTT → Equipment → LIVE → TimescaleDB → Modbus TCP verificado en laboratorio. **No declarar `production ready`** hasta cerrar los puntos pendientes aquí.
+
+**Actualización de CI (26 oct. 2026):** `main` ya incorporó el hardening (#108), las pruebas adversariales y de recuperación (#109), y **la documentación —sin implementación—** de distribución Docker para VPS (#110). Los workflows de CI y SNMP quedaron verdes tras #110. Esta evidencia certifica un entorno automatizado, **no** una migración sobre datos existentes, un bundle Docker instalable, ni los dispositivos y redes OT del cliente. Los resultados del laboratorio histórico de octubre se mantienen fechados y no deben reinterpretarse como una aceptación de campo.
 
 ## Diferenciar cuatro estados
 
@@ -76,7 +78,7 @@ flowchart LR
 
 No afirmamos tres BFDB × 96 circuitos con señales certificadas, mantenimiento de datos durante desconexión, seguridad industrial de Modbus, alarmas reales, failover multiinstancia, control remoto BMS ni migración productiva de datos del cliente. Una implementación de API o un G14 PASS histórico no constituye esas evidencias.
 
-Los PR abiertos [#29](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/29), [#30](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/30), [#36](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/36) divergen de la base certificada y **no** forman parte del baseline estable hasta revisión, integración y aceptación separadas.
+Las PR históricas [#29](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/29), [#30](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/30) y [#36](https://github.com/em3rc0dTh/AppM-Site-Mapper/pull/36) fueron **cerradas sin fusión**. Sus propuestas no forman parte del baseline estable por el mero hecho de haber existido. Una reintroducción necesita revisión y aceptación independientes.
 
 ## Decisión de producto
 

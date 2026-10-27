@@ -1,10 +1,48 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import type { DeletionMode, DeletionPreview } from '@/modules/topology/application/topology-deletion-service';
+import type {
+  DeletionMode,
+  DeletionPreview,
+} from '@/modules/topology/application/topology-deletion-service';
+
+const errorKeys = {
+  PREVIEW_FAILED: 'errors.previewFailed',
+  DELETE_FAILED: 'errors.deleteFailed',
+  SESSION_INVALID: 'errors.forbidden',
+  FORBIDDEN: 'errors.forbidden',
+  INVALID_ORIGIN: 'errors.forbidden',
+  CROSS_SITE_MUTATION_REJECTED: 'errors.forbidden',
+  INVALID_REQUEST: 'errors.invalidRequest',
+  INVALID_MODE: 'errors.invalidRequest',
+  ENTITY_NOT_ACTIVE: 'errors.entityNotActive',
+  INVALID_TOPOLOGY_CYCLE: 'errors.invalidTopologyCycle',
+  DELETION_TOO_LARGE: 'errors.deletionTooLarge',
+  DELETE_TOO_MANY_REFERENCES: 'errors.referenceLimit',
+  INVALID_PHYSICAL_REFERENCE: 'errors.invalidPhysicalReference',
+  RACK_CONTAINS_EXTERNAL_OCCUPANT: 'errors.externalRackOccupant',
+  CAS_REFERENCE_CONFLICT: 'errors.casConflict',
+  DELETE_NAME_MISMATCH: 'errors.nameMismatch',
+  DELETE_PREVIEW_STALE: 'errors.stalePreview',
+  HAS_ACTIVE_CHILDREN: 'errors.activeChildren',
+  DELETE_OWNING_DEVICE_INSTEAD: 'errors.deleteOwningDevice',
+  ATOMIC_DELETION_REQUIRED: 'errors.atomicDeletionRequired',
+  DELETE_LAYOUT_CONFLICT: 'errors.layoutConflict',
+  LAYOUT_CONFLICT: 'errors.layoutConflict',
+  WRITES_PAUSED_FOR_MIGRATION: 'errors.writesPaused',
+  ACTIVE_POWER_PATHS: 'errors.dependencyConflict',
+  ACTIVE_TELEMETRY_BINDINGS: 'errors.dependencyConflict',
+  ACTIVE_ACCESS_PORTS: 'errors.dependencyConflict',
+  ACTIVE_REFERENCE_CONFLICT: 'errors.dependencyConflict',
+  COMMISSIONING_TOPOLOGY_CONFLICT: 'errors.dependencyConflict',
+  BINDING_CONFLICT: 'errors.bindingConflict',
+  STALE_BINDING: 'errors.bindingConflict',
+} as const;
 
 export function DeleteEntityControl({ id, name }: Readonly<{ id: string; name: string }>) {
+  const t = useTranslations('topologyDeletion');
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<DeletionMode>('SINGLE');
@@ -13,6 +51,13 @@ export function DeleteEntityControl({ id, name }: Readonly<{ id: string; name: s
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  function localizedError(code: string) {
+    const key = Object.hasOwn(errorKeys, code)
+      ? errorKeys[code as keyof typeof errorKeys]
+      : 'errors.generic';
+    return t(key);
+  }
 
   async function load(nextMode: DeletionMode) {
     setMode(nextMode);
@@ -29,7 +74,7 @@ export function DeleteEntityControl({ id, name }: Readonly<{ id: string; name: s
       if (!response.ok || !payload.preview) throw new Error(payload.error ?? 'PREVIEW_FAILED');
       setPreview(payload.preview);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'PREVIEW_FAILED');
+      setError(localizedError(cause instanceof Error ? cause.message : 'PREVIEW_FAILED'));
     } finally {
       setBusy(false);
     }
@@ -47,16 +92,16 @@ export function DeleteEntityControl({ id, name }: Readonly<{ id: string; name: s
       });
       const result = (await response.json()) as { operationId?: string; error?: string };
       if (!response.ok) {
-        // A changed tree or placement must always be reviewed again.
+        // A changed topology or placement requires a fresh user review.
         setPreview(null);
         throw new Error(result.error ?? 'DELETE_FAILED');
       }
-      setSuccess(result.operationId ?? 'RECORDED');
+      setSuccess(result.operationId ?? '');
       setOpen(false);
       router.replace('/workspace');
       router.refresh();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'DELETE_FAILED');
+      setError(localizedError(cause instanceof Error ? cause.message : 'DELETE_FAILED'));
     } finally {
       setBusy(false);
     }
@@ -72,24 +117,30 @@ export function DeleteEntityControl({ id, name }: Readonly<{ id: string; name: s
           void load('SINGLE');
         }}
       >
-        Delete
+        {t('delete')}
       </button>
-      {success ? <span role="status">Operación auditada: {success}</span> : null}
+      {success ? <span role="status">{t('audited', { operationId: success })}</span> : null}
       {open ? (
         <section
           role="dialog"
           aria-modal="true"
-          aria-label={'Confirmar eliminación de ' + name}
+          aria-label={t('dialogTitle', { name })}
           className="mk1-delete-dialog"
-          style={{ padding: 20, border: '2px solid currentColor', borderRadius: 12, maxWidth: 460, background: 'var(--background, #fff)', color: 'var(--foreground, #111)', position: 'relative', zIndex: 20 }}
+          style={{
+            padding: 20,
+            border: '2px solid currentColor',
+            borderRadius: 12,
+            maxWidth: 460,
+            background: 'var(--background, #fff)',
+            color: 'var(--foreground, #111)',
+            position: 'relative',
+            zIndex: 20,
+          }}
         >
-          <h3>Eliminar {name}</h3>
-          <p>
-            La entidad dejará de estar disponible en el inventario operativo.
-            Su identidad, registros archivados y mediciones históricas se conservarán.
-          </p>
+          <h3>{t('dialogTitle', { name })}</h3>
+          <p>{t('description')}</p>
           <fieldset disabled={busy}>
-            <legend>Alcance</legend>
+            <legend>{t('scope')}</legend>
             <label>
               <input
                 type="radio"
@@ -97,7 +148,7 @@ export function DeleteEntityControl({ id, name }: Readonly<{ id: string; name: s
                 checked={mode === 'SINGLE'}
                 onChange={() => void load('SINGLE')}
               />{' '}
-              Solo esta entidad (sin hijos)
+              {t('single')}
             </label>
             <label style={{ display: 'block' }}>
               <input
@@ -106,40 +157,47 @@ export function DeleteEntityControl({ id, name }: Readonly<{ id: string; name: s
                 checked={mode === 'TREE'}
                 onChange={() => void load('TREE')}
               />{' '}
-              Entidad y todos sus descendientes
+              {t('tree')}
             </label>
           </fieldset>
           {preview ? (
             <div aria-live="polite">
               <p>
-                <strong>{preview.totalNodes} entidades</strong> afectadas, entre ellas{' '}
-                {preview.deviceCount} Device y {preview.equipmentCount} Equipment.
+                {t('impactEntities', {
+                  totalNodes: preview.totalNodes,
+                  deviceCount: preview.deviceCount,
+                  equipmentCount: preview.equipmentCount,
+                })}
               </p>
               <p>
-                {preview.occupiedCasCount} ocupaciones CAS, {preview.powerPathCount} rutas de
-                energía y {preview.bindingCount} bindings operativos serán retirados.
+                {t('impactReferences', {
+                  occupiedCasCount: preview.occupiedCasCount,
+                  powerPathCount: preview.powerPathCount,
+                  bindingCount: preview.bindingCount,
+                })}
               </p>
               {mode === 'SINGLE' && preview.hasChildren ? (
-                <p role="alert">
-                  Esta entidad contiene descendientes: elige la eliminación del árbol
-                  completo o retíralos individualmente antes.
-                </p>
+                <p role="alert">{t('hasChildren')}</p>
               ) : null}
               <label style={{ display: 'block' }}>
-                Para confirmar, escribe exactamente <strong>{name}</strong>:
+                {t('confirmNamePrompt')} <strong>{name}</strong>
                 <input
                   autoComplete="off"
                   spellCheck={false}
                   value={typedName}
                   onChange={(event) => setTypedName(event.target.value)}
                   style={{ display: 'block', width: '100%', marginTop: 8 }}
-                  aria-label="Nombre exacto de la entidad"
+                  aria-label={t('nameInput')}
                 />
               </label>
             </div>
           ) : null}
-          {error ? <p role="alert">{error}. Actualiza la vista previa antes de confirmar.</p> : null}
-          <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+          {error ? (
+            <p role="alert">
+              {error} {t('refreshAfterError')}
+            </p>
+          ) : null}
+          <div style={{ display: 'flex', gap: 12, marginTop: 16, flexWrap: 'wrap' }}>
             <button
               type="button"
               onClick={() => {
@@ -149,16 +207,21 @@ export function DeleteEntityControl({ id, name }: Readonly<{ id: string; name: s
               }}
               disabled={busy}
             >
-              Cancelar
+              {t('cancel')}
+            </button>
+            <button type="button" onClick={() => void load(mode)} disabled={busy}>
+              {t('refreshPreview')}
             </button>
             <button
               type="button"
               className="is-danger"
               onClick={() => void remove()}
-              disabled={busy || !preview || typedName !== name ||
-                (mode === 'SINGLE' && preview.hasChildren)}
+              disabled={
+                busy || !preview || typedName !== name ||
+                (mode === 'SINGLE' && preview.hasChildren)
+              }
             >
-              {busy ? 'Procesando…' : 'Confirmar eliminación'}
+              {busy ? t('processing') : t('confirmDelete')}
             </button>
           </div>
         </section>

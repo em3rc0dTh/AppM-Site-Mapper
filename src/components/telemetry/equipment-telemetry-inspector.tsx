@@ -12,6 +12,9 @@ type IndustrialSignal = {
   authoritative?: boolean;
   observedAt: string;
   key: string;
+  rawType: string;
+  rawValue: unknown;
+  lastObservation?: { rawType: string; rawValue: unknown; observedAt: string };
   sourceIdentity: string;
   protocol: string;
   enumLabel?: string | null;
@@ -24,6 +27,17 @@ type IndustrialSignal = {
   mibName: string | null;
   receivedAt: string;
 };
+
+function rawText(value: unknown): string {
+  if (value === undefined) return '— (no disponible)';
+  if (value === null) return 'null';
+  if (typeof value === 'string') return value;
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
+}
 
 type View = {
   targetId: string;
@@ -308,6 +322,12 @@ export function EquipmentTelemetryInspector({
                         {signal.quality === 'UNKNOWN' && !signal.alarmState && (
                           <small> · {t('interpretationPending')}</small>
                         )}
+                        <div style={{ overflowWrap: 'anywhere' }}>
+                          <small>
+                            RAW ({signal.lastObservation?.rawType ?? signal.rawType}):{' '}
+                            <code>{rawText(signal.lastObservation ? signal.lastObservation.rawValue : signal.rawValue)}</code>
+                          </small>
+                        </div>
                       </td>
                       <td>
                         {signal.quality} · <time>{signal.receivedAt}</time>
@@ -365,6 +385,9 @@ export function EquipmentTelemetryInspector({
                             </td>
                             <td>
                               {s.alarmState ?? (s.value === null ? '—' : String(s.value))} {s.unit}
+                              <div style={{ overflowWrap: 'anywhere' }}>
+                                <small>RAW ({s.rawType}): <code>{rawText(s.rawValue)}</code></small>
+                              </div>
                             </td>
                             <td>{s.quality}</td>
                           </tr>

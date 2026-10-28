@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { LiveTelemetry } from '@/components/telemetry/live-telemetry';
+import { IndustrialSignalExplorer } from '@/components/telemetry/industrial-signal-explorer';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 
@@ -27,6 +28,7 @@ export default async function TelemetryPage() {
         </nav>
       )}
       <LiveTelemetry />
+      <IndustrialSignalExplorer />
     </>
   );
 }

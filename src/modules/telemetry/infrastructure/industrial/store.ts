@@ -15,7 +15,12 @@ export interface CatalogSignal extends Signal {
 }
 export interface ObservationStore {
   commit(batch: ObservationBatch): Promise<'committed' | 'duplicate'>;
-  list(sourceIdentity?: string, limit?: number, targetId?: string): Promise<CatalogSignal[]>;
+  list(
+    sourceIdentity?: string,
+    limit?: number,
+    targetId?: string,
+    afterSignalId?: string,
+  ): Promise<CatalogSignal[]>;
   history(
     signalId: string,
     before: string,
@@ -119,12 +124,13 @@ export class MemoryObservationStore implements ObservationStore {
   async event(eventId: string) {
     return this.events.get(eventId)?.envelope ?? null;
   }
-  async list(sourceIdentity?: string, limit = 1000, targetId?: string) {
+  async list(sourceIdentity?: string, limit = 1000, targetId?: string, afterSignalId?: string) {
     return [...this.signals.values()]
       .filter(
         (s) =>
           (!sourceIdentity || s.sourceIdentity === sourceIdentity) &&
-          (!targetId || s.targetId === targetId),
+          (!targetId || s.targetId === targetId) &&
+          (!afterSignalId || s.id > afterSignalId),
       )
       .sort((a, b) => a.id.localeCompare(b.id))
       .slice(0, limit);
@@ -319,12 +325,18 @@ export class MongoObservationStore implements ObservationStore {
     const row = await this.db.collection('industrial_events').findOne({ eventId });
     return row ? (JSON.parse(row.envelopeJson as string) as ObservationBatch['envelope']) : null;
   }
-  async list(sourceIdentity?: string, limit = 1000, targetId?: string): Promise<CatalogSignal[]> {
+  async list(
+    sourceIdentity?: string,
+    limit = 1000,
+    targetId?: string,
+    afterSignalId?: string,
+  ): Promise<CatalogSignal[]> {
     const rows = await this.db
       .collection('industrial_signals')
       .find({
         ...(sourceIdentity ? { sourceIdentity } : {}),
         ...(targetId ? { 'signal.targetId': targetId } : {}),
+        ...(afterSignalId ? { signalId: { $gt: afterSignalId } } : {}),
       })
       .sort({ signalId: 1 })
       .limit(limit)

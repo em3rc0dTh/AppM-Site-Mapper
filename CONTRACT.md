@@ -1418,3 +1418,52 @@ The revised presentation/interaction design is defined in
 [Screen 14 — Home / Operations](docs/ui/Wireframes%20documentation.md),
 with its product-level constraints in
 [Operational Workspace](docs/product/operational-workspace.md).
+
+---
+
+# Amendment · 2026-10-28 — G10 Universal SNMP → Site Mapper → TimescaleDB → Metasys
+
+This amendment is **additive**. It does not supersede the existing BFDB MQTT contract,
+physical Device/Equipment domain, historical retention rules, RBAC, Modbus register
+assignments, or industrial source authentication.
+
+## G10-INV-001 — Vendor-agnostic acquisition
+
+All valid SNMP varbinds from an explicitly authorized source are preserved independent
+of whether an OID exists in a loaded MIB, source profile or commissioning map.
+New OIDs do not require application code changes to ingest. Transport security,
+payload/queue/catalog limits and failure diagnostics still apply. Missing OIDs are
+never fabricated; traps are event-driven, not equivalent to a complete MIB walk.
+
+## G10-INV-002 — Universal signal visibility
+
+Every accepted observation is inspectable as RAW (source, exact numeric OID, BER type,
+original value, observed/received time, quality and evidence). Unknown, zero, disabled,
+binary, text and command-like values remain visible without implying electrical
+measurement validity or executing SNMP SET. Paginate the catalog rather than silently
+truncating the fleet to the first 1,000 signals.
+
+## G10-INV-003 — Read, show, store, expose
+
+- **READ**: SNMP traps/informs and authorized read-only GET/GETNEXT/GETBULK feeds.
+- **SHOW**: universal industrial catalog as well as target-specific Equipment inspection.
+- **STORE**: MongoDB retains original event/varbinds; the separate industrial TimescaleDB
+  observation stream retains the per-signal RAW value/type and normalized provenance
+  when `INDUSTRIAL_TIMESCALE_ENABLED=true`. Monitor the durable outbox and delivery lag.
+- **EXPOSE**: an explicitly commissioned, numeric/boolean/approved-state signal is
+  delivered via existing read-only Modbus TCP FC03 with stable Unit ID, value address,
+  engineering unit, encoding and quality address. Metasys polls those registers.
+  Unknown/unrepresentable signals stay visible and historically stored without
+  invented Modbus values or assignments.
+
+Existing BFDB Unit 1–3 circuit offsets 0–767 are frozen. Additive industrial extensions
+begin at offset 1024, with FLOAT32 high-word-first (two holding registers) plus a
+UINT16 quality register, unless a separate approved Metasys map is adopted via
+versioned commissioning. The bridge must not read historical TimescaleDB to answer FC03.
+A new OID is ingested without code changes; publishing it requires an explicit
+verified interpretation and approved registry allocation, not a code change.
+
+**Release gate:** demonstrate one new OID traversing UDP SNMP → RAW inspector →
+TimescaleDB (including rawValue) → optional approved Modbus register → Metasys FC03
+with matching identity/time/value and unavailable-data behavior. No field certification
+is implied by static source review.

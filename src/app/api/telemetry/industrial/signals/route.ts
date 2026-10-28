@@ -22,7 +22,15 @@ export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
   const source = params.get('source') ?? undefined;
   const target = params.get('target');
-  if ((source?.length ?? 0) > 120 || (target?.length ?? 0) > 128)
+  const paginated = params.has('limit') || params.has('cursor');
+  const pageSize = paginated ? Number(params.get('limit') ?? 200) : 1000;
+  const cursor = params.get('cursor') ?? undefined;
+  if (
+    (source?.length ?? 0) > 120 ||
+    (target?.length ?? 0) > 128 ||
+    (paginated && (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 500)) ||
+    (cursor !== undefined && !/^[a-f0-9]{64}$/.test(cursor))
+  )
     return Response.json({ error: 'INVALID_FILTER' }, { status: 400 });
   try {
     let manifest;
@@ -33,9 +41,13 @@ export async function GET(request: Request) {
       manifest = null;
       publicationUnavailable = true;
     }
-    const all = await (await getObservationStore()).list(source, 1000, target ?? undefined);
+    const all = await (
+      await getObservationStore()
+    ).list(source, paginated ? pageSize + 1 : 1000, target ?? undefined, cursor);
+    const hasNext = paginated && all.length > pageSize;
+    const page = hasNext ? all.slice(0, pageSize) : all;
     const registry = await logicalRegistry();
-    const associated = associateLogicalSignals(all, registry);
+    const associated = associateLogicalSignals(page, registry);
     const signals = associated
       .filter((s) => !target || s.targetId === target)
       .map((s) => {
@@ -47,7 +59,7 @@ export async function GET(request: Request) {
         };
       });
     const unobservedPublishedPoints = [];
-    if (manifest && !source && !target) {
+    if (manifest && !source && !target && !paginated) {
       const observed = new Set(
         (
           await (
@@ -91,8 +103,9 @@ export async function GET(request: Request) {
             ? 'CONFIGURED'
             : 'NOT_CONFIGURED',
         correlations: correlateObservations(signals),
-        limit: 1000,
-        truncated: all.length === 1000,
+        limit: pageSize,
+        truncated: hasNext || (!paginated && all.length === 1000),
+        nextCursor: hasNext ? page.at(-1)!.id : null,
       },
       { headers: { 'Cache-Control': 'no-store' } },
     );

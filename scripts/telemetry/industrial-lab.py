@@ -21,7 +21,11 @@ def main():
     parser.add_argument('--bfdb-dir', type=Path, required=True)
     parser.add_argument('--subnet', default='172.30.54.0/24')
     parser.add_argument('--action', choices=['prepare', 'up', 'stop', 'status', 'logs'], default='prepare')
+    parser.add_argument('--snmp-sweep-count', type=int, default=0,
+                        help='Opt-in simulated SNMP inventory per controller (0 or 1..10000)')
     args = parser.parse_args()
+    if not 0 <= args.snmp_sweep_count <= 10000:
+        parser.error('--snmp-sweep-count must be 0..10000')
     bfdb = args.bfdb_dir.resolve()
     for filename in ['Dockerfile', 'apps/snmp-emulator/eltek-lab-service.mjs', 'config/eltek-sequence.example.json']:
         if not (bfdb / filename).is_file():
@@ -46,9 +50,33 @@ def main():
         target = lab / dst
         if not target.exists():
             save(target, json.loads((config / src).read_text()))
+        # Bind-mounted into non-root Node containers; only this private LAB's
+        # non-secret config needs world-read, while parent lab directory stays 0700.
+        target.chmod(0o644)
     profiles_path = lab / 'profiles.json'
     if not profiles_path.exists():
         save(profiles_path, json.loads((config / 'profiles.example.json').read_text()))
+    if args.snmp_sweep_count:
+        # Separate lab-only interpretation file; never rewrite approved source profiles.
+        rich_profiles_path = lab / 'profiles-rich.json'
+        if not rich_profiles_path.exists():
+            baseline = json.loads(profiles_path.read_text())
+            for profile in baseline:
+                if profile.get('protocol') != 'SNMP':
+                    continue
+                if not str(profile.get('sourceIdentity', '')).startswith('EMU-SNMP-QDF-'):
+                    continue
+                profile['version'] = 'synthetic-eltek-54-rich-v1'
+                for rule in profile.get('rules', []):
+                    if rule.get('key') == '1.3.6.1.4.1.12148.10.10.5.5.0':
+                        rule.update(scale=0.01, evidence='Synthetic 5389 -> 53.89 V; not field certification')
+                    if rule.get('key') == '1.3.6.1.4.1.12148.10.9.2.5.0':
+                        rule.update(scale=1, evidence='Synthetic 91 -> 91 A; not field certification')
+            save(rich_profiles_path, baseline)
+        profiles_path = rich_profiles_path
+    # Profile files contain no credentials; root-owned container mounts must
+    # be readable by the unprivileged node runtime (UID can differ from host).
+    profiles_path.chmod(0o644)
     broker = lab / 'mosquitto.conf'
     broker.write_text('listener 1883\nallow_anonymous true\npersistence false\n')
     profiles = json.loads(profiles_path.read_text())
@@ -58,6 +86,7 @@ def main():
                             'INDUSTRIAL_LOGICAL_POINTS_FILE': '/config/logical.json',
                             'INDUSTRIAL_PROFILES_FILE': '/config/industrial-profiles.json',
                             'MQTT_EXPECTED_SOURCES': 'EMU-BFDB-01,EMU-BFDB-02,EMU-BFDB-03',
+                            'SNMP_INGEST_MAX_RPM': '2000' if args.snmp_sweep_count else '120',
                         },
                         'volumes': [
                             str(lab / 'logical.json') + ':/config/logical.json:ro',
@@ -86,7 +115,9 @@ def main():
            volumes=[str(bfdb / 'config/eltek-sequence.example.json') + ':/config/sequence.json:ro'],
            environment=dict(SNMP_VERSION='3', SNMP_V3_USERNAME=user['name'], SNMP_V3_AUTH_KEY=s['auth'],
                             SNMP_V3_PRIV_KEY=s['priv'], SNMP_TRAP_TARGET_HOST='snmp-traps', SNMP_TRAP_TARGET_PORT='1162',
-                            SNMP_TRAP_INFORM='true', SNMP_SEQUENCE_FILE='/config/sequence.json', SNMP_AGENT_PORT='1161'))
+                            SNMP_TRAP_INFORM='true', SNMP_SEQUENCE_FILE='/config/sequence.json', SNMP_AGENT_PORT='1161',
+                            SNMP_LAB_SWEEP_COUNT=str(args.snmp_sweep_count), SNMP_LAB_SWEEP_BATCH='16',
+                            SNMP_LAB_SWEEP_INTERVAL_MS='150'))
     services['snmp-traps'] = {'environment': {'SNMP_TRAP_SOURCES_JSON': json.dumps(sources, separators=(',', ':'))}}
     # Preserve the isolated MQTT/SNMP lab while restoring host-loopback published ports.
     # Internal-only Docker networks cannot expose their published ports to the host.
@@ -113,7 +144,9 @@ def main():
                # exceeding the operating system's per-environment-value limit.
                MODBUS_POINTS_LOCAL_PATH=str(lab / 'points.json'), INDUSTRIAL_PROFILES_JSON='[]',
                INDUSTRIAL_INGEST_SOURCES_JSON=json.dumps({s['sourceIdentity']: s['token'] for s in sources}),
-               SNMP_TRAP_SOURCES_JSON=json.dumps(sources, separators=(',', ':')), SNMP_TRAP_ENGINE_ID='8000b983800001202610230001')
+               SNMP_TRAP_SOURCES_JSON=json.dumps(sources, separators=(',', ':')), SNMP_TRAP_ENGINE_ID='8000b983800001202610230001',
+               SNMP_TRAP_MAX_PENDING='5000' if args.snmp_sweep_count else '1000',
+               SNMP_INGEST_MAX_RPM='2000' if args.snmp_sweep_count else '120')
     envfile = lab / 'lab.env'
     envfile.write_text('\n'.join(key + "='" + str(value).replace("'", "\\'") + "'" for key, value in env.items()) + '\n')
     envfile.chmod(0o600)

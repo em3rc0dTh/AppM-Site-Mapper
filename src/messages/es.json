@@ -1109,7 +1109,8 @@
     "historicalSource": "Fuente histórica",
     "industrialHistoryUnavailable": "Histórico industrial no disponible",
     "industrialHistoryEmpty": "Sin muestras en las últimas 24 horas",
-    "industrialHistoryLimited": "Se muestran las 1.000 muestras más recientes."
+    "industrialHistoryLimited": "Se muestran las 1.000 muestras más recientes.",
+    "rawLabel": "RAW ({type}):"
   },
   "telemetryLens": {
     "context": "DIAGNÓSTICO CONTEXTUAL",
@@ -1998,5 +1999,36 @@
     "mk1_channel_2": "→ canal",
     "mk1_i_confirm_removing_this_association_without_deleting_its_history": "Confirmo retirar esta asociación sin borrar su historial.",
     "mk1_remove_mapping": "Retirar mapeo"
+  },
+  "industrialSignalExplorer": {
+    "show": "Abrir inspector universal SNMP / Industrial",
+    "hide": "Ocultar inspector universal SNMP / Industrial",
+    "description": "Todas las señales recibidas, incluidos OID desconocidos, ceros y estados sin MIB. Los valores RAW no implican unidades de ingeniería verificadas.",
+    "sourceLabel": "Fuente SNMP (identidad exacta)",
+    "sourcePlaceholder": "Todos los orígenes",
+    "filter": "Filtrar",
+    "refresh": "Actualizar",
+    "invalidResponse": "Respuesta del catálogo inválida",
+    "catalogUnavailable": "Catálogo industrial no disponible",
+    "loading": "Consultando catálogo de señales…",
+    "error": "Error: {reason}",
+    "count": "{count} señales en esta página",
+    "source": " · Fuente: {source}",
+    "empty": "No hay señales recibidas para este filtro.",
+    "variable": "Variable / OID",
+    "raw": "Valor original (RAW)",
+    "interpretation": "Interpretación",
+    "quality": "Calidad",
+    "sourceTime": "Fuente y fecha",
+    "metasys": "Metasys / Modbus",
+    "oidUnknown": "OID sin nombre MIB",
+    "snmpType": "Tipo SNMP: {type}",
+    "uninterpreted": "Sin interpretación",
+    "unassigned": "Sin asignación",
+    "modbusPoint": "FC03 · Unidad {unit} · offset {address}",
+    "pageNavigation": "Páginas del catálogo SNMP",
+    "previous": "Anterior",
+    "page": "Página {page}",
+    "next": "Siguiente"
   }
 }

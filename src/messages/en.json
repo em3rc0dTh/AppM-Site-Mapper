@@ -1109,7 +1109,8 @@
     "historicalSource": "Historical source",
     "industrialHistoryUnavailable": "Industrial history unavailable",
     "industrialHistoryEmpty": "No samples in the last 24 hours",
-    "industrialHistoryLimited": "Showing the latest 1,000 samples."
+    "industrialHistoryLimited": "Showing the latest 1,000 samples.",
+    "rawLabel": "RAW ({type}):"
   },
   "telemetryLens": {
     "context": "CONTEXTUAL DIAGNOSTIC",
@@ -1998,5 +1999,36 @@
     "mk1_channel_2": "→ channel",
     "mk1_i_confirm_removing_this_association_without_deleting_its_history": "I confirm removing this association without deleting its history.",
     "mk1_remove_mapping": "Remove mapping"
+  },
+  "industrialSignalExplorer": {
+    "show": "Open universal SNMP / Industrial inspector",
+    "hide": "Hide universal SNMP / Industrial inspector",
+    "description": "All received signals, including unknown OIDs, zero values, and states without a MIB. RAW values do not imply validated engineering units.",
+    "sourceLabel": "SNMP source (exact identity)",
+    "sourcePlaceholder": "All sources",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "invalidResponse": "Invalid catalog response",
+    "catalogUnavailable": "Industrial catalog unavailable",
+    "loading": "Loading signal catalog…",
+    "error": "Error: {reason}",
+    "count": "{count} signals on this page",
+    "source": " · Source: {source}",
+    "empty": "No signals received for this filter.",
+    "variable": "Variable / OID",
+    "raw": "Original value (RAW)",
+    "interpretation": "Interpretation",
+    "quality": "Quality",
+    "sourceTime": "Source and time",
+    "metasys": "Metasys / Modbus",
+    "oidUnknown": "OID without MIB name",
+    "snmpType": "SNMP type: {type}",
+    "uninterpreted": "Uninterpreted",
+    "unassigned": "Unassigned",
+    "modbusPoint": "FC03 · Unit {unit} · offset {address}",
+    "pageNavigation": "SNMP catalog pages",
+    "previous": "Previous",
+    "page": "Page {page}",
+    "next": "Next"
   }
 }

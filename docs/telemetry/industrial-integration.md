@@ -212,7 +212,8 @@ explicitly associated signals exist; navigation, styling, topology and existing 
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | `POST /ingest`                             | Per-source collector bearer, bounded SNMP captures and durable source quota                      |
 | `POST /projection`                         | Distinct machine bearer; only requested signal IDs, maximum 10,000                               |
-| `GET /signals?source=...&target=...`       | Catalog, quality and evidence-only correlations; maximum 1,000 rows with truncation indication   |
+| `GET /signals?source=...&target=...`       | Original catalog view, max 1,000 entries; `truncated` indicates possible additional pages         |
+| `GET /signals?source=...&limit=200&cursor=<signalId>` | Opt-in forward pagination (1–500/page) for all OIDs, including unmapped and unknown signals; `nextCursor` is an opaque catalog position |
 | `GET /history?signalId=...&cursor=...`     | 100 original normalized observations per page; cursor includes timestamp/event ID to retain ties |
 | `GET /events?id=...`                       | Retained original capture associated with an observation                                         |
 
@@ -241,3 +242,30 @@ USM/communities, decimal scales, sensor-to-inventory associations, actual emitte
 A/B wiring, approved Metasys table, deployment network/TLS, backup/restore drills, larger capacity
 benchmarks and operator visual acceptance. Supplied photographs/PDFs/XLSX are references; this
 change does not publish their customer data or invent those missing associations.
+
+## 2026-10-28 additive acceptance — universal visibility and Timescale RAW
+
+The new collapsed universal SNMP/Industrial explorer under `/telemetry` uses
+`GET /signals?limit=200&cursor=...` and can filter by exact `source`. Each row shows
+the original OID, RAW type/value (using the last observed RAW when an earlier known
+interpretation is retained), quality, source, time and publication status.
+The existing Equipment inspector also shows RAW for assigned signals and their
+historical series. Neither view invents units for uncommissioned observations.
+
+For NEW industrial observations, `industrial_observations.sample` in TimescaleDB
+now includes the per-signal `rawValue` and `rawType` along with normalized fields.
+The complete raw PDU remains separately durable in MongoDB. Existing Timescale rows
+are not rewritten or backfilled; `numeric_value` stays NULL for unverified raw numerics.
+The existing Mongo transactional outbox and idempotent Timescale delivery remain
+mandatory. Enable `INDUSTRIAL_TIMESCALE_ENABLED=true` and inspect
+`GET /api/telemetry/industrial/diagnostics` for delivery failures/lag; a successful
+SNMP HTTP receipt is not evidence of successful Timescale commit.
+
+Publication to Metasys remains **explicit and additive**, using the already implemented
+immutable manifest generator and registry. The legacy FC03 addresses 0–767 remain
+untouched; the approved industrial extension starts at 1024 (FLOAT32 ABCD value
+and UINT16 quality). Do not coerce arbitrary strings, binary values or unknown
+measurements into plausible FLOAT32 values. Publishing any specific field controller
+requires verified engineering scale and approved Metasys address/quality semantics.
+
+Acceptance still needs real device, OT route, Metasys polling and storage verification.

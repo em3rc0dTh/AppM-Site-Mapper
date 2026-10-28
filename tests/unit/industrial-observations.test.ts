@@ -148,4 +148,51 @@ describe('industrial observations', () => {
       });
     }
   });
+  it('paginates unknown SNMP varbinds without dropping raw zero, disabled codes or binary data', async () => {
+    const store = new MemoryObservationStore();
+    const source: SourceProfile = {
+      sourceIdentity: 'EMU-RAW',
+      protocol: 'SNMP',
+      version: 'raw-1',
+      staleMs: 30000,
+      rules: [],
+    };
+    const entries = [
+      { oid: '1.3.6.1.4.1.99999.1.0', type: 2, value: 0 },
+      { oid: '1.3.6.1.4.1.99999.2.0', type: 2, value: 4 },
+      { oid: '1.3.6.1.4.1.99999.3.0', type: 4, value: { encoding: 'base64', bytes: 'AAEC' } },
+      { oid: '1.3.6.1.4.1.99999.4.0', type: 4, value: 'pushbutton(0)' },
+      { oid: '1.3.6.1.4.1.99999.5.0', type: 4, value: 'vendor extension' },
+    ];
+    for (let i = 0; i < entries.length; i++) {
+      await store.commit(
+        normalizeObservations(
+          {
+            protocol: 'SNMP',
+            sourceIdentity: 'EMU-RAW',
+            transport: 'trap',
+            receivedAt: time,
+            messageId: 'raw-' + i,
+            raw: { varbinds: [entries[i]] },
+          },
+          source,
+        ),
+      );
+    }
+    const first = await store.list('EMU-RAW', 2);
+    const second = await store.list('EMU-RAW', 2, undefined, first.at(-1)!.id);
+    const third = await store.list('EMU-RAW', 2, undefined, second.at(-1)!.id);
+    const all = [...first, ...second, ...third];
+    expect(all).toHaveLength(5);
+    expect(new Set(all.map((signal) => signal.id)).size).toBe(5);
+    expect(all.every((signal) => signal.quality === 'UNKNOWN')).toBe(true);
+    expect(all.map((signal) => signal.rawValue)).toEqual(expect.arrayContaining([
+      0,
+      4,
+      { encoding: 'base64', bytes: 'AAEC' },
+      'pushbutton(0)',
+      'vendor extension',
+    ]));
+  });
+
 });

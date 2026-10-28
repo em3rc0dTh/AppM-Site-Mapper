@@ -23,7 +23,7 @@ time out after 10 seconds; retry backoff is bounded at 5 minutes. Each app repli
 
 The additive `industrial_observations` hypertable keeps normalized numeric value, original signal/event
 reference, source, protocol, logical identity, kind, unit, quality, timestamps and normalized provenance.
-Original raw values stay in Mongo. There is no new write to `telemetry_samples` or
+The full original PDU stays in Mongo. As of the 2026-10-28 additive change, new Timescale `sample` JSONB rows also include each signal's `rawValue` and `rawType` (previous rows are not backfilled). There is no new write to `telemetry_samples` or
 `telemetry_entity_samples`: their existing electrical paths are preserved. The industrial series is a
 separate representation, not another insertion into the old electrical history. No historical samples
 are backfilled automatically and no deletion policy is installed for the new hypertable.

@@ -23,23 +23,23 @@ site data in the emulated traffic.
 
 ## Observed receipt, source EMU-SNMP-QDF-01
 
-| Check | Result | Acceptance |
-| --- | ---: | --- |
-| Requested synthetic source inventory | 5,407 distinct varbind OIDs | Baseline |
-| Mongo `industrial_signals` (source + protocol) | 5,436 signals | PASS; includes enrichment/notification and GET observations |
-| Distinct private-lab synthetic OIDs in Mongo | 5,392 | PASS |
-| Mongo recorded SNMP source events | 523 | PASS |
-| Inspected original RAW tuple | `[5389, 4, 0]` | PASS |
-| Timescale distinct historical `signal_id` | 5,410 | PASS |
-| Distinct Timescale historical signals with `sample.rawValue` | 5,410 | PASS |
-| Timescale persisted raw zero observations | 4,732 | PASS |
-| Timescale events with voltage RAW = 5389 | 7 | PASS |
-| Timescale distinct signals reported UNKNOWN | 5,404 | PASS |
-| Modbus Unit 1, FC03, offset 1030 FLOAT32 | 53.88999938964844 V | PASS; synthetic ×0.01 V scale |
-| Modbus Unit 1, quality offset 1032 UINT16 | 1 (VALID) | PASS |
-| Receiver pending queue | 0 | PASS |
-| Receiver queue full / spool failure / too-large | 0 / 0 / 0 | PASS |
-| Receiver acknowledged application deliveries (all 3 sources) | 1,569 | PASS |
+| Check                                                        |                      Result | Acceptance                                                  |
+| ------------------------------------------------------------ | --------------------------: | ----------------------------------------------------------- |
+| Requested synthetic source inventory                         | 5,407 distinct varbind OIDs | Baseline                                                    |
+| Mongo `industrial_signals` (source + protocol)               |               5,436 signals | PASS; includes enrichment/notification and GET observations |
+| Distinct private-lab synthetic OIDs in Mongo                 |                       5,392 | PASS                                                        |
+| Mongo recorded SNMP source events                            |                         523 | PASS                                                        |
+| Inspected original RAW tuple                                 |              `[5389, 4, 0]` | PASS                                                        |
+| Timescale distinct historical `signal_id`                    |                       5,410 | PASS                                                        |
+| Distinct Timescale historical signals with `sample.rawValue` |                       5,410 | PASS                                                        |
+| Timescale persisted raw zero observations                    |                       4,732 | PASS                                                        |
+| Timescale events with voltage RAW = 5389                     |                           7 | PASS                                                        |
+| Timescale distinct signals reported UNKNOWN                  |                       5,404 | PASS                                                        |
+| Modbus Unit 1, FC03, offset 1030 FLOAT32                     |         53.88999938964844 V | PASS; synthetic ×0.01 V scale                               |
+| Modbus Unit 1, quality offset 1032 UINT16                    |                   1 (VALID) | PASS                                                        |
+| Receiver pending queue                                       |                           0 | PASS                                                        |
+| Receiver queue full / spool failure / too-large              |                   0 / 0 / 0 | PASS                                                        |
+| Receiver acknowledged application deliveries (all 3 sources) |                       1,569 | PASS                                                        |
 
 Counts above are **observed receipt values**, not a promise of exact counts
 on every rerun; periodic GET and sequence traps can add observations.

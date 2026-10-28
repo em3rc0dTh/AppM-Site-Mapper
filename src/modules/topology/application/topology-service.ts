@@ -466,8 +466,11 @@ export class TopologyService {
       }
     }
 
-    if (node.kind === 'DEVICE' && parent?.kind === 'CONTAINER_RACK' &&
-        parent.placementState === 'AUTO_PROVISIONAL') {
+    if (
+      node.kind === 'DEVICE' &&
+      parent?.kind === 'CONTAINER_RACK' &&
+      parent.placementState === 'AUTO_PROVISIONAL'
+    ) {
       if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
       const plan = await prepareDeviceRackPlacement(this.repository, parent, node);
       if ('error' in plan) return failure(plan.error);

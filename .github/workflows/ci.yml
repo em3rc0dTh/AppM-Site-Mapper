@@ -32,15 +32,6 @@ jobs:
       - name: Install industrial SNMP wire-test dependency
         run: npm ci --prefix infra/snmp-collector --no-audit --no-fund
 
-      # Temporary formatter receipt for the BDFB feature branch; restored before merge.
-      - name: BDFB formatter receipt
-        run: |
-          npx prettier --write src/modules/topology/domain/entities.ts src/modules/spatial/domain/layout-draft.ts src/modules/spatial/application/layout-editor-service.ts src/components/blueprint/room-layout-editor.tsx src/modules/spatial/application/bdfb-automatic-placement.ts src/modules/topology/application/topology-service.ts src/app/api/topology/route.ts tests/unit/bdfb-auto-placement.test.ts docs/architecture/bdfb-physical-placement.md
-          node -e 'const fs=require("node:fs"); for(const p of ["src/modules/topology/domain/entities.ts","src/modules/spatial/domain/layout-draft.ts","src/modules/spatial/application/layout-editor-service.ts","src/components/blueprint/room-layout-editor.tsx","src/modules/spatial/application/bdfb-automatic-placement.ts","src/modules/topology/application/topology-service.ts","src/app/api/topology/route.ts","tests/unit/bdfb-auto-placement.test.ts","docs/architecture/bdfb-physical-placement.md"]) console.log("BDFB_FORMAT_BEGIN "+p+" "+fs.readFileSync(p).toString("base64")+" BDFB_FORMAT_END");'
-          npm run typecheck
-          npm run lint
-          npx vitest run tests/unit/bdfb-auto-placement.test.ts
-
       - name: Industrial wire contracts and stable Modbus extensions
         run: npm run test:industrial
 

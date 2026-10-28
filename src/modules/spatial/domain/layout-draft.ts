@@ -180,7 +180,7 @@ export function findNextRackPlacement(
     const otherBounds = polygonBounds(other.polygon);
     if (otherBounds) candidates.add(right ? otherBounds.minX - width : otherBounds.maxX);
   }
-  for (const x of [...candidates].sort((left, right) => right ? right - left : left - right)) {
+  for (const x of [...candidates].sort((left, right) => (right ? right - left : left - right))) {
     if (x < bounds.minX || x + width > bounds.maxX) continue;
 
     const point = { x, y: bounds.minY };
@@ -289,7 +289,8 @@ export function validateLayoutDraft(value: unknown): string | null {
       r.totalU < 1 ||
       r.totalU > 100 ||
       (r.placementState !== undefined &&
-        r.placementState !== 'AUTO_PROVISIONAL' && r.placementState !== 'CONFIRMED')
+        r.placementState !== 'AUTO_PROVISIONAL' &&
+        r.placementState !== 'CONFIRMED')
     )
       return 'INVALID_RACK';
     const normalizedRackName = r.name.trim().toLocaleLowerCase();

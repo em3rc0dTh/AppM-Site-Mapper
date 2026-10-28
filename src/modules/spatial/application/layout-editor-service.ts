@@ -54,7 +54,9 @@ export async function readLayoutDraft(
           width: r.kind === 'CONTAINER_RACK' ? (r.dimensionsMm?.width ?? 600) : 600,
           depth: r.kind === 'CONTAINER_RACK' ? (r.dimensionsMm?.depth ?? 600) : 600,
           totalU: r.kind === 'CONTAINER_RACK' ? (r.totalU ?? 42) : 42,
-          ...(r.kind === 'CONTAINER_RACK' && r.placementState ? { placementState: r.placementState } : {}),
+          ...(r.kind === 'CONTAINER_RACK' && r.placementState
+            ? { placementState: r.placementState }
+            : {}),
         };
       }),
     },
@@ -176,18 +178,27 @@ export async function prepareLayoutSave(
       variant: 'RACK',
       parentId: r.positionId,
       placementMm: { x: r.x, y: r.y },
-      placementState: old?.kind === 'CONTAINER_RACK' &&
+      placementState:
+        old?.kind === 'CONTAINER_RACK' &&
         old.placementState === 'AUTO_PROVISIONAL' &&
         r.placementState === 'AUTO_PROVISIONAL' &&
-        old.placementMm?.x === r.x && old.placementMm?.y === r.y &&
-        old.dimensionsMm?.width === r.width && old.dimensionsMm?.depth === r.depth &&
+        old.placementMm?.x === r.x &&
+        old.placementMm?.y === r.y &&
+        old.dimensionsMm?.width === r.width &&
+        old.dimensionsMm?.depth === r.depth &&
         (() => {
           const initial = original.get(old.parentId);
           const current = draft.positions.find((position) => position.id === r.positionId);
-          return initial?.kind === 'POSITION' && current?.row === initial.coordinate.row &&
-            current?.column === initial.coordinate.column;
-        })() ? 'AUTO_PROVISIONAL' :
-        old ? 'CONFIRMED' : 'AUTO_PROVISIONAL',
+          return (
+            initial?.kind === 'POSITION' &&
+            current?.row === initial.coordinate.row &&
+            current?.column === initial.coordinate.column
+          );
+        })()
+          ? 'AUTO_PROVISIONAL'
+          : old
+            ? 'CONFIRMED'
+            : 'AUTO_PROVISIONAL',
       dimensionsMm: { width: r.width, depth: r.depth },
       totalU: r.totalU,
       cas: old?.kind === 'CONTAINER_RACK' ? old.cas : initializeCas(r.totalU),

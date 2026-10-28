@@ -1,5 +1,10 @@
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
-import type { ContainerRackNode, DeviceNode, PositionNode, TopologyNode } from '@/modules/topology/domain/entities';
+import type {
+  ContainerRackNode,
+  DeviceNode,
+  PositionNode,
+  TopologyNode,
+} from '@/modules/topology/domain/entities';
 import {
   findNextRackPlacement,
   validateLayoutDraft,
@@ -25,12 +30,16 @@ export function reflowForBdfb(
   const anchor = draft.positions.find((item) => item.id === target.positionId);
   if (!anchor) return null;
   const clusterId = anchor.clusterId;
-  const moving = draft.racks.filter((item) =>
-    movableIds.has(item.id) &&
-    item.placementState === 'AUTO_PROVISIONAL' &&
-    draft.positions.some((position) =>
-      position.id === item.positionId && position.clusterId === clusterId));
-  const other = moving.filter((item) => item.id !== target.id)
+  const moving = draft.racks.filter(
+    (item) =>
+      movableIds.has(item.id) &&
+      item.placementState === 'AUTO_PROVISIONAL' &&
+      draft.positions.some(
+        (position) => position.id === item.positionId && position.clusterId === clusterId,
+      ),
+  );
+  const other = moving
+    .filter((item) => item.id !== target.id)
     .sort((a, b) => a.x - b.x || a.id.localeCompare(b.id));
   const movingIds = new Set(moving.map((item) => item.id));
   const movingPositions = new Set(moving.map((item) => item.positionId));
@@ -52,17 +61,21 @@ export function reflowForBdfb(
     next = {
       ...next,
       positions: [...next.positions, position],
-      racks: [...next.racks, {
-        ...item, x: candidate.point.x, y: candidate.point.y,
-        ...(item.id === rackId ? { placementState: 'CONFIRMED' as const } : {}),
-      }],
+      racks: [
+        ...next.racks,
+        {
+          ...item,
+          x: candidate.point.x,
+          y: candidate.point.y,
+          ...(item.id === rackId ? { placementState: 'CONFIRMED' as const } : {}),
+        },
+      ],
     };
     return true;
   }
   // Rightmost BDFB is reserved first; conventional auto-racks then pack left.
   if (!append(target, 'RIGHT_TO_LEFT')) return null;
-  for (const rack of other)
-    if (!append(rack, 'LEFT_TO_RIGHT')) return null;
+  for (const rack of other) if (!append(rack, 'LEFT_TO_RIGHT')) return null;
   return validateLayoutDraft(next) === null ? next : null;
 }
 
@@ -80,50 +93,73 @@ export async function prepareDeviceRackPlacement(
   device: DeviceNode,
 ): Promise<RackMountPlan> {
   const confirmed = {
-    ...rack, placementState: 'CONFIRMED' as const, updatedAt: freshTimestamp(rack.updatedAt),
+    ...rack,
+    placementState: 'CONFIRMED' as const,
+    updatedAt: freshTimestamp(rack.updatedAt),
   };
   if (device.deviceType !== 'BDFB') return { before: [rack], after: [confirmed] };
 
   const targetPosition = await repo.getById(rack.parentId);
-  const cluster = targetPosition?.kind === 'POSITION'
-    ? await repo.getById(targetPosition.parentId) : null;
-  const room = cluster?.kind === 'CONTAINER_CLUSTER_BAY'
-    ? await repo.getById(cluster.parentId) : null;
-  if (!targetPosition || targetPosition.kind !== 'POSITION' ||
-      !cluster || cluster.kind !== 'CONTAINER_CLUSTER_BAY' ||
-      !room || room.kind !== 'ROOM_SUBSTRUCTURE' || !room.polygon ||
-      room.lifecycle !== 'ACTIVE' || cluster.lifecycle !== 'ACTIVE')
+  const cluster =
+    targetPosition?.kind === 'POSITION' ? await repo.getById(targetPosition.parentId) : null;
+  const room =
+    cluster?.kind === 'CONTAINER_CLUSTER_BAY' ? await repo.getById(cluster.parentId) : null;
+  if (
+    !targetPosition ||
+    targetPosition.kind !== 'POSITION' ||
+    !cluster ||
+    cluster.kind !== 'CONTAINER_CLUSTER_BAY' ||
+    !room ||
+    room.kind !== 'ROOM_SUBSTRUCTURE' ||
+    !room.polygon ||
+    room.lifecycle !== 'ACTIVE' ||
+    cluster.lifecycle !== 'ACTIVE'
+  )
     return { error: 'BDFB_PLACEMENT_BLOCKED' };
 
-  const clusters = (await repo.listChildren(room.id)).filter((item) =>
-    item.kind === 'CONTAINER_CLUSTER_BAY' && item.lifecycle === 'ACTIVE');
+  const clusters = (await repo.listChildren(room.id)).filter(
+    (item) => item.kind === 'CONTAINER_CLUSTER_BAY' && item.lifecycle === 'ACTIVE',
+  );
   const positions = (await Promise.all(clusters.map((item) => repo.listChildren(item.id))))
-    .flat().filter((item): item is PositionNode =>
-      item.kind === 'POSITION' && item.lifecycle === 'ACTIVE');
+    .flat()
+    .filter(
+      (item): item is PositionNode => item.kind === 'POSITION' && item.lifecycle === 'ACTIVE',
+    );
   const racks = (await Promise.all(positions.map((item) => repo.listChildren(item.id))))
-    .flat().filter((item): item is ContainerRackNode =>
-      item.kind === 'CONTAINER_RACK' && item.lifecycle === 'ACTIVE');
+    .flat()
+    .filter(
+      (item): item is ContainerRackNode =>
+        item.kind === 'CONTAINER_RACK' && item.lifecycle === 'ACTIVE',
+    );
   if (!racks.some((item) => item.id === rack.id)) return { error: 'BDFB_PLACEMENT_BLOCKED' };
 
   const draft: LayoutDraft = {
     version: room.updatedAt,
     polygon: [...room.polygon],
     clusters: clusters.map((item) => ({
-      id: item.id, name: item.name,
+      id: item.id,
+      name: item.name,
       variant: item.kind === 'CONTAINER_CLUSTER_BAY' ? item.variant : 'BAY',
       polygon: item.kind === 'CONTAINER_CLUSTER_BAY' ? [...(item.polygon ?? [])] : [],
     })),
     positions: positions.map((item) => ({
-      id: item.id, name: item.name, clusterId: item.parentId,
-      row: item.coordinate.row, column: item.coordinate.column,
+      id: item.id,
+      name: item.name,
+      clusterId: item.parentId,
+      row: item.coordinate.row,
+      column: item.coordinate.column,
     })),
     racks: racks.map((item) => {
       const position = positions.find((candidate) => candidate.id === item.parentId);
       const legacy = position ? gridCoordinateToPoint(position.coordinate) : { x: 0, y: 0 };
       return {
-        id: item.id, name: item.name, positionId: item.parentId,
-        x: item.placementMm?.x ?? legacy.x, y: item.placementMm?.y ?? legacy.y,
-        width: item.dimensionsMm?.width ?? 600, depth: item.dimensionsMm?.depth ?? 600,
+        id: item.id,
+        name: item.name,
+        positionId: item.parentId,
+        x: item.placementMm?.x ?? legacy.x,
+        y: item.placementMm?.y ?? legacy.y,
+        width: item.dimensionsMm?.width ?? 600,
+        depth: item.dimensionsMm?.depth ?? 600,
         totalU: item.totalU ?? 42,
         ...(item.placementState ? { placementState: item.placementState } : {}),
       };
@@ -132,13 +168,17 @@ export async function prepareDeviceRackPlacement(
 
   // Physical occupants are authoritative: an empty auto-rack may move;
   // an occupied or historical rack always remains at its confirmed coordinate.
-  const provisional = racks.filter((item) =>
-    item.placementState === 'AUTO_PROVISIONAL' &&
-    positions.some((p) => p.id === item.parentId && p.parentId === cluster.id));
-  const occupied = await Promise.all(provisional.map(async (item) => ({
-    id: item.id,
-    occupied: (await repo.listChildren(item.id)).some((child) => child.lifecycle === 'ACTIVE'),
-  })));
+  const provisional = racks.filter(
+    (item) =>
+      item.placementState === 'AUTO_PROVISIONAL' &&
+      positions.some((p) => p.id === item.parentId && p.parentId === cluster.id),
+  );
+  const occupied = await Promise.all(
+    provisional.map(async (item) => ({
+      id: item.id,
+      occupied: (await repo.listChildren(item.id)).some((child) => child.lifecycle === 'ACTIVE'),
+    })),
+  );
   const movable = new Set(occupied.filter((item) => !item.occupied).map((item) => item.id));
   const planned = reflowForBdfb(draft, rack.id, movable);
   if (!planned) return { error: 'BDFB_PLACEMENT_BLOCKED' };
@@ -152,8 +192,10 @@ export async function prepareDeviceRackPlacement(
     const previous = rackById.get(latest.id)!;
     const originalPosition = positionById.get(latest.positionId)!;
     const updatedPosition = planned.positions.find((item) => item.id === latest.positionId)!;
-    if (originalPosition.coordinate.row !== updatedPosition.row ||
-        originalPosition.coordinate.column !== updatedPosition.column) {
+    if (
+      originalPosition.coordinate.row !== updatedPosition.row ||
+      originalPosition.coordinate.column !== updatedPosition.column
+    ) {
       before.push(originalPosition);
       after.push({
         ...originalPosition,
@@ -162,11 +204,16 @@ export async function prepareDeviceRackPlacement(
       });
     }
     const placementState = latest.id === rack.id ? 'CONFIRMED' : 'AUTO_PROVISIONAL';
-    if (previous.placementMm?.x !== latest.x || previous.placementMm?.y !== latest.y ||
-        previous.placementState !== placementState) {
+    if (
+      previous.placementMm?.x !== latest.x ||
+      previous.placementMm?.y !== latest.y ||
+      previous.placementState !== placementState
+    ) {
       before.push(previous);
       after.push({
-        ...previous, placementMm: { x: latest.x, y: latest.y }, placementState,
+        ...previous,
+        placementMm: { x: latest.x, y: latest.y },
+        placementState,
         updatedAt: freshTimestamp(previous.updatedAt),
       });
     }

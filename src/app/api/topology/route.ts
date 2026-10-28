@@ -279,7 +279,7 @@ async function handlePOST(request: Request) {
           result.error === 'LAYOUT_CONFLICT' ||
           result.error === 'SERIAL_ALREADY_ASSIGNED' ||
           result.error === 'POSITION_OCCUPIED' ||
-           result.error === 'BDFB_PLACEMENT_BLOCKED'
+          result.error === 'BDFB_PLACEMENT_BLOCKED'
             ? 409
             : 422,
       },

@@ -12,7 +12,12 @@ import { UserAdminTable } from '@/components/settings/user-admin-table';
 import { UserCreateForm } from '@/components/settings/user-create-form';
 import { parseAppEnvironment } from '@/config/env';
 import { AuthService } from '@/modules/identity/application/auth-service';
-import { requirePermission } from '@/modules/identity/application/current-session';
+import { getCurrentSessionUser } from '@/modules/identity/application/current-session';
+import {
+  resolveSettingsTab,
+  settingsTabSlug,
+  visibleSettingsTabs,
+} from '@/modules/settings/domain/settings-access';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { getIdentityRuntime } from '@/modules/identity/infrastructure/identity-runtime';
 import { getPersistenceMode } from '@/modules/topology/infrastructure/topology-repository-factory';
@@ -26,35 +31,21 @@ export default async function SettingsPage({
 }) {
   const query = await searchParams;
   const t = await getTranslations('pages.settings');
-  const auth = await requirePermission('settings:read');
+  // Valid sessions may access personal settings even without admin permissions.
+  const user = await getCurrentSessionUser();
+  if (!user) redirect('/login');
+  if (user.mustChangePassword) redirect('/change-password');
 
-  if (!auth.ok) {
-    redirect('/login');
-  }
-
-  const canWrite = hasPermission(auth.value.role, 'settings:write');
-  const canManageUsers = hasPermission(auth.value.role, 'users:manage');
+  const canManageUsers = hasPermission(user.role, 'users:manage');
   const runtime = await getIdentityRuntime();
   const usersResult = canManageUsers
-    ? await new AuthService(runtime.repository, runtime.throttle).listUsers(auth.value)
+    ? await new AuthService(runtime.repository, runtime.throttle).listUsers(user)
     : null;
   const users = usersResult?.ok ? usersResult.value : [];
   const appEnvironment = parseAppEnvironment(process.env.APP_ENV);
 
-  const tabs = [
-    'Profile',
-    'Security',
-    'Users',
-    'Roles',
-    'Data Import',
-    'Drafting',
-    'System',
-    'Danger Zone',
-  ];
-  const visible = tabs.filter((tab) => tab !== 'Users' || canManageUsers);
-  const active =
-    visible.find((tab) => tab.toLowerCase().replaceAll(' ', '-') === query.tab) ??
-    (canManageUsers ? 'Users' : 'Profile');
+  const visible = visibleSettingsTabs(user.role);
+  const active = resolveSettingsTab(user.role, query.tab);
   const permissions: Permission[] = [
     'topology:read',
     'topology:write',
@@ -88,7 +79,7 @@ export default async function SettingsPage({
           {visible.map((tab) => (
             <Link
               key={tab}
-              href={`/settings?tab=${tab.toLowerCase().replaceAll(' ', '-')}`}
+              href={`/settings?tab=${settingsTabSlug(tab)}`}
               aria-current={active === tab ? 'page' : undefined}
             >
               <span className="zip-settings-icon" aria-hidden="true">
@@ -115,9 +106,9 @@ export default async function SettingsPage({
             <>
               <h2>{t('tabs.profile')}</h2>
               <p>
-                {auth.value.email} · {auth.value.role}
+                {user.email} · {user.role}
               </p>
-              {canWrite && <ProfileForm displayName={auth.value.displayName} />}
+              <ProfileForm displayName={user.displayName} />
               <LanguageSwitcher />
             </>
           )}
@@ -137,7 +128,7 @@ export default async function SettingsPage({
                   <UserCreateForm />
                 </details>
               </div>
-              <UserAdminTable currentUserId={auth.value.id} users={users} />
+              <UserAdminTable currentUserId={user.id} users={users} />
             </>
           )}
           {active === 'Roles' && (
@@ -167,7 +158,7 @@ export default async function SettingsPage({
             </>
           )}
           {active === 'Data Import' &&
-            (hasPermission(auth.value.role, 'topology:write') ? (
+            (hasPermission(user.role, 'topology:write') ? (
               <LayoutImport />
             ) : (
               <p>{t('importDenied')}</p>

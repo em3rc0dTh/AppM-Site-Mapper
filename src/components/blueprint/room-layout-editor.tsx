@@ -4,6 +4,7 @@ import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { BlueprintCanvas } from './blueprint-canvas';
+import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
 import { PolygonEditor } from '@/components/spatial/polygon-editor';
 import {
   findNextRackPlacement,
@@ -35,6 +36,7 @@ export function RoomLayoutEditor({
   roomId,
   initial,
   canWrite,
+  canDelete,
   focusRackId,
   focusBayId,
   focusPositionId,
@@ -42,6 +44,7 @@ export function RoomLayoutEditor({
   roomId: string;
   initial: LayoutDraft;
   canWrite: boolean;
+  canDelete: boolean;
   focusRackId?: string | undefined;
   focusBayId?: string | undefined;
   focusPositionId?: string | undefined;
@@ -229,6 +232,12 @@ export function RoomLayoutEditor({
     }
   }
   function remove() {
+    if (
+      [...saved.clusters, ...saved.positions, ...saved.racks].some((item) => item.id === selected)
+    ) {
+      setError(t('persistedDeleteRequired'));
+      return;
+    }
     if (draft.clusters.some((c) => c.id === selected)) {
       if (draft.positions.some((p) => p.clusterId === selected)) {
         setError(t('removePositions'));
@@ -287,6 +296,9 @@ export function RoomLayoutEditor({
     }
     setBoundary(null);
   }
+  const savedSelection = [...saved.clusters, ...saved.positions, ...saved.racks].find(
+    (n) => n.id === selected,
+  );
   const bay = draft.clusters.find((c) => c.id === selected);
   const rack = draft.racks.find((r) => r.id === selected);
   const position = draft.positions.find((p) => p.id === (rack?.positionId ?? selected));
@@ -626,7 +638,14 @@ export function RoomLayoutEditor({
                   <button>{t('applyRack')}</button>
                 </form>
               )}
-              <button type="button" disabled={!selected || !!placement} onClick={remove}>
+              {savedSelection && canDelete ? (
+                <DeleteEntityControl id={savedSelection.id} name={savedSelection.name} />
+              ) : null}
+              <button
+                type="button"
+                disabled={!selected || !!placement || !!savedSelection}
+                onClick={remove}
+              >
                 {t('removeSelected')}
               </button>
               <p>{t('archiveHelp')}</p>

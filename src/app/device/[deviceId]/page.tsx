@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { EquipmentCompositionEditor } from '@/components/equipment/equipment-composition-editor';
+import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
 import { EquipmentFocusInspector } from '@/components/equipment/equipment-focus-inspector';
 import { AccessPortEditor } from '@/components/equipment/access-port-editor';
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
@@ -30,6 +31,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
 
   const canWritePower = hasPermission(auth.value.role, 'power:write');
   const canWriteTopology = hasPermission(auth.value.role, 'topology:write');
+  const canDelete = hasPermission(auth.value.role, 'system:danger');
   const canReadTelemetry = hasPermission(auth.value.role, 'telemetry:read');
   const canReadIndustrialSettings = hasPermission(auth.value.role, 'settings:read');
   const { deviceId } = await params;
@@ -39,7 +41,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   if (
     !node ||
     (node.kind !== 'DEVICE' && node.kind !== 'EQUIPMENT') ||
-    (node.kind === 'DEVICE' && node.lifecycle !== 'ACTIVE')
+    node.lifecycle !== 'ACTIVE'
   ) {
     notFound();
   }
@@ -354,12 +356,16 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
 
         <section className="zip-device-stage">
           <h1>{node.kind === 'EQUIPMENT' ? t('composition') : t('elevation')}</h1>
+          {node.kind === 'DEVICE' && canDelete ? (
+            <DeleteEntityControl id={node.id} name={node.name} />
+          ) : null}
           {node.kind === 'EQUIPMENT' ? (
             <EquipmentCompositionEditor
               equipment={node}
               childEquipment={directEquipmentChildren}
               familyEquipment={familyEquipment}
               canWrite={canWriteTopology}
+              canDelete={canDelete}
               canWritePower={canWritePower}
               canReadTelemetry={canReadTelemetry}
               breakerTelemetryBindings={breakerTelemetryBindings}

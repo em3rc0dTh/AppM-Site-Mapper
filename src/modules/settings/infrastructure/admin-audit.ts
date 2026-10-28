@@ -12,14 +12,21 @@ export interface AdminAudit {
   action: string;
   targetId: string;
   at: string;
+  details?: Readonly<Record<string, unknown>>;
 }
-export async function recordAdminAudit(actorId: string, action: string, targetId: string) {
+export async function recordAdminAudit(
+  actorId: string,
+  action: string,
+  targetId: string,
+  details?: Readonly<Record<string, unknown>>,
+) {
   const event: AdminAudit = {
     id: randomUUID(),
     actorId,
     action,
     targetId,
     at: new Date().toISOString(),
+    ...(details ? { details } : {}),
   };
   if (getPersistenceMode() === 'mongodb')
     await (

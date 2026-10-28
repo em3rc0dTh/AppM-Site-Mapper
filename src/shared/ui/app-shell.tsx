@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
-import { Suspense, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useState, type ReactNode } from 'react';
+import type { Role } from '@/modules/identity/domain/roles';
 
 import { CommandPalette } from './command-palette';
 import { ContextTracker } from './context-tracker';
@@ -25,6 +26,36 @@ export function AppShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const [role, setRole] = useState<Role | null>(null);
+
+  // The root layout persists across client-side login/navigation. Resolve the
+  // current role in the shell so a STANDARD user never sees the ADMIN label.
+  useEffect(() => {
+    if (pathname === '/login' || pathname === '/change-password') return;
+    const controller = new AbortController();
+    void fetch('/api/auth/session', {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        const data = (await response.json()) as { user?: { role?: Role } };
+        return data.user?.role ?? null;
+      })
+      .then((nextRole) => {
+        if (!controller.signal.aborted) {
+          setRole(
+            nextRole === 'SUPERADMIN' || nextRole === 'ADMIN' || nextRole === 'STANDARD'
+              ? nextRole
+              : null,
+          );
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setRole(null);
+      });
+    return () => controller.abort();
+  }, [pathname]);
 
   if (pathname === '/login' || pathname === '/change-password') return children;
 
@@ -54,6 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST' });
       if (!response.ok) throw new Error();
+      setRole(null);
       router.replace('/login');
       router.refresh();
     } catch {
@@ -105,7 +137,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           {t('warehouse')}
         </Link>
         <Link className="zip-account" href="/settings">
-          {t('admin')} <b>⌄</b>
+          {role === 'ADMIN' || role === 'SUPERADMIN' ? t('admin') : t('myAccount')} <b>⌄</b>
         </Link>
         <button
           className="zip-more"

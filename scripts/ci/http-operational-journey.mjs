@@ -165,6 +165,86 @@ async function main() {
   assert.equal(session.body.user.email, email);
   record('Auth: bootstrap, login cookie and authenticated session');
 
+  // Regression: a valid STANDARD user entering the top-bar ADMIN /settings link
+  // must not be mistaken for an unauthenticated user or be signed out.
+  // All identities below belong to this isolated, disposable CI database.
+  const standardEmail = 'mk1-standard-operator@local.test';
+  const temporaryPassword = 'Temporary-MK1-Standard-2026!';
+  const standardPassword = 'Active-MK1-Standard-2026!';
+  await request(
+    'POST',
+    '/api/settings/users',
+    {
+      email: standardEmail,
+      displayName: 'CI Standard Operator',
+      role: 'STANDARD',
+      temporaryPassword,
+    },
+    201,
+  );
+  const tempLogin = await request('POST', '/api/auth/login', {
+    email: standardEmail,
+    password: temporaryPassword,
+  });
+  const temporaryCookie = (tempLogin.response.headers.get('set-cookie') || '').split(';')[0];
+  assert.ok(temporaryCookie.startsWith('appm_session='));
+  // A newly created account must change its initial password before accessing settings.
+  // The redirect form is framework-dependent (HTTP redirect or streamed app redirect),
+  // so rely on the dedicated change-password flow rather than a status-only assertion.
+  const changed = await request(
+    'POST',
+    '/api/auth/change-password',
+    {
+      currentPassword: temporaryPassword,
+      newPassword: standardPassword,
+    },
+    200,
+    { cookie: temporaryCookie },
+  );
+  assert.equal(changed.body.reauthenticationRequired, true);
+  const standardLogin = await request('POST', '/api/auth/login', {
+    email: standardEmail,
+    password: standardPassword,
+  });
+  const standardCookie = (standardLogin.response.headers.get('set-cookie') || '').split(';')[0];
+  assert.ok(standardCookie.startsWith('appm_session='));
+  for (const tab of ['', '?tab=profile', '?tab=security', '?tab=users', '?tab=danger-zone']) {
+    const settingsPage = await fetch(base + '/settings' + tab, {
+      headers: { cookie: standardCookie },
+      redirect: 'manual',
+      signal: AbortSignal.timeout(30000),
+    });
+    assert.equal(
+      settingsPage.status,
+      200,
+      'STANDARD settings ' + tab + ' must not redirect to login',
+    );
+    // Next.js may stream server components and redirects through RSC in HTML.
+    // Chromium checks the actual menu labels and visibility below.
+    await settingsPage.arrayBuffer();
+  }
+  const standardSession = await request('GET', '/api/auth/session', undefined, 200, {
+    cookie: standardCookie,
+  });
+  assert.equal(standardSession.body.user.role, 'STANDARD');
+  const unauthorizedUsers = await request('GET', '/api/settings/users', undefined, 403, {
+    cookie: standardCookie,
+  });
+  assert.equal(unauthorizedUsers.body.error, 'FORBIDDEN');
+  const ownProfile = await request(
+    'PATCH',
+    '/api/settings/profile',
+    {
+      displayName: 'CI Standard Operator Updated',
+    },
+    200,
+    { cookie: standardCookie },
+  );
+  assert.equal(ownProfile.body.user.displayName, 'CI Standard Operator Updated');
+  record(
+    'STANDARD: ADMIN navigation shows personal settings without logout or privilege escalation',
+  );
+
   const network = await create('NETWORK', null, 'CI Two-Site Network');
   const lima = await makeSite(network, 'CI LIMA', '0_1', 'CI-BFDB-LIMA');
   const quito = await makeSite(network, 'CI QUITO', '0_2', 'CI-BFDB-QUITO');

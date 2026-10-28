@@ -1,5 +1,6 @@
 import { ContextPin } from '@/components/workspace/context-pin';
 import { TopologyContextTree } from '@/components/topology/context-tree';
+import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
 import { CasEditor } from '@/components/rack/cas-editor';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { hasPermission } from '@/modules/identity/domain/roles';
@@ -89,6 +90,9 @@ export default async function RackPage({
                 }
               : {})}
           />
+          {hasPermission(auth.value.role, 'system:danger') ? (
+            <DeleteEntityControl id={result.value.rack.id} name={result.value.rack.name} />
+          ) : null}
           <div className="zip-rack-elevation-footer">
             <span className="is-available">
               □ {t('available')}{' '}

@@ -10,6 +10,7 @@ on:
       - 'scripts/ci/http-operational-journey.mjs'
       - 'scripts/ci/mk1-adversarial-http.mjs'
       - 'scripts/ci/http-operational-restart.mjs'
+      - 'scripts/ci/deletion-http-journey.mjs'
       - 'scripts/ci/browser-operational-journey.mjs'
       - '.github/workflows/operational-http-e2e.yml'
       - 'src/app/api/**'
@@ -31,6 +32,7 @@ on:
       - 'scripts/ci/http-operational-journey.mjs'
       - 'scripts/ci/mk1-adversarial-http.mjs'
       - 'scripts/ci/http-operational-restart.mjs'
+      - 'scripts/ci/deletion-http-journey.mjs'
       - 'scripts/ci/browser-operational-journey.mjs'
       - 'scripts/ci/modbus-tcp-operational.mjs'
   workflow_dispatch:
@@ -166,6 +168,9 @@ jobs:
           npm run dev -- -H 127.0.0.1 -p 3100 > /tmp/mk1-http-e2e-restart.log 2>&1 &
           echo $! > /tmp/mk1-http-e2e.pid
           node scripts/ci/http-operational-restart.mjs
+
+      - name: Verify audited single and recursive DELETE with disposable MongoDB
+        run: node scripts/ci/deletion-http-journey.mjs
 
       - name: Verify canonical MongoDB integrity
         run: npm run audit:mongo -- --expect-db=${{ env.MONGODB_DB_NAME }}

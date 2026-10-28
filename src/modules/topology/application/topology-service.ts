@@ -870,6 +870,8 @@ export class TopologyService {
     if (!node) {
       return failure('NOT_FOUND');
     }
+    // A confirmed deletion is historical evidence, not a restorable archive.
+    if (node.retirement) return failure('MOVE_NOT_ALLOWED');
 
     if (node.parentId) {
       const parent = await this.repository.getById(node.parentId);

@@ -61,12 +61,104 @@ try {
   await page.getByRole('button', { name: 'SIGN IN' }).click();
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 30000 });
   console.log('[PASS] Real Chromium: interactive login redirects to authenticated workspace');
+  await page.locator('a.zip-account').getByText('ADMIN').waitFor({ timeout: 30000 });
+
+  // Reproduce the user's exact bug: a STANDARD user clicks the top-bar ADMIN
+  // link and must remain logged in on personal Settings.
+  const standardPage = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  try {
+    await standardPage.goto(base + '/login', { waitUntil: 'domcontentloaded' });
+    await standardPage.locator('input[name="email"]').fill('mk1-standard-operator@local.test');
+    await standardPage.locator('input[name="password"]').fill('Active-MK1-Standard-2026!');
+    await standardPage.getByRole('button', { name: 'SIGN IN' }).click();
+    await standardPage.waitForURL((url) => !url.pathname.includes('/login'), {
+      timeout: 30000,
+    });
+    await standardPage.locator('a.zip-account').getByText('MY ACCOUNT').waitFor({
+      timeout: 30000,
+    });
+    await standardPage.locator('a.zip-account').click();
+    await standardPage.waitForURL((url) => url.pathname === '/settings', {
+      timeout: 30000,
+    });
+    await standardPage.locator('a[href="/settings?tab=profile"]').waitFor({
+      timeout: 30000,
+    });
+    assert.equal(await standardPage.locator('a[href="/settings?tab=security"]').count(), 1);
+    assert.equal(await standardPage.locator('a[href="/settings?tab=users"]').count(), 0);
+    assert.equal(await standardPage.locator('a[href="/settings?tab=danger-zone"]').count(), 0);
+    const sessionResponse = await standardPage.request.get(base + '/api/auth/session');
+    assert.equal(sessionResponse.status(), 200);
+    assert.equal((await sessionResponse.json()).user.role, 'STANDARD');
+    await standardPage.goto(base + '/settings?tab=users', { waitUntil: 'domcontentloaded' });
+    await standardPage
+      .locator('a[href="/settings?tab=profile"][aria-current="page"]')
+      .waitFor({ timeout: 30000 });
+    assert.equal((await standardPage.request.get(base + '/api/auth/session')).status(), 200);
+    // Translation is user-local; changing the STANDARD user's language must
+    // change the account label without granting administrative privileges.
+    await standardPage.goto(base + '/settings?tab=profile', {
+      waitUntil: 'domcontentloaded',
+    });
+    await standardPage.locator('.sm-locale-control select').selectOption('es');
+    await standardPage.waitForFunction(() => document.documentElement.lang === 'es', {
+      timeout: 30000,
+    });
+    await standardPage.locator('a.zip-account').getByText('MI CUENTA').waitFor({
+      timeout: 30000,
+    });
+    await standardPage.locator('.sm-locale-control select').selectOption('en');
+    await standardPage.waitForFunction(() => document.documentElement.lang === 'en', {
+      timeout: 30000,
+    });
+    console.log('[PASS] Chromium: STANDARD sees MY ACCOUNT / MI CUENTA and stays authenticated');
+  } finally {
+    await standardPage.close();
+  }
 
   await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
   await page.getByText('CI LIMA Panel 24P').first().waitFor({ timeout: 30000 });
   await page.getByText('MQTT POINT COMMISSIONING').waitFor({ timeout: 30000 });
   await page.getByText('0_1_1').first().waitFor({ timeout: 30000 });
   console.log('[PASS] Real Chromium: created panel, commissioning and MQTT point rendered');
+
+  // Verify the new destructive workflow visually without submitting a deletion.
+  await page.locator('.mk1-delete-entity > button').first().click();
+  const englishDelete = page.getByRole('dialog');
+  await englishDelete.getByText('Deletion scope').waitFor({ timeout: 30000 });
+  await englishDelete
+    .getByText('This entity has active descendants.', { exact: false })
+    .waitFor({ timeout: 30000 });
+  assert.equal(
+    await englishDelete.getByRole('button', { name: 'Confirm deletion' }).isDisabled(),
+    true,
+    'Single deletion must remain blocked for a populated Equipment',
+  );
+  await englishDelete.getByRole('button', { name: 'Cancel' }).click();
+  console.log('[PASS] Chromium: English deletion modal, descendant warning, disabled confirmation');
+
+  // The language preference is managed from Settings, not the Device toolbar.
+  await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
+  await page.locator('.sm-locale-control select').selectOption('es');
+  await page.waitForFunction(() => document.documentElement.lang === 'es', { timeout: 30000 });
+  await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
+  await page.locator('.mk1-delete-entity > button').first().waitFor({ timeout: 30000 });
+  await page.locator('.mk1-delete-entity > button').first().click();
+  const spanishDelete = page.getByRole('dialog');
+  await spanishDelete.getByText('Alcance de la eliminación').waitFor({ timeout: 30000 });
+  await spanishDelete
+    .getByText('Esta entidad contiene descendientes activos.', { exact: false })
+    .waitFor({ timeout: 30000 });
+  assert.equal(
+    await spanishDelete.getByRole('button', { name: 'Confirmar eliminación' }).isDisabled(),
+    true,
+  );
+  await spanishDelete.getByRole('button', { name: 'Cancelar' }).click();
+  await page.goto(base + '/settings?tab=profile', { waitUntil: 'domcontentloaded' });
+  await page.locator('.sm-locale-control select').selectOption('en');
+  await page.waitForFunction(() => document.documentElement.lang === 'en', { timeout: 30000 });
+  await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
+  console.log('[PASS] Chromium: Spanish deletion modal, translated confirmation, en/es round-trip');
 
   await page.getByText('Point group 0_1').first().waitFor({ timeout: 30000 });
   await page.screenshot({ path: '/tmp/mk1-operational-browser.png', fullPage: true });

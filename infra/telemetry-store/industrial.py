@@ -46,8 +46,9 @@ def insert_industrial(dsn, payload):
         unit = s.get('unit')
         if unit is not None and (not isinstance(unit, str) or len(unit) > 64):
             raise ValueError('invalid industrial unit')
-        # Keep normalized provenance without copying the original raw capture.
-        sample = {k: v for k, v in s.items() if k != 'rawValue'}
+        # Preserve the original per-varbind value/type in Timescale history as well.
+        # The full SNMP PDU remains in MongoDB; this is the bounded signal sample.
+        sample = dict(s)
         json.dumps(sample, allow_nan=False)
         rows.append((instant(s.get('observedAt')), instant(s.get('receivedAt')), signal, event,
                      bounded(s.get('logicalPointId'), 200, True), bounded(s.get('sourceIdentity'), 120),

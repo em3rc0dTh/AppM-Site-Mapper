@@ -16,6 +16,8 @@ export type TopologyKind =
 export type RoomSubstructureVariant = 'ROOM' | 'SUBSTRUCTURE';
 export type ContainerClusterBayVariant = 'CONTAINER_CLUSTER' | 'BAY';
 export type ContainerRackVariant = 'CONTAINER' | 'RACK';
+/** Missing on historical records is CONFIRMED. */
+export type RackPlacementState = 'AUTO_PROVISIONAL' | 'CONFIRMED';
 export type CasState = 'AVAILABLE' | 'RESERVED' | 'EQUIPPED';
 
 export type DeviceType =
@@ -174,6 +176,7 @@ export interface ContainerRackNode extends TopologyBase {
   readonly parentId: string;
   readonly variant: ContainerRackVariant;
   readonly placementMm?: PhysicalPoint;
+  readonly placementState?: RackPlacementState;
   readonly dimensionsMm?: DimensionsMm;
   readonly totalU?: number;
   readonly cas: readonly CasRange[];

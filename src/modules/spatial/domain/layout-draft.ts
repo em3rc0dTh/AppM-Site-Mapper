@@ -34,6 +34,7 @@ export interface DraftRack {
   width: number;
   depth: number;
   totalU: number;
+  placementState?: 'AUTO_PROVISIONAL' | 'CONFIRMED';
 }
 export interface LayoutDraft {
   version: string;
@@ -151,6 +152,7 @@ export function findNextRackPlacement(
   clusterId: string,
   width: number,
   depth: number,
+  direction: 'LEFT_TO_RIGHT' | 'RIGHT_TO_LEFT' = 'LEFT_TO_RIGHT',
 ): RackPlacement | null {
   const cluster = draft.clusters.find((candidate) => candidate.id === clusterId);
   const bounds = cluster ? polygonBounds(cluster.polygon) : null;
@@ -166,20 +168,19 @@ export function findNextRackPlacement(
   )
     return null;
 
-  const candidates = new Set<number>([bounds.minX]);
-
+  const right = direction === 'RIGHT_TO_LEFT';
+  const candidates = new Set<number>([right ? bounds.maxX - width : bounds.minX]);
   for (const existing of draft.racks) {
     const position = draft.positions.find((candidate) => candidate.id === existing.positionId);
-    if (position?.clusterId === clusterId) candidates.add(existing.x + existing.width);
+    if (position?.clusterId === clusterId)
+      candidates.add(right ? existing.x - width : existing.x + existing.width);
   }
-
   for (const other of draft.clusters) {
     if (other.id === clusterId) continue;
     const otherBounds = polygonBounds(other.polygon);
-    if (otherBounds) candidates.add(otherBounds.maxX);
+    if (otherBounds) candidates.add(right ? otherBounds.minX - width : otherBounds.maxX);
   }
-
-  for (const x of [...candidates].sort((left, right) => left - right)) {
+  for (const x of [...candidates].sort((left, right) => right ? right - left : left - right)) {
     if (x < bounds.minX || x + width > bounds.maxX) continue;
 
     const point = { x, y: bounds.minY };
@@ -286,7 +287,9 @@ export function validateLayoutDraft(value: unknown): string | null {
       r.width > 10000 ||
       r.depth > 10000 ||
       r.totalU < 1 ||
-      r.totalU > 100
+      r.totalU > 100 ||
+      (r.placementState !== undefined &&
+        r.placementState !== 'AUTO_PROVISIONAL' && r.placementState !== 'CONFIRMED')
     )
       return 'INVALID_RACK';
     const normalizedRackName = r.name.trim().toLocaleLowerCase();

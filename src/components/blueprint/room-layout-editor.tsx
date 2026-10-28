@@ -179,6 +179,7 @@ export function RoomLayoutEditor({
             width,
             depth,
             totalU,
+            placementState: 'AUTO_PROVISIONAL',
           },
         ],
       };

@@ -202,7 +202,8 @@ async function handlePATCH(request: Request, context: Context) {
         : result.error === 'LAYOUT_CONFLICT' ||
             result.error === 'SERIAL_ALREADY_ASSIGNED' ||
             result.error === 'SLOT_OCCUPIED' ||
-            result.error === 'POSITION_OCCUPIED'
+            result.error === 'POSITION_OCCUPIED' ||
+            result.error === 'BDFB_PLACEMENT_BLOCKED'
           ? 409
           : 422;
     return NextResponse.json({ error: result.error }, { status });

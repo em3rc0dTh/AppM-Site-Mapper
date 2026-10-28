@@ -189,6 +189,30 @@ describe('BDFB-PHYS-001', () => {
     expect(await repo.getById('r2')).not.toHaveProperty('placementState');
   });
 
+  it('reflows when an existing BDFB Device is moved into a newly provisional rack', async () => {
+    const initial = draft();
+    delete initial.racks[0]!.placementState;
+    const repo = new MemoryTopologyRepository(seed(initial));
+    const service = new TopologyService(repo);
+    const created = await service.create({
+      kind: 'DEVICE',
+      parentId: 'r1',
+      name: 'Existing BFDB identity',
+      deviceType: 'BDFB',
+    });
+    expect(created.ok).toBe(true);
+    if (!created.ok) return;
+
+    const moved = await service.move(created.value.id, 'r2');
+    expect(moved.ok).toBe(true);
+    expect(await repo.getById(created.value.id)).toMatchObject({ parentId: 'r2' });
+    expect(await repo.getById('r2')).toMatchObject({
+      placementMm: { x: 1800, y: 0 },
+      placementState: 'CONFIRMED',
+    });
+    expect(await repo.getById('r1')).toMatchObject({ placementMm: { x: 0, y: 0 } });
+  });
+
   it('does not write partial changes when an existing occupant blocks reflow', async () => {
     const items = seed();
     items.push({

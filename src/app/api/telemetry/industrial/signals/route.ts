@@ -41,12 +41,9 @@ export async function GET(request: Request) {
       manifest = null;
       publicationUnavailable = true;
     }
-    const all = await (await getObservationStore()).list(
-      source,
-      paginated ? pageSize + 1 : 1000,
-      target ?? undefined,
-      cursor,
-    );
+    const all = await (
+      await getObservationStore()
+    ).list(source, paginated ? pageSize + 1 : 1000, target ?? undefined, cursor);
     const hasNext = paginated && all.length > pageSize;
     const page = hasNext ? all.slice(0, pageSize) : all;
     const registry = await logicalRegistry();

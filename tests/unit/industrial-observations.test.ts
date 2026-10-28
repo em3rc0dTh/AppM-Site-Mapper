@@ -186,13 +186,14 @@ describe('industrial observations', () => {
     expect(all).toHaveLength(5);
     expect(new Set(all.map((signal) => signal.id)).size).toBe(5);
     expect(all.every((signal) => signal.quality === 'UNKNOWN')).toBe(true);
-    expect(all.map((signal) => signal.rawValue)).toEqual(expect.arrayContaining([
-      0,
-      4,
-      { encoding: 'base64', bytes: 'AAEC' },
-      'pushbutton(0)',
-      'vendor extension',
-    ]));
+    expect(all.map((signal) => signal.rawValue)).toEqual(
+      expect.arrayContaining([
+        0,
+        4,
+        { encoding: 'base64', bytes: 'AAEC' },
+        'pushbutton(0)',
+        'vendor extension',
+      ]),
+    );
   });
-
 });

@@ -208,14 +208,14 @@ All human read APIs below require the existing `telemetry:read` permission, with
 identity shortcut. Equipment telemetry gains a collapsed, translated signal table only when
 explicitly associated signals exist; navigation, styling, topology and existing views remain.
 
-| Endpoint under `/api/telemetry/industrial` | Access and purpose                                                                               |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| `POST /ingest`                             | Per-source collector bearer, bounded SNMP captures and durable source quota                      |
-| `POST /projection`                         | Distinct machine bearer; only requested signal IDs, maximum 10,000                               |
-| `GET /signals?source=...&target=...`       | Original catalog view, max 1,000 entries; `truncated` indicates possible additional pages         |
+| Endpoint under `/api/telemetry/industrial`            | Access and purpose                                                                                                                      |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /ingest`                                        | Per-source collector bearer, bounded SNMP captures and durable source quota                                                             |
+| `POST /projection`                                    | Distinct machine bearer; only requested signal IDs, maximum 10,000                                                                      |
+| `GET /signals?source=...&target=...`                  | Original catalog view, max 1,000 entries; `truncated` indicates possible additional pages                                               |
 | `GET /signals?source=...&limit=200&cursor=<signalId>` | Opt-in forward pagination (1–500/page) for all OIDs, including unmapped and unknown signals; `nextCursor` is an opaque catalog position |
-| `GET /history?signalId=...&cursor=...`     | 100 original normalized observations per page; cursor includes timestamp/event ID to retain ties |
-| `GET /events?id=...`                       | Retained original capture associated with an observation                                         |
+| `GET /history?signalId=...&cursor=...`                | 100 original normalized observations per page; cursor includes timestamp/event ID to retain ties                                        |
+| `GET /events?id=...`                                  | Retained original capture associated with an observation                                                                                |
 
 ## Verification and remaining commissioning
 

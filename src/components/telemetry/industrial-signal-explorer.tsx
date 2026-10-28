@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type IndustrialSignal = {
   id: string;
@@ -26,7 +27,7 @@ type IndustrialSignal = {
 };
 
 function rawText(value: unknown): string {
-  if (value === undefined) return '— (no disponible)';
+  if (value === undefined) return '—';
   if (value === null) return 'null';
   if (typeof value === 'string') return value;
   try {
@@ -37,6 +38,7 @@ function rawText(value: unknown): string {
 }
 
 export function IndustrialSignalExplorer() {
+  const t = useTranslations('industrialSignalExplorer');
   const [expanded, setExpanded] = useState(false);
   const [sourceInput, setSourceInput] = useState('');
   const [source, setSource] = useState('');
@@ -67,14 +69,14 @@ export function IndustrialSignalExplorer() {
           signals?: IndustrialSignal[];
           nextCursor?: string | null;
         };
-        if (!Array.isArray(data.signals)) throw new Error('Respuesta inválida');
+        if (!Array.isArray(data.signals)) throw new Error(t('invalidResponse'));
         if (!controller.signal.aborted) {
           setSignals(data.signals);
           setNextCursor(data.nextCursor ?? null);
         }
       } catch (cause) {
         if (!controller.signal.aborted) {
-          setError(cause instanceof Error ? cause.message : 'Catálogo no disponible');
+          setError(cause instanceof Error ? cause.message : t('catalogUnavailable'));
           setSignals([]);
           setNextCursor(null);
         }
@@ -84,19 +86,16 @@ export function IndustrialSignalExplorer() {
     }
     void load();
     return () => controller.abort();
-  }, [expanded, source, cursor, refresh]);
+  }, [expanded, source, cursor, refresh, t]);
 
   return (
     <section style={{ padding: '16px 24px', overflowWrap: 'anywhere' }}>
       <button type="button" aria-expanded={expanded} onClick={() => setExpanded((value) => !value)}>
-        {expanded ? 'Ocultar' : 'Abrir'} inspector universal SNMP / Industrial
+        {expanded ? t('hide') : t('show')}
       </button>
       {expanded && (
         <div style={{ marginTop: 12 }}>
-          <p>
-            Todas las señales recibidas, incluso OID desconocidos, valores cero y estados sin MIB.
-            Los datos RAW se presentan sin inferir unidades eléctricas.
-          </p>
+          <p>{t('description')}</p>
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -106,40 +105,40 @@ export function IndustrialSignalExplorer() {
             }}
             style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}
           >
-            <label htmlFor="industrial-source-filter">Fuente SNMP (identidad exacta)</label>
+            <label htmlFor="industrial-source-filter">{t('sourceLabel')}</label>
             <input
               id="industrial-source-filter"
               value={sourceInput}
               onChange={(event) => setSourceInput(event.target.value)}
               maxLength={120}
-              placeholder="Todos los orígenes"
+              placeholder={t('sourcePlaceholder')}
             />
-            <button type="submit">Filtrar</button>
+            <button type="submit">{t('filter')}</button>
             <button type="button" onClick={() => setRefresh((value) => value + 1)}>
-              Actualizar
+              {t('refresh')}
             </button>
           </form>
           <p role="status">
             {loading
-              ? 'Consultando catálogo…'
+              ? t('loading')
               : error
-                ? 'Error: ' + error
-                : signals.length + ' señales en esta página'}
-            {source ? ' · Fuente: ' + source : ''}
+                ? t('error', { reason: error })
+                : t('count', { count: signals.length })}
+            {source ? t('source', { source }) : ''}
           </p>
           {!loading && !error && signals.length === 0 && (
-            <p>No hay señales recibidas para este filtro.</p>
+            <p>{t('empty')}</p>
           )}
           <div style={{ overflowX: 'auto', maxHeight: 720, overflowY: 'auto' }}>
             <table>
               <thead>
                 <tr>
-                  <th>Variable / OID</th>
-                  <th>Valor original (RAW)</th>
-                  <th>Interpretación</th>
-                  <th>Calidad</th>
-                  <th>Fuente y fecha</th>
-                  <th>Metasys / Modbus</th>
+                  <th>{t('variable')}</th>
+                  <th>{t('raw')}</th>
+                  <th>{t('interpretation')}</th>
+                  <th>{t('quality')}</th>
+                  <th>{t('sourceTime')}</th>
+                  <th>{t('metasys')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -150,36 +149,46 @@ export function IndustrialSignalExplorer() {
                   return (
                     <tr key={signal.id}>
                       <td style={{ minWidth: 220, maxWidth: 340 }}>
-                        <strong>{signal.mibName ?? 'OID sin nombre MIB'}</strong>
-                        <div><code>{signal.key}</code></div>
+                        <strong>{signal.mibName ?? t('oidUnknown')}</strong>
+                        <div>
+                          <code>{signal.key}</code>
+                        </div>
                       </td>
                       <td style={{ minWidth: 150, maxWidth: 340 }}>
                         <code style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
                           {rawText(raw)}
                         </code>
-                        <div><small>Tipo SNMP: {rawType}</small></div>
+                        <div>
+                          <small>{t('snmpType', { type: rawType })}</small>
+                        </div>
                       </td>
                       <td>
                         {signal.alarmState && signal.alarmState !== 'UNKNOWN'
                           ? signal.alarmState
                           : signal.value === null
-                            ? 'Sin interpretación'
+                            ? t('uninterpreted')
                             : signal.enumLabel
                               ? signal.enumLabel + ' (' + String(signal.value) + ')'
                               : String(signal.value)}
                         {signal.unit ? ' ' + signal.unit : ''}
-                        <div><small>{signal.interpretation ?? 'UNINTERPRETED'}</small></div>
+                        <div>
+                          <small>{signal.interpretation ?? 'UNINTERPRETED'}</small>
+                        </div>
                       </td>
                       <td>{signal.quality}</td>
                       <td>
                         <code>{signal.sourceIdentity}</code>
-                        <div><small>{recent?.observedAt ?? signal.observedAt}</small></div>
+                        <div>
+                          <small>{recent?.observedAt ?? signal.observedAt}</small>
+                        </div>
                       </td>
                       <td>
                         {signal.publication?.point
-                          ? 'FC03 · Unit ' + signal.publication.point.unitId +
-                            ' · offset ' + signal.publication.point.address
-                          : signal.publication?.stage ?? 'Sin asignación'}
+                          ? t('modbusPoint', {
+                              unit: signal.publication.point.unitId,
+                              address: signal.publication.point.address,
+                            })
+                          : (signal.publication?.stage ?? t('unassigned'))}
                       </td>
                     </tr>
                   );
@@ -187,7 +196,10 @@ export function IndustrialSignalExplorer() {
               </tbody>
             </table>
           </div>
-          <nav aria-label="Páginas del catálogo SNMP" style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+          <nav
+            aria-label={t('pageNavigation')}
+            style={{ display: 'flex', gap: 12, marginTop: 12 }}
+          >
             <button
               type="button"
               disabled={loading || previous.length === 0}
@@ -196,9 +208,9 @@ export function IndustrialSignalExplorer() {
                 setPrevious((items) => items.slice(0, -1));
               }}
             >
-              Anterior
+              {t('previous')}
             </button>
-            <span>Página {previous.length + 1}</span>
+            <span>{t('page', { page: previous.length + 1 })}</span>
             <button
               type="button"
               disabled={loading || !nextCursor}
@@ -208,7 +220,7 @@ export function IndustrialSignalExplorer() {
                 setCursor(nextCursor);
               }}
             >
-              Siguiente
+              {t('next')}
             </button>
           </nav>
         </div>

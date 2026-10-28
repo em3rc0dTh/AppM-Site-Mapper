@@ -32,16 +32,6 @@ jobs:
       - name: Install industrial SNMP wire-test dependency
         run: npm ci --prefix infra/snmp-collector --no-audit --no-fund
 
-      # Branch-only diagnostic: formats runner working files, never pushes to GitHub.
-      - name: G10 review formatted source (temporary)
-        run: |
-          npx prettier --write docs/telemetry/industrial-integration.md src/app/api/telemetry/industrial/signals/route.ts src/components/telemetry/equipment-telemetry-inspector.tsx src/components/telemetry/industrial-signal-explorer.tsx src/modules/telemetry/infrastructure/industrial/store.ts tests/unit/industrial-observations.test.ts
-          for file in docs/telemetry/industrial-integration.md src/app/api/telemetry/industrial/signals/route.ts src/components/telemetry/equipment-telemetry-inspector.tsx src/components/telemetry/industrial-signal-explorer.tsx src/modules/telemetry/infrastructure/industrial/store.ts tests/unit/industrial-observations.test.ts; do
-            echo "@@FMT_BEGIN:${file}@@"
-            cat "$file"
-            echo "@@FMT_END:${file}@@"
-          done
-
       - name: Industrial wire contracts and stable Modbus extensions
         run: npm run test:industrial
 

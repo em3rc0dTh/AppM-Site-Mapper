@@ -29,7 +29,7 @@ type IndustrialSignal = {
 };
 
 function rawText(value: unknown): string {
-  if (value === undefined) return '— (no disponible)';
+  if (value === undefined) return '—';
   if (value === null) return 'null';
   if (typeof value === 'string') return value;
   try {
@@ -324,8 +324,14 @@ export function EquipmentTelemetryInspector({
                         )}
                         <div style={{ overflowWrap: 'anywhere' }}>
                           <small>
-                            RAW ({signal.lastObservation?.rawType ?? signal.rawType}):{' '}
-                            <code>{rawText(signal.lastObservation ? signal.lastObservation.rawValue : signal.rawValue)}</code>
+                            {t('rawLabel', { type: signal.lastObservation?.rawType ?? signal.rawType })}{' '}
+                            <code>
+                              {rawText(
+                                signal.lastObservation
+                                  ? signal.lastObservation.rawValue
+                                  : signal.rawValue,
+                              )}
+                            </code>
                           </small>
                         </div>
                       </td>
@@ -386,7 +392,9 @@ export function EquipmentTelemetryInspector({
                             <td>
                               {s.alarmState ?? (s.value === null ? '—' : String(s.value))} {s.unit}
                               <div style={{ overflowWrap: 'anywhere' }}>
-                                <small>RAW ({s.rawType}): <code>{rawText(s.rawValue)}</code></small>
+                                <small>
+                                  {t('rawLabel', { type: s.rawType })} <code>{rawText(s.rawValue)}</code>
+                                </small>
                               </div>
                             </td>
                             <td>{s.quality}</td>

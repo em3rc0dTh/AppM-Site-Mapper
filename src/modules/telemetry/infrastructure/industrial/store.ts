@@ -15,7 +15,12 @@ export interface CatalogSignal extends Signal {
 }
 export interface ObservationStore {
   commit(batch: ObservationBatch): Promise<'committed' | 'duplicate'>;
-  list(sourceIdentity?: string, limit?: number, targetId?: string, afterSignalId?: string): Promise<CatalogSignal[]>;
+  list(
+    sourceIdentity?: string,
+    limit?: number,
+    targetId?: string,
+    afterSignalId?: string,
+  ): Promise<CatalogSignal[]>;
   history(
     signalId: string,
     before: string,

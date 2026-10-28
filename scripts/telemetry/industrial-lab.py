@@ -50,6 +50,9 @@ def main():
         target = lab / dst
         if not target.exists():
             save(target, json.loads((config / src).read_text()))
+        # Bind-mounted into non-root Node containers; only this private LAB's
+        # non-secret config needs world-read, while parent lab directory stays 0700.
+        target.chmod(0o644)
     profiles_path = lab / 'profiles.json'
     if not profiles_path.exists():
         save(profiles_path, json.loads((config / 'profiles.example.json').read_text()))
@@ -71,6 +74,9 @@ def main():
                         rule.update(scale=1, evidence='Synthetic 91 -> 91 A; not field certification')
             save(rich_profiles_path, baseline)
         profiles_path = rich_profiles_path
+    # Profile files contain no credentials; root-owned container mounts must
+    # be readable by the unprivileged node runtime (UID can differ from host).
+    profiles_path.chmod(0o644)
     broker = lab / 'mosquitto.conf'
     broker.write_text('listener 1883\nallow_anonymous true\npersistence false\n')
     profiles = json.loads(profiles_path.read_text())

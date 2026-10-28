@@ -324,7 +324,9 @@ export function EquipmentTelemetryInspector({
                         )}
                         <div style={{ overflowWrap: 'anywhere' }}>
                           <small>
-                            {t('rawLabel', { type: signal.lastObservation?.rawType ?? signal.rawType })}{' '}
+                            {t('rawLabel', {
+                              type: signal.lastObservation?.rawType ?? signal.rawType,
+                            })}{' '}
                             <code>
                               {rawText(
                                 signal.lastObservation
@@ -393,7 +395,8 @@ export function EquipmentTelemetryInspector({
                               {s.alarmState ?? (s.value === null ? '—' : String(s.value))} {s.unit}
                               <div style={{ overflowWrap: 'anywhere' }}>
                                 <small>
-                                  {t('rawLabel', { type: s.rawType })} <code>{rawText(s.rawValue)}</code>
+                                  {t('rawLabel', { type: s.rawType })}{' '}
+                                  <code>{rawText(s.rawValue)}</code>
                                 </small>
                               </div>
                             </td>

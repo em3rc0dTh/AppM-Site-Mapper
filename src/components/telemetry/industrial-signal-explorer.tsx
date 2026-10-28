@@ -126,9 +126,7 @@ export function IndustrialSignalExplorer() {
                 : t('count', { count: signals.length })}
             {source ? t('source', { source }) : ''}
           </p>
-          {!loading && !error && signals.length === 0 && (
-            <p>{t('empty')}</p>
-          )}
+          {!loading && !error && signals.length === 0 && <p>{t('empty')}</p>}
           <div style={{ overflowX: 'auto', maxHeight: 720, overflowY: 'auto' }}>
             <table>
               <thead>
@@ -196,10 +194,7 @@ export function IndustrialSignalExplorer() {
               </tbody>
             </table>
           </div>
-          <nav
-            aria-label={t('pageNavigation')}
-            style={{ display: 'flex', gap: 12, marginTop: 12 }}
-          >
+          <nav aria-label={t('pageNavigation')} style={{ display: 'flex', gap: 12, marginTop: 12 }}>
             <button
               type="button"
               disabled={loading || previous.length === 0}

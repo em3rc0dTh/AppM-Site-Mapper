@@ -103,16 +103,18 @@ def acceptance(expected, duration):
     while time.monotonic()<deadline:
         try:
             mongo=mongo_snapshot()
+            last={"mongo":mongo}
             history=timescale_snapshot()
+            last["timescale"]=history
             bridge=modbus_three_registers()
+            last["modbus"]=bridge
             receiver=receiver_diagnostics()
             counters=receiver.get("counters",{})
-            last={"mongo":mongo,"timescale":history,"modbus":bridge,
-                  "receiver":{"pending":receiver.get("pending"),
+            last["receiver"]={"pending":receiver.get("pending"),
                               "queueFull":counters.get("trap.queue.full",0),
                               "spoolFailed":counters.get("trap.spool.failed",0),
                               "tooLarge":counters.get("trap.payload.too_large",0),
-                              "committed":counters.get("trap.delivery.committed",0)}}
+                              "committed":counters.get("trap.delivery.committed",0)}
             if any(last["receiver"][k] for k in ("queueFull","spoolFailed","tooLarge")):
                 raise RuntimeError("Receiver silently lost SNMP captures")
             passed=(mongo["catalog"]>=expected and

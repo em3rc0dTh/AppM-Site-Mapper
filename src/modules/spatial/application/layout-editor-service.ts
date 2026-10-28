@@ -54,6 +54,9 @@ export async function readLayoutDraft(
           width: r.kind === 'CONTAINER_RACK' ? (r.dimensionsMm?.width ?? 600) : 600,
           depth: r.kind === 'CONTAINER_RACK' ? (r.dimensionsMm?.depth ?? 600) : 600,
           totalU: r.kind === 'CONTAINER_RACK' ? (r.totalU ?? 42) : 42,
+          ...(r.kind === 'CONTAINER_RACK' && r.placementState
+            ? { placementState: r.placementState }
+            : {}),
         };
       }),
     },
@@ -118,6 +121,8 @@ export async function prepareLayoutSave(
     if (old && old.kind !== 'CONTAINER_RACK') return { error: 'KIND_CHANGE_FORBIDDEN' };
     if (old?.kind === 'CONTAINER_RACK') {
       if (old.totalU !== r.totalU) return { error: 'RACK_CAPACITY_CHANGE_REQUIRES_CAS_MIGRATION' };
+      if (old.placementState !== 'AUTO_PROVISIONAL' && r.placementState === 'AUTO_PROVISIONAL')
+        return { error: 'RACK_PLACEMENT_REOPEN_FORBIDDEN' };
       const oldPosition = original.get(old.parentId ?? '');
       const destination = draft.positions.find((p) => p.id === r.positionId);
       if (
@@ -173,6 +178,27 @@ export async function prepareLayoutSave(
       variant: 'RACK',
       parentId: r.positionId,
       placementMm: { x: r.x, y: r.y },
+      placementState:
+        old?.kind === 'CONTAINER_RACK' &&
+        old.placementState === 'AUTO_PROVISIONAL' &&
+        r.placementState === 'AUTO_PROVISIONAL' &&
+        old.placementMm?.x === r.x &&
+        old.placementMm?.y === r.y &&
+        old.dimensionsMm?.width === r.width &&
+        old.dimensionsMm?.depth === r.depth &&
+        (() => {
+          const initial = original.get(old.parentId);
+          const current = draft.positions.find((position) => position.id === r.positionId);
+          return (
+            initial?.kind === 'POSITION' &&
+            current?.row === initial.coordinate.row &&
+            current?.column === initial.coordinate.column
+          );
+        })()
+          ? 'AUTO_PROVISIONAL'
+          : old
+            ? 'CONFIRMED'
+            : 'AUTO_PROVISIONAL',
       dimensionsMm: { width: r.width, depth: r.depth },
       totalU: r.totalU,
       cas: old?.kind === 'CONTAINER_RACK' ? old.cas : initializeCas(r.totalU),

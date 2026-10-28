@@ -22,6 +22,7 @@ import type {
 } from '@/modules/topology/domain/entities';
 import { isAllowedParent, topologySlug } from '@/modules/topology/domain/hierarchy';
 import { initializeCas } from '@/modules/rack/domain/cas';
+import { prepareDeviceRackPlacement } from '@/modules/spatial/application/bdfb-automatic-placement';
 import type { AssetTemplateSnapshot } from '@/modules/warehouse/domain/template';
 import {
   normalizedTelemetryPointPrefix,
@@ -65,7 +66,8 @@ export type TopologyError =
   | 'SLOT_OCCUPIED'
   | 'CHILD_TYPE_NOT_ALLOWED'
   | 'INVALID_DEVICE_OWNERSHIP'
-  | 'EQUIPMENT_CYCLE';
+  | 'EQUIPMENT_CYCLE'
+  | 'BDFB_PLACEMENT_BLOCKED';
 
 export interface ConfigureEquipmentInput {
   readonly telemetryPointPrefix?: string | null;
@@ -464,6 +466,19 @@ export class TopologyService {
       }
     }
 
+    if (
+      node.kind === 'DEVICE' &&
+      parent?.kind === 'CONTAINER_RACK' &&
+      parent.placementState === 'AUTO_PROVISIONAL'
+    ) {
+      if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+      const plan = await prepareDeviceRackPlacement(this.repository, parent, node);
+      if ('error' in plan) return failure(plan.error);
+      if (!(await this.repository.commitLayout(plan.before, [...plan.after, node])))
+        return failure('LAYOUT_CONFLICT');
+      return success(await this.committed(node));
+    }
+
     if (node.kind === 'ROOM_SUBSTRUCTURE' && parent?.kind === 'LEVEL') {
       // Serialize sibling Room creates against the Level version so concurrent
       // requests cannot both pass the overlap pre-flight against stale siblings.
@@ -680,8 +695,14 @@ export class TopologyService {
 
       const moved = { ...node, parentId: parent.id, updatedAt: nowIso() } as TopologyNode;
       if (!this.repository.commitLayout) return failure('ATOMIC_LAYOUT_STORAGE_REQUIRED');
-      if (!(await this.repository.commitLayout([node, parent], [moved, parent])))
+      if (parent.kind === 'CONTAINER_RACK' && parent.placementState === 'AUTO_PROVISIONAL') {
+        const plan = await prepareDeviceRackPlacement(this.repository, parent, node);
+        if ('error' in plan) return failure(plan.error);
+        if (!(await this.repository.commitLayout([...plan.before, node], [...plan.after, moved])))
+          return failure('LAYOUT_CONFLICT');
+      } else if (!(await this.repository.commitLayout([node, parent], [moved, parent]))) {
         return failure('LAYOUT_CONFLICT');
+      }
       return success(await this.committed(moved));
     }
 

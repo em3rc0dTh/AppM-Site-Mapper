@@ -80,6 +80,7 @@ def main():
                             'INDUSTRIAL_LOGICAL_POINTS_FILE': '/config/logical.json',
                             'INDUSTRIAL_PROFILES_FILE': '/config/industrial-profiles.json',
                             'MQTT_EXPECTED_SOURCES': 'EMU-BFDB-01,EMU-BFDB-02,EMU-BFDB-03',
+                            'SNMP_INGEST_MAX_RPM': '2000' if args.snmp_sweep_count else '120',
                         },
                         'volumes': [
                             str(lab / 'logical.json') + ':/config/logical.json:ro',

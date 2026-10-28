@@ -138,7 +138,8 @@ def main():
                MODBUS_POINTS_LOCAL_PATH=str(lab / 'points.json'), INDUSTRIAL_PROFILES_JSON='[]',
                INDUSTRIAL_INGEST_SOURCES_JSON=json.dumps({s['sourceIdentity']: s['token'] for s in sources}),
                SNMP_TRAP_SOURCES_JSON=json.dumps(sources, separators=(',', ':')), SNMP_TRAP_ENGINE_ID='8000b983800001202610230001',
-               SNMP_TRAP_MAX_PENDING='5000' if args.snmp_sweep_count else '1000')
+               SNMP_TRAP_MAX_PENDING='5000' if args.snmp_sweep_count else '1000',
+               SNMP_INGEST_MAX_RPM='2000' if args.snmp_sweep_count else '120')
     envfile = lab / 'lab.env'
     envfile.write_text('\n'.join(key + "='" + str(value).replace("'", "\\'") + "'" for key, value in env.items()) + '\n')
     envfile.chmod(0o600)

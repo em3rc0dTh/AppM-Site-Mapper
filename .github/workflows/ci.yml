@@ -32,13 +32,6 @@ jobs:
       - name: Install industrial SNMP wire-test dependency
         run: npm ci --prefix infra/snmp-collector --no-audit --no-fund
 
-      - name: One-time rich lab docs formatting diagnostic
-        run: |
-          npx prettier --write docs/telemetry/eltek-rich-lab-acceptance.md
-          echo '@@FMT_BEGIN:docs/telemetry/eltek-rich-lab-acceptance.md@@'
-          cat docs/telemetry/eltek-rich-lab-acceptance.md
-          echo '@@FMT_END:docs/telemetry/eltek-rich-lab-acceptance.md@@'
-
       - name: Industrial wire contracts and stable Modbus extensions
         run: npm run test:industrial
 

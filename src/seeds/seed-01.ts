@@ -17,11 +17,12 @@ import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integr
 export const SEED_01_PROFILE = 'seed-01' as const;
 export const SEED_01_VERSION = 4 as const;
 
-const PANELS = ['A3', 'A2', 'B3', 'B2'] as const;
+const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
+type MeterPanelName = 'A3' | 'A2' | 'B3' | 'B2';
 
 interface MeterSpec {
-  readonly panel: PanelName;
+  readonly panel: MeterPanelName;
   readonly serial: string;
   readonly slaveId: number;
 }
@@ -288,6 +289,7 @@ interface RootEquipmentSpec {
   readonly aliases?: readonly string[];
   readonly childMode?: EquipmentNode['childMode'];
   readonly childCapacity?: number;
+  readonly presentation?: NonNullable<EquipmentNode['presentation']>;
 }
 
 function validateEquipment(
@@ -364,6 +366,7 @@ async function ensureRootEquipment(
     ...(spec.aliases?.length ? { aliases: spec.aliases } : {}),
     ...(spec.childMode ? { childMode: spec.childMode } : {}),
     ...(spec.childCapacity ? { childCapacity: spec.childCapacity } : {}),
+    ...(spec.presentation ? { presentation: spec.presentation } : {}),
   });
   if (!created.ok || created.value.kind !== 'EQUIPMENT') {
     throw new Error(
@@ -463,6 +466,7 @@ async function ensureDynamicChild(
     ...(spec.aliases?.length ? { aliases: spec.aliases } : {}),
     ...(spec.childMode ? { childMode: spec.childMode } : {}),
     ...(spec.childCapacity ? { childCapacity: spec.childCapacity } : {}),
+    ...(spec.presentation ? { presentation: spec.presentation } : {}),
   });
   if (!created.ok || created.value.kind !== 'EQUIPMENT') {
     throw new Error(
@@ -564,8 +568,9 @@ async function ensurePanelInFrame(
   frame: EquipmentNode,
   panelName: PanelName,
 ): Promise<EquipmentNode> {
-  const slotIndex = Number(panelName.slice(1)) - 1;
-  if (!Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex > 2) {
+  const slotIndex =
+    panelName.endsWith('3') ? 0 : panelName.endsWith('2') ? 1 : panelName.endsWith('1') ? 2 : -1;
+  if (slotIndex < 0) {
     throw new Error(`SEED_01_INTERNAL: invalid panel slot ${panelName}`);
   }
 
@@ -582,6 +587,11 @@ async function ensurePanelInFrame(
     equipmentType: 'PANEL',
     category: '24-position DC distribution panel',
     childCapacity: 24,
+    presentation: {
+      direction: 'COLUMN',
+      maxPerLine: 1,
+      childrenVisibility: 'INLINE',
+    },
   });
 }
 
@@ -651,6 +661,7 @@ async function ensurePositionalChild(
     ...(spec.childCapacity
       ? { childMode: 'POSITIONAL' as const, childCapacity: spec.childCapacity }
       : {}),
+    ...(spec.presentation ? { presentation: spec.presentation } : {}),
   });
   if (!created.ok || created.value.kind !== 'EQUIPMENT') {
     throw new Error(
@@ -725,7 +736,7 @@ async function seedBdfb(
   readonly deviceId: string;
   readonly breakerCount: number;
   readonly gatewayEquipmentId: string;
-  readonly meterEquipmentIds: Readonly<Record<PanelName, string>>;
+  readonly meterEquipmentIds: Readonly<Record<MeterPanelName, string>>;
 }> {
   const device = await ensureBdfbDevice(repository, topology, rack, spec);
 
@@ -744,7 +755,7 @@ async function seedBdfb(
       equipmentType: 'CHASSIS',
       manufacturer: 'Eltek',
       model: 'BDCBB/BDFB Power Distribution Solution',
-      category: '48 VDC BDFB chassis · 96 active breaker positions',
+      category: '48 VDC BDFB chassis · 144 physical breaker positions (6 x 24)',
       childMode: 'POSITIONAL',
       childCapacity: 1,
     });
@@ -770,7 +781,7 @@ async function seedBdfb(
     category: 'Industrial gateway · RS485 master · network commissioning pending field verification',
     aliases: ['AWT100-CEHW', 'Modbus RTU master', 'MQTT/Modbus TCP gateway'],
   });
-  const meterEquipmentIds = {} as Record<PanelName, string>;
+  const meterEquipmentIds = {} as Record<MeterPanelName, string>;
   for (const meter of spec.meters) {
     const equipment = await ensureRootEquipmentFromAnywhere(repository, topology, device, {
       name: `${spec.key}_METER-${meter.panel}`,
@@ -805,6 +816,11 @@ async function seedBdfb(
             equipmentType: 'SHELF',
             category: 'BDFB distribution shelf',
             childCapacity: 2,
+            presentation: {
+              direction: 'ROW',
+              maxPerLine: 2,
+              childrenVisibility: 'INLINE',
+            },
           })
         : await ensureDynamicChild(repository, topology, freshChassisBeforeShelf.id, {
             name: `${spec.key}-SHELF-01`,
@@ -812,6 +828,11 @@ async function seedBdfb(
             category: 'BDFB distribution shelf',
             childMode: 'POSITIONAL',
             childCapacity: 2,
+            presentation: {
+              direction: 'ROW',
+              maxPerLine: 2,
+              childrenVisibility: 'INLINE',
+            },
           });
   } else {
     shelf = await moveEquipmentToParent(
@@ -831,12 +852,22 @@ async function seedBdfb(
     equipmentType: 'FRAME',
     category: 'Side A breaker frame',
     childCapacity: 3,
+    presentation: {
+      direction: 'COLUMN',
+      maxPerLine: 1,
+      childrenVisibility: 'INLINE',
+    },
   });
   const frameB = await ensurePositionalChild(repository, topology, shelf.id, 1, {
     name: `${spec.key}-SHELF-01-FRAME-02`,
     equipmentType: 'FRAME',
     category: 'Side B breaker frame',
     childCapacity: 3,
+    presentation: {
+      direction: 'COLUMN',
+      maxPerLine: 1,
+      childrenVisibility: 'INLINE',
+    },
   });
 
   const panels = new Map<PanelName, EquipmentNode>();
@@ -961,7 +992,7 @@ async function seedIndustrialProfiles(
   created: {
     readonly deviceId: string;
     readonly gatewayEquipmentId: string;
-    readonly meterEquipmentIds: Readonly<Record<PanelName, string>>;
+    readonly meterEquipmentIds: Readonly<Record<MeterPanelName, string>>;
   },
 ): Promise<void> {
   const timestamp = new Date().toISOString();
@@ -1091,7 +1122,9 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
         },
         counts: {
           bdfbs: 3,
-          panels: 12,
+          panels: 18,
+          physicalBreakerSlots: 432,
+          meteredChannelCapacity: 288,
           gateways: 3,
           meters: 12,
           industrialProfiles: 15,

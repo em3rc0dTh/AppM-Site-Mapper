@@ -62,6 +62,9 @@ jobs:
       - name: Read-only Modbus certification script syntax
         run: node --check scripts/operations/certify-modbus-cb01.mjs
 
+      - name: Telxius consolidated launcher syntax
+        run: python3 -m py_compile scripts/telemetry/seed-01-telxius-lab.py
+
       - name: Telemetry history SQL regression
         run: python3 -m unittest discover -s infra/telemetry-store -p 'test_*.py'
 

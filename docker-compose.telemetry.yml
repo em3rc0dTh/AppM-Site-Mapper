@@ -67,6 +67,7 @@ services:
       APP_PERSISTENCE: mongodb
       MONGODB_URI: mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
       MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
+      SITE_MAPPER_SEED_PROFILE: '${SITE_MAPPER_SEED_PROFILE:-}'
       BOOTSTRAP_ADMIN_TOKEN: '${BOOTSTRAP_ADMIN_TOKEN:?Set a private bootstrap admin token}'
       TELEMETRY_ENABLED: '${TELEMETRY_ENABLED:-false}'
       MQTT_BROKER_URL: '${MQTT_BROKER_URL:-}'

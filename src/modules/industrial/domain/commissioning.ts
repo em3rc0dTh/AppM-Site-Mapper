@@ -296,42 +296,50 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
     stopBits: serial.stopBits,
   };
   if (raw.role === 'GATEWAY') {
+    const network =
+      raw.network === undefined ? undefined : object(raw.network) ? raw.network : null;
     if (
       raw.gatewayEquipmentId !== undefined ||
       serial.slaveId !== undefined ||
       (raw.sourceIdentity !== undefined &&
         (!text(raw.sourceIdentity, 120) ||
           !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(raw.sourceIdentity))) ||
-      !object(raw.network) ||
-      !only(raw.network, ['ip', 'mask', 'gateway', 'services']) ||
-      !ipv4(raw.network.ip) ||
-      !netmask(raw.network.mask) ||
-      !ipv4(raw.network.gateway) ||
-      !Array.isArray(raw.network.services) ||
-      raw.network.services.length < 1 ||
-      raw.network.services.length > 2
+      network === null ||
+      (network !== undefined &&
+        (!only(network, ['ip', 'mask', 'gateway', 'services']) ||
+          !ipv4(network.ip) ||
+          !netmask(network.mask) ||
+          !ipv4(network.gateway) ||
+          !Array.isArray(network.services) ||
+          network.services.length < 1 ||
+          network.services.length > 2)) ||
+      (raw.recordStatus === 'FIELD_VERIFIED' && network === undefined)
     )
       return null;
+
     const services: NetworkServiceConfiguration[] = [];
     const protocols = new Set<string>();
-    for (const rawService of raw.network.services) {
-      if (
-        !object(rawService) ||
-        !only(rawService, ['protocol', 'port']) ||
-        !['MQTT', 'MODBUS_TCP'].includes(String(rawService.protocol)) ||
-        protocols.has(String(rawService.protocol)) ||
-        (rawService.port !== undefined &&
-          (!Number.isInteger(rawService.port) ||
-            Number(rawService.port) < 1 ||
-            Number(rawService.port) > 65535))
-      )
-        return null;
-      protocols.add(String(rawService.protocol));
-      services.push({
-        protocol: rawService.protocol as UplinkProtocol,
-        ...(rawService.port !== undefined ? { port: Number(rawService.port) } : {}),
-      });
+    if (network !== undefined) {
+      for (const rawService of network.services as unknown[]) {
+        if (
+          !object(rawService) ||
+          !only(rawService, ['protocol', 'port']) ||
+          !['MQTT', 'MODBUS_TCP'].includes(String(rawService.protocol)) ||
+          protocols.has(String(rawService.protocol)) ||
+          (rawService.port !== undefined &&
+            (!Number.isInteger(rawService.port) ||
+              Number(rawService.port) < 1 ||
+              Number(rawService.port) > 65535))
+        )
+          return null;
+        protocols.add(String(rawService.protocol));
+        services.push({
+          protocol: rawService.protocol as UplinkProtocol,
+          ...(rawService.port !== undefined ? { port: Number(rawService.port) } : {}),
+        });
+      }
     }
+
     if (
       raw.meterNumber !== undefined ||
       raw.channelCount !== undefined ||
@@ -345,6 +353,7 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
           Number(raw.declaredSlaveCount) > 247))
     )
       return null;
+
     return {
       equipmentId: raw.equipmentId.trim(),
       role: 'GATEWAY',
@@ -365,12 +374,16 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
       ...(typeof raw.declaredSlaveCount === 'number'
         ? { declaredSlaveCount: raw.declaredSlaveCount }
         : {}),
-      network: {
-        ip: raw.network.ip,
-        mask: raw.network.mask,
-        gateway: raw.network.gateway,
-        services,
-      },
+      ...(network !== undefined
+        ? {
+            network: {
+              ip: network.ip as string,
+              mask: network.mask as string,
+              gateway: network.gateway as string,
+              services,
+            },
+          }
+        : {}),
       rs485,
       evidence,
     };

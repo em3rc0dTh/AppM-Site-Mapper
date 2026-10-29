@@ -1,6 +1,7 @@
 import { MongoClient, type Db } from 'mongodb';
 
 import { isProductionDeployment, requireRuntimeSecret } from '@/config/env';
+import { applyConfiguredRuntimeSeed } from '@/seeds/runtime-seed';
 import { ensurePersistenceIndexes } from '@/shared/infrastructure/mongodb/bootstrap';
 
 let clientPromise: Promise<MongoClient> | undefined;
@@ -61,6 +62,7 @@ export function getMongoDatabase(): Promise<Db> {
     const databaseName = requireRuntimeSecret('MONGODB_DB_NAME', process.env.MONGODB_DB_NAME);
     const database = client.db(databaseName);
     await ensurePersistenceIndexes(database);
+    await applyConfiguredRuntimeSeed(database);
     return database;
   });
 

@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
-"""Opt-in Telxius seed-01 MQTT + SmartPack2 synthetic lab.
+"""Run the consolidated Telxius seed-01 MQTT + Smartpack2 evidence lab.
 
-Preserves the customer Mongo volume and seed. Synthetic identities are isolated
-from field commissioning and may be retired without touching topology.
+Truth boundary:
+- MQTT comes from the BFDB Telxius emulator and is published to the existing
+  operator-supplied MQTT broker. This launcher does not start or own a broker.
+- Smartpack2 is one evidence snapshot source, not one controller per QDF.
+- The private 5,407-object SNMPWalk + Eltek MIB evidence is mounted at runtime;
+  it is never copied into Git.
+- QDF-2 remains RAW-only at breaker level until final post-migration breaker
+  positions are evidenced in Site Mapper. QDF-4/QDF-5 keep their existing
+  explicit Circuit Breaker bindings.
 """
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -14,51 +22,63 @@ import secrets
 import shlex
 import subprocess
 import sys
+from urllib.parse import urlparse, urlunparse
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNTIME = ROOT / ".runtime" / "industrial-lab"
 PROJECT = "site-mapper-seed-01"
 MONGO = PROJECT + "-mongodb-1"
-BASE_FILES = [
+
+BASE_COMPOSE = [
     ROOT / "docker-compose.telemetry.yml",
     ROOT / "docker-compose.industrial.yml",
-    RUNTIME / "compose.json",
-    RUNTIME / "seed-01.ports.yml",
 ]
+BASE_GENERATED = RUNTIME / "compose.json"
+BASE_PORTS = RUNTIME / "seed-01.ports.yml"
 BASE_ENV = RUNTIME / "lab.env"
+
 PROFILE_FILE = RUNTIME / "seed-01-telxius-profiles.json"
 OVERLAY_FILE = RUNTIME / "seed-01-telxius.compose.json"
 ENV_FILE = RUNTIME / "seed-01-telxius.env"
 SECRET_FILE = RUNTIME / "seed-01-telxius.secrets.json"
 COMMISSION = ROOT / "scripts/telemetry/commission-seed-01-telxius-lab.mongosh.js"
+BASE_LAUNCHER = ROOT / "scripts/telemetry/industrial-lab.py"
 
 QDFS = ("QDF-2", "QDF-4", "QDF-5")
-MQTT_SOURCE = {q: "EMU-TELXIUS-" + q for q in QDFS}
-SNMP_SOURCE = {q: "EMU-SNMP-TELXIUS-" + q for q in QDFS}
+MQTT_SOURCE = {qdf: "EMU-TELXIUS-" + qdf for qdf in QDFS}
 MODBUS_SOURCE_UNITS = {
     "EMU-TELXIUS-QDF-2": 1,
     "EMU-TELXIUS-QDF-4": 2,
     "EMU-TELXIUS-QDF-5": 3,
 }
-SNMP_ROOT = "1.3.6.1.4.1.8072.9999.2026.52"
-SNMP_POINTS = [
-    f"{SNMP_ROOT}.1.1.0",
-    f"{SNMP_ROOT}.1.2.0",
-    f"{SNMP_ROOT}.1.3.0",
-    f"{SNMP_ROOT}.1.4.0",
-    f"{SNMP_ROOT}.1.5.0",
-    f"{SNMP_ROOT}.1.6.0",
-    f"{SNMP_ROOT}.1.7.0",
-    f"{SNMP_ROOT}.1.8.0",
-    *[f"{SNMP_ROOT}.2.{i}.0" for i in range(1, 7)],
-]
+SMARTPACK_SOURCE = "EMU-SMARTPACK2-LURIN"
+
+WALK_CANDIDATES = (
+    "walk.txt",
+    "Results SNMPWalk(4).txt",
+    "Results SNMPWalk.txt",
+)
+MAIN_MIB_CANDIDATES = (
+    "EltekEnexusPowersystem-rev54.mib",
+    "EltekEnexusPowersystem.mib",
+)
+BRANCH_MIB_CANDIDATES = (
+    "EltekEnexusPowersystem_branch10_rev54.mib",
+    "EltekEnexusPowersystem_branch10.mib",
+)
 
 
 def fail(message: str) -> None:
     raise RuntimeError("SEED01 TELXIUS LAB BLOCKED: " + message)
 
 
-def run(argv: list[str], *, input_text: str | None = None, env=None, timeout=300) -> str:
+def run(
+    argv: list[str],
+    *,
+    input_text: str | None = None,
+    env: dict[str, str] | None = None,
+    timeout: int = 300,
+) -> str:
     done = subprocess.run(
         argv,
         input=input_text,
@@ -68,17 +88,24 @@ def run(argv: list[str], *, input_text: str | None = None, env=None, timeout=300
         timeout=timeout,
     )
     if done.returncode:
-        raise RuntimeError(f"command failed ({done.returncode}): {argv[0]}\n{done.stderr[-2000:]}")
+        raise RuntimeError(
+            f"command failed ({done.returncode}): {' '.join(argv[:4])}\n"
+            + done.stderr[-3000:]
+        )
     return done.stdout.strip()
 
 
-def run_live(argv: list[str], *, env=None, timeout=1200) -> None:
-    """Run a long Docker operation with visible progress instead of looking hung."""
+def run_live(
+    argv: list[str],
+    *,
+    env: dict[str, str] | None = None,
+    timeout: int = 1800,
+) -> None:
     try:
         done = subprocess.run(argv, text=True, env=env, timeout=timeout)
     except KeyboardInterrupt:
         raise RuntimeError(
-            "launch interrupted by operator; rerun --action up safely after checking --action status"
+            "launch interrupted by operator; inspect --action status before retrying"
         )
     if done.returncode:
         raise RuntimeError(f"command failed ({done.returncode}): {argv[0]}")
@@ -86,18 +113,121 @@ def run_live(argv: list[str], *, env=None, timeout=1200) -> None:
 
 def read_env(path: Path) -> dict[str, str]:
     values: dict[str, str] = {}
+    if not path.is_file():
+        return values
     for raw in path.read_text(encoding="utf8").splitlines():
         line = raw.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        values[key] = shlex.split(value, posix=True)[0] if value.strip() else ""
+        try:
+            parsed = shlex.split(value, posix=True)
+            values[key] = parsed[0] if parsed else ""
+        except ValueError:
+            values[key] = value.strip().strip("'").strip('"')
     return values
 
 
-def save_json(path: Path, value) -> None:
-    path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf8")
+def write_env(path: Path, values: dict[str, str]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path.write_text(
+        "\n".join(key + "=" + shlex.quote(str(value)) for key, value in values.items())
+        + "\n",
+        encoding="utf8",
+    )
     path.chmod(0o600)
+
+
+def save_json(path: Path, value, *, mode: int = 0o600) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf8")
+    path.chmod(mode)
+
+
+def existing_base_files() -> list[Path]:
+    files = [*BASE_COMPOSE, BASE_GENERATED]
+    if BASE_PORTS.is_file():
+        files.append(BASE_PORTS)
+    return files
+
+
+def ensure_base_runtime(bfdb: Path) -> None:
+    missing = [path for path in [*BASE_COMPOSE, BASE_GENERATED, BASE_ENV] if not path.is_file()]
+    if not missing:
+        return
+    if not BASE_LAUNCHER.is_file():
+        fail("missing base industrial launcher")
+    print("Preparing the existing Site Mapper industrial runtime ...", flush=True)
+    run_live(
+        [
+            sys.executable,
+            str(BASE_LAUNCHER),
+            "--bfdb-dir",
+            str(bfdb),
+            "--action",
+            "prepare",
+        ],
+        timeout=600,
+    )
+    missing = [path for path in [*BASE_COMPOSE, BASE_GENERATED, BASE_ENV] if not path.is_file()]
+    if missing:
+        fail("base runtime preparation did not create: " + ", ".join(map(str, missing)))
+
+
+def base_compose_command() -> list[str]:
+    command = [
+        "docker",
+        "compose",
+        "-p",
+        PROJECT,
+        "--project-directory",
+        str(ROOT),
+        "--env-file",
+        str(BASE_ENV),
+    ]
+    for file in existing_base_files():
+        command += ["-f", str(file)]
+    return command
+
+
+def full_compose_command() -> list[str]:
+    command = [
+        "docker",
+        "compose",
+        "-p",
+        PROJECT,
+        "--project-directory",
+        str(ROOT),
+        "--env-file",
+        str(ENV_FILE),
+    ]
+    for file in [*existing_base_files(), OVERLAY_FILE]:
+        command += ["-f", str(file)]
+    return command
+
+
+def ensure_mongo_running() -> None:
+    command = base_compose_command()
+    run_live(command + ["up", "-d", "mongodb", "mongo-init"], timeout=600)
+    for _ in range(60):
+        try:
+            if run(
+                [
+                    "docker",
+                    "exec",
+                    MONGO,
+                    "mongosh",
+                    "--quiet",
+                    "--eval",
+                    "print(db.adminCommand({ping:1}).ok)",
+                ],
+                timeout=10,
+            ).strip().endswith("1"):
+                return
+        except RuntimeError:
+            pass
+        subprocess.run(["sleep", "1"], check=False)
+    fail("MongoDB did not become ready")
 
 
 def inventory() -> dict:
@@ -110,20 +240,28 @@ const rows=state.bdfbs.map(x=>{
   const one=(name,type)=>{
     const m=eq.filter(e=>e.name===name && e.equipmentType===type);
     if(m.length!==1) throw new Error(name+' '+type+' expected once, got '+m.length);
-    return m[0].id;
+    return m[0];
   };
+  const gateway=one(x.key+'_GW-1','NETWORK_BOARD');
+  const controller=one(x.key+'_CTRL-1','CONTROLLER_BOARD');
+  const breakers=eq.filter(e=>e.equipmentType==='CIRCUIT_BREAKER');
   return {
-    key:x.key,deviceId:x.deviceId,
-    gatewayId:one(x.key+'_GW-1','NETWORK_BOARD'),
-    controllerId:one(x.key+'_CTRL-1','CONTROLLER_BOARD')
+    key:x.key,
+    deviceId:x.deviceId,
+    gatewayId:gateway.id,
+    gatewaySerial:gateway.serialNumber || null,
+    controllerId:controller.id,
+    breakerCount:breakers.length
   };
 });
 print(JSON.stringify({version:state.version,rows}));
 """
     out = run(["docker", "exec", MONGO, "mongosh", "--quiet", "--eval", script])
-    line = [x for x in out.splitlines() if x.startswith("{")][-1]
-    data = json.loads(line)
-    if {x["key"] for x in data["rows"]} != set(QDFS):
+    lines = [line for line in out.splitlines() if line.startswith("{")]
+    if not lines:
+        fail("could not read seed-01 inventory from MongoDB")
+    data = json.loads(lines[-1])
+    if {item["key"] for item in data["rows"]} != set(QDFS):
         fail("unexpected seed BDFB inventory")
     return data
 
@@ -135,118 +273,188 @@ def mqtt_rules() -> list[dict]:
         ("P1", "W", "POWER"),
         ("EP1", "kWh", "ENERGY"),
     )
-    rules = []
+    rules: list[dict] = []
     for group in range(1, 5):
         for position in range(1, 25):
             for wire, unit, metric in fields:
-                rules.append({
-                    "key": f"/reported/0_{group}_{position}/{wire}",
-                    "kind": "measurement",
-                    "unit": unit,
-                    "scale": 1,
-                    "numericEncoding": "decimal-string",
-                    "evidence": (
-                        "Synthetic Telxius seed-01 Acrel channel; group order "
-                        "A3,A2,B3,B2. Lab only; field channel binding remains separate."
-                    ),
-                })
+                rules.append(
+                    {
+                        "key": f"/reported/0_{group}_{position}/{wire}",
+                        "kind": "measurement",
+                        "unit": unit,
+                        "scale": 1,
+                        "numericEncoding": "decimal-string",
+                        "evidence": (
+                            "Telxius seed-01 LAB MQTT replay. Raw point identity is "
+                            "SN + rawPointId. The group-to-physical-panel relationship "
+                            "remains a laboratory transport mapping until field commissioning."
+                        ),
+                    }
+                )
     return rules
 
 
-def snmp_rules() -> list[dict]:
-    rules = [
-        {
-            "key": f"{SNMP_ROOT}.1.1.0",
-            "kind": "state",
-            "valueMap": [{"raw": 1, "code": 1, "label": "normal"}],
-            "evidence": "Results SNMPWalk powerSystemStatus=normal(1); numeric OID synthetic lab-only",
-        },
-        {
-            "key": f"{SNMP_ROOT}.1.2.0",
-            "kind": "state",
-            "valueMap": [{"raw": 4, "code": 4, "label": "SmartPack2 Touch"}],
-            "evidence": "Results SNMPWalk powerSystemType=smartpack2Touch(4); numeric OID synthetic lab-only",
-        },
-        {
-            "key": f"{SNMP_ROOT}.1.3.0",
-            "kind": "measurement",
-            "unit": "V",
-            "scale": 1,
-            "evidence": "Results SNMPWalk powerSystemNominalVoltage=48; synthetic lab-only",
-        },
-        {
-            "key": f"{SNMP_ROOT}.1.4.0",
-            "kind": "unknown",
-            "evidence": "Results SNMPWalk load-current literal 91; engineering interpretation intentionally unverified",
-        },
-        *[
-            {
-                "key": f"{SNMP_ROOT}.1.{index}.0",
-                "kind": "state",
-                "evidence": "Results SNMPWalk controller identity text; numeric OID synthetic lab-only",
-            }
-            for index in range(5, 9)
-        ],
-    ]
-    order = ("A3", "B3", "A2", "B2", "A1", "B1")
-    for index, panel in enumerate(order, 1):
-        rules.append({
-            "key": f"{SNMP_ROOT}.2.{index}.0",
-            "kind": "alarm",
-            "activeValues": [1],
-            "clearValues": [0],
-            "severity": "warning",
-            "evidence": (
-                f"Results SNMPWalk inputIoUnitProgInputDescription order: {panel} Fuse Alarm; "
-                "numeric OID/value convention synthetic lab-only"
-            ),
-        })
-    return rules
+def smartpack_profile() -> dict:
+    return {
+        "sourceIdentity": SMARTPACK_SOURCE,
+        "protocol": "SNMP",
+        "version": "telxius-smartpack2-evidence-replay-v1",
+        "staleMs": 120000,
+        "mib": "eltek-rev54",
+        "maxSignals": 4096,
+        "rules": [],
+    }
 
 
-def prepare(bfdb: Path) -> dict:
-    for path in [*BASE_FILES, BASE_ENV, COMMISSION]:
-        if not path.is_file():
-            fail("missing required local file: " + str(path))
-    for path in [
+def first_existing(directory: Path, names: tuple[str, ...], label: str) -> Path:
+    for name in names:
+        candidate = directory / name
+        if candidate.is_file():
+            return candidate.resolve()
+    fail(f"private SNMP evidence is missing {label} in {directory}")
+
+
+def resolve_evidence(evidence_dir: Path) -> dict[str, Path]:
+    if not evidence_dir.is_dir():
+        fail("TELXIUS_SNMP_EVIDENCE_DIR must be an existing private directory")
+    return {
+        "walk": first_existing(evidence_dir, WALK_CANDIDATES, "SNMPWalk"),
+        "mainMib": first_existing(evidence_dir, MAIN_MIB_CANDIDATES, "main Eltek rev54 MIB"),
+        "branchMib": first_existing(
+            evidence_dir,
+            BRANCH_MIB_CANDIDATES,
+            "Eltek branch10 rev54 MIB",
+        ),
+    }
+
+
+def broker_config(
+    raw_url: str,
+    username: str | None,
+    password: str | None,
+) -> dict[str, str]:
+    if not raw_url.strip():
+        fail(
+            "set TELXIUS_MQTT_BROKER_URL (or --mqtt-broker-url) to the existing broker"
+        )
+    parsed = urlparse(raw_url.strip())
+    if parsed.scheme != "mqtt":
+        fail(
+            "this BFDB field emulator currently supports mqtt:// only; "
+            "do not silently downgrade an mqtts:// broker"
+        )
+    if not parsed.hostname:
+        fail("invalid MQTT broker URL")
+    port = parsed.port or 1883
+    host = parsed.hostname
+    docker_host = "host.docker.internal" if host in {"localhost", "127.0.0.1"} else host
+    netloc = docker_host + (f":{port}" if port != 1883 else "")
+    docker_url = urlunparse(("mqtt", netloc, parsed.path or "", "", "", ""))
+    return {
+        "host": docker_host,
+        "port": str(port),
+        "url": docker_url,
+        "username": username or (parsed.username or ""),
+        "password": password or (parsed.password or ""),
+    }
+
+
+def load_or_create_secrets() -> dict:
+    if SECRET_FILE.is_file():
+        value = json.loads(SECRET_FILE.read_text(encoding="utf8"))
+        required = {
+            "community",
+            "sourceToken",
+            "v3User",
+            "v3Auth",
+            "v3Priv",
+            "engineId",
+        }
+        if not required.issubset(value):
+            fail("existing Telxius secret file is incomplete")
+        return value
+    value = {
+        "community": "lab-" + secrets.token_hex(12),
+        "sourceToken": secrets.token_hex(24),
+        "v3User": "telxius-lab-" + secrets.token_hex(4),
+        "v3Auth": secrets.token_hex(20),
+        "v3Priv": secrets.token_hex(20),
+        "engineId": "8000" + secrets.token_hex(10),
+    }
+    save_json(SECRET_FILE, value)
+    return value
+
+
+def default_sender_address() -> str:
+    try:
+        generated = json.loads(BASE_GENERATED.read_text(encoding="utf8"))
+        subnet = generated["networks"]["default"]["ipam"]["config"][0]["subnet"]
+        network = ipaddress.ip_network(subnet)
+        candidate = network.network_address + 60
+        if candidate in network:
+            return str(candidate)
+    except (KeyError, ValueError, TypeError, json.JSONDecodeError):
+        pass
+    fail("could not derive a stable SNMP sender address from the base lab network")
+
+
+def prepare(
+    bfdb: Path,
+    evidence_dir: Path,
+    broker: dict[str, str],
+) -> dict:
+    required = [
         bfdb / "apps/field-emulator/main.py",
         bfdb / "config/devices.telxius-seed-01.yaml",
         bfdb / "config/emulator.telxius-seed-01.yaml",
-        bfdb / "apps/snmp-emulator/telxius-smartpack2-lab-service.mjs",
-    ]:
-        if not path.is_file():
-            fail("BFDB checkout is missing Telxius emulator update: " + str(path))
+        bfdb / "apps/snmp-snapshot-emulator/Dockerfile",
+        bfdb / "apps/snmp-snapshot-emulator/build_snapshot.py",
+        bfdb / "apps/snmp-emulator/Dockerfile",
+        bfdb / "apps/snmp-emulator/telxius-snapshot-inform.mjs",
+        COMMISSION,
+    ]
+    missing = [path for path in required if not path.is_file()]
+    if missing:
+        fail("checkout is not current main; missing: " + ", ".join(map(str, missing)))
 
+    evidence = resolve_evidence(evidence_dir)
     data = inventory()
-    rows = {x["key"]: x for x in data["rows"]}
-    profiles = []
-    for qdf in QDFS:
-        profiles.append({
-            "sourceIdentity": MQTT_SOURCE[qdf],
-            "protocol": "MQTT",
-            "version": "synthetic-telxius-seed01-mqtt-v1",
-            "targetId": rows[qdf]["gatewayId"],
-            "staleMs": 30000,
-            "rules": mqtt_rules(),
-        })
-        profiles.append({
-            "sourceIdentity": SNMP_SOURCE[qdf],
-            "protocol": "SNMP",
-            "version": "synthetic-telxius-smartpack2-v1",
-            "targetId": rows[qdf]["controllerId"],
-            "staleMs": 60000,
-            "rules": snmp_rules(),
-        })
-    save_json(PROFILE_FILE, profiles)
+    rows = {item["key"]: item for item in data["rows"]}
 
-    if SECRET_FILE.exists():
-        secrets_data = json.loads(SECRET_FILE.read_text(encoding="utf8"))
-    else:
-        secrets_data = {
-            "community": "lab-" + secrets.token_hex(12),
-            "tokens": {qdf: secrets.token_hex(24) for qdf in QDFS},
-        }
-        save_json(SECRET_FILE, secrets_data)
+    profiles: list[dict] = []
+    for qdf in QDFS:
+        profiles.append(
+            {
+                "sourceIdentity": MQTT_SOURCE[qdf],
+                "protocol": "MQTT",
+                "version": "telxius-seed01-mqtt-complete-v2",
+                "targetId": rows[qdf]["gatewayId"],
+                "staleMs": 30000,
+                "rules": mqtt_rules(),
+            }
+        )
+    # One Smartpack2 evidence source. No QDF target is assigned because the
+    # supplied evidence does not prove which QDF controller owns this walk.
+    profiles.append(smartpack_profile())
+    save_json(PROFILE_FILE, profiles, mode=0o644)
+
+    secret = load_or_create_secrets()
+    sender_address = default_sender_address()
+
+    receiver_profile = {
+        "sourceIdentity": SMARTPACK_SOURCE,
+        "address": sender_address,
+        "version": "3",
+        "token": secret["sourceToken"],
+        "user": {
+            "name": secret["v3User"],
+            "level": "authPriv",
+            "authProtocol": "sha",
+            "authKey": secret["v3Auth"],
+            "privProtocol": "aes",
+            "privKey": secret["v3Priv"],
+        },
+    }
 
     services = {
         "site-mapper": {
@@ -256,15 +464,33 @@ def prepare(bfdb: Path) -> dict:
                 "SITE_MAPPER_SEED_PROFILE": "seed-01",
                 "INDUSTRIAL_PROFILES_FILE": "/config/seed-01-telxius-profiles.json",
                 "MQTT_EXPECTED_SOURCES": ",".join(MQTT_SOURCE.values()),
-                "MODBUS_SOURCE_UNITS_JSON": json.dumps(MODBUS_SOURCE_UNITS, separators=(",", ":")),
-                "MONGODB_URI": (
-                    "mongodb://" + MONGO +
-                    ":27017/?replicaSet=rs0&directConnection=true"
+                "MODBUS_SOURCE_UNITS_JSON": json.dumps(
+                    MODBUS_SOURCE_UNITS, separators=(",", ":")
                 ),
+                "MONGODB_URI": (
+                    "mongodb://"
+                    + MONGO
+                    + ":27017/?replicaSet=rs0&directConnection=true"
+                ),
+                "TELEMETRY_ENABLED": "true",
+                "MQTT_BROKER_URL": broker["url"],
+                "MQTT_USERNAME": broker["username"],
+                "MQTT_PASSWORD": broker["password"],
+                "SNMP_INGEST_MAX_RPM": "2000",
+                "INDUSTRIAL_TIMESCALE_ENABLED": "true",
             },
             "volumes": [
-                str(PROFILE_FILE) + ":/config/seed-01-telxius-profiles.json:ro",
+                str(PROFILE_FILE) + ":/config/seed-01-telxius-profiles.json:ro"
             ],
+            "extra_hosts": ["host.docker.internal:host-gateway"],
+        },
+        "operational-console": {
+            "environment": {
+                "MQTT_BROKER_URL": broker["url"],
+                "MQTT_USERNAME": broker["username"],
+                "MQTT_PASSWORD": broker["password"],
+            },
+            "extra_hosts": ["host.docker.internal:host-gateway"],
         },
         "modbus-tcp": {
             "environment": {
@@ -272,104 +498,201 @@ def prepare(bfdb: Path) -> dict:
                     MODBUS_SOURCE_UNITS, separators=(",", ":")
                 ),
                 "MODBUS_POINT_LAYOUT": "panels-4x24",
-            },
+            }
+        },
+        "snmp-traps": {
+            "environment": {
+                "SNMP_TRAP_SOURCES_JSON": json.dumps(
+                    [receiver_profile], separators=(",", ":")
+                ),
+                "SNMP_TRAP_ENGINE_ID": secret["engineId"],
+                "SNMP_TRAP_MAX_PENDING": "5000",
+            }
         },
         "lab-mqtt-telxius": {
             "build": {"context": str(bfdb)},
             "command": ["python", "apps/field-emulator/main.py"],
             "environment": {
-                "MQTT_HOST": "lab-mosquitto",
-                "MQTT_PORT": "1883",
+                "MQTT_HOST": broker["host"],
+                "MQTT_PORT": broker["port"],
+                "MQTT_USERNAME": broker["username"],
+                "MQTT_PASSWORD": broker["password"],
                 "EMULATOR_DEVICES_FILE": "devices.telxius-seed-01.yaml",
                 "EMULATOR_CONFIG_FILE": "emulator.telxius-seed-01.yaml",
             },
-            "depends_on": ["lab-mosquitto"],
+            "extra_hosts": ["host.docker.internal:host-gateway"],
+            "restart": "unless-stopped",
+        },
+        "seed01-smartpack2": {
+            "build": {
+                "context": str(bfdb),
+                "dockerfile": "apps/snmp-snapshot-emulator/Dockerfile",
+            },
+            "environment": {
+                "SNMP_WALK_FILE": "/evidence/walk.txt",
+                "SNMP_MIB_FILES": (
+                    "/evidence/EltekEnexusPowersystem-rev54.mib:"
+                    "/evidence/EltekEnexusPowersystem_branch10_rev54.mib"
+                ),
+                "SNMP_AGENT_PORT": "1161",
+                "SNMP_COMMUNITY": secret["community"],
+                "SNMP_SIM_LOG_LEVEL": "info",
+            },
+            "volumes": [
+                str(evidence["walk"]) + ":/evidence/walk.txt:ro",
+                str(evidence["mainMib"])
+                + ":/evidence/EltekEnexusPowersystem-rev54.mib:ro",
+                str(evidence["branchMib"])
+                + ":/evidence/EltekEnexusPowersystem_branch10_rev54.mib:ro",
+                "telxius_snmp_runtime:/runtime",
+            ],
+            "restart": "unless-stopped",
+        },
+        "seed01-smartpack2-to-site-mapper": {
+            "build": {
+                "context": str(bfdb),
+                "dockerfile": "apps/snmp-emulator/Dockerfile",
+            },
+            "command": ["node", "telxius-snapshot-inform.mjs"],
+            "environment": {
+                "SNMP_SNAPSHOT_FILE": "/runtime/snapshot.json",
+                "TELXIUS_SNMP_SOURCE_ID": SMARTPACK_SOURCE,
+                "SNMP_TRAP_TARGET_HOST": "snmp-traps",
+                "SNMP_TRAP_TARGET_PORT": "1162",
+                "SNMP_VERSION": "3",
+                "SNMP_V3_USERNAME": secret["v3User"],
+                "SNMP_V3_AUTH_KEY": secret["v3Auth"],
+                "SNMP_V3_PRIV_KEY": secret["v3Priv"],
+                "SNMP_TRAP_INFORM": "true",
+                "SNMP_SNAPSHOT_BATCH_SIZE": "16",
+                "SNMP_SNAPSHOT_BATCH_INTERVAL_MS": "40",
+                "SNMP_SNAPSHOT_REPEAT_SECONDS": "60",
+            },
+            "volumes": ["telxius_snmp_runtime:/runtime:ro"],
+            "depends_on": ["seed01-smartpack2", "snmp-traps"],
+            "networks": {"default": {"ipv4_address": sender_address}},
             "restart": "unless-stopped",
         },
     }
-    for qdf in QDFS:
-        suffix = qdf.lower().replace("-", "")
-        agent = f"seed01-snmp-agent-{suffix}"
-        collector = f"seed01-snmp-collector-{suffix}"
-        services[agent] = {
-            "build": {"context": str(bfdb), "dockerfile": "apps/snmp-emulator/Dockerfile"},
-            "command": ["node", "telxius-smartpack2-lab-service.mjs"],
-            "environment": {
-                "SNMP_VERSION": "2c",
-                "SNMP_COMMUNITY": secrets_data["community"],
-                "SNMP_AGENT_PORT": "1161",
-                "SNMP_LAB_QDF": qdf,
-                "SNMP_LAB_SERIAL": "EMU-SMARTPACK2-" + qdf,
-                "SNMP_LAB_SCENARIO": "NORMAL",
-            },
-            "restart": "unless-stopped",
-        }
-        services[collector] = {
-            "build": {"context": str(ROOT), "dockerfile": "infra/snmp-collector/Dockerfile"},
-            "command": ["node", "industrial-poll.mjs"],
-            "environment": {
-                "APP_ENV": "development",
-                "SNMP_CONTROLLER_HOST": agent,
-                "SNMP_CONTROLLER_PORT": "1161",
-                "SNMP_CONTROLLER_ID": SNMP_SOURCE[qdf],
-                "SNMP_VERSION": "2c",
-                "SNMP_COMMUNITY": secrets_data["community"],
-                "SNMP_OPERATIONAL_POINTS_JSON": json.dumps(SNMP_POINTS, separators=(",", ":")),
-                "SNMP_POLL_INTERVAL_MS": "10000",
-                "INDUSTRIAL_INGEST_URL": "http://site-mapper:3000/api/telemetry/industrial/ingest",
-                "INDUSTRIAL_INGEST_TOKEN": secrets_data["tokens"][qdf],
-            },
-            "depends_on": [agent, "site-mapper"],
-            "restart": "unless-stopped",
-        }
-    save_json(OVERLAY_FILE, {"services": services})
+    save_json(
+        OVERLAY_FILE,
+        {
+            "services": services,
+            "volumes": {"telxius_snmp_runtime": {}},
+        },
+    )
 
     env = read_env(BASE_ENV)
-    try:
-        existing_sources = json.loads(env.get("INDUSTRIAL_INGEST_SOURCES_JSON", "{}"))
-    except json.JSONDecodeError:
-        fail("existing INDUSTRIAL_INGEST_SOURCES_JSON is invalid")
-    for qdf in QDFS:
-        existing_sources[SNMP_SOURCE[qdf]] = secrets_data["tokens"][qdf]
-    env["INDUSTRIAL_INGEST_SOURCES_JSON"] = json.dumps(existing_sources, separators=(",", ":"))
-    ENV_FILE.write_text(
-        "\n".join(k + "=" + shlex.quote(str(v)) for k, v in env.items()) + "\n",
-        encoding="utf8",
+    # The generated Telxius env is authoritative for this profile. Inherited
+    # shell variables are stripped when Compose is invoked below.
+    env.update(
+        {
+            "APP_ENV": "development",
+            "TELEMETRY_ENABLED": "true",
+            "TELEMETRY_HISTORY_ENABLED": "true",
+            "INDUSTRIAL_TIMESCALE_ENABLED": "true",
+            "MQTT_BROKER_URL": broker["url"],
+            "MQTT_USERNAME": broker["username"],
+            "MQTT_PASSWORD": broker["password"],
+            "MQTT_TOPIC_FILTER": "data/dev/#",
+            "MQTT_TOPIC_PREFIX": "data/dev/",
+            "MQTT_EXPECTED_SOURCES": ",".join(MQTT_SOURCE.values()),
+            "MODBUS_SOURCE_UNITS_JSON": json.dumps(
+                MODBUS_SOURCE_UNITS, separators=(",", ":")
+            ),
+            "INDUSTRIAL_PROFILES_JSON": "[]",
+            "INDUSTRIAL_INGEST_SOURCES_JSON": json.dumps(
+                {SMARTPACK_SOURCE: secret["sourceToken"]}, separators=(",", ":")
+            ),
+            "SNMP_TRAP_SOURCES_JSON": json.dumps(
+                [receiver_profile], separators=(",", ":")
+            ),
+            "SNMP_TRAP_ENGINE_ID": secret["engineId"],
+            "SNMP_TRAP_MAX_PENDING": "5000",
+            "SNMP_INGEST_MAX_RPM": "2000",
+        }
     )
-    ENV_FILE.chmod(0o600)
+    write_env(ENV_FILE, env)
     return data
-
-
-def compose_command() -> list[str]:
-    cmd = [
-        "docker", "compose",
-        "-p", PROJECT,
-        "--project-directory", str(ROOT),
-        "--env-file", str(ENV_FILE),
-    ]
-    for file in [*BASE_FILES, OVERLAY_FILE]:
-        cmd += ["-f", str(file)]
-    return cmd
 
 
 def commission(mode: str) -> None:
     source = COMMISSION.read_text(encoding="utf8")
-    env = dict(os.environ)
-    env["SITEMAPPER_SEED01_LAB_MODE"] = mode
+    argv = ["docker", "exec", "-i", "-e", "SITEMAPPER_SEED01_LAB_MODE=" + mode]
     if mode in {"apply", "retire"}:
-        env["SITEMAPPER_SEED01_LAB_ACK"] = "LAB_ONLY"
-    # docker exec passes only the requested environment into mongosh.
-    argv = ["docker", "exec", "-i"]
-    for key in ("SITEMAPPER_SEED01_LAB_MODE", "SITEMAPPER_SEED01_LAB_ACK"):
-        if key in env:
-            argv += ["-e", key + "=" + env[key]]
+        argv += ["-e", "SITEMAPPER_SEED01_LAB_ACK=LAB_ONLY"]
     argv += [MONGO, "mongosh", "--quiet", "seed-01"]
     print(run(argv, input_text=source))
 
 
+def stop_historical_sources(command: list[str]) -> None:
+    # Best-effort only. These services may not exist in the current project.
+    old = [
+        "lab-mqtt",
+        "lab-mosquitto",
+        "lab-snmp-01",
+        "lab-snmp-02",
+        "lab-snmp-03",
+        "seed01-snmp-agent-qdf2",
+        "seed01-snmp-agent-qdf4",
+        "seed01-snmp-agent-qdf5",
+        "seed01-snmp-collector-qdf2",
+        "seed01-snmp-collector-qdf4",
+        "seed01-snmp-collector-qdf5",
+    ]
+    subprocess.run(command + ["stop", *old], check=False)
+
+
+def child_env(approved: dict[str, str]) -> dict[str, str]:
+    return {key: value for key, value in os.environ.items() if key not in approved}
+
+
+def require_runtime_inputs(args, base: dict[str, str]) -> tuple[Path, dict[str, str]]:
+    broker_url = (
+        args.mqtt_broker_url
+        or os.getenv("TELXIUS_MQTT_BROKER_URL")
+        or (
+            base.get("MQTT_BROKER_URL", "")
+            if "lab-mosquitto" not in base.get("MQTT_BROKER_URL", "")
+            else ""
+        )
+    )
+    username = (
+        args.mqtt_username
+        if args.mqtt_username is not None
+        else os.getenv("TELXIUS_MQTT_USERNAME", base.get("MQTT_USERNAME", ""))
+    )
+    password = (
+        args.mqtt_password
+        if args.mqtt_password is not None
+        else os.getenv("TELXIUS_MQTT_PASSWORD", base.get("MQTT_PASSWORD", ""))
+    )
+    evidence_raw = (
+        str(args.evidence_dir) if args.evidence_dir else os.getenv("TELXIUS_SNMP_EVIDENCE_DIR", "")
+    )
+    if not evidence_raw:
+        fail(
+            "set TELXIUS_SNMP_EVIDENCE_DIR (or --evidence-dir) to the private "
+            "directory containing the SNMPWalk and both Eltek rev54 MIB files"
+        )
+    return Path(evidence_raw).expanduser().resolve(), broker_config(
+        broker_url,
+        username,
+        password,
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--bfdb-dir", type=Path, default=ROOT.parent / "bfdb-telemetry-gateway")
+    parser.add_argument(
+        "--bfdb-dir",
+        type=Path,
+        default=ROOT.parent / "bfdb-telemetry-gateway",
+    )
+    parser.add_argument("--evidence-dir", type=Path)
+    parser.add_argument("--mqtt-broker-url")
+    parser.add_argument("--mqtt-username")
+    parser.add_argument("--mqtt-password")
     parser.add_argument(
         "--action",
         choices=["prepare", "plan", "up", "stop", "status", "logs", "retire"],
@@ -377,9 +700,45 @@ def main() -> None:
     )
     parser.add_argument("--ack-lab-only", action="store_true")
     args = parser.parse_args()
-    bfdb = args.bfdb_dir.resolve()
-    prepare(bfdb)
-    print("Prepared Telxius seed-01 lab profiles/overlay from Mongo seed v4+.")
+
+    bfdb = args.bfdb_dir.expanduser().resolve()
+    ensure_base_runtime(bfdb)
+
+    if args.action in {"stop", "status", "logs"} and OVERLAY_FILE.is_file() and ENV_FILE.is_file():
+        command = full_compose_command()
+        services = [
+            "mongodb",
+            "timescaledb",
+            "telemetry-store",
+            "site-mapper",
+            "modbus-tcp",
+            "snmp-traps",
+            "operational-console",
+            "lab-mqtt-telxius",
+            "seed01-smartpack2",
+            "seed01-smartpack2-to-site-mapper",
+        ]
+        if args.action == "stop":
+            run(command + ["stop", *services])
+        elif args.action == "status":
+            print(run(command + ["ps"]))
+        else:
+            print(run(command + ["logs", "--tail", "180", *services]))
+        return
+
+    ensure_mongo_running()
+    base = read_env(BASE_ENV)
+    evidence_dir, broker = require_runtime_inputs(args, base)
+    data = prepare(bfdb, evidence_dir, broker)
+
+    print(
+        "Prepared current-main Telxius lab: "
+        + ", ".join(
+            f"{row['key']} breakers={row['breakerCount']}" for row in data["rows"]
+        )
+        + "; Smartpack2=one unassigned 5,407-object evidence source.",
+        flush=True,
+    )
 
     if args.action == "prepare":
         return
@@ -392,33 +751,46 @@ def main() -> None:
         commission("retire")
         return
 
-    cmd = compose_command()
-    new_services = [
-        "site-mapper", "modbus-tcp", "lab-mosquitto", "lab-mqtt-telxius",
-        *[f"seed01-snmp-agent-{q.lower().replace('-', '')}" for q in QDFS],
-        *[f"seed01-snmp-collector-{q.lower().replace('-', '')}" for q in QDFS],
-    ]
+    command = full_compose_command()
+    approved_env = read_env(ENV_FILE)
+    environment = child_env(approved_env)
+
     if args.action == "up":
         if not args.ack_lab_only:
             fail("--ack-lab-only is required")
         commission("apply")
-        # Stop only historical synthetic publishers. No volumes are removed.
-        subprocess.run(cmd + ["stop", "lab-mqtt", "lab-snmp-01", "lab-snmp-02", "lab-snmp-03"],
-                       check=False)
-        # All required lab services are selected explicitly. --no-deps prevents
-        # Compose from recreating Mongo/mongo-init while this additive profile is applied.
-        run_live(cmd + ["up", "-d", "--build", "--no-deps", *new_services], timeout=1200)
-        print("Telxius seed-01 MQTT + SmartPack2 lab is running.")
+        stop_historical_sources(command)
+        selected = [
+            "mongodb",
+            "mongo-init",
+            "timescaledb",
+            "telemetry-store",
+            "site-mapper",
+            "modbus-tcp",
+            "snmp-traps",
+            "operational-console",
+            "lab-mqtt-telxius",
+            "seed01-smartpack2",
+            "seed01-smartpack2-to-site-mapper",
+        ]
+        run_live(
+            command + ["up", "-d", "--build", *selected],
+            env=environment,
+            timeout=1800,
+        )
+        print(run(command + ["ps"], env=environment))
+        print(
+            "\nTELXIUS LAB UP\n"
+            "- MQTT: QDF-2/QDF-4/QDF-5 -> existing broker -> Site Mapper\n"
+            "- SNMP: one Smartpack2 private 5,407-object replay -> INFORM batches -> Site Mapper\n"
+            "- Site Mapper: http://127.0.0.1:3000\n"
+            "- Operational Console: http://127.0.0.1:3100\n"
+            "- Modbus TCP lab: 127.0.0.1:1503\n",
+            flush=True,
+        )
         return
-    if args.action == "stop":
-        run(cmd + ["stop", *new_services])
-        return
-    if args.action == "status":
-        print(run(cmd + ["ps"]))
-        return
-    if args.action == "logs":
-        print(run(cmd + ["logs", "--tail", "160", *new_services]))
-        return
+
+    fail("unsupported action state")
 
 
 if __name__ == "__main__":

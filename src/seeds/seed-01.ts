@@ -561,6 +561,36 @@ async function ensureRootEquipmentFromAnywhere(
     : moveEquipmentToParent(repository, topology, existing, device);
 }
 
+async function ensurePresentation(
+  repository: TopologyRepository,
+  equipment: EquipmentNode,
+  presentation: NonNullable<EquipmentNode['presentation']>,
+): Promise<EquipmentNode> {
+  const freshNode = await repository.getById(equipment.id);
+  const fresh = freshNode ? expectKind(freshNode, 'EQUIPMENT', equipment.name) : null;
+  if (!fresh) throw new Error(`SEED_01_CONFLICT: Equipment ${equipment.name} disappeared`);
+
+  if (
+    fresh.presentation?.direction === presentation.direction &&
+    fresh.presentation?.maxPerLine === presentation.maxPerLine &&
+    fresh.presentation?.childrenVisibility === presentation.childrenVisibility
+  ) {
+    return fresh;
+  }
+  if (!repository.commitLayout) {
+    throw new Error('SEED_01_MIGRATION_FAILED: ATOMIC_LAYOUT_STORAGE_REQUIRED');
+  }
+  const updated: EquipmentNode = {
+    ...fresh,
+    presentation: { ...presentation },
+    updatedAt: new Date().toISOString(),
+  };
+  if (!(await repository.commitLayout([fresh], [updated]))) {
+    throw new Error(`SEED_01_MIGRATION_FAILED: presentation conflict for ${fresh.name}`);
+  }
+  return updated;
+}
+
 async function ensurePanelInFrame(
   repository: TopologyRepository,
   topology: TopologyService,
@@ -575,24 +605,27 @@ async function ensurePanelInFrame(
   }
 
   const existing = await findEquipmentByName(repository, device, panelName, 'PANEL');
+  const presentation = {
+    direction: 'COLUMN' as const,
+    maxPerLine: 1,
+    childrenVisibility: 'INLINE' as const,
+  };
   if (existing) {
     if (existing.childMode !== 'POSITIONAL' || existing.children.length !== 24) {
       throw new Error(`SEED_01_CONFLICT: PANEL ${panelName} must expose 24 positions`);
     }
-    return moveEquipmentToParent(repository, topology, existing, frame, slotIndex);
+    const moved = await moveEquipmentToParent(repository, topology, existing, frame, slotIndex);
+    return ensurePresentation(repository, moved, presentation);
   }
 
-  return ensurePositionalChild(repository, topology, frame.id, slotIndex, {
+  const created = await ensurePositionalChild(repository, topology, frame.id, slotIndex, {
     name: panelName,
     equipmentType: 'PANEL',
     category: '24-position DC distribution panel',
     childCapacity: 24,
-    presentation: {
-      direction: 'COLUMN',
-      maxPerLine: 1,
-      childrenVisibility: 'INLINE',
-    },
+    presentation,
   });
+  return ensurePresentation(repository, created, presentation);
 }
 
 async function ensurePositionalChild(
@@ -846,8 +879,13 @@ async function seedBdfb(
   if (shelf.childMode !== 'POSITIONAL' || shelf.children.length !== 2) {
     throw new Error(`SEED_01_CONFLICT: ${shelf.name} must contain exactly 2 frame slots`);
   }
+  shelf = await ensurePresentation(repository, shelf, {
+    direction: 'ROW',
+    maxPerLine: 2,
+    childrenVisibility: 'INLINE',
+  });
 
-  const frameA = await ensurePositionalChild(repository, topology, shelf.id, 0, {
+  let frameA = await ensurePositionalChild(repository, topology, shelf.id, 0, {
     name: `${spec.key}-SHELF-01-FRAME-01`,
     equipmentType: 'FRAME',
     category: 'Side A breaker frame',
@@ -858,7 +896,7 @@ async function seedBdfb(
       childrenVisibility: 'INLINE',
     },
   });
-  const frameB = await ensurePositionalChild(repository, topology, shelf.id, 1, {
+  let frameB = await ensurePositionalChild(repository, topology, shelf.id, 1, {
     name: `${spec.key}-SHELF-01-FRAME-02`,
     equipmentType: 'FRAME',
     category: 'Side B breaker frame',
@@ -868,6 +906,16 @@ async function seedBdfb(
       maxPerLine: 1,
       childrenVisibility: 'INLINE',
     },
+  });
+  frameA = await ensurePresentation(repository, frameA, {
+    direction: 'COLUMN',
+    maxPerLine: 1,
+    childrenVisibility: 'INLINE',
+  });
+  frameB = await ensurePresentation(repository, frameB, {
+    direction: 'COLUMN',
+    maxPerLine: 1,
+    childrenVisibility: 'INLINE',
   });
 
   const panels = new Map<PanelName, EquipmentNode>();

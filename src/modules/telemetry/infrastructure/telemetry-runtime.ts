@@ -166,7 +166,13 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
         industrialOutbox = new MqttObservationOutbox(
           process.env.INDUSTRIAL_MQTT_SPOOL ?? join(process.cwd(), '.runtime', 'industrial-mqtt'),
           captureIndustrial,
-          () => logger.warn('industrial.mqtt.delivery_retry', {}),
+          (error) =>
+            logger.warn('industrial.mqtt.delivery_retry', {
+              reason:
+                error instanceof Error
+                  ? (error.name + ': ' + error.message).slice(0, 240)
+                  : 'unknown delivery error',
+            }),
           Number(process.env.INDUSTRIAL_MQTT_MAX_PENDING ?? 1000),
         );
         await industrialOutbox.start();

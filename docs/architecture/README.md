@@ -105,6 +105,10 @@ The server-side MQTT consumer validates source/topic/payload and explicit breake
 
 For a complete, presentation-friendly context/deployment/sequence diagram, see [System Map](system-map.md). The system map is a current-runtime overview and does not supersede the accepted G2 domain contract.
 
+## Alarm domain
+
+Operational alarms are modeled separately from telemetry freshness. A missing MQTT/SNMP observation may produce a communication condition, but it is not by itself proof of electrical power loss. The canonical alarm model, state machines, acknowledgement, confidence, correlation and governed Modbus publication contract are documented in [Alarm Domain and State Machines](alarm-domain-and-state-machine.md).
+
 ## Migration boundary
 
 Legacy aliases and compatibility logic are restricted to `scripts/migrations/legacy/`.

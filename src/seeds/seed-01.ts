@@ -1,4 +1,4 @@
-import type { Db } from 'mongodb';
+import type { Db, Document } from 'mongodb';
 
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
@@ -10,6 +10,7 @@ import type {
   TopologyNode,
 } from '@/modules/topology/domain/entities';
 import { MongoTopologyRepository } from '@/modules/topology/infrastructure/mongo-topology-repository';
+import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
 export const SEED_01_VERSION = 1 as const;
@@ -155,6 +156,16 @@ export interface Seed01Summary {
     readonly breakerCount: number;
   }[];
 }
+
+type Seed01StateDocument = Document & {
+  readonly _id: typeof SEED_01_PROFILE;
+  readonly profile: typeof SEED_01_PROFILE;
+  readonly version: number;
+  readonly status: 'APPLIED';
+  readonly appliedAt: string;
+  readonly roomId: string;
+  readonly bdfbs: Seed01Summary['bdfbs'];
+};
 
 function normalizedName(value: string): string {
   return value.trim().replace(/\s+/g, ' ').toUpperCase();
@@ -510,89 +521,89 @@ async function seedBdfb(
 }
 
 export async function applySeed01(database: Db): Promise<Seed01Summary> {
-  const state = database.collection('runtime_seed_state');
-  const previous = await state.findOne({ _id: SEED_01_PROFILE });
+  return withIntegrityTransaction(database, async (session) => {
+    const state = database.collection<Seed01StateDocument>('runtime_seed_state');
+    const previous = await state.findOne({ _id: SEED_01_PROFILE }, { session });
 
-  if (typeof previous?.version === 'number' && previous.version > SEED_01_VERSION) {
-    throw new Error(
-      `SEED_01_VERSION_UNSUPPORTED: database has ${previous.version}, image supports ${SEED_01_VERSION}`,
+    if (typeof previous?.version === 'number' && previous.version > SEED_01_VERSION) {
+      throw new Error(
+        `SEED_01_VERSION_UNSUPPORTED: database has ${previous.version}, image supports ${SEED_01_VERSION}`,
+      );
+    }
+    if (previous?.status === 'APPLIED' && previous.version === SEED_01_VERSION) {
+      return {
+        profile: SEED_01_PROFILE,
+        version: SEED_01_VERSION,
+        alreadyApplied: true,
+        roomId: String(previous.roomId ?? ''),
+        bdfbs: Array.isArray(previous.bdfbs) ? previous.bdfbs : [],
+      };
+    }
+
+    const repository = new MongoTopologyRepository(database);
+    const topology = new TopologyService(repository);
+    const base = await resolveBase(repository, topology);
+    const bdfbs: Seed01Summary['bdfbs'][number][] = [];
+
+    for (const spec of BDFBS) {
+      const rack = base.racks.get(spec.key);
+      if (!rack) throw new Error(`SEED_01_BASE_REQUIRED: rack for ${spec.key}`);
+      const created = await seedBdfb(repository, topology, rack, spec);
+      bdfbs.push({
+        key: spec.key,
+        rackId: rack.id,
+        deviceId: created.deviceId,
+        breakerCount: created.breakerCount,
+      });
+    }
+
+    const appliedAt = new Date().toISOString();
+    await state.replaceOne(
+      { _id: SEED_01_PROFILE },
+      {
+        _id: SEED_01_PROFILE,
+        profile: SEED_01_PROFILE,
+        version: SEED_01_VERSION,
+        status: 'APPLIED',
+        appliedAt,
+        roomId: base.room.id,
+        bdfbs,
+        source: {
+          topology: 'seed-01 Mongo snapshot supplied by operator',
+          commissioning: 'CP_Acrel_v0.2',
+          breakerSchedule: 'Lista de Equipos QDF mop 1 - actualizado',
+          snmp: 'Results SNMPWalk',
+        },
+        observations: {
+          unassignedSmartPack2: {
+            company: 'TELXIUS CABLE PERU S.A.C.',
+            site: 'ESTACION LURIN',
+            model: 'SmartPack2 Touch',
+            serialNumber: '261243000151',
+            nominalVoltageVdc: 48,
+            assignmentStatus: 'UNASSIGNED_TO_QDF',
+          },
+          qdf2BreakerMigration: 'FINAL_POSITIONS_NOT_DECLARED',
+          industrialNetworkIdentity: 'FIELD_VERIFICATION_REQUIRED',
+        },
+        counts: {
+          bdfbs: 3,
+          panels: 12,
+          gateways: 3,
+          meters: 12,
+          controllers: 3,
+          confirmedBreakers: 48,
+        },
+      },
+      { upsert: true, session },
     );
-  }
-  if (previous?.status === 'APPLIED' && previous.version === SEED_01_VERSION) {
+
     return {
       profile: SEED_01_PROFILE,
       version: SEED_01_VERSION,
-      alreadyApplied: true,
-      roomId: String(previous.roomId ?? ''),
-      bdfbs: Array.isArray(previous.bdfbs)
-        ? (previous.bdfbs as Seed01Summary['bdfbs'])
-        : [],
-    };
-  }
-
-  const repository = new MongoTopologyRepository(database);
-  const topology = new TopologyService(repository);
-  const base = await resolveBase(repository, topology);
-  const bdfbs: Seed01Summary['bdfbs'][number][] = [];
-
-  for (const spec of BDFBS) {
-    const rack = base.racks.get(spec.key);
-    if (!rack) throw new Error(`SEED_01_BASE_REQUIRED: rack for ${spec.key}`);
-    const created = await seedBdfb(repository, topology, rack, spec);
-    bdfbs.push({
-      key: spec.key,
-      rackId: rack.id,
-      deviceId: created.deviceId,
-      breakerCount: created.breakerCount,
-    });
-  }
-
-  const appliedAt = new Date().toISOString();
-  await state.replaceOne(
-    { _id: SEED_01_PROFILE },
-    {
-      _id: SEED_01_PROFILE,
-      profile: SEED_01_PROFILE,
-      version: SEED_01_VERSION,
-      status: 'APPLIED',
-      appliedAt,
+      alreadyApplied: false,
       roomId: base.room.id,
       bdfbs,
-      source: {
-        topology: 'seed-01 Mongo snapshot supplied by operator',
-        commissioning: 'CP_Acrel_v0.2',
-        breakerSchedule: 'Lista de Equipos QDF mop 1 - actualizado',
-        snmp: 'Results SNMPWalk',
-      },
-      observations: {
-        unassignedSmartPack2: {
-          company: 'TELXIUS CABLE PERU S.A.C.',
-          site: 'ESTACION LURIN',
-          model: 'SmartPack2 Touch',
-          serialNumber: '261243000151',
-          nominalVoltageVdc: 48,
-          assignmentStatus: 'UNASSIGNED_TO_QDF',
-        },
-        qdf2BreakerMigration: 'FINAL_POSITIONS_NOT_DECLARED',
-        industrialNetworkIdentity: 'FIELD_VERIFICATION_REQUIRED',
-      },
-      counts: {
-        bdfbs: 3,
-        panels: 12,
-        gateways: 3,
-        meters: 12,
-        controllers: 3,
-        confirmedBreakers: 48,
-      },
-    },
-    { upsert: true },
-  );
-
-  return {
-    profile: SEED_01_PROFILE,
-    version: SEED_01_VERSION,
-    alreadyApplied: false,
-    roomId: base.room.id,
-    bdfbs,
-  };
+    };
+  });
 }

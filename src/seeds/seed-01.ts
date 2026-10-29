@@ -10,6 +10,7 @@ import type {
   TopologyNode,
 } from '@/modules/topology/domain/entities';
 import { MongoTopologyRepository } from '@/modules/topology/infrastructure/mongo-topology-repository';
+import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
@@ -279,6 +280,7 @@ interface RootEquipmentSpec {
   readonly serialNumber?: string;
   readonly category?: string;
   readonly aliases?: readonly string[];
+  readonly childMode?: EquipmentNode['childMode'];
   readonly childCapacity?: number;
 }
 
@@ -304,13 +306,11 @@ function validateEquipment(
   if (spec.model && equipment.model !== spec.model) {
     throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} model mismatch`);
   }
-  if (spec.childCapacity !== undefined) {
-    if (
-      equipment.childMode !== 'POSITIONAL' ||
-      equipment.children.length !== spec.childCapacity
-    ) {
-      throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} positional capacity mismatch`);
-    }
+  if (spec.childMode && equipment.childMode !== spec.childMode) {
+    throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} child mode mismatch`);
+  }
+  if (spec.childCapacity !== undefined && equipment.children.length !== spec.childCapacity) {
+    throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} child capacity mismatch`);
   }
 }
 
@@ -356,9 +356,107 @@ async function ensureRootEquipment(
     ...(spec.serialNumber ? { serialNumber: spec.serialNumber } : {}),
     ...(spec.category ? { category: spec.category } : {}),
     ...(spec.aliases?.length ? { aliases: spec.aliases } : {}),
-    ...(spec.childCapacity
-      ? { childMode: 'POSITIONAL' as const, childCapacity: spec.childCapacity }
-      : {}),
+    ...(spec.childMode ? { childMode: spec.childMode } : {}),
+    ...(spec.childCapacity ? { childCapacity: spec.childCapacity } : {}),
+  });
+  if (!created.ok || created.value.kind !== 'EQUIPMENT') {
+    throw new Error(
+      `SEED_01_CREATE_FAILED: Equipment ${spec.name}: ${created.ok ? 'INVALID_KIND' : created.error}`,
+    );
+  }
+  return created.value;
+}
+
+async function ensureDynamicChild(
+  repository: TopologyRepository,
+  topology: TopologyService,
+  parentId: string,
+  spec: RootEquipmentSpec,
+): Promise<EquipmentNode> {
+  const current = await repository.getById(parentId);
+  const parent = current ? expectKind(current, 'EQUIPMENT', parentId) : null;
+  if (!parent) throw new Error(`SEED_01_BASE_REQUIRED: Equipment parent ${parentId}`);
+  if (parent.childMode !== 'DYNAMIC') {
+    throw new Error(`SEED_01_CONFLICT: parent ${parent.name} is not dynamic`);
+  }
+
+  if (spec.serialNumber) {
+    const serialMatches = await repository.findActiveBySerialNumber(spec.serialNumber);
+    if (serialMatches.length > 1) {
+      throw new Error(`SEED_01_CONFLICT: duplicate active serial ${spec.serialNumber}`);
+    }
+    if (serialMatches.length === 1) {
+      const equipment = expectKind(serialMatches[0]!, 'EQUIPMENT', spec.name);
+      if (
+        equipment.lifecycle !== 'ACTIVE' ||
+        equipment.deviceId !== parent.deviceId ||
+        equipment.parentEquipmentId !== parent.id ||
+        equipment.equipmentType !== spec.equipmentType ||
+        normalizedName(equipment.name) !== normalizedName(spec.name)
+      ) {
+        throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} parent/type mismatch`);
+      }
+      if (spec.manufacturer && equipment.manufacturer !== spec.manufacturer) {
+        throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} manufacturer mismatch`);
+      }
+      if (spec.model && equipment.model !== spec.model) {
+        throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} model mismatch`);
+      }
+      return equipment;
+    }
+  }
+
+  const children = (
+    await Promise.all(
+      parent.children
+        .filter((id): id is string => typeof id === 'string')
+        .map((id) => repository.getById(id)),
+    )
+  ).filter(
+    (item): item is EquipmentNode =>
+      item?.kind === 'EQUIPMENT' &&
+      item.lifecycle === 'ACTIVE' &&
+      item.parentEquipmentId === parent.id &&
+      normalizedName(item.name) === normalizedName(spec.name),
+  );
+  if (children.length > 1) {
+    throw new Error(`SEED_01_CONFLICT: duplicate child Equipment ${spec.name}`);
+  }
+  if (children.length === 1) {
+    const equipment = children[0]!;
+    if (equipment.equipmentType !== spec.equipmentType) {
+      throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} type mismatch`);
+    }
+    if (spec.serialNumber && equipment.serialNumber !== spec.serialNumber) {
+      throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} serial mismatch`);
+    }
+    if (spec.manufacturer && equipment.manufacturer !== spec.manufacturer) {
+      throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} manufacturer mismatch`);
+    }
+    if (spec.model && equipment.model !== spec.model) {
+      throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} model mismatch`);
+    }
+    if (spec.childMode && equipment.childMode !== spec.childMode) {
+      throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} child mode mismatch`);
+    }
+    if (spec.childCapacity !== undefined && equipment.children.length !== spec.childCapacity) {
+      throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} child capacity mismatch`);
+    }
+    return equipment;
+  }
+
+  const created = await topology.create({
+    kind: 'EQUIPMENT',
+    parentId: parent.id,
+    name: spec.name,
+    equipmentType: spec.equipmentType,
+    ...(spec.manufacturer ? { manufacturer: spec.manufacturer } : {}),
+    ...(spec.model ? { model: spec.model } : {}),
+    ...(spec.serialNumber ? { serialNumber: spec.serialNumber } : {}),
+    ...(spec.category ? { category: spec.category } : {}),
+    ...(spec.aliases?.length ? { aliases: spec.aliases } : {}),
+    ...(spec.childMode ? { childMode: spec.childMode } : {}),
+    ...(spec.childCapacity ? { childCapacity: spec.childCapacity } : {}),
   });
   if (!created.ok || created.value.kind !== 'EQUIPMENT') {
     throw new Error(
@@ -443,6 +541,62 @@ async function ensurePositionalChild(
   return created.value;
 }
 
+async function ensureFullRackOccupancy(
+  repository: TopologyRepository,
+  rackId: string,
+  chassisId: string,
+): Promise<void> {
+  const rackNode = await repository.getById(rackId);
+  const chassisNode = await repository.getById(chassisId);
+  const rack = rackNode ? expectKind(rackNode, 'CONTAINER_RACK', rackId) : null;
+  const chassis = chassisNode ? expectKind(chassisNode, 'EQUIPMENT', chassisId) : null;
+  if (!rack || rack.variant !== 'RACK' || !rack.totalU) {
+    throw new Error(`SEED_01_CONFLICT: rack ${rackId} has no U capacity`);
+  }
+  if (!chassis) throw new Error(`SEED_01_CONFLICT: chassis ${chassisId} missing`);
+
+  if (chassis.rackPlacement) {
+    if (
+      chassis.rackPlacement.rackId === rack.id &&
+      chassis.rackPlacement.startU === 1 &&
+      chassis.rackPlacement.sizeU === rack.totalU
+    ) {
+      return;
+    }
+    throw new Error(`SEED_01_CONFLICT: chassis ${chassis.name} already has another rack placement`);
+  }
+
+  const equipped = rack.cas.find(
+    (range) => range.state === 'EQUIPPED' && range.occupantId === chassis.id,
+  );
+  if (equipped) return;
+  if (rack.cas.some((range) => range.state !== 'AVAILABLE')) {
+    throw new Error(`SEED_01_CONFLICT: rack ${rack.name} is not empty`);
+  }
+
+  const cas = new CasService(repository);
+  const reserved = await cas.reserve(rack.id, {
+    mountStartU: 1,
+    physicalSizeU: rack.totalU,
+  });
+  if (!reserved.ok) {
+    throw new Error(`SEED_01_CREATE_FAILED: reserve ${rack.name}: ${reserved.error}`);
+  }
+  const allocation = reserved.value.cas.find(
+    (range) =>
+      range.state === 'RESERVED' &&
+      range.mountStartU === 1 &&
+      range.physicalSizeU === rack.totalU,
+  );
+  if (!allocation) {
+    throw new Error(`SEED_01_CREATE_FAILED: reservation missing for ${rack.name}`);
+  }
+  const equippedResult = await cas.equip(rack.id, allocation.id, chassis.id);
+  if (!equippedResult.ok) {
+    throw new Error(`SEED_01_CREATE_FAILED: equip ${rack.name}: ${equippedResult.error}`);
+  }
+}
+
 async function seedBdfb(
   repository: TopologyRepository,
   topology: TopologyService,
@@ -457,21 +611,23 @@ async function seedBdfb(
     manufacturer: 'Eltek',
     model: 'BDCBB/BDFB Power Distribution Solution',
     category: '48 VDC BDFB chassis · 96 positions',
-    childCapacity: PANELS.length,
+    childMode: 'DYNAMIC',
   });
+  await ensureFullRackOccupancy(repository, rack.id, chassis.id);
 
   const panels = new Map<PanelName, EquipmentNode>();
-  for (const [panelIndex, panelName] of PANELS.entries()) {
-    const panel = await ensurePositionalChild(repository, topology, chassis.id, panelIndex, {
+  for (const panelName of PANELS) {
+    const panel = await ensureDynamicChild(repository, topology, chassis.id, {
       name: panelName,
       equipmentType: 'PANEL',
       category: '24-position DC distribution panel',
+      childMode: 'POSITIONAL',
       childCapacity: 24,
     });
     panels.set(panelName, panel);
   }
 
-  await ensureRootEquipment(repository, topology, device, {
+  await ensureDynamicChild(repository, topology, chassis.id, {
     name: `${spec.key}_CTRL-1`,
     equipmentType: 'CONTROLLER_BOARD',
     manufacturer: 'Eltek',
@@ -480,7 +636,7 @@ async function seedBdfb(
     aliases: ['SmartPack2 Touch', 'SNMP'],
   });
 
-  await ensureRootEquipment(repository, topology, device, {
+  await ensureDynamicChild(repository, topology, chassis.id, {
     name: `${spec.key}_GW-1`,
     equipmentType: 'NETWORK_BOARD',
     manufacturer: 'Acrel',
@@ -491,7 +647,7 @@ async function seedBdfb(
   });
 
   for (const meter of spec.meters) {
-    await ensureRootEquipment(repository, topology, device, {
+    await ensureDynamicChild(repository, topology, chassis.id, {
       name: `${spec.key}_METER-${meter.panel}`,
       equipmentType: 'CUSTOM',
       manufacturer: 'Acrel',

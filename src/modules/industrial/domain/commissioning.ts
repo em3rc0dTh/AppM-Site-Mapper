@@ -302,19 +302,21 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
       (raw.sourceIdentity !== undefined &&
         (!text(raw.sourceIdentity, 120) ||
           !/^[a-zA-Z0-9][a-zA-Z0-9_.:-]*$/.test(raw.sourceIdentity))) ||
-      !object(raw.network) ||
-      !only(raw.network, ['ip', 'mask', 'gateway', 'services']) ||
-      !ipv4(raw.network.ip) ||
-      !netmask(raw.network.mask) ||
-      !ipv4(raw.network.gateway) ||
-      !Array.isArray(raw.network.services) ||
-      raw.network.services.length < 1 ||
-      raw.network.services.length > 2
+      (raw.network !== undefined &&
+        (!object(raw.network) ||
+          !only(raw.network, ['ip', 'mask', 'gateway', 'services']) ||
+          !ipv4(raw.network.ip) ||
+          !netmask(raw.network.mask) ||
+          !ipv4(raw.network.gateway) ||
+          !Array.isArray(raw.network.services) ||
+          raw.network.services.length < 1 ||
+          raw.network.services.length > 2)) ||
+      (raw.recordStatus === 'FIELD_VERIFIED' && raw.network === undefined)
     )
       return null;
     const services: NetworkServiceConfiguration[] = [];
     const protocols = new Set<string>();
-    for (const rawService of raw.network.services) {
+    if (raw.network !== undefined) for (const rawService of raw.network.services) {
       if (
         !object(rawService) ||
         !only(rawService, ['protocol', 'port']) ||
@@ -365,12 +367,16 @@ export function parseProfileInput(raw: unknown): CommunicationProfileInput | nul
       ...(typeof raw.declaredSlaveCount === 'number'
         ? { declaredSlaveCount: raw.declaredSlaveCount }
         : {}),
-      network: {
-        ip: raw.network.ip,
-        mask: raw.network.mask,
-        gateway: raw.network.gateway,
-        services,
-      },
+      ...(raw.network !== undefined
+        ? {
+            network: {
+              ip: raw.network.ip,
+              mask: raw.network.mask,
+              gateway: raw.network.gateway,
+              services,
+            },
+          }
+        : {}),
       rs485,
       evidence,
     };

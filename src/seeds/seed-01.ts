@@ -1,5 +1,6 @@
-import type { Db, Document } from 'mongodb';
+import type { ClientSession, Db, Document } from 'mongodb';
 
+import type { CommunicationProfile } from '@/modules/industrial/domain/commissioning';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
@@ -14,7 +15,7 @@ import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 3 as const;
+export const SEED_01_VERSION = 4 as const;
 
 const PANELS = ['A3', 'A2', 'B3', 'B2'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -720,7 +721,12 @@ async function seedBdfb(
   topology: TopologyService,
   rack: ContainerRackNode,
   spec: BdfbSpec,
-): Promise<{ readonly deviceId: string; readonly breakerCount: number }> {
+): Promise<{
+  readonly deviceId: string;
+  readonly breakerCount: number;
+  readonly gatewayEquipmentId: string;
+  readonly meterEquipmentIds: Readonly<Record<PanelName, string>>;
+}> {
   const device = await ensureBdfbDevice(repository, topology, rack, spec);
 
   // v1 used a DYNAMIC chassis with panels/instrumentation directly beneath it.
@@ -755,7 +761,7 @@ async function seedBdfb(
     category: 'Integrated BDFB controller · physical serial pending QDF assignment',
     aliases: ['SmartPack2 Touch', 'SNMP'],
   });
-  await ensureRootEquipmentFromAnywhere(repository, topology, device, {
+  const gateway = await ensureRootEquipmentFromAnywhere(repository, topology, device, {
     name: `${spec.key}_GW-1`,
     equipmentType: 'NETWORK_BOARD',
     manufacturer: 'Acrel',
@@ -764,8 +770,9 @@ async function seedBdfb(
     category: 'Industrial gateway · RS485 master · network commissioning pending field verification',
     aliases: ['AWT100-CEHW', 'Modbus RTU master', 'MQTT/Modbus TCP gateway'],
   });
+  const meterEquipmentIds = {} as Record<PanelName, string>;
   for (const meter of spec.meters) {
-    await ensureRootEquipmentFromAnywhere(repository, topology, device, {
+    const equipment = await ensureRootEquipmentFromAnywhere(repository, topology, device, {
       name: `${spec.key}_METER-${meter.panel}`,
       equipmentType: 'CUSTOM',
       manufacturer: 'Acrel',
@@ -774,6 +781,7 @@ async function seedBdfb(
       category: `DC multi-circuit meter · ${meter.panel} · 24 channels`,
       aliases: [meter.panel, `RS485 slave ${meter.slaveId}`, 'AHKC-EKA 0-150 A / 5 V'],
     });
+    meterEquipmentIds[meter.panel] = equipment.id;
   }
 
   // Existing v1 chassis is DYNAMIC. Create the shelf while still compatible,
@@ -885,7 +893,132 @@ async function seedBdfb(
     });
   }
 
-  return { deviceId: device.id, breakerCount: spec.breakers.length };
+  return {
+    deviceId: device.id,
+    breakerCount: spec.breakers.length,
+    gatewayEquipmentId: gateway.id,
+    meterEquipmentIds,
+  };
+}
+
+const SEED_01_EVIDENCE = {
+  projectId: 'TELXIUS-LURIN-BDFB-ACREL',
+  documentName: 'CP_Acrel_v0.2',
+  revision: 'v0.2',
+  projectName: 'Telxius Lurin BDFB circuit telemetry',
+  site: 'Lurín',
+  client: 'TELXIUS CABLE PERU S.A.C.',
+  documentStatus: 'DECLARED_SOURCE',
+} as const;
+
+function sameRs485(
+  left: CommunicationProfile['rs485'],
+  right: CommunicationProfile['rs485'],
+): boolean {
+  return (
+    left.baudRate === right.baudRate &&
+    left.dataBits === right.dataBits &&
+    left.parity === right.parity &&
+    left.stopBits === right.stopBits &&
+    left.slaveId === right.slaveId
+  );
+}
+
+async function ensureIndustrialProfile(
+  database: Db,
+  session: ClientSession,
+  desired: CommunicationProfile,
+): Promise<void> {
+  const profiles = database.collection<CommunicationProfile & Document>(
+    'industrial_communication_profiles',
+  );
+  const existing = await profiles.findOne({ equipmentId: desired.equipmentId }, { session });
+
+  if (existing) {
+    if (
+      existing.bdfbDeviceId !== desired.bdfbDeviceId ||
+      existing.role !== desired.role ||
+      !sameRs485(existing.rs485, desired.rs485) ||
+      (desired.role === 'METER' &&
+        existing.gatewayEquipmentId !== desired.gatewayEquipmentId)
+    ) {
+      throw new Error(
+        `SEED_01_CONFLICT: industrial profile ${desired.equipmentId} differs from seed-01 commissioning truth`,
+      );
+    }
+    // Existing operator commissioning wins for network/source identity/status.
+    // Seed migration never overwrites later field work.
+    return;
+  }
+
+  await profiles.insertOne(desired, { session });
+}
+
+async function seedIndustrialProfiles(
+  database: Db,
+  session: ClientSession,
+  spec: BdfbSpec,
+  created: {
+    readonly deviceId: string;
+    readonly gatewayEquipmentId: string;
+    readonly meterEquipmentIds: Readonly<Record<PanelName, string>>;
+  },
+): Promise<void> {
+  const timestamp = new Date().toISOString();
+  const actor = 'seed:seed-01:v4';
+
+  await ensureIndustrialProfile(database, session, {
+    equipmentId: created.gatewayEquipmentId,
+    role: 'GATEWAY',
+    recordStatus: 'DECLARED',
+    gatewayNumber: 'GW-1',
+    downlinkMode: 'Modbus RTU Master',
+    declaredSlaveCount: 4,
+    rs485: {
+      baudRate: 9600,
+      dataBits: 8,
+      parity: 'NONE',
+      stopBits: 1,
+    },
+    evidence: { ...SEED_01_EVIDENCE },
+    bdfbDeviceId: created.deviceId,
+    revisionNumber: 1,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    updatedBy: actor,
+    history: [],
+  });
+
+  for (const meter of spec.meters) {
+    const meterEquipmentId = created.meterEquipmentIds[meter.panel];
+    if (!meterEquipmentId) {
+      throw new Error(`SEED_01_INTERNAL: missing meter Equipment for ${spec.key} ${meter.panel}`);
+    }
+    await ensureIndustrialProfile(database, session, {
+      equipmentId: meterEquipmentId,
+      role: 'METER',
+      recordStatus: 'DECLARED',
+      gatewayEquipmentId: created.gatewayEquipmentId,
+      meterNumber: meter.panel,
+      channelCount: 24,
+      channelDescription: `24 DC circuit channels for panel ${meter.panel}`,
+      hallSensorDescription: 'AHKC-EKA (0–150 A / 5 V)',
+      rs485: {
+        baudRate: 9600,
+        dataBits: 8,
+        parity: 'NONE',
+        stopBits: 1,
+        slaveId: meter.slaveId,
+      },
+      evidence: { ...SEED_01_EVIDENCE },
+      bdfbDeviceId: created.deviceId,
+      revisionNumber: 1,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      updatedBy: actor,
+      history: [],
+    });
+  }
 }
 
 export async function applySeed01(database: Db): Promise<Seed01Summary> {
@@ -917,6 +1050,7 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
       const rack = base.racks.get(spec.key);
       if (!rack) throw new Error(`SEED_01_BASE_REQUIRED: rack for ${spec.key}`);
       const created = await seedBdfb(repository, topology, rack, spec);
+      await seedIndustrialProfiles(database, session, spec, created);
       bdfbs.push({
         key: spec.key,
         rackId: rack.id,
@@ -952,13 +1086,16 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
             assignmentStatus: 'UNASSIGNED_TO_QDF',
           },
           qdf2BreakerMigration: 'FINAL_POSITIONS_NOT_DECLARED',
-          industrialNetworkIdentity: 'FIELD_VERIFICATION_REQUIRED',
+          industrialNetworkIdentity: 'NETWORK_PENDING',
+          acrelChannelMappings: 'PHYSICAL_CONFIRMATION_REQUIRED',
         },
         counts: {
           bdfbs: 3,
           panels: 12,
           gateways: 3,
           meters: 12,
+          industrialProfiles: 15,
+          confirmedChannelMappings: 0,
           controllers: 3,
           confirmedBreakers: 48,
         },

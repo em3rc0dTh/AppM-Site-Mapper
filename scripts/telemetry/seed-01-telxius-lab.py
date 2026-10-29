@@ -521,6 +521,7 @@ def prepare(
                 "EMULATOR_CONFIG_FILE": "emulator.telxius-seed-01.yaml",
             },
             "extra_hosts": ["host.docker.internal:host-gateway"],
+            "networks": {"default": {}, "host-access": {}},
             "restart": "unless-stopped",
         },
         "seed01-smartpack2": {

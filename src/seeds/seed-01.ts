@@ -14,7 +14,7 @@ import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 1 as const;
+export const SEED_01_VERSION = 2 as const;
 
 const PANELS = ['A3', 'A2', 'B3', 'B2'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -471,6 +471,50 @@ async function ensureDynamicChild(
   return created.value;
 }
 
+async function ensurePanelUnderFrame(
+  repository: TopologyRepository,
+  topology: TopologyService,
+  device: DeviceNode,
+  frame: EquipmentNode,
+  panelName: PanelName,
+): Promise<EquipmentNode> {
+  const matches = (await repository.listEquipmentForDevice(device.id)).filter(
+    (item) =>
+      item.lifecycle === 'ACTIVE' &&
+      item.equipmentType === 'PANEL' &&
+      normalizedName(item.name) === normalizedName(panelName),
+  );
+  if (matches.length > 1) {
+    throw new Error(`SEED_01_CONFLICT: duplicate PANEL ${panelName} in ${device.name}`);
+  }
+
+  if (matches.length === 1) {
+    const panel = matches[0]!;
+    if (panel.childMode !== 'POSITIONAL' || panel.children.length !== 24) {
+      throw new Error(`SEED_01_CONFLICT: PANEL ${panelName} must expose 24 positions`);
+    }
+    if (panel.parentEquipmentId === frame.id) return panel;
+
+    const moved = await topology.move(panel.id, frame.id);
+    if (!moved.ok || moved.value.kind !== 'EQUIPMENT') {
+      throw new Error(
+        `SEED_01_MIGRATION_FAILED: move PANEL ${panelName} under ${frame.name}: ${
+          moved.ok ? 'INVALID_KIND' : moved.error
+        }`,
+      );
+    }
+    return moved.value;
+  }
+
+  return ensureDynamicChild(repository, topology, frame.id, {
+    name: panelName,
+    equipmentType: 'PANEL',
+    category: '24-position DC distribution panel',
+    childMode: 'POSITIONAL',
+    childCapacity: 24,
+  });
+}
+
 async function ensurePositionalChild(
   repository: TopologyRepository,
   topology: TopologyService,
@@ -620,15 +664,33 @@ async function seedBdfb(
   });
   await ensureFullRackOccupancy(repository, rack.id, chassis.id);
 
+  // Canonical full BDFB physical chain:
+  // CHASSIS -> SHELF -> FRAME -> PANEL -> CIRCUIT_BREAKER.
+  // The frame split follows the declared A/B panel families without changing
+  // the electrical truth of individual breakers or inventing PowerPaths.
+  const shelf = await ensureDynamicChild(repository, topology, chassis.id, {
+    name: `${spec.key} Distribution Shelf`,
+    equipmentType: 'SHELF',
+    category: 'BDFB distribution shelf',
+    childMode: 'DYNAMIC',
+  });
+  const frameA = await ensureDynamicChild(repository, topology, shelf.id, {
+    name: 'FRAME-A',
+    equipmentType: 'FRAME',
+    category: 'Side A breaker frame',
+    childMode: 'DYNAMIC',
+  });
+  const frameB = await ensureDynamicChild(repository, topology, shelf.id, {
+    name: 'FRAME-B',
+    equipmentType: 'FRAME',
+    category: 'Side B breaker frame',
+    childMode: 'DYNAMIC',
+  });
+
   const panels = new Map<PanelName, EquipmentNode>();
   for (const panelName of PANELS) {
-    const panel = await ensureDynamicChild(repository, topology, chassis.id, {
-      name: panelName,
-      equipmentType: 'PANEL',
-      category: '24-position DC distribution panel',
-      childMode: 'POSITIONAL',
-      childCapacity: 24,
-    });
+    const frame = panelName.startsWith('A') ? frameA : frameB;
+    const panel = await ensurePanelUnderFrame(repository, topology, device, frame, panelName);
     panels.set(panelName, panel);
   }
 

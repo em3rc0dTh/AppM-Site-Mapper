@@ -25,7 +25,7 @@ export class MqttObservationOutbox {
   constructor(
     private readonly directory: string,
     private readonly deliver: (envelope: Envelope) => Promise<unknown>,
-    private readonly onError: () => void,
+    private readonly onError: (error: unknown) => void,
     private readonly maxPending = 1000,
     private readonly retryMs = 2000,
   ) {
@@ -175,11 +175,11 @@ export class MqttObservationOutbox {
           // snapshot was written only after every queued file had completed.
           // Periodic checkpoints are coalesced and never delete spool data.
           if (this.counters.committed % 10 === 0) this.persistDiagnostics();
-        } catch {
+        } catch (error) {
           this.counters.deliveryFailures++;
           this.lastFailureAt = new Date().toISOString();
           this.persistDiagnostics();
-          this.onError();
+          this.onError(error);
         }
       }
     })().finally(() => {

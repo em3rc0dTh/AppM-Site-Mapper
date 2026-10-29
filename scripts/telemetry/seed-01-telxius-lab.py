@@ -67,6 +67,47 @@ def run(argv: list[str], *, input_text: str | None = None, env=None, timeout=300
     return done.stdout.strip()
 
 
+def run_live(argv: list[str], *, env=None, timeout=1200) -> None:
+    """Run a long Docker operation with visible progress instead of looking hung."""
+    try:
+        done = subprocess.run(argv, text=True, env=env, timeout=timeout)
+    except KeyboardInterrupt:
+        raise RuntimeError(
+            "launch interrupted by operator; rerun --action up safely after checking --action status"
+        )
+    if done.returncode:
+        raise RuntimeError(f"command failed ({done.returncode}): {argv[0]}")
+
+
+def mongo_container_ip() -> str:
+    """Use the Mongo IP on this Compose project's private default network.
+
+    The shared host-access network can contain another 'mongodb' DNS alias from
+    an older lab. Pinning this one local launch to the already-running seed
+    container removes that ambiguity without recreating Mongo or its volume.
+    """
+    raw = run(["docker", "inspect", MONGO])
+    details = json.loads(raw)
+    if len(details) != 1:
+        fail("cannot inspect seed-01 Mongo container")
+    networks = details[0].get("NetworkSettings", {}).get("Networks", {})
+    preferred = PROJECT + "_default"
+    entry = networks.get(preferred)
+    if not entry:
+        candidates = [
+            value
+            for name, value in networks.items()
+            if "host-access" not in name and value.get("IPAddress")
+        ]
+        if len(candidates) != 1:
+            fail("cannot identify the private seed-01 Mongo network")
+        entry = candidates[0]
+    ip = entry.get("IPAddress")
+    if not ip:
+        fail("seed-01 Mongo has no private network IP")
+    return ip
+
+
 def read_env(path: Path) -> dict[str, str]:
     values: dict[str, str] = {}
     for raw in path.read_text(encoding="utf8").splitlines():
@@ -236,6 +277,10 @@ def prepare(bfdb: Path) -> dict:
             "environment": {
                 "INDUSTRIAL_PROFILES_FILE": "/config/seed-01-telxius-profiles.json",
                 "MQTT_EXPECTED_SOURCES": ",".join(MQTT_SOURCE.values()),
+                "MONGODB_URI": (
+                    "mongodb://" + mongo_container_ip() +
+                    ":27017/?replicaSet=rs0&directConnection=true"
+                ),
             },
             "volumes": [
                 str(PROFILE_FILE) + ":/config/seed-01-telxius-profiles.json:ro",
@@ -372,7 +417,9 @@ def main() -> None:
         # Stop only historical synthetic publishers. No volumes are removed.
         subprocess.run(cmd + ["stop", "lab-mqtt", "lab-snmp-01", "lab-snmp-02", "lab-snmp-03"],
                        check=False)
-        run(cmd + ["up", "-d", "--build", *new_services], timeout=1200)
+        # All required lab services are selected explicitly. --no-deps prevents
+        # Compose from recreating Mongo/mongo-init while this additive profile is applied.
+        run_live(cmd + ["up", "-d", "--build", "--no-deps", *new_services], timeout=1200)
         print("Telxius seed-01 MQTT + SmartPack2 lab is running.")
         return
     if args.action == "stop":

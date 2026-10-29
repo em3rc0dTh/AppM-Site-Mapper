@@ -35,6 +35,11 @@ COMMISSION = ROOT / "scripts/telemetry/commission-seed-01-telxius-lab.mongosh.js
 QDFS = ("QDF-2", "QDF-4", "QDF-5")
 MQTT_SOURCE = {q: "EMU-TELXIUS-" + q for q in QDFS}
 SNMP_SOURCE = {q: "EMU-SNMP-TELXIUS-" + q for q in QDFS}
+MODBUS_SOURCE_UNITS = {
+    "EMU-TELXIUS-QDF-2": 1,
+    "EMU-TELXIUS-QDF-4": 2,
+    "EMU-TELXIUS-QDF-5": 3,
+}
 SNMP_ROOT = "1.3.6.1.4.1.8072.9999.2026.52"
 SNMP_POINTS = [
     f"{SNMP_ROOT}.1.1.0",
@@ -251,6 +256,7 @@ def prepare(bfdb: Path) -> dict:
                 "SITE_MAPPER_SEED_PROFILE": "seed-01",
                 "INDUSTRIAL_PROFILES_FILE": "/config/seed-01-telxius-profiles.json",
                 "MQTT_EXPECTED_SOURCES": ",".join(MQTT_SOURCE.values()),
+                "MODBUS_SOURCE_UNITS_JSON": json.dumps(MODBUS_SOURCE_UNITS, separators=(",", ":")),
                 "MONGODB_URI": (
                     "mongodb://" + MONGO +
                     ":27017/?replicaSet=rs0&directConnection=true"
@@ -259,6 +265,14 @@ def prepare(bfdb: Path) -> dict:
             "volumes": [
                 str(PROFILE_FILE) + ":/config/seed-01-telxius-profiles.json:ro",
             ],
+        },
+        "modbus-tcp": {
+            "environment": {
+                "MODBUS_SOURCE_UNITS_JSON": json.dumps(
+                    MODBUS_SOURCE_UNITS, separators=(",", ":")
+                ),
+                "MODBUS_POINT_LAYOUT": "panels-4x24",
+            },
         },
         "lab-mqtt-telxius": {
             "build": {"context": str(bfdb)},
@@ -380,7 +394,7 @@ def main() -> None:
 
     cmd = compose_command()
     new_services = [
-        "site-mapper", "lab-mosquitto", "lab-mqtt-telxius",
+        "site-mapper", "modbus-tcp", "lab-mosquitto", "lab-mqtt-telxius",
         *[f"seed01-snmp-agent-{q.lower().replace('-', '')}" for q in QDFS],
         *[f"seed01-snmp-collector-{q.lower().replace('-', '')}" for q in QDFS],
     ]

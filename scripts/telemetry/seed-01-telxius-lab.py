@@ -246,6 +246,9 @@ def prepare(bfdb: Path) -> dict:
     services = {
         "site-mapper": {
             "environment": {
+                "APP_PERSISTENCE": "mongodb",
+                "MONGODB_DB_NAME": "seed-01",
+                "SITE_MAPPER_SEED_PROFILE": "seed-01",
                 "INDUSTRIAL_PROFILES_FILE": "/config/seed-01-telxius-profiles.json",
                 "MQTT_EXPECTED_SOURCES": ",".join(MQTT_SOURCE.values()),
                 "MONGODB_URI": (

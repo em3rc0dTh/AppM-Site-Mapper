@@ -155,13 +155,33 @@ for (const want of desired) {
   }
 }
 
-const existingIds = new Set(
+const existingById = new Map(
   d.telemetry_bindings
-    .find({ id: { $in: desired.map((x) => x.id) } }, { id: 1 })
+    .find({ id: { $in: desired.map((x) => x.id) } })
     .toArray()
-    .map((x) => x.id),
+    .map((x) => [x.id, x]),
 );
-const inserts = desired.filter((x) => !existingIds.has(x.id));
+for (const want of desired) {
+  const have = existingById.get(want.id);
+  if (!have) continue;
+  assert(
+    have.protocol === want.protocol &&
+      have.sourceIdentity === want.sourceIdentity &&
+      have.sourcePointId === want.sourcePointId &&
+      have.metric === want.metric &&
+      have.targetType === want.targetType &&
+      have.targetId === want.targetId &&
+      have.attributes?.commissioning === MARK,
+    'existing lab binding ID differs from desired contract: ' + want.id,
+  );
+}
+const inserts = desired.filter((x) => !existingById.has(x.id));
+const reactivations = desired.filter((x) => existingById.get(x.id)?.lifecycle === 'ARCHIVED');
+const activeExact = desired.filter((x) => existingById.get(x.id)?.lifecycle === 'ACTIVE');
+assert(
+  inserts.length + reactivations.length + activeExact.length === desired.length,
+  'lab bindings contain unsupported lifecycle state',
+);
 print(
   'SEED01 TELXIUS MQTT LAB mode=' +
     MODE +
@@ -172,7 +192,11 @@ print(
     ' metricBindings=' +
     pointCount +
     ' new=' +
-    inserts.length,
+    inserts.length +
+    ' reactivate=' +
+    reactivations.length +
+    ' alreadyActive=' +
+    activeExact.length,
 );
 for (const item of state.bdfbs) {
   const source = SOURCES[item.key];
@@ -185,7 +209,7 @@ if (MODE === 'plan') {
   quit(0);
 }
 assert(ACK === 'LAB_ONLY', 'LAB_ONLY acknowledgement required to apply synthetic bindings');
-if (!inserts.length) {
+if (!inserts.length && !reactivations.length) {
   print('ALREADY COMMISSIONED, 0 writes.');
   quit(0);
 }
@@ -198,12 +222,33 @@ try {
     writeConcern: { w: 'majority' },
   });
   const tx = session.getDatabase(DATABASE);
-  tx.telemetry_bindings.insertMany(
-    inserts.map((x) => ({ ...x, createdAt: now, updatedAt: now, revision: 1 })),
-    { ordered: true },
-  );
+  if (inserts.length) {
+    tx.telemetry_bindings.insertMany(
+      inserts.map((x) => ({ ...x, createdAt: now, updatedAt: now, revision: 1 })),
+      { ordered: true },
+    );
+  }
+  for (const item of reactivations) {
+    const result = tx.telemetry_bindings.updateOne(
+      {
+        id: item.id,
+        lifecycle: 'ARCHIVED',
+        'attributes.commissioning': MARK,
+      },
+      {
+        $set: { lifecycle: 'ACTIVE', updatedAt: now },
+        $inc: { revision: 1 },
+      },
+    );
+    assert(result.matchedCount === 1, 'reactivation lost race: ' + item.id);
+  }
   session.commitTransaction();
-  print('SEED01 TELXIUS MQTT LAB COMMITTED newBindings=' + inserts.length);
+  print(
+    'SEED01 TELXIUS MQTT LAB COMMITTED newBindings=' +
+      inserts.length +
+      ' reactivated=' +
+      reactivations.length,
+  );
 } catch (error) {
   try {
     session.abortTransaction();

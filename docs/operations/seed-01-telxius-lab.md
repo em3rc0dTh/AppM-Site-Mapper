@@ -1,106 +1,35 @@
-# Telxius seed-01 synthetic MQTT + SmartPack2 lab
+# Telxius seed-01 · consolidated MQTT + Smartpack2 evidence lab
 
-This lab is additive and opt-in. It never converts synthetic identities into field commissioning and never deletes Mongo/Timescale volumes.
+**Status:** current-main laboratory runbook. This profile is additive, preserves Mongo/Timescale volumes, uses the existing MQTT broker, and keeps laboratory replay separate from field commissioning.
 
-## Data contract
+## What this launcher starts
 
-### MQTT / Acrel path
+```mermaid
+flowchart LR
+  BF["BFDB Telxius MQTT emulator"] -->|"data/dev/<SN>"| MB["Existing MQTT broker"]
+  MB --> SM["Site Mapper MK1"]
 
-Three synthetic publishers:
+  EV["Private SNMPWalk + Eltek rev54 MIBs"] --> SNAP["BFDB Smartpack2 snapshot replay"]
+  SNAP -->|"GET / GETNEXT / WALK surface"| LAB["Read-only SNMP lab agent"]
+  SNAP --> SEND["Evidence snapshot sender"]
+  SEND -->|"SNMPv3 INFORM batches"| RX["Site Mapper SNMP receiver"]
+  RX --> SM
 
-- `EMU-TELXIUS-QDF-2`
-- `EMU-TELXIUS-QDF-4`
-- `EMU-TELXIUS-QDF-5`
-
-Each publishes 96 channels using the existing BFDB wire shape:
-
-```text
-0_1_1..24 -> A3
-0_2_1..24 -> A2
-0_3_1..24 -> B3
-0_4_1..24 -> B2
+  SM --> MONGO[(MongoDB)]
+  SM --> TS[(TimescaleDB)]
+  SM --> UI["Site Mapper UI"]
+  SM --> MOD["Modbus TCP"]
 ```
 
-Each point carries `U1/I1/P1/EP1` for voltage/current/power/energy. The lab commissioning script binds only positions that already contain confirmed Circuit Breaker Equipment.
+The launcher **does not start or own an MQTT broker**.
 
-Current seed-01 expectation:
+The broker URL is supplied by the operator and is the same broker consumed by Site Mapper and published to by the BFDB MQTT emulator.
 
-- QDF-2: 0 mapped breakers
-- QDF-4: 12 mapped breakers
-- QDF-5: 36 mapped breakers
+## Truth boundary
 
-No Circuit Breaker is created merely to consume telemetry.
+### MQTT / Acrel-AWT
 
-### SNMP / SmartPack2 path
-
-Three independent synthetic SmartPack2 agents are polled using SNMP GET. The operational collector forwards raw varbinds to the generic industrial capture endpoint, not the legacy SNMP feed-current endpoint.
-
-The synthetic OID root is:
-
-```text
-1.3.6.1.4.1.8072.9999.2026.52
-```
-
-It represents observed SmartPack2 semantics from the supplied Telxius walk:
-
-- power system status
-- SmartPack2 type
-- nominal voltage
-- load-current literal
-- company/site/model/controller serial text
-- fuse alarm inputs in observed order A3, B3, A2, B2, A1, B1
-
-The numeric OIDs are laboratory-only and are not asserted as real Eltek MIB addresses.
-
-## Prerequisite
-
-Use the matching BFDB emulator branch:
-
-```bash
-cd ../bfdb-telemetry-gateway
-git fetch origin
-git switch feat/telxius-seed-01-emulator-2026-10-29
-git pull --ff-only
-```
-
-The Site Mapper database must already contain `runtime_seed_state._id=seed-01` version 4 or newer.
-
-## Prepare / plan
-
-From AppM-Site-Mapper:
-
-```bash
-python3 scripts/telemetry/seed-01-telxius-lab.py --action prepare
-python3 scripts/telemetry/seed-01-telxius-lab.py --action plan
-```
-
-The launcher derives runtime target IDs from Mongo and writes ignored files below `.runtime/industrial-lab/`.
-
-## Start
-
-```bash
-python3 scripts/telemetry/seed-01-telxius-lab.py \
-  --action up \
-  --ack-lab-only
-```
-
-The launcher:
-
-1. applies reversible MQTT lab bindings;
-2. stops the historical `EMU-BFDB-01/02/03` publisher and old SNMP lab services without deleting them;
-3. recreates Site Mapper with the generated Telxius industrial profiles mounted read-only;
-4. starts the Telxius MQTT publisher;
-5. starts three SmartPack2 synthetic SNMP agents;
-6. starts three operational SNMP GET collectors.
-
-## Observe
-
-```bash
-python3 scripts/telemetry/seed-01-telxius-lab.py --action status
-python3 scripts/telemetry/seed-01-telxius-lab.py --action logs
-```
-
-Expected MQTT identities:
+The three laboratory publishers are:
 
 ```text
 EMU-TELXIUS-QDF-2
@@ -108,25 +37,234 @@ EMU-TELXIUS-QDF-4
 EMU-TELXIUS-QDF-5
 ```
 
-Expected SNMP identities:
+Each source exposes the complete four-group raw address space:
 
 ```text
-EMU-SNMP-TELXIUS-QDF-2
-EMU-SNMP-TELXIUS-QDF-4
-EMU-SNMP-TELXIUS-QDF-5
+0_1_1..24
+0_2_1..24
+0_3_1..24
+0_4_1..24
 ```
 
-QDF-2 may accept source traffic while exposing zero breaker readings because its final breaker positions remain unconfirmed.
+BFDB emits each 24-position group in the captured 10 + 10 + 4 message shape.
 
-## Stop or retire
+This is **96 raw addresses per QDF**. Only documented measured positions carry U1/I1/P1/EP1 values; the remaining raw addresses are state-only.
 
-Stop services without removing any volume:
+Site Mapper currently contains explicit Circuit Breaker inventory/bindings for:
+
+- QDF-4: 12 physical feed positions;
+- QDF-5: 36 physical feed positions.
+
+QDF-2 remains **RAW-visible but breaker-uncommissioned** in Site Mapper because the final post-migration physical breaker positions are not established by the seed evidence currently accepted in the repository.
+
+That means this lab may receive QDF-2 MQTT traffic without presenting those 26 historical feed references as commissioned Circuit Breakers.
+
+### SNMP / Smartpack2
+
+There is **one Smartpack2 evidence source** in this lab:
+
+```text
+EMU-SMARTPACK2-LURIN
+```
+
+It is not cloned into QDF-2/QDF-4/QDF-5.
+
+The supplied evidence snapshot contains **5,407 observed SNMP objects/OIDs**. These are not 5,407 sensors or 5,407 commissioned engineering measurements.
+
+The replay pipeline is:
+
+```text
+private SNMPWalk
++
+private Eltek rev54 MIBs
+        |
+        v
+BFDB snapshot compiler
+        |
+        +--> read-only GET / GETNEXT / WALK surface
+        |
+        +--> snapshot.json
+                 |
+                 v
+          SNMPv3 INFORM batches
+                 |
+                 v
+          Site Mapper RAW SNMP
+```
+
+The Site Mapper profile uses `mib: eltek-rev54` but intentionally assigns **no QDF target** to the Smartpack2 source because the current evidence does not prove which QDF controller owns the captured walk.
+
+Known Eltek definitions/enumerations may be interpreted by the existing catalog. Everything else remains visible as RAW/UNKNOWN rather than receiving invented engineering meaning.
+
+The INFORM sweep is a **laboratory delivery mechanism**. It does not claim that the physical Smartpack2 emits all 5,407 objects as traps/informs in the field.
+
+## Private evidence
+
+Do not commit customer SNMP evidence or vendor MIB files.
+
+Prepare a private directory containing:
+
+```text
+Results SNMPWalk(4).txt
+EltekEnexusPowersystem-rev54.mib
+EltekEnexusPowersystem_branch10_rev54.mib
+```
+
+The launcher also accepts `walk.txt` for the walk filename and the non-suffixed rev54 MIB names used by some local workspaces.
+
+Example:
+
+```bash
+export TELXIUS_SNMP_EVIDENCE_DIR=/absolute/private/path/telxius-smartpack2
+```
+
+## Existing MQTT broker
+
+Provide the already validated broker:
+
+```bash
+export TELXIUS_MQTT_BROKER_URL='mqtt://<broker-host>:1883'
+export TELXIUS_MQTT_USERNAME='<only-if-required>'
+export TELXIUS_MQTT_PASSWORD='<only-if-required>'
+```
+
+The current BFDB field-emulator publisher supports `mqtt://`. The launcher refuses to silently downgrade an `mqtts://` URL.
+
+When the broker is on `localhost` / `127.0.0.1`, the launcher translates the container-side connection to `host.docker.internal` and adds the Docker host gateway explicitly.
+
+## Repositories
+
+Both repositories must be on current `main`:
+
+```text
+AppM-Site-Mapper
+bfdb-telemetry-gateway
+```
+
+Typical sibling layout:
+
+```text
+Thradex/
+├── AppM-Site-Mapper/
+└── bfdb-telemetry-gateway/
+```
+
+The launcher validates that BFDB contains the current Telxius field emulator, full Smartpack2 snapshot compiler and snapshot INFORM sender.
+
+## Start everything
+
+From `AppM-Site-Mapper`:
+
+```bash
+git switch main
+git pull --ff-only origin main
+
+cd ../bfdb-telemetry-gateway
+git switch main
+git pull --ff-only origin main
+
+cd ../AppM-Site-Mapper
+
+python3 scripts/telemetry/seed-01-telxius-lab.py \
+  --action up \
+  --ack-lab-only
+```
+
+The launcher will:
+
+1. prepare the existing Site Mapper industrial runtime if its private runtime files do not yet exist;
+2. start MongoDB and the replica-set initializer without deleting volumes;
+3. verify `seed-01` v4+ already exists;
+4. read QDF target IDs from Mongo rather than hardcoding UUIDs;
+5. generate the MQTT industrial profiles and the single Smartpack2 RAW profile;
+6. apply reversible MQTT source/point bindings;
+7. stop older synthetic publishers/agents if they exist;
+8. start TimescaleDB;
+9. start the telemetry store;
+10. start Site Mapper;
+11. start the Modbus bridge;
+12. start the Site Mapper SNMP receiver;
+13. start the operational console;
+14. start BFDB QDF-2/QDF-4/QDF-5 MQTT emulation against the **existing broker**;
+15. compile and serve the private Smartpack2 5,407-object snapshot;
+16. deliver that snapshot to Site Mapper through authenticated SNMPv3 INFORM batches.
+
+No `docker compose down -v` is issued.
+
+## Expected services
+
+After startup:
+
+```text
+mongodb
+timescaledb
+telemetry-store
+site-mapper
+modbus-tcp
+snmp-traps
+operational-console
+lab-mqtt-telxius
+seed01-smartpack2
+seed01-smartpack2-to-site-mapper
+```
+
+The historical `lab-mosquitto`, generic `lab-mqtt` and old three-controller SNMP services are stopped if present. They are not deleted.
+
+## Observe
+
+```bash
+python3 scripts/telemetry/seed-01-telxius-lab.py --action status
+```
+
+Logs:
+
+```bash
+python3 scripts/telemetry/seed-01-telxius-lab.py --action logs
+```
+
+Expected local surfaces:
+
+```text
+Site Mapper:          http://127.0.0.1:3000
+Operational Console: http://127.0.0.1:3100
+Modbus TCP lab:      127.0.0.1:1503
+```
+
+## What should appear in Site Mapper
+
+### MQTT
+
+```text
+EMU-TELXIUS-QDF-2
+EMU-TELXIUS-QDF-4
+EMU-TELXIUS-QDF-5
+```
+
+For QDF-4/QDF-5, commissioned breaker bindings should update their existing Circuit Breaker Equipment.
+
+QDF-2 raw traffic can be captured and inspected, but its historical feed positions must not be promoted to final Circuit Breaker bindings until the post-migration physical positions are accepted.
+
+### SNMP
+
+Filter the universal industrial/SNMP explorer by:
+
+```text
+EMU-SMARTPACK2-LURIN
+```
+
+The expected catalog is the complete replayed snapshot over repeated batches, not one giant 5,407-varbind PDU.
+
+The number 5,407 means **observed OID/value objects in the supplied walk**.
+
+## Stop without deleting data
 
 ```bash
 python3 scripts/telemetry/seed-01-telxius-lab.py --action stop
 ```
 
-Archive only the synthetic MQTT bindings:
+This stops the selected services. It does not delete MongoDB, TimescaleDB, the Smartpack runtime volume or Site Mapper topology.
+
+## Retire only the synthetic MQTT bindings
 
 ```bash
 python3 scripts/telemetry/seed-01-telxius-lab.py \
@@ -134,4 +272,20 @@ python3 scripts/telemetry/seed-01-telxius-lab.py \
   --ack-lab-only
 ```
 
-Never use `docker compose down -v` for this customer seed.
+This archives only bindings tagged by the Telxius synthetic lab commissioning marker.
+
+## Explicit non-claims
+
+This lab does not claim that:
+
+- MQTT raw group numbers are commissioned physical panel identities;
+- RTU slave IDs equal MQTT raw group numbers;
+- real AWT firmware refreshes all four raw groups every ten seconds;
+- U2/I2/P2/EP2 represent a second breaker channel;
+- QDF-2 historical feed references are final post-migration breaker positions;
+- the captured Smartpack2 belongs to QDF-2, QDF-4 or QDF-5;
+- all 5,407 OIDs are engineering measurements;
+- all originally numeric walk OIDs have manufacturer-verified ASN.1 type metadata;
+- the physical Smartpack2 broadcasts a 5,407-object INFORM sweep;
+- the existing Modbus map is field-commissioned for Metasys;
+- successful laboratory startup equals physical field certification.

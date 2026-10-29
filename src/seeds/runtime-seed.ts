@@ -28,5 +28,12 @@ export async function applyConfiguredRuntimeSeed(database: Db): Promise<RuntimeS
     );
   }
 
-  return applySeed01(database);
+  const result = await applySeed01(database);
+  const confirmedBreakers = result.bdfbs.reduce((sum, item) => sum + item.breakerCount, 0);
+  console.info(
+    `[site-mapper-seed] profile=${result.profile} version=${result.version} status=${
+      result.alreadyApplied ? 'already-applied' : 'applied'
+    } bdfbs=${result.bdfbs.length} confirmedBreakers=${confirmedBreakers}`,
+  );
+  return result;
 }

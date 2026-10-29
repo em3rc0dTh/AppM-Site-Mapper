@@ -79,27 +79,6 @@ def run_live(argv: list[str], *, env=None, timeout=1200) -> None:
         raise RuntimeError(f"command failed ({done.returncode}): {argv[0]}")
 
 
-def mongo_published_port() -> int:
-    """Return the stable host port published for seed-01 Mongo.
-
-    Docker container IPs are ephemeral and generic service aliases can collide
-    when multiple Compose projects share an auxiliary network. Site Mapper
-    therefore reaches this already-running Mongo through the host-gateway and
-    the project's explicit published loopback port.
-    """
-    raw = run(["docker", "port", MONGO, "27017/tcp"])
-    lines = [line.strip() for line in raw.splitlines() if line.strip()]
-    if len(lines) != 1 or ":" not in lines[0]:
-        fail("cannot resolve the published seed-01 Mongo port")
-    try:
-        port = int(lines[0].rsplit(":", 1)[1])
-    except ValueError as error:
-        raise RuntimeError("SEED01 TELXIUS LAB BLOCKED: invalid Mongo published port") from error
-    if port < 1 or port > 65535:
-        fail("invalid seed-01 Mongo published port")
-    return port
-
-
 def read_env(path: Path) -> dict[str, str]:
     values: dict[str, str] = {}
     for raw in path.read_text(encoding="utf8").splitlines():
@@ -270,11 +249,10 @@ def prepare(bfdb: Path) -> dict:
                 "INDUSTRIAL_PROFILES_FILE": "/config/seed-01-telxius-profiles.json",
                 "MQTT_EXPECTED_SOURCES": ",".join(MQTT_SOURCE.values()),
                 "MONGODB_URI": (
-                    "mongodb://host.docker.internal:" + str(mongo_published_port()) +
-                    "/?replicaSet=rs0&directConnection=true"
+                    "mongodb://" + MONGO +
+                    ":27017/?replicaSet=rs0&directConnection=true"
                 ),
             },
-            "extra_hosts": ["host.docker.internal:host-gateway"],
             "volumes": [
                 str(PROFILE_FILE) + ":/config/seed-01-telxius-profiles.json:ro",
             ],

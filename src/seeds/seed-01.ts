@@ -14,7 +14,7 @@ import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 2 as const;
+export const SEED_01_VERSION = 3 as const;
 
 const PANELS = ['A3', 'A2', 'B3', 'B2'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -471,46 +471,115 @@ async function ensureDynamicChild(
   return created.value;
 }
 
-async function ensurePanelUnderFrame(
+async function moveEquipmentToParent(
+  repository: TopologyRepository,
+  topology: TopologyService,
+  equipment: EquipmentNode,
+  parent: EquipmentNode | DeviceNode,
+  targetSlotIndex?: number,
+): Promise<EquipmentNode> {
+  const fresh = await repository.getById(equipment.id);
+  const current = fresh ? expectKind(fresh, 'EQUIPMENT', equipment.name) : null;
+  if (!current) throw new Error(`SEED_01_CONFLICT: Equipment ${equipment.name} disappeared`);
+
+  const desiredParentEquipmentId = parent.kind === 'EQUIPMENT' ? parent.id : null;
+  if (
+    current.parentId === parent.id &&
+    current.parentEquipmentId === desiredParentEquipmentId &&
+    (parent.kind === 'DEVICE' || parent.childMode === 'DYNAMIC')
+  ) {
+    return current;
+  }
+
+  const moved = await topology.move(current.id, parent.id, targetSlotIndex);
+  if (!moved.ok || moved.value.kind !== 'EQUIPMENT') {
+    throw new Error(
+      `SEED_01_MIGRATION_FAILED: move ${current.name} under ${parent.name}: ${
+        moved.ok ? 'INVALID_KIND' : moved.error
+      }`,
+    );
+  }
+  return moved.value;
+}
+
+async function findEquipmentByName(
+  repository: TopologyRepository,
+  device: DeviceNode,
+  name: string,
+  equipmentType: EquipmentNode['equipmentType'],
+): Promise<EquipmentNode | null> {
+  const matches = (await repository.listEquipmentForDevice(device.id)).filter(
+    (item) =>
+      item.lifecycle === 'ACTIVE' &&
+      item.equipmentType === equipmentType &&
+      normalizedName(item.name) === normalizedName(name),
+  );
+  if (matches.length > 1) {
+    throw new Error(`SEED_01_CONFLICT: duplicate ${equipmentType} ${name} in ${device.name}`);
+  }
+  return matches[0] ?? null;
+}
+
+async function ensureRootEquipmentFromAnywhere(
+  repository: TopologyRepository,
+  topology: TopologyService,
+  device: DeviceNode,
+  spec: RootEquipmentSpec,
+): Promise<EquipmentNode> {
+  let existing: EquipmentNode | null = null;
+  if (spec.serialNumber) {
+    const matches = await repository.findActiveBySerialNumber(spec.serialNumber);
+    if (matches.length > 1) {
+      throw new Error(`SEED_01_CONFLICT: duplicate active serial ${spec.serialNumber}`);
+    }
+    if (matches.length === 1) {
+      existing = expectKind(matches[0]!, 'EQUIPMENT', spec.name);
+    }
+  }
+  existing ??= await findEquipmentByName(repository, device, spec.name, spec.equipmentType);
+
+  if (!existing) return ensureRootEquipment(repository, topology, device, spec);
+  if (existing.deviceId !== device.id || existing.equipmentType !== spec.equipmentType) {
+    throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} ownership/type mismatch`);
+  }
+  if (spec.serialNumber && existing.serialNumber !== spec.serialNumber) {
+    throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} serial mismatch`);
+  }
+  if (spec.manufacturer && existing.manufacturer !== spec.manufacturer) {
+    throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} manufacturer mismatch`);
+  }
+  if (spec.model && existing.model !== spec.model) {
+    throw new Error(`SEED_01_CONFLICT: Equipment ${spec.name} model mismatch`);
+  }
+  return existing.parentEquipmentId === null
+    ? existing
+    : moveEquipmentToParent(repository, topology, existing, device);
+}
+
+async function ensurePanelInFrame(
   repository: TopologyRepository,
   topology: TopologyService,
   device: DeviceNode,
   frame: EquipmentNode,
   panelName: PanelName,
 ): Promise<EquipmentNode> {
-  const matches = (await repository.listEquipmentForDevice(device.id)).filter(
-    (item) =>
-      item.lifecycle === 'ACTIVE' &&
-      item.equipmentType === 'PANEL' &&
-      normalizedName(item.name) === normalizedName(panelName),
-  );
-  if (matches.length > 1) {
-    throw new Error(`SEED_01_CONFLICT: duplicate PANEL ${panelName} in ${device.name}`);
+  const slotIndex = Number(panelName.slice(1)) - 1;
+  if (!Number.isInteger(slotIndex) || slotIndex < 0 || slotIndex > 2) {
+    throw new Error(`SEED_01_INTERNAL: invalid panel slot ${panelName}`);
   }
 
-  if (matches.length === 1) {
-    const panel = matches[0]!;
-    if (panel.childMode !== 'POSITIONAL' || panel.children.length !== 24) {
+  const existing = await findEquipmentByName(repository, device, panelName, 'PANEL');
+  if (existing) {
+    if (existing.childMode !== 'POSITIONAL' || existing.children.length !== 24) {
       throw new Error(`SEED_01_CONFLICT: PANEL ${panelName} must expose 24 positions`);
     }
-    if (panel.parentEquipmentId === frame.id) return panel;
-
-    const moved = await topology.move(panel.id, frame.id);
-    if (!moved.ok || moved.value.kind !== 'EQUIPMENT') {
-      throw new Error(
-        `SEED_01_MIGRATION_FAILED: move PANEL ${panelName} under ${frame.name}: ${
-          moved.ok ? 'INVALID_KIND' : moved.error
-        }`,
-      );
-    }
-    return moved.value;
+    return moveEquipmentToParent(repository, topology, existing, frame, slotIndex);
   }
 
-  return ensureDynamicChild(repository, topology, frame.id, {
+  return ensurePositionalChild(repository, topology, frame.id, slotIndex, {
     name: panelName,
     equipmentType: 'PANEL',
     category: '24-position DC distribution panel',
-    childMode: 'POSITIONAL',
     childCapacity: 24,
   });
 }
@@ -654,47 +723,31 @@ async function seedBdfb(
 ): Promise<{ readonly deviceId: string; readonly breakerCount: number }> {
   const device = await ensureBdfbDevice(repository, topology, rack, spec);
 
-  const chassis = await ensureRootEquipment(repository, topology, device, {
-    name: `${spec.key} Chassis`,
-    equipmentType: 'CHASSIS',
-    manufacturer: 'Eltek',
-    model: 'BDCBB/BDFB Power Distribution Solution',
-    category: '48 VDC BDFB chassis · 96 positions',
-    childMode: 'DYNAMIC',
-  });
+  // v1 used a DYNAMIC chassis with panels/instrumentation directly beneath it.
+  // v3 migrates that same chassis in place to the established canonical chain:
+  // CHASSIS[1] -> SHELF[2 frames] -> FRAME[3 panel slots] -> PANEL[24] -> CB.
+  let chassis = await findEquipmentByName(
+    repository,
+    device,
+    `${spec.key} Chassis`,
+    'CHASSIS',
+  );
+  if (!chassis) {
+    chassis = await ensureRootEquipment(repository, topology, device, {
+      name: `${spec.key} Chassis`,
+      equipmentType: 'CHASSIS',
+      manufacturer: 'Eltek',
+      model: 'BDCBB/BDFB Power Distribution Solution',
+      category: '48 VDC BDFB chassis · 96 active breaker positions',
+      childMode: 'POSITIONAL',
+      childCapacity: 1,
+    });
+  }
   await ensureFullRackOccupancy(repository, rack.id, chassis.id);
 
-  // Canonical full BDFB physical chain:
-  // CHASSIS -> SHELF -> FRAME -> PANEL -> CIRCUIT_BREAKER.
-  // The frame split follows the declared A/B panel families without changing
-  // the electrical truth of individual breakers or inventing PowerPaths.
-  const shelf = await ensureDynamicChild(repository, topology, chassis.id, {
-    name: `${spec.key} Distribution Shelf`,
-    equipmentType: 'SHELF',
-    category: 'BDFB distribution shelf',
-    childMode: 'DYNAMIC',
-  });
-  const frameA = await ensureDynamicChild(repository, topology, shelf.id, {
-    name: 'FRAME-A',
-    equipmentType: 'FRAME',
-    category: 'Side A breaker frame',
-    childMode: 'DYNAMIC',
-  });
-  const frameB = await ensureDynamicChild(repository, topology, shelf.id, {
-    name: 'FRAME-B',
-    equipmentType: 'FRAME',
-    category: 'Side B breaker frame',
-    childMode: 'DYNAMIC',
-  });
-
-  const panels = new Map<PanelName, EquipmentNode>();
-  for (const panelName of PANELS) {
-    const frame = panelName.startsWith('A') ? frameA : frameB;
-    const panel = await ensurePanelUnderFrame(repository, topology, device, frame, panelName);
-    panels.set(panelName, panel);
-  }
-
-  await ensureDynamicChild(repository, topology, chassis.id, {
+  // Move non-distribution instrumentation out of the chassis so its single
+  // physical child remains the BDFB shelf.
+  await ensureRootEquipmentFromAnywhere(repository, topology, device, {
     name: `${spec.key}_CTRL-1`,
     equipmentType: 'CONTROLLER_BOARD',
     manufacturer: 'Eltek',
@@ -702,8 +755,7 @@ async function seedBdfb(
     category: 'Integrated BDFB controller · physical serial pending QDF assignment',
     aliases: ['SmartPack2 Touch', 'SNMP'],
   });
-
-  await ensureDynamicChild(repository, topology, chassis.id, {
+  await ensureRootEquipmentFromAnywhere(repository, topology, device, {
     name: `${spec.key}_GW-1`,
     equipmentType: 'NETWORK_BOARD',
     manufacturer: 'Acrel',
@@ -712,21 +764,114 @@ async function seedBdfb(
     category: 'Industrial gateway · RS485 master · network commissioning pending field verification',
     aliases: ['AWT100-CEHW', 'Modbus RTU master', 'MQTT/Modbus TCP gateway'],
   });
-
   for (const meter of spec.meters) {
-    await ensureDynamicChild(repository, topology, chassis.id, {
+    await ensureRootEquipmentFromAnywhere(repository, topology, device, {
       name: `${spec.key}_METER-${meter.panel}`,
       equipmentType: 'CUSTOM',
       manufacturer: 'Acrel',
       model: 'AMC16Z-FDK24',
       serialNumber: meter.serial,
       category: `DC multi-circuit meter · ${meter.panel} · 24 channels`,
-      aliases: [
-        meter.panel,
-        `RS485 slave ${meter.slaveId}`,
-        'AHKC-EKA 0-150 A / 5 V',
-      ],
+      aliases: [meter.panel, `RS485 slave ${meter.slaveId}`, 'AHKC-EKA 0-150 A / 5 V'],
     });
+  }
+
+  // Existing v1 chassis is DYNAMIC. Create the shelf while still compatible,
+  // migrate panels, then freeze the chassis to one positional shelf slot.
+  const freshChassisBeforeShelf = expectKind(
+    (await repository.getById(chassis.id))!,
+    'EQUIPMENT',
+    chassis.name,
+  );
+  let shelf = await findEquipmentByName(
+    repository,
+    device,
+    `${spec.key}-SHELF-01`,
+    'SHELF',
+  );
+  if (!shelf) {
+    shelf =
+      freshChassisBeforeShelf.childMode === 'POSITIONAL'
+        ? await ensurePositionalChild(repository, topology, freshChassisBeforeShelf.id, 0, {
+            name: `${spec.key}-SHELF-01`,
+            equipmentType: 'SHELF',
+            category: 'BDFB distribution shelf',
+            childCapacity: 2,
+          })
+        : await ensureDynamicChild(repository, topology, freshChassisBeforeShelf.id, {
+            name: `${spec.key}-SHELF-01`,
+            equipmentType: 'SHELF',
+            category: 'BDFB distribution shelf',
+            childMode: 'POSITIONAL',
+            childCapacity: 2,
+          });
+  } else {
+    shelf = await moveEquipmentToParent(
+      repository,
+      topology,
+      shelf,
+      freshChassisBeforeShelf,
+      freshChassisBeforeShelf.childMode === 'POSITIONAL' ? 0 : undefined,
+    );
+  }
+  if (shelf.childMode !== 'POSITIONAL' || shelf.children.length !== 2) {
+    throw new Error(`SEED_01_CONFLICT: ${shelf.name} must contain exactly 2 frame slots`);
+  }
+
+  const frameA = await ensurePositionalChild(repository, topology, shelf.id, 0, {
+    name: `${spec.key}-SHELF-01-FRAME-01`,
+    equipmentType: 'FRAME',
+    category: 'Side A breaker frame',
+    childCapacity: 3,
+  });
+  const frameB = await ensurePositionalChild(repository, topology, shelf.id, 1, {
+    name: `${spec.key}-SHELF-01-FRAME-02`,
+    equipmentType: 'FRAME',
+    category: 'Side B breaker frame',
+    childCapacity: 3,
+  });
+
+  const panels = new Map<PanelName, EquipmentNode>();
+  for (const panelName of PANELS) {
+    const frame = panelName.startsWith('A') ? frameA : frameB;
+    panels.set(
+      panelName,
+      await ensurePanelInFrame(repository, topology, device, frame, panelName),
+    );
+  }
+
+  // After all legacy direct children have been migrated, freeze the chassis as
+  // POSITIONAL capacity 1 with the shelf in slot 1.
+  const freshChassis = expectKind(
+    (await repository.getById(chassis.id))!,
+    'EQUIPMENT',
+    chassis.name,
+  );
+  const unexpectedChildren = freshChassis.children.filter(
+    (childId): childId is string => Boolean(childId) && childId !== shelf.id,
+  );
+  if (unexpectedChildren.length) {
+    throw new Error(
+      `SEED_01_CONFLICT: ${freshChassis.name} has unexpected direct children after migration`,
+    );
+  }
+  if (
+    freshChassis.childMode !== 'POSITIONAL' ||
+    freshChassis.children.length !== 1 ||
+    freshChassis.children[0] !== shelf.id
+  ) {
+    const canonicalChassis: EquipmentNode = {
+      ...freshChassis,
+      childMode: 'POSITIONAL',
+      children: [shelf.id],
+      updatedAt: new Date().toISOString(),
+    };
+    if (!repository.commitLayout) {
+      throw new Error('SEED_01_MIGRATION_FAILED: ATOMIC_LAYOUT_STORAGE_REQUIRED');
+    }
+    if (!(await repository.commitLayout([freshChassis], [canonicalChassis]))) {
+      throw new Error('SEED_01_MIGRATION_FAILED: CHASSIS_LAYOUT_CONFLICT');
+    }
   }
 
   for (const breaker of spec.breakers) {

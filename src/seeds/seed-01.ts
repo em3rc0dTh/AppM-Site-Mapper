@@ -169,7 +169,12 @@ type Seed01StateDocument = Document & {
 };
 
 function normalizedName(value: string): string {
-  return value.trim().replace(/\s+/g, ' ').toUpperCase();
+  return value
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .toUpperCase();
 }
 
 function expectKind<K extends TopologyKind>(

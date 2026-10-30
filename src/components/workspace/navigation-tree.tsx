@@ -58,7 +58,13 @@ function Branch({
       {children.length > 0 && (query || expanded) && (
         <ul>
           {children.map((child) => (
-            <Branch key={child.id} node={child} query={query} pathname={pathname} />
+            <Branch
+              key={child.id}
+              node={child}
+              query={query}
+              pathname={pathname}
+              alarmRollups={alarmRollups}
+            />
           ))}
         </ul>
       )}

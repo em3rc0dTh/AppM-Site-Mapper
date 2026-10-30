@@ -24,7 +24,7 @@ export interface AssertAlarmInput {
 function isCorrelationConflict(error: unknown): boolean {
   if (error instanceof Error && error.message === 'ALARM_ACTIVE_CORRELATION_EXISTS') return true;
   return (
-    Boolean(error) &&
+    error !== null &&
     typeof error === 'object' &&
     'code' in error &&
     (error as { code?: unknown }).code === 11000

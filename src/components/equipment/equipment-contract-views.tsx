@@ -9,6 +9,8 @@ import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/com
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
 import { SnmpCapacityStrip } from './snmp-capacity-strip';
 import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
+import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
+import type { AlarmRollup } from '@/modules/alarm/domain/entities';
 
 interface Props {
   readonly root: EquipmentNode;
@@ -137,10 +139,12 @@ function BreakerRow({
   breaker,
   position,
   reading,
+  alarm,
 }: Readonly<{
   breaker: EquipmentNode;
   position: number;
   reading: CompositionBreakerTelemetry | undefined;
+  alarm?: AlarmRollup;
 }>) {
   const status = reading?.status ?? 'UNMAPPED';
   return (
@@ -154,6 +158,14 @@ function BreakerRow({
         <span className="ec-status-dot" aria-hidden="true" />
         <span className="ec-status-text">{status}</span>
       </span>
+      <span
+        className="ec-alarm-cell"
+        data-severity={alarm?.highestSeverity ?? 'NONE'}
+      >
+        {alarm?.activeAlarmCount
+          ? alarm.highestSeverity + ' · ' + alarm.activeAlarmCount
+          : '—'}
+      </span>
     </ChildLink>
   );
 }
@@ -163,11 +175,13 @@ function PanelComposition({
   byId,
   readings,
   onAdd,
+  alarmRollups,
 }: Readonly<{
   root: EquipmentNode;
   byId: ReadonlyMap<string, EquipmentNode>;
   readings: Props['readings'];
   onAdd?: Props['onAdd'];
+  alarmRollups: Readonly<Record<string, AlarmRollup>>;
 }>) {
   const t = useTranslations('equipmentView');
   const slots = root.children.map((id, index) => ({
@@ -207,6 +221,7 @@ function PanelComposition({
             <span>P · W</span>
             <span>E · kWh</span>
             <span>{t('status')}</span>
+            <span>ALARM</span>
           </div>
           {slots.length ? (
             slots.map(({ id, index, child }) =>
@@ -216,6 +231,7 @@ function PanelComposition({
                   breaker={child}
                   position={index + 1}
                   reading={readings[child.id]}
+                  alarm={alarmRollups[child.id]}
                 />
               ) : id ? (
                 <div className="ec-missing-row" key={id}>
@@ -243,6 +259,7 @@ function PanelComposition({
                   <span aria-hidden="true">—</span>
                   <span aria-hidden="true">—</span>
                   <span className="ec-status-available">{t('available')}</span>
+                  <span aria-hidden="true">—</span>
                 </div>
               ),
             )
@@ -263,6 +280,7 @@ export function EquipmentContractViews({
   canReadTelemetry = false,
 }: Props) {
   const t = useTranslations('equipmentView');
+  const { snapshot: alarmSnapshot } = useAlarmSnapshot();
   const children = activeChildren(root, equipmentById);
   const summary = projectCompositionTelemetry(root, equipmentById, readings);
   const type = root.equipmentType;
@@ -413,7 +431,7 @@ export function EquipmentContractViews({
       )}
 
       {type === 'PANEL' && (
-        <PanelComposition root={root} byId={equipmentById} readings={readings} onAdd={onAdd} />
+        <PanelComposition root={root} byId={equipmentById} readings={readings} onAdd={onAdd} alarmRollups={alarmSnapshot.rollups} />
       )}
 
       {type === 'CIRCUIT_BREAKER' && (

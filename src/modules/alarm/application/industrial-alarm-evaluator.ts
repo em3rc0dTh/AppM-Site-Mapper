@@ -76,6 +76,7 @@ export class IndustrialAlarmEvaluator {
           const correlationKey = [signal.targetId, signal.alarmCode, sourceContext].join('|');
 
           if (signal.alarmState === 'ACTIVE') {
+            const severity = commissionedSeverity(signal.severity);
             await this.commands.assert({
               code: signal.alarmCode,
               targetType,
@@ -83,9 +84,7 @@ export class IndustrialAlarmEvaluator {
               sourceContext,
               evidence: [evidence],
               observedAt: signal.observedAt,
-              ...(commissionedSeverity(signal.severity)
-                ? { severity: commissionedSeverity(signal.severity) }
-                : {}),
+              ...(severity ? { severity } : {}),
             });
           } else {
             const active = await this.alarms.getActiveByCorrelationKey(correlationKey);

@@ -22,11 +22,10 @@ export function proxy(request: NextRequest) {
     upstreamHeaders.delete('host');
     upstreamHeaders.delete('connection');
     upstreamHeaders.delete('content-length');
-    return fetch(upstream, {
-      method: 'GET',
-      headers: upstreamHeaders,
-      cache: 'no-store',
-      redirect: 'manual',
+    return NextResponse.rewrite(upstream, {
+      request: {
+        headers: upstreamHeaders,
+      },
     });
   }
 

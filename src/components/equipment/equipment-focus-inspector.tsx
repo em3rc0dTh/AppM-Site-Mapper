@@ -178,7 +178,11 @@ export function EquipmentFocusInspector({
         )}
         {activeTab === 'alarms' && (
           <>
-            <AlarmScopeSummary entityId={equipment.id} scopeLabel={equipment.name} showAffectedChildren />
+            <AlarmScopeSummary
+              entityId={equipment.id}
+              scopeLabel={equipment.name}
+              showAffectedChildren
+            />
             <AlarmOccurrenceList entityId={equipment.id} />
           </>
         )}

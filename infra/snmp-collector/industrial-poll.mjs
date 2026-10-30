@@ -103,19 +103,23 @@ async function poll() {
       signal: AbortSignal.timeout(timeoutMs + 5000),
     });
     if (!response.ok) throw new Error(`Site Mapper industrial ingest HTTP ${response.status}`);
-    console.info(JSON.stringify({
-      event: 'snmp.operational.poll.accepted',
-      sourceIdentity,
-      pointCount: varbinds.length,
-      at: now,
-    }));
+    console.info(
+      JSON.stringify({
+        event: 'snmp.operational.poll.accepted',
+        sourceIdentity,
+        pointCount: varbinds.length,
+        at: now,
+      }),
+    );
   } catch (error) {
-    console.warn(JSON.stringify({
-      event: 'snmp.operational.poll.failed',
-      sourceIdentity,
-      reason: error instanceof Error ? error.message : 'unknown',
-      at: new Date().toISOString(),
-    }));
+    console.warn(
+      JSON.stringify({
+        event: 'snmp.operational.poll.failed',
+        sourceIdentity,
+        reason: error instanceof Error ? error.message : 'unknown',
+        at: new Date().toISOString(),
+      }),
+    );
   } finally {
     if (!stopping) timer = setTimeout(poll, pollMs);
   }
@@ -128,10 +132,12 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
     session.close();
   });
 }
-console.info(JSON.stringify({
-  event: 'snmp.operational.collector.started',
-  sourceIdentity,
-  pointCount: points.length,
-  snmpVersion: version,
-}));
+console.info(
+  JSON.stringify({
+    event: 'snmp.operational.collector.started',
+    sourceIdentity,
+    pointCount: points.length,
+    snmpVersion: version,
+  }),
+);
 await poll();

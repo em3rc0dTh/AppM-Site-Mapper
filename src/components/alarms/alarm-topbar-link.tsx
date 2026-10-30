@@ -34,9 +34,9 @@ export function AlarmTopbarLink() {
   }, []);
 
   const count = snapshot?.occurrences.filter((item) => item.state === 'ACTIVE').length ?? 0;
-  const critical = snapshot?.occurrences.filter(
-    (item) => item.state === 'ACTIVE' && item.severity === 'CRITICAL',
-  ).length ?? 0;
+  const critical =
+    snapshot?.occurrences.filter((item) => item.state === 'ACTIVE' && item.severity === 'CRITICAL')
+      .length ?? 0;
 
   return (
     <Link

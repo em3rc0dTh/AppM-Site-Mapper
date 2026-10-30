@@ -21,7 +21,13 @@ import type { DeviceNode } from '@/modules/topology/domain/entities';
 import { useTranslations } from 'next-intl';
 
 type InspectorTab = 'overview' | 'alarms' | 'feeds' | 'history' | 'settings';
-const INSPECTOR_TABS: readonly InspectorTab[] = ['overview', 'alarms', 'feeds', 'history', 'settings'];
+const INSPECTOR_TABS: readonly InspectorTab[] = [
+  'overview',
+  'alarms',
+  'feeds',
+  'history',
+  'settings',
+];
 type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
 function metric(value: number | null | undefined, unit: string, decimals = 2): string {

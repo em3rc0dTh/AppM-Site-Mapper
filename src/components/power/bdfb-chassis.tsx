@@ -178,34 +178,34 @@ export function BdfbChassis({
             {selectedPanel.positions.map((breaker, index) => {
               const breakerAlarm = breaker ? alarmSnapshot?.rollups[breaker.id] : undefined;
               return (
-              <div
-                key={index}
-                role="listitem"
-                className="sm-bdfb-panel-position"
-                data-installed={breaker !== null}
-                data-alarm-severity={breakerAlarm?.highestSeverity?.toLowerCase()}
-              >
-                {breaker ? (
-                  <Link
-                    href={`/device/${breaker.id}`}
-                    title={t('positionBreaker', { position: index + 1, breaker: breaker.label })}
-                    aria-label={t('positionBreakerDetails', {
-                      position: index + 1,
-                      breaker: breaker.label,
-                    })}
-                  >
-                    <span>P{String(index + 1).padStart(2, '0')}</span>
-                    {breakerAlarm ? <AlarmBadge rollup={breakerAlarm} /> : <strong>●</strong>}
-                  </Link>
-                ) : (
-                  <span
-                    title={t('positionAvailable', { position: index + 1 })}
-                    aria-label={t('positionAvailable', { position: index + 1 })}
-                  >
-                    P{String(index + 1).padStart(2, '0')}
-                  </span>
-                )}
-              </div>
+                <div
+                  key={index}
+                  role="listitem"
+                  className="sm-bdfb-panel-position"
+                  data-installed={breaker !== null}
+                  data-alarm-severity={breakerAlarm?.highestSeverity?.toLowerCase()}
+                >
+                  {breaker ? (
+                    <Link
+                      href={`/device/${breaker.id}`}
+                      title={t('positionBreaker', { position: index + 1, breaker: breaker.label })}
+                      aria-label={t('positionBreakerDetails', {
+                        position: index + 1,
+                        breaker: breaker.label,
+                      })}
+                    >
+                      <span>P{String(index + 1).padStart(2, '0')}</span>
+                      {breakerAlarm ? <AlarmBadge rollup={breakerAlarm} /> : <strong>●</strong>}
+                    </Link>
+                  ) : (
+                    <span
+                      title={t('positionAvailable', { position: index + 1 })}
+                      aria-label={t('positionAvailable', { position: index + 1 })}
+                    >
+                      P{String(index + 1).padStart(2, '0')}
+                    </span>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -217,7 +217,9 @@ export function BdfbChassis({
                   <div
                     className="sm-bdfb-breaker-summary-row"
                     key={breaker.id}
-                    data-alarm-severity={alarmSnapshot?.rollups[breaker.id]?.highestSeverity?.toLowerCase()}
+                    data-alarm-severity={alarmSnapshot?.rollups[
+                      breaker.id
+                    ]?.highestSeverity?.toLowerCase()}
                   >
                     <span>{t('position', { position: String(index + 1).padStart(2, '0') })}</span>
                     <Link href={`/device/${breaker.id}`}>{breaker.label}</Link>

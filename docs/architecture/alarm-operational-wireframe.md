@@ -15,15 +15,15 @@
 
 Part 4 freezes how an operator discovers, follows, inspects and acknowledges an alarm without breaking the physical-navigation model already used by Site Mapper.
 
-~~~text
+```text
 operator navigation:   TOP → DOWN
 alarm visibility:      BOTTOM → UP
 alarm ownership:       REAL TARGET
-~~~
+```
 
 For a breaker-targeted occurrence:
 
-~~~mermaid
+```mermaid
 flowchart TD
   HOME["Home / Alarm Center"] --> QDF["QDF"]
   QDF --> BDFB["BDFB"]
@@ -41,7 +41,7 @@ flowchart TD
   CH -. "roll-up" .-> BDFB
   BDFB -. "roll-up" .-> QDF
   QDF -. "roll-up" .-> HOME
-~~~
+```
 
 There is still only one **AlarmOccurrence**. Ancestor badges are projections.
 
@@ -53,14 +53,14 @@ The approved visual behavior needs real Site Mapper screens for validation befor
 
 Preview activation requires both:
 
-~~~text
+```text
 APP_ENV != production
 SITE_MAPPER_SEED_PROFILE == seed-01
-~~~
+```
 
 The preview projects two deterministic visual fixtures onto canonical existing Equipment:
 
-~~~text
+```text
 A3-04
   POWER_LOSS
   CRITICAL
@@ -69,7 +69,7 @@ A3-04
 A3-03
   TELEMETRY_LOSS
   WARNING
-~~~
+```
 
 These fixtures exercise the UI and hierarchy. They are **not field-certified Telxius alarm evidence** and do not claim that those physical breakers are currently failing.
 
@@ -99,9 +99,9 @@ It does **not** certify production alarm evaluation, durable Mongo alarm persist
 
 The top bar exposes one operational alarm entry:
 
-~~~text
+```text
 [ Search ] [ ⚠ ALARMS 2 ] [ EXPLORE ] [ WAREHOUSE ] [ ADMIN ]
-~~~
+```
 
 The global count is occurrence-based. Roll-up visibility at ancestors never multiplies the count.
 
@@ -111,7 +111,7 @@ The global count is occurrence-based. Roll-up visibility at ancestors never mult
 
 Home exposes active alarms before the operator enters a QDF.
 
-~~~text
+```text
 INFRASTRUCTURE OVERVIEW
 
 [ Equipment ] [ Reporting ] [ No recent data ]
@@ -126,7 +126,7 @@ INFRASTRUCTURE OVERVIEW
 │ WARNING          [ Go to target → ]          │
 │                              [ View all → ]   │
 └───────────────────────────────────────────────┘
-~~~
+```
 
 Home is a navigation surface, not a new alarm owner.
 
@@ -136,7 +136,7 @@ Home is a navigation surface, not a new alarm owner.
 
 Every canonical ancestor of an active target receives a compact roll-up badge.
 
-~~~text
+```text
 QDF4                          🔴 2
 └─ BDFB QDF-4                 🔴 2
    └─ QDF-4 Chassis           🔴 2
@@ -145,7 +145,7 @@ QDF4                          🔴 2
             └─ A3             🔴 2
                ├─ A3-03       🟠 1
                └─ A3-04       🔴 1
-~~~
+```
 
 The highest severity drives the compact visual tone while the count remains occurrence-based.
 
@@ -168,7 +168,7 @@ QDF itself does not acquire breaker telemetry because a descendant is alarmed.
 
 The existing BDFB physical diagram remains authoritative. Panels containing alarmed descendants are marked without taking alarm ownership.
 
-~~~text
+```text
 FRAME-01                         FRAME-02
 ┌──────────────────────┐         ┌──────────────────────┐
 │ A3       🔴 2        │         │ B3       NORMAL     │
@@ -178,15 +178,15 @@ FRAME-01                         FRAME-02
 └──────────────────────┘         └──────────────────────┘
 
 P01 ●  P02 ●  P03 🟠  P04 🔴  P05 ●  P06 ●
-~~~
+```
 
 Installed-circuit presentation separates observability and alarms:
 
-~~~text
+```text
 POS   BREAKER   V     I     P     E      STATE    ALARM
 03    A3-03     ...   ...   ...   ...    STALE    WARNING
 04    A3-04     ...   ...   ...   ...    LIVE     CRITICAL
-~~~
+```
 
 **LIVE does not mean healthy.**
 
@@ -196,7 +196,7 @@ POS   BREAKER   V     I     P     E      STATE    ALARM
 
 Chassis, Shelf and Frame show descendant alarm summaries and identify the affected immediate child.
 
-~~~text
+```text
 Chassis
   2 descendant alarms
   affected child → Shelf-01
@@ -208,7 +208,7 @@ Shelf-01
 Frame-01
   2 descendant alarms
   affected child → A3
-~~~
+```
 
 Structural roll-up never invents V/A/kW/kWh for those nodes.
 
@@ -218,7 +218,7 @@ Structural roll-up never invents V/A/kW/kWh for those nodes.
 
 Panel is the transition from structural navigation to circuit-level evidence.
 
-~~~text
+```text
 A3
 
 2 ACTIVE ALARMS
@@ -229,7 +229,7 @@ POS   BREAKER   V     I     P      E      STATUS   ALARM
 01    A3-01     ...   ...   ...    ...    LIVE     —
 03    A3-03     ...   ...   ...    ...    STALE    WARNING
 04    A3-04     ...   ...   ...    ...    LIVE     CRITICAL
-~~~
+```
 
 Alarm state never rewrites a missing or stale measurement as zero.
 
@@ -239,14 +239,14 @@ Alarm state never rewrites a missing or stale measurement as zero.
 
 When selected Equipment is the real alarm target, a direct alarm hero appears before normal Equipment Composition.
 
-~~~text
+```text
 CRITICAL ALARM · LAB PREVIEW
 POWER LOSS
 
 ACTIVE · CONFIRMED · UNACKNOWLEDGED
 
 [ ACKNOWLEDGE ] [ VIEW ALARM DETAIL → ]
-~~~
+```
 
 The normal breaker identity, telemetry and PowerPath functions remain available underneath.
 
@@ -258,16 +258,16 @@ Alarm Center answers: **What requires attention now?**
 
 Canonical columns:
 
-| Field | Meaning |
-| --- | --- |
-| Severity | INFO / WARNING / CRITICAL |
-| Alarm | stable alarm code/name |
-| Target | real alarm owner |
-| Path | canonical physical ancestry |
-| Since | occurrence opening time |
-| ACK | acknowledgement state |
+| Field      | Meaning                               |
+| ---------- | ------------------------------------- |
+| Severity   | INFO / WARNING / CRITICAL             |
+| Alarm      | stable alarm code/name                |
+| Target     | real alarm owner                      |
+| Path       | canonical physical ancestry           |
+| Since      | occurrence opening time               |
+| ACK        | acknowledgement state                 |
 | Confidence | SUSPECTED / CONFIRMED when applicable |
-| Actions | Open Detail / Go to Target |
+| Actions    | Open Detail / Go to Target            |
 
 One occurrence appears once regardless of how many ancestor scopes display it.
 
@@ -287,16 +287,16 @@ The full alarm view contains:
 
 Evidence remains source-aware:
 
-~~~text
+```text
 Telemetry / MQTT
 Controller / SNMP
 Watchdog / observability
 Correlation
-~~~
+```
 
 The timeline preserves the lifecycle:
 
-~~~text
+```text
 condition detected
        ↓
 alarm asserted
@@ -308,7 +308,7 @@ operator ACK
 recovery detected
        ↓
 alarm resolved
-~~~
+```
 
 Automatic alarms have no manual Resolve button.
 
@@ -318,9 +318,9 @@ Automatic alarms have no manual Resolve button.
 
 ACK means **seen**, not **fixed**.
 
-~~~text
+```text
 ACTIVE + ACKNOWLEDGED
-~~~
+```
 
 is valid.
 
@@ -334,7 +334,7 @@ Both routes are mandatory.
 
 ### Investigative
 
-~~~text
+```text
 Home
 → QDF
 → BDFB
@@ -344,15 +344,15 @@ Home
 → Panel
 → Breaker
 → Alarm Detail
-~~~
+```
 
 ### Direct
 
-~~~text
+```text
 Home alarm → target
 Alarm Center → target
 Alarm Center → Alarm Detail → target
-~~~
+```
 
 Deep links preserve enough ancestry for breadcrumbs and tree context.
 
@@ -362,15 +362,15 @@ Deep links preserve enough ancestry for breadcrumbs and tree context.
 
 These are different:
 
-~~~text
+```text
 NO ACTIVE ALARMS
-~~~
+```
 
 means evaluation completed and no active occurrence exists.
 
-~~~text
+```text
 ALARM STATUS UNAVAILABLE
-~~~
+```
 
 means alarm state could not be obtained.
 
@@ -382,9 +382,9 @@ Unavailable must never be rendered as healthy.
 
 Desktop preserves the established Site Mapper structure:
 
-~~~text
+```text
 Topology | Stage | Inspector
-~~~
+```
 
 At smaller widths:
 
@@ -400,11 +400,11 @@ At smaller widths:
 
 The approved UI consumes occurrences and roll-ups. The seed preview can later be replaced by the persistent engine without redesigning the hierarchy.
 
-~~~mermaid
+```mermaid
 flowchart LR
   PREVIEW["seed-01 LAB preview provider"] --> UI["Approved alarm UI"]
   ENGINE["Persistent Alarm Engine"] --> UI
-~~~
+```
 
 Production follow-up still requires:
 

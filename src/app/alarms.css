@@ -54,9 +54,15 @@
   font-size: 0.66rem;
   font-weight: 700;
 }
-.alarm-badge[data-severity='critical'] { background: var(--alarm-critical); }
-.alarm-badge[data-severity='warning'] { background: var(--alarm-warning); }
-.alarm-badge[data-severity='info'] { background: var(--alarm-info); }
+.alarm-badge[data-severity='critical'] {
+  background: var(--alarm-critical);
+}
+.alarm-badge[data-severity='warning'] {
+  background: var(--alarm-warning);
+}
+.alarm-badge[data-severity='info'] {
+  background: var(--alarm-info);
+}
 
 .alarm-home-summary {
   margin: 18px 0 22px;
@@ -99,10 +105,18 @@
   gap: 7px;
   font-size: 0.75rem;
 }
-.alarm-home-counts b { font-size: 1.2rem; }
-[data-severity='critical'] { --alarm-tone: var(--alarm-critical); }
-[data-severity='warning'] { --alarm-tone: var(--alarm-warning); }
-[data-severity='info'] { --alarm-tone: var(--alarm-info); }
+.alarm-home-counts b {
+  font-size: 1.2rem;
+}
+[data-severity='critical'] {
+  --alarm-tone: var(--alarm-critical);
+}
+[data-severity='warning'] {
+  --alarm-tone: var(--alarm-warning);
+}
+[data-severity='info'] {
+  --alarm-tone: var(--alarm-info);
+}
 .alarm-home-counts span[data-severity],
 .alarm-scope-counts span[data-severity],
 .alarm-inspector-counts b[data-severity] {
@@ -123,7 +137,9 @@
   display: grid;
   gap: 3px;
 }
-.alarm-home-table small { color: #61738a; }
+.alarm-home-table small {
+  color: #61738a;
+}
 .alarm-path {
   min-width: 0;
   overflow: hidden;
@@ -222,7 +238,9 @@
   display: grid;
   gap: 2px;
 }
-.alarm-inspector-row small { color: #687a90; }
+.alarm-inspector-row small {
+  color: #687a90;
+}
 .alarm-inspector-all {
   display: inline-block;
   margin-top: 8px;
@@ -247,7 +265,10 @@
   margin: 4px 0 6px;
   font-size: 2rem;
 }
-.alarm-center-heading p { margin: 0; color: #607287; }
+.alarm-center-heading p {
+  margin: 0;
+  color: #607287;
+}
 .alarm-center-heading > strong {
   padding: 7px 10px;
   border-radius: 999px;
@@ -298,7 +319,9 @@
   background: color-mix(in srgb, var(--alarm-tone) 5%, #fff);
   color: var(--alarm-tone);
 }
-.alarm-center-stats b { font-size: 1.55rem; }
+.alarm-center-stats b {
+  font-size: 1.55rem;
+}
 .alarm-center-list {
   border: 1px solid #dbe2ea;
   border-radius: 8px;
@@ -309,9 +332,16 @@
   padding: 15px;
   border-bottom: 1px solid #dbe2ea;
 }
-.alarm-center-list h2 { margin: 0 0 4px; font-size: 1rem; }
-.alarm-center-list small { color: #6b7d91; }
-.alarm-center-table-wrap { overflow: auto; }
+.alarm-center-list h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+.alarm-center-list small {
+  color: #6b7d91;
+}
+.alarm-center-table-wrap {
+  overflow: auto;
+}
 .alarm-center-list table {
   width: 100%;
   border-collapse: collapse;
@@ -346,7 +376,10 @@
   border-radius: 4px;
   text-decoration: none;
 }
-.alarm-empty-state { padding: 28px; text-align: center; }
+.alarm-empty-state {
+  padding: 28px;
+  text-align: center;
+}
 
 .alarm-detail-breadcrumbs {
   justify-content: flex-start;
@@ -373,8 +406,14 @@
   font-size: 1.5rem;
   font-weight: 800;
 }
-.alarm-detail-hero h1 { margin: 3px 0 6px; font-size: 2rem; }
-.alarm-detail-hero p { margin: 0; color: #50657c; }
+.alarm-detail-hero h1 {
+  margin: 3px 0 6px;
+  font-size: 2rem;
+}
+.alarm-detail-hero p {
+  margin: 0;
+  color: #50657c;
+}
 .alarm-detail-tags {
   display: flex;
   gap: 7px;
@@ -423,7 +462,9 @@
   color: #18764a;
   background: #f1fbf6;
 }
-.alarm-ack-action small { color: #b51622; }
+.alarm-ack-action small {
+  color: #b51622;
+}
 .alarm-detail-grid {
   display: grid;
   grid-template-columns: 1fr 1.1fr;
@@ -436,15 +477,23 @@
   border-radius: 8px;
   background: #fff;
 }
-.alarm-detail-card h2 { margin: 0 0 14px; font-size: 1rem; }
+.alarm-detail-card h2 {
+  margin: 0 0 14px;
+  font-size: 1rem;
+}
 .alarm-detail-card dl {
   display: grid;
   grid-template-columns: 120px 1fr;
   gap: 8px 14px;
   margin: 16px 0 0;
 }
-.alarm-detail-card dt { color: #6a7b90; }
-.alarm-detail-card dd { margin: 0; font-weight: 600; }
+.alarm-detail-card dt {
+  color: #6a7b90;
+}
+.alarm-detail-card dd {
+  margin: 0;
+  font-weight: 600;
+}
 .alarm-detail-path {
   display: flex;
   gap: 5px;
@@ -469,15 +518,30 @@
   background: #f8fafc;
 }
 .alarm-measurement-grid small,
-.alarm-measurement-grid strong { display: block; }
-.alarm-measurement-grid strong { margin-top: 6px; font-size: 1.1rem; }
-.alarm-detail-note { color: #65778c; font-size: 0.7rem; }
+.alarm-measurement-grid strong {
+  display: block;
+}
+.alarm-measurement-grid strong {
+  margin-top: 6px;
+  font-size: 1.1rem;
+}
+.alarm-detail-note {
+  color: #65778c;
+  font-size: 0.7rem;
+}
 .alarm-evidence-card > div {
   padding: 10px 0;
   border-top: 1px solid #e8edf2;
 }
-.alarm-evidence-card p { margin: 4px 0 0; color: #607287; }
-.alarm-timeline-card ol { list-style: none; padding: 0; margin: 0; }
+.alarm-evidence-card p {
+  margin: 4px 0 0;
+  color: #607287;
+}
+.alarm-timeline-card ol {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
 .alarm-timeline-card li {
   display: grid;
   grid-template-columns: 100px 1fr;
@@ -485,9 +549,17 @@
   padding: 10px 0;
   border-top: 1px solid #e8edf2;
 }
-.alarm-timeline-card li[data-pending='true'] { opacity: 0.6; }
-.alarm-timeline-card time { color: #6b7d91; font-size: 0.67rem; }
-.alarm-timeline-card div { display: grid; gap: 3px; }
+.alarm-timeline-card li[data-pending='true'] {
+  opacity: 0.6;
+}
+.alarm-timeline-card time {
+  color: #6b7d91;
+  font-size: 0.67rem;
+}
+.alarm-timeline-card div {
+  display: grid;
+  gap: 3px;
+}
 
 .sm-bdfb-physical-panel[data-alarm-severity='critical'],
 .sm-bdfb-panel-position[data-alarm-severity='critical'],
@@ -512,24 +584,49 @@
 }
 
 @media (max-width: 1100px) {
-  .alarm-home-table article { grid-template-columns: 1fr auto; }
-  .alarm-home-table .alarm-path { grid-column: 1 / -1; }
-  .alarm-center-filters { grid-template-columns: repeat(2, 1fr); }
-  .alarm-center-stats { grid-template-columns: repeat(2, 1fr); }
-  .alarm-detail-grid { grid-template-columns: 1fr; }
+  .alarm-home-table article {
+    grid-template-columns: 1fr auto;
+  }
+  .alarm-home-table .alarm-path {
+    grid-column: 1 / -1;
+  }
+  .alarm-center-filters {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .alarm-center-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .alarm-detail-grid {
+    grid-template-columns: 1fr;
+  }
 }
 @media (max-width: 720px) {
   .alarm-topbar-link strong,
-  .alarm-topbar-link i { display: none; }
+  .alarm-topbar-link i {
+    display: none;
+  }
   .alarm-center-page,
-  .alarm-detail-page { padding: 18px 12px 34px; }
-  .alarm-detail-hero { grid-template-columns: 44px 1fr; }
-  .alarm-detail-actions { grid-column: 1 / -1; }
-  .alarm-measurement-grid { grid-template-columns: repeat(2, 1fr); }
-  .alarm-scope-banner { align-items: flex-start; flex-direction: column; }
-  .alarm-scope-links { margin-left: 0; justify-content: flex-start; }
+  .alarm-detail-page {
+    padding: 18px 12px 34px;
+  }
+  .alarm-detail-hero {
+    grid-template-columns: 44px 1fr;
+  }
+  .alarm-detail-actions {
+    grid-column: 1 / -1;
+  }
+  .alarm-measurement-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .alarm-scope-banner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .alarm-scope-links {
+    margin-left: 0;
+    justify-content: flex-start;
+  }
 }
-
 
 /* Canonical Equipment Composition alarm overlays. */
 .equipment-slot[data-alarm-severity='critical'],
@@ -666,7 +763,6 @@
   background: #fff8e8 !important;
 }
 
-
 .alarm-bdfb-strip {
   display: flex;
   align-items: center;
@@ -682,8 +778,12 @@
   display: grid;
   gap: 3px;
 }
-.alarm-bdfb-strip > div:first-child strong { color: #b51622; }
-.alarm-bdfb-strip > div:first-child small { color: #687a90; }
+.alarm-bdfb-strip > div:first-child strong {
+  color: #b51622;
+}
+.alarm-bdfb-strip > div:first-child small {
+  color: #687a90;
+}
 .alarm-bdfb-strip-items {
   display: flex;
   gap: 8px;
@@ -706,7 +806,9 @@
   font-size: 0.72rem;
   font-weight: 700;
 }
-.alarm-bdfb-strip-items small { color: #687a90; }
+.alarm-bdfb-strip-items small {
+  color: #687a90;
+}
 
 @media (max-width: 900px) {
   .alarm-bdfb-strip {

@@ -51,9 +51,15 @@ export function AlarmHomeSummary({ snapshot }: { snapshot: AlarmSnapshotView }) 
         <Link href="/alarms">View all alarms →</Link>
       </header>
       <div className="alarm-home-counts">
-        <span data-severity="critical"><b>{critical}</b> Critical</span>
-        <span data-severity="warning"><b>{warning}</b> Warning</span>
-        <span data-severity="info"><b>{info}</b> Info</span>
+        <span data-severity="critical">
+          <b>{critical}</b> Critical
+        </span>
+        <span data-severity="warning">
+          <b>{warning}</b> Warning
+        </span>
+        <span data-severity="info">
+          <b>{info}</b> Info
+        </span>
       </div>
       <div className="alarm-home-table">
         {snapshot.occurrences.slice(0, 3).map((alarm) => (
@@ -66,7 +72,10 @@ export function AlarmHomeSummary({ snapshot }: { snapshot: AlarmSnapshotView }) 
               {alarm.severity}
             </span>
             <small className="alarm-path" title={alarm.path.map((item) => item.name).join(' / ')}>
-              {alarm.path.slice(-6).map((item) => item.name).join(' / ')}
+              {alarm.path
+                .slice(-6)
+                .map((item) => item.name)
+                .join(' / ')}
             </small>
             <Link href={alarm.targetHref}>Go to target →</Link>
           </article>
@@ -101,8 +110,12 @@ export function AlarmScopeBanner({
         {snapshot.preview ? <small>LAB PREVIEW</small> : null}
       </div>
       <div className="alarm-scope-counts">
-        {rollup.critical > 0 ? <span data-severity="critical">● {rollup.critical} Critical</span> : null}
-        {rollup.warning > 0 ? <span data-severity="warning">▲ {rollup.warning} Warning</span> : null}
+        {rollup.critical > 0 ? (
+          <span data-severity="critical">● {rollup.critical} Critical</span>
+        ) : null}
+        {rollup.warning > 0 ? (
+          <span data-severity="warning">▲ {rollup.warning} Warning</span>
+        ) : null}
         {rollup.info > 0 ? <span data-severity="info">● {rollup.info} Info</span> : null}
       </div>
       <div className="alarm-scope-links">
@@ -151,19 +164,24 @@ export function AlarmInspectorCard({
           className="alarm-inspector-row"
           href={alarm.targetId === nodeId ? `/alarms/${alarm.id}` : alarm.targetHref}
         >
-          <span data-severity={alarm.severity.toLowerCase()} aria-hidden="true">!</span>
+          <span data-severity={alarm.severity.toLowerCase()} aria-hidden="true">
+            !
+          </span>
           <div>
             <strong>{occurrenceLabel(alarm)}</strong>
-            <small>{alarm.targetId === nodeId ? 'Direct alarm' : `Descendant · ${alarm.targetName}`}</small>
+            <small>
+              {alarm.targetId === nodeId ? 'Direct alarm' : `Descendant · ${alarm.targetName}`}
+            </small>
           </div>
           <b>›</b>
         </Link>
       ))}
-      <Link className="alarm-inspector-all" href="/alarms">View all alarms →</Link>
+      <Link className="alarm-inspector-all" href="/alarms">
+        View all alarms →
+      </Link>
     </section>
   );
 }
-
 
 export function DirectAlarmHero({
   snapshot,
@@ -190,9 +208,13 @@ export function DirectAlarmHero({
       data-severity={primary.severity.toLowerCase()}
       aria-label="Direct active alarm"
     >
-      <div className="alarm-direct-icon" aria-hidden="true">!</div>
+      <div className="alarm-direct-icon" aria-hidden="true">
+        !
+      </div>
       <div className="alarm-direct-copy">
-        <small>{primary.severity} ALARM {snapshot.preview ? '· LAB PREVIEW' : ''}</small>
+        <small>
+          {primary.severity} ALARM {snapshot.preview ? '· LAB PREVIEW' : ''}
+        </small>
         <h2>{occurrenceLabel(primary)}</h2>
         <div className="alarm-direct-tags">
           <span>{primary.state}</span>
@@ -200,7 +222,9 @@ export function DirectAlarmHero({
           <span>{primary.acknowledgement}</span>
         </div>
         <p>{primary.remarks}</p>
-        {direct.length > 1 ? <small>{direct.length} direct active alarms on this target.</small> : null}
+        {direct.length > 1 ? (
+          <small>{direct.length} direct active alarms on this target.</small>
+        ) : null}
       </div>
       <div className="alarm-direct-actions">
         <AlarmAcknowledgeButton

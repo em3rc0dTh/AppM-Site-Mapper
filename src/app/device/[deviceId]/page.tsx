@@ -3,7 +3,11 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { EquipmentCompositionEditor } from '@/components/equipment/equipment-composition-editor';
-import { AlarmInspectorCard, AlarmScopeBanner, DirectAlarmHero } from '@/components/alarms/alarm-ui';
+import {
+  AlarmInspectorCard,
+  AlarmScopeBanner,
+  DirectAlarmHero,
+} from '@/components/alarms/alarm-ui';
 import { getAlarmSnapshot } from '@/modules/alarms/application/alarm-preview-service';
 import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
 import { EquipmentFocusInspector } from '@/components/equipment/equipment-focus-inspector';
@@ -357,13 +361,15 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
       </nav>
 
       <div className="mk-device-layout">
-        <aside>{tree && (
+        <aside>
+          {tree && (
             <TopologyContextTree
               tree={tree}
               activeId={node.id}
               alarmRollups={alarmSnapshot.rollups}
             />
-          )}</aside>
+          )}
+        </aside>
 
         <section className="zip-device-stage">
           <AlarmScopeBanner snapshot={alarmSnapshot} nodeId={node.id} />

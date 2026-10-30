@@ -211,13 +211,13 @@ ordered by severity, then age
 
 Minimum list fields:
 
-| Field | Meaning |
-| --- | --- |
-| Severity | INFO / WARNING / CRITICAL |
-| Alarm | Stable AlarmDefinition name/code |
-| Asset | Canonical target path |
-| Since | Opened timestamp / duration |
-| Ack | Acknowledgement state |
+| Field      | Meaning                                |
+| ---------- | -------------------------------------- |
+| Severity   | INFO / WARNING / CRITICAL              |
+| Alarm      | Stable AlarmDefinition name/code       |
+| Asset      | Canonical target path                  |
+| Since      | Opened timestamp / duration            |
+| Ack        | Acknowledgement state                  |
 | Confidence | When applicable, SUSPECTED / CONFIRMED |
 
 Planned filters:
@@ -323,25 +323,25 @@ The approved mock separates measurements, observation state and alarm state.
 
 Canonical columns:
 
-| Column | Purpose |
-| --- | --- |
-| Position | Physical slot P01..P24 |
-| Circuit | Canonical breaker/feed label |
-| V | Latest/last-known voltage |
-| A | Latest/last-known current |
-| kW | Derived/accepted power |
-| State | Observation state |
-| Alarm | Alarm severity/state summary |
-| Remarks | Human-readable operational explanation |
-| Last reading | Source/measurement timestamp |
+| Column       | Purpose                                |
+| ------------ | -------------------------------------- |
+| Position     | Physical slot P01..P24                 |
+| Circuit      | Canonical breaker/feed label           |
+| V            | Latest/last-known voltage              |
+| A            | Latest/last-known current              |
+| kW           | Derived/accepted power                 |
+| State        | Observation state                      |
+| Alarm        | Alarm severity/state summary           |
+| Remarks      | Human-readable operational explanation |
+| Last reading | Source/measurement timestamp           |
 
 Example:
 
-| Pos | Circuit | V | A | kW | State | Alarm | Remarks |
-| --- | --- | ---: | ---: | ---: | --- | --- | --- |
-| P01 | A3-01 | 53.7 | 12.4 | 0.67 | LIVE | — | Linked by MQTT |
-| P03 | A3-03 | 53.6 | 9.2 | 0.49 | LATE | WARNING | Telemetry delayed |
-| P04 | A3-04 | 0.4 | 0.0 | 0.00 | LIVE | CRITICAL | Power loss confirmed |
+| Pos | Circuit |    V |    A |   kW | State | Alarm    | Remarks              |
+| --- | ------- | ---: | ---: | ---: | ----- | -------- | -------------------- |
+| P01 | A3-01   | 53.7 | 12.4 | 0.67 | LIVE  | —        | Linked by MQTT       |
+| P03 | A3-03   | 53.6 |  9.2 | 0.49 | LATE  | WARNING  | Telemetry delayed    |
+| P04 | A3-04   |  0.4 |  0.0 | 0.00 | LIVE  | CRITICAL | Power loss confirmed |
 
 The key semantic rule is:
 

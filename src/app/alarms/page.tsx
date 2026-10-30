@@ -31,11 +31,26 @@ export default async function AlarmCenterPage() {
       </header>
 
       <section className="alarm-center-stats">
-        <article><b>{active.length}</b><span>Active</span></article>
-        <article><b>{unack}</b><span>Without ACK</span></article>
-        <article data-severity="critical"><b>{critical}</b><span>Critical</span></article>
-        <article data-severity="warning"><b>{warning}</b><span>Warning</span></article>
-        <article data-severity="info"><b>{info}</b><span>Info</span></article>
+        <article>
+          <b>{active.length}</b>
+          <span>Active</span>
+        </article>
+        <article>
+          <b>{unack}</b>
+          <span>Without ACK</span>
+        </article>
+        <article data-severity="critical">
+          <b>{critical}</b>
+          <span>Critical</span>
+        </article>
+        <article data-severity="warning">
+          <b>{warning}</b>
+          <span>Warning</span>
+        </article>
+        <article data-severity="info">
+          <b>{info}</b>
+          <span>Info</span>
+        </article>
       </section>
 
       <AlarmCenterClient occurrences={snapshot.occurrences} />

@@ -110,9 +110,7 @@ function buildRollups(
   );
 }
 
-export async function getAlarmSnapshot(
-  repository: TopologyRepository,
-): Promise<AlarmSnapshotView> {
+export async function getAlarmSnapshot(repository: TopologyRepository): Promise<AlarmSnapshotView> {
   if (!previewEnabled()) return { preview: false, occurrences: [], rollups: {} };
 
   const topology = new TopologyService(repository);

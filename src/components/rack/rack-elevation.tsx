@@ -88,9 +88,7 @@ export function RackElevation({
           <h1>{t('front')}</h1>
           <small>{t('rearWarning')}</small>
         </header>
-        {alarmSnapshot ? (
-          <AlarmScopeBanner snapshot={alarmSnapshot} nodeId={view.rack.id} />
-        ) : null}
+        {alarmSnapshot ? <AlarmScopeBanner snapshot={alarmSnapshot} nodeId={view.rack.id} /> : null}
 
         <div className="legacy-rack-canvas zip-elevation-canvas">
           <div className="legacy-rack-frame zip-elevation-rack">

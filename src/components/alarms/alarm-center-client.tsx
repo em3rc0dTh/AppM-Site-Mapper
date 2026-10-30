@@ -135,7 +135,10 @@ export function AlarmCenterClient({
                       <Link href={alarm.targetHref}>{alarm.targetName}</Link>
                     </td>
                     <td title={alarm.path.map((item) => item.name).join(' / ')}>
-                      {alarm.path.slice(-5).map((item) => item.name).join(' / ')}
+                      {alarm.path
+                        .slice(-5)
+                        .map((item) => item.name)
+                        .join(' / ')}
                     </td>
                     <td>{new Date(alarm.openedAt).toLocaleString()}</td>
                     <td>{alarm.acknowledgement === 'ACKNOWLEDGED' ? '✓ Yes' : 'No'}</td>
@@ -153,7 +156,9 @@ export function AlarmCenterClient({
           </div>
         ) : (
           <div className="alarm-empty-state">
-            {stateFilter === 'ACTIVE' ? '✓ NO ACTIVE ALARMS MATCH THESE FILTERS' : 'NO ALARMS MATCH THESE FILTERS'}
+            {stateFilter === 'ACTIVE'
+              ? '✓ NO ACTIVE ALARMS MATCH THESE FILTERS'
+              : 'NO ALARMS MATCH THESE FILTERS'}
           </div>
         )}
       </section>

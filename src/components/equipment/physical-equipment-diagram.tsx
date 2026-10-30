@@ -453,7 +453,9 @@ export function PhysicalEquipmentDiagram({
                           <Link
                             href={'/device/' + encodeURIComponent(slot.equipment.id)}
                             className="equipment-physical-slot is-occupied"
-                            data-alarm-severity={alarmRollups[slot.equipment.id]?.highestSeverity?.toLowerCase()}
+                            data-alarm-severity={alarmRollups[
+                              slot.equipment.id
+                            ]?.highestSeverity?.toLowerCase()}
                             title={slot.equipment.name}
                           >
                             <small>{String(slot.index + 1).padStart(2, '0')}</small>

@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
+import { compactAlarmPath } from '@/components/alarm/alarm-path';
 import { useCallback, useEffect, useState } from 'react';
 
 import type { AlarmOccurrenceView, AlarmTransition } from '@/modules/alarm/domain/entities';
@@ -78,7 +79,7 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
       <section className="sm-alarm-detail-path">
         <small>{t('target')}</small>
         <div>
-          {occurrence.path.map((item, index) => (
+          {compactAlarmPath(occurrence.path).map((item, index) => (
             <span key={item.id}>
               {index > 0 ? ' › ' : ''}
               <Link href={item.href}>{item.name}</Link>

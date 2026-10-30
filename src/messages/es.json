@@ -300,7 +300,8 @@
       "mk1_rev": "· rev.",
       "mk1_confirmation": "Confirmación",
       "mk1_user": "· usuario",
-      "mk1_no_confirmed_acrel_physical_mapping": "Sin mapeo físico Acrel confirmado"
+      "mk1_no_confirmed_acrel_physical_mapping": "Sin mapeo físico Acrel confirmado",
+      "breadcrumbs": "Ruta de navegación"
     },
     "rackFocus": {
       "title": "DETALLE DEL RACK",

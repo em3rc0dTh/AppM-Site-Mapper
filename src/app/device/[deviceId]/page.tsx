@@ -343,8 +343,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     ['ROOM_SUBSTRUCTURE', 'DEVICE', 'EQUIPMENT'].includes(item.kind),
   );
   const roomIndex = usefulLinks.findIndex((item) => item.kind === 'ROOM_SUBSTRUCTURE');
-  const breadcrumbLinks =
-    roomIndex >= 0 ? usefulLinks.slice(roomIndex) : usefulLinks.slice(-4);
+  const breadcrumbLinks = roomIndex >= 0 ? usefulLinks.slice(roomIndex) : usefulLinks.slice(-4);
 
   const t = await getTranslations('pages.device');
   return (

@@ -163,7 +163,16 @@ export class AlarmService {
       acknowledgedBy: actorId,
       updatedAt: now,
     };
-    await this.alarms.replaceOccurrence(next);
+    try {
+      await this.alarms.replaceOccurrence(next);
+    } catch (error) {
+      if (error instanceof Error && error.message === 'ALARM_STALE_WRITE') {
+        const latest = await this.alarms.getOccurrence(id);
+        if (latest) return latest;
+      }
+      throw error;
+    }
+
     await this.alarms.insertTransition({
       id: randomUUID(),
       alarmOccurrenceId: id,

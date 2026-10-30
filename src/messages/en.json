@@ -300,7 +300,8 @@
       "mk1_rev": "· rev.",
       "mk1_confirmation": "Confirmation",
       "mk1_user": "· user",
-      "mk1_no_confirmed_acrel_physical_mapping": "No confirmed Acrel physical mapping"
+      "mk1_no_confirmed_acrel_physical_mapping": "No confirmed Acrel physical mapping",
+      "breadcrumbs": "Breadcrumb"
     },
     "rackFocus": {
       "title": "RACK FOCUS",

@@ -562,7 +562,8 @@
       "rack": "RACK",
       "device": "DEVICE",
       "equipment": "EQUIPMENT"
-    }
+    },
+    "activeAlarmsInBranch": "{count, plural, one {# active alarm in this branch} other {# active alarms in this branch}}"
   },
   "topologyViews": {
     "surveyed": "SURVEYED GEOMETRY",
@@ -721,7 +722,8 @@
     "positionsLive": "{reporting}/{total} positions MQTT LIVE",
     "childEquipmentLive": "{reporting}/{total} installed child Equipment MQTT LIVE",
     "physicalPositionsCount": "{count} physical positions",
-    "childEquipmentCount": "{count} child Equipment"
+    "childEquipmentCount": "{count} child Equipment",
+    "alarm": "ALARM"
   },
   "warehouseForms": {
     "creation": "Template creation mode",
@@ -2074,5 +2076,88 @@
     "previous": "Previous",
     "page": "Page {page}",
     "next": "Next"
+  },
+  "alarmUi": {
+    "header": {
+      "title": "ALARMS",
+      "unavailable": "Alarm status unavailable",
+      "loadingLabel": "Loading alarms",
+      "activeLabel": "{count} active alarms",
+      "criticalShort": "C",
+      "warningShort": "W",
+      "infoShort": "I"
+    },
+    "center": {
+      "eyebrow": "Operational alarms",
+      "title": "Alarm Center",
+      "description": "One occurrence, many hierarchical views. Targets own alarms; ancestors show roll-ups.",
+      "refresh": "Refresh",
+      "unavailable": "Alarm status unavailable. This is not equivalent to “no alarms”.",
+      "active": "Active",
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info",
+      "unacknowledged": "Unacknowledged",
+      "resolved": "Resolved",
+      "severityLabel": "Severity",
+      "siteLabel": "Site",
+      "qdfLabel": "QDF",
+      "familyLabel": "Alarm family",
+      "ackLabel": "Acknowledgement",
+      "searchLabel": "Search alarms",
+      "searchPlaceholder": "Search alarm, target or path…",
+      "allSeverities": "All severities",
+      "allSites": "All sites",
+      "allQdfs": "All QDFs",
+      "allFamilies": "All families",
+      "communication": "Communication",
+      "electrical": "Electrical",
+      "equipment": "Equipment",
+      "correlated": "Correlated",
+      "allAckStates": "All ACK states",
+      "acknowledged": "Acknowledged",
+      "alarm": "Alarm",
+      "targetPath": "Target path",
+      "since": "Since",
+      "ack": "ACK",
+      "confidence": "Confidence",
+      "actions": "Actions",
+      "openDetail": "Open detail",
+      "goToTarget": "Go to target",
+      "empty": "No alarms in this view."
+    },
+    "detail": {
+      "loading": "Loading alarm…",
+      "acknowledging": "Acknowledging…",
+      "acknowledge": "Acknowledge",
+      "goToTarget": "Go to target →",
+      "target": "TARGET",
+      "evidence": "Evidence",
+      "evidenceFallback": "Evidence",
+      "noEvidence": "No evidence references recorded.",
+      "timeline": "Event timeline",
+      "opened": "Alarm opened",
+      "resolved": "Resolved",
+      "occurrence": "Occurrence",
+      "correlation": "Correlation",
+      "rule": "Rule"
+    },
+    "scope": {
+      "unavailable": "Alarm status unavailable",
+      "activeInScope": "{count, plural, one {# active alarm in this scope} other {# active alarms in this scope}}",
+      "activeCount": "{count, plural, one {# active alarm} other {# active alarms}}",
+      "severityCounts": "{critical} Critical · {warning} Warning · {info} Info",
+      "direct": "{count} direct",
+      "rollup": "Descendant roll-up · no telemetry ownership implied",
+      "view": "View alarms →",
+      "affectedChildren": "AFFECTED CHILDREN"
+    },
+    "home": {
+      "active": "Active alarms",
+      "viewAll": "View all alarms →",
+      "unavailable": "Alarm status unavailable. This is not equivalent to no alarms.",
+      "none": "No active alarms.",
+      "goToTarget": "Go to target →"
+    }
   }
 }

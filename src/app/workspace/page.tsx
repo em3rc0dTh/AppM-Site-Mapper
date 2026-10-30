@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { DemoSeedButton } from '@/components/dev/demo-seed-button';
+import { getAlarmSnapshot } from '@/modules/alarms/application/alarm-preview-service';
 import { NavigationTree } from '@/components/workspace/navigation-tree';
 import { HomeSidebar } from '@/components/workspace/home-sidebar';
 import { HomeLiveOverview } from '@/components/workspace/home-live-overview';
@@ -31,7 +32,10 @@ export default async function WorkspacePage() {
   const topologyRepo = await createTopologyRepository();
   const topology = new TopologyService(topologyRepo);
   const service = new WorkspaceService(topologyRepo, await createPowerRepository());
-  const snapshot = await service.getSnapshot();
+  const [snapshot, alarmSnapshot] = await Promise.all([
+    service.getSnapshot(),
+    getAlarmSnapshot(topologyRepo),
+  ]);
   const context = await readContext(auth.value.id);
   const allNodes = flatten(snapshot.navigation);
   const latest = (await getTelemetryRuntime()).service.snapshot();
@@ -93,7 +97,9 @@ export default async function WorkspacePage() {
 
   return (
     <main className="sm-home">
-      <HomeSidebar tree={<NavigationTree roots={snapshot.navigation} />} />
+      <HomeSidebar
+        tree={<NavigationTree roots={snapshot.navigation} alarmRollups={alarmSnapshot.rollups} />}
+      />
       <section className="sm-home-main">
         <header className="sm-home-heading">
           <div>
@@ -110,6 +116,7 @@ export default async function WorkspacePage() {
           bdfbs={bdfbRows}
           cards={cards}
           initialSamples={latest}
+          alarmSnapshot={alarmSnapshot}
         />
       </section>
     </main>

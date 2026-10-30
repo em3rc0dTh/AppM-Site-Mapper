@@ -6,6 +6,8 @@ export type Permission =
   | 'power:read'
   | 'power:write'
   | 'telemetry:read'
+  | 'alarms:read'
+  | 'alarms:ack'
   | 'settings:read'
   | 'settings:write'
   | 'credentials:read'
@@ -14,13 +16,15 @@ export type Permission =
   | 'system:danger';
 
 const permissions: Readonly<Record<Role, ReadonlySet<Permission>>> = {
-  STANDARD: new Set<Permission>(['topology:read', 'power:read', 'telemetry:read']),
+  STANDARD: new Set<Permission>(['topology:read', 'power:read', 'telemetry:read', 'alarms:read']),
   ADMIN: new Set<Permission>([
     'topology:read',
     'topology:write',
     'power:read',
     'power:write',
     'telemetry:read',
+    'alarms:read',
+    'alarms:ack',
     'settings:read',
     'settings:write',
     'credentials:read',

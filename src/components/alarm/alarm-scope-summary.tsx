@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
+import { compactAlarmPath } from '@/components/alarm/alarm-path';
 
 export function AlarmScopeSummary({
   entityId,
@@ -140,8 +141,7 @@ export function AlarmOccurrenceList({
           <div>
             <strong>{alarm.name}</strong>
             <small>
-              {alarm.path
-                .slice(-3)
+              {compactAlarmPath(alarm.path)
                 .map((item) => item.name)
                 .join(' › ')}
             </small>

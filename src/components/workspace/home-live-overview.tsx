@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
+import { compactAlarmPath } from '@/components/alarm/alarm-path';
 import { useTelemetryStream } from '@/components/telemetry/use-bdfb-telemetry';
 import {
   aggregateBdfbDescendantTelemetry,
@@ -142,7 +143,11 @@ export function HomeLiveOverview({
               {alarm.severity}
               {alarm.confidence ? ' · ' + alarm.confidence : ''}
             </span>
-            <small>{alarm.path.map((item) => item.name).join(' › ')}</small>
+            <small title={alarm.path.map((item) => item.name).join(' › ')}>
+              {compactAlarmPath(alarm.path)
+                .map((item) => item.name)
+                .join(' › ')}
+            </small>
           </div>
           <Link href={alarm.targetHref}>{alarmT('goToTarget')}</Link>
         </article>

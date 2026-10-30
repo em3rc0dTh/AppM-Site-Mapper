@@ -10,6 +10,7 @@ import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { PowerContractEditor } from '@/components/power/power-contract-editor';
 import { RackElevation } from '@/components/rack/rack-elevation';
 import { EquipmentTelemetryInspector } from '@/components/telemetry/equipment-telemetry-inspector';
+import { AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
 import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { ContextPin } from '@/components/workspace/context-pin';
@@ -334,21 +335,31 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     nodeTrail.map(async (item) => ({
       id: item.id,
       name: item.name,
+      kind: item.kind,
       href: await service.buildDeepLink(item.id),
     })),
   );
+  const usefulLinks = links.filter((item) =>
+    ['ROOM_SUBSTRUCTURE', 'DEVICE', 'EQUIPMENT'].includes(item.kind),
+  );
+  const roomIndex = usefulLinks.findIndex((item) => item.kind === 'ROOM_SUBSTRUCTURE');
+  const breadcrumbLinks =
+    roomIndex >= 0 ? usefulLinks.slice(roomIndex) : usefulLinks.slice(-4);
 
   const t = await getTranslations('pages.device');
   return (
     <main className="operational-page mk-device-page">
-      <nav className="breadcrumbs zip-device-breadcrumbs">
-        {rackNode ? (
-          <Link href={`/rack/${rackNode.id}/focus`}>← {rackNode.name}</Link>
-        ) : links[0] ? (
-          <Link href={links[0].href}>← {links[0].name}</Link>
-        ) : null}
-        <span className="zip-breadcrumb-divider" />
-        <strong>{node.name}</strong>
+      <nav className="breadcrumbs zip-device-breadcrumbs" aria-label="Breadcrumb">
+        {breadcrumbLinks.map((item, index) => (
+          <span className="zip-device-breadcrumb-item" key={item.id}>
+            {index > 0 ? <span className="zip-device-breadcrumb-separator">›</span> : null}
+            {item.id === node.id ? (
+              <strong aria-current="page">{item.name}</strong>
+            ) : (
+              <Link href={item.href}>{item.name}</Link>
+            )}
+          </span>
+        ))}
       </nav>
 
       <div className="mk-device-layout">
@@ -630,6 +641,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               </div>
 
               <ContextPin entityId={node.id} />
+              <AlarmScopeSummary entityId={node.id} scopeLabel={node.name} />
 
               <dl>
                 <dt>{t('identity')}</dt>

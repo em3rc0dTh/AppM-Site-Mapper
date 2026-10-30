@@ -6020,3 +6020,39 @@ body {
   grid-template-columns: 48px minmax(0, 1fr) 405px !important;
 }
 
+/* Canonical compact breadcrumb for Device / Equipment focus. */
+.zip-device-breadcrumbs {
+  display: flex !important;
+  align-items: center;
+  gap: 0 !important;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.zip-device-breadcrumb-item {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.zip-device-breadcrumb-item a,
+.zip-device-breadcrumb-item strong {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.zip-device-breadcrumb-separator {
+  flex: 0 0 auto;
+  margin: 0 8px;
+  color: #8492a2;
+}
+
+/* Standard three-zone views also return collapsed tree width to the canvas.
+   Rack and Blueprint keep their dedicated layout contracts. */
+.zip-app-shell
+  .operational-layout:not(.operational-layout--rack):not(.operational-layout--blueprint):has(
+    > .operational-context .telxius-topology-tree[data-collapsed='true']
+  ) {
+  grid-template-columns: 48px minmax(0, 1fr) 378px !important;
+}
+

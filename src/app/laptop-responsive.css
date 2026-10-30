@@ -533,3 +533,12 @@
   }
 }
 
+@media (min-width: 941px) and (max-width: 1400px) {
+  .zip-app-shell
+    .operational-layout:not(.operational-layout--rack):not(.operational-layout--blueprint):has(
+      > .operational-context .telxius-topology-tree[data-collapsed='true']
+    ) {
+    grid-template-columns: 48px minmax(0, 1fr) 292px !important;
+  }
+}
+

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
+import { compactAlarmPath } from '@/components/alarm/alarm-path';
 import type {
   AlarmAcknowledgement,
   AlarmFamily,
@@ -216,7 +217,11 @@ export function AlarmCenter() {
                       <strong>{alarm.name}</strong>
                       <small>{alarm.alarmCode}</small>
                     </td>
-                    <td>{alarm.path.map((item) => item.name).join(' › ') || alarm.targetId}</td>
+                    <td title={alarm.path.map((item) => item.name).join(' › ')}>
+                      {compactAlarmPath(alarm.path)
+                        .map((item) => item.name)
+                        .join(' › ') || alarm.targetId}
+                    </td>
                     <td>{new Date(alarm.openedAt).toLocaleString()}</td>
                     <td>{alarm.acknowledgement === 'ACKNOWLEDGED' ? 'ACK' : '—'}</td>
                     <td>{alarm.confidence ?? '—'}</td>

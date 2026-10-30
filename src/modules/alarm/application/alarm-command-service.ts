@@ -21,6 +21,20 @@ export interface AssertAlarmInput {
   readonly confidence?: AlarmConfidence;
 }
 
+function isCorrelationConflict(error: unknown): boolean {
+  if (error instanceof Error && error.message === 'ALARM_ACTIVE_CORRELATION_EXISTS') return true;
+  return (
+    Boolean(error) &&
+    typeof error === 'object' &&
+    'code' in error &&
+    (error as { code?: unknown }).code === 11000
+  );
+}
+
+function isStaleWrite(error: unknown): boolean {
+  return error instanceof Error && error.message === 'ALARM_STALE_WRITE';
+}
+
 export class AlarmCommandService {
   constructor(
     private readonly alarms: AlarmRepository,
@@ -39,28 +53,16 @@ export class AlarmCommandService {
     }
 
     const correlationKey = [input.targetId, input.code, input.sourceContext].join('|');
-    const existing = await this.alarms.getActiveByCorrelationKey(correlationKey);
     const observedAt = input.observedAt ?? new Date().toISOString();
+    const existing = await this.alarms.getActiveByCorrelationKey(correlationKey);
+    if (existing) return this.mergeActive(existing, input, observedAt);
 
-    if (existing) {
-      const evidenceById = new Map(existing.evidenceRefs.map((item) => [item.id, item]));
-      for (const item of input.evidence) evidenceById.set(item.id, item);
-      const next: AlarmOccurrence = {
-        ...existing,
-        lastObservedAt: observedAt,
-        severity: input.severity ?? existing.severity,
-        // Once independently corroborated, an active occurrence cannot be downgraded
-        // by a later MQTT-only observation. Resolution is a separate transition.
-        ...(input.confidence
-          ? {
-              confidence: existing.confidence === 'CONFIRMED' ? 'CONFIRMED' : input.confidence,
-            }
-          : {}),
-        evidenceRefs: [...evidenceById.values()],
-        updatedAt: observedAt,
-      };
-      await this.alarms.replaceOccurrence(next);
-      return next;
+    const latest = await this.alarms.getLatestByCorrelationKey(correlationKey);
+    if (
+      latest?.lifecycle === 'RESOLVED' &&
+      observedAt <= latest.lastObservedAt
+    ) {
+      return latest;
     }
 
     const occurrence: AlarmOccurrence = {
@@ -83,7 +85,16 @@ export class AlarmCommandService {
       createdAt: observedAt,
       updatedAt: observedAt,
     };
-    await this.alarms.insertOccurrence(occurrence);
+
+    try {
+      await this.alarms.insertOccurrence(occurrence);
+    } catch (error) {
+      if (!isCorrelationConflict(error)) throw error;
+      const winner = await this.alarms.getActiveByCorrelationKey(correlationKey);
+      if (!winner) throw error;
+      return this.mergeActive(winner, input, observedAt);
+    }
+
     await this.alarms.insertTransition({
       id: randomUUID(),
       alarmOccurrenceId: occurrence.id,
@@ -104,6 +115,8 @@ export class AlarmCommandService {
   ): Promise<AlarmOccurrence | null> {
     const existing = await this.alarms.getActiveByCorrelationKey(correlationKey);
     if (!existing) return null;
+    if (observedAt < existing.lastObservedAt) return existing;
+
     const next: AlarmOccurrence = {
       ...existing,
       lifecycle: 'RESOLVED',
@@ -111,7 +124,14 @@ export class AlarmCommandService {
       lastObservedAt: observedAt,
       updatedAt: observedAt,
     };
-    await this.alarms.replaceOccurrence(next);
+
+    try {
+      await this.alarms.replaceOccurrence(next);
+    } catch (error) {
+      if (!isStaleWrite(error)) throw error;
+      return this.alarms.getLatestByCorrelationKey(correlationKey);
+    }
+
     await this.alarms.insertTransition({
       id: randomUUID(),
       alarmOccurrenceId: existing.id,
@@ -122,5 +142,38 @@ export class AlarmCommandService {
       evidenceRefs: [...evidenceRefs],
     });
     return next;
+  }
+
+  private async mergeActive(
+    existing: AlarmOccurrence,
+    input: AssertAlarmInput,
+    observedAt: string,
+  ): Promise<AlarmOccurrence> {
+    if (observedAt < existing.lastObservedAt) return existing;
+
+    const evidenceById = new Map(existing.evidenceRefs.map((item) => [item.id, item]));
+    for (const item of input.evidence) evidenceById.set(item.id, item);
+    const next: AlarmOccurrence = {
+      ...existing,
+      lastObservedAt: observedAt,
+      severity: input.severity ?? existing.severity,
+      // Once independently corroborated, an active occurrence cannot be downgraded
+      // by a later MQTT-only observation. Resolution is a separate transition.
+      ...(input.confidence
+        ? {
+            confidence: existing.confidence === 'CONFIRMED' ? 'CONFIRMED' : input.confidence,
+          }
+        : {}),
+      evidenceRefs: [...evidenceById.values()],
+      updatedAt: observedAt,
+    };
+
+    try {
+      await this.alarms.replaceOccurrence(next);
+      return next;
+    } catch (error) {
+      if (!isStaleWrite(error)) throw error;
+      return (await this.alarms.getLatestByCorrelationKey(existing.correlationKey)) ?? existing;
+    }
   }
 }

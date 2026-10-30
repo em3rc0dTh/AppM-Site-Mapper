@@ -178,13 +178,13 @@ export function EquipmentFocusInspector({
         )}
         {activeTab === 'alarms' && (
           <>
-            <AlarmScopeSummary entityId={equipment.id} showAffectedChildren />
+            <AlarmScopeSummary entityId={equipment.id} scopeLabel={equipment.name} showAffectedChildren />
             <AlarmOccurrenceList entityId={equipment.id} />
           </>
         )}
         {activeTab === 'overview' && (
           <>
-            <AlarmScopeSummary entityId={equipment.id} />
+            <AlarmScopeSummary entityId={equipment.id} scopeLabel={equipment.name} />
             {overview}
             {equipment.telemetryPointPrefix && (
               <p className="ec-inspector-note ec-point-group">

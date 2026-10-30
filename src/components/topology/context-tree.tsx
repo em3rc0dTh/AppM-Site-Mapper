@@ -155,10 +155,26 @@ export function TopologyContextTree({
   const t = useTranslations('topologyTree');
   const router = useRouter();
   const [selected, setSelected] = useState<TopologyNavigationNode | null>(null);
+  const [collapsed, setCollapsed] = useState(false);
   const { snapshot } = useAlarmSnapshot();
 
   return (
-    <nav className="telxius-topology-tree" aria-label={t('global')}>
+    <nav
+      className="telxius-topology-tree"
+      aria-label={t('global')}
+      data-collapsed={collapsed ? 'true' : 'false'}
+    >
+      <button
+        type="button"
+        className="telxius-tree-collapse-toggle"
+        aria-expanded={!collapsed}
+        aria-label={collapsed ? t('expandTree') : t('collapseTree')}
+        title={collapsed ? t('expandTree') : t('collapseTree')}
+        onClick={() => setCollapsed((value) => !value)}
+      >
+        {collapsed ? '›' : '‹'}
+      </button>
+      <div className="telxius-tree-collapsible-content">
       <header className="telxius-tree-brand">
         <span className="telxius-tree-brand-icon">
           <Icon name="network" />
@@ -191,6 +207,7 @@ export function TopologyContextTree({
           </Link>
         </div>
       )}
+      </div>
     </nav>
   );
 }

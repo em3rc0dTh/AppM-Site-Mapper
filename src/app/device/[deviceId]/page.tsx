@@ -350,18 +350,16 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   return (
     <main className="operational-page mk-device-page">
       <nav className="breadcrumbs zip-device-breadcrumbs" aria-label="Breadcrumb">
-        {breadcrumbLinks.map((item, index) =>
-          item.id === node.id ? (
-            <strong key={item.id} aria-current="page">
-              {item.name}
-            </strong>
-          ) : (
-            <span className="zip-device-breadcrumb-item" key={item.id}>
-              {index > 0 ? <span className="zip-device-breadcrumb-separator">›</span> : null}
+        {breadcrumbLinks.map((item, index) => (
+          <span className="zip-device-breadcrumb-item" key={item.id}>
+            {index > 0 ? <span className="zip-device-breadcrumb-separator">›</span> : null}
+            {item.id === node.id ? (
+              <strong aria-current="page">{item.name}</strong>
+            ) : (
               <Link href={item.href}>{item.name}</Link>
-            </span>
-          ),
-        )}
+            )}
+          </span>
+        ))}
       </nav>
 
       <div className="mk-device-layout">

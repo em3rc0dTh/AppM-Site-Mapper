@@ -8,6 +8,8 @@ import { useState, type CSSProperties, type MouseEvent } from 'react';
 import type { TopologyNavigationNode } from '@/modules/topology/application/topology-service';
 import type { TopologyKind } from '@/modules/topology/domain/entities';
 import { Icon } from '@/shared/ui/primitives';
+import { AlarmBadge } from '@/components/alarms/alarm-ui';
+import type { AlarmRollup } from '@/modules/alarms/domain/entities';
 
 function iconFor(kind: TopologyKind): string {
   if (kind === 'NETWORK') return 'network';
@@ -63,6 +65,7 @@ function TreeBranch({
   depth,
   onSelect,
   onOpen,
+  alarmRollups,
 }: Readonly<{
   item: TopologyNavigationNode;
   activeId: string;
@@ -70,6 +73,7 @@ function TreeBranch({
   depth: number;
   onSelect: (item: TopologyNavigationNode) => void;
   onOpen: (item: TopologyNavigationNode) => void;
+  alarmRollups: Readonly<Record<string, AlarmRollup>>;
 }>) {
   const t = useTranslations('topologyTree');
   const active = item.node.id === activeId;
@@ -107,6 +111,7 @@ function TreeBranch({
           <small>{t(`kinds.${labelFor(item.node.kind)}`)}</small>
           <strong>{item.node.name}</strong>
         </span>
+        <AlarmBadge rollup={alarmRollups[item.node.id]} />
         {item.children.length > 0 && (
           <span className="telxius-tree-chevron" aria-hidden="true">
             {expanded ? '⌄' : '›'}
@@ -124,6 +129,7 @@ function TreeBranch({
               depth={depth + 1}
               onSelect={onSelect}
               onOpen={onOpen}
+              alarmRollups={alarmRollups}
             />
           ))}
         </ul>
@@ -135,7 +141,12 @@ function TreeBranch({
 export function TopologyContextTree({
   tree,
   activeId,
-}: Readonly<{ tree: TopologyNavigationNode; activeId: string }>) {
+  alarmRollups = {},
+}: Readonly<{
+  tree: TopologyNavigationNode;
+  activeId: string;
+  alarmRollups?: Readonly<Record<string, AlarmRollup>>;
+}>) {
   const t = useTranslations('topologyTree');
   const router = useRouter();
   const [selected, setSelected] = useState<TopologyNavigationNode | null>(null);
@@ -161,6 +172,7 @@ export function TopologyContextTree({
           depth={0}
           onSelect={setSelected}
           onOpen={(item) => router.push(item.href)}
+          alarmRollups={alarmRollups}
         />
       </ul>
       {selected && (

@@ -78,9 +78,7 @@ for (const row of state.bdfbs) {
     .toArray();
   const panels = {};
   for (const feed of FEEDS) {
-    const matched = equipment.filter(
-      (x) => x.equipmentType === 'PANEL' && x.name === feed.panel,
-    );
+    const matched = equipment.filter((x) => x.equipmentType === 'PANEL' && x.name === feed.panel);
     assert(matched.length === 1, row.key + ' requires exactly one PANEL ' + feed.panel);
     panels[feed.panel] = matched[0];
   }
@@ -189,10 +187,7 @@ for (const row of state.bdfbs) {
         id: { $ne: binding.id },
       })
       .toArray();
-    assert(
-      targetConflicts.length === 0,
-      row.key + ' target port already has ' + binding.metric,
-    );
+    assert(targetConflicts.length === 0, row.key + ' target port already has ' + binding.metric);
   }
   plans.push({ row, chassis, ports, bindings });
 }

@@ -37,6 +37,19 @@ function highest(current: AlarmSeverity | null, next: AlarmSeverity): AlarmSever
   return !current || severityRank[next] > severityRank[current] ? next : current;
 }
 
+
+function operationalAlarmPath(path: readonly AlarmOccurrenceView['path'][number][]) {
+  // Alarm roll-up is intentionally bounded to the physical QDF operational
+  // scope. In the current canonical topology that boundary is the nearest
+  // Container/Rack ancestor. Site/Room/Building are navigational context and
+  // do not become QDF alarm owners; Global Alarm Center is the cross-QDF scope.
+  let rootIndex = -1;
+  for (let index = 0; index < path.length; index += 1) {
+    if (path[index]?.kind === 'CONTAINER_RACK') rootIndex = index;
+  }
+  return rootIndex >= 0 ? path.slice(rootIndex) : path;
+}
+
 function addAlarm(
   rollup: AlarmRollup,
   alarm: AlarmOccurrence,
@@ -89,8 +102,9 @@ export class AlarmService {
 
     for (const view of occurrences.filter((item) => item.lifecycle === 'ACTIVE')) {
       global = addAlarm(global, view, false);
-      for (let index = 0; index < view.path.length; index += 1) {
-        const pathItem = view.path[index]!;
+      const alarmPath = operationalAlarmPath(view.path);
+      for (let index = 0; index < alarmPath.length; index += 1) {
+        const pathItem = alarmPath[index]!;
         rollups[pathItem.id] = addAlarm(
           rollups[pathItem.id] ?? emptyRollup(),
           view,
@@ -102,7 +116,7 @@ export class AlarmService {
     // Identify the immediate affected child for each ancestor. A parent may contain
     // several alarms below the same child; count unique AlarmOccurrence identities.
     for (const view of occurrences.filter((item) => item.lifecycle === 'ACTIVE')) {
-      const path = view.path;
+      const path = operationalAlarmPath(view.path);
       for (let index = 0; index < path.length - 1; index += 1) {
         const parent = path[index]!;
         const child = path[index + 1]!;

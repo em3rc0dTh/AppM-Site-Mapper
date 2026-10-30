@@ -18,9 +18,13 @@ export function proxy(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/api/telemetry/')
   ) {
     const upstream = new URL(request.nextUrl.pathname + request.nextUrl.search, visualDevUpstream);
+    const upstreamHeaders = new Headers(request.headers);
+    upstreamHeaders.delete('host');
+    upstreamHeaders.delete('connection');
+    upstreamHeaders.delete('content-length');
     return fetch(upstream, {
       method: 'GET',
-      headers: request.headers,
+      headers: upstreamHeaders,
       cache: 'no-store',
       redirect: 'manual',
     });

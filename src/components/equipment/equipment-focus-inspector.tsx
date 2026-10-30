@@ -18,7 +18,7 @@ import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm
 
 type Tab = 'telemetry' | 'alarms' | 'overview' | 'ports' | 'settings';
 
-const TABS: readonly Tab[] = ['telemetry', 'alarms', 'overview', 'ports', 'settings'];
+const TABS: readonly Tab[] = ['overview', 'telemetry', 'alarms', 'ports', 'settings'];
 
 const METRICS = [
   { key: 'voltageV', symbol: 'V', label: 'Voltage', unit: 'V', digits: 2 },

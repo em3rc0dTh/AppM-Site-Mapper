@@ -52,6 +52,8 @@ MODBUS_SOURCE_UNITS = {
     "EMU-TELXIUS-QDF-5": 3,
 }
 SMARTPACK_SOURCE = "EMU-SMARTPACK2-LURIN"
+SYNTHETIC_SNMP_SOURCE = {qdf: "EMU-SNMP-" + qdf for qdf in QDFS}
+SYNTHETIC_SNMP_SERVICES = {qdf: "seed01-snmp-agent-" + qdf.lower().replace("-", "") for qdf in QDFS}
 
 WALK_CANDIDATES = (
     "walk.txt",
@@ -306,6 +308,51 @@ def smartpack_profile() -> dict:
     }
 
 
+def synthetic_snmp_profile(qdf: str, target_id: str) -> dict:
+    return {
+        "sourceIdentity": SYNTHETIC_SNMP_SOURCE[qdf],
+        "protocol": "SNMP",
+        "version": "seed01-synthetic-eltek-rev54-v1",
+        "targetId": target_id,
+        "staleMs": 120000,
+        "mib": "eltek-rev54",
+        "rules": [
+            {
+                "key": "1.3.6.1.4.1.12148.10.10.5.5.0",
+                "kind": "measurement",
+                "unit": "V",
+                "scale": 0.1,
+                "evidence": "Synthetic Eltek rev54 laboratory voltage; not field evidence",
+            },
+            {
+                "key": "1.3.6.1.4.1.12148.10.9.2.5.0",
+                "kind": "measurement",
+                "unit": "A",
+                "scale": 0.1,
+                "evidence": "Synthetic Eltek rev54 laboratory current; not field evidence",
+            },
+            {
+                "key": "1.3.6.1.4.1.12148.10.10.7.5.0",
+                "kind": "measurement",
+                "unit": "degC",
+                "scale": 0.1,
+                "evidence": "Synthetic Eltek rev54 laboratory temperature; not field evidence",
+            },
+            {
+                "key": "alarm:1.3.6.1.4.1.12148.10.2.1.0:3",
+                "kind": "alarm",
+                "activeValues": [1],
+                "clearValues": [0],
+                "alarmCode": "CONTROLLER_ALARM",
+                "evidence": (
+                    "Synthetic Eltek power-system status condition=3; "
+                    "lab-only controller alarm, not physical field evidence"
+                ),
+            },
+        ],
+    }
+
+
 def first_existing(directory: Path, names: tuple[str, ...], label: str) -> Path:
     for name in names:
         candidate = directory / name
@@ -372,6 +419,17 @@ def load_or_create_secrets() -> dict:
         }
         if not required.issubset(value):
             fail("existing Telxius secret file is incomplete")
+        if not isinstance(value.get("syntheticSnmp"), list) or len(value["syntheticSnmp"]) != 3:
+            value["syntheticSnmp"] = [
+                {
+                    "token": secrets.token_hex(24),
+                    "user": "seed01-synthetic-" + secrets.token_hex(4),
+                    "auth": secrets.token_hex(20),
+                    "priv": secrets.token_hex(20),
+                }
+                for _ in QDFS
+            ]
+            save_json(SECRET_FILE, value)
         return value
     value = {
         "community": "lab-" + secrets.token_hex(12),
@@ -380,6 +438,15 @@ def load_or_create_secrets() -> dict:
         "v3Auth": secrets.token_hex(20),
         "v3Priv": secrets.token_hex(20),
         "engineId": "8000" + secrets.token_hex(10),
+        "syntheticSnmp": [
+            {
+                "token": secrets.token_hex(24),
+                "user": "seed01-synthetic-" + secrets.token_hex(4),
+                "auth": secrets.token_hex(20),
+                "priv": secrets.token_hex(20),
+            }
+            for _ in QDFS
+        ],
     }
     save_json(SECRET_FILE, value)
     return value
@@ -398,29 +465,55 @@ def default_sender_address() -> str:
     fail("could not derive a stable SNMP sender address from the base lab network")
 
 
+def synthetic_sender_addresses() -> dict[str, str]:
+    try:
+        generated = json.loads(BASE_GENERATED.read_text(encoding="utf8"))
+        subnet = generated["networks"]["default"]["ipam"]["config"][0]["subnet"]
+        network = ipaddress.ip_network(subnet)
+        candidates = {
+            qdf: network.network_address + offset
+            for qdf, offset in zip(QDFS, (61, 62, 63), strict=True)
+        }
+        if all(candidate in network for candidate in candidates.values()):
+            return {qdf: str(candidate) for qdf, candidate in candidates.items()}
+    except (KeyError, ValueError, TypeError, json.JSONDecodeError):
+        pass
+    fail("could not derive stable synthetic SNMP addresses from the base lab network")
+
+
 def prepare(
     bfdb: Path,
     evidence_dir: Path | None,
     broker: dict[str, str],
+    snmp_mode: str,
 ) -> dict:
     required = [
         bfdb / "apps/field-emulator/main.py",
         bfdb / "config/devices.telxius-seed-01.yaml",
         bfdb / "config/emulator.telxius-seed-01.yaml",
-        bfdb / "apps/snmp-snapshot-emulator/Dockerfile",
-        bfdb / "apps/snmp-snapshot-emulator/build_snapshot.py",
-        bfdb / "apps/snmp-emulator/Dockerfile",
-        bfdb / "apps/snmp-emulator/telxius-snapshot-inform.mjs",
         COMMISSION,
     ]
+    if snmp_mode == "smartpack":
+        required += [
+            bfdb / "apps/snmp-snapshot-emulator/Dockerfile",
+            bfdb / "apps/snmp-snapshot-emulator/build_snapshot.py",
+            bfdb / "apps/snmp-emulator/Dockerfile",
+            bfdb / "apps/snmp-emulator/telxius-snapshot-inform.mjs",
+        ]
+    elif snmp_mode == "synthetic":
+        required += [
+            bfdb / "apps/snmp-emulator/Dockerfile",
+            bfdb / "apps/snmp-emulator/eltek-lab-service.mjs",
+            bfdb / "config/eltek-sequence.example.json",
+        ]
     missing = [path for path in required if not path.is_file()]
     if missing:
         fail("checkout is not current main; missing: " + ", ".join(map(str, missing)))
 
-    snmp_enabled = evidence_dir is not None
+    snmp_enabled = snmp_mode != "skip"
     evidence = (
         resolve_evidence(evidence_dir)
-        if evidence_dir is not None
+        if snmp_mode == "smartpack" and evidence_dir is not None
         else {
             "walk": RUNTIME / "SNMP_EVIDENCE_NOT_CONFIGURED",
             "mainMib": RUNTIME / "SNMP_EVIDENCE_NOT_CONFIGURED",
@@ -444,27 +537,92 @@ def prepare(
         )
     # One Smartpack2 evidence source. No QDF target is assigned because the
     # supplied evidence does not prove which QDF controller owns this walk.
-    if snmp_enabled:
+    if snmp_mode == "smartpack":
         profiles.append(smartpack_profile())
+    elif snmp_mode == "synthetic":
+        for qdf in QDFS:
+            profiles.append(synthetic_snmp_profile(qdf, rows[qdf]["controllerId"]))
     save_json(PROFILE_FILE, profiles, mode=0o644)
 
     secret = load_or_create_secrets()
     sender_address = default_sender_address()
+    receiver_profiles: list[dict] = []
+    synthetic_services: dict[str, dict] = {}
 
-    receiver_profile = {
-        "sourceIdentity": SMARTPACK_SOURCE,
-        "address": sender_address,
-        "version": "3",
-        "token": secret["sourceToken"],
-        "user": {
-            "name": secret["v3User"],
-            "level": "authPriv",
-            "authProtocol": "sha",
-            "authKey": secret["v3Auth"],
-            "privProtocol": "aes",
-            "privKey": secret["v3Priv"],
-        },
-    }
+    if snmp_mode == "smartpack":
+        receiver_profiles.append(
+            {
+                "sourceIdentity": SMARTPACK_SOURCE,
+                "address": sender_address,
+                "version": "3",
+                "token": secret["sourceToken"],
+                "user": {
+                    "name": secret["v3User"],
+                    "level": "authPriv",
+                    "authProtocol": "sha",
+                    "authKey": secret["v3Auth"],
+                    "privProtocol": "aes",
+                    "privKey": secret["v3Priv"],
+                },
+            }
+        )
+    elif snmp_mode == "synthetic":
+        addresses = synthetic_sender_addresses()
+        for index, qdf in enumerate(QDFS):
+            creds = secret["syntheticSnmp"][index]
+            receiver_profiles.append(
+                {
+                    "sourceIdentity": SYNTHETIC_SNMP_SOURCE[qdf],
+                    "address": addresses[qdf],
+                    "version": "3",
+                    "token": creds["token"],
+                    "user": {
+                        "name": creds["user"],
+                        "level": "authPriv",
+                        "authProtocol": "sha",
+                        "authKey": creds["auth"],
+                        "privProtocol": "aes",
+                        "privKey": creds["priv"],
+                    },
+                    "poll": {
+                        "method": "get",
+                        "port": 1161,
+                        "intervalMs": 10000,
+                        "oids": [
+                            "1.3.6.1.4.1.12148.10.10.5.5.0",
+                            "1.3.6.1.4.1.12148.10.9.2.5.0",
+                            "1.3.6.1.4.1.12148.10.10.7.5.0",
+                            "1.3.6.1.4.1.12148.10.2.1.0",
+                        ],
+                    },
+                }
+            )
+            synthetic_services[SYNTHETIC_SNMP_SERVICES[qdf]] = {
+                "build": {
+                    "context": str(bfdb),
+                    "dockerfile": "apps/snmp-emulator/Dockerfile",
+                },
+                "command": ["node", "eltek-lab-service.mjs"],
+                "environment": {
+                    "SNMP_VERSION": "3",
+                    "SNMP_V3_USERNAME": creds["user"],
+                    "SNMP_V3_AUTH_KEY": creds["auth"],
+                    "SNMP_V3_PRIV_KEY": creds["priv"],
+                    "SNMP_TRAP_TARGET_HOST": "snmp-traps",
+                    "SNMP_TRAP_TARGET_PORT": "1162",
+                    "SNMP_TRAP_INFORM": "true",
+                    "SNMP_SEQUENCE_FILE": "/config/sequence.json",
+                    "SNMP_AGENT_PORT": "1161",
+                    "SNMP_LAB_SWEEP_COUNT": "0",
+                },
+                "volumes": [
+                    str(bfdb / "config/eltek-sequence.example.json")
+                    + ":/config/sequence.json:ro"
+                ],
+                "depends_on": ["snmp-traps"],
+                "networks": {"default": {"ipv4_address": addresses[qdf]}},
+                "restart": "unless-stopped",
+            }
 
     services = {
         "site-mapper": {
@@ -513,7 +671,7 @@ def prepare(
         "snmp-traps": {
             "environment": {
                 "SNMP_TRAP_SOURCES_JSON": json.dumps(
-                    [receiver_profile], separators=(",", ":")
+                    receiver_profiles, separators=(",", ":")
                 ),
                 "SNMP_TRAP_ENGINE_ID": secret["engineId"],
                 "SNMP_TRAP_MAX_PENDING": "5000",
@@ -585,6 +743,8 @@ def prepare(
             "restart": "unless-stopped",
         },
     }
+    services.update(synthetic_services)
+
     save_json(
         OVERLAY_FILE,
         {
@@ -592,6 +752,16 @@ def prepare(
             "volumes": {"telxius_snmp_runtime": {}},
         },
     )
+
+    if snmp_mode == "smartpack":
+        ingest_sources = {SMARTPACK_SOURCE: secret["sourceToken"]}
+    elif snmp_mode == "synthetic":
+        ingest_sources = {
+            SYNTHETIC_SNMP_SOURCE[qdf]: secret["syntheticSnmp"][index]["token"]
+            for index, qdf in enumerate(QDFS)
+        }
+    else:
+        ingest_sources = {}
 
     env = read_env(BASE_ENV)
     # The generated Telxius env is authoritative for this profile. Inherited
@@ -613,11 +783,10 @@ def prepare(
             ),
             "INDUSTRIAL_PROFILES_JSON": "[]",
             "INDUSTRIAL_INGEST_SOURCES_JSON": json.dumps(
-                {SMARTPACK_SOURCE: secret["sourceToken"]} if snmp_enabled else {},
-                separators=(",", ":"),
+                ingest_sources, separators=(",", ":")
             ),
             "SNMP_TRAP_SOURCES_JSON": json.dumps(
-                [receiver_profile] if snmp_enabled else [], separators=(",", ":")
+                receiver_profiles, separators=(",", ":")
             ),
             "SNMP_TRAP_ENGINE_ID": secret["engineId"],
             "SNMP_TRAP_MAX_PENDING": "5000",
@@ -637,11 +806,11 @@ def commission(mode: str) -> None:
     print(run(argv, input_text=source))
 
 
-def stop_historical_sources(command: list[str]) -> None:
-    # Best-effort only. These services may not exist in the current project.
+def stop_historical_sources(*, keep_lab_broker: bool = False) -> None:
+    # Best-effort only. Stop exact old container names directly because removed
+    # Compose services are orphans and cannot be addressed reliably by a new config.
     old = [
         "lab-mqtt",
-        "lab-mosquitto",
         "lab-snmp-01",
         "lab-snmp-02",
         "lab-snmp-03",
@@ -652,7 +821,15 @@ def stop_historical_sources(command: list[str]) -> None:
         "seed01-snmp-collector-qdf4",
         "seed01-snmp-collector-qdf5",
     ]
-    subprocess.run(command + ["stop", *old], check=False)
+    if not keep_lab_broker:
+        old.append("lab-mosquitto")
+    for service in old:
+        subprocess.run(
+            ["docker", "stop", PROJECT + "-" + service + "-1"],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
 
 def child_env(approved: dict[str, str]) -> dict[str, str]:
@@ -661,43 +838,57 @@ def child_env(approved: dict[str, str]) -> dict[str, str]:
 
 def require_runtime_inputs(
     args, base: dict[str, str]
-) -> tuple[Path | None, dict[str, str]]:
-    broker_url = (
-        args.mqtt_broker_url
-        or os.getenv("TELXIUS_MQTT_BROKER_URL")
-        or (
-            base.get("MQTT_BROKER_URL", "")
-            if "lab-mosquitto" not in base.get("MQTT_BROKER_URL", "")
-            else ""
-        )
-    )
-    username = (
-        args.mqtt_username
-        if args.mqtt_username is not None
-        else os.getenv("TELXIUS_MQTT_USERNAME", base.get("MQTT_USERNAME", ""))
-    )
-    password = (
-        args.mqtt_password
-        if args.mqtt_password is not None
-        else os.getenv("TELXIUS_MQTT_PASSWORD", base.get("MQTT_PASSWORD", ""))
-    )
-    evidence_raw = (
-        str(args.evidence_dir) if args.evidence_dir else os.getenv("TELXIUS_SNMP_EVIDENCE_DIR", "")
-    )
-    if args.skip_snmp_evidence:
-        evidence_dir = None
-    elif not evidence_raw:
-        fail(
-            "set TELXIUS_SNMP_EVIDENCE_DIR (or --evidence-dir) to the private "
-            "directory containing the SNMPWalk and both Eltek rev54 MIB files, "
-            "or pass --skip-snmp-evidence to start the lab without Smartpack2 replay"
-        )
+) -> tuple[Path | None, dict[str, str], str]:
+    if args.use_lab_broker:
+        broker_url = "mqtt://lab-mosquitto:1883"
+        username = ""
+        password = ""
     else:
+        broker_url = (
+            args.mqtt_broker_url
+            or os.getenv("TELXIUS_MQTT_BROKER_URL")
+            or (
+                base.get("MQTT_BROKER_URL", "")
+                if "lab-mosquitto" not in base.get("MQTT_BROKER_URL", "")
+                else ""
+            )
+        )
+        username = (
+            args.mqtt_username
+            if args.mqtt_username is not None
+            else os.getenv("TELXIUS_MQTT_USERNAME", base.get("MQTT_USERNAME", ""))
+        )
+        password = (
+            args.mqtt_password
+            if args.mqtt_password is not None
+            else os.getenv("TELXIUS_MQTT_PASSWORD", base.get("MQTT_PASSWORD", ""))
+        )
+
+    evidence_raw = (
+        str(args.evidence_dir)
+        if args.evidence_dir
+        else os.getenv("TELXIUS_SNMP_EVIDENCE_DIR", "")
+    )
+    if args.synthetic_snmp:
+        evidence_dir = None
+        snmp_mode = "synthetic"
+    elif args.skip_snmp_evidence:
+        evidence_dir = None
+        snmp_mode = "skip"
+    elif evidence_raw:
         evidence_dir = Path(evidence_raw).expanduser().resolve()
-    return evidence_dir, broker_config(
-        broker_url,
-        username,
-        password,
+        snmp_mode = "smartpack"
+    else:
+        fail(
+            "SNMP mode is required: provide TELXIUS_SNMP_EVIDENCE_DIR/--evidence-dir "
+            "for Smartpack2 replay, pass --synthetic-snmp for the rebuildable Eltek "
+            "lab, or pass --skip-snmp-evidence to omit SNMP explicitly"
+        )
+
+    return (
+        evidence_dir,
+        broker_config(broker_url, username, password),
+        snmp_mode,
     )
 
 
@@ -709,13 +900,26 @@ def main() -> None:
         default=ROOT.parent / "bfdb-telemetry-gateway",
     )
     parser.add_argument("--evidence-dir", type=Path)
-    parser.add_argument(
+    snmp_mode = parser.add_mutually_exclusive_group()
+    snmp_mode.add_argument(
         "--skip-snmp-evidence",
         action="store_true",
         help=(
-            "start the Telxius lab without private Smartpack2 SNMP replay; "
-            "MQTT/Mongo/Timescale/Modbus/UI remain enabled"
+            "start without SNMP; MQTT/Mongo/Timescale/Modbus/UI remain enabled"
         ),
+    )
+    snmp_mode.add_argument(
+        "--synthetic-snmp",
+        action="store_true",
+        help=(
+            "build three synthetic Eltek SNMPv3 QDF sources and route their "
+            "measurements/CONTROLLER_ALARM events into Site Mapper"
+        ),
+    )
+    parser.add_argument(
+        "--use-lab-broker",
+        action="store_true",
+        help="use and start the seed-01 private lab-mosquitto broker",
     )
     parser.add_argument("--mqtt-broker-url")
     parser.add_argument("--mqtt-username")
@@ -733,17 +937,37 @@ def main() -> None:
 
     if args.action in {"stop", "status", "logs"} and OVERLAY_FILE.is_file() and ENV_FILE.is_file():
         command = full_compose_command()
+        overlay_services = set(
+            json.loads(OVERLAY_FILE.read_text(encoding="utf8")).get("services", {})
+        )
         services = [
-            "mongodb",
-            "timescaledb",
-            "telemetry-store",
-            "site-mapper",
-            "modbus-tcp",
-            "snmp-traps",
-            "operational-console",
-            "lab-mqtt-telxius",
-            "seed01-smartpack2",
-            "seed01-smartpack2-to-site-mapper",
+            name
+            for name in [
+                "mongodb",
+                "timescaledb",
+                "telemetry-store",
+                "site-mapper",
+                "modbus-tcp",
+                "snmp-traps",
+                "operational-console",
+                "lab-mosquitto",
+                "lab-mqtt-telxius",
+                "seed01-smartpack2",
+                "seed01-smartpack2-to-site-mapper",
+                *SYNTHETIC_SNMP_SERVICES.values(),
+            ]
+            if name in overlay_services
+            or name
+            in {
+                "mongodb",
+                "timescaledb",
+                "telemetry-store",
+                "site-mapper",
+                "modbus-tcp",
+                "snmp-traps",
+                "operational-console",
+                "lab-mosquitto",
+            }
         ]
         if args.action == "stop":
             run(command + ["stop", *services])
@@ -755,8 +979,8 @@ def main() -> None:
 
     ensure_mongo_running()
     base = read_env(BASE_ENV)
-    evidence_dir, broker = require_runtime_inputs(args, base)
-    data = prepare(bfdb, evidence_dir, broker)
+    evidence_dir, broker, selected_snmp_mode = require_runtime_inputs(args, base)
+    data = prepare(bfdb, evidence_dir, broker, selected_snmp_mode)
 
     print(
         "Prepared current-main Telxius lab: "
@@ -764,9 +988,13 @@ def main() -> None:
             f"{row['key']} breakers={row['breakerCount']}" for row in data["rows"]
         )
         + (
-            "; Smartpack2=one unassigned 5,407-object evidence source."
-            if evidence_dir is not None
-            else "; Smartpack2=SKIPPED (private SNMP evidence not configured)."
+            "; SNMP=Smartpack2 private evidence replay."
+            if selected_snmp_mode == "smartpack"
+            else (
+                "; SNMP=three synthetic Eltek QDF sources with lab-only CONTROLLER_ALARM."
+                if selected_snmp_mode == "synthetic"
+                else "; SNMP=SKIPPED explicitly."
+            )
         ),
         flush=True,
     )
@@ -790,7 +1018,7 @@ def main() -> None:
         if not args.ack_lab_only:
             fail("--ack-lab-only is required")
         commission("apply")
-        stop_historical_sources(command)
+        stop_historical_sources(keep_lab_broker=args.use_lab_broker)
         selected = [
             "mongodb",
             "mongo-init",
@@ -801,12 +1029,16 @@ def main() -> None:
             "operational-console",
             "lab-mqtt-telxius",
         ]
-        if evidence_dir is not None:
+        if args.use_lab_broker:
+            selected.append("lab-mosquitto")
+        if selected_snmp_mode == "smartpack":
             selected += [
                 "snmp-traps",
                 "seed01-smartpack2",
                 "seed01-smartpack2-to-site-mapper",
             ]
+        elif selected_snmp_mode == "synthetic":
+            selected += ["snmp-traps", *SYNTHETIC_SNMP_SERVICES.values()]
         run_live(
             command + ["up", "-d", "--build", *selected],
             env=environment,
@@ -815,11 +1047,19 @@ def main() -> None:
         print(run(command + ["ps"], env=environment))
         print(
             "\nTELXIUS LAB UP\n"
-            "- MQTT: QDF-2/QDF-4/QDF-5 -> existing broker -> Site Mapper\n"
             + (
-                "- SNMP: one Smartpack2 private 5,407-object replay -> INFORM batches -> Site Mapper\n"
-                if evidence_dir is not None
-                else "- SNMP: SKIPPED; no private evidence configured, no Smartpack2 claim made\n"
+                "- MQTT: QDF-2/QDF-4/QDF-5 -> seed-01 lab broker -> Site Mapper\n"
+                if args.use_lab_broker
+                else "- MQTT: QDF-2/QDF-4/QDF-5 -> existing broker -> Site Mapper\n"
+            )
+            + (
+                "- SNMP: one Smartpack2 private evidence replay -> Site Mapper\n"
+                if selected_snmp_mode == "smartpack"
+                else (
+                    "- SNMP: three synthetic Eltek SNMPv3 sources -> CONTROLLER_ALARM + measurements\n"
+                    if selected_snmp_mode == "synthetic"
+                    else "- SNMP: SKIPPED explicitly\n"
+                )
             )
             + "- Site Mapper: http://127.0.0.1:3000\n"
             + "- Operational Console: http://127.0.0.1:3100\n"

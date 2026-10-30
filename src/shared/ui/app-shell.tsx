@@ -9,6 +9,7 @@ import type { Role } from '@/modules/identity/domain/roles';
 import { CommandPalette } from './command-palette';
 import { ContextTracker } from './context-tracker';
 import { ContextualHelp } from '@/modules/help/components/contextual-help';
+import { AlarmTopbarLink } from '@/components/alarms/alarm-topbar-link';
 
 function BrandMark() {
   return (
@@ -129,6 +130,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Suspense>
         <CommandPalette />
         <ContextualHelp key={pathname} />
+        <AlarmTopbarLink />
 
         <Link className="zip-explore" href="/network">
           {t('explore')} <b>⌄</b>

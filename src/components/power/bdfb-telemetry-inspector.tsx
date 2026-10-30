@@ -305,6 +305,7 @@ export function BdfbTelemetryInspector({
       >
         {tab === 'overview' && (
           <>
+            <AlarmScopeSummary entityId={node.id} />
             <SnmpFeedLoadPanel
               key={node.id}
               deviceId={node.id}

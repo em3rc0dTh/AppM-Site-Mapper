@@ -163,7 +163,7 @@ function BreakerRow({
   breaker: EquipmentNode;
   position: number;
   reading: CompositionBreakerTelemetry | undefined;
-  alarmRollup?: AlarmRollup;
+  alarmRollup: AlarmRollup | undefined;
 }>) {
   const status = reading?.status ?? 'UNMAPPED';
   return (

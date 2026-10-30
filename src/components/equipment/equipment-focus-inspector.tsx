@@ -184,6 +184,7 @@ export function EquipmentFocusInspector({
         )}
         {activeTab === 'overview' && (
           <>
+            <AlarmScopeSummary entityId={equipment.id} />
             {overview}
             {equipment.telemetryPointPrefix && (
               <p className="ec-inspector-note ec-point-group">

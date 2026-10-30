@@ -159,6 +159,22 @@ export default async function TopologyNodePage({
       href: await service.buildDeepLink(item.id),
     })),
   );
+  const visualTrailEntries = trailEntries.filter((item, index) => {
+    const kind = trail[index]?.kind;
+    return (
+      kind === 'ROOM_SUBSTRUCTURE' ||
+      kind === 'CONTAINER_RACK' ||
+      item.id === node.id
+    );
+  });
+  const roomVisualIndex = visualTrailEntries.findIndex((item) =>
+    trail.some((entry) => entry.id === item.id && entry.kind === 'ROOM_SUBSTRUCTURE'),
+  );
+  const breadcrumbEntries =
+    roomVisualIndex >= 0
+      ? visualTrailEntries.slice(roomVisualIndex)
+      : visualTrailEntries.slice(-3);
+
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
   const canDelete = hasPermission(auth.value.role, 'system:danger');
@@ -342,19 +358,7 @@ export default async function TopologyNodePage({
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
         aria-label={t('breadcrumbs')}
       >
-        {trailEntries
-          .filter((item, index) => {
-            const kind = trail[index]?.kind;
-            return (
-              kind === 'SITE' ||
-              kind === 'STRUCTURE' ||
-              kind === 'LEVEL' ||
-              kind === 'ROOM_SUBSTRUCTURE' ||
-              kind === 'CONTAINER_RACK' ||
-              item.id === node.id
-            );
-          })
-          .map((item) =>
+        {breadcrumbEntries.map((item) =>
             item.id === node.id ? (
               <span key={item.id} aria-current="page" title={item.name}>
                 {item.name}

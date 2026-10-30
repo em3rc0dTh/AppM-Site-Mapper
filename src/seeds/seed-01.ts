@@ -206,7 +206,9 @@ async function resolveNamedChild<K extends TopologyKind>(
   const expected = normalizedName(name);
   const children = (await repository.listChildren(parentId)).filter(
     (node) =>
-      node.lifecycle === 'ACTIVE' && node.kind === kind && normalizedName(node.name) === expected,
+      node.lifecycle === 'ACTIVE' &&
+      node.kind === kind &&
+      normalizedName(node.name) === expected,
   );
   return expectKind(exactlyOne(children, `${kind} ${name}`), kind, name);
 }
@@ -220,7 +222,8 @@ async function resolveBase(
 }> {
   const sites = (await repository.listByKind('SITE')).filter(
     (node) =>
-      node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.site),
+      node.lifecycle === 'ACTIVE' &&
+      normalizedName(node.name) === normalizedName(BASE.site),
   );
   const site = expectKind(exactlyOne(sites, `SITE ${BASE.site}`), 'SITE', BASE.site);
   const structure = await resolveNamedChild(repository, site.id, 'STRUCTURE', BASE.structure);
@@ -228,8 +231,7 @@ async function resolveBase(
   const room = await resolveNamedChild(repository, level.id, 'ROOM_SUBSTRUCTURE', BASE.room);
 
   const allRacks = (await repository.listByKind('CONTAINER_RACK')).filter(
-    (node): node is ContainerRackNode =>
-      node.kind === 'CONTAINER_RACK' && node.lifecycle === 'ACTIVE',
+    (node): node is ContainerRackNode => node.kind === 'CONTAINER_RACK' && node.lifecycle === 'ACTIVE',
   );
   const racks = new Map<BdfbSpec['key'], ContainerRackNode>();
 
@@ -596,13 +598,8 @@ async function ensurePanelInFrame(
   frame: EquipmentNode,
   panelName: PanelName,
 ): Promise<EquipmentNode> {
-  const slotIndex = panelName.endsWith('3')
-    ? 0
-    : panelName.endsWith('2')
-      ? 1
-      : panelName.endsWith('1')
-        ? 2
-        : -1;
+  const slotIndex =
+    panelName.endsWith('3') ? 0 : panelName.endsWith('2') ? 1 : panelName.endsWith('1') ? 2 : -1;
   if (slotIndex < 0) {
     throw new Error(`SEED_01_INTERNAL: invalid panel slot ${panelName}`);
   }
@@ -640,7 +637,7 @@ async function ensurePositionalChild(
 ): Promise<EquipmentNode> {
   const parent = expectKind(
     exactlyOne(
-      [await repository.getById(parentId)].filter((item): item is TopologyNode => Boolean(item)),
+      [(await repository.getById(parentId))].filter((item): item is TopologyNode => Boolean(item)),
       `Equipment parent ${parentId}`,
     ),
     'EQUIPMENT',
@@ -657,10 +654,7 @@ async function ensurePositionalChild(
   if (existingId) {
     const existing = await repository.getById(existingId);
     const equipment = expectKind(
-      exactlyOne(
-        [existing].filter((item): item is TopologyNode => Boolean(item)),
-        spec.name,
-      ),
+      exactlyOne([existing].filter((item): item is TopologyNode => Boolean(item)), spec.name),
       'EQUIPMENT',
       spec.name,
     );
@@ -753,7 +747,9 @@ async function ensureFullRackOccupancy(
   }
   const allocation = reserved.value.cas.find(
     (range) =>
-      range.state === 'RESERVED' && range.mountStartU === 1 && range.physicalSizeU === rack.totalU,
+      range.state === 'RESERVED' &&
+      range.mountStartU === 1 &&
+      range.physicalSizeU === rack.totalU,
   );
   if (!allocation) {
     throw new Error(`SEED_01_CREATE_FAILED: reservation missing for ${rack.name}`);
@@ -780,7 +776,12 @@ async function seedBdfb(
   // v1 used a DYNAMIC chassis with panels/instrumentation directly beneath it.
   // v3 migrates that same chassis in place to the established canonical chain:
   // CHASSIS[1] -> SHELF[2 frames] -> FRAME[3 panel slots] -> PANEL[24] -> CB.
-  let chassis = await findEquipmentByName(repository, device, `${spec.key} Chassis`, 'CHASSIS');
+  let chassis = await findEquipmentByName(
+    repository,
+    device,
+    `${spec.key} Chassis`,
+    'CHASSIS',
+  );
   if (!chassis) {
     chassis = await ensureRootEquipment(repository, topology, device, {
       name: `${spec.key} Chassis`,
@@ -810,8 +811,7 @@ async function seedBdfb(
     manufacturer: 'Acrel',
     model: 'AWT100-CEHW',
     serialNumber: spec.gatewaySerial,
-    category:
-      'Industrial gateway · RS485 master · network commissioning pending field verification',
+    category: 'Industrial gateway · RS485 master · network commissioning pending field verification',
     aliases: ['AWT100-CEHW', 'Modbus RTU master', 'MQTT/Modbus TCP gateway'],
   });
   const meterEquipmentIds = {} as Record<MeterPanelName, string>;
@@ -835,7 +835,12 @@ async function seedBdfb(
     'EQUIPMENT',
     chassis.name,
   );
-  let shelf = await findEquipmentByName(repository, device, `${spec.key}-SHELF-01`, 'SHELF');
+  let shelf = await findEquipmentByName(
+    repository,
+    device,
+    `${spec.key}-SHELF-01`,
+    'SHELF',
+  );
   if (!shelf) {
     shelf =
       freshChassisBeforeShelf.childMode === 'POSITIONAL'
@@ -916,7 +921,10 @@ async function seedBdfb(
   const panels = new Map<PanelName, EquipmentNode>();
   for (const panelName of PANELS) {
     const frame = panelName.startsWith('A') ? frameA : frameB;
-    panels.set(panelName, await ensurePanelInFrame(repository, topology, device, frame, panelName));
+    panels.set(
+      panelName,
+      await ensurePanelInFrame(repository, topology, device, frame, panelName),
+    );
   }
 
   // After all legacy direct children have been migrated, freeze the chassis as
@@ -1010,7 +1018,8 @@ async function ensureIndustrialProfile(
       existing.bdfbDeviceId !== desired.bdfbDeviceId ||
       existing.role !== desired.role ||
       !sameRs485(existing.rs485, desired.rs485) ||
-      (desired.role === 'METER' && existing.gatewayEquipmentId !== desired.gatewayEquipmentId)
+      (desired.role === 'METER' &&
+        existing.gatewayEquipmentId !== desired.gatewayEquipmentId)
     ) {
       throw new Error(
         `SEED_01_CONFLICT: industrial profile ${desired.equipmentId} differs from seed-01 commissioning truth`,

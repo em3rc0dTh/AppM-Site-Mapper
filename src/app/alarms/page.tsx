@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { getAlarmSnapshot } from '@/modules/alarms/application/alarm-preview-service';
+import { AlarmCenterClient } from '@/components/alarms/alarm-center-client';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
@@ -30,37 +30,6 @@ export default async function AlarmCenterPage() {
         {snapshot.preview ? <strong>LAB PREVIEW · seed-01</strong> : null}
       </header>
 
-      <section className="alarm-center-filters" aria-label="Alarm filters">
-        <label>
-          State
-          <select defaultValue="ACTIVE">
-            <option>ACTIVE</option>
-            <option>RESOLVED</option>
-          </select>
-        </label>
-        <label>
-          Severity
-          <select defaultValue="ALL">
-            <option>ALL</option>
-            <option>CRITICAL</option>
-            <option>WARNING</option>
-            <option>INFO</option>
-          </select>
-        </label>
-        <label>
-          ACK
-          <select defaultValue="ALL">
-            <option>ALL</option>
-            <option>UNACKNOWLEDGED</option>
-            <option>ACKNOWLEDGED</option>
-          </select>
-        </label>
-        <label className="alarm-center-search">
-          Search
-          <input placeholder="Alarm, target or path…" />
-        </label>
-      </section>
-
       <section className="alarm-center-stats">
         <article><b>{active.length}</b><span>Active</span></article>
         <article><b>{unack}</b><span>Without ACK</span></article>
@@ -69,63 +38,7 @@ export default async function AlarmCenterPage() {
         <article data-severity="info"><b>{info}</b><span>Info</span></article>
       </section>
 
-      <section className="alarm-center-list">
-        <header>
-          <h2>Active alarms ({active.length})</h2>
-          <small>One occurrence is shown once, regardless of how many ancestor scopes display it.</small>
-        </header>
-
-        {active.length ? (
-          <div className="alarm-center-table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Severity</th>
-                  <th>Alarm</th>
-                  <th>Target</th>
-                  <th>Path</th>
-                  <th>Since</th>
-                  <th>ACK</th>
-                  <th>Confidence</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {active.map((alarm) => (
-                  <tr key={alarm.id}>
-                    <td>
-                      <span className="alarm-severity" data-severity={alarm.severity.toLowerCase()}>
-                        {alarm.severity}
-                      </span>
-                    </td>
-                    <td>
-                      <strong>{alarm.code.replaceAll('_', ' ')}</strong>
-                      <small>{alarm.summary}</small>
-                    </td>
-                    <td>
-                      <Link href={alarm.targetHref}>{alarm.targetName}</Link>
-                    </td>
-                    <td title={alarm.path.map((item) => item.name).join(' / ')}>
-                      {alarm.path.slice(-5).map((item) => item.name).join(' / ')}
-                    </td>
-                    <td>{new Date(alarm.openedAt).toLocaleString()}</td>
-                    <td>{alarm.acknowledgement === 'ACKNOWLEDGED' ? '✓ Yes' : 'No'}</td>
-                    <td>{alarm.confidence ?? '—'}</td>
-                    <td>
-                      <div className="alarm-center-actions">
-                        <Link href={`/alarms/${alarm.id}`}>Open detail</Link>
-                        <Link href={alarm.targetHref}>Go to target →</Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="alarm-empty-state">✓ NO ACTIVE ALARMS</div>
-        )}
-      </section>
+      <AlarmCenterClient occurrences={snapshot.occurrences} />
     </main>
   );
 }

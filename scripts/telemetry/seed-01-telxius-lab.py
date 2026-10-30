@@ -42,6 +42,7 @@ OVERLAY_FILE = RUNTIME / "seed-01-telxius.compose.json"
 ENV_FILE = RUNTIME / "seed-01-telxius.env"
 SECRET_FILE = RUNTIME / "seed-01-telxius.secrets.json"
 COMMISSION = ROOT / "scripts/telemetry/commission-seed-01-telxius-lab.mongosh.js"
+SNMP_V2C_COMMISSION = ROOT / "scripts/telemetry/commission-seed-01-snmp-v2c-shunts.mongosh.js"
 BASE_LAUNCHER = ROOT / "scripts/telemetry/industrial-lab.py"
 
 QDFS = ("QDF-2", "QDF-4", "QDF-5")
@@ -54,6 +55,21 @@ MODBUS_SOURCE_UNITS = {
 SMARTPACK_SOURCE = "EMU-SMARTPACK2-LURIN"
 SYNTHETIC_SNMP_SOURCE = {qdf: "EMU-SNMP-" + qdf for qdf in QDFS}
 SYNTHETIC_SNMP_SERVICES = {qdf: "seed01-snmp-agent-" + qdf.lower().replace("-", "") for qdf in QDFS}
+SNMP_V2C_SOURCE = {qdf: "EMU-SNMPV2C-" + qdf for qdf in QDFS}
+SNMP_V2C_AGENT_SERVICES = {
+    qdf: "seed01-snmp-v2c-agent-" + qdf.lower().replace("-", "") for qdf in QDFS
+}
+SNMP_V2C_COLLECTOR_SERVICES = {
+    qdf: "seed01-snmp-v2c-collector-" + qdf.lower().replace("-", "") for qdf in QDFS
+}
+SNMP_V2C_BFDB_ID = {"QDF-2": "BFDB-01", "QDF-4": "BFDB-02", "QDF-5": "BFDB-03"}
+SNMP_V2C_POINTS = [
+    {"oid": f"1.3.6.1.4.1.8072.9999.2026.49.1.{index}.0", "metric": "CURRENT", "scale": 0.1}
+    for index in range(1, 5)
+] + [
+    {"oid": f"1.3.6.1.4.1.8072.9999.2026.49.2.{index}.0", "metric": "VOLTAGE", "scale": 0.1}
+    for index in range(1, 5)
+]
 
 WALK_CANDIDATES = (
     "walk.txt",
@@ -422,6 +438,7 @@ def load_or_create_secrets() -> dict:
         "v3Auth": lambda: secrets.token_hex(20),
         "v3Priv": lambda: secrets.token_hex(20),
         "engineId": lambda: "8000" + secrets.token_hex(10),
+        "snmpIngestToken": lambda: secrets.token_hex(32),
     }
 
     if SECRET_FILE.is_file():
@@ -511,6 +528,7 @@ def prepare(
     evidence_dir: Path | None,
     broker: dict[str, str],
     snmp_mode: str,
+    snmp_v2c_shunts: bool,
 ) -> dict:
     required = [
         bfdb / "apps/field-emulator/main.py",
@@ -530,6 +548,15 @@ def prepare(
             bfdb / "apps/snmp-emulator/Dockerfile",
             bfdb / "apps/snmp-emulator/eltek-lab-service.mjs",
             bfdb / "config/eltek-sequence.example.json",
+        ]
+    if snmp_v2c_shunts:
+        required += [
+            bfdb / "apps/snmp-emulator/Dockerfile",
+            bfdb / "apps/snmp-emulator/server.mjs",
+            bfdb / "apps/snmp-emulator/oid-profile.mjs",
+            ROOT / "infra/snmp-collector/Dockerfile",
+            ROOT / "infra/snmp-collector/server.mjs",
+            SNMP_V2C_COMMISSION,
         ]
     missing = [path for path in required if not path.is_file()]
     if missing:
@@ -573,6 +600,7 @@ def prepare(
     sender_address = default_sender_address()
     receiver_profiles: list[dict] = []
     synthetic_services: dict[str, dict] = {}
+    snmp_v2c_services: dict[str, dict] = {}
 
     if snmp_mode == "smartpack":
         receiver_profiles.append(
@@ -649,6 +677,50 @@ def prepare(
                 "restart": "unless-stopped",
             }
 
+    if snmp_v2c_shunts:
+        points_json = json.dumps(SNMP_V2C_POINTS, separators=(",", ":"))
+        for qdf in QDFS:
+            agent = SNMP_V2C_AGENT_SERVICES[qdf]
+            collector = SNMP_V2C_COLLECTOR_SERVICES[qdf]
+            snmp_v2c_services[agent] = {
+                "build": {
+                    "context": str(bfdb),
+                    "dockerfile": "apps/snmp-emulator/Dockerfile",
+                },
+                "environment": {
+                    "SNMP_AGENT_HOST": "0.0.0.0",
+                    "SNMP_AGENT_PORT": "1161",
+                    "SNMP_AGENT_UPDATE_MS": "1000",
+                    "SNMP_EMULATOR_SCENARIO": "NORMAL",
+                    "SNMP_EMULATOR_PROFILE": "ELTEK_BDCBB_CONFIG_4",
+                    "SNMP_VERSION": "2c",
+                    "SNMP_COMMUNITY": secret["community"],
+                    "SNMP_EMULATOR_BFDB_ID": SNMP_V2C_BFDB_ID[qdf],
+                    "SNMP_EMULATOR_SOURCE_ID": SNMP_V2C_SOURCE[qdf],
+                },
+                "restart": "unless-stopped",
+            }
+            snmp_v2c_services[collector] = {
+                "build": {
+                    "context": str(ROOT),
+                    "dockerfile": "infra/snmp-collector/Dockerfile",
+                },
+                "environment": {
+                    "APP_ENV": "development",
+                    "SNMP_CONTROLLER_HOST": agent,
+                    "SNMP_CONTROLLER_PORT": "1161",
+                    "SNMP_CONTROLLER_ID": SNMP_V2C_SOURCE[qdf],
+                    "SNMP_VERSION": "2c",
+                    "SNMP_COMMUNITY": secret["community"],
+                    "SNMP_FEED_POINTS_JSON": points_json,
+                    "SNMP_POLL_INTERVAL_MS": "5000",
+                    "SNMP_INGEST_TOKEN": secret["snmpIngestToken"],
+                    "SNMP_INGEST_URL": "http://site-mapper:3000/api/telemetry/snmp/ingest",
+                },
+                "depends_on": ["site-mapper", agent],
+                "restart": "unless-stopped",
+            }
+
     services = {
         "site-mapper": {
             "environment": {
@@ -670,6 +742,7 @@ def prepare(
                 "MQTT_USERNAME": broker["username"],
                 "MQTT_PASSWORD": broker["password"],
                 "SNMP_INGEST_MAX_RPM": "2000",
+                "SNMP_INGEST_TOKEN": secret["snmpIngestToken"],
                 "INDUSTRIAL_TIMESCALE_ENABLED": "true",
             },
             "volumes": [
@@ -769,6 +842,7 @@ def prepare(
         },
     }
     services.update(synthetic_services)
+    services.update(snmp_v2c_services)
 
     save_json(
         OVERLAY_FILE,
@@ -816,6 +890,7 @@ def prepare(
             "SNMP_TRAP_ENGINE_ID": secret["engineId"],
             "SNMP_TRAP_MAX_PENDING": "5000",
             "SNMP_INGEST_MAX_RPM": "2000",
+            "SNMP_INGEST_TOKEN": secret["snmpIngestToken"],
         }
     )
     write_env(ENV_FILE, env)
@@ -827,6 +902,15 @@ def commission(mode: str) -> None:
     argv = ["docker", "exec", "-i", "-e", "SITEMAPPER_SEED01_LAB_MODE=" + mode]
     if mode in {"apply", "retire"}:
         argv += ["-e", "SITEMAPPER_SEED01_LAB_ACK=LAB_ONLY"]
+    argv += [MONGO, "mongosh", "--quiet", "seed-01"]
+    print(run(argv, input_text=source))
+
+
+def commission_snmp_v2c(mode: str) -> None:
+    source = SNMP_V2C_COMMISSION.read_text(encoding="utf8")
+    argv = ["docker", "exec", "-i", "-e", "SITEMAPPER_SEED01_V2C_MODE=" + mode]
+    if mode in {"apply", "retire"}:
+        argv += ["-e", "SITEMAPPER_SEED01_V2C_ACK=LAB_ONLY"]
     argv += [MONGO, "mongosh", "--quiet", "seed-01"]
     print(run(argv, input_text=source))
 
@@ -845,6 +929,8 @@ def stop_historical_sources(*, keep_lab_broker: bool = False) -> None:
         "seed01-snmp-collector-qdf2",
         "seed01-snmp-collector-qdf4",
         "seed01-snmp-collector-qdf5",
+        *SNMP_V2C_AGENT_SERVICES.values(),
+        *SNMP_V2C_COLLECTOR_SERVICES.values(),
     ]
     if not keep_lab_broker:
         old.append("lab-mosquitto")
@@ -942,6 +1028,14 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--snmp-v2c-shunts",
+        action="store_true",
+        help=(
+            "add three synthetic SNMPv2c Config4 shunt agents + collectors "
+            "alongside the selected controller/trap SNMP mode"
+        ),
+    )
+    parser.add_argument(
         "--use-lab-broker",
         action="store_true",
         help="use and start the seed-01 private lab-mosquitto broker",
@@ -980,6 +1074,8 @@ def main() -> None:
                 "seed01-smartpack2",
                 "seed01-smartpack2-to-site-mapper",
                 *SYNTHETIC_SNMP_SERVICES.values(),
+                *SNMP_V2C_AGENT_SERVICES.values(),
+                *SNMP_V2C_COLLECTOR_SERVICES.values(),
             ]
             if name in overlay_services
             or name
@@ -1005,7 +1101,13 @@ def main() -> None:
     ensure_mongo_running()
     base = read_env(BASE_ENV)
     evidence_dir, broker, selected_snmp_mode = require_runtime_inputs(args, base)
-    data = prepare(bfdb, evidence_dir, broker, selected_snmp_mode)
+    data = prepare(
+        bfdb,
+        evidence_dir,
+        broker,
+        selected_snmp_mode,
+        args.snmp_v2c_shunts,
+    )
 
     print(
         "Prepared current-main Telxius lab: "
@@ -1020,7 +1122,8 @@ def main() -> None:
                 if selected_snmp_mode == "synthetic"
                 else "; SNMP=SKIPPED explicitly."
             )
-        ),
+        )
+        + ("; SNMPv2c Config4 shunts=ENABLED." if args.snmp_v2c_shunts else ""),
         flush=True,
     )
 
@@ -1028,11 +1131,15 @@ def main() -> None:
         return
     if args.action == "plan":
         commission("plan")
+        if args.snmp_v2c_shunts:
+            commission_snmp_v2c("plan")
         return
     if args.action == "retire":
         if not args.ack_lab_only:
             fail("--ack-lab-only is required")
         commission("retire")
+        if args.snmp_v2c_shunts:
+            commission_snmp_v2c("retire")
         return
 
     command = full_compose_command()
@@ -1043,6 +1150,8 @@ def main() -> None:
         if not args.ack_lab_only:
             fail("--ack-lab-only is required")
         commission("apply")
+        if args.snmp_v2c_shunts:
+            commission_snmp_v2c("apply")
         stop_historical_sources(keep_lab_broker=args.use_lab_broker)
         selected = [
             "mongodb",
@@ -1064,6 +1173,11 @@ def main() -> None:
             ]
         elif selected_snmp_mode == "synthetic":
             selected += ["snmp-traps", *SYNTHETIC_SNMP_SERVICES.values()]
+        if args.snmp_v2c_shunts:
+            selected += [
+                *SNMP_V2C_AGENT_SERVICES.values(),
+                *SNMP_V2C_COLLECTOR_SERVICES.values(),
+            ]
         # Existing seed-01 labs can rebuild many images at once. Keep Compose
         # build concurrency at one target to reduce peak pressure on Docker
         # Desktop/WSL while preserving deterministic rebuild semantics.
@@ -1088,6 +1202,11 @@ def main() -> None:
                     if selected_snmp_mode == "synthetic"
                     else "- SNMP: SKIPPED explicitly\n"
                 )
+            )
+            + (
+                "- SNMPv2c shunts: QDF-2/QDF-4/QDF-5 Config4 A1/A2/B1/B2 -> Site Mapper\n"
+                if args.snmp_v2c_shunts
+                else ""
             )
             + "- Site Mapper: http://127.0.0.1:3000\n"
             + "- Operational Console: http://127.0.0.1:3100\n"

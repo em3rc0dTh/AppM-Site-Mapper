@@ -80,7 +80,7 @@ export default async function WorkspacePage() {
   );
   const cards = [
     ...new Map([...pinLinks, ...inventoryPins].map((item) => [item.id, item])).values(),
-  ].slice(0, 3);
+  ];
 
   const equipmentNodes = allNodes.filter((node) => node.kind === 'DEVICE');
   const bdfbRows = snapshot.bdfb;

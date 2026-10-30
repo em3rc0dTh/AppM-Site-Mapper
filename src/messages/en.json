@@ -544,7 +544,10 @@
     "noTopology": "No topology yet",
     "tryAnother": "Try another name.",
     "createNetwork": "Create a network to map your infrastructure.",
-    "activeAlarmsInBranch": "{count, plural, one {# active alarm in this branch} other {# active alarms in this branch}}"
+    "activeAlarmsInBranch": "{count, plural, one {# active alarm in this branch} other {# active alarms in this branch}}",
+    "viewMore": "View more",
+    "close": "Close",
+    "workspace": "Workspace"
   },
   "topologyTree": {
     "global": "Global topology",

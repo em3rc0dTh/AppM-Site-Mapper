@@ -53,8 +53,7 @@ export class AlarmCommandService {
         // by a later MQTT-only observation. Resolution is a separate transition.
         ...(input.confidence
           ? {
-              confidence:
-                existing.confidence === 'CONFIRMED' ? 'CONFIRMED' : input.confidence,
+              confidence: existing.confidence === 'CONFIRMED' ? 'CONFIRMED' : input.confidence,
             }
           : {}),
         evidenceRefs: [...evidenceById.values()],

@@ -289,3 +289,43 @@ This lab does not claim that:
 - the physical Smartpack2 broadcasts a 5,407-object INFORM sweep;
 - the existing Modbus map is field-commissioned for Metasys;
 - successful laboratory startup equals physical field certification.
+
+
+## Alarm UI acceptance fixture — Docker only
+
+The alarm implementation includes a **reversible synthetic UI fixture** for the existing isolated seed-01 Docker project. It exists only to validate the approved hierarchy and screens; it is not electrical field evidence and it does not commission production thresholds.
+
+The fixture creates exactly two active occurrences under QDF-4 / panel A3:
+
+```text
+A3-03  TELEMETRY_LOSS  WARNING
+A3-04  POWER_LOSS      CRITICAL · CONFIRMED
+```
+
+Apply it to the existing seed-01 Mongo container:
+
+```bash
+docker exec -i -e SITEMAPPER_ALARM_DEMO_ACK=LAB_ONLY \
+  site-mapper-seed-01-mongodb-1 mongosh --quiet seed-01 \
+  < scripts/telemetry/seed-01-alarm-ui-fixture.mongosh.js
+```
+
+Clear only these synthetic alarm records:
+
+```bash
+docker exec -i \
+  -e SITEMAPPER_ALARM_DEMO_ACK=LAB_ONLY \
+  -e SITEMAPPER_ALARM_DEMO_MODE=clear \
+  site-mapper-seed-01-mongodb-1 mongosh --quiet seed-01 \
+  < scripts/telemetry/seed-01-alarm-ui-fixture.mongosh.js
+```
+
+The script refuses any database except `seed-01` and requires the explicit `LAB_ONLY` acknowledgement. Records are tagged `LAB_UI_DESIGN_FIXTURE_2026_10_30`.
+
+For the already-created isolated Docker project used during the 30 October visual review, Site Mapper was published as:
+
+```text
+127.0.0.1:3001 -> container 3000
+```
+
+The generated runtime port overlay is authoritative for an existing lab. Do not recreate the project merely to force the base Compose default port.

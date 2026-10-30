@@ -381,6 +381,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               canReadTelemetry={canReadTelemetry}
               breakerTelemetryBindings={breakerTelemetryBindings}
               portConnections={portConnections}
+              alarmRollups={alarmSnapshot.rollups}
             />
           ) : view?.ok ? (
             <RackElevation

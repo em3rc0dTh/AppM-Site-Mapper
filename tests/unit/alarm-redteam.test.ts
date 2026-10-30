@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { AlarmCommandService } from '@/modules/alarm/application/alarm-command-service';
-import {
-  projectAlarmPublicationSignals,
-} from '@/modules/alarm/application/alarm-modbus-projection';
+import { projectAlarmPublicationSignals } from '@/modules/alarm/application/alarm-modbus-projection';
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
 import { AlarmService } from '@/modules/alarm/application/alarm-service';
 import { IndustrialAlarmEvaluator } from '@/modules/alarm/application/industrial-alarm-evaluator';
@@ -12,10 +10,7 @@ import type { AlarmOccurrence, AlarmTransition } from '@/modules/alarm/domain/en
 import { MemoryAlarmPolicyRepository } from '@/modules/alarm/infrastructure/memory-alarm-policy-repository';
 import { MemoryAlarmRepository } from '@/modules/alarm/infrastructure/memory-alarm-repository';
 import type { AlarmPolicy } from '@/modules/alarm/domain/policy';
-import type {
-  ObservationBatch,
-  Signal,
-} from '@/modules/telemetry/domain/industrial/observations';
+import type { ObservationBatch, Signal } from '@/modules/telemetry/domain/industrial/observations';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';

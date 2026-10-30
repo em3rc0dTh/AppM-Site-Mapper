@@ -1,6 +1,10 @@
 import type { Db } from 'mongodb';
 
-import { applySeed01, SEED_01_PROFILE, type Seed01Summary } from '@/seeds/seed-01';
+import {
+  applySeed01,
+  SEED_01_PROFILE,
+  type Seed01Summary,
+} from '@/seeds/seed-01';
 
 export type RuntimeSeedResult = Seed01Summary | null;
 

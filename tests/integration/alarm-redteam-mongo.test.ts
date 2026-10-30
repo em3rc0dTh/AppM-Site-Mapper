@@ -100,6 +100,8 @@ describe.skipIf(!uri)('Alarm red-team real Mongo concurrency', () => {
     const active = await repository.listActive();
 
     expect(rejected).toHaveLength(0);
-    expect(active.filter((item) => item.correlationKey === 'breaker|POWER_LOSS|mqtt:0_1_4')).toHaveLength(1);
+    expect(
+      active.filter((item) => item.correlationKey === 'breaker|POWER_LOSS|mqtt:0_1_4'),
+    ).toHaveLength(1);
   });
 });

@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
+import { AlarmInspectorCard, AlarmScopeBanner } from '@/components/alarms/alarm-ui';
+import { getAlarmSnapshot } from '@/modules/alarms/application/alarm-preview-service';
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { ContextPin } from '@/components/workspace/context-pin';
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -21,7 +23,10 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
   const view = await new RackElevationService(repo).getView(rackId);
   if (!view.ok) notFound();
 
-  const trail = await topology.getTrail(rackId);
+  const [trail, alarmSnapshot] = await Promise.all([
+    topology.getTrail(rackId),
+    getAlarmSnapshot(repo),
+  ]);
   const room = trail.find((node) => node.kind === 'ROOM_SUBSTRUCTURE');
   // The room Blueprint owns surveyed footprints and the rack-focus popup.
   // Never render arbitrary neighbour coordinates in a standalone page.
@@ -64,10 +69,17 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
 
       <div className="zip-rack-focus-layout">
         <aside className="zip-rack-topology">
-          {tree ? <TopologyContextTree tree={tree} activeId={rackId} /> : null}
+          {tree ? (
+            <TopologyContextTree
+              tree={tree}
+              activeId={rackId}
+              alarmRollups={alarmSnapshot.rollups}
+            />
+          ) : null}
         </aside>
 
         <section className="zip-rack-focus-stage">
+          <AlarmScopeBanner snapshot={alarmSnapshot} nodeId={rackId} />
           <h1>{t('title')}</h1>
           <div className="zip-rack-room">
             <div className="rack-unsurveyed-hint">{t('noSurvey')}</div>
@@ -119,6 +131,7 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
               </small>
             </div>
           </div>
+          <AlarmInspectorCard snapshot={alarmSnapshot} nodeId={rackId} />
           <dl>
             <dt>{t('capacity')}</dt>
             <dd>{view.value.rack.totalU ?? view.value.rows.length}U</dd>

@@ -68,6 +68,7 @@ export async function POST(request: Request) {
         eventId: result.batch.id,
         disposition: result.disposition,
         signals: result.batch.signals.length,
+        alarmEvaluation: result.alarmEvaluation,
       },
       { status: 202, headers: { 'Cache-Control': 'no-store' } },
     );

@@ -8,6 +8,8 @@ import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
 import { SnmpCapacityStrip } from './snmp-capacity-strip';
+import { AlarmBadge } from '@/components/alarms/alarm-ui';
+import type { AlarmRollup } from '@/modules/alarms/domain/entities';
 
 interface Props {
   readonly root: EquipmentNode;
@@ -15,6 +17,7 @@ interface Props {
   readonly readings: Readonly<Record<string, CompositionBreakerTelemetry>>;
   readonly onAdd?: (slot: number | null) => void;
   readonly canReadTelemetry?: boolean;
+  readonly alarmRollups?: Readonly<Record<string, AlarmRollup>>;
 }
 
 const METRICS = [
@@ -65,11 +68,20 @@ function ChildLink({
   );
 }
 
-function PanelPreview({ panel }: Readonly<{ panel: EquipmentNode }>) {
+function PanelPreview({
+  panel,
+  alarmRollups,
+}: Readonly<{
+  panel: EquipmentNode;
+  alarmRollups: Readonly<Record<string, AlarmRollup>>;
+}>) {
   const t = useTranslations('equipmentView');
   return (
     <ChildLink node={panel} className="ec-panel-line">
-      <strong className="ec-panel-name">{panel.name}</strong>
+      <span className="ec-panel-name-line">
+        <strong className="ec-panel-name">{panel.name}</strong>
+        <AlarmBadge rollup={alarmRollups[panel.id]} />
+      </span>
       <span className="ec-panel-meta">
         {panel.childMode === 'POSITIONAL'
           ? `${panel.children.length} positions · ${panel.children.filter(Boolean).length} occupied`
@@ -86,10 +98,12 @@ function FramePreview({
   frame,
   byId,
   readings,
+  alarmRollups,
 }: Readonly<{
   frame: EquipmentNode;
   byId: ReadonlyMap<string, EquipmentNode>;
   readings: Props['readings'];
+  alarmRollups: Readonly<Record<string, AlarmRollup>>;
 }>) {
   const t = useTranslations('equipmentView');
   const panels = activeChildren(frame, byId).filter(({ child }) => child.equipmentType === 'PANEL');
@@ -107,7 +121,9 @@ function FramePreview({
       </div>
       <div className="ec-frame-panels">
         {panels.length ? (
-          panels.map(({ child }) => <PanelPreview key={child.id} panel={child} />)
+          panels.map(({ child }) => (
+            <PanelPreview key={child.id} panel={child} alarmRollups={alarmRollups} />
+          ))
         ) : (
           <p className="ec-muted">{t('noPanelsInstalled')}</p>
         )}
@@ -136,10 +152,12 @@ function BreakerRow({
   breaker,
   position,
   reading,
+  alarmRollup,
 }: Readonly<{
   breaker: EquipmentNode;
   position: number;
   reading: CompositionBreakerTelemetry | undefined;
+  alarmRollup?: AlarmRollup;
 }>) {
   const status = reading?.status ?? 'UNMAPPED';
   return (
@@ -153,6 +171,10 @@ function BreakerRow({
         <span className="ec-status-dot" aria-hidden="true" />
         <span className="ec-status-text">{status}</span>
       </span>
+      <span className="ec-alarm-cell">
+        <AlarmBadge rollup={alarmRollup} />
+        {!alarmRollup ? <span>—</span> : null}
+      </span>
     </ChildLink>
   );
 }
@@ -162,11 +184,13 @@ function PanelComposition({
   byId,
   readings,
   onAdd,
+  alarmRollups,
 }: Readonly<{
   root: EquipmentNode;
   byId: ReadonlyMap<string, EquipmentNode>;
   readings: Props['readings'];
   onAdd?: Props['onAdd'];
+  alarmRollups: Readonly<Record<string, AlarmRollup>>;
 }>) {
   const t = useTranslations('equipmentView');
   const slots = root.children.map((id, index) => ({
@@ -206,6 +230,7 @@ function PanelComposition({
             <span>P · W</span>
             <span>E · kWh</span>
             <span>{t('status')}</span>
+            <span>ALARM</span>
           </div>
           {slots.length ? (
             slots.map(({ id, index, child }) =>
@@ -215,6 +240,7 @@ function PanelComposition({
                   breaker={child}
                   position={index + 1}
                   reading={readings[child.id]}
+                  alarmRollup={alarmRollups[child.id]}
                 />
               ) : id ? (
                 <div className="ec-missing-row" key={id}>
@@ -260,6 +286,7 @@ export function EquipmentContractViews({
   readings,
   onAdd,
   canReadTelemetry = false,
+  alarmRollups = {},
 }: Props) {
   const t = useTranslations('equipmentView');
   const children = activeChildren(root, equipmentById);
@@ -333,16 +360,20 @@ export function EquipmentContractViews({
                       <ChildLink node={child} className="ec-shelf-link" />
                     </div>
                     <Counts node={child} />
+                    <AlarmBadge rollup={alarmRollups[child.id]} />
                   </div>
                   <div className="ec-chassis-frame-strip">
                     {child.equipmentType === 'FRAME' ? (
                       activeChildren(child, equipmentById).map(({ child: panel }) => (
-                        <PanelPreview key={panel.id} panel={panel} />
+                        <PanelPreview key={panel.id} panel={panel} alarmRollups={alarmRollups} />
                       ))
                     ) : activeChildren(child, equipmentById).length ? (
                       activeChildren(child, equipmentById).map(({ child: frame }) => (
                         <ChildLink node={frame} key={frame.id} className="ec-chassis-frame">
-                          <strong>{frame.name}</strong>
+                          <span className="ec-panel-name-line">
+                            <strong>{frame.name}</strong>
+                            <AlarmBadge rollup={alarmRollups[frame.id]} />
+                          </span>
                           <small>
                             <Counts node={frame} />
                           </small>
@@ -372,7 +403,13 @@ export function EquipmentContractViews({
           </header>
           <div className="ec-frames-grid">
             {children.map(({ child }) => (
-              <FramePreview key={child.id} frame={child} byId={equipmentById} readings={readings} />
+              <FramePreview
+                key={child.id}
+                frame={child}
+                byId={equipmentById}
+                readings={readings}
+                alarmRollups={alarmRollups}
+              />
             ))}
             {!children.length && <p className="ec-muted">{t('noFrames')}</p>}
           </div>
@@ -395,6 +432,7 @@ export function EquipmentContractViews({
                 <div>
                   <ChildLink node={child} className="ec-frame-row-name" />
                   <Counts node={child} />
+                  <AlarmBadge rollup={alarmRollups[child.id]} />
                 </div>
                 <span className="ec-count">
                   {projectCompositionTelemetry(child, equipmentById, readings).reporting}/
@@ -411,7 +449,13 @@ export function EquipmentContractViews({
       )}
 
       {type === 'PANEL' && (
-        <PanelComposition root={root} byId={equipmentById} readings={readings} onAdd={onAdd} />
+        <PanelComposition
+          root={root}
+          byId={equipmentById}
+          readings={readings}
+          onAdd={onAdd}
+          alarmRollups={alarmRollups}
+        />
       )}
 
       {type === 'CIRCUIT_BREAKER' && (

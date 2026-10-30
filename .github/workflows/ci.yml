@@ -42,10 +42,7 @@ jobs:
         run: npm run lint
 
       - name: Format check
-        run: |
-          npx prettier --write scripts/ci/browser-operational-journey.mjs src/app/help.css src/app/laptop-responsive.css
-          git diff -- scripts/ci/browser-operational-journey.mjs src/app/help.css src/app/laptop-responsive.css
-          git diff --quiet -- scripts/ci/browser-operational-journey.mjs src/app/help.css src/app/laptop-responsive.css
+        run: npm run format:check
 
       - name: MVP documentation links
         run: npm run docs:check

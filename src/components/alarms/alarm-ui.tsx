@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import { AlarmAcknowledgeButton } from '@/components/alarms/alarm-acknowledge-button';
+
 import type {
   AlarmOccurrenceView,
   AlarmRollup,
@@ -156,6 +158,53 @@ export function AlarmInspectorCard({
         </Link>
       ))}
       <Link className="alarm-inspector-all" href="/alarms">View all alarms →</Link>
+    </section>
+  );
+}
+
+
+export function DirectAlarmHero({
+  snapshot,
+  nodeId,
+}: {
+  snapshot: AlarmSnapshotView;
+  nodeId: string;
+}) {
+  const direct = snapshot.occurrences.filter(
+    (item) => item.targetId === nodeId && item.state === 'ACTIVE',
+  );
+  if (!direct.length) return null;
+  const primary = [...direct].sort(
+    (left, right) =>
+      (right.severity === 'CRITICAL' ? 3 : right.severity === 'WARNING' ? 2 : 1) -
+      (left.severity === 'CRITICAL' ? 3 : left.severity === 'WARNING' ? 2 : 1),
+  )[0]!;
+
+  return (
+    <section
+      className="alarm-direct-hero"
+      data-severity={primary.severity.toLowerCase()}
+      aria-label="Direct active alarm"
+    >
+      <div className="alarm-direct-icon" aria-hidden="true">!</div>
+      <div className="alarm-direct-copy">
+        <small>{primary.severity} ALARM {snapshot.preview ? '· LAB PREVIEW' : ''}</small>
+        <h2>{occurrenceLabel(primary)}</h2>
+        <div className="alarm-direct-tags">
+          <span>{primary.state}</span>
+          {primary.confidence ? <span>{primary.confidence}</span> : null}
+          <span>{primary.acknowledgement}</span>
+        </div>
+        <p>{primary.remarks}</p>
+        {direct.length > 1 ? <small>{direct.length} direct active alarms on this target.</small> : null}
+      </div>
+      <div className="alarm-direct-actions">
+        <AlarmAcknowledgeButton
+          alarmId={primary.id}
+          acknowledged={primary.acknowledgement === 'ACKNOWLEDGED'}
+        />
+        <Link href={`/alarms/${primary.id}`}>View alarm detail →</Link>
+      </div>
     </section>
   );
 }

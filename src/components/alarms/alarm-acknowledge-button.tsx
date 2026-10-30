@@ -6,9 +6,11 @@ import { useState } from 'react';
 export function AlarmAcknowledgeButton({
   alarmId,
   acknowledged,
+  canAcknowledge,
 }: {
   alarmId: string;
   acknowledged: boolean;
+  canAcknowledge: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -16,6 +18,10 @@ export function AlarmAcknowledgeButton({
 
   if (acknowledged) {
     return <span className="alarm-acknowledged">✓ ACKNOWLEDGED</span>;
+  }
+
+  if (!canAcknowledge) {
+    return <span className="alarm-acknowledged">ACK · READ ONLY</span>;
   }
 
   return (

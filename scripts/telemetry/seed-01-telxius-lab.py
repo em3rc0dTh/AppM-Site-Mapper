@@ -419,6 +419,17 @@ def load_or_create_secrets() -> dict:
         }
         if not required.issubset(value):
             fail("existing Telxius secret file is incomplete")
+        if not isinstance(value.get("syntheticSnmp"), list) or len(value["syntheticSnmp"]) != 3:
+            value["syntheticSnmp"] = [
+                {
+                    "token": secrets.token_hex(24),
+                    "user": "seed01-synthetic-" + secrets.token_hex(4),
+                    "auth": secrets.token_hex(20),
+                    "priv": secrets.token_hex(20),
+                }
+                for _ in QDFS
+            ]
+            save_json(SECRET_FILE, value)
         return value
     value = {
         "community": "lab-" + secrets.token_hex(12),
@@ -427,6 +438,15 @@ def load_or_create_secrets() -> dict:
         "v3Auth": secrets.token_hex(20),
         "v3Priv": secrets.token_hex(20),
         "engineId": "8000" + secrets.token_hex(10),
+        "syntheticSnmp": [
+            {
+                "token": secrets.token_hex(24),
+                "user": "seed01-synthetic-" + secrets.token_hex(4),
+                "auth": secrets.token_hex(20),
+                "priv": secrets.token_hex(20),
+            }
+            for _ in QDFS
+        ],
     }
     save_json(SECRET_FILE, value)
     return value
@@ -443,6 +463,22 @@ def default_sender_address() -> str:
     except (KeyError, ValueError, TypeError, json.JSONDecodeError):
         pass
     fail("could not derive a stable SNMP sender address from the base lab network")
+
+
+def synthetic_sender_addresses() -> dict[str, str]:
+    try:
+        generated = json.loads(BASE_GENERATED.read_text(encoding="utf8"))
+        subnet = generated["networks"]["default"]["ipam"]["config"][0]["subnet"]
+        network = ipaddress.ip_network(subnet)
+        candidates = {
+            qdf: network.network_address + offset
+            for qdf, offset in zip(QDFS, (61, 62, 63), strict=True)
+        }
+        if all(candidate in network for candidate in candidates.values()):
+            return {qdf: str(candidate) for qdf, candidate in candidates.items()}
+    except (KeyError, ValueError, TypeError, json.JSONDecodeError):
+        pass
+    fail("could not derive stable synthetic SNMP addresses from the base lab network")
 
 
 def prepare(

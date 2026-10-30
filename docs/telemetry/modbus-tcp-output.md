@@ -20,7 +20,8 @@ The Modbus server does not query TimescaleDB or MongoDB when answering a Modbus 
 - Variable order at each circuit: Voltage (V), Current (A), Power (W), Energy (kWh).
 - Circuit number `n` from 1 to 96: zero-based start address `(n - 1) * 8`; Voltage at +0, Current at +2, Power at +4, Energy at +6. IEEE-754 FLOAT32, network big-endian word order, **high word first**. Register numbering in Metasys may need +40001 or +1 offset depending on its configured Modbus driver.
 - Only explicitly commissioned breaker metrics accepted by Site Mapper are exported. Missing values are not invented.
-- Missing or stale values (default age 30 seconds) use `MODBUS_MISSING_POLICY`. The backward-compatible default `zero` reads **0**, indistinguishable from a valid zero. The opt-in `exception` returns Modbus exception 04 for the entire FC03 request when any requested value is missing/stale. **Do not use this output for safety controls** until Metasys polling and missing-data behavior have been field-certified. No fifth metric or status register is exposed.
+- Missing or stale values (default age 30 seconds) use `MODBUS_MISSING_POLICY`. The backward-compatible default `zero` reads **0**, indistinguishable from a valid zero. The opt-in `exception` returns Modbus exception 04 for the entire FC03 request when any requested value is missing/stale. **Do not use this output for safety controls** until Metasys polling and missing-data behavior have been field-certified.
+- The legacy circuit block remains exactly 0–767 and still exposes only V/I/P/E. Governed industrial extensions begin at address **1024** and are opt-in through the immutable publication registry. Alarm Engine values may be assigned there without altering the circuit map.
 - Function codes other than FC03 return illegal-function exception. Malformed/out-of-range FC03 requests return exception, not out-of-bounds data.
 
 ## Local deployment
@@ -39,6 +40,40 @@ MODBUS_BRIDGE_TOKEN=<same-private-token>
 The sidecar listens for authenticated writes from Site Mapper at `POST /internal/accepted-breaker`. It is not a public telemetry endpoint. In a containerized Next.js deployment, configure this URL to the private sidecar service name instead.
 
 Expose Modbus only through a customer-approved OT network route/firewall. Modbus TCP has no built-in authentication or encryption. Metasys commissioning and production network routing remain explicit acceptance gates.
+
+## Alarm Engine extension points
+
+Alarm publication is not inferred from breaker measurements and does not reuse occurrence UUIDs.
+An operator-approved point in `MODBUS_POINTS_FILE` can declare a stable `logicalPointId` using:
+
+```text
+ALARM/<canonical-target-id>/<ALARM_CODE>/STATE
+ALARM/<canonical-target-id>/<ALARM_CODE>/ACK
+ALARM/<canonical-target-id>/<ALARM_CODE>/SEVERITY
+ALARM/<canonical-target-id>/<ALARM_CODE>/CONFIDENCE
+ALARM/<canonical-target-id>/<ALARM_CODE>/QUALITY
+```
+
+The bridge continues polling the authenticated Site Mapper projection endpoint. Site Mapper derives
+these values from the canonical Alarm Engine and the bridge keeps only ephemeral Latest State; the
+bridge still does not query MongoDB or TimescaleDB directly.
+
+Current semantic codes are:
+
+```text
+STATE       0 clear/resolved, 1 active
+ACK         0 unacknowledged/none, 1 all matching active occurrences acknowledged
+SEVERITY    0 none, 1 info, 2 warning, 3 critical
+CONFIDENCE  0 none, 1 suspected, 2 confirmed
+QUALITY     1 governed projection valid
+```
+
+For compatibility with the existing extension registry, each logical alarm value currently uses the
+same FLOAT32 + adjacent quality-register slot already supported by the bridge. A future UINT16
+transport is not silently substituted because published Modbus addresses and datatypes are immutable.
+
+These points remain **unassigned until commissioning explicitly adds them to the publication
+registry**. No alarm address is guessed from topology, panel position, MQTT point, or SNMP OID.
 
 ## Verification
 

@@ -1,6 +1,6 @@
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import { TopologyService } from '@/modules/topology/application/topology-service';
-import type { TopologyNode } from '@/modules/topology/domain/entities';
+import type { EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
 import {
   EMPTY_ALARM_ROLLUP,
   severityRank,
@@ -117,7 +117,7 @@ export async function getAlarmSnapshot(
 
   const topology = new TopologyService(repository);
   const equipment = (await repository.listByKind('EQUIPMENT')).filter(
-    (node) => node.kind === 'EQUIPMENT' && node.lifecycle === 'ACTIVE',
+    (node): node is EquipmentNode => node.kind === 'EQUIPMENT' && node.lifecycle === 'ACTIVE',
   );
 
   const findEquipment = (name: string) =>

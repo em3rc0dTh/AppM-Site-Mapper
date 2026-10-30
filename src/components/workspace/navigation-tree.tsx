@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import type { WorkspaceTreeNode } from '@/modules/workspace/application/workspace-service';
 import { Icon, StatePanel } from '@/shared/ui/primitives';
+import { AlarmBadge } from '@/components/alarms/alarm-ui';
+import type { AlarmRollup } from '@/modules/alarms/domain/entities';
 
 function matches(node: WorkspaceTreeNode, query: string): boolean {
   return (
@@ -16,10 +18,12 @@ function Branch({
   node,
   query,
   pathname,
+  alarmRollups,
 }: {
   node: WorkspaceTreeNode;
   query: string;
   pathname: string;
+  alarmRollups: Readonly<Record<string, AlarmRollup>>;
 }) {
   const [expanded, setExpanded] = useState(false);
   const children = node.children.filter((child) => matches(child, query));
@@ -47,6 +51,7 @@ function Branch({
             name={node.kind === 'NETWORK' ? 'network' : node.kind.includes('ROOM') ? 'room' : 'box'}
           />
           <span>{node.name}</span>
+          <AlarmBadge rollup={alarmRollups[node.id]} />
           {node.children.length > 0 && <small>{node.children.length}</small>}
         </Link>
       </div>
@@ -60,7 +65,13 @@ function Branch({
     </li>
   );
 }
-export function NavigationTree({ roots }: { roots: readonly WorkspaceTreeNode[] }) {
+export function NavigationTree({
+  roots,
+  alarmRollups = {},
+}: {
+  roots: readonly WorkspaceTreeNode[];
+  alarmRollups?: Readonly<Record<string, AlarmRollup>>;
+}) {
   const [query, setQuery] = useState('');
   const pathname = usePathname();
   const filtered = roots.filter((node) => matches(node, query.toLowerCase()));
@@ -86,7 +97,13 @@ export function NavigationTree({ roots }: { roots: readonly WorkspaceTreeNode[] 
       ) : (
         <ul>
           {filtered.map((node) => (
-            <Branch key={node.id} node={node} query={query.toLowerCase()} pathname={pathname} />
+            <Branch
+              key={node.id}
+              node={node}
+              query={query.toLowerCase()}
+              pathname={pathname}
+              alarmRollups={alarmRollups}
+            />
           ))}
         </ul>
       )}

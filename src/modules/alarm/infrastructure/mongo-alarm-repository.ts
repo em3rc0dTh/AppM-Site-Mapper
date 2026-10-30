@@ -29,6 +29,11 @@ export class MongoAlarmRepository implements AlarmRepository {
     return document ? withoutMongoId<AlarmOccurrence>(document) : null;
   }
 
+  async getActiveByCorrelationKey(correlationKey: string): Promise<AlarmOccurrence | null> {
+    const document = await this.occurrences.findOne({ correlationKey, lifecycle: 'ACTIVE' });
+    return document ? withoutMongoId<AlarmOccurrence>(document) : null;
+  }
+
   async listActive(): Promise<readonly AlarmOccurrence[]> {
     return (await this.occurrences.find({ lifecycle: 'ACTIVE' }).sort({ openedAt: -1 }).toArray())
       .map((item) => withoutMongoId<AlarmOccurrence>(item));

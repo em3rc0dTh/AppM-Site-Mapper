@@ -546,21 +546,83 @@ def prepare(
 
     secret = load_or_create_secrets()
     sender_address = default_sender_address()
+    receiver_profiles: list[dict] = []
+    synthetic_services: dict[str, dict] = {}
 
-    receiver_profile = {
-        "sourceIdentity": SMARTPACK_SOURCE,
-        "address": sender_address,
-        "version": "3",
-        "token": secret["sourceToken"],
-        "user": {
-            "name": secret["v3User"],
-            "level": "authPriv",
-            "authProtocol": "sha",
-            "authKey": secret["v3Auth"],
-            "privProtocol": "aes",
-            "privKey": secret["v3Priv"],
-        },
-    }
+    if snmp_mode == "smartpack":
+        receiver_profiles.append(
+            {
+                "sourceIdentity": SMARTPACK_SOURCE,
+                "address": sender_address,
+                "version": "3",
+                "token": secret["sourceToken"],
+                "user": {
+                    "name": secret["v3User"],
+                    "level": "authPriv",
+                    "authProtocol": "sha",
+                    "authKey": secret["v3Auth"],
+                    "privProtocol": "aes",
+                    "privKey": secret["v3Priv"],
+                },
+            }
+        )
+    elif snmp_mode == "synthetic":
+        addresses = synthetic_sender_addresses()
+        for index, qdf in enumerate(QDFS):
+            creds = secret["syntheticSnmp"][index]
+            receiver_profiles.append(
+                {
+                    "sourceIdentity": SYNTHETIC_SNMP_SOURCE[qdf],
+                    "address": addresses[qdf],
+                    "version": "3",
+                    "token": creds["token"],
+                    "user": {
+                        "name": creds["user"],
+                        "level": "authPriv",
+                        "authProtocol": "sha",
+                        "authKey": creds["auth"],
+                        "privProtocol": "aes",
+                        "privKey": creds["priv"],
+                    },
+                    "poll": {
+                        "method": "get",
+                        "port": 1161,
+                        "intervalMs": 10000,
+                        "oids": [
+                            "1.3.6.1.4.1.12148.10.10.5.5.0",
+                            "1.3.6.1.4.1.12148.10.9.2.5.0",
+                            "1.3.6.1.4.1.12148.10.10.7.5.0",
+                            "1.3.6.1.4.1.12148.10.2.1.0",
+                        ],
+                    },
+                }
+            )
+            synthetic_services[SYNTHETIC_SNMP_SERVICES[qdf]] = {
+                "build": {
+                    "context": str(bfdb),
+                    "dockerfile": "apps/snmp-emulator/Dockerfile",
+                },
+                "command": ["node", "eltek-lab-service.mjs"],
+                "environment": {
+                    "SNMP_VERSION": "3",
+                    "SNMP_V3_USERNAME": creds["user"],
+                    "SNMP_V3_AUTH_KEY": creds["auth"],
+                    "SNMP_V3_PRIV_KEY": creds["priv"],
+                    "SNMP_TRAP_TARGET_HOST": "snmp-traps",
+                    "SNMP_TRAP_TARGET_PORT": "1162",
+                    "SNMP_TRAP_INFORM": "true",
+                    "SNMP_SEQUENCE_FILE": "/config/sequence.json",
+                    "SNMP_AGENT_PORT": "1161",
+                    "SNMP_LAB_SWEEP_COUNT": "0",
+                },
+                "volumes": [
+                    str(bfdb / "config/eltek-sequence.example.json")
+                    + ":/config/sequence.json:ro"
+                ],
+                "depends_on": ["snmp-traps"],
+                "networks": {"default": {"ipv4_address": addresses[qdf]}},
+                "restart": "unless-stopped",
+            }
 
     services = {
         "site-mapper": {
@@ -609,7 +671,7 @@ def prepare(
         "snmp-traps": {
             "environment": {
                 "SNMP_TRAP_SOURCES_JSON": json.dumps(
-                    [receiver_profile], separators=(",", ":")
+                    receiver_profiles, separators=(",", ":")
                 ),
                 "SNMP_TRAP_ENGINE_ID": secret["engineId"],
                 "SNMP_TRAP_MAX_PENDING": "5000",
@@ -681,6 +743,8 @@ def prepare(
             "restart": "unless-stopped",
         },
     }
+    services.update(synthetic_services)
+
     save_json(
         OVERLAY_FILE,
         {

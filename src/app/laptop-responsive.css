@@ -51,12 +51,24 @@
     flex: 0 0 38px;
   }
 
+  .zip-app-shell .sm-alarm-header {
+    flex: 0 0 auto;
+    min-height: 40px;
+    margin-right: 8px;
+    padding-inline: 8px;
+    gap: 5px;
+  }
+
+  .zip-app-shell .sm-alarm-header small {
+    display: none;
+  }
+
   /* Breadcrumbs are bounded between the brand and the action cluster. */
   .zip-app-shell.app-shell--immersive .breadcrumbs,
   .zip-app-shell .mk-device-page .breadcrumbs,
   .zip-app-shell .app-shell--power .breadcrumbs {
     left: 212px;
-    right: 575px !important;
+    right: 690px !important;
     padding-inline: 12px;
     gap: 8px;
     min-width: 0;
@@ -332,6 +344,10 @@
     grid-template-columns: 212px minmax(0, 1fr) 292px !important;
   }
 
+  .zip-app-shell .zip-rack-elevation-page {
+    --zip-rack-inspector-width: 292px;
+  }
+
   .zip-app-shell .zip-rack-elevation-page .operational-layout--rack,
   .zip-app-shell .operational-layout--rack,
   .zip-app-shell .operational-layout--blueprint {
@@ -340,7 +356,11 @@
 
   .zip-app-shell .zip-rack-elevation-view,
   .zip-app-shell .operational-layout--rack .legacy-rack-view {
-    grid-template-columns: minmax(0, 1fr) 292px !important;
+    grid-template-columns: minmax(0, 1fr) var(--zip-rack-inspector-width) !important;
+  }
+
+  .zip-app-shell .zip-rack-elevation-page .zip-rack-telemetry {
+    right: calc(var(--zip-rack-inspector-width) + 48px) !important;
   }
 
   .zip-app-shell .zip-rack-elevation-main,

@@ -1,0 +1,45 @@
+name: Alarm red-team Mongo one-shot
+
+on:
+  push:
+    branches:
+      - fix/alarm-hardening-redteam-2026-10-30
+    paths:
+      - '.github/workflows/alarm-redteam-mongo-once.yml'
+
+jobs:
+  mongo-redteam:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      APP_ENV: test
+      APP_PERSISTENCE: mongodb
+      ALARM_REDTEAM_MONGO_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: fix/alarm-hardening-redteam-2026-10-30
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Start disposable MongoDB replica set
+        run: |
+          docker run -d --name alarm-redteam-mongo -p 127.0.0.1:27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for i in {1..45}; do
+            if docker exec alarm-redteam-mongo mongosh --quiet --eval 'db.adminCommand({ping:1})' 2>/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          docker exec alarm-redteam-mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
+          for i in {1..45}; do
+            if docker exec alarm-redteam-mongo mongosh --quiet --eval 'db.hello().isWritablePrimary' | grep -q true; then
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Run real Mongo concurrent alarm attack
+        run: npx vitest run tests/integration/alarm-redteam-mongo.test.ts

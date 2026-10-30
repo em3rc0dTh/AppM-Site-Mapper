@@ -6,11 +6,15 @@ describe('RBAC policy', () => {
   it('keeps Standard read-only', () => {
     expect(hasPermission('STANDARD', 'topology:read')).toBe(true);
     expect(hasPermission('STANDARD', 'topology:write')).toBe(false);
+    expect(hasPermission('STANDARD', 'alarms:read')).toBe(true);
+    expect(hasPermission('STANDARD', 'alarms:ack')).toBe(false);
   });
 
   it('allows Admin operational writes but not dangerous system actions', () => {
     expect(hasPermission('ADMIN', 'topology:write')).toBe(true);
     expect(hasPermission('ADMIN', 'system:danger')).toBe(false);
+    expect(hasPermission('ADMIN', 'alarms:read')).toBe(true);
+    expect(hasPermission('ADMIN', 'alarms:ack')).toBe(true);
   });
 
   it('restricts user-role management', () => {

@@ -88,7 +88,7 @@ export function AlarmCenter() {
           </p>
         </div>
         <button type="button" onClick={() => void refresh()}>
-          Refresh
+          {t('refresh')}
         </button>
       </header>
 
@@ -127,10 +127,10 @@ export function AlarmCenter() {
               aria-pressed={!showResolved}
               onClick={() => setShowResolved(false)}
             >
-              Active
+              {t('active')}
             </button>
             <button type="button" aria-pressed={showResolved} onClick={() => setShowResolved(true)}>
-              Resolved
+              {t('resolved')}
             </button>
             <select
               aria-label={t('severityLabel')}

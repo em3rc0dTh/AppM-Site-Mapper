@@ -26,6 +26,7 @@ function Branch({
   rollups: Readonly<Record<string, AlarmRollup>>;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const t = useTranslations('workspaceUi');
   const children = node.children.filter((child) => matches(child, query));
   return (
     <li>
@@ -56,7 +57,7 @@ function Branch({
             <span
               className="sm-tree-alarm-badge"
               data-severity={rollups[node.id]!.highestSeverity ?? 'INFO'}
-              title={rollups[node.id]!.activeAlarmCount + ' active alarm(s) in this branch'}
+              title={t('activeAlarmsInBranch', { count: rollups[node.id]!.activeAlarmCount })}
             >
               {rollups[node.id]!.activeAlarmCount}
             </span>

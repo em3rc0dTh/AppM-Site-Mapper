@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState, type CSSProperties } from 'react';
 
 import { TopologyCreateControl } from '@/components/topology/topology-create-form';
+import { AlarmInspectorCard, AlarmScopeBanner } from '@/components/alarms/alarm-ui';
+import type { AlarmSnapshotView } from '@/modules/alarms/domain/entities';
 import { RackTemplateInstantiator } from '@/components/warehouse/rack-template-instantiator';
 import type { RackElevationView } from '@/modules/rack/application/rack-elevation-service';
 import { topologyInspector } from '@/shared/ui/entity-adapters';
@@ -60,11 +62,13 @@ export function RackElevation({
   context,
   focusDeviceId,
   canWrite = false,
+  alarmSnapshot,
 }: Readonly<{
   view: RackElevationView;
   context?: RackElevationContext;
   focusDeviceId?: string;
   canWrite?: boolean;
+  alarmSnapshot?: AlarmSnapshotView;
 }>) {
   const t = useTranslations('rackElevation');
   const router = useRouter();
@@ -84,6 +88,9 @@ export function RackElevation({
           <h1>{t('front')}</h1>
           <small>{t('rearWarning')}</small>
         </header>
+        {alarmSnapshot ? (
+          <AlarmScopeBanner snapshot={alarmSnapshot} nodeId={view.rack.id} />
+        ) : null}
 
         <div className="legacy-rack-canvas zip-elevation-canvas">
           <div className="legacy-rack-frame zip-elevation-rack">
@@ -165,6 +172,9 @@ export function RackElevation({
             </small>
           </div>
         </div>
+        {alarmSnapshot ? (
+          <AlarmInspectorCard snapshot={alarmSnapshot} nodeId={view.rack.id} />
+        ) : null}
         <dl className="zip-elevation-stats">
           <dt>{t('capacity')}</dt>
           <dd>{totalU}U</dd>

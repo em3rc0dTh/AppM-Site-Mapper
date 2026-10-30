@@ -4,12 +4,14 @@ import { useLocale, useTranslations } from 'next-intl';
 import { useState } from 'react';
 
 import { isSupportedLocale, localeCookieName } from '@/i18n/locales';
+import { useHydrated } from '@/shared/ui/use-hydrated';
 
 /** Explicit per-browser preference. Does not mutate user-entered data or URL paths. */
 export function LanguageSwitcher() {
   const locale = useLocale();
   const t = useTranslations('language');
   const [pending, setPending] = useState(false);
+  const hydrated = useHydrated();
 
   return (
     <label className="sm-locale-control">
@@ -17,7 +19,7 @@ export function LanguageSwitcher() {
       <select
         aria-label={t('selection')}
         value={locale}
-        disabled={pending}
+        disabled={!hydrated || pending}
         onChange={(event) => {
           const selected = event.target.value;
           if (!isSupportedLocale(selected) || selected === locale) return;

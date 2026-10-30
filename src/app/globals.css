@@ -3685,3 +3685,103 @@ p {
     display: none;
   }
 }
+
+.sm-alarm-scope-view {
+  appearance: none;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #275eac;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.sm-alarm-scope-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 42%);
+  backdrop-filter: blur(2px);
+}
+.sm-alarm-scope-modal {
+  width: min(920px, 94vw);
+  max-height: min(760px, 88vh);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid #cfd9e4;
+  border-radius: 12px;
+  background: #fff;
+  color: #172536;
+  box-shadow: 0 24px 70px rgb(15 23 42 / 24%);
+}
+.sm-alarm-scope-modal > header,
+.sm-alarm-scope-modal > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e2e8ef;
+}
+.sm-alarm-scope-modal > footer {
+  border-top: 1px solid #e2e8ef;
+  border-bottom: 0;
+  justify-content: flex-end;
+}
+.sm-alarm-scope-modal > header small {
+  display: block;
+  margin-bottom: 3px;
+  color: #64758a;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.sm-alarm-scope-modal > header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.sm-alarm-scope-modal > header button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #d5dee7;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 21px;
+  cursor: pointer;
+}
+.sm-alarm-scope-modal-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 18px;
+}
+.sm-alarm-scope-modal-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+  color: #53687c;
+  font-size: 11px;
+}
+.sm-alarm-scope-modal > footer a {
+  color: #275eac;
+  font-size: 12px;
+  font-weight: 700;
+}
+@media (max-width: 700px) {
+  .sm-alarm-scope-modal-backdrop {
+    padding: 8px;
+  }
+  .sm-alarm-scope-modal {
+    width: 100%;
+    max-height: 92vh;
+  }
+  .sm-alarm-scope-modal-summary {
+    flex-direction: column;
+  }
+}
+

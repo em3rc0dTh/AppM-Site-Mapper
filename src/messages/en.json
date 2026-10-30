@@ -569,7 +569,9 @@
       "device": "DEVICE",
       "equipment": "EQUIPMENT"
     },
-    "activeAlarmsInBranch": "{count, plural, one {# active alarm in this branch} other {# active alarms in this branch}}"
+    "activeAlarmsInBranch": "{count, plural, one {# active alarm in this branch} other {# active alarms in this branch}}",
+    "collapseTree": "Collapse tree",
+    "expandTree": "Expand tree"
   },
   "topologyViews": {
     "surveyed": "SURVEYED GEOMETRY",
@@ -2158,7 +2160,12 @@
       "direct": "{count} direct",
       "rollup": "Descendant roll-up · no telemetry ownership implied",
       "view": "View alarms →",
-      "affectedChildren": "AFFECTED CHILDREN"
+      "affectedChildren": "AFFECTED CHILDREN",
+      "scoped": "CURRENT SCOPE ALARMS",
+      "currentScope": "current scope",
+      "modalTitle": "Alarms · {scope}",
+      "close": "Close",
+      "viewAllGlobal": "View all system alarms →"
     },
     "home": {
       "active": "Active alarms",

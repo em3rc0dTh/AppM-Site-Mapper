@@ -5974,3 +5974,49 @@ body {
     grid-column: 1;
   }
 }
+
+/* Collapsible operational topology rail: default geometry stays unchanged. */
+.telxius-topology-tree {
+  position: relative;
+}
+.telxius-tree-collapse-toggle {
+  position: sticky;
+  top: 0;
+  z-index: 8;
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-left: 1px solid #dce3eb;
+  border-bottom: 1px solid #dce3eb;
+  background: #fff;
+  color: #334155;
+  font-size: 18px;
+  cursor: pointer;
+}
+.telxius-tree-collapsible-content {
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+.telxius-topology-tree[data-collapsed='true'] .telxius-tree-collapsible-content {
+  display: none;
+}
+.telxius-topology-tree[data-collapsed='true'] .telxius-tree-collapse-toggle {
+  width: 100%;
+  margin: 0;
+  border-left: 0;
+}
+.zip-app-shell
+  .zip-bdfb-page
+  .operational-layout:has(> .operational-context .telxius-topology-tree[data-collapsed='true']) {
+  grid-template-columns: 48px minmax(0, 1fr) minmax(370px, 410px) !important;
+}
+.zip-app-shell
+  .mk-device-layout:has(> aside:first-child .telxius-topology-tree[data-collapsed='true']) {
+  grid-template-columns: 48px minmax(0, 1fr) 405px !important;
+}
+

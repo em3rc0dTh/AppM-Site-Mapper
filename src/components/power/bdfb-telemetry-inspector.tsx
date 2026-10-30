@@ -311,7 +311,7 @@ export function BdfbTelemetryInspector({
       >
         {tab === 'overview' && (
           <>
-            <AlarmScopeSummary entityId={node.id} />
+            <AlarmScopeSummary entityId={node.id} scopeLabel={node.name} />
             <SnmpFeedLoadPanel
               key={node.id}
               deviceId={node.id}
@@ -378,7 +378,7 @@ export function BdfbTelemetryInspector({
 
         {tab === 'alarms' && (
           <>
-            <AlarmScopeSummary entityId={node.id} showAffectedChildren />
+            <AlarmScopeSummary entityId={node.id} scopeLabel={node.name} showAffectedChildren />
             <AlarmOccurrenceList entityId={node.id} />
           </>
         )}

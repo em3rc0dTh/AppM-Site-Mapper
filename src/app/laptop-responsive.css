@@ -518,3 +518,18 @@
     grid-template-columns: minmax(0, 1fr) !important;
   }
 }
+
+/* Collapsed topology rail keeps the inspector width and gives the recovered space to the canvas. */
+@media (min-width: 941px) and (max-width: 1400px) {
+  .zip-app-shell
+    .zip-bdfb-page
+    .operational-layout:has(> .operational-context .telxius-topology-tree[data-collapsed='true']) {
+    grid-template-columns: 48px minmax(0, 1fr) 292px !important;
+  }
+
+  .zip-app-shell
+    .mk-device-layout:has(> aside:first-child .telxius-topology-tree[data-collapsed='true']) {
+    grid-template-columns: 48px minmax(0, 1fr) 292px !important;
+  }
+}
+

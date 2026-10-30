@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
@@ -9,12 +10,15 @@ export function AlarmScopeSummary({
   entityId,
   compact = false,
   showAffectedChildren = false,
+  scopeLabel,
 }: {
   readonly entityId: string;
   readonly compact?: boolean;
   readonly showAffectedChildren?: boolean;
+  readonly scopeLabel?: string;
 }) {
   const t = useTranslations('alarmUi.scope');
+  const [modalOpen, setModalOpen] = useState(false);
   const { snapshot, error } = useAlarmSnapshot();
   const rollup = snapshot.rollups[entityId];
   if (error) return <span className="sm-alarm-scope-unavailable">{t('unavailable')}</span>;
@@ -50,7 +54,9 @@ export function AlarmScopeSummary({
         ) : (
           <span>{t('rollup')}</span>
         )}
-        <Link href="/alarms">{t('view')}</Link>
+        <button type="button" className="sm-alarm-scope-view" onClick={() => setModalOpen(true)}>
+          {t('view')}
+        </button>
       </div>
       {showAffectedChildren && rollup.affectedChildren.length > 0 ? (
         <div className="sm-alarm-affected-children">
@@ -62,6 +68,48 @@ export function AlarmScopeSummary({
               <em>{child.activeAlarmCount}</em>
             </Link>
           ))}
+        </div>
+      ) : null}
+      {modalOpen ? (
+        <div
+          className="sm-alarm-scope-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setModalOpen(false);
+          }}
+        >
+          <section
+            className="sm-alarm-scope-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('modalTitle', { scope: scopeLabel ?? t('currentScope') })}
+          >
+            <header>
+              <div>
+                <small>{t('scoped')}</small>
+                <h2>{t('modalTitle', { scope: scopeLabel ?? t('currentScope') })}</h2>
+              </div>
+              <button type="button" onClick={() => setModalOpen(false)} aria-label={t('close')}>
+                ×
+              </button>
+            </header>
+            <div className="sm-alarm-scope-modal-body">
+              <div className="sm-alarm-scope-modal-summary">
+                <strong>{t('activeCount', { count: rollup.activeAlarmCount })}</strong>
+                <span>
+                  {t('severityCounts', {
+                    critical: rollup.critical,
+                    warning: rollup.warning,
+                    info: rollup.info,
+                  })}
+                </span>
+              </div>
+              <AlarmOccurrenceList entityId={entityId} />
+            </div>
+            <footer>
+              <Link href="/alarms">{t('viewAllGlobal')}</Link>
+            </footer>
+          </section>
         </div>
       ) : null}
     </section>

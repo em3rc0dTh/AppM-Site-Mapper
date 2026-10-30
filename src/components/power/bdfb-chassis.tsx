@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { ContextPin } from '@/components/workspace/context-pin';
+import { AlarmBadge } from '@/components/alarms/alarm-ui';
+import type { AlarmSnapshotView } from '@/modules/alarms/domain/entities';
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 
@@ -37,6 +39,7 @@ export function BdfbChassis({
   powerBindings = [],
   telemetryBindings = [],
   activePanelId,
+  alarmSnapshot,
 }: Readonly<{
   device: DeviceNode;
   presentation: BdfbPresentation;
@@ -44,6 +47,7 @@ export function BdfbChassis({
   telemetryBindings?: readonly BreakerTelemetryBindingSummary[];
   canWritePower?: boolean;
   activePanelId?: string;
+  alarmSnapshot?: AlarmSnapshotView;
 }>) {
   const t = useTranslations('bdfbChassis');
   const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
@@ -96,11 +100,13 @@ export function BdfbChassis({
                       {frame.panels.map((panel) => {
                         const occupied = panel.positions.filter(Boolean).length;
                         const selected = selectedPanel?.id === panel.id;
+                        const panelAlarm = alarmSnapshot?.rollups[panel.id];
                         return (
                           <article
                             key={panel.id}
                             className="sm-bdfb-physical-panel"
                             data-selected={selected}
+                            data-alarm-severity={panelAlarm?.highestSeverity?.toLowerCase()}
                           >
                             <button
                               className="sm-bdfb-panel-select"
@@ -112,7 +118,10 @@ export function BdfbChassis({
                                 installed: occupied,
                               })}
                             >
-                              <strong>{panel.label}</strong>
+                              <span className="sm-bdfb-panel-title-line">
+                                <strong>{panel.label}</strong>
+                                <AlarmBadge rollup={panelAlarm} />
+                              </span>
                               <span>
                                 {t('panelPositions', {
                                   installed: occupied,
@@ -166,12 +175,15 @@ export function BdfbChassis({
             </div>
           </div>
           <div className="sm-bdfb-panel-positions" role="list" aria-label={t('slots')}>
-            {selectedPanel.positions.map((breaker, index) => (
+            {selectedPanel.positions.map((breaker, index) => {
+              const breakerAlarm = breaker ? alarmSnapshot?.rollups[breaker.id] : undefined;
+              return (
               <div
                 key={index}
                 role="listitem"
                 className="sm-bdfb-panel-position"
                 data-installed={breaker !== null}
+                data-alarm-severity={breakerAlarm?.highestSeverity?.toLowerCase()}
               >
                 {breaker ? (
                   <Link
@@ -183,7 +195,7 @@ export function BdfbChassis({
                     })}
                   >
                     <span>P{String(index + 1).padStart(2, '0')}</span>
-                    <strong>●</strong>
+                    {breakerAlarm ? <AlarmBadge rollup={breakerAlarm} /> : <strong>●</strong>}
                   </Link>
                 ) : (
                   <span
@@ -194,16 +206,22 @@ export function BdfbChassis({
                   </span>
                 )}
               </div>
-            ))}
+              );
+            })}
           </div>
           {installed > 0 ? (
             <div className="sm-bdfb-breaker-summary">
               <strong>{t('circuits')}</strong>
               {selectedPanel.positions.map((breaker, index) =>
                 breaker ? (
-                  <div className="sm-bdfb-breaker-summary-row" key={breaker.id}>
+                  <div
+                    className="sm-bdfb-breaker-summary-row"
+                    key={breaker.id}
+                    data-alarm-severity={alarmSnapshot?.rollups[breaker.id]?.highestSeverity?.toLowerCase()}
+                  >
                     <span>{t('position', { position: String(index + 1).padStart(2, '0') })}</span>
                     <Link href={`/device/${breaker.id}`}>{breaker.label}</Link>
+                    <AlarmBadge rollup={alarmSnapshot?.rollups[breaker.id]} />
                     <small>
                       {destinationByBreaker.get(breaker.id)?.counterpartName ?? t('noDestination')}
                       {' · '}

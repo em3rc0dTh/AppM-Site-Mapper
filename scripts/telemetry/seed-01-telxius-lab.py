@@ -821,9 +821,9 @@ def main() -> None:
                 if evidence_dir is not None
                 else "- SNMP: SKIPPED; no private evidence configured, no Smartpack2 claim made\n"
             )
-            "- Site Mapper: http://127.0.0.1:3000\n"
-            "- Operational Console: http://127.0.0.1:3100\n"
-            "- Modbus TCP lab: 127.0.0.1:1503\n",
+            + "- Site Mapper: http://127.0.0.1:3000\n"
+            + "- Operational Console: http://127.0.0.1:3100\n"
+            + "- Modbus TCP lab: 127.0.0.1:1503\n",
             flush=True,
         )
         return

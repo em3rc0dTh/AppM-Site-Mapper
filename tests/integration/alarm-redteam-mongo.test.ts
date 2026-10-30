@@ -66,10 +66,7 @@ describe.skipIf(!uri)('Alarm red-team real Mongo concurrency', () => {
   it('treats concurrent identical assertions as idempotent success', async () => {
     const database = client.db(databaseName);
     const repository = new MongoAlarmRepository(database);
-    const commands = new AlarmCommandService(
-      repository,
-      new MemoryTopologyRepository(topology()),
-    );
+    const commands = new AlarmCommandService(repository, new MemoryTopologyRepository(topology()));
 
     const results = await Promise.allSettled(
       Array.from({ length: 16 }, (_, index) =>

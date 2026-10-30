@@ -10,6 +10,8 @@ import type { RackElevationView } from '@/modules/rack/application/rack-elevatio
 import { topologyInspector } from '@/shared/ui/entity-adapters';
 import { InlineInspector } from '@/shared/ui/inline-inspector';
 import type { InspectorEntity } from '@/shared/ui/entity-inspector';
+import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
+import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 
 interface RackBlock {
   readonly key: string;
@@ -70,6 +72,7 @@ export function RackElevation({
   const router = useRouter();
 
   const [selected, setSelected] = useState<InspectorEntity | null>(null);
+  const { snapshot: alarmSnapshot } = useAlarmSnapshot();
   const blocks = useMemo(() => buildBlocks(view), [view]);
   const count = (role: string) => view.rows.filter((row) => row.role === role).length;
   const physical = count('PHYSICAL');
@@ -84,6 +87,7 @@ export function RackElevation({
           <h1>{t('front')}</h1>
           <small>{t('rearWarning')}</small>
         </header>
+        <AlarmScopeSummary entityId={view.rack.id} showAffectedChildren />
 
         <div className="legacy-rack-canvas zip-elevation-canvas">
           <div className="legacy-rack-frame zip-elevation-rack">
@@ -107,6 +111,14 @@ export function RackElevation({
                     </span>
                     <span className="legacy-rack-block-copy">
                       <strong>{block.occupant?.name ?? roleLabel(block.role)}</strong>
+                      {block.occupant && alarmSnapshot.rollups[block.occupant.id]?.activeAlarmCount ? (
+                        <span
+                          className="sm-alarm-rollup-badge"
+                          data-severity={alarmSnapshot.rollups[block.occupant.id]!.highestSeverity ?? 'INFO'}
+                        >
+                          {alarmSnapshot.rollups[block.occupant.id]!.activeAlarmCount}
+                        </span>
+                      ) : null}
                     </span>
                   </>
                 );
@@ -165,6 +177,8 @@ export function RackElevation({
             </small>
           </div>
         </div>
+        <AlarmScopeSummary entityId={view.rack.id} />
+        <AlarmOccurrenceList entityId={view.rack.id} />
         <dl className="zip-elevation-stats">
           <dt>{t('capacity')}</dt>
           <dd>{totalU}U</dd>

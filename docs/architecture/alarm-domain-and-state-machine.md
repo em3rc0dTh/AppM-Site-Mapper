@@ -686,32 +686,18 @@ The alarm engine never owns register addresses directly. Publication remains an 
 
 This document freezes **Part 1 — alarm domain model** and **Part 2 — state machines** as the current architecture direction.
 
-The following remain deliberately open:
-
-## Part 3 — UI placement and presentation
-
-To design next:
-
-- alarm visibility at BDFB/QDF level;
-- A3/B3 panel summaries;
-- individual breaker rows;
-- Inspector alarm summary;
-- global navigation / Alarm Center;
-- distinction between telemetry status and alarm state;
-- use of V / A / kW / kWh in the physical view;
-- alarm counters, severity and acknowledgement affordances.
+**Part 3 — UI placement and presentation** is now also approved and documented separately in [Alarm UI Placement and Presentation](alarm-ui-placement.md). That document records the semantics of the approved BDFB QDF-4 visual mock: global alarm navigation, panel V/A/kW summaries, breaker indicators, State vs Alarm separation, Inspector alarms, last-known values, alarm detail and hierarchical roll-up.
 
 ## Part 4 — operational wireframe
 
 Still to define:
 
-- exact screen composition;
-- table columns;
-- badges and compact indicators;
-- alarm drawer/detail;
-- evidence timeline;
-- acknowledgement interaction;
+- exact component geometry;
+- detailed table sizing/behavior;
+- alarm drawer/detail interaction;
+- evidence timeline layout;
+- acknowledgement interaction details;
 - historical navigation;
-- mobile/responsive behavior if required.
+- responsive behavior if required.
 
-Neither Part 3 nor Part 4 is frozen by this document.
+Parts 1–3 are frozen design baselines. Part 4 remains deliberately open.

@@ -1,6 +1,12 @@
 import type { AlarmPathItem } from '@/modules/alarm/domain/entities';
 
-const STRUCTURAL_KINDS = new Set(['SITE', 'STRUCTURE', 'LEVEL', 'CONTAINER_CLUSTER_BAY', 'CONTAINER_RACK']);
+const STRUCTURAL_KINDS = new Set([
+  'SITE',
+  'STRUCTURE',
+  'LEVEL',
+  'CONTAINER_CLUSTER_BAY',
+  'CONTAINER_RACK',
+]);
 
 export function compactAlarmPath(path: readonly AlarmPathItem[]): readonly AlarmPathItem[] {
   if (!path.length) return path;

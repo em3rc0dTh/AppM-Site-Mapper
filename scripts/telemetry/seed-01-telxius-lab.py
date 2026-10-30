@@ -806,11 +806,11 @@ def commission(mode: str) -> None:
     print(run(argv, input_text=source))
 
 
-def stop_historical_sources(command: list[str]) -> None:
-    # Best-effort only. These services may not exist in the current project.
+def stop_historical_sources(*, keep_lab_broker: bool = False) -> None:
+    # Best-effort only. Stop exact old container names directly because removed
+    # Compose services are orphans and cannot be addressed reliably by a new config.
     old = [
         "lab-mqtt",
-        "lab-mosquitto",
         "lab-snmp-01",
         "lab-snmp-02",
         "lab-snmp-03",
@@ -821,7 +821,15 @@ def stop_historical_sources(command: list[str]) -> None:
         "seed01-snmp-collector-qdf4",
         "seed01-snmp-collector-qdf5",
     ]
-    subprocess.run(command + ["stop", *old], check=False)
+    if not keep_lab_broker:
+        old.append("lab-mosquitto")
+    for service in old:
+        subprocess.run(
+            ["docker", "stop", PROJECT + "-" + service + "-1"],
+            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
 
 def child_env(approved: dict[str, str]) -> dict[str, str]:

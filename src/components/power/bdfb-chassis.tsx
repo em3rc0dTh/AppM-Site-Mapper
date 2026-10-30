@@ -133,7 +133,9 @@ export function BdfbChassis({
                                     alarmSnapshot.rollups[panel.id]!.highestSeverity ?? 'INFO'
                                   }
                                 >
-                                  {t('alarmCount', { count: alarmSnapshot.rollups[panel.id]!.activeAlarmCount })}
+                                  {t('alarmCount', {
+                                    count: alarmSnapshot.rollups[panel.id]!.activeAlarmCount,
+                                  })}
                                 </span>
                               ) : null}
                             </button>

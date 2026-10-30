@@ -121,7 +121,7 @@ for (const mode of ['1', '2c', '3', 'inform'])
       );
       await until(() => service.pending.size === 1);
       // Recover the pending capture after receiver restart; no invented fresh timestamp.
-      service.close();
+      await service.close();
       await pause(30);
       fail = false;
       service = await startTrapReceiver(config);
@@ -132,7 +132,7 @@ for (const mode of ['1', '2c', '3', 'inform'])
       assert.equal(JSON.stringify(received[0]).includes(base.community), false);
     } finally {
       session?.close();
-      service?.close();
+      if (service) await service.close();
       await pause(70);
       await new Promise((r) => server.close(r));
       await rm(directory, { recursive: true, force: true });
@@ -206,7 +206,7 @@ test('optional GET/GETNEXT/GETBULK feeds preserve original varbinds without SET'
         const p = received.find((p) => p.transport === method);
         assert.equal(p.raw.varbinds.find((v) => v.oid === '1.3.6.1.4.1.99999.2.0').value, 48);
       } finally {
-        service.close();
+        await service.close();
         await pause(30);
       }
     }

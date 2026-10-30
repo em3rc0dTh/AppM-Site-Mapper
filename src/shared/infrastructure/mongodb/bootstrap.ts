@@ -121,6 +121,19 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
   ]);
 
+  const alarmPolicies = database.collection('alarm_policies');
+  await Promise.all([
+    alarmPolicies.createIndex({ id: 1 }, { unique: true, name: 'uq_alarm_policy_id' }),
+    alarmPolicies.createIndex(
+      { enabled: 1, targetType: 1, targetId: 1 },
+      { name: 'ix_alarm_policy_enabled_target' },
+    ),
+    alarmPolicies.createIndex(
+      { targetId: 1, sourceContext: 1 },
+      { name: 'ix_alarm_policy_target_source_context' },
+    ),
+  ]);
+
   const alarmOccurrences = database.collection('alarm_occurrences');
   await Promise.all([
     alarmOccurrences.createIndex({ id: 1 }, { unique: true, name: 'uq_alarm_occurrence_id' }),

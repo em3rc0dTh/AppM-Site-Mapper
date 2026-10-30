@@ -117,7 +117,7 @@ function TreeBranch({
           <span
             className="sm-tree-alarm-badge"
             data-severity={rollups[item.node.id]!.highestSeverity ?? 'INFO'}
-            title={rollups[item.node.id]!.activeAlarmCount + ' active alarm(s) in this branch'}
+            title={t('activeAlarmsInBranch', { count: rollups[item.node.id]!.activeAlarmCount })}
           >
             {rollups[item.node.id]!.activeAlarmCount}
           </span>

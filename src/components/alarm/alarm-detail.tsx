@@ -1,11 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useState } from 'react';
 
 import type { AlarmOccurrenceView, AlarmTransition } from '@/modules/alarm/domain/entities';
 
 export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canAck: boolean }) {
+  const t = useTranslations('alarmUi.detail');
   const [occurrence, setOccurrence] = useState<AlarmOccurrenceView | null>(null);
   const [transitions, setTransitions] = useState<readonly AlarmTransition[]>([]);
   const [error, setError] = useState('');
@@ -48,7 +50,7 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
   }
 
   if (error && !occurrence) return <div className="sm-alarm-unavailable">{error}</div>;
-  if (!occurrence) return <div className="sm-alarm-detail">Loading alarm…</div>;
+  if (!occurrence) return <div className="sm-alarm-detail">{t('loading')}</div>;
 
   return (
     <section className="sm-alarm-detail" data-severity={occurrence.severity}>
@@ -66,15 +68,15 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
           occurrence.lifecycle === 'ACTIVE' &&
           occurrence.acknowledgement === 'UNACKNOWLEDGED' ? (
             <button type="button" disabled={busy} onClick={() => void acknowledge()}>
-              {busy ? 'Acknowledging…' : 'Acknowledge'}
+              {busy ? t('acknowledging') : t('acknowledge')}
             </button>
           ) : null}
-          <Link href={occurrence.targetHref}>Go to target →</Link>
+          <Link href={occurrence.targetHref}>{t('goToTarget')}</Link>
         </div>
       </header>
 
       <section className="sm-alarm-detail-path">
-        <small>TARGET</small>
+        <small>{t('target')}</small>
         <div>
           {occurrence.path.map((item, index) => (
             <span key={item.id}>
@@ -87,7 +89,7 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
 
       <div className="sm-alarm-detail-grid">
         <section>
-          <h2>Evidence</h2>
+          <h2>{t('evidence')}</h2>
           {occurrence.evidenceRefs.length ? (
             occurrence.evidenceRefs.map((evidence) => (
               <article className="sm-alarm-evidence" key={evidence.id}>
@@ -100,7 +102,7 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
                   {evidence.sourcePointId ? '· ' + evidence.sourcePointId : ''}
                 </p>
                 <p>
-                  {evidence.metric ?? 'Evidence'}
+                  {evidence.metric ?? t('evidenceFallback')}
                   {evidence.value !== undefined ? ': ' + String(evidence.value) : ''}
                   {evidence.unit ? ' ' + evidence.unit : ''}
                 </p>
@@ -108,15 +110,15 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
               </article>
             ))
           ) : (
-            <p>No evidence references recorded.</p>
+            <p>{t('noEvidence')}</p>
           )}
         </section>
 
         <section>
-          <h2>Event timeline</h2>
+          <h2>{t('timeline')}</h2>
           <ol className="sm-alarm-timeline">
             <li>
-              <strong>Alarm opened</strong>
+              <strong>{t('opened')}</strong>
               <span>{new Date(occurrence.openedAt).toLocaleString()}</span>
             </li>
             {transitions.map((transition) => (
@@ -128,7 +130,7 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
             ))}
             {occurrence.resolvedAt ? (
               <li>
-                <strong>Resolved</strong>
+                <strong>{t('resolved')}</strong>
                 <span>{new Date(occurrence.resolvedAt).toLocaleString()}</span>
               </li>
             ) : null}
@@ -137,9 +139,9 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
       </div>
 
       <footer className="sm-alarm-detail-meta">
-        <span>Occurrence: {occurrence.id}</span>
-        <span>Correlation: {occurrence.correlationKey}</span>
-        <span>Rule: {occurrence.ruleVersion}</span>
+        <span>{t('occurrence')}: {occurrence.id}</span>
+        <span>{t('correlation')}: {occurrence.correlationKey}</span>
+        <span>{t('rule')}: {occurrence.ruleVersion}</span>
       </footer>
       {error ? <p className="sm-alarm-unavailable">{error}</p> : null}
     </section>

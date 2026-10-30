@@ -1,6 +1,10 @@
 name: Alarm red-team Mongo concurrency
 
 on:
+  pull_request:
+    paths:
+      - 'tests/integration/alarm-redteam-mongo.test.ts'
+      - '.github/workflows/alarm-redteam-mongo-once.yml'
   push:
     branches:
       - test/alarm-redteam-2026-10-30

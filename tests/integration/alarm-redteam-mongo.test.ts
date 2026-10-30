@@ -99,6 +99,15 @@ describe.skipIf(!uri)('Alarm red-team real Mongo concurrency', () => {
     const rejected = results.filter((item) => item.status === 'rejected');
     const active = await repository.listActive();
 
+    console.log('[ALARM REDTEAM MONGO]', {
+      fulfilled: results.length - rejected.length,
+      rejected: rejected.length,
+      reasons: rejected.map((item) =>
+        item.status === 'rejected' ? String(item.reason) : 'unexpected',
+      ),
+      active: active.length,
+    });
+
     expect(rejected).toHaveLength(0);
     expect(
       active.filter((item) => item.correlationKey === 'breaker|POWER_LOSS|mqtt:0_1_4'),

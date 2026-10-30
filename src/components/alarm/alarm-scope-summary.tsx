@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 
@@ -13,9 +14,10 @@ export function AlarmScopeSummary({
   readonly compact?: boolean;
   readonly showAffectedChildren?: boolean;
 }) {
+  const t = useTranslations('alarmUi.scope');
   const { snapshot, error } = useAlarmSnapshot();
   const rollup = snapshot.rollups[entityId];
-  if (error) return <span className="sm-alarm-scope-unavailable">Alarm status unavailable</span>;
+  if (error) return <span className="sm-alarm-scope-unavailable">{t('unavailable')}</span>;
   if (!rollup?.activeAlarmCount) return null;
 
   if (compact) {
@@ -23,7 +25,7 @@ export function AlarmScopeSummary({
       <span
         className="sm-alarm-rollup-badge"
         data-severity={rollup.highestSeverity ?? 'INFO'}
-        title={rollup.activeAlarmCount + ' active alarm(s) in this scope'}
+        title={t('activeInScope', { count: rollup.activeAlarmCount })}
       >
         {rollup.activeAlarmCount}
       </span>
@@ -34,23 +36,23 @@ export function AlarmScopeSummary({
     <section className="sm-alarm-scope-card" data-severity={rollup.highestSeverity ?? 'INFO'}>
       <header>
         <strong>
-          {rollup.activeAlarmCount} active alarm{rollup.activeAlarmCount === 1 ? '' : 's'}
+          {t('activeCount', { count: rollup.activeAlarmCount })}
         </strong>
         <span>
-          {rollup.critical} Critical · {rollup.warning} Warning · {rollup.info} Info
+          {t('severityCounts', { critical: rollup.critical, warning: rollup.warning, info: rollup.info })}
         </span>
       </header>
       <div className="sm-alarm-scope-meta">
         {rollup.directActiveAlarmCount > 0 ? (
-          <span>{rollup.directActiveAlarmCount} direct</span>
+          <span>{t('direct', { count: rollup.directActiveAlarmCount })}</span>
         ) : (
-          <span>Descendant roll-up · no telemetry ownership implied</span>
+          <span>{t('rollup')}</span>
         )}
-        <Link href="/alarms">View alarms →</Link>
+        <Link href="/alarms">{t('view')}</Link>
       </div>
       {showAffectedChildren && rollup.affectedChildren.length > 0 ? (
         <div className="sm-alarm-affected-children">
-          <small>AFFECTED CHILDREN</small>
+          <small>{t('affectedChildren')}</small>
           {rollup.affectedChildren.map((child) => (
             <Link href={child.href} key={child.id}>
               <span data-severity={child.highestSeverity}>●</span>

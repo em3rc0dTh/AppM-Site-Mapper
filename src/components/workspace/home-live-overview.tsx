@@ -47,6 +47,7 @@ export function HomeLiveOverview({
   initialSamples: readonly TelemetrySample[];
 }) {
   const t = useTranslations('workspaceUi');
+  const alarmT = useTranslations('alarmUi.home');
   const { samples: streamed, now, hasSnapshot } = useTelemetryStream();
   const { snapshot: alarmSnapshot, error: alarmError } = useAlarmSnapshot();
   const samples = hasSnapshot ? streamed : initialSamples;
@@ -87,28 +88,28 @@ export function HomeLiveOverview({
         </article>
       </div>
 
-      <section className="sm-home-section sm-home-alarm-section" aria-label="Active alarms">
+      <section className="sm-home-section sm-home-alarm-section" aria-label={alarmT('active')}>
         <div className="sm-home-section-heading">
-          <h2>Active alarms</h2>
-          <Link href="/alarms">View all alarms →</Link>
+          <h2>{alarmT('active')}</h2>
+          <Link href="/alarms">{alarmT('viewAll')}</Link>
         </div>
         {alarmError ? (
           <p className="sm-alarm-unavailable">
-            Alarm status unavailable. This is not equivalent to no alarms.
+            {alarmT('unavailable')}
           </p>
         ) : alarmSnapshot.global.activeAlarmCount === 0 ? (
-          <p className="sm-alarm-empty">No active alarms.</p>
+          <p className="sm-alarm-empty">{alarmT('none')}</p>
         ) : (
           <>
             <div className="sm-home-alarm-counters">
               <span data-severity="CRITICAL">
-                <b>{alarmSnapshot.global.critical}</b> Critical
+                <b>{alarmSnapshot.global.critical}</b> {alarmT('critical')}
               </span>
               <span data-severity="WARNING">
-                <b>{alarmSnapshot.global.warning}</b> Warning
+                <b>{alarmSnapshot.global.warning}</b> {alarmT('warning')}
               </span>
               <span data-severity="INFO">
-                <b>{alarmSnapshot.global.info}</b> Info
+                <b>{alarmSnapshot.global.info}</b> {alarmT('info')}
               </span>
             </div>
             <div className="sm-home-alarm-list">
@@ -125,7 +126,7 @@ export function HomeLiveOverview({
                       </span>
                       <small>{alarm.path.map((item) => item.name).join(' › ')}</small>
                     </div>
-                    <Link href={alarm.targetHref}>Go to target →</Link>
+                    <Link href={alarm.targetHref}>{alarmT('goToTarget')}</Link>
                   </article>
                 ))}
             </div>

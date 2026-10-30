@@ -45,7 +45,7 @@ export function AlarmTopbarLink() {
       href="/alarms"
       aria-label={count ? `${count} active alarms` : 'Alarm Center'}
     >
-      <span aria-hidden="true">♟</span>
+      <span aria-hidden="true">⚠</span>
       <strong>ALARMS</strong>
       {count > 0 ? <b>{count}</b> : null}
       {critical > 0 ? <i aria-label={`${critical} critical`}>● {critical}</i> : null}

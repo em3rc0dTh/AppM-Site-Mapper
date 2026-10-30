@@ -12,6 +12,12 @@ export class MemoryAlarmRepository implements AlarmRepository {
     return this.occurrences.get(id) ?? null;
   }
 
+  async getActiveByCorrelationKey(correlationKey: string): Promise<AlarmOccurrence | null> {
+    return [...this.occurrences.values()].find(
+      (item) => item.lifecycle === 'ACTIVE' && item.correlationKey === correlationKey,
+    ) ?? null;
+  }
+
   async listActive(): Promise<readonly AlarmOccurrence[]> {
     return [...this.occurrences.values()]
       .filter((item) => item.lifecycle === 'ACTIVE')

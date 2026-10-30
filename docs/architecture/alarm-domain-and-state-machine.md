@@ -3,6 +3,7 @@
 **Status:** architecture/design baseline. This document defines the alarm-domain model and state-machine semantics approved for the current Site Mapper direction. It is not a claim that the complete Alarm Engine or Alarm Center UI is already implemented.
 
 **Related boundaries:**
+
 - MQTT provider/topic configuration: [Telemetry contract](../telemetry/contract.md)
 - SNMP industrial ingestion: [Industrial integration](../telemetry/industrial-integration.md)
 - Modbus/Metasys publication: [Modbus TCP output](../telemetry/modbus-tcp-output.md)
@@ -109,12 +110,12 @@ alarm occurrence
 
 The initial model recognizes four families.
 
-| Family | Meaning | Typical examples |
-| --- | --- | --- |
-| `COMMUNICATION` | Observability or transport degradation | `TELEMETRY_LOSS` |
-| `ELECTRICAL` | Electrical condition observed from accepted measurements | `LOW_VOLTAGE`, `OVERCURRENT` |
-| `EQUIPMENT` | Condition explicitly reported by hardware/controller | `FUSE_ALARM`, `CONTROLLER_ALARM` |
-| `CORRELATED` | Operational conclusion supported by more than one evidence stream | `POWER_LOSS` with confidence |
+| Family          | Meaning                                                           | Typical examples                 |
+| --------------- | ----------------------------------------------------------------- | -------------------------------- |
+| `COMMUNICATION` | Observability or transport degradation                            | `TELEMETRY_LOSS`                 |
+| `ELECTRICAL`    | Electrical condition observed from accepted measurements          | `LOW_VOLTAGE`, `OVERCURRENT`     |
+| `EQUIPMENT`     | Condition explicitly reported by hardware/controller              | `FUSE_ALARM`, `CONTROLLER_ALARM` |
+| `CORRELATED`    | Operational conclusion supported by more than one evidence stream | `POWER_LOSS` with confidence     |
 
 The families prevent a transport failure from being silently converted into an electrical diagnosis.
 
@@ -326,15 +327,15 @@ Telemetry history remains in its existing stores. Alarm records reference the su
 
 The initial V1 catalog should remain deliberately small.
 
-| Code | Family | Primary evidence |
-| --- | --- | --- |
-| `TELEMETRY_LOSS` | COMMUNICATION | MQTT/SNMP watchdog |
-| `LOW_VOLTAGE` | ELECTRICAL | voltage |
-| `OVERCURRENT` | ELECTRICAL | current |
-| `POWER_LOSS` | ELECTRICAL/CORRELATED | voltage/current plus optional corroboration |
-| `FUSE_ALARM` | EQUIPMENT | SNMP/controller |
-| `CONTROLLER_ALARM` | EQUIPMENT | SNMP/controller |
-| `DATA_QUALITY_DEGRADED` | COMMUNICATION/DATA | invalid/stale/insufficient coverage |
+| Code                    | Family                | Primary evidence                            |
+| ----------------------- | --------------------- | ------------------------------------------- |
+| `TELEMETRY_LOSS`        | COMMUNICATION         | MQTT/SNMP watchdog                          |
+| `LOW_VOLTAGE`           | ELECTRICAL            | voltage                                     |
+| `OVERCURRENT`           | ELECTRICAL            | current                                     |
+| `POWER_LOSS`            | ELECTRICAL/CORRELATED | voltage/current plus optional corroboration |
+| `FUSE_ALARM`            | EQUIPMENT             | SNMP/controller                             |
+| `CONTROLLER_ALARM`      | EQUIPMENT             | SNMP/controller                             |
+| `DATA_QUALITY_DEGRADED` | COMMUNICATION/DATA    | invalid/stale/insufficient coverage         |
 
 Additional alarm types can be added when more of the observed SNMP space is understood and commissioned.
 
@@ -636,13 +637,35 @@ alarmOccurrence-<uuid>
 
 The exact addresses are assigned only by the publication registry.
 
-| Logical value | Suggested type | Semantic values |
-| --- | --- | --- |
-| `ALARM_STATE` | UINT16 | 0 = clear/resolved, 1 = active |
-| `ALARM_ACK` | UINT16 | 0 = unacknowledged, 1 = acknowledged |
-| `ALARM_SEVERITY` | UINT16 | 0 none, 1 info, 2 warning, 3 critical |
-| `ALARM_CONFIDENCE` | UINT16 | 0 none, 1 suspected, 2 confirmed |
-| `QUALITY` | UINT16 | governed quality enumeration |
+| Logical value      | Suggested type | Semantic values                       |
+| ------------------ | -------------- | ------------------------------------- |
+| `ALARM_STATE`      | UINT16         | 0 = clear/resolved, 1 = active        |
+| `ALARM_ACK`        | UINT16         | 0 = unacknowledged, 1 = acknowledged  |
+| `ALARM_SEVERITY`   | UINT16         | 0 none, 1 info, 2 warning, 3 critical |
+| `ALARM_CONFIDENCE` | UINT16         | 0 none, 1 suspected, 2 confirmed      |
+| `QUALITY`          | UINT16         | governed quality enumeration          |
+
+The current Site Mapper bridge preserves the existing extension transport contract: each
+operator-approved alarm value is encoded in one extension slot as network-order FLOAT32
+plus its adjacent quality register. The values remain integer-coded according to the table
+above; this avoids rewriting the already certified bridge while a future typed UINT16
+registry remains a separate compatibility decision.
+
+Alarm extension points use the governed logical identity:
+
+```text
+ALARM/<canonical-target-id>/<ALARM_CODE>/STATE
+ALARM/<canonical-target-id>/<ALARM_CODE>/ACK
+ALARM/<canonical-target-id>/<ALARM_CODE>/SEVERITY
+ALARM/<canonical-target-id>/<ALARM_CODE>/CONFIDENCE
+ALARM/<canonical-target-id>/<ALARM_CODE>/QUALITY
+```
+
+The publication projection aggregates active occurrences for the same target and alarm
+definition. `STATE=1` when any matching occurrence is active; `ACK=1` only when all
+matching active occurrences are acknowledged; severity/confidence use the strongest
+active value. No active occurrence projects the governed clear/none values. A missing or
+invalid canonical target projects invalid quality rather than a false clear.
 
 Approved normalized/derived measurements may use engineering values such as:
 
@@ -690,14 +713,6 @@ This document freezes **Part 1 — alarm domain model** and **Part 2 — state m
 
 ## Part 4 — operational wireframe
 
-Still to define:
+Part 4 is approved and documented in [Alarm Operational Wireframe and Interaction](alarm-operational-wireframe.md). It freezes Home, Alarm Center, hierarchy roll-up, affected-child drill-down, direct target deep links, Inspector alarm tabs, breaker detail, evidence/timeline, acknowledgement and resolved-history interaction.
 
-- exact component geometry;
-- detailed table sizing/behavior;
-- alarm drawer/detail interaction;
-- evidence timeline layout;
-- acknowledgement interaction details;
-- historical navigation;
-- responsive behavior if required.
-
-Parts 1–3 are frozen design baselines. Part 4 remains deliberately open.
+Parts 1–4 are now frozen architecture/design baselines. Automatic alarm evaluation remains policy-driven: no target receives production threshold semantics without an explicit enabled AlarmPolicy.

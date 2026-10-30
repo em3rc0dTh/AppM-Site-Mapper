@@ -6,6 +6,7 @@ import { useState, type FormEvent } from 'react';
 
 import { isWorkspaceHref } from '@/modules/workspace/domain/context';
 import { AuthFrame } from '@/shared/ui/auth-frame';
+import { useHydrated } from '@/shared/ui/use-hydrated';
 
 interface LoginResponse {
   readonly error?: string;
@@ -19,6 +20,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const hydrated = useHydrated();
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,7 +87,7 @@ export default function LoginPage() {
             required
           />
         </label>
-        <button className="auth-submit" type="submit" disabled={busy}>
+        <button className="auth-submit" type="submit" disabled={!hydrated || busy}>
           {busy ? t('submitting') : t('submit')}
         </button>
         {error ? (

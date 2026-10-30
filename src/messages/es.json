@@ -45,7 +45,8 @@
       "packets": "Inspeccionar paquetes originales del breaker",
       "snmpSeparation": "Los shunts de entrada DC por SNMP son independientes de las lecturas MQTT de los breakers.",
       "hideSnmp": "OCULTAR ENTRADAS SNMP",
-      "showSnmp": "INSPECCIONAR ENTRADAS SNMP"
+      "showSnmp": "INSPECCIONAR ENTRADAS SNMP",
+      "alarms": "Alarmas"
     }
   },
   "bdfb": {
@@ -109,7 +110,8 @@
         "requiresBinding": "Las lecturas en vivo requieren enlaces MQTT explícitos de los equipos.",
         "panelScope": "Alcance del promedio: {panel}",
         "entireScope": "Alcance del promedio: todos los interruptores BDFB configurados"
-      }
+      },
+      "alarms": "Alarmas"
     }
   },
   "snmp": {
@@ -541,7 +543,8 @@
     "noMatchingEntities": "No hay entidades coincidentes",
     "noTopology": "Aún no hay topología",
     "tryAnother": "Pruebe con otro nombre.",
-    "createNetwork": "Cree una red para mapear su infraestructura."
+    "createNetwork": "Cree una red para mapear su infraestructura.",
+    "activeAlarmsInBranch": "{count, plural, one {# alarma activa en esta rama} other {# alarmas activas en esta rama}}"
   },
   "topologyTree": {
     "global": "Topología global",
@@ -562,7 +565,8 @@
       "rack": "RACK",
       "device": "DEVICE",
       "equipment": "EQUIPMENT"
-    }
+    },
+    "activeAlarmsInBranch": "{count, plural, one {# alarma activa en esta rama} other {# alarmas activas en esta rama}}"
   },
   "topologyViews": {
     "surveyed": "GEOMETRÍA LEVANTADA",
@@ -721,7 +725,8 @@
     "positionsLive": "{reporting}/{total} posiciones MQTT EN VIVO",
     "childEquipmentLive": "{reporting}/{total} equipos hijos instalados con MQTT EN VIVO",
     "physicalPositionsCount": "{count} posiciones físicas",
-    "childEquipmentCount": "{count} equipos hijos"
+    "childEquipmentCount": "{count} equipos hijos",
+    "alarm": "ALARMA"
   },
   "warehouseForms": {
     "creation": "Modo de creación de plantilla",
@@ -1303,7 +1308,8 @@
     "openPanelComposition": "Abrir composición del equipo: {panel}",
     "positionBreaker": "Posición {position}: {breaker}",
     "positionBreakerDetails": "Posición {position}: {breaker}; abrir detalles del interruptor",
-    "positionAvailable": "Posición {position}: disponible"
+    "positionAvailable": "Posición {position}: disponible",
+    "alarmCount": "{count, plural, one {# alarma} other {# alarmas}}"
   },
   "bdfbTree": {
     "tree": "Árbol de potencia BDFB",
@@ -2074,5 +2080,92 @@
     "previous": "Anterior",
     "page": "Página {page}",
     "next": "Siguiente"
+  },
+  "alarmUi": {
+    "header": {
+      "title": "ALARMAS",
+      "unavailable": "Estado de alarmas no disponible",
+      "loadingLabel": "Cargando alarmas",
+      "activeLabel": "{count} alarmas activas",
+      "criticalShort": "C",
+      "warningShort": "W",
+      "infoShort": "I",
+      "summary": "{critical} C · {warning} W · {info} I"
+    },
+    "center": {
+      "eyebrow": "Alarmas operativas",
+      "title": "Centro de alarmas",
+      "description": "Una ocurrencia, múltiples vistas jerárquicas. El objetivo conserva la alarma; los ancestros muestran el roll-up.",
+      "refresh": "Actualizar",
+      "unavailable": "El estado de alarmas no está disponible. Esto no equivale a “sin alarmas”.",
+      "active": "Activas",
+      "critical": "Crítica",
+      "warning": "Advertencia",
+      "info": "Info",
+      "unacknowledged": "Sin ACK",
+      "resolved": "Resueltas",
+      "severityLabel": "Severidad",
+      "siteLabel": "Sitio",
+      "qdfLabel": "QDF",
+      "familyLabel": "Familia de alarma",
+      "ackLabel": "Reconocimiento",
+      "searchLabel": "Buscar alarmas",
+      "searchPlaceholder": "Buscar alarma, objetivo o ruta…",
+      "allSeverities": "Todas las severidades",
+      "allSites": "Todos los sitios",
+      "allQdfs": "Todos los QDF",
+      "allFamilies": "Todas las familias",
+      "communication": "Comunicación",
+      "electrical": "Eléctrica",
+      "equipment": "Equipment",
+      "correlated": "Correlacionada",
+      "allAckStates": "Todos los estados ACK",
+      "acknowledged": "Reconocida",
+      "alarm": "Alarma",
+      "targetPath": "Ruta del objetivo",
+      "since": "Desde",
+      "ack": "ACK",
+      "confidence": "Confianza",
+      "actions": "Acciones",
+      "openDetail": "Abrir detalle",
+      "goToTarget": "Ir al objetivo",
+      "empty": "No hay alarmas en esta vista."
+    },
+    "detail": {
+      "loading": "Cargando alarma…",
+      "acknowledging": "Reconociendo…",
+      "acknowledge": "Reconocer",
+      "goToTarget": "Ir al objetivo →",
+      "target": "OBJETIVO",
+      "evidence": "Evidencia",
+      "evidenceFallback": "Evidencia",
+      "noEvidence": "No hay referencias de evidencia registradas.",
+      "timeline": "Línea de tiempo del evento",
+      "opened": "Alarma abierta",
+      "resolved": "Resuelta",
+      "occurrence": "Ocurrencia",
+      "correlation": "Correlación",
+      "rule": "Regla"
+    },
+    "scope": {
+      "unavailable": "Estado de alarmas no disponible",
+      "activeInScope": "{count, plural, one {# alarma activa en este ámbito} other {# alarmas activas en este ámbito}}",
+      "activeCount": "{count, plural, one {# alarma activa} other {# alarmas activas}}",
+      "severityCounts": "{critical} Crítica · {warning} Advertencia · {info} Info",
+      "direct": "{count} directa(s)",
+      "rollup": "Roll-up descendente · no implica propiedad de telemetría",
+      "view": "Ver alarmas →",
+      "affectedChildren": "ELEMENTOS AFECTADOS"
+    },
+    "home": {
+      "active": "Alarmas activas",
+      "viewAll": "Ver todas las alarmas →",
+      "unavailable": "El estado de alarmas no está disponible. Esto no equivale a no tener alarmas.",
+      "none": "No hay alarmas activas.",
+      "goToTarget": "Ir al objetivo →",
+      "critical": "Crítica",
+      "warning": "Advertencia",
+      "info": "Info"
+    }
   }
 }

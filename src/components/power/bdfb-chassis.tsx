@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { ContextPin } from '@/components/workspace/context-pin';
+import { AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
+import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 
@@ -58,6 +60,7 @@ export function BdfbChassis({
   const available = (selectedPanel?.positions.length ?? 0) - installed;
   const destinationByBreaker = new Map(powerBindings.map((item) => [item.breakerId, item]));
   const monitoredBreakers = new Set(telemetryBindings.map((item) => item.breakerId));
+  const { snapshot: alarmSnapshot } = useAlarmSnapshot();
 
   return (
     <section className="bdfb-chassis sm-bdfb-modern sm-bdfb-stage">
@@ -77,6 +80,7 @@ export function BdfbChassis({
           <span>{t('panels', { count: panels.length })}</span>
         </div>
       </header>
+      <AlarmScopeSummary entityId={device.id} showAffectedChildren />
 
       <div className="sm-bdfb-physical-body">
         <article className="sm-bdfb-physical-chassis">
@@ -101,6 +105,9 @@ export function BdfbChassis({
                             key={panel.id}
                             className="sm-bdfb-physical-panel"
                             data-selected={selected}
+                            data-alarm-severity={
+                              alarmSnapshot.rollups[panel.id]?.highestSeverity ?? 'NONE'
+                            }
                           >
                             <button
                               className="sm-bdfb-panel-select"
@@ -119,6 +126,18 @@ export function BdfbChassis({
                                   available: panel.positions.length - occupied,
                                 })}
                               </span>
+                              {alarmSnapshot.rollups[panel.id]?.activeAlarmCount ? (
+                                <span
+                                  className="sm-panel-alarm-inline"
+                                  data-severity={
+                                    alarmSnapshot.rollups[panel.id]!.highestSeverity ?? 'INFO'
+                                  }
+                                >
+                                  {t('alarmCount', {
+                                    count: alarmSnapshot.rollups[panel.id]!.activeAlarmCount,
+                                  })}
+                                </span>
+                              ) : null}
                             </button>
                             <Link
                               className="sm-bdfb-panel-composition-link"
@@ -184,6 +203,14 @@ export function BdfbChassis({
                   >
                     <span>P{String(index + 1).padStart(2, '0')}</span>
                     <strong>●</strong>
+                    {alarmSnapshot.rollups[breaker.id]?.activeAlarmCount ? (
+                      <em
+                        className="sm-breaker-alarm-dot"
+                        data-severity={alarmSnapshot.rollups[breaker.id]!.highestSeverity ?? 'INFO'}
+                      >
+                        {alarmSnapshot.rollups[breaker.id]!.activeAlarmCount}
+                      </em>
+                    ) : null}
                   </Link>
                 ) : (
                   <span

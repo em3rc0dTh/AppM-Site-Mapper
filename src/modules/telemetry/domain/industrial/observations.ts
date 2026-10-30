@@ -16,6 +16,8 @@ export interface SignalRule {
   clearValues?: readonly (number | string | boolean)[];
   severity?: string;
   evidence?: string;
+  alarmCode?: string;
+  corroboratesAlarmCodes?: readonly string[];
   match?: 'oid-instance';
   numericEncoding?: 'decimal-string';
   valueMap?: readonly { raw: string | number | boolean; code: number; label?: string }[];
@@ -50,7 +52,7 @@ export interface Signal {
   authoritative?: boolean;
   key: string;
   sourceIdentity: string;
-  protocol: Envelope['protocol'];
+  protocol: Envelope['protocol'] | 'ALARM';
   targetId: string | null;
   kind: SignalKind;
   mibName: string | null;
@@ -65,6 +67,9 @@ export interface Signal {
   quality: Quality;
   alarmState: 'ACTIVE' | 'RESOLVED' | 'UNKNOWN' | null;
   severity: string | null;
+  alarmCode?: string;
+  corroboratesAlarmCodes?: readonly string[];
+  interpretationEvidence?: string;
   profileVersion: string;
   receivedAt: string;
   observedAt: string;
@@ -124,6 +129,17 @@ export function parseProfiles(raw: string | undefined): SourceProfile[] {
         (r.unit !== undefined && (typeof r.unit !== 'string' || r.unit.length > 64)) ||
         (r.targetId !== undefined && (typeof r.targetId !== 'string' || !r.targetId)) ||
         (r.severity !== undefined && typeof r.severity !== 'string') ||
+        (r.alarmCode !== undefined &&
+          (r.kind !== 'alarm' ||
+            typeof r.alarmCode !== 'string' ||
+            !/^[A-Z][A-Z0-9_]{1,63}$/.test(r.alarmCode))) ||
+        (r.corroboratesAlarmCodes !== undefined &&
+          (r.kind !== 'alarm' ||
+            !Array.isArray(r.corroboratesAlarmCodes) ||
+            r.corroboratesAlarmCodes.length > 8 ||
+            r.corroboratesAlarmCodes.some(
+              (code) => typeof code !== 'string' || !/^[A-Z][A-Z0-9_]{1,63}$/.test(code),
+            ))) ||
         (r.scale !== undefined &&
           (typeof r.scale !== 'number' || !Number.isFinite(r.scale) || r.scale === 0)) ||
         (r.offset !== undefined && (typeof r.offset !== 'number' || !Number.isFinite(r.offset)))
@@ -394,6 +410,11 @@ export function normalizeObservations(
         quality,
         alarmState,
         severity: rule?.severity ?? null,
+        ...(rule?.alarmCode ? { alarmCode: rule.alarmCode } : {}),
+        ...(rule?.corroboratesAlarmCodes?.length
+          ? { corroboratesAlarmCodes: [...rule.corroboratesAlarmCodes] }
+          : {}),
+        ...(rule?.evidence ? { interpretationEvidence: rule.evidence } : {}),
         profileVersion: profile.version,
         receivedAt: new Date(received).toISOString(),
         observedAt: new Date(observed).toISOString(),

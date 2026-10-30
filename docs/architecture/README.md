@@ -27,6 +27,7 @@ React/Next.js render and transport application behavior. Domain rules do not dep
 - **inventory** — Device/Equipment projections and pin state;
 - **power** — BDFB internal structure and PowerPath;
 - **telemetry** — external MQTT normalization, identity resolution and realtime fan-out;
+- **alarm** — commissioned alarm policies, occurrence lifecycle, evidence, hierarchy roll-up and acknowledgement;
 - **workspace** — operational composition;
 - **settings** — explicit administrative surfaces.
 
@@ -62,7 +63,10 @@ Canonical collections include:
 - `power_paths`;
 - `users`;
 - `sessions`;
-- `auth_rate_limits`.
+- `auth_rate_limits`;
+- `alarm_policies`;
+- `alarm_occurrences`;
+- `alarm_transitions`.
 
 CAS is owned by Container/Rack persistence. BDFB structures consist of canonical nested Equipment nodes and explicit child/position relationships; PowerPath is a separate aggregate. MQTT `TelemetryBinding` records map verified source + point + metric to canonical Equipment IDs.
 
@@ -107,7 +111,7 @@ For a complete, presentation-friendly context/deployment/sequence diagram, see [
 
 ## Alarm domain
 
-Operational alarms are modeled separately from telemetry freshness. A missing MQTT/SNMP observation may produce a communication condition, but it is not by itself proof of electrical power loss. The canonical alarm model, state machines, acknowledgement, confidence, correlation and governed Modbus publication contract are documented in [Alarm Domain and State Machines](alarm-domain-and-state-machine.md). The approved physical-view/Inspector/Alarm Center placement derived from the QDF-4 visual mock is documented in [Alarm UI Placement and Presentation](alarm-ui-placement.md).
+Operational alarms are modeled separately from telemetry freshness. A missing MQTT/SNMP observation may produce a communication condition, but it is not by itself proof of electrical power loss. The canonical alarm model, state machines, acknowledgement, confidence, correlation and governed Modbus publication contract are documented in [Alarm Domain and State Machines](alarm-domain-and-state-machine.md). The approved physical-view/Inspector/Alarm Center placement derived from the QDF-4 visual mock is documented in [Alarm UI Placement and Presentation](alarm-ui-placement.md). The approved end-to-end operational interaction, deep links, hierarchy roll-up, ACK behavior and seed-01 UI fixture are frozen in [Alarm Operational Wireframe and Interaction](alarm-operational-wireframe.md).
 
 ## Migration boundary
 

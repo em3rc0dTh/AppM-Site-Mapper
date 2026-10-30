@@ -11,6 +11,10 @@ import { MemoryObservationStore, MongoObservationStore, type ObservationStore } 
 import { getPersistenceMode } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { getClient, getMongoDatabase } from '@/shared/infrastructure/mongodb/client';
 import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
+import { logger } from '@/shared/infrastructure/logger';
+import { IndustrialAlarmEvaluator } from '@/modules/alarm/application/industrial-alarm-evaluator';
+import { createAlarmRepository } from '@/modules/alarm/infrastructure/alarm-repository-factory';
+import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
 export function industrialProfiles() {
   return configuredIndustrialProfiles();
@@ -43,6 +47,22 @@ export async function getObservationStore(): Promise<ObservationStore> {
   return holder.promise;
 }
 
+async function getIndustrialAlarmEvaluator(): Promise<IndustrialAlarmEvaluator> {
+  const holder = getProcessSingleton<{ promise?: Promise<IndustrialAlarmEvaluator> }>(
+    'industrial-alarm-evaluator',
+    () => ({}),
+  );
+  if (!holder.promise) {
+    holder.promise = Promise.all([createAlarmRepository(), createTopologyRepository()]).then(
+      ([alarms, topology]) => new IndustrialAlarmEvaluator(alarms, topology),
+    );
+    holder.promise.catch(() => {
+      delete holder.promise;
+    });
+  }
+  return holder.promise;
+}
+
 export async function captureIndustrial(envelope: Envelope) {
   const profile = industrialProfiles().find(
     (p) => p.protocol === envelope.protocol && p.sourceIdentity === envelope.sourceIdentity,
@@ -51,5 +71,28 @@ export async function captureIndustrial(envelope: Envelope) {
   const batch = normalizeObservations(envelope, profile);
   batch.signals = associateLogicalSignals(batch.signals, await logicalRegistry());
   const disposition = await (await getObservationStore()).commit(batch);
-  return { batch, disposition };
+
+  let alarmEvaluation: 'NOT_APPLICABLE' | 'PROCESSED' | 'DEGRADED' = 'NOT_APPLICABLE';
+  if (
+    batch.signals.some(
+      (signal) =>
+        signal.protocol === 'SNMP' &&
+        signal.kind === 'alarm' &&
+        Boolean(signal.alarmCode || signal.corroboratesAlarmCodes?.length),
+    )
+  ) {
+    try {
+      await (await getIndustrialAlarmEvaluator()).observe(batch);
+      alarmEvaluation = 'PROCESSED';
+    } catch (error) {
+      alarmEvaluation = 'DEGRADED';
+      logger.warn('alarm.snmp_evaluation_failed', {
+        sourceIdentity: envelope.sourceIdentity,
+        eventId: batch.id,
+        reason: error instanceof Error ? error.message : 'unknown',
+      });
+    }
+  }
+
+  return { batch, disposition, alarmEvaluation };
 }

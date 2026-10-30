@@ -4,6 +4,7 @@ import { useBdfbTelemetrySnapshot } from '@/components/telemetry/use-bdfb-teleme
 import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
 import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
+import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -18,8 +19,14 @@ import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 import { useTranslations } from 'next-intl';
 
-type InspectorTab = 'overview' | 'feeds' | 'history' | 'settings';
-const INSPECTOR_TABS: readonly InspectorTab[] = ['overview', 'feeds', 'history', 'settings'];
+type InspectorTab = 'overview' | 'alarms' | 'feeds' | 'history' | 'settings';
+const INSPECTOR_TABS: readonly InspectorTab[] = [
+  'overview',
+  'alarms',
+  'feeds',
+  'history',
+  'settings',
+];
 type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
 function metric(value: number | null | undefined, unit: string, decimals = 2): string {
@@ -290,7 +297,7 @@ export function BdfbTelemetryInspector({
             tabIndex={tab === item ? 0 : -1}
             onClick={() => changeTab(item)}
           >
-            {t(item)}
+            {item === 'alarms' ? t('alarms') : t(item)}
           </button>
         ))}
       </nav>
@@ -304,6 +311,7 @@ export function BdfbTelemetryInspector({
       >
         {tab === 'overview' && (
           <>
+            <AlarmScopeSummary entityId={node.id} />
             <SnmpFeedLoadPanel
               key={node.id}
               deviceId={node.id}
@@ -365,6 +373,13 @@ export function BdfbTelemetryInspector({
                 </small>
               </div>
             </section>
+          </>
+        )}
+
+        {tab === 'alarms' && (
+          <>
+            <AlarmScopeSummary entityId={node.id} showAffectedChildren />
+            <AlarmOccurrenceList entityId={node.id} />
           </>
         )}
 

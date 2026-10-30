@@ -8,6 +8,8 @@ import { useState, type CSSProperties, type MouseEvent } from 'react';
 import type { TopologyNavigationNode } from '@/modules/topology/application/topology-service';
 import type { TopologyKind } from '@/modules/topology/domain/entities';
 import { Icon } from '@/shared/ui/primitives';
+import type { AlarmRollup } from '@/modules/alarm/domain/entities';
+import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 
 function iconFor(kind: TopologyKind): string {
   if (kind === 'NETWORK') return 'network';
@@ -63,6 +65,7 @@ function TreeBranch({
   depth,
   onSelect,
   onOpen,
+  rollups,
 }: Readonly<{
   item: TopologyNavigationNode;
   activeId: string;
@@ -70,13 +73,16 @@ function TreeBranch({
   depth: number;
   onSelect: (item: TopologyNavigationNode) => void;
   onOpen: (item: TopologyNavigationNode) => void;
+  rollups: Readonly<Record<string, AlarmRollup>>;
 }>) {
   const t = useTranslations('topologyTree');
   const active = item.node.id === activeId;
   const chosen = item.node.id === selectedId;
+  const alarmedBranch = Boolean(rollups[item.node.id]?.activeAlarmCount);
   const expanded =
     depth < 3 ||
     containsActive(item, activeId) ||
+    alarmedBranch ||
     (selectedId !== null && containsActive(item, selectedId));
 
   const select = (event: MouseEvent<HTMLAnchorElement>) => {
@@ -107,6 +113,15 @@ function TreeBranch({
           <small>{t(`kinds.${labelFor(item.node.kind)}`)}</small>
           <strong>{item.node.name}</strong>
         </span>
+        {rollups[item.node.id]?.activeAlarmCount ? (
+          <span
+            className="sm-tree-alarm-badge"
+            data-severity={rollups[item.node.id]!.highestSeverity ?? 'INFO'}
+            title={t('activeAlarmsInBranch', { count: rollups[item.node.id]!.activeAlarmCount })}
+          >
+            {rollups[item.node.id]!.activeAlarmCount}
+          </span>
+        ) : null}
         {item.children.length > 0 && (
           <span className="telxius-tree-chevron" aria-hidden="true">
             {expanded ? '⌄' : '›'}
@@ -124,6 +139,7 @@ function TreeBranch({
               depth={depth + 1}
               onSelect={onSelect}
               onOpen={onOpen}
+              rollups={rollups}
             />
           ))}
         </ul>
@@ -139,6 +155,7 @@ export function TopologyContextTree({
   const t = useTranslations('topologyTree');
   const router = useRouter();
   const [selected, setSelected] = useState<TopologyNavigationNode | null>(null);
+  const { snapshot } = useAlarmSnapshot();
 
   return (
     <nav className="telxius-topology-tree" aria-label={t('global')}>
@@ -161,6 +178,7 @@ export function TopologyContextTree({
           depth={0}
           onSelect={setSelected}
           onOpen={(item) => router.push(item.href)}
+          rollups={snapshot.rollups}
         />
       </ul>
       {selected && (

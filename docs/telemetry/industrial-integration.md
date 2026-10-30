@@ -78,6 +78,39 @@ OIDs, 8 repetitions for GETBULK). It is not an unbounded MIB walk. SET is never 
 Existing commissioned feed GET ingestion remains separate and unchanged.
 Poll failures are diagnostic logs, not native power-loss alarms.
 
+### Explicit SNMP alarm commissioning
+
+An interpreted SNMP alarm does **not** automatically become an Alarm Engine occurrence. The
+profile rule must explicitly opt in after the exact OID semantics and canonical target are verified.
+
+Two independent fields are available on an alarm rule:
+
+- `alarmCode` opens/resolves that commissioned hardware alarm on the associated target. The code
+  must already exist in the Site Mapper alarm catalog, for example `FUSE_ALARM` or
+  `CONTROLLER_ALARM`.
+- `corroboratesAlarmCodes` names existing **correlated** Alarm Engine conclusions that this active
+  SNMP condition is authorized to corroborate. It never creates a second correlated occurrence;
+  it attaches SNMP evidence to the existing target occurrence and may raise its confidence to
+  `CONFIRMED`.
+
+Conceptual private-profile shape:
+
+```json
+{
+  "key": "<verified exact SNMP OID instance>",
+  "kind": "alarm",
+  "targetId": "<canonical Device or Equipment ID>",
+  "alarmCode": "FUSE_ALARM",
+  "corroboratesAlarmCodes": ["POWER_LOSS"],
+  "evidence": "<commissioning record explaining the verified semantics>"
+}
+```
+
+The placeholder above is documentation only and is not a deployable OID. Do not copy it into a
+field profile. A raw OID, a MIB label, an alarm-looking value, a trap name, physical panel position,
+or temporal coincidence is insufficient authority to populate either field. An uncommissioned SNMP
+alarm remains industrial evidence only and cannot assert or confirm an application alarm.
+
 ## Interpretation and alarm lifecycle
 
 Rules match an **exact key**, carry a profile version and declare kind, unit, scale and optional

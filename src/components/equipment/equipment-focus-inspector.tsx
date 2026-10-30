@@ -14,10 +14,11 @@ import {
 } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import { useTranslations } from 'next-intl';
+import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
 
-type Tab = 'telemetry' | 'overview' | 'ports' | 'settings';
+type Tab = 'telemetry' | 'alarms' | 'overview' | 'ports' | 'settings';
 
-const TABS: readonly Tab[] = ['telemetry', 'overview', 'ports', 'settings'];
+const TABS: readonly Tab[] = ['telemetry', 'alarms', 'overview', 'ports', 'settings'];
 
 const METRICS = [
   { key: 'voltageV', symbol: 'V', label: 'Voltage', unit: 'V', digits: 2 },
@@ -115,7 +116,7 @@ export function EquipmentFocusInspector({
             aria-controls={`ec-tabpanel-${key}`}
             onClick={() => setTab(key)}
           >
-            {t(key)}
+            {key === 'alarms' ? t('alarms') : t(key)}
           </button>
         ))}
       </div>
@@ -175,8 +176,15 @@ export function EquipmentFocusInspector({
             )}
           </>
         )}
+        {activeTab === 'alarms' && (
+          <>
+            <AlarmScopeSummary entityId={equipment.id} showAffectedChildren />
+            <AlarmOccurrenceList entityId={equipment.id} />
+          </>
+        )}
         {activeTab === 'overview' && (
           <>
+            <AlarmScopeSummary entityId={equipment.id} />
             {overview}
             {equipment.telemetryPointPrefix && (
               <p className="ec-inspector-note ec-point-group">

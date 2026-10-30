@@ -143,6 +143,9 @@ describe('alarm hierarchy', () => {
       expect(snapshot.rollups[ancestor]?.descendantActiveAlarmCount).toBe(1);
     }
 
+    expect(snapshot.rollups.site).toBeUndefined();
+    expect(snapshot.rollups.room).toBeUndefined();
+
     expect(snapshot.rollups.panel?.affectedChildren).toEqual([
       expect.objectContaining({ id: 'breaker', activeAlarmCount: 1 }),
     ]);

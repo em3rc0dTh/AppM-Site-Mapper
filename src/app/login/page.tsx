@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 
 import { isWorkspaceHref } from '@/modules/workspace/domain/context';
 import { AuthFrame } from '@/shared/ui/auth-frame';
@@ -19,6 +19,11 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -85,7 +90,7 @@ export default function LoginPage() {
             required
           />
         </label>
-        <button className="auth-submit" type="submit" disabled={busy}>
+        <button className="auth-submit" type="submit" disabled={!hydrated || busy}>
           {busy ? t('submitting') : t('submit')}
         </button>
         {error ? (

@@ -119,7 +119,10 @@ function FramePreview({
       <div className="ec-frame-heading">
         <div>
           <small>{t('frame')}</small>
-          <ChildLink node={frame} className="ec-frame-title" />
+          <span className="ec-panel-name-line">
+            <ChildLink node={frame} className="ec-frame-title" />
+            <AlarmBadge rollup={alarmRollups[frame.id]} />
+          </span>
         </div>
         <span className="ec-count">
           {t('frameMqttLive', { reporting: signal.reportingChildren, total: panels.length })}

@@ -43,8 +43,7 @@ function projectionValue(field: AlarmPublicationField, active: readonly AlarmOcc
   }
   if (field === 'CONFIDENCE') {
     return active.reduce(
-      (highest, item) =>
-        Math.max(highest, item.confidence ? CONFIDENCE_CODE[item.confidence] : 0),
+      (highest, item) => Math.max(highest, item.confidence ? CONFIDENCE_CODE[item.confidence] : 0),
       0,
     );
   }

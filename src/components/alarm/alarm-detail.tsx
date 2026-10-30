@@ -139,9 +139,15 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
       </div>
 
       <footer className="sm-alarm-detail-meta">
-        <span>{t('occurrence')}: {occurrence.id}</span>
-        <span>{t('correlation')}: {occurrence.correlationKey}</span>
-        <span>{t('rule')}: {occurrence.ruleVersion}</span>
+        <span>
+          {t('occurrence')}: {occurrence.id}
+        </span>
+        <span>
+          {t('correlation')}: {occurrence.correlationKey}
+        </span>
+        <span>
+          {t('rule')}: {occurrence.ruleVersion}
+        </span>
       </footer>
       {error ? <p className="sm-alarm-unavailable">{error}</p> : null}
     </section>

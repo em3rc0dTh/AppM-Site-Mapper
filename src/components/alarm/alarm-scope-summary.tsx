@@ -35,9 +35,7 @@ export function AlarmScopeSummary({
   return (
     <section className="sm-alarm-scope-card" data-severity={rollup.highestSeverity ?? 'INFO'}>
       <header>
-        <strong>
-          {t('activeCount', { count: rollup.activeAlarmCount })}
-        </strong>
+        <strong>{t('activeCount', { count: rollup.activeAlarmCount })}</strong>
         <span>
           {t('severityCounts', {
             critical: rollup.critical,

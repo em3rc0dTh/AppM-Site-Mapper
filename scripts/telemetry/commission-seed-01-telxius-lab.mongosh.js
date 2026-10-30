@@ -64,7 +64,9 @@ for (const item of state.bdfbs) {
     .toArray();
   const byId = new Map(equipment.map((x) => [x.id, x]));
   for (const panelName of Object.keys(PANEL_GROUP)) {
-    const panels = equipment.filter((x) => x.equipmentType === 'PANEL' && x.name === panelName);
+    const panels = equipment.filter(
+      (x) => x.equipmentType === 'PANEL' && x.name === panelName,
+    );
     assert(panels.length === 1, item.key + ' must have exactly one PANEL ' + panelName);
     const panel = panels[0];
     assert(
@@ -86,7 +88,13 @@ for (const item of state.bdfbs) {
       const rawPointId = '0_' + PANEL_GROUP[panelName] + '_' + (index + 1);
       for (const metric of METRICS) {
         desired.push({
-          id: 'lab:seed01:mqtt:' + source + ':' + rawPointId + ':' + metric.toLowerCase(),
+          id:
+            'lab:seed01:mqtt:' +
+            source +
+            ':' +
+            rawPointId +
+            ':' +
+            metric.toLowerCase(),
           protocol: 'MQTT',
           sourceIdentity: source,
           sourcePointId: rawPointId,
@@ -114,15 +122,14 @@ assert(sourceCount === 3, 'expected 3 source bindings');
 assert(pointCount === 48 * 4, 'expected 192 metric bindings for 48 confirmed breakers');
 
 for (const want of desired) {
-  const sourceMatch = d.telemetry_bindings
-    .find({
-      lifecycle: 'ACTIVE',
-      protocol: want.protocol,
-      sourceIdentity: want.sourceIdentity,
-      sourcePointId: want.sourcePointId === undefined ? { $exists: false } : want.sourcePointId,
-      metric: want.metric,
-    })
-    .toArray();
+  const sourceMatch = d.telemetry_bindings.find({
+    lifecycle: 'ACTIVE',
+    protocol: want.protocol,
+    sourceIdentity: want.sourceIdentity,
+    sourcePointId:
+      want.sourcePointId === undefined ? { $exists: false } : want.sourcePointId,
+    metric: want.metric,
+  }).toArray();
   assert(sourceMatch.length <= 1, 'duplicate source binding for ' + want.id);
   if (sourceMatch.length === 1) {
     const have = sourceMatch[0];
@@ -134,18 +141,16 @@ for (const want of desired) {
     );
   }
   if (want.metric !== 'SOURCE') {
-    const targetConflicts = d.telemetry_bindings
-      .find({
-        lifecycle: 'ACTIVE',
-        targetType: 'EQUIPMENT',
-        targetId: want.targetId,
-        metric: want.metric,
-        $or: [
-          { sourceIdentity: { $ne: want.sourceIdentity } },
-          { sourcePointId: { $ne: want.sourcePointId } },
-        ],
-      })
-      .toArray();
+    const targetConflicts = d.telemetry_bindings.find({
+      lifecycle: 'ACTIVE',
+      targetType: 'EQUIPMENT',
+      targetId: want.targetId,
+      metric: want.metric,
+      $or: [
+        { sourceIdentity: { $ne: want.sourceIdentity } },
+        { sourcePointId: { $ne: want.sourcePointId } },
+      ],
+    }).toArray();
     assert(targetConflicts.length === 0, 'breaker already owns another telemetry source');
   }
 }
@@ -195,8 +200,7 @@ print(
 );
 for (const item of state.bdfbs) {
   const source = SOURCES[item.key];
-  const mapped =
-    desired.filter((x) => x.sourceIdentity === source && x.metric !== 'SOURCE').length / 4;
+  const mapped = desired.filter((x) => x.sourceIdentity === source && x.metric !== 'SOURCE').length / 4;
   print(item.key + ' source=' + source + ' mappedBreakers=' + mapped);
 }
 

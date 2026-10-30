@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useState, type CSSProperties, type MouseEvent } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type MouseEvent } from 'react';
 
 import type { TopologyNavigationNode } from '@/modules/topology/application/topology-service';
 import type { TopologyKind } from '@/modules/topology/domain/entities';
@@ -156,7 +156,17 @@ export function TopologyContextTree({
   const router = useRouter();
   const [selected, setSelected] = useState<TopologyNavigationNode | null>(null);
   const [collapsed, setCollapsed] = useState(false);
+  const treeContent = useRef<HTMLDivElement>(null);
   const { snapshot } = useAlarmSnapshot();
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      treeContent.current
+        ?.querySelector<HTMLElement>('a[aria-current="page"]')
+        ?.scrollIntoView({ block: 'center', inline: 'nearest' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [activeId]);
 
   return (
     <nav
@@ -174,7 +184,7 @@ export function TopologyContextTree({
       >
         {collapsed ? '›' : '‹'}
       </button>
-      <div className="telxius-tree-collapsible-content">
+      <div className="telxius-tree-collapsible-content" ref={treeContent}>
         <header className="telxius-tree-brand">
           <span className="telxius-tree-brand-icon">
             <Icon name="network" />

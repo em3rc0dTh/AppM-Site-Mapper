@@ -173,6 +173,9 @@ try {
     [1366, 768, [212, 292]],
     [1280, 800, [212, 292]],
     [1100, 720, [190, null]],
+    [1063, 720, [190, null]],
+    [1045, 720, [190, null]],
+    [992, 720, [190, null]],
   ]) {
     await page.setViewportSize({ width, height });
     const geometry = await deviceLayout.evaluate((element) => {
@@ -189,7 +192,7 @@ try {
       };
     });
     const [left, right] = expectedColumns;
-    assert.equal(geometry.cols.length, width === 1100 ? 2 : 3, `${width}px layout column count`);
+    assert.equal(geometry.cols.length, width <= 1199 ? 2 : 3, `${width}px layout column count`);
     assert.ok(
       Math.abs(geometry.cols[0] - left) < 2,
       `${width}px topology width: ${geometry.cols[0]}`,
@@ -206,14 +209,100 @@ try {
       geometry.viewportOverflow <= 3,
       `${width}px unexpected document horizontal overflow: ${geometry.viewportOverflow}`,
     );
-    if (width === 1920 || width === 1366) {
+
+    const headerGeometry = await page.evaluate(() => {
+      const rect = (selector) => {
+        const element = document.querySelector(selector);
+        const box = element?.getBoundingClientRect();
+        return box
+          ? { left: box.left, right: box.right, top: box.top, bottom: box.bottom, width: box.width }
+          : null;
+      };
+      return {
+        search: rect('.mk-search-trigger'),
+        alarm: rect('.sm-alarm-header'),
+        actions: rect('.zip-topbar-actions'),
+        breadcrumb: rect('.zip-device-breadcrumbs'),
+        viewportWidth: window.innerWidth,
+      };
+    });
+    for (const [name, box] of [
+      ['Search', headerGeometry.search],
+      ['Alarm', headerGeometry.alarm],
+    ]) {
+      assert.ok(box, `${width}px ${name} control missing`);
+      assert.ok(box.width > 24, `${width}px ${name} control collapsed: ${box.width}`);
+      assert.ok(box.left >= -1, `${width}px ${name} control clipped left: ${box.left}`);
+      assert.ok(
+        box.right <= headerGeometry.viewportWidth + 1,
+        `${width}px ${name} control clipped right: ${box.right}`,
+      );
+    }
+    assert.ok(
+      headerGeometry.actions?.right <= headerGeometry.viewportWidth + 1,
+      `${width}px topbar action cluster overflows viewport`,
+    );
+    if (headerGeometry.breadcrumb && headerGeometry.actions) {
+      assert.ok(
+        headerGeometry.breadcrumb.right <= headerGeometry.actions.left + 2,
+        `${width}px breadcrumb overlaps Search/Alarm action cluster: breadcrumb=${headerGeometry.breadcrumb.right}, actions=${headerGeometry.actions.left}`,
+      );
+    }
+
+    if (width === 1920 || width === 1366 || width === 1063 || width === 992) {
       await page.screenshot({
         path: `/tmp/mk1-operational-browser-${width}.png`,
         fullPage: true,
       });
     }
-    console.log(`[PASS] Real Chromium: ${width}px laptop/desktop columns and horizontal overflow`);
+    console.log(
+      `[PASS] Real Chromium: ${width}px Equipment layout, Search/Alarm visibility and overflow`,
+    );
   }
+
+  // Deep Equipment focus must retain the hierarchy all the way to a breaker,
+  // including the sub-1000px desktop-like viewport that triggered the regression.
+  for (const width of [1063, 992]) {
+    await page.setViewportSize({ width, height: 720 });
+    await page.goto(base + '/device/' + breaker.id, { waitUntil: 'domcontentloaded' });
+    const tree = page.locator('.telxius-topology-tree');
+    await tree.waitFor({ timeout: 30000 });
+    await tree.getByText('CI LIMA BDFB', { exact: true }).waitFor({ timeout: 30000 });
+    await tree.getByText('CI LIMA Panel 24P', { exact: true }).waitFor({ timeout: 30000 });
+    await tree.getByText('CI LIMA Circuit Breaker 01', { exact: true }).waitFor({ timeout: 30000 });
+
+    const activeGeometry = await tree.evaluate((element) => {
+      const current = element.querySelector('a[aria-current="page"]');
+      const active = current?.getBoundingClientRect();
+      const host = element.getBoundingClientRect();
+      return {
+        active: active
+          ? { top: active.top, bottom: active.bottom, left: active.left, right: active.right }
+          : null,
+        host: { top: host.top, bottom: host.bottom, left: host.left, right: host.right },
+      };
+    });
+    assert.ok(activeGeometry.active, `${width}px active breaker missing from hierarchy`);
+    assert.ok(
+      activeGeometry.active.bottom >= activeGeometry.host.top &&
+        activeGeometry.active.top <= activeGeometry.host.bottom,
+      `${width}px active breaker exists but is outside the visible hierarchy viewport`,
+    );
+    assert.ok(
+      activeGeometry.active.left >= activeGeometry.host.left - 1 &&
+        activeGeometry.active.right <= activeGeometry.host.right + 1,
+      `${width}px active breaker is horizontally clipped out of the hierarchy`,
+    );
+    await page.screenshot({
+      path: `/tmp/mk1-operational-breaker-${width}.png`,
+      fullPage: true,
+    });
+    console.log(`[PASS] Real Chromium: ${width}px deep Equipment hierarchy remains visible`);
+  }
+
+  // Return to the panel for the remaining operational journey.
+  await page.setViewportSize({ width: 1366, height: 768 });
+  await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
 
   // Region-level laptop regression: Explorer (Network→Site→Structure→Level)
   // and the Room Blueprint must keep canvas/property panes in their columns.

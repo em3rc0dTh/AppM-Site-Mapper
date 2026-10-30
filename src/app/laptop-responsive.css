@@ -421,7 +421,7 @@
 
   .zip-app-shell.app-shell--immersive .breadcrumbs,
   .zip-app-shell .mk-device-page .breadcrumbs {
-    right: 510px !important;
+    right: 560px !important;
   }
 
   .zip-app-shell .mk-device-layout {
@@ -558,5 +558,150 @@
 @media (max-width: 1180px) {
   .zip-app-shell .zip-topbar-actions .zip-warehouse {
     display: none !important;
+  }
+}
+
+/* Device / Equipment acceptance band for 941–999px.
+   This range previously fell between the laptop and mobile contracts, leaving
+   the 310px tree + 405px inspector baseline active and starving the canvas.
+   Keep Search and the global alarm control visible, preserve the hierarchy,
+   and move the inspector below the work surface exactly as 1000–1199px does. */
+@media (min-width: 941px) and (max-width: 999px) {
+  .zip-app-shell .zip-brand {
+    width: 190px;
+    flex: 0 0 190px;
+    padding-inline: 12px;
+    gap: 8px;
+  }
+
+  .zip-app-shell .zip-brand strong {
+    font-size: 17px;
+  }
+
+  .zip-app-shell .zip-brand-mark {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+  }
+
+  .zip-app-shell.app-shell--immersive .breadcrumbs,
+  .zip-app-shell .mk-device-page .breadcrumbs {
+    left: 190px;
+    right: 520px !important;
+    padding-inline: 10px;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 10px;
+  }
+
+  .zip-app-shell.app-shell--immersive .breadcrumbs a,
+  .zip-app-shell .mk-device-page .breadcrumbs a,
+  .zip-app-shell .mk-device-page .breadcrumbs strong {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .zip-app-shell .zip-topbar-actions .sm-alarm-header {
+    flex: 0 0 auto;
+    min-width: max-content;
+    min-height: 40px;
+    margin-right: 6px;
+    padding-inline: 7px;
+    gap: 4px;
+    overflow: visible;
+  }
+
+  .zip-app-shell .zip-topbar-actions .sm-alarm-header small {
+    display: none;
+  }
+
+  .zip-app-shell .zip-topbar-actions .zip-explore,
+  .zip-app-shell .zip-topbar-actions .zip-account {
+    min-width: 0;
+    margin-right: 6px;
+    padding-inline: 8px;
+    gap: 5px;
+    font-size: 11px;
+  }
+
+  .zip-app-shell .zip-topbar-actions .zip-explore {
+    min-width: 74px;
+  }
+
+  .zip-app-shell .zip-topbar-actions .zip-account {
+    min-width: 82px;
+  }
+
+  .zip-app-shell .zip-topbar-actions .zip-more {
+    width: 36px;
+    flex: 0 0 36px;
+    margin-right: 6px;
+  }
+
+  .zip-app-shell .mk-device-layout {
+    grid-template-columns: 190px minmax(0, 1fr) !important;
+    height: auto !important;
+    min-height: calc(100dvh - 67px) !important;
+    overflow: visible !important;
+  }
+
+  .mk-device-layout > aside:first-child {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    min-width: 0;
+    height: auto !important;
+  }
+
+  .mk-device-layout > .zip-device-stage,
+  .mk-device-layout > section {
+    grid-column: 2;
+    min-width: 0;
+    height: auto !important;
+    overflow-y: visible !important;
+  }
+
+  .mk-device-layout > .zip-device-inspector,
+  .mk-device-layout > .mk-inline-inspector {
+    grid-column: 2;
+    min-width: 0;
+    height: auto !important;
+    overflow-y: visible !important;
+    border-top: 1px solid #dce6f0;
+  }
+
+  .zip-app-shell .operational-context {
+    min-width: 0;
+    overflow-x: hidden !important;
+  }
+
+  .zip-app-shell .telxius-tree-node > a {
+    min-width: 0;
+    min-height: 38px;
+    grid-template-columns: 8px 12px minmax(0, 1fr) 9px;
+    column-gap: 4px;
+    padding-left: calc(5px + var(--tree-depth) * 5px);
+    padding-right: 5px;
+  }
+
+  .zip-app-shell .telxius-tree-copy {
+    min-width: 0;
+    overflow: visible;
+  }
+
+  .zip-app-shell .telxius-tree-copy strong {
+    white-space: normal;
+    text-overflow: clip;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+    font-size: 11px;
+  }
+
+  .zip-app-shell .telxius-tree-root,
+  .zip-app-shell .telxius-topology-tree {
+    min-width: 0;
   }
 }

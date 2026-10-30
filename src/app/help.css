@@ -1109,3 +1109,16 @@
     min-height: 76px;
   }
 }
+
+/* Keep the command palette compact at laptop widths.
+   This file loads after laptop-responsive.css, so without this rule its generic
+   clamp() silently re-expands Search and can push ALARMS off the topbar. */
+@media (min-width: 1260px) and (max-width: 1599px) {
+  .zip-app-shell .zip-topbar .mk-search-trigger {
+    flex: 0 1 170px;
+    flex-basis: 170px;
+    width: 170px;
+    min-width: 124px;
+    max-width: 170px;
+  }
+}

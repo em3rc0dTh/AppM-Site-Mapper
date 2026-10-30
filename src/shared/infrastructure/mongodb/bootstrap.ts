@@ -121,6 +121,36 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
   ]);
 
+  const alarmOccurrences = database.collection('alarm_occurrences');
+  await Promise.all([
+    alarmOccurrences.createIndex({ id: 1 }, { unique: true, name: 'uq_alarm_occurrence_id' }),
+    alarmOccurrences.createIndex(
+      { lifecycle: 1, severity: 1, openedAt: -1 },
+      { name: 'ix_alarm_active_severity_time' },
+    ),
+    alarmOccurrences.createIndex(
+      { targetId: 1, lifecycle: 1, openedAt: -1 },
+      { name: 'ix_alarm_target_lifecycle_time' },
+    ),
+    alarmOccurrences.createIndex(
+      { correlationKey: 1 },
+      {
+        unique: true,
+        name: 'uq_alarm_active_correlation',
+        partialFilterExpression: { lifecycle: 'ACTIVE' },
+      },
+    ),
+  ]);
+
+  const alarmTransitions = database.collection('alarm_transitions');
+  await Promise.all([
+    alarmTransitions.createIndex({ id: 1 }, { unique: true, name: 'uq_alarm_transition_id' }),
+    alarmTransitions.createIndex(
+      { alarmOccurrenceId: 1, occurredAt: 1 },
+      { name: 'ix_alarm_transition_occurrence_time' },
+    ),
+  ]);
+
   const users = database.collection('users');
   await Promise.all([
     users.createIndex({ id: 1 }, { unique: true, name: 'uq_user_id' }),

@@ -690,14 +690,6 @@ This document freezes **Part 1 — alarm domain model** and **Part 2 — state m
 
 ## Part 4 — operational wireframe
 
-Still to define:
+Part 4 is approved and documented in [Alarm Operational Wireframe and Interaction](alarm-operational-wireframe.md). It freezes Home, Alarm Center, hierarchy roll-up, affected-child drill-down, direct target deep links, Inspector alarm tabs, breaker detail, evidence/timeline, acknowledgement and resolved-history interaction.
 
-- exact component geometry;
-- detailed table sizing/behavior;
-- alarm drawer/detail interaction;
-- evidence timeline layout;
-- acknowledgement interaction details;
-- historical navigation;
-- responsive behavior if required.
-
-Parts 1–3 are frozen design baselines. Part 4 remains deliberately open.
+Parts 1–4 are now frozen architecture/design baselines. Automatic alarm evaluation remains policy-driven: no target receives production threshold semantics without an explicit enabled AlarmPolicy.

@@ -18,7 +18,7 @@ import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm
 
 type Tab = 'telemetry' | 'alarms' | 'overview' | 'ports' | 'settings';
 
-const TABS: readonly Tab[] = ['telemetry', 'alarms', 'overview', 'ports', 'settings'];
+const TABS: readonly Tab[] = ['overview', 'telemetry', 'alarms', 'ports', 'settings'];
 
 const METRICS = [
   { key: 'voltageV', symbol: 'V', label: 'Voltage', unit: 'V', digits: 2 },
@@ -72,9 +72,8 @@ export function EquipmentFocusInspector({
   const summary = projectCompositionTelemetry(equipment, equipmentById, readings);
   const breaker = equipment.equipmentType === 'CIRCUIT_BREAKER';
   const current = breaker ? readings[equipment.id] : undefined;
-  const hasLiveReadings = canReadTelemetry && summary.reporting > 0;
-  const visibleTabs = hasLiveReadings ? TABS : TABS.filter((key) => key !== 'telemetry');
-  const activeTab = tab === 'telemetry' && !hasLiveReadings ? 'overview' : tab;
+  const visibleTabs = canReadTelemetry ? TABS : TABS.filter((key) => key !== 'telemetry');
+  const activeTab = tab === 'telemetry' && !canReadTelemetry ? 'overview' : tab;
   const coverage = breaker
     ? t('coverageBreaker', { reporting: summary.reporting })
     : equipment.equipmentType === 'PANEL'

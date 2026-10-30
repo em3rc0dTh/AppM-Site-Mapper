@@ -12,6 +12,7 @@ import {
 } from '@/modules/topology/application/equipment-composition-projection';
 import type { AccessPort, EquipmentNode } from '@/modules/topology/domain/entities';
 import type { PortConnectionView } from '@/modules/power/domain/port-connection-view';
+import type { AlarmRollup } from '@/modules/alarms/domain/entities';
 import { useTelemetryStream } from '@/components/telemetry/use-bdfb-telemetry';
 import {
   compositionBreakerTelemetry,
@@ -27,6 +28,7 @@ interface Props {
   readonly canReadTelemetry?: boolean | undefined;
   readonly breakerTelemetryBindings?: readonly CompositionBreakerBinding[] | undefined;
   readonly portConnections?: readonly PortConnectionView[] | undefined;
+  readonly alarmRollups?: Readonly<Record<string, AlarmRollup>> | undefined;
 }
 
 function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBreakerTelemetry }>) {
@@ -294,6 +296,7 @@ export function PhysicalEquipmentDiagram({
   canReadTelemetry = false,
   breakerTelemetryBindings = [],
   portConnections = [],
+  alarmRollups = {},
 }: Props) {
   const t = useTranslations('physicalDiagram');
   const equipmentById = useMemo(
@@ -369,6 +372,7 @@ export function PhysicalEquipmentDiagram({
           equipmentById={equipmentById}
           readings={breakerReadings}
           canReadTelemetry={canReadTelemetry}
+          alarmRollups={alarmRollups}
           {...(onAdd ? { onAdd } : {})}
         />
         {hasPorts && (
@@ -449,6 +453,7 @@ export function PhysicalEquipmentDiagram({
                           <Link
                             href={'/device/' + encodeURIComponent(slot.equipment.id)}
                             className="equipment-physical-slot is-occupied"
+                            data-alarm-severity={alarmRollups[slot.equipment.id]?.highestSeverity?.toLowerCase()}
                             title={slot.equipment.name}
                           >
                             <small>{String(slot.index + 1).padStart(2, '0')}</small>

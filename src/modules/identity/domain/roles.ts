@@ -36,6 +36,8 @@ const permissions: Readonly<Record<Role, ReadonlySet<Permission>>> = {
     'power:read',
     'power:write',
     'telemetry:read',
+    'alarms:read',
+    'alarms:ack',
     'settings:read',
     'settings:write',
     'credentials:read',

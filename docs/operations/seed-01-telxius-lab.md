@@ -153,6 +153,25 @@ The launcher validates that BFDB contains the current Telxius field emulator, fu
 
 ## Start everything
 
+### Without private Smartpack2 evidence
+
+If the private SNMPWalk and Eltek rev54 MIB files are not available, do **not** invent,
+download substitute evidence, or assign the Smartpack2 source to a QDF. Start the same
+Telxius lab in explicit degraded mode:
+
+```bash
+python3 scripts/telemetry/seed-01-telxius-lab.py \
+  --action up \
+  --ack-lab-only \
+  --skip-snmp-evidence
+```
+
+This mode still starts MongoDB, TimescaleDB, telemetry-store, Site Mapper, Modbus TCP,
+Operational Console and the QDF-2/QDF-4/QDF-5 MQTT Telxius emulator. It stops the old
+per-QDF synthetic SNMP agents/collectors, does not start the Smartpack2 replay services,
+and publishes no Smartpack2 profile or ingest authorization. The launcher reports SNMP as
+`SKIPPED`; that is an explicit evidence boundary, not a failed commissioning state.
+
 From `AppM-Site-Mapper`:
 
 ```bash

@@ -753,6 +753,16 @@ def prepare(
         },
     )
 
+    if snmp_mode == "smartpack":
+        ingest_sources = {SMARTPACK_SOURCE: secret["sourceToken"]}
+    elif snmp_mode == "synthetic":
+        ingest_sources = {
+            SYNTHETIC_SNMP_SOURCE[qdf]: secret["syntheticSnmp"][index]["token"]
+            for index, qdf in enumerate(QDFS)
+        }
+    else:
+        ingest_sources = {}
+
     env = read_env(BASE_ENV)
     # The generated Telxius env is authoritative for this profile. Inherited
     # shell variables are stripped when Compose is invoked below.
@@ -773,11 +783,10 @@ def prepare(
             ),
             "INDUSTRIAL_PROFILES_JSON": "[]",
             "INDUSTRIAL_INGEST_SOURCES_JSON": json.dumps(
-                {SMARTPACK_SOURCE: secret["sourceToken"]} if snmp_enabled else {},
-                separators=(",", ":"),
+                ingest_sources, separators=(",", ":")
             ),
             "SNMP_TRAP_SOURCES_JSON": json.dumps(
-                [receiver_profile] if snmp_enabled else [], separators=(",", ":")
+                receiver_profiles, separators=(",", ":")
             ),
             "SNMP_TRAP_ENGINE_ID": secret["engineId"],
             "SNMP_TRAP_MAX_PENDING": "5000",

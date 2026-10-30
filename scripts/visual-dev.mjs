@@ -111,14 +111,10 @@ try {
   console.log('Mutations:    BLOCKED (except login/logout)');
   console.log('');
 
-  const child = spawn(
-    process.execPath,
-    [nextBin, 'dev', '-H', devHost, '-p', String(devPort)],
-    {
-      env,
-      stdio: 'inherit',
-    },
-  );
+  const child = spawn(process.execPath, [nextBin, 'dev', '-H', devHost, '-p', String(devPort)], {
+    env,
+    stdio: 'inherit',
+  });
 
   for (const signal of ['SIGINT', 'SIGTERM']) {
     process.on(signal, () => child.kill(signal));

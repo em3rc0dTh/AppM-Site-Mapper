@@ -6011,10 +6011,6 @@ body {
   border-left: 0;
 }
 .zip-app-shell
-  .operational-layout:has(> .operational-context .telxius-topology-tree[data-collapsed='true']) {
-  grid-template-columns: 48px minmax(0, 1fr) 378px !important;
-}
-.zip-app-shell
   .zip-bdfb-page
   .operational-layout:has(> .operational-context .telxius-topology-tree[data-collapsed='true']) {
   grid-template-columns: 48px minmax(0, 1fr) minmax(370px, 410px) !important;

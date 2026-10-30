@@ -686,7 +686,7 @@ The alarm engine never owns register addresses directly. Publication remains an 
 
 This document freezes **Part 1 — alarm domain model** and **Part 2 — state machines** as the current architecture direction.
 
-**Part 3 — UI placement and presentation** is now also approved and documented separately in [Alarm UI Placement and Presentation](alarm-ui-placement.md). That document records the semantics of the approved BDFB QDF-4 visual mock: global alarm navigation, panel V/A/kW summaries, breaker indicators, State vs Alarm separation, Inspector alarms, last-known values, alarm detail and hierarchical roll-up.
+**Part 3 — UI placement and presentation** is now also approved and documented separately in [Alarm UI Placement and Presentation](alarm-ui-placement.md). That document records the semantics of the approved BDFB QDF-4 visual mock and its later hierarchy clarification: home/global alarm navigation, top-down drill-down with bottom-up alarm roll-up through the canonical QDF/BDFB/Equipment ancestry, breaker-target indicators, State vs Alarm separation, Inspector alarms, last-known values and alarm detail. Structural Shelf/Frame/Panel nodes do not gain telemetry ownership merely because they display descendant alarm summaries; measurements are shown only for explicitly commissioned telemetry targets/bindings.
 
 ## Part 4 — operational wireframe
 

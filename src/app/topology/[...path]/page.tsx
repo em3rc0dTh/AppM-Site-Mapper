@@ -172,9 +172,7 @@ export default async function TopologyNodePage({
     trail.some((entry) => entry.id === item.id && entry.kind === 'ROOM_SUBSTRUCTURE'),
   );
   const breadcrumbEntries =
-    roomVisualIndex >= 0
-      ? visualTrailEntries.slice(roomVisualIndex)
-      : visualTrailEntries.slice(-3);
+    roomVisualIndex >= 0 ? visualTrailEntries.slice(roomVisualIndex) : visualTrailEntries.slice(-3);
 
   const childKinds = allowedChildKinds(node.kind);
   const canWrite = hasPermission(auth.value.role, 'topology:write');
@@ -360,16 +358,16 @@ export default async function TopologyNodePage({
         aria-label={t('breadcrumbs')}
       >
         {breadcrumbEntries.map((item) =>
-            item.id === node.id ? (
-              <span key={item.id} aria-current="page" title={item.name}>
-                {item.name}
-              </span>
-            ) : (
-              <Link key={item.id} href={item.href} title={item.name} prefetch={false}>
-                {item.name}
-              </Link>
-            ),
-          )}
+          item.id === node.id ? (
+            <span key={item.id} aria-current="page" title={item.name}>
+              {item.name}
+            </span>
+          ) : (
+            <Link key={item.id} href={item.href} title={item.name} prefetch={false}>
+              {item.name}
+            </Link>
+          ),
+        )}
       </nav>
 
       <div className="operational-layout telxius-operational-layout">

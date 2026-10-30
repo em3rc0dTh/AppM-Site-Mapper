@@ -421,7 +421,7 @@
 
   .zip-app-shell.app-shell--immersive .breadcrumbs,
   .zip-app-shell .mk-device-page .breadcrumbs {
-    right: 510px !important;
+    right: 560px !important;
   }
 
   .zip-app-shell .mk-device-layout {

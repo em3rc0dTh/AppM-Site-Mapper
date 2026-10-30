@@ -1,4 +1,5 @@
 import { ContextPin } from '@/components/workspace/context-pin';
+import { getAlarmSnapshot } from '@/modules/alarms/application/alarm-preview-service';
 import { TopologyContextTree } from '@/components/topology/context-tree';
 import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
 import { CasEditor } from '@/components/rack/cas-editor';
@@ -33,11 +34,12 @@ export default async function RackPage({
     notFound();
   }
 
-  const [trail, parent] = await Promise.all([
+  const [trail, parent, alarmSnapshot] = await Promise.all([
     topology.getTrail(rackId),
     result.value.rack.parentId
       ? topology.getById(result.value.rack.parentId)
       : Promise.resolve(null),
+    getAlarmSnapshot(repository),
   ]);
   const room = [...trail].reverse().find((item) => item.kind === 'ROOM_SUBSTRUCTURE') ?? null;
   const root = trail[0];
@@ -69,7 +71,13 @@ export default async function RackPage({
       </nav>
       <div className="operational-layout telxius-operational-layout operational-layout--rack">
         <aside className="zip-rack-menu zip-rack-tree-menu">
-          {navigationTree && <TopologyContextTree tree={navigationTree} activeId={rackId} />}
+          {navigationTree && (
+            <TopologyContextTree
+              tree={navigationTree}
+              activeId={rackId}
+              alarmRollups={alarmSnapshot.rollups}
+            />
+          )}
           <details className="rack-tools-disclosure">
             <summary>{t('actions')}</summary>
             {room && <Link href={`/blueprint/${room.id}?rack=${rackId}`}>{t('locate')}</Link>}
@@ -80,6 +88,7 @@ export default async function RackPage({
         <section className="operational-stage operational-stage--wide zip-rack-elevation-stage">
           <RackElevation
             view={result.value}
+            alarmSnapshot={alarmSnapshot}
             canWrite={hasPermission(auth.value.role, 'topology:write')}
             {...(parent?.kind === 'POSITION'
               ? {

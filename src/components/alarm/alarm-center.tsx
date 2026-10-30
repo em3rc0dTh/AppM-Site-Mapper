@@ -218,10 +218,10 @@ export function AlarmCenter() {
                       <small>{alarm.alarmCode}</small>
                     </td>
                     <td title={alarm.path.map((item) => item.name).join(' › ')}>
-                        {compactAlarmPath(alarm.path)
-                          .map((item) => item.name)
-                          .join(' › ') || alarm.targetId}
-                      </td>
+                      {compactAlarmPath(alarm.path)
+                        .map((item) => item.name)
+                        .join(' › ') || alarm.targetId}
+                    </td>
                     <td>{new Date(alarm.openedAt).toLocaleString()}</td>
                     <td>{alarm.acknowledgement === 'ACKNOWLEDGED' ? 'ACK' : '—'}</td>
                     <td>{alarm.confidence ?? '—'}</td>

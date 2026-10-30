@@ -16,7 +16,7 @@ function tone(rollup: AlarmRollup | undefined): string {
   return rollup?.highestSeverity?.toLowerCase() ?? 'none';
 }
 
-export function AlarmBadge({ rollup }: { rollup?: AlarmRollup }) {
+export function AlarmBadge({ rollup }: { rollup: AlarmRollup | undefined }) {
   const count = total(rollup);
   if (!count) return null;
   return (
@@ -84,6 +84,7 @@ export function AlarmScopeBanner({
   nodeId: string;
 }) {
   const rollup = snapshot.rollups[nodeId];
+  if (!rollup) return null;
   const count = total(rollup);
   if (!count) return null;
 
@@ -128,6 +129,7 @@ export function AlarmInspectorCard({
   nodeId: string;
 }) {
   const rollup = snapshot.rollups[nodeId];
+  if (!rollup) return null;
   const count = total(rollup);
   if (!count) return null;
   const alarms = snapshot.occurrences.filter((item) => rollup.occurrenceIds.includes(item.id));

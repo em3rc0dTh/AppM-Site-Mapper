@@ -900,13 +900,26 @@ def main() -> None:
         default=ROOT.parent / "bfdb-telemetry-gateway",
     )
     parser.add_argument("--evidence-dir", type=Path)
-    parser.add_argument(
+    snmp_mode = parser.add_mutually_exclusive_group()
+    snmp_mode.add_argument(
         "--skip-snmp-evidence",
         action="store_true",
         help=(
-            "start the Telxius lab without private Smartpack2 SNMP replay; "
-            "MQTT/Mongo/Timescale/Modbus/UI remain enabled"
+            "start without SNMP; MQTT/Mongo/Timescale/Modbus/UI remain enabled"
         ),
+    )
+    snmp_mode.add_argument(
+        "--synthetic-snmp",
+        action="store_true",
+        help=(
+            "build three synthetic Eltek SNMPv3 QDF sources and route their "
+            "measurements/CONTROLLER_ALARM events into Site Mapper"
+        ),
+    )
+    parser.add_argument(
+        "--use-lab-broker",
+        action="store_true",
+        help="use and start the seed-01 private lab-mosquitto broker",
     )
     parser.add_argument("--mqtt-broker-url")
     parser.add_argument("--mqtt-username")
@@ -924,17 +937,37 @@ def main() -> None:
 
     if args.action in {"stop", "status", "logs"} and OVERLAY_FILE.is_file() and ENV_FILE.is_file():
         command = full_compose_command()
+        overlay_services = set(
+            json.loads(OVERLAY_FILE.read_text(encoding="utf8")).get("services", {})
+        )
         services = [
-            "mongodb",
-            "timescaledb",
-            "telemetry-store",
-            "site-mapper",
-            "modbus-tcp",
-            "snmp-traps",
-            "operational-console",
-            "lab-mqtt-telxius",
-            "seed01-smartpack2",
-            "seed01-smartpack2-to-site-mapper",
+            name
+            for name in [
+                "mongodb",
+                "timescaledb",
+                "telemetry-store",
+                "site-mapper",
+                "modbus-tcp",
+                "snmp-traps",
+                "operational-console",
+                "lab-mosquitto",
+                "lab-mqtt-telxius",
+                "seed01-smartpack2",
+                "seed01-smartpack2-to-site-mapper",
+                *SYNTHETIC_SNMP_SERVICES.values(),
+            ]
+            if name in overlay_services
+            or name
+            in {
+                "mongodb",
+                "timescaledb",
+                "telemetry-store",
+                "site-mapper",
+                "modbus-tcp",
+                "snmp-traps",
+                "operational-console",
+                "lab-mosquitto",
+            }
         ]
         if args.action == "stop":
             run(command + ["stop", *services])
@@ -946,8 +979,8 @@ def main() -> None:
 
     ensure_mongo_running()
     base = read_env(BASE_ENV)
-    evidence_dir, broker = require_runtime_inputs(args, base)
-    data = prepare(bfdb, evidence_dir, broker)
+    evidence_dir, broker, selected_snmp_mode = require_runtime_inputs(args, base)
+    data = prepare(bfdb, evidence_dir, broker, selected_snmp_mode)
 
     print(
         "Prepared current-main Telxius lab: "
@@ -955,9 +988,13 @@ def main() -> None:
             f"{row['key']} breakers={row['breakerCount']}" for row in data["rows"]
         )
         + (
-            "; Smartpack2=one unassigned 5,407-object evidence source."
-            if evidence_dir is not None
-            else "; Smartpack2=SKIPPED (private SNMP evidence not configured)."
+            "; SNMP=Smartpack2 private evidence replay."
+            if selected_snmp_mode == "smartpack"
+            else (
+                "; SNMP=three synthetic Eltek QDF sources with lab-only CONTROLLER_ALARM."
+                if selected_snmp_mode == "synthetic"
+                else "; SNMP=SKIPPED explicitly."
+            )
         ),
         flush=True,
     )
@@ -981,7 +1018,7 @@ def main() -> None:
         if not args.ack_lab_only:
             fail("--ack-lab-only is required")
         commission("apply")
-        stop_historical_sources(command)
+        stop_historical_sources(keep_lab_broker=args.use_lab_broker)
         selected = [
             "mongodb",
             "mongo-init",
@@ -992,12 +1029,16 @@ def main() -> None:
             "operational-console",
             "lab-mqtt-telxius",
         ]
-        if evidence_dir is not None:
+        if args.use_lab_broker:
+            selected.append("lab-mosquitto")
+        if selected_snmp_mode == "smartpack":
             selected += [
                 "snmp-traps",
                 "seed01-smartpack2",
                 "seed01-smartpack2-to-site-mapper",
             ]
+        elif selected_snmp_mode == "synthetic":
+            selected += ["snmp-traps", *SYNTHETIC_SNMP_SERVICES.values()]
         run_live(
             command + ["up", "-d", "--build", *selected],
             env=environment,
@@ -1006,11 +1047,19 @@ def main() -> None:
         print(run(command + ["ps"], env=environment))
         print(
             "\nTELXIUS LAB UP\n"
-            "- MQTT: QDF-2/QDF-4/QDF-5 -> existing broker -> Site Mapper\n"
             + (
-                "- SNMP: one Smartpack2 private 5,407-object replay -> INFORM batches -> Site Mapper\n"
-                if evidence_dir is not None
-                else "- SNMP: SKIPPED; no private evidence configured, no Smartpack2 claim made\n"
+                "- MQTT: QDF-2/QDF-4/QDF-5 -> seed-01 lab broker -> Site Mapper\n"
+                if args.use_lab_broker
+                else "- MQTT: QDF-2/QDF-4/QDF-5 -> existing broker -> Site Mapper\n"
+            )
+            + (
+                "- SNMP: one Smartpack2 private evidence replay -> Site Mapper\n"
+                if selected_snmp_mode == "smartpack"
+                else (
+                    "- SNMP: three synthetic Eltek SNMPv3 sources -> CONTROLLER_ALARM + measurements\n"
+                    if selected_snmp_mode == "synthetic"
+                    else "- SNMP: SKIPPED explicitly\n"
+                )
             )
             + "- Site Mapper: http://127.0.0.1:3000\n"
             + "- Operational Console: http://127.0.0.1:3100\n"

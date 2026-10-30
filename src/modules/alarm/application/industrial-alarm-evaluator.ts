@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 
 import { AlarmCommandService } from '@/modules/alarm/application/alarm-command-service';
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
@@ -12,8 +12,11 @@ function commissionedSeverity(value: string | null): AlarmSeverity | undefined {
 }
 
 function evidenceFor(signal: Signal): AlarmEvidenceRef {
+  const id = createHash('sha256')
+    .update([signal.eventId, signal.id, signal.alarmState ?? '', signal.observedAt].join('|'))
+    .digest('hex');
   return {
-    id: randomUUID(),
+    id,
     kind: 'SNMP',
     sourceIdentity: signal.sourceIdentity,
     sourcePointId: signal.key,
@@ -85,7 +88,7 @@ export class IndustrialAlarmEvaluator {
             });
           } else {
             const active = await this.alarms.getActiveByCorrelationKey(correlationKey);
-            if (active) {
+            if (active && signal.observedAt >= active.lastObservedAt) {
               const byId = new Map(active.evidenceRefs.map((item) => [item.id, item]));
               byId.set(evidence.id, evidence);
               await this.alarms.replaceOccurrence({

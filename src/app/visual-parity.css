@@ -6090,9 +6090,10 @@ body {
   overflow: visible;
 }
 
-/* Equipment focus keeps the requested 25 / 50 / 25 geometry on desktop. */
-@media (min-width: 1200px) {
+/* Preserve the established full-HD Device / Equipment baseline.
+   Laptop widths have their own contract in laptop-responsive.css. */
+@media (min-width: 1600px) {
   .zip-app-shell .mk-device-layout {
-    grid-template-columns: minmax(250px, 25%) minmax(0, 50%) minmax(280px, 25%) !important;
+    grid-template-columns: 310px minmax(0, 1fr) 405px !important;
   }
 }

@@ -28,14 +28,22 @@ export function AlarmHeaderBadge() {
       className="sm-alarm-header"
       href="/alarms"
       data-severity={snapshot.global.highestSeverity ?? 'NONE'}
-      aria-label={loading ? t('loadingLabel') : t('activeLabel', { count: snapshot.global.activeAlarmCount })}
+      aria-label={
+        loading
+          ? t('loadingLabel')
+          : t('activeLabel', { count: snapshot.global.activeAlarmCount })
+      }
     >
       <span aria-hidden="true">●</span>
       <span>{t('title')}</span>
       <b>{loading ? '…' : snapshot.global.activeAlarmCount}</b>
       {!loading && snapshot.global.activeAlarmCount > 0 ? (
         <small>
-          {snapshot.global.critical} {t('criticalShort')} · {snapshot.global.warning} {t('warningShort')} · {snapshot.global.info} {t('infoShort')}
+          {t('summary', {
+            critical: snapshot.global.critical,
+            warning: snapshot.global.warning,
+            info: snapshot.global.info,
+          })}
         </small>
       ) : null}
     </Link>

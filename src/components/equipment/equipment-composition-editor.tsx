@@ -7,6 +7,8 @@ import { PanelCommissioning } from '@/components/telemetry/panel-commissioning';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
+import { AlarmBadge } from '@/components/alarms/alarm-ui';
+import type { AlarmRollup } from '@/modules/alarms/domain/entities';
 
 import type {
   EquipmentChildMode,
@@ -44,6 +46,7 @@ export function EquipmentCompositionEditor({
   canReadTelemetry = false,
   breakerTelemetryBindings = [],
   portConnections = [],
+  alarmRollups = {},
 }: Readonly<{
   equipment: EquipmentNode;
   childEquipment: readonly EquipmentNode[];
@@ -54,6 +57,7 @@ export function EquipmentCompositionEditor({
   canReadTelemetry?: boolean;
   breakerTelemetryBindings?: readonly CompositionBreakerBinding[];
   portConnections?: readonly PortConnectionView[];
+  alarmRollups?: Readonly<Record<string, AlarmRollup>>;
 }>) {
   const t = useTranslations('equipmentEditor');
   const router = useRouter();
@@ -623,9 +627,11 @@ export function EquipmentCompositionEditor({
             <div className="equipment-slot-grid" style={compositionStyle}>
               {equipment.children.map((childId, index) => {
                 const child = childId ? byId.get(childId) : undefined;
+                const childAlarm = childId ? alarmRollups[childId] : undefined;
                 return (
                   <article
                     className={'equipment-slot ' + (childId ? 'is-occupied' : 'is-available')}
+                    data-alarm-severity={childAlarm?.highestSeverity?.toLowerCase()}
                     key={String(index)}
                   >
                     <header>
@@ -635,7 +641,10 @@ export function EquipmentCompositionEditor({
                     {child ? (
                       <>
                         <Link href={'/device/' + encodeURIComponent(child.id)}>
-                          <strong>{child.name}</strong>
+                          <span className="equipment-slot-alarm-title">
+                            <strong>{child.name}</strong>
+                            <AlarmBadge rollup={childAlarm} />
+                          </span>
                           <small>{label(child.equipmentType)}</small>
                         </Link>
                         {canWrite ? (
@@ -693,10 +702,17 @@ export function EquipmentCompositionEditor({
                 equipment.children.map((childId) => {
                   if (!childId) return null;
                   const child = byId.get(childId);
+                  const childAlarm = child ? alarmRollups[child.id] : undefined;
                   return child ? (
-                    <article key={child.id}>
+                    <article
+                      key={child.id}
+                      data-alarm-severity={childAlarm?.highestSeverity?.toLowerCase()}
+                    >
                       <Link href={'/device/' + encodeURIComponent(child.id)}>
-                        <strong>{child.name}</strong>
+                        <span className="equipment-slot-alarm-title">
+                          <strong>{child.name}</strong>
+                          <AlarmBadge rollup={childAlarm} />
+                        </span>
                         <small>{label(child.equipmentType)}</small>
                       </Link>
                       {canWrite ? (

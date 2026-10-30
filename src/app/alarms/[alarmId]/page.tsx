@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { AlarmAcknowledgeButton } from '@/components/alarms/alarm-acknowledge-button';
 import { getAlarmSnapshot } from '@/modules/alarms/application/alarm-preview-service';
 import { requirePermission } from '@/modules/identity/application/current-session';
+import { hasPermission } from '@/modules/identity/domain/roles';
 import { getTelemetryRuntime } from '@/modules/telemetry/infrastructure/telemetry-runtime';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 
@@ -31,6 +32,7 @@ export default async function AlarmDetailPage({
   const auth = await requirePermission('alarms:read');
   if (!auth.ok) redirect('/login');
 
+  const canAcknowledge = hasPermission(auth.value.role, 'alarms:ack');
   const { alarmId } = await params;
   const repository = await createTopologyRepository();
   const snapshot = await getAlarmSnapshot(repository);
@@ -69,6 +71,7 @@ export default async function AlarmDetailPage({
           <AlarmAcknowledgeButton
             alarmId={alarm.id}
             acknowledged={alarm.acknowledgement === 'ACKNOWLEDGED'}
+            canAcknowledge={canAcknowledge}
           />
           <Link href={alarm.targetHref}>Go to target →</Link>
         </div>

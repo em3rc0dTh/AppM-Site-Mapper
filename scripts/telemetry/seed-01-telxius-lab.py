@@ -407,47 +407,72 @@ def broker_config(
 
 
 def load_or_create_secrets() -> dict:
+    def new_synthetic_secret() -> dict[str, str]:
+        return {
+            "token": secrets.token_hex(24),
+            "user": "seed01-synthetic-" + secrets.token_hex(4),
+            "auth": secrets.token_hex(20),
+            "priv": secrets.token_hex(20),
+        }
+
+    defaults = {
+        "community": lambda: "lab-" + secrets.token_hex(12),
+        "sourceToken": lambda: secrets.token_hex(24),
+        "v3User": lambda: "telxius-lab-" + secrets.token_hex(4),
+        "v3Auth": lambda: secrets.token_hex(20),
+        "v3Priv": lambda: secrets.token_hex(20),
+        "engineId": lambda: "8000" + secrets.token_hex(10),
+    }
+
     if SECRET_FILE.is_file():
         value = json.loads(SECRET_FILE.read_text(encoding="utf8"))
-        required = {
-            "community",
-            "sourceToken",
-            "v3User",
-            "v3Auth",
-            "v3Priv",
-            "engineId",
-        }
-        if not required.issubset(value):
-            fail("existing Telxius secret file is incomplete")
-        if not isinstance(value.get("syntheticSnmp"), list) or len(value["syntheticSnmp"]) != 3:
-            value["syntheticSnmp"] = [
-                {
-                    "token": secrets.token_hex(24),
-                    "user": "seed01-synthetic-" + secrets.token_hex(4),
-                    "auth": secrets.token_hex(20),
-                    "priv": secrets.token_hex(20),
-                }
-                for _ in QDFS
-            ]
+        if not isinstance(value, dict):
+            fail("existing Telxius secret file must contain a JSON object")
+
+        changed = False
+        # Forward-migrate older lab secret files in place. Preserve every valid
+        # existing credential so running services can be recreated without
+        # silently rotating identities; generate only fields introduced later.
+        for key, factory in defaults.items():
+            if not isinstance(value.get(key), str) or not value[key].strip():
+                value[key] = factory()
+                changed = True
+
+        current = value.get("syntheticSnmp")
+        if not isinstance(current, list):
+            current = []
+            changed = True
+
+        migrated: list[dict[str, str]] = []
+        for index in range(len(QDFS)):
+            existing = current[index] if index < len(current) and isinstance(current[index], dict) else {}
+            generated = new_synthetic_secret()
+            row: dict[str, str] = {}
+            for key in ("token", "user", "auth", "priv"):
+                candidate = existing.get(key)
+                if isinstance(candidate, str) and candidate.strip():
+                    row[key] = candidate
+                else:
+                    row[key] = generated[key]
+                    changed = True
+            migrated.append(row)
+
+        if len(current) != len(QDFS):
+            changed = True
+        value["syntheticSnmp"] = migrated
+
+        if changed:
             save_json(SECRET_FILE, value)
+            print(
+                "Migrated legacy Telxius lab secrets in place; existing credentials preserved.",
+                flush=True,
+            )
+        else:
+            SECRET_FILE.chmod(0o600)
         return value
-    value = {
-        "community": "lab-" + secrets.token_hex(12),
-        "sourceToken": secrets.token_hex(24),
-        "v3User": "telxius-lab-" + secrets.token_hex(4),
-        "v3Auth": secrets.token_hex(20),
-        "v3Priv": secrets.token_hex(20),
-        "engineId": "8000" + secrets.token_hex(10),
-        "syntheticSnmp": [
-            {
-                "token": secrets.token_hex(24),
-                "user": "seed01-synthetic-" + secrets.token_hex(4),
-                "auth": secrets.token_hex(20),
-                "priv": secrets.token_hex(20),
-            }
-            for _ in QDFS
-        ],
-    }
+
+    value = {key: factory() for key, factory in defaults.items()}
+    value["syntheticSnmp"] = [new_synthetic_secret() for _ in QDFS]
     save_json(SECRET_FILE, value)
     return value
 

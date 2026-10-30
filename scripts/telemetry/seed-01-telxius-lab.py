@@ -400,7 +400,7 @@ def default_sender_address() -> str:
 
 def prepare(
     bfdb: Path,
-    evidence_dir: Path,
+    evidence_dir: Path | None,
     broker: dict[str, str],
 ) -> dict:
     required = [
@@ -417,7 +417,16 @@ def prepare(
     if missing:
         fail("checkout is not current main; missing: " + ", ".join(map(str, missing)))
 
-    evidence = resolve_evidence(evidence_dir)
+    snmp_enabled = evidence_dir is not None
+    evidence = (
+        resolve_evidence(evidence_dir)
+        if evidence_dir is not None
+        else {
+            "walk": RUNTIME / "SNMP_EVIDENCE_NOT_CONFIGURED",
+            "mainMib": RUNTIME / "SNMP_EVIDENCE_NOT_CONFIGURED",
+            "branchMib": RUNTIME / "SNMP_EVIDENCE_NOT_CONFIGURED",
+        }
+    )
     data = inventory()
     rows = {item["key"]: item for item in data["rows"]}
 
@@ -435,7 +444,8 @@ def prepare(
         )
     # One Smartpack2 evidence source. No QDF target is assigned because the
     # supplied evidence does not prove which QDF controller owns this walk.
-    profiles.append(smartpack_profile())
+    if snmp_enabled:
+        profiles.append(smartpack_profile())
     save_json(PROFILE_FILE, profiles, mode=0o644)
 
     secret = load_or_create_secrets()
@@ -603,10 +613,11 @@ def prepare(
             ),
             "INDUSTRIAL_PROFILES_JSON": "[]",
             "INDUSTRIAL_INGEST_SOURCES_JSON": json.dumps(
-                {SMARTPACK_SOURCE: secret["sourceToken"]}, separators=(",", ":")
+                {SMARTPACK_SOURCE: secret["sourceToken"]} if snmp_enabled else {},
+                separators=(",", ":"),
             ),
             "SNMP_TRAP_SOURCES_JSON": json.dumps(
-                [receiver_profile], separators=(",", ":")
+                [receiver_profile] if snmp_enabled else [], separators=(",", ":")
             ),
             "SNMP_TRAP_ENGINE_ID": secret["engineId"],
             "SNMP_TRAP_MAX_PENDING": "5000",
@@ -648,7 +659,9 @@ def child_env(approved: dict[str, str]) -> dict[str, str]:
     return {key: value for key, value in os.environ.items() if key not in approved}
 
 
-def require_runtime_inputs(args, base: dict[str, str]) -> tuple[Path, dict[str, str]]:
+def require_runtime_inputs(
+    args, base: dict[str, str]
+) -> tuple[Path | None, dict[str, str]]:
     broker_url = (
         args.mqtt_broker_url
         or os.getenv("TELXIUS_MQTT_BROKER_URL")
@@ -671,12 +684,17 @@ def require_runtime_inputs(args, base: dict[str, str]) -> tuple[Path, dict[str, 
     evidence_raw = (
         str(args.evidence_dir) if args.evidence_dir else os.getenv("TELXIUS_SNMP_EVIDENCE_DIR", "")
     )
-    if not evidence_raw:
+    if args.skip_snmp_evidence:
+        evidence_dir = None
+    elif not evidence_raw:
         fail(
             "set TELXIUS_SNMP_EVIDENCE_DIR (or --evidence-dir) to the private "
-            "directory containing the SNMPWalk and both Eltek rev54 MIB files"
+            "directory containing the SNMPWalk and both Eltek rev54 MIB files, "
+            "or pass --skip-snmp-evidence to start the lab without Smartpack2 replay"
         )
-    return Path(evidence_raw).expanduser().resolve(), broker_config(
+    else:
+        evidence_dir = Path(evidence_raw).expanduser().resolve()
+    return evidence_dir, broker_config(
         broker_url,
         username,
         password,
@@ -691,6 +709,14 @@ def main() -> None:
         default=ROOT.parent / "bfdb-telemetry-gateway",
     )
     parser.add_argument("--evidence-dir", type=Path)
+    parser.add_argument(
+        "--skip-snmp-evidence",
+        action="store_true",
+        help=(
+            "start the Telxius lab without private Smartpack2 SNMP replay; "
+            "MQTT/Mongo/Timescale/Modbus/UI remain enabled"
+        ),
+    )
     parser.add_argument("--mqtt-broker-url")
     parser.add_argument("--mqtt-username")
     parser.add_argument("--mqtt-password")
@@ -737,7 +763,11 @@ def main() -> None:
         + ", ".join(
             f"{row['key']} breakers={row['breakerCount']}" for row in data["rows"]
         )
-        + "; Smartpack2=one unassigned 5,407-object evidence source.",
+        + (
+            "; Smartpack2=one unassigned 5,407-object evidence source."
+            if evidence_dir is not None
+            else "; Smartpack2=SKIPPED (private SNMP evidence not configured)."
+        ),
         flush=True,
     )
 
@@ -768,12 +798,15 @@ def main() -> None:
             "telemetry-store",
             "site-mapper",
             "modbus-tcp",
-            "snmp-traps",
             "operational-console",
             "lab-mqtt-telxius",
-            "seed01-smartpack2",
-            "seed01-smartpack2-to-site-mapper",
         ]
+        if evidence_dir is not None:
+            selected += [
+                "snmp-traps",
+                "seed01-smartpack2",
+                "seed01-smartpack2-to-site-mapper",
+            ]
         run_live(
             command + ["up", "-d", "--build", *selected],
             env=environment,
@@ -783,7 +816,11 @@ def main() -> None:
         print(
             "\nTELXIUS LAB UP\n"
             "- MQTT: QDF-2/QDF-4/QDF-5 -> existing broker -> Site Mapper\n"
-            "- SNMP: one Smartpack2 private 5,407-object replay -> INFORM batches -> Site Mapper\n"
+            + (
+                "- SNMP: one Smartpack2 private 5,407-object replay -> INFORM batches -> Site Mapper\n"
+                if evidence_dir is not None
+                else "- SNMP: SKIPPED; no private evidence configured, no Smartpack2 claim made\n"
+            )
             "- Site Mapper: http://127.0.0.1:3000\n"
             "- Operational Console: http://127.0.0.1:3100\n"
             "- Modbus TCP lab: 127.0.0.1:1503\n",

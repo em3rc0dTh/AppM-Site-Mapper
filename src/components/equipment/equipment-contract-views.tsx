@@ -231,7 +231,7 @@ function PanelComposition({
                   breaker={child}
                   position={index + 1}
                   reading={readings[child.id]}
-                  alarm={alarmRollups[child.id]}
+                  {...(alarmRollups[child.id] ? { alarm: alarmRollups[child.id]! } : {})}
                 />
               ) : id ? (
                 <div className="ec-missing-row" key={id}>

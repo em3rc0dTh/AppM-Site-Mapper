@@ -163,7 +163,8 @@ export default async function TopologyNodePage({
     const kind = trail[index]?.kind;
     return (
       kind === 'ROOM_SUBSTRUCTURE' ||
-      kind === 'CONTAINER_RACK' ||
+      kind === 'DEVICE' ||
+      kind === 'EQUIPMENT' ||
       item.id === node.id
     );
   });

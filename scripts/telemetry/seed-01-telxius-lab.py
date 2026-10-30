@@ -1064,8 +1064,11 @@ def main() -> None:
             ]
         elif selected_snmp_mode == "synthetic":
             selected += ["snmp-traps", *SYNTHETIC_SNMP_SERVICES.values()]
+        # Existing seed-01 labs can rebuild many images at once. Keep Compose
+        # build concurrency at one target to reduce peak pressure on Docker
+        # Desktop/WSL while preserving deterministic rebuild semantics.
         run_live(
-            command + ["up", "-d", "--build", *selected],
+            command + ["--parallel", "1", "up", "-d", "--build", *selected],
             env=environment,
             timeout=1800,
         )

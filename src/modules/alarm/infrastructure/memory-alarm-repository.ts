@@ -23,7 +23,8 @@ export class MemoryAlarmRepository implements AlarmRepository {
         .filter((item) => item.correlationKey === correlationKey)
         .sort(
           (a, b) =>
-            b.lastObservedAt.localeCompare(a.lastObservedAt) || b.openedAt.localeCompare(a.openedAt),
+            b.lastObservedAt.localeCompare(a.lastObservedAt) ||
+            b.openedAt.localeCompare(a.openedAt),
         )[0] ?? null
     );
   }
@@ -46,8 +47,7 @@ export class MemoryAlarmRepository implements AlarmRepository {
     if (
       occurrence.lifecycle === 'ACTIVE' &&
       [...this.occurrences.values()].some(
-        (item) =>
-          item.lifecycle === 'ACTIVE' && item.correlationKey === occurrence.correlationKey,
+        (item) => item.lifecycle === 'ACTIVE' && item.correlationKey === occurrence.correlationKey,
       )
     ) {
       throw new Error('ALARM_ACTIVE_CORRELATION_EXISTS');

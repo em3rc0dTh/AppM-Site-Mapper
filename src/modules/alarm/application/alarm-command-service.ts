@@ -58,10 +58,7 @@ export class AlarmCommandService {
     if (existing) return this.mergeActive(existing, input, observedAt);
 
     const latest = await this.alarms.getLatestByCorrelationKey(correlationKey);
-    if (
-      latest?.lifecycle === 'RESOLVED' &&
-      observedAt <= latest.lastObservedAt
-    ) {
+    if (latest?.lifecycle === 'RESOLVED' && observedAt <= latest.lastObservedAt) {
       return latest;
     }
 

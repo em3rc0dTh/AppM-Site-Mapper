@@ -20,6 +20,9 @@ import { TelemetryRejectionLogThrottle } from '@/modules/telemetry/infrastructur
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { logger } from '@/shared/infrastructure/logger';
 import { getProcessSingleton } from '@/shared/infrastructure/process-singleton';
+import { TelemetryAlarmEvaluator } from '@/modules/alarm/application/telemetry-alarm-evaluator';
+import { createAlarmRepository } from '@/modules/alarm/infrastructure/alarm-repository-factory';
+import { createAlarmPolicyRepository } from '@/modules/alarm/infrastructure/alarm-policy-repository-factory';
 
 export interface TelemetrySourceDiagnostic {
   readonly serial: string;
@@ -188,6 +191,22 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     const hub = new TelemetryHub(maxStreams);
     const topologyRepository = await createTopologyRepository();
     const bindingRepository = await createTelemetryBindingRepository();
+    const alarmRepository = await createAlarmRepository();
+    const alarmPolicyRepository = await createAlarmPolicyRepository();
+    const alarmEvaluator = new TelemetryAlarmEvaluator(
+      alarmRepository,
+      alarmPolicyRepository,
+      topologyRepository,
+    );
+    const unsubscribeAlarmEvaluator = hub.subscribe((sample) => {
+      void alarmEvaluator.observe(sample).catch((error) =>
+        logger.warn('alarm.telemetry_evaluation_failed', {
+          reason: error instanceof Error ? error.message : 'unknown',
+          targetId: sample.targetId,
+        }),
+      );
+    });
+    alarmEvaluator.start();
     const service = new TelemetryService(
       topologyRepository,
       hub,
@@ -437,6 +456,8 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
       service,
       stop: async () => {
         source?.stop();
+        unsubscribeAlarmEvaluator?.();
+        alarmEvaluator.stop();
         await industrialOutbox?.close();
       },
       diagnostics: () => {

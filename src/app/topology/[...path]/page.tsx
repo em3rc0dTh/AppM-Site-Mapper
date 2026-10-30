@@ -4,6 +4,8 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
+import { AlarmScopeBanner } from '@/components/alarms/alarm-ui';
+import { getAlarmSnapshot } from '@/modules/alarms/application/alarm-preview-service';
 import {
   BdfbChassis,
   type BreakerPowerBinding,
@@ -145,6 +147,7 @@ export default async function TopologyNodePage({
   if ((node.kind === 'DEVICE' && node.deviceType !== 'BDFB') || node.kind === 'EQUIPMENT') {
     redirect(`/device/${node.id}`);
   }
+  const alarmSnapshot = await getAlarmSnapshot(repository);
   const [trail, children, selfHref] = await Promise.all([
     service.getTrail(node.id),
     service.listChildren(node.id),
@@ -369,7 +372,13 @@ export default async function TopologyNodePage({
 
       <div className="operational-layout telxius-operational-layout">
         <aside className="operational-context">
-          {navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />}
+          {navigationTree && (
+            <TopologyContextTree
+              tree={navigationTree}
+              activeId={node.id}
+              alarmRollups={alarmSnapshot.rollups}
+            />
+          )}
           {node.kind === 'DEVICE' && bdfbPresentation && (
             <details className="context-power-disclosure">
               <summary>{t('electricalHierarchy')}</summary>
@@ -385,6 +394,7 @@ export default async function TopologyNodePage({
         </aside>
 
         <section className="operational-stage telxius-operational-stage">
+          <AlarmScopeBanner snapshot={alarmSnapshot} nodeId={node.id} />
           <SectionHeader
             eyebrow={
               node.kind === 'SITE'
@@ -443,6 +453,7 @@ export default async function TopologyNodePage({
                 powerBindings={bdfbPowerBindings}
                 telemetryBindings={bdfbTelemetryBindings}
                 canWritePower={canWritePower}
+                alarmSnapshot={alarmSnapshot}
               />
             ) : node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? (
               <section className="zip-bdfb-recovery-state" role="status">
@@ -539,6 +550,7 @@ export default async function TopologyNodePage({
             feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
             mappedBreakerCount={mappedBdfbBreakerCount}
             descendantEquipmentIds={descendantEquipmentIds}
+            alarmSnapshot={alarmSnapshot}
           />
         ) : (
           <TopologyPropertiesPanel

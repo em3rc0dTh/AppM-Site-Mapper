@@ -39,7 +39,11 @@ export function AlarmScopeSummary({
           {t('activeCount', { count: rollup.activeAlarmCount })}
         </strong>
         <span>
-          {t('severityCounts', { critical: rollup.critical, warning: rollup.warning, info: rollup.info })}
+          {t('severityCounts', {
+            critical: rollup.critical,
+            warning: rollup.warning,
+            info: rollup.info,
+          })}
         </span>
       </header>
       <div className="sm-alarm-scope-meta">

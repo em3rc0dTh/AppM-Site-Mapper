@@ -8,6 +8,7 @@ import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
 import { SnmpCapacityStrip } from './snmp-capacity-strip';
+import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
 
 interface Props {
   readonly root: EquipmentNode;
@@ -278,6 +279,7 @@ export function EquipmentContractViews({
           </span>
         )}
       </div>
+      <AlarmScopeSummary entityId={root.id} showAffectedChildren />
       {canReadTelemetry && (
         <div className="ec-live-cover" aria-label={t('coverage')}>
           <span>
@@ -439,6 +441,7 @@ export function EquipmentContractViews({
             {t('mqttSourceCaption')} {readings[root.id]?.sourceIdentity ?? t('noVerifiedBinding')} ·{' '}
             {t('packetCaption')} {readings[root.id]?.receivedAt ?? '—'}
           </p>
+          <AlarmOccurrenceList entityId={root.id} descendants={false} />
           <Link className="ec-trace-link" href={`/power?entityId=${encodeURIComponent(root.id)}`}>
             {t('explorePower')}
           </Link>

@@ -171,7 +171,7 @@ body {
   z-index: 85;
   top: 0;
   left: 310px;
-  right: 790px;
+  right: 930px;
   height: 67px;
   margin: 0 !important;
   padding: 0 31px;
@@ -1879,9 +1879,12 @@ body {
   padding: 0 !important;
   position: relative;
 }
+.zip-rack-elevation-page {
+  --zip-rack-inspector-width: 378px;
+}
 .zip-rack-elevation-view {
   display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 378px !important;
+  grid-template-columns: minmax(0, 1fr) var(--zip-rack-inspector-width) !important;
   min-height: calc(100vh - 145px);
   background: #fff;
 }
@@ -2250,7 +2253,7 @@ body {
 }
 .zip-rack-telemetry {
   position: absolute;
-  right: 390px;
+  right: calc(var(--zip-rack-inspector-width, 378px) + 48px);
   top: 8px;
   z-index: 10;
 }
@@ -5181,6 +5184,7 @@ body {
    preserve the approved rack/CAS composition while preventing clipping. */
 @media (min-width: 941px) {
   .zip-rack-elevation-page {
+    --zip-rack-inspector-width: clamp(320px, 24vw, 378px);
     height: calc(100dvh - 67px) !important;
     min-height: 0 !important;
     overflow: hidden !important;
@@ -5280,12 +5284,16 @@ body {
 }
 
 @media (min-width: 941px) and (max-width: 1280px) {
+  .zip-rack-elevation-page {
+    --zip-rack-inspector-width: 320px;
+  }
+
   .zip-rack-elevation-page .operational-layout--rack {
     grid-template-columns: 230px minmax(0, 1fr) !important;
   }
 
   .zip-rack-elevation-page .zip-rack-elevation-view {
-    grid-template-columns: minmax(0, 1fr) 320px !important;
+    grid-template-columns: minmax(0, 1fr) var(--zip-rack-inspector-width) !important;
   }
 
   .zip-rack-elevation-page .zip-rack-elevation-footer {

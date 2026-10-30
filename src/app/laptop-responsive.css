@@ -560,3 +560,131 @@
     display: none !important;
   }
 }
+
+
+/* Device / Equipment visual-acceptance contract:
+   the equipment workbench remains a three-zone 25 / 50 / 25 surface down to
+   the desktop/tablet transition. Search and alarm actions are protected before
+   optional header actions, and the active topology path keeps a readable rail. */
+@media (min-width: 941px) and (max-width: 1199px) {
+  .zip-app-shell .zip-brand {
+    width: 220px;
+    flex: 0 0 220px;
+    padding-inline: 12px;
+    gap: 8px;
+  }
+
+  .zip-app-shell .zip-brand strong {
+    font-size: 17px;
+  }
+
+  .zip-app-shell .zip-brand-mark {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+  }
+
+  .zip-app-shell .zip-topbar-actions {
+    min-width: 0;
+  }
+
+  .zip-app-shell .zip-topbar-actions .mk-search-trigger {
+    width: 124px;
+    min-width: 124px;
+    flex: 0 0 124px;
+    margin-right: 6px !important;
+    padding-inline: 8px;
+  }
+
+  .zip-app-shell .zip-topbar-actions .help-trigger,
+  .zip-app-shell .zip-topbar-actions .sm-alarm-header,
+  .zip-app-shell .zip-topbar-actions .zip-explore,
+  .zip-app-shell .zip-topbar-actions .zip-account,
+  .zip-app-shell .zip-topbar-actions .zip-more {
+    margin-right: 6px;
+  }
+
+  .zip-app-shell .zip-topbar-actions .zip-explore,
+  .zip-app-shell .zip-topbar-actions .zip-account {
+    min-width: 0;
+    padding-inline: 8px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .zip-app-shell .zip-topbar-actions .zip-account {
+    max-width: 96px;
+  }
+
+  .zip-app-shell .zip-topbar-actions .zip-more {
+    width: 34px;
+    flex-basis: 34px;
+  }
+
+  .zip-app-shell .zip-topbar-actions .zip-warehouse {
+    display: none !important;
+  }
+
+  .zip-app-shell .zip-topbar-actions .sm-alarm-header {
+    min-width: max-content;
+    padding-inline: 7px;
+    overflow: visible;
+  }
+
+  .zip-app-shell.app-shell--immersive .breadcrumbs,
+  .zip-app-shell .mk-device-page .breadcrumbs {
+    left: 220px;
+    right: 500px !important;
+    padding-inline: 10px;
+    gap: 6px;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    font-size: 11px !important;
+  }
+
+  .zip-app-shell .mk-device-layout {
+    grid-template-columns: minmax(220px, 25%) minmax(0, 50%) minmax(220px, 25%) !important;
+    height: calc(100dvh - 67px) !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .mk-device-layout > aside:first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    min-width: 0;
+    height: 100% !important;
+    overflow-y: auto !important;
+  }
+
+  .mk-device-layout > .zip-device-stage,
+  .mk-device-layout > section {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    min-width: 0;
+    height: 100% !important;
+    overflow-y: auto !important;
+  }
+
+  .mk-device-layout > .zip-device-inspector,
+  .mk-device-layout > .mk-inline-inspector {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    min-width: 0;
+    height: 100% !important;
+    overflow-y: auto !important;
+    border-top: 0 !important;
+  }
+
+  .zip-app-shell .telxius-tree-node > a {
+    padding-left: calc(5px + var(--tree-depth) * 5px);
+  }
+
+  .zip-app-shell .telxius-tree-copy strong {
+    font-size: 11px;
+    line-height: 1.3;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

@@ -3,6 +3,8 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { EquipmentCompositionEditor } from '@/components/equipment/equipment-composition-editor';
+import { AlarmInspectorCard, AlarmScopeBanner } from '@/components/alarms/alarm-ui';
+import { getAlarmSnapshot } from '@/modules/alarms/application/alarm-preview-service';
 import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
 import { EquipmentFocusInspector } from '@/components/equipment/equipment-focus-inspector';
 import { AccessPortEditor } from '@/components/equipment/access-port-editor';
@@ -49,6 +51,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   if (node.kind === 'DEVICE' && node.deviceType === 'BDFB') {
     redirect(await service.buildDeepLink(node.id));
   }
+
+  const alarmSnapshot = await getAlarmSnapshot(repo);
 
   const owningDeviceId = node.kind === 'DEVICE' ? node.id : node.deviceId;
   const directEquipmentChildren =
@@ -352,9 +356,16 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
       </nav>
 
       <div className="mk-device-layout">
-        <aside>{tree && <TopologyContextTree tree={tree} activeId={node.id} />}</aside>
+        <aside>{tree && (
+            <TopologyContextTree
+              tree={tree}
+              activeId={node.id}
+              alarmRollups={alarmSnapshot.rollups}
+            />
+          )}</aside>
 
         <section className="zip-device-stage">
+          <AlarmScopeBanner snapshot={alarmSnapshot} nodeId={node.id} />
           <h1>{node.kind === 'EQUIPMENT' ? t('composition') : t('elevation')}</h1>
           {node.kind === 'DEVICE' && canDelete ? (
             <DeleteEntityControl id={node.id} name={node.name} />
@@ -390,6 +401,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               canReadTelemetry={canReadTelemetry}
               overview={
                 <>
+                  <AlarmInspectorCard snapshot={alarmSnapshot} nodeId={node.id} />
                   <ContextPin entityId={node.id} />
                   <dl>
                     <dt>{t('identity')}</dt>

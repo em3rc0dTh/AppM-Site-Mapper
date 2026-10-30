@@ -109,7 +109,8 @@
         "requiresBinding": "Live readings require explicit Equipment MQTT bindings.",
         "panelScope": "Average scope: {panel}",
         "entireScope": "Average scope: all configured BDFB breakers"
-      }
+      },
+      "alarms": "Alarms"
     }
   },
   "snmp": {

@@ -1430,3 +1430,35 @@
 .ec-alarm-cell[data-severity='INFO'] {
   color: #1765a5;
 }
+
+.ec-card-status,
+.ec-frame-heading-status,
+.ec-frame-row-status,
+.ec-panel-name-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ec-card-status,
+.ec-frame-heading-status,
+.ec-frame-row-status {
+  justify-content: flex-end;
+}
+.ec-panel-name-row {
+  justify-content: space-between;
+  width: 100%;
+}
+.ec-panel-name-row .ec-panel-name {
+  min-width: 0;
+}
+.ec-frame-heading-status,
+.ec-frame-row-status {
+  flex-wrap: wrap;
+}
+.ec-frame-card[data-alarm-severity='CRITICAL'],
+.ec-shelf-card[data-alarm-severity='CRITICAL'],
+.ec-panel-line[data-alarm-severity='CRITICAL'] {
+  border-color: #ff9da4;
+}
+

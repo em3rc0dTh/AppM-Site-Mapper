@@ -52,6 +52,8 @@ MODBUS_SOURCE_UNITS = {
     "EMU-TELXIUS-QDF-5": 3,
 }
 SMARTPACK_SOURCE = "EMU-SMARTPACK2-LURIN"
+SYNTHETIC_SNMP_SOURCE = {qdf: "EMU-SNMP-" + qdf for qdf in QDFS}
+SYNTHETIC_SNMP_SERVICES = {qdf: "seed01-snmp-agent-" + qdf.lower().replace("-", "") for qdf in QDFS}
 
 WALK_CANDIDATES = (
     "walk.txt",
@@ -303,6 +305,51 @@ def smartpack_profile() -> dict:
         "mib": "eltek-rev54",
         "maxSignals": 4096,
         "rules": [],
+    }
+
+
+def synthetic_snmp_profile(qdf: str, target_id: str) -> dict:
+    return {
+        "sourceIdentity": SYNTHETIC_SNMP_SOURCE[qdf],
+        "protocol": "SNMP",
+        "version": "seed01-synthetic-eltek-rev54-v1",
+        "targetId": target_id,
+        "staleMs": 120000,
+        "mib": "eltek-rev54",
+        "rules": [
+            {
+                "key": "1.3.6.1.4.1.12148.10.10.5.5.0",
+                "kind": "measurement",
+                "unit": "V",
+                "scale": 0.1,
+                "evidence": "Synthetic Eltek rev54 laboratory voltage; not field evidence",
+            },
+            {
+                "key": "1.3.6.1.4.1.12148.10.9.2.5.0",
+                "kind": "measurement",
+                "unit": "A",
+                "scale": 0.1,
+                "evidence": "Synthetic Eltek rev54 laboratory current; not field evidence",
+            },
+            {
+                "key": "1.3.6.1.4.1.12148.10.10.7.5.0",
+                "kind": "measurement",
+                "unit": "degC",
+                "scale": 0.1,
+                "evidence": "Synthetic Eltek rev54 laboratory temperature; not field evidence",
+            },
+            {
+                "key": "alarm:1.3.6.1.4.1.12148.10.2.1.0:3",
+                "kind": "alarm",
+                "activeValues": [1],
+                "clearValues": [0],
+                "alarmCode": "CONTROLLER_ALARM",
+                "evidence": (
+                    "Synthetic Eltek power-system status condition=3; "
+                    "lab-only controller alarm, not physical field evidence"
+                ),
+            },
+        ],
     }
 
 

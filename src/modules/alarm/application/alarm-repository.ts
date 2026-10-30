@@ -1,7 +1,4 @@
-import type {
-  AlarmOccurrence,
-  AlarmTransition,
-} from '@/modules/alarm/domain/entities';
+import type { AlarmOccurrence, AlarmTransition } from '@/modules/alarm/domain/entities';
 
 export interface AlarmRepository {
   getOccurrence(id: string): Promise<AlarmOccurrence | null>;

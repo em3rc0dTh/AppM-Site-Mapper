@@ -30,7 +30,10 @@ const occurrences = db.getCollection('alarm_occurrences');
 const transitions = db.getCollection('alarm_transitions');
 
 if (mode === 'clear') {
-  const ids = occurrences.find({ fixtureMarker: marker }, { id: 1 }).toArray().map((item) => item.id);
+  const ids = occurrences
+    .find({ fixtureMarker: marker }, { id: 1 })
+    .toArray()
+    .map((item) => item.id);
   if (ids.length) transitions.deleteMany({ alarmOccurrenceId: { $in: ids } });
   const result = occurrences.deleteMany({ fixtureMarker: marker });
   print(JSON.stringify({ mode, marker, removed: result.deletedCount, transitionIds: ids.length }));
@@ -163,11 +166,7 @@ const fixtures = [
 ];
 
 for (const fixture of fixtures) {
-  occurrences.replaceOne(
-    { id: fixture.id },
-    fixture,
-    { upsert: true },
-  );
+  occurrences.replaceOne({ id: fixture.id }, fixture, { upsert: true });
   transitions.deleteMany({ alarmOccurrenceId: fixture.id, metadata: { fixtureMarker: marker } });
   transitions.insertOne({
     id: fixture.id + '-opened',
@@ -181,11 +180,17 @@ for (const fixture of fixtures) {
   });
 }
 
-print(JSON.stringify({
-  mode,
-  marker,
-  bdfb: bdfb.name,
-  panel: panel.name,
-  targets: fixtures.map((item) => ({ id: item.id, targetId: item.targetId, alarmCode: item.alarmCode })),
-  warning: 'Synthetic UI-only alarms. Do not treat as field evidence.',
-}));
+print(
+  JSON.stringify({
+    mode,
+    marker,
+    bdfb: bdfb.name,
+    panel: panel.name,
+    targets: fixtures.map((item) => ({
+      id: item.id,
+      targetId: item.targetId,
+      alarmCode: item.alarmCode,
+    })),
+    warning: 'Synthetic UI-only alarms. Do not treat as field evidence.',
+  }),
+);

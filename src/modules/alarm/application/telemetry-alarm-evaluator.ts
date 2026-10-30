@@ -186,10 +186,7 @@ export class TelemetryAlarmEvaluator {
         policy.powerLoss.debounceSamples,
         policy.powerLoss.recoverySamples,
         policy.powerLoss.severity,
-        [
-          evidence(sample, 'VOLTAGE', voltageV, 'V'),
-          evidence(sample, 'CURRENT', currentA, 'A'),
-        ],
+        [evidence(sample, 'VOLTAGE', voltageV, 'V'), evidence(sample, 'CURRENT', currentA, 'A')],
         'SUSPECTED',
       );
     }

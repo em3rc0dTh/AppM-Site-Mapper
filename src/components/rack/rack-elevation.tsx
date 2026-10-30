@@ -111,10 +111,13 @@ export function RackElevation({
                     </span>
                     <span className="legacy-rack-block-copy">
                       <strong>{block.occupant?.name ?? roleLabel(block.role)}</strong>
-                      {block.occupant && alarmSnapshot.rollups[block.occupant.id]?.activeAlarmCount ? (
+                      {block.occupant &&
+                      alarmSnapshot.rollups[block.occupant.id]?.activeAlarmCount ? (
                         <span
                           className="sm-alarm-rollup-badge"
-                          data-severity={alarmSnapshot.rollups[block.occupant.id]!.highestSeverity ?? 'INFO'}
+                          data-severity={
+                            alarmSnapshot.rollups[block.occupant.id]!.highestSeverity ?? 'INFO'
+                          }
                         >
                           {alarmSnapshot.rollups[block.occupant.id]!.activeAlarmCount}
                         </span>

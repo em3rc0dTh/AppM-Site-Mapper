@@ -3,10 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 
-import type {
-  AlarmOccurrenceView,
-  AlarmTransition,
-} from '@/modules/alarm/domain/entities';
+import type { AlarmOccurrenceView, AlarmTransition } from '@/modules/alarm/domain/entities';
 
 export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canAck: boolean }) {
   const [occurrence, setOccurrence] = useState<AlarmOccurrenceView | null>(null);
@@ -59,10 +56,15 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
         <div>
           <span>{occurrence.family}</span>
           <h1>{occurrence.name}</h1>
-          <p>{occurrence.severity} · {occurrence.lifecycle} · {occurrence.confidence ?? '—'} · {occurrence.acknowledgement}</p>
+          <p>
+            {occurrence.severity} · {occurrence.lifecycle} · {occurrence.confidence ?? '—'} ·{' '}
+            {occurrence.acknowledgement}
+          </p>
         </div>
         <div>
-          {canAck && occurrence.lifecycle === 'ACTIVE' && occurrence.acknowledgement === 'UNACKNOWLEDGED' ? (
+          {canAck &&
+          occurrence.lifecycle === 'ACTIVE' &&
+          occurrence.acknowledgement === 'UNACKNOWLEDGED' ? (
             <button type="button" disabled={busy} onClick={() => void acknowledge()}>
               {busy ? 'Acknowledging…' : 'Acknowledge'}
             </button>
@@ -86,24 +88,37 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
       <div className="sm-alarm-detail-grid">
         <section>
           <h2>Evidence</h2>
-          {occurrence.evidenceRefs.length ? occurrence.evidenceRefs.map((evidence) => (
-            <article className="sm-alarm-evidence" key={evidence.id}>
-              <header><strong>{evidence.kind}</strong><span>{new Date(evidence.observedAt).toLocaleString()}</span></header>
-              <p>{evidence.sourceIdentity ?? '—'} {evidence.sourcePointId ? '· ' + evidence.sourcePointId : ''}</p>
-              <p>
-                {evidence.metric ?? 'Evidence'}
-                {evidence.value !== undefined ? ': ' + String(evidence.value) : ''}
-                {evidence.unit ? ' ' + evidence.unit : ''}
-              </p>
-              {evidence.note ? <small>{evidence.note}</small> : null}
-            </article>
-          )) : <p>No evidence references recorded.</p>}
+          {occurrence.evidenceRefs.length ? (
+            occurrence.evidenceRefs.map((evidence) => (
+              <article className="sm-alarm-evidence" key={evidence.id}>
+                <header>
+                  <strong>{evidence.kind}</strong>
+                  <span>{new Date(evidence.observedAt).toLocaleString()}</span>
+                </header>
+                <p>
+                  {evidence.sourceIdentity ?? '—'}{' '}
+                  {evidence.sourcePointId ? '· ' + evidence.sourcePointId : ''}
+                </p>
+                <p>
+                  {evidence.metric ?? 'Evidence'}
+                  {evidence.value !== undefined ? ': ' + String(evidence.value) : ''}
+                  {evidence.unit ? ' ' + evidence.unit : ''}
+                </p>
+                {evidence.note ? <small>{evidence.note}</small> : null}
+              </article>
+            ))
+          ) : (
+            <p>No evidence references recorded.</p>
+          )}
         </section>
 
         <section>
           <h2>Event timeline</h2>
           <ol className="sm-alarm-timeline">
-            <li><strong>Alarm opened</strong><span>{new Date(occurrence.openedAt).toLocaleString()}</span></li>
+            <li>
+              <strong>Alarm opened</strong>
+              <span>{new Date(occurrence.openedAt).toLocaleString()}</span>
+            </li>
             {transitions.map((transition) => (
               <li key={transition.id}>
                 <strong>{transition.toState}</strong>
@@ -112,7 +127,10 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
               </li>
             ))}
             {occurrence.resolvedAt ? (
-              <li><strong>Resolved</strong><span>{new Date(occurrence.resolvedAt).toLocaleString()}</span></li>
+              <li>
+                <strong>Resolved</strong>
+                <span>{new Date(occurrence.resolvedAt).toLocaleString()}</span>
+              </li>
             ) : null}
           </ol>
         </section>

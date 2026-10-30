@@ -6,10 +6,7 @@ import { createAlarmRepository } from '@/modules/alarm/infrastructure/alarm-repo
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { isSafeMutationRequest } from '@/shared/http/request-security';
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await requirePermission('alarms:ack');
   if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: 403 });
   if (!isSafeMutationRequest(request)) {
@@ -17,10 +14,7 @@ export async function POST(
   }
 
   const { id } = await params;
-  const service = new AlarmService(
-    await createAlarmRepository(),
-    await createTopologyRepository(),
-  );
+  const service = new AlarmService(await createAlarmRepository(), await createTopologyRepository());
   try {
     return NextResponse.json({
       occurrence: await service.acknowledge(id, auth.value.id),

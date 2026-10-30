@@ -105,7 +105,9 @@ export function BdfbChassis({
                             key={panel.id}
                             className="sm-bdfb-physical-panel"
                             data-selected={selected}
-                            data-alarm-severity={alarmSnapshot.rollups[panel.id]?.highestSeverity ?? 'NONE'}
+                            data-alarm-severity={
+                              alarmSnapshot.rollups[panel.id]?.highestSeverity ?? 'NONE'
+                            }
                           >
                             <button
                               className="sm-bdfb-panel-select"
@@ -125,8 +127,16 @@ export function BdfbChassis({
                                 })}
                               </span>
                               {alarmSnapshot.rollups[panel.id]?.activeAlarmCount ? (
-                                <span className="sm-panel-alarm-inline" data-severity={alarmSnapshot.rollups[panel.id]!.highestSeverity ?? 'INFO'}>
-                                  {alarmSnapshot.rollups[panel.id]!.activeAlarmCount} alarm{alarmSnapshot.rollups[panel.id]!.activeAlarmCount === 1 ? '' : 's'}
+                                <span
+                                  className="sm-panel-alarm-inline"
+                                  data-severity={
+                                    alarmSnapshot.rollups[panel.id]!.highestSeverity ?? 'INFO'
+                                  }
+                                >
+                                  {alarmSnapshot.rollups[panel.id]!.activeAlarmCount} alarm
+                                  {alarmSnapshot.rollups[panel.id]!.activeAlarmCount === 1
+                                    ? ''
+                                    : 's'}
                                 </span>
                               ) : null}
                             </button>
@@ -195,7 +205,10 @@ export function BdfbChassis({
                     <span>P{String(index + 1).padStart(2, '0')}</span>
                     <strong>●</strong>
                     {alarmSnapshot.rollups[breaker.id]?.activeAlarmCount ? (
-                      <em className="sm-breaker-alarm-dot" data-severity={alarmSnapshot.rollups[breaker.id]!.highestSeverity ?? 'INFO'}>
+                      <em
+                        className="sm-breaker-alarm-dot"
+                        data-severity={alarmSnapshot.rollups[breaker.id]!.highestSeverity ?? 'INFO'}
+                      >
                         {alarmSnapshot.rollups[breaker.id]!.activeAlarmCount}
                       </em>
                     ) : null}

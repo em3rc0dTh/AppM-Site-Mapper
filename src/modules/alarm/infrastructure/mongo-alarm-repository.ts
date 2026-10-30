@@ -1,10 +1,7 @@
 import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
 
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
-import type {
-  AlarmOccurrence,
-  AlarmTransition,
-} from '@/modules/alarm/domain/entities';
+import type { AlarmOccurrence, AlarmTransition } from '@/modules/alarm/domain/entities';
 
 type OccurrenceDocument = AlarmOccurrence & Document;
 type TransitionDocument = AlarmTransition & Document;
@@ -35,23 +32,23 @@ export class MongoAlarmRepository implements AlarmRepository {
   }
 
   async listActive(): Promise<readonly AlarmOccurrence[]> {
-    return (await this.occurrences.find({ lifecycle: 'ACTIVE' }).sort({ openedAt: -1 }).toArray())
-      .map((item) => withoutMongoId<AlarmOccurrence>(item));
+    return (
+      await this.occurrences.find({ lifecycle: 'ACTIVE' }).sort({ openedAt: -1 }).toArray()
+    ).map((item) => withoutMongoId<AlarmOccurrence>(item));
   }
 
   async listResolved(limit = 100): Promise<readonly AlarmOccurrence[]> {
-    return (await this.occurrences
-      .find({ lifecycle: 'RESOLVED' })
-      .sort({ resolvedAt: -1 })
-      .limit(Math.max(1, Math.min(limit, 500)))
-      .toArray())
-      .map((item) => withoutMongoId<AlarmOccurrence>(item));
+    return (
+      await this.occurrences
+        .find({ lifecycle: 'RESOLVED' })
+        .sort({ resolvedAt: -1 })
+        .limit(Math.max(1, Math.min(limit, 500)))
+        .toArray()
+    ).map((item) => withoutMongoId<AlarmOccurrence>(item));
   }
 
   async insertOccurrence(occurrence: AlarmOccurrence): Promise<void> {
-    await this.occurrences.insertOne(
-      occurrence as OptionalUnlessRequiredId<OccurrenceDocument>,
-    );
+    await this.occurrences.insertOne(occurrence as OptionalUnlessRequiredId<OccurrenceDocument>);
   }
 
   async replaceOccurrence(occurrence: AlarmOccurrence): Promise<void> {
@@ -60,16 +57,15 @@ export class MongoAlarmRepository implements AlarmRepository {
   }
 
   async insertTransition(transition: AlarmTransition): Promise<void> {
-    await this.transitions.insertOne(
-      transition as OptionalUnlessRequiredId<TransitionDocument>,
-    );
+    await this.transitions.insertOne(transition as OptionalUnlessRequiredId<TransitionDocument>);
   }
 
   async listTransitions(occurrenceId: string): Promise<readonly AlarmTransition[]> {
-    return (await this.transitions
-      .find({ alarmOccurrenceId: occurrenceId })
-      .sort({ occurredAt: 1 })
-      .toArray())
-      .map((item) => withoutMongoId<AlarmTransition>(item));
+    return (
+      await this.transitions
+        .find({ alarmOccurrenceId: occurrenceId })
+        .sort({ occurredAt: 1 })
+        .toArray()
+    ).map((item) => withoutMongoId<AlarmTransition>(item));
   }
 }

@@ -93,15 +93,23 @@ export function HomeLiveOverview({
           <Link href="/alarms">View all alarms →</Link>
         </div>
         {alarmError ? (
-          <p className="sm-alarm-unavailable">Alarm status unavailable. This is not equivalent to no alarms.</p>
+          <p className="sm-alarm-unavailable">
+            Alarm status unavailable. This is not equivalent to no alarms.
+          </p>
         ) : alarmSnapshot.global.activeAlarmCount === 0 ? (
           <p className="sm-alarm-empty">No active alarms.</p>
         ) : (
           <>
             <div className="sm-home-alarm-counters">
-              <span data-severity="CRITICAL"><b>{alarmSnapshot.global.critical}</b> Critical</span>
-              <span data-severity="WARNING"><b>{alarmSnapshot.global.warning}</b> Warning</span>
-              <span data-severity="INFO"><b>{alarmSnapshot.global.info}</b> Info</span>
+              <span data-severity="CRITICAL">
+                <b>{alarmSnapshot.global.critical}</b> Critical
+              </span>
+              <span data-severity="WARNING">
+                <b>{alarmSnapshot.global.warning}</b> Warning
+              </span>
+              <span data-severity="INFO">
+                <b>{alarmSnapshot.global.info}</b> Info
+              </span>
             </div>
             <div className="sm-home-alarm-list">
               {alarmSnapshot.occurrences
@@ -111,7 +119,10 @@ export function HomeLiveOverview({
                   <article key={alarm.id} data-severity={alarm.severity}>
                     <div>
                       <strong>{alarm.name}</strong>
-                      <span>{alarm.severity}{alarm.confidence ? ' · ' + alarm.confidence : ''}</span>
+                      <span>
+                        {alarm.severity}
+                        {alarm.confidence ? ' · ' + alarm.confidence : ''}
+                      </span>
                       <small>{alarm.path.map((item) => item.name).join(' › ')}</small>
                     </div>
                     <Link href={alarm.targetHref}>Go to target →</Link>

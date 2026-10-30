@@ -29,7 +29,9 @@ export function AlarmCenter() {
 
   const sites = useMemo(
     () =>
-      [...new Set(snapshot.occurrences.map((item) => scopeName(item, 'SITE')).filter(Boolean))].sort(),
+      [
+        ...new Set(snapshot.occurrences.map((item) => scopeName(item, 'SITE')).filter(Boolean)),
+      ].sort(),
     [snapshot.occurrences],
   );
   const qdfs = useMemo(
@@ -45,7 +47,9 @@ export function AlarmCenter() {
   const rows = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return snapshot.occurrences
-      .filter((item) => (showResolved ? item.lifecycle === 'RESOLVED' : item.lifecycle === 'ACTIVE'))
+      .filter((item) =>
+        showResolved ? item.lifecycle === 'RESOLVED' : item.lifecycle === 'ACTIVE',
+      )
       .filter((item) => severity === 'ALL' || item.severity === severity)
       .filter((item) => family === 'ALL' || item.family === family)
       .filter((item) => ack === 'ALL' || item.acknowledgement === ack)
@@ -77,7 +81,9 @@ export function AlarmCenter() {
         <div>
           <span>Operational alarms</span>
           <h1>Alarm Center</h1>
-          <p>One occurrence, many hierarchical views. Targets own alarms; ancestors show roll-ups.</p>
+          <p>
+            One occurrence, many hierarchical views. Targets own alarms; ancestors show roll-ups.
+          </p>
         </div>
         <button type="button" onClick={() => void refresh()}>
           Refresh
@@ -121,11 +127,7 @@ export function AlarmCenter() {
             >
               Active
             </button>
-            <button
-              type="button"
-              aria-pressed={showResolved}
-              onClick={() => setShowResolved(true)}
-            >
+            <button type="button" aria-pressed={showResolved} onClick={() => setShowResolved(true)}>
               Resolved
             </button>
             <select
@@ -150,11 +152,7 @@ export function AlarmCenter() {
                 </option>
               ))}
             </select>
-            <select
-              aria-label="QDF"
-              value={qdf}
-              onChange={(event) => setQdf(event.target.value)}
-            >
+            <select aria-label="QDF" value={qdf} onChange={(event) => setQdf(event.target.value)}>
               <option value="ALL">All QDFs</option>
               {qdfs.map((value) => (
                 <option value={value} key={value}>
@@ -176,9 +174,7 @@ export function AlarmCenter() {
             <select
               aria-label="Acknowledgement"
               value={ack}
-              onChange={(event) =>
-                setAck(event.target.value as 'ALL' | AlarmAcknowledgement)
-              }
+              onChange={(event) => setAck(event.target.value as 'ALL' | AlarmAcknowledgement)}
             >
               <option value="ALL">All ACK states</option>
               <option value="UNACKNOWLEDGED">Unacknowledged</option>

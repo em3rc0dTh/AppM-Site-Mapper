@@ -158,13 +158,8 @@ function BreakerRow({
         <span className="ec-status-dot" aria-hidden="true" />
         <span className="ec-status-text">{status}</span>
       </span>
-      <span
-        className="ec-alarm-cell"
-        data-severity={alarm?.highestSeverity ?? 'NONE'}
-      >
-        {alarm?.activeAlarmCount
-          ? alarm.highestSeverity + ' · ' + alarm.activeAlarmCount
-          : '—'}
+      <span className="ec-alarm-cell" data-severity={alarm?.highestSeverity ?? 'NONE'}>
+        {alarm?.activeAlarmCount ? alarm.highestSeverity + ' · ' + alarm.activeAlarmCount : '—'}
       </span>
     </ChildLink>
   );
@@ -431,7 +426,13 @@ export function EquipmentContractViews({
       )}
 
       {type === 'PANEL' && (
-        <PanelComposition root={root} byId={equipmentById} readings={readings} onAdd={onAdd} alarmRollups={alarmSnapshot.rollups} />
+        <PanelComposition
+          root={root}
+          byId={equipmentById}
+          readings={readings}
+          onAdd={onAdd}
+          alarmRollups={alarmSnapshot.rollups}
+        />
       )}
 
       {type === 'CIRCUIT_BREAKER' && (

@@ -179,7 +179,7 @@ describe('alarm hierarchy', () => {
     });
 
     expect(repeated.id).toBe(first.id);
-    expect((await alarmRepo.listActive())).toHaveLength(1);
+    expect(await alarmRepo.listActive()).toHaveLength(1);
 
     const acknowledged = await query.acknowledge(first.id, 'operator-1');
     expect(acknowledged.lifecycle).toBe('ACTIVE');

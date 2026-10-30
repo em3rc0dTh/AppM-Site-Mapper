@@ -9,7 +9,11 @@ export function AlarmHeaderBadge() {
 
   if (error) {
     return (
-      <Link className="sm-alarm-header is-unavailable" href="/alarms" title="Alarm status unavailable">
+      <Link
+        className="sm-alarm-header is-unavailable"
+        href="/alarms"
+        title="Alarm status unavailable"
+      >
         <span aria-hidden="true">!</span>
         <span>ALARMS</span>
         <b>?</b>
@@ -22,9 +26,7 @@ export function AlarmHeaderBadge() {
       className="sm-alarm-header"
       href="/alarms"
       data-severity={snapshot.global.highestSeverity ?? 'NONE'}
-      aria-label={
-        loading ? 'Loading alarms' : snapshot.global.activeAlarmCount + ' active alarms'
-      }
+      aria-label={loading ? 'Loading alarms' : snapshot.global.activeAlarmCount + ' active alarms'}
     >
       <span aria-hidden="true">●</span>
       <span>ALARMS</span>

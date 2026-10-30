@@ -11,10 +11,7 @@ export async function GET(request: Request) {
 
   const url = new URL(request.url);
   const includeResolved = url.searchParams.get('includeResolved') === 'true';
-  const service = new AlarmService(
-    await createAlarmRepository(),
-    await createTopologyRepository(),
-  );
+  const service = new AlarmService(await createAlarmRepository(), await createTopologyRepository());
   return NextResponse.json(
     await service.snapshot({
       includeResolved,

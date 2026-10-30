@@ -290,7 +290,6 @@ This lab does not claim that:
 - the existing Modbus map is field-commissioned for Metasys;
 - successful laboratory startup equals physical field certification.
 
-
 ## Alarm UI acceptance fixture — Docker only
 
 The alarm implementation includes a **reversible synthetic UI fixture** for the existing isolated seed-01 Docker project. It exists only to validate the approved hierarchy and screens; it is not electrical field evidence and it does not commission production thresholds.

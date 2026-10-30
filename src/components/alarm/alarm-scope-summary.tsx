@@ -33,7 +33,9 @@ export function AlarmScopeSummary({
   return (
     <section className="sm-alarm-scope-card" data-severity={rollup.highestSeverity ?? 'INFO'}>
       <header>
-        <strong>{rollup.activeAlarmCount} active alarm{rollup.activeAlarmCount === 1 ? '' : 's'}</strong>
+        <strong>
+          {rollup.activeAlarmCount} active alarm{rollup.activeAlarmCount === 1 ? '' : 's'}
+        </strong>
         <span>
           {rollup.critical} Critical · {rollup.warning} Warning · {rollup.info} Info
         </span>
@@ -85,7 +87,12 @@ export function AlarmOccurrenceList({
           <span data-severity={alarm.severity}>●</span>
           <div>
             <strong>{alarm.name}</strong>
-            <small>{alarm.path.slice(-3).map((item) => item.name).join(' › ')}</small>
+            <small>
+              {alarm.path
+                .slice(-3)
+                .map((item) => item.name)
+                .join(' › ')}
+            </small>
           </div>
           <em>{alarm.severity}</em>
         </Link>

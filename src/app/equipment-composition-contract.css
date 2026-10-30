@@ -291,7 +291,10 @@
 .ec-breaker-columns,
 .ec-breaker-row {
   display: grid;
-  grid-template-columns: 44px minmax(150px, 2fr) repeat(4, minmax(64px, 1fr)) minmax(88px, 1fr) minmax(110px, 1.2fr);
+  grid-template-columns: 44px minmax(150px, 2fr) repeat(4, minmax(64px, 1fr)) minmax(
+      88px,
+      1fr
+    ) minmax(110px, 1.2fr);
   align-items: center;
   gap: 8px;
   padding: 12px 14px;
@@ -813,7 +816,10 @@
 .ec-breaker-columns,
 .ec-breaker-row,
 .ec-empty-breaker-row {
-  grid-template-columns: 44px minmax(175px, 2.5fr) repeat(4, minmax(58px, 0.8fr)) minmax(88px, 1fr) minmax(110px, 1.2fr);
+  grid-template-columns: 44px minmax(175px, 2.5fr) repeat(4, minmax(58px, 0.8fr)) minmax(
+      88px,
+      1fr
+    ) minmax(110px, 1.2fr);
 }
 
 .ec-empty-breaker-row {
@@ -1417,6 +1423,12 @@
   white-space: nowrap;
   color: #718297;
 }
-.ec-alarm-cell[data-severity='CRITICAL'] { color: #d91f30; }
-.ec-alarm-cell[data-severity='WARNING'] { color: #bb7800; }
-.ec-alarm-cell[data-severity='INFO'] { color: #1765a5; }
+.ec-alarm-cell[data-severity='CRITICAL'] {
+  color: #d91f30;
+}
+.ec-alarm-cell[data-severity='WARNING'] {
+  color: #bb7800;
+}
+.ec-alarm-cell[data-severity='INFO'] {
+  color: #1765a5;
+}

@@ -15,7 +15,8 @@ export const ALARM_DEFINITIONS: readonly AlarmDefinition[] = [
     code: 'LOW_VOLTAGE',
     family: 'ELECTRICAL',
     name: 'Low voltage',
-    description: 'Accepted voltage is below the commissioned threshold for the required debounce period.',
+    description:
+      'Accepted voltage is below the commissioned threshold for the required debounce period.',
     applicableTargetTypes: ['EQUIPMENT'],
     defaultSeverity: 'WARNING',
     ruleVersion: 'v1',
@@ -25,7 +26,8 @@ export const ALARM_DEFINITIONS: readonly AlarmDefinition[] = [
     code: 'OVERCURRENT',
     family: 'ELECTRICAL',
     name: 'Overcurrent',
-    description: 'Accepted current is above the commissioned threshold for the required debounce period.',
+    description:
+      'Accepted current is above the commissioned threshold for the required debounce period.',
     applicableTargetTypes: ['EQUIPMENT'],
     defaultSeverity: 'CRITICAL',
     ruleVersion: 'v1',
@@ -35,7 +37,8 @@ export const ALARM_DEFINITIONS: readonly AlarmDefinition[] = [
     code: 'POWER_LOSS',
     family: 'CORRELATED',
     name: 'Power loss',
-    description: 'Electrical evidence and optional independent corroboration indicate loss of power.',
+    description:
+      'Electrical evidence and optional independent corroboration indicate loss of power.',
     applicableTargetTypes: ['EQUIPMENT'],
     defaultSeverity: 'CRITICAL',
     ruleVersion: 'v1',
@@ -65,7 +68,8 @@ export const ALARM_DEFINITIONS: readonly AlarmDefinition[] = [
     code: 'DATA_QUALITY_DEGRADED',
     family: 'COMMUNICATION',
     name: 'Data quality degraded',
-    description: 'Accepted observations are insufficient, stale, invalid, or incomplete for normal operation.',
+    description:
+      'Accepted observations are insufficient, stale, invalid, or incomplete for normal operation.',
     applicableTargetTypes: ['DEVICE', 'EQUIPMENT'],
     defaultSeverity: 'WARNING',
     ruleVersion: 'v1',

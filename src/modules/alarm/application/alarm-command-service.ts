@@ -34,11 +34,7 @@ export class AlarmCommandService {
       throw new Error('ALARM_TARGET_TYPE_NOT_ALLOWED');
     }
     const target = await this.topology.getById(input.targetId);
-    if (
-      !target ||
-      target.lifecycle !== 'ACTIVE' ||
-      target.kind !== input.targetType
-    ) {
+    if (!target || target.lifecycle !== 'ACTIVE' || target.kind !== input.targetType) {
       throw new Error('ALARM_TARGET_NOT_ACTIVE');
     }
 

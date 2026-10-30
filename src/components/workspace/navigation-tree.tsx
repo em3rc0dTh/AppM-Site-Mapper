@@ -66,7 +66,13 @@ function Branch({
       {children.length > 0 && (query || expanded) && (
         <ul>
           {children.map((child) => (
-            <Branch key={child.id} node={child} query={query} pathname={pathname} rollups={rollups} />
+            <Branch
+              key={child.id}
+              node={child}
+              query={query}
+              pathname={pathname}
+              rollups={rollups}
+            />
           ))}
         </ul>
       )}
@@ -100,7 +106,13 @@ export function NavigationTree({ roots }: { roots: readonly WorkspaceTreeNode[] 
       ) : (
         <ul>
           {filtered.map((node) => (
-            <Branch key={node.id} node={node} query={query.toLowerCase()} pathname={pathname} rollups={snapshot.rollups} />
+            <Branch
+              key={node.id}
+              node={node}
+              query={query.toLowerCase()}
+              pathname={pathname}
+              rollups={snapshot.rollups}
+            />
           ))}
         </ul>
       )}

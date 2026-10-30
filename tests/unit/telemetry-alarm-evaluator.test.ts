@@ -94,7 +94,7 @@ describe('TelemetryAlarmEvaluator', () => {
     const query = new AlarmService(alarms, topology);
 
     await evaluator.observe(sample(44, 4, '2026-10-30T02:10:00.000Z'));
-    expect((await alarms.listActive())).toHaveLength(0);
+    expect(await alarms.listActive()).toHaveLength(0);
 
     await evaluator.observe(sample(44, 4, '2026-10-30T02:10:10.000Z'));
     const active = await alarms.listActive();
@@ -105,9 +105,9 @@ describe('TelemetryAlarmEvaluator', () => {
     expect((await alarms.listActive())[0]?.lifecycle).toBe('ACTIVE');
 
     await evaluator.observe(sample(48, 4, '2026-10-30T02:10:20.000Z'));
-    expect((await alarms.listActive())).toHaveLength(1);
+    expect(await alarms.listActive()).toHaveLength(1);
     await evaluator.observe(sample(48, 4, '2026-10-30T02:10:30.000Z'));
-    expect((await alarms.listActive())).toHaveLength(0);
+    expect(await alarms.listActive()).toHaveLength(0);
   });
 
   it('asserts configured power loss as suspected from electrical evidence only', async () => {

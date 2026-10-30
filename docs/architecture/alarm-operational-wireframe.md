@@ -3,6 +3,7 @@
 **Status:** approved Part 4 implementation baseline, 2026-10-30.
 
 **Depends on:**
+
 - [Alarm Domain and State Machines](alarm-domain-and-state-machine.md)
 - [Alarm UI Placement and Presentation](alarm-ui-placement.md)
 
@@ -77,6 +78,7 @@ A direct target jump preserves canonical hierarchy through breadcrumb/context na
 Operational records are persisted in alarm_policies, alarm_occurrences and alarm_transitions.
 
 Core APIs:
+
 - GET /api/alarms
 - GET /api/alarms/:id
 - POST /api/alarms/:id/ack

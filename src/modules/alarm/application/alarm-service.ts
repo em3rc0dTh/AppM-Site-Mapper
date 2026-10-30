@@ -37,7 +37,6 @@ function highest(current: AlarmSeverity | null, next: AlarmSeverity): AlarmSever
   return !current || severityRank[next] > severityRank[current] ? next : current;
 }
 
-
 function operationalAlarmPath(path: readonly AlarmOccurrenceView['path'][number][]) {
   // Alarm roll-up is intentionally bounded to the physical QDF operational
   // scope. In the current canonical topology that boundary is the nearest
@@ -50,11 +49,7 @@ function operationalAlarmPath(path: readonly AlarmOccurrenceView['path'][number]
   return rootIndex >= 0 ? path.slice(rootIndex) : path;
 }
 
-function addAlarm(
-  rollup: AlarmRollup,
-  alarm: AlarmOccurrence,
-  direct: boolean,
-): AlarmRollup {
+function addAlarm(rollup: AlarmRollup, alarm: AlarmOccurrence, direct: boolean): AlarmRollup {
   const directIds = direct ? [...rollup.directAlarmIds, alarm.id] : [...rollup.directAlarmIds];
   const descendantIds = direct
     ? [...rollup.descendantAlarmIds]

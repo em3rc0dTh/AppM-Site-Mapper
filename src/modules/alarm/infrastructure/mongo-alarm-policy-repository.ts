@@ -26,9 +26,9 @@ export class MongoAlarmPolicyRepository implements AlarmPolicyRepository {
     targetType: AlarmPolicy['targetType'],
     targetId: string,
   ): Promise<readonly AlarmPolicy[]> {
-    return (
-      await this.collection.find({ enabled: true, targetType, targetId }).toArray()
-    ).map(toDomain);
+    return (await this.collection.find({ enabled: true, targetType, targetId }).toArray()).map(
+      toDomain,
+    );
   }
 
   async getById(id: string): Promise<AlarmPolicy | null> {

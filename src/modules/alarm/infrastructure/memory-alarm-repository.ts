@@ -1,8 +1,5 @@
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
-import type {
-  AlarmOccurrence,
-  AlarmTransition,
-} from '@/modules/alarm/domain/entities';
+import type { AlarmOccurrence, AlarmTransition } from '@/modules/alarm/domain/entities';
 
 export class MemoryAlarmRepository implements AlarmRepository {
   private readonly occurrences = new Map<string, AlarmOccurrence>();
@@ -13,9 +10,11 @@ export class MemoryAlarmRepository implements AlarmRepository {
   }
 
   async getActiveByCorrelationKey(correlationKey: string): Promise<AlarmOccurrence | null> {
-    return [...this.occurrences.values()].find(
-      (item) => item.lifecycle === 'ACTIVE' && item.correlationKey === correlationKey,
-    ) ?? null;
+    return (
+      [...this.occurrences.values()].find(
+        (item) => item.lifecycle === 'ACTIVE' && item.correlationKey === correlationKey,
+      ) ?? null
+    );
   }
 
   async listActive(): Promise<readonly AlarmOccurrence[]> {

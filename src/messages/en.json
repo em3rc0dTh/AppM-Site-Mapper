@@ -45,7 +45,8 @@
       "packets": "Inspect original breaker packets",
       "snmpSeparation": "SNMP incoming DC shunts are independent from MQTT breaker readings.",
       "hideSnmp": "HIDE SNMP FEEDS",
-      "showSnmp": "INSPECT SNMP FEEDS"
+      "showSnmp": "INSPECT SNMP FEEDS",
+      "alarms": "Alarms"
     }
   },
   "bdfb": {
@@ -109,7 +110,8 @@
         "requiresBinding": "Live readings require explicit Equipment MQTT bindings.",
         "panelScope": "Average scope: {panel}",
         "entireScope": "Average scope: all configured BDFB breakers"
-      }
+      },
+      "alarms": "Alarms"
     }
   },
   "snmp": {
@@ -541,7 +543,8 @@
     "noMatchingEntities": "No matching entities",
     "noTopology": "No topology yet",
     "tryAnother": "Try another name.",
-    "createNetwork": "Create a network to map your infrastructure."
+    "createNetwork": "Create a network to map your infrastructure.",
+    "activeAlarmsInBranch": "{count, plural, one {# active alarm in this branch} other {# active alarms in this branch}}"
   },
   "topologyTree": {
     "global": "Global topology",
@@ -1305,7 +1308,8 @@
     "openPanelComposition": "Open Equipment Composition: {panel}",
     "positionBreaker": "Position {position}: {breaker}",
     "positionBreakerDetails": "Position {position}: {breaker}; open breaker details",
-    "positionAvailable": "Position {position}: available"
+    "positionAvailable": "Position {position}: available",
+    "alarmCount": "{count, plural, one {# alarm} other {# alarms}}"
   },
   "bdfbTree": {
     "tree": "BDFB power tree",
@@ -2157,7 +2161,10 @@
       "viewAll": "View all alarms →",
       "unavailable": "Alarm status unavailable. This is not equivalent to no alarms.",
       "none": "No active alarms.",
-      "goToTarget": "Go to target →"
+      "goToTarget": "Go to target →",
+      "critical": "Critical",
+      "warning": "Warning",
+      "info": "Info"
     }
   }
 }

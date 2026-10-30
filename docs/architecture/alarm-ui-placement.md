@@ -721,6 +721,6 @@ navigation always preserves a route to the real target
 - **Part 1 — Alarm domain model:** frozen design baseline.
 - **Part 2 — Alarm state machines:** frozen design baseline.
 - **Part 3 — UI placement and presentation:** frozen design baseline by this document and the approved mock.
-- **Part 4 — Operational wireframe/detail interaction:** still open.
+- **Part 4 — Operational wireframe/detail interaction:** approved and frozen in [Alarm Operational Wireframe and Interaction](alarm-operational-wireframe.md).
 
-Part 4 must refine exact component geometry, responsive behavior, drawer/modal behavior, evidence timeline layout and interaction details without violating Parts 1–3.
+Parts 1–4 now form the canonical alarm UX/domain baseline.

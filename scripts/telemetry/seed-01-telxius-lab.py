@@ -838,43 +838,57 @@ def child_env(approved: dict[str, str]) -> dict[str, str]:
 
 def require_runtime_inputs(
     args, base: dict[str, str]
-) -> tuple[Path | None, dict[str, str]]:
-    broker_url = (
-        args.mqtt_broker_url
-        or os.getenv("TELXIUS_MQTT_BROKER_URL")
-        or (
-            base.get("MQTT_BROKER_URL", "")
-            if "lab-mosquitto" not in base.get("MQTT_BROKER_URL", "")
-            else ""
-        )
-    )
-    username = (
-        args.mqtt_username
-        if args.mqtt_username is not None
-        else os.getenv("TELXIUS_MQTT_USERNAME", base.get("MQTT_USERNAME", ""))
-    )
-    password = (
-        args.mqtt_password
-        if args.mqtt_password is not None
-        else os.getenv("TELXIUS_MQTT_PASSWORD", base.get("MQTT_PASSWORD", ""))
-    )
-    evidence_raw = (
-        str(args.evidence_dir) if args.evidence_dir else os.getenv("TELXIUS_SNMP_EVIDENCE_DIR", "")
-    )
-    if args.skip_snmp_evidence:
-        evidence_dir = None
-    elif not evidence_raw:
-        fail(
-            "set TELXIUS_SNMP_EVIDENCE_DIR (or --evidence-dir) to the private "
-            "directory containing the SNMPWalk and both Eltek rev54 MIB files, "
-            "or pass --skip-snmp-evidence to start the lab without Smartpack2 replay"
-        )
+) -> tuple[Path | None, dict[str, str], str]:
+    if args.use_lab_broker:
+        broker_url = "mqtt://lab-mosquitto:1883"
+        username = ""
+        password = ""
     else:
+        broker_url = (
+            args.mqtt_broker_url
+            or os.getenv("TELXIUS_MQTT_BROKER_URL")
+            or (
+                base.get("MQTT_BROKER_URL", "")
+                if "lab-mosquitto" not in base.get("MQTT_BROKER_URL", "")
+                else ""
+            )
+        )
+        username = (
+            args.mqtt_username
+            if args.mqtt_username is not None
+            else os.getenv("TELXIUS_MQTT_USERNAME", base.get("MQTT_USERNAME", ""))
+        )
+        password = (
+            args.mqtt_password
+            if args.mqtt_password is not None
+            else os.getenv("TELXIUS_MQTT_PASSWORD", base.get("MQTT_PASSWORD", ""))
+        )
+
+    evidence_raw = (
+        str(args.evidence_dir)
+        if args.evidence_dir
+        else os.getenv("TELXIUS_SNMP_EVIDENCE_DIR", "")
+    )
+    if args.synthetic_snmp:
+        evidence_dir = None
+        snmp_mode = "synthetic"
+    elif args.skip_snmp_evidence:
+        evidence_dir = None
+        snmp_mode = "skip"
+    elif evidence_raw:
         evidence_dir = Path(evidence_raw).expanduser().resolve()
-    return evidence_dir, broker_config(
-        broker_url,
-        username,
-        password,
+        snmp_mode = "smartpack"
+    else:
+        fail(
+            "SNMP mode is required: provide TELXIUS_SNMP_EVIDENCE_DIR/--evidence-dir "
+            "for Smartpack2 replay, pass --synthetic-snmp for the rebuildable Eltek "
+            "lab, or pass --skip-snmp-evidence to omit SNMP explicitly"
+        )
+
+    return (
+        evidence_dir,
+        broker_config(broker_url, username, password),
+        snmp_mode,
     )
 
 

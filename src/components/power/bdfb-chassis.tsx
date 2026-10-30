@@ -5,7 +5,6 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { ContextPin } from '@/components/workspace/context-pin';
-import { AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
@@ -80,8 +79,6 @@ export function BdfbChassis({
           <span>{t('panels', { count: panels.length })}</span>
         </div>
       </header>
-      <AlarmScopeSummary entityId={device.id} showAffectedChildren />
-
       <div className="sm-bdfb-physical-body">
         <article className="sm-bdfb-physical-chassis">
           <div className="sm-bdfb-physical-title">{t('chassis', { name: device.name })}</div>

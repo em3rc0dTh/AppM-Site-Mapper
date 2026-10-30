@@ -6056,3 +6056,43 @@ body {
   grid-template-columns: 48px minmax(0, 1fr) 378px !important;
 }
 
+/* Stable right-side action cluster: search/help/alarms must remain visible and
+   must sit above immersive breadcrumbs instead of being clipped by them. */
+.zip-context-slot {
+  min-width: 0;
+}
+.zip-topbar-actions {
+  position: relative;
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  min-width: 0;
+  height: 100%;
+  background: #fff;
+}
+.zip-topbar-actions .mk-search-trigger {
+  width: clamp(150px, 18vw, 260px);
+  min-width: 150px;
+  flex: 0 1 260px;
+  margin: auto 10px auto 0 !important;
+}
+.zip-topbar-actions .help-trigger,
+.zip-topbar-actions .sm-alarm-header,
+.zip-topbar-actions .zip-explore,
+.zip-topbar-actions .zip-warehouse,
+.zip-topbar-actions .zip-account,
+.zip-topbar-actions .zip-more {
+  flex-shrink: 0;
+}
+.zip-topbar-actions .sm-alarm-header {
+  margin-right: 10px;
+  overflow: visible;
+}
+
+/* Equipment focus keeps the requested 25 / 50 / 25 geometry on desktop. */
+@media (min-width: 1200px) {
+  .zip-app-shell .mk-device-layout {
+    grid-template-columns: minmax(250px, 25%) minmax(0, 50%) minmax(280px, 25%) !important;
+  }
+}

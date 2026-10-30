@@ -68,11 +68,37 @@ function ChildLink({
   );
 }
 
-function PanelPreview({ panel }: Readonly<{ panel: EquipmentNode }>) {
+function AlarmBadge({
+  id,
+  rollups,
+}: Readonly<{ id: string; rollups: Readonly<Record<string, AlarmRollup>> }>) {
+  const alarm = rollups[id];
+  if (!alarm?.activeAlarmCount) return null;
+  return (
+    <span
+      className="sm-alarm-rollup-badge"
+      data-severity={alarm.highestSeverity ?? 'INFO'}
+      title={`${alarm.activeAlarmCount} active alarms`}
+    >
+      {alarm.activeAlarmCount}
+    </span>
+  );
+}
+
+function PanelPreview({
+  panel,
+  alarmRollups,
+}: Readonly<{
+  panel: EquipmentNode;
+  alarmRollups: Readonly<Record<string, AlarmRollup>>;
+}>) {
   const t = useTranslations('equipmentView');
   return (
     <ChildLink node={panel} className="ec-panel-line">
-      <strong className="ec-panel-name">{panel.name}</strong>
+      <span className="ec-panel-name-row">
+        <strong className="ec-panel-name">{panel.name}</strong>
+        <AlarmBadge id={panel.id} rollups={alarmRollups} />
+      </span>
       <span className="ec-panel-meta">
         {panel.childMode === 'POSITIONAL'
           ? `${panel.children.length} positions · ${panel.children.filter(Boolean).length} occupied`
@@ -89,10 +115,12 @@ function FramePreview({
   frame,
   byId,
   readings,
+  alarmRollups,
 }: Readonly<{
   frame: EquipmentNode;
   byId: ReadonlyMap<string, EquipmentNode>;
   readings: Props['readings'];
+  alarmRollups: Readonly<Record<string, AlarmRollup>>;
 }>) {
   const t = useTranslations('equipmentView');
   const panels = activeChildren(frame, byId).filter(({ child }) => child.equipmentType === 'PANEL');
@@ -104,13 +132,18 @@ function FramePreview({
           <small>{t('frame')}</small>
           <ChildLink node={frame} className="ec-frame-title" />
         </div>
-        <span className="ec-count">
-          {t('frameMqttLive', { reporting: signal.reportingChildren, total: panels.length })}
+        <span className="ec-frame-heading-status">
+          <span className="ec-count">
+            {t('frameMqttLive', { reporting: signal.reportingChildren, total: panels.length })}
+          </span>
+          <AlarmBadge id={frame.id} rollups={alarmRollups} />
         </span>
       </div>
       <div className="ec-frame-panels">
         {panels.length ? (
-          panels.map(({ child }) => <PanelPreview key={child.id} panel={child} />)
+          panels.map(({ child }) => (
+            <PanelPreview key={child.id} panel={child} alarmRollups={alarmRollups} />
+          ))
         ) : (
           <p className="ec-muted">{t('noPanelsInstalled')}</p>
         )}
@@ -346,19 +379,27 @@ export function EquipmentContractViews({
                       <small>{child.equipmentType.replaceAll('_', ' ')}</small>
                       <ChildLink node={child} className="ec-shelf-link" />
                     </div>
-                    <Counts node={child} />
+                    <span className="ec-card-status">
+                      <Counts node={child} />
+                      <AlarmBadge id={child.id} rollups={alarmSnapshot.rollups} />
+                    </span>
                   </div>
                   <div className="ec-chassis-frame-strip">
                     {child.equipmentType === 'FRAME' ? (
                       activeChildren(child, equipmentById).map(({ child: panel }) => (
-                        <PanelPreview key={panel.id} panel={panel} />
+                        <PanelPreview
+                          key={panel.id}
+                          panel={panel}
+                          alarmRollups={alarmSnapshot.rollups}
+                        />
                       ))
                     ) : activeChildren(child, equipmentById).length ? (
                       activeChildren(child, equipmentById).map(({ child: frame }) => (
                         <ChildLink node={frame} key={frame.id} className="ec-chassis-frame">
                           <strong>{frame.name}</strong>
-                          <small>
+                          <small className="ec-card-status">
                             <Counts node={frame} />
+                            <AlarmBadge id={frame.id} rollups={alarmSnapshot.rollups} />
                           </small>
                         </ChildLink>
                       ))
@@ -386,7 +427,13 @@ export function EquipmentContractViews({
           </header>
           <div className="ec-frames-grid">
             {children.map(({ child }) => (
-              <FramePreview key={child.id} frame={child} byId={equipmentById} readings={readings} />
+              <FramePreview
+                key={child.id}
+                frame={child}
+                byId={equipmentById}
+                readings={readings}
+                alarmRollups={alarmSnapshot.rollups}
+              />
             ))}
             {!children.length && <p className="ec-muted">{t('noFrames')}</p>}
           </div>
@@ -410,12 +457,15 @@ export function EquipmentContractViews({
                   <ChildLink node={child} className="ec-frame-row-name" />
                   <Counts node={child} />
                 </div>
-                <span className="ec-count">
-                  {projectCompositionTelemetry(child, equipmentById, readings).reporting}/
-                  {child.childMode === 'POSITIONAL'
-                    ? child.children.length
-                    : child.children.filter(Boolean).length}{' '}
-                  {t('livePositions')}
+                <span className="ec-frame-row-status">
+                  <span className="ec-count">
+                    {projectCompositionTelemetry(child, equipmentById, readings).reporting}/
+                    {child.childMode === 'POSITIONAL'
+                      ? child.children.length
+                      : child.children.filter(Boolean).length}{' '}
+                    {t('livePositions')}
+                  </span>
+                  <AlarmBadge id={child.id} rollups={alarmSnapshot.rollups} />
                 </span>
               </div>
             ))}

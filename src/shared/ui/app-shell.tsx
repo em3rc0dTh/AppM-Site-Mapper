@@ -128,28 +128,31 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Suspense fallback={null}>
           <ContextTracker />
         </Suspense>
-        <CommandPalette />
-        <ContextualHelp key={pathname} />
-        <AlarmHeaderBadge />
 
-        <Link className="zip-explore" href="/network">
-          {t('explore')} <b>⌄</b>
-        </Link>
-        <Link className="zip-warehouse" href="/warehouse">
-          {t('warehouse')}
-        </Link>
-        <Link className="zip-account" href="/settings">
-          {role === 'ADMIN' || role === 'SUPERADMIN' ? t('admin') : t('myAccount')} <b>⌄</b>
-        </Link>
-        <button
-          className="zip-more"
-          disabled={busy}
-          onClick={logout}
-          aria-label={t('signOut')}
-          title={t('signOut')}
-        >
-          {busy ? '…' : '⋮'}
-        </button>
+        <div className="zip-topbar-actions">
+          <CommandPalette />
+          <ContextualHelp key={pathname} />
+          <AlarmHeaderBadge />
+
+          <Link className="zip-explore" href="/network">
+            {t('explore')} <b>⌄</b>
+          </Link>
+          <Link className="zip-warehouse" href="/warehouse">
+            {t('warehouse')}
+          </Link>
+          <Link className="zip-account" href="/settings">
+            {role === 'ADMIN' || role === 'SUPERADMIN' ? t('admin') : t('myAccount')} <b>⌄</b>
+          </Link>
+          <button
+            className="zip-more"
+            disabled={busy}
+            onClick={logout}
+            aria-label={t('signOut')}
+            title={t('signOut')}
+          >
+            {busy ? '…' : '⋮'}
+          </button>
+        </div>
       </header>
 
       <div className="app-content zip-app-content" id="main-content" tabIndex={-1}>

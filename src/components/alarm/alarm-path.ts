@@ -12,9 +12,7 @@ export function compactAlarmPath(path: readonly AlarmPathItem[]): readonly Alarm
   if (!path.length) return path;
 
   const roomIndex = path.findIndex((item) => item.kind === 'ROOM_SUBSTRUCTURE');
-  const deviceIndex = path.findIndex(
-    (item, index) => index > roomIndex && item.kind === 'DEVICE',
-  );
+  const deviceIndex = path.findIndex((item, index) => index > roomIndex && item.kind === 'DEVICE');
 
   if (roomIndex >= 0 && deviceIndex > roomIndex) {
     return [

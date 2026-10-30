@@ -31,6 +31,14 @@ export class MongoAlarmRepository implements AlarmRepository {
     return document ? withoutMongoId<AlarmOccurrence>(document) : null;
   }
 
+  async getLatestByCorrelationKey(correlationKey: string): Promise<AlarmOccurrence | null> {
+    const document = await this.occurrences.findOne(
+      { correlationKey },
+      { sort: { lastObservedAt: -1, openedAt: -1 } },
+    );
+    return document ? withoutMongoId<AlarmOccurrence>(document) : null;
+  }
+
   async listActive(): Promise<readonly AlarmOccurrence[]> {
     return (
       await this.occurrences.find({ lifecycle: 'ACTIVE' }).sort({ openedAt: -1 }).toArray()
@@ -52,8 +60,19 @@ export class MongoAlarmRepository implements AlarmRepository {
   }
 
   async replaceOccurrence(occurrence: AlarmOccurrence): Promise<void> {
-    const result = await this.occurrences.replaceOne({ id: occurrence.id }, occurrence);
-    if (result.matchedCount !== 1) throw new Error('ALARM_OCCURRENCE_NOT_FOUND');
+    const result = await this.occurrences.replaceOne(
+      {
+        id: occurrence.id,
+        ...(occurrence.lifecycle === 'ACTIVE' ? { lifecycle: 'ACTIVE' } : {}),
+        lastObservedAt: { $lte: occurrence.lastObservedAt },
+      },
+      occurrence,
+    );
+    if (result.matchedCount === 1) return;
+
+    const current = await this.occurrences.findOne({ id: occurrence.id });
+    if (!current) throw new Error('ALARM_OCCURRENCE_NOT_FOUND');
+    throw new Error('ALARM_STALE_WRITE');
   }
 
   async insertTransition(transition: AlarmTransition): Promise<void> {

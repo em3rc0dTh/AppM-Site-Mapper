@@ -74,6 +74,7 @@ export async function captureIndustrial(envelope: Envelope) {
 
   let alarmEvaluation: 'NOT_APPLICABLE' | 'PROCESSED' | 'DEGRADED' = 'NOT_APPLICABLE';
   if (
+    disposition === 'committed' &&
     batch.signals.some(
       (signal) =>
         signal.protocol === 'SNMP' &&

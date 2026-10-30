@@ -146,6 +146,10 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
       { name: 'ix_alarm_target_lifecycle_time' },
     ),
     alarmOccurrences.createIndex(
+      { correlationKey: 1, lastObservedAt: -1 },
+      { name: 'ix_alarm_correlation_last_observed' },
+    ),
+    alarmOccurrences.createIndex(
       { correlationKey: 1 },
       {
         unique: true,

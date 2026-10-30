@@ -690,14 +690,10 @@ This document freezes **Part 1 — alarm domain model** and **Part 2 — state m
 
 ## Part 4 — operational wireframe
 
-Still to define:
+**Part 4 is now approved** and documented in [Operational Alarm Wireframe and Interaction](alarm-operational-wireframe.md).
 
-- exact component geometry;
-- detailed table sizing/behavior;
-- alarm drawer/detail interaction;
-- evidence timeline layout;
-- acknowledgement interaction details;
-- historical navigation;
-- responsive behavior if required.
+It freezes Home, Alarm Center, canonical tree roll-up, QDF/BDFB/Chassis/Shelf/Frame/Panel/Breaker drill-down, direct target navigation, alarm detail, acknowledgement, evidence/timeline presentation and responsive behavior.
 
-Parts 1–3 are frozen design baselines. Part 4 remains deliberately open.
+The current seed-01 implementation is explicitly a LAB preview vertical slice; it does not claim that the persistent production Alarm Engine is complete.
+
+Parts 1–4 are now frozen operator/design baselines.

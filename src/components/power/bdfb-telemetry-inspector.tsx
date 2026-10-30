@@ -297,7 +297,7 @@ export function BdfbTelemetryInspector({
             tabIndex={tab === item ? 0 : -1}
             onClick={() => changeTab(item)}
           >
-            {item === 'alarms' ? 'Alarms' : t(item)}
+            {item === 'alarms' ? t('alarms') : t(item)}
           </button>
         ))}
       </nav>

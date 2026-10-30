@@ -101,7 +101,7 @@ function topology(): readonly TopologyNode[] {
       accessPorts: [],
       pinned: false,
     },
-  ];
+  ] as unknown as readonly TopologyNode[];
 }
 
 describe('alarm hierarchy', () => {

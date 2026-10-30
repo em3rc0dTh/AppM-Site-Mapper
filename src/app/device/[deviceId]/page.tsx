@@ -348,7 +348,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const t = await getTranslations('pages.device');
   return (
     <main className="operational-page mk-device-page">
-      <nav className="breadcrumbs zip-device-breadcrumbs" aria-label="Breadcrumb">
+      <nav className="breadcrumbs zip-device-breadcrumbs" aria-label={t('breadcrumbs')}>
         {breadcrumbLinks.map((item, index) => (
           <span className="zip-device-breadcrumb-item" key={item.id}>
             {index > 0 ? <span className="zip-device-breadcrumb-separator">›</span> : null}

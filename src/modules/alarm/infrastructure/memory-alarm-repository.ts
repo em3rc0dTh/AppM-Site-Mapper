@@ -17,6 +17,17 @@ export class MemoryAlarmRepository implements AlarmRepository {
     );
   }
 
+  async getLatestByCorrelationKey(correlationKey: string): Promise<AlarmOccurrence | null> {
+    return (
+      [...this.occurrences.values()]
+        .filter((item) => item.correlationKey === correlationKey)
+        .sort(
+          (a, b) =>
+            b.lastObservedAt.localeCompare(a.lastObservedAt) || b.openedAt.localeCompare(a.openedAt),
+        )[0] ?? null
+    );
+  }
+
   async listActive(): Promise<readonly AlarmOccurrence[]> {
     return [...this.occurrences.values()]
       .filter((item) => item.lifecycle === 'ACTIVE')
@@ -32,11 +43,27 @@ export class MemoryAlarmRepository implements AlarmRepository {
 
   async insertOccurrence(occurrence: AlarmOccurrence): Promise<void> {
     if (this.occurrences.has(occurrence.id)) throw new Error('ALARM_OCCURRENCE_EXISTS');
+    if (
+      occurrence.lifecycle === 'ACTIVE' &&
+      [...this.occurrences.values()].some(
+        (item) =>
+          item.lifecycle === 'ACTIVE' && item.correlationKey === occurrence.correlationKey,
+      )
+    ) {
+      throw new Error('ALARM_ACTIVE_CORRELATION_EXISTS');
+    }
     this.occurrences.set(occurrence.id, occurrence);
   }
 
   async replaceOccurrence(occurrence: AlarmOccurrence): Promise<void> {
-    if (!this.occurrences.has(occurrence.id)) throw new Error('ALARM_OCCURRENCE_NOT_FOUND');
+    const current = this.occurrences.get(occurrence.id);
+    if (!current) throw new Error('ALARM_OCCURRENCE_NOT_FOUND');
+    if (
+      (current.lifecycle === 'RESOLVED' && occurrence.lifecycle === 'ACTIVE') ||
+      occurrence.lastObservedAt < current.lastObservedAt
+    ) {
+      throw new Error('ALARM_STALE_WRITE');
+    }
     this.occurrences.set(occurrence.id, occurrence);
   }
 

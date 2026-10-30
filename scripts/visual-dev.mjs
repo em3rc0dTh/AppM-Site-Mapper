@@ -9,7 +9,10 @@ const devHost = process.env.VISUAL_DEV_HOST || '127.0.0.1';
 const devPort = Number(process.env.VISUAL_DEV_PORT || '3002');
 
 function dockerText(args) {
-  return execFileSync('docker', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  return execFileSync('docker', args, {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  }).trim();
 }
 
 function requireRunning(name) {
@@ -18,12 +21,16 @@ function requireRunning(name) {
     state = dockerText(['inspect', '-f', '{{.State.Running}}', name]);
   } catch {
     throw new Error(
-      name + ' is not available. Start the seed-01 Docker lab first; visual-dev never starts or changes it.',
+      name +
+        ' is not available. Start the seed-01 Docker lab first; ' +
+        'visual-dev never starts or changes it.',
     );
   }
   if (state !== 'true') {
     throw new Error(
-      name + ' is not running. Start seed-01 first; visual-dev will not start/stop Docker services.',
+      name +
+        ' is not running. Start seed-01 first; ' +
+        'visual-dev will not start/stop Docker services.',
     );
   }
 }
@@ -31,7 +38,9 @@ function requireRunning(name) {
 function publishedPort(name, containerPort, protocol = 'tcp') {
   const raw = dockerText(['port', name, containerPort + '/' + protocol]);
   const line = raw.split(/\r?\n/).find(Boolean);
-  if (!line) throw new Error('No published port for ' + name + ' ' + containerPort + '/' + protocol);
+  if (!line) {
+    throw new Error('No published port for ' + name + ' ' + containerPort + '/' + protocol);
+  }
   const match = line.match(/:(\d+)$/);
   if (!match) throw new Error('Could not parse Docker published port: ' + line);
   return Number(match[1]);
@@ -40,9 +49,9 @@ function publishedPort(name, containerPort, protocol = 'tcp') {
 async function requirePortFree(host, port) {
   await new Promise((resolve, reject) => {
     const server = net.createServer();
-    server.once('error', () =>
-      reject(new Error('Visual-dev port ' + host + ':' + port + ' is already in use.')),
-    );
+    server.once('error', () => {
+      reject(new Error('Visual-dev port ' + host + ':' + port + ' is already in use.'));
+    });
     server.listen(port, host, () => server.close(resolve));
   });
 }
@@ -102,10 +111,14 @@ try {
   console.log('Mutations:    BLOCKED (except login/logout)');
   console.log('');
 
-  const child = spawn(process.execPath, [nextBin, 'dev', '-H', devHost, '-p', String(devPort)], {
-    env,
-    stdio: 'inherit',
-  });
+  const child = spawn(
+    process.execPath,
+    [nextBin, 'dev', '-H', devHost, '-p', String(devPort)],
+    {
+      env,
+      stdio: 'inherit',
+    },
+  );
 
   for (const signal of ['SIGINT', 'SIGTERM']) {
     process.on(signal, () => child.kill(signal));

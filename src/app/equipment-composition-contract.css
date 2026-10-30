@@ -1462,3 +1462,10 @@
   border-color: #ff9da4;
 }
 
+@media (max-width: 700px) {
+  .ec-frame-row > .ec-frame-row-status {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+

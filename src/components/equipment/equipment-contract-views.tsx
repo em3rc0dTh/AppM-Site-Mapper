@@ -77,7 +77,10 @@ function PanelPreview({
 }>) {
   const t = useTranslations('equipmentView');
   return (
-    <ChildLink node={panel} className="ec-panel-line">
+    <ChildLink
+      node={panel}
+      className={`ec-panel-line alarm-node-${alarmRollups[panel.id]?.highestSeverity?.toLowerCase() ?? 'none'}`}
+    >
       <span className="ec-panel-name-line">
         <strong className="ec-panel-name">{panel.name}</strong>
         <AlarmBadge rollup={alarmRollups[panel.id]} />
@@ -109,7 +112,10 @@ function FramePreview({
   const panels = activeChildren(frame, byId).filter(({ child }) => child.equipmentType === 'PANEL');
   const signal = projectCompositionTelemetry(frame, byId, readings);
   return (
-    <article className="ec-frame-card">
+    <article
+      className="ec-frame-card"
+      data-alarm-severity={alarmRollups[frame.id]?.highestSeverity?.toLowerCase()}
+    >
       <div className="ec-frame-heading">
         <div>
           <small>{t('frame')}</small>
@@ -161,7 +167,10 @@ function BreakerRow({
 }>) {
   const status = reading?.status ?? 'UNMAPPED';
   return (
-    <ChildLink node={breaker} className="ec-breaker-row">
+    <ChildLink
+      node={breaker}
+      className={`ec-breaker-row alarm-node-${alarmRollup?.highestSeverity?.toLowerCase() ?? 'none'}`}
+    >
       <span className="ec-pos">{String(position).padStart(2, '0')}</span>
       <span className="ec-breaker-name" title={breaker.name}>
         {breaker.name}
@@ -268,6 +277,7 @@ function PanelComposition({
                   <span aria-hidden="true">—</span>
                   <span aria-hidden="true">—</span>
                   <span className="ec-status-available">{t('available')}</span>
+                  <span aria-hidden="true">—</span>
                 </div>
               ),
             )
@@ -353,7 +363,11 @@ export function EquipmentContractViews({
           <div className="ec-chassis-shelves">
             {children.length ? (
               children.map(({ child }) => (
-                <article className="ec-shelf-card" key={child.id}>
+                <article
+                  className="ec-shelf-card"
+                  data-alarm-severity={alarmRollups[child.id]?.highestSeverity?.toLowerCase()}
+                  key={child.id}
+                >
                   <div className="ec-shelf-card-heading">
                     <div>
                       <small>{child.equipmentType.replaceAll('_', ' ')}</small>
@@ -427,7 +441,11 @@ export function EquipmentContractViews({
           </header>
           <div className="ec-frame-rows">
             {children.map(({ child, position }) => (
-              <div className="ec-frame-row" key={child.id}>
+              <div
+                className="ec-frame-row"
+                data-alarm-severity={alarmRollups[child.id]?.highestSeverity?.toLowerCase()}
+                key={child.id}
+              >
                 <span className="ec-pos">{String(position).padStart(2, '0')}</span>
                 <div>
                   <ChildLink node={child} className="ec-frame-row-name" />

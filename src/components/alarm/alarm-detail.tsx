@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type {
   AlarmOccurrenceView,
@@ -14,7 +14,7 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  async function load() {
+  const load = useCallback(async () => {
     const response = await fetch('/api/alarms/' + encodeURIComponent(id), { cache: 'no-store' });
     if (!response.ok) throw new Error('ALARM_NOT_FOUND');
     const payload = (await response.json()) as {
@@ -23,11 +23,16 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
     };
     setOccurrence(payload.occurrence);
     setTransitions(payload.transitions);
-  }
+  }, [id]);
 
   useEffect(() => {
-    void load().catch((reason) => setError(reason instanceof Error ? reason.message : 'LOAD_FAILED'));
-  }, [id]);
+    const initial = window.setTimeout(() => {
+      void load().catch((reason) =>
+        setError(reason instanceof Error ? reason.message : 'LOAD_FAILED'),
+      );
+    }, 0);
+    return () => window.clearTimeout(initial);
+  }, [load]);
 
   async function acknowledge() {
     if (!occurrence || busy) return;

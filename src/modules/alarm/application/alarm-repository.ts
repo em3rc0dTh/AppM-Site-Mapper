@@ -5,6 +5,7 @@ import type {
 
 export interface AlarmRepository {
   getOccurrence(id: string): Promise<AlarmOccurrence | null>;
+  getActiveByCorrelationKey(correlationKey: string): Promise<AlarmOccurrence | null>;
   listActive(): Promise<readonly AlarmOccurrence[]>;
   listResolved(limit?: number): Promise<readonly AlarmOccurrence[]>;
   insertOccurrence(occurrence: AlarmOccurrence): Promise<void>;

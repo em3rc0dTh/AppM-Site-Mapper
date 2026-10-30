@@ -2,10 +2,22 @@
 
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, useSyncExternalStore, type FormEvent } from 'react';
 
 import { isWorkspaceHref } from '@/modules/workspace/domain/context';
 import { AuthFrame } from '@/shared/ui/auth-frame';
+
+function subscribeHydration(): () => void {
+  return () => {};
+}
+
+function clientHydrated(): boolean {
+  return true;
+}
+
+function serverHydrated(): boolean {
+  return false;
+}
 
 interface LoginResponse {
   readonly error?: string;
@@ -19,11 +31,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    setHydrated(true);
-  }, []);
+  const hydrated = useSyncExternalStore(subscribeHydration, clientHydrated, serverHydrated);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

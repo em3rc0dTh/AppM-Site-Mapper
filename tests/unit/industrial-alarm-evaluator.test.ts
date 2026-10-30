@@ -91,18 +91,15 @@ function batch(item: Signal): ObservationBatch {
 }
 
 describe('IndustrialAlarmEvaluator', () => {
-  it(
-    'does not promote an interpreted SNMP alarm unless commissioning declares alarm semantics',
-    async () => {
-      const alarms = new MemoryAlarmRepository();
+  it('ignores SNMP alarm semantics not explicitly commissioned', async () => {
+    const alarms = new MemoryAlarmRepository();
     const topologyRepository = new MemoryTopologyRepository(topology());
     const evaluator = new IndustrialAlarmEvaluator(alarms, topologyRepository);
 
     await evaluator.observe(batch(signal()));
 
-      expect(await alarms.listActive()).toHaveLength(0);
-    },
-  );
+    expect(await alarms.listActive()).toHaveLength(0);
+  });
 
   it('opens and explicitly clears a commissioned hardware alarm', async () => {
     const alarms = new MemoryAlarmRepository();
@@ -143,10 +140,8 @@ describe('IndustrialAlarmEvaluator', () => {
     expect(await alarms.listResolved()).toHaveLength(1);
   });
 
-  it(
-    'confirms the existing breaker POWER_LOSS occurrence with commissioned SNMP evidence',
-    async () => {
-      const alarms = new MemoryAlarmRepository();
+  it('confirms existing POWER_LOSS with commissioned SNMP evidence', async () => {
+    const alarms = new MemoryAlarmRepository();
     const topologyRepository = new MemoryTopologyRepository(topology());
     const commands = new AlarmCommandService(alarms, topologyRepository);
     const evaluator = new IndustrialAlarmEvaluator(alarms, topologyRepository);
@@ -187,7 +182,6 @@ describe('IndustrialAlarmEvaluator', () => {
     expect(active.filter((item) => item.alarmCode === 'POWER_LOSS')).toHaveLength(1);
     expect(confirmed?.confidence).toBe('CONFIRMED');
     expect(confirmed?.sourceContext).toBe('mqtt:0_1_4');
-      expect(confirmed?.evidenceRefs.some((item) => item.kind === 'SNMP')).toBe(true);
-    },
-  );
+    expect(confirmed?.evidenceRefs.some((item) => item.kind === 'SNMP')).toBe(true);
+  });
 });

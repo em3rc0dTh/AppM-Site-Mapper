@@ -656,3 +656,12 @@
     grid-column: 1 / -1;
   }
 }
+
+.alarm-node-critical {
+  border-color: #ef8c94 !important;
+  background: #fff0f1 !important;
+}
+.alarm-node-warning {
+  border-color: #edc06a !important;
+  background: #fff8e8 !important;
+}

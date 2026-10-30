@@ -10,6 +10,7 @@ import {
 } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type { WorkspaceBdfbSummary } from '@/modules/workspace/application/workspace-service';
+import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 
 type Pin = { id: string; name: string; kind: string; context: string; href: string };
 type BdfbRow = WorkspaceBdfbSummary & BdfbDescendantTelemetry;
@@ -47,6 +48,7 @@ export function HomeLiveOverview({
 }) {
   const t = useTranslations('workspaceUi');
   const { samples: streamed, now, hasSnapshot } = useTelemetryStream();
+  const { snapshot: alarmSnapshot, error: alarmError } = useAlarmSnapshot();
   const samples = hasSnapshot ? streamed : initialSamples;
   const rows = bdfbs.map((item) => projectBdfb(samples, item, now));
   const online = equipmentIds.filter(
@@ -84,6 +86,41 @@ export function HomeLiveOverview({
           <span>{t('unknown')}</span>
         </article>
       </div>
+
+      <section className="sm-home-section sm-home-alarm-section" aria-label="Active alarms">
+        <div className="sm-home-section-heading">
+          <h2>Active alarms</h2>
+          <Link href="/alarms">View all alarms →</Link>
+        </div>
+        {alarmError ? (
+          <p className="sm-alarm-unavailable">Alarm status unavailable. This is not equivalent to no alarms.</p>
+        ) : alarmSnapshot.global.activeAlarmCount === 0 ? (
+          <p className="sm-alarm-empty">No active alarms.</p>
+        ) : (
+          <>
+            <div className="sm-home-alarm-counters">
+              <span data-severity="CRITICAL"><b>{alarmSnapshot.global.critical}</b> Critical</span>
+              <span data-severity="WARNING"><b>{alarmSnapshot.global.warning}</b> Warning</span>
+              <span data-severity="INFO"><b>{alarmSnapshot.global.info}</b> Info</span>
+            </div>
+            <div className="sm-home-alarm-list">
+              {alarmSnapshot.occurrences
+                .filter((alarm) => alarm.lifecycle === 'ACTIVE')
+                .slice(0, 5)
+                .map((alarm) => (
+                  <article key={alarm.id} data-severity={alarm.severity}>
+                    <div>
+                      <strong>{alarm.name}</strong>
+                      <span>{alarm.severity}{alarm.confidence ? ' · ' + alarm.confidence : ''}</span>
+                      <small>{alarm.path.map((item) => item.name).join(' › ')}</small>
+                    </div>
+                    <Link href={alarm.targetHref}>Go to target →</Link>
+                  </article>
+                ))}
+            </div>
+          </>
+        )}
+      </section>
 
       <section className="sm-home-section">
         <div className="sm-home-section-heading">

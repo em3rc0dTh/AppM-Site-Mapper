@@ -8,9 +8,18 @@ describe('RBAC policy', () => {
     expect(hasPermission('STANDARD', 'topology:write')).toBe(false);
   });
 
-  it('allows Admin operational writes but not dangerous system actions', () => {
+  it('allows Admin operational writes and alarm acknowledgement but not dangerous system actions', () => {
     expect(hasPermission('ADMIN', 'topology:write')).toBe(true);
+    expect(hasPermission('ADMIN', 'alarms:read')).toBe(true);
+    expect(hasPermission('ADMIN', 'alarms:ack')).toBe(true);
     expect(hasPermission('ADMIN', 'system:danger')).toBe(false);
+  });
+
+  it('keeps Standard alarm access read-only and grants Superadmin full alarm access', () => {
+    expect(hasPermission('STANDARD', 'alarms:read')).toBe(true);
+    expect(hasPermission('STANDARD', 'alarms:ack')).toBe(false);
+    expect(hasPermission('SUPERADMIN', 'alarms:read')).toBe(true);
+    expect(hasPermission('SUPERADMIN', 'alarms:ack')).toBe(true);
   });
 
   it('restricts user-role management', () => {

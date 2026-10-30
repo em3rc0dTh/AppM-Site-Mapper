@@ -6096,4 +6096,11 @@ body {
   .zip-app-shell .mk-device-layout {
     grid-template-columns: 310px minmax(0, 1fr) 405px !important;
   }
+
+  /* The full-HD action cluster is wider than the historical 610px reservation.
+     Reserve its real space so breadcrumbs never sit underneath Search/ALARMS. */
+  .zip-app-shell.app-shell--immersive .breadcrumbs,
+  .zip-app-shell .mk-device-page .breadcrumbs {
+    right: 950px !important;
+  }
 }

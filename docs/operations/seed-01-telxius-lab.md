@@ -153,6 +153,29 @@ The launcher validates that BFDB contains the current Telxius field emulator, fu
 
 ## Start everything
 
+### Full self-contained seed-01 lab without private Smartpack2 evidence
+
+When the private Smartpack2 walk/MIB evidence is unavailable, the supported full
+laboratory mode uses the repository's synthetic Eltek SNMPv3 emulator instead of
+inventing Smartpack2 evidence:
+
+```bash
+python3 scripts/telemetry/seed-01-telxius-lab.py \
+  --action up \
+  --ack-lab-only \
+  --use-lab-broker \
+  --synthetic-snmp
+```
+
+This mode rebuilds/starts the seed-01 private broker, QDF-2/QDF-4/QDF-5 MQTT
+Telxius publisher, three synthetic Eltek SNMPv3 agents, SNMP receiver, Site Mapper,
+MongoDB, TimescaleDB, telemetry-store, Modbus TCP and Operational Console.
+
+Each synthetic SNMP source is bound to the canonical QDF controller Equipment and
+publishes lab voltage/current/temperature plus a governed `CONTROLLER_ALARM`
+open/clear cycle. These signals are explicitly synthetic and must never be presented
+as Smartpack2 field evidence or physical commissioning.
+
 ### Without private Smartpack2 evidence
 
 If the private SNMPWalk and Eltek rev54 MIB files are not available, do **not** invent,

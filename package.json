@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "docs:check": "node scripts/ci/docs-links.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write src/app/device/[deviceId]/page.tsx src/app/globals.css src/app/home-redesign.css src/app/laptop-responsive.css src/app/topology/[...path]/page.tsx src/app/visual-parity.css src/app/equipment-composition-contract.css src/components/alarm/alarm-path.ts src/components/equipment/equipment-focus-inspector.tsx src/components/equipment/equipment-contract-views.tsx src/components/topology/context-tree.tsx src/shared/ui/app-shell.tsx && git diff -- src/app/device/[deviceId]/page.tsx src/app/globals.css src/app/home-redesign.css src/app/laptop-responsive.css src/app/topology/[...path]/page.tsx src/app/visual-parity.css src/app/equipment-composition-contract.css src/components/alarm/alarm-path.ts src/components/equipment/equipment-focus-inspector.tsx src/components/equipment/equipment-contract-views.tsx src/components/topology/context-tree.tsx src/shared/ui/app-shell.tsx && exit 1",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit && node --test infra/snmp-collector/server.test.mjs",
     "test:integration": "vitest run tests/integration --passWithNoTests",

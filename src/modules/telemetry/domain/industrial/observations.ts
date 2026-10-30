@@ -52,7 +52,7 @@ export interface Signal {
   authoritative?: boolean;
   key: string;
   sourceIdentity: string;
-  protocol: Envelope['protocol'];
+  protocol: Envelope['protocol'] | 'ALARM';
   targetId: string | null;
   kind: SignalKind;
   mibName: string | null;

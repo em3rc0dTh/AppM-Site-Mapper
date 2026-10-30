@@ -168,9 +168,11 @@ export function AlarmInspectorCard({
 export function DirectAlarmHero({
   snapshot,
   nodeId,
+  canAcknowledge,
 }: {
   snapshot: AlarmSnapshotView;
   nodeId: string;
+  canAcknowledge: boolean;
 }) {
   const direct = snapshot.occurrences.filter(
     (item) => item.targetId === nodeId && item.state === 'ACTIVE',
@@ -204,6 +206,7 @@ export function DirectAlarmHero({
         <AlarmAcknowledgeButton
           alarmId={primary.id}
           acknowledged={primary.acknowledgement === 'ACKNOWLEDGED'}
+          canAcknowledge={canAcknowledge}
         />
         <Link href={`/alarms/${primary.id}`}>View alarm detail →</Link>
       </div>

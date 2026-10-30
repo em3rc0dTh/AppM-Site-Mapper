@@ -576,6 +576,7 @@ export function EquipmentCompositionEditor({
         canReadTelemetry={canReadTelemetry}
         breakerTelemetryBindings={breakerTelemetryBindings}
         portConnections={portConnections}
+        alarmRollups={alarmRollups}
         onAdd={canWrite && isActive ? openComposer : undefined}
       />
       {canReadTelemetry &&

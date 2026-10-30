@@ -35,6 +35,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const canWriteTopology = hasPermission(auth.value.role, 'topology:write');
   const canDelete = hasPermission(auth.value.role, 'system:danger');
   const canReadTelemetry = hasPermission(auth.value.role, 'telemetry:read');
+  const canAcknowledgeAlarms = hasPermission(auth.value.role, 'alarms:ack');
   const canReadIndustrialSettings = hasPermission(auth.value.role, 'settings:read');
   const { deviceId } = await params;
   const repo = await createTopologyRepository();
@@ -367,7 +368,11 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
         <section className="zip-device-stage">
           <AlarmScopeBanner snapshot={alarmSnapshot} nodeId={node.id} />
           <h1>{node.kind === 'EQUIPMENT' ? t('composition') : t('elevation')}</h1>
-          <DirectAlarmHero snapshot={alarmSnapshot} nodeId={node.id} />
+          <DirectAlarmHero
+            snapshot={alarmSnapshot}
+            nodeId={node.id}
+            canAcknowledge={canAcknowledgeAlarms}
+          />
           {node.kind === 'DEVICE' && canDelete ? (
             <DeleteEntityControl id={node.id} name={node.name} />
           ) : null}

@@ -53,13 +53,16 @@ def insert_industrial(dsn, payload):
         rows.append((instant(s.get('observedAt')), instant(s.get('receivedAt')), signal, event,
                      bounded(s.get('logicalPointId'), 200, True), bounded(s.get('sourceIdentity'), 120),
                      s['protocol'], s['kind'], numeric, unit, s['quality'], Jsonb(sample)))
+    statement = '''INSERT INTO industrial_observations
+      (observed_at, received_at, signal_id, event_id, logical_point_id, source_identity,
+       protocol, kind, numeric_value, unit, quality, sample)
+      VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+      ON CONFLICT (observed_at, signal_id, event_id) DO NOTHING'''
     with psycopg.connect(dsn) as conn:
-        for row in rows:
-            conn.execute('''INSERT INTO industrial_observations
-              (observed_at, received_at, signal_id, event_id, logical_point_id, source_identity,
-               protocol, kind, numeric_value, unit, quality, sample)
-              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-              ON CONFLICT (observed_at, signal_id, event_id) DO NOTHING''', row)
+        with conn.cursor() as cursor:
+            # psycopg3 pipelines executemany internally, avoiding one client/server
+            # round trip per signal while preserving the same transaction boundary.
+            cursor.executemany(statement, rows)
     return len(rows)
 
 

@@ -7,9 +7,16 @@
 | power:read     | yes      | yes   | yes        |
 | power:write    | no       | yes   | yes        |
 | telemetry:read | yes      | yes   | yes        |
+| alarms:read    | yes      | yes   | yes        |
+| alarms:ack     | no       | yes   | yes        |
 | settings:read  | no       | yes   | yes        |
 | settings:write | no       | yes   | yes        |
 | users:manage   | no       | no    | yes        |
 | system:danger  | no       | no    | yes        |
 
 **Comportamiento implementado actual:** solo `SUPERADMIN` tiene `users:manage` y puede acceder a Settings → Users. La función interna `canManageRole` contempla una restricción teórica para `ADMIN`, pero sin ese permiso no puede gestionar usuarios por la UI ni por la API. No documentar alta de cuentas como disponible para ADMIN.
+
+
+## Alarm permissions
+
+STANDARD may inspect alarms and evidence but cannot acknowledge them. ADMIN and SUPERADMIN may acknowledge an occurrence. Acknowledgement never resolves an automatic alarm; resolution remains driven by the recovery policy.

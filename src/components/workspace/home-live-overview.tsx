@@ -10,6 +10,8 @@ import {
 } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type { WorkspaceBdfbSummary } from '@/modules/workspace/application/workspace-service';
+import type { AlarmSnapshotView } from '@/modules/alarms/domain/entities';
+import { AlarmHomeSummary } from '@/components/alarms/alarm-ui';
 
 type Pin = { id: string; name: string; kind: string; context: string; href: string };
 type BdfbRow = WorkspaceBdfbSummary & BdfbDescendantTelemetry;
@@ -39,11 +41,13 @@ export function HomeLiveOverview({
   bdfbs,
   cards,
   initialSamples,
+  alarmSnapshot,
 }: {
   equipmentIds: readonly string[];
   bdfbs: readonly WorkspaceBdfbSummary[];
   cards: readonly Pin[];
   initialSamples: readonly TelemetrySample[];
+  alarmSnapshot: AlarmSnapshotView;
 }) {
   const t = useTranslations('workspaceUi');
   const { samples: streamed, now, hasSnapshot } = useTelemetryStream();
@@ -84,6 +88,8 @@ export function HomeLiveOverview({
           <span>{t('unknown')}</span>
         </article>
       </div>
+
+      <AlarmHomeSummary snapshot={alarmSnapshot} />
 
       <section className="sm-home-section">
         <div className="sm-home-section-heading">

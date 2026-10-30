@@ -8,7 +8,7 @@ import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
 import { SnmpCapacityStrip } from './snmp-capacity-strip';
-import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
+import { AlarmOccurrenceList } from '@/components/alarm/alarm-scope-summary';
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 import type { AlarmRollup } from '@/modules/alarm/domain/entities';
 
@@ -292,7 +292,6 @@ export function EquipmentContractViews({
           </span>
         )}
       </div>
-      <AlarmScopeSummary entityId={root.id} showAffectedChildren />
       {canReadTelemetry && (
         <div className="ec-live-cover" aria-label={t('coverage')}>
           <span>

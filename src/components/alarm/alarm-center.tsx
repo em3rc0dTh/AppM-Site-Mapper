@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
@@ -18,6 +19,7 @@ function scopeName(alarm: AlarmOccurrenceView, kind: string): string {
 }
 
 export function AlarmCenter() {
+  const t = useTranslations('alarmUi.center');
   const { snapshot, loading, error, refresh } = useAlarmSnapshot(true);
   const [showResolved, setShowResolved] = useState(false);
   const [severity, setSeverity] = useState<'ALL' | AlarmSeverity>('ALL');
@@ -79,10 +81,10 @@ export function AlarmCenter() {
     <section className="sm-alarm-center">
       <header className="sm-alarm-center-heading">
         <div>
-          <span>Operational alarms</span>
-          <h1>Alarm Center</h1>
+          <span>{t('eyebrow')}</span>
+          <h1>{t('title')}</h1>
           <p>
-            One occurrence, many hierarchical views. Targets own alarms; ancestors show roll-ups.
+            {t('description')}
           </p>
         </div>
         <button type="button" onClick={() => void refresh()}>
@@ -92,30 +94,30 @@ export function AlarmCenter() {
 
       {error ? (
         <div className="sm-alarm-unavailable" role="alert">
-          Alarm status unavailable. This is not equivalent to “no alarms”.
+          {t('unavailable')}
         </div>
       ) : (
         <>
           <div className="sm-alarm-summary-grid">
             <article>
               <strong>{snapshot.global.activeAlarmCount}</strong>
-              <span>Active</span>
+              <span>{t('active')}</span>
             </article>
             <article data-severity="CRITICAL">
               <strong>{snapshot.global.critical}</strong>
-              <span>Critical</span>
+              <span>{t('critical')}</span>
             </article>
             <article data-severity="WARNING">
               <strong>{snapshot.global.warning}</strong>
-              <span>Warning</span>
+              <span>{t('warning')}</span>
             </article>
             <article data-severity="INFO">
               <strong>{snapshot.global.info}</strong>
-              <span>Info</span>
+              <span>{t('info')}</span>
             </article>
             <article>
               <strong>{snapshot.global.unacknowledgedCount}</strong>
-              <span>Unacknowledged</span>
+              <span>{t('unacknowledged')}</span>
             </article>
           </div>
 
@@ -131,29 +133,29 @@ export function AlarmCenter() {
               Resolved
             </button>
             <select
-              aria-label="Severity"
+              aria-label={t('severityLabel')}
               value={severity}
               onChange={(event) => setSeverity(event.target.value as 'ALL' | AlarmSeverity)}
             >
-              <option value="ALL">All severities</option>
-              <option value="CRITICAL">Critical</option>
-              <option value="WARNING">Warning</option>
-              <option value="INFO">Info</option>
+              <option value="ALL">{t('allSeverities')}</option>
+              <option value="CRITICAL">{t('critical')}</option>
+              <option value="WARNING">{t('warning')}</option>
+              <option value="INFO">{t('info')}</option>
             </select>
             <select
-              aria-label="Site"
+              aria-label={t('siteLabel')}
               value={site}
               onChange={(event) => setSite(event.target.value)}
             >
-              <option value="ALL">All sites</option>
+              <option value="ALL">{t('allSites')}</option>
               {sites.map((value) => (
                 <option value={value} key={value}>
                   {value}
                 </option>
               ))}
             </select>
-            <select aria-label="QDF" value={qdf} onChange={(event) => setQdf(event.target.value)}>
-              <option value="ALL">All QDFs</option>
+            <select aria-label={t('qdfLabel')} value={qdf} onChange={(event) => setQdf(event.target.value)}>
+              <option value="ALL">{t('allQdfs')}</option>
               {qdfs.map((value) => (
                 <option value={value} key={value}>
                   {value}
@@ -161,29 +163,29 @@ export function AlarmCenter() {
               ))}
             </select>
             <select
-              aria-label="Alarm family"
+              aria-label={t('familyLabel')}
               value={family}
               onChange={(event) => setFamily(event.target.value as 'ALL' | AlarmFamily)}
             >
-              <option value="ALL">All families</option>
-              <option value="COMMUNICATION">Communication</option>
-              <option value="ELECTRICAL">Electrical</option>
-              <option value="EQUIPMENT">Equipment</option>
-              <option value="CORRELATED">Correlated</option>
+              <option value="ALL">{t('allFamilies')}</option>
+              <option value="COMMUNICATION">{t('communication')}</option>
+              <option value="ELECTRICAL">{t('electrical')}</option>
+              <option value="EQUIPMENT">{t('equipment')}</option>
+              <option value="CORRELATED">{t('correlated')}</option>
             </select>
             <select
-              aria-label="Acknowledgement"
+              aria-label={t('ackLabel')}
               value={ack}
               onChange={(event) => setAck(event.target.value as 'ALL' | AlarmAcknowledgement)}
             >
-              <option value="ALL">All ACK states</option>
-              <option value="UNACKNOWLEDGED">Unacknowledged</option>
-              <option value="ACKNOWLEDGED">Acknowledged</option>
+              <option value="ALL">{t('allAckStates')}</option>
+              <option value="UNACKNOWLEDGED">{t('unacknowledged')}</option>
+              <option value="ACKNOWLEDGED">{t('acknowledged')}</option>
             </select>
             <input
-              aria-label="Search alarms"
+              aria-label={t('searchLabel')}
               type="search"
-              placeholder="Search alarm, target or path…"
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
@@ -193,13 +195,13 @@ export function AlarmCenter() {
             <table className="sm-alarm-table">
               <thead>
                 <tr>
-                  <th>Severity</th>
-                  <th>Alarm</th>
-                  <th>Target path</th>
-                  <th>Since</th>
-                  <th>ACK</th>
-                  <th>Confidence</th>
-                  <th>Actions</th>
+                  <th>{t('severityLabel')}</th>
+                  <th>{t('alarm')}</th>
+                  <th>{t('targetPath')}</th>
+                  <th>{t('since')}</th>
+                  <th>{t('ack')}</th>
+                  <th>{t('confidence')}</th>
+                  <th>{t('actions')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -217,15 +219,15 @@ export function AlarmCenter() {
                     <td>{alarm.acknowledgement === 'ACKNOWLEDGED' ? 'ACK' : '—'}</td>
                     <td>{alarm.confidence ?? '—'}</td>
                     <td>
-                      <Link href={'/alarms/' + encodeURIComponent(alarm.id)}>Open detail</Link>
+                      <Link href={'/alarms/' + encodeURIComponent(alarm.id)}>{t('openDetail')}</Link>
                       {' · '}
-                      <Link href={alarm.targetHref}>Go to target</Link>
+                      <Link href={alarm.targetHref}>{t('goToTarget')}</Link>
                     </td>
                   </tr>
                 ))}
                 {!loading && rows.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>No alarms in this view.</td>
+                    <td colSpan={7}>{t('empty')}</td>
                   </tr>
                 ) : null}
               </tbody>

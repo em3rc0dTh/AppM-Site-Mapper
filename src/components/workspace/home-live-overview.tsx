@@ -68,6 +68,11 @@ export function HomeLiveOverview({
   const totalPowerW = reporting.reduce((sum, row) => sum + row.totalPowerW!, 0);
   const partial = reporting.length !== rows.length;
   const monitoring = rows.filter((row) => row.reportingEquipment > 0).length;
+  const affectedBdfbs = rows.flatMap((row) => {
+    const rollup = alarmSnapshot.rollups[row.deviceId];
+    const count = rollup ? rollup.directCount + rollup.descendantCount : 0;
+    return count ? [{ row, rollup, count }] : [];
+  });
 
   return (
     <>
@@ -156,6 +161,30 @@ export function HomeLiveOverview({
           <h2>{t('overview')}</h2>
           <span>{t('systemWide')}</span>
         </div>
+        {affectedBdfbs.length ? (
+          <div className="alarm-bdfb-strip">
+            <div>
+              <strong>⚠ Alarms affecting BDFBs</strong>
+              <small>
+                {alarmSnapshot.occurrences.length} active occurrence
+                {alarmSnapshot.occurrences.length === 1 ? '' : 's'} rolled up through the physical hierarchy.
+              </small>
+            </div>
+            <div className="alarm-bdfb-strip-items">
+              {affectedBdfbs.map(({ row, rollup, count }) => (
+                <Link href={row.href} key={row.deviceId}>
+                  <strong>{row.deviceName}</strong>
+                  <span>{count} alarm{count === 1 ? '' : 's'}</span>
+                  <small>
+                    {rollup.critical ? `${rollup.critical} critical` : ''}
+                    {rollup.critical && rollup.warning ? ' · ' : ''}
+                    {rollup.warning ? `${rollup.warning} warning` : ''}
+                  </small>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
         <div className="sm-home-stats">
           <article>
             <small>{t('livePower')}</small>

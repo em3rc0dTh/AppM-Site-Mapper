@@ -245,7 +245,7 @@ try {
     if (headerGeometry.breadcrumb && headerGeometry.actions) {
       assert.ok(
         headerGeometry.breadcrumb.right <= headerGeometry.actions.left + 2,
-        `${width}px breadcrumb overlaps Search/Alarm action cluster`,
+        `${width}px breadcrumb overlaps Search/Alarm action cluster: breadcrumb=${headerGeometry.breadcrumb.right}, actions=${headerGeometry.actions.left}`,
       );
     }
 

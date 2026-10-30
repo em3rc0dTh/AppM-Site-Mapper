@@ -83,9 +83,7 @@ export function AlarmCenter() {
         <div>
           <span>{t('eyebrow')}</span>
           <h1>{t('title')}</h1>
-          <p>
-            {t('description')}
-          </p>
+          <p>{t('description')}</p>
         </div>
         <button type="button" onClick={() => void refresh()}>
           {t('refresh')}
@@ -154,7 +152,11 @@ export function AlarmCenter() {
                 </option>
               ))}
             </select>
-            <select aria-label={t('qdfLabel')} value={qdf} onChange={(event) => setQdf(event.target.value)}>
+            <select
+              aria-label={t('qdfLabel')}
+              value={qdf}
+              onChange={(event) => setQdf(event.target.value)}
+            >
               <option value="ALL">{t('allQdfs')}</option>
               {qdfs.map((value) => (
                 <option value={value} key={value}>
@@ -219,7 +221,9 @@ export function AlarmCenter() {
                     <td>{alarm.acknowledgement === 'ACKNOWLEDGED' ? 'ACK' : '—'}</td>
                     <td>{alarm.confidence ?? '—'}</td>
                     <td>
-                      <Link href={'/alarms/' + encodeURIComponent(alarm.id)}>{t('openDetail')}</Link>
+                      <Link href={'/alarms/' + encodeURIComponent(alarm.id)}>
+                        {t('openDetail')}
+                      </Link>
                       {' · '}
                       <Link href={alarm.targetHref}>{t('goToTarget')}</Link>
                     </td>

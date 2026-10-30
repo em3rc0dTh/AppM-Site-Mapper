@@ -542,3 +542,22 @@
   }
 }
 
+@media (min-width: 1000px) and (max-width: 1400px) {
+  .zip-app-shell .zip-topbar-actions .mk-search-trigger {
+    width: clamp(124px, 14vw, 170px);
+    min-width: 124px;
+    flex-basis: 170px;
+  }
+
+  .zip-app-shell .zip-topbar-actions .sm-alarm-header {
+    min-width: max-content;
+    padding-inline: 8px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .zip-app-shell .zip-topbar-actions .zip-warehouse {
+    display: none !important;
+  }
+}
+

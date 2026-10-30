@@ -1,4 +1,5 @@
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
+import { alarmDefinition } from '@/modules/alarm/domain/catalog';
 import type { AlarmOccurrence } from '@/modules/alarm/domain/entities';
 import type { Signal } from '@/modules/telemetry/domain/industrial/observations';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
@@ -65,10 +66,13 @@ export async function projectAlarmPublicationSignals(
     if (!parsed) continue;
 
     const target = await topology.getById(parsed.targetId);
+    const definition = alarmDefinition(parsed.alarmCode);
     const validTarget =
       target &&
       target.lifecycle === 'ACTIVE' &&
-      (target.kind === 'DEVICE' || target.kind === 'EQUIPMENT');
+      (target.kind === 'DEVICE' || target.kind === 'EQUIPMENT') &&
+      Boolean(definition?.enabled) &&
+      definition!.applicableTargetTypes.includes(target.kind);
 
     const matching = validTarget
       ? active.filter(

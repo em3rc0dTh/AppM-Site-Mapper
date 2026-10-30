@@ -216,7 +216,7 @@ function PanelComposition({
             <span>P · W</span>
             <span>E · kWh</span>
             <span>{t('status')}</span>
-            <span>ALARM</span>
+            <span>{t('alarm')}</span>
           </div>
           {slots.length ? (
             slots.map(({ id, index, child }) =>

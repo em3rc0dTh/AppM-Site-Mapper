@@ -569,7 +569,9 @@
       "device": "DEVICE",
       "equipment": "EQUIPMENT"
     },
-    "activeAlarmsInBranch": "{count, plural, one {# alarma activa en esta rama} other {# alarmas activas en esta rama}}"
+    "activeAlarmsInBranch": "{count, plural, one {# alarma activa en esta rama} other {# alarmas activas en esta rama}}",
+    "collapseTree": "Colapsar árbol",
+    "expandTree": "Expandir árbol"
   },
   "topologyViews": {
     "surveyed": "GEOMETRÍA LEVANTADA",
@@ -2158,7 +2160,12 @@
       "direct": "{count} directa(s)",
       "rollup": "Roll-up descendente · no implica propiedad de telemetría",
       "view": "Ver alarmas →",
-      "affectedChildren": "ELEMENTOS AFECTADOS"
+      "affectedChildren": "ELEMENTOS AFECTADOS",
+      "scoped": "ALARMAS DEL ÁMBITO ACTUAL",
+      "currentScope": "ámbito actual",
+      "modalTitle": "Alarmas · {scope}",
+      "close": "Cerrar",
+      "viewAllGlobal": "Ver todas las alarmas del sistema →"
     },
     "home": {
       "active": "Alarmas activas",

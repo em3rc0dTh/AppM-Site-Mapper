@@ -18,9 +18,10 @@ export function parseAlarmPublicationLogicalPoint(logicalPointId: string): {
   alarmCode: string;
   field: AlarmPublicationField;
 } | null {
-  const match = /^ALARM\/([^/]{1,160})\/([A-Z][A-Z0-9_]{1,63})\/(STATE|ACK|SEVERITY|CONFIDENCE|QUALITY)$/.exec(
-    logicalPointId,
-  );
+  const match =
+    /^ALARM\/([^/]{1,160})\/([A-Z][A-Z0-9_]{1,63})\/(STATE|ACK|SEVERITY|CONFIDENCE|QUALITY)$/.exec(
+      logicalPointId,
+    );
   return match
     ? {
         targetId: match[1]!,

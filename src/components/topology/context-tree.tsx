@@ -175,38 +175,38 @@ export function TopologyContextTree({
         {collapsed ? '›' : '‹'}
       </button>
       <div className="telxius-tree-collapsible-content">
-      <header className="telxius-tree-brand">
-        <span className="telxius-tree-brand-icon">
-          <Icon name="network" />
-        </span>
-        <strong>APPMANAGER</strong>
-        <Link href="/workspace">{t('home')}</Link>
-      </header>
-      <div className="telxius-tree-heading">
-        <span>{t('topology')}</span>
-        <b>{t('all')}</b>
-      </div>
-      <ul className="telxius-tree-root">
-        <TreeBranch
-          item={tree}
-          activeId={activeId}
-          selectedId={selected?.node.id ?? null}
-          depth={0}
-          onSelect={setSelected}
-          onOpen={(item) => router.push(item.href)}
-          rollups={snapshot.rollups}
-        />
-      </ul>
-      {selected && (
-        <div className="topology-tree-selection" role="status">
-          <span>{t(`kinds.${labelFor(selected.node.kind)}`)}</span>
-          <strong title={selected.node.name}>{selected.node.name}</strong>
-          <small>{t('directChildren', { count: selected.children.length })}</small>
-          <Link href={selected.href} prefetch={false}>
-            {t('open')}
-          </Link>
+        <header className="telxius-tree-brand">
+          <span className="telxius-tree-brand-icon">
+            <Icon name="network" />
+          </span>
+          <strong>APPMANAGER</strong>
+          <Link href="/workspace">{t('home')}</Link>
+        </header>
+        <div className="telxius-tree-heading">
+          <span>{t('topology')}</span>
+          <b>{t('all')}</b>
         </div>
-      )}
+        <ul className="telxius-tree-root">
+          <TreeBranch
+            item={tree}
+            activeId={activeId}
+            selectedId={selected?.node.id ?? null}
+            depth={0}
+            onSelect={setSelected}
+            onOpen={(item) => router.push(item.href)}
+            rollups={snapshot.rollups}
+          />
+        </ul>
+        {selected && (
+          <div className="topology-tree-selection" role="status">
+            <span>{t(`kinds.${labelFor(selected.node.kind)}`)}</span>
+            <strong title={selected.node.name}>{selected.node.name}</strong>
+            <small>{t('directChildren', { count: selected.children.length })}</small>
+            <Link href={selected.href} prefetch={false}>
+              {t('open')}
+            </Link>
+          </div>
+        )}
       </div>
     </nav>
   );

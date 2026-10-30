@@ -485,25 +485,35 @@ def prepare(
     bfdb: Path,
     evidence_dir: Path | None,
     broker: dict[str, str],
+    snmp_mode: str,
 ) -> dict:
     required = [
         bfdb / "apps/field-emulator/main.py",
         bfdb / "config/devices.telxius-seed-01.yaml",
         bfdb / "config/emulator.telxius-seed-01.yaml",
-        bfdb / "apps/snmp-snapshot-emulator/Dockerfile",
-        bfdb / "apps/snmp-snapshot-emulator/build_snapshot.py",
-        bfdb / "apps/snmp-emulator/Dockerfile",
-        bfdb / "apps/snmp-emulator/telxius-snapshot-inform.mjs",
         COMMISSION,
     ]
+    if snmp_mode == "smartpack":
+        required += [
+            bfdb / "apps/snmp-snapshot-emulator/Dockerfile",
+            bfdb / "apps/snmp-snapshot-emulator/build_snapshot.py",
+            bfdb / "apps/snmp-emulator/Dockerfile",
+            bfdb / "apps/snmp-emulator/telxius-snapshot-inform.mjs",
+        ]
+    elif snmp_mode == "synthetic":
+        required += [
+            bfdb / "apps/snmp-emulator/Dockerfile",
+            bfdb / "apps/snmp-emulator/eltek-lab-service.mjs",
+            bfdb / "config/eltek-sequence.example.json",
+        ]
     missing = [path for path in required if not path.is_file()]
     if missing:
         fail("checkout is not current main; missing: " + ", ".join(map(str, missing)))
 
-    snmp_enabled = evidence_dir is not None
+    snmp_enabled = snmp_mode != "skip"
     evidence = (
         resolve_evidence(evidence_dir)
-        if evidence_dir is not None
+        if snmp_mode == "smartpack" and evidence_dir is not None
         else {
             "walk": RUNTIME / "SNMP_EVIDENCE_NOT_CONFIGURED",
             "mainMib": RUNTIME / "SNMP_EVIDENCE_NOT_CONFIGURED",
@@ -527,8 +537,11 @@ def prepare(
         )
     # One Smartpack2 evidence source. No QDF target is assigned because the
     # supplied evidence does not prove which QDF controller owns this walk.
-    if snmp_enabled:
+    if snmp_mode == "smartpack":
         profiles.append(smartpack_profile())
+    elif snmp_mode == "synthetic":
+        for qdf in QDFS:
+            profiles.append(synthetic_snmp_profile(qdf, rows[qdf]["controllerId"]))
     save_json(PROFILE_FILE, profiles, mode=0o644)
 
     secret = load_or_create_secrets()

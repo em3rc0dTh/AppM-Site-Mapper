@@ -645,6 +645,28 @@ The exact addresses are assigned only by the publication registry.
 | `ALARM_CONFIDENCE` | UINT16         | 0 none, 1 suspected, 2 confirmed      |
 | `QUALITY`          | UINT16         | governed quality enumeration          |
 
+The current Site Mapper bridge preserves the existing extension transport contract: each
+operator-approved alarm value is encoded in one extension slot as network-order FLOAT32
+plus its adjacent quality register. The values remain integer-coded according to the table
+above; this avoids rewriting the already certified bridge while a future typed UINT16
+registry remains a separate compatibility decision.
+
+Alarm extension points use the governed logical identity:
+
+```text
+ALARM/<canonical-target-id>/<ALARM_CODE>/STATE
+ALARM/<canonical-target-id>/<ALARM_CODE>/ACK
+ALARM/<canonical-target-id>/<ALARM_CODE>/SEVERITY
+ALARM/<canonical-target-id>/<ALARM_CODE>/CONFIDENCE
+ALARM/<canonical-target-id>/<ALARM_CODE>/QUALITY
+```
+
+The publication projection aggregates active occurrences for the same target and alarm
+definition. `STATE=1` when any matching occurrence is active; `ACK=1` only when all
+matching active occurrences are acknowledged; severity/confidence use the strongest
+active value. No active occurrence projects the governed clear/none values. A missing or
+invalid canonical target projects invalid quality rather than a false clear.
+
 Approved normalized/derived measurements may use engineering values such as:
 
 ```text

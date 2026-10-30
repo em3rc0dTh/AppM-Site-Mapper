@@ -2089,7 +2089,8 @@
       "activeLabel": "{count} active alarms",
       "criticalShort": "C",
       "warningShort": "W",
-      "infoShort": "I"
+      "infoShort": "I",
+      "summary": "{critical} C · {warning} W · {info} I"
     },
     "center": {
       "eyebrow": "Operational alarms",

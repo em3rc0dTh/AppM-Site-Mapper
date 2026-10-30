@@ -1,6 +1,8 @@
 'use client';
 
 import { useBdfbTelemetrySnapshot } from '@/components/telemetry/use-bdfb-telemetry';
+import { AlarmInspectorCard } from '@/components/alarms/alarm-ui';
+import type { AlarmSnapshotView } from '@/modules/alarms/domain/entities';
 import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
 import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
@@ -18,8 +20,8 @@ import { TELEMETRY_HISTORY_WINDOWS } from '@/modules/telemetry/domain/history';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
 import { useTranslations } from 'next-intl';
 
-type InspectorTab = 'overview' | 'feeds' | 'history' | 'settings';
-const INSPECTOR_TABS: readonly InspectorTab[] = ['overview', 'feeds', 'history', 'settings'];
+type InspectorTab = 'overview' | 'alarms' | 'feeds' | 'history' | 'settings';
+const INSPECTOR_TABS: readonly InspectorTab[] = ['overview', 'alarms', 'feeds', 'history', 'settings'];
 type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
 function metric(value: number | null | undefined, unit: string, decimals = 2): string {
@@ -161,6 +163,7 @@ export function BdfbTelemetryInspector({
   feeds,
   mappedBreakerCount = 0,
   descendantEquipmentIds = [],
+  alarmSnapshot,
 }: Readonly<{
   node: DeviceNode;
   presentation: BdfbPresentation;
@@ -169,6 +172,7 @@ export function BdfbTelemetryInspector({
   feeds?: readonly string[];
   mappedBreakerCount?: number;
   descendantEquipmentIds?: readonly string[];
+  alarmSnapshot?: AlarmSnapshotView;
 }>) {
   const ti = useTranslations('bdfb.inspector.info');
   const t = useTranslations('bdfb.inspector');
@@ -304,6 +308,9 @@ export function BdfbTelemetryInspector({
       >
         {tab === 'overview' && (
           <>
+            {alarmSnapshot ? (
+              <AlarmInspectorCard snapshot={alarmSnapshot} nodeId={node.id} />
+            ) : null}
             <SnmpFeedLoadPanel
               key={node.id}
               deviceId={node.id}
@@ -365,6 +372,16 @@ export function BdfbTelemetryInspector({
                 </small>
               </div>
             </section>
+          </>
+        )}
+
+        {tab === 'alarms' && (
+          <>
+            {alarmSnapshot ? (
+              <AlarmInspectorCard snapshot={alarmSnapshot} nodeId={node.id} />
+            ) : (
+              <div className="zip-bdfb-history-state">Alarm status unavailable</div>
+            )}
           </>
         )}
 

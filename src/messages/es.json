@@ -109,7 +109,8 @@
         "requiresBinding": "Las lecturas en vivo requieren enlaces MQTT explícitos de los equipos.",
         "panelScope": "Alcance del promedio: {panel}",
         "entireScope": "Alcance del promedio: todos los interruptores BDFB configurados"
-      }
+      },
+      "alarms": "Alarmas"
     }
   },
   "snmp": {

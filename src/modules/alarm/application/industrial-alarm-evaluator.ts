@@ -4,10 +4,7 @@ import { AlarmCommandService } from '@/modules/alarm/application/alarm-command-s
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
 import { alarmDefinition } from '@/modules/alarm/domain/catalog';
 import type { AlarmEvidenceRef, AlarmSeverity } from '@/modules/alarm/domain/entities';
-import type {
-  ObservationBatch,
-  Signal,
-} from '@/modules/telemetry/domain/industrial/observations';
+import type { ObservationBatch, Signal } from '@/modules/telemetry/domain/industrial/observations';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 
 function commissionedSeverity(value: string | null): AlarmSeverity | undefined {

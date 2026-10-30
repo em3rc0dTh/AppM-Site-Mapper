@@ -459,11 +459,11 @@ export function EquipmentContractViews({
                 </div>
                 <span className="ec-frame-row-status">
                   <span className="ec-count">
-                  {projectCompositionTelemetry(child, equipmentById, readings).reporting}/
-                  {child.childMode === 'POSITIONAL'
-                    ? child.children.length
-                    : child.children.filter(Boolean).length}{' '}
-                  {t('livePositions')}
+                    {projectCompositionTelemetry(child, equipmentById, readings).reporting}/
+                    {child.childMode === 'POSITIONAL'
+                      ? child.children.length
+                      : child.children.filter(Boolean).length}{' '}
+                    {t('livePositions')}
                   </span>
                   <AlarmBadge id={child.id} rollups={alarmSnapshot.rollups} />
                 </span>

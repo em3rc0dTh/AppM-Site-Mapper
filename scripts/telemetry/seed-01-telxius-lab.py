@@ -742,7 +742,6 @@ def prepare(
                 "MQTT_USERNAME": broker["username"],
                 "MQTT_PASSWORD": broker["password"],
                 "SNMP_INGEST_MAX_RPM": "2000",
-            "SNMP_INGEST_TOKEN": secret["snmpIngestToken"],
                 "SNMP_INGEST_TOKEN": secret["snmpIngestToken"],
                 "INDUSTRIAL_TIMESCALE_ENABLED": "true",
             },
@@ -891,6 +890,7 @@ def prepare(
             "SNMP_TRAP_ENGINE_ID": secret["engineId"],
             "SNMP_TRAP_MAX_PENDING": "5000",
             "SNMP_INGEST_MAX_RPM": "2000",
+            "SNMP_INGEST_TOKEN": secret["snmpIngestToken"],
         }
     )
     write_env(ENV_FILE, env)
@@ -1122,7 +1122,7 @@ def main() -> None:
                 if selected_snmp_mode == "synthetic"
                 else "; SNMP=SKIPPED explicitly."
             )
-        ),
+        )
         + ("; SNMPv2c Config4 shunts=ENABLED." if args.snmp_v2c_shunts else ""),
         flush=True,
     )

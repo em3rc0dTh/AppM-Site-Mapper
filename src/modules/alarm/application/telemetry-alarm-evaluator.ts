@@ -125,7 +125,7 @@ export class TelemetryAlarmEvaluator {
         targetType: policy.targetType,
         targetId: policy.targetId,
         sourceContext: policy.sourceContext,
-        severity: policy.telemetryLoss.severity,
+        ...(policy.telemetryLoss.severity ? { severity: policy.telemetryLoss.severity } : {}),
         evidence: [
           {
             id: randomUUID(),
@@ -222,7 +222,7 @@ export class TelemetryAlarmEvaluator {
           sourceContext: policy.sourceContext,
           evidence: evidenceRefs,
           observedAt: sample.receivedAt,
-          severity,
+          ...(severity ? { severity } : {}),
           ...(confidence ? { confidence } : {}),
         });
       }

@@ -60,11 +60,7 @@ export function startIndustrialHistoryDelivery() {
   if (process.env.INDUSTRIAL_TIMESCALE_ENABLED !== 'true') return;
   getProcessSingleton('industrial-timescale-delivery', () => {
     const owner = randomUUID();
-    const concurrency = boundedPositiveInt(
-      process.env.INDUSTRIAL_TIMESCALE_CONCURRENCY,
-      4,
-      16,
-    );
+    const concurrency = boundedPositiveInt(process.env.INDUSTRIAL_TIMESCALE_CONCURRENCY, 4, 16);
     const batchesPerTick = boundedPositiveInt(
       process.env.INDUSTRIAL_TIMESCALE_BATCHES_PER_TICK,
       80,

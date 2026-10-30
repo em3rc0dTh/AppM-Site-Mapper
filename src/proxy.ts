@@ -5,6 +5,38 @@ import { buildContentSecurityPolicy } from '@/shared/http/content-security-polic
 import { isSafeMutationRequest } from '@/shared/http/request-security';
 
 export function proxy(request: NextRequest) {
+  const visualDevUpstream = process.env.SITE_MAPPER_VISUAL_DEV_UPSTREAM?.trim();
+  const visualDevReadOnly = process.env.SITE_MAPPER_VISUAL_DEV_READ_ONLY === 'true';
+
+  // Visual-dev never owns industrial ingestion. Read-only telemetry requests are
+  // delegated to the already-running seed-01 Site Mapper runtime so :3002 can
+  // render the same LIVE/STALE/OFFLINE data without opening a second MQTT/SNMP
+  // consumer or Modbus projection path.
+  if (
+    visualDevUpstream &&
+    request.method === 'GET' &&
+    request.nextUrl.pathname.startsWith('/api/telemetry/')
+  ) {
+    const upstream = new URL(request.nextUrl.pathname + request.nextUrl.search, visualDevUpstream);
+    return fetch(upstream, {
+      method: 'GET',
+      headers: request.headers,
+      cache: 'no-store',
+      redirect: 'manual',
+    });
+  }
+
+  // Read-only visual development blocks operational mutations. Login/logout are
+  // intentionally allowed because they only establish/remove the browser session.
+  if (
+    visualDevReadOnly &&
+    request.nextUrl.pathname.startsWith('/api/') &&
+    ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method) &&
+    !['/api/auth/login', '/api/auth/logout'].includes(request.nextUrl.pathname)
+  ) {
+    return NextResponse.json({ error: 'VISUAL_DEV_READ_ONLY' }, { status: 423 });
+  }
+
   // Apply a common same-origin fence to cookie-authenticated mutations,
   // including handlers that have not yet adopted bounded JSON parsing.
   if (

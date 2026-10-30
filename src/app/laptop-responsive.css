@@ -561,7 +561,6 @@
   }
 }
 
-
 /* Device / Equipment visual-acceptance contract:
    the equipment workbench remains a three-zone 25 / 50 / 25 surface down to
    the desktop/tablet transition. Search and alarm actions are protected before
@@ -644,7 +643,8 @@
   }
 
   .zip-app-shell .mk-device-layout {
-    grid-template-columns: minmax(220px, 25%) minmax(0, 50%) minmax(220px, 25%) !important;
+    grid-template-columns:
+      minmax(220px, 25%) minmax(0, 50%) minmax(220px, 25%) !important;
     height: calc(100dvh - 67px) !important;
     min-height: 0 !important;
     overflow: hidden !important;

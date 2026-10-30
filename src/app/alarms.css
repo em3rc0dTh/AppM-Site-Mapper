@@ -529,3 +529,130 @@
   .alarm-scope-banner { align-items: flex-start; flex-direction: column; }
   .alarm-scope-links { margin-left: 0; justify-content: flex-start; }
 }
+
+
+/* Canonical Equipment Composition alarm overlays. */
+.equipment-slot[data-alarm-severity='critical'],
+.equipment-dynamic-list article[data-alarm-severity='critical'],
+.equipment-physical-slot[data-alarm-severity='critical'],
+.ec-shelf-card[data-alarm-severity='critical'],
+.ec-frame-card[data-alarm-severity='critical'],
+.ec-frame-row[data-alarm-severity='critical'],
+.ec-panel-line[data-alarm-severity='critical'],
+.ec-breaker-row[data-alarm-severity='critical'] {
+  border-color: #ef8c94 !important;
+  background: #fff0f1 !important;
+}
+.equipment-slot[data-alarm-severity='warning'],
+.equipment-dynamic-list article[data-alarm-severity='warning'],
+.equipment-physical-slot[data-alarm-severity='warning'],
+.ec-shelf-card[data-alarm-severity='warning'],
+.ec-frame-card[data-alarm-severity='warning'],
+.ec-frame-row[data-alarm-severity='warning'],
+.ec-panel-line[data-alarm-severity='warning'],
+.ec-breaker-row[data-alarm-severity='warning'] {
+  border-color: #edc06a !important;
+  background: #fff8e8 !important;
+}
+.equipment-slot-alarm-title,
+.ec-panel-name-line {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ec-breaker-columns,
+.ec-breaker-row {
+  grid-template-columns:
+    44px minmax(130px, 1.7fr)
+    repeat(4, minmax(62px, 0.8fr))
+    minmax(84px, 0.9fr)
+    minmax(76px, 0.8fr) !important;
+}
+.ec-alarm-cell {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  color: #6d7d90;
+  font-size: 0.65rem;
+}
+
+/* Direct target view: the alarm owns the target, not its ancestors. */
+.alarm-direct-hero {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: start;
+  margin: 0 0 14px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--alarm-tone) 45%, #dbe2ea);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--alarm-tone) 6%, #fff);
+}
+.alarm-direct-icon {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--alarm-tone);
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+.alarm-direct-copy h2 {
+  margin: 2px 0 6px;
+  color: #162b45;
+  font-size: 1.35rem;
+}
+.alarm-direct-copy > small:first-child {
+  color: var(--alarm-tone);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.alarm-direct-copy p {
+  margin: 8px 0 0;
+  color: #52677f;
+}
+.alarm-direct-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.alarm-direct-tags span {
+  padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--alarm-tone) 30%, #d4dce5);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--alarm-tone);
+  font-size: 0.62rem;
+  font-weight: 750;
+}
+.alarm-direct-actions {
+  min-width: 180px;
+  display: grid;
+  gap: 7px;
+}
+.alarm-direct-actions > a {
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  padding: 0 10px;
+  border: 1px solid #b8cbe0;
+  border-radius: 5px;
+  background: #fff;
+  color: #145ca9;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 850px) {
+  .alarm-direct-hero {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+  .alarm-direct-actions {
+    grid-column: 1 / -1;
+  }
+}

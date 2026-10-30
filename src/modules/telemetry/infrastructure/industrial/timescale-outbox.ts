@@ -47,68 +47,114 @@ export async function industrialHistoryDiagnostics() {
     return { status: 'UNAVAILABLE', alerts: ['TIMESCALE_DIAGNOSTICS_UNAVAILABLE'] };
   }
 }
-/** Durable Mongo outbox; a lease permits multiple app replicas and recovery after a crash.
+
+function boundedPositiveInt(value: string | undefined, fallback: number, max: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? Math.min(parsed, max) : fallback;
+}
+
+/** Durable Mongo outbox; leases permit concurrent delivery and recovery after a crash.
  * HTTP acknowledgement is followed by deletion; Timescale's composite key makes retries harmless.
  */
 export function startIndustrialHistoryDelivery() {
   if (process.env.INDUSTRIAL_TIMESCALE_ENABLED !== 'true') return;
   getProcessSingleton('industrial-timescale-delivery', () => {
     const owner = randomUUID();
+    const concurrency = boundedPositiveInt(
+      process.env.INDUSTRIAL_TIMESCALE_CONCURRENCY,
+      4,
+      16,
+    );
+    const batchesPerTick = boundedPositiveInt(
+      process.env.INDUSTRIAL_TIMESCALE_BATCHES_PER_TICK,
+      80,
+      400,
+    );
+    const leaseMs = 60000;
+
     const tick = async () => {
       try {
         const db = await getMongoDatabase();
         const queue = db.collection('industrial_timescale_outbox');
-        for (let i = 0; i < 20; i++) {
-          const row = await queue.findOneAndUpdate(
-            { availableAt: { $lte: new Date() } },
-            { $set: { owner, availableAt: new Date(Date.now() + 30000) }, $inc: { attempts: 1 } },
-            { sort: { createdAt: 1 }, returnDocument: 'after' },
+        const status = db.collection('industrial_delivery_status');
+        let processed = 0;
+
+        while (processed < batchesPerTick) {
+          const width = Math.min(concurrency, batchesPerTick - processed);
+          const claimed = (
+            await Promise.all(
+              Array.from({ length: width }, () =>
+                queue.findOneAndUpdate(
+                  { availableAt: { $lte: new Date() } },
+                  {
+                    $set: { owner, availableAt: new Date(Date.now() + leaseMs) },
+                    $inc: { attempts: 1 },
+                  },
+                  { sort: { createdAt: 1 }, returnDocument: 'after' },
+                ),
+              ),
+            )
+          ).filter((row) => row !== null);
+
+          if (!claimed.length) break;
+
+          const results = await Promise.all(
+            claimed.map(async (row) => {
+              try {
+                const response = await fetch(industrialStoreUrl('/industrial-batch'), {
+                  method: 'POST',
+                  headers: {
+                    'content-type': 'application/json',
+                    authorization: `Bearer ${process.env.TELEMETRY_STORE_TOKEN}`,
+                  },
+                  body: row.payloadJson as string,
+                  signal: AbortSignal.timeout(10000),
+                  redirect: 'error',
+                });
+                if (!response.ok) throw new Error('Historical delivery rejected');
+                const acknowledgement = (await response.json()) as { accepted?: number };
+                const expected = (JSON.parse(row.payloadJson as string) as { signals: unknown[] })
+                  .signals.length;
+                if (acknowledgement.accepted !== expected)
+                  throw new Error('Historical delivery acknowledgement mismatch');
+                await queue.deleteOne({ _id: row._id, owner });
+                return true;
+              } catch {
+                await queue.updateOne(
+                  { _id: row._id, owner },
+                  {
+                    $set: {
+                      lastFailureAt: new Date(),
+                      availableAt: new Date(
+                        Date.now() +
+                          Math.min(300000, 1000 * 2 ** Math.min(Number(row.attempts), 8)),
+                      ),
+                    },
+                  },
+                );
+                return false;
+              }
+            }),
           );
-          if (!row) break;
-          try {
-            const response = await fetch(industrialStoreUrl('/industrial-batch'), {
-              method: 'POST',
-              headers: {
-                'content-type': 'application/json',
-                authorization: `Bearer ${process.env.TELEMETRY_STORE_TOKEN}`,
-              },
-              body: row.payloadJson as string,
-              signal: AbortSignal.timeout(10000),
-              redirect: 'error',
-            });
-            if (!response.ok) throw new Error('Historical delivery rejected');
-            const acknowledgement = (await response.json()) as { accepted?: number };
-            const expected = (JSON.parse(row.payloadJson as string) as { signals: unknown[] })
-              .signals.length;
-            if (acknowledgement.accepted !== expected)
-              throw new Error('Historical delivery acknowledgement mismatch');
-            await queue.deleteOne({ _id: row._id, owner });
-            await db
-              .collection('industrial_delivery_status')
-              .updateOne(
-                { key: 'timescale' },
-                { $set: { lastDeliveryAt: new Date().toISOString() } },
-                { upsert: true },
-              );
-          } catch {
-            await queue.updateOne(
-              { _id: row._id, owner },
-              {
-                $set: {
-                  lastFailureAt: new Date(),
-                  availableAt: new Date(
-                    Date.now() + Math.min(300000, 1000 * 2 ** Math.min(Number(row.attempts), 8)),
-                  ),
-                },
-              },
+
+          processed += claimed.length;
+          const delivered = results.filter(Boolean).length;
+          const failed = results.length - delivered;
+          const now = new Date().toISOString();
+
+          if (delivered) {
+            await status.updateOne(
+              { key: 'timescale' },
+              { $set: { lastDeliveryAt: now } },
+              { upsert: true },
             );
-            await db
-              .collection('industrial_delivery_status')
-              .updateOne(
-                { key: 'timescale' },
-                { $inc: { failures: 1 }, $set: { lastFailureAt: new Date().toISOString() } },
-                { upsert: true },
-              );
+          }
+          if (failed) {
+            await status.updateOne(
+              { key: 'timescale' },
+              { $inc: { failures: failed }, $set: { lastFailureAt: now } },
+              { upsert: true },
+            );
             break;
           }
         }

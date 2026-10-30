@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
 import { EquipmentCompositionEditor } from '@/components/equipment/equipment-composition-editor';
-import { AlarmInspectorCard, AlarmScopeBanner } from '@/components/alarms/alarm-ui';
+import { AlarmInspectorCard, AlarmScopeBanner, DirectAlarmHero } from '@/components/alarms/alarm-ui';
 import { getAlarmSnapshot } from '@/modules/alarms/application/alarm-preview-service';
 import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
 import { EquipmentFocusInspector } from '@/components/equipment/equipment-focus-inspector';
@@ -367,6 +367,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
         <section className="zip-device-stage">
           <AlarmScopeBanner snapshot={alarmSnapshot} nodeId={node.id} />
           <h1>{node.kind === 'EQUIPMENT' ? t('composition') : t('elevation')}</h1>
+          <DirectAlarmHero snapshot={alarmSnapshot} nodeId={node.id} />
           {node.kind === 'DEVICE' && canDelete ? (
             <DeleteEntityControl id={node.id} name={node.name} />
           ) : null}

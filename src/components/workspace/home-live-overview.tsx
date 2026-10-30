@@ -10,7 +10,7 @@ import {
 } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
 import type { WorkspaceBdfbSummary } from '@/modules/workspace/application/workspace-service';
-import type { AlarmSnapshotView } from '@/modules/alarms/domain/entities';
+import type { AlarmRollup, AlarmSnapshotView } from '@/modules/alarms/domain/entities';
 import { AlarmHomeSummary } from '@/components/alarms/alarm-ui';
 
 type Pin = { id: string; name: string; kind: string; context: string; href: string };
@@ -68,11 +68,15 @@ export function HomeLiveOverview({
   const totalPowerW = reporting.reduce((sum, row) => sum + row.totalPowerW!, 0);
   const partial = reporting.length !== rows.length;
   const monitoring = rows.filter((row) => row.reportingEquipment > 0).length;
-  const affectedBdfbs = rows.flatMap((row) => {
+  const affectedBdfbs = rows.reduce<
+    Array<{ row: BdfbRow; rollup: AlarmRollup; count: number }>
+  >((items, row) => {
     const rollup = alarmSnapshot.rollups[row.deviceId];
-    const count = rollup ? rollup.directCount + rollup.descendantCount : 0;
-    return count ? [{ row, rollup, count }] : [];
-  });
+    if (!rollup) return items;
+    const count = rollup.directCount + rollup.descendantCount;
+    if (count) items.push({ row, rollup, count });
+    return items;
+  }, []);
 
   return (
     <>

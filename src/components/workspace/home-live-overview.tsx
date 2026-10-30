@@ -94,9 +94,7 @@ export function HomeLiveOverview({
           <Link href="/alarms">{alarmT('viewAll')}</Link>
         </div>
         {alarmError ? (
-          <p className="sm-alarm-unavailable">
-            {alarmT('unavailable')}
-          </p>
+          <p className="sm-alarm-unavailable">{alarmT('unavailable')}</p>
         ) : alarmSnapshot.global.activeAlarmCount === 0 ? (
           <p className="sm-alarm-empty">{alarmT('none')}</p>
         ) : (

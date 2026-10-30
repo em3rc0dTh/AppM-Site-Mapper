@@ -192,11 +192,7 @@ try {
       };
     });
     const [left, right] = expectedColumns;
-    assert.equal(
-      geometry.cols.length,
-      width <= 1199 ? 2 : 3,
-      `${width}px layout column count`,
-    );
+    assert.equal(geometry.cols.length, width <= 1199 ? 2 : 3, `${width}px layout column count`);
     assert.ok(
       Math.abs(geometry.cols[0] - left) < 2,
       `${width}px topology width: ${geometry.cols[0]}`,
@@ -273,9 +269,7 @@ try {
     await tree.waitFor({ timeout: 30000 });
     await tree.getByText('CI LIMA BDFB', { exact: true }).waitFor({ timeout: 30000 });
     await tree.getByText('CI LIMA Panel 24P', { exact: true }).waitFor({ timeout: 30000 });
-    await tree
-      .getByText('CI LIMA Circuit Breaker 01', { exact: true })
-      .waitFor({ timeout: 30000 });
+    await tree.getByText('CI LIMA Circuit Breaker 01', { exact: true }).waitFor({ timeout: 30000 });
 
     const activeGeometry = await tree.evaluate((element) => {
       const current = element.querySelector('a[aria-current="page"]');

@@ -587,7 +587,7 @@
   .zip-app-shell.app-shell--immersive .breadcrumbs,
   .zip-app-shell .mk-device-page .breadcrumbs {
     left: 190px;
-    right: 500px !important;
+    right: 520px !important;
     padding-inline: 10px;
     gap: 6px;
     min-width: 0;

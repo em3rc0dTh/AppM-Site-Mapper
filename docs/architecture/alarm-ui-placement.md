@@ -26,6 +26,120 @@ Global Alarm Center
 
 One incident remains one incident.
 
+### 1.1 Navigation invariant — top-down navigation, bottom-up alarm visibility
+
+The operator navigates **down** the physical hierarchy while alarm visibility rolls **up** from the real affected target.
+
+For an alarm whose target is a breaker, the operational experience is:
+
+```text
+QDF scope
+  ↓ operator drills down
+BDFB
+  ↓
+Chassis
+  ↓
+Shelf
+  ↓
+Frame
+  ↓
+Panel
+  ↓
+Breaker target
+```
+
+The alarm itself is visible in the opposite direction as a descendant summary:
+
+```text
+Breaker target            ← owns the AlarmOccurrence
+  ↑ descendant roll-up
+Panel
+  ↑
+Frame
+  ↑
+Shelf
+  ↑
+Chassis
+  ↑
+BDFB
+  ↑
+QDF operational scope
+  ↑
+Global Alarm Center
+```
+
+For every ACTIVE `AlarmOccurrence`:
+
+```text
+visible scopes =
+  target
+  + every canonical ancestor(target)
+  + global operational scope
+```
+
+The implementation must follow the canonical `parentId` / `parentEquipmentId` ancestry. It must **not** hard-code a mandatory list of labels such as Shelf → Frame → Panel, because supported physical compositions may vary.
+
+Ancestor visibility means **contains an alarmed descendant**. It does not transfer ownership of the alarm to the ancestor.
+
+### 1.2 Telemetry ownership invariant
+
+Structural hierarchy and telemetry ownership are separate concerns.
+
+In the current BDFB/QDF model:
+
+- Shelf, Frame and Panel are structural Equipment and do not become telemetry producers merely because alarm state is displayed on them.
+- Metering devices / commissioned telemetry bindings provide measurements associated with the monitored circuit breaker or another explicitly commissioned target.
+- The breaker (or other explicitly bound target) may own the detailed telemetry/evidence used by the Alarm Engine.
+- Shelf, Frame, Panel, Chassis, BDFB and QDF may display alarm roll-ups from descendants without displaying invented telemetry values.
+- A structural node may show direct telemetry only when an independent, explicit measurement binding exists for that exact node/feed. No telemetry is inferred from hierarchy alone.
+
+Therefore:
+
+```text
+alarm visibility can propagate upward
+telemetry ownership does not propagate upward
+```
+
+and:
+
+```text
+descendant alarm roll-up != node telemetry
+```
+
+### 1.3 Direct alarm navigation invariant
+
+Every alarm summary must preserve a path to the real affected target.
+
+From the home screen, QDF overview, Alarm Center, ancestor badge or Inspector, the operator must be able to reach:
+
+```text
+alarm summary
+  ↓
+affected branch
+  ↓
+affected child at the next hierarchy level
+  ↓
+...
+  ↓
+target breaker / target equipment
+  ↓
+alarm detail
+```
+
+At intermediate scopes, the UI highlights which child contains the active descendant alarm. This allows the operator to answer successively:
+
+```text
+Which QDF?
+Which BDFB?
+Which chassis?
+Which shelf?
+Which frame?
+Which panel?
+Which breaker?
+```
+
+A global Alarm Center entry may additionally deep-link directly to the target breaker/equipment while preserving enough context to reconstruct its ancestor trail.
+
 ---
 
 ## 2. Global navigation
@@ -47,6 +161,38 @@ It must expose at least:
 - navigation to the Alarm Center.
 
 Search remains an independent control. Alarm counters must not replace or obscure global search.
+
+### 2.1 Home / primary-screen alarm summary
+
+The primary workspace must expose an operational alarm summary even before the operator enters a specific QDF/BDFB.
+
+Minimum behavior:
+
+- active alarm count and highest severity;
+- compact list of the highest-priority active alarms;
+- canonical target path;
+- direct navigation to the affected target;
+- optional scoped navigation to the containing QDF/BDFB;
+- no duplication when the same occurrence is visible in more than one ancestor summary.
+
+Conceptually:
+
+```text
+ACTIVE ALARMS · 3
+CRITICAL 1 · WARNING 2
+
+POWER LOSS
+QDF-4 / BDFB-01 / CHASSIS / SHELF-2 / FRAME-1 / A3 / P04
+[GO TO TARGET]
+
+TELEMETRY LOSS
+QDF-4 / ... / A3 / P03
+[GO TO TARGET]
+
+[VIEW ALL ALARMS]
+```
+
+The home summary is a navigation surface, not a new alarm source.
 
 ---
 
@@ -92,18 +238,19 @@ Acknowledgement actions belong in the Alarm Center or alarm detail, not on every
 
 The existing BDFB physical view remains the main context.
 
-Panel cards become physical-operational summaries.
+The BDFB/QDF view must make alarm location obvious at every visible structural level. A node with no direct alarm may still show that one of its descendants is alarmed.
 
-For a panel/feed with commissioned measurements, the compact card may show:
+Panel cards are therefore **physical/alarm summaries first**.
+
+For the current model, where metering devices are bound to circuit breakers rather than to structural panels, a panel card should default to:
 
 ```text
-A3                                  CRITICAL
-
-53.7 V        138.2 A        7.42 kW
-Voltage       Current        Power
+A3                                  CRITICAL DESCENDANT
 
 6 installed · 18 available
 1 critical · 1 warning
+
+Affected: P04
 ```
 
 For a healthy panel:
@@ -111,19 +258,21 @@ For a healthy panel:
 ```text
 B3                                  NORMAL
 
-53.8 V        130.0 A        6.99 kW
-
 6 installed · 18 available
-No active alarms
+No active descendant alarms
 ```
+
+A panel may show V / A / kW only if those measurements are explicitly commissioned to that exact panel/feed. Breaker telemetry must never be silently re-labelled as panel telemetry.
 
 ### 4.1 Measurement source rule
 
-Values shown on A3/B3 must be genuinely attributable to that panel/feed.
+Shelf, Frame and Panel are structural nodes in the current QDF/BDFB composition. They do not produce telemetry by hierarchy.
 
-Do not fabricate panel values by averaging breaker children merely to fill the card.
+Do not fabricate panel values by averaging, summing or copying breaker children merely to fill a structural card.
 
-For DC feeds:
+If a future or explicitly commissioned panel/feed meter exists, its measurements may be shown only with a binding that proves the measurement belongs to that exact scope.
+
+For a commissioned DC feed:
 
 ```text
 P(kW) = |V| × I / 1000
@@ -131,7 +280,7 @@ P(kW) = |V| × I / 1000
 
 only when V and I are commissioned to the same feed and sufficiently aligned in time.
 
-Energy is not required on the compact card; it can remain in Inspector/Charts to avoid visual overload.
+Breaker-level measurements remain attached to the breaker/metering-device relationship and are presented at breaker detail/rows.
 
 ### 4.2 Panel roll-up
 
@@ -483,25 +632,65 @@ The semantic point of P04 is deliberate: a source can be LIVE while its fresh va
 
 ## 16. Hierarchical presentation contract
 
+The canonical interaction is **top-down drill-down with bottom-up alarm roll-up**.
+
 ```mermaid
 flowchart TD
+  HOME["Home / Primary alarm summary"]
   AC["Global Alarm Center"]
-  B["BDFB/QDF summary"]
-  P["Panel A/B summary + V/A/kW"]
-  C["Breaker row + observation state + alarm"]
+  Q["QDF operational scope"]
+  B["BDFB"]
+  C["Chassis"]
+  S["Shelf"]
+  F["Frame"]
+  P["Panel"]
+  BR["Breaker / real alarm target"]
   D["Alarm detail + evidence + ACK + timeline"]
 
-  AC --> B
-  B --> P
-  P --> C
-  C --> D
+  HOME -->|"scope or direct jump"| Q
+  HOME -->|"view all"| AC
+  AC -->|"direct target jump"| BR
+
+  Q --> B
+  B --> C
+  C --> S
+  S --> F
+  F --> P
+  P --> BR
+  BR --> D
 ```
+
+At each ancestor, the UI must identify the affected child branch. Example:
+
+```text
+QDF-4       🔴 1
+└─ BDFB-01  🔴 1
+   └─ CH-01 🔴 1
+      └─ S2 🔴 1
+         └─ F1 🔴 1
+            └─ A3 🔴 1
+               └─ P04 🔴 POWER LOSS
+```
+
+The same `AlarmOccurrence` is being projected at each level. The badges do not create seven alarms.
+
+Each scope should expose at least:
+
+```text
+directAlarmCount
+descendantAlarmCount
+highestSeverity
+unacknowledgedCount
+affectedChildren
+```
+
+where `affectedChildren` identifies the immediate child nodes that contain active alarm descendants and therefore provides the next drill-down step.
 
 The hierarchy always keeps these concepts separate:
 
 ```text
 MEASUREMENT
-V / A / kW / kWh
+owned by the explicitly commissioned telemetry target/binding
 
 OBSERVATION
 UNOBSERVED / LIVE / LATE / LOST / RECOVERING
@@ -510,6 +699,19 @@ ALARM
 INFO / WARNING / CRITICAL
 ACTIVE / RESOLVED
 SUSPECTED / CONFIRMED when applicable
+
+ROLL-UP
+ancestor summary of descendant AlarmOccurrence identities
+```
+
+The key invariants are:
+
+```text
+one occurrence, many visible scopes
+target owns the alarm
+ancestors summarize the alarm
+structural roll-up does not invent telemetry
+navigation always preserves a route to the real target
 ```
 
 ---

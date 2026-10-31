@@ -42,10 +42,7 @@ jobs:
         run: npm run lint
 
       - name: Format check
-        run: |
-          npx prettier --write src/app/api/telemetry/stream/route.ts
-          git diff -- src/app/api/telemetry/stream/route.ts
-          npm run format:check
+        run: npm run format:check
 
       - name: MVP documentation links
         run: npm run docs:check

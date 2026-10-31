@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 
 import type { AlarmSnapshot } from '@/modules/alarm/domain/entities';
 
@@ -22,35 +22,100 @@ const EMPTY: AlarmSnapshot = {
   },
 };
 
-export function useAlarmSnapshot(includeResolved = false) {
-  const [snapshot, setSnapshot] = useState<AlarmSnapshot>(EMPTY);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+interface AlarmSnapshotState {
+  readonly snapshot: AlarmSnapshot;
+  readonly loading: boolean;
+  readonly error: string | null;
+}
 
-  const refresh = useCallback(async () => {
+const INITIAL_STATE: AlarmSnapshotState = {
+  snapshot: EMPTY,
+  loading: true,
+  error: null,
+};
+
+let state: AlarmSnapshotState = INITIAL_STATE;
+let timer: ReturnType<typeof setInterval> | null = null;
+let inFlight: Promise<void> | null = null;
+const listeners = new Set<() => void>();
+
+function emit(next: AlarmSnapshotState): void {
+  state = next;
+  for (const listener of listeners) listener();
+}
+
+async function refreshSharedSnapshot(): Promise<void> {
+  if (inFlight) return inFlight;
+  inFlight = (async () => {
     try {
-      const response = await fetch(
-        '/api/alarms' + (includeResolved ? '?includeResolved=true' : ''),
-        { cache: 'no-store' },
-      );
+      // All alarm surfaces consume the same snapshot, including resolved
+      // occurrences. Rollups are still computed from ACTIVE occurrences only.
+      const response = await fetch('/api/alarms?includeResolved=true', { cache: 'no-store' });
       if (!response.ok) throw new Error('ALARM_STATUS_UNAVAILABLE');
-      setSnapshot((await response.json()) as AlarmSnapshot);
-      setError(null);
+      emit({
+        snapshot: (await response.json()) as AlarmSnapshot,
+        loading: false,
+        error: null,
+      });
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : 'ALARM_STATUS_UNAVAILABLE');
+      emit({
+        ...state,
+        loading: false,
+        error: reason instanceof Error ? reason.message : 'ALARM_STATUS_UNAVAILABLE',
+      });
     } finally {
-      setLoading(false);
+      inFlight = null;
     }
-  }, [includeResolved]);
+  })();
+  return inFlight;
+}
 
-  useEffect(() => {
-    const initial = window.setTimeout(() => void refresh(), 0);
-    const timer = window.setInterval(() => void refresh(), 15_000);
-    return () => {
-      window.clearTimeout(initial);
-      window.clearInterval(timer);
-    };
-  }, [refresh]);
+function startPolling(): void {
+  if (timer) return;
+  void refreshSharedSnapshot();
+  timer = setInterval(() => void refreshSharedSnapshot(), 5_000);
+}
 
-  return { snapshot, loading, error, refresh };
+function stopPolling(): void {
+  if (listeners.size || !timer) return;
+  clearInterval(timer);
+  timer = null;
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  startPolling();
+  const refreshOnVisible = () => {
+    if (document.visibilityState === 'visible') void refreshSharedSnapshot();
+  };
+  window.addEventListener('focus', refreshOnVisible);
+  document.addEventListener('visibilitychange', refreshOnVisible);
+  return () => {
+    listeners.delete(listener);
+    window.removeEventListener('focus', refreshOnVisible);
+    document.removeEventListener('visibilitychange', refreshOnVisible);
+    stopPolling();
+  };
+}
+
+function getSnapshot(): AlarmSnapshotState {
+  return state;
+}
+
+function getServerSnapshot(): AlarmSnapshotState {
+  return INITIAL_STATE;
+}
+
+/**
+ * Alarm UI has one browser-side source of truth. The includeResolved argument is
+ * retained for API compatibility; the shared store always fetches resolved
+ * occurrences so the Alarm Center and scoped badges cannot drift by polling on
+ * independent clocks.
+ */
+export function useAlarmSnapshot(_includeResolved = false) {
+  const current = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  return {
+    ...current,
+    refresh: refreshSharedSnapshot,
+  };
 }

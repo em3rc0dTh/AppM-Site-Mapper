@@ -188,6 +188,48 @@ describe('TelemetryService', () => {
     expect(service.latest(physical.id)?.reported).toEqual({ current: 5 });
   });
 
+  it('publishes LIVE telemetry without waiting for historian durability', async () => {
+    const owner = device('device-live-first', 'SN-LIVE-FIRST');
+    const repository = new MemoryTopologyRepository([owner]);
+    const hub = new TelemetryHub(4);
+
+    let releaseHistory: (() => void) | null = null;
+    let historyStarted = false;
+    const pendingHistory = new Promise<void>((resolve) => {
+      releaseHistory = resolve;
+    });
+
+    const service = new TelemetryService(
+      repository,
+      hub,
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 1024 },
+      {
+        configuredBindings: [binding('source-live-first', 'SN-LIVE-FIRST', 'DEVICE', owner.id)],
+      },
+      undefined,
+      {
+        write: async () => {},
+        writeDurable: async () => {
+          historyStarted = true;
+          await pendingHistory;
+        },
+      },
+    );
+
+    const result = await service.ingest(
+      'data/dev/SN-LIVE-FIRST',
+      new TextEncoder().encode(JSON.stringify({ reported: { current: 5 } })),
+      timestamp,
+    );
+
+    expect(result.ok).toBe(true);
+    expect(historyStarted).toBe(true);
+    expect(service.latest(owner.id)?.reported).toEqual({ current: 5 });
+
+    releaseHistory?.();
+    await Promise.resolve();
+  });
+
   it('maps BFDB point telemetry through explicit Device and Equipment bindings', async () => {
     const bdfb: DeviceNode = {
       ...device('device-1', 'LOCAL-BFDB-01'),

@@ -233,7 +233,8 @@ export class TelemetryService {
           verified.add(id);
         }
         for (const own of buildBoundBfdbEquipmentPatches(normalized.value, bindings, verified)) {
-          this.hub.publish(await this.withHistoryStatus(own));
+          this.hub.publish(own);
+          void this.captureHistory(own);
         }
       }
     }

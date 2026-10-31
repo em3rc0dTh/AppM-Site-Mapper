@@ -45,8 +45,7 @@ export async function GET() {
         try {
           while (!closed && pending.size) {
             const first = pending.entries().next().value as
-              | [string, { name: string; data: unknown }]
-              | undefined;
+              [string, { name: string; data: unknown }] | undefined;
             if (!first) break;
             const [key, item] = first;
             pending.delete(key);

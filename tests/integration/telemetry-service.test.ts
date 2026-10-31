@@ -193,7 +193,7 @@ describe('TelemetryService', () => {
     const repository = new MemoryTopologyRepository([owner]);
     const hub = new TelemetryHub(4);
 
-    let releaseHistory: (() => void) | null = null;
+    let releaseHistory: () => void = () => {};
     let historyStarted = false;
     const pendingHistory = new Promise<void>((resolve) => {
       releaseHistory = resolve;
@@ -226,7 +226,7 @@ describe('TelemetryService', () => {
     expect(historyStarted).toBe(true);
     expect(service.latest(owner.id)?.reported).toEqual({ current: 5 });
 
-    releaseHistory?.();
+    releaseHistory();
     await Promise.resolve();
   });
 

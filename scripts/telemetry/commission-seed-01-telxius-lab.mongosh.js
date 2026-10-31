@@ -9,6 +9,8 @@ const SOURCES = {
   'QDF-5': 'EMU-TELXIUS-QDF-5',
 };
 const METRICS = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'];
+const TELEMETRY_LOSS_AFTER_MS = 35_000;
+const TELEMETRY_RECOVERY_SAMPLES = 2;
 
 function assert(value, message) {
   if (!value) throw new Error('SEED01 LAB BLOCKED: ' + message);
@@ -27,11 +29,21 @@ if (MODE === 'retire') {
     { lifecycle: 'ACTIVE', 'attributes.commissioning': MARK },
     { $set: { lifecycle: 'ARCHIVED', updatedAt: now } },
   );
-  print('SEED01 LAB RETIRED bindings=' + result.modifiedCount);
+  const policies = d.alarm_policies.updateMany(
+    { enabled: true, 'attributes.commissioning': MARK },
+    { $set: { enabled: false, updatedAt: now } },
+  );
+  print(
+    'SEED01 LAB RETIRED bindings=' +
+      result.modifiedCount +
+      ' alarmPolicies=' +
+      policies.modifiedCount,
+  );
   quit(0);
 }
 
 const desired = [];
+const desiredPolicies = [];
 for (const item of state.bdfbs) {
   const source = SOURCES[item.key];
   assert(source, 'unexpected BDFB key ' + item.key);
@@ -84,6 +96,27 @@ for (const item of state.bdfbs) {
         item.key + ' invalid breaker at ' + panelName + '-' + (index + 1),
       );
       const rawPointId = '0_' + PANEL_GROUP[panelName] + '_' + (index + 1);
+      desiredPolicies.push({
+        id: 'lab:seed01:alarm:' + source + ':' + breaker.id + ':telemetry-loss',
+        targetType: 'EQUIPMENT',
+        targetId: breaker.id,
+        sourceContext: 'mqtt:' + source + ':' + rawPointId,
+        sourceIdentity: source,
+        enabled: true,
+        telemetryLoss: {
+          lossAfterMs: TELEMETRY_LOSS_AFTER_MS,
+          recoverySamples: TELEMETRY_RECOVERY_SAMPLES,
+          severity: 'WARNING',
+        },
+        attributes: {
+          commissioning: MARK,
+          synthetic: true,
+          labProfile: 'TELXIUS_SEED_01',
+          qdf: item.key,
+          panelLabel: panelName,
+          position: index + 1,
+        },
+      });
       for (const metric of METRICS) {
         desired.push({
           id: 'lab:seed01:mqtt:' + source + ':' + rawPointId + ':' + metric.toLowerCase(),
@@ -109,9 +142,25 @@ for (const item of state.bdfbs) {
 }
 
 const sourceCount = desired.filter((x) => x.metric === 'SOURCE').length;
+assert(desiredPolicies.length === 48, 'expected 48 telemetry-loss alarm policies');
 const pointCount = desired.length - sourceCount;
 assert(sourceCount === 3, 'expected 3 source bindings');
 assert(pointCount === 48 * 4, 'expected 192 metric bindings for 48 confirmed breakers');
+
+for (const policy of desiredPolicies) {
+  const existing = d.alarm_policies.find({ id: policy.id }).toArray();
+  assert(existing.length <= 1, 'duplicate alarm policy id ' + policy.id);
+  if (!existing.length) continue;
+  const have = existing[0];
+  assert(
+    have.targetType === policy.targetType &&
+      have.targetId === policy.targetId &&
+      have.sourceContext === policy.sourceContext &&
+      have.sourceIdentity === policy.sourceIdentity &&
+      have.attributes?.commissioning === MARK,
+    'existing alarm policy differs from lab contract: ' + policy.id,
+  );
+}
 
 for (const want of desired) {
   const sourceMatch = d.telemetry_bindings
@@ -173,6 +222,14 @@ for (const want of desired) {
 const inserts = desired.filter((x) => !existingById.has(x.id));
 const reactivations = desired.filter((x) => existingById.get(x.id)?.lifecycle === 'ARCHIVED');
 const activeExact = desired.filter((x) => existingById.get(x.id)?.lifecycle === 'ACTIVE');
+const policyById = new Map(
+  d.alarm_policies
+    .find({ id: { $in: desiredPolicies.map((x) => x.id) } })
+    .toArray()
+    .map((x) => [x.id, x]),
+);
+const newPolicies = desiredPolicies.filter((x) => !policyById.has(x.id));
+const disabledPolicies = desiredPolicies.filter((x) => policyById.get(x.id)?.enabled !== true);
 assert(
   inserts.length + reactivations.length + activeExact.length === desired.length,
   'lab bindings contain unsupported lifecycle state',
@@ -191,7 +248,13 @@ print(
     ' reactivate=' +
     reactivations.length +
     ' alreadyActive=' +
-    activeExact.length,
+    activeExact.length +
+    ' alarmPolicies=' +
+    desiredPolicies.length +
+    ' newAlarmPolicies=' +
+    newPolicies.length +
+    ' reactivateAlarmPolicies=' +
+    disabledPolicies.length,
 );
 for (const item of state.bdfbs) {
   const source = SOURCES[item.key];
@@ -205,7 +268,7 @@ if (MODE === 'plan') {
   quit(0);
 }
 assert(ACK === 'LAB_ONLY', 'LAB_ONLY acknowledgement required to apply synthetic bindings');
-if (!inserts.length && !reactivations.length) {
+if (!inserts.length && !reactivations.length && !newPolicies.length && !disabledPolicies.length) {
   print('ALREADY COMMISSIONED, 0 writes.');
   quit(0);
 }
@@ -223,6 +286,28 @@ try {
       inserts.map((x) => ({ ...x, createdAt: now, updatedAt: now, revision: 1 })),
       { ordered: true },
     );
+  }
+  for (const policy of newPolicies) {
+    tx.alarm_policies.insertOne({
+      ...policy,
+      createdAt: now,
+      updatedAt: now,
+    });
+  }
+  for (const policy of disabledPolicies) {
+    const result = tx.alarm_policies.updateOne(
+      { id: policy.id, 'attributes.commissioning': MARK },
+      {
+        $set: {
+          enabled: true,
+          telemetryLoss: policy.telemetryLoss,
+          sourceContext: policy.sourceContext,
+          sourceIdentity: policy.sourceIdentity,
+          updatedAt: now,
+        },
+      },
+    );
+    assert(result.matchedCount === 1, 'alarm policy reactivation lost race: ' + policy.id);
   }
   for (const item of reactivations) {
     const result = tx.telemetry_bindings.updateOne(
@@ -243,7 +328,11 @@ try {
     'SEED01 TELXIUS MQTT LAB COMMITTED newBindings=' +
       inserts.length +
       ' reactivated=' +
-      reactivations.length,
+      reactivations.length +
+      ' newAlarmPolicies=' +
+      newPolicies.length +
+      ' reactivatedAlarmPolicies=' +
+      disabledPolicies.length,
   );
 } catch (error) {
   try {

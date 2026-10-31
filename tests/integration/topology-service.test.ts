@@ -368,6 +368,48 @@ describe('TopologyService', () => {
     expect(current?.href).toContain('/topology/');
   });
 
+  it('keeps the full breaker path when canonical equipment depth exceeds twelve levels', async () => {
+    const service = new TopologyService(new MemoryTopologyRepository());
+    const { network, rack } = await buildHierarchy(service);
+
+    const device = await service.create({
+      kind: 'DEVICE',
+      parentId: rack.id,
+      name: 'BDFB deep',
+      deviceType: 'BDFB',
+    });
+    if (!device.ok) throw new Error(device.error);
+
+    let parentId = device.value.id;
+    const chain = [
+      ['Chassis', 'CHASSIS'],
+      ['Shelf', 'SHELF'],
+      ['Frame', 'FRAME'],
+      ['Panel', 'PANEL'],
+      ['Breaker', 'CIRCUIT_BREAKER'],
+    ] as const;
+    let breakerId = '';
+    for (const [name, equipmentType] of chain) {
+      const created = await service.create({
+        kind: 'EQUIPMENT',
+        parentId,
+        name,
+        equipmentType,
+      });
+      if (!created.ok || created.value.kind !== 'EQUIPMENT') {
+        throw new Error(created.ok ? 'Expected Equipment' : created.error);
+      }
+      parentId = created.value.id;
+      if (equipmentType === 'CIRCUIT_BREAKER') breakerId = created.value.id;
+    }
+
+    const tree = await service.buildNavigationTree(network.id);
+    const contains = (node: typeof tree, id: string): boolean =>
+      Boolean(node && (node.node.id === id || node.children.some((child) => contains(child, id))));
+
+    expect(contains(tree, breakerId)).toBe(true);
+  });
+
   it('keeps deep links canonical when the navigation tree is rooted below Network', async () => {
     const service = new TopologyService(new MemoryTopologyRepository());
     const { room, cluster, position, rack } = await buildHierarchy(service);

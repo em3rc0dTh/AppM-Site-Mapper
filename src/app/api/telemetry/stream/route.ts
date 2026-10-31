@@ -22,7 +22,8 @@ export async function GET() {
   let unsubscribe: (() => void) | null = null;
   let heartbeat: ReturnType<typeof setInterval> | null = null;
   let closed = false;
-  let sending = false;
+  let draining = false;
+  const pending = new Map<string, { name: string; data: unknown }>();
   let controllerRef: ReadableStreamDefaultController<Uint8Array> | undefined;
   const close = () => {
     if (closed) return;
@@ -38,34 +39,56 @@ export async function GET() {
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       controllerRef = controller;
-      const send = async (name: string, data: unknown) => {
-        if (closed || sending) return;
-        sending = true;
+      const drain = async () => {
+        if (closed || draining) return;
+        draining = true;
         try {
-          // Re-read session and user for every delivery; no cached role authority.
-          if (!(await auth.authorize(token, 'telemetry:read')).ok) {
-            close();
-            return;
+          while (!closed && pending.size) {
+            const first = pending.entries().next().value as
+              [string, { name: string; data: unknown }] | undefined;
+            if (!first) break;
+            const [key, item] = first;
+            pending.delete(key);
+            // Re-read session and user for every delivery; no cached role authority.
+            if (!(await auth.authorize(token, 'telemetry:read')).ok) {
+              close();
+              return;
+            }
+            if (!closed) controller.enqueue(event(item.name, item.data));
           }
-          if (!closed) controller.enqueue(event(name, data));
         } catch {
           close();
         } finally {
-          sending = false;
+          draining = false;
+          if (!closed && pending.size) void drain();
         }
       };
+      const send = (name: string, data: unknown, key: string) => {
+        if (closed) return;
+        // Replace queued stale data for the same logical stream instead of
+        // silently dropping it or allowing an unbounded backlog.
+        pending.set(key, { name, data });
+        void drain();
+      };
       unsubscribe = telemetry.hub.subscribe((sample) => {
-        void send('telemetry', sample);
+        const key = [
+          sample.targetType,
+          sample.targetId,
+          sample.sourceIdentity,
+          sample.sourcePointId ?? '',
+          sample.bindingId,
+        ].join('|');
+        send('telemetry', sample, 'telemetry:' + key);
       });
       if (!unsubscribe) {
         controller.enqueue(event('error', { code: 'STREAM_LIMIT_REACHED' }));
         close();
         return;
       }
-      void send('snapshot', telemetry.service.snapshot());
-      // A bounded snapshot refresh recovers updates coalesced during auth lookup.
+      send('snapshot', telemetry.service.snapshot(), 'snapshot');
+      // A bounded snapshot refresh repairs any client-side gap after reconnects.
       heartbeat = setInterval(() => {
-        void send('snapshot', telemetry.service.snapshot());
+        send('snapshot', telemetry.service.snapshot(), 'snapshot');
       }, 15_000);
     },
     cancel() {

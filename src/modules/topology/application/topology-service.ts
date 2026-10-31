@@ -929,7 +929,7 @@ export class TopologyService {
     return `/topology/${trail.flatMap((node) => [topologySlug[node.kind], node.id]).join('/')}`;
   }
 
-  async buildNavigationTree(rootId: string, maxDepth = 12): Promise<TopologyNavigationNode | null> {
+  async buildNavigationTree(rootId: string, maxDepth = 64): Promise<TopologyNavigationNode | null> {
     const trail = await this.getTrail(rootId);
     const root = trail.at(-1);
 

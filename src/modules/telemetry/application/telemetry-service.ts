@@ -178,7 +178,10 @@ export class TelemetryService {
         : {}),
     };
 
-    this.hub.publish(await this.withHistoryStatus(sample));
+    // LIVE presentation must never wait for historian I/O. Publish the accepted
+    // sample immediately; history persistence proceeds independently.
+    this.hub.publish(sample);
+    void this.captureHistory(sample);
     // Point-level telemetry belongs to its canonical Equipment even when the
     // BDFB electrical path is not yet commissioned (no POWER OUTPUT AccessPort).
     // Source identity and raw point mapping must both be explicit and active.
@@ -230,30 +233,25 @@ export class TelemetryService {
           verified.add(id);
         }
         for (const own of buildBoundBfdbEquipmentPatches(normalized.value, bindings, verified)) {
-          this.hub.publish(await this.withHistoryStatus(own));
+          this.hub.publish(own);
+          void this.captureHistory(own);
         }
       }
     }
     return success(this.hub.latest(target.id) ?? sample);
   }
 
-  private async withHistoryStatus(sample: TelemetrySample): Promise<TelemetrySample> {
-    if (!this.historyWriter) return { ...sample, historyCapture: 'DISABLED' };
-    // Only a durable writer acknowledgement can claim persisted history. Legacy
-    // best-effort writers still receive the sample, but never report PERSISTED.
-    if (!this.historyWriter.writeDurable) {
-      try {
-        await this.historyWriter.write(sample);
-      } catch {
-        // The sample remains usable for LIVE presentation; history is explicitly failed.
-      }
-      return { ...sample, historyCapture: 'FAILED' };
-    }
+  private async captureHistory(sample: TelemetrySample): Promise<void> {
+    if (!this.historyWriter) return;
     try {
-      await this.historyWriter.writeDurable(sample);
-      return { ...sample, historyCapture: 'PERSISTED' };
+      if (this.historyWriter.writeDurable) {
+        await this.historyWriter.writeDurable(sample);
+      } else {
+        await this.historyWriter.write(sample);
+      }
     } catch {
-      return { ...sample, historyCapture: 'FAILED' };
+      // Historian availability is intentionally isolated from LIVE delivery.
+      // Diagnostics on the writer surface persistence failures independently.
     }
   }
 

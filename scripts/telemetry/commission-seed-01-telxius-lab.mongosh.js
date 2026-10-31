@@ -229,7 +229,9 @@ const policyById = new Map(
     .map((x) => [x.id, x]),
 );
 const newPolicies = desiredPolicies.filter((x) => !policyById.has(x.id));
-const disabledPolicies = desiredPolicies.filter((x) => policyById.get(x.id)?.enabled !== true);
+const disabledPolicies = desiredPolicies.filter(
+  (x) => policyById.has(x.id) && policyById.get(x.id)?.enabled !== true,
+);
 assert(
   inserts.length + reactivations.length + activeExact.length === desired.length,
   'lab bindings contain unsupported lifecycle state',

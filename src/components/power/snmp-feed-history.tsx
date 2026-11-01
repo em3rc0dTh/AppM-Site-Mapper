@@ -40,7 +40,7 @@ const SERIES_STROKES = ['#1b70b2', '#0f9387', '#8f62b3', '#d19b34'];
 const METRICS: { key: ChartMetric; title: string; unit: string; digits: number }[] = [
   { key: 'voltageV', title: 'VOLTAGE · SHUNTS A/B', unit: 'V DC', digits: 1 },
   { key: 'currentA', title: 'CURRENT · SHUNTS A/B', unit: 'A', digits: 1 },
-  { key: 'powerW', title: 'ESTIMATED POWER · |V| × I', unit: 'W', digits: 1 },
+  { key: 'powerW', title: 'ESTIMATED POWER · |V| × I', unit: 'kW', digits: 3 },
   { key: 'energyKwh', title: 'ESTIMATED ENERGY · OBSERVED INTERVALS', unit: 'kWh', digits: 4 },
 ];
 
@@ -55,6 +55,8 @@ function createSeries(feeds: readonly FeedHistory[], metric: ChartMetric): Serie
         if (point.estimatedEnergyKwh === null) return [];
         accumulatedEnergy += point.estimatedEnergyKwh;
         value = accumulatedEnergy;
+      } else if (metric === 'powerW') {
+        value = point.powerW === null ? null : point.powerW / 1000;
       } else {
         value = point[metric];
       }

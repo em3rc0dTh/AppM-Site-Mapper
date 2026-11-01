@@ -19,6 +19,7 @@ interface FeedRow {
 }
 interface Configuration {
   hardwareProfile: string | null;
+  voltageToleranceV: number | null;
   canCommission: boolean;
   ports: FeedRow[];
 }
@@ -46,17 +47,35 @@ export function SnmpFeedCommissioning({
   const [loading, setLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [voltageToleranceInput, setVoltageToleranceInput] = useState('');
 
   async function refresh() {
     setLoading(true);
     try {
-      const result = await fetch(
-        '/api/telemetry/snmp/commission?' + new URLSearchParams({ deviceId }),
-        { cache: 'no-store' },
-      );
+      const [result, profileResult] = await Promise.all([
+        fetch('/api/telemetry/snmp/commission?' + new URLSearchParams({ deviceId }), {
+          cache: 'no-store',
+        }),
+        fetch('/api/telemetry/snmp/hardware-profile?' + new URLSearchParams({ deviceId }), {
+          cache: 'no-store',
+        }),
+      ]);
       const body = (await result.json()) as Configuration & { error?: string };
+      const profileBody = (await profileResult.json()) as {
+        error?: string;
+        hardwareProfile?: string | null;
+        voltageToleranceV?: number | null;
+      };
       if (!result.ok) throw new Error(body.error ?? 'SNMP_CONFIGURATION_UNAVAILABLE');
-      setConfiguration(body);
+      if (!profileResult.ok)
+        throw new Error(profileBody.error ?? 'SNMP_PROFILE_CONFIGURATION_UNAVAILABLE');
+      const voltageToleranceV = profileBody.voltageToleranceV ?? null;
+      setConfiguration({
+        ...body,
+        hardwareProfile: profileBody.hardwareProfile ?? body.hardwareProfile,
+        voltageToleranceV,
+      });
+      setVoltageToleranceInput(voltageToleranceV === null ? '' : String(voltageToleranceV));
       setError('');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'SNMP_CONFIGURATION_UNAVAILABLE');
@@ -81,6 +100,40 @@ export function SnmpFeedCommissioning({
       onInventoryChanged?.();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'PROFILE_ASSIGNMENT_FAILED');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveVoltageTolerance() {
+    if (
+      configuration?.hardwareProfile !== 'ELTEK_BDCBB_CONFIG_2' &&
+      configuration?.hardwareProfile !== 'ELTEK_BDCBB_CONFIG_4'
+    )
+      return;
+    const voltageToleranceV = Number(voltageToleranceInput);
+    if (!Number.isFinite(voltageToleranceV) || voltageToleranceV <= 0 || voltageToleranceV > 20) {
+      setError(t('invalidVoltageTolerance'));
+      return;
+    }
+    setBusy(true);
+    try {
+      const response = await fetch('/api/telemetry/snmp/hardware-profile', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          deviceId,
+          hardwareProfile: configuration.hardwareProfile,
+          voltageToleranceV,
+          confirmInstalledProfile: true,
+        }),
+      });
+      const body = (await response.json()) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? 'VOLTAGE_TOLERANCE_UPDATE_FAILED');
+      await refresh();
+      onInventoryChanged?.();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'VOLTAGE_TOLERANCE_UPDATE_FAILED');
     } finally {
       setBusy(false);
     }
@@ -157,6 +210,25 @@ export function SnmpFeedCommissioning({
                   onClick={() => void activateProfile('ELTEK_BDCBB_CONFIG_4')}
                 >
                   {t('useConfig4')}
+                </button>
+              </div>
+            )}
+            {configuration.canCommission && configuration.hardwareProfile && (
+              <div className="sm-snmp-maintenance-port">
+                <label>
+                  <strong>{t('voltageTolerance')}</strong>
+                  <input
+                    type="number"
+                    min="0.01"
+                    max="20"
+                    step="0.01"
+                    value={voltageToleranceInput}
+                    onChange={(event) => setVoltageToleranceInput(event.target.value)}
+                  />
+                </label>
+                <small>{t('voltageToleranceHelp')}</small>
+                <button type="button" disabled={busy || loading} onClick={() => void saveVoltageTolerance()}>
+                  {t('saveVoltageTolerance')}
                 </button>
               </div>
             )}

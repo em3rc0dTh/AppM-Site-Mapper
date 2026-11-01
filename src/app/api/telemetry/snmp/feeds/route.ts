@@ -56,6 +56,9 @@ export async function GET(request: Request) {
   const equipment = (await topology.listEquipmentForDevice(deviceId)).filter(
     (node) => node.lifecycle === 'ACTIVE',
   );
+  const portById = new Map(
+    equipment.flatMap((node) => node.accessPorts.map((port) => [port.id, port] as const)),
+  );
   const profile = device?.kind === 'DEVICE' ? bdfbHardwareProfile(device) : null;
   const assessment = profile ? assessBdfbInventory(profile, equipment) : null;
   const toleranceV =
@@ -91,7 +94,10 @@ export async function GET(request: Request) {
       accessPortId: feed.accessPortId,
       side: feed.side === 'A' || feed.side === 'B' ? feed.side : null,
       position: feed.feedPosition ?? feed.side,
-      verified: feed.status === 'LIVE' && voltageBindings.length === 1 && permitted,
+      verified:
+        portById.get(feed.accessPortId)?.attributes?.independentInputConfirmed === true &&
+        voltageBindings.length === 1 &&
+        permitted,
       sourceMode:
         voltageBinding?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY'
           ? 'SYNTHETIC_LAB_ONLY'

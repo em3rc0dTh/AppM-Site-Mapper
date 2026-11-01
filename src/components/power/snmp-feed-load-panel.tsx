@@ -14,6 +14,22 @@ interface PhysicalPanel {
   frameName: string;
 }
 
+interface QdfVoltageValue {
+  voltageV: number;
+  observedAt: string;
+  contributingFeeds: number;
+}
+
+type SnmpBdfbLoadResponse = SnmpBdfbLoadView & {
+  voltageContract?: {
+    toleranceV: number | null;
+    semantics: string;
+    busA: QdfVoltageValue | null;
+    busB: QdfVoltageValue | null;
+    total: QdfVoltageValue | null;
+  };
+};
+
 function numeric(value: number | null | undefined, unit: string): string {
   return value === undefined || value === null ? '—' : `${value.toFixed(2)} ${unit}`;
 }
@@ -34,7 +50,7 @@ export function SnmpFeedLoadPanel({
   view = 'all',
 }: Readonly<{ deviceId: string; chassisId: string; view?: 'all' | 'summary' | 'feeds' }>) {
   const t = useTranslations('snmpLoad');
-  const [load, setLoad] = useState<SnmpBdfbLoadView | null>(null);
+  const [load, setLoad] = useState<SnmpBdfbLoadResponse | null>(null);
   const [panels, setPanels] = useState<ReadonlyMap<string, PhysicalPanel>>(new Map());
   const [error, setError] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
@@ -95,7 +111,7 @@ export function SnmpFeedLoadPanel({
           { cache: 'no-store' },
         );
         if (!response.ok) throw new Error(`HTTP_${response.status}`);
-        const result = (await response.json()) as SnmpBdfbLoadView;
+        const result = (await response.json()) as SnmpBdfbLoadResponse;
         if (active) {
           setLoad(result);
           setError(false);
@@ -179,7 +195,27 @@ export function SnmpFeedLoadPanel({
                 <span>{t('power')}</span>
                 <strong>{numeric(kilowatts(load?.totalEstimatedPowerW), 'kW')}</strong>
               </div>
+              <div>
+                <span>{t('totalVoltage')}</span>
+                <strong>{numeric(load?.voltageContract?.total?.voltageV, 'V')}</strong>
+              </div>
+              <div>
+                <span>{t('busAVoltage')}</span>
+                <strong>{numeric(load?.voltageContract?.busA?.voltageV, 'V')}</strong>
+              </div>
+              <div>
+                <span>{t('busBVoltage')}</span>
+                <strong>{numeric(load?.voltageContract?.busB?.voltageV, 'V')}</strong>
+              </div>
             </div>
+            {load?.voltageContract?.toleranceV !== null &&
+              load?.voltageContract?.toleranceV !== undefined && (
+                <small>
+                  {t('voltageTolerance', {
+                    value: load.voltageContract.toleranceV.toFixed(2),
+                  })}
+                </small>
+              )}
 
             {capacity && (
               <div className="sm-snmp-capacity-lab" aria-label={t('capacity')}>

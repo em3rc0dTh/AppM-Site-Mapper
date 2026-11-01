@@ -17,6 +17,7 @@ import {
 } from '@/modules/telemetry/application/snmp-feed-service';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import { parseSnmpFeedPacket, type SnmpFeedMetric } from '@/modules/telemetry/domain/snmp-feed';
+import { qdfVoltageToleranceV } from '@/modules/telemetry/application/qdf-total-voltage';
 import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import {
@@ -81,6 +82,7 @@ export async function GET(request: Request) {
     {
       deviceId,
       hardwareProfile: selectedProfile,
+      voltageToleranceV: qdfVoltageToleranceV(device.attributes),
       canCommission: write.ok && power.ok,
       ports: commissioned,
     },

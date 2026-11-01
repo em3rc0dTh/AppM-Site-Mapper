@@ -1338,7 +1338,11 @@
     "useConfig4": "USAR CONFIG 4",
     "retire": "RETIRAR",
     "confirmProfile": "Confirme que el cableado físico instalado utiliza {profile}. Esto cambia la configuración de shunts esperada. Deben retirarse los enlaces SNMP previamente comisionados antes del cambio.",
-    "confirmRetire": "¿Retirar el mapeo de {metric}? Las muestras históricas existentes permanecerán almacenadas."
+    "confirmRetire": "¿Retirar el mapeo de {metric}? Las muestras históricas existentes permanecerán almacenadas.",
+    "voltageTolerance": "Tolerancia de coherencia de voltaje QDF (V)",
+    "voltageToleranceHelp": "Requerida para el voltaje contractual BUS A/B y TOTAL. Es una regla de coherencia de comisionamiento, no un valor nominal del breaker.",
+    "saveVoltageTolerance": "GUARDAR TOLERANCIA DE VOLTAJE",
+    "invalidVoltageTolerance": "Ingrese una tolerancia de voltaje mayor que 0 y no mayor de 20 V."
   },
   "snmpLoad": {
     "section": "Carga de las entradas SNMP BDFB",
@@ -1408,7 +1412,11 @@
     "threshold": " · umbral {current} A",
     "timescaleUnavailable": "TimescaleDB no disponible: no se pudo consultar el historial SNMP restaurado.",
     "noTotal": "La corriente total del BDFB solo está disponible si todos los shunts independientes requeridos están verificados, vinculados y transmiten lecturas SNMP recientes.",
-    "snmpSeparate": "Las mediciones SNMP de shunts entrantes son independientes del promedio MQTT de los Equipment descendientes."
+    "snmpSeparate": "Las mediciones SNMP de shunts entrantes son independientes del promedio MQTT de los Equipment descendientes.",
+    "totalVoltage": "VOLTAJE TOTAL QDF",
+    "busAVoltage": "VOLTAJE BUS A",
+    "busBVoltage": "VOLTAJE BUS B",
+    "voltageTolerance": "Tolerancia de coherencia de voltaje: {value} V"
   },
   "snmpHistoryUi": {
     "title": "SNMP · HISTORIAL TIMESCALEDB",

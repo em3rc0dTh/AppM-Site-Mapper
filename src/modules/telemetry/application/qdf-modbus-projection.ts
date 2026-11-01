@@ -70,8 +70,12 @@ export async function projectQdfTotalCurrentSignals(
 
     const hub = new TelemetryHub(Math.max(ports.length, 1));
     if (ports.length) {
-      for (const sample of await history.queryLatestEntities(ports, 'ACCESS_PORT')) {
-        if (sample.protocol === 'SNMP' && ports.includes(sample.targetId)) hub.publish(sample);
+      try {
+        for (const sample of await history.queryLatestEntities(ports, 'ACCESS_PORT')) {
+          if (sample.protocol === 'SNMP' && ports.includes(sample.targetId)) hub.publish(sample);
+        }
+      } catch {
+        // Fail only this derived point closed; unrelated industrial/Alarm projections remain usable.
       }
     }
 

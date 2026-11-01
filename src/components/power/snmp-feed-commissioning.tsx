@@ -52,30 +52,16 @@ export function SnmpFeedCommissioning({
   async function refresh() {
     setLoading(true);
     try {
-      const [result, profileResult] = await Promise.all([
-        fetch('/api/telemetry/snmp/commission?' + new URLSearchParams({ deviceId }), {
-          cache: 'no-store',
-        }),
-        fetch('/api/telemetry/snmp/hardware-profile?' + new URLSearchParams({ deviceId }), {
-          cache: 'no-store',
-        }),
-      ]);
+      const result = await fetch(
+        '/api/telemetry/snmp/commission?' + new URLSearchParams({ deviceId }),
+        { cache: 'no-store' },
+      );
       const body = (await result.json()) as Configuration & { error?: string };
-      const profileBody = (await profileResult.json()) as {
-        error?: string;
-        hardwareProfile?: string | null;
-        voltageToleranceV?: number | null;
-      };
       if (!result.ok) throw new Error(body.error ?? 'SNMP_CONFIGURATION_UNAVAILABLE');
-      if (!profileResult.ok)
-        throw new Error(profileBody.error ?? 'SNMP_PROFILE_CONFIGURATION_UNAVAILABLE');
-      const voltageToleranceV = profileBody.voltageToleranceV ?? null;
-      setConfiguration({
-        ...body,
-        hardwareProfile: profileBody.hardwareProfile ?? body.hardwareProfile,
-        voltageToleranceV,
-      });
-      setVoltageToleranceInput(voltageToleranceV === null ? '' : String(voltageToleranceV));
+      setConfiguration(body);
+      setVoltageToleranceInput(
+        body.voltageToleranceV === null ? '' : String(body.voltageToleranceV),
+      );
       setError('');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'SNMP_CONFIGURATION_UNAVAILABLE');

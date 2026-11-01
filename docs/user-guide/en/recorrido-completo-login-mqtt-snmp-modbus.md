@@ -57,7 +57,7 @@ A label such as **24 INSTALLED / 0 AVAILABLE** describes inventory slots. It is 
 
 1. Select **OPEN PANEL COMPOSITION** on an installed Panel.
 2. Locate **24/24 positions MQTT LIVE** _only if the source currently publishes accepted data_.
-3. Read columns **POS, BREAKER, V · V, I · A, P · W, E · kWh, STATUS**.
+3. Read columns **POS, BREAKER, V · V, I · A, P · kW, E · kWh, STATUS**.
 4. Open **Telemetry** in the Equipment inspector. Aggregated descendant readings exclude empty or unmapped slots; they must not be interpreted as an SNMP shunt total.
 
 LAB-BDFB-02/03 may use four prefixes 0_1 through 0_4 and 24 circuits each. **LIVE**, **STALE**, **UNMAPPED** and **OFFLINE** describe different conditions.

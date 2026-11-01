@@ -30,7 +30,7 @@ MAX_PANEL_AGE_SECONDS=27.0
 MAX_SOURCE_AGE_SECONDS=15.0
 MAX_VERIFICATION_SECONDS=55.0
 POLL_SECONDS=2.0
-FLOAT_TOLERANCES=(0.1,0.4,5.0,0.001)
+FLOAT_TOLERANCES=(0.1,0.4,0.005,0.001)
 
 
 def require(ok,what):
@@ -166,7 +166,9 @@ def verify_samples(*, budget_seconds: float = MAX_VERIFICATION_SECONDS,
                 )
                 continue
             try:
-                expected=tuple(float(info["values"][key]) for key in FIELDS)
+                raw_expected=tuple(float(info["values"][key]) for key in FIELDS)
+                expected=(raw_expected[0],raw_expected[1],
+                          raw_expected[2]/1000.0,raw_expected[3])
                 require(all(math.isfinite(x) for x in expected),
                         "nonfinite MQTT numeric value")
             except (TypeError,ValueError,KeyError) as error:

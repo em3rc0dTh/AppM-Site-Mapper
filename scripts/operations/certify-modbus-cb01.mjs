@@ -123,7 +123,13 @@ function recentHistory() {
     .split('\n')
     .filter(Boolean)
     .map((line) => line.split('|').map((value) => (value === '' ? NaN : Number(value))))
-    .filter((v) => v.length === 4 && v.every(Number.isFinite));
+    .filter((v) => v.length === 4 && v.every(Number.isFinite))
+    .map(([voltageV, currentA, powerW, energyKwh]) => [
+      voltageV,
+      currentA,
+      powerW / 1000,
+      energyKwh,
+    ]);
 }
 function matches(values, candidate) {
   return values.every(
@@ -131,7 +137,7 @@ function matches(values, candidate) {
       Math.abs(value - candidate[i]) <= Math.max(0.0002, Math.abs(candidate[i]) * 0.00001),
   );
 }
-const labels = ['voltageV', 'currentA', 'powerW', 'energyKwh'];
+const labels = ['voltageV', 'currentA', 'powerKw', 'energyKwh'];
 console.log(
   'MODBUS_CERT_START',
   JSON.stringify({

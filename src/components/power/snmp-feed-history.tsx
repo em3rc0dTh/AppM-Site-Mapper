@@ -351,7 +351,7 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
                   key={item.key}
                   metric={item}
                   feeds={data.feeds}
-                  totalVoltage={data.totalVoltage?.total}
+                  totalVoltage={data.totalVoltage?.total ?? []}
                   window={window}
                 />
               ))}

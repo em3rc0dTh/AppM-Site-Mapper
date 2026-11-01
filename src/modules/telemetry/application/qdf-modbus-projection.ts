@@ -282,12 +282,12 @@ export async function projectQdfVoltageSignals(
           : parsed.point === 'BUS_B_VOLTAGE'
             ? snapshot.busB
             : snapshot.total;
-      const relevantSides =
+      const relevantSides: readonly ('A' | 'B')[] =
         parsed.point === 'BUS_A_VOLTAGE'
-          ? (['A'] as const)
+          ? ['A']
           : parsed.point === 'BUS_B_VOLTAGE'
-            ? (['B'] as const)
-            : (['A', 'B'] as const);
+            ? ['B']
+            : ['A', 'B'];
       const stale = evidence.some(
         (item) =>
           relevantSides.includes(item.side as 'A' | 'B') &&

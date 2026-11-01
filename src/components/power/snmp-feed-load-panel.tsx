@@ -18,6 +18,10 @@ function numeric(value: number | null | undefined, unit: string): string {
   return value === undefined || value === null ? '—' : `${value.toFixed(2)} ${unit}`;
 }
 
+function kilowatts(value: number | null | undefined): number | null | undefined {
+  return value === undefined || value === null ? value : value / 1000;
+}
+
 function readablePanel(panel: PhysicalPanel): string {
   const frame = panel.frameName.match(/FRAME-(\d+)/i);
   const position = panel.name.match(/PANEL-(\d+)/i);
@@ -173,7 +177,7 @@ export function SnmpFeedLoadPanel({
               </div>
               <div>
                 <span>{t('power')}</span>
-                <strong>{numeric(load?.totalEstimatedPowerW, 'W')}</strong>
+                <strong>{numeric(kilowatts(load?.totalEstimatedPowerW), 'kW')}</strong>
               </div>
             </div>
 

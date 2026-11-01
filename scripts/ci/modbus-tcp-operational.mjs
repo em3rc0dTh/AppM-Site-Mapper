@@ -39,7 +39,7 @@ for (let attempt = 0; attempt < 35; attempt++) {
   voltage = registers.readFloatBE(9);
   if (Math.abs(voltage - 13.79) < 0.001) {
     assert.ok(Math.abs(registers.readFloatBE(13) - 9.91) < 0.001);
-    assert.ok(Math.abs(registers.readFloatBE(17) - 136.72) < 0.001);
+    assert.ok(Math.abs(registers.readFloatBE(17) - 0.13672) < 0.00001);
     assert.ok(Math.abs(registers.readFloatBE(21) - 0.4155) < 0.0001);
     break;
   }

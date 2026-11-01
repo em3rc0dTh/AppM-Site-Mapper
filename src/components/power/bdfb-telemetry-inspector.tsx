@@ -33,6 +33,10 @@ function metric(value: number | null | undefined, unit: string, decimals = 2): s
   return value === undefined || value === null ? '—' : `${value.toFixed(decimals)} ${unit}`;
 }
 
+function kilowatts(value: number | null | undefined): number | null | undefined {
+  return value === undefined || value === null ? value : value / 1000;
+}
+
 function compactUtc(value: string | undefined): string {
   if (!value) return '—';
   const parsed = new Date(value);
@@ -43,19 +47,21 @@ function HistoryMetric({
   label,
   unit,
   decimals = 2,
+  scale = 1,
   metricKey,
   points,
 }: Readonly<{
   label: string;
   unit: string;
   decimals?: number;
+  scale?: number;
   metricKey: HistoryMetricKey;
   points: readonly TelemetryHistoryPoint[];
 }>) {
   const ti = useTranslations('bdfb.inspector.info');
   const values = points.flatMap((point, index) => {
     const value = point[metricKey];
-    return value === null ? [] : [{ index, value }];
+    return value === null ? [] : [{ index, value: value * scale }];
   });
   const latest = values.at(-1)?.value;
 
@@ -133,7 +139,14 @@ function HistoricalTelemetry({
           metricKey="currentA"
           points={history.points}
         />
-        <HistoryMetric label={ti('power')} unit="W" metricKey="powerW" points={history.points} />
+        <HistoryMetric
+          label={ti('power')}
+          unit="kW"
+          decimals={3}
+          scale={0.001}
+          metricKey="powerW"
+          points={history.points}
+        />
         <HistoryMetric
           label={ti('energy')}
           unit="kWh"
@@ -337,7 +350,7 @@ export function BdfbTelemetryInspector({
                 </div>
                 <div>
                   <span>{ti('avgPower')}</span>
-                  <strong>{metric(live.averagePowerW, 'W')}</strong>
+                  <strong>{metric(kilowatts(live.averagePowerW), 'kW', 3)}</strong>
                 </div>
                 <div>
                   <span>{ti('avgEnergy')}</span>
@@ -346,7 +359,7 @@ export function BdfbTelemetryInspector({
               </div>
 
               <p className="zip-bdfb-aggregate-note">
-                {ti('liveTotalPowerNote', { power: metric(live.totalPowerW, 'W') })}
+                {ti('liveTotalPowerNote', { power: metric(kilowatts(live.totalPowerW), 'kW', 3) })}
               </p>
               <dl className="zip-bdfb-live-average-counts">
                 <dt>{ti('reporting')}</dt>

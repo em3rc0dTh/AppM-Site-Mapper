@@ -8,6 +8,7 @@ import {
   POINT_LAYOUTS,
   rawPointIndex,
   circuitStartAddress,
+  modbusEngineeringValue,
 } from './register-map.mjs';
 
 export {
@@ -63,7 +64,10 @@ export class ModbusLatestState {
       const offset = circuitStartAddress(circuit + 1) + i * 2;
       const existing = slots.get(offset);
       if (existing && existing.receivedAt > timestamp) continue;
-      slots.set(offset, { value: field.value, receivedAt: timestamp });
+      slots.set(offset, {
+        value: modbusEngineeringValue(METRICS[i], field.value),
+        receivedAt: timestamp,
+      });
       changed = true;
     }
     return changed;

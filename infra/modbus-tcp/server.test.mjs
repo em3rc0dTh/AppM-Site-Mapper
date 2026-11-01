@@ -63,7 +63,7 @@ test('holding registers preserve FLOAT32 network byte order, source isolation an
   assert.equal(r[8], 16);
   assert.equal(r.readFloatBE(9), 12.5);
   assert.equal(r.readFloatBE(13), 2.5);
-  assert.equal(r.readFloatBE(17), 30);
+  assert.ok(Math.abs(r.readFloatBE(17) - 0.03) < 0.000001);
   assert.equal(r.readFloatBE(21), 1.25);
   assert.equal(handleFrame(command(2, 0, 2), state, now).readFloatBE(9), 0);
   assert.equal(handleFrame(command(2, 760, 2), state, now).readFloatBE(9), 15.5);
@@ -159,6 +159,7 @@ test('Metasys table has precisely four FLOAT32 measurements per circuit and stab
     assert.equal(row.registerCount, 2);
     assert.equal(row.scale, 1);
     assert.equal(row.wordOrder, 'High word first');
+    if (row.description.endsWith(' Power')) assert.equal(row.engineeringUnit, 'kW');
     assert.equal(row.rawPoint, pointIdForCircuit(row.circuit, 'panels-4x24'));
     assert.equal(row.reference, `${40001 + row.startAddress}-${40002 + row.startAddress}`);
     assert.equal(

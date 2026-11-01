@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  breakerTelemetryMetrics,
   panelReportedPoints,
   telemetryMetrics,
 } from '@/components/telemetry/telemetry-presentation';
@@ -18,6 +19,14 @@ describe('telemetry presentation truth boundary', () => {
       { label: 'online', value: 'false' },
     ]);
   });
+  it('presents canonical breaker power in kW without mutating the stored watt value', () => {
+    const reading = { metrics: { powerW: { value: 9720 } } };
+    expect(
+      breakerTelemetryMetrics(reading as Parameters<typeof breakerTelemetryMetrics>[0]),
+    ).toEqual([{ label: 'Power', value: '9.720', unit: 'kW' }]);
+    expect(reading.metrics.powerW.value).toBe(9720);
+  });
+
   it('keeps zero values and omits null/arrays from the scalar overview', () => {
     expect(telemetryMetrics({ cpu: 0, missing: null, samples: [1, 2] })).toEqual([
       { label: 'cpu', value: '0' },

@@ -96,7 +96,7 @@ Observed at the time of prior acceptance:
 ```text
 MODBUS_CERT_PASS
 Unit ID 1 · circuit 1 · addresses 0–7
-voltageV≈12.23 V · currentA≈13.49 A · powerW≈164.94 W · energyKwh≈0.3476 kWh
+voltageV≈12.23 V · currentA≈13.49 A · powerKw≈0.16494 kW · energyKwh≈0.3476 kWh
 matchedRecentBreakerHistory=true
 ```
 

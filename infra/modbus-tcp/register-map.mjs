@@ -4,7 +4,7 @@ export const CIRCUITS = 96;
 export const METRIC_DEFINITIONS = Object.freeze([
   Object.freeze({ key: 'voltageV', label: 'Voltage', unit: 'V' }),
   Object.freeze({ key: 'currentA', label: 'Current', unit: 'A' }),
-  Object.freeze({ key: 'powerW', label: 'Power', unit: 'W' }),
+  Object.freeze({ key: 'powerW', label: 'Power', unit: 'kW' }),
   Object.freeze({ key: 'energyKwh', label: 'Energy', unit: 'kWh' }),
 ]);
 export const METRICS = Object.freeze(METRIC_DEFINITIONS.map((metric) => metric.key));
@@ -12,6 +12,12 @@ export const REGISTERS_PER_METRIC = 2;
 export const REGISTERS_PER_CIRCUIT = METRIC_DEFINITIONS.length * REGISTERS_PER_METRIC;
 export const REGISTERS_PER_UNIT = CIRCUITS * REGISTERS_PER_CIRCUIT;
 export const POINT_LAYOUTS = Object.freeze(['blocks-2x48', 'panels-4x24']);
+
+export function modbusEngineeringValue(metricKey, value) {
+  if (!METRICS.includes(metricKey)) throw new RangeError('Unknown Modbus metric');
+  if (!Number.isFinite(value)) throw new TypeError('Finite Modbus metric value required');
+  return metricKey === 'powerW' ? value / 1000 : value;
+}
 
 export function circuitStartAddress(circuit) {
   if (!Number.isInteger(circuit) || circuit < 1 || circuit > CIRCUITS) {

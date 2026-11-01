@@ -69,7 +69,7 @@ En **Selected Panel · Circuit Positions**, `24 INSTALLED / 0 AVAILABLE` confirm
 
 1. Pulsa **OPEN PANEL COMPOSITION →** en el panel elegido.
 2. En **EQUIPMENT COMPOSITION** localiza **24/24 positions MQTT LIVE** cuando el emulador esté funcionando.
-3. Lee la tabla: **POS**, **BREAKER**, **V · V**, **I · A**, **P · W**, **E · kWh** y **STATUS**.
+3. Lee la tabla: **POS**, **BREAKER**, **V · V**, **I · A**, **P · kW**, **E · kWh** y **STATUS**.
 4. Abre la pestaña lateral **Telemetry** para ver los promedios de los breakers descendientes; los espacios sin mediciones se excluyen.
 
 **MQTT LIVE** significa que una fuente reciente fue asociada explícitamente al breaker. Las dos fuentes nuevas usan `LAB-BDFB-02` y `LAB-BDFB-03`, con cuatro grupos `0_1` a `0_4` de 24 circuitos. `STALE`, `UNMAPPED` y `OFFLINE` requieren diagnósticos diferentes.

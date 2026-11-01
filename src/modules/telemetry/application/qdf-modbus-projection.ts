@@ -1,3 +1,7 @@
+import {
+  assessBdfbInventory,
+  bdfbHardwareProfile,
+} from '@/modules/power/domain/bdfb-hardware-profile';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import {
   isBdfbFeedPort,
@@ -201,17 +205,9 @@ export async function projectQdfVoltageSignals(
       latestSamples = [];
     }
 
-    const profile = validDevice
-      ? (
-          await import('@/modules/power/domain/bdfb-hardware-profile')
-        ).bdfbHardwareProfile(device)
-      : null;
+    const profile = validDevice ? bdfbHardwareProfile(device) : null;
     const assessment =
-      validDevice && profile
-        ? (
-            await import('@/modules/power/domain/bdfb-hardware-profile')
-          ).assessBdfbInventory(profile, equipment)
-        : null;
+      validDevice && profile ? assessBdfbInventory(profile, equipment) : null;
     const toleranceV = validDevice ? qdfVoltageToleranceV(device.attributes) : null;
     const evidence: QdfVoltageFeedEvidence[] = [];
     const derivationBySide = new Map<'A' | 'B', string[]>();
@@ -258,7 +254,7 @@ export async function projectQdfVoltageSignals(
           permitted,
         sourceMode,
         voltageV: permitted ? reading!.value : null,
-        observedAt: permitted ? reading!.observedAt : null,
+        observedAt: reading?.observedAt ?? null,
       });
       if (permitted && side && voltageBinding?.sourcePointId) {
         derivationBySide.set(side, [

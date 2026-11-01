@@ -38,6 +38,7 @@ function fixture(latest: readonly TelemetrySample[]) {
     rootEquipmentIds: ['chassis'],
     pinned: false,
     lifecycle: 'ACTIVE',
+    attributes: { bdfbHardwareProfile: 'ELTEK_BDCBB_CONFIG_2' },
     createdAt: at,
     updatedAt: at,
   };
@@ -68,9 +69,26 @@ function fixture(latest: readonly TelemetrySample[]) {
         feed: side,
         snmpFeedInput: true,
         independentInputConfirmed: true,
+        servedPanelIds: side === 'A' ? ['panel-A1', 'panel-A2'] : ['panel-B1', 'panel-B2'],
       },
     })),
   };
+  const panels: EquipmentNode[] = ['A1', 'A2', 'B1', 'B2'].map((name) => ({
+    id: `panel-${name}`,
+    name,
+    kind: 'EQUIPMENT',
+    parentId: 'qdf-2',
+    parentEquipmentId: null,
+    deviceId: 'qdf-2',
+    equipmentType: 'PANEL',
+    childMode: 'POSITIONAL',
+    children: [],
+    pinned: false,
+    lifecycle: 'ACTIVE',
+    createdAt: at,
+    updatedAt: at,
+    accessPorts: [],
+  }));
   const oidA = '1.3.6.1.4.1.12148.10.10.18.4.1.6.1.1';
   const oidB = '1.3.6.1.4.1.12148.10.10.18.4.1.6.2.1';
   const binding = (id: string, oid: string, targetId: string): TelemetryBinding => ({
@@ -87,7 +105,7 @@ function fixture(latest: readonly TelemetrySample[]) {
     updatedAt: at,
   });
   return {
-    topology: new MemoryTopologyRepository([device, equipment]),
+    topology: new MemoryTopologyRepository([device, equipment, ...panels]),
     bindings: new MemoryTelemetryBindingRepository([
       binding('current-A', oidA, 'feed-A'),
       binding('current-B', oidB, 'feed-B'),

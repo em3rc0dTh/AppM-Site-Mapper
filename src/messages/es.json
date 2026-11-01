@@ -1408,7 +1408,11 @@
     "threshold": " · umbral {current} A",
     "timescaleUnavailable": "TimescaleDB no disponible: no se pudo consultar el historial SNMP restaurado.",
     "noTotal": "La corriente total del BDFB solo está disponible si todos los shunts independientes requeridos están verificados, vinculados y transmiten lecturas SNMP recientes.",
-    "snmpSeparate": "Las mediciones SNMP de shunts entrantes son independientes del promedio MQTT de los Equipment descendientes."
+    "snmpSeparate": "Las mediciones SNMP de shunts entrantes son independientes del promedio MQTT de los Equipment descendientes.",
+    "totalVoltage": "VOLTAJE TOTAL QDF",
+    "busAVoltage": "VOLTAJE BUS A",
+    "busBVoltage": "VOLTAJE BUS B",
+    "voltageTolerance": "Tolerancia de coherencia de voltaje: {value} V"
   },
   "snmpHistoryUi": {
     "title": "SNMP · HISTORIAL TIMESCALEDB",

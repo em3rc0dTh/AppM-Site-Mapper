@@ -4,18 +4,18 @@ The provided Vertiv UXIM/UXTM reference is used **only as a table presentation e
 
 ## Frozen baseline
 
-| Field                  | Value                                             |
-| ---------------------- | ------------------------------------------------- |
-| Transport              | Modbus TCP (MBAP)                                 |
-| Function code          | 03, Read Holding Registers                        |
-| Supported measurements | Voltage (V), Current (A), Power (kW), Energy (kWh) |
-| Value representation   | IEEE-754 FLOAT32, two 16-bit registers            |
-| Word/byte order        | High word first; network big-endian bytes         |
+| Field                  | Value                                               |
+| ---------------------- | --------------------------------------------------- |
+| Transport              | Modbus TCP (MBAP)                                   |
+| Function code          | 03, Read Holding Registers                          |
+| Supported measurements | Voltage (V), Current (A), Power (kW), Energy (kWh)  |
+| Value representation   | IEEE-754 FLOAT32, two 16-bit registers              |
+| Word/byte order        | High word first; network big-endian bytes           |
 | Scaling                | 1 on wire; Power is converted from internal W to kW |
-| First circuit          | Addresses 0..7; references 40001..40008           |
-| Last circuit           | Addresses 760..767; references 40761..40768       |
-| Unit IDs               | Unit 1/2/3 for lab emulator sources only          |
-| Access                 | Read-only: no FC04, FC06, FC16 or remote control  |
+| First circuit          | Addresses 0..7; references 40001..40008             |
+| Last circuit           | Addresses 760..767; references 40761..40768         |
+| Unit IDs               | Unit 1/2/3 for lab emulator sources only            |
+| Access                 | Read-only: no FC04, FC06, FC16 or remote control    |
 
 The reference prefix `4xxxx` is documentary (e.g. 40001 = wire offset 0); an integration tool might instead ask for 0 or 1. **Enter the actual zero-based start offset or adjust the point entry according to the driver's addressing convention.** Never send 40001 as the wire offset.
 

@@ -6,6 +6,7 @@ import {
   bdfbHardwareProfile,
   ELTEK_BDCBB_CONFIG_4,
 } from '@/modules/power/domain/bdfb-hardware-profile';
+import { qdfVoltageToleranceV } from '@/modules/telemetry/application/qdf-total-voltage';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { nowIso } from '@/shared/domain/entity';
 import {
@@ -33,7 +34,12 @@ export async function GET(request: Request) {
     ? assessBdfbInventory(selected, await topology.listEquipmentForDevice(id))
     : null;
   return Response.json(
-    { deviceId: id, hardwareProfile: selected, inventory },
+    {
+      deviceId: id,
+      hardwareProfile: selected,
+      voltageToleranceV: qdfVoltageToleranceV(device.attributes),
+      inventory,
+    },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }
@@ -57,6 +63,7 @@ async function handlePOST(request: Request) {
       'deviceId',
       'hardwareProfile',
       'confirmInstalledProfile',
+      'voltageToleranceV',
     ])
   ) {
     return Response.json({ error: 'INVALID_PROFILE_REQUEST' }, { status: 400 });
@@ -66,33 +73,59 @@ async function handlePOST(request: Request) {
     !isBoundedString(input.deviceId, 128) ||
     (input.hardwareProfile !== ELTEK_BDCBB_CONFIG_2 &&
       input.hardwareProfile !== ELTEK_BDCBB_CONFIG_4) ||
-    input.confirmInstalledProfile !== true
+    input.confirmInstalledProfile !== true ||
+    (input.voltageToleranceV !== undefined &&
+      (typeof input.voltageToleranceV !== 'number' ||
+        !Number.isFinite(input.voltageToleranceV) ||
+        input.voltageToleranceV <= 0 ||
+        input.voltageToleranceV > 20))
   ) {
     return Response.json({ error: 'INVALID_PROFILE_REQUEST' }, { status: 400 });
   }
   const selectedProfile = input.hardwareProfile as
     typeof ELTEK_BDCBB_CONFIG_2 | typeof ELTEK_BDCBB_CONFIG_4;
+  const requestedTolerance =
+    typeof input.voltageToleranceV === 'number' ? input.voltageToleranceV : undefined;
   const topology = await createTopologyRepository();
   const device = await topology.getById(input.deviceId);
   if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB' || device.lifecycle !== 'ACTIVE')
     return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
-  if (bdfbHardwareProfile(device) === selectedProfile)
-    return Response.json({ hardwareProfile: selectedProfile, alreadySelected: true });
+  const currentProfile = bdfbHardwareProfile(device);
+  const currentTolerance = qdfVoltageToleranceV(device.attributes);
+  if (
+    currentProfile === selectedProfile &&
+    (requestedTolerance === undefined || requestedTolerance === currentTolerance)
+  )
+    return Response.json({
+      hardwareProfile: selectedProfile,
+      voltageToleranceV: currentTolerance,
+      alreadySelected: true,
+    });
+
   // Never silently reinterpret existing OIDs when the physical layout changes.
   const equipment = await topology.listEquipmentForDevice(device.id);
-  const bindingsRepo = await (
-    await import('@/modules/telemetry/infrastructure/telemetry-binding-repository-factory')
-  ).createTelemetryBindingRepository();
-  for (const owner of equipment) {
-    for (const port of owner.accessPorts.filter((p) => p.lifecycle === 'ACTIVE')) {
-      const bindings = await bindingsRepo.listForTarget('ACCESS_PORT', port.id);
-      if (bindings.some((b) => b.lifecycle === 'ACTIVE' && b.protocol === 'SNMP'))
-        return Response.json({ error: 'ACTIVE_SNMP_BINDINGS_REQUIRE_RETIREMENT' }, { status: 409 });
+  if (currentProfile !== selectedProfile) {
+    const bindingsRepo = await (
+      await import('@/modules/telemetry/infrastructure/telemetry-binding-repository-factory')
+    ).createTelemetryBindingRepository();
+    for (const owner of equipment) {
+      for (const port of owner.accessPorts.filter((p) => p.lifecycle === 'ACTIVE')) {
+        const bindings = await bindingsRepo.listForTarget('ACCESS_PORT', port.id);
+        if (bindings.some((b) => b.lifecycle === 'ACTIVE' && b.protocol === 'SNMP'))
+          return Response.json(
+            { error: 'ACTIVE_SNMP_BINDINGS_REQUIRE_RETIREMENT' },
+            { status: 409 },
+          );
+      }
     }
   }
   const changed = {
     ...device,
-    attributes: { ...device.attributes, bdfbHardwareProfile: selectedProfile },
+    attributes: {
+      ...device.attributes,
+      bdfbHardwareProfile: selectedProfile,
+      ...(requestedTolerance !== undefined ? { qdfVoltageToleranceV: requestedTolerance } : {}),
+    },
     updatedAt: nowIso(),
   };
   if (!topology.replaceIfVersion || !(await topology.replaceIfVersion(changed, device.updatedAt))) {
@@ -101,6 +134,7 @@ async function handlePOST(request: Request) {
   return Response.json(
     {
       hardwareProfile: selectedProfile,
+      voltageToleranceV: qdfVoltageToleranceV(changed.attributes),
       inventory: assessBdfbInventory(selectedProfile, equipment),
     },
     { status: 201 },

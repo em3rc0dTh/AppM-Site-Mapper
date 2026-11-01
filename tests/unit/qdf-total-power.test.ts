@@ -13,11 +13,7 @@ import type { SnmpHistoricalBucket } from '@/modules/telemetry/infrastructure/ht
 
 const observed = '2026-11-01T05:00:00.000Z';
 
-function liveFeed(
-  id: string,
-  side: 'A' | 'B',
-  estimatedPowerW: number,
-): SnmpBdfbFeedView {
+function liveFeed(id: string, side: 'A' | 'B', estimatedPowerW: number): SnmpBdfbFeedView {
   return {
     accessPortId: id,
     label: `Feed ${side}`,

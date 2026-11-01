@@ -31,6 +31,7 @@ export function projectVerifiedLiveTotalCurrent(
 ): QdfLiveTotalCurrent | null {
   if (
     load.status !== 'COMPLETE' ||
+    load.inventoryStatus !== 'COMPLETE' ||
     !finiteCurrent(load.totalCurrentA) ||
     load.expectedFeedCount < 1 ||
     load.feeds.length !== load.expectedFeedCount ||

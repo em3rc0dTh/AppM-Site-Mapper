@@ -4,6 +4,10 @@ import {
   bdfbHardwareProfile,
 } from '@/modules/power/domain/bdfb-hardware-profile';
 import { projectHistoricalQdfTotalCurrent } from '@/modules/telemetry/application/qdf-total-current';
+import {
+  projectHistoricalQdfVoltage,
+  qdfVoltageToleranceV,
+} from '@/modules/telemetry/application/qdf-total-voltage';
 import { isBdfbFeedPort } from '@/modules/telemetry/application/snmp-feed-service';
 import {
   TELEMETRY_HISTORY_WINDOWS,
@@ -43,6 +47,7 @@ export async function GET(request: Request) {
   const ports = equipment.flatMap((item) => item.accessPorts.filter(isBdfbFeedPort)).slice(0, 4);
   const profile = bdfbHardwareProfile(device);
   const assessment = profile ? assessBdfbInventory(profile, equipment) : null;
+  const voltageToleranceV = qdfVoltageToleranceV(device.attributes);
   const bindings = await createTelemetryBindingRepository();
   const history = createTelemetryStoreClient();
   try {
@@ -63,6 +68,17 @@ export async function GET(request: Request) {
           source && compatible
             ? await history.querySnmpFeedSeries(port.id, source, window as TelemetryHistoryWindow)
             : [];
+        const voltageSource = voltages.length === 1 ? voltages[0]!.sourceIdentity : null;
+        const voltagePoints =
+          voltageSource && voltageSource === source
+            ? points
+            : voltageSource
+              ? await history.querySnmpFeedSeries(
+                  port.id,
+                  voltageSource,
+                  window as TelemetryHistoryWindow,
+                )
+              : [];
         return {
           accessPortId: port.id,
           label: port.name,
@@ -78,8 +94,15 @@ export async function GET(request: Request) {
             currents[0]?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY'
               ? ('SYNTHETIC_LAB_ONLY' as const)
               : ('FIELD' as const),
+          voltageSourceMode:
+            voltages[0]?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY'
+              ? ('SYNTHETIC_LAB_ONLY' as const)
+              : ('FIELD' as const),
           verified: port.attributes?.independentInputConfirmed === true,
+          voltageVerified:
+            port.attributes?.independentInputConfirmed === true && voltages.length === 1,
           points,
+          voltagePoints,
         };
       }),
     );
@@ -94,6 +117,22 @@ export async function GET(request: Request) {
       assessment?.expectedFeedCount ?? ports.length,
       assessment?.inventoryComplete ?? false,
     );
+    const totalVoltage =
+      voltageToleranceV !== null
+        ? projectHistoricalQdfVoltage(
+            feeds.map((feed) => ({
+              accessPortId: feed.accessPortId,
+              side: feed.side === 'A' || feed.side === 'B' ? feed.side : null,
+              position: feed.feedPosition ?? feed.side,
+              verified: feed.voltageVerified,
+              sourceMode: feed.voltageSourceMode,
+              points: feed.voltagePoints,
+            })),
+            assessment?.expectedFeedCount ?? ports.length,
+            assessment?.inventoryComplete ?? false,
+            voltageToleranceV,
+          )
+        : { busA: [], busB: [], total: [] };
     return Response.json(
       {
         deviceId,
@@ -103,6 +142,12 @@ export async function GET(request: Request) {
           unit: 'A',
           semantics: 'SUM_VERIFIED_INDEPENDENT_INPUTS',
           points: totalCurrent,
+        },
+        totalVoltage: {
+          unit: 'V',
+          semantics: 'COHERENT_REPRESENTATIVE_A_B_BUS_VOLTAGE',
+          toleranceV: voltageToleranceV,
+          ...totalVoltage,
         },
         energySource: 'ESTIMATED_FROM_PAIRED_VOLTAGE_CURRENT',
         maxIntegratedGapSeconds: 120,

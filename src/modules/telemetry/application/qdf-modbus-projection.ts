@@ -34,11 +34,7 @@ function unavailableQuality(
   if (!load) return 'INVALID';
   if (load.feeds.some((feed) => feed.status === 'STALE')) return 'STALE';
   if (load.feeds.some((feed) => feed.status === 'NO_DATA')) return 'UNOBSERVED';
-  if (
-    load.feeds.some((feed) =>
-      ['UNMAPPED', 'UNVERIFIED', 'CONFLICT'].includes(feed.status),
-    )
-  )
+  if (load.feeds.some((feed) => ['UNMAPPED', 'UNVERIFIED', 'CONFLICT'].includes(feed.status)))
     return 'INVALID';
   return 'UNKNOWN';
 }

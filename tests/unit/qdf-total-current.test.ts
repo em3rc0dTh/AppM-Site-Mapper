@@ -4,12 +4,20 @@ import {
   projectHistoricalQdfTotalCurrent,
   projectVerifiedLiveTotalCurrent,
 } from '@/modules/telemetry/application/qdf-total-current';
-import type { SnmpBdfbFeedView, SnmpBdfbLoadView } from '@/modules/telemetry/application/snmp-feed-service';
+import type {
+  SnmpBdfbFeedView,
+  SnmpBdfbLoadView,
+} from '@/modules/telemetry/application/snmp-feed-service';
 import type { SnmpHistoricalBucket } from '@/modules/telemetry/infrastructure/http-telemetry-store';
 
 const observed = '2026-11-01T05:00:00.000Z';
 
-function liveFeed(id: string, side: 'A' | 'B', currentA: number, at = observed): SnmpBdfbFeedView {
+function liveFeed(
+  id: string,
+  side: 'A' | 'B',
+  currentA: number,
+  at = observed,
+): SnmpBdfbFeedView {
   return {
     accessPortId: id,
     label: `Feed ${side}`,
@@ -94,7 +102,9 @@ describe('QDF total current contractual projection', () => {
     ).toBeNull();
 
     const duplicate = liveFeed('feed-A', 'B', 210);
-    expect(projectVerifiedLiveTotalCurrent(load([liveFeed('feed-A', 'A', 220), duplicate]))).toBeNull();
+    expect(
+      projectVerifiedLiveTotalCurrent(load([liveFeed('feed-A', 'A', 220), duplicate])),
+    ).toBeNull();
 
     const lab = { ...liveFeed('feed-B', 'B', 210), status: 'LAB_LIVE' as const };
     expect(projectVerifiedLiveTotalCurrent(load([liveFeed('feed-A', 'A', 220), lab]))).toBeNull();

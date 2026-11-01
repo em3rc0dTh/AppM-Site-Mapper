@@ -213,7 +213,11 @@ export function SnmpFeedCommissioning({
                   />
                 </label>
                 <small>{t('voltageToleranceHelp')}</small>
-                <button type="button" disabled={busy || loading} onClick={() => void saveVoltageTolerance()}>
+                <button
+                  type="button"
+                  disabled={busy || loading}
+                  onClick={() => void saveVoltageTolerance()}
+                >
                   {t('saveVoltageTolerance')}
                 </button>
               </div>

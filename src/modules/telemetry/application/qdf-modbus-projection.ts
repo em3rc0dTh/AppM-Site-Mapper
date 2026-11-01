@@ -141,7 +141,6 @@ export async function projectQdfTotalCurrentSignals(
   return output;
 }
 
-
 function bindingMode(
   attributes: Readonly<Record<string, unknown>> | undefined,
 ): 'SYNTHETIC_LAB_ONLY' | 'FIELD' {
@@ -211,9 +210,9 @@ export async function projectQdfTotalPowerSignals(
       );
       const sameSource = Boolean(
         current &&
-          voltage &&
-          current.sourceIdentity === voltage.sourceIdentity &&
-          sample?.sourceIdentity === current.sourceIdentity,
+        voltage &&
+        current.sourceIdentity === voltage.sourceIdentity &&
+        sample?.sourceIdentity === current.sourceIdentity,
       );
       evidence.push({
         accessPortId: portId,

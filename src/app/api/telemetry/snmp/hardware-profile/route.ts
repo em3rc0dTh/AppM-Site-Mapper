@@ -124,9 +124,7 @@ async function handlePOST(request: Request) {
     attributes: {
       ...device.attributes,
       bdfbHardwareProfile: selectedProfile,
-      ...(requestedTolerance !== undefined
-        ? { qdfVoltageToleranceV: requestedTolerance }
-        : {}),
+      ...(requestedTolerance !== undefined ? { qdfVoltageToleranceV: requestedTolerance } : {}),
     },
     updatedAt: nowIso(),
   };

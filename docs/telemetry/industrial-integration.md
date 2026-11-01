@@ -194,7 +194,15 @@ recovery testing. Disk/queue bounds and the filesystem must be monitored.
 
 No observed point is auto-published. The legacy register block remains 0–767. Each extension point
 occupies three explicit registers at offset >=1024: FLOAT32 ABCD/high-word-first value (two words),
-then UINT16 quality. Known latched alarm states retain 1/0 independently of freshness; the quality word still reports uncertainty. FC03, Unit IDs 1–247 and address limits are validated. Overlaps are rejected.
+then UINT16 quality.
+
+QDF total current is an application-derived logical point, not a renamed breaker or raw SNMP point.
+Commission it explicitly with `logicalPointId: "QDF/<deviceId>/TOTAL_CURRENT"`, unit `A`, and a
+free extension address. Site Mapper publishes it only when every expected physical input is
+independently verified, FIELD/LIVE, uniquely positioned and time-aligned. Missing, stale,
+unverified, duplicate or mixed LAB/FIELD evidence yields NaN plus a non-VALID quality code; it
+never fabricates zero or a partial total. Historical total-current series use the same fail-closed
+principle and are computed from aligned complete feed buckets without changing Timescale schemas. Known latched alarm states retain 1/0 independently of freshness; the quality word still reports uncertainty. FC03, Unit IDs 1–247 and address limits are validated. Overlaps are rejected.
 The maximum is 10,000 published points per manifest; each FC03 request remains limited to 125 words.
 
 | Quality    | Code | Extension value                                                |

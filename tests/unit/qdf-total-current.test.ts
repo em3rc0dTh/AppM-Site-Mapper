@@ -107,7 +107,9 @@ describe('QDF total current contractual projection', () => {
     ).toBeNull();
 
     const lab = { ...liveFeed('feed-B', 'B', 210), status: 'LAB_LIVE' as const };
-    expect(projectVerifiedLiveTotalCurrent(load([liveFeed('feed-A', 'A', 220), lab]))).toBeNull();
+    expect(
+      projectVerifiedLiveTotalCurrent(load([liveFeed('feed-A', 'A', 220), lab])),
+    ).toBeNull();
   });
 
   it('sums historical current only when every verified FIELD feed shares an aligned bucket', () => {

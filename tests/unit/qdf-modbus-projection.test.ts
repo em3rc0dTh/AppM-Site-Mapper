@@ -152,17 +152,20 @@ describe('QDF total current Modbus projection', () => {
     });
   });
 
-  it('publishes unavailable quality and no fabricated zero when coverage is incomplete', async () => {
-    const base = fixture([]);
-    const f = fixture([sample('feed-A', 220, base.oidA)]);
-    const [signal] = await projectQdfTotalCurrentSignals(
-      [{ signalId: 'b'.repeat(64), logicalPointId: 'QDF/qdf-2/TOTAL_CURRENT' }],
-      f.topology,
-      f.bindings,
-      f.history,
-      new Date(at),
-    );
-    expect(signal?.value).toBeNull();
-    expect(signal?.quality).not.toBe('VALID');
-  });
+  it(
+    'publishes unavailable quality and no fabricated zero when coverage is incomplete',
+    async () => {
+      const base = fixture([]);
+      const f = fixture([sample('feed-A', 220, base.oidA)]);
+      const [signal] = await projectQdfTotalCurrentSignals(
+        [{ signalId: 'b'.repeat(64), logicalPointId: 'QDF/qdf-2/TOTAL_CURRENT' }],
+        f.topology,
+        f.bindings,
+        f.history,
+        new Date(at),
+      );
+      expect(signal?.value).toBeNull();
+      expect(signal?.quality).not.toBe('VALID');
+    },
+  );
 });

@@ -84,6 +84,7 @@ function bucket(bucketAt: string, powerW: number, at = bucketAt): SnmpHistorical
     estimatedEnergyKwh: null,
     coveredSeconds: 0,
     sampleCount: 1,
+    pairedSampleCount: 1,
   };
 }
 

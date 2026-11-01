@@ -1,0 +1,21 @@
+name: QDF temporary format probe
+on:
+  push:
+    branches:
+      - feat/telxius-rfp-qdf-total-current
+permissions:
+  contents: read
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Show exact Prettier diff
+        run: |
+          npx prettier --write             src/modules/telemetry/application/qdf-modbus-projection.ts             tests/unit/qdf-modbus-projection.test.ts             tests/unit/qdf-total-current.test.ts
+          git diff --             src/modules/telemetry/application/qdf-modbus-projection.ts             tests/unit/qdf-modbus-projection.test.ts             tests/unit/qdf-total-current.test.ts

@@ -34,9 +34,7 @@ function unavailableQuality(
   if (!load) return 'INVALID';
   if (load.feeds.some((feed) => feed.status === 'STALE')) return 'STALE';
   if (load.feeds.some((feed) => feed.status === 'NO_DATA')) return 'UNOBSERVED';
-  if (
-    load.feeds.some((feed) => ['UNMAPPED', 'UNVERIFIED', 'CONFLICT'].includes(feed.status))
-  )
+  if (load.feeds.some((feed) => ['UNMAPPED', 'UNVERIFIED', 'CONFLICT'].includes(feed.status)))
     return 'INVALID';
   return 'UNKNOWN';
 }
@@ -56,9 +54,7 @@ export async function projectQdfTotalCurrentSignals(
 
     const device = await topology.getById(parsed.deviceId);
     const validDevice =
-      device?.kind === 'DEVICE' &&
-      device.lifecycle === 'ACTIVE' &&
-      device.deviceType === 'BDFB';
+      device?.kind === 'DEVICE' && device.lifecycle === 'ACTIVE' && device.deviceType === 'BDFB';
 
     const ports = validDevice
       ? (await topology.listEquipmentForDevice(parsed.deviceId))
@@ -78,13 +74,7 @@ export async function projectQdfTotalCurrentSignals(
     }
 
     const load = validDevice
-      ? await summarizeSnmpBdfbLoad(
-          parsed.deviceId,
-          topology,
-          bindings,
-          hub,
-          now.getTime(),
-        )
+      ? await summarizeSnmpBdfbLoad(parsed.deviceId, topology, bindings, hub, now.getTime())
       : null;
     const total = load ? projectVerifiedLiveTotalCurrent(load) : null;
     const quality: Signal['quality'] = total ? 'VALID' : unavailableQuality(load);

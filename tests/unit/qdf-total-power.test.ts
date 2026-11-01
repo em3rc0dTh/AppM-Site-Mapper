@@ -149,6 +149,33 @@ describe('QDF total power contractual projection', () => {
     expect(total.map((point) => point.powerKw)).toEqual([1.008, 1.04]);
   });
 
+  it('rejects historical buckets with incomplete paired voltage/current coverage', () => {
+    const at = '2026-11-01T05:00:00.000Z';
+    const incomplete = { ...bucket(at, 480), sampleCount: 2, pairedSampleCount: 1 };
+    expect(
+      projectHistoricalQdfTotalPower(
+        [
+          {
+            accessPortId: 'feed-A',
+            position: 'A',
+            verified: true,
+            sourceMode: 'FIELD',
+            points: [incomplete],
+          },
+          {
+            accessPortId: 'feed-B',
+            position: 'B',
+            verified: true,
+            sourceMode: 'FIELD',
+            points: [bucket(at, 528)],
+          },
+        ],
+        2,
+        true,
+      ),
+    ).toEqual([]);
+  });
+
   it('does not emit a partial historical total', () => {
     const at = '2026-11-01T05:00:00.000Z';
     expect(

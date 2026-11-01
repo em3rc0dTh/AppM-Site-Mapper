@@ -155,8 +155,9 @@ export async function projectQdfTotalCurrentSignals(
   return output;
 }
 
-
-function voltageMetric(reading: unknown): { value: number; oid: string; observedAt: string } | null {
+function voltageMetric(
+  reading: unknown,
+): { value: number; oid: string; observedAt: string } | null {
   if (!reading || typeof reading !== 'object' || Array.isArray(reading)) return null;
   const record = reading as Record<string, unknown>;
   if (
@@ -191,7 +192,9 @@ export async function projectQdfVoltageSignals(
     const validDevice =
       device?.kind === 'DEVICE' && device.lifecycle === 'ACTIVE' && device.deviceType === 'BDFB';
     const equipment = validDevice
-      ? (await topology.listEquipmentForDevice(deviceId)).filter((node) => node.lifecycle === 'ACTIVE')
+      ? (await topology.listEquipmentForDevice(deviceId)).filter(
+          (node) => node.lifecycle === 'ACTIVE',
+        )
       : [];
     const ports = equipment.flatMap((node) => node.accessPorts.filter(isBdfbFeedPort));
     let latestSamples: readonly TelemetrySample[] = [];
@@ -206,8 +209,7 @@ export async function projectQdfVoltageSignals(
     }
 
     const profile = validDevice ? bdfbHardwareProfile(device) : null;
-    const assessment =
-      validDevice && profile ? assessBdfbInventory(profile, equipment) : null;
+    const assessment = validDevice && profile ? assessBdfbInventory(profile, equipment) : null;
     const toleranceV = validDevice ? qdfVoltageToleranceV(device.attributes) : null;
     const evidence: QdfVoltageFeedEvidence[] = [];
     const derivationBySide = new Map<'A' | 'B', string[]>();

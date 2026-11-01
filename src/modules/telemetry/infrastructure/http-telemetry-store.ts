@@ -96,6 +96,7 @@ export interface SnmpHistoricalBucket {
   readonly estimatedEnergyKwh: number | null;
   readonly coveredSeconds: number;
   readonly sampleCount: number;
+  readonly pairedSampleCount?: number;
 }
 
 export class HttpTelemetryStore implements TelemetryHistoryWriter {

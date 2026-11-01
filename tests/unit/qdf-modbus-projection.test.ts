@@ -69,8 +69,7 @@ function fixture(latest: readonly TelemetrySample[]) {
         feed: side,
         snmpFeedInput: true,
         independentInputConfirmed: true,
-        servedPanelIds:
-          side === 'A' ? ['panel-A1', 'panel-A2'] : ['panel-B1', 'panel-B2'],
+        servedPanelIds: side === 'A' ? ['panel-A1', 'panel-A2'] : ['panel-B1', 'panel-B2'],
       },
     })),
   };
@@ -131,10 +130,7 @@ describe('QDF total current Modbus projection', () => {
 
   it('projects the complete verified total as a VALID A measurement', async () => {
     const base = fixture([]);
-    const f = fixture([
-      sample('feed-A', 220, base.oidA),
-      sample('feed-B', 210, base.oidB),
-    ]);
+    const f = fixture([sample('feed-A', 220, base.oidA), sample('feed-B', 210, base.oidB)]);
     const [signal] = await projectQdfTotalCurrentSignals(
       [{ signalId: 'a'.repeat(64), logicalPointId: 'QDF/qdf-2/TOTAL_CURRENT' }],
       f.topology,
@@ -152,20 +148,17 @@ describe('QDF total current Modbus projection', () => {
     });
   });
 
-  it(
-    'publishes unavailable quality and no fabricated zero when coverage is incomplete',
-    async () => {
-      const base = fixture([]);
-      const f = fixture([sample('feed-A', 220, base.oidA)]);
-      const [signal] = await projectQdfTotalCurrentSignals(
-        [{ signalId: 'b'.repeat(64), logicalPointId: 'QDF/qdf-2/TOTAL_CURRENT' }],
-        f.topology,
-        f.bindings,
-        f.history,
-        new Date(at),
-      );
-      expect(signal?.value).toBeNull();
-      expect(signal?.quality).not.toBe('VALID');
-    },
-  );
+  it('publishes unavailable quality and no fabricated zero when coverage is incomplete', async () => {
+    const base = fixture([]);
+    const f = fixture([sample('feed-A', 220, base.oidA)]);
+    const [signal] = await projectQdfTotalCurrentSignals(
+      [{ signalId: 'b'.repeat(64), logicalPointId: 'QDF/qdf-2/TOTAL_CURRENT' }],
+      f.topology,
+      f.bindings,
+      f.history,
+      new Date(at),
+    );
+    expect(signal?.value).toBeNull();
+    expect(signal?.quality).not.toBe('VALID');
+  });
 });

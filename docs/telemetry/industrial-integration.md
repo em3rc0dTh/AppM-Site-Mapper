@@ -202,7 +202,16 @@ free extension address. Site Mapper publishes it only when every expected physic
 independently verified, FIELD/LIVE, uniquely positioned and time-aligned. Missing, stale,
 unverified, duplicate or mixed LAB/FIELD evidence yields NaN plus a non-VALID quality code; it
 never fabricates zero or a partial total. Historical total-current series use the same fail-closed
-principle and are computed from aligned complete feed buckets without changing Timescale schemas. Known latched alarm states retain 1/0 independently of freshness; the quality word still reports uncertainty. FC03, Unit IDs 1–247 and address limits are validated. Overlaps are rejected.
+principle and are computed from aligned complete feed buckets without changing Timescale schemas.
+
+QDF total power follows the same additive contract through
+`logicalPointId: "QDF/<deviceId>/TOTAL_POWER"`, unit `kW`. It is derived from the complete
+verified incoming-feed set as `SUM(abs(voltageV) * currentA) / 1000`; it is not the existing
+partial descendant-breaker `totalPowerW`. CURRENT and VOLTAGE must each have exactly one FIELD
+binding for the same controller/source, every expected feed must be LIVE, and paired timestamps
+must be aligned. Historical TOTAL_POWER sums only buckets where every expected FIELD feed has
+complete paired V/I coverage; a bucket with any unpaired sample is omitted rather than partially
+summed. The legacy breaker block 0–767 and internal watt storage remain unchanged. Known latched alarm states retain 1/0 independently of freshness; the quality word still reports uncertainty. FC03, Unit IDs 1–247 and address limits are validated. Overlaps are rejected.
 The maximum is 10,000 published points per manifest; each FC03 request remains limited to 125 words.
 
 | Quality    | Code | Extension value                                                |

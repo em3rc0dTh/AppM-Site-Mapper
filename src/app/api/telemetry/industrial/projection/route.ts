@@ -112,7 +112,10 @@ export async function POST(request: Request) {
         : [],
     ]);
     const qdfById = new Map(
-      [...qdfCurrentSignals, ...qdfPowerSignals, ...qdfVoltageSignals].map((signal) => [signal.id, signal]),
+      [...qdfCurrentSignals, ...qdfPowerSignals, ...qdfVoltageSignals].map((signal) => [
+        signal.id,
+        signal,
+      ]),
     );
 
     const industrialPoints = signalIds

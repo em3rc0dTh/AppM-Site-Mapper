@@ -390,7 +390,7 @@ def query_snmp_feed_series(target_id, source_identity, window):
       )
       SELECT period, latest_at, current_a, voltage_v, power_w,
         CASE WHEN paired_count = 0 THEN NULL ELSE estimated_energy_kwh END,
-        covered_seconds, sample_count
+        covered_seconds, sample_count, paired_count
       FROM buckets ORDER BY period ASC LIMIT 1000
     """
     with psycopg.connect(DSN) as conn:
@@ -399,7 +399,8 @@ def query_snmp_feed_series(target_id, source_identity, window):
         "bucketAt": row[0].isoformat(), "observedAt": row[1].isoformat(),
         "currentA": row[2], "voltageV": row[3], "powerW": row[4],
         "estimatedEnergyKwh": float(row[5]) if row[5] is not None else None,
-        "coveredSeconds": float(row[6]), "sampleCount": row[7]
+        "coveredSeconds": float(row[6]), "sampleCount": row[7],
+        "pairedSampleCount": row[8]
     } for row in rows]
 
 def query_history(serial, window, raw_point_ids):

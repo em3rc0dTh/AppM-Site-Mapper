@@ -4,6 +4,7 @@ import {
   bdfbHardwareProfile,
 } from '@/modules/power/domain/bdfb-hardware-profile';
 import { projectHistoricalQdfTotalCurrent } from '@/modules/telemetry/application/qdf-total-current';
+import { projectHistoricalQdfTotalPower } from '@/modules/telemetry/application/qdf-total-power';
 import { isBdfbFeedPort } from '@/modules/telemetry/application/snmp-feed-service';
 import {
   TELEMETRY_HISTORY_WINDOWS,
@@ -78,7 +79,17 @@ export async function GET(request: Request) {
             currents[0]?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY'
               ? ('SYNTHETIC_LAB_ONLY' as const)
               : ('FIELD' as const),
+          powerSourceMode:
+            currents[0]?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY' ||
+            voltages[0]?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY'
+              ? ('SYNTHETIC_LAB_ONLY' as const)
+              : ('FIELD' as const),
           verified: port.attributes?.independentInputConfirmed === true,
+          powerVerified:
+            port.attributes?.independentInputConfirmed === true &&
+            currents.length === 1 &&
+            voltages.length === 1 &&
+            Boolean(compatible),
           points,
         };
       }),
@@ -94,6 +105,17 @@ export async function GET(request: Request) {
       assessment?.expectedFeedCount ?? ports.length,
       assessment?.inventoryComplete ?? false,
     );
+    const totalPower = projectHistoricalQdfTotalPower(
+      feeds.map((feed) => ({
+        accessPortId: feed.accessPortId,
+        position: feed.feedPosition ?? feed.side,
+        verified: feed.powerVerified,
+        sourceMode: feed.powerSourceMode,
+        points: feed.points,
+      })),
+      assessment?.expectedFeedCount ?? ports.length,
+      assessment?.inventoryComplete ?? false,
+    );
     return Response.json(
       {
         deviceId,
@@ -103,6 +125,11 @@ export async function GET(request: Request) {
           unit: 'A',
           semantics: 'SUM_VERIFIED_INDEPENDENT_INPUTS',
           points: totalCurrent,
+        },
+        totalPower: {
+          unit: 'kW',
+          semantics: 'SUM_VERIFIED_PAIRED_VOLTAGE_CURRENT',
+          points: totalPower,
         },
         energySource: 'ESTIMATED_FROM_PAIRED_VOLTAGE_CURRENT',
         maxIntegratedGapSeconds: 120,

@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   parseQdfTotalCurrentLogicalPoint,
+  parseQdfTotalPowerLogicalPoint,
   projectQdfTotalCurrentSignals,
+  projectQdfTotalPowerSignals,
 } from '@/modules/telemetry/application/qdf-modbus-projection';
 import type { TelemetryBinding, TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { MemoryTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-binding-repository';
@@ -11,7 +13,13 @@ import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memo
 
 const at = '2026-11-01T05:00:00.000Z';
 
-function sample(portId: string, currentA: number, oid: string): TelemetrySample {
+function sample(
+  portId: string,
+  currentA: number,
+  currentOid: string,
+  voltageV?: number,
+  voltageOid?: string,
+): TelemetrySample {
   return {
     bindingId: `snmp:${portId}`,
     targetId: portId,
@@ -20,7 +28,10 @@ function sample(portId: string, currentA: number, oid: string): TelemetrySample 
     entityKind: 'ACCESS_PORT',
     sourceIdentity: 'ELTEK-01',
     reported: {
-      currentA: { value: currentA, unit: 'A', oid, observedAt: at },
+      currentA: { value: currentA, unit: 'A', oid: currentOid, observedAt: at },
+      ...(voltageV !== undefined && voltageOid
+        ? { voltageV: { value: voltageV, unit: 'V', oid: voltageOid, observedAt: at } }
+        : {}),
     },
     receivedAt: at,
     sourceObservedAt: at,
@@ -91,13 +102,21 @@ function fixture(latest: readonly TelemetrySample[]) {
   }));
   const oidA = '1.3.6.1.4.1.12148.10.10.18.4.1.6.1.1';
   const oidB = '1.3.6.1.4.1.12148.10.10.18.4.1.6.2.1';
-  const binding = (id: string, oid: string, targetId: string): TelemetryBinding => ({
+  const voltageOidA = '1.3.6.1.4.1.12148.10.10.18.4.1.7.1.1';
+  const voltageOidB = '1.3.6.1.4.1.12148.10.10.18.4.1.7.2.1';
+  const binding = (
+    id: string,
+    oid: string,
+    targetId: string,
+    metric: 'CURRENT' | 'VOLTAGE',
+    unit: 'A' | 'V',
+  ): TelemetryBinding => ({
     id,
     protocol: 'SNMP',
     sourceIdentity: 'ELTEK-01',
     sourcePointId: oid,
-    metric: 'CURRENT',
-    unit: 'A',
+    metric,
+    unit,
     targetType: 'ACCESS_PORT',
     targetId,
     lifecycle: 'ACTIVE',
@@ -107,8 +126,10 @@ function fixture(latest: readonly TelemetrySample[]) {
   return {
     topology: new MemoryTopologyRepository([device, equipment, ...panels]),
     bindings: new MemoryTelemetryBindingRepository([
-      binding('current-A', oidA, 'feed-A'),
-      binding('current-B', oidB, 'feed-B'),
+      binding('current-A', oidA, 'feed-A', 'CURRENT', 'A'),
+      binding('current-B', oidB, 'feed-B', 'CURRENT', 'A'),
+      binding('voltage-A', voltageOidA, 'feed-A', 'VOLTAGE', 'V'),
+      binding('voltage-B', voltageOidB, 'feed-B', 'VOLTAGE', 'V'),
     ]),
     history: {
       async queryLatestEntities() {
@@ -117,6 +138,8 @@ function fixture(latest: readonly TelemetrySample[]) {
     },
     oidA,
     oidB,
+    voltageOidA,
+    voltageOidB,
   };
 }
 
@@ -126,6 +149,10 @@ describe('QDF total current Modbus projection', () => {
       deviceId: 'qdf-2',
     });
     expect(parseQdfTotalCurrentLogicalPoint('QDF/qdf-2/TOTAL_POWER')).toBeNull();
+    expect(parseQdfTotalPowerLogicalPoint('QDF/qdf-2/TOTAL_POWER')).toEqual({
+      deviceId: 'qdf-2',
+    });
+    expect(parseQdfTotalPowerLogicalPoint('QDF/qdf-2/TOTAL_CURRENT')).toBeNull();
   });
 
   it('projects the complete verified total as a VALID A measurement', async () => {
@@ -153,6 +180,46 @@ describe('QDF total current Modbus projection', () => {
     const f = fixture([sample('feed-A', 220, base.oidA)]);
     const [signal] = await projectQdfTotalCurrentSignals(
       [{ signalId: 'b'.repeat(64), logicalPointId: 'QDF/qdf-2/TOTAL_CURRENT' }],
+      f.topology,
+      f.bindings,
+      f.history,
+      new Date(at),
+    );
+    expect(signal?.value).toBeNull();
+    expect(signal?.quality).not.toBe('VALID');
+  });
+
+  it('projects complete verified total power as VALID kW', async () => {
+    const base = fixture([]);
+    const f = fixture([
+      sample('feed-A', 10, base.oidA, -48, base.voltageOidA),
+      sample('feed-B', 11, base.oidB, -48, base.voltageOidB),
+    ]);
+    const [signal] = await projectQdfTotalPowerSignals(
+      [{ signalId: 'c'.repeat(64), logicalPointId: 'QDF/qdf-2/TOTAL_POWER' }],
+      f.topology,
+      f.bindings,
+      f.history,
+      new Date(at),
+    );
+    expect(signal).toMatchObject({
+      id: 'c'.repeat(64),
+      targetId: 'qdf-2',
+      value: 1.008,
+      unit: 'kW',
+      quality: 'VALID',
+      kind: 'measurement',
+    });
+  });
+
+  it('does not publish fabricated total power when one feed lacks voltage', async () => {
+    const base = fixture([]);
+    const f = fixture([
+      sample('feed-A', 10, base.oidA, -48, base.voltageOidA),
+      sample('feed-B', 11, base.oidB),
+    ]);
+    const [signal] = await projectQdfTotalPowerSignals(
+      [{ signalId: 'd'.repeat(64), logicalPointId: 'QDF/qdf-2/TOTAL_POWER' }],
       f.topology,
       f.bindings,
       f.history,

@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "points": [
     {
       "protocol": "MQTT",
@@ -285,6 +285,36 @@
       "address": 1051,
       "unit": "A",
       "description": "SYNTHETIC QDF 3 verified total input current"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-TOTAL-01",
+      "key": "QDF/SYNTHETIC-QDF-01/TOTAL_POWER",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-01/TOTAL_POWER",
+      "unitId": 1,
+      "address": 1054,
+      "unit": "kW",
+      "description": "SYNTHETIC QDF 1 verified total input power"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-TOTAL-02",
+      "key": "QDF/SYNTHETIC-QDF-02/TOTAL_POWER",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-02/TOTAL_POWER",
+      "unitId": 2,
+      "address": 1054,
+      "unit": "kW",
+      "description": "SYNTHETIC QDF 2 verified total input power"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-TOTAL-03",
+      "key": "QDF/SYNTHETIC-QDF-03/TOTAL_POWER",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-03/TOTAL_POWER",
+      "unitId": 3,
+      "address": 1054,
+      "unit": "kW",
+      "description": "SYNTHETIC QDF 3 verified total input power"
     }
   ]
 }

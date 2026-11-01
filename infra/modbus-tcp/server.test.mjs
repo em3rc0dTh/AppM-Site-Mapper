@@ -63,7 +63,7 @@ test('holding registers preserve FLOAT32 network byte order, source isolation an
   assert.equal(r[8], 16);
   assert.equal(r.readFloatBE(9), 12.5);
   assert.equal(r.readFloatBE(13), 2.5);
-  assert.equal(r.readFloatBE(17), 0.03);
+  assert.ok(Math.abs(r.readFloatBE(17) - 0.03) < 0.000001);
   assert.equal(r.readFloatBE(21), 1.25);
   assert.equal(handleFrame(command(2, 0, 2), state, now).readFloatBE(9), 0);
   assert.equal(handleFrame(command(2, 760, 2), state, now).readFloatBE(9), 15.5);

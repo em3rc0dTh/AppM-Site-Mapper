@@ -17,8 +17,9 @@ The Modbus server does not query TimescaleDB or MongoDB when answering a Modbus 
 - Source mapping: `MODBUS_SOURCE_UNITS_JSON` is required, e.g. `{"EMU-BFDB-01":1,"EMU-BFDB-02":2,"EMU-BFDB-03":3}`. **Never guess a serial or unit from topology.**
 - Per Unit ID: 96 circuits × 4 variables × 2 holding registers = **768 registers** (0–767).
 - Raw-point layout is explicit: the legacy default `blocks-2x48` maps `0_1_1`..`0_1_48` to circuits 1–48 and `0_2_1`..`0_2_48` to circuits 49–96. The verified BFDB emulator uses `panels-4x24`: `0_1_1`..`0_1_24` → 1–24, `0_2_*` → 25–48, `0_3_*` → 49–72 and `0_4_*` → 73–96. Set `MODBUS_POINT_LAYOUT` to the provider-approved layout; never infer an unverified wiring map. The local `docker-compose.telemetry.yml` lab defaults to `panels-4x24` while direct stand-alone server usage retains `blocks-2x48` for compatibility.
-- Variable order at each circuit: Voltage (V), Current (A), Power (W), Energy (kWh).
+- Variable order at each circuit: Voltage (V), Current (A), Power (kW), Energy (kWh).
 - Circuit number `n` from 1 to 96: zero-based start address `(n - 1) * 8`; Voltage at +0, Current at +2, Power at +4, Energy at +6. IEEE-754 FLOAT32, network big-endian word order, **high word first**. Register numbering in Metasys may need +40001 or +1 offset depending on its configured Modbus driver.
+- Power is stored internally in watts (`powerW`) and converted at the Modbus publication boundary (`W / 1000`) so the wire value and engineering unit are kW. Historical storage is unchanged.
 - Only explicitly commissioned breaker metrics accepted by Site Mapper are exported. Missing values are not invented.
 - Missing or stale values (default age 30 seconds) use `MODBUS_MISSING_POLICY`. The backward-compatible default `zero` reads **0**, indistinguishable from a valid zero. The opt-in `exception` returns Modbus exception 04 for the entire FC03 request when any requested value is missing/stale. **Do not use this output for safety controls** until Metasys polling and missing-data behavior have been field-certified.
 - The legacy circuit block remains exactly 0–767 and still exposes only V/I/P/E. Governed industrial extensions begin at address **1024** and are opt-in through the immutable publication registry. Alarm Engine values may be assigned there without altering the circuit map.
@@ -81,7 +82,7 @@ registry**. No alarm address is guessed from topology, panel position, MQTT poin
 node --test infra/modbus-tcp/server.test.mjs
 ```
 
-The GitHub full-stack E2E checks that Site Mapper's accepted MQTT breaker sample arrives via Modbus FC03 at Unit ID 1 and matches V/A/W/kWh, and that Unit ID 2 is isolated. That run simultaneously verifies the TimescaleDB history.
+The GitHub full-stack E2E checks that Site Mapper's accepted MQTT breaker sample arrives via Modbus FC03 at Unit ID 1 and matches V/A/kW/kWh, and that Unit ID 2 is isolated. That run simultaneously verifies the TimescaleDB history.
 
 ## Remaining operational gates
 

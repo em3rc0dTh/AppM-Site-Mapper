@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 6,
   "points": [
     {
       "protocol": "MQTT",
@@ -285,6 +285,96 @@
       "address": 1051,
       "unit": "A",
       "description": "SYNTHETIC QDF 3 verified total input current"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-VOLTAGE-01",
+      "key": "QDF/SYNTHETIC-QDF-01/BUS_A_VOLTAGE",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-01/BUS_A_VOLTAGE",
+      "unitId": 1,
+      "address": 1057,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 1 coherent Bus A voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-VOLTAGE-01",
+      "key": "QDF/SYNTHETIC-QDF-01/BUS_B_VOLTAGE",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-01/BUS_B_VOLTAGE",
+      "unitId": 1,
+      "address": 1060,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 1 coherent Bus B voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-VOLTAGE-01",
+      "key": "QDF/SYNTHETIC-QDF-01/TOTAL_VOLTAGE",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-01/TOTAL_VOLTAGE",
+      "unitId": 1,
+      "address": 1063,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 1 coherent total voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-VOLTAGE-02",
+      "key": "QDF/SYNTHETIC-QDF-02/BUS_A_VOLTAGE",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-02/BUS_A_VOLTAGE",
+      "unitId": 2,
+      "address": 1057,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 2 coherent Bus A voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-VOLTAGE-02",
+      "key": "QDF/SYNTHETIC-QDF-02/BUS_B_VOLTAGE",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-02/BUS_B_VOLTAGE",
+      "unitId": 2,
+      "address": 1060,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 2 coherent Bus B voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-VOLTAGE-02",
+      "key": "QDF/SYNTHETIC-QDF-02/TOTAL_VOLTAGE",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-02/TOTAL_VOLTAGE",
+      "unitId": 2,
+      "address": 1063,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 2 coherent total voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-VOLTAGE-03",
+      "key": "QDF/SYNTHETIC-QDF-03/BUS_A_VOLTAGE",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-03/BUS_A_VOLTAGE",
+      "unitId": 3,
+      "address": 1057,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 3 coherent Bus A voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-VOLTAGE-03",
+      "key": "QDF/SYNTHETIC-QDF-03/BUS_B_VOLTAGE",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-03/BUS_B_VOLTAGE",
+      "unitId": 3,
+      "address": 1060,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 3 coherent Bus B voltage"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-VOLTAGE-03",
+      "key": "QDF/SYNTHETIC-QDF-03/TOTAL_VOLTAGE",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-03/TOTAL_VOLTAGE",
+      "unitId": 3,
+      "address": 1063,
+      "unit": "V",
+      "description": "SYNTHETIC QDF 3 coherent total voltage"
     }
   ]
 }

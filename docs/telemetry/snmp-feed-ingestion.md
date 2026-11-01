@@ -19,6 +19,20 @@ For Metasys/Modbus, an operator may explicitly commission the logical point
 `QDF/<deviceId>/TOTAL_CURRENT` in the immutable extension registry at an address >=1024. The
 legacy breaker block 0–767 is unchanged.
 
+For the RFP total-voltage contract, select the installed BDFB hardware profile and configure
+`voltageToleranceV` through the SNMP advanced commissioning UI/API. The tolerance is a coherence
+gate for derived measurements, not a breaker voltage rating. Every expected incoming feed must have
+one explicit FIELD VOLTAGE binding. Site Mapper derives representative BUS A and BUS B voltages from
+coherent measurements and exposes a single TOTAL_VOLTAGE only when both buses are also mutually
+coherent. It never adds voltages and never promotes the existing descendant `averageVoltageV` to
+contractual TOTAL. Historical buckets fail closed on missing, stale, LAB, duplicate or incoherent
+feed evidence.
+
+Modbus publication remains additive: use `QDF/<deviceId>/BUS_A_VOLTAGE`,
+`QDF/<deviceId>/BUS_B_VOLTAGE` and `QDF/<deviceId>/TOTAL_VOLTAGE`, all in volts, at free
+extension addresses >=1024. The example reserves 1057, 1060 and 1063 respectively, leaving the
+legacy 0–767 breaker block unchanged.
+
 ## Contractual assumption H-01
 
 Assume each BDFB/QDF input feeder is instrumented and its current is readable from a

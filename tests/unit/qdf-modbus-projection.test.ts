@@ -244,5 +244,4 @@ describe('QDF total current Modbus projection', () => {
     expect(signal?.value).toBeNull();
     expect(signal?.quality).not.toBe('VALID');
   });
-
 });

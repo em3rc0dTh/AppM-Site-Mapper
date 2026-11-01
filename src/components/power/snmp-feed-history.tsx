@@ -18,8 +18,23 @@ interface FeedHistory {
   points: SnmpHistoricalBucket[];
 }
 
+interface QdfVoltageHistoryPoint {
+  bucketAt: string;
+  observedAt: string;
+  voltageV: number;
+  contributingFeeds: number;
+}
+
 interface TrendResult {
   feeds: FeedHistory[];
+  totalVoltage?: {
+    unit: 'V';
+    semantics: string;
+    toleranceV: number | null;
+    busA: QdfVoltageHistoryPoint[];
+    busB: QdfVoltageHistoryPoint[];
+    total: QdfVoltageHistoryPoint[];
+  };
   energySource: string;
   maxIntegratedGapSeconds: number;
 }
@@ -36,7 +51,7 @@ interface Series {
   values: Point[];
 }
 
-const SERIES_STROKES = ['#1b70b2', '#0f9387', '#8f62b3', '#d19b34'];
+const SERIES_STROKES = ['#1b70b2', '#0f9387', '#8f62b3', '#d19b34', '#c84b31'];
 const METRICS: { key: ChartMetric; title: string; unit: string; digits: number }[] = [
   { key: 'voltageV', title: 'VOLTAGE · SHUNTS A/B', unit: 'V DC', digits: 1 },
   { key: 'currentA', title: 'CURRENT · SHUNTS A/B', unit: 'A', digits: 1 },
@@ -44,8 +59,12 @@ const METRICS: { key: ChartMetric; title: string; unit: string; digits: number }
   { key: 'energyKwh', title: 'ESTIMATED ENERGY · OBSERVED INTERVALS', unit: 'kWh', digits: 4 },
 ];
 
-function createSeries(feeds: readonly FeedHistory[], metric: ChartMetric): Series[] {
-  return feeds.map((feed) => {
+function createSeries(
+  feeds: readonly FeedHistory[],
+  metric: ChartMetric,
+  totalVoltage: readonly QdfVoltageHistoryPoint[] = [],
+): Series[] {
+  const feedSeries = feeds.map((feed) => {
     let accumulatedEnergy = 0;
     const values = feed.points.flatMap((point) => {
       const time = Date.parse(point.bucketAt);
@@ -68,19 +87,38 @@ function createSeries(feeds: readonly FeedHistory[], metric: ChartMetric): Serie
       values,
     };
   });
+  if (metric !== 'voltageV' || totalVoltage.length === 0) return feedSeries;
+  return [
+    ...feedSeries,
+    {
+      name: 'TOTAL QDF',
+      lab: false,
+      values: totalVoltage.flatMap((point) => {
+        const time = Date.parse(point.bucketAt);
+        return Number.isFinite(time) && Number.isFinite(point.voltageV)
+          ? [{ time, value: point.voltageV }]
+          : [];
+      }),
+    },
+  ];
 }
 
 function TrendChart({
   metric,
   feeds,
+  totalVoltage,
   window,
 }: Readonly<{
   metric: (typeof METRICS)[number];
   feeds: readonly FeedHistory[];
+  totalVoltage?: readonly QdfVoltageHistoryPoint[];
   window: TelemetryHistoryWindow;
 }>) {
   const tu = useTranslations('snmpHistoryUi');
-  const series = useMemo(() => createSeries(feeds, metric.key), [feeds, metric.key]);
+  const series = useMemo(
+    () => createSeries(feeds, metric.key, totalVoltage),
+    [feeds, metric.key, totalVoltage],
+  );
   const all = series.flatMap((item) => item.values);
   const last = all.length ? Math.max(...all.map((point) => point.time)) : null;
   // Deterministic history time domain: no render-time wall clock is used.
@@ -194,7 +232,7 @@ function TrendChart({
           </svg>
           <div className="sm-snmp-history-legend">
             {series.map((item, i) => (
-              <span key={feeds[i]!.accessPortId}>
+              <span key={`${item.name}:${i}`}>
                 <i
                   aria-hidden="true"
                   style={{ background: SERIES_STROKES[i % SERIES_STROKES.length] }}
@@ -309,7 +347,13 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
           ) : (
             <div className="sm-snmp-history-metrics">
               {METRICS.filter((item) => item.key === selectedMetric).map((item) => (
-                <TrendChart key={item.key} metric={item} feeds={data.feeds} window={window} />
+                <TrendChart
+                  key={item.key}
+                  metric={item}
+                  feeds={data.feeds}
+                  totalVoltage={data.totalVoltage?.total}
+                  window={window}
+                />
               ))}
             </div>
           )}

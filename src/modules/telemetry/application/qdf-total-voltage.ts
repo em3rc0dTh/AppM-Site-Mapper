@@ -52,6 +52,13 @@ const finiteVoltage = (value: number | null | undefined): value is number =>
 const finiteTolerance = (value: number): boolean =>
   Number.isFinite(value) && value > 0 && value <= 20;
 
+export function qdfVoltageToleranceV(
+  attributes: Readonly<Record<string, unknown>> | undefined,
+): number | null {
+  const value = attributes?.qdfVoltageToleranceV;
+  return typeof value === 'number' && finiteTolerance(value) ? value : null;
+}
+
 function average(values: readonly number[]): number {
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }

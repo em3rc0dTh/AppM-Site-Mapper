@@ -61,8 +61,7 @@ export async function GET(request: Request) {
   );
   const profile = device?.kind === 'DEVICE' ? bdfbHardwareProfile(device) : null;
   const assessment = profile ? assessBdfbInventory(profile, equipment) : null;
-  const toleranceV =
-    device?.kind === 'DEVICE' ? qdfVoltageToleranceV(device.attributes) : null;
+  const toleranceV = device?.kind === 'DEVICE' ? qdfVoltageToleranceV(device.attributes) : null;
   const now = Date.now();
   const voltageEvidence: QdfVoltageFeedEvidence[] = [];
   for (const feed of result.feeds) {

@@ -4,7 +4,6 @@
 **Scope:** BDFB/QDF DC input feeds, NOT breaker readings.  
 **Decision:** Accept normalized SNMP observations independently of the agent implementation.
 
-
 ## Contractual QDF total current
 
 The existing per-feed SNMP current remains authoritative at each independently commissioned input.

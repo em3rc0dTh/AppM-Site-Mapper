@@ -1338,7 +1338,11 @@
     "useConfig4": "USE CONFIG 4",
     "retire": "RETIRE",
     "confirmProfile": "Confirm that the installed physical wiring uses {profile}. This changes the expected shunt configuration. Previously commissioned SNMP bindings must be retired before switching.",
-    "confirmRetire": "Retire the {metric} mapping? Existing historical samples remain stored."
+    "confirmRetire": "Retire the {metric} mapping? Existing historical samples remain stored.",
+    "voltageTolerance": "QDF voltage coherence tolerance (V)",
+    "voltageToleranceHelp": "Required for contractual BUS A/B and TOTAL voltage. It is a commissioning coherence gate, not a breaker rating.",
+    "saveVoltageTolerance": "SAVE VOLTAGE TOLERANCE",
+    "invalidVoltageTolerance": "Enter a voltage tolerance greater than 0 and no more than 20 V."
   },
   "snmpLoad": {
     "section": "BDFB SNMP input feed load",

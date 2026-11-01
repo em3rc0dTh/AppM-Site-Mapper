@@ -20,12 +20,10 @@ describe('telemetry presentation truth boundary', () => {
     ]);
   });
   it('presents canonical breaker power in kW without mutating the stored watt value', () => {
-    const reading = {
-      metrics: { powerW: { value: 9720 } },
-    } as Parameters<typeof breakerTelemetryMetrics>[0];
-    expect(breakerTelemetryMetrics(reading)).toEqual([
-      { label: 'Power', value: '9.720', unit: 'kW' },
-    ]);
+    const reading = { metrics: { powerW: { value: 9720 } } };
+    expect(
+      breakerTelemetryMetrics(reading as Parameters<typeof breakerTelemetryMetrics>[0]),
+    ).toEqual([{ label: 'Power', value: '9.720', unit: 'kW' }]);
     expect(reading.metrics.powerW.value).toBe(9720);
   });
 

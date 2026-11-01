@@ -302,13 +302,7 @@ export async function projectQdfVoltageSignals(
           ? 'STALE'
           : toleranceV === null || !assessment?.inventoryComplete
             ? 'INVALID'
-            : evidence.some(
-                  (item) =>
-                    relevantSides.includes(item.side as 'A' | 'B') &&
-                    (!item.verified || item.sourceMode !== 'FIELD'),
-                )
-              ? 'INVALID'
-              : 'UNKNOWN';
+            : 'INVALID';
       const observedAt =
         selected?.observedAt ??
         evidence

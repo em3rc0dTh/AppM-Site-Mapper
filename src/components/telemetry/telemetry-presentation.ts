@@ -52,7 +52,7 @@ export function breakerTelemetryMetrics(reading: BreakerTelemetryReading): Telem
       ? [{ label: 'Current', value: reading.metrics.currentA.value.toFixed(2), unit: 'A' }]
       : []),
     ...(reading.metrics.powerW
-      ? [{ label: 'Power', value: reading.metrics.powerW.value.toFixed(2), unit: 'W' }]
+      ? [{ label: 'Power', value: (reading.metrics.powerW.value / 1000).toFixed(3), unit: 'kW' }]
       : []),
     ...(reading.metrics.energyKwh
       ? [{ label: 'Energy', value: reading.metrics.energyKwh.value.toFixed(4), unit: 'kWh' }]

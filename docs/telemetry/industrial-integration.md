@@ -202,7 +202,17 @@ free extension address. Site Mapper publishes it only when every expected physic
 independently verified, FIELD/LIVE, uniquely positioned and time-aligned. Missing, stale,
 unverified, duplicate or mixed LAB/FIELD evidence yields NaN plus a non-VALID quality code; it
 never fabricates zero or a partial total. Historical total-current series use the same fail-closed
-principle and are computed from aligned complete feed buckets without changing Timescale schemas. Known latched alarm states retain 1/0 independently of freshness; the quality word still reports uncertainty. FC03, Unit IDs 1–247 and address limits are validated. Overlaps are rejected.
+principle and are computed from aligned complete feed buckets without changing Timescale schemas.
+
+QDF voltage is deliberately **not summed**. Commission a numeric
+`qdfVoltageToleranceV` on the BDFB Device together with the verified hardware profile. Site Mapper
+derives `QDF/<deviceId>/BUS_A_VOLTAGE` and `BUS_B_VOLTAGE` only from the complete set of FIELD
+voltage bindings on that bus, with fresh/aligned timestamps and values coherent within the
+commissioned tolerance. `QDF/<deviceId>/TOTAL_VOLTAGE` is published only when both bus values are
+valid and mutually coherent within the same tolerance; otherwise the two bus values may remain
+VALID while TOTAL_VOLTAGE is unavailable/non-VALID. No descendant-equipment `averageVoltageV`,
+breaker subset average, nominal voltage or zero fallback is accepted as contractual TOTAL voltage.
+Historical voltage uses common complete feed buckets and the same coherence rule. Known latched alarm states retain 1/0 independently of freshness; the quality word still reports uncertainty. FC03, Unit IDs 1–247 and address limits are validated. Overlaps are rejected.
 The maximum is 10,000 published points per manifest; each FC03 request remains limited to 125 words.
 
 | Quality    | Code | Extension value                                                |

@@ -19,6 +19,15 @@ For Metasys/Modbus, an operator may explicitly commission the logical point
 `QDF/<deviceId>/TOTAL_CURRENT` in the immutable extension registry at an address >=1024. The
 legacy breaker block 0–767 is unchanged.
 
+TOTAL Power reuses the already commissioned per-feed current and voltage evidence rather than
+inventing a new sensor. A contractual value is available only when every expected independent input
+has one FIELD current binding and one FIELD voltage binding from the same controller, with aligned
+timestamps. The realtime value is `SUM(abs(V) * I) / 1000` in kW. Historical buckets additionally
+require `pairedSampleCount == sampleCount` on every feed, so missing voltage/current observations
+cannot silently reduce the total. Commission the additive Modbus point as
+`QDF/<deviceId>/TOTAL_POWER` with unit `kW`; do not repurpose the breaker block or the
+descendant-equipment partial `totalPowerW`.
+
 ## Contractual assumption H-01
 
 Assume each BDFB/QDF input feeder is instrumented and its current is readable from a

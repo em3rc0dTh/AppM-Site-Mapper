@@ -3,10 +3,16 @@ import {
   projectAlarmPublicationSignals,
 } from '@/modules/alarm/application/alarm-modbus-projection';
 import { createAlarmRepository } from '@/modules/alarm/infrastructure/alarm-repository-factory';
+import {
+  parseQdfTotalCurrentLogicalPoint,
+  projectQdfTotalCurrentSignals,
+} from '@/modules/telemetry/application/qdf-modbus-projection';
 import { collectorTokenEquals } from '@/modules/telemetry/application/snmp-ingest-credentials';
 import { logicalRegistry } from '@/modules/telemetry/infrastructure/industrial/logical-points';
 import { publicationManifest } from '@/modules/telemetry/infrastructure/industrial/publication';
 import { getObservationStore } from '@/modules/telemetry/infrastructure/industrial/runtime';
+import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
+import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { readBoundedJson } from '@/shared/http/request-security';
 
@@ -44,17 +50,30 @@ export async function POST(request: Request) {
         ? [{ signalId: id, logicalPointId: point.logicalPointId }]
         : [];
     });
+    const topology = await createTopologyRepository();
     const alarmSignals = alarmRequests.length
-      ? await projectAlarmPublicationSignals(
-          alarmRequests,
-          await createAlarmRepository(),
-          await createTopologyRepository(),
-        )
+      ? await projectAlarmPublicationSignals(alarmRequests, await createAlarmRepository(), topology)
       : [];
     const alarmById = new Map(alarmSignals.map((signal) => [signal.id, signal]));
 
+    const qdfRequests = signalIds.flatMap((id) => {
+      const point = manifest?.points.find((item) => item.signalId === id);
+      return point?.logicalPointId && parseQdfTotalCurrentLogicalPoint(point.logicalPointId)
+        ? [{ signalId: id, logicalPointId: point.logicalPointId }]
+        : [];
+    });
+    const qdfSignals = qdfRequests.length
+      ? await projectQdfTotalCurrentSignals(
+          qdfRequests,
+          topology,
+          await createTelemetryBindingRepository(),
+          createTelemetryStoreClient(),
+        )
+      : [];
+    const qdfById = new Map(qdfSignals.map((signal) => [signal.id, signal]));
+
     const industrialPoints = signalIds
-      .filter((id) => !alarmById.has(id))
+      .filter((id) => !alarmById.has(id) && !qdfById.has(id))
       .map((id) => ({
         id,
         point: registry?.points.find((point) => point.publicationSignalId === id),
@@ -114,6 +133,8 @@ export async function POST(request: Request) {
     const signals = signalIds.flatMap<Record<string, unknown>>((id) => {
       const alarm = alarmById.get(id);
       if (alarm) return [{ ...alarm }];
+      const qdf = qdfById.get(id);
+      if (qdf) return [{ ...qdf }];
       const industrial = industrialById.get(id);
       return industrial ? [industrial] : [];
     });

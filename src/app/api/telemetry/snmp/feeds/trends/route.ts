@@ -1,4 +1,9 @@
 import { requirePermission } from '@/modules/identity/application/current-session';
+import {
+  assessBdfbInventory,
+  bdfbHardwareProfile,
+} from '@/modules/power/domain/bdfb-hardware-profile';
+import { projectHistoricalQdfTotalCurrent } from '@/modules/telemetry/application/qdf-total-current';
 import { isBdfbFeedPort } from '@/modules/telemetry/application/snmp-feed-service';
 import {
   TELEMETRY_HISTORY_WINDOWS,
@@ -32,10 +37,12 @@ export async function GET(request: Request) {
   if (device?.kind !== 'DEVICE' || device.deviceType !== 'BDFB' || device.lifecycle !== 'ACTIVE')
     return Response.json({ error: 'BDFB_NOT_FOUND' }, { status: 404 });
 
-  const ports = (await topology.listEquipmentForDevice(deviceId))
-    .filter((item) => item.lifecycle === 'ACTIVE')
-    .flatMap((equipment) => equipment.accessPorts.filter(isBdfbFeedPort))
-    .slice(0, 4);
+  const equipment = (await topology.listEquipmentForDevice(deviceId)).filter(
+    (item) => item.lifecycle === 'ACTIVE',
+  );
+  const ports = equipment.flatMap((item) => item.accessPorts.filter(isBdfbFeedPort)).slice(0, 4);
+  const profile = bdfbHardwareProfile(device);
+  const assessment = profile ? assessBdfbInventory(profile, equipment) : null;
   const bindings = await createTelemetryBindingRepository();
   const history = createTelemetryStoreClient();
   try {
@@ -59,21 +66,44 @@ export async function GET(request: Request) {
         return {
           accessPortId: port.id,
           label: port.name,
-          side: port.attributes?.feed ?? null,
-          feedPosition: port.attributes?.feedPosition ?? null,
+          side:
+            typeof port.attributes?.feed === 'string' && port.attributes.feed
+              ? port.attributes.feed
+              : null,
+          feedPosition:
+            typeof port.attributes?.feedPosition === 'string' && port.attributes.feedPosition
+              ? port.attributes.feedPosition
+              : null,
           sourceMode:
             currents[0]?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY'
-              ? 'SYNTHETIC_LAB_ONLY'
-              : 'FIELD',
+              ? ('SYNTHETIC_LAB_ONLY' as const)
+              : ('FIELD' as const),
+          verified: port.attributes?.independentInputConfirmed === true,
           points,
         };
       }),
+    );
+    const totalCurrent = projectHistoricalQdfTotalCurrent(
+      feeds.map((feed) => ({
+        accessPortId: feed.accessPortId,
+        position: feed.feedPosition ?? feed.side,
+        verified: feed.verified,
+        sourceMode: feed.sourceMode,
+        points: feed.points,
+      })),
+      assessment?.expectedFeedCount ?? ports.length,
+      assessment?.inventoryComplete ?? false,
     );
     return Response.json(
       {
         deviceId,
         window,
         feeds,
+        totalCurrent: {
+          unit: 'A',
+          semantics: 'SUM_VERIFIED_INDEPENDENT_INPUTS',
+          points: totalCurrent,
+        },
         energySource: 'ESTIMATED_FROM_PAIRED_VOLTAGE_CURRENT',
         maxIntegratedGapSeconds: 120,
       },

@@ -4,6 +4,21 @@
 **Scope:** BDFB/QDF DC input feeds, NOT breaker readings.  
 **Decision:** Accept normalized SNMP observations independently of the agent implementation.
 
+## Contractual QDF total current
+
+The existing per-feed SNMP current remains authoritative at each independently commissioned input.
+A QDF total current is derived only from a complete set of verified physical input shunts. The
+application returns no total when inventory is incomplete, a feed is unmapped/unverified/stale, or
+LAB and FIELD evidence would be mixed.
+
+Realtime uses the existing `totalCurrentA` fail-closed rule. Historical totals are projected from
+aligned FIELD buckets only; a bucket missing any expected feed is omitted rather than summed
+partially. This projection does not add or migrate Timescale columns.
+
+For Metasys/Modbus, an operator may explicitly commission the logical point
+`QDF/<deviceId>/TOTAL_CURRENT` in the immutable extension registry at an address >=1024. The
+legacy breaker block 0–767 is unchanged.
+
 ## Contractual assumption H-01
 
 Assume each BDFB/QDF input feeder is instrumented and its current is readable from a

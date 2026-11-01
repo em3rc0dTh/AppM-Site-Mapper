@@ -1,5 +1,5 @@
 {
-  "version": 3,
+  "version": 4,
   "points": [
     {
       "protocol": "MQTT",
@@ -255,6 +255,36 @@
       "address": 1048,
       "unit": "kWh",
       "description": "SYNTHETIC BFDB 3 EP1; physical association pending"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-TOTAL-01",
+      "key": "QDF/SYNTHETIC-QDF-01/TOTAL_CURRENT",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-01/TOTAL_CURRENT",
+      "unitId": 1,
+      "address": 1051,
+      "unit": "A",
+      "description": "SYNTHETIC QDF 1 verified total input current"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-TOTAL-02",
+      "key": "QDF/SYNTHETIC-QDF-02/TOTAL_CURRENT",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-02/TOTAL_CURRENT",
+      "unitId": 2,
+      "address": 1051,
+      "unit": "A",
+      "description": "SYNTHETIC QDF 2 verified total input current"
+    },
+    {
+      "protocol": "SNMP",
+      "sourceIdentity": "SITE-MAPPER-QDF-TOTAL-03",
+      "key": "QDF/SYNTHETIC-QDF-03/TOTAL_CURRENT",
+      "logicalPointId": "QDF/SYNTHETIC-QDF-03/TOTAL_CURRENT",
+      "unitId": 3,
+      "address": 1051,
+      "unit": "A",
+      "description": "SYNTHETIC QDF 3 verified total input current"
     }
   ]
 }

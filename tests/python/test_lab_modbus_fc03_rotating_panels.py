@@ -37,16 +37,16 @@ class RotatingPanelsFC03Test(unittest.TestCase):
         self.assertLess(20,module.MAX_PANEL_AGE_SECONDS)
         self.assertLess(module.MAX_PANEL_AGE_SECONDS,30)
         self.assertTrue(module.comparison(
-            (12.43,2.62,32.57,.10353),
-            (12.430000305,2.619999885,32.569999694,.103529997)))
+            (12.43,2.62,.03257,.10353),
+            (12.430000305,2.619999885,.032569999694,.103529997)))
         self.assertFalse(module.comparison(
-            (12.43,2.62,32.57,.10353), (0.,0.,0.,0.)))
+            (12.43,2.62,.03257,.10353), (0.,0.,0.,0.)))
 
     def test_25_point_2_seconds_is_not_false_stale(self):
         rows=snapshot(25.2)
         with patch.object(module,"observations",return_value=rows),\
              patch.object(module,"read_fc03",return_value=(
-                 12.430000305,2.619999885,32.569999694,.103529997)):
+                 12.430000305,2.619999885,.032569999694,.103529997)):
             with contextlib.redirect_stdout(io.StringIO()) as output:
                 module.verify_samples(budget_seconds=5,poll_seconds=.01)
         self.assertIn("FC03 PASS: 8/8",output.getvalue())
@@ -56,7 +56,7 @@ class RotatingPanelsFC03Test(unittest.TestCase):
         fresh=snapshot(5)
         with patch.object(module,"observations",side_effect=[old,fresh,fresh]),\
              patch.object(module,"read_fc03",return_value=(
-                 12.430000305,2.619999885,32.569999694,.103529997)),\
+                 12.430000305,2.619999885,.032569999694,.103529997)),\
              patch.object(module.time,"sleep",return_value=None) as sleeper:
             with contextlib.redirect_stdout(io.StringIO()) as output:
                 module.verify_samples(budget_seconds=5,poll_seconds=.01)
@@ -83,7 +83,7 @@ class RotatingPanelsFC03Test(unittest.TestCase):
         old=snapshot(45,source_age=45)
         with patch.object(module,"observations",side_effect=[fresh,old]),\
              patch.object(module,"read_fc03",return_value=(
-                 12.430000305,2.619999885,32.569999694,.103529997)):
+                 12.430000305,2.619999885,.032569999694,.103529997)):
             with self.assertRaisesRegex(RuntimeError,"no longer LIVE"):
                 module.verify_samples(budget_seconds=5,poll_seconds=0)
 

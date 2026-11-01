@@ -3,8 +3,10 @@ import { describe, expect, it } from 'vitest';
 import {
   parseQdfTotalCurrentLogicalPoint,
   parseQdfTotalPowerLogicalPoint,
+  parseQdfVoltageLogicalPoint,
   projectQdfTotalCurrentSignals,
   projectQdfTotalPowerSignals,
+  projectQdfVoltageSignals,
 } from '@/modules/telemetry/application/qdf-modbus-projection';
 import type { TelemetryBinding, TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { MemoryTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-binding-repository';
@@ -39,6 +41,23 @@ function sample(
   };
 }
 
+function voltageSample(portId: string, voltageV: number, oid: string): TelemetrySample {
+  return {
+    bindingId: `snmp:voltage:${portId}`,
+    targetId: portId,
+    targetType: 'ACCESS_PORT',
+    entityId: portId,
+    entityKind: 'ACCESS_PORT',
+    sourceIdentity: 'ELTEK-01',
+    reported: {
+      voltageV: { value: voltageV, unit: 'V', oid, observedAt: at },
+    },
+    receivedAt: at,
+    sourceObservedAt: at,
+    protocol: 'SNMP',
+  };
+}
+
 function fixture(latest: readonly TelemetrySample[]) {
   const device: DeviceNode = {
     id: 'qdf-2',
@@ -49,7 +68,10 @@ function fixture(latest: readonly TelemetrySample[]) {
     rootEquipmentIds: ['chassis'],
     pinned: false,
     lifecycle: 'ACTIVE',
-    attributes: { bdfbHardwareProfile: 'ELTEK_BDCBB_CONFIG_2' },
+    attributes: {
+      bdfbHardwareProfile: 'ELTEK_BDCBB_CONFIG_2',
+      qdfVoltageToleranceV: 1,
+    },
     createdAt: at,
     updatedAt: at,
   };
@@ -153,6 +175,15 @@ describe('QDF total current Modbus projection', () => {
       deviceId: 'qdf-2',
     });
     expect(parseQdfTotalPowerLogicalPoint('QDF/qdf-2/TOTAL_CURRENT')).toBeNull();
+    expect(parseQdfVoltageLogicalPoint('QDF/qdf-2/BUS_A_VOLTAGE')).toEqual({
+      deviceId: 'qdf-2',
+      point: 'BUS_A_VOLTAGE',
+    });
+    expect(parseQdfVoltageLogicalPoint('QDF/qdf-2/TOTAL_VOLTAGE')).toEqual({
+      deviceId: 'qdf-2',
+      point: 'TOTAL_VOLTAGE',
+    });
+    expect(parseQdfVoltageLogicalPoint('QDF/qdf-2/TOTAL_CURRENT')).toBeNull();
   });
 
   it('projects the complete verified total as a VALID A measurement', async () => {
@@ -227,5 +258,45 @@ describe('QDF total current Modbus projection', () => {
     );
     expect(signal?.value).toBeNull();
     expect(signal?.quality).not.toBe('VALID');
+  });
+
+  it('projects BUS A, BUS B and coherent TOTAL voltage as VALID V measurements', async () => {
+    const base = fixture([]);
+    const f = fixture([
+      voltageSample('feed-A', -53.2, base.voltageOidA),
+      voltageSample('feed-B', -53.0, base.voltageOidB),
+    ]);
+    const signals = await projectQdfVoltageSignals(
+      [
+        { signalId: 'c'.repeat(64), logicalPointId: 'QDF/qdf-2/BUS_A_VOLTAGE' },
+        { signalId: 'd'.repeat(64), logicalPointId: 'QDF/qdf-2/BUS_B_VOLTAGE' },
+        { signalId: 'e'.repeat(64), logicalPointId: 'QDF/qdf-2/TOTAL_VOLTAGE' },
+      ],
+      f.topology,
+      f.bindings,
+      f.history,
+      new Date(at),
+    );
+    expect(signals[0]).toMatchObject({ value: -53.2, unit: 'V', quality: 'VALID' });
+    expect(signals[1]).toMatchObject({ value: -53, unit: 'V', quality: 'VALID' });
+    expect(signals[2]?.value).toBeCloseTo(-53.1, 8);
+    expect(signals[2]?.quality).toBe('VALID');
+  });
+
+  it('withholds TOTAL voltage when A and B exceed commissioned coherence tolerance', async () => {
+    const base = fixture([]);
+    const f = fixture([
+      voltageSample('feed-A', -53.2, base.voltageOidA),
+      voltageSample('feed-B', -50, base.voltageOidB),
+    ]);
+    const [signal] = await projectQdfVoltageSignals(
+      [{ signalId: 'f'.repeat(64), logicalPointId: 'QDF/qdf-2/TOTAL_VOLTAGE' }],
+      f.topology,
+      f.bindings,
+      f.history,
+      new Date(at),
+    );
+    expect(signal?.value).toBeNull();
+    expect(signal?.quality).toBe('INVALID');
   });
 });

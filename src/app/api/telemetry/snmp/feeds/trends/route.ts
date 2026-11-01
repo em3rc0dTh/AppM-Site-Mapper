@@ -66,8 +66,14 @@ export async function GET(request: Request) {
         return {
           accessPortId: port.id,
           label: port.name,
-          side: port.attributes?.feed ?? null,
-          feedPosition: port.attributes?.feedPosition ?? null,
+          side:
+            typeof port.attributes?.feed === 'string' && port.attributes.feed
+              ? port.attributes.feed
+              : null,
+          feedPosition:
+            typeof port.attributes?.feedPosition === 'string' && port.attributes.feedPosition
+              ? port.attributes.feedPosition
+              : null,
           sourceMode:
             currents[0]?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY'
               ? ('SYNTHETIC_LAB_ONLY' as const)

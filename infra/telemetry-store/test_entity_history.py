@@ -91,7 +91,7 @@ class EntityHistoryQueryTests(unittest.TestCase):
     def test_snmp_series_queries_raw_paired_current_voltage_and_bounded_energy(self):
         now = datetime(2026, 10, 22, 14, 39, 9, tzinfo=timezone.utc)
         self.connection.fetchall = lambda: [(
-            now, now, 214.9, -53.2, 11432.68, 0.0019, 60, 3
+            now, now, 214.9, -53.2, 11432.68, 0.0019, 60, 3, 3
         )]
         try:
             result = self.app.query_snmp_feed_series("shunt-A", "EMU-DELTA-BFDB-01", "24h")
@@ -101,6 +101,7 @@ class EntityHistoryQueryTests(unittest.TestCase):
         self.assertEqual(result[0]["voltageV"], -53.2)
         self.assertEqual(result[0]["estimatedEnergyKwh"], 0.0019)
         self.assertEqual(result[0]["coveredSeconds"], 60.0)
+        self.assertEqual(result[0]["pairedSampleCount"], 3)
         sql, params = self.connection.executed[-1]
         self.assertEqual(params, ("shunt-A", "EMU-DELTA-BFDB-01", "24 hours", "5 minutes"))
         self.assertIn("source_identity = %s", sql)
@@ -110,6 +111,7 @@ class EntityHistoryQueryTests(unittest.TestCase):
         self.assertIn("<= 120", sql)
         self.assertIn("ABS(voltage_v)", sql)
         self.assertIn("time_bucket(%s::interval, received_at)", sql)
+        self.assertIn("paired_count", sql)
 
     def test_distinct_on_does_not_order_by_separately_bound_bucket_expression(self):
         self.app.query_entity_history("device-01", "DEVICE", "24h")

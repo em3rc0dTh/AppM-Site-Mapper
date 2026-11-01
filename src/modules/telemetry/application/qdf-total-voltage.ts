@@ -126,16 +126,15 @@ export function projectVerifiedQdfVoltage(
   if (!busA || !busB) return { busA, busB, total: null };
 
   const totalValues = [busA.voltageV, busB.voltageV];
-  const total =
-    coherent(totalValues, toleranceV)
-      ? {
-          voltageV: average(totalValues),
-          observedAt: new Date(
-            Math.max(Date.parse(busA.observedAt), Date.parse(busB.observedAt)),
-          ).toISOString(),
-          contributingFeeds: busA.contributingFeeds + busB.contributingFeeds,
-        }
-      : null;
+  const total = coherent(totalValues, toleranceV)
+    ? {
+        voltageV: average(totalValues),
+        observedAt: new Date(
+          Math.max(Date.parse(busA.observedAt), Date.parse(busB.observedAt)),
+        ).toISOString(),
+        contributingFeeds: busA.contributingFeeds + busB.contributingFeeds,
+      }
+    : null;
 
   return { busA, busB, total };
 }

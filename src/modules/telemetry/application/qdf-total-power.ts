@@ -118,7 +118,15 @@ export function projectHistoricalQdfTotalPower(
 
   return candidateBuckets.flatMap((bucketAt) => {
     const points = byFeed.map((series) => series.get(bucketAt)!);
-    if (points.some((point) => !finitePower(point.powerW))) return [];
+    if (
+      points.some(
+        (point) =>
+          !finitePower(point.powerW) ||
+          point.sampleCount < 1 ||
+          point.pairedSampleCount !== point.sampleCount,
+      )
+    )
+      return [];
 
     const observed = points.map((point) => Date.parse(point.observedAt));
     if (observed.some((value) => !Number.isFinite(value))) return [];

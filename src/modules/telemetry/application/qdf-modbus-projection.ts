@@ -124,9 +124,13 @@ export async function projectQdfTotalCurrentSignals(
       observedAt,
       staleMs: 90_000,
       eventId: `qdf-total-current:${parsed.deviceId}:${observedAt}`,
-      derivedFrom: load?.feeds
-        .filter((feed) => feed.sourceIdentity && feed.currentOid)
-        .map((feed) => `${feed.sourceIdentity}:${feed.currentOid}`),
+      ...(load
+        ? {
+            derivedFrom: load.feeds
+              .filter((feed) => feed.sourceIdentity && feed.currentOid)
+              .map((feed) => `${feed.sourceIdentity}:${feed.currentOid}`),
+          }
+        : {}),
     });
   }
 

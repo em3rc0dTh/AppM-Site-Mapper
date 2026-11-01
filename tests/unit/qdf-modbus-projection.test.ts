@@ -69,7 +69,8 @@ function fixture(latest: readonly TelemetrySample[]) {
         feed: side,
         snmpFeedInput: true,
         independentInputConfirmed: true,
-        servedPanelIds: side === 'A' ? ['panel-A1', 'panel-A2'] : ['panel-B1', 'panel-B2'],
+        servedPanelIds:
+          side === 'A' ? ['panel-A1', 'panel-A2'] : ['panel-B1', 'panel-B2'],
       },
     })),
   };

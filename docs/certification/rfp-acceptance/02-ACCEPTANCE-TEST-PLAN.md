@@ -51,14 +51,14 @@ Customer source references are listed in the compliance matrix and remain extern
 One person may hold multiple roles in a laboratory run, but the record must state who performed each
 role.
 
-| Role | Responsibility |
-| --- | --- |
-| Acceptance Lead | Freezes scope/release, confirms prerequisites, owns final test disposition. |
-| Test Operator | Executes procedures exactly and records observations. |
-| Evidence Recorder | Captures sanitized screenshots, API responses, logs and timestamps. |
-| Software Owner | Investigates FAIL results; may not silently change expected results to create a PASS. |
-| Field/OT Representative | Confirms customer network, Metasys, physical mappings and field-only items. |
-| Customer/Project Representative | Approves final field acceptance or punch-list disposition where required. |
+| Role                            | Responsibility                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------------- |
+| Acceptance Lead                 | Freezes scope/release, confirms prerequisites, owns final test disposition.           |
+| Test Operator                   | Executes procedures exactly and records observations.                                 |
+| Evidence Recorder               | Captures sanitized screenshots, API responses, logs and timestamps.                   |
+| Software Owner                  | Investigates FAIL results; may not silently change expected results to create a PASS. |
+| Field/OT Representative         | Confirms customer network, Metasys, physical mappings and field-only items.           |
+| Customer/Project Representative | Approves final field acceptance or punch-list disposition where required.             |
 
 ## 5. Release freeze
 
@@ -89,18 +89,18 @@ FAIL
 
 Record at minimum:
 
-| Component | Required record |
-| --- | --- |
-| Site Mapper | commit/release, URL, runtime mode |
-| Browser | product/version |
-| MongoDB | version/topology |
-| TimescaleDB/PostgreSQL | version |
-| MQTT broker | product/version and security mode |
-| SNMP source/collector | profile/version when used |
-| Modbus sidecar | release/image, bind address and policy |
-| BDFB/QDF | tested canonical Device ID and field label |
-| Bindings | approved binding-set revision/hash |
-| OT/BMS | only for field run: approved endpoint/driver configuration record |
+| Component              | Required record                                                   |
+| ---------------------- | ----------------------------------------------------------------- |
+| Site Mapper            | commit/release, URL, runtime mode                                 |
+| Browser                | product/version                                                   |
+| MongoDB                | version/topology                                                  |
+| TimescaleDB/PostgreSQL | version                                                           |
+| MQTT broker            | product/version and security mode                                 |
+| SNMP source/collector  | profile/version when used                                         |
+| Modbus sidecar         | release/image, bind address and policy                            |
+| BDFB/QDF               | tested canonical Device ID and field label                        |
+| Bindings               | approved binding-set revision/hash                                |
+| OT/BMS                 | only for field run: approved endpoint/driver configuration record |
 
 Do not commit credentials or private customer addresses to this repository.
 

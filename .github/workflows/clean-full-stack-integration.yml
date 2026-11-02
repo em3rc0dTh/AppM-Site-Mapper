@@ -7,6 +7,7 @@ on:
       - 'docker-compose.integration.yml'
       - 'infra/integration/**'
       - 'infra/snmp-collector/**'
+      - 'docker-compose.integration.yml'
       - 'src/seeds/**'
       - 'src/modules/telemetry/**'
       - '.github/workflows/clean-full-stack-integration.yml'
@@ -44,6 +45,7 @@ jobs:
       - name: Validate controlled integration sources
         run: |
           node --check infra/snmp-collector/integration-agent.mjs
+          node --check infra/snmp-collector/integration-trap-sender.mjs
           sh -n infra/integration/mqtt-publisher.sh
 
       - name: Validate Compose resolution
@@ -132,6 +134,46 @@ jobs:
               break
             fi
             if [ "$i" = "45" ]; then exit 1; fi
+            sleep 2
+          done
+
+      - name: Require SNMP trap spool delivery and industrial history
+        run: |
+          set -eu
+          dc() {
+            docker compose               --env-file infra/integration/integration.env               -f docker-compose.telemetry.yml               -f docker-compose.integration.yml "$@"
+          }
+
+          for i in $(seq 1 45); do
+            if dc logs --no-color snmp-traps 2>&1 | grep -q '"event":"trap.delivery.committed"'; then
+              break
+            fi
+            if [ "$i" = "45" ]; then
+              echo "No committed controlled SNMP trap delivery"
+              exit 1
+            fi
+            sleep 2
+          done
+
+          mongo_events="$(dc exec -T mongodb mongosh --quiet seed-01 --eval '
+            print(db.industrial_events.countDocuments({sourceIdentity:"INT-TRAP-QDF-2",protocol:"SNMP"}));
+          ' | tail -n 1)"
+          if [ "${mongo_events:-0}" -lt 1 ]; then
+            echo "No industrial Mongo trap events"
+            exit 1
+          fi
+          echo "SNMP_TRAP_MONGO_EVENTS=$mongo_events"
+
+          for i in $(seq 1 45); do
+            rows="$(dc exec -T timescaledb psql -U site_mapper -d site_mapper_telemetry -Atc               "SELECT count(*) FROM industrial_observations WHERE source_identity='INT-TRAP-QDF-2' AND protocol='SNMP';"               2>/dev/null || echo 0)"
+            if [ "${rows:-0}" -gt 0 ]; then
+              echo "SNMP_TRAP_TIMESCALE_ROWS=$rows"
+              break
+            fi
+            if [ "$i" = "45" ]; then
+              echo "No industrial Timescale trap observations"
+              exit 1
+            fi
             sleep 2
           done
 

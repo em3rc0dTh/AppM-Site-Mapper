@@ -69,7 +69,7 @@ export function HomeLiveOverview({
   const unknown = equipmentIds.length - online;
   const activeAlarms = alarmSnapshot.occurrences.filter((alarm) => alarm.lifecycle === 'ACTIVE');
   const previewAlarms = activeAlarms.slice(0, 2);
-  const previewCards = cards.slice(0, 2);
+  const previewCards = cards.slice(0, 5);
 
   useEffect(() => {
     if (!modal) return;
@@ -215,7 +215,7 @@ export function HomeLiveOverview({
           <div className="sm-home-panel-preview">
             <div className="sm-home-pin-grid sm-home-pin-grid--preview">
               {previewCards.map((pin) => renderPin(pin, true))}
-              {previewCards.length < 2 && (
+              {previewCards.length < 5 && (
                 <Link className="sm-home-pin sm-home-add-pin sm-home-pin--compact" href="/network">
                   {t('addPinned')}
                 </Link>

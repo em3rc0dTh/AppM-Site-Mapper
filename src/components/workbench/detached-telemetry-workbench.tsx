@@ -76,7 +76,6 @@ function MqttWorkbench({ deviceId }: Readonly<{ deviceId: string }>) {
   const [error, setError] = useState('');
   useEffect(() => {
     const controller = new AbortController();
-    setError('');
     void fetch(
       `/api/telemetry/history?deviceId=${encodeURIComponent(deviceId)}&window=${window}`,
       { cache: 'no-store', signal: controller.signal },
@@ -108,7 +107,16 @@ function MqttWorkbench({ deviceId }: Readonly<{ deviceId: string }>) {
     <>
       <div className="sm-workbench-window-tabs">
         {TELEMETRY_HISTORY_WINDOWS.map((item) => (
-          <button key={item} type="button" aria-pressed={window === item} onClick={() => setWindow(item)}>
+          <button
+            key={item}
+            type="button"
+            aria-pressed={window === item}
+            onClick={() => {
+              setError('');
+              setData(null);
+              setWindow(item);
+            }}
+          >
             {item.toUpperCase()}
           </button>
         ))}

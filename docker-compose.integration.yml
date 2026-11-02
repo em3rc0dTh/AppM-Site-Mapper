@@ -81,6 +81,31 @@ services:
       mosquitto:
         condition: service_healthy
 
+  integration-bootstrap:
+    image: curlimages/curl:8.12.1
+    entrypoint: ['/bin/sh', '-ec']
+    command:
+      - |
+        for attempt in $(seq 1 60); do
+          code="$(curl -sS -o /tmp/bootstrap.json -w '%{http_code}' \
+            -X POST http://site-mapper:3000/api/auth/bootstrap \
+            -H 'content-type: application/json' \
+            -H 'authorization: Bearer seed01-integration-bootstrap-token-0000000000000001' \
+            --data '{"email":"integration@site-mapper.local","password":"Seed01-Integration-Only!2026","displayName":"Seed-01 Integration Admin"}' \
+            || true)"
+          if [ "$code" = "201" ] || [ "$code" = "409" ]; then
+            cat /tmp/bootstrap.json
+            exit 0
+          fi
+          sleep 2
+        done
+        cat /tmp/bootstrap.json 2>/dev/null || true
+        exit 1
+    depends_on:
+      site-mapper:
+        condition: service_started
+    restart: 'no'
+
   mqtt-publisher:
     image: eclipse-mosquitto:2.0.20
     entrypoint: ['/bin/sh', '/integration/mqtt-publisher.sh']
@@ -120,6 +145,7 @@ services:
 
   snmp-collector:
     <<: *snmp-collector
+    profiles: []
     environment:
       APP_ENV: development
       SNMP_CONTROLLER_HOST: snmp-agent-qdf2

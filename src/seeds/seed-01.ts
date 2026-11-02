@@ -1143,7 +1143,8 @@ async function seedBdfb(
       // The operator deliberately retired A1/B1 (2026-10-30). Archived
       // nodes remain authoritative historical data, never reactivate them.
       const matching = (await repository.listChildren(frame.id)).filter(
-        (node) => node.kind === 'EQUIPMENT' && normalizedName(node.name) === panelName,
+        (node): node is EquipmentNode =>
+          node.kind === 'EQUIPMENT' && normalizedName(node.name) === panelName,
       );
       if (matching.length > 1) {
         throw new Error(`SEED_01_CONFLICT: multiple historical ${panelName} panels`);

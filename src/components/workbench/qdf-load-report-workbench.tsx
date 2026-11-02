@@ -3,7 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
-import { projectQdfLoadReport, type QdfHistoricalElectricalContract } from '@/modules/telemetry/application/qdf-load-report';
+import {
+  projectQdfLoadReport,
+  type QdfHistoricalElectricalContract,
+} from '@/modules/telemetry/application/qdf-load-report';
 import {
   TELEMETRY_HISTORY_WINDOWS,
   type TelemetryHistoryWindow,
@@ -64,17 +67,26 @@ function LoadTrend({
   const x = (time: number) => 55 + ((time - first) / (last - first || 1)) * (width - 90);
   const y = (value: number) => 20 + (1 - (value - min) / range) * (height - 65);
   const path = values
-    .map((point, index) => `${index ? 'L' : 'M'} ${x(point.time).toFixed(2)} ${y(point.value).toFixed(2)}`)
+    .map(
+      (point, index) =>
+        `${index ? 'L' : 'M'} ${x(point.time).toFixed(2)} ${y(point.value).toFixed(2)}`,
+    )
     .join(' ');
   return (
     <section className="sm-load-report-trend">
-      <header><strong>{label}</strong><span>kW</span></header>
+      <header>
+        <strong>{label}</strong>
+        <span>kW</span>
+      </header>
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label}>
         <line x1="55" y1="20" x2={width - 35} y2="20" />
         <line x1="55" y1={height - 45} x2={width - 35} y2={height - 45} />
         <path d={path} />
       </svg>
-      <footer><span>{min.toFixed(3)} kW</span><span>{max.toFixed(3)} kW</span></footer>
+      <footer>
+        <span>{min.toFixed(3)} kW</span>
+        <span>{max.toFixed(3)} kW</span>
+      </footer>
     </section>
   );
 }
@@ -101,8 +113,14 @@ export function QdfLoadReportWorkbench({
     const controller = new AbortController();
     const query = `deviceId=${encodeURIComponent(deviceId)}&window=${windowRange}`;
     void Promise.all([
-      fetch(`/api/telemetry/snmp/feeds/trends?${query}`, { cache: 'no-store', signal: controller.signal }),
-      fetch(`/api/telemetry/qdf/load-report?${query}`, { cache: 'no-store', signal: controller.signal }),
+      fetch(`/api/telemetry/snmp/feeds/trends?${query}`, {
+        cache: 'no-store',
+        signal: controller.signal,
+      }),
+      fetch(`/api/telemetry/qdf/load-report?${query}`, {
+        cache: 'no-store',
+        signal: controller.signal,
+      }),
     ])
       .then(async ([trendResponse, breakerResponse]) => {
         if (!trendResponse.ok || !breakerResponse.ok) {
@@ -120,7 +138,8 @@ export function QdfLoadReportWorkbench({
         }
       })
       .catch((cause: unknown) => {
-        if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'LOAD_REPORT_FAILED');
+        if (!controller.signal.aborted)
+          setError(cause instanceof Error ? cause.message : 'LOAD_REPORT_FAILED');
       });
     return () => controller.abort();
   }, [deviceId, refresh, windowRange]);
@@ -142,7 +161,18 @@ export function QdfLoadReportWorkbench({
       ['peak_power_kw', report.metrics.power.peak ?? ''],
       ['energy_kwh', report.metrics.energy.total ?? ''],
       [],
-      ['panel', 'position', 'breaker', 'avg_voltage_v', 'avg_current_a', 'peak_abs_current_a', 'avg_power_kw', 'peak_abs_power_kw', 'latest_energy_counter_kwh', 'samples'],
+      [
+        'panel',
+        'position',
+        'breaker',
+        'avg_voltage_v',
+        'avg_current_a',
+        'peak_abs_current_a',
+        'avg_power_kw',
+        'peak_abs_power_kw',
+        'latest_energy_counter_kwh',
+        'samples',
+      ],
       ...breakers.rows.map((row) => [
         row.panelLabel,
         row.position,
@@ -173,7 +203,9 @@ export function QdfLoadReportWorkbench({
       <header className="sm-workbench-header">
         <div>
           <small>{t('detachedTitle')}</small>
-          <h1>{t('loadReportTitle')} · {deviceName}</h1>
+          <h1>
+            {t('loadReportTitle')} · {deviceName}
+          </h1>
           <p>{location}</p>
         </div>
         <div className="sm-workbench-header-actions">
@@ -188,7 +220,9 @@ export function QdfLoadReportWorkbench({
           >
             {t('refresh')}
           </button>
-          <button type="button" onClick={() => window.close()}>{t('close')}</button>
+          <button type="button" onClick={() => window.close()}>
+            {t('close')}
+          </button>
         </div>
       </header>
 
@@ -210,27 +244,57 @@ export function QdfLoadReportWorkbench({
         ))}
       </div>
 
-      {error ? <p className="sm-workbench-error" role="alert">{t('unavailable')}</p> : null}
+      {error ? (
+        <p className="sm-workbench-error" role="alert">
+          {t('unavailable')}
+        </p>
+      ) : null}
       {!report && !error ? <p>{t('loading')}</p> : null}
 
       {report && contract && breakers ? (
         <>
           <section className="sm-load-report-meta">
-            <span><b>{t('generatedFrom')}</b> {report.sourceContractVersion}</span>
-            <span><b>{t('contractStatus')}</b> {report.status}</span>
-            <span><b>{t('firstAccepted')}</b> {report.firstAcceptedAt ?? '—'}</span>
-            <span><b>{t('lastAccepted')}</b> {report.lastAcceptedAt ?? '—'}</span>
+            <span>
+              <b>{t('generatedFrom')}</b> {report.sourceContractVersion}
+            </span>
+            <span>
+              <b>{t('contractStatus')}</b> {report.status}
+            </span>
+            <span>
+              <b>{t('firstAccepted')}</b> {report.firstAcceptedAt ?? '—'}
+            </span>
+            <span>
+              <b>{t('lastAccepted')}</b> {report.lastAcceptedAt ?? '—'}
+            </span>
           </section>
 
           <section>
             <h2>{t('summary')}</h2>
             <div className="sm-load-report-kpis">
-              <article><small>{t('peakPower')}</small><strong>{metric(report.metrics.power.peak, 'kW', 3)}</strong></article>
-              <article><small>{t('avgPower')}</small><strong>{metric(report.metrics.power.average, 'kW', 3)}</strong></article>
-              <article><small>{t('peakCurrent')}</small><strong>{metric(report.metrics.current.peak, 'A')}</strong></article>
-              <article><small>{t('totalEnergy')}</small><strong>{metric(report.metrics.energy.total, 'kWh', 4)}</strong></article>
-              <article><small>{t('avgVoltage')}</small><strong>{metric(report.metrics.voltage.average, 'V')}</strong></article>
-              <article><small>{t('commonBuckets')}</small><strong>{report.coverage.commonBuckets}</strong></article>
+              <article>
+                <small>{t('peakPower')}</small>
+                <strong>{metric(report.metrics.power.peak, 'kW', 3)}</strong>
+              </article>
+              <article>
+                <small>{t('avgPower')}</small>
+                <strong>{metric(report.metrics.power.average, 'kW', 3)}</strong>
+              </article>
+              <article>
+                <small>{t('peakCurrent')}</small>
+                <strong>{metric(report.metrics.current.peak, 'A')}</strong>
+              </article>
+              <article>
+                <small>{t('totalEnergy')}</small>
+                <strong>{metric(report.metrics.energy.total, 'kWh', 4)}</strong>
+              </article>
+              <article>
+                <small>{t('avgVoltage')}</small>
+                <strong>{metric(report.metrics.voltage.average, 'V')}</strong>
+              </article>
+              <article>
+                <small>{t('commonBuckets')}</small>
+                <strong>{report.coverage.commonBuckets}</strong>
+              </article>
             </div>
           </section>
 
@@ -239,10 +303,22 @@ export function QdfLoadReportWorkbench({
           <section className="sm-load-report-quality">
             <h2>{t('metricQuality')}</h2>
             <div>
-              <span>{t('voltage')}<b>{report.metrics.voltage.quality}</b></span>
-              <span>{t('current')}<b>{report.metrics.current.quality}</b></span>
-              <span>{t('power')}<b>{report.metrics.power.quality}</b></span>
-              <span>{t('energy')}<b>{report.metrics.energy.quality}</b></span>
+              <span>
+                {t('voltage')}
+                <b>{report.metrics.voltage.quality}</b>
+              </span>
+              <span>
+                {t('current')}
+                <b>{report.metrics.current.quality}</b>
+              </span>
+              <span>
+                {t('power')}
+                <b>{report.metrics.power.quality}</b>
+              </span>
+              <span>
+                {t('energy')}
+                <b>{report.metrics.energy.quality}</b>
+              </span>
             </div>
           </section>
 
@@ -252,7 +328,10 @@ export function QdfLoadReportWorkbench({
                 <h2>{t('breakerDistribution')}</h2>
                 <p>{t('canonicalNote')}</p>
               </div>
-              <span>{breakers.reportingBreakerCount} / {breakers.installedBreakerCount} {t('reportingBreakers')}</span>
+              <span>
+                {breakers.reportingBreakerCount} / {breakers.installedBreakerCount}{' '}
+                {t('reportingBreakers')}
+              </span>
             </header>
             <div className="sm-load-report-table-wrap">
               <table>
@@ -291,8 +370,12 @@ export function QdfLoadReportWorkbench({
           </section>
 
           <footer className="sm-load-report-actions">
-            <button type="button" onClick={exportCsv}>{t('exportCsv')}</button>
-            <button type="button" onClick={() => window.print()}>{t('printPdf')}</button>
+            <button type="button" onClick={exportCsv}>
+              {t('exportCsv')}
+            </button>
+            <button type="button" onClick={() => window.print()}>
+              {t('printPdf')}
+            </button>
           </footer>
         </>
       ) : null}

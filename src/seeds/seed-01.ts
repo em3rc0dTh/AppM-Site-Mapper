@@ -1294,6 +1294,7 @@ async function ensureControlledIntegration(
   created: {
     readonly deviceId: string;
     readonly gatewaySerial: string;
+    readonly gatewayEquipmentId: string;
     readonly controllerEquipmentId: string;
     readonly panelIds: Readonly<Record<PanelName, string>>;
     readonly breakerEquipmentIds: Readonly<Record<string, string>>;
@@ -1375,14 +1376,14 @@ async function ensureControlledIntegration(
     sourceIdentity: created.gatewaySerial,
     metric: 'SOURCE',
     targetType: 'EQUIPMENT',
-    targetId: created.controllerEquipmentId,
+    targetId: created.gatewayEquipmentId,
     lifecycle: 'ACTIVE',
     createdAt: now,
     updatedAt: now,
     attributes: {
       commissioning: 'CONTROLLED_INTEGRATION',
       integrationProfile: INTEGRATION_PROFILE,
-      transportEquipmentId: created.controllerEquipmentId,
+      transportEquipmentId: created.gatewayEquipmentId,
     },
   });
 

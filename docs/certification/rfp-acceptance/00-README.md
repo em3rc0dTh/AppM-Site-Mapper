@@ -101,25 +101,25 @@ has been recorded.
 
 Used before formal execution:
 
-| State | Meaning |
-| --- | --- |
-| `IMPLEMENTED` | The required capability exists in the product. |
-| `EVIDENCE_AVAILABLE` | Existing technical/lab evidence can support formal acceptance. |
-| `PENDING_EXECUTION` | The formal acceptance procedure has not yet been executed. |
-| `FIELD_REQUIRED` | The obligation cannot be closed without physical/customer environment evidence. |
-| `OUTSIDE_SOFTWARE` | The requirement belongs to QDF hardware, installation or another supplier scope. |
+| State                | Meaning                                                                          |
+| -------------------- | -------------------------------------------------------------------------------- |
+| `IMPLEMENTED`        | The required capability exists in the product.                                   |
+| `EVIDENCE_AVAILABLE` | Existing technical/lab evidence can support formal acceptance.                   |
+| `PENDING_EXECUTION`  | The formal acceptance procedure has not yet been executed.                       |
+| `FIELD_REQUIRED`     | The obligation cannot be closed without physical/customer environment evidence.  |
+| `OUTSIDE_SOFTWARE`   | The requirement belongs to QDF hardware, installation or another supplier scope. |
 
 ### Acceptance result
 
 Used only after execution:
 
-| Result | Meaning |
-| --- | --- |
-| `PASS` | Expected result was observed and required evidence was captured. |
-| `FAIL` | Expected result was not met. A separate correction and re-test are required. |
+| Result    | Meaning                                                                                   |
+| --------- | ----------------------------------------------------------------------------------------- |
+| `PASS`    | Expected result was observed and required evidence was captured.                          |
+| `FAIL`    | Expected result was not met. A separate correction and re-test are required.              |
 | `BLOCKED` | Test could not be completed because a required field/customer dependency was unavailable. |
-| `N/A` | Requirement was formally determined not to apply to the accepted scope. |
-| `NOT_RUN` | Procedure has not been executed. |
+| `N/A`     | Requirement was formally determined not to apply to the accepted scope.                   |
+| `NOT_RUN` | Procedure has not been executed.                                                          |
 
 `IMPLEMENTED` is **not** equivalent to `PASS`.
 

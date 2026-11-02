@@ -58,11 +58,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => controller.abort();
   }, [pathname]);
 
-  if (
-    pathname === '/login' ||
-    pathname === '/change-password' ||
-    pathname.startsWith('/workbench')
-  )
+  if (pathname === '/login' || pathname === '/change-password' || pathname.startsWith('/workbench'))
     return children;
 
   const blueprint = pathname.startsWith('/blueprint');

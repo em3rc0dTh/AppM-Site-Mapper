@@ -83,6 +83,11 @@ services:
       MQTT_TOPIC_FILTER: data/dev/#
       TELEMETRY_HISTORY_ENABLED: 'true'
       SNMP_INGEST_TOKEN: seed01-integration-snmp-token-000000000000000000000001
+      INDUSTRIAL_TIMESCALE_ENABLED: 'true'
+      INDUSTRIAL_INGEST_SOURCES_JSON: >-
+        {"INT-TRAP-QDF-2":"seed01-integration-trap-token-000000000000000000000001"}
+      INDUSTRIAL_PROFILES_JSON: >-
+        [{"sourceIdentity":"INT-TRAP-QDF-2","protocol":"SNMP","version":"seed01-controlled-trap-v1","staleMs":30000,"rules":[]}]
       MODBUS_SOURCE_UNITS_JSON: >-
         {"26092403950003":1,"26092403950004":2,"26092403950002":3}
     depends_on:
@@ -121,6 +126,50 @@ services:
       site-mapper:
         condition: service_healthy
     restart: 'no'
+
+  snmp-traps:
+    build:
+      context: .
+      dockerfile: infra/snmp-collector/Dockerfile
+    command: ['node', 'trap-receiver.mjs']
+    environment:
+      APP_ENV: development
+      SNMP_TRAP_SOURCES_JSON: >-
+        [{"sourceIdentity":"INT-TRAP-QDF-2","address":"172.29.240.20","version":"2c","community":"site-mapper-integration-trap","token":"seed01-integration-trap-token-000000000000000000000001"}]
+      SNMP_TRAP_BIND_HOST: 0.0.0.0
+      SNMP_TRAP_PORT: '1162'
+      SNMP_TRAP_MAX_PENDING: '1000'
+      SNMP_TRAP_ENGINE_ID: 8000B9838001020305
+      SNMP_TRAP_SPOOL: /data/traps
+      INDUSTRIAL_INGEST_URL: http://site-mapper:3000/api/telemetry/industrial/ingest
+    volumes:
+      - integration_trap_spool:/data
+    networks:
+      default:
+      integration_ot:
+        ipv4_address: 172.29.240.10
+    depends_on:
+      site-mapper:
+        condition: service_healthy
+    restart: unless-stopped
+
+  snmp-trap-sender:
+    build:
+      context: .
+      dockerfile: infra/snmp-collector/Dockerfile
+    command: ['node', 'integration-trap-sender.mjs']
+    environment:
+      SNMP_TRAP_TARGET: snmp-traps
+      SNMP_TRAP_PORT: '1162'
+      SNMP_TRAP_COMMUNITY: site-mapper-integration-trap
+      SNMP_TRAP_INTERVAL_MS: '5000'
+    networks:
+      integration_ot:
+        ipv4_address: 172.29.240.20
+    depends_on:
+      snmp-traps:
+        condition: service_started
+    restart: unless-stopped
 
   mqtt-publisher:
     image: eclipse-mosquitto:2.0.20

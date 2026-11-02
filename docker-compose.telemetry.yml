@@ -66,8 +66,8 @@ services:
       APP_ENV: '${APP_ENV:-development}'
       APP_PERSISTENCE: mongodb
       MONGODB_URI: mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
-      MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
-      SITE_MAPPER_SEED_PROFILE: '${SITE_MAPPER_SEED_PROFILE:-}'
+      MONGODB_DB_NAME: '${MONGODB_DB_NAME:-seed-01}'
+      SITE_MAPPER_SEED_PROFILE: '${SITE_MAPPER_SEED_PROFILE:-seed-01}'
       BOOTSTRAP_ADMIN_TOKEN: '${BOOTSTRAP_ADMIN_TOKEN:?Set a private bootstrap admin token}'
       TELEMETRY_ENABLED: '${TELEMETRY_ENABLED:-false}'
       MQTT_BROKER_URL: '${MQTT_BROKER_URL:-}'
@@ -158,7 +158,7 @@ services:
       dockerfile: infra/operational-console/Dockerfile
     environment:
       MONGODB_URI: mongodb://mongodb:27017/?replicaSet=rs0&directConnection=true
-      MONGODB_DB_NAME: '${MONGODB_DB_NAME:-appm_site_mapper}'
+      MONGODB_DB_NAME: '${MONGODB_DB_NAME:-seed-01}'
       TIMESCALE_DSN: 'postgresql://site_mapper:${TIMESCALE_DB_PASSWORD:?Set a private TimescaleDB password (URL-safe)}@timescaledb:5432/site_mapper_telemetry'
       SITE_MAPPER_API_URL: http://site-mapper:3000
       MQTT_BROKER_URL: '${MQTT_BROKER_URL:-}'

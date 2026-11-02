@@ -1125,15 +1125,33 @@ async function seedBdfb(
         const created = await ensurePanelInFrame(
           repository, topology, device, frame, panelName,
         );
-        const archived = await topology.archive(created.id);
-        if (!archived.ok) {
-          throw new Error(`SEED_01_ARCHIVE_FAILED: ${panelName}: ${archived.error}`);
+        // TopologyService.archive() intentionally refuses attached Equipment.
+        // The v4 historical representation instead retains parentEquipmentId
+        // for traceability while clearing its live FRAME positional slot.
+        // Commit both changes atomically, never a transient dangling slot.
+        const freshFrame = expectKind((await repository.getById(frame.id))!, 'EQUIPMENT', frame.name);
+        const freshPanel = expectKind((await repository.getById(created.id))!, 'EQUIPMENT', created.name);
+        if (
+          freshFrame.children[2] !== freshPanel.id ||
+          freshPanel.parentEquipmentId !== freshFrame.id ||
+          !repository.commitLayout
+        ) {
+          throw new Error(`SEED_01_ARCHIVE_FAILED: incompatible frame/panel ${panelName}`);
         }
-        const stored = await repository.getById(created.id);
-        if (!stored || stored.lifecycle !== 'ARCHIVED' || stored.kind !== 'EQUIPMENT') {
-          throw new Error(`SEED_01_ARCHIVE_FAILED: missing tombstone for ${panelName}`);
+        const nextChildren = [...freshFrame.children];
+        nextChildren[2] = null;
+        const updatedFrame: EquipmentNode = {
+          ...freshFrame, children: nextChildren, updatedAt: new Date().toISOString(),
+        };
+        const archivedPanel: EquipmentNode = {
+          ...freshPanel, lifecycle: 'ARCHIVED', updatedAt: new Date().toISOString(),
+        };
+        if (!(await repository.commitLayout(
+          [freshFrame, freshPanel], [updatedFrame, archivedPanel],
+        ))) {
+          throw new Error(`SEED_01_ARCHIVE_FAILED: concurrent change to ${panelName}`);
         }
-        panels.set(panelName, stored);
+        panels.set(panelName, archivedPanel);
       }
       continue;
     }

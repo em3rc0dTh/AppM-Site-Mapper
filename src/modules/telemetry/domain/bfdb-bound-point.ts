@@ -1,3 +1,4 @@
+import { normalizePowerToWatts } from './power-unit-contract';
 import type { TelemetryBinding, TelemetrySample, NormalizedTelemetryMessage } from './entities';
 
 const METRICS = {
@@ -61,8 +62,12 @@ export function buildBoundBfdbEquipmentPatches(
 
     const reported: Record<string, unknown> = {};
     for (const link of links) {
-      const field = METRICS[link.metric.toUpperCase() as MetricName];
-      const value = numeric(rawFields[field.raw]);
+      const metricName = link.metric.toUpperCase() as MetricName;
+      const field = METRICS[metricName];
+      const value =
+        metricName === 'POWER'
+          ? normalizePowerToWatts(rawFields[field.raw], link.unit)
+          : numeric(rawFields[field.raw]);
       if (value !== undefined) {
         reported[field.key] = { value, unit: field.unit, observedAt };
       }

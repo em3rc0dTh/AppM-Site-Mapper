@@ -72,6 +72,38 @@ Rules:
 - raw payload state remains inspectable;
 - V/I/P/E are normalized only when present.
 
+### BFDB v1 power unit contract
+
+For the currently observed BFDB v1 wire shape, `P1/P2` are interpreted as **watts (W)** by
+default. This is an explicit versioned assumption, not a magnitude guess. A representative
+field-shaped sample contains `U1=14.95 V`, `I1=3.72 A`, `P1=55.62`; the dimensional check
+`14.95 × 3.72 = 55.614` is consistent with approximately `55.62 W`, not `55.62 kW`.
+
+The ingestion boundary now has one normalization rule:
+
+```text
+source POWER
+  unit W  -> canonical powerW unchanged
+  unit kW -> canonical powerW = value × 1000
+  other/ambiguous unit -> POWER metric rejected fail-closed
+```
+
+An ACTIVE POWER `TelemetryBinding.unit` may explicitly declare `W` or `kW`. When omitted for
+BFDB v1, the source unit defaults to `W`. If later protocol/field evidence proves that a source
+publishes kW, commission that source binding as `unit=kW`; historical/internal authority remains
+canonical W and no Timescale schema migration is required.
+
+Canonical storage and electrical calculations remain W. Contractual and operator-facing
+presentation is standardized to kW:
+
+```text
+BFDB P1/P2 -> source unit -> normalize -> powerW / power_w (W)
+                                      -> presentation / QDF / RFP (kW)
+```
+
+The W-to-kW presentation conversion is always `kW = W / 1000`. Energy integration continues to
+consume canonical W-derived power semantics; UI conversion must never feed back into persistence.
+
 ## MongoDB remains the ordered application structure
 
 Existing MongoDB topology remains authoritative for AppM structure:
@@ -256,7 +288,7 @@ It does not claim:
 ## Telemetry on every breaker bar (2026-10-12)
 
 In the BDFB chassis, opening a panel renders a separate LIVE status and four values
-(V, A, W and kWh) **inside each existing Circuit Breaker bar**. Selecting the
+(V, A, kW and kWh) **inside each existing Circuit Breaker bar**. Selecting the
 breaker opens its per-breaker inspector with the same exact source identity,
 raw point (when applicable), timestamp and available metrics. The whole-BDFB
 average remains a separate aggregate and never replaces an individual reading.
@@ -293,7 +325,7 @@ source or certify the physical correspondence of points in the field.
 The canonical Equipment page at `/device/<panel-equipment-id>` now uses the
 same authenticated Latest State transport as the BDFB chassis. Every installed
 CIRCUIT_BREAKER occupying a positional slot displays a compact readout with
-Voltage (V), Current (A), Power (W), Energy (kWh), data freshness, MQTT publisher
+Voltage (V), Current (A), Power (kW), Energy (kWh), data freshness, MQTT publisher
 identity, raw point where applicable, and receive timestamp. A free/empty
 position remains a pure capacity slot, with no invented metrics.
 
@@ -342,8 +374,9 @@ has been introduced.
 
 For the observed values, when the physical relationship is **verified** and
 the four bindings target the actual installed breaker ID, the child patch
-contains `voltageV=13.78 V`, `currentA=1.93 A`, `powerW=26.64 W` and
-`energyKwh=0.2795 kWh`. Values are an observed example, not defaults.
+contains canonical internal `voltageV=13.78 V`, `currentA=1.93 A`,
+`powerW=26.64 W` and `energyKwh=0.2795 kWh`. The operator-facing Power presentation is
+`0.02664 kW`. Values are an observed example, not defaults.
 
 If the breaker still shows NO DATA after updating, the bar displays the
 expected source/point (or independent SN). A missing, stale, wrong-target or

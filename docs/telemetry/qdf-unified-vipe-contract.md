@@ -19,6 +19,8 @@ contract.
 - Existing response fields remain present.
 - Existing Modbus addresses and publication behavior remain unchanged.
 - No Mongo or Timescale schema is added or changed.
+- Canonical internal breaker/feed power remains W; the QDF/RFP contract exposes Power in kW.
+- W-to-kW conversion occurs only at contractual/presentation boundaries and never mutates history.
 
 ## Live scope
 

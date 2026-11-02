@@ -1009,7 +1009,7 @@ async function seedBdfb(
       equipmentType: 'CHASSIS',
       manufacturer: 'Eltek',
       model: 'BDCBB/BDFB Power Distribution Solution',
-      category: '48 VDC BDFB chassis · 144 physical breaker positions (6 x 24)',
+      category: '48 VDC BDFB chassis · 96 positions',
       childMode: 'POSITIONAL',
       childCapacity: 1,
     });

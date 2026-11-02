@@ -25,6 +25,15 @@ interface QdfVoltageHistoryPoint {
   contributingFeeds: number;
 }
 
+interface QdfEnergyHistoryPoint {
+  bucketAt: string;
+  observedAt: string;
+  intervalEnergyKwh: number;
+  cumulativeEnergyKwh: number;
+  coveredSeconds: number;
+  contributingFeeds: number;
+}
+
 interface TrendResult {
   feeds: FeedHistory[];
   totalVoltage?: {
@@ -34,6 +43,13 @@ interface TrendResult {
     busA: QdfVoltageHistoryPoint[];
     busB: QdfVoltageHistoryPoint[];
     total: QdfVoltageHistoryPoint[];
+  };
+  totalEnergy?: {
+    unit: 'kWh';
+    semantics: string;
+    source: string;
+    maxIntegratedGapSeconds: number;
+    points: QdfEnergyHistoryPoint[];
   };
   energySource: string;
   maxIntegratedGapSeconds: number;
@@ -63,6 +79,7 @@ function createSeries(
   feeds: readonly FeedHistory[],
   metric: ChartMetric,
   totalVoltage: readonly QdfVoltageHistoryPoint[] = [],
+  totalEnergy: readonly QdfEnergyHistoryPoint[] = [],
 ): Series[] {
   const feedSeries = feeds.map((feed) => {
     let accumulatedEnergy = 0;
@@ -87,37 +104,56 @@ function createSeries(
       values,
     };
   });
-  if (metric !== 'voltageV' || totalVoltage.length === 0) return feedSeries;
-  return [
-    ...feedSeries,
-    {
-      name: 'TOTAL QDF',
-      lab: false,
-      values: totalVoltage.flatMap((point) => {
-        const time = Date.parse(point.bucketAt);
-        return Number.isFinite(time) && Number.isFinite(point.voltageV)
-          ? [{ time, value: point.voltageV }]
-          : [];
-      }),
-    },
-  ];
+  if (metric === 'voltageV' && totalVoltage.length > 0) {
+    return [
+      ...feedSeries,
+      {
+        name: 'TOTAL QDF',
+        lab: false,
+        values: totalVoltage.flatMap((point) => {
+          const time = Date.parse(point.bucketAt);
+          return Number.isFinite(time) && Number.isFinite(point.voltageV)
+            ? [{ time, value: point.voltageV }]
+            : [];
+        }),
+      },
+    ];
+  }
+  if (metric === 'energyKwh' && totalEnergy.length > 0) {
+    return [
+      ...feedSeries,
+      {
+        name: 'TOTAL QDF',
+        lab: false,
+        values: totalEnergy.flatMap((point) => {
+          const time = Date.parse(point.bucketAt);
+          return Number.isFinite(time) && Number.isFinite(point.cumulativeEnergyKwh)
+            ? [{ time, value: point.cumulativeEnergyKwh }]
+            : [];
+        }),
+      },
+    ];
+  }
+  return feedSeries;
 }
 
 function TrendChart({
   metric,
   feeds,
   totalVoltage,
+  totalEnergy,
   window,
 }: Readonly<{
   metric: (typeof METRICS)[number];
   feeds: readonly FeedHistory[];
   totalVoltage?: readonly QdfVoltageHistoryPoint[];
+  totalEnergy?: readonly QdfEnergyHistoryPoint[];
   window: TelemetryHistoryWindow;
 }>) {
   const tu = useTranslations('snmpHistoryUi');
   const series = useMemo(
-    () => createSeries(feeds, metric.key, totalVoltage),
-    [feeds, metric.key, totalVoltage],
+    () => createSeries(feeds, metric.key, totalVoltage, totalEnergy),
+    [feeds, metric.key, totalEnergy, totalVoltage],
   );
   const all = series.flatMap((item) => item.values);
   const last = all.length ? Math.max(...all.map((point) => point.time)) : null;
@@ -284,17 +320,9 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
     return () => controller.abort();
   }, [deviceId, window]);
 
-  const coverage =
-    data?.feeds.reduce(
-      (sum, feed) => sum + feed.points.reduce((acc, point) => acc + point.coveredSeconds, 0),
-      0,
-    ) ?? 0;
-  const latest =
-    data?.feeds.reduce(
-      (sum, feed) =>
-        sum + feed.points.reduce((acc, point) => acc + (point.estimatedEnergyKwh ?? 0), 0),
-      0,
-    ) ?? 0;
+  const totalEnergyPoints = data?.totalEnergy?.points ?? [];
+  const coverage = totalEnergyPoints.reduce((sum, point) => sum + point.coveredSeconds, 0);
+  const latest = totalEnergyPoints.at(-1)?.cumulativeEnergyKwh ?? null;
 
   return (
     <section className="zip-bdfb-live-average sm-snmp-history" aria-label={tu('charts')}>
@@ -352,13 +380,14 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
                   metric={item}
                   feeds={data.feeds}
                   totalVoltage={data.totalVoltage?.total ?? []}
+                  totalEnergy={data.totalEnergy?.points ?? []}
                   window={window}
                 />
               ))}
             </div>
           )}
           <div className="sm-snmp-history-footnote">
-            <strong>{tu('energy', { value: latest.toFixed(4) })}</strong>
+            <strong>{tu('energy', { value: latest === null ? '—' : latest.toFixed(4) })}</strong>
             <small>{tu('coverage', { minutes: (coverage / 60).toFixed(1) })}</small>
             <small>{tu('note')}</small>
           </div>

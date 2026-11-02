@@ -4,6 +4,7 @@ import {
   bdfbHardwareProfile,
 } from '@/modules/power/domain/bdfb-hardware-profile';
 import { projectHistoricalQdfTotalCurrent } from '@/modules/telemetry/application/qdf-total-current';
+import { projectHistoricalQdfTotalEnergy } from '@/modules/telemetry/application/qdf-total-energy';
 import { projectHistoricalQdfTotalPower } from '@/modules/telemetry/application/qdf-total-power';
 import {
   projectHistoricalQdfVoltage,
@@ -139,6 +140,17 @@ export async function GET(request: Request) {
       assessment?.expectedFeedCount ?? ports.length,
       assessment?.inventoryComplete ?? false,
     );
+    const totalEnergy = projectHistoricalQdfTotalEnergy(
+      feeds.map((feed) => ({
+        accessPortId: feed.accessPortId,
+        position: feed.feedPosition ?? feed.side,
+        verified: feed.powerVerified,
+        sourceMode: feed.powerSourceMode,
+        points: feed.points,
+      })),
+      assessment?.expectedFeedCount ?? ports.length,
+      assessment?.inventoryComplete ?? false,
+    );
     const totalVoltage =
       voltageToleranceV !== null
         ? projectHistoricalQdfVoltage(
@@ -169,6 +181,13 @@ export async function GET(request: Request) {
           unit: 'kW',
           semantics: 'SUM_VERIFIED_PAIRED_VOLTAGE_CURRENT',
           points: totalPower,
+        },
+        totalEnergy: {
+          unit: 'kWh',
+          semantics: 'SUM_VERIFIED_FEED_ENERGY_OVER_OBSERVED_INTERVALS',
+          source: 'DERIVED_FROM_PAIRED_VOLTAGE_CURRENT',
+          maxIntegratedGapSeconds: 120,
+          points: totalEnergy,
         },
         totalVoltage: {
           unit: 'V',

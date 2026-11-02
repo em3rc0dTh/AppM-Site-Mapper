@@ -10,6 +10,7 @@ describe('Settings navigation is independent of session authentication', () => {
     expect(visibleSettingsTabs('STANDARD')).toEqual(['Profile', 'Security']);
     expect(resolveSettingsTab('STANDARD')).toBe('Profile');
     expect(resolveSettingsTab('STANDARD', 'security')).toBe('Security');
+
     for (const forbidden of [
       'users',
       'roles',
@@ -22,34 +23,30 @@ describe('Settings navigation is independent of session authentication', () => {
     }
   });
 
-  it('ADMIN can use administrator settings but cannot expose Users or Danger Zone', () => {
-    expect(visibleSettingsTabs('ADMIN')).toEqual([
-      'Profile',
-      'Security',
-      'Roles',
-      'Data Import',
-      'Drafting',
-      'System',
-    ]);
+  it('ADMIN sees only Profile, Security and Roles', () => {
+    expect(visibleSettingsTabs('ADMIN')).toEqual(['Profile', 'Security', 'Roles']);
     expect(resolveSettingsTab('ADMIN')).toBe('Profile');
     expect(resolveSettingsTab('ADMIN', 'users')).toBe('Profile');
-    expect(resolveSettingsTab('ADMIN', 'danger-zone')).toBe('Profile');
-    expect(resolveSettingsTab('ADMIN', 'system')).toBe('System');
+    expect(resolveSettingsTab('ADMIN', 'roles')).toBe('Roles');
+
+    for (const removed of ['data-import', 'drafting', 'system', 'danger-zone']) {
+      expect(resolveSettingsTab('ADMIN', removed)).toBe('Profile');
+    }
   });
 
-  it('SUPERADMIN retains all tabs and Users as its default', () => {
+  it('SUPERADMIN sees only the retained settings tabs and defaults to Users', () => {
     expect(visibleSettingsTabs('SUPERADMIN')).toEqual([
       'Profile',
       'Security',
       'Users',
       'Roles',
-      'Data Import',
-      'Drafting',
-      'System',
-      'Danger Zone',
     ]);
     expect(resolveSettingsTab('SUPERADMIN')).toBe('Users');
-    expect(resolveSettingsTab('SUPERADMIN', 'danger-zone')).toBe('Danger Zone');
-    expect(settingsTabSlug('Danger Zone')).toBe('danger-zone');
+    expect(resolveSettingsTab('SUPERADMIN', 'users')).toBe('Users');
+    expect(settingsTabSlug('Roles')).toBe('roles');
+
+    for (const removed of ['data-import', 'drafting', 'system', 'danger-zone']) {
+      expect(resolveSettingsTab('SUPERADMIN', removed)).toBe('Users');
+    }
   });
 });

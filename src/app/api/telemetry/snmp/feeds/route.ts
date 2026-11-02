@@ -125,9 +125,9 @@ export async function GET(request: Request) {
     });
     const sameSource = Boolean(
       currentBinding &&
-        voltageBinding &&
-        currentBinding.sourceIdentity === voltageBinding.sourceIdentity &&
-        sample?.sourceIdentity === currentBinding.sourceIdentity,
+      voltageBinding &&
+      currentBinding.sourceIdentity === voltageBinding.sourceIdentity &&
+      sample?.sourceIdentity === currentBinding.sourceIdentity,
     );
     powerEvidence.push({
       accessPortId: feed.accessPortId,

@@ -1,4 +1,5 @@
 import { requirePermission } from '@/modules/identity/application/current-session';
+import { composeQdfHistoricalElectricalContract } from '@/modules/telemetry/application/qdf-electrical-contract';
 import {
   assessBdfbInventory,
   bdfbHardwareProfile,
@@ -167,6 +168,17 @@ export async function GET(request: Request) {
             voltageToleranceV,
           )
         : { busA: [], busB: [], total: [] };
+    const qdfElectricalContract = composeQdfHistoricalElectricalContract(
+      deviceId,
+      window as TelemetryHistoryWindow,
+      {
+        current: totalCurrent,
+        power: totalPower,
+        voltage: totalVoltage,
+        energy: totalEnergy,
+        voltageToleranceV,
+      },
+    );
     return Response.json(
       {
         deviceId,
@@ -197,6 +209,7 @@ export async function GET(request: Request) {
         },
         energySource: 'ESTIMATED_FROM_PAIRED_VOLTAGE_CURRENT',
         maxIntegratedGapSeconds: 120,
+        qdfElectricalContract,
       },
       { headers: { 'Cache-Control': 'private, no-store' } },
     );

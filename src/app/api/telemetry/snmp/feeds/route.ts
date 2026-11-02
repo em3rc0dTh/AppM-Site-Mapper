@@ -123,14 +123,15 @@ export async function GET(request: Request) {
       voltageV: permitted ? (reading!.value as number) : null,
       observedAt,
     });
+    const sameSource = Boolean(
+      currentBinding &&
+        voltageBinding &&
+        currentBinding.sourceIdentity === voltageBinding.sourceIdentity &&
+        sample?.sourceIdentity === currentBinding.sourceIdentity,
+    );
     powerEvidence.push({
       accessPortId: feed.accessPortId,
-      sameSource: Boolean(
-        currentBinding &&
-          voltageBinding &&
-          currentBinding.sourceIdentity === voltageBinding.sourceIdentity &&
-          sample?.sourceIdentity === currentBinding.sourceIdentity,
-      ),
+      sameSource,
       currentSourceMode:
         currentBinding?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY'
           ? 'SYNTHETIC_LAB_ONLY'

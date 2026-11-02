@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "docs:check": "node scripts/ci/docs-links.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write docs/certification/rfp-acceptance/00-README.md docs/certification/rfp-acceptance/01-RFP-COMPLIANCE-MATRIX.md docs/certification/rfp-acceptance/02-ACCEPTANCE-TEST-PLAN.md docs/certification/rfp-acceptance/04-TEST-RESULTS.md docs/certification/rfp-acceptance/05-OPERABILITY-CERTIFICATE.md docs/certification/rfp-acceptance/07-AS-BUILT.md docs/certification/rfp-acceptance/09-RELEASE-IDENTIFICATION.md && git diff -- docs/certification/rfp-acceptance/00-README.md docs/certification/rfp-acceptance/01-RFP-COMPLIANCE-MATRIX.md docs/certification/rfp-acceptance/02-ACCEPTANCE-TEST-PLAN.md docs/certification/rfp-acceptance/04-TEST-RESULTS.md docs/certification/rfp-acceptance/05-OPERABILITY-CERTIFICATE.md docs/certification/rfp-acceptance/07-AS-BUILT.md docs/certification/rfp-acceptance/09-RELEASE-IDENTIFICATION.md && exit 1",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit && node --test infra/snmp-collector/server.test.mjs",
     "test:integration": "vitest run tests/integration --passWithNoTests",

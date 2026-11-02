@@ -1,9 +1,7 @@
 name: Visual parity capture
 
 on:
-  push:
-    branches:
-      - feat/mk1-raw-build
+  workflow_dispatch:
 
 permissions:
   contents: read

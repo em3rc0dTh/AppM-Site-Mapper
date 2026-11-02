@@ -7,6 +7,7 @@ on:
       - main
       - 'feat/modbus-tcp-site-mapper-sidecar'
       - 'feat/**'
+      - 'release/**'
 
 permissions:
   contents: read

@@ -1,6 +1,6 @@
 # Documentación · AppM Site Mapper MK1
 
-**Punto de partida para operadores, desarrolladores, evaluadores del MVP y responsables de despliegue.** El README raíz resume el producto y muestra los diagramas principales. Este índice distingue la arquitectura implementada de la documentación histórica de reconstrucción.
+**Punto de partida para operadores, desarrolladores, responsables de despliegue y commissioning de campo.** El README raíz resume el producto y muestra los diagramas principales. Este índice distingue la arquitectura implementada, la integración/preproducción, el commissioning real y la documentación histórica de reconstrucción.
 
 ## Camino recomendado para una persona nueva (octubre 2026)
 
@@ -11,6 +11,12 @@
 **[3. Evidencia real de SNMP BDFB-01 A/B](telemetry/bdfb01-snmp-ui-acceptance-2026-10-24.md)**: laboratorio probado (no lecturas físicas).
 
 La nueva guía reemplaza como **punto de entrada** a los procedimientos técnicos largos; estos últimos continúan vigentes como referencia. **No** utilices un Compose nuevo para sustituir la base original de la computadora de laboratorio.
+
+## Conectar infraestructura real
+
+**[Field Commissioning](field/README.md)** es el punto de entrada para un ingeniero que debe incorporar hardware físico real. Incluye [Site Survey](field/site-survey.md), [commissioning MQTT/SNMP](field/real-equipment-commissioning.md) y [SAT Modbus/Metasys](field/metasys-sat.md).
+
+El entorno persistente de ingeniería se clasifica como **INTEGRATION / PRE-PRODUCTION**. Los documentos históricos pueden conservar la palabra “laboratorio” porque registran ejecuciones concretas; esa etiqueta histórica no debe confundirse con el estado operativo del stack actual.
 
 ## Primer día en Site Mapper: Manual del operador
 
@@ -26,14 +32,15 @@ El [guion de presentación](product/MVP-DEMO-ES.md) sirve para mostrar capacidad
 
 ## Ruta de lectura por perfil
 
-| Perfil / objetivo               | Empieza aquí                                      | Continúa con                                                                                               |
-| ------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Persona que evalúa el producto  | [Guion del MVP (español)](product/MVP-DEMO-ES.md) | [Alcance y evidencia](release/MVP-READINESS.md)                                                            |
-| Persona que necesita levantarlo | [Quickstart](operations/quickstart.md)            | [Variables](operations/environment-reference.md)                                                           |
-| Ingeniería / onboarding         | [Mapa del sistema](architecture/system-map.md)    | [Dominio](domain/topology-hierarchy.md) y [módulos](../src/modules/README.md)                              |
-| Operación y diagnóstico         | [Runbook](operations/runbook.md)                  | [Incidente de histórico](operations/history-connectivity.md), [laboratorio](operations/mqtt-modbus-lab.md) |
-| Release / seguridad             | [MVP Readiness](release/MVP-READINESS.md)         | [Checklist de release](release/release-checklist.md) y [limitaciones](release/known-limitations.md)        |
-| Migración y datos               | [Guía de migración](migrations/legacy-to-mk1.md)  | [Backup/restore](operations/backup-restore.md)                                                             |
+| Perfil / objetivo               | Empieza aquí                                               | Continúa con                                                                                                                                         |
+| ------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Persona que evalúa el producto  | [Guion del MVP (español)](product/MVP-DEMO-ES.md)          | [Alcance y evidencia](release/MVP-READINESS.md)                                                                                                      |
+| Persona que necesita levantarlo | [Full Stack seed-01](operations/full-stack-integration.md) | [Quickstart](operations/quickstart.md), [Portability hardening](release/portability-hardening.md) y [Variables](operations/environment-reference.md) |
+| Ingeniería / onboarding         | [Mapa del sistema](architecture/system-map.md)             | [Dominio](domain/topology-hierarchy.md) y [módulos](../src/modules/README.md)                                                                        |
+| Operación y diagnóstico         | [Runbook](operations/runbook.md)                           | [Incidente de histórico](operations/history-connectivity.md), [integración MQTT/Modbus](operations/mqtt-modbus-lab.md)                               |
+| Release / seguridad             | [MVP Readiness](release/MVP-READINESS.md)                  | [Checklist de release](release/release-checklist.md) y [limitaciones](release/known-limitations.md)                                                  |
+| Migración y datos               | [Guía de migración](migrations/legacy-to-mk1.md)           | [Backup/restore](operations/backup-restore.md)                                                                                                       |
+| Equipos reales / OT             | [Field Commissioning](field/README.md)                     | [Site Survey](field/site-survey.md) y [Metasys SAT](field/metasys-sat.md)                                                                            |
 
 ## ¿Qué documentación es normativa?
 
@@ -57,6 +64,8 @@ Las referencias `CONTRACT.md` en el directorio raíz del repositorio y en `docs/
 | Operational Console        | [Uso y límites](product/operational-console.md)                                                                         |
 | Usuario, sesión y permisos | [Seguridad](security/authentication.md), [RBAC](security/rbac-matrix.md)                                                |
 | CI y calidad               | [Estrategia de pruebas](testing/strategy.md)                                                                            |
+| Field commissioning        | [Hardware real / MQTT / SNMP / Metasys](field/README.md)                                                                |
+| Portabilidad / release     | [Portability & Real Equipment Commissioning](release/portability-hardening.md)                                          |
 | Avance histórico           | [Gates de reconstrucción](release/gates/)                                                                               |
 
 ## Reglas editoriales del repositorio

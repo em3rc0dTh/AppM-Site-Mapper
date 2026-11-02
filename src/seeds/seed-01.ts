@@ -1,6 +1,7 @@
 import type { ClientSession, Db, Document } from 'mongodb';
 
 import type { CommunicationProfile } from '@/modules/industrial/domain/commissioning';
+import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
@@ -15,7 +16,7 @@ import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 4 as const;
+export const SEED_01_VERSION = 5 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -141,11 +142,41 @@ const BDFBS: readonly BdfbSpec[] = [
 ];
 
 const BASE = {
+  network: 'TELXIUS LURIN',
   site: 'TELXIUS LURIN CABLE LANDING STATION',
   structure: 'EDIFICIO PRINCIPAL',
   level: 'LEVEL 00',
   room: 'SALA DE TRANSMISIONES',
+  qdfBay: 'QDF POWER DISTRIBUTION',
 } as const;
+
+const BASE_SITE_POLYGON = [
+  { x: 0, y: 0 },
+  { x: 10000, y: 0 },
+  { x: 10000, y: 8000 },
+  { x: 0, y: 8000 },
+] as const;
+
+const BASE_STRUCTURE_POLYGON = [
+  { x: 500, y: 500 },
+  { x: 9500, y: 500 },
+  { x: 9500, y: 7500 },
+  { x: 500, y: 7500 },
+] as const;
+
+const BASE_ROOM_POLYGON = [
+  { x: 1000, y: 1000 },
+  { x: 9000, y: 1000 },
+  { x: 9000, y: 7000 },
+  { x: 1000, y: 7000 },
+] as const;
+
+const BASE_QDF_BAY_POLYGON = [
+  { x: 1500, y: 1500 },
+  { x: 8500, y: 1500 },
+  { x: 8500, y: 3000 },
+  { x: 1500, y: 3000 },
+] as const;
 
 export interface Seed01Summary {
   readonly profile: typeof SEED_01_PROFILE;
@@ -211,27 +242,112 @@ async function resolveNamedChild<K extends TopologyKind>(
   return expectKind(exactlyOne(children, `${kind} ${name}`), kind, name);
 }
 
-async function resolveBase(
+async function createRequiredNode<K extends TopologyKind>(
+  topology: TopologyService,
+  input: Parameters<TopologyService['create']>[0],
+  kind: K,
+  context: string,
+): Promise<Extract<TopologyNode, { kind: K }>> {
+  const result = await topology.create(input);
+  if (!result.ok) {
+    throw new Error(`SEED_01_CREATE_FAILED: ${context}: ${result.error}`);
+  }
+  return expectKind(result.value, kind, context);
+}
+
+async function ensureNamedChild<K extends TopologyKind>(
+  repository: TopologyRepository,
+  topology: TopologyService,
+  parentId: string,
+  kind: K,
+  name: string,
+  createInput: Omit<Parameters<TopologyService['create']>[0], 'kind' | 'parentId' | 'name'>,
+): Promise<Extract<TopologyNode, { kind: K }>> {
+  const expected = normalizedName(name);
+  const matches = (await repository.listChildren(parentId)).filter(
+    (node) =>
+      node.lifecycle === 'ACTIVE' && node.kind === kind && normalizedName(node.name) === expected,
+  );
+  if (matches.length > 1) {
+    throw new Error(`SEED_01_CONFLICT: duplicate ${kind} ${name}`);
+  }
+  if (matches.length === 1) return expectKind(matches[0]!, kind, name);
+
+  return createRequiredNode(topology, { kind, parentId, name, ...createInput }, kind, name);
+}
+
+async function ensureBase(
   repository: TopologyRepository,
   topology: TopologyService,
 ): Promise<{
   readonly room: Extract<TopologyNode, { kind: 'ROOM_SUBSTRUCTURE' }>;
   readonly racks: ReadonlyMap<BdfbSpec['key'], ContainerRackNode>;
 }> {
-  const sites = (await repository.listByKind('SITE')).filter(
+  const activeSites = (await repository.listByKind('SITE')).filter(
     (node) =>
       node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.site),
   );
-  const site = expectKind(exactlyOne(sites, `SITE ${BASE.site}`), 'SITE', BASE.site);
-  const structure = await resolveNamedChild(repository, site.id, 'STRUCTURE', BASE.structure);
-  const level = await resolveNamedChild(repository, structure.id, 'LEVEL', BASE.level);
-  const room = await resolveNamedChild(repository, level.id, 'ROOM_SUBSTRUCTURE', BASE.room);
+  if (activeSites.length > 1) {
+    throw new Error(`SEED_01_CONFLICT: duplicate SITE ${BASE.site}`);
+  }
+
+  let site: Extract<TopologyNode, { kind: 'SITE' }>;
+  if (activeSites.length === 1) {
+    site = expectKind(activeSites[0]!, 'SITE', BASE.site);
+  } else {
+    const networks = (await repository.listByKind('NETWORK')).filter(
+      (node) =>
+        node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.network),
+    );
+    if (networks.length > 1) {
+      throw new Error(`SEED_01_CONFLICT: duplicate NETWORK ${BASE.network}`);
+    }
+    const network =
+      networks.length === 1
+        ? expectKind(networks[0]!, 'NETWORK', BASE.network)
+        : await createRequiredNode(
+            topology,
+            { kind: 'NETWORK', parentId: null, name: BASE.network },
+            'NETWORK',
+            BASE.network,
+          );
+    site = await createRequiredNode(
+      topology,
+      {
+        kind: 'SITE',
+        parentId: network.id,
+        name: BASE.site,
+        polygon: BASE_SITE_POLYGON,
+      },
+      'SITE',
+      BASE.site,
+    );
+  }
+
+  const structure = await ensureNamedChild(
+    repository,
+    topology,
+    site.id,
+    'STRUCTURE',
+    BASE.structure,
+    { polygon: BASE_STRUCTURE_POLYGON },
+  );
+  const level = await ensureNamedChild(repository, topology, structure.id, 'LEVEL', BASE.level, {});
+  const room = await ensureNamedChild(
+    repository,
+    topology,
+    level.id,
+    'ROOM_SUBSTRUCTURE',
+    BASE.room,
+    { roomVariant: 'ROOM', polygon: BASE_ROOM_POLYGON },
+  );
 
   const allRacks = (await repository.listByKind('CONTAINER_RACK')).filter(
     (node): node is ContainerRackNode =>
       node.kind === 'CONTAINER_RACK' && node.lifecycle === 'ACTIVE',
   );
   const racks = new Map<BdfbSpec['key'], ContainerRackNode>();
+  const unresolved: BdfbSpec[] = [];
 
   for (const spec of BDFBS) {
     const aliases = new Set(spec.rackNames.map(normalizedName));
@@ -241,12 +357,50 @@ async function resolveBase(
       const trail = await topology.getTrail(rack.id);
       if (trail.some((node) => node.id === room.id)) candidates.push(rack);
     }
-    racks.set(spec.key, exactlyOne(candidates, `rack for ${spec.key} inside ${BASE.room}`));
+    if (candidates.length > 1) {
+      throw new Error(`SEED_01_CONFLICT: multiple racks for ${spec.key} inside ${BASE.room}`);
+    }
+    if (candidates.length === 1) {
+      racks.set(spec.key, candidates[0]!);
+    } else {
+      unresolved.push(spec);
+    }
+  }
+
+  if (unresolved.length) {
+    const bay = await ensureNamedChild(
+      repository,
+      topology,
+      room.id,
+      'CONTAINER_CLUSTER_BAY',
+      BASE.qdfBay,
+      { clusterVariant: 'BAY', polygon: BASE_QDF_BAY_POLYGON },
+    );
+
+    for (const spec of unresolved) {
+      const coordinateColumn = spec.key === 'QDF-2' ? 2 : spec.key === 'QDF-4' ? 4 : 5;
+      const position = await ensureNamedChild(
+        repository,
+        topology,
+        bay.id,
+        'POSITION',
+        `${spec.key} POSITION`,
+        { coordinate: { row: 'QDF', column: coordinateColumn } },
+      );
+      const rack = await ensureNamedChild(
+        repository,
+        topology,
+        position.id,
+        'CONTAINER_RACK',
+        spec.key,
+        { containerVariant: 'RACK', totalU: 42 },
+      );
+      racks.set(spec.key, rack);
+    }
   }
 
   return { room, racks };
 }
-
 async function ensureBdfbDevice(
   repository: TopologyRepository,
   topology: TopologyService,
@@ -773,6 +927,10 @@ async function seedBdfb(
   readonly deviceId: string;
   readonly breakerCount: number;
   readonly gatewayEquipmentId: string;
+  readonly gatewaySerial: string;
+  readonly controllerEquipmentId: string;
+  readonly panelIds: Readonly<Record<PanelName, string>>;
+  readonly breakerEquipmentIds: Readonly<Record<string, string>>;
   readonly meterEquipmentIds: Readonly<Record<MeterPanelName, string>>;
 }> {
   const device = await ensureBdfbDevice(repository, topology, rack, spec);
@@ -796,7 +954,7 @@ async function seedBdfb(
 
   // Move non-distribution instrumentation out of the chassis so its single
   // physical child remains the BDFB shelf.
-  await ensureRootEquipmentFromAnywhere(repository, topology, device, {
+  const controller = await ensureRootEquipmentFromAnywhere(repository, topology, device, {
     name: `${spec.key}_CTRL-1`,
     equipmentType: 'CONTROLLER_BOARD',
     manufacturer: 'Eltek',
@@ -815,6 +973,7 @@ async function seedBdfb(
     aliases: ['AWT100-CEHW', 'Modbus RTU master', 'MQTT/Modbus TCP gateway'],
   });
   const meterEquipmentIds = {} as Record<MeterPanelName, string>;
+  const breakerEquipmentIds: Record<string, string> = {};
   for (const meter of spec.meters) {
     const equipment = await ensureRootEquipmentFromAnywhere(repository, topology, device, {
       name: `${spec.key}_METER-${meter.panel}`,
@@ -956,18 +1115,31 @@ async function seedBdfb(
   for (const breaker of spec.breakers) {
     const panel = panels.get(breaker.panel);
     if (!panel) throw new Error(`SEED_01_INTERNAL: missing panel ${breaker.panel}`);
-    await ensurePositionalChild(repository, topology, panel.id, breaker.position - 1, {
-      name: `${breaker.panel}-${String(breaker.position).padStart(2, '0')}`,
-      equipmentType: 'CIRCUIT_BREAKER',
-      category: '48 VDC feeder',
-      aliases: [breaker.destination],
-    });
+    const breakerEquipment = await ensurePositionalChild(
+      repository,
+      topology,
+      panel.id,
+      breaker.position - 1,
+      {
+        name: `${breaker.panel}-${String(breaker.position).padStart(2, '0')}`,
+        equipmentType: 'CIRCUIT_BREAKER',
+        category: '48 VDC feeder',
+        aliases: [breaker.destination],
+      },
+    );
+    breakerEquipmentIds[`${breaker.panel}:${breaker.position}`] = breakerEquipment.id;
   }
 
   return {
     deviceId: device.id,
     breakerCount: spec.breakers.length,
     gatewayEquipmentId: gateway.id,
+    gatewaySerial: spec.gatewaySerial,
+    controllerEquipmentId: controller.id,
+    panelIds: Object.fromEntries(
+      [...panels.entries()].map(([name, panel]) => [name, panel.id]),
+    ) as Record<PanelName, string>,
+    breakerEquipmentIds,
     meterEquipmentIds,
   };
 }
@@ -1035,7 +1207,7 @@ async function seedIndustrialProfiles(
   },
 ): Promise<void> {
   const timestamp = new Date().toISOString();
-  const actor = 'seed:seed-01:v4';
+  const actor = 'seed:seed-01:v5';
 
   await ensureIndustrialProfile(database, session, {
     equipmentId: created.gatewayEquipmentId,
@@ -1091,6 +1263,253 @@ async function seedIndustrialProfiles(
   }
 }
 
+const INTEGRATION_PROFILE = 'seed-01-controlled' as const;
+const INTEGRATION_SNMP_SOURCE = {
+  'QDF-2': 'INT-SNMP-QDF-2',
+  'QDF-4': 'INT-SNMP-QDF-4',
+  'QDF-5': 'INT-SNMP-QDF-5',
+} as const;
+const INTEGRATION_FEEDS = [
+  { slot: 'A1', panel: 'A3', side: 'A', index: 1 },
+  { slot: 'A2', panel: 'A2', side: 'A', index: 2 },
+  { slot: 'B1', panel: 'B3', side: 'B', index: 3 },
+  { slot: 'B2', panel: 'B2', side: 'B', index: 4 },
+] as const;
+const MQTT_PANEL_GROUP: Readonly<Record<'A3' | 'A2' | 'B3' | 'B2', number>> = {
+  A3: 1,
+  A2: 2,
+  B3: 3,
+  B2: 4,
+};
+
+async function ensureControlledIntegration(
+  database: Db,
+  session: ClientSession,
+  spec: BdfbSpec,
+  created: {
+    readonly deviceId: string;
+    readonly gatewaySerial: string;
+    readonly gatewayEquipmentId: string;
+    readonly controllerEquipmentId: string;
+    readonly panelIds: Readonly<Record<PanelName, string>>;
+    readonly breakerEquipmentIds: Readonly<Record<string, string>>;
+  },
+): Promise<void> {
+  if (process.env.SITE_MAPPER_INTEGRATION_PROFILE?.trim() !== INTEGRATION_PROFILE) return;
+
+  const topologyNodes = database.collection<TopologyNode & Document>('topology_nodes');
+  const device = await topologyNodes.findOne({ id: created.deviceId, kind: 'DEVICE' }, { session });
+  if (!device || device.kind !== 'DEVICE') {
+    throw new Error(`SEED_01_INTEGRATION_CONFLICT: missing BDFB ${spec.key}`);
+  }
+  const chassis = await topologyNodes.findOne(
+    {
+      kind: 'EQUIPMENT',
+      deviceId: created.deviceId,
+      equipmentType: 'CHASSIS',
+      lifecycle: 'ACTIVE',
+    },
+    { session },
+  );
+  if (!chassis || chassis.kind !== 'EQUIPMENT') {
+    throw new Error(`SEED_01_INTEGRATION_CONFLICT: missing chassis ${spec.key}`);
+  }
+
+  const desiredPorts = INTEGRATION_FEEDS.map((feed) => ({
+    id: `integration:seed01:${spec.key}:feed:${feed.slot}`,
+    deviceId: created.deviceId,
+    equipmentId: chassis.id,
+    name: `CONTROLLED ${feed.slot}`,
+    portType: 'POWER' as const,
+    direction: 'INPUT' as const,
+    exposure: 'EXTERNAL' as const,
+    protocol: 'SNMPv2c',
+    attributes: {
+      snmpFeedInput: true,
+      feed: feed.side,
+      feedPosition: feed.slot,
+      ratedCurrentA: 800,
+      shuntRatedCurrentA: 1000,
+      shuntRatedMillivolts: 60,
+      overloadThresholdA: 640,
+      servedPanelIds: [created.panelIds[feed.panel]],
+      independentInputConfirmed: false,
+      commissioning: 'SYNTHETIC_LAB_ONLY',
+      integrationProfile: INTEGRATION_PROFILE,
+      synthetic: true,
+    },
+    lifecycle: 'ACTIVE' as const,
+  }));
+
+  const foreignPorts = chassis.accessPorts.filter(
+    (port) => port.attributes?.integrationProfile !== INTEGRATION_PROFILE,
+  );
+  const existingControlled = chassis.accessPorts.filter(
+    (port) => port.attributes?.integrationProfile === INTEGRATION_PROFILE,
+  );
+  if (
+    existingControlled.length &&
+    JSON.stringify(existingControlled) !== JSON.stringify(desiredPorts)
+  ) {
+    throw new Error(`SEED_01_INTEGRATION_CONFLICT: SNMP feed inventory differs for ${spec.key}`);
+  }
+  if (!existingControlled.length) {
+    await topologyNodes.updateOne(
+      { id: chassis.id, lifecycle: 'ACTIVE' },
+      {
+        $set: {
+          accessPorts: [...foreignPorts, ...desiredPorts],
+          updatedAt: new Date().toISOString(),
+        },
+      },
+      { session },
+    );
+  }
+
+  const bindings = database.collection<TelemetryBinding & Document>('telemetry_bindings');
+  const now = new Date().toISOString();
+  const desired: TelemetryBinding[] = [];
+
+  desired.push({
+    id: `integration:seed01:mqtt:${created.gatewaySerial}:source`,
+    protocol: 'MQTT',
+    sourceIdentity: created.gatewaySerial,
+    metric: 'SOURCE',
+    targetType: 'EQUIPMENT',
+    targetId: created.gatewayEquipmentId,
+    lifecycle: 'ACTIVE',
+    createdAt: now,
+    updatedAt: now,
+    attributes: {
+      commissioning: 'CONTROLLED_INTEGRATION',
+      integrationProfile: INTEGRATION_PROFILE,
+      transportEquipmentId: created.gatewayEquipmentId,
+    },
+  });
+
+  for (const breaker of spec.breakers) {
+    const targetId = created.breakerEquipmentIds[`${breaker.panel}:${breaker.position}`];
+    const group = MQTT_PANEL_GROUP[breaker.panel as keyof typeof MQTT_PANEL_GROUP];
+    if (!targetId || !group) continue;
+    const sourcePointId = `0_${group}_${breaker.position}`;
+    for (const [metric, unit] of [
+      ['VOLTAGE', 'V'],
+      ['CURRENT', 'A'],
+      ['POWER', 'W'],
+      ['ENERGY', 'kWh'],
+    ] as const) {
+      desired.push({
+        id: `integration:seed01:mqtt:${created.gatewaySerial}:${sourcePointId}:${metric.toLowerCase()}`,
+        protocol: 'MQTT',
+        sourceIdentity: created.gatewaySerial,
+        sourcePointId,
+        metric,
+        unit,
+        targetType: 'EQUIPMENT',
+        targetId,
+        lifecycle: 'ACTIVE',
+        createdAt: now,
+        updatedAt: now,
+        attributes: {
+          commissioning: 'CONTROLLED_INTEGRATION',
+          integrationProfile: INTEGRATION_PROFILE,
+          synthetic: true,
+          qdf: spec.key,
+          panelLabel: breaker.panel,
+          position: breaker.position,
+        },
+      });
+    }
+  }
+
+  const snmpSource = INTEGRATION_SNMP_SOURCE[spec.key];
+  for (const feed of INTEGRATION_FEEDS) {
+    const portId = `integration:seed01:${spec.key}:feed:${feed.slot}`;
+    for (const point of [
+      {
+        metric: 'CURRENT',
+        unit: 'A',
+        oid: `1.3.6.1.4.1.8072.9999.2026.49.1.${feed.index}.0`,
+      },
+      {
+        metric: 'VOLTAGE',
+        unit: 'V',
+        oid: `1.3.6.1.4.1.8072.9999.2026.49.2.${feed.index}.0`,
+      },
+    ] as const) {
+      desired.push({
+        id: `integration:seed01:snmp:${spec.key}:${feed.slot}:${point.metric.toLowerCase()}`,
+        protocol: 'SNMP',
+        sourceIdentity: snmpSource,
+        sourcePointId: point.oid,
+        metric: point.metric,
+        unit: point.unit,
+        targetType: 'ACCESS_PORT',
+        targetId: portId,
+        lifecycle: 'ACTIVE',
+        createdAt: now,
+        updatedAt: now,
+        attributes: {
+          commissioning: 'SYNTHETIC_LAB_ONLY',
+          integrationProfile: INTEGRATION_PROFILE,
+          synthetic: true,
+          qdf: spec.key,
+          feedPosition: feed.slot,
+        },
+      });
+    }
+  }
+
+  for (const binding of desired) {
+    const existing = await bindings.findOne({ id: binding.id }, { session });
+    if (existing) {
+      if (
+        existing.protocol !== binding.protocol ||
+        existing.sourceIdentity !== binding.sourceIdentity ||
+        existing.sourcePointId !== binding.sourcePointId ||
+        existing.metric !== binding.metric ||
+        existing.targetType !== binding.targetType ||
+        existing.targetId !== binding.targetId
+      ) {
+        throw new Error(`SEED_01_INTEGRATION_CONFLICT: binding ${binding.id}`);
+      }
+      continue;
+    }
+    const sourceConflict = await bindings.findOne(
+      {
+        lifecycle: 'ACTIVE',
+        protocol: binding.protocol,
+        sourceIdentity: binding.sourceIdentity,
+        sourcePointId:
+          binding.sourcePointId === undefined ? { $exists: false } : binding.sourcePointId,
+        metric: binding.metric,
+      },
+      { session },
+    );
+    if (sourceConflict) {
+      throw new Error(`SEED_01_INTEGRATION_CONFLICT: source already bound ${binding.id}`);
+    }
+    await bindings.insertOne({ ...binding, revision: 1 }, { session });
+  }
+
+  if (device.attributes?.bdfbHardwareProfile !== 'ELTEK_BDCBB_CONFIG_4') {
+    await topologyNodes.updateOne(
+      { id: created.deviceId, kind: 'DEVICE', lifecycle: 'ACTIVE' },
+      {
+        $set: {
+          attributes: {
+            ...(device.attributes ?? {}),
+            bdfbHardwareProfile: 'ELTEK_BDCBB_CONFIG_4',
+            integrationProfile: INTEGRATION_PROFILE,
+          },
+          updatedAt: new Date().toISOString(),
+        },
+      },
+      { session },
+    );
+  }
+}
+
 export async function applySeed01(database: Db): Promise<Seed01Summary> {
   return withIntegrityTransaction(database, async (session) => {
     const state = database.collection<Seed01StateDocument>('runtime_seed_state');
@@ -1113,7 +1532,7 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
 
     const repository = new MongoTopologyRepository(database);
     const topology = new TopologyService(repository);
-    const base = await resolveBase(repository, topology);
+    const base = await ensureBase(repository, topology);
     const bdfbs: Seed01Summary['bdfbs'][number][] = [];
 
     for (const spec of BDFBS) {
@@ -1121,6 +1540,7 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
       if (!rack) throw new Error(`SEED_01_BASE_REQUIRED: rack for ${spec.key}`);
       const created = await seedBdfb(repository, topology, rack, spec);
       await seedIndustrialProfiles(database, session, spec, created);
+      await ensureControlledIntegration(database, session, spec, created);
       bdfbs.push({
         key: spec.key,
         rackId: rack.id,
@@ -1141,7 +1561,7 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
         roomId: base.room.id,
         bdfbs,
         source: {
-          topology: 'seed-01 Mongo snapshot supplied by operator',
+          topology: 'seed-01 canonical runtime seed manifest',
           commissioning: 'CP_Acrel_v0.2',
           breakerSchedule: 'Lista de Equipos QDF mop 1 - actualizado',
           snmp: 'Results SNMPWalk',

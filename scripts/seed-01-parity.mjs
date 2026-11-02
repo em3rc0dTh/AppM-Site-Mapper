@@ -14,7 +14,10 @@ import { MongoClient, EJSON } from 'mongodb';
 function argsOf(argv) {
   const flags = new Map();
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === '--exact-ids') { flags.set('exact-ids', true); continue; }
+    if (argv[i] === '--exact-ids') {
+      flags.set('exact-ids', true);
+      continue;
+    }
     if (!argv[i].startsWith('--') || !argv[i + 1] || argv[i + 1].startsWith('--'))
       throw new Error('Expected --snapshot FILE --uri URI --database NAME [--exact-ids]');
     flags.set(argv[i].slice(2), argv[++i]);
@@ -33,7 +36,8 @@ function topologyIndex(nodes) {
     if (!n.id || ids.has(n.id)) throw new Error('Missing or duplicated topology id');
     ids.set(n.id, n);
   }
-  const pathCache = new Map(), busy = new Set();
+  const pathCache = new Map(),
+    busy = new Set();
   function path(id) {
     if (pathCache.has(id)) return pathCache.get(id);
     const n = ids.get(id);
@@ -56,26 +60,41 @@ function topologyIndex(nodes) {
 function canonical(n, index) {
   const c = {};
   const fields = [
-    'kind', 'name', 'lifecycle', 'variant', 'polygon', 'coordinate',
-    'placementMm', 'placementState', 'dimensionsMm', 'totalU',
-    'deviceType', 'equipmentType', 'childMode', 'category',
-    'manufacturer', 'model', 'serialNumber', 'aliases', 'presentation',
+    'kind',
+    'name',
+    'lifecycle',
+    'variant',
+    'polygon',
+    'coordinate',
+    'placementMm',
+    'placementState',
+    'dimensionsMm',
+    'totalU',
+    'deviceType',
+    'equipmentType',
+    'childMode',
+    'category',
+    'manufacturer',
+    'model',
+    'serialNumber',
+    'aliases',
+    'presentation',
   ];
   for (const field of fields) {
     if (n[field] !== undefined) c[field] = n[field];
   }
   if (n.kind === 'EQUIPMENT') {
-    c.children = (n.children ?? []).map(id =>
-      id ? index.path(id) : null
-    );
-    c.accessPorts = (n.accessPorts ?? []).map(port => ({
-      name: port.name, portType: port.portType,
-      direction: port.direction, exposure: port.exposure,
+    c.children = (n.children ?? []).map((id) => (id ? index.path(id) : null));
+    c.accessPorts = (n.accessPorts ?? []).map((port) => ({
+      name: port.name,
+      portType: port.portType,
+      direction: port.direction,
+      exposure: port.exposure,
       protocol: port.protocol,
       attributes: port.attributes && {
         ...port.attributes,
         servedPanelIds: Array.isArray(port.attributes.servedPanelIds)
-          ? port.attributes.servedPanelIds.map(id => index.path(id))
+          ? port.attributes.servedPanelIds.map((id) => index.path(id))
           : port.attributes.servedPanelIds,
       },
       lifecycle: port.lifecycle,
@@ -87,11 +106,12 @@ function canonical(n, index) {
     c.device = index.path(n.deviceId);
   }
   if (n.kind === 'DEVICE') {
-    c.rootEquipmentIds = (n.rootEquipmentIds ?? []).map(id => index.path(id));
+    c.rootEquipmentIds = (n.rootEquipmentIds ?? []).map((id) => index.path(id));
   }
   if (n.kind === 'CONTAINER_RACK') {
-    c.cas = (n.cas ?? []).map(range => ({
-      ...range, id: undefined,
+    c.cas = (n.cas ?? []).map((range) => ({
+      ...range,
+      id: undefined,
       occupantId: range.occupantId ? index.path(range.occupantId) : undefined,
     }));
   }
@@ -100,16 +120,23 @@ function canonical(n, index) {
 function stable(x) {
   if (Array.isArray(x)) return x.map(stable);
   if (x && typeof x === 'object') {
-    return Object.fromEntries(Object.keys(x).sort().filter(k => x[k] !== undefined)
-      .map(k => [k, stable(x[k])]));
+    return Object.fromEntries(
+      Object.keys(x)
+        .sort()
+        .filter((k) => x[k] !== undefined)
+        .map((k) => [k, stable(x[k])]),
+    );
   }
   return x;
 }
 async function main() {
   const options = argsOf(process.argv.slice(2));
   const source = EJSON.parse(await readFile(options.get('snapshot'), 'utf8'));
-  if (source.database !== 'seed-01' || !Array.isArray(source.topology) ||
-      !source.seedState?.some(state => state.profile === 'seed-01')) {
+  if (
+    source.database !== 'seed-01' ||
+    !Array.isArray(source.topology) ||
+    !source.seedState?.some((state) => state.profile === 'seed-01')
+  ) {
     throw new Error('Expected operator seed-01 EJSON snapshot with topology + seedState');
   }
   const client = new MongoClient(options.get('uri'), { serverSelectionTimeoutMS: 8000 });
@@ -122,27 +149,39 @@ async function main() {
     const diffs = [];
     for (const [path, node] of expected.byPath) {
       const other = actual.byPath.get(path);
-      if (!other) { diffs.push('MISSING ' + path); continue; }
-      if (options.has('exact-ids') && node.id !== other.id)
-        diffs.push('ID ' + path);
-      if (JSON.stringify(stable(canonical(node, expected))) !==
-          JSON.stringify(stable(canonical(other, actual))))
+      if (!other) {
+        diffs.push('MISSING ' + path);
+        continue;
+      }
+      if (options.has('exact-ids') && node.id !== other.id) diffs.push('ID ' + path);
+      if (
+        JSON.stringify(stable(canonical(node, expected))) !==
+        JSON.stringify(stable(canonical(other, actual)))
+      )
         diffs.push('FIELDS ' + path);
     }
     for (const path of actual.byPath.keys()) {
       if (!expected.byPath.has(path)) diffs.push('EXTRA ' + path);
     }
-    console.log(JSON.stringify({
-      sourceNodes: source.topology.length, targetNodes: current.length,
-      exactIds: options.has('exact-ids'), differences: diffs.length,
-      details: diffs.slice(0, 150),
-    }, null, 2));
+    console.log(
+      JSON.stringify(
+        {
+          sourceNodes: source.topology.length,
+          targetNodes: current.length,
+          exactIds: options.has('exact-ids'),
+          differences: diffs.length,
+          details: diffs.slice(0, 150),
+        },
+        null,
+        2,
+      ),
+    );
     if (diffs.length) process.exitCode = 2;
   } finally {
     await client.close();
   }
 }
-main().catch(error => {
+main().catch((error) => {
   console.error('PARITY_CHECK_FAILED:', error.message);
   process.exitCode = 1;
 });

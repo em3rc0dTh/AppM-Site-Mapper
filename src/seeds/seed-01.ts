@@ -153,27 +153,39 @@ const BASE = {
 } as const;
 
 const BASE_SITE_POLYGON = [
-  { x: 3000, y: 2400 }, { x: 30600, y: 2400 },
-  { x: 30600, y: 25800 }, { x: 3000, y: 25800 },
+  { x: 3000, y: 2400 },
+  { x: 30600, y: 2400 },
+  { x: 30600, y: 25800 },
+  { x: 3000, y: 25800 },
 ] as const;
 
 const BASE_STRUCTURE_POLYGON = [
-  { x: 7800, y: 10200 }, { x: 10800, y: 10800 },
-  { x: 10800, y: 8400 }, { x: 27600, y: 8400 },
-  { x: 28800, y: 19800 }, { x: 11400, y: 19800 },
-  { x: 11400, y: 18600 }, { x: 7800, y: 18600 },
+  { x: 7800, y: 10200 },
+  { x: 10800, y: 10800 },
+  { x: 10800, y: 8400 },
+  { x: 27600, y: 8400 },
+  { x: 28800, y: 19800 },
+  { x: 11400, y: 19800 },
+  { x: 11400, y: 18600 },
+  { x: 7800, y: 18600 },
 ] as const;
 
 const BASE_ROOM_POLYGON = [
-  { x: 12000, y: 10200 }, { x: 26400, y: 10200 },
-  { x: 26400, y: 18000 }, { x: 12000, y: 18000 },
+  { x: 12000, y: 10200 },
+  { x: 26400, y: 10200 },
+  { x: 26400, y: 18000 },
+  { x: 12000, y: 18000 },
 ] as const;
 
 const HISTORICAL_ROOM_POLYGON = [
-  { x: 10800, y: 7800 }, { x: 14400, y: 4800 },
-  { x: 18600, y: 7200 }, { x: 14400, y: 10800 },
-  { x: 13800, y: 10200 }, { x: 12600, y: 11400 },
-  { x: 10200, y: 9600 }, { x: 11400, y: 8400 },
+  { x: 10800, y: 7800 },
+  { x: 14400, y: 4800 },
+  { x: 18600, y: 7200 },
+  { x: 14400, y: 10800 },
+  { x: 13800, y: 10200 },
+  { x: 12600, y: 11400 },
+  { x: 10200, y: 9600 },
+  { x: 11400, y: 8400 },
 ] as const;
 
 const PHYSICAL_BAYS = [
@@ -195,7 +207,9 @@ function assertSameGeometry(
   expected: readonly { readonly x: number; readonly y: number }[],
 ): void {
   if (!actual || JSON.stringify(actual) !== JSON.stringify(expected)) {
-    throw new Error(`SEED_01_PHYSICAL_CONFLICT: ${context} differs from operator snapshot; no automatic spatial overwrite`);
+    throw new Error(
+      `SEED_01_PHYSICAL_CONFLICT: ${context} differs from operator snapshot; no automatic spatial overwrite`,
+    );
   }
 }
 
@@ -305,7 +319,8 @@ async function ensureBase(
   readonly racks: ReadonlyMap<BdfbSpec['key'], ContainerRackNode>;
 }> {
   const activeSites = (await repository.listByKind('SITE')).filter(
-    (node) => node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.site),
+    (node) =>
+      node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.site),
   );
   if (activeSites.length > 1) {
     throw new Error(`SEED_01_CONFLICT: duplicate SITE ${BASE.site}`);
@@ -317,29 +332,43 @@ async function ensureBase(
     assertSameGeometry('SITE', site.polygon, BASE_SITE_POLYGON);
   } else {
     const networks = (await repository.listByKind('NETWORK')).filter(
-      (node) => node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.network),
+      (node) =>
+        node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.network),
     );
     if (networks.length > 1) throw new Error(`SEED_01_CONFLICT: duplicate NETWORK ${BASE.network}`);
-    const network = networks.length === 1
-      ? expectKind(networks[0]!, 'NETWORK', BASE.network)
-      : await createRequiredNode(
-          topology, { kind: 'NETWORK', parentId: null, name: BASE.network }, 'NETWORK', BASE.network,
-        );
+    const network =
+      networks.length === 1
+        ? expectKind(networks[0]!, 'NETWORK', BASE.network)
+        : await createRequiredNode(
+            topology,
+            { kind: 'NETWORK', parentId: null, name: BASE.network },
+            'NETWORK',
+            BASE.network,
+          );
     site = await createRequiredNode(
       topology,
       { kind: 'SITE', parentId: network.id, name: BASE.site, polygon: BASE_SITE_POLYGON },
-      'SITE', BASE.site,
+      'SITE',
+      BASE.site,
     );
   }
 
   const structure = await ensureNamedChild(
-    repository, topology, site.id, 'STRUCTURE', BASE.structure,
+    repository,
+    topology,
+    site.id,
+    'STRUCTURE',
+    BASE.structure,
     { polygon: BASE_STRUCTURE_POLYGON },
   );
   assertSameGeometry('STRUCTURE', structure.polygon, BASE_STRUCTURE_POLYGON);
   const level = await ensureNamedChild(repository, topology, structure.id, 'LEVEL', BASE.level, {});
   const room = await ensureNamedChild(
-    repository, topology, level.id, 'ROOM_SUBSTRUCTURE', BASE.room,
+    repository,
+    topology,
+    level.id,
+    'ROOM_SUBSTRUCTURE',
+    BASE.room,
     { roomVariant: 'ROOM', polygon: BASE_ROOM_POLYGON },
   );
   if (room.variant !== 'ROOM') throw new Error('SEED_01_PHYSICAL_CONFLICT: room variant');
@@ -349,7 +378,8 @@ async function ensureBase(
   // Level. Preserve it if present. A virgin bootstrap creates a historical
   // reference node, but does not invent a past operator/retirement event.
   const historicalRooms = (await repository.listChildren(level.id)).filter(
-    (node) => node.kind === 'ROOM_SUBSTRUCTURE' &&
+    (node) =>
+      node.kind === 'ROOM_SUBSTRUCTURE' &&
       node.lifecycle === 'ARCHIVED' &&
       normalizedName(node.name) === normalizedName(BASE.room),
   );
@@ -390,11 +420,17 @@ async function ensureBase(
   const bays: Extract<TopologyNode, { kind: 'CONTAINER_CLUSTER_BAY' }>[] = [];
   for (const spec of PHYSICAL_BAYS) {
     const polygon = [
-      { x: 13200, y: spec.y }, { x: 25200, y: spec.y },
-      { x: 25200, y: spec.y + 600 }, { x: 13200, y: spec.y + 600 },
+      { x: 13200, y: spec.y },
+      { x: 25200, y: spec.y },
+      { x: 25200, y: spec.y + 600 },
+      { x: 13200, y: spec.y + 600 },
     ];
     const bay = await ensureNamedChild(
-      repository, topology, room.id, 'CONTAINER_CLUSTER_BAY', spec.name,
+      repository,
+      topology,
+      room.id,
+      'CONTAINER_CLUSTER_BAY',
+      spec.name,
       { clusterVariant: 'BAY', polygon },
     );
     if (bay.variant !== 'BAY') throw new Error(`SEED_01_PHYSICAL_CONFLICT: variant ${spec.name}`);
@@ -411,7 +447,11 @@ async function ensureBase(
     const physical = PHYSICAL_RACKS[spec.key];
     const bay = bays[physical.bayIndex]!;
     const position = await ensureNamedChild(
-      repository, topology, bay.id, 'POSITION', physical.position,
+      repository,
+      topology,
+      bay.id,
+      'POSITION',
+      physical.position,
       { coordinate: { row: physical.row, column: 42 } },
     );
     if (position.coordinate.row !== physical.row || position.coordinate.column !== 42) {
@@ -432,10 +472,12 @@ async function ensureBase(
       throw new Error(`SEED_01_PHYSICAL_CONFLICT: rack ${spec.key} is in another position`);
     }
 
-    let rack = candidates[0] ?? await ensureNamedChild(
-      repository, topology, position.id, 'CONTAINER_RACK', physical.name,
-      { containerVariant: 'RACK', totalU: 42 },
-    );
+    let rack =
+      candidates[0] ??
+      (await ensureNamedChild(repository, topology, position.id, 'CONTAINER_RACK', physical.name, {
+        containerVariant: 'RACK',
+        totalU: 42,
+      }));
     if (rack.variant !== 'RACK' || rack.totalU !== 42) {
       throw new Error(`SEED_01_PHYSICAL_CONFLICT: rack ${spec.key} capacity/variant`);
     }
@@ -446,14 +488,19 @@ async function ensureBase(
     if (rack.placementMm || rack.dimensionsMm) {
       if (
         JSON.stringify(rack.placementMm) !== JSON.stringify(placement) ||
-        rack.dimensionsMm?.width !== 600 || rack.dimensionsMm?.depth !== 600 ||
+        rack.dimensionsMm?.width !== 600 ||
+        rack.dimensionsMm?.depth !== 600 ||
         rack.placementState !== 'CONFIRMED'
-      ) throw new Error(`SEED_01_PHYSICAL_CONFLICT: rack ${spec.key} placement`);
+      )
+        throw new Error(`SEED_01_PHYSICAL_CONFLICT: rack ${spec.key} placement`);
     } else {
       if (!repository.commitLayout) throw new Error('ATOMIC_LAYOUT_STORAGE_REQUIRED');
       const updated: ContainerRackNode = {
-        ...rack, placementMm: placement, dimensionsMm: dimensions,
-        placementState: 'CONFIRMED', updatedAt: new Date().toISOString(),
+        ...rack,
+        placementMm: placement,
+        dimensionsMm: dimensions,
+        placementState: 'CONFIRMED',
+        updatedAt: new Date().toISOString(),
       };
       if (!(await repository.commitLayout([rack], [updated]))) {
         throw new Error(`SEED_01_PHYSICAL_CONFLICT: rack ${spec.key} concurrent layout edit`);
@@ -1163,15 +1210,21 @@ async function seedBdfb(
       } else {
         // Fresh install: preserve the historical tombstone state, including
         // the empty positional slot, without inventing a live A1/B1 panel.
-        const created = await ensurePanelInFrame(
-          repository, topology, device, frame, panelName,
-        );
+        const created = await ensurePanelInFrame(repository, topology, device, frame, panelName);
         // TopologyService.archive() intentionally refuses attached Equipment.
         // The v4 historical representation instead retains parentEquipmentId
         // for traceability while clearing its live FRAME positional slot.
         // Commit both changes atomically, never a transient dangling slot.
-        const freshFrame = expectKind((await repository.getById(frame.id))!, 'EQUIPMENT', frame.name);
-        const freshPanel = expectKind((await repository.getById(created.id))!, 'EQUIPMENT', created.name);
+        const freshFrame = expectKind(
+          (await repository.getById(frame.id))!,
+          'EQUIPMENT',
+          frame.name,
+        );
+        const freshPanel = expectKind(
+          (await repository.getById(created.id))!,
+          'EQUIPMENT',
+          created.name,
+        );
         if (
           freshFrame.children[2] !== freshPanel.id ||
           freshPanel.parentEquipmentId !== freshFrame.id ||
@@ -1182,14 +1235,18 @@ async function seedBdfb(
         const nextChildren = [...freshFrame.children];
         nextChildren[2] = null;
         const updatedFrame: EquipmentNode = {
-          ...freshFrame, children: nextChildren, updatedAt: new Date().toISOString(),
+          ...freshFrame,
+          children: nextChildren,
+          updatedAt: new Date().toISOString(),
         };
         const archivedPanel: EquipmentNode = {
-          ...freshPanel, lifecycle: 'ARCHIVED', updatedAt: new Date().toISOString(),
+          ...freshPanel,
+          lifecycle: 'ARCHIVED',
+          updatedAt: new Date().toISOString(),
         };
-        if (!(await repository.commitLayout(
-          [freshFrame, freshPanel], [updatedFrame, archivedPanel],
-        ))) {
+        if (
+          !(await repository.commitLayout([freshFrame, freshPanel], [updatedFrame, archivedPanel]))
+        ) {
           throw new Error(`SEED_01_ARCHIVE_FAILED: concurrent change to ${panelName}`);
         }
         panels.set(panelName, archivedPanel);

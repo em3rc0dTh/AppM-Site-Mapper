@@ -273,12 +273,7 @@ async function ensureNamedChild<K extends TopologyKind>(
   }
   if (matches.length === 1) return expectKind(matches[0]!, kind, name);
 
-  return createRequiredNode(
-    topology,
-    { kind, parentId, name, ...createInput },
-    kind,
-    name,
-  );
+  return createRequiredNode(topology, { kind, parentId, name, ...createInput }, kind, name);
 }
 
 async function ensureBase(
@@ -337,14 +332,7 @@ async function ensureBase(
     BASE.structure,
     { polygon: BASE_STRUCTURE_POLYGON },
   );
-  const level = await ensureNamedChild(
-    repository,
-    topology,
-    structure.id,
-    'LEVEL',
-    BASE.level,
-    {},
-  );
+  const level = await ensureNamedChild(repository, topology, structure.id, 'LEVEL', BASE.level, {});
   const room = await ensureNamedChild(
     repository,
     topology,
@@ -1127,12 +1115,18 @@ async function seedBdfb(
   for (const breaker of spec.breakers) {
     const panel = panels.get(breaker.panel);
     if (!panel) throw new Error(`SEED_01_INTERNAL: missing panel ${breaker.panel}`);
-    const breakerEquipment = await ensurePositionalChild(repository, topology, panel.id, breaker.position - 1, {
-      name: `${breaker.panel}-${String(breaker.position).padStart(2, '0')}`,
-      equipmentType: 'CIRCUIT_BREAKER',
-      category: '48 VDC feeder',
-      aliases: [breaker.destination],
-    });
+    const breakerEquipment = await ensurePositionalChild(
+      repository,
+      topology,
+      panel.id,
+      breaker.position - 1,
+      {
+        name: `${breaker.panel}-${String(breaker.position).padStart(2, '0')}`,
+        equipmentType: 'CIRCUIT_BREAKER',
+        category: '48 VDC feeder',
+        aliases: [breaker.destination],
+      },
+    );
     breakerEquipmentIds[`${breaker.panel}:${breaker.position}`] = breakerEquipment.id;
   }
 
@@ -1142,7 +1136,9 @@ async function seedBdfb(
     gatewayEquipmentId: gateway.id,
     gatewaySerial: spec.gatewaySerial,
     controllerEquipmentId: controller.id,
-    panelIds: Object.fromEntries([...panels.entries()].map(([name, panel]) => [name, panel.id])) as Record<PanelName, string>,
+    panelIds: Object.fromEntries(
+      [...panels.entries()].map(([name, panel]) => [name, panel.id]),
+    ) as Record<PanelName, string>,
     breakerEquipmentIds,
     meterEquipmentIds,
   };
@@ -1267,7 +1263,6 @@ async function seedIndustrialProfiles(
   }
 }
 
-
 const INTEGRATION_PROFILE = 'seed-01-controlled' as const;
 const INTEGRATION_SNMP_SOURCE = {
   'QDF-2': 'INT-SNMP-QDF-2',
@@ -1361,7 +1356,12 @@ async function ensureControlledIntegration(
   if (!existingControlled.length) {
     await topologyNodes.updateOne(
       { id: chassis.id, lifecycle: 'ACTIVE' },
-      { $set: { accessPorts: [...foreignPorts, ...desiredPorts], updatedAt: new Date().toISOString() } },
+      {
+        $set: {
+          accessPorts: [...foreignPorts, ...desiredPorts],
+          updatedAt: new Date().toISOString(),
+        },
+      },
       { session },
     );
   }

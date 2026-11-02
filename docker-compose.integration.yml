@@ -54,7 +54,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          "mosquitto_pub -h 127.0.0.1 -p 1883 -t integration/health -m ok >/dev/null 2>&1",
+          'mosquitto_pub -h 127.0.0.1 -p 1883 -t integration/health -m ok >/dev/null 2>&1',
         ]
       interval: 3s
       timeout: 3s

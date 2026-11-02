@@ -191,18 +191,18 @@ No derivar Unit ID desde el número del BFDB, serial, rack o nombre del equipo.
 
 Por cada punto publicado registrar:
 
-| Campo | Valor |
-| --- | --- |
-| Equipment | |
-| Source identity | |
-| Metric | V / A / W / kWh / approved industrial point |
-| Unit ID | |
-| Register | |
-| Function | FC03 |
-| Encoding | IEEE-754 FLOAT32 cuando corresponda |
-| Word order | |
-| Engineering unit | |
-| Missing/stale policy | |
+| Campo                | Valor                                       |
+| -------------------- | ------------------------------------------- |
+| Equipment            |                                             |
+| Source identity      |                                             |
+| Metric               | V / A / W / kWh / approved industrial point |
+| Unit ID              |                                             |
+| Register             |                                             |
+| Function             | FC03                                        |
+| Encoding             | IEEE-754 FLOAT32 cuando corresponda         |
+| Word order           |                                             |
+| Engineering unit     |                                             |
+| Missing/stale policy |                                             |
 
 ## 8. Cadena de aceptación por señal
 

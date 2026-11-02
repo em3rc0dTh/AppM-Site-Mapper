@@ -13,8 +13,10 @@ const options = {
 };
 
 const agent = snmp.createAgent(options, (error, data) => {
-  if (error) console.error(JSON.stringify({ event: 'snmp.agent.error', source, reason: error.message }));
-  else if (data?.pdu) console.info(JSON.stringify({ event: 'snmp.agent.request', source, type: data.pdu.type }));
+  if (error)
+    console.error(JSON.stringify({ event: 'snmp.agent.error', source, reason: error.message }));
+  else if (data?.pdu)
+    console.info(JSON.stringify({ event: 'snmp.agent.request', source, type: data.pdu.type }));
 });
 
 agent.getAuthorizer().addCommunity(community);
@@ -47,7 +49,14 @@ for (let index = 1; index <= 4; index += 1) {
   );
 }
 
-console.info(JSON.stringify({ event: 'snmp.agent.started', source, port, profile: 'ELTEK_BDCBB_CONFIG_4_CONTROLLED' }));
+console.info(
+  JSON.stringify({
+    event: 'snmp.agent.started',
+    source,
+    port,
+    profile: 'ELTEK_BDCBB_CONFIG_4_CONTROLLED',
+  }),
+);
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => {

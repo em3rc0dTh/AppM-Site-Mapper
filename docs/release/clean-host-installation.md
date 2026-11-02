@@ -224,17 +224,17 @@ Hasta que ese bundle sea construido y ensayado, no afirmar que la distribución 
 
 Registrar por cada ensayo:
 
-| Campo | Valor |
-| --- | --- |
-| Release SHA | |
-| OS / arch | |
-| Docker version | |
-| Compose version | |
-| Installation mode | source / bundle |
-| Fresh host | yes/no |
-| Existing data | yes/no |
-| Startup result | PASS/FAIL |
-| Restart result | PASS/FAIL |
-| Backup/restore | PASS/FAIL/NOT_RUN |
+| Campo               | Valor             |
+| ------------------- | ----------------- |
+| Release SHA         |                   |
+| OS / arch           |                   |
+| Docker version      |                   |
+| Compose version     |                   |
+| Installation mode   | source / bundle   |
+| Fresh host          | yes/no            |
+| Existing data       | yes/no            |
+| Startup result      | PASS/FAIL         |
+| Restart result      | PASS/FAIL         |
+| Backup/restore      | PASS/FAIL/NOT_RUN |
 | Field commissioning | PASS/FAIL/NOT_RUN |
-| Evidence reference | |
+| Evidence reference  |                   |

@@ -32,15 +32,15 @@ El [guion de presentación](product/MVP-DEMO-ES.md) sirve para mostrar capacidad
 
 ## Ruta de lectura por perfil
 
-| Perfil / objetivo               | Empieza aquí                                      | Continúa con                                                                                               |
-| ------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| Persona que evalúa el producto  | [Guion del MVP (español)](product/MVP-DEMO-ES.md) | [Alcance y evidencia](release/MVP-READINESS.md)                                                            |
+| Perfil / objetivo               | Empieza aquí                                               | Continúa con                                                                                                                                         |
+| ------------------------------- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Persona que evalúa el producto  | [Guion del MVP (español)](product/MVP-DEMO-ES.md)          | [Alcance y evidencia](release/MVP-READINESS.md)                                                                                                      |
 | Persona que necesita levantarlo | [Full Stack seed-01](operations/full-stack-integration.md) | [Quickstart](operations/quickstart.md), [Portability hardening](release/portability-hardening.md) y [Variables](operations/environment-reference.md) |
-| Ingeniería / onboarding         | [Mapa del sistema](architecture/system-map.md)    | [Dominio](domain/topology-hierarchy.md) y [módulos](../src/modules/README.md)                              |
-| Operación y diagnóstico         | [Runbook](operations/runbook.md)                  | [Incidente de histórico](operations/history-connectivity.md), [integración MQTT/Modbus](operations/mqtt-modbus-lab.md)    |
-| Release / seguridad             | [MVP Readiness](release/MVP-READINESS.md)         | [Checklist de release](release/release-checklist.md) y [limitaciones](release/known-limitations.md)        |
-| Migración y datos               | [Guía de migración](migrations/legacy-to-mk1.md)  | [Backup/restore](operations/backup-restore.md)                                                             |
-| Equipos reales / OT              | [Field Commissioning](field/README.md)             | [Site Survey](field/site-survey.md) y [Metasys SAT](field/metasys-sat.md)                                 |
+| Ingeniería / onboarding         | [Mapa del sistema](architecture/system-map.md)             | [Dominio](domain/topology-hierarchy.md) y [módulos](../src/modules/README.md)                                                                        |
+| Operación y diagnóstico         | [Runbook](operations/runbook.md)                           | [Incidente de histórico](operations/history-connectivity.md), [integración MQTT/Modbus](operations/mqtt-modbus-lab.md)                               |
+| Release / seguridad             | [MVP Readiness](release/MVP-READINESS.md)                  | [Checklist de release](release/release-checklist.md) y [limitaciones](release/known-limitations.md)                                                  |
+| Migración y datos               | [Guía de migración](migrations/legacy-to-mk1.md)           | [Backup/restore](operations/backup-restore.md)                                                                                                       |
+| Equipos reales / OT             | [Field Commissioning](field/README.md)                     | [Site Survey](field/site-survey.md) y [Metasys SAT](field/metasys-sat.md)                                                                            |
 
 ## ¿Qué documentación es normativa?
 
@@ -64,8 +64,8 @@ Las referencias `CONTRACT.md` en el directorio raíz del repositorio y en `docs/
 | Operational Console        | [Uso y límites](product/operational-console.md)                                                                         |
 | Usuario, sesión y permisos | [Seguridad](security/authentication.md), [RBAC](security/rbac-matrix.md)                                                |
 | CI y calidad               | [Estrategia de pruebas](testing/strategy.md)                                                                            |
-| Field commissioning        | [Hardware real / MQTT / SNMP / Metasys](field/README.md)                                                               |
-| Portabilidad / release      | [Portability & Real Equipment Commissioning](release/portability-hardening.md)                                           |
+| Field commissioning        | [Hardware real / MQTT / SNMP / Metasys](field/README.md)                                                                |
+| Portabilidad / release     | [Portability & Real Equipment Commissioning](release/portability-hardening.md)                                          |
 | Avance histórico           | [Gates de reconstrucción](release/gates/)                                                                               |
 
 ## Reglas editoriales del repositorio

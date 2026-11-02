@@ -4,50 +4,50 @@ Copiar este archivo a la ubicación controlada de evidencia por cada equipo o fu
 
 ## Release / contexto
 
-| Campo | Valor |
-| --- | --- |
-| Release SHA / image digest | |
-| Environment | INTEGRATION / PRE-PRODUCTION / FIELD / PRODUCTION |
-| Site | |
-| Fecha/hora | |
-| Operador | |
-| Revisor | |
+| Campo                      | Valor                                             |
+| -------------------------- | ------------------------------------------------- |
+| Release SHA / image digest |                                                   |
+| Environment                | INTEGRATION / PRE-PRODUCTION / FIELD / PRODUCTION |
+| Site                       |                                                   |
+| Fecha/hora                 |                                                   |
+| Operador                   |                                                   |
+| Revisor                    |                                                   |
 
 ## Equipo físico
 
-| Campo | Valor |
-| --- | --- |
-| Manufacturer | |
-| Model | |
-| Firmware | |
-| Serial | |
-| Asset tag | |
-| Room / Rack / Position | |
-| Device ID | |
-| Equipment ID | |
+| Campo                  | Valor |
+| ---------------------- | ----- |
+| Manufacturer           |       |
+| Model                  |       |
+| Firmware               |       |
+| Serial                 |       |
+| Asset tag              |       |
+| Room / Rack / Position |       |
+| Device ID              |       |
+| Equipment ID           |       |
 
 ## Fuente
 
-| Campo | Valor |
-| --- | --- |
-| Protocol | MQTT / SNMP / other |
-| sourceIdentity | |
-| Management/broker reference | |
-| Topic/OID/raw point | |
-| Transport security | |
-| Source documentation | |
+| Campo                       | Valor               |
+| --------------------------- | ------------------- |
+| Protocol                    | MQTT / SNMP / other |
+| sourceIdentity              |                     |
+| Management/broker reference |                     |
+| Topic/OID/raw point         |                     |
+| Transport security          |                     |
+| Source documentation        |                     |
 
 ## Interpretación
 
-| Campo | Valor |
-| --- | --- |
-| RAW value | |
-| RAW type/syntax | |
-| Canonical metric | |
-| Engineering unit | |
-| Scale/conversion | |
-| Evidence for meaning | |
-| Binding/profile revision | |
+| Campo                    | Valor |
+| ------------------------ | ----- |
+| RAW value                |       |
+| RAW type/syntax          |       |
+| Canonical metric         |       |
+| Engineering unit         |       |
+| Scale/conversion         |       |
+| Evidence for meaning     |       |
+| Binding/profile revision |       |
 
 ## Verificación
 
@@ -62,17 +62,17 @@ Copiar este archivo a la ubicación controlada de evidencia por cada equipo o fu
 
 ## Modbus / BMS (si aplica)
 
-| Campo | Valor |
-| --- | --- |
-| Unit ID | |
-| Register | |
-| Function | FC03 |
-| Encoding | |
-| Word order | |
-| Missing policy | |
-| Metasys point | |
-| SAT result | PASS / FAIL / BLOCKED / N/A |
-| Evidence reference | |
+| Campo              | Valor                       |
+| ------------------ | --------------------------- |
+| Unit ID            |                             |
+| Register           |                             |
+| Function           | FC03                        |
+| Encoding           |                             |
+| Word order         |                             |
+| Missing policy     |                             |
+| Metasys point      |                             |
+| SAT result         | PASS / FAIL / BLOCKED / N/A |
+| Evidence reference |                             |
 
 ## Cierre
 

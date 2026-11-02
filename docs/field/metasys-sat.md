@@ -32,32 +32,32 @@ No utilizar el CSV de integración controlada como As-Built de cliente sin susti
 
 Registrar:
 
-| Parámetro | Valor aprobado |
-| --- | --- |
-| Site Mapper/sidecar IP | |
-| TCP port | |
-| Metasys IP | |
-| Unit ID | |
-| Address base | 0 / 1 |
-| Word order | |
-| Poll interval | |
-| Timeout/retries | |
-| Missing/stale behavior | zero / exception |
-| Register map revision/hash | |
+| Parámetro                  | Valor aprobado   |
+| -------------------------- | ---------------- |
+| Site Mapper/sidecar IP     |                  |
+| TCP port                   |                  |
+| Metasys IP                 |                  |
+| Unit ID                    |                  |
+| Address base               | 0 / 1            |
+| Word order                 |                  |
+| Poll interval              |                  |
+| Timeout/retries            |                  |
+| Missing/stale behavior     | zero / exception |
+| Register map revision/hash |                  |
 
 ## 4. Prueba punto a punto
 
 Seleccionar al menos un punto representativo por tipo y por mapping relevante.
 
-| Etapa | Evidencia |
-| --- | --- |
-| Fuente física | valor/display/API del equipo, cuando esté disponible |
-| Site Mapper RAW | OID/raw point/topic + valor |
-| Canonical | metric + unit + Equipment |
-| LIVE | valor + timestamp + freshness |
-| TimescaleDB | observation compatible |
-| Modbus | Unit ID + register + decoded FLOAT32 |
-| Metasys | punto BMS + valor + unit |
+| Etapa           | Evidencia                                            |
+| --------------- | ---------------------------------------------------- |
+| Fuente física   | valor/display/API del equipo, cuando esté disponible |
+| Site Mapper RAW | OID/raw point/topic + valor                          |
+| Canonical       | metric + unit + Equipment                            |
+| LIVE            | valor + timestamp + freshness                        |
+| TimescaleDB     | observation compatible                               |
+| Modbus          | Unit ID + register + decoded FLOAT32                 |
+| Metasys         | punto BMS + valor + unit                             |
 
 Resultado esperado: identidad, semántica y valor son coherentes dentro de la tolerancia acordada.
 
@@ -82,17 +82,17 @@ No certificar estado fresco utilizando únicamente un valor anterior al reinicio
 
 ## 7. Resultado
 
-| Campo | Valor |
-| --- | --- |
-| Release SHA/image | |
-| Site | |
-| Equipment | |
-| Source identity | |
-| Register map revision | |
-| Fecha/hora | |
-| Integrador | |
-| Resultado | PASS / FAIL / BLOCKED |
-| Evidencia | |
-| Observaciones | |
+| Campo                 | Valor                 |
+| --------------------- | --------------------- |
+| Release SHA/image     |                       |
+| Site                  |                       |
+| Equipment             |                       |
+| Source identity       |                       |
+| Register map revision |                       |
+| Fecha/hora            |                       |
+| Integrador            |                       |
+| Resultado             | PASS / FAIL / BLOCKED |
+| Evidencia             |                       |
+| Observaciones         |                       |
 
 Un PASS de software sin acceso al Metasys real no es un PASS de este SAT; debe registrarse como BLOCKED o fuera de alcance.

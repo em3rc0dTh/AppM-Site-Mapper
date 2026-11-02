@@ -64,7 +64,7 @@ Los nombres con `/` representan alternativas del **mismo nivel**. No implican un
 
 ## Full stack limpio · seed-01
 
-Para levantar **Mongo + seed-01 + Site Mapper + Timescale + Telemetry Store + MQTT broker/publisher + SNMP agents/collectors + Modbus + Operational Console** en una máquina limpia:
+Para levantar **Mongo + seed-01 + Site Mapper + Timescale + Telemetry Store + MQTT broker/publisher + SNMP polling + SNMP trap/inform con spool + Modbus + Operational Console** en una máquina limpia:
 
 ```bash
 docker compose \

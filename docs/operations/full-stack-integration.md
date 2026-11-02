@@ -149,7 +149,7 @@ docker compose \
   --env-file infra/integration/integration.env \
   -f docker-compose.telemetry.yml \
   -f docker-compose.integration.yml \
-  logs -f site-mapper mqtt-publisher snmp-collector snmp-collector-qdf4 snmp-collector-qdf5
+  logs -f site-mapper mqtt-publisher snmp-collector-qdf2 snmp-collector-qdf4 snmp-collector-qdf5
 ```
 
 ## Parada

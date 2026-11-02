@@ -159,9 +159,8 @@ services:
       SNMP_COMMUNITY: site-mapper-integration
       SNMP_AGENT_SOURCE: INT-SNMP-QDF-5
 
-  snmp-collector:
+  snmp-collector-qdf2:
     <<: *snmp-collector
-    profiles: []
     environment:
       APP_ENV: development
       SNMP_CONTROLLER_HOST: snmp-agent-qdf2

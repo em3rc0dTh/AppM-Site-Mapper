@@ -5,6 +5,7 @@ import { SnmpFeedLoadPanel } from '@/components/power/snmp-feed-load-panel';
 import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
 import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
+import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -192,6 +193,7 @@ export function BdfbTelemetryInspector({
 }>) {
   const ti = useTranslations('bdfb.inspector.info');
   const t = useTranslations('bdfb.inspector');
+  const tw = useTranslations('workbench');
   const { samples, now } = useBdfbTelemetrySnapshot(node.id);
   const inspectorRef = useRef<HTMLElement>(null);
   const [tab, setTab] = useState<InspectorTab>('overview');
@@ -386,6 +388,13 @@ export function BdfbTelemetryInspector({
                 </small>
               </div>
             </section>
+            <div className="sm-detached-workbench-actions">
+              <DetachedWorkbenchButton
+                href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
+                windowName={`site-mapper-load-report-${node.id}`}
+                label={tw('openLoadReport')}
+              />
+            </div>
           </>
         )}
 
@@ -397,16 +406,37 @@ export function BdfbTelemetryInspector({
         )}
 
         {tab === 'feeds' && (
-          <SnmpFeedLoadPanel
-            key={node.id}
-            deviceId={node.id}
-            chassisId={presentation.chassisId}
-            view="feeds"
-          />
+          <>
+            <div className="sm-detached-workbench-actions">
+              <DetachedWorkbenchButton
+                href={`/workbench/telemetry?deviceId=${encodeURIComponent(node.id)}&view=inputs`}
+                windowName={`site-mapper-telemetry-${node.id}`}
+                label={tw('openInputs')}
+              />
+            </div>
+            <SnmpFeedLoadPanel
+              key={node.id}
+              deviceId={node.id}
+              chassisId={presentation.chassisId}
+              view="feeds"
+            />
+          </>
         )}
 
         {tab === 'history' && (
           <>
+            <div className="sm-detached-workbench-actions sm-detached-workbench-actions--split">
+              <DetachedWorkbenchButton
+                href={`/workbench/telemetry?deviceId=${encodeURIComponent(node.id)}&view=snmp`}
+                windowName={`site-mapper-telemetry-${node.id}`}
+                label={tw('openSnmpCharts')}
+              />
+              <DetachedWorkbenchButton
+                href={`/workbench/telemetry?deviceId=${encodeURIComponent(node.id)}&view=mqtt`}
+                windowName={`site-mapper-telemetry-${node.id}`}
+                label={tw('openMqttCharts')}
+              />
+            </div>
             <SnmpFeedHistory deviceId={node.id} />
             <section className="zip-bdfb-live-average" aria-label={ti('historyChart')}>
               <header>

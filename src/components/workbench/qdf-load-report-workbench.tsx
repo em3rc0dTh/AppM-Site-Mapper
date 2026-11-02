@@ -99,9 +99,6 @@ export function QdfLoadReportWorkbench({
 
   useEffect(() => {
     const controller = new AbortController();
-    setError('');
-    setTrends(null);
-    setBreakers(null);
     const query = `deviceId=${encodeURIComponent(deviceId)}&window=${windowRange}`;
     void Promise.all([
       fetch(`/api/telemetry/snmp/feeds/trends?${query}`, { cache: 'no-store', signal: controller.signal }),
@@ -180,14 +177,34 @@ export function QdfLoadReportWorkbench({
           <p>{location}</p>
         </div>
         <div className="sm-workbench-header-actions">
-          <button type="button" onClick={() => setRefresh((value) => value + 1)}>{t('refresh')}</button>
+          <button
+            type="button"
+            onClick={() => {
+              setError('');
+              setTrends(null);
+              setBreakers(null);
+              setRefresh((value) => value + 1);
+            }}
+          >
+            {t('refresh')}
+          </button>
           <button type="button" onClick={() => window.close()}>{t('close')}</button>
         </div>
       </header>
 
       <div className="sm-workbench-window-tabs" aria-label={t('reportWindow')}>
         {TELEMETRY_HISTORY_WINDOWS.map((item) => (
-          <button key={item} type="button" aria-pressed={windowRange === item} onClick={() => setWindowRange(item)}>
+          <button
+            key={item}
+            type="button"
+            aria-pressed={windowRange === item}
+            onClick={() => {
+              setError('');
+              setTrends(null);
+              setBreakers(null);
+              setWindowRange(item);
+            }}
+          >
             {item.toUpperCase()}
           </button>
         ))}

@@ -21,10 +21,10 @@ interface Props {
 }
 
 const METRICS = [
-  { key: 'voltageV', symbol: 'V', unit: 'V', digits: 2 },
-  { key: 'currentA', symbol: 'I', unit: 'A', digits: 2 },
-  { key: 'powerW', symbol: 'P', unit: 'W', digits: 2 },
-  { key: 'energyKwh', symbol: 'E', unit: 'kWh', digits: 4 },
+  { key: 'voltageV', symbol: 'V', unit: 'V', digits: 2, scale: 1 },
+  { key: 'currentA', symbol: 'I', unit: 'A', digits: 2, scale: 1 },
+  { key: 'powerW', symbol: 'P', unit: 'kW', digits: 3, scale: 0.001 },
+  { key: 'energyKwh', symbol: 'E', unit: 'kWh', digits: 4, scale: 1 },
 ] as const;
 
 function formatted(value: number | undefined, digits: number): string {
@@ -160,7 +160,12 @@ function BreakerMetrics({
       {METRICS.map((item) => (
         <span className="ec-reading" key={item.key} title={item.unit}>
           <span className="ec-metric-key">{item.symbol}</span>
-          <strong>{formatted(reading?.[item.key], item.digits)}</strong>
+          <strong>
+            {formatted(
+              reading?.[item.key] === undefined ? undefined : reading[item.key]! * item.scale,
+              item.digits,
+            )}
+          </strong>
           <small>{item.unit}</small>
         </span>
       ))}
@@ -246,7 +251,7 @@ function PanelComposition({
             <span>{t('breaker')}</span>
             <span>V · V</span>
             <span>I · A</span>
-            <span>P · W</span>
+            <span>P · kW</span>
             <span>E · kWh</span>
             <span>{t('status')}</span>
             <span>{t('alarm')}</span>

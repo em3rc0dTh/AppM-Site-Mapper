@@ -6,6 +6,7 @@ import type {
   TelemetryBinding,
   TelemetryMetricValue,
 } from '@/modules/telemetry/domain/entities';
+import { normalizePowerToWatts } from '@/modules/telemetry/domain/power-unit-contract';
 
 interface ResolvedBreaker {
   readonly shelfId: string;
@@ -39,6 +40,15 @@ function finiteNumber(value: unknown): number | null {
 function metric(value: unknown, observedAt: string): TelemetryMetricValue | undefined {
   const numeric = finiteNumber(value);
   return numeric === null ? undefined : { value: numeric, observedAt };
+}
+
+function powerMetric(
+  value: unknown,
+  observedAt: string,
+  sourceUnit?: string,
+): TelemetryMetricValue | undefined {
+  const watts = normalizePowerToWatts(value, sourceUnit);
+  return watts === undefined ? undefined : { value: watts, observedAt };
 }
 
 function breakerMap(presentation: BdfbPresentation): ReadonlyMap<string, ResolvedBreaker> {
@@ -127,7 +137,9 @@ export function buildBfdbBreakerReadings(
     const accepts = (name: BfdbMetric) => !mapping || mapping.metrics.has(name);
     const voltageV = accepts('VOLTAGE') ? metric(rawPoint.U1, observedAt) : undefined;
     const currentA = accepts('CURRENT') ? metric(rawPoint.I1, observedAt) : undefined;
-    const powerW = accepts('POWER') ? metric(rawPoint.P1, observedAt) : undefined;
+    const powerW = accepts('POWER')
+      ? powerMetric(rawPoint.P1, observedAt, mapping?.metrics.get('POWER')?.unit)
+      : undefined;
     const energyKwh = accepts('ENERGY') ? metric(rawPoint.EP1, observedAt) : undefined;
     const metrics: BreakerTelemetryMetrics = {
       ...(voltageV ? { voltageV } : {}),

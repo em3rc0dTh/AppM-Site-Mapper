@@ -24,12 +24,18 @@ const message: NormalizedTelemetryMessage = {
     '0_1_2': { state: 'ONLINE', U1: '14' },
   },
 };
-const binding = (metric: string, targetId = 'breaker-01', point = '0_1_1'): TelemetryBinding => ({
+const binding = (
+  metric: string,
+  targetId = 'breaker-01',
+  point = '0_1_1',
+  unit?: string,
+): TelemetryBinding => ({
   id: `binding:${targetId}:${point}:${metric}`,
   sourceIdentity: 'EMU-BFDB-03',
   protocol: 'MQTT',
   sourcePointId: point,
   metric,
+  ...(unit ? { unit } : {}),
   targetType: 'EQUIPMENT',
   targetId,
   lifecycle: 'ACTIVE',
@@ -55,6 +61,50 @@ describe('explicit BFDB breaker Equipment projection', () => {
       },
     });
     expect(result[0]?.metricBindingIds).toHaveLength(4);
+  });
+
+  it('normalizes an explicitly declared kW source to canonical internal watts', () => {
+    const kwMessage: NormalizedTelemetryMessage = {
+      ...message,
+      reported: {
+        '0_1_1': {
+          state: 'ONLINE',
+          U1: '13.78',
+          I1: '1.93',
+          P1: '0.02664',
+          EP1: '0.2795',
+        },
+      },
+    };
+    const bindings = [
+      binding('VOLTAGE'),
+      binding('CURRENT'),
+      binding('POWER', 'breaker-01', '0_1_1', 'kW'),
+      binding('ENERGY'),
+    ];
+    const result = buildBoundBfdbEquipmentPatches(
+      kwMessage,
+      bindings,
+      new Set(['breaker-01']),
+    );
+    expect(result[0]?.reported.powerW).toEqual({
+      value: 26.64,
+      unit: 'W',
+      observedAt: receivedAt,
+    });
+  });
+
+  it('fails only the power metric closed when a source declares an unsupported power unit', () => {
+    const bindings = [
+      binding('VOLTAGE'),
+      binding('CURRENT'),
+      binding('POWER', 'breaker-01', '0_1_1', 'MW'),
+      binding('ENERGY'),
+    ];
+    const result = buildBoundBfdbEquipmentPatches(message, bindings, new Set(['breaker-01']));
+    expect(result[0]?.reported).not.toHaveProperty('powerW');
+    expect(result[0]?.reported).toHaveProperty('voltageV');
+    expect(result[0]?.reported).toHaveProperty('currentA');
   });
 
   it('never assigns a panel raw point to an unbound or unverified breaker', () => {

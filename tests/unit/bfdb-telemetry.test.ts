@@ -101,6 +101,25 @@ describe('BFDB telemetry binding', () => {
     expect(result.readings[0]?.state?.value).toBe('ONLINE');
   });
 
+  it('uses W as the BFDB v1 default and accepts an explicit kW binding override', () => {
+    const wattResult = buildBfdbBreakerReadings(
+      presentation,
+      message({ '0_9_9': { P1: '55.62' } }),
+      bindings('0_9_9', 'breaker-a1'),
+    );
+    expect(wattResult.readings[0]?.metrics.powerW?.value).toBe(55.62);
+
+    const kwBindings = bindings('0_9_9', 'breaker-a1').map((binding) =>
+      binding.metric === 'POWER' ? { ...binding, unit: 'kW' } : binding,
+    );
+    const kwResult = buildBfdbBreakerReadings(
+      presentation,
+      message({ '0_9_9': { P1: '0.05562' } }),
+      kwBindings,
+    );
+    expect(kwResult.readings[0]?.metrics.powerW?.value).toBeCloseTo(55.62, 10);
+  });
+
   it('reports points without an unambiguous binding as unmapped', () => {
     const result = buildBfdbBreakerReadings(
       presentation,

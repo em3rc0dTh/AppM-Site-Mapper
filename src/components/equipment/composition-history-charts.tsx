@@ -14,13 +14,18 @@ interface HistoryResponse {
   readonly error?: string;
 }
 
-const METRICS: readonly { key: CompositionMetricKey; name: string; unit: string; color: string }[] =
-  [
-    { key: 'voltageV', name: 'Voltage', unit: 'V', color: '#257bb8' },
-    { key: 'currentA', name: 'Current', unit: 'A', color: '#069e99' },
-    { key: 'powerW', name: 'Power', unit: 'W', color: '#d47a29' },
-    { key: 'energyKwh', name: 'Energy counter', unit: 'kWh', color: '#8467c8' },
-  ];
+const METRICS: readonly {
+  key: CompositionMetricKey;
+  name: string;
+  unit: string;
+  color: string;
+  scale: number;
+}[] = [
+  { key: 'voltageV', name: 'Voltage', unit: 'V', color: '#257bb8', scale: 1 },
+  { key: 'currentA', name: 'Current', unit: 'A', color: '#069e99', scale: 1 },
+  { key: 'powerW', name: 'Power', unit: 'kW', color: '#d47a29', scale: 0.001 },
+  { key: 'energyKwh', name: 'Energy counter', unit: 'kWh', color: '#8467c8', scale: 1 },
+];
 const WINDOWS: readonly TelemetryHistoryWindow[] = ['24h', '7d', '15d', '1M'];
 
 function formatValue(value: number, locale: string): string {
@@ -33,6 +38,7 @@ function SeriesChart({
   color,
   points,
   metric,
+  scale,
   window,
 }: Readonly<{
   name: string;
@@ -40,6 +46,7 @@ function SeriesChart({
   color: string;
   points: readonly CompositionHistoryPoint[];
   metric: CompositionMetricKey;
+  scale: number;
   window: TelemetryHistoryWindow;
 }>) {
   const t = useTranslations('historyCharts');
@@ -48,7 +55,7 @@ function SeriesChart({
     const value = point.metrics[metric];
     const at = Date.parse(point.at);
     return typeof value === 'number' && Number.isFinite(value) && Number.isFinite(at)
-      ? [{ at, value, reporting: point.reportingChildren }]
+      ? [{ at, value: value * scale, reporting: point.reportingChildren }]
       : [];
   });
   if (!observations.length) {
@@ -255,6 +262,7 @@ export function CompositionHistoryCharts({
                   color={metric.color}
                   points={data.points}
                   metric={metric.key}
+                  scale={metric.scale}
                   window={window}
                 />
               ))}

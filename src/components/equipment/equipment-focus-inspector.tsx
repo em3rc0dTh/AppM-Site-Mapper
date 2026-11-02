@@ -152,7 +152,11 @@ export function EquipmentFocusInspector({
                         <small>
                           {metric.symbol} · {t(`metric.${metric.key}`)}
                         </small>
-                        <strong>{value === undefined ? '—' : value.toFixed(metric.digits)}</strong>
+                        <strong>
+                          {value === undefined
+                            ? '—'
+                            : (value * metric.scale).toFixed(metric.digits)}
+                        </strong>
                         <span>{metric.unit}</span>
                       </div>
                     );

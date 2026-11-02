@@ -98,14 +98,18 @@ services:
     entrypoint: ['/bin/sh', '-ec']
     command:
       - |
-        for attempt in $(seq 1 60); do
-          code="$(curl -sS -o /tmp/bootstrap.json -w '%{http_code}' \
+        for attempt in $$(seq 1 60); do
+          code="$$(curl -sS -o /tmp/bootstrap.json -w '%{http_code}' \
             -X POST http://site-mapper:3000/api/auth/bootstrap \
             -H 'content-type: application/json' \
             -H 'authorization: Bearer seed01-integration-bootstrap-token-0000000000000001' \
             --data '{"email":"integration@site-mapper.local","password":"Seed01-Integration-Only!2026","displayName":"Seed-01 Integration Admin"}' \
             || true)"
-          if [ "$code" = "201" ] || [ "$code" = "409" ]; then
+          if [ "$$code" = "201" ]; then
+            cat /tmp/bootstrap.json
+            exit 0
+          fi
+          if [ "$$code" = "409" ] && grep -q '"error":"BOOTSTRAP_CLOSED"' /tmp/bootstrap.json; then
             cat /tmp/bootstrap.json
             exit 0
           fi

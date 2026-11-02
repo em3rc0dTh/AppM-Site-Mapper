@@ -1,9 +1,10 @@
-name: Industrial lab operator safety
+name: Industrial integration operator safety
 
 on:
   push:
     branches:
-      - feat/site-mapper-work-2026-10-23
+      - main
+      - 'release/**'
   pull_request:
     paths:
       - 'scripts/telemetry/**'
@@ -11,6 +12,8 @@ on:
       - 'tests/python/**'
       - 'docs/user-guide/**'
       - 'docs/operations/**'
+      - 'docs/field/**'
+      - 'docs/release/portability-hardening.md'
       - '.github/workflows/industrial-lab-operator-safety.yml'
   workflow_dispatch:
 

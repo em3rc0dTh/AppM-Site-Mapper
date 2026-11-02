@@ -5,14 +5,14 @@
 
 ## 1. Identification
 
-| Field | Value |
-| --- | --- |
-| Project | QDF monitoring / Site Mapper |
-| Customer/site | `<controlled project reference>` |
-| System | Site Mapper |
-| Release SHA | `<exact accepted commit>` |
-| Acceptance run | `<run ID>` |
-| Date | `<date>` |
+| Field          | Value                            |
+| -------------- | -------------------------------- |
+| Project        | QDF monitoring / Site Mapper     |
+| Customer/site  | `<controlled project reference>` |
+| System         | Site Mapper                      |
+| Release SHA    | `<exact accepted commit>`        |
+| Acceptance run | `<run ID>`                       |
+| Date           | `<date>`                         |
 
 ## 2. Certified scope
 
@@ -31,13 +31,13 @@ Do not include field items that remain BLOCKED.
 
 ## 3. Acceptance summary
 
-| Category | PASS | FAIL | BLOCKED | N/A |
-| --- | ---: | ---: | ---: | ---: |
-| Software / web |  |  |  |  |
-| Telemetry / history |  |  |  |  |
-| Load reporting |  |  |  |  |
-| Modbus / integration |  |  |  |  |
-| Field / physical |  |  |  |  |
+| Category             | PASS | FAIL | BLOCKED | N/A |
+| -------------------- | ---: | ---: | ------: | --: |
+| Software / web       |      |      |         |     |
+| Telemetry / history  |      |      |         |     |
+| Load reporting       |      |      |         |     |
+| Modbus / integration |      |      |         |     |
+| Field / physical     |      |      |         |     |
 
 ## 4. Operability statement
 
@@ -77,15 +77,15 @@ List every known limitation or blocker. At minimum review:
 
 ## 6. Evidence references
 
-| Area | Evidence |
-| --- | --- |
-| Release identity | `09-RELEASE-IDENTIFICATION.md` |
-| Compliance | `01-RFP-COMPLIANCE-MATRIX.md` |
-| Procedures | `03-TEST-PROCEDURES.md` |
-| Results | `04-TEST-RESULTS.md` |
-| Technical dossier | `06-TECHNICAL-DOSSIER.md` |
-| As-Built | `07-AS-BUILT.md` |
-| Limitations | `08-KNOWN-LIMITATIONS.md` |
+| Area               | Evidence                                             |
+| ------------------ | ---------------------------------------------------- |
+| Release identity   | `09-RELEASE-IDENTIFICATION.md`                       |
+| Compliance         | `01-RFP-COMPLIANCE-MATRIX.md`                        |
+| Procedures         | `03-TEST-PROCEDURES.md`                              |
+| Results            | `04-TEST-RESULTS.md`                                 |
+| Technical dossier  | `06-TECHNICAL-DOSSIER.md`                            |
+| As-Built           | `07-AS-BUILT.md`                                     |
+| Limitations        | `08-KNOWN-LIMITATIONS.md`                            |
 | Evidence artifacts | `evidence/<run/case>` or controlled project location |
 
 ## 7. Statement on telemetry authority
@@ -102,11 +102,11 @@ The accepted release must retain the documented canonical authorities:
 
 ## 8. Approval
 
-| Role | Name | Organization | Decision | Date | Signature/reference |
-| --- | --- | --- | --- | --- | --- |
-| Acceptance Lead |  |  |  |  |  |
-| Software Owner |  |  |  |  |  |
-| Field/OT Representative |  |  |  |  |  |
-| Customer/Project Representative |  |  |  |  |  |
+| Role                            | Name | Organization | Decision | Date | Signature/reference |
+| ------------------------------- | ---- | ------------ | -------- | ---- | ------------------- |
+| Acceptance Lead                 |      |              |          |      |                     |
+| Software Owner                  |      |              |          |      |                     |
+| Field/OT Representative         |      |              |          |      |                     |
+| Customer/Project Representative |      |              |          |      |                     |
 
 The certificate is invalid if its release SHA, test results and stated scope do not agree.

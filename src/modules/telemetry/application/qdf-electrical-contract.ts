@@ -1,18 +1,26 @@
-import type { TelemetryHistoryWindow } from '@/modules/telemetry/domain/history';
-import type { QdfLiveTotalCurrent, QdfTotalCurrentPoint } from '@/modules/telemetry/application/qdf-total-current';
+import type {
+  QdfLiveTotalCurrent,
+  QdfTotalCurrentPoint,
+} from '@/modules/telemetry/application/qdf-total-current';
 import type { QdfTotalEnergyPoint } from '@/modules/telemetry/application/qdf-total-energy';
-import type { QdfLiveTotalPower, QdfTotalPowerPoint } from '@/modules/telemetry/application/qdf-total-power';
+import type {
+  QdfLiveTotalPower,
+  QdfTotalPowerPoint,
+} from '@/modules/telemetry/application/qdf-total-power';
 import type {
   QdfHistoricalVoltageProjection,
   QdfVoltageSnapshot,
 } from '@/modules/telemetry/application/qdf-total-voltage';
+import type { TelemetryHistoryWindow } from '@/modules/telemetry/domain/history';
 
 export const QDF_ELECTRICAL_CONTRACT_VERSION = 'qdf-vipe-v1' as const;
 
 export type QdfElectricalMetricQuality = 'VALID' | 'UNAVAILABLE';
 export type QdfElectricalContractStatus = 'COMPLETE' | 'PARTIAL' | 'UNAVAILABLE';
 
-function aggregateStatus(qualities: readonly QdfElectricalMetricQuality[]): QdfElectricalContractStatus {
+function aggregateStatus(
+  qualities: readonly QdfElectricalMetricQuality[],
+): QdfElectricalContractStatus {
   const valid = qualities.filter((quality) => quality === 'VALID').length;
   if (valid === qualities.length) return 'COMPLETE';
   if (valid === 0) return 'UNAVAILABLE';

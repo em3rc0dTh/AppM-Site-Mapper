@@ -2,16 +2,7 @@ import type { Role } from '@/modules/identity/domain/roles';
 import { hasPermission } from '@/modules/identity/domain/roles';
 
 /** Route-level visibility. Server API authorization remains authoritative. */
-export const settingsTabs = [
-  'Profile',
-  'Security',
-  'Users',
-  'Roles',
-  'Data Import',
-  'Drafting',
-  'System',
-  'Danger Zone',
-] as const;
+export const settingsTabs = ['Profile', 'Security', 'Users', 'Roles'] as const;
 
 export type SettingsTab = (typeof settingsTabs)[number];
 
@@ -27,13 +18,7 @@ export function visibleSettingsTabs(role: Role): readonly SettingsTab[] {
         return true;
       case 'Users':
         return hasPermission(role, 'users:manage');
-      case 'Data Import':
-        return hasPermission(role, 'settings:read') && hasPermission(role, 'topology:write');
-      case 'Danger Zone':
-        return hasPermission(role, 'system:danger');
       case 'Roles':
-      case 'Drafting':
-      case 'System':
         return hasPermission(role, 'settings:read');
     }
   });

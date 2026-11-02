@@ -267,3 +267,12 @@ services:
         condition: service_healthy
       snmp-agent-qdf5:
         condition: service_started
+
+volumes:
+  integration_trap_spool:
+
+networks:
+  integration_ot:
+    ipam:
+      config:
+        - subnet: 172.29.240.0/24

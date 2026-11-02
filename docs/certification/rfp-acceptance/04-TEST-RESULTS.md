@@ -9,27 +9,27 @@ an actual acceptance run against the frozen release.
 
 ## 2. Run header
 
-| Field | Value |
-| --- | --- |
-| Acceptance run ID | `<YYYYMMDD-site-mapper-qdf-XX>` |
-| Release SHA | `<commit>` |
-| Deployment ID | `<deployment/image>` |
-| Date/time | `<ISO-8601 with timezone>` |
-| Environment | `LAB / PRE-PROD / FIELD` |
-| Data provenance | `LAB / FIELD` |
-| Acceptance Lead | `<name/role>` |
-| Test Operator | `<name/role>` |
-| Field/OT representative | `<name/role or N/A>` |
+| Field                   | Value                           |
+| ----------------------- | ------------------------------- |
+| Acceptance run ID       | `<YYYYMMDD-site-mapper-qdf-XX>` |
+| Release SHA             | `<commit>`                      |
+| Deployment ID           | `<deployment/image>`            |
+| Date/time               | `<ISO-8601 with timezone>`      |
+| Environment             | `LAB / PRE-PROD / FIELD`        |
+| Data provenance         | `LAB / FIELD`                   |
+| Acceptance Lead         | `<name/role>`                   |
+| Test Operator           | `<name/role>`                   |
+| Field/OT representative | `<name/role or N/A>`            |
 
 ## 3. Summary
 
-| Result | Count |
-| --- | ---: |
-| PASS | 0 |
-| FAIL | 0 |
-| BLOCKED | 0 |
-| N/A | 0 |
-| NOT_RUN | 18 |
+| Result  | Count |
+| ------- | ----: |
+| PASS    |     0 |
+| FAIL    |     0 |
+| BLOCKED |     0 |
+| N/A     |     0 |
+| NOT_RUN |    18 |
 
 **Overall disposition:** `NOT_EXECUTED`
 
@@ -37,26 +37,26 @@ Do not change the overall disposition to PASS while any in-scope software FAIL r
 
 ## 4. Result register
 
-| Test | Scope | Result | Evidence reference | Observation / action |
-| --- | --- | --- | --- | --- |
-| ACC-001 | Release identity | NOT_RUN | — | — |
-| ACC-002 | Local web platform | NOT_RUN | — | — |
-| ACC-003 | Breaker V/A/kW/kWh | NOT_RUN | — | — |
-| ACC-004 | QDF total Current | NOT_RUN | — | — |
-| ACC-005 | QDF total Voltage | NOT_RUN | — | — |
-| ACC-006 | QDF total Power | NOT_RUN | — | — |
-| ACC-007 | QDF Energy | NOT_RUN | — | — |
-| ACC-008 | Load Report | NOT_RUN | — | — |
-| ACC-009 | Fail-closed quality | NOT_RUN | — | — |
-| ACC-010 | Persistence/restart | NOT_RUN | — | — |
-| ACC-011 | QDF/source isolation | NOT_RUN | — | — |
-| ACC-012 | Authorized telemetry access | NOT_RUN | — | — |
-| ACC-013 | Modbus lab contract | NOT_RUN | — | — |
-| ACC-014 | Metasys field integration | NOT_RUN | — | — |
-| ACC-015 | Door display | NOT_RUN | — | — |
-| ACC-016 | Physical QDF capacity/install | NOT_RUN | — | — |
-| ACC-017 | As-Built review | NOT_RUN | — | — |
-| ACC-018 | Final operability/handoff | NOT_RUN | — | — |
+| Test    | Scope                         | Result  | Evidence reference | Observation / action |
+| ------- | ----------------------------- | ------- | ------------------ | -------------------- |
+| ACC-001 | Release identity              | NOT_RUN | —                  | —                    |
+| ACC-002 | Local web platform            | NOT_RUN | —                  | —                    |
+| ACC-003 | Breaker V/A/kW/kWh            | NOT_RUN | —                  | —                    |
+| ACC-004 | QDF total Current             | NOT_RUN | —                  | —                    |
+| ACC-005 | QDF total Voltage             | NOT_RUN | —                  | —                    |
+| ACC-006 | QDF total Power               | NOT_RUN | —                  | —                    |
+| ACC-007 | QDF Energy                    | NOT_RUN | —                  | —                    |
+| ACC-008 | Load Report                   | NOT_RUN | —                  | —                    |
+| ACC-009 | Fail-closed quality           | NOT_RUN | —                  | —                    |
+| ACC-010 | Persistence/restart           | NOT_RUN | —                  | —                    |
+| ACC-011 | QDF/source isolation          | NOT_RUN | —                  | —                    |
+| ACC-012 | Authorized telemetry access   | NOT_RUN | —                  | —                    |
+| ACC-013 | Modbus lab contract           | NOT_RUN | —                  | —                    |
+| ACC-014 | Metasys field integration     | NOT_RUN | —                  | —                    |
+| ACC-015 | Door display                  | NOT_RUN | —                  | —                    |
+| ACC-016 | Physical QDF capacity/install | NOT_RUN | —                  | —                    |
+| ACC-017 | As-Built review               | NOT_RUN | —                  | —                    |
+| ACC-018 | Final operability/handoff     | NOT_RUN | —                  | —                    |
 
 ## 5. Per-test execution record template
 
@@ -131,11 +131,11 @@ Typical legitimate blockers include:
 
 ## 8. Final approval record
 
-| Role | Name | Decision | Date | Signature/reference |
-| --- | --- | --- | --- | --- |
-| Acceptance Lead |  |  |  |  |
-| Software Owner |  |  |  |  |
-| Field/OT Representative |  |  |  |  |
-| Customer/Project Representative |  |  |  |  |
+| Role                            | Name | Decision | Date | Signature/reference |
+| ------------------------------- | ---- | -------- | ---- | ------------------- |
+| Acceptance Lead                 |      |          |      |                     |
+| Software Owner                  |      |          |      |                     |
+| Field/OT Representative         |      |          |      |                     |
+| Customer/Project Representative |      |          |      |                     |
 
 Final approval must use the same release SHA and scope stated in the Operability Certificate.

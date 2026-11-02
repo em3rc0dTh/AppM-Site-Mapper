@@ -62,6 +62,18 @@ services:
     restart: unless-stopped
 
   site-mapper:
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/login').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+      start_period: 5s
     environment:
       SITE_MAPPER_INTEGRATION_PROFILE: seed-01-controlled
       TELEMETRY_ENABLED: 'true'
@@ -103,7 +115,7 @@ services:
         exit 1
     depends_on:
       site-mapper:
-        condition: service_started
+        condition: service_healthy
     restart: 'no'
 
   mqtt-publisher:
@@ -119,7 +131,7 @@ services:
       mosquitto:
         condition: service_healthy
       site-mapper:
-        condition: service_started
+        condition: service_healthy
     restart: unless-stopped
 
   snmp-agent-qdf2:
@@ -160,7 +172,7 @@ services:
       SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
     depends_on:
       site-mapper:
-        condition: service_started
+        condition: service_healthy
       snmp-agent-qdf2:
         condition: service_started
 
@@ -180,7 +192,7 @@ services:
       SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
     depends_on:
       site-mapper:
-        condition: service_started
+        condition: service_healthy
       snmp-agent-qdf4:
         condition: service_started
 
@@ -200,6 +212,6 @@ services:
       SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
     depends_on:
       site-mapper:
-        condition: service_started
+        condition: service_healthy
       snmp-agent-qdf5:
         condition: service_started

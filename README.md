@@ -62,6 +62,20 @@ Los nombres con `/` representan alternativas del **mismo nivel**. No implican un
 
 **Estado:** especificación documentada, **no paquete de cliente generado**. `docker-compose.telemetry.yml` es el stack de integración/preproducción que todavía construye desde el código; no es el bundle final de cliente. Los datos y secretos del cliente deben residir en volúmenes y configuración privada, con backups/migraciones aprobadas antes de actualizar.
 
+## Full stack limpio · seed-01
+
+Para levantar **Mongo + seed-01 + Site Mapper + Timescale + Telemetry Store + MQTT broker/publisher + SNMP agents/collectors + Modbus + Operational Console** en una máquina limpia:
+
+```bash
+docker compose \
+  --env-file infra/integration/integration.env \
+  -f docker-compose.telemetry.yml \
+  -f docker-compose.integration.yml \
+  up -d --build
+```
+
+No requiere el repositorio BFDB externo ni scripts posteriores de reparación/commissioning. El perfil es sintético y está marcado como integración; no es evidencia de campo. Guía completa: [Full Stack Integration · seed-01](docs/operations/full-stack-integration.md).
+
 ## Inicio rápido · Demo visual sin Docker
 
 Requisitos: Node.js 22.13+ (menor a 23), npm y navegador.

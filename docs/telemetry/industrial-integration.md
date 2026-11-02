@@ -213,6 +213,16 @@ must be aligned. Historical TOTAL_POWER sums only buckets where every expected F
 complete paired V/I coverage; a bucket with any unpaired sample is omitted rather than partially
 summed. The legacy breaker block 0–767 and internal watt storage remain unchanged.
 
+### Unified QDF V/A/P/E contract
+
+Site Mapper exposes an additive application-level `qdf-vipe-v1` contract that composes the
+already-authoritative QDF Voltage, Current, Power and Energy projections. It never recalculates
+those measurements. Live scope contains canonical Voltage/Current/Power and explicitly marks Energy
+as `WINDOW_ONLY`; historical scope contains all four metrics and preserves E1 Energy as a requested
+window measurement rather than a lifetime counter. Each metric retains independent quality and
+timestamps, while the contract-level status is only a completeness summary. Existing API fields and
+Modbus logical points remain unchanged for backward compatibility.
+
 QDF total energy E1 is an **historical window measurement**, not a lifetime meter counter.
 It is published by the trends/load-report surface as the sum of the existing per-feed
 `estimatedEnergyKwh` values only for buckets where every expected independent input is verified

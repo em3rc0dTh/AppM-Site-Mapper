@@ -3,6 +3,12 @@ import {
   assessBdfbInventory,
   bdfbHardwareProfile,
 } from '@/modules/power/domain/bdfb-hardware-profile';
+import { composeQdfLiveElectricalContract } from '@/modules/telemetry/application/qdf-electrical-contract';
+import { projectVerifiedLiveTotalCurrent } from '@/modules/telemetry/application/qdf-total-current';
+import {
+  projectVerifiedLiveTotalPower,
+  type QdfLiveFeedPowerEvidence,
+} from '@/modules/telemetry/application/qdf-total-power';
 import { summarizeSnmpBdfbLoad } from '@/modules/telemetry/application/snmp-feed-service';
 import {
   projectVerifiedQdfVoltage,
@@ -64,13 +70,26 @@ export async function GET(request: Request) {
   const toleranceV = device?.kind === 'DEVICE' ? qdfVoltageToleranceV(device.attributes) : null;
   const now = Date.now();
   const voltageEvidence: QdfVoltageFeedEvidence[] = [];
+  const powerEvidence: QdfLiveFeedPowerEvidence[] = [];
   for (const feed of result.feeds) {
     const active = (await bindingRepo.listForTarget('ACCESS_PORT', feed.accessPortId)).filter(
       (binding) => binding.lifecycle === 'ACTIVE' && binding.protocol === 'SNMP',
     );
+    const currentBindings = active.filter((binding) => binding.metric === 'CURRENT');
+    const currentBinding = currentBindings.length === 1 ? currentBindings[0]! : null;
     const voltageBindings = active.filter((binding) => binding.metric === 'VOLTAGE');
     const voltageBinding = voltageBindings.length === 1 ? voltageBindings[0]! : null;
     const sample = telemetry.hub.latest(feed.accessPortId);
+    const currentRaw = sample?.reported.currentA;
+    const currentReading =
+      currentRaw && typeof currentRaw === 'object' && !Array.isArray(currentRaw)
+        ? (currentRaw as { value?: unknown; oid?: unknown; observedAt?: unknown })
+        : null;
+    const currentObservedAt =
+      typeof currentReading?.observedAt === 'string' &&
+      Number.isFinite(Date.parse(currentReading.observedAt))
+        ? currentReading.observedAt
+        : null;
     const raw = sample?.reported.voltageV;
     const reading =
       raw && typeof raw === 'object' && !Array.isArray(raw)
@@ -104,6 +123,26 @@ export async function GET(request: Request) {
       voltageV: permitted ? (reading!.value as number) : null,
       observedAt,
     });
+    const sameSource = Boolean(
+      currentBinding &&
+      voltageBinding &&
+      currentBinding.sourceIdentity === voltageBinding.sourceIdentity &&
+      sample?.sourceIdentity === currentBinding.sourceIdentity,
+    );
+    powerEvidence.push({
+      accessPortId: feed.accessPortId,
+      sameSource,
+      currentSourceMode:
+        currentBinding?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY'
+          ? 'SYNTHETIC_LAB_ONLY'
+          : 'FIELD',
+      voltageSourceMode:
+        voltageBinding?.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY'
+          ? 'SYNTHETIC_LAB_ONLY'
+          : 'FIELD',
+      currentObservedAt,
+      voltageObservedAt: observedAt,
+    });
   }
 
   const voltageContract =
@@ -115,6 +154,13 @@ export async function GET(request: Request) {
           toleranceV,
         )
       : { busA: null, busB: null, total: null };
+  const currentContract = projectVerifiedLiveTotalCurrent(result);
+  const powerContract = projectVerifiedLiveTotalPower(result, powerEvidence);
+  const qdfElectricalContract = composeQdfLiveElectricalContract(deviceId, {
+    current: currentContract,
+    power: powerContract,
+    voltage: voltageContract,
+  });
 
   return Response.json(
     {
@@ -125,6 +171,7 @@ export async function GET(request: Request) {
         semantics: 'COHERENT_REPRESENTATIVE_A_B_BUS_VOLTAGE',
         ...voltageContract,
       },
+      qdfElectricalContract,
     },
     { headers: { 'Cache-Control': 'no-store' } },
   );

@@ -5,63 +5,63 @@
 
 ## 1. Source
 
-| Field | Value |
-| --- | --- |
-| Repository | `em3rc0dTh/AppM-Site-Mapper` |
-| Branch/tag |  |
-| Exact commit SHA |  |
-| Release/version |  |
-| Commit date |  |
-| Acceptance run ID |  |
+| Field             | Value                        |
+| ----------------- | ---------------------------- |
+| Repository        | `em3rc0dTh/AppM-Site-Mapper` |
+| Branch/tag        |                              |
+| Exact commit SHA  |                              |
+| Release/version   |                              |
+| Commit date       |                              |
+| Acceptance run ID |                              |
 
 ## 2. Build/deployment
 
-| Field | Value |
-| --- | --- |
-| Deployment type | `local / container / pre-prod / field` |
-| Site Mapper image/build ID |  |
-| Node/runtime version |  |
-| Build timestamp |  |
-| Deployment timestamp |  |
-| Configuration profile reference |  |
+| Field                           | Value                                  |
+| ------------------------------- | -------------------------------------- |
+| Deployment type                 | `local / container / pre-prod / field` |
+| Site Mapper image/build ID      |                                        |
+| Node/runtime version            |                                        |
+| Build timestamp                 |                                        |
+| Deployment timestamp            |                                        |
+| Configuration profile reference |                                        |
 
 ## 3. Dependencies
 
-| Component | Version / identity |
-| --- | --- |
-| MongoDB |  |
-| PostgreSQL / TimescaleDB |  |
-| MQTT broker |  |
-| SNMP collector/profile |  |
-| Modbus sidecar |  |
-| Browser |  |
-| Operating system |  |
+| Component                | Version / identity |
+| ------------------------ | ------------------ |
+| MongoDB                  |                    |
+| PostgreSQL / TimescaleDB |                    |
+| MQTT broker              |                    |
+| SNMP collector/profile   |                    |
+| Modbus sidecar           |                    |
+| Browser                  |                    |
+| Operating system         |                    |
 
 ## 4. Accepted target
 
-| Field | Value |
-| --- | --- |
-| Customer/site reference |  |
-| QDF field label |  |
-| Site Mapper Device ID or controlled alias |  |
-| Chassis ID or controlled alias |  |
-| Installed breaker count |  |
-| Expected incoming feed count |  |
+| Field                                     | Value |
+| ----------------------------------------- | ----- |
+| Customer/site reference                   |       |
+| QDF field label                           |       |
+| Site Mapper Device ID or controlled alias |       |
+| Chassis ID or controlled alias            |       |
+| Installed breaker count                   |       |
+| Expected incoming feed count              |       |
 
 ## 5. Configuration revisions
 
 Record stable references/hashes. Do not paste secrets.
 
-| Configuration | Revision/hash/reference |
-| --- | --- |
-| Topology/inventory |  |
-| Telemetry binding set |  |
-| Source/controller profile |  |
-| QDF voltage tolerance |  |
-| Modbus source-to-Unit-ID map |  |
-| Modbus point layout |  |
-| Missing-data policy |  |
-| Deployment-specific register map |  |
+| Configuration                    | Revision/hash/reference |
+| -------------------------------- | ----------------------- |
+| Topology/inventory               |                         |
+| Telemetry binding set            |                         |
+| Source/controller profile        |                         |
+| QDF voltage tolerance            |                         |
+| Modbus source-to-Unit-ID map     |                         |
+| Modbus point layout              |                         |
+| Missing-data policy              |                         |
+| Deployment-specific register map |                         |
 
 ## 6. Data provenance
 

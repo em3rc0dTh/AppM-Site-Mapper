@@ -3,7 +3,26 @@ name: Visual parity capture
 on:
   push:
     branches:
-      - feat/mk1-raw-build
+      - main
+      - 'release/**'
+    paths:
+      - 'src/app/**'
+      - 'src/components/**'
+      - 'src/shared/ui/**'
+      - 'public/help/**'
+      - 'scripts/visual-capture.mjs'
+      - 'scripts/visual-dev.mjs'
+      - '.github/workflows/visual-parity.yml'
+  pull_request:
+    paths:
+      - 'src/app/**'
+      - 'src/components/**'
+      - 'src/shared/ui/**'
+      - 'public/help/**'
+      - 'scripts/visual-capture.mjs'
+      - 'scripts/visual-dev.mjs'
+      - '.github/workflows/visual-parity.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read

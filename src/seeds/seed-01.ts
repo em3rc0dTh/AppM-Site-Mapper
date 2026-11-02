@@ -15,7 +15,7 @@ import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 4 as const;
+export const SEED_01_VERSION = 5 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -141,11 +141,41 @@ const BDFBS: readonly BdfbSpec[] = [
 ];
 
 const BASE = {
+  network: 'TELXIUS LURIN',
   site: 'TELXIUS LURIN CABLE LANDING STATION',
   structure: 'EDIFICIO PRINCIPAL',
   level: 'LEVEL 00',
   room: 'SALA DE TRANSMISIONES',
+  qdfBay: 'QDF POWER DISTRIBUTION',
 } as const;
+
+const BASE_SITE_POLYGON = [
+  { x: 0, y: 0 },
+  { x: 10000, y: 0 },
+  { x: 10000, y: 8000 },
+  { x: 0, y: 8000 },
+] as const;
+
+const BASE_STRUCTURE_POLYGON = [
+  { x: 500, y: 500 },
+  { x: 9500, y: 500 },
+  { x: 9500, y: 7500 },
+  { x: 500, y: 7500 },
+] as const;
+
+const BASE_ROOM_POLYGON = [
+  { x: 1000, y: 1000 },
+  { x: 9000, y: 1000 },
+  { x: 9000, y: 7000 },
+  { x: 1000, y: 7000 },
+] as const;
+
+const BASE_QDF_BAY_POLYGON = [
+  { x: 1500, y: 1500 },
+  { x: 8500, y: 1500 },
+  { x: 8500, y: 3000 },
+  { x: 1500, y: 3000 },
+] as const;
 
 export interface Seed01Summary {
   readonly profile: typeof SEED_01_PROFILE;
@@ -211,27 +241,124 @@ async function resolveNamedChild<K extends TopologyKind>(
   return expectKind(exactlyOne(children, `${kind} ${name}`), kind, name);
 }
 
-async function resolveBase(
+async function createRequiredNode<K extends TopologyKind>(
+  topology: TopologyService,
+  input: Parameters<TopologyService['create']>[0],
+  kind: K,
+  context: string,
+): Promise<Extract<TopologyNode, { kind: K }>> {
+  const result = await topology.create(input);
+  if (!result.ok) {
+    throw new Error(`SEED_01_CREATE_FAILED: ${context}: ${result.error}`);
+  }
+  return expectKind(result.value, kind, context);
+}
+
+async function ensureNamedChild<K extends TopologyKind>(
+  repository: TopologyRepository,
+  topology: TopologyService,
+  parentId: string,
+  kind: K,
+  name: string,
+  createInput: Omit<Parameters<TopologyService['create']>[0], 'kind' | 'parentId' | 'name'>,
+): Promise<Extract<TopologyNode, { kind: K }>> {
+  const expected = normalizedName(name);
+  const matches = (await repository.listChildren(parentId)).filter(
+    (node) =>
+      node.lifecycle === 'ACTIVE' && node.kind === kind && normalizedName(node.name) === expected,
+  );
+  if (matches.length > 1) {
+    throw new Error(`SEED_01_CONFLICT: duplicate ${kind} ${name}`);
+  }
+  if (matches.length === 1) return expectKind(matches[0]!, kind, name);
+
+  return createRequiredNode(
+    topology,
+    { kind, parentId, name, ...createInput },
+    kind,
+    name,
+  );
+}
+
+async function ensureBase(
   repository: TopologyRepository,
   topology: TopologyService,
 ): Promise<{
   readonly room: Extract<TopologyNode, { kind: 'ROOM_SUBSTRUCTURE' }>;
   readonly racks: ReadonlyMap<BdfbSpec['key'], ContainerRackNode>;
 }> {
-  const sites = (await repository.listByKind('SITE')).filter(
+  const activeSites = (await repository.listByKind('SITE')).filter(
     (node) =>
       node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.site),
   );
-  const site = expectKind(exactlyOne(sites, `SITE ${BASE.site}`), 'SITE', BASE.site);
-  const structure = await resolveNamedChild(repository, site.id, 'STRUCTURE', BASE.structure);
-  const level = await resolveNamedChild(repository, structure.id, 'LEVEL', BASE.level);
-  const room = await resolveNamedChild(repository, level.id, 'ROOM_SUBSTRUCTURE', BASE.room);
+  if (activeSites.length > 1) {
+    throw new Error(`SEED_01_CONFLICT: duplicate SITE ${BASE.site}`);
+  }
+
+  let site: Extract<TopologyNode, { kind: 'SITE' }>;
+  if (activeSites.length === 1) {
+    site = expectKind(activeSites[0]!, 'SITE', BASE.site);
+  } else {
+    const networks = (await repository.listByKind('NETWORK')).filter(
+      (node) =>
+        node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.network),
+    );
+    if (networks.length > 1) {
+      throw new Error(`SEED_01_CONFLICT: duplicate NETWORK ${BASE.network}`);
+    }
+    const network =
+      networks.length === 1
+        ? expectKind(networks[0]!, 'NETWORK', BASE.network)
+        : await createRequiredNode(
+            topology,
+            { kind: 'NETWORK', parentId: null, name: BASE.network },
+            'NETWORK',
+            BASE.network,
+          );
+    site = await createRequiredNode(
+      topology,
+      {
+        kind: 'SITE',
+        parentId: network.id,
+        name: BASE.site,
+        polygon: BASE_SITE_POLYGON,
+      },
+      'SITE',
+      BASE.site,
+    );
+  }
+
+  const structure = await ensureNamedChild(
+    repository,
+    topology,
+    site.id,
+    'STRUCTURE',
+    BASE.structure,
+    { polygon: BASE_STRUCTURE_POLYGON },
+  );
+  const level = await ensureNamedChild(
+    repository,
+    topology,
+    structure.id,
+    'LEVEL',
+    BASE.level,
+    {},
+  );
+  const room = await ensureNamedChild(
+    repository,
+    topology,
+    level.id,
+    'ROOM_SUBSTRUCTURE',
+    BASE.room,
+    { roomVariant: 'ROOM', polygon: BASE_ROOM_POLYGON },
+  );
 
   const allRacks = (await repository.listByKind('CONTAINER_RACK')).filter(
     (node): node is ContainerRackNode =>
       node.kind === 'CONTAINER_RACK' && node.lifecycle === 'ACTIVE',
   );
   const racks = new Map<BdfbSpec['key'], ContainerRackNode>();
+  const unresolved: BdfbSpec[] = [];
 
   for (const spec of BDFBS) {
     const aliases = new Set(spec.rackNames.map(normalizedName));
@@ -241,12 +368,50 @@ async function resolveBase(
       const trail = await topology.getTrail(rack.id);
       if (trail.some((node) => node.id === room.id)) candidates.push(rack);
     }
-    racks.set(spec.key, exactlyOne(candidates, `rack for ${spec.key} inside ${BASE.room}`));
+    if (candidates.length > 1) {
+      throw new Error(`SEED_01_CONFLICT: multiple racks for ${spec.key} inside ${BASE.room}`);
+    }
+    if (candidates.length === 1) {
+      racks.set(spec.key, candidates[0]!);
+    } else {
+      unresolved.push(spec);
+    }
+  }
+
+  if (unresolved.length) {
+    const bay = await ensureNamedChild(
+      repository,
+      topology,
+      room.id,
+      'CONTAINER_CLUSTER_BAY',
+      BASE.qdfBay,
+      { clusterVariant: 'BAY', polygon: BASE_QDF_BAY_POLYGON },
+    );
+
+    for (const spec of unresolved) {
+      const coordinateColumn = spec.key === 'QDF-2' ? 2 : spec.key === 'QDF-4' ? 4 : 5;
+      const position = await ensureNamedChild(
+        repository,
+        topology,
+        bay.id,
+        'POSITION',
+        `${spec.key} POSITION`,
+        { coordinate: { row: 'QDF', column: coordinateColumn } },
+      );
+      const rack = await ensureNamedChild(
+        repository,
+        topology,
+        position.id,
+        'CONTAINER_RACK',
+        spec.key,
+        { containerVariant: 'RACK', totalU: 42 },
+      );
+      racks.set(spec.key, rack);
+    }
   }
 
   return { room, racks };
 }
-
 async function ensureBdfbDevice(
   repository: TopologyRepository,
   topology: TopologyService,
@@ -1113,7 +1278,7 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
 
     const repository = new MongoTopologyRepository(database);
     const topology = new TopologyService(repository);
-    const base = await resolveBase(repository, topology);
+    const base = await ensureBase(repository, topology);
     const bdfbs: Seed01Summary['bdfbs'][number][] = [];
 
     for (const spec of BDFBS) {
@@ -1141,7 +1306,7 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
         roomId: base.room.id,
         bdfbs,
         source: {
-          topology: 'seed-01 Mongo snapshot supplied by operator',
+          topology: 'seed-01 canonical runtime seed manifest',
           commissioning: 'CP_Acrel_v0.2',
           breakerSchedule: 'Lista de Equipos QDF mop 1 - actualizado',
           snmp: 'Results SNMPWalk',

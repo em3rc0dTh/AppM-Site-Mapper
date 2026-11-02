@@ -5,7 +5,7 @@
  *
  * Usage:
  * node scripts/seed-01-parity.mjs --snapshot ./seed-01-topology-full.json \
- *   --uri 'mongodb://localhost:27017/?replicaSet=rs0' --database seed-01-restore-check
+ *   --uri 'mongodb://127.0.0.1:27017/?directConnection=true' --database seed-01-restore-check
  * Add --exact-ids to check restored snapshot identity as well as topology.
  */
 import { readFile } from 'node:fs/promises';

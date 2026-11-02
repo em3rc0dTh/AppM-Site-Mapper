@@ -1,25 +1,6 @@
 name: BFDB MQTT transport integration
 
 on:
-  push:
-    branches: [main, 'release/**']
-    paths:
-      - '.github/workflows/bfdb-mqtt-integration.yml'
-      - 'scripts/local-dev.mjs'
-      - 'scripts/bfdb-lab-contract-publisher.mjs'
-      - 'src/dev/bfdb-emulator-seed.ts'
-      - 'src/modules/telemetry/**'
-      - 'src/app/api/telemetry/**'
-      - 'src/app/api/dev/seed-bfdb-emulator/**'
-  pull_request:
-    paths:
-      - '.github/workflows/bfdb-mqtt-integration.yml'
-      - 'scripts/local-dev.mjs'
-      - 'scripts/bfdb-lab-contract-publisher.mjs'
-      - 'src/dev/bfdb-emulator-seed.ts'
-      - 'src/modules/telemetry/**'
-      - 'src/app/api/telemetry/**'
-      - 'src/app/api/dev/seed-bfdb-emulator/**'
   workflow_dispatch:
 
 permissions:

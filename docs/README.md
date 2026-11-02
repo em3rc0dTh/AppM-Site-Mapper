@@ -35,7 +35,7 @@ El [guion de presentación](product/MVP-DEMO-ES.md) sirve para mostrar capacidad
 | Perfil / objetivo               | Empieza aquí                                      | Continúa con                                                                                               |
 | ------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
 | Persona que evalúa el producto  | [Guion del MVP (español)](product/MVP-DEMO-ES.md) | [Alcance y evidencia](release/MVP-READINESS.md)                                                            |
-| Persona que necesita levantarlo | [Quickstart](operations/quickstart.md)            | [Portability hardening](release/portability-hardening.md) y [Variables](operations/environment-reference.md)             |
+| Persona que necesita levantarlo | [Full Stack seed-01](operations/full-stack-integration.md) | [Quickstart](operations/quickstart.md), [Portability hardening](release/portability-hardening.md) y [Variables](operations/environment-reference.md) |
 | Ingeniería / onboarding         | [Mapa del sistema](architecture/system-map.md)    | [Dominio](domain/topology-hierarchy.md) y [módulos](../src/modules/README.md)                              |
 | Operación y diagnóstico         | [Runbook](operations/runbook.md)                  | [Incidente de histórico](operations/history-connectivity.md), [integración MQTT/Modbus](operations/mqtt-modbus-lab.md)    |
 | Release / seguridad             | [MVP Readiness](release/MVP-READINESS.md)         | [Checklist de release](release/release-checklist.md) y [limitaciones](release/known-limitations.md)        |

@@ -29,7 +29,10 @@ export default async function LoadReportWorkbenchPage({
   }
   const trail = await new TopologyService(repository).getTrail(deviceId);
   const location = trail
-    .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE' || item.kind === 'ROOM_SUBSTRUCTURE')
+    .filter(
+      (item) =>
+        item.kind === 'SITE' || item.kind === 'STRUCTURE' || item.kind === 'ROOM_SUBSTRUCTURE',
+    )
     .map((item) => item.name)
     .join(' / ');
   const initialWindow = TELEMETRY_HISTORY_WINDOWS.includes(query.window as TelemetryHistoryWindow)

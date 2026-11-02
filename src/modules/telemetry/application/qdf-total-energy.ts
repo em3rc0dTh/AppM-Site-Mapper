@@ -80,10 +80,7 @@ export function projectHistoricalQdfTotalEnergy(
     if (observed.some((value) => !Number.isFinite(value))) continue;
     if (Math.max(...observed) - Math.min(...observed) > maxObservedSkewMs) continue;
 
-    const intervalEnergyKwh = points.reduce(
-      (sum, point) => sum + point.estimatedEnergyKwh!,
-      0,
-    );
+    const intervalEnergyKwh = points.reduce((sum, point) => sum + point.estimatedEnergyKwh!, 0);
     cumulativeEnergyKwh += intervalEnergyKwh;
     output.push({
       bucketAt,

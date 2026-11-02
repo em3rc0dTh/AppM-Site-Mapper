@@ -6,6 +6,10 @@ Esta especificación define **cómo debe salir Site Mapper del repositorio priva
 
 Esta es una especificación de producto/distribución; **no** acredita que un bundle offline de producción haya sido construido, firmado, publicado, instalado o probado. La base inicial del trabajo es el `main` integrado tras PR #109 (`82ad57b7646dc873a6fbb43d8014ab5d05e47ceb`); nuevas versiones deberán registrar su SHA real y la aprobación de CI.
 
+## Gate de productización
+
+La ejecución de esta estrategia se controla mediante [Portability & Real Equipment Commissioning](portability-hardening.md) y el procedimiento [Clean Host Installation](clean-host-installation.md). La distribución no se considera cerrada hasta que el bundle pueda instalarse en un host limpio y después seguir el [Field Commissioning](../field/README.md) para incorporar infraestructura física real.
+
 ## 1. Decisión y límites
 
 - **Destino:** VPS Linux del cliente con Docker Engine y Docker Compose Plugin. Plataforma mínima objetivo: `linux/amd64`; `arm64` solo cuando exista build y prueba específica para esa arquitectura.

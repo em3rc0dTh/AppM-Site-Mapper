@@ -89,8 +89,7 @@ export function composeQdfHistoricalElectricalContract(
 ) {
   const currentQuality: QdfElectricalMetricQuality =
     input.current.length > 0 ? 'VALID' : 'UNAVAILABLE';
-  const powerQuality: QdfElectricalMetricQuality =
-    input.power.length > 0 ? 'VALID' : 'UNAVAILABLE';
+  const powerQuality: QdfElectricalMetricQuality = input.power.length > 0 ? 'VALID' : 'UNAVAILABLE';
   const voltageQuality: QdfElectricalMetricQuality =
     input.voltage.total.length > 0 ? 'VALID' : 'UNAVAILABLE';
   const energyQuality: QdfElectricalMetricQuality =

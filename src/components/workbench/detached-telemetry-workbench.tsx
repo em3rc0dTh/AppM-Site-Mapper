@@ -48,13 +48,21 @@ function WorkbenchChart({
   const x = (time: number) => 45 + ((time - first) / (last - first || 1)) * (width - 70);
   const y = (value: number) => 18 + (1 - (value - min) / range) * (height - 55);
   const path = values
-    .map((point, index) => `${index ? 'L' : 'M'} ${x(point.time).toFixed(2)} ${y(point.value).toFixed(2)}`)
+    .map(
+      (point, index) =>
+        `${index ? 'L' : 'M'} ${x(point.time).toFixed(2)} ${y(point.value).toFixed(2)}`,
+    )
     .join(' ');
   return (
     <section className="sm-workbench-chart">
       <header>
         <strong>{label}</strong>
-        <span>{values.at(-1)!.value.toFixed(metricKey === 'energyKwh' ? 4 : metricKey === 'powerW' ? 3 : 2)} {unit}</span>
+        <span>
+          {values
+            .at(-1)!
+            .value.toFixed(metricKey === 'energyKwh' ? 4 : metricKey === 'powerW' ? 3 : 2)}{' '}
+          {unit}
+        </span>
       </header>
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label={label}>
         <line x1="45" y1="18" x2={width - 25} y2="18" />
@@ -62,8 +70,12 @@ function WorkbenchChart({
         <path d={path} />
       </svg>
       <footer>
-        <span>{min.toFixed(2)} {unit}</span>
-        <span>{max.toFixed(2)} {unit}</span>
+        <span>
+          {min.toFixed(2)} {unit}
+        </span>
+        <span>
+          {max.toFixed(2)} {unit}
+        </span>
       </footer>
     </section>
   );
@@ -76,10 +88,10 @@ function MqttWorkbench({ deviceId }: Readonly<{ deviceId: string }>) {
   const [error, setError] = useState('');
   useEffect(() => {
     const controller = new AbortController();
-    void fetch(
-      `/api/telemetry/history?deviceId=${encodeURIComponent(deviceId)}&window=${window}`,
-      { cache: 'no-store', signal: controller.signal },
-    )
+    void fetch(`/api/telemetry/history?deviceId=${encodeURIComponent(deviceId)}&window=${window}`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    })
       .then(async (response) => {
         if (!response.ok) throw new Error(`HTTP_${response.status}`);
         return response.json() as Promise<TelemetryHistoryResponse>;
@@ -88,7 +100,8 @@ function MqttWorkbench({ deviceId }: Readonly<{ deviceId: string }>) {
         if (!controller.signal.aborted) setData(payload);
       })
       .catch((cause: unknown) => {
-        if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : 'HISTORY_LOAD_FAILED');
+        if (!controller.signal.aborted)
+          setError(cause instanceof Error ? cause.message : 'HISTORY_LOAD_FAILED');
       });
     return () => controller.abort();
   }, [deviceId, window]);
@@ -161,17 +174,27 @@ export function DetachedTelemetryWorkbench({
           <h1>{t('telemetryTitle')}</h1>
           <p>{deviceName}</p>
         </div>
-        <button type="button" onClick={() => window.close()}>{t('close')}</button>
+        <button type="button" onClick={() => window.close()}>
+          {t('close')}
+        </button>
       </header>
       <nav className="sm-workbench-nav" aria-label={t('source')}>
-        <button type="button" aria-pressed={view === 'snmp'} onClick={() => setView('snmp')}>{t('snmpCharts')}</button>
-        <button type="button" aria-pressed={view === 'mqtt'} onClick={() => setView('mqtt')}>{t('mqttCharts')}</button>
-        <button type="button" aria-pressed={view === 'inputs'} onClick={() => setView('inputs')}>{t('inputs')}</button>
+        <button type="button" aria-pressed={view === 'snmp'} onClick={() => setView('snmp')}>
+          {t('snmpCharts')}
+        </button>
+        <button type="button" aria-pressed={view === 'mqtt'} onClick={() => setView('mqtt')}>
+          {t('mqttCharts')}
+        </button>
+        <button type="button" aria-pressed={view === 'inputs'} onClick={() => setView('inputs')}>
+          {t('inputs')}
+        </button>
       </nav>
       <section className="sm-workbench-body">
         {view === 'snmp' ? <SnmpFeedHistory deviceId={deviceId} /> : null}
         {view === 'mqtt' ? <MqttWorkbench deviceId={deviceId} /> : null}
-        {view === 'inputs' ? <SnmpFeedLoadPanel deviceId={deviceId} chassisId={chassisId} view="feeds" /> : null}
+        {view === 'inputs' ? (
+          <SnmpFeedLoadPanel deviceId={deviceId} chassisId={chassisId} view="feeds" />
+        ) : null}
       </section>
     </main>
   );

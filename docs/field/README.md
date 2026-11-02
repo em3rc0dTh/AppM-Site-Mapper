@@ -57,6 +57,7 @@ flowchart TD
 - [Site Survey](site-survey.md) — información que debe obtenerse antes de tocar la red o el equipo.
 - [Commissioning de equipos reales](real-equipment-commissioning.md) — procedimiento MQTT/SNMP, RAW, binding, histórico y salida industrial.
 - [Metasys SAT](metasys-sat.md) — prueba de aceptación Modbus TCP con el BMS/integrador.
+- [Commissioning Record](commissioning-record.template.md) — plantilla de evidencia por equipo/fuente.
 - [Portability Hardening](../release/portability-hardening.md) — condiciones para instalar y recuperar Site Mapper desde una máquina limpia.
 
 ## Evidencia mínima por equipo

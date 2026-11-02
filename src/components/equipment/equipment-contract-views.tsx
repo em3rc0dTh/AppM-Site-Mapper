@@ -251,7 +251,9 @@ function PanelComposition({
             <span>{t('breaker')}</span>
             <span>V · V</span>
             <span>I · A</span>
-            <span>P · kW</span>
+            <span>
+              {METRICS[2].symbol} · {METRICS[2].unit}
+            </span>
             <span>E · kWh</span>
             <span>{t('status')}</span>
             <span>{t('alarm')}</span>

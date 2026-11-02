@@ -26,7 +26,9 @@ Telemetry Store
 Mosquitto
 publisher MQTT continuo
 3 agentes SNMP controlados
-3 collectors SNMP
+3 collectors SNMP polling
+SNMP trap/inform receiver + spool durable
+SNMP trap sender controlado
 Modbus TCP
 Operational Console
 ```
@@ -103,14 +105,32 @@ Cada uno publica 4 CURRENT + 4 VOLTAGE mediante SNMPv2c en la red Docker aislada
 
 Los feeds deben aparecer como `LAB_LIVE`, nunca como `LIVE` de campo, porque `independentInputConfirmed=false` y el commissioning está marcado `SYNTHETIC_LAB_ONLY`.
 
+## SNMP traps/informs
+
+El perfil controlado también levanta un receptor industrial SNMP independiente del polling:
+
+```text
+snmp-trap-sender
+  -> UDP/1162
+  -> snmp-traps
+  -> durable spool
+  -> /api/telemetry/industrial/ingest
+  -> Mongo industrial_events
+  -> Timescale industrial_observations
+```
+
+La fuente `INT-TRAP-QDF-2` usa una IP fija únicamente dentro de la red Docker de integración para que el receiver pueda autenticar origen + community de forma determinista. Esto es evidencia de transporte/orquestación, no evidencia de un controller físico.
+
 ## Histórico
 
-MQTT y SNMP deben persistir en TimescaleDB.
+MQTT, SNMP polling y SNMP trap/inform deben persistir en sus stores correspondientes.
 
 El clean-stack CI exige:
 
 - filas de breakers MQTT en `telemetry_samples`;
-- filas SNMP ACCESS_PORT en `telemetry_entity_samples`.
+- filas SNMP ACCESS_PORT en `telemetry_entity_samples`;
+- eventos trap/inform en Mongo `industrial_events`;
+- observaciones trap/inform entregadas a Timescale `industrial_observations`.
 
 ## Modbus
 

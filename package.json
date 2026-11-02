@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "docs:check": "node scripts/ci/docs-links.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --write src/app/api/telemetry/qdf/load-report/route.ts src/app/workbench/load-report/page.tsx src/app/workbench/workbench.css src/components/workbench/detached-telemetry-workbench.tsx src/components/workbench/qdf-load-report-workbench.tsx src/shared/ui/app-shell.tsx tests/unit/qdf-load-report.test.ts && git diff -- src/app/api/telemetry/qdf/load-report/route.ts src/app/workbench/load-report/page.tsx src/app/workbench/workbench.css src/components/workbench/detached-telemetry-workbench.tsx src/components/workbench/qdf-load-report-workbench.tsx src/shared/ui/app-shell.tsx tests/unit/qdf-load-report.test.ts && exit 1",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit && node --test infra/snmp-collector/server.test.mjs",
     "test:integration": "vitest run tests/integration --passWithNoTests",

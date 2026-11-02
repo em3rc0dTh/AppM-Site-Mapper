@@ -4,14 +4,15 @@
 
 The operator's local `seed-01` Mongo snapshot reported `runtime_seed_state.version=4` and 115 topology nodes (including archived nodes), all reachable from the Site Mapper NETWORK. This snapshot is the spatial reference for **active** topology of the Telxius Lurín test installation. This change does not claim to recreate the archival metadata or exact historical UUIDs on a virgin database.
 
-The baseline v5 had a generic QDF Bay and fabricated rectangular footprints. A fresh v6 database instead creates:
+The baseline v5 had a generic QDF Bay and fabricated rectangular footprints. A fresh v6 database instead reconstructs 115 reference topology nodes, including seven archived nodes (one Room and six A1/B1 panels):
 
 ```text
 NETWORK Site Mapper
 └── SITE Telxius Lurín Cable Landing Station
     └── STRUCTURE EDIFICIO PRINCIPAL
         └── LEVEL LEVEL 00
-            └── ROOM SALA DE TRANSMISIONES
+            ├── ROOM SALA DE TRANSMISIONES (ARCHIVED, historical irregular polygon)
+            └── ROOM SALA DE TRANSMISIONES (ACTIVE)
                 ├── BAY Contained-Cluster-01
                 │   └── POSITION QDF2 anchor (T42)
                 │       └── RACK QDF2 42U 600x600 (24600,11400)
@@ -29,7 +30,7 @@ The spatial polygon constants in `src/seeds/seed-01.ts` are derived from the ope
 ## Upgrade behavior
 
 - **Existing v4 DB with matching active spatial geometry:** reuse existing named nodes, racks, IDs, CAS, root Equipment and archives; apply any remaining seed-specific industrial changes.
-- **Fresh DB:** create the active spatial topology represented above, then the BDFB hierarchy through the normal topology domain service. Generated IDs are new; **archived v4 Room and retired A1/B1 panel records are not recreated on a fresh DB**.
+- **Fresh DB:** create the active spatial topology represented above, then the BDFB hierarchy through the normal topology domain service. Generated IDs are new; the archived v4 Room geometry and six retired A1/B1 panel records are recreated as archived reference nodes. Their domain UUIDs and retirement actor/event metadata remain generated/unspecified on a fresh DB; use private snapshot restore for historical identity.
 - **Existing synthetic v5 DB with incompatible layout:** fail with `SEED_01_PHYSICAL_CONFLICT`, without automatically moving racks or overwriting geometry. An explicitly reviewed migration is required.
 - A rack's confirmed placement must match its authoritative coordinates; a missing placement is filled only for a newly created rack. Conflicting existing placement is rejected.
 - No `down -v`, dropped collection, re-seeding command or destructive migration is part of this change.
@@ -70,7 +71,7 @@ The lab restore refuses any existing destination database, confirms a constraine
 
 ## Archived panels
 
-The six A1/B1 panels were intentionally retired in the original v4 snapshot. v6 **does not reactivate** existing tombstones. On a fresh synthesized installation it creates their tombstones and leaves frame slot 3 unoccupied. The historical Room with noncanonical archived polygon and its exact `retirement` metadata can only be reproduced from the private snapshot, not the fresh synthetic bootstrap.
+The six A1/B1 panels were intentionally retired in the original v4 snapshot. v6 **does not reactivate** existing tombstones. On a fresh synthesized installation it creates their tombstones and leaves frame slot 3 unoccupied. The historical Room polygon is present as an archived reference on a fresh bootstrap. Its original domain ID and exact `retirement` metadata can only be reproduced from the private snapshot.
 
 ## Parity meaning
 

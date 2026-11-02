@@ -6,25 +6,25 @@
 
 ## 1. Document control
 
-| Field | Value |
-| --- | --- |
-| Project | `<project>` |
-| Site | `<site>` |
-| As-Built revision | `<revision>` |
-| Date | `<date>` |
-| Prepared by | `<role/name>` |
-| Reviewed by | `<role/name>` |
-| Related accepted Site Mapper SHA | `<commit>` |
+| Field                            | Value         |
+| -------------------------------- | ------------- |
+| Project                          | `<project>`   |
+| Site                             | `<site>`      |
+| As-Built revision                | `<revision>`  |
+| Date                             | `<date>`      |
+| Prepared by                      | `<role/name>` |
+| Reviewed by                      | `<role/name>` |
+| Related accepted Site Mapper SHA | `<commit>`    |
 
 ## 2. Installed QDF inventory
 
 Complete one row per physical QDF.
 
-| Field label | Site Mapper Device ID | Chassis | Installed breaker count | Measurement controller | Status |
-| --- | --- | --- | ---: | --- | --- |
-| QDF-2 | `<private/control copy>` |  |  |  | PENDING |
-| QDF-4 | `<private/control copy>` |  |  |  | PENDING |
-| QDF-5 | `<private/control copy>` |  |  |  | PENDING |
+| Field label | Site Mapper Device ID    | Chassis | Installed breaker count | Measurement controller | Status  |
+| ----------- | ------------------------ | ------- | ----------------------: | ---------------------- | ------- |
+| QDF-2       | `<private/control copy>` |         |                         |                        | PENDING |
+| QDF-4       | `<private/control copy>` |         |                         |                        | PENDING |
+| QDF-5       | `<private/control copy>` |         |                         |                        | PENDING |
 
 The public copy may replace confidential IDs with controlled references.
 
@@ -51,8 +51,8 @@ Verify that Site Mapper composition matches the installed arrangement.
 Maintain the authoritative project copy with at least:
 
 | QDF | Frame | Panel | Position | Breaker/equipment label | Destination/load | Binding status | Notes |
-| --- | --- | --- | ---: | --- | --- | --- | --- |
-|  |  |  |  |  |  |  |  |
+| --- | ----- | ----- | -------: | ----------------------- | ---------------- | -------------- | ----- |
+|     |       |       |          |                         |                  |                |       |
 
 Do not infer a telemetry mapping solely from physical position.
 
@@ -61,8 +61,8 @@ Do not infer a telemetry mapping solely from physical position.
 Controlled project copy should identify:
 
 | QDF | Controller/gateway | Source identity | Raw point layout | Binding-set revision | Provenance |
-| --- | --- | --- | --- | --- | --- |
-|  |  |  |  |  | FIELD |
+| --- | ------------------ | --------------- | ---------------- | -------------------- | ---------- |
+|     |                    |                 |                  |                      | FIELD      |
 
 The source/controller identity must be approved from field evidence; do not guess it from topology.
 
@@ -70,18 +70,18 @@ The source/controller identity must be approved from field evidence; do not gues
 
 Store confidential network details in the controlled copy.
 
-| Item | Controlled value/reference |
-| --- | --- |
-| Site Mapper local URL/host |  |
-| Customer management switch/port |  |
-| Approved OT VLAN/route |  |
-| Modbus endpoint |  |
-| TCP port |  |
-| Source-to-Unit-ID mapping revision |  |
-| Metasys addressing convention |  |
-| FLOAT32 word order confirmation |  |
-| Missing/stale policy |  |
-| Metasys commissioning record |  |
+| Item                               | Controlled value/reference |
+| ---------------------------------- | -------------------------- |
+| Site Mapper local URL/host         |                            |
+| Customer management switch/port    |                            |
+| Approved OT VLAN/route             |                            |
+| Modbus endpoint                    |                            |
+| TCP port                           |                            |
+| Source-to-Unit-ID mapping revision |                            |
+| Metasys addressing convention      |                            |
+| FLOAT32 word order confirmation    |                            |
+| Missing/stale policy               |                            |
+| Metasys commissioning record       |                            |
 
 ## 7. Register-map record
 
@@ -106,11 +106,11 @@ Record or reference:
 
 For each QDF:
 
-| QDF | Display installed | V readable | A readable | kW readable | kWh readable | Field evidence |
-| --- | --- | --- | --- | --- | --- | --- |
-| QDF-2 | PENDING |  |  |  |  |  |
-| QDF-4 | PENDING |  |  |  |  |  |
-| QDF-5 | PENDING |  |  |  |  |  |
+| QDF   | Display installed | V readable | A readable | kW readable | kWh readable | Field evidence |
+| ----- | ----------------- | ---------- | ---------- | ----------- | ------------ | -------------- |
+| QDF-2 | PENDING           |            |            |             |              |                |
+| QDF-4 | PENDING           |            |            |             |              |                |
+| QDF-5 | PENDING           |            |            |             |              |                |
 
 This is a physical acceptance item, not automatically a Site Mapper software PASS.
 
@@ -119,14 +119,14 @@ This is a physical acceptance item, not automatically a Site Mapper software PAS
 List the final controlled drawing numbers/revisions where applicable.
 
 | Drawing | Revision | Date | Status |
-| --- | --- | --- | --- |
-|  |  |  |  |
+| ------- | -------- | ---- | ------ |
+|         |          |      |        |
 
 ## 11. Deviations from design
 
 | Deviation ID | Design expectation | Installed state | Approval/reference | Impact |
-| --- | --- | --- | --- | --- |
-|  |  |  |  |  |
+| ------------ | ------------------ | --------------- | ------------------ | ------ |
+|              |                    |                 |                    |        |
 
 Every deviation affecting telemetry identity, units, register allocation or BMS behavior requires
 acceptance impact review.
@@ -134,17 +134,17 @@ acceptance impact review.
 ## 12. Punch list
 
 | Item | Owner | Severity | Status | Closure evidence |
-| --- | --- | --- | --- | --- |
-|  |  |  |  |  |
+| ---- | ----- | -------- | ------ | ---------------- |
+|      |       |          |        |                  |
 
 Final project acceptance should not claim “no pending installation details” while this table contains
 unresolved applicable items.
 
 ## 13. As-Built approval
 
-| Role | Name | Date | Decision/reference |
-| --- | --- | --- | --- |
-| Installation representative |  |  |  |
-| Software/telemetry representative |  |  |  |
-| OT/BMS representative |  |  |  |
-| Customer/project representative |  |  |  |
+| Role                              | Name | Date | Decision/reference |
+| --------------------------------- | ---- | ---- | ------------------ |
+| Installation representative       |      |      |                    |
+| Software/telemetry representative |      |      |                    |
+| OT/BMS representative             |      |      |                    |
+| Customer/project representative   |      |      |                    |

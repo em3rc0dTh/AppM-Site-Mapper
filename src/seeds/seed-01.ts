@@ -14,6 +14,7 @@ import type {
 import { MongoTopologyRepository } from '@/modules/topology/infrastructure/mongo-topology-repository';
 import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
+import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
 export const SEED_01_VERSION = 6 as const;
@@ -166,6 +167,13 @@ const BASE_STRUCTURE_POLYGON = [
 const BASE_ROOM_POLYGON = [
   { x: 12000, y: 10200 }, { x: 26400, y: 10200 },
   { x: 26400, y: 18000 }, { x: 12000, y: 18000 },
+] as const;
+
+const HISTORICAL_ROOM_POLYGON = [
+  { x: 10800, y: 7800 }, { x: 14400, y: 4800 },
+  { x: 18600, y: 7200 }, { x: 14400, y: 10800 },
+  { x: 13800, y: 10200 }, { x: 12600, y: 11400 },
+  { x: 10200, y: 9600 }, { x: 11400, y: 8400 },
 ] as const;
 
 const PHYSICAL_BAYS = [
@@ -336,6 +344,38 @@ async function ensureBase(
   );
   if (room.variant !== 'ROOM') throw new Error('SEED_01_PHYSICAL_CONFLICT: room variant');
   assertSameGeometry('ROOM', room.polygon, BASE_ROOM_POLYGON);
+
+  // The v4 snapshot has an earlier, intentionally ARCHIVED Room under this
+  // Level. Preserve it if present. A virgin bootstrap creates a historical
+  // reference node, but does not invent a past operator/retirement event.
+  const historicalRooms = (await repository.listChildren(level.id)).filter(
+    (node) => node.kind === 'ROOM_SUBSTRUCTURE' &&
+      node.lifecycle === 'ARCHIVED' &&
+      normalizedName(node.name) === normalizedName(BASE.room),
+  );
+  if (historicalRooms.length > 1) {
+    throw new Error('SEED_01_PHYSICAL_CONFLICT: multiple historical Room records');
+  }
+  if (historicalRooms.length === 1) {
+    const historic = expectKind(historicalRooms[0]!, 'ROOM_SUBSTRUCTURE', BASE.room);
+    if (historic.variant !== 'ROOM') {
+      throw new Error('SEED_01_PHYSICAL_CONFLICT: historical Room variant');
+    }
+    assertSameGeometry('ARCHIVED ROOM', historic.polygon, HISTORICAL_ROOM_POLYGON);
+  } else {
+    const timestamp = nowIso();
+    await repository.insert({
+      id: createDomainId(),
+      parentId: level.id,
+      kind: 'ROOM_SUBSTRUCTURE',
+      name: BASE.room,
+      variant: 'ROOM',
+      lifecycle: 'ARCHIVED',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      polygon: HISTORICAL_ROOM_POLYGON,
+    });
+  }
 
   // Preserve all four physically mapped bays, including the deliberately empty second bay.
   // Reject a synthetic single-bay v5 installation: it requires an explicit, reviewed

@@ -33,6 +33,9 @@ Procedimiento ejecutable: [Clean Host Installation](clean-host-installation.md).
 
 - [ ] `.env.example` contiene todas las variables necesarias para los Compose soportados o las marca explícitamente como externas/opcionales.
 - [ ] instalación limpia documentada;
+- [ ] Mongo vacía + `MONGODB_DB_NAME=seed-01` + `SITE_MAPPER_SEED_PROFILE=seed-01` materializa el seed canónico sin scripts correctivos;
+- [ ] reiniciar el mismo release sobre el seed aplicado es idempotente y no duplica inventario;
+- [ ] conflictos del seed fallan de forma explícita; no existen auto-reparaciones silenciosas;
 - [ ] versiones de runtime e imágenes registradas;
 - [ ] no se requiere ningún archivo fuera del release salvo configuración/secretos del deployment;
 - [ ] healthchecks permiten identificar qué dependencia falla;

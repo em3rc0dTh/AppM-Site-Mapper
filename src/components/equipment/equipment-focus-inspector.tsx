@@ -21,10 +21,10 @@ type Tab = 'telemetry' | 'alarms' | 'overview' | 'ports' | 'settings';
 const TABS: readonly Tab[] = ['overview', 'telemetry', 'alarms', 'ports', 'settings'];
 
 const METRICS = [
-  { key: 'voltageV', symbol: 'V', label: 'Voltage', unit: 'V', digits: 2 },
-  { key: 'currentA', symbol: 'I', label: 'Current', unit: 'A', digits: 2 },
-  { key: 'powerW', symbol: 'P', label: 'Power', unit: 'W', digits: 2 },
-  { key: 'energyKwh', symbol: 'E', label: 'Energy counter', unit: 'kWh', digits: 4 },
+  { key: 'voltageV', symbol: 'V', label: 'Voltage', unit: 'V', digits: 2, scale: 1 },
+  { key: 'currentA', symbol: 'I', label: 'Current', unit: 'A', digits: 2, scale: 1 },
+  { key: 'powerW', symbol: 'P', label: 'Power', unit: 'kW', digits: 3, scale: 0.001 },
+  { key: 'energyKwh', symbol: 'E', label: 'Energy counter', unit: 'kWh', digits: 4, scale: 1 },
 ] as const;
 
 interface Props {

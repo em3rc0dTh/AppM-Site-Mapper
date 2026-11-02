@@ -88,7 +88,9 @@ export async function GET(request: Request) {
   const sampleGroups = new Map<string, Awaited<ReturnType<typeof store.queryEntity>>>();
 
   try {
-    const queryIds = breakers.filter((breaker) => boundIds.has(breaker.id)).map((breaker) => breaker.id);
+    const queryIds = breakers
+      .filter((breaker) => boundIds.has(breaker.id))
+      .map((breaker) => breaker.id);
     for (let index = 0; index < queryIds.length; index += 8) {
       const batch = queryIds.slice(index, index + 8);
       const results = await Promise.all(

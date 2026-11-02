@@ -112,7 +112,7 @@ jobs:
             docker compose               --env-file infra/integration/integration.env               -f docker-compose.telemetry.yml               -f docker-compose.integration.yml "$@"
           }
 
-          for service in snmp-collector snmp-collector-qdf4 snmp-collector-qdf5; do
+          for service in snmp-collector-qdf2 snmp-collector-qdf4 snmp-collector-qdf5; do
             for i in $(seq 1 45); do
               if dc logs --no-color "$service" 2>&1 | grep -q 'snmp.poll.accepted'; then
                 break

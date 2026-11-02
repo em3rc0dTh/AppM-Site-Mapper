@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "docs:check": "node scripts/ci/docs-links.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --write docs/certification/rfp-acceptance/00-README.md docs/certification/rfp-acceptance/01-RFP-COMPLIANCE-MATRIX.md docs/certification/rfp-acceptance/02-ACCEPTANCE-TEST-PLAN.md docs/certification/rfp-acceptance/04-TEST-RESULTS.md docs/certification/rfp-acceptance/05-OPERABILITY-CERTIFICATE.md docs/certification/rfp-acceptance/07-AS-BUILT.md docs/certification/rfp-acceptance/09-RELEASE-IDENTIFICATION.md && echo __FMT_0_BEGIN__; base64 -w0 docs/certification/rfp-acceptance/00-README.md; echo; echo __FMT_0_END__; echo __FMT_1_BEGIN__; base64 -w0 docs/certification/rfp-acceptance/01-RFP-COMPLIANCE-MATRIX.md; echo; echo __FMT_1_END__; echo __FMT_2_BEGIN__; base64 -w0 docs/certification/rfp-acceptance/02-ACCEPTANCE-TEST-PLAN.md; echo; echo __FMT_2_END__; echo __FMT_3_BEGIN__; base64 -w0 docs/certification/rfp-acceptance/04-TEST-RESULTS.md; echo; echo __FMT_3_END__; echo __FMT_4_BEGIN__; base64 -w0 docs/certification/rfp-acceptance/05-OPERABILITY-CERTIFICATE.md; echo; echo __FMT_4_END__; echo __FMT_5_BEGIN__; base64 -w0 docs/certification/rfp-acceptance/07-AS-BUILT.md; echo; echo __FMT_5_END__; echo __FMT_6_BEGIN__; base64 -w0 docs/certification/rfp-acceptance/09-RELEASE-IDENTIFICATION.md; echo; echo __FMT_6_END__ && exit 1",
+    "format:check": "prettier --check .",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit && node --test infra/snmp-collector/server.test.mjs",
     "test:integration": "vitest run tests/integration --passWithNoTests",

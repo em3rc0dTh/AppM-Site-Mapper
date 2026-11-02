@@ -16,7 +16,7 @@ import { CasService } from '@/modules/rack/application/cas-service';
 import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integrity-transaction';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 5 as const;
+export const SEED_01_VERSION = 6 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -141,42 +141,55 @@ const BDFBS: readonly BdfbSpec[] = [
   },
 ];
 
+// Physical reference: operator's seed-01 v4 Mongo snapshot (2026-10-29).
+// These are physical-domain facts, NOT lab telemetry fixtures.
 const BASE = {
-  network: 'TELXIUS LURIN',
-  site: 'TELXIUS LURIN CABLE LANDING STATION',
+  network: 'Site Mapper',
+  site: 'Telxius Lurín Cable Landing Station',
   structure: 'EDIFICIO PRINCIPAL',
   level: 'LEVEL 00',
   room: 'SALA DE TRANSMISIONES',
-  qdfBay: 'QDF POWER DISTRIBUTION',
 } as const;
 
 const BASE_SITE_POLYGON = [
-  { x: 0, y: 0 },
-  { x: 10000, y: 0 },
-  { x: 10000, y: 8000 },
-  { x: 0, y: 8000 },
+  { x: 3000, y: 2400 }, { x: 30600, y: 2400 },
+  { x: 30600, y: 25800 }, { x: 3000, y: 25800 },
 ] as const;
 
 const BASE_STRUCTURE_POLYGON = [
-  { x: 500, y: 500 },
-  { x: 9500, y: 500 },
-  { x: 9500, y: 7500 },
-  { x: 500, y: 7500 },
+  { x: 7800, y: 10200 }, { x: 10800, y: 10800 },
+  { x: 10800, y: 8400 }, { x: 27600, y: 8400 },
+  { x: 28800, y: 19800 }, { x: 11400, y: 19800 },
+  { x: 11400, y: 18600 }, { x: 7800, y: 18600 },
 ] as const;
 
 const BASE_ROOM_POLYGON = [
-  { x: 1000, y: 1000 },
-  { x: 9000, y: 1000 },
-  { x: 9000, y: 7000 },
-  { x: 1000, y: 7000 },
+  { x: 12000, y: 10200 }, { x: 26400, y: 10200 },
+  { x: 26400, y: 18000 }, { x: 12000, y: 18000 },
 ] as const;
 
-const BASE_QDF_BAY_POLYGON = [
-  { x: 1500, y: 1500 },
-  { x: 8500, y: 1500 },
-  { x: 8500, y: 3000 },
-  { x: 1500, y: 3000 },
+const PHYSICAL_BAYS = [
+  { name: 'Contained-Cluster-01', y: 11400 },
+  { name: 'Contained-Cluster-02', y: 13200 },
+  { name: 'Contained-Cluster-03', y: 15000 },
+  { name: 'CONTAINED-CLUSTER-04', y: 16800 },
 ] as const;
+
+const PHYSICAL_RACKS = {
+  'QDF-2': { bayIndex: 0, name: 'QDF2', position: 'QDF2 anchor', row: 'T', x: 24600, y: 11400 },
+  'QDF-4': { bayIndex: 2, name: 'QDF4', position: 'QDF4 anchor', row: 'Z', x: 24600, y: 15000 },
+  'QDF-5': { bayIndex: 3, name: 'QDF5', position: 'QDF5 anchor', row: 'AC', x: 24600, y: 16800 },
+} as const;
+
+function assertSameGeometry(
+  context: string,
+  actual: readonly { readonly x: number; readonly y: number }[] | undefined,
+  expected: readonly { readonly x: number; readonly y: number }[],
+): void {
+  if (!actual || JSON.stringify(actual) !== JSON.stringify(expected)) {
+    throw new Error(`SEED_01_PHYSICAL_CONFLICT: ${context} differs from operator snapshot; no automatic spatial overwrite`);
+  }
+}
 
 export interface Seed01Summary {
   readonly profile: typeof SEED_01_PROFILE;
@@ -284,8 +297,7 @@ async function ensureBase(
   readonly racks: ReadonlyMap<BdfbSpec['key'], ContainerRackNode>;
 }> {
   const activeSites = (await repository.listByKind('SITE')).filter(
-    (node) =>
-      node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.site),
+    (node) => node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.site),
   );
   if (activeSites.length > 1) {
     throw new Error(`SEED_01_CONFLICT: duplicate SITE ${BASE.site}`);
@@ -294,109 +306,121 @@ async function ensureBase(
   let site: Extract<TopologyNode, { kind: 'SITE' }>;
   if (activeSites.length === 1) {
     site = expectKind(activeSites[0]!, 'SITE', BASE.site);
+    assertSameGeometry('SITE', site.polygon, BASE_SITE_POLYGON);
   } else {
     const networks = (await repository.listByKind('NETWORK')).filter(
-      (node) =>
-        node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.network),
+      (node) => node.lifecycle === 'ACTIVE' && normalizedName(node.name) === normalizedName(BASE.network),
     );
-    if (networks.length > 1) {
-      throw new Error(`SEED_01_CONFLICT: duplicate NETWORK ${BASE.network}`);
-    }
-    const network =
-      networks.length === 1
-        ? expectKind(networks[0]!, 'NETWORK', BASE.network)
-        : await createRequiredNode(
-            topology,
-            { kind: 'NETWORK', parentId: null, name: BASE.network },
-            'NETWORK',
-            BASE.network,
-          );
+    if (networks.length > 1) throw new Error(`SEED_01_CONFLICT: duplicate NETWORK ${BASE.network}`);
+    const network = networks.length === 1
+      ? expectKind(networks[0]!, 'NETWORK', BASE.network)
+      : await createRequiredNode(
+          topology, { kind: 'NETWORK', parentId: null, name: BASE.network }, 'NETWORK', BASE.network,
+        );
     site = await createRequiredNode(
       topology,
-      {
-        kind: 'SITE',
-        parentId: network.id,
-        name: BASE.site,
-        polygon: BASE_SITE_POLYGON,
-      },
-      'SITE',
-      BASE.site,
+      { kind: 'SITE', parentId: network.id, name: BASE.site, polygon: BASE_SITE_POLYGON },
+      'SITE', BASE.site,
     );
   }
 
   const structure = await ensureNamedChild(
-    repository,
-    topology,
-    site.id,
-    'STRUCTURE',
-    BASE.structure,
+    repository, topology, site.id, 'STRUCTURE', BASE.structure,
     { polygon: BASE_STRUCTURE_POLYGON },
   );
+  assertSameGeometry('STRUCTURE', structure.polygon, BASE_STRUCTURE_POLYGON);
   const level = await ensureNamedChild(repository, topology, structure.id, 'LEVEL', BASE.level, {});
   const room = await ensureNamedChild(
-    repository,
-    topology,
-    level.id,
-    'ROOM_SUBSTRUCTURE',
-    BASE.room,
+    repository, topology, level.id, 'ROOM_SUBSTRUCTURE', BASE.room,
     { roomVariant: 'ROOM', polygon: BASE_ROOM_POLYGON },
   );
+  if (room.variant !== 'ROOM') throw new Error('SEED_01_PHYSICAL_CONFLICT: room variant');
+  assertSameGeometry('ROOM', room.polygon, BASE_ROOM_POLYGON);
+
+  // Preserve all four physically mapped bays, including the deliberately empty second bay.
+  // Reject a synthetic single-bay v5 installation: it requires an explicit, reviewed
+  // reconciliation instead of silently relocating existing operators' assets.
+  const activeBays = (await repository.listChildren(room.id)).filter(
+    (node) => node.lifecycle === 'ACTIVE' && node.kind === 'CONTAINER_CLUSTER_BAY',
+  );
+  const expectedNames = new Set(PHYSICAL_BAYS.map((bay) => normalizedName(bay.name)));
+  if (activeBays.some((bay) => !expectedNames.has(normalizedName(bay.name)))) {
+    throw new Error('SEED_01_PHYSICAL_CONFLICT: unexpected active bay; review migration from v5');
+  }
+  const bays: Extract<TopologyNode, { kind: 'CONTAINER_CLUSTER_BAY' }>[] = [];
+  for (const spec of PHYSICAL_BAYS) {
+    const polygon = [
+      { x: 13200, y: spec.y }, { x: 25200, y: spec.y },
+      { x: 25200, y: spec.y + 600 }, { x: 13200, y: spec.y + 600 },
+    ];
+    const bay = await ensureNamedChild(
+      repository, topology, room.id, 'CONTAINER_CLUSTER_BAY', spec.name,
+      { clusterVariant: 'BAY', polygon },
+    );
+    if (bay.variant !== 'BAY') throw new Error(`SEED_01_PHYSICAL_CONFLICT: variant ${spec.name}`);
+    assertSameGeometry(spec.name, bay.polygon, polygon);
+    bays.push(bay);
+  }
 
   const allRacks = (await repository.listByKind('CONTAINER_RACK')).filter(
     (node): node is ContainerRackNode =>
       node.kind === 'CONTAINER_RACK' && node.lifecycle === 'ACTIVE',
   );
   const racks = new Map<BdfbSpec['key'], ContainerRackNode>();
-  const unresolved: BdfbSpec[] = [];
-
   for (const spec of BDFBS) {
+    const physical = PHYSICAL_RACKS[spec.key];
+    const bay = bays[physical.bayIndex]!;
+    const position = await ensureNamedChild(
+      repository, topology, bay.id, 'POSITION', physical.position,
+      { coordinate: { row: physical.row, column: 42 } },
+    );
+    if (position.coordinate.row !== physical.row || position.coordinate.column !== 42) {
+      throw new Error(`SEED_01_PHYSICAL_CONFLICT: position ${physical.position}`);
+    }
+
     const aliases = new Set(spec.rackNames.map(normalizedName));
     const candidates: ContainerRackNode[] = [];
     for (const rack of allRacks) {
       if (!aliases.has(normalizedName(rack.name))) continue;
       const trail = await topology.getTrail(rack.id);
-      if (trail.some((node) => node.id === room.id)) candidates.push(rack);
+      if (trail.some((ancestor) => ancestor.id === room.id)) candidates.push(rack);
     }
     if (candidates.length > 1) {
-      throw new Error(`SEED_01_CONFLICT: multiple racks for ${spec.key} inside ${BASE.room}`);
+      throw new Error(`SEED_01_CONFLICT: multiple racks for ${spec.key}`);
     }
-    if (candidates.length === 1) {
-      racks.set(spec.key, candidates[0]!);
-    } else {
-      unresolved.push(spec);
+    if (candidates.length === 1 && candidates[0]!.parentId !== position.id) {
+      throw new Error(`SEED_01_PHYSICAL_CONFLICT: rack ${spec.key} is in another position`);
     }
-  }
 
-  if (unresolved.length) {
-    const bay = await ensureNamedChild(
-      repository,
-      topology,
-      room.id,
-      'CONTAINER_CLUSTER_BAY',
-      BASE.qdfBay,
-      { clusterVariant: 'BAY', polygon: BASE_QDF_BAY_POLYGON },
+    let rack = candidates[0] ?? await ensureNamedChild(
+      repository, topology, position.id, 'CONTAINER_RACK', physical.name,
+      { containerVariant: 'RACK', totalU: 42 },
     );
-
-    for (const spec of unresolved) {
-      const coordinateColumn = spec.key === 'QDF-2' ? 2 : spec.key === 'QDF-4' ? 4 : 5;
-      const position = await ensureNamedChild(
-        repository,
-        topology,
-        bay.id,
-        'POSITION',
-        `${spec.key} POSITION`,
-        { coordinate: { row: 'QDF', column: coordinateColumn } },
-      );
-      const rack = await ensureNamedChild(
-        repository,
-        topology,
-        position.id,
-        'CONTAINER_RACK',
-        spec.key,
-        { containerVariant: 'RACK', totalU: 42 },
-      );
-      racks.set(spec.key, rack);
+    if (rack.variant !== 'RACK' || rack.totalU !== 42) {
+      throw new Error(`SEED_01_PHYSICAL_CONFLICT: rack ${spec.key} capacity/variant`);
     }
+    const placement = { x: physical.x, y: physical.y };
+    const dimensions = { width: 600, depth: 600 };
+    // Missing placement is legal only on a newly created rack. Existing placements
+    // must never be overwritten by a seed.
+    if (rack.placementMm || rack.dimensionsMm) {
+      if (
+        JSON.stringify(rack.placementMm) !== JSON.stringify(placement) ||
+        rack.dimensionsMm?.width !== 600 || rack.dimensionsMm?.depth !== 600 ||
+        rack.placementState !== 'CONFIRMED'
+      ) throw new Error(`SEED_01_PHYSICAL_CONFLICT: rack ${spec.key} placement`);
+    } else {
+      if (!repository.commitLayout) throw new Error('ATOMIC_LAYOUT_STORAGE_REQUIRED');
+      const updated: ContainerRackNode = {
+        ...rack, placementMm: placement, dimensionsMm: dimensions,
+        placementState: 'CONFIRMED', updatedAt: new Date().toISOString(),
+      };
+      if (!(await repository.commitLayout([rack], [updated]))) {
+        throw new Error(`SEED_01_PHYSICAL_CONFLICT: rack ${spec.key} concurrent layout edit`);
+      }
+      rack = updated;
+    }
+    racks.set(spec.key, rack);
   }
 
   return { room, racks };

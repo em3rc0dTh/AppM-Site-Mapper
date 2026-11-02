@@ -82,11 +82,7 @@ describe('explicit BFDB breaker Equipment projection', () => {
       binding('POWER', 'breaker-01', '0_1_1', 'kW'),
       binding('ENERGY'),
     ];
-    const result = buildBoundBfdbEquipmentPatches(
-      kwMessage,
-      bindings,
-      new Set(['breaker-01']),
-    );
+    const result = buildBoundBfdbEquipmentPatches(kwMessage, bindings, new Set(['breaker-01']));
     expect(result[0]?.reported.powerW).toEqual({
       value: 26.64,
       unit: 'W',

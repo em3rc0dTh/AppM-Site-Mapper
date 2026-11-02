@@ -55,13 +55,13 @@ From the project root, with a Mongo replica set available on a lab endpoint:
 ```bash
 node scripts/seed-01-restore-lab.mjs \
   --snapshot ./seed-01-topology-full.json \
-  --uri 'mongodb://localhost:27017/?replicaSet=rs0' \
+  --uri 'mongodb://127.0.0.1:27017/?directConnection=true' \
   --database seed-01-restore-lab \
   --confirm seed-01-restore-lab
 
 node scripts/seed-01-parity.mjs \
   --snapshot ./seed-01-topology-full.json \
-  --uri 'mongodb://localhost:27017/?replicaSet=rs0' \
+  --uri 'mongodb://127.0.0.1:27017/?directConnection=true' \
   --database seed-01-restore-lab --exact-ids
 ```
 

@@ -58,7 +58,24 @@ git rev-parse HEAD
 
 Registrar el SHA. Si existe una modificación local, la instalación deja de representar el release aprobado.
 
-## 4. Configuración privada
+## 4. Contrato de arranque limpio con seed-01
+
+Para esta línea de release el arranque persistente canónico es:
+
+```dotenv
+MONGODB_DB_NAME=seed-01
+SITE_MAPPER_SEED_PROFILE=seed-01
+```
+
+Sobre una Mongo vacía, la aplicación debe crear automáticamente la base canónica de `seed-01`: Network, Site, Structure, Level, Room, área/posiciones QDF, racks QDF-2/QDF-4/QDF-5, BDFB, Equipment y perfiles industriales declarados por el seed.
+
+**No se admite como procedimiento normal** ejecutar después scripts Python, `mongosh`, updates manuales a colecciones o fixtures para completar lo que el seed debió crear.
+
+Si el seed encuentra una contradicción de identidad, serial, parentage, tipo o estructura, debe **fallar explícitamente**. No debe “reparar” silenciosamente datos incompatibles.
+
+El estado sintético de integración (publishers/emuladores/fixtures) es otra capa y no forma parte de la verdad física canónica del seed.
+
+## 5. Configuración privada
 
 Crear el archivo local solo si no existe:
 
@@ -85,7 +102,7 @@ Además debe decidirse explícitamente:
 
 No copiar un `.env` de otro cliente.
 
-## 5. Validar el Compose antes de arrancar
+## 6. Validar el Compose antes de arrancar
 
 ```bash
 docker compose -f docker-compose.telemetry.yml config --quiet
@@ -102,7 +119,7 @@ docker compose \
 
 Un error de variable requerida se corrige en configuración; no debe eliminarse la guarda para “hacerlo arrancar”.
 
-## 6. Primera instalación persistente
+## 7. Primera instalación persistente
 
 ```bash
 docker compose -f docker-compose.telemetry.yml up -d --build
@@ -113,7 +130,7 @@ No utilizar `down -v` durante diagnóstico.
 
 Los volúmenes contienen estado que no se reconstruye con `git pull`.
 
-## 7. Salud mínima
+## 8. Salud mínima
 
 Verificar:
 
@@ -129,7 +146,7 @@ SNMP collector when selected
 
 El endpoint de Site Mapper confirma disponibilidad HTTP, no todas las dependencias. Consultar también los healthchecks/diagnósticos de los servicios correspondientes.
 
-## 8. Bootstrap
+## 9. Bootstrap
 
 En una base nueva:
 
@@ -141,7 +158,7 @@ En una base nueva:
 
 No insertar usuarios directamente en MongoDB.
 
-## 9. Persistencia y reinicio
+## 10. Persistencia y reinicio
 
 Antes de incorporar equipos reales:
 
@@ -151,7 +168,7 @@ Antes de incorporar equipos reales:
 4. confirmar que TimescaleDB conserva su esquema;
 5. confirmar que los servicios vuelven a healthy.
 
-## 10. Existing installation
+## 11. Existing installation
 
 Si el host ya contiene datos:
 
@@ -164,7 +181,7 @@ Si el host ya contiene datos:
 
 Consultar [Backup/Restore](../operations/backup-restore.md) y las notas de hardening/migración.
 
-## 11. Conectar equipos reales
+## 12. Conectar equipos reales
 
 Después de que la plataforma base sea estable:
 
@@ -182,7 +199,7 @@ Site Survey
 
 Seguir [Commissioning de equipos reales](../field/real-equipment-commissioning.md).
 
-## 12. Entrega final de cliente
+## 13. Entrega final de cliente
 
 Este procedimiento desde source es el camino de ingeniería actual. La entrega productizada objetivo no debe exigir Git ni compilación:
 
@@ -203,7 +220,7 @@ El bundle deberá incluir:
 
 Hasta que ese bundle sea construido y ensayado, no afirmar que la distribución offline del cliente está certificada.
 
-## 13. Evidencia de portabilidad
+## 14. Evidencia de portabilidad
 
 Registrar por cada ensayo:
 

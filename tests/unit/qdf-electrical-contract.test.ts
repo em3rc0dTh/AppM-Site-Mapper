@@ -7,9 +7,21 @@ import {
 
 describe('unified QDF V/A/P/E contractual projection', () => {
   it('composes live V/A/P without recalculating the certified metric values', () => {
-    const current = { currentA: 24, observedAt: '2026-11-02T01:00:00.000Z', contributingFeeds: 2 };
-    const power = { powerKw: 1.152, observedAt: '2026-11-02T01:00:00.000Z', contributingFeeds: 2 };
-    const voltageValue = { voltageV: -48, observedAt: '2026-11-02T01:00:00.000Z', contributingFeeds: 2 };
+    const current = {
+      currentA: 24,
+      observedAt: '2026-11-02T01:00:00.000Z',
+      contributingFeeds: 2,
+    };
+    const power = {
+      powerKw: 1.152,
+      observedAt: '2026-11-02T01:00:00.000Z',
+      contributingFeeds: 2,
+    };
+    const voltageValue = {
+      voltageV: -48,
+      observedAt: '2026-11-02T01:00:00.000Z',
+      contributingFeeds: 2,
+    };
     const contract = composeQdfLiveElectricalContract('qdf-1', {
       current,
       power,
@@ -31,7 +43,11 @@ describe('unified QDF V/A/P/E contractual projection', () => {
   });
 
   it('reports PARTIAL without promoting missing live metrics to valid totals', () => {
-    const current = { currentA: 24, observedAt: '2026-11-02T01:00:00.000Z', contributingFeeds: 2 };
+    const current = {
+      currentA: 24,
+      observedAt: '2026-11-02T01:00:00.000Z',
+      contributingFeeds: 2,
+    };
     const contract = composeQdfLiveElectricalContract('qdf-1', {
       current,
       power: null,
@@ -48,14 +64,16 @@ describe('unified QDF V/A/P/E contractual projection', () => {
     const current = [{ bucketAt: at, observedAt: at, currentA: 24, contributingFeeds: 2 }];
     const power = [{ bucketAt: at, observedAt: at, powerKw: 1.152, contributingFeeds: 2 }];
     const voltage = [{ bucketAt: at, observedAt: at, voltageV: -48, contributingFeeds: 2 }];
-    const energy = [{
-      bucketAt: at,
-      observedAt: at,
-      intervalEnergyKwh: 0.0192,
-      cumulativeEnergyKwh: 0.0192,
-      coveredSeconds: 60,
-      contributingFeeds: 2,
-    }];
+    const energy = [
+      {
+        bucketAt: at,
+        observedAt: at,
+        intervalEnergyKwh: 0.0192,
+        cumulativeEnergyKwh: 0.0192,
+        coveredSeconds: 60,
+        contributingFeeds: 2,
+      },
+    ];
     const contract = composeQdfHistoricalElectricalContract('qdf-1', '24h', {
       current,
       power,
@@ -80,14 +98,16 @@ describe('unified QDF V/A/P/E contractual projection', () => {
       current: [],
       power: [],
       voltage: { busA: [], busB: [], total: [] },
-      energy: [{
-        bucketAt: '2026-11-02T01:00:00.000Z',
-        observedAt: '2026-11-02T01:00:00.000Z',
-        intervalEnergyKwh: 0.01,
-        cumulativeEnergyKwh: 0.01,
-        coveredSeconds: 60,
-        contributingFeeds: 2,
-      }],
+      energy: [
+        {
+          bucketAt: '2026-11-02T01:00:00.000Z',
+          observedAt: '2026-11-02T01:00:00.000Z',
+          intervalEnergyKwh: 0.01,
+          cumulativeEnergyKwh: 0.01,
+          coveredSeconds: 60,
+          contributingFeeds: 2,
+        },
+      ],
       voltageToleranceV: 1,
     });
     expect(contract.status).toBe('PARTIAL');

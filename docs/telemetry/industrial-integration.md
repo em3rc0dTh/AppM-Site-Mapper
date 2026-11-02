@@ -213,6 +213,17 @@ must be aligned. Historical TOTAL_POWER sums only buckets where every expected F
 complete paired V/I coverage; a bucket with any unpaired sample is omitted rather than partially
 summed. The legacy breaker block 0–767 and internal watt storage remain unchanged.
 
+QDF total energy E1 is an **historical window measurement**, not a lifetime meter counter.
+It is published by the trends/load-report surface as the sum of the existing per-feed
+`estimatedEnergyKwh` values only for buckets where every expected independent input is verified
+FIELD evidence, every sample is paired V/I evidence, feed sample counts match and common observed
+coverage matches. Each accepted bucket reports interval kWh and the cumulative kWh within the
+requested window. Missing feeds, partial pairing, LAB evidence or mismatched coverage omit that
+bucket rather than treating missing consumption as zero. E1 does not create a Modbus point, does
+not persist a lifetime accumulator, does not change Timescale schemas and does not alter the
+existing Current, Voltage or Power contracts. A durable lifetime counter remains a separate
+post-RFP hardening concern.
+
 QDF voltage is deliberately **not summed**. Commission a numeric
 `qdfVoltageToleranceV` on the BDFB Device together with the verified hardware profile. Site Mapper
 derives `QDF/<deviceId>/BUS_A_VOLTAGE` and `BUS_B_VOLTAGE` only from the complete set of FIELD

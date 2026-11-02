@@ -28,6 +28,13 @@ cannot silently reduce the total. Commission the additive Modbus point as
 `QDF/<deviceId>/TOTAL_POWER` with unit `kW`; do not repurpose the breaker block or the
 descendant-equipment partial `totalPowerW`.
 
+TOTAL Energy E1 reuses the historical energy already integrated from paired FIELD voltage/current
+samples. Site Mapper exposes a canonical QDF total only when all expected verified input feeds share
+the same bucket coverage; it sums per-feed `estimatedEnergyKwh`, reports interval and cumulative
+window kWh, and fails closed for incomplete pairing, missing feeds, LAB evidence or coverage mismatch.
+This is an observed-window RFP measurement, not a persistent lifetime energy totalizer and not a new
+Modbus register.
+
 For the RFP total-voltage contract, select the installed BDFB hardware profile and configure
 `voltageToleranceV` through the SNMP advanced commissioning UI/API. The tolerance is a coherence
 gate for derived measurements, not a breaker voltage rating. Every expected incoming feed must have

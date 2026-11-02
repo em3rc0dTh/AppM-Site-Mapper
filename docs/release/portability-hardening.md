@@ -27,6 +27,8 @@ flowchart LR
   O --> P[Acceptance]
 ```
 
+Procedimiento ejecutable: [Clean Host Installation](clean-host-installation.md).
+
 ## P0 · Portabilidad
 
 - [ ] `.env.example` contiene todas las variables necesarias para los Compose soportados o las marca explícitamente como externas/opcionales.

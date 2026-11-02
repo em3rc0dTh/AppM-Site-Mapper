@@ -25,10 +25,7 @@ export function resolvePowerSourceUnit(unit: string | undefined): PowerSourceUni
  * P1 is dimensionally consistent with U1 × I1. An explicit TelemetryBinding.unit
  * overrides that default. Unsupported/ambiguous units fail closed.
  */
-export function normalizePowerToWatts(
-  value: unknown,
-  sourceUnit?: string,
-): number | undefined {
+export function normalizePowerToWatts(value: unknown, sourceUnit?: string): number | undefined {
   const parsed = numeric(value);
   if (parsed === undefined) return undefined;
   const unit = resolvePowerSourceUnit(sourceUnit);

@@ -44,3 +44,38 @@ The spatial polygon constants in `src/seeds/seed-01.ts` are derived from the ope
 6. Preserve field-commissioning boundaries: controlled SNMP/MQTT observations are not physical acceptance evidence.
 
 **Not included:** importing the full 115-node snapshot into source control or supplying a byte-identical historical clone. To achieve archival and UUID parity on a fresh installation, use a reviewed private snapshot import with collision/reference checks; do not publish site-specific operational details or lab credentials in the public repo.
+
+## Private exact-identity laboratory reproduction
+
+Use the private `seed-01-topology-full.json` exported on the operator workstation, not a checked-in fixture. This **only** restores the 115-node topology and `runtime_seed_state` marker; it does **not** restore all telemetry, industrial histories, users, credentials, alarms or Timescale data.
+
+From the project root, with a Mongo replica set available on a lab endpoint:
+
+```bash
+node scripts/seed-01-restore-lab.mjs \
+  --snapshot ./seed-01-topology-full.json \
+  --uri 'mongodb://localhost:27017/?replicaSet=rs0' \
+  --database seed-01-restore-lab \
+  --confirm seed-01-restore-lab
+
+node scripts/seed-01-parity.mjs \
+  --snapshot ./seed-01-topology-full.json \
+  --uri 'mongodb://localhost:27017/?replicaSet=rs0' \
+  --database seed-01-restore-lab --exact-ids
+```
+
+Only after exact-identity parity passes should an authorized operator run the application v6 against this **lab copy**, then re-run the parity command (with and without `--exact-ids`). Never point a live installation at the restored lab without changing credentials/ports and authorizing a test.
+
+The lab restore refuses any existing destination database, confirms a constrained lab name, validates the source inventory and seven historical tombstones, and uses a transaction. It never modifies the operator's source database.
+
+## Archived panels
+
+The six A1/B1 panels were intentionally retired in the original v4 snapshot. v6 **does not reactivate** existing tombstones. On a fresh synthesized installation it creates their tombstones and leaves frame slot 3 unoccupied. The historical Room with noncanonical archived polygon and its exact `retirement` metadata can only be reproduced from the private snapshot, not the fresh synthetic bootstrap.
+
+## Parity meaning
+
+The read-only parity tool compares paths, active/archive lifecycle, physical footprints, rack placement, equipment structure, positional slots and key equipment properties, with an optional domain-ID check. It intentionally excludes revision, created/updated timestamps, `retirement` actor IDs, CAS range IDs and generated access-port IDs. Thus `differences=0` is **logical parity**, not byte-for-byte replication. For historical identity and complete event audit, use the private EJSON and separately inspect all associated collections; do not claim full operational equivalence from topology parity alone.
+
+## Execution status
+
+Code staged on a draft PR. No local WSL/Docker runtime, database, build, test, live integration or deployment was accessed or run through GitHub. The operator retains sole authority for actual lab execution and release certification.

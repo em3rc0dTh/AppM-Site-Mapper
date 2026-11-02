@@ -1099,6 +1099,44 @@ async function seedBdfb(
   const panels = new Map<PanelName, EquipmentNode>();
   for (const panelName of PANELS) {
     const frame = panelName.startsWith('A') ? frameA : frameB;
+    if (panelName === 'A1' || panelName === 'B1') {
+      // The operator deliberately retired A1/B1 (2026-10-30). Archived
+      // nodes remain authoritative historical data, never reactivate them.
+      const matching = (await repository.listChildren(frame.id)).filter(
+        (node) => node.kind === 'EQUIPMENT' && normalizedName(node.name) === panelName,
+      );
+      if (matching.length > 1) {
+        throw new Error(`SEED_01_CONFLICT: multiple historical ${panelName} panels`);
+      }
+      const historical = matching[0];
+      if (historical) {
+        if (
+          historical.lifecycle !== 'ARCHIVED' ||
+          historical.equipmentType !== 'PANEL' ||
+          historical.deviceId !== device.id ||
+          historical.parentEquipmentId !== frame.id
+        ) {
+          throw new Error(`SEED_01_PHYSICAL_CONFLICT: historical panel ${panelName} modified`);
+        }
+        panels.set(panelName, historical);
+      } else {
+        // Fresh install: preserve the historical tombstone state, including
+        // the empty positional slot, without inventing a live A1/B1 panel.
+        const created = await ensurePanelInFrame(
+          repository, topology, device, frame, panelName,
+        );
+        const archived = await topology.archive(created.id);
+        if (!archived.ok) {
+          throw new Error(`SEED_01_ARCHIVE_FAILED: ${panelName}: ${archived.error}`);
+        }
+        const stored = await repository.getById(created.id);
+        if (!stored || stored.lifecycle !== 'ARCHIVED' || stored.kind !== 'EQUIPMENT') {
+          throw new Error(`SEED_01_ARCHIVE_FAILED: missing tombstone for ${panelName}`);
+        }
+        panels.set(panelName, stored);
+      }
+      continue;
+    }
     panels.set(panelName, await ensurePanelInFrame(repository, topology, device, frame, panelName));
   }
 

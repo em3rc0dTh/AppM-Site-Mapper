@@ -6,7 +6,9 @@
 
 **[Manual paso a paso: Login → Workspace → BDFB → MQTT → SNMP → Timescale → Modbus](docs/user-guide/recorrido-completo-login-mqtt-snmp-modbus.md)**
 
-**[Guía para encender el laboratorio existente en WSL/Docker, comprobarlo y ampliar SNMP](docs/operations/laboratorio-industrial-para-principiantes.md)**
+**[Guía para reanudar el entorno persistente de integración/preproducción en WSL/Docker](docs/operations/laboratorio-industrial-para-principiantes.md)**
+
+**[Field Commissioning: conectar equipos MQTT/SNMP reales y llevarlos hasta Modbus/Metasys](docs/field/README.md)**
 
 Si recibiste una computadora con la instalación ya preparada, el primer comando de diagnóstico es **solo lectura**:
 
@@ -14,11 +16,11 @@ Si recibiste una computadora con la instalación ya preparada, el primer comando
 python3 scripts/telemetry/estado-laboratorio.py
 ```
 
-No reinstales ni reconstruyas el proyecto para volver a entrar. Las cuentas, bases de datos y configuraciones de laboratorio no se regeneran al hacer `git pull`; el entorno persistente necesita sus propios archivos privados y volúmenes originales.
+No reinstales ni reconstruyas el proyecto para volver a entrar. Las cuentas, bases de datos y configuraciones persistentes no se regeneran al hacer `git pull`; el entorno de integración/preproducción necesita sus propios archivos privados y volúmenes originales.
 
 ## ¿Qué es?
 
-Una plataforma para modelar infraestructura física (Network → Site → Room → Rack → Device → Equipment), administrar posiciones y conexiones eléctricas y consultar telemetría confirmada. El resultado del laboratorio **no equivale a certificación de producción**.
+Una plataforma para modelar infraestructura física (Network → Site → Room → Rack → Device → Equipment), administrar posiciones y conexiones eléctricas y consultar telemetría confirmada. El stack persistente actual reproduce el camino operacional en **integración/preproducción**; la producción se declara únicamente después del commissioning y aceptación sobre hardware, red OT y sistemas externos reales.
 
 ### Arquitectura
 
@@ -58,7 +60,7 @@ Los nombres con `/` representan alternativas del **mismo nivel**. No implican un
 
 **[Contrato de distribución Docker para VPS](docs/release/docker-vps-distribution.md)** — Site Mapper se compila en CI y se entrega como **imágenes preconstruidas**, no como repositorio ni código fuente. Cada componente opera en su propio contenedor; un bundle offline multiimagen (`docker save`) y un Compose **sin `build:`** permitirán instalarlo con `docker load` y `docker compose up --no-build --pull never`.
 
-**Estado:** especificación documentada, **no paquete de cliente generado**. `docker-compose.telemetry.yml` sigue siendo un laboratorio de ingeniería que construye desde el código, no un despliegue productivo. Los datos y secretos del cliente deben residir en volúmenes y configuración privada, con backups/migraciones aprobadas antes de actualizar.
+**Estado:** especificación documentada, **no paquete de cliente generado**. `docker-compose.telemetry.yml` es el stack de integración/preproducción que todavía construye desde el código; no es el bundle final de cliente. Los datos y secretos del cliente deben residir en volúmenes y configuración privada, con backups/migraciones aprobadas antes de actualizar.
 
 ## Inicio rápido · Demo visual sin Docker
 
@@ -84,7 +86,7 @@ flowchart LR
   Rack --> Device --> Equipment --> Panel
   Panel --> CB01[CB-01 y 4 bindings]
   CB01 --> Live[LIVE / 24h / 7d]
-  Live --> Modbus[FC03 · Solo laboratorio]
+  Live --> Modbus[FC03 · Integración / preproducción]
 ```
 
 **[Manual del operador: aprender a crear, ubicar, conectar y verificar](docs/user-guide/README.md)** · [Guion para presentar el MVP en español](docs/product/MVP-DEMO-ES.md).
@@ -103,6 +105,27 @@ En la rama de trabajo del **24 de octubre** se observó:
 - **BDFB-02/03 SNMPv3 Config2 A/B**: código y proceso aditivo preparados, **aún sin ejecución ni aceptación local**. Su activación exige revisión del plan, copia de seguridad y confirmación de que los shunts son exclusivamente sintéticos.
 
 Estas evidencias son de **laboratorio**, no de autenticación SNMP de campo, shunts instalados, redes OT, integridad eléctrica o interoperabilidad física Metasys. [Registro técnico detallado](docs/telemetry/industrial-unified-lab.md) y [evidencia visual BDFB-01 SNMP](docs/telemetry/bdfb01-snmp-ui-acceptance-2026-10-24.md).
+
+## Conectar equipos reales
+
+La incorporación de infraestructura física tiene un procedimiento propio: **[Field Commissioning](docs/field/README.md)**. El flujo canónico es:
+
+```text
+Site Survey
+→ Device / Equipment físico
+→ MQTT o SNMP autorizado
+→ RAW
+→ significado / escala / unidad validados
+→ commissioning explícito
+→ LIVE
+→ TimescaleDB
+→ Modbus
+→ Metasys SAT
+→ restart / recovery
+→ As-Built
+```
+
+Site Mapper no infiere que un tópico, OID, slot, serial o número de panel representa automáticamente un circuito físico. La relación entre fuente, raw point/OID, métrica y Equipment debe aprobarse explícitamente.
 
 ## Código organizado
 
@@ -139,7 +162,7 @@ Sesiones y RBAC server-side; credenciales MQTT privadas; MongoDB con seriales ac
 
 **Inicio recomendado para una persona nueva:** [Manual maestro de operación de Login a PowerPath y MQTT](docs/user-guide/manual-maestro.md), con [modelo de datos explicado](docs/user-guide/modelo-de-datos.md) y [catálogo de capturas reales](docs/user-guide/evidencia-visual.md). La estructura de persistencia actual permanece inalterada.
 
-**[Índice de documentación](docs/README.md)** · [Arquitectura](docs/architecture/system-map.md) · [Guía de demostración](docs/product/MVP-DEMO-ES.md) · [Operación y diagnóstico](docs/operations/quickstart.md) · [Release](docs/release/MVP-READINESS.md) · [Limitaciones](docs/release/known-limitations.md).
+**[Índice de documentación](docs/README.md)** · [Field Commissioning](docs/field/README.md) · [Arquitectura](docs/architecture/system-map.md) · [Operación y diagnóstico](docs/operations/quickstart.md) · [Portability Hardening](docs/release/portability-hardening.md) · [Release](docs/release/MVP-READINESS.md) · [Limitaciones](docs/release/known-limitations.md).
 
 [CONTRACT.md](CONTRACT.md) es el plan histórico de reconstrucción; las decisiones aceptadas en contratos de dominio, ADR y código implementado gobiernan el estado actual. Las PR divergentes no entran en este baseline sin aceptación independiente.
 

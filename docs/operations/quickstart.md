@@ -1,11 +1,11 @@
-# Quickstart operativo · MVP MK1
+# Quickstart operativo · Site Mapper MK1
 
-**Tres caminos distintos.** Elige uno antes de comenzar: (A) visual efímero, (B) visual con inventario Mongo existente o (C) laboratorio integral persistente. No mezcles datos de los tres modos.
+**Tres caminos distintos.** Elige uno antes de comenzar: (A) visual efímero DEV, (B) inventario Mongo existente o (C) stack persistente de INTEGRATION / PRE-PRODUCTION. No mezcles datos de los tres modos.
 
 ## Requisitos
 
 - Node.js 22.13–22.x, npm, Git.
-- Docker Engine + plugin `docker compose` para los modos persistentes; WSL2 sirve como shell del laboratorio.
+- Docker Engine + plugin `docker compose` para los modos persistentes; WSL2 puede utilizarse como shell del entorno de integración.
 - Navegador compatible. Para MQTT real, **broker y emulador externos** ya disponibles; el repo no los inicia.
 - Credenciales y configuración privada en un archivo `.env` ignorado por Git. **Nunca pegarlas en issues, capturas, logs o chats.**
 
@@ -31,7 +31,7 @@ npm run audit:mongo
 
 Este comando requiere un `MONGODB_URI` privado vigente y la selección explícita correcta de `MONGODB_DB_NAME`. Consulta [Mongo + MQTT](mongodb-live-mqtt.md) para el modo de inspección y la incorporación de cuentas. **No uses** `--new` ni `--crud-test` contra un inventario que quieres conservar.
 
-## C. Stack persistente completo — Compose
+## C. Stack persistente de integración/preproducción — Compose
 
 ### C1. Preparar la configuración local
 
@@ -45,6 +45,7 @@ El Compose necesita como mínimo:
 
 | Nombre                           | Qué configurar                                                                                     |
 | -------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `TIMESCALE_DB_PASSWORD`          | Password privado URL-safe requerido por TimescaleDB en el Compose                                  |
 | `BOOTSTRAP_ADMIN_TOKEN`          | Secreto aleatorio privado para el bootstrap de la primera cuenta (aunque ya exista una cuenta)     |
 | `MODBUS_BRIDGE_TOKEN`            | Otro token distinto y privado, **24+ caracteres**, compartido entre App y sidecar                  |
 | `MODBUS_SOURCE_UNITS_JSON`       | JSON con Unit IDs **autorizados**; el laboratorio previo usó `EMU-BFDB-01 → 1`, `02 → 2`, `03 → 3` |
@@ -101,6 +102,24 @@ node scripts/operations/certify-modbus-cb01.mjs \
 ```
 
 El éxito se marca con `MODBUS_CERT_PASS` y coincidencia de los cuatro FLOAT32 con histórico del **mismo breaker**. En otro inventario, debes usar **sus** identidades y la correspondencia real.
+
+## Pasar de integración a equipos reales
+
+El stack persistente no convierte por sí solo una fuente en infraestructura de campo aceptada. Para conectar un controller, BFDB, rectificador, gateway o BMS real, seguir **[Field Commissioning](../field/README.md)**:
+
+```text
+Site Survey
+→ inventario físico
+→ MQTT/SNMP real
+→ RAW
+→ commissioning
+→ LIVE
+→ TimescaleDB
+→ Modbus
+→ Metasys SAT
+```
+
+No copiar identities, Unit IDs, OIDs, seriales ni direcciones de los ejemplos de integración hacia un cliente nuevo.
 
 ## Operación después del arranque
 

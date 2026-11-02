@@ -19,8 +19,18 @@ describe('QDF load report projection', () => {
           busA: [],
           busB: [],
           total: [
-            { bucketAt: '2026-11-01T00:00:00.000Z', observedAt: '2026-11-01T00:00:01.000Z', voltageV: 48, contributingFeeds: 4 },
-            { bucketAt: '2026-11-01T00:05:00.000Z', observedAt: '2026-11-01T00:05:01.000Z', voltageV: 50, contributingFeeds: 4 },
+            {
+              bucketAt: '2026-11-01T00:00:00.000Z',
+              observedAt: '2026-11-01T00:00:01.000Z',
+              voltageV: 48,
+              contributingFeeds: 4,
+            },
+            {
+              bucketAt: '2026-11-01T00:05:00.000Z',
+              observedAt: '2026-11-01T00:05:01.000Z',
+              voltageV: 50,
+              contributingFeeds: 4,
+            },
           ],
         },
         current: {
@@ -28,8 +38,18 @@ describe('QDF load report projection', () => {
           semantics: 'SUM_VERIFIED_INDEPENDENT_INPUTS',
           quality: 'VALID',
           points: [
-            { bucketAt: '2026-11-01T00:00:00.000Z', observedAt: '2026-11-01T00:00:01.000Z', currentA: 100, contributingFeeds: 4 },
-            { bucketAt: '2026-11-01T00:05:00.000Z', observedAt: '2026-11-01T00:05:01.000Z', currentA: 140, contributingFeeds: 4 },
+            {
+              bucketAt: '2026-11-01T00:00:00.000Z',
+              observedAt: '2026-11-01T00:00:01.000Z',
+              currentA: 100,
+              contributingFeeds: 4,
+            },
+            {
+              bucketAt: '2026-11-01T00:05:00.000Z',
+              observedAt: '2026-11-01T00:05:01.000Z',
+              currentA: 140,
+              contributingFeeds: 4,
+            },
           ],
         },
         power: {
@@ -37,8 +57,18 @@ describe('QDF load report projection', () => {
           semantics: 'SUM_VERIFIED_PAIRED_VOLTAGE_CURRENT',
           quality: 'VALID',
           points: [
-            { bucketAt: '2026-11-01T00:00:00.000Z', observedAt: '2026-11-01T00:00:01.000Z', powerKw: 4.8, contributingFeeds: 4 },
-            { bucketAt: '2026-11-01T00:05:00.000Z', observedAt: '2026-11-01T00:05:01.000Z', powerKw: 7, contributingFeeds: 4 },
+            {
+              bucketAt: '2026-11-01T00:00:00.000Z',
+              observedAt: '2026-11-01T00:00:01.000Z',
+              powerKw: 4.8,
+              contributingFeeds: 4,
+            },
+            {
+              bucketAt: '2026-11-01T00:05:00.000Z',
+              observedAt: '2026-11-01T00:05:01.000Z',
+              powerKw: 7,
+              contributingFeeds: 4,
+            },
           ],
         },
         energy: {
@@ -49,8 +79,22 @@ describe('QDF load report projection', () => {
           quality: 'VALID',
           maxIntegratedGapSeconds: 120,
           points: [
-            { bucketAt: '2026-11-01T00:00:00.000Z', observedAt: '2026-11-01T00:00:01.000Z', intervalEnergyKwh: 0.1, cumulativeEnergyKwh: 0.1, coveredSeconds: 60, contributingFeeds: 4 },
-            { bucketAt: '2026-11-01T00:05:00.000Z', observedAt: '2026-11-01T00:05:01.000Z', intervalEnergyKwh: 0.2, cumulativeEnergyKwh: 0.3, coveredSeconds: 60, contributingFeeds: 4 },
+            {
+              bucketAt: '2026-11-01T00:00:00.000Z',
+              observedAt: '2026-11-01T00:00:01.000Z',
+              intervalEnergyKwh: 0.1,
+              cumulativeEnergyKwh: 0.1,
+              coveredSeconds: 60,
+              contributingFeeds: 4,
+            },
+            {
+              bucketAt: '2026-11-01T00:05:00.000Z',
+              observedAt: '2026-11-01T00:05:01.000Z',
+              intervalEnergyKwh: 0.2,
+              cumulativeEnergyKwh: 0.3,
+              coveredSeconds: 60,
+              contributingFeeds: 4,
+            },
           ],
           totalKwh: 0.3,
         },

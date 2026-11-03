@@ -35,12 +35,7 @@ describe('Settings navigation is independent of session authentication', () => {
   });
 
   it('SUPERADMIN sees only the retained settings tabs and defaults to Users', () => {
-    expect(visibleSettingsTabs('SUPERADMIN')).toEqual([
-      'Profile',
-      'Security',
-      'Users',
-      'Roles',
-    ]);
+    expect(visibleSettingsTabs('SUPERADMIN')).toEqual(['Profile', 'Security', 'Users', 'Roles']);
     expect(resolveSettingsTab('SUPERADMIN')).toBe('Users');
     expect(resolveSettingsTab('SUPERADMIN', 'users')).toBe('Users');
     expect(settingsTabSlug('Roles')).toBe('roles');

@@ -42,6 +42,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Diagnostic canonical Prettier diff
+        run: |
+          npx prettier --write src/app/settings/page.tsx tests/unit/settings-access.test.ts
+          git diff -- src/app/settings/page.tsx tests/unit/settings-access.test.ts
+
       - name: Format check
         run: npm run format:check
 

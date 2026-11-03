@@ -55,6 +55,22 @@ export async function searchTopology(
       results.push({ id: node.id, name: node.name, kind: node.kind, href, breadcrumb });
     }
 
+    if (node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER') {
+      for (const alias of node.aliases ?? []) {
+        const target = alias.trim();
+        if (!target || !target.toLocaleLowerCase().includes(normalized)) continue;
+        const panel = node.parentEquipmentId ? await repository.getById(node.parentEquipmentId) : null;
+        const device = await repository.getById(node.deviceId);
+        results.push({
+          id: `power-target:${node.id}:${target}`,
+          name: target,
+          kind: 'POWER_TARGET',
+          href: `/power?breaker=${encodeURIComponent(node.id)}`,
+          breadcrumb: `${device?.name ?? 'Power source'} / ${panel?.name ?? 'Panel'} / ${node.name} → declared target`,
+        });
+      }
+    }
+
     if (node.kind !== 'DEVICE' || node.deviceType !== 'BDFB') continue;
     const presentation = await bdfbProjection.get(node.id);
     if (!presentation) continue;

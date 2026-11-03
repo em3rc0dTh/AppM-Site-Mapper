@@ -62,7 +62,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'mosquitto_pub -h 127.0.0.1 -p 1883 -u "$$MQTT_USERNAME" -P "$$MQTT_PASSWORD" -t "$$MQTT_TOPIC_PREFIX""health" -m ok >/dev/null 2>&1',
+          'mosquitto_pub -h 127.0.0.1 -p 1883 -u "$MQTT_USERNAME" -P "$MQTT_PASSWORD" -t "_health/site-mapper" -m ok >/dev/null 2>&1',
         ]
       interval: 5s
       timeout: 3s

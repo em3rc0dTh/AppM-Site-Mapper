@@ -196,7 +196,7 @@ export default async function PowerPage({
         ...(item.source ? [item.source.equipment.deviceId] : []),
         ...(item.target ? [item.target.equipment.deviceId] : []),
       ]),
-      ...(selectedBreaker ? [selectedBreaker.deviceId] : []),
+      ...(selectedBreaker ? [selectedBreaker.id, selectedBreaker.deviceId] : []),
     ]),
   ];
 

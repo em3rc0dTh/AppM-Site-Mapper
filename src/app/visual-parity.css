@@ -6603,3 +6603,41 @@ dialog.zip-power-floating-window[open] {
 dialog.zip-power-floating-window::backdrop {
   background: transparent;
 }
+
+
+/* True non-modal floating power window: no dialog top-layer, no backdrop, draggable. */
+.zip-power-floating-layer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 10000 !important;
+  pointer-events: none !important;
+}
+
+.zip-power-floating-layer .zip-power-floating-window {
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  margin: 0 !important;
+  pointer-events: auto !important;
+}
+
+.zip-power-floating-layer .zip-power-floating-window.is-dragged {
+  left: var(--floating-left) !important;
+  top: var(--floating-top) !important;
+  transform: none !important;
+}
+
+.zip-power-floating-header {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.zip-power-floating-header:active {
+  cursor: grabbing;
+}
+
+.zip-power-floating-close {
+  cursor: pointer;
+}

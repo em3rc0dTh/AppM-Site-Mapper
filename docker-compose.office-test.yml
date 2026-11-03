@@ -44,9 +44,11 @@ services:
         test -n "$$MQTT_USERNAME"
         test -n "$$MQTT_PASSWORD"
         test -n "$$MQTT_TOPIC_PREFIX"
-        umask 077
-        mosquitto_passwd -b -c /tmp/mosquitto.passwd "$$MQTT_USERNAME" "$$MQTT_PASSWORD"
-        printf 'user %s\ntopic readwrite %s#\n' "$$MQTT_USERNAME" "$$MQTT_TOPIC_PREFIX" > /tmp/mosquitto.acl
+        umask 027
+        mosquitto_passwd -b -c /tmp/mosquitto.passwd "$MQTT_USERNAME" "$MQTT_PASSWORD"
+        printf 'user %s\ntopic readwrite %s#\n' "$MQTT_USERNAME" "$MQTT_TOPIC_PREFIX" > /tmp/mosquitto.acl
+        chown mosquitto:mosquitto /tmp/mosquitto.passwd /tmp/mosquitto.acl
+        chmod 640 /tmp/mosquitto.passwd /tmp/mosquitto.acl
         exec mosquitto -c /mosquitto/config/mosquitto.conf
     environment:
       MQTT_USERNAME: '${MQTT_USERNAME:?Set MQTT_USERNAME}'

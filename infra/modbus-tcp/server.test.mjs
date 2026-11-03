@@ -42,7 +42,7 @@ test('maps two BFDB blocks of 48 circuits to exactly 96 positions', () => {
   assert.equal(rawPointIndex('0_1_25'), 24);
   assert.equal(rawPointIndex('0_2_24'), 71);
   assert.equal(rawPointIndex('0_2_48'), 95);
-  for (const malformed of ['0_5_1', '0_1_0', '0_1_49', 'garbage']) {
+  for (const malformed of ['0_5_1', '0_1_0', '0_1_49', 'garbage', ['0_1_1'], 123, null]) {
     assert.equal(rawPointIndex(malformed), null);
   }
 });
@@ -81,6 +81,53 @@ test('invalid source and out-of-map points do not corrupt holding registers', ()
   assert.equal(handleFrame(command(1, 767, 2), state)[8], 2);
   assert.equal(handleFrame(command(1, 0, 126), state)[8], 2);
   assert.equal(handleFrame(command(1, 0, 1, 6), state)[7], 0x86);
+});
+
+test('rejects FLOAT32 overflow without partially overwriting previously accepted readings', () => {
+  const state = new ModbusLatestState(sourceMap);
+  const now = Date.now();
+  const accepted = sample('EMU-BFDB-01', '0_1_1', 12.5, new Date(now).toISOString());
+  assert.equal(state.apply(accepted, now), true);
+  const invalid = sample('EMU-BFDB-01', '0_1_1', 1e39, new Date(now).toISOString());
+  invalid.metrics.currentA.value = 88;
+  assert.equal(state.apply(invalid, now), false);
+  const result = handleFrame(command(1, 0, 8), state, now);
+  assert.equal(result.readFloatBE(9), 12.5);
+  assert.equal(result.readFloatBE(13), 2.5);
+  assert.equal(state.apply(sample('EMU-BFDB-01', ['0_1_1'], 99), now), false);
+  assert.equal(handleFrame(command(1, 0, 2), state, now).readFloatBE(9), 12.5);
+});
+
+test('HTTP bridge rejects overflow and array point ID without changing FC03 state', async () => {
+  const app = startBridge({
+    sourceMap,
+    token: TOKEN,
+    modbusHost: '127.0.0.1',
+    modbusPort: 0,
+    ingestHost: '127.0.0.1',
+    ingestPort: 0,
+  });
+  await Promise.all([
+    new Promise((resolve) => app.modbus.once('listening', resolve)),
+    new Promise((resolve) => app.ingest.once('listening', resolve)),
+  ]);
+  const url = `http://127.0.0.1:${app.ingest.address().port}/internal/accepted-breaker`;
+  const post = (body) =>
+    fetch(url, {
+      method: 'POST',
+      headers: { authorization: `Bearer ${TOKEN}`, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  try {
+    assert.equal((await post(sample('EMU-BFDB-01', '0_1_1', 13.25))).status, 202);
+    assert.equal((await post(sample('EMU-BFDB-01', '0_1_1', 1e39))).status, 422);
+    assert.equal((await post(sample('EMU-BFDB-01', ['0_1_1'], 77))).status, 422);
+    const result = handleFrame(command(1, 0, 8), app.state);
+    assert.equal(result.readFloatBE(9), 13.25);
+    assert.equal(result.readFloatBE(13), 2.5);
+  } finally {
+    await app.close();
+  }
 });
 
 test('HTTP bridge authenticates and Modbus TCP emits a real MBAP response', async () => {

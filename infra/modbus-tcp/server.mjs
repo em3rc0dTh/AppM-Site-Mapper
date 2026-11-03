@@ -56,6 +56,14 @@ export class ModbusLatestState {
     if (!sample.metrics || typeof sample.metrics !== 'object') return false;
     const timestamp = Date.parse(sample.receivedAt);
     if (!Number.isFinite(timestamp) || Math.abs(now - timestamp) > 60000) return false;
+    // Validate the complete incoming sample before changing any holding register.
+    // A finite JS number may still overflow IEEE-754 FLOAT32 during Modbus encoding.
+    for (const metric of METRICS) {
+      const field = sample.metrics[metric];
+      if (!field || !Number.isFinite(field.value)) continue;
+      const engineeringValue = modbusEngineeringValue(metric, field.value);
+      if (!Number.isFinite(Math.fround(engineeringValue))) return false;
+    }
     let changed = false;
     const slots = this.values.get(unit);
     for (let i = 0; i < METRICS.length; i++) {

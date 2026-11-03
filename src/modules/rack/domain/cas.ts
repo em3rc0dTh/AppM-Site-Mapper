@@ -49,6 +49,7 @@ export function validateCas(ranges: readonly CasRange[], totalU: number): boolea
   }
 
   const sorted = [...ranges].sort((left, right) => left.startU - right.startU);
+  const ids = new Set<string>();
 
   if (sorted[0]?.startU !== 1 || sorted.at(-1)?.endU !== totalU) {
     return false;
@@ -60,6 +61,10 @@ export function validateCas(ranges: readonly CasRange[], totalU: number): boolea
     if (!range || range.startU < 1 || range.endU < range.startU || range.endU > totalU) {
       return false;
     }
+    if (typeof range.id !== 'string' || !range.id.trim() || ids.has(range.id)) {
+      return false;
+    }
+    ids.add(range.id);
 
     const next = sorted[index + 1];
 

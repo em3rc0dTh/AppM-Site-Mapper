@@ -40,6 +40,7 @@ export function pointIdForCircuit(circuit, pointLayout = 'panels-4x24') {
 }
 
 export function rawPointIndex(rawPointId, pointLayout = 'blocks-2x48') {
+  if (typeof rawPointId !== 'string') return null;
   if (pointLayout === 'panels-4x24') {
     const match = /^0_([1-4])_([1-9]|1[0-9]|2[0-4])$/.exec(rawPointId);
     return match ? (Number(match[1]) - 1) * 24 + Number(match[2]) - 1 : null;

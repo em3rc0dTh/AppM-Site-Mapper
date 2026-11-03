@@ -379,17 +379,7 @@ export default async function PowerPage({
                   <strong>● {selectedBreaker.accessPorts[0]?.name ?? t('powerOutputFallback')}</strong>
                 </article>
               </div>
-              <div
-                style={{
-                  marginTop: 18,
-                  padding: '12px 14px',
-                  border: '1px dashed #8db8f2',
-                  borderRadius: 10,
-                  background: '#f7fbff',
-                }}
-              >
-                {t('declaredRelation', { breaker: selectedBreaker.name, target: declaredTarget })}
-              </div>
+
             </section>
           ) : (
             <div className="zip-power-empty">{t('noActive')}</div>

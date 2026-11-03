@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocale, useTranslations } from 'next-intl';
 
@@ -93,12 +93,20 @@ export function DeclaredPowerFloatingWindow({
   const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const windowRef = useRef<HTMLDialogElement | null>(null);
   const [view, setView] = useState<View | null>(null);
   const [section, setSection] = useState<'telemetry' | 'history' | 'trace'>('telemetry');
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    const node = windowRef.current;
+    if (!node) return;
+    if (open && !node.open) node.show();
+    if (!open && node.open) node.close();
+  }, [open, mounted]);
 
   useEffect(() => {
     if (!open) return;
@@ -151,7 +159,12 @@ export function DeclaredPowerFloatingWindow({
       {open && mounted
         ? createPortal(
             <div className="zip-power-floating-layer">
-              <section className="zip-power-floating-window" role="region" aria-label={t('powerWindow')}>
+              <dialog
+                ref={windowRef}
+                className="zip-power-floating-window"
+                aria-label={t('powerWindow')}
+                onClose={() => setOpen(false)}
+              >
           <header className="zip-power-floating-header">
             <div>
               <small>{t('powerWindow')}</small>
@@ -275,7 +288,7 @@ export function DeclaredPowerFloatingWindow({
               <time dateTime={receivedAt}>{updated}</time>
             </div>
           )}
-        </section>
+              </dialog>
             </div>,
             document.body,
           )

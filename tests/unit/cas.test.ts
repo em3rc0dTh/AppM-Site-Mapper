@@ -58,6 +58,20 @@ describe('CAS engine', () => {
     expect(freed.ranges[0]).toMatchObject({ startU: 1, endU: 42, state: 'AVAILABLE' });
   });
 
+  it('rejects duplicate CAS identifiers before any allocation can remove rack ranges', () => {
+    const ranges = [
+      { id: 'duplicate', startU: 1, endU: 4, state: 'AVAILABLE' as const },
+      { id: 'duplicate', startU: 5, endU: 10, state: 'AVAILABLE' as const },
+    ];
+    const snapshot = JSON.stringify(ranges);
+    expect(validateCas(ranges, 10)).toBe(false);
+    expect(reserveCas(ranges, 10, { mountStartU: 2, physicalSizeU: 1 })).toEqual({
+      ok: false,
+      error: 'INVALID_CAPACITY',
+    });
+    expect(JSON.stringify(ranges)).toBe(snapshot);
+  });
+
   it('rejects overlap and out-of-capacity reservations', () => {
     const initial = initializeCas(10);
     const first = reserveCas(initial, 10, { mountStartU: 3, physicalSizeU: 3 });

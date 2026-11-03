@@ -50,6 +50,25 @@ export default async function PowerPage({
     (node): node is EquipmentNode => node.kind === 'EQUIPMENT' && node.lifecycle === 'ACTIVE',
   );
   const byEquipmentId = new Map(allEquipment.map((item) => [item.id, item]));
+  const selectedBreaker = query.breaker ? byEquipmentId.get(query.breaker) : undefined;
+  const selectedBreakerPanel = selectedBreaker?.parentEquipmentId
+    ? byEquipmentId.get(selectedBreaker.parentEquipmentId)
+    : undefined;
+  const selectedBreakerDevice = selectedBreaker
+    ? await topology.getById(selectedBreaker.deviceId)
+    : null;
+  const declaredTarget =
+    selectedBreaker?.equipmentType === 'CIRCUIT_BREAKER'
+      ? selectedBreaker.aliases?.find((alias) => alias.trim().length > 0)
+      : undefined;
+  const declaredFeed: 'A' | 'B' | undefined = selectedBreakerPanel?.name
+    .trim()
+    .toUpperCase()
+    .startsWith('A')
+    ? 'A'
+    : selectedBreakerPanel?.name.trim().toUpperCase().startsWith('B')
+      ? 'B'
+      : undefined;
 
   const inSubtree = (candidate: EquipmentNode, rootId: string): boolean => {
     let current: EquipmentNode | undefined = candidate;
@@ -162,17 +181,22 @@ export default async function PowerPage({
   const primary = views[0];
   const feedA = views.find((item) => item.feed === 'A');
   const feedB = views.find((item) => item.feed === 'B');
+  const hasDeclaredFallback = !primary && Boolean(declaredTarget && selectedBreaker);
   const targetName =
-    primary?.target?.equipment.name ?? primary?.targetStages.at(-2)?.name ?? 'Unresolved target';
+    primary?.target?.equipment.name ??
+    primary?.targetStages.at(-2)?.name ??
+    declaredTarget ??
+    'Unresolved target';
   const breadcrumbs = selectedEntity ? await service.getTrail(selectedEntity.id) : [];
   const traceEntityId = primary?.target?.equipment.deviceId ?? selectedEntity?.id;
   const telemetryEntityIds = [
-    ...new Set(
-      views.flatMap((item) => [
+    ...new Set([
+      ...views.flatMap((item) => [
         ...(item.source ? [item.source.equipment.deviceId] : []),
         ...(item.target ? [item.target.equipment.deviceId] : []),
       ]),
-    ),
+      ...(selectedBreaker ? [selectedBreaker.deviceId] : []),
+    ]),
   ];
 
   const t = await getTranslations('pages.power');
@@ -208,7 +232,7 @@ export default async function PowerPage({
           {query.feed === 'A' ? 'FEED A' : query.feed === 'B' ? 'FEED B' : 'A+B'} <b>⌄</b>
         </Link>
         <strong>
-          <i /> {primary ? t('configured') : t('noPath')}
+          <i /> {primary ? t('configured') : hasDeclaredFallback ? 'DECLARED PATH' : t('noPath')}
         </strong>
       </div>
 
@@ -230,12 +254,24 @@ export default async function PowerPage({
               <div className="zip-power-tree-feed">
                 <b>{t('feed', { side: 'A' })}</b>
                 <span>{t('primary')}</span>
-                <small>{feedA ? t('configuredLower') : t('notConfigured')}</small>
+                <small>
+                  {feedA
+                    ? t('configuredLower')
+                    : hasDeclaredFallback && declaredFeed === 'A'
+                      ? 'declared'
+                      : t('notConfigured')}
+                </small>
               </div>
               <div className="zip-power-tree-feed">
                 <b>{t('feed', { side: 'B' })}</b>
                 <span>{t('secondary')}</span>
-                <small>{feedB ? t('configuredLower') : t('notConfigured')}</small>
+                <small>
+                  {feedB
+                    ? t('configuredLower')
+                    : hasDeclaredFallback && declaredFeed === 'B'
+                      ? 'declared'
+                      : t('notConfigured')}
+                </small>
               </div>
             </>
           ) : null}
@@ -277,6 +313,82 @@ export default async function PowerPage({
                 </div>
               </section>
             </>
+          ) : hasDeclaredFallback && selectedBreaker && declaredTarget ? (
+            <section className="zip-power-box">
+              <h2>DECLARED POWER PATH</h2>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'minmax(220px, 1fr) minmax(140px, 0.7fr) minmax(220px, 1fr)',
+                  gap: 20,
+                  alignItems: 'stretch',
+                }}
+              >
+                <article
+                  style={{
+                    border: '1px solid var(--line, #d6deea)',
+                    borderRadius: 14,
+                    padding: 22,
+                    background: '#fff',
+                  }}
+                >
+                  <small>TARGET · DECLARED</small>
+                  <h3 style={{ margin: '10px 0 4px' }}>{declaredTarget}</h3>
+                  <p style={{ margin: 0 }}>Excel / seed-01 destination</p>
+                  <hr style={{ margin: '20px 0', border: 0, borderTop: '1px solid #e5eaf0' }} />
+                  <strong>○ POWER INPUT · unresolved</strong>
+                </article>
+
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 10,
+                    textAlign: 'center',
+                  }}
+                >
+                  <strong style={{ color: '#1769e0' }}>← DECLARED PATH</strong>
+                  <small>Target is known; physical endpoint is not linked yet.</small>
+                </div>
+
+                <article
+                  style={{
+                    border: '1px solid var(--line, #d6deea)',
+                    borderRadius: 14,
+                    padding: 22,
+                    background: '#fff',
+                  }}
+                >
+                  <small>SOURCE · CONFIRMED INVENTORY</small>
+                  <h3 style={{ margin: '10px 0 4px' }}>
+                    {selectedBreakerDevice?.kind === 'DEVICE'
+                      ? selectedBreakerDevice.name
+                      : selectedBreaker.deviceId}
+                  </h3>
+                  <p style={{ margin: '0 0 4px' }}>
+                    {selectedBreakerPanel?.name ?? 'Panel'} · {selectedBreaker.name}
+                  </p>
+                  <p style={{ margin: 0 }}>Feed {declaredFeed ?? '—'}</p>
+                  <hr style={{ margin: '20px 0', border: 0, borderTop: '1px solid #e5eaf0' }} />
+                  <strong>● {selectedBreaker.accessPorts[0]?.name ?? 'Power output'}</strong>
+                </article>
+              </div>
+              <div
+                style={{
+                  marginTop: 18,
+                  padding: '12px 14px',
+                  border: '1px dashed #8db8f2',
+                  borderRadius: 10,
+                  background: '#f7fbff',
+                }}
+              >
+                <strong>{selectedBreaker.name}</strong> feeds <strong>{declaredTarget}</strong>. This
+                relation comes from the declared seed/Excel target and remains pending physical
+                endpoint resolution.
+              </div>
+            </section>
           ) : (
             <div className="zip-power-empty">{t('noActive')}</div>
           )}
@@ -292,17 +404,37 @@ export default async function PowerPage({
           </div>
           <dl>
             <dt>{t('status')}</dt>
-            <dd className="is-good">● {t('configuredLower')}</dd>
+            <dd className={primary ? 'is-good' : ''}>
+              ● {primary ? t('configuredLower') : hasDeclaredFallback ? 'declared' : t('notConfigured')}
+            </dd>
             <dt>{t('feedLabel')}</dt>
-            <dd>{primary?.feed ?? '—'}</dd>
+            <dd>{primary?.feed ?? declaredFeed ?? '—'}</dd>
             <dt>{t('source')}</dt>
-            <dd>{primary?.source?.equipment.name ?? primary?.sourceStages.at(-2)?.name ?? '—'}</dd>
+            <dd>
+              {primary?.source?.equipment.name ??
+                primary?.sourceStages.at(-2)?.name ??
+                (selectedBreaker
+                  ? `${selectedBreakerDevice?.kind === 'DEVICE' ? selectedBreakerDevice.name : 'Device'} / ${selectedBreakerPanel?.name ?? 'Panel'} / ${selectedBreaker.name}`
+                  : '—')}
+            </dd>
             <dt>{t('destination')}</dt>
             <dd>{targetName}</dd>
             <dt>{t('feed', { side: 'A' })}</dt>
-            <dd>{feedA ? t('configuredLower') : t('notConfigured')}</dd>
+            <dd>
+              {feedA
+                ? t('configuredLower')
+                : hasDeclaredFallback && declaredFeed === 'A'
+                  ? 'declared'
+                  : t('notConfigured')}
+            </dd>
             <dt>{t('feed', { side: 'B' })}</dt>
-            <dd>{feedB ? t('configuredLower') : t('notConfigured')}</dd>
+            <dd>
+              {feedB
+                ? t('configuredLower')
+                : hasDeclaredFallback && declaredFeed === 'B'
+                  ? 'declared'
+                  : t('notConfigured')}
+            </dd>
             <dt>{t('redundancy')}</dt>
             <dd>{feedA && feedB ? 'A + B' : t('single')}</dd>
           </dl>
@@ -333,13 +465,21 @@ export default async function PowerPage({
         <span>
           {t('feedAUpper')}{' '}
           <b className={feedA ? 'is-good' : ''}>
-            {feedA ? '● ' + t('configured') : '○ ' + t('notConfiguredFull')}
+            {feedA
+              ? '● ' + t('configured')
+              : hasDeclaredFallback && declaredFeed === 'A'
+                ? '◐ DECLARED'
+                : '○ ' + t('notConfiguredFull')}
           </b>
         </span>
         <span>
           {t('feedBUpper')}{' '}
           <b className={feedB ? 'is-good' : ''}>
-            {feedB ? '● ' + t('configured') : '○ ' + t('notConfiguredFull')}
+            {feedB
+              ? '● ' + t('configured')
+              : hasDeclaredFallback && declaredFeed === 'B'
+                ? '◐ DECLARED'
+                : '○ ' + t('notConfiguredFull')}
           </b>
         </span>
         <span>

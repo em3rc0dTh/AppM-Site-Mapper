@@ -97,20 +97,21 @@ export function DeclaredPowerFloatingWindow({
   const locale = useLocale();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const windowRef = useRef<HTMLDialogElement | null>(null);
+  const floatingRef = useRef<HTMLElement | null>(null);
+  const dragRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    left: number;
+    top: number;
+  } | null>(null);
+  const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
   const [view, setView] = useState<View | null>(null);
   const [section, setSection] = useState<'telemetry' | 'history' | 'trace'>('telemetry');
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    const node = windowRef.current;
-    if (!node) return;
-    if (open && !node.open) node.show();
-    if (!open && node.open) node.close();
-  }, [open, mounted]);
 
   useEffect(() => {
     if (!open) return;
@@ -140,6 +141,47 @@ export function DeclaredPowerFloatingWindow({
     };
   }, [breakerId, open]);
 
+
+  const beginDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if ((event.target as HTMLElement).closest('button')) return;
+    const node = floatingRef.current;
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      left: rect.left,
+      top: rect.top,
+    };
+    setPosition({ left: rect.left, top: rect.top });
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const moveDrag = (event: React.PointerEvent<HTMLElement>) => {
+    const drag = dragRef.current;
+    const node = floatingRef.current;
+    if (!drag || drag.pointerId !== event.pointerId || !node) return;
+
+    const nextLeft = drag.left + event.clientX - drag.startX;
+    const nextTop = drag.top + event.clientY - drag.startY;
+    const maxLeft = Math.max(8, window.innerWidth - node.offsetWidth - 8);
+    const maxTop = Math.max(8, window.innerHeight - node.offsetHeight - 8);
+
+    setPosition({
+      left: Math.min(Math.max(8, nextLeft), maxLeft),
+      top: Math.min(Math.max(8, nextTop), maxTop),
+    });
+  };
+
+  const endDrag = (event: React.PointerEvent<HTMLElement>) => {
+    if (dragRef.current?.pointerId !== event.pointerId) return;
+    dragRef.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  };
+
   const metrics = useMemo(() => liveMetrics(view?.sample ?? null, breakerId), [view, breakerId]);
   const receivedAt = view?.sample?.receivedAt;
   const updated = receivedAt
@@ -159,7 +201,10 @@ export function DeclaredPowerFloatingWindow({
       <button
         type="button"
         className={triggerClassName ? `zip-power-window-trigger ${triggerClassName}` : 'zip-power-window-trigger'}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          setPosition(null);
+          setOpen(true);
+        }}
       >
         {triggerLabel ?? t('openPowerWindow')}
       </button>
@@ -167,13 +212,26 @@ export function DeclaredPowerFloatingWindow({
       {open && mounted
         ? createPortal(
             <div className="zip-power-floating-layer">
-              <dialog
-                ref={windowRef}
-                className="zip-power-floating-window"
+              <section
+                ref={floatingRef}
+                className={`zip-power-floating-window${position ? ' is-dragged' : ''}`}
                 aria-label={t('powerWindow')}
-                onClose={() => setOpen(false)}
+                style={
+                  position
+                    ? ({
+                        '--floating-left': `${position.left}px`,
+                        '--floating-top': `${position.top}px`,
+                      } as React.CSSProperties)
+                    : undefined
+                }
               >
-          <header className="zip-power-floating-header">
+          <header
+            className="zip-power-floating-header"
+            onPointerDown={beginDrag}
+            onPointerMove={moveDrag}
+            onPointerUp={endDrag}
+            onPointerCancel={endDrag}
+          >
             <div>
               <small>{t('powerWindow')}</small>
               <h2>
@@ -296,7 +354,7 @@ export function DeclaredPowerFloatingWindow({
               <time dateTime={receivedAt}>{updated}</time>
             </div>
           )}
-              </dialog>
+              </section>
             </div>,
             document.body,
           )

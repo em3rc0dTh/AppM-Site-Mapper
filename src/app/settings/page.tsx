@@ -75,11 +75,7 @@ export default async function SettingsPage({
               aria-current={active === tab ? 'page' : undefined}
             >
               <span className="zip-settings-icon" aria-hidden="true">
-                {tab === 'Profile'
-                  ? '♙'
-                  : tab === 'Security' || tab === 'Roles'
-                    ? '◇'
-                    : '♧'}
+                {tab === 'Profile' ? '♙' : tab === 'Security' || tab === 'Roles' ? '◇' : '♧'}
               </span>
               <span>{tabLabels[tab]}</span>
             </Link>
@@ -136,9 +132,7 @@ export default async function SettingsPage({
                     <tr key={permission}>
                       <td>{permission}</td>
                       {roles.map((role) => (
-                        <td key={role}>
-                          {hasPermission(role, permission) ? t('allowed') : '—'}
-                        </td>
+                        <td key={role}>{hasPermission(role, permission) ? t('allowed') : '—'}</td>
                       ))}
                     </tr>
                   ))}

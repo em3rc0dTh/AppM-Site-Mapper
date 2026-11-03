@@ -71,6 +71,7 @@ export function EquipmentFocusInspector({
   );
   const summary = projectCompositionTelemetry(equipment, equipmentById, readings);
   const breaker = equipment.equipmentType === 'CIRCUIT_BREAKER';
+  const declaredTarget = breaker ? equipment.aliases?.find((alias) => alias.trim().length > 0) : undefined;
   const current = breaker ? readings[equipment.id] : undefined;
   const visibleTabs = canReadTelemetry ? TABS : TABS.filter((key) => key !== 'telemetry');
   const activeTab = tab === 'telemetry' && !canReadTelemetry ? 'overview' : tab;
@@ -97,6 +98,22 @@ export function EquipmentFocusInspector({
           <small>{equipment.equipmentType.replaceAll('_', ' ')}</small>
         </div>
       </div>
+
+      {declaredTarget ? (
+        <div
+          className="ec-inspector-note"
+          style={{
+            marginTop: 12,
+            padding: '10px 12px',
+            border: '1px solid #d7e2ef',
+            borderRadius: 8,
+            background: '#f8fbff',
+          }}
+        >
+          <small style={{ display: 'block', marginBottom: 4 }}>DECLARED POWER TARGET</small>
+          <strong>{declaredTarget}</strong>
+        </div>
+      ) : null}
 
       {canReadTelemetry && (
         <p className="ec-scope-readiness">

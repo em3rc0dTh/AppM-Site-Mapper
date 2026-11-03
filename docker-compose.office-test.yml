@@ -83,6 +83,7 @@ services:
         condition: service_healthy
 
   office-snmp-agent-qdf2:
+    profiles: ['snmp-sim']
     <<: *office-snmp-agent
     environment:
       SNMP_AGENT_PORT: '1161'
@@ -90,6 +91,7 @@ services:
       SNMP_AGENT_SOURCE: OFFICE-SNMP-QDF-2
 
   office-snmp-agent-qdf4:
+    profiles: ['snmp-sim']
     <<: *office-snmp-agent
     environment:
       SNMP_AGENT_PORT: '1161'
@@ -97,6 +99,7 @@ services:
       SNMP_AGENT_SOURCE: OFFICE-SNMP-QDF-4
 
   office-snmp-agent-qdf5:
+    profiles: ['snmp-sim']
     <<: *office-snmp-agent
     environment:
       SNMP_AGENT_PORT: '1161'
@@ -104,6 +107,7 @@ services:
       SNMP_AGENT_SOURCE: OFFICE-SNMP-QDF-5
 
   office-snmp-collector-qdf2:
+    profiles: ['snmp-sim']
     <<: *office-snmp-collector
     environment:
       APP_ENV: development
@@ -124,6 +128,7 @@ services:
         condition: service_started
 
   office-snmp-collector-qdf4:
+    profiles: ['snmp-sim']
     <<: *office-snmp-collector
     environment:
       APP_ENV: development
@@ -144,6 +149,7 @@ services:
         condition: service_started
 
   office-snmp-collector-qdf5:
+    profiles: ['snmp-sim']
     <<: *office-snmp-collector
     environment:
       APP_ENV: development

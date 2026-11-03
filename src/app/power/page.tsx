@@ -5,7 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { PowerCanvasRoute } from '@/components/power/power-canvas-route';
 import { DeclaredPowerTelemetry } from '@/components/power/declared-power-telemetry';
-import { DeclaredPowerFloatingWindow } from '@/components/power/declared-power-floating-window';
+import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
@@ -319,18 +319,13 @@ export default async function PowerPage({
             <section className="zip-power-box">
               <h2>{t('declaredPowerPath')}</h2>
               <div className="zip-power-declared-actions">
-                <DeclaredPowerFloatingWindow
-                  breakerId={selectedBreaker.id}
-                  sourceDevice={
-                    selectedBreakerDevice?.kind === 'DEVICE'
-                      ? selectedBreakerDevice.name
-                      : selectedBreaker.deviceId
-                  }
-                  sourcePanel={selectedBreakerPanel?.name ?? t('panelFallback')}
-                  sourceBreaker={selectedBreaker.name}
-                  target={declaredTarget}
-                  {...(declaredFeed ? { feed: declaredFeed } : {})}
-                />
+                <DetachedWorkbenchButton
+                  href={`/workbench/power-path?breakerId=${encodeURIComponent(selectedBreaker.id)}`}
+                  windowName={`site-mapper-power-path-${selectedBreaker.id}`}
+                  label={t('openPowerWindow')}
+                >
+                  {t('openPowerWindow')}
+                </DetachedWorkbenchButton>
               </div>
 
               <div

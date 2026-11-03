@@ -9,7 +9,7 @@ import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/com
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
 import { SnmpCapacityStrip } from './snmp-capacity-strip';
 import { AlarmOccurrenceList } from '@/components/alarm/alarm-scope-summary';
-import { DeclaredPowerFloatingWindow } from '@/components/power/declared-power-floating-window';
+import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 import type { AlarmRollup } from '@/modules/alarm/domain/entities';
 
@@ -37,37 +37,6 @@ function activeChildren(node: EquipmentNode, byId: ReadonlyMap<string, Equipment
     const child = id ? byId.get(id) : undefined;
     return child?.lifecycle === 'ACTIVE' ? [{ child, position: index + 1 }] : [];
   });
-}
-
-function breakerPowerContext(root: EquipmentNode, byId: ReadonlyMap<string, EquipmentNode>) {
-  const target = root.aliases?.find((alias) => alias.trim().length > 0);
-  if (!target) return null;
-
-  const panel = root.parentEquipmentId ? byId.get(root.parentEquipmentId) : undefined;
-  let source: EquipmentNode = root;
-  let current: EquipmentNode | undefined = root;
-  const visited = new Set<string>();
-
-  while (current && !visited.has(current.id)) {
-    visited.add(current.id);
-    source = current;
-    current = current.parentEquipmentId ? byId.get(current.parentEquipmentId) : undefined;
-  }
-
-  const normalizedPanel = panel?.name.trim().toUpperCase() ?? '';
-  const feed: 'A' | 'B' | undefined = normalizedPanel.startsWith('A')
-    ? 'A'
-    : normalizedPanel.startsWith('B')
-      ? 'B'
-      : undefined;
-
-  return {
-    target,
-    sourceDevice: source.name,
-    sourcePanel: panel?.name ?? 'Panel',
-    sourceBreaker: root.name,
-    feed,
-  };
 }
 
 function destination(id: string) {
@@ -549,25 +518,13 @@ export function EquipmentContractViews({
             {t('packetCaption')} {readings[root.id]?.receivedAt ?? '—'}
           </p>
           <AlarmOccurrenceList entityId={root.id} descendants={false} />
-          {(() => {
-            const powerContext = breakerPowerContext(root, equipmentById);
-            return powerContext ? (
-              <DeclaredPowerFloatingWindow
-                breakerId={root.id}
-                sourceDevice={powerContext.sourceDevice}
-                sourcePanel={powerContext.sourcePanel}
-                sourceBreaker={powerContext.sourceBreaker}
-                target={powerContext.target}
-                {...(powerContext.feed ? { feed: powerContext.feed } : {})}
-                triggerLabel={t('explorePower')}
-                triggerClassName="ec-trace-link"
-              />
-            ) : (
-              <Link className="ec-trace-link" href={`/power?breaker=${encodeURIComponent(root.id)}`}>
-                {t('explorePower')}
-              </Link>
-            );
-          })()}
+          <DetachedWorkbenchButton
+            href={`/workbench/power-path?breakerId=${encodeURIComponent(root.id)}`}
+            windowName={`site-mapper-power-path-${root.id}`}
+            label={t('explorePower')}
+          >
+            {t('explorePower')}
+          </DetachedWorkbenchButton>
         </section>
       )}
       {canReadTelemetry && ['CHASSIS', 'SHELF', 'SUB_SHELF', 'FRAME', 'PANEL'].includes(type) && (

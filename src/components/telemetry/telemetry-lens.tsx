@@ -236,6 +236,7 @@ export function TelemetryLens({
                 <CompositionHistoryCharts
                   equipmentId={breakerId}
                   equipmentType="CIRCUIT_BREAKER"
+                  compact
                 />
               </section>
             ) : null}

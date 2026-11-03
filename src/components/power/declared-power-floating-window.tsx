@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { CompositionHistoryCharts } from '@/components/equipment/composition-history-charts';
@@ -91,8 +92,13 @@ export function DeclaredPowerFloatingWindow({
   const th = useTranslations('historyCharts');
   const locale = useLocale();
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const [view, setView] = useState<View | null>(null);
   const [section, setSection] = useState<'telemetry' | 'history' | 'trace'>('telemetry');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -142,8 +148,10 @@ export function DeclaredPowerFloatingWindow({
         {t('openPowerWindow')}
       </button>
 
-      {open ? (
-        <section className="zip-power-floating-window" role="region" aria-label={t('powerWindow')}>
+      {open && mounted
+        ? createPortal(
+            <div className="zip-power-floating-layer">
+              <section className="zip-power-floating-window" role="region" aria-label={t('powerWindow')}>
           <header className="zip-power-floating-header">
             <div>
               <small>{t('powerWindow')}</small>
@@ -268,7 +276,10 @@ export function DeclaredPowerFloatingWindow({
             </div>
           )}
         </section>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }

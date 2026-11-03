@@ -364,7 +364,21 @@
       "feedAUpper": "FEED A",
       "feedBUpper": "FEED B",
       "powerOutput": "POWER OUTPUT",
-      "powerInput": "POWER INPUT"
+      "powerInput": "POWER INPUT",
+      "declaredPath": "DECLARED PATH",
+      "declaredPowerPath": "DECLARED POWER PATH",
+      "declared": "Declared",
+      "targetDeclared": "TARGET · DECLARED",
+      "excelSeedDestination": "Excel / seed-01 destination",
+      "unresolved": "Unresolved",
+      "sourceConfirmedInventory": "SOURCE · CONFIRMED INVENTORY",
+      "feedSide": "Feed {side}",
+      "panelFallback": "Panel",
+      "deviceFallback": "Device",
+      "declaredTargetKnown": "Target is known; physical endpoint is not linked yet.",
+      "declaredRelation": "{breaker} feeds {target}. This relation comes from the declared seed/Excel target and remains pending physical endpoint resolution.",
+      "declaredTarget": "Declared power target",
+      "powerOutputFallback": "Power output"
     },
     "rack": {
       "elevation": "ELEVATION",
@@ -1130,7 +1144,12 @@
     "reconnecting": "Reconnecting",
     "close": "Close telemetry",
     "offline": "OFFLINE · No measurements received for this context.",
-    "empty": "No mapped metrics for this object."
+    "empty": "No mapped metrics for this object.",
+    "powerPathHistory": "POWER PATH HISTORY",
+    "timeSeriesBreaker": "Timeseries · breaker",
+    "timescale": "TimescaleDB",
+    "telemetryTemporarilyUnavailable": "Telemetry temporarily unavailable",
+    "loadingTelemetry": "Loading telemetry…"
   },
   "panelCommissioning": {
     "title": "MQTT POINT COMMISSIONING",

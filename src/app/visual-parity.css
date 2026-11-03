@@ -3453,7 +3453,7 @@ body {
   grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
 }
 
-/* Approved ZIP parity: telemetry diagnostic overlay. */
+/* Approved ZIP parity: telemetry diagnostic overlay — white operational theme. */
 .zip-telemetry-overlay {
   position: fixed;
   inset: 67px 0 0;
@@ -3461,7 +3461,7 @@ body {
   display: grid;
   place-items: center;
   padding: 46px;
-  background: rgba(4, 8, 18, 0.92);
+  background: rgba(15, 23, 42, 0.28);
 }
 .zip-telemetry-diagnostic {
   width: min(1120px, 92vw);
@@ -3470,22 +3470,22 @@ body {
   overflow: auto;
   margin: 0 !important;
   padding: 34px 42px !important;
-  border: 1px solid #24314d !important;
+  border: 1px solid #d6deea !important;
   border-radius: 22px !important;
-  background:
-    radial-gradient(circle at 50% 35%, rgba(23, 60, 100, 0.28), transparent 32rem), #050918 !important;
-  color: #eef5ff !important;
-  box-shadow: 0 30px 100px #0008;
+  background: #ffffff !important;
+  color: #10233f !important;
+  box-shadow: 0 30px 80px rgb(15 35 65 / 22%);
 }
 .zip-telemetry-diagnostic > header {
   min-height: 72px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #1f2d49;
+  border-bottom: 1px solid #dbe4ef;
 }
 .zip-telemetry-diagnostic > header h2 {
   margin: 6px 0 0;
   font-size: 23px !important;
   letter-spacing: 0.02em;
+  color: #10233f !important;
 }
 .zip-telemetry-status {
   display: flex;
@@ -3493,10 +3493,11 @@ body {
   gap: 16px;
 }
 .zip-telemetry-status > span {
-  border: 1px solid #244365;
+  border: 1px solid #b8d7f7;
   border-radius: 999px;
   padding: 8px 14px;
-  color: #7bc7ff;
+  color: #1769e0;
+  background: #f7fbff;
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -3506,47 +3507,55 @@ body {
   height: 38px;
   min-height: 38px;
   border-radius: 50% !important;
-  border: 1px solid #26344e !important;
-  background: #0b1120 !important;
-  color: #91a1bb !important;
+  border: 1px solid #d6deea !important;
+  background: #ffffff !important;
+  color: #64748b !important;
   font-size: 20px !important;
   padding: 0 !important;
 }
 .zip-telemetry-diagnostic > p {
-  min-height: 360px;
+  min-height: 180px;
   margin: 22px 0;
-  border: 1px solid #172642;
+  border: 1px solid #dbe4ef;
   border-radius: 18px;
   display: grid;
   place-items: center;
-  color: #8092ad;
+  color: #64748b;
   background:
-    linear-gradient(#0d1730 1px, transparent 1px),
-    linear-gradient(90deg, #0d1730 1px, transparent 1px), #070c19;
+    linear-gradient(#edf2f7 1px, transparent 1px),
+    linear-gradient(90deg, #edf2f7 1px, transparent 1px), #ffffff;
   background-size: 54px 54px;
 }
 .zip-telemetry-diagnostic article {
-  min-height: 360px;
+  min-height: 0;
   border-radius: 18px !important;
-  background: #091126 !important;
-  border-color: #203151 !important;
+  background: #ffffff !important;
+  border-color: #dbe4ef !important;
+  color: #10233f !important;
 }
 .zip-telemetry-diagnostic .mk-live-grid {
   grid-template-columns: repeat(4, minmax(130px, 1fr));
-  margin-top: 34px;
+  margin-top: 18px;
 }
 .zip-telemetry-diagnostic .mk-live-grid > div {
-  min-height: 108px;
-  border: 1px solid #1d3152;
+  min-height: 90px;
+  border: 1px solid #e2e8f0 !important;
   border-radius: 12px;
   place-content: center;
   text-align: center;
+  background: #f8fbff !important;
+  color: #10233f !important;
+}
+.zip-telemetry-diagnostic .mk-live-grid small,
+.zip-telemetry-diagnostic .mk-live-grid strong {
+  color: #10233f !important;
 }
 .zip-telemetry-diagnostic footer {
   display: flex;
   justify-content: center;
   padding-top: 18px;
-  border-top: 1px solid #1d2b45;
+  border-top: 1px solid #dbe4ef;
+  color: #64748b !important;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }

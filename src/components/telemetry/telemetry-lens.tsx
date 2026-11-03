@@ -22,6 +22,51 @@ function isTelemetrySample(value: unknown): value is TelemetrySample {
   );
 }
 
+function scalar(
+  value: unknown,
+  candidates: readonly string[],
+  depth = 0,
+): number | undefined {
+  if (depth > 6 || value === null || typeof value !== 'object') return undefined;
+  const record = value as Record<string, unknown>;
+  for (const [key, item] of Object.entries(record)) {
+    const normalized = key.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (candidates.includes(normalized)) {
+      if (typeof item === 'number' && Number.isFinite(item)) return item;
+      if (item && typeof item === 'object') {
+        const nested = item as Record<string, unknown>;
+        if (typeof nested.value === 'number' && Number.isFinite(nested.value)) return nested.value;
+      }
+    }
+  }
+  for (const item of Object.values(record)) {
+    const found = scalar(item, candidates, depth + 1);
+    if (found !== undefined) return found;
+  }
+  return undefined;
+}
+
+function fallbackBreakerMetrics(sample: TelemetrySample) {
+  const voltage = scalar(sample.reported, ['voltage', 'voltagev', 'u', 'v']);
+  const current = scalar(sample.reported, ['current', 'currenta', 'i', 'a']);
+  const powerW = scalar(sample.reported, ['power', 'powerw', 'p', 'w']);
+  const energy = scalar(sample.reported, ['energy', 'energykwh', 'e', 'ep', 'kwh']);
+  return [
+    ...(voltage === undefined
+      ? []
+      : [{ label: 'Voltage', value: voltage.toFixed(2), unit: 'V' }]),
+    ...(current === undefined
+      ? []
+      : [{ label: 'Current', value: current.toFixed(2), unit: 'A' }]),
+    ...(powerW === undefined
+      ? []
+      : [{ label: 'Power', value: (powerW / 1000).toFixed(3), unit: 'kW' }]),
+    ...(energy === undefined
+      ? []
+      : [{ label: 'Energy', value: energy.toFixed(4), unit: 'kWh' }]),
+  ];
+}
+
 export function TelemetryLens({
   entityIds,
   label,
@@ -132,7 +177,7 @@ export function TelemetryLens({
                 const metrics = breakerId
                   ? reading
                     ? breakerTelemetryMetrics(reading)
-                    : []
+                    : fallbackBreakerMetrics(sample)
                   : telemetryMetrics(sample.reported);
 
                 return (

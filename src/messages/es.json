@@ -364,7 +364,21 @@
       "feedAUpper": "ALIMENTACIÓN A",
       "feedBUpper": "ALIMENTACIÓN B",
       "powerOutput": "SALIDA DE POTENCIA",
-      "powerInput": "ENTRADA DE POTENCIA"
+      "powerInput": "ENTRADA DE POTENCIA",
+      "declaredPath": "RUTA DECLARADA",
+      "declaredPowerPath": "RUTA DE POTENCIA DECLARADA",
+      "declared": "Declarado",
+      "targetDeclared": "DESTINO · DECLARADO",
+      "excelSeedDestination": "Destino declarado en Excel / seed-01",
+      "unresolved": "Sin resolver",
+      "sourceConfirmedInventory": "ORIGEN · INVENTARIO CONFIRMADO",
+      "feedSide": "Alimentación {side}",
+      "panelFallback": "Panel",
+      "deviceFallback": "Device",
+      "declaredTargetKnown": "El destino es conocido; el endpoint físico aún no está vinculado.",
+      "declaredRelation": "{breaker} alimenta {target}. Esta relación proviene del destino declarado en Excel/seed y queda pendiente de resolver contra el endpoint físico.",
+      "declaredTarget": "Destino de potencia declarado",
+      "powerOutputFallback": "Salida de potencia"
     },
     "rack": {
       "elevation": "ELEVACIÓN",
@@ -1130,7 +1144,12 @@
     "reconnecting": "Reconectando",
     "close": "Cerrar telemetría",
     "offline": "SIN CONEXIÓN · No se recibieron mediciones para este contexto.",
-    "empty": "No hay métricas vinculadas para este objeto."
+    "empty": "No hay métricas vinculadas para este objeto.",
+    "powerPathHistory": "HISTORIAL DE LA RUTA DE POTENCIA",
+    "timeSeriesBreaker": "Serie temporal · breaker",
+    "timescale": "TimescaleDB",
+    "telemetryTemporarilyUnavailable": "Telemetría temporalmente no disponible",
+    "loadingTelemetry": "Cargando telemetría…"
   },
   "panelCommissioning": {
     "title": "COMISIONAMIENTO DE PUNTOS MQTT",

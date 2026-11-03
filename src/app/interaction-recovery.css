@@ -2196,3 +2196,28 @@
     font-size: 9px;
   }
 }
+
+
+/* White power-path telemetry: ensure live values remain readable against light cards. */
+.zip-telemetry-overlay .zip-telemetry-diagnostic .mk-live-grid > div {
+  background: #f8fbff !important;
+  color: #0f172a !important;
+  border-color: #dbe4ef !important;
+}
+
+.zip-telemetry-overlay .zip-telemetry-diagnostic .mk-live-grid small {
+  color: #47627e !important;
+  font-weight: 700 !important;
+}
+
+.zip-telemetry-overlay .zip-telemetry-diagnostic .mk-live-grid strong {
+  color: #0f172a !important;
+  opacity: 1 !important;
+  font-weight: 850 !important;
+}
+
+.zip-telemetry-overlay .zip-telemetry-diagnostic .mk-live-grid strong em,
+.zip-telemetry-overlay .zip-telemetry-diagnostic .mk-live-grid em {
+  color: #334155 !important;
+  opacity: 1 !important;
+}

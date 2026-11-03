@@ -78,6 +78,7 @@ export function TelemetryLens({
 }) {
   const tu = useTranslations('lensExtra');
   const t = useTranslations('telemetryLens');
+  const th = useTranslations('historyCharts');
   const [open, setOpen] = useState(false);
   const [samples, setSamples] = useState<TelemetrySample[]>([]);
   const [connected, setConnected] = useState(false);
@@ -196,7 +197,17 @@ export function TelemetryLens({
                     <div className="mk-live-grid">
                       {metrics.map((metric) => (
                         <div key={metric.label}>
-                          <small>{metric.label}</small>
+                          <small>
+                            {metric.label === 'Voltage'
+                              ? th('metricVoltage')
+                              : metric.label === 'Current'
+                                ? th('metricCurrent')
+                                : metric.label === 'Power'
+                                  ? th('metricPower')
+                                  : metric.label === 'Energy'
+                                    ? th('metricEnergy')
+                                    : metric.label}
+                          </small>
                           <strong>
                             {metric.value} <em>{metric.unit}</em>
                           </strong>
@@ -228,10 +239,10 @@ export function TelemetryLens({
                   }}
                 >
                   <div>
-                    <small>POWER PATH HISTORY</small>
-                    <h3 style={{ margin: '4px 0 0' }}>Timeseries · breaker</h3>
+                    <small>{t('powerPathHistory')}</small>
+                    <h3 style={{ margin: '4px 0 0' }}>{t('timeSeriesBreaker')}</h3>
                   </div>
-                  <small>TimescaleDB</small>
+                  <small>{t('timescale')}</small>
                 </header>
                 <CompositionHistoryCharts
                   equipmentId={breakerId}

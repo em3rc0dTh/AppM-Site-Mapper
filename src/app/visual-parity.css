@@ -6551,3 +6551,38 @@ body {
     grid-template-columns: 1fr 1fr;
   }
 }
+
+
+/* Viewport portal host for the floating Power Path window. */
+.zip-power-floating-layer {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 10000 !important;
+  display: grid !important;
+  place-items: center !important;
+  padding: 40px !important;
+  pointer-events: none !important;
+}
+
+.zip-power-floating-layer .zip-power-floating-window {
+  position: relative !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  z-index: 1 !important;
+  pointer-events: auto !important;
+  width: min(1080px, calc(100vw - 80px)) !important;
+  max-height: calc(100dvh - 80px) !important;
+  overflow: hidden !important;
+}
+
+@media (max-width: 920px) {
+  .zip-power-floating-layer {
+    padding: 14px !important;
+  }
+
+  .zip-power-floating-layer .zip-power-floating-window {
+    width: calc(100vw - 28px) !important;
+    max-height: calc(100dvh - 28px) !important;
+  }
+}

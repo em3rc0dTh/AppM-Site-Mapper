@@ -378,7 +378,19 @@
       "declaredTargetKnown": "Target is known; physical endpoint is not linked yet.",
       "declaredRelation": "{breaker} feeds {target}. This relation comes from the declared seed/Excel target and remains pending physical endpoint resolution.",
       "declaredTarget": "Declared power target",
-      "powerOutputFallback": "Power output"
+      "powerOutputFallback": "Power output",
+      "openPowerWindow": "OPEN POWER PATH VIEW",
+      "powerWindow": "POWER PATH",
+      "closePowerWindow": "Close power-path window",
+      "electricalLink": "ELECTRICAL LINK",
+      "updatedAt": "Updated: {value}",
+      "declaredAsset": "DECLARED ASSET",
+      "declaredAssetTooltip": "Electrically identified equipment; physical location is not yet mapped in Site Mapper.",
+      "powerWindowActions": "Power-path window actions",
+      "windowTelemetry": "TELEMETRY",
+      "windowHistory": "HISTORY",
+      "windowFullTrace": "FULL TRACE",
+      "liveMeasurements": "Live measurements"
     },
     "rack": {
       "elevation": "ELEVATION",

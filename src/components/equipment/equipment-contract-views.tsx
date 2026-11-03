@@ -517,7 +517,7 @@ export function EquipmentContractViews({
             {t('packetCaption')} {readings[root.id]?.receivedAt ?? '—'}
           </p>
           <AlarmOccurrenceList entityId={root.id} descendants={false} />
-          <Link className="ec-trace-link" href={`/power?entityId=${encodeURIComponent(root.id)}`}>
+          <Link className="ec-trace-link" href={`/power?breaker=${encodeURIComponent(root.id)}`}>
             {t('explorePower')}
           </Link>
         </section>

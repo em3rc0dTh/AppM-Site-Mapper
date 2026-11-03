@@ -378,7 +378,19 @@
       "declaredTargetKnown": "El destino es conocido; el endpoint físico aún no está vinculado.",
       "declaredRelation": "{breaker} alimenta {target}. Esta relación proviene del destino declarado en Excel/seed y queda pendiente de resolver contra el endpoint físico.",
       "declaredTarget": "Destino de potencia declarado",
-      "powerOutputFallback": "Salida de potencia"
+      "powerOutputFallback": "Salida de potencia",
+      "openPowerWindow": "VER RUTA DE POTENCIA",
+      "powerWindow": "RUTA DE POTENCIA",
+      "closePowerWindow": "Cerrar ventana de ruta de potencia",
+      "electricalLink": "ENLACE ELÉCTRICO",
+      "updatedAt": "Actualizado: {value}",
+      "declaredAsset": "EQUIPO DECLARADO",
+      "declaredAssetTooltip": "Equipo identificado eléctricamente; su ubicación física aún no está mapeada en Site Mapper.",
+      "powerWindowActions": "Acciones de la ventana de ruta de potencia",
+      "windowTelemetry": "TELEMETRÍA",
+      "windowHistory": "HISTÓRICO",
+      "windowFullTrace": "RASTREO COMPLETO",
+      "liveMeasurements": "Mediciones en vivo"
     },
     "rack": {
       "elevation": "ELEVACIÓN",

@@ -29,33 +29,18 @@ describe('Settings navigation is independent of session authentication', () => {
     expect(resolveSettingsTab('ADMIN', 'users')).toBe('Profile');
     expect(resolveSettingsTab('ADMIN', 'roles')).toBe('Roles');
 
-    for (const removed of [
-      'data-import',
-      'drafting',
-      'system',
-      'danger-zone',
-    ]) {
+    for (const removed of ['data-import', 'drafting', 'system', 'danger-zone']) {
       expect(resolveSettingsTab('ADMIN', removed)).toBe('Profile');
     }
   });
 
   it('SUPERADMIN sees only the retained settings tabs and defaults to Users', () => {
-    expect(visibleSettingsTabs('SUPERADMIN')).toEqual([
-      'Profile',
-      'Security',
-      'Users',
-      'Roles',
-    ]);
+    expect(visibleSettingsTabs('SUPERADMIN')).toEqual(['Profile', 'Security', 'Users', 'Roles']);
     expect(resolveSettingsTab('SUPERADMIN')).toBe('Users');
     expect(resolveSettingsTab('SUPERADMIN', 'users')).toBe('Users');
     expect(settingsTabSlug('Roles')).toBe('roles');
 
-    for (const removed of [
-      'data-import',
-      'drafting',
-      'system',
-      'danger-zone',
-    ]) {
+    for (const removed of ['data-import', 'drafting', 'system', 'danger-zone']) {
       expect(resolveSettingsTab('SUPERADMIN', removed)).toBe('Users');
     }
   });

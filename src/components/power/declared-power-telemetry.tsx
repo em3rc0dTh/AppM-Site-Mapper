@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 
@@ -95,6 +96,9 @@ export function DeclaredPowerTelemetry({
 }: Readonly<{
   targetId: string;
 }>) {
+  const tp = useTranslations('pages.power');
+  const tl = useTranslations('telemetryLens');
+  const th = useTranslations('historyCharts');
   const [view, setView] = useState<View | null>(null);
   const [error, setError] = useState(false);
 
@@ -142,7 +146,7 @@ export function DeclaredPowerTelemetry({
         minWidth: 0,
       }}
     >
-      <small>TELEMETRY · BREAKER LIVE</small>
+      <small>{tp('diagnostic')} · {th('title')}</small>
       <div
         style={{
           display: 'grid',
@@ -161,7 +165,15 @@ export function DeclaredPowerTelemetry({
               background: '#f8fbff',
             }}
           >
-            <small style={{ display: 'block' }}>{item.label}</small>
+            <small style={{ display: 'block' }}>
+              {item.label === 'Voltage'
+                ? th('metricVoltage')
+                : item.label === 'Current'
+                  ? th('metricCurrent')
+                  : item.label === 'Power'
+                    ? th('metricPower')
+                    : th('metricEnergy')}
+            </small>
             <strong style={{ fontSize: 20 }}>
               {item.value} <span style={{ fontSize: 12, fontWeight: 500 }}>{item.unit}</span>
             </strong>
@@ -170,10 +182,10 @@ export function DeclaredPowerTelemetry({
       </div>
       <small style={{ display: 'block', marginTop: 12 }}>
         {error
-          ? 'Telemetry temporarily unavailable'
+          ? tl('telemetryTemporarilyUnavailable')
           : view?.status
             ? `${view.status}${sourceIdentity ? ` · ${sourceIdentity}` : ''}${receivedAt ? ` · ${receivedAt}` : ''}`
-            : 'Loading telemetry…'}
+            : tl('loadingTelemetry')}
       </small>
     </article>
   );

@@ -151,10 +151,12 @@ function SeriesChart({
 export function CompositionHistoryCharts({
   equipmentId,
   equipmentType,
-}: Readonly<{ equipmentId: string; equipmentType: string }>) {
+  compact = false,
+}: Readonly<{ equipmentId: string; equipmentType: string; compact?: boolean }>) {
   const t = useTranslations('historyCharts');
   const locale = useLocale();
   const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
+  const [selectedMetric, setSelectedMetric] = useState<CompositionMetricKey>('currentA');
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -244,6 +246,47 @@ export function CompositionHistoryCharts({
           )}
           {!data.points.length ? (
             <p>{t('noReadings')}</p>
+          ) : compact ? (
+            <>
+              <div className="ec-history-metric-tabs" role="group" aria-label="Telemetry metric">
+                {METRICS.map((metric) => (
+                  <button
+                    key={metric.key}
+                    type="button"
+                    aria-pressed={selectedMetric === metric.key}
+                    onClick={() => setSelectedMetric(metric.key)}
+                  >
+                    {metric.key === 'voltageV'
+                      ? t('metricVoltage')
+                      : metric.key === 'currentA'
+                        ? t('metricCurrent')
+                        : metric.key === 'powerW'
+                          ? t('metricPower')
+                          : t('metricEnergy')}
+                  </button>
+                ))}
+              </div>
+              {METRICS.filter((metric) => metric.key === selectedMetric).map((metric) => (
+                <SeriesChart
+                  key={metric.key}
+                  name={
+                    metric.key === 'voltageV'
+                      ? t('metricVoltage')
+                      : metric.key === 'currentA'
+                        ? t('metricCurrent')
+                        : metric.key === 'powerW'
+                          ? t('metricPower')
+                          : t('metricEnergy')
+                  }
+                  unit={metric.unit}
+                  color={metric.color}
+                  points={data.points}
+                  metric={metric.key}
+                  scale={metric.scale}
+                  window={window}
+                />
+              ))}
+            </>
           ) : (
             <div className="ec-history-grid">
               {METRICS.map((metric) => (
@@ -268,7 +311,7 @@ export function CompositionHistoryCharts({
               ))}
             </div>
           )}
-          <p className="ec-history-explainer">{t('bucketDisclaimer')}</p>
+          {!compact && <p className="ec-history-explainer">{t('bucketDisclaimer')}</p>}
         </>
       )}
     </div>

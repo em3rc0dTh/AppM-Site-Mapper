@@ -5,6 +5,7 @@ import { getTranslations } from 'next-intl/server';
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { PowerCanvasRoute } from '@/components/power/power-canvas-route';
 import { DeclaredPowerTelemetry } from '@/components/power/declared-power-telemetry';
+import { DeclaredPowerFloatingWindow } from '@/components/power/declared-power-floating-window';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
@@ -317,6 +318,21 @@ export default async function PowerPage({
           ) : hasDeclaredFallback && selectedBreaker && declaredTarget ? (
             <section className="zip-power-box">
               <h2>{t('declaredPowerPath')}</h2>
+              <div className="zip-power-declared-actions">
+                <DeclaredPowerFloatingWindow
+                  breakerId={selectedBreaker.id}
+                  sourceDevice={
+                    selectedBreakerDevice?.kind === 'DEVICE'
+                      ? selectedBreakerDevice.name
+                      : selectedBreaker.deviceId
+                  }
+                  sourcePanel={selectedBreakerPanel?.name ?? t('panelFallback')}
+                  sourceBreaker={selectedBreaker.name}
+                  target={declaredTarget}
+                  {...(declaredFeed ? { feed: declaredFeed } : {})}
+                />
+              </div>
+
               <div
                 style={{
                   display: 'grid',

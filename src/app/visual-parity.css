@@ -6113,3 +6113,111 @@ body {
     right: 950px !important;
   }
 }
+
+
+/* Power telemetry modal: no nested scrolling; keep one focused historical chart visible. */
+.zip-telemetry-overlay {
+  overflow: hidden !important;
+}
+
+.zip-telemetry-overlay > .zip-telemetry-diagnostic {
+  height: auto !important;
+  max-height: calc(100dvh - 105px) !important;
+  overflow: hidden !important;
+}
+
+.zip-telemetry-diagnostic article {
+  padding: 18px !important;
+}
+
+.zip-telemetry-diagnostic .mk-live-grid > div {
+  min-height: 78px !important;
+}
+
+.zip-telemetry-diagnostic .mk-live-grid small {
+  color: #475569 !important;
+  font-weight: 700 !important;
+}
+
+.zip-telemetry-diagnostic .mk-live-grid strong {
+  color: #0f172a !important;
+  font-size: clamp(18px, 2vw, 24px) !important;
+  font-weight: 800 !important;
+}
+
+.zip-telemetry-diagnostic .mk-live-grid em {
+  color: #334155 !important;
+  font-weight: 700 !important;
+}
+
+.zip-telemetry-diagnostic .ec-history-charts {
+  gap: 8px;
+  padding: 8px 0 0;
+}
+
+.zip-telemetry-diagnostic .ec-history-controls {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.zip-telemetry-diagnostic .ec-history-controls > div {
+  justify-content: flex-end;
+}
+
+.zip-telemetry-diagnostic .ec-history-coverage {
+  gap: 5px;
+}
+
+.zip-telemetry-diagnostic .ec-history-metric-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.zip-telemetry-diagnostic .ec-history-metric-tabs button {
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 1px solid #d2e2f0;
+  border-radius: 6px;
+  background: #fff;
+  color: #375979;
+  font-size: 10px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.zip-telemetry-diagnostic .ec-history-metric-tabs button[aria-pressed='true'] {
+  border-color: #2376b8;
+  background: #e4f1ff;
+  color: #07569a;
+}
+
+.zip-telemetry-diagnostic .ec-series {
+  padding: 10px 12px;
+  border-color: #dce6f0;
+  box-shadow: none;
+}
+
+.zip-telemetry-diagnostic .ec-series svg {
+  height: 210px;
+  margin: 4px 0 0;
+}
+
+.zip-telemetry-diagnostic .ec-history-explainer {
+  display: none;
+}
+
+@media (max-height: 760px) {
+  .zip-telemetry-diagnostic .ec-series svg {
+    height: 160px;
+  }
+
+  .zip-telemetry-diagnostic article {
+    padding: 12px !important;
+  }
+
+  .zip-telemetry-diagnostic .mk-live-grid > div {
+    min-height: 68px !important;
+  }
+}

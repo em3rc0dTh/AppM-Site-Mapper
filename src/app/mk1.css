@@ -2389,3 +2389,44 @@ body {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+
+/* Power-path telemetry lens follows the application's white operational theme. */
+.zip-telemetry-diagnostic.mk-diagnostic {
+  background: #ffffff;
+  color: #10233f;
+  border-color: #d6deea;
+  box-shadow: 0 18px 48px rgb(15 35 65 / 18%);
+}
+
+.zip-telemetry-diagnostic.mk-diagnostic small,
+.zip-telemetry-diagnostic.mk-diagnostic time,
+.zip-telemetry-diagnostic.mk-diagnostic footer {
+  color: #64748b;
+}
+
+.zip-telemetry-diagnostic.mk-diagnostic article {
+  background: #ffffff;
+  border-color: #dbe4ef;
+}
+
+.zip-telemetry-diagnostic .mk-live-grid > div {
+  background: #f7fbff;
+  border: 1px solid #e2e8f0;
+}
+
+.zip-telemetry-diagnostic .mk-live-grid em {
+  color: #64748b;
+}
+
+.zip-telemetry-diagnostic [data-state='LIVE'] {
+  color: #0f9f6e;
+}
+
+.zip-telemetry-diagnostic [data-state='STALE'] {
+  color: #b7791f;
+}
+
+.zip-telemetry-diagnostic [data-state='OFFLINE'] {
+  color: #64748b;
+}

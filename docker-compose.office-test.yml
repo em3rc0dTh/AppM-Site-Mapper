@@ -1,0 +1,164 @@
+# OFFICE/FIELD overlay.
+# MQTT is received from a real external publisher over the LAN.
+# SNMP stays synthetic until real SNMP endpoints are supplied.
+# Do NOT combine this overlay with docker-compose.integration.yml.
+
+x-office-snmp-points: &office-snmp-points >-
+  [{"oid":"1.3.6.1.4.1.8072.9999.2026.49.1.1.0","metric":"CURRENT","unit":"A","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.49.1.2.0","metric":"CURRENT","unit":"A","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.49.2.1.0","metric":"VOLTAGE","unit":"V","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.49.2.2.0","metric":"VOLTAGE","unit":"V","scale":0.1}]
+
+x-office-snmp-agent: &office-snmp-agent
+  build:
+    context: .
+    dockerfile: infra/snmp-collector/Dockerfile
+  command: ['node', 'integration-agent.mjs']
+  environment:
+    SNMP_AGENT_PORT: '1161'
+    SNMP_COMMUNITY: '${SNMP_SIM_COMMUNITY:-site-mapper-office-sim}'
+  restart: unless-stopped
+
+x-office-snmp-collector: &office-snmp-collector
+  build:
+    context: .
+    dockerfile: infra/snmp-collector/Dockerfile
+  environment:
+    APP_ENV: development
+    SNMP_CONTROLLER_PORT: '1161'
+    SNMP_VERSION: 2c
+    SNMP_COMMUNITY: '${SNMP_SIM_COMMUNITY:-site-mapper-office-sim}'
+    SNMP_V2C_ACKNOWLEDGE_PLAINTEXT: 'true'
+    SNMP_FEED_POINTS_JSON: *office-snmp-points
+    SNMP_POLL_INTERVAL_MS: '${SNMP_POLL_INTERVAL_MS:-5000}'
+    SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:?Set SNMP_INGEST_TOKEN}'
+    SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
+  restart: unless-stopped
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2.0.20
+    entrypoint: ['/bin/sh', '-ec']
+    command:
+      - |
+        test -n "$$MQTT_USERNAME"
+        test -n "$$MQTT_PASSWORD"
+        test -n "$$MQTT_TOPIC_PREFIX"
+        umask 077
+        mosquitto_passwd -b -c /tmp/mosquitto.passwd "$$MQTT_USERNAME" "$$MQTT_PASSWORD"
+        printf 'user %s\ntopic readwrite %s#\n' "$$MQTT_USERNAME" "$$MQTT_TOPIC_PREFIX" > /tmp/mosquitto.acl
+        exec mosquitto -c /mosquitto/config/mosquitto.conf
+    environment:
+      MQTT_USERNAME: '${MQTT_USERNAME:?Set MQTT_USERNAME}'
+      MQTT_PASSWORD: '${MQTT_PASSWORD:?Set MQTT_PASSWORD}'
+      MQTT_TOPIC_PREFIX: '${MQTT_TOPIC_PREFIX:?Set MQTT_TOPIC_PREFIX}'
+    volumes:
+      - ./infra/field/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    ports:
+      - '${MQTT_LAN_BIND_HOST:-0.0.0.0}:${MQTT_LAN_PORT:-1883}:1883'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'mosquitto_pub -h 127.0.0.1 -p 1883 -u "$$MQTT_USERNAME" -P "$$MQTT_PASSWORD" -t "$$MQTT_TOPIC_PREFIX""health" -m ok >/dev/null 2>&1',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  site-mapper:
+    environment:
+      SITE_MAPPER_INTEGRATION_PROFILE: office-field
+      TELEMETRY_ENABLED: 'true'
+      MQTT_CLIENT_ID: '${MQTT_CLIENT_ID:-site-mapper-office-field}'
+      MQTT_BROKER_URL: mqtt://mosquitto:1883
+      MQTT_USERNAME: '${MQTT_USERNAME:?Set MQTT_USERNAME}'
+      MQTT_PASSWORD: '${MQTT_PASSWORD:?Set MQTT_PASSWORD}'
+      MQTT_TOPIC_PREFIX: '${MQTT_TOPIC_PREFIX:?Set MQTT_TOPIC_PREFIX}'
+      MQTT_TOPIC_FILTER: '${MQTT_TOPIC_FILTER:?Set MQTT_TOPIC_FILTER}'
+      TELEMETRY_HISTORY_ENABLED: 'true'
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
+  office-snmp-agent-qdf2:
+    <<: *office-snmp-agent
+    environment:
+      SNMP_AGENT_PORT: '1161'
+      SNMP_COMMUNITY: '${SNMP_SIM_COMMUNITY:-site-mapper-office-sim}'
+      SNMP_AGENT_SOURCE: OFFICE-SNMP-QDF-2
+
+  office-snmp-agent-qdf4:
+    <<: *office-snmp-agent
+    environment:
+      SNMP_AGENT_PORT: '1161'
+      SNMP_COMMUNITY: '${SNMP_SIM_COMMUNITY:-site-mapper-office-sim}'
+      SNMP_AGENT_SOURCE: OFFICE-SNMP-QDF-4
+
+  office-snmp-agent-qdf5:
+    <<: *office-snmp-agent
+    environment:
+      SNMP_AGENT_PORT: '1161'
+      SNMP_COMMUNITY: '${SNMP_SIM_COMMUNITY:-site-mapper-office-sim}'
+      SNMP_AGENT_SOURCE: OFFICE-SNMP-QDF-5
+
+  office-snmp-collector-qdf2:
+    <<: *office-snmp-collector
+    environment:
+      APP_ENV: development
+      SNMP_CONTROLLER_HOST: office-snmp-agent-qdf2
+      SNMP_CONTROLLER_PORT: '1161'
+      SNMP_CONTROLLER_ID: OFFICE-SNMP-QDF-2
+      SNMP_VERSION: 2c
+      SNMP_COMMUNITY: '${SNMP_SIM_COMMUNITY:-site-mapper-office-sim}'
+      SNMP_V2C_ACKNOWLEDGE_PLAINTEXT: 'true'
+      SNMP_FEED_POINTS_JSON: *office-snmp-points
+      SNMP_POLL_INTERVAL_MS: '${SNMP_POLL_INTERVAL_MS:-5000}'
+      SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:?Set SNMP_INGEST_TOKEN}'
+      SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
+    depends_on:
+      site-mapper:
+        condition: service_started
+      office-snmp-agent-qdf2:
+        condition: service_started
+
+  office-snmp-collector-qdf4:
+    <<: *office-snmp-collector
+    environment:
+      APP_ENV: development
+      SNMP_CONTROLLER_HOST: office-snmp-agent-qdf4
+      SNMP_CONTROLLER_PORT: '1161'
+      SNMP_CONTROLLER_ID: OFFICE-SNMP-QDF-4
+      SNMP_VERSION: 2c
+      SNMP_COMMUNITY: '${SNMP_SIM_COMMUNITY:-site-mapper-office-sim}'
+      SNMP_V2C_ACKNOWLEDGE_PLAINTEXT: 'true'
+      SNMP_FEED_POINTS_JSON: *office-snmp-points
+      SNMP_POLL_INTERVAL_MS: '${SNMP_POLL_INTERVAL_MS:-5000}'
+      SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:?Set SNMP_INGEST_TOKEN}'
+      SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
+    depends_on:
+      site-mapper:
+        condition: service_started
+      office-snmp-agent-qdf4:
+        condition: service_started
+
+  office-snmp-collector-qdf5:
+    <<: *office-snmp-collector
+    environment:
+      APP_ENV: development
+      SNMP_CONTROLLER_HOST: office-snmp-agent-qdf5
+      SNMP_CONTROLLER_PORT: '1161'
+      SNMP_CONTROLLER_ID: OFFICE-SNMP-QDF-5
+      SNMP_VERSION: 2c
+      SNMP_COMMUNITY: '${SNMP_SIM_COMMUNITY:-site-mapper-office-sim}'
+      SNMP_V2C_ACKNOWLEDGE_PLAINTEXT: 'true'
+      SNMP_FEED_POINTS_JSON: *office-snmp-points
+      SNMP_POLL_INTERVAL_MS: '${SNMP_POLL_INTERVAL_MS:-5000}'
+      SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:?Set SNMP_INGEST_TOKEN}'
+      SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
+    depends_on:
+      site-mapper:
+        condition: service_started
+      office-snmp-agent-qdf5:
+        condition: service_started

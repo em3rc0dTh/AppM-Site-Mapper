@@ -6586,3 +6586,20 @@ body {
     max-height: calc(100dvh - 28px) !important;
   }
 }
+
+
+/* Native non-modal dialog reset for the floating Power Path tool window. */
+dialog.zip-power-floating-window {
+  margin: 0 !important;
+  inset: auto !important;
+  padding: 0 !important;
+  border: 1px solid #cbd8e6 !important;
+}
+
+dialog.zip-power-floating-window[open] {
+  display: block !important;
+}
+
+dialog.zip-power-floating-window::backdrop {
+  background: transparent;
+}

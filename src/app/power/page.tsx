@@ -4,6 +4,7 @@ import { getTranslations } from 'next-intl/server';
 
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { PowerCanvasRoute } from '@/components/power/power-canvas-route';
+import { DeclaredPowerTelemetry } from '@/components/power/declared-power-telemetry';
 import { TelemetryLens } from '@/components/telemetry/telemetry-lens';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { resolvePowerEndpoint } from '@/modules/power/domain/endpoint-validation';
@@ -343,14 +344,17 @@ export default async function PowerPage({
                   style={{
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 10,
-                    textAlign: 'center',
+                    gap: 12,
+                    minWidth: 0,
                   }}
                 >
-                  <strong style={{ color: '#1769e0' }}>← DECLARED PATH</strong>
-                  <small>Target is known; physical endpoint is not linked yet.</small>
+                  <DeclaredPowerTelemetry targetId={selectedBreaker.id} />
+                  <div style={{ textAlign: 'center' }}>
+                    <strong style={{ color: '#1769e0' }}>← DECLARED PATH</strong>
+                    <small style={{ display: 'block', marginTop: 6 }}>
+                      Target is known; physical endpoint is not linked yet.
+                    </small>
+                  </div>
                 </div>
 
                 <article

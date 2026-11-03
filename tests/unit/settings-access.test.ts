@@ -29,7 +29,12 @@ describe('Settings navigation is independent of session authentication', () => {
     expect(resolveSettingsTab('ADMIN', 'users')).toBe('Profile');
     expect(resolveSettingsTab('ADMIN', 'roles')).toBe('Roles');
 
-    for (const removed of ['data-import', 'drafting', 'system', 'danger-zone']) {
+    for (const removed of [
+      'data-import',
+      'drafting',
+      'system',
+      'danger-zone',
+    ]) {
       expect(resolveSettingsTab('ADMIN', removed)).toBe('Profile');
     }
   });
@@ -45,7 +50,12 @@ describe('Settings navigation is independent of session authentication', () => {
     expect(resolveSettingsTab('SUPERADMIN', 'users')).toBe('Users');
     expect(settingsTabSlug('Roles')).toBe('roles');
 
-    for (const removed of ['data-import', 'drafting', 'system', 'danger-zone']) {
+    for (const removed of [
+      'data-import',
+      'drafting',
+      'system',
+      'danger-zone',
+    ]) {
       expect(resolveSettingsTab('SUPERADMIN', removed)).toBe('Users');
     }
   });

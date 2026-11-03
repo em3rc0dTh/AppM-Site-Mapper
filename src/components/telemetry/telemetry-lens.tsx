@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
+import { CompositionHistoryCharts } from '@/components/equipment/composition-history-charts';
 
 import { breakerTelemetryMetrics, telemetryMetrics } from './telemetry-presentation';
 
@@ -162,6 +163,37 @@ export function TelemetryLens({
                 );
               })
             )}
+
+            {breakerId ? (
+              <section
+                style={{
+                  marginTop: 18,
+                  paddingTop: 18,
+                  borderTop: '1px solid #dbe4ef',
+                }}
+                aria-label="Power path history"
+              >
+                <header
+                  style={{
+                    display: 'flex',
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    gap: 12,
+                    marginBottom: 12,
+                  }}
+                >
+                  <div>
+                    <small>POWER PATH HISTORY</small>
+                    <h3 style={{ margin: '4px 0 0' }}>Timeseries · breaker</h3>
+                  </div>
+                  <small>TimescaleDB</small>
+                </header>
+                <CompositionHistoryCharts
+                  equipmentId={breakerId}
+                  equipmentType="CIRCUIT_BREAKER"
+                />
+              </section>
+            ) : null}
 
             <footer>{tu('footer')}</footer>
           </div>

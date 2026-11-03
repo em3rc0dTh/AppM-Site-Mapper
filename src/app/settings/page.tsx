@@ -136,7 +136,9 @@ export default async function SettingsPage({
                     <tr key={permission}>
                       <td>{permission}</td>
                       {roles.map((role) => (
-                        <td key={role}>{hasPermission(role, permission) ? t('allowed') : '—'}</td>
+                        <td key={role}>
+                          {hasPermission(role, permission) ? t('allowed') : '—'}
+                        </td>
                       ))}
                     </tr>
                   ))}

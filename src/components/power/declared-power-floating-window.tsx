@@ -81,6 +81,7 @@ export function DeclaredPowerFloatingWindow({
   target,
   feed,
   triggerLabel,
+  triggerClassName,
 }: Readonly<{
   breakerId: string;
   sourceDevice: string;
@@ -89,6 +90,7 @@ export function DeclaredPowerFloatingWindow({
   target: string;
   feed?: 'A' | 'B';
   triggerLabel?: string;
+  triggerClassName?: string;
 }>) {
   const t = useTranslations('pages.power');
   const th = useTranslations('historyCharts');
@@ -154,7 +156,11 @@ export function DeclaredPowerFloatingWindow({
 
   return (
     <>
-      <button type="button" className="zip-power-window-trigger" onClick={() => setOpen(true)}>
+      <button
+        type="button"
+        className={triggerClassName ? `zip-power-window-trigger ${triggerClassName}` : 'zip-power-window-trigger'}
+        onClick={() => setOpen(true)}
+      >
         {triggerLabel ?? t('openPowerWindow')}
       </button>
 

@@ -6,6 +6,7 @@ import { getTranslations } from 'next-intl/server';
 import { BlueprintCanvas } from '@/components/blueprint/blueprint-canvas';
 import {
   BdfbChassis,
+  type BreakerDeclaredDestination,
   type BreakerPowerBinding,
   type BreakerTelemetryBindingSummary,
 } from '@/components/power/bdfb-chassis';
@@ -262,12 +263,49 @@ export default async function TopologyNodePage({
       });
     }
   }
-  const descendantEquipmentIds =
+  const bdfbEquipment =
     node.kind === 'DEVICE' && node.deviceType === 'BDFB'
-      ? (await repository.listEquipmentForDevice(node.id))
-          .filter((equipment) => equipment.lifecycle === 'ACTIVE')
-          .map((equipment) => equipment.id)
+      ? (await repository.listEquipmentForDevice(node.id)).filter(
+          (equipment) => equipment.lifecycle === 'ACTIVE',
+        )
       : [];
+  const descendantEquipmentIds = bdfbEquipment.map((equipment) => equipment.id);
+
+  const declaredBdfbDestinations: BreakerDeclaredDestination[] = bdfbEquipment.flatMap(
+    (equipment) => {
+      if (equipment.equipmentType !== 'CIRCUIT_BREAKER') return [];
+      const raw =
+        equipment.attributes?.declaredPower &&
+        typeof equipment.attributes.declaredPower === 'object' &&
+        !Array.isArray(equipment.attributes.declaredPower)
+          ? (equipment.attributes.declaredPower as Record<string, unknown>)
+          : null;
+      const targetName =
+        typeof raw?.targetLabel === 'string'
+          ? raw.targetLabel
+          : equipment.aliases?.find((alias) => alias.trim().length > 0);
+      if (!targetName) return [];
+
+      const feed = raw?.feed === 'A' || raw?.feed === 'B' ? raw.feed : undefined;
+      let companionFeed: 'A' | 'B' | undefined;
+      const companion =
+        raw?.companionFeed &&
+        typeof raw.companionFeed === 'object' &&
+        !Array.isArray(raw.companionFeed)
+          ? (raw.companionFeed as Record<string, unknown>)
+          : null;
+      if (companion?.feed === 'A' || companion?.feed === 'B') companionFeed = companion.feed;
+
+      return [
+        {
+          breakerId: equipment.id,
+          targetName,
+          ...(feed ? { feed } : {}),
+          ...(companionFeed ? { companionFeed } : {}),
+        },
+      ];
+    },
+  );
 
   const mappedBdfbBreakerCount = new Set(bdfbTelemetryBindings.map((binding) => binding.breakerId))
     .size;
@@ -445,6 +483,7 @@ export default async function TopologyNodePage({
                 {...(query.panel ? { activePanelId: query.panel } : {})}
                 powerBindings={bdfbPowerBindings}
                 telemetryBindings={bdfbTelemetryBindings}
+                declaredDestinations={declaredBdfbDestinations}
                 canWritePower={canWritePower}
               />
             ) : node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? (

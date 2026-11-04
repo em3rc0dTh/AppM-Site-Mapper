@@ -1,4 +1,8 @@
-export function buildContentSecurityPolicy(nonce: string, development: boolean): string {
+export function buildContentSecurityPolicy(
+  nonce: string,
+  development: boolean,
+  secureTransport = !development,
+): string {
   if (!/^[A-Za-z0-9+/_=-]+$/.test(nonce)) {
     throw new Error('INVALID_CSP_NONCE');
   }
@@ -18,6 +22,6 @@ export function buildContentSecurityPolicy(nonce: string, development: boolean):
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    ...(development ? [] : ['upgrade-insecure-requests']),
+    ...(secureTransport ? ['upgrade-insecure-requests'] : []),
   ].join('; ');
 }

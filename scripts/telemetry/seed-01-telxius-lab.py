@@ -7,9 +7,10 @@ Truth boundary:
 - Smartpack2 is one evidence snapshot source, not one controller per QDF.
 - The private 5,407-object SNMPWalk + Eltek MIB evidence is mounted at runtime;
   it is never copied into Git.
-- QDF-2 remains RAW-only at breaker level until final post-migration breaker
-  positions are evidenced in Site Mapper. QDF-4/QDF-5 keep their existing
-  explicit Circuit Breaker bindings.
+- QDF-2 post-migration breaker positions are now declared and commissioned in
+  seed-01 v8. QDF-2/QDF-4/QDF-5 expose 74 explicit Circuit Breaker bindings.
+- Breaker ratedCurrentA is currently a provisional 20 A standard, not a
+  manufacturer/field-verified physical rating.
 """
 from __future__ import annotations
 

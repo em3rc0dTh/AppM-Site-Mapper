@@ -390,7 +390,10 @@
       "windowTelemetry": "TELEMETRÍA",
       "windowHistory": "HISTÓRICO",
       "windowFullTrace": "RASTREO COMPLETO",
-      "liveMeasurements": "Mediciones en vivo"
+      "liveMeasurements": "Mediciones en vivo",
+      "companionFeedAvailable": "FEED {side} DISPONIBLE",
+      "openCompanionFeed": "ABRIR FEED {side} ↗",
+      "remarks": "NOTAS"
     },
     "rack": {
       "elevation": "ELEVACIÓN",

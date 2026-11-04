@@ -17,7 +17,7 @@ import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integr
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 7 as const;
+export const SEED_01_VERSION = 8 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -49,6 +49,39 @@ interface BdfbSpec {
   readonly meters: readonly MeterSpec[];
   readonly breakers: readonly BreakerSpec[];
 }
+
+const STANDARD_BREAKER_RATED_CURRENT_A = 20;
+const STANDARD_BREAKER_RATING_SOURCE = 'PROVISIONAL_STANDARD' as const;
+const STANDARD_BREAKER_RATING_REFERENCE = 'seed-01-v8 temporary standard until field rating is verified';
+
+const QDF_2_BREAKERS: readonly BreakerSpec[] = [
+  { panel: 'A3', position: 2, destination: 'GRTLuren3 PSU0 A0', sourceRow: 1, legacyPanel: 'A1', legacyPosition: 1 },
+  { panel: 'B3', position: 2, destination: 'GRTLuren3 PSU0 B0', sourceRow: 1, legacyPanel: 'B1', legacyPosition: 1 },
+  { panel: 'A3', position: 3, destination: 'GRTLuren3 PSU0 A1', sourceRow: 2, legacyPanel: 'A1', legacyPosition: 2 },
+  { panel: 'B3', position: 3, destination: 'GRTLuren3 PSU0 B1', sourceRow: 2, legacyPanel: 'B1', legacyPosition: 2 },
+  { panel: 'A3', position: 4, destination: 'GRTLuren3 PSU1 A0', sourceRow: 3, legacyPanel: 'A1', legacyPosition: 3 },
+  { panel: 'B3', position: 4, destination: 'GRTLuren3 PSU1 B0', sourceRow: 3, legacyPanel: 'B1', legacyPosition: 3 },
+  { panel: 'A3', position: 1, destination: 'Rack CDN PDU-1A', sourceRow: 4, legacyPanel: 'A1', legacyPosition: 4 },
+  { panel: 'B3', position: 1, destination: 'Rack CDN PDU-1B', sourceRow: 4, legacyPanel: 'B1', legacyPosition: 4 },
+  { panel: 'A3', position: 5, destination: 'GRTLuren3 PSU1 A1', sourceRow: 5, legacyPanel: 'A2', legacyPosition: 1 },
+  { panel: 'B3', position: 5, destination: 'GRTLuren3 PSU1 B1', sourceRow: 5, legacyPanel: 'B2', legacyPosition: 1 },
+  { panel: 'A3', position: 6, destination: 'GRTLuren3 PSU2 A0', sourceRow: 6, legacyPanel: 'A2', legacyPosition: 2 },
+  { panel: 'B3', position: 6, destination: 'GRTLuren3 PSU2 B0', sourceRow: 6, legacyPanel: 'B2', legacyPosition: 2 },
+  { panel: 'A3', position: 7, destination: 'GRTLuren3 PSU2 A1', sourceRow: 7, legacyPanel: 'A2', legacyPosition: 3 },
+  { panel: 'B3', position: 7, destination: 'GRTLuren3 PSU2 B1', sourceRow: 7, legacyPanel: 'B2', legacyPosition: 3 },
+  { panel: 'A3', position: 8, destination: 'DTX-LUR-FP2-01 SH15 PEM A1.1', sourceRow: 8, legacyPanel: 'A2', legacyPosition: 6 },
+  { panel: 'B3', position: 8, destination: 'DTX-LUR-FP2-01 SH15 PEM B1.1', sourceRow: 8, legacyPanel: 'B2', legacyPosition: 6 },
+  { panel: 'A3', position: 9, destination: 'DTX-LUR-FP2-01 SH15 PEM A1.2', sourceRow: 9, legacyPanel: 'A2', legacyPosition: 7 },
+  { panel: 'B3', position: 9, destination: 'DTX-LUR-FP2-01 SH15 PEM B1.2', sourceRow: 9, legacyPanel: 'B2', legacyPosition: 7 },
+  { panel: 'A3', position: 10, destination: 'DTX-LUR-FP2-01 SH15 PEM A2.1', sourceRow: 10, legacyPanel: 'A2', legacyPosition: 8 },
+  { panel: 'B3', position: 10, destination: 'DTX-LUR-FP2-01 SH15 PEM B2.1', sourceRow: 10, legacyPanel: 'B2', legacyPosition: 8 },
+  { panel: 'A3', position: 11, destination: 'DTX-LUR-FP2-01 SH15 PEM A2.2', sourceRow: 11, legacyPanel: 'A2', legacyPosition: 14 },
+  { panel: 'B3', position: 11, destination: 'DTX-LUR-FP2-01 SH15 PEM B2.2', sourceRow: 11, legacyPanel: 'B2', legacyPosition: 14 },
+  { panel: 'A3', position: 12, destination: 'DTX-LUR-FP2-01 SH15 PEM A3.1', sourceRow: 12, legacyPanel: 'A2', legacyPosition: 15 },
+  { panel: 'B3', position: 12, destination: 'DTX-LUR-FP2-01 SH15 PEM B3.1', sourceRow: 12, legacyPanel: 'B2', legacyPosition: 15 },
+  { panel: 'A3', position: 13, destination: 'DTX-LUR-FP2-01 SH15 PEM A3.2', sourceRow: 13, legacyPanel: 'A2', legacyPosition: 16 },
+  { panel: 'B3', position: 13, destination: 'DTX-LUR-FP2-01 SH15 PEM B3.2', sourceRow: 13, legacyPanel: 'B2', legacyPosition: 16 },
+];
 
 const QDF_4_BREAKERS: readonly BreakerSpec[] = [
   { panel: 'A3', position: 1, destination: 'BB-LUR-04 SH2 A1', sourceRow: 1, legacyPanel: 'A1', legacyPosition: 15 },
@@ -193,9 +226,8 @@ const BDFBS: readonly BdfbSpec[] = [
       { panel: 'B3', serial: '26042902290010', slaveId: 5 },
       { panel: 'B2', serial: '26042902290012', slaveId: 7 },
     ],
-    // The source workbook lists legacy feeds but does not declare their final
-    // positions after migration. Seed-01 therefore materializes no QDF-2 breakers.
-    breakers: [],
+    // Post-migration positions are now operator-declared: A3/B3 positions 1..13.
+    breakers: QDF_2_BREAKERS,
   },
   {
     key: 'QDF-4',
@@ -1130,7 +1162,34 @@ async function ensureDeclaredFeedPairs(
       targetMaterialization: 'NOT_CREATED' as const,
     };
 
-    if (JSON.stringify(current.attributes?.declaredPower) === JSON.stringify(declaredPower)) {
+    const existingRatedCurrentA = current.attributes?.ratedCurrentA;
+    const existingRatingProvenance = current.attributes?.ratedCurrentProvenance;
+    const hasOperatorRating =
+      typeof existingRatedCurrentA === 'number' &&
+      Number.isFinite(existingRatedCurrentA) &&
+      existingRatedCurrentA > 0 &&
+      (!existingRatingProvenance ||
+        typeof existingRatingProvenance !== 'object' ||
+        (existingRatingProvenance as Record<string, unknown>).source !==
+          STANDARD_BREAKER_RATING_SOURCE);
+
+    const ratedCurrentA = hasOperatorRating
+      ? existingRatedCurrentA
+      : STANDARD_BREAKER_RATED_CURRENT_A;
+    const ratedCurrentProvenance = hasOperatorRating
+      ? existingRatingProvenance
+      : {
+          source: STANDARD_BREAKER_RATING_SOURCE,
+          verified: false,
+          reference: STANDARD_BREAKER_RATING_REFERENCE,
+        };
+
+    if (
+      JSON.stringify(current.attributes?.declaredPower) === JSON.stringify(declaredPower) &&
+      current.attributes?.ratedCurrentA === ratedCurrentA &&
+      JSON.stringify(current.attributes?.ratedCurrentProvenance) ===
+        JSON.stringify(ratedCurrentProvenance)
+    ) {
       continue;
     }
 
@@ -1140,6 +1199,8 @@ async function ensureDeclaredFeedPairs(
       attributes: {
         ...(current.attributes ?? {}),
         declaredPower,
+        ratedCurrentA,
+        ratedCurrentProvenance,
       },
       updatedAt: new Date().toISOString(),
     });
@@ -1725,8 +1786,10 @@ async function ensureControlledIntegration(
   }
 
   const bindings = database.collection<TelemetryBinding & Document>('telemetry_bindings');
+  const alarmPolicies = database.collection<Document>('alarm_policies');
   const now = new Date().toISOString();
   const desired: TelemetryBinding[] = [];
+  const desiredOvercurrentPolicies: Document[] = [];
 
   desired.push({
     id: `integration:seed01:mqtt:${created.gatewaySerial}:source`,
@@ -1750,6 +1813,47 @@ async function ensureControlledIntegration(
     const group = MQTT_PANEL_GROUP[breaker.panel as keyof typeof MQTT_PANEL_GROUP];
     if (!targetId || !group) continue;
     const sourcePointId = `0_${group}_${breaker.position}`;
+    const breakerNode = await topologyNodes.findOne(
+      {
+        id: targetId,
+        kind: 'EQUIPMENT',
+        equipmentType: 'CIRCUIT_BREAKER',
+        lifecycle: 'ACTIVE',
+      },
+      { session },
+    );
+    const ratedCurrentA =
+      typeof breakerNode?.attributes?.ratedCurrentA === 'number' &&
+      Number.isFinite(breakerNode.attributes.ratedCurrentA) &&
+      breakerNode.attributes.ratedCurrentA > 0
+        ? breakerNode.attributes.ratedCurrentA
+        : null;
+    if (ratedCurrentA !== null) {
+      desiredOvercurrentPolicies.push({
+        id: `seed01:alarm:${created.gatewaySerial}:${sourcePointId}:overcurrent`,
+        targetType: 'EQUIPMENT',
+        targetId,
+        sourceContext: `mqtt:${created.gatewaySerial}:${sourcePointId}`,
+        sourceIdentity: created.gatewaySerial,
+        enabled: true,
+        overcurrent: {
+          assertAboveA: ratedCurrentA,
+          clearBelowA: Number((ratedCurrentA * 0.9).toFixed(3)),
+          debounceSamples: 2,
+          recoverySamples: 3,
+          severity: 'CRITICAL',
+        },
+        attributes: {
+          policySource: 'BREAKER_RATED_CURRENT',
+          provisional: breakerNode?.attributes?.ratedCurrentProvenance?.verified !== true,
+          qdf: spec.key,
+          panelLabel: breaker.panel,
+          position: breaker.position,
+        },
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
     for (const [metric, unit] of [
       ['VOLTAGE', 'V'],
       ['CURRENT', 'A'],
@@ -1848,6 +1952,35 @@ async function ensureControlledIntegration(
       throw new Error(`SEED_01_INTEGRATION_CONFLICT: source already bound ${binding.id}`);
     }
     await bindings.insertOne({ ...binding, revision: 1 }, { session });
+  }
+
+  for (const policy of desiredOvercurrentPolicies) {
+    const existing = await alarmPolicies.findOne({ id: policy.id }, { session });
+    if (
+      existing &&
+      (existing.targetType !== policy.targetType ||
+        existing.targetId !== policy.targetId ||
+        existing.sourceContext !== policy.sourceContext ||
+        existing.sourceIdentity !== policy.sourceIdentity)
+    ) {
+      throw new Error(`SEED_01_INTEGRATION_CONFLICT: alarm policy ${policy.id}`);
+    }
+    if (existing) {
+      await alarmPolicies.updateOne(
+        { id: policy.id },
+        {
+          $set: {
+            enabled: true,
+            overcurrent: policy.overcurrent,
+            attributes: policy.attributes,
+            updatedAt: now,
+          },
+        },
+        { session },
+      );
+    } else {
+      await alarmPolicies.insertOne(policy, { session });
+    }
   }
 
   if (device.attributes?.bdfbHardwareProfile !== 'ELTEK_BDCBB_CONFIG_4') {

@@ -1829,6 +1829,12 @@ async function ensureControlledIntegration(
         ? breakerNode.attributes.ratedCurrentA
         : null;
     if (ratedCurrentA !== null) {
+      const rawRatingProvenance = breakerNode?.attributes?.ratedCurrentProvenance;
+      const ratingVerified =
+        Boolean(rawRatingProvenance) &&
+        typeof rawRatingProvenance === 'object' &&
+        !Array.isArray(rawRatingProvenance) &&
+        (rawRatingProvenance as Record<string, unknown>).verified === true;
       desiredOvercurrentPolicies.push({
         id: `seed01:alarm:${created.gatewaySerial}:${sourcePointId}:overcurrent`,
         targetType: 'EQUIPMENT',
@@ -1845,7 +1851,7 @@ async function ensureControlledIntegration(
         },
         attributes: {
           policySource: 'BREAKER_RATED_CURRENT',
-          provisional: breakerNode?.attributes?.ratedCurrentProvenance?.verified !== true,
+          provisional: !ratingVerified,
           qdf: spec.key,
           panelLabel: breaker.panel,
           position: breaker.position,

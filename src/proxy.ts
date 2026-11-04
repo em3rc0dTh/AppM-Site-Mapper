@@ -55,7 +55,13 @@ export function proxy(request: NextRequest) {
     }
   }
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
-  const csp = buildContentSecurityPolicy(nonce, process.env.NODE_ENV !== 'production');
+  const development = process.env.NODE_ENV !== 'production';
+  const forwardedProto = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim();
+  const secureTransport =
+    process.env.SITE_MAPPER_HTTPS_ENABLED === 'true' ||
+    forwardedProto === 'https' ||
+    request.nextUrl.protocol === 'https:';
+  const csp = buildContentSecurityPolicy(nonce, development, secureTransport);
 
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);

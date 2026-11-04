@@ -1338,7 +1338,7 @@
     "shelfLabel": "SHELF",
     "mqttBound": "MQTT bound",
     "noMqtt": "No MQTT binding",
-    "noDestination": "No connected destination",
+    "noDestination": "Destination unknown",
     "openChassis": "OPEN CHASSIS COMPOSITION →",
     "openPanel": "OPEN PANEL COMPOSITION →",
     "inventoryDisclaimer": "Positions and connections are inventory records, not live current readings or a wiring certificate. Select another panel above to inspect its positions.",
@@ -1349,7 +1349,9 @@
     "positionBreaker": "Position {position}: {breaker}",
     "positionBreakerDetails": "Position {position}: {breaker}; open breaker details",
     "positionAvailable": "Position {position}: available",
-    "alarmCount": "{count, plural, one {# alarm} other {# alarms}}"
+    "alarmCount": "{count, plural, one {# alarm} other {# alarms}}",
+    "feedLabel": "Feed {side}",
+    "companionAvailable": "Feed {side} available"
   },
   "bdfbTree": {
     "tree": "BDFB power tree",

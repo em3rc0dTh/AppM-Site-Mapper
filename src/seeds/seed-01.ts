@@ -1058,6 +1058,98 @@ async function ensurePositionalChild(
   return created.value;
 }
 
+function breakerFeed(panel: BreakerSpec['panel']): 'A' | 'B' {
+  return panel.startsWith('A') ? 'A' : 'B';
+}
+
+async function ensureDeclaredFeedPairs(
+  repository: TopologyRepository,
+  spec: BdfbSpec,
+  breakerEquipmentIds: Readonly<Record<string, string>>,
+): Promise<void> {
+  if (!spec.breakers.length) return;
+  if (!repository.commitLayout) {
+    throw new Error('SEED_01_MIGRATION_FAILED: ATOMIC_LAYOUT_STORAGE_REQUIRED');
+  }
+
+  const before: EquipmentNode[] = [];
+  const after: EquipmentNode[] = [];
+
+  for (const breaker of spec.breakers) {
+    const feed = breakerFeed(breaker.panel);
+    const companions = spec.breakers.filter(
+      (candidate) =>
+        candidate.sourceRow === breaker.sourceRow && breakerFeed(candidate.panel) !== feed,
+    );
+    if (companions.length !== 1) {
+      throw new Error(
+        `SEED_01_FEED_PAIR_CONFLICT: ${spec.key} source row ${breaker.sourceRow} expected one companion feed, found ${companions.length}`,
+      );
+    }
+    const companion = companions[0]!;
+    const breakerId = breakerEquipmentIds[`${breaker.panel}:${breaker.position}`];
+    const companionId = breakerEquipmentIds[`${companion.panel}:${companion.position}`];
+    if (!breakerId || !companionId) {
+      throw new Error(
+        `SEED_01_FEED_PAIR_CONFLICT: missing breaker identity for ${spec.key} row ${breaker.sourceRow}`,
+      );
+    }
+
+    const currentNode = await repository.getById(breakerId);
+    const current = currentNode ? expectKind(currentNode, 'EQUIPMENT', breakerId) : null;
+    if (!current || current.equipmentType !== 'CIRCUIT_BREAKER') {
+      throw new Error(`SEED_01_FEED_PAIR_CONFLICT: breaker ${breakerId} missing`);
+    }
+
+    const declaredPower = {
+      contractVersion: 1,
+      state: 'DECLARED' as const,
+      sourceDocument: 'Lista de Equipos QDF mop 1 - actualizado',
+      qdf: spec.key,
+      sourceRow: breaker.sourceRow,
+      pairId: `seed01:${spec.key}:row:${breaker.sourceRow}`,
+      feed,
+      targetLabel: breaker.destination,
+      currentBreaker: {
+        panel: breaker.panel,
+        position: breaker.position,
+      },
+      legacyBreaker: {
+        panel: breaker.legacyPanel,
+        position: breaker.legacyPosition,
+      },
+      companionFeed: {
+        feed: breakerFeed(companion.panel),
+        breakerId: companionId,
+        panel: companion.panel,
+        position: companion.position,
+        targetLabel: companion.destination,
+      },
+      remarks: [...(breaker.remarks ?? [])],
+      targetPlacement: 'UNKNOWN' as const,
+      targetMaterialization: 'NOT_CREATED' as const,
+    };
+
+    if (JSON.stringify(current.attributes?.declaredPower) === JSON.stringify(declaredPower)) {
+      continue;
+    }
+
+    before.push(current);
+    after.push({
+      ...current,
+      attributes: {
+        ...(current.attributes ?? {}),
+        declaredPower,
+      },
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  if (after.length && !(await repository.commitLayout(before, after))) {
+    throw new Error(`SEED_01_FEED_PAIR_CONFLICT: concurrent feed-pair update for ${spec.key}`);
+  }
+}
+
 async function ensureFullRackOccupancy(
   repository: TopologyRepository,
   rackId: string,
@@ -1390,6 +1482,11 @@ async function seedBdfb(
     );
     breakerEquipmentIds[`${breaker.panel}:${breaker.position}`] = breakerEquipment.id;
   }
+
+  // Close Feed A/B from the workbook row pairing without inventing remote
+  // Equipment or rack/bay/U placement. The companion breaker is now explicit
+  // seed truth and can be opened independently in Power Path Workbench.
+  await ensureDeclaredFeedPairs(repository, spec, breakerEquipmentIds);
 
   return {
     deviceId: device.id,

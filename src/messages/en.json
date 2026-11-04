@@ -390,7 +390,10 @@
       "windowTelemetry": "TELEMETRY",
       "windowHistory": "HISTORY",
       "windowFullTrace": "FULL TRACE",
-      "liveMeasurements": "Live measurements"
+      "liveMeasurements": "Live measurements",
+      "companionFeedAvailable": "FEED {side} AVAILABLE",
+      "openCompanionFeed": "OPEN FEED {side} ↗",
+      "remarks": "REMARKS"
     },
     "rack": {
       "elevation": "ELEVATION",

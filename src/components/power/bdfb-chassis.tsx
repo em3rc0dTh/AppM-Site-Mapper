@@ -232,29 +232,27 @@ export function BdfbChassis({
           {installed > 0 ? (
             <div className="sm-bdfb-breaker-summary">
               <strong>{t('circuits')}</strong>
-              {selectedPanel.positions.map((breaker, index) =>
-                breaker ? (
+              {selectedPanel.positions.map((breaker, index) => {
+                if (!breaker) return null;
+                const declared = declaredByBreaker.get(breaker.id);
+                const physical = destinationByBreaker.get(breaker.id);
+
+                return (
                   <div className="sm-bdfb-breaker-summary-row" key={breaker.id}>
                     <span>{t('position', { position: String(index + 1).padStart(2, '0') })}</span>
                     <Link href={`/device/${breaker.id}`}>{breaker.label}</Link>
                     <small>
-                      {destinationByBreaker.get(breaker.id)?.counterpartName ??
-                        declaredByBreaker.get(breaker.id)?.targetName ??
-                        t('noDestination')}
-                      {declaredByBreaker.get(breaker.id)?.feed
-                        ? ` · ${t('feedLabel', { side: declaredByBreaker.get(breaker.id)!.feed })}`
-                        : ''}
-                      {declaredByBreaker.get(breaker.id)?.companionFeed
-                        ? ` · ${t('companionAvailable', {
-                            side: declaredByBreaker.get(breaker.id)!.companionFeed,
-                          })}`
+                      {physical?.counterpartName ?? declared?.targetName ?? t('noDestination')}
+                      {declared?.feed ? ` · ${t('feedLabel', { side: declared.feed })}` : ''}
+                      {declared?.companionFeed
+                        ? ` · ${t('companionAvailable', { side: declared.companionFeed })}`
                         : ''}
                       {' · '}
                       {monitoredBreakers.has(breaker.id) ? t('mqttBound') : t('noMqtt')}
                     </small>
                   </div>
-                ) : null,
-              )}
+                );
+              })}
             </div>
           ) : (
             <p className="sm-bdfb-panel-empty">{t('noCircuits')}</p>

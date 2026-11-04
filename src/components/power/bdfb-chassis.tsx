@@ -19,6 +19,12 @@ export interface BreakerPowerBinding {
   readonly accessPortLabel?: string;
   readonly mount?: string;
 }
+export interface BreakerDeclaredDestination {
+  readonly breakerId: string;
+  readonly targetName: string;
+  readonly feed?: 'A' | 'B';
+  readonly companionFeed?: 'A' | 'B';
+}
 export interface BreakerTelemetryBindingSummary {
   readonly breakerId: string;
   readonly sourceIdentity: string;
@@ -37,12 +43,14 @@ export function BdfbChassis({
   presentation,
   powerBindings = [],
   telemetryBindings = [],
+  declaredDestinations = [],
   activePanelId,
 }: Readonly<{
   device: DeviceNode;
   presentation: BdfbPresentation;
   powerBindings?: readonly BreakerPowerBinding[];
   telemetryBindings?: readonly BreakerTelemetryBindingSummary[];
+  declaredDestinations?: readonly BreakerDeclaredDestination[];
   canWritePower?: boolean;
   activePanelId?: string;
 }>) {
@@ -58,6 +66,7 @@ export function BdfbChassis({
   const installed = selectedPanel?.positions.filter((position) => position !== null).length ?? 0;
   const available = (selectedPanel?.positions.length ?? 0) - installed;
   const destinationByBreaker = new Map(powerBindings.map((item) => [item.breakerId, item]));
+  const declaredByBreaker = new Map(declaredDestinations.map((item) => [item.breakerId, item]));
   const monitoredBreakers = new Set(telemetryBindings.map((item) => item.breakerId));
   const { snapshot: alarmSnapshot } = useAlarmSnapshot();
 
@@ -229,7 +238,17 @@ export function BdfbChassis({
                     <span>{t('position', { position: String(index + 1).padStart(2, '0') })}</span>
                     <Link href={`/device/${breaker.id}`}>{breaker.label}</Link>
                     <small>
-                      {destinationByBreaker.get(breaker.id)?.counterpartName ?? t('noDestination')}
+                      {destinationByBreaker.get(breaker.id)?.counterpartName ??
+                        declaredByBreaker.get(breaker.id)?.targetName ??
+                        t('noDestination')}
+                      {declaredByBreaker.get(breaker.id)?.feed
+                        ? ` · ${t('feedLabel', { side: declaredByBreaker.get(breaker.id)!.feed })}`
+                        : ''}
+                      {declaredByBreaker.get(breaker.id)?.companionFeed
+                        ? ` · ${t('companionAvailable', {
+                            side: declaredByBreaker.get(breaker.id)!.companionFeed,
+                          })}`
+                        : ''}
                       {' · '}
                       {monitoredBreakers.has(breaker.id) ? t('mqttBound') : t('noMqtt')}
                     </small>

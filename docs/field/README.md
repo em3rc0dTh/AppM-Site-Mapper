@@ -56,6 +56,7 @@ flowchart TD
 
 - [Site Survey](site-survey.md) — información que debe obtenerse antes de tocar la red o el equipo.
 - [Commissioning de equipos reales](real-equipment-commissioning.md) — procedimiento MQTT/SNMP, RAW, binding, histórico y salida industrial.
+- [Telxius Lurín · Conexión de equipos físicos y cierre de Power Feeds](telxius-physical-equipment-connection-runbook.md) — runbook operativo para sustituir el laboratorio por BDFB/Acrel real, preservar Feed A/B y materializar equipos remotos solo con evidencia de ubicación.
 - [Metasys SAT](metasys-sat.md) — prueba de aceptación Modbus TCP con el BMS/integrador.
 - [Commissioning Record](commissioning-record.template.md) — plantilla de evidencia por equipo/fuente.
 - [Portability Hardening](../release/portability-hardening.md) — condiciones para instalar y recuperar Site Mapper desde una máquina limpia.

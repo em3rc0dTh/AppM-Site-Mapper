@@ -1338,7 +1338,7 @@
     "shelfLabel": "SHELF",
     "mqttBound": "Vinculado por MQTT",
     "noMqtt": "Sin vinculación MQTT",
-    "noDestination": "Sin destino conectado",
+    "noDestination": "Destino desconocido",
     "openChassis": "ABRIR COMPOSICIÓN DEL CHASSIS →",
     "openPanel": "ABRIR COMPOSICIÓN DEL PANEL →",
     "inventoryDisclaimer": "Las posiciones y conexiones son registros de inventario, no lecturas de corriente en vivo ni certificación de cableado. Selecciona otro panel arriba para consultar sus posiciones.",
@@ -1349,7 +1349,9 @@
     "positionBreaker": "Posición {position}: {breaker}",
     "positionBreakerDetails": "Posición {position}: {breaker}; abrir detalles del interruptor",
     "positionAvailable": "Posición {position}: disponible",
-    "alarmCount": "{count, plural, one {# alarma} other {# alarmas}}"
+    "alarmCount": "{count, plural, one {# alarma} other {# alarmas}}",
+    "feedLabel": "Feed {side}",
+    "companionAvailable": "Feed {side} disponible"
   },
   "bdfbTree": {
     "tree": "Árbol de potencia BDFB",

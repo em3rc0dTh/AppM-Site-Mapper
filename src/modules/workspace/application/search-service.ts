@@ -88,7 +88,7 @@ export async function searchTopology(
           id: `power-target:${node.id}:${target}`,
           name: target,
           kind: 'POWER_TARGET',
-          href: `/power?breaker=${encodeURIComponent(node.id)}`,
+          href: `/workbench/power-path?breakerId=${encodeURIComponent(node.id)}`,
           breadcrumb: `${device?.name ?? 'Power source'} / ${panel?.name ?? 'Panel'} / ${node.name} → declared target`,
         });
       }

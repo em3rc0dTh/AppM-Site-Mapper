@@ -11,6 +11,9 @@ const SOURCES = {
 const METRICS = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'];
 const TELEMETRY_LOSS_AFTER_MS = 35_000;
 const TELEMETRY_RECOVERY_SAMPLES = 2;
+const OVERCURRENT_CLEAR_RATIO = 0.9;
+const OVERCURRENT_DEBOUNCE_SAMPLES = 2;
+const OVERCURRENT_RECOVERY_SAMPLES = 3;
 
 function assert(value, message) {
   if (!value) throw new Error('SEED01 LAB BLOCKED: ' + message);
@@ -117,6 +120,36 @@ for (const item of state.bdfbs) {
           position: index + 1,
         },
       });
+      const ratedCurrentA = breaker.attributes?.ratedCurrentA;
+      assert(
+        typeof ratedCurrentA === 'number' && Number.isFinite(ratedCurrentA) && ratedCurrentA > 0,
+        item.key + ' breaker ' + breaker.name + ' is missing ratedCurrentA',
+      );
+      desiredPolicies.push({
+        id: 'lab:seed01:alarm:' + source + ':' + breaker.id + ':overcurrent',
+        targetType: 'EQUIPMENT',
+        targetId: breaker.id,
+        sourceContext: 'mqtt:' + source + ':' + rawPointId,
+        sourceIdentity: source,
+        enabled: true,
+        overcurrent: {
+          assertAboveA: ratedCurrentA,
+          clearBelowA: Number((ratedCurrentA * OVERCURRENT_CLEAR_RATIO).toFixed(3)),
+          debounceSamples: OVERCURRENT_DEBOUNCE_SAMPLES,
+          recoverySamples: OVERCURRENT_RECOVERY_SAMPLES,
+          severity: 'CRITICAL',
+        },
+        attributes: {
+          commissioning: MARK,
+          synthetic: true,
+          labProfile: 'TELXIUS_SEED_01',
+          policySource: 'BREAKER_RATED_CURRENT',
+          provisional: breaker.attributes?.ratedCurrentProvenance?.verified !== true,
+          qdf: item.key,
+          panelLabel: panelName,
+          position: index + 1,
+        },
+      });
       for (const metric of METRICS) {
         desired.push({
           id: 'lab:seed01:mqtt:' + source + ':' + rawPointId + ':' + metric.toLowerCase(),
@@ -142,10 +175,10 @@ for (const item of state.bdfbs) {
 }
 
 const sourceCount = desired.filter((x) => x.metric === 'SOURCE').length;
-assert(desiredPolicies.length === 48, 'expected 48 telemetry-loss alarm policies');
+assert(desiredPolicies.length === 148, 'expected 148 alarm policies (74 telemetry-loss + 74 overcurrent)');
 const pointCount = desired.length - sourceCount;
 assert(sourceCount === 3, 'expected 3 source bindings');
-assert(pointCount === 48 * 4, 'expected 192 metric bindings for 48 confirmed breakers');
+assert(pointCount === 74 * 4, 'expected 296 metric bindings for 74 confirmed breakers');
 
 for (const policy of desiredPolicies) {
   const existing = d.alarm_policies.find({ id: policy.id }).toArray();

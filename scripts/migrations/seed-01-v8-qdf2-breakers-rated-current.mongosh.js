@@ -128,13 +128,9 @@ try {
   const policies = tx.alarm_policies;
   const now = new Date().toISOString();
 
-  const panelDocs = {
+  const panels = {
     A3: topology.findOne({ id: a3.id, lifecycle: 'ACTIVE' }),
     B3: topology.findOne({ id: b3.id, lifecycle: 'ACTIVE' }),
-  };
-  const panels = {
-    A3: await panelDocs.A3,
-    B3: await panelDocs.B3,
   };
   assert(panels.A3 && panels.B3, 'QDF-2 panels disappeared during transaction');
 
@@ -299,7 +295,7 @@ try {
       revision: 1,
       attributes: {
         commissioning: 'CONTROLLED_INTEGRATION',
-        integrationProfile: 'SEED_01_CONTROLLED_INTEGRATION',
+        integrationProfile: 'seed-01-controlled',
         transportEquipmentId: gateway.id,
       },
     });
@@ -351,7 +347,7 @@ try {
           revision: 1,
           attributes: {
             commissioning: 'CONTROLLED_INTEGRATION',
-            integrationProfile: 'SEED_01_CONTROLLED_INTEGRATION',
+            integrationProfile: 'seed-01-controlled',
             synthetic: true,
             qdf: 'QDF-2',
             panelLabel: panelName,

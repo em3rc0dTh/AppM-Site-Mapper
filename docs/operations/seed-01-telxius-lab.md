@@ -50,14 +50,16 @@ BFDB emits each 24-position group in the captured 10 + 10 + 4 message shape.
 
 This is **96 raw addresses per QDF**. Only documented measured positions carry U1/I1/P1/EP1 values; the remaining raw addresses are state-only.
 
-Site Mapper currently contains explicit Circuit Breaker inventory/bindings for:
+Site Mapper seed-01 v8 contains explicit Circuit Breaker inventory/bindings for all current post-migration positions:
 
-- QDF-4: 12 physical feed positions;
-- QDF-5: 36 physical feed positions.
+- QDF-2: 26 breakers · A3/B3 positions 1..13;
+- QDF-4: 12 breakers;
+- QDF-5: 36 breakers;
+- total: **74 breakers**.
 
-QDF-2 remains **RAW-visible but breaker-uncommissioned** in Site Mapper because the final post-migration physical breaker positions are not established by the seed evidence currently accepted in the repository.
+The QDF-2 mapping is based on the newly operator-declared post-migration schedule. Legacy positions remain evidence in `declaredPower.legacyBreaker`; they are not the current physical position.
 
-That means this lab may receive QDF-2 MQTT traffic without presenting those 26 historical feed references as commissioned Circuit Breakers.
+All 74 breakers currently receive a **provisional standard `ratedCurrentA = 20 A`**. It is explicitly marked unverified and must be replaced, breaker by breaker, when manufacturer or field evidence becomes available. `SUB-EQUIPO` remains remark/evidence only and is never materialized as topology.
 
 ### SNMP / Smartpack2
 
@@ -282,9 +284,7 @@ EMU-TELXIUS-QDF-4
 EMU-TELXIUS-QDF-5
 ```
 
-For QDF-4/QDF-5, commissioned breaker bindings should update their existing Circuit Breaker Equipment.
-
-QDF-2 raw traffic can be captured and inspected, but its historical feed positions must not be promoted to final Circuit Breaker bindings until the post-migration physical positions are accepted.
+For QDF-2/QDF-4/QDF-5, commissioned breaker bindings update their current Circuit Breaker Equipment. QDF-2 uses the accepted post-migration A3/B3 positions, never the legacy A1/A2/B1/B2 positions.
 
 ### SNMP
 
@@ -320,11 +320,13 @@ This archives only bindings tagged by the Telxius synthetic lab commissioning ma
 
 This lab does not claim that:
 
+- the provisional 20 A breaker rating is manufacturer- or field-verified;
+
 - MQTT raw group numbers are commissioned physical panel identities;
 - RTU slave IDs equal MQTT raw group numbers;
 - real AWT firmware refreshes all four raw groups every ten seconds;
 - U2/I2/P2/EP2 represent a second breaker channel;
-- QDF-2 historical feed references are final post-migration breaker positions;
+- legacy QDF-2 feed references are current post-migration breaker positions;
 - the captured Smartpack2 belongs to QDF-2, QDF-4 or QDF-5;
 - all 5,407 OIDs are engineering measurements;
 - all originally numeric walk OIDs have manufacturer-verified ASN.1 type metadata;

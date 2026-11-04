@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
 
 import { CompositionHistoryCharts } from '@/components/equipment/composition-history-charts';
+import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 
 type View = {
@@ -66,6 +67,8 @@ export function DetachedPowerPathWorkbench({
   sourceBreaker,
   target,
   feed,
+  companionFeed,
+  remarks,
 }: Readonly<{
   breakerId: string;
   sourceDevice: string;
@@ -73,6 +76,14 @@ export function DetachedPowerPathWorkbench({
   sourceBreaker: string;
   target: string;
   feed?: 'A' | 'B';
+  companionFeed?: {
+    readonly breakerId: string;
+    readonly feed: 'A' | 'B';
+    readonly panel: string;
+    readonly position: number;
+    readonly targetLabel: string;
+  };
+  remarks?: readonly string[];
 }>) {
   const t = useTranslations('pages.power');
   const th = useTranslations('historyCharts');
@@ -174,7 +185,8 @@ export function DetachedPowerPathWorkbench({
         </article>
       </section>
 
-      <nav className="sm-workbench-nav" aria-label={t('powerWindowActions')}>
+      <div className="sm-power-workbench-toolbar">
+        <nav className="sm-workbench-nav" aria-label={t('powerWindowActions')}>
         <button type="button" aria-pressed={section === 'telemetry'} onClick={() => setSection('telemetry')}>
           {t('windowTelemetry')}
         </button>
@@ -185,6 +197,30 @@ export function DetachedPowerPathWorkbench({
           {t('windowFullTrace')}
         </button>
       </nav>
+        {companionFeed ? (
+          <div className="sm-power-companion-feed">
+            <span>{t('companionFeedAvailable', { side: companionFeed.feed })}</span>
+            <DetachedWorkbenchButton
+              href={`/workbench/power-path?breakerId=${encodeURIComponent(companionFeed.breakerId)}`}
+              windowName={`site-mapper-power-path-${companionFeed.breakerId}`}
+              label={t('openCompanionFeed', { side: companionFeed.feed })}
+            >
+              {t('openCompanionFeed', { side: companionFeed.feed })}
+            </DetachedWorkbenchButton>
+          </div>
+        ) : null}
+      </div>
+
+      {remarks?.length ? (
+        <aside className="sm-power-remarks">
+          <strong>{t('remarks')}</strong>
+          <ul>
+            {remarks.map((remark) => (
+              <li key={remark}>{remark}</li>
+            ))}
+          </ul>
+        </aside>
+      ) : null}
 
       {section === 'history' ? (
         <section className="sm-power-workbench-detail">

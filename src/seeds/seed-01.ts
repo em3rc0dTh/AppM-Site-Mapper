@@ -17,7 +17,7 @@ import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integr
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 6 as const;
+export const SEED_01_VERSION = 7 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -33,6 +33,12 @@ interface BreakerSpec {
   readonly panel: 'A3' | 'B3';
   readonly position: number;
   readonly destination: string;
+  /** Source workbook row used as the authoritative Feed A/B pairing key. */
+  readonly sourceRow: number;
+  readonly legacyPanel: 'A1' | 'A2' | 'B1' | 'B2';
+  readonly legacyPosition: number;
+  /** Workbook SUB-EQUIPO content is evidence/remark only; never materialized as Equipment. */
+  readonly remarks?: readonly string[];
 }
 
 interface BdfbSpec {
@@ -45,58 +51,135 @@ interface BdfbSpec {
 }
 
 const QDF_4_BREAKERS: readonly BreakerSpec[] = [
-  { panel: 'A3', position: 1, destination: 'BB-LUR-04 SH2 A1' },
-  { panel: 'B3', position: 1, destination: 'BB-LUR-04 SH2 FEED B1' },
-  { panel: 'A3', position: 2, destination: 'BB-LUR-04 SH2 A2' },
-  { panel: 'B3', position: 2, destination: 'BB-LUR-04 SH2 FEED B2' },
-  { panel: 'A3', position: 3, destination: 'PL-LUR-FPN3-1 SH20 FEED A' },
-  { panel: 'B3', position: 3, destination: 'PL-LUR-FPN3-1 SH20 FEED B' },
-  { panel: 'A3', position: 4, destination: 'DTN-LUR-FP4-01 SH1 A' },
-  { panel: 'B3', position: 4, destination: 'DTN-LUR-FP4-01 SH1 B' },
-  { panel: 'A3', position: 5, destination: 'DTN-LUR-FP4-01 SH2 A' },
-  { panel: 'B3', position: 5, destination: 'DTN-LUR-FP4-01 SH2 B' },
-  { panel: 'A3', position: 6, destination: 'BB-LUR-FPN3-3 SH17 FEED A' },
-  { panel: 'B3', position: 6, destination: 'BB-LUR-FPN3-3 SH17 FEED B' },
+  { panel: 'A3', position: 1, destination: 'BB-LUR-04 SH2 A1', sourceRow: 1, legacyPanel: 'A1', legacyPosition: 15 },
+  { panel: 'B3', position: 1, destination: 'BB-LUR-04 SH2 FEED B1', sourceRow: 1, legacyPanel: 'B1', legacyPosition: 15 },
+  { panel: 'A3', position: 2, destination: 'BB-LUR-04 SH2 A2', sourceRow: 2, legacyPanel: 'A1', legacyPosition: 16 },
+  { panel: 'B3', position: 2, destination: 'BB-LUR-04 SH2 FEED B2', sourceRow: 2, legacyPanel: 'B1', legacyPosition: 16 },
+  { panel: 'A3', position: 3, destination: 'PL-LUR-FPN3-1 SH20 FEED A', sourceRow: 3, legacyPanel: 'A2', legacyPosition: 4 },
+  { panel: 'B3', position: 3, destination: 'PL-LUR-FPN3-1 SH20 FEED B', sourceRow: 3, legacyPanel: 'B2', legacyPosition: 4 },
+  { panel: 'A3', position: 4, destination: 'DTN-LUR-FP4-01 SH1 A', sourceRow: 4, legacyPanel: 'A2', legacyPosition: 5 },
+  { panel: 'B3', position: 4, destination: 'DTN-LUR-FP4-01 SH1 B', sourceRow: 4, legacyPanel: 'B2', legacyPosition: 5 },
+  { panel: 'A3', position: 5, destination: 'DTN-LUR-FP4-01 SH2 A', sourceRow: 5, legacyPanel: 'A2', legacyPosition: 10 },
+  { panel: 'B3', position: 5, destination: 'DTN-LUR-FP4-01 SH2 B', sourceRow: 5, legacyPanel: 'B2', legacyPosition: 10 },
+  { panel: 'A3', position: 6, destination: 'BB-LUR-FPN3-3 SH17 FEED A', sourceRow: 6, legacyPanel: 'A2', legacyPosition: 16 },
+  { panel: 'B3', position: 6, destination: 'BB-LUR-FPN3-3 SH17 FEED B', sourceRow: 6, legacyPanel: 'B2', legacyPosition: 16 },
 ];
 
 const QDF_5_BREAKERS: readonly BreakerSpec[] = [
-  { panel: 'A3', position: 1, destination: 'WS-LUR-04 PS1' },
-  { panel: 'B3', position: 1, destination: 'WS-LUR-04 PS2' },
-  { panel: 'A3', position: 2, destination: 'WS-LUR-01 PSU1' },
-  { panel: 'B3', position: 2, destination: 'WS-LUR-01 PSU2' },
-  { panel: 'A3', position: 3, destination: 'GXLUR02 SH01 PEM1' },
-  { panel: 'B3', position: 3, destination: 'GXLUR02 SH1 PEM3' },
-  { panel: 'A3', position: 4, destination: 'GXLUR02 SH01 PEM2' },
-  { panel: 'B3', position: 4, destination: 'GXLUR02 SH1 PEM4' },
-  { panel: 'A3', position: 5, destination: 'GXLUR01 SH2 PEM1' },
-  { panel: 'B3', position: 5, destination: 'GXLUR01 SH2 PEM3' },
-  { panel: 'A3', position: 6, destination: 'GXLUR01 SH2 PEM2' },
-  { panel: 'B3', position: 6, destination: 'GXLUR01 SH2 PEM4' },
-  { panel: 'A3', position: 7, destination: 'WS-LUR-02 L1' },
-  { panel: 'B3', position: 7, destination: 'WS-LUR-02 L2' },
-  { panel: 'A3', position: 8, destination: 'CAR-LUR-01 L1' },
-  { panel: 'B3', position: 8, destination: 'CAR-LUR-01 L2' },
-  { panel: 'A3', position: 9, destination: 'WS-LUR-03 L1' },
-  { panel: 'B3', position: 9, destination: 'WS-LUR-03 L2' },
-  { panel: 'A3', position: 10, destination: 'DTX-LUR-FP2-1 SH8 PA1-1' },
-  { panel: 'B3', position: 10, destination: 'DTX-LUR-FP2-1 SH8 PB1-1' },
-  { panel: 'A3', position: 11, destination: 'DTX-LUR-FP2-1 SH8 PA1-2' },
-  { panel: 'B3', position: 11, destination: 'DTX-LUR-FP2-1 SH8 PB1-2' },
-  { panel: 'A3', position: 12, destination: 'DTX-LUR-FP2-1 SH8 PA2-1' },
-  { panel: 'B3', position: 12, destination: 'DTX-LUR-FP2-1 SH8 PB2-1' },
-  { panel: 'A3', position: 13, destination: 'DTX-LUR-FP2-1 SH8 PA2-2' },
-  { panel: 'B3', position: 13, destination: 'DTX-LUR-FP2-1 SH8 PB2-2' },
-  { panel: 'A3', position: 14, destination: 'DTX-LUR-FP2-1 SH8 PA3-1' },
-  { panel: 'B3', position: 14, destination: 'DTX-LUR-FP2-1 SH8 PB3-1' },
-  { panel: 'A3', position: 15, destination: 'DTX-LUR-FP2-1 SH8 PA3-2' },
-  { panel: 'B3', position: 15, destination: 'DTX-LUR-FP2-1 SH8 PB3-2' },
-  { panel: 'A3', position: 16, destination: 'PL-LUR-FPO1-1 FEED A' },
-  { panel: 'B3', position: 16, destination: 'PL-LUR-FPO1-1 FEED B' },
-  { panel: 'A3', position: 17, destination: '010208.14 PDU1-A' },
-  { panel: 'B3', position: 17, destination: '010208.14 PDU1-B' },
-  { panel: 'A3', position: 18, destination: '010208.13 PDU1-A' },
-  { panel: 'B3', position: 18, destination: '010208.13 PDU1-B' },
+  { panel: 'A3', position: 1, destination: 'WS-LUR-04 PS1', sourceRow: 9, legacyPanel: 'A2', legacyPosition: 5 },
+  { panel: 'B3', position: 1, destination: 'WS-LUR-04 PS2', sourceRow: 9, legacyPanel: 'B2', legacyPosition: 5 },
+  { panel: 'A3', position: 2, destination: 'WS-LUR-01 PSU1', sourceRow: 3, legacyPanel: 'A1', legacyPosition: 8 },
+  { panel: 'B3', position: 2, destination: 'WS-LUR-01 PSU2', sourceRow: 3, legacyPanel: 'B1', legacyPosition: 8 },
+  { panel: 'A3', position: 3, destination: 'GXLUR02 SH01 PEM1', sourceRow: 1, legacyPanel: 'A1', legacyPosition: 6 },
+  { panel: 'B3', position: 3, destination: 'GXLUR02 SH1 PEM3', sourceRow: 1, legacyPanel: 'B1', legacyPosition: 6 },
+  { panel: 'A3', position: 4, destination: 'GXLUR02 SH01 PEM2', sourceRow: 2, legacyPanel: 'A1', legacyPosition: 7 },
+  { panel: 'B3', position: 4, destination: 'GXLUR02 SH1 PEM4', sourceRow: 2, legacyPanel: 'B1', legacyPosition: 7 },
+  { panel: 'A3', position: 5, destination: 'GXLUR01 SH2 PEM1', sourceRow: 4, legacyPanel: 'A1', legacyPosition: 14 },
+  { panel: 'B3', position: 5, destination: 'GXLUR01 SH2 PEM3', sourceRow: 4, legacyPanel: 'B1', legacyPosition: 14 },
+  { panel: 'A3', position: 6, destination: 'GXLUR01 SH2 PEM2', sourceRow: 5, legacyPanel: 'A1', legacyPosition: 15 },
+  { panel: 'B3', position: 6, destination: 'GXLUR01 SH2 PEM4', sourceRow: 5, legacyPanel: 'B1', legacyPosition: 15 },
+  { panel: 'A3', position: 7, destination: 'WS-LUR-02 L1', sourceRow: 6, legacyPanel: 'A1', legacyPosition: 16 },
+  { panel: 'B3', position: 7, destination: 'WS-LUR-02 L2', sourceRow: 6, legacyPanel: 'B1', legacyPosition: 16 },
+  { panel: 'A3', position: 8, destination: 'CAR-LUR-01 L1', sourceRow: 7, legacyPanel: 'A1', legacyPosition: 22 },
+  { panel: 'B3', position: 8, destination: 'CAR-LUR-01 L2', sourceRow: 7, legacyPanel: 'B1', legacyPosition: 22 },
+  { panel: 'A3', position: 9, destination: 'WS-LUR-03 L1', sourceRow: 8, legacyPanel: 'A1', legacyPosition: 23 },
+  { panel: 'B3', position: 9, destination: 'WS-LUR-03 L2', sourceRow: 8, legacyPanel: 'B1', legacyPosition: 23 },
+  { panel: 'A3', position: 10, destination: 'DTX-LUR-FP2-1 SH8 PA1-1', sourceRow: 10, legacyPanel: 'A2', legacyPosition: 6 },
+  { panel: 'B3', position: 10, destination: 'DTX-LUR-FP2-1 SH8 PB1-1', sourceRow: 10, legacyPanel: 'B2', legacyPosition: 6 },
+  { panel: 'A3', position: 11, destination: 'DTX-LUR-FP2-1 SH8 PA1-2', sourceRow: 11, legacyPanel: 'A2', legacyPosition: 7 },
+  { panel: 'B3', position: 11, destination: 'DTX-LUR-FP2-1 SH8 PB1-2', sourceRow: 11, legacyPanel: 'B2', legacyPosition: 7 },
+  { panel: 'A3', position: 12, destination: 'DTX-LUR-FP2-1 SH8 PA2-1', sourceRow: 12, legacyPanel: 'A2', legacyPosition: 8 },
+  { panel: 'B3', position: 12, destination: 'DTX-LUR-FP2-1 SH8 PB2-1', sourceRow: 12, legacyPanel: 'B2', legacyPosition: 8 },
+  {
+    panel: 'A3',
+    position: 13,
+    destination: 'DTX-LUR-FP2-1 SH8 PA2-2',
+    sourceRow: 15,
+    legacyPanel: 'A2',
+    legacyPosition: 14,
+  },
+  {
+    panel: 'B3',
+    position: 13,
+    destination: 'DTX-LUR-FP2-1 SH8 PB2-2',
+    sourceRow: 15,
+    legacyPanel: 'B2',
+    legacyPosition: 14,
+  },
+  {
+    panel: 'A3',
+    position: 14,
+    destination: 'DTX-LUR-FP2-1 SH8 PA3-1',
+    sourceRow: 16,
+    legacyPanel: 'A2',
+    legacyPosition: 15,
+  },
+  {
+    panel: 'B3',
+    position: 14,
+    destination: 'DTX-LUR-FP2-1 SH8 PB3-1',
+    sourceRow: 16,
+    legacyPanel: 'B2',
+    legacyPosition: 15,
+  },
+  {
+    panel: 'A3',
+    position: 15,
+    destination: 'DTX-LUR-FP2-1 SH8 PA3-2',
+    sourceRow: 17,
+    legacyPanel: 'A2',
+    legacyPosition: 16,
+  },
+  {
+    panel: 'B3',
+    position: 15,
+    destination: 'DTX-LUR-FP2-1 SH8 PB3-2',
+    sourceRow: 17,
+    legacyPanel: 'B2',
+    legacyPosition: 16,
+  },
+  { panel: 'A3', position: 16, destination: 'PL-LUR-FPO1-1 FEED A', sourceRow: 18, legacyPanel: 'A2', legacyPosition: 22 },
+  { panel: 'B3', position: 16, destination: 'PL-LUR-FPO1-1 FEED B', sourceRow: 18, legacyPanel: 'B2', legacyPosition: 22 },
+  {
+    panel: 'A3',
+    position: 17,
+    destination: '010208.14 PDU1-A',
+    sourceRow: 13,
+    legacyPanel: 'A2',
+    legacyPosition: 10,
+    remarks: ['Pos-1: MTC-9 SH10 PEM A', 'Pos-2: XTM-LUR01 PEM A'],
+  },
+  {
+    panel: 'B3',
+    position: 17,
+    destination: '010208.14 PDU1-B',
+    sourceRow: 13,
+    legacyPanel: 'B2',
+    legacyPosition: 10,
+    remarks: ['Pos-1: MTC-9 SH10 PEM B', 'Pos-2: XTM-LUR01 PEM B'],
+  },
+  {
+    panel: 'A3',
+    position: 18,
+    destination: '010208.13 PDU1-A',
+    sourceRow: 14,
+    legacyPanel: 'A2',
+    legacyPosition: 11,
+    remarks: ['Pos-1: MTC-9 SH1 PEM A', 'Pos-2: MTC-9 SH4 PEM A'],
+  },
+  {
+    panel: 'B3',
+    position: 18,
+    destination: '010208.13 PDU1-B',
+    sourceRow: 14,
+    legacyPanel: 'B2',
+    legacyPosition: 11,
+    remarks: ['Pos-1: MTC-9 SH1 PEM B', 'Pos-2: MTC-9 SH4 PEM B'],
+  },
 ];
+
+// Important: these schedules close the declared A/B feeds only. The remote targets
+// are NOT materialized as Equipment because their bay/rack/U placement is not yet known.
 
 const BDFBS: readonly BdfbSpec[] = [
   {

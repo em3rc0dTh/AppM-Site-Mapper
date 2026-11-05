@@ -109,4 +109,4 @@ Current evidence classification:
 - gateway MAC uniqueness: pending higher-resolution/exported field evidence;
 - meter serial conflicts: unresolved and BLOCK APPLY.
 
-No topology, profile or telemetry binding may be changed solely from this evidence. The read-only S05 diff must still be executed against the deployed runtime before an APPLY plan is approved.
+No topology, profile or telemetry binding may be changed solely from this evidence. During Sprint development, the read-only S05 diff is executed against the local validation runtime before an APPLY plan is approved. TFARM04 remains deferred until final field deployment/certification.

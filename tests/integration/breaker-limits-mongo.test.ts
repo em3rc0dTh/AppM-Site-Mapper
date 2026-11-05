@@ -44,35 +44,35 @@ describe.skipIf(!enabled)('S01 real Mongo replica-set transactions', () => {
       await db.collection(name).deleteMany({});
     }
     await db.collection('topology_nodes').insertMany([
-        {
-          id: 'bdfb',
-          kind: 'DEVICE',
-          deviceType: 'BDFB',
-          name: 'Synthetic BDFB',
-          lifecycle: 'ACTIVE',
-        },
-        {
-          id: 'panel',
-          kind: 'EQUIPMENT',
-          equipmentType: 'PANEL',
-          deviceId: 'bdfb',
-          name: 'A1',
-          children: ['breaker', 'sibling'],
-          lifecycle: 'ACTIVE',
-        },
-        ...['breaker', 'sibling'].map((id) => ({
-          id,
-          kind: 'EQUIPMENT',
-          equipmentType: 'CIRCUIT_BREAKER',
-          deviceId: 'bdfb',
-          parentEquipmentId: 'panel',
-          name: id,
-          lifecycle: 'ACTIVE',
-          revision: 1,
-          updatedAt: timestamp,
-          attributes: {},
-        })),
-      ]);
+      {
+        id: 'bdfb',
+        kind: 'DEVICE',
+        deviceType: 'BDFB',
+        name: 'Synthetic BDFB',
+        lifecycle: 'ACTIVE',
+      },
+      {
+        id: 'panel',
+        kind: 'EQUIPMENT',
+        equipmentType: 'PANEL',
+        deviceId: 'bdfb',
+        name: 'A1',
+        children: ['breaker', 'sibling'],
+        lifecycle: 'ACTIVE',
+      },
+      ...['breaker', 'sibling'].map((id) => ({
+        id,
+        kind: 'EQUIPMENT',
+        equipmentType: 'CIRCUIT_BREAKER',
+        deviceId: 'bdfb',
+        parentEquipmentId: 'panel',
+        name: id,
+        lifecycle: 'ACTIVE',
+        revision: 1,
+        updatedAt: timestamp,
+        attributes: {},
+      })),
+    ]);
     await db.collection('telemetry_bindings').insertOne({
       id: 'current',
       targetType: 'EQUIPMENT',
@@ -143,22 +143,22 @@ describe.skipIf(!enabled)('S01 real Mongo replica-set transactions', () => {
 
   it('preserves disabled policy, debounce/recovery, and previous thresholds in the audit', async () => {
     await db.collection('alarm_policies').insertOne({
-        id: 'existing',
-        targetType: 'EQUIPMENT',
-        targetId: 'breaker',
-        sourceContext: 's01',
-        sourceIdentity: 'S01-SYNTHETIC',
-        enabled: false,
-        createdAt: timestamp,
-        updatedAt: timestamp,
-        overcurrent: {
-          assertAboveA: 30,
-          clearBelowA: 25,
-          debounceSamples: 3,
-          recoverySamples: 4,
-          severity: 'WARNING',
-        },
-      });
+      id: 'existing',
+      targetType: 'EQUIPMENT',
+      targetId: 'breaker',
+      sourceContext: 's01',
+      sourceIdentity: 'S01-SYNTHETIC',
+      enabled: false,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      overcurrent: {
+        assertAboveA: 30,
+        clearBelowA: 25,
+        debounceSamples: 3,
+        recoverySamples: 4,
+        severity: 'WARNING',
+      },
+    });
     await service.update('breaker', input(), 'synthetic-admin');
     expect(await service.get('breaker')).toMatchObject({
       policyEnabled: false,

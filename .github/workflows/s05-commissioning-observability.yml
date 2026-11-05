@@ -14,10 +14,14 @@ on:
       - src/messages/es.json
       - scripts/operations/audit-s05-commissioning.mjs
       - config/industrial/s05-commissioning-reference.example.json
+      - infra/field/init-office-env.sh
+      - infra/field/office-test.env.example
+      - docker-compose.telemetry.yml
       - tests/unit/commissioning-observability.test.ts
       - tests/unit/industrial-commissioning-idempotency.test.ts
       - tests/unit/industrial-credential-security.test.ts
       - tests/unit/s05-snmp-history-diagnostics.test.ts
+      - tests/unit/s05-office-secret-wiring.test.ts
       - .github/workflows/s05-commissioning-observability.yml
   pull_request:
     paths:
@@ -30,10 +34,14 @@ on:
       - src/messages/es.json
       - scripts/operations/audit-s05-commissioning.mjs
       - config/industrial/s05-commissioning-reference.example.json
+      - infra/field/init-office-env.sh
+      - infra/field/office-test.env.example
+      - docker-compose.telemetry.yml
       - tests/unit/commissioning-observability.test.ts
       - tests/unit/industrial-commissioning-idempotency.test.ts
       - tests/unit/industrial-credential-security.test.ts
       - tests/unit/s05-snmp-history-diagnostics.test.ts
+      - tests/unit/s05-office-secret-wiring.test.ts
       - .github/workflows/s05-commissioning-observability.yml
   workflow_dispatch:
 
@@ -61,6 +69,7 @@ jobs:
           tests/unit/industrial-commissioning-idempotency.test.ts
           tests/unit/industrial-credential-security.test.ts
           tests/unit/s05-snmp-history-diagnostics.test.ts
+          tests/unit/s05-office-secret-wiring.test.ts
       - name: I18n catalogs
         run: npx vitest run tests/unit/i18n-catalogs.test.ts tests/unit/i18n-static-ui.test.ts
       - name: TypeScript compile
@@ -75,7 +84,11 @@ jobs:
           src/modules/telemetry/infrastructure/http-telemetry-store.ts
           scripts/operations/audit-s05-commissioning.mjs
           config/industrial/s05-commissioning-reference.example.json
+          infra/field/init-office-env.sh
+          infra/field/office-test.env.example
+          docker-compose.telemetry.yml
           tests/unit/commissioning-observability.test.ts
           tests/unit/industrial-commissioning-idempotency.test.ts
           tests/unit/industrial-credential-security.test.ts
           tests/unit/s05-snmp-history-diagnostics.test.ts
+          tests/unit/s05-office-secret-wiring.test.ts

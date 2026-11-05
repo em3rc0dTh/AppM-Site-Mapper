@@ -142,25 +142,6 @@ export default async function BlueprintPage({
             <small>{t('clusters')}</small>
             <strong>{result.value.clusters.length}</strong>
           </section>
-          <section className="room-rack-navigation">
-            <small>{t('racks', { count: result.value.racks.length })}</small>
-            {result.value.racks.map((rack) => (
-              <Link
-                key={rack.id}
-                href={
-                  result.value.room.polygon?.length
-                    ? `/blueprint/${roomId}?rack=${encodeURIComponent(rack.id)}`
-                    : `/rack/${rack.id}`
-                }
-              >
-                {rack.name} <span>{t('inspect')}</span>
-              </Link>
-            ))}
-          </section>
-          <div>
-            <span>⌗</span>
-            <p>{t('instruction')}</p>
-          </div>
           <ThradexAttribution variant="inspector" />
         </aside>
       </ResizableWorkspace>

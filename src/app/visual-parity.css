@@ -6114,7 +6114,6 @@ body {
   }
 }
 
-
 /* Power telemetry modal: no nested scrolling; keep one focused historical chart visible. */
 .zip-telemetry-overlay {
   overflow: hidden !important;
@@ -6221,7 +6220,6 @@ body {
     min-height: 68px !important;
   }
 }
-
 
 /* Floating power-path tool window: preserves the main three-column workspace. */
 .zip-power-declared-actions {
@@ -6552,7 +6550,6 @@ body {
   }
 }
 
-
 /* Viewport portal host for the floating Power Path window. */
 .zip-power-floating-layer {
   position: fixed !important;
@@ -6587,7 +6584,6 @@ body {
   }
 }
 
-
 /* Native non-modal dialog reset for the floating Power Path tool window. */
 dialog.zip-power-floating-window {
   margin: 0 !important;
@@ -6603,7 +6599,6 @@ dialog.zip-power-floating-window[open] {
 dialog.zip-power-floating-window::backdrop {
   background: transparent;
 }
-
 
 /* True non-modal floating power window: no dialog top-layer, no backdrop, draggable. */
 .zip-power-floating-layer {

@@ -56,11 +56,13 @@ jobs:
         run: |
           docker compose             --env-file infra/integration/integration.env             -f docker-compose.telemetry.yml             -f docker-compose.integration.yml             up -d --build
 
-      - name: Require seed-01 v6 and physical topology bootstrap
+      - name: Require seed-01 v8 and physical topology bootstrap
         run: |
           set -eu
           dc() {
-            docker compose               --env-file infra/integration/integration.env               -f docker-compose.telemetry.yml               -f docker-compose.integration.yml "$@"
+            docker compose --env-file infra/integration/integration.env \
+              -f docker-compose.telemetry.yml \
+              -f docker-compose.integration.yml "$@"
           }
 
           for i in $(seq 1 90); do
@@ -71,58 +73,71 @@ jobs:
               if [ "$state" = "exited" ] && [ "$code" = "0" ]; then
                 break
               fi
+              if [ "$state" = "exited" ] && [ "$code" != "0" ]; then
+                echo "INTEGRATION_BOOTSTRAP_FAILED exit=$code"
+                dc logs --tail 100 integration-bootstrap || true
+                exit 1
+              fi
             fi
-            if [ "$i" = "90" ]; then exit 1; fi
+            if [ "$i" = "90" ]; then
+              echo "INTEGRATION_BOOTSTRAP_TIMEOUT"
+              exit 1
+            fi
             sleep 2
           done
 
           dc exec -T mongodb mongosh --quiet seed-01 --eval '
+            function assert(ok, message) { if(!ok) { print("SEED01_V8_FAIL "+message); quit(1); } }
             const s=db.runtime_seed_state.findOne({_id:"seed-01",status:"APPLIED"});
-            if(!s || s.version!==6 || !Array.isArray(s.bdfbs) || s.bdfbs.length!==3) quit(1);
+            assert(s && s.version===8 && Array.isArray(s.bdfbs) && s.bdfbs.length===3,
+              "seed status/version/BDFB summary");
             const c=db.topology_nodes;
-            print("CHECK: version "+s.version);
-            const kinds=[
-              ["NETWORK",1],["SITE",1],["STRUCTURE",1],["LEVEL",1],
-              ["ROOM_SUBSTRUCTURE",2],["CONTAINER_CLUSTER_BAY",4],
-              ["POSITION",3],["CONTAINER_RACK",3],["DEVICE",3],["EQUIPMENT",96]
-            ];
-            for(const [kind,count] of kinds) {
-              const actual=c.countDocuments({kind});
-              if(actual!==count) { print("NODE_COUNT_CONFLICT "+kind+" "+actual+" expected="+count); quit(1); }
-            }
-            print("CHECK: kinds "+JSON.stringify(kinds));
             const room=c.findOne({kind:"ROOM_SUBSTRUCTURE",lifecycle:"ACTIVE",name:"SALA DE TRANSMISIONES"});
-            if(!room || s.roomId!==room.id || JSON.stringify(room.polygon)!==JSON.stringify([
+            assert(room && s.roomId===room.id, "physical room identity");
+            assert(JSON.stringify(room.polygon)===JSON.stringify([
               {x:12000,y:10200},{x:26400,y:10200},{x:26400,y:18000},{x:12000,y:18000}
-            ])) quit(1);
+            ]), "room geometry");
             const bays=c.find({kind:"CONTAINER_CLUSTER_BAY",parentId:room.id,lifecycle:"ACTIVE"}).toArray();
-            print("CHECK: bays "+bays.map(b=>b.name).join(","));
-            if(bays.length!==4) quit(1);
+            assert(bays.length===4, "four physical bays");
             for(const name of ["Contained-Cluster-01","Contained-Cluster-02","Contained-Cluster-03","CONTAINED-CLUSTER-04"])
-              if(!bays.some(b=>b.name===name)) quit(1);
-            print("CHECK: room geometry and 4 bays");
-            if(c.countDocuments({kind:"ROOM_SUBSTRUCTURE",lifecycle:"ARCHIVED"})!==1 ||
-               c.countDocuments({kind:"EQUIPMENT",equipmentType:"PANEL",lifecycle:"ARCHIVED"})!==6) quit(1);
+              assert(bays.some(b=>b.name===name), "missing bay "+name);
             const physical=[
-              ["QDF2","QDF2 anchor","T",24600,11400],
-              ["QDF4","QDF4 anchor","Z",24600,15000],
-              ["QDF5","QDF5 anchor","AC",24600,16800]
+              ["QDF-2","QDF2","QDF2 anchor","T",24600,11400,26],
+              ["QDF-4","QDF4","QDF4 anchor","Z",24600,15000,12],
+              ["QDF-5","QDF5","QDF5 anchor","AC",24600,16800,36]
             ];
-            print("CHECK: archives");
-            for(const [name,anchor,row,x,y] of physical) {
-              const rack=c.findOne({kind:"CONTAINER_RACK",name,lifecycle:"ACTIVE"});
-              if(!rack || rack.totalU!==42 || rack.placementState!=="CONFIRMED" ||
-                 rack.placementMm?.x!==x || rack.placementMm?.y!==y ||
-                 rack.dimensionsMm?.width!==600 || rack.dimensionsMm?.depth!==600 ||
-                 !Array.isArray(rack.cas) ||
-                 rack.cas.filter(r=>r.state==="EQUIPPED" && r.startU===1 && r.endU===42).length!==1) quit(1);
-              print("CHECK: rack "+name);
+            let sum=0;
+            for(const [key,rackName,anchor,row,x,y,count] of physical) {
+              const rack=c.findOne({kind:"CONTAINER_RACK",name:rackName,lifecycle:"ACTIVE"});
+              assert(rack && rack.totalU===42 && rack.placementState==="CONFIRMED",
+                key+" rack placement");
+              assert(rack.placementMm?.x===x && rack.placementMm?.y===y,
+                key+" rack coordinates");
+              assert(rack.dimensionsMm?.width===600 && rack.dimensionsMm?.depth===600,
+                key+" rack dimensions");
+              assert(Array.isArray(rack.cas) &&
+                rack.cas.filter(r=>r.state==="EQUIPPED" && r.startU===1 && r.endU===42).length===1,
+                key+" CAS");
               const pos=c.findOne({id:rack.parentId,kind:"POSITION",name:anchor,lifecycle:"ACTIVE"});
-              if(!pos || pos.coordinate?.row!==row || pos.coordinate?.column!==42) quit(1);
+              assert(pos && pos.coordinate?.row===row && pos.coordinate?.column===42,
+                key+" anchor");
+              const devices=c.find({kind:"DEVICE",deviceType:"BDFB",name:"BDFB "+key,lifecycle:"ACTIVE"}).toArray();
+              assert(devices.length===1, key+" device");
+              const device=devices[0];
+              assert(c.countDocuments({kind:"EQUIPMENT",equipmentType:"CIRCUIT_BREAKER",
+                lifecycle:"ACTIVE",deviceId:device.id})===count, key+" breaker count");
+              for(const panelName of ["A3","B3"]) {
+                const panels=c.find({kind:"EQUIPMENT",equipmentType:"PANEL",lifecycle:"ACTIVE",
+                  deviceId:device.id,name:panelName}).toArray();
+                assert(panels.length===1 && panels[0].children.filter(Boolean).length===count/2,
+                  key+" "+panelName+" occupied slots");
+              }
+              sum+=count;
             }
-            print("CHECK: rack placement and anchors");
-            if(c.countDocuments({kind:"EQUIPMENT",equipmentType:"CIRCUIT_BREAKER",lifecycle:"ACTIVE"})!==48) quit(1);
-            print("SEED01_V6_PHYSICAL_BOOTSTRAP_OK");
+            assert(sum===74 && c.countDocuments({kind:"EQUIPMENT",
+              equipmentType:"CIRCUIT_BREAKER",lifecycle:"ACTIVE"})===74,
+              "total breakers");
+            print("SEED01_V8_PHYSICAL_BOOTSTRAP_OK breakers="+sum);
           '
 
       - name: Require MQTT subscribed and durable telemetry

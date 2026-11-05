@@ -64,11 +64,11 @@ UNPLACED
 
 ### 3.1 Gateways QDF
 
-| QDF | Gateway serial registrado | Breakers actuales materializados |
-| --- | --- | ---: |
-| QDF-2 | `26092403950003` | 0 |
-| QDF-4 | `26092403950004` | 12 |
-| QDF-5 | `26092403950002` | 36 |
+| QDF   | Gateway serial registrado | Breakers actuales materializados |
+| ----- | ------------------------- | -------------------------------: |
+| QDF-2 | `26092403950003`          |                                0 |
+| QDF-4 | `26092403950004`          |                               12 |
+| QDF-5 | `26092403950002`          |                               36 |
 
 **Importante:** el serial del gateway registrado no debe asumirse automáticamente como `sourceIdentity` MQTT del hardware real. En campo se debe observar el mensaje real y confirmar qué identidad publica efectivamente.
 
@@ -421,20 +421,20 @@ target Equipment: not created
 
 Cuando el levantamiento de campo confirme la ubicación física, obtener como mínimo:
 
-| Campo | Requerido |
-| --- | --- |
-| Site / Room | Sí |
-| Bay / cluster | Cuando aplique |
-| Rack | Sí para equipo rackeado |
-| U inicial | Sí para equipo rackeado |
-| Tamaño U | Sí |
-| Manufacturer | Cuando esté disponible |
-| Model | Cuando esté disponible |
-| Serial / Asset tag | Cuando exista |
-| Nombre/label de campo | Sí |
-| Power input A | Si existe |
-| Power input B | Si existe |
-| Fotografía/nameplate | Recomendado |
+| Campo                 | Requerido               |
+| --------------------- | ----------------------- |
+| Site / Room           | Sí                      |
+| Bay / cluster         | Cuando aplique          |
+| Rack                  | Sí para equipo rackeado |
+| U inicial             | Sí para equipo rackeado |
+| Tamaño U              | Sí                      |
+| Manufacturer          | Cuando esté disponible  |
+| Model                 | Cuando esté disponible  |
+| Serial / Asset tag    | Cuando exista           |
+| Nombre/label de campo | Sí                      |
+| Power input A         | Si existe               |
+| Power input B         | Si existe               |
+| Fotografía/nameplate  | Recomendado             |
 
 Entonces:
 

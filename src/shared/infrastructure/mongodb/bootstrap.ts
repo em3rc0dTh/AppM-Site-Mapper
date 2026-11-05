@@ -134,6 +134,15 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
   ]);
 
+  const breakerLimitEvents = database.collection('breaker_limit_events');
+  await Promise.all([
+    breakerLimitEvents.createIndex({ id: 1 }, { unique: true, name: 'uq_breaker_limit_event_id' }),
+    breakerLimitEvents.createIndex(
+      { breakerId: 1, occurredAt: -1 },
+      { name: 'ix_breaker_limit_event_history' },
+    ),
+  ]);
+
   const alarmOccurrences = database.collection('alarm_occurrences');
   await Promise.all([
     alarmOccurrences.createIndex({ id: 1 }, { unique: true, name: 'uq_alarm_occurrence_id' }),

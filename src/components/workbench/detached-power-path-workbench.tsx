@@ -48,10 +48,18 @@ function scalar(value: unknown, candidates: readonly string[], depth = 0): numbe
 
 function liveMetrics(sample: TelemetrySample | null, breakerId: string): Metric[] {
   const reading = sample?.breakerReadings?.find((item) => item.breakerId === breakerId);
-  const voltage = metricFromReading(reading, 'voltageV') ?? (sample ? scalar(sample.reported, ['voltage','voltagev','u','v']) : undefined);
-  const current = metricFromReading(reading, 'currentA') ?? (sample ? scalar(sample.reported, ['current','currenta','i','a']) : undefined);
-  const powerW = metricFromReading(reading, 'powerW') ?? (sample ? scalar(sample.reported, ['power','powerw','p','w']) : undefined);
-  const energy = metricFromReading(reading, 'energyKwh') ?? (sample ? scalar(sample.reported, ['energy','energykwh','e','ep','kwh']) : undefined);
+  const voltage =
+    metricFromReading(reading, 'voltageV') ??
+    (sample ? scalar(sample.reported, ['voltage', 'voltagev', 'u', 'v']) : undefined);
+  const current =
+    metricFromReading(reading, 'currentA') ??
+    (sample ? scalar(sample.reported, ['current', 'currenta', 'i', 'a']) : undefined);
+  const powerW =
+    metricFromReading(reading, 'powerW') ??
+    (sample ? scalar(sample.reported, ['power', 'powerw', 'p', 'w']) : undefined);
+  const energy =
+    metricFromReading(reading, 'energyKwh') ??
+    (sample ? scalar(sample.reported, ['energy', 'energykwh', 'e', 'ep', 'kwh']) : undefined);
   return [
     { key: 'voltage', value: voltage === undefined ? '—' : voltage.toFixed(2), unit: 'V' },
     { key: 'current', value: current === undefined ? '—' : current.toFixed(2), unit: 'A' },
@@ -134,9 +142,11 @@ export function DetachedPowerPathWorkbench({
     <main className="sm-workbench sm-power-workbench">
       <header className="sm-workbench-header">
         <div>
-          <small>SITE MAPPER · DETACHED WORKBENCH</small>
+          <small>{t('detachedTitle')}</small>
           <h1>{t('powerWindow')}</h1>
-          <p>{sourceDevice} / {sourcePanel} / {sourceBreaker} → {target}</p>
+          <p>
+            {sourceDevice} / {sourcePanel} / {sourceBreaker} → {target}
+          </p>
         </div>
         <button type="button" onClick={() => window.close()}>
           {t('closePowerWindow')}
@@ -146,7 +156,11 @@ export function DetachedPowerPathWorkbench({
       <section className="sm-power-path-flow">
         <article className="sm-power-path-card">
           <small>{t('source')}</small>
-          <div className="sm-power-cabinet" aria-hidden="true"><span/><span/><span/></div>
+          <div className="sm-power-cabinet" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
           <strong>{sourceDevice}</strong>
           <span>{sourcePanel}</span>
           <span>{sourceBreaker}</span>
@@ -167,17 +181,24 @@ export function DetachedPowerPathWorkbench({
                         ? th('metricPower')
                         : th('metricEnergy')}
                 </span>
-                <strong>{metric.value} <em>{metric.unit}</em></strong>
+                <strong>
+                  {metric.value} <em>{metric.unit}</em>
+                </strong>
               </div>
             ))}
           </div>
-          <div className="sm-power-path-arrow" aria-hidden="true"><i/><b>→</b></div>
+          <div className="sm-power-path-arrow" aria-hidden="true">
+            <i />
+            <b>→</b>
+          </div>
           <time dateTime={receivedAt}>{t('updatedAt', { value: updated })}</time>
         </section>
 
         <article className="sm-power-path-card">
           <small>{t('destination')}</small>
-          <div className="sm-power-target-glyph" aria-hidden="true">▤</div>
+          <div className="sm-power-target-glyph" aria-hidden="true">
+            ▤
+          </div>
           <strong>{target}</strong>
           <span className="sm-power-declared-badge" title={t('declaredAssetTooltip')}>
             {t('declaredAsset')}
@@ -187,16 +208,28 @@ export function DetachedPowerPathWorkbench({
 
       <div className="sm-power-workbench-toolbar">
         <nav className="sm-workbench-nav" aria-label={t('powerWindowActions')}>
-        <button type="button" aria-pressed={section === 'telemetry'} onClick={() => setSection('telemetry')}>
-          {t('windowTelemetry')}
-        </button>
-        <button type="button" aria-pressed={section === 'history'} onClick={() => setSection('history')}>
-          {t('windowHistory')}
-        </button>
-        <button type="button" aria-pressed={section === 'trace'} onClick={() => setSection('trace')}>
-          {t('windowFullTrace')}
-        </button>
-      </nav>
+          <button
+            type="button"
+            aria-pressed={section === 'telemetry'}
+            onClick={() => setSection('telemetry')}
+          >
+            {t('windowTelemetry')}
+          </button>
+          <button
+            type="button"
+            aria-pressed={section === 'history'}
+            onClick={() => setSection('history')}
+          >
+            {t('windowHistory')}
+          </button>
+          <button
+            type="button"
+            aria-pressed={section === 'trace'}
+            onClick={() => setSection('trace')}
+          >
+            {t('windowFullTrace')}
+          </button>
+        </nav>
         {companionFeed ? (
           <div className="sm-power-companion-feed">
             <span>{t('companionFeedAvailable', { side: companionFeed.feed })}</span>
@@ -224,12 +257,21 @@ export function DetachedPowerPathWorkbench({
 
       {section === 'history' ? (
         <section className="sm-power-workbench-detail">
-          <CompositionHistoryCharts equipmentId={breakerId} equipmentType="CIRCUIT_BREAKER" compact />
+          <CompositionHistoryCharts
+            equipmentId={breakerId}
+            equipmentType="CIRCUIT_BREAKER"
+            compact
+          />
         </section>
       ) : section === 'trace' ? (
         <section className="sm-power-workbench-detail sm-power-trace">
-          <strong>{sourceDevice}</strong><span>→</span><strong>{sourcePanel}</strong><span>→</span>
-          <strong>{sourceBreaker}</strong><span>→</span><strong>{target}</strong>
+          <strong>{sourceDevice}</strong>
+          <span>→</span>
+          <strong>{sourcePanel}</strong>
+          <span>→</span>
+          <strong>{sourceBreaker}</strong>
+          <span>→</span>
+          <strong>{target}</strong>
         </section>
       ) : (
         <section className="sm-power-workbench-detail sm-power-live-status">

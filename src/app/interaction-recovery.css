@@ -2197,7 +2197,6 @@
   }
 }
 
-
 /* White power-path telemetry: ensure live values remain readable against light cards. */
 .zip-telemetry-overlay .zip-telemetry-diagnostic .mk-live-grid > div {
   background: #f8fbff !important;

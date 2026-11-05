@@ -248,7 +248,7 @@ export function CompositionHistoryCharts({
             <p>{t('noReadings')}</p>
           ) : compact ? (
             <>
-              <div className="ec-history-metric-tabs" role="group" aria-label="Telemetry metric">
+              <div className="ec-history-metric-tabs" role="group" aria-label={t('metricLabel')}>
                 {METRICS.map((metric) => (
                   <button
                     key={metric.key}

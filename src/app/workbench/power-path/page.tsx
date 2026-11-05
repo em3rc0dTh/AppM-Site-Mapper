@@ -57,7 +57,6 @@ function declaredPowerMetadata(value: unknown): DeclaredPowerMetadata | null {
   };
 }
 
-
 export default async function PowerPathWorkbenchPage({
   searchParams,
 }: Readonly<{
@@ -83,23 +82,17 @@ export default async function PowerPathWorkbenchPage({
   const target = breaker.aliases?.find((alias) => alias.trim().length > 0);
   if (!target) notFound();
 
-  const panel =
-    breaker.parentEquipmentId
-      ? await repository.getById(breaker.parentEquipmentId)
-      : null;
+  const panel = breaker.parentEquipmentId
+    ? await repository.getById(breaker.parentEquipmentId)
+    : null;
 
   const device = await repository.getById(breaker.deviceId);
 
   const metadata = declaredPowerMetadata(breaker.attributes?.declaredPower);
-  const normalizedPanel =
-    panel?.kind === 'EQUIPMENT' ? panel.name.trim().toUpperCase() : '';
+  const normalizedPanel = panel?.kind === 'EQUIPMENT' ? panel.name.trim().toUpperCase() : '';
   const feed: 'A' | 'B' | undefined =
     metadata?.feed ??
-    (normalizedPanel.startsWith('A')
-      ? 'A'
-      : normalizedPanel.startsWith('B')
-        ? 'B'
-        : undefined);
+    (normalizedPanel.startsWith('A') ? 'A' : normalizedPanel.startsWith('B') ? 'B' : undefined);
 
   return (
     <DetachedPowerPathWorkbench

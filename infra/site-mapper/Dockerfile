@@ -1,9 +1,10 @@
-FROM node:22-alpine AS build
+FROM node:22-alpine AS test
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
+FROM test AS build
 RUN npm run build
 
 FROM node:22-alpine

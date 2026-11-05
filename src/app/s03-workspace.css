@@ -233,3 +233,27 @@
   max-width: none;
   overflow: hidden;
 }
+
+
+/* S03 owns pane placement from 900px upward. Legacy laptop rules used to move
+   the inspector below the canvas at 941–1199px; that conflicts with the
+   resizable three-pane contract and leaves an empty third column. */
+@media (min-width: 900px) {
+  .zip-app-shell .s03-layout > :first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  .zip-app-shell .s03-layout > :nth-child(2) {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  .zip-app-shell .s03-layout > :nth-child(3) {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    border-top: 0 !important;
+  }
+}

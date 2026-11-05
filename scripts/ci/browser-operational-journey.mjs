@@ -164,18 +164,20 @@ try {
   await page.screenshot({ path: '/tmp/mk1-operational-browser.png', fullPage: true });
   console.log('[PASS] Real Chromium: configured telemetry prefix visible on actual Equipment page');
 
-  // The approved 22" full-HD layout is a non-negotiable baseline.
-  // Laptop fixes must change only the effective viewport below 1600px.
+  // Sprint 03 owns the operational workspace from 900px upward:
+  // 232px topology + flexible canvas + 320px inspector by default.
+  // Users may resize both side panes, so this acceptance validates the fresh
+  // default plus minimum usable center-stage geometry rather than legacy widths.
   const deviceLayout = page.locator('.mk-device-layout');
-  for (const [width, height, expectedColumns] of [
-    [1920, 1080, [310, 405]],
-    [1536, 864, [212, 292]],
-    [1366, 768, [212, 292]],
-    [1280, 800, [212, 292]],
-    [1100, 720, [190, null]],
-    [1063, 720, [190, null]],
-    [1045, 720, [190, null]],
-    [992, 720, [190, null]],
+  for (const [width, height] of [
+    [1920, 1080],
+    [1536, 864],
+    [1366, 768],
+    [1280, 800],
+    [1100, 720],
+    [1063, 720],
+    [1045, 720],
+    [992, 720],
   ]) {
     await page.setViewportSize({ width, height });
     const geometry = await deviceLayout.evaluate((element) => {
@@ -191,19 +193,19 @@ try {
         viewportOverflow: document.documentElement.scrollWidth - window.innerWidth,
       };
     });
-    const [left, right] = expectedColumns;
-    assert.equal(geometry.cols.length, width <= 1199 ? 2 : 3, `${width}px layout column count`);
+    assert.equal(geometry.cols.length, 3, `${width}px S03 layout column count`);
     assert.ok(
-      Math.abs(geometry.cols[0] - left) < 2,
-      `${width}px topology width: ${geometry.cols[0]}`,
+      Math.abs(geometry.cols[0] - 232) < 2,
+      `${width}px S03 topology default width: ${geometry.cols[0]}`,
     );
-    if (right !== null) {
-      assert.ok(
-        Math.abs(geometry.cols[2] - right) < 2,
-        `${width}px inspector width: ${geometry.cols[2]}`,
-      );
-    }
-    assert.ok(geometry.stageWidth > 550, `${width}px must preserve legible center stage`);
+    assert.ok(
+      Math.abs(geometry.cols[2] - 320) < 2,
+      `${width}px S03 inspector default width: ${geometry.cols[2]}`,
+    );
+    assert.ok(
+      geometry.stageWidth >= 320,
+      `${width}px must preserve the S03 minimum center stage`,
+    );
     assert.ok(geometry.inspectorWidth > 250, `${width}px must preserve visible inspector`);
     assert.ok(
       geometry.viewportOverflow <= 3,

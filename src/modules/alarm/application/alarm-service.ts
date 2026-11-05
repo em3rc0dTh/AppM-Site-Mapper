@@ -203,7 +203,7 @@ export class AlarmService {
   private async toView(occurrence: AlarmOccurrence): Promise<AlarmOccurrenceView> {
     const target = await this.topologyRepository.getById(occurrence.targetId);
     const pathNodes = target ? await this.topology.getTrail(target.id) : [];
-    const path = await Promise.all(
+    const livePath = await Promise.all(
       pathNodes.map(async (node) => ({
         id: node.id,
         name: node.name,
@@ -211,10 +211,14 @@ export class AlarmService {
         href: await this.topology.buildDeepLink(node.id),
       })),
     );
+    const path = occurrence.lifecycle === 'RESOLVED' && occurrence.targetPathSnapshot?.length
+      ? occurrence.targetPathSnapshot
+      : livePath.length ? livePath : occurrence.targetPathSnapshot ?? [];
     return {
       ...occurrence,
       path,
-      targetHref: target ? await this.topology.buildDeepLink(target.id) : '#',
+      targetHref: target ? await this.topology.buildDeepLink(target.id)
+        : occurrence.targetPathSnapshot?.at(-1)?.href ?? '#',
     };
   }
 }

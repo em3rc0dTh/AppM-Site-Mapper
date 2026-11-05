@@ -38,6 +38,8 @@ export interface AlarmOccurrence {
   readonly name: string;
   readonly targetType: 'DEVICE' | 'EQUIPMENT';
   readonly targetId: string;
+  /** Immutable location identity captured when the occurrence first asserts. */
+  readonly targetPathSnapshot?: readonly AlarmPathItem[];
   readonly sourceContext: string;
   readonly openedAt: string;
   readonly lastObservedAt: string;

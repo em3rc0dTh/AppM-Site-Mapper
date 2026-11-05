@@ -24,6 +24,7 @@ describe('S01 breaker protection contract', () => {
   it('accepts an evidenced, verified field rating', () => {
     expect(parseBreakerProtectionInput({
       ...input(), provenance:{source:'MANUFACTURER',verified:true,reference:'P/N ABC-123'},
+      verificationConfirmed: true,
     }).provenance.verified).toBe(true);
   });
   it('never certifies a provisional standard', () => {

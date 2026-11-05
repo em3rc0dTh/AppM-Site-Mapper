@@ -271,3 +271,49 @@
     margin: 0 !important;
   }
 }
+
+
+/* S04 integration: NETWORK / SITE / STRUCTURE / LEVEL already own a contextual
+   inspector inside TopologyExplorer. Treat that inspector as S03's third visual
+   pane instead of allocating a second, hidden outer inspector column. */
+@media (min-width: 900px) {
+  .zip-app-shell .mk-explorer-page .s03-layout.s03-layout {
+    grid-template-columns: var(--s03-tree-width) minmax(0, 1fr) !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .s03-layout.s03-layout > :first-child {
+    grid-column: 1 !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .s03-layout.s03-layout > :nth-child(2) {
+    grid-column: 2 !important;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .zip-app-shell .mk-explorer-page .s03-layout.s03-layout > :nth-child(3) {
+    display: none !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .s03-layout .zip-explorer {
+    width: 100%;
+    min-width: 0;
+    grid-template-columns:
+      minmax(0, 1fr)
+      var(--s03-inspector-width) !important;
+  }
+
+  .zip-app-shell .mk-explorer-page .s03-layout .zip-explorer-main {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .zip-app-shell .mk-explorer-page .s03-layout .zip-inspector {
+    min-width: 0;
+    height: 100%;
+    overflow-y: auto;
+    border-left: 1px solid var(--zip-border) !important;
+    display: flex;
+    flex-direction: column;
+  }
+}

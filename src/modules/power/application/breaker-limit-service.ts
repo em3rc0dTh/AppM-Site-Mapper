@@ -172,7 +172,7 @@ export class BreakerLimitService {
 
   async history(id: string): Promise<readonly BreakerLimitEvent[]> {
     await this.context(id);
-    return this.db.collection<BreakerLimitEvent>('breaker_limit_events')
+    return this.db.collection<BreakerLimitEvent & Document>('breaker_limit_events')
       .find({ breakerId: id }, { projection: { _id: 0 } })
       .sort({ occurredAt: -1 }).limit(100).toArray();
   }

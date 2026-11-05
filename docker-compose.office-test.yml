@@ -9,6 +9,36 @@ x-office-snmp-points: &office-snmp-points >-
    {"oid":"1.3.6.1.4.1.8072.9999.2026.49.2.1.0","metric":"VOLTAGE","unit":"V","scale":0.1},
    {"oid":"1.3.6.1.4.1.8072.9999.2026.49.2.2.0","metric":"VOLTAGE","unit":"V","scale":0.1}]
 
+x-office-config2-points: &office-config2-points >-
+  [{"oid":"1.3.6.1.4.1.8072.9999.2026.48.1.1.0","metric":"CURRENT","unit":"A","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.48.1.2.0","metric":"CURRENT","unit":"A","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.48.2.1.0","metric":"VOLTAGE","unit":"V","scale":0.1},
+   {"oid":"1.3.6.1.4.1.8072.9999.2026.48.2.2.0","metric":"VOLTAGE","unit":"V","scale":0.1}]
+
+x-office-real-snmp-collector: &office-real-snmp-collector
+  profiles: ['snmp']
+  build:
+    context: .
+    dockerfile: infra/snmp-collector/Dockerfile
+  environment:
+    APP_ENV: development
+    SNMP_VERSION: '${SNMP_REAL_VERSION:-2c}'
+    SNMP_COMMUNITY: '${SNMP_REAL_COMMUNITY:-}'
+    SNMP_V2C_ACKNOWLEDGE_PLAINTEXT: '${SNMP_REAL_V2C_ACKNOWLEDGE_PLAINTEXT:-true}'
+    SNMP_V3_USERNAME: '${SNMP_REAL_V3_USERNAME:-}'
+    SNMP_V3_AUTH_KEY: '${SNMP_REAL_V3_AUTH_KEY:-}'
+    SNMP_V3_PRIV_KEY: '${SNMP_REAL_V3_PRIV_KEY:-}'
+    SNMP_FEED_POINTS_JSON: *office-config2-points
+    SNMP_POLL_INTERVAL_MS: '${SNMP_POLL_INTERVAL_MS:-5000}'
+    SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:?Set SNMP_INGEST_TOKEN}'
+    SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  depends_on:
+    site-mapper:
+      condition: service_started
+  restart: unless-stopped
+
 x-office-snmp-agent: &office-snmp-agent
   build:
     context: .
@@ -83,6 +113,63 @@ services:
     depends_on:
       mosquitto:
         condition: service_healthy
+
+  # Real/external Config2 collectors. In the 2026-11-04 OFFICE lab the
+  # three agents are exposed on the Docker host at UDP 11611/11612/11613.
+  # Field installations may replace host/port/auth through the runtime env.
+  snmp-collector:
+    <<: *office-real-snmp-collector
+    environment:
+      APP_ENV: development
+      SNMP_CONTROLLER_HOST: '${SNMP_QDF2_HOST:-host.docker.internal}'
+      SNMP_CONTROLLER_PORT: '${SNMP_QDF2_PORT:-11611}'
+      SNMP_CONTROLLER_ID: '${SNMP_QDF2_ID:-EMU-DELTA-BFDB-01}'
+      SNMP_VERSION: '${SNMP_REAL_VERSION:-2c}'
+      SNMP_COMMUNITY: '${SNMP_REAL_COMMUNITY:-}'
+      SNMP_V2C_ACKNOWLEDGE_PLAINTEXT: '${SNMP_REAL_V2C_ACKNOWLEDGE_PLAINTEXT:-true}'
+      SNMP_V3_USERNAME: '${SNMP_REAL_V3_USERNAME:-}'
+      SNMP_V3_AUTH_KEY: '${SNMP_REAL_V3_AUTH_KEY:-}'
+      SNMP_V3_PRIV_KEY: '${SNMP_REAL_V3_PRIV_KEY:-}'
+      SNMP_FEED_POINTS_JSON: *office-config2-points
+      SNMP_POLL_INTERVAL_MS: '${SNMP_POLL_INTERVAL_MS:-5000}'
+      SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:?Set SNMP_INGEST_TOKEN}'
+      SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
+
+  office-snmp-collector-qdf4-real:
+    <<: *office-real-snmp-collector
+    environment:
+      APP_ENV: development
+      SNMP_CONTROLLER_HOST: '${SNMP_QDF4_HOST:-host.docker.internal}'
+      SNMP_CONTROLLER_PORT: '${SNMP_QDF4_PORT:-11612}'
+      SNMP_CONTROLLER_ID: '${SNMP_QDF4_ID:-EMU-DELTA-BFDB-02}'
+      SNMP_VERSION: '${SNMP_REAL_VERSION:-2c}'
+      SNMP_COMMUNITY: '${SNMP_REAL_COMMUNITY:-}'
+      SNMP_V2C_ACKNOWLEDGE_PLAINTEXT: '${SNMP_REAL_V2C_ACKNOWLEDGE_PLAINTEXT:-true}'
+      SNMP_V3_USERNAME: '${SNMP_REAL_V3_USERNAME:-}'
+      SNMP_V3_AUTH_KEY: '${SNMP_REAL_V3_AUTH_KEY:-}'
+      SNMP_V3_PRIV_KEY: '${SNMP_REAL_V3_PRIV_KEY:-}'
+      SNMP_FEED_POINTS_JSON: *office-config2-points
+      SNMP_POLL_INTERVAL_MS: '${SNMP_POLL_INTERVAL_MS:-5000}'
+      SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:?Set SNMP_INGEST_TOKEN}'
+      SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
+
+  office-snmp-collector-qdf5-real:
+    <<: *office-real-snmp-collector
+    environment:
+      APP_ENV: development
+      SNMP_CONTROLLER_HOST: '${SNMP_QDF5_HOST:-host.docker.internal}'
+      SNMP_CONTROLLER_PORT: '${SNMP_QDF5_PORT:-11613}'
+      SNMP_CONTROLLER_ID: '${SNMP_QDF5_ID:-EMU-DELTA-BFDB-03}'
+      SNMP_VERSION: '${SNMP_REAL_VERSION:-2c}'
+      SNMP_COMMUNITY: '${SNMP_REAL_COMMUNITY:-}'
+      SNMP_V2C_ACKNOWLEDGE_PLAINTEXT: '${SNMP_REAL_V2C_ACKNOWLEDGE_PLAINTEXT:-true}'
+      SNMP_V3_USERNAME: '${SNMP_REAL_V3_USERNAME:-}'
+      SNMP_V3_AUTH_KEY: '${SNMP_REAL_V3_AUTH_KEY:-}'
+      SNMP_V3_PRIV_KEY: '${SNMP_REAL_V3_PRIV_KEY:-}'
+      SNMP_FEED_POINTS_JSON: *office-config2-points
+      SNMP_POLL_INTERVAL_MS: '${SNMP_POLL_INTERVAL_MS:-5000}'
+      SNMP_INGEST_TOKEN: '${SNMP_INGEST_TOKEN:?Set SNMP_INGEST_TOKEN}'
+      SNMP_INGEST_URL: http://site-mapper:3000/api/telemetry/snmp/ingest
 
   office-snmp-agent-qdf2:
     profiles: ['snmp-sim']

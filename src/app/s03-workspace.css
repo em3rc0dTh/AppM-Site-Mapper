@@ -255,3 +255,20 @@
     border-top: 0 !important;
   }
 }
+
+
+/* Keep immersive breadcrumbs in the topbar for every S03 desktop-like width.
+   interaction-recovery.css moves them into document flow below 1180px; that
+   makes width:100% collide with the action cluster once S03 measures live bounds. */
+@media (min-width: 900px) {
+  .zip-app-shell.app-shell--immersive .breadcrumbs,
+  .zip-app-shell .mk-device-page .breadcrumbs {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: auto !important;
+    width: auto !important;
+    height: 67px !important;
+    min-height: 67px !important;
+    margin: 0 !important;
+  }
+}

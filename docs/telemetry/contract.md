@@ -158,7 +158,41 @@ Create a physical Equipment only when Site Mapper needs to inventory/manage that
 independently.
 
 
-Only explicit, active `TelemetryBinding` records are authoritative: source identity, raw point ID, target Equipment ID and metric. Physical panel order, a free-form `rawPointId` attribute or `BFDB_TELEMETRY_BINDING_MODE=panel-order-24` do not certify a mapping. Unmapped points remain visible as unmapped; they never become invented breaker readings.
+Only explicit, active `TelemetryBinding` records are authoritative: source identity, raw point ID, target Equipment ID and metric. A binding may be created by an operator-controlled commissioning flow or by the automatic reconciliation rule below; telemetry is never attributed to a breaker until that durable binding exists.
+
+## Automatic BFDB binding reconciliation
+
+MQTT is observation input, not physical-inventory authority. Site Mapper **never creates a Device, Panel or Circuit Breaker from MQTT traffic**.
+
+For the current BFDB v1 profile, an unbound raw point may be promoted to an explicit `TelemetryBinding` only when all of these conditions are true:
+
+1. the MQTT serial has already resolved uniquely to one active BDFB inventory identity;
+2. the raw point matches the supported `0_<group>_<position>` grammar;
+3. the BFDB profile maps that group deterministically to one panel label (`1=A3`, `2=A2`, `3=B3`, `4=B2`);
+4. exactly one active panel with that label exists under the resolved BDFB;
+5. the referenced position is already occupied by an active `CIRCUIT_BREAKER` in Site Mapper;
+6. the breaker belongs to that panel and BDFB through a valid active topology chain;
+7. the metric is actually present and numeric in the MQTT packet; and
+8. no active binding already assigns that source point/metric or the target breaker/metric to a conflicting source.
+
+When those conditions are met, Site Mapper persists an idempotent `AUTO_RECONCILED` point binding and can present the measurement immediately. Replaying the same packet does not create duplicates.
+
+If the breaker does not yet exist, the point remains RAW/unmapped. When an operator later creates the breaker in the matching Site Mapper panel/position, a subsequent MQTT packet can reconcile automatically.
+
+Metric presence is independent:
+
+```text
+I1 only                -> CURRENT binding only
+U1 + I1                -> VOLTAGE + CURRENT
+U1 + I1 + P1           -> VOLTAGE + CURRENT + POWER
+U1 + I1 + P1 + EP1     -> VOLTAGE + CURRENT + POWER + ENERGY
+```
+
+Missing metrics are not inferred, calculated or persisted as zero. In particular, Site Mapper does not synthesize POWER or ENERGY merely because other electrical values are present.
+
+A malformed, ambiguous or conflicting point remains unmapped. Automatic reconciliation never retargets a pre-existing binding and never overwrites operator/field commissioning.
+
+Physical panel order by itself, a free-form `rawPointId` attribute or `BFDB_TELEMETRY_BINDING_MODE=panel-order-24` still do not certify a mapping outside this governed BFDB profile. Unmapped points remain visible as unmapped; they never become invented breaker readings.
 
 ## Latest State and partial MQTT updates
 

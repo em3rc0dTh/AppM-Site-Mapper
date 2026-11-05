@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { AutomaticBfdbBindingReconciler } from './automatic-bfdb-binding-reconciler';
 import { TelemetryIdentityResolver } from './telemetry-identity-resolver';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
@@ -52,7 +53,7 @@ export class TelemetryService {
     const normalized = normalizeTelemetry(topic, payload, this.normalizerOptions, receivedAt);
     if (!normalized.ok) return normalized;
 
-    const bindings = await this.bindingsFor(normalized.value.sourceIdentity);
+    let bindings = await this.bindingsFor(normalized.value.sourceIdentity);
     const sourceBindings = bindings.filter(
       (binding) => !binding.sourcePointId && binding.metric.toUpperCase() === 'SOURCE',
     );
@@ -150,6 +151,18 @@ export class TelemetryService {
 
     const sourceNode = await this.topologyRepository.getById(target.id);
     const ownerId = sourceNode?.kind === 'EQUIPMENT' ? sourceNode.deviceId : target.id;
+
+    // Site Mapper topology is the physical authority. MQTT never creates a breaker.
+    // When a BFDB point matches an already-existing panel/position uniquely, persist
+    // only the metrics actually present in the packet and immediately reuse them.
+    if (normalized.value.protocol === 'BFDB' && this.bindingRepository) {
+      const created = await new AutomaticBfdbBindingReconciler(
+        this.topologyRepository,
+        this.bindingRepository,
+      ).reconcile(normalized.value, ownerId, bindings);
+      if (created.length) bindings = await this.bindingsFor(normalized.value.sourceIdentity);
+    }
+
     if (target.type === 'DEVICE' || target.type === 'EQUIPMENT') {
       const projection = await new BdfbProjectionService(this.topologyRepository).get(ownerId);
       if (projection) {

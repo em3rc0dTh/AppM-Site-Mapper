@@ -7,9 +7,9 @@ Truth boundary:
 - Smartpack2 is one evidence snapshot source, not one controller per QDF.
 - The private 5,407-object SNMPWalk + Eltek MIB evidence is mounted at runtime;
   it is never copied into Git.
-- QDF-2 remains RAW-only at breaker level until final post-migration breaker
-  positions are evidenced in Site Mapper. QDF-4/QDF-5 keep their existing
-  explicit Circuit Breaker bindings.
+- seed-01 v8 contains the accepted physical breaker inventory for QDF-2/QDF-4/QDF-5.
+  QDF-2 uses post-migration A3/B3 positions 1..13; legacy positions remain evidence.
+- Synthetic lab bindings are transport fixtures only. MQTT never creates physical topology.
 """
 from __future__ import annotations
 
@@ -252,7 +252,8 @@ def inventory() -> dict:
     script = r"""
 const d=db.getSiblingDB('seed-01');
 const state=d.runtime_seed_state.findOne({_id:'seed-01',status:'APPLIED'});
-if(!state || state.version<4) throw new Error('seed-01 v4+ required');
+if(!state || state.version<8) throw new Error('seed-01 v8+ required');
+const expectedBreakers={'QDF-2':26,'QDF-4':12,'QDF-5':36};
 const rows=state.bdfbs.map(x=>{
   const eq=d.topology_nodes.find({kind:'EQUIPMENT',deviceId:x.deviceId,lifecycle:'ACTIVE'}).toArray();
   const one=(name,type)=>{
@@ -263,6 +264,7 @@ const rows=state.bdfbs.map(x=>{
   const gateway=one(x.key+'_GW-1','NETWORK_BOARD');
   const controller=one(x.key+'_CTRL-1','CONTROLLER_BOARD');
   const breakers=eq.filter(e=>e.equipmentType==='CIRCUIT_BREAKER');
+  if(breakers.length!==expectedBreakers[x.key]) throw new Error(x.key+' breaker count expected '+expectedBreakers[x.key]+', got '+breakers.length);
   return {
     key:x.key,
     deviceId:x.deviceId,

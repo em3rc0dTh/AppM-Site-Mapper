@@ -449,52 +449,55 @@ snmp-sim
 
 No synthetic MQTT publisher is started.
 
-## Tomorrow: real SNMP
+## OFFICE/FIELD: three real/external Config2 sources
 
-First edit:
+The `snmp` profile now starts one collector per QDF. The 2026-11-04 OFFICE lab baseline is:
 
 ```text
-.runtime/office-test.env
+QDF-2 -> EMU-DELTA-BFDB-01 -> host.docker.internal:11611
+QDF-4 -> EMU-DELTA-BFDB-02 -> host.docker.internal:11612
+QDF-5 -> EMU-DELTA-BFDB-03 -> host.docker.internal:11613
 ```
 
-Fill the real SNMP values.
+All three use the governed Config2 four-point contract:
 
-Required minimum depends on the SNMP version.
+```text
+A CURRENT -> 1.3.6.1.4.1.8072.9999.2026.48.1.1.0
+B CURRENT -> 1.3.6.1.4.1.8072.9999.2026.48.1.2.0
+A VOLTAGE -> 1.3.6.1.4.1.8072.9999.2026.48.2.1.0
+B VOLTAGE -> 1.3.6.1.4.1.8072.9999.2026.48.2.2.0
+scale = 0.1
+```
 
-### SNMP v2c
+Configure only runtime values in `.runtime/office-test.env`. For the current v2c lab:
 
 ```env
-SNMP_CONTROLLER_HOST=<DEVICE_IP>
-SNMP_CONTROLLER_PORT=161
-SNMP_CONTROLLER_ID=<DEVICE_ID>
-SNMP_VERSION=2c
-SNMP_COMMUNITY=<COMMUNITY>
-SNMP_V2C_ACKNOWLEDGE_PLAINTEXT=true
-SNMP_FEED_POINTS_JSON=<APPROVED_OIDS>
+SNMP_REAL_VERSION=2c
+SNMP_REAL_COMMUNITY=<PRIVATE_COMMUNITY>
+SNMP_REAL_V2C_ACKNOWLEDGE_PLAINTEXT=true
+
+SNMP_QDF2_HOST=host.docker.internal
+SNMP_QDF2_PORT=11611
+SNMP_QDF2_ID=EMU-DELTA-BFDB-01
+
+SNMP_QDF4_HOST=host.docker.internal
+SNMP_QDF4_PORT=11612
+SNMP_QDF4_ID=EMU-DELTA-BFDB-02
+
+SNMP_QDF5_HOST=host.docker.internal
+SNMP_QDF5_PORT=11613
+SNMP_QDF5_ID=EMU-DELTA-BFDB-03
 ```
 
-### SNMP v3
+For field SNMPv3, keep the three host/port/source identities but replace authentication with `SNMP_REAL_VERSION=3`, `SNMP_REAL_V3_USERNAME`, `SNMP_REAL_V3_AUTH_KEY` and `SNMP_REAL_V3_PRIV_KEY`.
 
-```env
-SNMP_CONTROLLER_HOST=<DEVICE_IP>
-SNMP_CONTROLLER_PORT=161
-SNMP_CONTROLLER_ID=<DEVICE_ID>
-SNMP_VERSION=3
-SNMP_V3_USERNAME=<USERNAME>
-SNMP_V3_AUTH_KEY=<AUTH_SECRET>
-SNMP_V3_PRIV_KEY=<PRIV_SECRET>
-SNMP_FEED_POINTS_JSON=<APPROVED_OIDS>
-```
-
-Before Site Mapper, validate basic reachability with the appropriate `snmpget` or `snmpwalk` command from Ubuntu.
-
-Then start OFFICE using real SNMP:
+Validate each endpoint with `snmpget`/`snmpwalk` first, then:
 
 ```bash
 sh infra/field/office-up.sh real
 ```
 
-This activates the base `snmp` profile instead of `snmp-sim`.
+This starts all three collectors under the `snmp` profile. Secrets stay in the runtime env and are never committed.
 
 If no SNMP should run:
 
@@ -504,26 +507,26 @@ sh infra/field/office-up.sh none
 
 ---
 
-# COMMISSIONING RULE
+# MQTT BINDING RECONCILIATION RULE
 
-Never infer:
+MQTT never creates physical inventory. The breaker must already exist in Site Mapper.
 
-```text
-rawPointId 17 == CB17
-```
-
-The required sequence remains:
+For the governed BFDB profile, Site Mapper may create the durable telemetry binding automatically when serial, panel group and physical position resolve to exactly one existing active breaker:
 
 ```text
-physical CB
- -> Device/Equipment
- -> real message
- -> sourceIdentity
- -> rawPointId
- -> physical verification
- -> explicit binding
- -> LIVE metrics
+existing physical CB in Site Mapper
+ + accepted MQTT serial
+ + governed rawPointId 0_<group>_<position>
+        |
+        v
+deterministic topology match
+        |
+        +--> match: explicit AUTO_RECONCILED binding -> LIVE
+        |
+        +--> no/ambiguous match: RAW remains UNMAPPED
 ```
+
+Metric bindings are created only for values actually present in the packet. Missing Voltage/Current/Power/Energy are not invented or derived by commissioning.
 
 ---
 

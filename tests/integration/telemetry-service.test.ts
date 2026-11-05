@@ -164,6 +164,140 @@ describe('TelemetryService', () => {
     expect(service.latest(breakers[1]!.id)).toBeNull();
   });
 
+  it('auto-reconciles BFDB metrics only after the matching breaker exists in Site Mapper', async () => {
+    const bdfb: DeviceNode = {
+      ...device('auto-qdf-4', 'AUTO-QDF-4'),
+      deviceType: 'BDFB',
+    };
+    const repository = new MemoryTopologyRepository([bdfb]);
+    const topology = new TopologyService(repository);
+    const chassis = await topology.create({
+      kind: 'EQUIPMENT',
+      parentId: bdfb.id,
+      name: 'QDF-4 Chassis',
+      equipmentType: 'CHASSIS',
+      childMode: 'POSITIONAL',
+      childCapacity: 1,
+    });
+    if (!chassis.ok || chassis.value.kind !== 'EQUIPMENT') throw new Error('Expected chassis');
+    const panel = await topology.create({
+      kind: 'EQUIPMENT',
+      parentId: chassis.value.id,
+      parentSlotIndex: 0,
+      name: 'A3',
+      equipmentType: 'PANEL',
+      childMode: 'POSITIONAL',
+      childCapacity: 2,
+    });
+    if (!panel.ok || panel.value.kind !== 'EQUIPMENT') throw new Error('Expected panel');
+
+    const bindings = new MemoryTelemetryBindingRepository();
+    const service = new TelemetryService(
+      repository,
+      new TelemetryHub(10),
+      { topicPrefix: 'data/dev/', maxPayloadBytes: 4096 },
+      {},
+      bindings,
+    );
+
+    const currentOnly = (epoch: number) =>
+      new TextEncoder().encode(
+        JSON.stringify({
+          method: 'update',
+          sn: 'AUTO-QDF-4',
+          timestamp: epoch,
+          reported: { '0_1_2': { state: 'ONLINE', I1: '4.82' } },
+        }),
+      );
+
+    const beforeInventory = await service.ingest(
+      'data/dev/AUTO-QDF-4',
+      currentOnly(1_790_580_000),
+      timestamp,
+    );
+    expect(beforeInventory.ok).toBe(true);
+    expect(
+      (await bindings.listForSource('MQTT', 'AUTO-QDF-4')).filter(
+        (item) => item.sourcePointId === '0_1_2',
+      ),
+    ).toHaveLength(0);
+
+    const created = await topology.create({
+      kind: 'EQUIPMENT',
+      parentId: panel.value.id,
+      parentSlotIndex: 1,
+      name: 'A3-02',
+      equipmentType: 'CIRCUIT_BREAKER',
+    });
+    if (!created.ok || created.value.kind !== 'EQUIPMENT') throw new Error('Expected breaker');
+
+    const afterInventory = await service.ingest(
+      'data/dev/AUTO-QDF-4',
+      currentOnly(1_790_580_001),
+      '2026-09-22T00:00:01.000Z',
+    );
+    expect(afterInventory.ok).toBe(true);
+    expect(service.latest(created.value.id)?.reported).toMatchObject({
+      currentA: { value: 4.82, unit: 'A' },
+    });
+    expect(service.latest(created.value.id)?.reported).not.toHaveProperty('voltageV');
+    expect(service.latest(created.value.id)?.reported).not.toHaveProperty('powerW');
+    expect(service.latest(created.value.id)?.reported).not.toHaveProperty('energyKwh');
+
+    let pointBindings = (await bindings.listForSource('MQTT', 'AUTO-QDF-4')).filter(
+      (item) => item.sourcePointId === '0_1_2',
+    );
+    expect(pointBindings).toHaveLength(1);
+    expect(pointBindings[0]).toMatchObject({
+      metric: 'CURRENT',
+      targetType: 'EQUIPMENT',
+      targetId: created.value.id,
+      unit: 'A',
+      attributes: {
+        commissioning: 'AUTO_RECONCILED',
+        discovery: 'TOPOLOGY_POINT_MATCH',
+        panelLabel: 'A3',
+        position: 2,
+      },
+    });
+
+    const voltageAndCurrent = new TextEncoder().encode(
+      JSON.stringify({
+        method: 'update',
+        sn: 'AUTO-QDF-4',
+        timestamp: 1_790_580_002,
+        reported: { '0_1_2': { state: 'ONLINE', U1: '12.24', I1: '4.82' } },
+      }),
+    );
+    expect(
+      (
+        await service.ingest(
+          'data/dev/AUTO-QDF-4',
+          voltageAndCurrent,
+          '2026-09-22T00:00:02.000Z',
+        )
+      ).ok,
+    ).toBe(true);
+
+    expect(service.latest(created.value.id)?.reported).toMatchObject({
+      voltageV: { value: 12.24, unit: 'V' },
+      currentA: { value: 4.82, unit: 'A' },
+    });
+    expect(service.latest(created.value.id)?.reported).not.toHaveProperty('powerW');
+    expect(service.latest(created.value.id)?.reported).not.toHaveProperty('energyKwh');
+
+    // Replaying the same packet is idempotent: one binding per reported metric.
+    await service.ingest(
+      'data/dev/AUTO-QDF-4',
+      voltageAndCurrent,
+      '2026-09-22T00:00:03.000Z',
+    );
+    pointBindings = (await bindings.listForSource('MQTT', 'AUTO-QDF-4')).filter(
+      (item) => item.sourcePointId === '0_1_2',
+    );
+    expect(pointBindings.map((item) => item.metric).sort()).toEqual(['CURRENT', 'VOLTAGE']);
+  });
+
   it('maps generic telemetry only through an explicit source binding', async () => {
     const owner = device('device-1', 'SN-D');
     const physical = equipment('equipment-1', owner);

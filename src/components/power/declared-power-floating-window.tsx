@@ -26,11 +26,7 @@ function metricFromReading(
   return reading?.metrics[key]?.value;
 }
 
-function scalar(
-  value: unknown,
-  candidates: readonly string[],
-  depth = 0,
-): number | undefined {
+function scalar(value: unknown, candidates: readonly string[], depth = 0): number | undefined {
   if (depth > 6 || value === null || typeof value !== 'object') return undefined;
   const record = value as Record<string, unknown>;
   for (const [key, item] of Object.entries(record)) {
@@ -96,7 +92,6 @@ export function DeclaredPowerFloatingWindow({
   const th = useTranslations('historyCharts');
   const locale = useLocale();
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const floatingRef = useRef<HTMLElement | null>(null);
   const dragRef = useRef<{
     pointerId: number;
@@ -108,10 +103,6 @@ export function DeclaredPowerFloatingWindow({
   const [position, setPosition] = useState<{ left: number; top: number } | null>(null);
   const [view, setView] = useState<View | null>(null);
   const [section, setSection] = useState<'telemetry' | 'history' | 'trace'>('telemetry');
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -140,7 +131,6 @@ export function DeclaredPowerFloatingWindow({
       clearTimeout(timer);
     };
   }, [breakerId, open]);
-
 
   const beginDrag = (event: React.PointerEvent<HTMLElement>) => {
     if ((event.target as HTMLElement).closest('button')) return;
@@ -200,7 +190,11 @@ export function DeclaredPowerFloatingWindow({
     <>
       <button
         type="button"
-        className={triggerClassName ? `zip-power-window-trigger ${triggerClassName}` : 'zip-power-window-trigger'}
+        className={
+          triggerClassName
+            ? `zip-power-window-trigger ${triggerClassName}`
+            : 'zip-power-window-trigger'
+        }
         onClick={() => {
           setPosition(null);
           setOpen(true);
@@ -209,7 +203,7 @@ export function DeclaredPowerFloatingWindow({
         {triggerLabel ?? t('openPowerWindow')}
       </button>
 
-      {open && mounted
+      {open
         ? createPortal(
             <div className="zip-power-floating-layer">
               <section
@@ -225,135 +219,132 @@ export function DeclaredPowerFloatingWindow({
                     : undefined
                 }
               >
-          <header
-            className="zip-power-floating-header"
-            onPointerDown={beginDrag}
-            onPointerMove={moveDrag}
-            onPointerUp={endDrag}
-            onPointerCancel={endDrag}
-          >
-            <div>
-              <small>{t('powerWindow')}</small>
-              <h2>
-                {sourceDevice} / {sourcePanel} / {sourceBreaker} → {target}
-              </h2>
-            </div>
-            <button
-              type="button"
-              className="zip-power-floating-close"
-              onClick={() => setOpen(false)}
-              aria-label={t('closePowerWindow')}
-            >
-              ×
-            </button>
-          </header>
-
-          <div className="zip-power-floating-flow">
-            <article className="zip-power-floating-card is-source">
-              <small>{t('source')}</small>
-              <div className="zip-power-cabinet" aria-hidden="true">
-                <span />
-                <span />
-                <span />
-              </div>
-              <strong>{sourceDevice}</strong>
-              <span>{sourcePanel}</span>
-              <span>{sourceBreaker}</span>
-              {feed ? <b>{t('feedSide', { side: feed })}</b> : null}
-            </article>
-
-            <section className="zip-power-floating-link">
-              <small>{t('electricalLink')}</small>
-              <div className="zip-power-floating-metrics">
-                {metrics.map((metric) => (
-                  <div key={metric.key}>
-                    <span>
-                      {metric.key === 'voltage'
-                        ? th('metricVoltage')
-                        : metric.key === 'current'
-                          ? th('metricCurrent')
-                          : metric.key === 'power'
-                            ? th('metricPower')
-                            : th('metricEnergy')}
-                    </span>
-                    <strong>
-                      {metric.value} <em>{metric.unit}</em>
-                    </strong>
+                <header
+                  className="zip-power-floating-header"
+                  onPointerDown={beginDrag}
+                  onPointerMove={moveDrag}
+                  onPointerUp={endDrag}
+                  onPointerCancel={endDrag}
+                >
+                  <div>
+                    <small>{t('powerWindow')}</small>
+                    <h2>
+                      {sourceDevice} / {sourcePanel} / {sourceBreaker} → {target}
+                    </h2>
                   </div>
-                ))}
-              </div>
-              <div className="zip-power-flow-line" aria-hidden="true">
-                <i />
-                <b>→</b>
-              </div>
-              <time dateTime={receivedAt}>{t('updatedAt', { value: updated })}</time>
-            </section>
+                  <button
+                    type="button"
+                    className="zip-power-floating-close"
+                    onClick={() => setOpen(false)}
+                    aria-label={t('closePowerWindow')}
+                  >
+                    ×
+                  </button>
+                </header>
 
-            <article className="zip-power-floating-card is-target">
-              <small>{t('destination')}</small>
-              <div className="zip-power-target-glyph" aria-hidden="true">
-                ▤
-              </div>
-              <strong>{target}</strong>
-              <span
-                className="zip-power-declared-badge"
-                title={t('declaredAssetTooltip')}
-              >
-                {t('declaredAsset')}
-              </span>
-            </article>
-          </div>
+                <div className="zip-power-floating-flow">
+                  <article className="zip-power-floating-card is-source">
+                    <small>{t('source')}</small>
+                    <div className="zip-power-cabinet" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                    <strong>{sourceDevice}</strong>
+                    <span>{sourcePanel}</span>
+                    <span>{sourceBreaker}</span>
+                    {feed ? <b>{t('feedSide', { side: feed })}</b> : null}
+                  </article>
 
-          <nav className="zip-power-floating-actions" aria-label={t('powerWindowActions')}>
-            <button
-              type="button"
-              aria-pressed={section === 'telemetry'}
-              onClick={() => setSection('telemetry')}
-            >
-              {t('windowTelemetry')}
-            </button>
-            <button
-              type="button"
-              aria-pressed={section === 'history'}
-              onClick={() => setSection('history')}
-            >
-              {t('windowHistory')}
-            </button>
-            <button
-              type="button"
-              aria-pressed={section === 'trace'}
-              onClick={() => setSection('trace')}
-            >
-              {t('windowFullTrace')}
-            </button>
-          </nav>
+                  <section className="zip-power-floating-link">
+                    <small>{t('electricalLink')}</small>
+                    <div className="zip-power-floating-metrics">
+                      {metrics.map((metric) => (
+                        <div key={metric.key}>
+                          <span>
+                            {metric.key === 'voltage'
+                              ? th('metricVoltage')
+                              : metric.key === 'current'
+                                ? th('metricCurrent')
+                                : metric.key === 'power'
+                                  ? th('metricPower')
+                                  : th('metricEnergy')}
+                          </span>
+                          <strong>
+                            {metric.value} <em>{metric.unit}</em>
+                          </strong>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="zip-power-flow-line" aria-hidden="true">
+                      <i />
+                      <b>→</b>
+                    </div>
+                    <time dateTime={receivedAt}>{t('updatedAt', { value: updated })}</time>
+                  </section>
 
-          {section === 'history' ? (
-            <div className="zip-power-floating-detail">
-              <CompositionHistoryCharts
-                equipmentId={breakerId}
-                equipmentType="CIRCUIT_BREAKER"
-                compact
-              />
-            </div>
-          ) : section === 'trace' ? (
-            <div className="zip-power-floating-detail zip-power-floating-trace">
-              <strong>{sourceDevice}</strong>
-              <span>→</span>
-              <strong>{sourcePanel}</strong>
-              <span>→</span>
-              <strong>{sourceBreaker}</strong>
-              <span>→</span>
-              <strong>{target}</strong>
-            </div>
-          ) : (
-            <div className="zip-power-floating-detail zip-power-floating-status">
-              <span>{t('liveMeasurements')}</span>
-              <strong>{view?.status ?? '—'}</strong>
-              <span>{view?.sample?.sourceIdentity ?? '—'}</span>
-              <time dateTime={receivedAt}>{updated}</time>
-            </div>
-          )}
+                  <article className="zip-power-floating-card is-target">
+                    <small>{t('destination')}</small>
+                    <div className="zip-power-target-glyph" aria-hidden="true">
+                      ▤
+                    </div>
+                    <strong>{target}</strong>
+                    <span className="zip-power-declared-badge" title={t('declaredAssetTooltip')}>
+                      {t('declaredAsset')}
+                    </span>
+                  </article>
+                </div>
+
+                <nav className="zip-power-floating-actions" aria-label={t('powerWindowActions')}>
+                  <button
+                    type="button"
+                    aria-pressed={section === 'telemetry'}
+                    onClick={() => setSection('telemetry')}
+                  >
+                    {t('windowTelemetry')}
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={section === 'history'}
+                    onClick={() => setSection('history')}
+                  >
+                    {t('windowHistory')}
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={section === 'trace'}
+                    onClick={() => setSection('trace')}
+                  >
+                    {t('windowFullTrace')}
+                  </button>
+                </nav>
+
+                {section === 'history' ? (
+                  <div className="zip-power-floating-detail">
+                    <CompositionHistoryCharts
+                      equipmentId={breakerId}
+                      equipmentType="CIRCUIT_BREAKER"
+                      compact
+                    />
+                  </div>
+                ) : section === 'trace' ? (
+                  <div className="zip-power-floating-detail zip-power-floating-trace">
+                    <strong>{sourceDevice}</strong>
+                    <span>→</span>
+                    <strong>{sourcePanel}</strong>
+                    <span>→</span>
+                    <strong>{sourceBreaker}</strong>
+                    <span>→</span>
+                    <strong>{target}</strong>
+                  </div>
+                ) : (
+                  <div className="zip-power-floating-detail zip-power-floating-status">
+                    <span>{t('liveMeasurements')}</span>
+                    <strong>{view?.status ?? '—'}</strong>
+                    <span>{view?.sample?.sourceIdentity ?? '—'}</span>
+                    <time dateTime={receivedAt}>{updated}</time>
+                  </div>
+                )}
               </section>
             </div>,
             document.body,

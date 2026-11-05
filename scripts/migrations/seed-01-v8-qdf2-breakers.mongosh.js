@@ -40,19 +40,71 @@ assert(state.version >= 4 && state.version <= 8, 'unsupported seed-01 version');
 assert(Array.isArray(state.bdfbs) && state.bdfbs.length === 3, 'expected exactly 3 BDFBs');
 
 const schedule = [
-  { row: 1, a: { pos: 2, destination: 'GRTLuren3 PSU0 A0', legacyPanel: 'A1', legacyPos: 1 }, b: { pos: 2, destination: 'GRTLuren3 PSU0 B0', legacyPanel: 'B1', legacyPos: 1 } },
-  { row: 2, a: { pos: 3, destination: 'GRTLuren3 PSU0 A1', legacyPanel: 'A1', legacyPos: 2 }, b: { pos: 3, destination: 'GRTLuren3 PSU0 B1', legacyPanel: 'B1', legacyPos: 2 } },
-  { row: 3, a: { pos: 4, destination: 'GRTLuren3 PSU1 A0', legacyPanel: 'A1', legacyPos: 3 }, b: { pos: 4, destination: 'GRTLuren3 PSU1 B0', legacyPanel: 'B1', legacyPos: 3 } },
-  { row: 4, a: { pos: 1, destination: 'Rack CDN PDU-1A', legacyPanel: 'A1', legacyPos: 4 }, b: { pos: 1, destination: 'Rack CDN PDU-1B', legacyPanel: 'B1', legacyPos: 4 } },
-  { row: 5, a: { pos: 5, destination: 'GRTLuren3 PSU1 A1', legacyPanel: 'A2', legacyPos: 1 }, b: { pos: 5, destination: 'GRTLuren3 PSU1 B1', legacyPanel: 'B2', legacyPos: 1 } },
-  { row: 6, a: { pos: 6, destination: 'GRTLuren3 PSU2 A0', legacyPanel: 'A2', legacyPos: 2 }, b: { pos: 6, destination: 'GRTLuren3 PSU2 B0', legacyPanel: 'B2', legacyPos: 2 } },
-  { row: 7, a: { pos: 7, destination: 'GRTLuren3 PSU2 A1', legacyPanel: 'A2', legacyPos: 3 }, b: { pos: 7, destination: 'GRTLuren3 PSU2 B1', legacyPanel: 'B2', legacyPos: 3 } },
-  { row: 8, a: { pos: 8, destination: 'DTX-LUR-FP2-01 SH15 PEM A1.1', legacyPanel: 'A2', legacyPos: 6 }, b: { pos: 8, destination: 'DTX-LUR-FP2-01 SH15 PEM B1.1', legacyPanel: 'B2', legacyPos: 6 } },
-  { row: 9, a: { pos: 9, destination: 'DTX-LUR-FP2-01 SH15 PEM A1.2', legacyPanel: 'A2', legacyPos: 7 }, b: { pos: 9, destination: 'DTX-LUR-FP2-01 SH15 PEM B1.2', legacyPanel: 'B2', legacyPos: 7 } },
-  { row: 10, a: { pos: 10, destination: 'DTX-LUR-FP2-01 SH15 PEM A2.1', legacyPanel: 'A2', legacyPos: 8 }, b: { pos: 10, destination: 'DTX-LUR-FP2-01 SH15 PEM B2.1', legacyPanel: 'B2', legacyPos: 8 } },
-  { row: 11, a: { pos: 11, destination: 'DTX-LUR-FP2-01 SH15 PEM A2.2', legacyPanel: 'A2', legacyPos: 14 }, b: { pos: 11, destination: 'DTX-LUR-FP2-01 SH15 PEM B2.2', legacyPanel: 'B2', legacyPos: 14 } },
-  { row: 12, a: { pos: 12, destination: 'DTX-LUR-FP2-01 SH15 PEM A3.1', legacyPanel: 'A2', legacyPos: 15 }, b: { pos: 12, destination: 'DTX-LUR-FP2-01 SH15 PEM B3.1', legacyPanel: 'B2', legacyPos: 15 } },
-  { row: 13, a: { pos: 13, destination: 'DTX-LUR-FP2-01 SH15 PEM A3.2', legacyPanel: 'A2', legacyPos: 16 }, b: { pos: 13, destination: 'DTX-LUR-FP2-01 SH15 PEM B3.2', legacyPanel: 'B2', legacyPos: 16 } },
+  {
+    row: 1,
+    a: { pos: 2, destination: 'GRTLuren3 PSU0 A0', legacyPanel: 'A1', legacyPos: 1 },
+    b: { pos: 2, destination: 'GRTLuren3 PSU0 B0', legacyPanel: 'B1', legacyPos: 1 },
+  },
+  {
+    row: 2,
+    a: { pos: 3, destination: 'GRTLuren3 PSU0 A1', legacyPanel: 'A1', legacyPos: 2 },
+    b: { pos: 3, destination: 'GRTLuren3 PSU0 B1', legacyPanel: 'B1', legacyPos: 2 },
+  },
+  {
+    row: 3,
+    a: { pos: 4, destination: 'GRTLuren3 PSU1 A0', legacyPanel: 'A1', legacyPos: 3 },
+    b: { pos: 4, destination: 'GRTLuren3 PSU1 B0', legacyPanel: 'B1', legacyPos: 3 },
+  },
+  {
+    row: 4,
+    a: { pos: 1, destination: 'Rack CDN PDU-1A', legacyPanel: 'A1', legacyPos: 4 },
+    b: { pos: 1, destination: 'Rack CDN PDU-1B', legacyPanel: 'B1', legacyPos: 4 },
+  },
+  {
+    row: 5,
+    a: { pos: 5, destination: 'GRTLuren3 PSU1 A1', legacyPanel: 'A2', legacyPos: 1 },
+    b: { pos: 5, destination: 'GRTLuren3 PSU1 B1', legacyPanel: 'B2', legacyPos: 1 },
+  },
+  {
+    row: 6,
+    a: { pos: 6, destination: 'GRTLuren3 PSU2 A0', legacyPanel: 'A2', legacyPos: 2 },
+    b: { pos: 6, destination: 'GRTLuren3 PSU2 B0', legacyPanel: 'B2', legacyPos: 2 },
+  },
+  {
+    row: 7,
+    a: { pos: 7, destination: 'GRTLuren3 PSU2 A1', legacyPanel: 'A2', legacyPos: 3 },
+    b: { pos: 7, destination: 'GRTLuren3 PSU2 B1', legacyPanel: 'B2', legacyPos: 3 },
+  },
+  {
+    row: 8,
+    a: { pos: 8, destination: 'DTX-LUR-FP2-01 SH15 PEM A1.1', legacyPanel: 'A2', legacyPos: 6 },
+    b: { pos: 8, destination: 'DTX-LUR-FP2-01 SH15 PEM B1.1', legacyPanel: 'B2', legacyPos: 6 },
+  },
+  {
+    row: 9,
+    a: { pos: 9, destination: 'DTX-LUR-FP2-01 SH15 PEM A1.2', legacyPanel: 'A2', legacyPos: 7 },
+    b: { pos: 9, destination: 'DTX-LUR-FP2-01 SH15 PEM B1.2', legacyPanel: 'B2', legacyPos: 7 },
+  },
+  {
+    row: 10,
+    a: { pos: 10, destination: 'DTX-LUR-FP2-01 SH15 PEM A2.1', legacyPanel: 'A2', legacyPos: 8 },
+    b: { pos: 10, destination: 'DTX-LUR-FP2-01 SH15 PEM B2.1', legacyPanel: 'B2', legacyPos: 8 },
+  },
+  {
+    row: 11,
+    a: { pos: 11, destination: 'DTX-LUR-FP2-01 SH15 PEM A2.2', legacyPanel: 'A2', legacyPos: 14 },
+    b: { pos: 11, destination: 'DTX-LUR-FP2-01 SH15 PEM B2.2', legacyPanel: 'B2', legacyPos: 14 },
+  },
+  {
+    row: 12,
+    a: { pos: 12, destination: 'DTX-LUR-FP2-01 SH15 PEM A3.1', legacyPanel: 'A2', legacyPos: 15 },
+    b: { pos: 12, destination: 'DTX-LUR-FP2-01 SH15 PEM B3.1', legacyPanel: 'B2', legacyPos: 15 },
+  },
+  {
+    row: 13,
+    a: { pos: 13, destination: 'DTX-LUR-FP2-01 SH15 PEM A3.2', legacyPanel: 'A2', legacyPos: 16 },
+    b: { pos: 13, destination: 'DTX-LUR-FP2-01 SH15 PEM B3.2', legacyPanel: 'B2', legacyPos: 16 },
+  },
 ];
 
 const qdf2 = d.topology_nodes.findOne({
@@ -74,7 +126,10 @@ function exactlyOnePanel(name) {
     })
     .toArray();
   assert(rows.length === 1, 'QDF-2 requires exactly one panel ' + name);
-  assert(Array.isArray(rows[0].children) && rows[0].children.length === 24, name + ' must expose 24 positions');
+  assert(
+    Array.isArray(rows[0].children) && rows[0].children.length === 24,
+    name + ' must expose 24 positions',
+  );
   return rows[0];
 }
 
@@ -94,7 +149,12 @@ for (const item of desired) {
   const id = panel.children[item.pos - 1];
   if (!id) {
     missing += 1;
-    existingRows.push({ panel: item.panel, position: item.pos, status: 'CREATE', destination: item.destination });
+    existingRows.push({
+      panel: item.panel,
+      position: item.pos,
+      status: 'CREATE',
+      destination: item.destination,
+    });
     continue;
   }
   const breaker = d.topology_nodes.findOne({ id });
@@ -130,7 +190,10 @@ for (const panel of [a3, b3]) {
     }
   }
 }
-assert(outsideDesired.length === 0, 'QDF-2 has unexpected occupied A3/B3 positions: ' + JSON.stringify(outsideDesired));
+assert(
+  outsideDesired.length === 0,
+  'QDF-2 has unexpected occupied A3/B3 positions: ' + JSON.stringify(outsideDesired),
+);
 
 printjson({
   mode: MODE,

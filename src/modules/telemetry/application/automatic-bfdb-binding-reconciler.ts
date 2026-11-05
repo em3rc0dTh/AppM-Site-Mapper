@@ -41,9 +41,7 @@ function parsePoint(rawPointId: string): { panelLabel: string; position: number 
 function deterministicId(sourceIdentity: string, sourcePointId: string, metric: string): string {
   return (
     'auto:mqtt-point:' +
-    createHash('sha256')
-      .update([sourceIdentity, sourcePointId, metric].join('|'))
-      .digest('hex')
+    createHash('sha256').update([sourceIdentity, sourcePointId, metric].join('|')).digest('hex')
   );
 }
 

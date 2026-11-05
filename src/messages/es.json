@@ -46,7 +46,8 @@
       "snmpSeparation": "Los shunts de entrada DC por SNMP son independientes de las lecturas MQTT de los breakers.",
       "hideSnmp": "OCULTAR ENTRADAS SNMP",
       "showSnmp": "INSPECCIONAR ENTRADAS SNMP",
-      "alarms": "Alarmas"
+      "alarms": "Alarmas",
+      "declaredPowerTarget": "DESTINO ELÉCTRICO DECLARADO"
     }
   },
   "bdfb": {
@@ -393,7 +394,8 @@
       "liveMeasurements": "Mediciones en vivo",
       "companionFeedAvailable": "FEED {side} DISPONIBLE",
       "openCompanionFeed": "ABRIR FEED {side} ↗",
-      "remarks": "NOTAS"
+      "remarks": "NOTAS",
+      "detachedTitle": "SITE MAPPER · ESPACIO DE TRABAJO INDEPENDIENTE"
     },
     "rack": {
       "elevation": "ELEVACIÓN",
@@ -1160,7 +1162,7 @@
     "close": "Cerrar telemetría",
     "offline": "SIN CONEXIÓN · No se recibieron mediciones para este contexto.",
     "empty": "No hay métricas vinculadas para este objeto.",
-    "powerPathHistory": "HISTORIAL DE LA RUTA DE POTENCIA",
+    "powerPathHistory": "Historial del recorrido eléctrico",
     "timeSeriesBreaker": "Serie temporal · breaker",
     "timescale": "TimescaleDB",
     "telemetryTemporarilyUnavailable": "Telemetría temporalmente no disponible",
@@ -1351,7 +1353,11 @@
     "positionAvailable": "Posición {position}: disponible",
     "alarmCount": "{count, plural, one {# alarma} other {# alarmas}}",
     "feedLabel": "Feed {side}",
-    "companionAvailable": "Feed {side} disponible"
+    "companionAvailable": "Feed {side} disponible",
+    "configureLimitsHint": "Configurar límites del breaker (también con clic derecho)",
+    "closeMenu": "Cerrar menú del breaker",
+    "limitsHistory": "Configurar límites e historial",
+    "openBreaker": "Abrir breaker"
   },
   "bdfbTree": {
     "tree": "Árbol de potencia BDFB",
@@ -1780,7 +1786,8 @@
     "metricVoltage": "Voltaje",
     "metricCurrent": "Corriente",
     "metricPower": "Potencia",
-    "metricEnergy": "Contador de energía"
+    "metricEnergy": "Contador de energía",
+    "metricLabel": "Métrica de telemetría"
   },
   "fullTrace": {
     "source": "ORIGEN {feed}",
@@ -2281,5 +2288,38 @@
     "history": "Historial",
     "fieldOnly": "Sólo datos canónicos FIELD",
     "sourceUnavailable": "No hay datos de origen disponibles para esta vista."
+  },
+  "breakerLimits": {
+    "title": "Límites de corriente del breaker",
+    "close": "Cerrar límites del breaker",
+    "loading": "Cargando límites del breaker…",
+    "note": "Umbrales de corriente del breaker (A). Estos valores no configuran los ratings de los shunts SNMP de entrada.",
+    "disabled": "La política de alarma está DESHABILITADA. Guardar límites no la activa.",
+    "commission": "No existe una política; guardar creará una política de SOBRECORRIENTE si el breaker tiene exactamente un binding MQTT de corriente activo.",
+    "rating": "Corriente nominal (A)",
+    "assert": "Activar alarma al alcanzar o superar (A)",
+    "clear": "Resolver alarma al descender hasta (A)",
+    "provenance": "Procedencia del rating",
+    "reference": "Referencia de evidencia",
+    "confirm": "Confirmo que revisé la fuente del rating y su evidencia.",
+    "provisional": "PROVISIONAL · sin verificar en campo",
+    "hysteresis": "El umbral de resolución debe ser menor que el de activación. Los ratings verificados no pueden degradarse.",
+    "readOnly": "Solo lectura · se requiere el permiso power:write.",
+    "historyLabel": "Historial de cambios de límites del breaker",
+    "history": "Historial de cambios",
+    "empty": "No hay cambios registrados.",
+    "confirmError": "Confirma la fuente verificada y la referencia de evidencia antes de guardar.",
+    "saving": "Guardando…",
+    "save": "Guardar límites del breaker",
+    "unset": "sin definir",
+    "ratingChange": "Rating: {before} → {after} A",
+    "assertChange": "Activación: {before} → {after} A",
+    "clearChange": "Resolución: {before} → {after} A",
+    "sources": {
+      "PROVISIONAL_STANDARD": "Estándar provisional",
+      "FIELD_SURVEY": "Levantamiento en campo",
+      "MANUFACTURER": "Fabricante",
+      "CUSTOMER_DOCUMENT": "Documento del cliente"
+    }
   }
 }

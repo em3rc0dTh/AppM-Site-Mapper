@@ -326,7 +326,6 @@ body:has(.sm-workbench) {
   }
 }
 
-
 /* Detached Power Path workbench */
 .sm-power-workbench {
   min-width: 980px;
@@ -392,7 +391,9 @@ body:has(.sm-workbench) {
   border: 2px solid #7f96aa;
   border-radius: 6px;
   background: linear-gradient(145deg, #f9fbfc, #e8eef3);
-  box-shadow: inset -8px 0 0 #d8e0e7, 7px 7px 0 #e8edf1;
+  box-shadow:
+    inset -8px 0 0 #d8e0e7,
+    7px 7px 0 #e8edf1;
 }
 
 .sm-power-cabinet span {
@@ -532,7 +533,6 @@ body:has(.sm-workbench) {
     grid-template-columns: 1fr;
   }
 }
-
 
 .sm-power-workbench-toolbar {
   display: flex;

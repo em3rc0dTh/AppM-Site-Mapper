@@ -88,7 +88,7 @@ export class BreakerLimitService {
       if (legacyRating !== undefined && (
         typeof legacyRating !== 'number' || !Number.isFinite(legacyRating) || legacyRating <= 0
       )) throw new Error('BREAKER_EXISTING_RATING_INVALID');
-      if (typeof legacyRating === 'number' && !before &&
+      if (typeof legacyRating === 'number' &&
           (input.provenance.source === 'PROVISIONAL_STANDARD' || input.ratedCurrentA !== legacyRating)) {
         throw new Error('EXISTING_RATING_REQUIRES_RECONCILIATION');
       }

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { LanguageSwitcher } from '@/shared/ui/language-switcher';
+import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 import type { Permission, Role } from '@/modules/identity/domain/roles';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -141,6 +142,7 @@ export default async function SettingsPage({
               <p>{t('serverEnforcement')}</p>
             </>
           )}
+          <ThradexAttribution />
         </section>
       </div>
     </main>

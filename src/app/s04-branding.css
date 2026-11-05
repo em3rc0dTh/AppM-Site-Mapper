@@ -1,0 +1,105 @@
+/* S04: non-invasive provider attribution.
+   No fixed positioning, no global footer row, no canvas/workspace geometry changes. */
+.sm-thradex-attribution {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  color: #748292;
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.025em;
+}
+
+.sm-thradex-attribution strong {
+  color: #263442;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.sm-thradex-attribution--page {
+  justify-content: flex-end;
+  margin-top: 28px;
+  padding-top: 12px;
+  border-top: 1px solid #e5ebf1;
+}
+
+.sm-thradex-attribution--inspector {
+  justify-content: center;
+  flex: 0 0 auto;
+  margin: 18px 16px 0;
+  padding: 13px 8px 4px;
+  border-top: 1px solid #e5ebf1;
+}
+
+.zip-room-properties .sm-thradex-attribution--inspector {
+  border-top-color: #263848;
+  color: #72889a;
+}
+
+.zip-room-properties .sm-thradex-attribution--inspector strong {
+  color: #a8bac9;
+}
+
+@media (max-width: 700px) {
+  .sm-thradex-attribution--page {
+    justify-content: center;
+  }
+}
+
+
+/* Explorer's contextual inspector is the visible S03 third pane. Keep provider
+   attribution anchored to that pane without overlaying canvas controls. */
+.mk-explorer-page .zip-inspector > .sm-thradex-attribution--inspector {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: #fff;
+}
+
+
+/* Operational inspectors keep provider attribution visible inside the inspector
+   itself. Sticky positioning is scoped to the inspector; it never overlaps the
+   canvas or changes the S03 column geometry. */
+.s03-layout > :nth-child(3) > .sm-thradex-attribution--inspector,
+.mk-explorer-page .zip-inspector > .sm-thradex-attribution--inspector {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin-top: auto;
+  background: #fff;
+  box-shadow: 0 -1px 0 #e5ebf1;
+}
+
+
+/* Room inspector has a legacy direct-child div rule used by its empty-state
+   illustration (min-height:260px; span:35px). The attribution is also a direct
+   child div, so explicitly opt it out of that legacy presentation. */
+.zip-room-properties > .sm-thradex-attribution--inspector {
+  display: flex !important;
+  place-items: initial !important;
+  justify-content: center !important;
+  align-items: baseline !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: auto 16px 0 !important;
+  padding: 13px 8px 10px !important;
+  text-align: center !important;
+  color: #748292 !important;
+  background: #fff !important;
+  border-top: 1px solid #e5ebf1 !important;
+  box-shadow: 0 -1px 0 #e5ebf1 !important;
+}
+
+.zip-room-properties > .sm-thradex-attribution--inspector span {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  color: #748292 !important;
+}
+
+.zip-room-properties > .sm-thradex-attribution--inspector strong {
+  font-size: 11px !important;
+  line-height: 1 !important;
+  color: #263442 !important;
+}

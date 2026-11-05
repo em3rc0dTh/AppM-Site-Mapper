@@ -75,6 +75,31 @@ function polygonCentroid(points: readonly PointMm[]): PointMm {
   };
 }
 
+function horizontalSpan(points: readonly PointMm[]): number {
+  if (points.length === 0) return 0;
+  const xs = points.map((point) => point.x);
+  return Math.max(...xs) - Math.min(...xs);
+}
+
+function readableLabel(name: string, widthMm: number, fontSizeMm: number): string {
+  const normalized = name.trim().toUpperCase();
+  const available = Math.max(1, widthMm * 0.82);
+  const averageGlyphWidth = Math.max(1, fontSizeMm * 0.5);
+  const maxChars = Math.max(3, Math.floor(available / averageGlyphWidth));
+
+  if (normalized.length <= maxChars) return normalized;
+
+  const semanticCompact = normalized
+    .replace(/^CONTAINED[-_ ]+CLUSTER[-_ ]*/, 'CLUSTER-')
+    .replace(/^CONTENEDOR[-_ ]+CLUSTER[-_ ]*/, 'CLUSTER-')
+    .replace(/^CONTAINER[-_ ]+CLUSTER[-_ ]*/, 'CLUSTER-');
+
+  if (semanticCompact.length <= maxChars) return semanticCompact;
+
+  if (maxChars <= 4) return normalized.slice(0, maxChars);
+  return `${normalized.slice(0, maxChars - 1)}…`;
+}
+
 export function BlueprintCanvas({
   polygon,
   clusters,
@@ -388,6 +413,12 @@ export function BlueprintCanvas({
           {clusters.map((cluster) => {
             if (!cluster.polygon || cluster.polygon.length < 3) return null;
             const center = polygonCentroid(cluster.polygon);
+            const clusterFontSize = Math.max(150, Math.min(240, 220 / zoom));
+            const clusterLabel = readableLabel(
+              cluster.name,
+              horizontalSpan(cluster.polygon),
+              clusterFontSize,
+            );
 
             return (
               <g
@@ -412,8 +443,10 @@ export function BlueprintCanvas({
                   y={center.y - 250}
                   textAnchor="middle"
                   className="blueprint-cluster-label"
+                  style={{ fontSize: clusterFontSize }}
                 >
-                  {cluster.name.toUpperCase()}
+                  <title>{cluster.name}</title>
+                  {clusterLabel}
                 </text>
               </g>
             );
@@ -490,9 +523,13 @@ export function BlueprintCanvas({
             />
           ))}
 
-          {racks.map((rack) => (
-            <g
-              key={rack.id}
+          {racks.map((rack) => {
+            const rackFontSize = Math.max(130, Math.min(200, 180 / zoom));
+            const rackLabel = readableLabel(rack.name, rack.rect.width, rackFontSize);
+
+            return (
+              <g
+                key={rack.id}
               className={`blueprint-rack-node${selectedRackId === rack.id ? ' is-selected' : ''}`}
               role="button"
               tabIndex={0}
@@ -528,17 +565,20 @@ export function BlueprintCanvas({
                 className="blueprint-rack-inner"
                 aria-hidden="true"
               />
-              <text
-                x={rack.rect.x + rack.rect.width / 2}
-                y={rack.rect.y + rack.rect.depth / 2}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="blueprint-rack-label"
-              >
-                {rack.name}
-              </text>
-            </g>
-          ))}
+                <text
+                  x={rack.rect.x + rack.rect.width / 2}
+                  y={rack.rect.y + rack.rect.depth / 2}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  className="blueprint-rack-label"
+                  style={{ fontSize: rackFontSize }}
+                >
+                  <title>{rack.name}</title>
+                  {rackLabel}
+                </text>
+              </g>
+            );
+          })}
         </svg>
         <div className="blueprint-canvas-corners" aria-hidden="true">
           <span />

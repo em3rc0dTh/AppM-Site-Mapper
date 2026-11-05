@@ -2875,6 +2875,34 @@ body {
   color: #06b65b !important;
 }
 
+.zip-login-page .zip-login-footer--branded {
+  display: grid;
+  justify-items: center;
+  gap: 38px;
+  margin-top: 24px !important;
+}
+
+.zip-login-powered-by {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+}
+
+.zip-login-powered-by p {
+  margin: 0;
+  color: #69737d;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.055em;
+  line-height: 1;
+}
+
+.zip-login-thradex-logo {
+  display: block;
+  width: min(240px, 68vw);
+  height: auto;
+}
+
 /* ZIP parity: Global Search */
 .zip-command {
   width: 666px !important;

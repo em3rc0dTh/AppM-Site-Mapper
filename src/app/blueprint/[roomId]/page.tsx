@@ -1,3 +1,4 @@
+import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
 import Link from 'next/link';
 import { RoomLayoutEditor } from '@/components/blueprint/room-layout-editor';
 import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
@@ -76,7 +77,7 @@ export default async function BlueprintPage({
           </Link>
         ))}
       </nav>
-      <div className="operational-layout operational-layout--blueprint">
+      <ResizableWorkspace className="operational-layout operational-layout--blueprint" userKey={auth.value.id}>
         <aside className="operational-context">
           {tree && <TopologyContextTree tree={tree} activeId={roomId} />}
         </aside>
@@ -157,7 +158,7 @@ export default async function BlueprintPage({
             <p>{t('instruction')}</p>
           </div>
         </aside>
-      </div>
+      </ResizableWorkspace>
     </main>
   );
 }

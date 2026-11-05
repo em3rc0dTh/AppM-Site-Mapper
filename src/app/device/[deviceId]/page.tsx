@@ -1,3 +1,4 @@
+import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -361,7 +362,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
         ))}
       </nav>
 
-      <div className="mk-device-layout">
+      <ResizableWorkspace className="mk-device-layout" userKey={auth.value.id}>
         <aside>{tree && <TopologyContextTree tree={tree} activeId={node.id} />}</aside>
 
         <section className="zip-device-stage">
@@ -696,7 +697,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             </>
           )}
         </aside>
-      </div>
+      </ResizableWorkspace>
     </main>
   );
 }

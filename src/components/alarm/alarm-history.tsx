@@ -37,9 +37,6 @@ export function AlarmHistory() {
   useEffect(() => {
     const controller = new AbortController();
     async function load() {
-      setLoading(true);
-      setError('');
-      setPage(DEFAULT_PAGE);
       try {
         const response = await fetch('/api/alarms/history?' + filters +
           (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''), {
@@ -47,9 +44,13 @@ export function AlarmHistory() {
           });
         if (!response.ok) throw new Error('ALARM_HISTORY_UNAVAILABLE');
         const result = (await response.json()) as Page;
-        if (!controller.signal.aborted) setPage(result);
+        if (!controller.signal.aborted) {
+          setPage(result);
+          setError('');
+        }
       } catch (reason) {
         if (!controller.signal.aborted) {
+          setPage(DEFAULT_PAGE);
           setError(reason instanceof Error ? reason.message : 'ALARM_HISTORY_UNAVAILABLE');
         }
       } finally {
@@ -61,6 +62,7 @@ export function AlarmHistory() {
   }, [filters, cursor, reload]);
 
   const update = (callback: () => void) => {
+    setLoading(true);
     setCursor(null);
     setCursorTrail([]);
     callback();
@@ -69,7 +71,7 @@ export function AlarmHistory() {
     <section className="sm-alarm-history" aria-label={t('history')}>
       <header className="sm-alarm-history-heading">
         <div><h2>{t('history')}</h2><p>{t('historyDescription')}</p></div>
-        <button type="button" onClick={() => setReload((n) => n + 1)}>{t('refresh')}</button>
+        <button type="button" onClick={() => { setLoading(true); setReload((n) => n + 1); }}>{t('refresh')}</button>
       </header>
       <div className="sm-alarm-filters">
         <select aria-label={t('status')} value={lifecycle} onChange={(e) => update(() => setLifecycle(e.target.value))}>
@@ -111,12 +113,14 @@ export function AlarmHistory() {
       </div>
       <footer className="sm-alarm-history-pagination">
         <span>{t('pageSizeNote')}</span>
-        <button type="button" disabled={loading || !cursor} onClick={() => { setCursor(null); setCursorTrail([]); }}>{t('firstPage')}</button>
+        <button type="button" disabled={loading || !cursor} onClick={() => { setLoading(true); setCursor(null); setCursorTrail([]); }}>{t('firstPage')}</button>
         <button type="button" disabled={loading || !cursorTrail.length} onClick={() => {
+          setLoading(true);
           setCursor(cursorTrail[cursorTrail.length - 1] ?? null);
           setCursorTrail((trail) => trail.slice(0, -1));
         }}>{t('previousPage')}</button>
         <button type="button" disabled={loading || !page.nextCursor} onClick={() => {
+          setLoading(true);
           setCursorTrail((trail) => [...trail, cursor]);
           setCursor(page.nextCursor);
         }}>{t('nextPage')}</button>

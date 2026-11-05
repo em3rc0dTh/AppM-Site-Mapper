@@ -28,14 +28,14 @@ recreate all bindings after broker/collector restart
 
 ## State model
 
-| Component | HEALTHY | DEGRADED/OFFLINE effect | Allowed first recovery |
-| --- | --- | --- | --- |
-| MQTT broker | Authenticated publish/subscription works | MQTT source becomes STALE/OFFLINE; SNMP and stored history may remain available | Restart/recreate Mosquitto only after config and credentials are verified |
-| Site Mapper MQTT subscriber | `subscribed` and source freshness advances | RAW/LIVE MQTT stops advancing | Let reconnect/backoff operate; restart Site Mapper only if subscriber is irrecoverably stopped |
-| SNMP collector | Polls accepted and observations advance | Affected SNMP source becomes STALE/OFFLINE; MQTT remains independent | Restart only the affected collector |
-| Telemetry Store | `/health` returns OK and writes advance | LIVE may remain available; history becomes DEGRADED | Diagnose store/Timescale boundary; restart telemetry-store only |
-| TimescaleDB | PostgreSQL ready and durable rows query | Historical persistence unavailable | Diagnose DB/role/storage; use controlled role repair only when proven |
-| MongoDB | Topology/bindings/configuration readable | Commissioning/topology authority unavailable | STOP writes and diagnose Mongo; never reseed destructively |
+| Component                   | HEALTHY                                    | DEGRADED/OFFLINE effect                                                         | Allowed first recovery                                                                         |
+| --------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| MQTT broker                 | Authenticated publish/subscription works   | MQTT source becomes STALE/OFFLINE; SNMP and stored history may remain available | Restart/recreate Mosquitto only after config and credentials are verified                      |
+| Site Mapper MQTT subscriber | `subscribed` and source freshness advances | RAW/LIVE MQTT stops advancing                                                   | Let reconnect/backoff operate; restart Site Mapper only if subscriber is irrecoverably stopped |
+| SNMP collector              | Polls accepted and observations advance    | Affected SNMP source becomes STALE/OFFLINE; MQTT remains independent            | Restart only the affected collector                                                            |
+| Telemetry Store             | `/health` returns OK and writes advance    | LIVE may remain available; history becomes DEGRADED                             | Diagnose store/Timescale boundary; restart telemetry-store only                                |
+| TimescaleDB                 | PostgreSQL ready and durable rows query    | Historical persistence unavailable                                              | Diagnose DB/role/storage; use controlled role repair only when proven                          |
+| MongoDB                     | Topology/bindings/configuration readable   | Commissioning/topology authority unavailable                                    | STOP writes and diagnose Mongo; never reseed destructively                                     |
 
 ## Pre-recovery evidence
 
@@ -166,14 +166,14 @@ A normal recovery may legitimately change latest timestamps and row counts. It m
 
 ## S05 acceptance matrix
 
-| Scenario | Required evidence |
-| --- | --- |
-| MQTT broker interruption | Reconnect + same source/bindings + new RAW/history |
-| Site Mapper subscriber restart | Stable session/recovery behavior; no binding duplication |
-| Single SNMP collector restart | Only affected source recovers; other sources uninterrupted |
-| Telemetry Store restart | LIVE independent; history resumes and old history remains |
-| Timescale role repair | Targeted repair only; store healthy; old and new rows visible |
-| Host reboot | Services recover under declared restart policies; baseline passes |
+| Scenario                       | Required evidence                                                 |
+| ------------------------------ | ----------------------------------------------------------------- |
+| MQTT broker interruption       | Reconnect + same source/bindings + new RAW/history                |
+| Site Mapper subscriber restart | Stable session/recovery behavior; no binding duplication          |
+| Single SNMP collector restart  | Only affected source recovers; other sources uninterrupted        |
+| Telemetry Store restart        | LIVE independent; history resumes and old history remains         |
+| Timescale role repair          | Targeted repair only; store healthy; old and new rows visible     |
+| Host reboot                    | Services recover under declared restart policies; baseline passes |
 
 ## Existing automated evidence
 

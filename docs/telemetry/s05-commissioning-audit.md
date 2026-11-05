@@ -67,12 +67,12 @@ For a gate-style run, add `--strict`. The process returns exit code 10 when a co
 
 ## Result states
 
-| State | Meaning |
-| --- | --- |
-| `MATCH` | Runtime agrees with the commissioning reference. |
-| `CONFLICT` | Both sides exist but disagree. No automatic repair is allowed. |
+| State                | Meaning                                                             |
+| -------------------- | ------------------------------------------------------------------- |
+| `MATCH`              | Runtime agrees with the commissioning reference.                    |
+| `CONFLICT`           | Both sides exist but disagree. No automatic repair is allowed.      |
 | `MISSING_IN_RUNTIME` | The reference expects an entity/position that is absent at runtime. |
-| `OBSERVED` | Informational runtime count; no expected value is inferred. |
+| `OBSERVED`           | Informational runtime count; no expected value is inferred.         |
 
 ## Relationship to existing baseline checks
 
@@ -92,7 +92,6 @@ A `CONFLICT` is a blocker for automatic commissioning.
 The operator must verify the physical asset or another authoritative field record before any seed, MongoDB document, telemetry binding or commissioning profile is changed.
 
 No script in this audit performs APPLY.
-
 
 ## Field network evidence — 2026-11-05
 

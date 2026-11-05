@@ -29,6 +29,8 @@ type BreakerLimitEvent = {
   readonly occurredAt: string;
   readonly before: BreakerProtection | null;
   readonly after: BreakerProtection;
+  readonly beforePolicy: AlarmPolicy['overcurrent'] | null;
+  readonly afterPolicy: AlarmPolicy['overcurrent'];
   readonly policyId: string;
 };
 
@@ -105,7 +107,9 @@ export class BreakerLimitService {
         targetType: 'EQUIPMENT', targetId: id, protocol: 'MQTT',
         metric: 'CURRENT', lifecycle: 'ACTIVE',
       }, { session }).toArray();
-      if (bindings.length !== 1 || typeof bindings[0]?.sourceIdentity !== 'string') {
+      if (bindings.length !== 1 ||
+          typeof bindings[0]?.sourceIdentity !== 'string' || !bindings[0].sourceIdentity.trim() ||
+          typeof bindings[0]?.sourcePointId !== 'string' || !bindings[0].sourcePointId.trim()) {
         throw new Error('BREAKER_CURRENT_BINDING_REQUIRED');
       }
 
@@ -165,7 +169,8 @@ export class BreakerLimitService {
       }
       const event: BreakerLimitEvent = {
         id: randomUUID(), breakerId: id, deviceId: device.id, panelId: panel.id,
-        actorId, occurredAt: now, before, after, policyId,
+        actorId, occurredAt: now, before, after,
+        beforePolicy: policy?.overcurrent ?? null, afterPolicy: overcurrent, policyId,
       };
       await this.db.collection<BreakerLimitEvent & Document>('breaker_limit_events').insertOne(event as OptionalUnlessRequiredId<BreakerLimitEvent & Document>, { session });
     });

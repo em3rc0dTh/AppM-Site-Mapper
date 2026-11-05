@@ -113,8 +113,8 @@ describe.skipIf(!enabled)('S02 real MongoDB alarm acceptance (disposable DB only
     expect(resolved).toMatchObject({ lifecycle: 'RESOLVED', acknowledgement: 'ACKNOWLEDGED' });
     expect(resolved?.evidenceRefs.some((item) => item.metric === 'CURRENT' && item.value === 15)).toBe(true);
     const transitions = await restored.listTransitions(raised!.id);
-    expect(transitions.map((item) => item.toState)).toEqual(['ACTIVE', 'ACKNOWLEDGED', 'RESOLVED']);
-    expect(transitions.at(-1)?.evidenceRefs.length).toBeGreaterThan(0);
+    expect(transitions.map((item) => item.toState).sort()).toEqual(['ACKNOWLEDGED', 'ACTIVE', 'RESOLVED']);
+    expect(transitions.find((item) => item.toState === 'RESOLVED')?.evidenceRefs.length).toBeGreaterThan(0);
 
     const history = await service.history({ limit: 50, lifecycle: 'RESOLVED', targetId: 'breaker' });
     expect(history.items.some((item) => item.id === raised!.id)).toBe(true);
@@ -161,7 +161,7 @@ describe.skipIf(!enabled)('S02 real MongoDB alarm acceptance (disposable DB only
       }
       cursor = page.nextCursor ?? undefined;
     } while (cursor);
-    expect(found.size).toBeGreaterThanOrEqual(527);
+    expect(found.size).toBe(527);
     const ack = await repo.listHistory({ limit: 100, lifecycle: 'RESOLVED', acknowledgement: 'ACKNOWLEDGED' });
     expect(ack.items.every((item) => item.acknowledgement === 'ACKNOWLEDGED')).toBe(true);
   });

@@ -9,7 +9,14 @@
       "deviceName": "BDFB QDF-DEMO",
       "gateway": {
         "name": "QDF-DEMO_GW-1",
-        "serial": "DEMO-GW-001"
+        "serial": "DEMO-GW-001",
+        "network": {
+          "ipv4": "192.0.2.10",
+          "netmask": "255.255.255.0",
+          "defaultGateway": "192.0.2.1",
+          "dhcp": false,
+          "evidence": "synthetic example"
+        }
       },
       "meters": [
         {

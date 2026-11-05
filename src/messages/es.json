@@ -2190,7 +2190,8 @@
       "targetIdLabel": "ID de equipo",
       "firstPage": "Primera página",
       "nextPage": "Siguiente página",
-      "pageSizeNote": "50 eventos por página · fechas UTC"
+      "pageSizeNote": "50 eventos por página · fechas UTC",
+      "previousPage": "Página anterior"
     },
     "detail": {
       "loading": "Cargando alarma…",

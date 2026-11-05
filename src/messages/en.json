@@ -2190,7 +2190,8 @@
       "targetIdLabel": "Equipment ID",
       "firstPage": "First page",
       "nextPage": "Next page",
-      "pageSizeNote": "50 events per page · UTC dates"
+      "pageSizeNote": "50 events per page · UTC dates",
+      "previousPage": "Previous page"
     },
     "detail": {
       "loading": "Loading alarm…",

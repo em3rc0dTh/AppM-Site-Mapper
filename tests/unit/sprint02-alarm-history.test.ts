@@ -64,3 +64,80 @@ describe('S02 - durable alarm history and independent acknowledgement', () => {
     expect(await service.transitions(created.id)).toHaveLength(3);
   });
 });
+
+describe('S02 - history pagination and evidence retention', () => {
+  it('paginates beyond 500 occurrences without duplicates, including equal timestamps', async () => {
+    const { repository, commands } = setup();
+    const first = await commands.assert({
+      code: 'OVERCURRENT',
+      targetType: 'EQUIPMENT',
+      targetId: 'breaker-a3-04',
+      sourceContext: 'mqtt:baseline',
+      evidence: [],
+      observedAt: T0,
+    });
+    await Promise.all(Array.from({ length: 525 }, (_, index) =>
+      repository.insertOccurrence({
+        ...first,
+        id: 'history-' + String(index).padStart(4, '0'),
+        correlationKey: 'unique-history-' + index,
+        lifecycle: index % 2 === 0 ? 'RESOLVED' : 'ACTIVE',
+        acknowledgement: index % 3 === 0 ? 'ACKNOWLEDGED' : 'UNACKNOWLEDGED',
+      }),
+    ));
+
+    const seen = new Set<string>();
+    let cursor: string | undefined;
+    let pageCount = 0;
+    do {
+      const page = await repository.listHistory({ limit: 100, ...(cursor ? { cursor } : {}) });
+      for (const item of page.items) {
+        expect(seen.has(item.id)).toBe(false);
+        seen.add(item.id);
+      }
+      cursor = page.nextCursor ?? undefined;
+      pageCount += 1;
+    } while (cursor);
+    expect(seen.size).toBe(526);
+    expect(pageCount).toBe(6);
+
+    const filtered = await repository.listHistory({
+      limit: 100,
+      lifecycle: 'RESOLVED',
+      acknowledgement: 'ACKNOWLEDGED',
+      targetId: 'breaker-a3-04',
+      fromDate: '2026-11-05',
+      toDate: '2026-11-05',
+    });
+    expect(filtered.items.length).toBeGreaterThan(0);
+    expect(filtered.items.every((item) =>
+      item.lifecycle === 'RESOLVED' && item.acknowledgement === 'ACKNOWLEDGED'
+    )).toBe(true);
+  });
+
+  it('persists recovery readings and their references into the resolved event log', async () => {
+    const { commands, service } = setup();
+    const created = await commands.assert({
+      code: 'OVERCURRENT',
+      targetType: 'EQUIPMENT',
+      targetId: 'breaker-a3-04',
+      sourceContext: 'mqtt:A3-04',
+      observedAt: T0,
+      evidence: [{
+        id: 'trigger', kind: 'MQTT', metric: 'CURRENT', value: 24, unit: 'A',
+        assertThreshold: 20, clearThreshold: 18, thresholdUnit: 'A',
+        policyId: 'policy-1', observedAt: T0,
+      }],
+    });
+    await commands.resolve(created.correlationKey, 'RECOVERY_POLICY_SATISFIED', [], T1, [{
+      id: 'recovery', kind: 'MQTT', metric: 'CURRENT', value: 17, unit: 'A',
+      assertThreshold: 20, clearThreshold: 18, thresholdUnit: 'A',
+      policyId: 'policy-1', observedAt: T1,
+    }]);
+    const alarm = await service.getOccurrenceView(created.id);
+    expect(alarm?.lifecycle).toBe('RESOLVED');
+    expect(alarm?.evidenceRefs.map((item) => item.id)).toEqual(['trigger', 'recovery']);
+    const transitions = await service.transitions(created.id);
+    expect(transitions[1]?.evidenceRefs).toContain('recovery');
+  });
+});

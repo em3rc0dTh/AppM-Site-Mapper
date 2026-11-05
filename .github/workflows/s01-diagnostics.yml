@@ -1,8 +1,8 @@
 name: S01 Diagnostics (temporary)
 on:
-  push:
+  pull_request:
     branches:
-      - feat/mk1-s01-breaker-ratings-thresholds
+      - main
 permissions:
   contents: read
   issues: write

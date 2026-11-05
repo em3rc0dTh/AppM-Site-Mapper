@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 
@@ -17,7 +18,14 @@ export function AuthFrame({
   title,
   description,
   children,
-}: Readonly<{ eyebrow: string; title: string; description: string; children: ReactNode }>) {
+  showProviderBrand = false,
+}: Readonly<{
+  eyebrow: string;
+  title: string;
+  description: string;
+  children: ReactNode;
+  showProviderBrand?: boolean;
+}>) {
   const t = useTranslations('shell');
   return (
     <main className="mk-login zip-login-page">
@@ -34,8 +42,21 @@ export function AuthFrame({
           <p className="sr-only">{description}</p>
           {children}
         </div>
-        <footer>
+        <footer className={showProviderBrand ? 'zip-login-footer zip-login-footer--branded' : undefined}>
           <LanguageSwitcher />
+          {showProviderBrand ? (
+            <div className="zip-login-powered-by">
+              <p>Powered by</p>
+              <Image
+                className="zip-login-thradex-logo"
+                src="/brand/thradex-login.png"
+                alt="Thradex"
+                width={300}
+                height={80}
+                priority
+              />
+            </div>
+          ) : null}
         </footer>
       </section>
     </main>

@@ -162,7 +162,7 @@ export function BreakerLimitEditor({
                 <time dateTime={entry.occurredAt}>{entry.occurredAt}</time> · {entry.actorId}
                 <div>Rating: {entry.before?.ratedCurrentA ?? 'unset'} → {entry.after.ratedCurrentA} A</div>
                 <div>Assert: {entry.beforePolicy?.assertAboveA ?? entry.before?.assertAboveA ?? 'unset'} → {entry.after.assertAboveA} A</div>
-                <div>Clear: {entry.before?.clearBelowA ?? 'unset'} → {entry.after.clearBelowA} A</div>
+                <div>Clear: {entry.beforePolicy?.clearBelowA ?? entry.before?.clearBelowA ?? 'unset'} → {entry.after.clearBelowA} A</div>
               </li>)}</ul>:<p>No recorded changes.</p>}
             </section>
           </>

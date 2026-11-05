@@ -3472,7 +3472,7 @@ p {
   border-color: #e8b756;
   background: #fffaf0;
 }
-.sm-bdfb-panel-position a {
+.sm-bdfb-panel-position .sm-breaker-position-trigger {
   position: relative;
 }
 .sm-breaker-alarm-dot {

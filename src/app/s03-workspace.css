@@ -144,7 +144,6 @@
   }
 }
 
-
 /* S03 visual acceptance: the topology collapse control belongs to the heading row.
    visual-parity.css defines it as sticky and therefore leaves a 34px flow row above
    TOPOLOGY on initial render. Keep collapsed rail behavior unchanged; only remove
@@ -157,7 +156,6 @@
   right: 7px;
   margin: 0;
 }
-
 
 /* S03 acceptance: tree typography follows the actual resizable rail width,
    not only the viewport media query. */

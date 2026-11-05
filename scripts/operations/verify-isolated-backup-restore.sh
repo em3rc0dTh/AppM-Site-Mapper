@@ -54,13 +54,18 @@ until docker exec "$PG" pg_isready -U site_mapper -d site_mapper_telemetry >/dev
   sleep 1
 done
 
+docker exec "$PG" psql -X -q -U site_mapper -d site_mapper_telemetry \
+  -c 'CREATE EXTENSION IF NOT EXISTS timescaledb;' >/dev/null
+docker exec "$PG" psql -X -q -U site_mapper -d site_mapper_telemetry \
+  -c 'SELECT timescaledb_pre_restore();' >/dev/null
+
 docker exec -i "$PG" pg_restore \
   -U site_mapper -d site_mapper_telemetry \
-  --no-owner --no-privileges --clean --if-exists --exit-on-error \
+  --no-owner --no-privileges --exit-on-error \
   < "$BACKUP_DIR/timescale.dump"
 
 docker exec "$PG" psql -X -q -U site_mapper -d site_mapper_telemetry \
-  -c "SELECT CASE WHEN to_regprocedure('timescaledb_post_restore()') IS NOT NULL THEN timescaledb_post_restore() END;" >/dev/null || true
+  -c 'SELECT timescaledb_post_restore();' >/dev/null
 
 TABLE_COUNT="$(docker exec "$PG" psql -X -At -U site_mapper -d site_mapper_telemetry   -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('telemetry_samples','telemetry_entity_samples');")"
 [ "$TABLE_COUNT" -ge 1 ] || { echo "Timescale telemetry schema was not restored" >&2; exit 5; }

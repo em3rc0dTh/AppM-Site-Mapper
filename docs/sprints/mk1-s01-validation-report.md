@@ -95,3 +95,16 @@ No story has been promoted to **ACCEPTED** solely from source inspection. Until 
 - Run `npm ci --no-audit --no-fund`, `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run test:unit`, `npm run test:integration`, `npm run build` and required Mongo HTTP acceptance; record true results.
 - On a disposable Mongo replica set, exercise the transactional and authorization scenarios without using the customer's TFARM04 database.
 - Complete the browser-based gate and collect operator approval before transitioning to Sprint 02.
+
+## One-command local transactional gate (added 2026-11-05)
+
+Run from WSL with Docker integration enabled, directly against the Windows Git checkout (no additional Git authentication or clone):
+
+```bash
+cd /mnt/c/Users/eduar/Desktop/Thradex/AppM-Site-Mapper
+sh scripts/operations/sprint-01-gate.sh
+```
+
+The gate builds the existing Node 22 image, executes TypeScript/lint/format and breaker unit tests, starts a disposable `mongo:7.0` single-node replica set without host ports or persistent volumes, and executes **unskipped** `tests/integration/breaker-limits-mongo.test.ts` against loopback in that container's network namespace. Every mandatory operation must pass or the gate exits nonzero. On completion, it force-removes only its own Mongo container; a successful run emits `S01_LOCAL_MONGO_PASS` and `.runtime/s01-local/SPRINT-01-MONGO-ACCEPTANCE.txt`.
+
+**Never infer PASS from existence of the script.** The gate has been committed but no receipt from an actual run has been provided in this session. A successful local-Mongo result alone does not claim UI acceptance, GitHub CI success or permission to merge and enter Sprint 02.

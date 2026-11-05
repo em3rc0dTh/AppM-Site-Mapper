@@ -57,3 +57,22 @@
   z-index: 2;
   background: #fff;
 }
+
+
+/* Operational inspectors keep provider attribution visible inside the inspector
+   itself. Sticky positioning is scoped to the inspector; it never overlaps the
+   canvas or changes the S03 column geometry. */
+.s03-layout > :nth-child(3) > .sm-thradex-attribution--inspector,
+.mk-explorer-page .zip-inspector > .sm-thradex-attribution--inspector {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin-top: auto;
+  background: #fff;
+  box-shadow: 0 -1px 0 #e5ebf1;
+}
+
+.s03-layout > .zip-room-properties > .sm-thradex-attribution--inspector {
+  background: #0b1119;
+  box-shadow: 0 -1px 0 #263848;
+}

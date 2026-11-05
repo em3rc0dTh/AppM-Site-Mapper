@@ -27,6 +27,12 @@ describe('S01 breaker protection contract', () => {
       verificationConfirmed: true,
     }).provenance.verified).toBe(true);
   });
+  it('refuses verified evidence without explicit operator confirmation', () => {
+    expect(() => parseBreakerProtectionInput({
+      ...input(),
+      provenance: { source: 'MANUFACTURER', verified: true, reference: 'P/N CB-001' },
+    })).toThrow('VERIFIED_RATING_REQUIRES_CONFIRMATION');
+  });
   it('never certifies a provisional standard', () => {
     expect(() => parseBreakerProtectionInput({
       ...input(), provenance:{source:'PROVISIONAL_STANDARD',verified:true},

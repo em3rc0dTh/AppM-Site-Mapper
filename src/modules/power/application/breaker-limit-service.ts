@@ -78,6 +78,24 @@ export class BreakerLimitService {
       if ((breaker.revision ?? 0) !== input.expectedRevision) throw new Error('BREAKER_STALE_WRITE');
 
       const before = readBreakerProtection(breaker.attributes);
+      if (breaker.attributes?.breakerProtection !== undefined && !before) {
+        throw new Error('BREAKER_EXISTING_RATING_INVALID');
+      }
+      // Older field-survey workflows may persist the nominal rating directly on
+      // attributes. Never silently replace that fact with a provisional standard.
+      const legacyRating = breaker.attributes?.ratedCurrentA;
+      const legacySource = breaker.attributes?.ratedCurrentProvenance;
+      if (legacyRating !== undefined && (
+        typeof legacyRating !== 'number' || !Number.isFinite(legacyRating) || legacyRating <= 0
+      )) throw new Error('BREAKER_EXISTING_RATING_INVALID');
+      if (typeof legacyRating === 'number' && !before &&
+          (input.provenance.source === 'PROVISIONAL_STANDARD' || input.ratedCurrentA !== legacyRating)) {
+        throw new Error('EXISTING_RATING_REQUIRES_RECONCILIATION');
+      }
+      if (legacySource && typeof legacySource === 'object' && !Array.isArray(legacySource) &&
+          (legacySource as {verified?:unknown}).verified === true && !input.provenance.verified) {
+        throw new Error('VERIFIED_RATING_DOWNGRADE_FORBIDDEN');
+      }
       if (before?.provenance.verified && !input.provenance.verified) {
         throw new Error('VERIFIED_RATING_DOWNGRADE_FORBIDDEN');
       }
@@ -147,7 +165,7 @@ export class BreakerLimitService {
         id: randomUUID(), breakerId: id, deviceId: device.id, panelId: panel.id,
         actorId, occurredAt: now, before, after, policyId,
       };
-      await this.db.collection<BreakerLimitEvent>('breaker_limit_events').insertOne(event, { session });
+      await this.db.collection<BreakerLimitEvent & Document>('breaker_limit_events').insertOne(event, { session });
     });
     return this.get(id);
   }

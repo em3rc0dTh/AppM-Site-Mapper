@@ -3792,3 +3792,9 @@ p {
     flex-direction: column;
   }
 }
+
+/* S02: scalable alarm-history navigation */
+.sm-alarm-history-heading { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.sm-alarm-history-heading button, .sm-alarm-history-pagination button { min-height:36px; padding:7px 12px; border:1px solid #cbd8e4; border-radius:6px; background:#fff; color:#174f7d; }
+.sm-alarm-history-pagination { display:flex; justify-content:flex-end; flex-wrap:wrap; align-items:center; gap:10px; padding:12px 0; font-size:12px; }
+.sm-alarm-history-pagination button:disabled { opacity:.5; cursor:not-allowed; }

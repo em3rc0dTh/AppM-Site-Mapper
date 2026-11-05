@@ -2185,7 +2185,12 @@
       "status": "Status",
       "viewLabel": "Alarm view",
       "fromDate": "From date",
-      "toDate": "To date"
+      "toDate": "To date",
+      "allStatuses": "All statuses",
+      "targetIdLabel": "Equipment ID",
+      "firstPage": "First page",
+      "nextPage": "Next page",
+      "pageSizeNote": "50 events per page · UTC dates"
     },
     "detail": {
       "loading": "Loading alarm…",

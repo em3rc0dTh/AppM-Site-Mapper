@@ -2185,7 +2185,12 @@
       "status": "Estado",
       "viewLabel": "Vista de alarmas",
       "fromDate": "Desde fecha",
-      "toDate": "Hasta fecha"
+      "toDate": "Hasta fecha",
+      "allStatuses": "Todos los estados",
+      "targetIdLabel": "ID de equipo",
+      "firstPage": "Primera página",
+      "nextPage": "Siguiente página",
+      "pageSizeNote": "50 eventos por página · fechas UTC"
     },
     "detail": {
       "loading": "Cargando alarma…",

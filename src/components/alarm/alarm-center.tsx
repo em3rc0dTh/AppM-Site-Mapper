@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useMemo, useState } from 'react';
 
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
+import { AlarmHistory } from '@/components/alarm/alarm-history';
 import { compactAlarmPath } from '@/components/alarm/alarm-path';
 import type {
   AlarmAcknowledgement,
@@ -23,8 +24,6 @@ export function AlarmCenter() {
   const t = useTranslations('alarmUi.center');
   const { snapshot, loading, error, refresh } = useAlarmSnapshot(true);
   const [view, setView] = useState<'ACTIVE' | 'RESOLVED' | 'HISTORY'>('ACTIVE');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
   const [severity, setSeverity] = useState<'ALL' | AlarmSeverity>('ALL');
   const [family, setFamily] = useState<'ALL' | AlarmFamily>('ALL');
   const [ack, setAck] = useState<'ALL' | AlarmAcknowledgement>('ALL');
@@ -53,8 +52,6 @@ export function AlarmCenter() {
     const needle = search.trim().toLowerCase();
     return snapshot.occurrences
       .filter((item) => view === 'HISTORY' || item.lifecycle === view)
-      .filter((item) => !fromDate || item.openedAt.slice(0, 10) >= fromDate)
-      .filter((item) => !toDate || item.openedAt.slice(0, 10) <= toDate)
       .filter((item) => severity === 'ALL' || item.severity === severity)
       .filter((item) => family === 'ALL' || item.family === family)
       .filter((item) => ack === 'ALL' || item.acknowledgement === ack)
@@ -78,7 +75,7 @@ export function AlarmCenter() {
           severityRank[b.severity] - severityRank[a.severity] ||
           b.openedAt.localeCompare(a.openedAt),
       );
-  }, [ack, family, fromDate, qdf, search, severity, site, snapshot.occurrences, toDate, view]);
+  }, [ack, family, qdf, search, severity, site, snapshot.occurrences, view]);
 
   return (
     <section className="sm-alarm-center">
@@ -122,6 +119,10 @@ export function AlarmCenter() {
             </article>
           </div>
 
+          {view === 'HISTORY' ? (
+            <AlarmHistory />
+          ) : (
+            <>
           <div className="sm-alarm-filters">
             <div className="sm-alarm-view-tabs" role="group" aria-label={t('viewLabel')}>
               {(['ACTIVE', 'RESOLVED', 'HISTORY'] as const).map((tab) => (
@@ -189,14 +190,6 @@ export function AlarmCenter() {
               <option value="UNACKNOWLEDGED">{t('unacknowledged')}</option>
               <option value="ACKNOWLEDGED">{t('acknowledged')}</option>
             </select>
-            <label className="sm-alarm-date-filter">
-              <span>{t('fromDate')}</span>
-              <input type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} />
-            </label>
-            <label className="sm-alarm-date-filter">
-              <span>{t('toDate')}</span>
-              <input type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} />
-            </label>
             <input
               aria-label={t('searchLabel')}
               type="search"
@@ -206,12 +199,6 @@ export function AlarmCenter() {
             />
           </div>
 
-          {view === 'HISTORY' ? (
-            <section className="sm-alarm-history-heading" aria-label={t('history')}>
-              <h2>{t('history')}</h2>
-              <p>{t('historyDescription')}</p>
-            </section>
-          ) : null}
           <div className="sm-alarm-table-wrap">
             <table className="sm-alarm-table">
               <thead>
@@ -262,6 +249,8 @@ export function AlarmCenter() {
               </tbody>
             </table>
           </div>
+            </>
+          )}
         </>
       )}
     </section>

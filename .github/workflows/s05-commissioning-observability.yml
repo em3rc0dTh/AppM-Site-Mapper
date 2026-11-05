@@ -1,0 +1,64 @@
+name: S05 commissioning observability
+
+on:
+  push:
+    branches:
+      - feat/s05-commissioning-audit
+    paths:
+      - src/app/api/industrial/commissioning/route.ts
+      - src/components/industrial/commissioning-console.tsx
+      - src/components/industrial/commissioning-observability.tsx
+      - src/modules/industrial/application/commissioning-observability.ts
+      - src/messages/en.json
+      - src/messages/es.json
+      - scripts/operations/audit-s05-commissioning.mjs
+      - config/industrial/s05-commissioning-reference.example.json
+      - tests/unit/commissioning-observability.test.ts
+      - .github/workflows/s05-commissioning-observability.yml
+  pull_request:
+    paths:
+      - src/app/api/industrial/commissioning/route.ts
+      - src/components/industrial/commissioning-console.tsx
+      - src/components/industrial/commissioning-observability.tsx
+      - src/modules/industrial/application/commissioning-observability.ts
+      - src/messages/en.json
+      - src/messages/es.json
+      - scripts/operations/audit-s05-commissioning.mjs
+      - config/industrial/s05-commissioning-reference.example.json
+      - tests/unit/commissioning-observability.test.ts
+      - .github/workflows/s05-commissioning-observability.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  s05:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: S05 unit observability
+        run: npx vitest run tests/unit/commissioning-observability.test.ts
+      - name: I18n catalogs
+        run: npx vitest run tests/unit/i18n-catalogs.test.ts tests/unit/i18n-static-ui.test.ts
+      - name: TypeScript compile
+        run: npm run typecheck
+      - name: Formatting
+        run: >
+          npx prettier --check
+          src/app/api/industrial/commissioning/route.ts
+          src/components/industrial/commissioning-console.tsx
+          src/components/industrial/commissioning-observability.tsx
+          src/modules/industrial/application/commissioning-observability.ts
+          scripts/operations/audit-s05-commissioning.mjs
+          config/industrial/s05-commissioning-reference.example.json
+          tests/unit/commissioning-observability.test.ts

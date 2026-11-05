@@ -7,6 +7,7 @@ import { requirePermission } from '@/modules/identity/application/current-sessio
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { WarehouseService } from '@/modules/warehouse/application/warehouse-service';
 import { createWarehouseRepository } from '@/modules/warehouse/infrastructure/warehouse-repository-factory';
+import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,6 +49,8 @@ export default async function WarehousePage() {
           </div>
         </section>
       )}
+
+      <ThradexAttribution />
     </main>
   );
 }

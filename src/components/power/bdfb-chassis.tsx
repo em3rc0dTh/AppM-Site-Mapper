@@ -87,9 +87,7 @@ export function BdfbChassis({
     const x = Math.max(8, Math.min(rect.left, window.innerWidth - menuWidth - 8));
     const below = rect.bottom + 6;
     const y =
-      below + menuHeight <= window.innerHeight
-        ? below
-        : Math.max(8, rect.top - menuHeight - 6);
+      below + menuHeight <= window.innerHeight ? below : Math.max(8, rect.top - menuHeight - 6);
     setEditingBreaker(null);
     setContextMenu({ id: breaker.id, label: breaker.label, x, y });
   }
@@ -262,9 +260,7 @@ export function BdfbChassis({
                     {alarmSnapshot.rollups[breaker.id]?.activeAlarmCount ? (
                       <em
                         className="sm-breaker-alarm-dot"
-                        data-severity={
-                          alarmSnapshot.rollups[breaker.id]!.highestSeverity ?? 'INFO'
-                        }
+                        data-severity={alarmSnapshot.rollups[breaker.id]!.highestSeverity ?? 'INFO'}
                       >
                         {alarmSnapshot.rollups[breaker.id]!.activeAlarmCount}
                       </em>

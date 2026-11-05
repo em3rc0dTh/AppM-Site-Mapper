@@ -317,7 +317,8 @@ export function BreakerLimitEditor({
                   <ul>
                     {history.map((entry) => (
                       <li key={entry.id}>
-                        <time dateTime={entry.occurredAt}>{entry.occurredAt}</time> · {entry.actorId}
+                        <time dateTime={entry.occurredAt}>{entry.occurredAt}</time> ·{' '}
+                        {entry.actorId}
                         <div>
                           {t('ratingChange', {
                             before: entry.before?.ratedCurrentA ?? t('unset'),

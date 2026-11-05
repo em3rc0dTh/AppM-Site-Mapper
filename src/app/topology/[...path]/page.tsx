@@ -409,7 +409,10 @@ export default async function TopologyNodePage({
         )}
       </nav>
 
-      <ResizableWorkspace className="operational-layout telxius-operational-layout" userKey={auth.value.id}>
+      <ResizableWorkspace
+        className="operational-layout telxius-operational-layout"
+        userKey={auth.value.id}
+      >
         <aside className="operational-context">
           {navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />}
           {node.kind === 'DEVICE' && bdfbPresentation && (

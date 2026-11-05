@@ -77,7 +77,10 @@ export default async function BlueprintPage({
           </Link>
         ))}
       </nav>
-      <ResizableWorkspace className="operational-layout operational-layout--blueprint" userKey={auth.value.id}>
+      <ResizableWorkspace
+        className="operational-layout operational-layout--blueprint"
+        userKey={auth.value.id}
+      >
         <aside className="operational-context">
           {tree && <TopologyContextTree tree={tree} activeId={roomId} />}
         </aside>

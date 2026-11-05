@@ -1,6 +1,14 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type PointerEvent,
+  type ReactNode,
+} from 'react';
 
 type Side = 'tree' | 'inspector';
 type Widths = { tree: number; inspector: number };
@@ -8,9 +16,16 @@ const DEFAULT: Widths = { tree: 232, inspector: 320 };
 const LIMITS = { tree: 180, inspector: 240, canvas: 320 } as const;
 
 export function constrainWorkspaceWidths(width: number, proposed: Widths): Widths {
-  if (!Number.isFinite(width) || width < LIMITS.tree + LIMITS.inspector + LIMITS.canvas) return DEFAULT;
-  const tree = Math.max(LIMITS.tree, Math.min(Math.round(proposed.tree), Math.min(420, width - LIMITS.inspector - LIMITS.canvas)));
-  const inspector = Math.max(LIMITS.inspector, Math.min(Math.round(proposed.inspector), Math.min(520, width - tree - LIMITS.canvas)));
+  if (!Number.isFinite(width) || width < LIMITS.tree + LIMITS.inspector + LIMITS.canvas)
+    return DEFAULT;
+  const tree = Math.max(
+    LIMITS.tree,
+    Math.min(Math.round(proposed.tree), Math.min(420, width - LIMITS.inspector - LIMITS.canvas)),
+  );
+  const inspector = Math.max(
+    LIMITS.inspector,
+    Math.min(Math.round(proposed.inspector), Math.min(520, width - tree - LIMITS.canvas)),
+  );
   return { tree, inspector };
 }
 
@@ -61,16 +76,19 @@ export function ResizableWorkspace({
 
   const constrained = constrainWorkspaceWidths(width, widths);
 
-  const update = useCallback((next: Widths) => {
-    const containerWidth = ref.current?.getBoundingClientRect().width ?? width;
-    const safe = constrainWorkspaceWidths(containerWidth, next);
-    setWidths(safe);
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(safe));
-    } catch {
-      // Layout preferences are optional; private browsing must remain usable.
-    }
-  }, [storageKey, width]);
+  const update = useCallback(
+    (next: Widths) => {
+      const containerWidth = ref.current?.getBoundingClientRect().width ?? width;
+      const safe = constrainWorkspaceWidths(containerWidth, next);
+      setWidths(safe);
+      try {
+        window.localStorage.setItem(storageKey, JSON.stringify(safe));
+      } catch {
+        // Layout preferences are optional; private browsing must remain usable.
+      }
+    },
+    [storageKey, width],
+  );
 
   const handlePointerDown = (side: Side, event: PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0 || width < 900) return;
@@ -115,14 +133,24 @@ export function ResizableWorkspace({
         if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
         event.preventDefault();
         const direction = side === 'tree' ? 1 : -1;
-        const change = event.key === 'ArrowRight' ? 16 * direction : event.key === 'ArrowLeft' ? -16 * direction : 0;
+        const change =
+          event.key === 'ArrowRight'
+            ? 16 * direction
+            : event.key === 'ArrowLeft'
+              ? -16 * direction
+              : 0;
         update({
           ...constrained,
-          [side]: event.key === 'Home'
-            ? (side === 'tree' ? LIMITS.tree : LIMITS.inspector)
-            : event.key === 'End'
-              ? (side === 'tree' ? 420 : 520)
-              : constrained[side] + change,
+          [side]:
+            event.key === 'Home'
+              ? side === 'tree'
+                ? LIMITS.tree
+                : LIMITS.inspector
+              : event.key === 'End'
+                ? side === 'tree'
+                  ? 420
+                  : 520
+                : constrained[side] + change,
         });
       }}
     />
@@ -145,10 +173,18 @@ export function ResizableWorkspace({
       {separator('tree')}
       {separator('inspector')}
       <div className="s03-mobile-controls" role="group" aria-label="Workspace panels">
-        <button type="button" aria-expanded={treeOpen} onClick={() => setTreeOpen((value) => !value)}>
+        <button
+          type="button"
+          aria-expanded={treeOpen}
+          onClick={() => setTreeOpen((value) => !value)}
+        >
           {treeOpen ? 'Hide tree' : 'Show tree'}
         </button>
-        <button type="button" aria-expanded={inspectorOpen} onClick={() => setInspectorOpen((value) => !value)}>
+        <button
+          type="button"
+          aria-expanded={inspectorOpen}
+          onClick={() => setInspectorOpen((value) => !value)}
+        >
           {inspectorOpen ? 'Hide inspector' : 'Show inspector'}
         </button>
       </div>

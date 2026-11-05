@@ -8,12 +8,14 @@ describe('S03 panel constraints', () => {
   });
   it('rejects non-finite workspace widths', () => {
     expect(constrainWorkspaceWidths(Number.NaN, { tree: 1000, inspector: 1000 })).toEqual({
-      tree: 232, inspector: 320,
+      tree: 232,
+      inspector: 320,
     });
   });
   it('keeps desktop panel widths within configured bounds', () => {
     expect(constrainWorkspaceWidths(1400, { tree: 0, inspector: 999 })).toEqual({
-      tree: 180, inspector: 520,
+      tree: 180,
+      inspector: 520,
     });
   });
 });

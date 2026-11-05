@@ -54,17 +54,47 @@ until docker exec "$PG" pg_isready -U site_mapper -d site_mapper_telemetry >/dev
   sleep 1
 done
 
-docker exec "$PG" psql -X -q -U site_mapper -d site_mapper_telemetry \
+docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d site_mapper_telemetry \
   -c 'CREATE EXTENSION IF NOT EXISTS timescaledb;' >/dev/null
-docker exec "$PG" psql -X -q -U site_mapper -d site_mapper_telemetry \
-  -c 'SELECT timescaledb_pre_restore();' >/dev/null
+
+# TimescaleDB's pre-restore hook stops background workers. Some container/image
+# combinations terminate the invoking psql connection while doing so. Treat that
+# disconnect as acceptable only if PostgreSQL becomes ready again immediately;
+# any persistent outage still fails closed.
+set +e
+docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d site_mapper_telemetry \
+  -c 'SELECT timescaledb_pre_restore();' >/dev/null 2>&1
+PRE_RESTORE_RC=$?
+set -e
+
+i=0
+until docker exec "$PG" pg_isready -U site_mapper -d site_mapper_telemetry >/dev/null 2>&1; do
+  i=$((i + 1))
+  [ "$i" -lt 60 ] || {
+    echo "TimescaleDB did not recover readiness after pre_restore (rc=$PRE_RESTORE_RC)" >&2
+    exit 4
+  }
+  sleep 1
+done
+
+# Verify the restoring GUC before trusting a disconnected pre_restore session.
+RESTORING="$(docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1 \
+  -U site_mapper -d site_mapper_telemetry \
+  -c "SELECT current_setting('timescaledb.restoring', true);")"
+case "$RESTORING" in
+  on|true|1) ;;
+  *)
+    echo "timescaledb_pre_restore did not leave restore mode enabled (rc=$PRE_RESTORE_RC, restoring=$RESTORING)" >&2
+    exit 4
+    ;;
+esac
 
 docker exec -i "$PG" pg_restore \
   -U site_mapper -d site_mapper_telemetry \
   --no-owner --no-privileges --exit-on-error \
   < "$BACKUP_DIR/timescale.dump"
 
-docker exec "$PG" psql -X -q -U site_mapper -d site_mapper_telemetry \
+docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d site_mapper_telemetry \
   -c 'SELECT timescaledb_post_restore();' >/dev/null
 
 TABLE_COUNT="$(docker exec "$PG" psql -X -At -U site_mapper -d site_mapper_telemetry   -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('telemetry_samples','telemetry_entity_samples');")"

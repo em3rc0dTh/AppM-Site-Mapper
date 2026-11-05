@@ -1,4 +1,5 @@
 import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
+import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 import Link from 'next/link';
 import { RoomLayoutEditor } from '@/components/blueprint/room-layout-editor';
 import { DeleteEntityControl } from '@/components/topology/delete-entity-control';
@@ -160,6 +161,7 @@ export default async function BlueprintPage({
             <span>⌗</span>
             <p>{t('instruction')}</p>
           </div>
+          <ThradexAttribution variant="inspector" />
         </aside>
       </ResizableWorkspace>
     </main>

@@ -24,6 +24,7 @@ export interface BreakerProtectionInput {
   readonly clearBelowA: number;
   readonly provenance: BreakerProtection['provenance'];
   readonly expectedRevision: number;
+  readonly verificationConfirmed?: boolean;
 }
 
 const SOURCES: readonly BreakerRatingSource[] = [
@@ -33,7 +34,7 @@ const SOURCES: readonly BreakerRatingSource[] = [
 export function parseBreakerProtectionInput(value: unknown): BreakerProtectionInput {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('INVALID_BREAKER_LIMITS');
   const body = value as Record<string, unknown>;
-  if (Object.keys(body).some((key) => !['ratedCurrentA','assertAboveA','clearBelowA','provenance','expectedRevision'].includes(key))) {
+  if (Object.keys(body).some((key) => !['ratedCurrentA','assertAboveA','clearBelowA','provenance','expectedRevision','verificationConfirmed'].includes(key))) {
     throw new Error('INVALID_BREAKER_LIMITS');
   }
   const positive = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v > 0 && v <= 100_000;
@@ -59,11 +60,18 @@ export function parseBreakerProtectionInput(value: unknown): BreakerProtectionIn
   if (p.source !== 'PROVISIONAL_STANDARD' && (!p.verified || !p.reference || typeof p.reference !== 'string' || !p.reference.trim())) {
     throw new Error('VERIFIED_RATING_REQUIRES_EVIDENCE');
   }
+  if (p.source !== 'PROVISIONAL_STANDARD' && body.verificationConfirmed !== true) {
+    throw new Error('VERIFIED_RATING_REQUIRES_CONFIRMATION');
+  }
+  if (body.verificationConfirmed !== undefined && typeof body.verificationConfirmed !== 'boolean') {
+    throw new Error('INVALID_BREAKER_CONFIRMATION');
+  }
   return {
     ratedCurrentA: body.ratedCurrentA as number,
     assertAboveA: body.assertAboveA as number,
     clearBelowA: body.clearBelowA as number,
     expectedRevision: body.expectedRevision as number,
+    ...(body.verificationConfirmed === true ? { verificationConfirmed: true } : {}),
     provenance: {
       source: p.source as BreakerRatingSource,
       verified: p.verified as boolean,
@@ -83,6 +91,7 @@ export function readBreakerProtection(attributes: Readonly<Record<string, unknow
       clearBelowA: v.clearBelowA,
       provenance: v.provenance,
       expectedRevision: 0,
+      verificationConfirmed: true, // Reading stored evidence is not an operator mutation.
     });
     return {
       ratedCurrentA: parsed.ratedCurrentA,

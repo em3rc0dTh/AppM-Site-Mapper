@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import './breaker-limit-editor.css';
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 

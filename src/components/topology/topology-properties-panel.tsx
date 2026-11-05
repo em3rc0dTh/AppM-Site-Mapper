@@ -1,4 +1,5 @@
 import { useTranslations } from 'next-intl';
+import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import { isValidPolygon, polygonArea } from '@/modules/spatial/domain/geometry';
 import type { TopologyNode } from '@/modules/topology/domain/entities';
@@ -97,7 +98,8 @@ export function TopologyPropertiesPanel({
             </div>
           </dl>
         </section>
-      </aside>
+        <ThradexAttribution variant="inspector" />
+    </aside>
     );
   }
 
@@ -128,7 +130,8 @@ export function TopologyPropertiesPanel({
             {t('toOpen')}
           </p>
         </div>
-      </aside>
+        <ThradexAttribution variant="inspector" />
+    </aside>
     );
   }
 
@@ -189,7 +192,8 @@ export function TopologyPropertiesPanel({
           <span>{t('mappedBreakers', { count: mappedBreakers })}</span>
           <span>{t('selectPanel')}</span>
         </div>
-      </aside>
+        <ThradexAttribution variant="inspector" />
+    </aside>
     );
   }
 
@@ -224,7 +228,8 @@ export function TopologyPropertiesPanel({
             <small>{t('devicePreserved')}</small>
           </div>
         </section>
-      </aside>
+        <ThradexAttribution variant="inspector" />
+    </aside>
     );
   }
 
@@ -246,7 +251,8 @@ export function TopologyPropertiesPanel({
             {t('inspectProperties')}
           </p>
         </div>
-      </aside>
+        <ThradexAttribution variant="inspector" />
+    </aside>
     );
   }
 
@@ -263,6 +269,7 @@ export function TopologyPropertiesPanel({
           <strong>{contained}</strong>
         </div>
       </section>
+      <ThradexAttribution variant="inspector" />
     </aside>
   );
 }

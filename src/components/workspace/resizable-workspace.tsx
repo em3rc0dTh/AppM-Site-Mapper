@@ -51,9 +51,9 @@ export function ResizableWorkspace({
     // This keeps server and client markup identical during React hydration.
     const frame = window.requestAnimationFrame(() => {
       try {
-        const stored = JSON.parse(window.localStorage.getItem(storageKey) || 'null') as
-          | Partial<Widths>
-          | null;
+        const stored = JSON.parse(
+          window.localStorage.getItem(storageKey) || 'null',
+        ) as Partial<Widths> | null;
         if (
           typeof stored?.tree === 'number' &&
           Number.isFinite(stored.tree) &&

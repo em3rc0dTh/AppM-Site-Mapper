@@ -76,17 +76,35 @@ done
 
 i=0
 while :; do
-  MQTT_ROWS="$(pg_scalar "SELECT count(*) FROM telemetry_samples WHERE source_identity IN ('26092403950003','26092403950004','26092403950002');")"
-  MQTT_ROWS="$(numeric_scalar "$MQTT_ROWS")"
-  SNMP_ROWS="$(pg_scalar "SELECT count(*) FROM telemetry_entity_samples WHERE source_identity IN ('INT-SNMP-QDF-2','INT-SNMP-QDF-4','INT-SNMP-QDF-5');")"
-  SNMP_ROWS="$(numeric_scalar "$SNMP_ROWS")"
-  if [ "$MQTT_ROWS" -gt 0 ] && [ "$SNMP_ROWS" -gt 0 ]; then
+  ready=1
+  MQTT_ROWS=0
+  for serial in 26092403950003 26092403950004 26092403950002; do
+    count="$(pg_scalar "SELECT count(*) FROM telemetry_samples WHERE source_identity='$serial';")"
+    count="$(numeric_scalar "$count")"
+    MQTT_ROWS=$((MQTT_ROWS + count))
+    if [ "$count" -le 0 ]; then
+      ready=0
+    fi
+  done
+
+  SNMP_ROWS=0
+  for source in INT-SNMP-QDF-2 INT-SNMP-QDF-4 INT-SNMP-QDF-5; do
+    count="$(pg_scalar "SELECT count(*) FROM telemetry_entity_samples WHERE source_identity='$source';")"
+    count="$(numeric_scalar "$count")"
+    SNMP_ROWS=$((SNMP_ROWS + count))
+    if [ "$count" -le 0 ]; then
+      ready=0
+    fi
+  done
+
+  if [ "$ready" -eq 1 ]; then
     break
   fi
+
   i=$((i + 1))
   [ "$i" -lt 90 ] || {
     dc logs --tail 150 mqtt-publisher snmp-collector-qdf2 snmp-collector-qdf4 snmp-collector-qdf5 site-mapper
-    echo "S00 local telemetry did not converge" >&2
+    echo "S00 local telemetry did not converge for all 3 MQTT + 3 SNMP sources" >&2
     exit 11
   }
   sleep 1

@@ -18,6 +18,7 @@ export function AlarmHistory() {
   const [toDate, setToDate] = useState('');
   const [targetId, setTargetId] = useState('');
   const [cursor, setCursor] = useState<string | null>(null);
+  const [cursorTrail, setCursorTrail] = useState<readonly (string | null)[]>([]);
   const [page, setPage] = useState<Page>(DEFAULT_PAGE);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -38,6 +39,7 @@ export function AlarmHistory() {
     async function load() {
       setLoading(true);
       setError('');
+      setPage(DEFAULT_PAGE);
       try {
         const response = await fetch('/api/alarms/history?' + filters +
           (cursor ? '&cursor=' + encodeURIComponent(cursor) : ''), {
@@ -60,6 +62,7 @@ export function AlarmHistory() {
 
   const update = (callback: () => void) => {
     setCursor(null);
+    setCursorTrail([]);
     callback();
   };
   return (
@@ -108,8 +111,15 @@ export function AlarmHistory() {
       </div>
       <footer className="sm-alarm-history-pagination">
         <span>{t('pageSizeNote')}</span>
-        <button type="button" disabled={loading || !cursor} onClick={() => setCursor(null)}>{t('firstPage')}</button>
-        <button type="button" disabled={loading || !page.nextCursor} onClick={() => setCursor(page.nextCursor)}>{t('nextPage')}</button>
+        <button type="button" disabled={loading || !cursor} onClick={() => { setCursor(null); setCursorTrail([]); }}>{t('firstPage')}</button>
+        <button type="button" disabled={loading || !cursorTrail.length} onClick={() => {
+          setCursor(cursorTrail[cursorTrail.length - 1] ?? null);
+          setCursorTrail((trail) => trail.slice(0, -1));
+        }}>{t('previousPage')}</button>
+        <button type="button" disabled={loading || !page.nextCursor} onClick={() => {
+          setCursorTrail((trail) => [...trail, cursor]);
+          setCursor(page.nextCursor);
+        }}>{t('nextPage')}</button>
       </footer>
     </section>
   );

@@ -102,6 +102,7 @@ services:
   site-mapper:
     environment:
       SITE_MAPPER_INTEGRATION_PROFILE: office-field
+      SITE_MAPPER_CREDENTIAL_KEY: '${SITE_MAPPER_CREDENTIAL_KEY:?Set a private credential encryption key}'
       TELEMETRY_ENABLED: 'true'
       MQTT_CLIENT_ID: '${MQTT_CLIENT_ID:-site-mapper-office-field}'
       MQTT_BROKER_URL: mqtt://mosquitto:1883

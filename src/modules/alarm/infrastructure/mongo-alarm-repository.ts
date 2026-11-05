@@ -58,24 +58,29 @@ export class MongoAlarmRepository implements AlarmRepository {
   }
 
   async listHistory(query: AlarmHistoryQuery): Promise<AlarmHistoryPage> {
-    const filter: Filter<OccurrenceDocument> = {};
-    if (query.lifecycle) filter.lifecycle = query.lifecycle;
-    if (query.acknowledgement) filter.acknowledgement = query.acknowledgement;
-    if (query.severity) filter.severity = query.severity;
-    if (query.targetId) filter.targetId = query.targetId;
-    if (query.fromDate || query.toDate) {
-      filter.openedAt = {
-        ...(query.fromDate ? { $gte: query.fromDate + 'T00:00:00.000Z' } : {}),
-        ...(query.toDate ? { $lte: query.toDate + 'T23:59:59.999Z' } : {}),
-      };
-    }
-    if (query.cursor) {
-      const previous = parseHistoryCursor(query.cursor);
-      filter.$or = [
-        { openedAt: { $lt: previous.openedAt } },
-        { openedAt: previous.openedAt, id: { $lt: previous.id } },
-      ];
-    }
+    const previous = query.cursor ? parseHistoryCursor(query.cursor) : null;
+    const filter: Filter<OccurrenceDocument> = {
+      ...(query.lifecycle ? { lifecycle: query.lifecycle } : {}),
+      ...(query.acknowledgement ? { acknowledgement: query.acknowledgement } : {}),
+      ...(query.severity ? { severity: query.severity } : {}),
+      ...(query.targetId ? { targetId: query.targetId } : {}),
+      ...(query.fromDate || query.toDate
+        ? {
+            openedAt: {
+              ...(query.fromDate ? { $gte: query.fromDate + 'T00:00:00.000Z' } : {}),
+              ...(query.toDate ? { $lte: query.toDate + 'T23:59:59.999Z' } : {}),
+            },
+          }
+        : {}),
+      ...(previous
+        ? {
+            $or: [
+              { openedAt: { $lt: previous.openedAt } },
+              { openedAt: previous.openedAt, id: { $lt: previous.id } },
+            ],
+          }
+        : {}),
+    };
     const documents = await this.occurrences.find(filter).sort({ openedAt: -1, id: -1 })
       .limit(query.limit + 1).toArray();
     return takeHistoryPage(

@@ -35,6 +35,17 @@ test -f infra/site-mapper/Dockerfile || fail "Site Mapper Dockerfile missing"
 
 echo "Sprint 01 LOCAL-ONLY. No TFARM, OFFICE, or FIELD targets."
 echo "MongoDB is disposable, has no published ports and no persistent volumes."
+# Fast preflight against the current checkout using the previously built Node 22
+# image. On retries, this catches formatting errors BEFORE expensive rebuilds.
+if docker image inspect "$IMAGE" >/dev/null 2>&1; then
+  echo "=== 0/6 FAST PRECHECK (NO REBUILD) ==="
+  docker run --rm --network none \
+    -v "$ROOT_DIR:/source:ro" -w /source "$IMAGE" \
+    node /app/node_modules/prettier/bin/prettier.cjs \
+    --check . --end-of-line auto ||
+    fail "Source formatting failed before build; run npx prettier --write tests/integration/breaker-limits-mongo.test.ts --end-of-line auto"
+fi
+
 echo "=== 1/6 BUILD NODE 22 / NEXT.JS VALIDATION IMAGE ==="
 docker build --target build -t "$IMAGE" -f infra/site-mapper/Dockerfile . ||
   fail "Docker build / Next.js build failed"

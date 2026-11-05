@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
-import { Suspense, useEffect, useState, type ReactNode } from 'react';
+import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Role } from '@/modules/identity/domain/roles';
 
 import { CommandPalette } from './command-palette';
@@ -28,6 +28,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [role, setRole] = useState<Role | null>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const brandRef = useRef<HTMLAnchorElement>(null);
+  const actionsRef = useRef<HTMLDivElement>(null);
 
   // The root layout persists across client-side login/navigation. Resolve the
   // current role in the shell so a STANDARD user never sees the ADMIN label.
@@ -57,6 +60,31 @@ export function AppShell({ children }: { children: ReactNode }) {
       });
     return () => controller.abort();
   }, [pathname]);
+
+  useEffect(() => {
+    const shell = shellRef.current;
+    const brand = brandRef.current;
+    const actions = actionsRef.current;
+    if (!shell || !brand || !actions) return;
+
+    const syncTopbarGeometry = () => {
+      shell.style.setProperty(
+        '--s03-topbar-brand-width',
+        `${Math.ceil(brand.getBoundingClientRect().width)}px`,
+      );
+      shell.style.setProperty(
+        '--s03-topbar-actions-width',
+        `${Math.ceil(actions.getBoundingClientRect().width)}px`,
+      );
+    };
+
+    syncTopbarGeometry();
+    const observer = new ResizeObserver(syncTopbarGeometry);
+    observer.observe(brand);
+    observer.observe(actions);
+    return () => observer.disconnect();
+  }, []);
+
 
   if (pathname === '/login' || pathname === '/change-password' || pathname.startsWith('/workbench'))
     return children;
@@ -98,6 +126,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   return (
     <div
+      ref={shellRef}
       className={[
         'app-shell',
         'zip-app-shell',
@@ -114,7 +143,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
 
       <header className="app-topbar zip-topbar">
-        <Link href="/workspace" className="zip-brand">
+        <Link ref={brandRef} href="/workspace" className="zip-brand">
           <BrandMark />
           <span>
             <strong>SITE MAPPER</strong>
@@ -130,7 +159,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <ContextTracker />
         </Suspense>
 
-        <div className="zip-topbar-actions">
+        <div ref={actionsRef} className="zip-topbar-actions">
           <CommandPalette />
           <ContextualHelp key={pathname} />
           <AlarmHeaderBadge />

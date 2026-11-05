@@ -219,3 +219,17 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+
+/* S03 acceptance: immersive breadcrumbs are bounded by the measured brand and
+   action cluster widths. This replaces brittle breakpoint-specific right offsets
+   and prevents Search/actions from overlapping the current-location trail. */
+.zip-app-shell.app-shell--immersive .breadcrumbs,
+.zip-app-shell .mk-device-page .breadcrumbs {
+  left: var(--s03-topbar-brand-width, 310px) !important;
+  right: var(--s03-topbar-actions-width, 950px) !important;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: none;
+  overflow: hidden;
+}

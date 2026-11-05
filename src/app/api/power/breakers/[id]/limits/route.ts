@@ -12,8 +12,14 @@ function status(error: string): number {
   if (error === 'BREAKER_STALE_WRITE' || error === 'BREAKER_POLICY_STALE_WRITE' ||
       error === 'BREAKER_POLICY_AMBIGUOUS' || error === 'BREAKER_CURRENT_BINDING_REQUIRED' ||
       error === 'BREAKER_POLICY_SOURCE_MISMATCH' || error === 'BREAKER_TOPOLOGY_CONFLICT' ||
-      error === 'VERIFIED_RATING_DOWNGRADE_FORBIDDEN') return 409;
-  return 422;
+      error === 'VERIFIED_RATING_DOWNGRADE_FORBIDDEN' || error === 'EXISTING_RATING_REQUIRES_RECONCILIATION' ||
+      error === 'BREAKER_EXISTING_RATING_INVALID') return 409;
+  if (error.startsWith('INVALID_BREAKER_') || error === 'PROVISIONAL_RATING_CANNOT_BE_VERIFIED' ||
+      error === 'VERIFIED_RATING_REQUIRES_EVIDENCE') return 422;
+  return 500;
+}
+function publicCode(error: string): string {
+  return status(error) === 500 ? 'BREAKER_LIMIT_INTERNAL_ERROR' : error;
 }
 function unavailable() {
   return NextResponse.json({ error: 'BREAKER_LIMITS_REQUIRE_PERSISTENT_STORAGE' }, { status: 503 });
@@ -29,7 +35,7 @@ export async function GET(_request: Request, context: Context) {
     return NextResponse.json({ ...(await service.get(id)), canEdit: canWrite.ok }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (error) {
     const code = error instanceof Error ? error.message : 'BREAKER_LIMIT_READ_FAILED';
-    return NextResponse.json({error:code}, {status:status(code)});
+    return NextResponse.json({error:publicCode(code)}, {status:status(code)});
   }
 }
 export async function PATCH(request: Request, context: Context) {
@@ -50,6 +56,6 @@ export async function PATCH(request: Request, context: Context) {
     return NextResponse.json(result, {headers:{'Cache-Control':'no-store'}});
   } catch (error) {
     const code = error instanceof Error ? error.message : 'BREAKER_LIMIT_WRITE_FAILED';
-    return NextResponse.json({error:code},{status: status(code)});
+    return NextResponse.json({error:publicCode(code)},{status: status(code)});
   }
 }

@@ -10,6 +10,7 @@ describe('S05 OFFICE secret wiring', () => {
     const template = read('infra/field/office-test.env.example');
     const init = read('infra/field/init-office-env.sh');
     const compose = read('docker-compose.telemetry.yml');
+    const officeCompose = read('docker-compose.office-test.yml');
     const gitignore = read('.gitignore');
 
     expect(template).toContain('SITE_MAPPER_CREDENTIAL_KEY=CHANGE_ME');
@@ -21,7 +22,8 @@ describe('S05 OFFICE secret wiring', () => {
     expect(init).toContain('"SITE_MAPPER_CREDENTIAL_KEY"');
     expect(init).not.toContain('MQTT password: $MQTT_PASSWORD');
     expect(init).toContain('MQTT password: generated in the private runtime env (not printed)');
-    expect(compose).toContain(
+    expect(compose).toContain("SITE_MAPPER_CREDENTIAL_KEY: '${SITE_MAPPER_CREDENTIAL_KEY:-}'");
+    expect(officeCompose).toContain(
       "SITE_MAPPER_CREDENTIAL_KEY: '${SITE_MAPPER_CREDENTIAL_KEY:?Set a private credential encryption key}'",
     );
     expect(gitignore).toContain('.runtime/');

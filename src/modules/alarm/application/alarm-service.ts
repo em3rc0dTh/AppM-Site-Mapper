@@ -152,7 +152,8 @@ export class AlarmService {
   async acknowledge(id: string, actorId: string): Promise<AlarmOccurrence> {
     const current = await this.alarms.getOccurrence(id);
     if (!current) throw new Error('ALARM_NOT_FOUND');
-    if (current.lifecycle !== 'ACTIVE') throw new Error('ALARM_NOT_ACTIVE');
+    // Acknowledgement records operator awareness, independently from the physical condition.
+    // Resolved-but-unacknowledged occurrences remain eligible for ACK.
     if (current.acknowledgement === 'ACKNOWLEDGED') return current;
 
     const now = new Date().toISOString();

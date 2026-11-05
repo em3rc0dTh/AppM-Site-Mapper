@@ -15,7 +15,7 @@ export async function GET(request: Request) {
   return NextResponse.json(
     await service.snapshot({
       includeResolved,
-      resolvedLimit: 100,
+      resolvedLimit: 500,
     }),
   );
 }

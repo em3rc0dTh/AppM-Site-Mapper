@@ -22,7 +22,9 @@ function scopeName(alarm: AlarmOccurrenceView, kind: string): string {
 export function AlarmCenter() {
   const t = useTranslations('alarmUi.center');
   const { snapshot, loading, error, refresh } = useAlarmSnapshot(true);
-  const [showResolved, setShowResolved] = useState(false);
+  const [view, setView] = useState<'ACTIVE' | 'RESOLVED' | 'HISTORY'>('ACTIVE');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
   const [severity, setSeverity] = useState<'ALL' | AlarmSeverity>('ALL');
   const [family, setFamily] = useState<'ALL' | AlarmFamily>('ALL');
   const [ack, setAck] = useState<'ALL' | AlarmAcknowledgement>('ALL');
@@ -50,9 +52,9 @@ export function AlarmCenter() {
   const rows = useMemo(() => {
     const needle = search.trim().toLowerCase();
     return snapshot.occurrences
-      .filter((item) =>
-        showResolved ? item.lifecycle === 'RESOLVED' : item.lifecycle === 'ACTIVE',
-      )
+      .filter((item) => view === 'HISTORY' || item.lifecycle === view)
+      .filter((item) => !fromDate || item.openedAt.slice(0, 10) >= fromDate)
+      .filter((item) => !toDate || item.openedAt.slice(0, 10) <= toDate)
       .filter((item) => severity === 'ALL' || item.severity === severity)
       .filter((item) => family === 'ALL' || item.family === family)
       .filter((item) => ack === 'ALL' || item.acknowledgement === ack)
@@ -76,7 +78,7 @@ export function AlarmCenter() {
           severityRank[b.severity] - severityRank[a.severity] ||
           b.openedAt.localeCompare(a.openedAt),
       );
-  }, [ack, family, qdf, search, severity, showResolved, site, snapshot.occurrences]);
+  }, [ack, family, fromDate, qdf, search, severity, site, snapshot.occurrences, toDate, view]);
 
   return (
     <section className="sm-alarm-center">
@@ -121,16 +123,18 @@ export function AlarmCenter() {
           </div>
 
           <div className="sm-alarm-filters">
-            <button
-              type="button"
-              aria-pressed={!showResolved}
-              onClick={() => setShowResolved(false)}
-            >
-              {t('active')}
-            </button>
-            <button type="button" aria-pressed={showResolved} onClick={() => setShowResolved(true)}>
-              {t('resolved')}
-            </button>
+            <div className="sm-alarm-view-tabs" role="group" aria-label={t('viewLabel')}>
+              {(['ACTIVE', 'RESOLVED', 'HISTORY'] as const).map((tab) => (
+                <button
+                  key={tab}
+                  type="button"
+                  aria-pressed={view === tab}
+                  onClick={() => setView(tab)}
+                >
+                  {tab === 'ACTIVE' ? t('active') : tab === 'RESOLVED' ? t('resolved') : t('history')}
+                </button>
+              ))}
+            </div>
             <select
               aria-label={t('severityLabel')}
               value={severity}
@@ -185,6 +189,14 @@ export function AlarmCenter() {
               <option value="UNACKNOWLEDGED">{t('unacknowledged')}</option>
               <option value="ACKNOWLEDGED">{t('acknowledged')}</option>
             </select>
+            <label className="sm-alarm-date-filter">
+              <span>{t('fromDate')}</span>
+              <input type="date" value={fromDate} max={toDate || undefined} onChange={(event) => setFromDate(event.target.value)} />
+            </label>
+            <label className="sm-alarm-date-filter">
+              <span>{t('toDate')}</span>
+              <input type="date" value={toDate} min={fromDate || undefined} onChange={(event) => setToDate(event.target.value)} />
+            </label>
             <input
               aria-label={t('searchLabel')}
               type="search"
@@ -194,6 +206,12 @@ export function AlarmCenter() {
             />
           </div>
 
+          {view === 'HISTORY' ? (
+            <section className="sm-alarm-history-heading" aria-label={t('history')}>
+              <h2>{t('history')}</h2>
+              <p>{t('historyDescription')}</p>
+            </section>
+          ) : null}
           <div className="sm-alarm-table-wrap">
             <table className="sm-alarm-table">
               <thead>
@@ -202,6 +220,7 @@ export function AlarmCenter() {
                   <th>{t('alarm')}</th>
                   <th>{t('targetPath')}</th>
                   <th>{t('since')}</th>
+                  <th>{t('status')}</th>
                   <th>{t('ack')}</th>
                   <th>{t('confidence')}</th>
                   <th>{t('actions')}</th>
@@ -223,7 +242,8 @@ export function AlarmCenter() {
                         .join(' › ') || alarm.targetId}
                     </td>
                     <td>{new Date(alarm.openedAt).toLocaleString()}</td>
-                    <td>{alarm.acknowledgement === 'ACKNOWLEDGED' ? 'ACK' : '—'}</td>
+                    <td>{alarm.lifecycle}</td>
+                    <td>{alarm.acknowledgement === 'ACKNOWLEDGED' ? 'ACK' : 'UNACK'}</td>
                     <td>{alarm.confidence ?? '—'}</td>
                     <td>
                       <Link href={'/alarms/' + encodeURIComponent(alarm.id)}>
@@ -236,7 +256,7 @@ export function AlarmCenter() {
                 ))}
                 {!loading && rows.length === 0 ? (
                   <tr>
-                    <td colSpan={7}>{t('empty')}</td>
+                    <td colSpan={8}>{t('empty')}</td>
                   </tr>
                 ) : null}
               </tbody>

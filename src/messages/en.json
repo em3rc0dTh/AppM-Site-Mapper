@@ -2179,7 +2179,13 @@
       "actions": "Actions",
       "openDetail": "Open detail",
       "goToTarget": "Go to target",
-      "empty": "No alarms in this view."
+      "empty": "No alarms in this view.",
+      "history": "History / Event Log",
+      "historyDescription": "Resolved alarms are not deleted. Inspect each occurrence's state, acknowledgement and original evidence.",
+      "status": "Status",
+      "viewLabel": "Alarm view",
+      "fromDate": "From date",
+      "toDate": "To date"
     },
     "detail": {
       "loading": "Loading alarm…",

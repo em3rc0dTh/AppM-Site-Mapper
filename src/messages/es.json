@@ -2179,7 +2179,13 @@
       "actions": "Acciones",
       "openDetail": "Abrir detalle",
       "goToTarget": "Ir al objetivo",
-      "empty": "No hay alarmas en esta vista."
+      "empty": "No hay alarmas en esta vista.",
+      "history": "Historial / Registro de eventos",
+      "historyDescription": "Las alarmas resueltas no se eliminan. Consulta el estado, reconocimiento y la evidencia original de cada ocurrencia.",
+      "status": "Estado",
+      "viewLabel": "Vista de alarmas",
+      "fromDate": "Desde fecha",
+      "toDate": "Hasta fecha"
     },
     "detail": {
       "loading": "Cargando alarma…",

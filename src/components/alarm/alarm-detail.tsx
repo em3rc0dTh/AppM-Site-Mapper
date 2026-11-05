@@ -66,7 +66,6 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
         </div>
         <div>
           {canAck &&
-          occurrence.lifecycle === 'ACTIVE' &&
           occurrence.acknowledgement === 'UNACKNOWLEDGED' ? (
             <button type="button" disabled={busy} onClick={() => void acknowledge()}>
               {busy ? t('acknowledging') : t('acknowledge')}

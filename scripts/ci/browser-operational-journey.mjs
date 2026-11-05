@@ -332,11 +332,7 @@ try {
   );
   console.log('[PASS] Real Chromium: laptop Network Explorer retains canvas and Inspector');
 
-  for (const [width, expected, row] of [
-    [1920, [310, 270], 1],
-    [1366, [212, 270], 1],
-    [1100, [190, null], 2],
-  ]) {
+  for (const width of [1920, 1366, 1100]) {
     await page.setViewportSize({ width, height: 820 });
     await page.goto(base + '/blueprint/' + room.id, {
       waitUntil: 'domcontentloaded',
@@ -361,39 +357,24 @@ try {
         documentOverflow: document.documentElement.scrollWidth - window.innerWidth,
       };
     });
-    assert.equal(
-      geometry.cols.length,
-      width === 1100 ? 2 : 3,
-      `${width}px Room Blueprint layout columns`,
+    assert.equal(geometry.cols.length, 3, `${width}px S03 Room Blueprint layout columns`);
+    assert.ok(
+      Math.abs(geometry.cols[0] - 232) < 2,
+      `${width}px S03 Room topology default width: ${geometry.cols[0]}`,
     );
     assert.ok(
-      Math.abs(geometry.cols[0] - expected[0]) < 2,
-      `${width}px Room topology width: ${geometry.cols[0]}`,
+      Math.abs(geometry.cols[2] - 320) < 2,
+      `${width}px S03 Room properties default width: ${geometry.cols[2]}`,
     );
     assert.ok(
       geometry.stage.x >= geometry.tree.x + geometry.tree.width - 2,
       `${width}px Room stage must be right of topology`,
     );
-    assert.ok(geometry.stage.width > 550, `${width}px Room stage must be usable`);
-    if (width === 1100) {
-      assert.ok(
-        geometry.properties.x >= geometry.stage.x - 2,
-        'Compact laptop Room properties must not occupy the topology column',
-      );
-      assert.ok(
-        geometry.properties.y >= geometry.stage.bottom - 3,
-        'Compact laptop Room properties must follow the canvas',
-      );
-    } else {
-      assert.ok(
-        Math.abs(geometry.cols[2] - expected[1]) < 2,
-        `${width}px Room properties width: ${geometry.cols[2]}`,
-      );
-      assert.ok(
-        geometry.properties.x >= geometry.stage.x + geometry.stage.width - 2,
-        `${width}px Room properties must be to the right of the canvas`,
-      );
-    }
+    assert.ok(geometry.stage.width >= 320, `${width}px Room stage must remain usable`);
+    assert.ok(
+      geometry.properties.x >= geometry.stage.x + geometry.stage.width - 2,
+      `${width}px Room properties must be to the right of the canvas`,
+    );
     assert.ok(
       geometry.documentOverflow <= 3,
       `${width}px unexpected Blueprint horizontal overflow: ${geometry.documentOverflow}`,

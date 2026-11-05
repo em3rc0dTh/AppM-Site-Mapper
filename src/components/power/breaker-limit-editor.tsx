@@ -11,6 +11,7 @@ interface LimitsView {
   protection: BreakerProtection | null;
   policy: { assertAboveA: number; clearBelowA: number } | null;
   canEdit: boolean;
+  policyEnabled: boolean | null;
 }
 interface Event {
   id: string;
@@ -104,6 +105,11 @@ export function BreakerLimitEditor({
         {loading ? <p>Loading breaker limits…</p> : error&&!data ? <p role="alert">{error}</p> : data ? (
           <>
             <p className="sm-breaker-limit-note">Breaker current thresholds (A). These values do not configure incoming SNMP shunt ratings.</p>
+            {data.policyEnabled === false ? (
+              <p role="status">Existing alarm policy is DISABLED. Saving limits does not enable it.</p>
+            ) : data.policyEnabled === null ? (
+              <p role="status">No policy currently exists; saving will commission an OVERCURRENT policy when the breaker has exactly one active MQTT current binding.</p>
+            ) : null}
             <form onSubmit={save} className="sm-breaker-limit-form">
               <label>Nominal rating (A)
                 <input type="number" min="0.001" max="100000" step="any" required value={rating}

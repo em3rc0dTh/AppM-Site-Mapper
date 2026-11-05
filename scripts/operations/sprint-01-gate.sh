@@ -46,9 +46,9 @@ if docker image inspect "$IMAGE" >/dev/null 2>&1; then
     fail "Source formatting failed before build; run npx prettier --write tests/integration/breaker-limits-mongo.test.ts --end-of-line auto"
 fi
 
-echo "=== 1/6 BUILD NODE 22 / NEXT.JS VALIDATION IMAGE ==="
-docker build --target build -t "$IMAGE" -f infra/site-mapper/Dockerfile . ||
-  fail "Docker build / Next.js build failed"
+echo "=== 1/6 BUILD NODE 22 TEST IMAGE (NO NEXT.JS REBUILD) ==="
+docker build --target test -t "$IMAGE" -f infra/site-mapper/Dockerfile . ||
+  fail "Node 22 test image build failed"
 
 echo "=== 2/6 STATIC QUALITY / BREAKER UNIT TESTS ==="
 docker run --rm --network none "$IMAGE" sh -ec '

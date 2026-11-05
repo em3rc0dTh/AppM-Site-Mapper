@@ -46,7 +46,8 @@
       "snmpSeparation": "SNMP incoming DC shunts are independent from MQTT breaker readings.",
       "hideSnmp": "HIDE SNMP FEEDS",
       "showSnmp": "INSPECT SNMP FEEDS",
-      "alarms": "Alarms"
+      "alarms": "Alarms",
+      "declaredPowerTarget": "DECLARED POWER TARGET"
     }
   },
   "bdfb": {
@@ -393,7 +394,8 @@
       "liveMeasurements": "Live measurements",
       "companionFeedAvailable": "FEED {side} AVAILABLE",
       "openCompanionFeed": "OPEN FEED {side} ↗",
-      "remarks": "REMARKS"
+      "remarks": "REMARKS",
+      "detachedTitle": "SITE MAPPER · DETACHED WORKBENCH"
     },
     "rack": {
       "elevation": "ELEVATION",
@@ -1160,7 +1162,7 @@
     "close": "Close telemetry",
     "offline": "OFFLINE · No measurements received for this context.",
     "empty": "No mapped metrics for this object.",
-    "powerPathHistory": "POWER PATH HISTORY",
+    "powerPathHistory": "Power path history",
     "timeSeriesBreaker": "Timeseries · breaker",
     "timescale": "TimescaleDB",
     "telemetryTemporarilyUnavailable": "Telemetry temporarily unavailable",
@@ -1351,7 +1353,11 @@
     "positionAvailable": "Position {position}: available",
     "alarmCount": "{count, plural, one {# alarm} other {# alarms}}",
     "feedLabel": "Feed {side}",
-    "companionAvailable": "Feed {side} available"
+    "companionAvailable": "Feed {side} available",
+    "configureLimitsHint": "Configure breaker limits (also available with right click)",
+    "closeMenu": "Close breaker menu",
+    "limitsHistory": "Configure limits & history",
+    "openBreaker": "Open breaker"
   },
   "bdfbTree": {
     "tree": "BDFB power tree",
@@ -1780,7 +1786,8 @@
     "metricVoltage": "Voltage",
     "metricCurrent": "Current",
     "metricPower": "Power",
-    "metricEnergy": "Energy counter"
+    "metricEnergy": "Energy counter",
+    "metricLabel": "Telemetry metric"
   },
   "fullTrace": {
     "source": "SOURCE {feed}",
@@ -2281,5 +2288,38 @@
     "history": "History",
     "fieldOnly": "FIELD canonical data only",
     "sourceUnavailable": "No source data is available for this view."
+  },
+  "breakerLimits": {
+    "title": "Breaker current limits",
+    "close": "Close breaker limits",
+    "loading": "Loading breaker limits…",
+    "note": "Breaker current thresholds (A). These values do not configure incoming SNMP shunt ratings.",
+    "disabled": "Existing alarm policy is DISABLED. Saving limits does not enable it.",
+    "commission": "No policy currently exists; saving will commission an OVERCURRENT policy when the breaker has exactly one active MQTT current binding.",
+    "rating": "Nominal rating (A)",
+    "assert": "Alarm assert at/above (A)",
+    "clear": "Alarm clear at/below (A)",
+    "provenance": "Rating provenance",
+    "reference": "Evidence reference",
+    "confirm": "I confirm the rating source and evidence reference were reviewed.",
+    "provisional": "PROVISIONAL · not field verified",
+    "hysteresis": "Clear threshold must be strictly below the assert threshold. Verified field ratings cannot be downgraded.",
+    "readOnly": "Read only · `power:write` permission required.",
+    "historyLabel": "Breaker limit change history",
+    "history": "Change history",
+    "empty": "No recorded changes.",
+    "confirmError": "Confirm the verified source and evidence reference before saving.",
+    "saving": "Saving…",
+    "save": "Save breaker limits",
+    "unset": "unset",
+    "ratingChange": "Rating: {before} → {after} A",
+    "assertChange": "Assert: {before} → {after} A",
+    "clearChange": "Clear: {before} → {after} A",
+    "sources": {
+      "PROVISIONAL_STANDARD": "Provisional standard",
+      "FIELD_SURVEY": "Field survey",
+      "MANUFACTURER": "Manufacturer",
+      "CUSTOMER_DOCUMENT": "Customer document"
+    }
   }
 }

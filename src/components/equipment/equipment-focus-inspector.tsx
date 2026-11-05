@@ -71,7 +71,9 @@ export function EquipmentFocusInspector({
   );
   const summary = projectCompositionTelemetry(equipment, equipmentById, readings);
   const breaker = equipment.equipmentType === 'CIRCUIT_BREAKER';
-  const declaredTarget = breaker ? equipment.aliases?.find((alias) => alias.trim().length > 0) : undefined;
+  const declaredTarget = breaker
+    ? equipment.aliases?.find((alias) => alias.trim().length > 0)
+    : undefined;
   const current = breaker ? readings[equipment.id] : undefined;
   const visibleTabs = canReadTelemetry ? TABS : TABS.filter((key) => key !== 'telemetry');
   const activeTab = tab === 'telemetry' && !canReadTelemetry ? 'overview' : tab;
@@ -110,7 +112,7 @@ export function EquipmentFocusInspector({
             background: '#f8fbff',
           }}
         >
-          <small style={{ display: 'block', marginBottom: 4 }}>DECLARED POWER TARGET</small>
+          <small style={{ display: 'block', marginBottom: 4 }}>{t('declaredPowerTarget')}</small>
           <strong>{declaredTarget}</strong>
         </div>
       ) : null}

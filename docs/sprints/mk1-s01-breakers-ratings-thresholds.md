@@ -16,12 +16,14 @@
 ## User stories and acceptance
 
 ### HU-009 — Identify a breaker
+
 - Present panel identity (for example `A3`), physical position (`P04`), breaker identifier and existing label in the BDFB Physical View.
 - The stable breaker identity comes from the canonical installed Equipment tree, never derived from display coordinates alone.
 - Empty positions have no writable breaker target; panel and position remain visible.
 - **AC:** operator can unambiguously find the same breaker from the physical view and its detailed view, including after reload.
 
 ### HU-010 — Context menu
+
 - Right-click an installed breaker opens a focused menu anchored to that breaker with `Configure breaker limits` and `View breaker`; `Escape` and outside click close it.
 - Keyboard/focus and accessible alternative must be available; do not make right-click the sole path.
 - Only authorized roles can invoke editing; unauthorized users may view values but cannot mutate through browser or direct API.
@@ -29,6 +31,7 @@
 - **AC:** selecting an installed breaker opens exactly its configuration; clicking an empty slot does not open a writable configuration.
 
 ### HU-011 — Ratings and limits
+
 - Show `ratedCurrentA`, `assertAboveA`, `clearBelowA`, source/provenance and verification status.
 - Units always A; values must be finite and positive where applicable. `clearBelowA < assertAboveA` is mandatory. Hysteresis and equality semantics follow the existing alarm policy contract and must be documented, not guessed.
 - Distinguish rating (device nameplate/commissioned fact) from policy thresholds (editable operational settings).
@@ -36,18 +39,21 @@
 - **AC:** authorized operator can save a valid threshold pair and retrieve exactly the saved values; invalid input fails without partial writes.
 
 ### HU-012 — Provenance
+
 - Persist the rating's source and verification state. An operator-provided verified rating requires an evidence reference and explicit authorized confirmation.
 - Existing verified field/manufacturer/customer-document values win over seeds or provisional values.
 - Changing thresholds must not silently change provenance or certify hardware.
 - **AC:** restart and seed reconciliation preserve verified ratings and their evidence.
 
 ### HU-013 — Safe persistence and alarm policy
+
 - The write is server-side authorized and targeted by canonical breaker ID; validate ownership, breaker type, expected revision and all numeric constraints.
 - Update the threshold policy consistently with the accepted alarm-domain model, without changing other breakers, MQTT bindings, shunt ratings or Modbus mappings.
 - Reject stale edits with an explicit conflict rather than losing a concurrent operator's changes.
 - **AC:** after reload, only the selected breaker and its intended alarm policy show the new limits; another breaker's policy remains unchanged.
 
 ### HU-014 — Audit trail
+
 - Capture breaker ID, panel/path context, actor, timestamp, before/after rating and threshold values, provenance change, result and a safe correlation/request ID.
 - Never log credentials, raw secrets or unrestricted telemetry payloads.
 - Audit must survive UI reload and preserve historical changes. Failed validation must not produce a successful mutation audit.

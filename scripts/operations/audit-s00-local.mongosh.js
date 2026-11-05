@@ -18,51 +18,64 @@ let totalBreakers = 0;
 const qdfs = [];
 
 for (const spec of expected) {
-  const devices = d.topology_nodes.find({
-    kind: 'DEVICE',
-    lifecycle: 'ACTIVE',
-    deviceType: 'BDFB',
-    name: spec.name,
-  }).toArray();
+  const devices = d.topology_nodes
+    .find({
+      kind: 'DEVICE',
+      lifecycle: 'ACTIVE',
+      deviceType: 'BDFB',
+      name: spec.name,
+    })
+    .toArray();
   assert(devices.length === 1, spec.key + ' active Device expected exactly once');
   const device = devices[0];
 
-  const breakers = d.topology_nodes.find({
-    kind: 'EQUIPMENT',
-    lifecycle: 'ACTIVE',
-    deviceId: device.id,
-    equipmentType: 'CIRCUIT_BREAKER',
-  }).toArray();
-  assert(breakers.length === spec.breakers, spec.key + ' expected ' + spec.breakers + ' breakers, found ' + breakers.length);
-  totalBreakers += breakers.length;
-
-  for (const panelName of ['A3', 'B3']) {
-    const panels = d.topology_nodes.find({
+  const breakers = d.topology_nodes
+    .find({
       kind: 'EQUIPMENT',
       lifecycle: 'ACTIVE',
       deviceId: device.id,
-      equipmentType: 'PANEL',
-      name: panelName,
-    }).toArray();
+      equipmentType: 'CIRCUIT_BREAKER',
+    })
+    .toArray();
+  assert(
+    breakers.length === spec.breakers,
+    spec.key + ' expected ' + spec.breakers + ' breakers, found ' + breakers.length,
+  );
+  totalBreakers += breakers.length;
+
+  for (const panelName of ['A3', 'B3']) {
+    const panels = d.topology_nodes
+      .find({
+        kind: 'EQUIPMENT',
+        lifecycle: 'ACTIVE',
+        deviceId: device.id,
+        equipmentType: 'PANEL',
+        name: panelName,
+      })
+      .toArray();
     assert(panels.length === 1, spec.key + ' expected one ' + panelName);
     const occupied = panels[0].children.filter(Boolean).length;
     assert(occupied === spec.breakers / 2, spec.key + ' ' + panelName + ' occupied=' + occupied);
   }
 
-  const gateway = d.topology_nodes.find({
-    kind: 'EQUIPMENT',
-    lifecycle: 'ACTIVE',
-    deviceId: device.id,
-    serialNumber: spec.serial,
-  }).toArray();
+  const gateway = d.topology_nodes
+    .find({
+      kind: 'EQUIPMENT',
+      lifecycle: 'ACTIVE',
+      deviceId: device.id,
+      serialNumber: spec.serial,
+    })
+    .toArray();
   assert(gateway.length === 1, spec.key + ' gateway serial mismatch');
 
-  const sourceBindings = d.telemetry_bindings.find({
-    lifecycle: 'ACTIVE',
-    protocol: 'MQTT',
-    sourceIdentity: spec.serial,
-    metric: 'SOURCE',
-  }).toArray();
+  const sourceBindings = d.telemetry_bindings
+    .find({
+      lifecycle: 'ACTIVE',
+      protocol: 'MQTT',
+      sourceIdentity: spec.serial,
+      metric: 'SOURCE',
+    })
+    .toArray();
   assert(sourceBindings.length === 1, spec.key + ' expected one MQTT SOURCE binding');
 
   const metricBindings = d.telemetry_bindings.countDocuments({
@@ -71,14 +84,19 @@ for (const spec of expected) {
     sourceIdentity: spec.serial,
     sourcePointId: { $exists: true },
   });
-  assert(metricBindings === spec.breakers * 4, spec.key + ' expected ' + (spec.breakers * 4) + ' MQTT metric bindings, found ' + metricBindings);
+  assert(
+    metricBindings === spec.breakers * 4,
+    spec.key + ' expected ' + spec.breakers * 4 + ' MQTT metric bindings, found ' + metricBindings,
+  );
 
   const snmpSource = 'INT-SNMP-' + spec.key;
-  const snmpBindings = d.telemetry_bindings.find({
-    lifecycle: 'ACTIVE',
-    protocol: 'SNMP',
-    sourceIdentity: snmpSource,
-  }).toArray();
+  const snmpBindings = d.telemetry_bindings
+    .find({
+      lifecycle: 'ACTIVE',
+      protocol: 'SNMP',
+      sourceIdentity: snmpSource,
+    })
+    .toArray();
   assert(snmpBindings.length === 8, snmpSource + ' expected 8 controlled Config4 bindings');
 
   qdfs.push({
@@ -92,21 +110,27 @@ for (const spec of expected) {
 
 assert(totalBreakers === 74, 'expected 74 breakers, found ' + totalBreakers);
 
-const duplicateSourceBindings = d.telemetry_bindings.aggregate([
-  { $match: { lifecycle: 'ACTIVE' } },
-  { $group: {
-      _id: {
-        protocol: '$protocol',
-        sourceIdentity: '$sourceIdentity',
-        sourcePointId: { $ifNull: ['$sourcePointId', null] },
-        metric: '$metric',
+const duplicateSourceBindings = d.telemetry_bindings
+  .aggregate([
+    { $match: { lifecycle: 'ACTIVE' } },
+    {
+      $group: {
+        _id: {
+          protocol: '$protocol',
+          sourceIdentity: '$sourceIdentity',
+          sourcePointId: { $ifNull: ['$sourcePointId', null] },
+          metric: '$metric',
+        },
+        count: { $sum: 1 },
       },
-      count: { $sum: 1 },
-    }
-  },
-  { $match: { count: { $gt: 1 } } },
-]).toArray();
-assert(duplicateSourceBindings.length === 0, 'duplicate active source bindings: ' + JSON.stringify(duplicateSourceBindings));
+    },
+    { $match: { count: { $gt: 1 } } },
+  ])
+  .toArray();
+assert(
+  duplicateSourceBindings.length === 0,
+  'duplicate active source bindings: ' + JSON.stringify(duplicateSourceBindings),
+);
 
 printjson({
   status: 'S00_LOCAL_MONGO_PASS',

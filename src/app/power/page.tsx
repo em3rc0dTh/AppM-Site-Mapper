@@ -348,7 +348,9 @@ export default async function PowerPage({
                   <h3 style={{ margin: '10px 0 4px' }}>{declaredTarget}</h3>
                   <p style={{ margin: 0 }}>{t('excelSeedDestination')}</p>
                   <hr style={{ margin: '20px 0', border: 0, borderTop: '1px solid #e5eaf0' }} />
-                  <strong>○ {t('powerInput')} · {t('unresolved')}</strong>
+                  <strong>
+                    ○ {t('powerInput')} · {t('unresolved')}
+                  </strong>
                 </article>
 
                 <div
@@ -387,10 +389,11 @@ export default async function PowerPage({
                   </p>
                   <p style={{ margin: 0 }}>{t('feedSide', { side: declaredFeed ?? '—' })}</p>
                   <hr style={{ margin: '20px 0', border: 0, borderTop: '1px solid #e5eaf0' }} />
-                  <strong>● {selectedBreaker.accessPorts[0]?.name ?? t('powerOutputFallback')}</strong>
+                  <strong>
+                    ● {selectedBreaker.accessPorts[0]?.name ?? t('powerOutputFallback')}
+                  </strong>
                 </article>
               </div>
-
             </section>
           ) : (
             <div className="zip-power-empty">{t('noActive')}</div>
@@ -408,7 +411,12 @@ export default async function PowerPage({
           <dl>
             <dt>{t('status')}</dt>
             <dd className={primary ? 'is-good' : ''}>
-              ● {primary ? t('configuredLower') : hasDeclaredFallback ? t('declared') : t('notConfigured')}
+              ●{' '}
+              {primary
+                ? t('configuredLower')
+                : hasDeclaredFallback
+                  ? t('declared')
+                  : t('notConfigured')}
             </dd>
             <dt>{t('feedLabel')}</dt>
             <dd>{primary?.feed ?? declaredFeed ?? '—'}</dd>

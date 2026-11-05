@@ -1,9 +1,6 @@
 /** S01 — canonical breaker protection settings, not SNMP shunt capacity. */
 export type BreakerRatingSource =
-  | 'PROVISIONAL_STANDARD'
-  | 'FIELD_SURVEY'
-  | 'MANUFACTURER'
-  | 'CUSTOMER_DOCUMENT';
+  'PROVISIONAL_STANDARD' | 'FIELD_SURVEY' | 'MANUFACTURER' | 'CUSTOMER_DOCUMENT';
 
 export interface BreakerProtection {
   readonly ratedCurrentA: number;
@@ -28,20 +25,42 @@ export interface BreakerProtectionInput {
 }
 
 const SOURCES: readonly BreakerRatingSource[] = [
-  'PROVISIONAL_STANDARD', 'FIELD_SURVEY', 'MANUFACTURER', 'CUSTOMER_DOCUMENT',
+  'PROVISIONAL_STANDARD',
+  'FIELD_SURVEY',
+  'MANUFACTURER',
+  'CUSTOMER_DOCUMENT',
 ];
 
 export function parseBreakerProtectionInput(value: unknown): BreakerProtectionInput {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('INVALID_BREAKER_LIMITS');
+  if (!value || typeof value !== 'object' || Array.isArray(value))
+    throw new Error('INVALID_BREAKER_LIMITS');
   const body = value as Record<string, unknown>;
-  if (Object.keys(body).some((key) => !['ratedCurrentA','assertAboveA','clearBelowA','provenance','expectedRevision','verificationConfirmed'].includes(key))) {
+  if (
+    Object.keys(body).some(
+      (key) =>
+        ![
+          'ratedCurrentA',
+          'assertAboveA',
+          'clearBelowA',
+          'provenance',
+          'expectedRevision',
+          'verificationConfirmed',
+        ].includes(key),
+    )
+  ) {
     throw new Error('INVALID_BREAKER_LIMITS');
   }
-  const positive = (v: unknown) => typeof v === 'number' && Number.isFinite(v) && v > 0 && v <= 100_000;
-  if (!positive(body.ratedCurrentA) || !positive(body.assertAboveA) || !positive(body.clearBelowA)) {
+  const positive = (v: unknown) =>
+    typeof v === 'number' && Number.isFinite(v) && v > 0 && v <= 100_000;
+  if (
+    !positive(body.ratedCurrentA) ||
+    !positive(body.assertAboveA) ||
+    !positive(body.clearBelowA)
+  ) {
     throw new Error('INVALID_BREAKER_LIMITS');
   }
-  if ((body.clearBelowA as number) >= (body.assertAboveA as number)) throw new Error('INVALID_BREAKER_HYSTERESIS');
+  if ((body.clearBelowA as number) >= (body.assertAboveA as number))
+    throw new Error('INVALID_BREAKER_HYSTERESIS');
   if (!Number.isSafeInteger(body.expectedRevision) || (body.expectedRevision as number) < 0) {
     throw new Error('INVALID_BREAKER_REVISION');
   }
@@ -49,15 +68,20 @@ export function parseBreakerProtectionInput(value: unknown): BreakerProtectionIn
     throw new Error('INVALID_BREAKER_PROVENANCE');
   }
   const p = body.provenance as Record<string, unknown>;
-  if (Object.keys(p).some((key) => !['source','verified','reference'].includes(key))) throw new Error('INVALID_BREAKER_PROVENANCE');
+  if (Object.keys(p).some((key) => !['source', 'verified', 'reference'].includes(key)))
+    throw new Error('INVALID_BREAKER_PROVENANCE');
   if (!SOURCES.includes(p.source as BreakerRatingSource) || typeof p.verified !== 'boolean') {
     throw new Error('INVALID_BREAKER_PROVENANCE');
   }
   if (p.reference !== undefined && (typeof p.reference !== 'string' || p.reference.length > 320)) {
     throw new Error('INVALID_BREAKER_PROVENANCE');
   }
-  if (p.source === 'PROVISIONAL_STANDARD' && p.verified) throw new Error('PROVISIONAL_RATING_CANNOT_BE_VERIFIED');
-  if (p.source !== 'PROVISIONAL_STANDARD' && (!p.verified || !p.reference || typeof p.reference !== 'string' || !p.reference.trim())) {
+  if (p.source === 'PROVISIONAL_STANDARD' && p.verified)
+    throw new Error('PROVISIONAL_RATING_CANNOT_BE_VERIFIED');
+  if (
+    p.source !== 'PROVISIONAL_STANDARD' &&
+    (!p.verified || !p.reference || typeof p.reference !== 'string' || !p.reference.trim())
+  ) {
     throw new Error('VERIFIED_RATING_REQUIRES_EVIDENCE');
   }
   if (p.source !== 'PROVISIONAL_STANDARD' && body.verificationConfirmed !== true) {
@@ -75,12 +99,16 @@ export function parseBreakerProtectionInput(value: unknown): BreakerProtectionIn
     provenance: {
       source: p.source as BreakerRatingSource,
       verified: p.verified as boolean,
-      ...(typeof p.reference === 'string' && p.reference.trim() ? { reference: p.reference.trim() } : {}),
+      ...(typeof p.reference === 'string' && p.reference.trim()
+        ? { reference: p.reference.trim() }
+        : {}),
     },
   };
 }
 
-export function readBreakerProtection(attributes: Readonly<Record<string, unknown>> | undefined): BreakerProtection | null {
+export function readBreakerProtection(
+  attributes: Readonly<Record<string, unknown>> | undefined,
+): BreakerProtection | null {
   const value = attributes?.breakerProtection;
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const v = value as Record<string, unknown>;

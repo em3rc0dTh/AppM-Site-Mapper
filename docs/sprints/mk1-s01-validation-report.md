@@ -6,6 +6,47 @@
 **Branch:** `feat/mk1-s01-breaker-ratings-thresholds`
 **Gate decision:** **NOT ACCEPTED — DO NOT START S02 / DO NOT MERGE OR DEPLOY.**
 
+## Correction and executed validation — 2026-11-05
+
+Source snapshot: `3365e30b09012e97514ff9fdd3ce0c6f6b832841`. Retrieved through the authorized GitHub connector; the private repository cannot be cloned with anonymous Git in this environment. All source and binary assets were recovered; dependency versions were preserved. Validation used Node **22.23.4** and `npm ci` with the committed lockfile.
+
+### Confirmed defects corrected
+
+- Three TS2769 errors in `BreakerLimitService.context`: omit the optional Mongo `session` property outside a transaction, rather than passing `undefined` with `exactOptionalPropertyTypes` enabled. Transaction calls still pass their session.
+- Missing bilingual messages in the breaker editor/context menu and four pre-existing UI labels: added EN/ES catalog messages without weakening the i18n test.
+- Pre-existing lint failure in `DeclaredPowerFloatingWindow`: removed redundant mounted state/effect. The portal is already guarded by `open`, initially false and set only by a browser click.
+- Applied the existing formatter to files failing the repository-wide format gate. Outside the fixes above, these are formatting-only changes; no migration, seed, collector or deployment was executed.
+
+### Executed receipts
+
+| Check                                       | Actual result                                                                    |
+| ------------------------------------------- | -------------------------------------------------------------------------------- |
+| TypeScript                                  | PASS, after fixing the three session-option errors                               |
+| ESLint                                      | PASS                                                                             |
+| Repository format                           | PASS                                                                             |
+| Documentation links                         | PASS: 21 entrypoints, 178 links                                                  |
+| Unit tests                                  | PASS: 68 files, 287 tests; additional 2 SNMP Node tests                          |
+| Integration suite                           | PASS: 79 tests; 7 database/infra-dependent tests SKIPPED, not accepted as passes |
+| Certification suite                         | PASS: 2 tests                                                                    |
+| Next.js optimized build                     | PASS, Next.js 16.4.2                                                             |
+| Industrial contracts                        | PASS: 9 tests                                                                    |
+| Mongo audit regression                      | PASS: 7 tests (does not certify a live database)                                 |
+| Modbus TCP server regression                | PASS: 9 tests                                                                    |
+| Telemetry history SQL regression            | PASS: 4 Python tests                                                             |
+| Modbus certification / seed launcher syntax | PASS; scripts were not executed against a deployment                             |
+| Production dependency audit                 | PASS: 0 vulnerabilities                                                          |
+
+### Remaining execution blockers
+
+- Re-ran GitHub CI `42054039952`; attempt 2 job `127344172306` failed before exposing steps. Its log endpoint returned `404 BlobNotFound`. The connector cannot read check annotations; the failure reason is **not confirmed**. Do not attribute this to billing or to a particular workflow action without evidence.
+- Downloaded official MongoDB 7.0.14 and attempted a disposable loopback replica set on port 27027. Startup failed with `std::exception in initAndListen: open: Operation not permitted`, exit 100. No database acceptance result was produced.
+- Added `tests/integration/breaker-limits-mongo.test.ts`: real commit/readback, sibling isolation, concurrent revisions, server-rejected audit rollback, disabled-policy preservation, protected rating and stale-write scenarios. It runs as a required step after disposable Mongo initialization in the HTTP acceptance workflow. These new scenarios are **NOT EXECUTED** here; compiling them is not acceptance.
+- Real HTTP/browser acceptance, persistent Mongo behavior and operator approval remain pending. **S01 remains NOT ACCEPTED; S02 has not started.** No merge or deployment was performed.
+
+**TFARM04 was not accessed or modified.** No customer database, Timescale service, Docker volume or field configuration was touched. All local test data and service attempts were disposable.
+
+The earlier observations below remain as historical context, superseded by the executed receipts above where applicable.
+
 ## Evidence and constraints
 
 - Reviewed source in the PR for breaker physical positions, contextual menu/editor, domain input validation, protected API routes, transactional service, alarm policy projection, audit events, persistence indexes, and proposed unit tests.
@@ -20,14 +61,14 @@
 
 ## Story-by-story gate
 
-| Story | Source review | Acceptance |
-|---|---|---|
-| HU-009 Panel and breaker position | Existing canonical positions P01.. and Equipment links inspected | PENDING physical-view navigation check |
-| HU-010 Right-click / accessible alternate action | Context menu, edit shortcut and focus containment inspected | PENDING browser interaction/accessibility check |
-| HU-011 Nominal rating / alert thresholds | Input validation and editor inspected | PENDING persisted end-to-end edit |
-| HU-012 Evidence and provenance | Verified source requires reference + explicit confirmation; downgrade guards inspected | PENDING legacy-field reconciliation against real DB |
-| HU-013 Scoped persistence / alarm policy | CAS, server permission check and transactional service inspected | PENDING Mongo replica-set commit, rollback and concurrent-edit check |
-| HU-014 Append-only audit | Indexes and before/after audit inserts inspected | PENDING durable history and failure-atomicity check |
+| Story                                            | Source review                                                                          | Acceptance                                                           |
+| ------------------------------------------------ | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| HU-009 Panel and breaker position                | Existing canonical positions P01.. and Equipment links inspected                       | PENDING physical-view navigation check                               |
+| HU-010 Right-click / accessible alternate action | Context menu, edit shortcut and focus containment inspected                            | PENDING browser interaction/accessibility check                      |
+| HU-011 Nominal rating / alert thresholds         | Input validation and editor inspected                                                  | PENDING persisted end-to-end edit                                    |
+| HU-012 Evidence and provenance                   | Verified source requires reference + explicit confirmation; downgrade guards inspected | PENDING legacy-field reconciliation against real DB                  |
+| HU-013 Scoped persistence / alarm policy         | CAS, server permission check and transactional service inspected                       | PENDING Mongo replica-set commit, rollback and concurrent-edit check |
+| HU-014 Append-only audit                         | Indexes and before/after audit inserts inspected                                       | PENDING durable history and failure-atomicity check                  |
 
 ## Mandatory acceptance scenarios
 

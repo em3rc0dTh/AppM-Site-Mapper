@@ -270,13 +270,8 @@ describe('TelemetryService', () => {
       }),
     );
     expect(
-      (
-        await service.ingest(
-          'data/dev/AUTO-QDF-4',
-          voltageAndCurrent,
-          '2026-09-22T00:00:02.000Z',
-        )
-      ).ok,
+      (await service.ingest('data/dev/AUTO-QDF-4', voltageAndCurrent, '2026-09-22T00:00:02.000Z'))
+        .ok,
     ).toBe(true);
 
     expect(service.latest(created.value.id)?.reported).toMatchObject({
@@ -287,11 +282,7 @@ describe('TelemetryService', () => {
     expect(service.latest(created.value.id)?.reported).not.toHaveProperty('energyKwh');
 
     // Replaying the same packet is idempotent: one binding per reported metric.
-    await service.ingest(
-      'data/dev/AUTO-QDF-4',
-      voltageAndCurrent,
-      '2026-09-22T00:00:03.000Z',
-    );
+    await service.ingest('data/dev/AUTO-QDF-4', voltageAndCurrent, '2026-09-22T00:00:03.000Z');
     pointBindings = (await bindings.listForSource('MQTT', 'AUTO-QDF-4')).filter(
       (item) => item.sourcePointId === '0_1_2',
     );

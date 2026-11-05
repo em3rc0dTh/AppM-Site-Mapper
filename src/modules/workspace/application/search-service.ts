@@ -114,10 +114,7 @@ export async function searchTopology(
           }
 
           for (const breaker of panel.positions) {
-            if (
-              breaker &&
-              searchMatches(`${breaker.label} ${breaker.id}`, normalized)
-            ) {
+            if (breaker && searchMatches(`${breaker.label} ${breaker.id}`, normalized)) {
               results.push({
                 id: breaker.id,
                 name: breaker.label,

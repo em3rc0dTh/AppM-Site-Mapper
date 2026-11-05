@@ -22,11 +22,7 @@ function isTelemetrySample(value: unknown): value is TelemetrySample {
   );
 }
 
-function scalar(
-  value: unknown,
-  candidates: readonly string[],
-  depth = 0,
-): number | undefined {
+function scalar(value: unknown, candidates: readonly string[], depth = 0): number | undefined {
   if (depth > 6 || value === null || typeof value !== 'object') return undefined;
   const record = value as Record<string, unknown>;
   for (const [key, item] of Object.entries(record)) {
@@ -52,18 +48,12 @@ function fallbackBreakerMetrics(sample: TelemetrySample) {
   const powerW = scalar(sample.reported, ['power', 'powerw', 'p', 'w']);
   const energy = scalar(sample.reported, ['energy', 'energykwh', 'e', 'ep', 'kwh']);
   return [
-    ...(voltage === undefined
-      ? []
-      : [{ label: 'Voltage', value: voltage.toFixed(2), unit: 'V' }]),
-    ...(current === undefined
-      ? []
-      : [{ label: 'Current', value: current.toFixed(2), unit: 'A' }]),
+    ...(voltage === undefined ? [] : [{ label: 'Voltage', value: voltage.toFixed(2), unit: 'V' }]),
+    ...(current === undefined ? [] : [{ label: 'Current', value: current.toFixed(2), unit: 'A' }]),
     ...(powerW === undefined
       ? []
       : [{ label: 'Power', value: (powerW / 1000).toFixed(3), unit: 'kW' }]),
-    ...(energy === undefined
-      ? []
-      : [{ label: 'Energy', value: energy.toFixed(4), unit: 'kWh' }]),
+    ...(energy === undefined ? [] : [{ label: 'Energy', value: energy.toFixed(4), unit: 'kWh' }]),
   ];
 }
 
@@ -227,7 +217,7 @@ export function TelemetryLens({
                   paddingTop: 18,
                   borderTop: '1px solid #dbe4ef',
                 }}
-                aria-label="Power path history"
+                aria-label={t('powerPathHistory')}
               >
                 <header
                   style={{

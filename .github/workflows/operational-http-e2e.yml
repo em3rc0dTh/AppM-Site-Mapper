@@ -22,6 +22,8 @@ on:
       - 'src/app/api/**'
       - 'src/modules/topology/**'
       - 'src/modules/power/**'
+      - 'tests/integration/breaker-limits-mongo.test.ts'
+      - 'src/components/power/**'
       - 'src/modules/telemetry/**'
       - 'infra/modbus-tcp/**'
       - 'scripts/ci/modbus-tcp-operational.mjs'
@@ -34,6 +36,8 @@ on:
       - 'src/app/api/**'
       - 'src/modules/topology/**'
       - 'src/modules/power/**'
+      - 'tests/integration/breaker-limits-mongo.test.ts'
+      - 'src/components/power/**'
       - 'src/modules/telemetry/**'
       - 'scripts/ci/http-operational-journey.mjs'
       - 'scripts/ci/mk1-adversarial-http.mjs'
@@ -109,6 +113,11 @@ jobs:
           done
           echo 'Mongo replica set failed to become primary.'
           exit 1
+
+      - name: S01 real Mongo transaction, concurrency and rollback acceptance
+        env:
+          CI_BREAKER_ACCEPTANCE: 'true'
+        run: npx vitest run tests/integration/breaker-limits-mongo.test.ts
 
       - name: Start real Mosquitto broker
         run: |

@@ -43,7 +43,10 @@ for (const spec of expected) {
       .toArray();
     assert(rows.length === 1, spec.key + ' expected exactly one ' + panelName);
     const panel = rows[0];
-    assert(Array.isArray(panel.children) && panel.children.length === 24, spec.key + ' ' + panelName + ' must expose 24 positions');
+    assert(
+      Array.isArray(panel.children) && panel.children.length === 24,
+      spec.key + ' ' + panelName + ' must expose 24 positions',
+    );
     const occupied = [];
     for (let i = 0; i < panel.children.length; i += 1) {
       if (!panel.children[i]) continue;
@@ -62,7 +65,13 @@ for (const spec of expected) {
     const expectedPositions = Array.from({ length: spec.perPanel }, (_, i) => i + 1);
     assert(
       JSON.stringify(occupied) === JSON.stringify(expectedPositions),
-      spec.key + ' ' + panelName + ' expected positions ' + expectedPositions.join(',') + ', got ' + occupied.join(','),
+      spec.key +
+        ' ' +
+        panelName +
+        ' expected positions ' +
+        expectedPositions.join(',') +
+        ', got ' +
+        occupied.join(','),
     );
     panels[panelName] = occupied.length;
   }
@@ -79,7 +88,9 @@ for (const spec of expected) {
   const mqtt = d.telemetry_bindings
     .find({ lifecycle: 'ACTIVE', protocol: 'MQTT', sourceIdentity: spec.serial })
     .toArray();
-  const sourceBindings = mqtt.filter((x) => !x.sourcePointId && String(x.metric).toUpperCase() === 'SOURCE');
+  const sourceBindings = mqtt.filter(
+    (x) => !x.sourcePointId && String(x.metric).toUpperCase() === 'SOURCE',
+  );
   assert(sourceBindings.length <= 1, spec.key + ' has ambiguous MQTT SOURCE bindings');
 
   result.qdfs.push({
@@ -116,7 +127,10 @@ const duplicateBindings = d.telemetry_bindings
     { $match: { count: { $gt: 1 } } },
   ])
   .toArray();
-assert(duplicateBindings.length === 0, 'duplicate active telemetry source-point bindings: ' + JSON.stringify(duplicateBindings));
+assert(
+  duplicateBindings.length === 0,
+  'duplicate active telemetry source-point bindings: ' + JSON.stringify(duplicateBindings),
+);
 
 const snmpSources = ['EMU-DELTA-BFDB-01', 'EMU-DELTA-BFDB-02', 'EMU-DELTA-BFDB-03'];
 for (const source of snmpSources) {
@@ -125,8 +139,14 @@ for (const source of snmpSources) {
     .toArray();
   const metrics = rows.map((x) => String(x.metric).toUpperCase()).sort();
   assert(rows.length === 4, source + ' expected 4 active Config2 bindings; found ' + rows.length);
-  assert(metrics.filter((x) => x === 'CURRENT').length === 2, source + ' expected 2 CURRENT bindings');
-  assert(metrics.filter((x) => x === 'VOLTAGE').length === 2, source + ' expected 2 VOLTAGE bindings');
+  assert(
+    metrics.filter((x) => x === 'CURRENT').length === 2,
+    source + ' expected 2 CURRENT bindings',
+  );
+  assert(
+    metrics.filter((x) => x === 'VOLTAGE').length === 2,
+    source + ' expected 2 VOLTAGE bindings',
+  );
   result.snmp[source] = { bindings: rows.length, metrics };
 }
 
@@ -143,7 +163,10 @@ const activeSerialDuplicates = d.topology_nodes
     { $match: { count: { $gt: 1 } } },
   ])
   .toArray();
-assert(activeSerialDuplicates.length === 0, 'duplicate active inventory serials: ' + JSON.stringify(activeSerialDuplicates));
+assert(
+  activeSerialDuplicates.length === 0,
+  'duplicate active inventory serials: ' + JSON.stringify(activeSerialDuplicates),
+);
 
 const state = d.runtime_seed_state.findOne({ _id: 'seed-01', status: 'APPLIED' });
 assert(state, 'runtime_seed_state seed-01 missing');

@@ -146,7 +146,9 @@ export function DeclaredPowerTelemetry({
         minWidth: 0,
       }}
     >
-      <small>{tp('diagnostic')} · {th('title')}</small>
+      <small>
+        {tp('diagnostic')} · {th('title')}
+      </small>
       <div
         style={{
           display: 'grid',

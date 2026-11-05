@@ -65,7 +65,12 @@ export function BdfbChassis({
     panels[0];
   const [selectedId, setSelectedId] = useState(initialPanel?.id ?? '');
   const [editingBreakerId, setEditingBreakerId] = useState<string | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ id: string; label: string; x: number; y: number } | null>(null);
+  const [contextMenu, setContextMenu] = useState<{
+    id: string;
+    label: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const selectedPanel = panels.find((panel) => panel.id === selectedId) ?? initialPanel;
   const installed = selectedPanel?.positions.filter((position) => position !== null).length ?? 0;
   const available = (selectedPanel?.positions.length ?? 0) - installed;
@@ -201,40 +206,52 @@ export function BdfbChassis({
                 role="listitem"
                 className="sm-bdfb-panel-position"
                 data-installed={breaker !== null}
-                onContextMenu={breaker ? (event) => {
-                  event.preventDefault();
-                  setContextMenu({
-                    id: breaker.id, label: breaker.label,
-                    x: Math.max(8, Math.min(event.clientX, window.innerWidth - 230)),
-                    y: Math.max(8, Math.min(event.clientY, window.innerHeight - 120)),
-                  });
-                } : undefined}
+                onContextMenu={
+                  breaker
+                    ? (event) => {
+                        event.preventDefault();
+                        setContextMenu({
+                          id: breaker.id,
+                          label: breaker.label,
+                          x: Math.max(8, Math.min(event.clientX, window.innerWidth - 230)),
+                          y: Math.max(8, Math.min(event.clientY, window.innerHeight - 120)),
+                        });
+                      }
+                    : undefined
+                }
               >
                 {breaker ? (
                   <>
-                  <Link
-                    href={`/device/${breaker.id}`}
-                    title={t('positionBreaker', { position: index + 1, breaker: breaker.label })}
-                    aria-label={t('positionBreakerDetails', {
-                      position: index + 1,
-                      breaker: breaker.label,
-                    })}
-                  >
-                    <span>P{String(index + 1).padStart(2, '0')}</span>
-                    <strong>●</strong>
-                    {alarmSnapshot.rollups[breaker.id]?.activeAlarmCount ? (
-                      <em
-                        className="sm-breaker-alarm-dot"
-                        data-severity={alarmSnapshot.rollups[breaker.id]!.highestSeverity ?? 'INFO'}
-                      >
-                        {alarmSnapshot.rollups[breaker.id]!.activeAlarmCount}
-                      </em>
-                    ) : null}
-                  </Link>
-                  <button type="button" className="sm-breaker-limit-open"
-                    onClick={() => setEditingBreakerId(breaker.id)}
-                    aria-label={`Configure current limits for ${breaker.label}`}
-                    title="Configure breaker limits (also available with right click)">⚙</button>
+                    <Link
+                      href={`/device/${breaker.id}`}
+                      title={t('positionBreaker', { position: index + 1, breaker: breaker.label })}
+                      aria-label={t('positionBreakerDetails', {
+                        position: index + 1,
+                        breaker: breaker.label,
+                      })}
+                    >
+                      <span>P{String(index + 1).padStart(2, '0')}</span>
+                      <strong>●</strong>
+                      {alarmSnapshot.rollups[breaker.id]?.activeAlarmCount ? (
+                        <em
+                          className="sm-breaker-alarm-dot"
+                          data-severity={
+                            alarmSnapshot.rollups[breaker.id]!.highestSeverity ?? 'INFO'
+                          }
+                        >
+                          {alarmSnapshot.rollups[breaker.id]!.activeAlarmCount}
+                        </em>
+                      ) : null}
+                    </Link>
+                    <button
+                      type="button"
+                      className="sm-breaker-limit-open"
+                      onClick={() => setEditingBreakerId(breaker.id)}
+                      aria-label={`Configure current limits for ${breaker.label}`}
+                      title={t('configureLimitsHint')}
+                    >
+                      ⚙
+                    </button>
                   </>
                 ) : (
                   <span
@@ -280,22 +297,50 @@ export function BdfbChassis({
       )}
       {contextMenu ? (
         <>
-          <button type="button" className="sm-breaker-context-dismiss"
-            onClick={() => setContextMenu(null)} aria-label="Close breaker menu" tabIndex={-1} />
-          <div className="sm-breaker-context-menu" role="menu"
+          <button
+            type="button"
+            className="sm-breaker-context-dismiss"
+            onClick={() => setContextMenu(null)}
+            aria-label={t('closeMenu')}
+            tabIndex={-1}
+          />
+          <div
+            className="sm-breaker-context-menu"
+            role="menu"
             aria-label={`Breaker actions for ${contextMenu.label}`}
-            style={{left: contextMenu.x, top: contextMenu.y}}
-            onKeyDown={event => {if(event.key==='Escape')setContextMenu(null)}}>
-            <button type="button" role="menuitem" autoFocus
-              onClick={() => {setEditingBreakerId(contextMenu.id);setContextMenu(null)}}>
-              Configure limits &amp; history
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') setContextMenu(null);
+            }}
+          >
+            <button
+              type="button"
+              role="menuitem"
+              autoFocus
+              onClick={() => {
+                setEditingBreakerId(contextMenu.id);
+                setContextMenu(null);
+              }}
+            >
+              {t('limitsHistory')}
             </button>
-            <Link role="menuitem" href={`/device/${contextMenu.id}`}
-              onClick={() => setContextMenu(null)}>Open breaker</Link>
+            <Link
+              role="menuitem"
+              href={`/device/${contextMenu.id}`}
+              onClick={() => setContextMenu(null)}
+            >
+              {t('openBreaker')}
+            </Link>
           </div>
         </>
       ) : null}
-      {editingBreakerId ? <BreakerLimitEditor key={editingBreakerId} breakerId={editingBreakerId} onClose={() => setEditingBreakerId(null)} /> : null}
+      {editingBreakerId ? (
+        <BreakerLimitEditor
+          key={editingBreakerId}
+          breakerId={editingBreakerId}
+          onClose={() => setEditingBreakerId(null)}
+        />
+      ) : null}
     </section>
   );
 }

@@ -40,29 +40,36 @@ export function ResizableWorkspace({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef<{ side: Side; x: number; initial: Widths } | null>(null);
-  const [widths, setWidths] = useState<Widths>(() => {
-    if (typeof window === 'undefined') return DEFAULT;
-    try {
-      const stored = JSON.parse(
-        window.localStorage.getItem(`site-mapper:workspace:s03:v1:${userKey}`) || 'null',
-      ) as Partial<Widths> | null;
-      if (
-        typeof stored?.tree === 'number' &&
-        Number.isFinite(stored.tree) &&
-        typeof stored.inspector === 'number' &&
-        Number.isFinite(stored.inspector)
-      ) {
-        return { tree: stored.tree, inspector: stored.inspector };
-      }
-    } catch {
-      // Storage access may be blocked; default widths remain usable.
-    }
-    return DEFAULT;
-  });
+  const [widths, setWidths] = useState<Widths>(DEFAULT);
   const [width, setWidth] = useState(1200);
   const [treeOpen, setTreeOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const storageKey = `site-mapper:workspace:s03:v1:${userKey}`;
+
+  useEffect(() => {
+    // Delay storage hydration until after the server-rendered layout is mounted.
+    // This keeps server and client markup identical during React hydration.
+    const frame = window.requestAnimationFrame(() => {
+      try {
+        const stored = JSON.parse(window.localStorage.getItem(storageKey) || 'null') as
+          | Partial<Widths>
+          | null;
+        if (
+          typeof stored?.tree === 'number' &&
+          Number.isFinite(stored.tree) &&
+          typeof stored.inspector === 'number' &&
+          Number.isFinite(stored.inspector)
+        ) {
+          setWidths({ tree: stored.tree, inspector: stored.inspector });
+        } else {
+          setWidths(DEFAULT);
+        }
+      } catch {
+        setWidths(DEFAULT);
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [storageKey]);
 
   useEffect(() => {
     const node = ref.current;

@@ -86,6 +86,7 @@ export function BreakerLimitEditor({
           ratedCurrentA:Number(rating),assertAboveA:Number(assertAt),clearBelowA:Number(clearAt),
           provenance:{source,verified, ...(reference.trim()?{reference:reference.trim()}:{})},
           expectedRevision:data.revision,
+          verificationConfirmed: source !== 'PROVISIONAL_STANDARD' && confirmEvidence,
         }),
       });
       const payload = await response.json();

@@ -33,7 +33,14 @@ function evidence(
     metric: metricName,
     value,
     unit,
-    ...(policy ? { policyId: policy.id, assertThreshold: policy.assertThreshold, clearThreshold: policy.clearThreshold, thresholdUnit: unit } : {}),
+    ...(policy
+      ? {
+          policyId: policy.id,
+          assertThreshold: policy.assertThreshold,
+          clearThreshold: policy.clearThreshold,
+          thresholdUnit: unit,
+        }
+      : {}),
     observedAt: sample.sourceObservedAt ?? sample.receivedAt,
   };
 }
@@ -159,7 +166,13 @@ export class TelemetryAlarmEvaluator {
         policy.lowVoltage.debounceSamples,
         policy.lowVoltage.recoverySamples,
         policy.lowVoltage.severity,
-        [evidence(sample, 'VOLTAGE', voltageV, 'V', { id: policy.id, assertThreshold: policy.lowVoltage.assertBelowV, clearThreshold: policy.lowVoltage.clearAboveV })],
+        [
+          evidence(sample, 'VOLTAGE', voltageV, 'V', {
+            id: policy.id,
+            assertThreshold: policy.lowVoltage.assertBelowV,
+            clearThreshold: policy.lowVoltage.clearAboveV,
+          }),
+        ],
       );
     }
 
@@ -173,7 +186,13 @@ export class TelemetryAlarmEvaluator {
         policy.overcurrent.debounceSamples,
         policy.overcurrent.recoverySamples,
         policy.overcurrent.severity,
-        [evidence(sample, 'CURRENT', currentA, 'A', { id: policy.id, assertThreshold: policy.overcurrent.assertAboveA, clearThreshold: policy.overcurrent.clearBelowA })],
+        [
+          evidence(sample, 'CURRENT', currentA, 'A', {
+            id: policy.id,
+            assertThreshold: policy.overcurrent.assertAboveA,
+            clearThreshold: policy.overcurrent.clearBelowA,
+          }),
+        ],
       );
     }
 

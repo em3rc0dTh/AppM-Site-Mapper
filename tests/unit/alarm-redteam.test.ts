@@ -368,7 +368,7 @@ describe('Alarm red-team invariants', () => {
     const acknowledged = await service.acknowledge(occurrence.id, 'redteam-operator');
     expect(acknowledged.lifecycle).toBe('RESOLVED');
     expect(acknowledged.acknowledgement).toBe('ACKNOWLEDGED');
-    expect((await alarms.listActive())).toHaveLength(0);
+    expect(await alarms.listActive()).toHaveLength(0);
     expect((await service.transitions(occurrence.id)).at(-1)?.toState).toBe('ACKNOWLEDGED');
   });
 

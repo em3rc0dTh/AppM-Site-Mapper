@@ -2,7 +2,10 @@ import type { Collection, Db, Document, Filter, OptionalUnlessRequiredId } from 
 
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
 import { parseHistoryCursor, takeHistoryPage } from '@/modules/alarm/application/alarm-history';
-import type { AlarmHistoryPage, AlarmHistoryQuery } from '@/modules/alarm/application/alarm-history';
+import type {
+  AlarmHistoryPage,
+  AlarmHistoryQuery,
+} from '@/modules/alarm/application/alarm-history';
 import type { AlarmOccurrence, AlarmTransition } from '@/modules/alarm/domain/entities';
 
 type OccurrenceDocument = AlarmOccurrence & Document;
@@ -81,8 +84,11 @@ export class MongoAlarmRepository implements AlarmRepository {
           }
         : {}),
     };
-    const documents = await this.occurrences.find(filter).sort({ openedAt: -1, id: -1 })
-      .limit(query.limit + 1).toArray();
+    const documents = await this.occurrences
+      .find(filter)
+      .sort({ openedAt: -1, id: -1 })
+      .limit(query.limit + 1)
+      .toArray();
     return takeHistoryPage(
       documents.map((item) => withoutMongoId<AlarmOccurrence>(item)),
       query.limit,

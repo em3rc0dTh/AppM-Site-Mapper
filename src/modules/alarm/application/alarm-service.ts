@@ -145,7 +145,9 @@ export class AlarmService {
     return { occurrences, rollups, global };
   }
 
-  async history(query: AlarmHistoryQuery): Promise<{ items: readonly AlarmOccurrenceView[]; nextCursor: string | null }> {
+  async history(
+    query: AlarmHistoryQuery,
+  ): Promise<{ items: readonly AlarmOccurrenceView[]; nextCursor: string | null }> {
     const page = await this.alarms.listHistory(query);
     return {
       items: await Promise.all(page.items.map((item) => this.toView(item))),
@@ -211,14 +213,18 @@ export class AlarmService {
         href: await this.topology.buildDeepLink(node.id),
       })),
     );
-    const path = occurrence.lifecycle === 'RESOLVED' && occurrence.targetPathSnapshot?.length
-      ? occurrence.targetPathSnapshot
-      : livePath.length ? livePath : occurrence.targetPathSnapshot ?? [];
+    const path =
+      occurrence.lifecycle === 'RESOLVED' && occurrence.targetPathSnapshot?.length
+        ? occurrence.targetPathSnapshot
+        : livePath.length
+          ? livePath
+          : (occurrence.targetPathSnapshot ?? []);
     return {
       ...occurrence,
       path,
-      targetHref: target ? await this.topology.buildDeepLink(target.id)
-        : occurrence.targetPathSnapshot?.at(-1)?.href ?? '#',
+      targetHref: target
+        ? await this.topology.buildDeepLink(target.id)
+        : (occurrence.targetPathSnapshot?.at(-1)?.href ?? '#'),
     };
   }
 }

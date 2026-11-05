@@ -121,8 +121,13 @@ export function AlarmCenter() {
 
           <nav className="sm-alarm-view-tabs sm-alarm-main-tabs" aria-label={t('viewLabel')}>
             {(['ACTIVE', 'RESOLVED', 'HISTORY'] as const).map((tab) => (
-              <button key={tab} type="button" aria-current={view === tab ? 'page' : undefined}
-                aria-pressed={view === tab} onClick={() => setView(tab)}>
+              <button
+                key={tab}
+                type="button"
+                aria-current={view === tab ? 'page' : undefined}
+                aria-pressed={view === tab}
+                onClick={() => setView(tab)}
+              >
                 {tab === 'ACTIVE' ? t('active') : tab === 'RESOLVED' ? t('resolved') : t('history')}
               </button>
             ))}
@@ -131,121 +136,120 @@ export function AlarmCenter() {
             <AlarmHistory />
           ) : (
             <>
-          <div className="sm-alarm-filters">
+              <div className="sm-alarm-filters">
+                <select
+                  aria-label={t('severityLabel')}
+                  value={severity}
+                  onChange={(event) => setSeverity(event.target.value as 'ALL' | AlarmSeverity)}
+                >
+                  <option value="ALL">{t('allSeverities')}</option>
+                  <option value="CRITICAL">{t('critical')}</option>
+                  <option value="WARNING">{t('warning')}</option>
+                  <option value="INFO">{t('info')}</option>
+                </select>
+                <select
+                  aria-label={t('siteLabel')}
+                  value={site}
+                  onChange={(event) => setSite(event.target.value)}
+                >
+                  <option value="ALL">{t('allSites')}</option>
+                  {sites.map((value) => (
+                    <option value={value} key={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  aria-label={t('qdfLabel')}
+                  value={qdf}
+                  onChange={(event) => setQdf(event.target.value)}
+                >
+                  <option value="ALL">{t('allQdfs')}</option>
+                  {qdfs.map((value) => (
+                    <option value={value} key={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  aria-label={t('familyLabel')}
+                  value={family}
+                  onChange={(event) => setFamily(event.target.value as 'ALL' | AlarmFamily)}
+                >
+                  <option value="ALL">{t('allFamilies')}</option>
+                  <option value="COMMUNICATION">{t('communication')}</option>
+                  <option value="ELECTRICAL">{t('electrical')}</option>
+                  <option value="EQUIPMENT">{t('equipment')}</option>
+                  <option value="CORRELATED">{t('correlated')}</option>
+                </select>
+                <select
+                  aria-label={t('ackLabel')}
+                  value={ack}
+                  onChange={(event) => setAck(event.target.value as 'ALL' | AlarmAcknowledgement)}
+                >
+                  <option value="ALL">{t('allAckStates')}</option>
+                  <option value="UNACKNOWLEDGED">{t('unacknowledged')}</option>
+                  <option value="ACKNOWLEDGED">{t('acknowledged')}</option>
+                </select>
+                <input
+                  aria-label={t('searchLabel')}
+                  type="search"
+                  placeholder={t('searchPlaceholder')}
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+              </div>
 
-            <select
-              aria-label={t('severityLabel')}
-              value={severity}
-              onChange={(event) => setSeverity(event.target.value as 'ALL' | AlarmSeverity)}
-            >
-              <option value="ALL">{t('allSeverities')}</option>
-              <option value="CRITICAL">{t('critical')}</option>
-              <option value="WARNING">{t('warning')}</option>
-              <option value="INFO">{t('info')}</option>
-            </select>
-            <select
-              aria-label={t('siteLabel')}
-              value={site}
-              onChange={(event) => setSite(event.target.value)}
-            >
-              <option value="ALL">{t('allSites')}</option>
-              {sites.map((value) => (
-                <option value={value} key={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label={t('qdfLabel')}
-              value={qdf}
-              onChange={(event) => setQdf(event.target.value)}
-            >
-              <option value="ALL">{t('allQdfs')}</option>
-              {qdfs.map((value) => (
-                <option value={value} key={value}>
-                  {value}
-                </option>
-              ))}
-            </select>
-            <select
-              aria-label={t('familyLabel')}
-              value={family}
-              onChange={(event) => setFamily(event.target.value as 'ALL' | AlarmFamily)}
-            >
-              <option value="ALL">{t('allFamilies')}</option>
-              <option value="COMMUNICATION">{t('communication')}</option>
-              <option value="ELECTRICAL">{t('electrical')}</option>
-              <option value="EQUIPMENT">{t('equipment')}</option>
-              <option value="CORRELATED">{t('correlated')}</option>
-            </select>
-            <select
-              aria-label={t('ackLabel')}
-              value={ack}
-              onChange={(event) => setAck(event.target.value as 'ALL' | AlarmAcknowledgement)}
-            >
-              <option value="ALL">{t('allAckStates')}</option>
-              <option value="UNACKNOWLEDGED">{t('unacknowledged')}</option>
-              <option value="ACKNOWLEDGED">{t('acknowledged')}</option>
-            </select>
-            <input
-              aria-label={t('searchLabel')}
-              type="search"
-              placeholder={t('searchPlaceholder')}
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </div>
-
-          <div className="sm-alarm-table-wrap">
-            <table className="sm-alarm-table">
-              <thead>
-                <tr>
-                  <th>{t('severityLabel')}</th>
-                  <th>{t('alarm')}</th>
-                  <th>{t('targetPath')}</th>
-                  <th>{t('since')}</th>
-                  <th>{t('status')}</th>
-                  <th>{t('ack')}</th>
-                  <th>{t('confidence')}</th>
-                  <th>{t('actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((alarm) => (
-                  <tr key={alarm.id} data-severity={alarm.severity}>
-                    <td>
-                      <span className="sm-alarm-severity">{alarm.severity}</span>
-                    </td>
-                    <td>
-                      <strong>{alarm.name}</strong>
-                      <small>{alarm.alarmCode}</small>
-                    </td>
-                    <td title={alarm.path.map((item) => item.name).join(' › ')}>
-                      {compactAlarmPath(alarm.path)
-                        .map((item) => item.name)
-                        .join(' › ') || alarm.targetId}
-                    </td>
-                    <td>{new Date(alarm.openedAt).toLocaleString()}</td>
-                    <td>{alarm.lifecycle}</td>
-                    <td>{alarm.acknowledgement === 'ACKNOWLEDGED' ? 'ACK' : 'UNACK'}</td>
-                    <td>{alarm.confidence ?? '—'}</td>
-                    <td>
-                      <Link href={'/alarms/' + encodeURIComponent(alarm.id)}>
-                        {t('openDetail')}
-                      </Link>
-                      {' · '}
-                      <Link href={alarm.targetHref}>{t('goToTarget')}</Link>
-                    </td>
-                  </tr>
-                ))}
-                {!loading && rows.length === 0 ? (
-                  <tr>
-                    <td colSpan={8}>{t('empty')}</td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
-          </div>
+              <div className="sm-alarm-table-wrap">
+                <table className="sm-alarm-table">
+                  <thead>
+                    <tr>
+                      <th>{t('severityLabel')}</th>
+                      <th>{t('alarm')}</th>
+                      <th>{t('targetPath')}</th>
+                      <th>{t('since')}</th>
+                      <th>{t('status')}</th>
+                      <th>{t('ack')}</th>
+                      <th>{t('confidence')}</th>
+                      <th>{t('actions')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((alarm) => (
+                      <tr key={alarm.id} data-severity={alarm.severity}>
+                        <td>
+                          <span className="sm-alarm-severity">{alarm.severity}</span>
+                        </td>
+                        <td>
+                          <strong>{alarm.name}</strong>
+                          <small>{alarm.alarmCode}</small>
+                        </td>
+                        <td title={alarm.path.map((item) => item.name).join(' › ')}>
+                          {compactAlarmPath(alarm.path)
+                            .map((item) => item.name)
+                            .join(' › ') || alarm.targetId}
+                        </td>
+                        <td>{new Date(alarm.openedAt).toLocaleString()}</td>
+                        <td>{alarm.lifecycle}</td>
+                        <td>{alarm.acknowledgement === 'ACKNOWLEDGED' ? 'ACK' : 'UNACK'}</td>
+                        <td>{alarm.confidence ?? '—'}</td>
+                        <td>
+                          <Link href={'/alarms/' + encodeURIComponent(alarm.id)}>
+                            {t('openDetail')}
+                          </Link>
+                          {' · '}
+                          <Link href={alarm.targetHref}>{t('goToTarget')}</Link>
+                        </td>
+                      </tr>
+                    ))}
+                    {!loading && rows.length === 0 ? (
+                      <tr>
+                        <td colSpan={8}>{t('empty')}</td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
             </>
           )}
         </>

@@ -37,11 +37,18 @@ describe('S02 - durable alarm history and independent acknowledgement', () => {
       targetId: 'breaker-a3-04',
       sourceContext: 'mqtt:A3-04',
       observedAt: T0,
-      evidence: [{
-        id: 'sample-01', kind: 'MQTT', metric: 'CURRENT', value: 24,
-        unit: 'A', observedAt: T0, sourceIdentity: 'simulator',
-        note: 'assertAboveA=20; provisional rating',
-      }],
+      evidence: [
+        {
+          id: 'sample-01',
+          kind: 'MQTT',
+          metric: 'CURRENT',
+          value: 24,
+          unit: 'A',
+          observedAt: T0,
+          sourceIdentity: 'simulator',
+          note: 'assertAboveA=20; provisional rating',
+        },
+      ],
     });
     expect(created.targetPathSnapshot?.at(-1)?.name).toBe('A3-04');
     await commands.resolve(created.correlationKey, 'RECOVERY_POLICY_SATISFIED', [], T1);
@@ -56,7 +63,7 @@ describe('S02 - durable alarm history and independent acknowledgement', () => {
     const acknowledged = await service.acknowledge(created.id, 'operator-1');
     expect(acknowledged.lifecycle).toBe('RESOLVED');
     expect(acknowledged.acknowledgement).toBe('ACKNOWLEDGED');
-    expect((await repository.listActive())).toHaveLength(0);
+    expect(await repository.listActive()).toHaveLength(0);
 
     const events = await service.transitions(created.id);
     expect(events.map((event) => event.toState)).toEqual(['ACTIVE', 'RESOLVED', 'ACKNOWLEDGED']);
@@ -77,15 +84,17 @@ describe('S02 - history pagination and evidence retention', () => {
       evidence: [],
       observedAt: T0,
     });
-    await Promise.all(Array.from({ length: 525 }, (_, index) =>
-      repository.insertOccurrence({
-        ...first,
-        id: 'history-' + String(index).padStart(4, '0'),
-        correlationKey: 'unique-history-' + index,
-        lifecycle: index % 2 === 0 ? 'RESOLVED' : 'ACTIVE',
-        acknowledgement: index % 3 === 0 ? 'ACKNOWLEDGED' : 'UNACKNOWLEDGED',
-      }),
-    ));
+    await Promise.all(
+      Array.from({ length: 525 }, (_, index) =>
+        repository.insertOccurrence({
+          ...first,
+          id: 'history-' + String(index).padStart(4, '0'),
+          correlationKey: 'unique-history-' + index,
+          lifecycle: index % 2 === 0 ? 'RESOLVED' : 'ACTIVE',
+          acknowledgement: index % 3 === 0 ? 'ACKNOWLEDGED' : 'UNACKNOWLEDGED',
+        }),
+      ),
+    );
 
     const seen = new Set<string>();
     let cursor: string | undefined;
@@ -111,9 +120,11 @@ describe('S02 - history pagination and evidence retention', () => {
       toDate: '2026-11-05',
     });
     expect(filtered.items.length).toBeGreaterThan(0);
-    expect(filtered.items.every((item) =>
-      item.lifecycle === 'RESOLVED' && item.acknowledgement === 'ACKNOWLEDGED'
-    )).toBe(true);
+    expect(
+      filtered.items.every(
+        (item) => item.lifecycle === 'RESOLVED' && item.acknowledgement === 'ACKNOWLEDGED',
+      ),
+    ).toBe(true);
   });
 
   it('persists recovery readings and their references into the resolved event log', async () => {
@@ -124,17 +135,35 @@ describe('S02 - history pagination and evidence retention', () => {
       targetId: 'breaker-a3-04',
       sourceContext: 'mqtt:A3-04',
       observedAt: T0,
-      evidence: [{
-        id: 'trigger', kind: 'MQTT', metric: 'CURRENT', value: 24, unit: 'A',
-        assertThreshold: 20, clearThreshold: 18, thresholdUnit: 'A',
-        policyId: 'policy-1', observedAt: T0,
-      }],
+      evidence: [
+        {
+          id: 'trigger',
+          kind: 'MQTT',
+          metric: 'CURRENT',
+          value: 24,
+          unit: 'A',
+          assertThreshold: 20,
+          clearThreshold: 18,
+          thresholdUnit: 'A',
+          policyId: 'policy-1',
+          observedAt: T0,
+        },
+      ],
     });
-    await commands.resolve(created.correlationKey, 'RECOVERY_POLICY_SATISFIED', [], T1, [{
-      id: 'recovery', kind: 'MQTT', metric: 'CURRENT', value: 17, unit: 'A',
-      assertThreshold: 20, clearThreshold: 18, thresholdUnit: 'A',
-      policyId: 'policy-1', observedAt: T1,
-    }]);
+    await commands.resolve(created.correlationKey, 'RECOVERY_POLICY_SATISFIED', [], T1, [
+      {
+        id: 'recovery',
+        kind: 'MQTT',
+        metric: 'CURRENT',
+        value: 17,
+        unit: 'A',
+        assertThreshold: 20,
+        clearThreshold: 18,
+        thresholdUnit: 'A',
+        policyId: 'policy-1',
+        observedAt: T1,
+      },
+    ]);
     const alarm = await service.getOccurrenceView(created.id);
     expect(alarm?.lifecycle).toBe('RESOLVED');
     expect(alarm?.evidenceRefs.map((item) => item.id)).toEqual(['trigger', 'recovery']);

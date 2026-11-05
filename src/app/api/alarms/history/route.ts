@@ -19,24 +19,38 @@ export async function GET(request: Request) {
   const toDate = params.get('toDate');
   const targetId = params.get('targetId')?.trim();
   const cursor = params.get('cursor');
-  const isDay = (date: string | null) => !date ||
+  const isDay = (date: string | null) =>
+    !date ||
     (/^\d{4}-\d{2}-\d{2}$/.test(date) && !Number.isNaN(Date.parse(date + 'T00:00:00.000Z')));
-  if (!Number.isInteger(limit) || limit < 1 || limit > 100 ||
-      (lifecycle && lifecycle !== 'ACTIVE' && lifecycle !== 'RESOLVED') ||
-      (acknowledgement && acknowledgement !== 'ACKNOWLEDGED' && acknowledgement !== 'UNACKNOWLEDGED') ||
-      (severity && severity !== 'INFO' && severity !== 'WARNING' && severity !== 'CRITICAL') ||
-      !isDay(fromDate) || !isDay(toDate) || (fromDate && toDate && fromDate > toDate) ||
-      (targetId && targetId.length > 128)) {
+  if (
+    !Number.isInteger(limit) ||
+    limit < 1 ||
+    limit > 100 ||
+    (lifecycle && lifecycle !== 'ACTIVE' && lifecycle !== 'RESOLVED') ||
+    (acknowledgement &&
+      acknowledgement !== 'ACKNOWLEDGED' &&
+      acknowledgement !== 'UNACKNOWLEDGED') ||
+    (severity && severity !== 'INFO' && severity !== 'WARNING' && severity !== 'CRITICAL') ||
+    !isDay(fromDate) ||
+    !isDay(toDate) ||
+    (fromDate && toDate && fromDate > toDate) ||
+    (targetId && targetId.length > 128)
+  ) {
     return NextResponse.json({ error: 'INVALID_HISTORY_FILTERS' }, { status: 400 });
   }
   if (cursor) {
-    try { parseHistoryCursor(cursor); }
-    catch { return NextResponse.json({ error: 'INVALID_HISTORY_CURSOR' }, { status: 400 }); }
+    try {
+      parseHistoryCursor(cursor);
+    } catch {
+      return NextResponse.json({ error: 'INVALID_HISTORY_CURSOR' }, { status: 400 });
+    }
   }
   const query: AlarmHistoryQuery = {
     limit,
     ...(lifecycle ? { lifecycle: lifecycle as NonNullable<AlarmHistoryQuery['lifecycle']> } : {}),
-    ...(acknowledgement ? { acknowledgement: acknowledgement as NonNullable<AlarmHistoryQuery['acknowledgement']> } : {}),
+    ...(acknowledgement
+      ? { acknowledgement: acknowledgement as NonNullable<AlarmHistoryQuery['acknowledgement']> }
+      : {}),
     ...(severity ? { severity: severity as NonNullable<AlarmHistoryQuery['severity']> } : {}),
     ...(fromDate ? { fromDate } : {}),
     ...(toDate ? { toDate } : {}),

@@ -1,6 +1,13 @@
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
-import { compareHistoryOrder, parseHistoryCursor, takeHistoryPage } from '@/modules/alarm/application/alarm-history';
-import type { AlarmHistoryPage, AlarmHistoryQuery } from '@/modules/alarm/application/alarm-history';
+import {
+  compareHistoryOrder,
+  parseHistoryCursor,
+  takeHistoryPage,
+} from '@/modules/alarm/application/alarm-history';
+import type {
+  AlarmHistoryPage,
+  AlarmHistoryQuery,
+} from '@/modules/alarm/application/alarm-history';
 import type { AlarmOccurrence, AlarmTransition } from '@/modules/alarm/domain/entities';
 
 export class MemoryAlarmRepository implements AlarmRepository {
@@ -53,8 +60,12 @@ export class MemoryAlarmRepository implements AlarmRepository {
       .filter((item) => !query.targetId || item.targetId === query.targetId)
       .filter((item) => !query.fromDate || item.openedAt.slice(0, 10) >= query.fromDate)
       .filter((item) => !query.toDate || item.openedAt.slice(0, 10) <= query.toDate)
-      .filter((item) => !previous || item.openedAt < previous.openedAt ||
-        (item.openedAt === previous.openedAt && item.id < previous.id))
+      .filter(
+        (item) =>
+          !previous ||
+          item.openedAt < previous.openedAt ||
+          (item.openedAt === previous.openedAt && item.id < previous.id),
+      )
       .sort(compareHistoryOrder);
     return takeHistoryPage(ordered, query.limit);
   }

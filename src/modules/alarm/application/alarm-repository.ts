@@ -1,5 +1,8 @@
 import type { AlarmOccurrence, AlarmTransition } from '@/modules/alarm/domain/entities';
-import type { AlarmHistoryQuery, AlarmHistoryPage } from '@/modules/alarm/application/alarm-history';
+import type {
+  AlarmHistoryQuery,
+  AlarmHistoryPage,
+} from '@/modules/alarm/application/alarm-history';
 
 export interface AlarmRepository {
   getOccurrence(id: string): Promise<AlarmOccurrence | null>;

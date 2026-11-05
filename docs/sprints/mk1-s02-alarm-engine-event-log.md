@@ -88,15 +88,15 @@ be applied deliberately after a backup; it does not delete or transform data.
 
 ## Acceptance cases
 
-| ID | Required observation | Status |
-|---|---|---|
-| HU-015 | Breaker/equipment ID and stored location remain identifiable | Implemented, not certified |
-| HU-016 | Trigger reading, unit, source, timestamp and thresholds visible | Implemented, not certified |
+| ID     | Required observation                                                   | Status                                             |
+| ------ | ---------------------------------------------------------------------- | -------------------------------------------------- |
+| HU-015 | Breaker/equipment ID and stored location remain identifiable           | Implemented, not certified                         |
+| HU-016 | Trigger reading, unit, source, timestamp and thresholds visible        | Implemented, not certified                         |
 | HU-017 | Assert/recovery policy changes condition state without erasing history | Existing engine + recovery evidence; not certified |
-| HU-018 | ACK acts independently and supports RESOLVED + UNACK | Implemented, not certified |
-| HU-019 | Dedicated History tab is discoverable next to Active and Resolved | Implemented, not certified |
-| HU-020 | Historical results remain queryable beyond the former 500 cap | Implemented, not certified |
-| HU-021 | Server-filtered state/ACK/severity/equipment/date and pagination | Implemented, not certified |
+| HU-018 | ACK acts independently and supports RESOLVED + UNACK                   | Implemented, not certified                         |
+| HU-019 | Dedicated History tab is discoverable next to Active and Resolved      | Implemented, not certified                         |
+| HU-020 | Historical results remain queryable beyond the former 500 cap          | Implemented, not certified                         |
+| HU-021 | Server-filtered state/ACK/severity/equipment/date and pagination       | Implemented, not certified                         |
 
 ### Additional regression scenarios
 

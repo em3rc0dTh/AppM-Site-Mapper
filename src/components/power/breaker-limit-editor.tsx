@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type { BreakerProtection, BreakerRatingSource } from '@/modules/power/domain/breaker-protection';
 
 interface LimitsView {
@@ -68,7 +68,7 @@ export function BreakerLimitEditor({
     return () => {cancelled=true};
   }, [prefix]);
 
-  async function save(event: React.FormEvent<HTMLFormElement>) {
+  async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!data?.canEdit || saving) return;
     setSaving(true);setError(null);

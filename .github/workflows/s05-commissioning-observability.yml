@@ -14,6 +14,7 @@ on:
       - scripts/operations/audit-s05-commissioning.mjs
       - config/industrial/s05-commissioning-reference.example.json
       - tests/unit/commissioning-observability.test.ts
+      - tests/unit/industrial-commissioning-idempotency.test.ts
       - .github/workflows/s05-commissioning-observability.yml
   pull_request:
     paths:
@@ -26,6 +27,7 @@ on:
       - scripts/operations/audit-s05-commissioning.mjs
       - config/industrial/s05-commissioning-reference.example.json
       - tests/unit/commissioning-observability.test.ts
+      - tests/unit/industrial-commissioning-idempotency.test.ts
       - .github/workflows/s05-commissioning-observability.yml
   workflow_dispatch:
 
@@ -46,8 +48,12 @@ jobs:
           cache: npm
       - name: Exact dependencies
         run: npm ci --no-audit --no-fund
-      - name: S05 unit observability
-        run: npx vitest run tests/unit/commissioning-observability.test.ts
+      - name: S05 unit commissioning
+        run: >
+          npx vitest run
+          tests/unit/commissioning-observability.test.ts
+          tests/unit/industrial-commissioning-idempotency.test.ts
+          tests/unit/industrial-commissioning-idempotency.test.ts
       - name: I18n catalogs
         run: npx vitest run tests/unit/i18n-catalogs.test.ts tests/unit/i18n-static-ui.test.ts
       - name: TypeScript compile

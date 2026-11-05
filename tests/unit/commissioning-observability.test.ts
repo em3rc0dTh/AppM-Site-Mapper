@@ -138,6 +138,33 @@ describe('S05 commissioning observability', () => {
     expect(JSON.stringify(result)).not.toContain('credentialRef');
   });
 
+
+  it('recognizes the existing TELXIUS synthetic MQTT marker as LAB', () => {
+    const result = composeCommissioningObservability({
+      profiles: [profile({ recordStatus: 'DECLARED' })],
+      bindings: [
+        binding({
+          attributes: {
+            commissioning: 'SEED_01_SYNTHETIC_LAB_V1',
+            synthetic: true,
+            labProfile: 'TELXIUS_SEED_01',
+          },
+        }),
+      ],
+      targetLabels: new Map([['breaker', 'A3-01']]),
+      fieldVerifiedAccessPortIds: new Set(),
+      mqtt: diagnostics(),
+      snmp: null,
+    });
+
+    expect(result.sources[0]).toMatchObject({
+      protocol: 'MQTT',
+      sourceIdentity: 'GW-SERIAL',
+      environment: 'LAB',
+      communication: 'LIVE',
+    });
+  });
+
   it('keeps synthetic SNMP explicitly LAB and normalizes LAB_LIVE to LIVE communication', () => {
     const snmpBinding = binding({
       id: 'snmp-current',

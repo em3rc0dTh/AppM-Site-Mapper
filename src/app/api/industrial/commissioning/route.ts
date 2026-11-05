@@ -1,5 +1,6 @@
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { IndustrialCommissioningService } from '@/modules/industrial/application/commissioning-service';
+import { composeCommissioningObservability } from '@/modules/industrial/application/commissioning-observability';
 import {
   parseProfileInput,
   parseConfirmChannel,
@@ -7,6 +8,8 @@ import {
 } from '@/modules/industrial/domain/commissioning';
 import { createCommunicationProfileRepository } from '@/modules/industrial/infrastructure/communication-profile-repository';
 import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
+import { summarizeSnmpBdfbLoad } from '@/modules/telemetry/application/snmp-feed-service';
+import { getTelemetryRuntime } from '@/modules/telemetry/infrastructure/telemetry-runtime';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import {
   isSafeMutationRequest,
@@ -41,9 +44,76 @@ export async function GET(request: Request) {
       { headers: { 'Cache-Control': 'no-store' } },
     );
   const overview = await app.overview(deviceId);
-  return overview.ok
-    ? Response.json(overview.value, { headers: { 'Cache-Control': 'no-store' } })
-    : Response.json({ error: overview.error }, { status: 404 });
+  if (!overview.ok) return Response.json({ error: overview.error }, { status: 404 });
+
+  const topology = await createTopologyRepository();
+  const bindingRepository = await createTelemetryBindingRepository();
+  const telemetryRuntime = await getTelemetryRuntime();
+
+  const breakerIds = overview.value.equipment
+    .filter((item) => item.equipmentType === 'CIRCUIT_BREAKER')
+    .map((item) => item.id);
+  const accessPorts = overview.value.equipment.flatMap((item) =>
+    item.accessPorts.map((port) => ({ owner: item, port })),
+  );
+  const accessPortIds = accessPorts.map(({ port }) => port.id);
+
+  const [breakerBindings, accessPortBindings, snmp] = await Promise.all([
+    bindingRepository.listForTargets('EQUIPMENT', breakerIds),
+    bindingRepository.listForTargets('ACCESS_PORT', accessPortIds),
+    summarizeSnmpBdfbLoad(
+      deviceId,
+      topology,
+      bindingRepository,
+      telemetryRuntime.hub,
+    ),
+  ]);
+
+  const mqttSourceIdentities = [
+    ...new Set(
+      overview.value.profiles
+        .filter((profile) => profile.role === 'GATEWAY' && Boolean(profile.sourceIdentity))
+        .map((profile) => profile.sourceIdentity!)
+    ),
+  ];
+  const mqttSourceBindingGroups = await Promise.all(
+    mqttSourceIdentities.map((sourceIdentity) =>
+      bindingRepository.listForSource('MQTT', sourceIdentity),
+    ),
+  );
+
+  const allBindings = new Map(
+    [...breakerBindings, ...accessPortBindings, ...mqttSourceBindingGroups.flat()].map((binding) => [
+      binding.id,
+      binding,
+    ]),
+  );
+  const targetLabels = new Map<string, string>([
+    [overview.value.device.id, overview.value.device.name],
+    ...overview.value.equipment.map((item) => [item.id, item.name] as const),
+    ...accessPorts.map(
+      ({ owner, port }) => [port.id, owner.name + ' / ' + port.name] as const,
+    ),
+  ]);
+  const fieldVerifiedAccessPortIds = new Set(
+    accessPorts
+      .filter(({ port }) => port.attributes?.independentInputConfirmed === true)
+      .map(({ port }) => port.id),
+  );
+
+  const observability = composeCommissioningObservability({
+    profiles: overview.value.profiles,
+    bindings: [...allBindings.values()],
+    targetLabels,
+    fieldVerifiedAccessPortIds,
+    mqtt: telemetryRuntime.diagnostics(),
+    snmp,
+  });
+
+  return Response.json(
+    { ...overview.value, observability },
+    { headers: { 'Cache-Control': 'no-store' } },
+  );
 }
 
 export async function POST(request: Request) {

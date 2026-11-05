@@ -25,25 +25,29 @@ export function ResizableWorkspace({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef<{ side: Side; x: number; initial: Widths } | null>(null);
-  const [widths, setWidths] = useState<Widths>(DEFAULT);
+  const [widths, setWidths] = useState<Widths>(() => {
+    if (typeof window === 'undefined') return DEFAULT;
+    try {
+      const stored = JSON.parse(
+        window.localStorage.getItem(`site-mapper:workspace:s03:v1:${userKey}`) || 'null',
+      ) as Partial<Widths> | null;
+      if (
+        typeof stored?.tree === 'number' &&
+        Number.isFinite(stored.tree) &&
+        typeof stored.inspector === 'number' &&
+        Number.isFinite(stored.inspector)
+      ) {
+        return { tree: stored.tree, inspector: stored.inspector };
+      }
+    } catch {
+      // Storage access may be blocked; default widths remain usable.
+    }
+    return DEFAULT;
+  });
   const [width, setWidth] = useState(1200);
   const [treeOpen, setTreeOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const storageKey = `site-mapper:workspace:s03:v1:${userKey}`;
-
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(storageKey) || 'null') as Partial<Widths> | null;
-      if (saved && typeof saved.tree === 'number' && Number.isFinite(saved.tree) &&
-          typeof saved.inspector === 'number' && Number.isFinite(saved.inspector)) {
-        setWidths({ tree: saved.tree, inspector: saved.inspector });
-      } else {
-        setWidths(DEFAULT);
-      }
-    } catch {
-      setWidths(DEFAULT);
-    }
-  }, [storageKey]);
 
   useEffect(() => {
     const node = ref.current;

@@ -10,6 +10,7 @@ import {
 import { useState, type CSSProperties } from 'react';
 
 import type { PhysicalPoint, TopologyNode } from '@/modules/topology/domain/entities';
+import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 
 import type { VisualStageChild } from './topology-visual-stage';
 
@@ -315,6 +316,7 @@ export function TopologyExplorer({
         ) : (
           <p>{t('selectHelp')}</p>
         )}
+        <ThradexAttribution variant="inspector" />
       </aside>
     </section>
   );

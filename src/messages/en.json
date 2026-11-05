@@ -2321,5 +2321,15 @@
       "MANUFACTURER": "Manufacturer",
       "CUSTOMER_DOCUMENT": "Customer document"
     }
+  },
+  "s03Workspace": {
+    "resizeTree": "Resize topology tree",
+    "resizeInspector": "Resize inspector",
+    "panels": "Workspace panels",
+    "hideTree": "Hide tree",
+    "showTree": "Show tree",
+    "hideInspector": "Hide inspector",
+    "showInspector": "Show inspector",
+    "resetLayout": "Reset layout"
   }
 }

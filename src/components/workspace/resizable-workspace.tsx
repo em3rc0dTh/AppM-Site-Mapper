@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 import {
   useCallback,
   useEffect,
@@ -38,6 +40,7 @@ export function ResizableWorkspace({
   className: string;
   userKey: string;
 }) {
+  const t = useTranslations('s03Workspace');
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef<{ side: Side; x: number; initial: Widths } | null>(null);
   const [widths, setWidths] = useState<Widths>(DEFAULT);
@@ -126,7 +129,7 @@ export function ResizableWorkspace({
       key={side}
       role="separator"
       tabIndex={0}
-      aria-label={side === 'tree' ? 'Resize topology tree' : 'Resize inspector'}
+      aria-label={side === 'tree' ? t('resizeTree') : t('resizeInspector')}
       aria-orientation="vertical"
       aria-valuemin={side === 'tree' ? LIMITS.tree : LIMITS.inspector}
       aria-valuemax={side === 'tree' ? 420 : 520}
@@ -179,30 +182,30 @@ export function ResizableWorkspace({
       {children}
       {separator('tree')}
       {separator('inspector')}
-      <div className="s03-mobile-controls" role="group" aria-label="Workspace panels">
+      <div className="s03-mobile-controls" role="group" aria-label={t('panels')}>
         <button
           type="button"
           aria-expanded={treeOpen}
           onClick={() => setTreeOpen((value) => !value)}
         >
-          {treeOpen ? 'Hide tree' : 'Show tree'}
+          {treeOpen ? t('hideTree') : t('showTree')}
         </button>
         <button
           type="button"
           aria-expanded={inspectorOpen}
           onClick={() => setInspectorOpen((value) => !value)}
         >
-          {inspectorOpen ? 'Hide inspector' : 'Show inspector'}
+          {inspectorOpen ? t('hideInspector') : t('showInspector')}
         </button>
       </div>
       <button
         className="s03-reset"
         type="button"
-        title="Restore default panel widths"
-        aria-label="Restore default panel widths"
+        title={t('resetLayout')}
+        aria-label={t('resetLayout')}
         onClick={() => update(DEFAULT)}
       >
-        Reset layout
+        {t('resetLayout')}
       </button>
     </div>
   );

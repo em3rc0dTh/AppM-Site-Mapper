@@ -8,7 +8,7 @@
 .sm-breaker-limit-dialog {
   position: fixed;
   z-index: 1001;
-  width: min(380px, calc(100vw - 16px));
+  width: min(390px, calc(100vw - 16px));
   max-height: min(70vh, 640px);
   overflow: auto;
   border: 1px solid #b9cad8;
@@ -35,14 +35,14 @@
 .sm-breaker-limit-header h2 {
   margin: 0;
   color: #173d5a;
-  font-size: 0.98rem;
+  font-size: 1.06rem;
 }
 
 .sm-breaker-limit-header small {
   display: block;
   margin-top: 2px;
   color: #647b8f;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
 }
 
 .sm-breaker-limit-header button {
@@ -70,6 +70,39 @@
   line-height: 1.45;
 }
 
+
+.sm-breaker-limit-status {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 12px;
+}
+
+.sm-breaker-limit-status span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 4px 8px;
+  border: 1px solid #d2dde6;
+  border-radius: 999px;
+  background: #f7fafc;
+  color: #466178;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.sm-breaker-limit-status span[data-tone='provisional'] {
+  border-color: #e6cf9a;
+  background: #fff8e8;
+  color: #7f5b12;
+}
+
+.sm-breaker-limit-status span[data-tone='verified'] {
+  border-color: #b9ddca;
+  background: #eef9f3;
+  color: #236746;
+}
+
 .sm-breaker-limit-form {
   display: grid;
   gap: 9px;
@@ -79,7 +112,7 @@
   display: grid;
   gap: 4px;
   color: #294d68;
-  font-size: 0.76rem;
+  font-size: 0.84rem;
   font-weight: 650;
 }
 
@@ -92,7 +125,7 @@
   padding: 6px 8px;
   background: #fff;
   color: #18334b;
-  font-size: 0.8rem;
+  font-size: 0.86rem;
 }
 
 .sm-breaker-limit-form input:focus,

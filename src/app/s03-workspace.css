@@ -143,3 +143,17 @@
     color: #233e5a;
   }
 }
+
+
+/* S03 visual acceptance: the topology collapse control belongs to the heading row.
+   visual-parity.css defines it as sticky and therefore leaves a 34px flow row above
+   TOPOLOGY on initial render. Keep collapsed rail behavior unchanged; only remove
+   the expanded control from document flow. */
+.zip-app-shell:not(.app-shell--blueprint)
+  .telxius-topology-tree[data-collapsed='false']
+  .telxius-tree-collapse-toggle {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  margin: 0;
+}

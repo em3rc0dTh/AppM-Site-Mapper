@@ -104,7 +104,10 @@ and generates private values for:
 - telemetry-store token
 - Modbus bridge token
 - SNMP ingest token
+- Site Mapper industrial credential encryption key
 - MQTT password
+
+The industrial credential encryption key is generated locally, remains in `.runtime/office-test.env`, and is passed only to the Site Mapper service. It must never be copied from the C&P workbook or committed to Git.
 
 The MQTT username is:
 

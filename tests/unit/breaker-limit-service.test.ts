@@ -153,6 +153,35 @@ describe('S01 breaker limit service', () => {
     expect(await context.service.history('breaker-1')).toHaveLength(1);
   });
 
+  it('preserves a disabled policy and records its previous alarm thresholds', async () => {
+    const context = fixture();
+    context.policies.push({
+      id: 'existing-policy', targetType: 'EQUIPMENT', targetId: 'breaker-1',
+      sourceContext: 'mqtt:0_1_4', sourceIdentity: 'QDF4-GW',
+      enabled: false, createdAt, updatedAt: createdAt,
+      overcurrent: {
+        assertAboveA: 30, clearBelowA: 25,
+        debounceSamples: 3, recoverySamples: 4, severity: 'WARNING',
+      },
+      telemetryLoss: { lossAfterMs: 30000, recoverySamples: 2 },
+    });
+    const result = await context.service.update('breaker-1', settings(), 'admin-1');
+    expect(result.policyEnabled).toBe(false);
+    expect(context.policies).toHaveLength(1);
+    expect(context.policies[0]).toMatchObject({
+      enabled: false,
+      telemetryLoss: { lossAfterMs: 30000 },
+      overcurrent: {
+        assertAboveA: 20, clearBelowA: 18,
+        debounceSamples: 3, recoverySamples: 4, severity: 'WARNING',
+      },
+    });
+    expect(context.events[0]).toMatchObject({
+      beforePolicy: { assertAboveA: 30, clearBelowA: 25 },
+      afterPolicy: { assertAboveA: 20, clearBelowA: 18 },
+    });
+  });
+
   it('rejects stale changes without writing a policy or audit', async () => {
     const context = fixture();
     await expect(context.service.update('breaker-1', settings(0), 'admin-1'))

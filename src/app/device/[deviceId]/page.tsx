@@ -343,7 +343,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const breadcrumbIds = [
     room?.id,
     owningDevice?.kind === 'DEVICE' ? owningDevice.id : undefined,
-    node.kind === 'EQUIPMENT' ? node.parentEquipmentId ?? undefined : undefined,
+    node.kind === 'EQUIPMENT' ? (node.parentEquipmentId ?? undefined) : undefined,
     node.id,
   ].filter((id): id is string => Boolean(id));
   const breadcrumbLinks = [...new Set(breadcrumbIds)].flatMap((id) => {

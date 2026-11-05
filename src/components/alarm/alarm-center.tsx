@@ -119,23 +119,20 @@ export function AlarmCenter() {
             </article>
           </div>
 
+          <nav className="sm-alarm-view-tabs sm-alarm-main-tabs" aria-label={t('viewLabel')}>
+            {(['ACTIVE', 'RESOLVED', 'HISTORY'] as const).map((tab) => (
+              <button key={tab} type="button" aria-current={view === tab ? 'page' : undefined}
+                aria-pressed={view === tab} onClick={() => setView(tab)}>
+                {tab === 'ACTIVE' ? t('active') : tab === 'RESOLVED' ? t('resolved') : t('history')}
+              </button>
+            ))}
+          </nav>
           {view === 'HISTORY' ? (
             <AlarmHistory />
           ) : (
             <>
           <div className="sm-alarm-filters">
-            <div className="sm-alarm-view-tabs" role="group" aria-label={t('viewLabel')}>
-              {(['ACTIVE', 'RESOLVED', 'HISTORY'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  type="button"
-                  aria-pressed={view === tab}
-                  onClick={() => setView(tab)}
-                >
-                  {tab === 'ACTIVE' ? t('active') : tab === 'RESOLVED' ? t('resolved') : t('history')}
-                </button>
-              ))}
-            </div>
+
             <select
               aria-label={t('severityLabel')}
               value={severity}

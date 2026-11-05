@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "provenance": {
+    "note": "Synthetic example only. Real commissioning references belong under .runtime/ and must not be committed."
+  },
+  "qdfs": [
+    {
+      "key": "QDF-DEMO",
+      "deviceName": "BDFB QDF-DEMO",
+      "gateway": {
+        "name": "QDF-DEMO_GW-1",
+        "serial": "DEMO-GW-001",
+        "network": {
+          "ipv4": "192.0.2.10",
+          "netmask": "255.255.255.0",
+          "defaultGateway": "192.0.2.1",
+          "dhcp": false,
+          "evidence": "synthetic example"
+        }
+      },
+      "meters": [
+        {
+          "panel": "A3",
+          "name": "QDF-DEMO_METER-A3",
+          "serial": "DEMO-M-A3",
+          "slaveId": 1
+        }
+      ],
+      "breakers": [
+        {
+          "panel": "A3",
+          "position": 1,
+          "destination": "DEMO LOAD A",
+          "legacyPanel": "A1",
+          "legacyPosition": 1,
+          "sourceRow": 1
+        }
+      ]
+    }
+  ]
+}

@@ -97,6 +97,8 @@ This creates:
 .runtime/office-test.env
 ```
 
+If the file already exists, the initializer preserves all existing runtime secrets and configuration. It only adds/replaces a missing or placeholder `SITE_MAPPER_CREDENTIAL_KEY`; it does not regenerate MQTT, Timescale, SNMP or bootstrap credentials.
+
 and generates private values for:
 
 - TimescaleDB password
@@ -104,7 +106,10 @@ and generates private values for:
 - telemetry-store token
 - Modbus bridge token
 - SNMP ingest token
+- Site Mapper industrial credential encryption key
 - MQTT password
+
+The industrial credential encryption key is generated locally, remains in `.runtime/office-test.env`, and is passed only to the Site Mapper service. It must never be copied from the C&P workbook or committed to Git.
 
 The MQTT username is:
 

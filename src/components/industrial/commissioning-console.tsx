@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
+import {
+  CommissioningObservabilityPanel,
+  type CommissioningObservabilityData,
+} from '@/components/industrial/commissioning-observability';
 
 interface Bdfb {
   id: string;
@@ -126,6 +130,7 @@ interface Overview {
   warnings: CommissioningWarning[];
   readiness: CommissioningReadiness[];
   mappings: Mapping[];
+  observability?: CommissioningObservabilityData;
 }
 type ProfileRole = 'GATEWAY' | 'METER';
 const metrics = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'] as const;
@@ -662,6 +667,10 @@ export function CommissioningConsole({
 
       {overview && (
         <>
+          {overview.observability ? (
+            <CommissioningObservabilityPanel data={overview.observability} />
+          ) : null}
+
           <section
             style={{
               border: '1px solid #c8ced6',

@@ -65,6 +65,7 @@ export function BdfbChassis({
     panels[0];
   const [selectedId, setSelectedId] = useState(initialPanel?.id ?? '');
   const [editingBreakerId, setEditingBreakerId] = useState<string | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ id: string; label: string; x: number; y: number } | null>(null);
   const selectedPanel = panels.find((panel) => panel.id === selectedId) ?? initialPanel;
   const installed = selectedPanel?.positions.filter((position) => position !== null).length ?? 0;
   const available = (selectedPanel?.positions.length ?? 0) - installed;
@@ -200,7 +201,14 @@ export function BdfbChassis({
                 role="listitem"
                 className="sm-bdfb-panel-position"
                 data-installed={breaker !== null}
-                onContextMenu={breaker ? (event) => {event.preventDefault();setEditingBreakerId(breaker.id)} : undefined}
+                onContextMenu={breaker ? (event) => {
+                  event.preventDefault();
+                  setContextMenu({
+                    id: breaker.id, label: breaker.label,
+                    x: Math.max(8, Math.min(event.clientX, window.innerWidth - 230)),
+                    y: Math.max(8, Math.min(event.clientY, window.innerHeight - 120)),
+                  });
+                } : undefined}
               >
                 {breaker ? (
                   <>
@@ -270,6 +278,23 @@ export function BdfbChassis({
           <p className="sm-bdfb-panel-focus-note">{t('inventoryDisclaimer')}</p>
         </section>
       )}
+      {contextMenu ? (
+        <>
+          <button type="button" className="sm-breaker-context-dismiss"
+            onClick={() => setContextMenu(null)} aria-label="Close breaker menu" tabIndex={-1} />
+          <div className="sm-breaker-context-menu" role="menu"
+            aria-label={`Breaker actions for ${contextMenu.label}`}
+            style={{left: contextMenu.x, top: contextMenu.y}}
+            onKeyDown={event => {if(event.key==='Escape')setContextMenu(null)}}>
+            <button type="button" role="menuitem" autoFocus
+              onClick={() => {setEditingBreakerId(contextMenu.id);setContextMenu(null)}}>
+              Configure limits &amp; history
+            </button>
+            <Link role="menuitem" href={`/device/${contextMenu.id}`}
+              onClick={() => setContextMenu(null)}>Open breaker</Link>
+          </div>
+        </>
+      ) : null}
       {editingBreakerId ? <BreakerLimitEditor key={editingBreakerId} breakerId={editingBreakerId} onClose={() => setEditingBreakerId(null)} /> : null}
     </section>
   );

@@ -61,19 +61,14 @@ export async function GET(request: Request) {
   const [breakerBindings, accessPortBindings, snmp] = await Promise.all([
     bindingRepository.listForTargets('EQUIPMENT', breakerIds),
     bindingRepository.listForTargets('ACCESS_PORT', accessPortIds),
-    summarizeSnmpBdfbLoad(
-      deviceId,
-      topology,
-      bindingRepository,
-      telemetryRuntime.hub,
-    ),
+    summarizeSnmpBdfbLoad(deviceId, topology, bindingRepository, telemetryRuntime.hub),
   ]);
 
   const mqttSourceIdentities = [
     ...new Set(
       overview.value.profiles
         .filter((profile) => profile.role === 'GATEWAY' && Boolean(profile.sourceIdentity))
-        .map((profile) => profile.sourceIdentity!)
+        .map((profile) => profile.sourceIdentity!),
     ),
   ];
   const mqttSourceBindingGroups = await Promise.all(
@@ -83,17 +78,14 @@ export async function GET(request: Request) {
   );
 
   const allBindings = new Map(
-    [...breakerBindings, ...accessPortBindings, ...mqttSourceBindingGroups.flat()].map((binding) => [
-      binding.id,
-      binding,
-    ]),
+    [...breakerBindings, ...accessPortBindings, ...mqttSourceBindingGroups.flat()].map(
+      (binding) => [binding.id, binding],
+    ),
   );
   const targetLabels = new Map<string, string>([
     [overview.value.device.id, overview.value.device.name],
     ...overview.value.equipment.map((item) => [item.id, item.name] as const),
-    ...accessPorts.map(
-      ({ owner, port }) => [port.id, owner.name + ' / ' + port.name] as const,
-    ),
+    ...accessPorts.map(({ owner, port }) => [port.id, owner.name + ' / ' + port.name] as const),
   ]);
   const fieldVerifiedAccessPortIds = new Set(
     accessPorts

@@ -54,67 +54,65 @@ function profile(
 }
 
 function topology(): MemoryTopologyRepository {
-  return new MemoryTopologyRepository(
-    [
-      {
-        id: 'qdf',
-        name: 'BDFB QDF-TEST',
-        kind: 'DEVICE',
-        deviceType: 'BDFB',
-        lifecycle: 'ACTIVE',
-        createdAt: '2026-11-05T10:00:00.000Z',
-        updatedAt: '2026-11-05T10:00:00.000Z',
-      },
-      {
-        id: 'gw',
-        name: 'QDF-TEST_GW-1',
-        kind: 'EQUIPMENT',
-        equipmentType: 'NETWORK_BOARD',
-        deviceId: 'qdf',
-        parentId: 'qdf',
-        parentEquipmentId: null,
-        childMode: 'DYNAMIC',
-        children: [],
-        accessPorts: [],
-        pinned: false,
-        lifecycle: 'ACTIVE',
-        createdAt: '2026-11-05T10:00:00.000Z',
-        updatedAt: '2026-11-05T10:00:00.000Z',
-      },
-      {
-        id: 'meter',
-        name: 'QDF-TEST_METER-A3',
-        kind: 'EQUIPMENT',
-        equipmentType: 'CUSTOM',
-        deviceId: 'qdf',
-        parentId: 'qdf',
-        parentEquipmentId: null,
-        childMode: 'DYNAMIC',
-        children: [],
-        accessPorts: [],
-        pinned: false,
-        lifecycle: 'ACTIVE',
-        createdAt: '2026-11-05T10:00:00.000Z',
-        updatedAt: '2026-11-05T10:00:00.000Z',
-      },
-      {
-        id: 'breaker',
-        name: 'A3-01',
-        kind: 'EQUIPMENT',
-        equipmentType: 'CIRCUIT_BREAKER',
-        deviceId: 'qdf',
-        parentId: 'qdf',
-        parentEquipmentId: null,
-        childMode: 'DYNAMIC',
-        children: [],
-        accessPorts: [],
-        pinned: false,
-        lifecycle: 'ACTIVE',
-        createdAt: '2026-11-05T10:00:00.000Z',
-        updatedAt: '2026-11-05T10:00:00.000Z',
-      },
-    ] as unknown as TopologyNode[],
-  );
+  return new MemoryTopologyRepository([
+    {
+      id: 'qdf',
+      name: 'BDFB QDF-TEST',
+      kind: 'DEVICE',
+      deviceType: 'BDFB',
+      lifecycle: 'ACTIVE',
+      createdAt: '2026-11-05T10:00:00.000Z',
+      updatedAt: '2026-11-05T10:00:00.000Z',
+    },
+    {
+      id: 'gw',
+      name: 'QDF-TEST_GW-1',
+      kind: 'EQUIPMENT',
+      equipmentType: 'NETWORK_BOARD',
+      deviceId: 'qdf',
+      parentId: 'qdf',
+      parentEquipmentId: null,
+      childMode: 'DYNAMIC',
+      children: [],
+      accessPorts: [],
+      pinned: false,
+      lifecycle: 'ACTIVE',
+      createdAt: '2026-11-05T10:00:00.000Z',
+      updatedAt: '2026-11-05T10:00:00.000Z',
+    },
+    {
+      id: 'meter',
+      name: 'QDF-TEST_METER-A3',
+      kind: 'EQUIPMENT',
+      equipmentType: 'CUSTOM',
+      deviceId: 'qdf',
+      parentId: 'qdf',
+      parentEquipmentId: null,
+      childMode: 'DYNAMIC',
+      children: [],
+      accessPorts: [],
+      pinned: false,
+      lifecycle: 'ACTIVE',
+      createdAt: '2026-11-05T10:00:00.000Z',
+      updatedAt: '2026-11-05T10:00:00.000Z',
+    },
+    {
+      id: 'breaker',
+      name: 'A3-01',
+      kind: 'EQUIPMENT',
+      equipmentType: 'CIRCUIT_BREAKER',
+      deviceId: 'qdf',
+      parentId: 'qdf',
+      parentEquipmentId: null,
+      childMode: 'DYNAMIC',
+      children: [],
+      accessPorts: [],
+      pinned: false,
+      lifecycle: 'ACTIVE',
+      createdAt: '2026-11-05T10:00:00.000Z',
+      updatedAt: '2026-11-05T10:00:00.000Z',
+    },
+  ] as unknown as TopologyNode[]);
 }
 
 describe('S05 commissioning idempotency', () => {
@@ -203,10 +201,7 @@ describe('S05 commissioning idempotency', () => {
     const first = await service.confirmChannel({ ...base, rawPointId: '0_1_1' }, 'operator');
     expect(first.ok).toBe(true);
 
-    const conflicting = await service.confirmChannel(
-      { ...base, rawPointId: '0_1_2' },
-      'operator',
-    );
+    const conflicting = await service.confirmChannel({ ...base, rawPointId: '0_1_2' }, 'operator');
     expect(conflicting).toEqual({ ok: false, error: 'CHANNEL_CONFLICT' });
     expect(await bindings.listForTarget('EQUIPMENT', 'breaker')).toHaveLength(1);
   });

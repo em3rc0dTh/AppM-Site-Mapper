@@ -45,7 +45,9 @@ export interface CommissioningObservability {
 
 function latest(values: readonly (string | null | undefined)[]): string | null {
   const timestamps = values
-    .filter((value): value is string => typeof value === 'string' && Number.isFinite(Date.parse(value)))
+    .filter(
+      (value): value is string => typeof value === 'string' && Number.isFinite(Date.parse(value)),
+    )
     .sort((left, right) => Date.parse(right) - Date.parse(left));
   return timestamps[0] ?? null;
 }
@@ -97,8 +99,7 @@ function mqttStatus(
     };
   }
   const runtimeError =
-    diagnostics.lastConnectionError &&
-    ['reconnecting', 'stopped'].includes(diagnostics.connection);
+    diagnostics.lastConnectionError && ['reconnecting', 'stopped'].includes(diagnostics.connection);
   return {
     communication: runtimeError ? 'ERROR' : 'OFFLINE',
     lastSeenAt: null,
@@ -191,26 +192,24 @@ export function composeCommissioningObservability(input: {
 
   const bindingViews = active
     .filter((binding) => binding.protocol === 'MQTT' || binding.protocol === 'SNMP')
-    .map(
-      (binding): CommissioningBindingView => ({
-        id: binding.id,
-        protocol: binding.protocol,
-        sourceIdentity: binding.sourceIdentity,
-        sourcePointId: binding.sourcePointId ?? null,
-        metric: binding.metric,
-        targetType: binding.targetType,
-        targetId: binding.targetId,
-        targetLabel: input.targetLabels.get(binding.targetId) ?? binding.targetId,
-        commissioning:
-          typeof binding.attributes?.commissioning === 'string'
-            ? binding.attributes.commissioning
-            : null,
-        measurementSource:
-          typeof binding.attributes?.measurementSource === 'string'
-            ? binding.attributes.measurementSource
-            : null,
-      }),
-    )
+    .map((binding): CommissioningBindingView => ({
+      id: binding.id,
+      protocol: binding.protocol,
+      sourceIdentity: binding.sourceIdentity,
+      sourcePointId: binding.sourcePointId ?? null,
+      metric: binding.metric,
+      targetType: binding.targetType,
+      targetId: binding.targetId,
+      targetLabel: input.targetLabels.get(binding.targetId) ?? binding.targetId,
+      commissioning:
+        typeof binding.attributes?.commissioning === 'string'
+          ? binding.attributes.commissioning
+          : null,
+      measurementSource:
+        typeof binding.attributes?.measurementSource === 'string'
+          ? binding.attributes.measurementSource
+          : null,
+    }))
     .sort(
       (left, right) =>
         left.protocol.localeCompare(right.protocol) ||

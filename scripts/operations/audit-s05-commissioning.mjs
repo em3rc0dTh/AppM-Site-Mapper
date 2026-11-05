@@ -46,11 +46,7 @@ const manifestSummary = {
 
 if (manifestOnly) {
   console.log(
-    JSON.stringify(
-      { status: 'S05_MANIFEST_VALID', readOnly: true, manifestSummary },
-      null,
-      2,
-    ),
+    JSON.stringify({ status: 'S05_MANIFEST_VALID', readOnly: true, manifestSummary }, null, 2),
   );
   process.exit(0);
 }
@@ -105,9 +101,7 @@ try {
         'serial',
         spec.gateway.serial,
         gateway.serialNumber ?? null,
-        String(gateway.serialNumber ?? '') === String(spec.gateway.serial)
-          ? 'MATCH'
-          : 'CONFLICT',
+        String(gateway.serialNumber ?? '') === String(spec.gateway.serial) ? 'MATCH' : 'CONFLICT',
       );
 
       if (spec.gateway.network) {

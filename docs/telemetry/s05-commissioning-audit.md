@@ -92,3 +92,22 @@ A `CONFLICT` is a blocker for automatic commissioning.
 The operator must verify the physical asset or another authoritative field record before any seed, MongoDB document, telemetry binding or commissioning profile is changed.
 
 No script in this audit performs APPLY.
+
+
+## Field network evidence — 2026-11-05
+
+A field LAN-scanning capture supplied by the operator supersedes the duplicate gateway IPv4 values documented in CP_Acrel_v0.3.
+
+The capture proves that the three Acrel gateways have distinct static IPv4 addresses and that the serial-to-network assignment is unique for QDF-2, QDF-4 and QDF-5. The exact operational addresses and other customer-network details are retained only in the private runtime reference under `.runtime/`; they are intentionally not committed to this public repository.
+
+The stable gateway identity remains the hardware serial. IPv4 and MAC addresses are commissioning/network attributes and must never replace the serial as the identity key.
+
+Current evidence classification:
+
+- gateway serial mapping: FIELD VERIFIED;
+- gateway IPv4 uniqueness: FIELD VERIFIED;
+- CP v0.3 duplicate IPv4 value: SUPERSEDED;
+- gateway MAC uniqueness: pending higher-resolution/exported field evidence;
+- meter serial conflicts: unresolved and BLOCK APPLY.
+
+No topology, profile or telemetry binding may be changed solely from this evidence. The read-only S05 diff must still be executed against the deployed runtime before an APPLY plan is approved.

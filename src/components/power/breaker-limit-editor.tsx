@@ -208,12 +208,18 @@ export function BreakerLimitEditor({
           <>
             {view === 'limits' ? (
               <>
-                <p className="sm-breaker-limit-note">{t('note')}</p>
-                {data.policyEnabled === false ? (
-                  <p role="status">{t('disabled')}</p>
-                ) : data.policyEnabled === null ? (
-                  <p role="status">{t('commission')}</p>
-                ) : null}
+                <div className="sm-breaker-limit-status" aria-label={t('statusLabel')}>
+                  <span>
+                    {data.policyEnabled === false
+                      ? t('policyDisabledShort')
+                      : data.policyEnabled === null
+                        ? t('policyNewShort')
+                        : t('policyActiveShort')}
+                  </span>
+                  <span data-tone={source === 'PROVISIONAL_STANDARD' ? 'provisional' : 'verified'}>
+                    {source === 'PROVISIONAL_STANDARD' ? t('provisionalShort') : t('verifiedShort')}
+                  </span>
+                </div>
                 <form onSubmit={save} className="sm-breaker-limit-form">
                   <label>
                     {t('rating')}
@@ -296,10 +302,7 @@ export function BreakerLimitEditor({
                         {t('confirm')}
                       </label>
                     </>
-                  ) : (
-                    <p className="sm-breaker-limit-note">{t('provisional')}</p>
-                  )}
-                  <p className="sm-breaker-limit-note">{t('hysteresis')}</p>
+                  ) : null}
                   {error ? <p role="alert">{error}</p> : null}
                   {data.canEdit ? (
                     <button type="submit" disabled={saving || !rating || !assertAt || !clearAt}>

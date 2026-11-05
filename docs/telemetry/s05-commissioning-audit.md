@@ -100,7 +100,7 @@ A field LAN-scanning capture supplied by the operator supersedes the duplicate g
 
 The capture proves that the three Acrel gateways have distinct static IPv4 addresses and that the serial-to-network assignment is unique for QDF-2, QDF-4 and QDF-5. The exact operational addresses and other customer-network details are retained only in the private runtime reference under `.runtime/`; they are intentionally not committed to this public repository.
 
-The stable gateway identity remains the hardware serial. IPv4 and MAC addresses are commissioning/network attributes and must never replace the serial as the identity key.
+The stable gateway identity remains the hardware serial. IPv4 and MAC addresses are commissioning/network attributes and must never replace the serial as the identity key. Field verification of those network attributes is granular evidence only: it does **not** promote the complete communication profile, MQTT publisher identity, channel map or measurements to `FIELD_VERIFIED`.
 
 Current evidence classification:
 

@@ -98,7 +98,7 @@ EOF
   sha256sum mongodb.archive.gz timescale.dump MANIFEST.txt > SHA256SUMS
   sha256sum -c SHA256SUMS >/dev/null
 )
-sh scripts/operations/verify-office-backup-restore.sh "$BACKUP"
+sh scripts/operations/verify-isolated-backup-restore.sh "$BACKUP"
 
 echo "=== 8/8 ACCEPTANCE RECEIPT ==="
 SHA="$(git rev-parse HEAD 2>/dev/null || echo UNKNOWN)"

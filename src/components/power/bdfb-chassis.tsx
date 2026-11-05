@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 
 import { ContextPin } from '@/components/workspace/context-pin';
+import { BreakerLimitEditor } from '@/components/power/breaker-limit-editor';
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 import type { BdfbPresentation } from '@/modules/power/domain/bdfb-model';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
@@ -62,6 +63,7 @@ export function BdfbChassis({
     panels.find((panel) => panel.positions.some(Boolean)) ??
     panels[0];
   const [selectedId, setSelectedId] = useState(initialPanel?.id ?? '');
+  const [editingBreakerId, setEditingBreakerId] = useState<string | null>(null);
   const selectedPanel = panels.find((panel) => panel.id === selectedId) ?? initialPanel;
   const installed = selectedPanel?.positions.filter((position) => position !== null).length ?? 0;
   const available = (selectedPanel?.positions.length ?? 0) - installed;
@@ -197,8 +199,10 @@ export function BdfbChassis({
                 role="listitem"
                 className="sm-bdfb-panel-position"
                 data-installed={breaker !== null}
+                onContextMenu={breaker ? (event) => {event.preventDefault();setEditingBreakerId(breaker.id)} : undefined}
               >
                 {breaker ? (
+                  <>
                   <Link
                     href={`/device/${breaker.id}`}
                     title={t('positionBreaker', { position: index + 1, breaker: breaker.label })}
@@ -218,6 +222,11 @@ export function BdfbChassis({
                       </em>
                     ) : null}
                   </Link>
+                  <button type="button" className="sm-breaker-limit-open"
+                    onClick={() => setEditingBreakerId(breaker.id)}
+                    aria-label={`Configure current limits for ${breaker.label}`}
+                    title="Configure breaker limits (also available with right click)">⚙</button>
+                  </>
                 ) : (
                   <span
                     title={t('positionAvailable', { position: index + 1 })}
@@ -260,6 +269,7 @@ export function BdfbChassis({
           <p className="sm-bdfb-panel-focus-note">{t('inventoryDisclaimer')}</p>
         </section>
       )}
+      {editingBreakerId ? <BreakerLimitEditor key={editingBreakerId} breakerId={editingBreakerId} onClose={() => setEditingBreakerId(null)} /> : null}
     </section>
   );
 }

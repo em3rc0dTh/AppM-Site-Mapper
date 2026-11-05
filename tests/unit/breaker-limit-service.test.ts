@@ -32,6 +32,8 @@ function settings(
   };
 }
 
+// Local in-memory Mongo driver test double requires dynamic document fields.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RecordDocument = Record<string, any>;
 
 function fixture({

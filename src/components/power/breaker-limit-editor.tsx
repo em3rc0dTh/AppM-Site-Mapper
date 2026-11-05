@@ -19,6 +19,8 @@ interface Event {
   occurredAt: string;
   before: BreakerProtection | null;
   after: BreakerProtection;
+  beforePolicy: {assertAboveA:number;clearBelowA:number} | null;
+  afterPolicy: {assertAboveA:number;clearBelowA:number};
 }
 const sourceOptions: readonly BreakerRatingSource[] = [
   'PROVISIONAL_STANDARD', 'FIELD_SURVEY', 'MANUFACTURER', 'CUSTOMER_DOCUMENT',

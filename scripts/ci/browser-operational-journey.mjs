@@ -202,10 +202,7 @@ try {
       Math.abs(geometry.cols[2] - 320) < 2,
       `${width}px S03 inspector default width: ${geometry.cols[2]}`,
     );
-    assert.ok(
-      geometry.stageWidth >= 320,
-      `${width}px must preserve the S03 minimum center stage`,
-    );
+    assert.ok(geometry.stageWidth >= 320, `${width}px must preserve the S03 minimum center stage`);
     assert.ok(geometry.inspectorWidth > 250, `${width}px must preserve visible inspector`);
     assert.ok(
       geometry.viewportOverflow <= 3,

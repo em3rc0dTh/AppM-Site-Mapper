@@ -85,7 +85,6 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => observer.disconnect();
   }, [pathname]);
 
-
   if (pathname === '/login' || pathname === '/change-password' || pathname.startsWith('/workbench'))
     return children;
 

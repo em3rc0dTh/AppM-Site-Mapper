@@ -220,7 +220,6 @@
   white-space: nowrap;
 }
 
-
 /* S03 acceptance: immersive breadcrumbs are bounded by the measured brand and
    action cluster widths. This replaces brittle breakpoint-specific right offsets
    and prevents Search/actions from overlapping the current-location trail. */
@@ -233,7 +232,6 @@
   max-width: none;
   overflow: hidden;
 }
-
 
 /* S03 owns pane placement from 900px upward. Legacy laptop rules used to move
    the inspector below the canvas at 941–1199px; that conflicts with the

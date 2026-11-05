@@ -1962,7 +1962,7 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
             nominalVoltageVdc: 48,
             assignmentStatus: 'UNASSIGNED_TO_QDF',
           },
-          qdf2BreakerMigration: 'FINAL_POSITIONS_NOT_DECLARED',
+          qdf2BreakerMigration: 'POST_MIGRATION_POSITIONS_DECLARED',
           industrialNetworkIdentity: 'NETWORK_PENDING',
           acrelChannelMappings: 'PHYSICAL_CONFIRMATION_REQUIRED',
         },

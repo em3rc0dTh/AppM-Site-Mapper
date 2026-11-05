@@ -21,6 +21,7 @@ import { createCommunicationProfileRepository } from '@/modules/industrial/infra
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { RackElevationService } from '@/modules/rack/application/rack-elevation-service';
 import type { PortConnectionView } from '@/modules/power/domain/port-connection-view';
+import { readBreakerProtection } from '@/modules/power/domain/breaker-protection';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import { rawPointForPosition } from '@/modules/topology/domain/telemetry-point-prefix';
@@ -339,13 +340,23 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
       href: await service.buildDeepLink(item.id),
     })),
   );
-  const usefulLinks = links.filter((item) =>
-    ['ROOM_SUBSTRUCTURE', 'DEVICE', 'EQUIPMENT'].includes(item.kind),
-  );
-  const roomIndex = usefulLinks.findIndex((item) => item.kind === 'ROOM_SUBSTRUCTURE');
-  const breadcrumbLinks = roomIndex >= 0 ? usefulLinks.slice(roomIndex) : usefulLinks.slice(-4);
+  const breadcrumbIds = [
+    room?.id,
+    owningDevice?.kind === 'DEVICE' ? owningDevice.id : undefined,
+    node.kind === 'EQUIPMENT' ? node.parentEquipmentId ?? undefined : undefined,
+    node.id,
+  ].filter((id): id is string => Boolean(id));
+  const breadcrumbLinks = [...new Set(breadcrumbIds)].flatMap((id) => {
+    const link = links.find((item) => item.id === id);
+    return link ? [link] : [];
+  });
 
+  const breakerProtection =
+    node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER'
+      ? readBreakerProtection(node.attributes)
+      : null;
   const t = await getTranslations('pages.device');
+  const tBreaker = await getTranslations('breakerLimits');
   return (
     <main className="operational-page mk-device-page">
       <nav className="breadcrumbs zip-device-breadcrumbs" aria-label={t('breadcrumbs')}>
@@ -418,6 +429,32 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     <dd>{node.parentEquipmentId ?? t('deviceRoot')}</dd>
                     <dt>{t('childCapacity')}</dt>
                     <dd>{node.childMode === 'POSITIONAL' ? node.children.length : t('dynamic')}</dd>
+                    {node.equipmentType === 'CIRCUIT_BREAKER' ? (
+                      breakerProtection ? (
+                        <>
+                          <dt>{t('breakerNominal')}</dt>
+                          <dd>{breakerProtection.ratedCurrentA} A</dd>
+                          <dt>{t('breakerAlarm')}</dt>
+                          <dd>≥ {breakerProtection.assertAboveA} A</dd>
+                          <dt>{t('breakerClear')}</dt>
+                          <dd>≤ {breakerProtection.clearBelowA} A</dd>
+                          <dt>{t('breakerRatingSource')}</dt>
+                          <dd>
+                            {tBreaker(`sources.${breakerProtection.provenance.source}`)} ·{' '}
+                            {breakerProtection.provenance.verified
+                              ? t('breakerVerified')
+                              : t('breakerProvisional')}
+                          </dd>
+                          <dt>{t('breakerUpdated')}</dt>
+                          <dd>{breakerProtection.updatedAt || '—'}</dd>
+                        </>
+                      ) : (
+                        <>
+                          <dt>{t('breakerProtection')}</dt>
+                          <dd>{t('breakerNotConfigured')}</dd>
+                        </>
+                      )
+                    ) : null}
                     {node.equipmentType === 'PANEL' ? (
                       <>
                         <dt>{t('mk1_telemetry_role')}</dt>

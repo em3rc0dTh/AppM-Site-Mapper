@@ -146,9 +146,9 @@ describe.skipIf(!enabled)('S02 real MongoDB alarm acceptance (disposable DB only
     const baseline = (await repo.listResolved(100))[0]!;
     await client.db(databaseName).collection('alarm_occurrences').insertMany(
       Array.from({ length: 525 }, (_, index) => ({
-        ...baseline, _id: undefined, id: 's02-history-' + String(index).padStart(4, '0'),
+        ...baseline, id: 's02-history-' + String(index).padStart(4, '0'),
         correlationKey: 's02-history-' + index,
-        openedAt: at(20), lastObservedAt: at(20), resolvedAt: at(21), lifecycle: 'RESOLVED',
+        openedAt: at(20), lastObservedAt: at(20), resolvedAt: at(21), lifecycle: 'RESOLVED' as const,
       })),
     );
     const found = new Set<string>();

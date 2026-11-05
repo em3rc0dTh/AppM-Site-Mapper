@@ -121,7 +121,10 @@ export function CommandPalette() {
   return (
     <>
       <button ref={trigger} className="mk-search-trigger" onClick={() => setOpen(true)}>
-        ⌕ <span>{t('searchButton')}</span>
+        <span className="mk-search-trigger-glyph" aria-hidden="true">
+          ⌕
+        </span>
+        <span className="mk-search-trigger-label">{t('searchButton')}</span>
         <kbd>⌘ K</kbd>
       </button>
 

@@ -84,7 +84,7 @@ function horizontalSpan(points: readonly PointMm[]): number {
 function readableLabel(name: string, widthMm: number, fontSizeMm: number): string {
   const normalized = name.trim().toUpperCase();
   const available = Math.max(1, widthMm * 0.82);
-  const averageGlyphWidth = Math.max(1, fontSizeMm * 0.58);
+  const averageGlyphWidth = Math.max(1, fontSizeMm * 0.5);
   const maxChars = Math.max(3, Math.floor(available / averageGlyphWidth));
 
   if (normalized.length <= maxChars) return normalized;
@@ -413,7 +413,7 @@ export function BlueprintCanvas({
           {clusters.map((cluster) => {
             if (!cluster.polygon || cluster.polygon.length < 3) return null;
             const center = polygonCentroid(cluster.polygon);
-            const clusterFontSize = Math.max(105, Math.min(145, 135 / zoom));
+            const clusterFontSize = Math.max(150, Math.min(240, 220 / zoom));
             const clusterLabel = readableLabel(
               cluster.name,
               horizontalSpan(cluster.polygon),
@@ -524,7 +524,7 @@ export function BlueprintCanvas({
           ))}
 
           {racks.map((rack) => {
-            const rackFontSize = Math.max(100, Math.min(140, 130 / zoom));
+            const rackFontSize = Math.max(130, Math.min(200, 180 / zoom));
             const rackLabel = readableLabel(rack.name, rack.rect.width, rackFontSize);
 
             return (

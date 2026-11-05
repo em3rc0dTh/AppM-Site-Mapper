@@ -141,10 +141,10 @@ try {
             spec.key,
             spec.gateway.name,
             'recordStatus',
-            'FIELD_VERIFIED',
+            'report-only',
             profile.recordStatus ?? null,
-            profile.recordStatus === 'FIELD_VERIFIED' ? 'MATCH' : 'CONFLICT',
-            'FIELD network evidence must be represented explicitly before APPLY.',
+            'OBSERVED',
+            'Field evidence verifies the network attributes only; it must not promote the complete communication profile or MQTT publisher identity.',
           );
         }
       }

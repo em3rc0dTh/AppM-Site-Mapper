@@ -43,9 +43,7 @@ describe.skipIf(!enabled)('S01 real Mongo replica-set transactions', () => {
     ]) {
       await db.collection(name).deleteMany({});
     }
-    await db
-      .collection('topology_nodes')
-      .insertMany([
+    await db.collection('topology_nodes').insertMany([
         {
           id: 'bdfb',
           kind: 'DEVICE',
@@ -144,9 +142,7 @@ describe.skipIf(!enabled)('S01 real Mongo replica-set transactions', () => {
   });
 
   it('preserves disabled policy, debounce/recovery, and previous thresholds in the audit', async () => {
-    await db
-      .collection('alarm_policies')
-      .insertOne({
+    await db.collection('alarm_policies').insertOne({
         id: 'existing',
         targetType: 'EQUIPMENT',
         targetId: 'breaker',

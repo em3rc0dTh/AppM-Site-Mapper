@@ -17,6 +17,7 @@ export interface BreakerLimitView {
   readonly revision: number;
   readonly protection: BreakerProtection | null;
   readonly policy: AlarmPolicy['overcurrent'] | null;
+  readonly policyEnabled: boolean | null;
 }
 
 type BreakerLimitEvent = {
@@ -69,6 +70,7 @@ export class BreakerLimitService {
       revision: breaker.revision ?? 0,
       protection: readBreakerProtection(breaker.attributes),
       policy: policies[0]?.overcurrent ?? null,
+      policyEnabled: policies[0]?.enabled ?? null,
     };
   }
 

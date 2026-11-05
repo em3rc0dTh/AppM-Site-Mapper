@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { Db, Document } from 'mongodb';
+import type { Db, Document, OptionalUnlessRequiredId } from 'mongodb';
 
 import type { EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
 import type { AlarmPolicy } from '@/modules/alarm/domain/policy';
@@ -159,13 +159,13 @@ export class BreakerLimitService {
           sourceIdentity: bindings[0]!.sourceIdentity as string,
           enabled: true, overcurrent, createdAt: now, updatedAt: now,
         };
-        await policies.insertOne(created, { session });
+        await policies.insertOne(created as OptionalUnlessRequiredId<AlarmPolicy & Document>, { session });
       }
       const event: BreakerLimitEvent = {
         id: randomUUID(), breakerId: id, deviceId: device.id, panelId: panel.id,
         actorId, occurredAt: now, before, after, policyId,
       };
-      await this.db.collection<BreakerLimitEvent & Document>('breaker_limit_events').insertOne(event, { session });
+      await this.db.collection<BreakerLimitEvent & Document>('breaker_limit_events').insertOne(event as OptionalUnlessRequiredId<BreakerLimitEvent & Document>, { session });
     });
     return this.get(id);
   }

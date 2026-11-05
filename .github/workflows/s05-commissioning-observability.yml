@@ -53,7 +53,6 @@ jobs:
           npx vitest run
           tests/unit/commissioning-observability.test.ts
           tests/unit/industrial-commissioning-idempotency.test.ts
-          tests/unit/industrial-commissioning-idempotency.test.ts
       - name: I18n catalogs
         run: npx vitest run tests/unit/i18n-catalogs.test.ts tests/unit/i18n-static-ui.test.ts
       - name: TypeScript compile
@@ -68,3 +67,4 @@ jobs:
           scripts/operations/audit-s05-commissioning.mjs
           config/industrial/s05-commissioning-reference.example.json
           tests/unit/commissioning-observability.test.ts
+          tests/unit/industrial-commissioning-idempotency.test.ts

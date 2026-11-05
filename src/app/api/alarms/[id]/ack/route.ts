@@ -21,7 +21,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'ALARM_ACK_FAILED';
-    const status = message === 'ALARM_NOT_FOUND' ? 404 : message === 'ALARM_NOT_ACTIVE' ? 409 : 500;
+    const status = message === 'ALARM_NOT_FOUND' ? 404 : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }

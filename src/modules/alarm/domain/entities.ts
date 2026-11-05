@@ -23,6 +23,10 @@ export interface AlarmEvidenceRef {
   readonly metric?: string;
   readonly value?: number | string | boolean;
   readonly unit?: string;
+  readonly assertThreshold?: number;
+  readonly clearThreshold?: number;
+  readonly thresholdUnit?: string;
+  readonly policyId?: string;
   readonly observedAt: string;
   readonly note?: string;
 }
@@ -34,6 +38,8 @@ export interface AlarmOccurrence {
   readonly name: string;
   readonly targetType: 'DEVICE' | 'EQUIPMENT';
   readonly targetId: string;
+  /** Immutable location identity captured when the occurrence first asserts. */
+  readonly targetPathSnapshot?: readonly AlarmPathItem[];
   readonly sourceContext: string;
   readonly openedAt: string;
   readonly lastObservedAt: string;

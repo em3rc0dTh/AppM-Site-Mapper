@@ -178,6 +178,10 @@ class BlockingAckRepository implements AlarmRepository {
     return this.inner.listResolved(limit);
   }
 
+  listHistory(query: import('@/modules/alarm/application/alarm-history').AlarmHistoryQuery) {
+    return this.inner.listHistory(query);
+  }
+
   insertOccurrence(occurrence: AlarmOccurrence): Promise<void> {
     return this.inner.insertOccurrence(occurrence);
   }
@@ -345,7 +349,7 @@ describe('Alarm red-team invariants', () => {
     expect(state?.alarmState).toBe('UNKNOWN');
   });
 
-  it('still rejects a resolved alarm acknowledgement', async () => {
+  it('acknowledges a resolved alarm without reactivating it', async () => {
     const alarms = new MemoryAlarmRepository();
     const topologyRepository = new MemoryTopologyRepository(topology());
     const commands = new AlarmCommandService(alarms, topologyRepository);
@@ -361,9 +365,11 @@ describe('Alarm red-team invariants', () => {
     });
     await commands.resolve(occurrence.correlationKey, 'REDTEAM_CLEAR', [], T3);
 
-    await expect(service.acknowledge(occurrence.id, 'redteam-operator')).rejects.toThrow(
-      'ALARM_NOT_ACTIVE',
-    );
+    const acknowledged = await service.acknowledge(occurrence.id, 'redteam-operator');
+    expect(acknowledged.lifecycle).toBe('RESOLVED');
+    expect(acknowledged.acknowledgement).toBe('ACKNOWLEDGED');
+    expect(await alarms.listActive()).toHaveLength(0);
+    expect((await service.transitions(occurrence.id)).at(-1)?.toState).toBe('ACKNOWLEDGED');
   });
 
   it('keeps an unknown target out of a valid Modbus projection', async () => {

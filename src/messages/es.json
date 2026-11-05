@@ -2186,7 +2186,19 @@
       "actions": "Acciones",
       "openDetail": "Abrir detalle",
       "goToTarget": "Ir al objetivo",
-      "empty": "No hay alarmas en esta vista."
+      "empty": "No hay alarmas en esta vista.",
+      "history": "Historial / Registro de eventos",
+      "historyDescription": "Las alarmas resueltas no se eliminan. Consulta el estado, reconocimiento y la evidencia original de cada ocurrencia.",
+      "status": "Estado",
+      "viewLabel": "Vista de alarmas",
+      "fromDate": "Desde fecha",
+      "toDate": "Hasta fecha",
+      "allStatuses": "Todos los estados",
+      "targetIdLabel": "ID de equipo",
+      "firstPage": "Primera página",
+      "nextPage": "Siguiente página",
+      "pageSizeNote": "50 eventos por página · fechas UTC",
+      "previousPage": "Página anterior"
     },
     "detail": {
       "loading": "Cargando alarma…",
@@ -2202,7 +2214,10 @@
       "resolved": "Resuelta",
       "occurrence": "Ocurrencia",
       "correlation": "Correlación",
-      "rule": "Regla"
+      "rule": "Regla",
+      "triggerThreshold": "Umbral de activación",
+      "clearThreshold": "Umbral de recuperación",
+      "policy": "Política"
     },
     "scope": {
       "unavailable": "Estado de alarmas no disponible",

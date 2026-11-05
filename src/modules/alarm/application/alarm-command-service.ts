@@ -9,6 +9,7 @@ import type {
   AlarmSeverity,
 } from '@/modules/alarm/domain/entities';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
+import { TopologyService } from '@/modules/topology/application/topology-service';
 
 export interface AssertAlarmInput {
   readonly code: string;
@@ -62,6 +63,18 @@ export class AlarmCommandService {
       return latest;
     }
 
+    // Capture physical lineage at assertion time so historical evidence does not
+    // change meaning if the Equipment is moved, renamed, or archived later.
+    const topologyService = new TopologyService(this.topology);
+    const trail = await topologyService.getTrail(input.targetId);
+    const targetPathSnapshot = await Promise.all(
+      trail.map(async (node) => ({
+        id: node.id,
+        name: node.name,
+        kind: node.kind,
+        href: await topologyService.buildDeepLink(node.id),
+      })),
+    );
     const occurrence: AlarmOccurrence = {
       id: randomUUID(),
       alarmCode: definition.code,
@@ -69,6 +82,7 @@ export class AlarmCommandService {
       name: definition.name,
       targetType: input.targetType,
       targetId: input.targetId,
+      targetPathSnapshot,
       sourceContext: input.sourceContext,
       openedAt: observedAt,
       lastObservedAt: observedAt,
@@ -109,13 +123,17 @@ export class AlarmCommandService {
     reason: string,
     evidenceRefs: readonly string[] = [],
     observedAt = new Date().toISOString(),
+    recoveryEvidence: readonly AlarmEvidenceRef[] = [],
   ): Promise<AlarmOccurrence | null> {
     const existing = await this.alarms.getActiveByCorrelationKey(correlationKey);
     if (!existing) return null;
     if (observedAt < existing.lastObservedAt) return existing;
 
+    const evidenceById = new Map(existing.evidenceRefs.map((item) => [item.id, item]));
+    for (const item of recoveryEvidence) evidenceById.set(item.id, item);
     const next: AlarmOccurrence = {
       ...existing,
+      evidenceRefs: [...evidenceById.values()],
       lifecycle: 'RESOLVED',
       resolvedAt: observedAt,
       lastObservedAt: observedAt,
@@ -136,7 +154,7 @@ export class AlarmCommandService {
       toState: 'RESOLVED',
       occurredAt: observedAt,
       reason,
-      evidenceRefs: [...evidenceRefs],
+      evidenceRefs: [...new Set([...evidenceRefs, ...recoveryEvidence.map((item) => item.id)])],
     });
     return next;
   }

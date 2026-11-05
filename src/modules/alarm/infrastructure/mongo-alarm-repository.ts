@@ -1,6 +1,11 @@
-import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
+import type { Collection, Db, Document, Filter, OptionalUnlessRequiredId } from 'mongodb';
 
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
+import { parseHistoryCursor, takeHistoryPage } from '@/modules/alarm/application/alarm-history';
+import type {
+  AlarmHistoryPage,
+  AlarmHistoryQuery,
+} from '@/modules/alarm/application/alarm-history';
 import type { AlarmOccurrence, AlarmTransition } from '@/modules/alarm/domain/entities';
 
 type OccurrenceDocument = AlarmOccurrence & Document;
@@ -53,6 +58,41 @@ export class MongoAlarmRepository implements AlarmRepository {
         .limit(Math.max(1, Math.min(limit, 500)))
         .toArray()
     ).map((item) => withoutMongoId<AlarmOccurrence>(item));
+  }
+
+  async listHistory(query: AlarmHistoryQuery): Promise<AlarmHistoryPage> {
+    const previous = query.cursor ? parseHistoryCursor(query.cursor) : null;
+    const filter: Filter<OccurrenceDocument> = {
+      ...(query.lifecycle ? { lifecycle: query.lifecycle } : {}),
+      ...(query.acknowledgement ? { acknowledgement: query.acknowledgement } : {}),
+      ...(query.severity ? { severity: query.severity } : {}),
+      ...(query.targetId ? { targetId: query.targetId } : {}),
+      ...(query.fromDate || query.toDate
+        ? {
+            openedAt: {
+              ...(query.fromDate ? { $gte: query.fromDate + 'T00:00:00.000Z' } : {}),
+              ...(query.toDate ? { $lte: query.toDate + 'T23:59:59.999Z' } : {}),
+            },
+          }
+        : {}),
+      ...(previous
+        ? {
+            $or: [
+              { openedAt: { $lt: previous.openedAt } },
+              { openedAt: previous.openedAt, id: { $lt: previous.id } },
+            ],
+          }
+        : {}),
+    };
+    const documents = await this.occurrences
+      .find(filter)
+      .sort({ openedAt: -1, id: -1 })
+      .limit(query.limit + 1)
+      .toArray();
+    return takeHistoryPage(
+      documents.map((item) => withoutMongoId<AlarmOccurrence>(item)),
+      query.limit,
+    );
   }
 
   async insertOccurrence(occurrence: AlarmOccurrence): Promise<void> {

@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
+import type { AlarmHistoryQuery } from '@/modules/alarm/application/alarm-history';
 import type {
   AlarmOccurrence,
   AlarmOccurrenceView,
@@ -144,6 +145,16 @@ export class AlarmService {
     return { occurrences, rollups, global };
   }
 
+  async history(
+    query: AlarmHistoryQuery,
+  ): Promise<{ items: readonly AlarmOccurrenceView[]; nextCursor: string | null }> {
+    const page = await this.alarms.listHistory(query);
+    return {
+      items: await Promise.all(page.items.map((item) => this.toView(item))),
+      nextCursor: page.nextCursor,
+    };
+  }
+
   async getOccurrenceView(id: string): Promise<AlarmOccurrenceView | null> {
     const occurrence = await this.alarms.getOccurrence(id);
     return occurrence ? this.toView(occurrence) : null;
@@ -152,7 +163,8 @@ export class AlarmService {
   async acknowledge(id: string, actorId: string): Promise<AlarmOccurrence> {
     const current = await this.alarms.getOccurrence(id);
     if (!current) throw new Error('ALARM_NOT_FOUND');
-    if (current.lifecycle !== 'ACTIVE') throw new Error('ALARM_NOT_ACTIVE');
+    // Acknowledgement records operator awareness, independently from the physical condition.
+    // Resolved-but-unacknowledged occurrences remain eligible for ACK.
     if (current.acknowledgement === 'ACKNOWLEDGED') return current;
 
     const now = new Date().toISOString();
@@ -193,7 +205,7 @@ export class AlarmService {
   private async toView(occurrence: AlarmOccurrence): Promise<AlarmOccurrenceView> {
     const target = await this.topologyRepository.getById(occurrence.targetId);
     const pathNodes = target ? await this.topology.getTrail(target.id) : [];
-    const path = await Promise.all(
+    const livePath = await Promise.all(
       pathNodes.map(async (node) => ({
         id: node.id,
         name: node.name,
@@ -201,10 +213,18 @@ export class AlarmService {
         href: await this.topology.buildDeepLink(node.id),
       })),
     );
+    const path =
+      occurrence.lifecycle === 'RESOLVED' && occurrence.targetPathSnapshot?.length
+        ? occurrence.targetPathSnapshot
+        : livePath.length
+          ? livePath
+          : (occurrence.targetPathSnapshot ?? []);
     return {
       ...occurrence,
       path,
-      targetHref: target ? await this.topology.buildDeepLink(target.id) : '#',
+      targetHref: target
+        ? await this.topology.buildDeepLink(target.id)
+        : (occurrence.targetPathSnapshot?.at(-1)?.href ?? '#'),
     };
   }
 }

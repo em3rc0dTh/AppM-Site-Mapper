@@ -1,4 +1,13 @@
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
+import {
+  compareHistoryOrder,
+  parseHistoryCursor,
+  takeHistoryPage,
+} from '@/modules/alarm/application/alarm-history';
+import type {
+  AlarmHistoryPage,
+  AlarmHistoryQuery,
+} from '@/modules/alarm/application/alarm-history';
 import type { AlarmOccurrence, AlarmTransition } from '@/modules/alarm/domain/entities';
 
 export class MemoryAlarmRepository implements AlarmRepository {
@@ -40,6 +49,25 @@ export class MemoryAlarmRepository implements AlarmRepository {
       .filter((item) => item.lifecycle === 'RESOLVED')
       .sort((a, b) => (b.resolvedAt ?? '').localeCompare(a.resolvedAt ?? ''))
       .slice(0, limit);
+  }
+
+  async listHistory(query: AlarmHistoryQuery): Promise<AlarmHistoryPage> {
+    const previous = query.cursor ? parseHistoryCursor(query.cursor) : null;
+    const ordered = [...this.occurrences.values()]
+      .filter((item) => !query.lifecycle || item.lifecycle === query.lifecycle)
+      .filter((item) => !query.acknowledgement || item.acknowledgement === query.acknowledgement)
+      .filter((item) => !query.severity || item.severity === query.severity)
+      .filter((item) => !query.targetId || item.targetId === query.targetId)
+      .filter((item) => !query.fromDate || item.openedAt.slice(0, 10) >= query.fromDate)
+      .filter((item) => !query.toDate || item.openedAt.slice(0, 10) <= query.toDate)
+      .filter(
+        (item) =>
+          !previous ||
+          item.openedAt < previous.openedAt ||
+          (item.openedAt === previous.openedAt && item.id < previous.id),
+      )
+      .sort(compareHistoryOrder);
+    return takeHistoryPage(ordered, query.limit);
   }
 
   async insertOccurrence(occurrence: AlarmOccurrence): Promise<void> {

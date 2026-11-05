@@ -30,7 +30,10 @@ function source(currentA: number, step: number): TelemetrySample {
     sourceIdentity: 'S02-SYNTHETIC',
     sourcePointId: '0_1_4',
     protocol: 'BFDB',
-    reported: { voltageV: { value: 48, observedAt: stamp }, currentA: { value: currentA, observedAt: stamp } },
+    reported: {
+      voltageV: { value: 48, observedAt: stamp },
+      currentA: { value: currentA, observedAt: stamp },
+    },
     receivedAt: stamp,
     sourceObservedAt: stamp,
   };
@@ -38,12 +41,39 @@ function source(currentA: number, step: number): TelemetrySample {
 
 function topology(): MemoryTopologyRepository {
   const nodes = [
-    { id: 'rack', name: 'QDF-LAB', kind: 'CONTAINER_RACK', parentId: null, lifecycle: 'ACTIVE', createdAt: at(0), updatedAt: at(0) },
-    { id: 'device', name: 'BDFB-LAB', kind: 'DEVICE', parentId: 'rack', lifecycle: 'ACTIVE', createdAt: at(0), updatedAt: at(0) },
     {
-      id: 'breaker', name: 'A3-04', kind: 'EQUIPMENT', parentId: 'device', parentEquipmentId: null,
-      deviceId: 'device', equipmentType: 'CIRCUIT_BREAKER', childMode: 'DYNAMIC',
-      children: [], accessPorts: [], pinned: false, lifecycle: 'ACTIVE', createdAt: at(0), updatedAt: at(0),
+      id: 'rack',
+      name: 'QDF-LAB',
+      kind: 'CONTAINER_RACK',
+      parentId: null,
+      lifecycle: 'ACTIVE',
+      createdAt: at(0),
+      updatedAt: at(0),
+    },
+    {
+      id: 'device',
+      name: 'BDFB-LAB',
+      kind: 'DEVICE',
+      parentId: 'rack',
+      lifecycle: 'ACTIVE',
+      createdAt: at(0),
+      updatedAt: at(0),
+    },
+    {
+      id: 'breaker',
+      name: 'A3-04',
+      kind: 'EQUIPMENT',
+      parentId: 'device',
+      parentEquipmentId: null,
+      deviceId: 'device',
+      equipmentType: 'CIRCUIT_BREAKER',
+      childMode: 'DYNAMIC',
+      children: [],
+      accessPorts: [],
+      pinned: false,
+      lifecycle: 'ACTIVE',
+      createdAt: at(0),
+      updatedAt: at(0),
     },
   ] as unknown as TopologyNode[];
   return new MemoryTopologyRepository(nodes);
@@ -56,19 +86,31 @@ describe.skipIf(!enabled)('S02 real MongoDB alarm acceptance (disposable DB only
   let evaluator: TelemetryAlarmEvaluator;
 
   beforeAll(async () => {
-    if (process.env.APP_ENV !== 'test' || !/^mongodb:\/\/127\.0\.0\.1:\d+\/\?replicaSet=[\w-]+$/.test(uri)) {
+    if (
+      process.env.APP_ENV !== 'test' ||
+      !/^mongodb:\/\/127\.0\.0\.1:\d+\/\?replicaSet=[\w-]+$/.test(uri)
+    ) {
       throw new Error('S02 requires an isolated loopback MongoDB test replica set');
     }
     client = await MongoClient.connect(uri);
     const db = client.db(databaseName);
     await ensurePersistenceIndexes(db);
     await db.collection('alarm_policies').insertOne({
-      id: 's02-policy', targetId: 'breaker', targetType: 'EQUIPMENT',
-      sourceContext: 'mqtt:0_1_4', sourceIdentity: 'S02-SYNTHETIC', enabled: true,
+      id: 's02-policy',
+      targetId: 'breaker',
+      targetType: 'EQUIPMENT',
+      sourceContext: 'mqtt:0_1_4',
+      sourceIdentity: 'S02-SYNTHETIC',
+      enabled: true,
       overcurrent: {
-        assertAboveA: 20, clearBelowA: 18, debounceSamples: 3, recoverySamples: 3, severity: 'WARNING',
+        assertAboveA: 20,
+        clearBelowA: 18,
+        debounceSamples: 3,
+        recoverySamples: 3,
+        severity: 'WARNING',
       },
-      createdAt: at(0), updatedAt: at(0),
+      createdAt: at(0),
+      updatedAt: at(0),
     });
     const tree = topology();
     repo = new MongoAlarmRepository(db);
@@ -91,10 +133,19 @@ describe.skipIf(!enabled)('S02 real MongoDB alarm acceptance (disposable DB only
 
     await evaluator.observe(source(24, 4));
     const [raised] = await repo.listActive();
-    expect(raised).toMatchObject({ lifecycle: 'ACTIVE', acknowledgement: 'UNACKNOWLEDGED', targetId: 'breaker' });
+    expect(raised).toMatchObject({
+      lifecycle: 'ACTIVE',
+      acknowledgement: 'UNACKNOWLEDGED',
+      targetId: 'breaker',
+    });
     expect(raised?.targetPathSnapshot?.at(-1)?.name).toBe('A3-04');
     expect(raised?.evidenceRefs[0]).toMatchObject({
-      metric: 'CURRENT', value: 24, unit: 'A', assertThreshold: 20, clearThreshold: 18, policyId: 's02-policy',
+      metric: 'CURRENT',
+      value: 24,
+      unit: 'A',
+      assertThreshold: 20,
+      clearThreshold: 18,
+      policyId: 's02-policy',
     });
 
     await service.acknowledge(raised!.id, 's02-operator');
@@ -111,12 +162,24 @@ describe.skipIf(!enabled)('S02 real MongoDB alarm acceptance (disposable DB only
     const restored = new MongoAlarmRepository(client.db(databaseName));
     const resolved = await restored.getOccurrence(raised!.id);
     expect(resolved).toMatchObject({ lifecycle: 'RESOLVED', acknowledgement: 'ACKNOWLEDGED' });
-    expect(resolved?.evidenceRefs.some((item) => item.metric === 'CURRENT' && item.value === 15)).toBe(true);
+    expect(
+      resolved?.evidenceRefs.some((item) => item.metric === 'CURRENT' && item.value === 15),
+    ).toBe(true);
     const transitions = await restored.listTransitions(raised!.id);
-    expect(transitions.map((item) => item.toState).sort()).toEqual(['ACKNOWLEDGED', 'ACTIVE', 'RESOLVED']);
-    expect(transitions.find((item) => item.toState === 'RESOLVED')?.evidenceRefs.length).toBeGreaterThan(0);
+    expect(transitions.map((item) => item.toState).sort()).toEqual([
+      'ACKNOWLEDGED',
+      'ACTIVE',
+      'RESOLVED',
+    ]);
+    expect(
+      transitions.find((item) => item.toState === 'RESOLVED')?.evidenceRefs.length,
+    ).toBeGreaterThan(0);
 
-    const history = await service.history({ limit: 50, lifecycle: 'RESOLVED', targetId: 'breaker' });
+    const history = await service.history({
+      limit: 50,
+      lifecycle: 'RESOLVED',
+      targetId: 'breaker',
+    });
     expect(history.items.some((item) => item.id === raised!.id)).toBe(true);
 
     await evaluator.observe(source(25, 9));
@@ -137,24 +200,44 @@ describe.skipIf(!enabled)('S02 real MongoDB alarm acceptance (disposable DB only
     await service.acknowledge(active.id, 'late-operator');
     await service.acknowledge(active.id, 'second-operator');
     const final = await repo.getOccurrence(active.id);
-    expect(final).toMatchObject({ lifecycle: 'RESOLVED', acknowledgement: 'ACKNOWLEDGED', acknowledgedBy: 'late-operator' });
-    expect((await repo.listTransitions(active.id)).filter((transition) => transition.toState === 'ACKNOWLEDGED')).toHaveLength(1);
+    expect(final).toMatchObject({
+      lifecycle: 'RESOLVED',
+      acknowledgement: 'ACKNOWLEDGED',
+      acknowledgedBy: 'late-operator',
+    });
+    expect(
+      (await repo.listTransitions(active.id)).filter(
+        (transition) => transition.toState === 'ACKNOWLEDGED',
+      ),
+    ).toHaveLength(1);
     expect(await repo.listActive()).toHaveLength(0);
   });
 
   it('paginates 526+ real Mongo occurrences without duplicates with server filters', async () => {
     const baseline = (await repo.listResolved(100))[0]!;
-    await client.db(databaseName).collection('alarm_occurrences').insertMany(
-      Array.from({ length: 525 }, (_, index) => ({
-        ...baseline, id: 's02-history-' + String(index).padStart(4, '0'),
-        correlationKey: 's02-history-' + index,
-        openedAt: at(20), lastObservedAt: at(20), resolvedAt: at(21), lifecycle: 'RESOLVED' as const,
-      })),
-    );
+    await client
+      .db(databaseName)
+      .collection('alarm_occurrences')
+      .insertMany(
+        Array.from({ length: 525 }, (_, index) => ({
+          ...baseline,
+          id: 's02-history-' + String(index).padStart(4, '0'),
+          correlationKey: 's02-history-' + index,
+          openedAt: at(20),
+          lastObservedAt: at(20),
+          resolvedAt: at(21),
+          lifecycle: 'RESOLVED' as const,
+        })),
+      );
     const found = new Set<string>();
     let cursor: string | undefined;
     do {
-      const page = await repo.listHistory({ limit: 100, lifecycle: 'RESOLVED', targetId: 'breaker', ...(cursor ? { cursor } : {}) });
+      const page = await repo.listHistory({
+        limit: 100,
+        lifecycle: 'RESOLVED',
+        targetId: 'breaker',
+        ...(cursor ? { cursor } : {}),
+      });
       for (const item of page.items) {
         expect(found.has(item.id)).toBe(false);
         found.add(item.id);
@@ -162,7 +245,11 @@ describe.skipIf(!enabled)('S02 real MongoDB alarm acceptance (disposable DB only
       cursor = page.nextCursor ?? undefined;
     } while (cursor);
     expect(found.size).toBe(527);
-    const ack = await repo.listHistory({ limit: 100, lifecycle: 'RESOLVED', acknowledgement: 'ACKNOWLEDGED' });
+    const ack = await repo.listHistory({
+      limit: 100,
+      lifecycle: 'RESOLVED',
+      acknowledgement: 'ACKNOWLEDGED',
+    });
     expect(ack.items.every((item) => item.acknowledgement === 'ACKNOWLEDGED')).toBe(true);
   });
 });

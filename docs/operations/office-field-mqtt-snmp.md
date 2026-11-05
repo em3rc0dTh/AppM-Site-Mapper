@@ -97,6 +97,8 @@ This creates:
 .runtime/office-test.env
 ```
 
+If the file already exists, the initializer preserves all existing runtime secrets and configuration. It only adds/replaces a missing or placeholder `SITE_MAPPER_CREDENTIAL_KEY`; it does not regenerate MQTT, Timescale, SNMP or bootstrap credentials.
+
 and generates private values for:
 
 - TimescaleDB password

@@ -334,7 +334,12 @@ export function BdfbChassis({
               <strong>{contextMenu.label}</strong>
               <small>{t('chooseAction')}</small>
             </header>
-            <button type="button" role="menuitem" autoFocus onClick={() => openBreakerEditor('limits')}>
+            <button
+              type="button"
+              role="menuitem"
+              autoFocus
+              onClick={() => openBreakerEditor('limits')}
+            >
               {t('configureLimits')}
             </button>
             <button type="button" role="menuitem" onClick={() => openBreakerEditor('history')}>

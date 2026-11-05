@@ -1,4 +1,5 @@
 import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
+import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -166,6 +167,7 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
               ),
             ]}
           />
+          <ThradexAttribution variant="inspector" />
         </aside>
       </ResizableWorkspace>
     </main>

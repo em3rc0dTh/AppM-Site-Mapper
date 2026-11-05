@@ -157,3 +157,67 @@
   right: 7px;
   margin: 0;
 }
+
+
+/* S03 acceptance: tree typography follows the actual resizable rail width,
+   not only the viewport media query. */
+@container (max-width: 280px) {
+  .telxius-topology-tree .telxius-tree-node > a {
+    grid-template-columns: 8px 12px minmax(0, 1fr) 8px;
+    gap: 4px;
+    padding-left: calc(5px + var(--tree-depth) * 7px);
+    padding-right: 5px;
+  }
+
+  .telxius-topology-tree .telxius-tree-copy strong {
+    font-size: 11px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+}
+
+@container (max-width: 210px) {
+  .telxius-topology-tree .telxius-tree-node > a {
+    grid-template-columns: 7px 10px minmax(0, 1fr) 7px;
+    gap: 3px;
+    padding-left: calc(4px + var(--tree-depth) * 4px);
+    padding-right: 4px;
+  }
+
+  .telxius-topology-tree .telxius-tree-copy strong {
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* S03 acceptance: Search keeps a stable leading icon + label when the action
+   cluster is compressed. Anonymous flex text previously allowed the label's
+   first character to be visually clipped in some widths. */
+.zip-app-shell .zip-topbar-actions .mk-search-trigger {
+  box-sizing: border-box;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+.zip-app-shell .zip-topbar-actions .mk-search-trigger .mk-search-glyph {
+  flex: 0 0 16px;
+  width: 16px;
+  display: grid !important;
+  place-items: center;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.zip-app-shell .zip-topbar-actions .mk-search-trigger .mk-search-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

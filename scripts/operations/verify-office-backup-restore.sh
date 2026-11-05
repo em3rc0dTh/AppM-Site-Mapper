@@ -8,7 +8,7 @@ if [ -z "$BACKUP_DIR" ] || [ ! -d "$BACKUP_DIR" ]; then
 fi
 BACKUP_DIR="$(CDPATH= cd -- "$BACKUP_DIR" && pwd)"
 
-for file in mongodb.archive.gz timescale.dump SHA256SUMS; do
+for file in mongodb.archive.gz timescale.dump MANIFEST.txt SHA256SUMS; do
   test -s "$BACKUP_DIR/$file" || {
     echo "Missing backup artifact: $file" >&2
     exit 1

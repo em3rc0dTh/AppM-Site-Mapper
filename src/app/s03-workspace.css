@@ -1,5 +1,5 @@
 /* S03: shared operational three-pane sizing, loaded last to supersede legacy fixed grids. */
-.zip-app-shell .s03-layout {
+.zip-app-shell .s03-layout.s03-layout {
   --s03-tree-width: 232px;
   --s03-inspector-width: 320px;
   position: relative;
@@ -8,18 +8,18 @@
   min-width: 0;
   column-gap: 0;
 }
-.zip-app-shell .s03-layout > :nth-child(-n + 3) {
+.zip-app-shell .s03-layout.s03-layout > :nth-child(-n + 3) {
   min-width: 0;
   max-width: 100%;
 }
-.zip-app-shell .s03-layout > :first-child,
-.zip-app-shell .s03-layout > :nth-child(3) {
+.zip-app-shell .s03-layout.s03-layout > :first-child,
+.zip-app-shell .s03-layout.s03-layout > :nth-child(3) {
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   container-type: inline-size;
 }
-.zip-app-shell .s03-layout > :nth-child(2) {
+.zip-app-shell .s03-layout.s03-layout > :nth-child(2) {
   min-width: 0;
   overflow-x: auto;
 }
@@ -101,27 +101,27 @@
     height: auto !important;
     overflow: visible !important;
   }
-  .zip-app-shell .s03-layout > :first-child,
-  .zip-app-shell .s03-layout > :nth-child(3) {
+  .zip-app-shell .s03-layout.s03-layout > :first-child,
+  .zip-app-shell .s03-layout.s03-layout > :nth-child(3) {
     display: none !important;
     width: 100% !important;
     max-height: min(45dvh, 440px);
     overflow: auto;
   }
-  .zip-app-shell .s03-layout[data-tree-open='true'] > :first-child,
-  .zip-app-shell .s03-layout[data-inspector-open='true'] > :nth-child(3) {
+  .zip-app-shell .s03-layout.s03-layout[data-tree-open='true'] > :first-child,
+  .zip-app-shell .s03-layout.s03-layout[data-inspector-open='true'] > :nth-child(3) {
     display: block !important;
   }
-  .zip-app-shell .s03-layout > :nth-child(2) {
+  .zip-app-shell .s03-layout.s03-layout > :nth-child(2) {
     width: 100%;
     min-width: 0;
     overflow-x: auto;
     order: 2;
   }
-  .zip-app-shell .s03-layout > :first-child {
+  .zip-app-shell .s03-layout.s03-layout > :first-child {
     order: 1;
   }
-  .zip-app-shell .s03-layout > :nth-child(3) {
+  .zip-app-shell .s03-layout.s03-layout > :nth-child(3) {
     order: 3;
   }
   .s03-separator,
@@ -237,17 +237,17 @@
    the inspector below the canvas at 941–1199px; that conflicts with the
    resizable three-pane contract and leaves an empty third column. */
 @media (min-width: 900px) {
-  .zip-app-shell .s03-layout > :first-child {
+  .zip-app-shell .s03-layout.s03-layout > :first-child {
     grid-column: 1 !important;
     grid-row: 1 !important;
   }
 
-  .zip-app-shell .s03-layout > :nth-child(2) {
+  .zip-app-shell .s03-layout.s03-layout > :nth-child(2) {
     grid-column: 2 !important;
     grid-row: 1 !important;
   }
 
-  .zip-app-shell .s03-layout > :nth-child(3) {
+  .zip-app-shell .s03-layout.s03-layout > :nth-child(3) {
     grid-column: 3 !important;
     grid-row: 1 !important;
     height: 100% !important;

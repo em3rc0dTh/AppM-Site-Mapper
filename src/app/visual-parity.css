@@ -110,6 +110,20 @@ body {
   opacity: 1 !important;
   text-overflow: ellipsis;
 }
+
+.zip-topbar .mk-search-glyph {
+  flex: 0 0 auto;
+  overflow: visible !important;
+}
+
+.zip-topbar .mk-search-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden !important;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .zip-topbar .mk-search-trigger kbd {
   display: none;
 }

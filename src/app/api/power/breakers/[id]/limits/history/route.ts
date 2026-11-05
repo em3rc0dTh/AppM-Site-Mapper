@@ -16,6 +16,9 @@ export async function GET(_request: Request, context: {params: Promise<{id:strin
     return NextResponse.json({history}, {headers:{'Cache-Control':'no-store'}});
   } catch(error) {
     const code = error instanceof Error ? error.message : 'BREAKER_LIMIT_HISTORY_FAILED';
-    return NextResponse.json({error:code},{status:code==='BREAKER_NOT_FOUND'?404:409});
+    return NextResponse.json(
+      {error: code === 'BREAKER_NOT_FOUND' ? code : 'BREAKER_LIMIT_HISTORY_FAILED'},
+      {status: code === 'BREAKER_NOT_FOUND' ? 404 : 500},
+    );
   }
 }

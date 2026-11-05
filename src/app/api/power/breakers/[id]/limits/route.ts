@@ -46,7 +46,7 @@ export async function PATCH(request: Request, context: Context) {
   const body = await readBoundedJson(request, {maxBytes: 4096, maxDepth: 4, maxNodes: 32});
   if (!body.ok) return NextResponse.json({error:body.error}, {status:jsonBodyErrorStatus(body.error)});
   if (!body.value || typeof body.value !== 'object' || Array.isArray(body.value) ||
-      !hasOnlyKeys(body.value as Record<string,unknown>, ['ratedCurrentA','assertAboveA','clearBelowA','provenance','expectedRevision'])) {
+      !hasOnlyKeys(body.value as Record<string,unknown>, ['ratedCurrentA','assertAboveA','clearBelowA','provenance','expectedRevision','verificationConfirmed'])) {
     return NextResponse.json({error:'INVALID_BREAKER_LIMITS'}, {status:400});
   }
   try {

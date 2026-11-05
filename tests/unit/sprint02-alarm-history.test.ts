@@ -43,6 +43,7 @@ describe('S02 - durable alarm history and independent acknowledgement', () => {
         note: 'assertAboveA=20; provisional rating',
       }],
     });
+    expect(created.targetPathSnapshot?.at(-1)?.name).toBe('A3-04');
     await commands.resolve(created.correlationKey, 'RECOVERY_POLICY_SATISFIED', [], T1);
 
     const historical = await service.snapshot({ includeResolved: true });

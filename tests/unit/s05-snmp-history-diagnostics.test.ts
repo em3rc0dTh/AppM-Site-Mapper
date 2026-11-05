@@ -54,9 +54,9 @@ describe('S05 SNMP history diagnostics', () => {
       rowsAccepted: 0,
     });
 
-    await expect(
-      store.commitSnmpBatch('CTRL', '2026-11-05T10:00:01.000Z', [sample]),
-    ).resolves.toBe('committed');
+    await expect(store.commitSnmpBatch('CTRL', '2026-11-05T10:00:01.000Z', [sample])).resolves.toBe(
+      'committed',
+    );
 
     const recovered = store.diagnostics();
     expect(recovered.failures).toBe(1);

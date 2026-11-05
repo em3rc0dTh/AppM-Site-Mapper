@@ -15,7 +15,9 @@ describe('S05 OFFICE secret wiring', () => {
     expect(template).toContain('SITE_MAPPER_CREDENTIAL_KEY=CHANGE_ME');
     expect(init).toContain('SITE_MAPPER_CREDENTIAL_KEY="$(rand_hex 32)"');
     expect(init).toContain('ensure_credential_key');
-    expect(init).toContain('Updated existing OFFICE runtime env with a missing credential encryption key');
+    expect(init).toContain(
+      'Updated existing OFFICE runtime env with a missing credential encryption key',
+    );
     expect(init).toContain('"SITE_MAPPER_CREDENTIAL_KEY"');
     expect(init).not.toContain('MQTT password: $MQTT_PASSWORD');
     expect(init).toContain('MQTT password: generated in the private runtime env (not printed)');

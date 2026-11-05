@@ -138,7 +138,6 @@ describe('S05 commissioning observability', () => {
     expect(JSON.stringify(result)).not.toContain('credentialRef');
   });
 
-
   it('recognizes the existing TELXIUS synthetic MQTT marker as LAB', () => {
     const result = composeCommissioningObservability({
       profiles: [profile({ recordStatus: 'DECLARED' })],

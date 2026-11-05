@@ -9,6 +9,7 @@ on:
       - src/components/industrial/commissioning-console.tsx
       - src/components/industrial/commissioning-observability.tsx
       - src/modules/industrial/application/commissioning-observability.ts
+      - src/modules/telemetry/infrastructure/http-telemetry-store.ts
       - src/messages/en.json
       - src/messages/es.json
       - scripts/operations/audit-s05-commissioning.mjs
@@ -16,6 +17,7 @@ on:
       - tests/unit/commissioning-observability.test.ts
       - tests/unit/industrial-commissioning-idempotency.test.ts
       - tests/unit/industrial-credential-security.test.ts
+      - tests/unit/s05-snmp-history-diagnostics.test.ts
       - .github/workflows/s05-commissioning-observability.yml
   pull_request:
     paths:
@@ -23,6 +25,7 @@ on:
       - src/components/industrial/commissioning-console.tsx
       - src/components/industrial/commissioning-observability.tsx
       - src/modules/industrial/application/commissioning-observability.ts
+      - src/modules/telemetry/infrastructure/http-telemetry-store.ts
       - src/messages/en.json
       - src/messages/es.json
       - scripts/operations/audit-s05-commissioning.mjs
@@ -30,6 +33,7 @@ on:
       - tests/unit/commissioning-observability.test.ts
       - tests/unit/industrial-commissioning-idempotency.test.ts
       - tests/unit/industrial-credential-security.test.ts
+      - tests/unit/s05-snmp-history-diagnostics.test.ts
       - .github/workflows/s05-commissioning-observability.yml
   workflow_dispatch:
 
@@ -56,6 +60,7 @@ jobs:
           tests/unit/commissioning-observability.test.ts
           tests/unit/industrial-commissioning-idempotency.test.ts
           tests/unit/industrial-credential-security.test.ts
+          tests/unit/s05-snmp-history-diagnostics.test.ts
       - name: I18n catalogs
         run: npx vitest run tests/unit/i18n-catalogs.test.ts tests/unit/i18n-static-ui.test.ts
       - name: TypeScript compile
@@ -67,8 +72,10 @@ jobs:
           src/components/industrial/commissioning-console.tsx
           src/components/industrial/commissioning-observability.tsx
           src/modules/industrial/application/commissioning-observability.ts
+          src/modules/telemetry/infrastructure/http-telemetry-store.ts
           scripts/operations/audit-s05-commissioning.mjs
           config/industrial/s05-commissioning-reference.example.json
           tests/unit/commissioning-observability.test.ts
           tests/unit/industrial-commissioning-idempotency.test.ts
           tests/unit/industrial-credential-security.test.ts
+          tests/unit/s05-snmp-history-diagnostics.test.ts

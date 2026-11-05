@@ -6,6 +6,7 @@ import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
 import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
 import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
+import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -511,6 +512,7 @@ export function BdfbTelemetryInspector({
           </>
         )}
       </div>
+      <ThradexAttribution variant="inspector" />
     </aside>
   );
 }

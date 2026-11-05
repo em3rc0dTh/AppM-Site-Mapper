@@ -1,0 +1,33 @@
+name: S05 one-time credential-test format
+
+on:
+  push:
+    branches:
+      - feat/s05-commissioning-audit
+    paths:
+      - .github/workflows/s05-prettier-autofix.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/s05-commissioning-audit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx prettier --write tests/unit/industrial-credential-security.test.ts
+      - name: Commit exact formatter output
+        run: |
+          if git diff --quiet; then exit 0; fi
+          git config user.name "em3rc0dTh"
+          git config user.email "eduardo.farid@thradex.com"
+          git add tests/unit/industrial-credential-security.test.ts
+          git commit -m "style(s05): format credential security test"
+          git push origin HEAD:feat/s05-commissioning-audit

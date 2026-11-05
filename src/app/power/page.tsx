@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
+import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 
 import { FullPowerTraceModal } from '@/components/power/full-power-trace-modal';
 import { PowerCanvasRoute } from '@/components/power/power-canvas-route';
@@ -469,6 +470,7 @@ export default async function PowerPage({
             entityIds={telemetryEntityIds}
             breakerId={query.breaker}
           />
+          <ThradexAttribution variant="inspector" />
         </aside>
       </div>
 

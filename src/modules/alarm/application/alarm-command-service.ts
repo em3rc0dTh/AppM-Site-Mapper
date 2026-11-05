@@ -109,13 +109,17 @@ export class AlarmCommandService {
     reason: string,
     evidenceRefs: readonly string[] = [],
     observedAt = new Date().toISOString(),
+    recoveryEvidence: readonly AlarmEvidenceRef[] = [],
   ): Promise<AlarmOccurrence | null> {
     const existing = await this.alarms.getActiveByCorrelationKey(correlationKey);
     if (!existing) return null;
     if (observedAt < existing.lastObservedAt) return existing;
 
+    const evidenceById = new Map(existing.evidenceRefs.map((item) => [item.id, item]));
+    for (const item of recoveryEvidence) evidenceById.set(item.id, item);
     const next: AlarmOccurrence = {
       ...existing,
+      evidenceRefs: [...evidenceById.values()],
       lifecycle: 'RESOLVED',
       resolvedAt: observedAt,
       lastObservedAt: observedAt,
@@ -136,7 +140,7 @@ export class AlarmCommandService {
       toState: 'RESOLVED',
       occurredAt: observedAt,
       reason,
-      evidenceRefs: [...evidenceRefs],
+      evidenceRefs: [...new Set([...evidenceRefs, ...recoveryEvidence.map((item) => item.id)])],
     });
     return next;
   }

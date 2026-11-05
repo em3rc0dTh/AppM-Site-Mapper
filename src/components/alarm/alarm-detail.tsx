@@ -106,6 +106,13 @@ export function AlarmDetail({ id, canAck }: { readonly id: string; readonly canA
                   {evidence.value !== undefined ? ': ' + String(evidence.value) : ''}
                   {evidence.unit ? ' ' + evidence.unit : ''}
                 </p>
+                {evidence.assertThreshold !== undefined ? (
+                  <p>{t('triggerThreshold')}: {evidence.assertThreshold} {evidence.thresholdUnit ?? evidence.unit ?? ''}</p>
+                ) : null}
+                {evidence.clearThreshold !== undefined ? (
+                  <p>{t('clearThreshold')}: {evidence.clearThreshold} {evidence.thresholdUnit ?? evidence.unit ?? ''}</p>
+                ) : null}
+                {evidence.policyId ? <small>{t('policy')}: {evidence.policyId}</small> : null}
                 {evidence.note ? <small>{evidence.note}</small> : null}
               </article>
             ))

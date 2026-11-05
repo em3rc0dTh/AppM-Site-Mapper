@@ -1,4 +1,4 @@
-import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
+import type { Collection, Db, Document, Filter, OptionalUnlessRequiredId } from 'mongodb';
 
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
 import { parseHistoryCursor, takeHistoryPage } from '@/modules/alarm/application/alarm-history';
@@ -58,7 +58,7 @@ export class MongoAlarmRepository implements AlarmRepository {
   }
 
   async listHistory(query: AlarmHistoryQuery): Promise<AlarmHistoryPage> {
-    const filter: Record<string, unknown> = {};
+    const filter: Filter<OccurrenceDocument> = {};
     if (query.lifecycle) filter.lifecycle = query.lifecycle;
     if (query.acknowledgement) filter.acknowledgement = query.acknowledgement;
     if (query.severity) filter.severity = query.severity;

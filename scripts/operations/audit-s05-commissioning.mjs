@@ -97,17 +97,63 @@ try {
     if (gateways.length !== 1) {
       add('GATEWAY', spec.key, spec.gateway.name, 'identity', 1, gateways.length, 'CONFLICT');
     } else {
+      const gateway = gateways[0];
       add(
         'GATEWAY',
         spec.key,
         spec.gateway.name,
         'serial',
         spec.gateway.serial,
-        gateways[0].serialNumber ?? null,
-        String(gateways[0].serialNumber ?? '') === String(spec.gateway.serial)
+        gateway.serialNumber ?? null,
+        String(gateway.serialNumber ?? '') === String(spec.gateway.serial)
           ? 'MATCH'
           : 'CONFLICT',
       );
+
+      if (spec.gateway.network) {
+        const profile = await database
+          .collection('industrial_communication_profiles')
+          .findOne({ equipmentId: gateway.id });
+        if (!profile || profile.role !== 'GATEWAY') {
+          add(
+            'GATEWAY_PROFILE',
+            spec.key,
+            spec.gateway.name,
+            'network',
+            spec.gateway.network,
+            null,
+            'MISSING_IN_RUNTIME',
+          );
+        } else {
+          for (const [field, expected] of [
+            ['ip', spec.gateway.network.ipv4],
+            ['mask', spec.gateway.network.netmask],
+            ['gateway', spec.gateway.network.defaultGateway],
+          ]) {
+            if (!expected) continue;
+            const actual = profile.network?.[field] ?? null;
+            add(
+              'GATEWAY_PROFILE',
+              spec.key,
+              spec.gateway.name,
+              'network.' + field,
+              expected,
+              actual,
+              actual === expected ? 'MATCH' : 'CONFLICT',
+            );
+          }
+          add(
+            'GATEWAY_PROFILE',
+            spec.key,
+            spec.gateway.name,
+            'recordStatus',
+            'FIELD_VERIFIED',
+            profile.recordStatus ?? null,
+            profile.recordStatus === 'FIELD_VERIFIED' ? 'MATCH' : 'CONFLICT',
+            'FIELD network evidence must be represented explicitly before APPLY.',
+          );
+        }
+      }
     }
 
     for (const meterSpec of spec.meters) {
@@ -140,15 +186,36 @@ try {
       const slaveAlias = (meter.aliases ?? []).find((value) =>
         /^RS485 slave\s+\d+$/i.test(String(value)),
       );
-      const actualSlave = slaveAlias ? Number(String(slaveAlias).match(/\d+$/)?.[0]) : null;
+      const aliasSlave = slaveAlias ? Number(String(slaveAlias).match(/\d+$/)?.[0]) : null;
       add(
         'METER',
         spec.key,
         meterSpec.name,
-        'slaveId',
+        'inventorySlaveId',
         meterSpec.slaveId,
-        actualSlave,
-        actualSlave === meterSpec.slaveId ? 'MATCH' : 'CONFLICT',
+        aliasSlave,
+        aliasSlave === meterSpec.slaveId ? 'MATCH' : 'CONFLICT',
+      );
+
+      const profile = await database
+        .collection('industrial_communication_profiles')
+        .findOne({ equipmentId: meter.id });
+      const profileSlave =
+        profile?.role === 'METER' && Number.isInteger(profile.rs485?.slaveId)
+          ? Number(profile.rs485.slaveId)
+          : null;
+      add(
+        'METER_PROFILE',
+        spec.key,
+        meterSpec.name,
+        'rs485.slaveId',
+        meterSpec.slaveId,
+        profileSlave,
+        profileSlave === null
+          ? 'MISSING_IN_RUNTIME'
+          : profileSlave === meterSpec.slaveId
+            ? 'MATCH'
+            : 'CONFLICT',
       );
     }
 

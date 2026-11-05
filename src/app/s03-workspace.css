@@ -317,3 +317,30 @@
     flex-direction: column;
   }
 }
+
+
+/* Blueprint/Room tree header follows the same single-row contract as the rest
+   of S03. Keep APPMANAGER, Inicio and the collapse control vertically aligned
+   without adding a separate row above the topology tree. */
+.zip-app-shell.app-shell--blueprint
+  .telxius-topology-tree[data-collapsed='false']
+  .telxius-tree-collapse-toggle {
+  position: absolute !important;
+  top: 6px !important;
+  right: 7px !important;
+  margin: 0 !important;
+}
+
+.zip-app-shell.app-shell--blueprint .telxius-tree-brand {
+  min-height: 46px !important;
+  grid-template-columns: 20px minmax(0, 1fr) auto !important;
+  align-items: center !important;
+  padding: 0 48px 0 10px !important;
+}
+
+.zip-app-shell.app-shell--blueprint .telxius-tree-brand-icon,
+.zip-app-shell.app-shell--blueprint .telxius-tree-brand strong,
+.zip-app-shell.app-shell--blueprint .telxius-tree-brand > a {
+  align-self: center !important;
+  line-height: 1.1 !important;
+}

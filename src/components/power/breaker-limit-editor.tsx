@@ -38,6 +38,7 @@ export function BreakerLimitEditor({
   const [source, setSource] = useState<BreakerRatingSource>('PROVISIONAL_STANDARD');
   const [reference, setReference] = useState('');
   const [verified, setVerified] = useState(false);
+  const [confirmEvidence, setConfirmEvidence] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const prefix = `/api/power/breakers/${encodeURIComponent(breakerId)}/limits`;
 
@@ -64,6 +65,7 @@ export function BreakerLimitEditor({
       setSource(view.protection?.provenance.source ?? 'PROVISIONAL_STANDARD');
       setReference(view.protection?.provenance.reference ?? '');
       setVerified(view.protection?.provenance.verified ?? false);
+      setConfirmEvidence(false);
     }).catch(e => {if (!cancelled) setError(e instanceof Error ? e.message : 'READ_FAILED')})
       .finally(() => {if (!cancelled) setLoading(false)});
     return () => {cancelled=true};
@@ -72,6 +74,10 @@ export function BreakerLimitEditor({
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!data?.canEdit || saving) return;
+    if (source !== 'PROVISIONAL_STANDARD' && (!reference.trim() || !confirmEvidence)) {
+      setError('Confirm the verified source and evidence reference before saving.');
+      return;
+    }
     setSaving(true);setError(null);
     try {
       const response = await fetch(prefix, {
@@ -125,7 +131,7 @@ export function BreakerLimitEditor({
               </label>
               <label>Rating provenance
                 <select value={source} disabled={!data.canEdit||saving}
-                  onChange={e=>{const v=e.target.value as BreakerRatingSource;setSource(v);setVerified(v!=='PROVISIONAL_STANDARD')}}>
+                  onChange={e=>{const v=e.target.value as BreakerRatingSource;setSource(v);setVerified(v!=='PROVISIONAL_STANDARD');setConfirmEvidence(false)}}>
                   {sourceOptions.map(v=><option key={v} value={v}>{v}</option>)}
                 </select>
               </label>
@@ -133,6 +139,11 @@ export function BreakerLimitEditor({
                 <label>Evidence reference
                   <input type="text" maxLength={320} value={reference} required
                     disabled={!data.canEdit||saving} onChange={e=>setReference(e.target.value)}/>
+                </label>
+                <label className="sm-breaker-confirm-evidence"><input type="checkbox"
+                  checked={confirmEvidence} disabled={!data.canEdit||saving}
+                  onChange={e=>setConfirmEvidence(e.target.checked)}/>
+                  I confirm the rating source and evidence reference were reviewed.
                 </label>
               ) : <p className="sm-breaker-limit-note">PROVISIONAL · not field verified</p>}
               <p className="sm-breaker-limit-note">Clear threshold must be strictly below the assert threshold. Verified field ratings cannot be downgraded.</p>

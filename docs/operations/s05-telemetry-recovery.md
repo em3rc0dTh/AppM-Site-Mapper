@@ -39,7 +39,7 @@ recreate all bindings after broker/collector restart
 
 ## Pre-recovery evidence
 
-From repository root on TFARM04:
+During Sprint acceptance, run this first from the repository root of the local OFFICE/FIELD validation stack:
 
 ```bash
 ./scripts/operations/audit-office-baseline.sh   | tee .runtime/s05-recovery-before.txt
@@ -186,4 +186,4 @@ S05 reuses existing repository coverage rather than creating a second transport 
 
 ## Gate
 
-HU-038 is ACCEPTED only after the controlled scenarios relevant to TFARM04 have been executed with before/after evidence. Documentation and unit tests alone do not certify the field runtime.
+HU-038 is ACCEPTED for Sprint development only after the controlled scenarios have been executed on the local OFFICE/FIELD validation stack with before/after evidence. Documentation and unit tests alone are insufficient. TFARM04 execution is a later field deployment/certification gate after the development Sprints are closed.

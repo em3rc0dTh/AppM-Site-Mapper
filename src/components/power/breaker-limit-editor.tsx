@@ -35,8 +35,17 @@ const sourceOptions: readonly BreakerRatingSource[] = [
 
 export function BreakerLimitEditor({
   breakerId,
+  view,
+  x,
+  y,
   onClose,
-}: Readonly<{ breakerId: string; onClose: () => void }>) {
+}: Readonly<{
+  breakerId: string;
+  view: 'limits' | 'history';
+  x: number;
+  y: number;
+  onClose: () => void;
+}>) {
   const t = useTranslations('breakerLimits');
   const [data, setData] = useState<LimitsView | null>(null);
   const [history, setHistory] = useState<readonly Event[]>([]);
@@ -164,7 +173,7 @@ export function BreakerLimitEditor({
 
   return (
     <div
-      className="sm-breaker-limit-overlay"
+      className="sm-breaker-limit-popover-layer"
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -174,14 +183,16 @@ export function BreakerLimitEditor({
         ref={dialogRef}
         className="sm-breaker-limit-dialog"
         role="dialog"
-        aria-modal="true"
-        aria-label={t('title')}
+        aria-modal="false"
+        aria-label={view === 'history' ? t('history') : t('title')}
+        data-view={view}
+        style={{ left: x, top: y }}
         onKeyDown={handleDialogKey}
       >
         <header className="sm-breaker-limit-header">
           <div>
             <h2 ref={titleRef} tabIndex={-1}>
-              {t('title')}
+              {view === 'history' ? t('history') : t('title')}
             </h2>
             <small>{data ? `${data.panelName} · ${data.breakerName}` : breakerId}</small>
           </div>
@@ -195,145 +206,150 @@ export function BreakerLimitEditor({
           <p role="alert">{error}</p>
         ) : data ? (
           <>
-            <p className="sm-breaker-limit-note">{t('note')}</p>
-            {data.policyEnabled === false ? (
-              <p role="status">{t('disabled')}</p>
-            ) : data.policyEnabled === null ? (
-              <p role="status">{t('commission')}</p>
-            ) : null}
-            <form onSubmit={save} className="sm-breaker-limit-form">
-              <label>
+            {view === 'limits' ? (
+              <>
+                <p className="sm-breaker-limit-note">{t('note')}</p>
+                {data.policyEnabled === false ? (
+                <p role="status">{t('disabled')}</p>
+                ) : data.policyEnabled === null ? (
+                <p role="status">{t('commission')}</p>
+                ) : null}
+                <form onSubmit={save} className="sm-breaker-limit-form">
+                <label>
                 {t('rating')}
                 <input
-                  type="number"
-                  min="0.001"
-                  max="100000"
-                  step="any"
-                  required
-                  value={rating}
-                  disabled={!data.canEdit || saving}
-                  onChange={(e) => setRating(e.target.value)}
+                type="number"
+                min="0.001"
+                max="100000"
+                step="any"
+                required
+                value={rating}
+                disabled={!data.canEdit || saving}
+                onChange={(e) => setRating(e.target.value)}
                 />
-              </label>
-              <label>
+                </label>
+                <label>
                 {t('assert')}
                 <input
-                  type="number"
-                  min="0.001"
-                  max="100000"
-                  step="any"
-                  required
-                  value={assertAt}
-                  disabled={!data.canEdit || saving}
-                  onChange={(e) => setAssertAt(e.target.value)}
+                type="number"
+                min="0.001"
+                max="100000"
+                step="any"
+                required
+                value={assertAt}
+                disabled={!data.canEdit || saving}
+                onChange={(e) => setAssertAt(e.target.value)}
                 />
-              </label>
-              <label>
+                </label>
+                <label>
                 {t('clear')}
                 <input
-                  type="number"
-                  min="0.001"
-                  max="100000"
-                  step="any"
-                  required
-                  value={clearAt}
-                  disabled={!data.canEdit || saving}
-                  onChange={(e) => setClearAt(e.target.value)}
+                type="number"
+                min="0.001"
+                max="100000"
+                step="any"
+                required
+                value={clearAt}
+                disabled={!data.canEdit || saving}
+                onChange={(e) => setClearAt(e.target.value)}
                 />
-              </label>
-              <label>
+                </label>
+                <label>
                 {t('provenance')}
                 <select
-                  value={source}
-                  disabled={!data.canEdit || saving}
-                  onChange={(e) => {
-                    const v = e.target.value as BreakerRatingSource;
-                    setSource(v);
-                    setVerified(v !== 'PROVISIONAL_STANDARD');
-                    setConfirmEvidence(false);
-                  }}
+                value={source}
+                disabled={!data.canEdit || saving}
+                onChange={(e) => {
+                const v = e.target.value as BreakerRatingSource;
+                setSource(v);
+                setVerified(v !== 'PROVISIONAL_STANDARD');
+                setConfirmEvidence(false);
+                }}
                 >
-                  {sourceOptions.map((v) => (
-                    <option key={v} value={v}>
-                      {t(`sources.${v}`)}
-                    </option>
-                  ))}
+                {sourceOptions.map((v) => (
+                <option key={v} value={v}>
+                {t(`sources.${v}`)}
+                </option>
+                ))}
                 </select>
-              </label>
-              {source !== 'PROVISIONAL_STANDARD' ? (
+                </label>
+                {source !== 'PROVISIONAL_STANDARD' ? (
                 <>
-                  <label>
-                    {t('reference')}
-                    <input
-                      type="text"
-                      maxLength={320}
-                      value={reference}
-                      required
-                      disabled={!data.canEdit || saving}
-                      onChange={(e) => setReference(e.target.value)}
-                    />
-                  </label>
-                  <label className="sm-breaker-confirm-evidence">
-                    <input
-                      type="checkbox"
-                      checked={confirmEvidence}
-                      disabled={!data.canEdit || saving}
-                      onChange={(e) => setConfirmEvidence(e.target.checked)}
-                    />
-                    {t('confirm')}
-                  </label>
+                <label>
+                {t('reference')}
+                <input
+                type="text"
+                maxLength={320}
+                value={reference}
+                required
+                disabled={!data.canEdit || saving}
+                onChange={(e) => setReference(e.target.value)}
+                />
+                </label>
+                <label className="sm-breaker-confirm-evidence">
+                <input
+                type="checkbox"
+                checked={confirmEvidence}
+                disabled={!data.canEdit || saving}
+                onChange={(e) => setConfirmEvidence(e.target.checked)}
+                />
+                {t('confirm')}
+                </label>
                 </>
-              ) : (
+                ) : (
                 <p className="sm-breaker-limit-note">{t('provisional')}</p>
-              )}
-              <p className="sm-breaker-limit-note">{t('hysteresis')}</p>
-              {error ? <p role="alert">{error}</p> : null}
-              {data.canEdit ? (
+                )}
+                <p className="sm-breaker-limit-note">{t('hysteresis')}</p>
+                {error ? <p role="alert">{error}</p> : null}
+                {data.canEdit ? (
                 <button type="submit" disabled={saving || !rating || !assertAt || !clearAt}>
-                  {saving ? t('saving') : t('save')}
+                {saving ? t('saving') : t('save')}
                 </button>
-              ) : (
+                ) : (
                 <p>{t('readOnly')}</p>
-              )}
-            </form>
-            <section className="sm-breaker-limit-audit" aria-label={t('historyLabel')}>
+                )}
+                </form>
+              </>
+            ) : (
+              <section className="sm-breaker-limit-audit" aria-label={t('historyLabel')}>
               <h3>{t('history')}</h3>
               {history.length ? (
-                <ul>
-                  {history.map((entry) => (
-                    <li key={entry.id}>
-                      <time dateTime={entry.occurredAt}>{entry.occurredAt}</time> · {entry.actorId}
-                      <div>
-                        {t('ratingChange', {
-                          before: entry.before?.ratedCurrentA ?? t('unset'),
-                          after: entry.after.ratedCurrentA,
-                        })}
-                      </div>
-                      <div>
-                        {t('assertChange', {
-                          before:
-                            entry.beforePolicy?.assertAboveA ??
-                            entry.before?.assertAboveA ??
-                            t('unset'),
-                          after: entry.after.assertAboveA,
-                        })}
-                      </div>
-                      <div>
-                        {t('clearChange', {
-                          before:
-                            entry.beforePolicy?.clearBelowA ??
-                            entry.before?.clearBelowA ??
-                            t('unset'),
-                          after: entry.after.clearBelowA,
-                        })}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+              <ul>
+              {history.map((entry) => (
+              <li key={entry.id}>
+              <time dateTime={entry.occurredAt}>{entry.occurredAt}</time> · {entry.actorId}
+              <div>
+              {t('ratingChange', {
+              before: entry.before?.ratedCurrentA ?? t('unset'),
+              after: entry.after.ratedCurrentA,
+              })}
+              </div>
+              <div>
+              {t('assertChange', {
+              before:
+              entry.beforePolicy?.assertAboveA ??
+              entry.before?.assertAboveA ??
+              t('unset'),
+              after: entry.after.assertAboveA,
+              })}
+              </div>
+              <div>
+              {t('clearChange', {
+              before:
+              entry.beforePolicy?.clearBelowA ??
+              entry.before?.clearBelowA ??
+              t('unset'),
+              after: entry.after.clearBelowA,
+              })}
+              </div>
+              </li>
+              ))}
+              </ul>
               ) : (
-                <p>{t('empty')}</p>
+              <p>{t('empty')}</p>
               )}
-            </section>
+              </section>
+            )}
           </>
         ) : null}
       </section>

@@ -19,7 +19,7 @@ assert(['plan', 'apply', 'retire'].includes(MODE), 'mode must be plan/apply/reti
 
 const d = db.getSiblingDB(DATABASE);
 const state = d.runtime_seed_state.findOne({ _id: 'seed-01', status: 'APPLIED' });
-assert(state && state.version >= 4, 'seed-01 v4+ must be APPLIED');
+assert(state && state.version >= 8, 'seed-01 v8+ must be APPLIED');
 assert(Array.isArray(state.bdfbs) && state.bdfbs.length === 3, 'expected exactly 3 seeded BDFBs');
 
 if (MODE === 'retire') {
@@ -142,10 +142,10 @@ for (const item of state.bdfbs) {
 }
 
 const sourceCount = desired.filter((x) => x.metric === 'SOURCE').length;
-assert(desiredPolicies.length === 48, 'expected 48 telemetry-loss alarm policies');
+assert(desiredPolicies.length === 74, 'expected 74 telemetry-loss alarm policies');
 const pointCount = desired.length - sourceCount;
 assert(sourceCount === 3, 'expected 3 source bindings');
-assert(pointCount === 48 * 4, 'expected 192 metric bindings for 48 confirmed breakers');
+assert(pointCount === 74 * 4, 'expected 296 metric bindings for 74 confirmed breakers');
 
 for (const policy of desiredPolicies) {
   const existing = d.alarm_policies.find({ id: policy.id }).toArray();

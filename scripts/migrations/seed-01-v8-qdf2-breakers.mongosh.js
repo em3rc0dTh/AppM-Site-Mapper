@@ -99,13 +99,15 @@ for (const item of desired) {
   }
   const breaker = d.topology_nodes.findOne({ id });
   assert(breaker, item.panel + '-' + item.pos + ' contains dangling child id');
+  const expectedName = item.panel + '-' + String(item.pos).padStart(2, '0');
   assert(
     breaker.kind === 'EQUIPMENT' &&
       breaker.lifecycle === 'ACTIVE' &&
       breaker.equipmentType === 'CIRCUIT_BREAKER' &&
       breaker.deviceId === qdf2.id &&
       breaker.parentEquipmentId === panel.id &&
-      breaker.parentId === panel.id,
+      breaker.parentId === panel.id &&
+      breaker.name === expectedName,
     item.panel + '-' + item.pos + ' is occupied by incompatible topology',
   );
   existingRows.push({
@@ -180,7 +182,8 @@ try {
           current.equipmentType === 'CIRCUIT_BREAKER' &&
           current.deviceId === qdf2.id &&
           current.parentEquipmentId === panel.id &&
-          current.parentId === panel.id,
+          current.parentId === panel.id &&
+          current.name === expectedName,
         expectedName + ' changed during migration',
       );
     } else {
@@ -226,8 +229,12 @@ try {
     const original = name === 'A3' ? a3 : b3;
     const panel = panels[name];
     if (JSON.stringify(panel.children) !== JSON.stringify(original.children)) {
+      const revisionFilter =
+        original.revision === undefined
+          ? { revision: { $exists: false } }
+          : { revision: original.revision };
       const result = topology.updateOne(
-        { id: panel.id, lifecycle: 'ACTIVE', revision: original.revision },
+        { id: panel.id, lifecycle: 'ACTIVE', ...revisionFilter },
         { $set: { children: panel.children, updatedAt: now }, $inc: { revision: 1 } },
       );
       assert(result.matchedCount === 1, name + ' positional update lost race');

@@ -1,0 +1,51 @@
+name: Sprint 02 one-time Prettier normalization
+on:
+  push:
+    branches:
+      - feat/mk1-s02-alarm-history
+    paths:
+      - .github/workflows/s02-format-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/mk1-s02-alarm-history
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Apply repository-locked Prettier only to Sprint 02 changes
+        run: |
+          npx prettier --write \
+            docs/sprints/mk1-s02-alarm-engine-event-log.md \
+            scripts/migrations/s02-alarm-history-indexes.mongosh.js \
+            src/app/api/alarms/history/route.ts \
+            src/app/globals.css \
+            src/components/alarm/alarm-center.tsx \
+            src/components/alarm/alarm-detail.tsx \
+            src/components/alarm/alarm-history.tsx \
+            src/modules/alarm/application/alarm-history.ts \
+            src/modules/alarm/application/alarm-repository.ts \
+            src/modules/alarm/application/alarm-service.ts \
+            src/modules/alarm/application/telemetry-alarm-evaluator.ts \
+            src/modules/alarm/infrastructure/memory-alarm-repository.ts \
+            src/modules/alarm/infrastructure/mongo-alarm-repository.ts \
+            tests/unit/alarm-redteam.test.ts \
+            tests/unit/sprint02-alarm-history.test.ts
+      - name: Commit formatting
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- docs/sprints/mk1-s02-alarm-engine-event-log.md scripts/migrations/s02-alarm-history-indexes.mongosh.js src/app/api/alarms/history/route.ts src/app/globals.css src/components/alarm/alarm-center.tsx src/components/alarm/alarm-detail.tsx src/components/alarm/alarm-history.tsx src/modules/alarm/application/alarm-history.ts src/modules/alarm/application/alarm-repository.ts src/modules/alarm/application/alarm-service.ts src/modules/alarm/application/telemetry-alarm-evaluator.ts src/modules/alarm/infrastructure/memory-alarm-repository.ts src/modules/alarm/infrastructure/mongo-alarm-repository.ts tests/unit/alarm-redteam.test.ts tests/unit/sprint02-alarm-history.test.ts
+          if ! git diff --cached --quiet; then
+            git commit -m "style(s02): normalize Prettier formatting"
+            git push origin HEAD:feat/mk1-s02-alarm-history
+          fi

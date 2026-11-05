@@ -2206,7 +2206,10 @@
       "resolved": "Resuelta",
       "occurrence": "Ocurrencia",
       "correlation": "Correlación",
-      "rule": "Regla"
+      "rule": "Regla",
+      "triggerThreshold": "Umbral de activación",
+      "clearThreshold": "Umbral de recuperación",
+      "policy": "Política"
     },
     "scope": {
       "unavailable": "Estado de alarmas no disponible",

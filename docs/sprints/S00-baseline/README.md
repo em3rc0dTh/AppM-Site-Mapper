@@ -1,7 +1,7 @@
 # Sprint 00 — Commissioning Baseline & Automatic Telemetry Reconciliation
 
 **Scope:** AppM Site Mapper MK1 · OFFICE/FIELD baseline  
-**Target:** converge to `main` after acceptance  
+**Target:** converge to `main` after LOCAL acceptance  
 **Rule:** no Sprint 01 breaker-threshold/rating/alarm work is included here.
 
 ## Stories
@@ -55,31 +55,42 @@ Missing metric => no metric binding and no derived value.
 
 ## Controlled execution
 
-### Read-only planning
+### Local acceptance only
+
+The canonical Sprint 00 gate is deliberately **LOCAL-ONLY**:
 
 ```bash
-sh scripts/operations/sprint-00-gate.sh plan
+sh scripts/operations/sprint-00-gate.sh
 ```
 
-This performs code validation, compose validation, QDF-2 migration plan, Timescale health and a current baseline audit. The migration remains read-only.
+It delegates to `sprint-00-local-gate.sh` and creates the isolated Docker project:
 
-### Acceptance
-
-```bash
-SITEMAPPER_S00_ACK=ACCEPT sh scripts/operations/sprint-00-gate.sh accept
+```text
+site-mapper-s00-local
 ```
 
-The acceptance path first creates and restores a private backup. It then applies only the approved QDF-2 topology reconciliation and runs the final audit.
+The gate:
+
+1. builds and runs the code-level telemetry integration tests;
+2. renders a merged local integration Compose with **all host ports removed**;
+3. destroys/recreates only the dedicated `site-mapper-s00-local` project and its own volumes;
+4. starts a clean seed-01 v8 stack with controlled MQTT/SNMP publishers;
+5. requires 74 breakers and the expected MQTT/SNMP bindings;
+6. requires real rows in local Timescale for all three QDF MQTT sources and all three synthetic SNMP sources;
+7. creates Mongo + Timescale backups and restores them into disposable verification containers;
+8. writes a private local receipt.
 
 A successful run prints:
 
 ```text
-SPRINT_00_ACCEPTED
-receipt=<private backup path>/SPRINT-00-ACCEPTANCE.txt
+SPRINT_00_ACCEPTED_LOCAL
+TFARM04_TOUCHED=false
 ```
 
-The private receipt/backups must not be committed.
+Set `SITEMAPPER_S00_KEEP_LOCAL=1` only when the local disposable stack should remain up for inspection. Otherwise the gate deletes only its own project/volumes on exit.
+
+**TFARM04 / OFFICE / FIELD is not an acceptance target.** No Sprint 00 test, cleanup, migration or destructive command is run there. FIELD preflight helpers remain operational tools for a later deployment phase; they are not part of Sprint acceptance.
 
 ## Main convergence
 
-The Sprint 00 PR may be merged only after the acceptance run succeeds. Once merged, `main` is the sole baseline for Sprint 01; the Sprint 00 working branch is no longer an operational source of truth.
+The Sprint 00 PR may be merged only after the **local clean-room acceptance** succeeds. Once merged, `main` is the sole baseline for Sprint 01; the Sprint 00 working branch is no longer an operational source of truth. TFARM may consume that validated `main` later through a separate deployment/preflight decision.

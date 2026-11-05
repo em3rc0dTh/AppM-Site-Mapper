@@ -71,7 +71,7 @@ function fixture({
     ? [{
         id: 'mqtt-current-1', targetId: 'breaker-1',
         targetType: 'EQUIPMENT', protocol: 'MQTT', metric: 'CURRENT',
-        lifecycle: 'ACTIVE', sourceIdentity: 'QDF4-GW',
+        lifecycle: 'ACTIVE', sourceIdentity: 'QDF4-GW', sourcePointId: '0_1_4',
       }]
     : [];
   const policies: RecordDocument[] = [];

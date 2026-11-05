@@ -18,7 +18,7 @@ El arranque debe dejar disponibles:
 
 ```text
 MongoDB + replica set
-seed-01 v5
+seed-01 v8
 Site Mapper
 primer SUPERADMIN de integración
 TimescaleDB
@@ -57,7 +57,7 @@ SITE_MAPPER_INTEGRATION_PROFILE=seed-01-controlled
 
 Con Mongo vacía, Site Mapper crea automáticamente el baseline seed-01. El perfil de integración agrega únicamente fixtures sintéticos marcados:
 
-- bindings MQTT para los breakers ya confirmados en QDF-4/QDF-5;
+- bindings MQTT para los 74 breakers confirmados en QDF-2/QDF-4/QDF-5;
 - feeds SNMP Config4 A1/A2/B1/B2 controlados por QDF;
 - hardware profile Config4 para el entorno sintético;
 - Unit IDs Modbus de integración.
@@ -89,7 +89,7 @@ con cuatro grupos de 24 puntos:
 0_4_1..24
 ```
 
-QDF-2 permanece sin bindings de breaker cuando el seed no dispone de posiciones físicas finales confirmadas. Su tráfico puede existir sin inventar esas relaciones.
+QDF-2 usa las posiciones post-migración aceptadas A3/B3 1..13. Las posiciones legacy A1/A2/B1/B2 permanecen como evidencia y no son posiciones físicas actuales.
 
 ## SNMP controlado
 

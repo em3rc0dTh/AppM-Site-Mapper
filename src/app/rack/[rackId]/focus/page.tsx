@@ -1,3 +1,4 @@
+import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
@@ -62,7 +63,7 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
         </strong>
       </nav>
 
-      <div className="zip-rack-focus-layout">
+      <ResizableWorkspace className="zip-rack-focus-layout" userKey={auth.value.id}>
         <aside className="zip-rack-topology">
           {tree ? <TopologyContextTree tree={tree} activeId={rackId} /> : null}
         </aside>
@@ -166,7 +167,7 @@ export default async function RackFocus({ params }: { params: Promise<{ rackId: 
             ]}
           />
         </aside>
-      </div>
+      </ResizableWorkspace>
     </main>
   );
 }

@@ -1,0 +1,273 @@
+/* S03: shared operational three-pane sizing, loaded last to supersede legacy fixed grids. */
+.zip-app-shell .s03-layout.s03-layout {
+  --s03-tree-width: 232px;
+  --s03-inspector-width: 320px;
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--s03-tree-width) minmax(0, 1fr) var(--s03-inspector-width) !important;
+  min-width: 0;
+  column-gap: 0;
+}
+.zip-app-shell .s03-layout.s03-layout > :nth-child(-n + 3) {
+  min-width: 0;
+  max-width: 100%;
+}
+.zip-app-shell .s03-layout.s03-layout > :first-child,
+.zip-app-shell .s03-layout.s03-layout > :nth-child(3) {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  container-type: inline-size;
+}
+.zip-app-shell .s03-layout.s03-layout > :nth-child(2) {
+  min-width: 0;
+  overflow-x: auto;
+}
+.s03-separator {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 25;
+  width: 10px;
+  cursor: col-resize;
+  touch-action: none;
+  background: transparent;
+  transform: translateX(-50%);
+}
+.s03-separator:hover,
+.s03-separator:focus-visible {
+  background: color-mix(in srgb, #2b7db9 28%, transparent);
+  outline: 2px solid #2b7db9;
+  outline-offset: -2px;
+}
+.s03-separator--tree {
+  left: var(--s03-tree-width);
+}
+.s03-separator--inspector {
+  left: calc(100% - var(--s03-inspector-width));
+}
+.s03-mobile-controls {
+  display: none;
+}
+.s03-reset {
+  position: absolute;
+  z-index: 24;
+  right: calc(var(--s03-inspector-width) + 12px);
+  bottom: 8px;
+  padding: 4px 9px;
+  border: 1px solid #a8b7c7;
+  border-radius: 5px;
+  background: #fff;
+  color: #243a50;
+  font-size: 11px;
+  opacity: 0.75;
+}
+.s03-reset:focus-visible,
+.s03-reset:hover {
+  opacity: 1;
+}
+.s03-layout
+  :is(
+    .zip-device-inspector,
+    .zip-room-properties,
+    .zip-rack-inspector,
+    .telxius-inspector,
+    .mk-inline-inspector,
+    .operational-properties
+  ) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.s03-layout :is(dl, dd, table, .sm-bdfb-inspector, .zip-device-inspector, .zip-rack-inspector) {
+  max-width: 100%;
+}
+.s03-layout :is(.ec-table-scroll, .sm-home-table-wrap) {
+  overflow-x: auto;
+}
+@container (max-width: 300px) {
+  .s03-layout
+    :is(.zip-device-inspector, .zip-room-properties, .zip-rack-inspector, .mk-inline-inspector)
+    dl,
+  .s03-layout .equipment-breaker-telemetry-values {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+@media (max-width: 899px) {
+  .zip-app-shell .s03-layout {
+    display: flex !important;
+    flex-direction: column;
+    min-width: 0;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .zip-app-shell .s03-layout.s03-layout > :first-child,
+  .zip-app-shell .s03-layout.s03-layout > :nth-child(3) {
+    display: none !important;
+    width: 100% !important;
+    max-height: min(45dvh, 440px);
+    overflow: auto;
+  }
+  .zip-app-shell .s03-layout.s03-layout[data-tree-open='true'] > :first-child,
+  .zip-app-shell .s03-layout.s03-layout[data-inspector-open='true'] > :nth-child(3) {
+    display: block !important;
+  }
+  .zip-app-shell .s03-layout.s03-layout > :nth-child(2) {
+    width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    order: 2;
+  }
+  .zip-app-shell .s03-layout.s03-layout > :first-child {
+    order: 1;
+  }
+  .zip-app-shell .s03-layout.s03-layout > :nth-child(3) {
+    order: 3;
+  }
+  .s03-separator,
+  .s03-reset {
+    display: none !important;
+  }
+  .s03-mobile-controls {
+    order: 0;
+    display: flex;
+    gap: 8px;
+    padding: 8px;
+    background: #f3f6fa;
+  }
+  .s03-mobile-controls button {
+    border: 1px solid #b9c7d7;
+    padding: 8px 12px;
+    border-radius: 5px;
+    background: white;
+    color: #233e5a;
+  }
+}
+
+/* S03 visual acceptance: the topology collapse control belongs to the heading row.
+   visual-parity.css defines it as sticky and therefore leaves a 34px flow row above
+   TOPOLOGY on initial render. Keep collapsed rail behavior unchanged; only remove
+   the expanded control from document flow. */
+.zip-app-shell:not(.app-shell--blueprint)
+  .telxius-topology-tree[data-collapsed='false']
+  .telxius-tree-collapse-toggle {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  margin: 0;
+}
+
+/* S03 acceptance: tree typography follows the actual resizable rail width,
+   not only the viewport media query. */
+@container (max-width: 280px) {
+  .telxius-topology-tree .telxius-tree-node > a {
+    grid-template-columns: 8px 12px minmax(0, 1fr) 8px;
+    gap: 4px;
+    padding-left: calc(5px + var(--tree-depth) * 7px);
+    padding-right: 5px;
+  }
+
+  .telxius-topology-tree .telxius-tree-copy strong {
+    font-size: 11px;
+    line-height: 1.25;
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: anywhere;
+    text-overflow: clip;
+  }
+}
+
+@container (max-width: 210px) {
+  .telxius-topology-tree .telxius-tree-node > a {
+    grid-template-columns: 7px 10px minmax(0, 1fr) 7px;
+    gap: 3px;
+    padding-left: calc(4px + var(--tree-depth) * 4px);
+    padding-right: 4px;
+  }
+
+  .telxius-topology-tree .telxius-tree-copy strong {
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* S03 acceptance: Search keeps a stable leading icon + label when the action
+   cluster is compressed. Anonymous flex text previously allowed the label's
+   first character to be visually clipped in some widths. */
+.zip-app-shell .zip-topbar-actions .mk-search-trigger {
+  box-sizing: border-box;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+.zip-app-shell .zip-topbar-actions .mk-search-trigger .mk-search-glyph {
+  flex: 0 0 16px;
+  width: 16px;
+  display: grid !important;
+  place-items: center;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.zip-app-shell .zip-topbar-actions .mk-search-trigger .mk-search-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: block !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* S03 acceptance: immersive breadcrumbs are bounded by the measured brand and
+   action cluster widths. This replaces brittle breakpoint-specific right offsets
+   and prevents Search/actions from overlapping the current-location trail. */
+.zip-app-shell.app-shell--immersive .breadcrumbs,
+.zip-app-shell .mk-device-page .breadcrumbs {
+  left: var(--s03-topbar-brand-width, 310px) !important;
+  right: var(--s03-topbar-actions-width, 950px) !important;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: none;
+  overflow: hidden;
+}
+
+/* S03 owns pane placement from 900px upward. Legacy laptop rules used to move
+   the inspector below the canvas at 941–1199px; that conflicts with the
+   resizable three-pane contract and leaves an empty third column. */
+@media (min-width: 900px) {
+  .zip-app-shell .s03-layout.s03-layout > :first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+  }
+
+  .zip-app-shell .s03-layout.s03-layout > :nth-child(2) {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+  }
+
+  .zip-app-shell .s03-layout.s03-layout > :nth-child(3) {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    border-top: 0 !important;
+  }
+}
+
+/* Keep immersive breadcrumbs in the topbar for every S03 desktop-like width.
+   interaction-recovery.css moves them into document flow below 1180px; that
+   makes width:100% collide with the action cluster once S03 measures live bounds. */
+@media (min-width: 900px) {
+  .zip-app-shell.app-shell--immersive .breadcrumbs,
+  .zip-app-shell .mk-device-page .breadcrumbs {
+    position: fixed !important;
+    top: 0 !important;
+    bottom: auto !important;
+    width: auto !important;
+    height: 67px !important;
+    min-height: 67px !important;
+    margin: 0 !important;
+  }
+}

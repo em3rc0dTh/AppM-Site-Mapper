@@ -2336,5 +2336,15 @@
       "MANUFACTURER": "Fabricante",
       "CUSTOMER_DOCUMENT": "Documento del cliente"
     }
+  },
+  "s03Workspace": {
+    "resizeTree": "Redimensionar árbol de topología",
+    "resizeInspector": "Redimensionar inspector",
+    "panels": "Paneles del workspace",
+    "hideTree": "Ocultar árbol",
+    "showTree": "Mostrar árbol",
+    "hideInspector": "Ocultar inspector",
+    "showInspector": "Mostrar inspector",
+    "resetLayout": "Restaurar distribución"
   }
 }

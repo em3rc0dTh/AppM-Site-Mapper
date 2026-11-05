@@ -1,3 +1,4 @@
+import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
 import { SiteBoundaryWorkspace } from '@/components/topology/site-boundary-workspace';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -408,7 +409,10 @@ export default async function TopologyNodePage({
         )}
       </nav>
 
-      <div className="operational-layout telxius-operational-layout">
+      <ResizableWorkspace
+        className="operational-layout telxius-operational-layout"
+        userKey={auth.value.id}
+      >
         <aside className="operational-context">
           {navigationTree && <TopologyContextTree tree={navigationTree} activeId={node.id} />}
           {node.kind === 'DEVICE' && bdfbPresentation && (
@@ -596,7 +600,7 @@ export default async function TopologyNodePage({
             feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
           />
         )}
-      </div>
+      </ResizableWorkspace>
 
       {(rackLink || blueprintLink) && (
         <div className="telxius-hidden-actions" aria-hidden="true">

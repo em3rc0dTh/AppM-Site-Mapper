@@ -15,7 +15,8 @@ function status(error: string): number {
       error === 'VERIFIED_RATING_DOWNGRADE_FORBIDDEN' || error === 'EXISTING_RATING_REQUIRES_RECONCILIATION' ||
       error === 'BREAKER_EXISTING_RATING_INVALID') return 409;
   if (error.startsWith('INVALID_BREAKER_') || error === 'PROVISIONAL_RATING_CANNOT_BE_VERIFIED' ||
-      error === 'VERIFIED_RATING_REQUIRES_EVIDENCE') return 422;
+      error === 'VERIFIED_RATING_REQUIRES_EVIDENCE' ||
+      error === 'VERIFIED_RATING_REQUIRES_CONFIRMATION') return 422;
   return 500;
 }
 function publicCode(error: string): string {

@@ -15,6 +15,7 @@ import { requirePermission } from '@/modules/identity/application/current-sessio
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
+import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 
 export default async function NetworkPage() {
   const auth = await requirePermission('topology:read');
@@ -70,6 +71,7 @@ export default async function NetworkPage() {
       </section>
 
       {canWrite && <TopologyCreateForm kind="NETWORK" parentId={null} />}
+      <ThradexAttribution />
     </main>
   );
 }

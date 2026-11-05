@@ -17,3 +17,8 @@
 .sm-breaker-limit-audit h3 { font-size: .98rem; margin: 0 0 12px; }
 .sm-breaker-limit-audit ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .sm-breaker-limit-audit li { font-size: .8rem; padding: 8px; border: 1px solid #475569; border-radius: 5px; }
+
+.sm-breaker-context-dismiss {position:fixed;inset:0;z-index:998;border:0;background:transparent;cursor:default;}
+.sm-breaker-context-menu {position:fixed;z-index:999;display:grid;min-width:210px;max-width:calc(100vw - 16px);background:#151c28;color:#f1f5f9;border:1px solid #475569;border-radius:8px;box-shadow:0 12px 32px #0008;padding:4px;}
+.sm-breaker-context-menu button,.sm-breaker-context-menu a {display:block;text-align:left;background:transparent;border:0;color:inherit;text-decoration:none;padding:9px 11px;border-radius:5px;font:inherit;font-size:.85rem;cursor:pointer;}
+.sm-breaker-context-menu button:hover,.sm-breaker-context-menu a:hover,.sm-breaker-context-menu button:focus-visible,.sm-breaker-context-menu a:focus-visible {background:#334155;outline:2px solid #a4d139;}

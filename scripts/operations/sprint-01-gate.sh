@@ -43,7 +43,10 @@ echo "=== 2/6 STATIC QUALITY / BREAKER UNIT TESTS ==="
 docker run --rm --network none "$IMAGE" sh -ec '
   npm run typecheck
   npm run lint
-  npm run format:check
+  # Git for Windows can check out CRLF for files lacking explicit eol=lf.
+  # Verify all Prettier rules while retaining each file original line ending.
+  # This does NOT write to files or waive style violations.
+  ./node_modules/.bin/prettier --check . --end-of-line auto
   node node_modules/vitest/vitest.mjs run tests/unit/breaker-limit-service.test.ts tests/unit/breaker-protection.test.ts
 ' || fail "S01 static checks or breaker unit tests failed"
 

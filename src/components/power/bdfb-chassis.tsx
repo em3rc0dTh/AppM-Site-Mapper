@@ -310,12 +310,11 @@ export function BdfbChassis({
       )}
       {contextMenu ? (
         <>
-          <button
-            type="button"
+          <div
             className="sm-breaker-context-dismiss"
-            onClick={() => setContextMenu(null)}
-            aria-label={t('closeMenu')}
-            tabIndex={-1}
+            role="presentation"
+            aria-hidden="true"
+            onMouseDown={() => setContextMenu(null)}
           />
           <div
             className="sm-breaker-context-menu"

@@ -15,6 +15,7 @@ on:
       - config/industrial/s05-commissioning-reference.example.json
       - tests/unit/commissioning-observability.test.ts
       - tests/unit/industrial-commissioning-idempotency.test.ts
+      - tests/unit/industrial-credential-security.test.ts
       - .github/workflows/s05-commissioning-observability.yml
   pull_request:
     paths:
@@ -53,6 +54,8 @@ jobs:
           npx vitest run
           tests/unit/commissioning-observability.test.ts
           tests/unit/industrial-commissioning-idempotency.test.ts
+          tests/unit/industrial-credential-security.test.ts
+          tests/unit/industrial-credential-security.test.ts
       - name: I18n catalogs
         run: npx vitest run tests/unit/i18n-catalogs.test.ts tests/unit/i18n-static-ui.test.ts
       - name: TypeScript compile

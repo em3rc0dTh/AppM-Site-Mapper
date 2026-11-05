@@ -85,3 +85,30 @@ The sprint is **not accepted** until a user can right-click one physical breaker
 - [ ] Tests and CI passed
 - [ ] User acceptance
 - [ ] PR integrated to `main`
+
+## Iteration report — 2026-11-05
+
+**Implemented, not accepted.** The draft PR contains a BDFB breaker context menu, canonical breaker protection settings, a role-checked API, a single-transaction breaker/policy/audit update, immutable audit collection/indexes, and focused unit test sources.
+
+- The existing BDFB `P01..` positional projection is reused; no new topology or power hierarchy was created.
+- Protected ratings cannot be downgraded to `PROVISIONAL_STANDARD`. Manufacturer/field/customer evidence requires both a reference and explicit operator confirmation. Legacy ratings require reconciliation rather than silent replacement.
+- The API requires precisely one active MQTT `CURRENT` binding with source identity and source point; shunt SNMP nominal values remain independent.
+- Editing an existing disabled overcurrent policy keeps it disabled and conserves unrelated rules and debounce/recovery values.
+- Audit events preserve both the previous protection attributes **and** any pre-existing alarm policy thresholds, actor and timestamp.
+- New API writes require `power:write` and same-origin request checks; the query endpoint is `power:read`; the editor shows read-only access without write privilege.
+
+### CI / evidence issue
+
+GitHub returned `failure` for the S01 CI and HTTP/MongoDB workflows. The connector provided no step records, and downloading job logs returned `404 BlobNotFound`. A comparison with merged Sprint 00 PR #154 showed analogous `failure` and empty steps for its CI run. This is consistent with an Actions execution or reporting issue, but the exact cause is **not verified**. Do not assert typecheck, formatter, tests, or HTTP acceptance as passed merely because the job had no logs.
+
+A temporary diagnostics workflow was added and removed after the same problem; it is **not part of the deliverable**. Do not weaken production CI or bypass branch protection to get green status.
+
+### Outstanding S01 gate
+
+- [ ] Obtain executable CI logs, or reproduce `npm ci && npm run typecheck && npm run lint && npm run format:check && npm run test:unit && npm run test:integration && npm run build` in a clean isolated checkout.
+- [ ] Run a real MongoDB replica-set integration acceptance covering atomic rollback, stale revisions, verified-rate protection and immutable before/after audit.
+- [ ] Confirm one physically selected breaker in QDF-2/4/5 can be edited by an authorized user and cannot be edited by a read-only user.
+- [ ] Verify context-menu keyboard/focus behavior and responsive usability.
+- [ ] Obtain operator acceptance with no field-ratings overwrite and no TFARM04 volume/data mutation from this branch.
+
+**Strict status:** WORK IN PROGRESS, not GREEN, not merged, not deployed.

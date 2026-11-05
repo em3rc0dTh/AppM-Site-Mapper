@@ -69,6 +69,7 @@ services:
       MONGODB_DB_NAME: '${MONGODB_DB_NAME:-seed-01}'
       SITE_MAPPER_SEED_PROFILE: '${SITE_MAPPER_SEED_PROFILE:-seed-01}'
       BOOTSTRAP_ADMIN_TOKEN: '${BOOTSTRAP_ADMIN_TOKEN:?Set a private bootstrap admin token}'
+      SITE_MAPPER_CREDENTIAL_KEY: '${SITE_MAPPER_CREDENTIAL_KEY:?Set a private credential encryption key}'
       TELEMETRY_ENABLED: '${TELEMETRY_ENABLED:-false}'
       MQTT_BROKER_URL: '${MQTT_BROKER_URL:-}'
       MQTT_USERNAME: '${MQTT_USERNAME:-}'

@@ -22,8 +22,8 @@ class Profiles implements CommunicationProfileRepository {
     return this.records;
   }
 
-  async save() {
-    throw new Error('not used by this test');
+  async save(_next: CommunicationProfile, _expectedRevision: number | null) {
+    return false;
   }
 }
 
@@ -36,9 +36,10 @@ const evidence = {
 function profile(
   value: Partial<CommunicationProfile> & Pick<CommunicationProfile, 'equipmentId' | 'role'>,
 ): CommunicationProfile {
+  const { equipmentId, role, ...overrides } = value;
   return {
-    equipmentId: value.equipmentId,
-    role: value.role,
+    equipmentId,
+    role,
     bdfbDeviceId: 'qdf',
     recordStatus: 'FIELD_VERIFIED',
     rs485: { baudRate: 9600, dataBits: 8, parity: 'NONE', stopBits: 1 },
@@ -48,7 +49,7 @@ function profile(
     updatedAt: '2026-11-05T10:00:00.000Z',
     updatedBy: 'tester',
     history: [],
-    ...value,
+    ...overrides,
   } as CommunicationProfile;
 }
 

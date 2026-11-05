@@ -42,7 +42,35 @@ export function BreakerLimitEditor({
   const [verified, setVerified] = useState(false);
   const [confirmEvidence, setConfirmEvidence] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const prefix = `/api/power/breakers/${encodeURIComponent(breakerId)}/limits`;
+
+  useEffect(() => {
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    return () => previousFocus?.focus();
+  }, []);
+
+  function handleDialogKey(event: import('react').KeyboardEvent<HTMLElement>) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusable = [...(dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not(:disabled), a[href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex="0"]',
+    ) ?? [])].filter(item => item.getClientRects().length > 0);
+    if (!focusable.length) return;
+    const first = focusable[0]!;
+    const last = focusable[focusable.length - 1]!;
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === titleRef.current)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -102,8 +130,8 @@ export function BreakerLimitEditor({
 
   return (
     <div className="sm-breaker-limit-overlay" role="presentation" onMouseDown={e=>{if(e.target===e.currentTarget)onClose()}}>
-      <section className="sm-breaker-limit-dialog" role="dialog" aria-modal="true"
-        aria-label="Breaker current limits" onKeyDown={e=>{if(e.key==='Escape')onClose()}}>
+      <section ref={dialogRef} className="sm-breaker-limit-dialog" role="dialog" aria-modal="true"
+        aria-label="Breaker current limits" onKeyDown={handleDialogKey}>
         <header className="sm-breaker-limit-header">
           <div>
             <h2 ref={titleRef} tabIndex={-1}>Breaker current limits</h2>

@@ -63,11 +63,17 @@ function bindingEnvironment(
     (binding) => binding.protocol === protocol && binding.sourceIdentity === sourceIdentity,
   );
   if (
-    sourceBindings.some(
-      (binding) =>
-        binding.attributes?.commissioning === 'SYNTHETIC_LAB_ONLY' ||
-        binding.attributes?.environment === 'LAB',
-    )
+    sourceBindings.some((binding) => {
+      const commissioning =
+        typeof binding.attributes?.commissioning === 'string'
+          ? binding.attributes.commissioning.toUpperCase()
+          : '';
+      return (
+        binding.attributes?.synthetic === true ||
+        binding.attributes?.environment === 'LAB' ||
+        commissioning.includes('LAB')
+      );
+    })
   )
     return 'LAB';
 

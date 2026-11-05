@@ -39,8 +39,8 @@ Exact customer-network values, real credentials and private normalized commissio
 | HU-034 — inspect equipment/breaker/shunt bindings | IN PROGRESS | Sanitized binding inventory and source grouping added; runtime acceptance pending. |
 | HU-035 — distinguish provenance, freshness and communication | IN PROGRESS | Projection supports LAB/FIELD/DECLARED and LIVE/STALE/OFFLINE/ERROR; runtime acceptance pending. |
 | HU-036 — repeatable commissioning without duplicates | IN PROGRESS | Existing transactional binding guards preserved; read-only external-reference diff added; APPLY remains blocked. |
-| HU-037 — keep credentials/secrets out of public surfaces | IN PROGRESS | Real workbook credentials are excluded from Git and UI observability; rotation decision remains operational. |
-| HU-038 — controlled recovery and durable history | PENDING S05 | Existing Timescale/MQTT recovery baseline will be verified after reconciliation. |
+| HU-037 — keep credentials/secrets out of public surfaces | IMPLEMENTED / RUNTIME GATE PENDING | Real workbook credentials are excluded from Git/UI observability; existing AES-256-GCM credential vault is covered by S05 tests; OFFICE now generates and injects a private credential encryption key. Rotation of any credential previously exposed in documentary material remains operational. |
+| HU-038 — controlled recovery and durable history | IMPLEMENTED / RUNTIME GATE PENDING | Controlled recovery runbook added; existing targeted Timescale repair preserved; SNMP atomic history errors now surface through diagnostics and clear after successful recovery. TFARM04 failure/recovery evidence remains required. |
 
 ## Repository implementation
 
@@ -55,7 +55,11 @@ The slice adds:
 - sanitized MQTT/SNMP source and binding views;
 - a read-only UI panel;
 - ES/EN copy;
-- unit/CI coverage for the projection.
+- commissioning idempotency coverage;
+- encrypted credential-boundary and OFFICE secret-wiring coverage;
+- controlled telemetry recovery contract;
+- SNMP atomic history failure/recovery diagnostics;
+- unit/CI coverage for the S05 slice.
 
 ## Gate before APPLY
 

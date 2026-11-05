@@ -178,6 +178,10 @@ class BlockingAckRepository implements AlarmRepository {
     return this.inner.listResolved(limit);
   }
 
+  listHistory(query: import('@/modules/alarm/application/alarm-history').AlarmHistoryQuery) {
+    return this.inner.listHistory(query);
+  }
+
   insertOccurrence(occurrence: AlarmOccurrence): Promise<void> {
     return this.inner.insertOccurrence(occurrence);
   }

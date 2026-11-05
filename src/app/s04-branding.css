@@ -46,3 +46,14 @@
     justify-content: center;
   }
 }
+
+
+/* Explorer's contextual inspector is the visible S03 third pane. Keep provider
+   attribution anchored to that pane without overlaying canvas controls. */
+.mk-explorer-page .zip-inspector > .sm-thradex-attribution--inspector {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: #fff;
+}

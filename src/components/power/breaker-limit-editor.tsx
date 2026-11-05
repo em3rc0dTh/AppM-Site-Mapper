@@ -136,6 +136,7 @@ export function BreakerLimitEditor({
                 </select>
               </label>
               {source!=='PROVISIONAL_STANDARD' ? (
+                <>
                 <label>Evidence reference
                   <input type="text" maxLength={320} value={reference} required
                     disabled={!data.canEdit||saving} onChange={e=>setReference(e.target.value)}/>
@@ -145,6 +146,7 @@ export function BreakerLimitEditor({
                   onChange={e=>setConfirmEvidence(e.target.checked)}/>
                   I confirm the rating source and evidence reference were reviewed.
                 </label>
+                </>
               ) : <p className="sm-breaker-limit-note">PROVISIONAL · not field verified</p>}
               <p className="sm-breaker-limit-note">Clear threshold must be strictly below the assert threshold. Verified field ratings cannot be downgraded.</p>
               {error ? <p role="alert">{error}</p> : null}

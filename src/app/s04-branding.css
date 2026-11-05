@@ -72,7 +72,34 @@
   box-shadow: 0 -1px 0 #e5ebf1;
 }
 
-.s03-layout > .zip-room-properties > .sm-thradex-attribution--inspector {
-  background: #0b1119;
-  box-shadow: 0 -1px 0 #263848;
+
+/* Room inspector has a legacy direct-child div rule used by its empty-state
+   illustration (min-height:260px; span:35px). The attribution is also a direct
+   child div, so explicitly opt it out of that legacy presentation. */
+.zip-room-properties > .sm-thradex-attribution--inspector {
+  display: flex !important;
+  place-items: initial !important;
+  justify-content: center !important;
+  align-items: baseline !important;
+  min-height: 0 !important;
+  height: auto !important;
+  margin: auto 16px 0 !important;
+  padding: 13px 8px 10px !important;
+  text-align: center !important;
+  color: #748292 !important;
+  background: #fff !important;
+  border-top: 1px solid #e5ebf1 !important;
+  box-shadow: 0 -1px 0 #e5ebf1 !important;
+}
+
+.zip-room-properties > .sm-thradex-attribution--inspector span {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  color: #748292 !important;
+}
+
+.zip-room-properties > .sm-thradex-attribution--inspector strong {
+  font-size: 11px !important;
+  line-height: 1 !important;
+  color: #263442 !important;
 }

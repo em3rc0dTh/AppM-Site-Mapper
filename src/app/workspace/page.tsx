@@ -5,6 +5,7 @@ import { DemoSeedButton } from '@/components/dev/demo-seed-button';
 import { NavigationTree } from '@/components/workspace/navigation-tree';
 import { HomeSidebar } from '@/components/workspace/home-sidebar';
 import { HomeLiveOverview } from '@/components/workspace/home-live-overview';
+import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { createPowerRepository } from '@/modules/power/infrastructure/power-repository-factory';
 import { getTelemetryRuntime } from '@/modules/telemetry/infrastructure/telemetry-runtime';
@@ -111,6 +112,7 @@ export default async function WorkspacePage() {
           cards={cards}
           initialSamples={latest}
         />
+        <ThradexAttribution />
       </section>
     </main>
   );

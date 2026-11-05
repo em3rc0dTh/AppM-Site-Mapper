@@ -1,0 +1,61 @@
+name: S02 Alarm Engine real Mongo acceptance
+
+on:
+  push:
+    branches:
+      - test/s02-alarm-acceptance-actions
+    paths:
+      - tests/integration/s02-alarm-acceptance-mongo.test.ts
+      - .github/workflows/s02-alarm-acceptance.yml
+  pull_request:
+    paths:
+      - tests/integration/s02-alarm-acceptance-mongo.test.ts
+      - .github/workflows/s02-alarm-acceptance.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  alarm-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_ENV: test
+      CI_ALARM_ACCEPTANCE: 'true'
+      ALARM_REDTEAM_MONGO_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+      MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Disposable MongoDB replica set (loopback only)
+        run: |
+          docker run -d --name s02-alarm-mongo -p 127.0.0.1:27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for i in {1..45}; do
+            if docker exec s02-alarm-mongo mongosh --quiet --eval 'db.adminCommand({ping:1})' 2>/dev/null; then break; fi
+            sleep 2
+          done
+          docker exec s02-alarm-mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
+          for i in {1..45}; do
+            if docker exec s02-alarm-mongo mongosh --quiet --eval 'db.hello().isWritablePrimary' | grep -q true; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - name: S02 unit lifecycle and red-team
+        run: npx vitest run tests/unit/sprint02-alarm-history.test.ts tests/unit/alarm-redteam.test.ts
+      - name: S02 real Mongo electrical lifecycle and 500+ history
+        run: npx vitest run tests/integration/s02-alarm-acceptance-mongo.test.ts
+      - name: Real Mongo concurrency (existing red-team)
+        run: npx vitest run tests/integration/alarm-redteam-mongo.test.ts
+      - name: TypeScript compile
+        run: npm run typecheck
+      - name: Cleanup isolated replica set
+        if: always()
+        run: docker rm -f s02-alarm-mongo || true

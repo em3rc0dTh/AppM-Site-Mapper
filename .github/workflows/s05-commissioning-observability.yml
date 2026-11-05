@@ -84,8 +84,6 @@ jobs:
           src/modules/telemetry/infrastructure/http-telemetry-store.ts
           scripts/operations/audit-s05-commissioning.mjs
           config/industrial/s05-commissioning-reference.example.json
-          infra/field/init-office-env.sh
-          infra/field/office-test.env.example
           docker-compose.telemetry.yml
           tests/unit/commissioning-observability.test.ts
           tests/unit/industrial-commissioning-idempotency.test.ts

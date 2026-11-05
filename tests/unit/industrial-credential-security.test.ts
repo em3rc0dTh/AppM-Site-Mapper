@@ -37,10 +37,7 @@ class CaptureCredentialRepository implements IndustrialCredentialRepository {
     expectedRevision: number,
     event: IndustrialCredentialEvent,
   ) {
-    if (
-      this.record?.equipmentId !== equipmentId ||
-      this.record.revisionNumber !== expectedRevision
-    )
+    if (this.record?.equipmentId !== equipmentId || this.record.revisionNumber !== expectedRevision)
       return false;
     this.record = null;
     this.events.push(structuredClone(event));
@@ -57,35 +54,33 @@ class CaptureCredentialRepository implements IndustrialCredentialRepository {
 }
 
 function topology() {
-  return new MemoryTopologyRepository(
-    [
-      {
-        id: 'qdf',
-        name: 'BDFB QDF-TEST',
-        kind: 'DEVICE',
-        deviceType: 'BDFB',
-        lifecycle: 'ACTIVE',
-        createdAt: '2026-11-05T10:00:00.000Z',
-        updatedAt: '2026-11-05T10:00:00.000Z',
-      },
-      {
-        id: 'gateway',
-        name: 'QDF-TEST_GW-1',
-        kind: 'EQUIPMENT',
-        equipmentType: 'NETWORK_BOARD',
-        deviceId: 'qdf',
-        parentId: 'qdf',
-        parentEquipmentId: null,
-        childMode: 'DYNAMIC',
-        children: [],
-        accessPorts: [],
-        pinned: false,
-        lifecycle: 'ACTIVE',
-        createdAt: '2026-11-05T10:00:00.000Z',
-        updatedAt: '2026-11-05T10:00:00.000Z',
-      },
-    ] as unknown as TopologyNode[],
-  );
+  return new MemoryTopologyRepository([
+    {
+      id: 'qdf',
+      name: 'BDFB QDF-TEST',
+      kind: 'DEVICE',
+      deviceType: 'BDFB',
+      lifecycle: 'ACTIVE',
+      createdAt: '2026-11-05T10:00:00.000Z',
+      updatedAt: '2026-11-05T10:00:00.000Z',
+    },
+    {
+      id: 'gateway',
+      name: 'QDF-TEST_GW-1',
+      kind: 'EQUIPMENT',
+      equipmentType: 'NETWORK_BOARD',
+      deviceId: 'qdf',
+      parentId: 'qdf',
+      parentEquipmentId: null,
+      childMode: 'DYNAMIC',
+      children: [],
+      accessPorts: [],
+      pinned: false,
+      lifecycle: 'ACTIVE',
+      createdAt: '2026-11-05T10:00:00.000Z',
+      updatedAt: '2026-11-05T10:00:00.000Z',
+    },
+  ] as unknown as TopologyNode[]);
 }
 
 describe('S05 industrial credential security', () => {

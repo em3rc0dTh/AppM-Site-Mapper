@@ -433,11 +433,17 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                       breakerProtection ? (
                         <>
                           <dt>{t('breakerNominal')}</dt>
-                          <dd>{t('breakerNominalValue', { value: breakerProtection.ratedCurrentA })}</dd>
+                          <dd>
+                            {t('breakerNominalValue', { value: breakerProtection.ratedCurrentA })}
+                          </dd>
                           <dt>{t('breakerAlarm')}</dt>
-                          <dd>{t('breakerAlarmValue', { value: breakerProtection.assertAboveA })}</dd>
+                          <dd>
+                            {t('breakerAlarmValue', { value: breakerProtection.assertAboveA })}
+                          </dd>
                           <dt>{t('breakerClear')}</dt>
-                          <dd>{t('breakerClearValue', { value: breakerProtection.clearBelowA })}</dd>
+                          <dd>
+                            {t('breakerClearValue', { value: breakerProtection.clearBelowA })}
+                          </dd>
                           <dt>{t('breakerRatingSource')}</dt>
                           <dd>
                             {tBreaker(`sources.${breakerProtection.provenance.source}`)} ·{' '}

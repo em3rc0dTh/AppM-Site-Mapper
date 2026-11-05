@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
+import type { AlarmHistoryQuery } from '@/modules/alarm/application/alarm-history';
 import type {
   AlarmOccurrence,
   AlarmOccurrenceView,
@@ -142,6 +143,14 @@ export class AlarmService {
     }
 
     return { occurrences, rollups, global };
+  }
+
+  async history(query: AlarmHistoryQuery): Promise<{ items: readonly AlarmOccurrenceView[]; nextCursor: string | null }> {
+    const page = await this.alarms.listHistory(query);
+    return {
+      items: await Promise.all(page.items.map((item) => this.toView(item))),
+      nextCursor: page.nextCursor,
+    };
   }
 
   async getOccurrenceView(id: string): Promise<AlarmOccurrenceView | null> {

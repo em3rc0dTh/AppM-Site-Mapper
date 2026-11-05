@@ -1,6 +1,8 @@
 import type { Collection, Db, Document, OptionalUnlessRequiredId } from 'mongodb';
 
 import type { AlarmRepository } from '@/modules/alarm/application/alarm-repository';
+import { parseHistoryCursor, takeHistoryPage } from '@/modules/alarm/application/alarm-history';
+import type { AlarmHistoryPage, AlarmHistoryQuery } from '@/modules/alarm/application/alarm-history';
 import type { AlarmOccurrence, AlarmTransition } from '@/modules/alarm/domain/entities';
 
 type OccurrenceDocument = AlarmOccurrence & Document;
@@ -53,6 +55,33 @@ export class MongoAlarmRepository implements AlarmRepository {
         .limit(Math.max(1, Math.min(limit, 500)))
         .toArray()
     ).map((item) => withoutMongoId<AlarmOccurrence>(item));
+  }
+
+  async listHistory(query: AlarmHistoryQuery): Promise<AlarmHistoryPage> {
+    const filter: Record<string, unknown> = {};
+    if (query.lifecycle) filter.lifecycle = query.lifecycle;
+    if (query.acknowledgement) filter.acknowledgement = query.acknowledgement;
+    if (query.severity) filter.severity = query.severity;
+    if (query.targetId) filter.targetId = query.targetId;
+    if (query.fromDate || query.toDate) {
+      filter.openedAt = {
+        ...(query.fromDate ? { $gte: query.fromDate + 'T00:00:00.000Z' } : {}),
+        ...(query.toDate ? { $lte: query.toDate + 'T23:59:59.999Z' } : {}),
+      };
+    }
+    if (query.cursor) {
+      const previous = parseHistoryCursor(query.cursor);
+      filter.$or = [
+        { openedAt: { $lt: previous.openedAt } },
+        { openedAt: previous.openedAt, id: { $lt: previous.id } },
+      ];
+    }
+    const documents = await this.occurrences.find(filter).sort({ openedAt: -1, id: -1 })
+      .limit(query.limit + 1).toArray();
+    return takeHistoryPage(
+      documents.map((item) => withoutMongoId<AlarmOccurrence>(item)),
+      query.limit,
+    );
   }
 
   async insertOccurrence(occurrence: AlarmOccurrence): Promise<void> {

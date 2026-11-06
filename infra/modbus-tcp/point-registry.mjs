@@ -198,7 +198,7 @@ export function registryCsv(registry) {
       p.signalId,
       p.logicalPointId ?? 'See approved logical alias registry',
       p.unitId,
-      3,
+      4,
       p.address,
       40001 + p.address,
       'FLOAT32',

@@ -37,7 +37,7 @@ describe('explicit BDFB aggregation across Equipment sources', () => {
     expect(result?.reported).toEqual({});
     expect(bdfbSourceView([source], 'other-device')).toBeNull();
   });
-  it('excludes conflicting publishers and expired metric values', () => {
+  it('excludes conflicting publishers and values beyond the 15-minute offline cutoff', () => {
     const conflict = {
       ...source,
       targetId: 'other-chassis',
@@ -48,7 +48,7 @@ describe('explicit BDFB aggregation across Equipment sources', () => {
       })),
     };
     expect(bdfbSourceView([source, conflict], 'bdfb')?.breakerReadings).toEqual([]);
-    expect(bdfbSourceView([source], 'bdfb', Date.parse(time) + 31_000)?.breakerReadings).toEqual(
+    expect(bdfbSourceView([source], 'bdfb', Date.parse(time) + 901_000)?.breakerReadings).toEqual(
       [],
     );
   });

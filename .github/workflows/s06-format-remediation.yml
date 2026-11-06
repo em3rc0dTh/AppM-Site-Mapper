@@ -1,0 +1,57 @@
+name: S06 format remediation (branch only)
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/s06-format-remediation.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feat/mk1-s06-field-lan-https-remote-contract' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Format only CI-identified files (no functional changes)
+        run: |
+          npx prettier --write \
+            docker-compose.field-lan.yml \
+            docker-compose.lab-remote.yml \
+            docs/operations/lan-https/acceptance.md \
+            docs/operations/lan-https/operations.md \
+            docs/operations/lan-https/README.md \
+            docs/operations/lan-https/security-and-access.md \
+            infra/field/ops/network-policy.example.json \
+            src/app/s03-workspace.css \
+            src/app/s04-branding.css \
+            src/components/blueprint/blueprint-canvas.tsx \
+            src/components/topology/topology-properties-panel.tsx \
+            src/shared/ui/auth-frame.tsx
+      - name: Commit formatting to S06 branch only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            docker-compose.field-lan.yml docker-compose.lab-remote.yml \
+            docs/operations/lan-https/acceptance.md docs/operations/lan-https/operations.md \
+            docs/operations/lan-https/README.md docs/operations/lan-https/security-and-access.md \
+            infra/field/ops/network-policy.example.json \
+            src/app/s03-workspace.css src/app/s04-branding.css \
+            src/components/blueprint/blueprint-canvas.tsx \
+            src/components/topology/topology-properties-panel.tsx src/shared/ui/auth-frame.tsx
+          if git diff --cached --quiet; then
+            echo "Already formatted"
+          else
+            git commit -m "style(s06): format CI-reported files only"
+            git push origin HEAD:${{ github.head_ref }}
+          fi

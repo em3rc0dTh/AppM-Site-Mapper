@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Read-only certification: exact breaker TimescaleDB history vs Modbus TCP FC03.
+// Read-only certification: exact breaker TimescaleDB history vs Modbus TCP FC04.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import net from 'node:net';
@@ -19,8 +19,8 @@ const host = arg('host', '127.0.0.1');
 const port = Number(arg('port', '1503'));
 const seconds = Number(arg('seconds', '45'));
 if (!source || !/^[a-zA-Z0-9_-]{1,120}$/.test(source)) throw new Error('Valid --source required');
-if (!point || !/^0_[1-4]_([1-9]|1[0-9]|2[0-4])$/.test(point))
-  throw new Error('4x24 --point required');
+if (!point || !/^0_[12]_([1-9]|[1-3][0-9]|4[0-8])$/.test(point))
+  throw new Error('2x48 canonical --point required');
 if (!breaker || !/^[0-9a-f-]{36}$/i.test(breaker)) throw new Error('Valid --breaker UUID required');
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid port');
 if (!Number.isInteger(seconds) || seconds < 5 || seconds > 120)
@@ -47,18 +47,18 @@ const config = JSON.parse(
 if (!Number.isInteger(config.unit) || config.unit < 1 || config.unit > 247) {
   throw new Error('Source not in MODBUS_SOURCE_UNITS_JSON');
 }
-if (config.layout !== 'panels-4x24') throw new Error('Expected MODBUS_POINT_LAYOUT=panels-4x24');
-const [, panel, position] = point.split('_').map(Number);
-const circuit = (panel - 1) * 24 + position;
+if (config.layout !== 'blocks-2x48') throw new Error('Expected MODBUS_POINT_LAYOUT=blocks-2x48');
+const [, side, position] = point.split('_').map(Number);
+const circuit = (side - 1) * 48 + position;
 const offset = (circuit - 1) * 8;
 
-function readFC03() {
+function readFC04() {
   return new Promise((resolve, reject) => {
     const req = Buffer.alloc(12);
     req.writeUInt16BE(0x4342, 0);
     req.writeUInt16BE(6, 4);
     req[6] = config.unit;
-    req[7] = 3;
+    req[7] = 4;
     req.writeUInt16BE(offset, 8);
     req.writeUInt16BE(8, 10);
     const socket = net.connect({ host, port }, () => socket.write(req));
@@ -83,8 +83,8 @@ function readFC03() {
         assert.equal(buf.readUInt16BE(0), 0x4342);
         assert.equal(buf.readUInt16BE(2), 0);
         assert.equal(buf[6], config.unit);
-        if (buf[7] === 0x83) throw new Error('Modbus exception ' + buf[8]);
-        assert.equal(buf[7], 3);
+        if (buf[7] === 0x84) throw new Error('Modbus exception ' + buf[8]);
+        assert.equal(buf[7], 4);
         assert.equal(buf[8], 16);
         assert.equal(total, 25);
         finish(
@@ -156,7 +156,7 @@ const until = Date.now() + seconds * 1000;
 let lastRead = null;
 while (Date.now() < until) {
   try {
-    const values = await readFC03();
+    const values = await readFC04();
     lastRead = values;
     const rows = recentHistory();
     if (values.some((value) => value !== 0) && rows.some((row) => matches(values, row))) {

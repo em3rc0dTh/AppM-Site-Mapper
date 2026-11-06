@@ -93,3 +93,9 @@ REAL SOURCE
 ```
 
 Cada salto debe conservar identidad, tiempo, valor y condición de disponibilidad de forma coherente.
+
+## Acceso y continuidad S06
+
+Para implementar el acceso HTTPS interno con Caddy y el acceso externo opcional mediante Cloudflare Tunnel, consulta [S06 FIELD LAN y LAB REMOTE](../operations/lan-https/README.md), [contrato de seguridad](../operations/lan-https/security-and-access.md), [runbook de despliegue](../operations/lan-https/deployment-runbook.md) y [gate de aceptación](../operations/lan-https/acceptance.md).
+
+**Estado:** configuraciones propuestas en GitHub, no aplicadas al host ni certificadas en campo. La instalación FIELD LAN debe funcionar sin WAN; LAB REMOTE requiere Internet, políticas Cloudflare Access y aprobación independiente.

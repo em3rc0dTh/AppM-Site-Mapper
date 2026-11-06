@@ -31,7 +31,13 @@ export function AuthFrame({
 }>) {
   const t = useTranslations('shell');
   return (
-    <main className={heritageBrand ? 'mk-login zip-login-page zip-login-page--heritage' : 'mk-login zip-login-page'}>
+    <main
+      className={
+        heritageBrand
+          ? 'mk-login zip-login-page zip-login-page--heritage'
+          : 'mk-login zip-login-page'
+      }
+    >
       <section className="mk-login-content zip-login-content">
         <header>
           {heritageBrand ? (

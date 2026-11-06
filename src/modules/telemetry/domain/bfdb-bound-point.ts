@@ -1,5 +1,9 @@
 import { normalizePowerToWatts } from './power-unit-contract';
-import { detectBfdbWireProfile, expandBfdbWirePoint } from './bfdb-wire-layout';
+import {
+  bindingPointIdsForWirePoint,
+  detectBfdbWireProfile,
+  expandBfdbWirePoint,
+} from './bfdb-wire-layout';
 import type { TelemetryBinding, TelemetrySample, NormalizedTelemetryMessage } from './entities';
 
 const METRICS = {
@@ -40,13 +44,14 @@ export function buildBoundBfdbEquipmentPatches(
     const rawFields = raw as Readonly<Record<string, unknown>>;
 
     for (const point of expandBfdbWirePoint(rawPointId, rawFields, profile)) {
+      const acceptedPointIds = bindingPointIdsForWirePoint(point, profile);
       const links = bindings.filter(
         (binding) =>
           binding.lifecycle === 'ACTIVE' &&
           binding.protocol === 'MQTT' &&
           binding.sourceIdentity === message.sourceIdentity &&
           binding.targetType === 'EQUIPMENT' &&
-          binding.sourcePointId === point.bindingPointId &&
+          Boolean(binding.sourcePointId && acceptedPointIds.includes(binding.sourcePointId)) &&
           eligibleBreakerIds.has(binding.targetId) &&
           Object.hasOwn(METRICS, binding.metric.toUpperCase()),
       );
@@ -59,7 +64,7 @@ export function buildBoundBfdbEquipmentPatches(
           binding.lifecycle === 'ACTIVE' &&
           binding.protocol === 'MQTT' &&
           binding.sourceIdentity === message.sourceIdentity &&
-          binding.sourcePointId === point.bindingPointId &&
+          Boolean(binding.sourcePointId && acceptedPointIds.includes(binding.sourcePointId)) &&
           binding.targetType === 'EQUIPMENT' &&
           Object.hasOwn(METRICS, binding.metric.toUpperCase()),
       );
@@ -99,7 +104,7 @@ export function buildBoundBfdbEquipmentPatches(
       patches.push({
         bindingId: links[0]!.id,
         metricBindingIds: links.map((binding) => binding.id),
-        sourcePointId: point.bindingPointId,
+        sourcePointId: links[0]!.sourcePointId ?? point.bindingPointId,
         targetId: breakerId,
         targetType: 'EQUIPMENT',
         entityId: breakerId,

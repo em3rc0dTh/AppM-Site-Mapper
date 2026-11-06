@@ -5,7 +5,7 @@ Current additive historical/identity/unified-lab revision: [implementation and l
 **Current closure status:** implementation and static review only; see [closure changes and deferred validation](industrial-closure-static.md). Historical laboratory results below precede this closure revision.
 
 This extension keeps the current application, MQTT parser, electrical bindings, historical service,
-GET collector, FC03 addresses 0–767, word order and missing-data policy in place.
+GET collector, FC04 breaker addresses 0–767, QDF Total 00 at 768–775, word order and missing-data policy in place.
 It adds infrastructure inside Site Mapper; BFDB remains the simulation laboratory.
 
 ## Data flow
@@ -192,9 +192,9 @@ recovery testing. Disk/queue bounds and the filesystem must be monitored.
    points with a higher version; changing/removing an already published point is rejected.
 5. Supply the generated table to the Metasys integrator and approve it in their commissioning flow.
 
-No observed point is auto-published. The legacy register block remains 0–767. Each extension point
-occupies three explicit registers at offset >=1024: FLOAT32 ABCD/high-word-first value (two words),
-then UINT16 quality.
+The approved client breaker block remains 0–767 and QDF Total circuit 00 occupies 768–775.
+Governed industrial extension points remain additive at offsets >=1024; each extension point occupies
+three explicit registers: FLOAT32 ABCD/high-word-first value (two words), then UINT16 quality.
 
 QDF total current is an application-derived logical point, not a renamed breaker or raw SNMP point.
 Commission it explicitly with `logicalPointId: "QDF/<deviceId>/TOTAL_CURRENT"`, unit `A`, and a
@@ -211,7 +211,7 @@ partial descendant-breaker `totalPowerW`. CURRENT and VOLTAGE must each have exa
 binding for the same controller/source, every expected feed must be LIVE, and paired timestamps
 must be aligned. Historical TOTAL_POWER sums only buckets where every expected FIELD feed has
 complete paired V/I coverage; a bucket with any unpaired sample is omitted rather than partially
-summed. The legacy breaker block 0–767 and internal watt storage remain unchanged.
+summed. The breaker block 0–767, Total 00 block 768–775 and internal watt storage remain unchanged.
 
 ### Unified QDF V/A/P/E contract
 
@@ -223,16 +223,11 @@ window measurement rather than a lifetime counter. Each metric retains independe
 timestamps, while the contract-level status is only a completeness summary. Existing API fields and
 Modbus logical points remain unchanged for backward compatibility.
 
-QDF total energy E1 is an **historical window measurement**, not a lifetime meter counter.
-It is published by the trends/load-report surface as the sum of the existing per-feed
-`estimatedEnergyKwh` values only for buckets where every expected independent input is verified
-FIELD evidence, every sample is paired V/I evidence, feed sample counts match and common observed
-coverage matches. Each accepted bucket reports interval kWh and the cumulative kWh within the
-requested window. Missing feeds, partial pairing, LAB evidence or mismatched coverage omit that
-bucket rather than treating missing consumption as zero. E1 does not create a Modbus point, does
-not persist a lifetime accumulator, does not change Timescale schemas and does not alter the
-existing Current, Voltage or Power contracts. A durable lifetime counter remains a separate
-post-RFP hardening concern.
+QDF total energy E1 remains an **historical window measurement** for trends/load-report and is not
+reused as the Modbus total. The client Modbus `00 Energy` at offset 774 is instead computed from the
+latest accepted breaker Energy counters only after all 96 breaker counters are present. This keeps
+the Excel v1.2 wire point semantically separate from E1's requested-window calculation. Missing
+breaker counters do not produce a partial total.
 
 QDF voltage is deliberately **not summed**. Commission a numeric
 `qdfVoltageToleranceV` on the BDFB Device together with the verified hardware profile. Site Mapper
@@ -242,8 +237,8 @@ commissioned tolerance. `QDF/<deviceId>/TOTAL_VOLTAGE` is published only when bo
 valid and mutually coherent within the same tolerance; otherwise the two bus values may remain
 VALID while TOTAL_VOLTAGE is unavailable/non-VALID. No descendant-equipment `averageVoltageV`,
 breaker subset average, nominal voltage or zero fallback is accepted as contractual TOTAL voltage.
-Historical voltage uses common complete feed buckets and the same coherence rule. Known latched alarm states retain 1/0 independently of freshness; the quality word still reports uncertainty. FC03, Unit IDs 1–247 and address limits are validated. Overlaps are rejected.
-The maximum is 10,000 published points per manifest; each FC03 request remains limited to 125 words.
+Historical voltage uses common complete feed buckets and the same coherence rule. Known latched alarm states retain 1/0 independently of freshness; the quality word still reports uncertainty. FC04, Unit IDs 1–247 and address limits are validated. Overlaps are rejected.
+The maximum is 10,000 published points per manifest; each FC04 request remains limited to 125 words.
 
 | Quality    | Code | Extension value                                                |
 | ---------- | ---: | -------------------------------------------------------------- |
@@ -255,7 +250,7 @@ The maximum is 10,000 published points per manifest; each FC03 request remains l
 | OFFLINE    |    5 | IEEE NaN for periodic values; known alarm remains 1/0          |
 
 Unknown alarm state is NaN; freshness never resolves an alarm. A real zero with VALID differs from absence. Strings, incompatible units and FLOAT32 overflow do
-not become plausible numbers. The old block's `zero`/`exception` policy is unchanged.
+not become plausible numbers. The base client block's `zero`/`exception` policy is unchanged.
 The bridge pulls commissioned signals every two seconds using a distinct machine credential;
 restart replay preserves original acquisition times, so recovery cannot make old data fresh.
 Export `/registry.csv` on the private bridge HTTP port with its bearer for the versioned address,
@@ -343,8 +338,8 @@ mandatory. Enable `INDUSTRIAL_TIMESCALE_ENABLED=true` and inspect
 SNMP HTTP receipt is not evidence of successful Timescale commit.
 
 Publication to Metasys remains **explicit and additive**, using the already implemented
-immutable manifest generator and registry. The legacy FC03 addresses 0–767 remain
-untouched; the approved industrial extension starts at 1024 (FLOAT32 ABCD value
+immutable manifest generator and registry. The approved FC04 breaker addresses 0–767 and QDF Total 768–775 remain
+frozen; the governed industrial extension starts at 1024 (FLOAT32 ABCD value
 and UINT16 quality). Do not coerce arbitrary strings, binary values or unknown
 measurements into plausible FLOAT32 values. Publishing any specific field controller
 requires verified engineering scale and approved Metasys address/quality semantics.

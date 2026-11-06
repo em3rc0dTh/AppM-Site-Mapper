@@ -43,6 +43,8 @@ export interface BreakerTelemetryReading {
   readonly breakerId: string;
   readonly breakerLabel: string;
   readonly rawPointId: string;
+  /** Canonical 2x48 Modbus point identity used only by the Site Mapper output sidecar. */
+  readonly modbusPointId?: string;
   readonly position: number;
   readonly metrics: BreakerTelemetryMetrics;
   readonly state?: BreakerTelemetryState;

@@ -1,11 +1,15 @@
 import { normalizePowerToWatts } from './power-unit-contract';
+import {
+  detectBfdbWireProfile,
+  expandBfdbWirePoint,
+} from './bfdb-wire-layout';
 import type { TelemetryBinding, TelemetrySample, NormalizedTelemetryMessage } from './entities';
 
 const METRICS = {
-  VOLTAGE: { raw: 'U1', key: 'voltageV', unit: 'V' },
-  CURRENT: { raw: 'I1', key: 'currentA', unit: 'A' },
-  POWER: { raw: 'P1', key: 'powerW', unit: 'W' },
-  ENERGY: { raw: 'EP1', key: 'energyKwh', unit: 'kWh' },
+  VOLTAGE: { key: 'voltageV', unit: 'V' },
+  CURRENT: { key: 'currentA', unit: 'A' },
+  POWER: { key: 'powerW', unit: 'W' },
+  ENERGY: { key: 'energyKwh', unit: 'kWh' },
 } as const;
 type MetricName = keyof typeof METRICS;
 
@@ -17,11 +21,11 @@ function numeric(value: unknown): number | undefined {
 }
 
 /**
- * Project an accepted BFDB message to an Equipment's own Latest State.
+ * Project an accepted BFDB message to each exact breaker Equipment Latest State.
  *
- * Unlike BDFB electrical-path visualizations, a verified MQTT measurement
- * doesn't require a POWER OUTPUT AccessPort. The physical target is resolved
- * by the service before calling this function, never by panel slot index.
+ * The field Acrel payload may carry two breakers inside one raw MQTT object
+ * (U1/I1/P1/EP1 and U2/I2/P2/EP2). Channel-qualified sourcePointIds keep
+ * those two physical circuits independent without inventing measurements.
  */
 export function buildBoundBfdbEquipmentPatches(
   message: NormalizedTelemetryMessage,
@@ -32,69 +36,84 @@ export function buildBoundBfdbEquipmentPatches(
 
   const patches: TelemetrySample[] = [];
   const observedAt = message.sourceObservedAt ?? message.receivedAt;
+  const profile = detectBfdbWireProfile(message.reported);
+
   for (const [rawPointId, raw] of Object.entries(message.reported)) {
     if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
     const rawFields = raw as Readonly<Record<string, unknown>>;
-    const links = bindings.filter(
-      (binding) =>
-        binding.lifecycle === 'ACTIVE' &&
-        binding.protocol === 'MQTT' &&
-        binding.sourceIdentity === message.sourceIdentity &&
-        binding.targetType === 'EQUIPMENT' &&
-        binding.sourcePointId === rawPointId &&
-        eligibleBreakerIds.has(binding.targetId) &&
-        Object.hasOwn(METRICS, binding.metric.toUpperCase()),
-    );
-    if (!links.length) continue;
 
-    // A point may not be attributed to two breakers or to duplicate metrics.
-    const sourcePointBindings = bindings.filter(
-      (binding) =>
-        binding.lifecycle === 'ACTIVE' &&
-        binding.protocol === 'MQTT' &&
-        binding.sourceIdentity === message.sourceIdentity &&
-        binding.sourcePointId === rawPointId &&
-        binding.targetType === 'EQUIPMENT' &&
-        Object.hasOwn(METRICS, binding.metric.toUpperCase()),
-    );
-    if (new Set(sourcePointBindings.map((b) => b.targetId)).size !== 1) continue;
-    if (new Set(links.map((b) => b.metric.toUpperCase())).size !== links.length) continue;
+    for (const point of expandBfdbWirePoint(rawPointId, rawFields, profile)) {
+      const links = bindings.filter(
+        (binding) =>
+          binding.lifecycle === 'ACTIVE' &&
+          binding.protocol === 'MQTT' &&
+          binding.sourceIdentity === message.sourceIdentity &&
+          binding.targetType === 'EQUIPMENT' &&
+          binding.sourcePointId === point.bindingPointId &&
+          eligibleBreakerIds.has(binding.targetId) &&
+          Object.hasOwn(METRICS, binding.metric.toUpperCase()),
+      );
+      if (!links.length) continue;
 
-    const reported: Record<string, unknown> = {};
-    for (const link of links) {
-      const metricName = link.metric.toUpperCase() as MetricName;
-      const field = METRICS[metricName];
-      const value =
-        metricName === 'POWER'
-          ? normalizePowerToWatts(rawFields[field.raw], link.unit)
-          : numeric(rawFields[field.raw]);
-      if (value !== undefined) {
-        reported[field.key] = { value, unit: field.unit, observedAt };
+      // A channel-qualified point may not be attributed to two breakers or
+      // duplicate semantic metrics.
+      const sourcePointBindings = bindings.filter(
+        (binding) =>
+          binding.lifecycle === 'ACTIVE' &&
+          binding.protocol === 'MQTT' &&
+          binding.sourceIdentity === message.sourceIdentity &&
+          binding.sourcePointId === point.bindingPointId &&
+          binding.targetType === 'EQUIPMENT' &&
+          Object.hasOwn(METRICS, binding.metric.toUpperCase()),
+      );
+      if (new Set(sourcePointBindings.map((binding) => binding.targetId)).size !== 1) continue;
+      if (new Set(links.map((binding) => binding.metric.toUpperCase())).size !== links.length)
+        continue;
+
+      const wireByMetric = {
+        VOLTAGE: point.fields.voltage,
+        CURRENT: point.fields.current,
+        POWER: point.fields.power,
+        ENERGY: point.fields.energy,
+      } as const;
+
+      const reported: Record<string, unknown> = {};
+      for (const link of links) {
+        const metricName = link.metric.toUpperCase() as MetricName;
+        const field = METRICS[metricName];
+        const wireField = wireByMetric[metricName];
+        const value =
+          metricName === 'POWER'
+            ? normalizePowerToWatts(rawFields[wireField], link.unit)
+            : numeric(rawFields[wireField]);
+        if (value !== undefined) {
+          reported[field.key] = { value, unit: field.unit, observedAt };
+        }
       }
-    }
-    if (
-      rawFields.state !== undefined &&
-      (typeof rawFields.state === 'string' || typeof rawFields.state === 'number')
-    ) {
-      reported.state = String(rawFields.state);
-    }
-    if (!Object.keys(reported).length) continue;
+      if (
+        rawFields.state !== undefined &&
+        (typeof rawFields.state === 'string' || typeof rawFields.state === 'number')
+      ) {
+        reported.state = String(rawFields.state);
+      }
+      if (!Object.keys(reported).length) continue;
 
-    const breakerId = links[0]!.targetId;
-    patches.push({
-      bindingId: links[0]!.id,
-      metricBindingIds: links.map((b) => b.id),
-      sourcePointId: rawPointId,
-      targetId: breakerId,
-      targetType: 'EQUIPMENT',
-      entityId: breakerId,
-      entityKind: 'EQUIPMENT',
-      sourceIdentity: message.sourceIdentity,
-      receivedAt: message.receivedAt,
-      reported,
-      ...(message.sourceObservedAt ? { sourceObservedAt: message.sourceObservedAt } : {}),
-      ...(message.sourceSentAt ? { sourceSentAt: message.sourceSentAt } : {}),
-    });
+      const breakerId = links[0]!.targetId;
+      patches.push({
+        bindingId: links[0]!.id,
+        metricBindingIds: links.map((binding) => binding.id),
+        sourcePointId: point.bindingPointId,
+        targetId: breakerId,
+        targetType: 'EQUIPMENT',
+        entityId: breakerId,
+        entityKind: 'EQUIPMENT',
+        sourceIdentity: message.sourceIdentity,
+        receivedAt: message.receivedAt,
+        reported,
+        ...(message.sourceObservedAt ? { sourceObservedAt: message.sourceObservedAt } : {}),
+        ...(message.sourceSentAt ? { sourceSentAt: message.sourceSentAt } : {}),
+      });
+    }
   }
   return patches;
 }

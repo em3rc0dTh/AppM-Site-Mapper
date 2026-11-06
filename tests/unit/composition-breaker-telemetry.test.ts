@@ -120,7 +120,7 @@ describe('Equipment Composition breaker telemetry', () => {
     ).toBe('NO DATA');
   });
 
-  it('distinguishes STALE and OFFLINE and excludes wrong-unit measurements', () => {
+  it('keeps a 5-minute publisher LIVE, then transitions through STALE and OFFLINE', () => {
     const reading = sample('breaker-01', 'BRK-SN-01', {
       voltageV: { value: 20, unit: 'C' },
       currentA: 1.2,
@@ -135,13 +135,31 @@ describe('Equipment Composition breaker telemetry', () => {
       compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now).voltageV,
     ).toBeUndefined();
     expect(
-      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now + 90_000)
+      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now + 300_000)
+        .status,
+    ).toBe('LIVE');
+    expect(
+      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now + 361_000)
         .status,
     ).toBe('STALE');
     expect(
-      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now + 301_000)
+      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now + 901_000)
         .status,
     ).toBe('OFFLINE');
+  });
+
+  it('surfaces source clock skew without discarding a freshly received breaker value', () => {
+    const reading = {
+      ...sample('breaker-01', 'BRK-SN-01', { voltageV: 13.2 }),
+      sourceObservedAt: '2026-10-13T12:00:00.000Z',
+    };
+    expect(
+      compositionBreakerTelemetry('breaker-01', 'device', [reading], [sourceLink], now),
+    ).toMatchObject({
+      status: 'CLOCK SKEW',
+      voltageV: 13.2,
+      sourceIdentity: 'BRK-SN-01',
+    });
   });
 
   it('fails closed when competing authenticated sources claim the same breaker', () => {

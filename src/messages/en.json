@@ -126,6 +126,9 @@
   "shell": {
     "skip": "Skip to workspace",
     "tagline": "Physical Infrastructure",
+    "poweredBy": "Powered by",
+    "poweredByThradex": "Powered by Thradex",
+    "thradex": "Thradex",
     "settings": "SETTINGS",
     "warehouseContext": "VIRTUAL WAREHOUSE",
     "networkContext": "NETWORK",

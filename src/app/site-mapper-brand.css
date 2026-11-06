@@ -1,0 +1,229 @@
+/* Site Mapper brand heritage.
+   Branding only: never changes the operational UI font stack. */
+.sm-brand {
+  --sm-brand-accent: #18b98f;
+  --sm-brand-ink: #202428;
+  --sm-brand-muted: #6d7781;
+  font-family: var(--font-site-mapper-brand), 'Trebuchet MS', Arial, sans-serif;
+}
+
+.sm-brand-lockup {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.sm-brand-mark {
+  flex: 0 0 auto;
+  fill: none;
+  stroke: var(--sm-brand-ink);
+  stroke-width: 1.35;
+}
+
+.sm-brand-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.sm-brand-name {
+  display: flex;
+  align-items: baseline;
+  min-width: 0;
+  color: var(--sm-brand-ink);
+  font-family: inherit;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  white-space: nowrap;
+}
+
+.sm-brand-word--mapper {
+  color: var(--sm-brand-accent);
+}
+
+.sm-brand-tagline {
+  color: var(--sm-brand-muted);
+  font-family: inherit;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+}
+
+.sm-brand--compact {
+  min-width: 0;
+}
+
+.sm-brand--compact .sm-brand-lockup {
+  gap: 12px;
+}
+
+.sm-brand--compact .sm-brand-mark {
+  width: 38px;
+  height: 38px;
+}
+
+.sm-brand--compact .sm-brand-copy {
+  gap: 2px;
+}
+
+.sm-brand--compact .sm-brand-name {
+  gap: 5px;
+  font-size: 23px;
+  line-height: 0.96;
+}
+
+.sm-brand--compact .sm-brand-tagline {
+  font-size: 9px;
+  line-height: 1.15;
+}
+
+.zip-brand .sm-brand {
+  width: 100%;
+}
+
+.zip-brand .sm-brand-name {
+  font-size: 23px;
+  line-height: 0.96;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.zip-brand .sm-brand-tagline {
+  font-size: 9px;
+  line-height: 1.15;
+  color: var(--sm-brand-muted);
+}
+
+.sm-brand--hero {
+  position: relative;
+  min-height: 150px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 25px 30px;
+  border: 1px solid #dde5ec;
+  border-radius: 10px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 42%, rgba(255, 255, 255, 0.72) 100%),
+    #fff;
+}
+
+.sm-brand--hero::after {
+  content: '';
+  position: absolute;
+  left: 30px;
+  bottom: 18px;
+  width: 56px;
+  height: 3px;
+  background: var(--sm-brand-accent);
+}
+
+.sm-brand--hero .sm-brand-lockup {
+  gap: 19px;
+}
+
+.sm-brand--hero .sm-brand-mark {
+  width: 58px;
+  height: 58px;
+  stroke-width: 1.2;
+}
+
+.sm-brand--hero .sm-brand-copy {
+  gap: 5px;
+}
+
+.sm-brand--hero .sm-brand-name {
+  gap: 9px;
+  font-size: clamp(38px, 3.2vw, 52px);
+  line-height: 0.9;
+  font-weight: 500;
+}
+
+.sm-brand--hero .sm-brand-tagline {
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.sm-brand-network {
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 0 31%;
+  width: 69%;
+  height: 100%;
+  color: #48525a;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+.sm-brand-network-map,
+.sm-brand-network-ticks {
+  fill: none;
+  stroke: currentColor;
+}
+
+.sm-brand-network-map {
+  stroke-width: 1.2;
+}
+
+.sm-brand-network-ticks {
+  stroke-width: 0.8;
+}
+
+.sm-brand-network-nodes {
+  fill: currentColor;
+}
+
+.sm-home-brand-hero {
+  margin-bottom: 20px;
+}
+
+@media (max-width: 900px) {
+  .sm-brand--hero {
+    min-height: 132px;
+    padding: 22px 24px;
+  }
+
+  .sm-brand--hero::after {
+    left: 24px;
+  }
+
+  .sm-brand-network {
+    inset-left: 24%;
+    width: 76%;
+    opacity: 0.1;
+  }
+
+  .sm-brand--hero .sm-brand-name {
+    font-size: clamp(32px, 6vw, 44px);
+  }
+}
+
+@media (max-width: 620px) {
+  .sm-brand--compact .sm-brand-name {
+    font-size: 20px;
+  }
+
+  .sm-brand--hero {
+    min-height: 118px;
+    padding: 20px;
+  }
+
+  .sm-brand--hero .sm-brand-mark {
+    width: 48px;
+    height: 48px;
+  }
+
+  .sm-brand--hero .sm-brand-name {
+    font-size: 31px;
+  }
+
+  .sm-brand--hero .sm-brand-tagline {
+    font-size: 13px;
+  }
+
+  .sm-brand-network {
+    inset: 0;
+    width: 100%;
+    opacity: 0.07;
+  }
+}

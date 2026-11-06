@@ -9,6 +9,7 @@ on:
       - 'infra/field/ops/**'
       - 'docs/operations/lan-https/**'
       - 'scripts/ci/check-s06.py'
+      - 'scripts/operations/sprint-06-local-gate.sh'
       - '.github/workflows/s06-static-contract.yml'
   workflow_dispatch:
 

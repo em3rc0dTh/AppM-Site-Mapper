@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  bindingPointIdsForWirePoint,
   detectBfdbWireProfile,
   expandBfdbWirePoint,
   findBfdbWirePointByBindingId,
@@ -59,6 +60,20 @@ describe('Acrel BFDB field wire layout', () => {
   it('treats field objects 13..24 as status-only shadows, not extra circuits', () => {
     expect(isFieldStatusOnlyPoint('0_7_24', 'FIELD_DUAL_12')).toBe(true);
     expect(expandBfdbWirePoint('0_7_24', reported['0_7_24'], 'FIELD_DUAL_12')).toEqual([]);
+  });
+
+
+  it('treats an explicit raw field binding as channel 1 only', () => {
+    const points = expandBfdbWirePoint('0_1_1', reported['0_1_1'], 'FIELD_DUAL_12');
+    expect(bindingPointIdsForWirePoint(points[0]!, 'FIELD_DUAL_12')).toEqual([
+      '0_1_1#1',
+      '0_1_1',
+    ]);
+    expect(bindingPointIdsForWirePoint(points[1]!, 'FIELD_DUAL_12')).toEqual(['0_1_1#2']);
+    expect(findBfdbWirePointByBindingId('0_1_1', reported)).toMatchObject({
+      channel: 1,
+      modbusPointId: '0_1_1',
+    });
   });
 
   it('can resolve a channel-qualified binding back to its raw frame and Modbus identity', () => {

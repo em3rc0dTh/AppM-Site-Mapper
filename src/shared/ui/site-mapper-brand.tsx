@@ -37,10 +37,7 @@ export function SiteMapperBrand({ variant, tagline }: SiteMapperBrandProps) {
             <span className="sm-brand-appmanager-a">{appManager.slice(0, 1)}</span>
             <span>{appManager.slice(1)}</span>
           </strong>
-          <span
-            className="sm-brand-product-line"
-            aria-label={`${siteMapper} ${generation}`}
-          >
+          <span className="sm-brand-product-line" aria-label={`${siteMapper} ${generation}`}>
             <span className="sm-brand-sitemapper">{siteMapper}</span>
             <span className="sm-brand-mk">{generation}</span>
           </span>

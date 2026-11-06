@@ -38,6 +38,7 @@ LAN works without any Cloudflare component. Cloudflare is optional for laborator
 | `deployment-runbook.md` | Preconditions, controlled execution, rollback, CA distribution, backup |
 | `security-and-access.md` | Security boundaries, separation of FIELD and LAB, ports, auth |
 | `acceptance.md` | HU-039..048 acceptance gates and evidence |
+| `operations.md` | Systemd templates, watchdog, backups, restore preflight and security considerations |
 
 ## Non-negotiables
 
@@ -53,4 +54,4 @@ LAN works without any Cloudflare component. Cloudflare is optional for laborator
 
 HU-039 local hostname; HU-040 Caddy/CA; HU-041 least-privilege networking; HU-042 boot; HU-043 watchdog; HU-044 recoverable backup; HU-045 separate profiles; HU-046 acceptance; HU-047 optional tunnel; HU-048 Access plus app authorization.
 
-**Implementation status:** Caddy and optional connector are declaratively prepared. DNS configuration, firewall, supervisor, watchdog integration, consistent backups and runtime validation require target-specific reconnaissance (S06-A) and are not silently implemented by this commit.
+**Implementation status:** Caddy, optional connector, systemd templates, conservative watchdog, encrypted backup, isolated restore preflight, static checks and network-policy templates are versioned. DNS/firewall enforcement, runtime integration, independent boot recovery, actual encrypted backups, restoration and certification remain target-specific and **not executed**.

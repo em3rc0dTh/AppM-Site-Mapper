@@ -87,7 +87,7 @@ def main() -> int:
                 caddy = container("caddy")
 
                 with (workspace / "mongo.archive.gz").open("wb") as output:
-                    execute("docker", "exec", mongo, "mongodump", "--archive", "--gzip", stdout=output)
+                    execute("docker", "exec", mongo, "mongodump", "--oplog", "--archive", "--gzip", stdout=output)
                 if (workspace / "mongo.archive.gz").stat().st_size == 0:
                     raise RuntimeError("empty Mongo dump")
                 with (workspace / "timescale.dump").open("wb") as output:

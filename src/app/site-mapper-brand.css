@@ -72,7 +72,7 @@
 
 .sm-brand--compact .sm-brand-name,
 .zip-brand .sm-brand-name {
-  gap: 5px;
+  gap: 0;
   font-size: 23px;
   line-height: 0.96;
   font-weight: 600;
@@ -135,7 +135,7 @@
 }
 
 .sm-brand--hero .sm-brand-name {
-  gap: 9px;
+  gap: 0;
   font-size: clamp(38px, 3.4vw, 50px);
   line-height: 0.9;
   font-weight: 500;
@@ -180,11 +180,35 @@
   padding-left: 18px;
 }
 
-.sm-home .sm-home-heading h1 {
+.sm-home .sm-home-product-signature {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 6px 0 2px;
   font-family: var(--font-site-mapper-brand), 'Trebuchet MS', Arial, sans-serif;
-  font-size: clamp(26px, 2vw, 32px);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.sm-home .sm-home-appmanager {
+  color: #202428;
+  font-size: clamp(30px, 2.4vw, 40px);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+}
+
+.sm-home .sm-home-sitemapper {
+  color: #18b98f;
+  font-size: clamp(19px, 1.55vw, 27px);
   font-weight: 500;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.035em;
+}
+
+.sm-home .sm-home-heading h1 {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
   color: #202428;
 }
 

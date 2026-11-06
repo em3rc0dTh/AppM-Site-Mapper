@@ -150,8 +150,8 @@ try {
   const providerAttribution = page.locator('.sm-thradex-attribution').first();
   await providerAttribution.waitFor({ state: 'visible', timeout: 30000 });
   assert.equal(await providerAttribution.getAttribute('aria-label'), 'Powered by Thradex');
-  const providerText = (await providerAttribution.textContent())?.replace(/\s+/g, ' ').trim();
-  assert.equal(providerText, 'Powered by Thradex');
+  const providerParts = await providerAttribution.locator('span, strong').allTextContents();
+  assert.deepEqual(providerParts.map((item) => item.trim()), ['Powered by', 'Thradex']);
   console.log('[PASS] S04 Chromium: permanent Powered by Thradex attribution on Equipment');
 
   // Verify the new destructive workflow visually without submitting a deletion.

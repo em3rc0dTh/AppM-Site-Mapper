@@ -15,13 +15,8 @@ services:
       - ./infra/field/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - site_mapper_caddy_data:/data
       - site_mapper_caddy_config:/config
-    healthcheck:
-      # An HTTP response from the protected app, including a login redirect,
-      # is acceptable; TLS trust is checked separately from authorized clients.
-      test: ["CMD", "caddy", "version"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
+    # Actual HTTPS availability is checked by the host-side S06 watchdog.
+    # A `caddy version` healthcheck is deliberately NOT treated as readiness.
 
 volumes:
   site_mapper_caddy_data:

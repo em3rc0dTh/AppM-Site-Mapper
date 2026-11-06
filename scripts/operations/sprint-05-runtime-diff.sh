@@ -145,11 +145,16 @@ if len(slave_profiles) != 12 or any(x.get("status") != "MATCH" for x in slave_pr
     raise SystemExit(f"S05 profile Slave ID mismatch: {slave_profiles}")
 
 network_pending = [
-    x for x in rows(kind="GATEWAY_PROFILE", status="MISSING_IN_RUNTIME")
+    x for x in rows(kind="GATEWAY_PROFILE", status="CONFLICT")
     if str(x.get("field", "")).startswith("network.")
+    and x.get("actual") is None
+    and x.get("expected") not in (None, "")
 ]
 if len(network_pending) != 9:
-    raise SystemExit(f"S05 expected 9 FIELD network attributes pending local APPLY, got {len(network_pending)}")
+    raise SystemExit(
+        "S05 expected exactly 9 unapplied FIELD network attributes "
+        f"(CONFLICT with actual=null), got {len(network_pending)}"
+    )
 
 duplicates = rows(kind="BINDINGS", field="duplicateSourcePoints")
 if len(duplicates) != 1 or duplicates[0].get("status") != "MATCH" or duplicates[0].get("actual") != 0:

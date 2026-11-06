@@ -414,3 +414,100 @@
     font-size: 12px;
   }
 }
+
+/* Mk2 legibility layer — translucent surfaces sit behind real UI, not in the PNG.
+   Scope: heritage login lockup / provider attribution and Home identity band. */
+.zip-login-page--heritage .zip-login-content > header {
+  box-sizing: border-box;
+  padding: 18px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.84);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 34px rgba(30, 45, 58, 0.11);
+}
+
+.zip-login-page--heritage .sm-brand--hero .sm-brand-appmanager,
+.zip-login-page--heritage .sm-brand--hero .sm-brand-mk {
+  color: #202428 !important;
+}
+
+.zip-login-page--heritage .sm-brand--hero .sm-brand-sitemapper {
+  color: #079b75 !important;
+}
+
+.zip-login-page--heritage .zip-login-powered-by {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 11px 24px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 23px;
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 9px 26px rgba(30, 45, 58, 0.11);
+}
+
+.zip-login-page--heritage .zip-login-powered-by p {
+  color: #4a5662;
+  font-weight: 600;
+}
+
+.sm-home .sm-home-heading > div {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  padding: 12px 22px 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(30, 45, 58, 0.09);
+}
+
+.sm-home .sm-home-heading .sm-home-scope {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+}
+
+@media (max-width: 700px) {
+  .zip-login-page--heritage .zip-login-content > header {
+    padding: 14px 10px;
+    border-radius: 16px;
+  }
+
+  .zip-login-page--heritage .sm-brand--hero .sm-brand-appmanager {
+    font-size: clamp(25px, 7.5vw, 37px) !important;
+  }
+
+  .zip-login-page--heritage .zip-login-powered-by {
+    padding: 9px 15px;
+  }
+
+  .sm-home .sm-home-heading > div {
+    padding: 10px 12px 12px 18px;
+  }
+
+  .sm-home .sm-home-product-signature {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .zip-login-page--heritage .zip-login-content > header,
+  .zip-login-page--heritage .zip-login-powered-by,
+  .sm-home .sm-home-heading > div,
+  .sm-home .sm-home-heading .sm-home-scope {
+    background: #fff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

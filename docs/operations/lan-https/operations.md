@@ -52,7 +52,7 @@ stateDiagram-v2
 
 ## Backup and restoration contract
 
-The backup program relies on running MongoDB, Timescale and Caddy Compose containers. It fails closed if `age`, the approved recipient or the existing runtime configuration are missing.
+The backup program relies on running MongoDB, Timescale and Caddy Compose containers. By default it refuses a destination that is not a separate mounted off-host volume (`S06_BACKUP_MOUNT_REQUIRED=1`); a target-specific remote mount must be approved. It fails closed if `age`, the approved recipient or the existing runtime configuration are missing.
 
 Generated bundle: encrypted `mongo.archive.gz.age`, `timescale.dump.age`, `caddy-data.tar.gz.age` and `runtime-config.tar.gz.age`; the manifest stores checksums of ciphertext. Temporary plaintext is created only in a root-protected scratch directory and removed after completion; for stronger assurance against recoverable plaintext on persistent disks, the operator should use encrypted scratch storage (tmpfs or LUKS), as approved for the host. Never copy plaintext bundle contents to Git.
 

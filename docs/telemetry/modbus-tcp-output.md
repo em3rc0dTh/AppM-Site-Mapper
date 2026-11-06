@@ -12,18 +12,18 @@ The Modbus server does not query TimescaleDB or MongoDB when answering a Modbus 
 
 ## Wire contract (baseline)
 
-- Transport: Modbus TCP (MBAP), holding register read function **03** only
+- Transport: Modbus TCP (MBAP), Input Register read function **04** only
 - Default server: TCP 1502, bound to loopback for local operation. The standard 502 can be mapped at deployment after network authorization.
 - Source mapping: `MODBUS_SOURCE_UNITS_JSON` is required, e.g. `{"EMU-BFDB-01":1,"EMU-BFDB-02":2,"EMU-BFDB-03":3}`. **Never guess a serial or unit from topology.**
-- Per Unit ID: 96 circuits × 4 variables × 2 holding registers = **768 registers** (0–767).
-- Raw-point layout is explicit: the legacy default `blocks-2x48` maps `0_1_1`..`0_1_48` to circuits 1–48 and `0_2_1`..`0_2_48` to circuits 49–96. The verified BFDB emulator uses `panels-4x24`: `0_1_1`..`0_1_24` → 1–24, `0_2_*` → 25–48, `0_3_*` → 49–72 and `0_4_*` → 73–96. Set `MODBUS_POINT_LAYOUT` to the provider-approved layout; never infer an unverified wiring map. The local `docker-compose.telemetry.yml` lab defaults to `panels-4x24` while direct stand-alone server usage retains `blocks-2x48` for compatibility.
+- Per Unit ID: 96 breakers × 4 variables × 2 registers = **768 breaker registers** (0–767), plus **8 QDF Total registers** (768–775), for 776 registers.
+- The Modbus sidecar receives a canonical **2×48** identity: A uses `0_1_1..0_1_48` and B uses `0_2_1..0_2_48`. Site Mapper translates the real Acrel wire format before this boundary. Field Acrel groups are 1/3/5/7, measured positions are 1..12, and channel 1/2 (`U1/I1/P1/EP1` vs `U2/I2/P2/EP2`) resolves to the 24 positions of each physical panel. The local `docker-compose.telemetry.yml` lab defaults to `panels-4x24` while direct stand-alone server usage retains `blocks-2x48` for compatibility.
 - Variable order at each circuit: Voltage (V), Current (A), Power (kW), Energy (kWh).
-- Circuit number `n` from 1 to 96: zero-based start address `(n - 1) * 8`; Voltage at +0, Current at +2, Power at +4, Energy at +6. IEEE-754 FLOAT32, network big-endian word order, **high word first**. Register numbering in Metasys may need +40001 or +1 offset depending on its configured Modbus driver.
+- Internal ordinal `n` from 1 to 96 (client labels 01-A…48-A then 01-B…48-B): zero-based start address `(n - 1) * 8`; Voltage at +0, Current at +2, Power at +4, Energy at +6. IEEE-754 FLOAT32, network big-endian word order, **high word first**. Register numbering in Metasys may need +40001 or +1 offset depending on its configured Modbus driver.
 - Power is stored internally in watts (`powerW`) and converted at the Modbus publication boundary (`W / 1000`) so the wire value and engineering unit are kW. Historical storage is unchanged.
 - Only explicitly commissioned breaker metrics accepted by Site Mapper are exported. Missing values are not invented.
-- Missing or stale values (default age 30 seconds) use `MODBUS_MISSING_POLICY`. The backward-compatible default `zero` reads **0**, indistinguishable from a valid zero. The opt-in `exception` returns Modbus exception 04 for the entire FC03 request when any requested value is missing/stale. **Do not use this output for safety controls** until Metasys polling and missing-data behavior have been field-certified.
-- The legacy circuit block remains exactly 0–767 and still exposes only V/I/P/E. Governed industrial extensions begin at address **1024** and are opt-in through the immutable publication registry. Alarm Engine values may be assigned there without altering the circuit map.
-- Function codes other than FC03 return illegal-function exception. Malformed/out-of-range FC03 requests return exception, not out-of-bounds data.
+- Missing or stale values (default age 30 seconds) use `MODBUS_MISSING_POLICY`. The backward-compatible default `zero` reads **0**, indistinguishable from a valid zero. The opt-in `exception` returns Modbus exception 04 for the entire FC04 request when any requested value is missing/stale. **Do not use this output for safety controls** until Metasys polling and missing-data behavior have been field-certified.
+- The breaker block remains exactly 0–767. Client circuit **00** occupies 768–775: Voltage 768, Current 770, Power 772 and Energy 774 (each FLOAT32/two registers). Governed industrial extensions still begin at address **1024** and remain opt-in.
+- Function codes other than FC04 return illegal-function exception. Malformed/out-of-range FC04 requests return exception, not out-of-bounds data.
 
 ## Local deployment
 
@@ -82,7 +82,7 @@ registry**. No alarm address is guessed from topology, panel position, MQTT poin
 node --test infra/modbus-tcp/server.test.mjs
 ```
 
-The GitHub full-stack E2E checks that Site Mapper's accepted MQTT breaker sample arrives via Modbus FC03 at Unit ID 1 and matches V/A/kW/kWh, and that Unit ID 2 is isolated. That run simultaneously verifies the TimescaleDB history.
+The GitHub full-stack E2E checks that Site Mapper's accepted MQTT breaker sample arrives via Modbus FC04 at Unit ID 1 and matches V/A/kW/kWh, and that Unit ID 2 is isolated. That run simultaneously verifies the TimescaleDB history.
 
 ## Remaining operational gates
 
@@ -102,7 +102,7 @@ node scripts/operations/certify-modbus-cb01.mjs \
   --breaker 4d394db4-b263-4ca3-9fa2-fb10661d89ff
 ```
 
-The script reads approved source→Unit ID from **the running Modbus container**. It then polls the loopback TCP/1503 FC03 response (8 holding registers, four network-order FLOAT32 values) and compares that tuple to **recent** rows for exactly the same source, point and breaker in the Site Mapper-owned `telemetry_samples` table. It never writes to MongoDB, TimescaleDB, MQTT, or Modbus. `MODBUS_CERT_PASS` certifies this local lab flow at the time of execution; `MODBUS_CERT_FAILED` or a timeout is **not** a pass. The sidecar's freshness policy may return zeros if no commissioned sample has arrived within 30 seconds.
+The script reads approved source→Unit ID from **the running Modbus container**. It then polls the loopback TCP/1503 FC04 response (8 input registers, four network-order FLOAT32 values) and compares that tuple to **recent** rows for exactly the same source, point and breaker in the Site Mapper-owned `telemetry_samples` table. It never writes to MongoDB, TimescaleDB, MQTT, or Modbus. `MODBUS_CERT_PASS` certifies this local lab flow at the time of execution; `MODBUS_CERT_FAILED` or a timeout is **not** a pass. The sidecar's freshness policy may return zeros if no commissioned sample has arrived within 30 seconds.
 
 This local validation does **not** certify external Metasys connectivity, wiring, BMS register offsets, quality flags, or behavior after a process restart. Do not expose the port beyond the approved OT network.
 
@@ -114,4 +114,4 @@ The single source for the four-variable register allocation is [`infra/modbus-tc
 node scripts/operations/generate-metasys-register-map.mjs --check
 ```
 
-For production mappings, generate the CSV privately with the approved `MODBUS_SOURCE_UNITS_JSON` and `MODBUS_POINT_LAYOUT`. Metasys integration still requires explicit local configuration and read-only field acceptance. The optional `MODBUS_MISSING_POLICY=exception` is not enabled in the default Docker Compose profile because partially commissioned panel reads can otherwise fail as an entire FC03 block. Confirm the desired missing-data behavior with the Metasys integrator before enabling it.
+For production mappings, generate the CSV privately with the approved `MODBUS_SOURCE_UNITS_JSON` and `MODBUS_POINT_LAYOUT`. Metasys integration still requires explicit local configuration and read-only field acceptance. The optional `MODBUS_MISSING_POLICY=exception` is not enabled in the default Docker Compose profile because partially commissioned panel reads can otherwise fail as an entire FC04 block. Confirm the desired missing-data behavior with the Metasys integrator before enabling it.

@@ -100,10 +100,7 @@ export default async function WorkspacePage() {
         <header className="sm-home-heading">
           <div>
             <span className="sm-home-breadcrumb">⌂ {t('home')}</span>
-            <div
-              className="sm-home-product-signature"
-              aria-label={brandT('fullName')}
-            >
+            <div className="sm-home-product-signature" aria-label={brandT('fullName')}>
               <span className="sm-home-appmanager">
                 <b>{brandT('appManager').slice(0, 1)}</b>
                 {brandT('appManager').slice(1)}

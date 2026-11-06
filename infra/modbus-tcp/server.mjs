@@ -56,7 +56,7 @@ export class ModbusLatestState {
     }
   }
 
-  recomputeTotalEnergy(unit) {
+  recomputeTotalEnergy(unit, now = Date.now()) {
     const slots = this.values.get(unit);
     if (!slots) return false;
 
@@ -64,7 +64,7 @@ export class ModbusLatestState {
     let receivedAt = 0;
     for (let circuit = 1; circuit <= CIRCUITS; circuit++) {
       const item = slots.get(circuitStartAddress(circuit) + 6);
-      if (!item) return false;
+      if (!item || now - item.receivedAt > this.staleMs) return false;
       total += item.value;
       receivedAt = Math.max(receivedAt, item.receivedAt);
     }
@@ -110,7 +110,7 @@ export class ModbusLatestState {
       if (metric === 'energyKwh') energyChanged = true;
       changed = true;
     }
-    if (energyChanged) this.recomputeTotalEnergy(unit);
+    if (energyChanged) this.recomputeTotalEnergy(unit, now);
     return changed;
   }
 

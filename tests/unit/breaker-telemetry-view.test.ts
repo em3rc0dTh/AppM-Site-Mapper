@@ -106,13 +106,25 @@ describe('per-breaker telemetry visualization', () => {
     expect(result['cb-1']).toBeUndefined();
   });
 
-  it('does not display stale, unbound or differently-unitized own readings as live', () => {
-    const stale = { ...sample('cb-1', { voltageV: 13 }), receivedAt: '2026-10-12T22:40:00.000Z' };
+  it('retains current 5-minute readings but drops offline, unbound or wrong-unit values', () => {
+    const offline = { ...sample('cb-1', { voltageV: 13 }), receivedAt: '2026-10-12T22:26:00.000Z' };
     const unboundPoint = { ...sample('cb-1', { voltageV: 13 }), sourcePointId: '0_1_1' };
     const wrongUnit = sample('cb-1', { voltageV: { value: 13, unit: 'C' } });
     expect(
-      resolveBdfbBreakerReadings(presentation, null, [stale, unboundPoint, wrongUnit], now),
+      resolveBdfbBreakerReadings(presentation, null, [offline, unboundPoint, wrongUnit], now),
     ).toEqual({});
+  });
+
+  it('keeps a freshly received value visible when the publisher clock is skewed', () => {
+    const skewed = {
+      ...sample('cb-1', { voltageV: { value: 13.79, unit: 'V' } }),
+      sourceObservedAt: '2026-10-13T12:00:00.000Z',
+    };
+    const result = resolveBdfbBreakerReadings(presentation, null, [skewed], now);
+    expect(result['cb-1']?.metrics.voltageV?.value).toBe(13.79);
+    expect(result['cb-1']?.metrics.voltageV?.observedAt).toBe(
+      '2026-10-13T12:00:00.000Z',
+    );
   });
 
   it('prefers a breaker direct SOURCE over a parent gateway projection', () => {

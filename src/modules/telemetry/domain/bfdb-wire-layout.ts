@@ -147,6 +147,17 @@ export function expandBfdbWirePoint(
   ];
 }
 
+
+export function bindingPointIdsForWirePoint(
+  point: BfdbWirePoint,
+  profile: BfdbWireProfile,
+): readonly string[] {
+  if (profile === 'FIELD_DUAL_12' && point.channel === 1) {
+    return [point.bindingPointId, point.rawPointId];
+  }
+  return [point.bindingPointId];
+}
+
 export function findBfdbWirePointByBindingId(
   sourcePointId: string,
   reported: Readonly<Record<string, unknown>>,
@@ -154,7 +165,7 @@ export function findBfdbWirePointByBindingId(
 ): BfdbWirePoint | null {
   for (const [rawPointId, rawValue] of Object.entries(reported)) {
     for (const point of expandBfdbWirePoint(rawPointId, rawValue, profile)) {
-      if (point.bindingPointId === sourcePointId) return point;
+      if (bindingPointIdsForWirePoint(point, profile).includes(sourcePointId)) return point;
     }
   }
   return null;

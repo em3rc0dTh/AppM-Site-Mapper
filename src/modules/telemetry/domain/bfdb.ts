@@ -7,6 +7,7 @@ import type {
   TelemetryMetricValue,
 } from '@/modules/telemetry/domain/entities';
 import {
+  bindingPointIdsForWirePoint,
   detectBfdbWireProfile,
   expandBfdbWirePoint,
   isFieldStatusOnlyPoint,
@@ -188,7 +189,10 @@ export function buildBfdbBreakerReadings(
 
     let mappedAny = false;
     for (const point of wirePoints) {
-      const mapping = metricBindingMap(bindings, message.sourceIdentity, point.bindingPointId);
+      const mapping =
+        bindingPointIdsForWirePoint(point, profile)
+          .map((sourcePointId) => metricBindingMap(bindings, message.sourceIdentity, sourcePointId))
+          .find((candidate) => candidate !== null) ?? null;
       if (!mapping) continue;
       const resolved = byBreaker.get(mapping.targetId);
       if (!resolved) continue;

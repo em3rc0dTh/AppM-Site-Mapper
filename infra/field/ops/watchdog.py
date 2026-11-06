@@ -51,6 +51,8 @@ def probe(url: str, ctx: ssl.SSLContext | None = None) -> tuple[bool, str]:
     except (urllib.error.URLError, ssl.SSLError, OSError, TimeoutError) as exc:
         if isinstance(exc, urllib.error.URLError) and isinstance(exc.reason, ssl.SSLError):
             return False, "tls_invalid"
+        if isinstance(exc, urllib.error.URLError) and isinstance(exc.reason, socket.gaierror):
+            return False, "dns_unavailable"
         if isinstance(exc, ssl.SSLError):
             return False, "tls_invalid"
         return False, type(exc).__name__
@@ -138,7 +140,7 @@ def main() -> int:
                 tls_ok, tls_reason = False, type(exc).__name__
 
         # No action until local DNS and CA trust are configured.
-        if tls_reason in ("ca_public_root_not_installed", "tls_invalid", "gaierror"):
+        if tls_reason in ("ca_public_root_not_installed", "tls_invalid", "dns_unavailable"):
             log("configuration_block", tls=tls_reason, app=app_reason)
             save_state(data)
             return 2

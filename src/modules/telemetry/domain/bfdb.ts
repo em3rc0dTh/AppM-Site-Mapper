@@ -142,7 +142,7 @@ export function buildBfdbBreakerReadings(
         const mapping = metricBindingMap(bindings, message.sourceIdentity, rawPointId);
         const resolved = mapping ? byBreaker.get(mapping.targetId) : undefined;
         if (mapping && resolved) {
-          const accepts = (name: BdfbMetric) => mapping.metrics.has(name);
+          const accepts = (name: BfdbMetric) => mapping.metrics.has(name);
           const voltageV = accepts('VOLTAGE') ? metric(rawPoint.U1, observedAt) : undefined;
           const currentA = accepts('CURRENT') ? metric(rawPoint.I1, observedAt) : undefined;
           const powerW = accepts('POWER')

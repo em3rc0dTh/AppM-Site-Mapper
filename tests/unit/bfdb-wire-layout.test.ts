@@ -71,6 +71,16 @@ describe('Acrel BFDB field wire layout', () => {
     });
   });
 
+
+  it('keeps measured 1/2/3/4 24-position frames in legacy mode even when U2 exists', () => {
+    const legacy = {
+      '0_1_1': { U1: '12.0', U2: '0.00' },
+      '0_1_24': { U1: '12.1', U2: '0.00' },
+      '0_2_1': { U1: '12.2', U2: '0.00' },
+    };
+    expect(detectBfdbWireProfile(legacy)).toBe('LEGACY_SINGLE_24');
+  });
+
   it('retains the old 1/2/3/4 single-channel shape only as compatibility mode', () => {
     const legacy = { '0_4_24': { U1: '12.0' } };
     expect(detectBfdbWireProfile(legacy)).toBe('LEGACY_SINGLE_24');

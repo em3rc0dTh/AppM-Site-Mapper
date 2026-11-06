@@ -59,7 +59,10 @@ try {
   }));
   assert.equal(loginBrand.alt, 'Thradex');
   assert.ok(loginBrand.complete, 'S04 Thradex login logo did not finish loading');
-  assert.ok(loginBrand.naturalWidth > 0 && loginBrand.naturalHeight > 0, 'S04 Thradex login logo is broken');
+  assert.ok(
+    loginBrand.naturalWidth > 0 && loginBrand.naturalHeight > 0,
+    'S04 Thradex login logo is broken',
+  );
   assert.ok(
     decodeURIComponent(loginBrand.src).includes('/brand/thradex-login.png'),
     'S04 login must render the approved Thradex logo asset',
@@ -386,7 +389,9 @@ try {
         labelState.visible.length <= labelState.title.length,
         'S04 visible canvas label must compact text without expanding physical geometry',
       );
-      console.log('[PASS] S04 Chromium: semantic canvas label retains full title without geometry expansion');
+      console.log(
+        '[PASS] S04 Chromium: semantic canvas label retains full title without geometry expansion',
+      );
     }
     const geometry = await layout.evaluate((element) => {
       const css = getComputedStyle(element);

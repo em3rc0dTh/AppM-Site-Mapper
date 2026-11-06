@@ -1,0 +1,36 @@
+name: S06 static contract (no deployment)
+
+on:
+  pull_request:
+    paths:
+      - 'docker-compose.field-lan.yml'
+      - 'docker-compose.lab-remote.yml'
+      - 'infra/field/caddy/**'
+      - 'infra/field/ops/**'
+      - 'docs/operations/lan-https/**'
+      - 'scripts/ci/check-s06.py'
+      - '.github/workflows/s06-static-contract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  offline-static:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate S06 source and syntax (no runtime)
+        run: |
+          python3 scripts/ci/check-s06.py
+          python3 -m py_compile infra/field/ops/*.py scripts/ci/check-s06.py
+          sh -n infra/field/ops/field-lan-service.sh
+          python3 -m json.tool infra/field/ops/network-policy.example.json >/dev/null
+      - name: Compose overlay syntax only
+        env:
+          CLOUDFLARE_TUNNEL_TOKEN: ci-syntax-only-not-a-real-token
+        run: |
+          docker compose -f docker-compose.field-lan.yml config --quiet
+          docker compose -f docker-compose.lab-remote.yml config --quiet
+
+# No connection to TFARM04, no container startup, no secrets and no deploy.

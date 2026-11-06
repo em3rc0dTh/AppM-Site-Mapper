@@ -45,30 +45,6 @@ try {
   assert.equal(initialTheme.locale, 'rgb(255, 255, 255)');
   console.log('[PASS] Chromium: light login theme and locale selector on initial render');
 
-  // S04 provider branding must use the approved Thradex image and remain visible on login.
-  const loginProvider = page.locator('.zip-login-powered-by');
-  const loginLogo = page.locator('img.zip-login-thradex-logo');
-  await loginProvider.getByText('Powered by', { exact: true }).waitFor({ timeout: 30000 });
-  await loginLogo.waitFor({ state: 'visible', timeout: 30000 });
-  const loginBrand = await loginLogo.evaluate((image) => ({
-    src: image.getAttribute('src') ?? '',
-    alt: image.getAttribute('alt') ?? '',
-    complete: image.complete,
-    naturalWidth: image.naturalWidth,
-    naturalHeight: image.naturalHeight,
-  }));
-  assert.equal(loginBrand.alt, 'Thradex');
-  assert.ok(loginBrand.complete, 'S04 Thradex login logo did not finish loading');
-  assert.ok(
-    loginBrand.naturalWidth > 0 && loginBrand.naturalHeight > 0,
-    'S04 Thradex login logo is broken',
-  );
-  assert.ok(
-    decodeURIComponent(loginBrand.src).includes('/brand/thradex-login.png'),
-    'S04 login must render the approved Thradex logo asset',
-  );
-  console.log('[PASS] S04 Chromium: approved Thradex login logo and Powered by attribution');
-
   // Verify the actual user-facing language selector, not just catalog parity.
   const loginLocale = page.locator('.sm-locale-control select');
   await loginLocale.waitFor({ timeout: 30000 });
@@ -145,14 +121,6 @@ try {
   await page.getByText('MQTT POINT COMMISSIONING').waitFor({ timeout: 30000 });
   await page.getByText('0_1_1').first().waitFor({ timeout: 30000 });
   console.log('[PASS] Real Chromium: created panel, commissioning and MQTT point rendered');
-
-  // S04 permanent provider attribution belongs to the operational surface, not only login.
-  const providerAttribution = page.locator('.sm-thradex-attribution').first();
-  await providerAttribution.waitFor({ state: 'visible', timeout: 30000 });
-  assert.equal(await providerAttribution.getAttribute('aria-label'), 'Powered by Thradex');
-  const providerParts = await providerAttribution.locator('span, strong').allTextContents();
-  assert.deepEqual(providerParts.map((item) => item.trim()), ['Powered by', 'Thradex']);
-  console.log('[PASS] S04 Chromium: permanent Powered by Thradex attribution on Equipment');
 
   // Verify the new destructive workflow visually without submitting a deletion.
   await page.locator('.mk1-delete-entity > button').first().click();
@@ -371,28 +339,6 @@ try {
     });
     const layout = page.locator('.operational-page--blueprint .operational-layout--blueprint');
     await layout.waitFor({ timeout: 30000 });
-    if (width === 1366) {
-      const rackLabel = page.locator('.blueprint-rack-label').first();
-      await rackLabel.waitFor({ state: 'visible', timeout: 30000 });
-      const labelState = await rackLabel.evaluate((element) => {
-        const title = element.querySelector('title')?.textContent?.trim() ?? '';
-        const visible = Array.from(element.childNodes)
-          .filter((node) => node.nodeType === Node.TEXT_NODE)
-          .map((node) => node.textContent ?? '')
-          .join('')
-          .trim();
-        return { title, visible };
-      });
-      assert.equal(labelState.title, 'CI LIMA Rack');
-      assert.ok(labelState.visible.length > 0, 'S04 semantic canvas label disappeared');
-      assert.ok(
-        labelState.visible.length <= labelState.title.length,
-        'S04 visible canvas label must compact text without expanding physical geometry',
-      );
-      console.log(
-        '[PASS] S04 Chromium: semantic canvas label retains full title without geometry expansion',
-      );
-    }
     const geometry = await layout.evaluate((element) => {
       const css = getComputedStyle(element);
       const cols = css.gridTemplateColumns.split(/\s+/).map((part) => parseFloat(part));

@@ -3,12 +3,14 @@ import http from 'node:http';
 import { readFileSync } from 'node:fs';
 import { ExtensionState, pinRegistry, registryCsv } from './point-registry.mjs';
 import {
+  CIRCUITS,
   METRICS,
   REGISTERS_PER_UNIT,
   POINT_LAYOUTS,
   rawPointIndex,
   circuitStartAddress,
   modbusEngineeringValue,
+  totalMetricStartAddress,
 } from './register-map.mjs';
 
 export {
@@ -18,6 +20,13 @@ export {
   POINT_LAYOUTS,
   rawPointIndex,
 } from './register-map.mjs';
+
+const TOTAL_SIGNAL_METRICS = Object.freeze({
+  TOTAL_VOLTAGE: Object.freeze({ metricKey: 'voltageV', unit: 'V' }),
+  TOTAL_CURRENT: Object.freeze({ metricKey: 'currentA', unit: 'A' }),
+  TOTAL_POWER: Object.freeze({ metricKey: 'powerW', unit: 'kW' }),
+  TOTAL_ENERGY: Object.freeze({ metricKey: 'energyKwh', unit: 'kWh' }),
+});
 
 export function floatRegisters(value) {
   const buffer = Buffer.alloc(4);
@@ -47,6 +56,24 @@ export class ModbusLatestState {
     }
   }
 
+  recomputeTotalEnergy(unit) {
+    const slots = this.values.get(unit);
+    if (!slots) return false;
+
+    let total = 0;
+    let receivedAt = 0;
+    for (let circuit = 1; circuit <= CIRCUITS; circuit++) {
+      const item = slots.get(circuitStartAddress(circuit) + 6);
+      if (!item) return false;
+      total += item.value;
+      receivedAt = Math.max(receivedAt, item.receivedAt);
+    }
+    if (!Number.isFinite(total) || !Number.isFinite(Math.fround(total))) return false;
+
+    slots.set(totalMetricStartAddress('energyKwh'), { value: total, receivedAt });
+    return true;
+  }
+
   apply(sample, now = Date.now()) {
     if (!sample || typeof sample !== 'object') return false;
     const unit = this.sourceUnits.get(sample.sourceIdentity);
@@ -56,7 +83,8 @@ export class ModbusLatestState {
     if (!sample.metrics || typeof sample.metrics !== 'object') return false;
     const timestamp = Date.parse(sample.receivedAt);
     if (!Number.isFinite(timestamp) || Math.abs(now - timestamp) > 60000) return false;
-    // Validate the complete incoming sample before changing any holding register.
+
+    // Validate the complete incoming sample before changing any Input Register.
     // A finite JS number may still overflow IEEE-754 FLOAT32 during Modbus encoding.
     for (const metric of METRICS) {
       const field = sample.metrics[metric];
@@ -64,21 +92,51 @@ export class ModbusLatestState {
       const engineeringValue = modbusEngineeringValue(metric, field.value);
       if (!Number.isFinite(Math.fround(engineeringValue))) return false;
     }
+
     let changed = false;
+    let energyChanged = false;
     const slots = this.values.get(unit);
     for (let i = 0; i < METRICS.length; i++) {
-      const field = sample.metrics[METRICS[i]];
+      const metric = METRICS[i];
+      const field = sample.metrics[metric];
       if (!field || !Number.isFinite(field.value)) continue;
       const offset = circuitStartAddress(circuit + 1) + i * 2;
       const existing = slots.get(offset);
       if (existing && existing.receivedAt > timestamp) continue;
       slots.set(offset, {
-        value: modbusEngineeringValue(METRICS[i], field.value),
+        value: modbusEngineeringValue(metric, field.value),
         receivedAt: timestamp,
       });
+      if (metric === 'energyKwh') energyChanged = true;
       changed = true;
     }
+    if (energyChanged) this.recomputeTotalEnergy(unit);
     return changed;
+  }
+
+  applyTotalSignal(unit, logicalPointId, signal) {
+    if (!this.values.has(unit) || typeof logicalPointId !== 'string') return false;
+    const name = logicalPointId.split('/').at(-1);
+    const definition = TOTAL_SIGNAL_METRICS[name];
+    if (!definition) return false;
+
+    const slots = this.values.get(unit);
+    const address = totalMetricStartAddress(definition.metricKey);
+    const timestamp = Date.parse(signal?.observedAt ?? signal?.receivedAt ?? '');
+
+    if (
+      signal?.quality !== 'VALID' ||
+      signal?.unit !== definition.unit ||
+      !Number.isFinite(signal?.value) ||
+      !Number.isFinite(timestamp) ||
+      !Number.isFinite(Math.fround(signal.value))
+    ) {
+      slots.delete(address);
+      return false;
+    }
+
+    slots.set(address, { value: signal.value, receivedAt: timestamp });
+    return true;
   }
 
   read(unit, offset, count, now = Date.now()) {
@@ -94,8 +152,8 @@ export class ModbusLatestState {
     )
       return null;
     const slots = this.values.get(unit);
-    // FC03 is atomic: if one requested register is unavailable, reject the whole block
-    // in exception mode. The default 'zero' policy retains existing lab behavior.
+    // FC04 is atomic: if one requested register is unavailable, reject the whole
+    // block in exception mode. The default 'zero' policy preserves field behavior.
     if (this.missingPolicy === 'exception') {
       for (let addr = offset; addr < offset + count; addr++) {
         const item = slots.get(addr - (addr % 2));
@@ -127,7 +185,7 @@ export function handleFrame(frame, state, now = Date.now()) {
   const transaction = frame.readUInt16BE(0);
   const unit = frame[6];
   const fn = frame[7];
-  if (fn !== 3) return response(transaction, unit, fn | 0x80, Buffer.from([1]));
+  if (fn !== 4) return response(transaction, unit, fn | 0x80, Buffer.from([1]));
   if (frame.length !== 12) return response(transaction, unit, fn | 0x80, Buffer.from([3]));
   const offset = frame.readUInt16BE(8),
     count = frame.readUInt16BE(10);
@@ -137,7 +195,7 @@ export function handleFrame(frame, state, now = Date.now()) {
   const body = Buffer.alloc(1 + registers.length * 2);
   body[0] = registers.length * 2;
   registers.forEach((value, index) => body.writeUInt16BE(value, 1 + index * 2));
-  return response(transaction, unit, 3, body);
+  return response(transaction, unit, 4, body);
 }
 
 export function startBridge({
@@ -160,6 +218,7 @@ export function startBridge({
   let stopped = false,
     projectionTimer;
   const projectionAbort = new AbortController();
+
   async function refreshProjection() {
     try {
       const response = await fetch(projectionUrl, {
@@ -168,20 +227,29 @@ export function startBridge({
           authorization: `Bearer ${projectionToken}`,
           'content-type': 'application/json',
         },
-        body: JSON.stringify({ signalIds: registry.points.map((p) => p.signalId) }),
+        body: JSON.stringify({ signalIds: registry.points.map((point) => point.signalId) }),
         signal: AbortSignal.any([projectionAbort.signal, AbortSignal.timeout(5000)]),
       });
       if (!response.ok) throw new Error('Projection unavailable');
       const body = await response.json();
       if (!Array.isArray(body.signals)) throw new Error('Invalid projection');
-      for (const signal of body.signals) state.extensions.apply(signal);
+
+      for (const signal of body.signals) {
+        state.extensions.apply(signal);
+        const point = registry.points.find((candidate) => candidate.signalId === signal.id);
+        if (point?.logicalPointId) {
+          state.applyTotalSignal(point.unitId, point.logicalPointId, signal);
+        }
+      }
     } catch {
       if (!stopped) console.warn(JSON.stringify({ event: 'modbus.projection.unavailable' }));
     } finally {
       if (!stopped) projectionTimer = setTimeout(refreshProjection, 2000);
     }
   }
+
   if (registry && projectionUrl && projectionToken) void refreshProjection();
+
   const modbus = net.createServer((socket) => {
     let pending = Buffer.alloc(0);
     socket.on('data', (chunk) => {

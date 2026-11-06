@@ -135,6 +135,51 @@ export function buildBfdbBreakerReadings(
 
     const wirePoints = expandBfdbWirePoint(rawPointId, rawPoint, profile);
     if (!wirePoints.length) {
+      // Preserve the pre-existing explicit-binding escape hatch for non-governed
+      // legacy/raw identities. This never applies to FIELD_DUAL_12 shadows:
+      // those remain connectivity-only and cannot become invented breakers.
+      if (profile === 'LEGACY_SINGLE_24') {
+        const mapping = metricBindingMap(bindings, message.sourceIdentity, rawPointId);
+        const resolved = mapping ? byBreaker.get(mapping.targetId) : undefined;
+        if (mapping && resolved) {
+          const accepts = (name: BdfbMetric) => mapping.metrics.has(name);
+          const voltageV = accepts('VOLTAGE') ? metric(rawPoint.U1, observedAt) : undefined;
+          const currentA = accepts('CURRENT') ? metric(rawPoint.I1, observedAt) : undefined;
+          const powerW = accepts('POWER')
+            ? powerMetric(rawPoint.P1, observedAt, mapping.metrics.get('POWER')?.unit)
+            : undefined;
+          const energyKwh = accepts('ENERGY') ? metric(rawPoint.EP1, observedAt) : undefined;
+          const metrics: BreakerTelemetryMetrics = {
+            ...(voltageV ? { voltageV } : {}),
+            ...(currentA ? { currentA } : {}),
+            ...(powerW ? { powerW } : {}),
+            ...(energyKwh ? { energyKwh } : {}),
+          };
+          const state =
+            rawPoint.state === undefined
+              ? undefined
+              : { value: String(rawPoint.state), observedAt };
+          if (Object.keys(metrics).length || state) {
+            readings.push({
+              deviceId: presentation.deviceId,
+              sourceIdentity: message.sourceIdentity,
+              shelfId: resolved.shelfId,
+              frameId: resolved.frameId,
+              panelId: resolved.panelId,
+              panelLabel: resolved.panelLabel,
+              breakerId: resolved.breakerId,
+              breakerLabel: resolved.breakerLabel,
+              rawPointId,
+              position: resolved.position,
+              metrics,
+              ...(state ? { state } : {}),
+              receivedAt: message.receivedAt,
+            });
+            continue;
+          }
+        }
+      }
+
       // Acrel field objects 13..24 are connectivity/state shadows; the actual
       // 24 measured circuits are encoded as channels 1/2 of objects 1..12.
       if (!isFieldStatusOnlyPoint(rawPointId, profile)) unmappedPointIds.push(rawPointId);

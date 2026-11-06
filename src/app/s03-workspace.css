@@ -272,7 +272,6 @@
   }
 }
 
-
 /* S04 integration: NETWORK / SITE / STRUCTURE / LEVEL already own a contextual
    inspector inside TopologyExplorer. Treat that inspector as S03's third visual
    pane instead of allocating a second, hidden outer inspector column. */
@@ -317,7 +316,6 @@
     flex-direction: column;
   }
 }
-
 
 /* Blueprint/Room tree header follows the same single-row contract as the rest
    of S03. Keep APPMANAGER, Inicio and the collapse control vertically aligned

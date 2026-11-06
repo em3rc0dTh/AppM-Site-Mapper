@@ -47,7 +47,6 @@
   }
 }
 
-
 /* Explorer's contextual inspector is the visible S03 third pane. Keep provider
    attribution anchored to that pane without overlaying canvas controls. */
 .mk-explorer-page .zip-inspector > .sm-thradex-attribution--inspector {
@@ -57,7 +56,6 @@
   z-index: 2;
   background: #fff;
 }
-
 
 /* Operational inspectors keep provider attribution visible inside the inspector
    itself. Sticky positioning is scoped to the inspector; it never overlaps the
@@ -71,7 +69,6 @@
   background: #fff;
   box-shadow: 0 -1px 0 #e5ebf1;
 }
-
 
 /* Room inspector has a legacy direct-child div rule used by its empty-state
    illustration (min-height:260px; span:35px). The attribution is also a direct

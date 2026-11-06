@@ -1,0 +1,23 @@
+# S06 FIELD LAN additive overlay for Ubuntu/Linux Docker Engine.
+# Requires docker-compose.telemetry.yml; do NOT merge with integration overlay.
+# Explicitly start only caddy after the existing stack is healthy.
+# network_mode: host is intentional: upstream Next.js is loopback-bound on the host.
+services:
+  caddy:
+    image: caddy:2.10.2-alpine
+    network_mode: host
+    profiles: ['field-lan']
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./infra/field/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - site_mapper_caddy_data:/data
+      - site_mapper_caddy_config:/config
+    # Actual HTTPS availability is checked by the host-side S06 watchdog.
+    # A `caddy version` healthcheck is deliberately NOT treated as readiness.
+
+volumes:
+  site_mapper_caddy_data:
+  site_mapper_caddy_config:

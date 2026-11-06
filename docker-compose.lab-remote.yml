@@ -1,0 +1,17 @@
+# S06 optional LAB REMOTE overlay. Never enabled in certified FIELD LAN.
+# Prerequisites: Cloudflare Access enforced and reviewed for the hostname,
+# existing Worker/VPC/Tunnel routing verified, and NO other connector for
+# this named tunnel running on the same host.
+# Deploy ONLY with explicit --profile lab-remote and --no-deps.
+services:
+  cloudflared-site-mapper:
+    image: cloudflare/cloudflared:latest
+    profiles: ['lab-remote']
+    network_mode: host
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    command: ['tunnel', '--no-autoupdate', 'run']
+    environment:
+      TUNNEL_TOKEN: '${CLOUDFLARE_TUNNEL_TOKEN:?Provide token from private runtime configuration}'

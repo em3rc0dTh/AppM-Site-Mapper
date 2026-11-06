@@ -43,18 +43,16 @@ export function AuthFrame({
           {children}
         </div>
         <footer
-          className={
-            showProviderBrand ? 'zip-login-footer zip-login-footer--branded' : undefined
-          }
+          className={showProviderBrand ? 'zip-login-footer zip-login-footer--branded' : undefined}
         >
           <LanguageSwitcher />
           {showProviderBrand ? (
             <div className="zip-login-powered-by">
-              <p>Powered by</p>
+              <p>{t('poweredBy')}</p>
               <Image
                 className="zip-login-thradex-logo"
                 src="/brand/thradex-login.png"
-                alt="Thradex"
+                alt={t('thradex')}
                 width={300}
                 height={80}
                 priority

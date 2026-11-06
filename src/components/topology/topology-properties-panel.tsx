@@ -99,7 +99,7 @@ export function TopologyPropertiesPanel({
           </dl>
         </section>
         <ThradexAttribution variant="inspector" />
-    </aside>
+      </aside>
     );
   }
 
@@ -131,7 +131,7 @@ export function TopologyPropertiesPanel({
           </p>
         </div>
         <ThradexAttribution variant="inspector" />
-    </aside>
+      </aside>
     );
   }
 
@@ -193,7 +193,7 @@ export function TopologyPropertiesPanel({
           <span>{t('selectPanel')}</span>
         </div>
         <ThradexAttribution variant="inspector" />
-    </aside>
+      </aside>
     );
   }
 
@@ -229,7 +229,7 @@ export function TopologyPropertiesPanel({
           </div>
         </section>
         <ThradexAttribution variant="inspector" />
-    </aside>
+      </aside>
     );
   }
 
@@ -252,7 +252,7 @@ export function TopologyPropertiesPanel({
           </p>
         </div>
         <ThradexAttribution variant="inspector" />
-    </aside>
+      </aside>
     );
   }
 

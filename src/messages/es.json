@@ -126,6 +126,9 @@
   "shell": {
     "skip": "Ir al espacio de trabajo",
     "tagline": "Infraestructura física",
+    "poweredBy": "Powered by",
+    "poweredByThradex": "Powered by Thradex",
+    "thradex": "Thradex",
     "settings": "CONFIGURACIÓN",
     "warehouseContext": "ALMACÉN VIRTUAL",
     "networkContext": "RED",

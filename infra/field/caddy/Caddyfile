@@ -1,0 +1,11 @@
+{
+    # No HTTP listener or implicit redirect on :80 in strict FIELD LAN.
+    auto_https disable_redirects
+}
+
+# This is a private .home.arpa hostname, not a public ACME certificate.
+sitemapper.thradex.home.arpa {
+    tls internal
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:3000
+}

@@ -66,6 +66,8 @@ def main() -> int:
     for path in CONFIGS:
         if not path.is_file():
             raise RuntimeError(f"missing config {path}")
+    if os.getenv("S06_BACKUP_MOUNT_REQUIRED", "1") == "1" and not os.path.ismount(DEST):
+        raise RuntimeError("backup destination must be an approved mounted off-host volume")
     DEST.mkdir(parents=True, mode=0o700, exist_ok=True)
     os.chmod(DEST, 0o700)
     lock_path = DEST / ".backup.lock"
@@ -86,11 +88,15 @@ def main() -> int:
 
                 with (workspace / "mongo.archive.gz").open("wb") as output:
                     execute("docker", "exec", mongo, "mongodump", "--archive", "--gzip", stdout=output)
+                if (workspace / "mongo.archive.gz").stat().st_size == 0:
+                    raise RuntimeError("empty Mongo dump")
                 with (workspace / "timescale.dump").open("wb") as output:
                     execute("docker", "exec", timescale, "sh", "-ec",
                             'export PGPASSWORD="$POSTGRES_PASSWORD"; exec pg_dump -Fc -U "$POSTGRES_USER" -d "$POSTGRES_DB"',
                             stdout=output)
 
+                if (workspace / "timescale.dump").stat().st_size == 0:
+                    raise RuntimeError("empty Timescale dump")
                 # Docker copy works without exposing CA private material to stdout.
                 execute("docker", "cp", f"{caddy}:/data", str(workspace / "caddy-data"))
                 with tarfile.open(workspace / "caddy-data.tar.gz", "w:gz") as archive:

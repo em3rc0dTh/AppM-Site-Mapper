@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Generates/checks the native FC03/FLOAT32 register table, using the same contract as server.mjs.
+// Generates/checks the native FC04/FLOAT32 register table, using the same contract as server.mjs.
 // Default sources are SIMULATOR identities only. Never commit production serials to the public repo.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,7 +12,7 @@ const defaultSources = { 'EMU-BFDB-01': 1, 'EMU-BFDB-02': 2, 'EMU-BFDB-03': 3 };
 const sourceMap = process.env.MODBUS_SOURCE_UNITS_JSON
   ? JSON.parse(process.env.MODBUS_SOURCE_UNITS_JSON)
   : defaultSources;
-const layout = process.env.MODBUS_POINT_LAYOUT || 'panels-4x24';
+const layout = process.env.MODBUS_POINT_LAYOUT || 'blocks-2x48';
 const args = new Set(process.argv.slice(2));
 if ([...args].some((arg) => !['--check', '--stdout'].includes(arg))) {
   throw new Error('Supported flags: --check, --stdout');
@@ -26,6 +26,7 @@ const columns = [
   ['UNIT ID', 'unitId'],
   ['SOURCE ID', 'sourceIdentity'],
   ['CIRCUIT', 'circuit'],
+  ['CIRCUIT / BREAKER', 'circuitLabel'],
   ['RAW POINT', 'rawPoint'],
   ['FUNCTION', 'functionCode'],
   ['DATA TYPE', 'dataType'],
@@ -49,7 +50,7 @@ else if (args.has('--check')) {
       'Metasys register map has drifted: run node scripts/operations/generate-metasys-register-map.mjs',
     );
     process.exitCode = 1;
-  } else console.log('METASYS_REGISTER_MAP_MATCH: 1152 measurement points (lab profile)');
+  } else console.log('METASYS_REGISTER_MAP_MATCH: 1164 points (388 per QDF, Excel v1.2)');
 } else {
   fs.mkdirSync(path.dirname(target), { recursive: true });
   fs.writeFileSync(target, data);

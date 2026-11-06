@@ -1,9 +1,9 @@
-/* Site Mapper brand heritage.
+/* AppManager SiteMapper Mk2 brand heritage.
    Scope is intentionally limited to:
-   - the global home link in AppShell,
-   - the /workspace Home heading,
+   - the global /workspace brand link in AppShell,
+   - the /workspace Home identity band,
    - the /login presentation.
-   Operational copy and typography elsewhere remain untouched. */
+   Operational UI copy and typography elsewhere remain untouched. */
 
 .sm-brand {
   --sm-brand-accent: #18b98f;
@@ -30,19 +30,42 @@
   min-width: 0;
 }
 
-.sm-brand-name {
-  display: flex;
-  align-items: baseline;
+.sm-brand-appmanager,
+.sm-brand-product-line {
   min-width: 0;
-  color: var(--sm-brand-ink);
-  font-family: inherit;
-  font-weight: 600;
-  letter-spacing: -0.035em;
   white-space: nowrap;
+  line-height: 1;
 }
 
-.sm-brand-word--mapper {
+.sm-brand-appmanager {
+  display: flex;
+  align-items: baseline;
+  color: var(--sm-brand-ink);
+  font-family: inherit;
+  font-weight: 400;
+  letter-spacing: -0.055em;
+}
+
+.sm-brand-appmanager-a {
   color: var(--sm-brand-accent);
+}
+
+.sm-brand-product-line {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.sm-brand-sitemapper {
+  color: var(--sm-brand-accent);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.sm-brand-mk {
+  color: var(--sm-brand-ink);
+  font-weight: 500;
+  letter-spacing: -0.02em;
 }
 
 .sm-brand-tagline {
@@ -50,49 +73,44 @@
   font-family: inherit;
   font-weight: 400;
   letter-spacing: 0.015em;
+  white-space: nowrap;
 }
 
-/* Global compact lockup: this is the existing /workspace link in every AppShell view. */
-.sm-brand--compact {
-  min-width: 0;
-}
-
-.sm-brand--compact .sm-brand-lockup {
-  gap: 12px;
-}
-
-.sm-brand--compact .sm-brand-mark {
-  width: 38px;
-  height: 38px;
-}
-
-.sm-brand--compact .sm-brand-copy {
-  gap: 2px;
-}
-
-.sm-brand--compact .sm-brand-name,
-.zip-brand .sm-brand-name {
-  gap: 0;
-  font-size: 23px;
-  line-height: 0.96;
-  font-weight: 600;
-  letter-spacing: -0.035em;
-}
-
-.sm-brand--compact .sm-brand-tagline,
-.zip-brand .sm-brand-tagline {
-  font-size: 9px;
-  line-height: 1.15;
-  color: var(--sm-brand-muted);
-}
-
+/* Global compact identity — same component in every AppShell view. */
+.sm-brand--compact,
 .zip-brand .sm-brand {
+  min-width: 0;
   width: 100%;
 }
 
-/* The current blueprint/room shell uses the same white topbar as the rest of
-   the product. Keep the Home lockup visually invariant across every view;
-   legacy blueprint selectors must not shrink or bleach the shared brand. */
+.sm-brand--compact .sm-brand-lockup {
+  gap: 10px;
+}
+
+.sm-brand--compact .sm-brand-mark {
+  width: 37px;
+  height: 37px;
+}
+
+.sm-brand--compact .sm-brand-copy {
+  gap: 1px;
+}
+
+.sm-brand--compact .sm-brand-appmanager {
+  font-size: 19px;
+}
+
+.sm-brand--compact .sm-brand-product-line {
+  font-size: 10px;
+}
+
+.sm-brand--compact .sm-brand-tagline {
+  font-size: 7.5px;
+  line-height: 1.05;
+}
+
+/* Legacy blueprint styles used to shrink/bleach the brand. The current shell
+   is white in these views, so the global identity must stay invariant. */
 .app-shell--blueprint .zip-brand .sm-brand {
   --sm-brand-ink: #202428;
   --sm-brand-muted: #6d7781;
@@ -102,69 +120,69 @@
   stroke: var(--sm-brand-ink) !important;
 }
 
-.app-shell--blueprint .zip-brand .sm-brand-name {
-  font-size: 23px !important;
-  line-height: 0.96 !important;
-  color: var(--sm-brand-ink) !important;
-  font-weight: 600 !important;
+.app-shell--blueprint .zip-brand .sm-brand-appmanager,
+.app-shell--blueprint .zip-brand .sm-brand-product-line,
+.app-shell--blueprint .zip-brand .sm-brand-tagline {
+  color: inherit !important;
 }
 
-.app-shell--blueprint .zip-brand .sm-brand-word--mapper {
+.app-shell--blueprint .zip-brand .sm-brand-appmanager-a,
+.app-shell--blueprint .zip-brand .sm-brand-sitemapper {
   color: var(--sm-brand-accent) !important;
 }
 
-.app-shell--blueprint .zip-brand .sm-brand-tagline {
-  color: var(--sm-brand-muted) !important;
-  font-size: 9px !important;
-}
-
-/* Hero lockup: currently approved only for Login. */
+/* Login hero identity. */
 .sm-brand--hero .sm-brand-lockup {
   justify-content: center;
-  gap: 20px;
+  gap: 19px;
 }
 
 .sm-brand--hero .sm-brand-mark {
-  width: 64px;
-  height: 64px;
-  stroke-width: 1.25;
+  width: 62px;
+  height: 62px;
+  stroke-width: 1.2;
 }
 
 .sm-brand--hero .sm-brand-copy {
-  gap: 5px;
+  gap: 4px;
 }
 
-.sm-brand--hero .sm-brand-name {
-  gap: 0;
-  font-size: clamp(38px, 3.4vw, 50px);
-  line-height: 0.9;
-  font-weight: 500;
+.sm-brand--hero .sm-brand-appmanager {
+  font-size: clamp(43px, 3.6vw, 56px);
+}
+
+.sm-brand--hero .sm-brand-product-line {
+  gap: 8px;
+  justify-content: flex-end;
+  font-size: clamp(19px, 1.6vw, 24px);
 }
 
 .sm-brand--hero .sm-brand-tagline {
-  font-size: 16px;
-  line-height: 1.2;
+  margin-top: 1px;
+  font-size: 14px;
+  text-align: right;
 }
 
-/* Home: retain the existing heading/copy and add only the approved brand atmosphere. */
+/* Home — real AppManager network reference only in the identity/header band.
+   The operational dashboard below remains visually clean. */
 .sm-home .sm-home-heading {
   position: relative;
   isolation: isolate;
-  min-height: 116px;
+  min-height: 150px;
   overflow: hidden;
-  padding: 24px 28px;
+  padding: 22px 28px;
   border-bottom: 1px solid #dce4ed;
   background:
-    linear-gradient(90deg, rgba(247, 249, 252, 0.90) 0%, rgba(247, 249, 252, 0.72) 48%, rgba(247, 249, 252, 0.48) 100%),
-    url('/brand/site-mapper-network.svg') center / cover no-repeat;
+    linear-gradient(90deg, rgba(247, 249, 252, 0.93) 0%, rgba(247, 249, 252, 0.74) 43%, rgba(247, 249, 252, 0.48) 100%),
+    url('/brand/site-mapper-network-real.webp') center 31% / cover no-repeat;
 }
 
 .sm-home .sm-home-heading::before {
   content: '';
   position: absolute;
   z-index: 0;
-  top: 25px;
-  bottom: 25px;
+  top: 26px;
+  bottom: 26px;
   left: 0;
   width: 4px;
   border-radius: 3px;
@@ -183,8 +201,8 @@
 .sm-home .sm-home-product-signature {
   display: flex;
   align-items: baseline;
-  gap: 12px;
-  margin: 6px 0 2px;
+  gap: 13px;
+  margin: 7px 0 5px;
   font-family: var(--font-site-mapper-brand), 'Trebuchet MS', Arial, sans-serif;
   line-height: 1;
   white-space: nowrap;
@@ -192,19 +210,37 @@
 
 .sm-home .sm-home-appmanager {
   color: #202428;
-  font-size: clamp(30px, 2.4vw, 40px);
+  font-size: clamp(30px, 2.35vw, 40px);
   font-weight: 400;
   letter-spacing: -0.055em;
 }
 
+.sm-home .sm-home-appmanager b {
+  color: #18b98f;
+  font: inherit;
+}
+
+.sm-home .sm-home-product-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
 .sm-home .sm-home-sitemapper {
   color: #18b98f;
-  font-size: clamp(19px, 1.55vw, 27px);
-  font-weight: 500;
+  font-size: clamp(19px, 1.5vw, 26px);
+  font-weight: 600;
   letter-spacing: -0.035em;
 }
 
+.sm-home .sm-home-mk {
+  color: #202428;
+  font-size: clamp(15px, 1.15vw, 20px);
+  font-weight: 500;
+}
+
 .sm-home .sm-home-heading h1 {
+  margin-top: 5px;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 18px;
   font-weight: 700;
@@ -217,41 +253,20 @@
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Login only. Change-password intentionally does not opt into this surface. */
+/* Login — the supplied AppManager network reference is the actual background.
+   Its original bottom curve is retained; no synthetic second curve is drawn. */
 .zip-login-page--heritage {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  background: #fff !important;
-}
-
-.zip-login-page--heritage::before {
-  content: '';
-  position: absolute;
-  z-index: 0;
-  inset: 0;
-  pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0.50) 50%, rgba(255, 255, 255, 0.76) 100%),
-    url('/brand/site-mapper-network.svg') center / cover no-repeat;
-  opacity: 0.94;
+    linear-gradient(90deg, rgba(255, 255, 255, 0.66) 0%, rgba(255, 255, 255, 0.43) 50%, rgba(255, 255, 255, 0.66) 100%),
+    url('/brand/site-mapper-network-real.webp') center / cover no-repeat !important;
 }
 
+.zip-login-page--heritage::before,
 .zip-login-page--heritage::after {
-  content: '';
-  position: absolute;
-  z-index: 0;
-  left: -5%;
-  right: -5%;
-  bottom: -122px;
-  height: 185px;
-  pointer-events: none;
-  border-top: 7px solid #18b98f;
-  border-radius: 50% 50% 0 0 / 45% 45% 0 0;
-  background: #2b3035;
-  box-shadow: 0 -5px 0 #fff;
-  transform: rotate(-0.8deg);
-  transform-origin: center;
+  content: none !important;
 }
 
 .zip-login-page--heritage .zip-login-content {
@@ -261,9 +276,9 @@
 
 .zip-login-page--heritage .zip-login-content > header {
   display: block !important;
-  width: 510px;
+  width: 540px;
   max-width: 100%;
-  margin: 0 auto 34px !important;
+  margin: 0 auto 28px !important;
 }
 
 .zip-login-page--heritage .sm-brand--hero {
@@ -291,25 +306,45 @@
 }
 
 @media (max-width: 1100px) {
-  .zip-brand .sm-brand-name,
-  .app-shell--blueprint .zip-brand .sm-brand-name {
-    font-size: 20px !important;
+  .sm-brand--compact .sm-brand-appmanager {
+    font-size: 17px;
+  }
+
+  .sm-brand--compact .sm-brand-product-line {
+    font-size: 9px;
+  }
+
+  .sm-brand--compact .sm-brand-tagline {
+    font-size: 7px;
   }
 }
 
 @media (max-width: 700px) {
   .sm-home .sm-home-heading {
-    min-height: 106px;
-    padding: 20px;
+    min-height: 136px;
+    padding: 19px 20px;
+    background-position: center 28%;
   }
 
   .sm-home .sm-home-heading::before {
-    top: 20px;
-    bottom: 20px;
+    top: 21px;
+    bottom: 21px;
   }
 
-  .sm-home .sm-home-heading h1 {
-    font-size: 25px;
+  .sm-home .sm-home-product-signature {
+    gap: 8px;
+  }
+
+  .sm-home .sm-home-appmanager {
+    font-size: 27px;
+  }
+
+  .sm-home .sm-home-sitemapper {
+    font-size: 18px;
+  }
+
+  .sm-home .sm-home-mk {
+    font-size: 14px;
   }
 
   .zip-login-page--heritage .zip-login-content > header {
@@ -317,19 +352,23 @@
   }
 
   .sm-brand--hero .sm-brand-lockup {
-    gap: 15px;
+    gap: 14px;
   }
 
   .sm-brand--hero .sm-brand-mark {
-    width: 52px;
-    height: 52px;
+    width: 50px;
+    height: 50px;
   }
 
-  .sm-brand--hero .sm-brand-name {
-    font-size: 34px;
+  .sm-brand--hero .sm-brand-appmanager {
+    font-size: 37px;
+  }
+
+  .sm-brand--hero .sm-brand-product-line {
+    font-size: 18px;
   }
 
   .sm-brand--hero .sm-brand-tagline {
-    font-size: 14px;
+    font-size: 12px;
   }
 }

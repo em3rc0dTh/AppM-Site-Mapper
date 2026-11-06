@@ -90,13 +90,32 @@
   width: 100%;
 }
 
+/* The current blueprint/room shell uses the same white topbar as the rest of
+   the product. Keep the Home lockup visually invariant across every view;
+   legacy blueprint selectors must not shrink or bleach the shared brand. */
 .app-shell--blueprint .zip-brand .sm-brand {
-  --sm-brand-ink: #dce5ee;
-  --sm-brand-muted: #8ea1b3;
+  --sm-brand-ink: #202428;
+  --sm-brand-muted: #6d7781;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-mark {
+  stroke: var(--sm-brand-ink) !important;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-name {
+  font-size: 23px !important;
+  line-height: 0.96 !important;
+  color: var(--sm-brand-ink) !important;
+  font-weight: 600 !important;
 }
 
 .app-shell--blueprint .zip-brand .sm-brand-word--mapper {
-  color: var(--sm-brand-accent);
+  color: var(--sm-brand-accent) !important;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-tagline {
+  color: var(--sm-brand-muted) !important;
+  font-size: 9px !important;
 }
 
 /* Hero lockup: currently approved only for Login. */
@@ -136,7 +155,7 @@
   padding: 24px 28px;
   border-bottom: 1px solid #dce4ed;
   background:
-    linear-gradient(90deg, rgba(247, 249, 252, 0.99) 0%, rgba(247, 249, 252, 0.91) 49%, rgba(247, 249, 252, 0.72) 100%),
+    linear-gradient(90deg, rgba(247, 249, 252, 0.90) 0%, rgba(247, 249, 252, 0.72) 48%, rgba(247, 249, 252, 0.48) 100%),
     url('/brand/site-mapper-network.svg') center / cover no-repeat;
 }
 
@@ -189,9 +208,9 @@
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.91) 0%, rgba(255, 255, 255, 0.74) 50%, rgba(255, 255, 255, 0.91) 100%),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.76) 0%, rgba(255, 255, 255, 0.50) 50%, rgba(255, 255, 255, 0.76) 100%),
     url('/brand/site-mapper-network.svg') center / cover no-repeat;
-  opacity: 0.82;
+  opacity: 0.94;
 }
 
 .zip-login-page--heritage::after {
@@ -248,8 +267,9 @@
 }
 
 @media (max-width: 1100px) {
-  .zip-brand .sm-brand-name {
-    font-size: 20px;
+  .zip-brand .sm-brand-name,
+  .app-shell--blueprint .zip-brand .sm-brand-name {
+    font-size: 20px !important;
   }
 }
 

@@ -63,14 +63,14 @@ export function projectCompositionTelemetry(
 
     if (node.equipmentType === 'CIRCUIT_BREAKER') {
       const reading = readings[node.id];
-      const live =
-        reading?.status === 'LIVE' &&
+      const reporting =
+        (reading?.status === 'LIVE' || reading?.status === 'CLOCK SKEW') &&
         COMPOSITION_METRICS.some(
           (key) => typeof reading[key] === 'number' && Number.isFinite(reading[key]),
         );
       const metrics: Partial<Record<CompositionMetricKey, number>> = {};
       const metricCounts = zeroCounts();
-      if (live) {
+      if (reporting) {
         for (const key of COMPOSITION_METRICS) {
           const value = reading[key];
           if (typeof value === 'number' && Number.isFinite(value)) {
@@ -83,7 +83,7 @@ export function projectCompositionTelemetry(
         ...empty,
         installed: 1,
         bound: reading && reading.status !== 'UNMAPPED' ? 1 : 0,
-        reporting: live ? 1 : 0,
+        reporting: reporting ? 1 : 0,
         stale: reading?.status === 'STALE' ? 1 : 0,
         metrics,
         metricCounts,

@@ -60,7 +60,7 @@ test('extension distinguishes missing, zero, stale, invalid, alarm and unknown',
   assert.deepEqual(state.read(1, 1024, 3, now), [0x3f80, 0, 1]);
   assert.equal(state.apply({ ...s, observedAt: new Date(now - 1000).toISOString() }), false);
 });
-test('independent TCP client reads extension and unchanged legacy addresses', async () => {
+test('independent TCP client reads extension and extension and approved base addresses over FC04', async () => {
   const bridge = startBridge({
     sourceMap: { 'EMU-1': 1 },
     token: 'lab-token-for-modbus-only-123456789',
@@ -93,12 +93,12 @@ test('independent TCP client reads extension and unchanged legacy addresses', as
       [0, 12],
       [1024, 48],
     ]) {
-      const packet = Buffer.from([0, 1, 0, 0, 0, 6, 1, 3, 0, 0, 0, 2]);
+      const packet = Buffer.from([0, 1, 0, 0, 0, 6, 1, 4, 0, 0, 0, 2]);
       packet.writeUInt16BE(address, 8);
       const received = once(client, 'data');
       client.write(packet);
       const [reply] = await received;
-      assert.equal(reply[7], 3);
+      assert.equal(reply[7], 4);
       assert.equal(reply.readFloatBE(9), expected);
     }
   } finally {

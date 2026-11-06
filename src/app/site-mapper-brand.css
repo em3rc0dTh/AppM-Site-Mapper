@@ -1,5 +1,10 @@
 /* Site Mapper brand heritage.
-   Branding only: never changes the operational UI font stack. */
+   Scope is intentionally limited to:
+   - the global home link in AppShell,
+   - the /workspace Home heading,
+   - the /login presentation.
+   Operational copy and typography elsewhere remain untouched. */
+
 .sm-brand {
   --sm-brand-accent: #18b98f;
   --sm-brand-ink: #202428;
@@ -8,8 +13,6 @@
 }
 
 .sm-brand-lockup {
-  position: relative;
-  z-index: 2;
   display: flex;
   align-items: center;
   min-width: 0;
@@ -49,6 +52,7 @@
   letter-spacing: 0.015em;
 }
 
+/* Global compact lockup: this is the existing /workspace link in every AppShell view. */
 .sm-brand--compact {
   min-width: 0;
 }
@@ -66,66 +70,45 @@
   gap: 2px;
 }
 
-.sm-brand--compact .sm-brand-name {
-  gap: 5px;
-  font-size: 23px;
-  line-height: 0.96;
-}
-
-.sm-brand--compact .sm-brand-tagline {
-  font-size: 9px;
-  line-height: 1.15;
-}
-
-.zip-brand .sm-brand {
-  width: 100%;
-}
-
+.sm-brand--compact .sm-brand-name,
 .zip-brand .sm-brand-name {
+  gap: 5px;
   font-size: 23px;
   line-height: 0.96;
   font-weight: 600;
   letter-spacing: -0.035em;
 }
 
+.sm-brand--compact .sm-brand-tagline,
 .zip-brand .sm-brand-tagline {
   font-size: 9px;
   line-height: 1.15;
   color: var(--sm-brand-muted);
 }
 
-.sm-brand--hero {
-  position: relative;
-  min-height: 150px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  padding: 25px 30px;
-  border: 1px solid #dde5ec;
-  border-radius: 10px;
-  background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 255, 255, 0.92) 42%, rgba(255, 255, 255, 0.72) 100%),
-    #fff;
+.zip-brand .sm-brand {
+  width: 100%;
 }
 
-.sm-brand--hero::after {
-  content: '';
-  position: absolute;
-  left: 30px;
-  bottom: 18px;
-  width: 56px;
-  height: 3px;
-  background: var(--sm-brand-accent);
+.app-shell--blueprint .zip-brand .sm-brand {
+  --sm-brand-ink: #dce5ee;
+  --sm-brand-muted: #8ea1b3;
 }
 
+.app-shell--blueprint .zip-brand .sm-brand-word--mapper {
+  color: var(--sm-brand-accent);
+}
+
+/* Hero lockup: currently approved only for Login. */
 .sm-brand--hero .sm-brand-lockup {
-  gap: 19px;
+  justify-content: center;
+  gap: 20px;
 }
 
 .sm-brand--hero .sm-brand-mark {
-  width: 58px;
-  height: 58px;
-  stroke-width: 1.2;
+  width: 64px;
+  height: 64px;
+  stroke-width: 1.25;
 }
 
 .sm-brand--hero .sm-brand-copy {
@@ -134,97 +117,175 @@
 
 .sm-brand--hero .sm-brand-name {
   gap: 9px;
-  font-size: clamp(38px, 3.2vw, 52px);
+  font-size: clamp(38px, 3.4vw, 50px);
   line-height: 0.9;
   font-weight: 500;
 }
 
 .sm-brand--hero .sm-brand-tagline {
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.2;
 }
 
-.sm-brand-network {
+/* Home: retain the existing heading/copy and add only the approved brand atmosphere. */
+.sm-home .sm-home-heading {
+  position: relative;
+  isolation: isolate;
+  min-height: 116px;
+  overflow: hidden;
+  padding: 24px 28px;
+  border-bottom: 1px solid #dce4ed;
+  background:
+    linear-gradient(90deg, rgba(247, 249, 252, 0.99) 0%, rgba(247, 249, 252, 0.91) 49%, rgba(247, 249, 252, 0.72) 100%),
+    url('/brand/site-mapper-network.svg') center / cover no-repeat;
+}
+
+.sm-home .sm-home-heading::before {
+  content: '';
   position: absolute;
   z-index: 0;
-  inset: 0 0 0 31%;
-  width: 69%;
-  height: 100%;
-  color: #48525a;
-  opacity: 0.14;
+  top: 25px;
+  bottom: 25px;
+  left: 0;
+  width: 4px;
+  border-radius: 3px;
+  background: #18b98f;
+}
+
+.sm-home .sm-home-heading > * {
+  position: relative;
+  z-index: 1;
+}
+
+.sm-home .sm-home-heading > div {
+  padding-left: 18px;
+}
+
+.sm-home .sm-home-heading h1 {
+  font-family: var(--font-site-mapper-brand), 'Trebuchet MS', Arial, sans-serif;
+  font-size: clamp(26px, 2vw, 32px);
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: #202428;
+}
+
+.sm-home .sm-home-breadcrumb,
+.sm-home .sm-home-scope {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Login only. Change-password intentionally does not opt into this surface. */
+.zip-login-page--heritage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #fff !important;
+}
+
+.zip-login-page--heritage::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
   pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.91) 0%, rgba(255, 255, 255, 0.74) 50%, rgba(255, 255, 255, 0.91) 100%),
+    url('/brand/site-mapper-network.svg') center / cover no-repeat;
+  opacity: 0.82;
 }
 
-.sm-brand-network-map,
-.sm-brand-network-ticks {
-  fill: none;
-  stroke: currentColor;
+.zip-login-page--heritage::after {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  left: -5%;
+  right: -5%;
+  bottom: -122px;
+  height: 185px;
+  pointer-events: none;
+  border-top: 7px solid #18b98f;
+  border-radius: 50% 50% 0 0 / 45% 45% 0 0;
+  background: #2b3035;
+  box-shadow: 0 -5px 0 #fff;
+  transform: rotate(-0.8deg);
+  transform-origin: center;
 }
 
-.sm-brand-network-map {
-  stroke-width: 1.2;
+.zip-login-page--heritage .zip-login-content {
+  position: relative;
+  z-index: 1;
 }
 
-.sm-brand-network-ticks {
-  stroke-width: 0.8;
+.zip-login-page--heritage .zip-login-content > header {
+  display: block !important;
+  width: 510px;
+  max-width: 100%;
+  margin: 0 auto 34px !important;
 }
 
-.sm-brand-network-nodes {
-  fill: currentColor;
+.zip-login-page--heritage .sm-brand--hero {
+  width: 100%;
 }
 
-.sm-home-brand-hero {
-  margin-bottom: 20px;
+.zip-login-page--heritage .zip-login-card {
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(2px);
 }
 
-@media (max-width: 900px) {
-  .sm-brand--hero {
-    min-height: 132px;
-    padding: 22px 24px;
-  }
-
-  .sm-brand--hero::after {
-    left: 24px;
-  }
-
-  .sm-brand-network {
-    left: 24%;
-    right: 0;
-    width: 76%;
-    opacity: 0.1;
-  }
-
-  .sm-brand--hero .sm-brand-name {
-    font-size: clamp(32px, 6vw, 44px);
-  }
+.zip-login-page--heritage .auth-submit {
+  background: #0aa77d !important;
+  border-color: #0aa77d !important;
 }
 
-@media (max-width: 620px) {
-  .sm-brand--compact .sm-brand-name {
+.zip-login-page--heritage .auth-submit:hover:not(:disabled) {
+  background: #078e6b !important;
+  border-color: #078e6b !important;
+}
+
+.zip-login-page--heritage .zip-login-footer--branded {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 1100px) {
+  .zip-brand .sm-brand-name {
     font-size: 20px;
   }
+}
 
-  .sm-brand--hero {
-    min-height: 118px;
+@media (max-width: 700px) {
+  .sm-home .sm-home-heading {
+    min-height: 106px;
     padding: 20px;
   }
 
+  .sm-home .sm-home-heading::before {
+    top: 20px;
+    bottom: 20px;
+  }
+
+  .sm-home .sm-home-heading h1 {
+    font-size: 25px;
+  }
+
+  .zip-login-page--heritage .zip-login-content > header {
+    width: 100%;
+  }
+
+  .sm-brand--hero .sm-brand-lockup {
+    gap: 15px;
+  }
+
   .sm-brand--hero .sm-brand-mark {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
   }
 
   .sm-brand--hero .sm-brand-name {
-    font-size: 31px;
+    font-size: 34px;
   }
 
   .sm-brand--hero .sm-brand-tagline {
-    font-size: 13px;
-  }
-
-  .sm-brand-network {
-    inset: 0;
-    width: 100%;
-    opacity: 0.07;
+    font-size: 14px;
   }
 }

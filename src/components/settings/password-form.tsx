@@ -65,7 +65,11 @@ export function PasswordForm({
           type="password"
         />
       </label>
-      <button className={authPresentation ? 'auth-submit' : undefined} disabled={busy} type="submit">
+      <button
+        className={authPresentation ? 'auth-submit' : undefined}
+        disabled={busy}
+        type="submit"
+      >
         {busy ? t('changing') : t('submit')}
       </button>
       <small className={authPresentation ? 'auth-password-help' : undefined}>{t('help')}</small>

@@ -10,6 +10,7 @@ on:
       - 'docs/operations/lan-https/**'
       - 'scripts/ci/check-s06.py'
       - 'scripts/operations/sprint-06-local-gate.sh'
+      - 'scripts/operations/verify-isolated-backup-restore.sh'
       - '.github/workflows/s06-static-contract.yml'
   workflow_dispatch:
 
@@ -26,6 +27,7 @@ jobs:
           python3 scripts/ci/check-s06.py
           python3 -m py_compile infra/field/ops/*.py scripts/ci/check-s06.py
           sh -n infra/field/ops/field-lan-service.sh
+          sh -n scripts/operations/verify-isolated-backup-restore.sh
           python3 -m json.tool infra/field/ops/network-policy.example.json >/dev/null
       - name: Compose overlay syntax only
         env:

@@ -29,6 +29,45 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
+pg_scalar_retry() {
+  db="$1"
+  sql="$2"
+  label="$3"
+  i=0
+  while :; do
+    if value="$(docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1       -U site_mapper -d "$db" -c "$sql" 2>/dev/null)"; then
+      printf '%s' "$value"
+      return 0
+    fi
+    i=$((i + 1))
+    [ "$i" -lt 60 ] || {
+      echo "TimescaleDB SQL did not stabilize for $label after 60 attempts" >&2
+      docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1         -U site_mapper -d "$db" -c "$sql" >&2 || true
+      return 1
+    }
+    sleep 1
+  done
+}
+
+pg_exec_retry() {
+  db="$1"
+  sql="$2"
+  label="$3"
+  i=0
+  while :; do
+    if docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1       -U site_mapper -d "$db" -c "$sql" >/dev/null 2>&1; then
+      return 0
+    fi
+    i=$((i + 1))
+    [ "$i" -lt 60 ] || {
+      echo "TimescaleDB SQL command did not stabilize for $label after 60 attempts" >&2
+      docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1         -U site_mapper -d "$db" -c "$sql" >&2 || true
+      return 1
+    }
+    sleep 1
+  done
+}
+
 docker run -d --rm --name "$MONGO" mongo:7.0 mongod --bind_ip_all >/dev/null
 i=0
 until docker exec "$MONGO" mongosh --quiet --eval 'db.runCommand({ping:1}).ok' 2>/dev/null | grep -q 1; do
@@ -101,15 +140,16 @@ done
 # Verify restore mode from a fresh connection. If pre_restore disconnected before
 # persisting the database-level GUC, set it explicitly and invoke pre_restore
 # once more so background workers are stopped before pg_restore.
-RESTORING="$(docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1 \
-  -U site_mapper -d site_mapper_telemetry \
-  -c "SELECT current_setting('timescaledb.restoring', true);")"
+RESTORING="$(pg_scalar_retry site_mapper_telemetry \
+  "SELECT current_setting('timescaledb.restoring', true);" \
+  "restore-mode verification after pre_restore")"
 case "$RESTORING" in
   on|true|1) ;;
   *)
     echo "timescaledb_pre_restore did not persist restore mode (rc=$PRE_RESTORE_RC, restoring=$RESTORING); applying guarded recovery" >&2
-    docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d postgres \
-      -c "ALTER DATABASE site_mapper_telemetry SET timescaledb.restoring='on';" >/dev/null
+    pg_exec_retry postgres \
+      "ALTER DATABASE site_mapper_telemetry SET timescaledb.restoring='on';" \
+      "guarded restore-mode ALTER DATABASE"
 
     set +e
     docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d site_mapper_telemetry \
@@ -127,9 +167,9 @@ case "$RESTORING" in
       sleep 1
     done
 
-    RESTORING="$(docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1 \
-      -U site_mapper -d site_mapper_telemetry \
-      -c "SELECT current_setting('timescaledb.restoring', true);")"
+    RESTORING="$(pg_scalar_retry site_mapper_telemetry \
+      "SELECT current_setting('timescaledb.restoring', true);" \
+      "restore-mode verification after guarded retry")"
     case "$RESTORING" in
       on|true|1) ;;
       *)
@@ -145,12 +185,13 @@ docker exec -i "$PG" pg_restore \
   --no-owner --no-privileges --exit-on-error \
   < "$BACKUP_DIR/timescale.dump"
 
-docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d site_mapper_telemetry \
-  -c 'SELECT timescaledb_post_restore();' >/dev/null
+pg_exec_retry site_mapper_telemetry \
+  'SELECT timescaledb_post_restore();' \
+  "timescaledb_post_restore"
 
-POST_RESTORING="$(docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1 \
-  -U site_mapper -d site_mapper_telemetry \
-  -c "SELECT current_setting('timescaledb.restoring', true);")"
+POST_RESTORING="$(pg_scalar_retry site_mapper_telemetry \
+  "SELECT current_setting('timescaledb.restoring', true);" \
+  "post-restore mode verification")"
 case "$POST_RESTORING" in
   off|false|0|'') ;;
   *)
@@ -159,10 +200,14 @@ case "$POST_RESTORING" in
     ;;
 esac
 
-TABLE_COUNT="$(docker exec "$PG" psql -X -At -U site_mapper -d site_mapper_telemetry   -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('telemetry_samples','telemetry_entity_samples');")"
+TABLE_COUNT="$(pg_scalar_retry site_mapper_telemetry \
+  "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('telemetry_samples','telemetry_entity_samples');" \
+  "restored telemetry table count")"
 [ "$TABLE_COUNT" -ge 1 ] || { echo "Timescale telemetry schema was not restored" >&2; exit 5; }
 
-SAMPLE_COUNT="$(docker exec "$PG" psql -X -At -U site_mapper -d site_mapper_telemetry   -c "SELECT CASE WHEN to_regclass('public.telemetry_samples') IS NULL THEN -1 ELSE (SELECT count(*) FROM telemetry_samples) END;")"
+SAMPLE_COUNT="$(pg_scalar_retry site_mapper_telemetry \
+  "SELECT CASE WHEN to_regclass('public.telemetry_samples') IS NULL THEN -1 ELSE (SELECT count(*) FROM telemetry_samples) END;" \
+  "restored telemetry sample count")"
 
 echo "ISOLATED_RESTORE_VERIFY_OK"
 echo "mongoTopologyNodes=$TOPOLOGY_COUNT"

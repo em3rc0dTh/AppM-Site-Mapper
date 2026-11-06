@@ -47,6 +47,8 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+__pycache__/
+*.pyc
 
 # test artifacts
 /playwright-report/

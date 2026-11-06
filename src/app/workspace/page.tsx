@@ -28,6 +28,7 @@ export default async function WorkspacePage() {
   const auth = await requirePermission('topology:read');
   if (!auth.ok) redirect('/login');
   const t = await getTranslations('workspace');
+  const brandT = await getTranslations('brand');
 
   const topologyRepo = await createTopologyRepository();
   const topology = new TopologyService(topologyRepo);
@@ -99,13 +100,17 @@ export default async function WorkspacePage() {
         <header className="sm-home-heading">
           <div>
             <span className="sm-home-breadcrumb">⌂ {t('home')}</span>
-            <div className="sm-home-product-signature" aria-label="AppManager SiteMapper Mk2">
+            <div
+              className="sm-home-product-signature"
+              aria-label={brandT('fullName')}
+            >
               <span className="sm-home-appmanager">
-                <b>A</b>ppManager
+                <b>{brandT('appManager').slice(0, 1)}</b>
+                {brandT('appManager').slice(1)}
               </span>
               <span className="sm-home-product-line">
-                <span className="sm-home-sitemapper">SiteMapper</span>
-                <span className="sm-home-mk">Mk2</span>
+                <span className="sm-home-sitemapper">{brandT('siteMapper')}</span>
+                <span className="sm-home-mk">{brandT('generation')}</span>
               </span>
             </div>
             <h1>{t('title')}</h1>

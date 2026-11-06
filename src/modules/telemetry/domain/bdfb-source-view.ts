@@ -1,4 +1,5 @@
 import type { TelemetrySample, BreakerTelemetryReading } from './entities';
+import { isTelemetryTransportCurrent } from './telemetry-freshness';
 
 /** Explicit BDFB breaker projection. Own Equipment metrics are never promoted to the parent. */
 export function bdfbSourceView(
@@ -23,14 +24,10 @@ export function bdfbSourceView(
   const readings = [...byBreaker.values()].flatMap((group) => {
     if (group.length !== 1) return [];
     const reading = group[0]!;
-    if (now === undefined) return [reading];
-    const metrics = Object.fromEntries(
-      Object.entries(reading.metrics).filter(([, metric]) => {
-        const age = now - Date.parse(metric.observedAt);
-        return age >= -30_000 && age <= 30_000;
-      }),
-    );
-    return Object.keys(metrics).length ? [{ ...reading, metrics }] : [];
+    if (now === undefined || isTelemetryTransportCurrent(reading.receivedAt, now)) {
+      return [reading];
+    }
+    return [];
   });
   const latest = eligible.reduce((a, b) => (a.receivedAt > b.receivedAt ? a : b));
   return { ...latest, reported: {}, breakerReadings: readings };

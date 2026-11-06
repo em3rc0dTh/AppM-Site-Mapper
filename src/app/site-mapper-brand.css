@@ -193,7 +193,7 @@
       rgba(247, 249, 252, 0.74) 43%,
       rgba(247, 249, 252, 0.48) 100%
     ),
-    url('/brand/site-mapper-network-real.webp') center 31% / cover no-repeat;
+    url('/brand/site-mapper-network-real.jpg') center 31% / cover no-repeat;
 }
 
 .sm-home .sm-home-heading::before {
@@ -285,7 +285,7 @@
       rgba(255, 255, 255, 0.43) 50%,
       rgba(255, 255, 255, 0.66) 100%
     ),
-    url('/brand/site-mapper-network-real.webp') center / cover no-repeat !important;
+    url('/brand/site-mapper-network-real.jpg') center / cover no-repeat !important;
 }
 
 .zip-login-page--heritage::before,

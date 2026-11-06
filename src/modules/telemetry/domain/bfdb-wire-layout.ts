@@ -41,9 +41,31 @@ function record(value: unknown): Readonly<Record<string, unknown>> | null {
 
 export function detectBfdbWireProfile(
   reported: Readonly<Record<string, unknown>>,
-): BfdbWireProfile {
-  for (const [rawPointId, rawValue] of Object.entries(reported)) {
-    if (/^0_[57]_/.test(rawPointId)) return 'FIELD_DUAL_12';
+): BdfbWireProfile {
+  const entries = Object.entries(reported);
+
+  // The namespace is decisive whenever a packet exposes one of the groups
+  // unique to either observed profile.
+  if (entries.some(([rawPointId]) => /^0_[57]_/.test(rawPointId))) return 'FIELD_DUAL_12';
+  if (entries.some(([rawPointId]) => /^0_[24]_/.test(rawPointId))) return 'LEGACY_SINGLE_24';
+
+  // A real Acrel 24-circuit meter encodes measurements in objects 1..12 with
+  // two channels and may still report objects 13..24 as ONLINE-only shadows.
+  // The legacy emulator instead publishes measured positions through 24.
+  for (const [rawPointId, rawValue] of entries) {
+    const match = /^0_[13]_([1-9]|1[0-9]|2[0-4])$/.exec(rawPointId);
+    if (!match || Number(match[1]) <= 12) continue;
+    const raw = record(rawValue);
+    if (!raw) continue;
+    const hasElectrical = ['U1', 'U2', 'I1', 'I2', 'P1', 'P2', 'EP1', 'EP2'].some((field) =>
+      Object.hasOwn(raw, field),
+    );
+    return hasElectrical ? 'LEGACY_SINGLE_24' : 'FIELD_DUAL_12';
+  }
+
+  // A partial field packet may contain only measured positions 1..12. In that
+  // restricted case channel-2 evidence is the best available discriminator.
+  for (const [, rawValue] of entries) {
     const raw = record(rawValue);
     if (raw && ['U2', 'I2', 'P2', 'EP2'].some((field) => Object.hasOwn(raw, field))) {
       return 'FIELD_DUAL_12';

@@ -147,7 +147,6 @@ export function expandBfdbWirePoint(
   ];
 }
 
-
 export function bindingPointIdsForWirePoint(
   point: BfdbWirePoint,
   profile: BfdbWireProfile,

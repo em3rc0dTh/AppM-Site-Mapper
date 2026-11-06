@@ -63,7 +63,6 @@ describe('explicit BFDB breaker Equipment projection', () => {
     expect(result[0]?.metricBindingIds).toHaveLength(4);
   });
 
-
   it('uses an explicit raw field binding as channel 1 and never leaks channel 2', () => {
     const fieldMessage: NormalizedTelemetryMessage = {
       ...message,

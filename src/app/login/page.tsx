@@ -70,6 +70,7 @@ export default function LoginPage() {
       title={t('title')}
       description={t('description')}
       showProviderBrand
+      heritageBrand
     >
       <form className="auth-form" onSubmit={submit}>
         <label>

@@ -34,8 +34,8 @@ def main() -> int:
     watchdog = (ROOT / "infra/field/ops/watchdog.py").read_text()
     assert "tls internal" in caddy and "sitemapper.thradex.home.arpa" in caddy
     assert "127.0.0.1:3000" in caddy
-    assert "profiles: [\"field-lan\"]" in field and "network_mode: host" in field
-    assert "profiles: [\"lab-remote\"]" in remote
+    assert ("profiles: ['field-lan']" in field or "profiles: [\"field-lan\"]" in field) and "network_mode: host" in field
+    assert "profiles: ['lab-remote']" in remote or "profiles: [\"lab-remote\"]" in remote
     assert "S06_WATCHDOG_RECOVERY_ENABLED" in watchdog
     assert "PROTECTED" in watchdog and "LOCKOUT".lower() in watchdog.lower()
     assert "down -v" not in (ROOT / "infra/field/ops/field-lan-service.sh").read_text()

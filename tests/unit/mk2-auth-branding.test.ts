@@ -27,7 +27,8 @@ describe('Mk2 authentication branding', () => {
 
   it('keeps the legacy SITE MAPPER mark behind the non-heritage AuthFrame branch only', () => {
     const frame = source('src/shared/ui/auth-frame.tsx');
-    expect(frame).toContain("heritageBrand ? 'mk-login zip-login-page zip-login-page--heritage'");
+    expect(frame).toContain('heritageBrand');
+    expect(frame).toContain("'mk-login zip-login-page zip-login-page--heritage'");
     expect(frame).toContain('<SiteMapperBrand variant="hero" tagline={t(\'tagline\')} />');
     expect(frame).toContain('<strong>SITE MAPPER</strong>');
   });

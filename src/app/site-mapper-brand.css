@@ -1,0 +1,513 @@
+/* AppManager SiteMapper Mk2 brand heritage.
+   Scope is intentionally limited to:
+   - the global /workspace brand link in AppShell,
+   - the /workspace Home identity band,
+   - the /login presentation.
+   Operational UI copy and typography elsewhere remain untouched. */
+
+.sm-brand {
+  --sm-brand-accent: #18b98f;
+  --sm-brand-ink: #202428;
+  --sm-brand-muted: #6d7781;
+  font-family: var(--font-site-mapper-brand), 'Trebuchet MS', Arial, sans-serif;
+}
+
+.sm-brand-lockup {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.sm-brand-mark {
+  flex: 0 0 auto;
+  fill: none;
+  stroke: var(--sm-brand-ink);
+  stroke-width: 1.35;
+}
+
+.sm-brand-copy {
+  display: grid;
+  min-width: 0;
+}
+
+.sm-brand-appmanager,
+.sm-brand-product-line {
+  min-width: 0;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.sm-brand-appmanager {
+  display: flex;
+  align-items: baseline;
+  color: var(--sm-brand-ink);
+  font-family: inherit;
+  font-weight: 400;
+  letter-spacing: -0.055em;
+}
+
+.sm-brand-appmanager-a {
+  color: var(--sm-brand-accent);
+}
+
+.sm-brand-product-line {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.sm-brand-sitemapper {
+  color: var(--sm-brand-accent);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.sm-brand-mk {
+  color: var(--sm-brand-ink);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.sm-brand-tagline {
+  color: var(--sm-brand-muted);
+  font-family: inherit;
+  font-weight: 400;
+  letter-spacing: 0.015em;
+  white-space: nowrap;
+}
+
+/* Global compact identity — same component in every AppShell view. */
+.sm-brand--compact,
+.zip-brand .sm-brand {
+  min-width: 0;
+  width: 100%;
+}
+
+.sm-brand--compact .sm-brand-lockup {
+  gap: 10px;
+}
+
+.sm-brand--compact .sm-brand-mark {
+  width: 37px;
+  height: 37px;
+}
+
+.sm-brand--compact .sm-brand-copy {
+  gap: 1px;
+}
+
+.sm-brand--compact .sm-brand-appmanager {
+  font-size: 19px;
+}
+
+.sm-brand--compact .sm-brand-product-line {
+  font-size: 10px;
+}
+
+.sm-brand--compact .sm-brand-tagline {
+  font-size: 7.5px;
+  line-height: 1.05;
+}
+
+/* Legacy blueprint styles used to shrink/bleach the brand. The current shell
+   is white in these views, so the global identity must stay invariant. */
+.app-shell--blueprint .zip-brand .sm-brand {
+  --sm-brand-ink: #202428;
+  --sm-brand-muted: #6d7781;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-mark {
+  stroke: var(--sm-brand-ink) !important;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-appmanager,
+.app-shell--blueprint .zip-brand .sm-brand-product-line,
+.app-shell--blueprint .zip-brand .sm-brand-tagline {
+  color: inherit !important;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-appmanager {
+  font-size: 19px !important;
+  font-weight: 400 !important;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-product-line {
+  font-size: 10px !important;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-tagline {
+  font-size: 7.5px !important;
+  line-height: 1.05 !important;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-appmanager-a,
+.app-shell--blueprint .zip-brand .sm-brand-sitemapper {
+  color: var(--sm-brand-accent) !important;
+}
+
+/* Login hero identity. */
+.sm-brand--hero .sm-brand-lockup {
+  justify-content: center;
+  gap: 19px;
+}
+
+.sm-brand--hero .sm-brand-mark {
+  width: 62px;
+  height: 62px;
+  stroke-width: 1.2;
+}
+
+.sm-brand--hero .sm-brand-copy {
+  gap: 4px;
+}
+
+.sm-brand--hero .sm-brand-appmanager {
+  font-size: clamp(43px, 3.6vw, 56px);
+}
+
+.sm-brand--hero .sm-brand-product-line {
+  gap: 8px;
+  justify-content: flex-end;
+  font-size: clamp(19px, 1.6vw, 24px);
+}
+
+.sm-brand--hero .sm-brand-tagline {
+  margin-top: 1px;
+  font-size: 14px;
+  text-align: right;
+}
+
+/* Home — real AppManager network reference only in the identity/header band.
+   The operational dashboard below remains visually clean. */
+.sm-home .sm-home-heading {
+  position: relative;
+  isolation: isolate;
+  min-height: 150px;
+  overflow: hidden;
+  padding: 22px 28px;
+  border-bottom: 1px solid #dce4ed;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(247, 249, 252, 0.93) 0%,
+      rgba(247, 249, 252, 0.74) 43%,
+      rgba(247, 249, 252, 0.48) 100%
+    ),
+    url('/brand/site-mapper-network-mk2.png') center 31% / cover no-repeat;
+}
+
+.sm-home .sm-home-heading::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  top: 26px;
+  bottom: 26px;
+  left: 0;
+  width: 4px;
+  border-radius: 3px;
+  background: #18b98f;
+}
+
+.sm-home .sm-home-heading > * {
+  position: relative;
+  z-index: 1;
+}
+
+.sm-home .sm-home-heading > div {
+  padding-left: 18px;
+}
+
+.sm-home .sm-home-product-signature {
+  display: flex;
+  align-items: baseline;
+  gap: 13px;
+  margin: 7px 0 5px;
+  font-family: var(--font-site-mapper-brand), 'Trebuchet MS', Arial, sans-serif;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.sm-home .sm-home-appmanager {
+  color: #202428;
+  font-size: clamp(30px, 2.35vw, 40px);
+  font-weight: 400;
+  letter-spacing: -0.055em;
+}
+
+.sm-home .sm-home-appmanager b {
+  color: #18b98f;
+  font: inherit;
+}
+
+.sm-home .sm-home-product-line {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.sm-home .sm-home-sitemapper {
+  color: #18b98f;
+  font-size: clamp(19px, 1.5vw, 26px);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.sm-home .sm-home-mk {
+  color: #202428;
+  font-size: clamp(15px, 1.15vw, 20px);
+  font-weight: 500;
+}
+
+.sm-home .sm-home-heading h1 {
+  margin-top: 5px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: #202428;
+}
+
+.sm-home .sm-home-breadcrumb,
+.sm-home .sm-home-scope {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Login — the supplied AppManager network reference is the actual background.
+   Its original bottom curve is retained; no synthetic second curve is drawn. */
+.zip-login-page--heritage {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.48) 0%,
+      rgba(255, 255, 255, 0.32) 50%,
+      rgba(255, 255, 255, 0.48) 100%
+    ),
+    url('/brand/site-mapper-network-mk2.png') center / cover no-repeat !important;
+}
+
+.zip-login-page--heritage::before,
+.zip-login-page--heritage::after {
+  content: none !important;
+}
+
+.zip-login-page--heritage .zip-login-content {
+  position: relative;
+  z-index: 1;
+}
+
+.zip-login-page--heritage .zip-login-content > header {
+  display: block !important;
+  width: 540px;
+  max-width: 100%;
+  margin: 0 auto 28px !important;
+}
+
+.zip-login-page--heritage .sm-brand--hero {
+  width: 100%;
+}
+
+.zip-login-page--heritage .sm-brand--hero .sm-brand-appmanager {
+  font-size: clamp(43px, 3.6vw, 56px) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.055em !important;
+  color: var(--sm-brand-ink) !important;
+}
+
+.zip-login-page--heritage .sm-brand--hero .sm-brand-appmanager-a {
+  color: var(--sm-brand-accent) !important;
+}
+
+.zip-login-page--heritage .sm-brand--hero .sm-brand-tagline {
+  margin-top: 1px !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  color: var(--sm-brand-muted) !important;
+}
+
+.zip-login-page--heritage .zip-login-card {
+  background: rgba(255, 255, 255, 0.94) !important;
+  backdrop-filter: blur(2px);
+}
+
+.zip-login-page--heritage .auth-submit {
+  background: #0aa77d !important;
+  border-color: #0aa77d !important;
+}
+
+.zip-login-page--heritage .auth-submit:hover:not(:disabled) {
+  background: #078e6b !important;
+  border-color: #078e6b !important;
+}
+
+.zip-login-page--heritage .zip-login-footer--branded {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 1100px) {
+  .sm-brand--compact .sm-brand-appmanager {
+    font-size: 17px;
+  }
+
+  .sm-brand--compact .sm-brand-product-line {
+    font-size: 9px;
+  }
+
+  .sm-brand--compact .sm-brand-tagline {
+    font-size: 7px;
+  }
+}
+
+@media (max-width: 700px) {
+  .sm-home .sm-home-heading {
+    min-height: 136px;
+    padding: 19px 20px;
+    background-position: center 28%;
+  }
+
+  .sm-home .sm-home-heading::before {
+    top: 21px;
+    bottom: 21px;
+  }
+
+  .sm-home .sm-home-product-signature {
+    gap: 8px;
+  }
+
+  .sm-home .sm-home-appmanager {
+    font-size: 27px;
+  }
+
+  .sm-home .sm-home-sitemapper {
+    font-size: 18px;
+  }
+
+  .sm-home .sm-home-mk {
+    font-size: 14px;
+  }
+
+  .zip-login-page--heritage .zip-login-content > header {
+    width: 100%;
+  }
+
+  .sm-brand--hero .sm-brand-lockup {
+    gap: 14px;
+  }
+
+  .sm-brand--hero .sm-brand-mark {
+    width: 50px;
+    height: 50px;
+  }
+
+  .sm-brand--hero .sm-brand-appmanager {
+    font-size: 37px;
+  }
+
+  .sm-brand--hero .sm-brand-product-line {
+    font-size: 18px;
+  }
+
+  .sm-brand--hero .sm-brand-tagline {
+    font-size: 12px;
+  }
+}
+
+/* Mk2 legibility layer — translucent surfaces sit behind real UI, not in the PNG.
+   Scope: heritage login lockup / provider attribution and Home identity band. */
+.zip-login-page--heritage .zip-login-content > header {
+  box-sizing: border-box;
+  padding: 18px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.84);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 34px rgba(30, 45, 58, 0.11);
+}
+
+.zip-login-page--heritage .sm-brand--hero .sm-brand-appmanager,
+.zip-login-page--heritage .sm-brand--hero .sm-brand-mk {
+  color: #202428 !important;
+}
+
+.zip-login-page--heritage .sm-brand--hero .sm-brand-sitemapper {
+  color: #079b75 !important;
+}
+
+.zip-login-page--heritage .zip-login-powered-by {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 11px 24px 13px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 23px;
+  background: rgba(255, 255, 255, 0.88);
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 9px 26px rgba(30, 45, 58, 0.11);
+}
+
+.zip-login-page--heritage .zip-login-powered-by p {
+  color: #4a5662;
+  font-weight: 600;
+}
+
+.sm-home .sm-home-heading > div {
+  box-sizing: border-box;
+  width: fit-content;
+  max-width: 100%;
+  padding: 12px 22px 14px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(30, 45, 58, 0.09);
+}
+
+.sm-home .sm-home-heading .sm-home-scope {
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(9px);
+  backdrop-filter: blur(9px);
+}
+
+@media (max-width: 700px) {
+  .zip-login-page--heritage .zip-login-content > header {
+    padding: 14px 10px;
+    border-radius: 16px;
+  }
+
+  .zip-login-page--heritage .sm-brand--hero .sm-brand-appmanager {
+    font-size: clamp(25px, 7.5vw, 37px) !important;
+  }
+
+  .zip-login-page--heritage .zip-login-powered-by {
+    padding: 9px 15px;
+  }
+
+  .sm-home .sm-home-heading > div {
+    padding: 10px 12px 12px 18px;
+  }
+
+  .sm-home .sm-home-product-signature {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .zip-login-page--heritage .zip-login-content > header,
+  .zip-login-page--heritage .zip-login-powered-by,
+  .sm-home .sm-home-heading > div,
+  .sm-home .sm-home-heading .sm-home-scope {
+    background: #fff;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

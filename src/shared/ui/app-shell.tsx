@@ -10,16 +10,7 @@ import { CommandPalette } from './command-palette';
 import { ContextTracker } from './context-tracker';
 import { ContextualHelp } from '@/modules/help/components/contextual-help';
 import { AlarmHeaderBadge } from '@/components/alarm/alarm-header-badge';
-
-function BrandMark() {
-  return (
-    <svg className="zip-brand-mark" viewBox="0 0 64 64" aria-hidden="true">
-      <path d="M32 4 56 17v30L32 60 8 47V17Z" />
-      <path d="m8 17 24 14 24-14M32 31v29M20 24 43 11M20 24v16l12 8 12-8V24" />
-      <path d="M21 25v7m0 0-3 2m3-2 3 1" />
-    </svg>
-  );
-}
+import { SiteMapperBrand } from './site-mapper-brand';
 
 export function AppShell({ children }: { children: ReactNode }) {
   const t = useTranslations('shell');
@@ -143,11 +134,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <header className="app-topbar zip-topbar">
         <Link ref={brandRef} href="/workspace" className="zip-brand">
-          <BrandMark />
-          <span>
-            <strong>SITE MAPPER</strong>
-            <small>{t('tagline')}</small>
-          </span>
+          <SiteMapperBrand variant="compact" tagline={t('tagline')} />
         </Link>
 
         <div className="zip-context-slot">

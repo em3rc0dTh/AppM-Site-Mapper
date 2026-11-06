@@ -2391,5 +2391,11 @@
     "hideInspector": "Hide inspector",
     "showInspector": "Show inspector",
     "resetLayout": "Reset layout"
+  },
+  "brand": {
+    "appManager": "AppManager",
+    "siteMapper": "SiteMapper",
+    "generation": "Mk2",
+    "fullName": "AppManager SiteMapper Mk2"
   }
 }

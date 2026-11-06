@@ -1,8 +1,4 @@
-export type TelemetryFreshnessStatus =
-  | 'LIVE'
-  | 'STALE'
-  | 'OFFLINE'
-  | 'CLOCK SKEW';
+export type TelemetryFreshnessStatus = 'LIVE' | 'STALE' | 'OFFLINE' | 'CLOCK SKEW';
 
 /** Nominal field cadence for Acrel AWT100/BFDB MQTT publishers: one packet every 5 minutes. */
 export const BFDB_EXPECTED_INTERVAL_MS = 5 * 60_000;
@@ -38,8 +34,7 @@ export function classifyTelemetryFreshness(
   if (received === null) return 'OFFLINE';
 
   const transportAge = now - received;
-  if (!Number.isFinite(transportAge) || transportAge > BFDB_OFFLINE_AFTER_MS)
-    return 'OFFLINE';
+  if (!Number.isFinite(transportAge) || transportAge > BFDB_OFFLINE_AFTER_MS) return 'OFFLINE';
 
   // A future receive time means the runtime/server clock itself is inconsistent.
   if (transportAge < -TELEMETRY_CLOCK_SKEW_TOLERANCE_MS) return 'CLOCK SKEW';

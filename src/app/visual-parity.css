@@ -69,7 +69,10 @@ body {
   color: #77818a;
 }
 .zip-context-slot {
-  flex: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
 }
 .zip-static-context {
   flex: 1;

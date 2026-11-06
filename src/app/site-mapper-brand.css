@@ -126,6 +126,20 @@
   color: inherit !important;
 }
 
+.app-shell--blueprint .zip-brand .sm-brand-appmanager {
+  font-size: 19px !important;
+  font-weight: 400 !important;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-product-line {
+  font-size: 10px !important;
+}
+
+.app-shell--blueprint .zip-brand .sm-brand-tagline {
+  font-size: 7.5px !important;
+  line-height: 1.05 !important;
+}
+
 .app-shell--blueprint .zip-brand .sm-brand-appmanager-a,
 .app-shell--blueprint .zip-brand .sm-brand-sitemapper {
   color: var(--sm-brand-accent) !important;
@@ -283,6 +297,24 @@
 
 .zip-login-page--heritage .sm-brand--hero {
   width: 100%;
+}
+
+.zip-login-page--heritage .sm-brand--hero .sm-brand-appmanager {
+  font-size: clamp(43px, 3.6vw, 56px) !important;
+  font-weight: 400 !important;
+  letter-spacing: -0.055em !important;
+  color: var(--sm-brand-ink) !important;
+}
+
+.zip-login-page--heritage .sm-brand--hero .sm-brand-appmanager-a {
+  color: var(--sm-brand-accent) !important;
+}
+
+.zip-login-page--heritage .sm-brand--hero .sm-brand-tagline {
+  margin-top: 1px !important;
+  font-size: 14px !important;
+  line-height: 1.2 !important;
+  color: var(--sm-brand-muted) !important;
 }
 
 .zip-login-page--heritage .zip-login-card {

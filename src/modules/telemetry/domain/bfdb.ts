@@ -86,7 +86,7 @@ function metricBindingMap(
   bindings: readonly TelemetryBinding[],
   sourceIdentity: string,
   sourcePointId: string,
-): { targetId: string; metrics: ReadonlyMap<BdfbMetric, TelemetryBinding> } | null {
+): { targetId: string; metrics: ReadonlyMap<BfdbMetric, TelemetryBinding> } | null {
   const candidates = bindings.filter(
     (binding) =>
       binding.lifecycle === 'ACTIVE' &&
@@ -102,11 +102,11 @@ function metricBindingMap(
   const targetId = [...targetIds][0];
   if (!targetId) return null;
 
-  const metrics = new Map<BdfbMetric, TelemetryBinding>();
+  const metrics = new Map<BfdbMetric, TelemetryBinding>();
   for (const binding of candidates) {
     const name = binding.metric.toUpperCase();
-    if (!BFDB_METRICS.includes(name as BdfbMetric)) continue;
-    const typed = name as BdfbMetric;
+    if (!BFDB_METRICS.includes(name as BfdbMetric)) continue;
+    const typed = name as BfdbMetric;
     if (metrics.has(typed)) return null;
     metrics.set(typed, binding);
   }
@@ -144,10 +144,11 @@ export function buildBfdbBreakerReadings(
     let mappedAny = false;
     for (const point of wirePoints) {
       const mapping = metricBindingMap(bindings, message.sourceIdentity, point.bindingPointId);
-      const resolved = mapping ? byBreaker.get(mapping.targetId) : undefined;
+      if (!mapping) continue;
+      const resolved = byBreaker.get(mapping.targetId);
       if (!resolved) continue;
 
-      const accepts = (name: BdfbMetric) => mapping.metrics.has(name);
+      const accepts = (name: BfdbMetric) => mapping.metrics.has(name);
       const voltageV = accepts('VOLTAGE')
         ? metric(rawPoint[point.fields.voltage], observedAt)
         : undefined;

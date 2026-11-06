@@ -187,7 +187,12 @@
   padding: 22px 28px;
   border-bottom: 1px solid #dce4ed;
   background:
-    linear-gradient(90deg, rgba(247, 249, 252, 0.93) 0%, rgba(247, 249, 252, 0.74) 43%, rgba(247, 249, 252, 0.48) 100%),
+    linear-gradient(
+      90deg,
+      rgba(247, 249, 252, 0.93) 0%,
+      rgba(247, 249, 252, 0.74) 43%,
+      rgba(247, 249, 252, 0.48) 100%
+    ),
     url('/brand/site-mapper-network-real.webp') center 31% / cover no-repeat;
 }
 
@@ -274,7 +279,12 @@
   isolation: isolate;
   overflow: hidden;
   background:
-    linear-gradient(90deg, rgba(255, 255, 255, 0.66) 0%, rgba(255, 255, 255, 0.43) 50%, rgba(255, 255, 255, 0.66) 100%),
+    linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0.66) 0%,
+      rgba(255, 255, 255, 0.43) 50%,
+      rgba(255, 255, 255, 0.66) 100%
+    ),
     url('/brand/site-mapper-network-real.webp') center / cover no-repeat !important;
 }
 

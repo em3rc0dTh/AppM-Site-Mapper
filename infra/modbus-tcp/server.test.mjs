@@ -129,8 +129,8 @@ test('00 total V/A/kW signals mirror commissioned QDF projection into 768..773',
     true,
   );
   const result = handleFrame(command(1, 768, 6), state);
-  assert.equal(result.readFloatBE(9), 52.4);
-  assert.equal(result.readFloatBE(13), 120.5);
+  assert.ok(Math.abs(result.readFloatBE(9) - 52.4) < 0.00001);
+  assert.ok(Math.abs(result.readFloatBE(13) - 120.5) < 0.00001);
   assert.ok(Math.abs(result.readFloatBE(17) - 6.31) < 0.00001);
 });
 

@@ -46,8 +46,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   await headers();
   const locale = await getLocale();
   return (
-    <html lang={locale} data-theme="light" className={siteMapperBrandFont.variable}>
-      <body>
+    <html lang={locale} data-theme="light">
+      <body className={siteMapperBrandFont.variable}>
         <NextIntlClientProvider>
           <AppShell>{children}</AppShell>
         </NextIntlClientProvider>

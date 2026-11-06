@@ -5,6 +5,7 @@ import type {
   TelemetryMetricValue,
   TelemetrySample,
 } from '@/modules/telemetry/domain/entities';
+import { isTelemetryTransportCurrent } from '@/modules/telemetry/domain/telemetry-freshness';
 
 interface BreakerLocation {
   shelfId: string;
@@ -14,13 +15,6 @@ interface BreakerLocation {
   breakerId: string;
   breakerLabel: string;
   position: number;
-}
-
-const FRESH_MS = 30_000;
-
-function isFresh(timestamp: string, now: number): boolean {
-  const age = now - Date.parse(timestamp);
-  return Number.isFinite(age) && age >= -FRESH_MS && age <= FRESH_MS;
 }
 
 function ownMetric(
@@ -43,9 +37,7 @@ function ownMetric(
       : typeof value === 'string' && value.trim()
         ? Number(value)
         : NaN;
-  return Number.isFinite(numeric) && isFresh(timestamp, now)
-    ? { value: numeric as number, observedAt: timestamp }
-    : undefined;
+  return Number.isFinite(numeric) ? { value: numeric as number, observedAt: timestamp } : undefined;
 }
 
 /**
@@ -86,7 +78,7 @@ export function resolveBdfbBreakerReadings(
       sample.entityId !== sample.targetId ||
       sample.entityKind !== 'EQUIPMENT' ||
       !sample.bindingId ||
-      !isFresh(sample.receivedAt, now)
+      !isTelemetryTransportCurrent(sample.receivedAt, now)
     )
       continue;
     const location = locations.get(sample.targetId);
@@ -111,7 +103,7 @@ export function resolveBdfbBreakerReadings(
     };
     const stateValue = sample.reported.state;
     const state =
-      (typeof stateValue === 'string' || typeof stateValue === 'number') && isFresh(observedAt, now)
+      typeof stateValue === 'string' || typeof stateValue === 'number'
         ? { value: String(stateValue), observedAt }
         : undefined;
     if (!Object.keys(metrics).length && !state) continue;

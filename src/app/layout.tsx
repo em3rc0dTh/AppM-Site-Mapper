@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
+import { Josefin_Sans } from 'next/font/google';
 import { headers } from 'next/headers';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getTranslations } from 'next-intl/server';
@@ -21,7 +22,14 @@ import './light-theme-contract.css';
 import './help.css';
 import './s03-workspace.css';
 import './s04-branding.css';
+import './site-mapper-brand.css';
 import { AppShell } from '@/shared/ui/app-shell';
+
+const siteMapperBrandFont = Josefin_Sans({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-site-mapper-brand',
+});
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('metadata');
@@ -37,7 +45,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   await headers();
   const locale = await getLocale();
   return (
-    <html lang={locale} data-theme="light">
+    <html lang={locale} data-theme="light" className={siteMapperBrandFont.variable}>
       <body>
         <NextIntlClientProvider>
           <AppShell>{children}</AppShell>

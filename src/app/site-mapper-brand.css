@@ -188,7 +188,8 @@
   }
 
   .sm-brand-network {
-    inset-left: 24%;
+    left: 24%;
+    right: 0;
     width: 76%;
     opacity: 0.1;
   }

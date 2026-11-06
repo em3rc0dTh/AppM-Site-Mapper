@@ -530,41 +530,41 @@ export function BlueprintCanvas({
             return (
               <g
                 key={rack.id}
-              className={`blueprint-rack-node${selectedRackId === rack.id ? ' is-selected' : ''}`}
-              role="button"
-              tabIndex={0}
-              aria-label={t('inspectRack', { name: rack.name })}
-              onClick={() => {
-                if (tool === 'select' && !onPlace) inspectRack(rack);
-              }}
-              onDoubleClick={() => {
-                if (tool === 'select' && !onSelectRack && !onPlace) {
-                  inspectRack(rack);
-                  setFocusedRackId(rack.id);
-                }
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  event.preventDefault();
-                  inspectRack(rack);
-                }
-              }}
-            >
-              <rect
-                x={rack.rect.x}
-                y={rack.rect.y}
-                width={rack.rect.width}
-                height={rack.rect.depth}
-                className="blueprint-rack"
-              />
-              <rect
-                x={rack.rect.x + Math.min(65, rack.rect.width * 0.12)}
-                y={rack.rect.y + Math.min(65, rack.rect.depth * 0.12)}
-                width={Math.max(1, rack.rect.width - Math.min(130, rack.rect.width * 0.24))}
-                height={Math.max(1, rack.rect.depth - Math.min(130, rack.rect.depth * 0.24))}
-                className="blueprint-rack-inner"
-                aria-hidden="true"
-              />
+                className={`blueprint-rack-node${selectedRackId === rack.id ? ' is-selected' : ''}`}
+                role="button"
+                tabIndex={0}
+                aria-label={t('inspectRack', { name: rack.name })}
+                onClick={() => {
+                  if (tool === 'select' && !onPlace) inspectRack(rack);
+                }}
+                onDoubleClick={() => {
+                  if (tool === 'select' && !onSelectRack && !onPlace) {
+                    inspectRack(rack);
+                    setFocusedRackId(rack.id);
+                  }
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    inspectRack(rack);
+                  }
+                }}
+              >
+                <rect
+                  x={rack.rect.x}
+                  y={rack.rect.y}
+                  width={rack.rect.width}
+                  height={rack.rect.depth}
+                  className="blueprint-rack"
+                />
+                <rect
+                  x={rack.rect.x + Math.min(65, rack.rect.width * 0.12)}
+                  y={rack.rect.y + Math.min(65, rack.rect.depth * 0.12)}
+                  width={Math.max(1, rack.rect.width - Math.min(130, rack.rect.width * 0.24))}
+                  height={Math.max(1, rack.rect.depth - Math.min(130, rack.rect.depth * 0.24))}
+                  className="blueprint-rack-inner"
+                  aria-hidden="true"
+                />
                 <text
                   x={rack.rect.x + rack.rect.width / 2}
                   y={rack.rect.y + rack.rect.depth / 2}

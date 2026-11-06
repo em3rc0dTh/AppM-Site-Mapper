@@ -30,15 +30,15 @@ LAN works without any Cloudflare component. Cloudflare is optional for laborator
 
 ## Delivered repository artifacts
 
-| Item | Responsibility |
-| --- | --- |
-| `docker-compose.field-lan.yml` | Additive Caddy service, host networking, persistence for CA and Caddy configuration |
-| `infra/field/caddy/Caddyfile` | HTTPS for approved hostname with `tls internal`; reverse proxy to loopback Next.js |
-| `docker-compose.lab-remote.yml` | Explicit opt-in cloudflared service, no public inbound host ports |
-| `deployment-runbook.md` | Preconditions, controlled execution, rollback, CA distribution, backup |
-| `security-and-access.md` | Security boundaries, separation of FIELD and LAB, ports, auth |
-| `acceptance.md` | HU-039..048 acceptance gates and evidence |
-| `operations.md` | Systemd templates, watchdog, backups, restore preflight and security considerations |
+| Item                            | Responsibility                                                                      |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| `docker-compose.field-lan.yml`  | Additive Caddy service, host networking, persistence for CA and Caddy configuration |
+| `infra/field/caddy/Caddyfile`   | HTTPS for approved hostname with `tls internal`; reverse proxy to loopback Next.js  |
+| `docker-compose.lab-remote.yml` | Explicit opt-in cloudflared service, no public inbound host ports                   |
+| `deployment-runbook.md`         | Preconditions, controlled execution, rollback, CA distribution, backup              |
+| `security-and-access.md`        | Security boundaries, separation of FIELD and LAB, ports, auth                       |
+| `acceptance.md`                 | HU-039..048 acceptance gates and evidence                                           |
+| `operations.md`                 | Systemd templates, watchdog, backups, restore preflight and security considerations |
 
 ## Non-negotiables
 

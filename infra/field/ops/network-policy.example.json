@@ -13,15 +13,7 @@
     "port": 22,
     "source_cidr": "CHANGE_ME_MANAGEMENT_CIDR"
   },
-  "excluded_web_ports": [
-    80,
-    3000,
-    3100,
-    27017,
-    55432,
-    18081,
-    18082
-  ],
+  "excluded_web_ports": [80, 3000, 3100, 27017, 55432, 18081, 18082],
   "ot_exceptions": "Specify required MQTT/SNMP/Modbus source-destination rules after site survey; do not infer or block blindly",
   "apply_automatically": false
 }

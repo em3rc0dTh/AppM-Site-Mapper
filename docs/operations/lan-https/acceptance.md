@@ -2,18 +2,18 @@
 
 **Current status: NOT EXECUTED.** Prepared in GitHub only; do not mark any item accepted based on a static configuration file.
 
-| HU | Observable criterion | Evidence expected |
-| --- | --- | --- |
-| HU-039 | Two authorized LAN devices resolve and open the exact `.home.arpa` hostname offline | Client DNS trace + browser/curl TLS result |
-| HU-040 | Caddy certificate SAN matches hostname, chain trusted, CA survives restart | SAN/issuer output, CA fingerprint before/after |
+| HU     | Observable criterion                                                                                       | Evidence expected                                             |
+| ------ | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| HU-039 | Two authorized LAN devices resolve and open the exact `.home.arpa` hostname offline                        | Client DNS trace + browser/curl TLS result                    |
+| HU-040 | Caddy certificate SAN matches hostname, chain trusted, CA survives restart                                 | SAN/issuer output, CA fingerprint before/after                |
 | HU-041 | Only authorized TCP/443 web ingress, Next.js backend not directly LAN-accessible; OT exceptions documented | Resolved Compose config, firewall and approved network probes |
-| HU-042 | Host reboot recovers Site Mapper dependencies unattended | Host boot + Docker health timeline |
-| HU-043 | Isolated process failures recovered with retry limits; no cascading DB restart | Incident log and recovery drill |
-| HU-044 | Mongo, Timescale, CA/config and secrets backups restored in isolated target | Timestamped restore report and checksums |
-| HU-045 | FIELD LAN has no public tunnel; LAB is explicitly opt-in | Profile manifest, active services, external ingress checks |
-| HU-046 | Login/RBAC, topology, alarm history, MQTT/SNMP, Timescale and offline operation pass | Golden path and signed certification report |
-| HU-047 | Authorized remote user reaches application via approved Cloudflare route | Cloudflare Access policy + remote browser flow |
-| HU-048 | Anonymous remote access denied; authorized user still constrained by Site Mapper RBAC | Denied/allowed session logs; SSE/WebSocket and logout checks |
+| HU-042 | Host reboot recovers Site Mapper dependencies unattended                                                   | Host boot + Docker health timeline                            |
+| HU-043 | Isolated process failures recovered with retry limits; no cascading DB restart                             | Incident log and recovery drill                               |
+| HU-044 | Mongo, Timescale, CA/config and secrets backups restored in isolated target                                | Timestamped restore report and checksums                      |
+| HU-045 | FIELD LAN has no public tunnel; LAB is explicitly opt-in                                                   | Profile manifest, active services, external ingress checks    |
+| HU-046 | Login/RBAC, topology, alarm history, MQTT/SNMP, Timescale and offline operation pass                       | Golden path and signed certification report                   |
+| HU-047 | Authorized remote user reaches application via approved Cloudflare route                                   | Cloudflare Access policy + remote browser flow                |
+| HU-048 | Anonymous remote access denied; authorized user still constrained by Site Mapper RBAC                      | Denied/allowed session logs; SSE/WebSocket and logout checks  |
 
 ## Explicit negative tests
 

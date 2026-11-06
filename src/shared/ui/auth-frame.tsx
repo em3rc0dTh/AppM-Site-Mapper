@@ -43,9 +43,7 @@ export function AuthFrame({
           {children}
         </div>
         <footer
-          className={
-            showProviderBrand ? 'zip-login-footer zip-login-footer--branded' : undefined
-          }
+          className={showProviderBrand ? 'zip-login-footer zip-login-footer--branded' : undefined}
         >
           <LanguageSwitcher />
           {showProviderBrand ? (

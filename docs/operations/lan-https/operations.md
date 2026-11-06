@@ -4,23 +4,23 @@
 
 ## New artifacts and responsibilities
 
-| Artifact | Responsibility | Protection |
-| --- | --- | --- |
-| `infra/field/ops/field-lan-service.sh` | Starts/stops **Caddy only** by Compose service name, with no build or volume removal | Requires original private Compose environment |
-| `infra/field/ops/systemd/site-mapper-field-lan.service` | Linux boot hook for Caddy after Docker | Requires approved `/opt/site-mapper` deployment location |
-| `infra/field/ops/watchdog.py` and systemd timer | Checks HTTPS through local CA and Next.js health, observes dependencies and selectively restarts Caddy or Next.js | **Recovery disabled by default** |
-| `infra/field/ops/backup.py` and daily timer | Runs `mongodump`, `pg_dump`, captures Caddy /data and private runtime configuration, encrypts using `age` | Requires external backup destination and public age recipient |
-| `infra/field/ops/restore-preflight.py` | Verifies SHA-256 checksums and decrypts into a **new isolated directory only** | Never connects to running databases |
-| `infra/field/ops/network-policy.example.json` | Template for authorized LAN + admin CIDRs, no auto-applied firewall | Site survey + administrative approval mandatory |
-| `infra/field/ops/check-network-policy.py` | Validates network contract, rejects wildcard/public source CIDRs | Read-only |
-| `infra/field/ops/preflight.py` | Inspects DNS, tool presence and Docker port publication | Read-only |
-| `scripts/ci/check-s06.py` | Checks Python syntax and static file invariants | Local/CI only, no services |
+| Artifact                                                | Responsibility                                                                                                    | Protection                                                    |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `infra/field/ops/field-lan-service.sh`                  | Starts/stops **Caddy only** by Compose service name, with no build or volume removal                              | Requires original private Compose environment                 |
+| `infra/field/ops/systemd/site-mapper-field-lan.service` | Linux boot hook for Caddy after Docker                                                                            | Requires approved `/opt/site-mapper` deployment location      |
+| `infra/field/ops/watchdog.py` and systemd timer         | Checks HTTPS through local CA and Next.js health, observes dependencies and selectively restarts Caddy or Next.js | **Recovery disabled by default**                              |
+| `infra/field/ops/backup.py` and daily timer             | Runs `mongodump`, `pg_dump`, captures Caddy /data and private runtime configuration, encrypts using `age`         | Requires external backup destination and public age recipient |
+| `infra/field/ops/restore-preflight.py`                  | Verifies SHA-256 checksums and decrypts into a **new isolated directory only**                                    | Never connects to running databases                           |
+| `infra/field/ops/network-policy.example.json`           | Template for authorized LAN + admin CIDRs, no auto-applied firewall                                               | Site survey + administrative approval mandatory               |
+| `infra/field/ops/check-network-policy.py`               | Validates network contract, rejects wildcard/public source CIDRs                                                  | Read-only                                                     |
+| `infra/field/ops/preflight.py`                          | Inspects DNS, tool presence and Docker port publication                                                           | Read-only                                                     |
+| `scripts/ci/check-s06.py`                               | Checks Python syntax and static file invariants                                                                   | Local/CI only, no services                                    |
 
 ## Systemd installation contract
 
 The provided units deliberately reference `/opt/site-mapper` and `/etc/site-mapper/s06.env`; these are target-specific defaults, **not verified locations on TFARM04**. Do not enable these units before installation survey and backups.
 
-1. Choose final immutable release/images and target directory. Verify exact Compose project name and runtime env. The systemd entrypoint uses the *existing* Compose project identity; a wrong project name may create a separate Caddy instance.
+1. Choose final immutable release/images and target directory. Verify exact Compose project name and runtime env. The systemd entrypoint uses the _existing_ Compose project identity; a wrong project name may create a separate Caddy instance.
 2. Copy the example settings to `/etc/site-mapper/s06.env`, edit locally, set root-only permissions (0600). Do not check it into Git.
 3. Place public CA root in `/etc/site-mapper/ca-root.crt` after approved Caddy enrollment; never copy its private key to this path.
 4. Once the operator approves installation, install/copy units into systemd's administrator-managed directory, reload units and enable them individually.

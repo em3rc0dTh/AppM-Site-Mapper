@@ -2,15 +2,15 @@
 
 ## Two modes, not one public deployment
 
-| Attribute | FIELD LAN | LAB REMOTE |
-| --- | --- | --- |
-| Canonical URL | https://sitemapper.thradex.home.arpa | https://site-mapper.thradex.workers.dev |
-| DNS | Local resolver, no WAN dependency | Cloudflare-managed public host |
-| TLS | Caddy private CA, trusted on clients | Cloudflare public TLS |
-| Authentication | Site Mapper session + server RBAC | Cloudflare Access **and** Site Mapper RBAC |
-| Inbound perimeter | Authorized LAN TCP 443 only | No forwarded router port; outbound tunnel |
-| Tunnel | Disabled / not deployed | Explicit opt-in after Access approval |
-| Offline | Required | Not possible |
+| Attribute         | FIELD LAN                            | LAB REMOTE                                 |
+| ----------------- | ------------------------------------ | ------------------------------------------ |
+| Canonical URL     | https://sitemapper.thradex.home.arpa | https://site-mapper.thradex.workers.dev    |
+| DNS               | Local resolver, no WAN dependency    | Cloudflare-managed public host             |
+| TLS               | Caddy private CA, trusted on clients | Cloudflare public TLS                      |
+| Authentication    | Site Mapper session + server RBAC    | Cloudflare Access **and** Site Mapper RBAC |
+| Inbound perimeter | Authorized LAN TCP 443 only          | No forwarded router port; outbound tunnel  |
+| Tunnel            | Disabled / not deployed              | Explicit opt-in after Access approval      |
+| Offline           | Required                             | Not possible                               |
 
 ## Required firewall and service binding review
 

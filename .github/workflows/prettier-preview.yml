@@ -1,0 +1,29 @@
+name: Prettier preview
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Show Prettier diff
+        shell: bash
+        run: |
+          npx prettier --write src/modules/telemetry/domain/composition-breaker-telemetry.ts
+          git --no-pager diff -- src/modules/telemetry/domain/composition-breaker-telemetry.ts
+          git diff --quiet -- src/modules/telemetry/domain/composition-breaker-telemetry.ts

@@ -1,52 +1,106 @@
 # Site Mapper — Metasys Modbus TCP register map (read only)
 
-The provided Vertiv UXIM/UXTM reference is used **only as a table presentation example**. Site Mapper does not implement Vertiv's Modbus ASCII transport, battery-specific registers, scaling or control commands.
+This document is the runtime companion to the approved **Modbus_TCP_v1.2.xlsx** client schedule.
+The Excel allocation is authoritative for the Site Mapper -> Metasys Modbus surface.
 
-## Frozen baseline
+## Frozen contract
 
-| Field                  | Value                                               |
-| ---------------------- | --------------------------------------------------- |
-| Transport              | Modbus TCP (MBAP)                                   |
-| Function code          | 03, Read Holding Registers                          |
-| Supported measurements | Voltage (V), Current (A), Power (kW), Energy (kWh)  |
-| Value representation   | IEEE-754 FLOAT32, two 16-bit registers              |
-| Word/byte order        | High word first; network big-endian bytes           |
-| Scaling                | 1 on wire; Power is converted from internal W to kW |
-| First circuit          | Addresses 0..7; references 40001..40008             |
-| Last circuit           | Addresses 760..767; references 40761..40768         |
-| Unit IDs               | Unit 1/2/3 for lab emulator sources only            |
-| Access                 | Read-only: no FC04, FC06, FC16 or remote control    |
+| Field | Value |
+| --- | --- |
+| Transport | Modbus TCP (MBAP) |
+| Function code | **04 — Read Input Registers** |
+| TCP production port | 502 after authorized OT publication |
+| Unit IDs | 1 = QDF-2, 2 = QDF-4, 3 = QDF-5 |
+| Breaker labels | 01-A…48-A and 01-B…48-B |
+| Total label | 00 = Entire QDF |
+| Measurements | Voltage (V), Current (A), Power (kW), Energy (kWh) |
+| Value representation | IEEE-754 FLOAT32, two 16-bit registers |
+| Word/byte order | High word first; network big-endian bytes |
+| Scaling | 1 on wire; internal power W is published as kW |
+| Breaker block | offsets 0…767 |
+| Total block | offsets 768…775 |
+| Registers per Unit ID | 776 |
+| Points per Unit ID | 388 |
+| Total points | 1,164 |
+| Access | Read-only |
 
-The reference prefix `4xxxx` is documentary (e.g. 40001 = wire offset 0); an integration tool might instead ask for 0 or 1. **Enter the actual zero-based start offset or adjust the point entry according to the driver's addressing convention.** Never send 40001 as the wire offset.
+The documentary 4xxxx reference is one-based: offset 0 = 40001. The actual Modbus request uses the
+zero-based start address unless the Metasys driver is configured for another addressing convention.
 
-## Table columns (following the supplied reference format)
+## Breaker allocation
 
-The generated CSV starts with `CATEGORY`, `NAME/DESCRIPTION`, `REFERENCE` and `DATA ADDRESS`, like the Vertiv reference, and explicitly adds `START ADDRESS (0-BASED)`, `UNIT ID`, `SOURCE ID`, `CIRCUIT`, `RAW POINT`, `FUNCTION`, `DATA TYPE`, `REGISTER COUNT`, `ENGINEERING UNIT`, `SCALE`, `WORD ORDER`.
+The runtime keeps a stable internal ordinal only to calculate register offsets. It is not exposed as
+a client breaker number.
 
-Each Unit ID contains 96 circuits × 4 quantities = 384 FLOAT32 values = 768 16-bit holding registers. The three lab Unit IDs together yield **1,152 documented measurements** and 2,304 16-bit registers.
+| Client breaker | Internal ordinal | Start block |
+| --- | ---: | ---: |
+| 01-A | 1 | 0 |
+| … | … | … |
+| 48-A | 48 | 376 |
+| 01-B | 49 | 384 |
+| … | … | … |
+| 48-B | 96 | 760 |
 
-| Circuit 1 / Unit 1 | Reference   | Wire offsets | Format / unit |
-| ------------------ | ----------- | ------------ | ------------- |
-| Voltage            | 40001-40002 | 0-1          | FLOAT32 / V   |
-| Current            | 40003-40004 | 2-3          | FLOAT32 / A   |
-| Power              | 40005-40006 | 4-5          | FLOAT32 / kW  |
-| Energy             | 40007-40008 | 6-7          | FLOAT32 / kWh |
+Each breaker consumes eight registers:
 
-The CSV is generated from `infra/modbus-tcp/register-map.mjs`, also used by the runtime. No manual editing of row offsets is supported.
+| Measurement | Relative offset | Example 01-A |
+| --- | ---: | --- |
+| Voltage | +0 | 40001-40002 |
+| Current | +2 | 40003-40004 |
+| Power | +4 | 40005-40006 |
+| Energy | +6 | 40007-40008 |
+
+## QDF total 00
+
+The four QDF totals occupy the eight registers immediately after the breaker block.
+
+| 00 measurement | Reference | Start address | Unit |
+| --- | --- | ---: | --- |
+| Voltage | 40769-40770 | 768 | V |
+| Current | 40771-40772 | 770 | A |
+| Power | 40773-40774 | 772 | kW |
+| Energy | 40775-40776 | 774 | kWh |
+
+Voltage, Current and Power can be mirrored from the commissioned canonical QDF projections. Total
+Energy is the sum of the latest accepted 96 breaker energy counters after every breaker has supplied
+an Energy value. Missing measurements are never manufactured.
+
+## Real Acrel MQTT normalization
+
+Field Acrel frames use slave/group identifiers **1, 3, 5 and 7**. Measured objects 1..12 carry two
+physical channels:
+
+- channel 1: U1 / I1 / P1 / EP1;
+- channel 2: U2 / I2 / P2 / EP2.
+
+Site Mapper resolves these to the client breaker space before the Modbus sidecar sees them:
+
+- group 1 -> A3 -> A positions 01..24;
+- group 3 -> A2 -> A positions 25..48;
+- group 5 -> B3 -> B positions 01..24;
+- group 7 -> B2 -> B positions 25..48.
+
+Objects 13..24 observed as state-only in the field profile are connectivity shadows and do not create
+additional breaker measurements.
+
+## Generated CSV
+
+The committed CSV is generated from the same register-map module used by the runtime:
 
 ```sh
 node scripts/operations/generate-metasys-register-map.mjs
 node scripts/operations/generate-metasys-register-map.mjs --check
 ```
 
-The committed CSV uses **synthetic lab source identities** `EMU-BFDB-01/02/03` and layout `panels-4x24`. To generate a deployment-specific table without publishing client identities, set the approved private `MODBUS_SOURCE_UNITS_JSON` and `MODBUS_POINT_LAYOUT` in your environment and run `--stdout` with private redirection. Do not commit that output to this public repository.
+The public CSV uses emulator identities. Field source-to-Unit-ID mapping remains runtime
+configuration; the OFFICE/FIELD template maps the approved serials to Unit IDs 1/2/3.
 
-## Data validity (commissioning gate)
+## Data validity
 
-Only explicitly commissioned breaker bindings populate the sidecar. In the current release, missing or expired data (default 30 s) reads zero with the backward-compatible `MODBUS_MISSING_POLICY=zero`. A real zero is indistinguishable from unavailable telemetry. The optional `MODBUS_MISSING_POLICY=exception` instead returns Modbus exception **04 (Server Device Failure)** if any requested register lacks a fresh value. Since an exception invalidates the entire FC03 block request, the Metasys integrator must agree on polling granularity (ideally one circuit/8 registers per read) and certify its handling before enabling that policy in production.
+Only accepted commissioned breaker measurements populate the register image. The configured
+`MODBUS_MISSING_POLICY` controls missing/stale reads. The default `zero` policy is compatible with
+the existing deployment but makes an unavailable value indistinguishable from a legitimate zero.
+The optional `exception` policy returns exception 04 for an FC04 request containing unavailable
+registers and must be agreed with the Metasys integrator.
 
-The table is a **register allocation**, not evidence that 288 circuits are active. Site Mapper does not expose an additional quality/status measurement within the four-variable-only customer contract. It must not be used for interlocks or safety-critical decisions until missing-data semantics are signed off.
-
-## Metasys handoff checklist
-
-Confirm FC03, Unit IDs, IP/OT route, TCP port (standard 502 after approved deployment; local lab 1503), 0/1 addressing offset, IEEE-754 FLOAT32 word order (high-first), engineering units and poll grouping. Verify circuit 1 and circuit 96, no cross-Unit-ID leakage, actual values vs accepted telemetry, restart/staleness behavior and unavailable-point response. Creating/configuring native Metasys point entries is still required; no custom translator is part of this solution.
+This interface is read-only and is not a safety-control channel.

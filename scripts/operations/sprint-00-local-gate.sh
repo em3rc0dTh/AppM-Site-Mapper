@@ -111,7 +111,7 @@ while :; do
 done
 
 echo "=== 5/8 INVENTORY / BINDING AUDIT ==="
-dc exec -T mongodb mongosh --quiet seed-01 < scripts/operations/audit-s00-local.mongosh.js
+dc exec -T mongodb mongosh --quiet seed-01 --file /dev/stdin < scripts/operations/audit-s00-local.mongosh.js
 
 echo "=== 6/8 HISTORY AUDIT ==="
 for serial in 26092403950003 26092403950004 26092403950002; do
@@ -144,10 +144,21 @@ dc exec -T mongodb \
   mongodump --quiet --db seed-01 --archive --gzip > "$BACKUP/mongodb.archive.gz"
 dc exec -T timescaledb \
   pg_dump -U site_mapper -d site_mapper_telemetry -Fc > "$BACKUP/timescale.dump"
+TIMESCALE_CONTAINER_ID="$(dc ps -q timescaledb)"
+test -n "$TIMESCALE_CONTAINER_ID" || {
+  echo "S00 local TimescaleDB container identity missing" >&2
+  exit 14
+}
+TIMESCALE_IMAGE="$(docker inspect --format '{{.Image}}' "$TIMESCALE_CONTAINER_ID")"
+TIMESCALE_VERSION="$(pg_scalar "SELECT extversion FROM pg_extension WHERE extname='timescaledb';")"
+test -n "$TIMESCALE_IMAGE" || { echo "S00 local TimescaleDB image identity missing" >&2; exit 14; }
+test -n "$TIMESCALE_VERSION" || { echo "S00 local TimescaleDB extension version missing" >&2; exit 14; }
 cat > "$BACKUP/MANIFEST.txt" <<EOF
 mongoDatabase=seed-01
 profile=S00_LOCAL
 project=$PROJECT
+timescaleImage=$TIMESCALE_IMAGE
+timescaleVersion=$TIMESCALE_VERSION
 EOF
 (
   cd "$BACKUP"

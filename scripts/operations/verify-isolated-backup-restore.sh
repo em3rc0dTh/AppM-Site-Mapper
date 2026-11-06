@@ -45,7 +45,20 @@ SEED_COUNT="$(docker exec "$MONGO" mongosh --quiet "$MONGO_DB" --eval 'db.runtim
 [ "$TOPOLOGY_COUNT" -gt 0 ] || { echo "Restored Mongo topology is empty" >&2; exit 3; }
 [ "$SEED_COUNT" -eq 1 ] || { echo "Restored seed state missing/ambiguous" >&2; exit 3; }
 
-docker run -d --rm --name "$PG"   -e POSTGRES_USER=site_mapper   -e POSTGRES_PASSWORD=s00-restore-only   -e POSTGRES_DB=site_mapper_telemetry   timescale/timescaledb:latest-pg16 >/dev/null
+TIMESCALE_IMAGE="$(sed -n 's/^timescaleImage=//p' "$BACKUP_DIR/MANIFEST.txt" 2>/dev/null || true)"
+TIMESCALE_VERSION_EXPECTED="$(sed -n 's/^timescaleVersion=//p' "$BACKUP_DIR/MANIFEST.txt" 2>/dev/null || true)"
+TIMESCALE_IMAGE="${TIMESCALE_IMAGE:-timescale/timescaledb:latest-pg16}"
+
+docker image inspect "$TIMESCALE_IMAGE" >/dev/null 2>&1 || {
+  echo "Exact TimescaleDB backup image is unavailable locally: $TIMESCALE_IMAGE" >&2
+  exit 4
+}
+
+docker run -d --rm --name "$PG" \
+  -e POSTGRES_USER=site_mapper \
+  -e POSTGRES_PASSWORD=s00-restore-only \
+  -e POSTGRES_DB=site_mapper_telemetry \
+  "$TIMESCALE_IMAGE" >/dev/null
 
 i=0
 until docker exec "$PG" pg_isready -U site_mapper -d site_mapper_telemetry >/dev/null 2>&1; do
@@ -56,6 +69,14 @@ done
 
 docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d site_mapper_telemetry \
   -c 'CREATE EXTENSION IF NOT EXISTS timescaledb;' >/dev/null
+
+TIMESCALE_VERSION_ACTUAL="$(docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1 \
+  -U site_mapper -d site_mapper_telemetry \
+  -c "SELECT extversion FROM pg_extension WHERE extname='timescaledb';")"
+if [ -n "$TIMESCALE_VERSION_EXPECTED" ] && [ "$TIMESCALE_VERSION_ACTUAL" != "$TIMESCALE_VERSION_EXPECTED" ]; then
+  echo "TimescaleDB version mismatch: backup=$TIMESCALE_VERSION_EXPECTED restore=$TIMESCALE_VERSION_ACTUAL" >&2
+  exit 4
+fi
 
 # TimescaleDB's pre-restore hook stops background workers. Some container/image
 # combinations terminate the invoking psql connection while doing so. Treat that
@@ -77,15 +98,45 @@ until docker exec "$PG" pg_isready -U site_mapper -d site_mapper_telemetry >/dev
   sleep 1
 done
 
-# Verify the restoring GUC before trusting a disconnected pre_restore session.
+# Verify restore mode from a fresh connection. If pre_restore disconnected before
+# persisting the database-level GUC, set it explicitly and invoke pre_restore
+# once more so background workers are stopped before pg_restore.
 RESTORING="$(docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1 \
   -U site_mapper -d site_mapper_telemetry \
   -c "SELECT current_setting('timescaledb.restoring', true);")"
 case "$RESTORING" in
   on|true|1) ;;
   *)
-    echo "timescaledb_pre_restore did not leave restore mode enabled (rc=$PRE_RESTORE_RC, restoring=$RESTORING)" >&2
-    exit 4
+    echo "timescaledb_pre_restore did not persist restore mode (rc=$PRE_RESTORE_RC, restoring=$RESTORING); applying guarded recovery" >&2
+    docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d postgres \
+      -c "ALTER DATABASE site_mapper_telemetry SET timescaledb.restoring='on';" >/dev/null
+
+    set +e
+    docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d site_mapper_telemetry \
+      -c 'SELECT timescaledb_pre_restore();' >/dev/null 2>&1
+    PRE_RESTORE_RETRY_RC=$?
+    set -e
+
+    i=0
+    until docker exec "$PG" pg_isready -U site_mapper -d site_mapper_telemetry >/dev/null 2>&1; do
+      i=$((i + 1))
+      [ "$i" -lt 60 ] || {
+        echo "TimescaleDB did not recover after guarded pre_restore retry (rc=$PRE_RESTORE_RETRY_RC)" >&2
+        exit 4
+      }
+      sleep 1
+    done
+
+    RESTORING="$(docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1 \
+      -U site_mapper -d site_mapper_telemetry \
+      -c "SELECT current_setting('timescaledb.restoring', true);")"
+    case "$RESTORING" in
+      on|true|1) ;;
+      *)
+        echo "TimescaleDB restore mode is still disabled after guarded recovery (rc=$PRE_RESTORE_RETRY_RC, restoring=$RESTORING)" >&2
+        exit 4
+        ;;
+    esac
     ;;
 esac
 
@@ -96,6 +147,17 @@ docker exec -i "$PG" pg_restore \
 
 docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d site_mapper_telemetry \
   -c 'SELECT timescaledb_post_restore();' >/dev/null
+
+POST_RESTORING="$(docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1 \
+  -U site_mapper -d site_mapper_telemetry \
+  -c "SELECT current_setting('timescaledb.restoring', true);")"
+case "$POST_RESTORING" in
+  off|false|0|'') ;;
+  *)
+    echo "TimescaleDB remained in restore mode after post_restore: $POST_RESTORING" >&2
+    exit 5
+    ;;
+esac
 
 TABLE_COUNT="$(docker exec "$PG" psql -X -At -U site_mapper -d site_mapper_telemetry   -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('telemetry_samples','telemetry_entity_samples');")"
 [ "$TABLE_COUNT" -ge 1 ] || { echo "Timescale telemetry schema was not restored" >&2; exit 5; }

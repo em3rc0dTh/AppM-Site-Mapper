@@ -380,7 +380,7 @@ try {
           .trim();
         return { title, visible };
       });
-      assert.equal(labelState.title, 'CI LIMA RACK');
+      assert.equal(labelState.title, 'CI LIMA Rack');
       assert.ok(labelState.visible.length > 0, 'S04 semantic canvas label disappeared');
       assert.ok(
         labelState.visible.length <= labelState.title.length,

@@ -28,16 +28,20 @@ describe('Equipment telemetry isolation and history', () => {
     });
     expect(hub.latest('equipment')?.reported).toEqual({ power: 44 });
   });
-  it('distinguishes unmapped, empty, live, stale and offline using measurement time', () => {
+  it('uses 5-minute transport cadence and separates source clock skew from offline', () => {
     const now = Date.parse(sample.receivedAt);
     expect(entityTelemetryStatus(false, null, now)).toBe('UNMAPPED');
     expect(entityTelemetryStatus(true, null, now)).toBe('NO DATA');
     expect(entityTelemetryStatus(true, sample, now)).toBe('LIVE');
-    expect(entityTelemetryStatus(true, sample, now + 31_000)).toBe('STALE');
-    expect(entityTelemetryStatus(true, sample, now + 301_000)).toBe('OFFLINE');
+    expect(entityTelemetryStatus(true, sample, now + 300_000)).toBe('LIVE');
+    expect(entityTelemetryStatus(true, sample, now + 361_000)).toBe('STALE');
+    expect(entityTelemetryStatus(true, sample, now + 901_000)).toBe('OFFLINE');
     expect(
       entityTelemetryStatus(true, { ...sample, sourceObservedAt: '2025-01-01T00:00:00Z' }, now),
-    ).toBe('OFFLINE');
+    ).toBe('CLOCK SKEW');
+    expect(
+      entityTelemetryStatus(true, { ...sample, sourceObservedAt: '2026-10-13T11:00:00Z' }, now),
+    ).toBe('CLOCK SKEW');
   });
   it('writes non-BDFB metrics with exact identity and queries history by target rather than SN', async () => {
     const fetchMock = vi

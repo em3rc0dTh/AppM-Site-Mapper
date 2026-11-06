@@ -1,4 +1,5 @@
 import type { TelemetrySample } from './entities';
+import { classifyTelemetryFreshness } from './telemetry-freshness';
 
 export function entityTelemetryStatus(
   mapped: boolean,
@@ -7,6 +8,7 @@ export function entityTelemetryStatus(
 ) {
   if (!mapped) return 'UNMAPPED';
   if (!sample || !Object.keys(sample.reported).length) return 'NO DATA';
+
   const observed = Object.values(sample.reported).flatMap((value) =>
     value &&
     typeof value === 'object' &&
@@ -15,8 +17,7 @@ export function entityTelemetryStatus(
       ? [value.observedAt]
       : [],
   );
-  const age =
-    now - Date.parse(observed.sort().at(-1) ?? sample.sourceObservedAt ?? sample.receivedAt);
-  if (!Number.isFinite(age) || age > 300_000 || age < -30_000) return 'OFFLINE';
-  return age > 30_000 ? 'STALE' : 'LIVE';
+  const sourceObservedAt = observed.sort().at(-1) ?? sample.sourceObservedAt;
+
+  return classifyTelemetryFreshness(sample.receivedAt, sourceObservedAt, now);
 }

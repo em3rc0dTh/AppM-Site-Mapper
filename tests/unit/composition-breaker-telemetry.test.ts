@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   compositionBreakerTelemetry,
+  isInspectableBreakerTelemetry,
   type CompositionBreakerBinding,
 } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
@@ -160,6 +161,17 @@ describe('Equipment Composition breaker telemetry', () => {
       voltageV: 13.2,
       sourceIdentity: 'BRK-SN-01',
     });
+  });
+
+  it('keeps LIVE, STALE and CLOCK SKEW measurements inspectable in the focused breaker view', () => {
+    expect(isInspectableBreakerTelemetry({ status: 'LIVE', voltageV: 12.7 })).toBe(true);
+    expect(isInspectableBreakerTelemetry({ status: 'STALE', voltageV: 12.7 })).toBe(true);
+    expect(isInspectableBreakerTelemetry({ status: 'CLOCK SKEW', voltageV: 12.7 })).toBe(true);
+
+    expect(isInspectableBreakerTelemetry({ status: 'OFFLINE', voltageV: 12.7 })).toBe(false);
+    expect(isInspectableBreakerTelemetry({ status: 'NO DATA' })).toBe(false);
+    expect(isInspectableBreakerTelemetry({ status: 'UNMAPPED' })).toBe(false);
+    expect(isInspectableBreakerTelemetry({ status: 'CONFLICT' })).toBe(false);
   });
 
   it('fails closed when competing authenticated sources claim the same breaker', () => {

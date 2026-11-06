@@ -41,7 +41,7 @@ function record(value: unknown): Readonly<Record<string, unknown>> | null {
 
 export function detectBfdbWireProfile(
   reported: Readonly<Record<string, unknown>>,
-): BdfbWireProfile {
+): BfdbWireProfile {
   const entries = Object.entries(reported);
 
   // The namespace is decisive whenever a packet exposes one of the groups

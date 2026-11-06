@@ -343,8 +343,24 @@ assignment and no copying of the panel payload to its children.
 Explicit commissioning/bindings remain required if the publisher reports
 the whole panel and its individual breakers do not have their own source.
 
-Metric values are only labeled LIVE while fresh (30 seconds).
-An explicitly mapped breaker without a fresh accepted measurement shows
+For the real Acrel dual-channel field layout, a commissioned raw identity such
+as `0_1_1` is a compatibility alias for **channel 1 only**. The canonical
+channel-qualified identities remain `0_1_1#1` for channel 1 and `0_1_1#2`
+for channel 2. A raw alias can never supply U2/I2/P2/EP2. Automatic
+reconciliation must not create a duplicate `#1` binding when the raw channel-1
+alias already exists. LIVE projection, durable history and Modbus FC04 consume
+the same resolved binding semantics.
+
+The field BFDB/Acrel publisher cadence is nominally 5 minutes. Transport receipt
+time is the connectivity authority: values remain `LIVE` through 6 minutes
+(5 minutes plus 20% jitter allowance), become `STALE` after 6 minutes, and
+become `OFFLINE` only after 15 minutes (three missed nominal intervals).
+Embedded source timestamps are compared with `receivedAt`; a divergence greater
+than 30 seconds is surfaced as `CLOCK SKEW` instead of falsely declaring the
+transport offline. The last accepted values remain inspectable through the
+STALE window.
+
+An explicitly mapped breaker without a usable accepted measurement shows
 `MAPPED · NO LIVE READING`. An unbound breaker shows
 `UNMAPPED · NO BREAKER BINDING` and four placeholders.
 An empty Holder position is not treated as a breaker and never shows readings.
@@ -374,9 +390,13 @@ The server supplies active breaker bindings to the client only for users with
 evidence.
 
 With an explicit binding but no usable sample, the bar says `NO DATA`.
-Without a binding, it says `UNMAPPED`. Data between 30 seconds and 5
-minutes old says `STALE`; older data says `OFFLINE`. Incompatible metric
-units are ignored, and multiple competing sources produce `CONFLICT`.
+Without a binding, it says `UNMAPPED`. For the 5-minute BFDB/Acrel cadence,
+received packets are `LIVE` through 6 minutes, `STALE` from 6 to 15 minutes,
+and `OFFLINE` after 15 minutes. A fresh MQTT packet whose embedded source clock
+differs from its receive time by more than 30 seconds is `CLOCK SKEW`: its
+verified measurements remain visible and count as reporting, while the clock
+fault remains explicit. Incompatible metric units are ignored, and multiple
+competing sources produce `CONFLICT`.
 Historical data, Device power paths and Mongo Equipment topology are
 unchanged. No data migration is required.
 

@@ -34,3 +34,9 @@
 - Date and evidence package: **PENDING**
 
 Result: **NOT CERTIFIED** until all relevant P0 checks have signed evidence. LAN and LAB REMOTE are certified separately.
+
+## GitHub Actions validation versus field certification
+
+The PR validation gate requires the following GitHub Actions workflows to complete successfully on the **same PR head SHA**: main `CI` (including unit, integration, typecheck, lint, format and build), `S06 static contract (no deployment)`, and `Industrial integration operator safety`. Any additionally triggered commissioning/security workflows must also succeed. Record the individual workflow run IDs and final conclusions in the PR review rather than relying on a previous commit's green checks.
+
+This **repository CI gate does not authorize deployment** and cannot certify local DNS resolution, client CA trust, firewall ingress, Cloudflare Access policy, reboot behavior, actual off-host backups, isolated restore or WAN disconnection. Those remain separate field acceptance tasks. No TFARM04 or customer host action is implied by passing Actions.

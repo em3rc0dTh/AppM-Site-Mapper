@@ -4,7 +4,9 @@ import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useState, type FormEvent } from 'react';
 
-export function PasswordForm() {
+export function PasswordForm({
+  presentation = 'settings',
+}: Readonly<{ presentation?: 'settings' | 'auth' }>) {
   const t = useTranslations('forms.password');
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -42,14 +44,19 @@ export function PasswordForm() {
     router.refresh();
   }
 
+  const authPresentation = presentation === 'auth';
+
   return (
-    <form className="settings-form" onSubmit={submit}>
+    <form
+      className={authPresentation ? 'auth-form auth-password-form' : 'settings-form'}
+      onSubmit={submit}
+    >
       <label>
-        {t('current')}
+        <span>{t('current')}</span>
         <input autoComplete="current-password" name="currentPassword" required type="password" />
       </label>
       <label>
-        {t('next')}
+        <span>{t('next')}</span>
         <input
           autoComplete="new-password"
           minLength={12}
@@ -58,11 +65,15 @@ export function PasswordForm() {
           type="password"
         />
       </label>
-      <button disabled={busy} type="submit">
+      <button
+        className={authPresentation ? 'auth-submit' : undefined}
+        disabled={busy}
+        type="submit"
+      >
         {busy ? t('changing') : t('submit')}
       </button>
-      <small>{t('help')}</small>
-      {error ? <small className="form-error">{error}</small> : null}
+      <small className={authPresentation ? 'auth-password-help' : undefined}>{t('help')}</small>
+      {error ? <small className="form-error auth-error">{error}</small> : null}
     </form>
   );
 }

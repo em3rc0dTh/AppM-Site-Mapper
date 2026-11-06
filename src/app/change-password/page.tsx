@@ -21,13 +21,15 @@ export default async function ChangePasswordPage() {
       eyebrow={t('eyebrow')}
       title={t('title')}
       description={user.mustChangePassword ? t('forcedDescription') : t('description')}
+      showProviderBrand
+      heritageBrand
     >
       <div className="auth-account">
         <span>{t('signedInAs')}</span>
         <strong>{user.displayName}</strong>
         <small>{user.email}</small>
       </div>
-      <PasswordForm />
+      <PasswordForm presentation="auth" />
     </AuthFrame>
   );
 }

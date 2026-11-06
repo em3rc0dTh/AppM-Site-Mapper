@@ -342,6 +342,51 @@
   border-color: #078e6b !important;
 }
 
+/* First-login password rotation uses the same Mk2 auth surface as /login.
+   Settings keeps its normal settings-form presentation. */
+.zip-login-page--heritage .auth-account {
+  display: grid;
+  gap: 3px;
+  margin-bottom: 22px;
+  padding: 13px 15px;
+  border: 1px solid #dce5e2;
+  border-radius: 10px;
+  background: rgba(245, 250, 248, 0.9);
+  color: #31413f;
+}
+
+.zip-login-page--heritage .auth-account span,
+.zip-login-page--heritage .auth-account small {
+  color: #6b7b78;
+  font-size: 11px;
+}
+
+.zip-login-page--heritage .auth-account strong {
+  color: #202a29;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.zip-login-page--heritage .auth-password-form label:first-child::before,
+.zip-login-page--heritage .auth-password-form label:nth-child(2)::before {
+  content: '▢';
+}
+
+.zip-login-page--heritage .auth-password-help {
+  display: block;
+  margin-top: -8px;
+  color: #66746f;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.zip-login-page--heritage .auth-password-form .auth-error {
+  display: block;
+  margin-top: -8px;
+  text-align: center;
+}
+
 .zip-login-page--heritage .zip-login-footer--branded {
   position: relative;
   z-index: 1;

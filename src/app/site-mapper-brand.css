@@ -342,7 +342,6 @@
   border-color: #078e6b !important;
 }
 
-
 /* First-login password rotation uses the same Mk2 auth surface as /login.
    Settings keeps its normal settings-form presentation. */
 .zip-login-page--heritage .auth-account {

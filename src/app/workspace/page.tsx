@@ -99,8 +99,13 @@ export default async function WorkspacePage() {
         <header className="sm-home-heading">
           <div>
             <span className="sm-home-breadcrumb">⌂ {t('home')}</span>
-            <div className="sm-home-product-signature" aria-label="AppManager SiteMapper Mk2">
-              <span className="sm-home-appmanager"><b>A</b>ppManager</span>
+            <div
+              className="sm-home-product-signature"
+              aria-label="AppManager SiteMapper Mk2"
+            >
+              <span className="sm-home-appmanager">
+                <b>A</b>ppManager
+              </span>
               <span className="sm-home-product-line">
                 <span className="sm-home-sitemapper">SiteMapper</span>
                 <span className="sm-home-mk">Mk2</span>

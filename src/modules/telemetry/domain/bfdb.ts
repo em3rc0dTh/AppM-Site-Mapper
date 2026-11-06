@@ -6,6 +6,11 @@ import type {
   TelemetryBinding,
   TelemetryMetricValue,
 } from '@/modules/telemetry/domain/entities';
+import {
+  detectBfdbWireProfile,
+  expandBfdbWirePoint,
+  isFieldStatusOnlyPoint,
+} from '@/modules/telemetry/domain/bfdb-wire-layout';
 import { normalizePowerToWatts } from '@/modules/telemetry/domain/power-unit-contract';
 
 interface ResolvedBreaker {
@@ -80,14 +85,14 @@ function breakerMap(presentation: BdfbPresentation): ReadonlyMap<string, Resolve
 function metricBindingMap(
   bindings: readonly TelemetryBinding[],
   sourceIdentity: string,
-  rawPointId: string,
-): { targetId: string; metrics: ReadonlyMap<BfdbMetric, TelemetryBinding> } | null {
+  sourcePointId: string,
+): { targetId: string; metrics: ReadonlyMap<BdfbMetric, TelemetryBinding> } | null {
   const candidates = bindings.filter(
     (binding) =>
       binding.lifecycle === 'ACTIVE' &&
       binding.protocol === 'MQTT' &&
       binding.sourceIdentity === sourceIdentity &&
-      binding.sourcePointId === rawPointId &&
+      binding.sourcePointId === sourcePointId &&
       binding.targetType === 'EQUIPMENT',
   );
   if (candidates.length === 0) return null;
@@ -97,11 +102,11 @@ function metricBindingMap(
   const targetId = [...targetIds][0];
   if (!targetId) return null;
 
-  const metrics = new Map<BfdbMetric, TelemetryBinding>();
+  const metrics = new Map<BdfbMetric, TelemetryBinding>();
   for (const binding of candidates) {
     const name = binding.metric.toUpperCase();
-    if (!BFDB_METRICS.includes(name as BfdbMetric)) continue;
-    const typed = name as BfdbMetric;
+    if (!BFDB_METRICS.includes(name as BdfbMetric)) continue;
+    const typed = name as BdfbMetric;
     if (metrics.has(typed)) return null;
     metrics.set(typed, binding);
   }
@@ -120,6 +125,7 @@ export function buildBfdbBreakerReadings(
   const byBreaker = breakerMap(presentation);
   const readings: BreakerTelemetryReading[] = [];
   const unmappedPointIds: string[] = [];
+  const profile = detectBfdbWireProfile(message.reported);
 
   for (const [rawPointId, rawPoint] of Object.entries(message.reported)) {
     if (!isRecord(rawPoint)) {
@@ -127,45 +133,68 @@ export function buildBfdbBreakerReadings(
       continue;
     }
 
-    const mapping = metricBindingMap(bindings, message.sourceIdentity, rawPointId);
-    const resolved = mapping ? byBreaker.get(mapping.targetId) : undefined;
-    if (!resolved) {
-      unmappedPointIds.push(rawPointId);
+    const wirePoints = expandBfdbWirePoint(rawPointId, rawPoint, profile);
+    if (!wirePoints.length) {
+      // Acrel field objects 13..24 are connectivity/state shadows; the actual
+      // 24 measured circuits are encoded as channels 1/2 of objects 1..12.
+      if (!isFieldStatusOnlyPoint(rawPointId, profile)) unmappedPointIds.push(rawPointId);
       continue;
     }
 
-    const accepts = (name: BfdbMetric) => !mapping || mapping.metrics.has(name);
-    const voltageV = accepts('VOLTAGE') ? metric(rawPoint.U1, observedAt) : undefined;
-    const currentA = accepts('CURRENT') ? metric(rawPoint.I1, observedAt) : undefined;
-    const powerW = accepts('POWER')
-      ? powerMetric(rawPoint.P1, observedAt, mapping?.metrics.get('POWER')?.unit)
-      : undefined;
-    const energyKwh = accepts('ENERGY') ? metric(rawPoint.EP1, observedAt) : undefined;
-    const metrics: BreakerTelemetryMetrics = {
-      ...(voltageV ? { voltageV } : {}),
-      ...(currentA ? { currentA } : {}),
-      ...(powerW ? { powerW } : {}),
-      ...(energyKwh ? { energyKwh } : {}),
-    };
+    let mappedAny = false;
+    for (const point of wirePoints) {
+      const mapping = metricBindingMap(bindings, message.sourceIdentity, point.bindingPointId);
+      const resolved = mapping ? byBreaker.get(mapping.targetId) : undefined;
+      if (!resolved) continue;
 
-    const state =
-      rawPoint.state === undefined ? undefined : { value: String(rawPoint.state), observedAt };
+      const accepts = (name: BdfbMetric) => mapping.metrics.has(name);
+      const voltageV = accepts('VOLTAGE')
+        ? metric(rawPoint[point.fields.voltage], observedAt)
+        : undefined;
+      const currentA = accepts('CURRENT')
+        ? metric(rawPoint[point.fields.current], observedAt)
+        : undefined;
+      const powerW = accepts('POWER')
+        ? powerMetric(
+            rawPoint[point.fields.power],
+            observedAt,
+            mapping.metrics.get('POWER')?.unit,
+          )
+        : undefined;
+      const energyKwh = accepts('ENERGY')
+        ? metric(rawPoint[point.fields.energy], observedAt)
+        : undefined;
+      const metrics: BreakerTelemetryMetrics = {
+        ...(voltageV ? { voltageV } : {}),
+        ...(currentA ? { currentA } : {}),
+        ...(powerW ? { powerW } : {}),
+        ...(energyKwh ? { energyKwh } : {}),
+      };
+      if (!Object.keys(metrics).length) continue;
 
-    readings.push({
-      deviceId: presentation.deviceId,
-      sourceIdentity: message.sourceIdentity,
-      shelfId: resolved.shelfId,
-      frameId: resolved.frameId,
-      panelId: resolved.panelId,
-      panelLabel: resolved.panelLabel,
-      breakerId: resolved.breakerId,
-      breakerLabel: resolved.breakerLabel,
-      rawPointId,
-      position: resolved.position,
-      metrics,
-      ...(state ? { state } : {}),
-      receivedAt: message.receivedAt,
-    });
+      const state =
+        rawPoint.state === undefined ? undefined : { value: String(rawPoint.state), observedAt };
+
+      readings.push({
+        deviceId: presentation.deviceId,
+        sourceIdentity: message.sourceIdentity,
+        shelfId: resolved.shelfId,
+        frameId: resolved.frameId,
+        panelId: resolved.panelId,
+        panelLabel: resolved.panelLabel,
+        breakerId: resolved.breakerId,
+        breakerLabel: resolved.breakerLabel,
+        rawPointId,
+        modbusPointId: point.modbusPointId,
+        position: resolved.position,
+        metrics,
+        ...(state ? { state } : {}),
+        receivedAt: message.receivedAt,
+      });
+      mappedAny = true;
+    }
+
+    if (!mappedAny) unmappedPointIds.push(rawPointId);
   }
 
   return { readings, unmappedPointIds };

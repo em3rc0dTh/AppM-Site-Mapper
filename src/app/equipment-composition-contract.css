@@ -383,7 +383,8 @@
   box-shadow: 0 0 0 3px rgba(57, 219, 186, 0.16);
 }
 
-.ec-status[data-status='STALE'] .ec-status-dot {
+.ec-status[data-status='STALE'] .ec-status-dot,
+.ec-status[data-status='CLOCK SKEW'] .ec-status-dot {
   background: #e9bb67;
 }
 

@@ -36,7 +36,7 @@ docker compose --env-file .runtime/office-test.env \
 
 These commands are **examples, not proof of deployment**, and the private env path is illustrative. Never generate new secrets over a working installation. The Caddy service has its own persistent volumes. The version should be reviewed/pinned to an approved image digest for the customer release.
 
-The sample image-level healthcheck verifies only that the binary exists. It is **not** an HTTPS healthcheck. A real health probe must validate HTTPS, hostname/SAN, the local CA chain and the application response without `-k`.
+The Caddy overlay does not claim a superficial binary-level healthcheck. The separate S06 watchdog verifies HTTPS, the exact hostname, local CA trust and Next.js /api/health without `-k`. See [operational implementation](operations.md).
 
 ## DNS and trust workflow
 
@@ -49,7 +49,7 @@ The sample image-level healthcheck verifies only that the binary exists. It is *
 ## HU-042/043 supervisor and watchdog
 
 - Docker `restart: unless-stopped` helps with process/daemon restart but does not establish boot ordering, WAN independence, OS readiness, or app functional health.
-- Gate a host-level systemd unit / timer design on the actual Linux deployment. It must not blindly re-run a build or a seed on every boot.
+- Repository includes proposed systemd units and timer templates in `infra/field/ops/systemd/`. Their installation remains gated on actual Linux deployment. It must not blindly re-run a build or a seed on every boot.
 - Watchdog states: HEALTHY -> SUSPECT -> DEGRADED -> RECOVERING -> HEALTHY/LOCKOUT.
 - Initial proposal: checks at 60s, 3 consecutive failures, max 3 recovery attempts in 15m. Confirm with customer reliability requirements.
 - Never restart Mongo/Timescale because Caddy has failed. Record each action locally; require explicit intervention after retry exhaustion.
@@ -57,7 +57,7 @@ The sample image-level healthcheck verifies only that the binary exists. It is *
 ## HU-044 backup / restore
 
 - Record current Mongo replica set state and perform an engine-consistent backup.
-- Backup Timescale/PostgreSQL with a database-consistent mechanism; do not copy open volume directories as the only backup.
+- The repository backup candidate uses `mongodump`, `pg_dump -Fc`, encrypted `age` artifacts and a required off-host mount. Backup Timescale/PostgreSQL with a database-consistent mechanism; do not copy open volume directories as the only backup.
 - Backup Compose version/config, DNS/firewall instructions, private config, Caddy CA keys and Caddy data securely.
 - Keep backups off-host with retention and access controls. Set RPO/RTO with customer.
 - Restore to **an isolated environment** first, confirm application identities and TLS continuity, never overwrite the live data during a restoration drill.

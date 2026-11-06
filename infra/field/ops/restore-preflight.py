@@ -42,7 +42,7 @@ def main() -> int:
     if target.exists():
         raise RuntimeError("isolated output already exists: refusing overwrite")
     # Prevent writing back into the live repository or mounted Docker data trees.
-    if str(target).startswith(str(Path.cwd().resolve()) + os.sep):
+    if target == Path.cwd().resolve() or str(target).startswith(str(Path.cwd().resolve()) + os.sep):
         raise RuntimeError("choose an isolated output outside the working repository")
     for name, record in manifest["files"].items():
         if Path(name).name != name or not name.endswith(".age"):

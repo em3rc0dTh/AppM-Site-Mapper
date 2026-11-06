@@ -7,6 +7,7 @@ import type {
   TelemetryBinding,
 } from '@/modules/telemetry/domain/entities';
 import {
+  bindingPointIdsForWirePoint,
   detectBfdbWireProfile,
   expandBfdbWirePoint,
 } from '@/modules/telemetry/domain/bfdb-wire-layout';
@@ -129,12 +130,13 @@ export class AutomaticBfdbBindingReconciler {
           const wireField = wireByMetric[metric as keyof typeof wireByMetric];
           if (numeric(raw[wireField]) === null) continue;
 
+          const acceptedPointIds = bindingPointIdsForWirePoint(point, profile);
           const existingForSourcePoint = currentSourceBindings.filter(
             (binding) =>
               binding.lifecycle === 'ACTIVE' &&
               binding.protocol === 'MQTT' &&
               binding.sourceIdentity === message.sourceIdentity &&
-              binding.sourcePointId === point.bindingPointId &&
+              Boolean(binding.sourcePointId && acceptedPointIds.includes(binding.sourcePointId)) &&
               binding.metric.toUpperCase() === metric,
           );
           if (existingForSourcePoint.length > 0) continue;

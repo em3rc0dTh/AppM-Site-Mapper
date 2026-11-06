@@ -9,7 +9,7 @@ function command(unit, offset, count) {
   frame.writeUInt16BE(0, 2);
   frame.writeUInt16BE(6, 4);
   frame[6] = unit;
-  frame[7] = 3;
+  frame[7] = 4;
   frame.writeUInt16BE(offset, 8);
   frame.writeUInt16BE(count, 10);
   return frame;
@@ -23,8 +23,8 @@ async function read(unit, offset, count) {
     socket.setTimeout(2000, () => socket.destroy(new Error('Modbus read timed out')));
     socket.once('data', (chunk) => {
       socket.destroy();
-      if (chunk.readUInt16BE(0) !== 101 || chunk[6] !== unit || chunk[7] !== 3) {
-        reject(new Error('Unexpected Modbus MBAP/FC03 response'));
+      if (chunk.readUInt16BE(0) !== 101 || chunk[6] !== unit || chunk[7] !== 4) {
+        reject(new Error('Unexpected Modbus MBAP/FC04 response'));
       } else {
         resolve(chunk);
       }
@@ -49,5 +49,5 @@ assert.ok(Math.abs(voltage - 13.79) < 0.001, 'MQTT reading not exported to Modbu
 const other = await read(2, 0, 8);
 assert.equal(other.readFloatBE(9), 0, 'Second BFDB Unit ID leaked first BFDB voltage');
 console.log(
-  '[PASS] MQTT -> Site Mapper accepted breaker -> Modbus FC03 TCP FLOAT32, 4 metrics, isolated Unit IDs',
+  '[PASS] MQTT -> Site Mapper accepted breaker -> Modbus FC04 TCP FLOAT32, 4 metrics, isolated Unit IDs',
 );

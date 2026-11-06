@@ -21,10 +21,12 @@ Prueba de aceptación para la salida Site Mapper -> Modbus TCP -> Metasys/BMS. E
 La salida base de circuitos usa:
 
 - Modbus TCP;
-- FC03 Holding Registers;
-- FLOAT32 para V/A/W/kWh en el contrato eléctrico vigente;
+- **FC04 Input Registers**;
+- FLOAT32 para **V/A/kW/kWh** en el contrato eléctrico vigente;
 - dos registros de 16 bits por FLOAT32;
-- Unit IDs y addresses explícitamente comisionados.
+- Unit IDs y addresses explícitamente comisionados;
+- breakers 01-A…48-A / 01-B…48-B en offsets 0…767;
+- circuito 00 (Total QDF) en offsets 768…775.
 
 No utilizar el CSV de integración controlada como As-Built de cliente sin sustituir identities y mappings por los aprobados en campo.
 
@@ -38,7 +40,7 @@ Registrar:
 | TCP port                   |                  |
 | Metasys IP                 |                  |
 | Unit ID                    |                  |
-| Address base               | 0 / 1            |
+| Address base               | 0-based          |
 | Word order                 |                  |
 | Poll interval              |                  |
 | Timeout/retries            |                  |

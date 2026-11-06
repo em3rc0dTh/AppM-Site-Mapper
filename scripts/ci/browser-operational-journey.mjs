@@ -327,8 +327,8 @@ try {
   );
   assert.equal(explorerColumns.length, 2, 'Laptop topology Explorer must show canvas + Inspector');
   assert.ok(
-    Math.abs(explorerColumns[1] - 292) < 2,
-    `1366px Explorer Inspector width: ${explorerColumns[1]}`,
+    Math.abs(explorerColumns[1] - 320) < 2,
+    `1366px S03 Explorer Inspector default width: ${explorerColumns[1]}`,
   );
   console.log('[PASS] Real Chromium: laptop Network Explorer retains canvas and Inspector');
 

@@ -13,6 +13,10 @@ import { TelemetryHub } from '@/modules/telemetry/application/telemetry-hub';
 import { TelemetryService } from '@/modules/telemetry/application/telemetry-service';
 import type { TelemetryHistoryWriterDiagnostics } from '@/modules/telemetry/application/telemetry-history-writer';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
+import {
+  detectBfdbWireProfile,
+  findBfdbWirePointByBindingId,
+} from '@/modules/telemetry/domain/bfdb-wire-layout';
 import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
 import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
 import { NativeMqttSource } from '@/modules/telemetry/infrastructure/native-mqtt-source';
@@ -358,7 +362,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
                 metrics: unknown;
               }> = [...(result.value.breakerReadings ?? [])].map((reading) => ({
                 sourceIdentity: reading.sourceIdentity,
-                rawPointId: reading.rawPointId,
+                rawPointId: reading.modbusPointId ?? reading.rawPointId,
                 receivedAt: reading.receivedAt,
                 metrics: reading.metrics,
               }));
@@ -384,16 +388,23 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
                 rawReported && typeof rawReported === 'object' && !Array.isArray(rawReported)
                   ? (rawReported as Record<string, unknown>)
                   : {};
+              const wireProfile = detectBfdbWireProfile(freshPoints);
               for (const item of directSamples) {
-                const point = item.sourcePointId!;
-                const raw = freshPoints[point];
+                const sourcePointId = item.sourcePointId!;
+                const point = findBfdbWirePointByBindingId(
+                  sourcePointId,
+                  freshPoints,
+                  wireProfile,
+                );
+                if (!point) continue;
+                const raw = freshPoints[point.rawPointId];
                 if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
                 const source = raw as Record<string, unknown>;
                 const fields = [
-                  ['U1', 'voltageV'],
-                  ['I1', 'currentA'],
-                  ['P1', 'powerW'],
-                  ['EP1', 'energyKwh'],
+                  [point.fields.voltage, 'voltageV'],
+                  [point.fields.current, 'currentA'],
+                  [point.fields.power, 'powerW'],
+                  [point.fields.energy, 'energyKwh'],
                 ] as const;
                 const metrics: Record<string, { value: number }> = {};
                 for (const [wire, normalized] of fields) {
@@ -412,7 +423,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
                 if (Object.keys(metrics).length) {
                   mappedReadings.push({
                     sourceIdentity: item.sourceIdentity,
-                    rawPointId: point,
+                    rawPointId: point.modbusPointId,
                     receivedAt: item.receivedAt,
                     metrics,
                   });

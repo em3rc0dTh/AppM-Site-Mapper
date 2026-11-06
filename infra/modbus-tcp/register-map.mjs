@@ -1,5 +1,5 @@
-// Canonical, read-only Site Mapper Modbus TCP register contract.
-// No Vertiv addresses or battery-only data are inherited.
+// Canonical, read-only Site Mapper -> Metasys Modbus TCP contract.
+// The client-facing map is frozen by Modbus_TCP_v1.2.xlsx.
 export const CIRCUITS = 96;
 export const METRIC_DEFINITIONS = Object.freeze([
   Object.freeze({ key: 'voltageV', label: 'Voltage', unit: 'V' }),
@@ -10,13 +10,28 @@ export const METRIC_DEFINITIONS = Object.freeze([
 export const METRICS = Object.freeze(METRIC_DEFINITIONS.map((metric) => metric.key));
 export const REGISTERS_PER_METRIC = 2;
 export const REGISTERS_PER_CIRCUIT = METRIC_DEFINITIONS.length * REGISTERS_PER_METRIC;
-export const REGISTERS_PER_UNIT = CIRCUITS * REGISTERS_PER_CIRCUIT;
+export const CIRCUIT_REGISTERS_PER_UNIT = CIRCUITS * REGISTERS_PER_CIRCUIT;
+export const TOTAL_START_ADDRESS = CIRCUIT_REGISTERS_PER_UNIT;
+export const TOTAL_METRIC_DEFINITIONS = Object.freeze(
+  METRIC_DEFINITIONS.map((metric, index) =>
+    Object.freeze({ ...metric, address: TOTAL_START_ADDRESS + index * REGISTERS_PER_METRIC }),
+  ),
+);
+export const REGISTERS_PER_UNIT =
+  TOTAL_START_ADDRESS + TOTAL_METRIC_DEFINITIONS.length * REGISTERS_PER_METRIC;
 export const POINT_LAYOUTS = Object.freeze(['blocks-2x48', 'panels-4x24']);
 
 export function modbusEngineeringValue(metricKey, value) {
   if (!METRICS.includes(metricKey)) throw new RangeError('Unknown Modbus metric');
   if (!Number.isFinite(value)) throw new TypeError('Finite Modbus metric value required');
   return metricKey === 'powerW' ? value / 1000 : value;
+}
+
+export function clientBreakerLabel(circuit) {
+  circuitStartAddress(circuit);
+  return circuit <= 48
+    ? `${String(circuit).padStart(2, '0')}-A`
+    : `${String(circuit - 48).padStart(2, '0')}-B`;
 }
 
 export function circuitStartAddress(circuit) {
@@ -32,7 +47,13 @@ export function metricStartAddress(circuit, metricKey) {
   return circuitStartAddress(circuit) + index * REGISTERS_PER_METRIC;
 }
 
-export function pointIdForCircuit(circuit, pointLayout = 'panels-4x24') {
+export function totalMetricStartAddress(metricKey) {
+  const definition = TOTAL_METRIC_DEFINITIONS.find((metric) => metric.key === metricKey);
+  if (!definition) throw new RangeError('Unknown Modbus total metric');
+  return definition.address;
+}
+
+export function pointIdForCircuit(circuit, pointLayout = 'blocks-2x48') {
   circuitStartAddress(circuit);
   if (!POINT_LAYOUTS.includes(pointLayout)) throw new RangeError('Invalid point layout');
   const width = pointLayout === 'panels-4x24' ? 24 : 48;
@@ -52,7 +73,39 @@ export function rawPointIndex(rawPointId, pointLayout = 'blocks-2x48') {
   throw new Error('MODBUS_POINT_LAYOUT must be blocks-2x48 or panels-4x24');
 }
 
-export function registerMapRows(sourceUnits, pointLayout = 'panels-4x24') {
+function mapRow({
+  category,
+  description,
+  unit,
+  source,
+  circuit,
+  circuitLabel,
+  metric,
+  address,
+  rawPoint,
+}) {
+  const hex = (value) => value.toString(16).toUpperCase().padStart(4, '0') + 'H';
+  return {
+    category,
+    description,
+    reference: `${40001 + address}-${40002 + address}`,
+    dataAddress: `${hex(address)}-${hex(address + 1)}`,
+    startAddress: address,
+    unitId: unit,
+    sourceIdentity: source,
+    circuit,
+    circuitLabel,
+    rawPoint,
+    functionCode: '04',
+    dataType: 'FLOAT32',
+    registerCount: REGISTERS_PER_METRIC,
+    engineeringUnit: metric.unit,
+    scale: 1,
+    wordOrder: 'High word first',
+  };
+}
+
+export function registerMapRows(sourceUnits, pointLayout = 'blocks-2x48') {
   if (!POINT_LAYOUTS.includes(pointLayout)) throw new RangeError('Invalid point layout');
   if (!sourceUnits || typeof sourceUnits !== 'object' || Array.isArray(sourceUnits)) {
     throw new TypeError('Source-to-Unit-ID object required');
@@ -66,29 +119,40 @@ export function registerMapRows(sourceUnits, pointLayout = 'panels-4x24') {
     }
     used.add(unit);
   }
+
   const rows = [];
   for (const [source, unit] of identities.sort((a, b) => a[1] - b[1])) {
+    for (const metric of TOTAL_METRIC_DEFINITIONS) {
+      rows.push(
+        mapRow({
+          category: 'QDF Total',
+          description: `00 QDF Total ${metric.label}`,
+          unit,
+          source,
+          circuit: 0,
+          circuitLabel: '00',
+          metric,
+          address: metric.address,
+          rawPoint: null,
+        }),
+      );
+    }
+
     for (let circuit = 1; circuit <= CIRCUITS; circuit++) {
       for (const metric of METRIC_DEFINITIONS) {
-        const address = metricStartAddress(circuit, metric.key);
-        const hex = (value) => value.toString(16).toUpperCase().padStart(4, '0') + 'H';
-        rows.push({
-          category: 'Circuit Measurements',
-          description: `Circuit ${String(circuit).padStart(2, '0')} ${metric.label}`,
-          reference: `${40001 + address}-${40002 + address}`,
-          dataAddress: `${hex(address)}-${hex(address + 1)}`,
-          startAddress: address,
-          unitId: unit,
-          sourceIdentity: source,
-          circuit,
-          rawPoint: pointIdForCircuit(circuit, pointLayout),
-          functionCode: '03',
-          dataType: 'FLOAT32',
-          registerCount: REGISTERS_PER_METRIC,
-          engineeringUnit: metric.unit,
-          scale: 1,
-          wordOrder: 'High word first',
-        });
+        rows.push(
+          mapRow({
+            category: 'Circuit Measurements',
+            description: `${clientBreakerLabel(circuit)} ${metric.label}`,
+            unit,
+            source,
+            circuit,
+            circuitLabel: clientBreakerLabel(circuit),
+            metric,
+            address: metricStartAddress(circuit, metric.key),
+            rawPoint: pointIdForCircuit(circuit, pointLayout),
+          }),
+        );
       }
     }
   }

@@ -63,6 +63,9 @@ jobs:
       - name: Read-only Modbus certification script syntax
         run: node --check scripts/operations/certify-modbus-cb01.mjs
 
+      - name: Full local golden path shell syntax
+        run: sh -n scripts/operations/full-local-golden-path.sh
+
       - name: Telxius consolidated launcher syntax
         run: python3 -m py_compile scripts/telemetry/seed-01-telxius-lab.py
 

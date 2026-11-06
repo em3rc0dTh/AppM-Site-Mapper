@@ -34,7 +34,8 @@ const siteMapperBrandFont = Josefin_Sans({
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('metadata');
   return {
-    title: 'AppM Site Mapper MK1',
+    title: 'AppManager SiteMapper Mk2',
+    applicationName: 'AppManager SiteMapper Mk2',
     description: t('description'),
   };
 }

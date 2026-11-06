@@ -391,11 +391,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
               const wireProfile = detectBfdbWireProfile(freshPoints);
               for (const item of directSamples) {
                 const sourcePointId = item.sourcePointId!;
-                const point = findBfdbWirePointByBindingId(
-                  sourcePointId,
-                  freshPoints,
-                  wireProfile,
-                );
+                const point = findBfdbWirePointByBindingId(sourcePointId, freshPoints, wireProfile);
                 if (!point) continue;
                 const raw = freshPoints[point.rawPointId];
                 if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;

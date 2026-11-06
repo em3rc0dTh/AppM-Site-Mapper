@@ -5,24 +5,24 @@ The Excel allocation is authoritative for the Site Mapper -> Metasys Modbus surf
 
 ## Frozen contract
 
-| Field | Value |
-| --- | --- |
-| Transport | Modbus TCP (MBAP) |
-| Function code | **04 — Read Input Registers** |
-| TCP production port | 502 after authorized OT publication |
-| Unit IDs | 1 = QDF-2, 2 = QDF-4, 3 = QDF-5 |
-| Breaker labels | 01-A…48-A and 01-B…48-B |
-| Total label | 00 = Entire QDF |
-| Measurements | Voltage (V), Current (A), Power (kW), Energy (kWh) |
-| Value representation | IEEE-754 FLOAT32, two 16-bit registers |
-| Word/byte order | High word first; network big-endian bytes |
-| Scaling | 1 on wire; internal power W is published as kW |
-| Breaker block | offsets 0…767 |
-| Total block | offsets 768…775 |
-| Registers per Unit ID | 776 |
-| Points per Unit ID | 388 |
-| Total points | 1,164 |
-| Access | Read-only |
+| Field                 | Value                                              |
+| --------------------- | -------------------------------------------------- |
+| Transport             | Modbus TCP (MBAP)                                  |
+| Function code         | **04 — Read Input Registers**                      |
+| TCP production port   | 502 after authorized OT publication                |
+| Unit IDs              | 1 = QDF-2, 2 = QDF-4, 3 = QDF-5                    |
+| Breaker labels        | 01-A…48-A and 01-B…48-B                            |
+| Total label           | 00 = Entire QDF                                    |
+| Measurements          | Voltage (V), Current (A), Power (kW), Energy (kWh) |
+| Value representation  | IEEE-754 FLOAT32, two 16-bit registers             |
+| Word/byte order       | High word first; network big-endian bytes          |
+| Scaling               | 1 on wire; internal power W is published as kW     |
+| Breaker block         | offsets 0…767                                      |
+| Total block           | offsets 768…775                                    |
+| Registers per Unit ID | 776                                                |
+| Points per Unit ID    | 388                                                |
+| Total points          | 1,164                                              |
+| Access                | Read-only                                          |
 
 The documentary 4xxxx reference is one-based: offset 0 = 40001. The actual Modbus request uses the
 zero-based start address unless the Metasys driver is configured for another addressing convention.
@@ -33,33 +33,33 @@ The runtime keeps a stable internal ordinal only to calculate register offsets. 
 a client breaker number.
 
 | Client breaker | Internal ordinal | Start block |
-| --- | ---: | ---: |
-| 01-A | 1 | 0 |
-| … | … | … |
-| 48-A | 48 | 376 |
-| 01-B | 49 | 384 |
-| … | … | … |
-| 48-B | 96 | 760 |
+| -------------- | ---------------: | ----------: |
+| 01-A           |                1 |           0 |
+| …              |                … |           … |
+| 48-A           |               48 |         376 |
+| 01-B           |               49 |         384 |
+| …              |                … |           … |
+| 48-B           |               96 |         760 |
 
 Each breaker consumes eight registers:
 
 | Measurement | Relative offset | Example 01-A |
-| --- | ---: | --- |
-| Voltage | +0 | 40001-40002 |
-| Current | +2 | 40003-40004 |
-| Power | +4 | 40005-40006 |
-| Energy | +6 | 40007-40008 |
+| ----------- | --------------: | ------------ |
+| Voltage     |              +0 | 40001-40002  |
+| Current     |              +2 | 40003-40004  |
+| Power       |              +4 | 40005-40006  |
+| Energy      |              +6 | 40007-40008  |
 
 ## QDF total 00
 
 The four QDF totals occupy the eight registers immediately after the breaker block.
 
-| 00 measurement | Reference | Start address | Unit |
-| --- | --- | ---: | --- |
-| Voltage | 40769-40770 | 768 | V |
-| Current | 40771-40772 | 770 | A |
-| Power | 40773-40774 | 772 | kW |
-| Energy | 40775-40776 | 774 | kWh |
+| 00 measurement | Reference   | Start address | Unit |
+| -------------- | ----------- | ------------: | ---- |
+| Voltage        | 40769-40770 |           768 | V    |
+| Current        | 40771-40772 |           770 | A    |
+| Power          | 40773-40774 |           772 | kW   |
+| Energy         | 40775-40776 |           774 | kWh  |
 
 Voltage, Current and Power can be mirrored from the commissioned canonical QDF projections. Total
 Energy is the sum of the latest accepted 96 breaker energy counters after every breaker has supplied

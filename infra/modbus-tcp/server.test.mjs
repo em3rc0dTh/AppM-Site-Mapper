@@ -77,7 +77,10 @@ test('invalid source and out-of-map points do not corrupt Input Registers', () =
   const state = new ModbusLatestState(sourceMap);
   assert.equal(state.apply(sample('UNTRUSTED', '0_1_1', 99)), false);
   assert.equal(state.apply(sample('EMU-BFDB-01', '0_9_1', 99)), false);
-  assert.equal(state.read(1, 0, 8).every((value) => value === 0), true);
+  assert.equal(
+    state.read(1, 0, 8).every((value) => value === 0),
+    true,
+  );
   assert.equal(handleFrame(command(1, 775, 2), state)[8], 2);
   assert.equal(handleFrame(command(1, 0, 126), state)[8], 2);
   assert.equal(handleFrame(command(1, 0, 1, 3), state)[7], 0x83);

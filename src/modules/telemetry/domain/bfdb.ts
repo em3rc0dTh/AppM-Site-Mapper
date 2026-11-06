@@ -156,11 +156,7 @@ export function buildBfdbBreakerReadings(
         ? metric(rawPoint[point.fields.current], observedAt)
         : undefined;
       const powerW = accepts('POWER')
-        ? powerMetric(
-            rawPoint[point.fields.power],
-            observedAt,
-            mapping.metrics.get('POWER')?.unit,
-          )
+        ? powerMetric(rawPoint[point.fields.power], observedAt, mapping.metrics.get('POWER')?.unit)
         : undefined;
       const energyKwh = accepts('ENERGY')
         ? metric(rawPoint[point.fields.energy], observedAt)

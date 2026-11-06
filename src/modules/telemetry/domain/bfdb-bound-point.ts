@@ -1,8 +1,5 @@
 import { normalizePowerToWatts } from './power-unit-contract';
-import {
-  detectBfdbWireProfile,
-  expandBfdbWirePoint,
-} from './bfdb-wire-layout';
+import { detectBfdbWireProfile, expandBfdbWirePoint } from './bfdb-wire-layout';
 import type { TelemetryBinding, TelemetrySample, NormalizedTelemetryMessage } from './entities';
 
 const METRICS = {

@@ -71,7 +71,6 @@ describe('Acrel BFDB field wire layout', () => {
     });
   });
 
-
   it('keeps measured 1/2/3/4 24-position frames in legacy mode even when U2 exists', () => {
     const legacy = {
       '0_1_1': { U1: '12.0', U2: '0.00' },

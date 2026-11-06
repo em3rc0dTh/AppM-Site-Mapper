@@ -74,10 +74,7 @@ export function detectBfdbWireProfile(
   return 'LEGACY_SINGLE_24';
 }
 
-export function isFieldStatusOnlyPoint(
-  rawPointId: string,
-  profile: BfdbWireProfile,
-): boolean {
+export function isFieldStatusOnlyPoint(rawPointId: string, profile: BfdbWireProfile): boolean {
   if (profile !== 'FIELD_DUAL_12') return false;
   const match = /^0_([1357])_([1-9]|1[0-9]|2[0-4])$/.exec(rawPointId);
   return Boolean(match && Number(match[2]) > 12);
@@ -105,8 +102,7 @@ function makePoint(
   const sidePosition = sideBase + panelPosition;
   return {
     rawPointId,
-    bindingPointId:
-      profile === 'FIELD_DUAL_12' ? `${rawPointId}#${channel}` : rawPointId,
+    bindingPointId: profile === 'FIELD_DUAL_12' ? `${rawPointId}#${channel}` : rawPointId,
     channel,
     panelLabel,
     panelPosition,
@@ -130,24 +126,8 @@ export function expandBfdbWirePoint(
     const group = FIELD_GROUPS[match[1] as keyof typeof FIELD_GROUPS];
     const position = Number(match[2]);
     return [
-      makePoint(
-        rawPointId,
-        1,
-        group.panelLabel,
-        group.side,
-        group.sideBase,
-        position,
-        profile,
-      ),
-      makePoint(
-        rawPointId,
-        2,
-        group.panelLabel,
-        group.side,
-        group.sideBase,
-        position,
-        profile,
-      ),
+      makePoint(rawPointId, 1, group.panelLabel, group.side, group.sideBase, position, profile),
+      makePoint(rawPointId, 2, group.panelLabel, group.side, group.sideBase, position, profile),
     ];
   }
 

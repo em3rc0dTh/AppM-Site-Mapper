@@ -40,11 +40,7 @@ describe('Equipment telemetry isolation and history', () => {
       entityTelemetryStatus(true, { ...sample, sourceObservedAt: '2025-01-01T00:00:00Z' }, now),
     ).toBe('CLOCK SKEW');
     expect(
-      entityTelemetryStatus(
-        true,
-        { ...sample, sourceObservedAt: '2026-10-13T11:00:00Z' },
-        now,
-      ),
+      entityTelemetryStatus(true, { ...sample, sourceObservedAt: '2026-10-13T11:00:00Z' }, now),
     ).toBe('CLOCK SKEW');
   });
   it('writes non-BDFB metrics with exact identity and queries history by target rather than SN', async () => {

@@ -1,4 +1,5 @@
 import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
+import { classifyTelemetryFreshness } from '@/modules/telemetry/domain/telemetry-freshness';
 
 export interface CompositionBreakerBinding {
   readonly id: string;
@@ -8,7 +9,14 @@ export interface CompositionBreakerBinding {
   readonly metric: string;
 }
 
-export type BreakerLiveStatus = 'LIVE' | 'STALE' | 'OFFLINE' | 'NO DATA' | 'UNMAPPED' | 'CONFLICT';
+export type BreakerLiveStatus =
+  | 'LIVE'
+  | 'STALE'
+  | 'OFFLINE'
+  | 'CLOCK SKEW'
+  | 'NO DATA'
+  | 'UNMAPPED'
+  | 'CONFLICT';
 
 export interface CompositionBreakerTelemetry {
   readonly status: BreakerLiveStatus;
@@ -49,12 +57,6 @@ function numericMetric(value: unknown, expectedUnit: string): number | undefined
         ? Number(value)
         : Number.NaN;
   return Number.isFinite(number) ? number : undefined;
-}
-
-function freshness(timestamp: string, now: number): BreakerLiveStatus {
-  const delta = now - Date.parse(timestamp);
-  if (!Number.isFinite(delta) || delta < -30_000 || delta > 300_000) return 'OFFLINE';
-  return delta > 30_000 ? 'STALE' : 'LIVE';
 }
 
 function fromOwnSample(
@@ -107,7 +109,7 @@ function fromOwnSample(
     : (sample.sourceObservedAt ?? sample.receivedAt);
 
   return {
-    status: freshness(timestamp, now),
+    status: classifyTelemetryFreshness(sample.receivedAt, timestamp, now),
     ...values,
     ...(state ? { state } : {}),
     sourceIdentity: sample.sourceIdentity,
@@ -143,7 +145,7 @@ function fromGatewayReading(
     ? observed.sort().at(-1)!
     : (reading.state?.observedAt ?? reading.receivedAt);
   return {
-    status: freshness(timestamp, now),
+    status: classifyTelemetryFreshness(reading.receivedAt, timestamp, now),
     ...values,
     ...(reading.state ? { state: reading.state.value } : {}),
     sourceIdentity: reading.sourceIdentity,

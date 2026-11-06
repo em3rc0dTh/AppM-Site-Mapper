@@ -6,21 +6,18 @@ import type {
   NormalizedTelemetryMessage,
   TelemetryBinding,
 } from '@/modules/telemetry/domain/entities';
+import {
+  detectBfdbWireProfile,
+  expandBfdbWirePoint,
+} from '@/modules/telemetry/domain/bfdb-wire-layout';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
 
-const PANEL_BY_GROUP = {
-  '1': 'A3',
-  '2': 'A2',
-  '3': 'B3',
-  '4': 'B2',
-} as const;
-
 const METRICS = {
-  U1: { metric: 'VOLTAGE', unit: 'V' },
-  I1: { metric: 'CURRENT', unit: 'A' },
-  P1: { metric: 'POWER', unit: 'W' },
-  EP1: { metric: 'ENERGY', unit: 'kWh' },
+  VOLTAGE: { unit: 'V' },
+  CURRENT: { unit: 'A' },
+  POWER: { unit: 'W' },
+  ENERGY: { unit: 'kWh' },
 } as const;
 
 function numeric(value: unknown): number | null {
@@ -28,14 +25,6 @@ function numeric(value: unknown): number | null {
   if (typeof value !== 'string' || !value.trim()) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parsePoint(rawPointId: string): { panelLabel: string; position: number } | null {
-  const match = /^0_([1-4])_([1-9]\d{0,2})$/.exec(rawPointId);
-  if (!match) return null;
-  const position = Number(match[2]);
-  if (!Number.isInteger(position) || position < 1 || position > 256) return null;
-  return { panelLabel: PANEL_BY_GROUP[match[1] as keyof typeof PANEL_BY_GROUP], position };
 }
 
 function deterministicId(sourceIdentity: string, sourcePointId: string, metric: string): string {
@@ -54,6 +43,10 @@ function uniqueNodes(nodes: readonly TopologyNode[]): readonly TopologyNode[] {
 /**
  * Persist point bindings only when telemetry and existing Site Mapper topology
  * describe the same circuit unambiguously.
+ *
+ * Field Acrel frames publish four Modbus slave groups (1/3/5/7). Each measured
+ * raw position 1..12 carries two physical channels, so channel 1 resolves to
+ * panel positions 1..12 and channel 2 resolves to positions 13..24.
  *
  * This reconciler NEVER creates Device/Equipment topology. MQTT is observation
  * input, not physical-inventory authority.
@@ -100,69 +93,85 @@ export class AutomaticBfdbBindingReconciler {
     }> = [];
     const candidateBreakerIds = new Set<string>();
     const now = new Date().toISOString();
+    const profile = detectBfdbWireProfile(message.reported);
 
     for (const [rawPointId, rawValue] of Object.entries(message.reported)) {
-      const point = parsePoint(rawPointId);
-      if (!point || !rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) continue;
-
-      const panels = panelsByLabel.get(point.panelLabel) ?? [];
-      if (panels.length !== 1) continue;
-      const panel = panels[0]!;
-      if (panel.childMode !== 'POSITIONAL') continue;
-
-      const breakerId = panel.children[point.position - 1];
-      if (!breakerId) continue;
-      const breaker = byId.get(breakerId);
-      if (
-        !breaker ||
-        breaker.equipmentType !== 'CIRCUIT_BREAKER' ||
-        breaker.parentEquipmentId !== panel.id ||
-        breaker.parentId !== panel.id ||
-        breaker.deviceId !== ownerDeviceId ||
-        !(await identity.valid(breaker))
-      )
-        continue;
-
+      if (!rawValue || typeof rawValue !== 'object' || Array.isArray(rawValue)) continue;
       const raw = rawValue as Readonly<Record<string, unknown>>;
-      for (const [rawField, definition] of Object.entries(METRICS)) {
-        if (numeric(raw[rawField]) === null) continue;
 
-        const existingForSourcePoint = currentSourceBindings.filter(
-          (binding) =>
-            binding.lifecycle === 'ACTIVE' &&
-            binding.protocol === 'MQTT' &&
-            binding.sourceIdentity === message.sourceIdentity &&
-            binding.sourcePointId === rawPointId &&
-            binding.metric.toUpperCase() === definition.metric,
-        );
-        if (existingForSourcePoint.length > 0) continue;
+      for (const point of expandBfdbWirePoint(rawPointId, raw, profile)) {
+        const panels = panelsByLabel.get(point.panelLabel) ?? [];
+        if (panels.length !== 1) continue;
+        const panel = panels[0]!;
+        if (panel.childMode !== 'POSITIONAL') continue;
 
-        candidateBreakerIds.add(breaker.id);
-        candidates.push({
-          panel,
-          breaker,
-          binding: {
-            id: deterministicId(message.sourceIdentity, rawPointId, definition.metric),
-            protocol: 'MQTT',
-            sourceIdentity: message.sourceIdentity,
-            sourcePointId: rawPointId,
-            metric: definition.metric,
-            unit: definition.unit,
-            targetType: 'EQUIPMENT',
-            targetId: breaker.id,
-            lifecycle: 'ACTIVE',
-            createdAt: now,
-            updatedAt: now,
-            attributes: {
-              commissioning: 'AUTO_RECONCILED',
-              discovery: 'TOPOLOGY_POINT_MATCH',
-              bdfbDeviceId: ownerDeviceId,
-              matchedPanelId: panel.id,
-              panelLabel: panel.name,
-              position: point.position,
+        const breakerId = panel.children[point.panelPosition - 1];
+        if (!breakerId) continue;
+        const breaker = byId.get(breakerId);
+        if (
+          !breaker ||
+          breaker.equipmentType !== 'CIRCUIT_BREAKER' ||
+          breaker.parentEquipmentId !== panel.id ||
+          breaker.parentId !== panel.id ||
+          breaker.deviceId !== ownerDeviceId ||
+          !(await identity.valid(breaker))
+        )
+          continue;
+
+        const wireByMetric = {
+          VOLTAGE: point.fields.voltage,
+          CURRENT: point.fields.current,
+          POWER: point.fields.power,
+          ENERGY: point.fields.energy,
+        } as const;
+
+        for (const [metric, definition] of Object.entries(METRICS)) {
+          const wireField = wireByMetric[metric as keyof typeof wireByMetric];
+          if (numeric(raw[wireField]) === null) continue;
+
+          const existingForSourcePoint = currentSourceBindings.filter(
+            (binding) =>
+              binding.lifecycle === 'ACTIVE' &&
+              binding.protocol === 'MQTT' &&
+              binding.sourceIdentity === message.sourceIdentity &&
+              binding.sourcePointId === point.bindingPointId &&
+              binding.metric.toUpperCase() === metric,
+          );
+          if (existingForSourcePoint.length > 0) continue;
+
+          candidateBreakerIds.add(breaker.id);
+          candidates.push({
+            panel,
+            breaker,
+            binding: {
+              id: deterministicId(message.sourceIdentity, point.bindingPointId, metric),
+              protocol: 'MQTT',
+              sourceIdentity: message.sourceIdentity,
+              sourcePointId: point.bindingPointId,
+              metric,
+              unit: definition.unit,
+              targetType: 'EQUIPMENT',
+              targetId: breaker.id,
+              lifecycle: 'ACTIVE',
+              createdAt: now,
+              updatedAt: now,
+              attributes: {
+                commissioning: 'AUTO_RECONCILED',
+                discovery: 'TOPOLOGY_POINT_MATCH',
+                bdfbDeviceId: ownerDeviceId,
+                matchedPanelId: panel.id,
+                panelLabel: panel.name,
+                position: point.panelPosition,
+                side: point.side,
+                sidePosition: point.sidePosition,
+                wireRawPointId: point.rawPointId,
+                wireChannel: point.channel,
+                modbusPointId: point.modbusPointId,
+                wireProfile: profile,
+              },
             },
-          },
-        });
+          });
+        }
       }
     }
 

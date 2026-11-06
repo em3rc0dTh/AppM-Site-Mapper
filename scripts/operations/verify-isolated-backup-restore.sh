@@ -106,12 +106,14 @@ until docker exec "$PG" pg_isready -U site_mapper -d site_mapper_telemetry >/dev
   sleep 1
 done
 
-docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d site_mapper_telemetry \
-  -c 'CREATE EXTENSION IF NOT EXISTS timescaledb;' >/dev/null
+echo "RESTORE_STAGE=timescale_initial_sql_stability"
+pg_exec_retry site_mapper_telemetry \
+  'CREATE EXTENSION IF NOT EXISTS timescaledb;' \
+  "initial Timescale extension creation"
 
-TIMESCALE_VERSION_ACTUAL="$(docker exec "$PG" psql -X -Atq -v ON_ERROR_STOP=1 \
-  -U site_mapper -d site_mapper_telemetry \
-  -c "SELECT extversion FROM pg_extension WHERE extname='timescaledb';")"
+TIMESCALE_VERSION_ACTUAL="$(pg_scalar_retry site_mapper_telemetry \
+  "SELECT extversion FROM pg_extension WHERE extname='timescaledb';" \
+  "initial Timescale extension version")"
 if [ -n "$TIMESCALE_VERSION_EXPECTED" ] && [ "$TIMESCALE_VERSION_ACTUAL" != "$TIMESCALE_VERSION_EXPECTED" ]; then
   echo "TimescaleDB version mismatch: backup=$TIMESCALE_VERSION_EXPECTED restore=$TIMESCALE_VERSION_ACTUAL" >&2
   exit 4
@@ -121,6 +123,7 @@ fi
 # combinations terminate the invoking psql connection while doing so. Treat that
 # disconnect as acceptable only if PostgreSQL becomes ready again immediately;
 # any persistent outage still fails closed.
+echo "RESTORE_STAGE=timescale_pre_restore"
 set +e
 docker exec "$PG" psql -X -q -v ON_ERROR_STOP=1 -U site_mapper -d site_mapper_telemetry \
   -c 'SELECT timescaledb_pre_restore();' >/dev/null 2>&1
@@ -180,11 +183,13 @@ case "$RESTORING" in
     ;;
 esac
 
+echo "RESTORE_STAGE=timescale_pg_restore"
 docker exec -i "$PG" pg_restore \
   -U site_mapper -d site_mapper_telemetry \
   --no-owner --no-privileges --exit-on-error \
   < "$BACKUP_DIR/timescale.dump"
 
+echo "RESTORE_STAGE=timescale_post_restore"
 pg_exec_retry site_mapper_telemetry \
   'SELECT timescaledb_post_restore();' \
   "timescaledb_post_restore"

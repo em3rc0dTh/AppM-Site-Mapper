@@ -10,13 +10,7 @@ export interface CompositionBreakerBinding {
 }
 
 export type BreakerLiveStatus =
-  | 'LIVE'
-  | 'STALE'
-  | 'OFFLINE'
-  | 'CLOCK SKEW'
-  | 'NO DATA'
-  | 'UNMAPPED'
-  | 'CONFLICT';
+  'LIVE' | 'STALE' | 'OFFLINE' | 'CLOCK SKEW' | 'NO DATA' | 'UNMAPPED' | 'CONFLICT';
 
 export interface CompositionBreakerTelemetry {
   readonly status: BreakerLiveStatus;

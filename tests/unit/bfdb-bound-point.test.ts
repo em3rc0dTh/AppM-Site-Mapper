@@ -63,6 +63,61 @@ describe('explicit BFDB breaker Equipment projection', () => {
     expect(result[0]?.metricBindingIds).toHaveLength(4);
   });
 
+
+  it('uses an explicit raw field binding as channel 1 and never leaks channel 2', () => {
+    const fieldMessage: NormalizedTelemetryMessage = {
+      ...message,
+      reported: {
+        '0_1_1': {
+          state: 'ONLINE',
+          U1: '13.79',
+          U2: '12.11',
+          I1: '9.91',
+          I2: '2.22',
+          P1: '136.72',
+          P2: '26.88',
+          EP1: '0.4155',
+          EP2: '0.9999',
+        },
+      },
+    };
+    const rawBindings = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].map((m) => binding(m));
+    const rawResult = buildBoundBfdbEquipmentPatches(
+      fieldMessage,
+      rawBindings,
+      new Set(['breaker-01']),
+    );
+    expect(rawResult).toHaveLength(1);
+    expect(rawResult[0]).toMatchObject({
+      sourcePointId: '0_1_1',
+      reported: {
+        voltageV: { value: 13.79, unit: 'V' },
+        currentA: { value: 9.91, unit: 'A' },
+        powerW: { value: 136.72, unit: 'W' },
+        energyKwh: { value: 0.4155, unit: 'kWh' },
+      },
+    });
+
+    const channel2Bindings = ['VOLTAGE', 'CURRENT', 'POWER', 'ENERGY'].map((m) =>
+      binding(m, 'breaker-02', '0_1_1#2'),
+    );
+    const channel2Result = buildBoundBfdbEquipmentPatches(
+      fieldMessage,
+      channel2Bindings,
+      new Set(['breaker-02']),
+    );
+    expect(channel2Result).toHaveLength(1);
+    expect(channel2Result[0]).toMatchObject({
+      sourcePointId: '0_1_1#2',
+      reported: {
+        voltageV: { value: 12.11, unit: 'V' },
+        currentA: { value: 2.22, unit: 'A' },
+        powerW: { value: 26.88, unit: 'W' },
+        energyKwh: { value: 0.9999, unit: 'kWh' },
+      },
+    });
+  });
+
   it('normalizes an explicitly declared kW source to canonical internal watts', () => {
     const kwMessage: NormalizedTelemetryMessage = {
       ...message,

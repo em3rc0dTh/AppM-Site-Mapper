@@ -1,5 +1,7 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
+
 type SiteMapperBrandProps = {
   readonly variant: 'compact' | 'hero';
   readonly tagline: string;
@@ -21,19 +23,26 @@ function BrandMark({ compact = false }: { readonly compact?: boolean }) {
 
 export function SiteMapperBrand({ variant, tagline }: SiteMapperBrandProps) {
   const compact = variant === 'compact';
+  const t = useTranslations('brand');
+  const appManager = t('appManager');
+  const siteMapper = t('siteMapper');
+  const generation = t('generation');
 
   return (
     <div className={`sm-brand sm-brand--${variant}`}>
       <div className="sm-brand-lockup">
         <BrandMark compact={compact} />
         <span className="sm-brand-copy">
-          <strong className="sm-brand-appmanager" aria-label="AppManager">
-            <span className="sm-brand-appmanager-a">A</span>
-            <span>ppManager</span>
+          <strong className="sm-brand-appmanager" aria-label={appManager}>
+            <span className="sm-brand-appmanager-a">{appManager.slice(0, 1)}</span>
+            <span>{appManager.slice(1)}</span>
           </strong>
-          <span className="sm-brand-product-line" aria-label="SiteMapper Mk2">
-            <span className="sm-brand-sitemapper">SiteMapper</span>
-            <span className="sm-brand-mk">Mk2</span>
+          <span
+            className="sm-brand-product-line"
+            aria-label={`${siteMapper} ${generation}`}
+          >
+            <span className="sm-brand-sitemapper">{siteMapper}</span>
+            <span className="sm-brand-mk">{generation}</span>
           </span>
           <small className="sm-brand-tagline">{tagline}</small>
         </span>

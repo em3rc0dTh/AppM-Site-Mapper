@@ -368,6 +368,26 @@ try {
     });
     const layout = page.locator('.operational-page--blueprint .operational-layout--blueprint');
     await layout.waitFor({ timeout: 30000 });
+    if (width === 1366) {
+      const rackLabel = page.locator('.blueprint-rack-label').first();
+      await rackLabel.waitFor({ state: 'visible', timeout: 30000 });
+      const labelState = await rackLabel.evaluate((element) => {
+        const title = element.querySelector('title')?.textContent?.trim() ?? '';
+        const visible = Array.from(element.childNodes)
+          .filter((node) => node.nodeType === Node.TEXT_NODE)
+          .map((node) => node.textContent ?? '')
+          .join('')
+          .trim();
+        return { title, visible };
+      });
+      assert.equal(labelState.title, 'CI LIMA RACK');
+      assert.ok(labelState.visible.length > 0, 'S04 semantic canvas label disappeared');
+      assert.ok(
+        labelState.visible.length <= labelState.title.length,
+        'S04 visible canvas label must compact text without expanding physical geometry',
+      );
+      console.log('[PASS] S04 Chromium: semantic canvas label retains full title without geometry expansion');
+    }
     const geometry = await layout.evaluate((element) => {
       const css = getComputedStyle(element);
       const cols = css.gridTemplateColumns.split(/\s+/).map((part) => parseFloat(part));

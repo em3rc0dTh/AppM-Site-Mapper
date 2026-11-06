@@ -1,7 +1,4 @@
-import type {
-  BreakerTelemetryReading,
-  TelemetrySample,
-} from '@/modules/telemetry/domain/entities';
+import type { BreakerTelemetryReading, TelemetrySample } from '@/modules/telemetry/domain/entities';
 import { classifyTelemetryFreshness } from '@/modules/telemetry/domain/telemetry-freshness';
 
 export interface CompositionBreakerBinding {

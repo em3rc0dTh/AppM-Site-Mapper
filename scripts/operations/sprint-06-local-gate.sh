@@ -46,8 +46,8 @@ CLOUDFLARE_TUNNEL_TOKEN=local-syntax-only-not-a-real-token \
 CLOUDFLARE_TUNNEL_TOKEN=local-syntax-only-not-a-real-token \
   docker compose -f docker-compose.lab-remote.yml config --quiet
 
-FIELD_SERVICES="$(CLOUDFLARE_TUNNEL_TOKEN=x docker compose -f docker-compose.field-lan.yml config --services)"
-LAB_SERVICES="$(CLOUDFLARE_TUNNEL_TOKEN=x docker compose -f docker-compose.lab-remote.yml config --services)"
+FIELD_SERVICES="$(CLOUDFLARE_TUNNEL_TOKEN=x docker compose -f docker-compose.field-lan.yml --profile field-lan config --services)"
+LAB_SERVICES="$(CLOUDFLARE_TUNNEL_TOKEN=x docker compose -f docker-compose.lab-remote.yml --profile lab-remote config --services)"
 [ "$FIELD_SERVICES" = "caddy" ] || fail "FIELD overlay contains unexpected services: $FIELD_SERVICES"
 [ "$LAB_SERVICES" = "cloudflared-site-mapper" ] || fail "LAB overlay contains unexpected services: $LAB_SERVICES"
 

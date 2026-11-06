@@ -27,7 +27,7 @@ export function SiteMapperBrand({ variant, tagline }: SiteMapperBrandProps) {
       <div className="sm-brand-lockup">
         <BrandMark compact={compact} />
         <span className="sm-brand-copy">
-          <strong className="sm-brand-name" aria-label="Site Mapper">
+          <strong className="sm-brand-name" aria-label="SiteMapper">
             <span className="sm-brand-word sm-brand-word--site">Site</span>
             <span className="sm-brand-word sm-brand-word--mapper">Mapper</span>
           </strong>

@@ -5,7 +5,10 @@ import { useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
-import type { CompositionBreakerTelemetry } from '@/modules/telemetry/domain/composition-breaker-telemetry';
+import {
+  isInspectableBreakerTelemetry,
+  type CompositionBreakerTelemetry,
+} from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
 import { SnmpCapacityStrip } from './snmp-capacity-strip';
 import { AlarmOccurrenceList } from '@/components/alarm/alarm-scope-summary';
@@ -498,7 +501,9 @@ export function EquipmentContractViews({
             <div>
               <small>{t('circuitBreaker')}</small>
               <strong>
-                {readings[root.id]?.status === 'LIVE' ? t('ownTelemetry') : t('circuitDetails')}
+                {isInspectableBreakerTelemetry(readings[root.id])
+                  ? t('ownTelemetry')
+                  : t('circuitDetails')}
               </strong>
             </div>
             <span className="ec-status" data-status={readings[root.id]?.status ?? 'UNMAPPED'}>
@@ -506,7 +511,7 @@ export function EquipmentContractViews({
               {readings[root.id]?.status ?? 'UNMAPPED'}
             </span>
           </div>
-          {readings[root.id]?.status === 'LIVE' ? (
+          {isInspectableBreakerTelemetry(readings[root.id]) ? (
             <div className="ec-breaker-metrics">
               <BreakerMetrics reading={readings[root.id]} />
             </div>

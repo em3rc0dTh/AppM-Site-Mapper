@@ -25,6 +25,15 @@ export interface CompositionBreakerTelemetry {
   readonly diagnostic?: string;
 }
 
+export function isInspectableBreakerTelemetry(
+  reading: CompositionBreakerTelemetry | undefined,
+): boolean {
+  if (!reading || !['LIVE', 'STALE', 'CLOCK SKEW'].includes(reading.status)) return false;
+  return [reading.voltageV, reading.currentA, reading.powerW, reading.energyKwh].some(
+    (value) => typeof value === 'number' && Number.isFinite(value),
+  );
+}
+
 type ElectricalKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
 const ELECTRICAL: ReadonlyArray<{

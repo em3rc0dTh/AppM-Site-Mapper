@@ -12,16 +12,12 @@ import {
   type BdfbDescendantTelemetry,
 } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
+import { isTelemetryTransportCurrent } from '@/modules/telemetry/domain/telemetry-freshness';
 import type { WorkspaceBdfbSummary } from '@/modules/workspace/application/workspace-service';
 
 type Pin = { id: string; name: string; kind: string; context: string; href: string };
 type BdfbRow = WorkspaceBdfbSummary & BdfbDescendantTelemetry;
 type HomeModal = 'alarms' | 'access' | null;
-
-function fresh(iso: string, now: number): boolean {
-  const age = now - Date.parse(iso);
-  return Number.isFinite(age) && age >= -30_000 && age <= 30_000;
-}
 
 function projectBdfb(
   samples: readonly TelemetrySample[],
@@ -63,7 +59,7 @@ export function HomeLiveOverview({
         (sample) =>
           sample.targetId === id &&
           sample.metricBindingIds?.length &&
-          fresh(sample.receivedAt, now),
+          isTelemetryTransportCurrent(sample.receivedAt, now),
       ),
   ).length;
   const unknown = equipmentIds.length - online;

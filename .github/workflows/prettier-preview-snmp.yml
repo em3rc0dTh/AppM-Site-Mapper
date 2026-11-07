@@ -1,0 +1,23 @@
+name: Prettier preview SNMP
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Show exact diff
+        shell: bash
+        run: |
+          npx prettier --write scripts/telemetry/commission-seed-01-snmp-config2.mongosh.js tests/unit/snmp-config2-seed01-runtime.test.ts
+          git --no-pager diff -- scripts/telemetry/commission-seed-01-snmp-config2.mongosh.js tests/unit/snmp-config2-seed01-runtime.test.ts
+          git diff --quiet -- scripts/telemetry/commission-seed-01-snmp-config2.mongosh.js tests/unit/snmp-config2-seed01-runtime.test.ts

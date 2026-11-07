@@ -1,4 +1,5 @@
 import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
+import { isTelemetryTransportCurrent } from '@/modules/telemetry/domain/telemetry-freshness';
 
 export type BdfbMetric = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
@@ -25,12 +26,6 @@ type MeasuredValue = {
 type EquipmentReadings = Partial<Record<BdfbMetric, MeasuredValue>>;
 
 const METRICS: readonly BdfbMetric[] = ['voltageV', 'currentA', 'powerW', 'energyKwh'];
-const MAX_AGE_MS = 30_000;
-
-function isFresh(iso: string, now: number): boolean {
-  const age = now - Date.parse(iso);
-  return Number.isFinite(age) && age >= -MAX_AGE_MS && age <= MAX_AGE_MS;
-}
 
 function average(values: readonly number[]): number | null {
   return values.length ? values.reduce((total, value) => total + value, 0) / values.length : null;
@@ -60,8 +55,7 @@ export function aggregateBdfbDescendantTelemetry(
       sample.targetType !== 'EQUIPMENT' ||
       !allowed.has(sample.targetId) ||
       !sample.metricBindingIds?.length ||
-      !isFresh(sample.sourceObservedAt ?? sample.receivedAt, now) ||
-      !isFresh(sample.receivedAt, now)
+      !isTelemetryTransportCurrent(sample.receivedAt, now)
     )
       continue;
 
@@ -75,7 +69,6 @@ export function aggregateBdfbDescendantTelemetry(
         typeof metric.observedAt === 'string'
           ? metric.observedAt
           : (sample.sourceObservedAt ?? sample.receivedAt);
-      if (!isFresh(observedAt, now)) continue;
       values.push([
         key,
         {
@@ -97,8 +90,8 @@ export function aggregateBdfbDescendantTelemetry(
       const previous = current[key];
       if (
         !previous ||
-        value.observedAt > previous.observedAt ||
-        (value.observedAt === previous.observedAt && value.receivedAt > previous.receivedAt)
+        value.receivedAt > previous.receivedAt ||
+        (value.receivedAt === previous.receivedAt && value.observedAt > previous.observedAt)
       )
         current[key] = value;
     }

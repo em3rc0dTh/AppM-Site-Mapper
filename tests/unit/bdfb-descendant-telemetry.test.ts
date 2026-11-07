@@ -85,6 +85,31 @@ describe('canonical BDFB descendant LIVE telemetry', () => {
     expect(output.withoutCurrentReading).toBe(3);
   });
 
+  it('keeps 5-minute field packets visible and ignores embedded source clock skew for transport health', () => {
+    const receivedAt = '2026-10-20T20:45:00.000Z';
+    const skewed = {
+      ...sample('breaker', '0_1_1', 12.53, 0, 0, 2.1),
+      receivedAt,
+      sourceObservedAt: '2026-10-21T09:55:00.000Z',
+      reported: {
+        voltageV: { value: 12.53, observedAt: '2026-10-21T09:55:00.000Z' },
+        currentA: { value: 0, observedAt: '2026-10-21T09:55:00.000Z' },
+        powerW: { value: 0, observedAt: '2026-10-21T09:55:00.000Z' },
+        energyKwh: { value: 2.1, observedAt: '2026-10-21T09:55:00.000Z' },
+      },
+    };
+    const output = aggregateBdfbDescendantTelemetry(
+      [skewed],
+      ['breaker'],
+      Date.parse(receivedAt) + 300_000,
+    );
+    expect(output.reportingEquipment).toBe(1);
+    expect(output.averageVoltageV).toBe(12.53);
+    expect(output.averageCurrentA).toBe(0);
+    expect(output.totalPowerW).toBe(0);
+    expect(output.averageEnergyKwh).toBe(2.1);
+  });
+
   it('preserves true zero power without labeling missing measurements as zero', () => {
     const zero = sample('a', '0_1_1', 12, 0, 0, 0);
     const output = aggregateBdfbDescendantTelemetry([zero], ['a', 'b'], now);

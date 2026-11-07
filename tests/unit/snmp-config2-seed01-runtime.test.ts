@@ -10,7 +10,7 @@ describe('seed-01 SNMP Config2 runtime contract', () => {
   it('normalizes collector script permissions before dropping to USER node', () => {
     const dockerfile = source('infra/snmp-collector/Dockerfile');
     const chmod = dockerfile.indexOf('chmod 0644 /app/*.mjs');
-    const user = dockerfile.indexOf('USER node');
+    const user = dockerfile.indexOf('\nUSER node');
 
     expect(chmod).toBeGreaterThan(-1);
     expect(user).toBeGreaterThan(chmod);

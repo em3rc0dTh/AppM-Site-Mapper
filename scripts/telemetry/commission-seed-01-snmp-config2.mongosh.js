@@ -90,9 +90,7 @@ function collect(dbh) {
     const owner = chassis[0];
 
     const panelsByName = new Map(
-      equipment
-        .filter((item) => item.equipmentType === 'PANEL')
-        .map((item) => [item.name, item]),
+      equipment.filter((item) => item.equipmentType === 'PANEL').map((item) => [item.name, item]),
     );
 
     for (const side of SIDES) {
@@ -132,13 +130,7 @@ function collect(dbh) {
         { metric: 'VOLTAGE', oid: side.voltageOid, unit: 'V' },
       ]) {
         expectedBindings.push({
-          id:
-            'seed01:snmp-config2:' +
-            row.key +
-            ':' +
-            side.side +
-            ':' +
-            point.metric.toLowerCase(),
+          id: 'seed01:snmp-config2:' + row.key + ':' + side.side + ':' + point.metric.toLowerCase(),
           protocol: 'SNMP',
           sourceIdentity,
           sourcePointId: point.oid,
@@ -241,7 +233,10 @@ function collect(dbh) {
           id: { $ne: expected.id },
         })
         .toArray();
-      assert(sourceClaims.length === 0, row.key + ' OID already claimed: ' + expected.sourcePointId);
+      assert(
+        sourceClaims.length === 0,
+        row.key + ' OID already claimed: ' + expected.sourcePointId,
+      );
 
       const idClaims = dbh.telemetry_bindings.find({ id: expected.id }).toArray();
       assert(
@@ -301,7 +296,10 @@ if (plan.every((item) => item.state === 'ALREADY_READY')) {
   print('ALREADY READY · 0 writes');
   quit(0);
 }
-assert(plan.every((item) => item.state === 'READY'), 'mixed READY/ALREADY_READY state requires review');
+assert(
+  plan.every((item) => item.state === 'READY'),
+  'mixed READY/ALREADY_READY state requires review',
+);
 
 const session = db.getMongo().startSession();
 try {
@@ -312,7 +310,10 @@ try {
 
   const tx = session.getDatabase(DATABASE);
   const verified = collect(tx);
-  assert(verified.every((item) => item.state === 'READY'), 'state changed before commit');
+  assert(
+    verified.every((item) => item.state === 'READY'),
+    'state changed before commit',
+  );
 
   const now = new Date().toISOString();
 

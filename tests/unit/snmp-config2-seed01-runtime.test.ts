@@ -35,7 +35,7 @@ describe('seed-01 SNMP Config2 runtime contract', () => {
     expect(script).toContain("const MARK = 'SEED_01_SNMP_CONFIG2_V1'");
     expect(script).toContain("const PROFILE = 'ELTEK_BDCBB_CONFIG_2'");
     expect(script).toContain("ACK === 'SYNTHETIC_LAB_ONLY'");
-    expect(script).toContain("independentInputConfirmed: false");
+    expect(script).toContain('independentInputConfirmed: false');
     expect(script).toContain("commissioning: 'SYNTHETIC_LAB_ONLY'");
     expect(script).toContain('MQTT/Modbus untouched');
   });

@@ -11,9 +11,14 @@ permissions:
 
 jobs:
   dispatch:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
+      - name: Dispatch BFDB MQTT integration
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run bfdb-mqtt-integration.yml --repo em3rc0dTh/AppM-Site-Mapper --ref main
+
       - name: Dispatch Visual parity capture
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh workflow run visual-parity.yml --repo em3rc0dTh/AppM-Site-Mapper --ref fix/actions-mqtt-visual-2026-11-09
+        run: gh workflow run visual-parity.yml --repo em3rc0dTh/AppM-Site-Mapper --ref main

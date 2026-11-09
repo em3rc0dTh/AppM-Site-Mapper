@@ -1,5 +1,5 @@
-// Temporary final Actions sweep marker. Do not merge.
 #!/usr/bin/env node
+// Temporary final Actions sweep marker. Do not merge.
 /**
  * MK1 red-team wheel: bounded, reproducible HTTP fault probes.
  * This script MUST run only after the normal CI HTTP journey on disposable

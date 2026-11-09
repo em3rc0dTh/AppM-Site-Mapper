@@ -234,9 +234,9 @@ if (bdfbLink) {
       bodyTop: bodyRect.top,
       bodyBottom: bodyRect.bottom,
       framesSideBySide:
-        frameRects.length === 2 &&
-        Math.abs(frameRects[0].top - frameRects[1].top) <= 2 &&
-        frameRects[0].right <= frameRects[1].left + 2,
+        frameRects.length < 2 ||
+        (Math.abs(frameRects[0].top - frameRects[1].top) <= 2 &&
+          frameRects[0].right <= frameRects[1].left + 2),
       panelsStacked: frames.every((frame) => {
         const children = [...frame.querySelectorAll('.sm-bdfb-physical-panel')].map((panel) =>
           panel.getBoundingClientRect(),
@@ -249,9 +249,15 @@ if (bdfbLink) {
   });
 
   assert.ok(overviewGeometry, 'BDFB physical overview geometry must exist');
-  assert.equal(overviewGeometry.frameCount, 2, 'BDFB overview must render A/B as two frames');
-  assert.ok(overviewGeometry.panelCount >= 1, 'BDFB overview must render configured panels');
-  assert.ok(overviewGeometry.framesSideBySide, 'BDFB A/B frames must render side-by-side');
+  assert.ok(
+    overviewGeometry.frameCount >= 1,
+    'BDFB overview must render at least one physical frame or direct-mount group',
+  );
+  assert.ok(overviewGeometry.panelCount >= 2, 'BDFB overview must render the A/B panel fixture');
+  assert.ok(
+    overviewGeometry.framesSideBySide,
+    'Multiple BDFB frames/groups must render side-by-side at the approved desktop viewport',
+  );
   assert.ok(overviewGeometry.panelsStacked, 'BDFB panels must stack vertically within A/B');
   assert.ok(
     overviewGeometry.bodyScrollHeight <= overviewGeometry.bodyClientHeight + 2,

@@ -1,6 +1,6 @@
 # Site Mapper MK1 — Entrega de VM, Configuración FIELD y Commissioning
 
-**Versión:** 1.0  
+**Versión:** 1.1  
 **Propósito:** contrato operativo para preparar, transportar, instalar, configurar, comisionar y entregar Site Mapper en infraestructura del cliente.  
 **Principio:** el cliente no recibe un proyecto para desarrollar; recibe una **appliance preparada**. La instalación FIELD debe requerir únicamente infraestructura, red, endpoints/credenciales y validación del commissioning.
 
@@ -505,3 +505,439 @@ se recupera tras reboot
 ```
 
 **No se modifica código por cliente. Se sustituyen endpoints, red, secretos y commissioning aprobado.**
+
+---
+
+## 18. Ejemplos de cómo debería verse
+
+> Todos los valores de IP, nombres y secretos de esta sección son **ilustrativos**. En FIELD se sustituyen por los datos aprobados del cliente. Los seriales QDF mostrados corresponden al baseline actualmente conocido.
+
+### 18.1 Ejemplo — ficha mínima que entrega el cliente
+
+```text
+SITE MAPPER VM
+Hypervisor: VMware vSphere
+CPU:        4 vCPU
+RAM:        16 GB
+Disk:       200 GB SSD thin
+VLAN:       OT-MONITORING
+IP:         10.50.10.50/24
+Gateway:    10.50.10.1
+DNS:        10.50.1.10
+NTP:        10.50.1.20
+
+MQTT
+Puerto requerido: TCP/1883
+QDF-2 serial: 26092403950003
+QDF-4 serial: 26092403950004
+QDF-5 serial: 26092403950002
+
+SNMP
+Versión:    v2c
+Puerto:     UDP/161
+Community:  <entregada por canal seguro>
+Controller 1 IP: 10.50.20.31
+Controller 2 IP: 10.50.20.32
+Controller 3 IP: 10.50.20.33
+MIB/OID docs: entregadas / perfil ya validado
+
+METASYS
+Origen BMS:      10.50.30.20
+Destino:         10.50.10.50
+Modbus TCP Port: <puerto aprobado>
+Register map:    <revisión aprobada>
+```
+
+### 18.2 Ejemplo — cómo debería verse la VM en el hypervisor
+
+```text
+Name:        VTKALL-SITE-MAPPER-01
+Guest OS:    Ubuntu Server 24.04 LTS
+vCPU:        4
+Memory:      16 GB
+Disk 0:      200 GB / Thin provisioned
+NIC 0:       OT-MONITORING
+Power:       ON
+Autostart:   Enabled
+```
+
+Vista conceptual:
+
+```text
+┌──────────────────────────────────────────────┐
+│ VTKALL-SITE-MAPPER-01                       │
+├──────────────────────────────────────────────┤
+│ CPU        4 vCPU                           │
+│ Memory     16 GB                            │
+│ Disk       200 GB Thin                      │
+│ Network    OT-MONITORING                    │
+│ IP         10.50.10.50                      │
+│ Status     Running                          │
+└──────────────────────────────────────────────┘
+```
+
+El cliente no debería ver veinte VMs ni una VM por componente. La entrega normal es **una VM Site Mapper** con los servicios encapsulados dentro.
+
+### 18.3 Ejemplo — topología de red FIELD
+
+```mermaid
+flowchart LR
+    Q2["QDF-2\n26092403950003"] -->|TCP/1883| VM["Site Mapper VM\n10.50.10.50"]
+    Q4["QDF-4\n26092403950004"] -->|TCP/1883| VM
+    Q5["QDF-5\n26092403950002"] -->|TCP/1883| VM
+
+    VM -->|UDP/161 SNMP v2c| D1["Controller 1\n10.50.20.31"]
+    VM -->|UDP/161 SNMP v2c| D2["Controller 2\n10.50.20.32"]
+    VM -->|UDP/161 SNMP v2c| D3["Controller 3\n10.50.20.33"]
+
+    M["Metasys\n10.50.30.20"] -->|Modbus TCP| VM
+    U["Usuarios LAN"] -->|HTTPS/443| VM
+```
+
+### 18.4 Ejemplo — qué se configura en cada QDF
+
+La pantalla real depende del fabricante, pero conceptualmente debe quedar así:
+
+```text
+MQTT SETTINGS
+
+Broker / Server IP : 10.50.10.50
+Broker Port        : 1883
+Protocol           : MQTT
+Username           : <solo si se acordó autenticación>
+Password           : <solo si se acordó autenticación>
+
+Publisher identity : serial del propio QDF
+Topic resultante   : data/dev/<serial>
+```
+
+Para los tres equipos:
+
+```text
+QDF-2 → data/dev/26092403950003
+QDF-4 → data/dev/26092403950004
+QDF-5 → data/dev/26092403950002
+```
+
+**El cliente no debe crear manualmente estos topics si el firmware ya publica siguiendo el contrato por serial.** Solo debe apuntar el broker al Site Mapper.
+
+### 18.5 Ejemplo — verificación MQTT que esperamos
+
+```text
+Broker: 10.50.10.50:1883
+
+Received:
+data/dev/26092403950003  {...}
+data/dev/26092403950004  {...}
+data/dev/26092403950002  {...}
+
+Result:
+QDF-2  ONLINE
+QDF-4  ONLINE
+QDF-5  ONLINE
+```
+
+Después:
+
+```text
+MQTT RAW
+   ↓
+Serial reconocido
+   ↓
+Bindings ya aprobados
+   ↓
+LIVE
+   ↓
+TimescaleDB
+   ↓
+Modbus
+```
+
+### 18.6 Ejemplo — SNMP v2c recibido del cliente
+
+El cliente nos entrega:
+
+```text
+Controller: DELTA-01
+IP:         10.50.20.31
+Port:       161/UDP
+Version:    SNMP v2c
+Community:  ********
+Access:     Read Only
+```
+
+Nosotros lo traducimos al runtime, por ejemplo:
+
+```dotenv
+SNMP_CONTROLLER_HOST=10.50.20.31
+SNMP_CONTROLLER_PORT=161
+SNMP_CONTROLLER_ID=DELTA-01
+SNMP_VERSION=2c
+SNMP_COMMUNITY=<SECRET>
+SNMP_V2C_ACKNOWLEDGE_PLAINTEXT=true
+SNMP_POLL_INTERVAL_MS=30000
+```
+
+Para varios controllers se crea/configura un collector por controlador; **no se modifica código**.
+
+### 18.7 Ejemplo — profile SNMP ya conocido
+
+Si el profile/OIDs ya fue validado previamente, FIELD solo sustituye endpoint y secreto:
+
+```text
+LAB
+Controller Host = snmp-agent-test
+Community       = lab-only
+Profile/OIDs    = DELTA_PROFILE_X
+
+          ↓ sustituir FIELD ↓
+
+FIELD
+Controller Host = 10.50.20.31
+Community       = <cliente>
+Profile/OIDs    = DELTA_PROFILE_X
+```
+
+Si el modelo/firmware cambia o el OID no coincide, se detiene el commissioning y se valida la nueva evidencia antes de mapearla.
+
+### 18.8 Ejemplo — configuración runtime FIELD
+
+Ejemplo conceptual de variables que deberían quedar fuera del código:
+
+```dotenv
+APP_ENV=production
+APP_PERSISTENCE=mongodb
+
+TELEMETRY_ENABLED=true
+TELEMETRY_HISTORY_ENABLED=true
+
+MQTT_BROKER_URL=mqtt://mosquitto:1883
+MQTT_TOPIC_PREFIX=data/dev/
+MQTT_TOPIC_FILTER=data/dev/#
+
+SNMP_VERSION=2c
+SNMP_CONTROLLER_PORT=161
+SNMP_POLL_INTERVAL_MS=30000
+
+MODBUS_POINT_LAYOUT=panels-4x24
+MODBUS_MISSING_POLICY=zero
+
+SITE_MAPPER_STORAGE_WARN_PCT=70
+SITE_MAPPER_STORAGE_ACTION_PCT=80
+SITE_MAPPER_STORAGE_CRITICAL_PCT=90
+```
+
+Los secretos reales se almacenan en la configuración privada del deployment, no en Git ni en el documento As-Built.
+
+### 18.9 Ejemplo — reglas de firewall
+
+| Origen | Destino | Protocolo/Puerto | Uso |
+|---|---|---|---|
+| QDF-2/4/5 | Site Mapper VM | TCP/1883 | Publicación MQTT |
+| Site Mapper VM | Controllers SNMP | UDP/161 | Polling SNMP v2c |
+| Metasys | Site Mapper VM | TCP/`<MODBUS_PORT>` | Lectura Modbus |
+| LAN autorizada | Site Mapper VM | TCP/443 | UI Site Mapper |
+
+Ejemplo:
+
+```text
+ALLOW 10.50.40.21-23  -> 10.50.10.50 TCP/1883
+ALLOW 10.50.10.50     -> 10.50.20.31-33 UDP/161
+ALLOW 10.50.30.20     -> 10.50.10.50 TCP/<MODBUS_PORT>
+ALLOW <LAN-USERS>     -> 10.50.10.50 TCP/443
+```
+
+No solicitar:
+
+```text
+ANY -> MongoDB 27017
+ANY -> Timescale 5432
+ANY -> APIs internas
+Internet -> MQTT 1883
+```
+
+### 18.10 Ejemplo — cómo debería verse el SSD de entrega
+
+```text
+SITE-MAPPER-DELIVERY/
+│
+├── appliance/
+│   └── VTKALL-Site-Mapper-v1.0.ova
+│
+├── bundle/
+│   └── site-mapper-images-v1.0.tar
+│
+├── checksums/
+│   └── SHA256SUMS
+│
+├── manifest/
+│   └── release-manifest.json
+│
+└── docs/
+    ├── 01-INSTALL.md
+    ├── 02-NETWORK-REQUIREMENTS.md
+    ├── 03-FIELD-CONFIGURATION.md
+    ├── 04-COMMISSIONING.md
+    ├── 05-METASYS-SAT.md
+    ├── 06-BACKUP-RESTORE.md
+    └── 07-AS-BUILT-TEMPLATE.md
+```
+
+Ejemplo de verificación antes de importar:
+
+```bash
+sha256sum -c checksums/SHA256SUMS
+```
+
+Resultado esperado:
+
+```text
+appliance/VTKALL-Site-Mapper-v1.0.ova: OK
+bundle/site-mapper-images-v1.0.tar: OK
+```
+
+### 18.11 Ejemplo — importación en VMware
+
+```text
+vSphere / ESXi
+  ↓
+Deploy OVF Template
+  ↓
+Seleccionar VTKALL-Site-Mapper-v1.0.ova
+  ↓
+VM Name: VTKALL-SITE-MAPPER-01
+  ↓
+Datastore: <cliente>
+  ↓
+Network: OT-MONITORING
+  ↓
+Disk: Thin
+  ↓
+Deploy
+  ↓
+Power On
+```
+
+Después se comprueba que la VM tenga 4 vCPU, 16 GB RAM, 200 GB virtual disk y la NIC conectada a la VLAN correcta.
+
+### 18.12 Ejemplo — importación en Hyper-V
+
+Si se entrega una exportación completa compatible:
+
+```text
+Hyper-V Manager
+  ↓
+Import Virtual Machine
+  ↓
+Seleccionar carpeta de exportación
+  ↓
+Elegir destino
+  ↓
+Conectar NIC al Virtual Switch FIELD
+  ↓
+Start
+```
+
+Si se entrega solo un VHDX, se crea una VM compatible y se adjunta el VHDX existente. El formato exacto de entrega debe acordarse antes de fabricar la Golden Appliance.
+
+### 18.13 Ejemplo — importación en Proxmox/KVM
+
+```text
+Crear/importar VM
+  ↓
+Importar QCOW2/VMDK compatible
+  ↓
+4 cores
+  ↓
+16 GB RAM
+  ↓
+Bridge/VLAN FIELD
+  ↓
+200 GB virtual capacity
+  ↓
+Boot
+```
+
+La entrega debe indicar el formato exacto probado para el hypervisor del cliente.
+
+### 18.14 Ejemplo — primer arranque
+
+El objetivo operativo debería verse así:
+
+```text
+$ site-mapper status
+
+Site Mapper          RUNNING
+MongoDB              HEALTHY
+TimescaleDB          HEALTHY
+MQTT Broker          HEALTHY
+MQTT Subscriber      CONNECTED
+SNMP Collector 01    CONNECTED
+SNMP Collector 02    CONNECTED
+SNMP Collector 03    CONNECTED
+Modbus               RUNNING
+HTTPS                 RUNNING
+Storage               14% USED / NORMAL
+```
+
+Este CLI es el **objetivo de productización**; si aún no está implementado en el release, el mismo estado se verifica mediante los comandos operativos Docker definidos en el bundle.
+
+### 18.15 Ejemplo — commissioning aceptado
+
+```text
+QDF-2
+Serial: 26092403950003
+MQTT:    PASS
+LIVE:    PASS
+History: PASS
+
+QDF-4
+Serial: 26092403950004
+MQTT:    PASS
+LIVE:    PASS
+History: PASS
+
+QDF-5
+Serial: 26092403950002
+MQTT:    PASS
+LIVE:    PASS
+History: PASS
+
+SNMP DELTA-01
+IP:      10.50.20.31
+v2c:     PASS
+RAW:     PASS
+Profile: PASS
+LIVE:    PASS
+
+METASYS
+Register Map Revision: R1
+Connectivity: PASS
+Point-to-point SAT: PASS
+```
+
+### 18.16 Ejemplo — handover final
+
+```text
+SITE MAPPER FIELD HANDOVER
+
+Release:          v1.0
+VM:               VTKALL-SITE-MAPPER-01
+IP:               10.50.10.50
+Resources:        4 vCPU / 16 GB / 200 GB
+Hypervisor:       VMware vSphere
+MQTT:             3/3 QDF ONLINE
+SNMP:             3/3 controllers ONLINE
+Timescale:        HEALTHY
+Modbus:           HEALTHY
+Metasys SAT:      PASS
+Reboot recovery:  PASS
+Backup:           PASS
+Storage:          NORMAL
+As-Built:         DELIVERED
+
+Result: ACCEPTED
+```
+
+El cliente conserva el control del hypervisor y la red. VTKALL conserva la trazabilidad del release, mappings, commissioning y soporte.
+

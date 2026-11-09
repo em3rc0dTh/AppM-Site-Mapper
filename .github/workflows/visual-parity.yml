@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   capture:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
       LOCAL_ADMIN_EMAIL: visual@local.test

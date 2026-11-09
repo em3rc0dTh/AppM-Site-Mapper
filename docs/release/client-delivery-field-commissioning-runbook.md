@@ -32,19 +32,19 @@ Después del commissioning inicial, un reinicio de la VM debe recuperar automát
 
 ### 2.1 Infraestructura
 
-| Requisito | Baseline |
-|---|---|
-| Hypervisor | VMware, Hyper-V o Proxmox/KVM |
-| Arquitectura | x86_64 / amd64 |
-| CPU | **4 vCPU** |
-| RAM | **16 GB** |
-| Disco virtual | **200 GB SSD expandible**, thin cuando el hypervisor lo soporte |
-| IP Site Mapper | IP fija |
-| Red | máscara/VLAN/port-group |
-| Gateway | según red FIELD |
-| DNS | servidor aprobado |
-| NTP | servidor aprobado |
-| Acceso web | HTTPS hacia Site Mapper |
+| Requisito      | Baseline                                                        |
+| -------------- | --------------------------------------------------------------- |
+| Hypervisor     | VMware, Hyper-V o Proxmox/KVM                                   |
+| Arquitectura   | x86_64 / amd64                                                  |
+| CPU            | **4 vCPU**                                                      |
+| RAM            | **16 GB**                                                       |
+| Disco virtual  | **200 GB SSD expandible**, thin cuando el hypervisor lo soporte |
+| IP Site Mapper | IP fija                                                         |
+| Red            | máscara/VLAN/port-group                                         |
+| Gateway        | según red FIELD                                                 |
+| DNS            | servidor aprobado                                               |
+| NTP            | servidor aprobado                                               |
+| Acceso web     | HTTPS hacia Site Mapper                                         |
 
 Escalamiento previsto de almacenamiento: **200 GB → 500 GB → 1 TB**.
 
@@ -91,16 +91,16 @@ No se requiere un usuario MQTT diferente por QDF. Si se habilita autenticación,
 
 Para cada controlador/equipo SNMP necesitamos:
 
-| Dato | SNMP v2c |
-|---|---|
-| IP/hostname | Obligatorio |
-| Puerto | UDP/161 salvo acuerdo distinto |
-| Versión | v2c |
-| Community | **Read Only**, entregada por canal seguro |
-| MIB/manual | Requerido si el perfil/OIDs no están ya validados |
-| OIDs | Lista/documentación cuando corresponda |
-| Polling | frecuencia acordada |
-| Routing/firewall | Site Mapper → equipo UDP/161 |
+| Dato             | SNMP v2c                                          |
+| ---------------- | ------------------------------------------------- |
+| IP/hostname      | Obligatorio                                       |
+| Puerto           | UDP/161 salvo acuerdo distinto                    |
+| Versión          | v2c                                               |
+| Community        | **Read Only**, entregada por canal seguro         |
+| MIB/manual       | Requerido si el perfil/OIDs no están ya validados |
+| OIDs             | Lista/documentación cuando corresponda            |
+| Polling          | frecuencia acordada                               |
+| Routing/firewall | Site Mapper → equipo UDP/161                      |
 
 La **community no se inventa ni se lleva desde LAB**. La entrega real debe usar la community que el cliente ya tenga o la que su equipo de red/OT cree específicamente para la integración.
 
@@ -127,27 +127,27 @@ Normalmente Modbus TCP no usa username/password. La seguridad principal es segme
 
 ## 3. Matriz de responsabilidades
 
-| Actividad | VTKALL | Cliente |
-|---|---|---|
-| Construir imágenes Site Mapper | **Sí** | No |
-| Construir Golden VM | **Sí** | No |
-| Proveer hypervisor | No | **Sí** |
-| Proveer 4 vCPU / 16 GB / 200 GB | No | **Sí** |
-| Importar VM | Puede hacerlo | Puede hacerlo |
-| Asignar VLAN/port-group | Asiste | **Sí / autoriza** |
-| Asignar IP/gateway/DNS/NTP | Configura si tiene acceso | **Provee / autoriza** |
-| Abrir MQTT TCP/1883 | No | **Sí** |
-| Configurar Broker IP en QDF | Puede asistir | **Cliente/OT** |
-| Proveer SNMP IP/community | No | **Sí** |
-| Configurar collectors SNMP | **Sí** | No |
-| Validar OID/escala/unidad | **Sí**, con evidencia | Aporta documentación |
-| Configurar mappings | **Sí** | Valida |
-| Proveer datos Metasys | No | **Sí / integrador** |
-| Configurar salida Modbus | **Sí** | Valida |
-| SAT Metasys | **Conjunta** | **Conjunta** |
-| Backup/restore inicial | **Sí** | Provee destino/política |
-| As-Built | **Sí** | Aprueba |
-| Operación normal | Soporte | **Cliente** |
+| Actividad                       | VTKALL                    | Cliente                 |
+| ------------------------------- | ------------------------- | ----------------------- |
+| Construir imágenes Site Mapper  | **Sí**                    | No                      |
+| Construir Golden VM             | **Sí**                    | No                      |
+| Proveer hypervisor              | No                        | **Sí**                  |
+| Proveer 4 vCPU / 16 GB / 200 GB | No                        | **Sí**                  |
+| Importar VM                     | Puede hacerlo             | Puede hacerlo           |
+| Asignar VLAN/port-group         | Asiste                    | **Sí / autoriza**       |
+| Asignar IP/gateway/DNS/NTP      | Configura si tiene acceso | **Provee / autoriza**   |
+| Abrir MQTT TCP/1883             | No                        | **Sí**                  |
+| Configurar Broker IP en QDF     | Puede asistir             | **Cliente/OT**          |
+| Proveer SNMP IP/community       | No                        | **Sí**                  |
+| Configurar collectors SNMP      | **Sí**                    | No                      |
+| Validar OID/escala/unidad       | **Sí**, con evidencia     | Aporta documentación    |
+| Configurar mappings             | **Sí**                    | Valida                  |
+| Proveer datos Metasys           | No                        | **Sí / integrador**     |
+| Configurar salida Modbus        | **Sí**                    | Valida                  |
+| SAT Metasys                     | **Conjunta**              | **Conjunta**            |
+| Backup/restore inicial          | **Sí**                    | Provee destino/política |
+| As-Built                        | **Sí**                    | Aprueba                 |
+| Operación normal                | Soporte                   | **Cliente**             |
 
 Si el cliente dice **“háganlo ustedes”**, VTKALL necesita acceso temporal autorizado al hypervisor, red/VLAN, consola de la VM y los secretos FIELD. Los cambios de firewall/routing siguen requiriendo autorización del dueño de infraestructura.
 
@@ -218,10 +218,10 @@ Antes de exportarla:
 
 ## 6. Formato de VM según hypervisor
 
-| Hypervisor | Formato preferido |
-|---|---|
-| VMware | OVA/OVF + VMDK |
-| Hyper-V | VHDX |
+| Hypervisor  | Formato preferido         |
+| ----------- | ------------------------- |
+| VMware      | OVA/OVF + VMDK            |
+| Hyper-V     | VHDX                      |
 | Proxmox/KVM | QCOW2 o import compatible |
 
 No necesitamos entregar los tres formatos a cada cliente. Se entrega **el formato de su hypervisor**.
@@ -731,12 +731,12 @@ Los secretos reales se almacenan en la configuración privada del deployment, no
 
 ### 18.9 Ejemplo — reglas de firewall
 
-| Origen | Destino | Protocolo/Puerto | Uso |
-|---|---|---|---|
-| QDF-2/4/5 | Site Mapper VM | TCP/1883 | Publicación MQTT |
-| Site Mapper VM | Controllers SNMP | UDP/161 | Polling SNMP v2c |
-| Metasys | Site Mapper VM | TCP/`<MODBUS_PORT>` | Lectura Modbus |
-| LAN autorizada | Site Mapper VM | TCP/443 | UI Site Mapper |
+| Origen         | Destino          | Protocolo/Puerto    | Uso              |
+| -------------- | ---------------- | ------------------- | ---------------- |
+| QDF-2/4/5      | Site Mapper VM   | TCP/1883            | Publicación MQTT |
+| Site Mapper VM | Controllers SNMP | UDP/161             | Polling SNMP v2c |
+| Metasys        | Site Mapper VM   | TCP/`<MODBUS_PORT>` | Lectura Modbus   |
+| LAN autorizada | Site Mapper VM   | TCP/443             | UI Site Mapper   |
 
 Ejemplo:
 
@@ -941,22 +941,21 @@ Result: ACCEPTED
 
 El cliente conserva el control del hypervisor y la red. VTKALL conserva la trazabilidad del release, mappings, commissioning y soporte.
 
-
 ---
 
 ## 19. FIELD Read-Only Gate
 
 Antes del commissioning puede ejecutarse un gate integral **read-only**:
 
-~~~bash
+```bash
 bash scripts/release/field-check.sh all --env-file /opt/site-mapper/config/field.env
-~~~
+```
 
 Este gate reutiliza el preflight de VM y añade validación de configuración FIELD, servicios, MQTT, SNMP, MongoDB/TimescaleDB y Modbus.
 
 Contrato de seguridad:
 
-~~~text
+```text
 NO INSTALL
 NO DELETE
 NO RESTART
@@ -964,25 +963,25 @@ NO MIGRATION
 NO VOLUME CHANGE
 NO NETWORK/FIREWALL CHANGE
 NO SNMP SET
-~~~
+```
 
 Por defecto tampoco escribe archivos. Si se requiere evidencia se habilita explícitamente:
 
-~~~bash
+```bash
 bash scripts/release/field-check.sh all \
   --env-file /opt/site-mapper/config/field.env \
   --receipt
-~~~
+```
 
 El receipt es sanitizado y no contiene passwords, communities, tokens ni private keys.
 
 Resultados posibles:
 
-~~~text
+```text
 NOT_READY
 READY_WITH_WARNINGS
 READY_FOR_COMMISSIONING
-~~~
+```
 
 **READY_FOR_COMMISSIONING no equivale a producción aceptada.** Después continúan commissioning real, LIVE/histórico, contrato Modbus congelado, Metasys SAT, reboot/recovery, backup/restore y As-Built.
 

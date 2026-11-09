@@ -14,13 +14,13 @@ By default it also writes no files. The optional receipt is the only intentional
 
 Full gate:
 
-~~~bash
+```bash
 bash scripts/release/field-check.sh all --env-file /path/to/field.env
-~~~
+```
 
 Individual modules:
 
-~~~bash
+```bash
 bash scripts/release/field-check.sh vm --env-file /path/to/field.env
 bash scripts/release/field-check.sh config --env-file /path/to/field.env
 bash scripts/release/field-check.sh services --env-file /path/to/field.env
@@ -28,15 +28,15 @@ bash scripts/release/field-check.sh mqtt --env-file /path/to/field.env
 bash scripts/release/field-check.sh snmp --env-file /path/to/field.env
 bash scripts/release/field-check.sh data --env-file /path/to/field.env
 bash scripts/release/field-check.sh modbus --env-file /path/to/field.env
-~~~
+```
 
 Sanitized receipt:
 
-~~~bash
+```bash
 sudo bash scripts/release/field-check.sh all \
   --env-file /opt/site-mapper/config/field.env \
   --receipt
-~~~
+```
 
 ## What it validates
 
@@ -50,17 +50,17 @@ sudo bash scripts/release/field-check.sh all \
 
 The MQTT baseline uses the current known serials when MQTT_EXPECTED_SOURCES is not set:
 
-~~~text
+```text
 26092403950003
 26092403950004
 26092403950002
-~~~
+```
 
 The gate does not start publishers, synthetic agents or emulators.
 
 ## Result semantics
 
-~~~text
+```text
 NOT_READY
   at least one hard prerequisite failed
 
@@ -70,7 +70,7 @@ READY_WITH_WARNINGS
 
 READY_FOR_COMMISSIONING
   all checks visible to this gate passed
-~~~
+```
 
 None of these states means PRODUCTION_ACCEPTED. Acceptance still requires real commissioning evidence, LIVE/history coherence, the frozen Modbus contract, Metasys SAT, reboot/recovery evidence, backup/restore evidence and As-Built.
 
@@ -78,15 +78,15 @@ None of these states means PRODUCTION_ACCEPTED. Acceptance still requires real c
 
 Receipt writing is opt-in:
 
-~~~bash
+```bash
 bash scripts/release/field-check.sh all --receipt
-~~~
+```
 
 Default:
 
-~~~text
+```text
 /var/lib/site-mapper/receipts/<UTC>-field-check.txt
-~~~
+```
 
 Override with SITE_MAPPER_FIELD_RECEIPT_DIR. The receipt never includes communities, passwords, tokens or private keys.
 

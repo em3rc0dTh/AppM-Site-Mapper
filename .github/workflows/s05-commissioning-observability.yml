@@ -90,3 +90,4 @@ jobs:
           tests/unit/industrial-credential-security.test.ts
           tests/unit/s05-snmp-history-diagnostics.test.ts
           tests/unit/s05-office-secret-wiring.test.ts
+# CI full-actions probe only; temporary PR, do not merge.

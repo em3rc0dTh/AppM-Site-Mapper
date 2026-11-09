@@ -102,3 +102,4 @@ jobs:
                   assert port.get('host_ip') == '127.0.0.1', (name, port)
           print('BFDB Config4: three isolated sources and eight independent OIDs each')
           PY
+# CI full-actions probe only; temporary PR, do not merge.

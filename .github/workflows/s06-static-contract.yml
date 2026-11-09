@@ -37,3 +37,4 @@ jobs:
           docker compose -f docker-compose.lab-remote.yml config --quiet
 
 # No connection to TFARM04, no container startup, no secrets and no deploy.
+# CI full-actions probe only; temporary PR, do not merge.

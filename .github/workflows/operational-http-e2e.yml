@@ -217,3 +217,4 @@ jobs:
         run: |
           docker compose -f docker-compose.telemetry.yml down -v || true
           docker rm -f mk1-e2e-mongo || true
+# CI full-actions probe only; temporary PR, do not merge.

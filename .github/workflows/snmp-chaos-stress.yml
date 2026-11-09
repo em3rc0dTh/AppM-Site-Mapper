@@ -30,3 +30,4 @@ jobs:
         run: npx vitest run tests/unit/snmp-adversarial-security.test.ts tests/unit/bdfb-config4.test.ts
       - name: Production dependencies high-severity audit
         run: npm audit --omit=dev --audit-level=high
+# CI full-actions probe only; temporary PR, do not merge.

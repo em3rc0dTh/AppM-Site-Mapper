@@ -35,3 +35,4 @@ jobs:
         run: node --test infra/modbus-tcp/server.test.mjs
       - name: Check committed Metasys register table against runtime map
         run: node scripts/operations/generate-metasys-register-map.mjs --check
+# CI full-actions probe only; temporary PR, do not merge.

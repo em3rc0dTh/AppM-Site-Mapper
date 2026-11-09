@@ -60,3 +60,4 @@ jobs:
           PY
       - name: Production dependency vulnerability check
         run: npm audit --omit=dev --audit-level=high
+# CI full-actions probe only; temporary PR, do not merge.

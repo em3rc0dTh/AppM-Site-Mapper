@@ -59,3 +59,4 @@ jobs:
       - name: Cleanup isolated replica set
         if: always()
         run: docker rm -f s02-alarm-mongo || true
+# CI full-actions probe only; temporary PR, do not merge.

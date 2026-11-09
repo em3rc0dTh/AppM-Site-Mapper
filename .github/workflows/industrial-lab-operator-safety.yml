@@ -49,3 +49,4 @@ jobs:
           python3 -m unittest discover -s tests/python -p 'test_lab_modbus_bridge_only.py' -v
           python3 -m unittest discover -s tests/python -p 'test_lab_modbus_fc03_rotating_panels.py' -v
           python3 -m unittest discover -s tests/python -p 'test_lab_modbus_compose_provenance.py' -v
+# CI full-actions probe only; temporary PR, do not merge.

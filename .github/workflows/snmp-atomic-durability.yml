@@ -43,3 +43,4 @@ jobs:
       - name: Remove disposable data
         if: always()
         run: docker compose -f docker-compose.telemetry.yml down -v
+# CI full-actions probe only; temporary PR, do not merge.

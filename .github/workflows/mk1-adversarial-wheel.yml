@@ -61,3 +61,4 @@ jobs:
           node --test infra/snmp-collector/chaos.test.mjs infra/snmp-collector/adversarial-wire.test.mjs infra/modbus-tcp/server.test.mjs
       - name: Check for high-severity production dependencies
         run: npm audit --omit=dev --audit-level=high
+# CI full-actions probe only; temporary PR, do not merge.

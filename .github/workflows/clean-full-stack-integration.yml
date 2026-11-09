@@ -263,3 +263,4 @@ jobs:
         if: always()
         run: |
           docker compose             --env-file infra/integration/integration.env             -f docker-compose.telemetry.yml             -f docker-compose.integration.yml             down -v --remove-orphans || true
+# CI full-actions probe only; temporary PR, do not merge.

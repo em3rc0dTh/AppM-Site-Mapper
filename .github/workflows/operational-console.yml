@@ -30,3 +30,4 @@ jobs:
         run: npm test
       - name: Docker image build
         run: docker build -f infra/operational-console/Dockerfile -t site-mapper-operational-console .
+# CI full-actions probe only; temporary PR, do not merge.

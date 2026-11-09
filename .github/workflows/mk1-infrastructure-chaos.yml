@@ -81,3 +81,4 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Fail downstream delivery, restart consumer and replay durable queue
         run: npx vitest run tests/integration/mk1-spool-infrastructure-chaos.test.ts
+# CI full-actions probe only; temporary PR, do not merge.

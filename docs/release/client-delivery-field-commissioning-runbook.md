@@ -941,3 +941,49 @@ Result: ACCEPTED
 
 El cliente conserva el control del hypervisor y la red. VTKALL conserva la trazabilidad del release, mappings, commissioning y soporte.
 
+
+---
+
+## 19. FIELD Read-Only Gate
+
+Antes del commissioning puede ejecutarse un gate integral **read-only**:
+
+~~~bash
+bash scripts/release/field-check.sh all --env-file /opt/site-mapper/config/field.env
+~~~
+
+Este gate reutiliza el preflight de VM y añade validación de configuración FIELD, servicios, MQTT, SNMP, MongoDB/TimescaleDB y Modbus.
+
+Contrato de seguridad:
+
+~~~text
+NO INSTALL
+NO DELETE
+NO RESTART
+NO MIGRATION
+NO VOLUME CHANGE
+NO NETWORK/FIREWALL CHANGE
+NO SNMP SET
+~~~
+
+Por defecto tampoco escribe archivos. Si se requiere evidencia se habilita explícitamente:
+
+~~~bash
+bash scripts/release/field-check.sh all \
+  --env-file /opt/site-mapper/config/field.env \
+  --receipt
+~~~
+
+El receipt es sanitizado y no contiene passwords, communities, tokens ni private keys.
+
+Resultados posibles:
+
+~~~text
+NOT_READY
+READY_WITH_WARNINGS
+READY_FOR_COMMISSIONING
+~~~
+
+**READY_FOR_COMMISSIONING no equivale a producción aceptada.** Después continúan commissioning real, LIVE/histórico, contrato Modbus congelado, Metasys SAT, reboot/recovery, backup/restore y As-Built.
+
+Detalle operativo: [FIELD Read-Only Gate](field-readonly-gate.md).

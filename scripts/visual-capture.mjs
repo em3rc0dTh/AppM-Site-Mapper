@@ -298,8 +298,14 @@ if (bdfbLink) {
     assert.ok(boardGeometry, 'BDFB panel focus and positions must exist');
     assert.ok(boardGeometry.endpointCount >= 1, 'Panel has no physical positions');
     assert.ok(boardGeometry.boardHeight >= 200, 'BDFB panel focus collapsed inside viewport');
-    assert.ok(boardGeometry.gridHeight >= 40, 'BDFB position grid is clipped');
-    assert.ok(boardGeometry.endpointHeight >= 20, 'BDFB breaker positions are not visible');
+    assert.ok(
+      boardGeometry.endpointHeight >= 35,
+      'BDFB breaker positions are smaller than the current 37px visual contract',
+    );
+    assert.ok(
+      boardGeometry.gridHeight + 1 >= boardGeometry.endpointHeight,
+      'BDFB position grid is clipped',
+    );
 
     await snap('12a-panel-breaker-board');
 

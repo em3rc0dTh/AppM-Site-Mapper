@@ -246,6 +246,11 @@ function openBrowser(url) {
 try {
   await waitForHealth();
   const cookie = await bootstrapAndLogin();
+  if (mqttLab) {
+    // Stable CI synchronization point: topology + 3 BFDB fixtures + telemetry
+    // bindings are fully seeded before an external publisher sends one-shot batches.
+    console.log('SITE_MAPPER_MQTT_FIXTURE_READY');
+  }
   const verified = mqttLab
     ? await verifyEmulator(cookie)
     : mqttOnly

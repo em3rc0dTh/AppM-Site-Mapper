@@ -71,7 +71,10 @@ fail() { failures=$((failures + 1)); record FAIL "$@"; }
 
 env_value() {
   key="$1"
-  current="${!key-}"
+  current=""
+  if [[ -v $key ]]; then
+    current="${!key}"
+  fi
   if [ -n "$current" ]; then
     printf '%s' "$current"
     return 0

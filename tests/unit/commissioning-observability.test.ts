@@ -1,3 +1,4 @@
+// Temporary final Actions sweep marker. Do not merge.
 import { describe, expect, it } from 'vitest';
 
 import { composeCommissioningObservability } from '@/modules/industrial/application/commissioning-observability';

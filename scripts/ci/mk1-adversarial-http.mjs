@@ -1,3 +1,4 @@
+// Temporary final Actions sweep marker. Do not merge.
 #!/usr/bin/env node
 /**
  * MK1 red-team wheel: bounded, reproducible HTTP fault probes.

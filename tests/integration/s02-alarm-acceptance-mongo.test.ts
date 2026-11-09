@@ -1,3 +1,4 @@
+// Temporary final Actions sweep marker. Do not merge.
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MongoClient } from 'mongodb';
 

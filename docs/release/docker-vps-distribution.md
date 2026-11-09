@@ -12,7 +12,7 @@ La ejecución de esta estrategia se controla mediante [Portability & Real Equipm
 
 ## 1. Decisión y límites
 
-- **Destino:** VPS Linux del cliente con Docker Engine y Docker Compose Plugin. Plataforma mínima objetivo: `linux/amd64`; `arm64` solo cuando exista build y prueba específica para esa arquitectura.
+- **Destino:** VM/VPS Linux del cliente con Docker Engine y Docker Compose Plugin. Plataforma mínima objetivo: `linux/amd64`; `arm64` solo cuando exista build y prueba específica para esa arquitectura. Baseline de planificación: **4 vCPU, 16 GB RAM, 200 GB SSD virtual expandible**.
 - **Compilación:** exclusivamente en infraestructura nuestra/CI; no en el VPS del cliente.
 - **Entrega principal:** bundle offline versionado, por ejemplo `site-mapper-mk1-rc1-linux-amd64.tar` producido con `docker save`, más `compose.client.yaml`, plantilla de configuración, manifiesto de hashes y guía operativa.
 - **Alternativa:** distribuir esas mismas imágenes por registry privado (pull por digest) cuando el cliente tenga conectividad y acceso permitido.
@@ -120,7 +120,7 @@ Para una actualización se entregan nuevas imágenes más un manifiesto de compa
 - **Modbus:** `MODBUS_SOURCE_UNITS_JSON` validado, `MODBUS_BRIDGE_TOKEN` secreto y FC03 de solo lectura en red OT segmentada. El valor cero de un registro vencido no equivale a medición certificada.
 - **Credenciales de Equipment:** guardar `SITE_MAPPER_CREDENTIAL_KEY` fuera de imágenes y repositorio, con custodia/backup seguros. Si se pierde, los secretos ya cifrados pueden volverse irrecuperables.
 - **Datos:** volúmenes independientes, persistentes, cifrados cuando corresponda, para Mongo, Timescale, MQTT broker, spool MQTT, cola SNMP y cualquier estado operativo durable. Nunca hornear datasets o contraseñas de cliente en capas Docker.
-- **Recursos:** fijar mínimos y sizing de VPS según pruebas de carga; no inventar CPU/RAM/disco garantizados. Registrar alertas por disco, spool, reintentos, errores de ingestión y servicios no saludables.
+- **Recursos:** para una instalación comparable al workload actualmente observado, el baseline aprobado es **4 vCPU / 16 GB RAM / 200 GB SSD virtual expandible**. El almacenamiento opera con WARNING 70%, ACTION 80%, CRITICAL 90% y EMERGENCY >=95%; llegar al 80% **no autoriza borrado automático**. Escalar primero a 500 GB y luego a 1 TB mientras ingestión/concurrencia permanezcan comparables; escalar CPU/RAM hacia 8 vCPU / 32 GB cuando las métricas de carga lo justifiquen. Ejecutar [client-vm-preflight.sh](../../scripts/release/client-vm-preflight.sh) y consultar [Client VM / Appliance Baseline](client-vm-appliance.md).
 
 Referencias del contrato vigente: [entorno](../operations/environment-reference.md), [hardening](../operations/mk1-critical-hardening-2026-10-26.md), [backup y restore](../operations/backup-restore.md), [preparación MVP](MVP-READINESS.md).
 

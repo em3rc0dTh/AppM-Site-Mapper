@@ -58,6 +58,8 @@ Los nombres con `/` representan alternativas del **mismo nivel**. No implican un
 
 ## Entrega a clientes: VM / appliance + imágenes Docker
 
+**[Runbook completo de entrega, VM, FIELD y commissioning](docs/release/client-delivery-field-commissioning-runbook.md)** — responsabilidades VTKALL/cliente, construcción de imágenes, Golden VM, transporte en SSD, importación al hypervisor, MQTT QDF, SNMP, Metasys, SAT y handover.
+
 **[Baseline de VM / appliance para cliente](docs/release/client-vm-appliance.md)** — objetivo actual: **4 vCPU, 16 GB RAM y 200 GB SSD virtual expandible**, con umbrales operativos de almacenamiento 70/80/90% y escalamiento previsto a 500 GB y 1 TB. La referencia se basa en el consumo observado del stack en TFARM04; el crecimiento diario de histórico sigue siendo una estimación hasta disponer de una ventana FIELD representativa.
 
 **[Contrato de distribución Docker para VPS](docs/release/docker-vps-distribution.md)** — Site Mapper se compila en CI y se entrega como **imágenes preconstruidas**, no como repositorio ni código fuente. Cada componente opera en su propio contenedor; un bundle offline multiimagen (`docker save`) y un Compose **sin `build:`** permitirán instalarlo con `docker load` y `docker compose up --no-build --pull never`.

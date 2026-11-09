@@ -38,11 +38,13 @@ jobs:
         run: |
           npm run local:emulator -- --no-open > /tmp/site-mapper-mqtt.log 2>&1 &
           for i in {1..90}; do
-            if grep -q '"message":"mqtt.subscribed"' /tmp/site-mapper-mqtt.log; then
+            if grep -q '"message":"mqtt.subscribed"' /tmp/site-mapper-mqtt.log \
+              && grep -q 'SITE_MAPPER_MQTT_FIXTURE_READY' /tmp/site-mapper-mqtt.log; then
               exit 0
             fi
             sleep 1
           done
+          echo "MQTT fixture did not become ready after subscription + seed" >&2
           exit 1
       - name: Publish three-source four-panel batches into Mosquitto
         run: node scripts/bfdb-lab-contract-publisher.mjs

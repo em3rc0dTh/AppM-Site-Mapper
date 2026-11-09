@@ -1,6 +1,6 @@
 # Site Mapper MK1 — Entrega de VM, Configuración FIELD y Commissioning
 
-**Versión:** 1.1  
+**Versión:** 1.2  
 **Propósito:** contrato operativo para preparar, transportar, instalar, configurar, comisionar y entregar Site Mapper en infraestructura del cliente.  
 **Principio:** el cliente no recibe un proyecto para desarrollar; recibe una **appliance preparada**. La instalación FIELD debe requerir únicamente infraestructura, red, endpoints/credenciales y validación del commissioning.
 

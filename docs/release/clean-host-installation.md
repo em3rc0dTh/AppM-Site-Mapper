@@ -33,6 +33,22 @@ Para el camino actual desde repositorio:
 - almacenamiento persistente suficiente;
 - reloj/NTP correcto.
 
+Para una **VM/appliance de cliente comparable al workload actualmente observado**, el baseline aprobado es:
+
+- **4 vCPU**;
+- **16 GB RAM**;
+- **200 GB SSD virtual expandible**, preferentemente thin-provisioned;
+- **x86_64/amd64**;
+- Ubuntu Server 24.04 LTS como sistema base objetivo.
+
+Validar el host de forma no destructiva antes del commissioning:
+
+```bash
+bash scripts/release/client-vm-preflight.sh
+```
+
+El sizing, sus márgenes, escalamiento y límites se documentan en [Client VM / Appliance Baseline](client-vm-appliance.md).
+
 Node.js no es obligatorio en el host cuando todo se construye dentro de Docker. Sí es necesario para el modo DEV sin Docker.
 
 Registrar versiones reales en la evidencia de instalación:

@@ -56,11 +56,19 @@ flowchart TD
 
 Los nombres con `/` representan alternativas del **mismo nivel**. No implican un nivel adicional. La correspondencia física nunca se infiere automáticamente de un número de slot. Consulta [topología](docs/domain/topology-hierarchy.md).
 
-## Entrega a clientes: imágenes Docker en su VPS
+## Entrega a clientes: VM / appliance + imágenes Docker
+
+**[Baseline de VM / appliance para cliente](docs/release/client-vm-appliance.md)** — objetivo actual: **4 vCPU, 16 GB RAM y 200 GB SSD virtual expandible**, con umbrales operativos de almacenamiento 70/80/90% y escalamiento previsto a 500 GB y 1 TB. La referencia se basa en el consumo observado del stack en TFARM04; el crecimiento diario de histórico sigue siendo una estimación hasta disponer de una ventana FIELD representativa.
 
 **[Contrato de distribución Docker para VPS](docs/release/docker-vps-distribution.md)** — Site Mapper se compila en CI y se entrega como **imágenes preconstruidas**, no como repositorio ni código fuente. Cada componente opera en su propio contenedor; un bundle offline multiimagen (`docker save`) y un Compose **sin `build:`** permitirán instalarlo con `docker load` y `docker compose up --no-build --pull never`.
 
-**Estado:** especificación documentada, **no paquete de cliente generado**. `docker-compose.telemetry.yml` es el stack de integración/preproducción que todavía construye desde el código; no es el bundle final de cliente. Los datos y secretos del cliente deben residir en volúmenes y configuración privada, con backups/migraciones aprobadas antes de actualizar.
+Antes del commissioning, ejecutar el preflight no destructivo:
+
+```bash
+bash scripts/release/client-vm-preflight.sh
+```
+
+**Estado:** sizing y preflight de VM ya están versionados; el **paquete offline final de cliente aún no está generado/certificado**. `docker-compose.telemetry.yml` sigue siendo el stack de integración/preproducción que construye desde código. Los datos y secretos del cliente deben residir en volúmenes y configuración privada, con backups/migraciones aprobadas antes de actualizar.
 
 ## Full stack limpio · seed-01
 

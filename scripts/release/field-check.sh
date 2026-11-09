@@ -213,8 +213,20 @@ check_services() {
   mosq_state="$(container_state_for_service mosquitto 2>/dev/null || true)"
   if [ "$mosq_state" = "running" ]; then
     pass "mosquitto container running"
-  elif command -v ss >/dev/null 2>&1 && ss -lnt 2>/dev/null | awk '{print $4}' | grep -Eq '(^|:)1883
+  elif command -v ss >/dev/null 2>&1 && ss -lnt 2>/dev/null | awk '{print $4}' | grep -Eq '(^|:)1883$'; then
+    pass "MQTT listener detected on TCP/1883"
+  else
+    warn "Mosquitto service not found and TCP/1883 not detected"
+  fi
 
+  collector_services="$(docker ps --format '{{.Label "com.docker.compose.service"}}' 2>/dev/null | grep '^snmp-collector' | sort -u || true)"
+  if [ -n "$collector_services" ]; then
+    count="$(printf '%s\n' "$collector_services" | grep -c . || true)"
+    pass "SNMP collector services running: $count"
+  else
+    warn "no running snmp-collector* service detected"
+  fi
+}
 check_mqtt() {
   echo
   echo "=== MQTT ==="

@@ -6,10 +6,10 @@ set -u
 # Optional --receipt writes only a sanitized local evidence file.
 
 ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
-ENV_FILE="\${SITE_MAPPER_FIELD_ENV_FILE:-$ROOT_DIR/.env}"
+ENV_FILE="${SITE_MAPPER_FIELD_ENV_FILE:-$ROOT_DIR/.env}"
 MODE="all"
 WRITE_RECEIPT=0
-RECEIPT_DIR="\${SITE_MAPPER_FIELD_RECEIPT_DIR:-/var/lib/site-mapper/receipts}"
+RECEIPT_DIR="${SITE_MAPPER_FIELD_RECEIPT_DIR:-/var/lib/site-mapper/receipts}"
 
 failures=0
 warnings=0
@@ -71,7 +71,7 @@ fail() { failures=$((failures + 1)); record FAIL "$@"; }
 
 env_value() {
   key="$1"
-  eval "current=\${$key-}"
+  current="${!key-}"
   if [ -n "$current" ]; then
     printf '%s' "$current"
     return 0
@@ -79,11 +79,11 @@ env_value() {
   [ -r "$ENV_FILE" ] || return 1
   line="$(grep -E "^[[:space:]]*$key=" "$ENV_FILE" 2>/dev/null | tail -n 1 || true)"
   [ -n "$line" ] || return 1
-  value="\${line#*=}"
-  value="\${value%$'\r'}"
+  value="${line#*=}"
+  value="${value%$'\r'}"
   case "$value" in
-    \"*\") value="\${value#\"}"; value="\${value%\"}" ;;
-    \'*\') value="\${value#\'}"; value="\${value%\'}" ;;
+    \"*\") value="${value#\"}"; value="${value%\"}" ;;
+    \'*\') value="${value#\'}"; value="${value%\'}" ;;
   esac
   printf '%s' "$value"
 }
@@ -149,7 +149,7 @@ check_config() {
     2c)
       pass "SNMP version=2c"
       [ -n "$snmp_host" ] && pass "SNMP controller host configured" || warn "SNMP_CONTROLLER_HOST missing in base env; per-controller deployment may provide it per service"
-      [ "\${snmp_port:-161}" = "161" ] && pass "SNMP port=161" || info "SNMP port=$snmp_port"
+      [ "${snmp_port:-161}" = "161" ] && pass "SNMP port=161" || info "SNMP port=$snmp_port"
       if is_secret_present SNMP_COMMUNITY; then pass "SNMP v2c community present (redacted)"; else fail "SNMP v2c community missing"; fi
       ack="$(env_value SNMP_V2C_ACKNOWLEDGE_PLAINTEXT 2>/dev/null || true)"
       [ "$ack" = "true" ] && pass "SNMP v2c plaintext acknowledgement enabled" || warn "SNMP_V2C_ACKNOWLEDGE_PLAINTEXT is not true"
@@ -264,7 +264,7 @@ check_snmp() {
   host="$(env_value SNMP_CONTROLLER_HOST 2>/dev/null || true)"
   port="$(env_value SNMP_CONTROLLER_PORT 2>/dev/null || true)"
   points="$(env_value SNMP_FEED_POINTS_JSON 2>/dev/null || true)"
-  port="\${port:-161}"
+  port="${port:-161}"
 
   if [ -z "$host" ]; then
     warn "SNMP_CONTROLLER_HOST not present in base env; inspect per-controller services separately"
@@ -355,7 +355,7 @@ PY
   [ "$modbus_state" = "running" ] && pass "modbus-tcp container running" || warn "modbus-tcp container not running/found"
 
   modbus_port="$(env_value MODBUS_CLIENT_PORT 2>/dev/null || true)"
-  modbus_port="\${modbus_port:-1503}"
+  modbus_port="${modbus_port:-1503}"
   if command -v ss >/dev/null 2>&1 && ss -lnt 2>/dev/null | awk '{print $4}' | grep -Eq "(^|:)$modbus_port$"; then
     pass "Modbus TCP listener detected on port $modbus_port"
   else

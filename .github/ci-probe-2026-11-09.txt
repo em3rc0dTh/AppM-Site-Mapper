@@ -1,0 +1,2 @@
+Temporary CI probe. Do not merge.
+Purpose: trigger pull_request workflows for full validation after FIELD gate changes.

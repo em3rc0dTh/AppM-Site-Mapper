@@ -27,10 +27,12 @@ flowchart LR
   O --> P[Acceptance]
 ```
 
-Procedimiento ejecutable: [Clean Host Installation](clean-host-installation.md).
+Procedimiento ejecutable: [Clean Host Installation](clean-host-installation.md). Baseline de infraestructura: [Client VM / Appliance](client-vm-appliance.md).
 
 ## P0 · Portabilidad
 
+- [ ] la VM/host objetivo cumple el baseline documentado de **4 vCPU / 16 GB RAM / 200 GB SSD virtual expandible** o existe una excepción de sizing aprobada;
+- [ ] `scripts/release/client-vm-preflight.sh` pasa antes del commissioning y registra capacidad/umbrales sin modificar el host;
 - [ ] `.env.example` contiene todas las variables necesarias para los Compose soportados o las marca explícitamente como externas/opcionales.
 - [ ] instalación limpia documentada;
 - [ ] Mongo vacía + `MONGODB_DB_NAME=seed-01` + `SITE_MAPPER_SEED_PROFILE=seed-01` materializa el seed canónico sin scripts correctivos;

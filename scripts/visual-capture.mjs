@@ -211,16 +211,19 @@ if (await powerTelemetryButton.count()) {
 const bdfbLink = await search('BDFB-A', 'DEVICE');
 if (bdfbLink) {
   await go(bdfbLink);
+  await page.locator('.sm-bdfb-physical-body').waitFor({ state: 'visible', timeout: 10_000 });
+
   const overviewGeometry = await page.evaluate(() => {
-    const body = document.querySelector('.bdfb-chassis-body');
-    const device = document.querySelector('.bdfb-overview-device');
-    const frames = [...document.querySelectorAll('.bdfb-overview-frame')];
-    const panels = [...document.querySelectorAll('.bdfb-overview-panel')];
+    const body = document.querySelector('.sm-bdfb-physical-body');
+    const device = document.querySelector('.sm-bdfb-physical-chassis');
+    const frames = [...document.querySelectorAll('.sm-bdfb-physical-frame')];
+    const panels = [...document.querySelectorAll('.sm-bdfb-physical-panel')];
     if (!body || !device) return null;
+
     const frameRects = frames.map((frame) => frame.getBoundingClientRect());
-    const panelRects = panels.map((panel) => panel.getBoundingClientRect());
     const bodyRect = body.getBoundingClientRect();
     const deviceRect = device.getBoundingClientRect();
+
     return {
       frameCount: frames.length,
       panelCount: panels.length,
@@ -235,7 +238,7 @@ if (bdfbLink) {
         Math.abs(frameRects[0].top - frameRects[1].top) <= 2 &&
         frameRects[0].right <= frameRects[1].left + 2,
       panelsStacked: frames.every((frame) => {
-        const children = [...frame.querySelectorAll('.bdfb-overview-panel')].map((panel) =>
+        const children = [...frame.querySelectorAll('.sm-bdfb-physical-panel')].map((panel) =>
           panel.getBoundingClientRect(),
         );
         return children.every(
@@ -244,48 +247,60 @@ if (bdfbLink) {
       }),
     };
   });
-  assert.ok(overviewGeometry, 'BDFB overview geometry must exist');
+
+  assert.ok(overviewGeometry, 'BDFB physical overview geometry must exist');
   assert.equal(overviewGeometry.frameCount, 2, 'BDFB overview must render A/B as two frames');
   assert.ok(overviewGeometry.panelCount >= 1, 'BDFB overview must render configured panels');
   assert.ok(overviewGeometry.framesSideBySide, 'BDFB A/B frames must render side-by-side');
   assert.ok(overviewGeometry.panelsStacked, 'BDFB panels must stack vertically within A/B');
   assert.ok(
     overviewGeometry.bodyScrollHeight <= overviewGeometry.bodyClientHeight + 2,
-    'BDFB overview must fit the viewport without vertical scroll',
+    'BDFB physical overview must fit the viewport without vertical scroll',
   );
   assert.ok(
     overviewGeometry.deviceTop >= overviewGeometry.bodyTop - 2 &&
       overviewGeometry.deviceBottom <= overviewGeometry.bodyBottom + 2,
-    'BDFB chassis must remain fully visible inside the overview frame',
+    'BDFB chassis must remain fully visible inside the physical overview frame',
   );
+
   await snap('11-bdfb');
-  const panel = page.locator('.bdfb-overview-panel').first();
+
+  const panel = page.locator('.sm-bdfb-panel-select').first();
   if (await panel.count()) {
     await panel.click();
-    await page.locator('.bdfb-endpoint').first().waitFor({ state: 'visible' });
-    // A CSS-only regression previously collapsed the board to its header while
-    // leaving every endpoint in the DOM. Check actual rendered dimensions.
+    await page.locator('.sm-bdfb-panel-focus').waitFor({ state: 'visible', timeout: 10_000 });
+    await page.locator('.sm-bdfb-panel-position').first().waitFor({
+      state: 'visible',
+      timeout: 10_000,
+    });
+
+    // The current physical renderer keeps the selected panel in a dedicated
+    // focus surface. Validate rendered dimensions, not merely DOM presence.
     const boardGeometry = await page.evaluate(() => {
-      const board = document.querySelector('.bdfb-panel-board--detail');
-      const grid = document.querySelector('.bdfb-endpoint-grid');
-      const endpoint = document.querySelector('.bdfb-endpoint');
+      const board = document.querySelector('.sm-bdfb-panel-focus');
+      const grid = document.querySelector('.sm-bdfb-panel-positions');
+      const endpoint = document.querySelector('.sm-bdfb-panel-position');
       if (!board || !grid || !endpoint) return null;
       return {
         boardHeight: board.getBoundingClientRect().height,
         gridHeight: grid.getBoundingClientRect().height,
         endpointHeight: endpoint.getBoundingClientRect().height,
-        endpointCount: grid.querySelectorAll('.bdfb-endpoint').length,
+        endpointCount: grid.querySelectorAll('.sm-bdfb-panel-position').length,
       };
     });
-    assert.ok(boardGeometry, 'BDFB panel board and endpoints must exist');
-    assert.ok(boardGeometry.endpointCount >= 1, 'Panel has no physical endpoints');
-    assert.ok(boardGeometry.boardHeight >= 380, 'BDFB board collapsed inside viewport');
-    assert.ok(boardGeometry.gridHeight >= 240, 'BDFB endpoint grid is clipped');
-    assert.ok(boardGeometry.endpointHeight >= 22, 'BDFB breaker buttons are not visible');
+
+    assert.ok(boardGeometry, 'BDFB panel focus and positions must exist');
+    assert.ok(boardGeometry.endpointCount >= 1, 'Panel has no physical positions');
+    assert.ok(boardGeometry.boardHeight >= 200, 'BDFB panel focus collapsed inside viewport');
+    assert.ok(boardGeometry.gridHeight >= 40, 'BDFB position grid is clipped');
+    assert.ok(boardGeometry.endpointHeight >= 20, 'BDFB breaker positions are not visible');
+
     await snap('12a-panel-breaker-board');
-    const breaker08 = page.locator('.bdfb-endpoint').nth(7);
-    if (await breaker08.count()) {
-      await breaker08.click();
+
+    const breakerTriggers = page.locator('.sm-breaker-position-trigger');
+    const breakerCount = await breakerTriggers.count();
+    if (breakerCount > 0) {
+      await breakerTriggers.nth(Math.min(7, breakerCount - 1)).click();
       await page.waitForTimeout(250);
     }
     await snap('12-panel-breaker');

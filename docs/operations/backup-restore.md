@@ -21,6 +21,26 @@ Before production release, define and verify:
 
 These values are environment/business decisions and are not invented by the repository.
 
+## Client VM storage capacity policy
+
+For the current client VM baseline, the target is **200 GB SSD virtual, expandable**. Operational filesystem thresholds are:
+
+- **<70%:** NORMAL;
+- **70–79%:** WARNING; inspect growth trend;
+- **80–89%:** ACTION; expand storage or execute the approved retention/archive plan;
+- **90–94%:** CRITICAL;
+- **>=95%:** EMERGENCY.
+
+The **80% threshold never authorizes automatic deletion**.
+
+Current retention behavior must be distinguished by store:
+
+- Industrial Mongo evidence/history follows `INDUSTRIAL_RETENTION_DAYS` (default 90 days in the current environment template).
+- Site Mapper-owned Timescale historical hypertables do not have a general automatic deletion policy.
+- Pending outbox/spool data must not be deleted merely to recover disk space.
+
+If capacity approaches the action threshold, preserve a recoverable backup and choose explicitly between disk expansion, approved Timescale retention/compression/archive, or a customer-approved history policy. See [Client VM / Appliance Baseline](../release/client-vm-appliance.md).
+
 ## Pre-migration backup
 
 Before promoting G13 migration staging data:

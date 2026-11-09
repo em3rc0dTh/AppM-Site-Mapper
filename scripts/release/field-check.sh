@@ -2,6 +2,7 @@
 set -u
 
 # Site Mapper FIELD read-only gate.
+# CI validation probe only; branch will not be merged.
 # Safety contract: no install/delete/restart/migration/volume/network mutation and no SNMP SET.
 # Optional --receipt writes only a sanitized local evidence file.
 

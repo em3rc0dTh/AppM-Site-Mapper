@@ -4,15 +4,15 @@
 
 ## 1. Baseline requested from the client
 
-| Resource | Baseline |
-| --- | ---: |
-| Architecture | x86_64 / amd64 |
-| CPU | **4 vCPU** |
-| RAM | **16 GB** |
-| Virtual disk | **200 GB SSD**, thin-provisioned when supported, expandable |
-| OS | Ubuntu Server 24.04 LTS |
-| Network | fixed addressing/DNS/NTP according to the site design |
-| Hypervisor | VMware, Hyper-V or KVM/Proxmox; export format chosen per client |
+| Resource     |                                                        Baseline |
+| ------------ | --------------------------------------------------------------: |
+| Architecture |                                                  x86_64 / amd64 |
+| CPU          |                                                      **4 vCPU** |
+| RAM          |                                                       **16 GB** |
+| Virtual disk |     **200 GB SSD**, thin-provisioned when supported, expandable |
+| OS           |                                         Ubuntu Server 24.04 LTS |
+| Network      |           fixed addressing/DNS/NTP according to the site design |
+| Hypervisor   | VMware, Hyper-V or KVM/Proxmox; export format chosen per client |
 
 The virtual disk must be expandable without rebuilding Site Mapper.
 
@@ -41,13 +41,13 @@ Expected clean appliance occupation is approximately **20–25 GB**. The exact e
 
 The client VM is managed against the following filesystem thresholds:
 
-| Usage | State | Required action |
-| ---: | --- | --- |
-| < 70% | NORMAL | No capacity action |
-| 70–79% | WARNING | Review growth trend and available expansion |
-| **80–89%** | **ACTION** | Expand storage or apply the approved retention/archive plan |
-| 90–94% | CRITICAL | Immediate capacity intervention |
-| >= 95% | EMERGENCY | Protect writes/services and recover capacity under operator control |
+|      Usage | State      | Required action                                                     |
+| ---------: | ---------- | ------------------------------------------------------------------- |
+|      < 70% | NORMAL     | No capacity action                                                  |
+|     70–79% | WARNING    | Review growth trend and available expansion                         |
+| **80–89%** | **ACTION** | Expand storage or apply the approved retention/archive plan         |
+|     90–94% | CRITICAL   | Immediate capacity intervention                                     |
+|     >= 95% | EMERGENCY  | Protect writes/services and recover capacity under operator control |
 
 **The 80% threshold is an action threshold, not an automatic delete trigger.**
 
@@ -117,14 +117,14 @@ The transport package should include the appliance, `SHA256SUMS`, release manife
 
 ## 8. Confidence
 
-| Decision | Current confidence |
-| --- | ---: |
-| 4 vCPU | high (~90–95%) |
-| 16 GB RAM | very high (~95%) |
-| clean appliance ~20–25 GB | high (~85–90%) |
-| 200 GB initial disk | medium-high (~75–80%) |
-| 500 GB / 1 TB scaling path | high |
-| 256 GB external SSD for transport | very high |
+| Decision                          |    Current confidence |
+| --------------------------------- | --------------------: |
+| 4 vCPU                            |        high (~90–95%) |
+| 16 GB RAM                         |      very high (~95%) |
+| clean appliance ~20–25 GB         |        high (~85–90%) |
+| 200 GB initial disk               | medium-high (~75–80%) |
+| 500 GB / 1 TB scaling path        |                  high |
+| 256 GB external SSD for transport |             very high |
 
 The main remaining uncertainty is daily historical growth after real commissioning. Replace the planning estimate with measured MB/day once enough operational data exists.
 

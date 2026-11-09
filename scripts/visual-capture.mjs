@@ -320,10 +320,15 @@ if (bdfbLink) {
 }
 
 await go('/warehouse');
-await page.getByRole('heading', { name: 'Device & Equipment Templates' }).waitFor({
+await page.getByRole('heading', { name: 'Equipment Templates' }).waitFor({
   state: 'visible',
   timeout: 10_000,
 });
+const createTemplate = page.locator('details.warehouse-create-card');
+if (await createTemplate.count()) {
+  await createTemplate.locator('summary').click();
+}
+await page.getByRole('tab', { name: 'JSON' }).waitFor({ state: 'visible', timeout: 10_000 });
 await page.getByRole('tab', { name: 'JSON' }).click();
 const warehouseJson = page.getByRole('textbox', { name: 'Template JSON' });
 await warehouseJson.waitFor({ state: 'visible', timeout: 10_000 });

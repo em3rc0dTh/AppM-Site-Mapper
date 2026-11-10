@@ -34,16 +34,16 @@ function scalar(name, oid, type, value) {
   mib.setScalarValue(name, value);
 }
 
-for (let index = 1; index <= 4; index += 1) {
+for (let index = 1; index <= 2; index += 1) {
   scalar(
     `current${index}`,
-    `1.3.6.1.4.1.8072.9999.2026.49.1.${index}`,
+    `1.3.6.1.4.1.8072.9999.2026.48.1.${index}`,
     snmp.ObjectType.Integer,
     900 + index * 75,
   );
   scalar(
     `voltage${index}`,
-    `1.3.6.1.4.1.8072.9999.2026.49.2.${index}`,
+    `1.3.6.1.4.1.8072.9999.2026.48.2.${index}`,
     snmp.ObjectType.Integer,
     518 + index,
   );
@@ -54,7 +54,7 @@ console.info(
     event: 'snmp.agent.started',
     source,
     port,
-    profile: 'ELTEK_BDCBB_CONFIG_4_CONTROLLED',
+    profile: 'ELTEK_BDCBB_CONFIG_2_CONTROLLED',
   }),
 );
 

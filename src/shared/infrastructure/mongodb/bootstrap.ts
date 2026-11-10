@@ -121,6 +121,22 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
   ]);
 
+  const telemetryWatchState = database.collection('telemetry_watch_state');
+  await Promise.all([
+    telemetryWatchState.createIndex(
+      { id: 1 },
+      { unique: true, name: 'uq_telemetry_watch_state_id' },
+    ),
+    telemetryWatchState.createIndex(
+      { protocol: 1, sourceIdentity: 1, scope: 1, targetId: 1 },
+      { name: 'ix_telemetry_watch_source_scope_target' },
+    ),
+    telemetryWatchState.createIndex(
+      { lastObservedAt: 1 },
+      { name: 'ix_telemetry_watch_last_observed', sparse: true },
+    ),
+  ]);
+
   const alarmPolicies = database.collection('alarm_policies');
   await Promise.all([
     alarmPolicies.createIndex({ id: 1 }, { unique: true, name: 'uq_alarm_policy_id' }),

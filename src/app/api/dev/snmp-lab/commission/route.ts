@@ -7,8 +7,7 @@ import {
   assessBdfbInventory,
   bdfbHardwareProfile,
   ELTEK_BDCBB_CONFIG_2,
-  ELTEK_BDCBB_CONFIG_4,
-  config4FeedPosition,
+  ELTEK_BDCBB_CONFIG_4
 } from '@/modules/power/domain/bdfb-hardware-profile';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import { isBdfbFeedPort } from '@/modules/telemetry/application/snmp-feed-service';
@@ -45,15 +44,12 @@ function labSourceForDevice(name: string): string | null {
   return matched ? `EMU-DELTA-BFDB-${matched[1]}` : null;
 }
 
-type LabSlot = Readonly<{ feed: string; currentOid: string; voltageOid: string }>;
-function labSlots(profile: string): readonly LabSlot[] {
+function labOidPair(profile: string, index: number) {
   const suffix = profile === ELTEK_BDCBB_CONFIG_2 ? '48' : '49';
-  const positions = profile === ELTEK_BDCBB_CONFIG_2 ? ['A', 'B'] : ['A1', 'A2', 'B1', 'B2'];
-  return positions.map((feed, index) => ({
-    feed,
+  return {
     currentOid: `1.3.6.1.4.1.8072.9999.2026.${suffix}.1.${index + 1}.0`,
     voltageOid: `1.3.6.1.4.1.8072.9999.2026.${suffix}.2.${index + 1}.0`,
-  }));
+  };
 }
 
 export async function GET(request: Request) {
@@ -130,17 +126,11 @@ async function handlePOST(request: Request) {
     );
 
   const ports = equipment.flatMap((owner) => owner.accessPorts.filter(isBdfbFeedPort));
-  const plan = labSlots(profile).flatMap((slot) => {
-    const port = ports.find(
-      (candidate) =>
-        (profile === ELTEK_BDCBB_CONFIG_2
-          ? candidate.attributes?.feed
-          : config4FeedPosition(candidate)) === slot.feed,
-    );
-    if (!port) return [];
+  const plan = ports.flatMap((port, index) => {
+    const oid = labOidPair(profile, index);
     return [
-      { port, metric: 'CURRENT', oid: slot.currentOid, unit: 'A' },
-      { port, metric: 'VOLTAGE', oid: slot.voltageOid, unit: 'V' },
+      { port, metric: 'CURRENT', oid: oid.currentOid, unit: 'A' },
+      { port, metric: 'VOLTAGE', oid: oid.voltageOid, unit: 'V' },
     ];
   });
   if (plan.length !== assessment.expectedFeedCount * 2)

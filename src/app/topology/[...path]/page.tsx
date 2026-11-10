@@ -50,20 +50,7 @@ function feedFromLabel(label: string): 'A' | 'B' | undefined {
 }
 
 function eyebrowFor(node: TopologyNode): string {
-  switch (node.kind) {
-    case 'SITE':
-      return 'INFRASTRUCTURE / SITE CANVAS';
-    case 'STRUCTURE':
-      return 'BUILDING / STRUCTURE LAYOUT';
-    case 'LEVEL':
-      return 'LEVEL / FLOOR LAYOUT';
-    case 'ROOM_SUBSTRUCTURE':
-      return 'SUBSTRUCTURE / ROOM BLUEPRINT';
-    case 'DEVICE':
-      return node.deviceType === 'BDFB' ? 'POWER / BDFB INTERNALS' : 'DEVICE';
-    default:
-      return node.kind.replaceAll('_', ' ');
-  }
+  return node.kind === 'DEVICE' ? 'DEVICE' : node.kind.replaceAll('_', ' ');
 }
 
 function navigationContextRoot(
@@ -92,20 +79,7 @@ function navigationContextRoot(
 }
 
 function descriptionFor(node: TopologyNode): string | undefined {
-  switch (node.kind) {
-    case 'SITE':
-      return node.kind;
-    case 'STRUCTURE':
-      return undefined;
-    case 'ROOM_SUBSTRUCTURE':
-      return 'Physical room boundary · cluster bays · 600 × 600 mm position grid';
-    case 'DEVICE':
-      return node.deviceType === 'BDFB'
-        ? 'Physical distribution hierarchy · live MQTT overlay'
-        : undefined;
-    default:
-      return undefined;
-  }
+  return node.kind === 'SITE' ? node.kind : undefined;
 }
 
 export default async function TopologyNodePage({

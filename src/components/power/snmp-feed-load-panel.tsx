@@ -610,7 +610,7 @@ export function SnmpFeedLoadPanel({
                         {mappedPanels.length > 0 ? (
                           mappedPanels.map((panel) => (
                             <span className="sm-snmp-panel-label" key={panel.id}>
-                              {readablePanel(panel)}
+                              {readablePanel(panel, t('frameWord'), t('panelWord'))}
                             </span>
                           ))
                         ) : (

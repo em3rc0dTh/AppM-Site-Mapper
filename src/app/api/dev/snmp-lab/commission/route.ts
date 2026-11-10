@@ -7,7 +7,7 @@ import {
   assessBdfbInventory,
   bdfbHardwareProfile,
   ELTEK_BDCBB_CONFIG_2,
-  ELTEK_BDCBB_CONFIG_4
+  ELTEK_BDCBB_CONFIG_4,
 } from '@/modules/power/domain/bdfb-hardware-profile';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import { isBdfbFeedPort } from '@/modules/telemetry/application/snmp-feed-service';

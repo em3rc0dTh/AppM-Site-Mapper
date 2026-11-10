@@ -373,8 +373,13 @@ export class TelemetryAlarmEvaluator {
         )
           continue;
 
-        const expected = breakers.size;
-        const reporting = [...breakers.values()].filter((item) => item.reporting).length;
+        const installedBreakers = (await this.topology.listEquipmentForDevice(deviceId)).filter(
+          (item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'CIRCUIT_BREAKER',
+        );
+        const expected = installedBreakers.length;
+        const reporting = installedBreakers.filter(
+          (breaker) => breakers.get(breaker.id)?.reporting === true,
+        ).length;
         const context = this.coverageContext();
         if (expected > 0 && reporting === expected) {
           await this.resolveCoverageAlarm(

@@ -54,8 +54,18 @@ function labelFor(kind: TopologyKind): TopologyKindLabel {
   }
 }
 
+function navigationChildren(node: TopologyNavigationNode): readonly TopologyNavigationNode[] {
+  return node.children.filter(
+    (child) =>
+      child.node.kind !== 'EQUIPMENT' || child.node.equipmentType !== 'CIRCUIT_BREAKER',
+  );
+}
+
 function containsActive(node: TopologyNavigationNode, id: string): boolean {
-  return node.node.id === id || node.children.some((child) => containsActive(child, id));
+  return (
+    node.node.id === id ||
+    navigationChildren(node).some((child) => containsActive(child, id))
+  );
 }
 
 function TreeBranch({
@@ -84,6 +94,8 @@ function TreeBranch({
     containsActive(item, activeId) ||
     alarmedBranch ||
     (selectedId !== null && containsActive(item, selectedId));
+
+  const visibleChildren = navigationChildren(item);
 
   const select = (event: MouseEvent<HTMLAnchorElement>) => {
     // Keyboard Enter opens the link; a pointer's first click only inspects.
@@ -122,15 +134,15 @@ function TreeBranch({
             {rollups[item.node.id]!.activeAlarmCount}
           </span>
         ) : null}
-        {item.children.length > 0 && (
+        {visibleChildren.length > 0 && (
           <span className="telxius-tree-chevron" aria-hidden="true">
             {expanded ? '⌄' : '›'}
           </span>
         )}
       </Link>
-      {expanded && item.children.length > 0 && (
+      {expanded && visibleChildren.length > 0 && (
         <ul>
-          {item.children.map((child) => (
+          {visibleChildren.map((child) => (
             <TreeBranch
               key={child.node.id}
               item={child}
@@ -211,7 +223,7 @@ export function TopologyContextTree({
           <div className="topology-tree-selection" role="status">
             <span>{t(`kinds.${labelFor(selected.node.kind)}`)}</span>
             <strong title={selected.node.name}>{selected.node.name}</strong>
-            <small>{t('directChildren', { count: selected.children.length })}</small>
+            <small>{t('directChildren', { count: navigationChildren(selected).length })}</small>
             <Link href={selected.href} prefetch={false}>
               {t('open')}
             </Link>

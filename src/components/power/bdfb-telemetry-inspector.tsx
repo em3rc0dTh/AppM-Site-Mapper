@@ -328,75 +328,53 @@ export function BdfbTelemetryInspector({
       >
         {tab === 'overview' && (
           <>
-            <AlarmScopeSummary entityId={node.id} scopeLabel={node.name} />
             <SnmpFeedLoadPanel
               key={node.id}
               deviceId={node.id}
               chassisId={presentation.chassisId}
               view="summary"
             />
-            <section className="zip-bdfb-live-average" aria-label={ti('averageLabel')}>
-              <header>
+
+            <section className="front01-mqtt-summary" aria-label="Telemetría descendiente MQTT LIVE">
+              <header className="front01-summary-header">
                 <div>
                   <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
-                  <strong>{ti('live')}</strong>
+                  <strong>TELEMETRÍA DESCENDIENTE · MQTT LIVE</strong>
                 </div>
-                <span>{ti('entire')}</span>
+                <span>BDFB completo</span>
               </header>
-              <div className="zip-bdfb-live-average-grid">
-                <div>
-                  <span>{ti('avgVoltage')}</span>
-                  <strong>{metric(live.averageVoltageV, 'V')}</strong>
-                </div>
-                <div>
-                  <span>{ti('avgCurrent')}</span>
-                  <strong>{metric(live.averageCurrentA, 'A')}</strong>
-                </div>
-                <div>
-                  <span>{ti('avgPower')}</span>
-                  <strong>{metric(kilowatts(live.averagePowerW), 'kW', 3)}</strong>
-                </div>
-                <div>
-                  <span>{ti('avgEnergy')}</span>
-                  <strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong>
-                </div>
+
+              <div className="front01-mqtt-kpis">
+                <div><span>VOLTAJE PROM.</span><strong>{metric(live.averageVoltageV, 'V')}</strong></div>
+                <div><span>CORRIENTE PROM.</span><strong>{metric(live.averageCurrentA, 'A')}</strong></div>
+                <div><span>POTENCIA PROM.</span><strong>{metric(kilowatts(live.averagePowerW), 'kW', 3)}</strong></div>
+                <div><span>ENERGÍA PROM.</span><strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong></div>
               </div>
 
-              <p className="zip-bdfb-aggregate-note">
-                {ti('liveTotalPowerNote', { power: metric(kilowatts(live.totalPowerW), 'kW', 3) })}
-              </p>
-              <dl className="zip-bdfb-live-average-counts">
-                <dt>{ti('reporting')}</dt>
-                <dd>{reportingEquipment}</dd>
-                <dt>{ti('descendant')}</dt>
-                <dd>{live.descendantEquipment}</dd>
-                <dt>{ti('notCurrent')}</dt>
-                <dd>{live.withoutCurrentReading}</dd>
-                <dt>{ti('last')}</dt>
-                <dd>{compactUtc(latestReceived)}</dd>
+              <dl className="front01-mqtt-facts">
+                <dt>Potencia total</dt><dd>{metric(kilowatts(live.totalPowerW), 'kW', 3)}</dd>
+                <dt>Reportando</dt><dd>{reportingEquipment}</dd>
+                <dt>Descendientes</dt><dd>{live.descendantEquipment}</dd>
+                <dt>Sin corriente</dt><dd>{live.withoutCurrentReading}</dd>
+                <dt>Último paquete</dt><dd>{compactUtc(latestReceived)}</dd>
               </dl>
+
+              <footer className="front01-mqtt-footer">
+                <div>
+                  <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
+                  <span>
+                    {reportingEquipment > 0
+                      ? `LIVE · ${reportingEquipment} Equipment descendientes contribuyen a los promedios`
+                      : 'Sin telemetría descendiente activa'}
+                  </span>
+                </div>
+                <DetachedWorkbenchButton
+                  href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
+                  windowName={`site-mapper-load-report-${node.id}`}
+                  label="Abrir reporte carga"
+                />
+              </footer>
             </section>
-            <section className="zip-bdfb-status-card">
-              <h3>{ti('status')}</h3>
-              <div>
-                <span>●</span>
-                <strong>
-                  {reportingEquipment > 0 ? ti('telemetryReceived') : ti('inventoryRecorded')}
-                </strong>
-                <small>
-                  {reportingEquipment > 0
-                    ? ti('descendantsAveraged', { count: reportingEquipment })
-                    : ti('requiresBinding')}
-                </small>
-              </div>
-            </section>
-            <div className="sm-detached-workbench-actions">
-              <DetachedWorkbenchButton
-                href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
-                windowName={`site-mapper-load-report-${node.id}`}
-                label={tw('openLoadReport')}
-              />
-            </div>
           </>
         )}
 

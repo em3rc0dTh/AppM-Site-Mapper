@@ -550,3 +550,65 @@
     grid-template-columns:minmax(100px,.7fr) minmax(0,1.3fr);
   }
 }
+
+
+/* FRONT-01 · BDFB stage identity and live health semaphore. */
+.front01-stage-heading-row {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  margin:0 0 10px;
+}
+.front01-stage-heading-row .front01-stage-heading {
+  margin:0;
+}
+.front01-bdfb-health {
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  flex:0 0 auto;
+  padding:6px 9px;
+  border:1px solid #d2dde7;
+  border-radius:999px;
+  background:#fff;
+  color:#506578;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.035em;
+  white-space:nowrap;
+}
+.front01-bdfb-health i {
+  width:10px;
+  height:10px;
+  border-radius:50%;
+  background:#9ba9b5;
+  box-shadow:0 0 0 2px rgba(155,169,181,.15);
+}
+.front01-bdfb-health[data-tone="healthy"] {
+  border-color:#b8dfd1;
+  background:#f4fbf8;
+  color:#176b56;
+}
+.front01-bdfb-health[data-tone="healthy"] i {
+  background:#28a77f;
+  box-shadow:0 0 0 2px rgba(40,167,127,.16);
+}
+.front01-bdfb-health[data-tone="warning"] {
+  border-color:#ead49a;
+  background:#fffaf0;
+  color:#8b6512;
+}
+.front01-bdfb-health[data-tone="warning"] i {
+  background:#d8a624;
+  box-shadow:0 0 0 2px rgba(216,166,36,.16);
+}
+.front01-bdfb-health[data-tone="critical"] {
+  border-color:#efb8b8;
+  background:#fff6f6;
+  color:#a12a2a;
+}
+.front01-bdfb-health[data-tone="critical"] i {
+  background:#dc3f3f;
+  box-shadow:0 0 0 2px rgba(220,63,63,.16);
+}

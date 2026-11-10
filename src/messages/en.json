@@ -14,6 +14,7 @@
     "confirm": "Confirm"
   },
   "front01Ui": {
+    "inspector": "INSPECTOR",
     "physicalView": "Physical view",
     "operation": "Operation",
     "statusOperational": "OPERATIONAL",
@@ -1492,6 +1493,8 @@
     "statusUnmapped": "UNMAPPED",
     "statusNoData": "NO DATA",
     "statusStale": "STALE",
+    "frameWord": "Frame",
+    "panelWord": "Panel",
     "section": "BDFB SNMP input feed load",
     "incoming": "SNMP · INCOMING DC FEEDS",
     "simulated": "SIMULATED SHUNT CURRENT",

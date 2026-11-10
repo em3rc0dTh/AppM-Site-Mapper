@@ -2,7 +2,7 @@
 
 import { useState, type ReactNode } from 'react';
 
-type Front01View = 'physical' | 'operation' | 'maintenance';
+type Front01View = 'physical' | 'operation';
 
 interface Front01ViewDefinition {
   readonly key: Front01View;
@@ -18,12 +18,11 @@ interface Props {
 }
 
 /** FRONT-01 is a presentation split; all original editors and service contracts are reused. */
-export function Front01StageTabs({ physical, operation, maintenance, label, heading }: Props) {
+export function Front01StageTabs({ physical, operation, label, heading }: Props) {
   const [view, setView] = useState<Front01View>('physical');
   const views: readonly Front01ViewDefinition[] = [
     { key: 'physical', title: 'Vista física' },
     { key: 'operation', title: 'Operación' },
-    ...(maintenance ? [{ key: 'maintenance' as const, title: 'Mantenimiento' }] : []),
   ];
 
   return (
@@ -50,11 +49,6 @@ export function Front01StageTabs({ physical, operation, maintenance, label, head
       {view === 'operation' && (
         <div id="front01-panel-operation" className="front01-operational-content" role="tabpanel" aria-labelledby="front01-tab-operation">
           {operation}
-        </div>
-      )}
-      {view === 'maintenance' && maintenance && (
-        <div id="front01-panel-maintenance" className="front01-operational-content" role="tabpanel" aria-labelledby="front01-tab-maintenance">
-          {maintenance}
         </div>
       )}
     </div>

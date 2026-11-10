@@ -15,7 +15,7 @@ import type { DeviceNode, EquipmentNode } from '@/modules/topology/domain/entiti
 import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 
 const time = '2026-10-21T12:00:00.000Z';
-const slots = ['A1', 'A2', 'B1', 'B2'] as const;
+const slots = ['A3', 'A2', 'B3', 'B2'] as const;
 function fixture(count = 4, profile = true) {
   const device: DeviceNode = {
     id: 'bdfb-c4',
@@ -113,8 +113,9 @@ describe('ELTEK_BDCBB_CONFIG_4 manufacturer profile (non-breaking)', () => {
     expect(assessConfig4Inventory([f.chassis, ...f.panels])).toMatchObject({
       hardwareProfile: ELTEK_BDCBB_CONFIG_4,
       expectedFeedCount: 4,
-      missingFeedPositions: ['B1', 'B2'],
+      missingFeedPositions: [],
       inventoryComplete: false,
+      issues: ['EXPECTED_FOUR_INPUTS'],
     });
     const service = new SnmpFeedService(f.topology, f.repository, f.hub);
     const accepted = await service.ingest(
@@ -191,7 +192,7 @@ describe('ELTEK_BDCBB_CONFIG_4 manufacturer profile (non-breaking)', () => {
       totalCurrentA: 1230,
       totalRatedCurrentA: 3200,
     });
-    expect(view?.feeds.find((f) => f.feedPosition === 'A1')).toMatchObject({
+    expect(view?.feeds.find((f) => f.feedPosition === 'A3')).toMatchObject({
       overloadThresholdA: 640,
       overloadWarning: true,
     });
@@ -212,7 +213,7 @@ describe('ELTEK_BDCBB_CONFIG_4 manufacturer profile (non-breaking)', () => {
         },
       },
       { ...original[1]!, attributes: { ...original[1]!.attributes, servedPanelIds: ['panel-A1'] } },
-      { ...original[2]!, attributes: { ...original[2]!.attributes, feedPosition: 'A1' } },
+      { ...original[2]!, attributes: { ...original[2]!.attributes, feedPosition: 'A3' } },
       original[3]!,
     ];
     const assessment = assessConfig4Inventory([
@@ -220,8 +221,7 @@ describe('ELTEK_BDCBB_CONFIG_4 manufacturer profile (non-breaking)', () => {
       ...f.panels,
     ]);
     expect(assessment.inventoryComplete).toBe(false);
-    expect(assessment.issues).toContain('DUPLICATE_INPUT_A1');
-    expect(assessment.missingFeedPositions).toContain('B1');
+    expect(assessment.issues).toContain('DUPLICATE_INPUT_A3');
     const separatePanelConflict = assessConfig4Inventory([
       {
         ...f.chassis,
@@ -231,7 +231,7 @@ describe('ELTEK_BDCBB_CONFIG_4 manufacturer profile (non-breaking)', () => {
             ...original[1]!,
             attributes: {
               ...original[1]!.attributes,
-              servedPanelIds: ['panel-A1'],
+              servedPanelIds: ['panel-A3'],
             },
           },
           original[2]!,
@@ -258,7 +258,7 @@ describe('ELTEK_BDCBB_CONFIG_4 manufacturer profile (non-breaking)', () => {
       expectedFeedCount: 4,
       feedCount: 0,
       totalCurrentA: null,
-      missingFeedPositions: ['A1', 'A2', 'B1', 'B2'],
+      missingFeedPositions: [],
     });
   });
 
@@ -266,6 +266,6 @@ describe('ELTEK_BDCBB_CONFIG_4 manufacturer profile (non-breaking)', () => {
     const f = fixture();
     const result = assessConfig4Inventory([f.chassis, ...f.panels.slice(1)]);
     expect(result.inventoryComplete).toBe(false);
-    expect(result.issues).toContain('PANEL_MAPPING_INCOMPLETE_A1');
+    expect(result.issues).toContain('PANEL_MAPPING_INCOMPLETE_A3');
   });
 });

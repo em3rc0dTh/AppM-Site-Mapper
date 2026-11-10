@@ -1,3 +1,4 @@
+import { isOperationallyVisible } from '@/modules/topology/application/equipment-visibility';
 import { redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
@@ -39,7 +40,7 @@ export default async function WorkspacePage() {
   const latest = (await getTelemetryRuntime()).service.snapshot();
   const pinnedNodes = (
     await Promise.all(context.pinned.map((id) => topologyRepo.getById(id)))
-  ).filter((node) => node?.lifecycle === 'ACTIVE');
+  ).filter((node) => node?.lifecycle === 'ACTIVE' && isOperationallyVisible(node));
 
   // A pinned BDFB chassis is a physical component of a Device. Direct Access
   // opens the Device's physical view; Equipment Composition remains accessible

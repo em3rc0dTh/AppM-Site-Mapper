@@ -1,3 +1,4 @@
+import { isOperationallyVisible } from '@/modules/topology/application/equipment-visibility';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
 import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
@@ -74,7 +75,9 @@ export class WorkspaceService {
     const activeNetworks = networks.filter((node) => node.lifecycle === 'ACTIVE');
     const inventory = [...devices, ...equipment].filter(
       (node): node is InventoryNode =>
-        (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && node.lifecycle === 'ACTIVE',
+        (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') &&
+        node.lifecycle === 'ACTIVE' &&
+        isOperationallyVisible(node),
     );
 
     return {
@@ -90,7 +93,7 @@ export class WorkspaceService {
 
   private async buildTree(node: TopologyNode): Promise<WorkspaceTreeNode> {
     const children = (await this.topology.listChildren(node.id)).filter(
-      (child) => child.lifecycle === 'ACTIVE',
+      (child) => child.lifecycle === 'ACTIVE' && isOperationallyVisible(child),
     );
 
     return {
@@ -133,7 +136,9 @@ export class WorkspaceService {
             this.topology.listEquipmentForDevice(device.id),
           ]);
           const descendantEquipmentIds = descendantEquipment
-            .filter((equipment) => equipment.lifecycle === 'ACTIVE')
+            .filter(
+              (equipment) => equipment.lifecycle === 'ACTIVE' && isOperationallyVisible(equipment),
+            )
             .map((equipment) => equipment.id);
           if (!presentation)
             return {

@@ -1,3 +1,4 @@
+import { isOperationallyVisible } from '@/modules/topology/application/equipment-visibility';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type { DeviceNode, EquipmentNode, TopologyNode } from '@/modules/topology/domain/entities';
 import { nowIso } from '@/shared/domain/entity';
@@ -42,6 +43,7 @@ export class InventoryService {
         (node): node is EquipmentNode =>
           node.kind === 'EQUIPMENT' &&
           node.lifecycle === 'ACTIVE' &&
+          isOperationallyVisible(node) &&
           ((node.parentEquipmentId === null && rackDeviceIds.has(node.deviceId)) ||
             node.rackPlacement?.rackId === rack.id),
       ),
@@ -50,7 +52,11 @@ export class InventoryService {
 
   async getInventoryItem(id: string): Promise<InventoryItem | null> {
     const node: TopologyNode | null = await this.repository.getById(id);
-    return node && (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') ? node : null;
+    return node &&
+      isOperationallyVisible(node) &&
+      (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT')
+      ? node
+      : null;
   }
 
   async setPinned(id: string, pinned: boolean): Promise<Result<InventoryItem, InventoryError>> {

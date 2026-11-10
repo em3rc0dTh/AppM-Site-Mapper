@@ -1,6 +1,7 @@
 import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
 import { SiteBoundaryWorkspace } from '@/components/topology/site-boundary-workspace';
 import Link from 'next/link';
+import { isOperationallyVisible } from '@/modules/topology/application/equipment-visibility';
 import { notFound, redirect } from 'next/navigation';
 import { getTranslations } from 'next-intl/server';
 
@@ -149,7 +150,7 @@ export default async function TopologyNodePage({
   }
   const [trail, children, selfHref] = await Promise.all([
     service.getTrail(node.id),
-    service.listChildren(node.id),
+    service.listChildren(node.id).then((items) => items.filter(isOperationallyVisible)),
     service.buildDeepLink(node.id),
   ]);
   const root = navigationContextRoot(trail, node);
@@ -207,7 +208,12 @@ export default async function TopologyNodePage({
           ? `/rack/${child.id}`
           : deepLink;
 
-      return { node: child, href, directChildCount: (await service.listChildren(child.id)).length };
+      return {
+        node: child,
+        href,
+        directChildCount: (await service.listChildren(child.id)).filter(isOperationallyVisible)
+          .length,
+      };
     }),
   );
 

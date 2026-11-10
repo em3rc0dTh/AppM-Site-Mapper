@@ -1,3 +1,4 @@
+import { isOperationallyVisible } from '@/modules/topology/application/equipment-visibility';
 import { BdfbProjectionService } from '@/modules/power/application/bdfb-projection-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import { TopologyService } from '@/modules/topology/application/topology-service';
@@ -57,7 +58,7 @@ export async function searchTopology(
   const bdfbProjection = new BdfbProjectionService(repository);
   const nodes = (await Promise.all(kinds.map((kind) => repository.listByKind(kind))))
     .flat()
-    .filter((node) => node.lifecycle === 'ACTIVE');
+    .filter((node) => node.lifecycle === 'ACTIVE' && isOperationallyVisible(node));
 
   const byId = new Map(nodes.map((node) => [node.id, node]));
   const results: SearchResult[] = [];

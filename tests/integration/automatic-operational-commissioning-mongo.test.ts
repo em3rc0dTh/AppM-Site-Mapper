@@ -58,6 +58,41 @@ describe.skipIf(!enabled)('automatic operational monitoring with disposable Mong
     }
   });
 
+  it('preserves already provisioned legacy watch indexes across repeated bootstraps', async () => {
+    const legacyDb = client.db(databaseName + '_legacy_indexes');
+    try {
+      const watches = legacyDb.collection('telemetry_watch_state');
+      await watches.createIndex(
+        { id: 1 },
+        { name: 'telemetry_watch_state_id_unique', unique: true },
+      );
+      await watches.createIndex(
+        { protocol: 1, sourceIdentity: 1, scope: 1, targetId: 1 },
+        { name: 'telemetry_watch_source_scope_target' },
+      );
+      await watches.createIndex(
+        { lastObservedAt: 1 },
+        { name: 'telemetry_watch_last_observed', sparse: true },
+      );
+
+      await ensurePersistenceIndexes(legacyDb);
+      await ensurePersistenceIndexes(legacyDb);
+      const indexes = await watches.indexes();
+      expect(indexes.find((index) => index.name === 'telemetry_watch_state_id_unique')?.unique).toBe(
+        true,
+      );
+      expect(indexes.some((index) => index.name === 'uq_telemetry_watch_state_id')).toBe(false);
+      expect(indexes.some((index) => index.name === 'ix_telemetry_watch_source_scope_target')).toBe(
+        false,
+      );
+      expect(indexes.some((index) => index.name === 'ix_telemetry_watch_last_observed')).toBe(
+        false,
+      );
+    } finally {
+      await legacyDb.dropDatabase();
+    }
+  });
+
   it('persists watch state and detects loss after restart without policies', async () => {
     const db = client.db(databaseName);
     const indexes = await db.collection('telemetry_watch_state').indexes();

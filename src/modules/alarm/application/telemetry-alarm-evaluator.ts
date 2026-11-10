@@ -173,7 +173,11 @@ export class TelemetryAlarmEvaluator {
   }
 
   private async observeAutomaticWatch(sample: TelemetrySample): Promise<void> {
-    if (!this.watches || (sample.targetType !== 'DEVICE' && sample.targetType !== 'EQUIPMENT')) return;
+    if (
+      !this.watches ||
+      (sample.targetType !== 'DEVICE' && sample.targetType !== 'EQUIPMENT')
+    )
+      return;
     const scope = sample.sourcePointId ? 'POINT' : 'SOURCE';
     const state = reportedState(sample);
     await this.watches.observe({
@@ -254,8 +258,9 @@ export class TelemetryAlarmEvaluator {
       })
       .filter(
         (entry, index, array) =>
-          array.findIndex((candidate) => candidate.binding.sourceIdentity === entry.binding.sourceIdentity) ===
-          index,
+          array.findIndex(
+            (candidate) => candidate.binding.sourceIdentity === entry.binding.sourceIdentity,
+          ) === index,
       );
 
     const offlineSources = sourceEntries.filter((entry) => entry.offline);
@@ -284,10 +289,7 @@ export class TelemetryAlarmEvaluator {
           nowIso,
           'SUPERSEDED_BY_SOURCE_TELEMETRY_LOSS',
         );
-      } else if (
-        source.state &&
-        source.state.freshStreak >= this.automaticRecoverySamples
-      ) {
+      } else if (source.state && source.state.freshStreak >= this.automaticRecoverySamples) {
         await this.resolveAutomaticLoss(
           source.expectation.targetId,
           context,

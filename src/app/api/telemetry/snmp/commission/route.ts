@@ -140,7 +140,7 @@ async function handlePOST(request: Request) {
     const panels = target.port.attributes?.servedPanelIds;
     if (
       !slot ||
-      target.port.attributes?.feed !== slot[0] ||
+      (target.port.attributes?.feed !== 'A' && target.port.attributes?.feed !== 'B') ||
       target.port.attributes?.independentInputConfirmed !== true ||
       target.port.attributes?.ratedCurrentA !== CONFIG_4_RATED_CURRENT_A ||
       target.port.attributes?.shuntRatedCurrentA !== CONFIG_4_SHUNT_CURRENT_A ||

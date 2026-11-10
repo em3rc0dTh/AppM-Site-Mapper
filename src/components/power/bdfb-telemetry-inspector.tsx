@@ -279,48 +279,51 @@ export function BdfbTelemetryInspector({
         </div>
       </div>
 
-      <nav
-        className="sm-bdfb-inspector-tabs"
-        role="tablist"
-        aria-label={ti('inspectorSections')}
-        onKeyDown={(event) => {
-          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-          event.preventDefault();
-          const current = tabs.findIndex((item) => item === tab);
-          const nextIndex =
-            event.key === 'Home'
-              ? 0
-              : event.key === 'End'
-                ? tabs.length - 1
-                : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) %
-                  tabs.length;
-          const nextTab = tabs[nextIndex]!;
-          changeTab(nextTab);
-          const button = document.getElementById('sm-bdfb-tab-' + nextTab);
-          button?.focus();
-        }}
-      >
-        {tabs.map((item) => (
-          <button
-            key={item}
-            type="button"
-            role="tab"
-            id={'sm-bdfb-tab-' + item}
-            aria-controls={'sm-bdfb-panel-' + item}
-            aria-selected={tab === item}
-            tabIndex={tab === item ? 0 : -1}
-            onClick={() => changeTab(item)}
-          >
-            {item === 'alarms' ? t('alarms') : item === 'feeds' ? 'Entradas' : item === 'history' ? 'Gráficas' : item === 'overview' ? 'Resumen' : 'Configuración'}
-          </button>
-        ))}
-      </nav>
+      {mode === 'operation' && (
+              <nav
+                className="sm-bdfb-inspector-tabs"
+                role="tablist"
+                aria-label={ti('inspectorSections')}
+                onKeyDown={(event) => {
+                  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                  event.preventDefault();
+                  const current = tabs.findIndex((item) => item === tab);
+                  const nextIndex =
+                    event.key === 'Home'
+                      ? 0
+                      : event.key === 'End'
+                        ? tabs.length - 1
+                        : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) %
+                          tabs.length;
+                  const nextTab = tabs[nextIndex]!;
+                  changeTab(nextTab);
+                  const button = document.getElementById('sm-bdfb-tab-' + nextTab);
+                  button?.focus();
+                }}
+              >
+                {tabs.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    role="tab"
+                    id={'sm-bdfb-tab-' + item}
+                    aria-controls={'sm-bdfb-panel-' + item}
+                    aria-selected={tab === item}
+                    tabIndex={tab === item ? 0 : -1}
+                    onClick={() => changeTab(item)}
+                  >
+                    {item === 'alarms' ? 'Alarmas' : item === 'feeds' ? 'Entradas' : item === 'history' ? 'Gráficas' : item === 'overview' ? 'Resumen' : 'Configuración'}
+                  </button>
+                ))}
+              </nav>
+      )}
 
       <div
         className="sm-bdfb-inspector-content"
-        role="tabpanel"
-        id={'sm-bdfb-panel-' + tab}
-        aria-labelledby={'sm-bdfb-tab-' + tab}
+        role={mode === 'operation' ? 'tabpanel' : 'region'}
+        id={mode === 'operation' ? 'sm-bdfb-panel-' + tab : undefined}
+        aria-labelledby={mode === 'operation' ? 'sm-bdfb-tab-' + tab : undefined}
+        aria-label={mode === 'maintenance' ? 'Mantenimiento del BDFB' : undefined}
         tabIndex={0}
       >
         {tab === 'overview' && (

@@ -116,6 +116,7 @@ export default async function TopologyNodePage({
   searchParams: Promise<{ level?: string; panel?: string; breaker?: string }>;
 }>) {
   const auth = await requirePermission('topology:read');
+  const t = await getTranslations('pages.topology');
 
   if (!auth.ok) {
     redirect('/login');
@@ -377,7 +378,7 @@ export default async function TopologyNodePage({
         placement.sizeU !== undefined
           ? `U${placement.startU}–U${placement.startU + placement.sizeU - 1}`
           : placement?.mode === 'FULL_RACK'
-            ? 'Full rack'
+            ? t('mountFullRack')
             : undefined;
 
       bdfbPowerBindings.push({
@@ -396,7 +397,7 @@ export default async function TopologyNodePage({
 
   const rackLink: string | null = null;
   const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
-  const t = await getTranslations('pages.topology');
+
   const sectionDescription =
     node.kind === 'ROOM_SUBSTRUCTURE'
       ? t('roomDescription')

@@ -57,3 +57,194 @@
 .front01-equipment-summary .front01-summary-facts { font-size:13px; }
 .front01-operational-content .zip-bdfb-inspector .sm-bdfb-inspector-tabs { flex-wrap:wrap; }
 .front01-operational-content .zip-bdfb-inspector-id { display:none; }
+
+
+/* FRONT-01 · Operación/Resumen: dense industrial summaries, no duplicated cards. */
+.front01-snmp-summary,
+.front01-mqtt-summary {
+  margin:0 0 12px;
+  padding:14px 16px;
+  border:1px solid #cfe0db;
+  border-radius:8px;
+  background:#f8fcfa;
+  color:#17324a;
+}
+.front01-mqtt-summary { border-color:#d5e0eb; background:#fff; }
+.front01-summary-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+  font-size:11px;
+  letter-spacing:.055em;
+}
+.front01-summary-header > span {
+  flex:0 0 auto;
+  padding:4px 8px;
+  border:1px solid #c7d8d2;
+  border-radius:999px;
+  background:#fff;
+  font-size:9px;
+  font-weight:800;
+}
+.front01-summary-header > div {
+  display:flex;
+  align-items:center;
+  gap:7px;
+}
+.front01-summary-header i,
+.front01-mqtt-footer i {
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#9aa8b5;
+}
+.front01-summary-header i[data-live="true"],
+.front01-mqtt-footer i[data-live="true"] { background:#2aa184; }
+
+.front01-snmp-kpis {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:0;
+  margin:0 0 12px;
+  border:1px solid #d9e5e1;
+  border-radius:6px;
+  overflow:hidden;
+  background:#fff;
+}
+.front01-snmp-kpis > div {
+  min-width:0;
+  padding:9px 11px;
+  border-right:1px solid #e2ebe8;
+  border-bottom:1px solid #e2ebe8;
+}
+.front01-snmp-kpis > div:nth-child(4n) { border-right:0; }
+.front01-snmp-kpis > div:nth-last-child(-n+4) { border-bottom:0; }
+.front01-snmp-kpis dt,
+.front01-mqtt-kpis span,
+.front01-mqtt-facts dt {
+  color:#60758a;
+  font-size:9px;
+  font-weight:750;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.front01-snmp-kpis dd {
+  margin:4px 0 0;
+  font-size:14px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+
+.front01-snmp-table-wrap { overflow-x:auto; }
+.front01-snmp-table {
+  width:100%;
+  border-collapse:collapse;
+  background:#fff;
+  font-size:10px;
+  font-variant-numeric:tabular-nums;
+}
+.front01-snmp-table th {
+  padding:7px 9px;
+  border-bottom:1px solid #cfded9;
+  color:#5c7286;
+  text-align:left;
+  font-size:9px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.front01-snmp-table td {
+  padding:8px 9px;
+  border-bottom:1px solid #e4ece9;
+  font-weight:650;
+}
+.front01-snmp-table tbody tr:last-child td { border-bottom:0; }
+
+.front01-snmp-footer {
+  display:grid;
+  grid-template-columns:auto minmax(140px,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin-top:11px;
+  font-size:10px;
+}
+.front01-utilization-meter {
+  height:7px;
+  overflow:hidden;
+  border:1px solid #bfd4cd;
+  border-radius:999px;
+  background:#e5efeb;
+}
+.front01-utilization-meter > span {
+  display:block;
+  height:100%;
+  background:#51b59a;
+}
+
+.front01-mqtt-kpis {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  border:1px solid #dde6ef;
+  border-radius:6px;
+  overflow:hidden;
+}
+.front01-mqtt-kpis > div {
+  min-width:0;
+  padding:10px 12px;
+  border-right:1px solid #e3eaf1;
+}
+.front01-mqtt-kpis > div:last-child { border-right:0; }
+.front01-mqtt-kpis strong {
+  display:block;
+  margin-top:4px;
+  font-size:15px;
+  font-variant-numeric:tabular-nums;
+}
+.front01-mqtt-facts {
+  display:grid;
+  grid-template-columns:auto auto auto auto auto auto auto auto auto auto;
+  align-items:baseline;
+  gap:6px 10px;
+  margin:11px 0 0;
+  padding:9px 0;
+  border-bottom:1px solid #e3eaf1;
+}
+.front01-mqtt-facts dd {
+  margin:0 10px 0 0;
+  font-size:11px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.front01-mqtt-footer {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding-top:9px;
+}
+.front01-mqtt-footer > div {
+  display:flex;
+  align-items:center;
+  gap:7px;
+  min-width:0;
+  font-size:10px;
+  font-weight:650;
+}
+.front01-mqtt-footer .sm-detached-workbench-button,
+.front01-mqtt-footer a {
+  flex:0 0 auto;
+}
+
+@media(max-width:1100px) {
+  .front01-snmp-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .front01-snmp-kpis > div:nth-child(4n) { border-right:1px solid #e2ebe8; }
+  .front01-snmp-kpis > div:nth-child(2n) { border-right:0; }
+  .front01-snmp-kpis > div:nth-last-child(-n+4) { border-bottom:1px solid #e2ebe8; }
+  .front01-snmp-kpis > div:nth-last-child(-n+2) { border-bottom:0; }
+  .front01-mqtt-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .front01-mqtt-kpis > div:nth-child(2) { border-right:0; }
+  .front01-mqtt-kpis > div:nth-child(-n+2) { border-bottom:1px solid #e3eaf1; }
+  .front01-mqtt-facts { grid-template-columns:auto auto auto auto; }
+}

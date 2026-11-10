@@ -14,10 +14,11 @@ interface Props {
   readonly operation: ReactNode;
   readonly maintenance?: ReactNode;
   readonly label: string;
+  readonly heading?: string;
 }
 
 /** FRONT-01 is a presentation split; all original editors and service contracts are reused. */
-export function Front01StageTabs({ physical, operation, maintenance, label }: Props) {
+export function Front01StageTabs({ physical, operation, maintenance, label, heading }: Props) {
   const [view, setView] = useState<Front01View>('physical');
   const views: readonly Front01ViewDefinition[] = [
     { key: 'physical', title: 'Vista física' },
@@ -27,6 +28,7 @@ export function Front01StageTabs({ physical, operation, maintenance, label }: Pr
 
   return (
     <div className="front01-stage">
+      {heading ? <h1 className="front01-stage-heading">{heading}</h1> : null}
       <div className="front01-primary-tabs" role="tablist" aria-label={label}>
         {views.map((item) => (
           <button

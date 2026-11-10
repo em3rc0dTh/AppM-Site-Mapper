@@ -215,7 +215,7 @@ export function BdfbTelemetryInspector({
 
   const hasA = feeds?.includes('A') ?? false;
   const hasB = feeds?.includes('B') ?? false;
-  const scopeLabel = selectedPanel?.label ?? 'Entire BDFB';
+  const scopeLabel = selectedPanel?.label ?? ti('entire');
   const positions = panels.flatMap((panel) => panel.positions);
   const breakers = positions.filter((item) => item !== null);
 
@@ -275,7 +275,7 @@ export function BdfbTelemetryInspector({
         <span>▥</span>
         <div>
           <h2>{node.name}</h2>
-          <small>{location ?? 'Infrastructure'}</small>
+          <small>{location ?? ti('infrastructure')}</small>
         </div>
       </div>
 

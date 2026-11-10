@@ -466,7 +466,115 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               overview={
                 <div className="front01-equipment-operation-overview">
                   <ContextPin entityId={node.id} />
-                  <dl>
+                  <dl className="front01-equipment-quick-summary">
+                    <div>
+                      <dt>{t('type')}</dt>
+                      <dd>{node.equipmentType.replaceAll('_', ' ')}</dd>
+                    </div>
+                    <div>
+                      <dt>{t('model')}</dt>
+                      <dd>{node.model ?? node.category ?? t('notSpecified')}</dd>
+                    </div>
+                    {node.equipmentType === 'SHELF' || node.equipmentType === 'FRAME' || node.equipmentType === 'CHASSIS' ? (
+                      <>
+                        <div>
+                          <dt>{t('childCapacity')}</dt>
+                          <dd>{node.childMode === 'POSITIONAL' ? node.children.length : t('dynamic')}</dd>
+                        </div>
+                        <div>
+                          <dt>{t('location')}</dt>
+                          <dd>{room?.name ?? t('room')} / {rackNode?.name ?? t('rack')} / {mountLabel}</dd>
+                        </div>
+                      </>
+                    ) : null}
+                    {node.equipmentType === 'PANEL' ? (
+                      <>
+                        <div>
+                          <dt>Posiciones</dt>
+                          <dd>
+                            {node.children.filter((child) => child !== null).length} / {node.children.length}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>{t('mk1_telemetry_point_prefix')}</dt>
+                          <dd>{node.telemetryPointPrefix ?? '—'}</dd>
+                        </div>
+                        <div>
+                          <dt>{t('mk1_telemetry_source_s_n')}</dt>
+                          <dd>{node.serialNumber ?? '—'}</dd>
+                        </div>
+                        <div>
+                          <dt>{t('location')}</dt>
+                          <dd>{room?.name ?? t('room')} / {rackNode?.name ?? t('rack')} / {mountLabel}</dd>
+                        </div>
+                      </>
+                    ) : null}
+                    {node.equipmentType === 'CIRCUIT_BREAKER' ? (
+                      <>
+                        <div>
+                          <dt>{t('breakerNominal')}</dt>
+                          <dd>
+                            {breakerProtection
+                              ? t('breakerNominalValue', { value: breakerProtection.ratedCurrentA })
+                              : '—'}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>{t('breakerAlarm')}</dt>
+                          <dd>
+                            {breakerProtection
+                              ? t('breakerAlarmValue', { value: breakerProtection.assertAboveA })
+                              : '—'}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>{t('mk1_physical_position')}</dt>
+                          <dd>{breakerPosition > 0 ? String(breakerPosition).padStart(2, '0') : '—'}</dd>
+                        </div>
+                        <div>
+                          <dt>{t('mk1_measurement_model')}</dt>
+                          <dd>
+                            {focusedDirectSource && !focusedPointBinding && !acrelMapping
+                              ? 'SELF-MEASURED'
+                              : acrelMapping || focusedPointBinding || parentPanel
+                                ? 'EXTERNALLY-MEASURED'
+                                : 'UNCOMMISSIONED'}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>{t('mk1_measured_via')}</dt>
+                          <dd>
+                            {acrelMapping
+                              ? `${acrelMapping.gatewayAlias ?? acrelMapping.gatewayName} → ${acrelMapping.meterAlias ?? acrelMapping.meterName} → CH ${acrelMapping.channel}`
+                              : focusedDirectSource && !focusedPointBinding
+                                ? `Self source · ${focusedDirectSource.sourceIdentity}`
+                                : panelBindingConfirmed && parentPanel
+                                  ? `${parentPanel.name} → position ${String(breakerPosition).padStart(2, '0')}`
+                                  : focusedPointBinding
+                                    ? `Explicit MQTT binding · ${focusedPointBinding.sourceIdentity}`
+                                    : parentPanel
+                                      ? `${parentPanel.name} → telemetry not commissioned`
+                                      : 'No measurement source commissioned'}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>{t('location')}</dt>
+                          <dd>{room?.name ?? t('room')} / {rackNode?.name ?? t('rack')} / {mountLabel}</dd>
+                        </div>
+                      </>
+                    ) : null}
+                    <div>
+                      <dt>{t('powerA')}</dt>
+                      <dd>{hasFeedA ? t('pathRecorded') : t('noPath')}</dd>
+                    </div>
+                    <div>
+                      <dt>{t('powerB')}</dt>
+                      <dd>{hasFeedB ? t('pathRecorded') : t('noPath')}</dd>
+                    </div>
+                  </dl>
+                  <details className="front01-equipment-details">
+                    <summary>Detalles técnicos</summary>
+                    <dl>
                     <dt>{t('identity')}</dt>
                     <dd>{node.name}</dd>
                     <dt>{t('type')}</dt>
@@ -654,7 +762,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                         </>
                       )
                     ) : null}
-                  </dl>
+                    </dl>
+                  </details>
                   {node.equipmentType === 'CIRCUIT_BREAKER' && canReadIndustrialSettings ? (
                     <Link
                       className="zip-device-outline"

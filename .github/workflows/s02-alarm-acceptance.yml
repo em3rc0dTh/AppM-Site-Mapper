@@ -6,10 +6,12 @@ on:
       - test/s02-alarm-acceptance-actions
     paths:
       - tests/integration/s02-alarm-acceptance-mongo.test.ts
+      - tests/integration/automatic-operational-commissioning-mongo.test.ts
       - .github/workflows/s02-alarm-acceptance.yml
   pull_request:
     paths:
       - tests/integration/s02-alarm-acceptance-mongo.test.ts
+      - tests/integration/automatic-operational-commissioning-mongo.test.ts
       - .github/workflows/s02-alarm-acceptance.yml
   workflow_dispatch:
 
@@ -52,6 +54,8 @@ jobs:
         run: npx vitest run tests/unit/sprint02-alarm-history.test.ts tests/unit/alarm-redteam.test.ts
       - name: S02 real Mongo electrical lifecycle and 500+ history
         run: npx vitest run tests/integration/s02-alarm-acceptance-mongo.test.ts
+      - name: Automatic operational watch persistence and restart
+        run: npx vitest run tests/integration/automatic-operational-commissioning-mongo.test.ts
       - name: Real Mongo concurrency (existing red-team)
         run: npx vitest run tests/integration/alarm-redteam-mongo.test.ts
       - name: TypeScript compile

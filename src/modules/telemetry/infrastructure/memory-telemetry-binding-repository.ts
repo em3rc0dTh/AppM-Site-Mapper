@@ -8,6 +8,20 @@ export class MemoryTelemetryBindingRepository implements TelemetryBindingReposit
     for (const binding of seed) this.bindings.set(binding.id, structuredClone(binding));
   }
 
+  async listActiveByProtocol(
+    protocol: TelemetryBinding['protocol'],
+  ): Promise<readonly TelemetryBinding[]> {
+    return [...this.bindings.values()]
+      .filter((binding) => binding.lifecycle === 'ACTIVE' && binding.protocol === protocol)
+      .sort(
+        (left, right) =>
+          left.sourceIdentity.localeCompare(right.sourceIdentity) ||
+          (left.sourcePointId ?? '').localeCompare(right.sourcePointId ?? '') ||
+          left.metric.localeCompare(right.metric),
+      )
+      .map((binding) => structuredClone(binding));
+  }
+
   async listForSource(
     protocol: TelemetryBinding['protocol'],
     sourceIdentity: string,

@@ -121,6 +121,49 @@ export async function ensurePersistenceIndexes(database: Db): Promise<void> {
     ),
   ]);
 
+  const telemetryWatchState = database.collection('telemetry_watch_state');
+  // An earlier operator migration used different names for these same indexes.
+  // Keep those valid indexes intact: creating an equivalent index under a new
+  // name can fail on MongoDB 7 and prevent the entire application from starting.
+  const watchCollectionExists = await database
+    .listCollections({ name: 'telemetry_watch_state' }, { nameOnly: true })
+    .hasNext();
+  const existingWatchIndexes = watchCollectionExists ? await telemetryWatchState.indexes() : [];
+  const watchIndexes: readonly {
+    readonly key: Record<string, 1>;
+    readonly name: string;
+    readonly unique?: boolean;
+    readonly sparse?: boolean;
+  }[] = [
+    { key: { id: 1 }, name: 'uq_telemetry_watch_state_id', unique: true },
+    {
+      key: { protocol: 1, sourceIdentity: 1, scope: 1, targetId: 1 },
+      name: 'ix_telemetry_watch_source_scope_target',
+    },
+    { key: { lastObservedAt: 1 }, name: 'ix_telemetry_watch_last_observed', sparse: true },
+  ];
+  for (const desired of watchIndexes) {
+    const existing = existingWatchIndexes.find(
+      (index) =>
+        Object.keys(index.key).length === Object.keys(desired.key).length &&
+        Object.entries(desired.key).every(([field, direction]) => index.key[field] === direction),
+    );
+    if (existing) {
+      if (
+        Boolean(existing.unique) !== Boolean(desired.unique) ||
+        Boolean(existing.sparse) !== Boolean(desired.sparse)
+      ) {
+        throw new Error(`TELEMETRY_WATCH_INDEX_CONFLICT: incompatible index ${existing.name}`);
+      }
+      continue;
+    }
+    await telemetryWatchState.createIndex(desired.key, {
+      name: desired.name,
+      ...(desired.unique ? { unique: true } : {}),
+      ...(desired.sparse ? { sparse: true } : {}),
+    });
+  }
+
   const alarmPolicies = database.collection('alarm_policies');
   await Promise.all([
     alarmPolicies.createIndex({ id: 1 }, { unique: true, name: 'uq_alarm_policy_id' }),

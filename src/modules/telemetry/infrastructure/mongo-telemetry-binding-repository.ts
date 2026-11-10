@@ -27,6 +27,16 @@ export class MongoTelemetryBindingRepository implements TelemetryBindingReposito
     this.collection = database.collection<BindingDocument>('telemetry_bindings');
   }
 
+  async listActiveByProtocol(
+    protocol: TelemetryBinding['protocol'],
+  ): Promise<readonly TelemetryBinding[]> {
+    const documents = await this.collection
+      .find({ lifecycle: 'ACTIVE', protocol })
+      .sort({ sourceIdentity: 1, sourcePointId: 1, metric: 1 })
+      .toArray();
+    return documents.map(toDomain);
+  }
+
   async listForSource(
     protocol: TelemetryBinding['protocol'],
     sourceIdentity: string,

@@ -14,10 +14,15 @@ import { TelemetryService } from '@/modules/telemetry/application/telemetry-serv
 import type { TelemetryHistoryWriterDiagnostics } from '@/modules/telemetry/application/telemetry-history-writer';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import {
+  BFDB_LIVE_MAX_AGE_MS,
+  BFDB_OFFLINE_AFTER_MS,
+} from '@/modules/telemetry/domain/telemetry-freshness';
+import {
   detectBfdbWireProfile,
   findBfdbWirePointByBindingId,
 } from '@/modules/telemetry/domain/bfdb-wire-layout';
 import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
+import { createTelemetryWatchRepository } from '@/modules/telemetry/infrastructure/telemetry-watch-repository-factory';
 import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
 import { NativeMqttSource } from '@/modules/telemetry/infrastructure/native-mqtt-source';
 import { TelemetryRejectionLogThrottle } from '@/modules/telemetry/infrastructure/telemetry-rejection-log-throttle';
@@ -96,6 +101,13 @@ export function assertMqttProductionSecurity(
 function positiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function telemetryWatchMode(value: string | undefined): 'SHADOW' | 'ACTIVE' {
+  const normalized = (value ?? 'shadow').trim().toLowerCase();
+  if (normalized === 'shadow') return 'SHADOW';
+  if (normalized === 'active') return 'ACTIVE';
+  throw new Error('TELEMETRY_WATCH_MODE must be shadow or active.');
 }
 
 function configuredBindings(value: string | undefined): readonly TelemetryBinding[] {
@@ -197,10 +209,27 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     const bindingRepository = await createTelemetryBindingRepository();
     const alarmRepository = await createAlarmRepository();
     const alarmPolicyRepository = await createAlarmPolicyRepository();
+    const telemetryWatchRepository = await createTelemetryWatchRepository();
     const alarmEvaluator = new TelemetryAlarmEvaluator(
       alarmRepository,
       alarmPolicyRepository,
       topologyRepository,
+      bindingRepository,
+      telemetryWatchRepository,
+      {
+        mode: telemetryWatchMode(process.env.TELEMETRY_WATCH_MODE),
+        lossAfterMs: positiveInt(process.env.TELEMETRY_WATCH_LOSS_AFTER_MS, 900_000),
+        recoverySamples: positiveInt(process.env.TELEMETRY_WATCH_RECOVERY_SAMPLES, 2),
+        reportedOfflineSamples: positiveInt(
+          process.env.TELEMETRY_WATCH_REPORTED_OFFLINE_SAMPLES,
+          2,
+        ),
+        onWatchdogError: (error) =>
+          logger.warn('alarm.telemetry_watchdog_failed', {
+            reason: error instanceof Error ? error.message : 'unknown',
+          }),
+        onShadowSignal: (signal) => logger.info('alarm.telemetry_shadow_transition', signal),
+      },
     );
     const unsubscribeAlarmEvaluator = hub.subscribe((sample) => {
       void alarmEvaluator.observe(sample).catch((error) =>
@@ -523,9 +552,9 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
               mappedBreakerCount: sample?.breakerReadings?.length ?? 0,
               unmappedPointCount: sample?.unmappedPointIds?.length ?? 0,
               freshness:
-                !sample || age > 300_000 || state?.state !== 'subscribed'
+                !sample || age > BFDB_OFFLINE_AFTER_MS
                   ? 'OFFLINE'
-                  : age > 15_000
+                  : age > BFDB_LIVE_MAX_AGE_MS
                     ? 'STALE'
                     : 'LIVE',
             };

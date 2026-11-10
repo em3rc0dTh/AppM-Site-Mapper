@@ -64,10 +64,7 @@ function validPort(value: unknown): value is AccessPortInput {
     (port.feed === undefined ||
       (port.portType === 'POWER' && (port.feed === 'A' || port.feed === 'B'))) &&
     (port.feedPosition === undefined ||
-      port.feedPosition === 'A1' ||
-      port.feedPosition === 'A2' ||
-      port.feedPosition === 'B1' ||
-      port.feedPosition === 'B2') &&
+      isBoundedString(port.feedPosition, 64)) &&
     (port.overloadThresholdA === undefined ||
       (typeof port.overloadThresholdA === 'number' &&
         Number.isFinite(port.overloadThresholdA) &&

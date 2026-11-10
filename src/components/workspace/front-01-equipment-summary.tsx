@@ -21,7 +21,7 @@ export function Front01EquipmentSummary({ equipment, location }: Readonly<{
         {capacity !== null && <><dt>Ocupación</dt><dd>{installed} / {capacity}</dd></>}
       </dl>
       <AlarmScopeSummary entityId={equipment.id} scopeLabel={equipment.name} />
-      <p className="front01-summary-note">La ficha completa, telemetría, alarmas, puertos y configuración están en Operación.</p>
+      <p className="front01-summary-note">Resumen, entradas, gráficas y alarmas están en Operación. Puertos y configuración están en Mantenimiento.</p>
     </section>
   );
 }

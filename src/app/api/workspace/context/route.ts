@@ -3,6 +3,7 @@ import {
   jsonBodyErrorStatus as hardenedJsonStatus,
   isSafeMutationRequest as hardenedSafeMutation,
 } from '@/shared/http/request-security';
+import { isOperationallyVisible } from '@/modules/topology/application/equipment-visibility';
 import { NextResponse } from 'next/server';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { isWorkspaceHref } from '@/modules/workspace/domain/context';
@@ -69,6 +70,7 @@ export async function PATCH(request: Request) {
   if (
     !node ||
     node.lifecycle !== 'ACTIVE' ||
+    !isOperationallyVisible(node) ||
     !['CONTAINER_RACK', 'DEVICE', 'EQUIPMENT'].includes(node.kind)
   )
     return NextResponse.json({ error: 'OBJECT_NOT_FOUND' }, { status: 404 });

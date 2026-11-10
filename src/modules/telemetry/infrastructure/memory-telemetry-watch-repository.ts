@@ -46,6 +46,21 @@ export class MemoryTelemetryWatchRepository implements TelemetryWatchRepository 
     return structuredClone(next);
   }
 
+  async markLost(
+    expectation: TelemetryWatchExpectation,
+    detectedAt = new Date().toISOString(),
+  ): Promise<TelemetryWatchState> {
+    const current = await this.ensureExpected(expectation, detectedAt);
+    if (current.freshStreak === 0) return current;
+    const next: TelemetryWatchState = {
+      ...current,
+      freshStreak: 0,
+      updatedAt: detectedAt,
+    };
+    this.states.set(next.id, next);
+    return structuredClone(next);
+  }
+
   async list(): Promise<readonly TelemetryWatchState[]> {
     return [...this.states.values()].map((item) => structuredClone(item));
   }

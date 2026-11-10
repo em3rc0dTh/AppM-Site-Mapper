@@ -6,6 +6,9 @@ export interface TelemetryBindingRepository {
     bindings: readonly TelemetryBinding[],
     expectedTopology: readonly TopologyNode[],
   ): Promise<readonly string[]>;
+  listActiveByProtocol(
+    protocol: TelemetryBinding['protocol'],
+  ): Promise<readonly TelemetryBinding[]>;
   listForSource(
     protocol: TelemetryBinding['protocol'],
     sourceIdentity: string,

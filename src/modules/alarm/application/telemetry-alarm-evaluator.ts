@@ -7,7 +7,7 @@ import type { AlarmEvidenceRef, AlarmSeverity } from '@/modules/alarm/domain/ent
 import type { AlarmPolicy } from '@/modules/alarm/domain/policy';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { TelemetryWatchRepository } from '@/modules/telemetry/application/telemetry-watch-repository';
-import type { TelemetrySample } from '@/modules/telemetry/domain/entities';
+import type { TelemetryBinding, TelemetrySample } from '@/modules/telemetry/domain/entities';
 import {
   BFDB_OFFLINE_AFTER_MS,
   BFDB_EXPECTED_INTERVAL_MS,
@@ -437,7 +437,7 @@ export class TelemetryAlarmEvaluator {
 
   private async resolveDescendantAutomaticLoss(
     sourceIdentity: string,
-    bindings: readonly Awaited<ReturnType<TelemetryBindingRepository['listActiveByProtocol']>>,
+    bindings: readonly TelemetryBinding[],
     observedAt: string,
     reason: string,
   ): Promise<void> {

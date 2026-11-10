@@ -85,7 +85,7 @@
   border:1px solid #c7d8d2;
   border-radius:999px;
   background:#fff;
-  font-size:9px;
+  font-size:10px;
   font-weight:800;
 }
 .front01-summary-header > div {
@@ -125,14 +125,14 @@
 .front01-mqtt-kpis span,
 .front01-mqtt-facts dt {
   color:#60758a;
-  font-size:9px;
+  font-size:10px;
   font-weight:750;
   text-transform:uppercase;
   letter-spacing:.04em;
 }
 .front01-snmp-kpis dd {
-  margin:4px 0 0;
-  font-size:14px;
+  margin:5px 0 0;
+  font-size:19px;
   font-weight:800;
   font-variant-numeric:tabular-nums;
 }
@@ -142,22 +142,23 @@
   width:100%;
   border-collapse:collapse;
   background:#fff;
-  font-size:10px;
+  font-size:13px;
   font-variant-numeric:tabular-nums;
 }
 .front01-snmp-table th {
-  padding:7px 9px;
+  padding:8px 9px;
   border-bottom:1px solid #cfded9;
   color:#5c7286;
   text-align:left;
-  font-size:9px;
+  font-size:10px;
   text-transform:uppercase;
   letter-spacing:.04em;
 }
 .front01-snmp-table td {
-  padding:8px 9px;
+  padding:9px;
   border-bottom:1px solid #e4ece9;
-  font-weight:650;
+  font-size:13px;
+  font-weight:700;
 }
 .front01-snmp-table tbody tr:last-child td { border-bottom:0; }
 
@@ -167,7 +168,7 @@
   align-items:center;
   gap:12px;
   margin-top:11px;
-  font-size:10px;
+  font-size:12px;
 }
 .front01-utilization-meter {
   height:7px;
@@ -197,8 +198,9 @@
 .front01-mqtt-kpis > div:last-child { border-right:0; }
 .front01-mqtt-kpis strong {
   display:block;
-  margin-top:4px;
-  font-size:15px;
+  margin-top:5px;
+  font-size:19px;
+  font-weight:800;
   font-variant-numeric:tabular-nums;
 }
 .front01-mqtt-facts {
@@ -211,8 +213,8 @@
   border-bottom:1px solid #e3eaf1;
 }
 .front01-mqtt-facts dd {
-  margin:0 10px 0 0;
-  font-size:11px;
+  margin:0 12px 0 0;
+  font-size:14px;
   font-weight:800;
   font-variant-numeric:tabular-nums;
   white-space:nowrap;
@@ -229,7 +231,7 @@
   align-items:center;
   gap:7px;
   min-width:0;
-  font-size:10px;
+  font-size:11px;
   font-weight:650;
 }
 .front01-mqtt-footer .sm-detached-workbench-button,
@@ -286,7 +288,7 @@
   width:100%;
   min-width:980px;
   border-collapse:collapse;
-  font-size:10px;
+  font-size:13px;
   font-variant-numeric:tabular-nums;
 }
 .front01-inputs-table th {
@@ -298,26 +300,28 @@
   background:#f2f7f5;
   color:#5c7286;
   text-align:left;
-  font-size:9px;
+  font-size:10px;
   text-transform:uppercase;
   letter-spacing:.04em;
   white-space:nowrap;
 }
 .front01-inputs-table td {
-  padding:9px;
+  padding:10px 9px;
   border-bottom:1px solid #e5ece9;
-  vertical-align:top;
+  vertical-align:middle;
+  font-size:13px;
+  font-weight:600;
 }
 .front01-inputs-table tbody tr:last-child td { border-bottom:0; }
 .front01-inputs-table td > strong,
 .front01-inputs-table td > small { display:block; }
 .front01-inputs-table td > small {
-  margin-top:2px;
+  margin-top:3px;
   color:#64798b;
-  font-size:9px;
+  font-size:10px;
 }
 .front01-inputs-table code {
-  font-size:9px;
+  font-size:11px;
   white-space:nowrap;
   color:#314f66;
 }
@@ -328,7 +332,7 @@
   flex-wrap:wrap;
   margin-top:9px;
   color:#617486;
-  font-size:9px;
+  font-size:10.5px;
   line-height:1.4;
 }
 .front01-inputs-note span:first-child {

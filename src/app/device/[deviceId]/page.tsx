@@ -45,6 +45,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const canDelete = hasPermission(auth.value.role, 'system:danger');
   const canReadTelemetry = hasPermission(auth.value.role, 'telemetry:read');
   const canReadIndustrialSettings = hasPermission(auth.value.role, 'settings:read');
+  const t = await getTranslations('pages.device');
+  const tf = await getTranslations('front01Ui');
   const { deviceId } = await params;
   const repo = await createTopologyRepository();
   const service = new TopologyService(repo);
@@ -329,7 +331,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
         pathId: path.id,
         flow: outgoing ? 'OUTGOING' : 'INCOMING',
         peerEquipmentId: peerEquipment?.id ?? '',
-        peerEquipmentName: peerEquipment?.name ?? 'Unknown Equipment',
+        peerEquipmentName: peerEquipment?.name ?? t('unknownEquipment'),
         peerPortName: peerPort?.name ?? peerId,
         ...(path.feed ? { feed: path.feed } : {}),
       };
@@ -344,8 +346,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     placement?.mode === 'U_RANGE' && placement.startU !== undefined && placement.sizeU !== undefined
       ? `U${placement.startU} – U${placement.startU + placement.sizeU - 1}`
       : placement?.mode === 'FULL_RACK'
-        ? 'Full rack'
-        : 'Not mounted';
+        ? t('mountFullRack')
+        : t('notMounted');
 
   const links = await Promise.all(
     nodeTrail.map(async (item) => ({
@@ -370,7 +372,6 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER'
       ? readBreakerProtection(node.attributes)
       : null;
-  const t = await getTranslations('pages.device');
   const tBreaker = await getTranslations('breakerLimits');
   return (
     <main className="operational-page mk-device-page">
@@ -410,7 +411,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           ) : null}
           {node.kind === 'EQUIPMENT' ? (
             <Front01StageTabs
-              label="Vistas del Equipment"
+              label={t('views')}
               physical={
                 <>
                   <EquipmentCompositionEditor
@@ -425,10 +426,10 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     portConnections={portConnections}
                   />
                   <details className="front01-equipment-technical-config" id="bdfb-access-ports">
-                    <summary>Configuración técnica</summary>
+                    <summary>{tf('technicalConfiguration')}</summary>
                     <div className="front01-equipment-technical-grid">
                       <section>
-                        <h3>Puertos</h3>
+                        <h3>{tf('ports')}</h3>
                         <p className="ec-inspector-note">
                           {t('terminals', {
                             count: node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length,
@@ -454,7 +455,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                         ) : null}
                       </section>
                       <section>
-                        <h3>Energía</h3>
+                        <h3>{tf('power')}</h3>
                         {canWritePower && contract.ok ? (
                           <PowerContractEditor
                             entityId={node.id}
@@ -503,7 +504,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     {node.equipmentType === 'PANEL' ? (
                       <>
                         <div>
-                          <dt>Posiciones</dt>
+                          <dt>{tf('positions')}</dt>
                           <dd>
                             {node.children.filter((child) => child !== null).length} / {node.children.length}
                           </dd>
@@ -548,10 +549,10 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                           <dt>{t('mk1_measurement_model')}</dt>
                           <dd>
                             {focusedDirectSource && !focusedPointBinding && !acrelMapping
-                              ? 'SELF-MEASURED'
+                              ? t('selfMeasured')
                               : acrelMapping || focusedPointBinding || parentPanel
-                                ? 'EXTERNALLY-MEASURED'
-                                : 'UNCOMMISSIONED'}
+                                ? t('externallyMeasured')
+                                 : t('uncommissioned')}
                           </dd>
                         </div>
                         <div>
@@ -560,14 +561,14 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                             {acrelMapping
                               ? `${acrelMapping.gatewayAlias ?? acrelMapping.gatewayName} → ${acrelMapping.meterAlias ?? acrelMapping.meterName} → CH ${acrelMapping.channel}`
                               : focusedDirectSource && !focusedPointBinding
-                                ? `Self source · ${focusedDirectSource.sourceIdentity}`
+                                ? t('selfSource', { identity: focusedDirectSource.sourceIdentity })
                                 : panelBindingConfirmed && parentPanel
                                   ? `${parentPanel.name} → position ${String(breakerPosition).padStart(2, '0')}`
                                   : focusedPointBinding
-                                    ? `Explicit MQTT binding · ${focusedPointBinding.sourceIdentity}`
+                                    ? t('explicitMqttBinding', { identity: focusedPointBinding.sourceIdentity })
                                     : parentPanel
-                                      ? `${parentPanel.name} → telemetry not commissioned`
-                                      : 'No measurement source commissioned'}
+                                      ? t('telemetryNotCommissioned', { panel: parentPanel.name })
+                                      : t('noMeasurementSource')}
                           </dd>
                         </div>
                         <div>
@@ -586,7 +587,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                     </div>
                   </dl>
                   <details className="front01-equipment-details">
-                    <summary>Detalles técnicos</summary>
+                    <summary>{tf('technicalDetails')}</summary>
                     <dl>
                     <dt>{t('identity')}</dt>
                     <dd>{node.name}</dd>
@@ -649,8 +650,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                           {node.childMode === 'POSITIONAL' &&
                           node.serialNumber &&
                           node.telemetryPointPrefix
-                            ? 'READY FOR EXPLICIT COMMISSIONING'
-                            : 'NOT READY'}
+                            ? t('readyExplicitCommissioning')
+                            : t('notReady')}
                         </dd>
                       </>
                     ) : null}
@@ -667,24 +668,24 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                         <dt>{t('mk1_measurement_model')}</dt>
                         <dd>
                           {focusedDirectSource && !focusedPointBinding && !acrelMapping
-                            ? 'SELF-MEASURED'
+                            ? t('selfMeasured')
                             : acrelMapping || focusedPointBinding || parentPanel
-                              ? 'EXTERNALLY-MEASURED'
-                              : 'UNCOMMISSIONED'}
+                              ? t('externallyMeasured')
+                               : t('uncommissioned')}
                         </dd>
                         <dt>{t('mk1_measured_via')}</dt>
                         <dd>
                           {acrelMapping
                             ? `${acrelMapping.gatewayAlias ?? acrelMapping.gatewayName} → ${acrelMapping.meterAlias ?? acrelMapping.meterName} → CH ${acrelMapping.channel}`
                             : focusedDirectSource && !focusedPointBinding
-                              ? `Self source · ${focusedDirectSource.sourceIdentity}`
+                              ? t('selfSource', { identity: focusedDirectSource.sourceIdentity })
                               : panelBindingConfirmed && parentPanel
                                 ? `${parentPanel.name} → position ${String(breakerPosition).padStart(2, '0')}`
                                 : focusedPointBinding
-                                  ? `Explicit MQTT binding · ${focusedPointBinding.sourceIdentity}`
+                                  ? t('explicitMqttBinding', { identity: focusedPointBinding.sourceIdentity })
                                   : parentPanel
-                                    ? `${parentPanel.name} → telemetry not commissioned`
-                                    : 'No measurement source commissioned'}
+                                    ? t('telemetryNotCommissioned', { panel: parentPanel.name })
+                                    : t('noMeasurementSource')}
                         </dd>
                         {parentPanel && !acrelMapping ? (
                           <>
@@ -699,7 +700,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                             <dt>{t('mk1_resolved_raw_point')}</dt>
                             <dd>{expectedPanelPoint ?? '—'}</dd>
                             <dt>{t('mk1_binding')}</dt>
-                            <dd>{panelBindingConfirmed ? 'CONFIRMED' : 'NOT COMMISSIONED'}</dd>
+                            <dd>{panelBindingConfirmed ? t('confirmed') : t('notCommissioned')}</dd>
                           </>
                         ) : null}
                       </>
@@ -719,13 +720,19 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                           <dt>{t('mk1_transport_source')}</dt>
                           <dd>{acrelMapping.sourceIdentity}</dd>
                           <dt>{t('mk1_commissioning_status')}</dt>
-                          <dd>{acrelMapping.recordStatus ?? 'DECLARED'}</dd>
+                          <dd>{acrelMapping.recordStatus === 'FIELD_VERIFIED'
+                            ? t('fieldVerified')
+                            : t('declared')}</dd>
                           <dt>{t('mk1_mac_gateway')}</dt>
                           <dd>{acrelMapping.macAddress ?? '—'}</dd>
                           <dt>{t('mk1_login_gateway')}</dt>
                           <dd>{acrelMapping.loginUsername ?? '—'}</dd>
                           <dt>{t('mk1_credential_note')}</dt>
-                          <dd>{acrelMapping.credentialState ?? 'NOT_DECLARED'}</dd>
+                          <dd>{acrelMapping.credentialState === 'PRESENT_IN_SOURCE'
+                            ? t('presentInSource')
+                            : acrelMapping.credentialState === 'SECRET_REFERENCED'
+                              ? t('secretReferenced')
+                              : t('notDeclared')}</dd>
                           {acrelMapping.network ? (
                             <>
                               <dt>{t('mk1_gateway_network')}</dt>
@@ -903,8 +910,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                           {node.childMode === 'POSITIONAL' &&
                           node.serialNumber &&
                           node.telemetryPointPrefix
-                            ? 'READY FOR EXPLICIT COMMISSIONING'
-                            : 'NOT READY'}
+                            ? t('readyExplicitCommissioning')
+                            : t('notReady')}
                         </dd>
                       </>
                     ) : null}
@@ -921,24 +928,24 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                         <dt>{t('mk1_measurement_model')}</dt>
                         <dd>
                           {focusedDirectSource && !focusedPointBinding && !acrelMapping
-                            ? 'SELF-MEASURED'
+                            ? t('selfMeasured')
                             : acrelMapping || focusedPointBinding || parentPanel
-                              ? 'EXTERNALLY-MEASURED'
-                              : 'UNCOMMISSIONED'}
+                              ? t('externallyMeasured')
+                               : t('uncommissioned')}
                         </dd>
                         <dt>{t('mk1_measured_via')}</dt>
                         <dd>
                           {acrelMapping
                             ? `${acrelMapping.gatewayAlias ?? acrelMapping.gatewayName} → ${acrelMapping.meterAlias ?? acrelMapping.meterName} → CH ${acrelMapping.channel}`
                             : focusedDirectSource && !focusedPointBinding
-                              ? `Self source · ${focusedDirectSource.sourceIdentity}`
+                              ? t('selfSource', { identity: focusedDirectSource.sourceIdentity })
                               : panelBindingConfirmed && parentPanel
                                 ? `${parentPanel.name} → position ${String(breakerPosition).padStart(2, '0')}`
                                 : focusedPointBinding
-                                  ? `Explicit MQTT binding · ${focusedPointBinding.sourceIdentity}`
+                                  ? t('explicitMqttBinding', { identity: focusedPointBinding.sourceIdentity })
                                   : parentPanel
-                                    ? `${parentPanel.name} → telemetry not commissioned`
-                                    : 'No measurement source commissioned'}
+                                    ? t('telemetryNotCommissioned', { panel: parentPanel.name })
+                                    : t('noMeasurementSource')}
                         </dd>
                         {parentPanel && !acrelMapping ? (
                           <>
@@ -953,7 +960,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                             <dt>{t('mk1_resolved_raw_point')}</dt>
                             <dd>{expectedPanelPoint ?? '—'}</dd>
                             <dt>{t('mk1_binding')}</dt>
-                            <dd>{panelBindingConfirmed ? 'CONFIRMED' : 'NOT COMMISSIONED'}</dd>
+                            <dd>{panelBindingConfirmed ? t('confirmed') : t('notCommissioned')}</dd>
                           </>
                         ) : null}
                       </>
@@ -973,13 +980,19 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                           <dt>{t('mk1_transport_source')}</dt>
                           <dd>{acrelMapping.sourceIdentity}</dd>
                           <dt>{t('mk1_commissioning_status')}</dt>
-                          <dd>{acrelMapping.recordStatus ?? 'DECLARED'}</dd>
+                          <dd>{acrelMapping.recordStatus === 'FIELD_VERIFIED'
+                            ? t('fieldVerified')
+                            : t('declared')}</dd>
                           <dt>{t('mk1_mac_gateway')}</dt>
                           <dd>{acrelMapping.macAddress ?? '—'}</dd>
                           <dt>{t('mk1_login_gateway')}</dt>
                           <dd>{acrelMapping.loginUsername ?? '—'}</dd>
                           <dt>{t('mk1_credential_note')}</dt>
-                          <dd>{acrelMapping.credentialState ?? 'NOT_DECLARED'}</dd>
+                          <dd>{acrelMapping.credentialState === 'PRESENT_IN_SOURCE'
+                            ? t('presentInSource')
+                            : acrelMapping.credentialState === 'SECRET_REFERENCED'
+                              ? t('secretReferenced')
+                              : t('notDeclared')}</dd>
                           {acrelMapping.network ? (
                             <>
                               <dt>{t('mk1_gateway_network')}</dt>

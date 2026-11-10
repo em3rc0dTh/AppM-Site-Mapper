@@ -629,8 +629,7 @@ export function AccessPortEditor({
                   )}
                 </>
               )}
-              {form.portType === 'POWER' &&
-                (!quickFeed || hardwareProfile === 'ELTEK_BDCBB_CONFIG_2') && (
+              {form.portType === 'POWER' && (
                   <label>
                     {quickFeed ? t('incomingShunt') : t('feed')}
                     <select

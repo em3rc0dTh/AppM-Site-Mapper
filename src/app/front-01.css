@@ -2,9 +2,34 @@
 .front01-stage-heading { margin:0 0 10px; color:#17202a; font-size:22px; line-height:1.15; font-weight:800; }
 .zip-bdfb-page .telxius-operational-stage { padding-top:0 !important; }
 .zip-bdfb-page .telxius-operational-stage::before { display:none !important; content:none !important; }
-.zip-bdfb-page #front01-panel-physical .bdfb-chassis { height:auto !important; min-height:0 !important; }
-.zip-bdfb-page #front01-panel-physical .sm-bdfb-physical-body,
-.zip-bdfb-page #front01-panel-physical .sm-bdfb-physical-chassis { height:auto !important; min-height:0 !important; }
+
+/* FRONT-01 inserts a view switcher between the fixed-height BDFB canvas and
+   BdfbChassis. Preserve the original height chain so the existing two-row
+   physical layout (hierarchy above + selected panel below) remains intact. */
+.zip-bdfb-page .front01-stage {
+  height:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+.zip-bdfb-page .front01-stage-heading,
+.zip-bdfb-page .front01-primary-tabs {
+  flex:0 0 auto;
+}
+.zip-bdfb-page #front01-panel-physical {
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+}
+.zip-bdfb-page #front01-panel-physical .bdfb-chassis {
+  height:100% !important;
+  min-height:0 !important;
+}
+.zip-bdfb-page .front01-operational-content {
+  flex:1 1 auto;
+  min-height:0;
+  overflow:auto;
+}
 
 .front01-primary-tabs { display:flex; flex-wrap:wrap; gap:8px; padding:8px 0 14px; }
 .front01-primary-tabs button { border:1px solid #cdd9e7; background:#f8fbff; color:#173f64; padding:10px 18px; border-radius:6px; font:inherit; font-weight:700; cursor:pointer; }

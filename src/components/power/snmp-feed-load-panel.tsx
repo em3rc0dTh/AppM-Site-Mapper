@@ -411,7 +411,7 @@ export function SnmpFeedLoadPanel({
             )}
           </>
         )}
-        {view !== 'summary' && (
+        {(
           <>
             {labEnabled && inventoryRecorded && labCount === 0 && (
               <div className="sm-snmp-lab-activation">

@@ -228,8 +228,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           logger.warn('alarm.telemetry_watchdog_failed', {
             reason: error instanceof Error ? error.message : 'unknown',
           }),
-        onShadowSignal: (signal) =>
-          logger.info('alarm.telemetry_shadow_transition', signal),
+        onShadowSignal: (signal) => logger.info('alarm.telemetry_shadow_transition', signal),
       },
     );
     const unsubscribeAlarmEvaluator = hub.subscribe((sample) => {

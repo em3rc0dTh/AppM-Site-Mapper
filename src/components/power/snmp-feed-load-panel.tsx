@@ -274,7 +274,7 @@ export function SnmpFeedLoadPanel({
               <tr>
                 <th>{t('input')}</th>
                 <th>{t('status')}</th>
-                <th>Corriente</th>
+                <th>{t('current')}</th>
                 <th>{t('voltage')}</th>
                 <th>{t('panel')}</th>
                 <th>{t('controllerColumn')}</th>

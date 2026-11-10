@@ -1,3 +1,4 @@
+import { isInternalEquipment, isOperationallyVisible } from '@/modules/topology/application/equipment-visibility';
 import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
 import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
 import Link from 'next/link';
@@ -50,6 +51,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     notFound();
   }
 
+  // Internal industrial assets remain accessible by authorized technical staff only.
+  if (isInternalEquipment(node) && !canReadIndustrialSettings) notFound();
+
   if (node.kind === 'DEVICE' && node.deviceType === 'BDFB') {
     redirect(await service.buildDeepLink(node.id));
   }
@@ -58,11 +62,11 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const directEquipmentChildren =
     node.kind === 'EQUIPMENT'
       ? (await service.listChildren(node.id)).filter(
-          (child): child is EquipmentNode => child.kind === 'EQUIPMENT',
+          (child): child is EquipmentNode => child.kind === 'EQUIPMENT' && (isOperationallyVisible(child) || isInternalEquipment(node)),
         )
       : [];
   const deviceEquipment = (await repo.listEquipmentForDevice(owningDeviceId)).filter(
-    (item) => item.lifecycle === 'ACTIVE',
+    (item) => item.lifecycle === 'ACTIVE' && (isOperationallyVisible(item) || isInternalEquipment(node)),
   );
   const familyEquipment: readonly EquipmentNode[] =
     node.kind === 'DEVICE'

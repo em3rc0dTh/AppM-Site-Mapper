@@ -17,7 +17,7 @@ export async function Front01BdfbSummary({ node, presentation, location }: Reado
   const occupiedPanels = panels.filter((panel) => panel.positions.some(Boolean)).length;
   return (
     <aside className="telxius-properties front01-compact-inspector">
-      <header>INSPECTOR <span>⌄</span></header>
+      <header>{t('inspector')} <span>⌄</span></header>
       <div className="zip-bdfb-inspector-id">
         <span aria-hidden="true">▥</span>
         <div><h2>{node.name}</h2><small>{location}</small></div>

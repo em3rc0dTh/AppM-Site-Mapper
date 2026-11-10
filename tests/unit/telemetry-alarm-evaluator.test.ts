@@ -112,7 +112,7 @@ describe('TelemetryAlarmEvaluator', () => {
 
 
 
-  it('does not convert an explicit telemetry OFFLINE state with zero values into electrical loss', async () => {
+  it('does not convert OFFLINE zeroes into electrical loss', async () => {
     const topology = new MemoryTopologyRepository(breakerTopology());
     const alarms = new MemoryAlarmRepository();
     const policies = new MemoryAlarmPolicyRepository([

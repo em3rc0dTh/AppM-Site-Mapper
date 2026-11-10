@@ -2104,12 +2104,6 @@ const INTEGRATION_SNMP_SOURCE = {
   'QDF-4': 'INT-SNMP-QDF-4',
   'QDF-5': 'INT-SNMP-QDF-5',
 } as const;
-const INTEGRATION_FEEDS = [
-  { slot: 'A1', panel: 'A3', side: 'A', index: 1 },
-  { slot: 'A2', panel: 'A2', side: 'A', index: 2 },
-  { slot: 'B1', panel: 'B3', side: 'B', index: 3 },
-  { slot: 'B2', panel: 'B2', side: 'B', index: 4 },
-] as const;
 const MQTT_PANEL_GROUP: Readonly<Record<'A3' | 'A2' | 'B3' | 'B2', number>> = {
   A3: 1,
   A2: 2,
@@ -2150,7 +2144,14 @@ async function ensureControlledIntegration(
     throw new Error(`SEED_01_INTEGRATION_CONFLICT: missing chassis ${spec.key}`);
   }
 
-  const desiredPorts = INTEGRATION_FEEDS.map((feed) => ({
+  const integrationFeeds = spec.meters.map((meter, index) => ({
+    slot: meter.panel,
+    panel: meter.panel,
+    side: meter.panel.startsWith('A') ? ('A' as const) : ('B' as const),
+    index: index + 1,
+  }));
+
+  const desiredPorts = integrationFeeds.map((feed) => ({
     id: `integration:seed01:${spec.key}:feed:${feed.slot}`,
     deviceId: created.deviceId,
     equipmentId: chassis.id,
@@ -2258,7 +2259,7 @@ async function ensureControlledIntegration(
   }
 
   const snmpSource = INTEGRATION_SNMP_SOURCE[spec.key];
-  for (const feed of INTEGRATION_FEEDS) {
+  for (const feed of integrationFeeds) {
     const portId = `integration:seed01:${spec.key}:feed:${feed.slot}`;
     for (const point of [
       {

@@ -110,6 +110,52 @@ describe('TelemetryAlarmEvaluator', () => {
     expect(await alarms.listActive()).toHaveLength(0);
   });
 
+
+
+  it('does not convert an explicit telemetry OFFLINE state with zero values into electrical loss', async () => {
+    const topology = new MemoryTopologyRepository(breakerTopology());
+    const alarms = new MemoryAlarmRepository();
+    const policies = new MemoryAlarmPolicyRepository([
+      {
+        id: 'offline-guard-policy',
+        targetType: 'EQUIPMENT',
+        targetId: 'breaker',
+        sourceContext: 'mqtt:0_1_4',
+        sourceIdentity: 'EMU-TELXIUS-QDF-4',
+        enabled: true,
+        lowVoltage: {
+          assertBelowV: 45,
+          clearAboveV: 47,
+          debounceSamples: 1,
+          recoverySamples: 1,
+          severity: 'WARNING',
+        },
+        powerLoss: {
+          assertVoltageBelowV: 1,
+          assertCurrentBelowA: 0.1,
+          clearVoltageAboveV: 45,
+          debounceSamples: 1,
+          recoverySamples: 1,
+          severity: 'CRITICAL',
+        },
+        createdAt,
+        updatedAt: createdAt,
+      },
+    ]);
+
+    const evaluator = new TelemetryAlarmEvaluator(alarms, policies, topology);
+    const offline = sample(0, 0, '2026-10-30T02:30:00.000Z');
+    await evaluator.observe({
+      ...offline,
+      reported: {
+        ...offline.reported,
+        state: 'OFFLINE',
+      },
+    });
+
+    expect(await alarms.listActive()).toHaveLength(0);
+  });
+
   it('asserts configured power loss as suspected from electrical evidence only', async () => {
     const topology = new MemoryTopologyRepository(breakerTopology());
     const alarms = new MemoryAlarmRepository();

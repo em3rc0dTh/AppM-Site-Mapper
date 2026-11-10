@@ -6,26 +6,29 @@ import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 import { useTelemetryStream } from '@/components/telemetry/use-bdfb-telemetry';
 import { aggregateBdfbDescendantTelemetry } from '@/modules/telemetry/application/bdfb-descendant-telemetry';
 
-type Tone = 'healthy' | 'warning' | 'critical';
+type Tone = 'healthy' | 'warning' | 'critical' | 'neutral';
 
 export function Front01BdfbHealth({
   deviceId,
-  descendantEquipmentIds,
+  installedEquipmentIds,
 }: Readonly<{
   deviceId: string;
-  descendantEquipmentIds: readonly string[];
+  installedEquipmentIds: readonly string[];
 }>) {
   const { snapshot, loading: alarmsLoading, error: alarmError } = useAlarmSnapshot();
   const { samples, now, hasSnapshot } = useTelemetryStream();
 
   const telemetry = useMemo(
-    () => aggregateBdfbDescendantTelemetry(samples, descendantEquipmentIds, now),
-    [samples, descendantEquipmentIds, now],
+    () => aggregateBdfbDescendantTelemetry(samples, installedEquipmentIds, now),
+    [samples, installedEquipmentIds, now],
   );
 
   const rollup = snapshot.rollups[deviceId];
   const activeAlarms = rollup?.activeAlarmCount ?? 0;
   const highestSeverity = rollup?.highestSeverity ?? null;
+
+  const installed = installedEquipmentIds.length;
+  const reporting = telemetry.reportingEquipment;
 
   let tone: Tone = 'healthy';
   let label = 'OPERATIVO';
@@ -33,12 +36,21 @@ export function Front01BdfbHealth({
   if (highestSeverity === 'CRITICAL') {
     tone = 'critical';
     label = 'ALARMA';
-  } else if (activeAlarms > 0) {
+  } else if (activeAlarms > 0 || alarmError) {
     tone = 'warning';
-    label = 'ATENCIÓN';
-  } else if (alarmError || alarmsLoading || !hasSnapshot || telemetry.reportingEquipment === 0) {
+    label = activeAlarms > 0 ? 'ATENCIÓN' : 'ESTADO PARCIAL';
+  } else if (alarmsLoading || !hasSnapshot) {
+    tone = 'neutral';
+    label = 'VERIFICANDO';
+  } else if (installed === 0) {
+    tone = 'neutral';
+    label = 'SIN EQUIPO INSTALADO';
+  } else if (reporting === 0) {
+    tone = 'neutral';
+    label = 'SIN TELEMETRÍA';
+  } else if (reporting < installed) {
     tone = 'warning';
-    label = hasSnapshot ? 'SIN DATOS RECIENTES' : 'VERIFICANDO';
+    label = 'TELEMETRÍA PARCIAL';
   }
 
   return (
@@ -50,9 +62,9 @@ export function Front01BdfbHealth({
           ? 'Alarma crítica activa'
           : activeAlarms > 0
             ? `${activeAlarms} alarma(s) activa(s)`
-            : telemetry.reportingEquipment > 0
-              ? `${telemetry.reportingEquipment} Equipment reportando`
-              : 'Sin telemetría reciente'
+            : installedEquipmentIds.length > 0
+              ? `${telemetry.reportingEquipment} / ${installedEquipmentIds.length} instalados reportando`
+              : 'Sin Equipment instalado'
       }
     >
       <i aria-hidden="true" />

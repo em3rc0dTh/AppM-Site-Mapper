@@ -22,7 +22,7 @@ interface PortForm {
   protocol: string;
   customType: string;
   feed: '' | 'A' | 'B';
-  feedPosition: string;
+  feedPosition: '' | 'A1' | 'A2' | 'B1' | 'B2';
   overloadThresholdA: string;
   snmpFeedInput: boolean;
   independentInputConfirmed: boolean;
@@ -69,8 +69,9 @@ function formFor(port?: AccessPort): PortForm {
     protocol: port?.protocol ?? '',
     customType: port?.customType ?? '',
     feed: feed === 'A' || feed === 'B' ? feed : '',
-    feedPosition:
-      typeof port?.attributes?.feedPosition === 'string' ? port.attributes.feedPosition : '',
+    feedPosition: ['A1', 'A2', 'B1', 'B2'].includes(String(port?.attributes?.feedPosition))
+      ? (port?.attributes?.feedPosition as PortForm['feedPosition'])
+      : '',
     overloadThresholdA:
       typeof port?.attributes?.overloadThresholdA === 'number'
         ? String(port.attributes.overloadThresholdA)
@@ -182,8 +183,9 @@ export function AccessPortEditor({
         form.servedPanelIds.length <= maxPanelCount)) &&
     (!quickFeed ||
       (form.servedPanelIds.length === maxPanelCount &&
-        Boolean(form.feed) &&
-        (hardwareProfile === 'ELTEK_BDCBB_CONFIG_2' || Boolean(form.feedPosition)))) &&
+        (hardwareProfile === 'ELTEK_BDCBB_CONFIG_2'
+          ? Boolean(form.feed)
+          : Boolean(form.feedPosition)))) &&
     (canWritePower || (form.portType !== 'POWER' && editing?.portType !== 'POWER'));
 
   function patch(change: Partial<PortForm>) {
@@ -629,7 +631,8 @@ export function AccessPortEditor({
                   )}
                 </>
               )}
-              {form.portType === 'POWER' && (
+              {form.portType === 'POWER' &&
+                (!quickFeed || hardwareProfile === 'ELTEK_BDCBB_CONFIG_2') && (
                   <label>
                     {quickFeed ? t('incomingShunt') : t('feed')}
                     <select
@@ -679,13 +682,10 @@ export function AccessPortEditor({
                               value={form.feedPosition}
                               onChange={(event) =>
                                 patch({
-                                  feedPosition: event.target.value,
-                                  feed:
-                                    event.target.value.startsWith('A')
-                                      ? 'A'
-                                      : event.target.value.startsWith('B')
-                                        ? 'B'
-                                        : form.feed,
+                                  feedPosition: event.target.value as PortForm['feedPosition'],
+                                  feed: event.target.value
+                                    ? (event.target.value[0] as PortForm['feed'])
+                                    : form.feed,
                                   ...(!editingId && quickFeed
                                     ? {
                                         name: event.target.value
@@ -697,11 +697,10 @@ export function AccessPortEditor({
                               }
                             >
                               <option value="">{t('generic')}</option>
-                              {panels.map((panel) => (
-                                <option key={panel.id} value={panel.name}>
-                                  {panel.name}
-                                </option>
-                              ))}
+                              <option value="A1">A1 · {t('sideA')}</option>
+                              <option value="A2">A2 · {t('sideA')}</option>
+                              <option value="B1">B1 · {t('sideB')}</option>
+                              <option value="B2">B2 · {t('sideB')}</option>
                             </select>
                           </label>
                         )}

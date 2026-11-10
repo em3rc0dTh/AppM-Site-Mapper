@@ -27,7 +27,7 @@ export function Front01BdfbSummary({ node, presentation, location }: Readonly<{
         <dt>Circuitos instalados</dt><dd>{installed} / {positions.length}</dd>
       </dl>
       <AlarmScopeSummary entityId={node.id} scopeLabel={node.name} />
-      <p className="front01-summary-note">Entradas, gráficas, alarmas y configuración están en Operación.</p>
+      <p className="front01-summary-note">Entradas, gráficas y alarmas están en Operación. La configuración técnica está en Mantenimiento.</p>
     </aside>
   );
 }

@@ -138,7 +138,9 @@ uses matching canonical index specifications. **Both preserve existing equivalen
 legacy-named indexes**, so already-prepared databases do not receive duplicate
 or conflicting index definitions. A same-key index with incompatible uniqueness
 or sparse options causes a deliberate failure; neither routine drops or renames
-an index. Run the optional script only against the verified target database
+an index. The CI includes a disposable MongoDB regression that provisions the original
+legacy-named indexes and verifies that repeated bootstraps preserve them.
+Run the optional script only against the verified target database
 after a restorable backup, never against a guessed MongoDB database name.
 
 For field rollout, use `shadow` first. Only enable `active` after verifying

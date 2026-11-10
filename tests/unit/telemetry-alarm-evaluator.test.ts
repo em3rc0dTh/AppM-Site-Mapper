@@ -110,8 +110,6 @@ describe('TelemetryAlarmEvaluator', () => {
     expect(await alarms.listActive()).toHaveLength(0);
   });
 
-
-
   it('does not convert OFFLINE zeroes into electrical loss', async () => {
     const topology = new MemoryTopologyRepository(breakerTopology());
     const alarms = new MemoryAlarmRepository();

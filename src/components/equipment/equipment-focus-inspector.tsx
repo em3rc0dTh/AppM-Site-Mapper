@@ -137,7 +137,7 @@ export function EquipmentFocusInspector({
             aria-controls={`ec-tabpanel-${key}`}
             onClick={() => setTab(key)}
           >
-            {key === 'overview' ? 'Resumen' : key === 'telemetry' ? 'Entradas' : key === 'history' ? 'Gráficas' : key === 'alarms' ? 'Alarmas' : key === 'ports' ? t('ports') : t('settings')}
+            {key === 'overview' ? t('overview') : key === 'telemetry' ? t('inputs') : key === 'history' ? t('charts') : key === 'alarms' ? t('alarms') : key === 'ports' ? t('ports') : t('settings')}
           </button>
         ))}
       </div>

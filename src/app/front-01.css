@@ -12,3 +12,15 @@
 .front01-summary-facts dd { margin:0; overflow-wrap:anywhere; font-weight:600; }
 .front01-summary-note { padding:12px 14px; font-size:12px; color:#667b91; }
 @media(max-width:900px){ .front01-summary-facts { grid-template-columns:1fr 1fr; } }
+
+/* Keep the original equipment controls intact, but give them canvas width. */
+.zip-device-stage .front01-operational-content { min-width:0; }
+.zip-device-stage .front01-operational-content .ec-inspector { box-sizing:border-box; padding:16px; }
+.zip-device-stage .front01-operational-content .ec-inspector-tabs { flex-wrap:wrap; }
+.zip-device-stage .front01-operational-content .ec-inspector-tab-body,
+.zip-device-stage .front01-operational-content .ec-composition-history { max-height:none; overflow:visible; }
+.front01-equipment-summary { min-width:0; background:#fff; }
+.front01-equipment-summary .zip-device-identity { padding:16px; border-bottom:1px solid #e1e7ee; }
+.front01-equipment-summary .front01-summary-facts { font-size:13px; }
+.front01-operational-content .zip-bdfb-inspector .sm-bdfb-inspector-tabs { flex-wrap:wrap; }
+.front01-operational-content .zip-bdfb-inspector-id { display:none; }

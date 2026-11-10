@@ -1,3 +1,6 @@
+import '@/app/front-01.css';
+import { Front01StageTabs } from '@/components/workspace/front-01-stage-tabs';
+import { Front01BdfbSummary } from '@/components/workspace/front-01-bdfb-summary';
 import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
 import { SiteBoundaryWorkspace } from '@/components/topology/site-boundary-workspace';
 import Link from 'next/link';
@@ -486,7 +489,9 @@ export default async function TopologyNodePage({
 
           <div className="operational-stage-body">
             {node.kind === 'DEVICE' && bdfbPresentation ? (
-              <BdfbChassis
+              <Front01StageTabs
+                label="Vistas del BDFB"
+                physical={<>              <BdfbChassis
                 key={query.panel ?? 'bdfb-overview'}
                 device={node}
                 presentation={bdfbPresentation}
@@ -495,6 +500,17 @@ export default async function TopologyNodePage({
                 telemetryBindings={bdfbTelemetryBindings}
                 declaredDestinations={declaredBdfbDestinations}
                 canWritePower={canWritePower}
+              /></>}
+                operation={<>              <BdfbTelemetryInspector
+                key={query.panel ?? 'bdfb-operation'}
+                node={node}
+                presentation={bdfbPresentation}
+                {...(query.panel ? { activePanelId: query.panel } : {})}
+                location={trail.filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE').map((item) => item.name).join(' / ')}
+                feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
+                mappedBreakerCount={mappedBdfbBreakerCount}
+                descendantEquipmentIds={descendantEquipmentIds}
+              /></>}
               />
             ) : node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? (
               <section className="zip-bdfb-recovery-state" role="status">
@@ -579,18 +595,10 @@ export default async function TopologyNodePage({
         </section>
 
         {node.kind === 'DEVICE' && bdfbPresentation ? (
-          <BdfbTelemetryInspector
-            key={query.panel ?? 'bdfb-inspector'}
+          <Front01BdfbSummary
             node={node}
             presentation={bdfbPresentation}
-            {...(query.panel ? { activePanelId: query.panel } : {})}
-            location={trail
-              .filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE')
-              .map((item) => item.name)
-              .join(' / ')}
-            feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
-            mappedBreakerCount={mappedBdfbBreakerCount}
-            descendantEquipmentIds={descendantEquipmentIds}
+            location={trail.filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE').map((item) => item.name).join(' / ')}
           />
         ) : (
           <TopologyPropertiesPanel

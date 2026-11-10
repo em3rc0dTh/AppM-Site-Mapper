@@ -173,10 +173,7 @@ export class TelemetryAlarmEvaluator {
   }
 
   private async observeAutomaticWatch(sample: TelemetrySample): Promise<void> {
-    if (
-      !this.watches ||
-      (sample.targetType !== 'DEVICE' && sample.targetType !== 'EQUIPMENT')
-    )
+    if (!this.watches || (sample.targetType !== 'DEVICE' && sample.targetType !== 'EQUIPMENT'))
       return;
     const scope = sample.sourcePointId ? 'POINT' : 'SOURCE';
     const state = reportedState(sample);
@@ -386,8 +383,7 @@ export class TelemetryAlarmEvaluator {
           sourceIdentity: group.sourceIdentity,
           age: Math.max(...lost.map((point) => point.age)),
           severity: 'WARNING',
-          note:
-            `All ${group.points.length} commissioned breaker points in this panel are unavailable.`,
+          note: `All ${group.points.length} commissioned breaker points in this panel are unavailable.`,
           nowIso,
         });
         for (const point of group.points) {

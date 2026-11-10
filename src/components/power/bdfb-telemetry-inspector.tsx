@@ -292,8 +292,8 @@ export function BdfbTelemetryInspector({
               ? 0
               : event.key === 'End'
                 ? tabs.length - 1
-                : (current + (event.key === 'ArrowRight' ? 1 : -1) + INSPECTOR_TABS.length) %
-                  INSPECTOR_TABS.length;
+                : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) %
+                  tabs.length;
           const nextTab = tabs[nextIndex]!;
           changeTab(nextTab);
           const button = document.getElementById('sm-bdfb-tab-' + nextTab);

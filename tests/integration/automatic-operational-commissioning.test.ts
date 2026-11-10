@@ -198,11 +198,7 @@ describe('automatic operational commissioning end-to-end', () => {
     expect(await alarms.listActive()).toHaveLength(1);
 
     for (const offset of [1_600, 1_700]) {
-      const recovered = await service.ingest(
-        'data/dev/' + SOURCE,
-        payload(offset),
-        stamp(offset),
-      );
+      const recovered = await service.ingest('data/dev/' + SOURCE, payload(offset), stamp(offset));
       expect(recovered.ok).toBe(true);
       await Promise.all(pending.splice(0));
     }

@@ -191,7 +191,7 @@ function setup() {
 }
 
 describe('automatic operational telemetry alarms', () => {
-  it('keeps first rollout in shadow without creating occurrences and de-duplicates transitions', async () => {
+  it('keeps shadow rollout non-persistent and de-duplicated', async () => {
     const topologyRepository = new MemoryTopologyRepository(topology());
     const alarmRepository = new MemoryAlarmRepository();
     const bindingRepository = new MemoryTelemetryBindingRepository(bindings());
@@ -226,7 +226,7 @@ describe('automatic operational telemetry alarms', () => {
     expect(signals.at(-1)).toMatchObject({ action: 'RESOLVE', targetId: 'device' });
   });
 
-  it('raises one source/QDF alarm and suppresses descendants when the publisher disappears', async () => {
+  it('raises one source alarm and suppresses descendants', async () => {
     const { evaluator, alarmRepository } = setup();
     await evaluator.observe(sourceSample(T0));
     await evaluator.observe(pointSample('breaker-1', '0_1_1:1', T0));
@@ -243,7 +243,7 @@ describe('automatic operational telemetry alarms', () => {
     });
   });
 
-  it('raises a breaker alarm when one commissioned point disappears but siblings remain fresh', async () => {
+  it('raises a breaker alarm when one point disappears', async () => {
     const { evaluator, alarmRepository } = setup();
     await evaluator.observe(sourceSample(T0));
     await evaluator.observe(pointSample('breaker-1', '0_1_1:1', T0));
@@ -262,7 +262,7 @@ describe('automatic operational telemetry alarms', () => {
     expect(active[0]?.sourceContext).toContain(':point:0_1_1:2:breaker-2');
   });
 
-  it('raises one panel alarm instead of one alarm per breaker when all panel points are offline', async () => {
+  it('raises one panel alarm when all panel points are offline', async () => {
     const { evaluator, alarmRepository } = setup();
     await evaluator.observe(sourceSample(T0));
     await evaluator.observe(pointSample('breaker-1', '0_1_1:1', T0));
@@ -319,7 +319,7 @@ describe('automatic operational telemetry alarms', () => {
     });
   });
 
-  it('escalates simultaneous commissioned source loss to CRITICAL without inventing a global target', async () => {
+  it('escalates simultaneous source loss without a global target', async () => {
     const secondDevice = {
       id: 'device-2',
       kind: 'DEVICE',

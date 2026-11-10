@@ -162,7 +162,7 @@ export class TelemetryAlarmEvaluator {
   }
 
   private async observeAutomaticWatch(sample: TelemetrySample): Promise<void> {
-    if (!this.watches) return;
+    if (!this.watches || (sample.targetType !== 'DEVICE' && sample.targetType !== 'EQUIPMENT')) return;
     const scope = sample.sourcePointId ? 'POINT' : 'SOURCE';
     const state = reportedState(sample);
     await this.watches.observe({
@@ -200,7 +200,7 @@ export class TelemetryAlarmEvaluator {
         protocol: 'MQTT',
         sourceIdentity: binding.sourceIdentity,
         scope: 'SOURCE',
-        targetType: binding.targetType,
+        targetType: binding.targetType as 'DEVICE' | 'EQUIPMENT',
         targetId: binding.targetId,
       };
       expectations.set(telemetryWatchId(expectation), expectation);
@@ -414,7 +414,9 @@ export class TelemetryAlarmEvaluator {
             targetId: point.node.id,
             sourceContext: pointContext,
             sourceIdentity: group.sourceIdentity,
-            sourcePointId: point.expectation.sourcePointId,
+            ...(point.expectation.sourcePointId
+              ? { sourcePointId: point.expectation.sourcePointId }
+              : {}),
             age: point.age,
             severity: 'WARNING',
             note:

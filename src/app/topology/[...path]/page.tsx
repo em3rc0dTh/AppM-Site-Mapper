@@ -499,8 +499,8 @@ export default async function TopologyNodePage({
           <div className="operational-stage-body">
             {node.kind === 'DEVICE' && bdfbPresentation ? (
               <Front01StageTabs
-                label="Vistas del BDFB"
-                physicalHeading={`${node.name.replace(/^BDFB\s+/i, '')} Physical View`}
+                label={t('views')}
+                physicalHeading={t('physicalViewHeading', { name: node.name.replace(/^BDFB\s+/i, '') })}
                 operationHeading={node.name}
                 headingStatus={
                   <Front01BdfbHealth

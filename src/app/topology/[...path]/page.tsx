@@ -50,20 +50,7 @@ function feedFromLabel(label: string): 'A' | 'B' | undefined {
 }
 
 function eyebrowFor(node: TopologyNode): string {
-  switch (node.kind) {
-    case 'SITE':
-      return 'INFRASTRUCTURE / SITE CANVAS';
-    case 'STRUCTURE':
-      return 'BUILDING / STRUCTURE LAYOUT';
-    case 'LEVEL':
-      return 'LEVEL / FLOOR LAYOUT';
-    case 'ROOM_SUBSTRUCTURE':
-      return 'SUBSTRUCTURE / ROOM BLUEPRINT';
-    case 'DEVICE':
-      return node.deviceType === 'BDFB' ? 'POWER / BDFB INTERNALS' : 'DEVICE';
-    default:
-      return node.kind.replaceAll('_', ' ');
-  }
+  return node.kind === 'DEVICE' ? 'DEVICE' : node.kind.replaceAll('_', ' ');
 }
 
 function navigationContextRoot(
@@ -92,20 +79,7 @@ function navigationContextRoot(
 }
 
 function descriptionFor(node: TopologyNode): string | undefined {
-  switch (node.kind) {
-    case 'SITE':
-      return node.kind;
-    case 'STRUCTURE':
-      return undefined;
-    case 'ROOM_SUBSTRUCTURE':
-      return 'Physical room boundary · cluster bays · 600 × 600 mm position grid';
-    case 'DEVICE':
-      return node.deviceType === 'BDFB'
-        ? 'Physical distribution hierarchy · live MQTT overlay'
-        : undefined;
-    default:
-      return undefined;
-  }
+  return node.kind === 'SITE' ? node.kind : undefined;
 }
 
 export default async function TopologyNodePage({
@@ -116,6 +90,7 @@ export default async function TopologyNodePage({
   searchParams: Promise<{ level?: string; panel?: string; breaker?: string }>;
 }>) {
   const auth = await requirePermission('topology:read');
+  const t = await getTranslations('pages.topology');
 
   if (!auth.ok) {
     redirect('/login');
@@ -377,7 +352,7 @@ export default async function TopologyNodePage({
         placement.sizeU !== undefined
           ? `U${placement.startU}–U${placement.startU + placement.sizeU - 1}`
           : placement?.mode === 'FULL_RACK'
-            ? 'Full rack'
+            ? t('mountFullRack')
             : undefined;
 
       bdfbPowerBindings.push({
@@ -396,7 +371,7 @@ export default async function TopologyNodePage({
 
   const rackLink: string | null = null;
   const blueprintLink = node.kind === 'ROOM_SUBSTRUCTURE' ? `/blueprint/${node.id}` : null;
-  const t = await getTranslations('pages.topology');
+
   const sectionDescription =
     node.kind === 'ROOM_SUBSTRUCTURE'
       ? t('roomDescription')
@@ -499,8 +474,8 @@ export default async function TopologyNodePage({
           <div className="operational-stage-body">
             {node.kind === 'DEVICE' && bdfbPresentation ? (
               <Front01StageTabs
-                label="Vistas del BDFB"
-                physicalHeading={`${node.name.replace(/^BDFB\s+/i, '')} Physical View`}
+                label={t('views')}
+                physicalHeading={t('physicalViewHeading', { name: node.name.replace(/^BDFB\s+/i, '') })}
                 operationHeading={node.name}
                 headingStatus={
                   <Front01BdfbHealth

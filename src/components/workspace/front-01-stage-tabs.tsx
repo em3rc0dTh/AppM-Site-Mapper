@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
 
 type Front01View = 'physical' | 'operation';
 
@@ -30,10 +31,11 @@ export function Front01StageTabs({
   operationHeading,
   headingStatus,
 }: Props) {
+  const t = useTranslations('front01Ui');
   const [view, setView] = useState<Front01View>('physical');
   const views: readonly Front01ViewDefinition[] = [
-    { key: 'physical', title: 'Vista física' },
-    { key: 'operation', title: 'Operación' },
+    { key: 'physical', title: t('physicalView') },
+    { key: 'operation', title: t('operation') },
   ];
 
   const activeHeading =

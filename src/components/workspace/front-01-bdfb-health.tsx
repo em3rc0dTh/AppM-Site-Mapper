@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import { useTranslations } from 'next-intl';
 
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
 import { useTelemetryStream } from '@/components/telemetry/use-bdfb-telemetry';
@@ -15,6 +16,7 @@ export function Front01BdfbHealth({
   deviceId: string;
   installedEquipmentIds: readonly string[];
 }>) {
+  const t = useTranslations('front01Ui');
   const { snapshot, loading: alarmsLoading, error: alarmError } = useAlarmSnapshot();
   const { samples, now, hasSnapshot } = useTelemetryStream();
 
@@ -31,26 +33,26 @@ export function Front01BdfbHealth({
   const reporting = telemetry.reportingEquipment;
 
   let tone: Tone = 'healthy';
-  let label = 'OPERATIVO';
+  let label = t('statusOperational');
 
   if (highestSeverity === 'CRITICAL') {
     tone = 'critical';
-    label = 'ALARMA';
+    label = t('statusAlarm');
   } else if (activeAlarms > 0 || alarmError) {
     tone = 'warning';
-    label = activeAlarms > 0 ? 'ATENCIÓN' : 'ESTADO PARCIAL';
+    label = activeAlarms > 0 ? t('statusAttention') : t('statusPartial');
   } else if (alarmsLoading || !hasSnapshot) {
     tone = 'neutral';
-    label = 'VERIFICANDO';
+    label = t('statusChecking');
   } else if (installed === 0) {
     tone = 'neutral';
-    label = 'SIN EQUIPO INSTALADO';
+    label = t('statusNoInstalledEquipment');
   } else if (reporting === 0) {
     tone = 'neutral';
-    label = 'SIN TELEMETRÍA';
+    label = t('statusNoTelemetry');
   } else if (reporting < installed) {
     tone = 'warning';
-    label = 'TELEMETRÍA PARCIAL';
+    label = t('statusTelemetryPartial');
   }
 
   return (
@@ -59,12 +61,12 @@ export function Front01BdfbHealth({
       data-tone={tone}
       title={
         tone === 'critical'
-          ? 'Alarma crítica activa'
+          ? t('criticalAlarmActive')
           : activeAlarms > 0
-            ? `${activeAlarms} alarma(s) activa(s)`
+            ? t('activeAlarms', { count: activeAlarms })
             : installedEquipmentIds.length > 0
-              ? `${telemetry.reportingEquipment} / ${installedEquipmentIds.length} instalados reportando`
-              : 'Sin Equipment instalado'
+              ? t('installedReporting', { reporting: telemetry.reportingEquipment, installed: installedEquipmentIds.length })
+              : t('noInstalledEquipment')
       }
     >
       <i aria-hidden="true" />

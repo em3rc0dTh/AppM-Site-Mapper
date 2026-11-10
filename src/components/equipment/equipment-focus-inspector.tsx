@@ -22,10 +22,10 @@ const OPERATION_TABS: readonly Tab[] = ['overview', 'telemetry', 'history', 'ala
 const MAINTENANCE_TABS: readonly Tab[] = ['ports', 'settings'];
 
 const METRICS = [
-  { key: 'voltageV', symbol: 'V', label: 'Voltage', unit: 'V', digits: 2, scale: 1 },
-  { key: 'currentA', symbol: 'I', label: 'Current', unit: 'A', digits: 2, scale: 1 },
-  { key: 'powerW', symbol: 'P', label: 'Power', unit: 'kW', digits: 3, scale: 0.001 },
-  { key: 'energyKwh', symbol: 'E', label: 'Energy counter', unit: 'kWh', digits: 4, scale: 1 },
+  { key: 'voltageV', symbol: 'V', unit: 'V', digits: 2, scale: 1 },
+  { key: 'currentA', symbol: 'I', unit: 'A', digits: 2, scale: 1 },
+  { key: 'powerW', symbol: 'P', unit: 'kW', digits: 3, scale: 0.001 },
+  { key: 'energyKwh', symbol: 'E', unit: 'kWh', digits: 4, scale: 1 },
 ] as const;
 
 interface Props {
@@ -137,7 +137,7 @@ export function EquipmentFocusInspector({
             aria-controls={`ec-tabpanel-${key}`}
             onClick={() => setTab(key)}
           >
-            {key === 'overview' ? 'Resumen' : key === 'telemetry' ? 'Entradas' : key === 'history' ? 'Gráficas' : key === 'alarms' ? 'Alarmas' : key === 'ports' ? t('ports') : t('settings')}
+            {key === 'overview' ? t('overview') : key === 'telemetry' ? t('inputs') : key === 'history' ? t('charts') : key === 'alarms' ? t('alarms') : key === 'ports' ? t('ports') : t('settings')}
           </button>
         ))}
       </div>

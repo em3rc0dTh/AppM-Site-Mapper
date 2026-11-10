@@ -38,10 +38,16 @@ function kilowatts(value: number | null | undefined): number | null | undefined 
   return value === undefined || value === null ? value : value / 1000;
 }
 
-function readablePanel(panel: PhysicalPanel): string {
+function readablePanel(
+  panel: PhysicalPanel,
+  frameWord: string,
+  panelWord: string,
+): string {
   const frame = panel.frameName.match(/FRAME-(\d+)/i);
   const position = panel.name.match(/PANEL-(\d+)/i);
-  return frame && position ? `Frame ${frame[1]} · Panel ${position[1]}` : panel.name;
+  return frame && position
+    ? `${frameWord} ${frame[1]} · ${panelWord} ${position[1]}`
+    : panel.name;
 }
 
 export function SnmpFeedLoadPanel({
@@ -50,6 +56,26 @@ export function SnmpFeedLoadPanel({
   view = 'all',
 }: Readonly<{ deviceId: string; chassisId: string; view?: 'all' | 'summary' | 'feeds' }>) {
   const t = useTranslations('snmpLoad');
+  const statusLabel = (status: string): string => {
+    switch (status) {
+      case 'LIVE':
+        return t('statusLive');
+      case 'LAB_LIVE':
+        return t('labLive');
+      case 'UNVERIFIED':
+        return t('statusUnverified');
+      case 'CONFLICT':
+        return t('statusConflict');
+      case 'UNMAPPED':
+        return t('statusUnmapped');
+      case 'NO_DATA':
+        return t('statusNoData');
+      case 'STALE':
+        return t('statusStale');
+      default:
+        return status;
+    }
+  };
   const [load, setLoad] = useState<SnmpBdfbLoadResponse | null>(null);
   const [panels, setPanels] = useState<ReadonlyMap<string, PhysicalPanel>>(new Map());
   const [error, setError] = useState(false);
@@ -157,30 +183,30 @@ export function SnmpFeedLoadPanel({
     return (
       <section className="front01-snmp-summary" aria-label={t('section')}>
         <header className="front01-summary-header">
-          <strong>ENTRADAS DC · SNMP</strong>
-          <span>{error ? t('statusUnavailable') : isLab ? 'LAB SIMULATED' : load?.status === 'COMPLETE' ? 'LIVE' : t('statusPending')}</span>
+          <strong>{t('compactTitle')}</strong>
+          <span>{error ? t('statusUnavailable') : isLab ? t('statusLab') : load?.status === 'COMPLETE' ? t('statusLive') : t('statusPending')}</span>
         </header>
 
         <dl className="front01-snmp-kpis">
-          <div><dt>Corriente total</dt><dd>{numeric(error ? null : capacity?.measuredA, 'A')}</dd></div>
-          <div><dt>Capacidad nominal</dt><dd>{numeric(capacity?.ratedA, 'A')}</dd></div>
-          <div><dt>Disponible</dt><dd>{numeric(capacity?.availableA, 'A')}</dd></div>
-          <div><dt>Utilización</dt><dd>{numeric(capacity?.utilizationPct, '%')}</dd></div>
-          <div><dt>Voltaje QDF</dt><dd>{numeric(load?.voltageContract?.total?.voltageV, 'V')}</dd></div>
-          <div><dt>Bus A</dt><dd>{numeric(load?.voltageContract?.busA?.voltageV, 'V')}</dd></div>
-          <div><dt>Potencia aprox.</dt><dd>{numeric(kilowatts(load?.totalEstimatedPowerW), 'kW')}</dd></div>
-          <div><dt>Bus B</dt><dd>{numeric(load?.voltageContract?.busB?.voltageV, 'V')}</dd></div>
+          <div><dt>{t('totalCurrent')}</dt><dd>{numeric(error ? null : capacity?.measuredA, 'A')}</dd></div>
+          <div><dt>{t('nominalCapacity')}</dt><dd>{numeric(capacity?.ratedA, 'A')}</dd></div>
+          <div><dt>{t('available')}</dt><dd>{numeric(capacity?.availableA, 'A')}</dd></div>
+          <div><dt>{t('utilization')}</dt><dd>{numeric(capacity?.utilizationPct, '%')}</dd></div>
+          <div><dt>{t('qdfVoltage')}</dt><dd>{numeric(load?.voltageContract?.total?.voltageV, 'V')}</dd></div>
+          <div><dt>{t('busA')}</dt><dd>{numeric(load?.voltageContract?.busA?.voltageV, 'V')}</dd></div>
+          <div><dt>{t('approxPower')}</dt><dd>{numeric(kilowatts(load?.totalEstimatedPowerW), 'kW')}</dd></div>
+          <div><dt>{t('busB')}</dt><dd>{numeric(load?.voltageContract?.busB?.voltageV, 'V')}</dd></div>
         </dl>
 
         <div className="front01-snmp-table-wrap">
           <table className="front01-snmp-table">
             <thead>
               <tr>
-                <th>Shunt</th>
-                <th>Corriente</th>
-                <th>Nominal</th>
-                <th>Uso</th>
-                <th>Disponible</th>
+                <th>{t('shunt')}</th>
+                <th>{t('current')}</th>
+                <th>{t('ratedSmall')}</th>
+                <th>{t('usage')}</th>
+                <th>{t('available')}</th>
               </tr>
             </thead>
             <tbody>
@@ -199,7 +225,7 @@ export function SnmpFeedLoadPanel({
 
         <div className="front01-snmp-footer">
           <strong>
-            Entradas activas {reportingFeeds === null || !load ? '—' : `${reportingFeeds} / ${load.expectedFeedCount}`}
+            {t('activeInputs', { value: reportingFeeds === null || !load ? '—' : `${reportingFeeds} / ${load.expectedFeedCount}` })}
           </strong>
           {capacity?.utilizationPct !== null && capacity?.utilizationPct !== undefined ? (
             <>
@@ -225,14 +251,14 @@ export function SnmpFeedLoadPanel({
     return (
       <section className="front01-inputs-summary" aria-label={t('section')}>
         <header className="front01-summary-header">
-          <strong>ENTRADAS DC · SNMP</strong>
+          <strong>{t('compactTitle')}</strong>
           <span>
             {error
               ? t('statusUnavailable')
               : labCount > 0
-                ? 'LAB SIMULATED'
+                ? t('statusLab')
                 : load?.status === 'COMPLETE'
-                  ? 'LIVE'
+                  ? t('statusLive')
                   : t('statusPending')}
           </span>
         </header>
@@ -252,14 +278,14 @@ export function SnmpFeedLoadPanel({
           <table className="front01-inputs-table">
             <thead>
               <tr>
-                <th>Entrada</th>
-                <th>Estado</th>
-                <th>Corriente</th>
-                <th>Voltaje</th>
-                <th>Panel</th>
-                <th>Controller</th>
-                <th>OID corriente</th>
-                <th>Última lectura</th>
+                <th>{t('input')}</th>
+                <th>{t('status')}</th>
+                <th>{t('current')}</th>
+                <th>{t('voltage')}</th>
+                <th>{t('panel')}</th>
+                <th>{t('controllerColumn')}</th>
+                <th>{t('currentOidColumn')}</th>
+                <th>{t('lastReadingColumn')}</th>
               </tr>
             </thead>
             <tbody>
@@ -269,7 +295,7 @@ export function SnmpFeedLoadPanel({
                   .filter((panel): panel is PhysicalPanel => panel !== undefined);
                 const panelLabel =
                   mappedPanels.length > 0
-                    ? mappedPanels.map(readablePanel).join(', ')
+                    ? mappedPanels.map((panel) => readablePanel(panel, t('frameWord'), t('panelWord'))).join(', ')
                     : feed.servedPanelIds.length
                       ? t('assignedPanels', { count: feed.servedPanelIds.length })
                       : '—';
@@ -286,7 +312,7 @@ export function SnmpFeedLoadPanel({
                             : t('unassignedSide')}
                       </small>
                     </td>
-                    <td>{feed.status === 'LAB_LIVE' ? 'LAB LIVE · SIMULATED' : feed.status}</td>
+                    <td>{statusLabel(feed.status)}</td>
                     <td>{numeric(feed.currentA, 'A')}</td>
                     <td>{numeric(feed.voltageV, 'V')}</td>
                     <td>{panelLabel}</td>
@@ -304,10 +330,10 @@ export function SnmpFeedLoadPanel({
         <footer className="front01-inputs-note">
           <span>
             {labCount > 0
-              ? `SIMULATED SNMP · ${labCount} shunts reporting`
+              ? t('simulatedSnmpReporting', { count: labCount })
               : 'SNMP'}
           </span>
-          <span>Mediciones de shunt independientes de la telemetría MQTT descendiente.</span>
+          <span>{t('independentMeasurements')}</span>
           {load?.status !== 'COMPLETE' && <span>{t('noTotal')}</span>}
         </footer>
       </section>
@@ -584,7 +610,7 @@ export function SnmpFeedLoadPanel({
                         {mappedPanels.length > 0 ? (
                           mappedPanels.map((panel) => (
                             <span className="sm-snmp-panel-label" key={panel.id}>
-                              {readablePanel(panel)}
+                              {readablePanel(panel, t('frameWord'), t('panelWord'))}
                             </span>
                           ))
                         ) : (

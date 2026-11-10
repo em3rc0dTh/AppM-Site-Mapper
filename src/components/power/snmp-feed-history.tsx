@@ -68,11 +68,11 @@ interface Series {
 }
 
 const SERIES_STROKES = ['#1b70b2', '#0f9387', '#8f62b3', '#d19b34', '#c84b31'];
-const METRICS: { key: ChartMetric; title: string; unit: string; digits: number }[] = [
-  { key: 'voltageV', title: 'VOLTAGE · SHUNTS A/B', unit: 'V DC', digits: 1 },
-  { key: 'currentA', title: 'CURRENT · SHUNTS A/B', unit: 'A', digits: 1 },
-  { key: 'powerW', title: 'ESTIMATED POWER · |V| × I', unit: 'kW', digits: 3 },
-  { key: 'energyKwh', title: 'ESTIMATED ENERGY · OBSERVED INTERVALS', unit: 'kWh', digits: 4 },
+const METRICS: { key: ChartMetric; unit: string; digits: number }[] = [
+  { key: 'voltageV', unit: 'V DC', digits: 1 },
+  { key: 'currentA', unit: 'A', digits: 1 },
+  { key: 'powerW', unit: 'kW', digits: 3 },
+  { key: 'energyKwh', unit: 'kWh', digits: 4 },
 ];
 
 function createSeries(
@@ -80,6 +80,7 @@ function createSeries(
   metric: ChartMetric,
   totalVoltage: readonly QdfVoltageHistoryPoint[] = [],
   totalEnergy: readonly QdfEnergyHistoryPoint[] = [],
+  totalLabel = 'TOTAL QDF',
 ): Series[] {
   const feedSeries = feeds.map((feed) => {
     let accumulatedEnergy = 0;
@@ -108,7 +109,7 @@ function createSeries(
     return [
       ...feedSeries,
       {
-        name: 'TOTAL QDF',
+        name: totalLabel,
         lab: false,
         values: totalVoltage.flatMap((point) => {
           const time = Date.parse(point.bucketAt);
@@ -123,7 +124,7 @@ function createSeries(
     return [
       ...feedSeries,
       {
-        name: 'TOTAL QDF',
+        name: totalLabel,
         lab: false,
         values: totalEnergy.flatMap((point) => {
           const time = Date.parse(point.bucketAt);
@@ -152,8 +153,8 @@ function TrendChart({
 }>) {
   const tu = useTranslations('snmpHistoryUi');
   const series = useMemo(
-    () => createSeries(feeds, metric.key, totalVoltage, totalEnergy),
-    [feeds, metric.key, totalEnergy, totalVoltage],
+    () => createSeries(feeds, metric.key, totalVoltage, totalEnergy, tu('totalQdf')),
+    [feeds, metric.key, totalEnergy, totalVoltage, tu],
   );
   const all = series.flatMap((item) => item.values);
   const last = all.length ? Math.max(...all.map((point) => point.time)) : null;
@@ -274,7 +275,7 @@ function TrendChart({
                   style={{ background: SERIES_STROKES[i % SERIES_STROKES.length] }}
                 />
                 {item.name}
-                {item.lab ? ' (LAB)' : ''}:{' '}
+                {item.lab ? tu('labSuffix') : ''}:{' '}
                 {item.values.length ? format(item.values.at(-1)!.value) : '—'} {metric.unit}
               </span>
             ))}

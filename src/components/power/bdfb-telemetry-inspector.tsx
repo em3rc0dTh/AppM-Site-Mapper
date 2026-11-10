@@ -215,7 +215,7 @@ export function BdfbTelemetryInspector({
 
   const hasA = feeds?.includes('A') ?? false;
   const hasB = feeds?.includes('B') ?? false;
-  const scopeLabel = selectedPanel?.label ?? 'Entire BDFB';
+  const scopeLabel = selectedPanel?.label ?? ti('entire');
   const positions = panels.flatMap((panel) => panel.positions);
   const breakers = positions.filter((item) => item !== null);
 
@@ -275,7 +275,7 @@ export function BdfbTelemetryInspector({
         <span>▥</span>
         <div>
           <h2>{node.name}</h2>
-          <small>{location ?? 'Infrastructure'}</small>
+          <small>{location ?? ti('infrastructure')}</small>
         </div>
       </div>
 
@@ -312,7 +312,7 @@ export function BdfbTelemetryInspector({
                     tabIndex={tab === item ? 0 : -1}
                     onClick={() => changeTab(item)}
                   >
-                    {item === 'alarms' ? 'Alarmas' : item === 'feeds' ? 'Entradas' : item === 'history' ? 'Gráficas' : item === 'overview' ? 'Resumen' : 'Configuración'}
+                    {item === 'alarms' ? t('alarms') : item === 'feeds' ? t('feeds') : item === 'history' ? t('history') : item === 'overview' ? t('overview') : t('settings')}
                   </button>
                 ))}
               </nav>
@@ -323,7 +323,7 @@ export function BdfbTelemetryInspector({
         role={mode === 'operation' ? 'tabpanel' : 'region'}
         id={mode === 'operation' ? 'sm-bdfb-panel-' + tab : undefined}
         aria-labelledby={mode === 'operation' ? 'sm-bdfb-tab-' + tab : undefined}
-        aria-label={mode === 'maintenance' ? 'Mantenimiento del BDFB' : undefined}
+        aria-label={mode === 'maintenance' ? ti('maintenanceLabel') : undefined}
         tabIndex={0}
       >
         {tab === 'overview' && (
@@ -335,28 +335,28 @@ export function BdfbTelemetryInspector({
               view="summary"
             />
 
-            <section className="front01-mqtt-summary" aria-label="Telemetría descendiente MQTT LIVE">
+            <section className="front01-mqtt-summary" aria-label={ti('descendantMqttLive')}>
               <header className="front01-summary-header">
                 <div>
                   <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
-                  <strong>TELEMETRÍA DESCENDIENTE · MQTT LIVE</strong>
+                  <strong>{ti('descendantMqttLive')}</strong>
                 </div>
-                <span>BDFB completo</span>
+                <span>{ti('entire')}</span>
               </header>
 
               <div className="front01-mqtt-kpis">
-                <div><span>VOLTAJE PROM.</span><strong>{metric(live.averageVoltageV, 'V')}</strong></div>
-                <div><span>CORRIENTE PROM.</span><strong>{metric(live.averageCurrentA, 'A')}</strong></div>
-                <div><span>POTENCIA PROM.</span><strong>{metric(kilowatts(live.averagePowerW), 'kW', 3)}</strong></div>
-                <div><span>ENERGÍA PROM.</span><strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong></div>
+                <div><span>{ti('avgVoltage')}</span><strong>{metric(live.averageVoltageV, 'V')}</strong></div>
+                <div><span>{ti('avgCurrent')}</span><strong>{metric(live.averageCurrentA, 'A')}</strong></div>
+                <div><span>{ti('avgPower')}</span><strong>{metric(kilowatts(live.averagePowerW), 'kW', 3)}</strong></div>
+                <div><span>{ti('avgEnergy')}</span><strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong></div>
               </div>
 
               <dl className="front01-mqtt-facts">
-                <dt>Potencia total</dt><dd>{metric(kilowatts(live.totalPowerW), 'kW', 3)}</dd>
-                <dt>Reportando</dt><dd>{reportingEquipment}</dd>
-                <dt>Descendientes</dt><dd>{live.descendantEquipment}</dd>
-                <dt>Sin corriente</dt><dd>{live.withoutCurrentReading}</dd>
-                <dt>Último paquete</dt><dd>{compactUtc(latestReceived)}</dd>
+                <dt>{ti('totalPower')}</dt><dd>{metric(kilowatts(live.totalPowerW), 'kW', 3)}</dd>
+                <dt>{ti('reportingShort')}</dt><dd>{reportingEquipment}</dd>
+                <dt>{ti('descendants')}</dt><dd>{live.descendantEquipment}</dd>
+                <dt>{ti('withoutCurrent')}</dt><dd>{live.withoutCurrentReading}</dd>
+                <dt>{ti('latestPacket')}</dt><dd>{compactUtc(latestReceived)}</dd>
               </dl>
 
               <footer className="front01-mqtt-footer">
@@ -364,14 +364,14 @@ export function BdfbTelemetryInspector({
                   <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
                   <span>
                     {reportingEquipment > 0
-                      ? `LIVE · ${reportingEquipment} Equipment descendientes contribuyen a los promedios`
-                      : 'Sin telemetría descendiente activa'}
+                      ? ti('liveContributors', { count: reportingEquipment })
+                      : ti('noActiveDescendantTelemetry')}
                   </span>
                 </div>
                 <DetachedWorkbenchButton
                   href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
                   windowName={`site-mapper-load-report-${node.id}`}
-                  label="Abrir reporte carga"
+                  label={ti('openLoadReport')}
                 />
               </footer>
             </section>

@@ -52,7 +52,7 @@ export class InventoryService {
 
   async getInventoryItem(id: string): Promise<InventoryItem | null> {
     const node: TopologyNode | null = await this.repository.getById(id);
-    return node && (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') ? node : null;
+    return node && isOperationallyVisible(node) && (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') ? node : null;
   }
 
   async setPinned(id: string, pinned: boolean): Promise<Result<InventoryItem, InventoryError>> {

@@ -43,7 +43,9 @@ describe.skipIf(!enabled)('automatic operational monitoring with disposable Mong
       process.env.APP_ENV !== 'test' ||
       !/^mongodb:\/\/127\.0\.0\.1:\d+\/\?replicaSet=[\w-]+$/.test(uri)
     ) {
-      throw new Error('Automatic watch acceptance requires an isolated loopback MongoDB replica set');
+      throw new Error(
+        'Automatic watch acceptance requires an isolated loopback MongoDB replica set',
+      );
     }
     client = await MongoClient.connect(uri);
     await ensurePersistenceIndexes(client.db(databaseName));
@@ -56,10 +58,12 @@ describe.skipIf(!enabled)('automatic operational monitoring with disposable Mong
     }
   });
 
-  it('persists watch state and detects loss after evaluator restart without alarm policies', async () => {
+  it('persists watch state and detects loss after restart without policies', async () => {
     const db = client.db(databaseName);
     const indexes = await db.collection('telemetry_watch_state').indexes();
-    expect(indexes.find((index) => index.name === 'uq_telemetry_watch_state_id')?.unique).toBe(true);
+    expect(
+      indexes.find((index) => index.name === 'uq_telemetry_watch_state_id')?.unique,
+    ).toBe(true);
 
     const device: DeviceNode = {
       id: 'device',
@@ -113,7 +117,9 @@ describe.skipIf(!enabled)('automatic operational monitoring with disposable Mong
     await first.observe(sourceSample(0));
 
     expect(await db.collection('telemetry_watch_state').countDocuments({})).toBe(1);
-    expect(await db.collection('telemetry_watch_state').findOne({ sourceIdentity: SOURCE })).toMatchObject({
+    expect(
+      await db.collection('telemetry_watch_state').findOne({ sourceIdentity: SOURCE }),
+    ).toMatchObject({
       scope: 'SOURCE',
       targetId: device.id,
       lastObservedAt: at(0),

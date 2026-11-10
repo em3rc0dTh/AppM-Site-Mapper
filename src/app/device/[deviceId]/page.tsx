@@ -1,3 +1,6 @@
+import '@/app/front-01.css';
+import { Front01StageTabs } from '@/components/workspace/front-01-stage-tabs';
+import { Front01EquipmentSummary } from '@/components/workspace/front-01-equipment-summary';
 import {
   isInternalEquipment,
   isOperationallyVisible,
@@ -393,7 +396,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
             <DeleteEntityControl id={node.id} name={node.name} />
           ) : null}
           {node.kind === 'EQUIPMENT' ? (
-            <EquipmentCompositionEditor
+            <Front01StageTabs
+              label="Vistas del Equipment"
+              physical={<><EquipmentCompositionEditor
               equipment={node}
               childEquipment={directEquipmentChildren}
               familyEquipment={familyEquipment}
@@ -403,20 +408,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
               canReadTelemetry={canReadTelemetry}
               breakerTelemetryBindings={breakerTelemetryBindings}
               portConnections={portConnections}
-            />
-          ) : view?.ok ? (
-            <RackElevation
-              view={view.value}
-              {...(physical?.id ? { focusDeviceId: physical.id } : {})}
-            />
-          ) : (
-            <p>{t('noRack')}</p>
-          )}
-        </section>
-
-        <aside className="mk-inline-inspector zip-device-inspector">
-          {node.kind === 'EQUIPMENT' ? (
-            <EquipmentFocusInspector
+            /></>}
+              operation={<><EquipmentFocusInspector
               equipment={node}
               familyEquipment={familyEquipment}
               bindings={breakerTelemetryBindings}
@@ -678,8 +671,23 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                   <FullPowerTraceModal entityId={node.id} />
                 </>
               }
+            /></>}
+            />          ) : view?.ok ? (
+            <RackElevation
+              view={view.value}
+              {...(physical?.id ? { focusDeviceId: physical.id } : {})}
             />
           ) : (
+            <p>{t('noRack')}</p>
+          )}
+        </section>
+
+        <aside className="mk-inline-inspector zip-device-inspector">
+          {node.kind === 'EQUIPMENT' ? (
+            <Front01EquipmentSummary
+              equipment={node}
+              location={`${room?.name ?? t('room')} / ${rackNode?.name ?? t('rack')} / ${mountLabel}`}
+            />          ) : (
             <>
               <header>
                 {node.kind} <span>⌄</span>

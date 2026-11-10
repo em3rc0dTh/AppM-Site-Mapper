@@ -143,7 +143,18 @@
         "descendantsAveraged": "{count} lecturas de equipos descendientes contribuyen a los promedios disponibles.",
         "requiresBinding": "Las lecturas en vivo requieren enlaces MQTT explícitos de los equipos.",
         "panelScope": "Alcance del promedio: {panel}",
-        "entireScope": "Alcance del promedio: todos los interruptores BDFB configurados"
+        "entireScope": "Alcance del promedio: todos los interruptores BDFB configurados",
+        "totalPower": "Potencia total",
+        "reportingShort": "Reportando",
+        "descendants": "Descendientes",
+        "withoutCurrent": "Sin corriente",
+        "latestPacket": "Último paquete",
+        "descendantMqttLive": "TELEMETRÍA DESCENDIENTE · MQTT LIVE",
+        "liveContributors": "LIVE · {count} Equipment descendientes contribuyen a los promedios",
+        "noActiveDescendantTelemetry": "Sin telemetría descendiente activa",
+        "openLoadReport": "Abrir reporte de carga",
+        "maintenanceLabel": "Mantenimiento del BDFB",
+        "infrastructure": "Infraestructura"
       },
       "alarms": "Alarmas"
     }
@@ -728,7 +739,6 @@
     "structureStats": "ESTADÍSTICAS DE ESTRUCTURA",
     "totalLevels": "NIVELES TOTALES",
     "totalRooms": "SALAS TOTALES",
-    "infrastructure": "Infraestructura",
     "location": "Ubicación",
     "shelves": "Shelves físicos",
     "frames": "Frames físicos",

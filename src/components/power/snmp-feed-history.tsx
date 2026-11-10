@@ -369,10 +369,10 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
         </p>
       )}
       {!loading && !error && data && (
-        <>
-          {data.feeds.every((feed) => feed.points.length === 0) ? (
-            <p>{tu('empty')}</p>
-          ) : (
+        data.feeds.every((feed) => feed.points.length === 0) ? (
+          <p className="sm-snmp-history-empty">{tu('empty')}</p>
+        ) : (
+          <>
             <div className="sm-snmp-history-metrics">
               {METRICS.filter((item) => item.key === selectedMetric).map((item) => (
                 <TrendChart
@@ -385,13 +385,12 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
                 />
               ))}
             </div>
-          )}
-          <div className="sm-snmp-history-footnote">
-            <strong>{tu('energy', { value: latest === null ? '—' : latest.toFixed(4) })}</strong>
-            <small>{tu('coverage', { minutes: (coverage / 60).toFixed(1) })}</small>
-            <small>{tu('note')}</small>
-          </div>
-        </>
+            <div className="sm-snmp-history-footnote">
+              <strong>{tu('energy', { value: latest === null ? '—' : latest.toFixed(4) })}</strong>
+              <small>{tu('coverage', { minutes: (coverage / 60).toFixed(1) })}</small>
+            </div>
+          </>
+        )
       )}
     </section>
   );

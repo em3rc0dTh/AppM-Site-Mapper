@@ -479,6 +479,7 @@
     "topology": {
       "views": "Vistas del BDFB",
     "physicalViewHeading": "Vista física {name}",
+    "mountFullRack": "Rack completo",
     "site": "SITIO",
       "siteCanvas": "INFRAESTRUCTURA / PLANO DEL SITIO",
       "structure": "EDIFICIO / PLANO DE ESTRUCTURA",

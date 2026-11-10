@@ -88,7 +88,7 @@ async function createLab() {
 }
 
 describe('automatic operational commissioning end-to-end', () => {
-  it('creates telemetry bindings and watches from the first BFDB packet with zero alarm policies', async () => {
+  it('auto-commissions bindings, watches and telemetry loss without alarm policies', async () => {
     const { topologyRepository, device, breaker } = await createLab();
     const bindings = new MemoryTelemetryBindingRepository();
     const watches = new MemoryTelemetryWatchRepository();

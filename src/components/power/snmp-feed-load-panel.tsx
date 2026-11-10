@@ -289,7 +289,7 @@ export function SnmpFeedLoadPanel({
                   .filter((panel): panel is PhysicalPanel => panel !== undefined);
                 const panelLabel =
                   mappedPanels.length > 0
-                    ? mappedPanels.map(readablePanel).join(', ')
+                    ? mappedPanels.map((panel) => readablePanel(panel, t('frameWord'), t('panelWord'))).join(', ')
                     : feed.servedPanelIds.length
                       ? t('assignedPanels', { count: feed.servedPanelIds.length })
                       : '—';

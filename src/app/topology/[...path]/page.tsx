@@ -511,6 +511,17 @@ export default async function TopologyNodePage({
                 mappedBreakerCount={mappedBdfbBreakerCount}
                 descendantEquipmentIds={descendantEquipmentIds}
               /></>}
+                maintenance={<><BdfbTelemetryInspector
+                mode="maintenance"
+                key={query.panel ?? 'bdfb-maintenance'}
+                node={node}
+                presentation={bdfbPresentation}
+                {...(query.panel ? { activePanelId: query.panel } : {})}
+                location={trail.filter((item) => item.kind === 'SITE' || item.kind === 'STRUCTURE').map((item) => item.name).join(' / ')}
+                feeds={bdfbPowerBindings.flatMap((binding) => (binding.feed ? [binding.feed] : []))}
+                mappedBreakerCount={mappedBdfbBreakerCount}
+                descendantEquipmentIds={descendantEquipmentIds}
+              /></>}
               />
             ) : node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? (
               <section className="zip-bdfb-recovery-state" role="status">

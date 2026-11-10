@@ -281,6 +281,14 @@ export default async function TopologyNodePage({
         )
       : [];
   const descendantEquipmentIds = bdfbEquipment.map((equipment) => equipment.id);
+  const installedBreakerIds =
+    bdfbPresentation?.shelves.flatMap((shelf) =>
+      shelf.frames.flatMap((frame) =>
+        frame.panels.flatMap((panel) =>
+          panel.positions.flatMap((breaker) => (breaker ? [breaker.id] : [])),
+        ),
+      ),
+    ) ?? [];
 
   const declaredBdfbDestinations: BreakerDeclaredDestination[] = bdfbEquipment.flatMap(
     (equipment) => {
@@ -497,7 +505,7 @@ export default async function TopologyNodePage({
                 headingStatus={
                   <Front01BdfbHealth
                     deviceId={node.id}
-                    descendantEquipmentIds={descendantEquipmentIds}
+                    installedEquipmentIds={installedBreakerIds}
                   />
                 }
                 physical={<>              <BdfbChassis

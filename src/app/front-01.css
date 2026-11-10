@@ -335,3 +335,100 @@
   color:#244b68;
   font-weight:800;
 }
+
+
+/* FRONT-01 · Equipment Composition: use the canvas width instead of a long left-aligned fact list. */
+.front01-equipment-operation-overview {
+  min-width:0;
+}
+.front01-equipment-operation-overview > dl {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(120px,1fr) minmax(150px,1.35fr));
+  gap:0;
+  margin:12px 0;
+  border:1px solid #dbe4ed;
+  border-radius:8px;
+  overflow:hidden;
+  background:#fff;
+}
+.front01-equipment-operation-overview > dl > dt,
+.front01-equipment-operation-overview > dl > dd {
+  min-width:0;
+  margin:0;
+  padding:9px 10px;
+  border-bottom:1px solid #e7edf3;
+}
+.front01-equipment-operation-overview > dl > dt {
+  color:#61758a;
+  background:#f7fafc;
+  font-size:10px;
+  font-weight:700;
+}
+.front01-equipment-operation-overview > dl > dd {
+  color:#16334e;
+  font-size:11px;
+  font-weight:650;
+  overflow-wrap:anywhere;
+  border-right:1px solid #e7edf3;
+}
+.front01-equipment-operation-overview > dl > *:nth-last-child(-n+8) {
+  border-bottom:0;
+}
+.front01-equipment-operation-overview .zip-device-outline,
+.front01-equipment-operation-overview .zip-device-power-trace,
+.front01-equipment-operation-overview button {
+  margin-right:8px;
+}
+
+.front01-equipment-technical-config {
+  margin-top:12px;
+  border:1px solid #d5e0eb;
+  border-radius:8px;
+  background:#fff;
+}
+.front01-equipment-technical-config > summary {
+  cursor:pointer;
+  padding:11px 14px;
+  color:#244968;
+  background:#f7fafc;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.02em;
+}
+.front01-equipment-technical-config[open] > summary {
+  border-bottom:1px solid #dfe7ef;
+}
+.front01-equipment-technical-grid {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:14px;
+  padding:14px;
+}
+.front01-equipment-technical-grid > section {
+  min-width:0;
+  padding:12px;
+  border:1px solid #e0e7ef;
+  border-radius:7px;
+}
+.front01-equipment-technical-grid h3 {
+  margin:0 0 10px;
+  font-size:12px;
+  color:#1d3f5d;
+}
+.front01-equipment-technical-grid .ec-inspector-port {
+  margin-bottom:6px;
+}
+
+@media(max-width:1350px) {
+  .front01-equipment-operation-overview > dl {
+    grid-template-columns:repeat(2,minmax(110px,.8fr) minmax(160px,1.4fr));
+  }
+}
+@media(max-width:900px) {
+  .front01-equipment-operation-overview > dl {
+    grid-template-columns:minmax(110px,.8fr) minmax(0,1.6fr);
+  }
+  .front01-equipment-technical-grid {
+    grid-template-columns:1fr;
+  }
+}

@@ -398,24 +398,73 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           {node.kind === 'EQUIPMENT' ? (
             <Front01StageTabs
               label="Vistas del Equipment"
-              physical={<><EquipmentCompositionEditor
-              equipment={node}
-              childEquipment={directEquipmentChildren}
-              familyEquipment={familyEquipment}
-              canWrite={canWriteTopology}
-              canDelete={canDelete}
-              canWritePower={canWritePower}
-              canReadTelemetry={canReadTelemetry}
-              breakerTelemetryBindings={breakerTelemetryBindings}
-              portConnections={portConnections}
-            /></>}
+              physical={
+                <>
+                  <EquipmentCompositionEditor
+                    equipment={node}
+                    childEquipment={directEquipmentChildren}
+                    familyEquipment={familyEquipment}
+                    canWrite={canWriteTopology}
+                    canDelete={canDelete}
+                    canWritePower={canWritePower}
+                    canReadTelemetry={canReadTelemetry}
+                    breakerTelemetryBindings={breakerTelemetryBindings}
+                    portConnections={portConnections}
+                  />
+                  <details className="front01-equipment-technical-config" id="bdfb-access-ports">
+                    <summary>Configuración técnica</summary>
+                    <div className="front01-equipment-technical-grid">
+                      <section>
+                        <h3>Puertos</h3>
+                        <p className="ec-inspector-note">
+                          {t('terminals', {
+                            count: node.accessPorts.filter((port) => port.lifecycle === 'ACTIVE').length,
+                          })}
+                        </p>
+                        {node.accessPorts
+                          .filter((port) => port.lifecycle === 'ACTIVE')
+                          .map((port) => (
+                            <div className="ec-inspector-port" key={port.id}>
+                              <strong>{port.name}</strong>
+                              <span>
+                                {port.portType} · {port.direction ?? t('directionUnknown')}
+                              </span>
+                            </div>
+                          ))}
+                        {canWriteTopology ? (
+                          <AccessPortEditor
+                            equipmentId={node.id}
+                            accessPorts={node.accessPorts}
+                            canWritePower={canWritePower}
+                            portConnections={portConnections}
+                          />
+                        ) : null}
+                      </section>
+                      <section>
+                        <h3>Energía</h3>
+                        {canWritePower && contract.ok ? (
+                          <PowerContractEditor
+                            entityId={node.id}
+                            accessPorts={contract.value.accessPorts}
+                            redundancy={contract.value.redundancy}
+                          />
+                        ) : null}
+                        {!relatedPower.length ? (
+                          <p className="device-power-unconfigured">{t('noDirect')}</p>
+                        ) : null}
+                        <FullPowerTraceModal entityId={node.id} />
+                      </section>
+                    </div>
+                  </details>
+                </>
+              }
               operation={<><EquipmentFocusInspector
               equipment={node}
               familyEquipment={familyEquipment}
               bindings={breakerTelemetryBindings}
               canReadTelemetry={canReadTelemetry}
               overview={
-                <>
+                <div className="front01-equipment-operation-overview">
                   <ContextPin entityId={node.id} />
                   <dl>
                     <dt>{t('identity')}</dt>
@@ -626,7 +675,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                       {t('locate')}
                     </Link>
                   ) : null}
-                </>
+                </div>
               }
               ports={
                 <>

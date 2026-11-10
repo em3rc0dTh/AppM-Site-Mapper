@@ -1,6 +1,7 @@
 import '@/app/front-01.css';
 import { Front01StageTabs } from '@/components/workspace/front-01-stage-tabs';
 import { Front01BdfbSummary } from '@/components/workspace/front-01-bdfb-summary';
+import { Front01BdfbHealth } from '@/components/workspace/front-01-bdfb-health';
 import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
 import { SiteBoundaryWorkspace } from '@/components/topology/site-boundary-workspace';
 import Link from 'next/link';
@@ -491,7 +492,14 @@ export default async function TopologyNodePage({
             {node.kind === 'DEVICE' && bdfbPresentation ? (
               <Front01StageTabs
                 label="Vistas del BDFB"
-                heading={node.name}
+                physicalHeading={`${node.name.replace(/^BDFB\s+/i, '')} Physical View`}
+                operationHeading={node.name}
+                headingStatus={
+                  <Front01BdfbHealth
+                    deviceId={node.id}
+                    descendantEquipmentIds={descendantEquipmentIds}
+                  />
+                }
                 physical={<>              <BdfbChassis
                 key={query.panel ?? 'bdfb-overview'}
                 device={node}

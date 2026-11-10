@@ -1,3 +1,4 @@
+import { isOperationallyVisible } from '@/modules/topology/application/equipment-visibility';
 import { integrityErrorResponse } from '@/shared/http/integrity-error';
 import { parsePolygon } from '@/modules/spatial/domain/geometry';
 import { NextResponse } from 'next/server';
@@ -102,7 +103,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ nodes: await service.listNetworks() });
   }
 
-  return NextResponse.json({ nodes: await service.listChildren(parentId) });
+  return NextResponse.json({ nodes: (await service.listChildren(parentId)).filter(isOperationallyVisible) });
 }
 
 async function handlePOST(request: Request) {

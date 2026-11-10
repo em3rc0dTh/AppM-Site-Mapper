@@ -14,6 +14,10 @@ import { TelemetryService } from '@/modules/telemetry/application/telemetry-serv
 import type { TelemetryHistoryWriterDiagnostics } from '@/modules/telemetry/application/telemetry-history-writer';
 import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import {
+  BFDB_LIVE_MAX_AGE_MS,
+  BFDB_OFFLINE_AFTER_MS,
+} from '@/modules/telemetry/domain/telemetry-freshness';
+import {
   detectBfdbWireProfile,
   findBfdbWirePointByBindingId,
 } from '@/modules/telemetry/domain/bfdb-wire-layout';
@@ -539,9 +543,9 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
               mappedBreakerCount: sample?.breakerReadings?.length ?? 0,
               unmappedPointCount: sample?.unmappedPointIds?.length ?? 0,
               freshness:
-                !sample || age > 300_000 || state?.state !== 'subscribed'
+                !sample || age > BFDB_OFFLINE_AFTER_MS
                   ? 'OFFLINE'
-                  : age > 15_000
+                  : age > BFDB_LIVE_MAX_AGE_MS
                     ? 'STALE'
                     : 'LIVE',
             };

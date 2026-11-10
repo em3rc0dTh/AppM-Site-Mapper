@@ -82,6 +82,20 @@ export class MongoTelemetryWatchRepository implements TelemetryWatchRepository {
     return stored ? toDomain(stored) : next;
   }
 
+  async markLost(
+    expectation: TelemetryWatchExpectation,
+    detectedAt = new Date().toISOString(),
+  ): Promise<TelemetryWatchState> {
+    const current = await this.ensureExpected(expectation, detectedAt);
+    if (current.freshStreak === 0) return current;
+    await this.collection.updateOne(
+      { id: current.id },
+      { $set: { freshStreak: 0, updatedAt: detectedAt } },
+    );
+    const stored = await this.collection.findOne({ id: current.id });
+    return stored ? toDomain(stored) : { ...current, freshStreak: 0, updatedAt: detectedAt };
+  }
+
   async list(): Promise<readonly TelemetryWatchState[]> {
     return (await this.collection.find({}).toArray()).map(toDomain);
   }

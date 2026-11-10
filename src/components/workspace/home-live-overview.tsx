@@ -26,7 +26,7 @@ function projectBdfb(
 ): BdfbRow {
   return {
     ...item,
-    ...aggregateBdfbDescendantTelemetry(samples, item.descendantEquipmentIds, now),
+    ...aggregateBdfbDescendantTelemetry(samples, item.installedBreakerIds, now),
   };
 }
 
@@ -78,6 +78,21 @@ export function HomeLiveOverview({
 
   const renderPin = (pin: Pin, compact = false) => {
     const bdfb = rows.find((row) => row.deviceId === pin.id);
+    const rollup = alarmSnapshot.rollups[pin.id];
+    const installed = bdfb?.installedBreakerIds.length ?? 0;
+    const reporting = bdfb?.reportingEquipment ?? 0;
+    const status =
+      rollup?.highestSeverity === 'CRITICAL'
+        ? { tone: 'critical', label: 'ALARMA' }
+        : (rollup?.activeAlarmCount ?? 0) > 0
+          ? { tone: 'warning', label: 'ATENCIÓN' }
+          : installed === 0
+            ? { tone: 'neutral', label: 'SIN INVENTARIO' }
+            : reporting === installed
+              ? { tone: 'healthy', label: 'OPERATIVO' }
+              : reporting === 0
+                ? { tone: 'neutral', label: 'SIN TELEMETRÍA' }
+                : { tone: 'warning', label: 'TELEMETRÍA PARCIAL' };
     return (
       <Link
         href={pin.href}
@@ -87,6 +102,12 @@ export function HomeLiveOverview({
         <div>
           <span>▣</span>
           <strong>{pin.name}</strong>
+          {bdfb ? (
+            <span className="sm-home-pin-status" data-tone={status.tone}>
+              <i aria-hidden="true" />
+              <b>{status.label}</b>
+            </span>
+          ) : null}
         </div>
         <small title={pin.context}>{pin.context}</small>
         {bdfb ? (
@@ -111,7 +132,7 @@ export function HomeLiveOverview({
               <span>
                 {t('equipmentReporting')}{' '}
                 <b>
-                  {bdfb.reportingEquipment} / {bdfb.descendantEquipment}
+                  {bdfb.reportingEquipment} / {bdfb.installedBreakerIds.length}
                 </b>
               </span>
             </div>

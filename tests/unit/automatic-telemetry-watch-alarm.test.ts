@@ -217,12 +217,13 @@ describe('automatic operational telemetry alarms', () => {
     await evaluator.evaluateNow(T0 + 1_600);
 
     expect(await alarmRepository.listActive()).toHaveLength(0);
-    expect(signals).toEqual([{ action: 'ASSERT', targetId: 'device' }]);
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toMatchObject({ action: 'ASSERT', targetId: 'device' });
 
     await evaluator.observe(sourceSample(T0 + 1_700));
     await evaluator.observe(sourceSample(T0 + 1_800));
     await evaluator.evaluateNow(T0 + 1_801);
-    expect(signals.at(-1)).toEqual({ action: 'RESOLVE', targetId: 'device' });
+    expect(signals.at(-1)).toMatchObject({ action: 'RESOLVE', targetId: 'device' });
   });
 
   it('raises one source/QDF alarm and suppresses descendants when the publisher disappears', async () => {

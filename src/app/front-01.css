@@ -612,3 +612,13 @@
   background:#dc3f3f;
   box-shadow:0 0 0 2px rgba(220,63,63,.16);
 }
+
+.front01-bdfb-health[data-tone="neutral"] {
+  border-color:#d5dde5;
+  background:#f7f9fb;
+  color:#637587;
+}
+.front01-bdfb-health[data-tone="neutral"] i {
+  background:#8d9aa6;
+  box-shadow:0 0 0 2px rgba(141,154,166,.15);
+}

@@ -1,7 +1,7 @@
 import {
   bdfbHardwareProfile,
   ELTEK_BDCBB_CONFIG_2,
-  ELTEK_BDCBB_CONFIG_4
+  ELTEK_BDCBB_CONFIG_4,
 } from '@/modules/power/domain/bdfb-hardware-profile';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { PowerRepository } from '@/modules/power/application/power-repository';

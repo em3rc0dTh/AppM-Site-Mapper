@@ -2,6 +2,7 @@ import {
   bdfbHardwareProfile,
   ELTEK_BDCBB_CONFIG_2,
   ELTEK_BDCBB_CONFIG_4,
+  isConfig4Slot,
 } from '@/modules/power/domain/bdfb-hardware-profile';
 import type { TelemetryBindingRepository } from '@/modules/telemetry/application/telemetry-binding-repository';
 import type { PowerRepository } from '@/modules/power/application/power-repository';
@@ -25,7 +26,7 @@ export interface AccessPortInput {
   readonly protocol?: string;
   readonly customType?: string;
   readonly feed?: 'A' | 'B';
-  readonly feedPosition?: string;
+  readonly feedPosition?: 'A1' | 'A2' | 'B1' | 'B2';
   readonly overloadThresholdA?: number;
   /** An explicitly inventoried, independently metered incoming BDFB feeder. */
   readonly snmpFeedInput?: boolean;
@@ -69,10 +70,9 @@ function valid(input: AccessPortInput): boolean {
     validText(input.protocol) &&
     validText(input.customType) &&
     (input.feed === undefined || (input.portType === 'POWER' && ['A', 'B'].includes(input.feed))) &&
+    (input.feedPosition === undefined || isConfig4Slot(input.feedPosition)) &&
     (input.feedPosition === undefined ||
-      (typeof input.feedPosition === 'string' &&
-        input.feedPosition.trim().length > 0 &&
-        input.feedPosition.length <= 64)) &&
+      (input.snmpFeedInput === true && input.feed === input.feedPosition[0])) &&
     (input.overloadThresholdA === undefined ||
       (Number.isFinite(input.overloadThresholdA) &&
         input.overloadThresholdA > 0 &&
@@ -158,7 +158,8 @@ export class AccessPortService {
         return failure('INVALID_FEED_PANELS');
       const profile = bdfbHardwareProfile(device);
       if (profile === ELTEK_BDCBB_CONFIG_4) {
-        if (!input.feed || !input.feedPosition?.trim()) return failure('INVALID_PORT');
+        if (!input.feedPosition || !isConfig4Slot(input.feedPosition))
+          return failure('INVALID_PORT');
         if (input.servedPanelIds && input.servedPanelIds.length > 1)
           return failure('INVALID_FEED_PANELS');
         const otherPorts = peers

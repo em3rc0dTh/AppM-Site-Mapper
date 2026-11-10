@@ -1579,7 +1579,9 @@
     "empty": "Sin datos históricos para el rango seleccionado.",
     "coverage": "{minutes} minutos de alimentación cubiertos, sumados entre entradas. No hay extrapolación de intervalos mayores de 120 segundos.",
     "note": "Potencia = |V| × I a partir de lecturas DC emparejadas. La energía se integra mediante trapecios únicamente entre observaciones recientes. Ninguna es un contador de energía medido por SNMP; los datos simulados no certifican condiciones de campo.",
-    "metricHistoryLabel": "Tendencias históricas de {metric} durante {window}"
+    "metricHistoryLabel": "Tendencias históricas de {metric} durante {window}",
+    "totalQdf": "TOTAL QDF",
+    "labSuffix": " (LAB)"
   },
   "connectEquipmentPower": {
     "title": "Conectar alimentación de Equipment",

@@ -120,6 +120,32 @@ TELEMETRY_WATCH_REPORTED_OFFLINE_SAMPLES
 
 These values are operational policy, not electrical thresholds.
 
+The base `docker-compose.telemetry.yml` passes all four `TELEMETRY_WATCH_*` variables
+to the `site-mapper` container. Its default remains **shadow**, even if MQTT
+is enabled. The final field environment/overlay must be inspected before
+changing the mode; changing a host-only environment file without recreating
+the application container does not update its running process.
+
+The existing seed-01 industrial Equipment (gateway, controller and meters)
+remain in MongoDB to preserve telemetry bindings, even when customer-facing
+navigation hides them. Visual hiding is not telemetry disabling.
+
+### Safe index compatibility
+
+`ensurePersistenceIndexes()` creates the three telemetry-watch indexes during
+normal bootstrap. The optional `scripts/migrations/automatic-telemetry-watch-indexes.mongosh.js`
+uses matching canonical index specifications. **Both preserve existing equivalent
+legacy-named indexes**, so already-prepared databases do not receive duplicate
+or conflicting index definitions. A same-key index with incompatible uniqueness
+or sparse options causes a deliberate failure; neither routine drops or renames
+an index. Run the optional script only against the verified target database
+after a restorable backup, never against a guessed MongoDB database name.
+
+For field rollout, use `shadow` first. Only enable `active` after verifying
+the correct MQTT source identities, watch state, 15-minute loss window and
+clean recovery behavior in TFARM04. No forced source outage is permitted without
+an approved test window.
+
 ## Threshold alarms
 
 Automatic observability does not fabricate limits.
@@ -145,7 +171,7 @@ Alarm/watch failures are logged as `alarm.telemetry_evaluation_failed` or `alarm
 
 1. Merge code only after CI/acceptance.
 2. Back up MongoDB.
-3. Apply `scripts/migrations/automatic-telemetry-watch-indexes.mongosh.js`.
+3. Inspect existing telemetry-watch index specifications. Bootstrap creates compatible indexes automatically; run the optional idempotent migration only when required by the change plan.
 4. Deploy without manual alarm-policy seeding.
 5. Observe `telemetry_watch_state` for one complete source cadence/loss window.
 6. Confirm source/panel/breaker classifications against field reality.

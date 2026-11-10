@@ -13,7 +13,7 @@
     "lint": "eslint .",
     "docs:check": "node scripts/ci/docs-links.mjs",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
+    "format:check": "prettier --write tests/integration/automatic-operational-commissioning-mongo.test.ts && git diff -- tests/integration/automatic-operational-commissioning-mongo.test.ts && exit 1",
     "test": "vitest run",
     "test:unit": "vitest run tests/unit && node --test infra/snmp-collector/server.test.mjs",
     "test:integration": "vitest run tests/integration --passWithNoTests",

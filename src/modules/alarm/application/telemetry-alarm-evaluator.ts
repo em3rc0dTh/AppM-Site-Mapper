@@ -253,6 +253,7 @@ export class TelemetryAlarmEvaluator {
     for (const source of sourceEntries) {
       const context = this.sourceContext(source.binding.sourceIdentity);
       if (source.offline) {
+        await this.watches.markLost(source.expectation, nowIso);
         await this.assertAutomaticLoss({
           targetType: source.expectation.targetType,
           targetId: source.expectation.targetId,
@@ -364,6 +365,7 @@ export class TelemetryAlarmEvaluator {
       const panelFullyLost = lost.length === group.points.length;
 
       if (panelFullyLost) {
+        for (const point of lost) await this.watches.markLost(point.expectation, nowIso);
         await this.assertAutomaticLoss({
           targetType: 'EQUIPMENT',
           targetId: group.panel.id,
@@ -409,6 +411,7 @@ export class TelemetryAlarmEvaluator {
           point.node.id,
         );
         if (point.offline) {
+          await this.watches.markLost(point.expectation, nowIso);
           await this.assertAutomaticLoss({
             targetType: 'EQUIPMENT',
             targetId: point.node.id,

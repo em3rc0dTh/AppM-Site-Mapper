@@ -100,6 +100,16 @@ recovery samples             2
 reported OFFLINE debounce    2 samples
 ```
 
+Runtime rollout mode:
+
+```text
+TELEMETRY_WATCH_MODE=shadow   # calculate + log transitions, create no occurrences
+TELEMETRY_WATCH_MODE=active   # persist AlarmOccurrence/AlarmTransition
+```
+
+The default is `shadow`. Shadow transitions are logged as
+`alarm.telemetry_shadow_transition` and are de-duplicated until the condition resolves.
+
 Runtime overrides:
 
 ```text

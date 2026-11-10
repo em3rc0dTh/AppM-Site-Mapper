@@ -18,6 +18,7 @@ import {
   findBfdbWirePointByBindingId,
 } from '@/modules/telemetry/domain/bfdb-wire-layout';
 import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/telemetry-binding-repository-factory';
+import { createTelemetryWatchRepository } from '@/modules/telemetry/infrastructure/telemetry-watch-repository-factory';
 import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
 import { NativeMqttSource } from '@/modules/telemetry/infrastructure/native-mqtt-source';
 import { TelemetryRejectionLogThrottle } from '@/modules/telemetry/infrastructure/telemetry-rejection-log-throttle';
@@ -197,10 +198,25 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
     const bindingRepository = await createTelemetryBindingRepository();
     const alarmRepository = await createAlarmRepository();
     const alarmPolicyRepository = await createAlarmPolicyRepository();
+    const telemetryWatchRepository = await createTelemetryWatchRepository();
     const alarmEvaluator = new TelemetryAlarmEvaluator(
       alarmRepository,
       alarmPolicyRepository,
       topologyRepository,
+      bindingRepository,
+      telemetryWatchRepository,
+      {
+        lossAfterMs: positiveInt(process.env.TELEMETRY_WATCH_LOSS_AFTER_MS, 900_000),
+        recoverySamples: positiveInt(process.env.TELEMETRY_WATCH_RECOVERY_SAMPLES, 2),
+        reportedOfflineSamples: positiveInt(
+          process.env.TELEMETRY_WATCH_REPORTED_OFFLINE_SAMPLES,
+          2,
+        ),
+        onWatchdogError: (error) =>
+          logger.warn('alarm.telemetry_watchdog_failed', {
+            reason: error instanceof Error ? error.message : 'unknown',
+          }),
+      },
     );
     const unsubscribeAlarmEvaluator = hub.subscribe((sample) => {
       void alarmEvaluator.observe(sample).catch((error) =>

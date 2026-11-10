@@ -151,6 +151,75 @@ export function SnmpFeedLoadPanel({
     load !== null && load.expectedFeedCount > 0 && load.feedCount === load.expectedFeedCount;
   const labCount = load?.labFreshFeedCount ?? 0;
   const isLab = capacity?.mode === 'LAB_SIMULATED';
+  const reportingFeeds = load ? load.freshFeedCount + labCount : null;
+
+  if (view === 'summary') {
+    return (
+      <section className="front01-snmp-summary" aria-label={t('section')}>
+        <header className="front01-summary-header">
+          <strong>ENTRADAS DC · SNMP</strong>
+          <span>{error ? t('statusUnavailable') : isLab ? 'LAB SIMULATED' : load?.status === 'COMPLETE' ? 'LIVE' : t('statusPending')}</span>
+        </header>
+
+        <dl className="front01-snmp-kpis">
+          <div><dt>Corriente total</dt><dd>{numeric(error ? null : capacity?.measuredA, 'A')}</dd></div>
+          <div><dt>Capacidad nominal</dt><dd>{numeric(capacity?.ratedA, 'A')}</dd></div>
+          <div><dt>Disponible</dt><dd>{numeric(capacity?.availableA, 'A')}</dd></div>
+          <div><dt>Utilización</dt><dd>{numeric(capacity?.utilizationPct, '%')}</dd></div>
+          <div><dt>Voltaje QDF</dt><dd>{numeric(load?.voltageContract?.total?.voltageV, 'V')}</dd></div>
+          <div><dt>Bus A</dt><dd>{numeric(load?.voltageContract?.busA?.voltageV, 'V')}</dd></div>
+          <div><dt>Potencia aprox.</dt><dd>{numeric(kilowatts(load?.totalEstimatedPowerW), 'kW')}</dd></div>
+          <div><dt>Bus B</dt><dd>{numeric(load?.voltageContract?.busB?.voltageV, 'V')}</dd></div>
+        </dl>
+
+        <div className="front01-snmp-table-wrap">
+          <table className="front01-snmp-table">
+            <thead>
+              <tr>
+                <th>Shunt</th>
+                <th>Corriente</th>
+                <th>Nominal</th>
+                <th>Uso</th>
+                <th>Disponible</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(capacity?.feedUtilization ?? []).map((feed) => (
+                <tr key={feed.accessPortId}>
+                  <td>{feed.label}</td>
+                  <td>{numeric(feed.measuredA, 'A')}</td>
+                  <td>{numeric(feed.ratedA, 'A')}</td>
+                  <td>{feed.utilizationPct === null ? '—' : `${feed.utilizationPct.toFixed(1)}%`}</td>
+                  <td>{numeric(feed.availableA, 'A')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="front01-snmp-footer">
+          <strong>
+            Entradas activas {reportingFeeds === null || !load ? '—' : `${reportingFeeds} / ${load.expectedFeedCount}`}
+          </strong>
+          {capacity?.utilizationPct !== null && capacity?.utilizationPct !== undefined ? (
+            <>
+              <div
+                className="front01-utilization-meter"
+                role="meter"
+                aria-label={isLab ? t('simulatedUtilization') : t('verifiedUtilization')}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.max(0, Math.min(100, capacity.utilizationPct))}
+              >
+                <span style={{ width: `${Math.max(0, Math.min(100, capacity.utilizationPct))}%` }} />
+              </div>
+              <b>{capacity.utilizationPct.toFixed(1)}%</b>
+            </>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>

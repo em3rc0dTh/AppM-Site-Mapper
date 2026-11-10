@@ -10,5 +10,9 @@ export interface TelemetryWatchRepository {
     firstExpectedAt?: string,
   ): Promise<TelemetryWatchState>;
   observe(observation: TelemetryWatchObservation): Promise<TelemetryWatchState>;
+  markLost(
+    expectation: TelemetryWatchExpectation,
+    detectedAt?: string,
+  ): Promise<TelemetryWatchState>;
   list(): Promise<readonly TelemetryWatchState[]>;
 }

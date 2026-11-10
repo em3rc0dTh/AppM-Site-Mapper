@@ -2,6 +2,13 @@
 
 import { useState, type ReactNode } from 'react';
 
+type Front01View = 'physical' | 'operation' | 'maintenance';
+
+interface Front01ViewDefinition {
+  readonly key: Front01View;
+  readonly title: string;
+}
+
 interface Props {
   readonly physical: ReactNode;
   readonly operation: ReactNode;
@@ -11,12 +18,12 @@ interface Props {
 
 /** FRONT-01 is a presentation split; all original editors and service contracts are reused. */
 export function Front01StageTabs({ physical, operation, maintenance, label }: Props) {
-  const [view, setView] = useState<'physical' | 'operation' | 'maintenance'>('physical');
-  const views = [
+  const [view, setView] = useState<Front01View>('physical');
+  const views: readonly Front01ViewDefinition[] = [
     { key: 'physical', title: 'Vista física' },
     { key: 'operation', title: 'Operación' },
-    ...(maintenance ? [{ key: 'maintenance', title: 'Mantenimiento' }] : []),
-  ] as const;
+    ...(maintenance ? [{ key: 'maintenance' as const, title: 'Mantenimiento' }] : []),
+  ];
 
   return (
     <div className="front01-stage">

@@ -38,10 +38,16 @@ function kilowatts(value: number | null | undefined): number | null | undefined 
   return value === undefined || value === null ? value : value / 1000;
 }
 
-function readablePanel(panel: PhysicalPanel): string {
+function readablePanel(
+  panel: PhysicalPanel,
+  frameWord: string,
+  panelWord: string,
+): string {
   const frame = panel.frameName.match(/FRAME-(\d+)/i);
   const position = panel.name.match(/PANEL-(\d+)/i);
-  return frame && position ? `Frame ${frame[1]} · Panel ${position[1]}` : panel.name;
+  return frame && position
+    ? `${frameWord} ${frame[1]} · ${panelWord} ${position[1]}`
+    : panel.name;
 }
 
 export function SnmpFeedLoadPanel({

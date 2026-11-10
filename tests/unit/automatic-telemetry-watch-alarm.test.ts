@@ -284,7 +284,6 @@ describe('automatic operational telemetry alarms', () => {
     });
   });
 
-
   it('reconstructs a lost source after evaluator restart from persisted watch state', async () => {
     const topologyRepository = new MemoryTopologyRepository(topology());
     const alarmRepository = new MemoryAlarmRepository();

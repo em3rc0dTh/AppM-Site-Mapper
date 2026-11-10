@@ -386,15 +386,12 @@ export async function summarizeSnmpBdfbLoad(
         : [],
     });
   }
-  const positions = ['A2', 'B2', 'A1', 'B1'];
-  feeds.sort((a, b) => {
-    if (selectedProfile === ELTEK_BDCBB_CONFIG_4) {
-      const left = positions.indexOf(a.feedPosition ?? '');
-      const right = positions.indexOf(b.feedPosition ?? '');
-      if (left !== right) return (left < 0 ? 99 : left) - (right < 0 ? 99 : right);
-    }
-    return a.label.localeCompare(b.label);
-  });
+  feeds.sort((a, b) =>
+    (a.feedPosition ?? a.label).localeCompare(b.feedPosition ?? b.label, undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    }),
+  );
   const live = feeds.filter((item) => item.status === 'LIVE');
   const labLive = feeds.filter((item) => item.status === 'LAB_LIVE');
   const measuredCurrentA = live.length ? live.reduce((sum, item) => sum + item.currentA!, 0) : null;

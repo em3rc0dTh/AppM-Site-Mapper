@@ -547,7 +547,7 @@
     "power": "Potencia prom.",
     "energyCounter": "Contador de energía prom.",
     "totalPower": "Potencia total",
-    "equipmentReporting": "Equipment reportando",
+    "equipmentReporting": "Breakers reportando",
     "entireBdfb": "BDFB completo · Equipment descendiente comisionado · último",
     "details": "Detalles de Equipment",
     "open": "Abrir →",
@@ -1495,7 +1495,7 @@
     "metricEnergy": "ENERGÍA ESTIMADA · INTERVALOS OBSERVADOS",
     "trends": "Tendencias históricas de {title} durante {window}",
     "error": "Historial no disponible: {error}",
-    "empty": "No hay muestras almacenadas para el intervalo seleccionado. TimescaleDB no inventa historial faltante.",
+    "empty": "Sin datos históricos para el rango seleccionado.",
     "coverage": "{minutes} minutos de alimentación cubiertos, sumados entre entradas. No hay extrapolación de intervalos mayores de 120 segundos.",
     "note": "Potencia = |V| × I a partir de lecturas DC emparejadas. La energía se integra mediante trapecios únicamente entre observaciones recientes. Ninguna es un contador de energía medido por SNMP; los datos simulados no certifican condiciones de campo.",
     "metricHistoryLabel": "Tendencias históricas de {metric} durante {window}"

@@ -22,13 +22,8 @@ import type { DeviceNode } from '@/modules/topology/domain/entities';
 import { useTranslations } from 'next-intl';
 
 type InspectorTab = 'overview' | 'alarms' | 'feeds' | 'history' | 'settings';
-const INSPECTOR_TABS: readonly InspectorTab[] = [
-  'overview',
-  'alarms',
-  'feeds',
-  'history',
-  'settings',
-];
+const OPERATION_TABS: readonly InspectorTab[] = ['overview', 'feeds', 'history', 'alarms'];
+const MAINTENANCE_TABS: readonly InspectorTab[] = ['settings'];
 type HistoryMetricKey = 'voltageV' | 'currentA' | 'powerW' | 'energyKwh';
 
 function metric(value: number | null | undefined, unit: string, decimals = 2): string {
@@ -183,6 +178,7 @@ export function BdfbTelemetryInspector({
   feeds,
   mappedBreakerCount = 0,
   descendantEquipmentIds = [],
+  mode = 'operation',
 }: Readonly<{
   node: DeviceNode;
   presentation: BdfbPresentation;
@@ -191,13 +187,15 @@ export function BdfbTelemetryInspector({
   feeds?: readonly string[];
   mappedBreakerCount?: number;
   descendantEquipmentIds?: readonly string[];
+  mode?: 'operation' | 'maintenance';
 }>) {
   const ti = useTranslations('bdfb.inspector.info');
   const t = useTranslations('bdfb.inspector');
   const tw = useTranslations('workbench');
   const { samples, now } = useBdfbTelemetrySnapshot(node.id);
   const inspectorRef = useRef<HTMLElement>(null);
-  const [tab, setTab] = useState<InspectorTab>('overview');
+  const [tab, setTab] = useState<InspectorTab>(mode === 'maintenance' ? 'settings' : 'overview');
+  const tabs = mode === 'maintenance' ? MAINTENANCE_TABS : OPERATION_TABS;
   const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
   const [history, setHistory] = useState<TelemetryHistoryResponse | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
@@ -281,121 +279,102 @@ export function BdfbTelemetryInspector({
         </div>
       </div>
 
-      <nav
-        className="sm-bdfb-inspector-tabs"
-        role="tablist"
-        aria-label={ti('inspectorSections')}
-        onKeyDown={(event) => {
-          if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-          event.preventDefault();
-          const current = INSPECTOR_TABS.findIndex((item) => item === tab);
-          const nextIndex =
-            event.key === 'Home'
-              ? 0
-              : event.key === 'End'
-                ? INSPECTOR_TABS.length - 1
-                : (current + (event.key === 'ArrowRight' ? 1 : -1) + INSPECTOR_TABS.length) %
-                  INSPECTOR_TABS.length;
-          const nextTab = INSPECTOR_TABS[nextIndex]!;
-          changeTab(nextTab);
-          const button = document.getElementById('sm-bdfb-tab-' + nextTab);
-          button?.focus();
-        }}
-      >
-        {INSPECTOR_TABS.map((item) => (
-          <button
-            key={item}
-            type="button"
-            role="tab"
-            id={'sm-bdfb-tab-' + item}
-            aria-controls={'sm-bdfb-panel-' + item}
-            aria-selected={tab === item}
-            tabIndex={tab === item ? 0 : -1}
-            onClick={() => changeTab(item)}
-          >
-            {item === 'alarms' ? t('alarms') : t(item)}
-          </button>
-        ))}
-      </nav>
+      {mode === 'operation' && (
+              <nav
+                className="sm-bdfb-inspector-tabs"
+                role="tablist"
+                aria-label={ti('inspectorSections')}
+                onKeyDown={(event) => {
+                  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                  event.preventDefault();
+                  const current = tabs.findIndex((item) => item === tab);
+                  const nextIndex =
+                    event.key === 'Home'
+                      ? 0
+                      : event.key === 'End'
+                        ? tabs.length - 1
+                        : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) %
+                          tabs.length;
+                  const nextTab = tabs[nextIndex]!;
+                  changeTab(nextTab);
+                  const button = document.getElementById('sm-bdfb-tab-' + nextTab);
+                  button?.focus();
+                }}
+              >
+                {tabs.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    role="tab"
+                    id={'sm-bdfb-tab-' + item}
+                    aria-controls={'sm-bdfb-panel-' + item}
+                    aria-selected={tab === item}
+                    tabIndex={tab === item ? 0 : -1}
+                    onClick={() => changeTab(item)}
+                  >
+                    {item === 'alarms' ? 'Alarmas' : item === 'feeds' ? 'Entradas' : item === 'history' ? 'Gráficas' : item === 'overview' ? 'Resumen' : 'Configuración'}
+                  </button>
+                ))}
+              </nav>
+      )}
 
       <div
         className="sm-bdfb-inspector-content"
-        role="tabpanel"
-        id={'sm-bdfb-panel-' + tab}
-        aria-labelledby={'sm-bdfb-tab-' + tab}
+        role={mode === 'operation' ? 'tabpanel' : 'region'}
+        id={mode === 'operation' ? 'sm-bdfb-panel-' + tab : undefined}
+        aria-labelledby={mode === 'operation' ? 'sm-bdfb-tab-' + tab : undefined}
+        aria-label={mode === 'maintenance' ? 'Mantenimiento del BDFB' : undefined}
         tabIndex={0}
       >
         {tab === 'overview' && (
           <>
-            <AlarmScopeSummary entityId={node.id} scopeLabel={node.name} />
             <SnmpFeedLoadPanel
               key={node.id}
               deviceId={node.id}
               chassisId={presentation.chassisId}
               view="summary"
             />
-            <section className="zip-bdfb-live-average" aria-label={ti('averageLabel')}>
-              <header>
+
+            <section className="front01-mqtt-summary" aria-label="Telemetría descendiente MQTT LIVE">
+              <header className="front01-summary-header">
                 <div>
                   <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
-                  <strong>{ti('live')}</strong>
+                  <strong>TELEMETRÍA DESCENDIENTE · MQTT LIVE</strong>
                 </div>
-                <span>{ti('entire')}</span>
+                <span>BDFB completo</span>
               </header>
-              <div className="zip-bdfb-live-average-grid">
-                <div>
-                  <span>{ti('avgVoltage')}</span>
-                  <strong>{metric(live.averageVoltageV, 'V')}</strong>
-                </div>
-                <div>
-                  <span>{ti('avgCurrent')}</span>
-                  <strong>{metric(live.averageCurrentA, 'A')}</strong>
-                </div>
-                <div>
-                  <span>{ti('avgPower')}</span>
-                  <strong>{metric(kilowatts(live.averagePowerW), 'kW', 3)}</strong>
-                </div>
-                <div>
-                  <span>{ti('avgEnergy')}</span>
-                  <strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong>
-                </div>
+
+              <div className="front01-mqtt-kpis">
+                <div><span>VOLTAJE PROM.</span><strong>{metric(live.averageVoltageV, 'V')}</strong></div>
+                <div><span>CORRIENTE PROM.</span><strong>{metric(live.averageCurrentA, 'A')}</strong></div>
+                <div><span>POTENCIA PROM.</span><strong>{metric(kilowatts(live.averagePowerW), 'kW', 3)}</strong></div>
+                <div><span>ENERGÍA PROM.</span><strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong></div>
               </div>
 
-              <p className="zip-bdfb-aggregate-note">
-                {ti('liveTotalPowerNote', { power: metric(kilowatts(live.totalPowerW), 'kW', 3) })}
-              </p>
-              <dl className="zip-bdfb-live-average-counts">
-                <dt>{ti('reporting')}</dt>
-                <dd>{reportingEquipment}</dd>
-                <dt>{ti('descendant')}</dt>
-                <dd>{live.descendantEquipment}</dd>
-                <dt>{ti('notCurrent')}</dt>
-                <dd>{live.withoutCurrentReading}</dd>
-                <dt>{ti('last')}</dt>
-                <dd>{compactUtc(latestReceived)}</dd>
+              <dl className="front01-mqtt-facts">
+                <dt>Potencia total</dt><dd>{metric(kilowatts(live.totalPowerW), 'kW', 3)}</dd>
+                <dt>Reportando</dt><dd>{reportingEquipment}</dd>
+                <dt>Descendientes</dt><dd>{live.descendantEquipment}</dd>
+                <dt>Sin corriente</dt><dd>{live.withoutCurrentReading}</dd>
+                <dt>Último paquete</dt><dd>{compactUtc(latestReceived)}</dd>
               </dl>
+
+              <footer className="front01-mqtt-footer">
+                <div>
+                  <i aria-hidden="true" data-live={reportingEquipment > 0 ? 'true' : 'false'} />
+                  <span>
+                    {reportingEquipment > 0
+                      ? `LIVE · ${reportingEquipment} Equipment descendientes contribuyen a los promedios`
+                      : 'Sin telemetría descendiente activa'}
+                  </span>
+                </div>
+                <DetachedWorkbenchButton
+                  href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
+                  windowName={`site-mapper-load-report-${node.id}`}
+                  label="Abrir reporte carga"
+                />
+              </footer>
             </section>
-            <section className="zip-bdfb-status-card">
-              <h3>{ti('status')}</h3>
-              <div>
-                <span>●</span>
-                <strong>
-                  {reportingEquipment > 0 ? ti('telemetryReceived') : ti('inventoryRecorded')}
-                </strong>
-                <small>
-                  {reportingEquipment > 0
-                    ? ti('descendantsAveraged', { count: reportingEquipment })
-                    : ti('requiresBinding')}
-                </small>
-              </div>
-            </section>
-            <div className="sm-detached-workbench-actions">
-              <DetachedWorkbenchButton
-                href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
-                windowName={`site-mapper-load-report-${node.id}`}
-                label={tw('openLoadReport')}
-              />
-            </div>
           </>
         )}
 

@@ -58,7 +58,7 @@ SITE_MAPPER_INTEGRATION_PROFILE=seed-01-controlled
 Con Mongo vacía, Site Mapper crea automáticamente el baseline seed-01. El perfil de integración agrega únicamente fixtures sintéticos marcados:
 
 - bindings MQTT para los 74 breakers confirmados en QDF-2/QDF-4/QDF-5;
-- feeds SNMP Config4 A1/A2/B1/B2 controlados por QDF;
+- feeds SNMP Config2 A/B controlados por QDF; A sirve A3+A2 y B sirve B3+B2;
 - hardware profile Config4 para el entorno sintético;
 - Unit IDs Modbus de integración.
 

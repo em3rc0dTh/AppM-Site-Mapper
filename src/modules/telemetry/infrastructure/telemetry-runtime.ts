@@ -224,6 +224,8 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           process.env.TELEMETRY_WATCH_REPORTED_OFFLINE_SAMPLES,
           2,
         ),
+        coverageAlarmsEnabled: true,
+        criticalCoverageRatio: 0.8,
         onWatchdogError: (error) =>
           logger.warn('alarm.telemetry_watchdog_failed', {
             reason: error instanceof Error ? error.message : 'unknown',

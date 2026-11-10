@@ -17,7 +17,7 @@ import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integr
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 8 as const;
+export const SEED_01_VERSION = 9 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -2104,12 +2104,6 @@ const INTEGRATION_SNMP_SOURCE = {
   'QDF-4': 'INT-SNMP-QDF-4',
   'QDF-5': 'INT-SNMP-QDF-5',
 } as const;
-const INTEGRATION_FEEDS = [
-  { slot: 'A1', panel: 'A3', side: 'A', index: 1 },
-  { slot: 'A2', panel: 'A2', side: 'A', index: 2 },
-  { slot: 'B1', panel: 'B3', side: 'B', index: 3 },
-  { slot: 'B2', panel: 'B2', side: 'B', index: 4 },
-] as const;
 const MQTT_PANEL_GROUP: Readonly<Record<'A3' | 'A2' | 'B3' | 'B2', number>> = {
   A3: 1,
   A2: 2,
@@ -2150,11 +2144,16 @@ async function ensureControlledIntegration(
     throw new Error(`SEED_01_INTEGRATION_CONFLICT: missing chassis ${spec.key}`);
   }
 
-  const desiredPorts = INTEGRATION_FEEDS.map((feed) => ({
-    id: `integration:seed01:${spec.key}:feed:${feed.slot}`,
+  const integrationFeeds = [
+    { side: 'A' as const, panels: ['A3', 'A2'] as const, index: 1 },
+    { side: 'B' as const, panels: ['B3', 'B2'] as const, index: 2 },
+  ];
+
+  const desiredPorts = integrationFeeds.map((feed) => ({
+    id: `integration:seed01:${spec.key}:feed:${feed.side}`,
     deviceId: created.deviceId,
     equipmentId: chassis.id,
-    name: `CONTROLLED ${feed.slot}`,
+    name: `SNMP INPUT ${feed.side}`,
     portType: 'POWER' as const,
     direction: 'INPUT' as const,
     exposure: 'EXTERNAL' as const,
@@ -2162,12 +2161,7 @@ async function ensureControlledIntegration(
     attributes: {
       snmpFeedInput: true,
       feed: feed.side,
-      feedPosition: feed.slot,
-      ratedCurrentA: 800,
-      shuntRatedCurrentA: 1000,
-      shuntRatedMillivolts: 60,
-      overloadThresholdA: 640,
-      servedPanelIds: [created.panelIds[feed.panel]],
+      servedPanelIds: feed.panels.map((panel) => created.panelIds[panel]),
       independentInputConfirmed: false,
       commissioning: 'SYNTHETIC_LAB_ONLY',
       integrationProfile: INTEGRATION_PROFILE,
@@ -2182,13 +2176,10 @@ async function ensureControlledIntegration(
   const existingControlled = chassis.accessPorts.filter(
     (port) => port.attributes?.integrationProfile === INTEGRATION_PROFILE,
   );
-  if (
-    existingControlled.length &&
-    JSON.stringify(existingControlled) !== JSON.stringify(desiredPorts)
-  ) {
-    throw new Error(`SEED_01_INTEGRATION_CONFLICT: SNMP feed inventory differs for ${spec.key}`);
-  }
-  if (!existingControlled.length) {
+  const controlledMatches =
+    existingControlled.length === desiredPorts.length &&
+    JSON.stringify(existingControlled) === JSON.stringify(desiredPorts);
+  if (!controlledMatches) {
     await topologyNodes.updateOne(
       { id: chassis.id, lifecycle: 'ACTIVE' },
       {
@@ -2202,6 +2193,14 @@ async function ensureControlledIntegration(
   }
 
   const bindings = database.collection<TelemetryBinding & Document>('telemetry_bindings');
+  await bindings.deleteMany(
+    {
+      protocol: 'SNMP',
+      'attributes.integrationProfile': INTEGRATION_PROFILE,
+      'attributes.qdf': spec.key,
+    },
+    { session },
+  );
   const now = new Date().toISOString();
   const desired: TelemetryBinding[] = [];
 
@@ -2258,22 +2257,22 @@ async function ensureControlledIntegration(
   }
 
   const snmpSource = INTEGRATION_SNMP_SOURCE[spec.key];
-  for (const feed of INTEGRATION_FEEDS) {
-    const portId = `integration:seed01:${spec.key}:feed:${feed.slot}`;
+  for (const feed of integrationFeeds) {
+    const portId = `integration:seed01:${spec.key}:feed:${feed.side}`;
     for (const point of [
       {
         metric: 'CURRENT',
         unit: 'A',
-        oid: `1.3.6.1.4.1.8072.9999.2026.49.1.${feed.index}.0`,
+        oid: `1.3.6.1.4.1.8072.9999.2026.48.1.${feed.index}.0`,
       },
       {
         metric: 'VOLTAGE',
         unit: 'V',
-        oid: `1.3.6.1.4.1.8072.9999.2026.49.2.${feed.index}.0`,
+        oid: `1.3.6.1.4.1.8072.9999.2026.48.2.${feed.index}.0`,
       },
     ] as const) {
       desired.push({
-        id: `integration:seed01:snmp:${spec.key}:${feed.slot}:${point.metric.toLowerCase()}`,
+        id: `integration:seed01:snmp:${spec.key}:${feed.side}:${point.metric.toLowerCase()}`,
         protocol: 'SNMP',
         sourceIdentity: snmpSource,
         sourcePointId: point.oid,
@@ -2289,7 +2288,6 @@ async function ensureControlledIntegration(
           integrationProfile: INTEGRATION_PROFILE,
           synthetic: true,
           qdf: spec.key,
-          feedPosition: feed.slot,
         },
       });
     }
@@ -2327,14 +2325,14 @@ async function ensureControlledIntegration(
     await bindings.insertOne({ ...binding, revision: 1 }, { session });
   }
 
-  if (device.attributes?.bdfbHardwareProfile !== 'ELTEK_BDCBB_CONFIG_4') {
+  if (device.attributes?.bdfbHardwareProfile !== 'ELTEK_BDCBB_CONFIG_2') {
     await topologyNodes.updateOne(
       { id: created.deviceId, kind: 'DEVICE', lifecycle: 'ACTIVE' },
       {
         $set: {
           attributes: {
             ...(device.attributes ?? {}),
-            bdfbHardwareProfile: 'ELTEK_BDCBB_CONFIG_4',
+            bdfbHardwareProfile: 'ELTEK_BDCBB_CONFIG_2',
             integrationProfile: INTEGRATION_PROFILE,
           },
           updatedAt: new Date().toISOString(),

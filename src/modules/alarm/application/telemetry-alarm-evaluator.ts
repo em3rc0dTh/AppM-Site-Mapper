@@ -28,6 +28,8 @@ export interface AutomaticTelemetryAlarmOptions {
   readonly lossAfterMs?: number;
   readonly recoverySamples?: number;
   readonly reportedOfflineSamples?: number;
+  readonly coverageAlarmsEnabled?: boolean;
+  readonly criticalCoverageRatio?: number;
   readonly onWatchdogError?: (error: unknown) => void;
   readonly onShadowSignal?: (signal: {
     readonly action: 'ASSERT' | 'RESOLVE';
@@ -103,6 +105,8 @@ export class TelemetryAlarmEvaluator {
   private readonly automaticLossAfterMs: number;
   private readonly automaticRecoverySamples: number;
   private readonly automaticReportedOfflineSamples: number;
+  private readonly automaticCoverageAlarmsEnabled: boolean;
+  private readonly automaticCriticalCoverageRatio: number;
   private readonly automaticMode: 'SHADOW' | 'ACTIVE';
   private readonly shadowActive = new Set<string>();
   private watchdog: ReturnType<typeof setInterval> | null = null;
@@ -121,6 +125,11 @@ export class TelemetryAlarmEvaluator {
     this.automaticLossAfterMs = options.lossAfterMs ?? BFDB_OFFLINE_AFTER_MS;
     this.automaticRecoverySamples = Math.max(1, options.recoverySamples ?? 2);
     this.automaticReportedOfflineSamples = Math.max(1, options.reportedOfflineSamples ?? 2);
+    this.automaticCoverageAlarmsEnabled = options.coverageAlarmsEnabled ?? false;
+    this.automaticCriticalCoverageRatio = Math.min(
+      1,
+      Math.max(0, options.criticalCoverageRatio ?? 0.8),
+    );
   }
 
   start(): void {
@@ -297,13 +306,18 @@ export class TelemetryAlarmEvaluator {
     }
 
     const offlineSourceIds = new Set(offlineSources.map((entry) => entry.binding.sourceIdentity));
-    const uniquePoints = new Map<
+    const coveragePoints = new Map<
       string,
-      { expectation: TelemetryWatchExpectation; state: TelemetryWatchState; node: EquipmentNode }
+      {
+        expectation: TelemetryWatchExpectation;
+        state: TelemetryWatchState;
+        node: EquipmentNode;
+        offline: boolean;
+        age: number;
+      }
     >();
 
     for (const binding of pointBindings) {
-      if (offlineSourceIds.has(binding.sourceIdentity)) continue;
       const expectation: TelemetryWatchExpectation = {
         protocol: 'MQTT',
         sourceIdentity: binding.sourceIdentity,
@@ -312,9 +326,9 @@ export class TelemetryAlarmEvaluator {
         targetId: binding.targetId,
         sourcePointId: binding.sourcePointId!,
       };
-      const id = telemetryWatchId(expectation);
-      if (uniquePoints.has(id)) continue;
-      const state = stateById.get(id);
+      const key = [binding.targetId, binding.sourceIdentity, binding.sourcePointId].join('|');
+      if (coveragePoints.has(key)) continue;
+      const state = stateById.get(telemetryWatchId(expectation));
       const node = await this.topology.getById(binding.targetId);
       if (
         !state ||
@@ -324,7 +338,83 @@ export class TelemetryAlarmEvaluator {
         node.equipmentType !== 'CIRCUIT_BREAKER'
       )
         continue;
-      uniquePoints.set(id, { expectation, state, node });
+      const age = safeAge(state.lastUsableAt ?? state.firstExpectedAt, now);
+      const offline =
+        offlineSourceIds.has(binding.sourceIdentity) ||
+        state.reportedOfflineStreak >= this.automaticReportedOfflineSamples ||
+        age > this.automaticLossAfterMs;
+      coveragePoints.set(key, { expectation, state, node, offline, age });
+    }
+
+    if (this.automaticCoverageAlarmsEnabled) {
+      const byDevice = new Map<
+        string,
+        Map<string, { reporting: boolean; age: number }>
+      >();
+      for (const point of coveragePoints.values()) {
+        const breakers = byDevice.get(point.node.deviceId) ?? new Map();
+        const current = breakers.get(point.node.id) ?? {
+          reporting: false,
+          age: point.age,
+        };
+        current.reporting = current.reporting || !point.offline;
+        current.age = Math.max(current.age, point.age);
+        breakers.set(point.node.id, current);
+        byDevice.set(point.node.deviceId, breakers);
+      }
+
+      for (const [deviceId, breakers] of byDevice) {
+        const device = await this.topology.getById(deviceId);
+        if (
+          !device ||
+          device.kind !== 'DEVICE' ||
+          device.lifecycle !== 'ACTIVE' ||
+          device.deviceType !== 'BDFB'
+        )
+          continue;
+
+        const installedBreakers = (await this.topology.listEquipmentForDevice(deviceId)).filter(
+          (item) => item.lifecycle === 'ACTIVE' && item.equipmentType === 'CIRCUIT_BREAKER',
+        );
+        const expected = installedBreakers.length;
+        const reporting = installedBreakers.filter(
+          (breaker) => breakers.get(breaker.id)?.reporting === true,
+        ).length;
+        const context = this.coverageContext();
+        if (expected > 0 && reporting === expected) {
+          await this.resolveCoverageAlarm(
+            deviceId,
+            context,
+            nowIso,
+            'TELEMETRY_COVERAGE_RECOVERED',
+          );
+          continue;
+        }
+        if (expected === 0) continue;
+
+        const ratio = reporting / expected;
+        await this.assertCoverageAlarm({
+          targetId: deviceId,
+          sourceContext: context,
+          expected,
+          reporting,
+          severity: ratio < this.automaticCriticalCoverageRatio ? 'CRITICAL' : 'WARNING',
+          nowIso,
+        });
+      }
+    }
+
+    const uniquePoints = new Map<
+      string,
+      { expectation: TelemetryWatchExpectation; state: TelemetryWatchState; node: EquipmentNode }
+    >();
+    for (const [id, point] of coveragePoints) {
+      if (offlineSourceIds.has(point.expectation.sourceIdentity)) continue;
+      uniquePoints.set(id, {
+        expectation: point.expectation,
+        state: point.state,
+        node: point.node,
+      });
     }
 
     const panelGroups = new Map<
@@ -558,6 +648,94 @@ export class TelemetryAlarmEvaluator {
     }
     if (!(await this.alarms.getActiveByCorrelationKey(correlationKey))) return;
     await this.commands.resolve(correlationKey, reason, [], observedAt);
+  }
+
+  private async assertCoverageAlarm(input: {
+    targetId: string;
+    sourceContext: string;
+    expected: number;
+    reporting: number;
+    severity: AlarmSeverity;
+    nowIso: string;
+  }): Promise<void> {
+    const correlationKey = [input.targetId, 'TELEMETRY_LOSS', input.sourceContext].join('|');
+    const note = `${input.reporting}/${input.expected} installed breakers have fresh telemetry.`;
+
+    if (this.automaticMode === 'SHADOW') {
+      if (!this.shadowActive.has(correlationKey)) {
+        this.shadowActive.add(correlationKey);
+        this.options.onShadowSignal?.({
+          action: 'ASSERT',
+          targetId: input.targetId,
+          sourceContext: input.sourceContext,
+          severity: input.severity,
+          note,
+        });
+      }
+      return;
+    }
+
+    const active = await this.alarms.getActiveByCorrelationKey(correlationKey);
+    if (active?.severity === input.severity) return;
+
+    await this.commands.assert({
+      code: 'TELEMETRY_LOSS',
+      targetType: 'DEVICE',
+      targetId: input.targetId,
+      sourceContext: input.sourceContext,
+      severity: input.severity,
+      evidence: [
+        {
+          id: randomUUID(),
+          kind: 'DERIVED',
+          metric: 'telemetry_reporting_breakers',
+          value: input.reporting,
+          unit: 'breakers',
+          observedAt: input.nowIso,
+          note,
+        },
+        {
+          id: randomUUID(),
+          kind: 'DERIVED',
+          metric: 'telemetry_expected_breakers',
+          value: input.expected,
+          unit: 'breakers',
+          observedAt: input.nowIso,
+        },
+        {
+          id: randomUUID(),
+          kind: 'DERIVED',
+          metric: 'telemetry_coverage_pct',
+          value: Number(((input.reporting / input.expected) * 100).toFixed(2)),
+          unit: '%',
+          assertThreshold: this.automaticCriticalCoverageRatio * 100,
+          thresholdUnit: '%',
+          observedAt: input.nowIso,
+        },
+      ],
+      observedAt: input.nowIso,
+    });
+  }
+
+  private async resolveCoverageAlarm(
+    targetId: string,
+    sourceContext: string,
+    observedAt: string,
+    reason: string,
+  ): Promise<void> {
+    const correlationKey = [targetId, 'TELEMETRY_LOSS', sourceContext].join('|');
+    if (this.automaticMode === 'SHADOW') {
+      if (this.shadowActive.delete(correlationKey)) {
+        this.options.onShadowSignal?.({ action: 'RESOLVE', targetId, sourceContext });
+      }
+      return;
+    }
+    if (!(await this.alarms.getActiveByCorrelationKey(correlationKey))) return;
+    await this.commands.resolve(correlationKey, reason, [], observedAt);
+  }
+
+  private coverageContext(): string {
+    return 'auto-watch:mqtt:coverage';
   }
 
   private automaticCorrelationKey(targetId: string, sourceContext: string): string {

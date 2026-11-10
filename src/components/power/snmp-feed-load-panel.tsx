@@ -151,6 +151,168 @@ export function SnmpFeedLoadPanel({
     load !== null && load.expectedFeedCount > 0 && load.feedCount === load.expectedFeedCount;
   const labCount = load?.labFreshFeedCount ?? 0;
   const isLab = capacity?.mode === 'LAB_SIMULATED';
+  const reportingFeeds = load ? load.freshFeedCount + labCount : null;
+
+  if (view === 'summary') {
+    return (
+      <section className="front01-snmp-summary" aria-label={t('section')}>
+        <header className="front01-summary-header">
+          <strong>ENTRADAS DC · SNMP</strong>
+          <span>{error ? t('statusUnavailable') : isLab ? 'LAB SIMULATED' : load?.status === 'COMPLETE' ? 'LIVE' : t('statusPending')}</span>
+        </header>
+
+        <dl className="front01-snmp-kpis">
+          <div><dt>Corriente total</dt><dd>{numeric(error ? null : capacity?.measuredA, 'A')}</dd></div>
+          <div><dt>Capacidad nominal</dt><dd>{numeric(capacity?.ratedA, 'A')}</dd></div>
+          <div><dt>Disponible</dt><dd>{numeric(capacity?.availableA, 'A')}</dd></div>
+          <div><dt>Utilización</dt><dd>{numeric(capacity?.utilizationPct, '%')}</dd></div>
+          <div><dt>Voltaje QDF</dt><dd>{numeric(load?.voltageContract?.total?.voltageV, 'V')}</dd></div>
+          <div><dt>Bus A</dt><dd>{numeric(load?.voltageContract?.busA?.voltageV, 'V')}</dd></div>
+          <div><dt>Potencia aprox.</dt><dd>{numeric(kilowatts(load?.totalEstimatedPowerW), 'kW')}</dd></div>
+          <div><dt>Bus B</dt><dd>{numeric(load?.voltageContract?.busB?.voltageV, 'V')}</dd></div>
+        </dl>
+
+        <div className="front01-snmp-table-wrap">
+          <table className="front01-snmp-table">
+            <thead>
+              <tr>
+                <th>Shunt</th>
+                <th>Corriente</th>
+                <th>Nominal</th>
+                <th>Uso</th>
+                <th>Disponible</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(capacity?.feedUtilization ?? []).map((feed) => (
+                <tr key={feed.accessPortId}>
+                  <td>{feed.label}</td>
+                  <td>{numeric(feed.measuredA, 'A')}</td>
+                  <td>{numeric(feed.ratedA, 'A')}</td>
+                  <td>{feed.utilizationPct === null ? '—' : `${feed.utilizationPct.toFixed(1)}%`}</td>
+                  <td>{numeric(feed.availableA, 'A')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="front01-snmp-footer">
+          <strong>
+            Entradas activas {reportingFeeds === null || !load ? '—' : `${reportingFeeds} / ${load.expectedFeedCount}`}
+          </strong>
+          {capacity?.utilizationPct !== null && capacity?.utilizationPct !== undefined ? (
+            <>
+              <div
+                className="front01-utilization-meter"
+                role="meter"
+                aria-label={isLab ? t('simulatedUtilization') : t('verifiedUtilization')}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.max(0, Math.min(100, capacity.utilizationPct))}
+              >
+                <span style={{ width: `${Math.max(0, Math.min(100, capacity.utilizationPct))}%` }} />
+              </div>
+              <b>{capacity.utilizationPct.toFixed(1)}%</b>
+            </>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
+  if (view === 'feeds') {
+    return (
+      <section className="front01-inputs-summary" aria-label={t('section')}>
+        <header className="front01-summary-header">
+          <strong>ENTRADAS DC · SNMP</strong>
+          <span>
+            {error
+              ? t('statusUnavailable')
+              : labCount > 0
+                ? 'LAB SIMULATED'
+                : load?.status === 'COMPLETE'
+                  ? 'LIVE'
+                  : t('statusPending')}
+          </span>
+        </header>
+
+        {labEnabled && inventoryRecorded && labCount === 0 && (
+          <div className="front01-inputs-lab-action">
+            <span>{t('labController', { controller: labSource ?? t('notSelected') })}</span>
+            <button type="button" disabled={labBusy} onClick={() => void commissionLab()}>
+              {labBusy ? t('configuring') : t('connectSynthetic')}
+            </button>
+            {labConfigured && <small role="status">{t('labMapped')}</small>}
+            {labError && <small role="alert" className="form-error">{labError}</small>}
+          </div>
+        )}
+
+        <div className="front01-inputs-table-wrap">
+          <table className="front01-inputs-table">
+            <thead>
+              <tr>
+                <th>Entrada</th>
+                <th>Estado</th>
+                <th>Corriente</th>
+                <th>Voltaje</th>
+                <th>Panel</th>
+                <th>Controller</th>
+                <th>OID corriente</th>
+                <th>Última lectura</th>
+              </tr>
+            </thead>
+            <tbody>
+              {load?.feeds.map((feed) => {
+                const mappedPanels = feed.servedPanelIds
+                  .map((id) => panels.get(id))
+                  .filter((panel): panel is PhysicalPanel => panel !== undefined);
+                const panelLabel =
+                  mappedPanels.length > 0
+                    ? mappedPanels.map(readablePanel).join(', ')
+                    : feed.servedPanelIds.length
+                      ? t('assignedPanels', { count: feed.servedPanelIds.length })
+                      : '—';
+
+                return (
+                  <tr key={feed.accessPortId}>
+                    <td>
+                      <strong>{feed.label}</strong>
+                      <small>
+                        {feed.feedPosition
+                          ? t('inputSide', { position: feed.feedPosition })
+                          : feed.side
+                            ? t('side', { side: feed.side })
+                            : t('unassignedSide')}
+                      </small>
+                    </td>
+                    <td>{feed.status === 'LAB_LIVE' ? 'LAB LIVE · SIMULATED' : feed.status}</td>
+                    <td>{numeric(feed.currentA, 'A')}</td>
+                    <td>{numeric(feed.voltageV, 'V')}</td>
+                    <td>{panelLabel}</td>
+                    <td>{feed.sourceIdentity ?? t('notMapped')}</td>
+                    <td><code>{feed.currentOid ?? '—'}</code></td>
+                    <td>{feed.observedAt ?? '—'}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {!load?.feedCount && !error && <p>{t('noFeeds')}</p>}
+        <footer className="front01-inputs-note">
+          <span>
+            {labCount > 0
+              ? `SIMULATED SNMP · ${labCount} shunts reporting`
+              : 'SNMP'}
+          </span>
+          <span>Mediciones de shunt independientes de la telemetría MQTT descendiente.</span>
+          {load?.status !== 'COMPLETE' && <span>{t('noTotal')}</span>}
+        </footer>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -170,7 +332,7 @@ export function SnmpFeedLoadPanel({
           </span>
         </header>
 
-        {view !== 'feeds' && (
+        {(
           <>
             <div className="zip-bdfb-live-average-grid">
               <div>
@@ -342,7 +504,7 @@ export function SnmpFeedLoadPanel({
             )}
           </>
         )}
-        {view !== 'summary' && (
+        {(
           <>
             {labEnabled && inventoryRecorded && labCount === 0 && (
               <div className="sm-snmp-lab-activation">

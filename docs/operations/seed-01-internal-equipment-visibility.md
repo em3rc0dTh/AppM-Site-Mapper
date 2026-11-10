@@ -36,5 +36,5 @@ bindings or erase Timescale history to achieve a visual requirement.
   operational search, rack inventory or pins.
 - Technical acceptance: `industrial_communication_profiles`, MQTT/SNMP bindings,
   telemetry ingestion and Modbus addresses remain unchanged.
-- Verify with operator's real environment before client release; no tests/builds
-  or deployment were run as part of this code-only change.
+- GitHub Actions verify this branch before merging; check the latest CI run on the PR.
+- Operator visual acceptance in the real customer environment is still required before release.

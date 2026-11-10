@@ -479,6 +479,7 @@
     "topology": {
       "views": "BDFB views",
     "physicalViewHeading": "{name} Physical View",
+    "mountFullRack": "Full rack",
     "site": "SITE",
       "siteCanvas": "INFRASTRUCTURE / SITE CANVAS",
       "structure": "BUILDING / STRUCTURE LAYOUT",

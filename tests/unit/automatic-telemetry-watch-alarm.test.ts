@@ -249,6 +249,96 @@ describe('automatic operational telemetry alarms', () => {
     });
   });
 
+
+  it('reconstructs a lost source after evaluator restart from persisted watch state', async () => {
+    const topologyRepository = new MemoryTopologyRepository(topology());
+    const alarmRepository = new MemoryAlarmRepository();
+    const policyRepository = new MemoryAlarmPolicyRepository();
+    const bindingRepository = new MemoryTelemetryBindingRepository(bindings());
+    const watchRepository = new MemoryTelemetryWatchRepository();
+
+    const first = new TelemetryAlarmEvaluator(
+      alarmRepository,
+      policyRepository,
+      topologyRepository,
+      bindingRepository,
+      watchRepository,
+      { lossAfterMs: 1_000, recoverySamples: 2, reportedOfflineSamples: 2 },
+    );
+    await first.observe(sourceSample(T0));
+
+    const restarted = new TelemetryAlarmEvaluator(
+      alarmRepository,
+      policyRepository,
+      topologyRepository,
+      bindingRepository,
+      watchRepository,
+      { lossAfterMs: 1_000, recoverySamples: 2, reportedOfflineSamples: 2 },
+    );
+    await restarted.evaluateNow(T0 + 1_500);
+
+    expect(await alarmRepository.listActive()).toHaveLength(1);
+    expect((await alarmRepository.listActive())[0]).toMatchObject({
+      targetId: 'device',
+      alarmCode: 'TELEMETRY_LOSS',
+    });
+  });
+
+  it('escalates simultaneous commissioned source loss to CRITICAL without inventing a global target', async () => {
+    const secondDevice = {
+      id: 'device-2',
+      kind: 'DEVICE',
+      deviceType: 'BDFB',
+      parentId: 'rack',
+      name: 'BDFB QDF-4',
+      serialNumber: '26092403950004',
+      pinned: false,
+      rootEquipmentIds: [],
+      lifecycle: 'ACTIVE',
+      createdAt,
+      updatedAt: createdAt,
+    } as unknown as TopologyNode;
+    const source2: TelemetryBinding = {
+      id: 'source-2',
+      protocol: 'MQTT',
+      sourceIdentity: '26092403950004',
+      metric: 'SOURCE',
+      targetType: 'DEVICE',
+      targetId: 'device-2',
+      lifecycle: 'ACTIVE',
+      createdAt,
+      updatedAt: createdAt,
+    };
+
+    const topologyRepository = new MemoryTopologyRepository([...topology(), secondDevice]);
+    const alarmRepository = new MemoryAlarmRepository();
+    const bindingRepository = new MemoryTelemetryBindingRepository([...bindings(), source2]);
+    const watchRepository = new MemoryTelemetryWatchRepository();
+    const evaluator = new TelemetryAlarmEvaluator(
+      alarmRepository,
+      new MemoryAlarmPolicyRepository(),
+      topologyRepository,
+      bindingRepository,
+      watchRepository,
+      { lossAfterMs: 1_000, recoverySamples: 2, reportedOfflineSamples: 2 },
+    );
+
+    await evaluator.observe(sourceSample(T0));
+    await evaluator.observe({
+      ...sourceSample(T0),
+      bindingId: 'source-2',
+      targetId: 'device-2',
+      entityId: 'device-2',
+      sourceIdentity: '26092403950004',
+    });
+    await evaluator.evaluateNow(T0 + 1_500);
+
+    const active = await alarmRepository.listActive();
+    expect(active).toHaveLength(2);
+    expect(active.every((item) => item.severity === 'CRITICAL')).toBe(true);
+    expect(active.every((item) => item.alarmCode === 'TELEMETRY_LOSS')).toBe(true);
+  });
+
   it('resolves a source loss only after the configured recovery sample count', async () => {
     const { evaluator, alarmRepository } = setup();
     await evaluator.observe(sourceSample(T0));

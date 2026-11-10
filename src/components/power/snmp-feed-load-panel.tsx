@@ -332,7 +332,7 @@ export function SnmpFeedLoadPanel({
           </span>
         </header>
 
-        {view !== 'feeds' && (
+        {(
           <>
             <div className="zip-bdfb-live-average-grid">
               <div>

@@ -491,6 +491,7 @@ export default async function TopologyNodePage({
             {node.kind === 'DEVICE' && bdfbPresentation ? (
               <Front01StageTabs
                 label="Vistas del BDFB"
+                heading={node.name}
                 physical={<>              <BdfbChassis
                 key={query.panel ?? 'bdfb-overview'}
                 device={node}

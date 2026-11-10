@@ -78,9 +78,9 @@ describe.skipIf(!enabled)('automatic operational monitoring with disposable Mong
       await ensurePersistenceIndexes(legacyDb);
       await ensurePersistenceIndexes(legacyDb);
       const indexes = await watches.indexes();
-      expect(indexes.find((index) => index.name === 'telemetry_watch_state_id_unique')?.unique).toBe(
-        true,
-      );
+      expect(
+        indexes.find((index) => index.name === 'telemetry_watch_state_id_unique')?.unique,
+      ).toBe(true);
       expect(indexes.some((index) => index.name === 'uq_telemetry_watch_state_id')).toBe(false);
       expect(indexes.some((index) => index.name === 'ix_telemetry_watch_source_scope_target')).toBe(
         false,

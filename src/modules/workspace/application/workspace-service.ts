@@ -75,7 +75,9 @@ export class WorkspaceService {
     const activeNetworks = networks.filter((node) => node.lifecycle === 'ACTIVE');
     const inventory = [...devices, ...equipment].filter(
       (node): node is InventoryNode =>
-        (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') && node.lifecycle === 'ACTIVE' && isOperationallyVisible(node),
+        (node.kind === 'DEVICE' || node.kind === 'EQUIPMENT') &&
+        node.lifecycle === 'ACTIVE' &&
+        isOperationallyVisible(node),
     );
 
     return {
@@ -134,7 +136,9 @@ export class WorkspaceService {
             this.topology.listEquipmentForDevice(device.id),
           ]);
           const descendantEquipmentIds = descendantEquipment
-            .filter((equipment) => equipment.lifecycle === 'ACTIVE' && isOperationallyVisible(equipment))
+            .filter(
+              (equipment) => equipment.lifecycle === 'ACTIVE' && isOperationallyVisible(equipment),
+            )
             .map((equipment) => equipment.id);
           if (!presentation)
             return {

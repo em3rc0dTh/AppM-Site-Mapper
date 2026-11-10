@@ -103,7 +103,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ nodes: await service.listNetworks() });
   }
 
-  return NextResponse.json({ nodes: (await service.listChildren(parentId)).filter(isOperationallyVisible) });
+  return NextResponse.json({
+    nodes: (await service.listChildren(parentId)).filter(isOperationallyVisible),
+  });
 }
 
 async function handlePOST(request: Request) {

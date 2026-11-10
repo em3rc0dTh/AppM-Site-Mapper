@@ -950,9 +950,9 @@ export class TopologyService {
         depth >= maxDepth
           ? []
           : await Promise.all(
-              (await this.listChildren(node.id)).filter(isOperationallyVisible).map((child) =>
-                visit(child, nextSegments, depth + 1),
-              ),
+              (await this.listChildren(node.id))
+                .filter(isOperationallyVisible)
+                .map((child) => visit(child, nextSegments, depth + 1)),
             );
 
       return {

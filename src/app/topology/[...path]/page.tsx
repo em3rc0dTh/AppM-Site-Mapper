@@ -208,7 +208,12 @@ export default async function TopologyNodePage({
           ? `/rack/${child.id}`
           : deepLink;
 
-      return { node: child, href, directChildCount: (await service.listChildren(child.id)).filter(isOperationallyVisible).length };
+      return {
+        node: child,
+        href,
+        directChildCount: (await service.listChildren(child.id)).filter(isOperationallyVisible)
+          .length,
+      };
     }),
   );
 

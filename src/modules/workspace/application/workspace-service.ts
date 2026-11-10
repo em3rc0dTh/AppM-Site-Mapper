@@ -37,6 +37,8 @@ export interface WorkspaceBdfbSummary {
   readonly frames: number;
   readonly panels: number;
   readonly endpoints: number;
+  /** Physically installed breaker Equipment expected to report operational telemetry. */
+  readonly installedBreakerIds: readonly string[];
   /** All active canonical Equipment descendants (including non-reporting structural parts). */
   readonly descendantEquipmentIds: readonly string[];
   readonly href: string;
@@ -148,6 +150,7 @@ export class WorkspaceService {
               frames: 0,
               panels: 0,
               endpoints: 0,
+              installedBreakerIds: [],
               descendantEquipmentIds,
               href: await this.topologyService.buildDeepLink(device.id),
             };
@@ -155,6 +158,7 @@ export class WorkspaceService {
           const frames = presentation.shelves.flatMap((shelf) => shelf.frames);
           const panels = frames.flatMap((frame) => frame.panels);
           const endpoints = panels.flatMap((panel) => panel.positions).filter(Boolean);
+          const installedBreakerIds = endpoints.map((endpoint) => endpoint!.id);
 
           return {
             deviceId: device.id,
@@ -163,6 +167,7 @@ export class WorkspaceService {
             frames: frames.length,
             panels: panels.length,
             endpoints: endpoints.length,
+            installedBreakerIds,
             descendantEquipmentIds,
             href: await this.topologyService.buildDeepLink(device.id),
           };

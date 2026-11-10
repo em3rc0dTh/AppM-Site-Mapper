@@ -1075,3 +1075,50 @@
     flex-direction: column;
   }
 }
+
+
+/* Home · BDFB operational status uses installed breaker coverage + alarm rollup. */
+.sm-home-pin-status {
+  margin-left:auto;
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:4px 7px;
+  border:1px solid #d5dde5;
+  border-radius:999px;
+  background:#f7f9fb;
+  color:#637587;
+  font-size:9px;
+  font-style:normal;
+  font-weight:800;
+  letter-spacing:.025em;
+  white-space:nowrap;
+}
+.sm-home-pin-status i {
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#8d9aa6;
+}
+.sm-home-pin-status[data-tone="healthy"] {
+  border-color:#b8dfd1;
+  background:#f4fbf8;
+  color:#176b56;
+}
+.sm-home-pin-status[data-tone="healthy"] i { background:#28a77f; }
+.sm-home-pin-status[data-tone="warning"] {
+  border-color:#ead49a;
+  background:#fffaf0;
+  color:#8b6512;
+}
+.sm-home-pin-status[data-tone="warning"] i { background:#d8a624; }
+.sm-home-pin-status[data-tone="critical"] {
+  border-color:#efb8b8;
+  background:#fff6f6;
+  color:#a12a2a;
+}
+.sm-home-pin-status[data-tone="critical"] i { background:#dc3f3f; }
+.sm-home-pin--compact .sm-home-pin-status {
+  padding:3px 6px;
+  font-size:8px;
+}

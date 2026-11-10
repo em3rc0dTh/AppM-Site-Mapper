@@ -191,6 +191,40 @@ function setup() {
 }
 
 describe('automatic operational telemetry alarms', () => {
+  it('keeps first rollout in shadow without creating occurrences and de-duplicates transitions', async () => {
+    const topologyRepository = new MemoryTopologyRepository(topology());
+    const alarmRepository = new MemoryAlarmRepository();
+    const bindingRepository = new MemoryTelemetryBindingRepository(bindings());
+    const watchRepository = new MemoryTelemetryWatchRepository();
+    const signals: Array<{ action: string; targetId: string }> = [];
+    const evaluator = new TelemetryAlarmEvaluator(
+      alarmRepository,
+      new MemoryAlarmPolicyRepository(),
+      topologyRepository,
+      bindingRepository,
+      watchRepository,
+      {
+        mode: 'SHADOW',
+        lossAfterMs: 1_000,
+        recoverySamples: 2,
+        reportedOfflineSamples: 2,
+        onShadowSignal: (signal) => signals.push(signal),
+      },
+    );
+
+    await evaluator.observe(sourceSample(T0));
+    await evaluator.evaluateNow(T0 + 1_500);
+    await evaluator.evaluateNow(T0 + 1_600);
+
+    expect(await alarmRepository.listActive()).toHaveLength(0);
+    expect(signals).toEqual([{ action: 'ASSERT', targetId: 'device' }]);
+
+    await evaluator.observe(sourceSample(T0 + 1_700));
+    await evaluator.observe(sourceSample(T0 + 1_800));
+    await evaluator.evaluateNow(T0 + 1_801);
+    expect(signals.at(-1)).toEqual({ action: 'RESOLVE', targetId: 'device' });
+  });
+
   it('raises one source/QDF alarm and suppresses descendants when the publisher disappears', async () => {
     const { evaluator, alarmRepository } = setup();
     await evaluator.observe(sourceSample(T0));

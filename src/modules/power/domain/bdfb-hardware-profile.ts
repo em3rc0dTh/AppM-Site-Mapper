@@ -6,16 +6,10 @@ import type { AccessPort, DeviceNode, EquipmentNode } from '@/modules/topology/d
  */
 export const ELTEK_BDCBB_CONFIG_2 = 'ELTEK_BDCBB_CONFIG_2' as const;
 export const ELTEK_BDCBB_CONFIG_4 = 'ELTEK_BDCBB_CONFIG_4' as const;
-export const CONFIG_4_SLOTS = ['A1', 'A2', 'B1', 'B2'] as const;
-export type Config4Slot = (typeof CONFIG_4_SLOTS)[number];
 export const CONFIG_4_RATED_CURRENT_A = 800;
 export const CONFIG_4_SHUNT_CURRENT_A = 1000;
 export const CONFIG_4_SHUNT_MV = 60;
 export const CONFIG_4_DEFAULT_OVERLOAD_A = 640;
-
-export function isConfig4Slot(value: unknown): value is Config4Slot {
-  return CONFIG_4_SLOTS.some((slot) => slot === value);
-}
 
 export type BdfbHardwareProfile = typeof ELTEK_BDCBB_CONFIG_2 | typeof ELTEK_BDCBB_CONFIG_4;
 export function bdfbHardwareProfile(device: DeviceNode): BdfbHardwareProfile | null {
@@ -23,17 +17,19 @@ export function bdfbHardwareProfile(device: DeviceNode): BdfbHardwareProfile | n
   return selected === ELTEK_BDCBB_CONFIG_2 || selected === ELTEK_BDCBB_CONFIG_4 ? selected : null;
 }
 
-/** A/B is only a physical side. A1/A2/B1/B2 identify distinct inputs. */
-export function config4FeedPosition(port: AccessPort): Config4Slot | null {
-  const slot = port.attributes?.feedPosition;
-  return isConfig4Slot(slot) ? slot : null;
+/** A/B is the electrical side; feedPosition is inventory data, never a fixed enum. */
+export function config4FeedPosition(port: AccessPort): string | null {
+  const position = port.attributes?.feedPosition;
+  if (typeof position !== 'string') return null;
+  const normalized = position.trim();
+  return normalized.length > 0 && normalized.length <= 64 ? normalized : null;
 }
 
 export interface Config4Assessment {
   readonly hardwareProfile: typeof ELTEK_BDCBB_CONFIG_4;
   readonly expectedFeedCount: 4;
   readonly inventoriedFeedCount: number;
-  readonly missingFeedPositions: readonly Config4Slot[];
+  readonly missingFeedPositions: readonly string[];
   readonly issues: readonly string[];
   readonly inventoryComplete: boolean;
 }
@@ -56,31 +52,35 @@ export function assessConfig4Inventory(equipment: readonly EquipmentNode[]): Con
   const active = equipment.filter((item) => item.lifecycle === 'ACTIVE');
   const panels = new Map(active.filter((e) => e.equipmentType === 'PANEL').map((p) => [p.id, p]));
   const ports = active.flatMap((owner) => owner.accessPorts.filter(isIncoming));
-  const missingFeedPositions: Config4Slot[] = [];
+  const missingFeedPositions: string[] = [];
   const issues: string[] = [];
+  const seenPositions = new Set<string>();
   const seenPanels = new Map<string, string>();
 
-  for (const slot of CONFIG_4_SLOTS) {
-    const matching = ports.filter((port) => config4FeedPosition(port) === slot);
-    if (matching.length === 0) {
-      missingFeedPositions.push(slot);
-      continue;
+  for (const port of ports) {
+    const position = config4FeedPosition(port);
+    const identity = position ?? port.name;
+    if (!position) {
+      missingFeedPositions.push(port.name);
+      issues.push(`UNIDENTIFIED_INPUT_${port.id}`);
+    } else if (seenPositions.has(position)) {
+      issues.push(`DUPLICATE_INPUT_${position}`);
+    } else {
+      seenPositions.add(position);
     }
-    if (matching.length !== 1) {
-      issues.push(`DUPLICATE_INPUT_${slot}`);
-      continue;
-    }
-    const port = matching[0]!;
-    if (port.attributes?.feed !== slot[0]) issues.push(`WRONG_SIDE_${slot}`);
+
+    if (port.attributes?.feed !== 'A' && port.attributes?.feed !== 'B')
+      issues.push(`WRONG_SIDE_${identity}`);
     if (port.attributes?.independentInputConfirmed !== true)
-      issues.push(`SHUNT_NOT_VERIFIED_${slot}`);
+      issues.push(`SHUNT_NOT_VERIFIED_${identity}`);
     if (port.attributes?.ratedCurrentA !== CONFIG_4_RATED_CURRENT_A)
-      issues.push(`RATING_NOT_CONFIRMED_${slot}`);
+      issues.push(`RATING_NOT_CONFIRMED_${identity}`);
     if (
       port.attributes?.shuntRatedCurrentA !== CONFIG_4_SHUNT_CURRENT_A ||
       port.attributes?.shuntRatedMillivolts !== CONFIG_4_SHUNT_MV
     )
-      issues.push(`SHUNT_SPEC_NOT_CONFIRMED_${slot}`);
+      issues.push(`SHUNT_SPEC_NOT_CONFIRMED_${identity}`);
+
     const references = port.attributes?.servedPanelIds;
     if (
       !Array.isArray(references) ||
@@ -88,16 +88,15 @@ export function assessConfig4Inventory(equipment: readonly EquipmentNode[]): Con
       typeof references[0] !== 'string' ||
       !panels.has(references[0])
     ) {
-      issues.push(`PANEL_MAPPING_INCOMPLETE_${slot}`);
+      issues.push(`PANEL_MAPPING_INCOMPLETE_${identity}`);
     } else {
       const panelId = references[0];
-      if (seenPanels.has(panelId)) issues.push(`DUPLICATE_PANEL_MAPPING_${slot}`);
-      seenPanels.set(panelId, slot);
+      if (seenPanels.has(panelId)) issues.push(`DUPLICATE_PANEL_MAPPING_${identity}`);
+      seenPanels.set(panelId, identity);
     }
   }
-  if (ports.some((port) => config4FeedPosition(port) === null))
-    issues.push('UNIDENTIFIED_INPUT_FEEDS');
-  if (ports.length !== CONFIG_4_SLOTS.length) issues.push('EXPECTED_FOUR_INPUTS');
+
+  if (ports.length !== 4) issues.push('EXPECTED_FOUR_INPUTS');
   if (panels.size !== 4) issues.push('EXPECTED_FOUR_PANELS');
 
   return {
@@ -106,7 +105,8 @@ export function assessConfig4Inventory(equipment: readonly EquipmentNode[]): Con
     inventoriedFeedCount: ports.length,
     missingFeedPositions,
     issues: [...new Set(issues)],
-    inventoryComplete: missingFeedPositions.length === 0 && issues.length === 0,
+    inventoryComplete:
+      ports.length === 4 && missingFeedPositions.length === 0 && issues.length === 0,
   };
 }
 

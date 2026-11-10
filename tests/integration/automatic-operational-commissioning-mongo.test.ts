@@ -59,7 +59,7 @@ describe.skipIf(!enabled)('automatic operational monitoring with disposable Mong
   });
 
   it('preserves already provisioned legacy watch indexes across repeated bootstraps', async () => {
-    const legacyDb = client.db(databaseName + '_legacy_indexes');
+    const legacyDb = client.db('auto_watch_legacy_' + process.pid + '_' + Date.now());
     try {
       const watches = legacyDb.collection('telemetry_watch_state');
       await watches.createIndex(

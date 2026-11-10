@@ -83,16 +83,16 @@ export function HomeLiveOverview({
     const reporting = bdfb?.reportingEquipment ?? 0;
     const status =
       rollup?.highestSeverity === 'CRITICAL'
-        ? { tone: 'critical', label: 'ALARMA' }
+        ? { tone: 'critical', label: t('statusAlarm') }
         : (rollup?.activeAlarmCount ?? 0) > 0
-          ? { tone: 'warning', label: 'ATENCIÓN' }
+          ? { tone: 'warning', label: t('statusAttention') }
           : installed === 0
-            ? { tone: 'neutral', label: 'SIN INVENTARIO' }
+            ? { tone: 'neutral', label: t('statusNoInventory') }
             : reporting === installed
-              ? { tone: 'healthy', label: 'OPERATIVO' }
+              ? { tone: 'healthy', label: t('statusOperational') }
               : reporting === 0
-                ? { tone: 'neutral', label: 'SIN TELEMETRÍA' }
-                : { tone: 'warning', label: 'TELEMETRÍA PARCIAL' };
+                ? { tone: 'neutral', label: t('statusNoTelemetry') }
+                : { tone: 'warning', label: t('statusTelemetryPartial') };
     return (
       <Link
         href={pin.href}

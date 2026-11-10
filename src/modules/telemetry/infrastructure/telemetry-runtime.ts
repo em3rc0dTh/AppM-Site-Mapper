@@ -103,6 +103,13 @@ function positiveInt(value: string | undefined, fallback: number): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function telemetryWatchMode(value: string | undefined): 'SHADOW' | 'ACTIVE' {
+  const normalized = (value ?? 'shadow').trim().toLowerCase();
+  if (normalized === 'shadow') return 'SHADOW';
+  if (normalized === 'active') return 'ACTIVE';
+  throw new Error('TELEMETRY_WATCH_MODE must be shadow or active.');
+}
+
 function configuredBindings(value: string | undefined): readonly TelemetryBinding[] {
   if (!value?.trim()) return [];
   let parsed: unknown;
@@ -210,6 +217,7 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
       bindingRepository,
       telemetryWatchRepository,
       {
+        mode: telemetryWatchMode(process.env.TELEMETRY_WATCH_MODE),
         lossAfterMs: positiveInt(process.env.TELEMETRY_WATCH_LOSS_AFTER_MS, 900_000),
         recoverySamples: positiveInt(process.env.TELEMETRY_WATCH_RECOVERY_SAMPLES, 2),
         reportedOfflineSamples: positiveInt(
@@ -220,6 +228,8 @@ export async function getTelemetryRuntime(): Promise<TelemetryRuntime> {
           logger.warn('alarm.telemetry_watchdog_failed', {
             reason: error instanceof Error ? error.message : 'unknown',
           }),
+        onShadowSignal: (signal) =>
+          logger.info('alarm.telemetry_shadow_transition', signal),
       },
     );
     const unsubscribeAlarmEvaluator = hub.subscribe((sample) => {

@@ -3,6 +3,7 @@ import {
   polygonInsidePolygon,
   polygonsOverlapArea,
 } from '@/modules/spatial/domain/geometry';
+import { isOperationallyVisible } from '@/modules/topology/application/equipment-visibility';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
   AccessPort,
@@ -949,7 +950,7 @@ export class TopologyService {
         depth >= maxDepth
           ? []
           : await Promise.all(
-              (await this.listChildren(node.id)).map((child) =>
+              (await this.listChildren(node.id)).filter(isOperationallyVisible).map((child) =>
                 visit(child, nextSegments, depth + 1),
               ),
             );

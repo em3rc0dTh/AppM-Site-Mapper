@@ -2,21 +2,13 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MongoClient } from 'mongodb';
 
 import { TelemetryAlarmEvaluator } from '@/modules/alarm/application/telemetry-alarm-evaluator';
-import {
-  MemoryAlarmPolicyRepository,
-} from '@/modules/alarm/infrastructure/memory-alarm-policy-repository';
+import { MemoryAlarmPolicyRepository } from '@/modules/alarm/infrastructure/memory-alarm-policy-repository';
 import { MongoAlarmRepository } from '@/modules/alarm/infrastructure/mongo-alarm-repository';
 import type { TelemetryBinding, TelemetrySample } from '@/modules/telemetry/domain/entities';
-import {
-  MemoryTelemetryBindingRepository,
-} from '@/modules/telemetry/infrastructure/memory-telemetry-binding-repository';
-import {
-  MongoTelemetryWatchRepository,
-} from '@/modules/telemetry/infrastructure/mongo-telemetry-watch-repository';
+import { MemoryTelemetryBindingRepository } from '@/modules/telemetry/infrastructure/memory-telemetry-binding-repository';
+import { MongoTelemetryWatchRepository } from '@/modules/telemetry/infrastructure/mongo-telemetry-watch-repository';
 import type { DeviceNode } from '@/modules/topology/domain/entities';
-import {
-  MemoryTopologyRepository,
-} from '@/modules/topology/infrastructure/memory-topology-repository';
+import { MemoryTopologyRepository } from '@/modules/topology/infrastructure/memory-topology-repository';
 import { ensurePersistenceIndexes } from '@/shared/infrastructure/mongodb/bootstrap';
 
 const enabled = process.env.CI_ALARM_ACCEPTANCE === 'true';
@@ -69,9 +61,9 @@ describe.skipIf(!enabled)('automatic operational monitoring with disposable Mong
   it('persists watch state and detects loss after restart without policies', async () => {
     const db = client.db(databaseName);
     const indexes = await db.collection('telemetry_watch_state').indexes();
-    expect(
-      indexes.find((index) => index.name === 'uq_telemetry_watch_state_id')?.unique,
-    ).toBe(true);
+    expect(indexes.find((index) => index.name === 'uq_telemetry_watch_state_id')?.unique).toBe(
+      true,
+    );
 
     const device: DeviceNode = {
       id: 'device',
@@ -109,19 +101,12 @@ describe.skipIf(!enabled)('automatic operational monitoring with disposable Mong
 
     expect(await db.collection('alarm_policies').countDocuments({})).toBe(0);
 
-    const first = new TelemetryAlarmEvaluator(
-      alarms,
-      policies,
-      topology,
-      bindings,
-      watches,
-      {
-        mode: 'ACTIVE',
-        lossAfterMs: 1_000,
-        recoverySamples: 2,
-        reportedOfflineSamples: 2,
-      },
-    );
+    const first = new TelemetryAlarmEvaluator(alarms, policies, topology, bindings, watches, {
+      mode: 'ACTIVE',
+      lossAfterMs: 1_000,
+      recoverySamples: 2,
+      reportedOfflineSamples: 2,
+    });
     await first.observe(sourceSample(0));
 
     expect(await db.collection('telemetry_watch_state').countDocuments({})).toBe(1);

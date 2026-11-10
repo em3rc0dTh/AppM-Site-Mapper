@@ -24,10 +24,18 @@ type RuleCode = 'LOW_VOLTAGE' | 'OVERCURRENT' | 'POWER_LOSS';
 type Counter = { assert: number; clear: number };
 
 export interface AutomaticTelemetryAlarmOptions {
+  readonly mode?: 'SHADOW' | 'ACTIVE';
   readonly lossAfterMs?: number;
   readonly recoverySamples?: number;
   readonly reportedOfflineSamples?: number;
   readonly onWatchdogError?: (error: unknown) => void;
+  readonly onShadowSignal?: (signal: {
+    readonly action: 'ASSERT' | 'RESOLVE';
+    readonly targetId: string;
+    readonly sourceContext: string;
+    readonly severity?: AlarmSeverity;
+    readonly note?: string;
+  }) => void;
 }
 
 function metric(sample: TelemetrySample, key: string): number | null {
@@ -95,6 +103,8 @@ export class TelemetryAlarmEvaluator {
   private readonly automaticLossAfterMs: number;
   private readonly automaticRecoverySamples: number;
   private readonly automaticReportedOfflineSamples: number;
+  private readonly automaticMode: 'SHADOW' | 'ACTIVE';
+  private readonly shadowActive = new Set<string>();
   private watchdog: ReturnType<typeof setInterval> | null = null;
   private stopped = false;
 
@@ -107,6 +117,7 @@ export class TelemetryAlarmEvaluator {
     private readonly options: AutomaticTelemetryAlarmOptions = {},
   ) {
     this.commands = new AlarmCommandService(alarms, topology);
+    this.automaticMode = options.mode ?? 'ACTIVE';
     this.automaticLossAfterMs = options.lossAfterMs ?? BFDB_OFFLINE_AFTER_MS;
     this.automaticRecoverySamples = Math.max(1, options.recoverySamples ?? 2);
     this.automaticReportedOfflineSamples = Math.max(1, options.reportedOfflineSamples ?? 2);
@@ -490,6 +501,19 @@ export class TelemetryAlarmEvaluator {
     nowIso: string;
   }): Promise<void> {
     const correlationKey = this.automaticCorrelationKey(input.targetId, input.sourceContext);
+    if (this.automaticMode === 'SHADOW') {
+      if (!this.shadowActive.has(correlationKey)) {
+        this.shadowActive.add(correlationKey);
+        this.options.onShadowSignal?.({
+          action: 'ASSERT',
+          targetId: input.targetId,
+          sourceContext: input.sourceContext,
+          severity: input.severity,
+          note: input.note,
+        });
+      }
+      return;
+    }
     const active = await this.alarms.getActiveByCorrelationKey(correlationKey);
     if (active && (active.severity === 'CRITICAL' || active.severity === input.severity)) return;
 
@@ -523,6 +547,16 @@ export class TelemetryAlarmEvaluator {
     reason: string,
   ): Promise<void> {
     const correlationKey = this.automaticCorrelationKey(targetId, sourceContext);
+    if (this.automaticMode === 'SHADOW') {
+      if (this.shadowActive.delete(correlationKey)) {
+        this.options.onShadowSignal?.({
+          action: 'RESOLVE',
+          targetId,
+          sourceContext,
+        });
+      }
+      return;
+    }
     if (!(await this.alarms.getActiveByCorrelationKey(correlationKey))) return;
     await this.commands.resolve(correlationKey, reason, [], observedAt);
   }

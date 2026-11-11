@@ -40,6 +40,7 @@ function SeriesChart({
   metric,
   scale,
   window,
+  breaker = false,
 }: Readonly<{
   name: string;
   unit: string;
@@ -48,6 +49,7 @@ function SeriesChart({
   metric: CompositionMetricKey;
   scale: number;
   window: TelemetryHistoryWindow;
+  breaker?: boolean;
 }>) {
   const t = useTranslations('historyCharts');
   const locale = useLocale();
@@ -127,12 +129,18 @@ function SeriesChart({
           observations.map((point) => (
             <circle key={point.at} cx={x(point.at)} cy={y(point.value)} r="2.9" fill={color}>
               <title>
-                {t('tooltip', {
-                  date: new Date(point.at).toLocaleString(locale, { timeZone: 'America/Lima' }),
-                  value: formatValue(point.value, locale),
-                  unit,
-                  count: point.reporting,
-                })}
+                {breaker
+                  ? t('breakerTooltip', {
+                      date: new Date(point.at).toLocaleString(locale, { timeZone: 'America/Lima' }),
+                      value: formatValue(point.value, locale),
+                      unit,
+                    })
+                  : t('tooltip', {
+                      date: new Date(point.at).toLocaleString(locale, { timeZone: 'America/Lima' }),
+                      value: formatValue(point.value, locale),
+                      unit,
+                      count: point.reportingChildren,
+                    })}
               </title>
             </circle>
           ))}
@@ -201,7 +209,7 @@ export function CompositionHistoryCharts({
   return (
     <div className="ec-history-charts">
       <div className="ec-history-controls">
-        <strong>{t('title')}</strong>
+        <strong>{equipmentType === 'CIRCUIT_BREAKER' ? t('breakerTitle') : t('title')}</strong>
         <div role="group" aria-label={t('range')}>
           {WINDOWS.map((range) => (
             <button
@@ -229,11 +237,15 @@ export function CompositionHistoryCharts({
           <div className="ec-history-coverage">
             <span>{t('timeBuckets', { count: data.points.length })}</span>
             <span>
-              {t('bindings', { bound: data.boundBreakerCount, total: data.breakerCount })}
+              {equipmentType === 'CIRCUIT_BREAKER'
+                ? t('breakerBindings', { bound: data.boundBreakerCount, total: data.breakerCount })
+                : t('bindings', { bound: data.boundBreakerCount, total: data.breakerCount })}
             </span>
             <span>
               {last
-                ? t('reporting', { count: coverage ?? 0, total: denominator ?? 0 })
+                ? equipmentType === 'CIRCUIT_BREAKER'
+                  ? t('breakerReporting', { count: coverage ?? 0, total: denominator ?? 0 })
+                  : t('reporting', { count: coverage ?? 0, total: denominator ?? 0 })
                 : t('noRecord')}
             </span>
           </div>
@@ -245,7 +257,9 @@ export function CompositionHistoryCharts({
             </small>
           )}
           {!data.points.length ? (
-            <p>{t('noReadings')}</p>
+            <p>
+              {equipmentType === 'CIRCUIT_BREAKER' ? t('breakerNoReadings') : t('noReadings')}
+            </p>
           ) : compact ? (
             <>
               <div className="ec-history-metric-tabs" role="group" aria-label={t('metricLabel')}>
@@ -284,6 +298,7 @@ export function CompositionHistoryCharts({
                   metric={metric.key}
                   scale={metric.scale}
                   window={window}
+                  breaker={equipmentType === 'CIRCUIT_BREAKER'}
                 />
               ))}
             </>
@@ -307,11 +322,18 @@ export function CompositionHistoryCharts({
                   metric={metric.key}
                   scale={metric.scale}
                   window={window}
+                  breaker={equipmentType === 'CIRCUIT_BREAKER'}
                 />
               ))}
             </div>
           )}
-          {!compact && <p className="ec-history-explainer">{t('bucketDisclaimer')}</p>}
+          {!compact && (
+            <p className="ec-history-explainer">
+              {equipmentType === 'CIRCUIT_BREAKER'
+                ? t('breakerDisclaimer')
+                : t('bucketDisclaimer')}
+            </p>
+          )}
         </>
       )}
     </div>

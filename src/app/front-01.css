@@ -675,3 +675,30 @@
   background: #e6f3ff;
   border-color: #2678ba;
 }
+
+
+/* Physical hierarchy must remain reachable at 16-inch laptop CSS widths.
+   Do not clip Frame/Panel contents when the center pane is narrower than its
+   natural diagram; allow an intentional local scroll instead. */
+@media (min-width: 900px) and (max-width: 1599px) {
+  .zip-bdfb-page #front01-panel-physical {
+    overflow: auto;
+    overscroll-behavior: contain;
+    scrollbar-gutter: stable;
+  }
+  .zip-bdfb-page #front01-panel-physical > .bdfb-chassis {
+    min-width: 0;
+  }
+  .zip-bdfb-page .bdfb-chassis .sm-bdfb-physical-body,
+  .zip-bdfb-page .bdfb-chassis .sm-bdfb-panel-focus {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+  }
+  .zip-bdfb-page .bdfb-chassis .sm-bdfb-physical-frames,
+  .zip-bdfb-page .bdfb-chassis .sm-bdfb-physical-panels,
+  .zip-bdfb-page .bdfb-chassis .sm-bdfb-panel-positions {
+    min-width: 0;
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useLocale, useTranslations } from 'next-intl';
+import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 import type { CompositionHistoryPoint } from '@/modules/telemetry/application/composition-history';
 import type { CompositionMetricKey } from '@/modules/telemetry/application/composition-telemetry-summary';
 import type { TelemetryHistoryWindow } from '@/modules/telemetry/domain/history';
@@ -213,14 +214,11 @@ export function CompositionHistoryCharts({
         <div className="ec-history-heading">
           <strong>{equipmentType === 'CIRCUIT_BREAKER' ? t('breakerTitle') : t('title')}</strong>
           {equipmentType === 'CIRCUIT_BREAKER' && (
-            <a
-              className="ec-history-report-link"
+            <DetachedWorkbenchButton
               href={`/workbench/breaker-report?equipmentId=${encodeURIComponent(equipmentId)}&window=${window}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              {tr('openBreakerReport')}
-            </a>
+              windowName={`site-mapper-breaker-report-${equipmentId}`}
+              label={tr('openBreakerReport')}
+            />
           )}
         </div>
         <div role="group" aria-label={t('range')}>

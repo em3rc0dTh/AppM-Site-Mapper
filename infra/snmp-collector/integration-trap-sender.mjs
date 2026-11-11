@@ -4,6 +4,7 @@ const host = process.env.SNMP_TRAP_TARGET || 'snmp-traps';
 const port = Number(process.env.SNMP_TRAP_PORT || '1162');
 const community = process.env.SNMP_TRAP_COMMUNITY || 'site-mapper-integration-trap';
 const intervalMs = Number(process.env.SNMP_TRAP_INTERVAL_MS || '5000');
+const oneShot = process.env.SNMP_TRAP_ONESHOT === 'true';
 
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid SNMP_TRAP_PORT');
 if (!Number.isInteger(intervalMs) || intervalMs < 1000 || intervalMs > 60000)
@@ -36,15 +37,20 @@ function sendTrap() {
           sequence,
         }),
       );
+      if (oneShot) {
+        session.close();
+        process.exitCode = 1;
+      }
       return;
     }
     console.info(JSON.stringify({ event: 'snmp.integration_trap.sent', sequence }));
     sequence += 1;
+    if (oneShot) session.close();
   });
 }
 
 sendTrap();
-const timer = setInterval(sendTrap, intervalMs);
+const timer = oneShot ? undefined : setInterval(sendTrap, intervalMs);
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => {

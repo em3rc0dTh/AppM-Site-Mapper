@@ -76,11 +76,14 @@ display secrets in terminal output or logs.
 ## Activation on TFARM04 (controlled maintenance window)
 
 1. Merge the PR after review, fetch the accepted commit on TFARM04.
-2. Create a **distinct** authorized synthetic trap sender and determine its
-   IPv4 address as **seen by the receiver**. Do not assume existing synthetic
-   polling agents emit traps. The integration sender can be used manually
-   for a bounded one-shot test; do not run it continuously. Configure its
-   SNMPv2c principal or v3 user and target to match the receiver.
+2. For a deterministic local test, configure the **separate** source
+   `EMU-TRAP-LAB-01` with `address: "127.0.0.1"` in the three JSON contracts.
+   Set `SNMP_TRAP_TEST_COMMUNITY` to the same private community as that
+   source profile. The optional `snmp-trap-test` container shares the
+   receiver network namespace (`network_mode: service:snmp-traps`) and sends
+   exactly **one** notification from 127.0.0.1; existing BFDB polling agents
+   are neither modified nor assumed to emit traps. Never reuse this loopback
+   source for a real device.
 3. Append the three JSON keys from the example, replacing placeholders
    with local secrets, commissioned source identity and the authorized
    sender address. Do not replace the existing BFDB environment entries.
@@ -106,7 +109,17 @@ display secrets in terminal output or logs.
    Avoid `down`, `--remove-orphans`, `-v`, or rebuilding unrelated services.
    For a new checkout, building `snmp-traps` may be necessary before `up`;
    review the expected image and changes before doing so.
-6. Send exactly one controlled synthetic notification. Confirm:
+6. Send exactly one controlled synthetic notification after receiver startup:
+   ```sh
+   sudo docker compose --env-file .runtime/office-test.env \
+     -f docker-compose.telemetry.yml \
+     -f docker-compose.office-test.yml \
+     -f docker-compose.snmp-field.yml \
+     --profile trap-test run --rm --no-deps snmp-trap-test
+   ```
+   The command must print `snmp.integration_trap.sent` once and exit. It is
+   a test-only sender and must **never** be started using `up -d`.
+   Confirm:
    - receiver diagnostics show `trap.queued` and
      `trap.delivery.committed` (or diagnose `trap.delivery.retry`);
    - industrial response is HTTP 202 (receiver's success log is not itself

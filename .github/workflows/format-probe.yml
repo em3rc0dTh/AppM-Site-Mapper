@@ -1,0 +1,26 @@
+name: format-probe
+
+on:
+  push:
+    branches:
+      - feat/client-rfp-clarity-reporting
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Show Prettier diff for breaker report
+        shell: bash
+        run: |
+          cp src/components/workbench/breaker-load-report-workbench.tsx /tmp/before.tsx
+          npx prettier --write src/components/workbench/breaker-load-report-workbench.tsx
+          diff -u /tmp/before.tsx src/components/workbench/breaker-load-report-workbench.tsx || true

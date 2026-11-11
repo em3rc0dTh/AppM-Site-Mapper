@@ -5,6 +5,8 @@ const port = Number(process.env.SNMP_TRAP_PORT || '1162');
 const community = process.env.SNMP_TRAP_COMMUNITY || 'site-mapper-integration-trap';
 const intervalMs = Number(process.env.SNMP_TRAP_INTERVAL_MS || '5000');
 const oneShot = process.env.SNMP_TRAP_ONESHOT === 'true';
+const notificationOid =
+  process.env.SNMP_TRAP_NOTIFICATION_OID || '1.3.6.1.4.1.12148.10.1.2.1';
 
 if (oneShot && !process.env.SNMP_TRAP_COMMUNITY?.trim())
   throw new Error('One-shot trap sender requires explicit SNMP_TRAP_COMMUNITY');
@@ -30,7 +32,7 @@ function sendTrap() {
       value: sequence,
     },
   ];
-  session.trap('1.3.6.1.4.1.12148.10.1.2.1', vars, (error) => {
+  session.trap(notificationOid, vars, (error) => {
     if (error) {
       console.error(
         JSON.stringify({

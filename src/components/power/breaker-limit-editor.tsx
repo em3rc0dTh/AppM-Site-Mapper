@@ -13,6 +13,7 @@ interface LimitsView {
   panelName: string;
   revision: number;
   protection: BreakerProtection | null;
+  nominalRatingA: number | null;
   policy: { assertAboveA: number; clearBelowA: number } | null;
   canEdit: boolean;
   policyEnabled: boolean | null;
@@ -114,7 +115,7 @@ export function BreakerLimitEditor({
         if (cancelled) return;
         setData(view);
         setHistory(audit.history ?? []);
-        setRating(String(view.protection?.ratedCurrentA ?? ''));
+        setRating(String(view.protection?.ratedCurrentA ?? view.nominalRatingA ?? ''));
         setAssertAt(String(view.protection?.assertAboveA ?? view.policy?.assertAboveA ?? ''));
         setClearAt(String(view.protection?.clearBelowA ?? view.policy?.clearBelowA ?? ''));
         setSource(view.protection?.provenance.source ?? 'PROVISIONAL_STANDARD');

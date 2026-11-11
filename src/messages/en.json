@@ -2451,6 +2451,8 @@
     "breakerSummary": "Breaker summary",
     "latestEnergy": "Latest energy counter",
     "recordedIntervals": "Recorded intervals",
+    "timestamp": "Date and time",
+    "positionShort": "Pos. {position}",
     "lastAccepted": "Last accepted",
     "generatedFrom": "Generated from",
     "reportWindow": "Report window",

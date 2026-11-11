@@ -665,7 +665,7 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
  * QDF-4 A3/B3 position 7 is intentionally absent: no breaker is materialized from
  * a named reservation in the source worksheet.
  */
-const BREAKER_FIELD_SCHEDULE: Readonly<Record<string, Readonly<{
+export const BREAKER_FIELD_SCHEDULE: Readonly<Record<string, Readonly<{
   ratedCurrentA: number;
   targetFootprint: string;
   documentedStatus: 'IN_SERVICE' | 'OFF';
@@ -1634,6 +1634,7 @@ async function ensureDeclaredFeedPairs(
       pairId: `seed01:${spec.key}:row:${breaker.sourceRow}`,
       feed,
       targetLabel: breaker.destination,
+      documentedRatingA: field.ratedCurrentA,
       targetFootprint: field.targetFootprint,
       documentedStatus: field.documentedStatus,
       fieldScheduleSource: BREAKER_FIELD_SCHEDULE_SOURCE,

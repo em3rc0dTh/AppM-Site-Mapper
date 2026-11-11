@@ -33,5 +33,25 @@ services:
         condition: service_started
     restart: unless-stopped
 
+  # Optional one-time synthetic sender, never part of the standard stack.
+  # It shares the receiver network namespace so its source IPv4 is 127.0.0.1.
+  # Commission only this localhost synthetic test source in the private runtime.
+  snmp-trap-test:
+    profiles: ['trap-test']
+    build:
+      context: .
+      dockerfile: infra/snmp-collector/Dockerfile
+    command: ['node', 'integration-trap-sender.mjs']
+    network_mode: 'service:snmp-traps'
+    environment:
+      SNMP_TRAP_TARGET: '127.0.0.1'
+      SNMP_TRAP_PORT: '1162'
+      SNMP_TRAP_COMMUNITY: '${SNMP_TRAP_TEST_COMMUNITY:?Configure a private lab-only trap community}'
+      SNMP_TRAP_ONESHOT: 'true'
+    depends_on:
+      snmp-traps:
+        condition: service_started
+    restart: 'no'
+
 volumes:
   snmp_field_trap_spool:

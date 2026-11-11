@@ -162,7 +162,7 @@ body:has(.sm-workbench) {
 
 .sm-load-report-kpis {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
 }
 
@@ -192,6 +192,13 @@ body:has(.sm-workbench) {
 
 .sm-load-report-quality {
   padding: 14px;
+}
+
+.sm-load-report-quality-help {
+  margin: 0 0 10px;
+  color: #60778d;
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .sm-load-report-quality > div {

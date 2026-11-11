@@ -17,8 +17,8 @@ import { getHelpSearchIndex, readHelpArticle } from '@/modules/help/server';
 const root = process.cwd();
 
 describe('Customer-facing Site Mapper Help Center', () => {
-  it('has 23 unique, safe, bilingual workflow guides', async () => {
-    expect(helpCatalog).toHaveLength(23);
+  it('has 24 unique, safe, bilingual workflow guides', async () => {
+    expect(helpCatalog).toHaveLength(24);
     expect(new Set(helpCatalog.map((entry) => entry.slug)).size).toBe(helpCatalog.length);
     expect(new Set(helpCatalog.map((entry) => entry.file)).size).toBe(helpCatalog.length);
 

@@ -2,6 +2,8 @@
 
 Si es tu primera vez, no necesitas memorizar todos los nombres del sistema. Empieza aprendiendo **dónde estás**, **qué objeto tienes abierto** y **qué quieres hacer**.
 
+Para palabras como **Network, Site, Container Cluster, Anchor, Rack, Device o Equipment**, usa el [Glosario simple de Site Mapper](glosario.md).
+
 > Las capturas de esta ayuda usan una instalación de ejemplo. Los nombres, valores y estados que veas en tu sistema pueden ser diferentes.
 
 ## La pantalla tiene tres zonas principales

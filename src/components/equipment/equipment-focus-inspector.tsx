@@ -15,6 +15,7 @@ import {
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
 import { useTranslations } from 'next-intl';
 import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
+import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 
 type Tab = 'overview' | 'telemetry' | 'history' | 'alarms' | 'ports' | 'settings';
 
@@ -50,6 +51,7 @@ export function EquipmentFocusInspector({
   mode = 'operation',
 }: Props) {
   const t = useTranslations('equipment.inspector');
+  const tw = useTranslations('workbench');
   const [tab, setTab] = useState<Tab>(mode === 'maintenance' ? 'ports' : 'overview');
   const [snmpExpanded, setSnmpExpanded] = useState(false);
   const { samples, now, hasSnapshot } = useTelemetryStream(canReadTelemetry);
@@ -225,6 +227,15 @@ export function EquipmentFocusInspector({
         {activeTab === 'history' && canReadTelemetry && (
           <>
             <CompositionHistoryCharts equipmentId={equipment.id} equipmentType={equipment.equipmentType} />
+            {breaker && (
+              <div className="sm-detached-workbench-actions">
+                <DetachedWorkbenchButton
+                  href={`/workbench/breaker-report?equipmentId=${encodeURIComponent(equipment.id)}&window=24h`}
+                  windowName={`site-mapper-breaker-report-${equipment.id}`}
+                  label={tw('openBreakerReport')}
+                />
+              </div>
+            )}
             {breaker && (
               <details className="ec-history-raw">
                 <summary>{t('packets')}</summary>

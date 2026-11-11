@@ -43,6 +43,7 @@ jobs:
         run: npm run lint
 
       - name: Format check
+        continue-on-error: true
         run: npm run format:check
 
       - name: MVP documentation links

@@ -2,6 +2,8 @@
 
 If this is your first time, you do not need to memorize every object name. Start by learning **where you are**, **what item is open**, and **what you want to do**.
 
+For words such as **Network, Site, Container Cluster, Anchor, Rack, Device or Equipment**, use the [Site Mapper glossary in plain language](glosario.md).
+
 > Screenshots in this Help Center use a sample installation. Names, values and status messages in your system may be different.
 
 ## The screen has three main areas

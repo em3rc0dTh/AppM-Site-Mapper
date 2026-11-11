@@ -67,7 +67,10 @@ function navigationChildren(
 }
 
 function containsActive(node: TopologyNavigationNode, id: string): boolean {
-  return node.node.id === id || navigationChildren(node, id).some((child) => containsActive(child, id));
+  return (
+    node.node.id === id ||
+    navigationChildren(node, id).some((child) => containsActive(child, id))
+  );
 }
 
 function TreeBranch({

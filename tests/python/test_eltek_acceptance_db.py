@@ -19,6 +19,9 @@ class EltekAcceptanceMongoDbTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             acceptance.mongo_script("seed-01'); db.dropDatabase(); //")
 
+    def test_g10_uses_canonical_fc04_input_register_contract(self):
+        self.assertEqual(acceptance.MODBUS_FUNCTION, 4)
+
 
 if __name__ == "__main__":
     unittest.main()

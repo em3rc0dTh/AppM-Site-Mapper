@@ -17,7 +17,7 @@ import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integr
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 9 as const;
+export const SEED_01_VERSION = 10 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -657,6 +657,71 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
 
 // Important: these schedules close the declared A/B feeds only. The remote targets
 // are NOT materialized as Equipment because their bay/rack/U placement is not yet known.
+
+/**
+ * Field schedule: Distribución tributarios en QDF nuevos.xlsx (2026-11-11).
+ * These are documentary nominal ratings and DESTINATION labels, not alarm thresholds,
+ * live breaker states, certified PowerPaths, or verified physical rack assignments.
+ * QDF-4 A3/B3 position 7 is intentionally absent: no breaker is materialized from
+ * a named reservation in the source worksheet.
+ */
+export const BREAKER_FIELD_SCHEDULE: Readonly<
+  Record<
+    string,
+    Readonly<{
+      ratedCurrentA: number;
+      targetFootprint: string;
+      documentedStatus: 'IN_SERVICE' | 'OFF';
+      replacementTargetA?: number;
+    }>
+  >
+> = {
+  ...Object.fromEntries(
+    Array.from({ length: 13 }, (_, index) => {
+      const position = index + 1;
+      return [
+        `QDF-2:${position}`,
+        {
+          ratedCurrentA: position === 1 ? 100 : 80,
+          targetFootprint: position === 1 ? '010202.10' : position <= 7 ? '010202.09' : '010202.11',
+          documentedStatus: position === 1 ? ('OFF' as const) : ('IN_SERVICE' as const),
+          ...(position >= 8 ? { replacementTargetA: 60 } : {}),
+        },
+      ];
+    }),
+  ),
+  'QDF-4:1': { ratedCurrentA: 50, targetFootprint: '010206.20', documentedStatus: 'IN_SERVICE' },
+  'QDF-4:2': { ratedCurrentA: 50, targetFootprint: '010206.20', documentedStatus: 'IN_SERVICE' },
+  'QDF-4:3': { ratedCurrentA: 100, targetFootprint: '010206.19', documentedStatus: 'IN_SERVICE' },
+  'QDF-4:4': { ratedCurrentA: 100, targetFootprint: '010206.15', documentedStatus: 'IN_SERVICE' },
+  'QDF-4:5': { ratedCurrentA: 100, targetFootprint: '010206.15', documentedStatus: 'IN_SERVICE' },
+  'QDF-4:6': { ratedCurrentA: 60, targetFootprint: '010205.20', documentedStatus: 'IN_SERVICE' },
+  ...Object.fromEntries(
+    Array.from({ length: 18 }, (_, index) => {
+      const position = index + 1;
+      const targetFootprint =
+        position <= 2 || position === 7 || position === 8 || position === 9
+          ? '010208.12'
+          : position <= 6 || position === 18
+            ? '010208.13'
+            : position <= 15
+              ? '010208.16'
+              : position === 16
+                ? '010207.20'
+                : '010208.14';
+      return [
+        `QDF-5:${position}`,
+        {
+          ratedCurrentA: position === 8 ? 50 : position >= 17 ? 100 : 60,
+          targetFootprint,
+          documentedStatus: 'IN_SERVICE' as const,
+          ...(position === 8 ? { replacementTargetA: 30 } : {}),
+        },
+      ];
+    }),
+  ),
+};
+const BREAKER_FIELD_SCHEDULE_SOURCE = 'Distribución tributarios en QDF nuevos.xlsx';
 
 const BDFBS: readonly BdfbSpec[] = [
   {
@@ -1578,6 +1643,11 @@ async function ensureDeclaredFeedPairs(
       throw new Error(`SEED_01_FEED_PAIR_CONFLICT: breaker ${breakerId} missing`);
     }
 
+    const field = BREAKER_FIELD_SCHEDULE[`${spec.key}:${breaker.position}`];
+    if (!field)
+      throw new Error(
+        `SEED_01_FIELD_SCHEDULE_MISSING: ${spec.key}/${breaker.panel}/${breaker.position}`,
+      );
     const declaredPower = {
       contractVersion: 1,
       state: 'DECLARED' as const,
@@ -1587,6 +1657,11 @@ async function ensureDeclaredFeedPairs(
       pairId: `seed01:${spec.key}:row:${breaker.sourceRow}`,
       feed,
       targetLabel: breaker.destination,
+      documentedRatingA: field.ratedCurrentA,
+      targetFootprint: field.targetFootprint,
+      documentedStatus: field.documentedStatus,
+      fieldScheduleSource: BREAKER_FIELD_SCHEDULE_SOURCE,
+      ...(field.replacementTargetA ? { replacementTargetA: field.replacementTargetA } : {}),
       currentBreaker: {
         panel: breaker.panel,
         position: breaker.position,
@@ -1607,16 +1682,58 @@ async function ensureDeclaredFeedPairs(
       targetMaterialization: 'NOT_CREATED' as const,
     };
 
-    if (JSON.stringify(current.attributes?.declaredPower) === JSON.stringify(declaredPower)) {
+    // Preserve operator-corrected destination/pair/placement assertions during a
+    // version upgrade. The new worksheet facts fill missing documentary fields only.
+    const previousDeclaration = current.attributes?.declaredPower;
+    const existingDeclared =
+      previousDeclaration &&
+      typeof previousDeclaration === 'object' &&
+      !Array.isArray(previousDeclaration)
+        ? (previousDeclaration as Record<string, unknown>)
+        : null;
+    const mergedDeclaredPower = existingDeclared
+      ? {
+          ...declaredPower,
+          ...existingDeclared,
+          documentedRatingA: existingDeclared.documentedRatingA ?? field.ratedCurrentA,
+          targetFootprint: existingDeclared.targetFootprint ?? field.targetFootprint,
+          documentedStatus: existingDeclared.documentedStatus ?? field.documentedStatus,
+          fieldScheduleSource:
+            existingDeclared.fieldScheduleSource ?? BREAKER_FIELD_SCHEDULE_SOURCE,
+          ...(field.replacementTargetA && existingDeclared.replacementTargetA === undefined
+            ? { replacementTargetA: field.replacementTargetA }
+            : {}),
+        }
+      : declaredPower;
+
+    // Never overwrite an existing commissioned/verified rating or alarm policy.
+    // A documentary rating is a field fact, not an enabled overcurrent threshold.
+    const existingRating = current.attributes?.ratedCurrentA;
+    const protectedRating = current.attributes?.breakerProtection;
+    const canSeedRating = existingRating === undefined && protectedRating === undefined;
+    const ratingPatch = canSeedRating
+      ? {
+          ratedCurrentA: field.ratedCurrentA,
+          ratedCurrentProvenance: {
+            source: 'CUSTOMER_DOCUMENT',
+            verified: false,
+            reference: BREAKER_FIELD_SCHEDULE_SOURCE,
+          },
+        }
+      : {};
+    if (
+      JSON.stringify(current.attributes?.declaredPower) === JSON.stringify(mergedDeclaredPower) &&
+      !canSeedRating
+    )
       continue;
-    }
 
     before.push(current);
     after.push({
       ...current,
       attributes: {
         ...(current.attributes ?? {}),
-        declaredPower,
+        ...ratingPatch,
+        declaredPower: mergedDeclaredPower,
       },
       updatedAt: new Date().toISOString(),
     });
@@ -2396,7 +2513,7 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
         source: {
           topology: 'seed-01 canonical runtime seed manifest',
           commissioning: 'CP_Acrel_v0.2',
-          breakerSchedule: 'Lista de Equipos QDF mop 1 - actualizado',
+          breakerSchedule: BREAKER_FIELD_SCHEDULE_SOURCE,
           snmp: 'Results SNMPWalk',
         },
         observations: {

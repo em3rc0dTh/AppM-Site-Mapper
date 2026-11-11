@@ -172,14 +172,14 @@ It is not an alarm by itself.
 
 ## Where do I find each thing?
 
-| If you want to know… | Open… |
-| --- | --- |
-| Where a QDF is located | Room plan / navigation tree |
-| What is installed in a rack | Front Elevation |
-| How a BDFB is physically composed | Physical view |
-| What is happening now | Operation |
-| How values changed over time | Charts / Report |
-| What happened on one breaker | Breaker → Charts → Open breaker report |
-| What a term means | This glossary |
+| If you want to know…              | Open…                                  |
+| --------------------------------- | -------------------------------------- |
+| Where a QDF is located            | Room plan / navigation tree            |
+| What is installed in a rack       | Front Elevation                        |
+| How a BDFB is physically composed | Physical view                          |
+| What is happening now             | Operation                              |
+| How values changed over time      | Charts / Report                        |
+| What happened on one breaker      | Breaker → Charts → Open breaker report |
+| What a term means                 | This glossary                          |
 
 If a screen uses an infrastructure term you do not recognize, check this glossary first. Help should explain the concept without requiring outside technical knowledge.

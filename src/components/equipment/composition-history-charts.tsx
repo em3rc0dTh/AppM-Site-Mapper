@@ -268,9 +268,7 @@ export function CompositionHistoryCharts({
             </small>
           )}
           {!data.points.length ? (
-            <p>
-              {equipmentType === 'CIRCUIT_BREAKER' ? t('breakerNoReadings') : t('noReadings')}
-            </p>
+            <p>{equipmentType === 'CIRCUIT_BREAKER' ? t('breakerNoReadings') : t('noReadings')}</p>
           ) : compact ? (
             <>
               <div className="ec-history-metric-tabs" role="group" aria-label={t('metricLabel')}>
@@ -340,9 +338,7 @@ export function CompositionHistoryCharts({
           )}
           {!compact && (
             <p className="ec-history-explainer">
-              {equipmentType === 'CIRCUIT_BREAKER'
-                ? t('breakerDisclaimer')
-                : t('bucketDisclaimer')}
+              {equipmentType === 'CIRCUIT_BREAKER' ? t('breakerDisclaimer') : t('bucketDisclaimer')}
             </p>
           )}
         </>

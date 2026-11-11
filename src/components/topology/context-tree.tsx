@@ -54,17 +54,21 @@ function labelFor(kind: TopologyKind): TopologyKindLabel {
   }
 }
 
-function navigationChildren(node: TopologyNavigationNode): readonly TopologyNavigationNode[] {
+function navigationChildren(
+  node: TopologyNavigationNode,
+  activeId?: string,
+): readonly TopologyNavigationNode[] {
   return node.children.filter(
     (child) =>
-      child.node.kind !== 'EQUIPMENT' || child.node.equipmentType !== 'CIRCUIT_BREAKER',
+      child.node.kind !== 'EQUIPMENT' ||
+      child.node.equipmentType !== 'CIRCUIT_BREAKER' ||
+      child.node.id === activeId,
   );
 }
 
 function containsActive(node: TopologyNavigationNode, id: string): boolean {
   return (
-    node.node.id === id ||
-    navigationChildren(node).some((child) => containsActive(child, id))
+    node.node.id === id || navigationChildren(node, id).some((child) => containsActive(child, id))
   );
 }
 
@@ -95,7 +99,7 @@ function TreeBranch({
     alarmedBranch ||
     (selectedId !== null && containsActive(item, selectedId));
 
-  const visibleChildren = navigationChildren(item);
+  const visibleChildren = navigationChildren(item, activeId);
 
   const select = (event: MouseEvent<HTMLAnchorElement>) => {
     // Keyboard Enter opens the link; a pointer's first click only inspects.

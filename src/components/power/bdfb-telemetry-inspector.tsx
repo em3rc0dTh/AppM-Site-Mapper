@@ -280,42 +280,49 @@ export function BdfbTelemetryInspector({
       </div>
 
       {mode === 'operation' && (
-              <nav
-                className="sm-bdfb-inspector-tabs"
-                role="tablist"
-                aria-label={ti('inspectorSections')}
-                onKeyDown={(event) => {
-                  if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-                  event.preventDefault();
-                  const current = tabs.findIndex((item) => item === tab);
-                  const nextIndex =
-                    event.key === 'Home'
-                      ? 0
-                      : event.key === 'End'
-                        ? tabs.length - 1
-                        : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) %
-                          tabs.length;
-                  const nextTab = tabs[nextIndex]!;
-                  changeTab(nextTab);
-                  const button = document.getElementById('sm-bdfb-tab-' + nextTab);
-                  button?.focus();
-                }}
-              >
-                {tabs.map((item) => (
-                  <button
-                    key={item}
-                    type="button"
-                    role="tab"
-                    id={'sm-bdfb-tab-' + item}
-                    aria-controls={'sm-bdfb-panel-' + item}
-                    aria-selected={tab === item}
-                    tabIndex={tab === item ? 0 : -1}
-                    onClick={() => changeTab(item)}
-                  >
-                    {item === 'alarms' ? t('alarms') : item === 'feeds' ? t('feeds') : item === 'history' ? t('history') : item === 'overview' ? t('overview') : t('settings')}
-                  </button>
-                ))}
-              </nav>
+        <nav
+          className="sm-bdfb-inspector-tabs"
+          role="tablist"
+          aria-label={ti('inspectorSections')}
+          onKeyDown={(event) => {
+            if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+            event.preventDefault();
+            const current = tabs.findIndex((item) => item === tab);
+            const nextIndex =
+              event.key === 'Home'
+                ? 0
+                : event.key === 'End'
+                  ? tabs.length - 1
+                  : (current + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+            const nextTab = tabs[nextIndex]!;
+            changeTab(nextTab);
+            const button = document.getElementById('sm-bdfb-tab-' + nextTab);
+            button?.focus();
+          }}
+        >
+          {tabs.map((item) => (
+            <button
+              key={item}
+              type="button"
+              role="tab"
+              id={'sm-bdfb-tab-' + item}
+              aria-controls={'sm-bdfb-panel-' + item}
+              aria-selected={tab === item}
+              tabIndex={tab === item ? 0 : -1}
+              onClick={() => changeTab(item)}
+            >
+              {item === 'alarms'
+                ? t('alarms')
+                : item === 'feeds'
+                  ? t('feeds')
+                  : item === 'history'
+                    ? t('history')
+                    : item === 'overview'
+                      ? t('overview')
+                      : t('settings')}
+            </button>
+          ))}
+        </nav>
       )}
 
       <div
@@ -345,18 +352,35 @@ export function BdfbTelemetryInspector({
               </header>
 
               <div className="front01-mqtt-kpis">
-                <div><span>{ti('avgVoltage')}</span><strong>{metric(live.averageVoltageV, 'V')}</strong></div>
-                <div><span>{ti('avgCurrent')}</span><strong>{metric(live.averageCurrentA, 'A')}</strong></div>
-                <div><span>{ti('avgPower')}</span><strong>{metric(kilowatts(live.averagePowerW), 'kW', 3)}</strong></div>
-                <div><span>{ti('avgEnergy')}</span><strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong></div>
+                <div>
+                  <span>{ti('avgVoltage')}</span>
+                  <strong>{metric(live.averageVoltageV, 'V')}</strong>
+                </div>
+                <div>
+                  <span>{ti('avgCurrent')}</span>
+                  <strong>{metric(live.averageCurrentA, 'A')}</strong>
+                </div>
+                <div>
+                  <span>{ti('avgPower')}</span>
+                  <strong>{metric(kilowatts(live.averagePowerW), 'kW', 3)}</strong>
+                </div>
+                <div>
+                  <span>{ti('avgEnergy')}</span>
+                  <strong>{metric(live.averageEnergyKwh, 'kWh', 4)}</strong>
+                </div>
               </div>
 
               <dl className="front01-mqtt-facts">
-                <dt>{ti('totalPower')}</dt><dd>{metric(kilowatts(live.totalPowerW), 'kW', 3)}</dd>
-                <dt>{ti('reportingShort')}</dt><dd>{reportingEquipment}</dd>
-                <dt>{ti('descendants')}</dt><dd>{live.descendantEquipment}</dd>
-                <dt>{ti('withoutCurrent')}</dt><dd>{live.withoutCurrentReading}</dd>
-                <dt>{ti('latestPacket')}</dt><dd>{compactUtc(latestReceived)}</dd>
+                <dt>{ti('totalPower')}</dt>
+                <dd>{metric(kilowatts(live.totalPowerW), 'kW', 3)}</dd>
+                <dt>{ti('reportingShort')}</dt>
+                <dd>{reportingEquipment}</dd>
+                <dt>{ti('descendants')}</dt>
+                <dd>{live.descendantEquipment}</dd>
+                <dt>{ti('withoutCurrent')}</dt>
+                <dd>{live.withoutCurrentReading}</dd>
+                <dt>{ti('latestPacket')}</dt>
+                <dd>{compactUtc(latestReceived)}</dd>
               </dl>
 
               <footer className="front01-mqtt-footer">

@@ -599,7 +599,6 @@ body:has(.sm-workbench) {
   color: #6f8da8;
 }
 
-
 .sm-load-report-kpis--electrical {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
@@ -644,7 +643,6 @@ body:has(.sm-workbench) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-
 
 .sm-load-report-card-note {
   margin: 5px 0 0;

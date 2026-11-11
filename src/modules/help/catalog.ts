@@ -68,10 +68,23 @@ export const helpCatalog: readonly HelpEntry[] = [
     file: 'glosario.md',
     category: 'start',
     title: 'Glosario de Site Mapper',
-    summary: 'Entiende Network, Site, Anchor, Rack, BDFB, Panel, Breaker y otros términos en palabras sencillas.',
+    summary:
+      'Entiende Network, Site, Anchor, Rack, BDFB, Panel, Breaker y otros términos en palabras sencillas.',
     enTitle: 'Site Mapper glossary',
-    enSummary: 'Understand Network, Site, Anchor, Rack, BDFB, Panel, Breaker and other terms in plain language.',
-    keywords: ['glosario', 'glossary', 'anchor', 'container cluster', 'bay', 'network', 'site', 'rack', 'bdfb', 'breaker'],
+    enSummary:
+      'Understand Network, Site, Anchor, Rack, BDFB, Panel, Breaker and other terms in plain language.',
+    keywords: [
+      'glosario',
+      'glossary',
+      'anchor',
+      'container cluster',
+      'bay',
+      'network',
+      'site',
+      'rack',
+      'bdfb',
+      'breaker',
+    ],
     minutes: 7,
   },
   {
@@ -308,7 +321,8 @@ export function helpSummary(item: HelpEntry, locale: HelpLocale) {
 
 /** Recommendations only; actual permissions remain enforced by each page. */
 export function recommendHelp(pathname: string): readonly string[] {
-  if (pathname.startsWith('/blueprint/')) return ['glosario', 'espacios-y-racks', 'evidencia-visual'];
+  if (pathname.startsWith('/blueprint/'))
+    return ['glosario', 'espacios-y-racks', 'evidencia-visual'];
   if (pathname.startsWith('/rack/'))
     return ['glosario', 'equipos-y-posiciones', 'espacios-y-racks'];
   if (pathname.startsWith('/device/'))

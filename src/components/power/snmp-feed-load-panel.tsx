@@ -38,16 +38,10 @@ function kilowatts(value: number | null | undefined): number | null | undefined 
   return value === undefined || value === null ? value : value / 1000;
 }
 
-function readablePanel(
-  panel: PhysicalPanel,
-  frameWord: string,
-  panelWord: string,
-): string {
+function readablePanel(panel: PhysicalPanel, frameWord: string, panelWord: string): string {
   const frame = panel.frameName.match(/FRAME-(\d+)/i);
   const position = panel.name.match(/PANEL-(\d+)/i);
-  return frame && position
-    ? `${frameWord} ${frame[1]} · ${panelWord} ${position[1]}`
-    : panel.name;
+  return frame && position ? `${frameWord} ${frame[1]} · ${panelWord} ${position[1]}` : panel.name;
 }
 
 export function SnmpFeedLoadPanel({
@@ -184,18 +178,50 @@ export function SnmpFeedLoadPanel({
       <section className="front01-snmp-summary" aria-label={t('section')}>
         <header className="front01-summary-header">
           <strong>{t('compactTitle')}</strong>
-          <span>{error ? t('statusUnavailable') : isLab ? t('statusLab') : load?.status === 'COMPLETE' ? t('statusLive') : t('statusPending')}</span>
+          <span>
+            {error
+              ? t('statusUnavailable')
+              : isLab
+                ? t('statusLab')
+                : load?.status === 'COMPLETE'
+                  ? t('statusLive')
+                  : t('statusPending')}
+          </span>
         </header>
 
         <dl className="front01-snmp-kpis">
-          <div><dt>{t('totalCurrent')}</dt><dd>{numeric(error ? null : capacity?.measuredA, 'A')}</dd></div>
-          <div><dt>{t('nominalCapacity')}</dt><dd>{numeric(capacity?.ratedA, 'A')}</dd></div>
-          <div><dt>{t('available')}</dt><dd>{numeric(capacity?.availableA, 'A')}</dd></div>
-          <div><dt>{t('utilization')}</dt><dd>{numeric(capacity?.utilizationPct, '%')}</dd></div>
-          <div><dt>{t('qdfVoltage')}</dt><dd>{numeric(load?.voltageContract?.total?.voltageV, 'V')}</dd></div>
-          <div><dt>{t('busA')}</dt><dd>{numeric(load?.voltageContract?.busA?.voltageV, 'V')}</dd></div>
-          <div><dt>{t('approxPower')}</dt><dd>{numeric(kilowatts(load?.totalEstimatedPowerW), 'kW')}</dd></div>
-          <div><dt>{t('busB')}</dt><dd>{numeric(load?.voltageContract?.busB?.voltageV, 'V')}</dd></div>
+          <div>
+            <dt>{t('totalCurrent')}</dt>
+            <dd>{numeric(error ? null : capacity?.measuredA, 'A')}</dd>
+          </div>
+          <div>
+            <dt>{t('nominalCapacity')}</dt>
+            <dd>{numeric(capacity?.ratedA, 'A')}</dd>
+          </div>
+          <div>
+            <dt>{t('available')}</dt>
+            <dd>{numeric(capacity?.availableA, 'A')}</dd>
+          </div>
+          <div>
+            <dt>{t('utilization')}</dt>
+            <dd>{numeric(capacity?.utilizationPct, '%')}</dd>
+          </div>
+          <div>
+            <dt>{t('qdfVoltage')}</dt>
+            <dd>{numeric(load?.voltageContract?.total?.voltageV, 'V')}</dd>
+          </div>
+          <div>
+            <dt>{t('busA')}</dt>
+            <dd>{numeric(load?.voltageContract?.busA?.voltageV, 'V')}</dd>
+          </div>
+          <div>
+            <dt>{t('approxPower')}</dt>
+            <dd>{numeric(kilowatts(load?.totalEstimatedPowerW), 'kW')}</dd>
+          </div>
+          <div>
+            <dt>{t('busB')}</dt>
+            <dd>{numeric(load?.voltageContract?.busB?.voltageV, 'V')}</dd>
+          </div>
         </dl>
 
         <div className="front01-snmp-table-wrap">
@@ -215,7 +241,9 @@ export function SnmpFeedLoadPanel({
                   <td>{feed.label}</td>
                   <td>{numeric(feed.measuredA, 'A')}</td>
                   <td>{numeric(feed.ratedA, 'A')}</td>
-                  <td>{feed.utilizationPct === null ? '—' : `${feed.utilizationPct.toFixed(1)}%`}</td>
+                  <td>
+                    {feed.utilizationPct === null ? '—' : `${feed.utilizationPct.toFixed(1)}%`}
+                  </td>
                   <td>{numeric(feed.availableA, 'A')}</td>
                 </tr>
               ))}
@@ -225,7 +253,12 @@ export function SnmpFeedLoadPanel({
 
         <div className="front01-snmp-footer">
           <strong>
-            {t('activeInputs', { value: reportingFeeds === null || !load ? '—' : `${reportingFeeds} / ${load.expectedFeedCount}` })}
+            {t('activeInputs', {
+              value:
+                reportingFeeds === null || !load
+                  ? '—'
+                  : `${reportingFeeds} / ${load.expectedFeedCount}`,
+            })}
           </strong>
           {capacity?.utilizationPct !== null && capacity?.utilizationPct !== undefined ? (
             <>
@@ -237,7 +270,9 @@ export function SnmpFeedLoadPanel({
                 aria-valuemax={100}
                 aria-valuenow={Math.max(0, Math.min(100, capacity.utilizationPct))}
               >
-                <span style={{ width: `${Math.max(0, Math.min(100, capacity.utilizationPct))}%` }} />
+                <span
+                  style={{ width: `${Math.max(0, Math.min(100, capacity.utilizationPct))}%` }}
+                />
               </div>
               <b>{capacity.utilizationPct.toFixed(1)}%</b>
             </>
@@ -270,7 +305,11 @@ export function SnmpFeedLoadPanel({
               {labBusy ? t('configuring') : t('connectSynthetic')}
             </button>
             {labConfigured && <small role="status">{t('labMapped')}</small>}
-            {labError && <small role="alert" className="form-error">{labError}</small>}
+            {labError && (
+              <small role="alert" className="form-error">
+                {labError}
+              </small>
+            )}
           </div>
         )}
 
@@ -295,7 +334,9 @@ export function SnmpFeedLoadPanel({
                   .filter((panel): panel is PhysicalPanel => panel !== undefined);
                 const panelLabel =
                   mappedPanels.length > 0
-                    ? mappedPanels.map((panel) => readablePanel(panel, t('frameWord'), t('panelWord'))).join(', ')
+                    ? mappedPanels
+                        .map((panel) => readablePanel(panel, t('frameWord'), t('panelWord')))
+                        .join(', ')
                     : feed.servedPanelIds.length
                       ? t('assignedPanels', { count: feed.servedPanelIds.length })
                       : '—';
@@ -317,7 +358,9 @@ export function SnmpFeedLoadPanel({
                     <td>{numeric(feed.voltageV, 'V')}</td>
                     <td>{panelLabel}</td>
                     <td>{feed.sourceIdentity ?? t('notMapped')}</td>
-                    <td><code>{feed.currentOid ?? '—'}</code></td>
+                    <td>
+                      <code>{feed.currentOid ?? '—'}</code>
+                    </td>
                     <td>{feed.observedAt ?? '—'}</td>
                   </tr>
                 );
@@ -328,11 +371,7 @@ export function SnmpFeedLoadPanel({
 
         {!load?.feedCount && !error && <p>{t('noFeeds')}</p>}
         <footer className="front01-inputs-note">
-          <span>
-            {labCount > 0
-              ? t('simulatedSnmpReporting', { count: labCount })
-              : 'SNMP'}
-          </span>
+          <span>{labCount > 0 ? t('simulatedSnmpReporting', { count: labCount }) : 'SNMP'}</span>
           <span>{t('independentMeasurements')}</span>
           {load?.status !== 'COMPLETE' && <span>{t('noTotal')}</span>}
         </footer>
@@ -358,7 +397,7 @@ export function SnmpFeedLoadPanel({
           </span>
         </header>
 
-        {(
+        {
           <>
             <div className="zip-bdfb-live-average-grid">
               <div>
@@ -529,8 +568,8 @@ export function SnmpFeedLoadPanel({
               </div>
             )}
           </>
-        )}
-        {(
+        }
+        {
           <>
             {labEnabled && inventoryRecorded && labCount === 0 && (
               <div className="sm-snmp-lab-activation">
@@ -640,7 +679,7 @@ export function SnmpFeedLoadPanel({
             {load?.status !== 'COMPLETE' && <p className="sm-snmp-no-total">{t('noTotal')}</p>}
             <small>{t('snmpSeparate')}</small>
           </>
-        )}
+        }
       </section>
       {view === 'all' && (
         <>

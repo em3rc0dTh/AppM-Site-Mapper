@@ -36,6 +36,22 @@ jobs:
       - name: Industrial wire contracts and stable Modbus extensions
         run: npm run test:industrial
 
+      - name: SNMP FIELD customer-reference Compose contract
+        run: |
+          node --check infra/snmp-collector/integration-trap-sender.mjs
+          sed 's/CHANGE_ME/ci-only-placeholder/g' infra/field/office-test.env.example > /tmp/site-mapper-snmp-field.env
+          cat >> /tmp/site-mapper-snmp-field.env <<'EOF'
+          INDUSTRIAL_INGEST_SOURCES_JSON={"EMU-TRAP-LAB-01":"ci-only-source-token-123456789012345678901234567890"}
+          INDUSTRIAL_PROFILES_JSON=[{"sourceIdentity":"EMU-TRAP-LAB-01","protocol":"SNMP","version":"lab-raw-v1","staleMs":30000,"rules":[]}]
+          SNMP_TRAP_SOURCES_JSON=[{"sourceIdentity":"EMU-TRAP-LAB-01","address":"127.0.0.1","version":"2c","community":"ci-only-trap-principal","token":"ci-only-source-token-123456789012345678901234567890"}]
+          SNMP_TRAP_TEST_COMMUNITY=ci-only-trap-principal
+          EOF
+          docker compose --env-file /tmp/site-mapper-snmp-field.env \
+            -f docker-compose.telemetry.yml \
+            -f docker-compose.office-test.yml \
+            -f docker-compose.snmp-field.yml \
+            --profile snmp --profile trap-test config --quiet
+
       - name: Typecheck
         run: npm run typecheck
 

@@ -2,6 +2,8 @@
 
 Imagina que buscas un equipo en un edificio. Primero eliges el lugar, después la sala, luego el rack y finalmente el equipo.
 
+Si aparece una palabra que no conoces —por ejemplo **Network, Container Cluster, Anchor, Device o Equipment**— consulta el [Glosario simple de Site Mapper](glosario.md).
+
 ![Cómo encontrar un equipo dentro de una sala](/help/diagrams/es/places.svg)
 
 ## Las partes más importantes

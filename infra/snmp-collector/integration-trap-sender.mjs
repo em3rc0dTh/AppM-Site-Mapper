@@ -6,6 +6,8 @@ const community = process.env.SNMP_TRAP_COMMUNITY || 'site-mapper-integration-tr
 const intervalMs = Number(process.env.SNMP_TRAP_INTERVAL_MS || '5000');
 const oneShot = process.env.SNMP_TRAP_ONESHOT === 'true';
 
+if (oneShot && !process.env.SNMP_TRAP_COMMUNITY?.trim())
+  throw new Error('One-shot trap sender requires explicit SNMP_TRAP_COMMUNITY');
 if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid SNMP_TRAP_PORT');
 if (!Number.isInteger(intervalMs) || intervalMs < 1000 || intervalMs > 60000)
   throw new Error('Invalid SNMP_TRAP_INTERVAL_MS');

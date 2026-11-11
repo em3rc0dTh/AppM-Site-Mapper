@@ -19,6 +19,7 @@ import { createTelemetryBindingRepository } from '@/modules/telemetry/infrastruc
 import { createTelemetryStoreClient } from '@/modules/telemetry/infrastructure/http-telemetry-store';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
 import { readBoundedJson } from '@/shared/http/request-security';
+import { logger } from '@/shared/infrastructure/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -186,7 +187,13 @@ export async function POST(request: Request) {
     });
 
     return Response.json({ signals }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch {
+  } catch (error) {
+    logger.warn('industrial.projection.failed', {
+      reason:
+        error instanceof Error
+          ? (error.name + ': ' + error.message).replace(/[\r\n]/g, ' ').slice(0, 160)
+          : 'unknown',
+    });
     return Response.json({ error: 'PROJECTION_UNAVAILABLE' }, { status: 503 });
   }
 }

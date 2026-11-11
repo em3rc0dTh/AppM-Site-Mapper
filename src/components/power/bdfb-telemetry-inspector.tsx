@@ -280,16 +280,6 @@ export function BdfbTelemetryInspector({
       </div>
 
       {mode === 'operation' && (
-        <div className="sm-detached-workbench-actions sm-bdfb-load-report-toolbar">
-          <DetachedWorkbenchButton
-            href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
-            windowName={`site-mapper-load-report-${node.id}`}
-            label={ti('openLoadReport')}
-          />
-        </div>
-      )}
-
-      {mode === 'operation' && (
               <nav
                 className="sm-bdfb-inspector-tabs"
                 role="tablist"
@@ -378,6 +368,11 @@ export function BdfbTelemetryInspector({
                       : ti('noActiveDescendantTelemetry')}
                   </span>
                 </div>
+                <DetachedWorkbenchButton
+                  href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
+                  windowName={`site-mapper-load-report-${node.id}`}
+                  label={ti('openLoadReport')}
+                />
               </footer>
             </section>
           </>

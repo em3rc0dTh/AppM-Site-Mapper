@@ -225,7 +225,7 @@ export function QdfLoadReportWorkbench({
     <main className="sm-workbench sm-load-report">
       <header className="sm-workbench-header">
         <div>
-          <small>{t('detachedTitle')}</small>
+          <small>{t('operationalReport')}</small>
           <h1>
             {t('loadReportTitle')} · {deviceName}
           </h1>
@@ -298,7 +298,7 @@ export function QdfLoadReportWorkbench({
                   <div><dt>{t('min')}</dt><dd>{metric(report.metrics.voltage.min, 'V')}</dd></div>
                   <div><dt>{t('average')}</dt><dd>{metric(report.metrics.voltage.average, 'V')}</dd></div>
                   <div><dt>{t('max')}</dt><dd>{metric(report.metrics.voltage.max, 'V')}</dd></div>
-                  <div><dt>Δ</dt><dd>{metric(voltageVariation, 'V')}</dd></div>
+                  <div><dt>{t('voltageVariation')}</dt><dd>{metric(voltageVariation, 'V')}</dd></div>
                 </dl>
               </article>
               <article>
@@ -350,6 +350,13 @@ export function QdfLoadReportWorkbench({
               </span>
             </div>
             <p className="sm-load-report-coverage-note">
+              {t('intervalCoverage', {
+                voltage: report.coverage.voltageBuckets,
+                current: report.coverage.currentBuckets,
+                power: report.coverage.powerBuckets,
+                energy: report.coverage.energyBuckets,
+              })}
+              <br />
               <b>{t('completeIntervals')}:</b> {report.coverage.commonBuckets}
             </p>
           </section>

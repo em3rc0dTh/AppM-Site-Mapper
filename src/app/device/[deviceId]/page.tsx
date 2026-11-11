@@ -393,11 +393,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
           {tree && (
             <TopologyContextTree
               tree={tree}
-              activeId={
-                node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER' && parentPanel
-                  ? parentPanel.id
-                  : node.id
-              }
+              activeId={node.id}
             />
           )}
         </aside>

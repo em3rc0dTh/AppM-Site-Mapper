@@ -1,0 +1,37 @@
+# Customer-reference SNMP TRAP capability.
+# Compose with docker-compose.telemetry.yml and the deployment's existing
+# environment overlay. Never combine with docker-compose.integration.yml.
+# All source credentials/profiles are provided by a private env file.
+services:
+  site-mapper:
+    environment:
+      INDUSTRIAL_TIMESCALE_ENABLED: 'true'
+      INDUSTRIAL_INGEST_SOURCES_JSON: '${INDUSTRIAL_INGEST_SOURCES_JSON:?Configure source-to-token JSON in the private runtime env}'
+      INDUSTRIAL_PROFILES_JSON: '${INDUSTRIAL_PROFILES_JSON:?Configure source profiles in the private runtime env}'
+
+  snmp-traps:
+    build:
+      context: .
+      dockerfile: infra/snmp-collector/Dockerfile
+    command: ['node', 'trap-receiver.mjs']
+    environment:
+      APP_ENV: '${APP_ENV:-development}'
+      SNMP_TRAP_SOURCES_JSON: '${SNMP_TRAP_SOURCES_JSON:?Configure authorized traps in private runtime env}'
+      SNMP_TRAP_BIND_HOST: '0.0.0.0'
+      SNMP_TRAP_PORT: '1162'
+      SNMP_TRAP_MAX_PENDING: '${SNMP_TRAP_MAX_PENDING:-1000}'
+      SNMP_TRAP_SPOOL: '/data/traps'
+      INDUSTRIAL_INGEST_URL: '${INDUSTRIAL_INGEST_URL:-http://site-mapper:3000/api/telemetry/industrial/ingest}'
+    ports:
+      # Loopback by default. Field deployments must set the approved LAN
+      # binding and a corresponding source firewall rule explicitly.
+      - '${SNMP_TRAP_HOST_BIND:-127.0.0.1}:${SNMP_TRAP_HOST_PORT:-1162}:1162/udp'
+    volumes:
+      - snmp_field_trap_spool:/data
+    depends_on:
+      site-mapper:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  snmp_field_trap_spool:

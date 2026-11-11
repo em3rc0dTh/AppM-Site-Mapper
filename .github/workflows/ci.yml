@@ -56,7 +56,7 @@ jobs:
           const fs = require('node:fs');
           const { spawnSync } = require('node:child_process');
           const files = fs.readFileSync('/tmp/changed-format-files', 'utf8')
-            .split('\\0').filter((p) => /\\.(?:[cm]?[jt]sx?|json|css|md|ya?ml)$/.test(p) && fs.existsSync(p));
+            .split('\0').filter((p) => /\.(?:[cm]?[jt]sx?|json|css|md|ya?ml)$/.test(p) && fs.existsSync(p));
           if (!files.length) { console.log('No changed Prettier-supported files'); process.exit(0); }
           console.log('Prettier checking changed files:', files.join(', '));
           const result = spawnSync('npx', ['prettier', '--check', ...files], { stdio: 'inherit' });

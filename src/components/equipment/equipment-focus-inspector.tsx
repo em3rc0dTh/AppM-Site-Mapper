@@ -50,6 +50,7 @@ export function EquipmentFocusInspector({
   mode = 'operation',
 }: Props) {
   const t = useTranslations('equipment.inspector');
+  const tr = useTranslations('workbench');
   const [tab, setTab] = useState<Tab>(mode === 'maintenance' ? 'ports' : 'overview');
   const [snmpExpanded, setSnmpExpanded] = useState(false);
   const { samples, now, hasSnapshot } = useTelemetryStream(canReadTelemetry);
@@ -225,6 +226,16 @@ export function EquipmentFocusInspector({
         {activeTab === 'history' && canReadTelemetry && (
           <>
             <CompositionHistoryCharts equipmentId={equipment.id} equipmentType={equipment.equipmentType} />
+            {breaker && (
+              <a
+                className="ec-history-report-link"
+                href={`/workbench/breaker-report?equipmentId=${encodeURIComponent(equipment.id)}&window=24h`}
+                target="_blank"
+                rel="noreferrer"
+              >
+                {tr('openBreakerReport')}
+              </a>
+            )}
             {breaker && (
               <details className="ec-history-raw">
                 <summary>{t('packets')}</summary>

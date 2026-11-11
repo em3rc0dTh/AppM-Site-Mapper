@@ -23,6 +23,22 @@ History answers a simple question: **how did this measurement change over the la
 
 Some SNMP views also offer **15D** or **1M**.
 
+## QDF and individual breaker reports
+
+For a **QDF**, the report can summarize the selected period with minimum, average and maximum voltage, voltage variation, average and peak current, average and peak power, window energy and the breaker table.
+
+The **Data availability** section shows whether each measurement had data during the selected period. “No data in this window” does not mean the equipment is powered off.
+
+For an **individual breaker**:
+
+1. Open the breaker.
+2. Go to **Operation → Charts**.
+3. Select **Open breaker report**.
+4. Choose **24H**, **7D**, **15D** or **1M**.
+5. Export the result as **CSV** or use **Print / PDF**.
+
+The breaker energy value is shown as an accumulated counter; it is not automatically presented as window consumption.
+
 ## If the chart is empty
 
 There may be no stored readings for the selected period. Try another available period and check whether the unit has recent readings.

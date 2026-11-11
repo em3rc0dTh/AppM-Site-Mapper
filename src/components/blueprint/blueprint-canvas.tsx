@@ -225,7 +225,7 @@ export function BlueprintCanvas({
           ],
         },
       ],
-      actions: [{ label: t('openRackFocus'), href: `/rack/${rack.id}/focus` }],
+      actions: [{ label: t('open'), href: `/rack/${rack.id}` }],
     });
   }
   const [zoom, setZoom] = useState(focusedRack ? 2 : 1);

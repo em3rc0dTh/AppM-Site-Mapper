@@ -598,3 +598,57 @@ body:has(.sm-workbench) {
   margin-right: 6px;
   color: #6f8da8;
 }
+
+
+.sm-load-report-kpis--electrical {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.sm-load-report-kpis--electrical article {
+  min-height: 132px;
+}
+
+.sm-load-report-kpis--electrical dl {
+  display: grid;
+  gap: 5px;
+  margin: 2px 0 0;
+}
+
+.sm-load-report-kpis--electrical dl div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: #5f7488;
+  font-size: 10px;
+}
+
+.sm-load-report-kpis--electrical dt,
+.sm-load-report-kpis--electrical dd {
+  margin: 0;
+}
+
+.sm-load-report-kpis--electrical dd {
+  color: #1c3a54;
+  font-weight: 800;
+}
+
+.sm-load-report-coverage-note {
+  margin: 10px 0 0;
+  color: #5f7488;
+  font-size: 10px;
+}
+
+@media (max-width: 1180px) {
+  .sm-load-report-kpis--electrical {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+.sm-load-report-card-note {
+  margin: 5px 0 0;
+  color: #667b8f;
+  font-size: 9px;
+  line-height: 1.35;
+}

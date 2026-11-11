@@ -24,7 +24,7 @@ En la parte superior encontrarás **Search**, **?**, **EXPLORE**, **WAREHOUSE** 
 4. Abre el Rack y luego el equipo que necesitas.
 5. Desde su ficha puedes revisar su composición, sus conexiones y, cuando existan, sus lecturas.
 
-No pasa nada si al principio no recuerdas la jerarquía. El árbol de la izquierda y las rutas de navegación de la parte superior te indican siempre dónde estás.
+No pasa nada si al principio no recuerdas la jerarquía. El árbol de la izquierda y las rutas de navegación de la parte superior te indican siempre dónde estás. Si encuentras términos como **Network**, **Container Cluster** o **Anchor**, consulta el [Glosario de Site Mapper](glosario.md): explica qué representa cada término y si se trata de un lugar, una referencia o un equipo físico.
 
 ## Qué botón usar
 

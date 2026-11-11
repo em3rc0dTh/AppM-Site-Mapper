@@ -389,14 +389,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
       </nav>
 
       <ResizableWorkspace className="mk-device-layout" userKey={auth.value.id}>
-        <aside>
-          {tree && (
-            <TopologyContextTree
-              tree={tree}
-              activeId={node.id}
-            />
-          )}
-        </aside>
+        <aside>{tree && <TopologyContextTree tree={tree} activeId={node.id} />}</aside>
 
         <section className="zip-device-stage">
           <h1>{node.kind === 'EQUIPMENT' ? t('composition') : t('elevation')}</h1>

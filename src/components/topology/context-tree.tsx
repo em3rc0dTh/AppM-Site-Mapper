@@ -68,8 +68,7 @@ function navigationChildren(
 
 function containsActive(node: TopologyNavigationNode, id: string): boolean {
   return (
-    node.node.id === id ||
-    navigationChildren(node, id).some((child) => containsActive(child, id))
+    node.node.id === id || navigationChildren(node, id).some((child) => containsActive(child, id))
   );
 }
 

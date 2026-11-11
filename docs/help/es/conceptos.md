@@ -28,7 +28,7 @@ Supongamos que necesitas revisar el interruptor de un panel. Puedes seguir este 
 4. Abre el **Rack** donde se encuentra el equipo.
 5. Entra al **Device**, busca el **Panel** y selecciona el interruptor.
 
-No necesitas conocer todos los nombres de memoria: el árbol de navegación te ayuda a avanzar.
+No necesitas conocer todos los nombres de memoria: el árbol de navegación te ayuda a avanzar. Algunos niveles, como **Container Cluster** o **Anchor**, son referencias de ubicación de Site Mapper y no equipos físicos. Consulta el [Glosario de Site Mapper](glosario.md) para ver cada término explicado en palabras sencillas.
 
 ![Ejemplo real de una Room con racks ubicados en su Blueprint](/help/screenshots/room-blueprint.png)
 

@@ -73,7 +73,6 @@ export default async function RackPage({
           <details className="rack-tools-disclosure">
             <summary>{t('actions')}</summary>
             {room && <Link href={`/blueprint/${room.id}?rack=${rackId}`}>{t('locate')}</Link>}
-            <Link href={`/rack/${rackId}/focus`}>{t('focus')}</Link>
             <Link href={`/power?entity=${rackId}`}>{t('power')}</Link>
           </details>
         </aside>

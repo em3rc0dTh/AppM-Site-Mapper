@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 
 import {
   projectQdfLoadReport,
@@ -103,6 +103,7 @@ export function QdfLoadReportWorkbench({
   initialWindow: TelemetryHistoryWindow;
 }>) {
   const t = useTranslations('workbench');
+  const locale = useLocale();
   const [windowRange, setWindowRange] = useState<TelemetryHistoryWindow>(initialWindow);
   const [trends, setTrends] = useState<TrendPayload | null>(null);
   const [breakers, setBreakers] = useState<BreakerPayload | null>(null);
@@ -149,13 +150,37 @@ export function QdfLoadReportWorkbench({
     [trends],
   );
 
+  const statusLabel = (status: 'COMPLETE' | 'PARTIAL' | 'UNAVAILABLE') =>
+    status === 'COMPLETE'
+      ? t('dataComplete')
+      : status === 'PARTIAL'
+        ? t('dataPartial')
+        : t('dataUnavailable');
+
+  const qualityLabel = (quality: 'VALID' | 'UNAVAILABLE') =>
+    quality === 'VALID' ? t('dataAvailable') : t('noDataInWindow');
+
+  const formatTimestamp = (value: string | null) =>
+    value
+      ? new Date(value).toLocaleString(locale, { timeZone: 'America/Lima' })
+      : '—';
+
   function exportCsv() {
     if (!report || !breakers) return;
     const rows = [
       ['device', deviceName],
       ['window', report.window],
-      ['contract_status', report.status],
+      ['data_status', statusLabel(report.status)],
+      ['minimum_voltage_v', report.metrics.voltage.min ?? ''],
       ['average_voltage_v', report.metrics.voltage.average ?? ''],
+      ['maximum_voltage_v', report.metrics.voltage.max ?? ''],
+      [
+        'voltage_variation_v',
+        report.metrics.voltage.min !== null && report.metrics.voltage.max !== null
+          ? report.metrics.voltage.max - report.metrics.voltage.min
+          : '',
+      ],
+      ['average_current_a', report.metrics.current.average ?? ''],
       ['peak_current_a', report.metrics.current.peak ?? ''],
       ['average_power_kw', report.metrics.power.average ?? ''],
       ['peak_power_kw', report.metrics.power.peak ?? ''],
@@ -255,16 +280,13 @@ export function QdfLoadReportWorkbench({
         <>
           <section className="sm-load-report-meta">
             <span>
-              <b>{t('generatedFrom')}</b> {report.sourceContractVersion}
+              <b>{t('dataStatus')}</b> {statusLabel(report.status)}
             </span>
             <span>
-              <b>{t('contractStatus')}</b> {report.status}
+              <b>{t('firstReading')}</b> {formatTimestamp(report.firstAcceptedAt)}
             </span>
             <span>
-              <b>{t('firstAccepted')}</b> {report.firstAcceptedAt ?? '—'}
-            </span>
-            <span>
-              <b>{t('lastAccepted')}</b> {report.lastAcceptedAt ?? '—'}
+              <b>{t('lastReading')}</b> {formatTimestamp(report.lastAcceptedAt)}
             </span>
           </section>
 
@@ -272,28 +294,47 @@ export function QdfLoadReportWorkbench({
             <h2>{t('summary')}</h2>
             <div className="sm-load-report-kpis">
               <article>
-                <small>{t('peakPower')}</small>
-                <strong>{metric(report.metrics.power.peak, 'kW', 3)}</strong>
-              </article>
-              <article>
-                <small>{t('avgPower')}</small>
-                <strong>{metric(report.metrics.power.average, 'kW', 3)}</strong>
-              </article>
-              <article>
-                <small>{t('peakCurrent')}</small>
-                <strong>{metric(report.metrics.current.peak, 'A')}</strong>
-              </article>
-              <article>
-                <small>{t('totalEnergy')}</small>
-                <strong>{metric(report.metrics.energy.total, 'kWh', 4)}</strong>
+                <small>{t('minVoltage')}</small>
+                <strong>{metric(report.metrics.voltage.min, 'V')}</strong>
               </article>
               <article>
                 <small>{t('avgVoltage')}</small>
                 <strong>{metric(report.metrics.voltage.average, 'V')}</strong>
               </article>
               <article>
-                <small>{t('commonBuckets')}</small>
-                <strong>{report.coverage.commonBuckets}</strong>
+                <small>{t('maxVoltage')}</small>
+                <strong>{metric(report.metrics.voltage.max, 'V')}</strong>
+              </article>
+              <article>
+                <small>{t('voltageVariation')}</small>
+                <strong>
+                  {metric(
+                    report.metrics.voltage.min !== null && report.metrics.voltage.max !== null
+                      ? report.metrics.voltage.max - report.metrics.voltage.min
+                      : null,
+                    'V',
+                  )}
+                </strong>
+              </article>
+              <article>
+                <small>{t('avgCurrent')}</small>
+                <strong>{metric(report.metrics.current.average, 'A')}</strong>
+              </article>
+              <article>
+                <small>{t('peakCurrent')}</small>
+                <strong>{metric(report.metrics.current.peak, 'A')}</strong>
+              </article>
+              <article>
+                <small>{t('avgPower')}</small>
+                <strong>{metric(report.metrics.power.average, 'kW', 3)}</strong>
+              </article>
+              <article>
+                <small>{t('peakPower')}</small>
+                <strong>{metric(report.metrics.power.peak, 'kW', 3)}</strong>
+              </article>
+              <article>
+                <small>{t('totalEnergy')}</small>
+                <strong>{metric(report.metrics.energy.total, 'kWh', 4)}</strong>
               </article>
             </div>
           </section>
@@ -301,23 +342,26 @@ export function QdfLoadReportWorkbench({
           <LoadTrend points={contract.metrics.power.points} label={t('power')} />
 
           <section className="sm-load-report-quality">
-            <h2>{t('metricQuality')}</h2>
+            <h2>{t('dataAvailability')}</h2>
+            <p className="sm-load-report-quality-help">
+              {t('completeIntervalsHelp', { count: report.coverage.commonBuckets })}
+            </p>
             <div>
               <span>
                 {t('voltage')}
-                <b>{report.metrics.voltage.quality}</b>
+                <b>{qualityLabel(report.metrics.voltage.quality)}</b>
               </span>
               <span>
                 {t('current')}
-                <b>{report.metrics.current.quality}</b>
+                <b>{qualityLabel(report.metrics.current.quality)}</b>
               </span>
               <span>
                 {t('power')}
-                <b>{report.metrics.power.quality}</b>
+                <b>{qualityLabel(report.metrics.power.quality)}</b>
               </span>
               <span>
                 {t('energy')}
-                <b>{report.metrics.energy.quality}</b>
+                <b>{qualityLabel(report.metrics.energy.quality)}</b>
               </span>
             </div>
           </section>

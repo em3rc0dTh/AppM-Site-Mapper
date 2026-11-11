@@ -7,6 +7,8 @@ SNMP SET/Modbus writes. A passed lab is NOT real Eltek/Metasys certification.
 import argparse
 import json
 import math
+import os
+import re
 import socket
 import struct
 import subprocess
@@ -26,9 +28,11 @@ def invoke(container, *args):
         raise RuntimeError(container + " read failed (exit " + str(result.returncode) + ")")
     return result.stdout.strip()
 
-def mongo_snapshot():
-    script = """
-const d=db.getSiblingDB('appm_site_mapper');
+def mongo_script(database_name):
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,63}", database_name):
+        raise ValueError("Invalid MongoDB database name")
+    return """
+const d=db.getSiblingDB(__MONGO_DB__);
 const source='EMU-SNMP-QDF-01';
 const q={sourceIdentity:source,protocol:'SNMP'};
 const row=k=>d.industrial_signals.findOne({...q,'signal.key':k})?.signal;
@@ -40,8 +44,10 @@ const raw=[row('1.3.6.1.4.1.12148.10.10.5.5.0'),
 print(JSON.stringify({catalog:volume,synthetic,receivedEvents:d.industrial_events.countDocuments(q),
   raw:raw.map(v=>v?.lastObservation?.rawValue??v?.rawValue??null),
   known:raw.map(v=>Boolean(v))}));
-"""
-    text = invoke("mongodb", "mongosh", "--quiet", "--eval", script)
+""".replace("__MONGO_DB__", json.dumps(database_name))
+
+def mongo_snapshot(database_name):
+    text = invoke("mongodb", "mongosh", "--quiet", "--eval", mongo_script(database_name))
     return json.loads(text.splitlines()[-1])
 
 def timescale_snapshot():
@@ -97,12 +103,12 @@ def receiver_diagnostics():
     raw=invoke("snmp-traps","cat","/data/traps/diagnostics.json")
     return json.loads(raw)
 
-def acceptance(expected, duration):
+def acceptance(expected, duration, mongo_db):
     deadline=time.monotonic()+duration
     last={}
     while time.monotonic()<deadline:
         try:
-            mongo=mongo_snapshot()
+            mongo=mongo_snapshot(mongo_db)
             last={"mongo":mongo}
             history=timescale_snapshot()
             last["timescale"]=history
@@ -144,7 +150,10 @@ if __name__=="__main__":
     parser=argparse.ArgumentParser()
     parser.add_argument("--expected",type=int,default=5407)
     parser.add_argument("--timeout",type=int,default=600)
+    parser.add_argument("--mongo-db",default=os.environ.get("MONGODB_DB_NAME","seed-01"))
     args=parser.parse_args()
     if not 15<=args.expected<=10000 or not 30<=args.timeout<=1200:
         parser.error("Expected 15..10000 and timeout 30..1200")
-    sys.exit(0 if acceptance(args.expected,args.timeout) else 1)
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,63}", args.mongo_db):
+        parser.error("Invalid --mongo-db")
+    sys.exit(0 if acceptance(args.expected,args.timeout,args.mongo_db) else 1)

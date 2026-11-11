@@ -1909,7 +1909,13 @@
     "metricCurrent": "Current",
     "metricPower": "Power",
     "metricEnergy": "Energy counter",
-    "metricLabel": "Telemetry metric"
+    "metricLabel": "Telemetry metric",
+    "breakerTitle": "Breaker history",
+    "breakerBindings": "{bound}/{total} breaker linked",
+    "breakerReporting": "{count}/{total} with data in the latest interval",
+    "breakerNoReadings": "No historical measurements are recorded for this breaker in the selected period.",
+    "breakerDisclaimer": "Each point represents a historical measurement recorded for the breaker during the selected window. A missing measurement is not treated as zero. The energy counter is cumulative and does not by itself represent consumption during the window.",
+    "breakerTooltip": "{date} · {value} {unit}"
   },
   "fullTrace": {
     "source": "SOURCE {feed}",

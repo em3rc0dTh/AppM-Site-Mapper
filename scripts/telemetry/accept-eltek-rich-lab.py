@@ -20,6 +20,7 @@ SOURCE = "EMU-SNMP-QDF-01"
 VOLTAGE_OID = "1.3.6.1.4.1.12148.10.10.5.5.0"
 FUSE_STATUS_OID = "1.3.6.1.4.1.12148.10.15.18.8.1.2.1"
 BOOST_OID = "1.3.6.1.4.1.12148.10.10.15.2.0"
+MODBUS_FUNCTION = 4
 
 def invoke(container, *args):
     result = subprocess.run(["docker", "exec", PREFIX + "-" + container + "-1", *args],
@@ -68,8 +69,8 @@ WHERE source_identity = 'EMU-SNMP-QDF-01' AND protocol = 'SNMP';
                   "site_mapper_telemetry", "-t", "-A", "-c", sql)
     return json.loads(text.splitlines()[-1])
 
-def modbus_fc03(unit=1, offset=1030):
-    request=struct.pack(">HHHBBHH", 417, 0, 6, unit, 3, offset, 3)
+def modbus_fc04(unit=1, offset=1030):
+    request=struct.pack(">HHHBBHH", 417, 0, 6, unit, MODBUS_FUNCTION, offset, 3)
     with socket.create_connection(("127.0.0.1", 1503), timeout=5) as sock:
         sock.settimeout(5)
         sock.sendall(request)
@@ -79,12 +80,13 @@ def modbus_fc03(unit=1, offset=1030):
             if not chunk:
                 break
             payload+=chunk
-    if len(payload)!=13 or payload[:2]!=request[:2] or payload[7]!=3 or payload[8]!=6:
-        raise RuntimeError("Invalid Modbus FC03 MBAP/length")
+    if (len(payload)!=15 or payload[:2]!=request[:2] or payload[6]!=unit or
+            payload[7]!=MODBUS_FUNCTION or payload[8]!=6):
+        raise RuntimeError("Invalid Modbus FC04 MBAP/length")
     return {"voltage":struct.unpack(">f",payload[9:13])[0], "quality":None}
 
 def modbus_three_registers():
-    request=struct.pack(">HHHBBHH",417,0,6,1,3,1030,3)
+    request=struct.pack(">HHHBBHH",417,0,6,1,MODBUS_FUNCTION,1030,3)
     with socket.create_connection(("127.0.0.1",1503),timeout=5) as sock:
         sock.settimeout(5)
         sock.sendall(request)
@@ -94,8 +96,9 @@ def modbus_three_registers():
             if not chunk:
                 raise RuntimeError("Short Modbus TCP frame")
             data+=chunk
-    if len(data)!=15 or data[0:2]!=request[0:2] or data[6]!=1 or data[7]!=3 or data[8]!=6:
-        raise RuntimeError("Modbus FC03 response mismatch")
+    if (len(data)!=15 or data[0:2]!=request[0:2] or data[6]!=1 or
+            data[7]!=MODBUS_FUNCTION or data[8]!=6):
+        raise RuntimeError("Modbus FC04 response mismatch")
     return {"voltage":struct.unpack(">f",data[9:13])[0],
             "quality":struct.unpack(">H",data[13:15])[0]}
 

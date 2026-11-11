@@ -1,0 +1,763 @@
+name: UAT and system validation
+on:
+  push:
+    branches: [uat/actions-211-validation]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install industrial SNMP wire-test dependency
+        run: npm ci --prefix infra/snmp-collector --no-audit --no-fund
+
+      - name: Industrial wire contracts and stable Modbus extensions
+        run: npm run test:industrial
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: MVP documentation links
+        run: npm run docs:check
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Mongo audit regression tests
+        run: npm run test:audit-mongo
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Modbus TCP register contract and real MBAP regression
+        run: node --test infra/modbus-tcp/server.test.mjs
+
+      - name: Read-only Modbus certification script syntax
+        run: node --check scripts/operations/certify-modbus-cb01.mjs
+
+      - name: Full local golden path shell syntax
+        run: sh -n scripts/operations/full-local-golden-path.sh
+
+      - name: FIELD read-only gate syntax and config smoke
+        run: |
+          bash -n scripts/release/client-vm-preflight.sh
+          bash -n scripts/release/field-check.sh
+          cat > /tmp/site-mapper-field-check.env <<'EOF'
+          APP_ENV=production
+          APP_PERSISTENCE=mongodb
+          TELEMETRY_ENABLED=true
+          MQTT_BROKER_URL=mqtt://mosquitto:1883
+          MQTT_TOPIC_PREFIX=data/dev/
+          MQTT_TOPIC_FILTER=data/dev/#
+          SNMP_CONTROLLER_HOST=192.0.2.10
+          SNMP_CONTROLLER_PORT=161
+          SNMP_VERSION=2c
+          SNMP_COMMUNITY=ci-readonly-placeholder
+          SNMP_V2C_ACKNOWLEDGE_PLAINTEXT=true
+          MODBUS_SOURCE_UNITS_JSON={"26092403950003":1,"26092403950004":2,"26092403950002":3}
+          MODBUS_MISSING_POLICY=zero
+          TIMESCALE_DB_PASSWORD=ci-placeholder
+          TELEMETRY_STORE_TOKEN=ci-placeholder-token
+          MODBUS_BRIDGE_TOKEN=ci-placeholder-token
+          SITE_MAPPER_CREDENTIAL_KEY=0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+          EOF
+          bash scripts/release/field-check.sh config \
+            --env-file /tmp/site-mapper-field-check.env | tee /tmp/site-mapper-field-check.out
+          grep -q 'RESULT: READY_FOR_COMMISSIONING' /tmp/site-mapper-field-check.out
+
+      - name: Telxius consolidated launcher syntax
+        run: python3 -m py_compile scripts/telemetry/seed-01-telxius-lab.py
+
+      - name: Telemetry history SQL regression
+        run: python3 -m unittest discover -s infra/telemetry-store -p 'test_*.py'
+
+      - name: System certification
+        run: npm run test:certification
+
+      - name: Build
+        run: npm run build
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+  real-broker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Start a real local Mosquitto broker
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mosquitto mosquitto-clients
+          sudo systemctl restart mosquitto
+          for i in {1..20}; do
+            if timeout 1 bash -c '</dev/tcp/127.0.0.1/1883' 2>/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          exit 1
+      - name: Run the Site Mapper MQTT commissioning launcher
+        env:
+          CI: 'true'
+          LOCAL_ADMIN_EMAIL: mqtt-ci@local.test
+          LOCAL_ADMIN_PASSWORD: Mqtt-Ci-Only-2026!
+          MQTT_BROKER_URL: mqtt://127.0.0.1:1883
+        run: |
+          npm run local:emulator -- --no-open > /tmp/site-mapper-mqtt.log 2>&1 &
+          for i in {1..90}; do
+            if grep -q '"message":"mqtt.subscribed"' /tmp/site-mapper-mqtt.log \
+              && grep -q 'SITE_MAPPER_MQTT_FIXTURE_READY' /tmp/site-mapper-mqtt.log; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "MQTT fixture did not become ready after subscription + seed" >&2
+          exit 1
+      - name: Publish three-source four-panel batches into Mosquitto
+        run: node scripts/bfdb-lab-contract-publisher.mjs
+      - name: Require 288 of 288 mapped breaker readings
+        run: |
+          for i in {1..45}; do
+            if grep -q 'MQTT EMULATOR VERIFIED' /tmp/site-mapper-mqtt.log; then
+              grep 'EMU-BFDB-01: 96/96 raw points, 96/96 breakers, LIVE' /tmp/site-mapper-mqtt.log
+              grep 'EMU-BFDB-02: 96/96 raw points, 96/96 breakers, LIVE' /tmp/site-mapper-mqtt.log
+              grep 'EMU-BFDB-03: 96/96 raw points, 96/96 breakers, LIVE' /tmp/site-mapper-mqtt.log
+              exit 0
+            fi
+            sleep 2
+          done
+          exit 1
+      - name: Show non-secret commissioning evidence on failure
+        if: failure()
+        run: |
+          if [ -f /tmp/site-mapper-mqtt.log ]; then
+            grep -E 'mqtt\.|telemetry\.|Error|Failed|UNKNOWN_SOURCE|EMULATOR' /tmp/site-mapper-mqtt.log || true
+          fi
+  docker-config:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      APP_ENV: development
+      TIMESCALE_DB_PASSWORD: ci-timescale-lab-only
+      TELEMETRY_STORE_TOKEN: ci-telemetry-store-lab-only-32chars
+      BOOTSTRAP_ADMIN_TOKEN: ci-bootstrap-lab-only
+      MODBUS_BRIDGE_TOKEN: ci-modbus-bridge-lab-only-32chars
+      MODBUS_SOURCE_UNITS_JSON: '{"EMU-BFDB-01":1,"EMU-BFDB-02":2,"EMU-BFDB-03":3}'
+      SNMP_INGEST_TOKEN: ci-collector-lab-only-32characters
+      SNMP_V3_USERNAME: lab_readonly
+      SNMP_V3_AUTH_KEY: lab-only-ci-auth-passphrase
+      SNMP_V3_PRIV_KEY: lab-only-ci-privacy-passphrase
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check laboratory bootstrap script syntax
+        run: bash -n scripts/lab/bfdb-snmp-config4.sh
+      - name: Check Site Mapper overlay and generate normalized Compose
+        run: |
+          docker compose -f docker-compose.telemetry.yml \
+            -f infra/lab/bfdb-snmp/config4-site-mapper.override.yml \
+            --profile snmp config --quiet
+          docker compose -f docker-compose.telemetry.yml \
+            -f infra/lab/bfdb-snmp/config4-site-mapper.override.yml \
+            --profile snmp config --format json > /tmp/site-mapper-config4.json
+      - name: Validate Configuration 2 and v2c collector Compose wiring
+        run: |
+          SNMP_VERSION=2c SNMP_COMMUNITY=ci-private-readonly-lab-only \
+            docker compose -f docker-compose.telemetry.yml \
+            -f infra/lab/bfdb-snmp/config2-site-mapper.override.yml \
+            --profile snmp config --format json > /tmp/site-mapper-config2.json
+          python3 - <<'PY'
+          import json
+          with open('/tmp/site-mapper-config2.json', encoding='utf-8') as file:
+              data = json.load(file)
+          for i, suffix in [(1, ''), (2, '-02'), (3, '-03')]:
+              env = data['services']['snmp-collector' + suffix]['environment']
+              assert env['SNMP_VERSION'] == '2c'
+              assert env['SNMP_COMMUNITY'] == 'ci-private-readonly-lab-only'
+              assert env['SNMP_CONTROLLER_ID'] == f'EMU-DELTA-BFDB-0{i}'
+              points = json.loads(env['SNMP_FEED_POINTS_JSON'])
+              assert len(points) == 4
+              assert sum(p['metric'] == 'CURRENT' for p in points) == 2
+              assert sum(p['metric'] == 'VOLTAGE' for p in points) == 2
+              assert all('.2026.48.' in p['oid'] for p in points)
+          print('Config 2: two independent shunts and v2c collector wiring validated')
+          PY
+      - name: Validate independent BFDB repository overlay structure
+        run: |
+          cat > /tmp/bfdb-agent-services.yml <<'EOF'
+          services:
+            mosquitto:
+              image: eclipse-mosquitto:2.0
+            snmp-agent-bfdb-01:
+              image: node:22-alpine
+            snmp-agent-bfdb-02:
+              image: node:22-alpine
+            snmp-agent-bfdb-03:
+              image: node:22-alpine
+          EOF
+          docker compose -f /tmp/bfdb-agent-services.yml \
+            -f infra/lab/bfdb-snmp/config4-bfdb.override.yml config --quiet
+      - name: Certify three collectors, eight independent Config4 points and loopback ports
+        run: |
+          python3 - <<'PY'
+          import json
+          with open('/tmp/site-mapper-config4.json', encoding='utf-8') as handle:
+              data = json.load(handle)
+          for i, suffix in [(1, ''), (2, '-02'), (3, '-03')]:
+              svc = data['services']['snmp-collector' + suffix]
+              env = svc['environment']
+              assert env['SNMP_CONTROLLER_HOST'] == f'snmp-agent-bfdb-0{i}'
+              assert env['SNMP_CONTROLLER_ID'] == f'EMU-DELTA-BFDB-0{i}'
+              assert str(env['SNMP_CONTROLLER_PORT']) == '1161'
+              points = json.loads(env['SNMP_FEED_POINTS_JSON'])
+              assert len(points) == 8
+              assert len({(point['oid'], point['metric']) for point in points}) == 8
+              assert all(point['scale'] == 0.1 and '.2026.49.' in point['oid'] for point in points)
+          assert data['networks']['bfdb_snmp_lab']['name'] == 'site_mapper_bfdb_snmp_lab'
+          for name, service in data['services'].items():
+              for port in service.get('ports', []):
+                  assert port.get('host_ip') == '127.0.0.1', (name, port)
+          print('BFDB Config4: three isolated sources and eight independent OIDs each')
+          PY
+  clean-stack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install root dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate controlled integration sources
+        run: |
+          node --check infra/snmp-collector/integration-agent.mjs
+          node --check infra/snmp-collector/integration-trap-sender.mjs
+          sh -n infra/integration/mqtt-publisher.sh
+
+      - name: Validate Compose resolution
+        run: |
+          docker compose             --env-file infra/integration/integration.env             -f docker-compose.telemetry.yml             -f docker-compose.integration.yml             config --quiet
+
+      - name: Start from an empty runner
+        run: |
+          docker compose             --env-file infra/integration/integration.env             -f docker-compose.telemetry.yml             -f docker-compose.integration.yml             up -d --build
+
+      - name: Require seed-01 v8 and physical topology bootstrap
+        run: |
+          set -eu
+          dc() {
+            docker compose --env-file infra/integration/integration.env \
+              -f docker-compose.telemetry.yml \
+              -f docker-compose.integration.yml "$@"
+          }
+
+          for i in $(seq 1 90); do
+            bootstrap_id="$(dc ps -aq integration-bootstrap)"
+            if [ -n "$bootstrap_id" ]; then
+              code="$(docker inspect -f '{{.State.ExitCode}}' "$bootstrap_id" 2>/dev/null || echo 99)"
+              state="$(docker inspect -f '{{.State.Status}}' "$bootstrap_id" 2>/dev/null || echo missing)"
+              if [ "$state" = "exited" ] && [ "$code" = "0" ]; then
+                break
+              fi
+              if [ "$state" = "exited" ] && [ "$code" != "0" ]; then
+                echo "INTEGRATION_BOOTSTRAP_FAILED exit=$code"
+                dc logs --tail 100 integration-bootstrap || true
+                exit 1
+              fi
+            fi
+            if [ "$i" = "90" ]; then
+              echo "INTEGRATION_BOOTSTRAP_TIMEOUT"
+              exit 1
+            fi
+            sleep 2
+          done
+
+          dc exec -T mongodb mongosh --quiet seed-01 --eval '
+            function assert(ok, message) { if(!ok) { print("SEED01_V8_FAIL "+message); quit(1); } }
+            const s=db.runtime_seed_state.findOne({_id:"seed-01",status:"APPLIED"});
+            assert(s && s.version===8 && Array.isArray(s.bdfbs) && s.bdfbs.length===3,
+              "seed status/version/BDFB summary");
+            const c=db.topology_nodes;
+            const room=c.findOne({kind:"ROOM_SUBSTRUCTURE",lifecycle:"ACTIVE",name:"SALA DE TRANSMISIONES"});
+            assert(room && s.roomId===room.id, "physical room identity");
+            assert(JSON.stringify(room.polygon)===JSON.stringify([
+              {x:12000,y:10200},{x:26400,y:10200},{x:26400,y:18000},{x:12000,y:18000}
+            ]), "room geometry");
+            const bays=c.find({kind:"CONTAINER_CLUSTER_BAY",parentId:room.id,lifecycle:"ACTIVE"}).toArray();
+            assert(bays.length===4, "four physical bays");
+            for(const name of ["Contained-Cluster-01","Contained-Cluster-02","Contained-Cluster-03","CONTAINED-CLUSTER-04"])
+              assert(bays.some(b=>b.name===name), "missing bay "+name);
+            const physical=[
+              ["QDF-2","QDF2","QDF2 anchor","T",24600,11400,26],
+              ["QDF-4","QDF4","QDF4 anchor","Z",24600,15000,12],
+              ["QDF-5","QDF5","QDF5 anchor","AC",24600,16800,36]
+            ];
+            let sum=0;
+            for(const [key,rackName,anchor,row,x,y,count] of physical) {
+              const rack=c.findOne({kind:"CONTAINER_RACK",name:rackName,lifecycle:"ACTIVE"});
+              assert(rack && rack.totalU===42 && rack.placementState==="CONFIRMED",
+                key+" rack placement");
+              assert(rack.placementMm?.x===x && rack.placementMm?.y===y,
+                key+" rack coordinates");
+              assert(rack.dimensionsMm?.width===600 && rack.dimensionsMm?.depth===600,
+                key+" rack dimensions");
+              assert(Array.isArray(rack.cas) &&
+                rack.cas.filter(r=>r.state==="EQUIPPED" && r.startU===1 && r.endU===42).length===1,
+                key+" CAS");
+              const pos=c.findOne({id:rack.parentId,kind:"POSITION",name:anchor,lifecycle:"ACTIVE"});
+              assert(pos && pos.coordinate?.row===row && pos.coordinate?.column===42,
+                key+" anchor");
+              const devices=c.find({kind:"DEVICE",deviceType:"BDFB",name:"BDFB "+key,lifecycle:"ACTIVE"}).toArray();
+              assert(devices.length===1, key+" device");
+              const device=devices[0];
+              assert(c.countDocuments({kind:"EQUIPMENT",equipmentType:"CIRCUIT_BREAKER",
+                lifecycle:"ACTIVE",deviceId:device.id})===count, key+" breaker count");
+              for(const panelName of ["A3","B3"]) {
+                const panels=c.find({kind:"EQUIPMENT",equipmentType:"PANEL",lifecycle:"ACTIVE",
+                  deviceId:device.id,name:panelName}).toArray();
+                assert(panels.length===1 && panels[0].children.filter(Boolean).length===count/2,
+                  key+" "+panelName+" occupied slots");
+              }
+              sum+=count;
+            }
+            assert(sum===74 && c.countDocuments({kind:"EQUIPMENT",
+              equipmentType:"CIRCUIT_BREAKER",lifecycle:"ACTIVE"})===74,
+              "total breakers");
+            print("SEED01_V8_PHYSICAL_BOOTSTRAP_OK breakers="+sum);
+          '
+
+      - name: Require MQTT subscribed and durable telemetry
+        run: |
+          set -eu
+          dc() {
+            docker compose               --env-file infra/integration/integration.env               -f docker-compose.telemetry.yml               -f docker-compose.integration.yml "$@"
+          }
+
+          for i in $(seq 1 60); do
+            if dc logs --no-color site-mapper 2>&1 | grep -q '"message":"mqtt.subscribed"\|mqtt.subscribed'; then
+              break
+            fi
+            if [ "$i" = "60" ]; then exit 1; fi
+            sleep 2
+          done
+
+          for i in $(seq 1 60); do
+            rows="$(dc exec -T timescaledb psql -U site_mapper -d site_mapper_telemetry -Atc               "SELECT count(*) FROM telemetry_samples WHERE source_identity IN ('26092403950004','26092403950002');"               2>/dev/null || echo 0)"
+            if [ "${rows:-0}" -gt 0 ]; then
+              echo "MQTT_HISTORY_ROWS=$rows"
+              break
+            fi
+            if [ "$i" = "60" ]; then exit 1; fi
+            sleep 2
+          done
+
+      - name: Require all three SNMP collectors accepted and persisted
+        run: |
+          set -eu
+          dc() {
+            docker compose               --env-file infra/integration/integration.env               -f docker-compose.telemetry.yml               -f docker-compose.integration.yml "$@"
+          }
+
+          for service in snmp-collector-qdf2 snmp-collector-qdf4 snmp-collector-qdf5; do
+            for i in $(seq 1 45); do
+              if dc logs --no-color "$service" 2>&1 | grep -q 'snmp.poll.accepted'; then
+                break
+              fi
+              if [ "$i" = "45" ]; then
+                echo "No accepted SNMP poll from $service"
+                exit 1
+              fi
+              sleep 2
+            done
+          done
+
+          for i in $(seq 1 45); do
+            rows="$(dc exec -T timescaledb psql -U site_mapper -d site_mapper_telemetry -Atc               "SELECT count(*) FROM telemetry_entity_samples WHERE target_type='ACCESS_PORT' AND source_identity LIKE 'INT-SNMP-QDF-%';"               2>/dev/null || echo 0)"
+            if [ "${rows:-0}" -gt 0 ]; then
+              echo "SNMP_HISTORY_ROWS=$rows"
+              break
+            fi
+            if [ "$i" = "45" ]; then exit 1; fi
+            sleep 2
+          done
+
+      - name: Require SNMP trap spool delivery and industrial history
+        run: |
+          set -eu
+          dc() {
+            docker compose               --env-file infra/integration/integration.env               -f docker-compose.telemetry.yml               -f docker-compose.integration.yml "$@"
+          }
+
+          for i in $(seq 1 45); do
+            if dc logs --no-color snmp-traps 2>&1 | grep -q '"event":"trap.delivery.committed"'; then
+              break
+            fi
+            if [ "$i" = "45" ]; then
+              echo "No committed controlled SNMP trap delivery"
+              exit 1
+            fi
+            sleep 2
+          done
+
+          mongo_events="$(dc exec -T mongodb mongosh --quiet seed-01 --eval '
+            print(db.industrial_events.countDocuments({sourceIdentity:"INT-TRAP-QDF-2",protocol:"SNMP"}));
+          ' | tail -n 1)"
+          if [ "${mongo_events:-0}" -lt 1 ]; then
+            echo "No industrial Mongo trap events"
+            exit 1
+          fi
+          echo "SNMP_TRAP_MONGO_EVENTS=$mongo_events"
+
+          for i in $(seq 1 45); do
+            rows="$(dc exec -T timescaledb psql -U site_mapper -d site_mapper_telemetry -Atc               "SELECT count(*) FROM industrial_observations WHERE source_identity='INT-TRAP-QDF-2' AND protocol='SNMP';"               2>/dev/null || echo 0)"
+            if [ "${rows:-0}" -gt 0 ]; then
+              echo "SNMP_TRAP_TIMESCALE_ROWS=$rows"
+              break
+            fi
+            if [ "$i" = "45" ]; then
+              echo "No industrial Timescale trap observations"
+              exit 1
+            fi
+            sleep 2
+          done
+
+      - name: Require Modbus and operational surfaces
+        run: |
+          set -eu
+          dc() {
+            docker compose               --env-file infra/integration/integration.env               -f docker-compose.telemetry.yml               -f docker-compose.integration.yml "$@"
+          }
+
+          curl --fail --silent --show-error http://127.0.0.1:3000/login >/dev/null
+          curl --fail --silent --show-error http://127.0.0.1:3100/ >/dev/null
+
+          dc exec -T modbus-tcp node -e '
+            const m=JSON.parse(process.env.MODBUS_SOURCE_UNITS_JSON||"{}");
+            if(m["26092403950003"]!==1 || m["26092403950004"]!==2 || m["26092403950002"]!==3) process.exit(1);
+            console.log("MODBUS_MAP_OK");
+          '
+
+          dc ps
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          docker compose             --env-file infra/integration/integration.env             -f docker-compose.telemetry.yml             -f docker-compose.integration.yml             ps || true
+          docker compose             --env-file infra/integration/integration.env             -f docker-compose.telemetry.yml             -f docker-compose.integration.yml             logs --no-color --tail=300 || true
+
+      - name: Dispose runner volumes
+        if: always()
+        run: |
+          docker compose             --env-file infra/integration/integration.env             -f docker-compose.telemetry.yml             -f docker-compose.integration.yml             down -v --remove-orphans || true
+  alarm-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      APP_ENV: test
+      CI_ALARM_ACCEPTANCE: 'true'
+      ALARM_REDTEAM_MONGO_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+      MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Disposable MongoDB replica set (loopback only)
+        run: |
+          docker run -d --name s02-alarm-mongo -p 127.0.0.1:27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for i in {1..45}; do
+            if docker exec s02-alarm-mongo mongosh --quiet --eval 'db.adminCommand({ping:1})' 2>/dev/null; then break; fi
+            sleep 2
+          done
+          docker exec s02-alarm-mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
+          for i in {1..45}; do
+            if docker exec s02-alarm-mongo mongosh --quiet --eval 'db.hello().isWritablePrimary' | grep -q true; then exit 0; fi
+            sleep 2
+          done
+          exit 1
+      - name: S02 unit lifecycle and red-team
+        run: npx vitest run tests/unit/sprint02-alarm-history.test.ts tests/unit/alarm-redteam.test.ts
+      - name: S02 real Mongo electrical lifecycle and 500+ history
+        run: npx vitest run tests/integration/s02-alarm-acceptance-mongo.test.ts
+      - name: Automatic operational watch persistence and restart
+        run: npx vitest run tests/integration/automatic-operational-commissioning-mongo.test.ts
+      - name: Real Mongo concurrency (existing red-team)
+        run: npx vitest run tests/integration/alarm-redteam-mongo.test.ts
+      - name: TypeScript compile
+        run: npm run typecheck
+      - name: Cleanup isolated replica set
+        if: always()
+        run: docker rm -f s02-alarm-mongo || true
+  s05:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: S05 unit commissioning
+        run: >
+          npx vitest run
+          tests/unit/commissioning-observability.test.ts
+          tests/unit/industrial-commissioning-idempotency.test.ts
+          tests/unit/industrial-credential-security.test.ts
+          tests/unit/s05-snmp-history-diagnostics.test.ts
+          tests/unit/s05-office-secret-wiring.test.ts
+      - name: I18n catalogs
+        run: npx vitest run tests/unit/i18n-catalogs.test.ts tests/unit/i18n-static-ui.test.ts
+      - name: TypeScript compile
+        run: npm run typecheck
+      - name: Formatting
+        run: >
+          npx prettier --check
+          src/app/api/industrial/commissioning/route.ts
+          src/components/industrial/commissioning-console.tsx
+          src/components/industrial/commissioning-observability.tsx
+          src/modules/industrial/application/commissioning-observability.ts
+          src/modules/telemetry/infrastructure/http-telemetry-store.ts
+          scripts/operations/audit-s05-commissioning.mjs
+          config/industrial/s05-commissioning-reference.example.json
+          docker-compose.telemetry.yml
+          tests/unit/commissioning-observability.test.ts
+          tests/unit/industrial-commissioning-idempotency.test.ts
+          tests/unit/industrial-credential-security.test.ts
+          tests/unit/s05-snmp-history-diagnostics.test.ts
+          tests/unit/s05-office-secret-wiring.test.ts
+  http-mongo-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      APP_ENV: test
+      APP_PERSISTENCE: mongodb
+      MONGODB_URI: mongodb://127.0.0.1:27017/?replicaSet=rs0
+      MONGODB_DB_NAME: site_mapper_http_ci_${{ github.run_id }}
+      BOOTSTRAP_ADMIN_TOKEN: isolated-mk1-http-ci-token
+      CI_HTTP_ACCEPTANCE: 'true'
+      CI_COMBINED_E2E: 'true'
+      TELEMETRY_ENABLED: 'true'
+      MQTT_BROKER_URL: mqtt://127.0.0.1:1883
+      MQTT_TOPIC_FILTER: data/dev/#
+      TELEMETRY_HISTORY_ENABLED: 'true'
+      SNMP_INGEST_TOKEN: isolated-snmp-ci-collector-token-2026-not-production
+      TELEMETRY_STORE_URL: http://127.0.0.1:18081
+      TELEMETRY_STORE_TOKEN: mk1-ci-isolated-store-secret
+      TIMESCALE_DB_PASSWORD: isolated-ci-timescale-only-secret
+      CI_HTTP_BASE_URL: http://127.0.0.1:3100
+      MODBUS_BRIDGE_URL: http://127.0.0.1:18082
+      MODBUS_TEST_PORT: '1503'
+      MODBUS_BRIDGE_TOKEN: ci-only-internal-modbus-bridge-secret-2026
+      MODBUS_SOURCE_UNITS_JSON: '{"CI-BFDB-LIMA":1,"CI-BFDB-QUITO":2}'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Start a disposable MongoDB replica set
+        run: |
+          docker run -d --name mk1-e2e-mongo -p 127.0.0.1:27017:27017 mongo:7 --replSet rs0 --bind_ip_all
+          for i in {1..45}; do
+            if docker exec mk1-e2e-mongo mongosh --quiet --eval 'db.adminCommand({ping:1})' 2>/dev/null; then
+              break
+            fi
+            sleep 2
+          done
+          docker exec mk1-e2e-mongo mongosh --quiet --eval 'rs.initiate({_id:"rs0",members:[{_id:0,host:"127.0.0.1:27017"}]})'
+          for i in {1..45}; do
+            if docker exec mk1-e2e-mongo mongosh --quiet --eval 'db.hello().isWritablePrimary' | grep -q true; then
+              exit 0
+            fi
+            sleep 2
+          done
+          echo 'Mongo replica set failed to become primary.'
+          exit 1
+
+      - name: S01 real Mongo transaction, concurrency and rollback acceptance
+        env:
+          CI_BREAKER_ACCEPTANCE: 'true'
+        run: npx vitest run tests/integration/breaker-limits-mongo.test.ts
+
+      - name: Start real Mosquitto broker
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y mosquitto mosquitto-clients
+          sudo systemctl restart mosquitto
+          for i in {1..20}; do
+            if timeout 1 bash -c '</dev/tcp/127.0.0.1/1883' 2>/dev/null; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Start TimescaleDB and telemetry-store
+        run: |
+          # MongoDB already runs as the dedicated CI replica-set container on 127.0.0.1:27017.
+          # Limit Compose to the Timescale history store and Modbus sidecar to avoid a second Mongo bind.
+          docker compose -f docker-compose.telemetry.yml up -d --build timescaledb telemetry-store modbus-tcp
+          for i in {1..90}; do
+            if curl -fsS http://127.0.0.1:18081/health; then exit 0; fi
+            sleep 2
+          done
+          docker compose -f docker-compose.telemetry.yml logs --tail=60
+          exit 1
+
+      - name: Start Site Mapper Modbus TCP bridge on localhost
+        run: |
+          docker compose -f docker-compose.telemetry.yml ps modbus-tcp
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:18082/health; then exit 0; fi
+            sleep 1
+          done
+          docker compose -f docker-compose.telemetry.yml logs modbus-tcp
+          exit 1
+
+      - name: Build actual Next.js application
+        run: npm run build
+
+      - name: Start application against disposable MongoDB
+        run: |
+          npm run dev -- -H 127.0.0.1 -p 3100 > /tmp/mk1-http-e2e.log 2>&1 &
+          echo $! > /tmp/mk1-http-e2e.pid
+
+      - name: Create Sites, Equipment, PowerPaths and commissioning via HTTP
+        run: node scripts/ci/http-operational-journey.mjs
+
+      - name: Bounded adversarial HTTP wheel (concurrent racks, breakers, CSRF, malformed bodies)
+        run: node scripts/ci/mk1-adversarial-http.mjs
+
+      - name: Certify Modbus TCP register values from accepted MQTT readings
+        run: node scripts/ci/modbus-tcp-operational.mjs
+
+      - name: Install isolated Chromium automation
+        run: |
+          npm install --prefix /tmp/mk1-playwright --no-save --no-audit --no-fund playwright@1.56.1
+          /tmp/mk1-playwright/node_modules/.bin/playwright install --with-deps chromium
+
+      - name: Exercise real browser login and Equipment UI
+        run: node scripts/ci/browser-operational-journey.mjs
+
+      - name: Restart Next.js and certify persisted inventory and history
+        run: |
+          kill "$(cat /tmp/mk1-http-e2e.pid)" || true
+          sudo fuser -k 3100/tcp || true
+          sleep 2
+          if curl -fsS http://127.0.0.1:3100/api/health; then
+            echo 'Old Next.js process still serves requests; restart was not verified.'
+            exit 1
+          fi
+          npm run dev -- -H 127.0.0.1 -p 3100 > /tmp/mk1-http-e2e-restart.log 2>&1 &
+          echo $! > /tmp/mk1-http-e2e.pid
+          node scripts/ci/http-operational-restart.mjs
+
+      - name: Verify audited single and recursive DELETE with disposable MongoDB
+        run: node scripts/ci/deletion-http-journey.mjs
+
+      - name: Verify canonical MongoDB integrity
+        run: npm run audit:mongo -- --expect-db=${{ env.MONGODB_DB_NAME }}
+
+      - name: Print sanitized application diagnostics on failure
+        if: failure()
+        run: |
+          if [ -f /tmp/mk1-http-e2e.log ]; then
+            grep -E 'Error|error|Failed|POST /api/|PATCH /api/|GET /api/' /tmp/mk1-http-e2e.log | tail -100 || true
+          fi
+          docker logs --tail 35 mk1-e2e-mongo 2>&1 | grep -E 'ERROR|Error|FATAL' || true
+
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mk1-browser-evidence
+          path: /tmp/mk1-operational-browser*.png
+          if-no-files-found: ignore
+
+      - name: Cleanup disposable services
+        if: always()
+        run: |
+          docker compose -f docker-compose.telemetry.yml down -v || true
+          docker rm -f mk1-e2e-mongo || true
+  capture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      LOCAL_ADMIN_EMAIL: visual@local.test
+      LOCAL_ADMIN_PASSWORD: Visual-Local-Only!2026
+      LOCAL_ADMIN_NAME: Visual Capture
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Install capture browser
+        run: |
+          npm install --global playwright@1.55.0
+          playwright install --with-deps chromium
+      - name: Start local seeded app
+        run: |
+          npm run local:dev -- --no-open > /tmp/site-mapper.log 2>&1 &
+          for i in {1..120}; do
+            if grep -q "Site Mapper local demo is ready." /tmp/site-mapper.log; then
+              cat /tmp/site-mapper.log
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/site-mapper.log
+          exit 1
+      - name: Capture approved view family
+        run: NODE_PATH="$(npm root --global)" node scripts/visual-capture.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: site-mapper-visual-current
+          path: visual-artifacts/current
+          if-no-files-found: error

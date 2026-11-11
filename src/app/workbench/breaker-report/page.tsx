@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
+import { getTranslations } from 'next-intl/server';
 
 import { BreakerLoadReportWorkbench } from '@/components/workbench/breaker-load-report-workbench';
 import { requirePermission } from '@/modules/identity/application/current-session';
@@ -23,6 +24,7 @@ export default async function BreakerReportWorkbenchPage({
   const equipmentId = query.equipmentId?.trim();
   if (!equipmentId) notFound();
 
+  const t = await getTranslations('workbench');
   const repository = await createTopologyRepository();
   const breaker = await repository.getById(equipmentId);
   if (
@@ -50,7 +52,7 @@ export default async function BreakerReportWorkbenchPage({
   const context = [
     device?.name,
     panel?.kind === 'EQUIPMENT' ? panel.name : null,
-    position > 0 ? `Pos. ${position}` : null,
+    position > 0 ? t('positionShort', { position }) : null,
     location || null,
   ]
     .filter(Boolean)

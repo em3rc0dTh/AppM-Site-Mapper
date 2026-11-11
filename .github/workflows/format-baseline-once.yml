@@ -20,30 +20,30 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Format only 24 files already flagged by CI
         run: |
-          npx prettier --write \\
-            'docs/help/en/glosario.md' \\
-            'docs/help/es/glosario.md' \\
-            'src/app/device/[deviceId]/page.tsx' \\
-            'src/app/front-01.css' \\
-            'src/app/home-redesign.css' \\
-            'src/app/s03-workspace.css' \\
-            'src/app/site-mapper-brand.css' \\
-            'src/app/topology/[...path]/page.tsx' \\
-            'src/app/workbench/workbench.css' \\
-            'src/components/equipment/composition-history-charts.tsx' \\
-            'src/components/equipment/equipment-focus-inspector.tsx' \\
-            'src/components/power/bdfb-telemetry-inspector.tsx' \\
-            'src/components/power/snmp-feed-history.tsx' \\
-            'src/components/power/snmp-feed-load-panel.tsx' \\
-            'src/components/topology/context-tree.tsx' \\
-            'src/components/workbench/breaker-load-report-workbench.tsx' \\
-            'src/components/workbench/qdf-load-report-workbench.tsx' \\
-            'src/components/workspace/front-01-bdfb-health.tsx' \\
-            'src/components/workspace/front-01-bdfb-summary.tsx' \\
-            'src/components/workspace/front-01-equipment-summary.tsx' \\
-            'src/components/workspace/front-01-stage-tabs.tsx' \\
-            'src/components/workspace/resizable-workspace.tsx' \\
-            'src/modules/alarm/application/telemetry-alarm-evaluator.ts' \\
+          npx prettier --write \
+            'docs/help/en/glosario.md' \
+            'docs/help/es/glosario.md' \
+            'src/app/device/[deviceId]/page.tsx' \
+            'src/app/front-01.css' \
+            'src/app/home-redesign.css' \
+            'src/app/s03-workspace.css' \
+            'src/app/site-mapper-brand.css' \
+            'src/app/topology/[...path]/page.tsx' \
+            'src/app/workbench/workbench.css' \
+            'src/components/equipment/composition-history-charts.tsx' \
+            'src/components/equipment/equipment-focus-inspector.tsx' \
+            'src/components/power/bdfb-telemetry-inspector.tsx' \
+            'src/components/power/snmp-feed-history.tsx' \
+            'src/components/power/snmp-feed-load-panel.tsx' \
+            'src/components/topology/context-tree.tsx' \
+            'src/components/workbench/breaker-load-report-workbench.tsx' \
+            'src/components/workbench/qdf-load-report-workbench.tsx' \
+            'src/components/workspace/front-01-bdfb-health.tsx' \
+            'src/components/workspace/front-01-bdfb-summary.tsx' \
+            'src/components/workspace/front-01-equipment-summary.tsx' \
+            'src/components/workspace/front-01-stage-tabs.tsx' \
+            'src/components/workspace/resizable-workspace.tsx' \
+            'src/modules/alarm/application/telemetry-alarm-evaluator.ts' \
             'src/modules/help/catalog.ts'
       - name: Commit formatter-only baseline
         run: |

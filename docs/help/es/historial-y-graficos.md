@@ -23,6 +23,22 @@ El historial responde una pregunta sencilla: **¿cómo cambió esta medición du
 
 En algunas vistas de SNMP pueden aparecer periodos adicionales, como **15D** o **1M**.
 
+## Reportes del QDF y de un breaker
+
+Para un **QDF**, el reporte puede resumir el período seleccionado con voltaje mínimo, promedio y máximo, variación de voltaje, corriente promedio y pico, potencia promedio y pico, energía del intervalo y la tabla de breakers con datos.
+
+La sección **Disponibilidad de datos** indica si cada magnitud tuvo mediciones durante el período. “Sin datos en este intervalo” no significa que el equipo esté apagado.
+
+Para un **breaker individual**:
+
+1. Abre el breaker.
+2. Entra a **Operación → Gráficas**.
+3. Selecciona **Abrir reporte del breaker**.
+4. Elige **24H**, **7D**, **15D** o **1M**.
+5. Puedes exportar el resultado como **CSV** o usar **Imprimir / PDF**.
+
+El contador de energía del breaker se muestra como contador acumulado; no se presenta automáticamente como consumo del intervalo.
+
 ## Si no aparece ningún gráfico
 
 Puede que no haya mediciones guardadas en el periodo elegido. Cambia el intervalo si corresponde y revisa si el equipo tiene lecturas recientes.

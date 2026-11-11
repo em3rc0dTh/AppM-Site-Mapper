@@ -20,6 +20,8 @@ export interface BreakerLimitView {
   readonly deviceId: string;
   readonly revision: number;
   readonly protection: BreakerProtection | null;
+  /** Field-survey nominal capacity, also readable before an alarm policy is commissioned. */
+  readonly nominalRatingA: number | null;
   readonly policy: AlarmPolicy['overcurrent'] | null;
   readonly policyEnabled: boolean | null;
 }
@@ -94,6 +96,12 @@ export class BreakerLimitService {
       deviceId: device.id,
       revision: breaker.revision ?? 0,
       protection: readBreakerProtection(breaker.attributes),
+      nominalRatingA:
+        typeof breaker.attributes?.ratedCurrentA === 'number' &&
+        Number.isFinite(breaker.attributes.ratedCurrentA) &&
+        breaker.attributes.ratedCurrentA > 0
+          ? breaker.attributes.ratedCurrentA
+          : null,
       policy: policies[0]?.overcurrent ?? null,
       policyEnabled: policies[0]?.enabled ?? null,
     };

@@ -4,7 +4,7 @@
 
 Este laboratorio usa los servicios reales de Site Mapper (receptor UDP SNMPv3,
 autenticación por origen, MongoDB replica set, outbox duradero, TimescaleDB,
-Modbus TCP FC03) con emulador BFDB. Nunca importa el Excel del proveedor
+Modbus TCP FC04) con emulador BFDB. Nunca importa el Excel del proveedor
 ni descarga datos de clientes. Hay **5.407 instancias SNMP sintéticas** por
 controlador, de las cuales un subconjunto utiliza OID genuinos rev54
 con valores de ejemplo; las restantes llevan un prefijo LAB claramente separado.
@@ -42,7 +42,7 @@ El comprobador ejecuta exclusivamente consultas:
   de tensión, estado disabled(4) y comando observado pushbutton(0);
 - Timescale: al menos 5.407 señales distintas con `sample.rawValue`, ceros,
   muestras UNKNOWN y el valor 5389 original;
-- Modbus: cliente externo TCP lee FC03 Unit 1/offset 1030,
+- Modbus: cliente externo TCP lee FC04 Unit 1/offset 1030,
   IEEE754 FLOAT32 ≈53,89 y quality=1 (offset 1032);
 - receptor: sin contadores `trap.queue.full`, `trap.spool.failed`
   o `trap.payload.too_large`; notificaciones a la aplicación.

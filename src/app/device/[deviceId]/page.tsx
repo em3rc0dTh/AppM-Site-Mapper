@@ -372,6 +372,26 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
     node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER'
       ? readBreakerProtection(node.attributes)
       : null;
+  const declaredBreakerPower =
+    node.kind === 'EQUIPMENT' && node.equipmentType === 'CIRCUIT_BREAKER' &&
+    node.attributes?.declaredPower && typeof node.attributes.declaredPower === 'object' &&
+    !Array.isArray(node.attributes.declaredPower)
+      ? node.attributes.declaredPower as Record<string, unknown>
+      : null;
+  const nominalFieldRating =
+    node.kind === 'EQUIPMENT' && typeof node.attributes?.ratedCurrentA === 'number' &&
+    Number.isFinite(node.attributes.ratedCurrentA)
+      ? node.attributes.ratedCurrentA : null;
+  const displayedNominalA = breakerProtection?.ratedCurrentA ?? nominalFieldRating;
+  const targetFootprint =
+    typeof declaredBreakerPower?.targetFootprint === 'string' ? declaredBreakerPower.targetFootprint : null;
+  const declaredTarget =
+    typeof declaredBreakerPower?.targetLabel === 'string' ? declaredBreakerPower.targetLabel : null;
+  const declaredStatus =
+    declaredBreakerPower?.documentedStatus === 'IN_SERVICE' ? 'IN_SERVICE' :
+    declaredBreakerPower?.documentedStatus === 'OFF' ? 'OFF' : null;
+  const replacementTargetA =
+    typeof declaredBreakerPower?.replacementTargetA === 'number' ? declaredBreakerPower.replacementTargetA : null;
   const tBreaker = await getTranslations('breakerLimits');
   return (
     <main className="operational-page mk-device-page">
@@ -528,8 +548,8 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                         <div>
                           <dt>{t('breakerNominal')}</dt>
                           <dd>
-                            {breakerProtection
-                              ? t('breakerNominalValue', { value: breakerProtection.ratedCurrentA })
+                            {displayedNominalA !== null
+                              ? t('breakerNominalValue', { value: displayedNominalA })
                               : '—'}
                           </dd>
                         </div>
@@ -541,6 +561,30 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                               : '—'}
                           </dd>
                         </div>
+                        {declaredTarget ? (
+                          <div>
+                            <dt>{t('declaredPowerTarget')}</dt>
+                            <dd>{declaredTarget}</dd>
+                          </div>
+                        ) : null}
+                        {targetFootprint ? (
+                          <div>
+                            <dt>{t('declaredTargetFootprint')}</dt>
+                            <dd>{targetFootprint}</dd>
+                          </div>
+                        ) : null}
+                        {declaredStatus ? (
+                          <div>
+                            <dt>{t('documentedBreakerStatus')}</dt>
+                            <dd>{t(declaredStatus === 'IN_SERVICE' ? 'documentedInService' : 'documentedOff')}</dd>
+                          </div>
+                        ) : null}
+                        {replacementTargetA !== null ? (
+                          <div>
+                            <dt>{t('breakerDocumentaryRemark')}</dt>
+                            <dd>{t('breakerReplacementRemark', { value: replacementTargetA })}</dd>
+                          </div>
+                        ) : null}
                         <div>
                           <dt>{t('mk1_physical_position')}</dt>
                           <dd>{breakerPosition > 0 ? String(breakerPosition).padStart(2, '0') : '—'}</dd>
@@ -632,6 +676,10 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                         </>
                       ) : (
                         <>
+                          <dt>{t('breakerNominal')}</dt>
+                          <dd>{displayedNominalA !== null
+                            ? t('breakerNominalValue', { value: displayedNominalA })
+                            : t('breakerNotConfigured')}</dd>
                           <dt>{t('breakerProtection')}</dt>
                           <dd>{t('breakerNotConfigured')}</dd>
                         </>

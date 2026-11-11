@@ -46,7 +46,7 @@ services:
     environment:
       SNMP_TRAP_TARGET: '127.0.0.1'
       SNMP_TRAP_PORT: '1162'
-      SNMP_TRAP_COMMUNITY: '${SNMP_TRAP_TEST_COMMUNITY:?Configure a private lab-only trap community}'
+      SNMP_TRAP_COMMUNITY: '${SNMP_TRAP_TEST_COMMUNITY:-}'
       SNMP_TRAP_ONESHOT: 'true'
     depends_on:
       snmp-traps:

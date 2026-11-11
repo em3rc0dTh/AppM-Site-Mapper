@@ -342,3 +342,53 @@
   align-self: center !important;
   line-height: 1.1 !important;
 }
+
+
+/* BDFB 16-inch laptop recovery: focus only the physical/operational stage.
+   The user's stored tree/inspector widths remain unchanged on restoration. */
+@media (min-width: 900px) {
+  .zip-app-shell .zip-bdfb-page .s03-layout.s03-layout[data-stage-focused='true'] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+  .zip-app-shell .zip-bdfb-page .s03-layout.s03-layout[data-stage-focused='true'] > :first-child,
+  .zip-app-shell .zip-bdfb-page .s03-layout.s03-layout[data-stage-focused='true'] > :nth-child(3),
+  .zip-bdfb-page .s03-layout[data-stage-focused='true'] .s03-separator,
+  .zip-bdfb-page .s03-layout[data-stage-focused='true'] .s03-reset {
+    display: none !important;
+  }
+  .zip-app-shell .zip-bdfb-page .s03-layout.s03-layout[data-stage-focused='true'] > :nth-child(2) {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    overflow-x: auto;
+  }
+}
+.zip-bdfb-page .s03-stage-focus {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 45;
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid #2376b8;
+  border-radius: 7px;
+  background: #f2f9ff;
+  color: #115e94;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgb(14 45 76 / 12%);
+  cursor: pointer;
+}
+.zip-bdfb-page .s03-stage-focus:hover,
+.zip-bdfb-page .s03-stage-focus:focus-visible,
+.zip-bdfb-page .s03-stage-focus[aria-pressed='true'] {
+  background: #dceeff;
+  outline-offset: 2px;
+}
+@media (max-width: 899px) {
+  .zip-bdfb-page .s03-stage-focus {
+    display: none;
+  }
+}

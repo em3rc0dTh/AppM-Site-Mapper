@@ -14,14 +14,14 @@ El historial responde una pregunta sencilla: **¿cómo cambió esta medición du
 4. Selecciona **24H** para ver el último día o **7D** para ver la última semana, si la pantalla ofrece esas opciones.
 5. Observa la unidad de cada valor y el periodo elegido.
 
-## Ver el historial de entradas SNMP
+## Ver el historial de entradas del QDF
 
 1. Abre el **Device BDFB**.
 2. Ve a **INSPECTOR → Charts**.
 3. Selecciona el periodo y una magnitud, por ejemplo **Current** o **Voltage**.
 4. Comprueba qué entrada (A, B u otra) corresponde a cada curva.
 
-En algunas vistas de SNMP pueden aparecer periodos adicionales, como **15D** o **1M**.
+En algunas vistas del QDF pueden aparecer periodos adicionales, como **15D** o **1M**.
 
 ## Reportes descargables
 

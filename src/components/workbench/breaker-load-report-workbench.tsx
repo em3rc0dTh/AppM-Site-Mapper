@@ -158,7 +158,7 @@ export function BreakerLoadReportWorkbench({
             <header><h2>{t('history')}</h2></header>
             <div className="sm-load-report-table-wrap">
               <table>
-                <thead><tr><th>{t('firstReading')}</th><th>{t('voltage')}</th><th>{t('current')}</th><th>{t('power')}</th><th>{t('energy')}</th></tr></thead>
+                <thead><tr><th>{t('timestamp')}</th><th>{t('voltage')}</th><th>{t('current')}</th><th>{t('power')}</th><th>{t('energy')}</th></tr></thead>
                 <tbody>
                   {data.points.map((point) => (
                     <tr key={point.at}>

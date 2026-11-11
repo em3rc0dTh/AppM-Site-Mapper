@@ -161,9 +161,7 @@ export function QdfLoadReportWorkbench({
     quality === 'VALID' ? t('dataAvailable') : t('noDataInWindow');
 
   const formatTimestamp = (value: string | null) =>
-    value
-      ? new Date(value).toLocaleString(locale, { timeZone: 'America/Lima' })
-      : '—';
+    value ? new Date(value).toLocaleString(locale, { timeZone: 'America/Lima' }) : '—';
 
   function exportCsv() {
     if (!report || !breakers) return;

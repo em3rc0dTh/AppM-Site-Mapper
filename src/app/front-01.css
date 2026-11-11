@@ -646,3 +646,32 @@
   background: #eaf5fd;
   outline: none;
 }
+
+
+/* QDF report entry stays visible above Physical/Operation content. */
+.front01-stage-report-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex: 0 0 auto;
+  margin: 0 0 8px;
+}
+.front01-stage-report-actions .sm-detached-workbench-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid #8cb8da;
+  border-radius: 6px;
+  color: #115e94;
+  background: #f4faff;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.front01-stage-report-actions .sm-detached-workbench-button:hover,
+.front01-stage-report-actions .sm-detached-workbench-button:focus-visible {
+  background: #e6f3ff;
+  border-color: #2678ba;
+}

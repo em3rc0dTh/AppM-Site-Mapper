@@ -19,6 +19,7 @@ interface Props {
   readonly physicalHeading?: string;
   readonly operationHeading?: string;
   readonly headingStatus?: ReactNode;
+  readonly headingActions?: ReactNode;
 }
 
 /** FRONT-01 is a presentation split; all original editors and service contracts are reused. */
@@ -30,6 +31,7 @@ export function Front01StageTabs({
   physicalHeading,
   operationHeading,
   headingStatus,
+  headingActions,
 }: Props) {
   const t = useTranslations('front01Ui');
   const [view, setView] = useState<Front01View>('physical');
@@ -47,6 +49,11 @@ export function Front01StageTabs({
         <div className="front01-stage-heading-row">
           <h1 className="front01-stage-heading">{activeHeading}</h1>
           {headingStatus}
+        </div>
+      ) : null}
+      {headingActions ? (
+        <div className="sm-detached-workbench-actions front01-stage-report-actions">
+          {headingActions}
         </div>
       ) : null}
       <div className="front01-primary-tabs" role="tablist" aria-label={label}>

@@ -233,6 +233,12 @@ export function QdfLoadReportWorkbench({
           <p>{location}</p>
         </div>
         <div className="sm-workbench-header-actions">
+          <button type="button" onClick={exportCsv} disabled={!report || !breakers}>
+            {t('exportCsv')}
+          </button>
+          <button type="button" onClick={() => window.print()} disabled={!report || !breakers}>
+            {t('printPdf')}
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -409,14 +415,6 @@ export function QdfLoadReportWorkbench({
             </div>
           </section>
 
-          <footer className="sm-load-report-actions">
-            <button type="button" onClick={exportCsv}>
-              {t('exportCsv')}
-            </button>
-            <button type="button" onClick={() => window.print()}>
-              {t('printPdf')}
-            </button>
-          </footer>
         </>
       ) : null}
     </main>

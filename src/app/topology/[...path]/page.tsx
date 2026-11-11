@@ -2,6 +2,7 @@ import '@/app/front-01.css';
 import { Front01StageTabs } from '@/components/workspace/front-01-stage-tabs';
 import { Front01BdfbSummary } from '@/components/workspace/front-01-bdfb-summary';
 import { Front01BdfbHealth } from '@/components/workspace/front-01-bdfb-health';
+import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 import { ResizableWorkspace } from '@/components/workspace/resizable-workspace';
 import { SiteBoundaryWorkspace } from '@/components/topology/site-boundary-workspace';
 import Link from 'next/link';
@@ -91,6 +92,7 @@ export default async function TopologyNodePage({
 }>) {
   const auth = await requirePermission('topology:read');
   const t = await getTranslations('pages.topology');
+  const ti = await getTranslations('bdfb.inspector.info');
 
   if (!auth.ok) {
     redirect('/login');
@@ -482,6 +484,15 @@ export default async function TopologyNodePage({
                     deviceId={node.id}
                     installedEquipmentIds={installedBreakerIds}
                   />
+                }
+                headingActions={
+                  hasPermission(auth.value.role, 'telemetry:read') ? (
+                    <DetachedWorkbenchButton
+                      href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
+                      windowName={`site-mapper-load-report-${node.id}`}
+                      label={ti('openLoadReport')}
+                    />
+                  ) : null
                 }
                 physical={<>              <BdfbChassis
                 key={query.panel ?? 'bdfb-overview'}

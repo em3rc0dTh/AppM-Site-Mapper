@@ -2446,7 +2446,7 @@
     "sourceUnavailable": "No hay datos de origen disponibles para esta vista.",
     "minVoltage": "Voltaje mínimo",
     "maxVoltage": "Voltaje máximo",
-    "voltageVariation": "Variación de voltaje",
+    "voltageVariation": "Variación de voltaje (máx. − mín.)",
     "completeIntervals": "Intervalos con las cuatro magnitudes disponibles",
     "dataStatus": "Estado de datos",
     "statusComplete": "Datos completos",
@@ -2462,7 +2462,10 @@
     "acceptedIntervals": "Intervalos con datos",
     "breakerIdentity": "Breaker",
     "qdfContext": "QDF",
-    "noBreakerSamples": "No hay mediciones históricas del breaker en este intervalo."
+    "noBreakerSamples": "No hay mediciones históricas del breaker en este intervalo.",
+    "operationalReport": "SITE MAPPER · REPORTE OPERACIONAL",
+    "intervalCoverage": "Intervalos registrados: V {voltage} · I {current} · P {power} · E {energy}",
+    "energyCounterHelp": "El contador de energía es acumulativo; no representa por sí solo el consumo del intervalo."
   },
   "breakerLimits": {
     "title": "Límites de corriente",

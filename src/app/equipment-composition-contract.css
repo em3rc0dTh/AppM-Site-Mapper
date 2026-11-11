@@ -1046,6 +1046,19 @@
   gap: 10px;
 }
 
+.ec-history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ec-history-heading .ec-history-report-link {
+  margin: 0;
+  flex-shrink: 0;
+}
+
 .ec-history-controls > div {
   display: flex;
   gap: 5px;

@@ -162,6 +162,7 @@ export function CompositionHistoryCharts({
   compact = false,
 }: Readonly<{ equipmentId: string; equipmentType: string; compact?: boolean }>) {
   const t = useTranslations('historyCharts');
+  const tr = useTranslations('workbench');
   const locale = useLocale();
   const [window, setWindow] = useState<TelemetryHistoryWindow>('24h');
   const [selectedMetric, setSelectedMetric] = useState<CompositionMetricKey>('currentA');
@@ -209,7 +210,19 @@ export function CompositionHistoryCharts({
   return (
     <div className="ec-history-charts">
       <div className="ec-history-controls">
-        <strong>{equipmentType === 'CIRCUIT_BREAKER' ? t('breakerTitle') : t('title')}</strong>
+        <div className="ec-history-heading">
+          <strong>{equipmentType === 'CIRCUIT_BREAKER' ? t('breakerTitle') : t('title')}</strong>
+          {equipmentType === 'CIRCUIT_BREAKER' && (
+            <a
+              className="ec-history-report-link"
+              href={`/workbench/breaker-report?equipmentId=${encodeURIComponent(equipmentId)}&window=${window}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              {tr('openBreakerReport')}
+            </a>
+          )}
+        </div>
         <div role="group" aria-label={t('range')}>
           {WINDOWS.map((range) => (
             <button

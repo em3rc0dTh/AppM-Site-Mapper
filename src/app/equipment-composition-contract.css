@@ -1054,7 +1054,7 @@
   flex-wrap: wrap;
 }
 
-.ec-history-heading .ec-history-report-link {
+.ec-history-heading .sm-detached-workbench-button {
   margin: 0;
   flex-shrink: 0;
 }

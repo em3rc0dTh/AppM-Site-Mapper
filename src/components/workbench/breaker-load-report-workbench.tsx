@@ -204,6 +204,12 @@ export function BreakerLoadReportWorkbench({
           </p>
         </div>
         <div className="sm-workbench-header-actions">
+          <button type="button" onClick={exportCsv} disabled={!data || !stats || !data.points.length}>
+            {t('exportCsv')}
+          </button>
+          <button type="button" onClick={() => window.print()} disabled={!data || !stats || !data.points.length}>
+            {t('printPdf')}
+          </button>
           <button
             type="button"
             onClick={() => {
@@ -293,10 +299,6 @@ export function BreakerLoadReportWorkbench({
 
           <Trend points={data.points} label={t('power')} />
 
-          <footer className="sm-load-report-actions">
-            <button type="button" onClick={exportCsv}>{t('exportCsv')}</button>
-            <button type="button" onClick={() => window.print()}>{t('printPdf')}</button>
-          </footer>
         </>
       ) : null}
     </main>

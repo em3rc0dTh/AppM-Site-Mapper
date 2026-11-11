@@ -220,6 +220,7 @@ export function startBridge({
   const projectionAbort = new AbortController();
 
   async function refreshProjection() {
+    let failure = 'FETCH_FAILED';
     try {
       const response = await fetch(projectionUrl, {
         method: 'POST',
@@ -230,9 +231,15 @@ export function startBridge({
         body: JSON.stringify({ signalIds: registry.points.map((point) => point.signalId) }),
         signal: AbortSignal.any([projectionAbort.signal, AbortSignal.timeout(5000)]),
       });
-      if (!response.ok) throw new Error('Projection unavailable');
+      if (!response.ok) {
+        failure = `HTTP_${response.status}`;
+        throw new Error('Projection unavailable');
+      }
       const body = await response.json();
-      if (!Array.isArray(body.signals)) throw new Error('Invalid projection');
+      if (!Array.isArray(body.signals)) {
+        failure = 'INVALID_RESPONSE';
+        throw new Error('Invalid projection');
+      }
 
       for (const signal of body.signals) {
         state.extensions.apply(signal);
@@ -241,8 +248,12 @@ export function startBridge({
           state.applyTotalSignal(point.unitId, point.logicalPointId, signal);
         }
       }
-    } catch {
-      if (!stopped) console.warn(JSON.stringify({ event: 'modbus.projection.unavailable' }));
+    } catch (error) {
+      if (!stopped) {
+        const reason =
+          error?.name === 'TimeoutError' || error?.name === 'AbortError' ? 'TIMEOUT' : failure;
+        console.warn(JSON.stringify({ event: 'modbus.projection.unavailable', reason }));
+      }
     } finally {
       if (!stopped) projectionTimer = setTimeout(refreshProjection, 2000);
     }

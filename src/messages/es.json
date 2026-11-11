@@ -383,7 +383,14 @@
       "mk1_confirmation": "Confirmación",
       "mk1_user": "· usuario",
       "mk1_no_confirmed_acrel_physical_mapping": "Sin mapeo físico Acrel confirmado",
-      "breadcrumbs": "Ruta de navegación"
+      "breadcrumbs": "Ruta de navegación",
+      "declaredPowerTarget": "Equipo alimentado (declarado)",
+      "declaredTargetFootprint": "Huella del destino",
+      "documentedBreakerStatus": "Estado documental",
+      "documentedInService": "En servicio (documental)",
+      "documentedOff": "Apagado (documental)",
+      "breakerDocumentaryRemark": "Observación técnica",
+      "breakerReplacementRemark": "Reemplazo propuesto a {value} A (no aplicado)"
     },
     "rackFocus": {
       "title": "DETALLE DEL RACK",

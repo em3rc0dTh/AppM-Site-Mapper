@@ -236,7 +236,7 @@ export function BreakerLoadReportWorkbench({
         <>
           <section className="sm-load-report-meta">
             <span>
-              <b>{t('reportCoverage')}</b> {data.points.length} {t('acceptedIntervals').toLowerCase()}
+              <b>{t('acceptedIntervals')}:</b> {data.points.length}
             </span>
           </section>
 
@@ -250,7 +250,7 @@ export function BreakerLoadReportWorkbench({
                   <div><dt>{t('min')}</dt><dd>{metric(stats.voltage.min, 'V')}</dd></div>
                   <div><dt>{t('average')}</dt><dd>{metric(stats.voltage.average, 'V')}</dd></div>
                   <div><dt>{t('max')}</dt><dd>{metric(stats.voltage.max, 'V')}</dd></div>
-                  <div><dt>Δ</dt><dd>{metric(stats.voltage.variation, 'V')}</dd></div>
+                  <div><dt>{t('voltageVariation')}</dt><dd>{metric(stats.voltage.variation, 'V')}</dd></div>
                 </dl>
               </article>
               <article>
@@ -275,6 +275,7 @@ export function BreakerLoadReportWorkbench({
                 <dl>
                   <div><dt>{t('lastEnergyCounter')}</dt><dd>{metric(stats.energy.latest, 'kWh', 4)}</dd></div>
                 </dl>
+                <p className="sm-load-report-card-note">{t('energyCounterHelp')}</p>
               </article>
             </div>
           </section>

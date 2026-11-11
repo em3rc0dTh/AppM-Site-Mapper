@@ -383,7 +383,14 @@
       "mk1_confirmation": "Confirmation",
       "mk1_user": "· user",
       "mk1_no_confirmed_acrel_physical_mapping": "No confirmed Acrel physical mapping",
-      "breadcrumbs": "Breadcrumb"
+      "breadcrumbs": "Breadcrumb",
+      "declaredPowerTarget": "Declared powered equipment",
+      "declaredTargetFootprint": "Destination footprint reference",
+      "documentedBreakerStatus": "Documented status",
+      "documentedInService": "In service (documented)",
+      "documentedOff": "Off (documented)",
+      "breakerDocumentaryRemark": "Technical remark",
+      "breakerReplacementRemark": "Proposed replacement to {value} A (not applied)"
     },
     "rackFocus": {
       "title": "RACK FOCUS",

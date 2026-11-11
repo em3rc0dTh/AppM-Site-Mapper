@@ -2520,7 +2520,9 @@
     "showTree": "Mostrar árbol",
     "hideInspector": "Ocultar inspector",
     "showInspector": "Mostrar inspector",
-    "resetLayout": "Restaurar distribución"
+    "resetLayout": "Restaurar distribución",
+    "expandStage": "Ampliar vista física",
+    "restorePanels": "Restaurar paneles"
   },
   "brand": {
     "appManager": "AppManager",

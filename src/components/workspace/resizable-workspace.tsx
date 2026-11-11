@@ -35,10 +35,12 @@ export function ResizableWorkspace({
   children,
   className,
   userKey,
+  allowStageFocus = false,
 }: {
   children: ReactNode;
   className: string;
   userKey: string;
+  allowStageFocus?: boolean;
 }) {
   const t = useTranslations('s03Workspace');
   const ref = useRef<HTMLDivElement>(null);
@@ -47,6 +49,7 @@ export function ResizableWorkspace({
   const [width, setWidth] = useState(1200);
   const [treeOpen, setTreeOpen] = useState(false);
   const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [stageFocused, setStageFocused] = useState(false);
   const storageKey = `site-mapper:workspace:s03:v1:${userKey}`;
 
   useEffect(() => {
@@ -178,6 +181,7 @@ export function ResizableWorkspace({
       style={style}
       data-tree-open={treeOpen}
       data-inspector-open={inspectorOpen}
+      data-stage-focused={allowStageFocus && stageFocused}
     >
       {children}
       {separator('tree')}
@@ -198,6 +202,16 @@ export function ResizableWorkspace({
           {inspectorOpen ? t('hideInspector') : t('showInspector')}
         </button>
       </div>
+      {allowStageFocus && (
+        <button
+          className="s03-stage-focus"
+          type="button"
+          aria-pressed={stageFocused}
+          onClick={() => setStageFocused((value) => !value)}
+        >
+          {stageFocused ? t('restorePanels') : t('expandStage')}
+        </button>
+      )}
       <button
         className="s03-reset"
         type="button"

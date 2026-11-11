@@ -40,6 +40,8 @@ jobs:
             scripts/telemetry/commission-bdfb01-snmp-lab.py
       - name: Check mongosh script syntax (no database connection)
         run: node --check scripts/telemetry/commission-bdfb23-snmp-config2.mongosh.js
+      - name: G10 acceptance Mongo database selection
+        run: python3 -m unittest discover -s tests/python -p 'test_eltek_acceptance_db.py' -v
       - name: BDFB-02/03 SNMP Config2 safety (no Docker needed)
         run: python3 -m unittest discover -s tests/python -p 'test_bdfb23_snmp_setup.py' -v
       - name: BDFB-01 original SNMP regression (no Docker needed)

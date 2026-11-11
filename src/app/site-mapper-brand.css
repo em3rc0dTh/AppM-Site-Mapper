@@ -556,3 +556,90 @@
     backdrop-filter: none;
   }
 }
+
+
+/* Global brand is also the Home control. Keep it subtle by default and explicit on interaction. */
+.zip-brand {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.zip-brand .sm-brand {
+  flex: 1 1 auto;
+}
+
+.zip-brand-home {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #dce4e8;
+  border-radius: 9px;
+  background: #fff;
+  color: #263238;
+  transition:
+    color 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.zip-brand-home svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.zip-brand:hover,
+.zip-brand:focus-visible {
+  border-color: rgba(24, 185, 143, 0.72);
+  background: rgba(24, 185, 143, 0.055);
+  box-shadow: 0 0 0 2px rgba(24, 185, 143, 0.07);
+  outline: none;
+}
+
+.zip-brand:hover .zip-brand-home,
+.zip-brand:focus-visible .zip-brand-home {
+  border-color: #18b98f;
+  background: #18b98f;
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1100px) {
+  .zip-brand {
+    gap: 8px;
+    padding-inline: 8px;
+  }
+
+  .zip-brand-home {
+    width: 29px;
+    height: 29px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zip-brand,
+  .zip-brand-home {
+    transition: none;
+  }
+}

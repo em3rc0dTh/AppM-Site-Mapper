@@ -133,8 +133,20 @@ export function AppShell({ children }: { children: ReactNode }) {
       </a>
 
       <header className="app-topbar zip-topbar">
-        <Link ref={brandRef} href="/workspace" className="zip-brand">
+        <Link
+          ref={brandRef}
+          href="/workspace"
+          className="zip-brand"
+          aria-label={t('goHome')}
+          title={t('goHome')}
+        >
           <SiteMapperBrand variant="compact" tagline={t('tagline')} />
+          <span className="zip-brand-home" aria-hidden="true">
+            <svg viewBox="0 0 24 24" focusable="false">
+              <path d="M3 11.5 12 4l9 7.5" />
+              <path d="M5.5 10.5V20h13v-9.5M9.5 20v-6h5v6" />
+            </svg>
+          </span>
         </Link>
 
         <div className="zip-context-slot">

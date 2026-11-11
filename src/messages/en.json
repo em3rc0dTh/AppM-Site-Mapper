@@ -2446,7 +2446,7 @@
     "sourceUnavailable": "No source data is available for this view.",
     "minVoltage": "Minimum voltage",
     "maxVoltage": "Maximum voltage",
-    "voltageVariation": "Voltage variation",
+    "voltageVariation": "Voltage variation (max − min)",
     "completeIntervals": "Intervals with all four measurements available",
     "dataStatus": "Data status",
     "statusComplete": "Complete data",
@@ -2462,7 +2462,10 @@
     "acceptedIntervals": "Intervals with data",
     "breakerIdentity": "Breaker",
     "qdfContext": "QDF",
-    "noBreakerSamples": "No historical breaker measurements are available in this window."
+    "noBreakerSamples": "No historical breaker measurements are available in this window.",
+    "operationalReport": "SITE MAPPER · OPERATIONAL REPORT",
+    "intervalCoverage": "Recorded intervals: V {voltage} · I {current} · P {power} · E {energy}",
+    "energyCounterHelp": "The energy counter is cumulative; by itself it does not represent consumption during the window."
   },
   "breakerLimits": {
     "title": "Current limits",

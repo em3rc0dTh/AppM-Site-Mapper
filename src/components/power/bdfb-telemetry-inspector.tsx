@@ -368,11 +368,6 @@ export function BdfbTelemetryInspector({
                       : ti('noActiveDescendantTelemetry')}
                   </span>
                 </div>
-                <DetachedWorkbenchButton
-                  href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
-                  windowName={`site-mapper-load-report-${node.id}`}
-                  label={ti('openLoadReport')}
-                />
               </footer>
             </section>
           </>

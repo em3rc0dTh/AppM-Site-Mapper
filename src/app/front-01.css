@@ -622,3 +622,27 @@
   background:#8d9aa6;
   box-shadow:0 0 0 2px rgba(141,154,166,.15);
 }
+
+
+.ec-history-report-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  margin: 10px 0 2px;
+  padding: 6px 9px;
+  border: 1px solid #8cb8da;
+  border-radius: 5px;
+  background: #f4faff;
+  color: #115e94;
+  font-size: 9px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.ec-history-report-link:hover,
+.ec-history-report-link:focus-visible {
+  border-color: #237cb8;
+  background: #eaf5fd;
+  outline: none;
+}

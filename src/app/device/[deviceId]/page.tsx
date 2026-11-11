@@ -726,7 +726,11 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                               ) : (
                                 <>
                                   <dt>{t('breakerNominal')}</dt>
-                                  <dd>{displayedNominalA !== null ? t('breakerNominalValue', { value: displayedNominalA }) : t('breakerNotConfigured')}</dd>
+                                  <dd>
+                                    {displayedNominalA !== null
+                                      ? t('breakerNominalValue', { value: displayedNominalA })
+                                      : t('breakerNotConfigured')}
+                                  </dd>
                                   <dt>{t('breakerProtection')}</dt>
                                   <dd>{t('breakerNotConfigured')}</dd>
                                 </>

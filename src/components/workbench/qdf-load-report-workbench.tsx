@@ -302,33 +302,60 @@ export function QdfLoadReportWorkbench({
                 <small>{t('voltage')}</small>
                 <strong>{metric(report.metrics.voltage.average, 'V')}</strong>
                 <dl>
-                  <div><dt>{t('min')}</dt><dd>{metric(report.metrics.voltage.min, 'V')}</dd></div>
-                  <div><dt>{t('average')}</dt><dd>{metric(report.metrics.voltage.average, 'V')}</dd></div>
-                  <div><dt>{t('max')}</dt><dd>{metric(report.metrics.voltage.max, 'V')}</dd></div>
-                  <div><dt>{t('voltageVariation')}</dt><dd>{metric(voltageVariation, 'V')}</dd></div>
+                  <div>
+                    <dt>{t('min')}</dt>
+                    <dd>{metric(report.metrics.voltage.min, 'V')}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('average')}</dt>
+                    <dd>{metric(report.metrics.voltage.average, 'V')}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('max')}</dt>
+                    <dd>{metric(report.metrics.voltage.max, 'V')}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('voltageVariation')}</dt>
+                    <dd>{metric(voltageVariation, 'V')}</dd>
+                  </div>
                 </dl>
               </article>
               <article>
                 <small>{t('current')}</small>
                 <strong>{metric(report.metrics.current.average, 'A')}</strong>
                 <dl>
-                  <div><dt>{t('average')}</dt><dd>{metric(report.metrics.current.average, 'A')}</dd></div>
-                  <div><dt>{t('peak')}</dt><dd>{metric(report.metrics.current.peak, 'A')}</dd></div>
+                  <div>
+                    <dt>{t('average')}</dt>
+                    <dd>{metric(report.metrics.current.average, 'A')}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('peak')}</dt>
+                    <dd>{metric(report.metrics.current.peak, 'A')}</dd>
+                  </div>
                 </dl>
               </article>
               <article>
                 <small>{t('power')}</small>
                 <strong>{metric(report.metrics.power.average, 'kW', 3)}</strong>
                 <dl>
-                  <div><dt>{t('average')}</dt><dd>{metric(report.metrics.power.average, 'kW', 3)}</dd></div>
-                  <div><dt>{t('peak')}</dt><dd>{metric(report.metrics.power.peak, 'kW', 3)}</dd></div>
+                  <div>
+                    <dt>{t('average')}</dt>
+                    <dd>{metric(report.metrics.power.average, 'kW', 3)}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('peak')}</dt>
+                    <dd>{metric(report.metrics.power.peak, 'kW', 3)}</dd>
+                  </div>
                 </dl>
               </article>
               <article>
                 <small>{t('energy')}</small>
                 <strong>{metric(report.metrics.energy.total, 'kWh', 4)}</strong>
                 <dl>
-                  <div><dt>{t('totalEnergy')}</dt><dd>{metric(report.metrics.energy.total, 'kWh', 4)}</dd></div>
+                  <div>
+                    <dt>{t('totalEnergy')}</dt>
+                    <dd>{metric(report.metrics.energy.total, 'kWh', 4)}</dd>
+                  </div>
                 </dl>
               </article>
             </div>
@@ -414,7 +441,6 @@ export function QdfLoadReportWorkbench({
               </table>
             </div>
           </section>
-
         </>
       ) : null}
     </main>

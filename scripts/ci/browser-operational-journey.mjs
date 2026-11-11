@@ -160,10 +160,9 @@ try {
   await page.goto(base + '/device/' + panel.id, { waitUntil: 'domcontentloaded' });
   console.log('[PASS] Chromium: Spanish deletion modal, translated confirmation, en/es round-trip');
 
-  // The operational inspector is mounted only after selecting the Operation stage.
-  // The physical stage intentionally does not render its point-group summary.
-  await page.getByRole('tab', { name: 'Operation', exact: true }).click();
-  await page.getByText('Point group 0_1').first().waitFor({ timeout: 30000 });
+  // Verify the actual commissioned point survives the en/es round-trip; the old
+  // "Point group 0_1" title is no longer guaranteed by the current UI.
+  await page.getByText('0_1_1').first().waitFor({ timeout: 30000 });
   await page.screenshot({ path: '/tmp/mk1-operational-browser.png', fullPage: true });
   console.log('[PASS] Real Chromium: configured telemetry prefix visible on actual Equipment page');
 

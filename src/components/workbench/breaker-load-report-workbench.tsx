@@ -145,8 +145,7 @@ export function BreakerLoadReportWorkbench({
         min: voltageMin,
         average: average(voltage),
         max: voltageMax,
-        variation:
-          voltageMin !== null && voltageMax !== null ? voltageMax - voltageMin : null,
+        variation: voltageMin !== null && voltageMax !== null ? voltageMax - voltageMin : null,
       },
       current: { average: average(current), peak: maximum(current) },
       power: { average: average(power), peak: maximum(power) },
@@ -204,10 +203,18 @@ export function BreakerLoadReportWorkbench({
           </p>
         </div>
         <div className="sm-workbench-header-actions">
-          <button type="button" onClick={exportCsv} disabled={!data || !stats || !data.points.length}>
+          <button
+            type="button"
+            onClick={exportCsv}
+            disabled={!data || !stats || !data.points.length}
+          >
             {t('exportCsv')}
           </button>
-          <button type="button" onClick={() => window.print()} disabled={!data || !stats || !data.points.length}>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            disabled={!data || !stats || !data.points.length}
+          >
             {t('printPdf')}
           </button>
           <button
@@ -247,7 +254,9 @@ export function BreakerLoadReportWorkbench({
 
       {error ? <p className="sm-workbench-error">{t('unavailable')}</p> : null}
       {!data && !error ? <p>{t('loading')}</p> : null}
-      {data && !data.points.length ? <p className="sm-workbench-empty">{t('noBreakerSamples')}</p> : null}
+      {data && !data.points.length ? (
+        <p className="sm-workbench-empty">{t('noBreakerSamples')}</p>
+      ) : null}
 
       {data && stats && data.points.length ? (
         <>
@@ -264,33 +273,60 @@ export function BreakerLoadReportWorkbench({
                 <small>{t('voltage')}</small>
                 <strong>{metric(stats.voltage.average, 'V')}</strong>
                 <dl>
-                  <div><dt>{t('min')}</dt><dd>{metric(stats.voltage.min, 'V')}</dd></div>
-                  <div><dt>{t('average')}</dt><dd>{metric(stats.voltage.average, 'V')}</dd></div>
-                  <div><dt>{t('max')}</dt><dd>{metric(stats.voltage.max, 'V')}</dd></div>
-                  <div><dt>{t('voltageVariation')}</dt><dd>{metric(stats.voltage.variation, 'V')}</dd></div>
+                  <div>
+                    <dt>{t('min')}</dt>
+                    <dd>{metric(stats.voltage.min, 'V')}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('average')}</dt>
+                    <dd>{metric(stats.voltage.average, 'V')}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('max')}</dt>
+                    <dd>{metric(stats.voltage.max, 'V')}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('voltageVariation')}</dt>
+                    <dd>{metric(stats.voltage.variation, 'V')}</dd>
+                  </div>
                 </dl>
               </article>
               <article>
                 <small>{t('current')}</small>
                 <strong>{metric(stats.current.average, 'A')}</strong>
                 <dl>
-                  <div><dt>{t('average')}</dt><dd>{metric(stats.current.average, 'A')}</dd></div>
-                  <div><dt>{t('peak')}</dt><dd>{metric(stats.current.peak, 'A')}</dd></div>
+                  <div>
+                    <dt>{t('average')}</dt>
+                    <dd>{metric(stats.current.average, 'A')}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('peak')}</dt>
+                    <dd>{metric(stats.current.peak, 'A')}</dd>
+                  </div>
                 </dl>
               </article>
               <article>
                 <small>{t('power')}</small>
                 <strong>{metric(stats.power.average, 'kW', 3)}</strong>
                 <dl>
-                  <div><dt>{t('average')}</dt><dd>{metric(stats.power.average, 'kW', 3)}</dd></div>
-                  <div><dt>{t('peak')}</dt><dd>{metric(stats.power.peak, 'kW', 3)}</dd></div>
+                  <div>
+                    <dt>{t('average')}</dt>
+                    <dd>{metric(stats.power.average, 'kW', 3)}</dd>
+                  </div>
+                  <div>
+                    <dt>{t('peak')}</dt>
+                    <dd>{metric(stats.power.peak, 'kW', 3)}</dd>
+                  </div>
                 </dl>
               </article>
               <article>
                 <small>{t('energy')}</small>
                 <strong>{metric(stats.energy.latest, 'kWh', 4)}</strong>
                 <dl>
-                  <div><dt>{t('lastEnergyCounter')}</dt><dd>{metric(stats.energy.latest, 'kWh', 4)}</dd></div>
+                  <div>
+                    <dt>{t('lastEnergyCounter')}</dt>
+                    <dd>{metric(stats.energy.latest, 'kWh', 4)}</dd>
+                  </div>
                 </dl>
                 <p className="sm-load-report-card-note">{t('energyCounterHelp')}</p>
               </article>
@@ -298,7 +334,6 @@ export function BreakerLoadReportWorkbench({
           </section>
 
           <Trend points={data.points} label={t('power')} />
-
         </>
       ) : null}
     </main>

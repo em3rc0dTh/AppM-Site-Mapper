@@ -17,16 +17,26 @@ type Widths = { tree: number; inspector: number };
 const DEFAULT: Widths = { tree: 232, inspector: 320 };
 const LIMITS = { tree: 180, inspector: 240, canvas: 320 } as const;
 
-export function constrainWorkspaceWidths(width: number, proposed: Widths, flexible = false): Widths {
+export function constrainWorkspaceWidths(
+  width: number,
+  proposed: Widths,
+  flexible = false,
+): Widths {
   if (!Number.isFinite(width) || width < LIMITS.tree + LIMITS.inspector + LIMITS.canvas)
     return DEFAULT;
   const tree = Math.max(
     LIMITS.tree,
-    Math.min(Math.round(proposed.tree), Math.min(flexible ? width : 420, width - LIMITS.inspector - LIMITS.canvas)),
+    Math.min(
+      Math.round(proposed.tree),
+      Math.min(flexible ? width : 420, width - LIMITS.inspector - LIMITS.canvas),
+    ),
   );
   const inspector = Math.max(
     LIMITS.inspector,
-    Math.min(Math.round(proposed.inspector), Math.min(flexible ? width : 520, width - tree - LIMITS.canvas)),
+    Math.min(
+      Math.round(proposed.inspector),
+      Math.min(flexible ? width : 520, width - tree - LIMITS.canvas),
+    ),
   );
   return { tree, inspector };
 }
@@ -130,7 +140,9 @@ export function ResizableWorkspace({
   const maxWidth = (side: Side) =>
     allowStageFocus
       ? width - LIMITS.canvas - constrained[side === 'tree' ? 'inspector' : 'tree']
-      : side === 'tree' ? 420 : 520;
+      : side === 'tree'
+        ? 420
+        : 520;
 
   const separator = (side: Side) => (
     <div

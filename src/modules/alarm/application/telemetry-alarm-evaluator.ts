@@ -347,10 +347,7 @@ export class TelemetryAlarmEvaluator {
     }
 
     if (this.automaticCoverageAlarmsEnabled) {
-      const byDevice = new Map<
-        string,
-        Map<string, { reporting: boolean; age: number }>
-      >();
+      const byDevice = new Map<string, Map<string, { reporting: boolean; age: number }>>();
       for (const point of coveragePoints.values()) {
         const breakers = byDevice.get(point.node.deviceId) ?? new Map();
         const current = breakers.get(point.node.id) ?? {

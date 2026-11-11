@@ -65,7 +65,10 @@ export function Front01BdfbHealth({
           : activeAlarms > 0
             ? t('activeAlarms', { count: activeAlarms })
             : installedEquipmentIds.length > 0
-              ? t('installedReporting', { reporting: telemetry.reportingEquipment, installed: installedEquipmentIds.length })
+              ? t('installedReporting', {
+                  reporting: telemetry.reportingEquipment,
+                  installed: installedEquipmentIds.length,
+                })
               : t('noInstalledEquipment')
       }
     >

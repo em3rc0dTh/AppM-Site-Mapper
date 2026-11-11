@@ -132,8 +132,6 @@ jobs:
                 assert(panels.length===1 && panels[0].children.filter(Boolean).length===count/2,
                   key+" "+panelName+" occupied slots");
               }
-              // Documentary capacities must be present on installed breakers without
-              // inventing any overcurrent policy or measured electrical state.
               for (const breaker of c.find({kind:"EQUIPMENT",equipmentType:"CIRCUIT_BREAKER",
                 lifecycle:"ACTIVE",deviceId:device.id}).toArray()) {
                 assert(typeof breaker.attributes?.ratedCurrentA==="number" &&

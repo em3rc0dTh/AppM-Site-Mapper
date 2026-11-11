@@ -68,10 +68,27 @@ export const helpCatalog: readonly HelpEntry[] = [
     file: 'glosario.md',
     category: 'start',
     title: 'Glosario simple de Site Mapper',
-    summary: 'Entiende Network, Site, Room, Cluster, Anchor, Rack, BDFB, Panel y Breaker sin conocimientos técnicos.',
+    summary:
+      'Entiende Network, Site, Room, Cluster, Anchor, Rack, BDFB, Panel y Breaker sin conocimientos técnicos.',
     enTitle: 'Site Mapper glossary in plain language',
-    enSummary: 'Understand Network, Site, Room, Cluster, Anchor, Rack, BDFB, Panel and Breaker without technical knowledge.',
-    keywords: ['glosario', 'glossary', 'network', 'site', 'room', 'cluster', 'anchor', 'rack', 'bdfb', 'panel', 'breaker', 'footprint', 'front elevation', 'physical view'],
+    enSummary:
+      'Understand Network, Site, Room, Cluster, Anchor, Rack, BDFB, Panel and Breaker without technical knowledge.',
+    keywords: [
+      'glosario',
+      'glossary',
+      'network',
+      'site',
+      'room',
+      'cluster',
+      'anchor',
+      'rack',
+      'bdfb',
+      'panel',
+      'breaker',
+      'footprint',
+      'front elevation',
+      'physical view',
+    ],
     minutes: 6,
   },
   {
@@ -308,7 +325,8 @@ export function helpSummary(item: HelpEntry, locale: HelpLocale) {
 
 /** Recommendations only; actual permissions remain enforced by each page. */
 export function recommendHelp(pathname: string): readonly string[] {
-  if (pathname.startsWith('/blueprint/')) return ['glosario', 'espacios-y-racks', 'evidencia-visual'];
+  if (pathname.startsWith('/blueprint/'))
+    return ['glosario', 'espacios-y-racks', 'evidencia-visual'];
   if (pathname.startsWith('/rack/'))
     return ['glosario', 'equipos-y-posiciones', 'espacios-y-racks'];
   if (pathname.startsWith('/device/'))

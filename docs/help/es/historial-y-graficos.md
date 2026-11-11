@@ -23,6 +23,30 @@ El historial responde una pregunta sencilla: **¿cómo cambió esta medición du
 
 En algunas vistas de SNMP pueden aparecer periodos adicionales, como **15D** o **1M**.
 
+## Reportes descargables
+
+### Reporte completo del QDF
+
+Desde el BDFB puedes abrir un reporte para **24H, 7D, 15D o 1M**. El resumen muestra el comportamiento general del QDF sin mezclarlo con un breaker individual.
+
+Incluye, cuando existen datos:
+
+- Voltaje mínimo, promedio, máximo y variación del período.
+- Corriente promedio y pico.
+- Potencia promedio y pico.
+- Energía del período.
+- Disponibilidad de datos.
+- Tabla de breakers instalados con sus valores históricos observados.
+- Exportación CSV e impresión / PDF.
+
+### Reporte de un breaker
+
+Desde un Breaker abre **Operación → Gráficas → Abrir reporte del breaker**.
+
+El reporte usa el mismo período **24H, 7D, 15D o 1M** y muestra únicamente ese circuito: Voltaje, Corriente, Potencia, último contador de Energía, intervalos registrados y detalle histórico.
+
+Esto permite revisar un breaker sin mezclarlo con los demás circuitos del QDF.
+
 ## Si no aparece ningún gráfico
 
 Puede que no haya mediciones guardadas en el periodo elegido. Cambia el intervalo si corresponde y revisa si el equipo tiene lecturas recientes.

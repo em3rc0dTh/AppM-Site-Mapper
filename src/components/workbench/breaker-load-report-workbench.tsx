@@ -116,8 +116,6 @@ export function BreakerLoadReportWorkbench({
 
   useEffect(() => {
     const controller = new AbortController();
-    setData(null);
-    setError('');
     void fetch(
       `/api/telemetry/composition-history?equipmentId=${encodeURIComponent(equipmentId)}&window=${windowRange}`,
       { cache: 'no-store', signal: controller.signal },
@@ -206,7 +204,14 @@ export function BreakerLoadReportWorkbench({
           </p>
         </div>
         <div className="sm-workbench-header-actions">
-          <button type="button" onClick={() => setRefresh((value) => value + 1)}>
+          <button
+            type="button"
+            onClick={() => {
+              setError('');
+              setData(null);
+              setRefresh((value) => value + 1);
+            }}
+          >
             {t('refresh')}
           </button>
           <button type="button" onClick={() => window.close()}>
@@ -221,7 +226,13 @@ export function BreakerLoadReportWorkbench({
             key={item}
             type="button"
             aria-pressed={windowRange === item}
-            onClick={() => setWindowRange(item)}
+            onClick={() => {
+              if (item !== windowRange) {
+                setError('');
+                setData(null);
+                setWindowRange(item);
+              }
+            }}
           >
             {item.toUpperCase()}
           </button>

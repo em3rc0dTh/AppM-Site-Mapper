@@ -392,3 +392,20 @@
     display: none;
   }
 }
+
+@media (min-width: 900px) {
+  .zip-app-shell .zip-bdfb-page .s03-layout.s03-layout[data-stage-focused='false'] {
+    grid-template-columns: var(--s03-tree-width) minmax(0, 1fr) var(--s03-inspector-width) !important;
+  }
+
+  .zip-bdfb-page .s03-separator::after {
+    content: '';
+    position: absolute;
+    top: 45%;
+    left: 2px;
+    width: 6px;
+    height: 38px;
+    border-radius: 4px;
+    background: #6486a0;
+  }
+}

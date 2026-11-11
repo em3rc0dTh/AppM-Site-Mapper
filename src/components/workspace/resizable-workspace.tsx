@@ -17,16 +17,16 @@ type Widths = { tree: number; inspector: number };
 const DEFAULT: Widths = { tree: 232, inspector: 320 };
 const LIMITS = { tree: 180, inspector: 240, canvas: 320 } as const;
 
-export function constrainWorkspaceWidths(width: number, proposed: Widths): Widths {
+export function constrainWorkspaceWidths(width: number, proposed: Widths, flexible = false): Widths {
   if (!Number.isFinite(width) || width < LIMITS.tree + LIMITS.inspector + LIMITS.canvas)
     return DEFAULT;
   const tree = Math.max(
     LIMITS.tree,
-    Math.min(Math.round(proposed.tree), Math.min(420, width - LIMITS.inspector - LIMITS.canvas)),
+    Math.min(Math.round(proposed.tree), Math.min(flexible ? width : 420, width - LIMITS.inspector - LIMITS.canvas)),
   );
   const inspector = Math.max(
     LIMITS.inspector,
-    Math.min(Math.round(proposed.inspector), Math.min(520, width - tree - LIMITS.canvas)),
+    Math.min(Math.round(proposed.inspector), Math.min(flexible ? width : 520, width - tree - LIMITS.canvas)),
   );
   return { tree, inspector };
 }
@@ -87,12 +87,12 @@ export function ResizableWorkspace({
     return () => observer.disconnect();
   }, []);
 
-  const constrained = constrainWorkspaceWidths(width, widths);
+  const constrained = constrainWorkspaceWidths(width, widths, allowStageFocus);
 
   const update = useCallback(
     (next: Widths) => {
       const containerWidth = ref.current?.getBoundingClientRect().width ?? width;
-      const safe = constrainWorkspaceWidths(containerWidth, next);
+      const safe = constrainWorkspaceWidths(containerWidth, next, allowStageFocus);
       setWidths(safe);
       try {
         window.localStorage.setItem(storageKey, JSON.stringify(safe));
@@ -100,7 +100,7 @@ export function ResizableWorkspace({
         // Layout preferences are optional; private browsing must remain usable.
       }
     },
-    [storageKey, width],
+    [storageKey, width, allowStageFocus],
   );
 
   const handlePointerDown = (side: Side, event: PointerEvent<HTMLDivElement>) => {
@@ -115,7 +115,7 @@ export function ResizableWorkspace({
     const delta = event.clientX - drag.current.x;
     const { side, initial } = drag.current;
     update({
-      tree: side === 'tree' ? initial.tree + delta : initial.tree,
+      tree: side === 'tree' ? Math.min(initial.tree + delta, maxWidth(side)) : initial.tree,
       inspector: side === 'inspector' ? initial.inspector - delta : initial.inspector,
     });
   };
@@ -127,6 +127,11 @@ export function ResizableWorkspace({
     }
   };
 
+  const maxWidth = (side: Side) =>
+    allowStageFocus
+      ? width - LIMITS.canvas - constrained[side === 'tree' ? 'inspector' : 'tree']
+      : side === 'tree' ? 420 : 520;
+
   const separator = (side: Side) => (
     <div
       key={side}
@@ -135,7 +140,7 @@ export function ResizableWorkspace({
       aria-label={side === 'tree' ? t('resizeTree') : t('resizeInspector')}
       aria-orientation="vertical"
       aria-valuemin={side === 'tree' ? LIMITS.tree : LIMITS.inspector}
-      aria-valuemax={side === 'tree' ? 420 : 520}
+      aria-valuemax={maxWidth(side)}
       aria-valuenow={constrained[side]}
       className={`s03-separator s03-separator--${side}`}
       onPointerDown={(event) => handlePointerDown(side, event)}
@@ -160,10 +165,8 @@ export function ResizableWorkspace({
                 ? LIMITS.tree
                 : LIMITS.inspector
               : event.key === 'End'
-                ? side === 'tree'
-                  ? 420
-                  : 520
-                : constrained[side] + change,
+                ? maxWidth(side)
+                : Math.min(constrained[side] + change, maxWidth(side)),
         });
       }}
     />

@@ -64,6 +64,17 @@ export const helpCatalog: readonly HelpEntry[] = [
     minutes: 5,
   },
   {
+    slug: 'glosario',
+    file: 'glosario.md',
+    category: 'start',
+    title: 'Glosario simple de Site Mapper',
+    summary: 'Entiende Network, Site, Room, Cluster, Anchor, Rack, BDFB, Panel y Breaker sin conocimientos técnicos.',
+    enTitle: 'Site Mapper glossary in plain language',
+    enSummary: 'Understand Network, Site, Room, Cluster, Anchor, Rack, BDFB, Panel and Breaker without technical knowledge.',
+    keywords: ['glosario', 'glossary', 'network', 'site', 'room', 'cluster', 'anchor', 'rack', 'bdfb', 'panel', 'breaker', 'footprint', 'front elevation', 'physical view'],
+    minutes: 6,
+  },
+  {
     slug: 'entidades',
     file: 'entidades.md',
     category: 'infrastructure',
@@ -297,18 +308,18 @@ export function helpSummary(item: HelpEntry, locale: HelpLocale) {
 
 /** Recommendations only; actual permissions remain enforced by each page. */
 export function recommendHelp(pathname: string): readonly string[] {
-  if (pathname.startsWith('/blueprint/')) return ['espacios-y-racks', 'evidencia-visual'];
+  if (pathname.startsWith('/blueprint/')) return ['glosario', 'espacios-y-racks', 'evidencia-visual'];
   if (pathname.startsWith('/rack/'))
-    return ['equipos-y-posiciones', 'plantillas-warehouse', 'espacios-y-racks'];
+    return ['glosario', 'equipos-y-posiciones', 'espacios-y-racks'];
   if (pathname.startsWith('/device/'))
-    return ['panel-y-breakers', 'vincular-mqtt', 'configurar-snmp', 'telemetria'];
+    return ['glosario', 'panel-y-breakers', 'telemetria', 'historial-y-graficos'];
   if (pathname.startsWith('/power')) return ['terminales-y-entradas', 'conexiones'];
   if (pathname.startsWith('/telemetry'))
     return ['telemetria', 'historial-y-graficos', 'verificacion'];
   if (pathname.startsWith('/settings'))
     return ['primer-acceso-y-usuarios', 'capturas-y-capacitacion'];
   if (pathname.startsWith('/topology/') || pathname === '/network')
-    return ['conceptos', 'entidades'];
+    return ['glosario', 'conceptos', 'entidades'];
   if (pathname.startsWith('/warehouse')) return ['plantillas-warehouse', 'panel-y-breakers'];
   return ['manual-maestro', 'practica-guiada', 'capturas-y-capacitacion'];
 }
@@ -321,6 +332,7 @@ export const helpWorkflowCoverage: Readonly<Record<string, readonly string[]>> =
   'manual-maestro': ['WF-NAV-01', 'WF-NAV-02', 'WF-NAV-08'],
   'primer-acceso-y-usuarios': ['WF-ACC-01', 'WF-ACC-02', 'WF-ACC-08'],
   conceptos: ['WF-NAV-02', 'WF-TOP-09'],
+  glosario: ['WF-NAV-02', 'WF-TOP-09'],
   entidades: ['WF-TOP-02', 'WF-TOP-03', 'WF-TOP-04', 'WF-TOP-05'],
   'espacios-y-racks': ['WF-MAP-09', 'WF-MAP-10', 'WF-MAP-11', 'WF-MAP-12', 'WF-MAP-15'],
   'equipos-y-posiciones': ['WF-EQ-01', 'WF-EQ-02', 'WF-EQ-07'],

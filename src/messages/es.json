@@ -1909,7 +1909,13 @@
     "metricCurrent": "Corriente",
     "metricPower": "Potencia",
     "metricEnergy": "Contador de energía",
-    "metricLabel": "Métrica de telemetría"
+    "metricLabel": "Métrica de telemetría",
+    "breakerTitle": "Historial del breaker",
+    "breakerBindings": "{bound}/{total} breaker vinculado",
+    "breakerReporting": "{count}/{total} con datos en el último intervalo",
+    "breakerNoReadings": "No hay mediciones históricas registradas para este breaker en el período seleccionado.",
+    "breakerDisclaimer": "Cada punto representa una medición histórica registrada del breaker durante el intervalo seleccionado. La ausencia de una medición no se interpreta como cero. El contador de energía es acumulativo y no representa por sí solo el consumo del intervalo.",
+    "breakerTooltip": "{date} · {value} {unit}"
   },
   "fullTrace": {
     "source": "ORIGEN {feed}",

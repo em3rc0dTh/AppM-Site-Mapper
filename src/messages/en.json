@@ -482,7 +482,7 @@
       "elevation": "ELEVATION",
       "actions": "Rack actions",
       "locate": "LOCATE IN ROOM",
-      "focus": "RACK FOCUS",
+      "focus": "VIEW IN ROOM PLAN",
       "power": "POWER PATH",
       "available": "AVAILABLE",
       "reserved": "RESERVED",

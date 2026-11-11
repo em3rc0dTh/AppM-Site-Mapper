@@ -154,6 +154,7 @@ export function QdfLoadReportWorkbench({
     const rows = [
       ['device', deviceName],
       ['window', report.window],
+      ['contract_status', report.status],
       ['minimum_voltage_v', report.metrics.voltage.min ?? ''],
       ['average_voltage_v', report.metrics.voltage.average ?? ''],
       ['maximum_voltage_v', report.metrics.voltage.max ?? ''],

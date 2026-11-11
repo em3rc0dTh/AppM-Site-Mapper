@@ -154,8 +154,16 @@ export function QdfLoadReportWorkbench({
     const rows = [
       ['device', deviceName],
       ['window', report.window],
-      ['contract_status', report.status],
+      ['minimum_voltage_v', report.metrics.voltage.min ?? ''],
       ['average_voltage_v', report.metrics.voltage.average ?? ''],
+      ['maximum_voltage_v', report.metrics.voltage.max ?? ''],
+      [
+        'voltage_variation_v',
+        report.metrics.voltage.min !== null && report.metrics.voltage.max !== null
+          ? report.metrics.voltage.max - report.metrics.voltage.min
+          : '',
+      ],
+      ['average_current_a', report.metrics.current.average ?? ''],
       ['peak_current_a', report.metrics.current.peak ?? ''],
       ['average_power_kw', report.metrics.power.average ?? ''],
       ['peak_power_kw', report.metrics.power.peak ?? ''],
@@ -198,6 +206,21 @@ export function QdfLoadReportWorkbench({
   }
 
   const contract = trends?.qdfElectricalContract;
+  const voltageVariation =
+    report?.metrics.voltage.min !== null &&
+    report?.metrics.voltage.min !== undefined &&
+    report?.metrics.voltage.max !== null &&
+    report?.metrics.voltage.max !== undefined
+      ? report.metrics.voltage.max - report.metrics.voltage.min
+      : null;
+  const statusLabel = (status: string) =>
+    status === 'COMPLETE'
+      ? t('statusComplete')
+      : status === 'PARTIAL'
+        ? t('statusPartial')
+        : t('statusUnavailable');
+  const qualityLabel = (quality: string) =>
+    quality === 'VALID' ? t('metricAvailable') : t('metricUnavailable');
   return (
     <main className="sm-workbench sm-load-report">
       <header className="sm-workbench-header">
@@ -255,10 +278,7 @@ export function QdfLoadReportWorkbench({
         <>
           <section className="sm-load-report-meta">
             <span>
-              <b>{t('generatedFrom')}</b> {report.sourceContractVersion}
-            </span>
-            <span>
-              <b>{t('contractStatus')}</b> {report.status}
+              <b>{t('dataStatus')}</b> {statusLabel(report.status)}
             </span>
             <span>
               <b>{t('firstAccepted')}</b> {report.firstAcceptedAt ?? '—'}
@@ -270,30 +290,39 @@ export function QdfLoadReportWorkbench({
 
           <section>
             <h2>{t('summary')}</h2>
-            <div className="sm-load-report-kpis">
+            <div className="sm-load-report-kpis sm-load-report-kpis--electrical">
               <article>
-                <small>{t('peakPower')}</small>
-                <strong>{metric(report.metrics.power.peak, 'kW', 3)}</strong>
-              </article>
-              <article>
-                <small>{t('avgPower')}</small>
-                <strong>{metric(report.metrics.power.average, 'kW', 3)}</strong>
-              </article>
-              <article>
-                <small>{t('peakCurrent')}</small>
-                <strong>{metric(report.metrics.current.peak, 'A')}</strong>
-              </article>
-              <article>
-                <small>{t('totalEnergy')}</small>
-                <strong>{metric(report.metrics.energy.total, 'kWh', 4)}</strong>
-              </article>
-              <article>
-                <small>{t('avgVoltage')}</small>
+                <small>{t('voltage')}</small>
                 <strong>{metric(report.metrics.voltage.average, 'V')}</strong>
+                <dl>
+                  <div><dt>{t('min')}</dt><dd>{metric(report.metrics.voltage.min, 'V')}</dd></div>
+                  <div><dt>{t('average')}</dt><dd>{metric(report.metrics.voltage.average, 'V')}</dd></div>
+                  <div><dt>{t('max')}</dt><dd>{metric(report.metrics.voltage.max, 'V')}</dd></div>
+                  <div><dt>Δ</dt><dd>{metric(voltageVariation, 'V')}</dd></div>
+                </dl>
               </article>
               <article>
-                <small>{t('commonBuckets')}</small>
-                <strong>{report.coverage.commonBuckets}</strong>
+                <small>{t('current')}</small>
+                <strong>{metric(report.metrics.current.average, 'A')}</strong>
+                <dl>
+                  <div><dt>{t('average')}</dt><dd>{metric(report.metrics.current.average, 'A')}</dd></div>
+                  <div><dt>{t('peak')}</dt><dd>{metric(report.metrics.current.peak, 'A')}</dd></div>
+                </dl>
+              </article>
+              <article>
+                <small>{t('power')}</small>
+                <strong>{metric(report.metrics.power.average, 'kW', 3)}</strong>
+                <dl>
+                  <div><dt>{t('average')}</dt><dd>{metric(report.metrics.power.average, 'kW', 3)}</dd></div>
+                  <div><dt>{t('peak')}</dt><dd>{metric(report.metrics.power.peak, 'kW', 3)}</dd></div>
+                </dl>
+              </article>
+              <article>
+                <small>{t('energy')}</small>
+                <strong>{metric(report.metrics.energy.total, 'kWh', 4)}</strong>
+                <dl>
+                  <div><dt>{t('totalEnergy')}</dt><dd>{metric(report.metrics.energy.total, 'kWh', 4)}</dd></div>
+                </dl>
               </article>
             </div>
           </section>
@@ -305,21 +334,24 @@ export function QdfLoadReportWorkbench({
             <div>
               <span>
                 {t('voltage')}
-                <b>{report.metrics.voltage.quality}</b>
+                <b>{qualityLabel(report.metrics.voltage.quality)}</b>
               </span>
               <span>
                 {t('current')}
-                <b>{report.metrics.current.quality}</b>
+                <b>{qualityLabel(report.metrics.current.quality)}</b>
               </span>
               <span>
                 {t('power')}
-                <b>{report.metrics.power.quality}</b>
+                <b>{qualityLabel(report.metrics.power.quality)}</b>
               </span>
               <span>
                 {t('energy')}
-                <b>{report.metrics.energy.quality}</b>
+                <b>{qualityLabel(report.metrics.energy.quality)}</b>
               </span>
             </div>
+            <p className="sm-load-report-coverage-note">
+              <b>{t('completeIntervals')}:</b> {report.coverage.commonBuckets}
+            </p>
           </section>
 
           <section className="sm-load-report-breakers">

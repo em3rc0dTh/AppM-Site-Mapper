@@ -92,6 +92,7 @@ export default async function TopologyNodePage({
 }>) {
   const auth = await requirePermission('topology:read');
   const t = await getTranslations('pages.topology');
+  const ti = await getTranslations('bdfb.inspector.info');
 
   if (!auth.ok) {
     redirect('/login');
@@ -485,11 +486,11 @@ export default async function TopologyNodePage({
                   />
                 }
                 headingActions={
-                  canReadTelemetry ? (
+                  hasPermission(auth.value.role, 'telemetry:read') ? (
                     <DetachedWorkbenchButton
                       href={`/workbench/load-report?deviceId=${encodeURIComponent(node.id)}&window=24h`}
                       windowName={`site-mapper-load-report-${node.id}`}
-                      label={(await getTranslations('bdfbInspector'))('openLoadReport')}
+                      label={ti('openLoadReport')}
                     />
                   ) : null
                 }

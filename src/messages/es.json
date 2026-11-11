@@ -2451,6 +2451,8 @@
     "breakerSummary": "Resumen del breaker",
     "latestEnergy": "Último contador de energía",
     "recordedIntervals": "Intervalos registrados",
+    "timestamp": "Fecha y hora",
+    "positionShort": "Pos. {position}",
     "lastAccepted": "Último intervalo aceptado",
     "generatedFrom": "Generado desde",
     "reportWindow": "Intervalo del reporte",

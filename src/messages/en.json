@@ -2520,7 +2520,9 @@
     "showTree": "Show tree",
     "hideInspector": "Hide inspector",
     "showInspector": "Show inspector",
-    "resetLayout": "Reset layout"
+    "resetLayout": "Reset layout",
+    "expandStage": "Expand physical view",
+    "restorePanels": "Restore panels"
   },
   "brand": {
     "appManager": "AppManager",

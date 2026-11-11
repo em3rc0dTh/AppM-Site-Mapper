@@ -139,7 +139,7 @@ function SeriesChart({
                       date: new Date(point.at).toLocaleString(locale, { timeZone: 'America/Lima' }),
                       value: formatValue(point.value, locale),
                       unit,
-                      count: point.reportingChildren,
+                      count: point.reporting,
                     })}
               </title>
             </circle>

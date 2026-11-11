@@ -2,6 +2,8 @@
 
 Think about finding equipment inside a building. First choose the location, then the room, then the rack and finally the equipment.
 
+If you see an unfamiliar word —for example **Network, Container Cluster, Anchor, Device or Equipment**— open the [Site Mapper glossary in plain language](glosario.md).
+
 ![How to find equipment in a room](/help/diagrams/en/places.svg)
 
 ## Main parts of your infrastructure

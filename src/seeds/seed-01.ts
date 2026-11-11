@@ -1659,6 +1659,24 @@ async function ensureDeclaredFeedPairs(
       targetMaterialization: 'NOT_CREATED' as const,
     };
 
+    // Preserve operator-corrected destination/pair/placement assertions during a
+    // version upgrade. The new worksheet facts fill missing documentary fields only.
+    const previousDeclaration = current.attributes?.declaredPower;
+    const existingDeclared =
+      previousDeclaration && typeof previousDeclaration === 'object' &&
+      !Array.isArray(previousDeclaration)
+        ? previousDeclaration as Record<string, unknown> : null;
+    const mergedDeclaredPower = existingDeclared
+      ? { ...declaredPower, ...existingDeclared,
+          documentedRatingA: existingDeclared.documentedRatingA ?? field.ratedCurrentA,
+          targetFootprint: existingDeclared.targetFootprint ?? field.targetFootprint,
+          documentedStatus: existingDeclared.documentedStatus ?? field.documentedStatus,
+          fieldScheduleSource: existingDeclared.fieldScheduleSource ?? BREAKER_FIELD_SCHEDULE_SOURCE,
+          ...(field.replacementTargetA && existingDeclared.replacementTargetA === undefined
+            ? { replacementTargetA: field.replacementTargetA } : {}),
+        }
+      : declaredPower;
+
     // Never overwrite an existing commissioned/verified rating or alarm policy.
     // A documentary rating is a field fact, not an enabled overcurrent threshold.
     const existingRating = current.attributes?.ratedCurrentA;
@@ -1675,7 +1693,7 @@ async function ensureDeclaredFeedPairs(
         }
       : {};
     if (
-      JSON.stringify(current.attributes?.declaredPower) === JSON.stringify(declaredPower) &&
+      JSON.stringify(current.attributes?.declaredPower) === JSON.stringify(mergedDeclaredPower) &&
       !canSeedRating
     ) continue;
 
@@ -1685,7 +1703,7 @@ async function ensureDeclaredFeedPairs(
       attributes: {
         ...(current.attributes ?? {}),
         ...ratingPatch,
-        declaredPower,
+        declaredPower: mergedDeclaredPower,
       },
       updatedAt: new Date().toISOString(),
     });

@@ -665,41 +665,61 @@ const QDF_5_BREAKERS: readonly BreakerSpec[] = [
  * QDF-4 A3/B3 position 7 is intentionally absent: no breaker is materialized from
  * a named reservation in the source worksheet.
  */
-export const BREAKER_FIELD_SCHEDULE: Readonly<Record<string, Readonly<{
-  ratedCurrentA: number;
-  targetFootprint: string;
-  documentedStatus: 'IN_SERVICE' | 'OFF';
-  replacementTargetA?: number;
-}>>> = {
-  ...Object.fromEntries(Array.from({ length: 13 }, (_, index) => {
-    const position = index + 1;
-    return [`QDF-2:${position}`, {
-      ratedCurrentA: position === 1 ? 100 : 80,
-      targetFootprint: position === 1 ? '010202.10' : position <= 7 ? '010202.09' : '010202.11',
-      documentedStatus: position === 1 ? 'OFF' as const : 'IN_SERVICE' as const,
-      ...(position >= 8 ? { replacementTargetA: 60 } : {}),
-    }];
-  })),
+export const BREAKER_FIELD_SCHEDULE: Readonly<
+  Record<
+    string,
+    Readonly<{
+      ratedCurrentA: number;
+      targetFootprint: string;
+      documentedStatus: 'IN_SERVICE' | 'OFF';
+      replacementTargetA?: number;
+    }>
+  >
+> = {
+  ...Object.fromEntries(
+    Array.from({ length: 13 }, (_, index) => {
+      const position = index + 1;
+      return [
+        `QDF-2:${position}`,
+        {
+          ratedCurrentA: position === 1 ? 100 : 80,
+          targetFootprint: position === 1 ? '010202.10' : position <= 7 ? '010202.09' : '010202.11',
+          documentedStatus: position === 1 ? ('OFF' as const) : ('IN_SERVICE' as const),
+          ...(position >= 8 ? { replacementTargetA: 60 } : {}),
+        },
+      ];
+    }),
+  ),
   'QDF-4:1': { ratedCurrentA: 50, targetFootprint: '010206.20', documentedStatus: 'IN_SERVICE' },
   'QDF-4:2': { ratedCurrentA: 50, targetFootprint: '010206.20', documentedStatus: 'IN_SERVICE' },
   'QDF-4:3': { ratedCurrentA: 100, targetFootprint: '010206.19', documentedStatus: 'IN_SERVICE' },
   'QDF-4:4': { ratedCurrentA: 100, targetFootprint: '010206.15', documentedStatus: 'IN_SERVICE' },
   'QDF-4:5': { ratedCurrentA: 100, targetFootprint: '010206.15', documentedStatus: 'IN_SERVICE' },
   'QDF-4:6': { ratedCurrentA: 60, targetFootprint: '010205.20', documentedStatus: 'IN_SERVICE' },
-  ...Object.fromEntries(Array.from({ length: 18 }, (_, index) => {
-    const position = index + 1;
-    const targetFootprint = position <= 2 || position === 7 || position === 8 || position === 9
-      ? '010208.12'
-      : position <= 6 || position === 18 ? '010208.13'
-      : position <= 15 ? '010208.16'
-      : position === 16 ? '010207.20' : '010208.14';
-    return [`QDF-5:${position}`, {
-      ratedCurrentA: position === 8 ? 50 : position >= 17 ? 100 : 60,
-      targetFootprint,
-      documentedStatus: 'IN_SERVICE' as const,
-      ...(position === 8 ? { replacementTargetA: 30 } : {}),
-    }];
-  })),
+  ...Object.fromEntries(
+    Array.from({ length: 18 }, (_, index) => {
+      const position = index + 1;
+      const targetFootprint =
+        position <= 2 || position === 7 || position === 8 || position === 9
+          ? '010208.12'
+          : position <= 6 || position === 18
+            ? '010208.13'
+            : position <= 15
+              ? '010208.16'
+              : position === 16
+                ? '010207.20'
+                : '010208.14';
+      return [
+        `QDF-5:${position}`,
+        {
+          ratedCurrentA: position === 8 ? 50 : position >= 17 ? 100 : 60,
+          targetFootprint,
+          documentedStatus: 'IN_SERVICE' as const,
+          ...(position === 8 ? { replacementTargetA: 30 } : {}),
+        },
+      ];
+    }),
+  ),
 };
 const BREAKER_FIELD_SCHEDULE_SOURCE = 'Distribución tributarios en QDF nuevos.xlsx';
 
@@ -1624,7 +1644,10 @@ async function ensureDeclaredFeedPairs(
     }
 
     const field = BREAKER_FIELD_SCHEDULE[`${spec.key}:${breaker.position}`];
-    if (!field) throw new Error(`SEED_01_FIELD_SCHEDULE_MISSING: ${spec.key}/${breaker.panel}/${breaker.position}`);
+    if (!field)
+      throw new Error(
+        `SEED_01_FIELD_SCHEDULE_MISSING: ${spec.key}/${breaker.panel}/${breaker.position}`,
+      );
     const declaredPower = {
       contractVersion: 1,
       state: 'DECLARED' as const,
@@ -1663,17 +1686,23 @@ async function ensureDeclaredFeedPairs(
     // version upgrade. The new worksheet facts fill missing documentary fields only.
     const previousDeclaration = current.attributes?.declaredPower;
     const existingDeclared =
-      previousDeclaration && typeof previousDeclaration === 'object' &&
+      previousDeclaration &&
+      typeof previousDeclaration === 'object' &&
       !Array.isArray(previousDeclaration)
-        ? previousDeclaration as Record<string, unknown> : null;
+        ? (previousDeclaration as Record<string, unknown>)
+        : null;
     const mergedDeclaredPower = existingDeclared
-      ? { ...declaredPower, ...existingDeclared,
+      ? {
+          ...declaredPower,
+          ...existingDeclared,
           documentedRatingA: existingDeclared.documentedRatingA ?? field.ratedCurrentA,
           targetFootprint: existingDeclared.targetFootprint ?? field.targetFootprint,
           documentedStatus: existingDeclared.documentedStatus ?? field.documentedStatus,
-          fieldScheduleSource: existingDeclared.fieldScheduleSource ?? BREAKER_FIELD_SCHEDULE_SOURCE,
+          fieldScheduleSource:
+            existingDeclared.fieldScheduleSource ?? BREAKER_FIELD_SCHEDULE_SOURCE,
           ...(field.replacementTargetA && existingDeclared.replacementTargetA === undefined
-            ? { replacementTargetA: field.replacementTargetA } : {}),
+            ? { replacementTargetA: field.replacementTargetA }
+            : {}),
         }
       : declaredPower;
 
@@ -1695,7 +1724,8 @@ async function ensureDeclaredFeedPairs(
     if (
       JSON.stringify(current.attributes?.declaredPower) === JSON.stringify(mergedDeclaredPower) &&
       !canSeedRating
-    ) continue;
+    )
+      continue;
 
     before.push(current);
     after.push({

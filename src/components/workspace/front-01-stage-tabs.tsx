@@ -71,11 +71,21 @@ export function Front01StageTabs({
           </button>
         ))}
       </div>
-      <div id="front01-panel-physical" role="tabpanel" aria-labelledby="front01-tab-physical" hidden={view !== 'physical'}>
+      <div
+        id="front01-panel-physical"
+        role="tabpanel"
+        aria-labelledby="front01-tab-physical"
+        hidden={view !== 'physical'}
+      >
         {physical}
       </div>
       {view === 'operation' && (
-        <div id="front01-panel-operation" className="front01-operational-content" role="tabpanel" aria-labelledby="front01-tab-operation">
+        <div
+          id="front01-panel-operation"
+          className="front01-operational-content"
+          role="tabpanel"
+          aria-labelledby="front01-tab-operation"
+        >
           {operation}
         </div>
       )}

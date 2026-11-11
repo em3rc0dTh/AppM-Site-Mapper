@@ -198,14 +198,14 @@ No es una alarma por sí misma.
 
 ## ¿Dónde veo cada cosa?
 
-| Si quieres saber… | Abre… |
-| --- | --- |
-| Dónde está un QDF | Plano de sala / árbol de navegación |
-| Qué ocupa un rack | Front Elevation |
-| Cómo está compuesto un BDFB | Vista física |
-| Qué ocurre ahora | Operación |
-| Cómo cambió durante horas o días | Gráficas / Reporte |
+| Si quieres saber…                    | Abre…                                          |
+| ------------------------------------ | ---------------------------------------------- |
+| Dónde está un QDF                    | Plano de sala / árbol de navegación            |
+| Qué ocupa un rack                    | Front Elevation                                |
+| Cómo está compuesto un BDFB          | Vista física                                   |
+| Qué ocurre ahora                     | Operación                                      |
+| Cómo cambió durante horas o días     | Gráficas / Reporte                             |
 | Qué ocurrió en un breaker específico | Breaker → Gráficas → Abrir reporte del breaker |
-| Qué significa una palabra | Este glosario |
+| Qué significa una palabra            | Este glosario                                  |
 
 Si una pantalla muestra una palabra de infraestructura que no entiendes, primero revisa este glosario. La ayuda debe explicar el concepto sin depender de conocimiento técnico externo.

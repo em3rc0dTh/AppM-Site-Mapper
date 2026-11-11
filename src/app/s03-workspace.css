@@ -343,7 +343,6 @@
   line-height: 1.1 !important;
 }
 
-
 /* BDFB 16-inch laptop recovery: focus only the physical/operational stage.
    The user's stored tree/inspector widths remain unchanged on restoration. */
 @media (min-width: 900px) {

@@ -56,16 +56,12 @@ function labelFor(kind: TopologyKind): TopologyKindLabel {
 
 function navigationChildren(node: TopologyNavigationNode): readonly TopologyNavigationNode[] {
   return node.children.filter(
-    (child) =>
-      child.node.kind !== 'EQUIPMENT' || child.node.equipmentType !== 'CIRCUIT_BREAKER',
+    (child) => child.node.kind !== 'EQUIPMENT' || child.node.equipmentType !== 'CIRCUIT_BREAKER',
   );
 }
 
 function containsActive(node: TopologyNavigationNode, id: string): boolean {
-  return (
-    node.node.id === id ||
-    navigationChildren(node).some((child) => containsActive(child, id))
-  );
+  return node.node.id === id || navigationChildren(node).some((child) => containsActive(child, id));
 }
 
 function TreeBranch({

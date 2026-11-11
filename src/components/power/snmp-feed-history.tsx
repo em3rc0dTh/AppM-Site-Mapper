@@ -369,8 +369,10 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
           {tu('error', { error })}
         </p>
       )}
-      {!loading && !error && data && (
-        data.feeds.every((feed) => feed.points.length === 0) ? (
+      {!loading &&
+        !error &&
+        data &&
+        (data.feeds.every((feed) => feed.points.length === 0) ? (
           <p className="sm-snmp-history-empty">{tu('empty')}</p>
         ) : (
           <>
@@ -391,8 +393,7 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
               <small>{tu('coverage', { minutes: (coverage / 60).toFixed(1) })}</small>
             </div>
           </>
-        )
-      )}
+        ))}
     </section>
   );
 }

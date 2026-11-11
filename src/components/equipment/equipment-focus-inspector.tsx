@@ -78,7 +78,9 @@ export function EquipmentFocusInspector({
     : undefined;
   const current = breaker ? readings[equipment.id] : undefined;
   const tabs = mode === 'maintenance' ? MAINTENANCE_TABS : OPERATION_TABS;
-  const visibleTabs = canReadTelemetry ? tabs : tabs.filter((key) => key !== 'telemetry' && key !== 'history');
+  const visibleTabs = canReadTelemetry
+    ? tabs
+    : tabs.filter((key) => key !== 'telemetry' && key !== 'history');
   const activeTab = tab === 'telemetry' && !canReadTelemetry ? 'overview' : tab;
   const coverage = breaker
     ? t('coverageBreaker', { reporting: summary.reporting })
@@ -137,7 +139,17 @@ export function EquipmentFocusInspector({
             aria-controls={`ec-tabpanel-${key}`}
             onClick={() => setTab(key)}
           >
-            {key === 'overview' ? t('overview') : key === 'telemetry' ? t('inputs') : key === 'history' ? t('charts') : key === 'alarms' ? t('alarms') : key === 'ports' ? t('ports') : t('settings')}
+            {key === 'overview'
+              ? t('overview')
+              : key === 'telemetry'
+                ? t('inputs')
+                : key === 'history'
+                  ? t('charts')
+                  : key === 'alarms'
+                    ? t('alarms')
+                    : key === 'ports'
+                      ? t('ports')
+                      : t('settings')}
           </button>
         ))}
       </div>
@@ -224,7 +236,10 @@ export function EquipmentFocusInspector({
         )}
         {activeTab === 'history' && canReadTelemetry && (
           <>
-            <CompositionHistoryCharts equipmentId={equipment.id} equipmentType={equipment.equipmentType} />
+            <CompositionHistoryCharts
+              equipmentId={equipment.id}
+              equipmentType={equipment.equipmentType}
+            />
             {breaker && (
               <details className="ec-history-raw">
                 <summary>{t('packets')}</summary>

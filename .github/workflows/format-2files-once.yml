@@ -1,0 +1,32 @@
+name: One-time topology UI formatter
+on:
+  push:
+    branches: ['feat/snmp-field-production-parity']
+    paths: ['.github/workflows/format-2files-once.yml']
+permissions:
+  contents: write
+jobs:
+  format-affected:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Prettier only changed topology pages
+        run: |
+          npx prettier --write 'src/app/device/[deviceId]/page.tsx' 'src/components/topology/context-tree.tsx'
+      - name: Commit formatting only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- 'src/app/device/[deviceId]/page.tsx' 'src/components/topology/context-tree.tsx'
+          if ! git diff --cached --quiet; then
+            git commit -m 'style(topology): format breaker focus fix'
+            git push origin HEAD:feat/snmp-field-production-parity
+          fi

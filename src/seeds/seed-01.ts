@@ -17,7 +17,7 @@ import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integr
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 10 as const;
+export const SEED_01_VERSION = 11 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -2278,6 +2278,9 @@ async function ensureControlledIntegration(
     attributes: {
       snmpFeedInput: true,
       feed: feed.side,
+      // Config2 design nominal per aggregated A/B input. This is capacity metadata,
+      // not a live SNMP measurement and not a physical shunt calibration claim.
+      ratedCurrentA: 800,
       servedPanelIds: feed.panels.map((panel) => created.panelIds[panel]),
       independentInputConfirmed: false,
       commissioning: 'SYNTHETIC_LAB_ONLY',

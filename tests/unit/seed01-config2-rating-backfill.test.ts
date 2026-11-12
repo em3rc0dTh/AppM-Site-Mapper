@@ -51,7 +51,10 @@ describe('seed-01 Config2 rating backfill', () => {
   });
 
   it('preserves an existing field rating instead of overwriting it', () => {
-    const result = backfillConfig2InputRatings([port('feed-a', 'A', 1200), port('feed-b', 'B', 800)]);
+    const result = backfillConfig2InputRatings([
+      port('feed-a', 'A', 1200),
+      port('feed-b', 'B', 800),
+    ]);
 
     expect(result.changed).toBe(false);
     expect(result.accessPorts[0]?.attributes?.ratedCurrentA).toBe(1200);

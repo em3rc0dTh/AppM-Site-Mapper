@@ -28,6 +28,18 @@ type SnmpBdfbLoadResponse = SnmpBdfbLoadView & {
     busB: QdfVoltageValue | null;
     total: QdfVoltageValue | null;
   };
+  qdfOperationalContract?: {
+    status: 'COMPLETE' | 'PARTIAL' | 'UNAVAILABLE';
+    metrics: {
+      voltage: {
+        total: QdfVoltageValue | null;
+        busA: QdfVoltageValue | null;
+        busB: QdfVoltageValue | null;
+      };
+      current: { total: { currentA: number } | null };
+      power: { total: { powerKw: number } | null };
+    };
+  };
 };
 
 function numeric(value: number | null | undefined, unit: string): string {
@@ -55,7 +67,7 @@ export function SnmpFeedLoadPanel({
       case 'LIVE':
         return t('statusLive');
       case 'LAB_LIVE':
-        return t('labLive');
+        return t('statusLive');
       case 'UNVERIFIED':
         return t('statusUnverified');
       case 'CONFLICT':
@@ -74,54 +86,6 @@ export function SnmpFeedLoadPanel({
   const [panels, setPanels] = useState<ReadonlyMap<string, PhysicalPanel>>(new Map());
   const [error, setError] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
-  const [labEnabled, setLabEnabled] = useState(false);
-  const [labSource, setLabSource] = useState<string | null>(null);
-  const [labBusy, setLabBusy] = useState(false);
-  const [labError, setLabError] = useState('');
-  const [labConfigured, setLabConfigured] = useState(false);
-  useEffect(() => {
-    let active = true;
-    void fetch(`/api/dev/snmp-lab/commission?deviceId=${encodeURIComponent(deviceId)}`, {
-      cache: 'no-store',
-    })
-      .then(async (response) => {
-        if (!response.ok) return;
-        const data = (await response.json()) as { enabled: boolean; sourceIdentity?: string };
-        if (active) {
-          setLabEnabled(data.enabled);
-          setLabSource(data.sourceIdentity ?? null);
-        }
-      })
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [deviceId]);
-
-  async function commissionLab() {
-    if (!window.confirm(t('confirmLab'))) return;
-    setLabBusy(true);
-    setLabError('');
-    try {
-      const response = await fetch('/api/dev/snmp-lab/commission', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ deviceId, confirmSyntheticOnly: true }),
-      });
-      const body = (await response.json()) as { error?: string; issues?: string[] };
-      if (!response.ok)
-        throw new Error(
-          [body.error ?? `HTTP_${response.status}`, ...(body.issues ?? [])].join(' · '),
-        );
-      setLabConfigured(true);
-      setRefreshVersion((version) => version + 1);
-    } catch (cause) {
-      setLabError(cause instanceof Error ? cause.message : 'LAB_MAPPING_FAILED');
-    } finally {
-      setLabBusy(false);
-    }
-  }
-
   useEffect(() => {
     let active = true;
     const refresh = async () => {
@@ -167,11 +131,10 @@ export function SnmpFeedLoadPanel({
   const capacity = load ? projectSnmpCapacity(load) : null;
   const awaitingVerification =
     load?.configurationIssues.some((issue) => issue.includes('NOT_VERIFIED')) ?? false;
-  const inventoryRecorded =
-    load !== null && load.expectedFeedCount > 0 && load.feedCount === load.expectedFeedCount;
   const labCount = load?.labFreshFeedCount ?? 0;
-  const isLab = capacity?.mode === 'LAB_SIMULATED';
   const reportingFeeds = load ? load.freshFeedCount + labCount : null;
+  const operationalVoltage = load?.qdfOperationalContract?.metrics.voltage;
+  const operationalPowerKw = load?.qdfOperationalContract?.metrics.power.total?.powerKw ?? null;
 
   if (view === 'summary') {
     return (
@@ -181,11 +144,9 @@ export function SnmpFeedLoadPanel({
           <span>
             {error
               ? t('statusUnavailable')
-              : isLab
-                ? t('statusLab')
-                : load?.status === 'COMPLETE'
-                  ? t('statusLive')
-                  : t('statusPending')}
+              : reportingFeeds && load && reportingFeeds === load.expectedFeedCount
+                ? t('statusLive')
+                : t('statusPending')}
           </span>
         </header>
 
@@ -208,19 +169,19 @@ export function SnmpFeedLoadPanel({
           </div>
           <div>
             <dt>{t('qdfVoltage')}</dt>
-            <dd>{numeric(load?.voltageContract?.total?.voltageV, 'V')}</dd>
+            <dd>{numeric(operationalVoltage?.total?.voltageV ?? load?.voltageContract?.total?.voltageV, 'V')}</dd>
           </div>
           <div>
             <dt>{t('busA')}</dt>
-            <dd>{numeric(load?.voltageContract?.busA?.voltageV, 'V')}</dd>
+            <dd>{numeric(operationalVoltage?.busA?.voltageV ?? load?.voltageContract?.busA?.voltageV, 'V')}</dd>
           </div>
           <div>
             <dt>{t('approxPower')}</dt>
-            <dd>{numeric(kilowatts(load?.totalEstimatedPowerW), 'kW')}</dd>
+            <dd>{numeric(operationalPowerKw ?? kilowatts(load?.totalEstimatedPowerW), 'kW')}</dd>
           </div>
           <div>
             <dt>{t('busB')}</dt>
-            <dd>{numeric(load?.voltageContract?.busB?.voltageV, 'V')}</dd>
+            <dd>{numeric(operationalVoltage?.busB?.voltageV ?? load?.voltageContract?.busB?.voltageV, 'V')}</dd>
           </div>
         </dl>
 
@@ -265,7 +226,7 @@ export function SnmpFeedLoadPanel({
               <div
                 className="front01-utilization-meter"
                 role="meter"
-                aria-label={isLab ? t('simulatedUtilization') : t('verifiedUtilization')}
+                aria-label={t('utilization')}
                 aria-valuemin={0}
                 aria-valuemax={100}
                 aria-valuenow={Math.max(0, Math.min(100, capacity.utilizationPct))}
@@ -290,28 +251,11 @@ export function SnmpFeedLoadPanel({
           <span>
             {error
               ? t('statusUnavailable')
-              : labCount > 0
-                ? t('statusLab')
-                : load?.status === 'COMPLETE'
-                  ? t('statusLive')
-                  : t('statusPending')}
+              : reportingFeeds && load && reportingFeeds === load.expectedFeedCount
+                ? t('statusLive')
+                : t('statusPending')}
           </span>
         </header>
-
-        {labEnabled && inventoryRecorded && labCount === 0 && (
-          <div className="front01-inputs-lab-action">
-            <span>{t('labController', { controller: labSource ?? t('notSelected') })}</span>
-            <button type="button" disabled={labBusy} onClick={() => void commissionLab()}>
-              {labBusy ? t('configuring') : t('connectSynthetic')}
-            </button>
-            {labConfigured && <small role="status">{t('labMapped')}</small>}
-            {labError && (
-              <small role="alert" className="form-error">
-                {labError}
-              </small>
-            )}
-          </div>
-        )}
 
         <div className="front01-inputs-table-wrap">
           <table className="front01-inputs-table">
@@ -371,7 +315,7 @@ export function SnmpFeedLoadPanel({
 
         {!load?.feedCount && !error && <p>{t('noFeeds')}</p>}
         <footer className="front01-inputs-note">
-          <span>{labCount > 0 ? t('simulatedSnmpReporting', { count: labCount }) : 'SNMP'}</span>
+          <span>SNMP</span>
           <span>{t('independentMeasurements')}</span>
           {load?.status !== 'COMPLETE' && <span>{t('noTotal')}</span>}
         </footer>
@@ -389,11 +333,9 @@ export function SnmpFeedLoadPanel({
           <span>
             {error
               ? t('statusUnavailable')
-              : load?.status === 'COMPLETE'
+              : reportingFeeds && load && reportingFeeds === load.expectedFeedCount
                 ? t('statusLive')
-                : labCount > 0
-                  ? t('statusLab')
-                  : t('statusPending')}
+                : t('statusPending')}
           </span>
         </header>
 
@@ -401,7 +343,7 @@ export function SnmpFeedLoadPanel({
           <>
             <div className="zip-bdfb-live-average-grid">
               <div>
-                <span>{isLab ? t('simulated') : t('independent')}</span>
+                <span>{t('independent')}</span>
                 <strong>{numeric(error ? null : capacity?.measuredA, 'A')}</strong>
               </div>
               <div>
@@ -447,7 +389,7 @@ export function SnmpFeedLoadPanel({
             {capacity && (
               <div className="sm-snmp-capacity-lab" aria-label={t('capacity')}>
                 <div className="sm-snmp-capacity-line">
-                  <strong>{isLab ? t('capacityLab') : t('capacityTitle')}</strong>
+                  <strong>{t('capacityTitle')}</strong>
                   <span>
                     {t('freshFeeds', {
                       reporting: capacity.reportingFeeds,
@@ -497,7 +439,7 @@ export function SnmpFeedLoadPanel({
                     <div className="sm-snmp-capacity-feed" key={feed.accessPortId}>
                       <div>
                         <strong>
-                          Shunt {feed.label} {feed.status === 'LAB_LIVE' ? '· SIMULATED' : ''}
+                          Shunt {feed.label}
                         </strong>
                         <span>
                           {feed.status === 'LIVE' || feed.status === 'LAB_LIVE'
@@ -546,7 +488,6 @@ export function SnmpFeedLoadPanel({
                     </Link>
                   </p>
                 )}
-                {isLab && <p>{t('simulationNote')}</p>}
               </div>
             )}
             {load?.hardwareProfile && (
@@ -571,31 +512,6 @@ export function SnmpFeedLoadPanel({
         }
         {
           <>
-            {labEnabled && inventoryRecorded && labCount === 0 && (
-              <div className="sm-snmp-lab-activation">
-                <strong>{t('lab')}</strong>
-                <small>{t('labController', { controller: labSource ?? t('notSelected') })}</small>
-                <button type="button" disabled={labBusy} onClick={() => void commissionLab()}>
-                  {labBusy ? t('configuring') : t('connectSynthetic')}
-                </button>
-                {labConfigured && (
-                  <small role="status">
-                    {t('labMapped')}
-                    <code>
-                      bash scripts/lab/bfdb-snmp-config4.sh collectors ../bfdb-telemetry-gateway
-                    </code>
-                  </small>
-                )}
-                {labError && (
-                  <small role="alert" className="form-error">
-                    {labError}
-                  </small>
-                )}
-              </div>
-            )}
-            {labCount > 0 && (
-              <p className="sm-snmp-lab-disclaimer">{t('simulatedNotice', { count: labCount })}</p>
-            )}
             <div
               className={
                 load?.hardwareProfile === 'ELTEK_BDCBB_CONFIG_4'
@@ -611,7 +527,7 @@ export function SnmpFeedLoadPanel({
                   <article key={feed.accessPortId} className="sm-snmp-feed-card">
                     <div className="sm-snmp-feed-card-heading">
                       <strong>{feed.label}</strong>
-                      <span>{feed.status === 'LAB_LIVE' ? t('labLive') : feed.status}</span>
+                      <span>{feed.status === 'LAB_LIVE' ? t('statusLive') : feed.status}</span>
                     </div>
                     <small>
                       {feed.feedPosition

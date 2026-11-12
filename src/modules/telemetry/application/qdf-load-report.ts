@@ -1,10 +1,11 @@
 import type { composeQdfHistoricalElectricalContract } from './qdf-electrical-contract';
+import type { composeQdfOperationalHistoricalContract } from './qdf-operational-contract';
 
 export const QDF_LOAD_REPORT_VERSION = 'qdf-load-report-v1' as const;
 
-export type QdfHistoricalElectricalContract = ReturnType<
-  typeof composeQdfHistoricalElectricalContract
->;
+export type QdfHistoricalElectricalContract =
+  | ReturnType<typeof composeQdfHistoricalElectricalContract>
+  | ReturnType<typeof composeQdfOperationalHistoricalContract>;
 
 function average(values: readonly number[]): number | null {
   if (!values.length) return null;

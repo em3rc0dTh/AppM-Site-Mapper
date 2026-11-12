@@ -112,6 +112,7 @@ function collect(dbh) {
       attributes: {
         snmpFeedInput: true,
         feed: side.side,
+        ratedCurrentA: 800,
         independentInputConfirmed: false,
         servedPanelIds: side.panels.map((name) => panelsByName.get(name).id),
         commissioning: 'SYNTHETIC_LAB_ONLY',

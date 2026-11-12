@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  backfillConfig2InputRatings,
-  CONFIG2_INPUT_RATED_CURRENT_A,
-} from '@/seeds/seed-01';
+import { backfillConfig2InputRatings, CONFIG2_INPUT_RATED_CURRENT_A } from '@/seeds/seed-01';
 import type { AccessPort } from '@/modules/topology/domain/entities';
 
 function port(id: string, feed: 'A' | 'B', ratedCurrentA?: number): AccessPort {
@@ -54,10 +51,7 @@ describe('seed-01 Config2 rating backfill', () => {
   });
 
   it('preserves an existing field rating instead of overwriting it', () => {
-    const result = backfillConfig2InputRatings([
-      port('feed-a', 'A', 1200),
-      port('feed-b', 'B', 800),
-    ]);
+    const result = backfillConfig2InputRatings([port('feed-a', 'A', 1200), port('feed-b', 'B', 800)]);
 
     expect(result.changed).toBe(false);
     expect(result.accessPorts[0]?.attributes?.ratedCurrentA).toBe(1200);

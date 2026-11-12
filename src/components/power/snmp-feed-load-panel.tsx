@@ -328,7 +328,9 @@ export function SnmpFeedLoadPanel({
                     <td>{numeric(feed.currentA, 'A')}</td>
                     <td>{numeric(feed.voltageV, 'V')}</td>
                     <td>{panelLabel}</td>
-                    <td><OperationalTime value={feed.observedAt} /></td>
+                    <td>
+                      <OperationalTime value={feed.observedAt} />
+                    </td>
                   </tr>
                 );
               })}

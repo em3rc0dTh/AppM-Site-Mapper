@@ -5,6 +5,7 @@ import type { TelemetryBinding } from '@/modules/telemetry/domain/entities';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import type { TopologyRepository } from '@/modules/topology/application/topology-repository';
 import type {
+  AccessPort,
   ContainerRackNode,
   DeviceNode,
   EquipmentNode,
@@ -2228,7 +2229,35 @@ const MQTT_PANEL_GROUP: Readonly<Record<'A3' | 'A2' | 'B3' | 'B2', number>> = {
   B2: 4,
 };
 
-const CONFIG2_INPUT_RATED_CURRENT_A = 800 as const;
+export const CONFIG2_INPUT_RATED_CURRENT_A = 800 as const;
+
+export function backfillConfig2InputRatings(
+  ports: readonly AccessPort[],
+): Readonly<{ accessPorts: readonly AccessPort[]; changed: boolean }> {
+  let changed = false;
+  const accessPorts = ports.map((port) => {
+    const feed = port.attributes?.feed;
+    const isConfig2Input =
+      port.lifecycle === 'ACTIVE' &&
+      port.portType === 'POWER' &&
+      port.direction === 'INPUT' &&
+      port.attributes?.snmpFeedInput === true &&
+      (feed === 'A' || feed === 'B');
+
+    if (!isConfig2Input || port.attributes?.ratedCurrentA !== undefined) return port;
+
+    changed = true;
+    return {
+      ...port,
+      attributes: {
+        ...(port.attributes ?? {}),
+        ratedCurrentA: CONFIG2_INPUT_RATED_CURRENT_A,
+      },
+    };
+  });
+
+  return { accessPorts, changed };
+}
 
 async function ensureConfig2InputRatings(
   database: Db,
@@ -2252,28 +2281,7 @@ async function ensureConfig2InputRatings(
     throw new Error(`SEED_01_CONFIG2_RATING_CONFLICT: missing chassis ${spec.key}`);
   }
 
-  let changed = false;
-  const accessPorts = chassis.accessPorts.map((port) => {
-    const feed = port.attributes?.feed;
-    const isConfig2Input =
-      port.lifecycle === 'ACTIVE' &&
-      port.portType === 'POWER' &&
-      port.direction === 'INPUT' &&
-      port.attributes?.snmpFeedInput === true &&
-      (feed === 'A' || feed === 'B');
-
-    if (!isConfig2Input || port.attributes?.ratedCurrentA !== undefined) return port;
-
-    changed = true;
-    return {
-      ...port,
-      attributes: {
-        ...(port.attributes ?? {}),
-        ratedCurrentA: CONFIG2_INPUT_RATED_CURRENT_A,
-      },
-    };
-  });
-
+  const { accessPorts, changed } = backfillConfig2InputRatings(chassis.accessPorts);
   if (!changed) return;
 
   await topologyNodes.updateOne(

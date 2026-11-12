@@ -14,6 +14,7 @@ import {
 
 interface TrendPayload {
   qdfElectricalContract: QdfHistoricalElectricalContract;
+  qdfOperationalContract?: QdfHistoricalElectricalContract;
 }
 
 interface BreakerRow {
@@ -144,9 +145,10 @@ export function QdfLoadReportWorkbench({
     return () => controller.abort();
   }, [deviceId, refresh, windowRange]);
 
+  const reportContract = trends?.qdfOperationalContract ?? trends?.qdfElectricalContract ?? null;
   const report = useMemo(
-    () => (trends ? projectQdfLoadReport(trends.qdfElectricalContract) : null),
-    [trends],
+    () => (reportContract ? projectQdfLoadReport(reportContract) : null),
+    [reportContract],
   );
 
   function exportCsv() {
@@ -206,7 +208,7 @@ export function QdfLoadReportWorkbench({
     URL.revokeObjectURL(url);
   }
 
-  const contract = trends?.qdfElectricalContract;
+  const contract = reportContract;
   const voltageVariation =
     report?.metrics.voltage.min !== null &&
     report?.metrics.voltage.min !== undefined &&

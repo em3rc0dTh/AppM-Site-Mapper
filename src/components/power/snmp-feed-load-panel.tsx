@@ -7,6 +7,7 @@ import { projectSnmpCapacity } from '@/modules/telemetry/application/snmp-capaci
 import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissioning';
 import { SnmpFeedHistory } from '@/components/power/snmp-feed-history';
 import type { SnmpBdfbLoadView } from '@/modules/telemetry/application/snmp-feed-service';
+import { formatOperationalTimestamp } from '@/shared/time/operational-time';
 
 interface PhysicalPanel {
   id: string;
@@ -48,6 +49,17 @@ function numeric(value: number | null | undefined, unit: string): string {
 
 function kilowatts(value: number | null | undefined): number | null | undefined {
   return value === undefined || value === null ? value : value / 1000;
+}
+
+function OperationalTime({ value }: Readonly<{ value: string | null | undefined }>) {
+  const timestamp = formatOperationalTimestamp(value);
+  return timestamp ? (
+    <time dateTime={timestamp.utc} title={timestamp.audit}>
+      {timestamp.display}
+    </time>
+  ) : (
+    <>—</>
+  );
 }
 
 function readablePanel(panel: PhysicalPanel, frameWord: string, panelWord: string): string {
@@ -316,7 +328,9 @@ export function SnmpFeedLoadPanel({
                     <td>{numeric(feed.currentA, 'A')}</td>
                     <td>{numeric(feed.voltageV, 'V')}</td>
                     <td>{panelLabel}</td>
-                    <td>{feed.observedAt ?? '—'}</td>
+                    <td>
+                      <OperationalTime value={feed.observedAt} />
+                    </td>
                   </tr>
                 );
               })}
@@ -568,7 +582,7 @@ export function SnmpFeedLoadPanel({
                       )}
                       {feed.observedAt && (
                         <small>
-                          {t('last')} {feed.observedAt}
+                          {t('last')} <OperationalTime value={feed.observedAt} />
                         </small>
                       )}
                       <div className="sm-snmp-panel-list">

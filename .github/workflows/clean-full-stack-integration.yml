@@ -56,7 +56,7 @@ jobs:
         run: |
           docker compose             --env-file infra/integration/integration.env             -f docker-compose.telemetry.yml             -f docker-compose.integration.yml             up -d --build
 
-      - name: Require seed-01 v10 and physical topology bootstrap
+      - name: Require seed-01 v11, Config2 ratings and physical topology bootstrap
         run: |
           set -eu
           dc() {
@@ -87,9 +87,9 @@ jobs:
           done
 
           dc exec -T mongodb mongosh --quiet seed-01 --eval '
-            function assert(ok, message) { if(!ok) { print("SEED01_V10_FAIL "+message); quit(1); } }
+            function assert(ok, message) { if(!ok) { print("SEED01_V11_FAIL "+message); quit(1); } }
             const s=db.runtime_seed_state.findOne({_id:"seed-01",status:"APPLIED"});
-            assert(s && s.version===10 && Array.isArray(s.bdfbs) && s.bdfbs.length===3,
+            assert(s && s.version===11 && Array.isArray(s.bdfbs) && s.bdfbs.length===3,
               "seed status/version/BDFB summary");
             const c=db.topology_nodes;
             const room=c.findOne({kind:"ROOM_SUBSTRUCTURE",lifecycle:"ACTIVE",name:"SALA DE TRANSMISIONES"});
@@ -124,6 +124,17 @@ jobs:
               const devices=c.find({kind:"DEVICE",deviceType:"BDFB",name:"BDFB "+key,lifecycle:"ACTIVE"}).toArray();
               assert(devices.length===1, key+" device");
               const device=devices[0];
+              const chassis=c.findOne({kind:"EQUIPMENT",equipmentType:"CHASSIS",
+                lifecycle:"ACTIVE",deviceId:device.id});
+              assert(chassis, key+" chassis");
+              const inputs=(chassis.accessPorts||[]).filter(p=>p.lifecycle==="ACTIVE" &&
+                p.attributes?.snmpFeedInput===true);
+              assert(inputs.length===2, key+" Config2 A/B input count");
+              assert(inputs.every(p=>p.attributes?.ratedCurrentA===800),
+                key+" Config2 input nominal rating");
+              assert(new Set(inputs.map(p=>p.attributes?.feed)).size===2 &&
+                inputs.some(p=>p.attributes?.feed==="A") && inputs.some(p=>p.attributes?.feed==="B"),
+                key+" Config2 A/B feed identities");
               assert(c.countDocuments({kind:"EQUIPMENT",equipmentType:"CIRCUIT_BREAKER",
                 lifecycle:"ACTIVE",deviceId:device.id})===count, key+" breaker count");
               for(const panelName of ["A3","B3"]) {
@@ -145,7 +156,7 @@ jobs:
             assert(sum===74 && c.countDocuments({kind:"EQUIPMENT",
               equipmentType:"CIRCUIT_BREAKER",lifecycle:"ACTIVE"})===74,
               "total breakers");
-            print("SEED01_V10_PHYSICAL_BOOTSTRAP_OK breakers="+sum);
+            print("SEED01_V11_PHYSICAL_BOOTSTRAP_OK breakers="+sum);
           '
 
       - name: Require MQTT subscribed and durable telemetry

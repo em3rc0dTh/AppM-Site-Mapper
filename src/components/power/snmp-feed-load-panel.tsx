@@ -415,7 +415,7 @@ export function SnmpFeedLoadPanel({
                   <div className="sm-snmp-capacity-meter">
                     <div
                       role="meter"
-                      aria-label={isLab ? t('simulatedUtilization') : t('verifiedUtilization')}
+                      aria-label={t('utilization')}
                       aria-valuemin={0}
                       aria-valuemax={100}
                       aria-valuenow={Math.max(0, Math.min(100, capacity.utilizationPct))}

@@ -12,14 +12,14 @@ Record the operator's communication-interruption exercise, the visible loss alar
 
 ## Observation log
 
-| Local time | Event | Evidence |
-| --- | --- | --- |
-| 09:05:02 | Last valid telemetry timestamp displayed for QDF-5 | Operator screenshot of power-path telemetry |
-| 09:08 (approx.) | Operator requested communication/telemetry stop | Operator statement |
-| 09:10 | Next nominal publishing opportunity had no usable new data | Operator statement |
-| 09:15 | Next nominal publishing opportunity had no usable new data | Operator statement |
-| ~09:19–09:20 | `TELEMETRY_LOSS` surfaced and QDF-5 changed to ALARMA | Operator screenshot and statement |
-| ~09:21 | Communication restored; QDF-5 turned green and the active loss alarm disappeared almost immediately | Explicit operator confirmation |
+| Local time      | Event                                                                                               | Evidence                                    |
+| --------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| 09:05:02        | Last valid telemetry timestamp displayed for QDF-5                                                  | Operator screenshot of power-path telemetry |
+| 09:08 (approx.) | Operator requested communication/telemetry stop                                                     | Operator statement                          |
+| 09:10           | Next nominal publishing opportunity had no usable new data                                          | Operator statement                          |
+| 09:15           | Next nominal publishing opportunity had no usable new data                                          | Operator statement                          |
+| ~09:19–09:20    | `TELEMETRY_LOSS` surfaced and QDF-5 changed to ALARMA                                               | Operator screenshot and statement           |
+| ~09:21          | Communication restored; QDF-5 turned green and the active loss alarm disappeared almost immediately | Explicit operator confirmation              |
 
 All times except the UI last-update timestamp are approximate operator-reported times; they have not been corroborated against immutable server timestamps.
 
@@ -41,17 +41,17 @@ The rapid restoration of visible data is expected after a fresh packet. Immediat
 
 ## Acceptance matrix
 
-| Test criterion | Result | Basis |
-| --- | --- | --- |
-| Last good value remains visible before expiry | OBSERVED | UI at 09:05:02 |
-| Source loss is surfaced after sustained absence | PASS — OPERATOR OBSERVED | QDF-5 alarm near 09:20 |
-| Source returns to green after resuming data | PASS — OPERATOR OBSERVED | Operator explicitly confirmed |
-| Active `TELEMETRY_LOSS` disappears on recovery | PASS — OPERATOR OBSERVED | Operator explicitly confirmed |
-| Loss threshold equals configured 15-minute policy | CODE VERIFIED; RUNTIME NOT VERIFIED | Repository only |
-| Recovery used 2 distinct accepted samples | NOT VERIFIED | No receive/packet evidence |
-| Formal RESOLVED transition persisted with correct timestamp | NOT VERIFIED | No `alarm_transitions` evidence |
-| No fixture contamination in viewed alarms | NOT VERIFIED | Fixture script exists; DB not inspected |
-| End-to-end industrial alarm certification | **NOT CERTIFIED** | Missing durable logs and runtime evidence |
+| Test criterion                                              | Result                              | Basis                                     |
+| ----------------------------------------------------------- | ----------------------------------- | ----------------------------------------- |
+| Last good value remains visible before expiry               | OBSERVED                            | UI at 09:05:02                            |
+| Source loss is surfaced after sustained absence             | PASS — OPERATOR OBSERVED            | QDF-5 alarm near 09:20                    |
+| Source returns to green after resuming data                 | PASS — OPERATOR OBSERVED            | Operator explicitly confirmed             |
+| Active `TELEMETRY_LOSS` disappears on recovery              | PASS — OPERATOR OBSERVED            | Operator explicitly confirmed             |
+| Loss threshold equals configured 15-minute policy           | CODE VERIFIED; RUNTIME NOT VERIFIED | Repository only                           |
+| Recovery used 2 distinct accepted samples                   | NOT VERIFIED                        | No receive/packet evidence                |
+| Formal RESOLVED transition persisted with correct timestamp | NOT VERIFIED                        | No `alarm_transitions` evidence           |
+| No fixture contamination in viewed alarms                   | NOT VERIFIED                        | Fixture script exists; DB not inspected   |
+| End-to-end industrial alarm certification                   | **NOT CERTIFIED**                   | Missing durable logs and runtime evidence |
 
 ## Closure evidence required
 

@@ -4,6 +4,12 @@ import {
   bdfbHardwareProfile,
 } from '@/modules/power/domain/bdfb-hardware-profile';
 import { composeQdfLiveElectricalContract } from '@/modules/telemetry/application/qdf-electrical-contract';
+import { composeQdfOperationalLiveContract } from '@/modules/telemetry/application/qdf-operational-contract';
+import {
+  projectOperationalLiveTotalCurrent,
+  projectOperationalLiveTotalPower,
+  projectOperationalQdfVoltage,
+} from '@/modules/telemetry/application/qdf-operational-projection';
 import { projectVerifiedLiveTotalCurrent } from '@/modules/telemetry/application/qdf-total-current';
 import {
   projectVerifiedLiveTotalPower,
@@ -161,6 +167,15 @@ export async function GET(request: Request) {
     power: powerContract,
     voltage: voltageContract,
   });
+  const operationalVoltage = projectOperationalQdfVoltage(
+    voltageEvidence,
+    assessment?.expectedFeedCount ?? result.expectedFeedCount,
+  );
+  const qdfOperationalContract = composeQdfOperationalLiveContract(deviceId, {
+    current: projectOperationalLiveTotalCurrent(result),
+    power: projectOperationalLiveTotalPower(result),
+    voltage: operationalVoltage,
+  });
 
   return Response.json(
     {
@@ -172,6 +187,7 @@ export async function GET(request: Request) {
         ...voltageContract,
       },
       qdfElectricalContract,
+      qdfOperationalContract,
     },
     { headers: { 'Cache-Control': 'no-store' } },
   );

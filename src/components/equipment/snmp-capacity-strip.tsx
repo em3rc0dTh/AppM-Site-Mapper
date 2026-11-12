@@ -88,7 +88,8 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
   const used = exclusive ? scopeCapacity.measuredA : null;
   const available = exclusive ? scopeCapacity.availableA : null;
   const ratio = exclusive ? scopeCapacity.utilizationPct : null;
-  const simulated = scopeCapacity.mode === 'LAB_SIMULATED';
+  const operationalLive =
+    scopeCapacity.mode === 'LAB_SIMULATED' || scopeCapacity.mode === 'VERIFIED_LIVE';
   return (
     <section className="ec-snmp-capacity" aria-label={t('label')}>
       <header>
@@ -97,11 +98,7 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
           <small>{chassis ? t('chassisShunts') : t('scopedFeeds')}</small>
         </div>
         <span>
-          {simulated
-            ? t('labSimulated')
-            : scopeCapacity.mode === 'VERIFIED_LIVE' && ratio !== null
-              ? t('verifiedLive')
-              : t('incompleteShared')}
+          {operationalLive && ratio !== null ? t('operationalLive') : t('incompleteShared')}
         </span>
       </header>
       <div className="ec-snmp-capacity-metrics">
@@ -125,12 +122,11 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.min(100, Math.max(0, ratio))}
-          aria-label={simulated ? t('simulatedCapacityUsed') : t('verifiedCapacityUsed')}
+          aria-label={t('capacityUsed')}
         >
           <div style={{ width: `${Math.min(100, Math.max(0, ratio))}%` }} />
           <span>
-            {t('utilization', { percent: ratio.toFixed(1), available: quantity(available) })}{' '}
-            {simulated ? t('labSimulated') : t('verified')}
+            {t('utilization', { percent: ratio.toFixed(1), available: quantity(available) })}
           </span>
         </div>
       )}
@@ -149,27 +145,24 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
                   })
                 : t('noRatedReading')}
               {' · '}
-              {feed.status === 'LAB_LIVE'
-                ? t('labSimulated')
-                : feed.status === 'LIVE'
-                  ? t('verifiedLive')
-                  : feed.status === 'STALE'
-                    ? t('stale')
-                    : feed.status === 'UNMAPPED'
-                      ? t('unmapped')
-                      : feed.status === 'NO_DATA'
-                        ? t('noData')
-                        : feed.status === 'CONFLICT'
-                          ? t('conflict')
-                          : t('unverified')}
+              {feed.status === 'LAB_LIVE' || feed.status === 'LIVE'
+                ? t('operationalLive')
+                : feed.status === 'STALE'
+                  ? t('stale')
+                  : feed.status === 'UNMAPPED'
+                    ? t('unmapped')
+                    : feed.status === 'NO_DATA'
+                      ? t('noData')
+                      : feed.status === 'CONFLICT'
+                        ? t('conflict')
+                        : t('unverified')}
               {(original?.servedPanelIds.length ?? 0) > 1 ? t('sharedShunt') : ''}
             </span>
           );
         })}
       </div>
-      {(simulated || shared || !exclusive) && (
+      {(shared || !exclusive) && (
         <p>
-          {simulated ? t('simulationWarning') : ''}
           {shared ? t('sharedWarning') : ''}
           {!exclusive ? t('partialWarning') : ratio === null ? t('incompleteWarning') : ''}
         </p>

@@ -51,6 +51,20 @@ interface TrendResult {
     maxIntegratedGapSeconds: number;
     points: QdfEnergyHistoryPoint[];
   };
+  operationalTotalVoltage?: {
+    unit: 'V';
+    semantics: string;
+    busA: QdfVoltageHistoryPoint[];
+    busB: QdfVoltageHistoryPoint[];
+    total: QdfVoltageHistoryPoint[];
+  };
+  operationalTotalEnergy?: {
+    unit: 'kWh';
+    semantics: string;
+    source: string;
+    maxIntegratedGapSeconds: number;
+    points: QdfEnergyHistoryPoint[];
+  };
   energySource: string;
   maxIntegratedGapSeconds: number;
 }
@@ -63,7 +77,6 @@ interface Point {
 }
 interface Series {
   name: string;
-  lab: boolean;
   values: Point[];
 }
 
@@ -101,7 +114,6 @@ function createSeries(
     });
     return {
       name: feed.feedPosition ?? feed.side ?? feed.label,
-      lab: feed.sourceMode === 'SYNTHETIC_LAB_ONLY',
       values,
     };
   });
@@ -110,7 +122,6 @@ function createSeries(
       ...feedSeries,
       {
         name: totalLabel,
-        lab: false,
         values: totalVoltage.flatMap((point) => {
           const time = Date.parse(point.bucketAt);
           return Number.isFinite(time) && Number.isFinite(point.voltageV)
@@ -125,7 +136,6 @@ function createSeries(
       ...feedSeries,
       {
         name: totalLabel,
-        lab: false,
         values: totalEnergy.flatMap((point) => {
           const time = Date.parse(point.bucketAt);
           return Number.isFinite(time) && Number.isFinite(point.cumulativeEnergyKwh)
@@ -274,9 +284,8 @@ function TrendChart({
                   aria-hidden="true"
                   style={{ background: SERIES_STROKES[i % SERIES_STROKES.length] }}
                 />
-                {item.name}
-                {item.lab ? tu('labSuffix') : ''}:{' '}
-                {item.values.length ? format(item.values.at(-1)!.value) : '—'} {metric.unit}
+                {item.name}: {item.values.length ? format(item.values.at(-1)!.value) : '—'}{' '}
+                {metric.unit}
               </span>
             ))}
           </div>
@@ -321,7 +330,7 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
     return () => controller.abort();
   }, [deviceId, window]);
 
-  const totalEnergyPoints = data?.totalEnergy?.points ?? [];
+  const totalEnergyPoints = data?.operationalTotalEnergy?.points ?? data?.totalEnergy?.points ?? [];
   const coverage = totalEnergyPoints.reduce((sum, point) => sum + point.coveredSeconds, 0);
   const latest = totalEnergyPoints.at(-1)?.cumulativeEnergyKwh ?? null;
 
@@ -382,8 +391,12 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
                   key={item.key}
                   metric={item}
                   feeds={data.feeds}
-                  totalVoltage={data.totalVoltage?.total ?? []}
-                  totalEnergy={data.totalEnergy?.points ?? []}
+                  totalVoltage={
+                    data.operationalTotalVoltage?.total ?? data.totalVoltage?.total ?? []
+                  }
+                  totalEnergy={
+                    data.operationalTotalEnergy?.points ?? data.totalEnergy?.points ?? []
+                  }
                   window={window}
                 />
               ))}

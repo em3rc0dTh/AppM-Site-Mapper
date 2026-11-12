@@ -35,7 +35,7 @@ function kilowatts(value: number | null | undefined): number | null | undefined 
   return value === undefined || value === null ? value : value / 1000;
 }
 
-function OperationalTime({ value }: Readonly<{ value?: string }>) {
+function OperationalTime({ value }: Readonly<{ value: string | null | undefined }>) {
   const timestamp = formatOperationalTimestamp(value);
   return timestamp ? (
     <time dateTime={timestamp.utc} title={timestamp.audit}>

@@ -170,7 +170,9 @@ function HistoricalTelemetry({
         <dt>{ti('activeBucket')}</dt>
         <dd>{latest?.activeBreakers ?? 0}</dd>
         <dt>{ti('latestBucket')}</dt>
-        <dd><OperationalTime value={latest?.observedAt} /></dd>
+        <dd>
+          <OperationalTime value={latest?.observedAt} />
+        </dd>
       </dl>
     </>
   );
@@ -386,7 +388,9 @@ export function BdfbTelemetryInspector({
                 <dt>{ti('withoutCurrent')}</dt>
                 <dd>{live.withoutCurrentReading}</dd>
                 <dt>{ti('latestPacket')}</dt>
-                <dd><OperationalTime value={latestReceived} /></dd>
+                <dd>
+                  <OperationalTime value={latestReceived} />
+                </dd>
               </dl>
 
               <footer className="front01-mqtt-footer">

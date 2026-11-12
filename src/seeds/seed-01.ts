@@ -17,7 +17,7 @@ import { withIntegrityTransaction } from '@/shared/infrastructure/mongodb/integr
 import { createDomainId, nowIso } from '@/shared/domain/entity';
 
 export const SEED_01_PROFILE = 'seed-01' as const;
-export const SEED_01_VERSION = 11 as const;
+export const SEED_01_VERSION = 12 as const;
 
 const PANELS = ['A3', 'A2', 'A1', 'B3', 'B2', 'B1'] as const;
 type PanelName = (typeof PANELS)[number];
@@ -2228,6 +2228,66 @@ const MQTT_PANEL_GROUP: Readonly<Record<'A3' | 'A2' | 'B3' | 'B2', number>> = {
   B2: 4,
 };
 
+const CONFIG2_INPUT_RATED_CURRENT_A = 800 as const;
+
+async function ensureConfig2InputRatings(
+  database: Db,
+  session: ClientSession,
+  spec: BdfbSpec,
+  created: {
+    readonly deviceId: string;
+  },
+): Promise<void> {
+  const topologyNodes = database.collection<TopologyNode & Document>('topology_nodes');
+  const chassis = await topologyNodes.findOne(
+    {
+      kind: 'EQUIPMENT',
+      deviceId: created.deviceId,
+      equipmentType: 'CHASSIS',
+      lifecycle: 'ACTIVE',
+    },
+    { session },
+  );
+  if (!chassis || chassis.kind !== 'EQUIPMENT') {
+    throw new Error(`SEED_01_CONFIG2_RATING_CONFLICT: missing chassis ${spec.key}`);
+  }
+
+  let changed = false;
+  const accessPorts = chassis.accessPorts.map((port) => {
+    const feed = port.attributes?.feed;
+    const isConfig2Input =
+      port.lifecycle === 'ACTIVE' &&
+      port.portType === 'POWER' &&
+      port.direction === 'INPUT' &&
+      port.attributes?.snmpFeedInput === true &&
+      (feed === 'A' || feed === 'B');
+
+    if (!isConfig2Input || port.attributes?.ratedCurrentA !== undefined) return port;
+
+    changed = true;
+    return {
+      ...port,
+      attributes: {
+        ...(port.attributes ?? {}),
+        ratedCurrentA: CONFIG2_INPUT_RATED_CURRENT_A,
+      },
+    };
+  });
+
+  if (!changed) return;
+
+  await topologyNodes.updateOne(
+    { id: chassis.id, lifecycle: 'ACTIVE' },
+    {
+      $set: {
+        accessPorts,
+        updatedAt: new Date().toISOString(),
+      },
+    },
+    { session },
+  );
+}
+
 async function ensureControlledIntegration(
   database: Db,
   session: ClientSession,
@@ -2280,7 +2340,7 @@ async function ensureControlledIntegration(
       feed: feed.side,
       // Config2 design nominal per aggregated A/B input. This is capacity metadata,
       // not a live SNMP measurement and not a physical shunt calibration claim.
-      ratedCurrentA: 800,
+      ratedCurrentA: CONFIG2_INPUT_RATED_CURRENT_A,
       servedPanelIds: feed.panels.map((panel) => created.panelIds[panel]),
       independentInputConfirmed: false,
       commissioning: 'SYNTHETIC_LAB_ONLY',
@@ -2494,6 +2554,7 @@ export async function applySeed01(database: Db): Promise<Seed01Summary> {
       const created = await seedBdfb(repository, topology, rack, spec);
       await seedIndustrialProfiles(database, session, spec, created);
       await ensureControlledIntegration(database, session, spec, created);
+      await ensureConfig2InputRatings(database, session, spec, created);
       bdfbs.push({
         key: spec.key,
         rackId: rack.id,

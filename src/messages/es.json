@@ -1604,7 +1604,7 @@
     "error": "Historial no disponible: {error}",
     "empty": "Sin datos históricos para el rango seleccionado.",
     "coverage": "{minutes} minutos de alimentación cubiertos, sumados entre entradas. No hay extrapolación de intervalos mayores de 120 segundos.",
-    "note": "Potencia = |V| × I a partir de lecturas DC emparejadas. La energía se integra mediante trapecios únicamente entre observaciones recientes. Ninguna es un contador de energía medido por SNMP; los datos simulados no certifican condiciones de campo.",
+    "note": "Potencia = |V| × I a partir de lecturas DC emparejadas. La energía se integra mediante trapecios únicamente entre observaciones recientes.",
     "metricHistoryLabel": "Tendencias históricas de {metric} durante {window}",
     "totalQdf": "TOTAL QDF",
     "labSuffix": " (LAB)"
@@ -1806,7 +1806,9 @@
     "unmapped": "SIN MAPEO",
     "noData": "SIN DATOS",
     "conflict": "CONFLICTO",
-    "unverified": "NO VERIFICADO"
+    "unverified": "NO VERIFICADO",
+    "operationalLive": "EN VIVO",
+    "capacityUsed": "Capacidad utilizada de alimentación DC"
   },
   "casEditor": {
     "edit": "✎ EDITAR CAS",

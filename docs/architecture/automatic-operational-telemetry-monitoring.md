@@ -180,3 +180,30 @@ Alarm/watch failures are logged as `alarm.telemetry_evaluation_failed` or `alarm
 7. Validate loss and recovery with controlled communication interruption before production acceptance.
 
 No TFARM04 live mutation is performed by this branch.
+
+## Field observation — QDF-5 interruption and restoration (2026-11-12, America/Lima)
+
+**Evidence class:** operator-confirmed UI acceptance, not yet an end-to-end event-log certification. This note is deliberately limited to observations shared during the QDF-5 field exercise; no raw MQTT capture, database transition export, runtime environment inspection or independent packet audit was provided.
+
+- Last valid QDF-5 telemetry seen: approximately **09:05** (UI showed **09:05:02**).
+- Operator requested telemetry stop: **09:08**.
+- No new usable reading observed at nominal **09:10** and **09:15** opportunities.
+- `TELEMETRY_LOSS` became visible around **09:19–09:20**.
+- Operator reports telemetry was re-enabled at **09:21**; QDF-5 changed to green and its active `TELEMETRY_LOSS` alarm disappeared almost immediately.
+- The Home later showed all three QDFs without recent samples and active critical source-loss alarms; source correlation may elevate severity, but that screenshot is not sufficient to attribute each occurrence's provenance.
+
+### Interpretation and certification boundary
+
+The implementation expects one packet approximately every five minutes, marks samples as STALE after ~6 minutes and declares source loss only after **more than 15 minutes** from `lastObservedAt` (or initial expectation). Therefore the delay from the **09:08 stop instruction** is expected: the timeout is measured from the **09:05 last observed packet**, not from the operator's request. The watchdog runs every five seconds.
+
+An accepted MQTT sample updates LIVE and Home reporting without waiting for the alarm state machine. The automatic alarm evaluator, however, requires `freshStreak >= TELEMETRY_WATCH_RECOVERY_SAMPLES` (default **2**) to formally resolve source loss. The watch repository counts accepted usable observations; it does **not** require two separate five-minute publisher cycles. An immediate return to green and removal from Active Alarm Center is consistent with rapid receipt of two accepted observations, but their independence and exact timestamps **were not verified**.
+
+**Accepted:** visible QDF-5 loss detection and visual return to operational state, as reported by the field operator.
+
+**Not yet certified:** exact assertion/resolution timestamps from `alarm_transitions`, source identity and packet IDs, count of independent accepted recovery observations, persisted `telemetry_watch_state`, runtime `TELEMETRY_WATCH_MODE`, and absence of UI fixtures influencing counts.
+
+To close the remaining evidence gate, capture sanitized `alarm_occurrences` and `alarm_transitions` rows for QDF-5, `telemetry_watch_state` source state, first two accepted MQTT receive times (with packet/message identifiers where available), deployed runtime watch settings, and evidence that the occurrence is not marked `LAB_UI_DESIGN_FIXTURE_2026_10_30`. Do not export secrets or customer payloads.
+
+**Operational UX finding:** while fresh enough to be projected as current (up to 15 minutes), a sample can remain counted in `reportingEquipment` after crossing the ~6-minute STALE boundary. The Home may therefore display `OPERATIVO` during that interim; future UX should distinguish STALE, OFFLINE and RECOVERING from confirmed RECOVERED without conflating telemetry availability with alarm lifecycle.
+
+Detailed operator field record: [QDF-5 communication-loss field acceptance](../operations/qdf5-telemetry-loss-field-acceptance-2026-11-12.md).

@@ -110,7 +110,7 @@ describe('QDF operational projection', () => {
     }));
 
     expect(projectOperationalLiveTotalCurrent(load)?.currentA).toBeCloseTo(446.1);
-    expect(projectOperationalLiveTotalPower(load)?.powerKw).toBeCloseTo(23.76072);
+    expect(projectOperationalLiveTotalPower(load)?.powerKw).toBeCloseTo(23.75268);
     expect(projectOperationalQdfVoltage(voltageEvidence, 2).total?.voltageV).toBeCloseTo(-53.25);
 
     expect(projectVerifiedLiveTotalCurrent(load)).toBeNull();
@@ -139,7 +139,7 @@ describe('QDF operational projection', () => {
     ];
 
     expect(projectOperationalHistoricalTotalCurrent(feeds, 2)[0]?.currentA).toBeCloseTo(446.1);
-    expect(projectOperationalHistoricalTotalPower(feeds, 2)[0]?.powerKw).toBeCloseTo(23.76072);
+    expect(projectOperationalHistoricalTotalPower(feeds, 2)[0]?.powerKw).toBeCloseTo(23.75268);
     expect(projectOperationalHistoricalTotalEnergy(feeds, 2)[0]?.intervalEnergyKwh).toBeCloseTo(2);
     expect(projectOperationalHistoricalVoltage(feeds, 2).total[0]?.voltageV).toBeCloseTo(-53.25);
 

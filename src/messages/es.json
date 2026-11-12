@@ -1585,7 +1585,8 @@
     "totalVoltage": "VOLTAJE TOTAL QDF",
     "busAVoltage": "VOLTAJE BUS A",
     "busBVoltage": "VOLTAJE BUS B",
-    "voltageTolerance": "Tolerancia de coherencia de voltaje: {value} V"
+    "voltageTolerance": "Tolerancia de coherencia de voltaje: {value} V",
+    "protocolSnmp": "SNMP"
   },
   "snmpHistoryUi": {
     "title": "SNMP · HISTORIAL TIMESCALEDB",

@@ -283,8 +283,6 @@ export function SnmpFeedLoadPanel({
                 <th>{t('current')}</th>
                 <th>{t('voltage')}</th>
                 <th>{t('panel')}</th>
-                <th>{t('controllerColumn')}</th>
-                <th>{t('currentOidColumn')}</th>
                 <th>{t('lastReadingColumn')}</th>
               </tr>
             </thead>
@@ -318,10 +316,6 @@ export function SnmpFeedLoadPanel({
                     <td>{numeric(feed.currentA, 'A')}</td>
                     <td>{numeric(feed.voltageV, 'V')}</td>
                     <td>{panelLabel}</td>
-                    <td>{feed.sourceIdentity ?? t('notMapped')}</td>
-                    <td>
-                      <code>{feed.currentOid ?? '—'}</code>
-                    </td>
                     <td>{feed.observedAt ?? '—'}</td>
                   </tr>
                 );
@@ -334,7 +328,9 @@ export function SnmpFeedLoadPanel({
         <footer className="front01-inputs-note">
           <span>{t('protocolSnmp')}</span>
           <span>{t('independentMeasurements')}</span>
-          {load?.status !== 'COMPLETE' && <span>{t('noTotal')}</span>}
+          {load && !load.qdfOperationalContract?.metrics.current.total && (
+            <span>{t('noTotal')}</span>
+          )}
         </footer>
       </section>
     );
@@ -607,7 +603,9 @@ export function SnmpFeedLoadPanel({
             {!load?.feedCount && !error && <p>{t('noFeeds')}</p>}
             {(load as (SnmpBdfbLoadView & { historyAvailable?: boolean }) | null)
               ?.historyAvailable === false && <p role="alert">{t('timescaleUnavailable')}</p>}
-            {load?.status !== 'COMPLETE' && <p className="sm-snmp-no-total">{t('noTotal')}</p>}
+            {load && !load.qdfOperationalContract?.metrics.current.total && (
+              <p className="sm-snmp-no-total">{t('noTotal')}</p>
+            )}
             <small>{t('snmpSeparate')}</small>
           </>
         }

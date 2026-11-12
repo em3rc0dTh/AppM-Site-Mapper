@@ -131,6 +131,8 @@ export function SnmpFeedLoadPanel({
   const capacity = load ? projectSnmpCapacity(load) : null;
   const awaitingVerification =
     load?.configurationIssues.some((issue) => issue.includes('NOT_VERIFIED')) ?? false;
+  const inventoryRecorded =
+    load !== null && load.expectedFeedCount > 0 && load.feedCount === load.expectedFeedCount;
   const labCount = load?.labFreshFeedCount ?? 0;
   const reportingFeeds = load ? load.freshFeedCount + labCount : null;
   const operationalVoltage = load?.qdfOperationalContract?.metrics.voltage;

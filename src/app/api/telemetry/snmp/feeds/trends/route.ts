@@ -1,5 +1,12 @@
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { composeQdfHistoricalElectricalContract } from '@/modules/telemetry/application/qdf-electrical-contract';
+import { composeQdfOperationalHistoricalContract } from '@/modules/telemetry/application/qdf-operational-contract';
+import {
+  projectOperationalHistoricalTotalCurrent,
+  projectOperationalHistoricalTotalEnergy,
+  projectOperationalHistoricalTotalPower,
+  projectOperationalHistoricalVoltage,
+} from '@/modules/telemetry/application/qdf-operational-projection';
 import {
   assessBdfbInventory,
   bdfbHardwareProfile,
@@ -179,6 +186,58 @@ export async function GET(request: Request) {
         voltageToleranceV,
       },
     );
+    const operationalExpectedFeedCount = assessment?.expectedFeedCount ?? ports.length;
+    const operationalTotalCurrent = projectOperationalHistoricalTotalCurrent(
+      feeds.map((feed) => ({
+        accessPortId: feed.accessPortId,
+        position: feed.feedPosition ?? feed.side,
+        verified: feed.verified,
+        sourceMode: feed.sourceMode,
+        points: feed.points,
+      })),
+      operationalExpectedFeedCount,
+    );
+    const operationalTotalPower = projectOperationalHistoricalTotalPower(
+      feeds.map((feed) => ({
+        accessPortId: feed.accessPortId,
+        position: feed.feedPosition ?? feed.side,
+        verified: feed.powerVerified,
+        sourceMode: feed.powerSourceMode,
+        points: feed.points,
+      })),
+      operationalExpectedFeedCount,
+    );
+    const operationalTotalEnergy = projectOperationalHistoricalTotalEnergy(
+      feeds.map((feed) => ({
+        accessPortId: feed.accessPortId,
+        position: feed.feedPosition ?? feed.side,
+        verified: feed.powerVerified,
+        sourceMode: feed.powerSourceMode,
+        points: feed.points,
+      })),
+      operationalExpectedFeedCount,
+    );
+    const operationalTotalVoltage = projectOperationalHistoricalVoltage(
+      feeds.map((feed) => ({
+        accessPortId: feed.accessPortId,
+        side: feed.side === 'A' || feed.side === 'B' ? feed.side : null,
+        position: feed.feedPosition ?? feed.side,
+        verified: feed.voltageVerified,
+        sourceMode: feed.voltageSourceMode,
+        points: feed.voltagePoints,
+      })),
+      operationalExpectedFeedCount,
+    );
+    const qdfOperationalContract = composeQdfOperationalHistoricalContract(
+      deviceId,
+      window as TelemetryHistoryWindow,
+      {
+        current: operationalTotalCurrent,
+        power: operationalTotalPower,
+        voltage: operationalTotalVoltage,
+        energy: operationalTotalEnergy,
+      },
+    );
     return Response.json(
       {
         deviceId,
@@ -210,6 +269,29 @@ export async function GET(request: Request) {
         energySource: 'ESTIMATED_FROM_PAIRED_VOLTAGE_CURRENT',
         maxIntegratedGapSeconds: 120,
         qdfElectricalContract,
+        qdfOperationalContract,
+        operationalTotalCurrent: {
+          unit: 'A',
+          semantics: 'SUM_OPERATIONAL_INPUTS',
+          points: operationalTotalCurrent,
+        },
+        operationalTotalPower: {
+          unit: 'kW',
+          semantics: 'SUM_OPERATIONAL_PAIRED_VOLTAGE_CURRENT',
+          points: operationalTotalPower,
+        },
+        operationalTotalEnergy: {
+          unit: 'kWh',
+          semantics: 'SUM_OPERATIONAL_FEED_ENERGY_OVER_OBSERVED_INTERVALS',
+          source: 'DERIVED_FROM_PAIRED_VOLTAGE_CURRENT',
+          maxIntegratedGapSeconds: 120,
+          points: operationalTotalEnergy,
+        },
+        operationalTotalVoltage: {
+          unit: 'V',
+          semantics: 'REPRESENTATIVE_A_B_BUS_VOLTAGE_FROM_OPERATIONAL_INPUTS',
+          ...operationalTotalVoltage,
+        },
       },
       { headers: { 'Cache-Control': 'private, no-store' } },
     );

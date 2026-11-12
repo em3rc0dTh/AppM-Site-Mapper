@@ -131,19 +131,7 @@ export function RackElevation({
                     type="button"
                     className={`legacy-rack-block legacy-rack-block--${block.role.toLowerCase()} ${item.id === focusDeviceId ? 'is-selected' : ''}`}
                     style={style}
-                    onClick={() =>
-                      setSelected({
-                        ...topologyInspector(item),
-                        actions: [
-                          {
-                            label: item.kind === 'DEVICE' ? t('openDevice') : t('openEquipment'),
-                            href: `/device/${item.id}`,
-                          },
-                          { label: t('trace'), href: `/power?entity=${item.id}` },
-                        ],
-                      })
-                    }
-                    onDoubleClick={() => router.push(`/device/${item.id}`)}
+                    onClick={() => router.push(`/device/${item.id}`)}
                   >
                     {body}
                   </button>

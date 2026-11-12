@@ -30,7 +30,7 @@ export function formatOperationalTimestamp(
     second: '2-digit',
     hour12: false,
   }).formatToParts(date);
-  const part = (type: Intl.DateTimeFormatPartTypes) =>
+  const part = (type: 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second') =>
     parts.find((item) => item.type === type)?.value ?? '';
 
   const display = `${part('hour')}:${part('minute')}:${part('second')}`;

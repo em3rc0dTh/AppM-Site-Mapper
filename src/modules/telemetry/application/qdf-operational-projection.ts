@@ -82,9 +82,7 @@ export function projectOperationalLiveTotalCurrent(
 ): QdfLiveTotalCurrent | null {
   if (
     !loadIdentity(load) ||
-    load.feeds.some(
-      (feed) => !freshOperationalStatus(feed.status) || !finiteCurrent(feed.currentA),
-    )
+    load.feeds.some((feed) => !freshOperationalStatus(feed.status) || !finiteCurrent(feed.currentA))
   )
     return null;
 
@@ -166,7 +164,13 @@ export function projectOperationalQdfVoltage(
   )
     return unavailable;
 
-  if (!alignedObservedAt(feeds.map((feed) => feed.observedAt), maxSkewMs)) return unavailable;
+  if (
+    !alignedObservedAt(
+      feeds.map((feed) => feed.observedAt),
+      maxSkewMs,
+    )
+  )
+    return unavailable;
 
   const busA = operationalVoltageSide(feeds, 'A');
   const busB = operationalVoltageSide(feeds, 'B');
@@ -206,12 +210,14 @@ export function projectOperationalHistoricalTotalCurrent(
       maxObservedSkewMs,
     );
     if (!observedAt) return [];
-    return [{
-      bucketAt,
-      observedAt,
-      currentA: points.reduce((sum, point) => sum + point.currentA!, 0),
-      contributingFeeds: points.length,
-    }];
+    return [
+      {
+        bucketAt,
+        observedAt,
+        currentA: points.reduce((sum, point) => sum + point.currentA!, 0),
+        contributingFeeds: points.length,
+      },
+    ];
   });
 }
 
@@ -244,12 +250,14 @@ export function projectOperationalHistoricalTotalPower(
       maxObservedSkewMs,
     );
     if (!observedAt) return [];
-    return [{
-      bucketAt,
-      observedAt,
-      powerKw: points.reduce((sum, point) => sum + point.powerW!, 0) / 1000,
-      contributingFeeds: points.length,
-    }];
+    return [
+      {
+        bucketAt,
+        observedAt,
+        powerKw: points.reduce((sum, point) => sum + point.powerW!, 0) / 1000,
+        contributingFeeds: points.length,
+      },
+    ];
   });
 }
 
@@ -312,7 +320,9 @@ function historicalVoltagePoint(
 ): QdfVoltageHistoryPoint {
   return {
     bucketAt,
-    observedAt: new Date(Math.max(...feeds.map((feed) => Date.parse(feed.observedAt)))).toISOString(),
+    observedAt: new Date(
+      Math.max(...feeds.map((feed) => Date.parse(feed.observedAt))),
+    ).toISOString(),
     voltageV: average(feeds.map((feed) => feed.voltageV)),
     contributingFeeds: feeds.length,
   };

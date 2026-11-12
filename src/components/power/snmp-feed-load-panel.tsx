@@ -171,11 +171,21 @@ export function SnmpFeedLoadPanel({
           </div>
           <div>
             <dt>{t('qdfVoltage')}</dt>
-            <dd>{numeric(operationalVoltage?.total?.voltageV ?? load?.voltageContract?.total?.voltageV, 'V')}</dd>
+            <dd>
+              {numeric(
+                operationalVoltage?.total?.voltageV ?? load?.voltageContract?.total?.voltageV,
+                'V',
+              )}
+            </dd>
           </div>
           <div>
             <dt>{t('busA')}</dt>
-            <dd>{numeric(operationalVoltage?.busA?.voltageV ?? load?.voltageContract?.busA?.voltageV, 'V')}</dd>
+            <dd>
+              {numeric(
+                operationalVoltage?.busA?.voltageV ?? load?.voltageContract?.busA?.voltageV,
+                'V',
+              )}
+            </dd>
           </div>
           <div>
             <dt>{t('approxPower')}</dt>
@@ -183,7 +193,12 @@ export function SnmpFeedLoadPanel({
           </div>
           <div>
             <dt>{t('busB')}</dt>
-            <dd>{numeric(operationalVoltage?.busB?.voltageV ?? load?.voltageContract?.busB?.voltageV, 'V')}</dd>
+            <dd>
+              {numeric(
+                operationalVoltage?.busB?.voltageV ?? load?.voltageContract?.busB?.voltageV,
+                'V',
+              )}
+            </dd>
           </div>
         </dl>
 
@@ -440,9 +455,7 @@ export function SnmpFeedLoadPanel({
                   {capacity.feedUtilization.map((feed) => (
                     <div className="sm-snmp-capacity-feed" key={feed.accessPortId}>
                       <div>
-                        <strong>
-                          Shunt {feed.label}
-                        </strong>
+                        <strong>Shunt {feed.label}</strong>
                         <span>
                           {feed.status === 'LIVE' || feed.status === 'LAB_LIVE'
                             ? `${numeric(feed.measuredA, 'A')} / ${numeric(feed.ratedA, 'A')}`

@@ -88,7 +88,8 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
   const used = exclusive ? scopeCapacity.measuredA : null;
   const available = exclusive ? scopeCapacity.availableA : null;
   const ratio = exclusive ? scopeCapacity.utilizationPct : null;
-  const operationalLive = scopeCapacity.mode === 'LAB_SIMULATED' || scopeCapacity.mode === 'VERIFIED_LIVE';
+  const operationalLive =
+    scopeCapacity.mode === 'LAB_SIMULATED' || scopeCapacity.mode === 'VERIFIED_LIVE';
   return (
     <section className="ec-snmp-capacity" aria-label={t('label')}>
       <header>
@@ -147,14 +148,14 @@ export function SnmpCapacityStrip({ root, byId }: Props) {
               {feed.status === 'LAB_LIVE' || feed.status === 'LIVE'
                 ? t('operationalLive')
                 : feed.status === 'STALE'
-                    ? t('stale')
-                    : feed.status === 'UNMAPPED'
-                      ? t('unmapped')
-                      : feed.status === 'NO_DATA'
-                        ? t('noData')
-                        : feed.status === 'CONFLICT'
-                          ? t('conflict')
-                          : t('unverified')}
+                  ? t('stale')
+                  : feed.status === 'UNMAPPED'
+                    ? t('unmapped')
+                    : feed.status === 'NO_DATA'
+                      ? t('noData')
+                      : feed.status === 'CONFLICT'
+                        ? t('conflict')
+                        : t('unverified')}
               {(original?.servedPanelIds.length ?? 0) > 1 ? t('sharedShunt') : ''}
             </span>
           );

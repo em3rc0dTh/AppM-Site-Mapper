@@ -9,7 +9,10 @@ import {
   projectOperationalLiveTotalPower,
   projectOperationalQdfVoltage,
 } from '@/modules/telemetry/application/qdf-operational-projection';
-import { projectHistoricalQdfTotalCurrent, projectVerifiedLiveTotalCurrent } from '@/modules/telemetry/application/qdf-total-current';
+import {
+  projectHistoricalQdfTotalCurrent,
+  projectVerifiedLiveTotalCurrent,
+} from '@/modules/telemetry/application/qdf-total-current';
 import { projectVerifiedQdfVoltage } from '@/modules/telemetry/application/qdf-total-voltage';
 import type { SnmpBdfbLoadView } from '@/modules/telemetry/application/snmp-feed-service';
 import type { SnmpHistoricalBucket } from '@/modules/telemetry/infrastructure/http-telemetry-store';

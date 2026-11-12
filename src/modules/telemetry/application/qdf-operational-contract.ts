@@ -18,9 +18,7 @@ export const QDF_OPERATIONAL_CONTRACT_VERSION = 'qdf-operational-v1' as const;
 export type QdfOperationalMetricQuality = 'VALID' | 'UNAVAILABLE';
 export type QdfOperationalContractStatus = 'COMPLETE' | 'PARTIAL' | 'UNAVAILABLE';
 
-function status(
-  qualities: readonly QdfOperationalMetricQuality[],
-): QdfOperationalContractStatus {
+function status(qualities: readonly QdfOperationalMetricQuality[]): QdfOperationalContractStatus {
   const valid = qualities.filter((quality) => quality === 'VALID').length;
   if (valid === qualities.length) return 'COMPLETE';
   if (valid === 0) return 'UNAVAILABLE';
@@ -37,8 +35,7 @@ export function composeQdfOperationalLiveContract(
 ) {
   const currentQuality: QdfOperationalMetricQuality = input.current ? 'VALID' : 'UNAVAILABLE';
   const powerQuality: QdfOperationalMetricQuality = input.power ? 'VALID' : 'UNAVAILABLE';
-  const voltageQuality: QdfOperationalMetricQuality =
-    input.voltage.total ? 'VALID' : 'UNAVAILABLE';
+  const voltageQuality: QdfOperationalMetricQuality = input.voltage.total ? 'VALID' : 'UNAVAILABLE';
 
   return {
     contractVersion: QDF_OPERATIONAL_CONTRACT_VERSION,
@@ -87,14 +84,14 @@ export function composeQdfOperationalHistoricalContract(
     energy: readonly QdfTotalEnergyPoint[];
   }>,
 ) {
-  const currentQuality: QdfOperationalMetricQuality =
-    input.current.length ? 'VALID' : 'UNAVAILABLE';
-  const powerQuality: QdfOperationalMetricQuality =
-    input.power.length ? 'VALID' : 'UNAVAILABLE';
-  const voltageQuality: QdfOperationalMetricQuality =
-    input.voltage.total.length ? 'VALID' : 'UNAVAILABLE';
-  const energyQuality: QdfOperationalMetricQuality =
-    input.energy.length ? 'VALID' : 'UNAVAILABLE';
+  const currentQuality: QdfOperationalMetricQuality = input.current.length
+    ? 'VALID'
+    : 'UNAVAILABLE';
+  const powerQuality: QdfOperationalMetricQuality = input.power.length ? 'VALID' : 'UNAVAILABLE';
+  const voltageQuality: QdfOperationalMetricQuality = input.voltage.total.length
+    ? 'VALID'
+    : 'UNAVAILABLE';
+  const energyQuality: QdfOperationalMetricQuality = input.energy.length ? 'VALID' : 'UNAVAILABLE';
 
   return {
     contractVersion: QDF_OPERATIONAL_CONTRACT_VERSION,

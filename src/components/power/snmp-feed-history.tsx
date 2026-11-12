@@ -284,8 +284,8 @@ function TrendChart({
                   aria-hidden="true"
                   style={{ background: SERIES_STROKES[i % SERIES_STROKES.length] }}
                 />
-                {item.name}:{' '}
-                {item.values.length ? format(item.values.at(-1)!.value) : '—'} {metric.unit}
+                {item.name}: {item.values.length ? format(item.values.at(-1)!.value) : '—'}{' '}
+                {metric.unit}
               </span>
             ))}
           </div>
@@ -391,8 +391,12 @@ export function SnmpFeedHistory({ deviceId }: Readonly<{ deviceId: string }>) {
                   key={item.key}
                   metric={item}
                   feeds={data.feeds}
-                  totalVoltage={data.operationalTotalVoltage?.total ?? data.totalVoltage?.total ?? []}
-                  totalEnergy={data.operationalTotalEnergy?.points ?? data.totalEnergy?.points ?? []}
+                  totalVoltage={
+                    data.operationalTotalVoltage?.total ?? data.totalVoltage?.total ?? []
+                  }
+                  totalEnergy={
+                    data.operationalTotalEnergy?.points ?? data.totalEnergy?.points ?? []
+                  }
                   window={window}
                 />
               ))}

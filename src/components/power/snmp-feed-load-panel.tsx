@@ -332,7 +332,7 @@ export function SnmpFeedLoadPanel({
 
         {!load?.feedCount && !error && <p>{t('noFeeds')}</p>}
         <footer className="front01-inputs-note">
-          <span>SNMP</span>
+          <span>{t('protocolSnmp')}</span>
           <span>{t('independentMeasurements')}</span>
           {load?.status !== 'COMPLETE' && <span>{t('noTotal')}</span>}
         </footer>

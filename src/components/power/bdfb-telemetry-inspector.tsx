@@ -7,6 +7,7 @@ import { SnmpFeedCommissioning } from '@/components/power/snmp-feed-commissionin
 import { AlarmOccurrenceList, AlarmScopeSummary } from '@/components/alarm/alarm-scope-summary';
 import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 import { ThradexAttribution } from '@/shared/ui/thradex-attribution';
+import { formatOperationalTimestamp } from '@/shared/time/operational-time';
 
 import { useEffect, useRef, useState } from 'react';
 
@@ -34,10 +35,15 @@ function kilowatts(value: number | null | undefined): number | null | undefined 
   return value === undefined || value === null ? value : value / 1000;
 }
 
-function compactUtc(value: string | undefined): string {
-  if (!value) return '—';
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value : `${parsed.toISOString().slice(11, 19)} UTC`;
+function OperationalTime({ value }: Readonly<{ value?: string }>) {
+  const timestamp = formatOperationalTimestamp(value);
+  return timestamp ? (
+    <time dateTime={timestamp.utc} title={timestamp.audit}>
+      {timestamp.display}
+    </time>
+  ) : (
+    <>—</>
+  );
 }
 
 function HistoryMetric({
@@ -164,7 +170,7 @@ function HistoricalTelemetry({
         <dt>{ti('activeBucket')}</dt>
         <dd>{latest?.activeBreakers ?? 0}</dd>
         <dt>{ti('latestBucket')}</dt>
-        <dd>{compactUtc(latest?.observedAt)}</dd>
+        <dd><OperationalTime value={latest?.observedAt} /></dd>
       </dl>
     </>
   );
@@ -380,7 +386,7 @@ export function BdfbTelemetryInspector({
                 <dt>{ti('withoutCurrent')}</dt>
                 <dd>{live.withoutCurrentReading}</dd>
                 <dt>{ti('latestPacket')}</dt>
-                <dd>{compactUtc(latestReceived)}</dd>
+                <dd><OperationalTime value={latestReceived} /></dd>
               </dl>
 
               <footer className="front01-mqtt-footer">

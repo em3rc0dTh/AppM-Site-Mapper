@@ -1580,7 +1580,7 @@
     "normal": "NORMAL",
     "threshold": " · threshold {current} A",
     "timescaleUnavailable": "TimescaleDB unavailable: restored SNMP history could not be queried.",
-    "noTotal": "A whole-BDFB current total is only available when every required independent shunt is verified, mapped and reporting fresh SNMP readings.",
+    "noTotal": "Total current requires all expected DC inputs to have recent, coherent readings.",
     "snmpSeparate": "Incoming SNMP shunt measurements are separate from the descendant Equipment MQTT average.",
     "totalVoltage": "QDF TOTAL VOLTAGE",
     "busAVoltage": "BUS A VOLTAGE",

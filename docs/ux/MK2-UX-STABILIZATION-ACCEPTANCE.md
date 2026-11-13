@@ -16,7 +16,7 @@ Implement the accepted light-theme MK2 frame, grounded in the November 13 UX rev
 4. **Menu affordance:** clear visible hamburger border, hover and keyboard focus. The navigation tree remains collapsed initially.
 5. **Card legibility:** stronger borders and readable metrics in Home KPIs and QDF cards.
 6. **Status-driven QDF contrast:** healthy = green, warning = amber, critical = red, unknown/no telemetry = neutral. Colors decorate **existing live statuses**, never derive or change them.
-7. **BDFB chassis:** center the physical chassis within the stage (max 880 px), retain existing left/right resizable panes, improve panel, position and breaker typography.
+7. **QDF-5 physical view only:** retain the existing three-column resizable workspace; center the chassis in the canvas (max 880 px), lighten shelf/frame/panel surfaces and make positions/circuit rows and the existing inspector text more legible. QDF-4 and QDF-2 physical screens remain outside this first visual acceptance.
 8. **Header retention:** preserve the existing sticky header when the workspace scrolls.
 
 ### Out of scope
@@ -25,6 +25,7 @@ Implement the accepted light-theme MK2 frame, grounded in the November 13 UX rev
 - Telemetry and alarms aggregation, rules, normalization, data values or API routes.
 - The operator's actual QDF identifiers and breadcrumb paths.
 - Mobile Inspector; new cartographic background; expanding operational/inspection capabilities.
+- QDF-4 / QDF-2 physical-view redesign before QDF-5 local acceptance.
 - Deploying to TFARM04 or merging to main.
 
 ## Manual local acceptance (after checkout)
@@ -39,7 +40,12 @@ Review the feature branch using the existing local environment and seeded/connec
 | Home KPI cards | Counts reflect runtime data; grouping is visible on different monitors |
 | QDF direct access | QDF-5, QDF-4 and QDF-2 cards remain clickable, use live values, and show correct conditional status styling |
 | Alarm card | Severity, count, paths and target actions are unchanged |
-| BDFB physical view | Chassis centered by default; existing hierarchy and inspector remain accessible; panels and breakers legible |
+| QDF-5 physical view | Chassis centered horizontally in the canvas; A3/B3/A2/B2 remain in their real frames; 24 slots of selected panel, all circuit rows, paths, alarm indicators, live data and links remain reachable |
+| Three-column layout | Topology, Canvas and Inspector remain independent, resizable, and restorable; test resizing both handles and stage focus |
+| Inspector & alarms | Physical properties, exact location, inherited/direct alarms and "Ver alarmas" remain visible and unchanged |
+| Physical/Operation | Both original tabs remain functional; physical view remains read-only and Operation retains telemetry and alarms |
+| Circuit scrolling | Entire selected panel breaker list is reachable; no footer controls cover last rows; no silent filtering or truncation |
+| QDF-4 / QDF-2 | Physical views still use their original styling pending approval; Home status-card styling is unchanged |
 | Scroll | Global top bar stays visible; cards do not overlap |
 | 1920×1080 and 1440×900 | No unintended clipping of header actions or QDF values |
 | Narrow/laptop viewport | Existing responsive UI remains navigable; record any overflow for a follow-up |

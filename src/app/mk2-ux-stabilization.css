@@ -1,0 +1,523 @@
+/* MK2 UX stabilization — review in local before promotion to main.
+   Pure presentation layer: no inventory, alarm, RBAC or telemetry contract changes.
+   Imported last so the approved light-theme palette remains authoritative. */
+
+/* Header: AppManager SiteMapper Mk2 | cube | home. */
+.zip-app-shell .zip-brand {
+  width: auto;
+  flex: 0 0 auto;
+  gap: 12px;
+  padding: 0 16px 0 22px;
+  border-right: 1px solid #d4dfe7;
+  align-self: stretch;
+}
+.zip-app-shell .zip-brand .sm-brand {
+  width: auto;
+  flex: 0 0 auto;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-lockup {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-copy {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-appmanager {
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: 400;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-product-line {
+  font-size: 18px;
+  line-height: 1.05;
+  gap: 6px;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-tagline {
+  display: none;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-mark {
+  width: 35px;
+  height: 35px;
+}
+.zip-app-shell .zip-brand-home {
+  width: 36px;
+  height: 36px;
+  border-color: #c8d5df;
+}
+.zip-app-shell .zip-brand-home svg {
+  width: 20px;
+  height: 20px;
+}
+.zip-app-shell .zip-topbar {
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgb(22 42 61 / 6%);
+}
+.zip-app-shell .zip-brand:focus-visible {
+  outline: 2px solid #087e66;
+  outline-offset: -3px;
+}
+
+/* Home: product name belongs to the brand, not a second banner lockup. */
+.sm-home .sm-home-heading h1 {
+  margin-top: 9px;
+  color: #1d2b38;
+  font-size: clamp(22px, 1.7vw, 28px);
+  line-height: 1.16;
+}
+.sm-home .sm-home-heading > div {
+  max-width: min(100%, 640px);
+  padding: 16px 24px 17px 18px;
+}
+.sm-home .sm-home-breadcrumb {
+  font-size: 14px;
+  color: #263a4a;
+}
+.sm-home .sm-home-heading .sm-home-scope {
+  color: #425f7a;
+  border: 1px solid #d2dce5;
+}
+
+/* A clearly discoverable hamburger, with keyboard focus, without
+   expanding the left rail until the operator asks for it. */
+.sm-home .sm-home-sidebar .sm-home-sidebar-toggle {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  margin: 8px 5px;
+  padding: 0;
+  border: 1px solid #94a9bc;
+  border-radius: 8px;
+  background: #fff;
+  color: #1b344a;
+  font-size: 23px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgb(21 43 68 / 10%);
+}
+.sm-home .sm-home-sidebar .sm-home-sidebar-toggle:hover,
+.sm-home .sm-home-sidebar .sm-home-sidebar-toggle:focus-visible {
+  border-color: #0b997b;
+  background: #edf9f5;
+  box-shadow: 0 0 0 3px rgb(24 185 143 / 14%);
+  outline: none;
+}
+
+/* Home cards: visible grouping even across different monitors. */
+.sm-home .sm-home-stats article,
+.sm-home .sm-home-action-grid > .sm-home-section {
+  border-color: #c5d3df;
+  box-shadow: 0 2px 9px rgb(30 56 83 / 7%);
+}
+.sm-home .sm-home-stats small {
+  color: #344f6b;
+  font-size: 12px;
+}
+.sm-home .sm-home-stats span {
+  color: #4b6580;
+  font-size: 12px;
+}
+.sm-home .sm-home-section-heading h2 {
+  color: #23394c;
+  font-size: 15px;
+}
+.sm-home .sm-home-action-grid .sm-home-section-heading button {
+  color: #17599b;
+  font-size: 13px;
+}
+
+/* QDF cards: no operational status is inferred by CSS. It only reflects
+   the existing data-tone assigned by the alarm/telemetry projection. */
+.sm-home .sm-home-pin--compact {
+  min-height: 215px;
+  padding: 15px;
+  gap: 11px;
+  border: 2px solid #9ebacb;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgb(30 56 83 / 9%);
+}
+.sm-home .sm-home-pin:has(.sm-home-pin-status[data-tone='healthy']) {
+  border-color: #199b78;
+  background: linear-gradient(180deg, #f0faf6 0%, #fff 46%);
+}
+.sm-home .sm-home-pin:has(.sm-home-pin-status[data-tone='warning']) {
+  border-color: #c38b24;
+  background: linear-gradient(180deg, #fff8e9 0%, #fff 46%);
+}
+.sm-home .sm-home-pin:has(.sm-home-pin-status[data-tone='critical']) {
+  border-color: #d33d4e;
+  background: linear-gradient(180deg, #fff0f2 0%, #fff 46%);
+}
+.sm-home .sm-home-pin:hover {
+  box-shadow: 0 4px 13px rgb(30 56 83 / 15%);
+}
+.sm-home .sm-home-pin:focus-visible {
+  outline: 3px solid #087e66;
+  outline-offset: 2px;
+}
+.sm-home .sm-home-pin--compact > div:first-child {
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+.sm-home .sm-home-pin--compact > div:first-child strong {
+  font-size: 16px;
+  line-height: 1.25;
+  color: #1b2e3f;
+}
+.sm-home .sm-home-pin--compact > small {
+  color: #445e77;
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+.sm-home .sm-home-pin--compact .sm-home-pin-status {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+.sm-home .sm-home-pin--compact .sm-home-pin-readings {
+  gap: 12px 8px;
+}
+.sm-home .sm-home-pin--compact .sm-home-pin-readings span {
+  min-width: 0;
+  color: #3b5671;
+  font-size: 12px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.sm-home .sm-home-pin--compact .sm-home-pin-readings b {
+  color: #192f45;
+  font-size: 15px;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+.sm-home .sm-home-pin--compact em {
+  color: #155c9e;
+  font-size: 13px;
+}
+.sm-home .sm-home-pin--compact .sm-home-pin-readings {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* QDF-5 visual acceptance candidate. Three resizable columns, inspector,
+   alarm rollups, circuit values/links and scroll ownership are unchanged.
+   Limit this review to the actual QDF-5 BDFB; QDF-2 and QDF-4 await sign-off. */
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-stage-heading {
+  color: #203044;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-stage-heading-row {
+  margin-bottom: 7px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-stage-report-actions {
+  margin-bottom: 6px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-primary-tabs {
+  gap: 7px;
+  padding: 6px 0 9px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-primary-tabs button {
+  padding: 8px 14px;
+  border-radius: 5px;
+  background: #fff;
+  color: #315170;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: none;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-primary-tabs button[aria-selected='true'] {
+  border-color: #4e92c4;
+  background: #edf6fc;
+  color: #155f98;
+  box-shadow: none;
+}
+
+/* The actual physical assembly stays centered inside the canvas, without
+   changing either side column, resize separators or user-saved widths. */
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-physical-body {
+  padding: 9px 14px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-physical-chassis {
+  box-sizing: border-box;
+  width: min(100%, 880px);
+  margin-inline: auto;
+  padding: 11px 13px;
+  border: 1px solid #9bafc0;
+  border-radius: 3px;
+  background: #fcfdfe;
+  box-shadow: none;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-physical-shelf {
+  padding: 9px 10px;
+  border: 1px solid #cbd6e0;
+  border-radius: 3px;
+  background: #f8fafc;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-physical-frames {
+  gap: 10px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-physical-frame {
+  padding: 8px;
+  border: 1px solid #c4d0db;
+  border-radius: 3px;
+  background: #f3f6f9;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-physical-title {
+  margin-bottom: 7px;
+  color: #345169;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-physical-panels {
+  gap: 6px;
+  grid-auto-rows: minmax(74px, 1fr);
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-physical-panel {
+  border: 1px solid #c1cdd8;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: none;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-physical-panel[data-selected='true'] {
+  border-color: #4388bb;
+  background: #f0f7fd;
+  box-shadow: none;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-panel-select {
+  gap: 3px;
+  padding: 7px 10px 3px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-panel-select > strong {
+  color: #20384e;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-panel-select > span {
+  color: #49657c;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage .sm-bdfb-panel-composition-link {
+  padding: 3px 10px 7px;
+  color: #246a9c;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Selected panel: reduce dead space, not content. All positions, breaker
+   menu triggers, alarms, MQTT links and circuit rows are still rendered. */
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-focus {
+  padding: 12px 14px 14px;
+  border: 1px solid #cad7e2;
+  border-radius: 5px;
+  background: #fbfcfe;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-focus-header span {
+  color: #43617a;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.035em;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-focus-header h2 {
+  color: #21415a;
+  font-size: 16px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-focus-header small,
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-focus-header > a {
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-focus-summary {
+  margin: 9px 0;
+  gap: 7px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-focus-summary > div {
+  padding: 6px 10px;
+  border-color: #d0dce6;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-focus-summary strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-focus-summary span {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-positions {
+  gap: 5px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-position {
+  min-height: 37px;
+  border-color: #c6d3de;
+  background: #f6f8fa;
+  color: #64798b;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-position[data-installed='true'] {
+  border-color: #7db0d4;
+  background: #e7f4fc;
+  color: #215a80;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-position > span,
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-position > .sm-breaker-position-trigger {
+  min-height: 37px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-position strong {
+  font-size: 10px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-breaker-summary {
+  margin-top: 10px;
+  border-color: #d0dbe5;
+  background: #fff;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-breaker-summary > strong {
+  padding: 7px 10px;
+  background: #f6f9fb;
+  color: #31516b;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-breaker-summary-row {
+  padding: 6px 10px;
+  grid-template-columns: 84px minmax(75px, 0.6fr) minmax(0, 2fr);
+  gap: 8px;
+  line-height: 1.4;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-breaker-summary-row > span,
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-breaker-summary-row > small {
+  font-size: 11.5px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-breaker-summary-row > small {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-breaker-summary-row > a {
+  color: #226a9b;
+  font-size: 12px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-empty,
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-panel-focus-note {
+  font-size: 11.5px;
+}
+
+/* The Inspector remains the same data-bearing region, including its live
+   alarm rollup and location; make only the existing text easier to scan. */
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-compact-inspector .zip-bdfb-inspector-id {
+  gap: 12px;
+  padding: 12px;
+  border-color: #d1dce5;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-compact-inspector .zip-bdfb-inspector-id h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-compact-inspector .zip-bdfb-inspector-id small {
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-compact-inspector .front01-summary-facts {
+  gap: 10px 12px;
+  padding: 12px 14px;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-compact-inspector .front01-summary-facts dt,
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-compact-inspector .front01-summary-facts dd {
+  font-size: 12px;
+  line-height: 1.45;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-compact-inspector .front01-summary-facts dd {
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-qdf5='true'] .front01-compact-inspector .front01-summary-note {
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+/* Favor vertical room for circuits on normal desktop displays, without
+   reducing font sizes or changing the physical/operation tabs. */
+@media (min-width: 1200px) and (min-height: 760px) {
+  .zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-stage {
+    grid-template-rows: minmax(255px, 0.85fr) minmax(320px, 1.15fr);
+    gap: 10px;
+  }
+}
+@media (max-width: 1180px) {
+  .zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-breaker-summary-row {
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
+  .zip-bdfb-page[data-mk2-ux-qdf5='true'] .sm-bdfb-breaker-summary-row > small {
+    grid-column: 2;
+    text-align: left;
+  }
+}
+
+@media (max-width: 1420px) {
+  .zip-app-shell .zip-brand {
+    padding-inline: 12px;
+    gap: 8px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-lockup {
+    gap: 9px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-appmanager {
+    font-size: 19px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-product-line {
+    font-size: 14px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+  .zip-app-shell .zip-brand-home {
+    width: 32px;
+    height: 32px;
+  }
+}
+@media (max-width: 700px) {
+  .zip-app-shell .sm-brand--compact .sm-brand-appmanager {
+    font-size: 16px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-product-line {
+    font-size: 12px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-lockup {
+    gap: 6px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-mark {
+    width: 25px;
+    height: 25px;
+  }
+  .sm-home .sm-home-heading > div {
+    padding: 12px 14px;
+  }
+  .sm-home .sm-home-pin--compact {
+    min-height: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sm-home .sm-home-pin,
+  .sm-home .sm-home-sidebar-toggle {
+    transition: none;
+  }
+}

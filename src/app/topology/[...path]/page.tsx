@@ -386,6 +386,13 @@ export default async function TopologyNodePage({
   return (
     <main
       className={`operational-page telxius-operational-page ${['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''} ${node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? 'zip-bdfb-page' : ''}`}
+      data-mk2-ux-qdf5={
+        node.kind === 'DEVICE' &&
+        node.deviceType === 'BDFB' &&
+        node.name.trim().toUpperCase() === 'BDFB QDF-5'
+          ? 'true'
+          : undefined
+      }
     >
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"

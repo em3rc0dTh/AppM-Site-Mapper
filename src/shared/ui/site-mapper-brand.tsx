@@ -41,7 +41,7 @@ export function SiteMapperBrand({ variant, tagline }: SiteMapperBrandProps) {
             <span className="sm-brand-sitemapper">{siteMapper}</span>
             <span className="sm-brand-mk">{generation}</span>
           </span>
-          <small className="sm-brand-tagline">{tagline}</small>
+          {!compact ? <small className="sm-brand-tagline">{tagline}</small> : null}
         </span>
       </div>
     </div>

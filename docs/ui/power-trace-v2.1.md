@@ -1,6 +1,6 @@
 # Rastreo de Ruta v2.1 — ventana operacional
 
-Estado: implementación en rama, pendiente de validación visual y CI.
+Estado (2026-11-16): **PR #226 fusionado en `main`**, código integrado; **UAT visual y funcional FIELD pendiente**. Ver [UAT MK1 v2.0](../certification/rfp-acceptance/10-UAT-MK1-V2-PLAN.md) (UAT-401..406, UAT-601).
 
 ## Entrada
 
@@ -31,11 +31,11 @@ La URL requiere sesión con permiso \`power:read\`; el módulo no usa el AppShel
 - Lecturas STALE/OFFLINE son históricas; no se presentan como medición en tiempo real.
 - No se ingieren ni modifican Excel, persistencia ni telemetría en este cambio.
 
-## Validación requerida antes de merge
+## Validación operacional pendiente después del merge
 
 1. Abrir Power Trace desde Device, Equipment y Power; confirmar popup independiente y ausencia de modal.
 2. Confirmar A3 con sus rutas reales (sin valores sintéticos) y navegar a ambos breakers.
 3. Revisar equipo sin rutas, solo A, solo B, múltiples rutas y rutas sin feed.
 4. Confirmar LIVE/STALE/OFFLINE, bindings ausentes y timestamps recientes.
 5. Comparar layout a 1440×900, 1280×720 y zoom 125%; comprobar impresión/PDF.
-6. Revisar el PR en CI y completar UAT sobre la instancia con datos y broker reales.
+6. Conservar evidencia CI del SHA integrado y completar UAT/SAT con datos y broker reales. Ninguna ejecución FIELD se infiere de la integración GitHub.

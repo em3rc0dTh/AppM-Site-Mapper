@@ -42,7 +42,6 @@ recovery code at login or as the second factor alongside their password to disab
 MFA and re-enroll. Protect printed/offline copies; losing all codes and the authenticator
 requires a separately approved administrator recovery process.
 
-
 ## Offline QR enrollment (MK2)
 
 - The Security page renders the `otpauth://` URI as a **client-side SVG QR** via
@@ -67,4 +66,3 @@ requires a separately approved administrator recovery process.
   confirm the six-digit code; store recovery codes; log out and sign in using
   the next unused code. Repeat using the manual fallback without exposing
   credentials.
-

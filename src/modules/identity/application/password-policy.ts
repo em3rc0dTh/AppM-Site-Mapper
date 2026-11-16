@@ -53,8 +53,9 @@ export async function assessNewPassword(
     });
     if (!response.ok) return 'PASSWORD_CHECK_UNAVAILABLE';
     const contentLength = response.headers.get('content-length');
-    if (contentLength && Number(contentLength) > 1_000_000)
+    if (contentLength && Number(contentLength) > 1_000_000) {
       return 'PASSWORD_CHECK_UNAVAILABLE';
+    }
     const body = await response.text();
     if (body.length > 1_000_000) return 'PASSWORD_CHECK_UNAVAILABLE';
     for (const line of body.split('\n')) {

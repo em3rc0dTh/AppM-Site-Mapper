@@ -1,4 +1,7 @@
+import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
+
+import { assessNewPassword } from '@/modules/identity/application/password-policy';
 
 import { hashPassword, verifyPassword } from '@/modules/identity/domain/password';
 
@@ -17,10 +20,6 @@ describe('password hashing', () => {
   });
 });
 
-import { createHash } from 'node:crypto';
-
-import { assessNewPassword } from '@/modules/identity/application/password-policy';
-
 describe('new-password policy', () => {
   it('rejects common secrets and excessively large secrets without remote access', async () => {
     await expect(assessNewPassword('password123456')).resolves.toBe('PASSWORD_COMPROMISED');
@@ -36,9 +35,9 @@ describe('new-password policy', () => {
       expect(String(url)).not.toContain(password);
       return new Response(sha1.slice(5) + ':42\n', { status: 200 });
     };
-    await expect(
-      assessNewPassword(password, 'online', lookup as typeof fetch),
-    ).resolves.toBe('PASSWORD_COMPROMISED');
+    await expect(assessNewPassword(password, 'online', lookup as typeof fetch)).resolves.toBe(
+      'PASSWORD_COMPROMISED',
+    );
   });
 
   it('fails closed when external breach screening is unavailable', async () => {

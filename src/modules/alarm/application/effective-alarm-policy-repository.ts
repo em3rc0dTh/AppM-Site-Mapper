@@ -60,7 +60,7 @@ export class EffectiveAlarmPolicyRepository implements AlarmPolicyRepository {
     const panelIds: string[] = [];
     const qdfIds: string[] = [];
     const visited = new Set<string>();
-    let current = await this.topology.getById(breaker.parentId ?? breaker.deviceId);
+    let current = await this.topology.getById(breaker.parentId);
     while (current && !visited.has(current.id)) {
       visited.add(current.id);
       if (current.kind === 'DEVICE') qdfIds.push(current.id);

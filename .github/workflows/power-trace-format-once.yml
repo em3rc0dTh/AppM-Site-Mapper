@@ -1,0 +1,32 @@
+name: Temporary Power Trace i18n formatting
+on:
+  push:
+    branches:
+      - feat/power-trace-window-v2-2026-11-16
+permissions:
+  contents: write
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/power-trace-window-v2-2026-11-16
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Format Power Trace i18n update
+        run: |
+          npx prettier --write src/components/workbench/full-power-trace-workbench.tsx src/messages/en.json src/messages/es.json
+      - name: Commit formatting in branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- src/components/workbench/full-power-trace-workbench.tsx src/messages/en.json src/messages/es.json
+          if ! git diff --cached --quiet; then
+            git commit -m "style(power): format internationalized workbench"
+            git push origin HEAD:feat/power-trace-window-v2-2026-11-16
+          fi

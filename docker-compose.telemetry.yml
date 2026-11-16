@@ -70,6 +70,9 @@ services:
       SITE_MAPPER_SEED_PROFILE: '${SITE_MAPPER_SEED_PROFILE:-seed-01}'
       BOOTSTRAP_ADMIN_TOKEN: '${BOOTSTRAP_ADMIN_TOKEN:?Set a private bootstrap admin token}'
       SITE_MAPPER_CREDENTIAL_KEY: '${SITE_MAPPER_CREDENTIAL_KEY:-}'
+      SITE_MAPPER_MFA_KEY: '${SITE_MAPPER_MFA_KEY:-}'
+      SITE_MAPPER_MFA_REQUIRED: '${SITE_MAPPER_MFA_REQUIRED:-false}'
+      PASSWORD_BREACH_MODE: '${PASSWORD_BREACH_MODE:-local}'
       TELEMETRY_ENABLED: '${TELEMETRY_ENABLED:-false}'
       # Automatic telemetry-loss monitoring is SHADOW unless field acceptance enables it.
       TELEMETRY_WATCH_MODE: '${TELEMETRY_WATCH_MODE:-shadow}'

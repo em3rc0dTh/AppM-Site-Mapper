@@ -2280,3 +2280,71 @@
   b {
   flex: 0 0 auto;
 }
+
+/* Offline MFA QR enrollment — browser-local SVG, no external assets. */
+.settings-shell .sm-mfa-qr-enrollment {
+  display: grid;
+  justify-items: start;
+  gap: 12px;
+  margin: 18px 0 14px;
+}
+
+.settings-shell .sm-mfa-qr-instructions {
+  max-width: 46rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.settings-shell .sm-mfa-qr-frame {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #d8e1e9;
+  border-radius: 8px;
+}
+
+.settings-shell .sm-mfa-qr-frame svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+.settings-shell .sm-mfa-manual {
+  max-width: 100%;
+  margin: 12px 0;
+}
+
+.settings-shell .sm-mfa-manual summary {
+  width: fit-content;
+  max-width: 100%;
+  color: #1e5ca8;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.settings-shell .sm-mfa-manual p {
+  max-width: 46rem;
+  margin: 10px 0;
+  line-height: 1.5;
+}
+
+.settings-shell .sm-mfa-manual-secret {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px 10px;
+  background: #f1f5f9;
+  border-radius: 5px;
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+.settings-shell .sm-mfa-security-note {
+  max-width: 46rem;
+  color: #576372;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}

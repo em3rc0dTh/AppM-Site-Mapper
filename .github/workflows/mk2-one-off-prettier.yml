@@ -9,7 +9,7 @@ permissions:
   contents: write
 jobs:
   format-mk2-only:
-    if: ${{ github.event.head_commit.message == 'chore(mk2): launch one-off Prettier correction' }}
+    if: contains(github.event.head_commit.message, 'launch one-off Prettier correction')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

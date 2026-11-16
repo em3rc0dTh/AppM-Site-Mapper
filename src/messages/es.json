@@ -2607,6 +2607,7 @@
     "relatedConditions": "Condiciones relacionadas del breaker",
     "relatedDesc": "Condiciones abiertas en los últimos 10 minutos en el mismo breaker. La correlación no demuestra la causa raíz.",
     "activeConditions": "condiciones activas ·",
-    "inspectEvidence": "Inspeccionar evidencia"
+    "inspectEvidence": "Inspeccionar evidencia",
+    "configureBreakerAlarmRules": "Inspeccionar y configurar las reglas de alarma del breaker"
   }
 }

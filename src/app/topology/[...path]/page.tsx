@@ -383,16 +383,16 @@ export default async function TopologyNodePage({
           ? t('site')
           : descriptionFor(node);
 
+  // QDF-2/4/5 share the same approved visual treatment, never hardcoded values.
+  const mk2PhysicalBdfb =
+    node.kind === 'DEVICE' &&
+    node.deviceType === 'BDFB' &&
+    /^BDFB\s+QDF-(2|4|5)$/i.test(node.name.trim());
+
   return (
     <main
       className={`operational-page telxius-operational-page ${['NETWORK', 'SITE', 'STRUCTURE', 'LEVEL'].includes(node.kind) ? 'mk-explorer-page' : ''} ${node.kind === 'ROOM_SUBSTRUCTURE' ? 'mk-dark-room' : ''} ${node.kind === 'DEVICE' && node.deviceType === 'BDFB' ? 'zip-bdfb-page' : ''}`}
-      data-mk2-ux-qdf5={
-        node.kind === 'DEVICE' &&
-        node.deviceType === 'BDFB' &&
-        node.name.trim().toUpperCase() === 'BDFB QDF-5'
-          ? 'true'
-          : undefined
-      }
+      data-mk2-ux-physical={mk2PhysicalBdfb ? 'true' : undefined}
     >
       <nav
         className="breadcrumbs operational-breadcrumbs telxius-breadcrumbs"
@@ -484,6 +484,7 @@ export default async function TopologyNodePage({
           <div className="operational-stage-body">
             {node.kind === 'DEVICE' && bdfbPresentation ? (
               <Front01StageTabs
+                compactHeading={mk2PhysicalBdfb}
                 label={t('views')}
                 physicalHeading={t('physicalViewHeading', {
                   name: node.name.replace(/^BDFB\s+/i, ''),

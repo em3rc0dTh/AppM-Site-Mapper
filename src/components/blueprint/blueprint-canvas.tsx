@@ -291,6 +291,11 @@ export function BlueprintCanvas({
       event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
+  // The room canvas uses surveyed millimetres as SVG user units. These
+  // typography values are therefore deliberately larger than CSS pixels
+  // and compensate for the current viewport zoom without altering geometry.
+  const axisFontSize = Math.max(250, Math.min(410, 390 / zoom));
+
   return (
     <section className="blueprint-panel">
       <header className="blueprint-toolbar zip-blueprint-toolbar">
@@ -393,6 +398,7 @@ export function BlueprintCanvas({
                 x={column.x}
                 y={labels.minY - 115}
                 textAnchor="middle"
+                style={{ fontSize: axisFontSize }}
               >
                 {column.label}
               </text>
@@ -404,6 +410,7 @@ export function BlueprintCanvas({
                 y={row.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
+                style={{ fontSize: axisFontSize }}
               >
                 {row.label}
               </text>
@@ -413,7 +420,7 @@ export function BlueprintCanvas({
           {clusters.map((cluster) => {
             if (!cluster.polygon || cluster.polygon.length < 3) return null;
             const center = polygonCentroid(cluster.polygon);
-            const clusterFontSize = Math.max(150, Math.min(240, 220 / zoom));
+            const clusterFontSize = Math.max(270, Math.min(480, 450 / zoom));
             const clusterLabel = readableLabel(
               cluster.name,
               horizontalSpan(cluster.polygon),
@@ -524,8 +531,13 @@ export function BlueprintCanvas({
           ))}
 
           {racks.map((rack) => {
-            const rackFontSize = Math.max(130, Math.min(200, 180 / zoom));
-            const rackLabel = readableLabel(rack.name, rack.rect.width, rackFontSize);
+            const rackFontSize = Math.max(190, Math.min(350, 330 / zoom));
+            // Short physical identifiers (QDF2/4/5) must not be ellipsized.
+            // Full name remains available in the existing SVG title for all racks.
+            const rackLabel =
+              rack.name.trim().length <= 5
+                ? rack.name.trim().toUpperCase()
+                : readableLabel(rack.name, rack.rect.width, rackFontSize);
 
             return (
               <g

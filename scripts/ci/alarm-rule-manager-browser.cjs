@@ -35,6 +35,13 @@ async function main() {
     const ruleOptions = await selects.nth(1).locator('option').count();
     assert.ok(targetOptions >= 1, 'Readable alarm target selector did not render');
     assert.equal(ruleOptions, 11, 'Simple alarm editor did not render all rule definitions');
+    const targetSearch = page.locator('#alarm-target-search');
+    await targetSearch.fill('__no_target_match__');
+    assert.equal(await selects.nth(0).locator('option').count(), 1);
+    assert.equal(await selects.nth(0).locator('option').first().isDisabled(), true);
+    await targetSearch.fill('');
+    assert.equal(await selects.nth(0).locator('option').count(), targetOptions);
+    checks.push({ test: 'Alarm target quick search filters without exposing internal IDs', result: 'PASS' });
     assert.equal(
       await page.locator('input[placeholder*="topolog"]').count(),
       0,

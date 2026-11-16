@@ -239,7 +239,7 @@
     },
     "blueprint": {
       "eyebrow": "SUBSTRUCTURE / ROOM BLUEPRINT",
-      "surveyed": "Surveyed room boundary · bay footprints · 600 × 600 mm position grid",
+      "surveyed": "Surveyed physical room plan · 600 × 600 mm grid",
       "unsurveyed": "Unsurveyed room · inventory topology only; no layout invented",
       "write": "EDIT PERMITTED",
       "read": "READ ONLY",
@@ -252,7 +252,7 @@
       "notSurveyed": "Not surveyed",
       "area": "Area",
       "footprints": "Rack footprints",
-      "clusters": "TOTAL CLUSTERS",
+      "clusters": "Clusters",
       "racks": "RACKS IN THIS ROOM · {count}",
       "inspect": "INSPECT ↗",
       "instruction": "CLICK A CLUSTER OR CABINET TO INSPECT PROPERTIES",

@@ -359,10 +359,6 @@ export function FullPowerTraceWorkbench({
     <main className="sm-workbench sm-power-trace-workbench" aria-label={t('aria')}>
       <header className="sm-trace-header">
         <div className="sm-trace-heading">
-          <span className="sm-trace-brand">
-            ⬡ <b>{t('brand')}</b>
-          </span>
-          <span className="sm-trace-heading-divider" aria-hidden="true" />
           <h1>ϟ {t('title')}</h1>
           <span className="sm-trace-version">{t('version')}</span>
         </div>

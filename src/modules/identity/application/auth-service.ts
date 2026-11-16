@@ -320,6 +320,44 @@ export class AuthService {
     return success(toSafeUser(user));
   }
 
+  async resetManagedUserPassword(
+    actor: SafeUser,
+    targetId: string,
+    temporaryPassword: string,
+  ): Promise<Result<SafeUser, AuthError>> {
+    if (!hasPermission(actor.role, 'users:manage')) {
+      return failure('FORBIDDEN');
+    }
+
+    if (actor.id === targetId) {
+      return failure('SELF_MANAGEMENT_RESTRICTED');
+    }
+
+    const target = await this.repository.getUserById(targetId);
+    if (!target) {
+      return failure('USER_NOT_FOUND');
+    }
+
+    if (!canManageRole(actor.role, target.role)) {
+      return failure('FORBIDDEN');
+    }
+
+    const policy = await assessNewPassword(temporaryPassword);
+    if (policy !== 'ACCEPTED') return failure(policy);
+
+    const updated: User = {
+      ...target,
+      passwordHash: await hashPassword(temporaryPassword),
+      mustChangePassword: true,
+      updatedAt: nowIso(),
+    };
+
+    await this.repository.replaceUser(updated, target, actor.id);
+    await this.repository.revokeUserSessions(target.id, this.clock());
+
+    return success(toSafeUser(updated));
+  }
+
   async listUsers(actor: SafeUser): Promise<Result<readonly SafeUser[], AuthError>> {
     if (!hasPermission(actor.role, 'users:manage')) {
       return failure('FORBIDDEN');

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import type { ReactNode } from 'react';
 
 import type { EquipmentNode } from '@/modules/topology/domain/entities';
@@ -11,6 +11,7 @@ import {
 } from '@/modules/telemetry/domain/composition-breaker-telemetry';
 import { projectCompositionTelemetry } from '@/modules/telemetry/application/composition-telemetry-summary';
 import { SnmpCapacityStrip } from './snmp-capacity-strip';
+import { formatEquipmentReadingTime } from './equipment-reading-time';
 import { AlarmOccurrenceList } from '@/components/alarm/alarm-scope-summary';
 import { DetachedWorkbenchButton } from '@/components/workbench/detached-workbench-button';
 import { useAlarmSnapshot } from '@/components/alarm/use-alarm-snapshot';
@@ -51,8 +52,9 @@ function Counts({ node }: Readonly<{ node: EquipmentNode }>) {
   const occupied = node.children.filter(Boolean).length;
   return (
     <span className="ec-count">
-      <b>{occupied}</b>
-      {node.childMode === 'POSITIONAL' ? ` / ${node.children.length} occupied` : ' installed'}
+      {node.childMode === 'POSITIONAL'
+        ? t('countOccupancy', { occupied, total: node.children.length })
+        : t('countInstalled', { count: occupied })}
     </span>
   );
 }
@@ -105,7 +107,10 @@ function PanelPreview({
       </span>
       <span className="ec-panel-meta">
         {panel.childMode === 'POSITIONAL'
-          ? `${panel.children.length} positions · ${panel.children.filter(Boolean).length} occupied`
+          ? t('positionOccupancy', {
+              total: panel.children.length,
+              occupied: panel.children.filter(Boolean).length,
+            })
           : t('installedCount', { count: panel.children.filter(Boolean).length })}
         <span className="ec-panel-presence">
           {panel.children.some(Boolean) ? t('installedStatus') : t('availableStatus')}
@@ -319,17 +324,20 @@ export function EquipmentContractViews({
   canReadTelemetry = false,
 }: Props) {
   const t = useTranslations('equipmentView');
+  const locale = useLocale();
   const { snapshot: alarmSnapshot } = useAlarmSnapshot();
   const children = activeChildren(root, equipmentById);
   const summary = projectCompositionTelemetry(root, equipmentById, readings);
   const type = root.equipmentType;
+  const focusedBreakerReading = readings[root.id];
+  const lastReceivedLima = formatEquipmentReadingTime(focusedBreakerReading?.receivedAt, locale);
   return (
     <div className="ec-contract" data-equipment-type={type}>
       <div className="ec-topline">
         <span className="ec-eyebrow">
           {t('physicalComposition')} <span aria-hidden="true">/</span> {type.replaceAll('_', ' ')}
         </span>
-        {summary.reporting > 0 && (
+        {summary.reporting > 0 && !canReadTelemetry && (
           <span className="ec-topline-status">
             <span className="ec-status-dot" aria-hidden="true" /> {summary.reporting}/
             {t('reportingBreakers', { count: summary.installed })}
@@ -348,7 +356,12 @@ export function EquipmentContractViews({
                     total: summary.installedChildren,
                   })}
           </span>
-          <small>{t('verifiedBreakers', { count: summary.reporting })}</small>
+          {summary.reporting > 0 && type !== 'CIRCUIT_BREAKER' ? (
+            <details className="ec-telemetry-calculation">
+              <summary>{t('telemetryMethod')}</summary>
+              <small>{t('verifiedBreakers', { count: summary.reporting })}</small>
+            </details>
+          ) : null}
         </div>
       )}
       <div className="ec-focus">
@@ -519,9 +532,13 @@ export function EquipmentContractViews({
             <p className="ec-breaker-no-data">{t('noReadings')}</p>
           )}
           <p className="ec-breaker-source">
-            {t('mqttSourceCaption')} {readings[root.id]?.sourceIdentity ?? t('noVerifiedBinding')} ·{' '}
-            {t('packetCaption')} {readings[root.id]?.receivedAt ?? '—'}
+            {t('lastReceivedLima')} {lastReceivedLima ?? '—'}
           </p>
+          <details className="ec-telemetry-source-details">
+            <summary>{t('sourceTechnical')}</summary>
+            <p>{t('mqttSourceCaption')} {focusedBreakerReading?.sourceIdentity ?? t('noVerifiedBinding')}</p>
+            <p>{t('rawTimestamp')} {focusedBreakerReading?.receivedAt ?? '—'}</p>
+          </details>
           <AlarmOccurrenceList entityId={root.id} descendants={false} />
           <DetachedWorkbenchButton
             href={`/workbench/power-path?breakerId=${encodeURIComponent(root.id)}`}

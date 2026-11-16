@@ -97,9 +97,3 @@ build.
 The consolidated **application code target** of the post-merge UAT is `7a43be8161ef938dbd2da7b1586fefcd329fbd79` (`main` after PRs #223–#226, November 16, 2026). This paragraph is an architectural target identifier, **not** proof that a particular VM/image runs this SHA. Leave the template's execution fields unfilled until the operator verifies the deployed artifact/digest in a controlled run. The documentation-only UAT PR has a later SHA and does not itself establish a new application build.
 
 See [UAT plan v2.0](10-UAT-MK1-V2-PLAN.md) and [UAT result register](11-UAT-MK1-V2-RESULTS.md). If application code changes, freeze and label the actual new release explicitly, review the scope and repeat affected scenarios.
-
-## 9. MK1 v2.0 reference SHA (not an execution record)
-
-The **code target** for post-merge UAT is `7a43be8161ef938dbd2da7b1586fefcd329fbd79` (`main`, PRs #223–#226, 2026-11-16). This is **not** proof that a deployed VM/image runs this SHA. Leave execution-specific fields unfilled until an operator verifies the actual artifact digest and configuration. The separate documentation-only UAT PR will have a newer SHA without changing the application code.
-
-See [UAT plan v2.0](10-UAT-MK1-V2-PLAN.md) and [result register](11-UAT-MK1-V2-RESULTS.md). If application code changes, freeze the real new release and retest affected scenarios without overwriting prior runs.

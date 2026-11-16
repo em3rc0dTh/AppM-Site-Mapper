@@ -1487,14 +1487,20 @@
 }
 
 
-/* Operator copy: keep technical provenance available without headline noise. */
-.mk2-equipment-ergonomics .equipment-composition-technical-note {
-  margin: 0 14px 10px;
+/* Operator copy: technical provenance remains available without headline noise. */
+.mk2-equipment-ergonomics .front01-equipment-technical-identity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 12px 14px 0;
+  color: #405b72;
   font-size: 14px;
   line-height: 1.55;
-  color: #405b72;
 }
-.mk2-equipment-ergonomics .equipment-composition-technical-note summary,
+.mk2-equipment-ergonomics .front01-equipment-technical-identity > span {
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .ec-telemetry-calculation summary,
 .mk2-equipment-ergonomics .ec-telemetry-calculation summary,
 .mk2-equipment-ergonomics .ec-telemetry-source-details summary,
 .mk2-equipment-ergonomics .equipment-breaker-source-technical summary {
@@ -1508,14 +1514,12 @@
   color: #225d8b;
   text-underline-offset: 3px;
 }
-.mk2-equipment-ergonomics .equipment-composition-technical-note :is(summary, p),
 .mk2-equipment-ergonomics .ec-telemetry-calculation :is(summary, small),
 .mk2-equipment-ergonomics .ec-telemetry-source-details :is(summary, p),
 .mk2-equipment-ergonomics .equipment-breaker-source-technical :is(summary, p) {
   overflow-wrap: anywhere;
   white-space: normal;
 }
-.mk2-equipment-ergonomics .equipment-composition-technical-note p,
 .mk2-equipment-ergonomics .ec-telemetry-source-details p,
 .mk2-equipment-ergonomics .equipment-breaker-source-technical p {
   margin: 5px 0;
@@ -1571,7 +1575,6 @@
   overflow-wrap: anywhere;
 }
 .mk2-equipment-ergonomics :is(
-  .equipment-composition-technical-note,
   .ec-telemetry-calculation,
   .ec-telemetry-source-details,
   .equipment-breaker-source-technical

@@ -787,7 +787,13 @@
     "openAction": "ABRIR",
     "roomType": "SALA",
     "liveStatusScope": "El estado en vivo aparece en un dispositivo o interruptor mapeado. La topología por sí sola no demuestra conectividad.",
-    "globalNetwork": "RED GLOBAL"
+    "globalNetwork": "RED GLOBAL",
+    "structureLevels": "Niveles registrados",
+    "openNamed": "Abrir {name}",
+    "levelItem": "Nivel registrado",
+    "enter": "Entrar ↗",
+    "noItems": "No hay elementos registrados",
+    "illustrativeBuilding": "Representación esquemática de niveles · no es una fotografía ni un modelo levantado"
   },
   "equipmentView": {
     "occupied": "ocupadas",

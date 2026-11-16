@@ -867,7 +867,8 @@
     "sourceTechnical": "Origen y marca de tiempo originales",
     "lastReceivedLima": "Última recepción (Lima):",
     "rawTimestamp": "Marca de tiempo original:",
-    "statusClockWarning": "Advertencia de reloj: consultar estado y origen de lecturas"
+    "statusClockWarning": "Advertencia de reloj: consultar estado y origen de lecturas",
+    "reportingCircuits": "{count, plural, one {# circuito con lecturas} other {# circuitos con lecturas}}"
   },
   "warehouseForms": {
     "creation": "Modo de creación de plantilla",

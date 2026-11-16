@@ -1411,7 +1411,8 @@
     "anchor": "Anclaje: {row}-{column}",
     "placementDescription": "Ubicación: automática de izquierda a derecha · X {minX}–{maxX} mm · Y {y} mm · referencia {row}-{column}",
     "rackCapacityHelp": "{totalU} U · cambiar la capacidad requiere una migración CAS independiente.",
-    "correction": "La distribución requiere corrección: {error}"
+    "correction": "La distribución requiere corrección: {error}",
+    "floorPlan": "Plano de sala"
   },
   "visualStage": {
     "schematic": "VISTA ESQUEMÁTICA DEL SITIO",

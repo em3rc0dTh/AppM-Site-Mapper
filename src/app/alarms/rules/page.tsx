@@ -10,5 +10,9 @@ export default async function AlarmRuleManagerPage() {
   const auth = await requirePermission('alarms:read');
   if (!auth.ok) redirect('/login');
   const editing = await requirePermission('settings:write');
-  return <main className="sm-rule-page"><RuleManager canEdit={editing.ok}/></main>;
+  return (
+    <main className="sm-rule-page">
+      <RuleManager canEdit={editing.ok} />
+    </main>
+  );
 }

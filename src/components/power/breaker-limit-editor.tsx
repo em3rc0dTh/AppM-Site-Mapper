@@ -199,8 +199,10 @@ export function BreakerLimitEditor({
             <small>{data ? `${data.panelName} · ${data.breakerName}` : breakerId}</small>
           </div>
           <div className="sm-breaker-limit-actions">
-            <Link href={'/alarms/rules?breakerId=' + encodeURIComponent(breakerId)}
-              title="Inspect and configure breaker alarm policies">
+            <Link
+              href={'/alarms/rules?breakerId=' + encodeURIComponent(breakerId)}
+              title="Inspect and configure breaker alarm policies"
+            >
               Alarm Rules
             </Link>
             <button type="button" onClick={onClose} aria-label={t('close')}>

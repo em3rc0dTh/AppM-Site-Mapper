@@ -2333,3 +2333,43 @@
     gap: 6px;
   }
 }
+
+
+/* MK2 Room micro-polish: unambiguous navigation, balanced footer and brand. */
+/* Room has a working topbar Home button; the second Inicio link is
+   intentionally not rendered. Keep the tree identity and collapse control. */
+.zip-app-shell.app-shell--blueprint .telxius-tree-brand[data-home-link='hidden'] {
+  grid-template-columns: 18px minmax(0, 1fr) !important;
+  padding-right: 45px !important;
+}
+/* Full SiteMapper Mk2 lettering and both original brand controls need a
+   few pixels of separation, not another global typography pass. */
+.zip-app-shell.app-shell--blueprint .zip-topbar > .zip-brand {
+  width: 322px !important;
+  flex-basis: 322px !important;
+}
+.zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-lockup {
+  gap: 12px !important;
+}
+/* Keep Restore Layout in the footer zone with deliberate bottom/right
+   clearance. Do not add a floating overlay over surveyed room geometry. */
+.mk2-room-ergonomics .blueprint-legend {
+  min-height: 64px;
+  padding: 10px 174px 15px 12px !important;
+}
+.mk2-room-ergonomics .s03-reset {
+  bottom: 15px !important;
+  right: calc(var(--s03-inspector-width) + 18px) !important;
+}
+@media (max-width: 1199px) {
+  .zip-app-shell.app-shell--blueprint .zip-topbar > .zip-brand {
+    width: 292px !important;
+    flex-basis: 292px !important;
+  }
+  .zip-app-shell.app-shell--blueprint .zip-brand .sm-brand-lockup {
+    gap: 7px !important;
+  }
+  .mk2-room-ergonomics .blueprint-legend {
+    padding: 10px 12px 56px !important;
+  }
+}

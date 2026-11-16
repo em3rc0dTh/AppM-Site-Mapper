@@ -183,7 +183,7 @@ export function FullPowerTraceWorkbench({
     try {
       const response = await fetch('/api/power-trace/' + encodeURIComponent(entityId), {
         cache: 'no-store',
-        signal,
+        ...(signal ? { signal } : {}),
       });
       const result = (await response.json()) as { trace?: FullPowerTrace; error?: string };
       if (!response.ok || !result.trace) throw new Error(result.error ?? 'HTTP ' + response.status);

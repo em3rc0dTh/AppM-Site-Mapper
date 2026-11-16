@@ -2006,3 +2006,162 @@
     margin-top: 8px;
   }
 }
+
+
+/* MK2 Room typographic hierarchy — readability correction against user screenshot 2026-11-16. */
+/* One page title, one canvas title, and one consistent operator-readable body
+   scale. SVG text uses survey units in BlueprintCanvas and is handled there. */
+.mk2-room-ergonomics .section-header h1 {
+  font-size: clamp(21px, 1.35vw, 24px) !important;
+  font-weight: 750 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0;
+}
+.mk2-room-ergonomics .section-description {
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+}
+.mk2-room-ergonomics .mk-draft-toolbar {
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 49px;
+  padding: 7px 13px !important;
+}
+.mk2-room-ergonomics .mk-draft-toolbar strong {
+  font-size: 17px !important;
+  margin-right: auto;
+}
+.mk2-room-ergonomics .zip-blueprint-toolbar {
+  min-height: 67px;
+  padding: 10px 14px !important;
+  align-items: center;
+}
+.mk2-room-ergonomics .zip-blueprint-toolbar small:first-child {
+  display: none !important; /* redundant VISTA DE PLANO 2D */
+}
+.mk2-room-ergonomics .zip-blueprint-toolbar strong {
+  display: block;
+  font-size: 18px !important;
+  line-height: 1.35;
+}
+.mk2-room-ergonomics .zip-blueprint-toolbar span {
+  font-size: 14px !important;
+  line-height: 1.45;
+}
+.mk2-room-ergonomics .zip-blueprint-mode b {
+  font-size: 14px;
+  line-height: 1.35;
+}
+.mk2-room-ergonomics .zip-drafting-tools button {
+  min-width: 42px;
+  min-height: 42px;
+  font-size: 19px;
+  line-height: 1;
+}
+.mk2-room-ergonomics .blueprint-legend {
+  min-height: 48px;
+  height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 9px;
+  padding: 8px 158px 8px 12px !important; /* reserve Reset Layout control */
+}
+.mk2-room-ergonomics .blueprint-legend :is(span, small, strong, b) {
+  font-size: 13px !important;
+  line-height: 1.4;
+}
+.mk2-room-ergonomics .blueprint-legend > span:last-child {
+  color: #37546b;
+  overflow-wrap: anywhere;
+}
+.mk2-room-ergonomics .s03-reset {
+  top: auto !important;
+  bottom: 9px !important; /* footer, not surveyed room/rack geometry */
+  opacity: 1;
+  min-height: 37px;
+  font-size: 13px;
+  font-weight: 650;
+  background: #fff;
+  border-color: #adc2d3;
+}
+/* Navigation and Inspector are not subordinate to the high-density canvas:
+   their text should be consistently readable without zoom. */
+.mk2-room-ergonomics .telxius-tree-brand strong {
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+.mk2-room-ergonomics .telxius-tree-heading span {
+  font-size: 13px !important;
+  line-height: 1.45;
+}
+.mk2-room-ergonomics .telxius-tree-node > a {
+  min-height: 42px;
+  align-items: center;
+  padding-block: 7px;
+}
+.mk2-room-ergonomics .telxius-tree-copy strong {
+  font-size: 14px !important;
+  font-weight: 600;
+  line-height: 1.45 !important;
+  letter-spacing: 0;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere;
+}
+.mk2-room-ergonomics .telxius-tree-copy small {
+  font-size: 12px;
+  line-height: 1.45;
+}
+.mk2-room-ergonomics .zip-room-properties > header {
+  min-height: 48px;
+  font-size: 17px !important;
+  line-height: 1.35;
+}
+.mk2-room-ergonomics .room-general-info,
+.mk2-room-ergonomics .mk2-room-cluster-list {
+  min-width: 0;
+  padding: 14px !important;
+}
+.mk2-room-ergonomics .room-general-info dl {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 0 10px;
+  font-size: 14px !important;
+}
+.mk2-room-ergonomics .room-general-info dt,
+.mk2-room-ergonomics .room-general-info dd {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  padding-block: 9px;
+}
+.mk2-room-ergonomics .room-general-info dd {
+  font-weight: 650;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list {
+  display: block !important; /* original flex pushed names into a thin column */
+}
+.mk2-room-ergonomics .mk2-room-cluster-list h3 {
+  margin: 0 0 7px;
+  font-size: 16px !important;
+  line-height: 1.4;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list ul {
+  width: 100%;
+  margin: 0 !important;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list li {
+  min-height: 40px;
+  font-size: 14px !important;
+  line-height: 1.5;
+  padding-block: 9px;
+}
+@media (max-width: 1180px) {
+  .mk2-room-ergonomics .s03-reset {
+    top: auto !important;
+    bottom: 9px !important;
+  }
+  .mk2-room-ergonomics .blueprint-legend {
+    padding-right: 14px !important;
+    padding-bottom: 52px !important;
+  }
+}

@@ -22,6 +22,7 @@ function scopeName(alarm: AlarmOccurrenceView, kind: string): string {
 
 export function AlarmCenter() {
   const t = useTranslations('alarmUi.center');
+  const tr = useTranslations('alarmRules');
   const { snapshot, loading, error, refresh } = useAlarmSnapshot(true);
   const [view, setView] = useState<'ACTIVE' | 'RESOLVED' | 'HISTORY'>('ACTIVE');
   const [severity, setSeverity] = useState<'ALL' | AlarmSeverity>('ALL');
@@ -86,7 +87,7 @@ export function AlarmCenter() {
           <p>{t('description')}</p>
         </div>
         <div className="sm-rule-center-actions">
-          <Link href="/alarms/rules">Rule Manager</Link>
+          <Link href="/alarms/rules">{tr('alarmRules')}</Link>
           <button type="button" onClick={() => void refresh()}>
             {t('refresh')}
           </button>
@@ -123,21 +124,20 @@ export function AlarmCenter() {
           </div>
 
           {snapshot.correlationGroups?.length ? (
-            <section className="sm-alarm-correlation-panel" aria-label="Related breaker conditions">
-              <h2>Related breaker conditions</h2>
+            <section className="sm-alarm-correlation-panel" aria-label={tr('relatedConditions')}>
+              <h2>{tr('relatedConditions')}</h2>
               <p>
-                Conditions opened within 10 minutes on the same breaker. Correlation does not prove
-                root cause.
+                {tr('relatedDesc')}
               </p>
               <div className="sm-alarm-correlation-list">
                 {snapshot.correlationGroups.map((group) => (
                   <article key={group.id}>
                     <strong>{group.primaryCode}</strong>
                     <span>
-                      {group.occurrenceIds.length} active conditions · {group.highestSeverity}
+                      {group.occurrenceIds.length} {tr('activeConditions')} {group.highestSeverity}
                     </span>
                     <Link href={'/alarms/' + encodeURIComponent(group.occurrenceIds[0]!)}>
-                      Inspect evidence
+                      {tr('inspectEvidence')}
                     </Link>
                   </article>
                 ))}

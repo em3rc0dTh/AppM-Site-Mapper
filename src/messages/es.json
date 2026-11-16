@@ -2608,6 +2608,12 @@
     "relatedDesc": "Condiciones abiertas en los últimos 10 minutos en el mismo breaker. La correlación no demuestra la causa raíz.",
     "activeConditions": "condiciones activas ·",
     "inspectEvidence": "Inspeccionar evidencia",
-    "configureBreakerAlarmRules": "Inspeccionar y configurar las reglas de alarma del breaker"
+    "configureBreakerAlarmRules": "Inspeccionar y configurar las reglas de alarma del breaker",
+    "allMetrics": "Todas las magnitudes",
+    "allBreakers": "Todos los breakers",
+    "draft": "Borrador",
+    "draftPending": "Borrador / Pendiente",
+    "loadLossCandidate": "Candidata: LOAD_LOSS",
+    "noLoadLossCandidate": "Sin candidato de pérdida de carga"
   }
 }

@@ -114,3 +114,46 @@ transactional procedure.
 7. Verify existing historical records and SNMP shunt routes are preserved.
 
 Do not conflate an MQTT ONLINE state with valid VIPE electrical measurements.
+
+
+## Field validation result — 2026-11-16
+
+The controlled TFARM04 correction was executed against the live Site Mapper
+database after the read-only audit exposed the same stale B3 ownership pattern
+across the commissioned QDFs.
+
+Observed result:
+
+- 120 existing B3 metric bindings were selected and backed up before mutation.
+- Existing B3 positions 1..12 were moved from raw slave-3 points `0_3_N` to
+  the physical B3 meter on slave 5, `0_5_N`.
+- Existing channel-2 B3 bindings (`0_5_N#2`) were preserved.
+- No A2/B2 bindings were synthesized; uncommissioned panels remain a separate
+  commissioning task.
+- No topology, SOURCE binding, MQTT broker configuration, gateway configuration,
+  historian data or SNMP route was intentionally changed by this correction.
+- Site Mapper consumed the corrected bindings dynamically; no application-stack
+  restart was required.
+- On the next telemetry publication the QDF-4 B3 panel changed from NO DATA to
+  6/6 LIVE readings from the slave-5 family. The observed values included
+  B3-03 at approximately 14.32 V / 4.31 A / 0.062 kW and B3-05 at approximately
+  14.23 V / -1.35 A, matching the previously captured `0_5_x` payload family
+  rather than the stale slave-3 values.
+
+### Persisted invariant
+
+For `FIELD_DUAL_12`, code, reconciliation and future commissioning must preserve:
+
+| Physical panel | Meter slave | MQTT raw family |
+| --- | ---: | --- |
+| A3 | 1 | `0_1_N` |
+| A2 | 3 | `0_3_N` |
+| B3 | 5 | `0_5_N` |
+| B2 | 7 | `0_7_N` |
+
+A breaker may be reported LIVE only when the resolved physical panel/position
+matches the raw meter group/channel. A stale persisted binding is not sufficient
+evidence of physical ownership.
+
+This field validation confirms the B3 ownership correction. It does **not**
+commission missing A2/B2 bindings or certify electrical measurement accuracy.

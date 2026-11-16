@@ -1072,8 +1072,8 @@
     "category": "Categoría",
     "positionsPlaceholder": "Número de posiciones físicas",
     "create": "Crear e instalar",
-    "slotsCount": "{count} posiciones",
-    "childrenCount": "{count} elementos secundarios",
+    "slotsCount": "{count, plural, one {# posición} other {# posiciones}}",
+    "childrenCount": "{count, plural, one {# equipo secundario} other {# equipos secundarios}}",
     "rawMqtt": "Grupo MQTT sin procesar, como 0_2. Déjalo vacío si no se ha comisionado.",
     "pointPrefixHelp": "El punto 1 se convierte en prefix_1. Solo registra la dirección; no reasigna las vinculaciones de circuitos existentes ni verifica su cableado físico.",
     "instanceHelp": "Selecciona las posiciones hijas y la presentación de esta instancia",
@@ -1092,7 +1092,11 @@
     "mk1_aliases": "Alias",
     "mk1_one_per_line_or_comma_separated": "Uno por línea o separados por coma",
     "mk1_manufacturer": "Fabricante",
-    "mk1_model": "Modelo"
+    "mk1_model": "Modelo",
+    "statusActive": "Activo",
+    "statusArchived": "Archivado",
+    "technicalInfo": "Datos técnicos de configuración",
+    "telemetryPrefix": "Identificador de telemetría"
   },
   "accessPorts": {
     "title": "PUERTOS DE ACCESO",

@@ -216,6 +216,7 @@ export class TelemetryService {
         const equipment = await this.topologyRepository.listEquipmentForDevice(ownerId);
         const byId = new Map(equipment.map((item) => [item.id, item]));
         const verified = new Set<string>();
+        const physicalLocations = new Map<string, { panelLabel: string; position: number }>();
         const identityResolver = new TelemetryIdentityResolver(this.topologyRepository);
         const ownSourceBindings = this.bindingRepository
           ? await this.bindingRepository.listForTargets('EQUIPMENT', [...breakerTargets])
@@ -243,9 +244,22 @@ export class TelemetryService {
             )
           )
             continue;
+          const panel = breaker.parentEquipmentId
+            ? byId.get(breaker.parentEquipmentId)
+            : undefined;
+          if (!panel || panel.equipmentType !== 'PANEL' || panel.childMode !== 'POSITIONAL')
+            continue;
+          const position = panel.children.indexOf(breaker.id) + 1;
+          if (position <= 0) continue;
           verified.add(id);
+          physicalLocations.set(id, { panelLabel: panel.name, position });
         }
-        for (const own of buildBoundBfdbEquipmentPatches(normalized.value, bindings, verified)) {
+        for (const own of buildBoundBfdbEquipmentPatches(
+          normalized.value,
+          bindings,
+          verified,
+          physicalLocations,
+        )) {
           this.hub.publish(own);
           void this.captureHistory(own);
         }

@@ -1,6 +1,6 @@
-import Link from 'next/link';
 'use client';
 
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from 'next/navigation';
 import { Suspense, useEffect, useRef, useState, type ReactNode } from 'react';

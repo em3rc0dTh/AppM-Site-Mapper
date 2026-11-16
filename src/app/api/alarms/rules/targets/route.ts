@@ -54,11 +54,13 @@ export async function GET() {
         const panel = breaker.parentEquipmentId ? byId.get(breaker.parentEquipmentId) : undefined;
         return { breaker, panel };
       })
-      .filter((item) => item.panel?.equipmentType === 'PANEL')
+      .filter(
+        (item): item is typeof item & { panel: NonNullable<typeof item.panel> } =>
+          item.panel?.equipmentType === 'PANEL',
+      )
       .sort(
         (a, b) =>
-          (a.panel?.name ?? '').localeCompare(b.panel?.name ?? '') ||
-          a.breaker.name.localeCompare(b.breaker.name),
+          a.panel.name.localeCompare(b.panel.name) || a.breaker.name.localeCompare(b.breaker.name),
       );
 
     for (const { breaker, panel } of breakers) {
@@ -66,7 +68,7 @@ export async function GET() {
         scope: 'BREAKER',
         id: breaker.id,
         deviceName: device.name,
-        panelName: panel?.name,
+        panelName: panel.name,
         breakerName: breaker.name,
       });
     }

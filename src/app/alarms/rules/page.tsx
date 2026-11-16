@@ -15,7 +15,8 @@ export default async function AlarmRuleManagerPage({
   if (!auth.ok) redirect('/login');
   const editing = await requirePermission('settings:write');
   const candidate = (await searchParams).breakerId;
-  const initialBreakerId = typeof candidate === 'string' && candidate.length <= 128 ? candidate : '';
+  const initialBreakerId =
+    typeof candidate === 'string' && candidate.length <= 128 ? candidate : '';
   return (
     <main className="sm-rule-page">
       <RuleManager canEdit={editing.ok} initialBreakerId={initialBreakerId} />

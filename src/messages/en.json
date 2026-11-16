@@ -2614,6 +2614,41 @@
     "draft": "Draft",
     "draftPending": "Draft / Pending",
     "loadLossCandidate": "Candidate: LOAD_LOSS",
-    "noLoadLossCandidate": "No Load Loss candidate"
+    "noLoadLossCandidate": "No Load Loss candidate",
+    "ruleNames": {
+      "LOW_VOLTAGE": "Low Voltage",
+      "HIGH_VOLTAGE": "High Voltage",
+      "VOLTAGE_LOSS": "Voltage Loss",
+      "LOW_CURRENT": "Low Current",
+      "LOAD_LOSS": "Load Loss",
+      "SUDDEN_CURRENT_DROP": "Sudden Current Drop",
+      "LOW_POWER": "Low Power",
+      "HIGH_POWER": "High Power",
+      "NO_ENERGY_INCREMENT": "No Energy Increment",
+      "ENERGY_COUNTER_RESET": "Energy Counter Reset",
+      "ENERGY_CONSUMPTION_ANOMALY": "Energy Consumption Anomaly"
+    },
+    "parameterLabels": {
+      "assertBelowV": "Assert ≤",
+      "clearAboveV": "Recover ≥",
+      "assertAboveV": "Assert ≥",
+      "clearBelowV": "Recover ≤",
+      "zeroToleranceV": "Zero tolerance",
+      "assertBelowA": "Assert ≤",
+      "clearAboveA": "Recover ≥",
+      "zeroToleranceA": "Zero tolerance",
+      "referenceMinA": "Expected minimum",
+      "referenceCurrentA": "Reference current",
+      "dropPercent": "Assert drop",
+      "clearDropPercent": "Recover below",
+      "assertBelowW": "Assert ≤",
+      "clearAboveW": "Recover ≥",
+      "assertAboveW": "Assert ≥",
+      "clearBelowW": "Recover ≤",
+      "maxDeltaKwh": "Max non-increment",
+      "windowMs": "Observation window",
+      "minDecrementKwh": "Minimum decrement",
+      "minDeltaKwh": "Minimum increment"
+    }
   }
 }

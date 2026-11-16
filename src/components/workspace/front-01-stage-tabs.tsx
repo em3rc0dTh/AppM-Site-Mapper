@@ -51,18 +51,7 @@ export function Front01StageTabs({
       {activeHeading ? (
         <div className="front01-stage-heading-row">
           <h1 className="front01-stage-heading">{activeHeading}</h1>
-          {compactHeading ? (
-            <div className="front01-stage-heading-controls">
-              {headingStatus}
-              {headingActions ? (
-                <div className="sm-detached-workbench-actions front01-stage-report-actions">
-                  {headingActions}
-                </div>
-              ) : null}
-            </div>
-          ) : (
-            headingStatus
-          )}
+          {!compactHeading ? headingStatus : null}
         </div>
       ) : null}
       {headingActions && !compactHeading ? (
@@ -70,20 +59,32 @@ export function Front01StageTabs({
           {headingActions}
         </div>
       ) : null}
-      <div className="front01-primary-tabs" role="tablist" aria-label={label}>
-        {views.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            role="tab"
-            id={`front01-tab-${item.key}`}
-            aria-selected={view === item.key}
-            aria-controls={`front01-panel-${item.key}`}
-            onClick={() => setView(item.key)}
-          >
-            {item.title}
-          </button>
-        ))}
+      <div className={compactHeading ? 'front01-stage-toolbar' : undefined}>
+        <div className="front01-primary-tabs" role="tablist" aria-label={label}>
+          {views.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              role="tab"
+              id={`front01-tab-${item.key}`}
+              aria-selected={view === item.key}
+              aria-controls={`front01-panel-${item.key}`}
+              onClick={() => setView(item.key)}
+            >
+              {item.title}
+            </button>
+          ))}
+        </div>
+        {compactHeading && (headingStatus || headingActions) ? (
+          <div className="front01-stage-heading-controls">
+            {headingStatus}
+            {headingActions ? (
+              <div className="sm-detached-workbench-actions front01-stage-report-actions">
+                {headingActions}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
       <div
         id="front01-panel-physical"

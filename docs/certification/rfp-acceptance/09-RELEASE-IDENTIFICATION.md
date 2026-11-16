@@ -91,3 +91,9 @@ tests invalid, record the new release identity and re-test the impacted scope.
 
 Never overwrite the original release identity to make a failed run appear to have used the corrected
 build.
+
+## 9. Code reference for MK1 v2.0 (not an execution record)
+
+The consolidated **application code target** of the post-merge UAT is `7a43be8161ef938dbd2da7b1586fefcd329fbd79` (`main` after PRs #223–#226, November 16, 2026). This paragraph is an architectural target identifier, **not** proof that a particular VM/image runs this SHA. Leave the template's execution fields unfilled until the operator verifies the deployed artifact/digest in a controlled run. The documentation-only UAT PR has a later SHA and does not itself establish a new application build.
+
+See [UAT plan v2.0](10-UAT-MK1-V2-PLAN.md) and [UAT result register](11-UAT-MK1-V2-RESULTS.md). If application code changes, freeze and label the actual new release explicitly, review the scope and repeat affected scenarios.

@@ -1485,3 +1485,98 @@
   font-size: 14px;
   line-height: 1.5;
 }
+
+
+/* Operator copy: keep technical provenance available without headline noise. */
+.mk2-equipment-ergonomics .equipment-composition-technical-note {
+  margin: 0 14px 10px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #405b72;
+}
+.mk2-equipment-ergonomics .equipment-composition-technical-note summary,
+.mk2-equipment-ergonomics .ec-telemetry-calculation summary,
+.mk2-equipment-ergonomics .ec-telemetry-source-details summary,
+.mk2-equipment-ergonomics .equipment-breaker-source-technical summary {
+  display: list-item;
+  cursor: pointer;
+  width: fit-content;
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: #225d8b;
+  text-underline-offset: 3px;
+}
+.mk2-equipment-ergonomics .equipment-composition-technical-note :is(summary, p),
+.mk2-equipment-ergonomics .ec-telemetry-calculation :is(summary, small),
+.mk2-equipment-ergonomics .ec-telemetry-source-details :is(summary, p),
+.mk2-equipment-ergonomics .equipment-breaker-source-technical :is(summary, p) {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.mk2-equipment-ergonomics .equipment-composition-technical-note p,
+.mk2-equipment-ergonomics .ec-telemetry-source-details p,
+.mk2-equipment-ergonomics .equipment-breaker-source-technical p {
+  margin: 5px 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.mk2-equipment-ergonomics .ec-telemetry-calculation {
+  min-width: 0;
+  max-width: 100%;
+  flex: 0 1 auto;
+  font-size: 14px;
+  font-weight: 500;
+}
+.mk2-equipment-ergonomics .ec-telemetry-calculation small {
+  display: block;
+  padding-top: 5px;
+  color: #405b72;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+.mk2-equipment-ergonomics .ec-telemetry-source-details {
+  margin: 0 0 12px;
+}
+.mk2-equipment-ergonomics .equipment-breaker-source-technical {
+  margin-top: 7px;
+  min-width: 0;
+}
+.mk2-equipment-ergonomics .equipment-configuration-allowed {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #405b72;
+}
+.mk2-equipment-ergonomics .equipment-breaker-telemetry-header {
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+.mk2-equipment-ergonomics .equipment-breaker-telemetry-header > :is(strong, span),
+.mk2-equipment-ergonomics .equipment-breaker-telemetry > small {
+  font-size: 14px;
+  line-height: 1.55;
+}
+.mk2-equipment-ergonomics .equipment-breaker-telemetry-header > strong {
+  font-size: 16px;
+}
+.mk2-equipment-ergonomics .equipment-breaker-telemetry > small {
+  display: block;
+  margin-top: 6px;
+  color: #405b72;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics :is(
+  .equipment-composition-technical-note,
+  .ec-telemetry-calculation,
+  .ec-telemetry-source-details,
+  .equipment-breaker-source-technical
+) > summary:focus-visible {
+  outline: 2px solid #247bb7;
+  outline-offset: 3px;
+  border-radius: 3px;
+}

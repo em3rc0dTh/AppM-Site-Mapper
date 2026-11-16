@@ -10,7 +10,7 @@ Scope: Next.js application on :3000, not Operational Console. The **customer FIE
 | Bounded JSON and allowed fields | Shared HTTP boundary and domain services                            | Existing implementation with additional content-type guard                                      |
 | Production cookie hardening     | `src/modules/identity/infrastructure/auth-cookie.ts`                | Code committed; __Host- on staging/production                                                   |
 | HTTPS/HSTS                      | `infra/field/caddy/Caddyfile`                                       | Config committed; requires deployed TLS verification                                            |
-| Password breach screening       | `src/modules/identity/application/password-policy.ts`               | FIELD: offline denylist; limited coverage accepted by baseline. Online mode is dev-only                                |
+| Password breach screening       | `src/modules/identity/application/password-policy.ts`               | FIELD: offline denylist; limited coverage accepted by baseline. Online mode is dev-only         |
 | Industrial credential reveal    | `src/app/api/industrial/credentials/route.ts`                       | Code committed; password step-up and throttle                                                   |
 | TOTP MFA                        | `src/modules/identity/application/mfa-service.ts` and `mfa-totp.ts` | Code committed; opt-in enrollment. Mandatory rollout blocked until recovery provisioned         |
 | Industrial data-plane ACL/TLS   | MQTT, SNMP, Modbus, Timescale deployment                            | Existing code partially guards ingress; customer edge configuration and network ACLs not proved |

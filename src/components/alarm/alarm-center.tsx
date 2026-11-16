@@ -85,9 +85,12 @@ export function AlarmCenter() {
           <h1>{t('title')}</h1>
           <p>{t('description')}</p>
         </div>
-        <button type="button" onClick={() => void refresh()}>
-          {t('refresh')}
-        </button>
+        <div className="sm-rule-center-actions">
+          <Link href="/alarms/rules">Rule Manager</Link>
+          <button type="button" onClick={() => void refresh()}>
+            {t('refresh')}
+          </button>
+        </div>
       </header>
 
       {error ? (

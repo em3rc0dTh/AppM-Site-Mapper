@@ -23,6 +23,18 @@ describe('Mk2 shared product header', () => {
     expect(productHeader).toContain('href="/workspace"');
   });
 
+  it('locks the approved two-line MK2 product header composition', () => {
+    const css = source('src/app/site-mapper-brand.css');
+
+    expect(css).toContain('.sm-product-header .sm-brand--compact .sm-brand-copy');
+    expect(css).toContain('display: grid;');
+    expect(css).toContain('justify-items: end;');
+    expect(css).toContain('background: #18b98f;');
+    expect(css).toContain('color: #fff;');
+    expect(css).toContain('width: 44px;');
+    expect(css).toContain('height: 44px;');
+  });
+
   it('keeps Power Trace free of the legacy MK1 identity', () => {
     const powerTrace = source('src/components/workbench/full-power-trace-workbench.tsx');
     const es = source('src/messages/es.json');

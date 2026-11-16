@@ -29,7 +29,7 @@ export default async function ChangePasswordPage() {
         <strong>{user.displayName}</strong>
         <small>{user.email}</small>
       </div>
-      <PasswordForm presentation="auth" />
+      <PasswordForm presentation="auth" forced={user.mustChangePassword} />
     </AuthFrame>
   );
 }

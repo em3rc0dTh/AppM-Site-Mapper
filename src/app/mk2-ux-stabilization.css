@@ -2059,8 +2059,9 @@
   line-height: 1;
 }
 .mk2-room-ergonomics .blueprint-legend {
-  min-height: 48px;
-  height: auto;
+  min-height: 52px;
+  height: auto !important;
+  flex: 0 0 auto !important;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -2068,7 +2069,7 @@
   padding: 8px 158px 8px 12px !important; /* reserve Reset Layout control */
 }
 .mk2-room-ergonomics .blueprint-legend :is(span, small, strong, b) {
-  font-size: 13px !important;
+  font-size: 14px !important;
   line-height: 1.4;
 }
 .mk2-room-ergonomics .blueprint-legend > span:last-child {
@@ -2079,8 +2080,8 @@
   top: auto !important;
   bottom: 9px !important; /* footer, not surveyed room/rack geometry */
   opacity: 1;
-  min-height: 37px;
-  font-size: 13px;
+  min-height: 40px;
+  font-size: 14px;
   font-weight: 650;
   background: #fff;
   border-color: #adc2d3;

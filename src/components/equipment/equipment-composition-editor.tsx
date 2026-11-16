@@ -443,14 +443,6 @@ export function EquipmentCompositionEditor({
           ) : null}
         </div>
       </header>
-      <details className="equipment-composition-technical-note">
-        <summary>{t('technicalInfo')}</summary>
-        <p>{t('childMode')}: {equipment.childMode}</p>
-        {equipment.telemetryPointPrefix ? (
-          <p>{t('telemetryPrefix')}: {equipment.telemetryPointPrefix}</p>
-        ) : null}
-      </details>
-
       {isActive && configurationOpen ? (
         <form className="equipment-configuration-form" onSubmit={configureEquipment}>
           <p className="equipment-configuration-allowed">

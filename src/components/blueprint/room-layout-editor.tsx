@@ -317,60 +317,64 @@ export function RoomLayoutEditor({
   );
   return (
     <section className="mk-room-editor">
-      <header className="mk-draft-toolbar">
-        <strong>{editing ? t('editDraft') : t('explore')}</strong>
-        {canWrite && !editing && <button onClick={() => setEditing(true)}>{t('editRoom')}</button>}
-        {editing && (
-          <>
-            <button
-              disabled={busy || !!boundary || !!placement || !past.length}
-              onClick={() => {
-                const prev = past.at(-1);
-                if (prev) {
-                  setFuture((f) => [draft, ...f]);
-                  setDraft(prev);
-                  setPast((p) => p.slice(0, -1));
-                }
-              }}
-            >
-              {t('undo')}
-            </button>
-            <button
-              disabled={busy || !!boundary || !!placement || !future.length}
-              onClick={() => {
-                const next = future[0];
-                if (next) {
-                  setPast((p) => [...p, draft]);
-                  setDraft(next);
-                  setFuture((f) => f.slice(1));
-                }
-              }}
-            >
-              {t('redo')}
-            </button>
-            <button
-              disabled={busy}
-              onClick={() => {
-                setDraft(saved);
-                setPast([]);
-                setFuture([]);
-                setEditing(false);
-                setBoundary(null);
-                setPlacement(null);
-                setError('');
-              }}
-            >
-              {t('cancel')}
-            </button>
-            <button
-              disabled={busy || !!validation || !!boundary || !!placement}
-              onClick={() => void save()}
-            >
-              {busy ? t('saving') : t('saveLayout')}
-            </button>
-          </>
-        )}
-      </header>
+      {(editing || (canWrite && draft.polygon.length < 3)) && (
+        <header className="mk-draft-toolbar">
+          {editing && <strong>{t('editDraft')}</strong>}
+          {canWrite && !editing && (
+            <button onClick={() => setEditing(true)}>{t('editRoom')}</button>
+          )}
+          {editing && (
+            <>
+              <button
+                disabled={busy || !!boundary || !!placement || !past.length}
+                onClick={() => {
+                  const prev = past.at(-1);
+                  if (prev) {
+                    setFuture((f) => [draft, ...f]);
+                    setDraft(prev);
+                    setPast((p) => p.slice(0, -1));
+                  }
+                }}
+              >
+                {t('undo')}
+              </button>
+              <button
+                disabled={busy || !!boundary || !!placement || !future.length}
+                onClick={() => {
+                  const next = future[0];
+                  if (next) {
+                    setPast((p) => [...p, draft]);
+                    setDraft(next);
+                    setFuture((f) => f.slice(1));
+                  }
+                }}
+              >
+                {t('redo')}
+              </button>
+              <button
+                disabled={busy}
+                onClick={() => {
+                  setDraft(saved);
+                  setPast([]);
+                  setFuture([]);
+                  setEditing(false);
+                  setBoundary(null);
+                  setPlacement(null);
+                  setError('');
+                }}
+              >
+                {t('cancel')}
+              </button>
+              <button
+                disabled={busy || !!validation || !!boundary || !!placement}
+                onClick={() => void save()}
+              >
+                {busy ? t('saving') : t('saveLayout')}
+              </button>
+            </>
+          )}
+        </header>
+      )}
       <div className={`mk-draft-workbench ${editing ? 'is-editing' : ''}`}>
         <div className="spatial-room-stage">
           {boundary ? (
@@ -417,6 +421,8 @@ export function RoomLayoutEditor({
               onSelectRack={editing && !busy ? setSelected : undefined}
               onSelectBay={editing && !busy ? setSelected : undefined}
               onPlace={editing && placement && !busy ? place : undefined}
+              onEditRoom={canWrite && !editing ? () => setEditing(true) : undefined}
+              editRoomLabel={t('editRoom')}
               focusRackId={
                 focusRackId ?? draft.racks.find((r) => r.positionId === focusPositionId)?.id
               }

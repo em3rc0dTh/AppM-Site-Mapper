@@ -47,6 +47,7 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
   const canReadIndustrialSettings = hasPermission(auth.value.role, 'settings:read');
   const t = await getTranslations('pages.device');
   const tf = await getTranslations('front01Ui');
+  const te = await getTranslations('equipmentEditor');
   const { deviceId } = await params;
   const repo = await createTopologyRepository();
   const service = new TopologyService(repo);
@@ -405,7 +406,9 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
       : null;
   const tBreaker = await getTranslations('breakerLimits');
   return (
-    <main className="operational-page mk-device-page">
+    <main
+      className={`operational-page mk-device-page${node.kind === 'EQUIPMENT' ? ' mk2-equipment-ergonomics' : ''}`}
+    >
       <nav className="breadcrumbs zip-device-breadcrumbs" aria-label={t('breadcrumbs')}>
         {breadcrumbLinks.map((item, index) => (
           <span className="zip-device-breadcrumb-item" key={item.id}>
@@ -445,6 +448,16 @@ export default async function DevicePage({ params }: { params: Promise<{ deviceI
                   />
                   <details className="front01-equipment-technical-config" id="bdfb-access-ports">
                     <summary>{tf('technicalConfiguration')}</summary>
+                    <div className="front01-equipment-technical-identity">
+                      <span>
+                        {te('childMode')}: {node.childMode}
+                      </span>
+                      {node.telemetryPointPrefix ? (
+                        <span>
+                          {te('telemetryPrefix')}: {node.telemetryPointPrefix}
+                        </span>
+                      ) : null}
+                    </div>
                     <div className="front01-equipment-technical-grid">
                       <section>
                         <h3>{tf('ports')}</h3>

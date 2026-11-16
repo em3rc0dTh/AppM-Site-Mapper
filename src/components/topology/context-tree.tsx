@@ -167,7 +167,8 @@ function TreeBranch({
 export function TopologyContextTree({
   tree,
   activeId,
-}: Readonly<{ tree: TopologyNavigationNode; activeId: string }>) {
+  showHomeLink = true,
+}: Readonly<{ tree: TopologyNavigationNode; activeId: string; showHomeLink?: boolean }>) {
   const t = useTranslations('topologyTree');
   const router = useRouter();
   const [selected, setSelected] = useState<TopologyNavigationNode | null>(null);
@@ -201,13 +202,15 @@ export function TopologyContextTree({
         {collapsed ? '›' : '‹'}
       </button>
       <div className="telxius-tree-collapsible-content" ref={treeContent}>
-        <header className="telxius-tree-brand">
-          <span className="telxius-tree-brand-icon">
-            <Icon name="network" />
-          </span>
-          <strong>APPMANAGER</strong>
-          <Link href="/workspace">{t('home')}</Link>
-        </header>
+        {showHomeLink && (
+          <header className="telxius-tree-brand">
+            <span className="telxius-tree-brand-icon">
+              <Icon name="network" />
+            </span>
+            <strong>APPMANAGER</strong>
+            <Link href="/workspace">{t('home')}</Link>
+          </header>
+        )}
         <div className="telxius-tree-heading">
           <span>{t('topology')}</span>
           <b>{t('all')}</b>

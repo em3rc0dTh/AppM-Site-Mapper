@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import { EquipmentContractViews } from './equipment-contract-views';
+import { formatEquipmentReadingTime } from './equipment-reading-time';
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 
 import {
@@ -31,6 +32,8 @@ interface Props {
 
 function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBreakerTelemetry }>) {
   const t = useTranslations('physicalDiagram');
+  const locale = useLocale();
+  const receivedAtLima = formatEquipmentReadingTime(reading.receivedAt, locale);
   const metrics = [
     { label: 'V', value: reading.voltageV, unit: 'V' },
     { label: 'I', value: reading.currentA, unit: 'A' },
@@ -40,7 +43,8 @@ function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBre
   return (
     <div className="equipment-breaker-telemetry" data-state={reading.status}>
       <div className="equipment-breaker-telemetry-header">
-        <strong>MQTT · {reading.status}</strong>
+        <strong>{t('telemetry')}</strong>
+        <span>{reading.status}</span>
         {reading.state && <span>{reading.state}</span>}
       </div>
       <div className="equipment-breaker-telemetry-values" aria-label={t('telemetry')}>
@@ -55,15 +59,32 @@ function BreakerMeasurementStrip({ reading }: Readonly<{ reading: CompositionBre
       </div>
       <small>
         {reading.sourceIdentity
-          ? `${reading.sourceIdentity}${reading.sourcePointId ? ` / ${reading.sourcePointId}` : ` / ${t('ownSource')}`} · ${reading.receivedAt ?? '—'}`
+          ? `${t('lastReceivedLima')} ${receivedAtLima ?? '—'}`
           : reading.status === 'UNMAPPED'
             ? t('noBinding')
             : reading.status === 'NO DATA'
-              ? (reading.diagnostic ?? t('waiting'))
+              ? t('waiting')
               : reading.status === 'CONFLICT'
                 ? t('conflict')
                 : t('telemetryUnavailable')}
       </small>
+      {(reading.sourceIdentity || reading.diagnostic) && (
+        <details className="equipment-breaker-source-technical">
+          <summary>{t('sourceTechnical')}</summary>
+          {reading.sourceIdentity && (
+            <p>
+              {t('sourceCaption')} {reading.sourceIdentity}
+              {reading.sourcePointId ? ` / ${reading.sourcePointId}` : ` / ${t('ownSource')}`}
+            </p>
+          )}
+          {reading.receivedAt && (
+            <p>
+              {t('rawTimestamp')} {reading.receivedAt}
+            </p>
+          )}
+          {reading.diagnostic && <p>{reading.diagnostic}</p>}
+        </details>
+      )}
     </div>
   );
 }

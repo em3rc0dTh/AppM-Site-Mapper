@@ -1,0 +1,2282 @@
+/* MK2 UX stabilization — review in local before promotion to main.
+   Pure presentation layer: no inventory, alarm, RBAC or telemetry contract changes.
+   Imported last so the approved light-theme palette remains authoritative. */
+
+/* Header: AppManager SiteMapper Mk2 | cube | home. */
+.zip-app-shell .zip-brand {
+  width: auto;
+  flex: 0 0 auto;
+  gap: 12px;
+  padding: 0 16px 0 22px;
+  border-right: 1px solid #d4dfe7;
+  align-self: stretch;
+}
+.zip-app-shell .zip-brand .sm-brand {
+  width: auto;
+  flex: 0 0 auto;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-lockup {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 14px;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-copy {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-appmanager {
+  font-size: 24px;
+  line-height: 1.05;
+  font-weight: 400;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-product-line {
+  font-size: 18px;
+  line-height: 1.05;
+  gap: 6px;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-tagline {
+  display: none;
+}
+.zip-app-shell .sm-brand--compact .sm-brand-mark {
+  width: 35px;
+  height: 35px;
+}
+.zip-app-shell .zip-brand-home {
+  width: 36px;
+  height: 36px;
+  border-color: #c8d5df;
+}
+.zip-app-shell .zip-brand-home svg {
+  width: 20px;
+  height: 20px;
+}
+.zip-app-shell .zip-topbar {
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgb(22 42 61 / 6%);
+}
+.zip-app-shell .zip-brand:focus-visible {
+  outline: 2px solid #087e66;
+  outline-offset: -3px;
+}
+
+/* Home: product name belongs to the brand, not a second banner lockup. */
+.sm-home .sm-home-heading h1 {
+  margin-top: 9px;
+  color: #1d2b38;
+  font-size: clamp(22px, 1.7vw, 28px);
+  line-height: 1.16;
+}
+.sm-home .sm-home-heading > div {
+  max-width: min(100%, 640px);
+  padding: 16px 24px 17px 18px;
+}
+.sm-home .sm-home-breadcrumb {
+  font-size: 14px;
+  color: #263a4a;
+}
+.sm-home .sm-home-heading .sm-home-scope {
+  color: #425f7a;
+  border: 1px solid #d2dce5;
+}
+
+/* A clearly discoverable hamburger, with keyboard focus, without
+   expanding the left rail until the operator asks for it. */
+.sm-home .sm-home-sidebar .sm-home-sidebar-toggle {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  margin: 8px 5px;
+  padding: 0;
+  border: 1px solid #94a9bc;
+  border-radius: 8px;
+  background: #fff;
+  color: #1b344a;
+  font-size: 23px;
+  line-height: 1;
+  box-shadow: 0 1px 3px rgb(21 43 68 / 10%);
+}
+.sm-home .sm-home-sidebar .sm-home-sidebar-toggle:hover,
+.sm-home .sm-home-sidebar .sm-home-sidebar-toggle:focus-visible {
+  border-color: #0b997b;
+  background: #edf9f5;
+  box-shadow: 0 0 0 3px rgb(24 185 143 / 14%);
+  outline: none;
+}
+
+/* Home cards: visible grouping even across different monitors. */
+.sm-home .sm-home-stats article,
+.sm-home .sm-home-action-grid > .sm-home-section {
+  border-color: #c5d3df;
+  box-shadow: 0 2px 9px rgb(30 56 83 / 7%);
+}
+.sm-home .sm-home-stats small {
+  color: #344f6b;
+  font-size: 12px;
+}
+.sm-home .sm-home-stats span {
+  color: #4b6580;
+  font-size: 12px;
+}
+.sm-home .sm-home-section-heading h2 {
+  color: #23394c;
+  font-size: 15px;
+}
+.sm-home .sm-home-action-grid .sm-home-section-heading button {
+  color: #17599b;
+  font-size: 13px;
+}
+
+/* QDF cards: no operational status is inferred by CSS. It only reflects
+   the existing data-tone assigned by the alarm/telemetry projection. */
+.sm-home .sm-home-pin--compact {
+  min-height: 215px;
+  padding: 15px;
+  gap: 11px;
+  border: 2px solid #9ebacb;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgb(30 56 83 / 9%);
+}
+.sm-home .sm-home-pin:has(.sm-home-pin-status[data-tone='healthy']) {
+  border-color: #199b78;
+  background: linear-gradient(180deg, #f0faf6 0%, #fff 46%);
+}
+.sm-home .sm-home-pin:has(.sm-home-pin-status[data-tone='warning']) {
+  border-color: #c38b24;
+  background: linear-gradient(180deg, #fff8e9 0%, #fff 46%);
+}
+.sm-home .sm-home-pin:has(.sm-home-pin-status[data-tone='critical']) {
+  border-color: #d33d4e;
+  background: linear-gradient(180deg, #fff0f2 0%, #fff 46%);
+}
+.sm-home .sm-home-pin:hover {
+  box-shadow: 0 4px 13px rgb(30 56 83 / 15%);
+}
+.sm-home .sm-home-pin:focus-visible {
+  outline: 3px solid #087e66;
+  outline-offset: 2px;
+}
+.sm-home .sm-home-pin--compact > div:first-child {
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+.sm-home .sm-home-pin--compact > div:first-child strong {
+  font-size: 16px;
+  line-height: 1.25;
+  color: #1b2e3f;
+}
+.sm-home .sm-home-pin--compact > small {
+  color: #445e77;
+  font-size: 12px;
+  line-height: 1.3;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+.sm-home .sm-home-pin--compact .sm-home-pin-status {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+.sm-home .sm-home-pin--compact .sm-home-pin-readings {
+  gap: 12px 8px;
+}
+.sm-home .sm-home-pin--compact .sm-home-pin-readings span {
+  min-width: 0;
+  color: #3b5671;
+  font-size: 12px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.sm-home .sm-home-pin--compact .sm-home-pin-readings b {
+  color: #192f45;
+  font-size: 15px;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+.sm-home .sm-home-pin--compact em {
+  color: #155c9e;
+  font-size: 13px;
+}
+.sm-home .sm-home-pin--compact .sm-home-pin-readings {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* MK2 physical visual baseline for QDF-2 / QDF-4 / QDF-5.
+   All values, alarms, links, composition actions and 3 resizable columns remain live.
+   Local acceptance is required individually before merging to main. */
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-heading {
+  color: #203044;
+  font-size: 21px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-heading-row {
+  margin-bottom: 7px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-report-actions {
+  margin-bottom: 6px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-primary-tabs {
+  gap: 7px;
+  padding: 6px 0 9px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-primary-tabs button {
+  padding: 8px 14px;
+  border-radius: 5px;
+  background: #fff;
+  color: #315170;
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: none;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-primary-tabs button[aria-selected='true'] {
+  border-color: #4e92c4;
+  background: #edf6fc;
+  color: #155f98;
+  box-shadow: none;
+}
+
+/* The actual physical assembly stays centered inside the canvas, without
+   changing either side column, resize separators or user-saved widths. */
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-body {
+  padding: 9px 14px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-chassis {
+  box-sizing: border-box;
+  width: min(100%, 880px);
+  margin-inline: auto;
+  padding: 11px 13px;
+  border: 1px solid #9bafc0;
+  border-radius: 3px;
+  background: #fcfdfe;
+  box-shadow: none;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-shelf {
+  padding: 9px 10px;
+  border: 1px solid #cbd6e0;
+  border-radius: 3px;
+  background: #f8fafc;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-frames {
+  gap: 10px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-frame {
+  padding: 8px;
+  border: 1px solid #c4d0db;
+  border-radius: 3px;
+  background: #f3f6f9;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-title {
+  margin-bottom: 7px;
+  color: #345169;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-panels {
+  gap: 6px;
+  grid-auto-rows: minmax(74px, 1fr);
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-panel {
+  border: 1px solid #c1cdd8;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: none;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .sm-bdfb-stage
+  .sm-bdfb-physical-panel[data-selected='true'] {
+  border-color: #4388bb;
+  background: #f0f7fd;
+  box-shadow: none;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-panel-select {
+  gap: 3px;
+  padding: 7px 10px 3px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-panel-select > strong {
+  color: #20384e;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-panel-select > span {
+  color: #49657c;
+  font-size: 11.5px;
+  font-weight: 400;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-panel-composition-link {
+  padding: 3px 10px 7px;
+  color: #246a9c;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+/* Selected panel: reduce dead space, not content. All positions, breaker
+   menu triggers, alarms, MQTT links and circuit rows are still rendered. */
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus {
+  padding: 12px 14px 14px;
+  border: 1px solid #cad7e2;
+  border-radius: 5px;
+  background: #fbfcfe;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus-header span {
+  color: #43617a;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.035em;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus-header h2 {
+  color: #21415a;
+  font-size: 16px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus-header small,
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus-header > a {
+  font-size: 11.5px;
+  line-height: 1.4;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus-summary {
+  margin: 9px 0;
+  gap: 7px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus-summary > div {
+  padding: 6px 10px;
+  border-color: #d0dce6;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus-summary strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus-summary span {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-positions {
+  gap: 5px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-position {
+  min-height: 37px;
+  border-color: #c6d3de;
+  background: #f6f8fa;
+  color: #64798b;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-position[data-installed='true'] {
+  border-color: #7db0d4;
+  background: #e7f4fc;
+  color: #215a80;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-position > span,
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-position > .sm-breaker-position-trigger {
+  min-height: 37px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-position strong {
+  font-size: 10px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary {
+  margin-top: 10px;
+  border-color: #d0dbe5;
+  background: #fff;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary > strong {
+  padding: 7px 10px;
+  background: #f6f9fb;
+  color: #31516b;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.015em;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row {
+  padding: 6px 10px;
+  grid-template-columns: 84px minmax(75px, 0.6fr) minmax(0, 2fr);
+  gap: 8px;
+  line-height: 1.4;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row > span,
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row > small {
+  font-size: 11.5px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row > small {
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row > a {
+  color: #226a9b;
+  font-size: 12px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-empty,
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus-note {
+  font-size: 11.5px;
+}
+
+/* The Inspector remains the same data-bearing region, including its live
+   alarm rollup and location; make only the existing text easier to scan. */
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .zip-bdfb-inspector-id {
+  gap: 12px;
+  padding: 12px;
+  border-color: #d1dce5;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .zip-bdfb-inspector-id h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .front01-compact-inspector
+  .zip-bdfb-inspector-id
+  small {
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .front01-summary-facts {
+  gap: 10px 12px;
+  padding: 12px 14px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .front01-summary-facts dt,
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .front01-summary-facts dd {
+  font-size: 12px;
+  line-height: 1.45;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .front01-summary-facts dd {
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .front01-summary-note {
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+/* Existing stored inspector widths remain untouched. Balance the labels and
+   values; on a genuinely narrow inspector, let the long location use a full row. */
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-compact-inspector .front01-summary-facts {
+  grid-template-columns: minmax(88px, 0.85fr) minmax(0, 1.65fr);
+  gap: 10px 8px;
+}
+@container (max-width: 305px) {
+  .zip-bdfb-page[data-mk2-ux-physical='true']
+    .front01-compact-inspector
+    .front01-summary-facts
+    dt:nth-of-type(2),
+  .zip-bdfb-page[data-mk2-ux-physical='true']
+    .front01-compact-inspector
+    .front01-summary-facts
+    dd:nth-of-type(2) {
+    grid-column: 1 / -1;
+  }
+  .zip-bdfb-page[data-mk2-ux-physical='true']
+    .front01-compact-inspector
+    .front01-summary-facts
+    dd:nth-of-type(2) {
+    margin-top: -5px;
+  }
+}
+
+/* Favor vertical room for circuits on normal desktop displays, without
+   reducing font sizes or changing the physical/operation tabs. */
+@media (min-width: 1200px) and (min-height: 760px) {
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage {
+    grid-template-rows: minmax(255px, 0.85fr) minmax(320px, 1.15fr);
+    gap: 10px;
+  }
+}
+@media (max-width: 1180px) {
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row {
+    grid-template-columns: 74px minmax(0, 1fr);
+  }
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row > small {
+    grid-column: 2;
+    text-align: left;
+  }
+}
+
+/* TO-BE v3 — physical inspection density, guided by DESIGN.md.
+   Existing device and alarm projections remain authoritative. The three
+   resizable workspace columns and their saved widths are never modified. */
+.zip-bdfb-page[data-mk2-ux-physical='true'] {
+  --mk2-physical-border: #c9d5df;
+  --mk2-physical-selected: #397eb5;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .operational-stage-body {
+  padding-top: 8px !important;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-heading-row {
+  margin: 0 0 7px;
+  min-height: 26px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-heading-row .front01-stage-heading {
+  margin: 0;
+  font-size: clamp(19px, 1.5vw, 22px);
+  font-weight: 650;
+  line-height: 1.2;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+  margin-bottom: 8px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-toolbar .front01-primary-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-primary-tabs button {
+  min-height: 34px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-heading-controls {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  margin-left: auto;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .front01-stage-heading-controls
+  .front01-stage-report-actions {
+  display: flex;
+  flex: 0 1 auto;
+  margin: 0;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .front01-stage-report-actions
+  .sm-detached-workbench-button {
+  min-height: 34px;
+  padding: 6px 10px;
+  border-color: #a3c8e3;
+  background: #fff;
+  box-shadow: none;
+  color: #175e91;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage {
+  gap: 10px;
+  grid-template-rows: max-content minmax(0, 1fr);
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-body {
+  padding: 5px 12px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-chassis {
+  padding: 9px 11px;
+  width: min(100%, 880px);
+  height: auto;
+  margin-inline: auto;
+  border-color: #a5b8c8;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-shelf {
+  margin-top: 6px;
+  padding: 7px 9px;
+  background: #f9fbfc;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-frame {
+  padding: 7px;
+  background: #f2f6f9;
+}
+/* Size the nested physical diagram from its own content instead of stretching
+   the panel cards to consume a percentage of the canvas height. */
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-shelf,
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-frames {
+  flex: 0 0 auto;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-panel {
+  align-content: start;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-title {
+  margin-bottom: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-panels {
+  flex: 0 0 auto;
+  grid-auto-rows: minmax(58px, max-content);
+  gap: 5px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-physical-panel {
+  min-height: 58px;
+  grid-template-rows: auto auto;
+  border: 1px solid #c5d2dd;
+  border-radius: 4px;
+  box-shadow: none;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .sm-bdfb-stage
+  .sm-bdfb-physical-panel[data-selected='true'] {
+  border-color: var(--mk2-physical-selected);
+  background: #edf6fc;
+  box-shadow: none;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-panel-select {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  padding: 7px 10px 1px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-panel-select > strong {
+  min-width: 42px;
+  font-size: 15px;
+  font-weight: 650;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-panel-select > span {
+  font-size: 11.5px;
+  font-weight: 400;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-panel-composition-link {
+  padding: 2px 10px 6px 62px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus {
+  box-sizing: border-box;
+  min-height: 0;
+  padding: 10px 12px 16px;
+  scroll-padding-bottom: 16px;
+  container-type: inline-size;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-focus-summary {
+  margin: 7px 0 8px;
+  gap: 7px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-positions {
+  width: min(100%, 1200px);
+  margin-inline: auto;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-position,
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-position > span,
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-position > .sm-breaker-position-trigger {
+  min-height: 35px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-position > span,
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-position > .sm-breaker-position-trigger {
+  padding: 4px 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary {
+  width: 100%;
+  min-width: 0;
+  margin-top: 8px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary > strong {
+  padding: 7px 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row {
+  min-height: 35px;
+  padding: 6px 10px;
+  grid-template-columns: minmax(84px, 0.5fr) minmax(74px, 0.65fr) minmax(0, 2.85fr);
+  align-items: center;
+  gap: 10px;
+  line-height: 1.4;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row > span,
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row > small {
+  font-size: 11.5px;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row > small {
+  min-width: 0;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row > a {
+  font-size: 12px;
+  font-weight: 600;
+}
+/* The old absolute Create Equipment dock sat on top of inventory notes and
+   circuit rows. Give it a real bottom strip in the stage flex layout.
+   Reset remains in the existing workspace-relative bottom-right position. */
+.zip-bdfb-page[data-mk2-ux-physical='true'] .telxius-operational-stage > .operational-edit-dock {
+  position: static;
+  z-index: auto;
+  flex: 0 0 auto;
+  align-items: center;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 6px 164px 7px 12px;
+  margin: 0;
+  border-top: 1px solid #e0e8ef;
+  background: #fff;
+  overflow: visible;
+}
+.zip-bdfb-page[data-mk2-ux-physical='true'] .operational-stage-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+/* Read-only operators have no creation dock. Keep a clear reset area
+   without moving or hiding the only existing layout-reset action. */
+.zip-bdfb-page[data-mk2-ux-physical='true']
+  .telxius-operational-stage:not(:has(> .operational-edit-dock))
+  > .operational-stage-body {
+  padding-bottom: 48px !important;
+}
+@media (max-width: 899px) {
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .telxius-operational-stage > .operational-edit-dock {
+    padding-right: 12px;
+    min-height: 40px;
+  }
+}
+
+/* React to the actual inspector/canvas divider, not only the viewport. */
+@container (max-width: 780px) {
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-positions {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+  }
+}
+@container (max-width: 540px) {
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-panel-positions {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+@media (max-width: 1180px) {
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row {
+    grid-template-columns: minmax(74px, 0.5fr) minmax(0, 2fr);
+  }
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-breaker-summary-row > small {
+    grid-column: 2;
+  }
+}
+@media (max-width: 650px) {
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-toolbar {
+    align-items: flex-start;
+  }
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .front01-stage-heading-controls {
+    margin-left: 0;
+  }
+  .zip-bdfb-page[data-mk2-ux-physical='true'] .sm-bdfb-stage .sm-bdfb-panel-composition-link {
+    padding-left: 10px;
+  }
+}
+
+@media (max-width: 1420px) {
+  .zip-app-shell .zip-brand {
+    padding-inline: 12px;
+    gap: 8px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-lockup {
+    gap: 9px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-appmanager {
+    font-size: 19px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-product-line {
+    font-size: 14px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-mark {
+    width: 30px;
+    height: 30px;
+  }
+  .zip-app-shell .zip-brand-home {
+    width: 32px;
+    height: 32px;
+  }
+}
+@media (max-width: 700px) {
+  .zip-app-shell .sm-brand--compact .sm-brand-appmanager {
+    font-size: 16px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-product-line {
+    font-size: 12px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-lockup {
+    gap: 6px;
+  }
+  .zip-app-shell .sm-brand--compact .sm-brand-mark {
+    width: 25px;
+    height: 25px;
+  }
+  .sm-home .sm-home-heading > div {
+    padding: 12px 14px;
+  }
+  .sm-home .sm-home-pin--compact {
+    min-height: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sm-home .sm-home-pin,
+  .sm-home .sm-home-sidebar-toggle {
+    transition: none;
+  }
+}
+
+/* MK2 Equipment composition ergonomic acceptance — Chassis/Shelf/Frame/Panel/Breaker. */
+/* Presentation-only. Use the real DOM, physical hierarchy, telemetry and
+   permissions; never replace real content with values from an AI mockup.
+   Topology/Canvas/Inspector sizing and user-saved widths stay untouched. */
+.mk2-equipment-ergonomics .zip-device-stage {
+  padding-bottom: 54px !important;
+}
+.mk2-equipment-ergonomics .zip-device-stage > h1 {
+  min-height: 36px;
+  height: auto;
+  margin-bottom: 7px;
+  font-size: 21px;
+  line-height: 1.25;
+}
+.mk2-equipment-ergonomics .zip-device-stage .front01-primary-tabs {
+  padding: 4px 0 9px;
+  gap: 6px;
+}
+.mk2-equipment-ergonomics .zip-device-stage .front01-primary-tabs button {
+  min-height: 34px;
+  padding: 7px 13px;
+}
+.mk2-equipment-ergonomics .equipment-composition {
+  box-sizing: border-box;
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  padding: 13px 14px 12px;
+  container-type: inline-size;
+}
+.mk2-equipment-ergonomics .equipment-composition-header {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 20px;
+  margin-bottom: 10px;
+}
+.mk2-equipment-ergonomics .equipment-composition-header > div:first-child {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+.mk2-equipment-ergonomics .equipment-composition-header h2 {
+  margin: 3px 0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .equipment-composition-header small {
+  line-height: 1.4;
+}
+.mk2-equipment-ergonomics .equipment-composition-policy {
+  display: flex;
+  flex: 1 1 285px;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  min-width: 0;
+}
+.mk2-equipment-ergonomics .equipment-composition-policy p {
+  flex: 1 1 210px;
+  max-width: none;
+  text-align: right;
+  line-height: 1.45;
+}
+.mk2-equipment-ergonomics .equipment-lifecycle-actions {
+  flex: 0 0 auto;
+}
+.mk2-equipment-ergonomics .equipment-contract-canvas {
+  gap: 11px;
+}
+.mk2-equipment-ergonomics .ec-contract {
+  border-radius: 9px;
+  box-shadow: none;
+}
+.mk2-equipment-ergonomics .ec-topline {
+  gap: 7px 12px;
+  padding: 9px 14px;
+  flex-wrap: wrap;
+  line-height: 1.4;
+}
+.mk2-equipment-ergonomics .ec-live-cover {
+  gap: 6px 12px;
+  padding: 8px 14px;
+  line-height: 1.45;
+}
+.mk2-equipment-ergonomics .ec-focus {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px 16px;
+  padding: 13px 15px 10px;
+}
+.mk2-equipment-ergonomics .ec-focus h2 {
+  font-size: clamp(17px, 1.45vw, 21px);
+  line-height: 1.3;
+}
+.mk2-equipment-ergonomics .ec-focus p {
+  margin-top: 3px;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .ec-focus-badges {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+.mk2-equipment-ergonomics .ec-focus-badges span,
+.mk2-equipment-ergonomics .ec-heading-counts span {
+  padding: 5px 8px;
+}
+.mk2-equipment-ergonomics .ec-main-section,
+.mk2-equipment-ergonomics .ec-panel-composition {
+  padding: 0 14px 13px;
+}
+.mk2-equipment-ergonomics .ec-section-heading {
+  padding: 10px 2px 11px;
+  gap: 8px 12px;
+  flex-wrap: wrap;
+}
+.mk2-equipment-ergonomics .ec-section-heading small,
+.mk2-equipment-ergonomics .ec-frame-heading small,
+.mk2-equipment-ergonomics .ec-shelf-card-heading small {
+  margin-bottom: 4px;
+}
+.mk2-equipment-ergonomics .ec-chassis-shelves {
+  gap: 9px;
+}
+.mk2-equipment-ergonomics .ec-shelf-card {
+  min-width: 0;
+  padding: 11px 12px;
+}
+.mk2-equipment-ergonomics .ec-shelf-card-heading {
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  margin-bottom: 8px;
+}
+.mk2-equipment-ergonomics .ec-chassis-frame-strip,
+.mk2-equipment-ergonomics .ec-frames-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
+  gap: 8px;
+}
+.mk2-equipment-ergonomics .ec-chassis-frame {
+  min-width: 0;
+  min-height: 63px;
+  padding: 10px 12px;
+  gap: 4px;
+  justify-content: space-between;
+  box-shadow: none;
+}
+.mk2-equipment-ergonomics .ec-chassis-frame strong {
+  font-size: 12px;
+  line-height: 1.45;
+}
+.mk2-equipment-ergonomics .ec-frame-card {
+  min-width: 0;
+  padding: 11px;
+}
+.mk2-equipment-ergonomics .ec-frame-heading {
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 7px 10px;
+  margin-bottom: 9px;
+}
+.mk2-equipment-ergonomics .ec-frame-heading-status {
+  justify-content: flex-end;
+}
+.mk2-equipment-ergonomics .ec-frame-panels,
+.mk2-equipment-ergonomics .ec-frame-rows {
+  gap: 6px;
+}
+.mk2-equipment-ergonomics .ec-panel-line {
+  padding: 9px 11px;
+  min-height: 51px;
+  gap: 4px 9px;
+}
+.mk2-equipment-ergonomics .ec-panel-meta {
+  gap: 4px 10px;
+  line-height: 1.45;
+}
+.mk2-equipment-ergonomics .ec-frame-row {
+  min-height: 50px;
+  padding: 9px 11px;
+  gap: 10px;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+}
+.mk2-equipment-ergonomics .ec-frame-row > div {
+  gap: 7px 12px;
+}
+.mk2-equipment-ergonomics .ec-frame-row-status {
+  max-width: 100%;
+}
+.mk2-equipment-ergonomics .ec-panel-composition .ec-table-scroll {
+  max-width: 100%;
+  min-width: 0;
+  max-height: min(64vh, 670px);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.mk2-equipment-ergonomics .ec-breaker-columns {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.mk2-equipment-ergonomics .ec-breaker-columns,
+.mk2-equipment-ergonomics .ec-breaker-row,
+.mk2-equipment-ergonomics .ec-empty-breaker-row {
+  gap: 7px;
+  padding: 8px 10px;
+  min-height: 33px;
+}
+.mk2-equipment-ergonomics .ec-breaker-columns,
+.mk2-equipment-ergonomics .ec-breaker-row,
+.mk2-equipment-ergonomics .ec-empty-breaker-row {
+  grid-template-columns:
+    42px minmax(155px, 2.25fr)
+    repeat(4, minmax(62px, 0.8fr))
+    minmax(85px, 1fr)
+    minmax(78px, 0.8fr);
+}
+.mk2-equipment-ergonomics .ec-breaker-table {
+  min-width: 760px;
+}
+.mk2-equipment-ergonomics .ec-empty-breaker-row button {
+  min-height: 30px;
+}
+.mk2-equipment-ergonomics .ec-breaker-detail {
+  margin: 0 14px 13px;
+  padding: 12px 14px;
+}
+.mk2-equipment-ergonomics .ec-breaker-detail .ec-section-heading {
+  padding-top: 2px;
+}
+.mk2-equipment-ergonomics .ec-breaker-metrics {
+  gap: 8px;
+}
+.mk2-equipment-ergonomics .ec-breaker-metrics .ec-reading {
+  padding: 11px 13px;
+}
+.mk2-equipment-ergonomics .ec-breaker-metrics .ec-reading strong {
+  font-size: 21px;
+}
+.mk2-equipment-ergonomics .ec-breaker-source {
+  margin: 10px 0;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .ec-legend {
+  padding: 9px 14px;
+  gap: 6px 15px;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity {
+  margin: 7px 14px 12px;
+  padding: 12px;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity header {
+  margin-bottom: 8px;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics {
+  gap: 7px;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics > div {
+  padding: 9px 10px;
+  gap: 4px;
+}
+.mk2-equipment-ergonomics .ec-snmp-feed-tags {
+  margin-top: 8px;
+  gap: 5px;
+}
+.mk2-equipment-ergonomics .ec-snmp-feed-tags span {
+  padding: 6px 8px;
+}
+.mk2-equipment-ergonomics .equipment-contract-canvas > .equipment-faceplate {
+  padding: 12px 14px;
+}
+.mk2-equipment-ergonomics .equipment-contract-canvas .equipment-faceplate-surface {
+  min-height: 118px;
+}
+.mk2-equipment-ergonomics .equipment-composition-workbench-actions {
+  margin-top: 9px;
+}
+.mk2-equipment-ergonomics .front01-equipment-technical-config {
+  margin-top: 9px;
+}
+.mk2-equipment-ergonomics .front01-equipment-technical-config > summary {
+  padding: 9px 12px;
+}
+/* Width awareness follows the resizable Canvas, not the outer viewport.
+   Never hide a panel, equipment slot, terminal, telemetry row or action. */
+@container (max-width: 670px) {
+  .mk2-equipment-ergonomics .ec-chassis-frame-strip,
+  .mk2-equipment-ergonomics .ec-frames-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mk2-equipment-ergonomics .equipment-composition-policy {
+    justify-content: flex-start;
+  }
+  .mk2-equipment-ergonomics .equipment-composition-policy p {
+    text-align: left;
+  }
+  .mk2-equipment-ergonomics .ec-frame-row {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+  .mk2-equipment-ergonomics .ec-frame-row-status {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+}
+@media (max-width: 899px) {
+  .mk2-equipment-ergonomics .equipment-composition {
+    padding: 10px;
+  }
+  .mk2-equipment-ergonomics .ec-main-section,
+  .mk2-equipment-ergonomics .ec-panel-composition {
+    padding-inline: 10px;
+  }
+  .mk2-equipment-ergonomics .ec-snmp-capacity {
+    margin-inline: 10px;
+  }
+}
+
+/* MK2 Equipment readability pass — operator-first, without data removal. */
+/* Typography, not a redesign. Readability takes precedence over packing data
+   into one viewport; long names/feeds may wrap and tables may scroll.
+   Scope: only existing Equipment Chassis/Shelf/Frame/Panel/Breaker screens. */
+.mk2-equipment-ergonomics {
+  --mk2-type-body: 16px;
+  --mk2-type-label: 14px;
+  --mk2-type-section: 18px;
+  --mk2-type-action: 14px;
+  --mk2-readable-muted: #405b72;
+  --mk2-readable-ink: #162e43;
+}
+.mk2-equipment-ergonomics .equipment-composition {
+  font-size: var(--mk2-type-body);
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .zip-device-stage > h1 {
+  font-size: 24px;
+  line-height: 1.3;
+}
+.mk2-equipment-ergonomics .equipment-composition-header h2,
+.mk2-equipment-ergonomics .ec-focus h2 {
+  font-size: 21px;
+  line-height: 1.35;
+}
+.mk2-equipment-ergonomics .equipment-composition-header span,
+.mk2-equipment-ergonomics .equipment-composition-header small,
+.mk2-equipment-ergonomics .ec-focus small,
+.mk2-equipment-ergonomics .ec-section-heading small,
+.mk2-equipment-ergonomics .ec-frame-heading small,
+.mk2-equipment-ergonomics .ec-shelf-card-heading small,
+.mk2-equipment-ergonomics .ec-topline,
+.mk2-equipment-ergonomics .ec-topline-status,
+.mk2-equipment-ergonomics .ec-live-cover,
+.mk2-equipment-ergonomics .ec-live-cover small,
+.mk2-equipment-ergonomics .ec-eyebrow,
+.mk2-equipment-ergonomics .ec-count,
+.mk2-equipment-ergonomics .ec-muted {
+  font-size: var(--mk2-type-label);
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
+  color: var(--mk2-readable-muted);
+}
+.mk2-equipment-ergonomics .ec-eyebrow,
+.mk2-equipment-ergonomics .ec-section-heading small,
+.mk2-equipment-ergonomics .ec-focus small,
+.mk2-equipment-ergonomics .ec-frame-heading small,
+.mk2-equipment-ergonomics .ec-shelf-card-heading small {
+  color: #195e91;
+}
+.mk2-equipment-ergonomics .ec-section-heading strong {
+  font-size: var(--mk2-type-section);
+  line-height: 1.35;
+  color: var(--mk2-readable-ink);
+}
+.mk2-equipment-ergonomics .equipment-composition-policy p,
+.mk2-equipment-ergonomics .ec-focus p,
+.mk2-equipment-ergonomics .ec-shelf-card-heading,
+.mk2-equipment-ergonomics .ec-card-status,
+.mk2-equipment-ergonomics .ec-frame-heading-status,
+.mk2-equipment-ergonomics .ec-frame-row-status,
+.mk2-equipment-ergonomics .ec-chassis-frame small,
+.mk2-equipment-ergonomics .ec-panel-meta,
+.mk2-equipment-ergonomics .ec-panel-presence,
+.mk2-equipment-ergonomics .ec-frame-row .ec-count {
+  font-size: var(--mk2-type-label);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--mk2-readable-muted);
+}
+.mk2-equipment-ergonomics .ec-shelf-link,
+.mk2-equipment-ergonomics .ec-frame-title,
+.mk2-equipment-ergonomics .ec-frame-row-name,
+.mk2-equipment-ergonomics .ec-chassis-frame strong,
+.mk2-equipment-ergonomics .ec-panel-name {
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.45;
+  color: #17558a;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .ec-focus-badges span,
+.mk2-equipment-ergonomics .ec-heading-counts span,
+.mk2-equipment-ergonomics .ec-status,
+.mk2-equipment-ergonomics .ec-status-available,
+.mk2-equipment-ergonomics .ec-alarm-cell,
+.mk2-equipment-ergonomics .ec-frame-row .ec-pos,
+.mk2-equipment-ergonomics .ec-pos {
+  font-size: var(--mk2-type-label);
+  line-height: 1.45;
+  letter-spacing: normal;
+}
+.mk2-equipment-ergonomics .ec-chassis-frame,
+.mk2-equipment-ergonomics .ec-panel-line,
+.mk2-equipment-ergonomics .ec-frame-row {
+  min-height: 60px;
+}
+.mk2-equipment-ergonomics .equipment-composition button,
+.mk2-equipment-ergonomics .equipment-composition .equipment-lifecycle-actions button,
+.mk2-equipment-ergonomics .equipment-composition .equipment-composition-workbench-actions button,
+.mk2-equipment-ergonomics .equipment-composition .equipment-faceplate button,
+.mk2-equipment-ergonomics .front01-equipment-technical-config > summary,
+.mk2-equipment-ergonomics .zip-device-stage .front01-primary-tabs button {
+  font-size: var(--mk2-type-action);
+  line-height: 1.4;
+}
+.mk2-equipment-ergonomics .equipment-composition button,
+.mk2-equipment-ergonomics .equipment-composition .equipment-lifecycle-actions button,
+.mk2-equipment-ergonomics .equipment-composition .equipment-composition-workbench-actions button,
+.mk2-equipment-ergonomics .zip-device-stage .front01-primary-tabs button {
+  min-height: 40px;
+}
+.mk2-equipment-ergonomics .equipment-composition-policy p,
+.mk2-equipment-ergonomics .ec-frame-heading-status,
+.mk2-equipment-ergonomics .ec-chassis-frame small,
+.mk2-equipment-ergonomics .ec-panel-meta {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+/* Panel: every position, measurement, alarm and allowed install action stays
+   visible; horizontal scrolling is preferred over shrinking numerical text. */
+.mk2-equipment-ergonomics .ec-breaker-table {
+  min-width: 1040px;
+}
+.mk2-equipment-ergonomics .ec-breaker-columns,
+.mk2-equipment-ergonomics .ec-breaker-row,
+.mk2-equipment-ergonomics .ec-empty-breaker-row {
+  grid-template-columns:
+    48px minmax(176px, 2fr)
+    repeat(4, minmax(100px, 1fr))
+    minmax(114px, 1fr)
+    minmax(116px, 1fr);
+  gap: 9px;
+  padding-block: 11px;
+  min-height: 45px;
+}
+.mk2-equipment-ergonomics .ec-breaker-columns {
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.4;
+}
+.mk2-equipment-ergonomics .ec-breaker-row .ec-reading strong,
+.mk2-equipment-ergonomics .ec-breaker-row .ec-breaker-name,
+.mk2-equipment-ergonomics .ec-empty-breaker-row {
+  font-size: 15px;
+  line-height: 1.45;
+}
+.mk2-equipment-ergonomics .ec-breaker-row .ec-reading small {
+  font-size: 13px;
+  color: #42647e;
+}
+.mk2-equipment-ergonomics .ec-breaker-row .ec-status,
+.mk2-equipment-ergonomics .ec-empty-breaker-row .ec-status-available,
+.mk2-equipment-ergonomics .ec-breaker-row .ec-alarm-cell {
+  font-size: 14px;
+  font-weight: 600;
+}
+.mk2-equipment-ergonomics .ec-empty-breaker-row button {
+  min-height: 40px;
+  padding: 7px 10px;
+  font-size: 14px;
+}
+
+/* Individual Breaker: preserve V/I/P/E precision, MQTT provenance and the
+   original status semantics. Only visual type and spacing change. */
+.mk2-equipment-ergonomics .ec-breaker-detail .ec-breaker-metrics .ec-reading strong {
+  font-size: 24px;
+  line-height: 1.25;
+  font-variant-numeric: tabular-nums;
+}
+.mk2-equipment-ergonomics .ec-breaker-detail .ec-breaker-metrics .ec-metric-key {
+  font-size: 14px;
+}
+.mk2-equipment-ergonomics .ec-breaker-detail .ec-breaker-metrics .ec-reading small,
+.mk2-equipment-ergonomics .ec-breaker-source,
+.mk2-equipment-ergonomics .ec-breaker-no-data,
+.mk2-equipment-ergonomics .ec-legend,
+.mk2-equipment-ergonomics .ec-legend b {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mk2-readable-muted);
+}
+.mk2-equipment-ergonomics .ec-breaker-source {
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .ec-trace-link,
+.mk2-equipment-ergonomics .ec-breaker-detail a {
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+/* SNMP: actual shunt capacity and shared/incomplete qualifications must be
+   readable; never transform an unverified value into a verified one. */
+.mk2-equipment-ergonomics .ec-snmp-capacity header strong {
+  font-size: 18px;
+  line-height: 1.35;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity header small,
+.mk2-equipment-ergonomics .ec-snmp-capacity header > span,
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics small,
+.mk2-equipment-ergonomics .ec-snmp-feed-tags span,
+.mk2-equipment-ergonomics .ec-snmp-capacity > p,
+.mk2-equipment-ergonomics .ec-snmp-utilization > span {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #315a54;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics strong {
+  font-size: 21px;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics > div {
+  gap: 7px;
+  padding: 12px;
+}
+.mk2-equipment-ergonomics .ec-snmp-feed-tags span {
+  padding: 8px 10px;
+  white-space: normal;
+}
+.mk2-equipment-ergonomics .ec-snmp-capacity-metrics {
+  gap: 9px;
+}
+
+/* Existing physical connectors and their registered metadata are
+   operational content, not miniature decorative captions. */
+.mk2-equipment-ergonomics .equipment-faceplate-header strong {
+  font-size: 18px;
+  line-height: 1.4;
+}
+.mk2-equipment-ergonomics .equipment-faceplate-header span,
+.mk2-equipment-ergonomics .equipment-faceplate-status,
+.mk2-equipment-ergonomics .equipment-faceplate-hint,
+.mk2-equipment-ergonomics .equipment-faceplate-selection,
+.mk2-equipment-ergonomics .equipment-faceplate-selection small,
+.mk2-equipment-ergonomics .equipment-faceplate-selection dt,
+.mk2-equipment-ergonomics .equipment-faceplate-selection dd,
+.mk2-equipment-ergonomics .equipment-faceplate-port small,
+.mk2-equipment-ergonomics .equipment-terminal-occupied {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .equipment-faceplate-port strong {
+  font-size: 15px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .equipment-faceplate-port {
+  min-height: 96px;
+  padding: 12px;
+}
+.mk2-equipment-ergonomics .equipment-faceplate-hint {
+  color: var(--mk2-readable-muted);
+}
+
+/* Settings, composer and Inspector use the same legibility baseline,
+   preserving permissions, input values and user-resized side panels. */
+.mk2-equipment-ergonomics .front01-equipment-technical-config > summary {
+  min-height: 40px;
+  padding-block: 11px;
+}
+.mk2-equipment-ergonomics .front01-equipment-technical-grid h3 {
+  font-size: 18px;
+}
+.mk2-equipment-ergonomics .front01-equipment-technical-grid,
+.mk2-equipment-ergonomics .front01-equipment-technical-grid p,
+.mk2-equipment-ergonomics .front01-equipment-technical-grid label,
+.mk2-equipment-ergonomics .ec-inspector-port {
+  font-size: 14px;
+  line-height: 1.55;
+}
+.mk2-equipment-ergonomics .equipment-composer,
+.mk2-equipment-ergonomics .equipment-configuration-form {
+  font-size: 16px;
+}
+.mk2-equipment-ergonomics .equipment-composer form label,
+.mk2-equipment-ergonomics .equipment-composer-tabs button,
+.mk2-equipment-ergonomics .equipment-configuration-form label,
+.mk2-equipment-ergonomics .equipment-composer > header small {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .zip-device-identity h2 {
+  font-size: 20px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics
+  .zip-device-inspector
+  .front01-equipment-summary
+  .zip-device-identity
+  small {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-facts {
+  min-width: 0;
+}
+.mk2-equipment-ergonomics
+  .zip-device-inspector
+  .front01-equipment-summary
+  .front01-summary-facts
+  dt,
+.mk2-equipment-ergonomics
+  .zip-device-inspector
+  .front01-equipment-summary
+  .front01-summary-facts
+  dd {
+  font-size: 14px !important;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary .front01-summary-note {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--mk2-readable-muted);
+}
+/* The columns remain resizable; if the Inspector is manually narrow,
+   keep labels and values on separate lines rather than reduce fonts. */
+.mk2-equipment-ergonomics .zip-device-inspector .front01-equipment-summary {
+  container-type: inline-size;
+}
+@container (max-width: 270px) {
+  .mk2-equipment-ergonomics
+    .zip-device-inspector
+    .front01-equipment-summary
+    .front01-summary-facts {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}
+
+/* Small resizable Canvas: legibility continues via wrapping or scrolling.
+   No row, SNMP feed, terminal or Equipment action is hidden. */
+@container (max-width: 680px) {
+  .mk2-equipment-ergonomics .ec-snmp-capacity-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mk2-equipment-ergonomics .ec-breaker-metrics {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Equipment's original Topology tree must remain readable when navigating
+   deep physical ancestry. Wrapping is safer than ellipsis for long IDs.
+   Do not alter its three-column width, selected path or scroll ownership. */
+.mk2-equipment-ergonomics .telxius-topology-tree .telxius-tree-node > a {
+  min-height: 42px;
+  align-items: center;
+  padding-block: 7px;
+}
+.zip-app-shell:not(.app-shell--blueprint)
+  .mk2-equipment-ergonomics
+  .telxius-topology-tree
+  .telxius-tree-copy
+  strong {
+  font-size: 14px;
+  font-weight: 550;
+  line-height: 1.5;
+  text-overflow: clip;
+  white-space: normal;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  letter-spacing: 0;
+}
+.mk2-equipment-ergonomics .telxius-topology-tree .telxius-tree-chevron {
+  font-size: 15px;
+}
+.mk2-equipment-ergonomics .telxius-topology-tree .topology-tree-selection {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk2-equipment-ergonomics .telxius-topology-tree .topology-tree-selection small,
+.mk2-equipment-ergonomics .telxius-topology-tree .topology-tree-selection a {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Operator copy: technical provenance remains available without headline noise. */
+.mk2-equipment-ergonomics .front01-equipment-technical-identity {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 12px 14px 0;
+  color: #405b72;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.mk2-equipment-ergonomics .front01-equipment-technical-identity > span {
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics .ec-telemetry-calculation summary,
+.mk2-equipment-ergonomics .ec-telemetry-calculation summary,
+.mk2-equipment-ergonomics .ec-telemetry-source-details summary,
+.mk2-equipment-ergonomics .equipment-breaker-source-technical summary {
+  display: list-item;
+  cursor: pointer;
+  width: fit-content;
+  max-width: 100%;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: #225d8b;
+  text-underline-offset: 3px;
+}
+.mk2-equipment-ergonomics .ec-telemetry-calculation :is(summary, small),
+.mk2-equipment-ergonomics .ec-telemetry-source-details :is(summary, p),
+.mk2-equipment-ergonomics .equipment-breaker-source-technical :is(summary, p) {
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.mk2-equipment-ergonomics .ec-telemetry-source-details p,
+.mk2-equipment-ergonomics .equipment-breaker-source-technical p {
+  margin: 5px 0;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.mk2-equipment-ergonomics .ec-telemetry-calculation {
+  min-width: 0;
+  max-width: 100%;
+  flex: 0 1 auto;
+  font-size: 14px;
+  font-weight: 500;
+}
+.mk2-equipment-ergonomics .ec-telemetry-calculation small {
+  display: block;
+  padding-top: 5px;
+  color: #405b72;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+.mk2-equipment-ergonomics .ec-telemetry-source-details {
+  margin: 0 0 12px;
+}
+.mk2-equipment-ergonomics .equipment-breaker-source-technical {
+  margin-top: 7px;
+  min-width: 0;
+}
+.mk2-equipment-ergonomics .equipment-configuration-allowed {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: #405b72;
+}
+.mk2-equipment-ergonomics .equipment-breaker-telemetry-header {
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+.mk2-equipment-ergonomics .equipment-breaker-telemetry-header > :is(strong, span),
+.mk2-equipment-ergonomics .equipment-breaker-telemetry > small {
+  font-size: 14px;
+  line-height: 1.55;
+}
+.mk2-equipment-ergonomics .equipment-breaker-telemetry-header > strong {
+  font-size: 16px;
+}
+.mk2-equipment-ergonomics .equipment-breaker-telemetry > small {
+  display: block;
+  margin-top: 6px;
+  color: #405b72;
+  overflow-wrap: anywhere;
+}
+.mk2-equipment-ergonomics
+  :is(.ec-telemetry-calculation, .ec-telemetry-source-details, .equipment-breaker-source-technical)
+  > summary:focus-visible {
+  outline: 2px solid #247bb7;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* MK2 physical infrastructure — source-grounded ergonomics for Network/Site/Structure/Level/Room. */
+/* Deliberately scoped: no QDF, Equipment, telemetry, RBAC or geometry changes. */
+.mk-explorer-page .zip-canvas-title {
+  min-height: 58px;
+  height: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  padding: 11px 20px !important;
+}
+.mk-explorer-page .zip-canvas-title strong {
+  min-width: 0;
+  font-size: clamp(19px, 1.35vw, 24px) !important;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .zip-canvas-title small {
+  margin-left: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #475d72;
+}
+.mk-explorer-page .zip-map-canvas {
+  padding: 10px 18px 0;
+  min-height: calc(100dvh - 205px) !important;
+}
+.mk-explorer-page .zip-network-graph {
+  display: grid;
+  place-items: center;
+  min-height: min(670px, calc(100dvh - 213px));
+  height: 100%;
+}
+.mk-explorer-page .mk2-network-cards {
+  width: 100%;
+  min-height: 460px;
+  padding: 28px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+.mk-explorer-page .mk2-network-cards .zip-graph-card {
+  position: relative !important;
+  inset: auto !important;
+  transform: none !important;
+  display: flex;
+  flex: 0 1 270px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  min-width: min(100%, 220px);
+  width: 270px;
+  height: auto;
+  min-height: 175px;
+  padding: 20px 18px;
+  text-align: center;
+  text-decoration: none;
+  border: 2px solid #3d7fdb;
+  border-radius: 9px;
+  box-shadow: 0 5px 16px #19395214;
+  background: #fff !important;
+  color: #142d42 !important;
+}
+.mk-explorer-page .mk2-network-cards .zip-graph-card:hover,
+.mk-explorer-page .mk2-network-cards .zip-graph-card:focus-visible {
+  border-color: #136cc9;
+  box-shadow: 0 0 0 4px #2d7ff922;
+  outline: 2px solid #247bb7;
+  outline-offset: 2px;
+}
+.mk-explorer-page .mk2-network-cards .zip-graph-glyph {
+  font-size: 45px;
+  line-height: 1;
+  color: #314d64;
+}
+.mk-explorer-page .mk2-network-cards .zip-graph-card > strong {
+  font-size: 17px;
+  line-height: 1.4;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .mk2-network-cards .zip-graph-card > small {
+  font-size: 14px;
+  line-height: 1.4;
+  color: #405b72;
+}
+.mk-explorer-page .mk2-network-empty {
+  font-size: 16px;
+  color: #435c72;
+}
+/* Structure is a clearly labeled schematic. A real building photo/model
+   must be supplied by an authorized source before any true photo overlay. */
+.mk-explorer-page .mk2-building-stage {
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 15px;
+  min-height: min(640px, calc(100dvh - 214px));
+  height: 100%;
+  padding: 22px 16px;
+}
+.mk-explorer-page .mk2-building-illustration {
+  width: min(94%, 760px);
+  min-height: 340px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #b7c9d8;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #eaf5ff 0 40%, #f9fbfc 40% 100%);
+}
+.mk-explorer-page .mk2-building-shell {
+  position: absolute;
+  inset: 12% 7% 11%;
+  overflow: hidden;
+  border: 2px solid #778fa4;
+  border-radius: 5px;
+  background: linear-gradient(150deg, #f8fbff, #e3eaf1);
+  box-shadow: 14px 13px 0 #afc1d0;
+}
+.mk-explorer-page .mk2-building-roof {
+  height: 18%;
+  border-bottom: 2px solid #6d8298;
+  background: #c7d7e5;
+}
+.mk-explorer-page .mk2-building-windows {
+  position: absolute;
+  top: 27%;
+  left: 5%;
+  right: 5%;
+  bottom: 18%;
+  opacity: 0.36;
+  background: repeating-linear-gradient(90deg, #7997b3 0 24px, #e9f1f9 24px 35px);
+  border-block: 4px solid #a8bbce;
+}
+.mk-explorer-page .mk2-building-floor-list {
+  position: relative;
+  z-index: 1;
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  padding: 42px 32px;
+}
+.mk-explorer-page .mk2-building-floor {
+  width: min(100%, 480px);
+  min-height: 74px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 18px;
+  text-decoration: none;
+  border: 2px solid #247cda;
+  border-radius: 8px;
+  background: #f7fbffed;
+  color: #173550;
+  box-shadow: 0 8px 25px #173b6033;
+}
+.mk-explorer-page .mk2-building-floor strong {
+  display: block;
+  font-size: 19px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .mk2-building-floor small {
+  display: block;
+  margin-top: 3px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #466178;
+}
+.mk-explorer-page .mk2-building-floor b {
+  flex: 0 0 auto;
+  border-radius: 5px;
+  padding: 11px 12px;
+  background: #1168b4;
+  color: #fff;
+  font-size: 14px;
+}
+.mk-explorer-page .mk2-building-floor:focus-visible,
+.mk-explorer-page .mk2-building-floor:hover {
+  outline: 2px solid #165ca2;
+  outline-offset: 3px;
+  background: #eff7ff;
+}
+.mk-explorer-page .mk2-building-no-floors {
+  font-size: 16px;
+  color: #30485e;
+  background: #ffffffed;
+  padding: 13px 16px;
+}
+.mk-explorer-page .mk2-building-caption {
+  font-size: 14px;
+  line-height: 1.5;
+  color: #465d72;
+  text-align: center;
+  margin: 0;
+}
+.mk-explorer-page .zip-level-stage svg .mk2-map-element {
+  cursor: pointer;
+}
+.mk-explorer-page .zip-level-stage svg .mk2-map-element polygon:hover,
+.mk-explorer-page .zip-level-stage svg .mk2-map-element:focus-visible polygon {
+  fill: #eaf4ff;
+  stroke: #1b77c5;
+  stroke-width: 3;
+}
+.mk-explorer-page .zip-level-stage svg .mk2-map-nameplate {
+  fill: #f5faff;
+  stroke: #2d7ff9;
+  stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
+}
+.mk-explorer-page .zip-level-stage svg .mk2-map-element text {
+  fill: #153957;
+  font-weight: 750;
+  stroke: none;
+  pointer-events: none;
+}
+.mk-explorer-page .zip-level-stage svg .mk2-map-element:focus-visible {
+  outline: none;
+}
+.mk-explorer-page .topology-unlocated-list a,
+.mk-explorer-page .topology-unlocated-inline a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 42px;
+  max-width: 100%;
+  padding: 9px 12px;
+  text-decoration: none;
+  border: 1px solid #cbdbea;
+  border-radius: 5px;
+  background: #f7fbff;
+  color: #18558d;
+  font-size: 15px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .topology-unlocated-list a:focus-visible,
+.mk-explorer-page .topology-unlocated-inline a:focus-visible {
+  outline: 2px solid #247bb7;
+  outline-offset: 3px;
+}
+.mk-explorer-page .zip-inspector-identity h2 {
+  font-size: 19px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .zip-inspector-identity small {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk-explorer-page .zip-inspector h3 {
+  font-size: 16px;
+  line-height: 1.4;
+}
+.mk-explorer-page .zip-inspector dl {
+  font-size: 14px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  gap: 0 10px;
+}
+.mk-explorer-page .zip-inspector dt,
+.mk-explorer-page .zip-inspector dd {
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.mk-explorer-page .zip-inspector section {
+  padding: 13px;
+}
+.mk-explorer-page .zip-open-action {
+  margin: 12px 16px 0;
+  min-height: 42px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.mk-explorer-page .zip-canvas-footer {
+  min-height: 58px;
+  height: auto !important;
+  flex-wrap: wrap;
+  gap: 8px 16px !important;
+  padding: 9px 160px 9px 16px !important;
+  font-size: 14px !important;
+}
+.mk-explorer-page .zip-canvas-footer > span:first-child {
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mk-explorer-page .zip-canvas-footer :is(button, b, span) {
+  font-size: 14px;
+}
+.mk-explorer-page .s03-reset {
+  bottom: 75px;
+  opacity: 0.95;
+}
+.mk2-room-ergonomics .s03-reset {
+  bottom: 75px;
+  opacity: 0.95;
+}
+.mk2-room-ergonomics .operational-stage > .section-header {
+  gap: 10px;
+  padding-bottom: 5px;
+  margin-bottom: 8px !important;
+}
+.mk2-room-ergonomics .section-header h1 {
+  font-size: clamp(23px, 1.5vw, 28px) !important;
+  line-height: 1.3 !important;
+}
+.mk2-room-ergonomics .section-description {
+  font-size: 14px !important;
+  line-height: 1.5;
+}
+.mk2-room-ergonomics .mk2-room-management {
+  position: relative;
+  font-size: 14px;
+}
+.mk2-room-ergonomics .mk2-room-management summary {
+  cursor: pointer;
+  padding: 9px 11px;
+  border: 1px solid #cbd8e5;
+  border-radius: 5px;
+  color: #345673;
+  font-size: 14px;
+  font-weight: 650;
+}
+.mk2-room-ergonomics .mk2-room-management > :not(summary) {
+  margin-top: 8px;
+}
+.mk2-room-ergonomics .mk-room-editor .mk-draft-toolbar,
+.mk2-room-ergonomics .mk-room-editor .zip-blueprint-toolbar {
+  padding-block: 10px;
+}
+.mk2-room-ergonomics .mk-draft-toolbar strong,
+.mk2-room-ergonomics .zip-blueprint-toolbar strong {
+  font-size: 17px;
+  line-height: 1.4;
+}
+.mk2-room-ergonomics .zip-blueprint-toolbar :is(span, small),
+.mk2-room-ergonomics .mk-draft-toolbar button,
+.mk2-room-ergonomics .mk-lens-switch button {
+  font-size: 14px;
+  line-height: 1.5;
+}
+.mk2-room-ergonomics .mk-lens-switch button,
+.mk2-room-ergonomics .mk-draft-toolbar button {
+  min-height: 40px;
+}
+.mk2-room-ergonomics .zip-room-properties > header {
+  font-size: 16px;
+  line-height: 1.4;
+}
+.mk2-room-ergonomics .room-general-info h3,
+.mk2-room-ergonomics .mk2-room-cluster-list h3 {
+  font-size: 16px;
+  line-height: 1.4;
+}
+.mk2-room-ergonomics .room-general-info :is(dt, dd),
+.mk2-room-ergonomics .mk2-room-cluster-list li {
+  font-size: 14px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list li {
+  padding: 9px 0;
+  border-bottom: 1px solid #dce5ed;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list li:last-child {
+  border-bottom: 0;
+}
+@media (max-width: 1180px) {
+  .mk-explorer-page .zip-canvas-title {
+    gap: 6px;
+  }
+  .mk-explorer-page .mk2-building-illustration {
+    min-height: 290px;
+  }
+  .mk-explorer-page .mk2-building-floor-list {
+    min-height: 290px;
+  }
+  .mk-explorer-page .zip-canvas-footer {
+    padding-right: 16px !important;
+  }
+  .mk-explorer-page .s03-reset,
+  .mk2-room-ergonomics .s03-reset {
+    top: 60px;
+    bottom: auto;
+  }
+}
+@media (max-width: 899px) {
+  .mk-explorer-page .zip-map-canvas {
+    min-height: 450px !important;
+  }
+  .mk-explorer-page .mk2-network-cards {
+    min-height: 400px;
+    padding: 20px 10px;
+  }
+  .mk-explorer-page .mk2-building-stage {
+    min-height: 450px;
+  }
+  .mk2-room-ergonomics .mk2-room-management {
+    margin-top: 8px;
+  }
+}
+
+/* MK2 Room typographic hierarchy — readability correction against user screenshot 2026-11-16. */
+/* One page title, one canvas title, and one consistent operator-readable body
+   scale. SVG text uses survey units in BlueprintCanvas and is handled there. */
+.mk2-room-ergonomics .section-header h1 {
+  font-size: clamp(21px, 1.35vw, 24px) !important;
+  font-weight: 750 !important;
+  line-height: 1.3 !important;
+  letter-spacing: 0;
+}
+.mk2-room-ergonomics .section-description {
+  font-size: 15px !important;
+  line-height: 1.5 !important;
+}
+.mk2-room-ergonomics .mk-draft-toolbar {
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 49px;
+  padding: 7px 13px !important;
+}
+.mk2-room-ergonomics .mk-draft-toolbar strong {
+  font-size: 17px !important;
+  margin-right: auto;
+}
+.mk2-room-ergonomics .zip-blueprint-toolbar {
+  min-height: 67px;
+  padding: 10px 14px !important;
+  align-items: center;
+}
+.mk2-room-ergonomics .zip-blueprint-toolbar small:first-child {
+  display: none !important; /* redundant VISTA DE PLANO 2D */
+}
+.mk2-room-ergonomics .zip-blueprint-toolbar strong {
+  display: block;
+  font-size: 18px !important;
+  line-height: 1.35;
+}
+.mk2-room-ergonomics .zip-blueprint-toolbar span {
+  font-size: 14px !important;
+  line-height: 1.45;
+}
+.mk2-room-ergonomics .zip-blueprint-mode b {
+  font-size: 14px;
+  line-height: 1.35;
+}
+.mk2-room-ergonomics .zip-drafting-tools button {
+  min-width: 42px;
+  min-height: 42px;
+  font-size: 19px;
+  line-height: 1;
+}
+.mk2-room-ergonomics .blueprint-legend {
+  min-height: 52px;
+  height: auto !important;
+  flex: 0 0 auto !important;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 9px;
+  padding: 8px 158px 8px 12px !important; /* reserve Reset Layout control */
+}
+.mk2-room-ergonomics .blueprint-legend :is(span, small, strong, b) {
+  font-size: 14px !important;
+  line-height: 1.4;
+}
+.mk2-room-ergonomics .blueprint-legend > span:last-child {
+  color: #37546b;
+  overflow-wrap: anywhere;
+}
+.mk2-room-ergonomics .s03-reset {
+  top: auto !important;
+  bottom: 9px !important; /* footer, not surveyed room/rack geometry */
+  opacity: 1;
+  min-height: 40px;
+  font-size: 14px;
+  font-weight: 650;
+  background: #fff;
+  border-color: #adc2d3;
+}
+/* Navigation and Inspector are not subordinate to the high-density canvas:
+   their text should be consistently readable without zoom. */
+.mk2-room-ergonomics .telxius-tree-brand strong {
+  font-size: 14px !important;
+  line-height: 1.45 !important;
+}
+.mk2-room-ergonomics .telxius-tree-heading span {
+  font-size: 13px !important;
+  line-height: 1.45;
+}
+.mk2-room-ergonomics .telxius-tree-node > a {
+  min-height: 42px;
+  align-items: center;
+  padding-block: 7px;
+}
+.mk2-room-ergonomics .telxius-tree-copy strong {
+  font-size: 14px !important;
+  font-weight: 600;
+  line-height: 1.45 !important;
+  letter-spacing: 0;
+  white-space: normal !important;
+  text-overflow: clip !important;
+  overflow-wrap: anywhere;
+}
+.mk2-room-ergonomics .telxius-tree-copy small {
+  font-size: 12px;
+  line-height: 1.45;
+}
+.mk2-room-ergonomics .zip-room-properties > header {
+  min-height: 48px;
+  font-size: 17px !important;
+  line-height: 1.35;
+}
+.mk2-room-ergonomics .room-general-info,
+.mk2-room-ergonomics .mk2-room-cluster-list {
+  min-width: 0;
+  padding: 14px !important;
+}
+.mk2-room-ergonomics .room-general-info dl {
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 0 10px;
+  font-size: 14px !important;
+}
+.mk2-room-ergonomics .room-general-info dt,
+.mk2-room-ergonomics .room-general-info dd {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  padding-block: 9px;
+}
+.mk2-room-ergonomics .room-general-info dd {
+  font-weight: 650;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list {
+  display: block !important; /* original flex pushed names into a thin column */
+}
+.mk2-room-ergonomics .mk2-room-cluster-list h3 {
+  margin: 0 0 7px;
+  font-size: 16px !important;
+  line-height: 1.4;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list ul {
+  width: 100%;
+  margin: 0 !important;
+}
+.mk2-room-ergonomics .mk2-room-cluster-list li {
+  min-height: 40px;
+  font-size: 14px !important;
+  line-height: 1.5;
+  padding-block: 9px;
+}
+@media (max-width: 1180px) {
+  .mk2-room-ergonomics .s03-reset {
+    top: auto !important;
+    bottom: 9px !important;
+  }
+  .mk2-room-ergonomics .blueprint-legend {
+    padding-right: 14px !important;
+    padding-bottom: 52px !important;
+  }
+}
+
+/* The coordinates are 13px on-screen via BlueprintCanvas's SVG viewport
+   measurement. Retain understated color and regular weight, never oversized
+   bold ticks that compete with the physical cluster names. */
+.mk2-room-ergonomics .blueprint-coordinate-labels text {
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  fill: #597186 !important;
+}
+
+/* MK2 Room acceptance refinement — no composition or geometry changes. */
+/* Leave the accepted coordinate-tick scaling untouched. Keep the physical
+   names inside their actual surveyed strips and rack footprint. */
+.mk2-room-ergonomics .blueprint-cluster-label {
+  font-weight: 650 !important;
+  letter-spacing: 0.015em !important;
+}
+.mk2-room-ergonomics .blueprint-rack-label {
+  font-weight: 700 !important;
+  letter-spacing: 0 !important;
+}
+/* The Edit Room action now lives beside the plan's existing status control,
+   so no standalone view-only toolbar consumes a blank strip above the map. */
+.mk2-room-ergonomics .mk2-blueprint-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.mk2-room-ergonomics .mk2-blueprint-edit-room {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid #1b71d5;
+  border-radius: 5px;
+  background: #216ddb;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  cursor: pointer;
+}
+.mk2-room-ergonomics .mk2-blueprint-edit-room:hover {
+  background: #165bab;
+}
+.mk2-room-ergonomics .mk2-blueprint-edit-room:focus-visible {
+  outline: 2px solid #0051a5;
+  outline-offset: 3px;
+}
+/* Keep Restore Layout in the footer zone with deliberate bottom/right
+   clearance. Do not add a floating overlay over surveyed room geometry. */
+.mk2-room-ergonomics .blueprint-legend {
+  min-height: 64px;
+  padding: 10px 174px 15px 12px !important;
+}
+.mk2-room-ergonomics .s03-reset {
+  bottom: 15px !important;
+  right: calc(var(--s03-inspector-width) + 18px) !important;
+}
+@media (max-width: 1199px) {
+  .mk2-room-ergonomics .blueprint-legend {
+    padding: 10px 12px 56px !important;
+  }
+}
+
+/* Room topology header: keep TODOS clear of the collapse control. */
+/* The collapse button is absolutely positioned at the heading's right edge
+   (34px wide, 7px inset). Reserve its full hit area plus breathing room so
+   the TODOS badge cannot be painted underneath it. */
+.zip-app-shell.app-shell--blueprint
+  .telxius-topology-tree[data-collapsed='false']
+  .telxius-tree-heading {
+  box-sizing: border-box;
+  min-width: 0;
+  padding-right: 54px !important;
+  gap: 8px;
+}
+.zip-app-shell.app-shell--blueprint
+  .telxius-topology-tree[data-collapsed='false']
+  .telxius-tree-heading
+  b {
+  flex: 0 0 auto;
+}

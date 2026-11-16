@@ -12,10 +12,10 @@ import { TopologyContextTree } from '@/components/topology/context-tree';
 import { requirePermission } from '@/modules/identity/application/current-session';
 import { hasPermission } from '@/modules/identity/domain/roles';
 import { SpatialService } from '@/modules/spatial/application/spatial-service';
-import { polygonArea } from '@/modules/spatial/domain/geometry';
+import { polygonArea, polygonBounds } from '@/modules/spatial/domain/geometry';
 import { TopologyService } from '@/modules/topology/application/topology-service';
 import { createTopologyRepository } from '@/modules/topology/infrastructure/topology-repository-factory';
-import { SectionHeader, StatusBadge } from '@/shared/ui/primitives';
+import { SectionHeader } from '@/shared/ui/primitives';
 
 export default async function BlueprintPage({
   params,
@@ -65,8 +65,19 @@ export default async function BlueprintPage({
   const canDelete = hasPermission(auth.value.role, 'system:danger');
 
   const t = await getTranslations('pages.blueprint');
+  // Inspector display order follows the recorded survey: top-to-bottom,
+  // then left-to-right. Unsurveyed clusters remain listed after surveyed
+  // ones, preserving source order for ties/no geometry.
+  const clustersByPlan = [...result.value.clusters].sort((left, right) => {
+    const a = polygonBounds(left.polygon ?? []);
+    const b = polygonBounds(right.polygon ?? []);
+    if (a && !b) return -1;
+    if (!a && b) return 1;
+    if (!a || !b) return 0;
+    return a.minY - b.minY || a.minX - b.minX;
+  });
   return (
-    <main className="operational-page operational-page--blueprint">
+    <main className="operational-page operational-page--blueprint mk2-room-ergonomics">
       <nav className="breadcrumbs">
         {breadcrumbItems.map((entry) => (
           <Link
@@ -83,7 +94,7 @@ export default async function BlueprintPage({
         userKey={auth.value.id}
       >
         <aside className="operational-context">
-          {tree && <TopologyContextTree tree={tree} activeId={roomId} />}
+          {tree && <TopologyContextTree tree={tree} activeId={roomId} showHomeLink={false} />}
         </aside>
 
         <section className="operational-stage operational-stage--wide">
@@ -93,8 +104,12 @@ export default async function BlueprintPage({
             description={result.value.room.polygon?.length ? t('surveyed') : t('unsurveyed')}
             actions={
               <>
-                <StatusBadge>{canWrite ? t('write') : t('read')}</StatusBadge>
-                {canDelete && <DeleteEntityControl id={roomId} name={result.value.room.name} />}
+                {canDelete && (
+                  <details className="mk2-room-management">
+                    <summary>{t('manageRoom')}</summary>
+                    <DeleteEntityControl id={roomId} name={result.value.room.name} />
+                  </details>
+                )}
               </>
             }
           />
@@ -118,8 +133,6 @@ export default async function BlueprintPage({
           <section className="room-general-info">
             <h3>{t('information')}</h3>
             <dl>
-              <dt>{t('name')}</dt>
-              <dd>{result.value.room.name}</dd>
               <dt>{t('type')}</dt>
               <dd>{result.value.room.variant}</dd>
               <dt>{t('geometry')}</dt>
@@ -134,14 +147,22 @@ export default async function BlueprintPage({
                   <dd>{(polygonArea(result.value.room.polygon) / 1_000_000).toFixed(2)} m²</dd>
                 </>
               ) : null}
-              <dt>{t('footprints')}</dt>
+              <dt>{t('racksRegistered')}</dt>
               <dd>{result.value.racks.length}</dd>
+              <dt>{t('clusters')}</dt>
+              <dd>{result.value.clusters.length}</dd>
             </dl>
           </section>
-          <section>
-            <small>{t('clusters')}</small>
-            <strong>{result.value.clusters.length}</strong>
-          </section>
+          {result.value.clusters.length > 0 && (
+            <section className="mk2-room-cluster-list">
+              <h3>{t('clustersList')}</h3>
+              <ul>
+                {clustersByPlan.map((cluster) => (
+                  <li key={cluster.id}>{cluster.name}</li>
+                ))}
+              </ul>
+            </section>
+          )}
           <ThradexAttribution variant="inspector" />
         </aside>
       </ResizableWorkspace>

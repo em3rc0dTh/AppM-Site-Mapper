@@ -24,6 +24,7 @@ import './s03-workspace.css';
 import './s04-branding.css';
 import './site-mapper-brand.css';
 import './alarm-rules.css';
+import './mk2-ux-stabilization.css';
 import { AppShell } from '@/shared/ui/app-shell';
 
 const siteMapperBrandFont = Josefin_Sans({

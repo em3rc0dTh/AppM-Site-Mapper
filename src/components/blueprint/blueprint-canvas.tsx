@@ -110,6 +110,8 @@ export function BlueprintCanvas({
   onSelectRack,
   onSelectBay,
   onPlace,
+  onEditRoom,
+  editRoomLabel,
   focusRackId,
   focusBayId,
   focusPositionId,
@@ -129,6 +131,8 @@ export function BlueprintCanvas({
   onSelectRack?: ((id: string) => void) | undefined;
   onSelectBay?: ((id: string) => void) | undefined;
   onPlace?: ((point: PointMm) => void) | undefined;
+  onEditRoom?: (() => void) | undefined;
+  editRoomLabel?: string | undefined;
   focusRackId?: string | undefined;
   focusBayId?: string | undefined;
   focusPositionId?: string | undefined;
@@ -239,6 +243,26 @@ export function BlueprintCanvas({
   );
   const pointer = useRef<Readonly<{ x: number; y: number }> | null>(null);
   const svgRef = useRef<SVGSVGElement | null>(null);
+  const [svgViewport, setSvgViewport] = useState({ width: 0, height: 0 });
+
+  // The room footprint is recorded in millimetres, while SVG text is painted
+  // on a resizable viewport. Measure the displayed SVG, not its survey size.
+  useEffect(() => {
+    const svg = svgRef.current;
+    if (!svg) return;
+    const updateViewport = () => {
+      const rect = svg.getBoundingClientRect();
+      setSvgViewport((current) =>
+        Math.abs(current.width - rect.width) < 0.5 && Math.abs(current.height - rect.height) < 0.5
+          ? current
+          : { width: rect.width, height: rect.height },
+      );
+    };
+    updateViewport();
+    const observer = new ResizeObserver(updateViewport);
+    observer.observe(svg);
+    return () => observer.disconnect();
+  }, []);
 
   // React delegates wheel listeners as passive. The drafting canvas needs
   // a direct non-passive listener so zoom does not also scroll the page.
@@ -291,6 +315,20 @@ export function BlueprintCanvas({
       event.currentTarget.releasePointerCapture(event.pointerId);
   }
 
+  // Convert the 13px operator-facing target to SVG units using the *actual*
+  // painted viewport (preserveAspectRatio defaults to xMidYMid meet).
+  // The calculation does not touch persisted coordinates or grid geometry.
+  const pxPerSurveyUnit =
+    svgViewport.width > 0 && svgViewport.height > 0
+      ? Math.min(svgViewport.width / view.width, svgViewport.height / view.height)
+      : 0;
+  const axisFontSize = pxPerSurveyUnit > 0 ? 13 / pxPerSurveyUnit : 300 / zoom;
+  // If a saved/resized Canvas becomes too narrow for adjacent two-character
+  // ticks, skip some displayed captions instead of shrinking them to microtext.
+  // The underlying 600mm grid and every coordinate remain unchanged.
+  const axisColumnStride =
+    pxPerSurveyUnit > 0 ? Math.max(1, Math.ceil((13 * 1.55) / (600 * pxPerSurveyUnit))) : 1;
+
   return (
     <section className="blueprint-panel">
       <header className="blueprint-toolbar zip-blueprint-toolbar">
@@ -301,9 +339,16 @@ export function BlueprintCanvas({
             600 × 600 mm {t('grid')} · {Math.round(zoom * 100)}%
           </span>
         </div>
-        <div className="zip-blueprint-mode">
-          <span className="zip-blueprint-mode-dot" />
-          <b>{onPlace ? t('place') : t('mode')}</b>
+        <div className="mk2-blueprint-toolbar-actions">
+          {onEditRoom && editRoomLabel && (
+            <button type="button" className="mk2-blueprint-edit-room" onClick={onEditRoom}>
+              {editRoomLabel}
+            </button>
+          )}
+          <div className="zip-blueprint-mode">
+            <span className="zip-blueprint-mode-dot" />
+            <b>{onPlace ? t('place') : t('mode')}</b>
+          </div>
         </div>
       </header>
 
@@ -387,23 +432,27 @@ export function BlueprintCanvas({
           />
 
           <g className="blueprint-coordinate-labels" aria-hidden="true">
-            {labels.columns.map((column) => (
-              <text
-                key={`column-${column.label}-${column.x}`}
-                x={column.x}
-                y={labels.minY - 115}
-                textAnchor="middle"
-              >
-                {column.label}
-              </text>
-            ))}
+            {labels.columns
+              .filter((_, index) => index % axisColumnStride === 0)
+              .map((column) => (
+                <text
+                  key={`column-${column.label}-${column.x}`}
+                  x={column.x}
+                  y={labels.minY - 320}
+                  textAnchor="middle"
+                  style={{ fontSize: axisFontSize }}
+                >
+                  {column.label}
+                </text>
+              ))}
             {labels.rows.map((row) => (
               <text
                 key={`row-${row.label}-${row.y}`}
-                x={labels.minX - 115}
+                x={labels.minX - 320}
                 y={row.y}
                 textAnchor="middle"
                 dominantBaseline="middle"
+                style={{ fontSize: axisFontSize }}
               >
                 {row.label}
               </text>
@@ -413,7 +462,17 @@ export function BlueprintCanvas({
           {clusters.map((cluster) => {
             if (!cluster.polygon || cluster.polygon.length < 3) return null;
             const center = polygonCentroid(cluster.polygon);
-            const clusterFontSize = Math.max(150, Math.min(240, 220 / zoom));
+            const clusterHeight =
+              Math.max(...cluster.polygon.map((point) => point.y)) -
+              Math.min(...cluster.polygon.map((point) => point.y));
+            // Fit the text within the surveyed strip, targeting 17 rendered px.
+            // Never offset the label into the top border of its real polygon.
+            const clusterFontSize = Math.min(
+              pxPerSurveyUnit > 0 ? 17 / pxPerSurveyUnit : 220 / zoom,
+              (horizontalSpan(cluster.polygon) * 0.88) /
+                (Math.max(1, cluster.name.trim().length) * 0.62),
+              clusterHeight * 0.7,
+            );
             const clusterLabel = readableLabel(
               cluster.name,
               horizontalSpan(cluster.polygon),
@@ -440,8 +499,9 @@ export function BlueprintCanvas({
                 />
                 <text
                   x={center.x}
-                  y={center.y - 250}
+                  y={center.y}
                   textAnchor="middle"
+                  dominantBaseline="central"
                   className="blueprint-cluster-label"
                   style={{ fontSize: clusterFontSize }}
                 >
@@ -524,8 +584,19 @@ export function BlueprintCanvas({
           ))}
 
           {racks.map((rack) => {
-            const rackFontSize = Math.max(130, Math.min(200, 180 / zoom));
-            const rackLabel = readableLabel(rack.name, rack.rect.width, rackFontSize);
+            // Target 14 rendered px, but keep the whole real rack name
+            // inside its recorded footprint at narrow widths.
+            const rackFontSize = Math.min(
+              pxPerSurveyUnit > 0 ? 14 / pxPerSurveyUnit : 210 / zoom,
+              (rack.rect.width * 0.9) / (Math.max(1, rack.name.trim().length) * 0.62),
+              rack.rect.depth * 0.7,
+            );
+            // Short physical identifiers (QDF2/4/5) must not be ellipsized.
+            // Full name remains available in the existing SVG title for all racks.
+            const rackLabel =
+              rack.name.trim().length <= 5
+                ? rack.name.trim().toUpperCase()
+                : readableLabel(rack.name, rack.rect.width, rackFontSize);
 
             return (
               <g
@@ -590,7 +661,7 @@ export function BlueprintCanvas({
       <footer className="blueprint-legend">
         <StatusBadge tone="accent">{t('clusters', { count: clusters.length })}</StatusBadge>
         <StatusBadge tone="accent">{t('racks', { count: racks.length })}</StatusBadge>
-        <StatusBadge>{t('tiles', { count: slots.length })}</StatusBadge>
+        {slots.length > 0 && <StatusBadge>{t('tiles', { count: slots.length })}</StatusBadge>}
         <span>{tool === 'pan' ? t('panHelp') : t('selectHelp')}</span>
       </footer>
       {focusedRackId && (

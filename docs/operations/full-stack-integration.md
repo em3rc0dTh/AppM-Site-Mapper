@@ -30,7 +30,6 @@ publisher MQTT continuo
 SNMP trap/inform receiver + spool durable
 SNMP trap sender controlado
 Modbus TCP
-Operational Console
 ```
 
 ## Credenciales de integración
@@ -144,13 +143,12 @@ La integración controlada reserva:
 
 con layout `panels-4x24`. QDF-4/QDF-5 deben recibir proyecciones desde muestras MQTT aceptadas.
 
-## Operational Console
+## Operational Console (retirada del despliegue)
 
-Disponible en:
-
-```text
-http://127.0.0.1:3100
-```
+Este servicio ya no pertenece al Compose base ni a la integración controlada. Su
+código permanece archivado para trazabilidad; no se construye, publica ni
+arranca como parte del paquete de Site Mapper. Consultar
+[retirada segura](retire-operational-console.md).
 
 ## Estado
 

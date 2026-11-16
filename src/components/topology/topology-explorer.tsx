@@ -221,36 +221,27 @@ export function TopologyExplorer({
               </div>
             ) : (
               <div className={`zip-network-graph zip-network-graph--${node.kind.toLowerCase()}`}>
-                <div className="zip-graph-title">
-                  {node.kind === 'NETWORK' ? t('globalNetwork') : node.name.toUpperCase()}
+                <div className="mk2-network-cards">
+                  {visualItems.map((entry) => (
+                    <Link
+                      key={entry.node.id}
+                      href={entry.href}
+                      className="zip-graph-card"
+                      onMouseEnter={() => setSelected(entry.node.id)}
+                      onFocus={() => setSelected(entry.node.id)}
+                      aria-label={t('openNamed', { name: entry.node.name })}
+                    >
+                      <span className="zip-graph-glyph" aria-hidden="true">
+                        {nodeGlyph(entry.node.kind)}
+                      </span>
+                      <strong>{entry.node.name.toUpperCase()}</strong>
+                      <small>{displayKind(entry.node.kind)}</small>
+                    </Link>
+                  ))}
+                  {visualItems.length === 0 && (
+                    <span className="mk2-network-empty">{t('noItems')}</span>
+                  )}
                 </div>
-                <div className="zip-graph-links" aria-hidden="true" />
-                {visualItems.map((entry, index) => (
-                  <button
-                    key={entry.node.id}
-                    className={`zip-graph-card zip-graph-card--${index + 1} ${selected === entry.node.id ? 'is-selected' : ''}`}
-                    onClick={() => setSelected(entry.node.id)}
-                    onDoubleClick={() => window.location.assign(entry.href)}
-                  >
-                    <span className="zip-graph-glyph" aria-hidden="true">
-                      {nodeGlyph(entry.node.kind)}
-                    </span>
-                    <strong>
-                      {node.kind === 'NETWORK'
-                        ? ((
-                            {
-                              Lima: 'SITE LIM',
-                              Arequipa: 'SITE ARE',
-                              Trujillo: 'SITE TRU',
-                            } as Record<string, string>
-                          )[entry.node.name] ?? entry.node.name.toUpperCase())
-                        : entry.node.name.toUpperCase()}
-                    </strong>
-                    <span className="zip-graph-metrics">
-                      <small>{t('unsurveyed')}</small>
-                    </span>
-                  </button>
-                ))}
               </div>
             )}
           </div>

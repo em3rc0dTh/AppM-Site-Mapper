@@ -9,11 +9,11 @@ Desde los controles de Power Trace existentes en Device, Equipment y Power se ab
 - \`/workbench/power-trace?entityId=<id>\`
 - \`/workbench/power-trace?entityId=<id>&path=<powerPathId>\` para resaltar una ruta.
 
-La URL requiere sesión con permiso \`power:read\`; el módulo no usa el AppShell ni modal. No hay menús laterales. Los lectores sin \`telemetry:read\` no ven telemetría en la ventana.
+La URL requiere sesión con permiso \`power:read\`; el módulo se abre como ventana independiente, sin modal ni menús laterales, pero reutiliza el **Workbench Shell MK2** con la identidad canónica \`AppManager SiteMapper Mk2\` y acceso a inicio. Los lectores sin \`telemetry:read\` no ven telemetría en la ventana.
 
 ## Contenido y reglas
 
-- Fondo blanco, título «Rastreo de Ruta», identidad del equipo y ubicación real.
+- Workbench Shell MK2, fondo claro, título «Rastreo de Ruta», identidad del equipo y ubicación real. No se presenta branding \`Site Mapper MK1\` dentro del contenido.
 - Feed A / equipo / Feed B en tres columnas; responsive apilado.
 - Cada lado lista los PowerPaths registrados. Si hay varios, no oculta rutas adicionales.
 - El recorrido usa exclusivamente fuente, Shelf / Frame (si existen), Panel, Breaker y AccessPorts obtenidos del servicio de trazabilidad. No se inventan elementos físicos ausentes.

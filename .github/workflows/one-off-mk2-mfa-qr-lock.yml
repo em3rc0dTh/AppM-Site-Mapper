@@ -1,0 +1,57 @@
+name: Temporary MK2 offline MFA QR lock and format
+on:
+  push:
+    branches:
+      - feat/mk2-offline-mfa-qr-2026-11-16
+    paths:
+      - .github/workflows/one-off-mk2-mfa-qr-lock.yml
+permissions:
+  contents: write
+jobs:
+  prepare:
+    if: contains(github.event.head_commit.message, 'launch offline MFA QR package lock')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Generate lockfile from pinned dependency
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+      - name: Install dependencies according to lockfile
+        run: npm ci --no-audit --no-fund
+      - name: Format touched sources and documentation
+        run: |
+          npx prettier --write \
+            package.json \
+            src/components/settings/mfa-panel.tsx \
+            src/app/mk2-ux-stabilization.css \
+            src/messages/es.json src/messages/en.json \
+            docs/security/mfa-totp-3000.md \
+            tests/unit/offline-mfa-qr.test.ts
+      - name: Check formatting, typing, lint and offline QR unit
+        run: |
+          npm run format:check
+          npm run typecheck
+          npm run lint
+          npx vitest run tests/unit/offline-mfa-qr.test.ts
+      - name: Commit only intended files
+        run: |
+          git config user.name "site-mapper-automation"
+          git config user.email "site-mapper-automation@users.noreply.github.com"
+          git add -- package.json package-lock.json \
+            src/components/settings/mfa-panel.tsx \
+            src/app/mk2-ux-stabilization.css \
+            src/messages/es.json src/messages/en.json \
+            docs/security/mfa-totp-3000.md \
+            tests/unit/offline-mfa-qr.test.ts
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            echo 'No changes required'
+            exit 0
+          fi
+          git commit -m "build(auth): lock bundled offline QR dependency and format MFA UI"
+          git push origin HEAD:feat/mk2-offline-mfa-qr-2026-11-16

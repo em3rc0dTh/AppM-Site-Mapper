@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import type { AlarmSeverity } from '@/modules/alarm/domain/entities';
@@ -103,6 +104,7 @@ export function RuleManager({
   canEdit: boolean;
   initialBreakerId?: string;
 }) {
+  const t = useTranslations('alarmRules');
   const [view, setView] = useState<View>(initialBreakerId ? 'ASSIGNMENTS' : 'RULES');
   const [metric, setMetric] = useState<Metric>('ALL');
   const [records, setRecords] = useState<readonly ManagedRuleRecord[]>([]);
@@ -289,35 +291,35 @@ export function RuleManager({
     <section className="sm-rule-manager">
       <header className="sm-rule-head">
         <div>
-          <small>OPERATIONS / ALARMS / RULE MANAGER</small>
-          <h1>Alarm Rules</h1>
-          <p>Published policies · Electrical profiles · Breaker overrides</p>
+          <small>{t('eyebrow')}</small>
+          <h1>{t('alarmRules')}</h1>
+          <p>{t('description')}</p>
         </div>
-        <Link href="/alarms">← Alarm Center</Link>
+        <Link href="/alarms">{t('backToCenter')}</Link>
       </header>
       <div className="sm-rule-kpis">
         <article>
-          <small>Rule catalog</small>
+          <small>{t('catalogShort')}</small>
           <strong>{MANAGED_RULE_CODES.length}</strong>
-          <span>V/A/P/E definitions</span>
+          <span>{t('vipeDefinitions')}</span>
         </article>
         <article>
-          <small>Published</small>
+          <small>{t('published')}</small>
           <strong>{published.length}</strong>
-          <span>Commissioned scopes</span>
+          <span>{t('commissionedScopes')}</span>
         </article>
         <article>
-          <small>Drafts</small>
+          <small>{t('drafts')}</small>
           <strong>{records.filter((r) => r.draft.status === 'DRAFT').length}</strong>
-          <span>Unpublished changes</span>
+          <span>{t('unpublishedChanges')}</span>
         </article>
         <article>
-          <small>DC profile</small>
-          <strong>48 V</strong>
-          <span>24 cells · Reference 54.5 V</span>
+          <small>{t('dcProfile')}</small>
+          <strong>{t('nominal48')}</strong>
+          <span>{t('dcShortSummary')}</span>
         </article>
       </div>
-      <nav className="sm-rule-tabs" aria-label="Rule manager views">
+      <nav className="sm-rule-tabs" aria-label={t('viewsLabel')}>
         {(['RULES', 'PROFILES', 'ASSIGNMENTS', 'HISTORY'] as const).map((tab) => (
           <button key={tab} type="button" onClick={() => setView(tab)} aria-pressed={view === tab}>
             {
@@ -341,15 +343,15 @@ export function RuleManager({
           {message}
         </p>
       ) : null}
-      {loading ? <p>Loading policies…</p> : null}
+      {loading ? <p>{t('loadingPolicies')}</p> : null}
       {view === 'PROFILES' ? (
         <section className="sm-rule-panel">
           <div className="sm-rule-panel-head">
             <div>
-              <h2>DC-48V-24CELL</h2>
-              <p>Rectifier settings · 24 battery cells</p>
+              <h2>{t('profileId')}</h2>
+              <p>{t('rectifierSettings')}</p>
             </div>
-            <span className="sm-rule-pill">Reference only</span>
+            <span className="sm-rule-pill">{t('referenceOnly')}</span>
           </div>
           <div className="sm-rule-profile-grid">
             {profileItems.map(([title, key, unit]) => (
@@ -361,21 +363,17 @@ export function RuleManager({
               </article>
             ))}
           </div>
-          <p>
-            These are measured equipment configuration references, not commissioned breaker alarm
-            thresholds. An operator must approve each alarm limit before publishing the
-            corresponding rule.
-          </p>
+          <p>{t('profileWarning')}</p>
         </section>
       ) : null}
       {view === 'RULES' ? (
         <div className="sm-rule-layout">
           <section className="sm-rule-panel">
             <div className="sm-rule-panel-head">
-              <h2>Rule Catalog</h2>
+              <h2>{t('ruleCatalog')}</h2>
               <select
                 value={metric}
-                aria-label="Filter metric"
+                aria-label={t('filterMetric')}
                 onChange={(e) => setMetric(e.target.value as Metric)}
               >
                 {(['ALL', 'V', 'A', 'P', 'E'] as const).map((m) => (
@@ -406,7 +404,7 @@ export function RuleManager({
                 );
               })}
             </div>
-            <h3>Saved configurations</h3>
+            <h3>{t('savedConfigurations')}</h3>
             <div className="sm-rule-list">
               {records
                 .filter((r) => metric === 'ALL' || ruleMetric(r.draft.code) === metric)
@@ -427,14 +425,14 @@ export function RuleManager({
                   </button>
                 ))}
               {records.length === 0 ? (
-                <p>No managed rules saved yet. Existing alarm policies remain unaffected.</p>
+                <p>{t('noRules')}</p>
               ) : null}
             </div>
           </section>
           <section className="sm-rule-panel sm-rule-inspector">
             <div className="sm-rule-panel-head">
               <div>
-                <small>RULE INSPECTOR</small>
+                <small>{t('inspector')}</small>
                 <h2>{titles[code]}</h2>
                 <p>
                   {code} · {ruleMetric(code)}
@@ -445,19 +443,17 @@ export function RuleManager({
               </span>
             </div>
             <div className="sm-rule-form">
-              <label>
-                Scope
-                <select
+              <label>{t('scope')}<select
                   value={scope}
                   onChange={(e) => {
                     setScope(e.target.value as RuleScope);
                     setSelectedId(null);
                   }}
                 >
-                  <option value="GLOBAL">Global</option>
-                  <option value="QDF">QDF / Device</option>
-                  <option value="PANEL">Panel</option>
-                  <option value="BREAKER">Breaker</option>
+                  <option value="GLOBAL">{t('global')}</option>
+                  <option value="QDF">{t('qdfDevice')}</option>
+                  <option value="PANEL">{t('panel')}</option>
+                  <option value="BREAKER">{t('breaker')}</option>
                 </select>
               </label>
               {scope !== 'GLOBAL' ? (
@@ -469,7 +465,7 @@ export function RuleManager({
                       setScopeId(e.target.value);
                       setSelectedId(null);
                     }}
-                    placeholder="Topology entity ID"
+                    placeholder={t('topologyIdPlaceholder')}
                   />
                 </label>
               ) : null}
@@ -488,20 +484,16 @@ export function RuleManager({
                     />
                   </label>
                 ))}
-                <label>
-                  Severity
-                  <select
+                <label>{t('severity')}<select
                     value={severity}
                     onChange={(e) => setSeverity(e.target.value as AlarmSeverity)}
                   >
-                    <option value="INFO">Info</option>
-                    <option value="WARNING">Warning</option>
-                    <option value="CRITICAL">Critical</option>
+                    <option value="INFO">{t('info')}</option>
+                    <option value="WARNING">{t('warning')}</option>
+                    <option value="CRITICAL">{t('critical')}</option>
                   </select>
                 </label>
-                <label>
-                  Confirm samples
-                  <input
+                <label>{t('debounce')}<input
                     type="number"
                     min={1}
                     max={30}
@@ -509,9 +501,7 @@ export function RuleManager({
                     onChange={(e) => setDebounce(Number(e.target.value))}
                   />
                 </label>
-                <label>
-                  Recovery samples
-                  <input
+                <label>{t('recovery')}<input
                     type="number"
                     min={1}
                     max={30}
@@ -521,26 +511,19 @@ export function RuleManager({
                 </label>
               </div>
               {code === 'LOAD_LOSS' || code === 'NO_ENERGY_INCREMENT' ? (
-                <p className="sm-rule-note">
-                  Expected load is required and must be commissioned. A zero reading alone does not
-                  prove breaker trip.
-                </p>
+                <p className="sm-rule-note">{t('expectedLoadWarning')}</p>
               ) : null}
               {code === 'LOAD_LOSS' ? (
                 <div className="sm-rule-simulator">
-                  <h3>Load Loss · Dry-run preview</h3>
+                  <h3>{t('loadLossSimulator')}</h3>
                   <div className="sm-rule-form-grid">
-                    <label>
-                      Prior current (A)
-                      <input
+                    <label>{t('previousCurrent')}<input
                         type="number"
                         value={simPrevious}
                         onChange={(e) => setSimPrevious(Number(e.target.value))}
                       />
                     </label>
-                    <label>
-                      Current reading (A)
-                      <input
+                    <label>{t('currentReading')}<input
                         type="number"
                         value={simCurrent}
                         onChange={(e) => setSimCurrent(Number(e.target.value))}
@@ -550,41 +533,27 @@ export function RuleManager({
                   <span className={loadLossCandidate ? 'sm-rule-test-alert' : 'sm-rule-test-ok'}>
                     {loadLossCandidate ? 'Candidate: LOAD_LOSS' : 'No Load Loss candidate'}
                   </span>
-                  <p>
-                    Preview only. Real alarms also require accepted telemetry, expected-load
-                    commissioning and debounce.
-                  </p>
+                  <p>{t('simulatorWarning')}</p>
                 </div>
               ) : null}
               <div className="sm-rule-actions">
-                <button type="button" onClick={save} disabled={!canEdit || busy}>
-                  Save draft
-                </button>
+                <button type="button" onClick={save} disabled={!canEdit || busy}>{t('saveDraft')}</button>
                 <button
                   type="button"
                   onClick={() => change('PUBLISH')}
                   disabled={!canEdit || busy || !selected}
-                >
-                  Publish
-                </button>
+                >{t('publish')}</button>
                 <button
                   type="button"
                   onClick={() => change('DISABLE')}
                   disabled={!canEdit || busy || !selected || !selected.published}
-                >
-                  Disable
-                </button>
+                >{t('disable')}</button>
               </div>
               {!canEdit ? (
-                <p className="sm-rule-note">
-                  Read-only: policy changes require settings:write permission.
-                </p>
+                <p className="sm-rule-note">{t('readOnlyNote')}</p>
               ) : null}
               {selected?.published ? (
-                <p className="sm-rule-note">
-                  A published snapshot stays active while draft changes are edited. Publish again to
-                  replace it.
-                </p>
+                <p className="sm-rule-note">{t('publishedSnapshotNote')}</p>
               ) : null}
             </div>
           </section>
@@ -592,19 +561,16 @@ export function RuleManager({
       ) : null}
       {view === 'ASSIGNMENTS' ? (
         <section className="sm-rule-panel">
-          <h2>Published Assignments</h2>
-          <p>
-            Published policies resolve from Global → QDF/Device → Panel → Breaker. Existing policies
-            take precedence for their alarm code.
-          </p>
+          <h2>{t('publishedAssignments')}</h2>
+          <p>{t('inheritanceNote')}</p>
           <div className="sm-rule-table-wrap">
             <table className="sm-rule-table">
               <thead>
                 <tr>
-                  <th>Rule</th>
-                  <th>Scope</th>
-                  <th>Target</th>
-                  <th>Revision</th>
+                  <th>{t('rule')}</th>
+                  <th>{t('scope')}</th>
+                  <th>{t('target')}</th>
+                  <th>{t('revision')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -619,26 +585,24 @@ export function RuleManager({
               </tbody>
             </table>
           </div>
-          <h3>Effective breaker policy</h3>
+          <h3>{t('effectiveBreaker')}</h3>
           <div className="sm-rule-preview">
             <input
-              aria-label="Breaker ID"
-              placeholder="Breaker topology ID"
+              aria-label={t('breakerIdLabel')}
+              placeholder={t('breakerIdPlaceholder')}
               value={previewId}
               onChange={(e) => setPreviewId(e.target.value)}
             />
-            <button type="button" onClick={() => void loadEffective()} disabled={!previewId}>
-              Inspect breaker
-            </button>
+            <button type="button" onClick={() => void loadEffective()} disabled={!previewId}>{t('inspectBreaker')}</button>
           </div>
           {preview ? (
             <div className="sm-rule-table-wrap">
               <table className="sm-rule-table">
                 <thead>
                   <tr>
-                    <th>Rule</th>
-                    <th>Origin</th>
-                    <th>Scope</th>
+                    <th>{t('rule')}</th>
+                    <th>{t('origin')}</th>
+                    <th>{t('scope')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -657,16 +621,16 @@ export function RuleManager({
       ) : null}
       {view === 'HISTORY' ? (
         <section className="sm-rule-panel">
-          <h2>Policy History</h2>
+          <h2>{t('policyHistory')}</h2>
           <div className="sm-rule-table-wrap">
             <table className="sm-rule-table">
               <thead>
                 <tr>
-                  <th>When</th>
-                  <th>Rule</th>
-                  <th>Action</th>
-                  <th>Revision</th>
-                  <th>Operator</th>
+                  <th>{t('when')}</th>
+                  <th>{t('rule')}</th>
+                  <th>{t('action')}</th>
+                  <th>{t('revision')}</th>
+                  <th>{t('operator')}</th>
                 </tr>
               </thead>
               <tbody>

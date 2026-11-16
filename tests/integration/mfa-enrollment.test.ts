@@ -111,9 +111,7 @@ describe('Site Mapper TOTP MFA', () => {
     if (!valid.ok) throw new Error('expected TOTP login');
     now = new Date('2026-11-16T08:01:01.000Z');
     const next = codeFor(started.value.secret, now);
-    expect(
-      (await mfa.disable(valid.value.token, 'a strong initial password', next)).ok,
-    ).toBe(true);
+    expect((await mfa.disable(valid.value.token, 'a strong initial password', next)).ok).toBe(true);
     expect(await auth.resolveSession(valid.value.token)).toBeNull();
     expect(
       (await auth.authenticate('admin@example.com', 'a strong initial password', 'mfa-5')).ok,
